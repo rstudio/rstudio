@@ -70,7 +70,7 @@ void reportException(const std::string& method,
 
    // log to console as well
    std::cerr << "Warning: " << message << std::endl
-             << "Please report this error to http://support.rstudio.com"
+             << "Please report this error to https://github.com/rstudio/rstudio/issues/new/choose"
              << std::endl;
 }
 

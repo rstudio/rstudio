@@ -17,19 +17,21 @@
 
 set -e
 
+./install-packages "$1"
 ./install-dictionaries
 ./install-mathjax
 ./install-boost
 ./install-pandoc
 ./install-quarto
-./install-packages
 ./install-sentry-cli
 ./install-npm-dependencies
 ./install-soci
 ./install-yaml-cpp
 ./install-crashpad
+./install-panmirror
+./install-sccache
 
 if [ -e install-overlay ]
 then
-   ./install-overlay $1
+   ./install-overlay "$1"
 fi

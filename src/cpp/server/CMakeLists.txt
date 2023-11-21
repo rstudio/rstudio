@@ -34,6 +34,7 @@ set(SERVER_SOURCE_FILES
    ServerLogVars.cpp
    ServerMainOverlay.cpp
    ServerMeta.cpp
+   ServerMetrics.cpp
    ServerOffline.cpp
    ServerOptions.cpp
    ServerOptionsOverlay.cpp
@@ -43,6 +44,7 @@ set(SERVER_SOURCE_FILES
    ServerREnvironment.cpp
    ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp
+   auth/ServerAuthHandlerOverlay.cpp
    auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
@@ -235,7 +237,7 @@ if (UNIX AND NOT APPLE)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_UPSTART_PROFILE_REDHAT}
            DESTINATION ${RSERVER_UPSTART_DIR})
 
-    # install configured systemd profile
+   # install configured systemd profile
    set(RSERVER_SYSTEMD_DIR "extras/systemd")
    set(RSERVER_SYSTEMD_PROFILE "${RSERVER_SYSTEMD_DIR}/rstudio-server.service")
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_SYSTEMD_PROFILE}.in
@@ -247,6 +249,12 @@ if (UNIX AND NOT APPLE)
                   ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_SYSTEMD_PROFILE_REDHAT})
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_SYSTEMD_PROFILE_REDHAT}
            DESTINATION ${RSERVER_SYSTEMD_DIR})
+
+   # install node
+   install(
+      DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_NODE_VERSION}/"
+      DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
+      USE_SOURCE_PERMISSIONS)
 
 elseif(APPLE)
 

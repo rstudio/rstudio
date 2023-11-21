@@ -32,7 +32,7 @@ namespace modules {
 namespace rmarkdown {
 namespace presentation {
 
-void ammendResults(const std::string& formatName,
+void amendResults(const std::string& formatName,
                    core::FilePath& targetFile,
                    int sourceLine,
                    core::json::Object* pResultsJson);

@@ -710,11 +710,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String rPubsSubtitle();
 
     /**
-     * Translated "Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser.".
+     * Translated "Posit Cloud lets you create and share data projects, applications, and data-driven documents online.".
      *
-     * @return translated "Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser."
+     * @return translated "Posit Cloud lets you create and share data projects, applications, and data-driven documents online."
      */
-    @DefaultMessage("Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser.")
+    @DefaultMessage("Posit Cloud lets you create and share data projects, applications, and data-driven documents online.")
     @Key("cloudSubtitle")
     String cloudSubtitle();
 
@@ -807,6 +807,15 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Choose this option if you want to create {0} or rebuild your {1} on the server.")
     @Key("publishReportSourcePageSubTitle")
     String publishReportSourcePageSubTitle(String scheduledReportNumber, String descriptor);
+
+    /**
+     * Translated "Choose this option if you want to be able to rebuild your {0} on the server.".
+     *
+     * @return translated "Choose this option if you want to be able to rebuild your {0} on the server."
+     */
+    @DefaultMessage("Choose this option if you want to be able to rebuild your {0} on the server.")
+    @Key("publishReportNoScheduledSourcePageSubtitle")
+    String publishReportNoScheduledSourcePageSubtitle(String descriptor);
 
     /**
      * Translated "scheduled reports".
@@ -1196,11 +1205,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String couldNotDetermineListToDeployReRender();
 
     /**
-     * Translated "To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.".
+     * Translated "To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.".
      *
-     * @return translated "To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
+     * @return translated "To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
      */
-    @DefaultMessage("To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
+    @DefaultMessage("To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
     @Key("finishedDocumentNotFoundMessage")
     String finishedDocumentNotFoundMessage();
 

@@ -15,8 +15,7 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.CheckBox;
+import java.util.ArrayList;
 
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -24,7 +23,8 @@ import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
-import java.util.ArrayList;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.CheckBox;
 
 public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPrefs>
 {
@@ -237,6 +237,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
       final NumericValueWidget widget = new NumericValueWidget(label, tooltip, minValue, maxValue);
       if (defaultSpaced)
          lessSpaced(widget);
+      
       registerEnsureVisibleHandler(widget);
       widget.setValue(prefValue.getGlobalValue() + "");
       onApplyCommands_.add(new Command()

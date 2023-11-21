@@ -218,14 +218,12 @@ core::Error detectExtendedType(const core::FilePath& filePath, std::string* pExt
 // source database events
 struct Events : boost::noncopyable
 {
-   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>      onDocUpdated;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&,
-                      boost::shared_ptr<SourceDocument>)>      onDocRenamed;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onDocAdded;
-   RSTUDIO_BOOST_SIGNAL<void(
-      boost::shared_ptr<source_database::SourceDocument>)>     onDocPendingRemove;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onDocRemoved;
-   RSTUDIO_BOOST_SIGNAL<void()>                                       onRemoveAll;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocUpdated;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, boost::shared_ptr<SourceDocument>)> onDocRenamed;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocAdded;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocPendingRemove;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)>                onDocRemoved;
+   RSTUDIO_BOOST_SIGNAL<void()>                                                      onRemoveAll;
 };
 
 Events& events();

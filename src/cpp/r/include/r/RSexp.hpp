@@ -16,6 +16,8 @@
 #ifndef R_R_SEXP_HPP
 #define R_R_SEXP_HPP
 
+#define R_INTERNAL_FUNCTIONS
+
 #include <string>
 #include <vector>
 #include <deque>
@@ -30,17 +32,28 @@
 #include <boost/utility.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
+
 #include <core/Log.hpp>
 #include <core/r_util/RFunctionInformation.hpp>
 
 #include <r/RErrorCategory.hpp>
 #include <r/RInternal.hpp>
 
-#include <shared_core/Error.hpp>
-#include <shared_core/json/Json.hpp>
-
 // IMPORTANT NOTE: all code in r::sexp must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
+
+#ifdef _WIN32
+# define RS_IMPORT __declspec(dllimport)
+#else
+# define RS_IMPORT
+#endif
+
+extern "C" {
+extern RS_IMPORT SEXP R_TrueValue;
+extern RS_IMPORT SEXP R_FalseValue;
+} // extern "C"
 
 
 namespace rstudio {
@@ -61,19 +74,26 @@ SEXP forcePromise(SEXP objectSEXP);
    
 // variables within an environment
 typedef std::pair<std::string,SEXP> Variable;
+
+// fills pVariables with Variable from the environment
+// 
+// The caller must make sure that `env` is protected for 
+// as long as the SEXPs in pVariables are used, because 
+// they are not protected
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
-                     Protect* pProtect,
                      std::vector<Variable>* pVariables);
-      
-// object info
-SEXP findVar(const std::string& name,
-             const std::string& ns = std::string());
-SEXP findVar(const std::string& name,
-             const SEXP env);
+ 
+// find variables in environments and namespaces
+SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
+SEXP findVar(const std::string& name, SEXP envSEXP);
+SEXP findVar(const std::string& name, const std::string& ns = std::string());
+
 SEXP findFunction(const std::string& name,
                   const std::string& ns = std::string());
+
+// object info
 std::string typeAsString(SEXP object);
 std::string classOf(SEXP objectSEXP);
 int length(SEXP object);
@@ -82,8 +102,8 @@ SEXP getNames(SEXP sexp);
 bool setNames(SEXP sexp, const std::vector<std::string>& names);
 
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);
-bool hasActiveBinding(const std::string&, const SEXP);
-bool isActiveBinding(const std::string&, const SEXP);
+bool hasActiveBinding(const std::string&, SEXP);
+bool isActiveBinding(const std::string&, SEXP);
 
 // function introspection
 SEXP functionBody(SEXP functionSEXP);
@@ -99,6 +119,7 @@ bool isNull(SEXP object);
 bool isEnvironment(SEXP object);
 bool isPrimitiveEnvironment(SEXP object);
 bool isNumeric(SEXP object);
+bool isUserDefinedDatabase(SEXP object);
 
 // type coercions
 std::string asString(SEXP object);
@@ -122,10 +143,15 @@ bool isExternalPointer(SEXP object);
 bool isNullExternalPointer(SEXP object);
 
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit);
+SEXP getWeakRefKey(SEXP ref);
+SEXP getWeakRefValue(SEXP ref);
 void registerFinalizer(SEXP s, R_CFinalizer_t fun);
 SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* protect);
+SEXP makeExternalPtr(void* ptr, SEXP prot, SEXP tag);
 void* getExternalPtrAddr(SEXP extptr);
 void clearExternalPtr(SEXP extptr);
+SEXP getExternalPtrProtected(SEXP extptr);
+SEXP getExternalPtrTag(SEXP extptr);
 
 // extract c++ type from R SEXP
 core::Error extract(SEXP valueSEXP, int* pInt);
@@ -257,27 +283,28 @@ core::Error getNamedAttrib(SEXP object, const std::string& name, T* pValue)
    return extract(attrib, pValue);
 }
 
-// protect R expressions
+// protect R objects -- this uses a stack-based protection mechanism,
+// so this object should never be stored on the heap! 
 class Protect : boost::noncopyable
 {
 public:
    Protect()
-   : protectCount_(0)
+      : protectCount_(0)
    {
    }
    
-   explicit Protect(SEXP sexp)
-   : protectCount_(0)
+   ~Protect()
    {
-      add(sexp);
+      UNPROTECT(protectCount_);
    }
-   
-   virtual ~Protect();
    
    // COPYING: boost::noncopyable
    
-   void add(SEXP sexp);
-   void unprotectAll();
+   void add(SEXP sexp)
+   {
+      PROTECT(sexp);
+      protectCount_++;
+   }
    
 private:
    int protectCount_;

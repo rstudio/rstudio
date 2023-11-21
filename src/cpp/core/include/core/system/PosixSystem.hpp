@@ -100,10 +100,11 @@ typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;
 core::Error processInfo(const std::string& process,
                         std::vector<ProcessInfo>* pInfo,
                         bool suppressErrors = true,
-                        ProcessFilter filter = ProcessFilter());
+                        ProcessFilter filter = ProcessFilter(),
+                        bool populateUsername = true);
 
 // get process info for the specific process specified by pid
-core::Error processInfo(pid_t pid, ProcessInfo* pInfo);
+core::Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername = true);
 
 bool isProcessRunning(pid_t pid);
 
@@ -186,12 +187,12 @@ Error runProcess(const std::string& path,
                  ProcessConfigFilter configFilter);
 
 // get this processes' child processes
-Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses);
+Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses, bool populateUsername = true);
 
 
 // get the child processes of the specified process
 Error getChildProcesses(pid_t pid,
-                        std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses);
+                        std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses, bool populateUsername = true);
 
 // kill a process with a specific sign
 Error killProcess(pid_t pid, int signal);
@@ -262,6 +263,7 @@ FilePath currentWorkingDirMac(PidType pid);
 #ifndef __APPLE__
 // Determine current working directory of a given process by shelling out
 // to lsof; used on systems without procfs.
+core::Error currentWorkingDirViaLsof(PidType pid, FilePath* pPath);
 FilePath currentWorkingDirViaLsof(PidType pid);
 
 // Determine current working directory of a given process via procfs; returns

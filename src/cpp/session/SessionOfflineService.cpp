@@ -128,7 +128,7 @@ bool offlineConnectionMatcher(boost::shared_ptr<HttpConnection> ptrHttpConn,
 
    if (now < ptrHttpConn->receivedTime())
    {
-      LOG_ERROR_MESSAGE("offlineConnectionMatcher: ignoring connection received in the future");
+      // this can happen because 'now' gets computed before the lock is taken
       return false;
    }
 
@@ -222,6 +222,9 @@ void OfflineService::run()
             // Wait for the client to be initialized before any offline handling
             if (!httpConnectionListener().eventsActive())
                continue;
+
+            // Periodically sync the state of the executing status (set it to false if idle)
+            console_input::updateSessionExecuting();
 
             // If R is not occupying the main thread, we'll continue to wait.
             if (!console_input::executing())

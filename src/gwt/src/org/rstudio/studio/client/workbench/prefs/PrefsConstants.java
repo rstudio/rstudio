@@ -2481,20 +2481,29 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String withRSConnectLabel();
 
     /**
-     * Translated "Enable publishing to RStudio Connect".
+     * Translated "Enable publishing to Posit Connect".
      *
-     * @return translated "Enable publishing to RStudio Connect"
+     * @return translated "Enable publishing to Posit Connect"
      */
-    @DefaultMessage("Enable publishing to RStudio Connect")
+    @DefaultMessage("Enable publishing to Posit Connect")
     @Key("chkEnableRSConnectLabel")
     String chkEnableRSConnectLabel();
 
     /**
-     * Translated "Information about RStudio Connect".
+     * Translated "Enable publishing to Posit Cloud".
      *
-     * @return translated "Information about RStudio Connect"
+     * @return translated "Enable publishing to Posit Cloud"
      */
-    @DefaultMessage("Information about RStudio Connect")
+    @DefaultMessage("Enable publishing to Posit Cloud")
+    @Key("chkEnableCloudLabel")
+    String chkEnableCloudLabel();
+
+    /**
+     * Translated "Information about Posit Connect".
+     *
+     * @return translated "Information about Posit Connect"
+     */
+    @DefaultMessage("Information about Posit Connect")
     @Key("checkBoxWithHelpTitle")
     String checkBoxWithHelpTitle();
 
@@ -2821,7 +2830,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Virtual Environment"
      */
     @DefaultMessage("Virtual Environment")
-    @Key("unknownType")
+    @Key("virtualEnvironmentType")
     String virtualEnvironmentType();
 
     /**
@@ -4333,11 +4342,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingSavePanelAction();
 
     /**
-     * Translated "Auto-save".
+     * Translated "Autosave".
      *
-     * @return translated "Auto-save"
+     * @return translated "Autosave"
      */
-    @DefaultMessage("Auto-save")
+    @DefaultMessage("Autosave")
     @Key("editingSavePanelAutosave")
     String editingSavePanelAutosave();
 
@@ -4531,11 +4540,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingTabWidthLabel();
 
     /**
-     * Translated "Editor scroll speed sensitivity"
+     * Translated "Editor scroll speed sensitivity:"
      *
-     * @return translated "Editor scroll speed sensitivity"
+     * @return translated "Editor scroll speed sensitivity:"
      */
-    @DefaultMessage("Editor scroll speed sensitivity")
+    @DefaultMessage("Editor scroll speed sensitivity:")
     @Key("editorScrollMultiplier")
     String editorScrollMultiplier();
 

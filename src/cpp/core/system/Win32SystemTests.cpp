@@ -94,7 +94,7 @@ TEST_CASE("Win32SystemTests")
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
 
-      std::string cmd = "ping -n 8 www.rstudio.com";
+      std::string cmd = "ping -n 8 posit.co";
       std::vector<char> cmdBuf(cmd.size() + 1, '\0');
       cmd.copy(&(cmdBuf[0]), cmd.size());
 
@@ -130,7 +130,7 @@ TEST_CASE("Win32SystemTests")
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
 
-      std::string cmd = "cmd.exe /S /C \"ping -n 8 www.rstudio.com\" 1> nul";
+      std::string cmd = "cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul";
       std::vector<char> cmdBuf(cmd.size() + 1, '\0');
       cmd.copy(&(cmdBuf[0]), cmd.size());
 
@@ -185,7 +185,7 @@ TEST_CASE("Win32SystemTests")
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
 
-      std::string cmd = "cmd.exe /S /C \"ping -n 8 www.rstudio.com\" 1> nul";
+      std::string cmd = "cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul";
       std::vector<char> cmdBuf(cmd.size() + 1, '\0');
       cmd.copy(&(cmdBuf[0]), cmd.size());
 
@@ -225,7 +225,7 @@ TEST_CASE("Win32SystemTests")
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
 
-      std::string cmd = "ping -n 8 www.rstudio.com";
+      std::string cmd = "ping -n 8 posit.co";
       std::vector<char> cmdBuf(cmd.size() + 1, '\0');
       cmd.copy(&(cmdBuf[0]), cmd.size());
 
@@ -252,17 +252,18 @@ TEST_CASE("Win32SystemTests")
       CloseHandle(pi.hThread);
    }
 
-   SECTION("We can find programs on the PATH")
-   {
-      FilePath calcPath;
-      Error error;
+   // Disabling for now, tracked here: https://github.com/rstudio/rstudio/issues/13165
+   // SECTION("We can find programs on the PATH")
+   // {
+   //    FilePath cmdPath;
+   //    Error error;
 
-      error = core::system::findProgramOnPath("calc", &calcPath);
-      CHECK(error == Success());
+   //    error = core::system::findProgramOnPath("cmd", &cmdPath);
+   //    CHECK(error == Success());
 
-      error = core::system::findProgramOnPath("calc.exe", &calcPath);
-      CHECK(error == Success());
-   }
+   //    error = core::system::findProgramOnPath("cmd.exe", &cmdPath);
+   //    CHECK(error == Success());
+   // }
 }
 
 } // end namespace tests

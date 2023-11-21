@@ -1,0 +1,26 @@
+
+.button {
+	margin-left: 12px;
+	margin-top: -2px;
+}
+
+.copilotStatusLabel {
+	height: 20px;
+}
+
+.copilotTosLabel {
+	font-style: oblique;
+}
+
+.copilotPreviewBlurb {
+	font-style: oblique;
+}
+
+.copilotPreviewBlurb a {
+	white-space: nowrap;
+	color: #00a;
+}
+
+.copilotPreviewBlurb a:visited {
+	color: #00a;
+}

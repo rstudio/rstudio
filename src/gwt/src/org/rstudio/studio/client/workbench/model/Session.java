@@ -18,6 +18,12 @@ import com.google.inject.Inject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
 
+/**
+ * The session information stored in this class is generally only
+ * set at the start of the session and is not meant to dynamically
+ * change at runtime. As such, the data is not guaranteed to be up
+ * to date.
+ */
 public class Session
 {
    @Inject
@@ -26,6 +32,15 @@ public class Session
       events_ = events;
    }
 
+   /**
+    * Retrieves the session info for the current session.
+    *
+    * This data may be stale, as it is generally only
+    * set at the start of the session and is not meant
+    * to dynamically change at runtime. Use with caution.
+    *
+    * @return The session info for the current session
+    */
    public SessionInfo getSessionInfo()
    {
       return sessionInfo_;

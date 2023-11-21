@@ -14,11 +14,12 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.regex.Pattern;
+
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.regex.Pattern;
 
 public class ElementIds
 {
@@ -318,6 +319,7 @@ public class ElementIds
       BUILD_SCRIPT("build_Script"),
       CA_BUNDLE("ca_bundle"),
       DEFAULT_WORKING_DIR("default_working_dir"),
+      DEFAULT_OPEN_PROJECT_DIR("default_open_project_dir"),
       ZOTERO_DATA_DIRECTORY("zotero_data_directory"),
       EXISTING_PROJECT_DIR("existing_project_dir"),
       FIND_IN("find_in"),
@@ -404,6 +406,7 @@ public class ElementIds
 
    // Modal Dialogs
    public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";
+   public static String getDialogGlobalPrefs() { return getElementId(DIALOG_GLOBAL_PREFS); }
    public final static String DIALOG_CREATE_SSH_KEY = "dialog_create_ssh_key";
 
    // DataImport

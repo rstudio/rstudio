@@ -658,6 +658,7 @@ public class ViewerPresenter extends BasePresenter
         ".icml",
         ".jira",
         ".mediawiki",
+        ".xml",
         ".xwiki",
         ".zim"
       ));

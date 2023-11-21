@@ -469,7 +469,7 @@
 
 .rs.addFunction("enableRStudioConnectUI", function(enable) {
   .rs.enqueClientEvent("enable_rstudio_connect", enable);
-  message("RStudio Connect UI ", if (enable) "enabled" else "disabled", ".")
+  message("Posit Connect UI ", if (enable) "enabled" else "disabled", ".")
   invisible(enable)
 })
 
@@ -477,7 +477,7 @@
    tryCatch({
       # check for any non-shinyapps.io accounts
       accounts <- rsconnect::accounts()
-      subset(accounts, !(server %in% c("shinyapps.io", "rstudio.cloud")))
+      subset(accounts, !(server %in% c("shinyapps.io", "rstudio.cloud", "posit.cloud")))
       .rs.scalar(nrow(accounts) > 0)
    }, error = function(e) { FALSE })
 })

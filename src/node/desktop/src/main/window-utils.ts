@@ -13,12 +13,14 @@
  *
  */
 
-import { BrowserWindow, webContents, WebContents } from 'electron';
+import { screen, BrowserWindow, webContents, WebContents, Rectangle } from 'electron';
 import { appState } from './app-state';
 import { PendingSatelliteWindow, PendingSecondaryWindow } from './pending-window';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { getDpiZoomScaling, raiseAndActivateWindow } from './utils';
+import { logger } from '../core/logger';
+import { safeError } from '../core/err';
 
 export function configureSatelliteWindow(
   pendingSatellite: PendingSatelliteWindow,
@@ -120,4 +122,105 @@ export function activateWindow(name: string): void {
 // but the type definition doesn't propagate that reality. Hence, this wrapper function.
 export function focusedWebContents(): Electron.WebContents | null {
   return webContents.getFocusedWebContents();
+}
+
+/**
+ * Window geometry
+ */
+export interface WindowBounds {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+  maximized: boolean;
+}
+
+/**
+ * Check if two Rectangles intersect.
+ *
+ * @param one First rectangle
+ * @param two Second rectangle
+ *
+ * @returns True if at least one pixel is within both rectangles.
+ */
+export function intersects(first: Rectangle, second: Rectangle): boolean {
+  const firstRight = first.x + first.width;
+  const firstBottom = first.y + first.height;
+  const secondRight = second.x + second.width;
+  const secondBottom = second.y + second.height;
+
+  if (first.x >= secondRight || firstRight <= second.x) {
+    // Don't overlap horizontally
+    return false;
+  }
+
+  if (first.y >= secondBottom || firstBottom <= second.y) {
+    // Don't overlap vertically
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Resize and reposition a window to requested location, and ensure it is visible and not too
+ * small (e.g. if monitor configuration has changed).
+ *
+ * @param window window to reposition and resize
+ * @param requestedBounds requested size and position
+ * @param defaultWidth width to use if width must be changed
+ * @param defaultHeight height to use if height must be changed
+ */
+export function positionAndEnsureVisible(
+  window: BrowserWindow,
+  requestedBounds: Rectangle,
+  defaultWidth: number,
+  defaultHeight: number) {
+
+  try {
+    const minWidth = 300;
+    const minHeight = 200;
+    
+    // Shrink the window rectangle a bit just to capture cases like RStudio
+    // too close to edge of window and hardly showing at all.
+    const checkRect = {
+      height: requestedBounds.height - 5,
+      width: requestedBounds.width - 5,
+      x: requestedBounds.x + 5,
+      y: requestedBounds.y + 5,
+    };
+    
+    // check for intersection
+    const goodDisplays = screen.getAllDisplays().find((display) => {
+      return intersects(checkRect, display.workArea);
+    });
+    
+    // Restore it to requested location if possible, or center of primary display otherwise
+    if (goodDisplays) {
+      window.setBounds(requestedBounds);
+    } else {
+      const primaryBounds = screen.getPrimaryDisplay().bounds;
+      const newSize = {
+        width: Math.min(defaultWidth, primaryBounds.width),
+        height: Math.min(defaultHeight, primaryBounds.height),
+      };
+      
+      window.setSize(newSize.width, newSize.height);
+      
+      // window.center() doesn't consistently pick the primary display,
+      // so manually calculating the center of the primary display
+      window.setPosition(
+        primaryBounds.x + (primaryBounds.width - newSize.width) / 2,
+        primaryBounds.y + (primaryBounds.height - newSize.height) / 2,
+        false
+      );
+    }
+      
+    // ensure a minimum size for the window on restore
+    const currSize = window.getSize();
+    window.setSize(Math.max(minWidth, currSize[0]), Math.max(minHeight, currSize[1]));
+
+  } catch (err: unknown) {
+    logger().logError(safeError(err));
+  }
 }

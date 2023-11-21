@@ -314,11 +314,7 @@ Error openDocument(const json::JsonRpcRequest& request,
 
    // ensure the file exists
    if (!documentPath.exists())
-   {
-      return systemError(boost::system::errc::no_such_file_or_directory,
-                         ERROR_LOCATION);
-   }
-
+      return core::fileNotFoundError(documentPath, ERROR_LOCATION);
    
    // ensure the file is not binary
    if (!module_context::isTextFile(documentPath))
@@ -372,7 +368,7 @@ Error openDocument(const json::JsonRpcRequest& request,
    // broadcast doc added event -- it's important to do this after it's in the 
    // database but before we serialize it so hooks can operate on the doc 
    // before it's written to the client
-   events().onDocAdded(pDoc->id());
+   events().onDocAdded(pDoc);
 
    // create JSON representation of doc
    json::Object jsonDoc;

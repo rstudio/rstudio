@@ -41,14 +41,16 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
    public RSConnectAccountList(RSConnectServerOperations server, 
          GlobalDisplay display,
          boolean refreshImmediately,
-         boolean showCloudAccounts,
+         boolean showShinyAppsAccounts,
          boolean showPositCloudAccounts,
+         boolean showConnectAccounts,
          String ariaLabel)
    {
       server_ = server;
       display_ = display;
-      showCloudAccounts_ = showCloudAccounts;
+      showShinyAppsAccounts_ = showShinyAppsAccounts;
       showPositCloudAccounts_ = showPositCloudAccounts;
+      showConnectAccounts_ = showConnectAccounts;
       accountList_ = new WidgetListBox<>();
       accountList_.setEmptyText(constants_.noAccountsConnected());
       if (refreshImmediately)
@@ -89,19 +91,17 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
       for (int i = 0; i < accounts.length(); i++)
       {
          RSConnectAccount account = accounts.get(i);
-         // hide ShinyApps and Posit.cloud accounts from the list if non-cloud supported content type
-         if (account.isShinyAppsAccount() && showCloudAccounts_)
+         if (account.isShinyAppsAccount() && showShinyAppsAccounts_)
          {
             accounts_.add(account);
             accountList_.addItem(new RSConnectAccountEntry(account));
          }
-         else if (account.isCloudAccount() && (showCloudAccounts_ || showPositCloudAccounts_))
+         else if (account.isCloudAccount() && showPositCloudAccounts_)
          {
             accounts_.add(account);
             accountList_.addItem(new RSConnectAccountEntry(account));
          }
-         // Connect accounts support all content types
-         else if (!account.isShinyAppsAccount() && !account.isCloudAccount())
+         else if (!account.isShinyAppsAccount() && !account.isCloudAccount() && showConnectAccounts_)
          {
             accounts_.add(account);
             accountList_.addItem(new RSConnectAccountEntry(account));
@@ -170,32 +170,34 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
          return accounts_.size();
    }
    
-   public void setShowCloudAccounts(boolean show)
-   {
-      showCloudAccounts_ = show;
-   }
+   public void setShowShinyAppsAccounts(boolean show) { showShinyAppsAccounts_ = show; }
    
-   public boolean getShowCloudAccounts()
-   {
-      return showCloudAccounts_;
-   }
+   public boolean getShowShinyAppsAccounts() { return showShinyAppsAccounts_; }
 
-   public void setShowPositCloudAccounts(boolean show)
-   {
-      showPositCloudAccounts_ = show;
-   }
+   public void setShowPositCloudAccounts(boolean show) { showPositCloudAccounts_ = show; }
 
    public boolean getShowPositCloudAccounts()
    {
       return showPositCloudAccounts_;
+   }
+
+   public void setShowConnectAccounts(boolean show)
+   {
+      showConnectAccounts_ = show;
+   }
+
+   public boolean getShowConnectAccounts()
+   {
+      return showConnectAccounts_;
    }
    
    private final WidgetListBox<RSConnectAccountEntry> accountList_;
    private final RSConnectServerOperations server_; 
    private final GlobalDisplay display_;
    
-   private boolean showCloudAccounts_;
+   private boolean showShinyAppsAccounts_;
    private boolean showPositCloudAccounts_;
+   private boolean showConnectAccounts_;
    
    private ArrayList<RSConnectAccount> accounts_ = new ArrayList<>();
    private Operation onRefreshCompleted_ = null;

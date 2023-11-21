@@ -85,6 +85,7 @@ public interface GitServerOperations extends VCSServerOperations
    void gitCommit(String message,
                   boolean amend,
                   boolean signOff,
+                  boolean gpgSign,
                   ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void gitDiffFile(String path,

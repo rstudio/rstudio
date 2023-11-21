@@ -92,7 +92,8 @@ enum class LogLevel
    ERR = 1,       // Error messages will be logged.
    WARN = 2,      // Warning and error messages will be logged.
    INFO = 3,      // Info, warning, and error messages will be logged.
-   DEBUG = 4      // All messages will be logged.
+   DEBUG = 4,     // All messages will be logged.
+   DEBUG_LEVEL = 4// Same as DEBUG. Preferred to avoid name conflict with core/Macros.hpp's DEBUG(..) macro used in rsession
 };
 
 /**
@@ -173,6 +174,33 @@ bool hasStderrLogDestination();
 bool isLogLevel(log::LogLevel level);
 
 /**
+ * @brief Returns the current log level for the first file log destination (LogLevel::OFF if there is no file destination)
+ */
+log::LogLevel getFileLogLevel();
+
+
+/**
+ * @brief Returns the current log level for the first stderr log destination (LogLevel::OFF if there is no stderr destination)
+ */
+log::LogLevel getStderrLogLevel();
+
+/**
+ * @brief Use to set the log level an existing file log destination, e.g. to enable debug logging
+ * for a process without restarting. No changes if there is no file log destination.
+ *
+ * @param in_newLevel    The new log level.
+ */
+void setFileLogLevel(log::LogLevel in_newLevel);
+
+/**
+ * @brief Use to set the log level any existing stderr log destination, e.g. to enable debug logging
+ * for a process without restarting. No changes if there is no stderr log destination.
+ *
+ * @param in_newLevel    The new log level.
+ */
+void setStderrLogLevel(log::LogLevel in_newLevel);
+
+/**
  * @brief Replaces logging delimiters with ' ' in the specified string.
  *
  * @param in_toClean    The string from which to clean logging delimiters.
@@ -202,6 +230,18 @@ void logError(const Error& in_error);
  *                              context.
  */
 void logError(const Error& in_error, const ErrorLocation& in_location);
+
+/**
+ * @brief Logs an error to all registered destinations.
+ *
+ * If no destinations are registered, no log will be written.
+ * If the configured log level is below LogLevel::ERR, no log will be written.
+ *
+ * @param in_error        The error to log.
+ * @param in_section      The section of the log that the message belongs in.
+ * @param in_location     The location from which the message was logged.
+ */
+void logError(const Error& in_error, const std::string& in_section, const ErrorLocation& in_loggedFrom);
 
 /**
  * @brief Logs an error as a warning to all registered destinations.
@@ -320,6 +360,9 @@ void logWarningMessage(const std::string& in_message,
  */
 void logDebugMessage(const std::string& in_message, const std::string& in_section = std::string());
 
+/* Like the above but used for macros that need a value return */
+bool logDebugMessageReturn(const std::string& in_message);
+
 /**
  * @brief Logs a debug message to all registered destinations.
  *
@@ -406,6 +449,20 @@ void logInfoMessage(const std::string& in_message,
  * @param in_message      The log entire log message (as would be logged by the logging engine).
  */
 void logPassthroughMessage(const std::string& in_source, const std::string& in_message);
+
+/**
+ * @brief Returns string name of given log level
+ *
+ * @return The level name
+ */
+std::string logLevelName(log::LogLevel in_logLevel);
+
+/**
+ * @brief Returns the LogLevel for a give name (ERROR, INFO, etc.)
+ *
+ * @return The level name
+ */
+LogLevel logLevelFromStr(const std::string& in_levelStr);
 
 /**
  * @brief Refreshes all log destinations. May be used after fork to prevent stale file handles.

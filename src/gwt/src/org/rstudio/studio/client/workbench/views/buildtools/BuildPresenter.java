@@ -14,17 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-
-import com.google.inject.Provider;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -35,6 +24,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
+import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -70,6 +60,17 @@ import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperatio
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class BuildPresenter extends BasePresenter
 {
@@ -199,8 +200,14 @@ public class BuildPresenter extends BasePresenter
             view_.buildCompleted();
             if (event.getRestartR())
             {
+               SuspendOptions options = userPrefs_.saveAndReloadWorkspaceOnBuild().getValue()
+                     ? SuspendOptions.createSaveAll(false)
+                     : SuspendOptions.createSaveMinimal(false);
+               
                eventBus_.fireEvent(
-                  new SuspendAndRestartEvent(event.getAfterRestartCommand()));
+                  new SuspendAndRestartEvent(
+                        options,
+                        event.getAfterRestartCommand()));
             }
          }
       });
@@ -405,7 +412,7 @@ public class BuildPresenter extends BasePresenter
          }
          else 
          {
-            quartoServe("default");
+            quartoServe("all");
          }
       }
       else

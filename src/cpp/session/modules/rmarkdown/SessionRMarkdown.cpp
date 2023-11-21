@@ -29,8 +29,11 @@
 #include <boost/format.hpp>
 #include <boost/scope_exit.hpp>
 
-#include <core/FileSerializer.hpp>
+#include <shared_core/Hash.hpp>
+
+#include <core/Base64.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
@@ -407,7 +410,7 @@ public:
    void terminateProcess(RenderTerminateType terminateType)
    {
       terminateType_ = terminateType;
-      async_r::AsyncRProcess::terminate();
+      async_r::AsyncRProcess::terminate(isQuarto_);
    }
 
    FilePath outputFile()
@@ -426,7 +429,7 @@ public:
       // file used for preview)
       if (sourceNavigation_)
       {
-         rmarkdown::presentation::ammendResults(
+         rmarkdown::presentation::amendResults(
                   outputFormat_["format_name"].getString(),
                   targetFile_,
                   sourceLine,
@@ -1574,6 +1577,93 @@ Error rmdImportImages(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // read params
+   json::Array imageDataJson;
+   std::string imagesDir;
+   Error error = json::readParams(request.params, &imageDataJson, &imagesDir);
+   if (error)
+      return error;
+
+   // determine images dir
+   FilePath imagesPath = module_context::resolveAliasedPath(imagesDir);
+   error = imagesPath.ensureDirectory();
+   if (error)
+      return error;
+   
+   // build list of target image paths
+   std::vector<std::string> createdImages;
+
+   // start decoding and writing image data to file
+   std::vector<std::string> imageData;
+   imageDataJson.toVectorString(imageData);
+   for (auto&& image : imageData)
+   {
+      // data:[<mime type>][;charset=<charset>][;base64],<encoded data>
+      boost::regex reDataImage(
+               "^data:image/([^;,]+)"  // data + mime type prefix; capture the image type
+               "(;charset=[^;,]+)?"    // optional charset
+               "(;base64)?"            // optional base64 declaration
+               ",(.*)$"                // comma separating prefix from data
+      );
+      
+      boost::smatch match;
+      if (boost::regex_match(image, match, reDataImage))
+      {
+         // extract the captured image data
+         std::string rawData = match[4];
+         if (match[3].matched)
+         {
+            Error error = base64::decode(rawData, &rawData);
+            if (error)
+               LOG_ERROR(error);
+         }
+         
+         // figure out an appropriate extension
+         std::string mimeType = match[1];
+         std::string fileExtension = mimeType;
+         if (mimeType == "svg+xml")
+            fileExtension = "svg";
+         
+         // create the file path
+         std::string crcHash = core::hash::crc32Hash(rawData);
+         std::string fileName = fmt::format("clipboard-{}.{}", crcHash, fileExtension);
+         FilePath imagePath = imagesPath.completeChildPath(fileName);
+         
+         // write to file
+         Error error = core::writeStringToFile(imagePath, rawData);
+         if (error)
+            LOG_ERROR(error);
+         
+         // return path to generated image
+         std::string resolvedPath = fmt::format("images/{}", fileName);
+         createdImages.push_back(resolvedPath);
+      }
+      else
+      {
+         static const boost::regex rePrefix("^(data:[^,]+,)");
+         
+         boost::smatch match;
+         if (boost::regex_match(image, match, rePrefix))
+         {
+            WLOGF("Don't know how to handle image data {}", match[1].str());
+         }
+         else
+         {
+            auto n = std::min(std::size_t(16), image.length());
+            WLOGF("Don't know how to handle image data {}", image.substr(0, n));
+         }
+      }
+   }
+   
+   // send back new image paths to client
+   json::Array createdImagesJson = core::json::toJsonArray(createdImages);
+   pResponse->setResult(createdImagesJson);
+   return Success();
+}
+
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
    static std::map<std::string,std::string> s_paramsFiles;
@@ -1607,6 +1697,15 @@ void onShutdown(bool terminatedNormally)
                                                s_renderOutputs);
    if (error)
       LOG_ERROR(error);
+
+#ifdef _WIN32
+   // Windows has issues with the Quarto background process running when the session shuts down
+   // It requires that the Quarto process is terminated first
+   if (isRenderRunning())
+   {
+      s_pCurrentRender_->terminateProcess(renderTerminateQuiet);
+   }
+#endif
 }
  
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
@@ -1747,6 +1846,7 @@ Error initialize()
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
       (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
       (bind(registerRpcMethod, "rmd_import_images", rmdImportImages))
+      (bind(registerRpcMethod, "rmd_save_base64_images", rmdSaveBase64Images))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 

@@ -14,7 +14,6 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
-
 # include guard
 if(RSTUDIO_CMAKE_GLOBALS_INCLUDED)
    return()
@@ -24,6 +23,15 @@ set(RSTUDIO_CMAKE_GLOBALS_INCLUDED YES)
 # helper for detecting Linux
 if(UNIX AND NOT APPLE)
    set(LINUX TRUE)
+endif()
+
+# cmake modules (compute path relative to this file)
+get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
+
+# read /etc/os-release
+if(LINUX)
+   include(OsRelease)
 endif()
 
 # version info
@@ -43,7 +51,7 @@ if ("$ENV{RSTUDIO_VERSION_PATCH}" STREQUAL "")
 else()
   set(CPACK_PACKAGE_VERSION_PATCH $ENV{RSTUDIO_VERSION_PATCH})
 endif()
-if ("$ENV{RSTUDIO_VERSION_PATCH}" STREQUAL "")
+if ("$ENV{RSTUDIO_VERSION_SUFFIX}" STREQUAL "")
   set(CPACK_PACKAGE_VERSION_SUFFIX "-dev+999")
 else()
   set(CPACK_PACKAGE_VERSION_SUFFIX $ENV{RSTUDIO_VERSION_SUFFIX})
@@ -233,14 +241,28 @@ endif()
 # pandoc version
 set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
 
+# node version
+set(RSTUDIO_NODE_VERSION "18.18.2" CACHE INTERNAL "Node version")
+
+# detect Centos 7, because we don't support Quarto on Centos7 arm64
+set(IS_CENTOS7 FALSE)
+if(LINUX AND EXISTS "/etc/centos-release")
+   file(READ "/etc/centos-release" CENTOS_RELEASE)
+   string(FIND "${CENTOS_RELEASE}" "release 7" CENTOS_RELEASE_POS)
+   if(CENTOS_RELEASE_POS GREATER 0)
+     set(IS_CENTOS7 TRUE)
+   endif()
+endif()
+
 # quarto support
 if(NOT DEFINED QUARTO_ENABLED)
-   if(LINUX AND UNAME_M STREQUAL aarch64)
-      # disabled on linux aarch64
-      message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
-      set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+   if(IS_CENTOS7 AND LINUX AND UNAME_M STREQUAL aarch64)
+      message(STATUS "quarto does not yet support aarch64 builds for CentOS; disabling quarto")
+      set(QUARTO_ENABLED FALSE CACHE INTERNAL "") 
    else()
-      # enable by default
+      if(LINUX AND UNAME_M STREQUAL aarch64)
+        message(STATUS "RStudio aarch64 builds supports quarto experimentally")
+      endif()
       set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
    endif()
 endif()
@@ -263,13 +285,14 @@ if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)
    endif()
 endif()
 
-# cmake modules (compute path relative to this file)
-get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
-set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
-
 # dependencies
 if(WIN32)
-   set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies/windows")
+   if(EXISTS "C:/rstudio-tools/dependencies")
+      set(RSTUDIO_DEPENDENCIES_DIR "C:/rstudio-tools/dependencies")
+      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
+   else()
+      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies/windows")
+   endif()
    set(CPACK_DEPENDENCIES_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}")
    set(CPACK_NSPROCESS_VERSION "1.6")
 else()
@@ -466,14 +489,10 @@ if(APPLE)
    # set OPENSSL_ROOT_DIR if unset
    if(NOT DEFINED OPENSSL_ROOT_DIR)
 
-      # Homebrew now defaults to OpenSSL 3, but some older formulae that
-      # we use require OpenSSL 1.1. Try to force CMake to use that OpenSSL.
-      file(GLOB OPENSSL_ROOT_CANDIDATE "${HOMEBREW_PREFIX}/Cellar/openssl@1.1/*")
+      file(GLOB OPENSSL_ROOT_CANDIDATE "${HOMEBREW_PREFIX}/Cellar/openssl/*")
       if(EXISTS "${OPENSSL_ROOT_CANDIDATE}")
          set(OPENSSL_ROOT_DIR "${OPENSSL_ROOT_CANDIDATE}" CACHE INTERNAL "")
-      elseif(EXISTS "${HOMEBREW_PREFIX}/opt/openssl@1.1")
-         set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl@1.1" CACHE INTERNAL "")
-      else()
+      elseif(EXISTS "${HOMEBREW_PREFIX}/opt/openssl")
          set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl" CACHE INTERNAL "")
       endif()
 
@@ -481,3 +500,7 @@ if(APPLE)
 
 endif()
 
+# If enabled, use caching for the build
+if(SCCACHE_ENABLED)
+   include(sccache)
+endif()

@@ -34,7 +34,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LauncherServerEvent;
-import org.rstudio.studio.client.application.events.MouseNavigateEvent;
+import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SuicideEvent;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
@@ -241,6 +241,26 @@ public class DesktopHooks
             (Operation) () -> commands_.forceQuitSession().execute());
    }
    
+   void promptToManageLicense(String licenseMessage)
+   {
+      String message = constants_.unableToFindActiveLicenseMessage();
+      if (!StringUtil.isNullOrEmpty(licenseMessage))
+      {
+         message = message + "\n\n" + constants_.detailsMessage();
+         message = message + licenseMessage;
+      }
+      globalDisplay_.showYesNoMessage(MessageDialog.QUESTION,
+            constants_.activeRStudioLicenseNotFound(),
+            message,
+            false,
+            (Operation) () -> editionInfo_.showLicense(),
+            (Operation) () -> commands_.forceQuitSession().execute(),
+            (Operation) () -> {},
+            constants_.selectLicense(),
+            constants_.quitRStudio(),
+            true);
+   }
+
    void updateLicenseWarningBar(String licenseMessage)
    {
       if (StringUtil.isNullOrEmpty(licenseMessage))
@@ -257,7 +277,7 @@ public class DesktopHooks
 
    void mouseNavigateButtonClick(boolean forward, int x, int y)
    {
-      events_.fireEvent(new MouseNavigateEvent(forward, x, y));
+      events_.fireEvent(new DesktopMouseNavigateEvent(forward, x, y));
    }
    
    void onDragStart()

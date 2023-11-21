@@ -1,5 +1,6 @@
 ---
 title: "R Console"
+date-meta: 2022-12-12
 ---
 
 The **Console** in RStudio includes a variety of features intended to make interactively working with code more productive and straightforward. This documentation reviews these features. Learning to use these features along with the related features available in the [Source](execution.html) pane can have a substantial payoff in your overall productivity.

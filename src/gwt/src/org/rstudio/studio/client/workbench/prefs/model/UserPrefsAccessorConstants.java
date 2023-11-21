@@ -386,7 +386,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeCompletionEnum_never();
    @DefaultStringValue("When triggered ($, ::)")
    String codeCompletionEnum_triggered();
-   @DefaultStringValue("Manually (tab)")
+   @DefaultStringValue("Manually (Tab, Ctrl + Space)")
    String codeCompletionEnum_manual();
 
    /**
@@ -434,6 +434,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showFunctionSignatureTooltipsTitle();
    @DefaultStringValue("Whether to show function signature tooltips during autocompletion.")
    String showFunctionSignatureTooltipsDescription();
+
+   /**
+    * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+    */
+   @DefaultStringValue("Show data preview in autocompletion help popup")
+   String showDataPreviewTitle();
+   @DefaultStringValue("Whether a data preview is shown in the autocompletion help popup for datasets and values.")
+   String showDataPreviewDescription();
 
    /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
@@ -680,6 +688,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String rainbowParenthesesDescription();
 
    /**
+    * Whether to highlight fenced divs in a variety of colors.
+    */
+   @DefaultStringValue("Use rainbow fenced divs")
+   String rainbowFencedDivsTitle();
+   @DefaultStringValue("Whether to highlight fenced divs in a variety of colors.")
+   String rainbowFencedDivsDescription();
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    @DefaultStringValue("Maximum characters per line in R console")
@@ -734,6 +750,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveFilesBeforeBuildTitle();
    @DefaultStringValue("Whether to save all open, unsaved files before building the project.")
    String saveFilesBeforeBuildDescription();
+
+   /**
+    * Whether RStudio should save and reload the R workspace when building the project.
+    */
+   @DefaultStringValue("Save and reload R workspace on build")
+   String saveAndReloadWorkspaceOnBuildTitle();
+   @DefaultStringValue("Whether RStudio should save and reload the R workspace when building the project.")
+   String saveAndReloadWorkspaceOnBuildDescription();
 
    /**
     * The default editor font size, in points.
@@ -798,6 +822,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String defaultProjectLocationTitle();
    @DefaultStringValue("The directory path under which to place new projects by default.")
    String defaultProjectLocationDescription();
+
+   /**
+    * The default directory to use in file dialogs when opening a project.
+    */
+   @DefaultStringValue("Default open project location")
+   String defaultOpenProjectLocationTitle();
+   @DefaultStringValue("The default directory to use in file dialogs when opening a project.")
+   String defaultOpenProjectLocationDescription();
 
    /**
     * Whether to echo R code when sourcing it.
@@ -1040,6 +1072,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showPublishDiagnosticsDescription();
 
    /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   @DefaultStringValue("")
+   String enableCloudPublishUiTitle();
+   @DefaultStringValue("Whether to show UI for publishing content to Posit Cloud.")
+   String enableCloudPublishUiDescription();
+
+   /**
     * Whether to check remote server SSL certificates when publishing content.
     */
    @DefaultStringValue("Check SSL certificates when publishing")
@@ -1148,6 +1188,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalTrackEnvironmentTitle();
    @DefaultStringValue("Whether to track and save changes to system environment variables in the Terminal.")
    String terminalTrackEnvironmentDescription();
+
+   /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+    */
+   @DefaultStringValue("Ignored environment variables")
+   String terminalIgnoredEnvironmentVariablesTitle();
+   @DefaultStringValue("Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.")
+   String terminalIgnoredEnvironmentVariablesDescription();
+
+   /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   @DefaultStringValue("Enable Terminal hooks")
+   String terminalHooksTitle();
+   @DefaultStringValue("Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.")
+   String terminalHooksDescription();
 
    /**
     * Terminal bell style
@@ -1316,6 +1372,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String gitDiffIgnoreWhitespaceTitle();
    @DefaultStringValue("Whether to ignore whitespace when generating diffs of version controlled files.")
    String gitDiffIgnoreWhitespaceDescription();
+
+   /**
+    * Whether to sign git commits.
+    */
+   @DefaultStringValue("Sign git commits")
+   String gitSignedCommitsTitle();
+   @DefaultStringValue("Whether to sign git commits.")
+   String gitSignedCommitsDescription();
 
    /**
     * Whether double-clicking should select a word in the Console pane.
@@ -1586,11 +1650,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerMaxCellSizeDescription();
 
    /**
-    * Support accessibility aids such as screen readers (RStudio Server).
+    * Support accessibility aids such as screen readers.
     */
-   @DefaultStringValue("Enable support for screen readers in RStudio Server")
+   @DefaultStringValue("Enable support for screen readers")
    String enableScreenReaderTitle();
-   @DefaultStringValue("Support accessibility aids such as screen readers (RStudio Server).")
+   @DefaultStringValue("Support accessibility aids such as screen readers.")
    String enableScreenReaderDescription();
 
    /**
@@ -1998,6 +2062,50 @@ public interface UserPrefsAccessorConstants extends Constants {
    String textRenderingTitle();
    @DefaultStringValue("Control how text is rendered within the IDE surface.")
    String textRenderingDescription();
+
+   /**
+    * Disable Electron accessibility support.
+    */
+   @DefaultStringValue("Disable Electron accessibility support")
+   String disableRendererAccessibilityTitle();
+   @DefaultStringValue("Disable Electron accessibility support.")
+   String disableRendererAccessibilityDescription();
+
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   @DefaultStringValue("Enable GitHub Copilot")
+   String copilotEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will use GitHub Copilot to provide code suggestions.")
+   String copilotEnabledDescription();
+
+   /**
+    * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+    */
+   @DefaultStringValue("GitHub Copilot completions delay")
+   String copilotCompletionsDelayTitle();
+   @DefaultStringValue("The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.")
+   String copilotCompletionsDelayDescription();
+
+   /**
+    * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+    */
+   @DefaultStringValue("Pressing Tab key will prefer inserting:")
+   String copilotTabKeyBehaviorTitle();
+   @DefaultStringValue("Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.")
+   String copilotTabKeyBehaviorDescription();
+   @DefaultStringValue("Copilot Suggestion")
+   String copilotTabKeyBehaviorEnum_suggestion();
+   @DefaultStringValue("Code Completion")
+   String copilotTabKeyBehaviorEnum_completions();
+
+   /**
+    * When enabled, RStudio will index project files with GitHub Copilot.
+    */
+   @DefaultStringValue("Index project files with GitHub Copilot")
+   String copilotIndexingEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will index project files with GitHub Copilot.")
+   String copilotIndexingEnabledDescription();
 
 
 

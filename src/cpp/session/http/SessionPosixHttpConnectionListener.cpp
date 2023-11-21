@@ -130,7 +130,6 @@ void initializeHttpConnectionListener()
 
                for (const core::system::posix::IpAddress& ip : addrs)
                {
-                  boost::system::error_code ec;
                   boost::asio::ip::address addr = boost::asio::ip::address::from_string(ip.Address);
 
                   if (addr.is_v4())

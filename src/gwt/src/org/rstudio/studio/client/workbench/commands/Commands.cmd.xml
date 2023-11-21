@@ -226,6 +226,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="toggleDocumentOutline"/>
          <cmd refid="toggleSoftWrapMode"/>
          <cmd refid="toggleRainbowParens"/>
+         <cmd refid="toggleRainbowFencedDivs"/>
          <separator/>
          <cmd refid="showDiagnosticsActiveDocument"/>
          <cmd refid="showDiagnosticsProject"/>
@@ -608,6 +609,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <separator/>
             <cmd refid="showDomElements"/>
             <cmd refid="showShortcutCommand"/>
+            <cmd refid="crashDesktopApplication"/>
             <separator/>
             <cmd refid="enableProsemirrorDevTools"/>
          </menu>
@@ -933,7 +935,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="showHelpMenu" value="Alt+Shift+H" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
       <shortcutgroup name="Accessibility">
-         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+/" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Shift+U" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="toggleScreenReaderSupport" value="Alt+Shift+/" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Alt+Shift+2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -2025,6 +2027,36 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Show code completions at the current cursor location"
         context="editor"/>
 
+   <cmd id="copilotInstallAgent"
+        label="Copilot: Install Agent"
+        menuLabel="Install Copilot Agent"
+        desc="Install the GitHub Copilot agent."/>
+        
+   <cmd id="copilotSignIn"
+        label="Copilot: Sign In"
+        menuLabel="Sign In"
+        desc="Sign in to the GitHub Copilot service."/>
+        
+   <cmd id="copilotSignOut"
+        label="Copilot: Sign Out"
+        menuLabel="Sign Out"
+        desc="Sign out from the GitHub Copilot service."/>
+        
+   <cmd id="copilotStatus"
+        label="Copilot: Check Status"
+        menuLabel="Status"
+        desc="Check the status of the GitHub Copilot agent."/>
+        
+   <cmd id="copilotRequestCompletions"
+        label="Copilot: Request Completions"
+        menuLabel="Request Completions"
+        desc="Request Copilot completions at the cursor position."/>
+   
+   <cmd id="copilotAcceptNextWord"
+        label="Copilot: Accept Next Word"
+        menuLabel="Request Completions"
+        desc="Accept the next word of the current Copilot suggestion, if any."/>
+   
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>
@@ -3743,6 +3775,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         checkable="true"
         context="editor"/>
 
+   <cmd id="toggleRainbowFencedDivs"
+        label="Toggle Rainbow Fenced Divs Mode"
+        menuLabel="Rainb_ow Fenced Divs"
+        checkable="true"
+        context="editor"/>
+
    <cmd id="maximizeConsole"
         menuLabel="Maximize Console"/>
 
@@ -4194,6 +4232,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="showShortcutCommand"
         menuLabel="Show _Keyboard Shortcut Commands"
+        rebindable="false"/>
+
+   <cmd id="crashDesktopApplication"
+        menuLabel="Crash RStudio Desktop (DA_NGER)"
         rebindable="false"/>
 
    <cmd id="showCommandPalette"

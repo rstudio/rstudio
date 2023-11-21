@@ -4,7 +4,7 @@
 
 Data source icons are displayed in the connection dialog when the icon file name matches one or more of the references below. Name matching is done with case insensitive exact matching (minus the file extension). For example, references to `SQLServer` will match `sqlserver.png`. However, references to `microsoftsqlserver` will *not* match `sqlserver.png`.
 
-There are five ways to match data source icons. For more info, see [Troubleshooting Connections](https://support.rstudio.com/hc/en-us/articles/115011264307).
+There are five ways to match data source icons. For more info, see [Troubleshooting Connections](https://support.posit.co/hc/en-us/articles/115011264307).
 
 1.  The driver name in `odbcinst.ini`
 

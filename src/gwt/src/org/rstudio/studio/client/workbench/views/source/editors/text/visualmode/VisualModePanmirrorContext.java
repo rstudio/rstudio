@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.XRef;
@@ -39,6 +39,8 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -50,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 
@@ -153,7 +156,15 @@ public class VisualModePanmirrorContext
       };
 
       uiContext.mapResourceToURL = path -> {
+         
+         // resolve asset path
          path = resolvePath(path);
+         
+         // root paths should be resolved relative to the resource directory,
+         // so if the path starts with a leading slash, just remove it
+         if (path.startsWith("/"))
+            path = path.substring(1);
+         
          FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
          return ImagePreviewer.imgSrcPathFromHref(resourceDir.getPath(), path);
       };
@@ -278,7 +289,28 @@ public class VisualModePanmirrorContext
             }
          });
       };
-
+      
+      uiContext.resolveBase64Images = (images) -> {
+         return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
+            FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+            String imagesDir = resourceDir.completePath("images");
+            server_.rmdSaveBase64Images(images, imagesDir, new ServerRequestCallback<JsArrayString>()
+            {
+               @Override
+               public void onResponseReceived(JsArrayString response)
+               {
+                  resolve.onInvoke(response);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  reject.onInvoke(error);
+               }
+            });
+         });
+      };
 
       uiContext.isWindowsDesktop = () -> {
          return BrowseCap.isWindowsDesktop();

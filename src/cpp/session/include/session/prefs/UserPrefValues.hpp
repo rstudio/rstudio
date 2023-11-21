@@ -125,6 +125,7 @@ namespace prefs {
 #define kCodeCompletionDelay "code_completion_delay"
 #define kCodeCompletionCharacters "code_completion_characters"
 #define kShowFunctionSignatureTooltips "show_function_signature_tooltips"
+#define kShowDataPreview "show_data_preview"
 #define kShowDiagnosticsR "show_diagnostics_r"
 #define kShowDiagnosticsCpp "show_diagnostics_cpp"
 #define kShowDiagnosticsYaml "show_diagnostics_yaml"
@@ -157,6 +158,7 @@ namespace prefs {
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
+#define kRainbowFencedDivs "rainbow_fenced_divs"
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
 #define kAnsiConsoleMode "ansi_console_mode"
@@ -167,6 +169,7 @@ namespace prefs {
 #define kShowInlineToolbarForRCodeChunks "show_inline_toolbar_for_r_code_chunks"
 #define kHighlightCodeChunks "highlight_code_chunks"
 #define kSaveFilesBeforeBuild "save_files_before_build"
+#define kSaveAndReloadWorkspaceOnBuild "save_and_reload_workspace_on_build"
 #define kFontSizePoints "font_size_points"
 #define kHelpFontSizePoints "help_font_size_points"
 #define kEditorTheme "editor_theme"
@@ -175,6 +178,7 @@ namespace prefs {
 #define kDefaultEncoding "default_encoding"
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
+#define kDefaultOpenProjectLocation "default_open_project_location"
 #define kSourceWithEcho "source_with_echo"
 #define kDefaultSweaveEngine "default_sweave_engine"
 #define kDefaultLatexProgram "default_latex_program"
@@ -223,6 +227,7 @@ namespace prefs {
 #define kRmdViewerTypePane "pane"
 #define kRmdViewerTypeNone "none"
 #define kShowPublishDiagnostics "show_publish_diagnostics"
+#define kEnableCloudPublishUi "enable_cloud_publish_ui"
 #define kPublishCheckCertificates "publish_check_certificates"
 #define kUsePublishCaBundle "use_publish_ca_bundle"
 #define kPublishCaBundle "publish_ca_bundle"
@@ -242,6 +247,8 @@ namespace prefs {
 #define kTerminalCloseBehaviorClean "clean"
 #define kTerminalCloseBehaviorNever "never"
 #define kTerminalTrackEnvironment "terminal_track_environment"
+#define kTerminalIgnoredEnvironmentVariables "terminal_ignored_environment_variables"
+#define kTerminalHooks "terminal_hooks"
 #define kTerminalBellStyle "terminal_bell_style"
 #define kTerminalBellStyleNone "none"
 #define kTerminalBellStyleSound "sound"
@@ -286,6 +293,7 @@ namespace prefs {
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
+#define kGitSignedCommits "git_signed_commits"
 #define kConsoleDoubleClickSelect "console_double_click_select"
 #define kConsoleSuspendBlockedNotice "console_suspend_blocked_notice"
 #define kConsoleSuspendBlockedNoticeDelay "console_suspend_blocked_notice_delay"
@@ -416,6 +424,13 @@ namespace prefs {
 #define kTextRendering "text_rendering"
 #define kTextRenderingAuto "auto"
 #define kTextRenderingGeometricPrecision "geometricPrecision"
+#define kDisableRendererAccessibility "disable_renderer_accessibility"
+#define kCopilotEnabled "copilot_enabled"
+#define kCopilotCompletionsDelay "copilot_completions_delay"
+#define kCopilotTabKeyBehavior "copilot_tab_key_behavior"
+#define kCopilotTabKeyBehaviorSuggestion "suggestion"
+#define kCopilotTabKeyBehaviorCompletions "completions"
+#define kCopilotIndexingEnabled "copilot_indexing_enabled"
 
 class UserPrefValues: public Preferences
 {
@@ -704,6 +719,12 @@ public:
    core::Error setShowFunctionSignatureTooltips(bool val);
 
    /**
+    * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+    */
+   bool showDataPreview();
+   core::Error setShowDataPreview(bool val);
+
+   /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
     */
    bool showDiagnosticsR();
@@ -884,6 +905,12 @@ public:
    core::Error setRainbowParentheses(bool val);
 
    /**
+    * Whether to highlight fenced divs in a variety of colors.
+    */
+   bool rainbowFencedDivs();
+   core::Error setRainbowFencedDivs(bool val);
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    int consoleLineLengthLimit();
@@ -924,6 +951,12 @@ public:
     */
    bool saveFilesBeforeBuild();
    core::Error setSaveFilesBeforeBuild(bool val);
+
+   /**
+    * Whether RStudio should save and reload the R workspace when building the project.
+    */
+   bool saveAndReloadWorkspaceOnBuild();
+   core::Error setSaveAndReloadWorkspaceOnBuild(bool val);
 
    /**
     * The default editor font size, in points.
@@ -972,6 +1005,12 @@ public:
     */
    std::string defaultProjectLocation();
    core::Error setDefaultProjectLocation(std::string val);
+
+   /**
+    * The default directory to use in file dialogs when opening a project.
+    */
+   std::string defaultOpenProjectLocation();
+   core::Error setDefaultOpenProjectLocation(std::string val);
 
    /**
     * Whether to echo R code when sourcing it.
@@ -1154,6 +1193,12 @@ public:
    core::Error setShowPublishDiagnostics(bool val);
 
    /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   bool enableCloudPublishUi();
+   core::Error setEnableCloudPublishUi(bool val);
+
+   /**
     * Whether to check remote server SSL certificates when publishing content.
     */
    bool publishCheckCertificates();
@@ -1230,6 +1275,18 @@ public:
     */
    bool terminalTrackEnvironment();
    core::Error setTerminalTrackEnvironment(bool val);
+
+   /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+    */
+   core::json::Array terminalIgnoredEnvironmentVariables();
+   core::Error setTerminalIgnoredEnvironmentVariables(core::json::Array val);
+
+   /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   bool terminalHooks();
+   core::Error setTerminalHooks(bool val);
 
    /**
     * Terminal bell style
@@ -1356,6 +1413,12 @@ public:
     */
    bool gitDiffIgnoreWhitespace();
    core::Error setGitDiffIgnoreWhitespace(bool val);
+
+   /**
+    * Whether to sign git commits.
+    */
+   bool gitSignedCommits();
+   core::Error setGitSignedCommits(bool val);
 
    /**
     * Whether double-clicking should select a word in the Console pane.
@@ -1556,7 +1619,7 @@ public:
    core::Error setDataViewerMaxCellSize(int val);
 
    /**
-    * Support accessibility aids such as screen readers (RStudio Server).
+    * Support accessibility aids such as screen readers.
     */
    bool enableScreenReader();
    core::Error setEnableScreenReader(bool val);
@@ -1860,6 +1923,36 @@ public:
     */
    std::string textRendering();
    core::Error setTextRendering(std::string val);
+
+   /**
+    * Disable Electron accessibility support.
+    */
+   bool disableRendererAccessibility();
+   core::Error setDisableRendererAccessibility(bool val);
+
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   bool copilotEnabled();
+   core::Error setCopilotEnabled(bool val);
+
+   /**
+    * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+    */
+   int copilotCompletionsDelay();
+   core::Error setCopilotCompletionsDelay(int val);
+
+   /**
+    * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+    */
+   std::string copilotTabKeyBehavior();
+   core::Error setCopilotTabKeyBehavior(std::string val);
+
+   /**
+    * When enabled, RStudio will index project files with GitHub Copilot.
+    */
+   bool copilotIndexingEnabled();
+   core::Error setCopilotIndexingEnabled(bool val);
 
 };
 

@@ -589,8 +589,8 @@ std::string ClientEvent::typeName() const
          return "presentation_preview";
       case client_events::kSuspendBlocked:
          return "session_suspend_blocked";
-	  case client_events::kClipboardAction:
-		 return "clipboard_action";
+      case client_events::kClipboardAction:
+         return "clipboard_action";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

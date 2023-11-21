@@ -24,6 +24,9 @@
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
+
+#include <core/system/User.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -265,7 +268,7 @@ ProgramStatus Options::read(int argc,
 
       // look up details for the proposed user
       system::User user;
-      Error error = system::User::getUserFromIdentifier(serverUser_, user);
+      Error error = system::getUserFromUsername(serverUser_, user);
 
       if (core::system::realUserIsRoot())
       {

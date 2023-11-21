@@ -52,8 +52,12 @@ findLibSegFault() {
 
    # look in common locations
    CANDIDATES=(
+      /usr/lib/x86_64-linux-gnu/libSegFault.so
       /lib/x86_64-linux-gnu/libSegFault.so
+      /usr/lib/i386-linux-gnu/libSegFault.so
       /lib/i386-linux-gnu/libSegFault.so
+      /usr/lib/aarch64-linux-gnu/libSegFault.so
+      /lib/aarch64-linux-gnu/libSegFault.so
       /lib64/libSegFault.so
       /lib/libSegFault.so
    )
@@ -94,7 +98,7 @@ runWatchdogProcess() {
 
    local PRELOAD
    if [ "$(uname)" = "Darwin" ]; then
-      PRELOAD="DYLD_INSERT_LIBRARIES=${DYLD_INSERT_LIBRARIES}"
+      PRELOAD="DYLD_INSERT_LIBRARIES=${R_LIB_DIR}/libR.dylib"
    else
       PRELOAD="LD_PRELOAD=${RSESSION_DIAGNOSTICS_LIBSEGFAULT}"
    fi
@@ -188,17 +192,13 @@ if [ ! -e "${R_DOC_DIR}" ]; then
    sudo mkdir "${R_DOC_DIR}"
 fi
 
-# On macOS, we need to tell the rsession executable where to look for libR.dylib
-if [ "$(uname)" = "Darwin" ]; then
-   export DYLD_INSERT_LIBRARIES="${R_LIB_DIR}/libR.dylib"
-fi
-
 UNIT_TEST_FAILURE=false
 
 # Run core tests
 if has-scope "core"; then
 
    section "Running 'core' tests"
+
    # Run only the tests that don't require root
    runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} '~[requiresRoot]'"
 

@@ -21,6 +21,17 @@
 # data without recomputing on the original object every time
 .rs.setVar("WorkingDataEnv", new.env(parent = emptyenv()))
 
+.rs.addFunction("subsetData", function(data, maxRows = -1, maxCols = -1)
+{
+   if (!is.na(maxRows) && maxRows != -1 && nrow(data) > maxRows)
+      data <- head(data, n = maxRows)
+   
+   if (!is.na(maxCols) && maxCols != -1 && ncol(data) > maxCols)
+      data <- data[1:maxCols]
+   
+   data
+})
+
 .rs.addFunction("formatDataColumn", function(x, start, len, ...)
 {
    # extract the visible part of the column
@@ -89,15 +100,17 @@
 
 .rs.addFunction("formatDataColumnList", function(col, ...)
 {
-   limit <- .rs.readUserPref("data_viewer_max_cell_size")
-   if (is.null(limit)) {
-      limit <- 50L
-   }
+   limit <- .rs.nullCoalesce(
+      .rs.readUserPref("data_viewer_max_cell_size"),
+      50L
+   )
 
    formatted <- as.character(col)
-   large <- nchar(formatted) > limit
+   na <- is.na(formatted)
+   large <- !na & nchar(formatted) > limit
    formatted <- substr(formatted, 1, limit)
    formatted <- paste0(formatted, ifelse(large, " [...]", ""))
+   formatted[na] <- NA_character_
    formatted
 })
 
@@ -107,19 +120,27 @@
    as.character(col)
 })
 
-.rs.addFunction("describeCols", function(x, maxFactors) 
+.rs.addFunction("describeCols", function(x,
+                                         maxRows = -1,
+                                         maxCols = -1,
+                                         maxFactors = 64,
+                                         totalCols = -1)
 {
-   colNames <- names(x)
+   # subset the data if requested
+   x <- .rs.subsetData(x, maxRows, maxCols)
    
    # get the variable labels, if any--labels may be provided either by this 
    # global attribute or by a 'label' attribute on an individual column (as in
    # e.g. Hmisc), which takes precedence if both are present
+   colNames <- names(x)
    colLabels <- attr(x, "variable.labels", exact = TRUE)
    if (!is.character(colLabels)) 
-   {
       colLabels <- character()
-   }
    
+   # we pass totalCols in the rownames col so we can pass this information
+   # along when we retrieve column data, without changing the response format
+   totalCols <- if (totalCols > 0) totalCols else ncol(x)
+
    # the first column is always the row names
    rowNameCol <- list(
       col_name        = .rs.scalar(""),
@@ -129,7 +150,8 @@
       col_search_type = .rs.scalar("none"),
       col_label       = .rs.scalar(""),
       col_vals        = "",
-      col_type_r      = .rs.scalar(""))
+      col_type_r      = .rs.scalar(""),
+      total_cols      = .rs.scalar(totalCols))
    
    # if there are no columns, bail out
    if (length(colNames) == 0) {
@@ -249,6 +271,24 @@
    c(list(rowNameCol), colAttrs)
 })
 
+.rs.addFunction("describeColSlice", function(x,
+                                             sliceStart = 1,
+                                             sliceEnd = 1)
+{
+   totalCols <- ncol(x)
+
+   if (totalCols == 0)
+      return(NULL)
+  
+   if (sliceEnd > totalCols || sliceEnd < 1)
+      sliceEnd <- totalCols
+   if (sliceStart > totalCols || sliceStart < 1 || sliceStart > sliceEnd)
+      sliceStart <- 1
+   
+   colSlice <- x[sliceStart:sliceEnd]
+   .rs.describeCols(colSlice, -1, -1, 64, totalCols)
+})
+
 .rs.addFunction("formatRowNames", function(x, start, len) 
 {
    # detect whether this is a data.frame that contains
@@ -350,9 +390,9 @@
       if (is.null(names(x)))
          names(x) <- paste("V", seq_along(x), sep = "")
       
-      if (flatten) {
+      if (flatten)
          x <- .rs.flattenFrame(x)
-      } 
+      
       return(x)
    }
 })
@@ -362,55 +402,79 @@
    which(vapply(x, fun, TRUE))
 })
 
-.rs.addFunction("flattenFrame", function(x) {
-  multicols <- .rs.multiCols(x)
-  while (length(multicols) > 0) {
-    multicol <- multicols[1]
-    newcols <- ncol(x[[multicol]])
-    if (identical(newcols, 0)) 
-    {
-      # remove columns consisting of empty frames
-      x[[multicol]] <- NULL
-    }
-    else
-    {
-      cols <- x[[multicol]]
+# given a 'data.frame' containing columns which themselves have
+# multiple columns (e.g. matrices, data.frames), expand those columns
+# such that we have a 'data.frame' with the nested columns e
+.rs.addFunction("flattenFrame", function(x)
+{
+   # skip if we don't have any rectangular columns;
+   # in this case, we can return the data as-is
+   isRectangular <- vapply(x, function(column) {
+      is.data.frame(column) || is.matrix(column)
+   }, FUN.VALUE = logical(1))
+   
+   if (!any(isRectangular))
+      return(x)
+   
+   # split into separate data.frames
+   stack <- .rs.stack()
+   .rs.enumerate(x, .rs.dataViewer.flatten, stack = stack)
+   parts <- stack$data()
+   
+   # pull out pieces we need
+   keys <- vapply(parts, `[[`, "name", FUN.VALUE = "character")
+   vals <- lapply(parts, `[[`, "value")
+   
+   # turn it into a data.frame
+   names(vals) <- keys
+   attr(vals, "row.names") <- .set_row_names(length(vals[[1L]]))
+   class(vals) <- "data.frame"
+   
+   # all done
+   vals
+})
 
-      # recurse because x[[multicol]] might also need flattening
-      if (length(.rs.multiCols(cols)) > 0L) {
-        cols <- x[[multicol]] <- .rs.flattenFrame(cols)
-        
-        # readjust indices
-        newcols <- ncol(cols)
-      }
-      
-      # apply column names
-      prefix <- names(multicol)[[1]]
-      if (is.matrix(cols)) {
-        colnames <- colnames(cols)
-        if (is.null(colnames)) {
-          colnames(cols) <- paste0(prefix, '[,', 1:ncol(cols), ']')
-        } else {
-          colnames(cols) <- paste0(prefix, '[,"', colnames, '"]')
-        }
+.rs.addFunction("dataViewer.flatten", function(name, value, stack)
+{
+   if (is.matrix(value)) {
+      .rs.dataViewer.flattenMatrix(name, value, stack)
+   } else if (is.data.frame(value)) {
+      .rs.dataViewer.flattenDataFrame(name, value, stack)
+   } else {
+      stack$push(list(name = name, value = value))
+   }
+})
 
-      } else if (is.data.frame(cols)) {
-        names(cols) <- paste(prefix, names(cols), sep = "$")
-      }
-      
-      # replace other columns in place
-      if (multicol >= ncol(x))  {
-        x <- cbind(x[0:(multicol-1)], cols)
-      } else {
-        x <- cbind(x[0:(multicol-1)], cols, x[(multicol+1):ncol(x)])
-      }
-    }
-    
-    # pop this frame off the list and adjust the other indices to account for
-    # the columns we just added, if any
-    multicols <- multicols[-1] + (max(newcols, 1) - 1) 
-  }
-  x
+.rs.addFunction("dataViewer.flattenMatrix", function(name, value, stack)
+{
+   colNames <- if (is.null(colnames(value)))
+      as.character(seq_len(ncol(value)))
+   else
+      encodeString(colnames(value), quote = '"')
+   
+   for (i in seq_len(ncol(value))) {
+      .rs.dataViewer.flatten(
+         name  = sprintf("%s[, %s]", name, colNames[[i]]),
+         value = value[, i, drop = TRUE],
+         stack = stack
+      )
+   }
+})
+
+.rs.addFunction("dataViewer.flattenDataFrame", function(name, value, stack)
+{
+   # a data.frame should almost always have names, but check just in case
+   colNames <- names(value)
+   if (is.null(colNames))
+      colNames <- sprintf("<%i>", seq_along(value))
+   
+   for (i in seq_along(value)) {
+      .rs.dataViewer.flatten(
+         name  = paste(name, colNames[[i]], sep = "$"),
+         value = value[[i]],
+         stack = stack
+      )
+   }
 })
 
 .rs.addFunction("applyTransform", function(x, filtered, search, cols, dirs)
@@ -570,24 +634,27 @@
       }
    }
    
-   # if the object exists in the cache environment, return it. Objects
-   # in the cache environment have already been coerced to data frames.
-   if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
-      return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
-   
-   # perhaps the object has been saved? attempt to load it into the
-   # cached environment
-   cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
-   if (file.exists(cacheFile))
+   if (.rs.isNonEmptyScalarString(cacheKey))
    {
-      status <- try(load(cacheFile, envir = .rs.CachedDataEnv), silent = TRUE)
-      if (inherits(status, "try-error"))
-         return(NULL)
-      
+      # if the object exists in the cache environment, return it. objects
+      # in the cache environment have already been coerced to data frames.
       if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
          return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
+      
+      # perhaps the object has been saved? attempt to load it into the
+      # cached environment
+      cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
+      if (file.exists(cacheFile))
+      {
+         status <- try(load(cacheFile, envir = .rs.CachedDataEnv), silent = TRUE)
+         if (inherits(status, "try-error"))
+            return(NULL)
+         
+         if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
+            return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
+      }
    }
-   
+
    # failure
    return(NULL)
 })
@@ -738,6 +805,9 @@
    # save a copy into the cached environment
    cacheKey <- .rs.addCachedData(force(x), name)
    
+   if (!.rs.isNonEmptyScalarString(cacheKey))
+      return(invisible(NULL))
+
    # call viewData 
    invisible(.Call("rs_viewData", x, expr, title, name, env, cacheKey, FALSE))
 })
@@ -768,7 +838,8 @@
 
 .rs.addFunction("viewDataFrame", function(x, title, preview) {
    cacheKey <- .rs.addCachedData(force(x), "")
-   invisible(.Call("rs_viewData", x, "", title, "", emptyenv(), cacheKey, preview))
+   if (.rs.isNonEmptyScalarString(cacheKey))
+      invisible(.Call("rs_viewData", x, "", title, "", emptyenv(), cacheKey, preview))
 })
 
 .rs.addFunction("initializeDataViewer", function(server) {
@@ -793,7 +864,8 @@
 {
    # coerce to data frame before assigning, and don't assign if we can't coerce
    frame <- .rs.toDataFrame(obj, objName, TRUE)
-   if (!is.null(frame))
+   if (!is.null(frame) &&
+       .rs.isNonEmptyScalarString(cacheKey))
       assign(cacheKey, frame, .rs.CachedDataEnv)
 })
 
@@ -803,19 +875,21 @@
    if (Encoding(cacheDir) == "unknown")
       Encoding(cacheDir) <- "UTF-8"
    
-   # remove data from the cache environment
-   if (exists(".rs.CachedDataEnv") &&
-       exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
-      rm(list = cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE)
-   
-   # remove data from the cache directory
-   cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
-   if (file.exists(cacheFile))
-      file.remove(cacheFile)
-   
-   # remove any working data
-   .rs.removeWorkingData(cacheKey)
-   
+   if (.rs.isNonEmptyScalarString(cacheKey))
+   {
+      # remove data from the cache environment
+      if (exists(".rs.CachedDataEnv") &&
+         exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
+         rm(list = cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE)
+      
+      # remove data from the cache directory
+      cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
+      if (file.exists(cacheFile))
+         file.remove(cacheFile)
+      
+      # remove any working data
+      .rs.removeWorkingData(cacheKey)
+   }
    invisible(NULL)
 })
 
@@ -831,9 +905,10 @@
    
    # save each active cache file from the cache environment
    lapply(ls(.rs.CachedDataEnv), function(cacheKey) {
-      save(list = cacheKey, 
-           file = file.path(cacheDir, paste(cacheKey, "Rdata", sep = ".")),
-           envir = .rs.CachedDataEnv)
+      if (.rs.isNonEmptyScalarString(cacheKey))
+         save(list = cacheKey, 
+            file = file.path(cacheDir, paste(cacheKey, "Rdata", sep = ".")),
+            envir = .rs.CachedDataEnv)
    })
    
    # clean the cache environment
@@ -846,7 +921,8 @@
 
 .rs.addFunction("findWorkingData", function(cacheKey)
 {
-   if (exists(".rs.WorkingDataEnv") &&
+   if (.rs.isNonEmptyScalarString(cacheKey) &&
+       exists(".rs.WorkingDataEnv") &&
        exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
       get(cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
    else
@@ -855,7 +931,8 @@
 
 .rs.addFunction("removeWorkingData", function(cacheKey)
 {
-   if (exists(".rs.WorkingDataEnv") &&
+   if (.rs.isNonEmptyScalarString(cacheKey) &&
+       exists(".rs.WorkingDataEnv") &&
        exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
       rm(list = cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
    invisible(NULL)
@@ -863,7 +940,8 @@
 
 .rs.addFunction("assignWorkingData", function(cacheKey, obj)
 {
-   assign(cacheKey, obj, .rs.WorkingDataEnv)
+   if (.rs.isNonEmptyScalarString(cacheKey))
+      assign(cacheKey, obj, .rs.WorkingDataEnv)
 })
 
 .rs.addFunction("findGlobalData", function(name)
@@ -874,5 +952,10 @@
          return(name)
    }
    invisible("")
+})
+
+.rs.addFunction("isNonEmptyScalarString", function(x)
+{
+   is.character(x) && length(x) == 1 && nzchar(x)
 })
 

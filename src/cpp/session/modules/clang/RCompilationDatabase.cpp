@@ -1165,7 +1165,9 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
 #ifdef _WIN32
    // add built-in clang compiler headers
    // built-in headers are not required with Rtools40 or newer
-   if (r::version_info::currentRVersion().versionMajor() < 4)
+   r_util::RVersionNumber version = r::version_info::currentRVersion();
+
+   if (version.versionMajor() < 4)
    {
       auto clArgs = clang().compileArgs(isCpp);
       args.insert(args.end(), clArgs.begin(), clArgs.end());
@@ -1177,10 +1179,23 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    // may not be compatible with the Rtools headers
    args.push_back("-nostdinc");
 
-   // add Rtools arguments
-   auto rtInfo = rToolsInfo();
-   auto rtArgs = rtInfo.clangArgs(isCpp);
-   args.insert(args.end(), rtArgs.begin(), rtArgs.end());
+   if (version < r_util::RVersionNumber(4, 2, 0))
+   {
+      // add Rtools arguments
+      auto rtInfo = rToolsInfo();
+      auto rtArgs = rtInfo.clangArgs(isCpp);
+      args.insert(args.end(), rtArgs.begin(), rtArgs.end());
+   }
+   else
+   {
+      // add system include headers as reported by compiler
+      std::vector<std::string> includes;
+      discoverSystemIncludePaths(&includes);
+      for (auto&& include : includes) {
+         FilePath includePath = FilePath(include);
+         args.push_back("-I" + includePath.getAbsolutePath());
+      }
+   }
 
    // re-generate compiler definitions
    generateCompilerDefinitions();

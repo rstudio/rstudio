@@ -635,6 +635,19 @@ core::Error UserPrefValues::setShowFunctionSignatureTooltips(bool val)
 }
 
 /**
+ * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+ */
+bool UserPrefValues::showDataPreview()
+{
+   return readPref<bool>("show_data_preview");
+}
+
+core::Error UserPrefValues::setShowDataPreview(bool val)
+{
+   return writePref("show_data_preview", val);
+}
+
+/**
  * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
  */
 bool UserPrefValues::showDiagnosticsR()
@@ -1025,6 +1038,19 @@ core::Error UserPrefValues::setRainbowParentheses(bool val)
 }
 
 /**
+ * Whether to highlight fenced divs in a variety of colors.
+ */
+bool UserPrefValues::rainbowFencedDivs()
+{
+   return readPref<bool>("rainbow_fenced_divs");
+}
+
+core::Error UserPrefValues::setRainbowFencedDivs(bool val)
+{
+   return writePref("rainbow_fenced_divs", val);
+}
+
+/**
  * The maximum number of characters to display in a single line in the R console.
  */
 int UserPrefValues::consoleLineLengthLimit()
@@ -1113,6 +1139,19 @@ bool UserPrefValues::saveFilesBeforeBuild()
 core::Error UserPrefValues::setSaveFilesBeforeBuild(bool val)
 {
    return writePref("save_files_before_build", val);
+}
+
+/**
+ * Whether RStudio should save and reload the R workspace when building the project.
+ */
+bool UserPrefValues::saveAndReloadWorkspaceOnBuild()
+{
+   return readPref<bool>("save_and_reload_workspace_on_build");
+}
+
+core::Error UserPrefValues::setSaveAndReloadWorkspaceOnBuild(bool val)
+{
+   return writePref("save_and_reload_workspace_on_build", val);
 }
 
 /**
@@ -1217,6 +1256,19 @@ std::string UserPrefValues::defaultProjectLocation()
 core::Error UserPrefValues::setDefaultProjectLocation(std::string val)
 {
    return writePref("default_project_location", val);
+}
+
+/**
+ * The default directory to use in file dialogs when opening a project.
+ */
+std::string UserPrefValues::defaultOpenProjectLocation()
+{
+   return readPref<std::string>("default_open_project_location");
+}
+
+core::Error UserPrefValues::setDefaultOpenProjectLocation(std::string val)
+{
+   return writePref("default_open_project_location", val);
 }
 
 /**
@@ -1610,6 +1662,19 @@ core::Error UserPrefValues::setShowPublishDiagnostics(bool val)
 }
 
 /**
+ * Whether to show UI for publishing content to Posit Cloud.
+ */
+bool UserPrefValues::enableCloudPublishUi()
+{
+   return readPref<bool>("enable_cloud_publish_ui");
+}
+
+core::Error UserPrefValues::setEnableCloudPublishUi(bool val)
+{
+   return writePref("enable_cloud_publish_ui", val);
+}
+
+/**
  * Whether to check remote server SSL certificates when publishing content.
  */
 bool UserPrefValues::publishCheckCertificates()
@@ -1776,6 +1841,32 @@ bool UserPrefValues::terminalTrackEnvironment()
 core::Error UserPrefValues::setTerminalTrackEnvironment(bool val)
 {
    return writePref("terminal_track_environment", val);
+}
+
+/**
+ * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+ */
+core::json::Array UserPrefValues::terminalIgnoredEnvironmentVariables()
+{
+   return readPref<core::json::Array>("terminal_ignored_environment_variables");
+}
+
+core::Error UserPrefValues::setTerminalIgnoredEnvironmentVariables(core::json::Array val)
+{
+   return writePref("terminal_ignored_environment_variables", val);
+}
+
+/**
+ * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+ */
+bool UserPrefValues::terminalHooks()
+{
+   return readPref<bool>("terminal_hooks");
+}
+
+core::Error UserPrefValues::setTerminalHooks(bool val)
+{
+   return writePref("terminal_hooks", val);
 }
 
 /**
@@ -2049,6 +2140,19 @@ bool UserPrefValues::gitDiffIgnoreWhitespace()
 core::Error UserPrefValues::setGitDiffIgnoreWhitespace(bool val)
 {
    return writePref("git_diff_ignore_whitespace", val);
+}
+
+/**
+ * Whether to sign git commits.
+ */
+bool UserPrefValues::gitSignedCommits()
+{
+   return readPref<bool>("git_signed_commits");
+}
+
+core::Error UserPrefValues::setGitSignedCommits(bool val)
+{
+   return writePref("git_signed_commits", val);
 }
 
 /**
@@ -2481,7 +2585,7 @@ core::Error UserPrefValues::setDataViewerMaxCellSize(int val)
 }
 
 /**
- * Support accessibility aids such as screen readers (RStudio Server).
+ * Support accessibility aids such as screen readers.
  */
 bool UserPrefValues::enableScreenReader()
 {
@@ -3143,6 +3247,71 @@ core::Error UserPrefValues::setTextRendering(std::string val)
    return writePref("text_rendering", val);
 }
 
+/**
+ * Disable Electron accessibility support.
+ */
+bool UserPrefValues::disableRendererAccessibility()
+{
+   return readPref<bool>("disable_renderer_accessibility");
+}
+
+core::Error UserPrefValues::setDisableRendererAccessibility(bool val)
+{
+   return writePref("disable_renderer_accessibility", val);
+}
+
+/**
+ * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+ */
+bool UserPrefValues::copilotEnabled()
+{
+   return readPref<bool>("copilot_enabled");
+}
+
+core::Error UserPrefValues::setCopilotEnabled(bool val)
+{
+   return writePref("copilot_enabled", val);
+}
+
+/**
+ * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+ */
+int UserPrefValues::copilotCompletionsDelay()
+{
+   return readPref<int>("copilot_completions_delay");
+}
+
+core::Error UserPrefValues::setCopilotCompletionsDelay(int val)
+{
+   return writePref("copilot_completions_delay", val);
+}
+
+/**
+ * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+ */
+std::string UserPrefValues::copilotTabKeyBehavior()
+{
+   return readPref<std::string>("copilot_tab_key_behavior");
+}
+
+core::Error UserPrefValues::setCopilotTabKeyBehavior(std::string val)
+{
+   return writePref("copilot_tab_key_behavior", val);
+}
+
+/**
+ * When enabled, RStudio will index project files with GitHub Copilot.
+ */
+bool UserPrefValues::copilotIndexingEnabled()
+{
+   return readPref<bool>("copilot_indexing_enabled");
+}
+
+core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
+{
+   return writePref("copilot_indexing_enabled", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3193,6 +3362,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCodeCompletionDelay,
       kCodeCompletionCharacters,
       kShowFunctionSignatureTooltips,
+      kShowDataPreview,
       kShowDiagnosticsR,
       kShowDiagnosticsCpp,
       kShowDiagnosticsYaml,
@@ -3223,6 +3393,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,
+      kRainbowFencedDivs,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,
@@ -3230,6 +3401,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
       kSaveFilesBeforeBuild,
+      kSaveAndReloadWorkspaceOnBuild,
       kFontSizePoints,
       kHelpFontSizePoints,
       kEditorTheme,
@@ -3238,6 +3410,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDefaultEncoding,
       kToolbarVisible,
       kDefaultProjectLocation,
+      kDefaultOpenProjectLocation,
       kSourceWithEcho,
       kDefaultSweaveEngine,
       kDefaultLatexProgram,
@@ -3268,6 +3441,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRmdPreferredTemplatePath,
       kRmdViewerType,
       kShowPublishDiagnostics,
+      kEnableCloudPublishUi,
       kPublishCheckCertificates,
       kUsePublishCaBundle,
       kPublishCaBundle,
@@ -3281,6 +3455,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalWebsockets,
       kTerminalCloseBehavior,
       kTerminalTrackEnvironment,
+      kTerminalIgnoredEnvironmentVariables,
+      kTerminalHooks,
       kTerminalBellStyle,
       kTerminalRenderer,
       kTerminalWeblinks,
@@ -3302,6 +3478,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kWrapTabNavigation,
       kGlobalTheme,
       kGitDiffIgnoreWhitespace,
+      kGitSignedCommits,
       kConsoleDoubleClickSelect,
       kConsoleSuspendBlockedNotice,
       kConsoleSuspendBlockedNoticeDelay,
@@ -3386,6 +3563,11 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDiscardPendingConsoleInputOnError,
       kEditorScrollMultiplier,
       kTextRendering,
+      kDisableRendererAccessibility,
+      kCopilotEnabled,
+      kCopilotCompletionsDelay,
+      kCopilotTabKeyBehavior,
+      kCopilotIndexingEnabled,
    });
 }
    

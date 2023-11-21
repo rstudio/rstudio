@@ -43,6 +43,32 @@ ConsoleProcessSocket s_terminalSocket;
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
 
+// Environment variables that shouldn't be saved / restored when serializing a Terminal session.
+std::set<std::string> s_ignoredEnvironmentVariables;
+
+void initializeIgnoredEnvironmentVariables()
+{
+   s_ignoredEnvironmentVariables.clear();
+   prefs::userPrefs().terminalIgnoredEnvironmentVariables().toSetString(s_ignoredEnvironmentVariables);
+}
+
+void onUserPrefsChanged(const std::string& layerName, const std::string& prefName)
+{
+   if (prefName == kTerminalIgnoredEnvironmentVariables)
+      initializeIgnoredEnvironmentVariables();
+}
+
+// environment variables which should be ignored, e.g. because they represent
+// session state that won't be valid after a restart
+bool isIgnoredEnvironmentVariable(const std::string& name)
+{
+   return
+         name == "_" ||
+         boost::algorithm::starts_with(name, "R_") ||
+         boost::algorithm::starts_with(name, "RSTUDIO_SESSION_") ||
+         s_ignoredEnvironmentVariables.count(name);
+}
+
 } // anonymous namespace
 
 void ConsoleProcess::setenv(const std::string& name,
@@ -59,15 +85,18 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       const ConsoleProcessInfo& procInfo,
       TerminalShell::ShellType* pSelectedShellType)
 {
-   // configure environment for shell
+   // configure environment for shell, inheriting system environment
+   //
+   // note that we do this even if the process has a saved environment to be
+   // used, as some environment variables might be tied to session state and so
+   // need to be re-generated so that the correct value is reflected in the
+   // terminal process
    core::system::Options shellEnv;
+   core::system::environment(&shellEnv);
+ 
+   // overlay saved environment variables
    if (procInfo.getTrackEnv() && !procInfo.getHandle().empty())
-   {
       loadEnvironment(procInfo.getHandle(), &shellEnv);
-   }
-
-   if (shellEnv.empty())
-      core::system::environment(&shellEnv);
 
 #ifdef __APPLE__
    // suppress macOS Catalina warning suggesting switching to zsh
@@ -76,33 +105,33 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
    *pSelectedShellType = procInfo.getShellType();
 
-#ifndef _WIN32
-   // set xterm title to show current working directory after each command
-   core::system::setenv(&shellEnv, "PROMPT_COMMAND",
-                        R"(echo -ne "\033]0;${PWD/#${HOME}/~}\007")");
-
-   // don't add commands starting with a space to shell history
-   if (procInfo.getTrackEnv())
-   {
-      // HISTCONTROL is Bash-specific. In Zsh we rely on the shell having the 
-      // HIST_IGNORE_SPACE option set, which we do via -g when we start Zsh. In the
-      // future we could make environment-capture smarter and not set this variable
-      // for shells that don't use it, but for now keeping it to avoid having to 
-      // rework PrivateCommand class.
-      core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
-   }
-#else
+#ifdef _WIN32
    core::system::setHomeToUserProfile(&shellEnv);
 #endif
+   
+   // don't forward GIT_ASKPASS or SSH_ASKPASS if it's set to our rpostback
+   // handlers -- those aren't required in a terminal, as the user can be
+   // prompted for input via stdin, and it's likely that users will munge
+   // the PATH within a terminal a way that makes our utilities unavailable
+   //
+   // TODO: could we just set an absolute path to the rpostback-askpass util?
+   std::string gitAskpass = core::system::getenv("GIT_ASKPASS");
+   if (gitAskpass == "rpostback-askpass")
+      core::system::unsetenv(&shellEnv, "GIT_ASKPASS");
 
+   std::string sshAskpass = core::system::getenv("SSH_ASKPASS");
+   if (sshAskpass == "rpostback-askpass")
+      core::system::unsetenv(&shellEnv, "SSH_ASKPASS");
+   
    // amend shell paths as appropriate
-   session::modules::workbench::ammendShellPaths(&shellEnv);
+   session::modules::workbench::amendShellPaths(&shellEnv);
 
    // set options
    core::system::ProcessOptions options;
-   options.workingDir = procInfo.getCwd().isEmpty() ? module_context::shellWorkingDirectory() :
-                                                    procInfo.getCwd();
-   options.environment = shellEnv;
+   options.workingDir = procInfo.getCwd().isEmpty()
+         ? module_context::shellWorkingDirectory()
+         : procInfo.getCwd();
+   
    options.smartTerminal = true;
 #ifdef _WIN32
    options.reportHasSubprocs = false; // child process detection not supported on Windows
@@ -143,7 +172,46 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
          options.args = sysShell.args;
       }
    }
+   
+#ifndef _WIN32
+   // set xterm title to show current working directory after each command
+   switch (shell.getEffectiveShellType())
+   {
+   
+   case TerminalShell::ShellType::PosixBash:
+   {
+      // NOTE: We don't use `${string//pattern/replacement}`-style variable substitution
+      // on Bash, as the way tilde is handled as a replacement character seems to depend
+      // on some unknown factors (sometimes it needs to be escaped like '\~'?)
+      const char* kPromptCommand = R"((_RS_PWD=$(dirs +0); echo -ne "\033]0;${_RS_PWD}\007"; unset _RS_PWD))"; 
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      break;
+   }
+      
+   default:
+   {
+      const char* kPromptCommand = R"(echo -ne "\033]0;${PWD/#${HOME}/~}\007")"; 
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      break;
+   }
+      
+   } // end switch
 
+   // don't add commands starting with a space to shell history
+   if (procInfo.getTrackEnv())
+   {
+      // HISTCONTROL is Bash-specific. In Zsh we rely on the shell having the 
+      // HIST_IGNORE_SPACE option set, which we do via -g when we start Zsh. In the
+      // future we could make environment-capture smarter and not set this variable
+      // for shells that don't use it, but for now keeping it to avoid having to 
+      // rework PrivateCommand class.
+      core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
+   }
+#endif
+
+   // finally, set up environment
+   options.environment = shellEnv;
+   
    return options;
 }
 
@@ -712,13 +780,14 @@ void ConsoleProcess::onHasSubprocs(bool hasNonIgnoredSubprocs, bool hasIgnoredSu
 
 void ConsoleProcess::reportCwd(const core::FilePath& cwd)
 {
-   if (procInfo_->getCwd() != cwd)
+   if (procInfo_->getCwd() != cwd && cwd.exists())
    {
-      procInfo_->setCwd(cwd);
+      FilePath resolvedCwd = cwd.resolveSymlink();
+      procInfo_->setCwd(resolvedCwd);
 
       json::Object termCwd;
       termCwd["handle"] = handle();
-      termCwd["cwd"] = module_context::createAliasedPath(cwd);
+      termCwd["cwd"] = module_context::createAliasedPath(resolvedCwd);
       module_context::enqueClientEvent(
             ClientEvent(client_events::kTerminalCwd, termCwd));
       childProcsSent_ = true;
@@ -812,10 +881,6 @@ namespace {
 
 bool augmentTerminalProcessPython(ConsoleProcessPtr cp)
 {
-   // disabled if user pref requests so
-   if (!prefs::userPrefs().terminalPythonIntegration())
-      return false;
-   
    // forward RETICULATE_PYTHON_FALLBACK if set
    std::string reticulatePythonFallback = modules::reticulate::reticulatePython();
 
@@ -876,76 +941,56 @@ void useTerminalHooks(ConsoleProcessPtr cp)
 
    if (isBashShell())
    {
-      // set the HOME directory for the new shell to our bundled bash utility
-      // folder, so that the shell reads those first
-      core::FilePath bashDotDir =
-            session::options().rResourcesPath().completeChildPath("terminal/bash");
+      core::FilePath bashDotDir = session::options().rResourcesPath().completeChildPath("terminal/bash");
+      core::FilePath bashProfile = bashDotDir.completeChildPath(".bash_profile");
 
-      // store the 'real' home so we can restore it after
-      cp->setenv("_REALHOME", core::system::getenv("HOME"));
-
-      // set HOME so our dotfiles can be sourced on startup
-      cp->setenv("HOME", bashDotDir.getAbsolutePath());
-   }
-
-   // enable terminal hooks for zsh
-   auto isZshShell = [&]()
-   {
-      switch (cp->getShellType())
+#ifdef __APPLE__
+      if (cp->getShellType() == TerminalShell::ShellType::PosixBash)
       {
-
-      case TerminalShell::ShellType::PosixZsh:
-      {
-         return true;
+         // use --rcfile to set startup scripts when using default bash shell
+         auto&& options = cp->getProcessOptions();
+         options.args.push_back("--rcfile");
+         options.args.push_back(bashProfile.getAbsolutePath());
       }
-
-      case TerminalShell::ShellType::CustomShell:
+      else
       {
-         FilePath shellPath = cp->getShellPath();
-         std::string shellName = shellPath.getFilename();
-
-#ifdef _WIN32
-         if (boost::algorithm::ends_with(shellName, "zsh.exe"))
-            return true;
+         // use ENV with other custom shells (presumedly a modern Bash shell)
+         const char* env = ::getenv("ENV");
+         cp->setenv("_REALENV", env ? env : "<unset>");
+         cp->setenv("ENV", bashProfile.getAbsolutePath());
+      }
+#else
+      // set ENV so that our terminal hooks are run
+      const char* env = ::getenv("ENV");
+      cp->setenv("_REALENV", env ? env : "<unset>");
+      cp->setenv("ENV", bashProfile.getAbsolutePath());
 #endif
-
-         if (boost::algorithm::ends_with(shellName, "zsh"))
-            return true;
-      }
-
-      default:
-      {
-         return false;
-      }
-
-      }
-   };
-
-   if (isZshShell())
-   {
-      FilePath zDotDir =
-            session::options().rResourcesPath().completeChildPath("terminal/zsh");
-
-      cp->setenv("ZDOTDIR", zDotDir.getAbsolutePath());
    }
+   
+   // let terminals know if python integration is enabled
+   cp->setenv(
+            "_RS_TERMINAL_PYTHON_INTEGRATION_ENABLED_",
+            prefs::userPrefs().terminalPythonIntegration() ? "TRUE" : "FALSE");
+   
+   // make sure terminals see R temporary directory
+   // (older versions of R didn't set R_SESSION_TMPDIR; newer ones do)
+   cp->setenv("R_SESSION_TMPDIR", module_context::tempDir().getAbsolutePath());
 
    // set RSTUDIO_TERMINAL_HOOKS (to be sourced on startup by supported shells)
-   FilePath hooksPath =
-         session::options().rResourcesPath().completeChildPath("terminal/hooks");
-
+   FilePath hooksPath = session::options().rResourcesPath().completeChildPath("terminal/hooks");
    cp->setenv("RSTUDIO_TERMINAL_HOOKS", hooksPath.getAbsolutePath());
-   
 }
    
 void augmentTerminalProcess(ConsoleProcessPtr cp)
 {
-   // check whether terminal hooks are required
-   // (currently, only done if we want to place python on PATH)
-   bool needsTerminalHooks = augmentTerminalProcessPython(cp);
-   if (needsTerminalHooks)
+   if (prefs::userPrefs().terminalHooks())
+   {
+      if (prefs::userPrefs().terminalPythonIntegration())
+         augmentTerminalProcessPython(cp);
+      
       useTerminalHooks(cp);
+   }
 }
-   
 
 } // end anonymous namespace
 
@@ -1118,22 +1163,18 @@ void ConsoleProcess::saveEnvironment(const std::string& env)
    {
       size_t equalSign = line.find_first_of('=');
       if (equalSign == std::string::npos)
-      {
          return;
-      }
 
-      std::string varName = line.substr(0, equalSign);
-      if (varName == "_")
+      std::string name = line.substr(0, equalSign);
+      if (isIgnoredEnvironmentVariable(name))
          continue;
-
-      core::system::setenv(&environment,
-                           line.substr(0, equalSign),
-                           line.substr(equalSign + 1));
+      
+      std::string value = line.substr(equalSign + 1);
+      core::system::setenv(&environment, name, value);
    }
+   
    if (environment.empty())
-   {
       return;
-   }
 
    procInfo_->saveConsoleEnvironment(environment);
 }
@@ -1166,6 +1207,8 @@ core::json::Array processesAsJson(SerializationMode serialMode)
 
 Error initialize()
 {
+   initializeIgnoredEnvironmentVariables();
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
    return internalInitialize();
 }
 

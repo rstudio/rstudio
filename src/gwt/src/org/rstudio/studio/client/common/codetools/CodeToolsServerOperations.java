@@ -55,20 +55,6 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          boolean isConsole,
          ServerRequestCallback<Completions> completions);
    
-   void getDplyrJoinCompletions(
-         String token,
-         String leftDataName,
-         String rightDataName,
-         String joinVerb,
-         String cursorPos,
-         ServerRequestCallback<Completions> completions);
-   
-   void getDplyrJoinCompletionsString(
-         String token,
-         String string,
-         String cursorPos,
-         ServerRequestCallback<Completions> completions);
-
    void getHelpAtCursor(
          String line, int cursorPos,
          ServerRequestCallback<org.rstudio.studio.client.server.Void> callback);
@@ -122,5 +108,5 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String connection,
          SqlCompletionParseContext context,
          ServerRequestCallback<Completions> requestCallback);
-   
+
 }

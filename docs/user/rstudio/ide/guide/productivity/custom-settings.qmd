@@ -1,5 +1,6 @@
 ---
 title: "Custom Settings"
+date-meta: 2022-12-12
 ---
 
 The examples in this section presume you are setting individual user account settings by changing files in `~/.config/rstudio` (Mac/Linux) or `AppData/Roaming/RStudio/` (Windows). For information on server wide setting on Posit Workbench or RStudio Server, see the [Customizing Session Settings section](https://docs.posit.co/ide/server-pro/r_sessions/customizing_session_settings.html) from <https://docs.posit.co/ide/server-pro/>.

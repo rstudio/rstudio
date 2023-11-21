@@ -1,0 +1,46 @@
+{
+  "name": "RStudio-{PLATFORM}",
+
+  "dockerComposeFile": "./docker-compose-vscode.yml",
+  "service": "vscode",
+  "shutdownAction": "stopCompose",
+  "workspaceFolder": "/workspace",
+  "initializeCommand": ".devcontainer/docker-env.sh {PLATFORM_LOWERCASE}",
+  "remoteEnv": {
+    "PATH": "${containerEnv:RSTUDIO_NODE_PATH}:${containerEnv:PATH}"
+  },
+  
+  "customizations": {
+    "vscode": {
+      "settings": {   
+        "cmake.configureArgs": ["-DRSTUDIO_TARGET=Server"],
+        "cmake.configureEnvironment": {
+          "GWT_XMX": "-Xmx1000M",
+          "GWT_XSS": "-Xss16M",
+          "GWT_BUILD_ALL": "NO"
+        },
+        "cmake.parallelJobs": {PARALLEL_JOBS},
+        "cmake.buildDirectory": "${workspaceFolder}/build-{PLATFORM_LOWERCASE}",
+        "C_Cpp.default.includePath": [
+          "${workspaceFolder}/src/cpp/**",
+          "/opt/rstudio-tools/x86_64/boost/boost_1_78_0/include"
+        ],
+        "extensions.verifySignature": false
+      },
+      "extensions": [
+        "editorconfig.editorconfig",
+        "ms-vscode.cpptools-extension-pack",
+        "vscjava.vscode-java-pack",
+        "dbaeumer.vscode-eslint",
+        "waderyan.nodejs-extension-pack",
+        "rust-lang.rust-analyzer",
+        "golang.go"
+      ]
+    }
+  },
+
+  "forwardPorts": [
+    8787
+  ]
+
+}

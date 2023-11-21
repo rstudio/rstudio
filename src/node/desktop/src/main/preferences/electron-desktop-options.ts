@@ -14,9 +14,10 @@
  *
  */
 
-import { BrowserWindow, Rectangle, screen } from 'electron';
+import { BrowserWindow } from 'electron';
 import Store from 'electron-store';
-import { dirname } from 'path';
+import { existsSync, lstatSync } from 'fs';
+import { basename, dirname, join } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { normalizeSeparatorsNative } from '../../core/file-path';
 import { logger } from '../../core/logger';
@@ -24,6 +25,8 @@ import { RStudioUserState } from '../../types/user-state-schema';
 
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
+import { kWindowsRExe } from '../../ui/utils';
+import { WindowBounds, positionAndEnsureVisible } from '../window-utils';
 
 const kProportionalFont = 'font.proportionalFont';
 const kFixedWidthFont = 'font.fixedWidthFont';
@@ -31,6 +34,7 @@ const kFixedWidthFont = 'font.fixedWidthFont';
 const kZoomLevel = 'view.zoomLevel';
 const kWindowBounds = 'view.windowBounds';
 const kAccessibility = 'view.accessibility';
+const kDisableRendererAccessibility = 'view.disableRendererAccessibility';
 
 const kLastRemoteSessionUrl = 'session.lastRemoteSessionUrl';
 const kAuthCookies = 'session.authCookies';
@@ -44,6 +48,8 @@ const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds
 
 const kRExecutablePath = 'platform.windows.rExecutablePath';
 const kPreferR64 = 'platform.windows.preferR64';
+
+const kCheckForRosetta = 'platform.macos.checkForRosetta';
 
 const userStateSchema = generateSchema<RStudioUserState>(properties);
 
@@ -71,24 +77,6 @@ export function ElectronDesktopOptions(directory = '', legacyOptions?: DesktopOp
  */
 export function clearOptionsSingleton(): void {
   options = null;
-}
-
-/**
- * Check if one rectangle is inside (shared border inclusive) the other.
- *
- * @param inner The rectangle assumed to be the smaller, inner rectangle
- * @param outer The rectangle assumed to be the larger, outer rectangle
- *
- * @returns True if the inner rectangle is inside (shared border inclusive)
- * the outer rectangle, false otherwise
- */
-export function firstIsInsideSecond(inner: Rectangle, outer: Rectangle): boolean {
-  return (
-    inner.x >= outer.x &&
-    inner.y >= outer.y &&
-    inner.x + inner.width <= outer.x + outer.width &&
-    inner.y + inner.height <= outer.y + outer.height
-  );
 }
 
 /**
@@ -156,11 +144,11 @@ export class DesktopOptionsImpl implements DesktopOptions {
     return zoomLevel;
   }
 
-  public saveWindowBounds(bounds: Rectangle): void {
+  public saveWindowBounds(bounds: WindowBounds): void {
     this.config.set(kWindowBounds, bounds);
   }
 
-  public windowBounds(): Rectangle {
+  public windowBounds(): WindowBounds {
     return this.config.get(kWindowBounds, properties.view.default.windowBounds);
   }
 
@@ -176,34 +164,16 @@ export class DesktopOptionsImpl implements DesktopOptions {
   private restoreMainWindowBoundsImpl(mainWindow: BrowserWindow): void {
     const savedBounds = this.windowBounds();
 
-    // Check if saved bounds is still in one of the available displays
-    const goodDisplays = screen.getAllDisplays().find((display) => {
-      return firstIsInsideSecond(savedBounds, display.workArea);
-    });
+    positionAndEnsureVisible(
+      mainWindow,
+      savedBounds,
+      properties.view.default.windowBounds.width,
+      properties.view.default.windowBounds.height,
+    );
 
-    // Restore it to previous location if possible, or center of primary display otherwise
-    if (goodDisplays) {
-      mainWindow.setBounds(savedBounds);
-    } else {
-      const primaryBounds = screen.getPrimaryDisplay().bounds;
-      const newSize = {
-        width: Math.min(properties.view.default.windowBounds.width, primaryBounds.width),
-        height: Math.min(properties.view.default.windowBounds.height, primaryBounds.height),
-      };
-
-      mainWindow.setSize(newSize.width, newSize.height);
-
-      // window.center() doesn't consistently pick the primary display,
-      // so manually calculating the center of the primary display
-      mainWindow.setPosition(
-        primaryBounds.x + (primaryBounds.width - newSize.width) / 2,
-        primaryBounds.y + (primaryBounds.height - newSize.height) / 2,
-      );
+    if (savedBounds.maximized) {
+      mainWindow.maximize();
     }
-
-    // ensure a minimum size for the window on restore
-    const currSize = mainWindow.getSize();
-    mainWindow.setSize(Math.max(300, currSize[0]), Math.max(200, currSize[1]));
   }
 
   public setAccessibility(accessibility: boolean): void {
@@ -212,6 +182,14 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
   public accessibility(): boolean {
     return this.config.get(kAccessibility, properties.view.default.accessibility);
+  }
+
+  public setDisableRendererAccessibility(accessibility: boolean): void {
+    this.config.set(kDisableRendererAccessibility, accessibility);
+  }
+
+  public disableRendererAccessibility(): boolean {
+    return this.config.get(kDisableRendererAccessibility, properties.view.default.disableRendererAccessibility);
   }
 
   public setLastRemoteSessionUrl(lastRemoteSessionUrl: string): void {
@@ -270,6 +248,26 @@ export class DesktopOptionsImpl implements DesktopOptions {
     return this.config.get(kRendererUseGpuDriverBugWorkarounds, properties.renderer.default.useGpuDriverBugWorkarounds);
   }
 
+  // MacOS Apple Silicon-only option
+  public setCheckForRosetta(value: boolean): void {
+    const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
+    if (!isAppleSilicon) {
+      return;
+    }
+    this.config.set(kCheckForRosetta, value);
+  }
+
+  // MacOS Apple Silicon-only option
+  public checkForRosetta(): boolean {
+    const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
+    if (!isAppleSilicon) {
+      return false;
+    }
+    const checkForRosettaConfig = this.config.get(kCheckForRosetta, properties.platform.default.macos.checkForRosetta);
+    logger().logDebug(`Desktop option 'checkForRosetta' is: ${checkForRosettaConfig}`);
+    return checkForRosettaConfig;
+  }
+
   // Windows-only option
   public rBinDir(): string {
     if (process.platform !== 'win32') {
@@ -304,14 +302,23 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return '';
     }
 
-    const rExecutablePath: string = this.config.get(kRExecutablePath,
-      properties.platform.default.windows.rExecutablePath);
+    const rExecutablePath: string = this.config.get(
+      kRExecutablePath,
+      properties.platform.default.windows.rExecutablePath,
+    );
 
     if (!rExecutablePath) {
       return '';
     }
 
-    return rExecutablePath;
+    // 2022.12 and 2023.03 allowed the user to select bin\R.exe, which will cause sessions
+    // to fail to load. We prevent that now, but fix it up if we encounter it.
+    const fixedPath = fixWindowsRExecutablePath(rExecutablePath);
+    if (fixedPath !== rExecutablePath) {
+      this.setRExecutablePath(fixedPath);
+    }
+
+    return fixedPath;
   }
 
   // Windows-only option
@@ -338,4 +345,41 @@ if (process.platform === 'darwin') {
   defaultFonts = ['Lucida Console', 'Consolas'];
 } else {
   defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
+}
+
+/**
+ * If user manually chooses bin\R.exe, sessions won't load, so insert the
+ * architecture folder (i386 if they are on a 32-bit machine, otherwise x64).
+ *
+ * If they want to use 32-bit R on a 64-bit machine they will need to
+ * choose it directly from the i386 folder.
+ *
+ * Use Rterm.exe instead of R.exe (or anything else the user might have
+ * chosen; we can't prevent them from choosing arbitrary files).
+ *
+ * @param rExePath Full path to Rterm.exe
+ * @returns Full path to Rterm.exe including arch folder
+ */
+export function fixWindowsRExecutablePath(rExePath: string): string {
+  if (process.platform !== 'win32' || !existsSync(rExePath) || lstatSync(rExePath).isDirectory()) {
+    // unexpected situation: just leave it as-is
+    return rExePath;
+  }
+
+  const selectedDir = basename(dirname(rExePath)).toLowerCase();
+  const origPath = rExePath;
+  if (selectedDir === 'bin') {
+    // User picked bin\*.exe; insert the subfolder matching the machine's architecture.
+    const archDir = process.arch === 'x64' ? 'x64' : 'i386';
+    rExePath = join(dirname(rExePath), archDir, kWindowsRExe);
+    logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
+  } else {
+    // Even if they chose the right folder, make sure they picked Rterm.exe
+    const exe = basename(rExePath).toLowerCase();
+    if (exe !== kWindowsRExe.toLowerCase()) {
+      rExePath = join(dirname(rExePath), kWindowsRExe);
+      logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
+    }
+  }
+  return rExePath;
 }

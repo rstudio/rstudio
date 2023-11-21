@@ -22,15 +22,17 @@ module.exports = {
     'no-empty-function': 1, // will only show a warning
     '@typescript-eslint/no-empty-function': 1,
 
-    'indent': ['error', 2, { SwitchCase: 1 }],
-    'quotes': ['error', 'single'],
-    'semi': ['error', 'always'],
+    indent: ['error', 2, { SwitchCase: 1 }],
+    quotes: ['error', 'single', { avoidEscape: true }],
+    semi: ['error', 'always'],
     'max-len': [
       'error',
       {
         code: 120,
         tabWidth: 2,
         ignoreUrls: true,
+        ignoreStrings: true,
+        ignoreTemplateLiterals: true,
       },
     ],
 
@@ -39,19 +41,18 @@ module.exports = {
     '@typescript-eslint/no-confusing-non-null-assertion': ['error'],
     '@typescript-eslint/no-floating-promises': ['warn'],
     '@typescript-eslint/no-invalid-void-type': ['error'],
-    '@typescript-eslint/no-misused-promises': ['error', { 'checksVoidReturn': false }],
+    '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: false }],
     '@typescript-eslint/no-throw-literal': ['error'],
     '@typescript-eslint/no-unnecessary-condition': ['error'],
     '@typescript-eslint/promise-function-async': ['warn'],
     '@typescript-eslint/require-array-sort-compare': ['error'],
     '@typescript-eslint/return-await': ['warn'],
-    '@typescript-eslint/no-implicit-any-catch': ['error'],
     '@typescript-eslint/no-unused-vars': [
       'warn',
       {
-        "varsIgnorePattern": "^_",
-        "argsIgnorePattern": "^_"
-      }
+        varsIgnorePattern: '^_',
+        argsIgnorePattern: '^_',
+      },
     ],
 
     '@typescript-eslint/strict-boolean-expressions': [

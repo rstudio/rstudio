@@ -306,30 +306,25 @@ void onDocRenamed(const std::string& oldPath,
    }
 }
 
-void onDocAdded(const std::string& id)
+void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!core::thread::isMainThread())
    {
-      module_context::executeOnMainThread(boost::bind(onDocAdded, id));
-      return;
-   }
-
-   std::string path;
-   Error error = source_database::getPath(id, &path);
-   if (error)
-   {
-      LOG_ERROR(error);
+      module_context::executeOnMainThread(boost::bind(onDocAdded, pDoc));
       return;
    }
 
    // ignore empty paths and non-R Markdown files
+   std::string path = pDoc->path();
    if (path.empty())
       return;
+
    FilePath docPath = module_context::resolveAliasedPath(path);
    if (docPath.getExtensionLowerCase() != ".rmd")
       return;
 
-   // find the cache (test for saved) 
+   // find the cache (test for saved)
+   std::string id = pDoc->id();
    FilePath cachePath = chunkCacheFolder(path, id, notebookCtxId());
    if (!cachePath.exists())
       cachePath = chunkCacheFolder(path, id, kSavedCtx);
@@ -341,7 +336,7 @@ void onDocAdded(const std::string& id)
    // file
    if (!cachePath.exists() && notebookPath.exists())
    {
-      error = r::exec::RFunction(
+      Error error = r::exec::RFunction(
                ".rs.hydrateCacheFromNotebook",
                string_utils::utf8ToSystem(notebookPath.getAbsolutePath())).call();
       if (error)
@@ -373,7 +368,7 @@ void onDocAdded(const std::string& id)
       // if we got this far, it means that the notebook cache looks newer than
       // our cache -- test to see whether it's compatible
       bool matches = false;
-      error = notebookContentMatches(notebookPath, docPath, &matches, nullptr);
+      Error error = notebookContentMatches(notebookPath, docPath, &matches, nullptr);
       if (error)
       {
          LOG_ERROR(error);
@@ -412,21 +407,10 @@ Error createMigrationFile(const FilePath& source, const FilePath& target)
    Error error;
    FilePath migrationFile = source.completePath(kMigrationTarget);
 
-   // Ensure migration file doesn't already exist. This shouldn't happen unless a crash occurred
-   // during a previous chunk execution.
-   if (migrationFile.exists())
-   {
-      LOG_WARNING_MESSAGE("Notebook output migration file " kMigrationTarget " already exists in " + 
-            source.getAbsolutePath());
-      error = migrationFile.remove();
-      if (error)
-      {
-         error.addProperty("description", "Unable to remove notebook output migration file");
-         return error;
-      }
-   }
-
-   error = writeStringToFile(migrationFile, target.getAbsolutePath()); 
+   // Write the migration file. Note that this file might already exist; this
+   // can happen if the document was saved mulitple times while the document
+   // was executing. In that case, we just overwrite it.
+   error = writeStringToFile(migrationFile, target.getAbsolutePath());
    if (error)
    {
       error.addProperty("description", "Unable to write notebook output migration file");

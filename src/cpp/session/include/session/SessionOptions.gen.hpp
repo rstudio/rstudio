@@ -56,6 +56,7 @@ protected:
                 boost::program_options::options_description* pExternal,
                 boost::program_options::options_description* pGit,
                 boost::program_options::options_description* pUser,
+                boost::program_options::options_description* pCopilot,
                 boost::program_options::options_description* pMisc,
                 std::string* pSaveActionDefault,
                 int* wwwSameSite)
@@ -122,6 +123,12 @@ protected:
       "Whether or not to reuse last used bound ports when restarting a Launcher session.");
 
    pSession->add_options()
+      ("session-connections-block-suspend",
+      value<bool>(&sessionConnectionsBlockSuspend_)->default_value(true),
+      "Whether or not an active database connection should block attempts to suspend the session after timeout.")
+      ("session-external-pointers-block-suspend",
+      value<bool>(&sessionExternalPointersBlockSuspend_)->default_value(true),
+      "Whether or not R objects containing external pointers should block attempts to suspend the session after timeout.")
       (kTimeoutSessionOption,
       value<int>(&timeoutMinutes_)->default_value(120),
       "The amount of minutes before a session times out, at which point the session will either suspend or exit.")
@@ -169,7 +176,7 @@ protected:
       "Specifies the path to a first project template which will be copied into new users' home directories and opened the first time they run a session. The template can optionally be configured with `DefaultOpenDocs` to cause documents to automatically be opened for the first project.")
       ("default-rsconnect-server",
       value<std::string>(&defaultRSConnectServer_)->default_value(std::string()),
-      "Specifies the default RStudio Connect server URL.")
+      "Specifies the default Posit Connect server URL.")
       (kTerminalPortOption,
       value<std::string>(&terminalPort_)->default_value(std::string()),
       "If specified, sets the port to bind the terminal server to. This should generally only be set for containerized Launcher sessions, where the port must be known.")
@@ -301,7 +308,7 @@ protected:
       value<bool>(&autoReloadSource_)->default_value(false),
       "Indicates whether or not to automatically reload R source if it changes during the session.")
       ("r-compatible-graphics-engine-version",
-      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(15),
+      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(16),
       "Specifies the maximum graphics engine version that this version of RStudio is compatible with.")
       ("r-resources-path",
       value<std::string>(&rResourcesPath_)->default_value("resources"),
@@ -367,6 +374,12 @@ protected:
       ("external-quarto-path",
       value<std::string>(&quartoPath_)->default_value(kDefaultQuartoPath),
       "Specifies the path to quarto binaries.")
+      ("external-node-path",
+      value<std::string>(&nodePath_)->default_value(kDefaultNodePath),
+      "Specifies the path to node binaries.")
+      ("external-copilot-agent-path",
+      value<std::string>(&copilotAgentPath_)->default_value(std::string()),
+      "Specifies the path to the GitHub Copilot agent.")
       ("external-libclang-path",
       value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
       "Specifies the path to the libclang shared library")
@@ -399,6 +412,23 @@ protected:
       value<std::string>(&launcherToken_)->default_value(""),
       "Specifies the token identifying the session launcher.");
 
+   pCopilot->add_options()
+      ("copilot-enabled",
+      value<bool>(&copilotEnabled_)->default_value(false),
+      "Indicates whether or not GitHub Copilot integration can be enabled.")
+      ("copilot-proxy-url",
+      value<std::string>(&copilotProxyUrl_)->default_value(""),
+      "The proxy URL that the Copilot agent should use for outgoing network requests. Only plain HTTP proxy URLs are supported.")
+      ("copilot-auth-provider",
+      value<std::string>(&copilotAuthProvider_)->default_value(""),
+      "The URL to the authentication provider to be used by GitHub Copilot.")
+      ("copilot-proxy-strict-ssl",
+      value<bool>(&copilotProxyStrictSsl_)->default_value(true),
+      "Should the GitHub Copilot agent perform SSL certificate validation when forming web requests?")
+      ("copilot-agent-helper",
+      value<std::string>(&copilotAgentHelper_)->default_value(std::string()),
+      "The path to an optional shell script, which when invoked, should start the GitHub Copilot agent.");
+
    pMisc->add_options();
 
    FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rsession configuration", "rsession.conf");
@@ -422,6 +452,8 @@ public:
    bool standalone() const { return standalone_; }
    bool verifySignatures() const { return verifySignatures_; }
    bool wwwReusePorts() const { return wwwReusePorts_; }
+   bool sessionConnectionsBlockSuspend() const { return sessionConnectionsBlockSuspend_; }
+   bool sessionExternalPointersBlockSuspend() const { return sessionExternalPointersBlockSuspend_; }
    int timeoutMinutes() const { return timeoutMinutes_; }
    bool timeoutSuspend() const { return timeoutSuspend_; }
    int disconnectedTimeoutMinutes() const { return disconnectedTimeoutMinutes_; }
@@ -501,6 +533,8 @@ public:
    core::FilePath mathjaxPath() const { return core::FilePath(mathjaxPath_); }
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
    core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
+   core::FilePath nodePath() const { return core::FilePath(nodePath_); }
+   core::FilePath copilotAgentPath() const { return core::FilePath(copilotAgentPath_); }
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
    core::FilePath libclangHeadersPath() const { return core::FilePath(libclangHeadersPath_); }
    core::FilePath winptyPath() const { return core::FilePath(winptyPath_); }
@@ -508,6 +542,11 @@ public:
    std::string userIdentity() const { return userIdentity_; }
    bool showUserIdentity() const { return showUserIdentity_; }
    std::string launcherToken() const { return launcherToken_; }
+   bool copilotEnabled() const { return copilotEnabled_; }
+   std::string copilotProxyUrl() const { return copilotProxyUrl_; }
+   std::string copilotAuthProvider() const { return copilotAuthProvider_; }
+   bool copilotProxyStrictSsl() const { return copilotProxyStrictSsl_; }
+   core::FilePath copilotAgentHelper() const { return core::FilePath(copilotAgentHelper_); }
 
 
 protected:
@@ -525,6 +564,8 @@ protected:
    bool standalone_;
    bool verifySignatures_;
    bool wwwReusePorts_;
+   bool sessionConnectionsBlockSuspend_;
+   bool sessionExternalPointersBlockSuspend_;
    int timeoutMinutes_;
    bool timeoutSuspend_;
    int disconnectedTimeoutMinutes_;
@@ -604,6 +645,8 @@ protected:
    std::string mathjaxPath_;
    std::string pandocPath_;
    std::string quartoPath_;
+   std::string nodePath_;
+   std::string copilotAgentPath_;
    std::string libclangPath_;
    std::string libclangHeadersPath_;
    std::string winptyPath_;
@@ -613,6 +656,11 @@ protected:
    std::string projectId_;
    std::string scopeId_;
    std::string launcherToken_;
+   bool copilotEnabled_;
+   std::string copilotProxyUrl_;
+   std::string copilotAuthProvider_;
+   bool copilotProxyStrictSsl_;
+   std::string copilotAgentHelper_;
    virtual bool allowOverlay() const { return false; };
 };
 

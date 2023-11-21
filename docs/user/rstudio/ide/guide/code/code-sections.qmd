@@ -1,5 +1,6 @@
 ---
 title: "Code Sections"
+date-meta: 2022-12-12
 ---
 
 Code sections provide structure for both navigation and folding of long functions or other code control flow.

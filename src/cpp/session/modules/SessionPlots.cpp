@@ -157,13 +157,12 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    // save plot
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
-   error = display.savePlotAsImage(plotPath, format, width, height);
+   error = display.savePlotAsImage(plotPath, format, width, height, true);
    if (error)
    {
        LOG_ERROR(error);
        return error;
    }
-
 
    // set success result
    pResponse->setResult(boolObject(true));
@@ -267,7 +266,7 @@ Error copyPlotToCocoaPasteboard(const json::JsonRpcRequest& request,
    // save as png
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
-   error = display.savePlotAsImage(targetFile, "png", width, height);
+   error = display.savePlotAsImage(targetFile, "png", width, height, true);
    if (error)
       return error;
 
@@ -313,7 +312,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
    FilePath smallPlotPath = tempPath.completeChildPath("plot-small.png");
-   error = display.savePlotAsImage(smallPlotPath, "png", width, height);
+   error = display.savePlotAsImage(smallPlotPath, "png", width, height, false);
    if (error)
    {
        LOG_ERROR(error);
@@ -620,7 +619,8 @@ void handlePngRequest(const http::Request& request,
    Error error = graphics::display().savePlotAsImage(imagePath,
                                                       graphics::kPngFormat,
                                                       width,
-                                                      height);
+                                                      height,
+                                                      true);
    if (error)
    {
       pResponse->setError(http::status::InternalServerError,
@@ -860,7 +860,7 @@ SEXP rs_savePlotAsImage(SEXP fileSEXP,
 
    r::session::graphics::Display& display = r::session::graphics::display();
    if (display.hasOutput())
-      display.savePlotAsImage(filePath, format, width, height);
+      display.savePlotAsImage(filePath, format, width, height, false);
 
    return R_NilValue;
 }

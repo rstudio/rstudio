@@ -1,0 +1,43 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug RStudio",
+            "type": "node",
+            "request": "launch",
+            "runtimeArgs": [
+                "run-script",
+                "debug"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "windows": {
+                "env": {
+                    "PATH": "${workspaceFolder}\\..\\..\\..\\dependencies\\common\\node\\16.20.2;${env:PATH}"
+                }
+            }
+        },
+        {
+            "name": "Launch RStudio",
+            "type": "node",
+            "request": "launch",
+            "runtimeArgs": [
+                "start",
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "windows": {
+                "env": {
+                    "PATH": "${workspaceFolder}\\..\\..\\..\\dependencies\\common\\node\\16.20.2;${env:PATH}"
+                }
+            }
+        }
+    ]
+}

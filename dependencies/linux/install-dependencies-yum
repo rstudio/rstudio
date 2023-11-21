@@ -21,10 +21,10 @@ set -e
 sudo yum install -y make
 sudo yum install -y gcc
 sudo yum install -y gcc-c++
-sudo yum install -y cmake
 sudo yum install -y rpmdevtools
 sudo yum install -y wget
 sudo yum install -y jq
+sudo yum install -y whois
 
 # core system libraries
 sudo yum install -y libuuid-devel
@@ -32,6 +32,7 @@ sudo yum install -y openssl-devel
 sudo yum install -y bzip2-devel
 sudo yum install -y zlib-devel
 sudo yum install -y pam-devel
+sudo yum install -y libuser-devel
 
 # pandoc dependencies
 sudo yum install -y libffi
@@ -63,6 +64,6 @@ fi
 
 # common
 cd ../common
-./install-common $1
+./install-common "$1"
 cd ../linux
 

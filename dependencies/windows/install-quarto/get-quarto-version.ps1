@@ -1,5 +1,6 @@
 # Retrieve latest Quarto version from GitHub
 
+# $response = Invoke-WebRequest -UseBasicParsing -Uri https://quarto.org/docs/download/_download.json
 $response = Invoke-WebRequest -UseBasicParsing -Uri https://quarto.org/docs/download/_prerelease.json
 $releases = ConvertFrom-Json $response.content
 $version = $releases.version

@@ -1,5 +1,6 @@
 ---
 title: "RStudio Projects"
+date-meta: 2022-12-12
 ---
 
 Expert data scientists keep all the files associated with a given project together --- input data, scripts, analytical results, and figures. This is such a wise and common practice that RStudio has built-in support for this via Projects. RStudio Projects make it straightforward to divide your work into multiple contexts, each with their own working directory, workspace, history, and source documents.

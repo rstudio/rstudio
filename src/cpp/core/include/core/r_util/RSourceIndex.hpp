@@ -75,7 +75,8 @@ public:
       Class      = 3,
       Variable   = 4, 
       Test       = 11, 
-      Roxygen    = 12
+      Roxygen    = 12, 
+      Package    = 14
    };
 
 public:
@@ -85,14 +86,14 @@ public:
 
    RSourceItem(int type,
                const std::string& name,
-               const std::vector<RS4MethodParam>& signature,
+               const std::string& extraInfo,
                int braceLevel,
                std::size_t line,
                std::size_t column, 
                bool hidden)
       : type_(type),
         name_(name),
-        signature_(signature),
+        extraInfo_(extraInfo),
         braceLevel_(braceLevel),
         line_(line),
         column_(column), 
@@ -108,7 +109,7 @@ private:
    RSourceItem(const std::string& context,
                int type,
                const std::string& name,
-               const std::vector<RS4MethodParam>& signature,
+               const std::string& extraInfo,
                int braceLevel,
                std::size_t line,
                std::size_t column, 
@@ -116,7 +117,7 @@ private:
       : context_(context),
         type_(type),
         name_(name),
-        signature_(signature),
+        extraInfo_(extraInfo),
         braceLevel_(braceLevel),
         line_(line),
         column_(column), 
@@ -134,7 +135,7 @@ public:
    bool isTest() const { return type_ == Test; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
-   const std::vector<RS4MethodParam>& signature() const { return signature_; }
+   const std::string& extraInfo() const { return extraInfo_; }
    const int braceLevel() const { return braceLevel_; }
    int line() const { return core::safe_convert::numberTo<std::size_t, int>(line_,0); }
    int column() const { return core::safe_convert::numberTo<std::size_t, int>(column_,0); }
@@ -167,7 +168,7 @@ public:
       return RSourceItem(context,
                          type_,
                          name_,
-                         signature_,
+                         extraInfo_,
                          braceLevel_,
                          line_,
                          column_, 
@@ -178,7 +179,7 @@ private:
    std::string context_;
    int type_;
    std::string name_;
-   std::vector<RS4MethodParam> signature_;
+   std::string extraInfo_;
    int braceLevel_;
    std::size_t line_;
    std::size_t column_;

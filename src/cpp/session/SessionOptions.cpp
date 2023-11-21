@@ -49,6 +49,22 @@
 
 #include "session-config.h"
 
+#ifdef _WIN32
+# define kPandocExe "pandoc.exe"
+#else
+# define kPandocExe "pandoc"
+#endif
+
+#if defined(_WIN32)
+# define kQuartoArch "x86_64"
+#elif defined(__aarch64__)
+# define kQuartoArch "aarch64"
+#elif defined(__amd64__)
+# define kQuartoArch "x86_64"
+#else
+# error "unknown or unsupported platform architecture"
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -92,7 +108,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    Error error = core::system::installPath("..", argv[0], &resourcePath_);
    if (error)
    {
-      LOG_ERROR_MESSAGE("Unable to determine install path: "+error.getSummary());
+      LOG_ERROR_MESSAGE("Unable to determine install path: " + error.getSummary());
       return ProgramStatus::exitFailure();
    }
 
@@ -126,13 +142,14 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    options_description external("external");
    options_description git("git");
    options_description user("user");
+   options_description copilot("copilot");
    options_description misc("misc");
    std::string saveActionDefault;
    int sameSite;
 
    program_options::OptionsDescription optionsDesc =
          buildOptions(&runTests, &runScript, &verify, &version, &program, &log, &docs, &www,
-                      &session, &allow, &r, &limits, &external, &git, &user, &misc,
+                      &session, &allow, &r, &limits, &external, &git, &user, &copilot, &misc,
                       &saveActionDefault, &sameSite);
 
    addOverlayOptions(&misc);
@@ -152,6 +169,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.commandLine.add(external);
    optionsDesc.commandLine.add(git);
    optionsDesc.commandLine.add(user);
+   optionsDesc.commandLine.add(copilot);
    optionsDesc.commandLine.add(misc);
 
    // define groups included in config-file processing
@@ -165,6 +183,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.configFile.add(limits);
    optionsDesc.configFile.add(external);
    optionsDesc.configFile.add(user);
+   optionsDesc.configFile.add(copilot);
    optionsDesc.configFile.add(misc);
 
    // read configuration
@@ -193,6 +212,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    {
       program_options::reportError(errMsg, ERROR_LOCATION);
       return ProgramStatus::exitFailure();
+   }
+   
+   // allow copilot to be enabled by default in RStudio Desktop
+   if (programMode_ == kSessionProgramModeDesktop)
+   {
+      copilotEnabled_ = true;
    }
 
    // compute program identity
@@ -310,6 +335,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePath(resourcePath_, &mathjaxPath_);
    resolvePandocPath(resourcePath_, &pandocPath_);
    resolveQuartoPath(resourcePath_, &quartoPath_);
+   resolveNodePath(resourcePath_, &nodePath_);
 
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
@@ -598,12 +624,15 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = macBinaryPath(resourcePath, "quarto/bin/tools");
-      *pPath = path.getAbsolutePath();
+      FilePath toolsPath = macBinaryPath(resourcePath, "quarto/bin/tools");
+      FilePath archPath = toolsPath.completeChildPath(kQuartoArch);
+      *pPath = (archPath.exists() ? archPath : toolsPath).getAbsolutePath();
    }
    else
    {
-      resolvePath(resourcePath, pPath);
+      FilePath resolvedPath = resourcePath.completePath(*pPath);
+      FilePath archPath = resolvedPath.completeChildPath(kQuartoArch);
+      *pPath = (archPath.exists() ? archPath : resolvedPath).getAbsolutePath();
    }
 }
 
@@ -613,6 +642,20 @@ void Options::resolveQuartoPath(const FilePath& resourcePath,
    if (*pPath == kDefaultQuartoPath && programMode() == kSessionProgramModeDesktop)
    {
       FilePath path = macBinaryPath(resourcePath, "quarto");
+      *pPath = path.getAbsolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
+void Options::resolveNodePath(const FilePath& resourcePath,
+                              std::string* pPath)
+{
+   if (*pPath == kDefaultNodePath && programMode() == kSessionProgramModeDesktop)
+   {
+      FilePath path = macBinaryPath(resourcePath, "node");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -646,13 +689,29 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
 void Options::resolvePandocPath(const FilePath& resourcePath,
                                   std::string* pPath)
 {
-   resolvePath(resourcePath, pPath);
+   // pandoc might be an architecture-specific sub-directory, to handle that
+   FilePath resolvedPath = resourcePath.completePath(*pPath);
+   FilePath candidatePath = resolvedPath.completeChildPath(kQuartoArch).completeChildPath(kPandocExe);
+   if (!candidatePath.exists())
+      candidatePath = resolvedPath.completeChildPath(kPandocExe);
+   *pPath = candidatePath.getParent().getAbsolutePath();
 }
 
 void Options::resolveQuartoPath(const FilePath& resourcePath,
                                 std::string* pPath)
 {
    resolvePath(resourcePath, pPath);
+}
+
+void Options::resolveNodePath(const FilePath& resourcePath,
+                              std::string* pPath)
+{
+#if defined(__linux__) && !defined(RSTUDIO_PACKAGE_BUILD)
+   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/18.18.2");
+   resolvePath(dependenciesPath, pPath);
+#else
+   resolvePath(resourcePath, pPath);
+#endif
 }
 
 void Options::resolveRsclangPath(const FilePath& resourcePath,

@@ -39,7 +39,7 @@ public class Link
     * then drop them from the URL.
     *
     * For example,
-    *    http://rstudio.com/help/base/ls
+    *    http://posit.co/help/base/ls
     * becomes
     *    /help/base/ls
     */

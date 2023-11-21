@@ -1,4 +1,3 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
     xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui"
@@ -18,7 +17,7 @@
       <g:HTMLPanel>
          <g:VerticalPanel ui:field="filePanel_">
            <g:HTMLPanel>
-             <g:InlineLabel text="Publish Files From:" ui:field="fileListLabel_"/>
+             <g:InlineLabel text="Publish files from:" ui:field="fileListLabel_"/>
              <g:InlineLabel styleName="{res.style.deployLabel}" 
                             ui:field="deployLabel_">
              </g:InlineLabel>
@@ -29,11 +28,11 @@
            </g:ScrollPanel>
            <g:HorizontalPanel>
                <rw:ThemedButton ui:field="checkUncheckAllButton_"
-                               text="Uncheck All">
+                               text="Uncheck all">
                                 <ui:attribute name="text" key="uncheckAllButtonText"/>
                </rw:ThemedButton>
               <rw:ThemedButton ui:field="addFileButton_" 
-                               text="Add More..."
+                               text="Add more..."
                                visible="false">
                   <ui:attribute name="text" key="addMoreButtonText"/>
               </rw:ThemedButton>
@@ -58,13 +57,13 @@
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%" ui:field="publishFromPanel_">
             <rw:FormLabel styleName="{res.style.firstControlLabel}"
-                          text="Publish From Account:"
+                          text="Publish from account:"
                           elementId="{ElementIds.getRscAccountListLabel}"
                      ui:field="accountListLabel_">
                 <ui:attribute name="text" key="publishFromAccountText"/>
             </rw:FormLabel>
             <rw:HyperlinkLabel styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}"
-                               ui:field="addAccountAnchor_" text="Add New Account">
+                               ui:field="addAccountAnchor_" text="Add new account">
                 <ui:attribute name="text" key="addNewAccountText"/>
             </rw:HyperlinkLabel>
          </g:HorizontalPanel>
@@ -72,7 +71,7 @@
                                    ui:field="accountList_" elementId="{ElementIds.getRscAccountList}">
          </rsc:RSConnectAccountList>
          <g:Label styleName="{res.style.firstControlLabel}"
-                  text="Publish To Account:"
+                  text="Publish to account:"
                   ui:field="publishToLabel_">
              <ui:attribute name="text" key="publishToAccountText"/>
          </g:Label>
@@ -96,7 +95,7 @@
                     <ui:attribute name="text" key="updateText"/>
                </g:Label>
                <rw:HyperlinkLabel stylePrimaryName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
-                                  ui:field="createNewAnchor_" text="Create New">
+                                  ui:field="createNewAnchor_" text="Create new">
                   <ui:attribute name="text" key="createNewText"/>
                </rw:HyperlinkLabel>
             </g:HorizontalPanel>

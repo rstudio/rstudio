@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -35,17 +34,13 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUISpelling;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier.CharClass;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.events.VisualModeSpellingAddToDictionaryEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
-
-import elemental2.core.JsArray;
-
 
 public class VisualModeSpelling extends SpellingContext
 {
@@ -61,7 +56,6 @@ public class VisualModeSpelling extends SpellingContext
    {
      super(docUpdateSentinel);  
      RStudioGinjector.INSTANCE.injectMembers(this);
-     docDisplay_ = docDisplay;
      context_ = context;
    }
    
@@ -191,13 +185,7 @@ public class VisualModeSpelling extends SpellingContext
    
    public PanmirrorUISpelling uiSpelling()
    {
-      CharClassifier classifier = docDisplay_.getFileType().getCharPredicate();
-      
       PanmirrorUISpelling uiSpelling = new PanmirrorUISpelling();
-      
-      uiSpelling.realtimeEnabled = () -> {
-         return spellChecker().realtimeSpellcheckEnabled();
-      };
 
       uiSpelling.checkWords = (words) -> {
          ArrayList<String> w = new ArrayList<>(Arrays.asList(words));
@@ -256,61 +244,7 @@ public class VisualModeSpelling extends SpellingContext
       uiSpelling.addToDictionary = (word) -> {
          spellChecker().addToUserDictionary(word);
       };
-      
-      uiSpelling.breakWords = (String text) -> {
-         JsArray<PanmirrorWordRange> words = new JsArray<>();
-         
-         int pos = 0;
-         while (pos < text.length()) 
-         {
-            // advance pos until we get past non-word characters
-            while (pos < text.length() && classifier.classify(text.charAt(pos)) != CharClass.Word)
-            {
-               pos++;
-            }
-            
-            // break out of the loop if we got to the end
-            if (pos == text.length())
-               break;
-            
-            // set start of word
-            int wordStart = pos++;
-            
-            // consume until a non-word is encountered
-            while (pos < text.length() && classifier.classify(text.charAt(pos)) != CharClass.NonWord)
-            {
-               pos++;
-            }
-            
-            // back over boundary (e.g. apostrophe) characters
-            while (classifier.classify(text.charAt(pos - 1)) == CharClass.Boundary)
-            {
-               pos--;
-            }
-            
-            // add word
-            PanmirrorWordRange word = new PanmirrorWordRange();
-            word.start = wordStart;
-            word.end = pos;
-            words.push(word);
-         }
-                  
-         return words;
-         
-      };
-      
-      uiSpelling.classifyCharacter = (ch) -> {
-         switch(classifier.classify(ch)) {
-         case Word:
-            return 0;
-         case Boundary:
-            return 1;
-         case NonWord:
-         default:
-            return 2;
-         }
-      };
-      
+
       return uiSpelling;
    }
    
@@ -330,7 +264,6 @@ public class VisualModeSpelling extends SpellingContext
          eventBus_.fireEvent(new VisualModeSpellingAddToDictionaryEvent(word));
    }
 
-   private final DocDisplay docDisplay_;
    private final Context context_;
    private EventBus eventBus_;
 }

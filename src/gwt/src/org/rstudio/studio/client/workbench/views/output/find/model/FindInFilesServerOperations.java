@@ -14,22 +14,24 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find.model;
 
-import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+
+import com.google.gwt.core.client.JsArrayString;
 
 public interface FindInFilesServerOperations
 {
-   void beginFind(String searchString,
+   void beginFind(String handle,
+                  String searchString,
                   boolean regex,
                   boolean isWholeWord,
                   boolean ignoreCase,
                   FileSystemItem directory,
                   JsArrayString includeFilePatterns,
+                  JsArrayString excludeFilePatterns,
                   boolean useGitGrep, 
                   boolean excludeGitIgnore,
-                  JsArrayString excludeFilePatterns,
                   ServerRequestCallback<String> requestCallback);
 
    void stopFind(String findOperationHandle,
@@ -37,30 +39,33 @@ public interface FindInFilesServerOperations
 
    void clearFindResults(ServerRequestCallback<Void> requestCallback);
 
-   void previewReplace(String searchString,
+   void previewReplace(String handle,
+                       String searchString,
                        boolean regex,
+                       boolean isWholeWord,
                        boolean searchIgnoreCase,
                        FileSystemItem dictionary,
                        JsArrayString includeFilePatterns,
+                       JsArrayString excludeFilePatterns,
                        boolean useGitGrep,
                        boolean excludeGitIgnore,
-                       JsArrayString excludeFilePatterns,
                        String replaceString,
                        ServerRequestCallback<String> requestCallback);
 
-   void completeReplace(String searchString,
+   void completeReplace(String handle,
+                        String searchString,
                         boolean regex,
                         boolean isWholeWord,
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
                         JsArrayString includeFilePatterns,
+                        JsArrayString excludeFilePatterns,
                         boolean useGitGrep,
                         boolean excludeGitIgnore,
-                        JsArrayString excludeFilePatterns,
                         int searchResults,
                         String replaceString,
                         ServerRequestCallback<String> requestCallback);
 
-   void stopReplace(String findOperationHandle,
+   void stopReplace(String handle,
                     ServerRequestCallback<Void> requestCallback);
 }

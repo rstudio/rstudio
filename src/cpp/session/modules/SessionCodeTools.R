@@ -610,7 +610,7 @@
 .rs.addFunction("getNames", function(object)
 {
    tryCatch({
-      if (is.environment(object))
+      if (is.environment(object) && !inherits(object, "R6"))
          ls(object, all.names = TRUE)
       else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
          dplyr::tbl_vars(object)
@@ -1091,9 +1091,7 @@
       }
    }
 
-   # all else fails, just provide a dummy return value
-   .rs.scalar("(...)")
-
+   .rs.scalar("")
 })
 
 .rs.addFunction("getActiveArgument", function(object,
@@ -1490,10 +1488,46 @@
  
 })
 
+# If a function internally calls out to one of these functions,
+# we assume that it may perform non-standard evaluation, and avoid
+# attempting certain diagnostics on its usages.
+#
+# Keep in sync with makeNsePrimitives() in RSexp.cpp
 .rs.setVar("nse.primitives", c(
-   "quote", "substitute", "match.call", "eval.parent",
-   "enquote", "bquote", "evalq", "lazy_dots", "compat_as_lazy_dots",
-   "select_vars", "quo", "quos", "enquo", "named_quos"
+   
+   # base R primitives
+   "bquote",
+   "enquote",
+   "eval.parent",
+   "evalq",
+   "expression",
+   "library",
+   "match.call",
+   "quote",
+   "require",
+   "subset",
+   "substitute",
+   "sys.call",
+   "sys.calls",
+   "sys.frame",
+   "sys.frames",
+   "sys.function",
+   "sys.parent",
+
+   # rlang tidy evaluation
+   "enexpr",
+   "enexprs",
+   "enquo",
+   "enquos",
+   "eval_tidy",
+   "quo",
+   "quos",
+
+   # dplyr -- not really primitives
+   "dplyr_quosures",
+   "group_by",
+   "group_by_prepare"
+   
 ))
 
 .rs.addFunction("performsNonstandardEvaluation", function(object)
@@ -1516,28 +1550,43 @@
 
 .rs.addFunction("performsNonstandardEvaluationImpl", function(node, nsePrimitives)
 {
+   # Validate that we have a call.
+   if (!is.call(node))
+      return(FALSE)
+   
+   # Check for things that look like tidyr evaluation; that is, `{{}}`.
+   isDoubleBracket <-
+      length(node) == 2L &&
+      is.symbol(node[[1L]]) &&
+      as.character(node[[1L]]) == "{" &&
+      is.call(node[[2L]]) &&
+      length(node[[2L]]) == 2L &&
+      is.symbol(node[[2L]][[1L]]) &&
+      as.character(node[[2L]][[1L]]) == "{"
+   
+   if (isDoubleBracket)
+      return(TRUE)
+   
    # Check if this is a call to an NSE primitive.
-   if (is.call(node))
+   head <- node[[1L]]
+   if (!is.symbol(head))
+      return(FALSE)
+   
+   headString <- as.character(head)
+   if (headString %in% nsePrimitives)
+      return(TRUE)
+
+   # Check if this is a call to an NSE primitive, qualified through
+   # `::` or `:::`.
+   if (headString %in% c("::", ":::") && length(node) == 3L)
    {
-      head <- node[[1]]
-      if (!is.symbol(head))
-         return(FALSE)
-
-      headString <- as.character(head)
-      if (headString %in% nsePrimitives)
+      rhs <- node[[3L]]
+      if (is.symbol(rhs) && as.character(rhs) %in% nsePrimitives)
          return(TRUE)
-
-      # Check if this is a call to an NSE primitive, qualified through
-      # `::` or `:::`.
-      if (headString %in% c("::", ":::") && length(node) == 3)
-      {
-         export <- node[[3]]
-         if (as.character(export) %in% nsePrimitives)
-            return(TRUE)
-      }
    }
-
-   return(FALSE)
+   
+   # Doesn't appear to be using NSE.
+   FALSE
 })
 
 .rs.addFunction("recursiveSearch", function(`_node`, fn, ...)
@@ -2619,4 +2668,64 @@
    # otherwise, treat 'envir' directly as the name of a namespace
    getNamespace(envir)
 
+})
+
+.rs.addFunction("stack", function(mode = "list")
+{
+   .data <- list()
+   storage.mode(.data) <- mode
+   
+   list(
+      
+      push = function(...) {
+         dots <- list(...)
+         for (data in dots) {
+            if (is.null(data))
+               .data[length(.data) + 1] <<- list(NULL)
+            else
+               .data[[length(.data) + 1]] <<- data
+         }
+      },
+      
+      pop = function() {
+         item <- .data[[length(.data)]]
+         length(.data) <<- length(.data) - 1
+         item
+      },
+      
+      peek = function() {
+         .data[[length(.data)]]
+      },
+      
+      contains = function(data) {
+         data %in% .data
+      },
+      
+      empty = function() {
+         length(.data) == 0
+      },
+      
+      get = function(index) {
+         if (index <= length(.data)) .data[[index]]
+      },
+      
+      set = function(index, value) {
+         .data[[index]] <<- value
+      },
+      
+      clear = function() {
+         .data <<- list()
+      },
+      
+      data = function() {
+         .data
+      }
+      
+   )
+   
+})
+
+.rs.addFunction("isAbsolutePath", function(path)
+{
+   grepl("^(?:/|~|[a-zA-Z]:[/\\])", path)
 })

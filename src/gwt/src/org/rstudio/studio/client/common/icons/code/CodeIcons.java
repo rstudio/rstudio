@@ -114,4 +114,7 @@ public interface CodeIcons extends ClientBundle
 
    @Source("column_2x.png")
    ImageResource column2x();
+
+   @Source("datatable_special_symbol_2x.png")
+   ImageResource datatableSpecialSymbol2x();
 }

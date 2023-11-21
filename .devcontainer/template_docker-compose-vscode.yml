@@ -1,0 +1,23 @@
+version: '3'
+services:
+    vscode:
+        build:
+            context: ..
+            dockerfile: Dockerfile
+            args: 
+                - USERNAME=${USER}
+                - BRANCH_NAME=${BRANCH_NAME}
+                - IMAGE_PREFIX=${IMAGE_PREFIX}
+                - OS_ARCH=${OS_ARCH}
+                - AWS_ARCH=${AWS_ARCH}
+        environment:
+                - RSTUDIO_NODE_PATH=${RSTUDIO_NODE_PATH}
+        ports:
+            - "8787"
+        tty: true
+        privileged: true
+        volumes:
+            - ../..:/workspace
+            - ~/:/userhome
+            - ~/.aws:/root/.aws
+            - /var/run/docker.sock:/var/run/docker.sock

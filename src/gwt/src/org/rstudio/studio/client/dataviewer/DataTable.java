@@ -171,6 +171,7 @@ public class DataTable
          if (i == 1)
          {
             columnTextWidget_ = new DataTableColumnWidget(this::setOffsetAndMaxColumns);
+            columnTextWidget_.getElement().setId("data-viewer-column-input");
             columnTextWidget_.setVisible(false);
             toolbar.addLeftWidget(columnTextWidget_);
          }

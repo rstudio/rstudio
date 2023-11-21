@@ -21,11 +21,17 @@
                                                          pixelRatio,
                                                          extraArgs)
 {
+   if (units == "px") # px = automatic size behavior 
+   {
+    height <- height * pixelRatio
+    width <- width * pixelRatio
+   }
+
    # form the arguments to the graphics device creator
    args <- list(
       filename = filename,
-      width    = width * pixelRatio,
-      height   = height * pixelRatio, 
+      width    = width,
+      height   = height, 
       units    = units,
       res      = 96 * pixelRatio
    )
@@ -62,8 +68,8 @@
    {
       device <- ragg::agg_png(
          filename = filename,
-         width    = width * pixelRatio,
-         height   = height * pixelRatio,
+         width    = width,
+         height   = height,
          units    = units,
          res      = 96 * pixelRatio
       )
@@ -76,6 +82,10 @@
    do.call(what = png, args = args)
 })
 
+# this seems like it is the only thing manipulated from NotebookPlots.cpp side
+# this is where pixelRatio is introduced to the machinery
+# it likely originates in RClientMetrics.cpp where it is drawn from
+# "r.session.client_metrics.device-pixel-ratio"
 .rs.addFunction("setNotebookGraphicsOption", function(filename,
                                                       height,
                                                       width,
@@ -87,7 +97,9 @@
    {
       .rs.createNotebookGraphicsDevice(filename, height, width, units,  pixelRatio, extraArgs)
       dev.control(displaylist = "enable")
-      .rs.setNotebookMargins()
+      # this introduces margins that makes the figure different from the actual output
+      # as seen in the rendered document, so disable it
+      # .rs.setNotebookMargins()
    })
 })
 
@@ -96,18 +108,39 @@
    save(plot, file = filename)
 })
 
+# this should not be used in my opinion (it is never called with
+# the change of setNotebookGraphicsOption above)
 .rs.addFunction("setNotebookMargins", function() {
    #           bot  left top  right
    par(mar = c(5.1, 4.1, 2.1, 2.1))
 })
 
+.rs.addFunction("replayNotebookPlotsPackages", function()
+{
+   grid <- asNamespace("grid")
+   names <- vapply(grid$.__S3MethodsTable__., function(method) {
+      environmentName(environment(method))
+   }, FUN.VALUE = character(1))
+   sort(unique(names))
+})
+
 .rs.addFunction("replayNotebookPlots", function(width, height, pixelRatio, tempFile, extraArgs) {
-   # open stdin (for consuming snapshots from parent process)
-   stdin <- file("stdin")
    
    require(grDevices, quietly = TRUE)
    
+   requiredPackages <- Sys.getenv("RS_NOTEBOOK_PACKAGES", unset = "")
+   requiredPackages <- strsplit(requiredPackages, ",", fixed = TRUE)[[1L]]
+   
+   suppressPackageStartupMessages({
+      for (package in requiredPackages) {
+         require(package, character.only = TRUE, quietly = TRUE)
+      }
+   })
+   
+   # open stdin (for consuming snapshots from parent process)
+   stdin <- file("stdin")
    snapshots <- readLines(stdin, warn = FALSE)
+   
    lapply(snapshots, function(snapshot) {
       
       # ignore empty lines
@@ -118,8 +151,11 @@
       # wasteful to use a separate device per plot, but the alternative is
       # doing a lot of state management and post-processing of the files
       # output from the device
-      output <- paste(tools::file_path_sans_ext(snapshot), "resized.png",
-                      sep = ".")
+      output <- paste(
+         tools::file_path_sans_ext(snapshot),
+         "resized.png",
+         sep = "."
+      )
       
       height <- if (height <= 0) width / 1.618 else height
       
@@ -127,52 +163,45 @@
                                        "px", pixelRatio, extraArgs)
       
       # actually replay the plot onto the device
-      tryCatch({
-         .rs.restoreGraphics(snapshot)
-      }, error = function(e) {
-         # nothing reasonable we can do here; we'll just omit this file from the
-         # output
-      })
+      tryCatch(
+         .rs.restoreGraphics(snapshot),
+         error = function(err) {
+            writeLines(conditionMessage(err), con = stderr())
+         }
+      )
       
       # close the device; has the side effect of committing the plot to disk
       dev.off()
       
-      # if the plot file was written out, emit to standard out for the caller to 
-      # consume
-      if (file.exists(output)) {
-         if (tempFile)
-         {
-            chunksPath <- dirname(snapshot)
-            chunksTempPath <- file.path(chunksPath, "temp")
-            
-            if (!dir.exists(chunksTempPath))
-               dir.create(chunksTempPath)
-            
-            chunkBaseName <- basename(tools::file_path_sans_ext(snapshot))
-            
-            final <- file.path(
-               chunksTempPath,
-               paste(chunkBaseName, "png", sep = ".")
-            )
-         }
-         else
-         {
-            final <- paste(tools::file_path_sans_ext(snapshot), "png", sep = ".")
-         }
+      # if the plot file was written out, emit to standard out for caller
+      if (!file.exists(output))
+         return(invisible(NULL))
+      
+      # build output path
+      final <- paste(tools::file_path_sans_ext(snapshot), "png", sep = ".")
+      if (tempFile) {
          
-         # remove the old copy of the plot if it existed
-         if (file.exists(final))
-            unlink(final)
+         chunksPath <- dirname(snapshot)
+         chunksTempPath <- file.path(chunksPath, "temp")
          
-         file.copy(output, final)
+         if (!dir.exists(chunksTempPath))
+            dir.create(chunksTempPath)
          
-         if (file.exists(output))
-            unlink(output)
+         chunkBaseName <- basename(tools::file_path_sans_ext(snapshot))
          
-         if (file.exists(final)) {
-            cat(final, "\n")
-         }
+         final <- file.path(
+            chunksTempPath,
+            paste(chunkBaseName, "png", sep = ".")
+         )
       }
+         
+      # remove the old copy of the plot if it existed
+      file.copy(output, final, overwrite = TRUE)
+      unlink(output)
+         
+      if (file.exists(final))
+         writeLines(final)
+      
    })
    
    invisible(NULL)

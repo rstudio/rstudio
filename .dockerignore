@@ -1,10 +1,12 @@
 # ignore everything except items that are specifically denoted
 *
 !dependencies/common/install-*
+!dependencies/common/lockfiles
 !dependencies/linux/install-*
 !dependencies/osx/install-*
 !dependencies/windows/*
 !dependencies/tools/rstudio-tools.sh
+!dependencies/tools/rstudio-tools.cmd
 !docker/jenkins
 !docker/docker-compile.sh
 !package/linux/install-dependencies

@@ -3,9 +3,9 @@ const process = require("process");
 
 const config = {
   plugins: [
-    [
-      '@electron-forge/plugin-webpack',
-      {
+    {
+      name: '@electron-forge/plugin-webpack',
+      config: {
         mainConfig: './webpack.main.config.js',
         renderer: {
           config: './webpack.renderer.config.js',
@@ -13,7 +13,9 @@ const config = {
             {
               js: './src/renderer/renderer.ts',
               name: 'main_window',
+              html: './src/renderer/renderer.html',
               preload: {
+                name: 'preload',
                 js: './src/renderer/preload.ts',
               },
             },
@@ -47,11 +49,11 @@ const config = {
             }
           ],
         },
-        // uncoment and change these ports to launch multiple debug instances
-        // port: 3000,
-        // loggerPort: 9000,
-      },
-    ],
+      }
+          // uncoment and change these ports to launch multiple debug instances
+          // port: 3000,
+          // loggerPort: 9000,
+    },
   ],
 
   // https://electron.github.io/electron-packager/main/interfaces/electronpackager.options.html 

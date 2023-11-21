@@ -42,8 +42,8 @@ std::string errorAsLogEntry(const Error& error);
 #define LOG_ERROR(error) rstudio::core::log::logError(error, \
                                                       ERROR_LOCATION)
 
-#define LOG_ERROR_NAMED(logSection, error) rstudio::core::log::logError(logSection, \
-                                                                        error, \
+#define LOG_ERROR_NAMED(logSection, error) rstudio::core::log::logError(error, \
+                                                                        logSection, \
                                                                         ERROR_LOCATION)
 
 #define LOG_ERROR_MESSAGE(message) rstudio::core::log::logErrorMessage(message, \
@@ -82,7 +82,9 @@ std::string errorAsLogEntry(const Error& error);
 #define LOG_INFO_MESSAGE_NAMED(logSection, message) rstudio::core::log::logInfoMessage(message, \
                                                                                        logSection)
 
-#define LOG_DEBUG_MESSAGE(message) rstudio::core::log::logDebugMessage(message)
+
+#define LOG_DEBUG_MESSAGE(message) (rstudio::core::log::isLogLevel(rstudio::core::log::LogLevel::DEBUG_LEVEL) ? rstudio::core::log::logDebugMessageReturn(message) : false)
+
 
 #define LOG_DEBUG_MESSAGE_WITH_PROPS(message, props) rstudio::core::log::logDebugMessage(message, \
                                                                                          std::string(), \

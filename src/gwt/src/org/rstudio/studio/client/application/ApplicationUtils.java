@@ -38,14 +38,25 @@ public class ApplicationUtils
       return pattern.replaceAll(url, replaceWith);
    }
    
-   // Returns:
-   // < 0 if version1 is earlier than version 2
-   // 0 if version1 and version2 are the same 
-   // > 0 if version1 is later than version 2
+   /**
+    * Compares two version strings, which may be in these formats:
+    *   * MAJOR.MINOR.PATCH - e.g. 3.6.0
+    *   * YEAR.MONTH.PATCH+COMMITS - e.g. 2023.06.0+421
+    *   * MAJOR.MINOR.PATCH-NUM - e.g. 1.4.1743-4
+    * @example compareVersions("2023.06.0+421", "2023.06.1+524") returns < 0
+    *          compareVersions("2023.06.1+524", "2023.06.1+524") returns 0
+    *          compareVersions("2023.06.2+999", "2023.06.1+524") returns > 0
+    * @param version1 The first version string to compare
+    * @param version2 The second version string to compare
+    * @return < 0 if version1 is earlier than version 2
+    *         0 if version1 and version2 are the same
+    *         > 0 if version1 is later than version 2
+    */
    public static int compareVersions(String version1, String version2)
    {
-      String[] v1parts = version1.split("\\.");
-      String[] v2parts = version2.split("\\.");
+      String versionRegex = "\\.|\\+|\\-";
+      String[] v1parts = version1.split(versionRegex); // example: ["2023", "06", "0", "421"]
+      String[] v2parts = version2.split(versionRegex); // example: ["2023", "06", "1", "524"]
       int numParts = Math.min(v1parts.length, v2parts.length);
       for (int i = 0; i < numParts; i++)
       {

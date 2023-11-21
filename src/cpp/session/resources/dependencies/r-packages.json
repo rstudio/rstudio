@@ -395,7 +395,6 @@
                 "jsonlite",
                 "knitr",
                 "magrittr",
-                "markdown",
                 "mime",
                 "rmarkdown",
                 "stringi",
@@ -499,7 +498,7 @@
         "import_mongo": {
             "description": "Mongo DB Import",
             "packages": [
-                "mogolite",
+                "mongolite",
                 "jsonlite"
             ]
         },

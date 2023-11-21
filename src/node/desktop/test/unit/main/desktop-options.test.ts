@@ -13,7 +13,7 @@
  */
 
 import { assert, expect } from 'chai';
-import { BrowserWindow, Rectangle, screen } from 'electron';
+import { BrowserWindow, screen } from 'electron';
 import { Display } from 'electron/main';
 import { describe } from 'mocha';
 import sinon from 'sinon';
@@ -25,7 +25,6 @@ import {
   clearOptionsSingleton,
   DesktopOptionsImpl,
   ElectronDesktopOptions,
-  firstIsInsideSecond,
 } from '../../../src/main/preferences/electron-desktop-options';
 import { createSinonStubInstanceForSandbox, tempDirectory } from '../unit-utils';
 
@@ -52,10 +51,6 @@ function deleteTestingDesktopOptions(): Err {
   clearOptionsSingleton();
   const filepath = new FilePath(kTestingConfigDirectory);
   return filepath.removeIfExistsSync();
-}
-
-function rec(height = 10, width = 10, x = 0, y = 0): Rectangle {
-  return { height: height, width: width, x: x, y: y };
 }
 
 describe('DesktopOptions', () => {
@@ -85,6 +80,9 @@ describe('DesktopOptions', () => {
       assert.equal(options.rBinDir(), nonWindowsRBinDir);
       assert.equal(options.peferR64(), nonWindowsPreferR64);
     }
+    if (process.platform === 'darwin' && process.arch === 'arm64') {
+      assert.equal(options.checkForRosetta(), properties.platform.default.macos.checkForRosetta);
+    }
   });
   it('set/get functionality returns correct values', () => {
     const options = testingDesktopOptions();
@@ -92,8 +90,9 @@ describe('DesktopOptions', () => {
     const newProportionalFont = 'testProportionalFont';
     const newFixWidthFont = 'testFixWidthFont';
     const newZoom = 1.5;
-    const newWindowBounds = { width: 123, height: 321, x: 0, y: 0 };
+    const newWindowBounds = { width: 123, height: 321, x: 0, y: 0, maximized: false };
     const newAccessibility = !(properties.view.default.accessibility as boolean);
+    const newDisableRendererAccessibility = !(properties.view.default.disableRendererAccessibility as boolean);
     const newLastRemoteSessionUrl = 'testLastRemoteSessionUrl';
     const newAuthCookies = ['test', 'Autht', 'Cookies'];
     const newTempAuthCookies = ['test', 'Temp', 'Auth', 'Cookies'];
@@ -112,6 +111,7 @@ describe('DesktopOptions', () => {
     options.setZoomLevel(newZoom);
     options.saveWindowBounds(newWindowBounds);
     options.setAccessibility(newAccessibility);
+    options.setDisableRendererAccessibility(newDisableRendererAccessibility);
     options.setLastRemoteSessionUrl(newLastRemoteSessionUrl);
     options.setAuthCookies(newAuthCookies);
     options.setTempAuthCookies(newTempAuthCookies);
@@ -124,6 +124,7 @@ describe('DesktopOptions', () => {
     assert.equal(options.zoomLevel(), newZoom);
     assert.deepEqual(options.windowBounds(), newWindowBounds);
     assert.equal(options.accessibility(), newAccessibility);
+    assert.equal(options.disableRendererAccessibility(), newDisableRendererAccessibility);
     assert.equal(options.lastRemoteSessionUrl(), newLastRemoteSessionUrl);
     assert.deepEqual(options.authCookies(), newAuthCookies);
     assert.deepEqual(options.tempAuthCookies(), newTempAuthCookies);
@@ -135,6 +136,12 @@ describe('DesktopOptions', () => {
     } else {
       assert.equal(options.rBinDir(), nonWindowsRBinDir);
       assert.equal(options.peferR64(), nonWindowsPreferR64);
+    }
+
+    if (process.platform === 'darwin' && process.arch === 'arm64') {
+      const newCheckForRosetta = !properties.platform.default.macos.checkForRosetta;
+      options.setCheckForRosetta(newCheckForRosetta);
+      assert.equal(options.checkForRosetta(), newCheckForRosetta);
     }
   });
   it('values persist between instances', () => {
@@ -154,7 +161,7 @@ describe('DesktopOptions', () => {
       { workArea: { width: 2000, height: 2000, x: 0, y: 0 } },
       { workArea: { width: 2000, height: 2000, x: 2000, y: 0 } },
     ];
-    const savedWinBounds = { width: 500, height: 500, x: 2100, y: 100 };
+    const savedWinBounds = { width: 500, height: 500, x: 2100, y: 100, maximized: false };
 
     // Save bounds onto a secondary display on the right
     ElectronDesktopOptions().saveWindowBounds(savedWinBounds);
@@ -175,7 +182,7 @@ describe('DesktopOptions', () => {
   });
   it('restores window bounds to default when saved display no longer present', () => {
     const defaultDisplay = { bounds: { width: 2000, height: 2000, x: 0, y: 0 } };
-    const savedWinBounds = { width: 500, height: 500, x: 0, y: 0 };
+    const savedWinBounds = { width: 500, height: 500, x: 0, y: 0, maximized: false };
     const defaultWinWidth = properties.view.default.windowBounds.width;
     const defaultWinHeight = properties.view.default.windowBounds.height;
 
@@ -194,106 +201,6 @@ describe('DesktopOptions', () => {
     sandbox.assert.calledTwice(testMainWindow.setSize);
     sandbox.assert.alwaysCalledWith(testMainWindow.setSize, defaultWinWidth, defaultWinHeight);
     sandbox.restore();
-  });
-});
-
-/**
- * A note on Electron's rectangle/display coordinate system:
- * (x, y) coord is top left corner of a Rectangle or Display object
- * (x + width, y + height) is bottom right corner
- *
- * x increases to the right, decreases to the left
- * y increases downwards, decreases upwards
- *
- * primary display's (x, y) coord is always (0, 0)
- * negative values are legal
- * external display to the right of primary display could be (primary.width, 0) ex. (1920, 0)
- * external display to the left of primary display could be (-secondary.width, 0) ex. (-1200, 0)
- */
-describe('FirstIsInsideSecond', () => {
-  const INNER_WIDTH = 10;
-  const INNER_HEIGHT = 10;
-  const INNER_X = 0;
-  const INNER_Y = 0;
-
-  const OUTER_WIDTH = 20;
-  const OUTER_HEIGHT = 20;
-  const OUTER_X = 0;
-  const OUTER_Y = 0;
-
-  const X_FAR_OUT_WEST = -100;
-  const X_FAR_BACK_EAST = 100;
-  const Y_FAR_UP_NORTH = -100;
-  const Y_FAR_DOWN_SOUTH = 100;
-
-  it('basic case', () => {
-    assert.isTrue(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X + 1, INNER_Y + 1),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
-      ),
-    ); // entirely inside
-
-    // top and left boarders shared
-    assert.isTrue(firstIsInsideSecond(rec(), rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y)));
-
-    // same size rectangles is valid
-    assert.isTrue(firstIsInsideSecond(rec(), rec()));
-  });
-  it('backwards case', () => {
-    assert.isFalse(firstIsInsideSecond(rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y), rec()));
-  });
-  it('partially outside', () => {
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X + 11, INNER_Y),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
-      ),
-    );
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X, INNER_Y + 11),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
-      ),
-    );
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X - 1, INNER_Y),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
-      ),
-    );
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X, INNER_Y - 1),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
-      ),
-    );
-  });
-  it('entirely outside', () => {
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, X_FAR_BACK_EAST, Y_FAR_DOWN_SOUTH),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
-      ),
-    );
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, X_FAR_OUT_WEST, Y_FAR_DOWN_SOUTH),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
-      ),
-    );
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, X_FAR_BACK_EAST, Y_FAR_UP_NORTH),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
-      ),
-    );
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, X_FAR_OUT_WEST, Y_FAR_UP_NORTH),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
-      ),
-    );
   });
 });
 

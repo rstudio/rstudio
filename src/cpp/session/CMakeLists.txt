@@ -104,7 +104,7 @@ if(WIN32)
 endif()
 
 # include files
-file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
+file(GLOB_RECURSE SESSION_HEADER_FILES CONFIGURE_DEPENDS "*.h*")
 
 
 # source files
@@ -167,6 +167,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionClipboard.cpp
    modules/SessionCrashHandler.cpp
    modules/SessionConsole.cpp
+   modules/SessionCopilot.cpp
    modules/SessionCpp.cpp
    modules/SessionDependencies.cpp
    modules/SessionDependencyList.cpp
@@ -374,7 +375,7 @@ else()
 endif()
 
 # R files
-file(GLOB_RECURSE SESSION_R_FILES "modules/*.R")
+file(GLOB_RECURSE SESSION_R_FILES CONFIGURE_DEPENDS "modules/*.R")
 
 # test files
 if (RSTUDIO_UNIT_TESTS_ENABLED)
@@ -625,7 +626,9 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # templates
    install(DIRECTORY "resources/templates"
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources
+           PATTERN ".gitignore"
+           EXCLUDE)
    # pandoc
    install(DIRECTORY "resources/pandoc"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
@@ -694,20 +697,29 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
          if (RSTUDIO_ELECTRON)
             install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}" 
                   DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
-                  USE_SOURCE_PERMISSIONS)
+                  USE_SOURCE_PERMISSIONS
+                  PATTERN ".gitignore"
+                  EXCLUDE)
          else()
             install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
                   DESTINATION "${RSTUDIO_INSTALL_BIN}"
                   USE_SOURCE_PERMISSIONS
-                  PATTERN "*/share" EXCLUDE)
+                  PATTERN "*/share"
+                  EXCLUDE
+                  PATTERN ".gitignore"
+                  EXCLUDE)
             install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
                   DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/quarto"
-                  USE_SOURCE_PERMISSIONS)
+                  USE_SOURCE_PERMISSIONS
+                  PATTERN ".gitignore"
+                  EXCLUDE)
          endif()
       else()
          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
                DESTINATION "${RSTUDIO_INSTALL_BIN}"
-               USE_SOURCE_PERMISSIONS)
+               USE_SOURCE_PERMISSIONS
+               PATTERN ".gitignore"
+               EXCLUDE)
       endif()
    else()
       install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"

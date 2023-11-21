@@ -151,11 +151,14 @@ for (binding in bindings)
 
 .rs.addJsonRpcHandler("create_aliased_path", function(path)
 {
-   if (file.exists(path)) {
-      return(.rs.scalar(.rs.createAliasedPath(normalizePath(path))))
-   } else {
+   if (!file.exists(path))
       return(.rs.scalar(""))
-   }
+   
+   # make sure we use forward slashes here, since otherwise our
+   # home path detection will fail to work
+   # https://github.com/rstudio/rstudio/issues/13134
+   normalized <- normalizePath(path, winslash = "/", mustWork = FALSE)
+   .rs.scalar(.rs.createAliasedPath(normalized))
 })
 
 .rs.addFunction("scanFiles", function(path,

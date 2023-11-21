@@ -17,6 +17,10 @@
 #include <signal.h>
 #include <unordered_set>
 
+#ifndef _WIN32
+#include <sys/resource.h>
+#endif
+
 #include "SessionConsoleInput.hpp"
 
 #include <session/prefs/UserPrefs.hpp>
@@ -314,6 +318,29 @@ void setSuspendedFromTimeout(bool suspended)
    
 bool suspendSession(bool force, int status)
 {
+#ifndef _WIN32
+   // Attempt to lower this session's CPU priority to something below average.
+   // Suspension is never as important as ongoing work on the system, but large
+   // sessions can be CPU-intensive to serialize.
+   //
+   // We could also do this on Windows with SetPriorityClass(), but on that OS
+   // the likelihood of being a multi-user system is much lower.
+   //
+   // Note also that we'd love to throttle I/O here, too, but there is no Unix
+   // API to do so and at least on Linux this is only possible via cgroups.
+   if (setpriority(PRIO_PROCESS, 0, 10) < 0)
+   {
+      core::Error error = core::systemError(errno, ERROR_LOCATION);
+      error.addProperty("description",
+                        "Failed to lower CPU priority during suspend");
+      LOG_ERROR(error);
+   }
+   else
+   {
+      LOG_INFO_MESSAGE("Lowered CPU priority during suspend");
+   }
+#endif
+
    // need to make sure the global environment is loaded before we
    // attempt to save it!
    r::session::ensureDeserialized();
@@ -329,7 +356,7 @@ bool suspendSession(bool force, int status)
    return r::session::suspend(force, status, session::options().ephemeralEnvVars());
 }
 
-void checkForTimeout(const boost::function<bool()>& allowSuspend)
+void checkForIdleSuspend(const boost::function<bool()>& allowSuspend)
 {
    bool canSuspend = allowSuspend();
 
@@ -406,7 +433,7 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
    }
 }
 
-void checkForSuspend(const boost::function<bool()>& allowSuspend)
+void checkForRequestedSuspend(const boost::function<bool()>& allowSuspend)
 {
    // never suspend in desktop mode
    if (options().programMode() == kSessionProgramModeDesktop)
@@ -432,8 +459,20 @@ void checkForSuspend(const boost::function<bool()>& allowSuspend)
             "computations may have been interrupted.");
       }
 
+      // exit status
+      int status = EX_FORCE;
+      if (options().getBoolOverlayOption(kLauncherSessionOption) && (core::system::getenv("RSTUDIO_FORCE_NON_ZERO_EXIT_CODE") != "1"))
+      {
+         // Avoid generating nonzero exit codes when running under Launcher.
+         // Error codes from normal behaviour like this are confusing for Slurm
+         // and Kubernetes administrators unfamiliar with our workloads.
+         // However, non-zero exit codes are needed by Sagemaker, so we allow
+         // them when requested by setting env var RSTUDIO_FORCE_NON_ZERO_EXIT_CODE=1.
+         status = EXIT_SUCCESS;
+      }
+
       // execute the forced suspend (does not return)
-      suspendSession(true, EX_FORCE);
+      suspendSession(true, status);
    }
 
    // cooperative suspend request
@@ -447,9 +486,6 @@ void checkForSuspend(const boost::function<bool()>& allowSuspend)
       // errors will be logged/reported internally and we will move on
       suspendSession(false);
    }
-
-   // timeout suspend
-   checkForTimeout(allowSuspend);
 }
 
 std::string mostSignificantTimeAgo(const boost::posix_time::ptime& before, const boost::posix_time::ptime& after = boost::posix_time::second_clock::universal_time())

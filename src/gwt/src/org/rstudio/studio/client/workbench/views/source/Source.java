@@ -14,30 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -79,8 +61,8 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.MouseNavigateEvent;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -99,9 +81,9 @@ import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
+import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -132,9 +114,9 @@ import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.R
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.CloseObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.RefreshObjectExplorerEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.CloseObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
@@ -148,6 +130,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CloseAllSourceDocsExceptEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CloseDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
@@ -157,10 +140,8 @@ import org.rstudio.studio.client.workbench.views.source.events.CollabEditStarted
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EditPresentation2SourceEvent;
-import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
-import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
+import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EnsureVisibleSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent;
@@ -168,12 +149,13 @@ import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWin
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocInitiatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
-import org.rstudio.studio.client.workbench.views.source.events.CloseDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
@@ -183,11 +165,30 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 @Singleton
 public class Source implements InsertSourceEvent.Handler,
@@ -221,7 +222,7 @@ public class Source implements InsertSourceEvent.Handler,
                                EditPresentation2SourceEvent.Handler,
                                XRefNavigationEvent.Handler,
                                NewDocumentWithCodeEvent.Handler,
-                               MouseNavigateEvent.Handler,
+                               DesktopMouseNavigateEvent.Handler,
                                RStudioApiRequestEvent.Handler,
                                CloseAllSourceDocsExceptEvent.Handler
 {
@@ -342,8 +343,9 @@ public class Source implements InsertSourceEvent.Handler,
       events_.addHandler(ScrollToPositionEvent.TYPE, this);
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
       events_.addHandler(XRefNavigationEvent.TYPE, this);
+      
       if (Desktop.hasDesktopFrame())
-         events_.addHandler(MouseNavigateEvent.TYPE, this);
+         events_.addHandler(DesktopMouseNavigateEvent.TYPE, this);
 
       events_.addHandler(SourcePathChangedEvent.TYPE,
             new SourcePathChangedEvent.Handler()
@@ -1887,7 +1889,7 @@ public class Source implements InsertSourceEvent.Handler,
    }
 
    @Override
-   public void onMouseNavigate(MouseNavigateEvent event)
+   public void onDesktopMouseNavigate(DesktopMouseNavigateEvent event)
    {
       if (isPointInSourcePane(event.getMouseX(), event.getMouseY()))
       {
@@ -3235,6 +3237,19 @@ public class Source implements InsertSourceEvent.Handler,
                            new VoidServerRequestCallback());
                   }
                }));
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_SET_GHOST_TEXT)
+      {
+         RStudioApiRequestEvent.SetGhostTextData data = requestEvent.getPayload().cast();
+         invokeEditorApiAction(null, (TextEditingTarget target) ->
+         {
+            DocDisplay editor = target.getDocDisplay();
+            editor.setGhostText(data.getText());
+            
+            JsObject response = JsObject.createJsObject();
+            response.setString("id", target.getId());
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         });
       }
    }
 

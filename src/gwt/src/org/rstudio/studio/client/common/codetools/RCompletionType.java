@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.common.codetools;
 
+import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContext;
+
 public class RCompletionType
 {
    public static final int UNKNOWN     =  0;
@@ -44,6 +46,11 @@ public class RCompletionType
    public static final int YAML_KEY    = 25;
    public static final int YAML_VALUE  = 26;
    public static final int COLUMN      = 27;
+   public static final int R6_OBJECT   = 28;
+   public static final int DATATABLE_SPECIAL_SYMBOL = 29;
+   public static final int SECUNDARY_ARGUMENT = 30;
+   public static final int ACTIVE_BINDING = 31;
+   
    public static final int SNIPPET     = 98;
    public static final int CONTEXT     = 99;
    
@@ -60,4 +67,30 @@ public class RCompletionType
       return type == FILE ||
              type == DIRECTORY;
    }
+
+   public static int score(int type, int context) 
+   {
+      // same logic as .rs.sortCompletions() on the server side
+      switch(type){
+         case ARGUMENT: return 1;
+         case COLUMN: return 2;
+         case DATATABLE_SPECIAL_SYMBOL: return 3;
+         case DATAFRAME: 
+         {
+            if (context != AutocompletionContext.TYPE_NAMESPACE_EXPORTED && context != AutocompletionContext.TYPE_NAMESPACE_ALL)
+               return 4;
+
+            break;
+         }
+            
+         case SECUNDARY_ARGUMENT: return 5;
+
+         case PACKAGE: return 101;
+         case CONTEXT: return 102;
+         default: break;
+      }
+
+      return 100;
+   }
+
 }

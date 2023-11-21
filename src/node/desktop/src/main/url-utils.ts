@@ -66,12 +66,7 @@ export function isLocalUrl(url: URL) {
  */
 export function isAllowedProtocol(url: URL) {
   const protocol = url.protocol;
-  const allowedProtocols = [
-    'http:',
-    'https:',
-    'mailto:',
-    'data:',
-  ];
+  const allowedProtocols = ['http:', 'https:', 'mailto:', 'data:'];
   return allowedProtocols.includes(protocol);
 }
 
@@ -115,7 +110,7 @@ export async function waitForUrlWithTimeout(
   return waitWithTimeout(checkReady, initialWaitMs, incrementWaitMs, maxWaitSec);
 }
 
-export function makeAbsoluteUrl(url: string) : URL {
+export function makeAbsoluteUrl(url: string): URL {
   const link = new URL(url, 'http://127.0.0.1');
   return link;
 }

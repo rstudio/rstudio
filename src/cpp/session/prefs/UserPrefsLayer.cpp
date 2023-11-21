@@ -110,7 +110,7 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
    }
 
    // Modify the error to be more descriptive
-   if (isFileNotFoundError(error) && prefsFile_.exists())
+   if (isFileNotFoundError(error))
    {
       error = Error(
          error.getName(),

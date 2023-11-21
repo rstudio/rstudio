@@ -36,6 +36,7 @@
 
 #include <r/ROptions.hpp>
 #include <r/session/RSession.hpp>
+#include <r/session/RSuspend.hpp>
 #include <r/session/RClientState.hpp> 
 #include <r/RFunctionHook.hpp>
 #include <r/RRoutines.hpp>
@@ -185,6 +186,12 @@ Error setClientState(const json::JsonRpcRequest& request,
    clientState.putTemporary(temporaryState);
    clientState.putPersistent(persistentState);
    clientState.putProjectPersistent(projPersistentState);
+
+   // commit state
+   clientState.commit(
+         r::session::ClientStateCommitPersistentOnly,
+         r::session::utils::clientStatePath(),
+         r::session::utils::projectClientStatePath());
    
    return Success();
 }

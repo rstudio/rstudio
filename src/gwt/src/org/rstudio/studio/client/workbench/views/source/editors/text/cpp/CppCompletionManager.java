@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
@@ -36,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -306,8 +306,10 @@ public class CppCompletionManager implements CompletionManager
                                  ((request_ != null) && request_.isExplicit());
 
       // see if we even have a completion position
-      boolean alwaysComplete = userPrefs_.codeCompletion().getValue() ==
-                                            UserPrefs.CODE_COMPLETION_ALWAYS;
+      boolean alwaysComplete =
+            userPrefs_.copilotEnabled().getValue() == false &&
+            userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS;
+      
       int autoChars = userPrefs_.codeCompletionCharacters().getValue();
       final CompletionPosition completionPosition =
             CppCompletionUtils.getCompletionPosition(docDisplay_,

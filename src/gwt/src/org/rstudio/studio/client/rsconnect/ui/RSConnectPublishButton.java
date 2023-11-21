@@ -16,7 +16,6 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -49,13 +48,13 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
+import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList.Entry;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
-import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList.Entry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -66,6 +65,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -387,14 +387,6 @@ public class RSConnectPublishButton extends Composite
    public void onRSConnectDeploymentCompleted(
          RSConnectDeploymentCompletedEvent event)
    {
-      if (!event.succeeded())
-         return;
-      
-      // when a deployment is successful, refresh ourselves. Consider: it's 
-      // a little wasteful to do this whether or not the deployment was for 
-      // the content on which this button is hosted, but there are unlikely to
-      // be more than a couple publish buttons at any one time, and this is
-      // cheap (just hits the local disk)
       populateDeployments(true);
    }
 
@@ -742,9 +734,10 @@ public class RSConnectPublishButton extends Composite
    // destinations
    private boolean recomputeMenuVisibility()
    {
-      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
+      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue() ||
+         pUserPrefs_.get().enableCloudPublishUi().getGlobalValue())
       {
-         // always show the menu when RSConnect is enabled
+         // always show the menu when RSConnect or Posit Cloud is enabled
          return true;
       }
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
@@ -773,7 +766,8 @@ public class RSConnectPublishButton extends Composite
       
       // if both internal and external publishing is disabled, hide ourselves
       if (!session_.getSessionInfo().getAllowExternalPublish() &&
-          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
+          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue() &&
+          !pUserPrefs_.get().enableCloudPublishUi().getGlobalValue())
          return false;
       
       // if we're bound to a command's visibility/enabled state, check that
@@ -798,9 +792,10 @@ public class RSConnectPublishButton extends Composite
           StringUtil.isNullOrEmpty(contentPath_))
          return false;
 
-      // If publishing to Connect is disabled, then we can't publish APIs
+      // If publishing to Connect and Cloud are both disabled, then we can't publish APIs
       if (contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API &&
-          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
+          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue() &&
+          !pUserPrefs_.get().enableCloudPublishUi().getGlobalValue())
       {
          return false;
       }
@@ -1016,7 +1011,6 @@ public class RSConnectPublishButton extends Composite
    private Commands commands_;
    private GlobalDisplay display_;
    private Session session_;
-   @SuppressWarnings("unused")
    private Provider<UserPrefs> pUserPrefs_;
    private Provider<UserState> pUserState_;
    private PlotPublishMRUList plotMru_;

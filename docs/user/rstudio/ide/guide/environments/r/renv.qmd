@@ -1,5 +1,6 @@
 ---
 title: "renv"
+date-meta: 2022-12-12
 ---
 
 The [`renv` package](https://rstudio.github.io/renv/articles/renv.html) helps you create **r**eproducible **env**ironments for your R projects. Use `renv` to make your R projects more:

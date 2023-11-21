@@ -1,5 +1,6 @@
 ---
 title: "Code Diagnostics"
+date-meta: 2022-12-12
 ---
 
 RStudio has the ability to perform static and dynamic analysis of R code or what is known as "Diagnostics". 

@@ -1,6 +1,7 @@
 @url NOTE note2x;
 @url WARNING warning2x;
 @url ERROR error2x;
+@url SPELLING spelling2x;
 
 .error, .fatal {
     background-image: ERROR;
@@ -8,6 +9,10 @@
 
 .warning {
    background-image: WARNING;
+}
+
+.spelling {
+   background-image: SPELLING;
 }
 
 .info, .ignored, .note, .style {

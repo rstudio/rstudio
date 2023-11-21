@@ -1,0 +1,24 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rw='urn:import:org.rstudio.core.client.widget'>
+             
+	<ui:style>
+	
+	.container {
+		margin-left: 6px;
+	}
+	
+	.container p {
+		margin-top: 0;
+		margin-bottom: 16px;
+	}
+	
+	</ui:style>
+	
+	<div class="{style.container}">
+		<p>Navigate to <a ui:field="verificationUri_" target="_blank"/> to complete signing in.</p>
+		<p>Verification code: <span ui:field="verificationCode_" /></p>
+		<p>This dialog will automatically close after you have finished verification.</p>
+	</div>
+	
+</ui:UiBinder>

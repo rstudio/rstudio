@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsVectorInteger;
 import org.rstudio.core.client.StringUtil;
@@ -56,6 +55,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChu
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 
@@ -447,8 +447,14 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       String code = docDisplay_.getCode(
          scope.getPreamble(),
          scope.getEnd());
-      NotebookQueueUnit unit = NotebookQueueUnit.create(sentinel_.getId(), 
-            id, chunk.getExecMode(), chunk.getExecScope(), code);
+      
+      NotebookQueueUnit unit = NotebookQueueUnit.create(
+            sentinel_.getId(), 
+            sentinel_.getType(),
+            id,
+            chunk.getExecMode(),
+            chunk.getExecScope(),
+            code);
       
       // add a pending range (if it has any content)
       if (!range.getStart().isEqualTo(range.getEnd()))

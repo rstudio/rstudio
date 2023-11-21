@@ -1,5 +1,6 @@
 ---
 title: "Screen Reader"
+date-meta: 2022-12-12
 ---
 
 This article aims to provide screen-reader users with some effective strategies for RStudio navigation.
@@ -24,7 +25,7 @@ Several accessibility-related options are available under the Help / Accessibili
 
 ## RStudio Desktop
 
--   Notes: Due to underlying accessibility issues introduced by components used to build RStudio Desktop, we cannot yet recommend its use via a screen reader except in an experimental fashion. We are actively working with the developer of these components to get these issues addressed, and will be releasing updates with these fixes as soon as we can.
+-   Notes: Screen-reader support for RStudio Desktop requires the Electron-based open-source version 2022.12 (Elsbeth Geranium) or newer. RStudio Desktop Pro does not support screen-reader operation at this time.
 
 ## Posit Workbench / RStudio Server
 
@@ -47,11 +48,9 @@ In most cases, screen reader users will have to keep turning off their virtual c
 
 ### Screen reader settings
 
-When using Posit Workbench or RStudio Server or later with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
+When using Posit Workbench, RStudio Server. or RStudio Desktop 2022.12 open-source (or later) with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
 
-The easiest way to enable the \"Screen Reader Support\" mode, however, is using its own keyboard shortcut by pressing \"Alt+Shift+/ (forward slash)\" on Windows or Linux; \"Ctrl+Option+/ (forward slash)\" on Mac.
-
--   Notes for Mac Users: the default VoiceOver modifier (VO) key conflict with any RStudio\'s shortcuts using Ctrl+Opt key combinations like above. Please use the VoiceOver pass-through keys (Ctrl+Opt+Tab) each time before pressing any RStudio\'s shortcuts requiring Ctrl+Opt key combination. Or, you can change the VO modifier key into \"Caps Lock\" via VoiceOver Utility (VO+F8) / General / \"Keys to use as the VoiceOver modifier\" setting.
+The easiest way to enable the \"Screen Reader Support\" mode, however, is using its own keyboard shortcut by pressing \"Alt+Shift+/ (forward slash)\" on Windows or Linux; \"Ctrl+Shift+U\" on Mac.
 
 Once the \"Screen Reader Support\" mode is toggled on, you will hear the following dialog message:
 

@@ -326,6 +326,13 @@ test_context("PosixSystemTests")
 
    test_that("Current working directory determined correctly with lsof method")
    {
+      FilePath lsofPath;
+      Error error = findProgramOnPath("lsof", &lsofPath);
+      expect_false(error);
+      
+      std::string resolvedPath = lsofPath.getAbsolutePath();
+      expect_true(resolvedPath.find("lsof") != std::string::npos);
+
       FilePath emptyPath;
       FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
       pid_t pid = fork();
@@ -333,13 +340,15 @@ test_context("PosixSystemTests")
 
       if (pid == 0)
       {
-         ::sleep(1);
+         ::sleep(2); // 1 sec was not enough time for lsof to run all the time in jenkins
          _exit(0);
       }
       else
       {
          // we now have a subprocess
-         FilePath cwd = currentWorkingDirViaLsof(pid);
+         FilePath cwd;
+         error = currentWorkingDirViaLsof(pid, &cwd);
+         expect_false(error);
          expect_false(cwd.isEmpty());
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);

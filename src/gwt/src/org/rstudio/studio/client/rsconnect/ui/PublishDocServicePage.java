@@ -19,10 +19,10 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.ServerType;
 
 import com.google.gwt.resources.client.ImageResource;
 
@@ -49,7 +49,8 @@ public class PublishDocServicePage
       if (input.isMultiRmd() && !input.isWebsiteRmd())
       {
          connectPage = new PublishMultiplePage(rscTitle, rscDesc,
-               new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input);
+               new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input,
+               ServerType.RSCONNECT);
       }
       else 
       {
@@ -58,14 +59,14 @@ public class PublishDocServicePage
             // static input implies static output
             connectPage = new PublishFilesPage(rscTitle, rscDesc,
                   new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input,
-                  false, true);
+                  false, true, ServerType.RSCONNECT);
          }
          else
          {
             connectPage = new PublishReportSourcePage(rscTitle, rscDesc,
                   constants_.publishToRstudioConnect(),
                   new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input, 
-                  false);
+                  false, true, ServerType.RSCONNECT);
          }
       }
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
@@ -75,17 +76,35 @@ public class PublishDocServicePage
       String cloudSubtitle = constants_.cloudSubtitle();
 
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage = null;
-      // Posit Cloud now supports basic Rmarkdown document publishing including the source code
-      if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT || input.getContentType() == RSConnect.CONTENT_TYPE_PRES)
+
+      if (input.isMultiRmd() && !input.isWebsiteRmd())
       {
-         cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
-            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()),
-               input, false, false);
+         cloudPage = new PublishMultiplePage(cloudTitle, cloudSubtitle,
+            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
+            ServerType.POSITCLOUD);
+      } else
+      {
+         if (input.isStaticDocInput())
+         {
+            // static input implies static output
+            cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
+               new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
+               false, true, ServerType.POSITCLOUD);
+         }
+         else
+         {
+            cloudPage = new PublishReportSourcePage(cloudTitle, cloudSubtitle,
+               constants_.publishToPositCloud(),
+               new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
+               false, false, ServerType.POSITCLOUD);
+         }
       }
 
-      pages.add(rpubsPage);
-      pages.add(connectPage);
-      if (cloudPage != null)
+      if (input.isExternalUIEnabled() && !input.isWebsiteRmd())
+         pages.add(rpubsPage);
+      if (input.isConnectUIEnabled())
+         pages.add(connectPage);
+      if (input.isCloudUIEnabled() && cloudPage != null)
          pages.add(cloudPage);
       
       return pages;

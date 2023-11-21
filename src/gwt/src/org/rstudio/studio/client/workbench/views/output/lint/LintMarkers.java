@@ -40,6 +40,7 @@ public class LintMarkers
          return AceAnnotation.create(
                anchor_.getRow(),
                anchor_.getColumn(),
+               annotation_.html(),
                annotation_.text(),
                annotation_.type());
       }

@@ -19,13 +19,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.gwt.core.client.GWT;
-
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
@@ -35,6 +28,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.yaml.Yaml;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
@@ -80,6 +74,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMark
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
 
 public class TextEditingTargetRMarkdownHelper
 {
@@ -1138,8 +1139,13 @@ public class TextEditingTargetRMarkdownHelper
       
       if (outputs == null)
          return null;
+      
       if (outputs.isEmpty())
-         outputs.add(tree.getKeyValue(outputKey));
+      {
+         String rawValue = tree.getKeyValue(outputKey);
+         Object parsedValue = Yaml.load(rawValue);
+         outputs.add((String) parsedValue);
+      }
       
       // filter commented out outputs
       outputs.removeIf(output -> output.startsWith("#"));

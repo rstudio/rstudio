@@ -17,10 +17,18 @@ import { assert } from 'chai';
 import { ipcMain, MenuItemConstructorOptions } from 'electron';
 import { describe } from 'mocha';
 import { MenuCallback } from '../../../src/main/menu-callback';
+import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { Application } from '../../../src/main/application';
 
 const separatorTemplate: MenuItemConstructorOptions = { type: 'separator' };
 
 describe('MenuCallback', () => {
+  let callback: MenuCallback;
+
+  beforeEach(() => {
+    callback = new MenuCallback();
+    setApplication(new Application());
+  });
 
   afterEach(() => {
     // MenuCallback is really intended to be a singleton, but we create a new one for 
@@ -28,10 +36,11 @@ describe('MenuCallback', () => {
     // which eventually triggers a warning about potential leaks. We could up the limit,
     // but opting to cleanup after each test, instead.
     ipcMain.removeAllListeners();
+    callback.debounceUpdateMenuShort.cancel();
+    clearApplicationSingleton();
   });
 
   it('can be constructed', () => {
-    const callback = new MenuCallback();
     const menuCount = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
     callback.beginMain();
     callback.menuBegin('&File');
@@ -41,7 +50,6 @@ describe('MenuCallback', () => {
   });
 
   it('can add a command', () => {
-    const callback = new MenuCallback();
     callback.beginMain();
     callback.menuBegin('&File');
 
@@ -52,7 +60,6 @@ describe('MenuCallback', () => {
   });
 
   it('can set initial visibility for command', () => {
-    const callback = new MenuCallback();
     callback.beginMain();
     callback.menuBegin('&File');
 
@@ -70,7 +77,6 @@ describe('MenuCallback', () => {
   });
 
   it('can change label for a command', () => {
-    const callback = new MenuCallback();
     callback.beginMain();
     callback.menuBegin('&File');
     callback.addCommand('a_command', 'Command', '', '', false, false, true);
@@ -89,7 +95,6 @@ describe('MenuCallback', () => {
   });
 
   it('can change visibility for a command', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
     const menuCount = process.platform === 'darwin' ? 2 : 1;
 
@@ -114,7 +119,6 @@ describe('MenuCallback', () => {
   });
 
   it('can remove unnecessary separators', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -133,7 +137,6 @@ describe('MenuCallback', () => {
   });
 
   it('can remove a separator that is before a hidden item', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -150,7 +153,6 @@ describe('MenuCallback', () => {
   });
 
   it('can contain a submenu', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
     const menuCount = process.platform === 'darwin' ? 2 : 1;
 
@@ -175,7 +177,6 @@ describe('MenuCallback', () => {
   });
 
   it('can rebuild the main menu', () => {
-    const callback = new MenuCallback();
     const menuCount = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -201,7 +202,6 @@ describe('MenuCallback', () => {
   });
 
   it('can change a command visibility that causes unnecessary separators', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -238,7 +238,6 @@ describe('MenuCallback', () => {
   });
 
   it('can update a command shortcut', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -255,5 +254,32 @@ describe('MenuCallback', () => {
     callback.updateMenus();
 
     assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items[0].accelerator, 'CommandOrControl+Shift+G');
+  });
+
+  it('can disable and enable application menu', () => {
+    const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
+
+    callback.beginMain();
+    callback.menuBegin('&Edit');
+    callback.addCommand('cutDummy', 'Cut', '', 'Cmd+C', false, false, true);
+    callback.addCommand('a_shortcut_cmd', 'Shortcut Command', '', 'Cmd+K', false, false, true);
+    callback.updateMenus();
+    
+    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[0].enabled, 'expected cut action to be enabled by default');
+    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[1].enabled, 'expected shortcut action to be enabled by default');
+
+    appState().modalTracker.setNumGwtModalsShowing(1);
+    callback.setMainMenuEnabled(false);
+    callback.updateMenus();
+
+    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[0].enabled, 'expected cut action to be enabled');
+    assert.isFalse(callback.mainMenu.items[menuIdx].submenu?.items[1].enabled, 'expected shortcut action to be disabled');
+
+    appState().modalTracker.setNumGwtModalsShowing(0);
+    callback.setMainMenuEnabled(true);
+    callback.updateMenus();
+
+    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[0].enabled, 'expected cut action to be enabled');
+    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[1].enabled, 'expected shortcut action to be enabled');
   });
 });

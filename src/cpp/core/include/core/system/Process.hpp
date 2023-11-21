@@ -270,6 +270,10 @@ Error runProgram(const std::string& executable,
 // Run a command synchronously. The command will be passed to and executed
 // by a command shell (/bin/sh on posix, cmd.exe on windows).
 //
+// NOTE: UNC paths are not supported by cmd.exe on Windows, so prefer using
+// runProgram() if running a program that might ingest a file path. Note that
+// this might happen just by virtue of having a project on a network share,
+// since the working directory might then be the project directory itself!
 Error runCommand(const std::string& command,
                  const ProcessOptions& options,
                  ProcessResult* pResult);
@@ -350,7 +354,7 @@ struct ProcessCallbacks
    // Called if an IO error occurs while reading from standard streams. The
    // default behavior if no callback is specified is to log and then terminate
    // the child (which will result in onExit being called w/ exitStatus == 15)
-   boost::function<void(ProcessOperations&,const Error&)> onError;
+   boost::function<void(ProcessOperations&, const Error&)> onError;
 
    // Called after the process has exited. Passes exitStatus (see ProcessResult
    // comment above for potential values)
@@ -366,8 +370,7 @@ struct ProcessCallbacks
 ProcessCallbacks createProcessCallbacks(
                const std::string& input,
                const boost::function<void(const ProcessResult&)>& onCompleted,
-               const boost::function<void(const Error&)>& onError=
-                                  boost::function<void(const core::Error&)>());
+               const boost::function<void(const Error&)>& onError = {});
 
 // Process supervisor
 class ProcessSupervisor : boost::noncopyable

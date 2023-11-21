@@ -108,6 +108,9 @@ class CodeSearchSuggestion implements Suggestion
       case SourceItem.MACRO:
          image = new ImageResource2x(CodeIcons.INSTANCE.macro2x());
          break;
+      case SourceItem.PACKAGE:
+         image = new ImageResource2x(CodeIcons.INSTANCE.rPackage2x());
+         break;
       case SourceItem.NONE:
       default:
          image = new ImageResource2x(CodeIcons.INSTANCE.keyword2x());

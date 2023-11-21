@@ -22,12 +22,14 @@
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/aggregate.hpp>
 
-#include <core/Algorithm.hpp>
 #include <shared_core/Error.hpp>
+
+#include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
 
@@ -354,37 +356,27 @@ public:
             requestUri_,
             kHelpLocation);
 
+      // copy from src to dest
+      dest = src;
+      
       // fixup hard-coded hrefs
-      Characters tempDest1;
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest1),
-            boost::make_iterator_range(src.begin(), src.end()),
-            "href=\"/",
-            "href=\"" + baseUrl + "/");
-      Characters tempDest2;
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest2),
-            boost::make_iterator_range(tempDest1.begin(), tempDest1.end()),
-            "href='/",
-            "href='" + baseUrl + "/");
+      boost::algorithm::replace_all(dest, "href=\"/", "href=\"" + baseUrl + "/");
+      boost::algorithm::replace_all(dest, "href='/", "href='" + baseUrl + "/");
       
       // fixup hard-coded src=
-      Characters tempDest3;
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest3),
-            boost::make_iterator_range(tempDest2.begin(), tempDest2.end()),
-            "src=\"/",
-            "src=\"" + baseUrl + "/");
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(dest),
-            boost::make_iterator_range(tempDest3.begin(), tempDest3.end()),
-            "src='/",
-            "src='" + baseUrl + "/");
+      boost::algorithm::replace_all(dest, "src=\"/", "src=\"" + baseUrl + "/");
+      boost::algorithm::replace_all(dest, "src='/", "src='" + baseUrl + "/");
+      
+      // add classes to headers
+      boost::regex reHeader("<h3>Arguments</h3>");
+      std::string reFormat("<h3 class=\"r-arguments-title\">Arguments</h3>");
+      boost::algorithm::replace_all_regex(dest, reHeader, reFormat);
       
       // append javascript callbacks
       std::string js(kJsCallbacks);
       std::copy(js.begin(), js.end(), std::back_inserter(dest));
    }
+   
 private:
    std::string requestUri_;
 };
@@ -476,11 +468,35 @@ void handleHttpdResult(SEXP httpdSEXP,
    // setup response
    pResponse->setStatusCode(code);
    pResponse->setContentType(contentType);
-
+   
    // set headers
    std::for_each(headers.begin(), 
                  headers.end(),
                  boost::bind(&http::Response::setHeaderLine, pResponse, _1));
+   
+   // fix up location header for redirects
+   if (code == 302 && pResponse->containsHeader("Location"))
+   {
+      // check for a redirect to the R help server. the R help server hard-codes
+      // navigation to the help server at 127.0.0.1 in a number of places
+      std::string location = pResponse->headerValue("Location");
+      std::string rPort = module_context::rLocalHelpPort();
+      std::string rHelpPrefix = fmt::format("http://127.0.0.1:{}/", rPort);
+      if (boost::algorithm::starts_with(location, rHelpPrefix))
+      {
+         // make sure we use the same base URL as the request, otherwise
+         // we might not be allowed to display the redirected Help content in the frame
+         //
+         // for example, RStudio Server might've been loaded from 'http://localhost:8787', but the
+         // R help server might try directing to 'http://127.0.0.1:8787'
+         //
+         // https://github.com/rstudio/rstudio/issues/13263
+         std::string path = location.substr(rHelpPrefix.length());
+         std::string ref = request.headerValue("Referer");
+         std::string redirect = fmt::format("{}help/{}", ref, path);
+         pResponse->setHeader("Location", redirect);
+      }
+   }
    
    // check payload
    SEXP payloadSEXP = VECTOR_ELT(httpdSEXP, 0);
@@ -626,9 +642,10 @@ SEXP parseRequestBody(const http::Request& request, r::sexp::Protect* pProtect)
       // content type
       if (!request.contentType().empty())
       {
-         Rf_setAttrib(bodySEXP,
-                      Rf_install("content-type"),
-                      Rf_mkString(request.contentType().c_str()));
+         r::sexp::Protect protect;
+         SEXP requestTypeSEXP;
+         protect.add(requestTypeSEXP = Rf_mkString(request.contentType().c_str()));
+         Rf_setAttrib(bodySEXP, Rf_install("content-type"), requestTypeSEXP);
       }
 
       return bodySEXP;
@@ -674,43 +691,48 @@ SEXP callHandler(const std::string& path,
                  const HandlerSource& handlerSource,
                  r::sexp::Protect* pProtect)
 {
+   // use local protection for intermediate values
+   r::sexp::Protect protect;
+   
    // uri decode the path
    std::string decodedPath = http::util::urlDecode(path);
 
    // construct "try(httpd(url, query, body, headers), silent=TRUE)"
-
-   SEXP trueSEXP;
-   pProtect->add(trueSEXP = Rf_ScalarLogical(TRUE));
    SEXP queryStringSEXP = parseQuery(request.queryParams(), pProtect);
    SEXP requestBodySEXP = parseRequestBody(request, pProtect);
    SEXP headersSEXP = headersBuffer(request, pProtect);
+   
+   SEXP pathSEXP;
+   protect.add(pathSEXP = Rf_mkString(path.c_str()));
 
    SEXP argsSEXP;
-   argsSEXP = Rf_list4(Rf_mkString(path.c_str()),
-                       queryStringSEXP,
-                       requestBodySEXP,
-                       headersSEXP);
-   pProtect->add(argsSEXP);
+   protect.add(argsSEXP = Rf_list4(pathSEXP, queryStringSEXP, requestBodySEXP, headersSEXP));
 
    // form the call expression
+   SEXP handlerSourceSEXP;
+   protect.add(handlerSourceSEXP = handlerSource(path));
+   
+   SEXP argSEXP;
+   protect.add(argSEXP = Rf_lcons(handlerSourceSEXP, argsSEXP));
+   
    SEXP innerCallSEXP;
-   pProtect->add(innerCallSEXP = Rf_lang3(
-         Rf_install("try"),
-         Rf_lcons( (handlerSource(path)), argsSEXP),
-         trueSEXP));
-   SET_TAG(CDR(CDR(innerCallSEXP)), Rf_install("silent"));
+   protect.add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, R_TrueValue));
+   SET_TAG(CDDR(innerCallSEXP), Rf_install("silent"));
    
    // suppress warnings
    SEXP suppressWarningsSEXP;
-   pProtect->add(suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base"));
+   protect.add(suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base"));
    
    SEXP callSEXP;
-   pProtect->add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
+   protect.add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
 
+   // get reference to tools namespace
+   SEXP toolsSEXP = r::sexp::findNamespace("tools");
+   
    // execute and return
    SEXP resultSEXP;
-   pProtect->add(resultSEXP = Rf_eval(callSEXP,
-                                      R_FindNamespace(Rf_mkString("tools"))));
+   pProtect->add(resultSEXP = Rf_eval(callSEXP, toolsSEXP));
+   
    return resultSEXP;
 }
 
@@ -993,16 +1015,14 @@ SEXP lookupCustomHandler(const std::string& uri)
       // load .httpd.handlers.env
       if (!s_customHandlersEnv)
       {
-         s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"),
-                                       R_FindNamespace(Rf_mkString("tools")));
+         SEXP toolsSEXP = r::sexp::findNamespace("tools");
+         s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"), toolsSEXP);
       }
 
       // we only proceed if .httpd.handlers.env really exists
       if (TYPEOF(s_customHandlersEnv) == ENVSXP)
       {
-         SEXP cl = Rf_findVarInFrame3(s_customHandlersEnv,
-                                      Rf_install(handler.c_str()),
-                                      TRUE);
+         SEXP cl = Rf_findVarInFrame3(s_customHandlersEnv, Rf_install(handler.c_str()), TRUE);
          if (cl != R_UnboundValue && TYPEOF(cl) == CLOSXP) // need a closure
             return cl;
       }

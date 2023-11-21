@@ -78,7 +78,7 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
 
    // append shell paths as appropriate
    std::string extraPathEntries;
-   session::modules::workbench::ammendShellPaths(&extraPathEntries);
+   session::modules::workbench::amendShellPaths(&extraPathEntries);
 
    optionsJson["terminal_path"] = terminalPath.getAbsolutePath();
    optionsJson["working_directory"] =

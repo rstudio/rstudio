@@ -1,5 +1,13 @@
 #!/usr/bin/env sh
 
+# bail if python integration isn't enabled here
+if [ "${_RS_TERMINAL_PYTHON_INTEGRATION_ENABLED_}" != "TRUE" ]; then
+	unset _RS_TERMINAL_PYTHON_INTEGRATION_ENABLED_
+	return 0
+fi
+
+unset _RS_TERMINAL_PYTHON_INTEGRATION_ENABLED_
+
 # if we have a conda prefix, ensure it's still used
 if [ -n "${_RS_CONDA_PREFIX}" ]; then
 
@@ -93,10 +101,62 @@ if [ -f "${RETICULATE_PYTHON}" ] || [ -f "${RETICULATE_PYTHON_FALLBACK}" ]; then
 		. "${_RS_PYTHON_BIN}/activate"
 	fi
 
-	# ensure that our python was placed on the PATH
-	if [ "$(echo "${PATH}" | cut -d":" -f"1")" != "${_RS_PYTHON_BIN}" ]; then
+	case "${_RS_PYTHON_BIN}" in
+
+	# if Python is located within a 'system' directory, copy the commonly-used
+	# tools to a separate temporary directory, and place that on the PATH
+	/usr/bin|/usr/local/bin|/opt/bin|/opt/local/bin|/opt/homebrew/bin)
+
+		if [ -d "${R_SESSION_TMPDIR}" ]; then
+
+			# create our custom terminal PATH location
+			_RS_TERMINAL_PATH="${R_SESSION_TMPDIR}/rstudio/terminal"
+			mkdir -p "${_RS_TERMINAL_PATH}"
+			PATH="${_RS_TERMINAL_PATH}:${PATH}"
+
+			# put common utilities on the PATH
+			_RS_OWD="$(pwd)"
+			cd "${_RS_PYTHON_BIN}"
+			for _RS_PYTHON_TOOL in python python3 ipython ipython3 pip pip3 jupyter jupyter-*; do
+				if [ -e "${_RS_PYTHON_TOOL}" ]; then
+					ln -nfs "${_RS_PYTHON_BIN}/${_RS_PYTHON_TOOL}" "${_RS_TERMINAL_PATH}/${_RS_PYTHON_TOOL}"
+				fi
+			done
+
+			# if only version-suffixed versions of tools are available, then
+			# also create a symlink so that the user can still invoke python
+			# with a plain 'python' call. note that we also create an alias
+			# as it looks like python can be sensitive to how it was invoked;
+			# e.g. it expects the binary to have a specific name.
+			#
+			# perhaps sort of like how a shell will run in a Bourne-shell
+			# compatibility mode if it's placed at /bin/sh, I guess?
+			cd "${_RS_TERMINAL_PATH}"
+			for _RS_PYTHON_TOOL in ipython python pip; do
+				if ! [ -e "${_RS_PYTHON_TOOL}" ]; then
+					if [ -e "${_RS_PYTHON_TOOL}3" ]; then
+						eval "alias ${_RS_PYTHON_TOOL}=${_RS_PYTHON_TOOL}3"
+						ln -nfs "${_RS_PYTHON_TOOL}3" "${_RS_PYTHON_TOOL}"
+					fi
+				fi
+			done
+
+			# clean up when done
+			cd "${_RS_OWD}"
+			unset _RS_OWD
+			unset _RS_PYTHON_TOOL
+			unset _RS_TERMINAL_PATH
+
+		fi
+
+	;;
+
+	# otherwise, use the directory as-is
+	*)
 		PATH="${_RS_PYTHON_BIN}:${PATH}"
-	fi
+	;;
+
+	esac
 
 	unset _RS_PYTHON_BIN
 

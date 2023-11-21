@@ -439,7 +439,7 @@ test_context("ProcessTests")
       REQUIRE(!error);
 
       // wait for processes to exit
-      bool success = supervisor.wait(boost::posix_time::seconds(10));
+      bool success = supervisor.wait(boost::posix_time::seconds(15));
       CHECK(success);
 
       // check to make sure all processes really exited

@@ -41,6 +41,7 @@ require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
 // RStudioEditor ----
 
 var RStudioEditor = function(renderer, session) {
+   session.renderer = renderer;
    Editor.call(this, renderer, session);
    this.setBehavioursEnabled(true);
 };
@@ -49,17 +50,20 @@ oop.inherits(RStudioEditor, Editor);
 (function() {
 
    this.$highlightBrackets = function() {
-      // Clear an existing highlight
-      if (this.session.$bracketHighlight) {
-         this.session.removeMarker(this.session.$bracketHighlight);
-         this.session.$bracketHighlight = null;
-      }
 
       // don't highlight if we have a selection (avoid a situation
       // where the highlighted bracket could appear to be part of
       // the user's current selection)
-      if (!this.session.selection.isEmpty())
+      if (!this.session.selection.isEmpty()) {
+         var session = this.session;
+         if (session.$bracketHighlight) {
+            session.$bracketHighlight.markerIds.forEach(function(id) {
+               session.removeMarker(id);
+            });
+            session.$bracketHighlight = null;
+         }
          return;
+      }
 
       // delegate to base
       Editor.prototype.$highlightBrackets.call(this);
@@ -176,7 +180,7 @@ oop.inherits(RStudioEditSession, EditSession);
       for (var i = start; i <= end; i++)
       {
          var state = Utils.getPrimaryState(this, i - 1);
-         if (Utils.endsWith(state, "qstring"))
+         if (Utils.endsWith(state, "qstring") || state === "rawstring")
             continue;
 
          var newIndent = mode.getNextLineIndent(state,

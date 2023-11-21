@@ -65,8 +65,14 @@ void scanPosixShells(std::vector<TerminalShell>* pShells)
          {
             foundZsh = true;
             std::vector<std::string> args;
-            args.emplace_back("-l"); // act like a login shell
-            args.emplace_back("-g"); // don't add commands with leading space to history
+            
+            // TODO: Re-enable terminal hooks for zsh. We previously tried an
+            // approach using '--emulate sh', but this does enough sh-specific
+            // stuff that cannot easily be undone just by later using 'emulate zsh'
+            //
+            // https://github.com/zsh-users/zsh/blob/c4ec7442f1138f2c525f98febb0db6def0fbe142/Src/params.c#L415-L431
+            args = { "--login", "--histignorespace" };
+            
             addShell(core::FilePath(trimmedLine), TerminalShell::ShellType::PosixZsh,
                      "Zsh", args, pShells);
          }
@@ -118,7 +124,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
    addShell(bashWSL,
             TerminalShell::ShellType::WSLBash,
             "Bash (Windows Subsystem for Linux)",
-            bashLoginArgs,
+            args, // don't pass bashLoginArgs here (rstudio issue #13918)
             pShells);
 #endif
 
@@ -148,6 +154,25 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
 }
 
 } // anonymous namespace
+
+TerminalShell::ShellType TerminalShell::getEffectiveShellType() const
+{
+   // keep non-custom shell types as-is
+   if (type != TerminalShell::ShellType::CustomShell)
+      return type;
+   
+   // otherwise, see if we can resolve the type
+#ifndef _WIN32
+   std::string filename = path.getFilename();
+   if (filename == "bash")
+      return TerminalShell::ShellType::PosixBash;
+   else if (filename == "zsh")
+      return TerminalShell::ShellType::PosixZsh;
+#endif
+   
+   // continue returning 'Custom' if we couldn't infer a known internal type
+   return type;
+}
 
 core::json::Object TerminalShell::toJson() const
 {
@@ -320,9 +345,11 @@ core::FilePath getGitBashShell()
 bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 {
 #ifdef _WIN32
-   pShellInfo->path = core::system::expandComSpec();
-   pShellInfo->type = TerminalShell::ShellType::Cmd64;
+   
    pShellInfo->name = "Command Prompt";
+   pShellInfo->type = TerminalShell::ShellType::Cmd64;
+   pShellInfo->path = core::system::expandComSpec();
+
 #else
    
    // use default bash shell
@@ -330,7 +357,18 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->type = TerminalShell::ShellType::PosixBash;
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
-   pShellInfo->args.emplace_back("-l");  // act like a login shell
+   
+# ifndef __APPLE__
+   
+   // the default Bash installation on macOS does not support sourcing
+   // of scripts specified in the ENV environment variable, or so it seems
+   pShellInfo->args.emplace_back("--login");  // act like a login shell
+   
+   // if terminal hooks are enabled, start in POSIX mode, so we can control startup init scripts 
+   if (prefs::userPrefs().terminalHooks())
+      pShellInfo->args.emplace_back("--posix");
+   
+# endif
    
 #endif
    
@@ -339,10 +377,14 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 
 bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
 {
+   using ShellType = TerminalShell::ShellType;
+   
+   core::FilePath customShellPath =
+         module_context::resolveAliasedPath(prefs::userPrefs().customShellCommand());
+   
    pShellInfo->name = "Custom";
-   pShellInfo->type = TerminalShell::ShellType::CustomShell;
-   pShellInfo->path = module_context::resolveAliasedPath(
-         prefs::userPrefs().customShellCommand());
+   pShellInfo->type = ShellType::CustomShell;
+   pShellInfo->path = customShellPath;
 
    // arguments are space separated, currently no way to represent a literal space
    std::vector<std::string> args;
@@ -350,6 +392,25 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
    {
       args = core::algorithm::split(prefs::userPrefs().customShellOptions(), " ");
    }
+   
+   if (prefs::userPrefs().terminalHooks())
+   {
+      // build the extra args
+      std::vector<std::string> extraArgs;
+      
+      // if this appears to be a bash shell, make sure we launch it as a POSIX shell
+      // TODO: should we also launch these as --login shells? Or just rely on the user to request that?
+      if (customShellPath.getFilename() == "bash" || customShellPath.getFilename() == "bash.exe")
+      {
+         bool hasPosixFlag = core::algorithm::contains(args, "--posix");
+         if (!hasPosixFlag)
+            extraArgs.push_back("--posix");
+      }
+      
+      // insert the arguments at the front
+      args.insert(args.begin(), extraArgs.begin(), extraArgs.end());
+   }
+   
    pShellInfo->args = args;
    return true;
 }

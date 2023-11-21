@@ -1004,7 +1004,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->spellingDictionary = it->second;
    }
-
+   
    return Success();
 }
 
@@ -1064,8 +1064,6 @@ Error writeProjectFile(const FilePath& projectFilePath,
 
       if (config.autoAppendNewline)
       {
-
-
          contents.append("AutoAppendNewline: Yes\n");
       }
 
@@ -1295,7 +1293,6 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(boost::str(fmt % config.spellingDictionary));
    }
 
-
    // write it
    return writeStringToFile(projectFilePath,
                             contents,
@@ -1335,7 +1332,7 @@ FilePath projectFromDirectory(const FilePath& path)
         it != children.end();
         ++it)
    {
-      if (!it->isDirectory() && (it->getExtensionLowerCase() == ".rproj"))
+      if ((it->getExtensionLowerCase() == ".rproj") && !it->isDirectory())
       {
          if (string_utils::toLower(it->getFilename()) == projFileLower)
             return *it;

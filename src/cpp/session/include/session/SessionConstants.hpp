@@ -147,9 +147,15 @@
 # define kDefaultPandocPath        "bin/pandoc"
 #endif
 
+#define kDefaultNodePath           "bin/node"
 #define kDefaultQuartoPath         "bin/quarto"
-#define kDefaultPostbackPath       "bin/postback/rpostback"
 #define kDefaultRsclangPath        "bin/rsclang"
+
+#ifdef _WIN32
+# define kDefaultPostbackPath       "bin/rpostback.exe"
+#else
+# define kDefaultPostbackPath       "bin/rpostback"
+#endif
 
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init";

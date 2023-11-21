@@ -19,6 +19,7 @@ import { FilePath } from '../../core/file-path';
 import { Xdg } from '../../core/xdg';
 import DesktopOptions from './desktop-options';
 import { preferenceKeys } from './preferences';
+import { safeError } from '../../core/err';
 
 const INI_FILE = 'desktop.ini';
 
@@ -34,7 +35,12 @@ class FilePreferences extends DesktopOptions {
     const desktopIni = userConfigDir.completePath(INI_FILE).getAbsolutePath().replace('rstudio', 'RStudio');
 
     if (FilePath.existsSync(desktopIni)) {
-      this.properties = PropertiesReader(desktopIni);
+      try {
+        this.properties = PropertiesReader(desktopIni);
+      } catch (err: unknown) {
+        // too early in startup to use logging
+        console.error(`Unable to migrate legacy desktop preferences: ${safeError(err).message}`);
+      }
     }
   }
 

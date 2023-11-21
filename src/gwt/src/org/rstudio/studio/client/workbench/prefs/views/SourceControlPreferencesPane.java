@@ -15,17 +15,6 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -42,12 +31,24 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.VcsHelpLink;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.inject.Inject;
 
 public class SourceControlPreferencesPane extends PreferencesPane
 {
@@ -62,8 +63,9 @@ public class SourceControlPreferencesPane extends PreferencesPane
    {
       res_ = res;
 
-      chkVcsEnabled_ = new CheckBox(
-            constants_.chkVcsEnabledLabel());
+      add(headerLabel(projectConstants_.versionControlTitle()));
+      
+      chkVcsEnabled_ = new CheckBox(constants_.chkVcsEnabledLabel());
       extraSpaced(chkVcsEnabled_);
       add(chkVcsEnabled_);
       chkVcsEnabled_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -252,5 +254,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private FormLabel terminalPathLabel_;
    private TextBoxWithButton terminalPathChooser_;
    private SshKeyWidget sshKeyWidget_;
+   
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+   private final static StudioClientProjectConstants projectConstants_ =
+         GWT.create(StudioClientProjectConstants.class);
 }

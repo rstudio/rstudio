@@ -44,16 +44,20 @@ public class Dependency extends JavaScriptObject
       return this.location;
    }-*/;
    
-   public final native String setName(String name) /*-{
-      this.name = name;
-   }-*/;
-   
    public final native String getName() /*-{
       return this.name;
    }-*/;
    
+   public final native String setName(String name) /*-{
+      this.name = name;
+   }-*/;
+   
    public final native String getVersion() /*-{
       return this.version;
+   }-*/;
+   
+   public final native void setVersion(String version) /*-{
+      this.version = version;
    }-*/;
    
    public final native boolean getSource() /*-{

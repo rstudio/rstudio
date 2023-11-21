@@ -26,7 +26,7 @@
 
 #include "RGraphicsDevDescVersions.hpp"
 
-typedef DevDescVersion15 RSDevDesc;
+typedef DevDescVersion16 RSDevDesc;
 
 namespace rstudio {
 namespace r {
@@ -92,6 +92,10 @@ void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
 void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
 
 SEXP capabilities(SEXP cap);
+
+void glyph(int n, int *glyphs, double *x, double *y, 
+              SEXP font, double size,
+              int colour, double rot, pDevDesc dd);
 
 } // namespace dev_desc
 } // namespace handler

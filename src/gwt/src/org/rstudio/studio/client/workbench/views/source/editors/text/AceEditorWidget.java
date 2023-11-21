@@ -16,40 +16,20 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.AttachEvent;
-import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
-
 import java.util.function.BiPredicate;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.elemental2.overlay.File;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
-import org.rstudio.studio.client.events.*;
+import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -69,9 +49,68 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Tooltip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ContextMenuEvent;
+import com.google.gwt.event.dom.client.ContextMenuHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasAllKeyHandlers;
+import com.google.gwt.event.dom.client.HasContextMenuHandlers;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.ScrollEvent;
+import com.google.gwt.event.dom.client.ScrollHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.inject.Inject;
+
+import elemental2.dom.ClipboardEvent;
+import jsinterop.base.Js;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -111,6 +150,7 @@ public class AceEditorWidget extends Composite
       editor_.setHighlightGutterLine(false);
       editor_.setFixedWidthGutter(true);
       editor_.setIndentedSoftWrap(false);
+      editor_.setTheme(themes_.getCurrentTheme());
       editor_.delegateEventsTo(AceEditorWidget.this);
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
@@ -285,10 +325,10 @@ public class AceEditorWidget extends Composite
                aceEventHandlers_.add(AceEditorNative.addEventListener(
                      editor_.getRenderer(),
                      "afterRender",
-                     new CommandWithArg<Void>()
+                     new CommandWithArg<JavaScriptObject>()
                      {
                         @Override
-                        public void execute(Void event)
+                        public void execute(JavaScriptObject event)
                         {
                            fireEvent(new RenderFinishedEvent());
                            isRendered_ = true;
@@ -333,6 +373,44 @@ public class AceEditorWidget extends Composite
                   clearKeyBuffers(editor_);
                }
             });
+      
+      events_.addHandler(EditorThemeChangedEvent.TYPE, new EditorThemeChangedEvent.Handler()
+      {
+         @Override
+         public void onEditorThemeChanged(EditorThemeChangedEvent event)
+         {
+            editor_.setTheme(event.getTheme());
+         }
+      });
+      
+      if (BrowseCap.isElectron())
+      {
+         addNativePasteHandler(getElement());
+      }
+   }
+   
+   private final native void addNativePasteHandler(Element el)
+   /*-{
+      var self = this;
+      el.addEventListener("paste", $entry(function(event) {
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget::onPaste(*)(event);
+      }));
+   }-*/;
+   
+   private void onPaste(NativeEvent event)
+   {
+      ClipboardEvent clipboardEvent = Js.cast(event);
+      elemental2.core.JsArray<String> types = clipboardEvent.clipboardData.types;
+      if (types.length == 1 && types.getAt(0) == "Files")
+      {
+         File file = Js.cast(clipboardEvent.clipboardData.files.getAt(0));
+         if (file != null && file.path != null)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            editor_.insert(file.path.replace('\\', '/'));
+         }
+      }
    }
 
    // When the 'keyBinding' field is initialized (the field holding all keyboard
@@ -422,10 +500,13 @@ public class AceEditorWidget extends Composite
    }-*/;
 
    @Inject
-   private void initialize(EventBus events, UserPrefs uiPrefs)
+   private void initialize(EventBus events,
+                           UserPrefs uiPrefs,
+                           AceThemes themes)
    {
       events_ = events;
       uiPrefs_ = uiPrefs;
+      themes_ = themes;
    }
 
    public HandlerRegistration addCursorChangedHandler(CursorChangedEvent.Handler handler)
@@ -457,7 +538,8 @@ public class AceEditorWidget extends Composite
       toggleBreakpointAtPosition(Position.create(pos.getRow(), 0));
    }
 
-   public AceEditorNative getEditor() {
+   public AceEditorNative getEditor()
+   {
       return editor_;
    }
 
@@ -1002,6 +1084,9 @@ public class AceEditorWidget extends Composite
    // The 'anchor' is associated with the position of the warning icon
    // /!\; while the anchored range is associated with the underlying
    // '~~~~~'. The marker id is needed to detach the annotation later.
+   //
+   // DiagnosticBackgroundPopup.java displays a popup when the marker 
+   // is hovered
    private class AnchoredAceAnnotation
    {
       public AnchoredAceAnnotation(AceAnnotation annotation,
@@ -1035,6 +1120,7 @@ public class AceEditorWidget extends Composite
          return AceAnnotation.create(
                anchor_.getRow(),
                anchor_.getColumn(),
+               annotation_.html(),
                annotation_.text(),
                annotation_.type());
       }
@@ -1087,13 +1173,13 @@ public class AceEditorWidget extends Composite
          else if (item.getType() == "style")
             clazz = lintStyles_.style();
          else if (item.getType() == "spelling")
-            clazz = lintStyles_.warning();
+            clazz = lintStyles_.spelling();
 
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
-            annotations_.add(new AnchoredAceAnnotation(
-               annotations.get(i),
-               range,
-               id));
+         annotations_.add(new AnchoredAceAnnotation(
+            annotations.get(i),
+            range,
+            id));
       }
    }
 
@@ -1273,4 +1359,5 @@ public class AceEditorWidget extends Composite
    // injected
    private EventBus events_;
    private UserPrefs uiPrefs_;
+   private AceThemes themes_;
 }

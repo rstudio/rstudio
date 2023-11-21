@@ -208,6 +208,7 @@ public abstract class
    public abstract AppCommand openPreviousFileOnFilesystem();
    public abstract AppCommand toggleSoftWrapMode();
    public abstract AppCommand toggleRainbowParens();
+   public abstract AppCommand toggleRainbowFencedDivs();
 
    // Projects
    public abstract AppCommand newProject();
@@ -729,8 +730,17 @@ public abstract class
    public abstract AppCommand focusNextPane();
    public abstract AppCommand focusPreviousPane();
    public abstract AppCommand showAccessibilityHelp();
+   
+   // Copilot
+   public abstract AppCommand copilotInstallAgent();
+   public abstract AppCommand copilotSignIn();
+   public abstract AppCommand copilotSignOut();
+   public abstract AppCommand copilotStatus();
+   public abstract AppCommand copilotRequestCompletions();
+   public abstract AppCommand copilotAcceptNextWord();
 
    // Internal
    public abstract AppCommand showDomElements();
    public abstract AppCommand showShortcutCommand();
+   public abstract AppCommand crashDesktopApplication();
 }

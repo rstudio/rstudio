@@ -155,6 +155,15 @@ public:
       return storage_ == nullptr;
    }
 
+   bool emptySession() const
+   {
+      if (empty())
+         return true;
+      bool validStorage = false;
+      Error error = storage_->isValid(&validStorage);
+      return error || !validStorage;
+   }
+
    std::string id() const
    {
       return id_;
@@ -554,7 +563,7 @@ public:
       Error storageError = storage_->isValid(&validStorage);
       if (storageError || !validStorage)
       {
-         LOG_DEBUG_MESSAGE("ActiveSession validation failed: properties storage not valid");
+         LOG_DEBUG_MESSAGE("ActiveSession validation failed - no session metadata for: " + id());
          if(storageError)
             LOG_ERROR(storageError);
          return false;

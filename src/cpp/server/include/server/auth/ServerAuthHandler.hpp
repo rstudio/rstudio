@@ -47,6 +47,9 @@ namespace handler {
 extern const char * const kSignIn;
 extern const char * const kSignOut;
 extern const char * const kRefreshCredentialsAndContinue;
+// This doesn't account for leap years, but that's alright because
+// we just need an approximate year.
+constexpr unsigned int kHoursInOneYear = 365 * 24;
 
 // functions which can be called on the handler directly
 std::string getUserIdentifier(const core::http::Request& request,
@@ -189,7 +192,7 @@ void signOut(const core::http::Request& request,
 // used to prevent inordinate generation of expired tokens
 bool isUserSignInThrottled(const std::string& user);
 
-void insertRevokedCookie(const RevokedCookie& cookie);
+bool insertRevokedCookie(const RevokedCookie& cookie);
 void applyRemoteRevokedCookie(const std::string& cookie);
 
 // refreshes the auth cookie silently (without user intervention)
@@ -214,7 +217,6 @@ core::Error getUserFromDatabase(const boost::shared_ptr<core::database::IConnect
                                 bool* pLocked,
                                 boost::posix_time::ptime* pLastSignin,
                                 bool* pExists);
-bool isUserActive(const boost::posix_time::ptime& lastSignin);
 core::Error updateLastSignin(const boost::shared_ptr<core::database::IConnection>& connection,
                              const core::system::User& user);
 
@@ -227,28 +229,10 @@ core::Error isUserLicensed(const std::string& username,
                            bool* pLicensed);
 core::Error isUserLicensed(const core::system::User& user,
                            bool isAdmin,
-                           bool* pLicensed);
-unsigned int getActiveUserCount();
+                           bool* pLicensed,
+                           bool isSigningIn=true);
+boost::posix_time::ptime parseDateStr(const std::string& strTime);
 std::string getExpiredDateStr();
-core::Error getNumActiveUsers(const boost::shared_ptr<core::database::IConnection>& connection,
-                              size_t* pNumActiveUsers);
-
-namespace overlay {
-
-core::Error initialize();
-bool canStaySignedIn();
-bool isUserListCookieValid(const std::string& cookieValue);
-bool shouldShowUserLicenseWarning();
-bool isUserAdmin(const std::string& username);
-bool isUserLocked(bool lockedColumn);
-std::string getUserListCookieValue();
-unsigned int getNamedUserLimit();
-core::json::Array getLicensedUsers();
-core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
-core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
-core::Error setAdmin(boost::asio::io_service& ioService, const std::string& username, bool isAdmin);
-
-} // namespace overlay
 
 } // namespace handler
 } // namespace auth
@@ -256,5 +240,3 @@ core::Error setAdmin(boost::asio::io_service& ioService, const std::string& user
 } // namespace rstudio
 
 #endif // SERVER_AUTH_HANDLER_HPP
-
-

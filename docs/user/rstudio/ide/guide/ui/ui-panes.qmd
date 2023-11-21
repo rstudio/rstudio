@@ -1,5 +1,6 @@
 ---
 title: "Pane Layout"
+date-meta: 2022-12-12
 ---
 
 The RStudio user interface has 4 primary panes:

@@ -128,7 +128,6 @@ void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
    r::sexp::listEnvironment(getMonitoredEnvironment(),
                             false,
                             prefs::userPrefs().showLastDotValue(),
-                            &rProtect,
                             pEnv);
 }
 

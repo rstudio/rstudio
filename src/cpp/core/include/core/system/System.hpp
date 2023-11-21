@@ -20,6 +20,7 @@
 #if defined(_WIN32)
 #include <windows.h>
 typedef DWORD PidType;
+typedef DWORD UidType;
 #else  // UNIX
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -319,18 +320,22 @@ FilePath currentWorkingDir(PidType pid);
 
 struct ProcessInfo
 {
-   ProcessInfo() : pid(0), ppid(0), pgrp(0) {}
+   ProcessInfo() : pid(0), ppid(0), pgrp(0), uidSet_(false) {}
    PidType pid;
    PidType ppid;
    PidType pgrp;
+   UidType uid_;
+   bool uidSet_;
    std::string username;
    std::string exe;
    std::string state;
    std::vector<std::string> arguments;
 
-#if !defined _WIN32 && !defined __APPLE__
+#ifndef _WIN32
    core::Error creationTime(boost::posix_time::ptime* pCreationTime) const;
 #endif
+   std::string getUsername() const;
+   UidType uid() const;
 };
 
 // simple encapsulation of parent-child relationship of processes

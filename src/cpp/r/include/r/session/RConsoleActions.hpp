@@ -42,6 +42,12 @@ ConsoleActions& consoleActions();
 #define kConsoleActionOutput        2
 #define kConsoleActionOutputError   3
 
+struct ConsoleAction
+{
+   int type;
+   std::string data;
+};
+
 class ConsoleActions : boost::noncopyable
 {
 private:
@@ -71,8 +77,8 @@ private:
    // protect data using a mutex because background threads (e.g.
    // console output capture threads) can interact with console actions
    mutable boost::mutex mutex_;
-   boost::circular_buffer<core::json::Value> actionsType_;
-   boost::circular_buffer<core::json::Value> actionsData_;
+   boost::circular_buffer<ConsoleAction> actions_;
+   ConsoleAction action_;
    std::vector<std::string> pendingInput_;
 };
 

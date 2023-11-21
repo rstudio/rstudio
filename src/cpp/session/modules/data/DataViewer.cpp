@@ -62,9 +62,6 @@
 // special cell values
 #define SPECIAL_CELL_NA 0
 
-// default max value for columns to return unless client requests more
-#define MAX_COLUMNS 50
-
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -240,14 +237,19 @@ struct CachedFrame
 
       // cache list of column names
       r::sexp::Protect protect;
-      SEXP namesSEXP;
+      SEXP namesSEXP = R_NilValue;
       r::exec::RFunction("names", sexp).call(&namesSEXP, &protect);
-      if (namesSEXP != nullptr && TYPEOF(namesSEXP) != NILSXP 
-          && !Rf_isNull(namesSEXP))
+      if (!Rf_isNull(namesSEXP))
       {
          r::sexp::extract(namesSEXP, &colNames);
       }
 
+      // cache number of rows, but only for 'local' data
+      // (avoid potentially expensive queries for remote tables)
+      nrow = Rf_inherits(sexp, "data.frame") || Rf_inherits(sexp, "matrix")
+            ? safeDim(sexp, DIM_ROWS)
+            : -1;
+      
       // cache number of columns
       ncol = safeDim(sexp, DIM_COLS);
    };
@@ -258,10 +260,9 @@ struct CachedFrame
    std::string envName;
    std::string objName;
 
-   // The frame's columns; used to determine whether the shape of the frame has
-   // changed (necessitating a full reload of any displayed version of the
-   // frame)
-   int ncol;
+   // The number of rows and columns; used to determine whether the shape of the frame has changed
+   // (necessitating a full reload of any displayed version of the frame)
+   int nrow, ncol;
    std::vector<std::string> colNames;
 
    // The current search string and filter set
@@ -327,28 +328,6 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
    return obj == R_UnboundValue ? nullptr : obj;
 }
 
-SEXP getNamedEnvir(const std::string& envir)
-{
-   SEXP env = nullptr;
-   r::sexp::Protect protect;
-
-   // shortcut for unbound environment
-   if (envir == kNoBoundEnv)
-      return nullptr;
-
-   // use the global environment or resolve environment name
-   if (envir.empty() || envir == "R_GlobalEnv")
-      return R_GlobalEnv;
-   
-   r::exec::RFunction(".rs.safeAsEnvironment", envir).call(&env, &protect);
-
-   // if we failed to find an environment by name, return a null SEXP
-   if (env == nullptr || TYPEOF(env) == NILSXP || Rf_isNull(env))
-      return nullptr; 
-
-   return env;
-}
-
 // data items are used both as the payload for the client event that opens an
 // editor viewer tab and as a server response when duplicating that tab's
 // contents
@@ -374,7 +353,7 @@ json::Value makeDataItem(SEXP dataSEXP,
    dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
       http::util::urlEncode(envName, true) + "&obj=" + 
       http::util::urlEncode(objName, true) + "&cache_key=" +
-      http::util::urlEncode(cacheKey, true) + "&max_cols=" + 
+      http::util::urlEncode(cacheKey, true) + "&max_display_columns=" + 
       safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns());
    dataItem["preview"] = preview;
 
@@ -464,13 +443,21 @@ void handleGridResReq(const http::Request& request,
    pResponse->setCacheableFile(gridResource, request);
 }
 
-json::Value getCols(SEXP dataSEXP)
+json::Value getCols(SEXP dataSEXP,
+                    int maxRows,
+                    int maxCols)
 {
    SEXP colsSEXP = R_NilValue;
    r::sexp::Protect protect;
    json::Value result;
-   Error error = r::exec::RFunction(".rs.describeCols", dataSEXP, MAX_FACTORS)
-      .call(&colsSEXP, &protect);
+
+   Error error = r::exec::RFunction(".rs.describeCols")
+         .addParam(dataSEXP)
+         .addParam(maxRows)
+         .addParam(maxCols)
+         .addParam(MAX_FACTORS)
+         .call(&colsSEXP, &protect);
+
    if (error || colsSEXP == R_NilValue) 
    {
       json::Object err;
@@ -478,6 +465,41 @@ json::Value getCols(SEXP dataSEXP)
          err["error"] = error.getSummary();
       else
          err["error"] = "Failed to retrieve column definitions for data.";
+      result = err;
+   }
+   else 
+   {
+      r::json::jsonValueFromList(colsSEXP, &result);
+   }
+   return result;
+}
+
+json::Value getColSlice(SEXP dataSEXP,
+                         int columnOffset,
+                         int maxDisplayColumns)
+{
+   SEXP colsSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   json::Value result;
+
+   // DataTables use 0-based indexing, but R uses 1-based indexing, so add 1 to the columnOffset
+   int sliceStart = columnOffset + 1;
+   int totalCols = safeDim(dataSEXP, DIM_COLS);
+   int sliceEnd = columnOffset + maxDisplayColumns < totalCols ? columnOffset + maxDisplayColumns : totalCols;
+
+   Error error = r::exec::RFunction(".rs.describeColSlice")
+         .addParam(dataSEXP)
+         .addParam(sliceStart)
+         .addParam(sliceEnd)
+         .call(&colsSEXP, &protect);
+
+   if (error || colsSEXP == R_NilValue) 
+   {
+      json::Object err;
+      if (error) 
+         err["error"] = error.getSummary();
+      else
+         err["error"] = "Failed to retrieve column definitions for the data slice.";
       result = err;
    }
    else 
@@ -497,19 +519,45 @@ json::Value getCols(SEXP dataSEXP)
 // NB: may throw exceptions! these are expected to be handled by the handlers
 // in getGridData, where they will be marshaled to JSON and displayed on the
 // client.
-json::Value getData(SEXP dataSEXP, const http::Fields& fields)
+json::Value getData(SEXP dataSEXP,
+                    int maxRows,
+                    int maxCols,
+                    const http::Fields& fields)
 {
    Error error;
    r::sexp::Protect protect;
+
+   // subset dataset if necessary
+   SEXP subsettedDataSEXP = R_NilValue;
+   error = r::exec::RFunction(".rs.subsetData")
+         .addParam(dataSEXP)
+         .addParam(maxRows)
+         .addParam(maxCols)
+         .call(&subsettedDataSEXP, &protect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      dataSEXP = subsettedDataSEXP;
+   }
 
    // read draw parameters from DataTables
    int draw = http::util::fieldValue<int>(fields, "draw", 0);
    int start = http::util::fieldValue<int>(fields, "start", 0);
    int length = http::util::fieldValue<int>(fields, "length", 0);
+
    std::string search = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "search[value]", ""));
+
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""));
+   
+   // Parameters from the client to delimit the column slice to return
+   int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
+   int maxDisplayColumns = http::util::fieldValue<int>(fields, "max_display_columns", 0);
 
    // loop through sort columns
    std::vector<int> ordercols;
@@ -526,16 +574,12 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 
       if (ordercol > 0)
       {
-         ordercols.push_back(ordercol);
+         ordercols.push_back(ordercol + columnOffset);
          orderdirs.push_back(orderdir);
       }
 
       orderIdx++;
    } while (ordercol > 0);
-
-   // Parameters from the client to delimit the column slice to return
-   int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
-   int maxColumns = http::util::fieldValue<int>(fields, "max_columns", MAX_COLUMNS);
 
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
@@ -652,7 +696,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    start++;
 
    // extract the portion of the column vector requested by the client
-   int numFormattedColumns = ncol - columnOffset < maxColumns ? ncol - columnOffset : maxColumns;
+   int numFormattedColumns = ncol - columnOffset < maxDisplayColumns ? ncol - columnOffset : maxDisplayColumns;
    SEXP formattedDataSEXP = Rf_allocVector(VECSXP, numFormattedColumns);
    protect.add(formattedDataSEXP);
 
@@ -791,14 +835,36 @@ Error getGridData(const http::Request& request,
       // find the data frame we're going to be pulling data from
       http::Fields fields;
       http::util::parseForm(request.body(), &fields);
+
       std::string envName = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "env", ""));
+
       std::string objName = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "obj", ""));
+
       std::string cacheKey = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "cache_key", ""));
+
+      std::string maxRowsField = http::util::urlDecode(
+               http::util::fieldValue<std::string>(fields, "max_rows", ""));
+
+      std::string maxColsField = http::util::urlDecode(
+               http::util::fieldValue<std::string>(fields, "max_cols", ""));
+
+      std::string maxDisplayColumnsField = http::util::urlDecode(
+               http::util::fieldValue<std::string>(fields, "max_display_columns", ""));
+
+      std::string columnOffsetField = http::util::urlDecode(
+               http::util::fieldValue<std::string>(fields, "column_offset", ""));
+
       std::string show = http::util::fieldValue<std::string>(
-            fields, "show", "data");
+               fields, "show", "data");
+
+      int maxRows = safe_convert::stringTo<int>(maxRowsField, -1);
+      int maxCols = safe_convert::stringTo<int>(maxColsField, -1);
+      int maxDisplayColumns = safe_convert::stringTo<int>(maxDisplayColumnsField, -1);
+      int columnOffset = safe_convert::stringTo<int>(columnOffsetField, 0);
+
       if (objName.empty() && cacheKey.empty()) 
       {
          return Success();
@@ -807,11 +873,10 @@ Error getGridData(const http::Request& request,
       r::sexp::Protect protect;
 
       // begin observing if we aren't already
-      if (envName != kNoBoundEnv) 
+      if (!cacheKey.empty() && envName != kNoBoundEnv)
       {
          SEXP objSEXP = findInNamedEnvir(envName, objName);
-         std::map<std::string, CachedFrame>::iterator it = 
-            s_cachedFrames.find(cacheKey);
+         auto it = s_cachedFrames.find(cacheKey);
          if (it == s_cachedFrames.end())
             s_cachedFrames[cacheKey] = CachedFrame(envName, objName, objSEXP);
       }
@@ -824,6 +889,17 @@ Error getGridData(const http::Request& request,
       if (error) 
       {
          LOG_ERROR(error);
+      }
+
+      // can we find it _anywhere_ ?!
+      if (dataSEXP == nullptr || dataSEXP == R_UnboundValue || 
+          Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
+      {
+         error = r::exec::RFunction(".rs.getAnywhere", objName).call(&dataSEXP, &protect);
+         if (error) 
+         {
+            LOG_ERROR(error);
+         }
       }
 
       // couldn't find the original object
@@ -845,11 +921,18 @@ Error getGridData(const http::Request& request,
          }
          if (show == "cols")
          {
-            result = getCols(dataSEXP);
+            if (columnOffset >= 0 && maxDisplayColumns > 0)
+            {
+               result = getColSlice(dataSEXP, columnOffset, maxDisplayColumns);
+            }
+            else
+            {
+               result = getCols(dataSEXP, maxRows, maxCols);
+            }
          }
          else if (show == "data")
          {
-            result = getData(dataSEXP, fields);
+            result = getData(dataSEXP, maxRows, maxCols, fields);
          }
       }
    }
@@ -918,10 +1001,9 @@ Error removeRCachedData(const std::string& cacheKey)
 Error removeCacheKey(const std::string& cacheKey)
 {
    // remove from watchlist
-   std::map<std::string, CachedFrame>::iterator pos = 
-      s_cachedFrames.find(cacheKey);
-   if (pos != s_cachedFrames.end())
-      s_cachedFrames.erase(pos);
+   auto it = s_cachedFrames.find(cacheKey);
+   if (it != s_cachedFrames.end())
+      s_cachedFrames.erase(it);
    
     return removeRCachedData(cacheKey);
 }
@@ -972,9 +1054,7 @@ void onDetectChanges(module_context::ChangeSource source)
       return;
 
    r::sexp::Protect protect;
-   for (std::map<std::string, CachedFrame>::iterator i = s_cachedFrames.begin();
-        i != s_cachedFrames.end();
-        i++) 
+   for (auto i = s_cachedFrames.begin(); i != s_cachedFrames.end(); i++)
    {
       SEXP sexp = findInNamedEnvir(i->second.envName, i->second.objName);
       if (sexp != i->second.observedSEXP) 
@@ -982,27 +1062,56 @@ void onDetectChanges(module_context::ChangeSource source)
          // clear working data for the object
          r::exec::RFunction(".rs.removeWorkingData", i->first).call();
    
-         if (Rf_inherits(sexp, "data.frame"))
+         if (sexp != nullptr)
          {
             // create a new frame object to capture the new state of the frame
             CachedFrame newFrame(i->second.envName, i->second.objName, sexp);
+            
+            // check for changes in the object
+            bool typeChanged = false;
+            if (i->second.observedSEXP != nullptr)
+            {
+               SEXP oldClass = Rf_getAttrib(i->second.observedSEXP, R_ClassSymbol);
+               SEXP newClass = Rf_getAttrib(sexp, R_ClassSymbol);
+               typeChanged = !R_compute_identical(oldClass, newClass, 0);
+            }
+            
+            bool structureChanged =
+                  i->second.nrow != newFrame.nrow ||
+                  i->second.ncol != newFrame.ncol ||
+                  i->second.colNames != newFrame.colNames;
+            
+            if (typeChanged || structureChanged)
+            {
+               // replace cached copy
+               r::exec::RFunction(".rs.assignCachedData")
+                     .addParam(i->first)
+                     .addParam(sexp)
+                     .addParam(i->second.objName)
+                     .call();
+               
+               // figure out the object classes for this thing
+               std::vector<std::string> objectClass;
+               Error error = r::exec::RFunction("base:::class")
+                     .addParam(sexp)
+                     .call(&objectClass);
+               
+               if (error)
+                  LOG_ERROR(error);
 
-            // replace cached copy (if we have something to replace it with)
-            if (sexp != nullptr)
-               r::exec::RFunction(".rs.assignCachedData", 
-                     i->first, sexp, i->second.objName).call();
+               // emit client event
+               json::Object changed;
+               changed["cache_key"] = i->first;
+               changed["type_changed"] = typeChanged;
+               changed["structure_changed"] = structureChanged;
+               changed["object_exists"] = true;
+               changed["object_class"] = json::toJsonArray(objectClass);
+               ClientEvent event(client_events::kDataViewChanged, changed);
+               module_context::enqueClientEvent(event);
 
-            // emit client event
-            json::Object changed;
-            changed["cache_key"] = i->first;
-            changed["structure_changed"] = i->second.ncol != newFrame.ncol || 
-               i->second.colNames != newFrame.colNames;
-            changed["type_changed"] = false;
-            ClientEvent event(client_events::kDataViewChanged, changed);
-            module_context::enqueClientEvent(event);
-
-            // replace old frame with new
-            s_cachedFrames[i->first] = newFrame;
+               // replace old frame with new
+               s_cachedFrames[i->first] = newFrame;
+            }
          }
          else 
          {
@@ -1011,27 +1120,10 @@ void onDetectChanges(module_context::ChangeSource source)
             changed["cache_key"] = i->first;
             changed["type_changed"] = true;
             changed["structure_changed"] = true;
+            changed["object_exists"] = false;
+            changed["object_class"] = json::Array();
             ClientEvent event(client_events::kDataViewChanged, changed);
             module_context::enqueClientEvent(event);
-
-            // then View() it again
-            r::sexp::Protect protect;
-            SEXP env = getNamedEnvir(i->second.envName);
-            if (env != nullptr)
-            {
-               protect.add(env);
-
-               SEXP symbol = Rf_install(i->second.objName.c_str());
-
-               Error error = r::exec::RFunction("View")
-                  .addParam(symbol)
-                  .call(env, true);
-               if (error)
-               {
-                  LOG_ERROR(error);
-               }
-
-            }
          }
       }
    }

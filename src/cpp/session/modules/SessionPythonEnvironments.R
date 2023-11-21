@@ -189,23 +189,6 @@
         return(python)
    }
 
-   # fall back to versions of python in /usr/bin if available
-   if (!.rs.platform.isWindows)
-   {
-     python3 <- Sys.which("python3")
-     if (nzchar(python3) && python3 == "/usr/bin/python3")
-        return(python3)
-
-     python <- Sys.which("python")
-     if (nzchar(python) && python == "/usr/bin/python")
-     {
-       info <- .rs.python.interpreterInfo(python, NULL)
-       version <- numeric_version(info$version, strict = FALSE)
-       if (!is.na(version) && version >= "3.2")
-          return(python)
-     }
-   }
-
    # no python found; return empty string placeholder
    ""
 

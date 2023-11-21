@@ -1,5 +1,6 @@
 ---
 title: "Writing Packages"
+date-meta: 2022-12-12
 ---
 
 R packages are an ideal way to package and distribute R code and data for re-use by others. RStudio includes a variety of tools that make developing R packages easier and more productive, including:

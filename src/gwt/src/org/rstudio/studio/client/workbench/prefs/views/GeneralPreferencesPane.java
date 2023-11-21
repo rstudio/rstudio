@@ -14,11 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,15 +44,19 @@ import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 
 public class GeneralPreferencesPane extends PreferencesPane
 {
@@ -116,6 +115,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          spaced(rVersion_);
          basic.add(rVersion_);
       }
+      
       if (versionsInfo.isMultiVersion())
       {
          rServerRVersion_ = new RVersionSelectWidget(
@@ -149,12 +149,12 @@ public class GeneralPreferencesPane extends PreferencesPane
       lessSpaced(restoreLastProject_);
       basic.add(restoreLastProject_);
 
-        basic.add(checkboxPref(constants_.rRestorePreviousOpenTitle(), prefs_.restoreSourceDocuments()));
+      basic.add(checkboxPref(constants_.rRestorePreviousOpenTitle(), prefs_.restoreSourceDocuments()));
 
       rProfileOnResume_ = new CheckBox(constants_.rRunProfileTitle());
       if (!Desktop.isDesktop())
          basic.add(rProfileOnResume_);
-
+      
       basic.add(spacedBefore(headerLabel(constants_.workspaceCaption())));
       basic.add(loadRData_ = new CheckBox(constants_.workspaceLabel()));
       lessSpaced(loadRData_);
@@ -247,6 +247,14 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.GENERAL_ADVANCED_PREFS);
 
+      advanced.add(headerLabel("Projects"));
+      advanced.add(defaultOpenProjectLocationChooser_ = new DirectoryChooserTextBox(
+            prefs_.defaultOpenProjectLocation().getTitle(),
+            ElementIds.TextBoxButtonId.DEFAULT_OPEN_PROJECT_DIR,
+            null,
+            fileDialogs_,
+            fsContext_));
+
       showServerHomePage_ = new SelectWidget(
               constants_.serverHomePageLabel(),
             new String[] {
@@ -265,7 +273,6 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       reuseSessionsForProjectLinks_ = new CheckBox(constants_.reUseIdleSessionLabel());
       lessSpaced(reuseSessionsForProjectLinks_);
-      boolean firstHeader = true;
 
       if (!Desktop.hasDesktopFrame())
       {
@@ -275,7 +282,6 @@ public class GeneralPreferencesPane extends PreferencesPane
             Label homePageLabel = headerLabel(constants_.desktopCaption());
             spacedBefore(homePageLabel);
             advanced.add(homePageLabel);
-            firstHeader = false;
          }
          if (session_.getSessionInfo().getShowUserHomePage())
          {
@@ -287,12 +293,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
      Label debuggingLabel = headerLabel(constants_.advancedDebuggingCaption());
-     if (!firstHeader)
-     {
-        spacedBefore(debuggingLabel);
-        firstHeader = false;
-     }
-     advanced.add(debuggingLabel);
+     advanced.add(extraSpacedBefore(debuggingLabel));
      advanced.add(checkboxPref(
            constants_.advancedDebuggingLabel(),
            prefs_.handleErrorsInUserCodeOnly()));
@@ -351,6 +352,8 @@ public class GeneralPreferencesPane extends PreferencesPane
          {
             nativeFileDialogs_ = checkboxPref(prefs_.nativeFileDialogs());
             advanced.add(nativeFileDialogs_);
+            disableRendererAccessibility_ = checkboxPref(prefs_.disableRendererAccessibility());
+            advanced.add(disableRendererAccessibility_);
          }
       }
 
@@ -366,16 +369,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       String[] values = new String[labels.length];
       for (int i = 0; i < labels.length; i++)
          values[i] = Double.parseDouble(labels[i]) + "";
-
-      helpFontSize_ = new SelectWidget(constants_.helpFontSizeLabel(),
-                                       labels,
-                                       values,
-                                       false, /* Multi select */
-                                       true, /* Horizontal label */
-                                       false /* List on left */);
-      if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getValue() + ""))
-         helpFontSize_.getListBox().setSelectedIndex(3);
-      advanced.add(helpFontSize_);
 
       Label experimentalLabel = headerLabel(constants_.experimentalLabel());
       spacedBefore(experimentalLabel);
@@ -404,6 +397,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
+      defaultOpenProjectLocationChooser_.setEnabled(false);
       alwaysSaveHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
       rProfileOnResume_.setEnabled(false);
@@ -411,7 +405,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       restoreLastProject_.setEnabled(false);
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.generalTablistLabel());
-      tabPanel.setSize("435px", "533px");
+      setTabPanelSize(tabPanel);
       tabPanel.add(basic, constants_.generalTablListBasicOption(), basic.getBasePanelId());
       tabPanel.add(graphics, constants_.generalTablListGraphicsOption(), graphics.getBasePanelId());
       tabPanel.add(advanced, constants_.generalTabListAdvancedOption(), advanced.getBasePanelId());
@@ -429,6 +423,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       saveWorkspace_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
+      defaultOpenProjectLocationChooser_.setEnabled(true);
 
       if (!isLauncherSession)
          showServerHomePage_.setValue(prefs.showUserHomePage().getValue());
@@ -462,8 +457,12 @@ public class GeneralPreferencesPane extends PreferencesPane
       String workingDir = prefs.initialWorkingDirectory().getValue();
       if (StringUtil.isNullOrEmpty(workingDir))
          workingDir = "~";
-      
       dirChooser_.setText(workingDir);
+      
+      String defaultOpenProjectLocation = prefs.defaultOpenProjectLocation().getValue();
+      if (StringUtil.isNullOrEmpty(defaultOpenProjectLocation))
+         defaultOpenProjectLocation = "~";
+      defaultOpenProjectLocationChooser_.setText(defaultOpenProjectLocation);
 
       alwaysSaveHistory_.setEnabled(true);
       removeHistoryDuplicates_.setEnabled(true);
@@ -501,6 +500,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       initialUiLanguage_ = prefs_.uiLanguage().getValue();
       initialNativeFileDialogs_ = prefs_.nativeFileDialogs().getValue();
+      initialDisableRendererAccessibility_ = prefs_.disableRendererAccessibility().getValue();
    }
 
    @Override
@@ -513,11 +513,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    public RestartRequirement onApply(UserPrefs prefs)
    {
       RestartRequirement restartRequirement = super.onApply(prefs);
-
-      {
-         double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
-         prefs.helpFontSizePoints().setGlobalValue(helpFontSize);
-      }
 
       if (clipboardMonitoring_ != null &&
           desktopMonitoring_ != clipboardMonitoring_.getValue())
@@ -572,6 +567,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       prefs.loadWorkspace().setGlobalValue(loadRData_.getValue());
       prefs.runRprofileOnResume().setGlobalValue(rProfileOnResume_.getValue());
       prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
+      prefs.defaultOpenProjectLocation().setGlobalValue(defaultOpenProjectLocationChooser_.getText());
       prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
       prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
       prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
@@ -602,6 +598,15 @@ public class GeneralPreferencesPane extends PreferencesPane
          {
             restartRequirement.setUiReloadRequired(true);
          }
+
+         boolean disableRendererAccessibilityPrefValue = disableRendererAccessibility_.getValue();
+         if (disableRendererAccessibilityPrefValue != initialDisableRendererAccessibility_)
+         {
+            if (Desktop.hasDesktopFrame() && BrowseCap.isElectron())
+               Desktop.getFrame().setDisableRendererAccessibility(disableRendererAccessibilityPrefValue);
+            restartRequirement.setDesktopRestartRequired(true);
+         }
+
 
          boolean useWebDialogsCookieValue = WebDialogCookie.getUseWebDialogs();
          boolean useWebDialogsPrefValue = !useNativeDialogsPrefValue;
@@ -708,11 +713,11 @@ public class GeneralPreferencesPane extends PreferencesPane
    private RVersionSelectWidget rServerRVersion_ = null;
    private CheckBox rememberRVersionForProjects_ = null;
    private CheckBox reuseSessionsForProjectLinks_ = null;
-   private SelectWidget helpFontSize_;
    private SelectWidget uiLanguage_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox fullPathInTitle_ = null;
    private CheckBox nativeFileDialogs_ = null;
+   private CheckBox disableRendererAccessibility_ = null;
    private CheckBox useGpuExclusions_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
@@ -725,6 +730,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton dirChooser_;
+   private TextBoxWithButton defaultOpenProjectLocationChooser_;
    private CheckBox loadRData_;
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox removeHistoryDuplicates_;
@@ -736,4 +742,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final Session session_;
    private String initialUiLanguage_;
    private boolean initialNativeFileDialogs_;
+   private boolean initialDisableRendererAccessibility_;
 }

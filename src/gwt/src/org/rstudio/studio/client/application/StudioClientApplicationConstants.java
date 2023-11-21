@@ -279,6 +279,15 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String applicationQuitMessage(String message);
 
     /**
+     * Translated "Quit RStudio".
+     *
+     * @return translated "Quit RStudio"
+     */
+    @DefaultMessage("Quit RStudio")
+    @Key("quitRStudio")
+    String quitRStudio();
+
+    /**
      * Translated "Are you sure you want to quit the R session?".
      *
      * @return translated "Are you sure you want to quit the R session?"
@@ -574,6 +583,33 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     @DefaultMessage("Unable to obtain a license. Please restart RStudio to try again.")
     @Key("licenseLostMessage")
     String licenseLostMessage();
+
+    /**
+     * Translated "Unable to find an active license. Please select a license file or restart RStudio to try again.".
+     *
+     * @return translated "Unable to find an active license. Please select a license file or restart RStudio to try again."
+     */
+    @DefaultMessage("Unable to find an active license. Please select a license file or restart RStudio to try again.")
+    @Key("unableToFindActiveLicenseMessage")
+    String unableToFindActiveLicenseMessage();
+
+    /**
+     * Translated "Active RStudio License Not Found".
+     *
+     * @return translated "Active RStudio License Not Found"
+     */
+    @DefaultMessage("Active RStudio License Not Found")
+    @Key("activeRStudioLicenseNotFound")
+    String activeRStudioLicenseNotFound();
+
+    /**
+     * Translated "Select License...".
+     *
+     * @return translated "Select License..."
+     */
+    @DefaultMessage("Select License...")
+    @Key("selectLicense")
+    String selectLicense();
 
     /**
      * Translated "Details: ".
@@ -1420,4 +1456,40 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     @DefaultMessage("<p>Click on a request to see details. Click on the background to show these instructions again.</p><h4>Available commands:</h4><ul><li>Esc: Close</li><li>P: Play/pause</li><li>E: Export</li><li>I: Import</li><li>+/-: Zoom in/out</li></ul>")
     @Key("requestLogVisualization")
     String requestLogVisualization();
+
+    /**
+     * Translated "Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available.".
+     *
+     * @return translated "Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available."
+     */
+    @DefaultMessage("Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available.")
+    @Key("visitWebsiteForNewVersion")
+    String visitWebsiteForNewVersionText();
+
+    /**
+     * Translated "Automatic update notifications were disabled for {0}.".
+     *
+     * @return translated "Automatic update notifications were disabled for {0}."
+     */
+    @DefaultMessage("Automatic update notifications were disabled for {0}.")
+    @Key("updateDisabledForVersionText")
+    String updateDisabledForVersionText(String version);
+
+    /**
+     * Translated "Danger!".
+     *
+     * @return translated "Danger!"
+     */
+    @DefaultMessage("Danger!")
+    @Key("reallyCrashCaption")
+    String reallyCrashCaption();
+
+    /**
+     * Translated "This will cause RStudio to immediately crash. You may lose work. Trigger crash?".
+     *
+     * @return translated "This will cause RStudio to immediately crash. You may lose work. Trigger crash?"
+     */
+    @DefaultMessage("This will cause RStudio to immediately crash. You may lose work. Trigger crash?")
+    @Key("reallyCrashMessage")
+    String reallyCrashMessage();
 }

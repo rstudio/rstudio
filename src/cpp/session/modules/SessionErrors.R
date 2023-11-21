@@ -87,16 +87,16 @@
 
    
    # look for python entry point and fill in the stack from reticulate if we can
-   ammended_stack <- list()
+   amended_stack <- list()
    lapply(stack, function(x) {
       func <- x$func
       if (.rs.hasPythonStackTrace(func)) {
          foundUserCode <<- TRUE # python code always includes src references
          python_stack_trace <- .rs.getActivePythonStackTrace()
          for (item in python_stack_trace)
-            ammended_stack[[length(ammended_stack) + 1]] <<- item
+            amended_stack[[length(amended_stack) + 1]] <<- item
       } else {
-         ammended_stack[[length(ammended_stack) + 1]] <<- x
+         amended_stack[[length(amended_stack) + 1]] <<- x
       }
    })
    
@@ -104,7 +104,7 @@
    if (foundUserCode || !userOnly)
    {
       err <- list(
-         frames = ammended_stack,
+         frames = amended_stack,
          message = .rs.scalar(geterrmessage()))
       errorReporter(err)
    }

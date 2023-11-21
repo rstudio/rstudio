@@ -93,6 +93,20 @@ public:
                       (persistOutput ? "FALSE" : "TRUE") +
                       ", " +
                       "'" + extraParams + "')");
+      
+      // set up environment
+      core::system::Options environment;
+      core::system::environment(&environment);
+      
+      // pass along packages we might require for plotting
+      std::vector<std::string> requiredPackages;
+      Error error = r::exec::RFunction(".rs.replayNotebookPlotsPackages")
+            .call(&requiredPackages);
+      if (error)
+         LOG_ERROR(error);
+      
+      environment.push_back({ "R_LIBS", module_context::libPathsString() });
+      environment.push_back({ "RS_NOTEBOOK_PACKAGES", core::algorithm::join(requiredPackages, ",") });
 
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
@@ -100,7 +114,9 @@ public:
       pReplayer->replayId_ = replayId;
       pReplayer->width_ = width;
       pReplayer->persistOutput_ = persistOutput;
-      pReplayer->start(cmd.c_str(), FilePath(),
+      pReplayer->start(cmd.c_str(),
+                       environment,
+                       FilePath(),
                        async_r::R_PROCESS_VANILLA,
                        sources,
                        input);
@@ -125,7 +141,8 @@ private:
             continue;
 
          FilePath chunkBase = png;
-         if (!persistOutput_) chunkBase = png.getParent();
+         if (!persistOutput_)
+            chunkBase = png.getParent();
 
          // create the event and send to the client. consider: this makes some
          // assumptions about the way output URLs are formed and some
@@ -147,6 +164,11 @@ private:
          module_context::enqueClientEvent(event);
       }
    }
+   
+   void onStderr(const std::string& output)
+   {
+      stderr_.append(output);
+   }
 
    void onCompleted(int exitStatus)
    {
@@ -157,6 +179,10 @@ private:
       result["replay_id"] = replayId_;
       module_context::enqueClientEvent(ClientEvent(
                client_events::kChunkPlotRefreshFinished, result));
+      
+      // if some errors occurred, log those
+      if (!stderr_.empty())
+         WLOGF("Error replaying plots: {}", stderr_);
 
       // if we succeeded, write the new rendered width into the notebook chunk
       // file
@@ -167,9 +193,10 @@ private:
          setChunkValue(docPath, docId_, "chunk_rendered_width", width_);
       }
    }
-
+   
    std::string docId_;
    std::string replayId_;
+   std::string stderr_;
    bool persistOutput_;
    int width_;
 };

@@ -88,6 +88,13 @@ struct RProjectBuildOptions
    bool autoRoxygenizeForBuildAndReload;
 };
 
+// copilot options
+struct RProjectCopilotOptions
+{
+   core::r_util::YesNoAskValue copilotEnabled;
+   core::r_util::YesNoAskValue copilotIndexingEnabled;
+};
+
 class ProjectContext : boost::noncopyable
 {
 public:
@@ -152,6 +159,9 @@ public:
    core::Error readBuildOptions(RProjectBuildOptions* pOptions);
    core::Error writeBuildOptions(const RProjectBuildOptions& options);
 
+   core::Error readCopilotOptions(RProjectCopilotOptions* pOptions) const;
+   core::Error writeCopilotOptions(const RProjectCopilotOptions& options) const;
+   
    // update the website output type
    void setWebsiteOutputFormat(const std::string& websiteOutputFormat);
 
@@ -233,6 +243,7 @@ private:
 
    core::FilePath vcsOptionsFilePath() const;
    core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
+   core::FilePath copilotOptionsFilePath() const;
 
    void updateDefaultEncoding();
    void updateBuildTargetPath();

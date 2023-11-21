@@ -1,7 +1,7 @@
 /*
  * wait-utils.test.ts
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2023 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -15,7 +15,14 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../../../src/core/wait-utils';
+import {
+  FunctionInterval,
+  WaitResult,
+  WaitTimeoutFn,
+  secondsToMs,
+  sleepPromise,
+  waitWithTimeout,
+} from '../../../src/core/wait-utils';
 import { isFailure, isSuccessful } from '../../../src/core/err';
 
 describe('wait-utils', () => {
@@ -51,5 +58,24 @@ describe('wait-utils', () => {
     const error = await waitWithTimeout(eventuallySucceeds, 1, 2, 1);
     assert.isTrue(isSuccessful(error));
     assert.equal(numCalls, 2);
+  });
+  it('sleepPromise waits for the specified time', async () => {
+    const sleepTime = 1.2;
+    const startTime = Date.now();
+    await sleepPromise(sleepTime);
+    const endTime = Date.now();
+    const timeTolerance = 1.5; // to account for some time variance
+    assert.isBelow(endTime - startTime, secondsToMs(sleepTime) * timeTolerance);
+  });
+  it('FunctionInterval executes function on specified interval', async () => {
+    const sleepTime = 1;
+    const intervalTime = sleepTime / 10;
+    let num = 0;
+    const numIncrement = () => num++;
+    const funcInterval = new FunctionInterval(numIncrement, secondsToMs(intervalTime));
+    funcInterval.start();
+    await sleepPromise(sleepTime); // function should have executed 8 - 10 times at this point
+    funcInterval.stop();
+    assert.include([8, 9, 10], num);
   });
 });

@@ -250,7 +250,6 @@ var RCodeModel = function(session, tokenizer,
       return true;
    }
 
-
    this.getFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
       return this.$scopes.getFunctionsInScope(pos);
@@ -268,87 +267,13 @@ var RCodeModel = function(session, tokenizer,
       return /\binfix\b/.test(token.type) || token.value === "|>";
    }
 
-   this.getDplyrJoinContextFromInfixChain = function(cursor)
-   {
-      var clone = cursor.cloneCursor();
-      
-      var token = "";
-      if (clone.hasType("identifier"))
-         token = clone.currentValue();
-      
-      // We're expecting to be within e.g.
-      //
-      //    mtcars %>% semi_join(foo, by = c("a" =
-      //                                           ^
-      // Here, we get:
-      // 1. The name of the 'right table' (foo), and
-      // 2. The cursor position (left or right of '=')
-      var cursorPos = "left";
-      if (clone.currentValue() === "=")
-         cursorPos = "right";
-
-      if (clone.hasType("identifier"))
-      {
-         if (!clone.moveToPreviousToken())
-            return null;
-         
-         if (clone.currentValue() === "=")
-            cursorPos = "right";
-      }
-
-      // Move to the first opening paren
-      if (!clone.findOpeningBracket("(", true))
-         return null;
-
-      if (!clone.moveToPreviousToken())
-         return null;
-
-      // Look back until we find a 'join' verb
-      while (clone.findOpeningBracket("(", true))
-      {
-         if (!clone.moveToPreviousToken())
-            return null;
-
-         if (!/_join$/.test(clone.currentValue()))
-            continue;
-
-         // If we get here, it looks like a dplyr join in a magrittr chain
-         // get the data name and the join verb
-         var verb = clone.currentValue();
-
-         if (!clone.moveToNextToken())
-            return null;
-
-         if (!clone.moveToNextToken())
-            return null;
-
-         var rightData = clone.currentValue();
-
-         var leftData = "";
-         var data = this.moveToDataObjectFromInfixChain(clone);
-         if (data === false)
-            return null;
-         
-         leftData = clone.currentValue();
-         
-         return {
-            "token": token,
-            "leftData": leftData,
-            "rightData": rightData,
-            "verb": verb,
-            "cursorPos": cursorPos
-         };
-      }
-      return null;
-   };
-
    // If the token cursor lies within an infix chain, try to retrieve:
    // 1. The data object name, and
    // 2. Any custom variable names (e.g. set through 'mutate', 'summarise')
    this.getDataFromInfixChain = function(tokenCursor)
    {
       var data = this.moveToDataObjectFromInfixChain(tokenCursor);
-      
+
       var additionalArgs = [];
       var excludeArgs = [];
       var name = "";
@@ -358,7 +283,18 @@ var RCodeModel = function(session, tokenizer,
          if (data.excludeArgsFromObject)
             excludeArgsFromObject = data.excludeArgsFromObject;
          
-         name = tokenCursor.currentValue();
+         var clone = tokenCursor.cloneCursor();
+         clone.findStartOfEvaluationContext();
+
+         name = this.$doc.getTextRange(new Range(
+            clone.currentPosition().row,
+            clone.currentPosition().column,
+
+            tokenCursor.currentPosition().row,
+            tokenCursor.currentPosition().column + tokenCursor.currentValue().length
+         ));
+         
+         // name = tokenCursor.currentValue();
          additionalArgs = data.additionalArgs;
          excludeArgs = data.excludeArgs;
 
@@ -464,8 +400,6 @@ var RCodeModel = function(session, tokenizer,
                }
 
             }
-            
-
          }
          
       } while (cursor.moveToNextToken());
@@ -488,14 +422,14 @@ var RCodeModel = function(session, tokenizer,
             return false;
 
          // Move over '::' qualifiers
-         if (clone.currentValue() === ":")
+         if (clone.currentValue() === "::" || clone.currentValue() === ":::")
          {
-            while (clone.currentValue() === ":")
-               if (!clone.moveToPreviousToken())
-                  return false;
+            // Move of to pkg identifier
+            if (!clone.moveToPreviousToken())
+               return false;
 
             // Move off of identifier
-            if (!clone.moveToPreviousToken())
+            if (!pIdentifier(clone.currentToken()) || !clone.moveToPreviousToken())
                return false;
          }
 
@@ -583,11 +517,11 @@ var RCodeModel = function(session, tokenizer,
          }
 
          // Move over '::' qualifiers
-         if (clone.currentValue() === ":")
+         if (clone.currentValue() === "::" || clone.currentValue() === ":::")
          {
-            while (clone.currentValue() === ":")
-               if (!clone.moveToPreviousToken())
-                  return false;
+            // Move off of ::
+            if (!clone.moveToPreviousToken())
+               return false;
 
             // Move off of identifier
             if (!clone.moveToPreviousToken())
@@ -644,7 +578,7 @@ var RCodeModel = function(session, tokenizer,
    var moveOutOfArgList = function(tokenCursor)
    {
       var clone = tokenCursor.cloneCursor();
-      if (!clone.findOpeningBracket("(", true))
+      if (!clone.findOpeningBracket(["(", "["], true))
          return false;
 
       if (!clone.moveToPreviousToken())
@@ -667,9 +601,16 @@ var RCodeModel = function(session, tokenizer,
       //
       // we don't pick up 'func', 'x', and 'y' as potential completions
       // since they will not be valid in all contexts
-      if (moveOutOfArgList(tokenCursor))
+      // 
+      // same for these calls: 
+      // 
+      //     y <- data[ x = 1, y = 2, |
+      // 
+      // we don't pick up 'x', 'data', or 'y'
+      while (moveOutOfArgList(tokenCursor))
       {
          var moved = false;
+
          if (pFunction(tokenCursor.currentToken()))
          {
             moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 
@@ -811,7 +752,7 @@ var RCodeModel = function(session, tokenizer,
 
    this.$buildScopeTreeUpToRow = function(maxRow)
    {
-      function getChunkLabel(reOptions, comment, iterator) {
+      function getChunkLabel(session, reOptions, comment, iterator) {
 
          if (typeof reOptions === "undefined")
             return "";
@@ -844,17 +785,15 @@ var RCodeModel = function(session, tokenizer,
          // ```{r}
          // #| label: foo
          var it = iterator.clone();
-         
-         var tok = it.moveToNextToken();
-         while(tok != null && tok.type.startsWith("comment"))
+         var token = it.moveToNextToken();
+         while (token != null && token.type.startsWith("comment"))
          {
-            var value = tok.value;
-            
+            var value = session.getLine(it.$row);
             var labelRegex = /^#\|\s*label\s*:\s*(.*)$/;
             if (labelRegex.test(value))
                return value.replace(labelRegex, "$1");
             
-            tok = it.moveToNextToken();
+            token = it.moveToStartOfNextRowWithTokens();
          }
          
          return null;
@@ -1027,7 +966,7 @@ var RCodeModel = function(session, tokenizer,
             //   ## Header 2 ----
             //
             // When we have such a header, we can provide a depth.
-            var match = /^\s*([#]+)\s*\w/.exec(value);
+            var match = /^\s*([#]+)\s*[^#]/.exec(value);
             if (match != null)
             {
                // compute depth -- if the depth seems unlikely / large,
@@ -1140,7 +1079,7 @@ var RCodeModel = function(session, tokenizer,
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = chunkCount;
 
-            var chunkLabel = getChunkLabel(this.$codeBeginPattern, value, iterator);
+            var chunkLabel = getChunkLabel(this.$session, this.$codeBeginPattern, value, iterator);
             var scopeName = "Chunk " + chunkNum;
             if (chunkLabel && value !== "YAML Header")
                scopeName += ": " + chunkLabel;

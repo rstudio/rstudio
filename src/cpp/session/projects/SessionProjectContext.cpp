@@ -508,28 +508,31 @@ std::vector<std::string> fileMonitorIgnoredComponents()
    std::vector<std::string> ignores = {
 
       // don't monitor things in .Rproj.user
-      "/.Rproj.user",
+      "/.Rproj.user/",
 
       // don't monitor things in .quarto
-      "/.quarto",
+      "/.quarto/",
 
       // ignore things within a .git folder
       // ... but allow e.g. .github
       "/.git/",
 
       // ignore some directories within the revdep folder
-      "/revdep/checks",
-      "/revdep/library",
+      "/revdep/checks/",
+      "/revdep/library/",
 
       // ignore files within an renv or packrat library
-      "/renv/library",
-      "/renv/python",
-      "/renv/staging",
-      "/packrat/lib",
-      "/packrat/src"
+      "/renv/library/",
+      "/renv/python/",
+      "/renv/staging/",
+      "/packrat/lib/",
+      "/packrat/src/",
+      
+      // mostly for internal use
+      "/RStudio.app/",
 
       // ignore things marked .noindex
-      ".noindex"
+      ".noindex/"
 
    };
 
@@ -775,11 +778,11 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
+   
    // only set project value if explicitly set to Yes or No
-   if (config_.useNativePipeOperator == r_util::YesValue)
-      uiPrefs[kInsertNativePipeOperator] = true;
-   if (config_.useNativePipeOperator == r_util::NoValue)
-      uiPrefs[kInsertNativePipeOperator] = false;
+   if (config_.useNativePipeOperator != DefaultValue)
+      uiPrefs[kInsertNativePipeOperator] = config_.useNativePipeOperator == YesValue;
+   
    uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
    uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
    uiPrefs[kDefaultEncoding] = defaultEncoding();
@@ -820,6 +823,12 @@ json::Object ProjectContext::uiPrefs() const
    if (!config_.spellingDictionary.empty())
       uiPrefs[kSpellingDictionaryLanguage] = config_.spellingDictionary;
 
+   if (config_.copilotEnabled != DefaultValue)
+      uiPrefs[kCopilotEnabled] = config_.copilotEnabled == YesValue;
+   
+   if (config_.copilotIndexingEnabled != DefaultValue)
+      uiPrefs[kCopilotIndexingEnabled] = config_.copilotIndexingEnabled == YesValue;
+   
    return uiPrefs;
 }
 
@@ -884,6 +893,10 @@ Error ProjectContext::buildOptionsFile(Settings* pOptionsFile) const
    return pOptionsFile->initialize(scratchPath().completeChildPath("build_options"));
 }
 
+FilePath ProjectContext::copilotOptionsFilePath() const
+{
+   return scratchPath().completeChildPath("copilot_options");
+}
 
 Error ProjectContext::readVcsOptions(RProjectVcsOptions* pOptions) const
 {
@@ -962,6 +975,35 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
 
    // opportunistically sync in-memory representation to what we wrote to disk
    buildOptions_ = options;
+
+   return Success();
+}
+
+Error ProjectContext::readCopilotOptions(RProjectCopilotOptions* pOptions) const
+{
+   core::Settings settings;
+   Error error = settings.initialize(copilotOptionsFilePath());
+   if (error)
+      return error;
+
+   using r_util::YesNoAskValue;
+   pOptions->copilotEnabled = static_cast<YesNoAskValue>(settings.getInt("copilot_enabled"));
+   pOptions->copilotIndexingEnabled = static_cast<YesNoAskValue>(settings.getInt("copilot_indexing_enabled"));
+
+   return Success();
+}
+
+Error ProjectContext::writeCopilotOptions(const RProjectCopilotOptions& options) const
+{
+   core::Settings settings;
+   Error error = settings.initialize(copilotOptionsFilePath());
+   if (error)
+      return error;
+
+   settings.beginUpdate();
+   settings.set("copilot_enabled", options.copilotEnabled);
+   settings.set("copilot_indexing_enabled", options.copilotIndexingEnabled);
+   settings.endUpdate();
 
    return Success();
 }

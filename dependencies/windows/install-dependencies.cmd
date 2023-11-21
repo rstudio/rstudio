@@ -7,7 +7,7 @@ call ..\tools\rstudio-tools.cmd
 set PATH=%CD%\tools;%PATH%
 
 REM Check for required tools on the PATH.
-for %%X in (R.exe 7z.exe cmake.exe) do (
+for %%X in (R.exe 7z.exe cmake.exe wget.exe) do (
   where /q %%X
   if ERRORLEVEL 1 (
     echo ERROR: %%X is not available on the PATH; cannot proceed.
@@ -18,7 +18,7 @@ for %%X in (R.exe 7z.exe cmake.exe) do (
 set WGET_ARGS=-c --no-check-certificate --no-hsts
 set UNZIP_ARGS=-q
 
-set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
+set BASEURL=%RSTUDIO_BUILDTOOLS%/
 set GIN_FILE=gin-2.1.2.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
@@ -31,8 +31,8 @@ set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
-set OPENSSL_FILES=openssl-1.1.1i.zip
-set BOOST_FILES=boost-1.78.0-win-msvc142.zip
+set OPENSSL_FILES=openssl-1.1.1w.zip
+set BOOST_FILES=boost-1.83.0-win-msvc142.zip
 set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
 set RESOURCE_HACKER=resource_hacker.zip
 
@@ -43,12 +43,21 @@ set PANDOC_VERSION=2.18
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
-REM set QUARTO_VERSION=0.9.230
+REM Pin to specific Quarto version for releases
+set QUARTO_VERSION=1.3.450
 
 REM Get latest Quarto release version
-cd install-quarto
-for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
-cd ..
+REM cd install-quarto
+REM for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
+REM cd ..
+
+REM Check for errors.
+if not "%QUARTO_VERSION%" == "%QUARTO_VERSION:ERROR=%" (
+	echo ERROR: Failed to determine Quarto version; cannot proceed.
+	echo Did you set the Powershell execution policy?
+	echo Try running 'Set-ExecutionPolicy Unrestricted'.
+	exit /b
+)
 
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
@@ -59,7 +68,7 @@ set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set NODE_VERSION=%RSTUDIO_NODE_VERSION%
 set NODE_ROOT=node
 set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
-set NODE_BASE_URL=https://nodejs.org/dist/v%NODE_VERSION%/
+set NODE_BASE_URL=%BASEURL%node/v%NODE_VERSION%/
 set NODE_ARCHIVE_DIR=node-v%NODE_VERSION%-win-x64
 set NODE_ARCHIVE_FILE=%NODE_ARCHIVE_DIR%.zip
 
@@ -139,9 +148,9 @@ if not exist resource-hacker (
 
 if not exist sentry-cli.exe (
   REM specify a version to install
-  set SENTRY_CLI_VERSION=2.8.0
+  set SENTRY_CLI_VERSION=2.9.0
   echo Installing sentry-cli
-  powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/%SENTRY_CLI_VERSION%/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
+  powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/2.9.0/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
   for /F "delims=" %%G in ('sentry-cli.exe --version') do (set "SENTRY_CLI_INSTALLED_VERSION=%%G")
   echo Installed Sentry CLI version: %SENTRY_CLI_INSTALLED_VERSION%
 )
@@ -165,7 +174,7 @@ if not exist "nsprocess/%NSIS_NSPROCESS_VERSION%" (
 pushd ..\common
 set CORE_DICTIONARIES=core-dictionaries.zip
 if not exist "dictionaries\en_US.dic" (
-  wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/dictionaries/%CORE_DICTIONARIES%"
+  wget %WGET_ARGS% "%BASEURL%dictionaries/%CORE_DICTIONARIES%"
   if exist "%CORE_DICTIONARIES%" (
      mkdir dictionaries
      echo Unzipping %CORE_DICTIONARIES%
@@ -176,7 +185,7 @@ if not exist "dictionaries\en_US.dic" (
 
 set MATHJAX=mathjax-27.zip
 if not exist "mathjax-27" (
-  wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/%MATHJAX%"
+  wget %WGET_ARGS% "%BASEURL%%MATHJAX%"
   if exist "%MATHJAX%" (
      mkdir mathjax-27
      echo Unzipping %MATHJAX%
@@ -197,14 +206,14 @@ if not exist pandoc\%PANDOC_VERSION% (
 
 
 
-REM wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
+REM wget %WGET_ARGS% %BASEURL%quarto/%QUARTO_VERSION%/%QUARTO_FILE%
 wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto
 mkdir quarto
-cd quarto
+pushd quarto
 unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
-cd ..
+popd
 del %QUARTO_FILE%
 
 
@@ -230,11 +239,6 @@ if not exist %YARN_DIR%\yarn (
   call %NODE_SUBDIR%\npm install --global yarn
 )
 
-set PATH=%CD%\%NODE_SUBDIR%;%CD%\%YARN_DIR%;%PATH%
-pushd ..\..\src\gwt\panmirror\src\editor
-call yarn install
-popd
-
 if not defined JENKINS_URL (
   if exist C:\Windows\py.exe (
     pushd ..\..\src\gwt\tools\i18n-helpers\
@@ -244,6 +248,13 @@ if not defined JENKINS_URL (
   )
 )
 
+cd
+echo "Installing panmirror (visual editor)"
+pushd ..\windows\install-panmirror
+call clone-quarto-repo.cmd
+popd
+cd
+
 call install-packages.cmd
 
 popd
@@ -252,3 +263,4 @@ regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\DIA 
 
 call install-crashpad.cmd
 call install-soci.cmd
+

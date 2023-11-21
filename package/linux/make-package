@@ -68,6 +68,9 @@ PACKAGE_VERSION_SET=0
 set-version () {
    if [ "$RSTUDIO_TARGET" = "Electron" ]; then
       pushd ${ELECTRON_SOURCE_DIR}
+      echo "ensure node-gyp installed for node ${RSTUDIO_NODE_VERSION}"
+      ${NPX} node-gyp install ${RSTUDIO_NODE_VERSION}
+      
       install-npm-packages
 
       # Set package.json info
@@ -164,7 +167,7 @@ fi
 ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
 
 # find node and npm
-RSTUDIO_NODE_VERSION=16.14.0
+RSTUDIO_NODE_VERSION=18.18.2
 find-program NODE node \
    "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
@@ -220,9 +223,31 @@ else
 fi
 
 # show build environment when building in CI
-if [ -n "${JENKINS_URL}" ]; then 
-   echo "Build environment: "
-   printenv
+if [ -n "${JENKINS_URL}" ]; then
+
+   echo "Build environment:"
+   printenv | sort
+   echo
+
+   echo "R version:"
+   R -s -e 'sessionInfo()' || true
+   R -s -e 'renv::diagnostics()' || true
+   echo
+
+fi
+
+# if SCCACHE_ENABLED environment variable is set, use sccache
+if [ -n "$SCCACHE_ENABLED" ]; then
+    echo "Using sccache"
+   
+    if [ -n "$AWS_ACCESS_KEY_ID" ] || [ $(aws sts get-caller-identity --query "Account" --profile ${AWS_PROFILE:-sso}) -eq 14 ]; then
+        echo "AWS credentials valid, using S3 build cache"
+        export SCCACHE_BUCKET="rstudio-build-cache"
+    else
+        echo "No valid AWS SSO session, using only local build cache"
+        export SCCACHE_DIR=$(pwd)/object_file_cache
+        mkdir -p $SCCACHE_DIR
+    fi
 fi
 
 cmake -G"${CMAKE_GENERATOR}"                           \
@@ -234,9 +259,14 @@ cmake -G"${CMAKE_GENERATOR}"                           \
       -DGWT_WWW_DIR="$BUILD_DIR/gwt/www"               \
       -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras"         \
       -DGWT_BUILD="$GWT_BUILD"                         \
+      -DSCCACHE_ENABLED=$SCCACHE_ENABLED               \
       $PKG_DIR/../..
 
 cmake --build . --target all -- ${MAKEFLAGS}
+
+if [ -n "$SCCACHE_ENABLED" ]; then
+   sccache --show-stats
+fi
 
 if [ "$PACKAGE_TARGET" != "DEB" ]
 then

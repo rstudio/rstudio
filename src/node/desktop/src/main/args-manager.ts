@@ -26,6 +26,9 @@ import LogOptions from './log-options';
 import { exitSuccess, ProgramStatus, run } from './program-status';
 import { getComponentVersions } from './utils';
 import { activateWindow } from './window-utils';
+import { resolveProjectFile } from './application-launch';
+import { existsSync } from 'fs';
+import { safeError } from '../core/err';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -84,8 +87,10 @@ export class ArgsManager {
       console.log('  --run-diagnostics  Run diagnostics and save in a file');
       console.log('  --log-level        Sets the verbosity of the logging');
       console.log('                     --log-level=ERR|WARN|INFO|DEBUG');
-      // eslint-disable-next-line max-len
+      /* eslint-disable max-len */
+      // prettier-ignore
       console.log('  --log-dir          The log directory to store log files in. The resulting log file name is based on the executable name.');
+      /* eslint-enable max-len */
       console.log('  --session-delay    Pause the rsession so the "Loading R" screen displays longer');
       console.log('  --session-exit     Terminate the rsession immediately forcing error page to display');
       console.log('  --startup-delay    Pause before showing the application so the splash screen displays longer');
@@ -119,7 +124,7 @@ export class ArgsManager {
   setUnswitchedArgs(args: string[]) {
     // filter out the process path and . (occurs in dev mode)
     this.unswitchedArgs = args.filter(
-      (value) => !value.startsWith('--') && value !== process.execPath && value !== '.'
+      (value) => !value.startsWith('--') && value !== process.execPath && value !== '.',
     );
   }
 
@@ -140,11 +145,11 @@ export class ArgsManager {
   handleAfterSessionLaunchCommands() {
     if (this.unswitchedArgs.length) {
       this.unswitchedArgs.forEach((arg) => {
-        if (FilePath.existsSync(arg)) {
+        if (FilePath.existsSync(arg) && !new FilePath(arg).isDirectory()) {
           app
             .whenReady()
             .then(() => {
-              getDesktopBridge().openFile(arg);
+              getDesktopBridge().openFile(path.resolve(arg));
               const name = webContents.getAllWebContents()[0].mainFrame.name;
               activateWindow(name);
             })
@@ -182,15 +187,26 @@ export class ArgsManager {
     if (this.unswitchedArgs.length) {
       this.unswitchedArgs = this.unswitchedArgs.filter((arg) => {
         if (FilePath.existsSync(arg)) {
-          const ext = path.extname(arg).toLowerCase();
+          const absolutePath = path.resolve(arg);
+          const ext = path.extname(absolutePath).toLowerCase();
 
-          if (ext === '.rproj') {
-            setenv(kRStudioInitialProject, arg);
-            return false;
+          let workingDir;
+          let projectFile = '';
+          if (new FilePath(absolutePath).isDirectory()) {
+            workingDir = absolutePath;
+            // find project file in working dir, if any
+            projectFile = resolveProjectFile(workingDir);
           } else {
-            const workingDir = path.dirname(arg);
-            setenv(kRStudioInitialWorkingDir, workingDir);
+            workingDir = path.dirname(absolutePath);
+            if (ext === '.rproj') {
+              projectFile = absolutePath;
+            }
           }
+          if (existsSync(projectFile)) {
+            setenv(kRStudioInitialProject, projectFile);
+            return false;
+          }
+          setenv(kRStudioInitialWorkingDir, workingDir);
         }
         logger().logDebug(`RS_INITIAL_WD: ${getenv(kRStudioInitialWorkingDir)}`);
         return true;
@@ -200,7 +216,10 @@ export class ArgsManager {
 
   handleLogLevel() {
     const logOptions = new LogOptions();
-
-    setLogger(new WinstonLogger(logOptions));
+    try {
+      setLogger(new WinstonLogger(logOptions));
+    } catch (error: unknown) {
+      console.error(safeError(error));
+    }
   }
 }

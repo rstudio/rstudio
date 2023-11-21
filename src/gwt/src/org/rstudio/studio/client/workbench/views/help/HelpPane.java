@@ -15,35 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.help;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.*;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.http.client.URL;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.*;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
@@ -79,11 +50,10 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.MouseNavigateEvent;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -93,6 +63,43 @@ import org.rstudio.studio.client.workbench.views.help.Help.LinkMenu;
 import org.rstudio.studio.client.workbench.views.help.events.HelpNavigateEvent;
 import org.rstudio.studio.client.workbench.views.help.model.VirtualHistory;
 import org.rstudio.studio.client.workbench.views.help.search.HelpSearch;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.AnchorElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class HelpPane extends WorkbenchPane
                       implements Help.Display
@@ -176,19 +183,6 @@ public class HelpPane extends WorkbenchPane
 
       prefs_.helpFontSizePoints().bind((Double value) -> refresh());
       
-      events_.addHandler(MouseNavigateEvent.TYPE, (MouseNavigateEvent event) ->
-      {
-         // check to see if we're targeting the Help pane
-         Element el = DomUtils.elementFromPoint(event.getMouseX(), event.getMouseY());
-         if (StringUtil.equals(el.getId(), ElementIds.getElementId(ElementIds.HELP_FRAME)))
-         {
-            if (event.getForward())
-               forward();
-            else
-               back();
-         }
-      });
-
       ensureWidget();
    }
 
@@ -223,13 +217,15 @@ public class HelpPane extends WorkbenchPane
          return;
 
       windowEl.setScrollPosition(scrollPos_);
-      setFocus();
    }
 
+   /**
+    * Invoked when switching panes via F6 / Shift+F6
+    */
    @Override
    public void setFocus()
    {
-      focusSearchHelp();
+      focus();
    }
 
    @Override
@@ -385,6 +381,12 @@ public class HelpPane extends WorkbenchPane
    
    private void handleMouseDown(NativeEvent event)
    {
+      // Not required on Electron; back / forward navigation is handled
+      // via a top-level Javascript event handler. See DesktopApplicationHeader.java
+      // for more details.
+      if (BrowseCap.isElectron())
+         return;
+      
       int button = EventProperty.button(event);
       if (button == EventProperty.MOUSE_BACKWARD)
       {

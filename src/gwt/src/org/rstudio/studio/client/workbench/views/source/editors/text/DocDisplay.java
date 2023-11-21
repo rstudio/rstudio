@@ -14,12 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.List;
 import java.util.function.BiPredicate;
+
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeySequence;
-
-import java.util.List;
-
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -35,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceGhostText;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
@@ -66,6 +66,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDe
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
+import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
+import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -75,16 +79,14 @@ import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasContextMenuHandlers;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
-
-import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
-import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
-import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
-import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                     HasFoldChangeHandlers,
@@ -120,7 +122,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    JsArrayString getLines();
    JsArrayString getLines(int startRow, int endRow);
    void setCode(String code, boolean preserveCursorPosition);
-   void insertCode(String code, boolean blockMode);
+   void insertCode(String code);
+   void insertCode(String code, boolean unused);
+   void insertCode(InputEditorPosition position, String code);
    void applyChanges(TextChange[] changes);
    void applyChanges(TextChange[] changes, boolean preserveCursorPosition);
    void focus();
@@ -187,6 +191,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setHighlightSelectedWord(boolean on);
    void setShowLineNumbers(boolean on);
    void setRelativeLineNumbers(boolean relative);
+   void setEnableKeyboardAccessibility(boolean keyboardAccessible);
    void setUseSoftTabs(boolean on);
    void setUseWrapMode(boolean on);
    boolean getUseWrapMode();
@@ -201,7 +206,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setHighlightRFunctionCalls(boolean highlight);
    void setColorPreview(boolean show);
    void setRainbowParentheses(boolean rainbow);
+   void setRainbowFencedDivs(boolean rainbow);
    boolean getRainbowParentheses();
+   boolean getRainbowFencedDivs();
    void setBackgroundColor(String color);
 
    void setScrollLeft(int x);
@@ -249,6 +256,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    HandlerRegistration addEditorModeChangedHandler(EditorModeChangedEvent.Handler handler);
    HandlerRegistration addSaveCompletedHandler(SaveFileEvent.Handler handler);
    HandlerRegistration addPasteHandler(PasteEvent.Handler handler);
+   HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler);
+   HandlerRegistration addCapturingKeyPressHandler(KeyPressHandler handler);
+   HandlerRegistration addCapturingKeyUpHandler(KeyUpHandler handler);
 
    boolean isScopeTreeReady(int row);
    HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
@@ -286,8 +296,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                Position start,
                                Range range,
                                boolean regexpModex);
-
-   void insertCode(InputEditorPosition position, String code);
 
    int getScrollLeft();
    void scrollToX(int x);
@@ -479,4 +487,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    void toggleTokenInfo();
    void setTextInputAriaLabel(String label);
+   
+   AceGhostText getGhostText();
+   void setGhostText(String text);
+   boolean hasGhostText();
+   void removeGhostText();
 }

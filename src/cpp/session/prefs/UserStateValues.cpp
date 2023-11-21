@@ -245,7 +245,7 @@ core::Error UserStateValues::setShowPublishUi(bool val)
 }
 
 /**
- * Whether to show UI for publishing content to RStudio Connect.
+ * Whether to show UI for publishing content to Posit Connect.
  */
 bool UserStateValues::enableRsconnectPublishUi()
 {

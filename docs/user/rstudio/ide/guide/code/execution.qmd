@@ -1,5 +1,6 @@
 ---
 title: "Executing code"
+date-meta: 2022-12-12
 ---
 
 RStudio supports the direct execution of code from within the source editor (the executed commands are inserted into the console where the output also appears).

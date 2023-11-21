@@ -35,6 +35,15 @@ public class TextCursor
    {
       return new TextCursor(data_, index_);
    }
+   
+   public boolean advance(int steps)
+   {
+      for (int i = 0; i < steps; i++)
+         if (!moveToNextCharacter())
+            return false;
+      
+      return true;
+   }
 
    public boolean moveToNextCharacter()
    {
@@ -181,6 +190,7 @@ public class TextCursor
       int index = index_ + offset;
       if (index < 0 || index >= n_)
          return '\0';
+      
       return data_.charAt(index);
    }
 
@@ -192,6 +202,15 @@ public class TextCursor
       boolean matches = data_.charAt(index_) == expected;
       index_ += matches ? 1 : 0;
       return matches;
+   }
+   
+   public boolean consume(String expected)
+   {
+      for (int i = 0, n = expected.length(); i < n; i++)
+         if (!consume(expected.charAt(i)))
+            return false;
+      
+      return true;
    }
 
    public boolean consumeUntil(char expected)

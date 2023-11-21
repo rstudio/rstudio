@@ -23,21 +23,20 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.google.gwt.dom.client.Node;
-import com.google.inject.Provider;
-import com.google.inject.assistedinject.Assisted;
-
 import org.rstudio.core.client.hyperlink.Hyperlink;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
+import com.google.inject.Provider;
+import com.google.inject.assistedinject.Assisted;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -85,6 +84,55 @@ public class VirtualConsole
       {
          return getUserPrefs().limitVisibleConsole().getValue();
       }
+   }
+   
+   private static class HyperlinkMatch
+   {
+      public static HyperlinkMatch create(String data, int offset)
+      {
+         String params;
+         String contents;
+         int endIndex;
+         
+         // ESC ']' '8' ';' <params> ';' <url> ( BEL | ESC ')')
+         TextCursor cursor = new TextCursor(data, offset);
+         if (!cursor.consume("\u001b]8;"))
+            return null;
+         
+         int paramsStart = cursor.getIndex();
+         if (!cursor.consumeUntil(';'))
+            return null;
+         
+         int paramsEnd = cursor.getIndex();
+         params = data.substring(paramsStart, paramsEnd);
+         
+         if (!cursor.consume(';'))
+            return null;
+         
+         int contentsStart = cursor.getIndex();
+         if (!cursor.consumeUntilRegex("(?:\\u0007|\\u001b\\))"))
+            return null;
+         
+         int contentsEnd = cursor.getIndex();
+         contents = data.substring(contentsStart, contentsEnd);
+         cursor.advance(cursor.peek() == '\u0007' ? 1 : 2);
+         endIndex = cursor.getIndex();
+         
+         return new HyperlinkMatch(params, contents, endIndex);
+      }
+      
+      private HyperlinkMatch(String params,
+                             String contents,
+                             int endIndex)
+      {
+         params_ = params;
+         contents_ = contents;
+         endIndex_ = endIndex;
+      }
+      
+      public final String params_;
+      public final String contents_;
+      public final int endIndex_;
    }
 
    @Inject
@@ -609,25 +657,25 @@ public class VirtualConsole
                // <ESC> ] 8 ; [params] ; [url] \7
                if (ansi_ == null)
                   ansi_ = new AnsiCode();
-                     
-               Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data.substring(pos), 0);
                
+               
+               HyperlinkMatch hyperlinkMatch = HyperlinkMatch.create(data, pos);
                if (hyperlinkMatch != null)
                {
-                  String url = hyperlinkMatch.getGroup(2);
+                  String params = hyperlinkMatch.params_;
+                  String url = hyperlinkMatch.contents_;
 
                   // toggle hyperlink_
                   if (!StringUtil.equals(url, ""))
                   {
-                     hyperlink_ = new HyperlinkInfo(url, /*params=*/ hyperlinkMatch.getGroup(1));
+                     hyperlink_ = new HyperlinkInfo(url, params);
                   }
                   else
                   {
                      hyperlink_ = null;   
                   }
 
-                  // discard either start or end anchor code
-                  tail = pos + hyperlinkMatch.getValue().length();
+                  tail = hyperlinkMatch.endIndex_;
                   break;
                }
                

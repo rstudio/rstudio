@@ -20,6 +20,7 @@
 
 #include <core/Exec.hpp>
 #include <core/RecursionGuard.hpp>
+#include <core/system/LibraryLoader.hpp>
 
 #define INTERNAL_R_FUNCTIONS
 #include <r/RJson.hpp>
@@ -34,8 +35,17 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <r/RSxpInfo.hpp>
 
 #include "EnvironmentUtils.hpp"
+
+#if defined(_WIN32)
+# define kLibraryName "R.dll"
+#elif defined(__APPLE__)
+# define kLibraryName "libR.dylib"
+#else
+# define kLibraryName "libR.so"
+#endif
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -68,7 +78,14 @@ bool s_browserActive = false;
 // has undesirable side effects.
 bool s_monitoring = true;
 
+// whether or not the global environment can safely be serialized
+bool s_isGlobalEnvironmentSerializable = true;
+
 namespace {
+
+// by default, use regular 'INTEGER' accessor; 'INTEGER_OR_NULL' will be loaded
+// if provided by this version of R
+int* (*INTEGER_OR_NULL)(SEXP) = INTEGER;
 
 // Keeps track of the data related to the most recent debugging event
 class LineDebugState
@@ -101,6 +118,27 @@ private:
    int& counter_;
 };
 
+bool isCompactRowNames(SEXP rowNamesInfoSEXP)
+{
+   return
+         TYPEOF(rowNamesInfoSEXP) == INTSXP &&
+         r::sexp::length(rowNamesInfoSEXP) == 2 &&
+         INTEGER(rowNamesInfoSEXP)[0] == NA_INTEGER;
+}
+
+bool isGlobalEnvironmentSerializable()
+{
+   bool serializable = false;
+   
+   Error error =
+         r::exec::RFunction(".rs.environment.isSerializable")
+         .call(&serializable);
+   if (error)
+      LOG_ERROR(error);
+   
+   return serializable;
+}
+
 bool isValidSrcref(SEXP srcref)
 {
    return srcref && TYPEOF(srcref) != NILSXP;
@@ -119,95 +157,255 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
-bool hasExternalPtrImpl(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited);
+
+bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited)
 {
-   // if we've already visited this SEXP, bail
-   if (visited.count(obj))
+   if (hasExternalPointer(CAR(list), nullPtr, visited))
+      return true;
+
+   if (hasExternalPointer(CDR(list), nullPtr, visited))
+      return true;
+
+   return false;
+}
+
+bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   R_xlen_t n = XLENGTH(obj);
+   for (R_xlen_t i = 0; i < n; i++)
+   {
+      if (hasExternalPointer(VECTOR_ELT(obj, i), nullPtr, visited))
+         return true;
+   }
+   return false;
+}
+
+bool frameBindingIsActive(SEXP binding) 
+{
+   static unsigned int ACTIVE_BINDING_MASK = (1<<15);
+   return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
+}
+
+bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visited) 
+{
+   if (frameBindingIsActive(b))
       return false;
 
-   // mark SEXP as visited
-   visited.insert(obj);
-
-   // list the contents of this environment
-   std::vector<r::sexp::Variable> vars;
-   r::sexp::Protect rProtect;
-   if (TYPEOF(obj) == S4SXP)
+   // ->extra is only used for immediate bindings: this needs special care
+   // before we call CAR() because it might error with "bad binding access": 
+   // from Rinlinedfuns.h : 
+   // 
+   //     INLINE_FUN SEXP CAR(SEXP e)
+   //     {
+   //        if (BNDCELL_TAG(e))
+   //        error("bad binding access");
+   //        return CAR0(e);
+   //     }
+   unsigned int typetag = reinterpret_cast<r::sxpinfo*>(b)->extra;
+   if (typetag)
    {
-      // for S4 objects, list the attributes (which correspond to slots)
-      r::sexp::listNamedAttributes(obj, &rProtect, &vars);
-   }
-   else
-   {
-      // not S4, coerce to environment
-      SEXP envir = R_NilValue;
-      if (TYPEOF(obj) == ENVSXP)
+      // it should not be set on 32-bits: unset it
+      if (sizeof(size_t) < sizeof(double))
       {
-         // we were given a primitive environment (ENVSXP)
-         envir = obj;
+         reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
       }
-      else
+      else 
       {
-         // convert the passed environment into a primitive environment; this is required so that
-         // e.g. reference objects that subclass 'environment' can be introspected below
-         Error error = r::sexp::asPrimitiveEnvironment(obj, &envir, &rProtect);
-         if (error)
-         {
-            // can't search in here
-            return false;
+         switch(typetag) {
+            case INTSXP:
+            case REALSXP: 
+            case LGLSXP:
+               // this is an immediate binding, R_expand_binding_value() would expand to a scalar
+               return false;
+            
+            default:
+               // otherwise (not sure this even hapens), ->extra should not be set: unset it
+               reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
          }
       }
-
-      r::sexp::listEnvironment(envir,
-                               true,  // include all values
-                               false, // don't include last dot
-                               &rProtect, &vars);
    }
+   
+   // now safe to test the value in CAR()
+   return hasExternalPointer(CAR(b), nullPtr, visited);
+}
 
-   // check for external pointers
-   for (std::vector<r::sexp::Variable>::iterator it = vars.begin(); it != vars.end(); it++)
+bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
+{
+   while(frame != R_NilValue)
    {
-      if (r::sexp::isExternalPointer(it->second) &&
-          r::sexp::isNullExternalPointer(it->second) == nullPtr)
-      {
+      if (frameBindingHasExternalPointer(frame, nullPtr, visited))
          return true;
-      }
-
-      if (r::sexp::isPrimitiveEnvironment(it->second) || TYPEOF(it->second) == S4SXP)
-      {
-         // if this object is itself an environment, check it recursively for external pointers.
-         // (we do this only if there's sufficient recursion depth remaining)
-         if (hasExternalPtrImpl(it->second, nullPtr, visited))
-            return true;
-      }
+      
+      frame = CDR(frame);
    }
 
    return false;
 }
 
+bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   SEXP hash = HASHTAB(obj);
+   if (hash == R_NilValue)
+      return frameHasExternalPointer(FRAME(obj), nullPtr, visited);
+   
+   R_xlen_t n = XLENGTH(hash);
+   for (R_xlen_t i = 0; i < n; i++)
+   {
+      if (frameHasExternalPointer(VECTOR_ELT(hash, i), nullPtr, visited))
+         return true;
+   }
+   return false;
+}
+
+bool weakrefHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   SEXP key = r::sexp::getWeakRefKey(obj);
+   if (key != R_NilValue)
+   {
+      if (hasExternalPointer(key, nullPtr, visited))
+         return true;
+
+      // only consider the value if the key is not NULL
+      if (hasExternalPointer(r::sexp::getWeakRefValue(obj), nullPtr, visited))
+         return true;
+   }
+
+   return false;
+}
+
+bool altrepHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   if (hasExternalPointer(CAR(obj), nullPtr, visited))
+      return true;
+
+   if (hasExternalPointer(CDR(obj), nullPtr, visited))
+      return true;
+
+   return false;
+}
+
+bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   if (obj == nullptr || obj == R_NilValue || visited.count(obj))
+      return false;
+
+   // mark SEXP as visited
+   visited.insert(obj);
+
+   // check if this is an external pointer
+   if (r::sexp::isExternalPointer(obj)) 
+   {
+      // NOTE: this includes UserDefinedDatabase, aka 
+      //       external pointers to R_ObjectTable
+
+      // when nullPtr is true, only return true for null pointer xp
+      // otherwise only return true for non null pointer xp
+      if (nullPtr == (r::sexp::getExternalPtrAddr(obj) == nullptr))
+         return true;
+
+      if (hasExternalPointer(r::sexp::getExternalPtrProtected(obj), nullPtr, visited))
+         return true;
+
+      if (hasExternalPointer(r::sexp::getExternalPtrTag(obj), nullPtr, visited))
+         return true;
+   }
+
+   switch(TYPEOF(obj))
+   {
+      case SYMSXP: 
+         return false;
+
+      case ENVSXP: 
+      {
+         if (envHasExternalPointer(obj, nullPtr, visited))
+            return true;
+         break;
+      }
+      case VECSXP:
+      case EXPRSXP:
+      {
+         if (listHasExternalPointer(obj, nullPtr, visited))
+            return true;
+         break;
+      }
+         
+      case LISTSXP:
+      case LANGSXP:
+      {
+         if (pairlistHasExternalPointer(obj, nullPtr, visited))
+            return true;
+         break;
+      }
+         
+      case WEAKREFSXP:
+      {
+         if (weakrefHasExternalPointer(obj, nullPtr, visited))
+            return true;
+
+         break;
+      }
+      case PROMSXP: 
+      {
+         SEXP value = PRVALUE(obj);
+         if (value != R_UnboundValue)
+         {
+            if (hasExternalPointer(value, nullPtr, visited))
+               return true;
+         }
+         else 
+         {
+            if (hasExternalPointer(PRCODE(obj), nullPtr, visited))
+               return true;
+
+            if (hasExternalPointer(PRENV(obj), nullPtr, visited))
+               return true;
+
+            return false;
+         }
+         break;
+      }
+      case CLOSXP:
+      {
+         if (hasExternalPointer(FORMALS(obj), nullPtr, visited))
+            return true;
+
+         if (hasExternalPointer(BODY(obj), nullPtr, visited))
+            return true;
+
+         if (hasExternalPointer(CLOENV(obj), nullPtr, visited))
+            return true;
+      }
+      default:
+         break;
+   }
+   
+   // altrep objects use ATTRIB() to hold class info, so no need
+   // to check ATTRIB() on them, but altrepHasExternalPointer() 
+   // checks for their data1 and data2, aka CAR() and CDR()
+   if (isAltrep(obj))
+      return altrepHasExternalPointer(obj, nullPtr, visited);
+      
+   // check attributes, this includes slots for S4 objects
+   if (hasExternalPointer(ATTRIB(obj), nullPtr, visited))
+      return true;
+
+   return false;
+}
 
 bool hasExternalPtr(SEXP obj,      // environment to search for external pointers
                     bool nullPtr)  // whether to look for NULL pointers
 {
    std::set<SEXP> visited;
-   return hasExternalPtrImpl(obj, nullPtr, visited);
+   return hasExternalPointer(obj, nullPtr, visited);
 }
 
 SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
 {
-   bool nullPtr = r::sexp::asLogical(nullSEXP);
    r::sexp::Protect protect;
-   bool hasPtr = false;
-   if (r::sexp::isExternalPointer(objSEXP))
-   {
-      // object is an external pointer itself
-      hasPtr = r::sexp::isNullExternalPointer(objSEXP) == nullPtr;
-   }
-   else if (r::sexp::isPrimitiveEnvironment(objSEXP) || TYPEOF(objSEXP) == S4SXP)
-   {
-      // object is an environment; check it for external pointers
-      hasPtr = hasExternalPtr(objSEXP, nullPtr);
-   }
-   return r::sexp::create(hasPtr, &protect);
+   
+   bool nullPtr = r::sexp::asLogical(nullSEXP);
+   return r::sexp::create(hasExternalPtr(objSEXP, nullPtr), &protect);
 }
 
 // Does an object contain an ALTREP anywhere? ALTREP (alternative representation) objects often
@@ -223,6 +421,91 @@ SEXP rs_isAltrep(SEXP obj)
 {
    r::sexp::Protect protect;
    return r::sexp::create(isAltrep(obj), &protect);
+}
+
+SEXP rs_dim(SEXP objectSEXP)
+{
+   // For 'data.frame' objects, check the 'row.names' attribute
+   if (Rf_inherits(objectSEXP, "data.frame"))
+   {
+      // default values for rows, columns
+      int numRows = -1;
+      int numCols = r::sexp::length(objectSEXP);
+      
+      SEXP rowNamesInfoSEXP = R_NilValue;
+      r::sexp::Protect protect;
+   
+      Error error = r::exec::RFunction("base:::.row_names_info")
+            .addParam(objectSEXP)
+            .addParam(0)
+            .call(&rowNamesInfoSEXP, &protect);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return R_NilValue;
+      }
+      
+      // Avoid materializing certain ALTREP representations.
+      //
+      // https://github.com/rstudio/rstudio/issues/13907
+      // https://github.com/rstudio/rstudio/pull/13544
+      bool canComputeRows = true;
+      if (isAltrep(rowNamesInfoSEXP))
+      {
+         // This code makes use of some internal details about ALTREP class metadata.
+         // In particular, for an ALTREP object, the class information is stored as
+         // a raw vector as a TAG on the associated object. The attributes of that
+         // class give some metadata information about the ALTREP class.
+         //
+         // https://github.com/wch/r-source/blob/e26e3f02a5e4255c4aad0842a46e141c03eed379/src/main/altrep.c#L38-L42
+         //
+         // The second entry in the table is the name of the package providing the
+         // ALTREP class definition, as a symbol.
+         SEXP altrepClassSEXP = TAG(rowNamesInfoSEXP);
+         SEXP altrepAttribSEXP = ATTRIB(altrepClassSEXP);
+         if (TYPEOF(altrepAttribSEXP) == LISTSXP && r::sexp::length(altrepAttribSEXP) >= 2)
+         {
+            SEXP packageSEXP = CADR(altrepAttribSEXP);
+            if (packageSEXP == Rf_install("duckdb"))
+               canComputeRows = false;
+         }
+      }
+      
+      // Detect compact row names.
+      if (canComputeRows)
+      {
+         if (isCompactRowNames(rowNamesInfoSEXP))
+         {
+            numRows = abs(INTEGER(rowNamesInfoSEXP)[1]);
+         }
+         else
+         {
+            numRows = r::sexp::length(rowNamesInfoSEXP);
+         }
+      }
+      
+      SEXP resultSEXP = Rf_allocVector(INTSXP, 2);
+      INTEGER(resultSEXP)[0] = numRows;
+      INTEGER(resultSEXP)[1] = numCols;
+      return resultSEXP;
+   }
+   
+   // Otherwise, just call 'dim()' directly
+   r::sexp::Protect protect;
+   SEXP dimSEXP = R_NilValue;
+   Error error = r::exec::RFunction("base:::dim")
+         .addParam(objectSEXP)
+         .call(&dimSEXP, &protect);
+   if (error)
+      LOG_ERROR(error);
+   
+   return dimSEXP;
+}
+
+SEXP rs_newTestExternalPointer(SEXP nullSEXP)
+{
+   bool nullPtr = r::sexp::asLogical(nullSEXP);
+   return r::sexp::makeExternalPtr(nullPtr ? nullptr : R_EmptyEnv, R_NilValue, R_NilValue);
 }
 
 // Construct a simulated source reference from a context containing a
@@ -409,7 +692,6 @@ json::Array environmentListAsJson()
        listEnvironment(env,
                        false,
                        prefs::userPrefs().showLastDotValue(),
-                       &rProtect,
                        &vars);
 
        // get object details and transform to json
@@ -838,8 +1120,8 @@ void onDetectChanges(module_context::ChangeSource /* source */)
          LOG_ERROR(error);
    }
    
+   // Check active environment for changes
    s_pEnvironmentMonitor->checkForChanges();
-   
 }
 
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
@@ -856,6 +1138,9 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 
    // End debug output capture every time a console prompt occurs
    *pCapturingDebugOutput = false;
+   
+   // Update session suspendable state
+   s_isGlobalEnvironmentSerializable = isGlobalEnvironmentSerializable();
 
    // If we were debugging but there's no longer a browser on the context stack,
    // switch back to the top level; otherwise, examine the stack and find the
@@ -874,7 +1159,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       context = r::context::getFunctionContext(BROWSER_FUNCTION,
                                                &depth, &environmentTop);
    }
-
+   
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
        depth != *pContextDepth ||
        context != *pCurrentContext)
@@ -901,6 +1186,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       *pCurrentContext = context;
       enqueContextDepthChangedEvent(depth, pLineDebugState.get());
    }
+   
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0)
    {
@@ -922,6 +1208,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
          enqueBrowserLineChangedEvent(srcref);
       }
    }
+   
 }
 
 void onBeforeExecute()
@@ -1250,8 +1537,7 @@ SEXP rs_dumpContexts()
 
 bool isSuspendable()
 {
-   // suppress suspension if any object has a live external pointer; these can't be restored
-   return !hasExternalPtr(R_GlobalEnv, false);
+   return s_isGlobalEnvironmentSerializable;
 }
 
 Error initialize()
@@ -1265,6 +1551,13 @@ Error initialize()
          boost::make_shared<int>(0);
    boost::shared_ptr<r::context::RCntxt> pCurrentContext =
          boost::make_shared<r::context::RCntxt>(r::context::globalContext());
+   
+   // get reference to INTEGER_OR_NULL if provided by this version of R
+   {
+      using core::system::Library;
+      Library rLibrary(kLibraryName);
+      core::system::loadSymbol(rLibrary, "INTEGER_OR_NULL", (void**) &INTEGER_OR_NULL);
+   }
 
    // functions that emit call frames also emit source references; these
    // values capture and supply the currently executing expression emitted by R
@@ -1279,7 +1572,9 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_hasExternalPointer);
    RS_REGISTER_CALL_METHOD(rs_hasAltrep);
    RS_REGISTER_CALL_METHOD(rs_isAltrep);
+   RS_REGISTER_CALL_METHOD(rs_dim);
    RS_REGISTER_CALL_METHOD(rs_dumpContexts);
+   RS_REGISTER_CALL_METHOD(rs_newTestExternalPointer);
 
    // subscribe to events
    using boost::bind;

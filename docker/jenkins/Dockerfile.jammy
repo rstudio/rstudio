@@ -25,22 +25,27 @@ RUN apt-get update && \
     expect \
     fakeroot \
     git-core \
+    glibc-tools \
     jq \
-    libattr1-dev \
     libacl1-dev \
+    libattr1-dev \
     libbz2-dev \
     libcap-dev \
     libcurl4-openssl-dev \
-    libfuse2 \
-    libgtk-3-0 \
-    libgl1-mesa-dev \
     libegl1-mesa \
+    libfreetype6-dev\
+    libfuse2 \
+    libgl1-mesa-dev \
+    libgtk-3-0 \
+    libjpeg-dev \ 
     libpam-dev \
     libpango1.0-dev \
+    libpng-dev\
     libpq-dev \
     libsqlite3-dev \
-    libuser1-dev \
     libssl-dev \
+    libtiff5-dev\
+    libuser1-dev \
     libxml2-dev \
     libxslt1-dev \
     lsof \
@@ -57,8 +62,17 @@ RUN apt-get update && \
     uuid-dev \
     valgrind \
     wget \
+    whois \
     xvfb \
     zlib1g-dev
+
+# If ARCH=amd64, install gcc-multilib
+RUN if [ "$ARCH" = "amd64" ]; then \
+    apt-get update && \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get install -y \
+    gcc-multilib \
+    ; fi
 
 # ensure we use the java 11 compiler
 RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-$(dpkg --print-architecture)/bin/java
@@ -87,13 +101,14 @@ RUN bash /tmp/install-crashpad bionic
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
-# copy panmirror project setup (so install-common can install needed deps)
-RUN mkdir -p /opt/rstudio-tools/panmirror
-COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
-COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
+# panmirror check for changes
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-mountain-hydrangea panmirror.version.json
 
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common jammy
+# panmirror needs to be able to build in this location
+RUN chmod -R 777 /opt/rstudio-tools/src
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
@@ -102,12 +117,20 @@ RUN export QT_VERSION=5.12.8 && \
     cd /tmp && /bin/bash ./install-qt-linux
 
 # cachebust for Quarto release
-ADD https://quarto.org/docs/download/_prerelease.json quarto_releases
+ADD https://quarto.org/docs/download/_download.json quarto_releases
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
+
+# Set Rust environment variables
+ENV PATH="/opt/rstudio-tools/dependencies/common/overlay/rust/bin:${PATH}"
+ENV CARGO_HOME="/opt/rstudio-tools/dependencies/common/overlay/rust"
+ENV RUSTUP_HOME="/opt/rstudio-tools/dependencies/common/overlay/rust"
+RUN if [ -d "/opt/rstudio-tools/dependencies/common/overlay/rust" ]; then \
+    chmod -R 777 /opt/rstudio-tools/dependencies/common/overlay/rust \
+    ; fi
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999

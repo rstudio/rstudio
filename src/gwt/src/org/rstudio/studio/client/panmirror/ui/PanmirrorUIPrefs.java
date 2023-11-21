@@ -42,6 +42,7 @@ public class PanmirrorUIPrefs {
       pUserState_ = pUserState;
    }
 
+   public Boolean realtimeSpelling() { return pUIPrefs_.get().realTimeSpellchecking().getValue(); }
 
    public Boolean darkMode()
    {

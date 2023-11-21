@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
 
 #include <boost/asio/write.hpp>
 #include <boost/asio/io_service.hpp>
@@ -106,7 +107,7 @@ public:
          http::Request*)> Handler;
 
     typedef boost::function<void(
-         boost::weak_ptr<AsyncConnectionImpl<SocketType>>)> ClosedHandler;
+         boost::weak_ptr<AsyncConnectionImpl<SocketType>>, bool, bool)> ClosedHandler;
 
    typedef boost::function<bool(
          boost::shared_ptr<AsyncConnectionImpl<SocketType> >,
@@ -115,6 +116,7 @@ public:
 public:
    AsyncConnectionImpl(boost::asio::io_service& ioService,
                        boost::shared_ptr<boost::asio::ssl::context> sslContext,
+                       long requestSequence,
                        const HeadersParsedHandler& onHeadersParsed,
                        const Handler& onRequestParsed,
                        const ClosedHandler& onClosed,
@@ -127,6 +129,7 @@ public:
         requestFilter_(requestFilter),
         responseFilter_(responseFilter),
         closed_(false),
+        requestSequence_(requestSequence),
         bytesTransferred_(0)
         
    {
@@ -145,13 +148,14 @@ public:
          socket_.reset(new SocketType(ioService));
          socketOperations_.reset(new SocketOperations<SocketType>(socket_));
       }
+      request_.setRequestSequence(requestSequence);
    }
 
    virtual ~AsyncConnectionImpl()
    {
       try
       {
-         close();
+         close(true);
       }
       catch(...)
       {
@@ -165,6 +169,9 @@ public:
 
    void startReading()
    {
+      startTime_ = boost::posix_time::microsec_clock::universal_time();
+      request_.setStartTime(startTime_);
+
       if (sslStream_)
       {
          // begin ssl handshake
@@ -196,6 +203,8 @@ public:
 
    virtual void writeResponse(bool close = true, Socket::Handler handler = Socket::NullHandler)
    {
+      sendingResponse_ = true;
+
       // add extra response headers
       if (!response_.containsHeader("Date"))
          response_.setHeader("Date", util::httpDate());
@@ -309,6 +318,16 @@ public:
 
    virtual void close()
    {
+      close(false);
+   }
+
+   virtual void close(bool fromDestructor)
+   {
+      if (fromDestructor && !closed_)
+      {
+         LOG_DEBUG_MESSAGE("Closing connection without an explicit response for URI: " + request().debugInfo());
+      }
+
       // ensure the socket is only closed once - boost considers
       // multiple closes an error, and this can lead to a segfault
       ClosedHandler closedHandler;
@@ -332,7 +351,7 @@ public:
       // notify that we have closed the connection
       // we do this after giving up the mutex to prevent potential deadlock
       if (closedHandler)
-         closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this());
+         closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this(), fromDestructor, requestParsed_);
    }
 
    void setUploadHandler(const AsyncUriUploadHandlerFunction& handler)
@@ -374,6 +393,51 @@ public:
       END_LOCK_MUTEX
 
       return boost::any();
+   }
+
+   bool closed() const
+   {
+      return closed_;
+   }
+
+   bool requestParsed() const
+   {
+      return requestParsed_;
+   }
+
+   bool sendingResponse() const
+   {
+      return sendingResponse_;
+   }
+
+   boost::posix_time::ptime startTime() const
+   {
+      return startTime_;
+   }
+
+   long requestSequence() const
+   {
+      return requestSequence_;
+   }
+
+   void setUsername(const std::string& username)
+   {
+      request_.setUsername(username);
+   }
+
+   const std::string& username() const
+   {
+      return request().username();
+   }
+
+   void setHandlerPrefix(const std::string& handlerPrefix)
+   {
+      request_.setHandlerPrefix(handlerPrefix);
+   }
+
+   const std::string& handlerPrefix() const
+   {
+      return request().handlerPrefix();
    }
    
 private:
@@ -523,6 +587,7 @@ private:
 
    void callHandler()
    {
+      requestParsed_ = true;
       onRequestParsed_(AsyncConnectionImpl<SocketType>::shared_from_this(),
                        &request_);
    }
@@ -630,6 +695,10 @@ private:
 
    boost::recursive_mutex mutex_;
    bool closed_ = false;
+   bool requestParsed_ = false;
+   bool sendingResponse_ = false;
+   boost::posix_time::ptime startTime_;
+   int requestSequence_;
 
    size_t bytesTransferred_;
 

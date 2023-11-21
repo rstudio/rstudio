@@ -18,36 +18,7 @@ import EventEmitter from 'events';
 
 import debounce from 'lodash/debounce';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-
-/**
- * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
- * after startup.
- */
-export function showPlaceholderMenu(): void {
-  const addPlaceholderMenuItem = function (mainMenu: Menu, label: string): void {
-    mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
-  };
-
-  const mainMenuStub = new Menu();
-  if (process.platform === 'darwin') {
-    mainMenuStub.append(new MenuItem({ role: 'appMenu' }));
-  }
-  addPlaceholderMenuItem(mainMenuStub, 'File');
-  addPlaceholderMenuItem(mainMenuStub, 'Edit');
-  addPlaceholderMenuItem(mainMenuStub, 'Code');
-  addPlaceholderMenuItem(mainMenuStub, 'View');
-  addPlaceholderMenuItem(mainMenuStub, 'Plots');
-  addPlaceholderMenuItem(mainMenuStub, 'Session');
-  addPlaceholderMenuItem(mainMenuStub, 'Build');
-  addPlaceholderMenuItem(mainMenuStub, 'Debug');
-  addPlaceholderMenuItem(mainMenuStub, 'Profile');
-  addPlaceholderMenuItem(mainMenuStub, 'Tools');
-  if (process.platform === 'darwin') {
-    addPlaceholderMenuItem(mainMenuStub, 'Window');
-  }
-  addPlaceholderMenuItem(mainMenuStub, 'Help');
-  Menu.setApplicationMenu(mainMenuStub);
-}
+import { appState } from './app-state';
 
 function menuIdFromLabel(label: string): string {
   return label.replace('&', '');
@@ -78,9 +49,13 @@ export class MenuCallback extends EventEmitter {
 
   isMenuSet = false;
 
+  savedMenu: Menu | null = null;
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
   debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
   debounceUpdateMenuShort: any = debounce(() => this.updateMenus(), 10);
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   constructor() {
     super();
@@ -135,8 +110,8 @@ export class MenuCallback extends EventEmitter {
       this.setCommandChecked(commandId, checked);
     });
 
-    ipcMain.on('menu_set_main_menu_enabled', () => {
-      /* do nothing */
+    ipcMain.on('menu_set_main_menu_enabled', (_event, enabled: boolean) => {
+      this.setMainMenuEnabled(enabled);
     });
 
     ipcMain.on('menu_set_command_label', (_event, commandId: string, label: string) => {
@@ -312,98 +287,101 @@ export class MenuCallback extends EventEmitter {
    *
    */
   updateMenus(): void {
-    /*
-     * This function will remove items that has a submenu array with no items
-     */
-    const removeItemsWithEmptySubmenuList = (item: MenuItemConstructorOptions) => {
-      if (Object.prototype.hasOwnProperty.call(item, 'submenu')) {
-        if (Array.isArray(item.submenu)) {
-          if (item.submenu.length > 0) {
-            item.submenu = item.submenu.filter((submenu) => {
-              return removeItemsWithEmptySubmenuList(submenu);
-            });
-            return true;
-          } else {
-            return false;
-          }
-        }
-      }
+    const newMainMenuTemplate = this.recursiveCopy(this.mainMenuTemplate);
 
-      return true;
-    };
-
-    /**
-     * Builds the final list of menu items using the given menu template
-     *
-     * @param menuItemTemplates a list of menu item templates representing the full menu (may include hidden items)
-     * @returns the final template list after removing unnecessary separators and hidden items
-     */
-    const recursiveCopy = (menuItemTemplates: MenuItemConstructorOptions[]) => {
-      let newMenuTemplate = new Array<MenuItemConstructorOptions>();
-
-      for (const menuItemTemplate of menuItemTemplates) {
-        let referenceMenuItemTemplate;
-        if (menuItemTemplate.id) {
-          referenceMenuItemTemplate = this.menuItemTemplates.get(menuItemTemplate.id) ?? {};
-        }
-        // the new menu item is based on foundMenuItemTemplate then the referenceMenuItemTemplate
-        // menuItemTemplate is the current state (i.e. checkbox state)
-        const newMenuItemTemplate = { ...menuItemTemplate, ...referenceMenuItemTemplate };
-
-        if (newMenuItemTemplate.type === 'separator') {
-          newMenuTemplate.push(newMenuItemTemplate);
-          continue;
-        }
-
-        if (newMenuItemTemplate.id) {
-          this.menuItemTemplates.set(newMenuItemTemplate.id, newMenuItemTemplate);
-        }
-
-        if (!newMenuItemTemplate.visible && !newMenuItemTemplate.role) continue;
-
-        const { submenu } = menuItemTemplate;
-        if (submenu instanceof Array) {
-          newMenuItemTemplate.submenu = recursiveCopy(submenu as Array<MenuItemConstructorOptions>);
-        }
-
-        newMenuTemplate.push(newMenuItemTemplate);
-      }
-
-      newMenuTemplate = newMenuTemplate.filter((item, idx, arr) => {
-        if (item.type !== 'separator') {
-          return removeItemsWithEmptySubmenuList(item);
-        }
-
-        const prevItem = arr[idx - 1];
-        return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
-      });
-
-      if (process.platform === 'darwin') {
-        newMenuTemplate = newMenuTemplate.reduce((menuTemplateList: MenuItemConstructorOptions[], menuItem) => {
-          if (menuItem.id === 'Help') {
-            const windowMenuItem: MenuItemConstructorOptions = {
-              id: 'Window',
-              visible: true,
-              role: 'windowMenu',
-              label: 'Window',
-            };
-
-            menuTemplateList.push(windowMenuItem);
-          }
-          menuTemplateList.push(menuItem);
-          return menuTemplateList;
-        }, []);
-      }
-
-      return newMenuTemplate;
-    };
-
-    const newMainMenuTemplate = recursiveCopy(this.mainMenuTemplate);
-    this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
-
-    Menu.setApplicationMenu(this.mainMenu);
+    if (appState().modalTracker.numModalsShowing() === 0) {
+      // update only if there are no modals showing
+      this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
+      Menu.setApplicationMenu(this.mainMenu);
+    }
 
     this.isMenuSet = true;
+  }
+
+  /*
+   * This function will remove items that has a submenu array with no items
+   */
+  private removeItemsWithEmptySubmenuList(item: MenuItemConstructorOptions): boolean {
+    if (Object.prototype.hasOwnProperty.call(item, 'submenu')) {
+      if (Array.isArray(item.submenu)) {
+        if (item.submenu.length > 0) {
+          item.submenu = item.submenu.filter((submenu) => {
+            return this.removeItemsWithEmptySubmenuList(submenu);
+          });
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Builds the final list of menu items using the given menu template
+   *
+   * @param menuItemTemplates a list of menu item templates representing the full menu (may include hidden items)
+   * @returns the final template list after removing unnecessary separators and hidden items
+   */
+  private recursiveCopy(menuItemTemplates: MenuItemConstructorOptions[]): MenuItemConstructorOptions[] {
+    let newMenuTemplate = new Array<MenuItemConstructorOptions>();
+
+    for (const menuItemTemplate of menuItemTemplates) {
+      let referenceMenuItemTemplate;
+      if (menuItemTemplate.id) {
+        referenceMenuItemTemplate = this.menuItemTemplates.get(menuItemTemplate.id) ?? {};
+      }
+      // the new menu item is based on foundMenuItemTemplate then the referenceMenuItemTemplate
+      // menuItemTemplate is the current state (i.e. checkbox state)
+      const newMenuItemTemplate = { ...menuItemTemplate, ...referenceMenuItemTemplate };
+
+      if (newMenuItemTemplate.type === 'separator') {
+        newMenuTemplate.push(newMenuItemTemplate);
+        continue;
+      }
+
+      if (newMenuItemTemplate.id) {
+        this.menuItemTemplates.set(newMenuItemTemplate.id, newMenuItemTemplate);
+      }
+
+      if (!newMenuItemTemplate.visible && !newMenuItemTemplate.role) continue;
+
+      const { submenu } = menuItemTemplate;
+      if (submenu instanceof Array) {
+        newMenuItemTemplate.submenu = this.recursiveCopy(submenu as Array<MenuItemConstructorOptions>);
+      }
+
+      newMenuTemplate.push(newMenuItemTemplate);
+    }
+
+    newMenuTemplate = newMenuTemplate.filter((item, idx, arr) => {
+      if (item.type !== 'separator') {
+        return this.removeItemsWithEmptySubmenuList(item);
+      }
+
+      const prevItem = arr[idx - 1];
+      return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
+    });
+
+    if (process.platform === 'darwin') {
+      newMenuTemplate = newMenuTemplate.reduce((menuTemplateList: MenuItemConstructorOptions[], menuItem) => {
+        if (menuItem.id === 'Help') {
+          const windowMenuItem: MenuItemConstructorOptions = {
+            id: 'Window',
+            visible: true,
+            role: 'windowMenu',
+            label: 'Window',
+          };
+
+          menuTemplateList.push(windowMenuItem);
+        }
+        menuTemplateList.push(menuItem);
+        return menuTemplateList;
+      }, []);
+    }
+
+    return newMenuTemplate;
   }
 
   addCommand(
@@ -505,5 +483,67 @@ export class MenuCallback extends EventEmitter {
         }
       })
       .join('+');
+  }
+
+  /**
+   * If applicable, stubs the menu bar with a placeholder or restores the saved menu bar.
+   * @param enabled Whether the main menu bar should be enabled or disabled (replaced with a placeholder).
+   */
+  setMainMenuEnabled(enabled: boolean) {
+    if (!enabled && !this.savedMenu) {
+      this.savedMenu = Menu.getApplicationMenu();
+      if (this.savedMenu) {
+        const disabledMenu = Menu.buildFromTemplate(this.recursiveCopy(this.mainMenuTemplate));
+        disabledMenu.items.forEach((item) => {
+          item.submenu?.items.forEach((subItem) => {
+            // keep some commands enabled
+            subItem.enabled = ['cut', 'copy', 'paste', 'redo', 'hide', 'hideOthers', 'unhide', 'selectAll'].includes(
+              subItem.role ?? '',
+            );
+          });
+        });
+        Menu.setApplicationMenu(disabledMenu);
+        this.mainMenu = disabledMenu;
+      }
+      return;
+    }
+    const restoreSavedMenu = enabled && appState().modalTracker.numModalsShowing() === 0;
+    if (restoreSavedMenu && this.savedMenu) {
+      Menu.setApplicationMenu(this.savedMenu);
+      this.mainMenu = this.savedMenu;
+      this.savedMenu = null;
+      return;
+    }
+    // Otherwise, the main menu bar is already in the desired state
+  }
+
+  /**
+   * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
+   * after startup.
+   */
+  showPlaceholderMenu() {
+    const addPlaceholderMenuItem = function (mainMenu: Menu, label: string): void {
+      mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
+    };
+
+    const mainMenuStub = new Menu();
+    if (process.platform === 'darwin') {
+      mainMenuStub.append(new MenuItem({ role: 'appMenu' }));
+    }
+    addPlaceholderMenuItem(mainMenuStub, 'File');
+    addPlaceholderMenuItem(mainMenuStub, 'Edit');
+    addPlaceholderMenuItem(mainMenuStub, 'Code');
+    addPlaceholderMenuItem(mainMenuStub, 'View');
+    addPlaceholderMenuItem(mainMenuStub, 'Plots');
+    addPlaceholderMenuItem(mainMenuStub, 'Session');
+    addPlaceholderMenuItem(mainMenuStub, 'Build');
+    addPlaceholderMenuItem(mainMenuStub, 'Debug');
+    addPlaceholderMenuItem(mainMenuStub, 'Profile');
+    addPlaceholderMenuItem(mainMenuStub, 'Tools');
+    if (process.platform === 'darwin') {
+      addPlaceholderMenuItem(mainMenuStub, 'Window');
+    }
+    addPlaceholderMenuItem(mainMenuStub, 'Help');
+    Menu.setApplicationMenu(mainMenuStub);
   }
 }

@@ -34,15 +34,23 @@
 
 #include <core/system/Crypto.hpp>
 #include <core/system/PosixSystem.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <server_core/http/SecureCookie.hpp>
 #include <server_core/SecureKeyFile.hpp>
+
+#ifdef RSTUDIO_HAS_SOCI
+#include <server_core/ServerDatabase.hpp>
+#endif
 
 namespace rstudio {
 namespace core {
 namespace http {
 namespace secure_cookie {
 
+namespace secure_cookie_overlay {
+   Error initialize(const FilePath& secureKeyFile);
+}
 namespace {
 
 // cookie field delimiter
@@ -289,12 +297,78 @@ Error initialize()
 
 Error initialize(const FilePath& secureKeyFile)
 {
-   if (secureKeyFile.isEmpty())
-      return initialize();
+   return initialize(false, secureKeyFile);
+}
 
-   Error error = key_file::readSecureKeyFile(secureKeyFile, &s_secureCookieKey, &s_secureCookieKeyHash, &s_secureCookieKeyPath);
+Error initialize(bool isLoadBalanced, const FilePath& secureKeyFile)
+{
+   if (secureKeyFile.isEmpty())
+   {
+      if (!isLoadBalanced)
+         return initialize();
+
+      FilePath secureKeyPath = core::system::xdg::findSystemConfigFile(
+            "secure key", "secure-cookie-key");
+      if (!secureKeyPath.exists())
+         secureKeyPath = core::FilePath("/var/lib/rstudio-server")
+            .completePath("secure-cookie-key");
+#ifdef RSTUDIO_HAS_SOCI
+      if (!secureKeyPath.exists())
+      {
+         LOG_DEBUG_MESSAGE("The secure-cookie-key does not exist on the filesystem, "
+            "attempting to read from database");
+         boost::shared_ptr<database::IConnection> pConnection;
+         if (!server_core::database::getConnection(boost::posix_time::seconds(5), &pConnection))
+         {
+            LOG_ERROR_MESSAGE("Unable to connect to database to retrieve load-balanced secure-cookie-key");
+            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+         }
+         Error error = database::execAndProcessQuery(pConnection,
+            "SELECT secure_cookie_key FROM cluster",
+            [=](const database::Row& row) -> Error
+            {
+               std::string secureCookieKey = database::getRowStringValue(row, "secure_cookie_key");
+               if (!secureCookieKey.empty())
+               {
+                  LOG_DEBUG_MESSAGE("Secure cookie key found in database, writing to file at " + secureKeyPath.getAbsolutePath());
+
+                  Error error = key_file::writeSecureKeyFile(secureCookieKey, secureKeyPath);
+                  s_secureCookieKey = secureCookieKey;
+                  s_secureCookieKeyPath = secureKeyPath.getAbsolutePath();
+                  if (error)
+                     return error;
+               }
+               return Success();
+            });
+         if (error)
+            return error;
+      }
+#endif
+      if (s_secureCookieKey.empty())
+      {
+         Error error = key_file::readSecureKeyFile(secureKeyPath, &s_secureCookieKey, &s_secureCookieKeyHash, &s_secureCookieKeyPath);
+         if (error)
+            return error;
+      }
+   }
+   else
+   {
+      Error error = key_file::readSecureKeyFile(secureKeyFile, &s_secureCookieKey, &s_secureCookieKeyHash, &s_secureCookieKeyPath);
+      if (error)
+         return error;
+   }
+
+   return ensureKeyStrength(s_secureCookieKey);
+}
+
+Error initialize(const std::string& secureKey, const FilePath& secureKeyFile)
+{
+   Error error = key_file::writeSecureKeyFile(secureKey, secureKeyFile);
    if (error)
       return error;
+
+   s_secureCookieKey = secureKey;
+   s_secureCookieKeyPath = secureKeyFile.getAbsolutePath();
 
    return ensureKeyStrength(s_secureCookieKey);
 }

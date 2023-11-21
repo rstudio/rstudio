@@ -14,18 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.Command;
+import java.util.LinkedList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
-import java.util.LinkedList;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Command;
 
 public class AceEditorNative extends JavaScriptObject
                              implements CanSetControlId
@@ -79,7 +80,11 @@ public class AceEditorNative extends JavaScriptObject
    public native final void setRelativeLineNumbers(boolean relative) /*-{
       this.setOption("relativeLineNumbers", relative);
    }-*/;
-   
+
+    public native final void setEnableKeyboardAccessibility(boolean keyboardAccessible) /*-{
+      this.setOption("enableKeyboardAccessibility", keyboardAccessible);
+   }-*/;
+
    public native final void setHighlightGutterLine(boolean highlight) /*-{
       this.setHighlightGutterLine(highlight);
    }-*/;
@@ -109,8 +114,8 @@ public class AceEditorNative extends JavaScriptObject
         enableBasicAutocompletion: enabled,
         enableSnippets: enabled && snippets,
         enableLiveAutocompletion: enabled && live,
-        completionCharacterThreshold: characterThreshold,
-        completionDelay: delayMilliseconds
+        liveAutocompletionThreshold: characterThreshold,
+        liveAutocompletionDelay: delayMilliseconds
       });
    }-*/;
    
@@ -310,11 +315,26 @@ public class AceEditorNative extends JavaScriptObject
    private static native <T> JavaScriptObject addEventListenerInternal(
          JavaScriptObject target,
          String eventName,
-         CommandWithArg<T> command) /*-{
-      var callback = $entry(function(arg) {
-         if (arg && arg.text)
-            arg = arg.text;
-         command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
+         CommandWithArg<T> command)
+   /*-{
+      
+      var callback = $entry(function(data) {
+         
+         // GWT barfs if we try to pass a 'native' integer here; since
+         // we don't try to use these right now just wrap it into something
+         // that GWT won't complain about.
+         if (typeof data === "number") {
+            data = { type: "number", value: data };
+         }
+         
+         // Some Ace events provide something like a 'boxed' string with
+         // the relevant payload in 'data.text'; if it exists, grab it.
+         if (data && data.text) {
+            data = data.text;
+         }
+         
+         command.@org.rstudio.core.client.CommandWithArg::execute(*)(data);
+         
       });
 
       target.addEventListener(eventName, callback);
@@ -681,6 +701,26 @@ public class AceEditorNative extends JavaScriptObject
       }
    }-*/;
    
+   public final native AceGhostText getGhostText() /*-{
+      return this.renderer.$ghostText;
+   }-*/;
+   
+   public final native void setGhostText(String text) /*-{
+      this.setGhostText(text);
+   }-*/;
+   
+   public final native void applyGhostText() /*-{
+      var ghostText = this.renderer.$ghostText;
+      
+   }-*/;
+   
+   public final native boolean hasGhostText() /*-{
+      return this.renderer.$ghostText != null;
+   }-*/;
+   
+   public final native void removeGhostText() /*-{
+      this.removeGhostText();
+   }-*/;
 
    private static final native void initialize()
    /*-{
@@ -695,6 +735,14 @@ public class AceEditorNative extends JavaScriptObject
       if (bindings.hasOwnProperty("return")) {
          delete bindings["return"];
       }
+   }-*/;
+   
+   // NOTE: We intentionally bypass Ace's 'setTheme()' API, as that only
+   // allows one to load themes that are bundled with Ace, but we instead
+   // load and manage themes ourselves.
+   public final native void setTheme(AceTheme theme) /*-{
+      theme = theme || { isDark: false };
+      this.renderer.theme = theme;
    }-*/;
 
    static { initialize(); }

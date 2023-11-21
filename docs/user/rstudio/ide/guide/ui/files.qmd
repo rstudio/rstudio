@@ -1,5 +1,6 @@
 ---
 title: "Managing Files"
+date-meta: 2022-12-12
 ---
 
 RStudio supports syntax highlighting and other specialized code-editing features for specific file types:

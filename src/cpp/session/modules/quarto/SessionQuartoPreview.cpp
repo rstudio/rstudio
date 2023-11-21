@@ -157,11 +157,11 @@ protected:
    {
       return "Preview: " + previewTarget_.getFilename();
    }
-
+   
    virtual std::vector<std::string> args()
    {
       // preview target file
-      std::vector<std::string> args({"preview"});
+      std::vector<std::string> args = { "preview" };
       if (!previewTarget_.isDirectory())
       {
          args.push_back(string_utils::utf8ToSystem(previewTarget_.getFilename()));
@@ -185,7 +185,7 @@ protected:
 
       return args;
    }
-
+   
    virtual void environment(core::system::Options* pEnv)
    {
       // set render token
@@ -612,6 +612,21 @@ void onAllSourceDocsRemoved()
    stopPreview();
 }
 
+#ifdef WIN32
+void onQuit()
+{
+   stopPreview();
+}
+
+void onSuspend(Settings*)
+{
+   stopPreview();
+}
+
+void onResume(const Settings&)
+{
+}
+#endif
 
 } // anonymous namespace
 
@@ -622,6 +637,12 @@ Error initialize()
    source_database::events().onDocRemoved.connect(onSourceDocRemoved);
    source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
 
+#ifdef WIN32
+   // Windows has issues with the Quarto background process running when the session shuts down
+   // It requires that the Quarto process is terminated first
+   module_context::events().onQuit.connect(onQuit);
+   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
+#endif
 
    // register rpc functions
   ExecBlock initBlock;

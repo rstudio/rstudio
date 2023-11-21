@@ -19,6 +19,7 @@
 
 #include <core/SocketRpc.hpp>
 #include <core/http/LocalStreamAsyncServer.hpp>
+#include <core/system/User.hpp>
 
 #include <server_core/http/SecureCookie.hpp>
 #include <server_core/SecureKeyFile.hpp>
@@ -125,6 +126,7 @@ void validationHandler(
    {
       if (!validateSecureCookie(pConnection, &username, fallbackAllowed))
       {
+         LOG_DEBUG_MESSAGE("validateSecure cookie failed for: " + pConnection->request().uri());
          unauthorizedResponseFunction(pConnection);
          return;
       }
@@ -139,6 +141,7 @@ void validationHandler(
             LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
                                 "secret " + secret);
          }
+         LOG_DEBUG_MESSAGE("invalid shared secret - auth failed for: " + pConnection->request().uri());
          unauthorizedResponseFunction(pConnection);
          return;
       }
@@ -148,7 +151,7 @@ void validationHandler(
       if (uid != -1)
       {
          core::system::User user;
-         Error error = core::system::User::getUserFromIdentifier(uid, user);
+         Error error = system::getUserFromUserId(uid, user);
          if (error)
          {
             LOG_WARNING_MESSAGE("Couldn't determine user for Server RPC request");
@@ -160,6 +163,9 @@ void validationHandler(
          username = user.getUsername();
       }
    }
+   pConnection->setUsername(username);
+
+   LOG_DEBUG_MESSAGE("Handling session rpc: " + pConnection->request().debugInfo());
 
    // invoke the wrapped async URI handler
    handler(username, pConnection);

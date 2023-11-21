@@ -69,6 +69,11 @@ public class JobOutputPanel extends Composite
 
       output_.showOutput(output, scrollToBottom);
    }
+
+   public void showBufferedOutput()
+   {
+      output_.showBufferedOutput();
+   }
    
    @UiField(provided=true) CompilePanel output_;
    @UiField Label empty_;

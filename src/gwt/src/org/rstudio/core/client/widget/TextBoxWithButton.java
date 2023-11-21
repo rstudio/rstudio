@@ -14,6 +14,12 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.res.ThemeResources;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -22,17 +28,10 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
-
-import org.rstudio.core.client.CoreClientConstants;
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class TextBoxWithButton extends Composite
                                implements HasValueChangeHandlers<String>,
@@ -128,6 +127,9 @@ public class TextBoxWithButton extends Composite
       {
          assert existingLabel == null : "Invalid usage, cannot provide both label and existingLabel";
 
+         if (!label.endsWith(":"))
+            label = label + ":";
+         
          lblCaption_ = new FormLabel(label, true);
          if (helpButton != null)
          {

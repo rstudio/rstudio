@@ -17,8 +17,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
-
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -30,6 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
@@ -45,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIt
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -73,9 +73,9 @@ public abstract class CompletionManagerBase
    }
    
    protected CompletionManagerBase(CompletionPopupDisplay popup,
-                                DocDisplay docDisplay,
-                                CodeToolsServerOperations server,
-                                CompletionContext context)
+                                   DocDisplay docDisplay,
+                                   CodeToolsServerOperations server,
+                                   CompletionContext context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -94,10 +94,12 @@ public abstract class CompletionManagerBase
    @Inject
    private void initialize(EventBus events,
                            UserPrefs uiPrefs,
+                           Copilot copilot,
                            HelpStrategy helpStrategy)
    {
       events_ = events;
       userPrefs_ = uiPrefs;
+      copilot_ = copilot;
       helpStrategy_ = helpStrategy;
    }
    
@@ -727,7 +729,10 @@ public abstract class CompletionManagerBase
    }
    
    protected boolean canAutoPopup(char ch, int lookbackLimit)
-   {  
+   {
+      if (copilot_.isEnabled())
+         return false;
+      
       String codeComplete = userPrefs_.codeCompletion().getValue();
       
       if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UserPrefs.CODE_COMPLETION_MANUAL))
@@ -1133,5 +1138,6 @@ public abstract class CompletionManagerBase
    
    protected EventBus events_;
    protected UserPrefs userPrefs_;
+   protected Copilot copilot_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

@@ -13,7 +13,7 @@
 #
 #
 
-cmake_minimum_required(VERSION 3.4.3)
+cmake_minimum_required(VERSION 3.6.3)
 project (RSTUDIO_GWT)
 
 set(GWT_LIB_DIR "lib")
@@ -138,13 +138,19 @@ if(GWT_COPY)
    install(
       DIRECTORY www
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
-      PATTERN "WEB-INF" EXCLUDE)
+      PATTERN "WEB-INF"
+      EXCLUDE
+      PATTERN ".gitignore"
+      EXCLUDE)
 
    # install compiled GWT artefacts
    install(
       DIRECTORY "${GWT_WWW_DIR}"
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
-      PATTERN "WEB-INF" EXCLUDE)
+      PATTERN "WEB-INF"
+      EXCLUDE
+      PATTERN ".gitignore"
+      EXCLUDE)
 
    # copy symbol maps
    install(

@@ -30,6 +30,7 @@
 #include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Crypto.hpp>
+#include <core/system/User.hpp>
 
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
@@ -92,6 +93,7 @@ Error startup();
 bool reloadConfiguration();
 void shutdown();
 bool requireLocalR();
+bool isLoadBalanced();
 
 } // namespace overlay
 } // namespace server
@@ -180,6 +182,8 @@ Error httpServerInit()
    }
 
    s_pHttpServer.reset(server::httpServerCreate(additionalHeaders));
+
+   s_pHttpServer->addStreamingUriPrefix("/events/get_events");
 
    // set server options
    s_pHttpServer->setAbortOnResourceError(true);
@@ -415,6 +419,7 @@ Error waitForSignals()
       // SIGINT, SIGQUIT, SIGTERM
       else if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM)
       {
+         LOG_DEBUG_MESSAGE("Received termination signal: " + std::to_string(sig));
          //
          // Here is where we can perform server cleanup e.g.
          // closing pam sessions
@@ -644,7 +649,7 @@ int main(int argc, char * const argv[])
       {
          Error error = setResourceLimit(core::system::FilesLimit, 4096);
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+            LOG_WARNING_MESSAGE("Unable to increase open files limit to 4096: " + error.asString());
       }
 
       // set working directory
@@ -678,7 +683,7 @@ int main(int argc, char * const argv[])
          };
 
          system::User serverUserObj;
-         error = system::User::getUserFromIdentifier(options.serverUser(), serverUserObj);
+         error = system::getUserFromUsername(options.serverUser(), serverUserObj);
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 
@@ -732,12 +737,6 @@ int main(int argc, char * const argv[])
       // initialize crypto utils
       core::system::crypto::initialize();
 
-      // initialize secure cookie module
-      error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
-
-      // execute any database commands if passed
       if (!options.dbCommand().empty())
       {
          Error error = server_core::database::execute(options.databaseConfigFile(), serverUser, options.dbCommand());
@@ -749,6 +748,11 @@ int main(int argc, char * const argv[])
 
       // initialize database connectivity
       error = server_core::database::initialize(options.databaseConfigFile(), true, serverUser);
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize secure cookie module 
+      error = core::http::secure_cookie::initialize(overlay::isLoadBalanced(), options.secureCookieKeyFile());
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

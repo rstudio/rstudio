@@ -114,5 +114,5 @@ public class PanmirrorEditor
    public native PanmirrorPandocFormat getPandocFormat();
    public native PanmirrorPandocFormatConfig getPandocFormatConfig(boolean isRmd);
    
-   public native void enableDevTools(JsObject initFn);
+   public native void enableDevTools();
 }

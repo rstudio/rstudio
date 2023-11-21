@@ -409,6 +409,17 @@ public class Application implements ApplicationEventHandlers
       }
    }
 
+   @Handler
+   void onCrashDesktopApplication()
+   {
+      globalDisplay_.showYesNoMessage(
+            GlobalDisplay.MSG_WARNING,
+            constants_.reallyCrashCaption(),
+            constants_.reallyCrashMessage(),
+            () -> Desktop.getFrame().crashDesktopApplication(),
+            false);
+   }
+
    @Override
    public void onUnauthorized(UnauthorizedEvent event)
    {
@@ -1021,6 +1032,11 @@ public class Application implements ApplicationEventHandlers
          commands_.loadServerHome().remove();
       }
 
+      if (!BrowseCap.isElectron())
+      {
+         commands_.crashDesktopApplication().remove();
+      }
+
       if (!sessionInfo.getWorkbenchJobsEnabled())
       {
          removeWorkbenchJobCommands();
@@ -1164,6 +1180,11 @@ public class Application implements ApplicationEventHandlers
          if (!pEdition_.get().proLicense() || !Desktop.hasDesktopFrame())
          {
             commands_.showLicenseDialog().remove();
+            commands_.showSessionServerOptionsDialog().remove();
+         }
+         else if (BrowseCap.isElectron())
+         {
+         // Electron RDP does not support remote sessons
             commands_.showSessionServerOptionsDialog().remove();
          }
       }

@@ -223,6 +223,15 @@ public class TextEditingTargetWidget
             editor_.setRainbowParentheses(rainbowParens);
          });
 
+      docUpdateSentinel_.addPropertyValueChangeHandler(
+         TextEditingTarget.USE_RAINBOW_FENCED_DIVS, (newval) ->
+         {
+            boolean rainbowFencedDivs = StringUtil.equals(newval.getValue(),
+               DocUpdateSentinel.PROPERTY_TRUE);
+            commands_.toggleRainbowFencedDivs().setChecked(rainbowFencedDivs);
+            editor_.setRainbowFencedDivs(rainbowFencedDivs);
+         });
+
       userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
          // Re-adapt to file type when this preference changes; it may bring
@@ -264,6 +273,12 @@ public class TextEditingTargetWidget
    {
       docUpdateSentinel_.setBoolProperty(
          TextEditingTarget.USE_RAINBOW_PARENS, !editor_.getRainbowParentheses());
+   }
+
+   public void toggleRainbowFencedDivs()
+   {
+      docUpdateSentinel_.setBoolProperty(
+         TextEditingTarget.USE_RAINBOW_FENCED_DIVS, !editor_.getRainbowFencedDivs());
    }
 
    public void toggleDocumentOutline()
@@ -983,6 +998,7 @@ public class TextEditingTargetWidget
       // update modes for filetype
       syncWrapMode();
       syncRainbowParenMode();
+      syncRainbowFencedDivs();
 
       toolbar_.invalidateSeparators();
    }
@@ -1281,6 +1297,7 @@ public class TextEditingTargetWidget
       // sync the state of the command marking word wrap mode for this document
       syncWrapMode();
       syncRainbowParenMode();
+      syncRainbowFencedDivs();
 
       Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
    }
@@ -2013,6 +2030,17 @@ public class TextEditingTargetWidget
       }
       editor_.setRainbowParentheses(rainbowMode);
       commands_.toggleRainbowParens().setChecked(rainbowMode);
+   }
+
+   private void syncRainbowFencedDivs()
+   {
+      boolean rainbowMode = editor_.getRainbowFencedDivs();
+      if (docUpdateSentinel_.hasProperty(TextEditingTarget.USE_RAINBOW_FENCED_DIVS))
+      {
+         rainbowMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.USE_RAINBOW_FENCED_DIVS, rainbowMode);
+      }
+      editor_.setRainbowFencedDivs(rainbowMode);
+      commands_.toggleRainbowFencedDivs().setChecked(rainbowMode);
    }
    
    private void onUserSwitchingToVisualMode()

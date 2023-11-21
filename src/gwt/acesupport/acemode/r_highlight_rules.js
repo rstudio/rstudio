@@ -21,6 +21,10 @@ var $colorFunctionCalls = false;
 
 define("mode/r_highlight_rules", ["require", "exports", "module"], function(require, exports, module)
 {
+  var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules;
+
+  var Utils = require("mode/utils");
+
   function include(rules) {
     var result = new Array(rules.length);
     for (var i = 0; i < rules.length; i++) {
@@ -216,7 +220,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       "NA_complex_"
     ]);
 
-    /* 
+    /*
       # R code to regenerate:
       cols <- col2rgb(colors())
       cols[] <- sub(" ", "0", sprintf("%2x", col2rgb(colors())))
@@ -891,7 +895,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
     // NOTE: We accept '\' as a standalone identifier here
     // so that it can be parsed as the 'function' alias symbol.
-    // 
+    //
     // Unicode escapes are picked to conform with TR31:
     // https://unicode.org/reports/tr31/#Default_Identifier_Syntax
     var reIdentifier = String.raw`(?:\\|_|[\p{L}\p{Nl}.][\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}.]*)`;
@@ -915,8 +919,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       {
         // R Markdown chunk metadata comments
         token : "comment.doc.tag",
-        regex : "#\\s*[|].*$",
-        next  : "start"
+        regex : "#\\s*[|]\\s*",
+        next  : "yaml-start"
       },
       {
         // Begin Roxygen with todo
@@ -949,7 +953,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : "[rR]['\"][-]*[[({]",
         next  : "rawstring",
         onMatch: function(value, state, stack, line) {
-          
+
           // initialize stack
           stack = stack || [];
 
@@ -972,7 +976,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       {
         token : "string", // hex color #rrggbb or #rrggbbaa
         regex : '(["\'])(#[0-9a-fA-F]{6})([0-9a-fA-F]{2})?(\\1)',
-        next  : "start", 
+        next  : "start",
         onMatch: function(value, state, stack, line) {
           var quote = value.substring(0,1);
           var col = value.substring(1, value.length - 1);
@@ -982,10 +986,10 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       {
         token : "string", // hex color #rgb
         regex : '(["\'])(#[0-9a-fA-F]{3})(\\1)',
-        next  : "start", 
+        next  : "start",
         onMatch: function(value, state, stack, line) {
           var quote = value.substring(0, 1);
-          var col = value.substring(1, value.length - 1); 
+          var col = value.substring(1, value.length - 1);
           return colorStringTokens(quote, col, col);
         }
       },
@@ -994,8 +998,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         // - first check that they are lower-case letters maybe followed by numbers
         // - then in that case test against the builtInColors map
         token : "string",
-        regex : '(["\'])([a-z]+[0-9]*)(\\1)', 
-        next  : "start", 
+        regex : '(["\'])([a-z]+[0-9]*)(\\1)',
+        next  : "start",
         onMatch: function(value, state, stack, line) {
           var quote = value.substring(0, 1);
           var content = value.substring(1, value.length - 1);
@@ -1221,7 +1225,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       },
       {
         token : "string",
-        regex : '.+',
+        regex : ".+",
         merge : true
       }
     ];
@@ -1234,7 +1238,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       },
       {
         token : "string",
-        regex : '.+',
+        regex : ".+",
         merge : true
       }
     ];
@@ -1264,7 +1268,60 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       next  : "start"
     }]);
 
+    this.embedRules(YamlHighlightRules, "yaml-", [{
+      token : "text",
+      regex : "$",
+      next  : "start"
+    }]);
+
     this.normalizeRules();
+
+    // allow for multi-line strings in YAML comments
+    this.$rules["yaml-multiline-string"].unshift({
+      regex: /^(#[|])(\s*)/,
+      onMatch: function (value, state, stack) {
+
+        // if the indent has decreased relative to what
+        // was used to start the multiline string, then
+        // exit multiline string state
+        var next = stack[0];
+        var indent = stack[1];
+
+        if (indent >= value.length) {
+          this.next = next;
+          stack.shift();
+          stack.shift();
+        } else {
+          this.next = state;
+        }
+
+        // retrieve tokens for the matched value
+        var tokens = this.splitRegex.exec(value);
+        return [
+          { type: "comment.doc.tag", value: tokens[1] },
+          { type: "indent", value: tokens[2] }
+        ];
+      }
+    });
+
+    this.$rules["yaml-start"].unshift({
+      token: "comment.doc.tag",
+      regex: "^#[|]",
+      next: "yaml-start"
+    });
+
+    this.$rules["yaml-qstring"].unshift({
+      token: "comment.doc.tag",
+      regex: "^#[|]",
+      next: "yaml-qstring"
+    });
+
+    this.$rules["yaml-qqstring"].unshift({
+      token: "comment.doc.tag",
+      regex: "^#[|]",
+      next: "yaml-qqstring"
+    });
+
   };
 
   oop.inherits(RHighlightRules, TextHighlightRules);

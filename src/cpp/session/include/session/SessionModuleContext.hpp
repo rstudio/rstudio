@@ -26,6 +26,7 @@
 #include <core/BoostSignals.hpp>
 #include <core/HtmlUtils.hpp>
 #include <core/Version.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/FileChangeEvent.hpp>
@@ -102,6 +103,11 @@ core::FilePath safeCurrentPath();
 
 core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
 core::json::Object createFileSystemItem(const core::FilePath& filePath);
+
+// postback helpers
+core::FilePath rPostbackPath();
+core::FilePath rPostbackScriptsDir();
+core::FilePath rPostbackScriptsPath(const std::string& scriptName);
    
 // r session info
 std::string rVersion();
@@ -336,6 +342,7 @@ struct firstNonEmpty
 // session events
 struct Events : boost::noncopyable
 {
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onBeforeClientInit;
    RSTUDIO_BOOST_SIGNAL<void(core::json::Object*)>                    onSessionInfo;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onClientInit;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onInitComplete;
@@ -354,6 +361,8 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onPackageLoaded;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onPackageLibraryMutated;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onPreferencesSaved;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onProjectConfigUpdated;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onProjectOptionsUpdated;
    RSTUDIO_BOOST_SIGNAL<void(const core::DistributedEvent&)>          onDistributedEvent;
    RSTUDIO_BOOST_SIGNAL<void(core::FilePath)>                         onPermissionsChanged;
    RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onShutdown;

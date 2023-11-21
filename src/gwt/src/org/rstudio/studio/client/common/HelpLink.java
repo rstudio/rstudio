@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.common;
 
-import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -22,6 +21,7 @@ import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -54,23 +54,26 @@ public class HelpLink extends Composite
       link_ = link;
       isRStudioLink_ = isRStudioLink;
       withVersionInfo_ = withVersionInfo;
-
-      HorizontalPanel helpPanel = new HorizontalPanel();
-
-      DecorativeImage helpImage = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
-      helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);
-      helpPanel.add(helpImage);
+      
       helpLink_ = new HyperlinkLabel(caption, () ->
       {
-         if (isRStudioLink_) {
+         if (isRStudioLink_)
+         {
             RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
                link_,
                withVersionInfo_);
          }
-         else {
+         else
+         {
             RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(link_);
          }
       });
+
+      DecorativeImage helpImage = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
+      
+      HorizontalPanel helpPanel = new HorizontalPanel();
+      helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);
+      helpPanel.add(helpImage);
       helpPanel.add(helpLink_);
 
       initWidget(helpPanel);

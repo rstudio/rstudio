@@ -25,8 +25,11 @@
 #include <boost/regex.hpp>
 
 #include <core/Log.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/PosixSystem.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 
@@ -56,7 +59,7 @@ constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
 constexpr const char* kDatabaseUsername = "username";
 constexpr const char* kDefaultPostgresqlDatabaseUsername = "postgres";
 constexpr const char* kDatabasePassword = "password";
-constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connnection-timeout-seconds";
+constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connection-timeout-seconds";
 constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
 constexpr const char* kPostgresqlDatabaseConnectionUri = "connection-uri";
 constexpr const char* kConnectionPoolSize = "pool-size";
@@ -64,11 +67,14 @@ constexpr const char* kConnectionPoolSize = "pool-size";
 // environment variables
 constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
 
-// misc constants
+// Choosing a modest pool size as the db usage of rserver is not high enough to
+// justify anything larger and with 20 a cluster of 5 nodes hits the postgres default limit of 100.
 constexpr const size_t kDefaultMinPoolSize = 4;
-constexpr const size_t kDefaultMaxPoolSize = 20;
+constexpr const size_t kDefaultMaxPoolSize = 6;
+constexpr const int kMinimumSupportedPostgreSqlMajorVersion = 11;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
+boost::optional<ConnectionOptions> s_connectionOptions = boost::none;
 
 struct ConfiguredDriverVisitor : boost::static_visitor<Driver>
 {
@@ -95,6 +101,64 @@ struct ConnectionPoolSizeVisitor : boost::static_visitor<int>
       return options.poolSize;
    }
 };
+
+/**
+ * @brief Validates that the PostgreSQL version is at least the minimum supported version.
+ * Prints a warning if the version is not supported.
+*/
+void validateMinimumPostgreSqlVersion()
+{
+
+   if(!s_connectionPool)
+   {
+      return;
+   }
+
+   const auto connection = s_connectionPool->getConnection();
+   if(!connection)
+   {
+      LOG_WARNING_MESSAGE("Failed to get connection from connection pool to determine PostgreSQL version.");
+      return;
+   }
+   const std::string queryStatement = "SHOW server_version;";
+   std::string versionStr;
+   database::Query versionQuery = connection->query(queryStatement).withOutput(versionStr);
+   const Error error = connection->execute(versionQuery);
+   if (error)
+   {
+      LOG_WARNING_MESSAGE("Failed to run query \"" + queryStatement +
+                          "\" to determine PostgreSQL version. error: " +
+                          error.getMessage());
+      return;
+   }
+
+   boost::smatch matches;
+   /* PostgreSQL's versioning policy changed between 9.6 and 10, versions below
+    * 10 will be in the format of X.X.X, whereas versions >= 10 will be in the
+    * format of X.X, so make the last version number match optional */
+   boost::regex versionRegex("([\\d]+)\\.([\\d]+)\\.?([\\d]+)?");
+   if (regex_utils::search(
+           versionStr, matches, versionRegex))
+   {
+      /* First match is the whole matching string, so the second match should be the major version number */
+      const int versionMajor = safe_convert::stringTo(matches[1], 0);
+
+      if (versionMajor < kMinimumSupportedPostgreSqlMajorVersion)
+      {
+         LOG_WARNING_MESSAGE("PostgreSQL version " + versionStr +
+                             " is not supported. "
+                             "Please upgrade to version " +
+                             safe_convert::numberToString(
+                                 kMinimumSupportedPostgreSqlMajorVersion) +
+                             " or later.");
+      } else {
+         LOG_INFO_MESSAGE("Using PostgreSQL version " + versionStr);
+      }
+   }
+   else {
+      LOG_WARNING_MESSAGE("Failed to parse PostgreSQL version: " + versionStr);
+   }
+}
 
 Error readOptions(const std::string& databaseConfigFile,
                   const boost::optional<system::User>& databaseFileUser,
@@ -236,7 +300,7 @@ Error readOptions(const std::string& databaseConfigFile,
    if (optionsFile.exists() && checkConfFilePermissions)
    {
       // the database configuration file can potentially contain sensitive information
-      // log a warning if permissions are too lax
+      // attempt to update the permissions and log a warning if permissions are too lax
       FileMode fileMode;
       Error error = optionsFile.getFileMode(fileMode);
       if (error)
@@ -252,8 +316,33 @@ Error readOptions(const std::string& databaseConfigFile,
              fileMode != FileMode::USER_READ_WRITE)
          {
             LOG_WARNING_MESSAGE("The database configuration file " + optionsFile.getAbsolutePath() +
-                                " has unrestrictive permissions. Please ensure that the file has"
-                                " only user read/write permissions (600) if it contains sensitive information");
+                                " has unrestrictive permissions. Posit Workbench will attempt to"
+                                " change the file permissions to 600 to protect sensitive information");
+            // ensure the config file has root ownership and correct file permissions
+            error = optionsFile.changeFileMode(FileMode::USER_READ_WRITE);
+            if (error)
+               LOG_WARNING_MESSAGE("Unable to change the file permissions for " +
+                                   optionsFile.getAbsolutePath() + " - please ensure that the file has " +
+                                   "only user read/write permissions (600) if it contains sensitive information");
+         }
+
+         if (core::system::realUserIsRoot())
+         {
+            system::User rootUser;
+            error = system::User::getUserFromIdentifier(UidType(0), rootUser);
+            bool logOwnershipWarning = false;
+            if (error)
+               logOwnershipWarning = true;
+   
+            error = optionsFile.changeOwnership(rootUser);
+            if (error)
+               logOwnershipWarning = true;
+            
+            if (logOwnershipWarning)
+               LOG_WARNING_MESSAGE("Failed attempt to update ownership of database configuration file " +
+                                   optionsFile.getAbsolutePath() + " to root user: " + error.getMessage() +
+                                   " - please ensure that the file owner is root if it contains" +
+                                   " sensitive information");
          }
       }
    }
@@ -282,6 +371,11 @@ Error migrationsDir(FilePath* pMigrationsDir)
 
 } // anonymous namespace
 
+core::database::Driver getConfiguredDriver(ConnectionOptions options) {
+   ConfiguredDriverVisitor visitor;
+   return boost::apply_visitor(visitor, options);
+}
+
 core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile)
 {
    ConnectionOptions options;
@@ -292,8 +386,12 @@ core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile
       return core::database::Driver::Unknown;
    }
 
-   ConfiguredDriverVisitor visitor;
-   return boost::apply_visitor(visitor, options);
+   return getConfiguredDriver(options);
+}
+
+boost::optional<core::database::ConnectionOptions> getConnectionOptions()
+{
+   return s_connectionOptions;
 }
 
 Error initialize(const std::string& databaseConfigFile,
@@ -340,6 +438,11 @@ Error initialize(const std::string& databaseConfigFile,
    error = createConnectionPool(poolSize, options, &s_connectionPool);
    if (error)
       return error;
+   
+   if (getConfiguredDriver(options) == Driver::Postgresql)
+   {
+      validateMinimumPostgreSqlVersion();
+   }
 
    if (updateSchema)
    {
@@ -361,6 +464,8 @@ Error initialize(const std::string& databaseConfigFile,
          return error;
       }
    }
+
+   s_connectionOptions = options;
 
    return Success();
 }

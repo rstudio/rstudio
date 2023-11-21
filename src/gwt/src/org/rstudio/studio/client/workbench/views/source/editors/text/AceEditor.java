@@ -14,44 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.animation.client.AnimationScheduler;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.PreElement;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.ContextMenuHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.dom.client.MouseMoveHandler;
-import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.event.logical.shared.AttachEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.core.client.GWT;
-
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 import org.rstudio.core.client.AceSupport;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
@@ -79,8 +48,8 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
-import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -114,6 +83,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceGhostText;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceInputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
@@ -167,10 +137,40 @@ import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import com.google.gwt.animation.client.AnimationScheduler;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.PreElement;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ContextMenuHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class AceEditor implements DocDisplay,
                                   InputEditorDisplay,
@@ -425,6 +425,7 @@ public class AceEditor implements DocDisplay,
       {
          fixVerticalOffsetBug();
          clearLineHighlight();
+         clearGhostText();
          lastCursorChangedTime_ = System.currentTimeMillis();
       });
 
@@ -433,6 +434,7 @@ public class AceEditor implements DocDisplay,
       {
          lastModifiedTime_ = System.currentTimeMillis();
          clearDebugLineHighlight();
+         clearGhostText();
       });
 
       widget_.addAttachHandler(event ->
@@ -474,6 +476,17 @@ public class AceEditor implements DocDisplay,
       });
 
       addFocusHandler((FocusEvent event) -> s_lastFocusedEditor = this);
+      
+      // https://github.com/rstudio/rstudio/issues/13118
+      setColorPreview(userPrefs_.colorPreview().getValue());
+      userPrefs_.colorPreview().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            setColorPreview(event.getValue());
+         }
+      });
 
       events_.addHandler(
             AceEditorCommandEvent.TYPE,
@@ -1176,14 +1189,15 @@ public class AceEditor implements DocDisplay,
       fireEvent(new ScrollYEvent(Position.create(getFirstVisibleRow(), 0)));
    }
 
+   public void insertCode(String code, boolean unused)
+   {
+      insertCode(code);
+   }
+   
    public void insertCode(String code)
    {
-      insertCode(code, false);
-   }
-
-   public void insertCode(String code, boolean blockMode)
-   {
-      widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
+      String normalizedCode = StringUtil.normalizeNewLines(code);
+      widget_.getEditor().insert(normalizedCode);
    }
 
    public void applyChanges(TextChange[] changes)
@@ -2418,6 +2432,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().setRelativeLineNumbers(relative);
    }
 
+   public void setEnableKeyboardAccessibility(boolean keyboardAccessible)
+   {
+      widget_.getEditor().setEnableKeyboardAccessibility(keyboardAccessible);
+   }
+
    public boolean getUseSoftTabs()
    {
       return getSession().getUseSoftTabs();
@@ -2454,6 +2473,17 @@ public class AceEditor implements DocDisplay,
    public boolean getRainbowParentheses()
    {
       return _getRainbowParenthesesImpl();
+   }
+
+   public void setRainbowFencedDivs(boolean rainbow)
+   {
+      _setRainbowFencedDivsImpl(rainbow);
+      widget_.getEditor().retokenizeDocument();
+   }
+
+   public boolean getRainbowFencedDivs()
+   {
+      return _getRainbowFencedDivsImpl();
    }
 
    public void setBackgroundColor(String color) 
@@ -2494,6 +2524,18 @@ public class AceEditor implements DocDisplay,
    /*-{
      var Mode = $wnd.require("mode/rainbow_paren_highlight_rules");
      return Mode.getRainbowParentheses();
+   }-*/;
+
+   private native final void _setRainbowFencedDivsImpl(boolean rainbow)
+   /*-{
+      var Mode = $wnd.require("mode/markdown_highlight_rules");
+      Mode.setRainbowFencedDivs(rainbow);
+   }-*/;
+
+   private native final boolean _getRainbowFencedDivsImpl()
+   /*-{
+     var Mode = $wnd.require("mode/markdown_highlight_rules");
+     return Mode.getRainbowFencedDivs();
    }-*/;
 
    public void enableSearchHighlight()
@@ -3623,6 +3665,14 @@ public class AceEditor implements DocDisplay,
          lineHighlightMarkerId_ = null;
       }
    }
+   
+   private void clearGhostText()
+   {
+      if (widget_.getEditor().hasGhostText())
+      {
+         widget_.getEditor().removeGhostText();
+      }
+   }
 
    private void applyDebugLineHighlight(
          Position startPos,
@@ -4563,6 +4613,31 @@ public class AceEditor implements DocDisplay,
    public static void clearLastFocusedEditor()
    {
       s_lastFocusedEditor = null;
+   }
+   
+   public AceGhostText getGhostText()
+   {
+      return widget_.getEditor().getGhostText();
+   }
+   
+   public void setGhostText(String text)
+   {
+      widget_.getEditor().setGhostText(text);
+   }
+   
+   public void applyGhostText()
+   {
+      widget_.getEditor().applyGhostText();
+   }
+   
+   public boolean hasGhostText()
+   {
+      return widget_.getEditor().hasGhostText();
+   }
+   
+   public void removeGhostText()
+   {
+      widget_.getEditor().removeGhostText();
    }
 
    private static class BackgroundTokenizer

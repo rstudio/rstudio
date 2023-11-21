@@ -19,7 +19,14 @@ param(
 
     # The Github Personal Access PAT to use to publish the build
     [Parameter(Mandatory)]
-    [string]$pat
+    [string]$pat,
+
+    # The release channel of the build, Hourly, Daily, Preview or Release
+    # Default value if it's not supplied is the contents of the version/BUILDTYPE file
+    # Otherwise we validate input and use that
+    [Parameter(Mandatory=$false)]
+	[ValidateSet("Hourly", "Daily", "Preview", "Release", IgnoreCase=$false)]
+    [string]$channel = (Get-Content (Join-Path -Path "version" -ChildPath "BUILDTYPE") | Out-String).Trim()
 )
 
 # Function to urlize a string
@@ -41,6 +48,23 @@ function URLize {
     return $string
 }
 
+function Handle409 {
+    param(
+        $url,
+        $payload,
+        $headers
+    )
+
+    Write-Host "Received a 409, assuming it's a commit interleaving error, waiting 3 seconds and retrying".
+    Start-Sleep -Seconds 3
+
+    # Identical call to the original above
+    Write-Host "Retrying..."
+    $retryCreateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+    Write-Host "Response :"
+    Write-Host $retryCreateResponse.Content
+}
+
 # Extract file metadata
 $size = (Get-Item $file).length
 $filename = (Get-Item $file).Name
@@ -55,8 +79,6 @@ $versionMeta = Join-Path -Path $root -ChildPath "version"
 # Extract build metadata
 $flower = Get-Content (Join-Path -Path $versionMeta -ChildPath "RELEASE") | Out-String
 $flower = URLize -string $flower
-$channel = Get-Content (Join-Path -Path $versionMeta -ChildPath "BUILDTYPE") | Out-String
-$channel = $channel.Trim()
 $commit = git rev-parse HEAD
 
 $versionStem = URLize -string $version
@@ -98,10 +120,60 @@ $headers = @{}
 $headers.Add("Accept", "application/vnd.github.v3+json")
 $headers.Add("Authorization", "token $pat")
 
-$url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$versionStem.md"
+# Prepare the product name, redirects hourly builds to a different page
+$product = "rstudio"
+if ($channel -eq "Hourly")
+{
+    $product = $product + "-hourly"
+}
 
+$url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$versionStem.md"
 # Send to Github! We have to use basic parsing here because this script runs on SKU of Windows that
 # doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
 # has a dendency on the IE DOM engine).
-Invoke-WebRequest -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
 
+Write-Host "Writing content to $url"
+
+try
+{
+    $createResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+    Write-Host "Response :"
+    Write-Host $createResponse.Content
+} catch {
+    $StatusCode = $_.Exception.Response.StatusCode.value__
+    
+    if ($StatusCode -eq 422) # Assume the file already exists and we need to do an update
+    {
+        Write-Host "Received a 422 error, assuming it's an issue updating. Getting existing file's SHA"
+        $getSha = Invoke-RestMethod -Method 'GET' -Headers $headers -Uri $url -UseBasicParsing
+        Write-Host "Github Response:"
+        Write-Host $getSha
+        $updateSha = $getSha.sha
+
+        # This looks messy but the whitespace is meaningful
+        $payload = @"
+{ "message": "Update $flower build $version in $build", "content": "$base64", "sha": "$updateSha" }
+"@
+        try {
+            Write-Host "Updating version file..."
+            $updateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+            Write-Host "Response :"
+            Write-Host $updateResponse.Content
+        } catch {
+            $StatusCode = $_.Exception.Response.StatusCode.value__
+
+            if ($StatusCode -eq 409)
+            {
+                Handle409 -url $url -payload $payload -headers $headers
+            }
+            else 
+            {
+                Write-Host "Received an unexpected error code: $StatusCode"
+            }
+        }
+    }
+    
+    if ($StatusCode -eq 409) { # Assume the repo has been updated backoff and try again.
+        Handle409 -url $url -payload $payload -headers $headers
+    }
+}

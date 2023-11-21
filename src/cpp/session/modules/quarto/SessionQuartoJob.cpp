@@ -84,6 +84,7 @@ Error QuartoJob::start()
    // create job and emit some output (to prevent the "has not emitted output" message)
    using namespace jobs;
    JobActions jobActions;
+   
    // note that we pass raw 'this' b/c the "stop" action will never be executed after we
    // hit onCompleted (because our status won't be "running"). if we passed shared_from_this
    // then we'd be keeping this object around forever (because jobs are never discarded).
@@ -100,7 +101,6 @@ Error QuartoJob::start()
                   jobActions,
                   true,
                   {"quarto", kJobTagTransient});
-   pJob_->addOutput("\n", true);
 
    // return success
    return Success();

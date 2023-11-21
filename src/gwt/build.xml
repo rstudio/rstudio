@@ -85,33 +85,76 @@
 
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
-   <property name="node.version" value="16.14.0"/>
+   <property name="node.version" value="18.18.2"/>
    <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
-   <condition property="node.bin" value="../../../${node.dir}/bin/node">
+   <!-- use yarn from system but will prefer yarn from dependencies if available -->
+   <condition property="yarn.bin" value="yarn">
      <not>
         <os family="windows" />
      </not>
    </condition>
-   <condition property="node.bin" value="${node.dir}/node.exe">
+   <available
+      property="yarn.bin"
+      value="${node.dir}/bin/yarn"
+      file="${node.dir}/bin/yarn"/>
+   <condition property="yarn.bin" value="${node.dir}/node_modules/yarn/bin/yarn.cmd">
      <os family="windows" />
    </condition>
-
-   <!-- use node from /opt/rstudio-tools if installed (typical for Docker) -->
+   <!-- use yarn from /opt/rstudio-tools if installed (typical for Docker) -->
    <available
-      property="node.bin"
-      value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"
-      file="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"/>
+      property="yarn.bin"
+      value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/yarn"
+      file="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/yarn"/>
+   <!-- use yarn from c:/rstudio-tools if installed (typical for Docker on Windows) -->
+   <available
+      property="yarn.bin"
+      value="c:\rstudio-tools\dependencies\common\node\${node.version}\node_modules\yarn\bin\yarn.cmd"
+      file="c:\rstudio-tools\dependencies\common\node\${node.version}\node_modules\yarn\bin\yarn.cmd"/>
 
-   <property name="panmirror.dir" value="./panmirror/src/editor"/>
+   <property name="panmirror.dir" value="./lib/quarto/apps/panmirror"/>
    <property name="panmirror.build.dir" value="./www/js/panmirror"/>
 
+   <!-- use panmirror from /opt/rstudio-tools if available (typical for Docker) -->
+   <available
+      property="panmirror.dir"
+      value="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"
+      file="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
+   <!-- use yarn from c:/rstudio-tools if installed (typical for Docker on Windows) -->
+   <available
+      property="panmirror.dir"
+      value="c:\rstudio-tools\src\gwt\lib\quarto\apps\panmirror"
+      file="c:\rstudio-tools\src\gwt\lib\quarto\apps\panmirror"/>
+
    <target name="panmirror" description="Compile panmirror library">
+
+      <!-- Make sure a default value for panmirror.minify is set -->
+      <condition property="panmirror.minify" value="true">
+         <not>
+            <isset property="panmirror.minify" />
+         </not>
+      </condition>
+
+      <echo message="yarn location: ${yarn.bin}"/>
+      <echo message="panmirror location: ${panmirror.dir}"/>
+      <echo message="panmirror minify: ${panmirror.minify}"/>
+
       <mkdir dir="${panmirror.build.dir}"/>
-      <exec executable="${node.bin}" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
-         <arg value="fuse"/>
-         <arg value="${panmirror.target}"/>
-         <env key="NODE_PATH" path="${env.NODE_PATH}:/opt/rstudio-tools/panmirror/node_modules"/>
+      <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+         <arg value="install"/>
+         <arg value="--network-timeout"/>
+         <arg value="240000"/>
       </exec>
+      <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+         <arg value="build"/>
+         <arg value="--minify"/>
+         <arg value="${panmirror.minify}"/>
+         <arg value="--sourcemap"/>
+         <arg value="true"/>
+         <env key="PANMIRROR_OUTDIR" value="dist-rstudio"/>
+      </exec>
+      <copy todir="${panmirror.build.dir}">
+         <fileset dir="${panmirror.dir}/dist-rstudio"/>
+      </copy>
    </target>
 
    <target name="javac" description="Compile java source">
@@ -145,7 +188,6 @@
    <target name="gwtc" depends="ext,javac" description="GWT compile to JavaScript">
       <antcall target="panmirror">
          <param name="panmirror.target" value="ide-dist"/>
-         <param name="panmirror.spawn" value="false"/>
       </antcall>
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
          <classpath>
@@ -196,6 +238,7 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktopSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
+         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
@@ -204,6 +247,7 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
+         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
@@ -211,13 +255,13 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev-watch"/>
+         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
    <target name="codeserver" depends="acesupport,javac" description="Run GWT devmode code server">
       <antcall target="panmirror">
          <param name="panmirror.target" value="${panmirror.target}"/>
-         <param name="panmirror.spawn" value="true"/>
       </antcall>
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
          <classpath>
@@ -339,6 +383,8 @@
       <delete dir="${www.dir}/rstudio" failonerror="false" />
       <delete file="${ace.bin}/acesupport.js" failonerror="false" />
       <delete dir="${panmirror.build.dir}" failonerror="false"/>
+      <delete dir="${panmirror.dir}/dist-rstudio" failonerror="false"/>
+      <delete dir="${panmirror.dir}/node_modules" failonerror="false"/>
       <delete dir="gen" failonerror="false" />
       <delete dir="${extras.dir}" failonerror="false" />
    </target>

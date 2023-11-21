@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -113,21 +114,31 @@ public class TextEditingTargetQuartoHelper
       // line is blank other than the comment prefix, remove that
       // prefix and insert a newline (terminating the block)
       {
-         Pattern pattern = Pattern.create("^\\s*#\\s*[|]\\s*$", "");
-         Match match = pattern.match(line, 0);
-         if (match != null)
+         String currentLine = docDisplay.getCurrentLine();
+         if (StringUtil.equals(currentLine.trim(), line.trim()))
          {
-            Position cursorPos = docDisplay.getCursorPosition();
-            Range range = Range.create(
-                  cursorPos.getRow(), 0,
-                  cursorPos.getRow() + 1, 0);
-            
-            event.stopPropagation();
-            event.preventDefault();
-            docDisplay.replaceRange(range, "\n\n");
-            docDisplay.moveCursorBackward();
-            docDisplay.ensureCursorVisible();
-            return true;
+            Pattern pattern = Pattern.create("^\\s*#\\s*[|]\\s*$", "");
+            Match match = pattern.match(currentLine, 0);
+            if (match != null)
+            {
+               String nextLine = docDisplay.getLine(docDisplay.getCursorRow() + 1);
+               pattern = Pattern.create("^\\s*#\\s*[|]", "");
+               match = pattern.match(nextLine, 0);
+               if (match == null)
+               {
+                  Position cursorPos = docDisplay.getCursorPosition();
+                  Range range = Range.create(
+                        cursorPos.getRow(), 0,
+                        cursorPos.getRow() + 1, 0);
+
+                  event.stopPropagation();
+                  event.preventDefault();
+                  docDisplay.replaceRange(range, "\n\n");
+                  docDisplay.moveCursorBackward();
+                  docDisplay.ensureCursorVisible();
+                  return true;
+               }
+            }
          }
       }
       

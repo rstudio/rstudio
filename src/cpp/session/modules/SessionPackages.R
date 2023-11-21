@@ -278,7 +278,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 .rs.addFunction("isPackageHyperlinkSafe", function(packageName)
 {
    allowed <- setdiff(
-      c(.packages(), "testthat", "rlang", "devtools", "usethis"), 
+      c(.packages(), "testthat", "rlang", "devtools", "usethis", "pkgload", "pkgdown"), 
       c("base", "stats", "utils")
    )
    .rs.scalar(
@@ -478,23 +478,24 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addJsonRpcHandler("get_package_install_context", function()
 {
-   # cran mirror configured
-   repos = getOption("repos")
-   cranMirrorConfigured <- !is.null(repos) && !any(repos == "@CRAN@")
+   # check if the '@CRAN@' placeholder is present in repos
+   repos <- getOption("repos")
+   cranMirrorConfigured <- !"@CRAN@" %in% repos
    
    # selected repository names (assume an unnamed repo == CRAN)
+   # TODO: What if no repositories are set?
    selectedRepositoryNames <- names(repos)
    if (is.null(selectedRepositoryNames))
      selectedRepositoryNames <- "CRAN"
 
    # package archive extension
-   if (identical(.Platform$OS.type, "windows"))
-      packageArchiveExtension <- ".zip; .tar.gz"
-   else if (identical(substr(.Platform$pkgType, 1L, 10L), "mac.binary"))
-      packageArchiveExtension <- ".tgz; .tar.gz"
-   else
-      packageArchiveExtension <- ".tar.gz"
-
+   packageArchiveExtension <- switch(
+      Sys.info()[["sysname"]],
+      Windows = ".zip; .tar.gz",
+      Darwin  = ".tgz; .tar.gz",
+      ".tar.gz"
+   )
+   
    # default library path (normalize on unix)
    defaultLibraryPath = .libPaths()[1L]
    if (!identical(.Platform$OS.type, "windows"))

@@ -23,6 +23,7 @@
 #ifndef _WIN32
 #include <sys/types.h>
 #include <unistd.h>
+#include <netdb.h>
 #endif
 
 #include <string>
@@ -113,6 +114,7 @@
 #include "SessionAddins.hpp"
 
 #include "SessionModuleContextInternal.hpp"
+#include <session/SessionModuleContext.hpp>
 
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientInit.hpp"
@@ -139,6 +141,7 @@
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
+#include "modules/SessionCopilot.hpp"
 #include "modules/SessionCRANMirrors.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionErrors.hpp"
@@ -652,6 +655,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::graphics::initialize)
       (modules::fonts::initialize)
       (modules::system_resources::initialize)
+      (modules::copilot::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -1852,10 +1856,8 @@ void afterResume()
 
 std::string getenvForLog(const std::string& envVar)
 {
-   std::string envVal = core::system::getenv("LD_LIBRARY_PATH");
-   if (envVal.empty())
-     return "(empty)";
-   return envVal;
+   std::string envVal = core::system::getenv(envVar);
+   return envVal.empty() ? "(empty)" : envVal;
 }
 
 void logStartingEnv()
@@ -1882,11 +1884,43 @@ void logStartingEnv()
 #endif
 }
 
+#ifdef _WIN32
+
+void win32InvalidParameterHandler(const wchar_t* expression,
+                                  const wchar_t* function,
+                                  const wchar_t* file,
+                                  unsigned int line,
+                                  uintptr_t pReserved)
+{
+   // This page intentionally left blank.
+}
+
+#endif
+
+// When the nscd service is enabled, the first call to getaddrinfo calls getenv("LOCALDOMAIN")
+// that will intermittently crash if done on a background thread as getenv is not thread-safe.
+// Making this call on the main thread first prevents that from happening. See rstudio-pro#4628
+void mainThreadWorkaround()
+{
+#ifdef __linux__
+   struct addrinfo hints, *addrInfoResult;
+   int addrInfoErrorCode;
+
+   memset (&hints, 0, sizeof (hints));
+
+   addrInfoErrorCode = ::getaddrinfo ("localhost", NULL, &hints, &addrInfoResult);
+   if (addrInfoErrorCode == 0)
+      ::freeaddrinfo(addrInfoResult);
+#endif
+}
+
 } // anonymous namespace
 
 // run session
 int main(int argc, char * const argv[])
 {
+   mainThreadWorkaround();
+
    try
    {
       // create and use a job object -- this is necessary on Electron as node
@@ -1899,6 +1933,15 @@ int main(int argc, char * const argv[])
       // the desktop frontend, it will still be closed if the frontend is closed
 #ifdef _WIN32
       core::system::initHook();
+#endif
+
+      // set an invalid parameter handler -- we do this to match the behavior of
+      // standalone builds of R, which use the MinGW runtime and so normally just
+      // ignore invalid parameters (or quietly log them if configured to do so)
+      //
+      // https://github.com/mirror/mingw-w64/blob/eff726c461e09f35eeaed125a3570fa5f807f02b/mingw-w64-crt/crt/crtexe.c#L98-L108
+#ifdef _WIN32
+      _set_invalid_parameter_handler(win32InvalidParameterHandler);
 #endif
 
       // save fallback library path
@@ -2160,15 +2203,7 @@ int main(int argc, char * const argv[])
          core::thread::safeLaunchThread(detectParentTermination);
 
       // set the rpostback absolute path
-      FilePath rpostback = options.rpostbackPath();
-   #ifndef __APPLE__
-      // package builds on Linux and Windows hoist the binary one level higher in the directory structure
-      if (rpostback.getAbsolutePath().find("session/postback") == std::string::npos) {
-         rpostback = rpostback.getParent().getParent();
-         rpostback = rpostback.completeChildPath("rpostback");
-      }
-   #endif
-
+      FilePath rpostback = module_context::rPostbackPath();
       core::system::setenv(
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));

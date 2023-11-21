@@ -30,8 +30,8 @@ import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsHelpLink;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
-import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsContext;
+import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -58,6 +58,8 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       globalDisplay_ = globalDisplay;
       server_ = server;
 
+      add(headerLabel(constants_.versionControlTitle()));
+      
       vcsSelect_ = new SelectWidget(constants_.vcsSelectLabel(), new String[]{});
       spaced(vcsSelect_);
       add(vcsSelect_);
@@ -321,7 +323,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
 
    private static final String NONE = constants_.noneProjectSourceControlLabel();
 
-   private static final String NO_REMOTE_ORIGIN  =constants_.noneLabel();
+   private static final String NO_REMOTE_ORIGIN = constants_.noneLabel();
 
    private static final ProjectPreferencesDialogResources RES =
                                     ProjectPreferencesDialogResources.INSTANCE;

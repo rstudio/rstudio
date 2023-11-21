@@ -47,6 +47,52 @@ namespace log {
 typedef std::map<std::string, std::shared_ptr<ILogDestination>> LogMap;
 typedef std::map<std::string, LogMap> SectionLogMap;
 
+LogLevel logLevelFromStr(const std::string& in_str)
+{
+   if (in_str == "ERROR")
+      return LogLevel::ERR;
+   else if (in_str == "WARNING")
+      return LogLevel::WARN;
+   else if (in_str == "INFO")
+      return LogLevel::INFO;
+   else if (in_str == "OFF")
+      return LogLevel::OFF;
+   else
+      return LogLevel::DEBUG;
+}
+
+std::string logLevelName(log::LogLevel in_logLevel)
+{
+   switch (in_logLevel)
+   {
+      case LogLevel::ERR:
+      {
+         return "ERROR";
+      }
+      case LogLevel::WARN:
+      {
+         return "WARNING";
+      }
+      case LogLevel::DEBUG:
+      {
+         return "DEBUG";
+      }
+      case LogLevel::INFO:
+      {
+         return "INFO";
+      }
+      case LogLevel::OFF:
+      {
+         return "OFF";
+      }
+      default:
+      {
+         assert(false); // This shouldn't be possible
+         return "OFF";
+      }
+   }
+}
+
 namespace {
 
 constexpr const char* s_loggedFrom = "LOGGED FROM";
@@ -91,18 +137,6 @@ std::ostream& operator<<(std::ostream& io_ostream, LogLevel in_logLevel)
    }
 
    return io_ostream;
-}
-
-LogLevel logLevelFromStr(const std::string& in_str)
-{
-   if (in_str == "ERROR")
-      return LogLevel::ERR;
-   else if (in_str == "WARNING")
-      return LogLevel::WARN;
-   else if (in_str == "INFO")
-      return LogLevel::INFO;
-   else
-      return LogLevel::DEBUG;
 }
 
 json::Object errorLocationToJson(const ErrorLocation& in_location)
@@ -612,6 +646,12 @@ void logError(const Error& in_error, const ErrorLocation& in_location)
       logger().writeMessageToDestinations(LogLevel::ERR, std::string(), "", boost::none, in_location, in_error);
 }
 
+void logError(const Error& in_error, const std::string& in_section, const ErrorLocation& in_location)
+{
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::ERR, std::string(), in_section, boost::none, in_location, in_error);
+}
+
 void logErrorAsWarning(const Error& in_error)
 {
    if (!in_error.isExpected())
@@ -668,6 +708,14 @@ void logWarningMessage(const std::string& in_message,
    Logger& log = logger();
    if (log.MaxLogLevel >= LogLevel::WARN)
       log.writeMessageToDestinations(LogLevel::WARN, in_message, in_section, in_properties, in_loggedFrom);
+}
+
+// Exists for the LOG_DEBUG_MESSAGE macro that needs a dummy value here so we can use a ? statement
+// to hide the evaluation of the arguments.
+bool logDebugMessageReturn(const std::string& in_message)
+{
+   logDebugMessage(in_message, std::string());
+   return true;
 }
 
 void logDebugMessage(const std::string& in_message, const std::string& in_section)
@@ -864,31 +912,95 @@ bool hasLogDestination()
 {
    Logger& log = logger();
    WRITE_LOCK_BEGIN(log.Mutex)
-      {
-         LogMap* logMap = &log.DefaultLogDestinations;
+   {
+      LogMap* logMap = &log.DefaultLogDestinations;
 
-         const auto destEnd = logMap->end();
-         for (auto iter = logMap->begin(); iter != destEnd; ++iter)
-         {
-            if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
-               return true;
-         }
+      const auto destEnd = logMap->end();
+      for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+      {
+         if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
+            return true;
       }
+   }
    RW_LOCK_END(false);
    return false;
 }
 
+template <typename T>
+void setLogLevel(LogLevel in_newLevel)
+{
+   Logger& log = logger();
+   WRITE_LOCK_BEGIN(log.Mutex)
+   {
+      LogMap* logMap = &log.DefaultLogDestinations;
+
+      const auto destEnd = logMap->end();
+      for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+      {
+         if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
+         {
+            iter->second->setLogLevel(in_newLevel);
+            if (in_newLevel > log.MaxLogLevel)
+               log.MaxLogLevel = in_newLevel;
+         }
+      }
+   }
+   RW_LOCK_END(false);
+}
+
+template <typename T>
+LogLevel getLogLevel()
+{
+   Logger& log = logger();
+   WRITE_LOCK_BEGIN(log.Mutex)
+   {
+      LogMap* logMap = &log.DefaultLogDestinations;
+
+      const auto destEnd = logMap->end();
+      for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+      {
+         if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
+             return iter->second->getLogLevel();
+      }
+   }
+   RW_LOCK_END(false);
+
+   return LogLevel::OFF;
+}
+
 } // anonymous namespace
+
 
 bool hasFileLogDestination()
 {
    return hasLogDestination<FileLogDestination>();
 }
 
+LogLevel getFileLogLevel()
+{
+   return getLogLevel<FileLogDestination>();
+}
+
+void setFileLogLevel(LogLevel in_newLevel)
+{
+   setLogLevel<FileLogDestination>(in_newLevel);
+}
+
 bool hasStderrLogDestination()
 {
    return hasLogDestination<StderrLogDestination>();
 }
+
+LogLevel getStderrLogLevel()
+{
+   return getLogLevel<StderrLogDestination>();
+}
+
+void setStderrLogLevel(LogLevel in_newLevel)
+{
+   setLogLevel<StderrLogDestination>(in_newLevel);
+}
+
 
 } // namespace log
 } // namespace core

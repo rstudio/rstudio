@@ -24,7 +24,7 @@ public interface HelpServerOperations
 
    void getHelp(String topic, 
                 String packageName,
-                int options,
+                int type,
                 ServerRequestCallback<HelpInfo> requestCallback);
    
    String getApplicationURL(String topicURI);

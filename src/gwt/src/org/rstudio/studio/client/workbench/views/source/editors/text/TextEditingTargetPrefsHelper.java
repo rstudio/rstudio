@@ -135,6 +135,11 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setRainbowParentheses(arg);
             }));
+      releaseOnDismiss.add(prefs.rainbowFencedDivs().bind(
+            (arg) ->
+            {
+               docDisplay.setRainbowFencedDivs(arg);
+            }));
       releaseOnDismiss.add(prefs.codeCompletionOther().bind(
             (arg) ->
             {
@@ -223,6 +228,11 @@ public class TextEditingTargetPrefsHelper
                (arg) ->
                {
                   docDisplay.setFoldStyle(FoldStyle.fromPref(arg));
+               }));
+         releaseOnDismiss.add(prefs.enableScreenReader().bind(
+               (arg) ->
+               {
+                  docDisplay.setEnableKeyboardAccessibility(arg);
                }));
       }
       

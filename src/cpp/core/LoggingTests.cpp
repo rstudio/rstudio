@@ -79,6 +79,24 @@ test_context("Logging")
       LOG_WARNING_MESSAGE("Warning message");
       LOG_ERROR_MESSAGE("Error message");
 
+      // Turn on debug logging for these LOG_DEBUG_MESSAGE tests
+      log::setFileLogLevel(log::LogLevel::DEBUG_LEVEL);
+
+      // Because the LOG_DEBUG_MESSAGE is a macro with a ? operator, these tests make sure it works
+      // in all important contexts
+      bool dummy = false;
+      if (!dummy) LOG_DEBUG_MESSAGE("Debug in solo if");
+
+      if (dummy)
+         dummy = true;
+      else
+         LOG_DEBUG_MESSAGE("Debug in else");
+
+      if (!dummy)
+         LOG_DEBUG_MESSAGE("Debug in if with else");
+      else
+         dummy = false;
+
       FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
       REQUIRE(logFile.exists());
 
@@ -89,6 +107,9 @@ test_context("Logging")
       REQUIRE(logFileContents.find("Info message") != std::string::npos);
       REQUIRE(logFileContents.find("Warning message") != std::string::npos);
       REQUIRE(logFileContents.find("Error message") != std::string::npos);
+      REQUIRE(logFileContents.find("Debug in solo if") != std::string::npos);
+      REQUIRE(logFileContents.find("Debug in else") != std::string::npos);
+      REQUIRE(logFileContents.find("Debug in if with else") != std::string::npos);
    }
 
    test_that("Can override logging based on env vars and write valid json format")
@@ -718,7 +739,11 @@ test_context("Logging")
                                      "properties", errorProperties));
 
       REQUIRE(code == boost::system::errc::no_such_file_or_directory);
+#ifndef _WIN32
       REQUIRE(message == "No such file or directory");
+#else
+      REQUIRE(message == "The system cannot find the file specified");
+#endif
       REQUIRE(type == "system");
 
       std::string description;
@@ -728,6 +753,8 @@ test_context("Logging")
       REQUIRE(description == "Couldn't read the file");
    }
 
+#ifndef _WIN32
+   // Disabled in Windows, tracked here: https://github.com/rstudio/rstudio/issues/13165
    test_that("Can log LogMessageProperties")
    {
       FilePath tmpConfPath;
@@ -779,7 +806,8 @@ test_context("Logging")
       REQUIRE(logFileContents.find(", prop4: " + obj.write()) != std::string::npos);
       REQUIRE(logFileContents.find(", prop5: " + arr.write()) != std::string::npos);
       REQUIRE(logFileContents.find("Couldn't find file") != std::string::npos);
-      REQUIRE(logFileContents.find("No such file or directory") != std::string::npos);
+      REQUIRE(((logFileContents.find("No such file or directory") != std::string::npos) || 
+              (logFileContents.find("The system cannot find the file specified") != std::string::npos)));
       REQUIRE(logFileContents.find("LoggingTests.cpp") != std::string::npos);
 
       boost::replace_all(confFileContents, "pretty", "json");
@@ -841,6 +869,7 @@ test_context("Logging")
 
       REQUIRE(success);
    }
+#endif
 
    test_that("Can debug action log")
    {

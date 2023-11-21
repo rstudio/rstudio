@@ -27,7 +27,9 @@
    TYPE_DOCUMENT_ID          = 3L,
    TYPE_DOCUMENT_OPEN        = 4L,
    TYPE_DOCUMENT_NEW         = 5L,
-   TYPE_FILES_PANE_NAVIGATE  = 6L
+   TYPE_FILES_PANE_NAVIGATE  = 6L,
+   TYPE_SET_GHOST_TEXT       = 7L
+   
 ))
 
 # list of potential event targets
@@ -222,10 +224,6 @@
 
       # normalize paths
       markers$file <- .rs.normalizePath(markers$file, mustWork = TRUE)
-
-      # check for html
-      markers$messageHTML <- inherits(markers$message, "html")
-
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
          markerTypes <- c("error", "warning", "box", "info", "style", "usage")
@@ -245,8 +243,7 @@
          marker$line <- .rs.scalar(as.numeric(marker$line))
          marker$column <- .rs.scalar(as.numeric(marker$column))
          marker$message <- .rs.scalar(marker$message)
-         marker$messageHTML <- .rs.scalar(inherits(marker$message, "html"))
-
+         
          marker
       })
    } else {
@@ -1243,4 +1240,19 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("bugReport", function()
 {
    .rs.bugReport(pro = FALSE)
+})
+
+.rs.addApiFunction("setGhostText", function(text)
+{
+   text <- paste(enc2utf8(text), collapse = "\n")
+   payload <- list(text = .rs.scalar(text))
+   request <- .rs.api.createRequest(
+      type    = .rs.api.eventTypes$TYPE_SET_GHOST_TEXT,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   .rs.api.sendRequest(request)
+   invisible(text)
 })

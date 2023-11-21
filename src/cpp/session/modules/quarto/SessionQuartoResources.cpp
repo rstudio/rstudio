@@ -15,6 +15,7 @@
 
 #include "SessionQuartoResources.hpp"
 
+#include <core/Exec.hpp>
 #include <core/PerformanceTimer.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -36,7 +37,8 @@ namespace resources {
 
 namespace {
 
-void handleQuartoResources(const http::Request& request, http::Response* pResponse)
+void handleQuartoResources(const http::Request& request,
+                           http::Response* pResponse)
 {
    // determine path
    std::string path = http::util::pathAfterPrefix(request, kQuartoResourcesPath);
@@ -49,20 +51,37 @@ void handleQuartoResources(const http::Request& request, http::Response* pRespon
    pResponse->setCacheableFile(quartoResource, request);
 }
 
-} // anonymous namespace
+void handleQuartoPreview(const http::Request& request,
+                         http::Response* pResponse)
+{
+   // determine path
+   std::string path = http::util::pathAfterPrefix(request, "/");
 
+   // find the file and serve it
+   QuartoConfig config = quartoConfig();
+   FilePath previewPath = FilePath(config.resources_path).completeChildPath("preview");
+   FilePath filePath = previewPath.completePath(path);
+   pResponse->setCacheableFile(filePath, request);
+   
+}
+
+} // anonymous namespace
 
 Error initialize()
 {
    QuartoConfig config = quartoConfig();
-   if (config.enabled)
-   {
-      return module_context::registerUriHandler(kQuartoResourcesPath, handleQuartoResources);
-   }
-   else
-   {
+   if (!config.enabled)
       return Success();
-   }
+      
+   using namespace module_context;
+   using boost::bind;
+   
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+         (bind(registerUriHandler, kQuartoResourcesPath, handleQuartoResources))
+         (bind(registerUriHandler, "/quarto-preview.js", handleQuartoPreview));
+   
+   return initBlock.execute();
 }
 
 } // namespace resources

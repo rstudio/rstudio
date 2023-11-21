@@ -1093,20 +1093,29 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String withRSConnectLabel();
 
     /**
-     * Translated "Enable publishing to RStudio Connect".
+     * Translated "Enable publishing to Posit Connect".
      *
-     * @return translated "Enable publishing to RStudio Connect"
+     * @return translated "Enable publishing to Posit Connect"
      */
-    @DefaultMessage("Enable publishing to RStudio Connect")
+    @DefaultMessage("Enable publishing to Posit Connect")
     @Key("chkEnableRSConnectLabel")
     String chkEnableRSConnectLabel();
 
     /**
-     * Translated "Information about RStudio Connect".
+     * Translated "Enable publishing to Posit Cloud".
      *
-     * @return translated "Information about RStudio Connect"
+     * @return translated "Enable publishing to Posit Cloud"
      */
-    @DefaultMessage("Information about RStudio Connect")
+    @DefaultMessage("Enable publishing to Posit Cloud")
+    @Key("chkEnableCloudLabel")
+    String chkEnableCloudLabel();
+
+    /**
+     * Translated "Information about Posit Connect".
+     *
+     * @return translated "Information about Posit Connect"
+     */
+    @DefaultMessage("Information about Posit Connect")
     @Key("checkBoxWithHelpTitle")
     String checkBoxWithHelpTitle();
 
@@ -1328,11 +1337,11 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String wizardNavigationPageCaption();
 
     /**
-     * Translated "RStudio Connect is a server product from RStudio ".
+     * Translated "Posit Connect is a server product from Posit ".
      *
-     * @return translated "RStudio Connect is a server product from RStudio "
+     * @return translated "Posit Connect is a server product from Posit "
      */
-    @DefaultMessage("RStudio Connect is a server product from RStudio ")
+    @DefaultMessage("Posit Connect is a server product from Posit ")
     @Key("serviceDescription")
     String serviceDescription();
 
@@ -2050,5 +2059,13 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     @Key("progressRemoveIndicator")
     String progressRemoveIndicator();
 
+    /**
+     * Translated "[Detected output overflow; buffering the next {0} lines of output]".
+     *
+     * @return translated "[Detected output overflow; buffering the next {0} lines of output]"
+     */
+    @DefaultMessage("[Detected output overflow; buffering the next {0} lines of output]")
+    @Key("consoleBufferedMessage")
+    String consoleBufferedMessage(int bufferSize);
 
 }

@@ -13,21 +13,23 @@
  *
  */
 
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import {
   app,
+  nativeTheme,
   BrowserWindow,
   clipboard,
-  dialog,
   ipcMain,
   Rectangle,
   screen,
   shell,
-  webFrameMain
+  webFrameMain,
+  dialog,
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, writeFileSync } from 'fs';
+import { platform, release } from 'os';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
@@ -45,10 +47,17 @@ import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import {
-  filterFromQFileDialogFilter, findRepoRoot,
-  getAppPath, handleLocaleCookies, resolveAliasedPath
+  filterFromQFileDialogFilter,
+  findRepoRoot,
+  getAppPath,
+  handleLocaleCookies,
+  resolveAliasedPath,
 } from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
+import { getenv } from '../core/environment';
+import { safeError } from '../core/err';
+import { userHomePathString } from '../core/user';
+import { detectRosetta } from './detect-rosetta';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -87,27 +96,45 @@ export class GwtCallback extends EventEmitter {
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
 
-  // https://github.com/foliojs/font-manager/issues/15
-  // the fork did not correct usage of Fontconfig
-  // getAvailableFontsSync() incorrectly sets the monospace property
-  monospaceFonts = [
-    ...new Set<string>(
-      findFontsSync({ monospace: true }).map((fd) => {
-        return process.platform === 'darwin' ? fd.postscriptName : fd.family;
-      }),
-    ),
-  ].sort((a, b) => a.localeCompare(b));
-  proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort((a, b) =>
-    a.localeCompare(b),
-  );
+  monospaceFonts: string[] = [];
+  proportionalFonts: string[] = [];
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
     this.owners.add(mainWindow);
 
+    // https://github.com/foliojs/font-manager/issues/15
+    // the fork did not correct usage of Fontconfig
+    // getAvailableFontsSync() incorrectly sets the monospace property
+    try {
+      const queryFonts = getenv('RSTUDIO_QUERY_FONTS');
+      if (queryFonts !== '0' && queryFonts.toLowerCase() !== 'false') {
+        this.monospaceFonts = [
+          ...new Set<string>(
+            findFontsSync({ monospace: true }).map((fd) => {
+              return process.platform === 'darwin' ? fd.postscriptName : fd.family;
+            }),
+          ),
+        ].sort((a, b) => a.localeCompare(b));
+        this.proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort(
+          (a, b) => a.localeCompare(b),
+        );
+      }
+    } catch (err: unknown) {
+      logger().logError(safeError(err));
+    }
+
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      // TODO: review if we need additional validation of URL
-      void shell.openExternal(url);
+
+      // shell.openExternal() seems unreliable on Windows
+      // https://github.com/electron/electron/issues/31347
+      if (process.platform === 'win32' && url.startsWith('file:///')) {
+        const path = decodeURI(url).substring('file:///'.length).replaceAll('/', '\\');
+        desktop.openExternal(path);
+      } else {
+        void shell.openExternal(url);
+      }
+
     });
 
     ipcMain.handle(
@@ -145,9 +172,11 @@ export class GwtCallback extends EventEmitter {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
         if (focusedWindow) {
-          return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showOpenDialog(focusedWindow!, openDialogOptions),
+          );
         } else {
-          return dialog.showOpenDialog(openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showOpenDialog(openDialogOptions));
         }
       },
     );
@@ -173,15 +202,17 @@ export class GwtCallback extends EventEmitter {
         if (defaultExtension) {
           saveDialogOptions['filters'] = [{ name: '', extensions: [defaultExtension.replace('.', '')] }];
         }
-        
+
         let focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusOwner) {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
         if (focusedWindow) {
-          return dialog.showSaveDialog(focusedWindow, saveDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showSaveDialog(focusedWindow!, saveDialogOptions),
+          );
         } else {
-          return dialog.showSaveDialog(saveDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showSaveDialog(saveDialogOptions));
         }
       },
     );
@@ -202,12 +233,18 @@ export class GwtCallback extends EventEmitter {
         }
 
         if (focusedWindow) {
-          return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showOpenDialog(focusedWindow!, openDialogOptions),
+          );
         } else {
-          return dialog.showOpenDialog(openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showOpenDialog(openDialogOptions));
         }
       },
     );
+
+    ipcMain.handle('desktop_get_user_home_path', () => {
+      return userHomePathString();
+    });
 
     ipcMain.on('desktop_on_clipboard_selection_changed', () => {
       // This was previously used for Ace-specific workarounds on Qt
@@ -385,6 +422,7 @@ export class GwtCallback extends EventEmitter {
       // discover available R installations
       const rInstalls = findRInstallationsWin32();
       if (rInstalls.length === 0) {
+        logger().logErrorMessage('No R installations found via registry or common R install locations.');
         return '';
       }
 
@@ -417,7 +455,7 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on(
       'desktop_open_minimal_window',
-      (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
+      async (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
         // handle some internal chrome urls specially
         if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
           const window = new BrowserWindow({
@@ -487,6 +525,10 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
+    ipcMain.on('desktop_set_gwt_num_modals_showing', (_event, gwtModalsShowing: number) => {
+      appState().modalTracker.setNumGwtModalsShowing(gwtModalsShowing);
+    });
+
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
       (_event, x: number, y: number, width: number, height: number) => {
@@ -502,26 +544,33 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_export_page_region_to_file', 
-      (event, targetPath, format, left, top, width, height) => {
-        const rect: Rectangle = { x: left, y: top, width, height };
-        targetPath = resolveAliasedPath(targetPath);
-        this.mainWindow.window
-          .capturePage(rect)
-          .then((image) => {
-            let buffer: Buffer;
-            if (format == 'jpeg') {
-              buffer = image.toJPEG(100);
-            } else {
-              buffer = image.toPNG();
-            }
-            writeFileSync(targetPath, buffer);
-          })
-          .catch((error) => {
-            logger().logError(error);
-          });
-      },
-    );
+    ipcMain.handle('desktop_copy_image_at_xy_to_clipboard', (_event, x: number, y: number) => {
+      const focusedWindow = BrowserWindow.getFocusedWindow();
+      if (focusedWindow?.webContents) {
+        focusedWindow.webContents.copyImageAt(x, y);
+      } else {
+        logger().logError(`Failed to copy image at x: ${x}, y: ${y} to clipboard`);
+      }
+    });
+
+    ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
+      const rect: Rectangle = { x: left, y: top, width, height };
+      targetPath = resolveAliasedPath(targetPath);
+      this.mainWindow.window
+        .capturePage(rect)
+        .then((image) => {
+          let buffer: Buffer;
+          if (format == 'jpeg') {
+            buffer = image.toJPEG(100);
+          } else {
+            buffer = image.toPNG();
+          }
+          writeFileSync(targetPath, buffer);
+        })
+        .catch((error) => {
+          logger().logError(error);
+        });
+    });
 
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
       return process.platform === 'win32';
@@ -530,18 +579,30 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_show_message_box',
       async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
-        const openDialogOptions: MessageBoxOptions = {
-          type: this.convertMessageBoxType(type),
-          title: caption,
-          message: message,
-          buttons: this.convertButtons(buttons),
-        };
+        let openDialogOptions: MessageBoxOptions;
+        if (process.platform === 'darwin') {
+          openDialogOptions = {
+            type: this.convertMessageBoxType(type),
+            message: caption,
+            detail: message,
+            buttons: this.convertButtons(buttons),
+          };
+        } else {
+          openDialogOptions = {
+            type: this.convertMessageBoxType(type),
+            title: caption,
+            message: message,
+            buttons: this.convertButtons(buttons),
+          };
+        }
 
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow) {
-          return dialog.showMessageBox(focusedWindow, openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showMessageBox(focusedWindow, openDialogOptions),
+          );
         } else {
-          return dialog.showMessageBox(openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(openDialogOptions));
         }
       },
     );
@@ -670,7 +731,9 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {});
 
-    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
+    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark: boolean) => {
+      nativeTheme.themeSource = isDark ? 'dark' : 'light';
+    });
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       return ElectronDesktopOptions().accessibility();
@@ -683,6 +746,10 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_set_autohide_menubar', (_event, autohide) => {
       this.mainWindow.window.setAutoHideMenuBar(autohide);
       this.mainWindow.window.setMenuBarVisibility(!autohide);
+    });
+
+    ipcMain.on('desktop_set_disable_renderer_accessibility', (event, disable) => {
+      ElectronDesktopOptions().setDisableRendererAccessibility(disable);
     });
 
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
@@ -701,26 +768,12 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
     });
 
-    ipcMain.on('desktop_show_license_dialog', () => {
-      GwtCallback.unimpl('desktop_show_license_dialog');
-    });
-
     ipcMain.on('desktop_show_session_server_options_dialog', () => {
       GwtCallback.unimpl('desktop_show_session_server_options_dialog');
     });
 
     ipcMain.handle('desktop_get_init_messages', () => {
       return '';
-    });
-
-    ipcMain.handle('desktop_get_license_status_message', () => {
-      GwtCallback.unimpl('desktop_get_license_status_messages');
-      return '';
-    });
-
-    ipcMain.handle('desktop_allow_product_usage', () => {
-      GwtCallback.unimpl('desktop_allow_product_usage');
-      return true;
     });
 
     ipcMain.handle('desktop_get_desktop_synctex_viewer', () => {
@@ -837,6 +890,10 @@ export class GwtCallback extends EventEmitter {
       this.emit(GwtCallback.SESSION_QUIT);
     });
 
+    ipcMain.on('desktop_stop_main_thread', () => {
+      process.crash();
+    });
+
     ipcMain.handle('desktop_get_session_server', () => {
       GwtCallback.unimpl('desktop_get_session_server');
       return {};
@@ -902,8 +959,41 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
+      if (varName === 'launch_failed') {
+        this.addMacOSVersionError();
+      }
       return resolveTemplateVar(varName, this.errorPageData);
     });
+
+    ipcMain.on('desktop_detect_rosetta', () => {
+      if (ElectronDesktopOptions().checkForRosetta()) {
+        detectRosetta();
+      }
+    });
+  }
+
+  addMacOSVersionError(): void {
+    if (platform() === 'darwin') {
+      const release_major = parseInt(release().substring(0, release().indexOf('.')));
+      // macOS 11.0 uses darwin 20.0.0
+      if (release_major < 20) {
+        const versionProductName = execSync('sw_vers -productName').toString().trim();
+        const versionProductVersion = execSync('sw_vers -productVersion').toString().trim();
+        let versionError =
+          'You are using an unsupported operating system: ' +
+          versionProductName +
+          ' ' +
+          versionProductVersion +
+          '. RStudio requires macOS 11 (Big Sur) or higher.';
+        if (this.errorPageData.get('process_error')) {
+          const launch_failed = this.errorPageData.get('process_error');
+          if (!launch_failed?.includes('No error available')) {
+            versionError += '\n\n' + launch_failed;
+          }
+        }
+        this.errorPageData.set('process_error', versionError);
+      }
+    }
   }
 
   setRemoteDesktop(isRemoteDesktop: boolean): void {
@@ -923,9 +1013,11 @@ export class GwtCallback extends EventEmitter {
     };
 
     if (focusedWindow) {
-      void dialog.showMessageBox(focusedWindow, dialogOptions);
+      void appState().modalTracker.trackElectronModalAsync(async () =>
+        dialog.showMessageBox(focusedWindow, dialogOptions),
+      );
     } else {
-      void dialog.showMessageBox(dialogOptions);
+      void appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(dialogOptions));
     }
   }
 
@@ -939,7 +1031,7 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  convertMessageBoxType(type: number): string {
+  convertMessageBoxType(type: number): 'info' | 'warning' | 'error' | 'question' {
     // map QMessageBox types to Electron values
     switch (type) {
       case 1:
@@ -984,8 +1076,21 @@ export class GwtCallback extends EventEmitter {
     const frame = webFrameMain.fromId(processId, frameId);
     if (frame) {
       for (const win of this.owners) {
-        if (win.window.webContents.mainFrame === frame) {
-          return win;
+        try {
+          // Some owners in this.owners may not have been unregistered, but have
+          // since been closed/destroyed. If that's the case for an owner, its
+          // WebContents (win.window.webContents) will have been destoyed.
+          // As a result, when we iterate through owners and hit one that has
+          // been destroyed, we get: "TypeError: Object has been destroyed".
+          // Then, we error out and cause a satellite window to have blank contents.
+          // See https://github.com/rstudio/rstudio/issues/12468 and
+          //     https://github.com/rstudio/rstudio/issues/12569
+          // To avoid failing, we catch the error and move on to check the next owner.
+          if (win.window.webContents.mainFrame === frame) {
+            return win;
+          }
+        } catch (error: unknown) {
+          logger().logDebug('Window WebContents has been destroyed. Skipping this window.');
         }
       }
     }

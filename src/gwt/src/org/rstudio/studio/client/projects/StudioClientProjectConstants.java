@@ -775,6 +775,34 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String quartoBookPageCaption();
 
     /**
+     * Translated "Quarto Manuscript".
+     *
+     * @return translated "Quarto Manuscript"
+     */
+    @DefaultMessage("Quarto Manuscript")
+    @Key("quartoManuscriptTitle")
+    String quartoManuscriptTitle();
+
+    /**
+     * Translated "Create a new Quarto manuscript project".
+     *
+     * @return translated "Create a new Quarto manuscript project"
+     */
+    @DefaultMessage("Create a new Quarto manuscript project")
+    @Key("quartoManuscriptSubTitle")
+    String quartoManuscriptSubTitle();
+
+    /**
+     * Translated "Create Quarto Manuscript".
+     *
+     * @return translated "Create Quarto Manuscript"
+     */
+    @DefaultMessage("Create Quarto Manuscript")
+    @Key("quartoManuscriptPageCaption")
+    String quartoManuscriptPageCaption();
+
+   
+    /**
      * Translated "Quarto Project".
      *
      * @return translated "Quarto Project"
@@ -836,6 +864,15 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Book")
     @Key("projectTypeBook")
     String projectTypeBook();
+    
+    /**
+     * Translated "Manuscript".
+     *
+     * @return translated "Manuscript"
+     */
+    @DefaultMessage("Manuscript")
+    @Key("projectTypeManuscript")
+    String projectTypeManuscript();
 
     /**
      * Translated "Engine:".
@@ -2078,4 +2115,51 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Use condaenv with packages:")
     @Key("useCondaenv")
     String useCondaenv();
+    
+    /**
+     * Translated "Editing".
+     *
+     * @return translated "Editing"
+     */
+    @DefaultMessage("Editing")
+    @Key("editingTitle")
+    String editingTitle();
+ 
+    /**
+     * Translated "Indexing".
+     *
+     * @return translated "Indexing"
+     */
+    @DefaultMessage("Indexing")
+    @Key("indexingTitle")
+    String indexingTitle();
+    
+    /**
+     * Translated "Saving".
+     *
+     * @return translated "Saving"
+     */
+    @DefaultMessage("Saving")
+    @Key("savingTitle")
+    String savingTitle();
+    
+    /**
+     * Translated "Workspace".
+     *
+     * @return translated "Workspace"
+     */
+    @DefaultMessage("Workspace")
+    @Key("workspaceTitle")
+    String workspaceTitle();
+    
+    /**
+     * Translated "Miscellaneous".
+     *
+     * @return translated "Miscellaneous"
+     */
+    @DefaultMessage("Miscellaneous")
+    @Key("miscellaneousTitle")
+    String miscellaneousTitle();
+    
+    
 }

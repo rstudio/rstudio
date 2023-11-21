@@ -17,7 +17,7 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, WebContents, WebRequest } from 'electron';
+import { app, BrowserWindow, Cookie, dialog, FileFilter, MessageBoxOptions, WebContents, WebRequest } from 'electron';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
@@ -30,6 +30,7 @@ import i18next from 'i18next';
 import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
+import { appState } from './app-state';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -85,7 +86,6 @@ export function augmentCommandLineArguments(): void {
 
   const pieces = user.split(' ');
   pieces.forEach((piece) => {
-
     // if this piece doesn't start with '-', treat it as a plain argument
     if (!piece.startsWith('-')) {
       app.commandLine.appendArgument(piece);
@@ -112,7 +112,6 @@ export function augmentCommandLineArguments(): void {
 
     app.commandLine.appendSwitch(lhs, rhs);
   });
-
 }
 
 /**
@@ -195,7 +194,7 @@ function findBuildRootImpl(rootDir: string): string {
     `${rootDir}/src/cpp`,
     `${rootDir}/package/linux`,
     `${rootDir}/package/osx`,
-    `${rootDir}/package/win32`
+    `${rootDir}/package/win32`,
   ];
 
   // list all files + directories in root folder
@@ -236,9 +235,9 @@ function rsessionNotFoundError(): Error {
 }
 
 /**
- * @returns Paths to config file, rsession, and desktop scripts.
+ * @returns Paths for install path, config file, rsession, and desktop scripts.
  */
-export function findComponents(): [FilePath, FilePath, FilePath] {
+export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
   // determine paths to config file, rsession, and desktop scripts
   let confPath: FilePath = new FilePath();
   let sessionPath: FilePath = new FilePath();
@@ -247,7 +246,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
   if (app.isPackaged) {
     // confPath is intentionally left empty for a package build
     sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
-    return [confPath, sessionPath, new FilePath(getAppPath())];
+    return [binRoot, confPath, sessionPath, new FilePath(getAppPath())];
   }
 
   // developer builds -- first, check for environment variable
@@ -276,7 +275,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
     const sessionPath = buildRootPath.completePath(`${subdir}/session/${rsessionExeName()}`);
     if (sessionPath.existsSync()) {
       confPath = buildRootPath.completePath(`${subdir}/conf/rdesktop-dev.conf`);
-      return [confPath, sessionPath, new FilePath(getAppPath())];
+      return [new FilePath(buildRoot), confPath, sessionPath, new FilePath(getAppPath())];
     }
   }
 
@@ -371,7 +370,6 @@ export function getDpiZoomScaling(): number {
 
 // this code follows in the footsteps of R.app
 function initializeLangDarwin(): string {
-
   {
     // if 'force.LANG' is set, that takes precedencec
     const args = ['read', 'org.R-project.R', 'force.LANG'];
@@ -398,7 +396,6 @@ function initializeLangDarwin(): string {
 
   // otherwise, just use UTF-8 locale
   return 'en_US.UTF-8';
-
 }
 
 export function initializeLang(): void {
@@ -448,10 +445,12 @@ export async function createStandaloneErrorDialog(
     dialogContent[process.platform === 'win32' ? 'title' : 'message'] = title;
     dialogContent[process.platform === 'win32' ? 'message' : 'detail'] = message;
 
-    await dialog.showMessageBox(options.window, dialogContent);
+    await appState().modalTracker.trackElectronModalAsync(async () =>
+      dialog.showMessageBox(options.window, dialogContent),
+    );
 
     if (options.shouldCloseWindow) window.close();
-    // eslint-disable-next-line @typescript-eslint/no-implicit-any-catch
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[utils.ts] [createStandaloneErrorDialog] Error when creating Standalone Error Dialog: ', error);
   }
@@ -483,19 +482,22 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
     });
   }
 
-  await window.webContents.session.cookies.get({}).then(async (cookies) => {
-    if (cookies.length === 0) {
-      await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
-    } else {
-      cookies.forEach(async (cookie) => {
-        await updateLocaleFromCookie(cookie, window);
-      });
-    }
-  });
+  await window.webContents.session.cookies
+    .get({})
+    .then(async (cookies: Cookie[]) => {
+      if (cookies.length === 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
+      } else {
+        cookies.forEach(async (cookie) => {
+          await updateLocaleFromCookie(cookie, window);
+        });
+      }
+    })
+    .catch((err) => logger().logError(err));
 };
 
 export function registerWebContentsDebugHandlers(webContents: WebContents) {
-
   // add debug handlers for all of the various navigation and load events
   const events = [
     'before-input-event',
@@ -565,16 +567,12 @@ export function registerWebContentsDebugHandlers(webContents: WebContents) {
       logger().logDebug(`Error adding debug handler for event '${event}': ${error}`);
     }
   }
-
 }
 
 function registerWebContentsDebugHandlerImpl(webContents: WebContents, event: string) {
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   webContents.on(event as any, (...args) => {
-
     const json = args.map((arg) => {
-
       // check for an Electron Event and handle it specially here
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const electronEvent = arg as any;
@@ -595,7 +593,34 @@ function registerWebContentsDebugHandlerImpl(webContents: WebContents, event: st
     });
 
     logger().logDebug(`'${event}': [${json.join(', ')}]`);
-
   });
+}
 
+export function getNumericEnvVar(envVarName: string): number | undefined {
+  const envVar = getenv(envVarName).trim();
+  if (envVar) {
+    const maybeNum = Number(envVar);
+    return !isNaN(maybeNum) ? maybeNum : undefined;
+  }
+  return undefined;
+}
+
+const TRAILING_SLASHES_REGEX = /[\\/]+$/;
+const ONLY_SLASHES_REGEX = /^[\\/]+$/;
+
+/**
+ * Removes trailing slashes from a path string. Paths that contain only
+ * slashes will be returned as-is.
+ * @param str The string to remove trailing slashes from
+ * @returns The string with trailing slashes removed
+ */
+export function removeTrailingSlashes(str: string): string {
+  if (str.length === 0 || ONLY_SLASHES_REGEX.test(str)) {
+    return str;
+  }
+  const trailingSlashesIndex = str.search(TRAILING_SLASHES_REGEX);
+  if (trailingSlashesIndex > 0) {
+    return str.substring(0, trailingSlashesIndex);
+  }
+  return str;
 }

@@ -1,0 +1,146 @@
+def utils
+
+pipeline {
+  agent {
+    label 'linux-4x && x86_64'
+  }
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+
+  environment {
+        GITHUB_LOGIN = credentials('posit-jenkins')
+        OS = 'jammy'
+        ARCH = 'x86_64'
+        FLAVOR = 'Server'
+        TYPE = 'DEB'
+        AWS_ACCOUNT_ID = '749683154838'
+        RSTUDIO_VERSION_FLOWER = ''
+        IS_PRO = false
+  }
+
+  stages {
+    stage('Load Utils') {
+      steps {
+        script {
+          sh 'printenv'
+          sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
+          utils = load "${env.WORKSPACE}/utils.groovy"
+          utils.addRemoteRef("${env.CHANGE_TARGET}")
+          RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+          IS_PRO = JOB_URL.contains('Pro')
+        }
+      }
+    }
+
+    stage('Build') {
+      when {
+        expression {
+          // Passing true makes this return true if there are any changes outside of 'docs'
+          return utils.hasChangesIn('docs', true)
+        }
+      }
+
+      stages {
+        stage('Prepare Build Container') {
+          when {
+            anyOf {
+              expression {
+                return utils.hasChangesIn('docker')
+              }
+              expression {
+                return utils.hasChangesIn('dependencies')
+              }
+            }
+          }
+          steps {
+            // AWS is here for the S3 bucket that we use for sccache
+            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+              pullBuildPush(
+                image_name: 'jenkins/ide',
+                image_tag: "${utils.getDockerTag()}",
+                dockerfile: "docker/jenkins/Dockerfile.${OS}",
+                build_arg_jenkins_uid: 'JENKINS_UID',
+                build_arg_jenkins_gid: 'JENKINS_GID',
+                builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+                push: false)
+            }
+          }
+        }
+
+        stage('Build Package and Test') {
+          agent {
+              docker {
+                image "jenkins/ide:${utils.getDockerTag()}"
+                registryCredentialsId 'ecr:us-east-1:aws-build-role'
+                registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+                label "${utils.getLinuxAgentLabel(ARCH)}"
+                reuseNode true
+              }
+            }
+
+          stages {
+            stage('Build Package') {
+              steps {
+                dir ("package/linux") {
+                  // AWS is here for the S3 bucket that we use for sccache
+                  withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                    // perform the compilation
+                    sh "SCCACHE_ENABLED=1 PACKAGE_OS=${OS} ./make-${FLAVOR.toLowerCase()}-package ${type} clean"
+                  }
+                }
+              }
+              //Archive the build
+              post {
+                success {
+                  archiveArtifacts artifacts: "package/linux/build-${FLAVOR}-${TYPE}/rstudio-*.${TYPE.toLowerCase()}", fingerprint: true
+                }
+              }
+            }
+
+            stage('Run GWT Unit Tests') {
+              steps {
+                dir ("package/linux/build-${FLAVOR}-${TYPE}/src/gwt") {
+                  // attempt to run ant (gwt) unit tests
+                  sh "./gwt-unit-tests.sh"
+                }
+              }
+            }
+
+            stage('Run C++ Unit Tests') {
+              steps {
+                dir ("package/linux/build-${FLAVOR}-${type}/src/cpp") {
+                  // attempt to run cpp unit tests
+                  sh "./rstudio-tests"
+                }
+              }
+            }
+
+            stage('Run Rust Unit Tests') {
+              when { expression { return FLAVOR == 'Server' && IS_PRO } } 
+              steps {
+                dir ("package/linux/build-${FLAVOR}-${type}") {
+                  // Just run the nss_pwb tests for now to keep it simple
+                  // We may want to consider adding a rust workspace in the future if we add more rust targets
+                  sh "ninja nss_pwb-test"
+                }
+              }
+            }
+
+            stage('Run Go Unit Tests') {
+              when { expression { return FLAVOR == 'Server' && IS_PRO } }
+              steps {
+                dir ("package/linux/build-${FLAVOR}-${type}") {
+                  sh "ninja workbench-user-service-test"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

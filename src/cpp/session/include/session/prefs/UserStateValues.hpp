@@ -35,6 +35,7 @@ namespace prefs {
 #define kViewZoomLevel "zoomLevel"
 #define kViewWindowBounds "windowBounds"
 #define kViewAccessibility "accessibility"
+#define kViewDisableRendererAccessibility "disableRendererAccessibility"
 #define kRemoteSession "remote_session"
 #define kRemoteSessionLastRemoteSessionUrl "lastRemoteSessionUrl"
 #define kRemoteSessionAuthCookies "authCookies"
@@ -45,6 +46,7 @@ namespace prefs {
 #define kRendererUseGpuDriverBugWorkarounds "useGpuDriverBugWorkarounds"
 #define kPlatform "platform"
 #define kPlatformWindows "windows"
+#define kPlatformMacos "macos"
 #define kContextId "context_id"
 #define kAutoCreatedProfile "auto_created_profile"
 #define kTheme "theme"
@@ -219,7 +221,7 @@ public:
    core::Error setShowPublishUi(bool val);
 
    /**
-    * Whether to show UI for publishing content to RStudio Connect.
+    * Whether to show UI for publishing content to Posit Connect.
     */
    bool enableRsconnectPublishUi();
    core::Error setEnableRsconnectPublishUi(bool val);

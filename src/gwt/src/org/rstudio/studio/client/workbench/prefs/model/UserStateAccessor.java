@@ -112,11 +112,15 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native JavaScriptObject getWindowBounds() /*-{
-         return this && this.windowBounds || {"width":1200,"height":900,"x":0,"y":0};
+         return this && this.windowBounds || {"width":1200,"height":900,"x":0,"y":0,"maximized":false};
       }-*/;
 
       public final native boolean getAccessibility() /*-{
          return this && this.accessibility || false;
+      }-*/;
+
+      public final native boolean getDisableRendererAccessibility() /*-{
+         return this && this.disableRendererAccessibility || false;
       }-*/;
 
    }
@@ -199,6 +203,10 @@ public class UserStateAccessor extends Prefs
 
       public final native JavaScriptObject getWindows() /*-{
          return this && this.windows || {"rBinDir":"","preferR64":true,"rExecutablePath":""};
+      }-*/;
+
+      public final native JavaScriptObject getMacos() /*-{
+         return this && this.macos || {"checkForRosetta":true};
       }-*/;
 
    }
@@ -464,7 +472,7 @@ public class UserStateAccessor extends Prefs
    }
 
    /**
-    * Whether to show UI for publishing content to RStudio Connect.
+    * Whether to show UI for publishing content to Posit Connect.
     */
    public PrefValue<Boolean> enableRsconnectPublishUi()
    {

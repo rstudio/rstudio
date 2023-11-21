@@ -252,7 +252,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 
 # try to determine if devtools::dev_mode is on
-.rs.addFunction( "devModeOn", function(){
+.rs.addFunction("devModeOn", function(){
    
   # determine devmode path (devtools <= 0.6 hard-coded it)
   devToolsPath <- getOption("devtools.path")
@@ -274,7 +274,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # load a package by name
-.rs.addFunction( "loadPackage", function(packageName, lib)
+.rs.addFunction("loadPackage", function(packageName, lib)
 {
    # when R loads package dependencies through a call to `library()`, dependent
    # packages will be searched for on the current library paths rather than the
@@ -295,7 +295,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # unload a package by name
-.rs.addFunction( "unloadPackage", function(packageName)
+.rs.addFunction("unloadPackage", function(packageName)
 {
    pkg = paste("package:", packageName, sep="")
    detach(pos = match(pkg, search()))
@@ -308,7 +308,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # save an environment to a file
-.rs.addFunction( "saveEnvironment", function(env, filename)
+.rs.addFunction("saveEnvironment", function(env, filename)
 {
    # suppress warnings emitted here, as they are not actionable
    # by the user (and seem to be harmless)
@@ -321,13 +321,13 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    invisible (NULL)
 })
 
-.rs.addFunction( "disableSaveCompression", function()
+.rs.addFunction("disableSaveCompression", function()
 {
   options(save.defaults=list(ascii=FALSE, compress=FALSE))
   options(save.image.defaults=list(ascii=FALSE, safe=TRUE, compress=FALSE))
 })
 
-.rs.addFunction( "attachDataFile", function(filename, name, pos = 2)
+.rs.addFunction("attachDataFile", function(filename, name, pos = 2)
 {
    if (!file.exists(filename)) 
       stop(gettextf("file '%s' not found", filename), domain = NA)
@@ -338,24 +338,24 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    invisible (NULL)
 })
 
-.rs.addGlobalFunction( "RStudioGD", function()
+.rs.addGlobalFunction("RStudioGD", function()
 {
    .Call("rs_createGD")
 })
 
 # set our graphics device as the default and cause it to be created/set
-.rs.addFunction( "initGraphicsDevice", function()
+.rs.addFunction("initGraphicsDevice", function()
 {
    options(device="RStudioGD")
    grDevices::deviceIsInteractive("RStudioGD")
 })
 
-.rs.addFunction( "activateGraphicsDevice", function()
+.rs.addFunction("activateGraphicsDevice", function()
 {
    invisible(.Call("rs_activateGD"))
 })
 
-.rs.addFunction( "newDesktopGraphicsDevice", function()
+.rs.addFunction("newDesktopGraphicsDevice", function()
 {
    sysName <- Sys.info()[['sysname']]
    if (identical(sysName, "Windows"))
@@ -373,7 +373,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # record an object to a file
-.rs.addFunction( "saveGraphicsSnapshot", function(snapshot, filename)
+.rs.addFunction("saveGraphicsSnapshot", function(snapshot, filename)
 {
    # make a copy of the snapshot into plot and set its metadata in a way
    # that is compatible with recordPlot
@@ -486,19 +486,19 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # generate a uuid
-.rs.addFunction( "createUUID", function()
+.rs.addFunction("createUUID", function()
 {
   .Call("rs_createUUID")
 })
 
 # check the current R architecture
-.rs.addFunction( "getRArch", function()
+.rs.addFunction("getRArch", function()
 {
    .Platform$r_arch
 })
 
 # pager
-.rs.addFunction( "pager", function(files, header, title, delete.file)
+.rs.addFunction("pager", function(files, header, title, delete.file)
 {
    for (i in 1:length(files)) {
       if ((i > length(header)) || !nzchar(header[[i]]))
@@ -529,7 +529,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 #  - windows: shell.exec
 #  - mac: Preview
 #  - linux: getOption("pdfviewer")
-.rs.addFunction( "shellViewPdf", function(path)
+.rs.addFunction("shellViewPdf", function(path)
 {
    sysName <- Sys.info()[['sysname']]
 
@@ -591,7 +591,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
 })
 
-.rs.addFunction( "callAs", function(name, f, ...)
+.rs.addFunction("callAs", function(name, f, ...)
 {
    # TODO: figure out how to print the args (...) as part of the message
    
@@ -616,7 +616,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # replacing an internal R function
-.rs.addFunction( "registerReplaceHook", function(name, package, hook, namespace = FALSE)
+.rs.addFunction("registerReplaceHook", function(name, package, hook, namespace = FALSE)
 {
    hookFactory <- function(original) function(...) .rs.callAs(name,
                                                              hook, 
@@ -626,7 +626,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # notification that an internal R function was called
-.rs.addFunction( "registerNotifyHook", function(name, package, hook, namespace = FALSE)
+.rs.addFunction("registerNotifyHook", function(name, package, hook, namespace = FALSE)
 {
    hookFactory <- function(original) function(...) 
    { 
@@ -640,7 +640,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # marking functions in R packages as unsupported
-.rs.addFunction( "registerUnsupported", function(name, package, alternative = "")
+.rs.addFunction("registerUnsupported", function(name, package, alternative = "")
 {
    unsupported <- function(...) 
    {  
@@ -654,7 +654,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    .rs.registerReplaceHook(name, package, unsupported)
 })
 
-.rs.addFunction( "parseCRANReposList", function(repos) {
+.rs.addFunction("parseCRANReposList", function(repos) {
   parts <- strsplit(repos, "\\|")[[1]]
   indexes <- seq_len(length(parts) / 2)
 
@@ -665,7 +665,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
   r
 })
 
-.rs.addFunction( "setCRANRepos", function(cran, secondary)
+.rs.addFunction("setCRANRepos", function(cran, secondary)
 {
   local({
 
@@ -687,25 +687,23 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
     })
 })
 
-.rs.addFunction( "setCRANReposAtStartup", function(cran, secondary)
+.rs.addFunction("setCRANReposAtStartup", function(cran, secondary)
 {
    # check whether the user has already set a CRAN repository
    # in their .Rprofile
-   repos = getOption("repos")
-   cranMirrorConfigured <- !is.null(repos) && !any(repos == "@CRAN@")
-
+   repos <- getOption("repos")
+   cranMirrorConfigured <- !"@CRAN@" %in% repos
    if (!cranMirrorConfigured)
       .rs.setCRANRepos(cran, secondary)
 })
 
-
-.rs.addFunction( "isCRANReposFromSettings", function()
+.rs.addFunction("isCRANReposFromSettings", function()
 {
    !is.null(attr(getOption("repos"), "RStudio"))
 })
 
 
-.rs.addFunction( "setCRANReposFromSettings", function(cran, secondary)
+.rs.addFunction("setCRANReposFromSettings", function(cran, secondary)
 {
    # only set the repository if the repository was set by us
    # in the first place (it wouldn't be if the user defined a
@@ -715,7 +713,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 
-.rs.addFunction( "libPathsAppend", function(path)
+.rs.addFunction("libPathsAppend", function(path)
 {
    # remove it if it already exists
    .libPaths(.libPaths()[.libPaths() != path])
@@ -772,14 +770,14 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 #  
 
 # add an rpc handler to the tools:rstudio environment
-.rs.addFunction( "addJsonRpcHandler", function(name, FN)
+.rs.addFunction("addJsonRpcHandler", function(name, FN)
 {
    fullName <- paste("rpc.", name, sep = "")
    .rs.addFunction(fullName, FN, TRUE)
 })
 
 # list all rpc handlers in the tools:rstudio environment
-.rs.addFunction( "listJsonRpcHandlers", function()
+.rs.addFunction("listJsonRpcHandlers", function()
 {
    rpcHandlers <- objects("tools:rstudio", 
                           all.names=TRUE, 
@@ -950,7 +948,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("callWithRDS", function(functionName, inputLocation, outputLocation)
 {
-   params = readRDS(inputLocation)
+   params <- readRDS(inputLocation)
    result <- do.call(functionName, params)
 
    saveRDS(file = outputLocation, object = result)

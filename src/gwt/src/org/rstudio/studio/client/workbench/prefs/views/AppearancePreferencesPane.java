@@ -14,21 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.SelectElement;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.inject.Inject;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -58,10 +47,23 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.TreeSet;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.TextResource;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.inject.Inject;
 
 public class AppearancePreferencesPane extends PreferencesPane
 {
@@ -227,6 +229,14 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
       
+      helpFontSize_ = new SelectWidget(constants_.helpFontSizeLabel(),
+                                       labels,
+                                       values,
+                                       false); /* Multi select */
+      helpFontSize_.getListBox().setWidth("95%");
+      if (!helpFontSize_.setValue(userPrefs.helpFontSizePoints().getValue() + ""))
+         helpFontSize_.getListBox().setSelectedIndex(3);
+
       textRendering_ = new SelectWidget(
             constants_.textRenderingLabel(),
             new String[] {
@@ -255,8 +265,9 @@ public class AppearancePreferencesPane extends PreferencesPane
                                 new String[0],
                                 new String[0],
                                 false);
+      
       theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
-      theme_.getListBox().getElement().getStyle().setHeight(225, Unit.PX);
+      theme_.getListBox().getElement().getStyle().setHeight(themeSelectorHeight(), Unit.PX);
       theme_.getListBox().addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -317,13 +328,14 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       leftPanel.add(textRendering_);
       leftPanel.add(fontSize_);
+      leftPanel.add(helpFontSize_);
       leftPanel.add(theme_);
       leftPanel.add(buttonPanel);
 
       FlowPanel previewPanel = new FlowPanel();
 
       previewPanel.setSize("100%", "100%");
-      preview_ = new AceEditorPreview(CODE_SAMPLE);
+      preview_ = new AceEditorPreview(RES.codeSample().getText());
       preview_.setHeight(previewDefaultHeight_);
       preview_.setWidth("278px");
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
@@ -343,6 +355,23 @@ public class AppearancePreferencesPane extends PreferencesPane
       // asynchronously too. We also need to wait until the next event cycle so that the progress
       // indicator will be ready.
       Scheduler.get().scheduleDeferred(() -> setThemes(themes));
+   }
+   
+   // It looks like theme components are larger in desktop, so we need
+   // to adjust the height of certain UI elements to ensure everything
+   // can fit.
+   //
+   // https://github.com/rstudio/rstudio/issues/13154
+   private int themeSelectorHeight()
+   {
+      if (Desktop.isDesktop())
+      {
+         return 200;
+      }
+      else
+      {
+         return 250;
+      }
    }
 
    private int getInitialZoomIndex(double currentZoomLevel) {
@@ -635,6 +664,11 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       RestartRequirement restartRequirement = super.onApply(rPrefs);
 
+      {
+         double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
+         userPrefs_.helpFontSizePoints().setGlobalValue(helpFontSize);
+      }
+
       if (relaunchRequired_)
          restartRequirement.setUiReloadRequired(true);
       
@@ -832,35 +866,15 @@ public class AppearancePreferencesPane extends PreferencesPane
 
    private final static String DEFAULT_FONT_NAME = "(Default)";
    private final static String DEFAULT_FONT_VALUE = "__default__";
+   
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
-   private static final String CODE_SAMPLE =
-         "# plotting of R objects\n" +
-         "plot <- function (x, y, ...)\n" +
-         "{\n" +
-         "  if (is.function(x) && \n" +
-         "      is.null(attr(x, \"class\")))\n" +
-         "  {\n" +
-         "    if (missing(y))\n" +
-         "      y <- NULL\n" +
-         "    \n" +
-         "    # check for ylab argument\n" +
-         "    hasylab <- function(...) \n" +
-         "      !all(is.na(\n" +
-         "        pmatch(names(list(...)),\n" +
-         "              \"ylab\")))\n" +
-         "    \n" +
-         "    if (hasylab(...))\n" +
-         "      plot.function(x, y, ...)\n" +
-         "    \n" +
-         "    else \n" +
-         "      plot.function(\n" +
-         "        x, y, \n" +
-         "        ylab = paste(\n" +
-         "          deparse(substitute(x)),\n" +
-         "          \"(x)\"), \n" +
-         "        ...)\n" +
-         "  }\n" +
-         "  else \n" +
-         "    UseMethod(\"plot\")\n" +
-         "}\n";
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("AppearancePreferencesPane.R")
+      TextResource codeSample();
+   }
+   
+   private static final Resources RES = GWT.create(Resources.class);
+   
 }

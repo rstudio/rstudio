@@ -1,5 +1,6 @@
 ---
 title: "Custom Shortcuts"
+date-meta: 2022-12-12
 ---
 
 Users can customize or bind keyboard shortcuts to execute:  

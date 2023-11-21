@@ -14,17 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayInteger;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.LinkElement;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.HashMap;
+import java.util.function.Consumer;
 
 import org.rstudio.core.client.ColorUtil.RGBColor;
 import org.rstudio.core.client.Debug;
@@ -44,8 +35,17 @@ import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
-import java.util.HashMap;
-import java.util.function.Consumer;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.LinkElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 @Singleton
 public class AceThemes
@@ -65,8 +65,18 @@ public class AceThemes
       state.get().theme().bind(theme -> applyTheme((AceTheme)theme.cast()));
    }
    
+   public AceTheme getCurrentTheme()
+   {
+      return currentTheme_;
+   }
+   
    private void applyTheme(Document document, final AceTheme theme)
    {
+      if (Document.get() == document)
+      {
+         currentTheme_ = theme;
+      }
+      
       final String linkId = "rstudio-acethemes-linkelement";
 
       // Build the URL.
@@ -124,7 +134,6 @@ public class AceThemes
          document.getBody().addClassName("editor_dark");
       else
          document.getBody().removeClassName("editor_dark");
-         
       
       // Deferred so that the browser can render the styles.
       new Timer()
@@ -280,6 +289,8 @@ public class AceThemes
          },
          themeLocation);
    }
+   
+   private AceTheme currentTheme_;
 
    private ThemeServerOperations themeServerOperations_;
    private final EventBus events_;

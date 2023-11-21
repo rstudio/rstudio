@@ -36,6 +36,7 @@
 #include <server/auth/ServerValidateUser.hpp>
 
 #include "../ServerREnvironment.hpp"
+#include "../ServerMetrics.hpp"
 #include "server-config.h"
 
 
@@ -240,6 +241,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
                                     const http::ResponseHandler& onLaunch,
                                     const http::ErrorHandler& onError)
 {
+   int numRemoved = 0;
    using namespace boost::posix_time;
    LOCK_MUTEX(launchesMutex_)
    {
@@ -270,9 +272,15 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
 
       pendingLaunches_[context] =  microsec_clock::universal_time();
 
-      cleanStalePendingLaunches();
+      numRemoved = cleanStalePendingLaunches();
    }
    END_LOCK_MUTEX
+
+   if (numRemoved > 0)
+      LOG_DEBUG_MESSAGE("Found " + std::to_string(numRemoved) + " sessions launched, but not connected to from this server in 3 minutes");
+
+   std::string processName = context.scope.isWorkspaces() ? "Homepage (rworkspaces)" : context.scope.workbench();
+   LOG_DEBUG_MESSAGE("Launching " + processName + " session for: " + context.username + " id: " + context.scope.id());
 
    // translate querystring arguments into extra session args 
    core::system::Options args;
@@ -294,9 +302,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    Error error = sessionLaunchFunction_(ioService, profile, request, onLaunch, onError);
    if (error)
    {
-      LOG_ERROR_MESSAGE("Returning error from session manager launch function: " + error.asString());
-
-      removePendingLaunch(context);
+      removePendingLaunch(context, false, "error during launch: " + error.asString());
       return error;
    }
 
@@ -369,6 +375,7 @@ Error SessionManager::launchAndTrackSession(
 
    LOG_DEBUG_MESSAGE("Launched session process for user: " + runAsUser + ": " + profile.executablePath +
                      " pid: " + safe_convert::numberToString(pid));
+   metrics::sessionLaunch(metrics::kEditorRStudio);
 
    // track it for subsequent reaping
    processTracker_.addProcess(pid, boost::bind(onProcessExit,
@@ -391,29 +398,96 @@ void SessionManager::addSessionLaunchProfileFilter(
    sessionLaunchProfileFilters_.push_back(filter);
 }
 
-void SessionManager::removePendingLaunch(const r_util::SessionContext& context)
+void SessionManager::removePendingLaunch(const r_util::SessionContext& context, const bool success, const std::string& errorMsg)
 {
+   bool removed = false;
+   boost::posix_time::ptime startTime;
    LOCK_MUTEX(launchesMutex_)
    {
-      if (pendingLaunches_.erase(context))
-         LOG_DEBUG_MESSAGE("Removed pending launch for: " + context.username + " id: " + context.scope.id());
+      LaunchMap::const_iterator it = pendingLaunches_.find(context);
+      if (it != pendingLaunches_.cend())
+      {
+         removed = true;
+         startTime = it->second;
+         pendingLaunches_.erase(context);
+      }
    }
    END_LOCK_MUTEX
+
+   if (removed)
+   {
+      boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - startTime;
+      std::string progName = context.scope.isWorkspaces() ? "Homepage (rworkspaces)" : context.scope.workbench() + " session(" + context.scope.id() + ")";
+      if (success)
+      {
+         if (!context.scope.isWorkspaces())
+            metrics::sessionStartConnect(context.scope.workbench(), context.username, startDuration);
+
+         LOG_DEBUG_MESSAGE(progName + " started and connection made by: " + context.username +
+                           " in " + std::to_string(startDuration.total_seconds()) + "." +
+                                    std::to_string(startDuration.total_milliseconds() % 1000) + "s");
+      }
+      else if (!errorMsg.empty())
+         LOG_ERROR_MESSAGE(context.scope.workbench() + " session start failed for: " + context.username + ":" + context.scope.id() +
+                           " in " + std::to_string(startDuration.total_seconds()) + "." +
+                                    std::to_string(startDuration.total_milliseconds() % 1000) + "s error: " + errorMsg);
+   }
+}
+
+void SessionManager::removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success, const std::string& errorMsg)
+{
+   bool removed = false;
+   boost::posix_time::ptime startTime;
+   LOCK_MUTEX(launchesMutex_)
+   {
+      auto it = pendingLaunches_.cbegin();
+      while (it != pendingLaunches_.cend())
+      {
+         if (it->first.username == username && it->first.scope.id() == sessionId)
+         {
+            removed = true;
+            startTime = it->second;
+            pendingLaunches_.erase(it++);
+            break;
+         }
+         else
+            ++it;
+      }
+   }
+   END_LOCK_MUTEX
+
+   if (removed)
+   {
+      boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - startTime;
+      if (success)
+         LOG_DEBUG_MESSAGE("Session started and connection made by: " + username + ":" + sessionId +
+                           " in " + std::to_string(startDuration.total_seconds()) + "." +
+                                    std::to_string(startDuration.total_milliseconds() % 1000) + "s");
+      else
+         LOG_ERROR_MESSAGE("Session start failed for: " + username + ":" + sessionId +
+                           " in " + std::to_string(startDuration.total_seconds()) + "." +
+                                    std::to_string(startDuration.total_milliseconds() % 1000) + "s error: " + errorMsg);
+   }
 }
 
 // Caller should have launchesMutex_. Removes any pendingLaunches that were recorded but where the
 // session never started, or rpcs ended up being handled by another rserver node in the cluster
-void SessionManager::cleanStalePendingLaunches()
+int SessionManager::cleanStalePendingLaunches()
 {
    auto it = pendingLaunches_.cbegin();
    auto now = boost::posix_time::microsec_clock::universal_time();
+   int numRemoved = 0;
    while (it != pendingLaunches_.cend())
    {
       if (now > (it->second + boost::posix_time::minutes(3)))
+      {
          pendingLaunches_.erase(it++);
+         numRemoved++;
+      }
       else
          ++it;
    }
+   return numRemoved;
 }
 
 void SessionManager::notifySIGCHLD()

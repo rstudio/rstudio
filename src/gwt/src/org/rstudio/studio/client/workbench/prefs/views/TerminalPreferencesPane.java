@@ -16,11 +16,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Panel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JsArrayUtil;
@@ -45,12 +40,17 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 
@@ -73,7 +73,6 @@ public class TerminalPreferencesPane extends PreferencesPane
       VerticalTabPanel closing = new VerticalTabPanel(ElementIds.TERMINAL_CLOSING_PREFS);
 
       Label shellLabel = headerLabel(constants_.shellHeaderLabel());
-      shellLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       general.add(shellLabel);
 
       initialDirectory_ = new SelectWidget(
@@ -194,7 +193,6 @@ public class TerminalPreferencesPane extends PreferencesPane
       general.add(helpLink);
 
       Label miscLabel = headerLabel(constants_.miscLabel());
-      miscLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       closing.add(miscLabel);
       miscLabel.setVisible(true);
 
@@ -246,7 +244,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       }
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.terminalPaneLabel());
-      tabPanel.setSize("435px", "533px");
+      setTabPanelSize(tabPanel);
       tabPanel.add(general, constants_.tabGeneralPanelLabel(), general.getBasePanelId());
       tabPanel.add(closing, constants_.tabClosingPanelLabel(), closing.getBasePanelId());
       tabPanel.selectTab(0);
@@ -431,6 +429,10 @@ public class TerminalPreferencesPane extends PreferencesPane
    
    private boolean pythonIntegrationSupported()
    {
+      boolean terminalHooksEnabled = prefs_.terminalHooks().getGlobalValue();
+      if (!terminalHooksEnabled)
+         return false;
+      
       String shell = terminalShell_.getValue();
       if (StringUtil.equals(shell, "bash") ||
           StringUtil.equals(shell, "zsh"))

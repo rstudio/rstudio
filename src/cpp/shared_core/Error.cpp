@@ -27,6 +27,7 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Logger.hpp>
 #include <shared_core/SafeConvert.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <boost/optional.hpp>
 
@@ -375,6 +376,36 @@ std::string Error::asString() const
    }
 
    return ostr.str();
+}
+
+void Error::writeJson(json::Object* pJson) const
+{
+   json::Object& json = *pJson;
+   
+   json["code"] = m_impl->Code;
+   json["name"] = m_impl->Name;
+   json["message"] = m_impl->Message;
+   
+   json::Object propertiesJson;
+   for (auto&& pair : m_impl->Properties)
+      propertiesJson[pair.first] = pair.second;
+   json["properties"] = propertiesJson;
+   
+   if (m_impl->Cause)
+   {
+      json::Object causeJson;
+      m_impl->Cause->writeJson(&causeJson);
+      json["cause"] = causeJson;
+   }
+   
+   json::Object locationJson;
+   locationJson["file"]     = m_impl->Location.getFile();
+   locationJson["function"] = m_impl->Location.getFunction();
+   locationJson["line"]     = (double) m_impl->Location.getLine();
+   json["location"] = locationJson;
+   
+   json["expected"] = m_impl->Expected;
+   
 }
 
 bool Error::hasCause() const

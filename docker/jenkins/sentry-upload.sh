@@ -22,15 +22,32 @@
 # where API_KEY is the Sentry API key
 # and RETRY_LIMIT is the number of retries to upload
 
-export SENTRY_HTTP_MAX_RETRIES=$2
+# Count retries
+RETRIES=0
 
-# Attempt upload
-/usr/local/bin/sentry-cli --auth-token $1 upload-dif --org rstudio --project ide-backend -t elf .
+# Loop until we succeed in uploading or exceed max retries
+while true; do 
 
-# Was upload successful?
-if [ $? -eq 0 ]; then
-    echo "Sentry upload complete"
-else
-    echo "Sentry upload failed"
-    exit 1
-fi
+    # Increment retry counter
+    ((RETRIES=RETRIES+1))
+    echo "Attempting Sentry upload (attempt $RETRIES)"
+
+    # Attempt upload
+    /usr/local/bin/sentry-cli --auth-token $1 upload-dif --org rstudio --project ide-backend -t elf .
+
+    # Was upload successful?
+    if [ $? -eq 0 ]; then
+        echo "Sentry upload complete"
+        break
+    fi
+
+    if [ $RETRIES -ge $2 ]; then
+        echo "Giving up upload after $RETRIES attempts"
+        exit 1
+    fi
+
+    # Cool off a little
+    echo "Sentry upload failed; waiting 30 seconds to try again"
+    sleep 30
+
+done

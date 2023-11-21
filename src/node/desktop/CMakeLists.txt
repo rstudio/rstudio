@@ -13,7 +13,7 @@
 #
 #
 
-cmake_minimum_required(VERSION 3.4.3)
+cmake_minimum_required(VERSION 3.6.3)
 project(ELECTRON_DESKTOP)
 
 if (LINUX)
@@ -29,12 +29,6 @@ if (LINUX)
                   DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
-
-# install mac-terminal script on apple
-if(APPLE)
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mac-terminal.in
-                  ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal)
-endif()
 
 # install desktop integration files on linux
 if(RSTUDIO_INSTALL_FREEDESKTOP)
@@ -97,6 +91,11 @@ if(RSTUDIO_INSTALL_FREEDESKTOP)
          DESTINATION /usr/share/icons/hicolor/48x48/mimetypes)
    install(FILES ${RSTUDIO_ICONS_256}/application-x-r-project.png
          DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
+endif()
+
+if(APPLE)
+   file(GLOB MAC_FILE_TYPE_ICONS ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/*.icns)
+   install(FILES ${MAC_FILE_TYPE_ICONS} DESTINATION ${RSTUDIO_INSTALL_BIN}/../..)
 endif()
 
 # Configure into the source directory during builds. This will

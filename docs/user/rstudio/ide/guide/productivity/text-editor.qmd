@@ -1,5 +1,6 @@
 ---
 title: "Text Editor"
+date-meta: 2022-12-12
 ---
 
 RStudio's source editor includes a variety of productivity enhancing features including syntax highlighting, code completion, multiple-file editing, and find/replace.

@@ -150,7 +150,17 @@ public class JobsPaneWidgets implements JobsPaneOperations
          progress_ = new JobProgress(events_);
          toolbar_.addLeftWidget(progress_);
       }
+      if (job.completed > 0)
+      {
+         output_.showBufferedOutput();
+      }
       progress_.showJob(job);
+   }
+
+   @Override
+   public void showBufferedOutput()
+   {
+      output_.showBufferedOutput();
    }
    
    @Override

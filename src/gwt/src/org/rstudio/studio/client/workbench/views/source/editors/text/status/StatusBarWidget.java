@@ -14,6 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import org.rstudio.core.client.resources.CoreResources;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.IsWidgetWithHeight;
+import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.icons.code.CodeIcons;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -25,13 +33,10 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.*;
-
-import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.IsWidgetWithHeight;
-import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.common.icons.code.CodeIcons;
-import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Widget;
 
 public class StatusBarWidget extends Composite
       implements StatusBar, IsWidgetWithHeight
@@ -199,15 +204,26 @@ public class StatusBarWidget extends Composite
       }
    }
 
-   private void initMessage(String message)
+   private void initMessage(String message,
+                            boolean hideScopeWidget,
+                            ImageResource icon)
    {
-      hide(scope_);
-      hide(scopeIcon_);
+      if (hideScopeWidget)
+      {
+         hide(scope_);
+         hide(scopeIcon_);
+      }
 
       message_.setValue(message);
+      message_.setIcon(icon);
       show(message_);
    }
 
+   private void initMessage(String message, boolean hideScopeWidget)
+   {
+      initMessage(message, hideScopeWidget, null);
+   }
+   
    private void endMessage()
    {
       show(scope_);
@@ -216,24 +232,71 @@ public class StatusBarWidget extends Composite
 
       setScopeType(scopeType_);
    }
+   
+   @Override
+   public void showStatus(StatusBarIconType type, String message)
+   {
+      ImageResource resource = null;
+      
+      switch (type)
+      {
+      case TYPE_OK:
+         // TODO: Better icon?
+         resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
+         break;
+      case TYPE_LOADING:
+         resource = new ImageResource2x(CoreResources.INSTANCE.progress());
+         break;
+      case TYPE_INFO:
+         resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
+         break;
+      case TYPE_WARNING:
+         resource = new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x());
+         break;
+      case TYPE_ERROR:
+         resource = new ImageResource2x(ThemeResources.INSTANCE.errorSmall2x());
+         break;
+      }
+      
+      initMessage(message, false, resource);
+   };
+   
+   @Override
+   public void hideStatus()
+   {
+      hideMessage();
+   }
 
    @Override
    public void showMessage(String message)
    {
-      initMessage(message);
+      initMessage(message, true);
    }
 
    @Override
+   public void showMessage(String message, boolean hideScopeWidget)
+   {
+      initMessage(message, hideScopeWidget);
+   }
+   
+   @Override
    public void showMessage(String message, int timeMs)
    {
-      initMessage(message);
+      initMessage(message, true);
+      hideTimer_.schedule(timeMs);
+   }
+   
+   @Override
+   public void showMessage(String message, boolean hideScopeWidget, int timeMs)
+   {
+      initMessage(message, hideScopeWidget);
       hideTimer_.schedule(timeMs);
    }
 
    @Override
    public void showMessage(String message, final HideMessageHandler handler)
    {
-      initMessage(message);
+      initMessage(message, true);
 
       // Protect against multiple messages shown at same time
       if (handler_ != null)

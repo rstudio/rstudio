@@ -15,6 +15,12 @@ URL=$1
 IDENTITY=$2
 FILENAME="${URL##*/}"
 
+# Don't publish redirects for hourly builds
+if [[ "$FILENAME" =~ "hourly" ]]; then
+    echo "Skipping publishing of hourly build"
+    exit 0
+fi
+
 # parse the URL into components; save/restore IFS (field separator)
 OLDIFS="$IFS"
 IFS='/'
@@ -56,11 +62,10 @@ fi
 
 # figure out the "latest" package name by replacing the version number with "latest"; for example
 # for "rstudio-workbench-2021.09.0-daily-123.pro1.deb", we want "rstudio-workbench-latest.deb"
-LATEST=$(echo "$FILENAME" | sed -e 's/[[:digit:]][[:digit:]][[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]*-daily-[[:digit:]][[:digit:]]*\(\.pro[[:digit:]][[:digit:]]*\)*/latest/')
-
-if [[ $LATEST =~ "preview" ]] ; then
-   echo "Not publishing link for preview release: $FILENAME"
-   exit 0
+if [[ $FILENAME =~ "preview" ]] ; then
+   LATEST=$(echo "$FILENAME" | sed -e 's/[[:digit:]][[:digit:]][[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]*-preview-[[:digit:]][[:digit:]]*\(\.pro[[:digit:]][[:digit:]]*\)*/latest/')
+else
+   LATEST=$(echo "$FILENAME" | sed -e 's/[[:digit:]][[:digit:]][[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]*-daily-[[:digit:]][[:digit:]]*\(\.pro[[:digit:]][[:digit:]]*\)*/latest/')
 fi
 
 echo "Publishing $FILENAME as daily $FLAVOR build for $OS ($PLATFORM): $LATEST..."

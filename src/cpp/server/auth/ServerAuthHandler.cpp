@@ -17,6 +17,7 @@
 #define SERVER_AUTH_HANDLER_CPP
 
 #include <server/auth/ServerAuthHandler.hpp>
+#include <server/auth/ServerAuthHandlerOverlay.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -26,6 +27,7 @@
 #include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/system/User.hpp>
 #include <core/Thread.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <server/ServerScheduler.hpp>
@@ -43,6 +45,8 @@
 
 #include <session/SessionScopes.hpp>
 
+#include "../ServerMetrics.hpp"
+
 using namespace rstudio::core;
 using namespace rstudio::core::database;
 
@@ -52,10 +56,6 @@ namespace auth {
 namespace handler {
 
 namespace {
-
-// This doesn't account for leap years, but that's alright because
-// we just need an approximate year.
-static constexpr unsigned int kHoursInOneYear = 365 * 24;
 
 Error dbUnavailableError(const std::string& msg,
                          const std::string& username,
@@ -83,13 +83,6 @@ boost::posix_time::ptime cookieExpiration(const std::string& cookie)
    return boost::posix_time::second_clock::universal_time();
 }
 
-boost::posix_time::ptime parseSigninTime(const std::string& strTime)
-{
-   boost::posix_time::ptime signinTime;
-   date_time::parseUtcTimeFromIso8601String(strTime, &signinTime);
-   return signinTime;
-}
-
 // map of last user sign in times to prevent users from creating
 // inordinate amounts of revocation entries
 std::map<std::string, boost::posix_time::ptime> s_loginTimes;
@@ -98,8 +91,15 @@ std::map<std::string, boost::posix_time::ptime> s_loginTimes;
 // allows for quickly removing the first element
 std::deque<RevokedCookie> s_revokedCookies;
 
+// Stores revoked cookies that have been expired and can be purged from the db
+std::vector<RevokedCookie> s_expiredCookies;
+
 // Tracks the set of cookies that are authorized for the user session, so they can all be revoked on signout
 std::map<std::string,boost::shared_ptr<UserSession>> s_userSessions;
+
+std::map<std::string,UidType> s_usernameToUID;
+
+std::map<UidType,std::string> s_UIDToUsername;
 
 boost::posix_time::ptime s_lastCookieCheckTime = boost::posix_time::second_clock::universal_time();
 boost::posix_time::time_duration s_cookieCheckDuration = boost::posix_time::seconds(5);
@@ -249,6 +249,10 @@ Error readRevocationListFromFile(const FilePath& revocationList,
 
 bool invalidateExpiredSessions()
 {
+   int expiredSessions = 0;
+   int preservedSessions = 0;
+   int activeSessions = 0;
+
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
       if (s_userSessions.size() == 0)
@@ -269,14 +273,13 @@ bool invalidateExpiredSessions()
                // Because the user's session has passively expired, we are not going to actively revoke the cookies across the cluster.
                // Each cookie has an expire time built in so it will expire on its own in the browser
                // pUserSession->invalidateSessionCookies();
-               LOG_DEBUG_MESSAGE("Expired UserSession for: " + pUserSession->username());
+               expiredSessions++;
 
                it = s_userSessions.erase(it);
             }
             else
             {
-               LOG_DEBUG_MESSAGE("Preserving expired UserSession with: " + std::to_string(pUserSession->numConnections()) +
-                                 " for: " + pUserSession->username());
+               preservedSessions++;
                ++it;
             }
          }
@@ -285,8 +288,16 @@ bool invalidateExpiredSessions()
             ++it;
          }
       }
+      activeSessions = s_userSessions.size();
    }
    END_LOCK_MUTEX
+
+   if (expiredSessions > 0)
+      LOG_DEBUG_MESSAGE("Expired " + std::to_string(expiredSessions) + " sessions");
+   if (preservedSessions > 0)
+      LOG_DEBUG_MESSAGE("Preserved " + std::to_string(preservedSessions) + " expired sessions with open streaming connections");
+
+   metrics::setActiveUserSessionCount(activeSessions);
 
    return true;
 }
@@ -311,6 +322,47 @@ void addToUserSessionConnections(const std::string& username, int val)
    END_LOCK_MUTEX
 }
 
+void removeExpiredCookies()
+{
+   std::vector<RevokedCookie> toRemove;
+
+   RECURSIVE_LOCK_MUTEX(s_mutex)
+   {
+      if (s_expiredCookies.size() == 0)
+         return;
+
+      // Get cookies to remove and clear the old list
+      toRemove.swap(s_expiredCookies);
+   }
+   END_LOCK_MUTEX
+
+   boost::shared_ptr<IConnection> connection;
+   server_core::database::getConnection(boost::posix_time::milliseconds(500), &connection);
+
+   if (connection)
+   {
+      LOG_DEBUG_MESSAGE("Begin expiring " + std::to_string(toRemove.size()) + " cookies");
+
+      for (auto it = toRemove.begin(); it != toRemove.end(); it++)
+      {
+         const RevokedCookie& toRemove = *it;
+         removeStaleCookieFromDatabase(toRemove, connection);
+      }
+      LOG_DEBUG_MESSAGE("Finished expiring cookies");
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("Failed to get db connection in 500ms - delaying expired cookie removal");
+
+      RECURSIVE_LOCK_MUTEX(s_mutex)
+      {
+         for (auto it = toRemove.begin(); it != toRemove.end(); it++)
+            s_expiredCookies.push_back(*it);
+      }
+      END_LOCK_MUTEX
+   }
+}
+
 } // anonymous namespace
 
 bool isCookieRevoked(const std::string& cookie)
@@ -318,13 +370,14 @@ bool isCookieRevoked(const std::string& cookie)
    if (cookie.empty())
       return true;
 
-   bool attemptedConnection = false;
-   boost::shared_ptr<IConnection> connection;
    boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
+
+   bool removeStaleCookies;
+   bool expireCookies = false;
 
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
-      bool removeStaleCookies = now > s_lastCookieCheckTime + s_cookieCheckDuration;
+      removeStaleCookies = now > s_lastCookieCheckTime + s_cookieCheckDuration;
 
       if (removeStaleCookies)
       {
@@ -342,29 +395,11 @@ bool isCookieRevoked(const std::string& cookie)
 
          if (removeStaleCookies && other.expiration <= now)
          {
-            if (!attemptedConnection)
-            {
-               // grab a connection from the pool, but only wait for a short amount of time
-               // this ensures that we do not delay the sign in process too long - deleting stale
-               // cookies from the database immediately is not of critical importance, as this operation will
-               // be retried on all subsequent auths / process restarts
-               server_core::database::getConnection(boost::posix_time::milliseconds(500), &connection);
-               attemptedConnection = true;
-            }
-
-            if (connection)
-            {
-               removeStaleCookieFromDatabase(other, connection);
-
-               // we only erase cookies from the memory map if they were also removed from the database
-               // to ensure that if we couldn't delete them immediately, we retry the operation later
-               it = s_revokedCookies.erase(it);
-               continue;
-            }
-            else
-            {
-               ++it;
-            }
+            expireCookies = true;
+            // Put it in the list to remove from the DB
+            s_expiredCookies.push_back(other);
+            // Remove it from this list
+            it = s_revokedCookies.erase(it);
          }
          else
          {
@@ -373,6 +408,9 @@ bool isCookieRevoked(const std::string& cookie)
       }
    }
    END_LOCK_MUTEX
+
+   if (expireCookies)
+      removeExpiredCookies();
 
    return false;
 }
@@ -383,18 +421,26 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
                           boost::posix_time::ptime* pLastSignin,
                           bool* pExists)
 {
-   LOG_DEBUG_MESSAGE("Getting user from database: " + user.getUsername());
+   LOG_DEBUG_MESSAGE("User db query start: " + user.getUsername());
    
    *pLocked = true;
 
-   Rowset rows;
-   Query userQuery = connection->query("SELECT user_name, user_id, last_sign_in, locked FROM licensed_users WHERE user_id = :uid OR user_name = :username")
-         .withInput(user.getUserId())
-         .withInput(user.getUsername());
+   const auto usernameColName = overlay::getUsernameDbColumnName();
+   Query userQuery = connection
+                         ->query("SELECT " + usernameColName +
+                                 ", user_id, last_sign_in, locked FROM "
+                                 "licensed_users WHERE user_id = :uid OR " +
+                                 usernameColName + " = :un")
+                         .withInput(user.getUserId())
+                         .withInput(user.getUsername());
 
+   Rowset rows;
    Error error = connection->execute(userQuery, rows);
    if (error)
+   {
+      error.addProperty("description", "Could not get user from database due to database error");
       return error;
+   }
 
    // Old versions of RSW didn't set the posix User ID. If we don't have the ID, update it  now.
    bool foundUser = false;
@@ -402,8 +448,13 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    {
       Row& row = *itr;
 
+      // Check for null in the username, could happen if the user was added by an older version of RSW
+      std::string username;
+      error = overlay::checkForUninitializedUsername(connection, row, user, &username);
+      if (error)
+         return error;
+
       int uid = row.get<int>(1);
-      const std::string& username = row.get<std::string>(0);
       bool locked = row.get<int>(3) == 1;
 
       // Check the last signin time. If we haven't seen a row for this user yet, update the time. 
@@ -412,7 +463,7 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
       // Safe static cast, because we already handled uid < 0
       if ((username == user.getUsername()) && ((uid < 0) || (static_cast<UidType>(uid) == user.getUserId())))
       {
-         boost::posix_time::ptime lastSignin = parseSigninTime(row.get<std::string>(2));
+         boost::posix_time::ptime lastSignin = parseDateStr(row.get<std::string>(2));
          if (!foundUser || (lastSignin > *pLastSignin))
             *pLastSignin = lastSignin;
 
@@ -439,19 +490,31 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    }
 
    *pExists = foundUser;
-   return Success();
-}
 
-bool isUserActive(const boost::posix_time::ptime& lastSignin)
-{
-   return (boost::posix_time::microsec_clock::universal_time() - lastSignin <
-           boost::posix_time::time_duration(kHoursInOneYear, 0, 0));
+   if (foundUser)
+      LOG_DEBUG_MESSAGE("Found user in db: " + user.getUsername());
+   else
+      LOG_DEBUG_MESSAGE("No record found for user in db: " + user.getUsername());
+   return Success();
 }
 
 Error addUser(boost::asio::io_service& ioService,
               const std::string& username,
               bool isAdmin)
 {
+   const auto result = overlay::addUser(ioService, username, isAdmin);
+   Error overlayError;
+   bool wasHandled;
+   std::tie(overlayError, wasHandled) = result;
+   if (overlayError)
+   {
+      return overlayError;
+   }
+   if (wasHandled)
+   {
+      return Success();
+   }
+
    boost::shared_ptr<IConnection> connection;
    if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
    {
@@ -459,7 +522,7 @@ Error addUser(boost::asio::io_service& ioService,
    }
    
    system::User user;
-   Error error = system::User::getUserFromIdentifier(username, user);
+   Error error = system::getUserFromUsername(username, user);
    if (error)
       return error;
 
@@ -478,7 +541,7 @@ Error addUser(boost::asio::io_service& ioService,
    {
       // user doesn't exist - check to see if we can add them
       bool isLicensed;
-      Error error = isUserLicensed(user, isAdmin, &isLicensed);
+      Error error = isUserLicensed(user, isAdmin, &isLicensed, false);
       if (error)
       {
          return error;
@@ -511,8 +574,10 @@ json::Array getAllUsers()
       return json::Array();
    }
 
+   const auto usernameColName = overlay::getUsernameDbColumnName();
+   Query query = connection->query("SELECT " + usernameColName + ", locked, last_sign_in, is_admin FROM licensed_users");
+
    Rowset rows;
-   Query query = connection->query("SELECT user_name, locked, last_sign_in, is_admin FROM licensed_users");
    Error error = connection->execute(query, rows);
    if (error)
    {
@@ -534,7 +599,9 @@ json::Array getAllUsers()
       if (locked)
          status = "Locked";
       else
-         status = isUserActive(parseSigninTime(lastSignin)) ? "Active" : "Inactive";
+         status = overlay::isUserActive(parseDateStr(lastSignin), username)
+                      ? "Active"
+                      : "Inactive";
 
       json::Object user;
       user["username"] = username;
@@ -550,33 +617,27 @@ json::Array getAllUsers()
 Error updateLastSignin(const boost::shared_ptr<IConnection>& connection,
                        const system::User& user)
 {
+   LOG_DEBUG_MESSAGE("Begin update last signIn time");
    std::string currentTime = date_time::format(boost::posix_time::microsec_clock::universal_time(),
                                                date_time::kIso8601Format);
+   const auto usernameColName = overlay::getUsernameDbColumnName();
    Query updateSignin =
-         connection->query("UPDATE licensed_users SET last_sign_in = :val WHERE user_id = :uid")
+         connection->query("UPDATE licensed_users SET last_sign_in = :val WHERE user_id = :uid OR " + usernameColName + " = :pn ")
             .withInput(currentTime)
-            .withInput(user.getUserId());
-
+            .withInput(user.getUserId())
+            .withInput(user.getUsername());
+   LOG_DEBUG_MESSAGE("End update last signIn time");
    return connection->execute(updateSignin);
 }
 
 Error addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
                         const system::User& user,
                         bool isAdmin)
-{   
+{ 
    LOG_DEBUG_MESSAGE("Adding user to database: " + user.getUsername());
 
-   std::string currentTime = date_time::format(boost::posix_time::microsec_clock::universal_time(),
-                                                date_time::kIso8601Format);
-   int locked = 0;
-   Query insertQuery = connection->query("INSERT INTO licensed_users (user_name, user_id, locked, last_sign_in, is_admin) VALUES (:un, :ui, :lk, :ls, :ia)")
-         .withInput(user.getUsername())
-         .withInput(user.getUserId())
-         .withInput(locked)
-         .withInput(currentTime)
-         .withInput(static_cast<int>(isAdmin));
+   Error error = overlay::addUserToDatabase(connection, user, isAdmin);
 
-   Error error = connection->execute(insertQuery);
    if (error)
    {
       // if we cannot insert the user into the database, we count this as a hard failure
@@ -592,7 +653,7 @@ Error isUserLicensed(const std::string& username,
                      bool* pLicensed)
 {
    system::User user;
-   Error error = system::User::getUserFromIdentifier(username, user);
+   Error error = system::getUserFromUsername(username, user);
    if (error)
       return error;
 
@@ -622,7 +683,8 @@ Error isUserLicensed(const std::string& username,
 
 Error isUserLicensed(const system::User& user,
                      bool isAdmin,
-                     bool* pLicensed)
+                     bool* pLicensed,
+                     bool isSigningIn)
 {
    const unsigned int userLimit = overlay::getNamedUserLimit();
 
@@ -646,7 +708,7 @@ Error isUserLicensed(const system::User& user,
          return Success();
       }
 
-      if (isUserActive(lastSignin))
+      if (overlay::isUserActive(lastSignin, user.getUsername()))
       {
          *pLicensed = true;
 
@@ -666,37 +728,47 @@ Error isUserLicensed(const system::User& user,
       else
       {
          // user is not active, meaning they haven't signed in for over a year
-         // attempt to making them active again by updating their signin time
-         // and checking to make sure this doesn't cause us to go over user limit
-
-         error = updateLastSignin(connection, user);
-         if (error)
-         {
-            // since we're trying to reactivate an old user, consider this a hard failure
-            // as we could not be able to enforce the user limit if we allowed this sign
-            // in to proceed
-            error.addProperty("description",
-                              "Could not reactivate user: " +  user.getUsername());
-            return error;
-         }
+         // check to make sure this doesn't cause us to go over user limit
+         // then attempt to making them active again by updating their signin time
 
          size_t numActiveUsers = 0;
-         error = getNumActiveUsers(connection, &numActiveUsers);
+         std::tie(numActiveUsers, error) = overlay::getActiveUserCount(connection);
          if (error)
             return error;
 
-         if ((userLimit > 0) && (numActiveUsers > userLimit))
+         if ((userLimit > 0) && (numActiveUsers >= userLimit))
          {
             *pLicensed = false;
             return Success();
          }
          else
          {
+            error = updateLastSignin(connection, user);
+            if (error)
+            {
+               // since we're trying to reactivate an old user, consider this a hard failure
+               // as we could not be able to enforce the user limit if we allowed this sign
+               // in to proceed
+               error.addProperty(
+                   "description",
+                   "Could not reactivate user: " + user.getUsername() +
+                       " - Unable to update last sign in time, which is "
+                       "required to enforce license limits");
+               return error;
+            }
+
             // there was room for this user, so let them sign in
             *pLicensed = true;
             return Success();
          }
       }
+   }
+   else if (overlay::isUserProvisioningEnabled())
+   {
+      // When users are provisioned from an external identity provider, only
+      // existing users can be considered licensed.
+      *pLicensed = false;
+      return Success();
    }
    else
    {
@@ -704,49 +776,33 @@ Error isUserLicensed(const system::User& user,
       // (by assigning them as an active user), or we've run out of spaces for the
       // license and auth should fail
       size_t numActiveUsers = 0;
-      error = getNumActiveUsers(connection, &numActiveUsers);
+      std::tie(numActiveUsers, error) = overlay::getActiveUserCount(connection);
       if (error)
          return error;
 
-      if ((userLimit > 0) && (numActiveUsers > userLimit))
+      if ((userLimit > 0) && (numActiveUsers >= userLimit))
       {
          // no more space for this user, so don't let them sign in
          *pLicensed = false;
          return Success();
       }
       
-      addUserToDatabase(connection, user, isAdmin);
+      error = addUserToDatabase(connection, user, isAdmin);
+      if (error)
+         return error;
+
+      if(isSigningIn)
+      {
+         // If the user is signing in, we need to update their last sign-in time
+         error = updateLastSignin(connection, user);
+         if (error)
+            return error;
+      }
       
       // added successfully, and there's space for the user
       *pLicensed = true;
       return Success();
    }
-}
-
-unsigned int getActiveUserCount()
-{
-   if (overlay::getNamedUserLimit() == 0)
-      return 0;
-
-   boost::shared_ptr<IConnection> connection;
-   if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
-   {
-      LOG_ERROR(systemError(boost::system::errc::timed_out,
-                            "Could not determine active user count - named user "
-                               "licensing system temporarily unavailable",
-                             ERROR_LOCATION));
-      return 0;
-   }
-
-   size_t numActiveUsers = 0;
-   Error error = getNumActiveUsers(connection, &numActiveUsers);
-   if (error)
-   {
-      error.addProperty("description", "Database error occurred while determining active users");
-      LOG_ERROR(error);
-   }
-
-   return numActiveUsers;
 }
 
 std::string getExpiredDateStr()
@@ -756,112 +812,16 @@ std::string getExpiredDateStr()
    return date_time::format(oneYearAgo, date_time::kIso8601Format);
 }
 
-Error getNumActiveUsers(const boost::shared_ptr<IConnection>& connection,
-                        size_t* pNumActiveUsers)
+boost::posix_time::ptime parseDateStr(const std::string& strTime)
 {
-   std::string expiration = getExpiredDateStr();
-
-   size_t numActive = 0;
-   bool dataReturned = false;
-
-   std::string queryStr = "SELECT COUNT(*) FROM licensed_users WHERE locked = false AND last_sign_in > :exp";
-   if (connection->driver() == Driver::Sqlite)
-      boost::replace_all(queryStr, "false", "0");
-
-   Query query = connection->query(queryStr)
-         .withInput(expiration)
-         .withOutput(numActive);
-
-   Error error = connection->execute(query, &dataReturned);
-   if (error)
-      return error;
-
-   if (!dataReturned)
-   {
-      return systemError(boost::system::errc::io_error,
-                         "Database returned no count of licensed users",
-                         ERROR_LOCATION);
-   }
-
-   *pNumActiveUsers = numActive;
-   return Success();
+   boost::posix_time::ptime time;
+   date_time::parseUtcTimeFromIso8601String(strTime, &time);
+   return time;
 }
-
-namespace overlay {
-
-Error initialize()
-{
-   return Success();
-}
-
-bool canStaySignedIn()
-{
-   return true;
-}
-bool isUserListCookieValid(const std::string& cookieValue)
-{
-   return true;
-}
-
-bool shouldShowUserLicenseWarning()
-{
-   return false;
-}
-
-bool isUserAdmin(const std::string& username)
-{
-   return false;
-}
-
-bool isUserLocked(bool lockedColumn)
-{
-   return false;
-}
-
-std::string getUserListCookieValue()
-{
-   return "9c16856330a7400cbbbba228392a5d83";
-}
-
-
-unsigned int getActiveUserCount()
-{
-   return 0;
-}
-
-unsigned int getNamedUserLimit()
-{
-   return 0;
-}
-
-json::Array getLicensedUsers()
-{
-   return getAllUsers();
-}
-
-Error lockUser(boost::asio::io_service& ioService,
-               const std::string& username)
-{
-   return Success();
-}
-
-Error unlockUser(boost::asio::io_service& ioService,
-                 const std::string& username)
-{
-   return Success();
-}
-
-Error setAdmin(boost::asio::io_service& ioService,
-               const std::string& username,
-               bool isAdmin)
-{
-   return Success();
-}
-
-} // namespace overlay
 
 void onCookieRevoked(const std::string& cookie)
 {
+   
 }
 
 // uri constants
@@ -877,11 +837,42 @@ RevokedCookie::RevokedCookie(const std::string& cookie)
    this->expiration = cookieExpiration(cookie);
 }
 
+void ensureDatabaseUser(const std::string& username)
+{
+   // Lookup the user in the database
+   system::User user;
+   Error error = system::getUserFromUsername(username, user);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   bool locked, exists;
+   boost::posix_time::ptime lastSignIn;
+   boost::shared_ptr<IConnection> connection = server_core::database::getConnection();
+   error = getUserFromDatabase(connection, user, &locked, &lastSignIn, &exists);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else if (!exists)
+   {
+      error = addUserToDatabase(connection, user, false);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+   }
+}
+
 boost::shared_ptr<UserSession> UserSession::createUserSession(const std::string& username)
 {
+   boost::shared_ptr<UserSession> pUserSession;
+   int activeSessions;
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
-      boost::shared_ptr<UserSession> pUserSession = UserSession::lookupUserSession(username);
+      pUserSession = UserSession::lookupUserSession(username);
       if (pUserSession)
       {
          LOG_DEBUG_MESSAGE("Reusing active session for: " + username + " that did not expire and was not logged out");
@@ -896,10 +887,20 @@ boost::shared_ptr<UserSession> UserSession::createUserSession(const std::string&
 
          LOG_DEBUG_MESSAGE("Created new UserSession for: " + username + " (total: " + std::to_string(s_userSessions.size()) + ")");
       }
-      return pUserSession;
+      activeSessions = s_userSessions.size();
    }
    END_LOCK_MUTEX
-   return boost::shared_ptr<UserSession>();
+
+   // Make sure there's a database record for the user when creating the session
+   // *unless* users can be provisioned only by an external identity provider.
+   if (!overlay::isUserProvisioningEnabled())
+   {
+      ensureDatabaseUser(username);
+   }
+
+   metrics::setActiveUserSessionCount(activeSessions);
+
+   return pUserSession;
 }
 
 void UserSession::updateSessionLastActiveTime(const std::string& username)
@@ -934,46 +935,6 @@ boost::shared_ptr<UserSession> UserSession::lookupUserSession(const std::string&
    {
       std::map<std::string, boost::shared_ptr<UserSession>>::iterator it = s_userSessions.find(username);
       bool sessionFound = it != s_userSessions.end();
-
-      // Lookup the user in the database
-      system::User user;
-      Error error = system::User::getUserFromIdentifier(username, user);
-      if (error)
-      {
-         LOG_ERROR(error);
-
-         if (sessionFound)
-            removeUserSession(username);
-
-         return boost::shared_ptr<UserSession>();
-      }
-
-      bool locked, exists;
-      boost::posix_time::ptime lastSignIn;
-      boost::shared_ptr<IConnection> connection = server_core::database::getConnection();
-      error = getUserFromDatabase(connection, user, &locked, &lastSignIn, &exists);
-      if (error)
-      {
-         LOG_ERROR(error);
-
-         if (sessionFound)
-            removeUserSession(username);
-
-         return boost::shared_ptr<UserSession>();
-      }
-      else if (!exists)
-      {
-         error = addUserToDatabase(connection, user, false);
-         if (error)
-         {
-            LOG_ERROR(error);
-
-            if (sessionFound)
-               removeUserSession(username);
-
-            return boost::shared_ptr<UserSession>();
-         }
-      }
 
       if (!sessionFound)
          return boost::shared_ptr<UserSession>();
@@ -1017,11 +978,18 @@ boost::shared_ptr<UserSession> UserSession::getOrCreateUserSession(const std::st
 
 void UserSession::removeUserSession(const std::string& username)
 {
+   int activeSessions;
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
       s_userSessions.erase(username);
+      activeSessions = s_userSessions.size();
    }
    END_LOCK_MUTEX
+
+   metrics::setActiveUserSessionCount(activeSessions);
+
+   // Remove the user from the username and uid caches so we revalidate from scratch next time
+   core::system::removeUserFromCache(username);
 }
 
 bool UserSession::invalidateUserSession(const std::string& username)
@@ -1067,7 +1035,8 @@ void UserSession::updateLastCookieRefreshTime()
 std::string getUserIdentifier(const core::http::Request& request,
                               bool requireUserListCookie)
 {
-   if (isCookieRevoked(request.cookieValue(kUserIdCookie)))
+   std::string cookieValue = request.cookieValue(kUserIdCookie);
+   if (isCookieRevoked(cookieValue))
       return std::string();
 
    std::string userIdentifier = s_handler.getUserIdentifier(request);
@@ -1269,11 +1238,11 @@ void applyRemoteRevokedCookie(const std::string& cookieValue)
 }
 
 
-void insertRevokedCookie(const RevokedCookie& cookie)
+bool insertRevokedCookie(const RevokedCookie& cookie)
 {
    // do not insert the cookie if it is already expired
    if (cookie.expiration <= boost::posix_time::second_clock::universal_time())
-      return;
+      return false;
 
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
@@ -1283,7 +1252,7 @@ void insertRevokedCookie(const RevokedCookie& cookie)
          if (other.expiration > cookie.expiration)
          {
             s_revokedCookies.insert(it, cookie);
-            return;
+            return true;
          }
       }
 
@@ -1291,13 +1260,13 @@ void insertRevokedCookie(const RevokedCookie& cookie)
       s_revokedCookies.insert(s_revokedCookies.end(), cookie);
    }
    END_LOCK_MUTEX
+
+   return true;
 }
 
 void invalidateAuthCookie(const std::string& cookie,
                           ExponentialBackoffPtr backoffPtr)
 {
-   LOG_DEBUG_MESSAGE("Invalidated auth cookie: " + cookie);
-
    if (cookie.empty())
       return;
 
@@ -1306,15 +1275,16 @@ void invalidateAuthCookie(const std::string& cookie,
    // store the revoked cookie in memory - we only check the memory cache when
    // checking incoming requests to see if the cookie presented has been revoked
    // because it is too expensive to hit the disk every time
-   insertRevokedCookie(revokedCookie);
+   if (insertRevokedCookie(revokedCookie))
+   {
+      // attempt to revoke the cookie - if the database insert fails, we still notify
+      // other nodes so they can at least update their in-memory cache
+      Error error = writeRevokedCookieToDatabase(revokedCookie);
+      if (error)
+         LOG_ERROR(error);
 
-   // attempt to revoke the cookie - if the database insert fails, we still notify
-   // other nodes so they can at least update their in-memory cache
-   Error error = writeRevokedCookieToDatabase(revokedCookie);
-   if (error)
-      LOG_ERROR(error);
-
-   onCookieRevoked(cookie);
+      onCookieRevoked(cookie);
+   }
 }
 
 Error initialize()
@@ -1421,5 +1391,3 @@ Error initialize()
 } // namespace rstudio
 
 #endif // SERVER_AUTH_HANDLER_CPP
-
-

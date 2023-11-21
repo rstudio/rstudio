@@ -1330,6 +1330,54 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show code completions at the current cursor location") // $NON-NLS-1$
     String codeCompletionDesc();
     
+    // copilotInstallAgent
+    @DefaultStringValue("Copilot: Install Agent") // $NON-NLS-1$
+    String copilotInstallAgentLabel();
+    @DefaultStringValue("Install Copilot Agent") // $NON-NLS-1$
+    String copilotInstallAgentMenuLabel();
+    @DefaultStringValue("Install the GitHub Copilot agent.") // $NON-NLS-1$
+    String copilotInstallAgentDesc();
+    
+    // copilotSignIn
+    @DefaultStringValue("Copilot: Sign In") // $NON-NLS-1$
+    String copilotSignInLabel();
+    @DefaultStringValue("Sign In") // $NON-NLS-1$
+    String copilotSignInMenuLabel();
+    @DefaultStringValue("Sign in to the GitHub Copilot service.") // $NON-NLS-1$
+    String copilotSignInDesc();
+    
+    // copilotSignOut
+    @DefaultStringValue("Copilot: Sign Out") // $NON-NLS-1$
+    String copilotSignOutLabel();
+    @DefaultStringValue("Sign Out") // $NON-NLS-1$
+    String copilotSignOutMenuLabel();
+    @DefaultStringValue("Sign out from the GitHub Copilot service.") // $NON-NLS-1$
+    String copilotSignOutDesc();
+    
+    // copilotStatus
+    @DefaultStringValue("Copilot: Check Status") // $NON-NLS-1$
+    String copilotStatusLabel();
+    @DefaultStringValue("Status") // $NON-NLS-1$
+    String copilotStatusMenuLabel();
+    @DefaultStringValue("Check the status of the GitHub Copilot agent.") // $NON-NLS-1$
+    String copilotStatusDesc();
+    
+    // copilotRequestCompletions
+    @DefaultStringValue("Copilot: Request Completions") // $NON-NLS-1$
+    String copilotRequestCompletionsLabel();
+    @DefaultStringValue("Request Completions") // $NON-NLS-1$
+    String copilotRequestCompletionsMenuLabel();
+    @DefaultStringValue("Request Copilot completions at the cursor position.") // $NON-NLS-1$
+    String copilotRequestCompletionsDesc();
+    
+    // copilotAcceptNextWord
+    @DefaultStringValue("Copilot: Accept Next Word") // $NON-NLS-1$
+    String copilotAcceptNextWordLabel();
+    @DefaultStringValue("Request Completions") // $NON-NLS-1$
+    String copilotAcceptNextWordMenuLabel();
+    @DefaultStringValue("Accept the next word of the current Copilot suggestion, if any.") // $NON-NLS-1$
+    String copilotAcceptNextWordDesc();
+    
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$
     String sourceNavigateBackMenuLabel();
@@ -3380,6 +3428,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Rain_bow Parentheses") // $NON-NLS-1$
     String toggleRainbowParensMenuLabel();
     
+    // toggleRainbowFencedDivs
+    @DefaultStringValue("Toggle Rainbow Fenced Divs Mode") // $NON-NLS-1$
+    String toggleRainbowFencedDivsLabel();
+    @DefaultStringValue("Rainb_ow Fenced Divs") // $NON-NLS-1$
+    String toggleRainbowFencedDivsMenuLabel();
+    
     // maximizeConsole
     @DefaultStringValue("Maximize Console") // $NON-NLS-1$
     String maximizeConsoleMenuLabel();
@@ -3917,6 +3971,10 @@ public interface CmdConstants extends Constants {
     // showShortcutCommand
     @DefaultStringValue("Show _Keyboard Shortcut Commands") // $NON-NLS-1$
     String showShortcutCommandMenuLabel();
+    
+    // crashDesktopApplication
+    @DefaultStringValue("Crash RStudio Desktop (DA_NGER)") // $NON-NLS-1$
+    String crashDesktopApplicationMenuLabel();
     
     // showCommandPalette
     @DefaultStringValue("Show Command Palette") // $NON-NLS-1$

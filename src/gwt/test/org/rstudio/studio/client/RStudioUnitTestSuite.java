@@ -22,6 +22,7 @@ import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.URIUtilsTests;
 import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
+import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
@@ -58,6 +59,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ElementIdsTests.class);
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
+      suite.addTestSuite(TestMocks.class);
+      suite.addTestSuite(ApplicationUtilsTests.class);
 
       return suite;
    }

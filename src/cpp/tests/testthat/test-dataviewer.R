@@ -62,7 +62,33 @@ test_that(".rs.flattenFrame() handles matrices and data frames", {
    tbl3$df_col <- df_col
    flat3 <- .rs.flattenFrame(tbl3)
 
-   expect_equal(names(flat1), c("x", "df_col$y", "df_col$z", "mat_col[,1]", "mat_col[,2]"))
-   expect_equal(names(flat2), c("x", "df_col$y", "df_col$z", 'mat_col[,"a"]', 'mat_col[,"b"]'))
-   expect_equal(names(flat3), c("x", "df_col$y", "df_col$z", "df_col$df$y", "df_col$df$z", 'mat_col[,"a"]', 'mat_col[,"b"]'))
+   expect_equal(names(flat1), c("x", "df_col$y", "df_col$z", "mat_col[, 1]", "mat_col[, 2]"))
+   expect_equal(names(flat2), c("x", "df_col$y", "df_col$z", 'mat_col[, "a"]', 'mat_col[, "b"]'))
+   expect_equal(names(flat3), c("x", "df_col$y", "df_col$z", "df_col$df$y", "df_col$df$z", 'mat_col[, "a"]', 'mat_col[, "b"]'))
+})
+
+test_that(".rs.describeColSlice() describes the correct number of column slices", {
+   tbl <- data.frame(x = 1:2, y = 1:2, x = 1:2)
+   # valid sliceStart and sliceEnd values
+   expect_equal(length(.rs.describeColSlice(tbl, 0, 1)), 2)
+   expect_equal(length(.rs.describeColSlice(tbl, 1, 1)), 2)
+   expect_equal(length(.rs.describeColSlice(tbl, 1, 2)), 3)
+   expect_equal(length(.rs.describeColSlice(tbl, 1, 3)), 4)
+   # sliceStart == 0
+   expect_equal(length(.rs.describeColSlice(tbl, 0, 1)), 2)
+   # negative sliceStart
+   expect_equal(length(.rs.describeColSlice(tbl, -1, 1)), 2)
+   # sliceStart > sliceEnd
+   expect_equal(length(.rs.describeColSlice(tbl, 2, 1)), 2)
+   # sliceEnd == 0, sliceEnd < sliceStart
+   expect_equal(length(.rs.describeColSlice(tbl, 1, 0)), 4)
+   # negative sliceEnd
+   expect_equal(length(.rs.describeColSlice(tbl, 1, -1)), 4)
+   # sliceEnd out of bounds
+   expect_equal(length(.rs.describeColSlice(tbl, 1, 4)), 4)
+})
+
+test_that(".rs.describeColSlice() returns NULL for empty data frames", {
+   tbl <- data.frame()
+   expect_equal(.rs.describeColSlice(tbl, 1, 1), NULL)
 })

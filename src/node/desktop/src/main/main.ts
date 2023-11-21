@@ -23,6 +23,7 @@ import { initI18n } from './i18n-manager';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { parseStatus } from './program-status';
 import { createStandaloneErrorDialog } from './utils';
+import { initCrashHandler } from './crash-handler';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -39,8 +40,9 @@ class RStudioMain {
       await this.startup();
     } catch (error: unknown) {
       const err = safeError(error);
-      console.error(err.message); // logging possibly not available this early in startup
+      await app.whenReady(); // can't show upcoming error message window until app is ready
       await createStandaloneErrorDialog(i18next.t('mainTs.unhandledException'), err.message);
+      console.error(err.message); // logging possibly not available this early in startup
       if (logLevel() === 'debug') {
         console.error(err.stack);
       }
@@ -84,10 +86,11 @@ class RStudioMain {
   }
 
   private async initializeAccessibility() {
-    // disable chromium renderer accessibility by default (it can cause 
-    // slowdown when used in conjunction with some applications; see e.g. 
-    // https://github.com/rstudio/rstudio/issues/1990) 
-    if (!ElectronDesktopOptions().accessibility()) {
+    // there have been cases, historically, where Chromium accessibility
+    // would enable itself and introduce performance issues even though the
+    // user was not using an accessibility aid such as a screen reader, e.g.:
+    // https://github.com/rstudio/rstudio/issues/1990)
+    if (ElectronDesktopOptions().disableRendererAccessibility()) {
       app.commandLine.appendSwitch('disable-renderer-accessibility');
     }
   }
@@ -126,6 +129,7 @@ class RStudioMain {
 }
 
 // Startup
+initCrashHandler();
 initI18n();
 
 const main = new RStudioMain();

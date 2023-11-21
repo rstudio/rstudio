@@ -88,9 +88,14 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                   int height, Command onPrepared);
    void prepareForNamedWindow(String name, boolean allowExternalNavigation,
          boolean showDesktopToolbar, Command onPrepared);
-   
+
+   void setNumGwtModalsShowing(int numModalsShowing);
+
    void copyPageRegionToClipboard(int left, int top, int width, int height,
                                   Command onCopied);
+
+   void copyImageAtXYToClipboard(int absoluteLeft, int absoluteTop,
+                                 Command completed);
    
    void exportPageRegionToFile(String targetPath, 
                                String format, 
@@ -162,7 +167,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void getEnableAccessibility(CommandWithArg<Boolean> callback);
    void setEnableAccessibility(boolean enable);
-   
+   void setDisableRendererAccessibility(boolean disable);
+
    void setAutohideMenubar(boolean enable);
 
    void getClipboardMonitoring(CommandWithArg<Boolean> callback);
@@ -210,6 +216,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void onSessionQuit();
 
+   void crashDesktopApplication();
+
    void getSessionServer(CommandWithArg<SessionServer> callback);
    void getSessionServers(CommandWithArg<JsArray<SessionServer>> callback);
    void reconnectToSessionServer(SessionServer server);
@@ -228,4 +236,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getProxyPortNumber(CommandWithArg<Double> callback);
 
    void signOut();
+
+   void detectRosetta();
 }

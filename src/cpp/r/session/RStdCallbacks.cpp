@@ -33,6 +33,7 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
+#include <r/session/RSuspend.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
@@ -41,7 +42,6 @@
 #include "REmbedded.hpp"
 #include "RStdCallbacks.hpp"
 #include "RQuit.hpp"
-#include "RSuspend.hpp"
 
 #include "graphics/RGraphicsDevDesc.hpp"
 #include "graphics/RGraphicsUtils.hpp"

@@ -1,5 +1,6 @@
 ---
 title: "Visual Editor"
+date-meta: 2022-12-12
 ---
 
 The Quarto visual editor provides a [WYSIWYM](https://en.wikipedia.org/wiki/WYSIWYM) editing interface for all of Pandoc markdown, including tables, citations, cross-references, footnotes, divs/spans, definition lists, attributes, raw HTML/TeX, and more. The visual editor also includes support for executing code cells and viewing their output inline:

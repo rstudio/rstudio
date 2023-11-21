@@ -36,6 +36,25 @@ namespace rstudio {
 namespace r {
 namespace util {
 
+// NOTE: On Windows, environment variables set via core::system::setenv()
+// won't be visible in the R session.
+//
+// These routines should be preferred when getting and
+// setting environment variables in the R session.
+void setenv(const std::string& key, const std::string& value);
+std::string getenv(const std::string& key);
+
+void appendToSystemPath(const core::FilePath& path);
+void appendToSystemPath(const std::string& path);
+void prependToSystemPath(const core::FilePath& path);
+void prependToSystemPath(const std::string& path);
+
+template <typename T>
+void addToSystemPath(const T& path, bool prepend)
+{
+   prepend ? prependToSystemPath(path) : appendToSystemPath(path);
+}
+
 std::string expandFileName(const std::string& name);
    
 std::string fixPath(const std::string& path);

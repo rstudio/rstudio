@@ -47,6 +47,12 @@
    padding-right: 3px;
    text-overflow: ellipsis;
    overflow: hidden;
+   user-select: all;
+}
+
+/* Disable the default CSS for selected text -- we manually style this ourselves. */
+.historyTable div::selection {
+   background: none;
 }
 
 .historyTable .selected td:first-child div {

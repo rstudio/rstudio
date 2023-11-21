@@ -1,0 +1,323 @@
+def utils
+
+pipeline {
+
+  agent none
+
+  options {
+    disableConcurrentBuilds()
+    buildDiscarder(
+      logRotator(
+        artifactDaysToKeepStr: '',
+        artifactNumToKeepStr: '',
+        daysToKeepStr: '',
+        numToKeepStr: '100'
+      )
+    )
+    // Timeout after no activity in the logs
+    timeout(time: 2, unit: 'HOURS', activity: true)
+  }
+
+  parameters {
+    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
+    string(name: 'RSTUDIO_VERSION_PATCH', description: 'RStudio Patch Version')
+    booleanParam(name: 'RSTUDIO_SKIP_QT', defaultValue: false, description: 'Skips installing and bulding for QT')
+    booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
+    booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
+    string(name: 'COMMIT_HASH' , defaultValue: '')
+  }
+
+  environment {
+    OS = "windows"
+    ARCH = "x86_64"
+    PACKAGE_OS = 'Windows'
+    AWS_ACCOUNT_ID = '749683154838'
+    GIT_URL = "https://github.com/rstudio/rstudio"
+  }
+
+  stages{
+
+    // Execute on a linux agent
+    stage('Checkout Load and Version') {
+      agent { label "linux" }
+      stages {
+        stage ('Checkout') { // checkout stage required here in order for versioning to work properly
+          when { expression { params.COMMIT_HASH != '' } }
+          steps {
+            checkout([$class: 'GitSCM',
+              branches: [[name: params.COMMIT_HASH]],
+              extensions: [],
+              userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: GIT_URL]]])
+          }
+        }
+
+        stage('Load Utils') {
+          steps {
+            script {
+              sh 'printenv'
+              sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
+              utils = load "${env.WORKSPACE}/utils.groovy"
+            }
+          }
+        }
+
+        stage('Versioning') {
+          steps {
+            script {
+              (RSTUDIO_VERSION,
+                RSTUDIO_VERSION_MAJOR,
+                RSTUDIO_VERSION_MINOR,
+                RSTUDIO_VERSION_PATCH,
+                RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
+              RSTUDIO_VERSION_FLOWER = utils.getFlower()
+              currentBuild.displayName = "${RSTUDIO_VERSION}"
+              IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+              PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${RSTUDIO_VERSION.replace('+', '-')}"
+            }
+          }
+        }
+      }
+      post {
+        always {
+          deleteDir()
+        }
+      }
+    }
+
+    // Build on windows agent, use matrix for electron / desktop
+    stage ('Build Matrix') {
+      matrix {
+        axes {
+          axis {
+            name 'FLAVOR'
+              values 'Electron', 'Desktop' // desktop denotes a Qt build
+          }
+        }
+
+        when {
+          anyOf {
+            environment name: 'FLAVOR', value: 'Electron'
+            expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+          }
+        }
+
+        stages {
+          stage('Build Windows') {
+            agent {
+              docker {
+                image "jenkins/ide:${utils.getDockerTag()}"
+                  registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+                  registryCredentialsId 'ecr:us-east-1:aws-build-role'
+                  reuseNode true
+                label "windows"
+                // Set a custom workspace relative to the workspace root (C:\Users\jenikns) to ensure file names
+                // won't be too long
+                customWorkspace "workspace/ide-${IS_PRO ? 'pro' : 'os'}-windows/${env.BRANCH_NAME.replace('/', '-')}"
+              }
+            }
+
+            stages {
+              stage ('Checkout') {
+                when { expression { params.COMMIT_HASH != '' } }
+                steps {
+                  checkout([$class: 'GitSCM',
+                    branches: [[name: params.COMMIT_HASH]],
+                    extensions: [],
+                    userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: GIT_URL]]])
+                }
+              }
+
+              stage('Build') {
+                environment {
+                  CODESIGN_KEY = credentials('ide-windows-signing-pfx')
+                  CODESIGN_PASS = credentials('ide-pfx-passphrase')
+                }
+
+                steps {
+                  // set requisite environment variables and build rstudio
+                  bat "cd package/win32 &&" +
+                    "set \"rstudio_version_major=${RSTUDIO_VERSION_MAJOR}\" &&" +
+                    "set \"rstudio_version_minor=${RSTUDIO_VERSION_MINOR}\" &&" +
+                    "set \"rstudio_version_patch=${RSTUDIO_VERSION_PATCH}\" &&" +
+                    "set \"rstudio_version_suffix=${RSTUDIO_VERSION_SUFFIX}\" &&" +
+                    "set \"package_os=windows\" &&" +
+                    "make-package.bat clean ${FLAVOR.toLowerCase()} &&" +
+                    "cd ../.."
+                }
+              }
+
+              stage('Tests') {
+                steps {
+                  bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
+                }
+              }
+
+              // TODO(Kevin): Tests failing with exit code 255. Mark as unstable?
+              // stage('Electron Tests') {
+              //   when { environment name: 'FLAVOR', value: 'Electron' }
+              //   steps {
+              //     bat 'cd src/node/desktop && scripts\\run-unit-tests.cmd'
+              //   }
+              // }
+
+              stage('Sign, Upload, and Publish') {
+                when { expression { return params.PUBLISH } }
+
+                environment {
+                  LONG_PACKAGE_NAME = "${PACKAGE_NAME}-RelWithDebInfo"
+                }
+
+                stages {
+                  stage('Sign') {
+                    environment {
+                      PFX_FILE = credentials('ide-windows-signing-pfx')
+                      PFX_PASS = credentials('ide-pfx-passphrase')
+                    }
+
+                    steps {
+                      bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /f %PFX_FILE% /p %PFX_PASS% /v /debug /n "RStudio PBC" /t http://timestamp.digicert.com  package\\win32\\build\\' + LONG_PACKAGE_NAME + '.exe'
+                      bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${LONG_PACKAGE_NAME}.exe"
+                    }
+                  }
+
+                  stage('Upload') {
+                    environment {
+                      BUILD_DEST = "s3://rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
+                    }
+
+                    steps {
+                      // strip unhelpful suffixes from filenames
+                      bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.exe package\\win32\\build\\${PACKAGE_NAME}.exe"
+                      bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
+
+                      // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+                      withAWS(role: 'ide-build', region: 'us-east-1') {
+                        retry(5) {
+                          bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${BUILD_DEST}/${PACKAGE_NAME}.exe"
+                          bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${BUILD_DEST}/${PACKAGE_NAME}.zip"
+                        }
+                      }
+                    }
+                  }
+
+                  stage('Sentry Upload') {
+                    when {
+                      allOf {
+                        expression { return params.DAILY }
+                        environment name: 'FLAVOR', value: 'Desktop'
+                      }
+                    }
+
+                    environment {
+                      SENTRY_API_KEY = credentials('ide-sentry-api-key')
+                    }
+
+                    steps {
+                      retry(5) {
+                        // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
+                        timeout(activity: true, time: 15) {
+                          bat '''
+                            cd package\\win32\\build
+                            FOR /F %%G IN ('dir /s /b *.pdb') DO (c:\\rstudio-tools\\dependencies\\windows\\breakpad-tools-windows\\dump_syms.exe %%G > %%G.sym)
+                          '''
+
+                          // upload the breakpad symbols, attempt to run sentry uplaod
+                          bat 'cd package\\win32\\build\\src\\cpp && c:\\rstudio-tools\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
+                        }
+                      }
+                    }
+                  }
+
+                  stage ('Publish') {
+                    environment {
+                      GITHUB_LOGIN = credentials('posit-jenkins')
+                      PRODUCT = "${utils.getProductName()}"
+                      // This is being done to make the variables visible to the powershell call
+                      VERSION = "${RSTUDIO_VERSION}"
+                      PACKAGE = "${PACKAGE_NAME}"
+                      // Channel to prevent hourlies from ending up on the Dailies page
+                      CHANNEL = "${ params.DAILY ? 'Daily' : 'Hourly'}"
+                      AWS_PATH= "https://s3.amazonaws.com/rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
+                    }
+
+                    stages {
+                      stage("Publish Exe") {
+                        steps {
+                          echo "Publishing the following .exe build:"
+                          echo "Product : ${PRODUCT}"
+                          echo "Version : ${VERSION}"
+                          echo "Package : ${PACKAGE}"
+                          echo "Channel : ${CHANNEL}"
+                          script {
+                            // publish the build (self installing exe)
+                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url ${env:AWS_PATH}/${env:PACKAGE}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.exe -version ${env:VERSION} -channel ${env:CHANNEL}'
+                          }
+                        }
+                      }
+
+                      // Only publish the zip for dailies, hourlies don't need it
+                      stage("Publish Zip") {
+                        when {
+                          allOf {
+                            expression { return params.DAILY }
+                          }
+                        }
+                        steps {
+                          echo "Publishing the following .zip build:"
+                          echo "Product : ${PRODUCT}"
+                          echo "Version : ${VERSION}"
+                          echo "Package : ${PACKAGE}"
+                          echo "Channel : ${CHANNEL}"
+                          script {
+                            // publish the build (installer-less zip)
+                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url ${env:AWS_PATH}/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION} -channel ${env:CHANNEL}'
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } // Build Windows Stage
+
+          // Run on linux agent
+          stage ("Update Daily Build Redirects") {
+            agent { label "linux" } 
+
+            when { 
+              anyOf {
+                expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
+                expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
+              }
+            }
+
+            environment {
+              RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
+              AWS_PATH= "${FLAVOR.toLowerCase()}/windows"
+            }
+
+            steps {
+              // the updateDailyRedirects uses a bash script, so much be run on linux
+              // Also depends on flavor, so must be in the matrix
+              script {
+                utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_NAME}.exe"
+              }
+            }
+
+            post {
+              always {
+                deleteDir()
+              }
+            }
+          } // stage ("Upload Daily Build Redirects")
+        } // Matrix Stages
+      } // Matrix
+    } // stage ("Build Matrix")
+  } // Root Stages
+  post {
+    always {
+      sendNotifications slack_channel: SLACK_CHANNEL
+    }
+  }
+}

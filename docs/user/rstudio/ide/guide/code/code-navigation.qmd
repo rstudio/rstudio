@@ -1,5 +1,6 @@
 ---
 title: "Navigating Code"
+date-meta: 2022-12-12
 ---
 
 RStudio includes a number of features to enable rapid navigation through source code. Learning these features can be a major productivity enhancement and can also assist in gaining a better understanding of source code written by others on your team or within external packages.

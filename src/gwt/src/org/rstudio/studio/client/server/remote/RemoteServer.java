@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.json.client.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -40,8 +39,22 @@ import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.*;
-import org.rstudio.studio.client.application.model.*;
+import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
+import org.rstudio.studio.client.application.events.InvalidSessionEvent;
+import org.rstudio.studio.client.application.events.ServerOfflineEvent;
+import org.rstudio.studio.client.application.events.SessionRelaunchEvent;
+import org.rstudio.studio.client.application.events.UnauthorizedEvent;
+import org.rstudio.studio.client.application.model.ActiveSession;
+import org.rstudio.studio.client.application.model.InvalidSessionInfo;
+import org.rstudio.studio.client.application.model.ProductInfo;
+import org.rstudio.studio.client.application.model.ProductNotice;
+import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.SessionInitOptions;
+import org.rstudio.studio.client.application.model.SuspendOptions;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
+import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONArrayBuilder;
 import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -142,6 +155,12 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotVerifyInstalledResponse;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -218,6 +237,12 @@ import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONBoolean;
+import com.google.gwt.json.client.JSONNull;
+import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -262,8 +287,43 @@ public class RemoteServer implements Server
       });
 
       // create server event listener
-      serverEventListener_ = new RemoteServerEventListener(this,
-                                                           externalListener);
+      serverEventListener_ = new RemoteServerEventListener(this, externalListener);
+      
+      // create JS callback for requests
+      if (Desktop.isDesktop())
+      {
+         initializeRpcRequestCallback();
+      }
+   }
+   
+   private final native void initializeRpcRequestCallback()
+   /*-{
+      var self = this;
+      $wnd.sendRpcRequest = $entry(function(name, value) {
+         self.@org.rstudio.studio.client.server.remote.RemoteServer::sendRpcRequestCallback(*)(name, value);
+      });
+   }-*/;
+   
+   private void sendRpcRequestCallback(String name, JavaScriptObject value)
+   {
+      try
+      {
+         if (name == SHOW_VIGNETTE)
+         {
+            JsArrayString arguments = value.cast();
+            String topic = arguments.get(0);
+            String packageName = arguments.get(1);
+            showVignette(topic, packageName);
+         }
+         else
+         {
+            Debug.log("Error: Unsupported RPC '" + name + "'");
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
    }
 
    // complete initialization now that the workbench is ready
@@ -564,7 +624,56 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, RSTUDIOAPI_RESPONSE, response, requestCallback);
    }
+   
+   @Override
+   public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyInstalledResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
+   }
 
+   @Override
+   public void copilotInstallAgent(ServerRequestCallback<CopilotInstallAgentResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_install_agent", requestCallback);
+   }
+   
+   @Override
+   public void copilotSignIn(ServerRequestCallback<CopilotSignInResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_sign_in", requestCallback);
+   }
+   
+   @Override
+   public void copilotSignOut(ServerRequestCallback<CopilotSignOutResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_sign_out", requestCallback);
+   }
+   
+   @Override
+   public void copilotStatus(ServerRequestCallback<CopilotStatusResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_status", requestCallback);
+   }
+   
+   @Override
+   public void copilotGenerateCompletions(String documentId,
+                                          String documentPath,
+                                          boolean isUntitled,
+                                          int cursorRow,
+                                          int cursorColumn,
+                                          ServerRequestCallback<CopilotGenerateCompletionsResponse> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(documentId)
+            .add(documentPath)
+            .add(isUntitled)
+            .add(cursorRow)
+            .add(cursorColumn)
+            .get();
+      
+      sendRequest(RPC_SCOPE, "copilot_generate_completions", params, requestCallback);
+   }
+   
    @Override
    public void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback)
@@ -924,44 +1033,6 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(functionString));
       params.set(1, new JSONString(envString));
       sendRequest(RPC_SCOPE, IS_FUNCTION, params, requestCallback);
-   }
-
-   public void getDplyrJoinCompletionsString(
-         String token,
-         String string,
-         String cursorPos,
-         ServerRequestCallback<Completions> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(token));
-      params.set(1, new JSONString(string));
-      params.set(2, new JSONString(cursorPos));
-      sendRequest(
-            RPC_SCOPE,
-            GET_DPLYR_JOIN_COMPLETIONS_STRING,
-            params,
-            requestCallback);
-   }
-
-   public void getDplyrJoinCompletions(
-         String token,
-         String leftDataName,
-         String rightDataName,
-         String verb,
-         String cursorPos,
-         ServerRequestCallback<Completions> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(token));
-      params.set(1, new JSONString(leftDataName));
-      params.set(2, new JSONString(rightDataName));
-      params.set(3, new JSONString(verb));
-      params.set(4, new JSONString(cursorPos));
-      sendRequest(
-            RPC_SCOPE,
-            GET_DPLYR_JOIN_COMPLETIONS,
-            params,
-            requestCallback);
    }
 
    public void getArgs(String name,
@@ -1402,7 +1473,7 @@ public class RemoteServer implements Server
 
    public void getHelp(String topic,
                        String packageName,
-                       int options,
+                       int type,
                        ServerRequestCallback<HelpInfo> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -1411,7 +1482,7 @@ public class RemoteServer implements Server
          params.set(1, new JSONString(packageName));
       else
          params.set(1, JSONNull.getInstance());
-      params.set(2, new JSONNumber(options));
+      params.set(2, new JSONNumber(type));
 
       sendRequest(RPC_SCOPE, GET_HELP, params, requestCallback);
    }
@@ -2160,7 +2231,7 @@ public class RemoteServer implements Server
    }
 
    public void writeProjectOptions(RProjectOptions options,
-                                  ServerRequestCallback<Void> callback)
+                                   ServerRequestCallback<Void> callback)
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_OPTIONS, options, callback);
    }
@@ -2787,12 +2858,14 @@ public class RemoteServer implements Server
    public void gitCommit(String message,
                          boolean amend,
                          boolean signOff,
+                         boolean gpgSign,
                          ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(message));
       params.set(1, JSONBoolean.getInstance(amend));
       params.set(2, JSONBoolean.getInstance(signOff));
+      params.set(3, JSONBoolean.getInstance(gpgSign));
       sendRequest(RPC_SCOPE, GIT_COMMIT, params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
@@ -4524,28 +4597,30 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void beginFind(String searchString,
+   public void beginFind(String handle,
+                         String searchString,
                          boolean regex,
                          boolean isWholeWord,
                          boolean ignoreCase,
                          FileSystemItem directory,
                          JsArrayString includeFilePatterns,
+                         JsArrayString excludeFilePatterns,
                          boolean useGitGrep, 
                          boolean excludeGitIgnore,
-                         JsArrayString excludeFilePatterns,
                          ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(searchString));
-      params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(isWholeWord));
-      params.set(3, JSONBoolean.getInstance(ignoreCase));
-      params.set(4, new JSONString(directory == null ? ""
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(searchString));
+      params.set(2, JSONBoolean.getInstance(regex));
+      params.set(3, JSONBoolean.getInstance(isWholeWord));
+      params.set(4, JSONBoolean.getInstance(ignoreCase));
+      params.set(5, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(5, new JSONArray(includeFilePatterns));
-      params.set(6, JSONBoolean.getInstance(useGitGrep));
-      params.set(7, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(8, new JSONArray(excludeFilePatterns));
+      params.set(6, new JSONArray(includeFilePatterns));
+      params.set(7, new JSONArray(excludeFilePatterns));
+      params.set(8, JSONBoolean.getInstance(useGitGrep));
+      params.set(9, JSONBoolean.getInstance(excludeGitIgnore));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }
 
@@ -4563,59 +4638,65 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void previewReplace(String searchString,
+   public void previewReplace(String handle,
+                              String searchString,
                               boolean regex,
+                              boolean isWholeWord,
                               boolean searchIgnoreCase,
                               FileSystemItem directory,
                               JsArrayString includeFilePatterns,
+                              JsArrayString excludeFilePatterns,
                               boolean useGitGrep,
                               boolean excludeGitIgnore,
-                              JsArrayString excludeFilePatterns,
                               String replaceString,
                               ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(searchString));
-      params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
-      params.set(3, new JSONString(directory == null ? ""
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(searchString));
+      params.set(2, JSONBoolean.getInstance(regex));
+      params.set(3, JSONBoolean.getInstance(isWholeWord));
+      params.set(4, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(5, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, JSONBoolean.getInstance(useGitGrep));
-      params.set(6, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(6, new JSONArray(includeFilePatterns));
       params.set(7, new JSONArray(excludeFilePatterns));
-      params.set(8, new JSONString(replaceString));
+      params.set(8, JSONBoolean.getInstance(useGitGrep));
+      params.set(9, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(10, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
    }
 
    @Override
-   public void completeReplace(String searchString,
+   public void completeReplace(String handle,
+                               String searchString,
                                boolean regex,
                                boolean isWholeWord,
                                boolean searchIgnoreCase,
                                FileSystemItem directory,
                                JsArrayString includeFilePatterns,
+                               JsArrayString excludeFilePatterns,
                                boolean useGitGrep,
                                boolean excludeGitIgnore,
-                               JsArrayString excludeFilePatterns,
                                int searchResults,
                                String replaceString,
                                ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(searchString));
-      params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(isWholeWord));
-      params.set(3, JSONBoolean.getInstance(searchIgnoreCase));
-      params.set(4, new JSONString(directory == null ? ""
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(searchString));
+      params.set(2, JSONBoolean.getInstance(regex));
+      params.set(3, JSONBoolean.getInstance(isWholeWord));
+      params.set(4, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(5, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(5, new JSONArray(includeFilePatterns));
-      params.set(6, JSONBoolean.getInstance(useGitGrep));
-      params.set(7, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(8, new JSONArray(excludeFilePatterns));
-      params.set(9, new JSONNumber(searchResults));
-      params.set(10, new JSONString(replaceString));
+      params.set(6, new JSONArray(includeFilePatterns));
+      params.set(7, JSONBoolean.getInstance(useGitGrep));
+      params.set(8, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(9, new JSONArray(excludeFilePatterns));
+      params.set(10, new JSONNumber(searchResults));
+      params.set(11, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, COMPLETE_REPLACE, params, requestCallback);
    }
@@ -5628,6 +5709,19 @@ public class RemoteServer implements Server
       params.set(0, new JSONArray(images));
       params.set(1,  new JSONString(imagesDir));
       sendRequest(RPC_SCOPE, RMD_IMPORT_IMAGES, params, requestCallback);
+   }
+   
+   @Override
+   public void rmdSaveBase64Images(JsArrayString images,
+                                   String imagesDir,
+                                   ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(images)
+            .add(imagesDir)
+            .get();
+      
+      sendRequest(RPC_SCOPE, RMD_SAVE_BASE64_IMAGES, params, requestCallback);
    }
 
    @Override
@@ -6642,9 +6736,6 @@ public class RemoteServer implements Server
    private static final String ABORT = "abort";
    private static final String ADAPT_TO_LANGUAGE = "adapt_to_language";
    private static final String EXECUTE_CODE = "execute_code";
-   private static final String GET_DPLYR_JOIN_COMPLETIONS_STRING =
-         "get_dplyr_join_completions_string";
-   private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
    private static final String GET_ARGS = "get_args";
    private static final String EXTRACT_CHUNK_OPTIONS = "extract_chunk_options";
    private static final String EXECUTE_USER_COMMAND = "execute_user_command";
@@ -6929,7 +7020,7 @@ public class RemoteServer implements Server
    private static final String STAN_RUN_DIAGNOSTICS = "stan_run_diagnostics";
 
    private static final String SQL_GET_COMPLETIONS = "sql_get_completions";
-
+   
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";
    private static final String START_BUILD = "start_build";
@@ -7009,6 +7100,7 @@ public class RemoteServer implements Server
    private static final String GET_RMD_TEMPLATES = "get_rmd_templates";
    private static final String GET_RMD_OUTPUT_INFO = "get_rmd_output_info";
    private static final String RMD_IMPORT_IMAGES = "rmd_import_images";
+   private static final String RMD_SAVE_BASE64_IMAGES = "rmd_save_base64_images";
 
    private static final String GET_PACKRAT_PREREQUISITES = "get_packrat_prerequisites";
    private static final String INSTALL_PACKRAT = "install_packrat";

@@ -1,0 +1,9 @@
+eclipse.preferences.version=1
+org.eclipse.jdt.core.compiler.annotation.nonnull=org.eclipse.jdt.annotation.NonNull
+org.eclipse.jdt.core.compiler.annotation.nullable=org.eclipse.jdt.annotation.Nullable
+org.eclipse.jdt.core.compiler.annotation.nullanalysis=disabled
+org.eclipse.jdt.core.compiler.problem.nullAnnotationInferenceConflict=error
+org.eclipse.jdt.core.compiler.problem.nullReference=warning
+org.eclipse.jdt.core.compiler.problem.nullSpecViolation=error
+org.eclipse.jdt.core.compiler.problem.potentialNullReference=ignore
+org.eclipse.jdt.core.compiler.problem.syntacticNullAnalysisForFields=disabled

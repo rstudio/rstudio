@@ -1,7 +1,7 @@
 /*
  * main-window.ts
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2023 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, Menu, session, shell } from 'electron';
+import { BrowserWindow, dialog, session, shell } from 'electron';
 
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
@@ -26,13 +26,13 @@ import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { GwtWindow } from './gwt-window';
-import { MenuCallback, showPlaceholderMenu } from './menu-callback';
+import { MenuCallback } from './menu-callback';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { SessionLauncher } from './session-launcher';
 import { CloseServerSessions } from './session-servers-overlay';
-import { isLocalUrl, waitForUrlWithTimeout } from './url-utils';
+import { waitForUrlWithTimeout } from './url-utils';
 import { registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
@@ -103,10 +103,13 @@ export class MainWindow extends GwtWindow {
       // channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
     }
 
-    showPlaceholderMenu();
+    this.menuCallback.showPlaceholderMenu();
 
-    this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (menu: Menu) => {
-      Menu.setApplicationMenu(menu);
+    this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (/*menu: Menu*/) => {
+      // We used to do `Menu.setApplicationMenu(menu);` here but that was causing crashes in
+      // Electron when holding down the Alt key (https://github.com/rstudio/rstudio/issues/12983).
+      // It seems some sort of clash between setting this here and the subsequent set
+      // that happens in MenuCallback.updateMenus().
     });
     this.menuCallback.on(MenuCallback.COMMAND_INVOKED, (commandId) => {
       this.invokeCommand(commandId);
@@ -131,20 +134,25 @@ export class MainWindow extends GwtWindow {
 
     registerWebContentsDebugHandlers(this.window.webContents);
 
-    // Detect attempts to navigate externally within subframes, and prevent them.
-    // The implementation here is pretty sub-optimal, but it's the best we can do until
-    // we get 'will-frame-navigate' support. In effect, we detect attempts to navigate
-    // externally within an iframe, and instead:
-    //
-    // 1. Open the page externally,
-    // 2. Re-direct the iframe back to the source URL (bleh).
-    //
+    // Detect attempts to navigate to an external url in an iframe, and open the
+    // url in an external browser instead of in the IDE.
+    // Once https://github.com/electron/electron/pull/34418 is merged, we can leverage
+    // the 'will-frame-navigate' event instead of intercepting the request.
     this.window.webContents.session.webRequest.onBeforeRequest((details, callback) => {
-
       logger().logDebug(`${details.method} ${details.url} [${details.resourceType}]`);
 
-      if (details.resourceType === 'subFrame' && !this.allowNavigation(details.url)) {
-        shell.openExternal(details.url).catch((error) => { logger().logError(error); });
+      // If `details.frame.url` is defined, navigation is being triggered in the iframe
+      // (e.g. clicking on an anchor tag within an iframe) as opposed to a request to load
+      // the url from the iframe src
+      if (details.resourceType === 'subFrame' && details.frame?.url && !this.allowNavigation(details.url)) {
+        // Open the page externally
+        shell.openExternal(details.url).catch((error) => {
+          logger().logError(error);
+        });
+        // Re-direct the iframe back to the source URL (bleh)
+        // eslint thinks there's "Unnecessary optional chain on a non-nullish value", but
+        // that seems like a false positive. Disabling the rule to avoid hitting the lint error.
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         callback({ cancel: false, redirectURL: details.frame?.url });
       } else {
         callback({ cancel: false });
@@ -206,11 +214,13 @@ export class MainWindow extends GwtWindow {
     if (error) {
       logger().logError(error);
 
-      dialog.showMessageBoxSync(this.window, {
-        message: i18next.t('mainWindowTs.rSessionFailedToStart'),
-        type: 'error',
-        title: appState().activation().editionName(),
-      });
+      appState().modalTracker.trackElectronModalSync(() =>
+        dialog.showMessageBoxSync(this.window, {
+          message: i18next.t('mainWindowTs.rSessionFailedToStart'),
+          type: 'error',
+          title: appState().activation().editionName(),
+        }),
+      );
       this.quit();
     }
   }
@@ -316,12 +326,14 @@ export class MainWindow extends GwtWindow {
   }
 
   onSessionQuit(): void {
+    let doQuit = true;
     if (this.isRemoteDesktop) {
       const pendingQuit = this.collectPendingQuitRequest();
-      if (pendingQuit === PendingQuit.PendingQuitAndExit || this.quitConfirmed) {
-        closeAllSatellites(this.window);
-        this.quit();
-      }
+      doQuit = pendingQuit === PendingQuit.PendingQuitAndExit || this.quitConfirmed;
+    }
+    if (doQuit) {
+      closeAllSatellites(this.window);
+      this.quit();
     }
   }
 
@@ -364,8 +376,8 @@ export class MainWindow extends GwtWindow {
     //                      false);
 
     if (!this.geometrySaved) {
-      const bounds = this.window.getBounds();
-      ElectronDesktopOptions().saveWindowBounds(bounds);
+      const bounds = this.window.getNormalBounds();
+      ElectronDesktopOptions().saveWindowBounds({ ...bounds, maximized: this.window.isMaximized() });
       this.geometrySaved = true;
     }
 

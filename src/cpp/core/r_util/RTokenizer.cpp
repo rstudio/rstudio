@@ -326,15 +326,17 @@ Error RTokenizer::matchRawStringLiteral(RToken* pToken)
       // consume hyphens
       for (int i = 0; i < hyphenCount; i++)
       {
-         ch = eat();
+         ch = peek();
          if (ch != L'-')
             goto LOOP;
+         ++pos_;
       }
       
       // consume quote character
-      ch = eat();
+      ch = peek();
       if (ch != quoteChar)
          goto LOOP;
+      ++pos_;
       
       // we're at the end of the string; break out of the loop
       valid = true;

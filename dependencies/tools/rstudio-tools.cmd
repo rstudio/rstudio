@@ -14,4 +14,5 @@
 :: AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 
 
-set RSTUDIO_NODE_VERSION=16.14.0
+set RSTUDIO_NODE_VERSION=18.18.2
+set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com

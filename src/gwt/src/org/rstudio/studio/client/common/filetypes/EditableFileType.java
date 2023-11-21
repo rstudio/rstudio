@@ -24,6 +24,16 @@ public abstract class EditableFileType extends FileType
       label_ = label;
       defaultIcon_ = defaultIcon;
    }
+   
+   public long getFileSizeLimit()
+   {
+      return Long.MAX_VALUE;
+   }
+
+   public long getLargeFileSize()
+   {
+      return Long.MAX_VALUE;
+   }
 
    public String getLabel()
    {

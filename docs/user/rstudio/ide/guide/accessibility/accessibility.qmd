@@ -1,5 +1,6 @@
 ---
 title: "Simplified Interface"
+date-meta: 2022-12-12
 ---
 
 RStudio has many features and options to help you work the way that best suits your needs.
@@ -8,7 +9,7 @@ Some features discussed are specific to RStudio Desktop or RStudio Server: if RS
 
 For the purposes of this discussion, "RStudio Server" encompasses both RStudio Server Open Source and Posit Workbench (previously RStudio Workbench or RStudio Server Pro).
 
-Email accessibility-related questions and comments to [accessibility\@rstudio.com](mailto:accessibility@rstudio.com).
+Email accessibility-related questions and comments to [accessibility\@posit.co](mailto:accessibility@posit.co).
 
 ## Zoom level
 
@@ -100,7 +101,7 @@ The Global Options dialog contains a section dedicated to accessibility options.
 
 Here are some additional resources related to RStudio accessibility, and accessibility of the R ecosystem.
 
--   [RStudio Blog: 1.3 Preview Accessibility](https://blog.rstudio.com/2020/03/04/rstudio-1-3-preview-accessibility/)
+-   [RStudio Blog: 1.3 Preview Accessibility](https://posit.co/blog/rstudio-1-3-preview-accessibility/)
 
 -   [BlindRUG - Blind R Users Group](http://nfbnet.org/mailman/listinfo/blindrug_nfbnet.org)
 

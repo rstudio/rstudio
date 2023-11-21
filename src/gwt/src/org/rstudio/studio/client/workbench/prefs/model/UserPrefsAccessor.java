@@ -812,6 +812,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+    */
+   public PrefValue<Boolean> showDataPreview()
+   {
+      return bool(
+         "show_data_preview",
+         _constants.showDataPreviewTitle(), 
+         _constants.showDataPreviewDescription(), 
+         true);
+   }
+
+   /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
     */
    public PrefValue<Boolean> showDiagnosticsR()
@@ -1183,6 +1195,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to highlight fenced divs in a variety of colors.
+    */
+   public PrefValue<Boolean> rainbowFencedDivs()
+   {
+      return bool(
+         "rainbow_fenced_divs",
+         _constants.rainbowFencedDivsTitle(), 
+         _constants.rainbowFencedDivsDescription(), 
+         true);
+   }
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    public PrefValue<Integer> consoleLineLengthLimit()
@@ -1273,6 +1297,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.saveFilesBeforeBuildTitle(), 
          _constants.saveFilesBeforeBuildDescription(), 
          false);
+   }
+
+   /**
+    * Whether RStudio should save and reload the R workspace when building the project.
+    */
+   public PrefValue<Boolean> saveAndReloadWorkspaceOnBuild()
+   {
+      return bool(
+         "save_and_reload_workspace_on_build",
+         _constants.saveAndReloadWorkspaceOnBuildTitle(), 
+         _constants.saveAndReloadWorkspaceOnBuildDescription(), 
+         true);
    }
 
    /**
@@ -1369,6 +1405,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.defaultProjectLocationTitle(), 
          _constants.defaultProjectLocationDescription(), 
          "");
+   }
+
+   /**
+    * The default directory to use in file dialogs when opening a project.
+    */
+   public PrefValue<String> defaultOpenProjectLocation()
+   {
+      return string(
+         "default_open_project_location",
+         _constants.defaultOpenProjectLocationTitle(), 
+         _constants.defaultOpenProjectLocationDescription(), 
+         "~");
    }
 
    /**
@@ -1780,6 +1828,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   public PrefValue<Boolean> enableCloudPublishUi()
+   {
+      return bool(
+         "enable_cloud_publish_ui",
+         _constants.enableCloudPublishUiTitle(), 
+         _constants.enableCloudPublishUiDescription(), 
+         true);
+   }
+
+   /**
     * Whether to check remote server SSL certificates when publishing content.
     */
    public PrefValue<Boolean> publishCheckCertificates()
@@ -1955,6 +2015,30 @@ public class UserPrefsAccessor extends Prefs
          "terminal_track_environment",
          _constants.terminalTrackEnvironmentTitle(), 
          _constants.terminalTrackEnvironmentDescription(), 
+         true);
+   }
+
+   /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+    */
+   public PrefValue<JsArrayString> terminalIgnoredEnvironmentVariables()
+   {
+      return object(
+         "terminal_ignored_environment_variables",
+         _constants.terminalIgnoredEnvironmentVariablesTitle(), 
+         _constants.terminalIgnoredEnvironmentVariablesDescription(), 
+         JsArrayUtil.createStringArray());
+   }
+
+   /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   public PrefValue<Boolean> terminalHooks()
+   {
+      return bool(
+         "terminal_hooks",
+         _constants.terminalHooksTitle(), 
+         _constants.terminalHooksDescription(), 
          true);
    }
 
@@ -2280,6 +2364,18 @@ public class UserPrefsAccessor extends Prefs
          "git_diff_ignore_whitespace",
          _constants.gitDiffIgnoreWhitespaceTitle(), 
          _constants.gitDiffIgnoreWhitespaceDescription(), 
+         false);
+   }
+
+   /**
+    * Whether to sign git commits.
+    */
+   public PrefValue<Boolean> gitSignedCommits()
+   {
+      return bool(
+         "git_signed_commits",
+         _constants.gitSignedCommitsTitle(), 
+         _constants.gitSignedCommitsDescription(), 
          false);
    }
 
@@ -2722,7 +2818,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Support accessibility aids such as screen readers (RStudio Server).
+    * Support accessibility aids such as screen readers.
     */
    public PrefValue<Boolean> enableScreenReader()
    {
@@ -3445,6 +3541,77 @@ public class UserPrefsAccessor extends Prefs
    public final static String TEXT_RENDERING_AUTO = "auto";
    public final static String TEXT_RENDERING_GEOMETRICPRECISION = "geometricPrecision";
 
+   /**
+    * Disable Electron accessibility support.
+    */
+   public PrefValue<Boolean> disableRendererAccessibility()
+   {
+      return bool(
+         "disable_renderer_accessibility",
+         _constants.disableRendererAccessibilityTitle(), 
+         _constants.disableRendererAccessibilityDescription(), 
+         false);
+   }
+
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   public PrefValue<Boolean> copilotEnabled()
+   {
+      return bool(
+         "copilot_enabled",
+         _constants.copilotEnabledTitle(), 
+         _constants.copilotEnabledDescription(), 
+         false);
+   }
+
+   /**
+    * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+    */
+   public PrefValue<Integer> copilotCompletionsDelay()
+   {
+      return integer(
+         "copilot_completions_delay",
+         _constants.copilotCompletionsDelayTitle(), 
+         _constants.copilotCompletionsDelayDescription(), 
+         300);
+   }
+
+   /**
+    * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+    */
+   public PrefValue<String> copilotTabKeyBehavior()
+   {
+      return enumeration(
+         "copilot_tab_key_behavior",
+         _constants.copilotTabKeyBehaviorTitle(), 
+         _constants.copilotTabKeyBehaviorDescription(), 
+         new String[] {
+            COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION,
+            COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS
+         },
+         "suggestion",
+         new String[] {
+            _constants.copilotTabKeyBehaviorEnum_suggestion(),
+            _constants.copilotTabKeyBehaviorEnum_completions()
+         });
+   }
+
+   public final static String COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION = "suggestion";
+   public final static String COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS = "completions";
+
+   /**
+    * When enabled, RStudio will index project files with GitHub Copilot.
+    */
+   public PrefValue<Boolean> copilotIndexingEnabled()
+   {
+      return bool(
+         "copilot_indexing_enabled",
+         _constants.copilotIndexingEnabledTitle(), 
+         _constants.copilotIndexingEnabledDescription(), 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3541,6 +3708,8 @@ public class UserPrefsAccessor extends Prefs
          codeCompletionCharacters().setValue(layer, source.getInteger("code_completion_characters"));
       if (source.hasKey("show_function_signature_tooltips"))
          showFunctionSignatureTooltips().setValue(layer, source.getBool("show_function_signature_tooltips"));
+      if (source.hasKey("show_data_preview"))
+         showDataPreview().setValue(layer, source.getBool("show_data_preview"));
       if (source.hasKey("show_diagnostics_r"))
          showDiagnosticsR().setValue(layer, source.getBool("show_diagnostics_r"));
       if (source.hasKey("show_diagnostics_cpp"))
@@ -3601,6 +3770,8 @@ public class UserPrefsAccessor extends Prefs
          colorPreview().setValue(layer, source.getBool("color_preview"));
       if (source.hasKey("rainbow_parentheses"))
          rainbowParentheses().setValue(layer, source.getBool("rainbow_parentheses"));
+      if (source.hasKey("rainbow_fenced_divs"))
+         rainbowFencedDivs().setValue(layer, source.getBool("rainbow_fenced_divs"));
       if (source.hasKey("console_line_length_limit"))
          consoleLineLengthLimit().setValue(layer, source.getInteger("console_line_length_limit"));
       if (source.hasKey("console_max_lines"))
@@ -3615,6 +3786,8 @@ public class UserPrefsAccessor extends Prefs
          highlightCodeChunks().setValue(layer, source.getBool("highlight_code_chunks"));
       if (source.hasKey("save_files_before_build"))
          saveFilesBeforeBuild().setValue(layer, source.getBool("save_files_before_build"));
+      if (source.hasKey("save_and_reload_workspace_on_build"))
+         saveAndReloadWorkspaceOnBuild().setValue(layer, source.getBool("save_and_reload_workspace_on_build"));
       if (source.hasKey("font_size_points"))
          fontSizePoints().setValue(layer, source.getDbl("font_size_points"));
       if (source.hasKey("help_font_size_points"))
@@ -3631,6 +3804,8 @@ public class UserPrefsAccessor extends Prefs
          toolbarVisible().setValue(layer, source.getBool("toolbar_visible"));
       if (source.hasKey("default_project_location"))
          defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
+      if (source.hasKey("default_open_project_location"))
+         defaultOpenProjectLocation().setValue(layer, source.getString("default_open_project_location"));
       if (source.hasKey("source_with_echo"))
          sourceWithEcho().setValue(layer, source.getBool("source_with_echo"));
       if (source.hasKey("default_sweave_engine"))
@@ -3691,6 +3866,8 @@ public class UserPrefsAccessor extends Prefs
          rmdViewerType().setValue(layer, source.getString("rmd_viewer_type"));
       if (source.hasKey("show_publish_diagnostics"))
          showPublishDiagnostics().setValue(layer, source.getBool("show_publish_diagnostics"));
+      if (source.hasKey("enable_cloud_publish_ui"))
+         enableCloudPublishUi().setValue(layer, source.getBool("enable_cloud_publish_ui"));
       if (source.hasKey("publish_check_certificates"))
          publishCheckCertificates().setValue(layer, source.getBool("publish_check_certificates"));
       if (source.hasKey("use_publish_ca_bundle"))
@@ -3717,6 +3894,10 @@ public class UserPrefsAccessor extends Prefs
          terminalCloseBehavior().setValue(layer, source.getString("terminal_close_behavior"));
       if (source.hasKey("terminal_track_environment"))
          terminalTrackEnvironment().setValue(layer, source.getBool("terminal_track_environment"));
+      if (source.hasKey("terminal_ignored_environment_variables"))
+         terminalIgnoredEnvironmentVariables().setValue(layer, source.getObject("terminal_ignored_environment_variables"));
+      if (source.hasKey("terminal_hooks"))
+         terminalHooks().setValue(layer, source.getBool("terminal_hooks"));
       if (source.hasKey("terminal_bell_style"))
          terminalBellStyle().setValue(layer, source.getString("terminal_bell_style"));
       if (source.hasKey("terminal_renderer"))
@@ -3759,6 +3940,8 @@ public class UserPrefsAccessor extends Prefs
          globalTheme().setValue(layer, source.getString("global_theme"));
       if (source.hasKey("git_diff_ignore_whitespace"))
          gitDiffIgnoreWhitespace().setValue(layer, source.getBool("git_diff_ignore_whitespace"));
+      if (source.hasKey("git_signed_commits"))
+         gitSignedCommits().setValue(layer, source.getBool("git_signed_commits"));
       if (source.hasKey("console_double_click_select"))
          consoleDoubleClickSelect().setValue(layer, source.getBool("console_double_click_select"));
       if (source.hasKey("console_suspend_blocked_notice"))
@@ -3927,6 +4110,16 @@ public class UserPrefsAccessor extends Prefs
          editorScrollMultiplier().setValue(layer, source.getInteger("editor_scroll_multiplier"));
       if (source.hasKey("text_rendering"))
          textRendering().setValue(layer, source.getString("text_rendering"));
+      if (source.hasKey("disable_renderer_accessibility"))
+         disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
+      if (source.hasKey("copilot_enabled"))
+         copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
+      if (source.hasKey("copilot_completions_delay"))
+         copilotCompletionsDelay().setValue(layer, source.getInteger("copilot_completions_delay"));
+      if (source.hasKey("copilot_tab_key_behavior"))
+         copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
+      if (source.hasKey("copilot_indexing_enabled"))
+         copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3978,6 +4171,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeCompletionDelay());
       prefs.add(codeCompletionCharacters());
       prefs.add(showFunctionSignatureTooltips());
+      prefs.add(showDataPreview());
       prefs.add(showDiagnosticsR());
       prefs.add(showDiagnosticsCpp());
       prefs.add(showDiagnosticsYaml());
@@ -4008,6 +4202,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightRFunctionCalls());
       prefs.add(colorPreview());
       prefs.add(rainbowParentheses());
+      prefs.add(rainbowFencedDivs());
       prefs.add(consoleLineLengthLimit());
       prefs.add(consoleMaxLines());
       prefs.add(ansiConsoleMode());
@@ -4015,6 +4210,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showInlineToolbarForRCodeChunks());
       prefs.add(highlightCodeChunks());
       prefs.add(saveFilesBeforeBuild());
+      prefs.add(saveAndReloadWorkspaceOnBuild());
       prefs.add(fontSizePoints());
       prefs.add(helpFontSizePoints());
       prefs.add(editorTheme());
@@ -4023,6 +4219,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(defaultEncoding());
       prefs.add(toolbarVisible());
       prefs.add(defaultProjectLocation());
+      prefs.add(defaultOpenProjectLocation());
       prefs.add(sourceWithEcho());
       prefs.add(defaultSweaveEngine());
       prefs.add(defaultLatexProgram());
@@ -4053,6 +4250,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(rmdPreferredTemplatePath());
       prefs.add(rmdViewerType());
       prefs.add(showPublishDiagnostics());
+      prefs.add(enableCloudPublishUi());
       prefs.add(publishCheckCertificates());
       prefs.add(usePublishCaBundle());
       prefs.add(publishCaBundle());
@@ -4066,6 +4264,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalWebsockets());
       prefs.add(terminalCloseBehavior());
       prefs.add(terminalTrackEnvironment());
+      prefs.add(terminalIgnoredEnvironmentVariables());
+      prefs.add(terminalHooks());
       prefs.add(terminalBellStyle());
       prefs.add(terminalRenderer());
       prefs.add(terminalWeblinks());
@@ -4087,6 +4287,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(wrapTabNavigation());
       prefs.add(globalTheme());
       prefs.add(gitDiffIgnoreWhitespace());
+      prefs.add(gitSignedCommits());
       prefs.add(consoleDoubleClickSelect());
       prefs.add(consoleSuspendBlockedNotice());
       prefs.add(consoleSuspendBlockedNoticeDelay());
@@ -4171,6 +4372,11 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(discardPendingConsoleInputOnError());
       prefs.add(editorScrollMultiplier());
       prefs.add(textRendering());
+      prefs.add(disableRendererAccessibility());
+      prefs.add(copilotEnabled());
+      prefs.add(copilotCompletionsDelay());
+      prefs.add(copilotTabKeyBehavior());
+      prefs.add(copilotIndexingEnabled());
       return prefs;
    }
    

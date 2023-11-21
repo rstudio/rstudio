@@ -13,7 +13,7 @@
 #
 #
 
-.rs.addFunction("findRtools42Installer", function(url, fallbackUrl)
+.rs.addFunction("findRtoolsInstaller", function(url, fallbackUrl)
 {
    tryCatch({
        tmp <- tempfile()

@@ -510,8 +510,12 @@ public class ImagePreviewer
 
    public static String imgSrcPathFromHref(String docDir, String href)
    {
+      // don't touch base64 data
+      if (href.startsWith("data:"))
+         return href;
+      
       // return paths that have a custom / external protocol as-is
-      Pattern reProtocol = Pattern.create("^\\w+://");
+      Pattern reProtocol = Pattern.create("^\\w+://", "");
       if (reProtocol.test(href))
          return href;
       

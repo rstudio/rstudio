@@ -15,12 +15,13 @@
 
 package org.rstudio.studio.client.rsconnect.model;
 
-import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class QmdPublishDetails
 {
+   public String project_type;
    public boolean is_shiny_qmd;
    public boolean is_self_contained;
    public String title;

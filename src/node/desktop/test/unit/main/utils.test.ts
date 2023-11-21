@@ -94,7 +94,7 @@ describe('Utils', () => {
   });
   it('findComponents returns session and scripts paths', () => {
     process.env.RSTUDIO_CPP_BUILD_OUTPUT = '/somewhere/interesting/';
-    const [, session, scripts] = Utils.findComponents();
+    const [, , session, scripts] = Utils.findComponents();
     assert.isNotEmpty(session.getAbsolutePath());
     assert.isNotEmpty(scripts.getAbsolutePath());
   });
@@ -137,5 +137,45 @@ describe('Utils', () => {
     ];
     const result = Utils.filterFromQFileDialogFilter(input);
     assert.deepEqual(expected, result);
+  });
+  it('getNumericEnvVar returns number for numeric values', () => {
+    const numValues = [0, 1, -1, 1.1];
+    const envVarName = 'NUMERIC_ENV_VAR_VALUE';
+    numValues.forEach((val, index) => {
+      setenv(envVarName, `${val}`);
+      const envVar = Utils.getNumericEnvVar(envVarName);
+      assert.equal(envVar, numValues[index]);
+    });
+  });
+  it('getNumericEnvVar returns undefined for non-numeric values', () => {
+    const nonNumValues = [NaN, undefined, null, 'hi', '', 'H3LL0'];
+    const envVarName = 'NON_NUMERIC_ENV_VAR_VALUE';
+    nonNumValues.forEach((val) => {
+      setenv(envVarName, `${val}`);
+      const envVar = Utils.getNumericEnvVar(envVarName);
+      assert.equal(envVar, undefined);
+    });
+  });
+  it('removeTrailingSlashes removes trailing slashes from path strings', () => {
+    const testCases = [
+      { input: '', expected: '' },
+      { input: '/', expected: '/' },
+      { input: '\\', expected: '\\' },
+      { input: '//', expected: '//' },
+      { input: '\\\\', expected: '\\\\' },
+      { input: '\\/\\', expected: '\\/\\' },
+      { input: 'a', expected: 'a' },
+      { input: '/a/b/c', expected: '/a/b/c' },
+      { input: 'a/b/c/', expected: 'a/b/c' },
+      { input: '/a/b/c//', expected: '/a/b/c' },
+      { input: '/a/b/c\\\\', expected: '/a/b/c' },
+      { input: '/a/b/c\\/', expected: '/a/b/c' },
+      { input: 'C:\\', expected: 'C:' },
+      { input: '~/', expected: '~' },
+    ];
+    testCases.forEach((testCase) => {
+      const result = Utils.removeTrailingSlashes(testCase.input);
+      assert.equal(result, testCase.expected);
+    });
   });
 });

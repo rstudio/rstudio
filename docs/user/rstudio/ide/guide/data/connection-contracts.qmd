@@ -1,5 +1,6 @@
 ---
 title: "Connections Contract"
+date-meta: 2022-12-12
 ---
 
 The RStudio **Connections** pane can display database-like connections from any R package which implements a connections contract.

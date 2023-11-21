@@ -1,5 +1,6 @@
 ---
 title: "Themes"
+date-meta: 2022-12-12
 ---
 
 ## Switching global themes

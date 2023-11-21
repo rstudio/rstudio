@@ -14,27 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
@@ -49,6 +34,26 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class CompletionPopupPanel extends ThemedPopupPanel
       implements CompletionPopupDisplay
@@ -84,38 +89,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
             hideAll();
          }
       });
-
-      handler_ = new NativePreviewHandler()
-      {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent previewEvent)
-         {
-            // any click outside the container or help popup should dismiss
-            // (we need this here b/c we don't seem to be getting onBlur
-            // events when the ace editor is in embedded mode
-            if (previewEvent.getTypeInt() == Event.ONMOUSEDOWN)
-            {
-               Element targetEl = previewEvent.getNativeEvent().getEventTarget().cast();
-               if (!help_.getElement().isOrHasChild(targetEl) &&
-                  (container_ == null) || 
-                  (container_.getElement() == null) || 
-                  !container_.getElement().isOrHasChild(targetEl))
-               {
-                  hideAll();
-               }
-            }
-            if (previewEvent.getTypeInt() == Event.ONKEYDOWN)
-            {
-               NativeEvent event = previewEvent.getNativeEvent();
-               int keyCode = event.getKeyCode();
-               int modifier = KeyboardShortcut.getModifierValue(event);
-               if (modifier != 0 && keyCode == KeyCodes.KEY_ENTER)
-               {
-                  hideAll();
-               }
-            }
-         }
-      };
    }
 
    private void hideAll()
@@ -160,10 +133,29 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                     boolean truncated)
    {
       registerIgnoredKeys();
-      CompletionList<QualifiedName> list = new CompletionList<>(values,
-                                                                6,
-                                                                true,
-                                                                true);
+      
+      // If we're going to display completions on top, then reverse
+      // the completion list, and select the last values instead of the first.
+      boolean isShowingOnBottom = false;
+      if (callback instanceof PopupPositioner)
+      {
+         PopupPositioner positioner = (PopupPositioner) callback;
+         isShowingOnBottom = positioner.getPreferBottom();
+      }
+      
+      if (!isShowingOnBottom)
+      {
+         List<QualifiedName> names = Arrays.asList(values);
+         Collections.reverse(names);
+         values = names.toArray(new QualifiedName[0]);
+      }
+      
+      // Since completion popups are usually displayed from the Source pane,
+      // if we're trying to display completions on top of the cursor location,
+      // we'll have relatively less space available. In that case, try to display
+      // fewer items, so we can fit the visible space.
+      int numVisibleItems = isShowingOnBottom ? 9 : 6;
+      CompletionList<QualifiedName> list = new CompletionList<>(values, numVisibleItems, true, true);
 
       list.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) ->
       {
@@ -189,11 +181,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          container_.add(truncated_);
 
       setWidget(container_);
-
-      ElementIds.assignElementId(list_.getElement(),
-            ElementIds.POPUP_COMPLETIONS);
+      ElementIds.assignElementId(list_.getElement(), ElementIds.POPUP_COMPLETIONS);
 
       show(callback);
+      
+      if (!isShowingOnBottom)
+         selectLast();
    }
 
    public boolean hasCompletions()
@@ -210,7 +203,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
    private void show(PositionCallback callback)
    {
-      registerNativeHandler(handler_);
+      registerNativeFocusHandler();
 
       if (callback != null)
          setPopupPositionAndShow(callback);
@@ -376,12 +369,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    @Override
-   public void displayDataHelp(ParsedInfo help)
-   {
-      displayPackageHelp(help);
-   }
-
-   @Override
    public void displaySnippetHelp(String contents)
    {
       if (!completionListIsOnScreen())
@@ -389,7 +376,16 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
       help_.displaySnippetHelp(contents);
       resolveHelpPosition(!StringUtil.isNullOrEmpty(contents));
+   }
 
+   @Override
+   public void displayRoxygenHelp(String title, String description, boolean hasVignette)
+   {
+      if (!completionListIsOnScreen())
+         return;
+      
+      help_.displayRoxygenHelp(title, description, hasVignette);
+      resolveHelpPosition(true);
    }
    
    @Override
@@ -412,7 +408,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       
       help_.displayParameterHelp(value, description, false);
       resolveHelpPosition(!StringUtil.isNullOrEmpty(description));
-      
    }
 
    public void clearHelp(boolean downloadOperationPending)
@@ -455,19 +450,44 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       return list_.getItems();
    }
-
-   private void registerNativeHandler(NativePreviewHandler handler)
+   
+   private void registerNativeFocusHandler()
    {
-      if (handlerRegistration_ != null)
-         handlerRegistration_.removeHandler();
-      handlerRegistration_ = Event.addNativePreviewHandler(handler);
+      focusHandler_ = registerNativeFocusHandlerImpl();
+   }
+   
+   private final native JavaScriptObject registerNativeFocusHandlerImpl()
+   /*-{
+      var self = this;
+      var handler = $entry(function(event) {
+         self.@org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel::onFocusIn(*)(event);
+      });
+      $doc.addEventListener("focusin", handler);
+      $doc.addEventListener("mousedown", handler);
+      return handler;
+   }-*/;
+
+   private void onFocusIn(NativeEvent event)
+   {
+      Element targetEl = event.getEventTarget().cast();
+      boolean isActiveClickTarget =
+            (container_ != null && container_.getElement().isOrHasChild(targetEl)) ||
+            (help_ != null && help_.getElement().isOrHasChild(targetEl));
+
+      if (!isActiveClickTarget)
+         hideAll();
    }
 
    private void unregisterNativeHandler()
    {
-      if (handlerRegistration_ != null)
-         handlerRegistration_.removeHandler();
+      unregisterNativeFocusHandlerImpl(focusHandler_);
    }
+   
+   private final native void unregisterNativeFocusHandlerImpl(JavaScriptObject focusHandler)
+   /*-{
+      $doc.removeEventListener("focusin", focusHandler);
+      $doc.removeEventListener("mousedown", focusHandler);
+   }-*/;
 
    private void resetIgnoredKeysHandle()
    {
@@ -498,8 +518,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private static QualifiedName lastSelectedValue_;
    private VerticalPanel container_;
    private final Label truncated_;
-   private final NativePreviewHandler handler_;
-   private HandlerRegistration handlerRegistration_;
+   private JavaScriptObject focusHandler_;
    private ShortcutManager.Handle handle_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 

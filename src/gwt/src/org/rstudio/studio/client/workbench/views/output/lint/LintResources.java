@@ -29,6 +29,7 @@ public interface LintResources extends ClientBundle
       String style();
       
       String warning();
+      String spelling();
       
       String error();
       String fatal();
@@ -43,10 +44,12 @@ public interface LintResources extends ClientBundle
    ImageResource note();
    ImageResource warning();
    ImageResource error();
-   
+   ImageResource spelling();
+
    ImageResource note2x();
    ImageResource warning2x();
    ImageResource error2x();
+   ImageResource spelling2x();
    
    public static final LintResources INSTANCE =
          GWT.create(LintResources.class);

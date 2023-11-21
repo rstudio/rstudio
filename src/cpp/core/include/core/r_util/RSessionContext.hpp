@@ -39,6 +39,9 @@
 #define kWorkbenchJupyterLab       "JupyterLab"
 #define kWorkbenchJupyterNotebook  "Jupyter Notebook"
 #define kWorkbenchVSCode           "VS Code"
+#define kJupyterPathEnvVar         "WORKBENCH_JUPYTER_PATH"
+#define kVSCodePathDefault         "/usr/lib/rstudio-server/bin/code-server/bin/code-server"
+#define kVSCodePathEnvVar          "WORKBENCH_VSCODE_PATH"
 
 #ifdef _WIN32
 typedef unsigned int uid_t;

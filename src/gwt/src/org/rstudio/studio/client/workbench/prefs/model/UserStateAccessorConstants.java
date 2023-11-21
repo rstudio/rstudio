@@ -1,4 +1,5 @@
-/* UserStateAccessorConstants.java
+/*
+ * UserStateAccessorConstants.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -159,11 +160,11 @@ public interface UserStateAccessorConstants extends Constants {
    String showPublishUiDescription();
 
    /**
-    * Whether to show UI for publishing content to RStudio Connect.
+    * Whether to show UI for publishing content to Posit Connect.
     */
    @DefaultStringValue("")
    String enableRsconnectPublishUiTitle();
-   @DefaultStringValue("Whether to show UI for publishing content to RStudio Connect.")
+   @DefaultStringValue("Whether to show UI for publishing content to Posit Connect.")
    String enableRsconnectPublishUiDescription();
 
    /**

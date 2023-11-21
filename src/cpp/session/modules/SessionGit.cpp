@@ -127,7 +127,7 @@ core::system::ProcessOptions procOptions()
    // (note that we also do this on init, but we do this again for
    // child processes just to ensure any user-initiated PATH munging
    // doesn't break builtin utilities)
-   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   FilePath postbackDir = module_context::rPostbackScriptsDir();
    core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
 
    options.workingDir = projects::projectContext().directory();
@@ -869,6 +869,7 @@ public:
    core::Error commit(std::string message,
                       bool amend,
                       bool signOff,
+                      bool gpgSign,
                       boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       using namespace string_utils;
@@ -943,6 +944,8 @@ public:
          args << "--amend";
       if (signOff)
          args << "--signoff";
+      if (gpgSign)
+        args << "--gpg-sign";
 
       return createConsoleProc(args,
                                "Git Commit",
@@ -1855,13 +1858,13 @@ Error vcsCommit(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    std::string commitMsg;
-   bool amend, signOff;
-   Error error = json::readParams(request.params, &commitMsg, &amend, &signOff);
+   bool amend, signOff, gpgSign;
+   Error error = json::readParams(request.params, &commitMsg, &amend, &signOff, &gpgSign);
    if (error)
       return error;
 
    boost::shared_ptr<ConsoleProcess> pCP;
-   error = s_git_.commit(commitMsg, amend, signOff, &pCP);
+   error = s_git_.commit(commitMsg, amend, signOff, gpgSign, &pCP);
    if (error)
    {
       if (error == systemError(boost::system::errc::illegal_byte_sequence, ErrorLocation()))
@@ -2159,29 +2162,47 @@ std::string githubUrl(const std::string& view,
 
    // get the upstream for the current branch
    std::string upstream = getUpstream();
+   std::string upstreamBranch;
 
-   // if there is none then get the upstream for master
-   if (upstream.empty())
-      upstream = getUpstream("master");
-
-   // if there still isn't one then fall back to origin/master
-   if (upstream.empty())
-      upstream = "origin/master";
-
-   // parse out the upstream name and branch
-   std::string::size_type pos = upstream.find_first_of('/');
-   if (pos == std::string::npos)
+   if (!upstream.empty())
    {
-      LOG_ERROR_MESSAGE("No / in upstream name: " + upstream);
-      return std::string();
+      // parse out the upstream name and branch
+      std::string::size_type pos = upstream.find_first_of('/');
+      if (pos == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("No / in upstream name: " + upstream);
+         return std::string();
+      }
+      upstreamBranch = upstream.substr(pos + 1);
    }
-   std::string upstreamName = upstream.substr(0, pos);
-   std::string upstreamBranch = upstream.substr(pos + 1);
+   // if there is none then use the last commit id
+   else
+   {
+      core::system::ProcessResult commitId;
+      std::string relativePath = filePath.getRelativePath(s_git_.root());
+      if (relativePath.empty())
+         relativePath = ".";
+      Error error = gitExec(gitArgs() << "rev-list" << "-1" << "HEAD" << relativePath,
+               s_git_.root(),
+               &commitId);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return std::string();
+      }
+      else if (commitId.exitStatus != 0)
+      {
+         if (!commitId.stdErr.empty())
+            LOG_ERROR_MESSAGE(commitId.stdErr);
+         return std::string();
+      }
+      upstreamBranch = boost::algorithm::trim_copy(commitId.stdOut);
+   }
 
    // now get the remote url
    core::system::ProcessResult result;
    Error error = gitExec(gitArgs() <<
-                   "config" << "--get" << ("remote." + upstreamName + ".url"),
+                   "ls-remote" << "--get-url",
                    s_git_.root(),
                    &result);
    if (error)
@@ -3116,6 +3137,11 @@ bool isWithinGitRoot(const core::FilePath& filePath)
    return isGitEnabled() && filePath.isWithin(s_git_.root());
 }
 
+FilePath gitExePath()
+{
+   return s_gitExePath.empty() ? detectedGitExePath() : FilePath(s_gitExePath);
+}
+
 FilePath detectedGitExePath()
 {
 #ifdef _WIN32
@@ -3354,22 +3380,12 @@ core::Error initialize()
       return error;
 
    // setup environment
-   BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
-   core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
-
+   r::util::setenv("GIT_ASKPASS", "rpostback-askpass");
    if (interceptAskPass)
-   {
-      core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
-   }
+      r::util::setenv("SSH_ASKPASS", "rpostback-askpass");
 
    // add postback directory to PATH
-   FilePath postbackDir = session::options().rpostbackPath().getParent();
-   if (postbackDir.getAbsolutePath().find("session/postback") == std::string::npos) {
-      // for package builds only, postback/rpostback-askpass in same directory as rpostback itself
-      postbackDir = postbackDir.completeChildPath("postback");
-   }
-
-   core::system::addToPath(postbackDir.getAbsolutePath());
+   r::util::appendToSystemPath(module_context::rPostbackScriptsDir());
 
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
