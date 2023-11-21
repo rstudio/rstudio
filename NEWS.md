@@ -17,6 +17,7 @@
 - Better error message when user preferences fail to save due to folder permissions. (#12974)
 - Update Electon Forge to 6.4.2 and Webpack to 5.89.0. (rstudio-pro#5383)
 - RStudio now supports pasting of file paths for files copied to the clipboard. (#4572)
+- RStudio now supports duplicate connection names for Posit drivers. (rstudio-pro#5437)
 
 #### Posit Workbench
 - Removed link for opening sessions in RStudio Desktop Pro from Session Info dialog. (rstudio-pro#5263)

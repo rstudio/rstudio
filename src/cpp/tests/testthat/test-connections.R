@@ -39,3 +39,62 @@ test_that("ODBC ini file is read", {
    bundle <- .rs.odbcBundleReadIni(file.path(tempdir(), "missing.ini"))
    expect_equal(bundle, list())
 })
+
+test_that("connection list filter removes duplicates appropriately", {
+   # Test that duplicates are filtered appropriately
+   # Entries can be listed with a modified name if they have a matching installer
+   # - 'RStudio'
+   # - 'RStudio Pro Drivers'
+   # - 'Posit Pro Drivers'
+
+   to_duplicate <- .rs.scalarListFromList(list(
+      # connectionReadSnippets()
+      list(name="Athena", source="Snippet", type="Snippet"),
+      list(name="BigQuery", source="Snippet", type="Snippet"),
+      # connectionReadDSN()
+      list(name="Databricks", source="DSN", type="Snippet"),
+      list(name="MySQL", source="DSN", type="Snippet"),
+      list(name="PostgresSQL", source="DSN", type="Snippet"),
+      list(name="SQLServer", source="DSN", type="Snippet"),
+      # connectionReadPackages()
+      list(name="Spark", source="Package", type="Shiny", package="sparklyr"),
+      # connectionReadOdbc()
+      list(name="Snowflake", source="ODBC", type="Snippet", installer="Homebrew")
+   ))
+   duplicates_keep <- .rs.scalarListFromList(list(
+      # connectionReadOdbc()
+      list(name="Databricks", source="ODBC", type="Snippet", installer="RStudio Pro Drivers"),
+      list(name="MySQL", source="ODBC", type="Snippet", installer="RStudio"),
+      list(name="PostgresSQL", source="ODBC", type="Snippet", installer="Posit Pro Drivers"),
+      # connectionReadInstallers()
+      list(name="SQLServer", source="Snippet", type="Install", subtype="Odbc")
+   ))
+   duplicates_reject <- .rs.scalarListFromList(list(
+      # connectionReadSnippets()
+      list(name="Snowflake", source="Snippet", type="Snippet"),
+      # connectionReadDSN()
+      list(name="Athena", source="DSN", type="Snippet"),
+      # connectionReadOdbc()
+      list(name="Spark", source="ODBC", type="Snippet", installer="AWS"),
+      list(name="Databricks", source="ODBC", type="Snippet"),
+      list(name="Athena", source="ODBC", type="Snippet", installer="apt"),
+      # connectionReadPackageInstallers()
+      list(name="BigQuery", source="Snippet", type="Install", subtype="Package")
+   ))
+
+   connections <- c(to_duplicate, duplicates_keep, duplicates_reject)
+   connectionList <- .rs.connectionListFilter(connections)
+
+   expect_length(connectionList, length(to_duplicate) + length(duplicates_keep))
+   expect_in(to_duplicate, connectionList)
+
+   # duplicates with updated name
+   duplicates_expected <- .rs.scalarListFromList(lapply(duplicates_keep, function(entry) {
+      entry$name <- paste(entry$name, .rs.connectionOdbcRStudioDriver(), sep = "")
+      entry
+   }))
+   expect_in(duplicates_expected, connectionList)
+
+   # duplicates that should be removed
+   expect_false(any(duplicates_reject %in% connectionList))
+})

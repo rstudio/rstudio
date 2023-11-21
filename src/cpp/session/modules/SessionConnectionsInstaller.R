@@ -516,7 +516,7 @@
    )
    
    osExtension <- osExtensions[[.rs.odbcBundleOsName()]]
-   driverName <- gsub(paste(" |", trimws(.rs.connectionOdbcRStudioDriver()), sep = ""), "", name)
+   driverName <- .rs.connectionStripRStudioDriver(name)
    
    if (is.null(libraryPattern) || nchar(libraryPattern) == 0) {
       libraryPattern <- paste(
@@ -573,6 +573,7 @@
    md5 = NULL,
    version = "") {
 
+   name <- .rs.connectionStripRStudioDriver(name)
    installPath <- file.path(
       normalizePath(installPath, mustWork = FALSE),
       tolower(name)
@@ -611,5 +612,9 @@
 })
 
 .rs.addFunction("connectionOdbcRStudioDriver", function() {
-   " with RStudio Driver"
+   " with Posit Driver"
+})
+
+.rs.addFunction("connectionStripRStudioDriver", function(connection) {
+   gsub(paste(" |", trimws(.rs.connectionOdbcRStudioDriver()), sep = ""), "", connection)
 })
