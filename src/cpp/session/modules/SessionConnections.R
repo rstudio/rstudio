@@ -527,20 +527,27 @@ options(
    do.call(rbind, lapply(registryEntriesValue, function(e) data.frame(e, stringsAsFactors = FALSE)))
 })
 
-.rs.addFunction("connectionReadOdbcEntry", function(drivers, uniqueDriverNames, driver) {
+.rs.addFunction("connectionReadOdbcEntry", function(drivers, driver) {
    tryCatch({
-      currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
-      driverInstaller <- drivers[drivers$attribute == "Installer" & drivers$name == driver, ]
-      driverId <- gsub(.rs.connectionOdbcRStudioDriver(), "", driver)
+      currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]$value
+      driverInstaller <- drivers[drivers$attribute == "Installer" & drivers$name == driver, ]$value
+      driverId <- .rs.connectionStripRStudioDriver(driver)
 
-      basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
-      snippetsFile <- file.path(
-         basePath,
-         tolower(driver),
-         "snippets",
-         paste(tolower(driverId), ".R", sep = "")
-      )
-      
+      # Instead of assuming the location of the snippets directory, we instead
+      # walk up the directory tree to find the snippets directory
+      prevDir <- NULL
+      walkDir <- dirname(currentDriver)
+      while (!identical(walkDir, prevDir)) {
+         snippetsDir <- file.path(walkDir, "snippets")
+         if (dir.exists(snippetsDir)) {
+            break
+         }
+         prevDir <- walkDir
+         walkDir <- dirname(walkDir)
+      }
+
+      snippetsFile <- file.path(snippetsDir, paste(tolower(driverId), ".R", sep = ""))
+
       if (identical(file.exists(snippetsFile), TRUE)) {
          snippet <- paste(readLines(snippetsFile), collapse = "\n")
       }
@@ -552,13 +559,13 @@ options(
             sep = "")
       }
 
-      licenseFile <- file.path(dirname(currentDriver$value), "license.lock")
+      licenseFile <- file.path(dirname(currentDriver), "license.lock")
 
       iconData <- .Call("rs_connectionIcon", driverId)
       if (nchar(iconData) == 0)
          iconData <- .Call("rs_connectionIcon", "ODBC")
 
-      hasInstaller <- identical(driverInstaller$value, "RStudio")
+      hasInstaller <- identical(driverInstaller, "RStudio")
       warningMessage <- NULL
 
       if (hasInstaller) {
@@ -584,7 +591,7 @@ options(
          source = .rs.scalar("ODBC"),
          hasInstaller = .rs.scalar(hasInstaller),
          warning = .rs.scalar(warningMessage),
-         installer = .rs.scalar(driverInstaller$value)
+         installer = .rs.scalar(driverInstaller)
       )
    }, error = function(e) {
       warning(e$message)
@@ -607,7 +614,7 @@ options(
       uniqueDriverNames <- unique(drivers$name)
 
       lapply(uniqueDriverNames, function(driver) {
-         .rs.connectionReadOdbcEntry(drivers, uniqueDriverNames, driver)
+         .rs.connectionReadOdbcEntry(drivers, driver)
       })
    }
 })
@@ -696,7 +703,7 @@ options(
 
             snippet <- paste(
                "library(DBI)\n",
-               "con <- dbConnect(odbc::odbc(), \"${1:Data Source Name=", 
+               "con <- dbConnect(odbc::odbc(), dsn=\"${1:Data Source Name=",
                dataSource$name,
                "}\", timeout = 10)",
                sep = "")
@@ -749,18 +756,31 @@ options(
    })
 })
 
-.rs.addJsonRpcHandler("get_new_connection_context", function() {
-   connectionList <- c(
-      list(),
-      .rs.connectionReadSnippets(),         # add snippets to connections list
-      .rs.connectionReadDSN(),              # add ODBC DSNs to connections list
-      .rs.connectionReadPackages(),         # add packages to connections list
-      .rs.connectionReadOdbc(),             # add ODBC drivers to connections list
-      .rs.connectionReadInstallers(),       # add installers to connections list
-      .rs.connectionReadPackageInstallers() # add package installers to connection list
-   )
+.rs.addFunction("connectionListFilter", function(connectionList) {
+   # Function to filter and deduplicate entries in the connections list
+   # The list may include multiple entries that have the same name,
+   # which may be from the same source or from different sources altogether
+   #
+   # IMPORTANT: We reference and modify the connectionList entries in place,
+   # even though it is less readable so that returned entries are modified
    
    connectionList <- Filter(function(e) !is.null(e), connectionList)
+
+   # Installers that are managed by Pro Drivers or the RStudio IDE
+   pro_driver_installers <- c("RStudio Pro Drivers", "Posit Pro Drivers")
+   posit_installers <- c("RStudio", pro_driver_installers)
+   # Helpers for connection list deduplication
+   is_desktop_install <- function(entry) {
+      identical(as.character(entry$installer), "RStudio") ||
+      (
+         # set by connectionReadInstallers
+         identical(as.character(entry$type), "Install") &&
+         identical(as.character(entry$subtype), "Odbc")
+      )
+   }
+   is_pro_driver <- function(entry) {
+      toString(entry$installer) %in% pro_driver_installers
+   }
 
    # remove duplicate names, in order
    connectionNames <- list()
@@ -770,9 +790,9 @@ options(
          existingDriver <- connectionNames[[entryName]]
          withRStudioName <- paste(entryName, .rs.connectionOdbcRStudioDriver(), sep = "")
 
-         if (identical(as.character(connectionList[[i]]$type), "Install") &&
-             !identical(as.character(existingDriver$installer), "RStudio") &&
-             is.null(connectionNames[[withRStudioName]])) {
+         if (is.null(connectionNames[[withRStudioName]]) &&
+             !(toString(existingDriver$installer) %in% posit_installers) &&
+             (is_desktop_install(connectionList[[i]]) || is_pro_driver(connectionList[[i]]))) {
             connectionList[[i]]$name <- entryName <- .rs.scalar(withRStudioName)
          }
          else {
@@ -787,6 +807,23 @@ options(
    
    connectionList <- Filter(function(e) !identical(e$remove, TRUE), connectionList)
 
+   connectionList
+})
+
+.rs.addJsonRpcHandler("get_new_connection_context", function() {
+   connectionList <- c(
+      list(),
+      .rs.connectionReadSnippets(),         # add snippets to connections list
+      .rs.connectionReadDSN(),              # add ODBC DSNs to connections list
+      .rs.connectionReadPackages(),         # add packages to connections list
+      .rs.connectionReadOdbc(),             # add ODBC drivers to connections list
+      .rs.connectionReadInstallers(),       # add installers to connections list
+      .rs.connectionReadPackageInstallers() # add package installers to connection list
+   )
+   # Filter list to handle empty values and duplicate names
+   connectionList <- .rs.connectionListFilter(connectionList)
+
+   # Remove names before sending to the UI
    context <- list(
       connectionsList = unname(connectionList)
    )
@@ -795,6 +832,7 @@ options(
 })
 
 .rs.addJsonRpcHandler("get_new_odbc_connection_context", function(name, retries = 1) {
+   name <- .rs.connectionStripRStudioDriver(name)
    singleEntryFilter <- function(e) {
       identical(as.character(e$name), name)
    }
@@ -900,7 +938,7 @@ options(
    connectionContext <- Filter(function(e) {
       identical(
          as.character(e$name),
-         gsub(.rs.connectionOdbcRStudioDriver(), "", driverName)
+         .rs.connectionStripRStudioDriver(driverName)
       )
    }, .rs.connectionReadInstallers())[[1]]
 
@@ -955,6 +993,7 @@ options(
 
 .rs.addJsonRpcHandler("uninstall_odbc_driver", function(driverName) {
    tryCatch({
+      driverName <- .rs.connectionStripRStudioDriver(driverName)
       defaultInstallPath <- file.path(.rs.connectionOdbcInstallPath(), tolower(driverName))
       defaultInstallExists <- dir.exists(defaultInstallPath)
 
