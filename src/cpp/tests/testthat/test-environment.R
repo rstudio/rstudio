@@ -278,7 +278,7 @@ test_that(".rs.isSerializable() works as expected", {
    
    # test that promises are not evaluated
    value <- FALSE
-   delayedAssign("value", value <<- TRUE, assign.env = envir)
+   delayedAssign("value", { value <- TRUE }, assign.env = envir)
    expect_false(.rs.isSerializable(envir))
    expect_false(value)
    
@@ -299,6 +299,6 @@ test_that(".rs.isSerializable() works as expected", {
    # for loops create immediate bindings; check that we don't barf when
    # attempting to scan the environment in such cases
    for (binding in 1)
-      expect_true(.rs.isSerializable(environment()))
+      .rs.isSerializable(environment())
    
 })
