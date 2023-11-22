@@ -296,4 +296,9 @@ test_that(".rs.isSerializable() works as expected", {
    force(envir$active)
    expect_true(value)
    
+   # for loops create immediate bindings; check that we don't barf when
+   # attempting to scan the environment in such cases
+   for (binding in 1)
+      expect_true(.rs.isSerializable(environment()))
+   
 })
