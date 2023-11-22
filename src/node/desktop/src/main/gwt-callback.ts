@@ -463,6 +463,7 @@ export class GwtCallback extends EventEmitter {
             webPreferences: { sandbox: true },
             acceptFirstMouse: true,
           });
+          window.removeMenu(); // this isn't permanent but sufficient for these internal pages
 
           // ensure window can be closed with Ctrl+W (Cmd+W on macOS)
           window.webContents.on('before-input-event', (event, input) => {

@@ -18,10 +18,16 @@ import EventEmitter from 'events';
 
 import debounce from 'lodash/debounce';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { appState } from './app-state';
+import { appState, getEventBus } from './app-state';
 
 function menuIdFromLabel(label: string): string {
   return label.replace('&', '');
+}
+
+function setApplicationMenu(menu: Menu): void {
+  // console.log(`${getEventBus().listenerCount('appmenu-set')} listeners`);
+  Menu.setApplicationMenu(menu);
+  getEventBus().emit('appmenu-set');
 }
 
 /**
@@ -292,7 +298,7 @@ export class MenuCallback extends EventEmitter {
     if (appState().modalTracker.numModalsShowing() === 0) {
       // update only if there are no modals showing
       this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
-      Menu.setApplicationMenu(this.mainMenu);
+      setApplicationMenu(this.mainMenu);
     }
 
     this.isMenuSet = true;
@@ -502,14 +508,14 @@ export class MenuCallback extends EventEmitter {
             );
           });
         });
-        Menu.setApplicationMenu(disabledMenu);
+        setApplicationMenu(disabledMenu);
         this.mainMenu = disabledMenu;
       }
       return;
     }
     const restoreSavedMenu = enabled && appState().modalTracker.numModalsShowing() === 0;
     if (restoreSavedMenu && this.savedMenu) {
-      Menu.setApplicationMenu(this.savedMenu);
+      setApplicationMenu(this.savedMenu);
       this.mainMenu = this.savedMenu;
       this.savedMenu = null;
       return;
@@ -544,6 +550,6 @@ export class MenuCallback extends EventEmitter {
       addPlaceholderMenuItem(mainMenuStub, 'Window');
     }
     addPlaceholderMenuItem(mainMenuStub, 'Help');
-    Menu.setApplicationMenu(mainMenuStub);
+    setApplicationMenu(mainMenuStub);
   }
 }

@@ -24,6 +24,7 @@ import { LoggerCallback } from './logger-callback';
 import { PendingWindow } from './pending-window';
 import { WindowTracker } from './window-tracker';
 import { ModalDialogTracker } from './modal-dialog-tracker';
+import EventEmitter from 'events';
 
 /**
  * Global application state
@@ -51,6 +52,7 @@ export interface AppState {
   windowCreated(newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void;
   server?: Server;
   client?: Client;
+  eventBus?: EventEmitter;
 }
 
 let rstudio: AppState | null = null;
@@ -80,4 +82,15 @@ export function setApplication(app: Application): void {
  */
 export function clearApplicationSingleton(): void {
   rstudio = null;
+}
+
+/**
+ * Use this to broadcast events that any part of the code can subscribe to.
+ * @returns Global event bus
+ */
+export function getEventBus(): EventEmitter {
+  if (!appState().eventBus) {
+    appState().eventBus = new EventEmitter();
+  }
+  return appState().eventBus!;
 }
