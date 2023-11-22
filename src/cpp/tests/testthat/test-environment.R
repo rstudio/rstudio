@@ -277,6 +277,23 @@ test_that(".rs.isSerializable() works as expected", {
    expect_false(.rs.isSerializable(envir))
    
    # test that promises are not evaluated
-   delayedAssign("error", stop("error"), assign.env = envir)
+   value <- FALSE
+   delayedAssign("value", value <<- TRUE, assign.env = envir)
    expect_false(.rs.isSerializable(envir))
+   expect_false(value)
+   
+   # force the promise, just to confirm it does what we expect it to
+   force(envir$value)
+   expect_true(value)
+   
+   # test that active bindings are not evaluated
+   value <- FALSE
+   makeActiveBinding("active", function() value <<- TRUE, env = envir)
+   expect_false(.rs.isSerializable(envir))
+   expect_false(value)
+   
+   # trigger the active binding, just to confirm it does what we expected
+   force(envir$active)
+   expect_true(value)
+   
 })
