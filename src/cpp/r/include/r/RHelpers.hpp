@@ -16,6 +16,7 @@
 #ifndef R_HELPERS_HPP
 #define R_HELPERS_HPP
 
+#include <set>
 #include <utility>
 
 #define R_INTERNAL_FUNCTIONS
@@ -26,14 +27,18 @@
 namespace rstudio {
 namespace r {
 
+namespace internal {
+
 inline bool isImmediateBinding(SEXP frameSEXP)
 {
-   r::sxpinfo* infoSEXP = reinterpret_cast<r::sxpinfo*>(frameSEXP);
-   return infoSEXP->extra != 0;
+   r::sxpinfo* info = reinterpret_cast<r::sxpinfo*>(frameSEXP);
+   return info->extra != 0;
 }
 
 template <typename F>
-bool recursiveFind(SEXP valueSEXP, F&& callback)
+bool recursiveFindImpl(SEXP valueSEXP,
+                   std::set<SEXP>& visitedEnvironments,
+                   F&& callback)
 {
    // Apply callback to value.
    if (callback(valueSEXP))
@@ -45,7 +50,12 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
    
    case ENVSXP:
    {
-      // An R environment can either be hashed or unhashed.
+      // Avoid infinite recursion.
+      auto result = visitedEnvironments.insert(valueSEXP);
+      if (result.second == false)
+         return false;
+      
+      // An R environment can either be hashed, or unhashed.
       // A hashed environment contains a VECSXP of 'frame's.
       // An unhashed environment contains a single 'frame'.
       // A 'frame' here is just a pairlist (LISTSXP).
@@ -61,7 +71,7 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
                if (!isImmediateBinding(frameSEXP))
                {
                   SEXP elSEXP = CAR(frameSEXP);
-                  if (recursiveFind(elSEXP, std::forward<F>(callback)))
+                  if (recursiveFindImpl(elSEXP, visitedEnvironments, std::forward<F>(callback)))
                      return true;
                }
             }
@@ -75,7 +85,7 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
             if (!isImmediateBinding(frameSEXP))
             {
                SEXP elSEXP = CAR(frameSEXP);
-               if (recursiveFind(elSEXP, std::forward<F>(callback)))
+               if (recursiveFindImpl(elSEXP, visitedEnvironments, std::forward<F>(callback)))
                   return true;
             }
          }
@@ -90,7 +100,7 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
       for (R_xlen_t i = 0; i < n; i++)
       {
          SEXP elSEXP = VECTOR_ELT(valueSEXP, i);
-         if (recursiveFind(elSEXP, std::forward<F>(callback)))
+         if (recursiveFindImpl(elSEXP, visitedEnvironments, std::forward<F>(callback)))
             return true;
       }
       
@@ -103,7 +113,7 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
       for (; valueSEXP != R_NilValue; valueSEXP = CDR(valueSEXP))
       {
          SEXP elSEXP = CAR(valueSEXP);
-         if (recursiveFind(elSEXP, std::forward<F>(callback)))
+         if (recursiveFindImpl(elSEXP, visitedEnvironments, std::forward<F>(callback)))
             return true;
       }
       
@@ -114,6 +124,19 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
    
    return false;
 }
+
+} // end namespace internal
+
+template <typename F>
+bool recursiveFind(SEXP valueSEXP, F&& callback)
+{
+   std::set<SEXP> visitedEnvironments;
+   return internal::recursiveFindImpl(
+            valueSEXP,
+            visitedEnvironments,
+            std::forward<F>(callback));
+}
+
 
 } // end namespace r
 } // end namespace rstudio

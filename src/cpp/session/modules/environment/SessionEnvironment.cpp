@@ -167,15 +167,15 @@ bool isSerializableImpl(SEXP valueSEXP)
    if (valueSEXP == R_BaseEnv || valueSEXP == R_BaseNamespace)
       return true;
    
-   // Assume package environments + namespaces can be serialized.
    if (TYPEOF(valueSEXP) == ENVSXP)
    {
+      // Assume package environments + namespaces can be serialized.
       if (R_IsNamespaceEnv(valueSEXP) || R_IsPackageEnv(valueSEXP))
          return true;
    }
    
    // Check for 'known-safe' object classes.
-   auto safeClasses = { "data.frame", "igraph" };
+   auto safeClasses = { "data.frame", "grf", "igraph" };
    for (auto&& safeClass : safeClasses)
       if (Rf_inherits(valueSEXP, safeClass))
          return true;
