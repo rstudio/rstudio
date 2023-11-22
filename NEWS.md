@@ -21,6 +21,8 @@
 
 #### Posit Workbench
 - Removed link for opening sessions in RStudio Desktop Pro from Session Info dialog. (rstudio-pro#5263)
+- Increased the built-in nginx server's max connection limit, enabled nginx error logging and allow both to be configured (rstudio-pro#4652, rstudio-pro#4747, rstudio-pro#5452)
+- Improved Admin: The Logs tab now allows viewing other server log files. A new Server tab provides real-time performance info and on-the-fly adjustment of the rserver log-level (rstudio-pro#5212)
 
 ### Fixed
 #### RStudio
@@ -51,6 +53,9 @@
 - Fixed WSL terminals not starting on RStudio Desktop for Windows. (#13918)
 - Fixed an issue that prevented users from opening files and vignettes with non-ASCII characters in their paths. (#13886)
 - Fixed an issue where large, heavily-nested objects could slow down code execution in the R session. (#13965)
+- Fixed performance problem locating RStudio projects that live under a large directory tree (rstudio-pro#5435)
+- Session Protocol Debug in Tools -> Command Palette turns on log-level=debug when set (rstudio-pro#5095)
+- Reduce overhead of session suspension checks and writes to the executing file (#13534, rstudio-pro#4922)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
@@ -64,4 +69,8 @@
 - Fixed label on button for showing and hiding launcher details so it is available to screen reader. [accessibility] (rstudio-pro#5268)
 - Improved the accessible label on launcher job details buttons. [accessibility] (rstudio-pro#5270)
 - Fixed an issue where last sign in for user would be updated even if login fails due to license limits (rstudio-pro#5039)
-
+- Fixed bug where vscode and jupyter websockets might be intermittently closed in some circumstances, especially when auth-timeout-minutes=0 (rstudio-pro#5220)
+- Fixed routing problem with load balancing when not using a standard port (rstudio-pro#5367)
+- Fixed intermittent problem with load balancing and local launcher sessions for some features like workbench jobs (rstudio-pro#5451)
+- Reduce number of DB connections allocated in the pool when servers have many cpus (rstudio-pro#5210)
+- Fixed issue where homepage did not display RStudio session's 'Executing' status consistently (rstudio-pro#5141)
