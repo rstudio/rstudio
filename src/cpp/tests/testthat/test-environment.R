@@ -250,3 +250,33 @@ test_that(".rs.hasExternalPointer() finds xp in functions", {
    )
 
 })
+
+test_that(".rs.isSerializable() works as expected", {
+   
+   # some 'obvious' examples
+   expect_true(.rs.isSerializable(1))
+   expect_true(.rs.isSerializable(letters))
+   expect_true(.rs.isSerializable(mtcars))
+   expect_true(.rs.isSerializable(pairlist(1, 2)))
+   expect_true(.rs.isSerializable(matrix(1:4, nrow = 2)))
+   
+   # slightly less obvious
+   envir <- new.env(parent = emptyenv())
+   expect_true(.rs.isSerializable(envir))
+
+   # test that we avoid infinite recursion
+   envir$self <- envir
+   expect_true(.rs.isSerializable(envir))
+   
+   # external pointers can't be serialized
+   expect_false(.rs.isSerializable(.Call("rs_newTestExternalPointer", FALSE)))
+   expect_false(.rs.isSerializable(.Call("rs_newTestExternalPointer", TRUE)))
+
+   # put the extptr into an environment; no longer serializable
+   envir$extptr <- .Call("rs_newTestExternalPointer", FALSE)
+   expect_false(.rs.isSerializable(envir))
+   
+   # test that promises are not evaluated
+   delayedAssign("error", stop("error"), assign.env = envir)
+   expect_false(.rs.isSerializable(envir))
+})
