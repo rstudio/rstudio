@@ -508,7 +508,7 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   removeMenuEventListener(): void {
     if (this.removeMenuBound) {
-      getEventBus().removeListener('appmenu-set', this.removeMenuBound);
+      getEventBus().off('appmenu-set', this.removeMenuBound);
       this.removeMenuBound = undefined;
     }
   }
