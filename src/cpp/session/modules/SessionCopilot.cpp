@@ -827,6 +827,13 @@ Error startAgent()
    options.allowParentSuspend = true;
    options.exitWithParent = true;
    options.callbacksRequireMainThread = true; // TODO: It'd be nice to drop this requirement!
+   options.reportHasSubprocs = false;
+   
+#ifndef _WIN32
+   options.detachSession = true;
+#else
+   options.detachProcess = true;
+#endif
 
    // Run the Copilot agent. If RStudio has been configured with a custom
    // Copilot agent script, use that; otherwise, just run the agent directly.
