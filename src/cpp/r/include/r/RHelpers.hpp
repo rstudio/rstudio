@@ -36,6 +36,11 @@ inline bool isImmediateBinding(SEXP frameSEXP)
 }
 
 template <typename F>
+bool recursiveFindImpl(SEXP valueSEXP,
+                       std::set<SEXP>& visitedEnvironments,
+                       F&& callback);
+
+template <typename F>
 bool recursiveFindFrame(SEXP frameSEXP,
                         std::set<SEXP>& visitedEnvironments,
                         F&& callback)
