@@ -21,13 +21,21 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
 
+#include <r/RSxpInfo.hpp>
+
 namespace rstudio {
 namespace r {
+
+inline bool isImmediateBinding(SEXP frameSEXP)
+{
+   r::sxpinfo* infoSEXP = reinterpret_cast<r::sxpinfo*>(frameSEXP);
+   return infoSEXP->extra != 0;
+}
 
 template <typename F>
 bool recursiveFind(SEXP valueSEXP, F&& callback)
 {
-   // Apply result to value.
+   // Apply callback to value.
    if (callback(valueSEXP))
       return true;
    
@@ -37,6 +45,10 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
    
    case ENVSXP:
    {
+      // An R environment can either be hashed or unhashed.
+      // A hashed environment contains a VECSXP of 'frame's.
+      // An unhashed environment contains a single 'frame'.
+      // A 'frame' here is just a pairlist (LISTSXP).
       SEXP hashTableSEXP = HASHTAB(valueSEXP);
       if (hashTableSEXP != R_NilValue)
       {
@@ -46,9 +58,12 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
             SEXP frameSEXP = VECTOR_ELT(hashTableSEXP, i);
             for (; frameSEXP != R_NilValue; frameSEXP = CDR(frameSEXP))
             {
-               SEXP elSEXP = CAR(frameSEXP);
-               if (recursiveFind(elSEXP, std::forward<F>(callback)))
-                  return true;
+               if (!isImmediateBinding(frameSEXP))
+               {
+                  SEXP elSEXP = CAR(frameSEXP);
+                  if (recursiveFind(elSEXP, std::forward<F>(callback)))
+                     return true;
+               }
             }
          }
       }
@@ -57,9 +72,12 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
          SEXP frameSEXP = FRAME(valueSEXP);
          for (; frameSEXP != R_NilValue; frameSEXP = CDR(frameSEXP))
          {
-            SEXP elSEXP = CAR(frameSEXP);
-            if (recursiveFind(elSEXP, std::forward<F>(callback)))
-               return true;
+            if (!isImmediateBinding(frameSEXP))
+            {
+               SEXP elSEXP = CAR(frameSEXP);
+               if (recursiveFind(elSEXP, std::forward<F>(callback)))
+                  return true;
+            }
          }
       }
       
