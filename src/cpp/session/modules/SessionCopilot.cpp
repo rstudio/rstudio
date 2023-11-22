@@ -824,7 +824,6 @@ Error startAgent()
 
    // Set up process options
    core::system::ProcessOptions options;
-   options.environment = environment;
    options.allowParentSuspend = true;
    options.exitWithParent = true;
    options.callbacksRequireMainThread = true; // TODO: It'd be nice to drop this requirement!
@@ -834,9 +833,14 @@ Error startAgent()
    FilePath copilotAgentHelper = session::options().copilotAgentHelper();
    if (copilotAgentHelper.exists())
    {
+      FilePath agentPath = copilotAgentPath();
+      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_COPILOT_AGENT_PATH", agentPath.getAbsolutePath()));
+      options.environment = environment;
+
       error = module_context::processSupervisor().runProgram(
                copilotAgentHelper.getAbsolutePath(),
-               { nodePath.getAbsolutePath() },
+               {},
                options,
                callbacks);
    }
@@ -847,6 +851,8 @@ Error startAgent()
          return fileNotFoundError(agentPath, ERROR_LOCATION);
 
       options.workingDir = agentPath.getParent();
+      options.environment = environment;
+
       error = module_context::processSupervisor().runProgram(
                nodePath.getAbsolutePath(),
                { agentPath.getAbsolutePath() },
