@@ -36,9 +36,27 @@ inline bool isImmediateBinding(SEXP frameSEXP)
 }
 
 template <typename F>
+bool recursiveFindFrame(SEXP frameSEXP,
+                        std::set<SEXP>& visitedEnvironments,
+                        F&& callback)
+{
+   for (; frameSEXP != R_NilValue; frameSEXP = CDR(frameSEXP))
+   {
+      if (!isImmediateBinding(frameSEXP))
+      {
+         SEXP elSEXP = CAR(frameSEXP);
+         if (recursiveFindImpl(elSEXP, visitedEnvironments, std::forward<F>(callback)))
+            return true;
+      }
+   }
+   
+   return false;
+}
+
+template <typename F>
 bool recursiveFindImpl(SEXP valueSEXP,
-                   std::set<SEXP>& visitedEnvironments,
-                   F&& callback)
+                       std::set<SEXP>& visitedEnvironments,
+                       F&& callback)
 {
    // Apply callback to value.
    if (callback(valueSEXP))
@@ -50,7 +68,7 @@ bool recursiveFindImpl(SEXP valueSEXP,
    
    case ENVSXP:
    {
-      // Avoid infinite recursion.
+      // Avoid infinite recursion -- environments can contain themselves!
       auto result = visitedEnvironments.insert(valueSEXP);
       if (result.second == false)
          return false;
@@ -66,29 +84,15 @@ bool recursiveFindImpl(SEXP valueSEXP,
          for (R_xlen_t i = 0; i < numCells; i++)
          {
             SEXP frameSEXP = VECTOR_ELT(hashTableSEXP, i);
-            for (; frameSEXP != R_NilValue; frameSEXP = CDR(frameSEXP))
-            {
-               if (!isImmediateBinding(frameSEXP))
-               {
-                  SEXP elSEXP = CAR(frameSEXP);
-                  if (recursiveFindImpl(elSEXP, visitedEnvironments, std::forward<F>(callback)))
-                     return true;
-               }
-            }
+            if (recursiveFindFrame(frameSEXP, visitedEnvironments, std::forward<F>(callback)))
+               return true;
          }
       }
       else
       {
          SEXP frameSEXP = FRAME(valueSEXP);
-         for (; frameSEXP != R_NilValue; frameSEXP = CDR(frameSEXP))
-         {
-            if (!isImmediateBinding(frameSEXP))
-            {
-               SEXP elSEXP = CAR(frameSEXP);
-               if (recursiveFindImpl(elSEXP, visitedEnvironments, std::forward<F>(callback)))
-                  return true;
-            }
-         }
+         if (recursiveFindFrame(frameSEXP, visitedEnvironments, std::forward<F>(callback)))
+            return true;
       }
       
       break;
