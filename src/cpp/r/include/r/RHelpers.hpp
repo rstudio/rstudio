@@ -102,7 +102,7 @@ bool recursiveFindImpl(SEXP valueSEXP,
       
       break;
    }
-      
+
    case VECSXP:
    {
       R_xlen_t n = Rf_xlength(valueSEXP);

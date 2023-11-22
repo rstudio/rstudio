@@ -204,6 +204,9 @@ bool isGlobalEnvironmentSerializable()
    // Start building a new cache of serialized object state.
    SerializationCache newCache;
    
+   // Flag tracking whether we found an object which cannot be serialized.
+   bool allValuesSerializable = true;
+   
    // Iterate over values in the global environment, and compute whether they can be serialized.
    SEXP hashTableSEXP = HASHTAB(R_GlobalEnv);
    R_xlen_t n = Rf_xlength(hashTableSEXP);
@@ -223,6 +226,7 @@ bool isGlobalEnvironmentSerializable()
                ? s_serializationCache.at(valueSEXP)
                : isSerializable(valueSEXP);
          newCache[valueSEXP] = canBeSerialized;
+         allValuesSerializable = allValuesSerializable && canBeSerialized;
       }
    }
    
@@ -230,15 +234,8 @@ bool isGlobalEnvironmentSerializable()
    s_serializationCache.clear();
    s_serializationCache = newCache;
    
-   // Return true only if all variables in the global environment can be serialized.
-   for (auto&& entry : s_serializationCache)
-   {
-      bool canBeSerialized = entry.second;
-      if (!canBeSerialized)
-         return false;
-   }
-   
-   return true;
+   // Return true only if all values can be serialized.
+   return allValuesSerializable;
 }
 
 bool isValidSrcref(SEXP srcref)
