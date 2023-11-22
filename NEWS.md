@@ -54,6 +54,7 @@
 - Fixed WSL terminals not starting on RStudio Desktop for Windows. (#13918)
 - Fixed an issue that prevented users from opening files and vignettes with non-ASCII characters in their paths. (#13886)
 - Fixed performance problem locating RStudio projects that live under a large directory tree (rstudio-pro#5435)
+- Fixed an issue where the menubar would show on secondary windows if Alt key was pressed (#13973)
 - Session Protocol Debug in Tools -> Command Palette turns on log-level=debug when set (rstudio-pro#5095)
 - Reduce overhead of session suspension checks and writes to the executing file (#13534, rstudio-pro#4922)
 
