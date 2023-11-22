@@ -50,6 +50,7 @@
 - Fixed an issue preventing users from copying code from the History pane. (#3219)
 - Fixed WSL terminals not starting on RStudio Desktop for Windows. (#13918)
 - Fixed an issue that prevented users from opening files and vignettes with non-ASCII characters in their paths. (#13886)
+- Fixed an issue where large, heavily-nested objects could slow down code execution in the R session. (#13965)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
