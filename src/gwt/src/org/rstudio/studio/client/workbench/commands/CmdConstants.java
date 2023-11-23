@@ -1378,6 +1378,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Accept the next word of the current Copilot suggestion, if any.") // $NON-NLS-1$
     String copilotAcceptNextWordDesc();
     
+    // copilotToggleAutomaticCompletions
+    @DefaultStringValue("Copilot: Toggle Automatic Completions") // $NON-NLS-1$
+    String copilotToggleAutomaticCompletionsLabel();
+    @DefaultStringValue("Toggle Automatic Completions") // $NON-NLS-1$
+    String copilotToggleAutomaticCompletionsMenuLabel();
+    @DefaultStringValue("When Copilot is enabled, this can be used to temporarily toggle GitHub Copilot on and off in a session.") // $NON-NLS-1$
+    String copilotToggleAutomaticCompletionsDesc();
+    
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$
     String sourceNavigateBackMenuLabel();

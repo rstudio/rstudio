@@ -53,6 +53,7 @@
 - Fixed an issue preventing users from copying code from the History pane. (#3219)
 - Fixed WSL terminals not starting on RStudio Desktop for Windows. (#13918)
 - Fixed an issue that prevented users from opening files and vignettes with non-ASCII characters in their paths. (#13886)
+- Fixed an issue where large, heavily-nested objects could slow down code execution in the R session. (#13965)
 - Fixed performance problem locating RStudio projects that live under a large directory tree (rstudio-pro#5435)
 - Fixed an issue where the menubar would show on secondary windows if Alt key was pressed (#13973)
 - Session Protocol Debug in Tools -> Command Palette turns on log-level=debug when set (rstudio-pro#5095)

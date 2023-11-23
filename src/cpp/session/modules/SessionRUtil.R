@@ -201,3 +201,8 @@
 {
    .Call("rs_utf8ToSystem", as.character(text), PACKAGE = "(embedding)")
 })
+
+.rs.addFunction("isSerializable", function(object)
+{
+   .Call("rs_isSerializable", object, PACKAGE = "(embedding)")
+})
