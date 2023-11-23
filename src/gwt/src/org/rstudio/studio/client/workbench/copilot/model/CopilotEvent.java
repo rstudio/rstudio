@@ -27,6 +27,8 @@ public class CopilotEvent extends GwtEvent<CopilotEvent.Handler>
       COMPLETION_RECEIVED_NONE,
       COMPLETION_CANCELLED,
       COMPLETION_ERROR,
+      COMPLETIONS_ENABLED,
+      COMPLETIONS_DISABLED,
    }
    
    public CopilotEvent(CopilotEventType type, Object data)

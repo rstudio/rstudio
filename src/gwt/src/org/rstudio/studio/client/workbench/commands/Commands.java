@@ -738,6 +738,7 @@ public abstract class
    public abstract AppCommand copilotStatus();
    public abstract AppCommand copilotRequestCompletions();
    public abstract AppCommand copilotAcceptNextWord();
+   public abstract AppCommand copilotToggleAutomaticCompletions();
 
    // Internal
    public abstract AppCommand showDomElements();

@@ -3154,6 +3154,11 @@ public class DummyCommands extends Commands {
     public AppCommand copilotAcceptNextWord() {
         return null;
     }
+
+    @Override
+    public AppCommand copilotToggleAutomaticCompletions() {
+        return null;
+    }
     
 
 }

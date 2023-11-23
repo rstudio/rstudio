@@ -18,11 +18,14 @@
 
 #include <algorithm>
 
+#include <boost/container/flat_map.hpp>
+
 #include <core/Exec.hpp>
 #include <core/RecursionGuard.hpp>
 #include <core/system/LibraryLoader.hpp>
 
 #define INTERNAL_R_FUNCTIONS
+#include <r/RHelpers.hpp>
 #include <r/RJson.hpp>
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -55,6 +58,8 @@ namespace session {
 namespace modules { 
 namespace environment {
 
+namespace {
+
 // which language is currently active on the front-end? this state is
 // synchronized between client and server so that we can tell when to
 // active environment monitors for different languages
@@ -81,7 +86,9 @@ bool s_monitoring = true;
 // whether or not the global environment can safely be serialized
 bool s_isGlobalEnvironmentSerializable = true;
 
-namespace {
+// whether or not particular objects can be safely serialized
+using SerializationCache = boost::container::flat_map<SEXP, bool>;
+SerializationCache s_serializationCache;
 
 // by default, use regular 'INTEGER' accessor; 'INTEGER_OR_NULL' will be loaded
 // if provided by this version of R
@@ -126,17 +133,109 @@ bool isCompactRowNames(SEXP rowNamesInfoSEXP)
          INTEGER(rowNamesInfoSEXP)[0] == NA_INTEGER;
 }
 
+bool isSerializableImpl(SEXP valueSEXP)
+{
+   // Check for SEXP types that we know can be safely serialized.
+   switch (TYPEOF(valueSEXP))
+   {
+   
+   // Assume that promises can be safely serialized.
+   // (We just want to avoid evaluating them here.)
+   case PROMSXP:
+      return true;
+      
+   // Assume that functions can be serialized.
+   // Technically, a function's closure _could_ contain arbitrary objects,
+   // which might not be serializable, but that should be exceedingly rare.
+   case CLOSXP:
+      return true;
+      
+   }
+   
+   // Check for SEXP types that we know cannot be safely serialized.
+   switch (TYPEOF(valueSEXP))
+   {
+   
+   // External pointers and weak references cannot be serialized.
+   case EXTPTRSXP:
+   case WEAKREFSXP:
+      return false;
+      
+   }
+   
+   // Assume base environments can be serialized.
+   if (valueSEXP == R_BaseEnv || valueSEXP == R_BaseNamespace)
+      return true;
+   
+   if (TYPEOF(valueSEXP) == ENVSXP)
+   {
+      // Assume package environments + namespaces can be serialized.
+      if (R_IsNamespaceEnv(valueSEXP) || R_IsPackageEnv(valueSEXP))
+         return true;
+   }
+   
+   // Check for 'known-safe' object classes.
+   auto safeClasses = { "data.frame", "grf", "igraph" };
+   for (auto&& safeClass : safeClasses)
+      if (Rf_inherits(valueSEXP, safeClass))
+         return true;
+   
+   // Check for 'known-unsafe' object classes.
+   auto unsafeClasses = { "ArrowObject", "DBIConnection", "python.builtin.object" };
+   for (auto&& unsafeClass : unsafeClasses)
+      if (Rf_inherits(valueSEXP, unsafeClass))
+         return false;
+   
+   // Assume other objects can be serialized.
+   return true;
+}
+
+bool isSerializable(SEXP valueSEXP)
+{
+   // An object is serializable if it is not, or does not contain, any non-serializable objects.
+   return !r::recursiveFind(valueSEXP, [&](SEXP elSEXP)
+   {
+      return !isSerializableImpl(elSEXP);
+   });
+}
+
 bool isGlobalEnvironmentSerializable()
 {
-   bool serializable = false;
+   // Start building a new cache of serialized object state.
+   SerializationCache newCache;
    
-   Error error =
-         r::exec::RFunction(".rs.environment.isSerializable")
-         .call(&serializable);
-   if (error)
-      LOG_ERROR(error);
+   // Flag tracking whether we found an object which cannot be serialized.
+   bool allValuesSerializable = true;
    
-   return serializable;
+   // Iterate over values in the global environment, and compute whether they can be serialized.
+   SEXP hashTableSEXP = HASHTAB(R_GlobalEnv);
+   R_xlen_t n = Rf_xlength(hashTableSEXP);
+   for (R_xlen_t i = 0; i < n; i++)
+   {
+      SEXP frameSEXP = VECTOR_ELT(hashTableSEXP, i);
+      for (; frameSEXP != R_NilValue; frameSEXP = CDR(frameSEXP))
+      {
+         // Compute whether the value can be serialized.
+         // If we already have a cached value from a prior computation, use it.
+         //
+         // TODO: If an R environment is updated in-place with a value that
+         // makes it no longer serializable, we would fail to detect this.
+         // Is this okay? Or should we avoid caching results for environments?
+         SEXP valueSEXP = CAR(frameSEXP);
+         bool canBeSerialized = s_serializationCache.contains(valueSEXP)
+               ? s_serializationCache.at(valueSEXP)
+               : isSerializable(valueSEXP);
+         newCache[valueSEXP] = canBeSerialized;
+         allValuesSerializable = allValuesSerializable && canBeSerialized;
+      }
+   }
+   
+   // Set the new cache.
+   s_serializationCache.clear();
+   s_serializationCache = newCache;
+   
+   // Return true only if all values can be serialized.
+   return allValuesSerializable;
 }
 
 bool isValidSrcref(SEXP srcref)
@@ -506,6 +605,12 @@ SEXP rs_newTestExternalPointer(SEXP nullSEXP)
 {
    bool nullPtr = r::sexp::asLogical(nullSEXP);
    return r::sexp::makeExternalPtr(nullPtr ? nullptr : R_EmptyEnv, R_NilValue, R_NilValue);
+}
+
+SEXP rs_isSerializable(SEXP valueSEXP)
+{
+   bool result = isSerializable(valueSEXP);
+   return Rf_ScalarLogical(result);
 }
 
 // Construct a simulated source reference from a context containing a
@@ -1575,6 +1680,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_dim);
    RS_REGISTER_CALL_METHOD(rs_dumpContexts);
    RS_REGISTER_CALL_METHOD(rs_newTestExternalPointer);
+   RS_REGISTER_CALL_METHOD(rs_isSerializable);
 
    // subscribe to events
    using boost::bind;
