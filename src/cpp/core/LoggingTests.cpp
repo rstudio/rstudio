@@ -676,7 +676,7 @@ test_context("Logging")
       boost::replace_all(logFileContents, "INFO", "DEBUG");
       LOG_PASSTHROUGH_MESSAGE("mysource", logFileContents);
 
-      logFileContents.empty();
+      (void) logFileContents.empty();
       REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
       REQUIRE(logFileContents.find("DEBUG") == std::string::npos);
 
@@ -685,7 +685,7 @@ test_context("Logging")
       boost::replace_all(logFileContents, "[logging-tests-" + id + "]", "[subproc]");
       LOG_PASSTHROUGH_MESSAGE("mysource", logFileContents);
 
-      logFileContents.empty();
+      (void) logFileContents.empty();
       REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
 
       REQUIRE(logFileContents.find("WARNING") != std::string::npos);
