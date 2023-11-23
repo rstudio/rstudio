@@ -216,6 +216,10 @@ public class TextEditingTargetCopilotHelper
 
                display_.addCursorChangedHandler((event) ->
                {
+                  // Check if we've been toggled off
+                  if (!automaticCodeSuggestionsEnabled_)
+                     return;
+                           
                   // Allow one-time suppression of cursor change handler
                   if (suppressCursorChangeHandler_)
                   {
@@ -335,6 +339,24 @@ public class TextEditingTargetCopilotHelper
       });
    }
    
+   @Handler
+   public void onCopilotToggleAutomaticCompletions()
+   {
+      if (display_.isFocused())
+      {
+         automaticCodeSuggestionsEnabled_ = !automaticCodeSuggestionsEnabled_;
+         
+         if (automaticCodeSuggestionsEnabled_)
+         {
+            events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETIONS_ENABLED));
+         }
+         else
+         {
+            events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETIONS_DISABLED));
+         }
+      }
+   }
+   
    private void updateCompletion(String key)
    {
       int n = key.length();
@@ -378,6 +400,7 @@ public class TextEditingTargetCopilotHelper
    private boolean suppressCursorChangeHandler_;
    
    private CopilotCompletion activeCompletion_;
+   private boolean automaticCodeSuggestionsEnabled_ = true;
    
    
    // Injected ----

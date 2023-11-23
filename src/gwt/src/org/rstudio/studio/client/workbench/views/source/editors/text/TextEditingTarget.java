@@ -1861,6 +1861,18 @@ public class TextEditingTarget implements
                            "Copilot: " + message);
                      break;
                      
+                  case COMPLETIONS_ENABLED:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           "Copilot: Automatic completions have been enabled.");
+                     break;
+                     
+                  case COMPLETIONS_DISABLED:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           "Copilot: Automatic completions have been disabled.");
+                     break;
+                     
                   }
                }
             });
