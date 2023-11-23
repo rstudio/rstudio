@@ -38,9 +38,10 @@ import { createObjectCsvWriter } from 'csv-writer'
  *    "deleted"   -- this string was in "old" but no longer in "new"
  *    "unchanged" -- no changes between "old" and "new" (in English)
  *    "changed"    - English value changed between "old" and "new"
+ *    "untranslated" - this string is in "old" and "new" but not translated into French
  */
 
-type StringStatus = 'added' | 'deleted' | 'unchanged' | 'changed' ;
+type StringStatus = 'added' | 'deleted' | 'unchanged' | 'changed' | 'untranslated' ;
 
 /**
  * Information gathered on one localized string
@@ -85,6 +86,8 @@ async function main() {
     process.exit(1);
   }
 
+  const onlyChanged = process.argv.includes("--only-changed");
+
   // discover property files and load their strings into memory
   const [oldENPropFiles, newENPropFiles, oldFRPropFiles, newFRPropFiles] = await loadPropertyFiles(oldRepo, newRepo);
 
@@ -106,25 +109,33 @@ async function main() {
       let currentFRString: string = '';
 
       if (oldENPropFile !== undefined) {
-        // did this string exist before?
-        if (oldENPropFile.strings.has(stringId)) {
-          oldENString = oldENPropFile.strings.get(stringId) ?? '';
-
-          // are English strings the same?
-          if (oldENString === newENString) {
-            status = 'unchanged';
-            // continue; // uncomment to exclude unchanged strings
-          } else {
-            status = 'changed';
-          }
-        }
-
         // get the French values
         if (oldFRPropFile?.strings.has(stringId)) {
           oldFRString = oldFRPropFile.strings.get(stringId) ?? '';
         }
         if (newFRPropFile?.strings.has(stringId)) {
           currentFRString = newFRPropFile.strings.get(stringId) ?? '';
+        }
+
+        if (stringId === 'quartoBlogTitle') {
+          console.log(`quartoBlogTitle: ${newENString} ${oldENPropFile.strings.get(stringId) ?? ''}`)
+        }
+
+        // did this string exist before?
+        if (oldENPropFile.strings.has(stringId)) {
+          oldENString = oldENPropFile.strings.get(stringId) ?? '';
+
+          // are English strings the same?
+          if (oldENString === newENString && currentFRString.length > 0) {
+            // at least the English is unchanged, French may not have been updated if English did change last time
+            status = 'unchanged';
+            if (onlyChanged)
+              continue;
+          } else if (currentFRString.length > 0) {
+            status = 'changed';
+          } else {
+            status = 'untranslated';
+          }
         }
       }
       report.push({
