@@ -2057,6 +2057,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Request Completions"
         desc="Accept the next word of the current Copilot suggestion, if any."/>
    
+   <cmd id="copilotToggleAutomaticCompletions"
+        label="Copilot: Toggle Automatic Completions"
+        menuLabel="Toggle Automatic Completions"
+        desc="When Copilot is enabled, this can be used to temporarily toggle GitHub Copilot on and off in a session."/>
+   
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>
