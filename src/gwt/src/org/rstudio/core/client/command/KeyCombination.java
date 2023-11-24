@@ -17,7 +17,7 @@ package org.rstudio.core.client.command;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Version;
 import org.rstudio.core.client.dom.EventProperty;
 
@@ -33,8 +33,6 @@ public class KeyCombination
       int keyCode = event.getKeyCode();
       int modifiers = KeyboardShortcut.getModifierValue(event);
 
-      Debug.logToConsole("key: " + key + " keyCode: " + keyCode + " modifiers: " + modifiers);
-
       // Unfortunately, the 'key' event property is corrupt with
       // certain versions of Qt. We need to check that we've received
       // a valid 'key' entry; if it's not valid, then we infer the correct
@@ -45,15 +43,12 @@ public class KeyCombination
       // https://bugreports.qt.io/browse/QTBUG-81783
       if (requiresQtWebEngineWorkaround())
       {
-         Debug.logToConsole("Using Qt workaround");
          key = KeyboardHelper.keyNameFromKeyCode(keyCode);
       }
 
       key_ = key;
-      Debug.logToConsole("adjusted key: " + key_);
-      keyCode_ = normalizeKeyCode(keyCode);
+      keyCode_ = normalizeKeyCode(keyCode, key_);
       modifiers_ = modifiers;
-      Debug.logToConsole("normalized keycode: " + keyCode_);
    }
 
    public KeyCombination(String key,
@@ -61,7 +56,7 @@ public class KeyCombination
                          int modifiers)
    {
       key_ = key;
-      keyCode_ = normalizeKeyCode(keyCode);
+      keyCode_ = normalizeKeyCode(keyCode, key);
       modifiers_ = modifiers;
    }
 
@@ -216,7 +211,7 @@ public class KeyCombination
       return Version.compare(version, "5.15.0") < 0;
    }
 
-   private static int normalizeKeyCode(int keyCode)
+   private static int normalizeMinusKeyCode(int keyCode)
    {
       switch (keyCode)
       {
@@ -226,8 +221,29 @@ public class KeyCombination
 
       default:
          return keyCode;
-
       }
+   }
+
+   private static int normalizeKeyCode(int keyCode, String key)
+   {
+      keyCode = normalizeMinusKeyCode(keyCode);
+
+      // We shouldn't be using keycodes: they assume the US English keyboard layout.
+      // Switching over entirely is a big project, so for now we'll map some specific 
+      // keys back to their US keyboard keycodes.
+
+      // Alt+- is default for "insert assignment operator" so map the "-" back to US keyboard.
+      //
+      // Historical curiousity: Qt did some of this for us under the covers, thus the
+      // insert assignment operator worked on Qt desktop but not on Server or Electron.
+      //
+      // https://github.com/rstudio/rstudio/issues/12457
+      if (StringUtil.equals(key, "-"))
+      {
+         keyCode = 189;
+      }
+
+      return keyCode;
    }
 
    private final String key_;
