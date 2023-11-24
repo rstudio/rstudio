@@ -17,6 +17,7 @@ package org.rstudio.core.client.command;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Version;
 import org.rstudio.core.client.dom.EventProperty;
 
@@ -32,6 +33,8 @@ public class KeyCombination
       int keyCode = event.getKeyCode();
       int modifiers = KeyboardShortcut.getModifierValue(event);
 
+      Debug.logToConsole("key: " + key + " keyCode: " + keyCode + " modifiers: " + modifiers);
+
       // Unfortunately, the 'key' event property is corrupt with
       // certain versions of Qt. We need to check that we've received
       // a valid 'key' entry; if it's not valid, then we infer the correct
@@ -42,13 +45,15 @@ public class KeyCombination
       // https://bugreports.qt.io/browse/QTBUG-81783
       if (requiresQtWebEngineWorkaround())
       {
+         Debug.logToConsole("Using Qt workaround");
          key = KeyboardHelper.keyNameFromKeyCode(keyCode);
       }
 
       key_ = key;
+      Debug.logToConsole("adjusted key: " + key_);
       keyCode_ = normalizeKeyCode(keyCode);
       modifiers_ = modifiers;
-
+      Debug.logToConsole("normalized keycode: " + keyCode_);
    }
 
    public KeyCombination(String key,
@@ -215,7 +220,6 @@ public class KeyCombination
    {
       switch (keyCode)
       {
-
       case 109: // NumPad minus
       case 173: // Firefox hyphen
          return 189;
