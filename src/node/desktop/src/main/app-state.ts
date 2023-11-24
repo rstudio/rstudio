@@ -25,7 +25,7 @@ import { PendingWindow } from './pending-window';
 import { WindowTracker } from './window-tracker';
 import { ModalDialogTracker } from './modal-dialog-tracker';
 import { EventBusTypes } from './event-bus-types';
-import { TypedEventEmitter } from './type-event-emitter';
+import { TypedEventEmitter } from './typed-event-emitter';
 
 /**
  * Global application state
