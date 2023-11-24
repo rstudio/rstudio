@@ -55,6 +55,7 @@
 - Fixed an issue where large, heavily-nested objects could slow down code execution in the R session. (#13965)
 - Fixed performance problem locating RStudio projects that live under a large directory tree (rstudio-pro#5435)
 - Session Protocol Debug in Tools -> Command Palette turns on log-level=debug when set (rstudio-pro#5095)
+- Fixed shortcut for inserting an assignment operator to work on non-US English keyboards (#12457)
 - Reduce overhead of session suspension checks and writes to the executing file (#13534, rstudio-pro#4922)
 
 #### Posit Workbench
