@@ -53,7 +53,11 @@
 #include <sys/prctl.h>
 #include <sys/sysinfo.h>
 #include <linux/kernel.h>
+#include <linux/keyctl.h>
 #include <dirent.h>
+#include <stdarg.h>
+#include <sys/syscall.h>
+
 #endif
 
 #include <boost/thread.hpp>
@@ -2619,6 +2623,47 @@ Error restorePriv()
    return posix::restorePrivileges();
 }
 
+
+/*
+ * This logic mirrors the code in the PAM module: pam_keyinit.so
+ * It's needed to clean diassociate a child process in a "subtitute user" operation (i.e. su -l as opposed to su that
+ * preserves the keyring). It's needed to prevent users from inadvertently adding keys to the session keyring through
+ * commands like 'cifscred add' that are then shared with other users. Linux cleans up keys when the process exits.
+ * Use 'keyctl show' to see the keyrings of a session and 'cat /proc/keys' to see the keys on a system.
+ */
+void resetKeyring()
+{
+#ifdef __linux__
+   // just in case permanentlyDropPrivs was used to change back to root for some reason
+   if (realUserIsRoot())
+      return;
+   /*
+    * Create a new session keyring, replacing the one owned by root. When the name arg is NULL, an anonymous keyring
+    * is created and attached to the process.
+    */
+   int ret = syscall(__NR_keyctl,
+                     KEYCTL_JOIN_SESSION_KEYRING,
+                     NULL);
+   if (ret < 0)
+   {
+      LOG_ERROR_MESSAGE("Unable to create new session keyring - errno: " + std::to_string(errno));
+      return;
+   }
+
+   /* Now link the new session keyring to the current user's keyring */
+   ret = syscall(__NR_keyctl,
+                 KEYCTL_LINK,
+                 KEY_SPEC_USER_KEYRING,
+                 KEY_SPEC_SESSION_KEYRING);
+
+   if (ret < 0)
+   {
+      LOG_ERROR_MESSAGE("Unable to link new session keyring with the user keyring - errno: " + std::to_string(errno));
+      return;
+   }
+#endif
+}
+
 // privilege manipulation for systems that support setresuid/getresuid
 #if defined(HAVE_SETRESUID)
 
@@ -2629,6 +2674,8 @@ Error permanentlyDropPriv(const std::string& newUsername)
 
 Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
 {
+   bool isRootAtStart = realUserIsRoot();
+
    // get user info
    User user;
    Error error = getUserFromUsername(newUsername, user);
@@ -2695,6 +2742,10 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    if (ruid != user.getUserId() || euid != user.getUserId() || suid != user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
 
+   // just in case this method is ever called not as root
+   if (isRootAtStart)
+      resetKeyring();
+
    // success
    return Success();
 }
@@ -2709,6 +2760,8 @@ Error permanentlyDropPriv(const std::string& newUsername)
 
 Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
 {
+   bool isRootAtStart = realUserIsRoot();
+
    // clear error state
    errno = 0;
 
@@ -2763,6 +2816,10 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    // verify
    if (::getuid() != user.getUserId() || ::geteuid() != user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
+
+   // just in case this method is ever called not as root
+   if (isRootAtStart)
+      resetKeyring();
 
    // success
    return Success();
