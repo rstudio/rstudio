@@ -56,6 +56,7 @@
 - Fixed performance problem locating RStudio projects that live under a large directory tree (rstudio-pro#5435)
 - Session Protocol Debug in Tools -> Command Palette turns on log-level=debug when set (rstudio-pro#5095)
 - Reduce overhead of session suspension checks and writes to the executing file (#13534, rstudio-pro#4922)
+- Reset session keyring on linux platforms to ensure credentials added in a session are isolated (rstudio-pro#5485)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
