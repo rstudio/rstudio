@@ -53,7 +53,16 @@
 #include <sys/prctl.h>
 #include <sys/sysinfo.h>
 #include <linux/kernel.h>
-#include <linux/keyctl.h>
+// Some data structures here don't compile on rhel8 due to 'private' being used as a symbol???
+// so defining them again here
+//#include <linux/keyctl.h>
+
+#define KEYCTL_JOIN_SESSION_KEYRING     1       /* join or start named session keyring */
+#define KEYCTL_LINK                     8       /* link a key into a keyring */
+
+#define KEY_SPEC_SESSION_KEYRING        -3      /* - key ID for session-specific keyring */
+#define KEY_SPEC_USER_KEYRING           -4      /* - key ID for UID-specific keyring */
+
 #include <dirent.h>
 #include <stdarg.h>
 #include <sys/syscall.h>
