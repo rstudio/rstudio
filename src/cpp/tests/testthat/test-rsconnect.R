@@ -65,10 +65,10 @@ test_that(".rs.rsconnectDeployList() includes _quarto.yml and _metadata.yml file
    writeLines("---\ntitle: quarto document\n---\n", sub)
 
    res <- .rs.rsconnectDeployList(main, FALSE, main)[[1L]]
-   expect_true(!any(grepl(res, "_quarto.yml")))
+   expect_true(!any(grepl("_quarto.yml", res)))
 
    res <- .rs.rsconnectDeployList(sub, FALSE, sub)[[1L]]
-   expect_true(!any(grepl(res, "_quarto.yml")))
+   expect_true(!any(grepl("_quarto.yml", res)))
 
    #---- quarto file in a quarto project
    writeLines('project:\n  title: "test"\n', file.path(tf, "_quarto.yml"))

@@ -291,6 +291,8 @@
 
 .rs.addFunction("docDeployList", function(target, asMultipleDoc, quartoSrcFile) {
   file_list <- c()
+  target <- normalizePath(target)
+  quartoSrcFile <- normalizePath(quartoSrcFile)
 
   # if deploying multiple documents, find all the files in the with a matching
   # extension; otherwise, just use the single document we were given
