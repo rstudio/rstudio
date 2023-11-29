@@ -27,7 +27,9 @@ void Options::addOverlayOptions(
                        boost::program_options::options_description* pRSession,
                        boost::program_options::options_description* pDatabase,
                        boost::program_options::options_description* pAuth,
-                       boost::program_options::options_description* pMonitor)
+                       boost::program_options::options_description* pMonitor,
+                       boost::program_options::options_description* pDatabricks,
+                       boost::program_options::options_description* pUserProvisioning)
 {
 }
 
@@ -49,11 +51,6 @@ std::string Options::gwtPrefix() const
 void sessionProcessConfigOverlay(core::system::Options* pArgs,
                                  core::system::Options* pEnvironment)
 {
-}
-
-std::string Options::rsessionExecutable() const
-{
-   return "rsession";
 }
 
 } // namespace server

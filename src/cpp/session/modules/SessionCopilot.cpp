@@ -838,8 +838,11 @@ Error startAgent()
    // Run the Copilot agent. If RStudio has been configured with a custom
    // Copilot agent script, use that; otherwise, just run the agent directly.
    FilePath copilotAgentHelper = session::options().copilotAgentHelper();
-   if (copilotAgentHelper.exists())
+   if (!copilotAgentHelper.isEmpty())
    {
+      if (!copilotAgentHelper.exists())
+         return fileNotFoundError(copilotAgentHelper, ERROR_LOCATION);
+      
       FilePath agentPath = copilotAgentPath();
       environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
       environment.push_back(std::make_pair("RSTUDIO_COPILOT_AGENT_PATH", agentPath.getAbsolutePath()));
