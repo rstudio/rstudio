@@ -24,6 +24,7 @@
 - Removed link for opening sessions in RStudio Desktop Pro from Session Info dialog. (rstudio-pro#5263)
 - Increased the built-in nginx server's max connection limit, enabled nginx error logging and allow both to be configured (rstudio-pro#4652, rstudio-pro#4747, rstudio-pro#5452)
 - Improved Admin: The Logs tab now allows viewing other server log files. A new Server tab provides real-time performance info and on-the-fly adjustment of the rserver log-level (rstudio-pro#5212)
+- Added requestTime to nginx access logs when rserver.conf's server-access-log=1. Format for rserver-http-access.log has changed to add a request time field useful for seeing how long it takes rserver to respond to requests. WARNING: if you have code that processes the log file, expect a new field.
 
 ### Fixed
 #### RStudio
@@ -57,6 +58,7 @@
 - Fixed performance problem locating RStudio projects that live under a large directory tree (rstudio-pro#5435)
 - Session Protocol Debug in Tools -> Command Palette turns on log-level=debug when set (rstudio-pro#5095)
 - Reduce overhead of session suspension checks and writes to the executing file (#13534, rstudio-pro#4922)
+- Reset session keyring on linux platforms to ensure credentials added in a session are isolated (rstudio-pro#5485)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
