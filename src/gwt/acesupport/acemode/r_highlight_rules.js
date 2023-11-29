@@ -1304,6 +1304,13 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
     });
 
+    // similarly, we need to be able to exit multiline strings
+    this.$rules["yaml-multiline-string"].unshift({
+      token: "text",
+      regex: /^\s*(?!#)/,
+      next: "start"
+    });
+
     this.$rules["yaml-start"].unshift({
       token: "comment.doc.tag",
       regex: "^#[|]",
