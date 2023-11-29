@@ -47,3 +47,6 @@ specify that it is comma-separated and stored as Unicode / UTF-8, otherwise the 
 may be garbled.
 
 The file will load directly into Apple Numbers if you have that handy.
+
+### Arguments
+--only-changed - writes only strings that have changed or been added

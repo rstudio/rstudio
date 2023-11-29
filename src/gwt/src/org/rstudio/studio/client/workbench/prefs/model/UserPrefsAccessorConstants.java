@@ -400,7 +400,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeCompletionOtherEnum_always();
    @DefaultStringValue("When triggered")
    String codeCompletionOtherEnum_triggered();
-   @DefaultStringValue("Manually (ctrl+space)")
+   @DefaultStringValue("Manually (Ctrl+Space)")
    String codeCompletionOtherEnum_manual();
 
    /**

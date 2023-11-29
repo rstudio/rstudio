@@ -86,8 +86,6 @@ public:
       return overlayOptions_[name];
    }
 
-   std::string rsessionExecutable() const;
-
 private:
    std::string monitorSharedSecret_;
    bool serverOffline_;
@@ -104,7 +102,9 @@ private:
                           boost::program_options::options_description* pRSession,
                           boost::program_options::options_description* pDatabase,
                           boost::program_options::options_description* pAuth,
-                          boost::program_options::options_description* pMonitor);
+                          boost::program_options::options_description* pMonitor,
+                          boost::program_options::options_description* pDatabricks,
+                          boost::program_options::options_description* pUserProvisioning);
 
    bool validateOverlayOptions(std::string* pErrMsg, std::ostream& osWarnings);
 
