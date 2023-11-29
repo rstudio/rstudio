@@ -448,4 +448,12 @@ public class RProjectConfig extends JavaScriptObject
    public native final void setZoteroLibraries(JsArrayString libraries) /*-{
       this.zotero_libraries = libraries;
    }-*/;
+
+   public native final String getProjectName() /*-{
+      return this.project_name;
+   }-*/;
+
+   public native final void setProjectName(String projectName) /*-{
+      this.project_name = projectName;
+   }-*/;
 }

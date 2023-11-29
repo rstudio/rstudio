@@ -417,7 +417,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
       configJson["zotero_libraries"] = json::toJsonArray(config.zoteroLibraries.get());
    else
       configJson["zotero_libraries"] = json::Value(); // null
-
+   configJson["project_name"] = config.projectName;
    return configJson;
 }
 
@@ -735,7 +735,13 @@ Error writeProjectConfig(const json::Object& configJson)
                             "spelling_dictionary", config.spellingDictionary);
    if (error)
       return error;
-   
+
+   // project name
+   error = json::readObject(configJson,
+                            "project_name", config.projectName);
+   if (error)
+      return error;
+  
    // write the config
    error = r_util::writeProjectFile(s_projectContext.file(),
                                     ProjectContext::buildDefaults(),
