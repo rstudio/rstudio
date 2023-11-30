@@ -102,8 +102,13 @@ public class DesktopHooks
    }-*/;
 
    
-   String getActiveProjectDir()
+   String getActiveProjectName()
    {
+      // Prefer user-provided name over the folder name
+      if (!StringUtil.isNullOrEmpty(workbenchContext_.getActiveProjectName()))
+      {
+         return workbenchContext_.getActiveProjectName();
+      }
       if (workbenchContext_.getActiveProjectDir() != null)
       {
          if (pUIPrefs_.get().fullProjectPathInWindowTitle().getValue())

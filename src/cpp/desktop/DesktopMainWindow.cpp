@@ -359,15 +359,15 @@ void MainWindow::onWorkbenchInitialized()
    workbenchInitialized_ = true;
 
    webPage()->runJavaScript(
-            QStringLiteral("window.desktopHooks.getActiveProjectDir()"),
-            [&](QVariant qProjectDir)
+            QStringLiteral("window.desktopHooks.getActiveProjectName()"),
+            [&](QVariant qProjectName)
    {
-      QString projectDir = qProjectDir.toString();
+      QString projectName = qProjectName.toString();
 
       if (projectDir.length() > 0)
       {
-         setWindowTitle(tr("%1 - %2").arg(projectDir).arg(desktop::activation().editionName()));
-         DockTileView::setLabel(projectDir);
+         setWindowTitle(tr("%1 - %2").arg(projectName).arg(desktop::activation().editionName()));
+         DockTileView::setLabel(projectName);
       }
       else
       {
