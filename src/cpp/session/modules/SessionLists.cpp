@@ -42,7 +42,8 @@ using namespace collection;
 
 // list names
 const char * const kFileMru = "file_mru";
-const char * const kProjectMru = kProjectMruList;
+const char * const kProjectMru = kProjectMruList; // legacy, replaced by kProjectNameMru
+const char * const kProjectNameMru = kProjectNameMruList;
 const char * const kHelpHistory = "help_history_links";
 const char * const kUserDictionary = "user_dictionary";
 const char * const kPlotPublishMru = "plot_publish_mru";
@@ -296,6 +297,7 @@ Error initialize()
    // register lists / max sizes
    s_lists[kFileMru] = 15;
    s_lists[kProjectMru] = 15;
+   s_lists[kProjectNameMru] = 15;
    s_lists[kHelpHistory] = 15;
    s_lists[kPlotPublishMru] = 15;
    s_lists[kCommandPaletteMru] = 10;

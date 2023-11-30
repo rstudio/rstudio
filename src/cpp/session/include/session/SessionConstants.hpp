@@ -114,7 +114,12 @@
 
 #define kMonitoredPath      "monitored"
 #define kListsPath          "lists"
+
+// legacy, stored only the project file path
 #define kProjectMruList     "project_mru"
+
+// stores project file path and optional name separated by a tab, e.g. (path[\tname])
+#define kProjectNameMruList "project_name_mru" 
 
 #define kServerHomeSetting     "showUserHomePage"
 #define kServerHomeAlways      "always"

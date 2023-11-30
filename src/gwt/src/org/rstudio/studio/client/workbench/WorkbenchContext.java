@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench;
 
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -186,6 +187,29 @@ public class WorkbenchContext
       return activeProjectDir_;
    }
 
+   /**
+    * The Project Name (for display purposes) defaults to the name of the project directory, 
+    * but can be customized by the user.
+    *
+    * @return the customized project name (or an empty string if not customized)
+    */
+   public String getActiveProjectName()
+   {
+      if (activeProjectName_ == null)
+      {
+          SessionInfo sessionInfo = session_.getSessionInfo();
+         if (sessionInfo != null)
+         {
+            activeProjectName_ = sessionInfo.getActiveProjectName();
+         }
+         if (StringUtil.isNullOrEmpty(activeProjectName_))
+         {
+            activeProjectName_ = "";
+         }
+      }
+      return activeProjectName_;
+   }
+
    public FileSystemItem getDefaultWorkingDir()
    {
       if (defaultWorkingDir_ == null)
@@ -228,11 +252,15 @@ public class WorkbenchContext
       FileSystemItem projDir = getActiveProjectDir();
       if (projDir != null)
       {
-         String title;
-         if (pUserPrefs_.get().fullProjectPathInWindowTitle().getValue())
-            title = projDir.getPath();
-         else
+         String title = getActiveProjectName();
+         if (StringUtil.isNullOrEmpty(title))
+         {
             title = projDir.getName();
+            if (pUserPrefs_.get().fullProjectPathInWindowTitle().getValue())
+               title = projDir.getPath();
+            else
+               title = projDir.getName();
+         }
          BranchesInfo branchInfo = pGitState_.get().getBranchInfo();
          if (branchInfo != null)
          {
@@ -268,6 +296,7 @@ public class WorkbenchContext
    private FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    private FileSystemItem defaultWorkingDir_ = null;
    private FileSystemItem activeProjectDir_ = null;
+   private String activeProjectName_ = null;
    private final Session session_;
    private final Provider<GitState> pGitState_;
    private final Provider<UserPrefs> pUserPrefs_;
