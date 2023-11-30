@@ -76,3 +76,4 @@
 - Fixed intermittent problem with load balancing and local launcher sessions for some features like workbench jobs (rstudio-pro#5451)
 - Reduce number of DB connections allocated in the pool when servers have many cpus (rstudio-pro#5210)
 - Fixed issue where homepage did not display RStudio session's 'Executing' status consistently (rstudio-pro#5141)
+- Fixed bug in the Posit Workbench VS Code extension that prevented the extension from recognizing all Dash apps (rstudio-workbench-vscode-ext#239)
