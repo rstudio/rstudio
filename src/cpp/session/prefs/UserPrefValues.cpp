@@ -3183,6 +3183,19 @@ core::Error UserPrefValues::setUiLanguage(std::string val)
 }
 
 /**
+ * Hide desktop menu bar until Alt key is pressed.
+ */
+bool UserPrefValues::autohideMenubar()
+{
+   return readPref<bool>("autohide_menubar");
+}
+
+core::Error UserPrefValues::setAutohideMenubar(bool val)
+{
+   return writePref("autohide_menubar", val);
+}
+
+/**
  * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
  */
 bool UserPrefValues::nativeFileDialogs()
@@ -3545,6 +3558,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonProjectEnvironmentAutomaticActivate,
       kCheckNullExternalPointers,
       kUiLanguage,
+      kAutohideMenubar,
       kNativeFileDialogs,
       kDiscardPendingConsoleInputOnError,
       kEditorScrollMultiplier,

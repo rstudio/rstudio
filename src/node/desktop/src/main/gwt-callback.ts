@@ -463,6 +463,7 @@ export class GwtCallback extends EventEmitter {
             webPreferences: { sandbox: true },
             acceptFirstMouse: true,
           });
+          window.removeMenu(); // this isn't permanent but sufficient for these internal pages
 
           // ensure window can be closed with Ctrl+W (Cmd+W on macOS)
           window.webContents.on('before-input-event', (event, input) => {
@@ -741,6 +742,11 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_set_enable_accessibility', (event, enable) => {
       ElectronDesktopOptions().setAccessibility(enable);
+    });
+
+    ipcMain.on('desktop_set_autohide_menubar', (_event, autohide: boolean) => {
+      this.mainWindow.window.setAutoHideMenuBar(autohide);
+      this.mainWindow.window.setMenuBarVisibility(!autohide);
     });
 
     ipcMain.on('desktop_set_disable_renderer_accessibility', (event, disable) => {
