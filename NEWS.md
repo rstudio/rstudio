@@ -2,7 +2,7 @@
 
 ### New
 #### RStudio
--
+- The GWT code can now be built with JDKs > 11 (#11242)
 
 #### Posit Workbench
 -
