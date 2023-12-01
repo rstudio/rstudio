@@ -132,7 +132,7 @@ public class WordWrap
          String thisChunk = "";
          if (index > 0)
          {
-            thisChunk = line.substring(0, index);
+            thisChunk = StringUtil.substring(line, 0, index);
             appendRawWithIndent(thisChunk);
          }
          wrap();
@@ -140,7 +140,7 @@ public class WordWrap
 
          int nextLineIndex = Math.min(line.length(), index + breakChars);
          origStringPos += nextLineIndex;
-         line = line.substring(nextLineIndex);
+         line = StringUtil.substring(line, nextLineIndex);
          trimmed = StringUtil.trimLeft(line);
          origStringPos += line.length() - trimmed.length();
          line = trimmed;

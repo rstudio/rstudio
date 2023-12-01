@@ -683,7 +683,7 @@ public class VirtualConsole
                Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
                if (sgrMatch == null)
                {
-                  if (StringUtil.equals(data.substring(tail), "["))
+                  if (StringUtil.equals(StringUtil.substring(data, tail), "["))
                   {
                      // only have "[" at end, could be any ANSI code, so save remainder
                      // of string to see if we can recognize it when more arrives

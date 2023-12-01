@@ -44,7 +44,7 @@ public class DesktopWindowOpener extends WebWindowOpener
          if (!hasProtocol(url))
          {
             if (url.startsWith("/"))
-               url = url.substring(1);
+               url = StringUtil.substring(url, 1);
             url = GWT.getHostPageBaseURL() + url;
          }
          

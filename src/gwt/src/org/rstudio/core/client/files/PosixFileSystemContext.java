@@ -16,6 +16,7 @@ package org.rstudio.core.client.files;
 
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
@@ -63,7 +64,7 @@ public abstract class PosixFileSystemContext implements FileSystemContext
       while (m != null)
       {
          results.add(FileSystemItem.createDir(
-               dirPath.substring(0, m.getIndex() + m.getValue().length())));
+               StringUtil.substring(dirPath, 0, m.getIndex() + m.getValue().length())));
 
          m = m.nextMatch();
       }

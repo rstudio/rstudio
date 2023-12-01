@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.common.reditor;
 
+import org.rstudio.core.client.StringUtil;
+
 /**
  * Models a language for CodeMirror.
  *
@@ -138,7 +140,7 @@ public class EditorLanguage
    public String getModeName()
    {
       int lastSlash = parserName_.lastIndexOf('/');
-      return parserName_.substring(lastSlash + 1);
+      return StringUtil.substring(parserName_, lastSlash + 1);
    }
 
    public boolean useRCompletion()

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.common.satellite;
 
+import org.rstudio.core.client.StringUtil;
+
 public class SatelliteUtils
 {
    public static String getSatelliteWindowName(String mode)
@@ -23,7 +25,7 @@ public class SatelliteUtils
    
    public static String getWindowNameFromSatelliteName(String windowName)
    {
-      return windowName.substring(SATELLITE_PREFIX.length());
+      return StringUtil.substring(windowName, SATELLITE_PREFIX.length());
    }
    
    public static boolean windowNameIsSatellite(String windowName)

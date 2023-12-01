@@ -18,6 +18,7 @@ import java.util.HashMap;
 
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -689,7 +690,7 @@ public class FileTypeRegistry
    {
       if (filespec.startsWith("*."))
       {
-         String ext = filespec.substring(1).toLowerCase();
+         String ext = StringUtil.substring(filespec, 1).toLowerCase();
          if (ext.equals("."))
          {
             ext = "";

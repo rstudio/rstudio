@@ -71,7 +71,7 @@ public class ShellInteractionManager implements ShellOutputWriter
       outputPrefixToSuppress_ = null;
 
       if (output.startsWith(prefix))
-         return output.substring(prefix.length());
+         return StringUtil.substring(output, prefix.length());
 
       return output;
    }
