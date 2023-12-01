@@ -2024,6 +2024,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String uiLanguageDescription();
 
    /**
+    * Hide desktop menu bar until Alt key is pressed.
+    */
+   @DefaultStringValue("Auto hide menu bar")
+   String autohideMenubarTitle();
+   @DefaultStringValue("Hide desktop menu bar until Alt key is pressed.")
+   String autohideMenubarDescription();
+
+   /**
     * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
     */
    @DefaultStringValue("Use native file and message dialog boxes")

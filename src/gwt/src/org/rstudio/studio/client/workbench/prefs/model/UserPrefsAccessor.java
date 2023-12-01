@@ -3475,6 +3475,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String UI_LANGUAGE_FR = "fr";
 
    /**
+    * Hide desktop menu bar until Alt key is pressed.
+    */
+   public PrefValue<Boolean> autohideMenubar()
+   {
+      return bool(
+         "autohide_menubar",
+         _constants.autohideMenubarTitle(), 
+         _constants.autohideMenubarDescription(), 
+         false);
+   }
+
+   /**
     * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
     */
    public PrefValue<Boolean> nativeFileDialogs()
@@ -4088,6 +4100,8 @@ public class UserPrefsAccessor extends Prefs
          checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
       if (source.hasKey("ui_language"))
          uiLanguage().setValue(layer, source.getString("ui_language"));
+      if (source.hasKey("autohide_menubar"))
+         autohideMenubar().setValue(layer, source.getBool("autohide_menubar"));
       if (source.hasKey("native_file_dialogs"))
          nativeFileDialogs().setValue(layer, source.getBool("native_file_dialogs"));
       if (source.hasKey("discard_pending_console_input_on_error"))
@@ -4353,6 +4367,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonProjectEnvironmentAutomaticActivate());
       prefs.add(checkNullExternalPointers());
       prefs.add(uiLanguage());
+      prefs.add(autohideMenubar());
       prefs.add(nativeFileDialogs());
       prefs.add(discardPendingConsoleInputOnError());
       prefs.add(editorScrollMultiplier());

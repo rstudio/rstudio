@@ -37,6 +37,7 @@ class MinimalWindow extends DesktopBrowserWindow {
       opener: options.opener,
       allowExternalNavigate: options.allowExternalNavigate,
     });
+    this.ensureNoMenu();
 
     // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
     this.window.webContents.on('before-input-event', (event, input) => {

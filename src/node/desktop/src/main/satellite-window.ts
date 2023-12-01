@@ -38,6 +38,7 @@ export class SatelliteWindow extends GwtWindow {
       addApiKeys: ['desktop'],
       existingWindow: existingWindow,
     });
+    this.ensureNoMenu();
 
     appState().gwtCallback?.registerOwner(this);
 

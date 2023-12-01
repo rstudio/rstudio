@@ -37,6 +37,7 @@ export class SecondaryWindow extends DesktopBrowserWindow {
       allowExternalNavigate: allowExternalNavigate,
       existingWindow: existingWindow,
     });
+    this.ensureNoMenu();
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
   }
