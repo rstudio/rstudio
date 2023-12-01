@@ -1,29 +1,11 @@
-## RStudio 2023.12.0 "Ocean Storm" Release Notes
+## RStudio 2024.04.0 "Chocolate Cosmos" Release Notes
 
 ### New
 #### RStudio
-- Updated Ace to version 1.28. (#13708)
-- Updated Boost to version 1.83.0. (#13577)
-- Updated Electron to version 26.2.4. (#13577)
-- Updated the default version of the GitHub Copilot agent to 1.10.3. (#13729)
-- Update openssl to 1.1.1w on Mac and Windows (#13683)
-- RStudio now supports highlighting of inline YAML chunk options in R Markdown / Quarto documents. (#11663)
-- Improved support for development documentation when a package has been loaded via `devtools::load_all()`. (#13526)
-- RStudio now supports autocompletion following `@` via `.AtNames`. (#13451)
-- RStudio now supports the execution and display of GraphViz (`dot`) graphs in R Markdown / Quarto chunks. (#13187)
-- RStudio now supports the execution of chunks with the 'file' option set. (#13636)
-- With screen reader support enabled, hitting ESC key allows Tabbing away from editor. [accessibility] (#13593)
-- RStudio now supports `LuaLaTeX` to compile Sweave/Rnw documents. (#13812)
-- Better error message when user preferences fail to save due to folder permissions. (#12974)
-- Update Electon Forge to 6.4.2 and Webpack to 5.89.0. (rstudio-pro#5383)
-- RStudio now supports pasting of file paths for files copied to the clipboard. (#4572)
-- RStudio now supports duplicate connection names for Posit drivers. (rstudio-pro#5437)
+-
 
 #### Posit Workbench
-- Removed link for opening sessions in RStudio Desktop Pro from Session Info dialog. (rstudio-pro#5263)
-- Increased the built-in nginx server's max connection limit, enabled nginx error logging and allow both to be configured (rstudio-pro#4652, rstudio-pro#4747, rstudio-pro#5452)
-- Improved Admin: The Logs tab now allows viewing other server log files. A new Server tab provides real-time performance info and on-the-fly adjustment of the rserver log-level (rstudio-pro#5212)
-- Added requestTime to nginx access logs when rserver.conf's server-access-log=1. Format for rserver-http-access.log has changed to add a request time field useful for seeing how long it takes rserver to respond to requests. WARNING: if you have code that processes the log file, expect a new field.
+-
 
 ### Fixed
 #### RStudio
@@ -59,21 +41,8 @@
 - Session Protocol Debug in Tools -> Command Palette turns on log-level=debug when set (rstudio-pro#5095)
 - Reduce overhead of session suspension checks and writes to the executing file (#13534, rstudio-pro#4922)
 - Reset session keyring on linux platforms to ensure credentials added in a session are isolated (rstudio-pro#5485)
+-
 
 #### Posit Workbench
-- Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
-- Fixed accessibility issues with empty Session and Project lists on the homepage. [accessibility] (rstudio/rstudio-pro#5214)
-- Fixed accessibility issues with Project controls on the homepage when not using launcher sessions. [accessibility] (rstudio/rstudio-pro#5215)
-- Fixed unlabeled input field in Rename Session modal dialog on the homepage. [accessibility] (rstudio/rstudio-pro#5178)
-- Fixed mismatched label on "Join session when ready" checkbox in New Session dialog. [accessibility] (rstudio/rstudio-pro#5221)
-- Fixed issue that caused start up crash in environments with encrypted database passwords. (rstudio-pro#5228)
-- Fixed an issue where Shift+Tab wouldn't wrap focus in the New Session dialog. [accessibility] (rstudio-pro#4488)
-- Fixed an issue where sessions couldn't be started with keyboard with Kubernetes or Slurm. [accessibility] (rstudio-pro#4360)
-- Fixed label on button for showing and hiding launcher details so it is available to screen reader. [accessibility] (rstudio-pro#5268)
-- Improved the accessible label on launcher job details buttons. [accessibility] (rstudio-pro#5270)
-- Fixed an issue where last sign in for user would be updated even if login fails due to license limits (rstudio-pro#5039)
-- Fixed bug where vscode and jupyter websockets might be intermittently closed in some circumstances, especially when auth-timeout-minutes=0 (rstudio-pro#5220)
-- Fixed routing problem with load balancing when not using a standard port (rstudio-pro#5367)
-- Fixed intermittent problem with load balancing and local launcher sessions for some features like workbench jobs (rstudio-pro#5451)
-- Reduce number of DB connections allocated in the pool when servers have many cpus (rstudio-pro#5210)
-- Fixed issue where homepage did not display RStudio session's 'Executing' status consistently (rstudio-pro#5141)
+-
+
