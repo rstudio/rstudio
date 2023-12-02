@@ -128,7 +128,7 @@ public class ImagePreviewer
                 endBraceIdx != -1 &&
                 endBraceIdx > startBraceIdx)
             {
-               attributes = line.substring(startBraceIdx + 2, endBraceIdx).trim();
+               attributes = StringUtil.substring(line, startBraceIdx + 2, endBraceIdx).trim();
             }
          }
          

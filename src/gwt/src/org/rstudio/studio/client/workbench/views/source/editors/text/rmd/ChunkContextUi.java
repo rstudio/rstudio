@@ -73,7 +73,7 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
       // must be all the text following the first space
       if (firstEqualsIdx == -1 && firstCommaIdx == -1)
       {
-         extractedChunkHeader = extractedChunkHeader.substring(firstSpaceIdx + 1).trim();
+         extractedChunkHeader = StringUtil.substring(extractedChunkHeader, firstSpaceIdx + 1).trim();
          if (extractedChunkHeader.endsWith("}"))
             extractedChunkHeader = extractedChunkHeader.substring(0, extractedChunkHeader.length() -1);
          return extractedChunkHeader;
@@ -92,7 +92,7 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
          return "";
 
       // otherwise, the text from the first space to that comma gives the label
-      return extractedChunkHeader.substring(firstSpaceIdx + 1, firstCommaIdx).trim();
+      return StringUtil.substring(extractedChunkHeader, firstSpaceIdx + 1, firstCommaIdx).trim();
    }
 
    // Public methods ----------------------------------------------------------

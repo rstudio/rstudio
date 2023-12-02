@@ -4644,7 +4644,7 @@ public class TextEditingTarget implements
 
       String newSelection = dontCommentLastLine ?
             builder.toString() :
-            builder.substring(0, builder.length() - 1);
+            StringUtil.substring(builder, 0, builder.length() - 1);
 
       display.replaceSelection(newSelection);
 
@@ -5263,7 +5263,7 @@ public class TextEditingTarget implements
          boolean isWrappingEnabled = wordWrap.getWrappingEnabled();
          bullet = false;
 
-         String content = line.substring(Math.min(line.length(),
+         String content = StringUtil.substring(line, Math.min(line.length(),
                                                   prefix.length()));
 
          if (content.matches("^\\s*\\@examples\\b.*$"))

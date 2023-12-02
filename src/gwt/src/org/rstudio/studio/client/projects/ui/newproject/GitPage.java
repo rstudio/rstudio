@@ -48,7 +48,7 @@ public class GitPage extends VersionControlPage
          url = StringUtil.substring(url, 0, url.length() - 1);
       if (url.endsWith("/.git"))
       {
-         url = url.substring(0, url.length() - 5);
+         url = StringUtil.substring(url, 0, url.length() - 5);
          while (url.endsWith("/"))
             url = StringUtil.substring(url, 0, url.length() - 1);
       }

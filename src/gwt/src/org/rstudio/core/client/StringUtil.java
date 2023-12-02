@@ -1464,6 +1464,16 @@ public class StringUtil
       return str.substr(indexStart);
    }-*/;
 
+   public static String substring(StringBuilder str, int indexStart, int indexEnd)
+   {
+      return substring(str.toString(), indexStart, indexEnd - indexStart);
+   }
+
+   public static String substring(StringBuilder str, int indexStart)
+   {
+      return substring(str.toString(), indexStart);
+   }
+
    /**
     * Convert a string "foo" to "f o o"
     * @param str

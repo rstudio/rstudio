@@ -355,7 +355,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
                                           idx + match_.length())) +
                "</span>" +
                SafeHtmlUtils.htmlEscape(
-                     history_.substring(idx + match_.length(),
+                     StringUtil.substring(history_, idx + match_.length(),
                                           history_.length()));
          }
 

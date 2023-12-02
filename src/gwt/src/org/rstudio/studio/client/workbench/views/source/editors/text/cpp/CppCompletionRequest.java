@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -72,7 +73,7 @@ public class CppCompletionRequest
       
       // Get the current line (up to the cursor position)
       Position cursorPos = docDisplay_.getCursorPosition();
-      String line = docDisplay_.getLine(cursorPos.getRow()).substring(0, cursorPos.getColumn());
+      String line = StringUtil.substring(docDisplay_.getLine(cursorPos.getRow()), 0, cursorPos.getColumn());
       
       Position completionPos = completionPosition_.getPosition();
       server_.getCppCompletions(line,

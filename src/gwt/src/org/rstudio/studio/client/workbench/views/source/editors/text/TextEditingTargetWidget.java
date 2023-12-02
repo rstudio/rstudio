@@ -1382,7 +1382,7 @@ public class TextEditingTargetWidget
 
       int parenPos = selectedOption.indexOf('(');
       if (parenPos != -1)
-          selectedOption = selectedOption.substring(0, parenPos).trim();
+          selectedOption = StringUtil.substring(selectedOption, 0, parenPos).trim();
 
       // don't show format text (but leave the code in for now in case
       // we change our mind)

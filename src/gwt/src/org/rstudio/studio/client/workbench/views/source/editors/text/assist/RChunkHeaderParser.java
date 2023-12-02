@@ -220,7 +220,7 @@ public class RChunkHeaderParser
          int endIndex = cursor.getIndex() + 1;
          if (consumer != null)
          {
-            String value = cursor.getData().substring(startIndex, endIndex);
+            String value = StringUtil.substring(cursor.getData(), startIndex, endIndex);
             consumer.consume(value);
          }
          cursor.setIndex(endIndex);

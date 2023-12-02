@@ -163,7 +163,7 @@ public class TextEditingTargetCopilotHelper
                               // Copilot includes trailing '```' for some reason in some cases,
                               // remove those if we're inserting in an R document.
                               if (completion.text.endsWith("\n```"))
-                                 completion.text = completion.text.substring(0, completion.text.length() - 3);
+                                 completion.text = StringUtil.substring(completion.text, 0, completion.text.length() - 3);
 
                               if (completion.displayText.endsWith("\n```"))
                                  completion.displayText = StringUtil.substring(completion.displayText, 0, completion.displayText.length() - 3);
@@ -321,8 +321,8 @@ public class TextEditingTargetCopilotHelper
       if (match == null)
          return;
       
-      String insertedWord = text.substring(0, match.getIndex());
-      String leftoverText = text.substring(match.getIndex());
+      String insertedWord = StringUtil.substring(text, 0, match.getIndex());
+      String leftoverText = StringUtil.substring(text, match.getIndex());
       
       int n = insertedWord.length();
       activeCompletion_.displayText = leftoverText;
@@ -361,7 +361,7 @@ public class TextEditingTargetCopilotHelper
    {
       int n = key.length();
       activeCompletion_.displayText = activeCompletion_.displayText.substring(n);
-      activeCompletion_.text = activeCompletion_.text.substring(n);
+      activeCompletion_.text = StringUtil.substring(activeCompletion_.text, n);
       activeCompletion_.position.character += n;
       activeCompletion_.range.start.character += n;
       activeCompletion_.range.end.character += n;

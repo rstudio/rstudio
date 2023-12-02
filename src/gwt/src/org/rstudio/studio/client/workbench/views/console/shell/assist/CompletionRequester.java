@@ -111,7 +111,7 @@ public class CompletionRequester
 
       if (token.toLowerCase().startsWith(cachedLinePrefix_.toLowerCase()))
       {
-         String diff = token.substring(cachedLinePrefix_.length());
+         String diff = StringUtil.substring(token, cachedLinePrefix_.length());
 
          // if we already have a cached result for this diff, use it
          CompletionResult cached = cachedCompletions_.get(diff);

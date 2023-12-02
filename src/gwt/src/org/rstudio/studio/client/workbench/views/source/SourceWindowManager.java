@@ -1000,7 +1000,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       if (input != null && input.startsWith(SourceSatellite.NAME_PREFIX))
       {
-         return input.substring(SourceSatellite.NAME_PREFIX.length());
+         return StringUtil.substring(input, SourceSatellite.NAME_PREFIX.length());
       }
       return "";
    }

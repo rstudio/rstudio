@@ -76,7 +76,7 @@ public class TextEditingTargetPresentation2Helper
          {
             boolean foundHeading = false;
             int level = StringUtil.parseInt(
-               type.substring(type.length()-1, type.length()),
+               StringUtil.substring(type, type.length()-1, type.length()),
                0
             );
             // atx style

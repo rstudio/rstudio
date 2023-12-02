@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 
@@ -31,7 +32,7 @@ public class DirEntryCheckBox extends Composite
       FileSystemItem fsi = null;
       if (path.endsWith("/"))
       {
-         path = path.substring(0, path.length() - 1);
+         path = StringUtil.substring(path, 0, path.length() - 1);
          fsi = FileSystemItem.createDir(path);
       }
       else

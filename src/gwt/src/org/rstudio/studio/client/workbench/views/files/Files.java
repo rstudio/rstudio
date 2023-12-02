@@ -1082,7 +1082,7 @@ public class Files
    {
       // prepare default information about the new file
       FileSystemItem newTempFile = getDefaultFileName(fileType);
-      String formattedExt = fileType.getDefaultExtension().toUpperCase().substring(1);
+      String formattedExt = StringUtil.substring(fileType.getDefaultExtension().toUpperCase(), 1);
       
       // guard for reentrancy
       if (inputPending_)
