@@ -441,7 +441,7 @@ public class NewConnectionSnippetHost extends Composite
                value = value.replaceAll("\\$equal\\$", "=");
             }
 
-            builder.append(input.substring(inputIndex, matcher.getIndex()));
+            builder.append(StringUtil.substring(input, inputIndex, matcher.getIndex()));
             
             if (partsKeyValues_.containsKey(key)) {
                value = partsKeyValues_.get(key);

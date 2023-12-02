@@ -166,7 +166,7 @@ public class TextEditingTargetCopilotHelper
                                  completion.text = completion.text.substring(0, completion.text.length() - 3);
 
                               if (completion.displayText.endsWith("\n```"))
-                                 completion.displayText = completion.displayText.substring(0, completion.displayText.length() - 3);
+                                 completion.displayText = StringUtil.substring(completion.displayText, 0, completion.displayText.length() - 3);
 
                               activeCompletion_ = completion;
                               display_.setGhostText(activeCompletion_.displayText);

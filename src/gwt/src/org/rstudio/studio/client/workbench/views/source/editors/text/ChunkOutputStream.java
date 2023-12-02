@@ -323,7 +323,7 @@ public class ChunkOutputStream extends FlowPanel
          // emit any messages queued prior to the error
          if (idx > 0)
          {
-            renderConsoleOutput(queuedError_.substring(0, idx), 
+            renderConsoleOutput(StringUtil.substring(queuedError_, 0, idx), 
                   classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
             initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
          }

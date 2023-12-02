@@ -236,7 +236,7 @@ public class AceEditor implements DocDisplay,
 
          // ... or if there is nothing but whitespace between the start of the line and the cursor.
          String line = getSession().getLine(range.getStart().getRow());
-         return line.substring(0, col).trim().length() != 0;
+         return StringUtil.substring(line, 0, col).trim().length() != 0;
 
       }
    }
@@ -2087,7 +2087,7 @@ public class AceEditor implements DocDisplay,
 
    public String getCurrentLineUpToCursor()
    {
-      return getCurrentLine().substring(0, getCursorPosition().getColumn());
+      return StringUtil.substring(getCurrentLine(), 0, getCursorPosition().getColumn());
    }
 
    public int getCurrentLineNum()
@@ -2369,7 +2369,7 @@ public class AceEditor implements DocDisplay,
          while (newEnd.getRow() != newStart.getRow())
          {
             String line = getSession().getLine(newEnd.getRow());
-            if (line.substring(0, newEnd.getColumn()).trim().length() != 0)
+            if (StringUtil.substring(line, 0, newEnd.getColumn()).trim().length() != 0)
                break;
 
             int prevRow = newEnd.getRow() - 1;

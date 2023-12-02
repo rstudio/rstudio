@@ -1072,7 +1072,7 @@ public class Files
       String defaultExt = fileType.getDefaultExtension();
 
       // extension has a '.' at the start, so remove that in the default name
-      String newFileDefaultName = "Untitled" + defaultExt.toUpperCase().substring(1) + defaultExt;
+      String newFileDefaultName = "Untitled" + StringUtil.substring(defaultExt.toUpperCase(), 1) + defaultExt;
       String path = currentPath_.completePath(newFileDefaultName);
       FileSystemItem newTempFile = FileSystemItem.createFile(path);
       return newTempFile;

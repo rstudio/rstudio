@@ -433,7 +433,7 @@ public class RCompletionManager implements CompletionManager
          AceGhostText ghostText = docDisplay_.getGhostText();
          if (ghostText.text.startsWith(key))
          {
-            String newGhostText = ghostText.text.substring(1);
+            String newGhostText = StringUtil.substring(ghostText.text, 1);
             docDisplay_.insertCode(key);
             docDisplay_.setGhostText(newGhostText);
             return true;
@@ -883,7 +883,7 @@ public class RCompletionManager implements CompletionManager
          return false;
       }
 
-      String linePart = input_.getText().substring(
+      String linePart = StringUtil.substring(input_.getText(),
             optionsStart,
             input_.getSelection().getStart().getPosition());
 
@@ -1224,7 +1224,7 @@ public class RCompletionManager implements CompletionManager
       // we erroneously capture '-' as part of the token name. This is awkward
       // but is effectively a bandaid until the autocompletion revamp.
       if (context.getToken().startsWith("-"))
-         context.setToken(context.getToken().substring(1));
+         context.setToken(StringUtil.substring(context.getToken(), 1));
       
       // fix up roxygen autocompletion for case where '@' is snug against
       // the comment marker
@@ -1282,7 +1282,7 @@ public class RCompletionManager implements CompletionManager
                                                 String line)
    {
       int index = Math.max(line.lastIndexOf('"'), line.lastIndexOf('\''));
-      String token = line.substring(index + 1);
+      String token = StringUtil.substring(line, index + 1);
       context.add(token, AutocompletionContext.TYPE_FILE);
       context.setToken(token);
    }
@@ -2006,7 +2006,7 @@ public class RCompletionManager implements CompletionManager
          
          // Strip off the quotes for string completions.
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
-            completionToken = completionToken.substring(1);
+            completionToken = StringUtil.substring(completionToken, 1);
          
          if (qualifiedName.source == "<chunk-option>")
          {

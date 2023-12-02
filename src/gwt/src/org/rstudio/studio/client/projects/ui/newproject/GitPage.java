@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import com.google.gwt.core.client.GWT;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
@@ -43,12 +45,12 @@ public class GitPage extends VersionControlPage
        * Strip trailing spaces, slashes and /.git
        */
       while (url.endsWith("/") || url.endsWith(" ") || url.endsWith("\t"))
-         url = url.substring(0, url.length() - 1);
+         url = StringUtil.substring(url, 0, url.length() - 1);
       if (url.endsWith("/.git"))
       {
          url = url.substring(0, url.length() - 5);
          while (url.endsWith("/"))
-            url = url.substring(0, url.length() - 1);
+            url = StringUtil.substring(url, 0, url.length() - 1);
       }
 
       /*

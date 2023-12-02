@@ -144,7 +144,7 @@ public class ShellInteractionManager implements ShellOutputWriter
          if (defaultPromptSuffix_ == null)
          {
             if (prompt.length() > 1)
-               defaultPromptSuffix_ = prompt.substring(prompt.length()-2);
+               defaultPromptSuffix_ = StringUtil.substring(prompt, prompt.length()-2);
             else if (prompt.length() > 0)
                defaultPromptSuffix_ = prompt;
 

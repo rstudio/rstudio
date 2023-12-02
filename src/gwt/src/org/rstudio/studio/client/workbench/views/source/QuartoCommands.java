@@ -228,7 +228,7 @@ public class QuartoCommands
             if (plotCodePos == -1 )
                plotCodePos = input.indexOf("## Slide with Plot");
             if (plotCodePos != -1)
-               input = input.substring(0, plotCodePos - 1);
+               input = StringUtil.substring(input, 0, plotCodePos - 1);
          }
       }
       

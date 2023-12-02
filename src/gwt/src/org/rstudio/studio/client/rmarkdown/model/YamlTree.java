@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
@@ -101,7 +102,7 @@ public class YamlTree
          int idx = yamlLine.indexOf(":");
          if (idx < 0)
             return "";
-         return yamlLine.substring(idx + 2).trim();
+         return StringUtil.substring(yamlLine, idx + 2).trim();
       }
       
       public void setValue(String value)

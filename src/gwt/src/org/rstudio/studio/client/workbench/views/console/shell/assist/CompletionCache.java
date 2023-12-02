@@ -85,7 +85,7 @@ public class CompletionCache
       // Construct the new completion token by taking the original
       // completion token, and adding the delta between the new line and
       // the original completion line used.
-      String token = original.getToken() + line.substring(substring.length());
+      String token = original.getToken() + StringUtil.substring(line, substring.length());
       
       // Extract the vector elements of the completion string
       JsArrayString completions      = original.getCompletions();

@@ -896,7 +896,7 @@ public class EnvironmentPresenter extends BasePresenter
             int idx = functionName.indexOf('(');
             if (idx > 0)
             {
-               functionName = functionName.substring(0, idx);
+               functionName = StringUtil.substring(functionName, 0, idx);
             }
 
             // omit qualifiers
@@ -906,7 +906,7 @@ public class EnvironmentPresenter extends BasePresenter
                functionName = functionName.substring(idx + 1);
                // :::, too
                if (functionName.startsWith(":"))
-                  functionName = functionName.substring(1);
+                  functionName = StringUtil.substring(functionName, 1);
             }
 
             // create the function definition

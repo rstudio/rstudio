@@ -100,7 +100,7 @@ public class CompletionRequester
          final ServerRequestCallback<CompletionResult> callback)
    {
       if (isHelpCompletion)
-         token = token.substring(token.lastIndexOf(':') + 1);
+         token = StringUtil.substring(token, token.lastIndexOf(':') + 1);
 
       if (cachedLinePrefix_ == null)
          return false;
@@ -134,7 +134,7 @@ public class CompletionRequester
 
    private String basename(String absolutePath)
    {
-      return absolutePath.substring(absolutePath.lastIndexOf('/') + 1);
+      return StringUtil.substring(absolutePath, absolutePath.lastIndexOf('/') + 1);
    }
 
    private boolean filterStartsWithDot(String item,
@@ -901,7 +901,7 @@ public class CompletionRequester
                firstSlashIndex = slashIndices.get(
                      slashIndices.size() - 3);
 
-            String endName = display.substring(lastSlashIndex + 1);
+            String endName = StringUtil.substring(display, lastSlashIndex + 1);
             String startName = "";
             if (slashIndices.size() > 2)
                startName += "...";
@@ -1050,7 +1050,7 @@ public class CompletionRequester
          }
          else
          {
-            name = val.substring(0, idx).trim();
+            name = StringUtil.substring(val, 0, idx).trim();
             pkgName = val.substring(idx + 1, val.length() - 1);
          }
 
