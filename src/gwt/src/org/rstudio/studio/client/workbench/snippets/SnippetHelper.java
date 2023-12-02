@@ -259,7 +259,7 @@ public class SnippetHelper
       // Munge the path a bit
       String path = path_;
       if (path.startsWith("~/"))
-         path = path.substring(2);
+         path = StringUtil.substring(path, 2);
 
       int instIncludeIdx = path.indexOf("/inst/include/");
       if (instIncludeIdx != -1)
@@ -267,7 +267,7 @@ public class SnippetHelper
 
       int srcIdx = path.indexOf("/src/");
       if (srcIdx != -1)
-         path = path.substring(srcIdx + 6);
+         path = StringUtil.substring(path, srcIdx + 6);
 
       path = path.replaceAll("[./]", "_");
       path = path.toUpperCase();

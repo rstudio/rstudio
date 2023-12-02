@@ -52,7 +52,7 @@ public class CompletionCache
       
       for (int i = 0, n = line.length(); i < n; i++)
       {
-         String substring = line.substring(0, n - i);
+         String substring = StringUtil.substring(line, 0, n - i);
          if (cache_.containsKey(substring))
          {
             Completions completions = narrow(line, substring, cache_.get(substring));

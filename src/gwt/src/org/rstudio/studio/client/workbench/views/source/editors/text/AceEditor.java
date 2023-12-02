@@ -593,7 +593,7 @@ public class AceEditor implements DocDisplay,
       // if the cursor is already at the end of the line
       // (allowing for trailing whitespace), then eat the
       // newline as well; otherwise, just eat to end of line
-      String rest = line.substring(cursorPos.getColumn());
+      String rest = StringUtil.substring(line, cursorPos.getColumn());
       if (rest.trim().isEmpty())
       {
          yankRange = Range.fromPoints(
@@ -2808,7 +2808,7 @@ public class AceEditor implements DocDisplay,
       int row = cursorPosition.getRow();
       String state = getSession().getState(row);
 
-      String line = getCurrentLine().substring(
+      String line = StringUtil.substring(getCurrentLine(),
             0, cursorPosition.getColumn());
       String tab = session.getTabString();
       int tabSize = session.getTabSize();

@@ -117,7 +117,7 @@ public class PresentationDispatcher
             if (param2.length() > 2 && 
                 param2.startsWith("/") && param2.endsWith("/"))
             {
-               pattern = param2.substring(1, param2.length()-1);
+               pattern = StringUtil.substring(param2, 1, param2.length()-1);
             }
             else
             {

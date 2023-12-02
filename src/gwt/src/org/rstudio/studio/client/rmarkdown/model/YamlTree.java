@@ -117,7 +117,7 @@ public class YamlTree
          if (idx == yamlLine.length() - 1)
             value = " " + value;
 
-         yamlLine = yamlLine.substring(0, idx + 2) + value;
+         yamlLine = StringUtil.substring(yamlLine, 0, idx + 2) + value;
       }
       
       public String yamlLine;

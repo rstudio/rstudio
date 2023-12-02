@@ -346,7 +346,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
             // if we can find the match, highlight it
             return
                SafeHtmlUtils.htmlEscape(
-                     history_.substring(0, idx)) +
+                     StringUtil.substring(history_, 0, idx)) +
                "<span class=\"" +
                ConsoleResources.INSTANCE.consoleStyles().searchMatch() +
                "\">" +

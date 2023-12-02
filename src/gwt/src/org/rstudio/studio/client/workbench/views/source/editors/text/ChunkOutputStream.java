@@ -328,7 +328,7 @@ public class ChunkOutputStream extends FlowPanel
             initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
          }
          // leave messages following the error in the queue
-         queuedError_ = queuedError_.substring(
+         queuedError_ = StringUtil.substring(queuedError_, 
                idx + err.getErrorMessage().length());
       }
       else

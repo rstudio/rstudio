@@ -4587,7 +4587,7 @@ public class TextEditingTarget implements
             builder.append(commonIndent);
             builder.append(commentStart);
             builder.append(" ");
-            builder.append(line.substring(commonIndent.length()));
+            builder.append(StringUtil.substring(line, commonIndent.length()));
             if (commentEnd != null)
             {
                builder.append(" ");

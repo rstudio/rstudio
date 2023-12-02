@@ -1750,7 +1750,7 @@ public class RemoteServer implements Server
    {
       String path = file.getPath();
       if (path.startsWith("~"))
-         path = userHomePath_ + path.substring(1);
+         path = userHomePath_ + StringUtil.substring(path, 1);
       return path;
    }
 

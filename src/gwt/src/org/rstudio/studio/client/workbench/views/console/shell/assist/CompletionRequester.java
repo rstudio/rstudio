@@ -161,7 +161,7 @@ public class CompletionRequester
       // trailing slashes)
 
       // Transform the token once beforehand for completions.
-      final String tokenSub   = token.substring(token.lastIndexOf('/') + 1);
+      final String tokenSub   = StringUtil.substring(token, token.lastIndexOf('/') + 1);
       final String tokenFuzzy = fuzzy(tokenSub);
 
       for (QualifiedName qname : cachedResult.completions)
@@ -1051,7 +1051,7 @@ public class CompletionRequester
          else
          {
             name = StringUtil.substring(val, 0, idx).trim();
-            pkgName = val.substring(idx + 1, val.length() - 1);
+            pkgName = StringUtil.substring(val, idx + 1, val.length() - 1);
          }
 
          return new QualifiedName(name, pkgName);

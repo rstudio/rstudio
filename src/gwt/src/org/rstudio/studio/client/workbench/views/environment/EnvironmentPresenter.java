@@ -903,7 +903,7 @@ public class EnvironmentPresenter extends BasePresenter
             idx = functionName.indexOf("::");
             if (idx > 0)
             {
-               functionName = functionName.substring(idx + 1);
+               functionName = StringUtil.substring(functionName, idx + 1);
                // :::, too
                if (functionName.startsWith(":"))
                   functionName = StringUtil.substring(functionName, 1);

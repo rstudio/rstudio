@@ -269,7 +269,7 @@ public class RCompletionManager implements CompletionManager
             if (cursor.hasType("string"))
             {
                String tokenValue = cursor.currentValue();
-               String path = tokenValue.substring(1, tokenValue.length() - 1);
+               String path = StringUtil.substring(tokenValue, 1, tokenValue.length() - 1);
                FileSystemItem filePath = FileSystemItem.createFile(path);
                
                // This will show a dialog error if no such file exists; this
@@ -1144,7 +1144,7 @@ public class RCompletionManager implements CompletionManager
          return false;
       
       int cursorCol = selection.getStart().getPosition();
-      String firstLine = input_.getText().substring(0, cursorCol);
+      String firstLine = StringUtil.substring(input_.getText(), 0, cursorCol);
       
       // never autocomplete in (non-roxygen) comments, or at the start
       // of roxygen comments (e.g. at "#' |")
@@ -1369,7 +1369,7 @@ public class RCompletionManager implements CompletionManager
       int row = input_.getCursorPosition().getRow();
       
       // trim to cursor position
-      firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
+      firstLine = StringUtil.substring(firstLine, 0, input_.getCursorPosition().getColumn());
       
       // Get the token at the cursor position.
       String tokenRegex = ".*[^" +
