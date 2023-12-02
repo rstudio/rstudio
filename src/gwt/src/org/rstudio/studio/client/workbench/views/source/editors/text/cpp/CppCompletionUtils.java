@@ -137,7 +137,7 @@ public class CppCompletionUtils
       {
          // calculate user text (up to two characters of additional
          // server side filter)
-         String userText = line.substring(
+         String userText = StringUtil.substring(line, 
                col + 1, Math.min(col + 3, position.getColumn()));
          
          CompletionPosition.Scope scope = isInclude

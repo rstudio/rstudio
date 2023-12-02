@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.vcs.common.diff;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
+
 class ChunkHeaderParser
 {
    public ChunkHeaderParser(String s)
@@ -73,7 +75,7 @@ class ChunkHeaderParser
             return null;
       }
 
-      String extraInfo = s_.substring(p_);
+      String extraInfo = StringUtil.substring(s_, p_);
 
       return new ChunkHeaderInfo(ranges.toArray(new Range[ranges.size()]),
                                  extraInfo);

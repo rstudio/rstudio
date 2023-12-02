@@ -52,7 +52,7 @@ public class TerminalSocketPacket
    {
       if (text.startsWith(textPrefix))
       {
-         return text.substring(1);
+         return StringUtil.substring(text, 1);
       }
       return "";
    }

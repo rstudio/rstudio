@@ -61,13 +61,13 @@ public class SVNDiffParser implements DiffParser
          sectionMatches.add(m);
 
          if (lastHeaderStart >= 0)
-            sectionData.add(data.substring(lastHeaderStart, m.getIndex()));
+            sectionData.add(StringUtil.substring(data, lastHeaderStart, m.getIndex()));
 
          lastHeaderStart = m.getIndex();
          pos = m.getIndex() + m.getValue().length();
       }
       if (lastHeaderStart >= 0)
-         sectionData.add(data.substring(lastHeaderStart));
+         sectionData.add(StringUtil.substring(data, lastHeaderStart));
 
       sections_ = new ArrayList<>();
       for (int i = 0; i < sectionData.size(); i++)
@@ -143,7 +143,7 @@ public class SVNDiffParser implements DiffParser
                int startAt = (m != null) ? m.getIndex() + m.getValue().length()
                                          : 0;
                Iterable<String> lines = StringUtil.getLineIterator(
-                     StringUtil.trimBlankLines(section.data.substring(startAt)));
+                     StringUtil.trimBlankLines(StringUtil.substring(section.data, startAt)));
                DiffChunk chunk = createInfoChunk(lines);
                if (lastSection != null && lastSection.isProperty)
                {

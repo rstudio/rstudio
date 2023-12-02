@@ -80,11 +80,11 @@ public class UnifiedParser implements DiffParser
       }
       else
       {
-         String fileA = line.substring(4);
+         String fileA = StringUtil.substring(line, 4);
          line = nextLine();
          if (line == null || !line.startsWith("+++ "))
             throw new DiffFormatException("Incomplete file header");
-         String fileB = line.substring(4);
+         String fileB = StringUtil.substring(line, 4);
          return new DiffFileHeader(headerLines, fileA, fileB);
       }
    }
@@ -163,7 +163,7 @@ public class UnifiedParser implements DiffParser
                lines.add(new Line(Type.Same,
                                   MASK_ALL,
                                   clone(positions),
-                                  diffLine.substring(columns),
+                                  StringUtil.substring(diffLine, columns),
                                   diffIndex_));
                break;
             case '-':
@@ -174,7 +174,7 @@ public class UnifiedParser implements DiffParser
                lines.add(new Line(Type.Deletion,
                                   clone(mask),
                                   clone(positions),
-                                  diffLine.substring(columns),
+                                  StringUtil.substring(diffLine, columns),
                                   diffIndex_));
                break;
             case '+':
@@ -185,7 +185,7 @@ public class UnifiedParser implements DiffParser
                lines.add(new Line(Type.Insertion,
                                   complement(mask),
                                   clone(positions),
-                                  diffLine.substring(columns),
+                                  StringUtil.substring(diffLine, columns),
                                   diffIndex_));
                break;
             case '\\':
@@ -195,7 +195,7 @@ public class UnifiedParser implements DiffParser
                lines.add(new Line(Type.Comment,
                                   MASK_NONE,
                                   clone(positions),
-                                  diffLine.substring(columns),
+                                  StringUtil.substring(diffLine, columns),
                                   diffIndex_));
                break;
             default:
@@ -323,7 +323,7 @@ public class UnifiedParser implements DiffParser
       if (!peek)
          pos_ = i + length;
 
-      return data_.substring(head, i);
+      return StringUtil.substring(data_, head, i);
    }
 
    private final String data_;

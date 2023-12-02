@@ -905,7 +905,7 @@ public class CompletionRequester
             String startName = "";
             if (slashIndices.size() > 2)
                startName += "...";
-            startName += display.substring(firstSlashIndex, lastSlashIndex);
+            startName += StringUtil.substring(display, firstSlashIndex, lastSlashIndex);
 
             SafeHtmlUtil.appendSpan(
                   sb,

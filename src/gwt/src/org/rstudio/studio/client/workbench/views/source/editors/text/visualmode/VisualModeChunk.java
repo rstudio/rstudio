@@ -1144,7 +1144,7 @@ public class VisualModeChunk
             // If this is the magic comment indicating a Quarto label, extract the label
             if (line.startsWith(quartoLabel))
             {
-               label = line.substring(quartoLabel.length()).trim();
+               label = StringUtil.substring(line, quartoLabel.length()).trim();
             }
          }
          lines++;

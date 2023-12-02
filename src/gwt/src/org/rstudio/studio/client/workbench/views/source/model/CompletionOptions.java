@@ -16,13 +16,15 @@ package org.rstudio.studio.client.workbench.views.source.model;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
+
 public class CompletionOptions
 {
    public void addOption(String optionValue,
                          int minPrefixChars)
    {
       options_.add(optionValue);
-      filterPrefixes_.add(optionValue.substring(0, minPrefixChars));
+      filterPrefixes_.add(StringUtil.substring(optionValue, 0, minPrefixChars));
    }
 
    public ArrayList<String> getCompletions(String prefix)

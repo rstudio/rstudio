@@ -201,7 +201,7 @@ public class RChunkHeaderParser
       int endIdx = match.getIndex();
       if (consumer != null)
       {
-         String value = cursor.getData().substring(startIdx, endIdx);
+         String value = StringUtil.substring(cursor.getData(), startIdx, endIdx);
          consumer.consume(value);
       }
 
@@ -257,7 +257,7 @@ public class RChunkHeaderParser
       int endIdx = cursor.getIndex();
       if (consumer != null)
       {
-         String value = cursor.getData().substring(startIdx, endIdx);
+         String value = StringUtil.substring(cursor.getData(), startIdx, endIdx);
          consumer.consume(value);
       }
       cursor.setIndex(endIdx);

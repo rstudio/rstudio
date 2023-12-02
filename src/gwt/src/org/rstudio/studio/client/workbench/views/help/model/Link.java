@@ -74,7 +74,7 @@ public class Link
    
    private static String normalizeUrl(String url)
    {
-      return url.indexOf('#') >= 0 ? url.substring(0, url.indexOf('#')) : url;
+      return url.indexOf('#') >= 0 ? StringUtil.substring(url, 0, url.indexOf('#')) : url;
    }
    
    @Override

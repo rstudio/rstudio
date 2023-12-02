@@ -4635,7 +4635,7 @@ public class TextEditingTarget implements
                startIdx++;
 
             int endIdx = commentEndIdx;
-            String afterComment = line.substring(startIdx, endIdx);
+            String afterComment = StringUtil.substring(line, startIdx, endIdx);
             builder.append(StringUtil.trimRight(commonIndent + afterComment));
 
             builder.append("\n");
@@ -5047,7 +5047,7 @@ public class TextEditingTarget implements
                String uiName = format;
                int nsLoc = uiName.indexOf("::");
                if (nsLoc != -1)
-                  uiName = uiName.substring(nsLoc + 2);
+                  uiName = StringUtil.substring(uiName, nsLoc + 2);
                formatList.add(uiName);
                valueList.add(format);
                extensionList.add(null);
@@ -6044,7 +6044,7 @@ public class TextEditingTarget implements
                int maxLabelLength = length - 10;
                maxLabelLength = Math.max(maxLabelLength, 20);
                if (label.length() > maxLabelLength)
-                  label = label.substring(0, maxLabelLength-1);
+                  label = StringUtil.substring(label, 0, maxLabelLength-1);
 
                // prefix
                String prefix = "# ";

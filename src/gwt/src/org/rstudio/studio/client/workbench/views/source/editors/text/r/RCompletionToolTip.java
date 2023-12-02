@@ -135,7 +135,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
             int index = commaIndices.get(i);
             if (index >= length)
             {
-               truncated = signature.substring(0, index + 1);
+               truncated = StringUtil.substring(signature, 0, index + 1);
                break;
             }
          }

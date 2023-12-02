@@ -360,7 +360,7 @@ public class TextEditingTargetCopilotHelper
    private void updateCompletion(String key)
    {
       int n = key.length();
-      activeCompletion_.displayText = activeCompletion_.displayText.substring(n);
+      activeCompletion_.displayText = StringUtil.substring(activeCompletion_.displayText, n);
       activeCompletion_.text = StringUtil.substring(activeCompletion_.text, n);
       activeCompletion_.position.character += n;
       activeCompletion_.range.start.character += n;

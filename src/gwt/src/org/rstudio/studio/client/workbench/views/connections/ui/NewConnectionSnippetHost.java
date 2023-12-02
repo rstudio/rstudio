@@ -464,7 +464,7 @@ public class NewConnectionSnippetHost extends Composite
          }
       }
       
-      builder.append(input.substring(inputIndex, input.length()));
+      builder.append(StringUtil.substring(input, inputIndex, input.length()));
       
       codePanel_.setCode(builder.toString(), "");
    }

@@ -862,7 +862,7 @@ public class RCompletionManager implements CompletionManager
    {
       if (input_.getText().matches("\\s*#+'.*"))
       {
-         String linePart = input_.getText().substring(0, input_.getSelection().getStart().getPosition());
+         String linePart = StringUtil.substring(input_.getText(), 0, input_.getSelection().getStart().getPosition());
          if (linePart.matches("\\s*#+'\\s*"))
             return true;
       }
@@ -2124,7 +2124,7 @@ public class RCompletionManager implements CompletionManager
             if (!userPrefs_.insertSpacesAroundEquals().getValue() &&
                   value.endsWith(kSpaceEquals))
             {
-               value = value.substring(0, value.length() - kSpaceEquals.length()) + "=";
+               value = StringUtil.substring(value, 0, value.length() - kSpaceEquals.length()) + "=";
             }
          }
          

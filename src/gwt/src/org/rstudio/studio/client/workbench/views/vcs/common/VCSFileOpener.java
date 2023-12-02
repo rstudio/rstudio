@@ -97,7 +97,7 @@ public class VCSFileOpener
             if (parts.length == 2)
             {
                String oldPath = parts[0], newPath = parts[1];
-               path = oldPath.substring(0, oldPath.lastIndexOf('/')) + "/" + newPath;
+               path = StringUtil.substring(oldPath, 0, oldPath.lastIndexOf('/')) + "/" + newPath;
             }
          }
          

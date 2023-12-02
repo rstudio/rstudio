@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
@@ -177,11 +178,11 @@ public class TerminalSessionSocket
             url = GWT.getHostPageBaseURL();
             if (url.startsWith("https:"))
             {
-               url = "wss:" + url.substring(6) + "p/" + urlSuffix;
+               url = "wss:" + StringUtil.substring(url, 6) + "p/" + urlSuffix;
             }
             else if (url.startsWith("http:"))
             {
-               url = "ws:" + url.substring(5) + "p/" + urlSuffix;
+               url = "ws:" + StringUtil.substring(url, 5) + "p/" + urlSuffix;
             }
             else
             {

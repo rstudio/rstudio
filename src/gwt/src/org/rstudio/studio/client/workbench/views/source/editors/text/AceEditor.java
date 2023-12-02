@@ -2345,7 +2345,7 @@ public class AceEditor implements DocDisplay,
          else
          {
             String firstLine = getSession().getLine(start.getRow());
-            if (firstLine.substring(0, start.getColumn()).trim().length() == 0)
+            if (StringUtil.substring(firstLine, 0, start.getColumn()).trim().length() == 0)
                newStart = Position.create(start.getRow(), 0);
          }
       }

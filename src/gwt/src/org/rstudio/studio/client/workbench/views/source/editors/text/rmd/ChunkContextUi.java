@@ -75,7 +75,7 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
       {
          extractedChunkHeader = StringUtil.substring(extractedChunkHeader, firstSpaceIdx + 1).trim();
          if (extractedChunkHeader.endsWith("}"))
-            extractedChunkHeader = extractedChunkHeader.substring(0, extractedChunkHeader.length() -1);
+            extractedChunkHeader = StringUtil.substring(extractedChunkHeader, 0, extractedChunkHeader.length() -1);
          return extractedChunkHeader;
       }
 
