@@ -15,12 +15,24 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
 
 import { isWindowsDocker } from '../unit-utils';
 import { SecondaryWindow } from '../../../src/main/secondary-window';
+import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { Application } from '../../../src/main/application';
 
 if (!isWindowsDocker()) {
   describe('SecondaryWindow', () => {
+    beforeEach(() => {
+      setApplication(new Application());
+    });
+
+    afterEach(() => {
+      clearApplicationSingleton();
+      sinon.restore();
+    });
+
     it('construction creates a hidden BrowserWindow', () => {
       const win = new SecondaryWindow(false, 'some name');
       assert.isObject(win);
