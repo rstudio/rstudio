@@ -444,8 +444,8 @@
    .rs.odbcBundleWriteIni(odbcinstPath, odbcinst)
 })
 
-.rs.addFunction("odbcBundleDriverIniPath", function(name, driverPath) {
-   dir(driverPath, pattern = paste(tolower(name), ".*\\.ini", sep = ""), recursive = TRUE, full.names = T)
+.rs.addFunction("odbcBundleDriverIniPath", function(driverPath) {
+   dir(driverPath, pattern = "rstudio\\..*odbc\\.ini", recursive = TRUE, full.names = T)
 })
 
 .rs.addFunction("odbcBundleRegisterOSX", function(name, driverPath, version, installPath) {
@@ -453,7 +453,7 @@
    .rs.odbcBundleRegisterLinux(name, driverPath, version, installPath)
 
    # Find driver.ini file
-   driverIniFile <- .rs.odbcBundleDriverIniPath(name, installPath)
+   driverIniFile <- .rs.odbcBundleDriverIniPath(installPath)
    
    if (length(driverIniFile) == 0) {
       warning("Could not find '", name, "' driver INI file under: ", installPath)
