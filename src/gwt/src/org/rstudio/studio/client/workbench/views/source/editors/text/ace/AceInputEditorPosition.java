@@ -147,9 +147,9 @@ public class AceInputEditorPosition extends InputEditorPosition
       String line = session_.getLine(position.getRow());
       int column = position.getColumn();
       if (leftwards)
-         line = line.substring(0, Math.min(line.length(), column));
+         line = StringUtil.substring(line, 0, Math.min(line.length(), column));
       else
-         line = line.substring(Math.min(line.length(), column));
+         line = StringUtil.substring(line, Math.min(line.length(), column));
 
       return StringUtil.notNull(line).trim().length() == 0;
    }

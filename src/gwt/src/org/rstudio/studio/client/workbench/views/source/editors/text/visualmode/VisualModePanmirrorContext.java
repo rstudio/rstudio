@@ -163,7 +163,7 @@ public class VisualModePanmirrorContext
          // root paths should be resolved relative to the resource directory,
          // so if the path starts with a leading slash, just remove it
          if (path.startsWith("/"))
-            path = path.substring(1);
+            path = StringUtil.substring(path, 1);
          
          FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
          return ImagePreviewer.imgSrcPathFromHref(resourceDir.getPath(), path);
@@ -345,7 +345,7 @@ public class VisualModePanmirrorContext
             FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
             FileSystemItem editorFile = FileSystemItem.createFile(this.docUpdateSentinel_.getPath());
             FileSystemItem targetFile = FileSystemItem.createFile(file.startsWith("/")
-               ? projectDir.completePath(file.substring(1))
+               ? projectDir.completePath(StringUtil.substring(file, 1))
                : editorFile.getParentPath().completePath(file));
             events_.fireEvent(new OpenSourceFileEvent(targetFile));
          }        
@@ -410,7 +410,7 @@ public class VisualModePanmirrorContext
    {
       if (format_.isHugoProjectDocument() && asset.startsWith("/"))
       {
-         return hugoStaticDirs().get(0).completePath(asset.substring(1));
+         return hugoStaticDirs().get(0).completePath(StringUtil.substring(asset, 1));
       }
       else
       {
@@ -425,7 +425,7 @@ public class VisualModePanmirrorContext
           asset.startsWith("/") && 
           QuartoHelper.isQuartoWebsiteConfig(config))
       {
-         return FileSystemItem.createDir(config.project_dir).completePath(asset.substring(1));
+         return FileSystemItem.createDir(config.project_dir).completePath(StringUtil.substring(asset, 1));
       }
       else
       {

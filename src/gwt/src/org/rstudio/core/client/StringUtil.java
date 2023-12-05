@@ -239,7 +239,7 @@ public class StringUtil
    public static String chomp(String string)
    {
       if (string.endsWith("\n"))
-         return string.substring(0, string.length()-1);
+         return StringUtil.substring(string, 0, string.length()-1);
       return string;
    }
 
@@ -376,12 +376,12 @@ public class StringUtil
                   String result;
                   if (match == null)
                   {
-                     result = text.substring(pos);
+                     result = StringUtil.substring(text, pos);
                      pos = text.length();
                   }
                   else
                   {
-                     result = text.substring(pos, match.getIndex());
+                     result = StringUtil.substring(text, pos, match.getIndex());
                      pos = match.getIndex() + match.getValue().length();
                   }
                   return result;
@@ -493,8 +493,8 @@ public class StringUtil
             }
          }
 
-         prefix = j <= prefix.length() ? prefix.substring(0, j)
-                                       : line.substring(0, j);
+         prefix = j <= prefix.length() ? StringUtil.substring(prefix, 0, j)
+                                       : StringUtil.substring(line, 0, j);
 
          whitespaceExpansionAllowed =
                whitespaceExpansionAllowed && (prefix.length() >= line.length());
@@ -582,7 +582,7 @@ public class StringUtil
          return authority;
 
       // port, return only the portion preceding the port
-      return authority.substring(0, idx);
+      return StringUtil.substring(authority, 0, idx);
    }
 
    public static String ensureSurroundedWith(String string, char chr)
@@ -601,7 +601,7 @@ public class StringUtil
    {
       if (input == null || input.length() < 1)
          return input;
-      return input.substring(0, 1).toUpperCase() + input.substring(1);
+      return StringUtil.substring(input, 0, 1).toUpperCase() + StringUtil.substring(input, 1);
    }
 
    public static native String capitalizeAllWords(String input)
@@ -668,7 +668,7 @@ public class StringUtil
             continue;
          }
       }
-      return string.substring(0, commentIndex);
+      return StringUtil.substring(string, 0, commentIndex);
    }
 
    public static String stripBalancedQuotes(String string)
@@ -703,7 +703,7 @@ public class StringUtil
          if (currentChar == '\'' && !inQuotes)
          {
             inSingleQuotes = true;
-            result.append(string.substring(stringStart, i));
+            result.append(StringUtil.substring(string, stringStart, i));
             continue;
          }
 
@@ -717,7 +717,7 @@ public class StringUtil
          if (currentChar == '"' && !inQuotes)
          {
             inDoubleQuotes = true;
-            result.append(string.substring(stringStart, i));
+            result.append(StringUtil.substring(string, stringStart, i));
             continue;
          }
 
@@ -728,7 +728,7 @@ public class StringUtil
             continue;
          }
       }
-      result.append(string.substring(stringStart, string.length()));
+      result.append(StringUtil.substring(string, stringStart, string.length()));
       return result.toString();
    }
 
@@ -940,7 +940,7 @@ public class StringUtil
 
       return lastDotIndex == -1 || lastDotIndex == string.length() - 1 ?
             "" :
-            string.substring(lastDotIndex + 1, string.length());
+            StringUtil.substring(string, lastDotIndex + 1, string.length());
    }
 
    public static String getExtension(String string)
@@ -988,25 +988,25 @@ public class StringUtil
                                  boolean backOverWhitespace)
    {
       if (backOverWhitespace)
-         while (pos > 0 && string.substring(pos - 1, pos).matches("\\s"))
+         while (pos > 0 && StringUtil.substring(string, pos - 1, pos).matches("\\s"))
             --pos;
 
       int startPos = Math.max(0, pos - 1);
       int endPos = Math.min(pos, string.length());
 
       while (startPos >= 0 &&
-            string.substring(startPos, startPos + 1).matches(tokenRegex))
+            StringUtil.substring(string, startPos, startPos + 1).matches(tokenRegex))
          --startPos;
 
       if (expandForward)
          while (endPos < string.length() &&
-               string.substring(endPos, endPos + 1).matches(tokenRegex))
+               StringUtil.substring(string, endPos, endPos + 1).matches(tokenRegex))
             ++endPos;
 
       if (startPos >= endPos)
          return "";
 
-      return string.substring(startPos + 1, endPos);
+      return StringUtil.substring(string, startPos + 1, endPos);
    }
 
    public static String repeat(String string, int times)
@@ -1096,8 +1096,8 @@ public class StringUtil
          return string;
 
       String result = string.replaceAll("\\s*([A-Z])", " $1");
-      return result.substring(0, 1).toUpperCase() +
-             result.substring(1);
+      return StringUtil.substring(result, 0, 1).toUpperCase() +
+             StringUtil.substring(result, 1);
    }
 
    public static native String escapeRegex(String regexString) /*-{
@@ -1119,7 +1119,7 @@ public class StringUtil
       if (truncatedSize < 0)
          return string;
 
-      return string.substring(0, truncatedSize) + suffix;
+      return StringUtil.substring(string, 0, truncatedSize) + suffix;
    }
 
    public static boolean isOneOf(String string, String... candidates)
@@ -1186,7 +1186,7 @@ public class StringUtil
       {
          if (string.startsWith(quote) && string.endsWith(quote))
          {
-            String substring = string.substring(1, string.length() - 1);
+            String substring = StringUtil.substring(string, 1, string.length() - 1);
             return substring.replaceAll("\\\\" + quote, quote);
          }
       }
@@ -1384,8 +1384,8 @@ public class StringUtil
    {
       for (String delimiter : new String[] { "\"", "'", "`" })
          if (string.startsWith(delimiter) && string.endsWith(delimiter))
-            return string
-                  .substring(1, string.length() - 1)
+            return StringUtil
+                  .substring(string, 1, string.length() - 1)
                   .replaceAll(escape + delimiter, delimiter);
 
       return string;
@@ -1409,7 +1409,7 @@ public class StringUtil
       if (!encodeLeadingTilde && path.startsWith("~"))
       {
          prefix = "~";
-         path = path.substring(1);
+         path = StringUtil.substring(path, 1);
       }
 
       return prefix + BASH_RESERVED_CHAR.replaceAll(path, match -> "\\" + match.getValue());
@@ -1449,6 +1449,29 @@ public class StringUtil
          return '\0';
 
       return str.charAt(pos);
+   }
+
+   /**
+    * GWT 2.10 changed String.substring to behave more like Java: it now throws an exception
+    * if the start or end index is out of range. If you need the old behavior use the following
+    * methods, instead.
+    */
+   public static native String substring(String str, int indexStart, int indexEnd) /*-{
+      return str.substr(indexStart, indexEnd - indexStart);
+   }-*/;
+
+   public static native String substring(String str, int indexStart) /*-{
+      return str.substr(indexStart);
+   }-*/;
+
+   public static String substring(StringBuilder str, int indexStart, int indexEnd)
+   {
+      return substring(str.toString(), indexStart, indexEnd - indexStart);
+   }
+
+   public static String substring(StringBuilder str, int indexStart)
+   {
+      return substring(str.toString(), indexStart);
    }
 
    /**

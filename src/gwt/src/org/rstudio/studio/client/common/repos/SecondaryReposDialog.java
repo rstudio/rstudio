@@ -255,7 +255,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                       if (mainEnd == '/' && repoEnd != '/')
                          repoUrl = repoUrl + "/";
                       else if (mainEnd != '/' && repoEnd == '/')
-                         repoUrl = repoUrl.substring(0, repoUrl.length() - 1);
+                         repoUrl = StringUtil.substring(repoUrl, 0, repoUrl.length() - 1);
                   }
                   
                   if (!StringUtil.isNullOrEmpty(repo.getName()) &&

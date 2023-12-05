@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
@@ -36,7 +37,7 @@ public class YamlTree
          // are valid YAML but "null" is easier to read for R users 
          if (line.endsWith(": ~"))
          {
-            line = line.substring(0, line.length() - 1) + "null";
+            line = StringUtil.substring(line, 0, line.length() - 1) + "null";
          }
          yamlLine = line;
          key = getKey(line);
@@ -101,7 +102,7 @@ public class YamlTree
          int idx = yamlLine.indexOf(":");
          if (idx < 0)
             return "";
-         return yamlLine.substring(idx + 2).trim();
+         return StringUtil.substring(yamlLine, idx + 2).trim();
       }
       
       public void setValue(String value)
@@ -116,7 +117,7 @@ public class YamlTree
          if (idx == yamlLine.length() - 1)
             value = " " + value;
 
-         yamlLine = yamlLine.substring(0, idx + 2) + value;
+         yamlLine = StringUtil.substring(yamlLine, 0, idx + 2) + value;
       }
       
       public String yamlLine;

@@ -306,7 +306,7 @@ public class AnsiCode
       boolean extendedRGBMarkerSeen = false;
       int extendedRGBColorsSeen = 0;
 
-      String[] tokens = code.substring(2, code.length() - 1).split(";");
+      String[] tokens = StringUtil.substring(code, 2, code.length() - 1).split(";");
       for (String token : tokens)
       {
          int codeVal = StringUtil.parseInt(token,  -1);

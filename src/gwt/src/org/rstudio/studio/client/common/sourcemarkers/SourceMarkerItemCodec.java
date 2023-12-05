@@ -160,7 +160,7 @@ public class SourceMarkerItemCodec
       if (!StringUtil.isNullOrEmpty(fileHeaderBasePath_))
       {
          if (path.startsWith(fileHeaderBasePath_))
-            path = path.substring(fileHeaderBasePath_.length());
+            path = StringUtil.substring(path, fileHeaderBasePath_.length());
       }
       cell.setInnerText(path);
 

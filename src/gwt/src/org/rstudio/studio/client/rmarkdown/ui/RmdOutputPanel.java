@@ -32,6 +32,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ScrollUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -386,7 +387,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    {
       String url = getCurrentUrl();
       int anchorPos = url.lastIndexOf("#");
-      return anchorPos > 0 ? url.substring(anchorPos + 1) : "";
+      return anchorPos > 0 ? StringUtil.substring(url, anchorPos + 1) : "";
    }
    
    @Override

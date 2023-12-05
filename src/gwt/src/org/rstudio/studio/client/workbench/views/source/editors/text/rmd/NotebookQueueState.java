@@ -586,7 +586,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (newlineIndex == -1)
             continue;
          
-         String header = code.substring(0, newlineIndex);
+         String header = StringUtil.substring(code, 0, newlineIndex);
          Map<String, String> chunkOptions = RChunkHeaderParser.parse(header);
          if (!chunkOptions.containsKey("engine"))
             continue;

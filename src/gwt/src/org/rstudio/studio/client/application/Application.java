@@ -857,7 +857,7 @@ public class Application implements ApplicationEventHandlers
       String scopePath = info.getScopePath();
       int loc = baseURL.indexOf(scopePath);
       if (loc != -1)
-         baseURL = baseURL.substring(0, loc) + "/";
+         baseURL = StringUtil.substring(baseURL, 0, loc) + "/";
 
       if (info.getScopeState() == InvalidSessionInfo.ScopeMissingProject)
       {

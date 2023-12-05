@@ -140,7 +140,7 @@ class CodeSearchSuggestion implements Suggestion
          if (context.startsWith(fsContextPath) &&
              (context.length() > fsContextPath.length()))
          {
-            context = context.substring(fsContextPath.length());
+            context = StringUtil.substring(context, fsContextPath.length());
          }
       }
       

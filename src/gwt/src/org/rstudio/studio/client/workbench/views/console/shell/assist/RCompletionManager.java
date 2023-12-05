@@ -269,7 +269,7 @@ public class RCompletionManager implements CompletionManager
             if (cursor.hasType("string"))
             {
                String tokenValue = cursor.currentValue();
-               String path = tokenValue.substring(1, tokenValue.length() - 1);
+               String path = StringUtil.substring(tokenValue, 1, tokenValue.length() - 1);
                FileSystemItem filePath = FileSystemItem.createFile(path);
                
                // This will show a dialog error if no such file exists; this
@@ -433,7 +433,7 @@ public class RCompletionManager implements CompletionManager
          AceGhostText ghostText = docDisplay_.getGhostText();
          if (ghostText.text.startsWith(key))
          {
-            String newGhostText = ghostText.text.substring(1);
+            String newGhostText = StringUtil.substring(ghostText.text, 1);
             docDisplay_.insertCode(key);
             docDisplay_.setGhostText(newGhostText);
             return true;
@@ -862,7 +862,7 @@ public class RCompletionManager implements CompletionManager
    {
       if (input_.getText().matches("\\s*#+'.*"))
       {
-         String linePart = input_.getText().substring(0, input_.getSelection().getStart().getPosition());
+         String linePart = StringUtil.substring(input_.getText(), 0, input_.getSelection().getStart().getPosition());
          if (linePart.matches("\\s*#+'\\s*"))
             return true;
       }
@@ -883,7 +883,7 @@ public class RCompletionManager implements CompletionManager
          return false;
       }
 
-      String linePart = input_.getText().substring(
+      String linePart = StringUtil.substring(input_.getText(),
             optionsStart,
             input_.getSelection().getStart().getPosition());
 
@@ -1144,7 +1144,7 @@ public class RCompletionManager implements CompletionManager
          return false;
       
       int cursorCol = selection.getStart().getPosition();
-      String firstLine = input_.getText().substring(0, cursorCol);
+      String firstLine = StringUtil.substring(input_.getText(), 0, cursorCol);
       
       // never autocomplete in (non-roxygen) comments, or at the start
       // of roxygen comments (e.g. at "#' |")
@@ -1224,12 +1224,12 @@ public class RCompletionManager implements CompletionManager
       // we erroneously capture '-' as part of the token name. This is awkward
       // but is effectively a bandaid until the autocompletion revamp.
       if (context.getToken().startsWith("-"))
-         context.setToken(context.getToken().substring(1));
+         context.setToken(StringUtil.substring(context.getToken(), 1));
       
       // fix up roxygen autocompletion for case where '@' is snug against
       // the comment marker
       if (context.getToken() == "'@")
-         context.setToken(context.getToken().substring(1));
+         context.setToken(StringUtil.substring(context.getToken(), 1));
       
       CompletionRequestContext requestContext = new CompletionRequestContext(
             invalidation_.getInvalidationToken(),
@@ -1282,7 +1282,7 @@ public class RCompletionManager implements CompletionManager
                                                 String line)
    {
       int index = Math.max(line.lastIndexOf('"'), line.lastIndexOf('\''));
-      String token = line.substring(index + 1);
+      String token = StringUtil.substring(line, index + 1);
       context.add(token, AutocompletionContext.TYPE_FILE);
       context.setToken(token);
    }
@@ -1369,7 +1369,7 @@ public class RCompletionManager implements CompletionManager
       int row = input_.getCursorPosition().getRow();
       
       // trim to cursor position
-      firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
+      firstLine = StringUtil.substring(firstLine, 0, input_.getCursorPosition().getColumn());
       
       // Get the token at the cursor position.
       String tokenRegex = ".*[^" +
@@ -2006,7 +2006,7 @@ public class RCompletionManager implements CompletionManager
          
          // Strip off the quotes for string completions.
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
-            completionToken = completionToken.substring(1);
+            completionToken = StringUtil.substring(completionToken, 1);
          
          if (qualifiedName.source == "<chunk-option>")
          {
@@ -2124,7 +2124,7 @@ public class RCompletionManager implements CompletionManager
             if (!userPrefs_.insertSpacesAroundEquals().getValue() &&
                   value.endsWith(kSpaceEquals))
             {
-               value = value.substring(0, value.length() - kSpaceEquals.length()) + "=";
+               value = StringUtil.substring(value, 0, value.length() - kSpaceEquals.length()) + "=";
             }
          }
          

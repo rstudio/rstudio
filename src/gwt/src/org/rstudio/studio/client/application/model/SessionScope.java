@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.model;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 
 /**
@@ -41,9 +42,9 @@ public class SessionScope
 
       if (sessionScope.length() == (USER_ID_LEN + PROJECT_ID_LEN + SESSION_ID_LEN))
       {
-         userId_ = sessionScope.substring(0, USER_ID_LEN);
-         projectId_ = sessionScope.substring(USER_ID_LEN, USER_ID_LEN + PROJECT_ID_LEN);
-         sessionId_ = sessionScope.substring(USER_ID_LEN + PROJECT_ID_LEN);
+         userId_ = StringUtil.substring(sessionScope, 0, USER_ID_LEN);
+         projectId_ = StringUtil.substring(sessionScope, USER_ID_LEN, USER_ID_LEN + PROJECT_ID_LEN);
+         sessionId_ = StringUtil.substring(sessionScope, USER_ID_LEN + PROJECT_ID_LEN);
       }
       
       // Otherwise leave everything null.
@@ -58,12 +59,12 @@ public class SessionScope
    
       // remove trailing slash, if any
       if (path.endsWith("/"))
-         path = path.substring(0, path.length() - 1);
+         path = StringUtil.substring(path, 0, path.length() - 1);
       
       // everything after final slash, if any
       int pos = path.lastIndexOf('/');
       if (pos >= 0)
-         path = path.substring(pos + 1);
+         path = StringUtil.substring(path, pos + 1);
 
       return new SessionScope(path);
    }

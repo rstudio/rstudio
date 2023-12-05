@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import org.rstudio.core.client.ScrollUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Operation;
@@ -169,7 +170,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
       if (url == null)
          return "";
       int anchorPos = url.lastIndexOf("#");
-      return anchorPos > 0 ? url.substring(anchorPos + 1) : "";
+      return anchorPos > 0 ? StringUtil.substring(url, anchorPos + 1) : "";
    }
    
    private RStudioFrame frame_;

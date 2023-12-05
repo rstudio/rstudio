@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -202,7 +203,7 @@ public class ChunkPlotWidget extends Composite
       String url = plot_.getUrl();
       int idx = url.lastIndexOf('?');
       if (idx > 0)
-         url = url.substring(0, idx);
+         url = StringUtil.substring(url, 0, idx);
       
       // verify that the plot being refreshed is the same one this widget
       // contains

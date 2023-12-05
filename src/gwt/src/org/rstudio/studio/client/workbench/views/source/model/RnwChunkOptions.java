@@ -98,7 +98,7 @@ public class RnwChunkOptions extends JavaScriptObject
       assert cursorPos >= optionsStartOffset :
             "cursorPos was less than optionsStartOffset";
 
-      String linePart = line.substring(optionsStartOffset, cursorPos);
+      String linePart = StringUtil.substring(line, optionsStartOffset, cursorPos);
 
       // This can be pretty simple because Noweb doesn't allow = or , to appear
       // in names or values (i.e. no quotes or escaping to make parsing more
@@ -203,7 +203,7 @@ public class RnwChunkOptions extends JavaScriptObject
                    currentName == null &&
                    braceStack.empty())
                {
-                  String part = line.substring(currentPartBegin,
+                  String part = StringUtil.substring(line, currentPartBegin,
                                                token.getOffset());
                   currentName = part;
                   currentPartBegin = token.getOffset() + token.getLength();
@@ -212,8 +212,7 @@ public class RnwChunkOptions extends JavaScriptObject
             case RToken.COMMA:
                if (braceStack.empty())
                {
-                  String part = line.substring(currentPartBegin,
-                                               token.getOffset());
+                  String part = StringUtil.substring(line, currentPartBegin, token.getOffset());
                   if (currentName == null)
                      currentName = part;
                   else
@@ -249,7 +248,7 @@ public class RnwChunkOptions extends JavaScriptObject
          }
       }
 
-      String part = line.substring(currentPartBegin,
+      String part = StringUtil.substring(line, currentPartBegin,
                                    line.length());
       if (currentName == null)
          currentName = part;
