@@ -2,7 +2,7 @@
 set -e
 
 # Update this when updating to a new base GWT release
-GWT_VER=2.9.0
+GWT_VER=2.10.0
 
 # This script is intended to run from the rstudio/gwt/tools folder
 RUN_DIR=`pwd`

@@ -219,7 +219,7 @@ public class TextBoxWithButton extends Composite
       
       if (text.startsWith(USE_DEFAULT_PREFIX))
       {
-         text = text.substring(USE_DEFAULT_PREFIX.length()).trim();
+         text = StringUtil.substring(text, USE_DEFAULT_PREFIX.length()).trim();
       }
       
       return text;

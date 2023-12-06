@@ -236,7 +236,7 @@ public class AceEditor implements DocDisplay,
 
          // ... or if there is nothing but whitespace between the start of the line and the cursor.
          String line = getSession().getLine(range.getStart().getRow());
-         return line.substring(0, col).trim().length() != 0;
+         return StringUtil.substring(line, 0, col).trim().length() != 0;
 
       }
    }
@@ -593,7 +593,7 @@ public class AceEditor implements DocDisplay,
       // if the cursor is already at the end of the line
       // (allowing for trailing whitespace), then eat the
       // newline as well; otherwise, just eat to end of line
-      String rest = line.substring(cursorPos.getColumn());
+      String rest = StringUtil.substring(line, cursorPos.getColumn());
       if (rest.trim().isEmpty())
       {
          yankRange = Range.fromPoints(
@@ -2087,7 +2087,7 @@ public class AceEditor implements DocDisplay,
 
    public String getCurrentLineUpToCursor()
    {
-      return getCurrentLine().substring(0, getCursorPosition().getColumn());
+      return StringUtil.substring(getCurrentLine(), 0, getCursorPosition().getColumn());
    }
 
    public int getCurrentLineNum()
@@ -2345,7 +2345,7 @@ public class AceEditor implements DocDisplay,
          else
          {
             String firstLine = getSession().getLine(start.getRow());
-            if (firstLine.substring(0, start.getColumn()).trim().length() == 0)
+            if (StringUtil.substring(firstLine, 0, start.getColumn()).trim().length() == 0)
                newStart = Position.create(start.getRow(), 0);
          }
       }
@@ -2369,7 +2369,7 @@ public class AceEditor implements DocDisplay,
          while (newEnd.getRow() != newStart.getRow())
          {
             String line = getSession().getLine(newEnd.getRow());
-            if (line.substring(0, newEnd.getColumn()).trim().length() != 0)
+            if (StringUtil.substring(line, 0, newEnd.getColumn()).trim().length() != 0)
                break;
 
             int prevRow = newEnd.getRow() - 1;
@@ -2808,7 +2808,7 @@ public class AceEditor implements DocDisplay,
       int row = cursorPosition.getRow();
       String state = getSession().getState(row);
 
-      String line = getCurrentLine().substring(
+      String line = StringUtil.substring(getCurrentLine(),
             0, cursorPosition.getColumn());
       String tab = session.getTabString();
       int tabSize = session.getTabSize();

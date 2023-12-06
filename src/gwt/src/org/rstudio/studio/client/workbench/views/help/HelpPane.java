@@ -544,7 +544,7 @@ public class HelpPane extends WorkbenchPane
       int previewLoc = docUrl.indexOf(previewPrefix);
       if (previewLoc != -1)
       {
-         String file = docUrl.substring(previewLoc + previewPrefix.length());
+         String file = StringUtil.substring(docUrl, previewLoc + previewPrefix.length());
          file = URL.decodeQueryString(file);
          FileSystemItem fsi = FileSystemItem.createFile(file);
          docTitle = fsi.getName();

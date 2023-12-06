@@ -288,7 +288,7 @@ public class PythonCompletionManager extends CompletionManagerBase
       
       String line = context.getLine();
       int position = context.getPosition();
-      return line.substring(0, position);
+      return StringUtil.substring(line, 0, position);
    }
    
    // this routine is primarily used to provide some extra context

@@ -100,7 +100,7 @@ public class CompletionRequester
          final ServerRequestCallback<CompletionResult> callback)
    {
       if (isHelpCompletion)
-         token = token.substring(token.lastIndexOf(':') + 1);
+         token = StringUtil.substring(token, token.lastIndexOf(':') + 1);
 
       if (cachedLinePrefix_ == null)
          return false;
@@ -111,7 +111,7 @@ public class CompletionRequester
 
       if (token.toLowerCase().startsWith(cachedLinePrefix_.toLowerCase()))
       {
-         String diff = token.substring(cachedLinePrefix_.length());
+         String diff = StringUtil.substring(token, cachedLinePrefix_.length());
 
          // if we already have a cached result for this diff, use it
          CompletionResult cached = cachedCompletions_.get(diff);
@@ -134,7 +134,7 @@ public class CompletionRequester
 
    private String basename(String absolutePath)
    {
-      return absolutePath.substring(absolutePath.lastIndexOf('/') + 1);
+      return StringUtil.substring(absolutePath, absolutePath.lastIndexOf('/') + 1);
    }
 
    private boolean filterStartsWithDot(String item,
@@ -161,7 +161,7 @@ public class CompletionRequester
       // trailing slashes)
 
       // Transform the token once beforehand for completions.
-      final String tokenSub   = token.substring(token.lastIndexOf('/') + 1);
+      final String tokenSub   = StringUtil.substring(token, token.lastIndexOf('/') + 1);
       final String tokenFuzzy = fuzzy(tokenSub);
 
       for (QualifiedName qname : cachedResult.completions)
@@ -901,11 +901,11 @@ public class CompletionRequester
                firstSlashIndex = slashIndices.get(
                      slashIndices.size() - 3);
 
-            String endName = display.substring(lastSlashIndex + 1);
+            String endName = StringUtil.substring(display, lastSlashIndex + 1);
             String startName = "";
             if (slashIndices.size() > 2)
                startName += "...";
-            startName += display.substring(firstSlashIndex, lastSlashIndex);
+            startName += StringUtil.substring(display, firstSlashIndex, lastSlashIndex);
 
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -1050,8 +1050,8 @@ public class CompletionRequester
          }
          else
          {
-            name = val.substring(0, idx).trim();
-            pkgName = val.substring(idx + 1, val.length() - 1);
+            name = StringUtil.substring(val, 0, idx).trim();
+            pkgName = StringUtil.substring(val, idx + 1, val.length() - 1);
          }
 
          return new QualifiedName(name, pkgName);

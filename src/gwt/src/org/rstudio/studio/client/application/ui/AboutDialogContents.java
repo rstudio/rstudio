@@ -19,6 +19,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Anchor;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
@@ -74,7 +75,7 @@ public class AboutDialogContents extends Composite
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());
       buildLabel.setText(
-           "\"" + info.release_name + "\" " + info.build_type + " (" + info.commit.substring(0, 8) + ", " +
+           "\"" + info.release_name + "\" " + info.build_type + " (" + StringUtil.substring(info.commit, 0, 8) + ", " +
            info.date + constants_.buildLabelForText() + info.os);
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);

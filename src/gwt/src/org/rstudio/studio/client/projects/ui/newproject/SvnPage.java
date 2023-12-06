@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import com.google.gwt.core.client.GWT;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
@@ -49,7 +51,7 @@ public class SvnPage extends VersionControlPage
    {
       // Strip trailing spaces and slashes
       while (url.endsWith("/") || url.endsWith(" ") || url.endsWith("\t"))
-         url = url.substring(0, url.length() - 1);
+         url = StringUtil.substring(url, 0, url.length() - 1);
       
       // Find last component
       url = url.replaceFirst(".*[/]", ""); // greedy

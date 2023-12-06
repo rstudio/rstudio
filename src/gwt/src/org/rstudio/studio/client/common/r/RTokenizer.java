@@ -148,7 +148,7 @@ public class RTokenizer
       }
       
       return new RStringToken(RToken.STRING, 
-                        data_.substring(start, pos_), 
+                        StringUtil.substring(data_, start, pos_), 
                         start, 
                         pos_-start, wellFormed);
    }
@@ -173,7 +173,7 @@ public class RTokenizer
       String rest = peek("[\\w.]*");
       pos_ += (rest != null ? rest : "").length();
       return new RToken(RToken.ID, 
-                        data_.substring(start, pos_), 
+                        StringUtil.substring(data_, start, pos_), 
                         start, 
                         pos_ - start);
    }
@@ -275,7 +275,7 @@ public class RTokenizer
          if (eatAllOnFailure)
          {
             pos_ = data_.length();
-            return data_.substring(start);
+            return StringUtil.substring(data_, start);
          }
          else
          {
@@ -285,7 +285,7 @@ public class RTokenizer
       else
       {
          pos_ = match.getIndex();
-         return data_.substring(start, pos_);
+         return StringUtil.substring(data_, start, pos_);
       }
    }
    
@@ -298,7 +298,7 @@ public class RTokenizer
       
       int start = pos_;
       pos_ += length;
-      return new RToken(tokenType, data_.substring(start, pos_), start, length);
+      return new RToken(tokenType, StringUtil.substring(data_, start, pos_), start, length);
    }
    
    private final String data_;

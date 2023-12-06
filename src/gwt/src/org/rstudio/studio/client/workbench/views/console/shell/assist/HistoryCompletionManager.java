@@ -218,7 +218,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
    {
       Position pos = input_.getCursorPosition();
       String text = input_.getText();
-      return text.substring(0, pos.getColumn());
+      return StringUtil.substring(text, 0, pos.getColumn());
    }
 
    public boolean previewKeyPress(char charCode)
@@ -346,16 +346,16 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
             // if we can find the match, highlight it
             return
                SafeHtmlUtils.htmlEscape(
-                     history_.substring(0, idx)) +
+                     StringUtil.substring(history_, 0, idx)) +
                "<span class=\"" +
                ConsoleResources.INSTANCE.consoleStyles().searchMatch() +
                "\">" +
                SafeHtmlUtils.htmlEscape(
-                     history_.substring(idx,
+                     StringUtil.substring(history_, idx,
                                           idx + match_.length())) +
                "</span>" +
                SafeHtmlUtils.htmlEscape(
-                     history_.substring(idx + match_.length(),
+                     StringUtil.substring(history_, idx + match_.length(),
                                           history_.length()));
          }
 

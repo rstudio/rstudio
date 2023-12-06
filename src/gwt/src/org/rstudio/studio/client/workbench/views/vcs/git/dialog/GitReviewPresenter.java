@@ -734,7 +734,7 @@ public class GitReviewPresenter implements ReviewPresenter
 
       String path = view_.getChangelistTable().getSelectedPaths().get(0);
       if (path.indexOf(" -> ") >= 0)
-         path = path.substring(path.indexOf(" -> ") + " -> ".length());
+         path = StringUtil.substring(path, path.indexOf(" -> ") + " -> ".length());
       UnifiedEmitter emitter = new UnifiedEmitter(path);
       for (DiffChunk chunk : chunks)
          emitter.addContext(chunk);

@@ -251,7 +251,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       // Enforce a sane visual limit on terminal captions
       if (caption.length() > 32)
       {
-         caption = caption.substring(0, 31) + "...";
+         caption = StringUtil.substring(caption, 0, 31) + "...";
       }
       return caption;
    }

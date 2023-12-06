@@ -436,7 +436,7 @@ public class AceEditorBackgroundLinkHighlighter
          {
             startIdx++;
             endIdx--;
-            url = url.substring(1, url.length() - 1);
+            url = StringUtil.substring(url, 1, url.length() - 1);
          }
 
          // trim off trailing punctuation (characters unlikely

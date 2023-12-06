@@ -97,7 +97,7 @@ public class MultipleItemSuggestTextBox extends TextBoxBase
          String previous = "";
          if (lastSepIndex != -1)
          {
-            previous = fullText.substring(0, lastSepIndex);
+            previous = StringUtil.substring(fullText, 0, lastSepIndex);
             if (!previous.endsWith(" "))
                previous = previous + " ";
          }

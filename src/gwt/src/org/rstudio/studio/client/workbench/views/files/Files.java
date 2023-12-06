@@ -1072,7 +1072,7 @@ public class Files
       String defaultExt = fileType.getDefaultExtension();
 
       // extension has a '.' at the start, so remove that in the default name
-      String newFileDefaultName = "Untitled" + defaultExt.toUpperCase().substring(1) + defaultExt;
+      String newFileDefaultName = "Untitled" + StringUtil.substring(defaultExt.toUpperCase(), 1) + defaultExt;
       String path = currentPath_.completePath(newFileDefaultName);
       FileSystemItem newTempFile = FileSystemItem.createFile(path);
       return newTempFile;
@@ -1082,7 +1082,7 @@ public class Files
    {
       // prepare default information about the new file
       FileSystemItem newTempFile = getDefaultFileName(fileType);
-      String formattedExt = fileType.getDefaultExtension().toUpperCase().substring(1);
+      String formattedExt = StringUtil.substring(fileType.getDefaultExtension().toUpperCase(), 1);
       
       // guard for reentrancy
       if (inputPending_)

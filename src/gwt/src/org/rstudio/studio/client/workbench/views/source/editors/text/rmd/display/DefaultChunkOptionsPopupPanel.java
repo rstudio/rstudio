@@ -138,7 +138,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (firstCommaIdx == -1)
          firstCommaIdx = extractedChunkHeader.length();
 
-      String label = extractedChunkHeader.substring(
+      String label = StringUtil.substring(extractedChunkHeader,
             0, Math.min(firstSpaceIdx, firstCommaIdx)).trim();
 
       return label;
@@ -181,7 +181,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             ? extracted.indexOf(' ')
             : extracted.indexOf(',');
 
-      String arguments = extracted.substring(argsStartIdx + 1);
+      String arguments = StringUtil.substring(extracted, argsStartIdx + 1);
       TextCursor cursor = new TextCursor(arguments);
 
       // consume commas and whitespace if needed
@@ -202,8 +202,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          }
 
          chunkOptions.put(
-               arguments.substring(startIndex, equalsIndex).trim(),
-               arguments.substring(equalsIndex + 1, endIndex).trim());
+               StringUtil.substring(arguments, startIndex, equalsIndex).trim(),
+               StringUtil.substring(arguments, equalsIndex + 1, endIndex).trim());
 
          startIndex = cursor.getIndex() + 1;
       }

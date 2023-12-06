@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 
 public class FilePathUtils
@@ -26,7 +27,7 @@ public class FilePathUtils
       {
          idx = unfriendlyFileName.lastIndexOf("\\");
       }
-      return unfriendlyFileName.substring(
+      return StringUtil.substring(unfriendlyFileName,
               idx + 1, unfriendlyFileName.length()).trim();
    }
    
@@ -34,7 +35,7 @@ public class FilePathUtils
    {
       int idx = fileName.lastIndexOf("/");
       return idx > 0 ?
-            fileName.substring(0, idx) :
+            StringUtil.substring(fileName, 0, idx) :
             fileName;
    }
 
@@ -42,7 +43,7 @@ public class FilePathUtils
    {
       int idx = path.lastIndexOf("/");
       return idx > 0 ?
-            path.substring(0, idx) :
+            StringUtil.substring(path, 0, idx) :
             path;
    }
    
@@ -75,7 +76,7 @@ public class FilePathUtils
       String prefix = new String(workingDirectory + 
             (workingDirectory.endsWith("/") ? "" : "/"));
       String relative = new String(path.startsWith("./") ? 
-            path.substring(2, path.length()) : path);
+            StringUtil.substring(path, 2, path.length()) : path);
       
       return prefix + relative;
    }
@@ -84,23 +85,23 @@ public class FilePathUtils
    {
       int tarGzIndex = path.indexOf(".tar.gz");
       if (tarGzIndex != -1)
-         return path.substring(0, tarGzIndex);
+         return StringUtil.substring(path, 0, tarGzIndex);
       
-      return path.substring(0, path.lastIndexOf('.'));
+      return StringUtil.substring(path, 0, path.lastIndexOf('.'));
    }
    
    public static String fileNameSansExtension(String path)
    {
       int lastSlashIndex = path.lastIndexOf('/');
       int extensionIndex = getExtensionIndex(path, lastSlashIndex + 1);
-      return path.substring(lastSlashIndex + 1, extensionIndex);
+      return StringUtil.substring(path, lastSlashIndex + 1, extensionIndex);
    }
    
    public static String filePathSansExtension(String path)
    {
       int lastSlashIndex = path.lastIndexOf('/');
       int extensionIndex = getExtensionIndex(path, lastSlashIndex + 1);
-      return path.substring(0, extensionIndex);
+      return StringUtil.substring(path, 0, extensionIndex);
    }
    
    @SuppressWarnings("unused")

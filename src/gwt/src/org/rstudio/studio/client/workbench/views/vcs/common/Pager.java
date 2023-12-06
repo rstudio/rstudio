@@ -19,6 +19,8 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 public class Pager extends SimplePager
@@ -99,7 +101,7 @@ public class Pager extends SimplePager
       else
       {
          int pos = text.indexOf(" of "); // TODO - don't think I can change this? Check w/ Gary
-         return constants_.commitsPager((pos >= 0 ? text.substring(0, pos) : text));
+         return constants_.commitsPager((pos >= 0 ? StringUtil.substring(text, 0, pos) : text));
       }
    }
 

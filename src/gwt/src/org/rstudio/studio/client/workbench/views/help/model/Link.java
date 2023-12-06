@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.workbench.views.help.model;
 
 import com.google.gwt.dom.client.Document;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
@@ -57,7 +59,7 @@ public class Link
       if (!url.startsWith(prefix))
          return url;
       else
-         return url.substring(prefix.length());
+         return StringUtil.substring(url, prefix.length());
    }
 
    public String getUrl()
@@ -72,7 +74,7 @@ public class Link
    
    private static String normalizeUrl(String url)
    {
-      return url.indexOf('#') >= 0 ? url.substring(0, url.indexOf('#')) : url;
+      return url.indexOf('#') >= 0 ? StringUtil.substring(url, 0, url.indexOf('#')) : url;
    }
    
    @Override

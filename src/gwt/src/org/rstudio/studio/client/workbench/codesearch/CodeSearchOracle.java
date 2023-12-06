@@ -180,7 +180,7 @@ public class CodeSearchOracle extends SuggestOracle
                   if (colonIndex == -1)
                      colonIndex = query.length();
                   
-                  if (StringUtil.isSubsequence(name, query.substring(0, colonIndex), true))
+                  if (StringUtil.isSubsequence(name, StringUtil.substring(query, 0, colonIndex), true))
                      suggestions.add(sugg);
                }
             }
@@ -372,7 +372,7 @@ public class CodeSearchOracle extends SuggestOracle
       // the query matches the start to come first
       int colonIndex = query.indexOf(":");
       final String localQuery = colonIndex > 0 ?
-            query.substring(0, colonIndex) :
+            StringUtil.substring(query, 0, colonIndex) :
             query;
       
       java.util.Collections.sort(suggestions,

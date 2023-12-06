@@ -150,11 +150,11 @@ public class ColorUtil
          // content that could be lying around.
          int rgbIdx = cssString.indexOf("rgb");
          if (rgbIdx != -1)
-            return fromRgbCssString(cssString.substring(rgbIdx).trim());
+            return fromRgbCssString(StringUtil.substring(cssString, rgbIdx).trim());
 
          int hashIdx = cssString.indexOf('#');
          if (hashIdx != -1)
-            return fromHex(cssString.substring(hashIdx).trim());
+            return fromHex(StringUtil.substring(cssString, hashIdx).trim());
 
          Debug.logToConsole("Failed to parse CSS '" + cssString + "'");
          return new RGBColor();

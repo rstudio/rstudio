@@ -23,7 +23,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.core.client.BrowseCap;
-
+import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -90,7 +90,7 @@ public class FileSystemItem extends JavaScriptObject
    {
       String name = getName();
       int extensionLength = getExtension().length();
-      return name.substring(0, name.length() - extensionLength);
+      return StringUtil.substring(name, 0, name.length() - extensionLength);
    }
 
    public static String getExtensionFromPath(String path)
@@ -101,7 +101,7 @@ public class FileSystemItem extends JavaScriptObject
 
       int lastDotIndex = filename.lastIndexOf('.');
       if (lastDotIndex != -1)
-         return filename.substring(lastDotIndex);
+         return StringUtil.substring(filename, lastDotIndex);
       else
          return "";
    }
@@ -132,7 +132,7 @@ public class FileSystemItem extends JavaScriptObject
       }
       else
       {
-         parentPath = path.substring(0, lastSlash);
+         parentPath = StringUtil.substring(path, 0, lastSlash);
          return FileSystemItem.createDir(parentPath);
       }
    }
@@ -166,7 +166,7 @@ public class FileSystemItem extends JavaScriptObject
    {
       if (isWithinHome())
       {
-         return getPath().substring(HOME_PREFIX.length());
+         return StringUtil.substring(getPath(), HOME_PREFIX.length());
       }
       else
       {
@@ -183,7 +183,7 @@ public class FileSystemItem extends JavaScriptObject
       if (getPath().startsWith(otherPath) &&
           (getPath().length() > otherPath.length()))
       {
-         return getPath().substring(otherPath.length());
+         return StringUtil.substring(getPath(), otherPath.length());
       }
       else
       {
@@ -247,7 +247,7 @@ public class FileSystemItem extends JavaScriptObject
       String ext = getExtension().toLowerCase();
       if (ext.length() > 0)
       {
-         String mimeExt = ext.substring(1).toLowerCase();
+         String mimeExt = StringUtil.substring(ext, 1).toLowerCase();
          String mimeType = MIME_TYPES.get(mimeExt);
          if (mimeType != null)
             return mimeType;
@@ -316,9 +316,9 @@ public class FileSystemItem extends JavaScriptObject
          return "/";
 
       while (path.endsWith("/"))
-         path = path.substring(0, path.length() - 1);
+         path = StringUtil.substring(path, 0, path.length() - 1);
 
-      return path.substring(Math.max(0, path.lastIndexOf('/') + 1));
+      return StringUtil.substring(path, Math.max(0, path.lastIndexOf('/') + 1));
    }
 
    private final native int getLengthNative() /*-{

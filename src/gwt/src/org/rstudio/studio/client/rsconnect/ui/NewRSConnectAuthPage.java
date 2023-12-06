@@ -273,7 +273,7 @@ public class NewRSConnectAuthPage
             // if we don't have any username, guess one based on user's given name
             // on the server
             result_.setAccountNickname(
-                  result_.getAuthUser().getFirstName().substring(0, 1) + 
+                  StringUtil.substring(result_.getAuthUser().getFirstName(), 0, 1) + 
                   result_.getAuthUser().getLastName().toLowerCase());
          }
       }

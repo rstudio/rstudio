@@ -17,6 +17,7 @@ package org.rstudio.core.client.patch;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 
 public class SubstringDiff
@@ -51,16 +52,16 @@ public class SubstringDiff
       if (valid_)
       {
          if (offset_ > 0)
-            changes.add(new TextChange(TextChange.Type.Equal, origVal_.substring(0, offset_)));
+            changes.add(new TextChange(TextChange.Type.Equal, StringUtil.substring(origVal_, 0, offset_)));
          
          if (length_ > 0)
-            changes.add(new TextChange(TextChange.Type.Delete, origVal_.substring(offset_, offset_ + length_)));
+            changes.add(new TextChange(TextChange.Type.Delete, StringUtil.substring(origVal_, offset_, offset_ + length_)));
          
          if (replacement_.length() > 0)
             changes.add(new TextChange(TextChange.Type.Insert, replacement_));
          
          if (offset_ + length_ < origVal_.length())
-            changes.add(new TextChange(TextChange.Type.Equal, origVal_.substring(offset_ + length_)));
+            changes.add(new TextChange(TextChange.Type.Equal, StringUtil.substring(origVal_, offset_ + length_)));
       }
       else
       {

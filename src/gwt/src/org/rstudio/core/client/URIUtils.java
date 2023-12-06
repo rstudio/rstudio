@@ -29,8 +29,8 @@ public class URIUtils
       int anchorPos = base.indexOf('#');
       if (anchorPos != -1)
       {
-         anchor = base.substring(anchorPos);
-         base = base.substring(0, anchorPos);
+         anchor = StringUtil.substring(base, anchorPos);
+         base = StringUtil.substring(base, 0, anchorPos);
       }
       
       // add the query param

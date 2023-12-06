@@ -56,7 +56,7 @@ public class QuartoConnection
          // clean out viewer_pane params
          int paramsLoc = url.indexOf("?capabilities=");
          if (paramsLoc != -1)
-            url = url.substring(0, paramsLoc);
+            url = StringUtil.substring(url, 0, paramsLoc);
       }
       url_ = url;
       website_ = website;
