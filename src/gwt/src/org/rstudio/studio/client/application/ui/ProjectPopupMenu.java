@@ -36,6 +36,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -47,6 +48,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class ProjectPopupMenu extends ToolbarPopupMenu
 {
@@ -72,25 +74,23 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                    ProjectsServerOperations server,
                    EventBus events,
                    Session session,
-                   ProductEditionInfo editionInfo)
+                   ProductEditionInfo editionInfo,
+                   Provider<UserPrefs> pUserPrefs)
    {
       server_ = server;
       events_ = events;
       mruList_ = mruList;
       allowSharedProjects_ = session.getSessionInfo().getAllowOpenSharedProjects();
       editionInfo_ = editionInfo;
+      pUserPrefs_ = pUserPrefs;
    }
    
    public ToolbarButton getToolbarButton()
    {
       if (toolbarButton_ == null)
       {
-         String buttonText = activeProjectFile_ != null ?
-                  mruList_.getQualifiedLabel(activeProjectFile_) :
-                  constants_.toolBarButtonText();
-          
          toolbarButton_ = new ToolbarMenuButton(
-                buttonText,
+                getProjectDisplayName(),
                 ToolbarButton.NoTitle,
                 new ImageResource2x(RESOURCES.projectMenu2x()),
                 this, 
@@ -104,8 +104,9 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
             // also set the doc title so the browser tab carries the project
             if (!Desktop.isDesktop())
             {
-               // put project title first so it isn't cut off when there are many tabs
-               Document.get().setTitle(buttonText + " \u00b7 " + editionInfo_.editionName());
+               setDocumentTitle();
+               pUserPrefs_.get().projectName().addValueChangeHandler(
+                     valueChangeEvent -> setDocumentTitle());
             }
          }
         
@@ -118,7 +119,28 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
        
        return toolbarButton_;
    }
-   
+
+   private void setDocumentTitle()
+   {
+      // put project title first so it isn't cut off when there are many tabs
+      Document.get().setTitle(getProjectDisplayName() + " \u00b7 " + editionInfo_.editionName());
+   }
+
+   private String getProjectDisplayName()
+   {
+      if (activeProjectFile_ != null)
+      {
+         // TODO this needs to go through mruList_.getQualifiedLabel(activeProjectFile_);
+         if (pUserPrefs_.get().projectName().getValue().length() > 0)
+            return pUserPrefs_.get().projectName().getValue();
+         else
+            return mruList_.getQualifiedLabel(activeProjectFile_);
+
+      } else {
+         return constants_.toolBarButtonText();
+      }
+   }
+
    @Override
    protected ToolbarMenuBar createMenuBar()
    {
@@ -297,4 +319,5 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private boolean allowSharedProjects_ = false;
    private ProductEditionInfo editionInfo_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
+   private Provider<UserPrefs> pUserPrefs_;
 }
