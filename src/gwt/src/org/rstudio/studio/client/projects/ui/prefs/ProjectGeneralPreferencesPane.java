@@ -45,8 +45,6 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       
       VerticalPanel container = new VerticalPanel();
       
-      container.add(headerLabel(constants_.generalTitle()));
-
       String textboxWidth = "100%";
       projectName_ = new TextBox();
       DomUtils.disableSpellcheck(projectName_);
@@ -54,8 +52,12 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
          constants_.projectNamePlaceholder(sessionInfo_.getActiveProjectDir().getName()));
       projectName_.setWidth(textboxWidth);
       projectNameLabel_ = new FormLabel(constants_.customProjectNameLabel(), projectName_);
-      container.add(spacedBefore(projectNameLabel_));
-      container.add(spaced(projectName_));
+      if (sessionInfo_.getAllowFullUI())
+      {
+         container.add(headerLabel(constants_.generalTitle()));
+         container.add(spacedBefore(projectNameLabel_));
+         container.add(spaced(projectName_));
+      }
  
       container.add(headerLabel(constants_.workspaceTitle()));
 
