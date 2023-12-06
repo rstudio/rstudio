@@ -353,7 +353,7 @@
         "code_completion_other": {
             "type": "string",
             "enum": ["always", "triggered", "manual"],
-            "enumReadable": ["Automatically", "When triggered", "Manually (ctrl+space)"],
+            "enumReadable": ["Automatically", "When triggered", "Manually (Ctrl+Space)"],
             "default": "always",
             "title": "Use code completion for other languages",
             "description": "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor."
@@ -1717,6 +1717,11 @@
             "default": false,
             "title": "Index project files with GitHub Copilot",
             "description": "When enabled, RStudio will index project files with GitHub Copilot."
+        },
+        "project_name": {
+            "description": "User-provided name for the currently opened R project.",
+            "type": "string",
+            "default": ""
         }
      }
 }

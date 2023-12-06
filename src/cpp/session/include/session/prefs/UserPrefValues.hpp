@@ -431,6 +431,7 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorSuggestion "suggestion"
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
+#define kProjectName "project_name"
 
 class UserPrefValues: public Preferences
 {
@@ -1953,6 +1954,12 @@ public:
     */
    bool copilotIndexingEnabled();
    core::Error setCopilotIndexingEnabled(bool val);
+
+   /**
+    * User-provided name for the currently opened R project.
+    */
+   std::string projectName();
+   core::Error setProjectName(std::string val);
 
 };
 

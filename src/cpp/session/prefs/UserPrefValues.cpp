@@ -3312,6 +3312,19 @@ core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
    return writePref("copilot_indexing_enabled", val);
 }
 
+/**
+ * User-provided name for the currently opened R project.
+ */
+std::string UserPrefValues::projectName()
+{
+   return readPref<std::string>("project_name");
+}
+
+core::Error UserPrefValues::setProjectName(std::string val)
+{
+   return writePref("project_name", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3568,6 +3581,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotCompletionsDelay,
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,
+      kProjectName,
    });
 }
    

@@ -271,10 +271,6 @@ public class SessionInfo extends JavaScriptObject
       return this.active_project_file;
    }-*/;
 
-   public final native String getActiveProjectName() /*-{
-      return this.active_project_name;
-   }-*/;
-
    public final FileSystemItem getActiveProjectDir()
    {
       String projFile = getActiveProjectFile();

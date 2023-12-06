@@ -790,6 +790,7 @@ json::Object ProjectContext::uiPrefs() const
    uiPrefs[kDefaultLatexProgram] = config_.defaultLatexProgram;
    uiPrefs[kRootDocument] = config_.rootDocument;
    uiPrefs[kUseRoxygen] = !config_.packageRoxygenize.empty();
+   uiPrefs[kProjectName] = config_.projectName;
 
    // python prefs -- only activate when non-empty
    if (!config_.pythonType.empty() ||
