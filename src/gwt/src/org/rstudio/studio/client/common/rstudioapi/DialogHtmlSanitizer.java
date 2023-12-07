@@ -59,7 +59,7 @@ public final class DialogHtmlSanitizer implements HtmlSanitizer {
             if (StringUtil.charAt(segment, 0) == '/') {
                tagStart = 1;
             }
-            tag = segment.substring(tagStart, tagEnd).toLowerCase();
+            tag = StringUtil.substring(segment, tagStart, tagEnd).toLowerCase();
             if (TAG_ALLOW_LIST.contains(tag)) {
                isValidTag = true;
             }
@@ -67,7 +67,7 @@ public final class DialogHtmlSanitizer implements HtmlSanitizer {
                // check for links
                int tagSpace = segment.indexOf(' ');
                if (tagSpace > 0) {
-                  String tagName = segment.substring(tagStart, tagSpace).toLowerCase();
+                  String tagName = StringUtil.substring(segment, tagStart, tagSpace).toLowerCase();
                   if (tagName == "a") {
                      
                      if (tag.matches("a href ?= ?\"https?://[^\"]+\"")) {
@@ -88,7 +88,7 @@ public final class DialogHtmlSanitizer implements HtmlSanitizer {
             sanitized.append(tag).append('>');
 
             sanitized.append(SafeHtmlUtils.htmlEscapeAllowEntities(
-            segment.substring(tagEnd + 1)));
+            StringUtil.substring(segment, tagEnd + 1)));
          } else {
             sanitized.append("&lt;").append(
             SafeHtmlUtils.htmlEscapeAllowEntities(segment));

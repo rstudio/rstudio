@@ -153,13 +153,13 @@ public class SafeHtmlUtil
          if (idx >= 0)
          {
             hasMatch = true;
-            sb.appendEscaped(haystack.substring(0, idx));
+            sb.appendEscaped(StringUtil.substring(haystack, 0, idx));
             sb.appendHtmlConstant(
                   "<span class=\"" + matchClass + "\">");
-            sb.appendEscaped(haystack.substring(idx, 
+            sb.appendEscaped(StringUtil.substring(haystack, idx, 
                   idx + needle.length()));
             sb.appendHtmlConstant("</span>");
-            sb.appendEscaped(haystack.substring(idx + needle.length(), 
+            sb.appendEscaped(StringUtil.substring(haystack, idx + needle.length(), 
                   haystack.length()));
          }
       }
@@ -260,13 +260,13 @@ public class SafeHtmlUtil
          {
             // Emit all the text from the last index to the beginning of this
             // match. 
-            sb.appendEscaped(haystack.substring(idx, match.index));
+            sb.appendEscaped(StringUtil.substring(haystack, idx, match.index));
             
             // Emit the match itself.
             idx = match.index;
             sb.appendHtmlConstant(
                   "<span class=\"" + matchClass + "\">");
-            sb.appendEscaped(haystack.substring(idx, 
+            sb.appendEscaped(StringUtil.substring(haystack, idx, 
                   idx + match.length));
             sb.appendHtmlConstant("</span>");
             
@@ -275,7 +275,7 @@ public class SafeHtmlUtil
          }
          
          // Emit the text from end of the last match to the end of the string
-         sb.appendEscaped(haystack.substring(idx, haystack.length()));
+         sb.appendEscaped(StringUtil.substring(haystack, idx, haystack.length()));
       }
       else
       {

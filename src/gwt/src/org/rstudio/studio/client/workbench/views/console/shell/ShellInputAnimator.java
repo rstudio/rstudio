@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
 import com.google.gwt.core.client.Scheduler;
@@ -109,7 +110,7 @@ public class ShellInputAnimator
          if (nextChar_ == 0)
             display_.clear();
          
-         display_.insertCode(code_.substring(nextChar_, nextChar_+1));
+         display_.insertCode(StringUtil.substring(code_, nextChar_, nextChar_+1));
          
          nextChar_++;
          

@@ -382,7 +382,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       {
          FileSystemItem projDir = session_.getSessionInfo().getActiveProjectDir();
          if (projDir.exists() && newValue.startsWith(projDir.getPath()))
-            newValue = newValue.substring(projDir.getLength() + 1);
+            newValue = StringUtil.substring(newValue, projDir.getLength() + 1);
       }
       else
       {

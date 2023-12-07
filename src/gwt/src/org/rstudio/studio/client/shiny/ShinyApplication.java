@@ -293,7 +293,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          final String destination,
          final String extendedType)
    {
-      String fileDir = filePath.substring(0, filePath.lastIndexOf("/"));
+      String fileDir = StringUtil.substring(filePath, 0, filePath.lastIndexOf("/"));
       for (ShinyApplicationParams params: params_)
       {
          if (StringUtil.equals(fileDir, params.getPath()))

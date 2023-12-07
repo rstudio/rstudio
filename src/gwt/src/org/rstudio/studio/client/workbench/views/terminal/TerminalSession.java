@@ -404,7 +404,7 @@ public class TerminalSession extends XTermWidget
       }
       if (inputQueue_.length() > MAXCHUNK)
       {
-         userInput = inputQueue_.substring(0, MAXCHUNK);
+         userInput = StringUtil.substring(inputQueue_, 0, MAXCHUNK);
          inputQueue_.delete(0, MAXCHUNK);
       }
       else
@@ -509,7 +509,7 @@ public class TerminalSession extends XTermWidget
       // if there's nothing before it
       if (BrowseCap.isWindowsDesktop() && !StringUtil.isNullOrEmpty(title) && title.startsWith(":/"))
       {
-         title = title.substring(1);
+         title = StringUtil.substring(title, 1);
       }
       setTitle(title);
       eventBus_.fireEvent(new TerminalTitleEvent(this));

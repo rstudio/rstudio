@@ -87,8 +87,8 @@ public class PresentationDispatcher
          }
          else
          {
-            param1 = params.substring(0, spaceLoc);
-            param2 = params.substring(spaceLoc+1);
+            param1 = StringUtil.substring(params, 0, spaceLoc);
+            param2 = StringUtil.substring(params, spaceLoc+1);
          } 
       }
       
@@ -117,7 +117,7 @@ public class PresentationDispatcher
             if (param2.length() > 2 && 
                 param2.startsWith("/") && param2.endsWith("/"))
             {
-               pattern = param2.substring(1, param2.length()-1);
+               pattern = StringUtil.substring(param2, 1, param2.length()-1);
             }
             else
             {
@@ -187,8 +187,8 @@ public class PresentationDispatcher
          int delimLoc = param1.indexOf("::");
          if (delimLoc != -1)
          {
-            packageName = param1.substring(0, delimLoc);
-            topic = param1.substring(delimLoc+2);
+            packageName = StringUtil.substring(param1, 0, delimLoc);
+            topic = StringUtil.substring(param1, delimLoc+2);
          }
 
          server_.showHelpTopic(topic, packageName, RCompletionType.FUNCTION);

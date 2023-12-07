@@ -590,7 +590,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
             else
             {
                String projectFile = newProject.getProjectFile();
-               String packageDirectory = projectFile.substring(0,
+               String packageDirectory = StringUtil.substring(projectFile, 0,
                      projectFile.lastIndexOf('/'));
 
                projServer_.packageSkeleton(

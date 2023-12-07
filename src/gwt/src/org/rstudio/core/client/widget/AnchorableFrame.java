@@ -15,6 +15,8 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
@@ -99,7 +101,7 @@ public class AnchorableFrame extends RStudioFrame
    {
       int hashPos = url.lastIndexOf('#');
       if (hashPos != -1)
-         return url.substring(0, hashPos);
+         return StringUtil.substring(url, 0, hashPos);
       else
          return url;
    }

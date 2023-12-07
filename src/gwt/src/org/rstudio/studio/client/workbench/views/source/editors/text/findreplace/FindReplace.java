@@ -476,18 +476,18 @@ public class FindReplace
                      case '&':
                         return match.getValue();
                      case '`':
-                        String prefix = data.substring(0, match.getIndex());
+                        String prefix = StringUtil.substring(data, 0, match.getIndex());
                         int lastLF = prefix.lastIndexOf("\n");
                         if (lastLF > 0)
-                           prefix = prefix.substring(lastLF + 1);
+                           prefix = StringUtil.substring(prefix, lastLF + 1);
                         return prefix;
                      case '\'':
-                        String suffix = data.substring(match.getIndex() + match.getValue().length());
+                        String suffix = StringUtil.substring(data, match.getIndex() + match.getValue().length());
                         int firstBreak = suffix.indexOf("\r");
                         if (firstBreak < 0)
                            firstBreak = suffix.indexOf("\n");
                         if (firstBreak >= 0)
-                           suffix = suffix.substring(0, firstBreak);
+                           suffix = StringUtil.substring(suffix, 0, firstBreak);
                         return suffix;
                   }
                   break;

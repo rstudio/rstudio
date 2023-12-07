@@ -153,12 +153,12 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
             String style = styles_.ref();
             if (ref.startsWith("refs/heads/"))
             {
-               ref = ref.substring("refs/heads/".length());
+               ref = StringUtil.substring(ref, "refs/heads/".length());
                style += " " + styles_.branch();
             }
             else if (ref.startsWith("refs/remotes/"))
             {
-               ref = ref.substring("refs/remotes/".length());
+               ref = StringUtil.substring(ref, "refs/remotes/".length());
                style += " " + styles_.remote();
             }
             else if (ref == "HEAD")
@@ -171,7 +171,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
          for (String tag : JsUtil.asIterable(commit.getTags()))
          {
             if (tag.startsWith("refs/tags/"))
-               tag = tag.substring("refs/tags/".length());
+               tag = StringUtil.substring(tag, "refs/tags/".length());
             SafeHtmlUtil.appendSpan(builder, styles_.tag(), tag);
          }
 
@@ -226,7 +226,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
          @Override
          public String getValue(CommitInfo object)
          {
-            return object.getId().substring(0, 8);
+            return StringUtil.substring(object.getId(), 0, 8);
          }
       };
       addColumn(idCol, idColName);

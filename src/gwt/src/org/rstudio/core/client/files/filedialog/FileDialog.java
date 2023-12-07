@@ -94,10 +94,10 @@ public abstract class FileDialog extends FileSystemDialog
       int lastIndex = filename.lastIndexOf('/');
       if (lastIndex >= 0)
       {
-         String dir = filename.substring(0, lastIndex);
+         String dir = StringUtil.substring(filename, 0, lastIndex);
          if (dir.length() == 0)
             dir = "/";
-         String file = filename.substring(lastIndex + 1);
+         String file = StringUtil.substring(filename, lastIndex + 1);
 
          // Targeted fix for "611: Permission denied error when attempting to
          // browse /shared folder in open file dialog". The /shared folder

@@ -79,7 +79,7 @@ public class ElementIds
       // does ID match disambiguation pattern?
       if (RE_NUMBERED_ELEMENT_ID.test(actualId))
       {
-         String trimmedId = actualId.substring(0, actualId.lastIndexOf('_'));
+         String trimmedId = StringUtil.substring(actualId, 0, actualId.lastIndexOf('_'));
          return trimmedId == testId;
       }
       return false;

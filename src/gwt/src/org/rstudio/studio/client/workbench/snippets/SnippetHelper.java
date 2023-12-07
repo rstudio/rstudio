@@ -190,7 +190,7 @@ public class SnippetHelper
    {
       int offset = token.length();
       if (StringUtil.isComplementOf(
-            token.substring(offset - 1),
+            StringUtil.substring(token, offset - 1),
             String.valueOf(editor_.getCharacterAtCursor())))
       {
          editor_.moveCursorRight();
@@ -259,15 +259,15 @@ public class SnippetHelper
       // Munge the path a bit
       String path = path_;
       if (path.startsWith("~/"))
-         path = path.substring(2);
+         path = StringUtil.substring(path, 2);
 
       int instIncludeIdx = path.indexOf("/inst/include/");
       if (instIncludeIdx != -1)
-         path = path.substring(instIncludeIdx + 15);
+         path = StringUtil.substring(path, instIncludeIdx + 15);
 
       int srcIdx = path.indexOf("/src/");
       if (srcIdx != -1)
-         path = path.substring(srcIdx + 6);
+         path = StringUtil.substring(path, srcIdx + 6);
 
       path = path.replaceAll("[./]", "_");
       path = path.toUpperCase();
@@ -286,7 +286,7 @@ public class SnippetHelper
          snippet = replaceHeaderGuard(snippet);
       }
 
-      return snippet.replaceAll("(?<!\\\\)\\$\\$", token.substring(snippetName.length()));
+      return snippet.replaceAll("(?<!\\\\)\\$\\$", StringUtil.substring(token, snippetName.length()));
    }
 
    public final native void applySnippetImpl(

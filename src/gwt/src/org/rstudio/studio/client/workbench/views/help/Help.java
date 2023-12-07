@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -217,7 +218,7 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
    {
       String appUrl = server_.getApplicationURL("");
       if (helpUrl.startsWith(appUrl) && !helpUrl.equals(appUrl))
-         return helpUrl.substring(appUrl.length());
+         return StringUtil.substring(helpUrl, appUrl.length());
       else
          return helpUrl;
    }

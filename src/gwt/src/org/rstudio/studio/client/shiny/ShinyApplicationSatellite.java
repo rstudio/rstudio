@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.shiny;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -32,7 +33,7 @@ public class ShinyApplicationSatellite extends SatelliteApplication
    
    public static final String getIdFromName(String name)
    {
-      return name.substring(NAME_PREFIX.length());
+      return StringUtil.substring(name, NAME_PREFIX.length());
    }
    
    public static final String getNameFromId(String id)

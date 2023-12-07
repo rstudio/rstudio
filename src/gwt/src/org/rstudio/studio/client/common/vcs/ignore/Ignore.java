@@ -269,7 +269,7 @@ public class Ignore
          if (parentPath.length() == 0)
             ignored.add(path);
          else
-            ignored.add(path.substring(thisParent.length() + 1));
+            ignored.add(StringUtil.substring(path, thisParent.length() + 1));
       }
 
       return new IgnoreList(parentPath, ignored);

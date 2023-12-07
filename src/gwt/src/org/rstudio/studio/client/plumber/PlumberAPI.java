@@ -224,7 +224,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
     
    private void launchPlumberAPI(final String filePath)
    {
-      String fileDir = filePath.substring(0, filePath.lastIndexOf("/"));
+      String fileDir = StringUtil.substring(filePath, 0, filePath.lastIndexOf("/"));
       if (fileDir.equals(currentAppPath()))
       {
          // The API being launched is the one already running; open and reload the API.
