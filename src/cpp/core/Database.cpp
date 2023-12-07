@@ -451,23 +451,36 @@ public:
       if (!options.password.empty())
          password = options.password;
 
-      // Prior to 2023.09.1, we allowed customers to encrypt their passwords. This configuration is
-      // no longer supported so we log a warning if we think the password is encrypted but still
-      // attempt to use it without decrypting, allowing the connection to fail later on with an
-      // invalid password error. This is to allow for the case where a customer happens to create
-      // a password that coincidentally matches the pattern we look for when detecting encryption.
+      // Somewhat convoluted due to need to handle several cases (Pro-only):
+      //
+      // (1) password without embedded encryption key; this could be a plain-text
+      //     password or an encrypted password generated before we added such embedding, but
+      //     we can't be sure without trying to decrypt and treating as plain text if that fails
+      // (2) an encrypted password with embedded key hash; if it won't decrypt, this is an error
+      //     and we don't want to treat as plain text
+      //
+      // In a future release we could simplify by assuming a password without embedded key must
+      // be plain text. Tracked in https://github.com/rstudio/rstudio-pro/issues/2446
+      // 
       bool assumeEncrypted = core::system::crypto::passwordContainsKeyHash(password);
 
-      if (assumeEncrypted)
+      Error error = core::system::crypto::decryptPassword(options.secureKey, options.secureKeyHash, password);
+      if (error)
       {
          static bool warnOnce = false;
+
+         if (assumeEncrypted)
+         {
+            error.addProperty("key-files", "/var/lib/rstudio-server/secure-cookie-key (managed), /etc/rstudio/secure-cookie-key (manual using XDG_CONFIG_DIRS)");
+            return error;
+         }
+
+         // decrypt failed, we'll just use the password as-is
          if (!warnOnce)
          {
             warnOnce = true;
-            LOG_WARNING_MESSAGE("It looks like the configured PostgreSQL password in database.conf"
-                " may have been encrypted, which is no longer a supported configuration. The password will be"
-                " passed to PostgreSQL as-is. Please see the Posit Workbench Administration"
-                " Guide for more information.");
+            LOG_DEBUG_MESSAGE(error.asString());
+            LOG_WARNING_MESSAGE("A plain text value is potentially being used for the PostgreSQL password, or an encrypted password could not be decrypted. The RStudio Server documentation for PostgreSQL shows how to encrypt this value.");
          }
       }
       return Success();
