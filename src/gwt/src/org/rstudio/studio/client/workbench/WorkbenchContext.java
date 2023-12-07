@@ -232,7 +232,6 @@ public class WorkbenchContext
          String title =  pUserPrefs_.get().projectName().getValue();
          if (StringUtil.isNullOrEmpty(title))
          {
-            title = projDir.getName();
             if (pUserPrefs_.get().fullProjectPathInWindowTitle().getValue())
                title = projDir.getPath();
             else
