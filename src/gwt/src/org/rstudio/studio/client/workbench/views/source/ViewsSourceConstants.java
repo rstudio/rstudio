@@ -1242,11 +1242,11 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String openLinkMacCommand();
 
     /**
-     * Translated "Open Link (Shift+Click)".
+     * Translated "Open Link (Ctrl+Click)".
      *
-     * @return translated "Open Link (Shift+Click)"
+     * @return translated "Open Link (Ctrl+Click)"
      */
-    @DefaultMessage("Open Link (Shift+Click)")
+    @DefaultMessage("Open Link (Ctrl+Click)")
     @Key("openLinkNotMacCommand")
     String openLinkNotMacCommand();
 
