@@ -530,10 +530,18 @@ void setEditorInfo()
    // check strict ssl flag
    bool proxyStrictSsl = session::options().copilotProxyStrictSsl();
    
+   // allow override from envvar
+   std::string proxyStrictSslOverride = core::system::getenv("COPILOT_PROXY_STRICT_SSL");
+   if (!proxyStrictSslOverride.empty())
+      proxyStrictSsl = core::string_utils::isTruthy(proxyStrictSslOverride, true);
+   
    // check for server-configured proxy URL
    std::string proxyUrl = session::options().copilotProxyUrl();
-   if (proxyUrl.empty())
-      proxyUrl = core::system::getenv("COPILOT_PROXY_URL");
+   
+   // allow override from envvar
+   std::string proxyUrlOverride = core::system::getenv("COPILOT_PROXY_URL");
+   if (!proxyUrlOverride.empty())
+      proxyUrl = proxyUrlOverride;
    
    // if we have one now, try to parse it
    if (!proxyUrl.empty())

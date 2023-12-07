@@ -452,10 +452,14 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             }
             else if (response.error != null)
             {
+               String output = response.output;
+               if (StringUtil.isNullOrEmpty(output))
+                  output = "(no output available)";
+               
                String message = StringUtil.join(new String[] {
                      "An error occurred while starting the GitHub Copilot agent.",
                      "Error: " + response.error.getEndUserMessage(),
-                     "Output: " + response.output
+                     "Output: " + output
                }, "\n\n");
                
                display_.showMessage(
