@@ -17,6 +17,7 @@ package org.rstudio.core.client.command;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Version;
 import org.rstudio.core.client.dom.EventProperty;
 
@@ -46,9 +47,8 @@ public class KeyCombination
       }
 
       key_ = key;
-      keyCode_ = normalizeKeyCode(keyCode);
+      keyCode_ = normalizeKeyCode(keyCode, key_);
       modifiers_ = modifiers;
-
    }
 
    public KeyCombination(String key,
@@ -56,7 +56,7 @@ public class KeyCombination
                          int modifiers)
    {
       key_ = key;
-      keyCode_ = normalizeKeyCode(keyCode);
+      keyCode_ = normalizeKeyCode(keyCode, key);
       modifiers_ = modifiers;
    }
 
@@ -211,19 +211,39 @@ public class KeyCombination
       return Version.compare(version, "5.15.0") < 0;
    }
 
-   private static int normalizeKeyCode(int keyCode)
+   private static int normalizeMinusKeyCode(int keyCode)
    {
       switch (keyCode)
       {
-
       case 109: // NumPad minus
       case 173: // Firefox hyphen
          return 189;
 
       default:
          return keyCode;
-
       }
+   }
+
+   private static int normalizeKeyCode(int keyCode, String key)
+   {
+      keyCode = normalizeMinusKeyCode(keyCode);
+
+      // We shouldn't be using keycodes: they assume the US English keyboard layout.
+      // Switching over entirely is a big project, so for now we'll map some specific 
+      // keys back to their US keyboard keycodes.
+
+      // Alt+- is default for "insert assignment operator" so map the "-" back to US keyboard.
+      //
+      // Historical curiousity: Qt did some of this for us under the covers, thus the
+      // insert assignment operator worked on Qt desktop but not on Server or Electron.
+      //
+      // https://github.com/rstudio/rstudio/issues/12457
+      if (StringUtil.equals(key, "-"))
+      {
+         keyCode = 189;
+      }
+
+      return keyCode;
    }
 
    private final String key_;

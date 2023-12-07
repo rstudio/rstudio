@@ -11,6 +11,7 @@
 
 ### Fixed
 #### RStudio
+- Fixed shortcut for inserting an assignment operator to work on non-US English keyboards (#12457)
 - Fixed an issue where the menubar would show on secondary windows if Alt key was pressed (#13973)
 - Fixed Windows installer to delete Start Menu shortcut during uninstall (#13936)
 
