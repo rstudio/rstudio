@@ -33,7 +33,9 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.UpdateWindowTitleEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -75,7 +77,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                    EventBus events,
                    Session session,
                    ProductEditionInfo editionInfo,
-                   Provider<UserPrefs> pUserPrefs)
+                   Provider<UserPrefs> pUserPrefs,
+                   WorkbenchContext workbenchContext)
    {
       server_ = server;
       events_ = events;
@@ -83,6 +86,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       allowSharedProjects_ = session.getSessionInfo().getAllowOpenSharedProjects();
       editionInfo_ = editionInfo;
       pUserPrefs_ = pUserPrefs;
+      workbenchContext_ = workbenchContext;
    }
    
    public ToolbarButton getToolbarButton()
@@ -103,11 +107,18 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
           
             // also set the doc title so the browser tab carries the project
             if (!Desktop.isDesktop())
-            {
                setDocumentTitle();
-               pUserPrefs_.get().projectName().addValueChangeHandler(
-                     valueChangeEvent -> setDocumentTitle());
-            }
+
+            // update title of document and satellite editors if project name is changed
+            pUserPrefs_.get().projectName().addValueChangeHandler(valueChangeEvent -> 
+            {
+               if (!Desktop.isDesktop())
+                  setDocumentTitle();
+
+               String title = workbenchContext_.createWindowTitle();
+               if (title != null) 
+                  events_.fireEventToAllSatellites(new UpdateWindowTitleEvent(title));
+            });
          }
         
           if (activeProjectFile_ == null)
@@ -320,4 +331,5 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private ProductEditionInfo editionInfo_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
    private Provider<UserPrefs> pUserPrefs_;
+   private WorkbenchContext workbenchContext_;
 }
