@@ -25,6 +25,7 @@ import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
+import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
 // Disabled in v1.3 due to failures. See #4249.
@@ -61,6 +62,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(SafeHtmlUtilTests.class);
       suite.addTestSuite(TestMocks.class);
       suite.addTestSuite(ApplicationUtilsTests.class);
+      suite.addTestSuite(ProjectMRUEntryTests.class);
 
       return suite;
    }
