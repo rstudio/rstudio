@@ -296,7 +296,6 @@ Error initialize()
 {  
    // register lists / max sizes
    s_lists[kFileMru] = 15;
-   s_lists[kProjectMru] = 15;
    s_lists[kProjectNameMru] = 15;
    s_lists[kHelpHistory] = 15;
    s_lists[kPlotPublishMru] = 15;
