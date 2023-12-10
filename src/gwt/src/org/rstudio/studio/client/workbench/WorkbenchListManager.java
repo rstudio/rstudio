@@ -43,9 +43,8 @@ public class WorkbenchListManager
       server_ = server;
 
       listContexts_.put(FILE_MRU, new ListContext(FILE_MRU));
-      listContexts_.put(PROJECT_MRU, new ListContext(PROJECT_MRU));
-      listContexts_.put(PLOT_PUBLISH_MRU, new ListContext(PLOT_PUBLISH_MRU));
       listContexts_.put(PROJECT_NAME_MRU, new ListContext(PROJECT_NAME_MRU));
+      listContexts_.put(PLOT_PUBLISH_MRU, new ListContext(PLOT_PUBLISH_MRU));
       listContexts_.put(COMMAND_PALETTE_MRU, new ListContext(COMMAND_PALETTE_MRU));
       listContexts_.put(HELP_HISTORY, new ListContext(HELP_HISTORY));
       listContexts_.put(USER_DICTIONARY, new ListContext(USER_DICTIONARY));
@@ -54,7 +53,6 @@ public class WorkbenchListManager
       {
          WorkbenchLists lists = session_.getSessionInfo().getLists();
          updateList(FILE_MRU, lists);
-         updateList(PROJECT_MRU, lists);
          updateList(PROJECT_NAME_MRU, lists);
          updateList(PLOT_PUBLISH_MRU, lists);
          updateList(COMMAND_PALETTE_MRU, lists);
@@ -73,12 +71,7 @@ public class WorkbenchListManager
       return listContexts_.get(FILE_MRU);
    }
 
-   public WorkbenchList getProjectMruList()
-   {
-      return listContexts_.get(PROJECT_MRU);
-   }
-
-   public WorkbenchList getProjectNameCacheList()
+   public WorkbenchList getProjectNameMruList()
    {
       return listContexts_.get(PROJECT_NAME_MRU);
    }
@@ -190,7 +183,6 @@ public class WorkbenchListManager
    private final WorkbenchListsServerOperations server_;
 
    private static final String FILE_MRU = "file_mru";
-   private static final String PROJECT_MRU = "project_mru";
    private static final String PROJECT_NAME_MRU = "project_name_mru";
    private static final String PLOT_PUBLISH_MRU = "plot_publish_mru";
    private static final String COMMAND_PALETTE_MRU = "command_palette_mru";

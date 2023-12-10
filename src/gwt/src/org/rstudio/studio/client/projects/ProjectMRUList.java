@@ -43,7 +43,7 @@ public class ProjectMRUList extends MRUList
                          final EventBus eventBus,
                          Session session)
    {
-      super(listManager.getProjectMruList(),
+      super(listManager.getProjectNameMruList(),
             new AppCommand[] {
                   commands.projectMru0(),
                   commands.projectMru1(),
