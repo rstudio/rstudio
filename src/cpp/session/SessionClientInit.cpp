@@ -376,6 +376,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    {
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
                               projects::projectContext().file());
+      sessionInfo["active_project_name"] = projects::projectContext().projectName();
       sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
       sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
       sessionInfo["project_supports_sharing"] = 
