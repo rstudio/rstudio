@@ -20,6 +20,7 @@
 
 #include <list>
 #include <string>
+#include <utility>
 
 #include <shared_core/FilePath.hpp>
 
@@ -30,28 +31,48 @@ class Error;
 
 namespace collection {
 
+/**
+ * Stores a list of text strings, backed by a file.
+ * 
+ * The file stores each item on a separate line. If an item with the same text is added to the
+ * list, it is removed from its previous position and newly added to the appropriate location
+ * (based on the prepend/append method used).
+ * 
+ * If constructed with a data separator character, the uniqueness of the list items is determined
+ * by the text up to (and not including) the separator character. Everything after the separator
+ * is ignored for uniqueness purposes but is still stored in the list.
+ */
 class MruList
 {
 public:
    MruList(const FilePath& file, size_t maxSize);
+   MruList(const FilePath& file, size_t maxSize, wchar_t dataSeparator);
 
    Error initialize();
    void prepend(const std::string& item);
    void append(const std::string& item);
    void remove(const std::string& item);
    void clear();
+   
+   // update an items extra data without changing its position in the list
+   void updateExtraData(const std::string& item, const std::string& extraData);
 
    size_t size() const;
    std::list<std::string> contents() const;
 
 private:
-   void insertItem(const std::string& item, bool prepend);
+   void insertItem(std::string item, bool prepend);
    void flush();
+   std::pair<std::string, std::string> splitItem(const std::string& item) const;
+   std::string joinItem(const std::string& uniquePart, const std::string& extraData) const;
 
    FilePath file_;
    size_t maxSize_;
+   bool haveExtraData_;
+   wchar_t separator_;
 
    std::list<std::string> contents_;
+   std::map<std::string, std::string> extraData_;
 };
 
 } // namespace collection
