@@ -42,7 +42,6 @@ using namespace collection;
 
 // list names
 const char * const kFileMru = "file_mru";
-const char * const kProjectMru = kProjectMruList; // legacy, replaced by kProjectNameMru
 const char * const kProjectNameMru = kProjectNameMruList;
 const char * const kHelpHistory = "help_history_links";
 const char * const kUserDictionary = "user_dictionary";
@@ -86,7 +85,11 @@ Error readList(const std::string& name,
    }
 
    // read the list from disk
-   pList->reset(new MruList(listPath(name), size));
+   if (name == kProjectNameMru)
+      // project name list stores the optional project display name after a tab character
+      pList->reset(new MruList(listPath(name), size, '\t'));
+   else
+      pList->reset(new MruList(listPath(name), size));
    return (*pList)->initialize();
 }
 

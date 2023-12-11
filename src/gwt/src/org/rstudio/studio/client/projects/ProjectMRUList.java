@@ -25,6 +25,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
+import org.rstudio.studio.client.projects.model.ProjectMRUEntry;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -118,7 +119,16 @@ public class ProjectMRUList extends MRUList
    protected ArrayList<String> generateLabels(
          ArrayList<String> mruEntries, boolean includeExt)
    {
-      return DuplicateHelper.getPathLabels(mruEntries, true);
+      ArrayList<String> mruPaths = new ArrayList<String>();
+      ArrayList<String> mruNames = new ArrayList<String>();
+      for (String entry : mruEntries)
+      {
+         ProjectMRUEntry mruEntry = new ProjectMRUEntry(entry);
+         mruPaths.add(mruEntry.getProjectFilePath());
+         mruNames.add(mruEntry.getProjectName());
+      }
+
+      return DuplicateHelper.getPathLabels(mruPaths, true);
    }
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 
