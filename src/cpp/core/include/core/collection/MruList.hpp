@@ -54,7 +54,7 @@ public:
    void remove(const std::string& item);
    void clear();
    
-   // update an items extra data without changing its position in the list
+   // update an item's extra data without changing its position in the list
    void updateExtraData(const std::string& item, const std::string& extraData);
 
    size_t size() const;
