@@ -326,25 +326,4 @@ public class StringUtilTests extends GWTTestCase
       assertEquals(StringUtil.charAt(str, 2), 'c');
       assertEquals(StringUtil.charAt(str, 3), 'd');
    }
-
-   public void testEnsureNotNullWithNull()
-   {
-      String str = null;
-      String result = StringUtil.ensureNotNull(str);
-      assertEquals("", result);
-   }
-
-   public void testEnsureNotNullWithEmpty()
-   {
-      String str = "";
-      String result = StringUtil.ensureNotNull(str);
-      assertEquals("", result);
-   }
-
-   public void testEnsureNotNullWithNonEmpty()
-   {
-      String str = "foo";
-      String result = StringUtil.ensureNotNull(str);
-      assertEquals(str, result);
-   }
 }

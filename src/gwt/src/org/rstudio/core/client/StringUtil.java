@@ -248,14 +248,6 @@ public class StringUtil
       return val == null || val.length() == 0;
    }
 
-   /**
-    * Returns an empty string if the input string is null or the string itself if not null
-    */
-   public static String ensureNotNull(String val)
-   {
-      return val == null ? "" : val;
-   }
-
    public static String textToRLiteral(String value)
    {
       String escaped = value.replaceAll("([\"\\n\\r\\t\\b\\f\\\\])", "\\\\$1");

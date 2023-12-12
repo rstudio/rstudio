@@ -20,8 +20,8 @@ public class ProjectMRUEntry {
 
    public ProjectMRUEntry(String projectFilePath, String projectName)
    {
-      projectFilePath_ = StringUtil.ensureNotNull(projectFilePath);
-      projectName_ = StringUtil.ensureNotNull(projectName).trim();
+      projectFilePath_ = StringUtil.notNull(projectFilePath);
+      projectName_ = StringUtil.notNull(projectName).trim();
    }
 
    public ProjectMRUEntry(String mruEntry)
