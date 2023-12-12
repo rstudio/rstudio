@@ -86,8 +86,8 @@ Error readList(const std::string& name,
 
    // read the list from disk
    if (name == kProjectNameMru)
-      // project name list stores the optional project display name after a tab character
-      pList->reset(new MruList(listPath(name), size, '\t'));
+      // project name list stores the optional project display name after separator character
+      pList->reset(new MruList(listPath(name), size, kProjectNameSepChar));
    else
       pList->reset(new MruList(listPath(name), size));
    return (*pList)->initialize();

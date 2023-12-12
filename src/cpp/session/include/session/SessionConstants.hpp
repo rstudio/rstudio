@@ -118,8 +118,9 @@
 // legacy, stored only the project file path
 #define kProjectMruList     "project_mru"
 
-// stores project file path and optional name separated by a tab, e.g. (path[\tname])
+// stores project file path and optional name separated by kProjectNameSepChar
 #define kProjectNameMruList "project_name_mru" 
+#define kProjectNameSepChar '\t' // must match PROJECT_NAME_SEP in GWT code
 
 #define kServerHomeSetting     "showUserHomePage"
 #define kServerHomeAlways      "always"

@@ -17,6 +17,13 @@ package org.rstudio.studio.client.projects.model;
 import org.rstudio.core.client.StringUtil;
 
 public class ProjectMRUEntry {
+   /**
+    * Separator between project file path and project name in MRU value. Must match
+    * kProjectNameSepChar constant in the Session C++ code.
+    *
+    * Only supports a single character separator, even though we declare it as a string.
+    */
+   public static final String PROJECT_NAME_SEP = "\t";
 
    public ProjectMRUEntry(String projectFilePath, String projectName)
    {
@@ -33,14 +40,14 @@ public class ProjectMRUEntry {
          return;
       }
 
-      int tabPos = mruEntry.indexOf("\t");
-      if (tabPos == -1)
+      int sepPos = mruEntry.indexOf(PROJECT_NAME_SEP);
+      if (sepPos == -1)
       {
          projectFilePath_ = mruEntry;
          projectName_ = "";
       } else {
-         projectFilePath_ = mruEntry.substring(0, tabPos);
-         projectName_ = mruEntry.substring(tabPos + 1).trim();
+         projectFilePath_ = mruEntry.substring(0, sepPos);
+         projectName_ = mruEntry.substring(sepPos + 1).trim();
       }
    }
 
@@ -64,7 +71,7 @@ public class ProjectMRUEntry {
          return "";
       else
          return projectFilePath_ +
-               (StringUtil.isNullOrEmpty(projectName_) ? "" : "\t" + projectName_);
+               (StringUtil.isNullOrEmpty(projectName_) ? "" : PROJECT_NAME_SEP + projectName_);
    }
 
    private final String projectFilePath_;
