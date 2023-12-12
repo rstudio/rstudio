@@ -17,7 +17,9 @@ package org.rstudio.studio.client.projects;
 import java.util.ArrayList;
 
 import com.google.gwt.core.client.GWT;
+
 import org.rstudio.core.client.DuplicateHelper;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -112,23 +114,38 @@ public class ProjectMRUList extends MRUList
    @Override
    protected String transformMruEntryPath(String entryPath)
    {
-      return FileSystemItem.createFile(entryPath).getParentPathString();
+      // split out the path component and tweak it
+      ProjectMRUEntry mruEntry = new ProjectMRUEntry(entryPath);
+      String newPath = FileSystemItem.createFile(mruEntry.getProjectFilePath()).getParentPathString();
+
+      // then reappend the custom name (if any)
+      return new ProjectMRUEntry(newPath, mruEntry.getProjectName()).getMRUValue();
    }
    
    @Override
-   protected ArrayList<String> generateLabels(
-         ArrayList<String> mruEntries, boolean includeExt)
+   protected ArrayList<String> generateLabels(ArrayList<String> mruEntries, boolean includeExt)
    {
+      // split out the paths and names so we can dedupe the paths
       ArrayList<String> mruPaths = new ArrayList<String>();
       ArrayList<String> mruNames = new ArrayList<String>();
       for (String entry : mruEntries)
       {
          ProjectMRUEntry mruEntry = new ProjectMRUEntry(entry);
          mruPaths.add(mruEntry.getProjectFilePath());
-         mruNames.add(mruEntry.getProjectName());
+         mruNames.add(StringUtil.notNull(mruEntry.getProjectName()));
       }
-
-      return DuplicateHelper.getPathLabels(mruPaths, true);
+      mruPaths = DuplicateHelper.getPathLabels(mruPaths, includeExt);
+      
+      // recombine paths and names for display
+      ArrayList<String> result = new ArrayList<String>();
+      for (int i = 0; i < mruEntries.size(); i++)
+      {
+         if (mruNames.get(i).length() > 0)
+            result.add(mruPaths.get(i) + " (" + mruNames.get(i) + ")");
+         else
+            result.add(mruPaths.get(i));
+      }
+      return result;
    }
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 

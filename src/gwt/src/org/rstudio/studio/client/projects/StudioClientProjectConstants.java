@@ -2181,11 +2181,11 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String customProjectNameLabel();
 
     /**
-     * Translated "({0})".
+     * Translated "{0}".
      *
-     * @return translated "({0})"
+     * @return translated "{0}"
      */
-    @DefaultMessage("({0})")
+    @DefaultMessage("{0}")
     @Key("projectNamePlaceholder")
     String projectNamePlaceholder(String defaultProjectName);
 }
