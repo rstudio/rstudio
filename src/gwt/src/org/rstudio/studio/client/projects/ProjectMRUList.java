@@ -72,7 +72,7 @@ public class ProjectMRUList extends MRUList
                @Override
                public void execute(String file)
                {
-                  openProjectFromMru(eventBus, file);
+                  openProjectFromMru(eventBus, new ProjectMRUEntry(file).getProjectFilePath());
                }
             });
       
