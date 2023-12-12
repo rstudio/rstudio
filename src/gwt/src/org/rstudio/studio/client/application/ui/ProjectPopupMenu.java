@@ -113,9 +113,9 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
             if (!Desktop.isDesktop())
                setDocumentTitle();
 
-            // update title of document and satellite editors if project name is changed
             pUserPrefs_.get().projectName().addValueChangeHandler(valueChangeEvent -> 
             {
+               // update title of document and satellite editors if project name is changed
                if (!Desktop.isDesktop())
                   setDocumentTitle();
 
@@ -123,9 +123,12 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                if (title != null) 
                   events_.fireEventToAllSatellites(new UpdateWindowTitleEvent(title));
 
-               // also update project name in the Project MRU list
+               // update project name in the Project MRU list
                ProjectMRUEntry entry = new ProjectMRUEntry(activeProjectFile_, valueChangeEvent.getValue());
                pWorkbenchLists_.get().getProjectNameMruList().updateExtraData(entry.getMRUValue());
+
+               // update the button text
+               toolbarButton_.setText(getProjectDisplayName());
             });
          }
         
