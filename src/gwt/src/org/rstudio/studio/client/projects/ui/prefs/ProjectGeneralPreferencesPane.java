@@ -48,8 +48,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       String textboxWidth = "100%";
       projectName_ = new TextBox();
       DomUtils.disableSpellcheck(projectName_);
-      DomUtils.setPlaceholder(projectName_,
-         constants_.projectNamePlaceholder(sessionInfo_.getActiveProjectDir().getName()));
+      DomUtils.setPlaceholder(projectName_, sessionInfo_.getActiveProjectDir().getName());
       projectName_.setWidth(textboxWidth);
       projectNameLabel_ = new FormLabel(constants_.customProjectNameLabel(), projectName_);
       if (sessionInfo_.getAllowFullUI())
