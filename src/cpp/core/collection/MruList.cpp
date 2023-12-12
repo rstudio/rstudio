@@ -150,6 +150,12 @@ void MruList::updateExtraData(const std::string& item, const std::string& extraD
    }
 }
 
+void MruList::updateExtraData(const std::string& itemWithExtraData)
+{
+   auto parts = splitItem(itemWithExtraData);
+   updateExtraData(parts.first, parts.second);
+}
+
 void MruList::remove(const std::string& item)
 {
    if (!haveExtraData_)

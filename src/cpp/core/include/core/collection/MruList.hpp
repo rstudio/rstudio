@@ -56,6 +56,7 @@ public:
    
    // update an item's extra data without changing its position in the list
    void updateExtraData(const std::string& item, const std::string& extraData);
+   void updateExtraData(const std::string& itemWithExtraData);
 
    size_t size() const;
    std::list<std::string> contents() const;

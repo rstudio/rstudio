@@ -33,7 +33,9 @@ test_context("MruList Tests")
    {
       FilePath listFilePath;
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
+
       MruList list(listFilePath, 10);
+
       REQUIRE_FALSE(list.initialize());
       REQUIRE(listFilePath.exists());
       REQUIRE_FALSE(listFilePath.remove());
@@ -45,7 +47,9 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
+
       REQUIRE(list.size() == 1);
       REQUIRE(list.contents().size() == 1);
       REQUIRE(list.contents().front() == "item1");
@@ -58,7 +62,9 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("  item1    ");
+
       REQUIRE(list.size() == 1);
       REQUIRE(list.contents().size() == 1);
       REQUIRE(list.contents().front() == "  item1    ");
@@ -71,6 +77,7 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("  item1    ");
 
       MruList list2(listFilePath, 10);
@@ -87,9 +94,11 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.append("item2");
       list.append("item3");
+
       REQUIRE(list.size() == 3);
       REQUIRE(list.contents().size() == 3);
       REQUIRE(list.contents().front() == "item1");
@@ -108,7 +117,9 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.prepend("item1");
+
       REQUIRE(list.size() == 1);
       REQUIRE(list.contents().size() == 1);
       REQUIRE(list.contents().front() == "item1");
@@ -121,10 +132,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.prepend("item1");
       list.prepend("item2");
       list.prepend("item3");
       list.prepend("item4");
+
       REQUIRE(list.size() == 4);
       REQUIRE(list.contents().size() == 4);
       REQUIRE(list.contents().front() == "item4");
@@ -144,10 +157,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.prepend("item2");
       list.append("item3");
       list.append("item4");
+
       REQUIRE(list.size() == 4);
       REQUIRE(list.contents().size() == 4);
       REQUIRE(list.contents().front() == "item2");
@@ -167,12 +182,14 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.prepend("item2");
       list.prepend("item3");
       list.append("item4");
       list.prepend("item5");
       list.append("item6");
+
       REQUIRE(list.size() == 6);
       REQUIRE(list.contents().size() == 6);
       REQUIRE(list.contents().front() == "item5");
@@ -195,7 +212,9 @@ test_context("MruList Tests")
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
       REQUIRE(list.contents().size() == 0);
+
       list.clear();
+
       REQUIRE(list.contents().size() == 0);
       MruList list2(listFilePath, 10);
       REQUIRE_FALSE(list2.initialize());
@@ -213,7 +232,9 @@ test_context("MruList Tests")
       list.append("item2");
       list.append("item3");
       REQUIRE(list.size() == 3);
+
       list.clear();
+
       REQUIRE(list.size() == 0);
       MruList list2(listFilePath, 10);
       REQUIRE_FALSE(list2.initialize());
@@ -227,10 +248,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 4);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.prepend("item2");
       list.append("item3");
       list.prepend("item4");
+
       REQUIRE(list.size() == 4);
       REQUIRE(list.contents().size() == 4);
       auto listContents = list.contents();
@@ -249,6 +272,7 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 4);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.append("item2");
       list.append("item3");
@@ -272,6 +296,7 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 4);
       REQUIRE_FALSE(list.initialize());
+
       list.prepend("item1");
       list.prepend("item2");
       list.prepend("item3");
@@ -295,10 +320,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.append("item2");
       list.append("item3");
       list.append("item1");
+
       auto listContents = list.contents();
       std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
       REQUIRE(vectorContents[0] == "item2");
@@ -313,10 +340,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.append("item2");
       list.append("item3");
       list.prepend("item2");
+
       auto listContents = list.contents();
       std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
       REQUIRE(vectorContents[0] == "item2");
@@ -331,10 +360,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.append("item2");
       list.append("item3");
       list.remove("item2");
+
       auto listContents = list.contents();
       std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
       REQUIRE(vectorContents[0] == "item1");
@@ -348,10 +379,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10);
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.append("item2");
       list.append("item3");
       list.remove("item4");
+
       auto listContents = list.contents();
       std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
       REQUIRE(vectorContents[0] == "item1");
@@ -368,7 +401,9 @@ test_context("MruList Tests")
    {
       FilePath listFilePath;
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
+
       MruList list(listFilePath, 10, '\t');
+
       REQUIRE_FALSE(list.initialize());
       REQUIRE(listFilePath.exists());
       REQUIRE_FALSE(listFilePath.remove());
@@ -380,7 +415,9 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
+
       REQUIRE(list.size() == 1);
       REQUIRE(list.contents().size() == 1);
       REQUIRE(list.contents().front() == "item1");
@@ -393,7 +430,9 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1\t");
+
       REQUIRE(list.size() == 1);
       REQUIRE(list.contents().size() == 1);
       REQUIRE(list.contents().front() == "item1");
@@ -406,7 +445,9 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1\tHello World!");
+
       REQUIRE(list.size() == 1);
       REQUIRE(list.contents().size() == 1);
       REQUIRE(list.contents().front() == "item1\tHello World!");
@@ -419,7 +460,9 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("  item1    ");
+
       REQUIRE(list.size() == 1);
       REQUIRE(list.contents().size() == 1);
       REQUIRE(list.contents().front() == "  item1    ");
@@ -432,6 +475,7 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("  item1    ");
 
       MruList list2(listFilePath, 10, '\t');
@@ -448,6 +492,7 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("  item1 \t Hello World!   ");
       list.append("   item2   ");
 
@@ -466,10 +511,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.append("item2\tThe Second Item");
       list.append("item3");
       list.append("item4\tThe Fourth Item");
+
       REQUIRE(list.size() == 4);
       auto contents = list.contents();
       REQUIRE(contents.size() == 4);
@@ -489,10 +536,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1\tThe First Item");
       list.append("item2\tThe Second Item");
       list.append("item3");
       list.append("item4\tThe Fourth Item");
+
       MruList list2(listFilePath, 10, '\t');
       REQUIRE_FALSE(list2.initialize());
       REQUIRE(list2.size() == 4);
@@ -515,7 +564,9 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '|');
       REQUIRE_FALSE(list.initialize());
+
       list.prepend("item1");
+
       REQUIRE(list.size() == 1);
       REQUIRE(list.contents().size() == 1);
       REQUIRE(list.contents().front() == "item1");
@@ -528,7 +579,9 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '|');
       REQUIRE_FALSE(list.initialize());
+
       list.prepend("item1|Hello World!");
+
       REQUIRE(list.size() == 1);
       REQUIRE(list.contents().size() == 1);
       REQUIRE(list.contents().front() == "item1|Hello World!");
@@ -541,10 +594,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '|');
       REQUIRE_FALSE(list.initialize());
+
       list.prepend("item1");
       list.prepend("item2|Hello");
       list.prepend("item3");
       list.prepend("item4|World");
+
       REQUIRE(list.size() == 4);
       REQUIRE(list.contents().size() == 4);
       REQUIRE(list.contents().front() == "item4|World");
@@ -564,10 +619,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '@');
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1@once");
       list.prepend("item2@upon");
       list.append("item3@a time");
       list.append("item4@there was a");
+
       REQUIRE(list.size() == 4);
       REQUIRE(list.contents().size() == 4);
       REQUIRE(list.contents().front() == "item2@upon");
@@ -587,6 +644,7 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.prepend("item2");
       list.prepend("item3");
@@ -594,6 +652,7 @@ test_context("MruList Tests")
       list.prepend("item5\tThe best item ever!!!");
       list.append("item6\t");
       list.prepend("item5\tBack and even better than before");
+
       REQUIRE(list.size() == 6);
       REQUIRE(list.contents().size() == 6);
       REQUIRE(list.contents().front() == "item5\tBack and even better than before");
@@ -616,7 +675,9 @@ test_context("MruList Tests")
       MruList list(listFilePath, 10, '\t');
       REQUIRE_FALSE(list.initialize());
       REQUIRE(list.contents().size() == 0);
+
       list.clear();
+
       REQUIRE(list.contents().size() == 0);
       MruList list2(listFilePath, 10, '\t');
       REQUIRE_FALSE(list2.initialize());
@@ -634,7 +695,9 @@ test_context("MruList Tests")
       list.append("item2");
       list.append("item3");
       REQUIRE(list.size() == 3);
+
       list.clear();
+
       REQUIRE(list.size() == 0);
       MruList list2(listFilePath, 10);
       REQUIRE_FALSE(list2.initialize());
@@ -648,10 +711,12 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 4, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1\tOnce");
       list.prepend("item2\tMore");
       list.append("item3\tInto");
       list.prepend("item4");
+
       REQUIRE(list.size() == 4);
       REQUIRE(list.contents().size() == 4);
       auto listContents = list.contents();
@@ -670,6 +735,7 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 4, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.append("item1");
       list.append("item2\tPlease don't delete me!");
       list.append("item3");
@@ -695,6 +761,7 @@ test_context("MruList Tests")
       REQUIRE_FALSE(list.initialize());
       list.append("item1");
       list.append("item2\tPlease don't delete me!");
+
       list.remove("item2");
       list.append("item2");
 
@@ -712,6 +779,7 @@ test_context("MruList Tests")
       REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
       MruList list(listFilePath, 4, '\t');
       REQUIRE_FALSE(list.initialize());
+
       list.prepend("item1");
       list.prepend("item2");
       list.prepend("item3\tThree is ok");
@@ -738,13 +806,14 @@ test_context("MruList Tests")
       list.append("item1\tFirst Try");
       list.append("item2");
       list.append("item3");
+
       list.append("item1\tNew and improved?");
+
       auto listContents = list.contents();
       std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
       REQUIRE(vectorContents[0] == "item2");
       REQUIRE(vectorContents[1] == "item3");
       REQUIRE(vectorContents[2] == "item1\tNew and improved?");
-      // check round trip just for the heck of it
       MruList list2(listFilePath, 10, '\t');
       REQUIRE_FALSE(list2.initialize());
       REQUIRE(list2.size() == 3);
@@ -765,7 +834,9 @@ test_context("MruList Tests")
       list.append("item1");
       list.append("item2");
       list.append("item3");
+
       list.prepend("item2");
+
       auto listContents = list.contents();
       std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
       REQUIRE(vectorContents[0] == "item2");
@@ -783,7 +854,9 @@ test_context("MruList Tests")
       list.append("item1\tItem 1");
       list.append("item2\tItem 2");
       list.append("item3\tItem 3");
+
       list.remove("item2\tAnything goes here for item 2");
+
       auto listContents = list.contents();
       std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
       REQUIRE(vectorContents[0] == "item1\tItem 1");
@@ -800,7 +873,9 @@ test_context("MruList Tests")
       list.append("item1");
       list.append("item2\tTwo");
       list.append("item3");
+
       list.remove("item4\tFour");
+
       auto listContents = list.contents();
       std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
       REQUIRE(vectorContents[0] == "item1");
@@ -818,10 +893,13 @@ test_context("MruList Tests")
       list.append("item1\tFirst Try");
       list.append("item2\tSo Great");
       list.append("item3\tThree is better");
+
       list.updateExtraData("item2", "Now two is ultra great!");
+      list.updateExtraData("item1\tSecond Try!");
+
       auto listContents = list.contents();
       std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item1\tFirst Try");
+      REQUIRE(vectorContents[0] == "item1\tSecond Try!");
       REQUIRE(vectorContents[1] == "item2\tNow two is ultra great!");
       REQUIRE(vectorContents[2] == "item3\tThree is better");
       MruList list2(listFilePath, 10, '\t');
@@ -829,9 +907,38 @@ test_context("MruList Tests")
       REQUIRE(list2.size() == 3);
       auto list2Contents = list2.contents();
       std::vector<std::string> vectorContents2(list2Contents.begin(), list2Contents.end());
-      REQUIRE(vectorContents2[0] == "item1\tFirst Try");
+      REQUIRE(vectorContents2[0] == "item1\tSecond Try!");
       REQUIRE(vectorContents2[1] == "item2\tNow two is ultra great!");
       REQUIRE(vectorContents2[2] == "item3\tThree is better");
+      REQUIRE_FALSE(listFilePath.remove());
+   }
+
+  test_that("Updating an item's extra text to empty string removes the extra text from the list")
+   {
+      FilePath listFilePath;
+      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
+      MruList list(listFilePath, 10, '\t');
+      REQUIRE_FALSE(list.initialize());
+      list.append("item1\tFirst Try");
+      list.append("item2\tSo Great");
+      list.append("item3\tThree is better");
+
+      list.updateExtraData("item2");
+      list.updateExtraData("item3", "");
+
+      auto listContents = list.contents();
+      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+      REQUIRE(vectorContents[0] == "item1\tFirst Try");
+      REQUIRE(vectorContents[1] == "item2");
+      REQUIRE(vectorContents[2] == "item3");
+      MruList list2(listFilePath, 10, '\t');
+      REQUIRE_FALSE(list2.initialize());
+      REQUIRE(list2.size() == 3);
+      auto list2Contents = list2.contents();
+      std::vector<std::string> vectorContents2(list2Contents.begin(), list2Contents.end());
+      REQUIRE(vectorContents2[0] == "item1\tFirst Try");
+      REQUIRE(vectorContents2[1] == "item2");
+      REQUIRE(vectorContents2[2] == "item3");
       REQUIRE_FALSE(listFilePath.remove());
    }
 
