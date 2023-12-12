@@ -239,6 +239,23 @@ Error listAppendItem(const json::JsonRpcRequest& request,
    return listInsertItem(false, request, pResponse);
 }
 
+Error listUpdateItemExtraData(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string name, value;
+   boost::shared_ptr<MruList> list;
+   Error error = getListNameAndContents(request, &name, &list);
+   if (error)
+      return error;
+   error = json::readParam(request.params, 1, &value);
+   if (error)
+      return error;
+
+   list->updateExtraData(value);
+
+   return Success();
+}
+
 
 Error listRemoveItem(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
@@ -319,6 +336,7 @@ Error initialize()
       (bind(registerRpcMethod, "list_prepend_item", listPrependItem))
       (bind(registerRpcMethod, "list_append_item", listAppendItem))
       (bind(registerRpcMethod, "list_remove_item", listRemoveItem))
+      (bind(registerRpcMethod, "list_update_extra", listUpdateItemExtraData))
       (bind(registerRpcMethod, "list_clear", listClear));
    return initBlock.execute();
 }

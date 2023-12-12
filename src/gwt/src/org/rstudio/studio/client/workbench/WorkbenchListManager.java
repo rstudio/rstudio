@@ -149,6 +149,12 @@ public class WorkbenchListManager
       }
 
       @Override
+      public void updateExtraData(String itemWithExtraData)
+      {
+         server_.listUpdateItemExtraData(name_, itemWithExtraData, new ListRequestCallback());
+      }
+
+      @Override
       public void clear()
       {
          server_.listClear(name_, new ListRequestCallback());

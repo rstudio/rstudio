@@ -3167,6 +3167,18 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void listUpdateItemExtraData(String listName,
+                                       String itemWithExtraData,
+                                       ServerRequestCallback<Void> requestCallback)
+   {
+       sendRequest(RPC_SCOPE,
+                  LIST_UPDATE_EXTRA_TEXT,
+                  listName,
+                  itemWithExtraData,
+                  requestCallback);
+   }
+
+   @Override
    public void listClear(String listName,
                          ServerRequestCallback<Void> requestCallback)
    {
@@ -6952,6 +6964,7 @@ public class RemoteServer implements Server
    private static final String LIST_PREPEND_ITEM = "list_prepend_item";
    private static final String LIST_APPEND_ITEM = "list_append_item";
    private static final String LIST_REMOVE_ITEM = "list_remove_item";
+   private static final String LIST_UPDATE_EXTRA_TEXT = "list_update_extra";
    private static final String LIST_CLEAR = "list_clear";
 
    private static final String PREVIEW_HTML = "preview_html";

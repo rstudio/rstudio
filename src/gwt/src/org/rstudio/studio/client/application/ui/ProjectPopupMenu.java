@@ -29,11 +29,13 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.projects.ProjectMRUList;
+import org.rstudio.studio.client.projects.model.ProjectMRUEntry;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.UpdateWindowTitleEvent;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -78,6 +80,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                    Session session,
                    ProductEditionInfo editionInfo,
                    Provider<UserPrefs> pUserPrefs,
+                   Provider<WorkbenchListManager> pWorkbenchLists,
                    WorkbenchContext workbenchContext)
    {
       server_ = server;
@@ -87,6 +90,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       editionInfo_ = editionInfo;
       pUserPrefs_ = pUserPrefs;
       workbenchContext_ = workbenchContext;
+      pWorkbenchLists_ = pWorkbenchLists;
    }
    
    public ToolbarButton getToolbarButton()
@@ -118,6 +122,10 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                String title = workbenchContext_.createWindowTitle();
                if (title != null) 
                   events_.fireEventToAllSatellites(new UpdateWindowTitleEvent(title));
+
+               // also update project name in the Project MRU list
+               ProjectMRUEntry entry = new ProjectMRUEntry(activeProjectFile_, valueChangeEvent.getValue());
+               pWorkbenchLists_.get().getProjectNameMruList().updateExtraData(entry.getMRUValue());
             });
          }
         
@@ -331,5 +339,6 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private ProductEditionInfo editionInfo_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
    private Provider<UserPrefs> pUserPrefs_;
+   private Provider<WorkbenchListManager> pWorkbenchLists_;
    private WorkbenchContext workbenchContext_;
 }
