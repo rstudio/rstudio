@@ -364,7 +364,7 @@ void MainWindow::onWorkbenchInitialized()
    {
       QString projectName = qProjectName.toString();
 
-      if (projectDir.length() > 0)
+      if (projectName.length() > 0)
       {
          setWindowTitle(tr("%1 - %2").arg(projectName).arg(desktop::activation().editionName()));
          DockTileView::setLabel(projectName);
