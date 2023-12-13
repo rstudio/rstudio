@@ -152,7 +152,6 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    {
       if (activeProjectFile_ != null)
       {
-         // TODO this needs to go through mruList_.getQualifiedLabel(activeProjectFile_);
          if (pUserPrefs_.get().projectName().getValue().length() > 0)
             return pUserPrefs_.get().projectName().getValue();
          else
