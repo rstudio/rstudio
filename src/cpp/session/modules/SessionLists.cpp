@@ -350,6 +350,20 @@ Error listRemoveItem(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error clearListByName(const std::string& listName)
+{
+   if (!isListNameValid(listName))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   boost::shared_ptr<MruList> list;
+   Error error = readList(listName, &list);
+   if (error)
+      return error;
+   list->clear();
+
+   return Success();
+}
+
 Error listClear(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -363,6 +377,13 @@ Error listClear(const json::JsonRpcRequest& request,
    // clear list
    list->clear();
 
+   // when clearing the project_name_mru, also clear the legacy project_mru
+   if (name == kProjectNameMru)
+   {
+      error = clearListByName(kProjectMru);
+      if (error)
+         return error;
+   }
    return Success();
 }
 
