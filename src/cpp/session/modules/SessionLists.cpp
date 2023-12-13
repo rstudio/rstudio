@@ -104,6 +104,61 @@ json::Array listToJson(const std::list<std::string>& list)
    return jsonArray;
 }
 
+Error migrateLegacyProjectMru()
+{
+   // copy the legacy project mru list to the new list to prevent loss on RStudio upgrade
+   FilePath legacyProjectMru = listPath(kProjectMru);
+   FilePath newProjectMru = listPath(kProjectNameMru);
+   if (legacyProjectMru.exists() && !newProjectMru.exists())
+   {
+      std::list<std::string> legacyList;
+      Error error = readCollectionFromFile<std::list<std::string>>(legacyProjectMru, &legacyList, parseString);
+      if (error)
+      {
+         // can't read the legacy list, just delete it and move on
+         LOG_ERROR(error);
+         legacyProjectMru.remove();
+      }
+      else
+      {
+         LOG_INFO_MESSAGE("Migrating legacy project MRU list to new project MRU list");
+         error = writeCollectionToFile<std::list<std::string>>(newProjectMru, legacyList, stringifyString);
+         if (error)
+         {
+            return error;
+         }
+      }
+   }
+   return Success();
+}
+
+std::string removeCustomProjectName(const std::string& str)
+{
+   std::size_t pos = str.find(kProjectNameSepChar);
+   if (pos != std::string::npos)
+      return str.substr(0, pos);
+   else
+      return str;
+}
+ 
+Error syncLegacyProjectMru()
+{
+   // read the current project mru list (project_name_mru)
+   boost::shared_ptr<MruList> list;
+   Error error = readList(kProjectNameMru, &list);
+   if (error)
+      return error;
+
+	 // write out the legacy list (project_mru) without the custom names
+   error = writeCollectionToFile<std::list<std::string>>(listPath(kProjectMru), 
+                                                         list->contents(),
+                                                         removeCustomProjectName);
+   if (error)
+      return error;
+
+   return Success();
+}
+
 void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
 {
    // ignore if deleted
@@ -123,6 +178,14 @@ void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
    // they downgrade to an older version of RStudio
    if (name == kProjectMru)
       return;
+
+   // when the project_name_mru file is changed, we also update the legacy project_mru file
+   if (name == kProjectNameMru)
+   {
+      Error error = syncLegacyProjectMru();
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // read it
    boost::shared_ptr<MruList> list;
@@ -246,8 +309,11 @@ Error listAppendItem(const json::JsonRpcRequest& request,
    return listInsertItem(false, request, pResponse);
 }
 
+/**
+ * Update the extra data on a list entry without changing its list position.
+ */
 Error listUpdateItemExtraData(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+                              json::JsonRpcResponse* pResponse)
 {
    std::string name, value;
    boost::shared_ptr<MruList> list;
@@ -300,34 +366,8 @@ Error listClear(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error migrateProjectMru()
-{
-   // if the legacy project mru list file exists and the new file doesn't
-   // copy the legacy list to the new list to prevent loss of MRU on RStudio upgrade
-   FilePath legacyProjectMru = listPath(kProjectMru);
-   FilePath newProjectMru = listPath(kProjectNameMru);
-   if (legacyProjectMru.exists() && !newProjectMru.exists())
-   {
-      std::list<std::string> legacyList;
-      Error error = readCollectionFromFile<std::list<std::string>>(legacyProjectMru, &legacyList, parseString);
-      if (error)
-      {
-         // can't read the legacy list, just delete it and move on
-         LOG_ERROR(error);
-         legacyProjectMru.remove();
-      }
-      else
-      {
-         LOG_INFO_MESSAGE("Migrating legacy project MRU list to new project MRU list");
-         error = writeCollectionToFile<std::list<std::string>>(newProjectMru, legacyList, stringifyString);
-         if (error)
-         {
-            return error;
-         }
-      }
-   }
-   return Success();
-}
+
+
 
 } // anonymous namespace
 
@@ -364,7 +404,7 @@ Error initialize()
                                                       kListsPath,
                                                       onListsFileChanged);
 
-   Error error = migrateProjectMru();
+   Error error = migrateLegacyProjectMru();
    if (error)
       return error;
 

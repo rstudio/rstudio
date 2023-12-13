@@ -91,7 +91,8 @@ Error MruList::initialize()
    return Success();
 }
 
-void MruList::insertItem(std::string item, bool prepend)
+void MruList::insertItem(std::string item,
+                         bool prepend)
 {
    std::string extraData;
    if (haveExtraData_)
