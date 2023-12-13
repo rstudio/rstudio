@@ -149,7 +149,7 @@ Error syncLegacyProjectMru()
    if (error)
       return error;
 
-	 // write out the legacy list (project_mru) without the custom names
+   // write out the legacy list (project_mru) without the custom names
    error = writeCollectionToFile<std::list<std::string>>(listPath(kProjectMru), 
                                                          list->contents(),
                                                          removeCustomProjectName);
