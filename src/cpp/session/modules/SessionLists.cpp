@@ -42,6 +42,7 @@ using namespace collection;
 
 // list names
 const char * const kFileMru = "file_mru";
+const char * const kProjectMru = kProjectMruList;
 const char * const kProjectNameMru = kProjectNameMruList;
 const char * const kHelpHistory = "help_history_links";
 const char * const kUserDictionary = "user_dictionary";
@@ -116,6 +117,12 @@ void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
    // get the name of the list
    FilePath filePath(fileChange.fileInfo().absolutePath());
    std::string name = filePath.getFilename();
+
+   // ignore changes to the legacy project_mru file; we write to it whenever project_name_mru is 
+   // written, but never read it; it's kept updated so user doesn't lose their Projects MRU if
+   // they downgrade to an older version of RStudio
+   if (name == kProjectMru)
+      return;
 
    // read it
    boost::shared_ptr<MruList> list;
@@ -293,6 +300,35 @@ Error listClear(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error migrateProjectMru()
+{
+   // if the legacy project mru list file exists and the new file doesn't
+   // copy the legacy list to the new list to prevent loss of MRU on RStudio upgrade
+   FilePath legacyProjectMru = listPath(kProjectMru);
+   FilePath newProjectMru = listPath(kProjectNameMru);
+   if (legacyProjectMru.exists() && !newProjectMru.exists())
+   {
+      std::list<std::string> legacyList;
+      Error error = readCollectionFromFile<std::list<std::string>>(legacyProjectMru, &legacyList, parseString);
+      if (error)
+      {
+         // can't read the legacy list, just delete it and move on
+         LOG_ERROR(error);
+         legacyProjectMru.remove();
+      }
+      else
+      {
+         LOG_INFO_MESSAGE("Migrating legacy project MRU list to new project MRU list");
+         error = writeCollectionToFile<std::list<std::string>>(newProjectMru, legacyList, stringifyString);
+         if (error)
+         {
+            return error;
+         }
+      }
+   }
+   return Success();
+}
+
 } // anonymous namespace
 
 
@@ -316,6 +352,7 @@ Error initialize()
 {  
    // register lists / max sizes
    s_lists[kFileMru] = 15;
+   s_lists[kProjectMru] = 15; // legacy, kept in sync with kProjectNameMru
    s_lists[kProjectNameMru] = 15;
    s_lists[kHelpHistory] = 15;
    s_lists[kPlotPublishMru] = 15;
@@ -326,6 +363,10 @@ Error initialize()
    s_listsPath = module_context::registerMonitoredUserScratchDir(
                                                       kListsPath,
                                                       onListsFileChanged);
+
+   Error error = migrateProjectMru();
+   if (error)
+      return error;
 
    using boost::bind;
    using namespace module_context;

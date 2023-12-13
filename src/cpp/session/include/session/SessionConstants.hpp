@@ -115,7 +115,7 @@
 #define kMonitoredPath      "monitored"
 #define kListsPath          "lists"
 
-// legacy, stored only the project file path
+// legacy, stores only the project file path (no custom name)
 #define kProjectMruList     "project_mru"
 
 // stores project file path and optional name separated by kProjectNameSepChar
