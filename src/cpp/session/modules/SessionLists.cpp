@@ -387,9 +387,6 @@ Error listClear(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-
-
 } // anonymous namespace
 
 
