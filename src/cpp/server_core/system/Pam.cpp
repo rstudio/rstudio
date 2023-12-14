@@ -81,16 +81,17 @@ int conv(int num_msg,
    try
    {
       MemoryPool pool;
-
+      *resp = static_cast<pam_response*>(pool.alloc(sizeof(pam_response)*num_msg));
       // resp will be freed by the caller
-      *resp = static_cast<pam_response*>(pool.alloc(sizeof(pam_response) * num_msg));
-      if (!*resp)
+      if ( *resp==nullptr)
+      {
          return PAM_BUF_ERR;
-
-      ::memset(*resp, 0, sizeof(pam_response) * num_msg);
+      }
+      ::memset(*resp, 0, sizeof(pam_response)*num_msg);
 
       for (int i = 0; i < num_msg; i++)
       {
+
          const pam_message* input = msg[i];
          std::string msgText = input->msg;
 
@@ -101,15 +102,29 @@ int conv(int num_msg,
             boost::regex passwordRegex("\\bpassword:\\s*$",
                                        boost::regex_constants::icase);
             boost::smatch match;
+            boost::regex freeipa1Regex("^First Factor:\\s*$",
+                                       boost::regex_constants::icase);
+            boost::smatch match2;
+            boost::regex freeipa2Regex("^Second Factor:\\s*$",
+                                       boost::regex_constants::icase);
+            boost::smatch match3;
             PAM* pPam = static_cast<PAM*>(appdata_ptr);
-            if (!pPam->requirePasswordPrompt_ || regex_search(msgText, match, passwordRegex))
+            if (!pPam->requirePasswordPrompt_ || regex_search(msgText, match, passwordRegex) || regex_search(msgText, match2, freeipa1Regex))
             {
-               resp[i]->resp_retcode = 0;
-
+               (*resp)[i].resp_retcode = 0;
                char* password = const_cast<char*>(pPam->password_.c_str());
                // respBuf will be freed by the caller
                char* respBuf = static_cast<char*>(pool.alloc(strlen(password) + 1));
-               resp[i]->resp = ::strcpy(respBuf, password);
+               (*resp)[i].resp = ::strcpy(respBuf, password);
+            }
+            else if ( regex_search(msgText, match3, freeipa2Regex))
+            {
+               (*resp)[i].resp_retcode = 0;
+               char* otp = const_cast<char*>(pPam->otp_.c_str());
+               // respBuf will be freed by the caller
+               char* respBuf = static_cast<char*>(pool.alloc(strlen(otp)+1));
+               (*resp)[i].resp = ::strcpy(respBuf, otp);
+               if (respBuf[strlen(otp)] != '\0') LOG_ERROR_MESSAGE("Wrong teminate on OTP.");
             }
             else
                return PAM_CONV_ERR;
@@ -117,10 +132,10 @@ int conv(int num_msg,
          }
          case PAM_TEXT_INFO:
          {
-            resp[i]->resp_retcode = 0;
+            (*resp)[i].resp_retcode = 0;
             char* respBuf = static_cast<char*>(pool.alloc(1));
             respBuf[0] = '\0';
-            resp[i]->resp = respBuf;
+            (*resp)[i].resp = respBuf;
             break;
          }
          case PAM_PROMPT_ECHO_ON:
@@ -132,7 +147,6 @@ int conv(int num_msg,
 
       // The caller will free all the memory we allocated
       pool.relinquishOwnership();
-
       return PAM_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -170,9 +184,11 @@ std::string PAM::lastError()
 }
 
 int PAM::login(const std::string& username,
-               const std::string& password)
+               const std::string& password,
+               const std::string& otp)
 {
    password_ = password;
+   otp_ = otp;
 
    struct pam_conv myConv;
    myConv.conv = conv;
@@ -194,6 +210,7 @@ int PAM::login(const std::string& username,
          LOG_ERROR_MESSAGE("pam_authenticate failed: " + lastError());
       return status_;
    }
+   LOG_DEBUG_MESSAGE("After pam_authenticate");
 
    status_ = ::pam_acct_mgmt(pamh_, defaultFlags_);
    if (status_ != PAM_SUCCESS)
@@ -201,6 +218,8 @@ int PAM::login(const std::string& username,
       LOG_ERROR_MESSAGE("pam_acct_mgmt failed: " + lastError());
       return status_;
    }
+   LOG_DEBUG_MESSAGE("After pam_acct_mgmt");
+   LOG_DEBUG_MESSAGE("End of PAM::login with OTP");
 
    return PAM_SUCCESS;
 }

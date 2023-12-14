@@ -95,6 +95,14 @@ int main(int argc, char * const argv[])
       // read password (up to 200 chars in length)
       const int MAXPASS = 200;
       std::string password = string_utils::consumeStdin(string_utils::StdinSingleLine);
+      std::string otp;
+      size_t splitTab = password.find('\t');
+      if (splitTab != std::string::npos)
+      {
+         otp = password.substr(splitTab+1);
+         password = password.substr(0, splitTab);
+      }
+      
       if (password.size() > MAXPASS)
       {
          // would be nice to log some details here but better not to leak any
@@ -106,7 +114,7 @@ int main(int argc, char * const argv[])
 
       // verify password
       core::system::PAM pam(service, false, true, requirePasswordPrompt);
-      if (pam.login(username, password) == PAM_SUCCESS)
+      if (pam.login(username, password, otp) == PAM_SUCCESS)
          return EXIT_SUCCESS;
       else
          return EXIT_FAILURE;

