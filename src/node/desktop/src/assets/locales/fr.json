@@ -8,7 +8,8 @@
     "buttonYes": "Oui",
     "buttonNo": "Non",
     "buttonQuit": "Quitter",
-    "noFileSelected": "Aucun fichier sélectionné"
+    "noFileSelected": "Aucun fichier sélectionné",
+    "allFiles": "Tous les fichiers"
   },
   "imgAlt": {
     "dialogQuestion": "Icône du point d'interrogation",

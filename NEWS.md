@@ -17,6 +17,7 @@
 - Fixed Windows installer to delete Start Menu shortcut during uninstall (#13936)
 - Fixed current Git branch not always showing correctly in external editor windows (#14029)
 - Fixed tooltip to show correct keyboard shortcut when hovering over URLs in the editor (#12504)
+- Fixed Save As dialog on Windows not showing Save As Type field when extensions are hidden (#12965)
 
 #### Posit Workbench
 -
