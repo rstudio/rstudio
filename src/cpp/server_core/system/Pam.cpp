@@ -210,7 +210,6 @@ int PAM::login(const std::string& username,
          LOG_ERROR_MESSAGE("pam_authenticate failed: " + lastError());
       return status_;
    }
-   LOG_DEBUG_MESSAGE("After pam_authenticate");
 
    status_ = ::pam_acct_mgmt(pamh_, defaultFlags_);
    if (status_ != PAM_SUCCESS)
@@ -218,8 +217,6 @@ int PAM::login(const std::string& username,
       LOG_ERROR_MESSAGE("pam_acct_mgmt failed: " + lastError());
       return status_;
    }
-   LOG_DEBUG_MESSAGE("After pam_acct_mgmt");
-   LOG_DEBUG_MESSAGE("End of PAM::login with OTP");
 
    return PAM_SUCCESS;
 }
