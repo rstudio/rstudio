@@ -25,6 +25,7 @@ import {
   shell,
   webFrameMain,
   dialog,
+  FileFilter,
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
@@ -199,10 +200,12 @@ export class GwtCallback extends EventEmitter {
         };
         logger().logDebug(`Using path: ${saveDialogOptions.defaultPath}`);
 
+        const filters: FileFilter[] = [{ name: i18next.t('common.allFiles'), extensions: ['*'] }];
         if (defaultExtension) {
-          saveDialogOptions['filters'] = [{ name: '', extensions: [defaultExtension.replace('.', '')] }];
+          const extension = defaultExtension.replace('.', '');
+          filters.push({ name: extension, extensions: [extension] });
         }
-
+        saveDialogOptions['filters'] = filters;
         let focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusOwner) {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
