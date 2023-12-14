@@ -81,12 +81,10 @@ int conv(int num_msg,
    try
    {
       MemoryPool pool;
-      *resp = static_cast<pam_response*>(pool.alloc(sizeof(pam_response)*num_msg));
       // resp will be freed by the caller
+      *resp = static_cast<pam_response*>(pool.alloc(sizeof(pam_response)*num_msg));
       if ( *resp==nullptr)
-      {
          return PAM_BUF_ERR;
-      }
       ::memset(*resp, 0, sizeof(pam_response)*num_msg);
 
       for (int i = 0; i < num_msg; i++)
