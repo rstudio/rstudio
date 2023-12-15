@@ -261,7 +261,7 @@
    srcfile <- attr(srcref, "srcfile")
    if (is.null(srcfile) || is.null(srcfile$filename))
       return("")
-   
+
    # check for absolute path in srcref
    filename <- enc2utf8(srcfile$filename)
    if (.rs.isAbsolutePath(filename))
@@ -273,7 +273,7 @@
       wd <- enc2utf8(srcfile$wd)
       filename <- paste(c(wd, filename), collapse = "/")
    }
-   
+
    normalizePath(filename, winslash = "/", mustWork = FALSE)
 })
 
@@ -963,7 +963,7 @@
 
    # Skip overly-large objects.
    n <- length(value)
-   if (n >= 10000L)
+   if (isTRUE(n >= 10000L))
       return(TRUE)
 
    # Objects containing external pointers cannot be serialized.
