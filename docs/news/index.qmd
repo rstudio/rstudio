@@ -22,7 +22,7 @@ This page provides the release notes associated with each release of RStudio and
 - Updated Electron to version 26.2.4. (#13577)
 - Updated the default version of the GitHub Copilot agent to 1.10.3. (#13729)
 - Updated openssl to 1.1.1w on Mac and Windows. (#13683)
-- Updated Electron Forge to 6.4.2 and Webpack to 5.89.0. (rstudio-pro#5383)
+- Updated Electron Forge to version 6.4.2 and Webpack to version 5.89.0. (rstudio-pro#5383)
 - Updated Quarto to version 1.3.450. (#13914)
 - RStudio now supports highlighting of inline YAML chunk options in R Markdown / Quarto documents. (#11663)
 - Improved support for development documentation when a package has been loaded via `devtools::load_all()`. (#13526)
