@@ -13,7 +13,7 @@ This page provides the release notes associated with each release of RStudio and
 
 **"Ocean Storm"**
 
->Date: 2023-12-15
+> Date: 2023-12-15
 
 ### New
 #### RStudio
@@ -43,7 +43,7 @@ This page provides the release notes associated with each release of RStudio and
 - Replaced Administration Guide section PRO markers with Workbench tags. (#5416)
 - Added Licenses guide that includes open source software components and full copies of license agreements used by the components. (#5027)
 - Restored database password encryption support removed in 2023.09.1 (rstudio-pro#5365)
-- Added support for launching jobs via Singulairty with Slurm (launcher#447)
+- Added support for launching jobs via Singularity with Slurm (launcher#447)
 
 ### Fixed
 #### RStudio
