@@ -24,7 +24,7 @@ pipeline {
     stage('Trigger Dispatcher') {
       steps {
         build wait: false,
-              job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/nightly-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
+              job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
               parameters: [
                 string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
                 booleanParam(name: "FORCE_BUILD", value: false),
