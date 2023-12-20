@@ -14,9 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -24,6 +28,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.widgetideas.client.SliderBar;
+
+
 
 @SuppressWarnings("deprecation")
 public class ManipulatorControlSlider extends ManipulatorControl
@@ -91,9 +97,9 @@ public class ManipulatorControlSlider extends ManipulatorControl
       }
       
       // update label on change
-      sliderBar_.addChangeListener(new ChangeListener() {
+      sliderBar_.addChangeListener(new ValueChangeHandler<Widget>() {
          @Override
-         public void onChange(Widget sender)
+         public void onValueChange(ValueChangeEvent<Widget> sender)
          {
             valueLabel.setText(formatLabel(sliderBar_, 
                                            sliderBar_.getCurrentValue()));
@@ -102,9 +108,9 @@ public class ManipulatorControlSlider extends ManipulatorControl
       sliderBar_.setCurrentValue(value);
       
       // fire changed even on slide completed
-      sliderBar_.addSlideCompletedListener(new ChangeListener() {
+      sliderBar_.addSlideCompletedListener(new ValueChangeHandler<Widget>() {
          @Override
-         public void onChange(Widget sender)
+         public void onValueChange(ValueChangeEvent<Widget> sender)
          {
             ManipulatorControlSlider.this.onValueChanged(
                         new JSONNumber(sliderBar_.getCurrentValue()));
@@ -138,4 +144,19 @@ public class ManipulatorControlSlider extends ManipulatorControl
    }
    
    private SliderBar sliderBar_;
+
+   private class ValueChangeListenerCollection<T> extends ArrayList<T>
+   {
+   /**
+    * Fires a change event to all listeners.
+    * 
+    * @param sender the widget sending the event.
+    */
+   public void fireChange(Widget sender) {
+      for (ChangeListener listener : this) {
+         listener.onChange(sender);
+      }
+   }
+   }
+
 }

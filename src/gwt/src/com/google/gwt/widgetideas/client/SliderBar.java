@@ -16,6 +16,7 @@
 package com.google.gwt.widgetideas.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -329,11 +330,11 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    * 
    * @param listener the listener to add
    */
-  public void addChangeListener(ChangeListener listener) {
+  public void addChangeListener(ValueChangeHandler<String> changeHandler) {
     if (changeListeners == null) {
       changeListeners = new ChangeListenerCollection();
     }
-    changeListeners.add(listener);
+    changeListeners.add(changeHandler);
   }
 
   /**
