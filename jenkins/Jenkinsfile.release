@@ -14,7 +14,7 @@ pipeline {
 
   triggers {
     // The first Sunday of every month at 12am
-    cron '0 0 ? * SUN#1'
+    cron '0 0 1-7 * 0'
   }
   
   parameters {
