@@ -35,7 +35,7 @@ def getVersion(boolean isHourly) {
     buildType="--build-type=hourly"
   }
   def rstudioVersion = sh(
-                          script: "docker/jenkins/rstudio-version.sh --patch=${params.RSTUDIO_VERSION_PATCH} ${buildType}",
+                          script: "docker/jenkins/rstudio-version.sh ${buildType}",
                           returnStdout: true
                         ).trim()
   echo "RStudio build version: ${rstudioVersion}"
