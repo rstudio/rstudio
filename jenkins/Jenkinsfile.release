@@ -8,7 +8,7 @@ pipeline {
         artifactDaysToKeepStr: '',
         artifactNumToKeepStr: '',
         daysToKeepStr: '',
-        numToKeepStr: '100')
+        numToKeepStr: '100'))
     rateLimitBuilds(throttle: [count: 1, durationName: 'hour', userBoost: true])
   }
 
