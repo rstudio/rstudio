@@ -2,15 +2,23 @@
 
 hooks_dir="hooks"
 git_hooks_dir="../.git/hooks"
+color_highlight='\033[1;95m'
+color_none='\033[0m'
 
-echo "Setting up git hooks..."
+echo "${color_highlight}Setting up git hooks in $git_hooks_dir...${color_none}"
 
 for hook in "$hooks_dir"/*
 do
     file_name=$(basename "$hook")
-    echo "\tCopying $file_name hook to $git_hooks_dir and making it executable"
+    echo "\tCopying ${color_highlight}$file_name${color_none} hook to $git_hooks_dir and making it executable"
+    # if the pre-commit hook already exists, back up the existing one
+    if [ -f "$git_hooks_dir"/"$file_name" ]; then
+        backup_file_name="$file_name"-"$(date +%Y-%m-%d-%H-%M-%S)"
+        echo "\t\tbacking up existing $file_name as $backup_file_name"
+        mv "$git_hooks_dir"/"$file_name" "$git_hooks_dir"/"$backup_file_name"
+    fi
     cp "$hook" "$git_hooks_dir"
     chmod +x "$git_hooks_dir"/"$file_name"
 done
 
-echo "Finished setting up git hooks!"
+echo "${color_highlight}Finished setting up git hooks!"
