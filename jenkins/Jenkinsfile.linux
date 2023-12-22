@@ -91,6 +91,7 @@ pipeline {
     booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
     booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
     string(name: 'COMMIT_HASH' , defaultValue: '')
+    booleanParam(name: 'FORCE_REBUILD', defaultValue: false, description: 'Rebuild binaries even if they already exist on dailies page')
   }
 
   environment {
@@ -214,17 +215,28 @@ pipeline {
             }
 
             when {
-              anyOf {
-                environment name: 'FLAVOR', value: 'Electron'
-                environment name: 'FLAVOR', value: 'Server'
-                expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+              allOf {
+                anyOf {
+                  environment name: 'FLAVOR', value: 'Electron'
+                  environment name: 'FLAVOR', value: 'Server'
+                  expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+                }
+                anyOf {
+                  expression { utils.urlIsGood("https://s3.amazonaws.com/rstudio-ide-build/${DAILIES_PATH}/${PACKAGE_FILE}")}
+                  expression { return params.FORCE_REBUILD == true }
+                }
               }
+              
             }
 
             environment {
               AWS_BUCKET="rstudio-ide-build"
               PRODUCT="${utils.getProductName()}"
               BUILD_LOCATION = "build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}" // Don't use BUILD_DIR because it impacts the make-package script
+              PACKAGE_DIR = "package/linux/${BUILD_LOCATION}"
+              PACKAGE_FILE = "${renameFile(PACKAGE_DIR, 'rstudio-*.' + ext_map[env.OS])}"
+              AWS_PATH = "${FLAVOR.toLowerCase()}/${OS}/${utils.getArchForOs(OS, ARCH)}"
+              DAILIES_PATH = "${PRODUCT}/${OS}-${utils.getArchForOs(OS, ARCH)}"
             }
 
             stages {
@@ -350,12 +362,9 @@ pipeline {
                 when { expression { return params.PUBLISH } }
 
                 environment {
-                  PACKAGE_DIR = "package/linux/${BUILD_LOCATION}"
-                  PACKAGE_FILE = "${renameFile(PACKAGE_DIR, 'rstudio-*.' + ext_map[env.OS])}"
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = "${renameTarFile(TAR_PACKAGE_DIR)}"
                   BUILD_TYPE = "sh(script: 'cat version/BUILDTYPE', returnStdout: true).trim().toLowerCase()"
-                  AWS_PATH = "${FLAVOR.toLowerCase()}/${OS}/${utils.getArchForOs(OS, ARCH)}"
                 }
 
                 stages {
@@ -405,7 +414,6 @@ pipeline {
                   stage("Publish") {
                     environment {
                       GITHUB_LOGIN = credentials('posit-jenkins')
-                      DAILIES_PATH = "${PRODUCT}/${OS}-${utils.getArchForOs(OS, ARCH)}"
                     }
 
                     steps {
