@@ -21,4 +21,4 @@ do
     chmod +x "$git_hooks_dir"/"$file_name"
 done
 
-echo "${color_highlight}Finished setting up git hooks!"
+echo "${color_highlight}Finished setting up git hooks!${color_none}"
