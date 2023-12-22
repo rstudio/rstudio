@@ -249,11 +249,11 @@ export class MainWindow extends GwtWindow {
     this.geometrySaved = false;
     this.workbenchInitialized = true;
 
-    this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
-      .then((projectDir) => {
-        if (projectDir.length > 0) {
-          this.window.setTitle(`${projectDir} - ${appState().activation().editionName()}`);
-          setDockLabel(projectDir);
+    this.executeJavaScript('window.desktopHooks.getActiveProjectName()')
+      .then((projectName) => {
+        if (projectName.length > 0) {
+          this.window.setTitle(`${projectName} - ${appState().activation().editionName()}`);
+          setDockLabel(projectName);
         } else {
           this.window.setTitle(appState().activation().editionName());
           setDockLabel('');

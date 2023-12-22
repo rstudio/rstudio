@@ -2107,6 +2107,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("When enabled, RStudio will index project files with GitHub Copilot.")
    String copilotIndexingEnabledDescription();
 
+   /**
+    * User-provided name for the currently opened R project.
+    */
+   @DefaultStringValue("")
+   String projectNameTitle();
+   @DefaultStringValue("User-provided name for the currently opened R project.")
+   String projectNameDescription();
+
 
 
 }

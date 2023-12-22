@@ -164,6 +164,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getRootDocument());
                 uiPrefs.useRoxygen().setProjectValue(
                                            config.hasPackageRoxygenize());
+                uiPrefs.projectName().setProjectValue(config.getProjectName());
 
                 // native pipe prefs (remove if set to defaults)
                 switch (config.getUseNativePipeOperator())

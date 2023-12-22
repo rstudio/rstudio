@@ -17,7 +17,9 @@ package org.rstudio.studio.client.projects;
 import java.util.ArrayList;
 
 import com.google.gwt.core.client.GWT;
+
 import org.rstudio.core.client.DuplicateHelper;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -25,6 +27,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
+import org.rstudio.studio.client.projects.model.ProjectMRUEntry;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -43,7 +46,7 @@ public class ProjectMRUList extends MRUList
                          final EventBus eventBus,
                          Session session)
    {
-      super(listManager.getProjectMruList(),
+      super(listManager.getProjectNameMruList(),
             new AppCommand[] {
                   commands.projectMru0(),
                   commands.projectMru1(),
@@ -69,7 +72,7 @@ public class ProjectMRUList extends MRUList
                @Override
                public void execute(String file)
                {
-                  openProjectFromMru(eventBus, file);
+                  openProjectFromMru(eventBus, new ProjectMRUEntry(file).getProjectFilePath());
                }
             });
       
@@ -111,14 +114,38 @@ public class ProjectMRUList extends MRUList
    @Override
    protected String transformMruEntryPath(String entryPath)
    {
-      return FileSystemItem.createFile(entryPath).getParentPathString();
+      // split out the path component and tweak it
+      ProjectMRUEntry mruEntry = new ProjectMRUEntry(entryPath);
+      String newPath = FileSystemItem.createFile(mruEntry.getProjectFilePath()).getParentPathString();
+
+      // then reappend the custom name (if any)
+      return new ProjectMRUEntry(newPath, mruEntry.getProjectName()).getMRUValue();
    }
    
    @Override
-   protected ArrayList<String> generateLabels(
-         ArrayList<String> mruEntries, boolean includeExt)
+   protected ArrayList<String> generateLabels(ArrayList<String> mruEntries, boolean includeExt)
    {
-      return DuplicateHelper.getPathLabels(mruEntries, true);
+      // split out the paths and names so we can dedupe the paths
+      ArrayList<String> mruPaths = new ArrayList<String>();
+      ArrayList<String> mruNames = new ArrayList<String>();
+      for (String entry : mruEntries)
+      {
+         ProjectMRUEntry mruEntry = new ProjectMRUEntry(entry);
+         mruPaths.add(mruEntry.getProjectFilePath());
+         mruNames.add(StringUtil.notNull(mruEntry.getProjectName()));
+      }
+      mruPaths = DuplicateHelper.getPathLabels(mruPaths, includeExt);
+      
+      // recombine paths and names for display
+      ArrayList<String> result = new ArrayList<String>();
+      for (int i = 0; i < mruEntries.size(); i++)
+      {
+         if (mruNames.get(i).length() > 0)
+            result.add(mruPaths.get(i) + " (" + mruNames.get(i) + ")");
+         else
+            result.add(mruPaths.get(i));
+      }
+      return result;
    }
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 

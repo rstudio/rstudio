@@ -3612,6 +3612,18 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * User-provided name for the currently opened R project.
+    */
+   public PrefValue<String> projectName()
+   {
+      return string(
+         "project_name",
+         _constants.projectNameTitle(), 
+         _constants.projectNameDescription(), 
+         "");
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -4120,6 +4132,8 @@ public class UserPrefsAccessor extends Prefs
          copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
       if (source.hasKey("copilot_indexing_enabled"))
          copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
+      if (source.hasKey("project_name"))
+         projectName().setValue(layer, source.getString("project_name"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4377,6 +4391,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotCompletionsDelay());
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
+      prefs.add(projectName());
       return prefs;
    }
    

@@ -376,6 +376,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    {
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
                               projects::projectContext().file());
+      sessionInfo["active_project_name"] = projects::projectContext().projectName();
       sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
       sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
       sessionInfo["project_supports_sharing"] = 
@@ -631,7 +632,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (session::options().getBoolOverlayOption(kSessionUserLicenseSoftLimitReached))
    {
       sessionInfo["license_message"] =
-            "There are more concurrent users of RStudio Workbench than your license supports. "
+            "There are more named users of Posit Workbench than your license supports. "
             "Please obtain an updated license to continue using the product.";
    }
 

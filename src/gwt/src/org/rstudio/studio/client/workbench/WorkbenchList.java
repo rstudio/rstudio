@@ -32,6 +32,7 @@ public interface WorkbenchList
    void append(String item);
    void prepend(String item);
    void remove(String item);
+   void updateExtraData(String itemWithExtraData);
    void clear();
 
    // change handler

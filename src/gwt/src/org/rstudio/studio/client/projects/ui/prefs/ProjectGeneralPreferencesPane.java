@@ -26,11 +26,13 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRVersion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
@@ -43,6 +45,19 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       
       VerticalPanel container = new VerticalPanel();
       
+      String textboxWidth = "100%";
+      projectName_ = new TextBox();
+      DomUtils.disableSpellcheck(projectName_);
+      DomUtils.setPlaceholder(projectName_, sessionInfo_.getActiveProjectDir().getName());
+      projectName_.setWidth(textboxWidth);
+      projectNameLabel_ = new FormLabel(constants_.customProjectNameLabel(), projectName_);
+      if (sessionInfo_.getAllowFullUI())
+      {
+         container.add(headerLabel(constants_.generalTitle()));
+         container.add(spacedBefore(projectNameLabel_));
+         container.add(spaced(projectName_));
+      }
+ 
       container.add(headerLabel(constants_.workspaceTitle()));
 
       // use default label
@@ -135,6 +150,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 
       quitChildProcessesOnExit_.setValue(quitChildProcessesChecked);
 
+      projectName_.setText(config.getProjectName());
    }
 
    @Override
@@ -158,8 +174,13 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       }
 
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
+      config.setProjectName(projectName_.getValue());
+
       return new RestartRequirement();
    }
+
+   private final FormLabel projectNameLabel_;
+   private final TextBox projectName_;
 
    private YesNoAskDefault restoreWorkspace_;
    private YesNoAskDefault saveWorkspace_;
