@@ -8,9 +8,10 @@
 ## Install Hooks
 The script will copy the hooks to [.git/hooks](/.git/hooks/) and make the hooks executable.
 
-⚠️ Note that this will replace any existing hooks with the same name in your local project! ⚠️
+> [!NOTE]
+> If you have any existing hooks with the same name in your local project's [.git/hooks](/.git/hooks/) directory, they will be renamed with the current timestamp appended to the end of the file name.
 
-💡 Windows: run the commands from a `Git Bash` terminal.
+💡 Running on Windows? Run the commands from a `Git Bash` terminal.
 
 From this directory (`git_hooks`), use the commands below to make the script executable and then run [set-up-git-hooks](./set-up-git-hooks).
 
@@ -20,7 +21,6 @@ chmod +x ./set-up-git-hooks
 ```
 
 ## Uninstall Hooks
-
 Go to [.git/hooks](/.git/hooks/) and delete the file for the hook you want to uninstall.
 - eg. If you want to uninstall the `pre-commit` hook, delete the `.git/hooks/pre-commit` file.
 
