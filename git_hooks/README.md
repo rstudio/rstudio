@@ -2,14 +2,17 @@
 
 ## Implemented Hooks
 
-- [pre-commit](./hooks/pre-commit): runs linting and formatting on staged JavaScript and TypeScript files
+- [pre-commit](./hooks/pre-commit)
+    - runs linting and formatting on staged JavaScript and TypeScript files
+    - scan staged files for possible secrets (see [secrets README](./secrets/README.md))
 - [pre-push](./hooks/pre-push): prevents pushes to the main branch
 
 ## Install Hooks
 The script will copy the hooks to [.git/hooks](/.git/hooks/) and make the hooks executable.
 
 > [!NOTE]
-> If you have any existing hooks with the same name in your local project's [.git/hooks](/.git/hooks/) directory, they will be renamed with the current timestamp appended to the end of the file name.
+> If you any existing hooks with the same name in your local project, they will be renamed with the current timestamp appended to the end of the file name.
+> Run `setup-git-hooks --overwrite` to overwrite existing hooks.
 
 💡 Running on Windows? Run the commands from a `Git Bash` terminal.
 
