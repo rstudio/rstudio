@@ -54,7 +54,7 @@ pipeline {
       }
       steps {
         sh "mkdir --parents ${TMP_SNYK_PATH}"
-        sh "cp --parents -r $(git diff --name-only ${env.CHANGE_TARGET}) ${TMP_SNYK_PATH}"
+        sh "cp --parents -r \$(git diff --name-only ${env.CHANGE_TARGET}) ${TMP_SNYK_PATH}"
         sh "snyk code test ${TMP_SNYK_PATH}"
         sh "rm -r ${TMP_SNYK_PATH}"
       }
