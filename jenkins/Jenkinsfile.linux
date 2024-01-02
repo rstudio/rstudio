@@ -84,7 +84,6 @@ pipeline {
   }
 
   parameters {
-    string(name: 'RSTUDIO_VERSION_PATCH', description: 'RStudio Patch Version')
     string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
     string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
     string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
@@ -232,7 +231,7 @@ pipeline {
               stage('Checkout') {
                 when { expression { params.COMMIT_HASH != '' } }
                 steps {
-                  // We need to checkout he correct commit again here because the matrix builds run on different agents
+                  // We need to checkout the correct commit again here because the matrix builds run on different agents
                   checkout([$class: 'GitSCM',
                             branches: [[name: "${params.COMMIT_HASH}"]],
                             extensions: [],
