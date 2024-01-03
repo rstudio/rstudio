@@ -24,6 +24,7 @@ pipeline {
     booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
     booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
     string(name: 'COMMIT_HASH' , defaultValue: '')
+    booleanParam(name: 'FORCE_REBUILD', defaultValue: false, description: 'Rebuild binaries even if they already exist on dailies page')
   }
 
   environment {
@@ -32,6 +33,9 @@ pipeline {
     PACKAGE_OS = 'Windows'
     AWS_ACCOUNT_ID = '749683154838'
     GIT_URL = "https://github.com/rstudio/rstudio"
+    RSTUDIO_VERSION_FLOWER = ""
+    RSTUDIO_VERSION_FILENAME = ""
+    SHOULD_REBUILD = false
   }
 
   stages{
@@ -72,6 +76,10 @@ pipeline {
               currentBuild.displayName = "${RSTUDIO_VERSION}"
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
               PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${RSTUDIO_VERSION.replace('+', '-')}"
+              RSTUDIO_VERSION_FILENAME = utils.getVersionFilename(RSTUDIO_VERSION) // Define here for use later in utils.rebuildCheck()
+
+              // Check if we should rebuild here on linux before moving into Windows build agent
+              SHOULD_REBUILD = utils.rebuildCheck()
             }
           }
         }
@@ -94,9 +102,12 @@ pipeline {
         }
 
         when {
-          anyOf {
-            environment name: 'FLAVOR', value: 'Electron'
-            expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+          allOf {
+            anyOf {
+              environment name: 'FLAVOR', value: 'Electron'
+              expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+            }
+            expression ( return SHOULD_REBUILD == true )
           }
         }
 

@@ -1,0 +1,89 @@
+pipeline {
+  agent none
+
+  options {
+    disableConcurrentBuilds()
+    buildDiscarder(
+      logRotator(
+        artifactDaysToKeepStr: '',
+        artifactNumToKeepStr: '',
+        daysToKeepStr: '',
+        numToKeepStr: '100'))
+    rateLimitBuilds(throttle: [count: 1, durationName: 'hour', userBoost: true])
+  }
+
+  // Daily trigger for daily builds
+  triggers {
+    cron 'H H(20-23) * * *'
+  }
+  
+  parameters {
+    booleanParam name: 'DAILY', description: 'Builds daily builds if true; builds hourly builds if false.'
+    booleanParam defaultValue: true, description: 'Publish the build to S3.', name: 'PUBLISH'
+    booleanParam defaultValue: false, description: 'Force build even if there are no changes.', name: 'FORCE_BUILD'
+    booleanParam defaultValue: false, description: 'Rebuild binaries even if they already exist on dailies page' name: 'FORCE_REBUILD'
+    string name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS'
+    string name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH'
+    string defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', name: 'SLACK_CHANNEL', trim: true
+  }
+
+  stages {
+    // Git commits triggers hourly builds
+    // Manual build with DAILY=false triggers hourly builds
+    stage('Trigger Hourly Build') {
+      when {
+        anyOf {
+          allOf {
+            triggeredBy 'SCMTrigger'
+            expression { return params.FORCE_BUILD }
+            changeset comparator: 'REGEXP', pattern: '?:(?!docs/).+'
+          }
+          expression { return params.DAILY == false }
+        }
+      }
+      steps {
+        build wait: false,
+              job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
+              parameters: [
+                string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                booleanParam(name: "FORCE_BUILD", value: false),
+                booleanParam(name: "FORCE_BUILD_DOCKER", value: false),
+                booleanParam(name: "DAILY", value: false),
+                booleanParam(name: "PUBLISH", value: params.PUBLISH),
+                booleanParam(name: "FORCE_REBUILD", value: params.FORCE_REBUILD),
+                string(name: "OS_FILTER", value: params.OS_FILTER),
+                string(name: "ARCH_FILTER", value: params.ARCH_FILTER)
+              ]
+      }
+    }
+
+    // Daily timer triggers daily builds
+    // Manual build with DAILY=true triggers daily builds
+    stage('Trigger Daily Build') {
+      when {
+        anyOf {
+          allOf {
+            triggeredBy 'TimerTrigger'
+            expression { return params.FORCE_BUILD }
+            changeset comparator: 'REGEXP', pattern: '?:(?!docs/).+'
+          }
+          expression { return params.DAILY == true }
+        }
+      }
+      steps {
+        build wait: false,
+              job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
+              parameters: [
+                string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                booleanParam(name: "FORCE_BUILD", value: params.FORCE_BUILD_BINARIES),
+                booleanParam(name: "FORCE_REBUILD", value: params.FORCE_REBUILD),
+                booleanParam(name: "FORCE_BUILD_DOCKER", value: params.FORCE_BUILD_DOCKER),
+                booleanParam(name: "DAILY", value: true),
+                booleanParam(name: "PUBLISH", value: params.PUBLISH),
+                string(name: "OS_FILTER", value: params.OS_FILTER),
+                string(name: "ARCH_FILTER", value: params.ARCH_FILTER)
+              ]
+      }
+    }
+  }
+}

@@ -80,6 +80,13 @@ def getFlower() {
   return readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
 }
 
+def getVersionFilename(String version) {
+  return sh(
+    script: "echo ${version} | sed -e 's/[^a-zA-Z0-9-]/-/g' | sed -e 's/--*/-/g'",
+    returnStdout: true
+  ).trim()
+}
+
 /**
   * Upload the package specified by packageFile to the location of destinationPath in the rstudio-ide-build S3 bucket.
   * Sets the correct ACLs.
@@ -148,6 +155,17 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
     packageFile +
     ' --file ' +
     packageFile 
+}
+
+/**
+ * Return true if the file at the URL exists. Return false otherwise
+ */
+def urlExists(String url) {
+  def exists = sh( returnStatus: true, script: 'curl --head --silent --fail ' + url + ' 2> /dev/null') == 0
+
+  echo "URL ${url} exists: ${exists}"
+
+  return exists
 }
 
 /** 
@@ -238,6 +256,99 @@ def getDockerBuildOs(String osName) {
   */
 def getDockerTag() {
   return "${IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
+}
+
+/**
+  * Rename the file on the filesystem
+  */
+def renameFile(String dir, String match) {
+  def file = sh(script: "basename `ls ${dir}/${match}`", returnStdout: true).trim()
+  def renamedFile = file.replace('-relwithdebinfo', '')
+  sh "mv ${dir}/${file} ${dir}/${renamedFile}"
+  return renamedFile
+}
+
+/**
+  * Rename the file on the filesystem
+  */
+def renameTarFile(String dir) {
+  if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
+    return renameFile(dir, "*.tar.gz")
+  }
+
+  return ""
+}
+
+def getAgentLabel(String arch) {
+  if (arch == 'arm64') {
+    return 'linux && arm64 && 4x'
+  }
+
+  return 'linux-4x && x86_64'
+}
+
+// Use a function to keep the pipeline length down.
+def shouldBuild(boolean isDaily, boolean isPro) {
+  def matchesFilter = ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
+    (params.ARCH_FILTER == env.ARCH ||  params.ARCH_FILTER == 'all') &&
+    (params.FLAVOR_FILTER == env.FLAVOR ||  params.FLAVOR_FILTER == 'all'))
+
+  // Filter hourlies based on https://github.com/rstudio/rstudio-pro/issues/4143#issuecomment-1362142399
+  def inHourlySubset = true
+  if (!isDaily) {
+    if (isPro) {
+      // build an x86_64 rhel8 WB, x86_64 rhel9 QT RDP, and an arm64 jammy Electron RDP 
+      inHourlySubset = ((env.OS == 'rhel8' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server') ||
+        (env.OS == 'centos7' && env.ARCH == 'x86_64' && env.FLAVOR == 'Desktop') || 
+        (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron'))
+    } else {
+      // build an arm64 rhel9 Desktop and an x86_64 focal Server
+      inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron') ||
+        (env.OS == 'focal' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
+    }
+  }
+
+  // The focal builds are being build on bionic, hence the name confusion here
+  def bionicProArm = (env.OS == 'focal' && env.ARCH == 'arm64' && isPro)
+
+  return matchesFilter && inHourlySubset && !bionicProArm
+}
+
+/**
+  * Check if this specific arch/product/os build exists on the dailies
+  * page, or if FORCE_REBUILD is set.
+  * Return true if we should build, false otherwise.
+  */
+def rebuildCheck() {
+  if (params.FORCE_REBUILD) {
+    echo "Building ${env.ARCH} ${env.PRODUCT} on ${env.OS} because FORCE_REBUILD is set"
+    return true
+  } 
+  else {
+    def buildType = ""
+    if (RSTUDIO_VERSION_FILENAME.contains("hourly")) {
+      buildType = "rstudio-hourly"
+    } 
+    else {
+      buildType = "rstudio"
+    }
+
+    def osArchName = ""
+    if (OS == "macos" || OS == "windows") {
+      osArchName = OS
+    } 
+    else {
+      osArchName = "${env.OS}-${getArchForOs(env.OS, env.ARCH)}"
+    }
+
+    def retVal = !urlExists("https://dailies.rstudio.com/${buildType}/${RSTUDIO_VERSION_FLOWER}/${getProductName()}/${osArchName}/${RSTUDIO_VERSION_FILENAME}/index.html")
+
+    if (!retVal) {
+      echo "Skipping build of ${env.ARCH} ${env.PRODUCT} on ${env.OS} version ${RSTUDIO_VERSION_FILENAME} because it already exists on dailies site."
+    }
+
+    return retVal
+  }
 }
 
 boolean postReviewCheck(String name, String status, String title, String summary, String content) {
