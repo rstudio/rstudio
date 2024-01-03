@@ -260,7 +260,9 @@ pipeline {
                     }
                 }
                 steps {
-                  SHOULD_BUILD_BINARY=false
+                  script {
+                    SHOULD_BUILD_BINARY=false
+                  }
                 }
               }
 
