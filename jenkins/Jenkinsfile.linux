@@ -222,7 +222,7 @@ pipeline {
                   expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
                 }
                 anyOf {
-                  expression { utils.urlIsGood("https://s3.amazonaws.com/rstudio-ide-build/${DAILIES_PATH}/${PACKAGE_FILE}")}
+                  
                   expression { return params.FORCE_REBUILD == true }
                 }
               }
@@ -237,6 +237,7 @@ pipeline {
               PACKAGE_FILE = "${renameFile(PACKAGE_DIR, 'rstudio-*.' + ext_map[env.OS])}"
               AWS_PATH = "${FLAVOR.toLowerCase()}/${OS}/${utils.getArchForOs(OS, ARCH)}"
               DAILIES_PATH = "${PRODUCT}/${OS}-${utils.getArchForOs(OS, ARCH)}"
+              SHOULD_BUILD_BINARY=true
             }
 
             stages {
@@ -251,7 +252,21 @@ pipeline {
                 }
               }
 
+              stage('Check if Build Already Exists') {
+                when { 
+                  anyOf {
+                    expression { utils.urlIsGood("https://s3.amazonaws.com/rstudio-ide-build/${DAILIES_PATH}/${PACKAGE_FILE}")}
+                    expression { !params.FORCE_REBUILD } 
+                    }
+                }
+                steps {
+                  SHOULD_BUILD_BINARY=false
+                }
+              }
+
               stage('Build and Sign') {
+                when { expression { SHOULD_BUILD_BINARY } }
+
                 environment {
                   CODESIGN_KEY = credentials('gpg-codesign-private-key')
                   CODESIGN_PASS = credentials('gpg-codesign-passphrase')
@@ -269,6 +284,8 @@ pipeline {
               }
 
               stage('Test') {
+                when { expression { SHOULD_BUILD_BINARY } }
+
                 stages {
                   stage ('Electron-Only Tests') {
                     when {
@@ -359,7 +376,10 @@ pipeline {
 
               stage ('Upload') {
 
-                when { expression { return params.PUBLISH } }
+                when { 
+                  expression { return params.PUBLISH } 
+                  expression { SHOULD_BUILD_BINARY } 
+                }
 
                 environment {
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
