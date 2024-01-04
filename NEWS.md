@@ -21,7 +21,7 @@
 #### Posit Workbench
 -
 
-### Updated Dependencies
+### Dependencies
 - Updated GWT to version 2.10.0 (#11505; Desktop + Server)
 - Updated Electron to version 28.0.0 (#14055; Desktop)
 
