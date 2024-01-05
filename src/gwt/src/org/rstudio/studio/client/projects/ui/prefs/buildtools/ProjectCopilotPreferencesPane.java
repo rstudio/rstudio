@@ -290,7 +290,15 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
             
             if (response == null)
             {
-               if (prefs_.copilotEnabled().getValue())
+               lblCopilotStatus_.setText("An unexpected error occurred while checking the status of the GitHub Copilot agent.");
+            }
+            else if (response.result == null)
+            {
+               if (response.error != null)
+               {
+                  lblCopilotStatus_.setText("An error occurred while starting the Copilot agent.");
+               }
+               else if (prefs_.copilotEnabled().getValue())
                {
                   lblCopilotStatus_.setText("The GitHub Copilot agent is not currently running.");
                }
