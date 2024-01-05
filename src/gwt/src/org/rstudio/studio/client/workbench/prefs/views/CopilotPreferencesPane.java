@@ -1,7 +1,7 @@
 /*
  * CopilotPreferencesPane.java
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2023 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -61,7 +61,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -88,7 +87,6 @@ public class CopilotPreferencesPane extends PreferencesPane
                                  UserPrefs prefs,
                                  Commands commands,
                                  AriaLiveService ariaLive,
-                                 GlobalDisplay display,
                                  Copilot copilot,
                                  CopilotServerOperations server,
                                  ProjectsServerOperations projectServer)
@@ -97,7 +95,6 @@ public class CopilotPreferencesPane extends PreferencesPane
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
-      display_ = display;
       copilot_ = copilot;
       server_ = server;
       projectServer_ = projectServer;
@@ -152,12 +149,6 @@ public class CopilotPreferencesPane extends PreferencesPane
       
       selCopilotTabKeyBehavior_.setValue(prefs_.copilotTabKeyBehavior().getGlobalValue());
       
-      previewBlurb_ = new HTML(
-            "<p>This feature is in preview. If you'd like to provide feedback or report an issue, please " +
-            "<a target=\"_blank\" href=\"https://github.com/rstudio/rstudio/issues\">file an issue</a> " +
-            "on the RStudio GitHub repository.</p>");
-      previewBlurb_.addStyleName(RES.styles().copilotPreviewBlurb());
-      
       linkCopilotTos_ = new HelpLink(
             "GitHub Copilot: Terms of Service",
             "github-copilot-terms-of-service",
@@ -198,7 +189,6 @@ public class CopilotPreferencesPane extends PreferencesPane
       VerticalPanel bottomPanel = new VerticalPanel();
       bottomPanel.getElement().getStyle().setBottom(0, Unit.PX);
       bottomPanel.getElement().getStyle().setPosition(Position.ABSOLUTE);
-      bottomPanel.add(spaced(previewBlurb_));
       bottomPanel.add(spaced(lblCopilotTos_));
       bottomPanel.add(spaced(linkCopilotTos_));
       add(bottomPanel);
@@ -476,7 +466,6 @@ public class CopilotPreferencesPane extends PreferencesPane
       String button();
       String copilotStatusLabel();
       String copilotTosLabel();
-      String copilotPreviewBlurb();
    }
 
    public interface Resources extends ClientBundle
@@ -517,14 +506,12 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final SelectWidget selCopilotTabKeyBehavior_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
-   private final HTML previewBlurb_;
    
    // Injected
    private final EventBus events_;
    private final Session session_;
    private final UserPrefs prefs_;
    private final Commands commands_;
-   private final GlobalDisplay display_;
    private final Copilot copilot_;
    private final CopilotServerOperations server_;
    private final ProjectsServerOperations projectServer_;
