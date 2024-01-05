@@ -138,7 +138,7 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
    
    private void initDisplay(RProjectOptions options)
    {
-      add(headerLabel("GitHub Copilot (Preview)"));
+      add(headerLabel("GitHub Copilot"));
       
       if (session_.getSessionInfo().getCopilotEnabled())
       {

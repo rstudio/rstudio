@@ -161,7 +161,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    
    private void initDisplay()
    {
-      add(headerLabel("GitHub Copilot (Preview)"));
+      add(headerLabel("GitHub Copilot"));
       
       if (session_.getSessionInfo().getCopilotEnabled())
       {
