@@ -233,4 +233,25 @@ def getDockerTag() {
   return "${IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
 }
 
+boolean postReviewComment(String comment) {
+  if (!env.GIT_BRANCH) { return false }
+  if (!env.GIT_BRANCH.startsWith('PR-')) { return false }
+
+  pullId = "${env.GIT_BRANCH}".replaceAll("^PR-", "")
+  ownerAndRepo = prApiUrlBase.replaceAll('^https://github.com[/:]', '').replaceAll('.git$', '')
+  prApiUrl = "https://api.github.com/repos/${ownerAndRepo}/pulls/${PULL_ID}/reviews"
+
+  println 'curl -L ' +
+    '-X POST ' +
+    '-H "Accept: application/vnd.github+json" ' +
+    // '-H "Authorization: token ${GITHUB_LOGIN_PSW}" ' +
+    '-H "Authorization: token TOKEN_HERE" ' +
+    '-H "X-GitHub-Api-Version: 2022-11-28" ' +
+    '-H "Content-Type: application/json" ' +
+    "-d '{\"body\": \"${comment}\", \"event\": \"COMMENT\", \"commit_id}\": \"${GIT_COMMIT}\"}' " +
+    '${prApiUrl}'
+
+  return true
+}
+
 return this
