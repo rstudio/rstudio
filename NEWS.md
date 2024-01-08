@@ -19,6 +19,7 @@
 - Fixed current Git branch not always showing correctly in external editor windows (#14029)
 - Fixed tooltip to show correct keyboard shortcut when hovering over URLs in the editor (#12504)
 - Fixed Save As dialog on Windows not showing Save As Type field when extensions are hidden (#12965)
+- Fixed GitHub Copilot project preferences not showing correct status message (#14064)
 
 #### Posit Workbench
 -
