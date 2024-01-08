@@ -248,8 +248,8 @@ boolean postReviewComment(String comment) {
     '-H "Authorization: token TOKEN_HERE" ' +
     '-H "X-GitHub-Api-Version: 2022-11-28" ' +
     '-H "Content-Type: application/json" ' +
-    "-d '{\"body\": \"${comment}\", \"event\": \"COMMENT\", \"commit_id}\": \"${GIT_COMMIT}\"}' " +
-    '${prApiUrl}'
+    "-d '{\"body\": \"${comment}\", \"event\": \"COMMENT\", \"commit_id\": \"${GIT_COMMIT}\"}' " +
+    "${prApiUrl}"
 
   return true
 }
