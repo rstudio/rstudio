@@ -2,10 +2,8 @@
 
 ### New
 #### RStudio
-- Updated GWT to version 2.10.0 (#11505)
-- Updated Electron to version 28.0.0 (#14055)
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar. (#8932)
-- The GWT code can now be built with JDKs > 11 (#11242)
+- RStudio's GWT sources can now be built with JDKs > 11 (#11242)
 - R projects can be given a custom display name in Project Options (#1909)
 
 #### Posit Workbench
@@ -23,3 +21,8 @@
 
 #### Posit Workbench
 -
+
+### Dependencies
+- Updated GWT to version 2.10.0 (#11505; Desktop + Server)
+- Updated Electron to version 28.0.0 (#14055; Desktop)
+
