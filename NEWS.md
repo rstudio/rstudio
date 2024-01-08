@@ -19,6 +19,7 @@
 - Fixed Save As dialog on Windows not showing Save As Type field when extensions are hidden (#12965)
 - Fixed GitHub Copilot project preferences not showing correct status message (#14064)
 - Fixed an issue where Quarto chunk option completions were not displayed at the start of a comment (#14074)
+- Fixed an issue where pipes containing a large number of comments were not indented correctly (#12674)
 
 #### Posit Workbench
 -
