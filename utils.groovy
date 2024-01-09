@@ -237,9 +237,9 @@ boolean postReviewComment(String comment) {
   if (!env.GIT_BRANCH) { return false }
   if (!env.GIT_BRANCH.startsWith('PR-')) { return false }
 
-  pullId = "${env.GIT_BRANCH}".replaceAll("^PR-", "")
-  ownerAndRepo = prApiUrlBase.replaceAll('^https://github.com[/:]', '').replaceAll('.git$', '')
-  prApiUrl = "https://api.github.com/repos/${ownerAndRepo}/pulls/${PULL_ID}/reviews"
+  pullId = env.GIT_BRANCH.replaceAll("^PR-", "")
+  ownerAndRepo = env.GIT_URL.replaceAll('^https://github.com[/:]', '').replaceAll('.git$', '')
+  prApiUrl = "https://api.github.com/repos/${ownerAndRepo}/pulls/${pullId}/reviews"
 
   println 'curl -L ' +
     '-X POST ' +
