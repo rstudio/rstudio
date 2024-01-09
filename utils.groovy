@@ -243,11 +243,11 @@ boolean postReviewComment(String comment) {
 
   strippedQuotes = comment.replaceAll('^"', '').replaceAll('"$', '')
 
-  println 'curl -L ' +
+  sh 'curl -L ' +
     '-X POST ' +
     '-H "Accept: application/vnd.github+json" ' +
-    // '-H "Authorization: token ${GITHUB_LOGIN_PSW}" ' +
-    '-H "Authorization: token TOKEN_HERE" ' +
+    '-H "Authorization: token ${GITHUB_LOGIN_PSW}" ' +
+    // '-H "Authorization: token TOKEN_HERE" ' +
     '-H "X-GitHub-Api-Version: 2022-11-28" ' +
     '-H "Content-Type: application/json" ' +
     "-d '{\"body\": \"${strippedQuotes}\", \"event\": \"COMMENT\", \"commit_id\": \"${GIT_COMMIT}\"}' " +
