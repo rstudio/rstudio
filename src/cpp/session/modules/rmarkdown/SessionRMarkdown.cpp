@@ -72,6 +72,8 @@
 
 #define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
 
+#define kAnsiEscapeRegex "(?:\033\\[\\d+m)*"
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -715,7 +717,16 @@ private:
          // if this is a Shiny render, check to see if Shiny started listening
          if (isShiny_)
          {
-            const boost::regex shinyListening("^Listening on (http.*)$");
+            // NOTE: This code path is also used for preview of Quarto documents using
+            // 'server: shiny', so we try to be permissive in terms of what kind of
+            // output we accept when we seeing Quarto is running.
+            //
+            // github.com/rstudio/rstudio/issues/14039
+            const boost::regex shinyListening(
+                     "^" kAnsiEscapeRegex
+                     "(?:Listening on |Browse at )?(https?://[^\033]+)"
+                     kAnsiEscapeRegex "$");
+            
             boost::smatch matches;
             if (regex_utils::match(outputLine, matches, shinyListening))
             {
