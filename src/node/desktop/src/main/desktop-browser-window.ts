@@ -189,8 +189,8 @@ export class DesktopBrowserWindow extends EventEmitter {
           if (match) {
             const args = [decodeURIComponent(match[2]), decodeURIComponent(match[1])];
             this.sendRpcRequest('show_vignette', args);
+            return { action: 'deny' };
           }
-          return { action: 'deny' };
         }
       }
 
