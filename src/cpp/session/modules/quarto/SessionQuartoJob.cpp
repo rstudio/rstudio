@@ -108,7 +108,13 @@ Error QuartoJob::start()
 
 ParsedServerLocation quartoServerLocationFromOutput(const std::string& output)
 {
-   boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/(web\\/viewer\\.html)?");
+   // Attempt to divine the Quarto server URL from output.
+   //
+   // Note that the URL itself might be colored via ANSI escapes;
+   // when parsing the URL path, avoid capturing those escapes.
+   //
+   // https://github.com/rstudio/rstudio/issues/14027
+   boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/([^\033\n]+)");
    boost::smatch match;
    if (regex_utils::search(output, match, browseRe))
    {

@@ -259,7 +259,8 @@ private:
       }
 
       // detect browse directive
-      if (port_ == 0) {
+      if (port_ == 0)
+      {
          auto location = quartoServerLocationFromOutput(output);
          if (location.port > 0)
          {
