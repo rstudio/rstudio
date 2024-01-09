@@ -241,7 +241,7 @@ boolean postReviewComment(String comment) {
   ownerAndRepo = env.GIT_URL.replaceAll('^https://github.com[/:]', '').replaceAll('.git$', '')
   prApiUrl = "https://api.github.com/repos/${ownerAndRepo}/pulls/${pullId}/reviews"
 
-  strippedQuotes = comment.replaceAll('^"', '').replaceAll('"$', '')
+  // strippedQuotes = comment.replaceAll('^"', '').replaceAll('"$', '')
 
   sh 'curl -L ' +
     '-X POST ' +
@@ -250,7 +250,7 @@ boolean postReviewComment(String comment) {
     // '-H "Authorization: token TOKEN_HERE" ' +
     '-H "X-GitHub-Api-Version: 2022-11-28" ' +
     '-H "Content-Type: application/json" ' +
-    "-d '{\"body\": \"${strippedQuotes}\", \"event\": \"COMMENT\", \"commit_id\": \"${GIT_COMMIT}\"}' " +
+    "-d '{\"body\": \"${comment}\", \"event\": \"COMMENT\", \"commit_id\": \"${GIT_COMMIT}\"}' " +
     "${prApiUrl}"
 
   return true

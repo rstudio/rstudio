@@ -55,7 +55,7 @@ pipeline {
       steps {
         sh "mkdir --parents ${TMP_SNYK_PATH}"
         sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
-        sh "snyk code test ${TMP_SNYK_PATH} | sed '/^Testing/d' | sed '/./,\$!d' | jq -Rs . > ${TMP_SNYK_PATH}/output.txt"
+        sh "snyk code test ${TMP_SNYK_PATH} | sed '/^Testing/d' | sed '/./,\$!d' > ${TMP_SNYK_PATH}/output.txt"
         script {
           text = sh(returnStdout: true, script: "cat ${TMP_SNYK_PATH}/output.txt")
           utils.postReviewComment(text)
