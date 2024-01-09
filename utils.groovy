@@ -241,23 +241,18 @@ boolean postReviewComment(String comment) {
   ownerAndRepo = env.GIT_URL.replaceAll('^https://github.com[/:]', '').replaceAll('.git$', '')
   prApiUrl = "https://api.github.com/repos/${ownerAndRepo}/pulls/${pullId}/reviews"
 
-  post = new URL(prApiUrl).openConnection()
-  post.setRequestMethod("POST")
-  post.setDoOutput(true)
-  post.setRequestProperty("Accept", "application/vnd.github+json")
-  post.setRequestProperty("Authorization", "token ${GITHUB_LOGIN_PSW}")
-  post.setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
-  post.setRequestProperty("Content-Type", "application/json")
- 
-  response = post.getOutputStream().write('''/
-    {
-      "body": "${comment}",
-      "event": "COMMENT",
-      "commit_id": "${env.GIT_COMMIT}"
-    }
-  '''.getBytes("UTF-8"))
-  println(response)
-  return response.equals(200)
+  strippedQuotes = comment.trim().replaceAll('^"', '').replaceAll('"$', '')
+
+  sh 'curl -L ' +
+    '-X POST ' +
+    '-H "Accept: application/vnd.github+json" ' +
+    '-H "Authorization: token ${GITHUB_LOGIN_PSW}" ' +
+    '-H "X-GitHub-Api-Version: 2022-11-28" ' +
+    '-H "Content-Type: application/json" ' +
+    "-d '{\"body\": \"${strippedQuotes}\", \"event\": \"COMMENT\", \"commit_id\": \"${GIT_COMMIT}\"}' " +
+    "${prApiUrl}"
+
+  return true
 }
 
 return this
