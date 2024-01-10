@@ -194,12 +194,18 @@ bool isIndexableFile(const FilePath& documentPath)
    
    // Don't index R files which might contain secrets.
    std::string name = documentPath.getFilename();
-   if (name == ".Renviron" || name == "Renviron.site")
+   if (name == "Renviron.site")
       return false;
    
-   // Don't try to index SSH secrets.
+   // Don't index files within hidden folders (like .ssh)
    std::string path = documentPath.getAbsolutePath();
-   if (path.find("/.ssh/") != std::string::npos)
+   if (path.find("/.") != std::string::npos)
+      return false;
+   
+   // Don't index binary files.
+   // Perform this check last as it can be expensive; we use the 'file'
+   // utility to determine if a file is a text file as a fallback.
+   if (!module_context::isTextFile(documentPath))
       return false;
    
    return true;
