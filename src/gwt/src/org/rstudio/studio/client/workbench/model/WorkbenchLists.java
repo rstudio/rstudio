@@ -34,7 +34,7 @@ public class WorkbenchLists extends JavaScriptObject
    
   
    private native final JsArrayString getListNative(String name) /*-{
-      return this[name] || [];
+      return this[name];
    }-*/;
    
    private ArrayList<String> convertList(JsArrayString jsList)
