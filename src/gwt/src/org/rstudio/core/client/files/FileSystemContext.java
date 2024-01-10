@@ -48,6 +48,12 @@ public interface FileSystemContext
     * @param relativeOrAbsolutePath
     */
    void cd(String relativeOrAbsolutePath);
+   
+   /**
+    * Like the above, but only sets the working directory; does not attempt
+    * to list file contents.
+    */
+   void setwd(String relativeOrAbsolutePath);
 
    /**
     * Get the contents of the current directory

@@ -14,11 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.files.ui;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
@@ -35,8 +33,14 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesConstants;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
 
 public class FilePathToolbar extends Composite
       implements RequiresResize, ProvidesResize
@@ -46,6 +50,11 @@ public class FilePathToolbar extends Composite
       public MessageDisplay messageDisplay()
       {
          return RStudioGinjector.INSTANCE.getGlobalDisplay();
+      }
+      
+      public void setwd(String relativeOrAbsolutePath)
+      {
+         cd(relativeOrAbsolutePath);
       }
 
       public void cd(String relativeOrAbsolutePath)
