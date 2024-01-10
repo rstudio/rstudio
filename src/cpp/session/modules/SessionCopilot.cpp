@@ -1141,6 +1141,8 @@ void indexFile(const core::FileInfo& info)
    if (error)
       return;
    
+   DLOG("Indexing document: {}", info.absolutePath());
+   
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
    textDocumentJson["languageId"] = languageId;
