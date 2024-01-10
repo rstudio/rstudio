@@ -114,7 +114,7 @@ ParsedServerLocation quartoServerLocationFromOutput(const std::string& output)
    // when parsing the URL path, avoid capturing those escapes.
    //
    // https://github.com/rstudio/rstudio/issues/14027
-   boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/([^\033\n]+)");
+   boost::regex browseRe("http://localhost:(\\d{2,})/([^\033\n]*)");
    boost::smatch match;
    if (regex_utils::search(output, match, browseRe))
    {
