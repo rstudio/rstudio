@@ -161,11 +161,7 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
  * Return true if the file at the URL exists. Return false otherwise
  */
 def urlExists(String url) {
-  def exists = sh( returnStatus: true, script: 'curl --head --silent --fail ' + url + ' 2> /dev/null') == 0
-
-  echo "URL ${url} exists: ${exists}"
-
-  return exists
+  return sh( returnStatus: true, script: 'curl --head --silent --fail ' + url + ' 2> /dev/null') == 0
 }
 
 /** 
