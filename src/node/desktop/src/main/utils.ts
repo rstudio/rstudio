@@ -197,15 +197,19 @@ function findBuildRootImpl(rootDir: string): string {
     `${rootDir}/package/win32`,
   ];
 
-  // list all files + directories in root folder
+  // Look for build directories, and files within those build directories
+  // that get eagerly modified after a build.
   for (const buildDirParent of buildDirParents) {
     const buildDirFiles = fs.readdirSync(buildDirParent);
-    for (const file of buildDirFiles) {
-      if (file.startsWith('build') || file.startsWith('cmake-build-')) {
-        const path = `${buildDirParent}/${file}`;
-        const stat = fs.statSync(path);
-        if (stat.isDirectory()) {
-          buildDirs.push({ path: path, stat: stat });
+    for (const buildDirFile of buildDirFiles) {
+      if (buildDirFile.startsWith('build') || buildDirFile.startsWith('cmake-build-')) {
+        const buildDirPath = `${buildDirParent}/${buildDirFile}`;
+        for (const buildFile of ['.ninja_log', 'CMakeFiles']) {
+          const buildPath = `${buildDirPath}/${buildFile}`;
+          if (fs.existsSync(buildPath)) {
+            const stat = fs.statSync(buildPath);
+            buildDirs.push({ path: buildDirPath, stat: stat });
+          }
         }
       }
     }
@@ -216,7 +220,6 @@ function findBuildRootImpl(rootDir: string): string {
     return '';
   }
 
-  // sort build directories by last modified time
   buildDirs.sort((lhs, rhs) => {
     return rhs.stat.mtime.getTime() - lhs.stat.mtime.getTime();
   });
