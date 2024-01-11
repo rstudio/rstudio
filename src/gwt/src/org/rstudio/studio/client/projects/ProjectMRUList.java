@@ -134,7 +134,15 @@ public class ProjectMRUList extends MRUList
          mruPaths.add(mruEntry.getProjectFilePath());
          mruNames.add(StringUtil.notNull(mruEntry.getProjectName()));
       }
-      mruPaths = DuplicateHelper.getPathLabels(mruPaths, includeExt);
+      // Before the project naming feature was added, this generateLabels() method consisted 
+      // of a single of code:
+      //
+      //   return DuplicateHelper.getPathLabels(mruEntries, true);
+      //
+      // Note that it hardcoded true for the "includeExtensions" parameter and did not use
+      // the value of the "includeExt" parameter. Also have to do that here to avoid
+      // https://github.com/rstudio/rstudio/issues/14107.
+      mruPaths = DuplicateHelper.getPathLabels(mruPaths, true);
       
       // recombine paths and names for display
       ArrayList<String> result = new ArrayList<String>();
