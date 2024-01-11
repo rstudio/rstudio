@@ -375,10 +375,6 @@ private:
          if (isReveal)
          {
             std::string url = url_ports::mapUrlPorts(viewerUrl());
-            if (isFileInSessionQuartoProject(previewTarget_))
-            {
-               url = url + urlPathForQuartoProjectOutputFile(outputFile_);
-            }
 
             json::Object eventData;
             eventData["url"] = url;
@@ -391,12 +387,6 @@ private:
          else
          {
             std::string url = viewerUrl();
-
-            if (outputFile_.getExtensionLowerCase() != ".pdf")
-            {
-               if (isFileInSessionQuartoProject(previewTarget_))
-                  url = url + urlPathForQuartoProjectOutputFile(outputFile_);
-            }
 
             // if we are dealing with a binary output file then make sure nav is for the file
             // not the project (as would occur for epub, docx in book output)
@@ -436,12 +426,7 @@ private:
 
    std::string rstudioServerPreviewWindowUrl()
    {
-      std::string url = url_ports::mapUrlPorts(viewerUrl());
-      if (isFileInSessionQuartoProject(previewTarget_))
-      {
-         url = url + urlPathForQuartoProjectOutputFile(outputFile_);
-      }
-      return url;
+      return url_ports::mapUrlPorts(viewerUrl());
    }
 
    std::string viewerUrl()
