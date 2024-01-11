@@ -20,6 +20,7 @@
 - Fixed GitHub Copilot project preferences not showing correct status message (#14064)
 - Fixed an issue where Quarto chunk option completions were not displayed at the start of a comment (#14074)
 - Fixed an issue where pipes containing a large number of comments were not indented correctly (#12674)
+- Fixed an issue where RStudio would unnecessarily list directory contents when opening a file (#14096)
 
 #### Posit Workbench
 -
