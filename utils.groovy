@@ -81,10 +81,7 @@ def getFlower() {
 }
 
 def getVersionFilename(String version) {
-  return sh(
-    script: "echo ${version} | sed -e 's/[^a-zA-Z0-9-]/-/g' | sed -e 's/--*/-/g'",
-    returnStdout: true
-  ).trim()
+  return version.replaceAll('[^a-zA-Z0-9-]', '-').replaceAll('--*', '-').trim()
 }
 
 /**
