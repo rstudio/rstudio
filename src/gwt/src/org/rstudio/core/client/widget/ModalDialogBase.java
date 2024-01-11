@@ -83,6 +83,12 @@ public abstract class ModalDialogBase extends DialogBox
 
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();
+
+      // panel to display an optional hyperlink; will be removed if it ends up empty
+      middlePanel_ = new HorizontalPanel();
+      middlePanel_.setStyleName(ThemeStyles.INSTANCE.dialogBottomPanel());
+      middlePanel_.setWidth("100%");
+
       bottomPanel_ = new HorizontalPanel();
       bottomPanel_.setStyleName(ThemeStyles.INSTANCE.dialogBottomPanel());
       bottomPanel_.setWidth("100%");
@@ -95,6 +101,7 @@ public abstract class ModalDialogBase extends DialogBox
       bottomPanel_.add(ariaLiveStatusWidget_);
 
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+      mainPanel_.add(middlePanel_);
       mainPanel_.add(bottomPanel_);
 
       // embed main panel in a custom container if specified
@@ -434,6 +441,17 @@ public abstract class ModalDialogBase extends DialogBox
    protected void setButtonAlignment(HorizontalAlignmentConstant alignment)
    {
       bottomPanel_.setCellHorizontalAlignment(buttonPanel_, alignment);
+   }
+
+   protected void addMiddleWidget(Widget middle)
+   {
+      middlePanel_.add(middle);
+   }
+
+   protected void removeMiddlePanel()
+   {
+      middlePanel_.removeFromParent();
+      middlePanel_ = null;
    }
 
    protected ProgressIndicator addProgressIndicator()
@@ -842,6 +860,7 @@ public abstract class ModalDialogBase extends DialogBox
    private boolean enterDisabled_ = false;
    private final SimplePanel containerPanel_;
    private final VerticalPanel mainPanel_;
+   private HorizontalPanel middlePanel_;
    private final HorizontalPanel bottomPanel_;
    private final HorizontalPanel buttonPanel_;
    private final HorizontalPanel leftButtonPanel_;
