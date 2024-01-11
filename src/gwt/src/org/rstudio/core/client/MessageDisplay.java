@@ -196,6 +196,20 @@ public abstract class MessageDisplay
       .showModal();
    }
 
+   /**
+    * Show a messagebox with a clickable URL shown below the message text.
+    */
+   public void showMessage(int type,
+                           String caption,
+                           String message,
+                           String urlLabel,
+                           String url)
+   {
+      createDialog(type, caption, message)
+         .addLink(urlLabel, url)
+         .showModal();
+   }
+ 
    public void showYesNoMessage(int type,
                                 String caption,
                                 String message,
