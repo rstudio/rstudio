@@ -85,9 +85,9 @@ public abstract class ModalDialogBase extends DialogBox
       mainPanel_ = new VerticalPanel();
 
       // panel to display an optional hyperlink; will be removed if it ends up empty
-      middlePanel_ = new HorizontalPanel();
-      middlePanel_.setStyleName(ThemeStyles.INSTANCE.dialogBottomPanel());
-      middlePanel_.setWidth("100%");
+      anchorPanel_ = new HorizontalPanel();
+      anchorPanel_.setStyleName(ThemeStyles.INSTANCE.dialogAnchorPanel());
+      anchorPanel_.setWidth("100%");
 
       bottomPanel_ = new HorizontalPanel();
       bottomPanel_.setStyleName(ThemeStyles.INSTANCE.dialogBottomPanel());
@@ -101,7 +101,7 @@ public abstract class ModalDialogBase extends DialogBox
       bottomPanel_.add(ariaLiveStatusWidget_);
 
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-      mainPanel_.add(middlePanel_);
+      mainPanel_.add(anchorPanel_);
       mainPanel_.add(bottomPanel_);
 
       // embed main panel in a custom container if specified
@@ -443,15 +443,15 @@ public abstract class ModalDialogBase extends DialogBox
       bottomPanel_.setCellHorizontalAlignment(buttonPanel_, alignment);
    }
 
-   protected void addMiddleWidget(Widget middle)
+   protected void addAnchorWidget(Widget middle)
    {
-      middlePanel_.add(middle);
+      anchorPanel_.add(middle);
    }
 
-   protected void removeMiddlePanel()
+   protected void removeAnchorPanel()
    {
-      middlePanel_.removeFromParent();
-      middlePanel_ = null;
+      anchorPanel_.removeFromParent();
+      anchorPanel_ = null;
    }
 
    protected ProgressIndicator addProgressIndicator()
@@ -860,7 +860,7 @@ public abstract class ModalDialogBase extends DialogBox
    private boolean enterDisabled_ = false;
    private final SimplePanel containerPanel_;
    private final VerticalPanel mainPanel_;
-   private HorizontalPanel middlePanel_;
+   private HorizontalPanel anchorPanel_;
    private final HorizontalPanel bottomPanel_;
    private final HorizontalPanel buttonPanel_;
    private final HorizontalPanel leftButtonPanel_;
