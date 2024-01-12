@@ -443,9 +443,9 @@ public abstract class ModalDialogBase extends DialogBox
       bottomPanel_.setCellHorizontalAlignment(buttonPanel_, alignment);
    }
 
-   protected void addAnchorWidget(Widget middle)
+   protected void addAnchorWidget(Widget widget)
    {
-      anchorPanel_.add(middle);
+      anchorPanel_.add(widget);
    }
 
    protected void removeAnchorPanel()
