@@ -11,11 +11,16 @@ for hook in "$hooks_dir"/*
 do
     file_name=$(basename "$hook")
     echo "\tCopying ${color_highlight}$file_name${color_none} hook to $git_hooks_dir and making it executable"
-    # if the pre-commit hook already exists, back up the existing one
-    if [ -f "$git_hooks_dir"/"$file_name" ]; then
-        backup_file_name="$file_name"-"$(date +%Y-%m-%d-%H-%M-%S)"
-        echo "\t\tbacking up existing $file_name as $backup_file_name"
-        mv "$git_hooks_dir"/"$file_name" "$git_hooks_dir"/"$backup_file_name"
+
+    if [ "$1" = "--overwrite" ]; then
+        echo "\t\toverwriting existing hook since ${color_highlight}--overwrite${color_none} option was used"
+    else
+        # if the pre-commit hook already exists, back up the existing one
+        if [ -f "$git_hooks_dir"/"$file_name" ]; then
+            backup_file_name="$file_name"-"$(date +%Y-%m-%d-%H-%M-%S)"
+            echo "\t\tbacking up existing $file_name as $backup_file_name"
+            mv "$git_hooks_dir"/"$file_name" "$git_hooks_dir"/"$backup_file_name"
+        fi
     fi
 
     cp "$hook" "$git_hooks_dir"
