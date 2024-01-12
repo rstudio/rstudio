@@ -8,8 +8,9 @@ For more information on how to use detect-secrets, see the [detect-secrets docum
 If you are receiving false positives from the pre-commit hook, you can update the baseline secrets file to mark the detected "secrets" as okay to commit.
 
 ### Updating the baseline secrets file
-1. Run `detect-secrets scan --baseline .secrets.baseline` to scan for new secrets and update the baseline secrets file
-2. Run `detect-secrets audit .secrets.baseline` to audit the baseline secrets file (flag each secret as either true or false positive)
+From the root of the project:
+1. Run `detect-secrets scan --baseline git_hooks/secrets/.secrets.baseline` to scan for new secrets and update the baseline secrets file
+2. Run `detect-secrets audit git_hooks/secrets/.secrets.baseline` to audit the baseline secrets file (flag each secret as either true or false positive)
 3. Commit the updated baseline secrets file
 
 ### Additional ways to handle false positives
@@ -22,9 +23,9 @@ Aside from adding false positives to the baseline secrets file, inline comments 
 
 It's best to refer to [detect-secrets](https://github.com/Yelp/detect-secrets) for the most up-to-date instructions, but here are the steps that were used to set up the initial baseline secrets file:
 1. Install detect-secrets via `pip install detect-secrets` (Python and pip installed already) or `brew install detect-secrets` (MacOS)
-2. Navigate to `git_hooks/secrets`
-3. Run `detect-secrets scan > .secrets.baseline` to generate the initial baseline secrets file
-4. Run `detect-secrets audit .secrets.baseline` to audit the baseline secrets file (flag each secret as either true or false positive)
-5. Commit the baseline secrets file
+2. Run `detect-secrets scan --no-verify > git_hooks/secrets/.secrets.baseline` to generate the initial baseline secrets file
+    - `--no-verify` is used to skip additional secret verification via a network call
+3. Run `detect-secrets audit git_hooks/secrets/.secrets.baseline` to audit the baseline secrets file (flag each secret as either true or false positive)
+4. Commit the baseline secrets file
 
 </details>
