@@ -29,12 +29,26 @@ If you are receiving false positives from the pre-commit hook, you can update th
 
 ### Updating the baseline secrets file
 From the root of the project:
-1. Run `detect-secrets scan --baseline git_hooks/secrets/.secrets.baseline` to scan for new secrets and update the baseline secrets file
+1. Run `detect-secrets scan --no-verify --no-verify --exclude-files 'src/cpp/ext/.*' --exclude-files 'dependencies/submodules/.*' --baseline git_hooks/secrets/.secrets.baseline` to scan for new secrets and update the baseline secrets file:
+```bash
+detect-secrets scan --no-verify --no-verify --exclude-files src/cpp/ext/.* --exclude-files dependencies/submodules/.* --baseline git_hooks/secrets/.secrets.baseline
+``` 
 2. Run `detect-secrets audit git_hooks/secrets/.secrets.baseline` to audit the baseline secrets file (flag each secret as either true or false positive)
 3. Commit the updated baseline secrets file
 
 ### Additional ways to handle false positives
 Aside from adding false positives to the baseline secrets file, inline comments can be added to ignore secrets in specific lines of code. Additionally, more advanced configuration and filtering on words is possible. See the [detect-secrets documentation](https://github.com/Yelp/detect-secrets/tree/master?tab=readme-ov-file#inline-allowlisting) for more information.
+
+## Report of secrets found
+
+To generate a report of secrets found, run `detect-secrets audit --report git_hooks/secrets/.secrets.baseline > git_hooks/secrets/secrets_report.json`.
+- `secrets_report.json` will not be committed as it is `.gitignore`d
+
+## Filtering secrets
+
+We currently only use the built-in filtering mechanism `--exclude-files` to filter out secrets in the `src/cpp/ext` and `dependencies/submodules` directories. These directories contain third-party code that we do not want to scan for secrets.
+
+For more on filters, see the [detect-secrets README](https://github.com/Yelp/detect-secrets/tree/master?tab=readme-ov-file#filters) or further details on writing [custom filters](https://github.com/Yelp/detect-secrets/blob/master/docs/filters.md#Using-Your-Own-Filters).
 
 ---
 
@@ -43,7 +57,7 @@ Aside from adding false positives to the baseline secrets file, inline comments 
 
 It's best to refer to [detect-secrets](https://github.com/Yelp/detect-secrets) for the most up-to-date instructions, but here are the steps that were used to set up the initial baseline secrets file:
 1. Install detect-secrets via `pip install detect-secrets` (Python and pip installed already) or `brew install detect-secrets` (MacOS)
-2. Run `detect-secrets scan --no-verify > git_hooks/secrets/.secrets.baseline` to generate the initial baseline secrets file
+2. Run `detect-secrets scan --no-verify --exclude-files 'src/cpp/ext/.*' --exclude-files 'dependencies/submodules/.*' > git_hooks/secrets/.secrets.baseline` to generate the initial baseline secrets file
     - `--no-verify` is used to skip additional secret verification via a network call
 3. Run `detect-secrets audit git_hooks/secrets/.secrets.baseline` to audit the baseline secrets file (flag each secret as either true or false positive)
 4. Commit the baseline secrets file
