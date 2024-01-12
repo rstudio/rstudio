@@ -213,6 +213,19 @@ public abstract class MessageDisplay
          .addLink(urlLabel, url)
          .showModal();
    }
+
+   public void showMessage(int type,
+                           String caption,
+                           String message,
+                           String urlLabel,
+                           String url,
+                           Operation dismissed)
+   {
+      createDialog(type, caption, message)
+         .addLink(urlLabel, url)
+         .addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, dismissed)
+         .showModal();
+   }
  
    public void showYesNoMessage(int type,
                                 String caption,

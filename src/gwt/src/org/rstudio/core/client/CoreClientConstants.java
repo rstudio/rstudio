@@ -1200,6 +1200,24 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String rpcOverrideErrorMessage(String desktop, String method);
 
     /**
+     * Translated "Unable to establish connection with {0} when executing ''{1}''"
+     *
+     * @return translated "Unable to establish connection with {0} when executing ''{1}''"
+     */
+    @DefaultMessage("Unable to establish connection with the session on {0}. Please try to log in again.")
+    @Key("rpcOverrideErrorMessageServer")
+    String rpcOverrideErrorMessageServer(String platform);
+
+    /**
+     * Translated "Log in"
+     *
+     * @return translated "Log in"
+     */
+    @DefaultMessage("Unable to establish connection with the session on {0}. Please try to log in again.")
+    @Key("rpcOverrideErrorMessageLink")
+    String rpcOverrideErrorMessageLink();
+
+    /**
      * Translated "You need to restart RStudio in order for these changes to take effect. Do you want to do this now?"
      *
      * @return translated "You need to restart RStudio in order for these changes to take effect. Do you want to do this now?"
