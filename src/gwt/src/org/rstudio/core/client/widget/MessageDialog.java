@@ -181,13 +181,13 @@ public class MessageDialog extends ModalDialogBase
 
    public void addLink(String label, String url)
    {
-      Anchor anchor = new Anchor(label, url);
-      addMiddleWidget(anchor);
+      Anchor anchor = new Anchor(label, url, "_blank");
+      addAnchorWidget(anchor);
    }
 
    public void removeMiddle()
    {
-      removeMiddlePanel();
+      removeAnchorPanel();
    }
 
    private final int type_;

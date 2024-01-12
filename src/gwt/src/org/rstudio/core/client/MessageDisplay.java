@@ -197,7 +197,11 @@ public abstract class MessageDisplay
    }
 
    /**
-    * Show a messagebox with a clickable URL shown below the message text.
+    * Show a messagebox with a clickable URL shown below the message text. The
+    * link will open in a new tab (e.g. target=_blank). 
+    *
+    * This mode is only supported for RStudio Server; on Desktop the link will not 
+    * be shown in the dialog.
     */
    public void showMessage(int type,
                            String caption,
