@@ -68,7 +68,7 @@ public class WebDialogBuilderFactory implements DialogBuilderFactory
          if (anchor_ != null)
             messageDialog.addLink(anchor_.label, anchor_.url);
          else
-            messageDialog.removeMiddle();
+            messageDialog.removeAnchorRegion();
 
          if (options_ != null)
          {
