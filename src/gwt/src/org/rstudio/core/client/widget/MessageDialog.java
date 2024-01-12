@@ -186,7 +186,7 @@ public class MessageDialog extends ModalDialogBase
       addAnchorWidget(anchor);
    }
 
-   public void removeMiddle()
+   public void removeAnchorRegion()
    {
       removeAnchorPanel();
    }
