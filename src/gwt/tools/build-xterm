@@ -10,6 +10,7 @@ fi
 
 mkdir xterm.js
 cd xterm.js
+npm init -y
 npm install xterm@4.9.0
 npm install xterm-addon-fit@0.4.0
 npm install xterm-addon-web-links@0.4.0
