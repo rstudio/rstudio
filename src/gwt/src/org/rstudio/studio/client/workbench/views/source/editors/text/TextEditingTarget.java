@@ -1833,44 +1833,44 @@ public class TextEditingTarget implements
                   case COMPLETION_REQUESTED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           "Copilot: Waiting for completions...");
+                           constants_.copilotWaiting());
                      break;
                      
                   case COMPLETION_CANCELLED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           "Copilot: No completions available.");
+                           constants_.copilotNoCompletions());
                      break;
                      
                   case COMPLETION_RECEIVED_SOME:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_OK,
-                           "Copilot: Completion response received.");
+                           constants_.copilotResponseReceived());
                      break;
                      
                   case COMPLETION_RECEIVED_NONE:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           "Copilot: No completions available.");
+                           constants_.copilotNoCompletions());
                      break;
                      
                   case COMPLETION_ERROR:
                      String message = (String) event.getData();
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_ERROR,
-                           "Copilot: " + message);
+                           constants_.copilotResponseErrorMessage(message));
                      break;
                      
                   case COMPLETIONS_ENABLED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           "Copilot: Automatic completions have been enabled.");
+                           constants_.copilotEnabled());
                      break;
                      
                   case COMPLETIONS_DISABLED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           "Copilot: Automatic completions have been disabled.");
+                           constants_.copilotDisabled());
                      break;
                      
                   }

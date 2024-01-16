@@ -2058,4 +2058,58 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("Creating R Markdown documents")
     @Key("creatingRMarkdown")
     String creatingRMarkdown();
+
+    /**
+     * Translated "Copilot: Waiting for completions..."
+     *
+     * @return translated "Copilot: Waiting for completions..."
+     */
+    @DefaultMessage("Copilot: Waiting for completions...")
+    @Key("copilotWaiting")
+    String copilotWaiting();
+
+    /**
+     * Translated "Copilot: No completions available."
+     *
+     * @return translated "Copilot: No completions available."
+     */
+    @DefaultMessage("Copilot: No completions available.")
+    @Key("copilotNoCompletions")
+    String copilotNoCompletions();
+
+    /**
+     * Translated "Copilot: Completion response received."
+     *
+     * @return translated "Copilot: Completion response received."
+     */
+    @DefaultMessage("Copilot: Completion response received.")
+    @Key("copilotResponseReceived")
+    String copilotResponseReceived();
+
+    /**
+     * Translated "Copilot: {0}"
+     *
+     * @return translated "Copilot: {0}"
+     */
+    @DefaultMessage("Copilot: {0}")
+    @Key("copilotResponseErrorMessage")
+    String copilotResponseErrorMessage(String message);
+
+    /**
+     * Translated "Copilot: Automatic completions have been enabled."
+     *
+     * @return translated "Copilot: Automatic completions have been enabled."
+     */
+    @DefaultMessage("Copilot: Automatic completions have been enabled.")
+    @Key("copilotEnabled")
+    String copilotEnabled();
+
+    /**
+     * Translated "Copilot: Automatic completions have been disabled."
+     *
+     * @return translated "Copilot: Automatic completions have been disabled."
+     */
+    @DefaultMessage("Copilot: Automatic completions have been disabled.")
+    @Key("copilotDisabled")
+    String copilotDisabled();
 }
