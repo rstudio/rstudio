@@ -3,7 +3,7 @@
 # A pre-commit hook script to:
 #  -  run linting and formatting on staged files based on the lint-staged,
 #     prettier and eslint configurations in src/node/desktop.
-#  -  run detect-secrets on staged files based on the ./git_hooks/.secrets.baseline file
+#  -  run detect-secrets on staged files to check for secrets.
 
 color_error='\033[1;31m' # red
 color_highlight='\033[1;95m' # magenta
@@ -26,10 +26,18 @@ then
     echo >&2 "${color_highlight}Note: secret scanning pre-commit hook is not being run because detect-secrets is not installed.${color_none}"
     echo >&2 "\tInstall ${color_highlight}detect-secrets${color_none} with 'pip install detect-secrets' or 'brew install detect-secrets'."
 else
-    secrets_results=$(git diff --staged --name-only -z | xargs -0 detect-secrets-hook --no-verify --baseline ./git_hooks/secrets/.secrets.baseline --exclude-files '.*/.*.min.js' --exclude-files 'src/cpp/ext/fmt/doc/html/api.html' --exclude-files 'src/cpp/ext/fmt/doc/html/searchindex.js' --exclude-files 'dependencies/submodules/.*')
+    baseline_file="./git_hooks/secrets/.secrets.baseline"
+    # Use the pro baseline file if the repo is rstudio-pro
+    if git remote -v | grep -q rstudio-pro; then
+        # This naming convention needs to be consistent with the naming convention in git_hooks/secrets/run-detect-secrets
+        baseline_file="${baseline_file}_pro"
+    fi
+    # This array of excluded files needs to be consistent with the array in git_hooks/secrets/run-detect-secrets
+    exclude_files=(--exclude-files '.*/.*.min.js' --exclude-files 'src/cpp/ext/fmt/doc/html/api.html' --exclude-files 'src/cpp/ext/fmt/doc/html/searchindex.js' --exclude-files 'dependencies/submodules/.*')
+    secrets_results=$(git diff --staged --name-only -z | xargs -0 detect-secrets-hook --no-verify --baseline ${baseline_file} "${exclude_files[@]}")
     if [ -n "$secrets_results" ]; then
         echo "${color_error}Uh oh! It looks like you have secrets in your code. Please remove them before committing.${color_none}"
-        echo "${color_error}If you are certain that these are false positives, see 'git_hooks/secrets/README.md' for instructions on how to mark them as such.${color_none}\n"
+        echo "${color_error}If you are certain that these are false positives, see 'git_hooks/secrets/README.md#false-positives' for instructions on how to mark them as such.${color_none}\n"
         echo "$secrets_results"
         exit 1
     fi
