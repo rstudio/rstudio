@@ -3,11 +3,11 @@
 Here is an informal, manually run and verified "test" to confirm that the secrets scanning is working as expected.
 
 1. Ensure `detect-secrets` is already installed. See 
-2. From this directory, run `detect-secrets scan --no-verify --all-files > secrets.baseline.test`.
-3. Confirm that all of the secrets below are flagged as secrets in the generated `secrets.baseline.test` file, with the exception of the `AWS_ACCESS_KEY_SECRET` secret. You can confirm this by doing one of the following:
-    - Manually inspecting the `secrets.baseline.test` file to confirm that the expected secrets are listed
-    - Running `detect-secrets audit secrets.baseline.test` and confirming that the expected secrets are listed
-    - Running `detect-secrets audit --report secrets.baseline.test > secrets_report_test.json` and confirming that the expected secrets are listed in the `secrets_report_test.json` file
+2. From this directory, run `detect-secrets scan --no-verify --all-files > secrets.baseline_test`.
+3. Confirm that all of the secrets below are flagged as secrets in the generated `secrets.baseline_test` file, with the exception of the `AWS_ACCESS_KEY_SECRET` secret. You can confirm this by doing one of the following:
+    - Manually inspecting the `secrets.baseline_test` file to confirm that the expected secrets are listed
+    - Running `detect-secrets audit secrets.baseline_test` and confirming that the expected secrets are listed
+    - Running `detect-secrets audit --report secrets.baseline_test > secrets_report_test.json` and confirming that the expected secrets are listed in the `secrets_report_test.json` file
 
 ---
 
