@@ -223,4 +223,66 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
     @Key("copilotCurrentlySignedIn")
     String copilotCurrentlySignedIn(String user);
 
+    /**
+     * Translated "An unknown error occurred."
+     *
+     * @return translated "An unknown error occurred."
+     */
+    @DefaultMessage("An unknown error occurred.")
+    @Key("copilotUnknownError")
+    String copilotUnknownError();
+
+    /**
+     * Translated "The GitHub Copilot agent is not installed."
+     *
+     * @return translated "The GitHub Copilot agent is not installed."
+     */
+    @DefaultMessage("The GitHub Copilot agent is not installed.")
+    @Key("copilotNotInstalledError")
+    String copilotNotInstalledError();
+
+    /**
+     * Translated "GitHub Copilot has been disabled by the system administrator."
+     *
+     * @return translated "GitHub Copilot has been disabled by the system administrator."
+     */
+    @DefaultMessage("GitHub Copilot has been disabled by the system administrator.")
+    @Key("copilotDisabledByAdministratorError")
+    String copilotDisabledByAdministratorError();
+
+    /**
+     * Translated "GitHub Copilot has been disabled via project preferences."
+     *
+     * @return translated "GitHub Copilot has been disabled via project preferences."
+     */
+    @DefaultMessage("GitHub Copilot has been disabled via project preferences.")
+    @Key("copilotDisabledViaProjectPreferencesError")
+    String copilotDisabledViaProjectPreferencesError();
+
+    /**
+     * Translated "GitHub Copilot has been disabled via global options."
+     *
+     * @return translated "GitHub Copilot has been disabled via global options."
+     */
+    @DefaultMessage("GitHub Copilot has been disabled via global options.")
+    @Key("copilotDisabledViaGlobalOptionsError")
+    String copilotDisabledViaGlobalOptionsError();
+
+    /**
+     * Translated "An error occurred while attempting to launch GitHub Copilot."
+     *
+     * @return translated "An error occurred while attempting to launch GitHub Copilot."
+     */
+    @DefaultMessage("An error occurred while attempting to launch GitHub Copilot.")
+    @Key("copilotLaunchError")
+    String copilotLaunchError();
+
+    /**
+     * Translated "[unknown]"
+     *
+     * @return translated "[unknown]"
+     */
+    @DefaultMessage("[unknown]")
+    @Key("copilotUnknownErrorShort")
+    String copilotUnknownErrorShort();
 }

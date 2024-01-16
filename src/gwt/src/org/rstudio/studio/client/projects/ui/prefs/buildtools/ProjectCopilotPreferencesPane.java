@@ -356,7 +356,7 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Copilot";
+      return constants_.copilotPaneName();
    }
 
    private void hideButtons()
