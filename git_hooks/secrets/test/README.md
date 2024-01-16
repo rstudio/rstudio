@@ -2,7 +2,7 @@
 
 Here is an informal, manually run and verified "test" to confirm that the secrets scanning is working as expected.
 
-1. Ensure `detect-secrets` is already installed. See 
+1. Ensure `detect-secrets` is already installed. See the [secrets README](../README.md#installation) for installation instructions.
 2. From this directory, run `detect-secrets scan --no-verify --all-files > secrets.baseline_test`.
 3. Confirm that all of the secrets below are flagged as secrets in the generated `secrets.baseline_test` file, with the exception of the `AWS_ACCESS_KEY_SECRET` secret. You can confirm this by doing one of the following:
     - Manually inspecting the `secrets.baseline_test` file to confirm that the expected secrets are listed
