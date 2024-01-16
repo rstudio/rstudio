@@ -176,14 +176,15 @@ public class CopilotPreferencesPane extends PreferencesPane
          add(headerLabel(constants_.copilotIndexingHeader()));
          add(spaced(cbCopilotIndexingEnabled_));
 
-         add(spacedBefore(headerLabel("Copilot Completions")));
+         add(spacedBefore(headerLabel(constants_.copilotCompletionsHeader())));
+
          // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
          // add(selCopilotTabKeyBehavior_);
-         add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 5000, prefs_.copilotCompletionsDelay()));
+         add(numericPref(constants_.copilotCompletionsDelayLabel(), 10, 5000, prefs_.copilotCompletionsDelay()));
       }
       else
       {
-         add(new Label("GitHub Copilot integration has been disabled by the administrator."));
+         add(new Label(constants_.copilotDisabledByAdmin()));
       }
       
       VerticalPanel bottomPanel = new VerticalPanel();
@@ -258,7 +259,7 @@ public class CopilotPreferencesPane extends PreferencesPane
             WebDialogBuilderFactory builder = GWT.create(WebDialogBuilderFactory.class);
             DialogBuilder dialog = builder.create(
                   GlobalDisplay.MSG_INFO,
-                  "GitHub Copilot: Status",
+                  constants_.copilotStatusDialogCaption(),
                   copilotStartupError_,
                   options);
             
@@ -332,13 +333,13 @@ public class CopilotPreferencesPane extends PreferencesPane
             
             if (response == null)
             {
-               lblCopilotStatus_.setText("An unexpected error occurred while checking the status of the GitHub Copilot agent.");
+               lblCopilotStatus_.setText(constants_.copilotUnexpectedError());
             }
             else if (response.result == null)
             {
                if (response.error != null)
                {
-                  lblCopilotStatus_.setText("An error occurred while starting the Copilot agent.");
+                  lblCopilotStatus_.setText(constants_.copilotStartupError());
                   if (!StringUtil.isNullOrEmpty(response.output))
                   {
                      copilotStartupError_ = response.output;
@@ -347,16 +348,16 @@ public class CopilotPreferencesPane extends PreferencesPane
                }
                else if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {
-                  lblCopilotStatus_.setText("GitHub Copilot has been disabled in this project.");
+                  lblCopilotStatus_.setText(constants_.copilotDisabledInProject());
                   showButtons(btnProjectOptions_);
                }
                else if (prefs_.copilotEnabled().getValue())
                {
-                  lblCopilotStatus_.setText("The GitHub Copilot agent is not currently running.");
+                  lblCopilotStatus_.setText(constants_.copilotAgentNotRunning());
                }
                else
                {
-                  lblCopilotStatus_.setText("The GitHub Copilot agent has not been enabled.");
+                  lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
                }
             }
             else if (response.result.status == CopilotConstants.STATUS_OK ||
@@ -368,21 +369,16 @@ public class CopilotPreferencesPane extends PreferencesPane
             else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
             {
                showButtons(btnActivate_, btnSignOut_, btnRefresh_);
-               lblCopilotStatus_.setText(
-                     "You are currently signed in as " + response.result.user + ", but " +
-                     "you haven't yet activated your GitHub Copilot account.");
+               lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
                showButtons(btnSignIn_, btnRefresh_);
-               lblCopilotStatus_.setText("You are not currently signed in.");
+               lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
             }
             else
             {
-               String message =
-                     "RStudio received a Copilot response that it does not understand.\n" +
-                     JSON.stringify(response);
-               
+               String message = constants_.copilotUnknownResponse(JSON.stringify(response));
                lblCopilotStatus_.setText(message);
             }
          }
