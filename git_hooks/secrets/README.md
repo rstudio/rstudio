@@ -35,10 +35,16 @@ If you are receiving false positives from the pre-commit hook, you can update th
 ### Updating the baseline secrets file
 From the root of the project:
 1. Run `run-detect-secrets update-baseline` to scan for new secrets and update the baseline secrets file
-2. Run `run-detect-secrets audit-baseline` to audit the baseline secrets file (flag each secret as either true or false positive). If there are new secrets in the baseline file that are unrelated to your changes, notify the team.
+2. Run `run-detect-secrets audit-baseline` to audit the baseline secrets file (flag each secret as either true or false positive).
+    - If there are new secrets in the baseline file that are unrelated to your changes, notify the team. You can skip them in the audit as you assess the other detected secrets, but they should be addressed before committing the updated baseline file.
 3. Commit the updated baseline secrets file
 
 See [detect-secrets documentation](https://github.com/Yelp/detect-secrets/tree/master?tab=readme-ov-file#adding-new-secrets-to-baseline) for more details.
+
+### Auditing the baseline secrets file
+From the root of the project:
+1. Run `run-detect-secrets audit-baseline` to audit the baseline secrets file (flag each secret as either true or false positive).
+    - If you see the error `ERROR: Secret not found on line <LINE_NUMBER>! Try recreating your baseline to fix this issue.`, **_do not_** recreate the baseline file (i.e., **don't** run `run-detect-secrets init-baseline`, as the marked false and true positives metadata may be lost). Instead, follow the instructions on [updating the baseline secrets file](#updating-the-baseline-secrets-file), which should automatically remove outdated secrets (i.e., if the secret no longer exists or the line number has changed).
 
 ## Report of secrets found
 To generate a report of secrets found, run `run-detect-secrets generate-report`. The output is similar to the output of `run-detect-secrets audit-baseline` but in JSON format.
