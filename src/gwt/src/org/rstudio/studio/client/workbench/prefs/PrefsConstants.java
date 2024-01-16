@@ -5134,5 +5134,121 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("geometricPrecision")
     String geometricPrecision();
     
-    
+    /**
+     * Translated "Loading..."
+     *
+     * @return translated "Loading..."
+     */
+    @DefaultMessage("Loading...")
+    @Key("copilotLoadingMessage")
+    String copilotLoadingMessage();
+
+    /**
+     * Translated "You are currently signed in as: {0}"
+     *
+     * @return translated "You are currently signed in as: {0}"
+     */
+    @DefaultMessage("You are currently signed in as: {0}")
+    @Key("copilotSignedInAsLabel")
+    String copilotSignedInAsLabel(String user);
+
+    /**
+     * Translated "Show Error..."
+     *
+     * @return translated "Show Error..."
+     */
+    @DefaultMessage("Show Error...")
+    @Key("copilotShowErrorLabel")
+    String copilotShowErrorLabel();
+
+    /**
+     * Translated "Sign In"
+     *
+     * @return translated "Sign In"
+     */
+    @DefaultMessage("Sign In")
+    @Key("copilotSignInLabel")
+    String copilotSignInLabel();
+
+    /**
+     * Translated "Sign Out"
+     *
+     * @return translated "Sign Out"
+     */
+    @DefaultMessage("Sign Out")
+    @Key("copilotSignOutLabel")
+    String copilotSignOutLabel();
+
+    /**
+     * Translated "Activate"
+     *
+     * @return translated "Activate"
+     */
+    @DefaultMessage("Activate")
+    @Key("copilotActivateLabel")
+    String copilotActivateLabel();
+
+    /**
+     * Translated "Refresh"
+     *
+     * @return translated "Refresh"
+     */
+    @DefaultMessage("Refresh")
+    @Key("copilotRefreshLabel")
+    String copilotRefreshLabel();
+
+    /**
+     * Translated "Project Options..."
+     *
+     * @return translated "Project Options..."
+     */
+    @DefaultMessage("Project Options...")
+    @Key("copilotProjectOptionsLabel")
+    String copilotProjectOptionsLabel();
+
+    /**
+     * Translated "GitHub Copilot: Terms of Service"
+     *
+     * @return translated "GitHub Copilot: Terms of Service"
+     */
+    @DefaultMessage("GitHub Copilot: Terms of Service")
+    @Key("copilotTermsOfServiceLinkLabel")
+    String copilotTermsOfServiceLinkLabel();
+
+    /**
+     * Translated "By using GitHub Copilot, you agree to abide by their terms of service."
+     *
+     * @return translated "By using GitHub Copilot, you agree to abide by their terms of service."
+     */
+    @DefaultMessage("By using GitHub Copilot, you agree to abide by their terms of service.")
+    @Key("copilotTermsOfServiceLabel")
+    String copilotTermsOfServiceLabel();
+
+    /**
+     * Translated "GitHub Copilot"
+     *
+     * @return translated "GitHub Copilot"
+     */
+    @DefaultMessage("GitHub Copilot")
+    @Key("copilotDisplayName")
+    String copilotDisplayName();
+
+    /**
+     * Translated "Copilot"
+     *
+     * @return translated "Copilot"
+     */
+    @DefaultMessage("Copilot")
+    @Key("copilotPaneName")
+    String copilotPaneName();
+
+    /**
+     * Translated "Copilot Indexing"
+     *
+     * @return translated "Copilot Indexing"
+     */
+    @DefaultMessage("Copilot Indexing")
+    @Key("copilotIndexingHeader")
+    String copilotIndexingHeader();
+
 }
