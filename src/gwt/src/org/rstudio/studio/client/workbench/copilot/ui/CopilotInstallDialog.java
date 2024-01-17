@@ -10,6 +10,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.copilot.CopilotUIConstants;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -39,25 +40,25 @@ public class CopilotInstallDialog extends ModalDialogBase
       ui_ = uiBinder.createAndBindUi(this);
       
       String alreadyInstalledMessage = isAlreadyInstalled
-            ? "The GitHub Copilot agent is already installed. Would you like to re-install it?"
-            : "The GitHub Copilot agent is not currently installed. Would you like to install it?";
+            ? constants_.copilotAlreadyInstalled()
+            : constants_.copilotNotInstalled();
       
       alreadyInstalledMessage_.setInnerText(alreadyInstalledMessage);
       
       progress_ = addProgressIndicator();
       
-      setTitle("GitHub Copilot: Install Agent");
-      setText("GitHub Copilot: Install Agent");
+      setTitle(constants_.copilotInstallAgent());
+      setText(constants_.copilotInstallAgent());
       setWidth("400px");
       
-      okButton_ = new ThemedButton("Install");
+      okButton_ = new ThemedButton(constants_.copilotInstallButton());
       addOkButton(okButton_);
       
-      cancelButton_ = new ThemedButton("Cancel");
+      cancelButton_ = new ThemedButton(constants_.copilotCancelButton());
       addCancelButton(cancelButton_);
       
       HelpLink tosLink = new HelpLink(
-            "Terms of Service",
+            constants_.copilotTermsOfService(),
             "github-copilot-terms-of-service",
             false);
       addLeftWidget(tosLink);
@@ -93,4 +94,6 @@ public class CopilotInstallDialog extends ModalDialogBase
    private final ProgressIndicator progress_;
    private final ThemedButton okButton_;
    private final ThemedButton cancelButton_;
+
+   private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
 }

@@ -285,4 +285,58 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
     @DefaultMessage("[unknown]")
     @Key("copilotUnknownErrorShort")
     String copilotUnknownErrorShort();
+
+    /**
+     * Translated "The GitHub Copilot agent is already installed. Would you like to re-install it?"
+     *
+     * @return translated "The GitHub Copilot agent is already installed. Would you like to re-install it?"
+     */
+    @DefaultMessage("The GitHub Copilot agent is already installed. Would you like to re-install it?")
+    @Key("copilotAlreadyInstalled")
+    String copilotAlreadyInstalled();
+
+    /**
+     * Translated "The GitHub Copilot agent is not currently installed. Would you like to install it?"
+     *
+     * @return translated "The GitHub Copilot agent is not currently installed. Would you like to install it?"
+     */
+    @DefaultMessage("The GitHub Copilot agent is not currently installed. Would you like to install it?")
+    @Key("copilotNotInstalled")
+    String copilotNotInstalled();
+
+    /**
+     * Translated "GitHub Copilot: Install Agent"
+     *
+     * @return translated "GitHub Copilot: Install Agent"
+     */
+    @DefaultMessage("GitHub Copilot: Install Agent")
+    @Key("copilotInstallAgent")
+    String copilotInstallAgent();
+
+    /**
+     * Translated "Install"
+     *
+     * @return translated "Install"
+     */
+    @DefaultMessage("Install")
+    @Key("copilotInstallButton")
+    String copilotInstallButton();
+
+    /**
+     * Translated "Cancel"
+     *
+     * @return translated "Cancel"
+     */
+    @DefaultMessage("Cancel")
+    @Key("copilotCancelButton")
+    String copilotCancelButton();
+
+    /**
+     * Translated "Terms of Service"
+     *
+     * @return translated "Terms of Service"
+     */
+    @DefaultMessage("Terms of Service")
+    @Key("copilotTermsOfService")
+    String copilotTermsOfService();
 }
