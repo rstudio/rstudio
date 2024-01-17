@@ -5134,5 +5134,228 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("geometricPrecision")
     String geometricPrecision();
     
-    
+    /**
+     * Translated "Loading..."
+     *
+     * @return translated "Loading..."
+     */
+    @DefaultMessage("Loading...")
+    @Key("copilotLoadingMessage")
+    String copilotLoadingMessage();
+
+    /**
+     * Translated "You are currently signed in as: {0}"
+     *
+     * @return translated "You are currently signed in as: {0}"
+     */
+    @DefaultMessage("You are currently signed in as: {0}")
+    @Key("copilotSignedInAsLabel")
+    String copilotSignedInAsLabel(String user);
+
+    /**
+     * Translated "Show Error..."
+     *
+     * @return translated "Show Error..."
+     */
+    @DefaultMessage("Show Error...")
+    @Key("copilotShowErrorLabel")
+    String copilotShowErrorLabel();
+
+    /**
+     * Translated "Sign In"
+     *
+     * @return translated "Sign In"
+     */
+    @DefaultMessage("Sign In")
+    @Key("copilotSignInLabel")
+    String copilotSignInLabel();
+
+    /**
+     * Translated "Sign Out"
+     *
+     * @return translated "Sign Out"
+     */
+    @DefaultMessage("Sign Out")
+    @Key("copilotSignOutLabel")
+    String copilotSignOutLabel();
+
+    /**
+     * Translated "Activate"
+     *
+     * @return translated "Activate"
+     */
+    @DefaultMessage("Activate")
+    @Key("copilotActivateLabel")
+    String copilotActivateLabel();
+
+    /**
+     * Translated "Refresh"
+     *
+     * @return translated "Refresh"
+     */
+    @DefaultMessage("Refresh")
+    @Key("copilotRefreshLabel")
+    String copilotRefreshLabel();
+
+    /**
+     * Translated "Project Options..."
+     *
+     * @return translated "Project Options..."
+     */
+    @DefaultMessage("Project Options...")
+    @Key("copilotProjectOptionsLabel")
+    String copilotProjectOptionsLabel();
+
+    /**
+     * Translated "GitHub Copilot: Terms of Service"
+     *
+     * @return translated "GitHub Copilot: Terms of Service"
+     */
+    @DefaultMessage("GitHub Copilot: Terms of Service")
+    @Key("copilotTermsOfServiceLinkLabel")
+    String copilotTermsOfServiceLinkLabel();
+
+    /**
+     * Translated "By using GitHub Copilot, you agree to abide by their terms of service."
+     *
+     * @return translated "By using GitHub Copilot, you agree to abide by their terms of service."
+     */
+    @DefaultMessage("By using GitHub Copilot, you agree to abide by their terms of service.")
+    @Key("copilotTermsOfServiceLabel")
+    String copilotTermsOfServiceLabel();
+
+    /**
+     * Translated "GitHub Copilot"
+     *
+     * @return translated "GitHub Copilot"
+     */
+    @DefaultMessage("GitHub Copilot")
+    @Key("copilotDisplayName")
+    String copilotDisplayName();
+
+    /**
+     * Translated "Copilot"
+     *
+     * @return translated "Copilot"
+     */
+    @DefaultMessage("Copilot")
+    @Key("copilotPaneName")
+    String copilotPaneName();
+
+    /**
+     * Translated "Copilot Indexing"
+     *
+     * @return translated "Copilot Indexing"
+     */
+    @DefaultMessage("Copilot Indexing")
+    @Key("copilotIndexingHeader")
+    String copilotIndexingHeader();
+
+    /**
+     * Translated "Copilot Completions"
+     *
+     * @return translated "Copilot Completions"
+     */
+    @DefaultMessage("Copilot Completions")
+    @Key("copilotCompletionsHeader")
+    String copilotCompletionsHeader();
+
+    /**
+     * Translated "Show code suggestions after keyboard idle (ms):"
+     *
+     * @return translated "Show code suggestions after keyboard idle (ms):"
+     */
+    @DefaultMessage("Show code suggestions after keyboard idle (ms):")
+    @Key("copilotCompletionsDelayLabel")
+    String copilotCompletionsDelayLabel();
+
+    /**
+     * Translated "GitHub Copilot integration has been disabled by the administrator."
+     *
+     * @return translated "GitHub Copilot integration has been disabled by the administrator."
+     */
+    @DefaultMessage("GitHub Copilot integration has been disabled by the administrator.")
+    @Key("copilotDisabledByAdmin")
+    String copilotDisabledByAdmin();
+
+    /**
+     * Translated "GitHub Copilot: Status"
+     *
+     * @return translated "GitHub Copilot: Status"
+     */
+    @DefaultMessage("GitHub Copilot: Status")
+    @Key("copilotStatusDialogCaption")
+    String copilotStatusDialogCaption();
+
+    /**
+     * Translated "An unexpected error occurred while checking the status of the GitHub Copilot agent."
+     *
+     * @return translated "An unexpected error occurred while checking the status of the GitHub Copilot agent."
+     */
+    @DefaultMessage("An unexpected error occurred while checking the status of the GitHub Copilot agent.")
+    @Key("copilotUnexpectedError")
+    String copilotUnexpectedError();
+
+    /**
+     * Translated "An error occurred while starting the Copilot agent."
+     *
+     * @return translated "An error occurred while starting the Copilot agent."
+     */
+    @DefaultMessage("An error occurred while starting the Copilot agent.")
+    @Key("copilotStartupError")
+    String copilotStartupError();
+
+    /**
+     * Translated "GitHub Copilot has been disabled in this project."
+     *
+     * @return translated "GitHub Copilot has been disabled in this project."
+     */
+    @DefaultMessage("GitHub Copilot has been disabled in this project.")
+    @Key("copilotDisabledInProject")
+    String copilotDisabledInProject();
+
+    /**
+     * Translated "The GitHub Copilot agent is not currently running."
+     *
+     * @return translated "The GitHub Copilot agent is not currently running."
+     */
+    @DefaultMessage("The GitHub Copilot agent is not currently running.")
+    @Key("copilotAgentNotRunning")
+    String copilotAgentNotRunning();
+
+    /**
+     * Translated "The GitHub Copilot agent has not been enabled."
+     *
+     * @return translated "The GitHub Copilot agent has not been enabled."
+     */
+    @DefaultMessage("The GitHub Copilot agent has not been enabled.")
+    @Key("copilotAgentNotEnabled")
+    String copilotAgentNotEnabled();
+
+    /**
+     * Translated "You are currently signed in as {0}, but you haven''t yet activated your GitHub Copilot account."
+     *
+     * @return translated "You are currently signed in as {0}, but you haven''t yet activated your GitHub Copilot account."
+     */
+    @DefaultMessage("You are currently signed in as {0}, but you haven''t yet activated your GitHub Copilot account.")
+    @Key("copilotAccountNotActivated")
+    String copilotAccountNotActivated(String name);
+
+    /**
+     * Translated "You are not currently signed in."
+     *
+     * @return translated "You are not currently signed in."
+     */
+    @DefaultMessage("You are not currently signed in.")
+    @Key("copilotNotSignedIn")
+    String copilotNotSignedIn();
+
+    /**
+     * Translated "RStudio received a Copilot response that it does not understand.\n{0}"
+     *
+     * @return translated "RStudio received a Copilot response that it does not understand.\n{0}"
+     */
+    @DefaultMessage("RStudio received a Copilot response that it does not understand.\n{0}")
+    @Key("copilotUnknownResponse")
+    String copilotUnknownResponse(String response);
 }

@@ -1,7 +1,10 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:rw='urn:import:org.rstudio.core.client.widget'>
-             
+             xmlns:rw='urn:import:org.rstudio.core.client.widget'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
+              
 	<ui:style>
 	
 	.container {
@@ -19,10 +22,10 @@
 		
 		<p ui:field="alreadyInstalledMessage_"></p>
 		
-		<p>
+		<p><ui:msg key="copilotTerms">
 			Your use of GitHub Copilot is governed by the GitHub Copilot terms of service.
 			By using this software, you agree to abide by the GitHub Copilot terms of service.
-		</p>
+		</ui:msg></p>
 		
 	</div>
 	

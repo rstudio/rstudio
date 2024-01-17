@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
@@ -99,34 +100,34 @@ public class CopilotPreferencesPane extends PreferencesPane
       server_ = server;
       projectServer_ = projectServer;
       
-      lblCopilotStatus_ = new Label("(Loading...)");
+      lblCopilotStatus_ = new Label(constants_.copilotLoadingMessage());
       lblCopilotStatus_.addStyleName(RES.styles().copilotStatusLabel());
       
       statusButtons_ = new ArrayList<SmallButton>();
       
-      btnShowError_ = new SmallButton("Show Error...");
+      btnShowError_ = new SmallButton(constants_.copilotShowErrorLabel());
       btnShowError_.addStyleName(RES.styles().button());
       statusButtons_.add(btnShowError_);
       
-      btnSignIn_ = new SmallButton("Sign In");
+      btnSignIn_ = new SmallButton(constants_.copilotSignInLabel());
       btnSignIn_.addStyleName(RES.styles().button());
       statusButtons_.add(btnSignIn_);
       
-      btnSignOut_ = new SmallButton("Sign Out");
+      btnSignOut_ = new SmallButton(constants_.copilotSignOutLabel());
       btnSignOut_.addStyleName(RES.styles().button());
       statusButtons_.add(btnSignOut_);
       
-      btnActivate_ = new SmallButton("Activate");
+      btnActivate_ = new SmallButton(constants_.copilotActivateLabel());
       Roles.getLinkRole().set(btnActivate_.getElement());
       btnActivate_.getElement().setPropertyString("href", "https://github.com/settings/copilot");
       btnActivate_.addStyleName(RES.styles().button());
       statusButtons_.add(btnActivate_);
       
-      btnRefresh_ = new SmallButton("Refresh");
+      btnRefresh_ = new SmallButton(constants_.copilotRefreshLabel());
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
       
-      btnProjectOptions_ = new SmallButton("Project Options...");
+      btnProjectOptions_ = new SmallButton(constants_.copilotProjectOptionsLabel());
       btnProjectOptions_.addStyleName(RES.styles().button());
       statusButtons_.add(btnProjectOptions_);
       
@@ -134,10 +135,10 @@ public class CopilotPreferencesPane extends PreferencesPane
       cbCopilotIndexingEnabled_ = checkboxPref(prefs_.copilotIndexingEnabled(), true);
       
       selCopilotTabKeyBehavior_ = new SelectWidget(
-            constants.copilotTabKeyBehaviorTitle(),
+            prefsConstants_.copilotTabKeyBehaviorTitle(),
             new String[] {
-                  constants.copilotTabKeyBehaviorEnum_suggestion(),
-                  constants.copilotTabKeyBehaviorEnum_completions()
+                  prefsConstants_.copilotTabKeyBehaviorEnum_suggestion(),
+                  prefsConstants_.copilotTabKeyBehaviorEnum_completions()
             },
             new String[] {
                   UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION,
@@ -150,18 +151,17 @@ public class CopilotPreferencesPane extends PreferencesPane
       selCopilotTabKeyBehavior_.setValue(prefs_.copilotTabKeyBehavior().getGlobalValue());
       
       linkCopilotTos_ = new HelpLink(
-            "GitHub Copilot: Terms of Service",
+            constants_.copilotTermsOfServiceLinkLabel(),
             "github-copilot-terms-of-service",
             false);
       
-      lblCopilotTos_ = new Label(
-            "By using GitHub Copilot, you agree to abide by their terms of service.");
+      lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
    }
    
    private void initDisplay()
    {
-      add(headerLabel("GitHub Copilot"));
+      add(headerLabel(constants_.copilotDisplayName()));
       
       if (session_.getSessionInfo().getCopilotEnabled())
       {
@@ -173,17 +173,18 @@ public class CopilotPreferencesPane extends PreferencesPane
             statusPanel.add(button);
          add(spaced(statusPanel));
          
-         add(headerLabel("Copilot Indexing"));
+         add(headerLabel(constants_.copilotIndexingHeader()));
          add(spaced(cbCopilotIndexingEnabled_));
 
-         add(spacedBefore(headerLabel("Copilot Completions")));
+         add(spacedBefore(headerLabel(constants_.copilotCompletionsHeader())));
+
          // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
          // add(selCopilotTabKeyBehavior_);
-         add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 5000, prefs_.copilotCompletionsDelay()));
+         add(numericPref(constants_.copilotCompletionsDelayLabel(), 10, 5000, prefs_.copilotCompletionsDelay()));
       }
       else
       {
-         add(new Label("GitHub Copilot integration has been disabled by the administrator."));
+         add(new Label(constants_.copilotDisabledByAdmin()));
       }
       
       VerticalPanel bottomPanel = new VerticalPanel();
@@ -258,7 +259,7 @@ public class CopilotPreferencesPane extends PreferencesPane
             WebDialogBuilderFactory builder = GWT.create(WebDialogBuilderFactory.class);
             DialogBuilder dialog = builder.create(
                   GlobalDisplay.MSG_INFO,
-                  "GitHub Copilot: Status",
+                  constants_.copilotStatusDialogCaption(),
                   copilotStartupError_,
                   options);
             
@@ -332,13 +333,13 @@ public class CopilotPreferencesPane extends PreferencesPane
             
             if (response == null)
             {
-               lblCopilotStatus_.setText("An unexpected error occurred while checking the status of the GitHub Copilot agent.");
+               lblCopilotStatus_.setText(constants_.copilotUnexpectedError());
             }
             else if (response.result == null)
             {
                if (response.error != null)
                {
-                  lblCopilotStatus_.setText("An error occurred while starting the Copilot agent.");
+                  lblCopilotStatus_.setText(constants_.copilotStartupError());
                   if (!StringUtil.isNullOrEmpty(response.output))
                   {
                      copilotStartupError_ = response.output;
@@ -347,42 +348,37 @@ public class CopilotPreferencesPane extends PreferencesPane
                }
                else if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {
-                  lblCopilotStatus_.setText("GitHub Copilot has been disabled in this project.");
+                  lblCopilotStatus_.setText(constants_.copilotDisabledInProject());
                   showButtons(btnProjectOptions_);
                }
                else if (prefs_.copilotEnabled().getValue())
                {
-                  lblCopilotStatus_.setText("The GitHub Copilot agent is not currently running.");
+                  lblCopilotStatus_.setText(constants_.copilotAgentNotRunning());
                }
                else
                {
-                  lblCopilotStatus_.setText("The GitHub Copilot agent has not been enabled.");
+                  lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
                }
             }
             else if (response.result.status == CopilotConstants.STATUS_OK ||
                      response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
             {
                showButtons(btnSignOut_, btnRefresh_);
-               lblCopilotStatus_.setText("You are currently signed in as: " + response.result.user);
+               lblCopilotStatus_.setText(constants_.copilotSignedInAsLabel(response.result.user));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
             {
                showButtons(btnActivate_, btnSignOut_, btnRefresh_);
-               lblCopilotStatus_.setText(
-                     "You are currently signed in as " + response.result.user + ", but " +
-                     "you haven't yet activated your GitHub Copilot account.");
+               lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
                showButtons(btnSignIn_, btnRefresh_);
-               lblCopilotStatus_.setText("You are not currently signed in.");
+               lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
             }
             else
             {
-               String message =
-                     "RStudio received a Copilot response that it does not understand.\n" +
-                     JSON.stringify(response);
-               
+               String message = constants_.copilotUnknownResponse(JSON.stringify(response));
                lblCopilotStatus_.setText(message);
             }
          }
@@ -410,7 +406,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Copilot";
+      return constants_.copilotPaneName();
    }
 
    @Override
@@ -516,6 +512,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final CopilotServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    
-   private static final UserPrefsAccessorConstants constants = GWT.create(UserPrefsAccessorConstants.class);
+   private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
    
 }
