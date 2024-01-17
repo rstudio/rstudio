@@ -13,6 +13,8 @@
  *
  */
 
+// Require OpenSSL 3 or newer
+#define OPENSSL_NO_DEPRECATED_3_0
 
 #include <core/system/Crypto.hpp>
 
@@ -39,15 +41,11 @@
 
 #include <boost/utility.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
 
-#include <memory>
+#include <core/Log.hpp>
 
-// openssl calls on lion are are all marked as deprecated
-#ifdef __clang__
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif
+#include <memory>
 
 using namespace rstudio::core;
 
@@ -233,39 +231,17 @@ namespace {
 Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
                   const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPem)
 {
-   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(RSA_new(), RSA_free);
-   if (!pRsa)
-      return systemError(boost::system::errc::not_enough_memory, "RSA key", ERROR_LOCATION);
-
-   std::unique_ptr<BIGNUM, decltype(&BN_free)> pBigNum(BN_new(), BN_free);
-   if (!pBigNum)
-      return systemError(boost::system::errc::not_enough_memory, "RSA bignum", ERROR_LOCATION);
-
-   int ret = BN_set_word(pBigNum.get(), RSA_F4);
-   if (ret != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-
-   ret = RSA_generate_key_ex(pRsa.get(), 2048, pBigNum.get(), nullptr);
-   if (ret != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-
-   // Convert RSA to PKEY
-   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_PKEY_new(), EVP_PKEY_free);
-   if (!pKey)
-      return systemError(boost::system::errc::not_enough_memory, "RSA evp key", ERROR_LOCATION);
-
-   ret = EVP_PKEY_set1_RSA(pKey.get(), pRsa.get());
-   if (ret != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-
+   // Generate RSA key
+   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_RSA_gen(2048), EVP_PKEY_free);
+   
    // Write public key in PEM format
-   ret = PEM_write_bio_PUBKEY(pBioPub.get(), pKey.get());
-   if (ret != 1)
+   int status = PEM_write_bio_PUBKEY(pBioPub.get(), pKey.get());
+   if (status != 1)
       return getLastCryptoError(ERROR_LOCATION);
 
    // Write private key in PEM format
-   ret = PEM_write_bio_PrivateKey(pBioPem.get(), pKey.get(), nullptr, nullptr, 0, nullptr, nullptr);
-   if (ret != 1)
+   status = PEM_write_bio_PrivateKey(pBioPem.get(), pKey.get(), nullptr, nullptr, 0, nullptr, nullptr);
+   if (status != 1)
       return getLastCryptoError(ERROR_LOCATION);
 
    return Success();
