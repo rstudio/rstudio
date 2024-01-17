@@ -173,7 +173,6 @@ public class RpcRequest
                           getMethod());
 
                   int type = RpcError.TRANSMISSION_ERROR;
-                  String actionableUrl = "";
                   
                   // override error message for status code 0
                   if (status == 0)
@@ -181,30 +180,33 @@ public class RpcRequest
                      type = RpcError.TRANSMISSION_ERROR_NO_RESPONSE;
                      if (Desktop.isDesktop())
                      {
-                         message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
+                        message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
                      } 
                      else
                      {
-                         message = constants_.rpcOverrideErrorMessageServer((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()));
-                         actionableUrl = "/";
-                     }
+                        // only show this error if not desktop and return early. Otherwise handle error as normal
+                        message = constants_.rpcOverrideErrorMessageServer((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()));
                      
-                     if (!showingNoConnectError_) 
-                     {
-                        showingNoConnectError_ = true;
-                        RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                        if (!showingNoConnectError_) 
+                        {
+                           showingNoConnectError_ = true;
+                           RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                               GlobalDisplay.MSG_ERROR,
                               "RPC Error",
                               message,
                               constants_.rpcOverrideErrorMessageLink(),
-                              actionableUrl,
+                              "/",
                               () -> {
                                  showingNoConnectError_ = false;
                               }
-                        );
+                           );
+                        }
+                        requestLogEntry_.logResponse(ResponseType.Unknown,
+                              message);
+                        // trigger any error handlers, but pass a null error to suppress dialogs
+                        requestCallback.onError(enclosingRequest, null);
+                        return;
                      }
-                     requestCallback.onError(enclosingRequest, null);
-                     return;
                   }
 
                   requestLogEntry_.logResponse(ResponseType.Unknown,

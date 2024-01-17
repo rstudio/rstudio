@@ -1213,7 +1213,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Log in"
      */
-    @DefaultMessage("Unable to establish connection with the session on {0}. Please try to log in again.")
+    @DefaultMessage("Log in")
     @Key("rpcOverrideErrorMessageLink")
     String rpcOverrideErrorMessageLink();
 
