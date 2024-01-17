@@ -7,7 +7,7 @@
 - R projects can be given a custom display name in Project Options (#1909)
 
 #### Posit Workbench
--
+- Show custom project names on Workbench homepage (rstudio-pro#5589)
 
 ### Fixed
 #### RStudio
