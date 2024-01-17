@@ -90,9 +90,8 @@ if(UNIX)
    endif()
 
    if(APPLE)
-      add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs
-                      -Wno-deprecated-declarations -fvisibility=hidden)
-
+      add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs -fvisibility=hidden)
+      
       find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
       find_library(COCOA_LIBRARY NAMES Cocoa)
       find_library(SECURITY_LIBRARY NAMES Security)
