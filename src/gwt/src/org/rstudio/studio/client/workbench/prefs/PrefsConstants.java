@@ -2112,24 +2112,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String cppPanelTitle();
 
     /**
-     * Translated "Restart R Required".
-     *
-     * @return translated "Restart R Required"
-     */
-    @DefaultMessage("Restart R Required")
-    @Key("cranMirrorTextBoxRestartCaption")
-    String cranMirrorTextBoxRestartCaption();
-
-    /**
-     * Translated "You must restart your R session for this setting to take effect.".
-     *
-     * @return translated "You must restart your R session for this setting to take effect."
-     */
-    @DefaultMessage("You must restart your R session for this setting to take effect.")
-    @Key("cranMirrorTextBoxRestartMessage")
-    String cranMirrorTextBoxRestartMessage();
-
-    /**
      * Translated "Retrieving list of CRAN mirrors...".
      *
      * @return translated "Retrieving list of CRAN mirrors..."

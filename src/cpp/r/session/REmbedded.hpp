@@ -73,7 +73,7 @@ void runEmbeddedR(const core::FilePath& rHome,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal);
 
-core::Error completeEmbeddedRInitialization(bool useInternet2);
+core::Error completeEmbeddedRInitialization();
 
 } // namespace session
 } // namespace r
