@@ -413,19 +413,11 @@ std::string s_exponent;
 core::Error rsaInit()
 {
    // seed the random number generator
-   int file = ::open("/dev/urandom", O_RDONLY);
-   if (file == -1)
-      return systemError(errno, "RSA /dev/urandom", ERROR_LOCATION);
-
-   char entropy[kRsaEntropyBytes];
-   int status = ::read(file, entropy, kRsaEntropyBytes);
-   int savedErrno = errno;
-   ::close(file);
+   RAND_poll();
    
-   if (status == -1)
-      return systemError(savedErrno, "RSA read random", ERROR_LOCATION);
-
-   RAND_seed(entropy, kRsaEntropyBytes);
+   // validate that the RNG is happy
+   if (RAND_status() != 1)
+      return getLastCryptoError(ERROR_LOCATION);
    
    // set up an internal key
    s_pRSA = EVP_RSA_gen(kRsaKeySize);
