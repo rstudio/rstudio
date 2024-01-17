@@ -1226,7 +1226,7 @@
             "title": "Always use --preclean when installing package",
             "description": "Always use --preclean when installing package."
         },
-       "use_secure_download": {
+        "use_secure_download": {
             "type": "boolean",
             "default": true,
             "title": "Download R packages securely",
