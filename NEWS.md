@@ -7,7 +7,7 @@
 - R projects can be given a custom display name in Project Options (#1909)
 
 #### Posit Workbench
--
+- Show custom project names on Workbench homepage (rstudio-pro#5589)
 
 ### Fixed
 #### RStudio
@@ -22,6 +22,7 @@
 - Fixed an issue where pipes containing a large number of comments were not indented correctly (#12674)
 - Fixed an issue where RStudio would unnecessarily list directory contents when opening a file (#14096)
 - Localize Copilot-related user interface strings into French (#14092)
+- Removed obsolete "Use Internet Explorer library/proxy" checkbox from Packages settings (#13250)
 
 #### Posit Workbench
 -

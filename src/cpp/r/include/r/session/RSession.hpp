@@ -64,7 +64,6 @@ struct RClientMetrics
 struct ROptions
 {
    ROptions() :
-         useInternet2(true),
          rCompatibleGraphicsEngineVersion(16),
          serverMode(false),
          autoReloadSource(false),
@@ -94,7 +93,6 @@ struct ROptions
    std::string rCRANUrl;
    std::string rCRANSecondary;
    std::string runScript;
-   bool useInternet2;
    int rCompatibleGraphicsEngineVersion;
    bool serverMode;
    bool autoReloadSource;

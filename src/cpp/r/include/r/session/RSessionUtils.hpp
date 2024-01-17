@@ -85,8 +85,6 @@ std::string rCRANSecondary();
 
 bool restoreWorkspace();
 
-bool useInternet2();
-
 bool alwaysSaveHistory();
 
 bool restoreEnvironmentOnResume();

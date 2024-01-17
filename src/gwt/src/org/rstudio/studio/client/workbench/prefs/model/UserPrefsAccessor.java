@@ -2604,18 +2604,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to use Internet2 for networking on R for Windows.
-    */
-   public PrefValue<Boolean> useInternet2()
-   {
-      return bool(
-         "use_internet2",
-         _constants.useInternet2Title(), 
-         _constants.useInternet2Description(), 
-         true);
-   }
-
-   /**
     * Whether to use secure downloads when fetching R packages.
     */
    public PrefValue<Boolean> useSecureDownload()
@@ -3988,8 +3976,6 @@ public class UserPrefsAccessor extends Prefs
          useDevtools().setValue(layer, source.getBool("use_devtools"));
       if (source.hasKey("clean_before_install"))
          cleanBeforeInstall().setValue(layer, source.getBool("clean_before_install"));
-      if (source.hasKey("use_internet2"))
-         useInternet2().setValue(layer, source.getBool("use_internet2"));
       if (source.hasKey("use_secure_download"))
          useSecureDownload().setValue(layer, source.getBool("use_secure_download"));
       if (source.hasKey("cleanup_after_r_cmd_check"))
@@ -4319,7 +4305,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(sshKeyType());
       prefs.add(useDevtools());
       prefs.add(cleanBeforeInstall());
-      prefs.add(useInternet2());
       prefs.add(useSecureDownload());
       prefs.add(cleanupAfterRCmdCheck());
       prefs.add(viewDirAfterRCmdCheck());

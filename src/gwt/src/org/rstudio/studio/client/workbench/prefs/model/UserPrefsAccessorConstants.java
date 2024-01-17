@@ -1522,14 +1522,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String cleanBeforeInstallDescription();
 
    /**
-    * Whether to use Internet2 for networking on R for Windows.
-    */
-   @DefaultStringValue("")
-   String useInternet2Title();
-   @DefaultStringValue("Whether to use Internet2 for networking on R for Windows.")
-   String useInternet2Description();
-
-   /**
     * Whether to use secure downloads when fetching R packages.
     */
    @DefaultStringValue("Download R packages securely")

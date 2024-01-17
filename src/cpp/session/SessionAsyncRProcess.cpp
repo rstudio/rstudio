@@ -98,13 +98,6 @@ void AsyncRProcess::start(const char* rCommand,
       args.push_back("--no-restore");
    }
 
-
-   // for windows we need to forward setInternet2
-#ifdef _WIN32
-   if (!r::session::utils::isR3_3() && prefs::userPrefs().useInternet2())
-      args.push_back("--internet2");
-#endif
-
    args.push_back("-s");
    args.push_back("-e");
    

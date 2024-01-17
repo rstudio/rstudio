@@ -1226,11 +1226,6 @@
             "title": "Always use --preclean when installing package",
             "description": "Always use --preclean when installing package."
         },
-        "use_internet2": {
-            "type": "boolean",
-            "default": true,
-            "description": "Whether to use Internet2 for networking on R for Windows."
-        },
         "use_secure_download": {
             "type": "boolean",
             "default": true,
