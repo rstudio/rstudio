@@ -1191,6 +1191,15 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String rpcErrorMessage(String statusCode, String desktop, String method);
 
     /**
+     * Translated "RPC Error"
+     *
+     * @return translated "RPC Error"
+     */
+    @DefaultMessage("RPC Error")
+    @Key("rpcErrorMessageCaption")
+    String rpcErrorMessageCaption();
+
+    /**
      * Translated "Unable to establish connection with {0} when executing ''{1}''"
      *
      * @return translated "Unable to establish connection with {0} when executing ''{1}''"
@@ -1204,7 +1213,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Unable to establish connection with {0} when executing ''{1}''"
      */
-    @DefaultMessage("Unable to establish connection with the session on {0}. Please try to log in again.")
+    @DefaultMessage("Unable to establish connection with the session on {0}. Please click the link to try logging in again in a new tab, then return to resume your session.")
     @Key("rpcOverrideErrorMessageServer")
     String rpcOverrideErrorMessageServer(String platform);
 

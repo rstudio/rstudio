@@ -177,22 +177,17 @@ public class RpcRequest
                   // override error message for status code 0
                   if (status == 0)
                   {
-                     type = RpcError.TRANSMISSION_ERROR_NO_RESPONSE;
-                     if (Desktop.isDesktop())
-                     {
-                        message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
-                     } 
-                     else
+                     if (!Desktop.isDesktop())
                      {
                         // only show this error if not desktop and return early. Otherwise handle error as normal
-                        message = constants_.rpcOverrideErrorMessageServer((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()));
+                        message = constants_.rpcOverrideErrorMessageServer(constants_.rStudioServerMessage());
                      
                         if (!showingNoConnectError_) 
                         {
                            showingNoConnectError_ = true;
                            RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                               GlobalDisplay.MSG_ERROR,
-                              "RPC Error",
+                              constants_.rpcErrorMessageCaption(),
                               message,
                               constants_.rpcOverrideErrorMessageLink(),
                               "/",
@@ -207,6 +202,9 @@ public class RpcRequest
                         requestCallback.onError(enclosingRequest, null);
                         return;
                      }
+
+                     type = RpcError.TRANSMISSION_ERROR_NO_RESPONSE;
+                     message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
                   }
 
                   requestLogEntry_.logResponse(ResponseType.Unknown,

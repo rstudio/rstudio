@@ -65,7 +65,7 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
                message = errMsg.stringValue();
          }
       }
-     
+      
       RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
             caption_,
             message);
