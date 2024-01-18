@@ -65,7 +65,7 @@ pipeline {
           // In the case of code 3, we don't want to post anything in order to avoid generating confusion
           if (exitCode != 3) {
             status = exitCode == 0 ? "success" : "failure"
-            text = !IS_PRO ? JOB_URL : "pro content"
+            text = !IS_PRO ? JOB_URL : sh(returnStdout: true, script: "jq -Rs . ${TMP_SNYK_PATH}/output.txt")
             utils.postReviewCheck('snyk-code-check', status, 'Snyk static code scan', 'Snyk static code analysis output', text)
           }
         }
