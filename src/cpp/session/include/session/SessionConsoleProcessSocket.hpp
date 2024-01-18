@@ -29,9 +29,14 @@
 #include <shared_core/Error.hpp>
 #include <core/Thread.hpp>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <websocketpp/frame.hpp>
+
+#pragma clang diagnostic pop
 
 #include "SessionConsoleProcessConnectionCallbacks.hpp"
 
