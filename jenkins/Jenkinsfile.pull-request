@@ -54,8 +54,21 @@ pipeline {
       }
       steps {
         sh "mkdir --parents ${TMP_SNYK_PATH}"
-        sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}); do [ -e \$FILE ] && cp --parents \$FILE ${TMP_SNYK_PATH}; done"
-        sh "snyk code test ${TMP_SNYK_PATH}"
+        sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
+        
+        script {
+          exitCode = sh(returnStatus: true, script: "snyk code test ${TMP_SNYK_PATH} | sed '/^Testing/d' | sed '/./,\$!d' > ${TMP_SNYK_PATH}/output.txt")
+          // - exit code 0: sucessful scan, no vulns identified in code
+          // - exit code 1: unsuccessful scan, code had vulns (real or false positive)
+          // - exit code 3: scan was not-applicable to files. This is typical for docs or NEWS commits
+          // 
+          // In the case of code 3, we don't want to post anything in order to avoid generating confusion
+          if (exitCode != 3) {
+            status = exitCode == 0 ? "success" : "failure"
+            text = !IS_PRO ? JOB_URL : "pro content"
+            utils.postReviewCheck('snyk-code-check', status, 'Snyk static code scan', 'Snyk static code analysis output', text)
+          }
+        }
         sh "rm -r ${TMP_SNYK_PATH}"
       }
     }
