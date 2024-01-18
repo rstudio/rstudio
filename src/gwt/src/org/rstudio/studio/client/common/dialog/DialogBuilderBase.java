@@ -30,6 +30,12 @@ public abstract class DialogBuilderBase implements DialogBuilder
       public ProgressOperation progressOperation;
    }
 
+   protected static class AnchorSpec
+   {
+      public String label;
+      public String url;
+   }
+
    public DialogBuilderBase(int type, String caption)
    {
       this.type = type;
@@ -67,6 +73,16 @@ public abstract class DialogBuilderBase implements DialogBuilder
    }
 
    @Override
+   public DialogBuilder addLink(String label, String url)
+   {
+      anchor_ = new AnchorSpec();
+      anchor_.label = label;
+      anchor_.url = url;
+
+      return this;
+   }
+
+   @Override
    public DialogBuilder setDefaultButton(int index)
    {
       defaultButton_ = index;
@@ -78,5 +94,6 @@ public abstract class DialogBuilderBase implements DialogBuilder
    protected final int type;
    protected final String caption;
    protected ArrayList<ButtonSpec> buttons_ = new ArrayList<>();
+   protected AnchorSpec anchor_;
    protected int defaultButton_ = 0;
 }
