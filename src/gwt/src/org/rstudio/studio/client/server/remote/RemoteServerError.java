@@ -117,6 +117,7 @@ class RemoteServerError implements ServerError
          return ServerError.EXECUTION;
          
       case RpcError.TRANSMISSION_ERROR:
+      case RpcError.TRANSMISSION_ERROR_NO_RESPONSE:
          return ServerError.TRANSMISSION;
          
       case RpcError.MAX_SESSIONS_REACHED:
