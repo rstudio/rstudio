@@ -46,7 +46,7 @@
 
 using namespace rstudio::core;
 
-#define kRsaKeySize 2048
+#define kRsaKeySize 4096
 #define kRsaEntropyBytes 4096
 
 namespace rstudio {
@@ -466,11 +466,6 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
    status = EVP_PKEY_decrypt_init(ctx);
    if (status <= 0)
       return getLastCryptoError(ERROR_LOCATION);
-   
-   
-   // status = EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING);
-   // if (status <= 0)
-   //    return getLastCryptoError(ERROR_LOCATION);
    
    std::size_t size = 0;
    status = EVP_PKEY_decrypt(
