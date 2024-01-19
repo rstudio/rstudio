@@ -80,7 +80,7 @@ EVP_PKEY* EVP_RSA_gen(int bits)
    if (EVP_PKEY_keygen_init(ctx.get()) <= 0)
        return logRsaKeygenError(ERROR_LOCATION);
 
-   if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), kRsaKeySize) <= 0)
+   if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), kRsaKeySizeBits) <= 0)
        return logRsaKeygenError(ERROR_LOCATION);
 
    EVP_PKEY* pKeyPair = nullptr;
