@@ -348,11 +348,11 @@ SEXP findInNamedEnvir(const std::string& environmentName,
 // data items are used both as the payload for the client event that opens an
 // editor viewer tab and as a server response when duplicating that tab's
 // contents
-json::Value makeDataItem(SEXP dataSEXP, 
-                         const std::string& expr,
-                         const std::string& caption, 
-                         const std::string& objName, const std::string& envName, 
-                         const std::string& cacheKey, int preview)
+json::Object makeDataItem(SEXP dataSEXP, 
+                          const std::string& expr,
+                          const std::string& caption, 
+                          const std::string& objName, const std::string& envName, 
+                          const std::string& cacheKey, int preview)
 {
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
