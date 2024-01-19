@@ -8,6 +8,7 @@
 color_error='\033[1;31m' # red
 color_highlight='\033[1;95m' # magenta
 color_none='\033[0m' # no color
+repo_root=$(git rev-parse --show-toplevel)
 
 # Linting and formatting on RStudio Desktop IDE files
 if test -f ./src/node/desktop/.lintstagedrc
@@ -26,6 +27,7 @@ then
     echo >&2 "${color_highlight}Note: secret scanning pre-commit hook is not being run because detect-secrets is not installed.${color_none}"
     echo >&2 "\tInstall ${color_highlight}detect-secrets${color_none} with 'pip install detect-secrets' or 'brew install detect-secrets'."
 else
+    cd "$repo_root"
     baseline_file="./git_hooks/secrets/.secrets.baseline"
     # Use the pro baseline file if the repo is rstudio-pro
     if git remote -v | grep -q rstudio-pro; then
@@ -36,8 +38,10 @@ else
     exclude_files=(--exclude-files '.*/.*.min.js' --exclude-files 'src/cpp/ext/fmt/doc/html/api.html' --exclude-files 'src/cpp/ext/fmt/doc/html/searchindex.js' --exclude-files 'dependencies/submodules/.*')
     secrets_results=$(git diff --staged --name-only -z | xargs -0 detect-secrets-hook --no-verify --baseline ${baseline_file} "${exclude_files[@]}")
     if [ -n "$secrets_results" ]; then
+        echo "${color_highlight}------${color_none}\n"
+        echo "detect-secrets-hook results:\n"
         echo "${color_error}Uh oh! It looks like you have secrets in your code. Please remove them before committing.${color_none}"
-        echo "${color_error}If you are certain that these are false positives, see 'git_hooks/secrets/README.md#false-positives' for instructions on how to mark them as such.${color_none}\n"
+        echo "If you are certain that these are false positives, see git_hooks/secrets/README.md for instructions on how to mark them as such.\n"
         echo "$secrets_results"
         exit 1
     fi
