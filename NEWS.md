@@ -23,6 +23,7 @@
 - Fixed an issue where RStudio would unnecessarily list directory contents when opening a file (#14096)
 - Localize Copilot-related user interface strings into French (#14092)
 - Removed obsolete "Use Internet Explorer library/proxy" checkbox from Packages settings (#13250)
+- Improved error handling for Desktop Pro license handling (rstudio-pro#4873)
 
 #### Posit Workbench
 -
