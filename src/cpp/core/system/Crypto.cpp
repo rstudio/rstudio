@@ -46,14 +46,49 @@
 
 using namespace rstudio::core;
 
-#define kRsaKeySize 4096
-#define kRsaEntropyBytes 4096
-
 namespace rstudio {
 namespace core {
 namespace system {
 namespace crypto {
-   
+
+namespace {
+
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+
+EVP_PKEY* logRsaKeygenError(const ErrorLocation& errorLocation)
+{
+    Error error = getLastCryptoError(errorLocation);
+    LOG_ERROR(error);
+    return nullptr;
+}
+
+// For forward-compatibility with OpenSSL >= 3.0.0
+EVP_PKEY* EVP_RSA_gen(int bits)
+{
+   std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)> pContext(
+               EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr),
+               EVP_PKEY_CTX_free);
+
+   if (pContext == nullptr)
+       return logRsaKeygenError(ERROR_LOCATION);
+
+   if (EVP_PKEY_keygen_init(pContext.get()) <= 0)
+       return logRsaKeygenError(ERROR_LOCATION);
+
+   if (EVP_PKEY_CTX_set_rsa_keygen_bits(pContext.get(), kRsaKeySize) <= 0)
+       return logRsaKeygenError(ERROR_LOCATION);
+
+   EVP_PKEY* pKeyPair = nullptr;
+   if (EVP_PKEY_keygen(pContext.get(), &pKeyPair) <= 0)
+       return logRsaKeygenError(ERROR_LOCATION);
+
+   return pKeyPair;
+}
+
+#endif
+
+} // end anonymous namespace
+
 void initialize()
 {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -232,7 +267,7 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
                   const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPem)
 {
    // Generate RSA key
-   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_RSA_gen(kRsaKeySize), EVP_PKEY_free);
+   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_RSA_gen(kRsaKeySizeBits), EVP_PKEY_free);
    
    // Write public key in PEM format
    int status = PEM_write_bio_PUBKEY(pBioPub.get(), pKey.get());
@@ -303,7 +338,7 @@ Error generateRsaCertAndKey(const std::string& certCommonName,
                             const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioCertKey)
 {
    // Generate RSA key
-   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pCertKey(EVP_RSA_gen(kRsaKeySize), EVP_PKEY_free);
+   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pCertKey(EVP_RSA_gen(kRsaKeySizeBits), EVP_PKEY_free);
    
    // Create certificate
    std::unique_ptr<X509, decltype(&X509_free)> pCert(X509_new(), X509_free);
@@ -414,29 +449,34 @@ core::Error rsaInit()
 {
    // seed the random number generator
    RAND_poll();
-   
+
    // validate that the RNG is happy
    if (RAND_status() != 1)
       return getLastCryptoError(ERROR_LOCATION);
-   
-   // set up an internal key
-   s_pRSA = EVP_RSA_gen(kRsaKeySize);
-   if (s_pRSA == nullptr)
-      return getLastCryptoError(ERROR_LOCATION);
-   
-   // read modulo + exponent as hex
+
+   // generate an RSA key pair
+   s_pRSA = EVP_RSA_gen(kRsaKeySizeBits);
+
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+   // extract exponent + modulus for future use
+   const BIGNUM *bn, *be, *bd;
+   RSA* pRsaKeyPair = EVP_PKEY_get0_RSA(s_pRSA);
+   RSA_get0_key(pRsaKeyPair, &bn, &be, &bd);
+#else
+   // extract exponent + modulus for future use
    BIGNUM* bn = nullptr;
    if (EVP_PKEY_get_bn_param(s_pRSA, "n", &bn) != 1)
       return getLastCryptoError(ERROR_LOCATION);
-         
-   char* n = BN_bn2hex(bn);
-   s_modulo = n;
-   OPENSSL_free(n);
    
    BIGNUM* be = nullptr;
    if (EVP_PKEY_get_bn_param(s_pRSA, "e", &be) != 1)
       return getLastCryptoError(ERROR_LOCATION);
-   
+#endif
+
+   char* n = BN_bn2hex(bn);
+   s_modulo = n;
+   OPENSSL_free(n);
+
    char* e = BN_bn2hex(be);
    s_exponent = e;
    OPENSSL_free(e);
