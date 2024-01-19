@@ -46,9 +46,6 @@
 
 using namespace rstudio::core;
 
-#define kRsaKeySize 4096
-#define kRsaEntropyBytes 4096
-
 namespace rstudio {
 namespace core {
 namespace system {
@@ -270,7 +267,7 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
                   const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPem)
 {
    // Generate RSA key
-   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_RSA_gen(kRsaKeySize), EVP_PKEY_free);
+   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_RSA_gen(kRsaKeySizeBits), EVP_PKEY_free);
    
    // Write public key in PEM format
    int status = PEM_write_bio_PUBKEY(pBioPub.get(), pKey.get());
@@ -341,7 +338,7 @@ Error generateRsaCertAndKey(const std::string& certCommonName,
                             const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioCertKey)
 {
    // Generate RSA key
-   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pCertKey(EVP_RSA_gen(kRsaKeySize), EVP_PKEY_free);
+   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pCertKey(EVP_RSA_gen(kRsaKeySizeBits), EVP_PKEY_free);
    
    // Create certificate
    std::unique_ptr<X509, decltype(&X509_free)> pCert(X509_new(), X509_free);
@@ -458,7 +455,7 @@ core::Error rsaInit()
       return getLastCryptoError(ERROR_LOCATION);
 
    // generate an RSA key pair
-   s_pRSA = EVP_RSA_gen(kRsaKeySize);
+   s_pRSA = EVP_RSA_gen(kRsaKeySizeBits);
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
    // extract exponent + modulus for future use
