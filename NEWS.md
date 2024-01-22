@@ -2,7 +2,7 @@
 
 ### New
 #### RStudio
-- RStudio Desktop on Windows and Linux supports auto-hiding the menu bar. (#8932)
+- RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
 - RStudio's GWT sources can now be built with JDKs > 11 (#11242)
 - R projects can be given a custom display name in Project Options (#1909)
 
@@ -24,6 +24,7 @@
 - Localize Copilot-related user interface strings into French (#14092)
 - Removed obsolete "Use Internet Explorer library/proxy" checkbox from Packages settings (#13250)
 - Improved error handling for Desktop Pro license handling (rstudio-pro#4873)
+- Fixed exception being logged when copying or cutting from editor in a separate window (#14140)
 
 #### Posit Workbench
 -

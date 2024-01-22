@@ -92,13 +92,15 @@ public class DesktopHooks
    }
 
    private native void addCopyHook() /*-{
-      var clean = function() {
-         setTimeout(function() {
-            $wnd.desktop.cleanClipboard(false);
-         }, 100)
-      };
-      $wnd.addEventListener("copy", clean, true);
-      $wnd.addEventListener("cut", clean, true);
+      if ($wnd.desktop) {
+         var clean = function() {
+            setTimeout(function() {
+               $wnd.desktop.cleanClipboard(false);
+            }, 100)
+         };
+         $wnd.addEventListener("copy", clean, true);
+         $wnd.addEventListener("cut", clean, true);
+      }
    }-*/;
 
    
