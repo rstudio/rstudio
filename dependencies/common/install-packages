@@ -21,7 +21,7 @@ section "Installing R Packages"
 
 # the default packages we install, when no lockfile is provided
 PACKAGES=(
-  digest@0.6.31  # work around arm64 build failures with digest 0.6.32
+  digest
   purrr
   rmarkdown
   testthat
