@@ -479,7 +479,6 @@ core::Error rsaInit()
    RSA* pRsaKeyPair = EVP_PKEY_get1_RSA(s_pRSA);
    bn = pRsaKeyPair->n;
    be = pRsaKeyPair->e;
-   bd = pRsaKeyPair->d;
 #elif OPENSSL_VERSION_NUMBER < 0x30000000L
    // extract exponent + modulus for future use
    const BIGNUM *bn, *be;
