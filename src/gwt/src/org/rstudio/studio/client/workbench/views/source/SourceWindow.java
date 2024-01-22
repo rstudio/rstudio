@@ -91,7 +91,8 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
 
       // set up desktop hooks (required to e.g. process commands issued by
       // the desktop frame)
-      pDesktopHooks.get();
+      if (Desktop.isDesktop())
+         pDesktopHooks.get();
 
       // export callbacks for main window
       exportFromSatellite();
