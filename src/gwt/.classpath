@@ -14,7 +14,7 @@
 	<classpathentry kind="lib" path="lib/gin/2.1.2/jakarta.inject-api-2.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/gin/2.1.2/javax.inject.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.9b3.jar"/>
-	<classpathentry kind="lib" path="lib/elemental2/base-1.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/elemental2/base-1.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/elemental2/elemental2-core-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/elemental2/elemental2-dom-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/elemental2/elemental2-promise-1.2.1.jar"/>
