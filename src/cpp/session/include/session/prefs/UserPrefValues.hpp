@@ -316,7 +316,6 @@ namespace prefs {
 #define kSshKeyTypeRsa "rsa"
 #define kUseDevtools "use_devtools"
 #define kCleanBeforeInstall "clean_before_install"
-#define kUseInternet2 "use_internet2"
 #define kUseSecureDownload "use_secure_download"
 #define kCleanupAfterRCmdCheck "cleanup_after_r_cmd_check"
 #define kViewDirAfterRCmdCheck "view_dir_after_r_cmd_check"
@@ -1522,12 +1521,6 @@ public:
     */
    bool cleanBeforeInstall();
    core::Error setCleanBeforeInstall(bool val);
-
-   /**
-    * Whether to use Internet2 for networking on R for Windows.
-    */
-   bool useInternet2();
-   core::Error setUseInternet2(bool val);
 
    /**
     * Whether to use secure downloads when fetching R packages.

@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench.copilot.model;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotResponse;
+import org.rstudio.studio.client.workbench.copilot.CopilotUIConstants;
 
+import com.google.gwt.core.client.GWT;
 import elemental2.core.JsNumber;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
@@ -36,31 +38,31 @@ public class CopilotResponseTypes
       {
          if (reason == Unknown)
          {
-            return "An unknown error occurred.";
+            return constants_.copilotUnknownError();
          }
          else if (reason == NotInstalled)
          {
-            return "The GitHub Copilot agent is not installed.";
+            return constants_.copilotNotInstalledError();
          }
          else if (reason == DisabledByAdministrator)
          {
-            return "GitHub Copilot has been disabled by the system administrator.";
+            return constants_.copilotDisabledByAdministratorError();
          }
          else if (reason == DisabledViaProjectPreferences)
          {
-            return "GitHub Copilot has been disabled via project preferences.";
+            return constants_.copilotDisabledViaProjectPreferencesError();
          }
          else if (reason == DisabledViaGlobalOptions)
          {
-            return "GitHub Copilot has been disabled via global options.";
+            return constants_.copilotDisabledViaGlobalOptionsError();
          }
          else if (reason == LaunchError)
          {
-            return "An error occurred while attempting to launch GitHub Copilot.";
+            return constants_.copilotLaunchError();
          }
          else
          {
-            return "<unknown>";
+            return constants_.copilotUnknownErrorShort();
          }
       }
       
@@ -160,4 +162,6 @@ public class CopilotResponseTypes
    public static class CopilotGenerateCompletionsResponse extends CopilotResponse
    {
    }
+
+   private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
 }

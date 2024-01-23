@@ -606,11 +606,6 @@ std::string rCRANSecondary()
    return s_options.rCRANSecondary;
 }
 
-bool useInternet2()
-{
-   return s_options.useInternet2;
-}
-
 bool alwaysSaveHistory()
 {
    return s_options.alwaysSaveHistory();

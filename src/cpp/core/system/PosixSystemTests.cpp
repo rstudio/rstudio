@@ -391,9 +391,7 @@ group::Group s_testNonMemberGroup;
 
 bool initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
 {
-   bool isRoot = core::system::effectiveUserIsRoot();
-   expect_true(isRoot);
-   if (!isRoot)
+   if (!core::system::effectiveUserIsRoot())
       return false;
 
    // get user info
@@ -427,11 +425,15 @@ bool initUserAndGroup(std::string username, std::string groupname, std::string n
 
 TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
 {
+   if (!core::system::effectiveUserIsRoot())
+      return;
+
 #ifdef __linux__
-      expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
+   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
+
 #ifdef __APPLE__
-      expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
+   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
 
    test_that("temporarilyDropPriv uses primary group")
@@ -494,9 +496,13 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
 
 TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
 {
+   if (!core::system::effectiveUserIsRoot())
+      return;
+
 #ifdef __linux__
    expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
+
 #ifdef __APPLE__
    expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
@@ -524,9 +530,13 @@ TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
 
 TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
 {
+   if (!core::system::effectiveUserIsRoot())
+      return;
+
 #ifdef __linux__
    expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
+
 #ifdef __APPLE__
    expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__

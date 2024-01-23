@@ -24,8 +24,10 @@ import com.google.gwt.user.client.Random;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationCsrfToken;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.GlobalDisplay;
 
 // NOTE: RpcRequest is an immutable object (all fields are marked final).
 // this means that it is safe to re-submit an RpcRequest since the 
@@ -169,18 +171,45 @@ public class RpcRequest
                   String message = constants_.rpcErrorMessage(Integer.toString(status),
                           Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage(),
                           getMethod());
+
+                  int type = RpcError.TRANSMISSION_ERROR;
                   
                   // override error message for status code 0
                   if (status == 0)
                   {
+                     if (!Desktop.isDesktop())
+                     {
+                        // only show this error if not desktop and return early. Otherwise handle error as normal
+                        message = constants_.rpcOverrideErrorMessageServer(constants_.rStudioServerMessage());
+                     
+                        if (!showingNoConnectError_) 
+                        {
+                           showingNoConnectError_ = true;
+                           RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+                              GlobalDisplay.MSG_ERROR,
+                              constants_.rpcErrorMessageCaption(),
+                              message,
+                              constants_.rpcOverrideErrorMessageLink(),
+                              "/",
+                              () -> {
+                                 showingNoConnectError_ = false;
+                              }
+                           );
+                        }
+                        requestLogEntry_.logResponse(ResponseType.Unknown,
+                              message);
+                        // trigger any error handlers, but pass a null error to suppress dialogs
+                        requestCallback.onError(enclosingRequest, null);
+                        return;
+                     }
+
+                     type = RpcError.TRANSMISSION_ERROR_NO_RESPONSE;
                      message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
                   }
 
                   requestLogEntry_.logResponse(ResponseType.Unknown,
                                               message);
-                  RpcError error = RpcError.create(
-                                             RpcError.TRANSMISSION_ERROR,
-                                             message);
+                  RpcError error = RpcError.create(type, message);
                   requestCallback.onError(enclosingRequest, error);
                }
             }
@@ -292,4 +321,6 @@ public class RpcRequest
    private Request request_ = null;
    private RequestLogEntry requestLogEntry_ = null;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
+
+   private static boolean showingNoConnectError_ = false;
 }
