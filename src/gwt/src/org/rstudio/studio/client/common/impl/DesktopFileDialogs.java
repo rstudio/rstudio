@@ -14,11 +14,6 @@
  */
 package org.rstudio.studio.client.common.impl;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -33,6 +28,11 @@ import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.inject.Inject;
 
 public class DesktopFileDialogs implements FileDialogs
 {
@@ -313,10 +313,9 @@ public class DesktopFileDialogs implements FileDialogs
    {
       if (fileName != null)
       {
-         String parentPath =
-               FileSystemItem.createFile(fileName).getParentPathString();
+         String parentPath = FileSystemItem.createFile(fileName).getParentPathString();
          if (!StringUtil.isNullOrEmpty(parentPath))
-            fsContext.cd(parentPath);
+            fsContext.setwd(parentPath);
       }
    }
 

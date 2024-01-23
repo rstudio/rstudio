@@ -327,17 +327,8 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::run_Rmainloop();
 }
 
-Error completeEmbeddedRInitialization(bool useInternet2)
+Error completeEmbeddedRInitialization()
 {
-   // use IE proxy settings if requested
-   if (!r::session::utils::isR3_3())
-   {
-      boost::format fmt("suppressWarnings(utils::setInternet2(%1%))");
-      Error error = r::exec::executeString(boost::str(fmt % useInternet2));
-      if (error)
-         LOG_ERROR(error);
-   }
-
    // register history functions
    Error error = r::exec::RFunction(".rs.registerHistoryFunctions").call();
    if (error)

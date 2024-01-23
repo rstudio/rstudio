@@ -12,14 +12,15 @@ pipeline {
   }
 
   environment {
-        GITHUB_LOGIN = credentials('posit-jenkins')
-        OS = 'jammy'
-        ARCH = 'x86_64'
-        FLAVOR = 'Server'
-        TYPE = 'DEB'
-        AWS_ACCOUNT_ID = '749683154838'
-        RSTUDIO_VERSION_FLOWER = ''
-        IS_PRO = false
+    GITHUB_LOGIN = credentials('posit-jenkins')
+    OS = 'jammy'
+    ARCH = 'x86_64'
+    FLAVOR = 'Server'
+    TYPE = 'DEB'
+    AWS_ACCOUNT_ID = '749683154838'
+    RSTUDIO_VERSION_FLOWER = ''
+    IS_PRO = false
+    BASE_IMAGE = ""
   }
 
   stages {
@@ -32,7 +33,30 @@ pipeline {
           utils.addRemoteRef("${env.CHANGE_TARGET}")
           RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
           IS_PRO = JOB_URL.contains('Pro')
+          BASE_IMAGE = "jenkins/ide:pro-jammy-x86_64-${RSTUDIO_VERSION_FLOWER}"
         }
+      }
+    }
+
+    stage('Snyk Code Scan') {
+      environment {
+        SNYK_TOKEN = credentials('snyk-auth-token')
+        TMP_SNYK_PATH = "/tmp/snyk-code-scan"
+      }
+      agent {
+        dockerfile {
+          filename 'docker/jenkins/Dockerfile.snyk'
+          registryCredentialsId 'ecr:us-east-1:aws-build-role'
+          registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+          additionalBuildArgs "--build-arg BASE_IMAGE=${BASE_IMAGE}" + ' --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}'
+          reuseNode true
+        }
+      }
+      steps {
+        sh "mkdir --parents ${TMP_SNYK_PATH}"
+        sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}); do [ -e \$FILE ] && cp --parents \$FILE ${TMP_SNYK_PATH}; done"
+        sh "snyk code test ${TMP_SNYK_PATH}"
+        sh "rm -r ${TMP_SNYK_PATH}"
       }
     }
 

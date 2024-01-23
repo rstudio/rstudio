@@ -1,3 +1,17 @@
+/*
+ * CopilotSignInDialog.java
+ *
+ * Copyright (C) 2023 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.workbench.copilot.ui;
 
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -5,6 +19,7 @@ import org.rstudio.core.client.widget.ElementPanel;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
+import org.rstudio.studio.client.workbench.copilot.CopilotUIConstants;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -34,7 +49,7 @@ public class CopilotSignInDialog extends ModalDialogBase
                               String verificationCode)
    {
       super(Roles.getDialogRole());
-      setText("GitHub Copilot: Sign in");
+      setText(constants_.copilotSignInDialogTitle());
 
       ui_ = uiBinder.createAndBindUi(this);
       progress_ = addProgressIndicator(true, false);
@@ -52,7 +67,7 @@ public class CopilotSignInDialog extends ModalDialogBase
          if (!progressShowing_)
          {
             progressShowing_ = true;
-            progress_.onProgress("Authenticating...");
+            progress_.onProgress(constants_.copilotAuthenticating());
          }
       });
 
@@ -75,4 +90,5 @@ public class CopilotSignInDialog extends ModalDialogBase
    private final DivElement ui_;
    private final ProgressIndicator progress_;
 
+   private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
 }

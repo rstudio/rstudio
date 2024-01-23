@@ -44,6 +44,8 @@ This page provides the release notes associated with each release of RStudio and
 - Increased the built-in nginx server's max connection limit, enabled nginx error logging, and allow both to be configured (rstudio-pro#4652, rstudio-pro#4747, rstudio-pro#5452)
 - Replaced Administration Guide section PRO markers with Workbench tags. (#5416)
 - Improved Admin: The Logs tab allows viewing other server log files. A new Server tab provides real-time performance info and on-the-fly adjustment of the rserver log-level (rstudio-pro#5212)
+- Added Databricks integration to RStudio Pro Sessions which allows users to seamlessly interact with Databricks clusters and resources (rstudio-pro#4927)
+- Added Databricks integration to Workbench which enables pass-through auth with Databricks, AWS-Databricks, and Azure Databricks for IDE and VS Code (rstudio-pro#4927)
 
 ### Fixed
 #### RStudio

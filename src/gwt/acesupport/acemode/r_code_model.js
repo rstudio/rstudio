@@ -1555,10 +1555,7 @@ var RCodeModel = function(session, tokenizer,
             column: this.$getLine(row).length
          };
 
-         var prevToken = this.$findPreviousSignificantToken(
-            startPos,
-            row - 10
-         );
+         var prevToken = this.$findPreviousSignificantToken(startPos, 0);
 
          // Special case for new function definitions.
          var line = this.$session.getLine(row);

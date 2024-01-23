@@ -19,6 +19,7 @@ public interface DialogBuilder
    DialogBuilder addButton(String label, String elementId);
    DialogBuilder addButton(String label, String elementId, Operation operation);
    DialogBuilder addButton(String label, String elementId, ProgressOperation operation);
+   DialogBuilder addLink(String label, String url);
 
    DialogBuilder setDefaultButton(int index);
 

@@ -23,6 +23,8 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/system/Crypto.hpp>
 
+#define kRsaKeySizeBits 4096
+
 namespace rstudio {
 namespace core {
 namespace system {

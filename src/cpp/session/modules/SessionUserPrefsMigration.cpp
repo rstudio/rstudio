@@ -244,7 +244,6 @@ core::Error migratePrefs(const FilePath& src)
    destPrefs[kClangVerbose] = settings.getInt("clangVerbose", 0);
    destPrefs[kHideObjectFiles] = settings.getBool("hideObjectFiles", true);
    destPrefs[kViewDirAfterRCmdCheck] = settings.getBool("viewDirAfterRCmdCheck", false);
-   destPrefs[kUseInternet2] = settings.getBool("useInternet2", true);
    destPrefs[kLatexShellEscape] = settings.getBool("enableLaTeXShellEscape", false);
    destPrefs[kCleanTexi2dviOutput] = settings.getBool("cleanTexi2DviOutput", true);
    destPrefs[kUseSecureDownload] = settings.getBool("securePackageDownload", true);

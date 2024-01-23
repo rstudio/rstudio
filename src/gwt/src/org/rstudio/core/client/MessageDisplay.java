@@ -196,6 +196,37 @@ public abstract class MessageDisplay
       .showModal();
    }
 
+   public void showMessage(int type,
+                           String caption,
+                           String message,
+                           String urlLabel,
+                           String url,
+                           Operation dismissed)
+   {
+      createDialog(type, caption, message)
+         .addLink(urlLabel, url)
+         .addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, dismissed)
+         .showModal();
+   }
+ 
+   /**
+    * Show a messagebox with a clickable URL shown below the message text. The
+    * link will open in a new tab (e.g. target=_blank). 
+    *
+    * This mode is only supported for RStudio Server; on Desktop the link will not 
+    * be shown in the dialog.
+    */
+   public void showMessage(int type,
+                           String caption,
+                           String message,
+                           String urlLabel,
+                           String url)
+   {
+      createDialog(type, caption, message)
+         .addLink(urlLabel, url)
+         .showModal();
+   }
+ 
    public void showYesNoMessage(int type,
                                 String caption,
                                 String message,

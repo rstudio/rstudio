@@ -104,7 +104,7 @@
       .rs.readUserPref("data_viewer_max_cell_size"),
       50L
    )
-
+   
    formatted <- as.character(col)
    na <- is.na(formatted)
    large <- !na & nchar(formatted) > limit
@@ -140,7 +140,7 @@
    # we pass totalCols in the rownames col so we can pass this information
    # along when we retrieve column data, without changing the response format
    totalCols <- if (totalCols > 0) totalCols else ncol(x)
-
+   
    # the first column is always the row names
    rowNameCol <- list(
       col_name        = .rs.scalar(""),
@@ -276,10 +276,10 @@
                                              sliceEnd = 1)
 {
    totalCols <- ncol(x)
-
+   
    if (totalCols == 0)
       return(NULL)
-  
+   
    if (sliceEnd > totalCols || sliceEnd < 1)
       sliceEnd <- totalCols
    if (sliceStart > totalCols || sliceStart < 1 || sliceStart > sliceEnd)
@@ -654,7 +654,7 @@
             return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
       }
    }
-
+   
    # failure
    return(NULL)
 })
@@ -666,9 +666,9 @@
    # default to searching from the global environment
    env <- globalenv()
    
-   # attempt to find a callframe from which View was invoked; this will allow
-   # us to locate viewing environments further in the callstack (e.g. in the
-   # debugger)
+   # attempt to find a call frame from which View was invoked; this will allow
+   # us to locate viewing environments further in the call stack
+   # (e.g. in the debugger)
    for (i in seq_along(sys.calls()))
    {
       if (identical(deparse(sys.call(i)[[1]]), "View"))
@@ -678,17 +678,22 @@
       }
    }
    
-   while (environmentName(env) != "R_EmptyEnv" && 
-          !exists(name, where = env, inherits = FALSE)) 
-   {
-      env <- parent.env(env)
-   }
+   # NOTE: we previously looked through the parent environments of
+   # the associated frame to find the actual environment hosting the
+   # object being viewed, but this caused problems when attempting
+   # to track object mutations. for example, the 'mtcars' dataset is
+   # defined in 'package:datasets', but attempting to modify that
+   # object would actually create that modified object in the R global
+   # environment. for that reason, it's best to track objects from the
+   # top-level environment where they were found, as that's where
+   # "modified" versions of that object will be generated
    env
 })
 
 # attempts to determine whether the View(...) function the user has an 
 # override (i.e. it's not the handler RStudio uses)
-.rs.addFunction("isViewOverride", function() {
+.rs.addFunction("isViewOverride", function()
+{
    # check to see if View has been overridden: find the View() call in the 
    # stack and examine the function being evaluated there
    for (i in seq_along(sys.calls()))
@@ -700,6 +705,7 @@
          return(!identical(deparse(body(sys.function(i))[[1]]), ".rs.callAs"))
       }
    }
+   
    # if we can't find View on the callstack, presume the common case (no
    # override)
    FALSE
@@ -807,7 +813,7 @@
    
    if (!.rs.isNonEmptyScalarString(cacheKey))
       return(invisible(NULL))
-
+   
    # call viewData 
    invisible(.Call("rs_viewData", x, expr, title, name, env, cacheKey, FALSE))
 })
@@ -818,7 +824,7 @@
 {
    if (inherits(object, c("function", "vignette")))
       return(FALSE)
-
+   
    # prefer data viewer for pandas DataFrames
    if (inherits(object, "pandas.core.frame.DataFrame"))
       return(FALSE)
@@ -879,7 +885,7 @@
    {
       # remove data from the cache environment
       if (exists(".rs.CachedDataEnv") &&
-         exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
+          exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
          rm(list = cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE)
       
       # remove data from the cache directory
@@ -907,8 +913,8 @@
    lapply(ls(.rs.CachedDataEnv), function(cacheKey) {
       if (.rs.isNonEmptyScalarString(cacheKey))
          save(list = cacheKey, 
-            file = file.path(cacheDir, paste(cacheKey, "Rdata", sep = ".")),
-            envir = .rs.CachedDataEnv)
+              file = file.path(cacheDir, paste(cacheKey, "Rdata", sep = ".")),
+              envir = .rs.CachedDataEnv)
    })
    
    # clean the cache environment

@@ -30,7 +30,6 @@ import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.PackagesHelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -58,14 +57,12 @@ public class PackagesPreferencesPane extends PreferencesPane
 {
    @Inject
    public PackagesPreferencesPane(PreferencesDialogResources res,
-                                  GlobalDisplay globalDisplay,
                                   UserPrefs uiPrefs,
                                   Session session,
                                   final DefaultCRANMirror defaultCRANMirror,
                                   MirrorsServerOperations server)
    {
       res_ = res;
-      globalDisplay_ = globalDisplay;
       server_ = server;
 
       secondaryReposWidget_ = new SecondaryReposWidget();
@@ -153,20 +150,8 @@ public class PackagesPreferencesPane extends PreferencesPane
       lessSpaced(secureDownloadPanel);
       management.add(secureDownloadPanel);
 
-      useInternet2_ = new CheckBox(
-                        constants_.useInternetTitle(),
-                        true);
-      if (BrowseCap.isWindowsDesktop())
-      {
-         lessSpaced(chkEnablePackages);
-         spaced(useInternet2_);
-         management.add(useInternet2_);
-      }
-      else
-      {
-         spaced(useSecurePackageDownload_);
-         useSecurePackageDownload_.getElement().getStyle().setMarginBottom(12, Unit.PX);
-      }
+      spaced(useSecurePackageDownload_);
+      useSecurePackageDownload_.getElement().getStyle().setMarginBottom(12, Unit.PX);
 
       management.add(spacedBefore(new HelpLink(constants_.managePackagesTitle(), "managing_packages")));
 
@@ -199,7 +184,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       development.add(packagesHelpLink);
 
       cranMirrorTextBox_.setEnabled(false);
-      useInternet2_.setEnabled(false);
       cleanupAfterCheckSuccess_.setEnabled(false);
       viewDirAfterCheckFailure_.setEnabled(false);
       useDevtools_.setEnabled(false);
@@ -275,14 +259,6 @@ public class PackagesPreferencesPane extends PreferencesPane
 
          secondaryReposWidget_.setRepos(cranMirror_.getSecondaryRepos());
       }
-
-      useInternet2_.setEnabled(true);
-      useInternet2_.setValue(prefs.useInternet2().getValue());
-      useInternet2_.addValueChangeHandler(event -> globalDisplay_.showMessage(
-            MessageDialog.INFO,
-            constants_.cranMirrorTextBoxRestartCaption(),
-            constants_.cranMirrorTextBoxRestartMessage())
-      );
 
       cleanupAfterCheckSuccess_.setEnabled(true);
       cleanupAfterCheckSuccess_.setValue(prefs.cleanupAfterRCmdCheck().getValue());
@@ -413,7 +389,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       cranMirror_.setSecondaryRepos(repos);
 
       prefs.cranMirror().setGlobalValue(cranMirror_);
-      prefs.useInternet2().setGlobalValue(useInternet2_.getValue());
       prefs.cleanupAfterRCmdCheck().setGlobalValue(cleanupAfterCheckSuccess_.getValue());
       prefs.viewDirAfterRCmdCheck().setGlobalValue(viewDirAfterCheckFailure_.getValue());
       prefs.hideObjectFiles().setGlobalValue(hideObjectFiles_.getValue());
@@ -426,12 +401,10 @@ public class PackagesPreferencesPane extends PreferencesPane
    }
 
    private final PreferencesDialogResources res_;
-   private final GlobalDisplay globalDisplay_;
    private final MirrorsServerOperations server_;
    private final InfoBar infoBar_;
 
    private CRANMirror cranMirror_ = CRANMirror.empty();
-   private final CheckBox useInternet2_;
    private TextBoxWithButton cranMirrorTextBox_;
    private final CheckBox cleanupAfterCheckSuccess_;
    private final CheckBox viewDirAfterCheckFailure_;

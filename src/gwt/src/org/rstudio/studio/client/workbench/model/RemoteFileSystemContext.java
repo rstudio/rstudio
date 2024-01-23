@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.inject.Inject;
+import java.util.ArrayList;
+
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.PosixFileSystemContext;
@@ -29,7 +29,8 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
-import java.util.ArrayList;
+import com.google.gwt.core.client.JsArray;
+import com.google.inject.Inject;
 
 public class RemoteFileSystemContext extends PosixFileSystemContext
 {
@@ -49,6 +50,14 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
    public MessageDisplay messageDisplay()
    {
       return globalDisplay_;
+   }
+   
+   public void setwd(String relativeOrAbsolutePath)
+   {
+      workingDir_ = combine(pwd(), relativeOrAbsolutePath);
+      contents_ = null;
+      if (callbacks_ != null)
+         callbacks_.onNavigated();
    }
 
    public void cd(String relativeOrAbsolutePath)

@@ -64,7 +64,12 @@ public class WebDialogBuilderFactory implements DialogBuilderFactory
                                        i == buttons_.size() - 1);
             }
          }
-         
+
+         if (anchor_ != null)
+            messageDialog.addLink(anchor_.label, anchor_.url);
+         else
+            messageDialog.removeAnchorRegion();
+
          if (options_ != null)
          {
             if (options_.width != null)

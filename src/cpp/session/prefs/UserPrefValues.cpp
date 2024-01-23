@@ -2377,19 +2377,6 @@ core::Error UserPrefValues::setCleanBeforeInstall(bool val)
 }
 
 /**
- * Whether to use Internet2 for networking on R for Windows.
- */
-bool UserPrefValues::useInternet2()
-{
-   return readPref<bool>("use_internet2");
-}
-
-core::Error UserPrefValues::setUseInternet2(bool val)
-{
-   return writePref("use_internet2", val);
-}
-
-/**
  * Whether to use secure downloads when fetching R packages.
  */
 bool UserPrefValues::useSecureDownload()
@@ -3509,7 +3496,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSshKeyType,
       kUseDevtools,
       kCleanBeforeInstall,
-      kUseInternet2,
       kUseSecureDownload,
       kCleanupAfterRCmdCheck,
       kViewDirAfterRCmdCheck,

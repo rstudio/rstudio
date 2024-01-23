@@ -181,9 +181,10 @@ public abstract class DelegatingCompletionManager
    }
    
    private boolean isRequestingCompletionsForYamlOptions(DocumentMode.Mode mode)
-   {  
-      // only available in R and Python right now
-      if (mode != Mode.R && mode != Mode.PYTHON)
+   {
+      // available for R, Python, and Markdown
+      // inclusion of Markdown necessary for https://github.com/rstudio/rstudio/issues/14074
+      if (mode != Mode.R && mode != Mode.PYTHON && mode != Mode.MARKDOWN)
          return false;
       
       String line = docDisplay_.getCurrentLineUpToCursor(); 

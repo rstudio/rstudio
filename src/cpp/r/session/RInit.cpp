@@ -348,7 +348,7 @@ Error initialize()
       return error;
 
    // complete embedded r initialization
-   error = r::session::completeEmbeddedRInitialization(utils::useInternet2());
+   error = r::session::completeEmbeddedRInitialization();
    if (error)
       return error;
 

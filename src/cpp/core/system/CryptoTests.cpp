@@ -132,7 +132,7 @@ test_context("CryptoTests")
       // Sanity checks.
       REQUIRE(pub.rfind("-----BEGIN PUBLIC KEY-----", 0) == 0);
       REQUIRE(priv.rfind("-----BEGIN PRIVATE KEY-----", 0) == 0);
-      REQUIRE(sig.size() == 256);
+      REQUIRE(sig.size() == kRsaKeySizeBits / 8);
    }
 
    test_that("SHA-256 hashing works correctly")

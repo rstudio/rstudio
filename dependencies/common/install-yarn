@@ -31,8 +31,7 @@ PATH="${NODE_BIN}:${PATH}"
 # check for yarn installation
 # TODO: do we want to allow yarn installs from other PATH locations?
 if has-program yarn; then
-  YARN_VERSION=$(PATH="${INSTALL_PATH}" yarn --version)
-  echo "yarn ${YARN_VERSION} already installed at '$(which yarn)'"
+  echo "yarn already installed at '$(which yarn)'"
 else
   npm install -g yarn
 fi

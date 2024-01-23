@@ -13,7 +13,6 @@
  *
  */
 
-
 #include <core/system/Crypto.hpp>
 
 #include <gsl/gsl>
@@ -39,15 +38,11 @@
 
 #include <boost/utility.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
 
-#include <memory>
+#include <core/Log.hpp>
 
-// openssl calls on lion are are all marked as deprecated
-#ifdef __clang__
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#endif
+#include <memory>
 
 using namespace rstudio::core;
 
@@ -55,7 +50,50 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace crypto {
-   
+
+namespace {
+
+template <typename T, typename Deleter>
+std::unique_ptr<T, Deleter> make_unique_ptr(T* ptr, Deleter deleter) {
+    return std::unique_ptr<T, Deleter>(ptr, deleter);
+}
+
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+
+EVP_PKEY* logRsaKeygenError(const ErrorLocation& errorLocation)
+{
+    Error error = getLastCryptoError(errorLocation);
+    LOG_ERROR(error);
+    return nullptr;
+}
+
+// For forward-compatibility with OpenSSL >= 3.0.0
+EVP_PKEY* EVP_RSA_gen(int bits)
+{
+   auto ctx = make_unique_ptr(
+               EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr),
+               EVP_PKEY_CTX_free);
+
+   if (ctx == nullptr)
+       return logRsaKeygenError(ERROR_LOCATION);
+
+   if (EVP_PKEY_keygen_init(ctx.get()) <= 0)
+       return logRsaKeygenError(ERROR_LOCATION);
+
+   if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), kRsaKeySizeBits) <= 0)
+       return logRsaKeygenError(ERROR_LOCATION);
+
+   EVP_PKEY* pKeyPair = nullptr;
+   if (EVP_PKEY_keygen(ctx.get(), &pKeyPair) <= 0)
+       return logRsaKeygenError(ERROR_LOCATION);
+
+   return pKeyPair;
+}
+
+#endif
+
+} // end anonymous namespace
+
 void initialize()
 {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -131,15 +169,19 @@ Error rsaSign(const std::string& message,
       return error;
 
    // convert the key into an RSA structure
-   std::unique_ptr<BIO, decltype(&BIO_free)> pKeyBuff(BIO_new_mem_buf(const_cast<char*>(pemPrivateKey.c_str()),
-                                                      gsl::narrow_cast<int>(pemPrivateKey.size())),
-                                                      BIO_free);
+   BIO* buffer = BIO_new_mem_buf(
+            const_cast<char*>(pemPrivateKey.c_str()),
+            gsl::narrow_cast<int>(pemPrivateKey.size()));
+         
+   auto pKeyBuff = make_unique_ptr(buffer, BIO_free);
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, "RSA sign", ERROR_LOCATION);
 
 
-   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pRsa(PEM_read_bio_PrivateKey(pKeyBuff.get(), nullptr, nullptr, nullptr),
-                                                            EVP_PKEY_free);
+   auto pRsa = make_unique_ptr(
+            PEM_read_bio_PrivateKey(pKeyBuff.get(), nullptr, nullptr, nullptr),
+            EVP_PKEY_free);
+   
    if (!pRsa)
       return systemError(boost::system::errc::not_enough_memory, "RSA private key", ERROR_LOCATION);
 
@@ -147,8 +189,7 @@ Error rsaSign(const std::string& message,
    // sign the message hash
    std::vector<unsigned char> pSignature(EVP_PKEY_size(pRsa.get()));
    size_t sigLen = pSignature.size();
-   std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)> ctx(EVP_PKEY_CTX_new(pRsa.get(), NULL),
-                                                                   EVP_PKEY_CTX_free);
+   auto ctx = make_unique_ptr(EVP_PKEY_CTX_new(pRsa.get(), NULL), EVP_PKEY_CTX_free);
    if (!ctx)
    {
       return systemError(boost::system::errc::not_enough_memory,
@@ -188,21 +229,23 @@ Error rsaVerify(const std::string& message,
       return error;
 
    // convert the key into an RSA structure
-   std::unique_ptr<BIO, decltype(&BIO_free)> pKeyBuff(
-            BIO_new_mem_buf(const_cast<char*>(pemPublicKey.c_str()),
-            gsl::narrow_cast<int>(pemPublicKey.size())),
-            BIO_free);
+   BIO* buffer =  BIO_new_mem_buf(
+            const_cast<char*>(pemPublicKey.c_str()),
+            gsl::narrow_cast<int>(pemPublicKey.size()));
+   
+   auto pKeyBuff = make_unique_ptr(buffer, BIO_free);
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, "RSA bio public key", ERROR_LOCATION);
 
-   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pRsa(PEM_read_bio_PUBKEY(pKeyBuff.get(), nullptr, nullptr, nullptr),
-                                                            EVP_PKEY_free);
+   auto pRsa = make_unique_ptr(
+            PEM_read_bio_PUBKEY(pKeyBuff.get(), nullptr, nullptr, nullptr),
+            EVP_PKEY_free);
+   
    if (!pRsa)
       return systemError(boost::system::errc::not_enough_memory, "RSA pub key", ERROR_LOCATION);
 
    // verify the message hash
-   std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)> ctx(EVP_PKEY_CTX_new(pRsa.get(), NULL),
-                                                                   EVP_PKEY_CTX_free);
+   auto ctx = make_unique_ptr(EVP_PKEY_CTX_new(pRsa.get(), NULL), EVP_PKEY_CTX_free);
    if (!ctx)
    {
       return systemError(boost::system::errc::not_enough_memory,
@@ -233,39 +276,19 @@ namespace {
 Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
                   const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPem)
 {
-   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(RSA_new(), RSA_free);
-   if (!pRsa)
-      return systemError(boost::system::errc::not_enough_memory, "RSA key", ERROR_LOCATION);
-
-   std::unique_ptr<BIGNUM, decltype(&BN_free)> pBigNum(BN_new(), BN_free);
-   if (!pBigNum)
-      return systemError(boost::system::errc::not_enough_memory, "RSA bignum", ERROR_LOCATION);
-
-   int ret = BN_set_word(pBigNum.get(), RSA_F4);
-   if (ret != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-
-   ret = RSA_generate_key_ex(pRsa.get(), 2048, pBigNum.get(), nullptr);
-   if (ret != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-
-   // Convert RSA to PKEY
-   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_PKEY_new(), EVP_PKEY_free);
+   // Generate RSA key
+   auto pKey = make_unique_ptr(EVP_RSA_gen(kRsaKeySizeBits), EVP_PKEY_free);
    if (!pKey)
-      return systemError(boost::system::errc::not_enough_memory, "RSA evp key", ERROR_LOCATION);
-
-   ret = EVP_PKEY_set1_RSA(pKey.get(), pRsa.get());
-   if (ret != 1)
       return getLastCryptoError(ERROR_LOCATION);
-
+   
    // Write public key in PEM format
-   ret = PEM_write_bio_PUBKEY(pBioPub.get(), pKey.get());
-   if (ret != 1)
+   int status = PEM_write_bio_PUBKEY(pBioPub.get(), pKey.get());
+   if (status != 1)
       return getLastCryptoError(ERROR_LOCATION);
 
    // Write private key in PEM format
-   ret = PEM_write_bio_PrivateKey(pBioPem.get(), pKey.get(), nullptr, nullptr, 0, nullptr, nullptr);
-   if (ret != 1)
+   status = PEM_write_bio_PrivateKey(pBioPem.get(), pKey.get(), nullptr, nullptr, 0, nullptr, nullptr);
+   if (status != 1)
       return getLastCryptoError(ERROR_LOCATION);
 
    return Success();
@@ -276,13 +299,17 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
 Error generateRsaKeyFiles(const FilePath& publicKeyPath,
                           const FilePath& privateKeyPath)
 {
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new_file(publicKeyPath.getAbsolutePath().c_str(), "w"),
-                                                     BIO_free);
+   auto pBioPub = make_unique_ptr(
+            BIO_new_file(publicKeyPath.getAbsolutePath().c_str(), "w"),
+            BIO_free);
+   
    if (!pBioPub)
       return getLastCryptoError(ERROR_LOCATION);
 
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new_file(privateKeyPath.getAbsolutePath().c_str(), "w"),
-                                                     BIO_free);
+   auto pBioPem = make_unique_ptr(
+            BIO_new_file(privateKeyPath.getAbsolutePath().c_str(), "w"),
+            BIO_free);
+   
    if (!pBioPem)
       return getLastCryptoError(ERROR_LOCATION);
 
@@ -292,14 +319,12 @@ Error generateRsaKeyFiles(const FilePath& publicKeyPath,
 Error generateRsaKeyPair(std::string* pOutPublicKey,
                          std::string* pOutPrivateKey)
 {
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new(BIO_s_mem()),
-                                                     BIO_free);
+   auto pBioPub = make_unique_ptr(BIO_new(BIO_s_mem()), BIO_free);
    if (!pBioPub)
       return systemError(boost::system::errc::not_enough_memory, "RSA bio key pair", ERROR_LOCATION);
 
    pOutPrivateKey->reserve(4096);
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new(BIO_s_mem()),
-                                                     BIO_free);
+   auto pBioPem = make_unique_ptr(BIO_new(BIO_s_mem()), BIO_free);
    if (!pBioPem)
       return systemError(boost::system::errc::not_enough_memory, "RSA bio priv key", ERROR_LOCATION);
 
@@ -326,31 +351,13 @@ Error generateRsaCertAndKey(const std::string& certCommonName,
                             const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioCert,
                             const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioCertKey)
 {
-   const int RSA_KEY_SIZE = 2048;
-
-   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(RSA_new(), RSA_free);
-   if (!pRsa)
-      return systemError(boost::system::errc::not_enough_memory, "RSA key", ERROR_LOCATION);
-
-   std::unique_ptr<BIGNUM, decltype(&BN_free)> pBigNum(BN_new(), BN_free);
-   if (!pBigNum)
-      return systemError(boost::system::errc::not_enough_memory, "RSA big num", ERROR_LOCATION);
-
-   int ret = BN_set_word(pBigNum.get(), RSA_F4);
-   if (ret != 1)
+   // Generate RSA key
+   auto pCertKey = make_unique_ptr(EVP_RSA_gen(kRsaKeySizeBits), EVP_PKEY_free);
+   if (!pCertKey)
       return getLastCryptoError(ERROR_LOCATION);
-
-   ret = RSA_generate_key_ex(pRsa.get(), RSA_KEY_SIZE, pBigNum.get(), nullptr);
-   if (ret != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-
-   std::unique_ptr<X509, decltype(&X509_free)> pCert { X509_new(), X509_free };
-   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pCertKey(EVP_PKEY_new(), EVP_PKEY_free);
-   if (!pCertKey || !pCert)
-      return systemError(boost::system::errc::not_enough_memory, "Cert/key", ERROR_LOCATION);
-
-   // Convert RSA to EVP_PKEY handing off this reference to the RSA so it's freed with pCertKey
-   EVP_PKEY_assign(pCertKey.get(), EVP_PKEY_RSA, reinterpret_cast<char*>(pRsa.release()));
+   
+   // Create certificate
+   auto pCert = make_unique_ptr(X509_new(), X509_free);
 
    ASN1_INTEGER_set(X509_get_serialNumber(pCert.get()), 1);
    X509_gmtime_adj(X509_get_notBefore(pCert.get()), 0);
@@ -370,13 +377,13 @@ Error generateRsaCertAndKey(const std::string& certCommonName,
    X509_sign(pCert.get(), pCertKey.get(), EVP_sha256());
 
    // Write cert key in PEM format
-   ret = PEM_write_bio_X509(pBioCert.get(), pCert.get());
-   if (ret != 1)
+   int status = PEM_write_bio_X509(pBioCert.get(), pCert.get());
+   if (status != 1)
       return getLastCryptoError(ERROR_LOCATION);
 
    // Write private key in PEM format
-   ret = PEM_write_bio_PrivateKey(pBioCertKey.get(), pCertKey.get(), nullptr, nullptr, 0, nullptr, nullptr);
-   if (ret != 1)
+   status = PEM_write_bio_PrivateKey(pBioCertKey.get(), pCertKey.get(), nullptr, nullptr, 0, nullptr, nullptr);
+   if (status != 1)
       return getLastCryptoError(ERROR_LOCATION);
 
    return Success();
@@ -388,13 +395,15 @@ Error generateRsaCertAndKeyFiles(const std::string& in_certCommonName,
                                  const FilePath& in_certPath,
                                  const FilePath& in_certKeyPath)
 {
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioCert(BIO_new_file(in_certPath.getAbsolutePath().c_str(), "w"),
-                                                      BIO_free);
+   auto pBioCert = make_unique_ptr(
+            BIO_new_file(in_certPath.getAbsolutePath().c_str(), "w"),
+            BIO_free);
    if (!pBioCert)
       return getLastCryptoError(ERROR_LOCATION);
 
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioCertKey(BIO_new_file(in_certKeyPath.getAbsolutePath().c_str(), "w"),
-                                                         BIO_free);
+   auto pBioCertKey = make_unique_ptr(
+            BIO_new_file(in_certKeyPath.getAbsolutePath().c_str(), "w"),
+            BIO_free);
    if (!pBioCertKey)
       return getLastCryptoError(ERROR_LOCATION);
 
@@ -421,13 +430,11 @@ Error generateRsaCertAndKeyPair(const std::string& in_certCommonName,
                                 std::string& out_cert,
                                 std::string& out_certKey)
 {
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioCert(BIO_new(BIO_s_mem()),
-                                                      BIO_free);
+   auto pBioCert = make_unique_ptr(BIO_new(BIO_s_mem()), BIO_free);
    if (!pBioCert)
       return systemError(boost::system::errc::not_enough_memory, "RSA cert buffer", ERROR_LOCATION);
 
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioCertKey(BIO_new(BIO_s_mem()),
-                                                         BIO_free);
+   auto pBioCertKey = make_unique_ptr(BIO_new(BIO_s_mem()), BIO_free);
    if (!pBioCertKey)
       return systemError(boost::system::errc::not_enough_memory, "RSA cert key buffer", ERROR_LOCATION);
 
@@ -449,62 +456,57 @@ Error generateRsaCertAndKeyPair(const std::string& in_certCommonName,
 }
 
 namespace {
-RSA* s_pRSA;
+EVP_PKEY* s_pRSA;
 std::string s_modulo;
 std::string s_exponent;
 }
 
 core::Error rsaInit()
 {
-   const int KEY_SIZE = 2048;
-   const int ENTROPY_BYTES = 4096;
+   // seed the random number generator
+   RAND_poll();
 
-   const BIGNUM *bn_n;
-   const BIGNUM *bn_e;
+   // validate that the RNG is happy
+   if (RAND_status() != 1)
+      return getLastCryptoError(ERROR_LOCATION);
 
-   int rnd = ::open("/dev/urandom", O_RDONLY);
-   if (rnd == -1)
-      return systemError(errno, "RSA /dev/urandom", ERROR_LOCATION);
+   // generate an RSA key pair
+   s_pRSA = EVP_RSA_gen(kRsaKeySizeBits);
 
-   char entropy[ENTROPY_BYTES];
-   if (-1 == ::read(rnd, entropy, ENTROPY_BYTES))
-   {
-      ::close(rnd);
-      return systemError(errno, "RSA read random", ERROR_LOCATION);
-   }
-   ::close(rnd);
-
-   RAND_seed(entropy, ENTROPY_BYTES);
-
-   #if OPENSSL_VERSION_NUMBER < 0x10100000L
-      s_pRSA = ::RSA_generate_key(KEY_SIZE, 0x10001, nullptr, nullptr);
-      if (!s_pRSA)
-         return getLastCryptoError(ERROR_LOCATION);
-
-      bn_n = s_pRSA->n;
-      bn_e = s_pRSA->e;
-   #else
-      BIGNUM *bn = BN_new();
-      BN_set_word(bn, RSA_F4);
- 
-      s_pRSA = RSA_new();
-      int rc = ::RSA_generate_key_ex(s_pRSA, KEY_SIZE, bn, nullptr);
-      BN_clear_free(bn);
-      if (rc != 1) {
-        RSA_free(s_pRSA);
-        return getLastCryptoError(ERROR_LOCATION);
-      }
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   // extract exponent + modulus for future use
+   const BIGNUM *bn, *be;
+   RSA* pRsaKeyPair = EVP_PKEY_get1_RSA(s_pRSA);
+   bn = pRsaKeyPair->n;
+   be = pRsaKeyPair->e;
+#elif OPENSSL_VERSION_NUMBER < 0x30000000L
+   // extract exponent + modulus for future use
+   const BIGNUM *bn, *be;
+   RSA* pRsaKeyPair = EVP_PKEY_get0_RSA(s_pRSA);
+   RSA_get0_key(pRsaKeyPair, &bn, &be, nullptr);
+#else
+   // extract exponent + modulus for future use
+   BIGNUM* bn = nullptr;
+   if (EVP_PKEY_get_bn_param(s_pRSA, "n", &bn) != 1)
+      return getLastCryptoError(ERROR_LOCATION);
    
-      RSA_get0_key(s_pRSA, &bn_n, &bn_e, nullptr);
-   #endif
+   BIGNUM* be = nullptr;
+   if (EVP_PKEY_get_bn_param(s_pRSA, "e", &be) != 1)
+      return getLastCryptoError(ERROR_LOCATION);
+#endif
 
-   char* n = BN_bn2hex(bn_n);
+   char* n = BN_bn2hex(bn);
    s_modulo = n;
    OPENSSL_free(n);
-   char* e = BN_bn2hex(bn_e);
+
+   char* e = BN_bn2hex(be);
    s_exponent = e;
    OPENSSL_free(e);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   RSA_free(pRsaKeyPair);
+#endif
+   
    return Success();
 }
 
@@ -516,24 +518,42 @@ void rsaPublicKey(std::string* pExponent, std::string* pModulo)
 
 core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlainText)
 {
+   int status = 0;
+   
    std::vector<unsigned char> cipherTextBytes;
    Error error = base64Decode(cipherText, cipherTextBytes);
    if (error)
       return error;
 
-   int size = RSA_size(s_pRSA);
-   std::vector<unsigned char> plainTextBytes(size);
-   int bytesRead = RSA_private_decrypt(gsl::narrow_cast<int>(cipherTextBytes.size()),
-                                       &cipherTextBytes[0],
-                                       &plainTextBytes[0],
-                                       s_pRSA,
-                                       RSA_PKCS1_PADDING);
-   if (bytesRead == -1)
+   auto ctx = make_unique_ptr(
+            EVP_PKEY_CTX_new(s_pRSA, nullptr),
+            EVP_PKEY_CTX_free);
+   
+   if (ctx == nullptr)
       return getLastCryptoError(ERROR_LOCATION);
-
-   plainTextBytes.resize(bytesRead);
-   pPlainText->assign(plainTextBytes.begin(), plainTextBytes.end());
-
+   
+   status = EVP_PKEY_decrypt_init(ctx.get());
+   if (status <= 0)
+      return getLastCryptoError(ERROR_LOCATION);
+   
+   std::size_t size = 0;
+   status = EVP_PKEY_decrypt(ctx.get(), nullptr, &size, cipherTextBytes.data(), cipherTextBytes.size());
+   if (status <= 0)
+      return getLastCryptoError(ERROR_LOCATION);
+   
+   unsigned char* buffer = (unsigned char*) OPENSSL_malloc(size);
+   if (buffer == nullptr)
+      return getLastCryptoError(ERROR_LOCATION);
+   
+   status = EVP_PKEY_decrypt(
+            ctx.get(),
+            buffer, &size,
+            cipherTextBytes.data(), cipherTextBytes.size());
+   
+   if (status <= 0)
+      return getLastCryptoError(ERROR_LOCATION);
+   
+   pPlainText->assign(buffer, buffer + size);
    return Success();
 }
 
