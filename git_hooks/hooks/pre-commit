@@ -1,11 +1,51 @@
 #!/bin/sh
 
-# A pre-commit hook script to run linting and formatting on staged files based
-# on the lint-staged, prettier and eslint configurations in src/node/desktop.
+# A pre-commit hook script to:
+#  -  run linting and formatting on staged files based on the lint-staged,
+#     prettier and eslint configurations in src/node/desktop.
+#  -  run detect-secrets on staged files to check for secrets.
 
-if [[ -f ./src/node/desktop/.lintstagedrc ]]
+color_error='\033[1;31m' # red
+color_highlight='\033[1;95m' # magenta
+color_none='\033[0m' # no color
+repo_root=$(git rev-parse --show-toplevel)
+
+# Linting and formatting on RStudio Desktop IDE files
+if test -f ./src/node/desktop/.lintstagedrc
 then
-    cd ./src/node/desktop && npx lint-staged
+    if git diff --staged --name-only | grep -qE '^src/node/desktop/.*'
+    then
+        cd ./src/node/desktop && npx lint-staged
+    fi
+else
+    echo >&2 "${color_highlight}Note: src/node/desktop linting pre-commit hook is not being run because ${color_none}.lintstagedrc${color_highlight} was not found.${color_none}"
+fi
+
+# Secret scanning on staged files
+if ! command -v detect-secrets &> /dev/null
+then
+    echo >&2 "${color_highlight}Note: secret scanning pre-commit hook is not being run because detect-secrets is not installed.${color_none}"
+    echo >&2 "\tInstall ${color_highlight}detect-secrets${color_none} with 'pip install detect-secrets' or 'brew install detect-secrets'."
+else
+    cd "$repo_root"
+    # This baseline file needs to be consistent with the baseline file in git_hooks/secrets/run-detect-secrets
+    baseline_file="git_hooks/secrets/.secrets.baseline"
+    # Use the pro baseline file if the repo is rstudio-pro
+    if git remote -v | grep -q rstudio-pro; then
+        # This naming convention needs to be consistent with the naming convention in git_hooks/secrets/run-detect-secrets
+        baseline_file="${baseline_file}_pro"
+    fi
+    # This array of excluded files needs to be consistent with the array in git_hooks/secrets/run-detect-secrets
+    exclude_files=(--exclude-files ${baseline_file} --exclude-files '.*/.*.min.js' --exclude-files 'src/cpp/ext/fmt/doc/html/api.html' --exclude-files 'src/cpp/ext/fmt/doc/html/searchindex.js' --exclude-files 'dependencies/submodules/.*')
+    secrets_results=$(git diff --staged --name-only -z | xargs -0 detect-secrets-hook --no-verify --baseline ${baseline_file} "${exclude_files[@]}")
+    if [ -n "$secrets_results" ]; then
+        echo "${color_highlight}------${color_none}\n"
+        echo "detect-secrets-hook results:\n"
+        echo "${color_error}Uh oh! It looks like you have secrets in your code. Please remove them before committing.${color_none}"
+        echo "If you are certain that these are false positives, see git_hooks/secrets/README.md for instructions on how to mark them as such.\n"
+        echo "$secrets_results"
+        exit 1
+    fi
 fi
 
 exit 0
