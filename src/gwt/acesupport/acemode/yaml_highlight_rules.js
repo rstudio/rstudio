@@ -118,7 +118,8 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
         onMatch: function (val, state, stack, line) {
 
           // compute indent (allow for comment prefix for comment-embedded YAML)
-          var indent = /^(?:#[|])?\s*/.exec(line)[0];
+          var match = /^(?:#[|])?(\s*)/.exec(line);
+          var indent = match[1];
 
           // save prior state + indent length
           stack = stack || [];
