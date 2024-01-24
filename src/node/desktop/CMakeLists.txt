@@ -173,17 +173,31 @@ endif()
 
 
 # define custom command for fixing up Electron fuses post-hoc
-add_custom_command(
-   OUTPUT "${ELECTRON_BUILD_DIR}/out/fuses"
-   DEPENDS "${DESKTOP_SOURCES}"
-   COMMENT "Setting Electron fuses"
-   WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
-   COMMAND
-      ${CMAKE_COMMAND} -E env
-      "PATH=${MODIFIED_PATH}"
-      "MAKEFLAGS="
-      ${NPM} run install-fuses
-)
+if (WIN32)
+
+   add_custom_command(
+      OUTPUT "${ELECTRON_BUILD_DIR}/out/fuses"
+      DEPENDS "${DESKTOP_SOURCES}"
+      COMMENT "Setting Electron fuses"
+      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      COMMAND ${NPM} run install-fuses
+   )
+
+else()
+
+   add_custom_command(
+      OUTPUT "${ELECTRON_BUILD_DIR}/out/fuses"
+      DEPENDS "${DESKTOP_SOURCES}"
+      COMMENT "Setting Electron fuses"
+      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      COMMAND
+         ${CMAKE_COMMAND} -E env
+         "PATH=${MODIFIED_PATH}"
+         "MAKEFLAGS="
+         ${NPM} run install-fuses
+   )
+
+endif()
 
 # define a target, indicating that building this target
 # requires that aforementioned OUTPUT file
