@@ -23,6 +23,7 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationCsrfToken;
@@ -177,34 +178,30 @@ public class RpcRequest
                   // override error message for status code 0
                   if (status == 0)
                   {
+                     type = RpcError.TRANSMISSION_ERROR_NO_RESPONSE;
+                     message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
+
                      if (!Desktop.isDesktop())
                      {
                         // only show this error if not desktop and return early. Otherwise handle error as normal
-                        message = constants_.rpcOverrideErrorMessageServer(constants_.rStudioServerMessage());
                      
                         if (!showingNoConnectError_) 
                         {
                            showingNoConnectError_ = true;
+                           MessageDisplay.suppressAllErrors = true;
                            RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                               GlobalDisplay.MSG_ERROR,
                               constants_.rpcErrorMessageCaption(),
-                              message,
+                              constants_.rpcOverrideErrorMessageServer(constants_.rStudioServerMessage()),
                               constants_.rpcOverrideErrorMessageLink(),
                               "/",
                               () -> {
                                  showingNoConnectError_ = false;
+                                 MessageDisplay.suppressAllErrors = false;
                               }
                            );
                         }
-                        requestLogEntry_.logResponse(ResponseType.Unknown,
-                              message);
-                        // trigger any error handlers, but pass a null error to suppress dialogs
-                        requestCallback.onError(enclosingRequest, null);
-                        return;
                      }
-
-                     type = RpcError.TRANSMISSION_ERROR_NO_RESPONSE;
-                     message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
                   }
 
                   requestLogEntry_.logResponse(ResponseType.Unknown,
