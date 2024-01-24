@@ -44,6 +44,8 @@ public abstract class MessageDisplay
    public final static int INPUT_NUMERIC = 3;
    public final static int INPUT_USERNAME = 4;
 
+   public static boolean suppressAllErrors = false;
+
    public static class PromptWithOptionResult
    {
       public String input;
@@ -355,6 +357,7 @@ public abstract class MessageDisplay
 
    public void showErrorMessage(String caption, String message)
    {
+      if (suppressAllErrors || message.isEmpty()) { return; }
       createDialog(MSG_ERROR, caption, message).showModal();
    }
 
@@ -362,6 +365,11 @@ public abstract class MessageDisplay
                                 String message,
                                 Operation dismissed)
    {
+      if (suppressAllErrors || message.isEmpty())
+      {
+         dismissed.execute();
+         return; 
+      }
       createDialog(MSG_ERROR, caption, message)
             .addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, dismissed)
             .showModal();
@@ -371,6 +379,7 @@ public abstract class MessageDisplay
                                 String message,
                                 Focusable focusAfter)
    {
+      if (suppressAllErrors || message.isEmpty()) { return; }
       showMessage(MSG_ERROR, caption, message, focusAfter);
    }
 
@@ -378,6 +387,7 @@ public abstract class MessageDisplay
                                 String message,
                                 CanFocus focusAfter)
    {
+      if (suppressAllErrors || message.isEmpty()) { return; }
       showMessage(MSG_ERROR, caption, message, focusAfter);
    }
 
