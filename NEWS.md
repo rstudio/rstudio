@@ -26,6 +26,7 @@
 - Removed obsolete "Use Internet Explorer library/proxy" checkbox from Packages settings (#13250)
 - Improved error handling for Desktop Pro license handling (rstudio-pro#4873)
 - Fixed exception being logged when copying or cutting from editor in a separate window (#14140)
+- Fixed an issue where RStudio's R diagnostics warned about potentially missing arguments even when disabled via preferences (#14046)
 
 #### Posit Workbench
 -
