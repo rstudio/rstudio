@@ -3,7 +3,7 @@
 Here is an informal, manually run and verified "test" to confirm that the secrets scanning is working as expected.
 
 1. Ensure `detect-secrets` is already installed. See the [secrets README](../README.md#installation) for installation instructions.
-2. From this directory, run `detect-secrets scan --no-verify --all-files > secrets.baseline_test`.
+2. From this directory, run `detect-secrets scan --no-verify --all-files --exclude-files 'secrets_report_test.json' > secrets.baseline_test`.
 3. Confirm that all of the secrets below are flagged as secrets in the generated `secrets.baseline_test` file, with the exception of the `AWS_ACCESS_KEY_SECRET` secret. You can confirm this by doing one of the following:
     - Manually inspecting the `secrets.baseline_test` file to confirm that the expected secrets are listed
     - Running `detect-secrets audit secrets.baseline_test` and confirming that the expected secrets are listed
@@ -12,7 +12,7 @@ Here is an informal, manually run and verified "test" to confirm that the secret
 ---
 
 ## Example secrets for secret scanning
-All of secrets below are randomly generated strings that match the expected string format for each secret type.
+All of the secrets below are randomly generated strings that match the expected string format for each secret type.
 
 ### Github secrets https://github.blog/2021-04-05-behind-githubs-new-authentication-token-formats
 GITHUB_PERSONAL=ghp_65CCDtH2W4OzBcxpUSr31wgbzR73sba1IIxA
