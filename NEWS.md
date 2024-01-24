@@ -22,6 +22,7 @@
 - Fixed an issue where pipes containing a large number of comments were not indented correctly (#12674)
 - Fixed an issue where RStudio would unnecessarily list directory contents when opening a file (#14096)
 - Localize Copilot-related user interface strings into French (#14092)
+- Improved highlighting of YAML chunk options for Quarto Documents (#13836)
 - Removed obsolete "Use Internet Explorer library/proxy" checkbox from Packages settings (#13250)
 - Improved error handling for Desktop Pro license handling (rstudio-pro#4873)
 - Fixed exception being logged when copying or cutting from editor in a separate window (#14140)
