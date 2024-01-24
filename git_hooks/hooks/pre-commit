@@ -18,8 +18,6 @@ hook_setup() {
     # Print a separator between hooks
     if [ "$previous_hook_run" = true ]; then
         echo "${color_highlight}------${color_none}"
-    else
-        previous_hook_run=true
     fi
 }
 
@@ -29,6 +27,7 @@ then
     hook_setup
     if git diff --staged --name-only | grep -qE '^src/node/desktop/.*'
     then
+        previous_hook_run=true
         cd ./src/node/desktop && npx lint-staged
     fi
 else
@@ -43,6 +42,7 @@ then
 else
     hook_setup
     echo "Running detect-secrets-hook on staged files..."
+    previous_hook_run=true
     secrets_results=$(./git_hooks/secrets/run-detect-secrets run-hook)
     if [ -n "$secrets_results" ]; then
         echo "detect-secrets-hook results:\n"
