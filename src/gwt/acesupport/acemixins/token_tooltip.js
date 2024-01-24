@@ -90,13 +90,8 @@ oop.inherits(TokenTooltip, Tooltip);
             return;
         }
 
-        var tokenText = token.type;
-        if (token.state)
-            tokenText += "|" + token.state;
-        if (token.merge)
-            tokenText += "\n  merge";
-        if (token.stateTransitions)
-            tokenText += "\n  " + token.stateTransitions.join("\n  ");
+        var state = JSON.stringify(session.getState(row));
+        var tokenText = state + "| " + token.type;
 
         if (this.tokenText != tokenText) {
             this.setText(tokenText);
