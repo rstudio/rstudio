@@ -163,7 +163,7 @@ var RMarkdownHighlightRules = function() {
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
-   
+
    // Embed mermaid highlight rules
    Utils.embedRules(
       this,
@@ -173,7 +173,7 @@ var RMarkdownHighlightRules = function() {
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
-   
+
    // Embed dot highlight rules
    Utils.embedRules(
 	  this,
@@ -183,7 +183,7 @@ var RMarkdownHighlightRules = function() {
 	  this.$reChunkEndString,
 	  ["start", "listblock", "allowBlock"]
    );
-   
+
    // Embed JavaScript highlighting rules
    Utils.embedRules(
       this,
@@ -233,7 +233,7 @@ var RMarkdownHighlightRules = function() {
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
-   
+
    // Embed text highlight rules
    Utils.embedRules(
       this,
@@ -265,6 +265,7 @@ var RMarkdownHighlightRules = function() {
    });
 
    this.normalizeRules();
+
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 
@@ -297,7 +298,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reSassChunkStartString       = engineRegex("sass");
    this.$reLessChunkStartString       = engineRegex("less");
    this.$reTextChunkStartString       = engineRegex("(?:asis|text)");
-   
+
 }).call(RMarkdownHighlightRules.prototype);
 
 exports.RMarkdownHighlightRules = RMarkdownHighlightRules;

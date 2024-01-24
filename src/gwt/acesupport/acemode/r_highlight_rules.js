@@ -924,7 +924,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         token : "comment.doc.tag",
         regex : "#\\s*[|]",
         onMatch: function(value, state, stack, line) {
-          this.next = stack.length ? stack[0] : "yaml-start";
+          this.next = stack.length ? stack[0] : state.replaceAll("start", "yaml-start");
           return this.token;
         }
       },
