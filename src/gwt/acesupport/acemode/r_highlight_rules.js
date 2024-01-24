@@ -922,7 +922,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         // state in a number of places, so we need to check whether states
         // have been encoded into the stack, and reuse an old state if possible.
         token : "comment.doc.tag",
-        regex : "#\\s*[|]",
+        regex : "^\\s*#\\s*[|]",
         onMatch: function(value, state, stack, line) {
           this.next = stack.length ? stack[0] : state.replaceAll("start", "yaml-start");
           return this.token;
