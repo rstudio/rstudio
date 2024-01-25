@@ -1,21 +1,51 @@
 #!/bin/sh
 
 # A pre-commit hook script to:
-#  -  run linting and formatting on staged files based on the lint-staged,
-#     prettier and eslint configurations in src/node/desktop.
-#  -  run detect-secrets on staged files to check for secrets.
+#  - run linting and formatting on staged files based on the lint-staged,
+#    prettier and eslint configurations in src/node/desktop.
+#  - run detect-secrets on staged files to check for secrets.
+# This script will run all applicable hooks and fails the commit afterwards if any of the hooks fail.
 
 color_error='\033[1;31m' # red
 color_highlight='\033[1;95m' # magenta
 color_none='\033[0m' # no color
 repo_root=$(git rev-parse --show-toplevel)
 
+fail_precommit=false # will be set to true if the pre-commit hook should fail at the end
+
+hook_setup() {
+    cd "$repo_root"
+    # Print a separator line before the output of each hook
+    echo "${color_highlight}------${color_none}"
+}
+
+precommit_exit() {
+    hook_setup
+    if [ "$fail_precommit" = true ]; then
+        echo >&2 "${color_error}pre-commit hook failed.${color_none}"
+        exit 1
+    else
+        echo "${color_highlight}pre-commit hook complete.${color_none}"
+        exit 0
+    fi
+}
+
+echo "${color_highlight}Running pre-commit hook...${color_none}"
+
+#####################################
+#          Add hooks below          #
+#####################################
+
 # Linting and formatting on RStudio Desktop IDE files
 if test -f ./src/node/desktop/.lintstagedrc
 then
+    hook_setup
     if git diff --staged --name-only | grep -qE '^src/node/desktop/.*'
     then
         cd ./src/node/desktop && npx lint-staged
+        if [ $? -ne 0 ]; then
+            fail_precommit=true
+        fi
     fi
 else
     echo >&2 "${color_highlight}Note: src/node/desktop linting pre-commit hook is not being run because ${color_none}.lintstagedrc${color_highlight} was not found.${color_none}"
@@ -27,25 +57,22 @@ then
     echo >&2 "${color_highlight}Note: secret scanning pre-commit hook is not being run because detect-secrets is not installed.${color_none}"
     echo >&2 "\tInstall ${color_highlight}detect-secrets${color_none} with 'pip install detect-secrets' or 'brew install detect-secrets'."
 else
-    cd "$repo_root"
-    # This baseline file needs to be consistent with the baseline file in git_hooks/secrets/run-detect-secrets
-    baseline_file="git_hooks/secrets/.secrets.baseline"
-    # Use the pro baseline file if the repo is rstudio-pro
-    if git remote -v | grep -q rstudio-pro; then
-        # This naming convention needs to be consistent with the naming convention in git_hooks/secrets/run-detect-secrets
-        baseline_file="${baseline_file}_pro"
-    fi
-    # This array of excluded files needs to be consistent with the array in git_hooks/secrets/run-detect-secrets
-    exclude_files=(--exclude-files ${baseline_file} --exclude-files '.*/.*.min.js' --exclude-files 'src/cpp/ext/fmt/doc/html/api.html' --exclude-files 'src/cpp/ext/fmt/doc/html/searchindex.js' --exclude-files 'dependencies/submodules/.*')
-    secrets_results=$(git diff --staged --name-only -z | xargs -0 detect-secrets-hook --no-verify --baseline ${baseline_file} "${exclude_files[@]}")
+    hook_setup
+    echo "Running detect-secrets-hook on staged files..."
+    secrets_results=$(./git_hooks/secrets/run-detect-secrets run-hook)
     if [ -n "$secrets_results" ]; then
-        echo "${color_highlight}------${color_none}\n"
-        echo "detect-secrets-hook results:\n"
-        echo "${color_error}Uh oh! It looks like you have secrets in your code. Please remove them before committing.${color_none}"
+        fail_precommit=true
+        echo "\n${color_error}Uh oh! It looks like you have secrets in your code. Please remove them before committing.${color_none}"
         echo "If you are certain that these are false positives, see git_hooks/secrets/README.md for instructions on how to mark them as such.\n"
         echo "$secrets_results"
-        exit 1
+    else
+        echo "🎉 No secrets found!"
     fi
 fi
 
-exit 0
+#####################################
+#          Add hooks above          #
+#####################################
+
+# This should be the last line of this file
+precommit_exit
