@@ -23,12 +23,9 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationCsrfToken;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.GlobalDisplay;
 
 // NOTE: RpcRequest is an immutable object (all fields are marked final).
 // this means that it is safe to re-submit an RpcRequest since the 
