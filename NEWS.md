@@ -5,7 +5,7 @@
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
 - RStudio's GWT sources can now be built with JDKs > 11 (#11242)
 - R projects can be given a custom display name in Project Options (#1909)
-- RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$ $` and `$$ $$` instead (#12862)
+- RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$$ $$` and `$ $` instead (#12862)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
