@@ -294,27 +294,11 @@ public class UnifiedEmitter
          }
 
          // Finish off the context iterator if necessary
-         if (ctx != null)
-         {
-            while (ctx != null)
-            {
-               ctxPop(true);
-            }
-         }
+         while (ctx != null)
+            ctxPop(true);
 
-         // Finish off the diff iterator if necessary
-         if (dff != null)
-         {
-            // TODO: Why is this necessary? Otherwise, attempts to stage
-            // the final changes in a diff will fail.
-            //
-            // https://github.com/rstudio/rstudio/issues/5476
-            skew++;
-            while (dff != null)
-            {
-               dffPop(true);
-            }
-         }
+         while (dff != null)
+            dffPop(true);
       }
 
       /**
@@ -370,18 +354,18 @@ public class UnifiedEmitter
          switch (dff.getType())
          {
             case Deletion:
+               skew--;
                output.add(new Line(Type.Deletion, dff.getOldLine(),
-                                   dff.getOldLine() + Math.min(-1, skew),
+                                   dff.getOldLine() + skew,
                                    dff.getText(),
                                    dff.getDiffIndex()));
-               skew--;
                break;
             case Insertion:
+               skew++;
                output.add(new Line(Type.Insertion, dff.getOldLine(),
-                                   dff.getOldLine() + Math.max(1, skew),
+                                   dff.getOldLine() + skew,
                                    dff.getText(),
                                    dff.getDiffIndex()));
-               skew++;
                break;
             default:
                assert false : "Unexpected diff line type";
