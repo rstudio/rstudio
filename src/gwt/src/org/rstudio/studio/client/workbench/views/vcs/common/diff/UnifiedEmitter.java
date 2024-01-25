@@ -14,13 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common.diff;
 
-import org.rstudio.core.client.DuplicateHelper;
-import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import org.rstudio.core.client.DuplicateHelper;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
 
 /**
  * This class is used to subset an existing patch (the existing patch is
@@ -65,8 +65,10 @@ public class UnifiedEmitter
    {
       prepareList(contextLines_, Type.Insertion);
       prepareList(diffLines_, Type.Same);
-      final ArrayList<DiffChunk> chunks = toDiffChunks(
-            new OutputLinesGenerator(contextLines_, diffLines_).getOutput());
+      
+      OutputLinesGenerator generator = new OutputLinesGenerator(contextLines_, diffLines_);
+      ArrayList<Line> output = generator.getOutput();
+      ArrayList<DiffChunk> chunks = toDiffChunks(output);
 
       if (chunks.size() == 0)
          return "";
@@ -109,7 +111,6 @@ public class UnifiedEmitter
       StringBuilder sb = new StringBuilder();
 
       // Write chunk header: @@ -A,B +C,D @@
-
       Range[] ranges = chunk.getRanges();
       for (int i = 0; i < ranges.length; i++)
          sb.append('@');
@@ -191,12 +192,9 @@ public class UnifiedEmitter
 
       Range[] ranges = new Range[firstLines.length];
       for (int i = 0; i < firstLines.length; i++)
-         ranges[i] = new Range(firstLines[i], 1 + lastLines[i] - firstLines[i]);
+         ranges[i] = new Range(firstLines[i], lastLines[i] - firstLines[i] + 1);
 
-      return new DiffChunk(ranges,
-                           "",
-                           new ArrayList<>(sublist),
-                           -1);
+      return new DiffChunk(ranges, "", new ArrayList<>(sublist), -1);
    }
 
    private static void prepareList(ArrayList<Line> lines, Type typeToRemove)
@@ -263,9 +261,13 @@ public class UnifiedEmitter
 */
             int cmp = ctx.getDiffIndex() - dff.getDiffIndex();
             if (cmp < 0)
+            {
                ctxPop(true);
+            }
             else if (cmp > 0)
+            {
                dffPop(true);
+            }
             else
             {
                /**
@@ -292,12 +294,27 @@ public class UnifiedEmitter
          }
 
          // Finish off the context iterator if necessary
-         while (ctx != null)
-            ctxPop(true);
+         if (ctx != null)
+         {
+            while (ctx != null)
+            {
+               ctxPop(true);
+            }
+         }
 
          // Finish off the diff iterator if necessary
-         while (dff != null)
-            dffPop(true);
+         if (dff != null)
+         {
+            // TODO: Why is this necessary? Otherwise, attempts to stage
+            // the final changes in a diff will fail.
+            //
+            // https://github.com/rstudio/rstudio/issues/5476
+            skew++;
+            while (dff != null)
+            {
+               dffPop(true);
+            }
+         }
       }
 
       /**
@@ -354,14 +371,14 @@ public class UnifiedEmitter
          {
             case Deletion:
                output.add(new Line(Type.Deletion, dff.getOldLine(),
-                                   dff.getOldLine() + skew,
+                                   dff.getOldLine() + Math.min(-1, skew),
                                    dff.getText(),
                                    dff.getDiffIndex()));
                skew--;
                break;
             case Insertion:
                output.add(new Line(Type.Insertion, dff.getOldLine(),
-                                   dff.getOldLine() + skew,
+                                   dff.getOldLine() + Math.max(1, skew),
                                    dff.getText(),
                                    dff.getDiffIndex()));
                skew++;
