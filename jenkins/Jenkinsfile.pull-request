@@ -57,9 +57,9 @@ pipeline {
         sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
         script {
           exitCode = sh(returnStatus: true, script: "snyk code test ${TMP_SNYK_PATH} | sed '/^Testing/d' | sed '/./,\$!d' > ${TMP_SNYK_PATH}/output.txt")
-          echo exitCode
-
           sh "cat ${TMP_SNYK_PATH}/output.txt"
+
+          echo "${exitCode}"
           // - exit code 0: sucessful scan, no vulns identified in code
           // - exit code 1: unsuccessful scan, code had vulns (real or false positive)
           // - exit code 3: scan was not-applicable to files. This is typical for docs or NEWS commits
