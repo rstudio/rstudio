@@ -32,7 +32,7 @@ const my_secret = "my_secret"  // line 3
 ## False positives
 If you are receiving false positives from the pre-commit hook, you can update the baseline secrets file to mark the detected "secrets" as okay to commit.
 
-First, you'll need to update the baseline secrets file to include the new strings. Then, you'll run the audit command to mark the new strings as false positives. Once complete, you can commit the updated baseline secrets file.
+First, update the baseline secrets file to include the new strings. Then, run the audit command to mark the new strings as false positives. Once complete, commit the updated baseline secrets file.
 
 ### Updating the baseline secrets file
 From the root of the project:
