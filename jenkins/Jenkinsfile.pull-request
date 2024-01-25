@@ -56,7 +56,7 @@ pipeline {
         sh "mkdir --parents ${TMP_SNYK_PATH}"
         sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
         script {
-          exitCode = sh(returnStatus: true, script: "snyk code test ${TMP_SNYK_PATH} | sed '/^Testing/d' | sed '/./,\$!d' > ${TMP_SNYK_PATH}/output.txt")
+          exitCode = sh(returnStatus: true, script: "snyk code test ${TMP_SNYK_PATH} > ${TMP_SNYK_PATH}/output.txt")
           sh "cat ${TMP_SNYK_PATH}/output.txt"
 
           echo "${exitCode}"
@@ -67,7 +67,7 @@ pipeline {
           // In the case of code 3, we don't want to post anything in order to avoid generating confusion
           if (exitCode != 3) {
             status = exitCode == 0 ? "success" : "failure"
-            text = !IS_PRO ? JOB_URL : sh(returnStdout: true, script: "jq -Rs . ${TMP_SNYK_PATH}/output.txt")
+            text = !IS_PRO ? JOB_URL : sh(returnStdout: true, script: "sed '/^Testing/d' ${TMP_SNYK_PATH}/output.txt | sed '/./,\$!d' | jq -Rs .")
             utils.postReviewCheck('snyk-code-check', status, 'Snyk static code scan', 'Snyk static code analysis output', text)
           }
         }
