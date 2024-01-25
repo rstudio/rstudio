@@ -23,12 +23,9 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationCsrfToken;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.GlobalDisplay;
 
 // NOTE: RpcRequest is an immutable object (all fields are marked final).
 // this means that it is safe to re-submit an RpcRequest since the 
@@ -178,29 +175,11 @@ public class RpcRequest
                   // override error message for status code 0
                   if (status == 0)
                   {
-                     type = RpcError.TRANSMISSION_ERROR_NO_RESPONSE;
                      message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
 
                      if (!Desktop.isDesktop())
                      {
-                        // only show this error if not desktop and return early. Otherwise handle error as normal
-                     
-                        if (!showingNoConnectError_) 
-                        {
-                           showingNoConnectError_ = true;
-                           MessageDisplay.suppressAllErrors = true;
-                           RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
-                              GlobalDisplay.MSG_ERROR,
-                              constants_.rpcErrorMessageCaption(),
-                              constants_.rpcOverrideErrorMessageServer(constants_.rStudioServerMessage()),
-                              constants_.rpcOverrideErrorMessageLink(),
-                              "/",
-                              () -> {
-                                 showingNoConnectError_ = false;
-                                 MessageDisplay.suppressAllErrors = false;
-                              }
-                           );
-                        }
+                        message = constants_.rpcOverrideErrorMessageServer(constants_.rStudioServerMessage());
                      }
                   }
 
@@ -318,6 +297,4 @@ public class RpcRequest
    private Request request_ = null;
    private RequestLogEntry requestLogEntry_ = null;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
-
-   private static boolean showingNoConnectError_ = false;
 }
