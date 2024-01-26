@@ -206,8 +206,7 @@
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
    
    # NOTE: We previously used `rsconnect:::getAppById()`, but this API did not
-   # provide the requisite 'config_url' entry, which we display in UI for
-   # redeployments.
+   # provide the requisite 'config_url' entry, which we display in UI for redeployments.
    
    # collect application list
    apps <- tryCatch(
@@ -223,13 +222,13 @@
    # drop __api__ suffix from hostUrl if necessary
    hostUrl <- sub("/__api__$", "/", hostUrl)
    
-   # keep only those which start with the provided host URL
+   # keep only application records which:
+   # - start with the provided host URL;
+   # - have a matching id
    apps <- apps[.rs.startsWith(apps$url, hostUrl) & apps$id == id, ]
    
-   list(
-      error = NULL,
-      app   = .rs.scalarListFromList(apps)
-   )
+   # TODO: What should we do if we have nrow(apps) != 1?
+   list(error = NULL, app = .rs.scalarListFromList(apps))
 
 })
 
