@@ -205,7 +205,7 @@ public class AceEditorBackgroundLinkHighlighter
    {
       return BrowseCap.isMacintosh()
             ? modifier == KeyboardShortcut.META
-            : modifier == KeyboardShortcut.SHIFT;
+            : modifier == KeyboardShortcut.CTRL;
    }
 
    private void beginDetectClickTarget(int modifier)
@@ -699,8 +699,8 @@ public class AceEditorBackgroundLinkHighlighter
       protected MarkerRenderer() {}
 
       public static final native MarkerRenderer create(final AceEditorNative editor,
-                                                      final String clazz,
-                                                      final String title)
+                                                       final String clazz,
+                                                       final String title)
       /*-{
          var markerBack = editor.renderer.$markerBack;
          return $entry(function(html, range, left, top, config) {
