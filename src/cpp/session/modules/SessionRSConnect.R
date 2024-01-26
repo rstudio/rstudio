@@ -215,8 +215,10 @@
       error = identity
    )
    
-   if (inherits(apps, "error"))
-      return(list(error = .rs.scalar(apps), app = NULL))
+   if (inherits(apps, "error")) {
+      message <- conditionMessage(apps)
+      return(list(error = .rs.scalar(message), app = NULL))
+   }
 
    # drop __api__ suffix from hostUrl if necessary
    hostUrl <- sub("/__api__$", "/", hostUrl)
