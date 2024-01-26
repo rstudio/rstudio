@@ -204,26 +204,37 @@
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
-   # init with empty list
-   appList <- list()
-   appError <- ""
+   
+   # NOTE: We previously used `rsconnect:::getAppById()`, but this API did not
+   # provide the requisite 'config_url' entry, which we display in UI for redeployments.
+   
+   # collect application list
+   apps <- tryCatch(
+      rsconnect::applications(account = account, server = server),
+      error = identity
+   )
+   
+   if (inherits(apps, "error")) {
+      message <- conditionMessage(apps)
+      return(list(error = .rs.scalar(message), app = NULL))
+   }
 
-   # attempt to get app ID from server
-   tryCatch({
-     appList <- rsconnect:::getAppById(id = id, account = account, server = server,
-                                       hostUrl = hostUrl)
-   }, error = function(e) {
-      # record the error message when a failure occurs (will be passed to the client for display)
-      appError <<- conditionMessage(e)
-   })
+   # drop __api__ suffix from hostUrl if necessary
+   hostUrl <- sub("/__api__$", "/", hostUrl)
+   
+   # keep only application records which:
+   # - start with the provided host URL;
+   # - have a matching id
+   apps <- apps[.rs.startsWith(apps$url, hostUrl) & apps$id == id, ]
+   
+   # TODO: What should we do if we have nrow(apps) != 1?
+   list(error = NULL, app = .rs.scalarListFromList(apps))
 
-   list(error = .rs.scalar(appError),
-        app   = if(length(appList) > 0) .rs.scalarListFromList(appList) else NULL)
 })
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
-   # suppress output when validating server URL (timeouts otherwise emitted to
-   # console)
+   # suppress output when validating server URL
+   # (timeouts otherwise emitted to console)
    capture.output(serverInfo <- rsconnect:::validateServerUrl(url = url))
    .rs.scalarListFromList(serverInfo)
 })
