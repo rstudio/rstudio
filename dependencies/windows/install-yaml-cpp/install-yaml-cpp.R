@@ -1,8 +1,8 @@
 
 OWD <- getwd()
 
-YAML_CPP_VERSION   <- "0.6.3"
-YAML_CPP_BRANCH    <- paste("yaml-cpp", YAML_CPP_VERSION, sep = "-")
+YAML_CPP_VERSION   <- "0.8.0"
+YAML_CPP_BRANCH    <- YAML_CPP_VERSION
 YAML_CPP_ROOT      <- file.path(getwd(), YAML_CPP_BRANCH)
 YAML_CPP_SOURCES   <- file.path(YAML_CPP_ROOT, "sources")
 YAML_CPP_BUILD_32  <- file.path(YAML_CPP_ROOT, "build/x86")

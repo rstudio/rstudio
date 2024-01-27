@@ -33,7 +33,7 @@ set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-3.1.4.zip
 set BOOST_FILES=boost-1.83.0-win-msvc142.zip
-set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
+set YAML_CPP_FILES=yaml-cpp-0.8.0.zip
 set RESOURCE_HACKER=resource_hacker.zip
 
 set NSIS_NSPROCESS_VERSION=1.6

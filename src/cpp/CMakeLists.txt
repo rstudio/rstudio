@@ -195,6 +195,7 @@ if(RSTUDIO_PACKAGE_BUILD)
 endif()
 
 # yaml-cpp
+set(YAML_CPP_VERSION "0.8.0")
 if(WIN32)
 
    if(RSTUDIO_SESSION_WIN32)
@@ -203,7 +204,7 @@ if(WIN32)
       set(YAML_CPP_ARCH "x64")
    endif()
 
-   set(YAML_CPP_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/yaml-cpp-0.6.3")
+   set(YAML_CPP_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/yaml-cpp-${YAML_CPP_VERSION}")
    set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_ROOT}/include")
 
    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -214,8 +215,8 @@ if(WIN32)
 
 elseif(NOT RSTUDIO_USE_SYSTEM_YAML_CPP)
 
-   set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/0.6.3/include")
-   set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/0.6.3/build/libyaml-cpp.a")
+   set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/include")
+   set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/build/libyaml-cpp.a")
 
 else()
    # NOTE: defines the following CMake variables:
