@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
-
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
@@ -90,6 +88,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -385,9 +384,12 @@ public class VisualMode implements VisualModeEditorSync,
                            {
                               // dismiss the warning bar
                               view_.hideWarningBar();
+                              
+                              // reset toolbar widgets (they'll be rebuilt on refresh)
+                              view_.getMarkdownToolbar().resetDisplay(true);
+                              
                               // this will trigger the refresh b/c the format changed
                               syncFromEditorIfActivated();
-                             
                            });
                         }
                         
@@ -1519,7 +1521,7 @@ public class VisualMode implements VisualModeEditorSync,
    {
       if (panmirror_ == null)
       {
-         // create panmirror (no progress b/c we alread have pane progress)
+         // create panmirror (no progress b/c we already have pane progress)
          PanmirrorContext context = createPanmirrorContext(); 
          PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
