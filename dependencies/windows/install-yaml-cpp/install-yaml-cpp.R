@@ -1,15 +1,20 @@
 
+if (file.exists("dependencies/windows/install-yaml-cpp"))
+   setwd("dependencies/windows/install-yaml-cpp")
+
 OWD <- getwd()
+CLEAN <- !interactive()
 
 YAML_CPP_VERSION   <- "0.8.0"
 YAML_CPP_BRANCH    <- YAML_CPP_VERSION
-YAML_CPP_ROOT      <- file.path(getwd(), YAML_CPP_BRANCH)
+YAML_CPP_FOLDER    <- sprintf("yaml-cpp-%s", YAML_CPP_VERSION)
+YAML_CPP_ROOT      <- file.path(getwd(), YAML_CPP_FOLDER)
 YAML_CPP_SOURCES   <- file.path(YAML_CPP_ROOT, "sources")
 YAML_CPP_BUILD_32  <- file.path(YAML_CPP_ROOT, "build/x86")
 YAML_CPP_BUILD_64  <- file.path(YAML_CPP_ROOT, "build/x64")
-YAML_CPP_INSTALL   <- file.path(YAML_CPP_ROOT, YAML_CPP_BRANCH)
+YAML_CPP_INSTALL   <- file.path(YAML_CPP_ROOT, YAML_CPP_FOLDER)
 
-if (file.exists(YAML_CPP_ROOT))
+if (CLEAN && file.exists(YAML_CPP_ROOT))
    shell(paste("rmdir /S /Q", shQuote(YAML_CPP_ROOT)))
 
 # clone yaml-cpp repository
@@ -21,9 +26,18 @@ args <- c(
    YAML_CPP_SOURCES
 )
 
-unlink(YAML_CPP_SOURCES, recursive = TRUE)
-dir.create(dirname(YAML_CPP_SOURCES), recursive = TRUE, showWarnings = FALSE)
-system2("git", args)
+if (CLEAN) {
+   unlink(YAML_CPP_SOURCES, recursive = TRUE)
+   dir.create(dirname(YAML_CPP_SOURCES), recursive = TRUE, showWarnings = FALSE)
+   system2("git", args)
+}
+
+cmakeCommonArgs <- c(
+   "-DYAML_CPP_BUILD_TESTS=Off",
+   "-DYAML_CPP_BUILD_TOOLS=Off",
+   "-DCMAKE_CXX_FLAGS_DEBUG=\"/Zi /Ob0 /Od /RTC1 /MDd\"",
+   "-DCMAKE_CXX_FLAGS_RELEASE=\"/O2 /Ob2 /DNDEBUG /MD\""
+)
 
 # make 32-bit build
 unlink(YAML_CPP_BUILD_32, recursive = TRUE)
@@ -33,9 +47,7 @@ setwd(YAML_CPP_BUILD_32)
 args <- c(
    "-G", shQuote("Visual Studio 16 2019"),
    "-A", "Win32",
-   "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebugDLL",
-   "-DYAML_CPP_BUILD_TESTS=Off",
-   "-DYAML_CPP_BUILD_TOOLS=Off",
+   cmakeCommonArgs,
    shQuote(YAML_CPP_SOURCES)
 )
 
@@ -53,9 +65,7 @@ setwd(YAML_CPP_BUILD_64)
 args <- c(
    "-G", shQuote("Visual Studio 16 2019"),
    "-A", "x64",
-   "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL",
-   "-DYAML_CPP_BUILD_TESTS=Off",
-   "-DYAML_CPP_BUILD_TOOLS=Off",
+   cmakeCommonArgs,
    shQuote(YAML_CPP_SOURCES)
 )
 
@@ -100,30 +110,33 @@ dir.create(file.path(YAML_CPP_INSTALL, "lib/x64"), recursive = TRUE, showWarning
 targets <- list(
    
    list(
-      source = file.path(YAML_CPP_BUILD_32, "Debug/libyaml-cppmdd.lib"),
+      source = file.path(YAML_CPP_BUILD_32, "Debug/yaml-cppmdd.lib"),
       target = file.path(YAML_CPP_INSTALL, "lib/x86/libyaml-cppmdd.lib")
    ),
    
    list(
-      source = file.path(YAML_CPP_BUILD_32, "Release/libyaml-cppmd.lib"),
+      source = file.path(YAML_CPP_BUILD_32, "Release/yaml-cppmd.lib"),
       target = file.path(YAML_CPP_INSTALL, "lib/x86/libyaml-cppmd.lib")
    ),
    
    list(
-      source = file.path(YAML_CPP_BUILD_64, "Debug/libyaml-cppmdd.lib"),
+      source = file.path(YAML_CPP_BUILD_64, "Debug/yaml-cppmdd.lib"),
       target = file.path(YAML_CPP_INSTALL, "lib/x64/libyaml-cppmdd.lib")
    ),
    
    list(
-      source = file.path(YAML_CPP_BUILD_64, "Release/libyaml-cppmd.lib"),
+      source = file.path(YAML_CPP_BUILD_64, "Release/yaml-cppmd.lib"),
       target = file.path(YAML_CPP_INSTALL, "lib/x64/libyaml-cppmd.lib")
    )
    
 )
 
+
 for (i in seq_along(targets)) {
    src <- targets[[i]]$source
    tgt <- targets[[i]]$target
+   if (!file.exists(src))
+      stop("Source file '", src, "' does not exist")
    file.copy(src, tgt)
 }
 
@@ -134,4 +147,4 @@ zipfile <- paste(files, "zip", sep = ".")
 zip(zipfile, files)
 
 # and copy a version to the root location
-copy(YAML_CPP_INSTALL, file.path(OWD, "..", YAML_CPP_BRANCH))
+copy(YAML_CPP_INSTALL, file.path(OWD, "..", YAML_CPP_FOLDER))
