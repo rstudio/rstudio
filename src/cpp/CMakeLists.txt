@@ -208,6 +208,7 @@ if(WIN32)
 
    FetchContent_GetProperties(yaml-cpp)
 
+   add_definitions(-DYAML_CPP_STATIC_DEFINE)
    if(NOT yaml-cpp_POPULATED)
      message(STATUS "Fetching yaml-cpp")
      FetchContent_Populate(yaml-cpp)
@@ -216,10 +217,7 @@ if(WIN32)
    endif()
 
    set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_SOURCE_DIR}/include")
-   set(YAML_CPP_LIBRARIES yaml-cpp::yaml-cpp)
-
-   # Define this ourselves to silence from #pragma message from yaml-cpp
-   add_definitions("-DYAML_CPP_API=__declspec(dllimport)")
+   set(YAML_CPP_LIBRARIES "${YAML_CPP_BINARY_DIR}/yaml-cpp.lib")
 
 elseif(NOT RSTUDIO_USE_SYSTEM_YAML_CPP)
    set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/include")
