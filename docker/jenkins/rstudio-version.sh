@@ -138,6 +138,17 @@ function calver() {
     fi
 }
 
+function patch() {
+    if [[ -n "$PATCH" ]]; then
+        echo "$PATCH"
+    elif [ -e "$RSTUDIO_ROOT_DIR/version/PATCH" ]; then
+        echo "$(cat "$RSTUDIO_ROOT_DIR/version/PATCH" | tr -d '[:space:]')"
+    else
+        echo "The $RSTUDIO_ROOT_DIR/version/PATCH file does not exist and a -p option was not provided. A build version could not be generated" >&2
+        exit 1
+    fi
+}
+
 function baseCommit() {
     BASE_COMMIT_FILE="$RSTUDIO_ROOT_DIR/version/base_commit/$(flower).BASE_COMMIT"
     if [ -e $BASE_COMMIT_FILE ]; then
@@ -148,7 +159,7 @@ function baseCommit() {
     fi
 }
 
-VERSION="$(calver).${PATCH}$(buildType)"
+VERSION="$(calver).$(patch)$(buildType)"
 
 BASE_COMMIT=$(baseCommit)
 log "BASE_COMMIT: $BASE_COMMIT"

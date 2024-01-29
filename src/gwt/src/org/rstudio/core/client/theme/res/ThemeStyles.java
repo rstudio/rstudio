@@ -111,6 +111,7 @@ public interface ThemeStyles extends CssResource
    String searchBox();
    String clearSearch();
 
+   String dialogAnchorPanel();
    String dialogBottomPanel();
 
    String dialogMessage();

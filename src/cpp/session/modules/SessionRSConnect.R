@@ -20,13 +20,13 @@
   ext <- tolower(tools::file_ext(sourcePath))
   if (identical(ext, "r"))
     sourcePath <- dirname(sourcePath)
-  
+
   rsconnect::forgetDeployment(appPath = sourcePath, force = TRUE)
 })
 
 # this is a clone of 'applicationConfigDir' in the rsconnect package; we use it
 # to detect the condition in which rsconnect has state but the package itself
-# isn't installed. 
+# isn't installed.
 .rs.addFunction("connectConfigDir", function(appName, subDir = NULL) {
 
   # get the home directory from the operating system (in case
@@ -71,8 +71,8 @@
 
    # take apart the frame and compose a list of scalars from each row
    for (i in seq_len(nrow(frame))) {
-      row <- lapply(cols, 
-                    function(col) { if (is.null(frame[i,col])) NULL 
+      row <- lapply(cols,
+                    function(col) { if (is.null(frame[i,col])) NULL
                                     else .rs.scalar(unlist(frame[i,col])) })
       names(row) <- cols
       ret[[i]] <- row
@@ -99,9 +99,9 @@
    accounts <- data.frame(
      name = character(0),
      server = character(0))
-     
+
    # attempt to populate the list from rsconnect; this can throw if e.g. the
-   # package is not installed. in the case of any error we'll safely return 
+   # package is not installed. in the case of any error we'll safely return
    # an empty list, or a stored RPubs upload ID if one was given (below)
    tryCatch({
      # included "orphaned" deployments; we will filter later
@@ -118,7 +118,7 @@
    # registered servers
    if (nrow(deploymentsFrame) > 0) {
      # filter the list of servers by those that actually have accounts
-     # registered 
+     # registered
      servers <- servers[
          as.character(servers$name) %in% as.character(accounts$server),]
 
@@ -136,7 +136,7 @@
      # rebuild list with additional metadata
      deployments <- .rs.scalarListFromFrame(deploymentsFrame)
    }
-   
+
    # no RPubs upload IDs to consider
    if (!is.character(rpubsUploadId) || nchar(rpubsUploadId) == 0) {
      return(deployments)
@@ -161,17 +161,17 @@
        rpubsDeployment[col] = "rpubs.com"
      else if (col == "appId")
        rpubsDeployment[col] = rpubsUploadId
-     else if (col == "bundleId") 
+     else if (col == "bundleId")
        rpubsDeployment[col] = rpubsUploadId
      else if (col == "asStatic")
        rpubsDeployment[col] = TRUE
-     else if (col == "when") 
+     else if (col == "when")
        rpubsDeployment[col] = 0
      else if (col == "hostUrl")
        rpubsDeployment[col] = "rpubs.com"
      else if (col == "username")
        rpubsDeployment[col] = "rpubs"
-     else 
+     else
        rpubsDeployment[col] = NA
    }
 
@@ -183,7 +183,7 @@
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
    accounts <- list()
    # safely return an empty list--we want to consider there to be 0 connected
-   # accounts when the rsconnect package is not installed or broken 
+   # accounts when the rsconnect package is not installed or broken
    # (vs. raising an error)
    tryCatch({
      accountFrame <- rsconnect::accounts()
@@ -203,27 +203,38 @@
    .rs.scalarListFromFrame(rsconnect::applications(account = account, server = server))
 })
 
-.rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) { 
-   # init with empty list
-   appList <- list()
-   appError <- ""
-
-   # attempt to get app ID from server
-   tryCatch({
-     appList <- rsconnect:::getAppById(id = id, account = account, server = server, 
-                                       hostUrl = hostUrl)
-   }, error = function(e) {
-      # record the error message when a failure occurs (will be passed to the client for display)
-      appError <<- conditionMessage(e)
-   })
+.rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
    
-   list(error = .rs.scalar(appError), 
-        app   = if(length(appList) > 0) .rs.scalarListFromList(appList) else NULL)
+   # NOTE: We previously used `rsconnect:::getAppById()`, but this API did not
+   # provide the requisite 'config_url' entry, which we display in UI for redeployments.
+   
+   # collect application list
+   apps <- tryCatch(
+      rsconnect::applications(account = account, server = server),
+      error = identity
+   )
+   
+   if (inherits(apps, "error")) {
+      message <- conditionMessage(apps)
+      return(list(error = .rs.scalar(message), app = NULL))
+   }
+
+   # drop __api__ suffix from hostUrl if necessary
+   hostUrl <- sub("/__api__$", "/", hostUrl)
+   
+   # keep only application records which:
+   # - start with the provided host URL;
+   # - have a matching id
+   apps <- apps[.rs.startsWith(apps$url, hostUrl) & apps$id == id, ]
+   
+   # TODO: What should we do if we have nrow(apps) != 1?
+   list(error = NULL, app = .rs.scalarListFromList(apps))
+
 })
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
-   # suppress output when validating server URL (timeouts otherwise emitted to
-   # console)
+   # suppress output when validating server URL
+   # (timeouts otherwise emitted to console)
    capture.output(serverInfo <- rsconnect:::validateServerUrl(url = url))
    .rs.scalarListFromList(serverInfo)
 })
@@ -282,40 +293,42 @@
   # we have a list of lint results; convert them to markers and emit them to
   # the Markers pane
   rsconnect:::showRstudioSourceMarkers(basePath = basePath, results)
-  
+
   # return the result to the client
   list(
-    has_lint = .rs.scalar(TRUE), 
-    error_message = .rs.scalar(err)) 
+    has_lint = .rs.scalar(TRUE),
+    error_message = .rs.scalar(err))
 })
 
 .rs.addFunction("docDeployList", function(target, asMultipleDoc, quartoSrcFile) {
   file_list <- c()
+  target <- normalizePath(target, winslash = "/")
+  quartoSrcFile <- normalizePath(quartoSrcFile, winslash = "/")
 
   # if deploying multiple documents, find all the files in the with a matching
   # extension; otherwise, just use the single document we were given
   if (asMultipleDoc) {
-    targets <- list.files(path = dirname(target), 
-      pattern = glob2rx(paste("*", tools::file_ext(target), sep = ".")), 
+    targets <- list.files(path = dirname(target),
+      pattern = glob2rx(paste("*", tools::file_ext(target), sep = ".")),
       ignore.case = TRUE, full.names = TRUE)
   } else {
     targets <- target
   }
 
   yaml <- NULL
-  
+
   # check for a known encoding
   encoding <- getOption("encoding")
   properties <- .rs.getSourceDocumentProperties(target)
   if (!is.null(properties$encoding))
      encoding <- properties$encoding
-  
+
   # attempt to parse yaml front matter
   yaml <- tryCatch(
      rmarkdown::yaml_front_matter(target, encoding = encoding),
      error = function(e) NULL
   )
-  
+
   # if this failed, try again as UTF-8
   if (is.null(yaml) && !identical(encoding, "UTF-8"))
   {
@@ -324,7 +337,7 @@
         error = function(e) NULL
      )
   }
-  
+
   # check to see if the target has "runtime: shiny/prerendred", if so then
   # return a full directory deploy list
   if (is.list(yaml) && (identical(yaml$runtime, "shiny_prerendered") ||
@@ -341,9 +354,9 @@
   for (t in targets) {
     deploy_frame <- NULL
     tryCatch({
-      # this operation can be expensive and could also throw if e.g. the 
+      # this operation can be expensive and could also throw if e.g. the
       # document fails to parse or render
-      deploy_frame <- rmarkdown::find_external_resources(t) 
+      deploy_frame <- rmarkdown::find_external_resources(t)
     },
     error = function(e) {
       # errors are not fatal here; we just might miss some resources, which
@@ -351,7 +364,7 @@
     })
     if (!is.null(deploy_frame)) {
       file_list <- c(file_list, deploy_frame$path)
-    } 
+    }
     file_list <- c(file_list, basename(t))
   }
 
@@ -360,7 +373,7 @@
     project <- .rs.quartoFileProject(quartoSrcFile)
     resources <- project$resources
     project <- project$project
-    
+
     # query quarto for resources
     file_list <- c(file_list, resources)
 
@@ -368,7 +381,7 @@
     if (file.exists(file.path(dirname(quartoSrcFile), "_metadata.yml"))) {
       file_list <- c(file_list, "_metadata.yml")
     }
-    
+
     if (length(project)) {
       if (identical(project, "")) {
         file_list <- c(file_list, "_quarto.yml")
@@ -389,7 +402,7 @@
        file.info(file.path(dirname(target), file_list))$size))
 })
 
-.rs.addFunction("makeDeploymentList", function(target, asMultipleDoc, 
+.rs.addFunction("makeDeploymentList", function(target, asMultipleDoc,
                                                quartoSrcFile, max_size) {
    ext <- tolower(tools::file_ext(target))
    if (ext %in% c("qmd", "rmd", "html", "htm", "md"))
@@ -407,18 +420,18 @@
 })
 
 # Given a list of files of the form:
-# 
+#
 # file2.ext
 # dir/file1.ext
 # dir/file2.ext
 # dir/file3.ext
 # dir/subdir/file4.ext
 # dir2/file2.ext
-# 
+#
 # and a threshold, collapses all directories that contain more than the threshold
 # number of files. For instance, if threshold = 2, the result from the above
 # would be:
-# 
+#
 # file2.ext
 # dir2/file2.ext
 # dir/
@@ -460,10 +473,10 @@
     # if the directory is too large, no need to bother sending a potentially
     # large blob of data to the client
     dir_list = if (dirlist$totalSize >= max_size)
-                  NULL 
+                  NULL
                else
                   .rs.summarizeDir(dirlist$contents, 5),
-    max_size = .rs.scalar(max_size), 
+    max_size = .rs.scalar(max_size),
     dir_size = .rs.scalar(dirlist$totalSize))
 })
 
@@ -518,7 +531,7 @@
     is_multi_rmd <- length(rmds) > 1
   }
 
-  # see if this format is self-contained (defaults to true for HTML-based 
+  # see if this format is self-contained (defaults to true for HTML-based
   # formats)
   selfContained <- TRUE
   outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
@@ -560,7 +573,7 @@
   if (file.exists(accountDir)) {
     files <- list.files(accountDir, recursive = TRUE, include.dirs = FALSE)
 
-    # if there are files and the rsconnect package isn't installed at all, 
+    # if there are files and the rsconnect package isn't installed at all,
     # consider those files to correspond to orphaned accounts
     if (length(files) > 0 && !.rs.isPackageInstalled("rsconnect")) {
       return(.rs.scalar(length(files)))
@@ -589,14 +602,14 @@
 
   # attempt to generate a name from the title
   tryCatch({
-    name <- rsconnect::generateAppName(appTitle = appTitle, 
-                                       appPath  = appPath, 
+    name <- rsconnect::generateAppName(appTitle = appTitle,
+                                       appPath  = appPath,
                                        account  = account)
   }, error = function(e) {
     valid <<- FALSE
     error <<- e$message
   })
-  
+
   # report result
   list(name  = .rs.scalar(name),
        valid = .rs.scalar(valid),

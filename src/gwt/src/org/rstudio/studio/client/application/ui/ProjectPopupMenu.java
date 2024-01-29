@@ -29,13 +29,18 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.projects.ProjectMRUList;
+import org.rstudio.studio.client.projects.model.ProjectMRUEntry;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.UpdateWindowTitleEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -47,6 +52,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class ProjectPopupMenu extends ToolbarPopupMenu
 {
@@ -72,25 +78,27 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                    ProjectsServerOperations server,
                    EventBus events,
                    Session session,
-                   ProductEditionInfo editionInfo)
+                   ProductEditionInfo editionInfo,
+                   Provider<UserPrefs> pUserPrefs,
+                   Provider<WorkbenchListManager> pWorkbenchLists,
+                   WorkbenchContext workbenchContext)
    {
       server_ = server;
       events_ = events;
       mruList_ = mruList;
       allowSharedProjects_ = session.getSessionInfo().getAllowOpenSharedProjects();
       editionInfo_ = editionInfo;
+      pUserPrefs_ = pUserPrefs;
+      workbenchContext_ = workbenchContext;
+      pWorkbenchLists_ = pWorkbenchLists;
    }
    
    public ToolbarButton getToolbarButton()
    {
       if (toolbarButton_ == null)
       {
-         String buttonText = activeProjectFile_ != null ?
-                  mruList_.getQualifiedLabel(activeProjectFile_) :
-                  constants_.toolBarButtonText();
-          
          toolbarButton_ = new ToolbarMenuButton(
-                buttonText,
+                getProjectDisplayName(),
                 ToolbarButton.NoTitle,
                 new ImageResource2x(RESOURCES.projectMenu2x()),
                 this, 
@@ -103,10 +111,25 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
           
             // also set the doc title so the browser tab carries the project
             if (!Desktop.isDesktop())
+               setDocumentTitle();
+
+            pUserPrefs_.get().projectName().addValueChangeHandler(valueChangeEvent -> 
             {
-               // put project title first so it isn't cut off when there are many tabs
-               Document.get().setTitle(buttonText + " \u00b7 " + editionInfo_.editionName());
-            }
+               // update title of document and satellite editors if project name is changed
+               if (!Desktop.isDesktop())
+                  setDocumentTitle();
+
+               String title = workbenchContext_.createWindowTitle();
+               if (title != null) 
+                  events_.fireEventToAllSatellites(new UpdateWindowTitleEvent(title));
+
+               // update project name in the Project MRU list
+               ProjectMRUEntry entry = new ProjectMRUEntry(activeProjectFile_, valueChangeEvent.getValue());
+               pWorkbenchLists_.get().getProjectNameMruList().updateExtraData(entry.getMRUValue());
+
+               // update the button text
+               toolbarButton_.setText(getProjectDisplayName());
+            });
          }
         
           if (activeProjectFile_ == null)
@@ -118,7 +141,27 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
        
        return toolbarButton_;
    }
-   
+
+   private void setDocumentTitle()
+   {
+      // put project title first so it isn't cut off when there are many tabs
+      Document.get().setTitle(getProjectDisplayName() + " \u00b7 " + editionInfo_.editionName());
+   }
+
+   private String getProjectDisplayName()
+   {
+      if (activeProjectFile_ != null)
+      {
+         if (pUserPrefs_.get().projectName().getValue().length() > 0)
+            return pUserPrefs_.get().projectName().getValue();
+         else
+            return mruList_.getQualifiedLabel(activeProjectFile_);
+
+      } else {
+         return constants_.toolBarButtonText();
+      }
+   }
+
    @Override
    protected ToolbarMenuBar createMenuBar()
    {
@@ -297,4 +340,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private boolean allowSharedProjects_ = false;
    private ProductEditionInfo editionInfo_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
+   private Provider<UserPrefs> pUserPrefs_;
+   private Provider<WorkbenchListManager> pWorkbenchLists_;
+   private WorkbenchContext workbenchContext_;
 }

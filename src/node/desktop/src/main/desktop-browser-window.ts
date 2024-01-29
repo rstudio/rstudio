@@ -21,7 +21,7 @@ import debounce from 'lodash/debounce';
 import { EventEmitter } from 'stream';
 import { URL } from 'url';
 import { logger } from '../core/logger';
-import { appState } from './app-state';
+import { appState, getEventBus } from './app-state';
 import { showContextMenu } from './context-menu';
 import { MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
@@ -109,6 +109,10 @@ export class DesktopBrowserWindow extends EventEmitter {
   // 'did-finish-load'; use this bool to differentiate
   private failLoad = false;
 
+  // if window has been told to delete its menu, we need to remember the bound
+  // handler so we can unregister it when the window is closed
+  private removeMenuBound?: () => void;
+
   constructor(protected options: WindowConstructorOptions) {
     super();
 
@@ -185,8 +189,8 @@ export class DesktopBrowserWindow extends EventEmitter {
           if (match) {
             const args = [decodeURIComponent(match[2]), decodeURIComponent(match[1])];
             this.sendRpcRequest('show_vignette', args);
+            return { action: 'deny' };
           }
-          return { action: 'deny' };
         }
       }
 
@@ -268,6 +272,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     });
 
     this.window.on('close', (event: Electron.Event) => {
+      this.removeMenuEventListener();
       this.closeEvent(event);
     });
 
@@ -493,6 +498,32 @@ export class DesktopBrowserWindow extends EventEmitter {
     this.executeJavaScript(command).catch(error => {
       logger().logError(error);
     });
+  }
+
+  private removeMenu(): void {
+    if (!this.window.isDestroyed()) {
+      this.window.removeMenu();
+    }
+  }
+
+  removeMenuEventListener(): void {
+    if (this.removeMenuBound) {
+      getEventBus().off('appmenu-set', this.removeMenuBound);
+      this.removeMenuBound = undefined;
+    }
+  }
+
+  /**
+   * Remove the menu from this window
+   */
+  ensureNoMenu(): void {
+    this.removeMenu();
+
+    // We frequently recreate the main menu, so have to remove it every time that happens.
+    if (this.removeMenuBound === undefined) { // only register one time
+      this.removeMenuBound = this.removeMenu.bind(this);
+      getEventBus().on('appmenu-set', this.removeMenuBound);
+    }
   }
 
   /**

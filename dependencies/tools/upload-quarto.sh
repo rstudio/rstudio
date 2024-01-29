@@ -5,7 +5,7 @@
 # tools (awscli) installed, and configured with a valid AWS account.
 
 # Modify to set the Quarto version to upload
-QUARTO_VERSION=1.3.433
+QUARTO_VERSION=1.4.549
 
 BASEURL="https://github.com/quarto-dev/quarto-cli/releases/download/"
 AWS_BUCKET="s3://rstudio-buildtools"
@@ -24,13 +24,10 @@ for PLATFORM in "${PLATFORMS[@]}"; do
     FILENAME="quarto-${QUARTO_VERSION}-${PLATFORM}"
 
     # Download from Pandoc release site
-    wget "${BASEURL}/v${QUARTO_VERSION}/${FILENAME}"
+    wget -c "${BASEURL}/v${QUARTO_VERSION}/${FILENAME}"
 
     # Upload to S3 bucket
     aws s3 cp "${FILENAME}" "${AWS_BUCKET}/quarto/${QUARTO_VERSION}/" --acl public-read
-
-    # Clean up
-    rm -f "${FILENAME}"
 
 done
 

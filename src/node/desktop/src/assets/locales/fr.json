@@ -4,8 +4,18 @@
     "buttonCancel": "Annuler",
     "buttonBrowse": "Parcourir...",
     "unknownErrorOccurred": "Une erreur inconnue s'est produite.",
+    "workingOnIt": "En cours d'élaboration...",
     "buttonYes": "Oui",
-    "buttonNo": "Non"
+    "buttonNo": "Non",
+    "buttonQuit": "Quitter",
+    "noFileSelected": "Aucun fichier sélectionné",
+    "allFiles": "Tous les fichiers"
+  },
+  "imgAlt": {
+    "dialogQuestion": "Icône du point d'interrogation",
+    "dialogInfo": "Icône d'information",
+    "dialogWarning": "Icône d'alerte",
+    "dialogError": "Icône d'erreur"
   },
   "contextMenu": {
     "saveImageAsDots": "Enregistrer l'image sous...",

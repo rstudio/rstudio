@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FormLabel;
@@ -73,7 +74,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
          String proj = projDir.getPath();
          if (path.getPath().startsWith(proj + "/"))
          {
-            return path.getPath().substring(proj.length() + 1);
+            return StringUtil.substring(path.getPath(), proj.length() + 1);
          }
          else
          {

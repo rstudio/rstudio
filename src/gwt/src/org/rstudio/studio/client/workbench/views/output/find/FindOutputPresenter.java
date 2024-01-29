@@ -458,7 +458,7 @@ public class FindOutputPresenter extends BasePresenter
                String projPath = projDir.getPath();
                if ((path + "/").startsWith(projPath + "/"))
                {
-                  object.setString("path", path.substring(projPath.length()));
+                  object.setString("path", StringUtil.substring(path, projPath.length()));
                   object.setBoolean("projectRelative", true);
                }
             }

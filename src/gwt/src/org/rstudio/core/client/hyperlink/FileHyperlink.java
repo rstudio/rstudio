@@ -48,7 +48,7 @@ public class FileHyperlink extends Hyperlink
 
             String second = match.getGroup(2);
             if (second != null)
-                col = StringUtil.parseInt(match.getGroup(2).substring(1), -1);
+                col = StringUtil.parseInt(StringUtil.substring(match.getGroup(2), 1), -1);
         }
         else 
         {

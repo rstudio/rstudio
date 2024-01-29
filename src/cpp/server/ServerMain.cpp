@@ -93,7 +93,6 @@ Error startup();
 bool reloadConfiguration();
 void shutdown();
 bool requireLocalR();
-bool isLoadBalanced();
 
 } // namespace overlay
 } // namespace server
@@ -104,6 +103,9 @@ namespace {
 std::string s_rpcSecret;
 
 const char * const kProgramIdentity = "rserver";
+
+const int kMinDesiredOpenFiles = 4096;
+const int kMaxDesiredOpenFiles = 8192;
    
 bool mainPageFilter(const core::http::Request& request,
                     core::http::Response* pResponse)
@@ -647,9 +649,32 @@ int main(int argc, char * const argv[])
       // so we can supports lots of concurrent connectins)
       if (core::system::realUserIsRoot())
       {
-         Error error = setResourceLimit(core::system::FilesLimit, 4096);
+         RLimitType soft, hard;
+         Error error = core::system::getResourceLimit(core::system::FilesLimit, &soft, &hard);
          if (error)
-            LOG_WARNING_MESSAGE("Unable to increase open files limit to 4096: " + error.asString());
+         {
+            LOG_WARNING_MESSAGE("Error trying to get system open files limits - using system defaults: " + error.asString());
+         }
+         else if (soft < kMaxDesiredOpenFiles && hard > kMinDesiredOpenFiles)
+         {
+            RLimitType newLimit;
+            if (hard < kMaxDesiredOpenFiles)
+               newLimit = hard;
+            else
+               newLimit = kMaxDesiredOpenFiles;
+            Error error = setResourceLimit(core::system::FilesLimit, newLimit);
+            if (error)
+               LOG_WARNING_MESSAGE("Unable to increase open files limit to: " + std::to_string(newLimit) +
+                                   " error: " + error.asString() + " with system limits soft: " +
+                                   std::to_string(soft) + " hard: " + std::to_string(hard));
+            else
+               LOG_DEBUG_MESSAGE("Increasing soft open files limit from: " + std::to_string(soft) +
+                                 " to " + std::to_string(newLimit) + " with hard limit: " + std::to_string(hard));
+         }
+         else
+         {
+            LOG_DEBUG_MESSAGE("Using system defined open files limits: " + std::to_string(soft));
+         }
       }
 
       // set working directory
@@ -737,6 +762,11 @@ int main(int argc, char * const argv[])
       // initialize crypto utils
       core::system::crypto::initialize();
 
+      // initialize secure cookie module
+      error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
       if (!options.dbCommand().empty())
       {
          Error error = server_core::database::execute(options.databaseConfigFile(), serverUser, options.dbCommand());
@@ -748,11 +778,6 @@ int main(int argc, char * const argv[])
 
       // initialize database connectivity
       error = server_core::database::initialize(options.databaseConfigFile(), true, serverUser);
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
-
-      // initialize secure cookie module 
-      error = core::http::secure_cookie::initialize(overlay::isLoadBalanced(), options.secureCookieKeyFile());
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

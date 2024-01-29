@@ -326,7 +326,7 @@ public class TextEditingTargetCompilePdfHelper
       if (startPattern == null)
          return -1;
       
-      String linePart = line.substring(0, cursorPos);
+      String linePart = StringUtil.substring(line, 0, cursorPos);
       Match match = startPattern.match(linePart, 0);
       if (match == null)
          return -1;

@@ -73,7 +73,7 @@ public class TerminalLocalEcho
          chunkEnd = match.getIndex();
 
          // try to match local-echoed text up to this ignored sequence
-         String outputToMatch = output.substring(chunkStart, chunkEnd);
+         String outputToMatch = StringUtil.substring(output, chunkStart, chunkEnd);
          if (outputToMatch.length() > 0)
          {
             int matchLen = outputNonEchoed(outputToMatch);
@@ -81,7 +81,7 @@ public class TerminalLocalEcho
             {
                // didn't match previously echoed text at all; write 
                // everything after that chunk
-               writer_.accept(output.substring(chunkEnd));
+               writer_.accept(StringUtil.substring(output, chunkEnd));
                return;
             }
             // Otherwise completely or partially matched; at this point
@@ -117,7 +117,7 @@ public class TerminalLocalEcho
          match = match.nextMatch();
       }
 
-      outputNonEchoed(output.substring(chunkStart, chunkEnd));
+      outputNonEchoed(StringUtil.substring(output, chunkStart, chunkEnd));
    }
 
    /**
@@ -144,7 +144,7 @@ public class TerminalLocalEcho
       {
          // output is superset of what was local-echoed; write out the
          // unmatched part
-         writer_.accept(outputToMatch.substring(lastOutput.length()));
+         writer_.accept(StringUtil.substring(outputToMatch, lastOutput.length()));
          return lastOutput.length();
       }
       else

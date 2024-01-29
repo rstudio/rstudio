@@ -299,14 +299,6 @@ var MarkdownHighlightRules = function() {
             token : "constant.hr",
             regex : "^\\s*[_](?:\\s*[_]){2,}\\s*$",
             next  : "allowBlock"
-        }, { // MathJax native display \[ ... \]
-            token : "latex.markup.list.string.begin",
-            regex : "\\\\\\[",
-            next  : "mathjaxnativedisplay"
-        }, { // MathJax native inline \( ... \)
-            token : "latex.markup.list.string.begin",
-            regex : "\\\\\\(",
-            next  : "mathjaxnativeinline"
         }, { // $ escape
             token : "text",
             regex : "\\\\\\$"

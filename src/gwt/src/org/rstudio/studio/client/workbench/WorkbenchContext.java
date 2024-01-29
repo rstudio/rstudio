@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench;
 
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -228,11 +229,14 @@ public class WorkbenchContext
       FileSystemItem projDir = getActiveProjectDir();
       if (projDir != null)
       {
-         String title;
-         if (pUserPrefs_.get().fullProjectPathInWindowTitle().getValue())
-            title = projDir.getPath();
-         else
-            title = projDir.getName();
+         String title =  pUserPrefs_.get().projectName().getValue();
+         if (StringUtil.isNullOrEmpty(title))
+         {
+            if (pUserPrefs_.get().fullProjectPathInWindowTitle().getValue())
+               title = projDir.getPath();
+            else
+               title = projDir.getName();
+         }
          BranchesInfo branchInfo = pGitState_.get().getBranchInfo();
          if (branchInfo != null)
          {

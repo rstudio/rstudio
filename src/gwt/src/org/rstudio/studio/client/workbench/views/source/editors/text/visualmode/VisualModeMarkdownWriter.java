@@ -205,7 +205,7 @@ public class VisualModeMarkdownWriter
                String filename = FileSystemItem.createFile(docPath).getStem();
                PanmirrorUIToolsAttr attr = new PanmirrorUITools().attr;
                // artifically add "a" and then remove it after pandocAutoIdentifier()
-               options.references.prefix = attr.pandocAutoIdentifier("a" + filename).substring(1) + "-";
+               options.references.prefix = StringUtil.substring(attr.pandocAutoIdentifier("a" + filename), 1) + "-";
             }
          }
       }

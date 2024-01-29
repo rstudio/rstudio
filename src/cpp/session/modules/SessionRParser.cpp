@@ -3034,14 +3034,20 @@ ARGUMENT_START:
       
       if (cursor.isType(RToken::COMMA))
       {
-         if (cursor.previousSignificantToken().isType(RToken::LPAREN))
-            status.lint().missingArgumentToFunctionCall(cursor);
+         if (status.parseOptions().checkArgumentsToRFunctionCalls())
+         {
+            if (cursor.previousSignificantToken().isType(RToken::LPAREN))
+               status.lint().missingArgumentToFunctionCall(cursor);
+         }
          
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          while (cursor.isType(RToken::COMMA))
          {
-            if (status.isWithinParenFunctionCall())
-               status.lint().missingArgumentToFunctionCall(cursor);
+            if (status.parseOptions().checkArgumentsToRFunctionCalls())
+            {
+               if (status.isWithinParenFunctionCall())
+                  status.lint().missingArgumentToFunctionCall(cursor);
+            }
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          }
       }

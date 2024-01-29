@@ -1004,7 +1004,13 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->spellingDictionary = it->second;
    }
-   
+
+   it = dcfFields.find("ProjectName");
+   if (it != dcfFields.end())
+   {
+      pConfig->projectName = it->second;
+   }
+
    return Success();
 }
 
@@ -1291,6 +1297,13 @@ Error writeProjectFile(const FilePath& projectFilePath,
    {
       boost::format fmt("\nSpellingDictionary: %1%\n");
       contents.append(boost::str(fmt % config.spellingDictionary));
+   }
+
+   // add Project Name if present
+   if (!config.projectName.empty())
+   {
+      boost::format fmt("\nProjectName: %1%\n");
+      contents.append(boost::str(fmt % config.projectName));
    }
 
    // write it

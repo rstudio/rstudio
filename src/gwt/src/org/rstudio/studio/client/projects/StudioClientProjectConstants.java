@@ -2160,6 +2160,23 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Miscellaneous")
     @Key("miscellaneousTitle")
     String miscellaneousTitle();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultMessage("General")
+    @Key("generalTitle")
+    String generalTitle();
     
     
+    /**
+     * Translated "Project display name (defaults to folder name):".
+     *
+     * @return translated "Project display name (defaults to folder name):"
+     */
+    @DefaultMessage("Project display name (defaults to folder name):")
+    @Key("customProjectNameLabel")
+    String customProjectNameLabel();
 }

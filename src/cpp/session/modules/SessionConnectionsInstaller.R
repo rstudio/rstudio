@@ -444,8 +444,8 @@
    .rs.odbcBundleWriteIni(odbcinstPath, odbcinst)
 })
 
-.rs.addFunction("odbcBundleDriverIniPath", function(name, driverPath) {
-   dir(driverPath, pattern = paste(tolower(name), ".*\\.ini", sep = ""), recursive = TRUE, full.names = T)
+.rs.addFunction("odbcBundleDriverIniPath", function(driverPath) {
+   dir(driverPath, pattern = "rstudio\\..*odbc\\.ini", recursive = TRUE, full.names = T)
 })
 
 .rs.addFunction("odbcBundleRegisterOSX", function(name, driverPath, version, installPath) {
@@ -453,7 +453,7 @@
    .rs.odbcBundleRegisterLinux(name, driverPath, version, installPath)
 
    # Find driver.ini file
-   driverIniFile <- .rs.odbcBundleDriverIniPath(name, installPath)
+   driverIniFile <- .rs.odbcBundleDriverIniPath(installPath)
    
    if (length(driverIniFile) == 0) {
       warning("Could not find '", name, "' driver INI file under: ", installPath)
@@ -516,7 +516,7 @@
    )
    
    osExtension <- osExtensions[[.rs.odbcBundleOsName()]]
-   driverName <- gsub(paste(" |", trimws(.rs.connectionOdbcRStudioDriver()), sep = ""), "", name)
+   driverName <- .rs.connectionStripRStudioDriver(name)
    
    if (is.null(libraryPattern) || nchar(libraryPattern) == 0) {
       libraryPattern <- paste(
@@ -573,6 +573,7 @@
    md5 = NULL,
    version = "") {
 
+   name <- .rs.connectionStripRStudioDriver(name)
    installPath <- file.path(
       normalizePath(installPath, mustWork = FALSE),
       tolower(name)
@@ -611,5 +612,9 @@
 })
 
 .rs.addFunction("connectionOdbcRStudioDriver", function() {
-   " with RStudio Driver"
+   " with Posit Driver"
+})
+
+.rs.addFunction("connectionStripRStudioDriver", function(connection) {
+   gsub(paste(" |", trimws(.rs.connectionOdbcRStudioDriver()), sep = ""), "", connection)
 })

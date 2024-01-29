@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-BRANCH=rstudio/v1.5
+BRANCH=rstudio/chocolate-cosmos
 #
 # RStudio fork of GWT started with BRANCH off of GWT 2.8.2 plus our changes.
 # That is, started life with:
@@ -10,19 +10,24 @@ BRANCH=rstudio/v1.5
 #   git checkout rstudio/v1.3
 #   git push --set-upstream origin rstudio/v1.3
 #
-# RStudio 1.4's GWT source is in rstudio/v1.4 branch.
+# GWT branches will use the RStudio release names: e.g. rstudio/chocolate-cosmos. Not all
+# RStudio releases will have a corresponding GWT branch (we don't change GWT very often).
 #
 # To take a new release of GWT, merge new tag (e.g. tags/2.9.0) into our branch and rebuild with
 # build-gwt (after resolving any merge conflicts). Once successful, be sure to make PR of changes
 # to rstudio/gwt as well as to rstudio itself.
 #
-# To start work on a new release of RStudio, manually create a new branch, e.g. rstudio/v1.6,
-# from the desired starting commit (most likely the head of the prior rstudio/v1.x branch),
+#   git fetch upstream --tags
+#   git checkout rstudio/the-branch
+#   git merge 2.10.0
+#
+# To start work on a new release of RStudio, manually create a new branch, e.g. rstudio/new-name
+# from the desired starting commit (most likely the head of the prior rstudio/release-name branch),
 # and update the BRANCH constant in this script. For example:
 #
-#   git branch rstudio/v1.6 rstudio/v1.5
-#   git checkout rstudio/v1.6
-#   git push --set-upstream origin rstudio/1.6
+#   git branch rstudio/new-name origin/rstudio/ocean-storm
+#   git checkout rstudio/new-name
+#   git push --set-upstream origin rstudio/new-name
 #
 
 # check out our copy of gwt and build tools
@@ -47,10 +52,10 @@ if [ "`git status --porcelain`" != "" ]; then
     exit 1
 fi
 
-# get latest master from upstream
+# get latest main from upstream
 git fetch upstream
-git checkout master
-git merge upstream/master
+git checkout main
+git merge upstream/main
 
 git checkout "${BRANCH}"
 git reset --hard "${BRANCH}"

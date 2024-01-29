@@ -205,7 +205,7 @@ public class AceEditorBackgroundLinkHighlighter
    {
       return BrowseCap.isMacintosh()
             ? modifier == KeyboardShortcut.META
-            : modifier == KeyboardShortcut.SHIFT;
+            : modifier == KeyboardShortcut.CTRL;
    }
 
    private void beginDetectClickTarget(int modifier)
@@ -323,7 +323,7 @@ public class AceEditorBackgroundLinkHighlighter
 
          if (remote == null || StringUtil.equals(remote, "github::"))
          {
-            globalDisplay_.openWindow("https://www.github.com/" + orgRepo + "/issues/" + issue);
+            globalDisplay_.openWindow("https://github.com/" + orgRepo + "/issues/" + issue);
          } 
          else if (StringUtil.equals(remote, "gitlab::"))
          {
@@ -436,7 +436,7 @@ public class AceEditorBackgroundLinkHighlighter
          {
             startIdx++;
             endIdx--;
-            url = url.substring(1, url.length() - 1);
+            url = StringUtil.substring(url, 1, url.length() - 1);
          }
 
          // trim off trailing punctuation (characters unlikely
@@ -699,8 +699,8 @@ public class AceEditorBackgroundLinkHighlighter
       protected MarkerRenderer() {}
 
       public static final native MarkerRenderer create(final AceEditorNative editor,
-                                                      final String clazz,
-                                                      final String title)
+                                                       final String clazz,
+                                                       final String title)
       /*-{
          var markerBack = editor.renderer.$markerBack;
          return $entry(function(html, range, left, top, config) {

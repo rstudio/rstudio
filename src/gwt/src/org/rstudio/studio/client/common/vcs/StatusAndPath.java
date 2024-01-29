@@ -32,8 +32,8 @@ public class StatusAndPath
          if (index < 0)
             return new String[] { "", path };
          else
-            return new String[] { path.substring(0, index),
-                                  path.substring(index + 1) };
+            return new String[] { StringUtil.substring(path, 0, index),
+                                  StringUtil.substring(path, index + 1) };
       }
 
       @Override

@@ -43,6 +43,7 @@ using namespace collection;
 // list names
 const char * const kFileMru = "file_mru";
 const char * const kProjectMru = kProjectMruList;
+const char * const kProjectNameMru = kProjectNameMruList;
 const char * const kHelpHistory = "help_history_links";
 const char * const kUserDictionary = "user_dictionary";
 const char * const kPlotPublishMru = "plot_publish_mru";
@@ -85,7 +86,11 @@ Error readList(const std::string& name,
    }
 
    // read the list from disk
-   pList->reset(new MruList(listPath(name), size));
+   if (name == kProjectNameMru)
+      // project name list stores the optional project display name after separator character
+      pList->reset(new MruList(listPath(name), size, kProjectNameSepChar));
+   else
+      pList->reset(new MruList(listPath(name), size));
    return (*pList)->initialize();
 }
 
@@ -97,6 +102,61 @@ json::Array listToJson(const std::list<std::string>& list)
       jsonArray.push_back(val);
    }
    return jsonArray;
+}
+
+Error migrateLegacyProjectMru()
+{
+   // copy the legacy project mru list to the new list to prevent loss on RStudio upgrade
+   FilePath legacyProjectMru = listPath(kProjectMru);
+   FilePath newProjectMru = listPath(kProjectNameMru);
+   if (legacyProjectMru.exists() && !newProjectMru.exists())
+   {
+      std::list<std::string> legacyList;
+      Error error = readCollectionFromFile<std::list<std::string>>(legacyProjectMru, &legacyList, parseString);
+      if (error)
+      {
+         // can't read the legacy list, just delete it and move on
+         LOG_ERROR(error);
+         legacyProjectMru.remove();
+      }
+      else
+      {
+         LOG_INFO_MESSAGE("Migrating legacy project MRU list to new project MRU list");
+         error = writeCollectionToFile<std::list<std::string>>(newProjectMru, legacyList, stringifyString);
+         if (error)
+         {
+            return error;
+         }
+      }
+   }
+   return Success();
+}
+
+std::string removeCustomProjectName(const std::string& str)
+{
+   std::size_t pos = str.find(kProjectNameSepChar);
+   if (pos != std::string::npos)
+      return str.substr(0, pos);
+   else
+      return str;
+}
+ 
+Error syncLegacyProjectMru()
+{
+   // read the current project mru list (project_name_mru)
+   boost::shared_ptr<MruList> list;
+   Error error = readList(kProjectNameMru, &list);
+   if (error)
+      return error;
+
+   // write out the legacy list (project_mru) without the custom names
+   error = writeCollectionToFile<std::list<std::string>>(listPath(kProjectMru), 
+                                                         list->contents(),
+                                                         removeCustomProjectName);
+   if (error)
+      return error;
+
+   return Success();
 }
 
 void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
@@ -112,6 +172,20 @@ void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
    // get the name of the list
    FilePath filePath(fileChange.fileInfo().absolutePath());
    std::string name = filePath.getFilename();
+
+   // ignore changes to the legacy project_mru file; we write to it whenever project_name_mru is 
+   // written, but never read it; it's kept updated so user doesn't lose their Projects MRU if
+   // they downgrade to an older version of RStudio
+   if (name == kProjectMru)
+      return;
+
+   // when the project_name_mru file is changed, we also update the legacy project_mru file
+   if (name == kProjectNameMru)
+   {
+      Error error = syncLegacyProjectMru();
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // read it
    boost::shared_ptr<MruList> list;
@@ -235,6 +309,26 @@ Error listAppendItem(const json::JsonRpcRequest& request,
    return listInsertItem(false, request, pResponse);
 }
 
+/**
+ * Update the extra data on a list entry without changing its list position.
+ */
+Error listUpdateItemExtraData(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   std::string name, value;
+   boost::shared_ptr<MruList> list;
+   Error error = getListNameAndContents(request, &name, &list);
+   if (error)
+      return error;
+   error = json::readParam(request.params, 1, &value);
+   if (error)
+      return error;
+
+   list->updateExtraData(value);
+
+   return Success();
+}
+
 
 Error listRemoveItem(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
@@ -256,6 +350,20 @@ Error listRemoveItem(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error clearListByName(const std::string& listName)
+{
+   if (!isListNameValid(listName))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   boost::shared_ptr<MruList> list;
+   Error error = readList(listName, &list);
+   if (error)
+      return error;
+   list->clear();
+
+   return Success();
+}
+
 Error listClear(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
@@ -269,6 +377,13 @@ Error listClear(const json::JsonRpcRequest& request,
    // clear list
    list->clear();
 
+   // when clearing the project_name_mru, also clear the legacy project_mru
+   if (name == kProjectNameMru)
+   {
+      error = clearListByName(kProjectMru);
+      if (error)
+         return error;
+   }
    return Success();
 }
 
@@ -295,7 +410,8 @@ Error initialize()
 {  
    // register lists / max sizes
    s_lists[kFileMru] = 15;
-   s_lists[kProjectMru] = 15;
+   s_lists[kProjectMru] = 15; // legacy, kept in sync with kProjectNameMru
+   s_lists[kProjectNameMru] = 15;
    s_lists[kHelpHistory] = 15;
    s_lists[kPlotPublishMru] = 15;
    s_lists[kCommandPaletteMru] = 10;
@@ -306,6 +422,10 @@ Error initialize()
                                                       kListsPath,
                                                       onListsFileChanged);
 
+   Error error = migrateLegacyProjectMru();
+   if (error)
+      return error;
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock;
@@ -315,6 +435,7 @@ Error initialize()
       (bind(registerRpcMethod, "list_prepend_item", listPrependItem))
       (bind(registerRpcMethod, "list_append_item", listAppendItem))
       (bind(registerRpcMethod, "list_remove_item", listRemoveItem))
+      (bind(registerRpcMethod, "list_update_extra", listUpdateItemExtraData))
       (bind(registerRpcMethod, "list_clear", listClear));
    return initBlock.execute();
 }

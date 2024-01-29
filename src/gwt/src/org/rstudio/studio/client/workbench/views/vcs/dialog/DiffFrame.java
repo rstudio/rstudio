@@ -23,6 +23,8 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DecorativeImage;
@@ -94,7 +96,7 @@ public class DiffFrame extends Composite
          
          viewFileHyperlink_.setClickHandler(viewFileClickHandler);
          viewFileHyperlink_.setAlwaysUnderline(false);
-         viewFileHyperlink_.setText(constants_.viewFileAtString(commitId.substring(0, 8)));
+         viewFileHyperlink_.setText(constants_.viewFileAtString(StringUtil.substring(commitId, 0, 8)));
          viewFileHyperlink_.addStyleName(RES.styles().viewFileHyperlink());
       }
       

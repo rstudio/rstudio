@@ -11,7 +11,7 @@ call VsDevCmd.bat -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.19041
 popd
 
 echo Microsoft toolchain configured, can now use cmake. For example:
-echo mkdir build
-echo cd build
-echo cmake ..\cpp -GNinja
+echo mkdir rstudio\src\build
+echo cd rstudio\src\build
+echo cmake ..\cpp -GNinja -DRSTUDIO_TARGET=Electron
 echo ninja

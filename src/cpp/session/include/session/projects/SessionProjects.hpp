@@ -117,6 +117,9 @@ public:
    // Path to the .RProj file representing the project
    const core::FilePath& file() const { return file_; }
 
+   // Optional user-supplied project name
+   const std::string& projectName() const { return config_.projectName; }
+
    // Path to the directory in which the project resides
    const core::FilePath& directory() const { return directory_; }
 

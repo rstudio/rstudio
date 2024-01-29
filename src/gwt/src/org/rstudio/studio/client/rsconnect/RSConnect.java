@@ -727,7 +727,7 @@ public class RSConnect implements SessionInitEvent.Handler,
       }
       if (pos > 0)
       {
-         failedPath = failedPath.substring(0, pos);
+         failedPath = StringUtil.substring(failedPath, 0, pos);
       }
       final String serverUrl = failedPath;
 

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.pdfviewer.model;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.common.Value;
@@ -464,7 +465,7 @@ public class PdfJsWindow extends WindowEx
    private static int getContainerPageNum(Element container)
    {
       return Integer.parseInt(
-            container.getId().substring("pageContainer".length()));
+            StringUtil.substring(container.getId(), "pageContainer".length()));
    }
    
    private static Element getViewerContainer(PdfJsWindow win)

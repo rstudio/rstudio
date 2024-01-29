@@ -30,8 +30,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
-import org.rstudio.studio.client.projects.ProjectMRUList;
-import org.rstudio.studio.client.workbench.FileMRUList;
+import org.rstudio.studio.client.workbench.events.UpdateWindowTitleEvent;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.buildtools.BuildCommands;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
@@ -48,8 +47,6 @@ public class SourceSatelliteWindow extends SatelliteWindow
                                 Provider<SourceSatellitePresenter> pPresenter,
                                 Provider<SourceWindowManager> pWindowManager,
                                 Provider<SourceWindow> pSourceWindow,
-                                Provider<FileMRUList> pFileMRUList,
-                                Provider<ProjectMRUList> pProjectMRUList,
                                 Provider<Source> pSource,
                                 CodeSearchLauncher launcher)
    {
@@ -58,9 +55,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
       pPresenter_ = pPresenter;
       pWindowManager_ = pWindowManager;
       pSourceWindow_ = pSourceWindow;
-      pFileMRUList_ = pFileMRUList;
       pSource_ = pSource;
-      pProjectMRUList_ = pProjectMRUList;
    }
 
    @Override
@@ -77,12 +72,8 @@ public class SourceSatelliteWindow extends SatelliteWindow
                windowParams.getOrdinal());
          title = windowParams.getTitle();
       }
-      if (title == null)
-         title = "";
-      else
-         title += " - ";
-      title += constants_.rstudioSourceEditor();
-      Window.setTitle(title);
+      setWindowTitle(title);
+      pEventBus_.get().addHandler(UpdateWindowTitleEvent.TYPE, uwt -> setWindowTitle(uwt.getTitle()));
 
       // set up the source window
       SourceWindow sourceWindow = pSourceWindow_.get();
@@ -134,12 +125,20 @@ public class SourceSatelliteWindow extends SatelliteWindow
       return true;
    }
 
+   private void setWindowTitle(String title)
+   {
+       if (title == null)
+         title = "";
+      else
+         title += " - ";
+      title += constants_.rstudioSourceEditor();
+      Window.setTitle(title);
+   }
+
    private final Provider<EventBus> pEventBus_;
    private final Provider<SourceSatellitePresenter> pPresenter_;
    private final Provider<SourceWindowManager> pWindowManager_;
    private final Provider<SourceWindow> pSourceWindow_;
    private final Provider<Source> pSource_;
-   @SuppressWarnings("unused") private final Provider<FileMRUList> pFileMRUList_;
-   @SuppressWarnings("unused") private final Provider<ProjectMRUList> pProjectMRUList_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

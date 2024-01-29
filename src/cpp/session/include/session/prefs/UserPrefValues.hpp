@@ -316,7 +316,6 @@ namespace prefs {
 #define kSshKeyTypeRsa "rsa"
 #define kUseDevtools "use_devtools"
 #define kCleanBeforeInstall "clean_before_install"
-#define kUseInternet2 "use_internet2"
 #define kUseSecureDownload "use_secure_download"
 #define kCleanupAfterRCmdCheck "cleanup_after_r_cmd_check"
 #define kViewDirAfterRCmdCheck "view_dir_after_r_cmd_check"
@@ -417,6 +416,7 @@ namespace prefs {
 #define kUiLanguage "ui_language"
 #define kUiLanguageEn "en"
 #define kUiLanguageFr "fr"
+#define kAutohideMenubar "autohide_menubar"
 #define kNativeFileDialogs "native_file_dialogs"
 #define kDiscardPendingConsoleInputOnError "discard_pending_console_input_on_error"
 #define kEditorScrollMultiplier "editor_scroll_multiplier"
@@ -430,6 +430,7 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorSuggestion "suggestion"
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
+#define kProjectName "project_name"
 
 class UserPrefValues: public Preferences
 {
@@ -1522,12 +1523,6 @@ public:
    core::Error setCleanBeforeInstall(bool val);
 
    /**
-    * Whether to use Internet2 for networking on R for Windows.
-    */
-   bool useInternet2();
-   core::Error setUseInternet2(bool val);
-
-   /**
     * Whether to use secure downloads when fetching R packages.
     */
    bool useSecureDownload();
@@ -1894,6 +1889,12 @@ public:
    core::Error setUiLanguage(std::string val);
 
    /**
+    * Hide desktop menu bar until Alt key is pressed.
+    */
+   bool autohideMenubar();
+   core::Error setAutohideMenubar(bool val);
+
+   /**
     * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
     */
    bool nativeFileDialogs();
@@ -1946,6 +1947,12 @@ public:
     */
    bool copilotIndexingEnabled();
    core::Error setCopilotIndexingEnabled(bool val);
+
+   /**
+    * User-provided name for the currently opened R project.
+    */
+   std::string projectName();
+   core::Error setProjectName(std::string val);
 
 };
 

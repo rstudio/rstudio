@@ -461,6 +461,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
     },
 
+    setAutohideMenubar: (enable: boolean) => {
+      ipcRenderer.send('desktop_set_autohide_menubar', enable);
+    },
+
     setDisableRendererAccessibility: (disable: boolean) => {
       ipcRenderer.send('desktop_set_disable_renderer_accessibility', disable);
     },

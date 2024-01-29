@@ -1172,7 +1172,7 @@ public class TextEditingTargetReformatHelper
          }
          else
          {
-            String start = line.substring(0, match.getGroup(1).length());
+            String start = StringUtil.substring(line, 0, match.getGroup(1).length());
             start = start.replaceAll("\\s*$", "");
             starts.add(start);
             
@@ -1181,7 +1181,7 @@ public class TextEditingTargetReformatHelper
             int endOfDelim = match.getGroup(1).length() +
                   match.getGroup(2).length();
             
-            String end = line.substring(endOfDelim);
+            String end = StringUtil.substring(line, endOfDelim);
             end = end.replaceAll("^\\s*", "");
             ends.add(end);
          }

@@ -250,3 +250,55 @@ test_that(".rs.hasExternalPointer() finds xp in functions", {
    )
 
 })
+
+test_that(".rs.isSerializable() works as expected", {
+   
+   # some 'obvious' examples
+   expect_true(.rs.isSerializable(1))
+   expect_true(.rs.isSerializable(letters))
+   expect_true(.rs.isSerializable(mtcars))
+   expect_true(.rs.isSerializable(pairlist(1, 2)))
+   expect_true(.rs.isSerializable(matrix(1:4, nrow = 2)))
+   
+   # slightly less obvious
+   envir <- new.env(parent = emptyenv())
+   expect_true(.rs.isSerializable(envir))
+
+   # test that we avoid infinite recursion
+   envir$self <- envir
+   expect_true(.rs.isSerializable(envir))
+   
+   # external pointers can't be serialized
+   expect_false(.rs.isSerializable(.Call("rs_newTestExternalPointer", FALSE)))
+   expect_false(.rs.isSerializable(.Call("rs_newTestExternalPointer", TRUE)))
+
+   # put the extptr into an environment; no longer serializable
+   envir$extptr <- .Call("rs_newTestExternalPointer", FALSE)
+   expect_false(.rs.isSerializable(envir))
+   
+   # test that promises are not evaluated
+   value <- FALSE
+   delayedAssign("value", { value <- TRUE }, assign.env = envir)
+   expect_false(.rs.isSerializable(envir))
+   expect_false(value)
+   
+   # force the promise, just to confirm it does what we expect it to
+   force(envir$value)
+   expect_true(value)
+   
+   # test that active bindings are not evaluated
+   value <- FALSE
+   makeActiveBinding("active", function() value <<- TRUE, env = envir)
+   expect_false(.rs.isSerializable(envir))
+   expect_false(value)
+   
+   # trigger the active binding, just to confirm it does what we expected
+   force(envir$active)
+   expect_true(value)
+   
+   # for loops create immediate bindings; check that we don't barf when
+   # attempting to scan the environment in such cases
+   for (binding in 1)
+      .rs.isSerializable(environment())
+   
+})

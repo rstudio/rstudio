@@ -400,7 +400,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeCompletionOtherEnum_always();
    @DefaultStringValue("When triggered")
    String codeCompletionOtherEnum_triggered();
-   @DefaultStringValue("Manually (ctrl+space)")
+   @DefaultStringValue("Manually (Ctrl+Space)")
    String codeCompletionOtherEnum_manual();
 
    /**
@@ -1522,14 +1522,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String cleanBeforeInstallDescription();
 
    /**
-    * Whether to use Internet2 for networking on R for Windows.
-    */
-   @DefaultStringValue("")
-   String useInternet2Title();
-   @DefaultStringValue("Whether to use Internet2 for networking on R for Windows.")
-   String useInternet2Description();
-
-   /**
     * Whether to use secure downloads when fetching R packages.
     */
    @DefaultStringValue("Download R packages securely")
@@ -2024,6 +2016,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String uiLanguageDescription();
 
    /**
+    * Hide desktop menu bar until Alt key is pressed.
+    */
+   @DefaultStringValue("Auto hide menu bar")
+   String autohideMenubarTitle();
+   @DefaultStringValue("Hide desktop menu bar until Alt key is pressed.")
+   String autohideMenubarDescription();
+
+   /**
     * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
     */
    @DefaultStringValue("Use native file and message dialog boxes")
@@ -2098,6 +2098,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotIndexingEnabledTitle();
    @DefaultStringValue("When enabled, RStudio will index project files with GitHub Copilot.")
    String copilotIndexingEnabledDescription();
+
+   /**
+    * User-provided name for the currently opened R project.
+    */
+   @DefaultStringValue("")
+   String projectNameTitle();
+   @DefaultStringValue("User-provided name for the currently opened R project.")
+   String projectNameDescription();
 
 
 

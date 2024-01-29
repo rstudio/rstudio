@@ -57,6 +57,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.events.UpdateWindowTitleEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
@@ -212,6 +213,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                openSourceWindow(windowId, null, null, null);
             }
          }
+
+         // git branch info isn't available at this point of startup so the Satellite window titles
+         // will be missing that information. Wait a bit and update titles again. May not always
+         // work if git is super-slow to initialize, but it's better than nothing (and this has
+         // never worked before) https://github.com/rstudio/rstudio/issues/14029
+         SingleShotTimer.fire(5000, () -> {
+            String title = pWorkbenchContext_.get().createWindowTitle();
+            if (title != null) 
+               events_.fireEventToAllSatellites(new UpdateWindowTitleEvent(title));
+         });
       }
 
       // signal that this window has focus
@@ -1000,7 +1011,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       if (input != null && input.startsWith(SourceSatellite.NAME_PREFIX))
       {
-         return input.substring(SourceSatellite.NAME_PREFIX.length());
+         return StringUtil.substring(input, SourceSatellite.NAME_PREFIX.length());
       }
       return "";
    }

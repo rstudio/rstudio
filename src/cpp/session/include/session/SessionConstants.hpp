@@ -114,7 +114,13 @@
 
 #define kMonitoredPath      "monitored"
 #define kListsPath          "lists"
+
+// legacy, stores only the project file path (no custom name)
 #define kProjectMruList     "project_mru"
+
+// stores project file path and optional name separated by kProjectNameSepChar
+#define kProjectNameMruList "project_name_mru" 
+#define kProjectNameSepChar '\t' // must match PROJECT_NAME_SEP in GWT code
 
 #define kServerHomeSetting     "showUserHomePage"
 #define kServerHomeAlways      "always"

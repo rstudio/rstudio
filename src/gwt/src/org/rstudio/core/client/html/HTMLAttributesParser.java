@@ -85,7 +85,7 @@ public class HTMLAttributesParser
             @Override
             public void execute()
             {
-               identifier_ = attributes_.substring(index + 1, index_);
+               identifier_ = StringUtil.substring(attributes_, index + 1, index_);
             }
          });
       }
@@ -102,7 +102,7 @@ public class HTMLAttributesParser
             @Override
             public void execute()
             {
-               classes_.add(attributes_.substring(index + 1, index_));
+               classes_.add(StringUtil.substring(attributes_, index + 1, index_));
             }
          });
       }
@@ -134,7 +134,7 @@ public class HTMLAttributesParser
             @Override
             public void execute()
             {
-               currentKey_ = attributes_.substring(index, index_);
+               currentKey_ = StringUtil.substring(attributes_, index, index_);
                map_.put(currentKey_, null);
             }
          });
@@ -166,7 +166,7 @@ public class HTMLAttributesParser
                @Override
                public void execute()
                {
-                  currentValue_ = attributes_.substring(index + 1, index_ - 1);
+                  currentValue_ = StringUtil.substring(attributes_, index + 1, index_ - 1);
                   if (isValidKey(currentKey_))
                      map_.put(currentKey_, currentValue_);
                }
@@ -178,7 +178,7 @@ public class HTMLAttributesParser
             @Override
             public void execute()
             {
-               currentValue_ = attributes_.substring(index, index_);
+               currentValue_ = StringUtil.substring(attributes_, index, index_);
                if (isValidKey(currentKey_))
                   map_.put(currentKey_, currentValue_);
             }

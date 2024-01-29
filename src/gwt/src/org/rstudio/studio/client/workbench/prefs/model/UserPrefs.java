@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -88,6 +89,12 @@ public class UserPrefs extends UserPrefsComputed
       eventBus.addHandler(SessionInitEvent.TYPE, this);
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
+      
+      // Let desktop-side know when this changes
+      if (BrowseCap.isElectron())
+      {
+         autohideMenubar().addValueChangeHandler(enabled -> Desktop.getFrame().setAutohideMenubar(enabled.getValue()));
+      }
    }
 
    public void writeUserPrefs()

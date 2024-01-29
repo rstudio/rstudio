@@ -860,7 +860,7 @@ public class DomUtils
       {
          if (tail != match.getIndex())
          {
-            String line = plainText.substring(tail, match.getIndex());
+            String line = StringUtil.substring(plainText, tail, match.getIndex());
             el.appendChild(doc.createTextNode(line));
          }
          el.appendChild(doc.createBRElement());
@@ -869,7 +869,7 @@ public class DomUtils
       }
 
       if (tail < plainText.length())
-         el.appendChild(doc.createTextNode(plainText.substring(tail)));
+         el.appendChild(doc.createTextNode(StringUtil.substring(plainText, tail)));
    }
 
    public static boolean isSelectionAsynchronous()

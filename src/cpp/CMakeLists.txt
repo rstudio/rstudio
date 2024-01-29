@@ -90,9 +90,8 @@ if(UNIX)
    endif()
 
    if(APPLE)
-      add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs
-                      -Wno-deprecated-declarations -fvisibility=hidden)
-
+      add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs -fvisibility=hidden)
+      
       find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
       find_library(COCOA_LIBRARY NAMES Cocoa)
       find_library(SECURITY_LIBRARY NAMES Security)
@@ -581,7 +580,7 @@ if(WIN32)
         set(OPENSSL_BITNESS "64")
      endif()
 
-     set(OPENSSL_NAME "openssl-1.1.1w")
+     set(OPENSSL_NAME "openssl-3.1.4")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
      set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}/lib")

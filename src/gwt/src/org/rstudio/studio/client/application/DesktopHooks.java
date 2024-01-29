@@ -92,18 +92,26 @@ public class DesktopHooks
    }
 
    private native void addCopyHook() /*-{
-      var clean = function() {
-         setTimeout(function() {
-            $wnd.desktop.cleanClipboard(false);
-         }, 100)
-      };
-      $wnd.addEventListener("copy", clean, true);
-      $wnd.addEventListener("cut", clean, true);
+      if ($wnd.desktop) {
+         var clean = function() {
+            setTimeout(function() {
+               $wnd.desktop.cleanClipboard(false);
+            }, 100)
+         };
+         $wnd.addEventListener("copy", clean, true);
+         $wnd.addEventListener("cut", clean, true);
+      }
    }-*/;
 
    
-   String getActiveProjectDir()
+   String getActiveProjectName()
    {
+      // Prefer user-provided name over the folder name
+      String name = pUIPrefs_.get().projectName().getValue();
+      if (!StringUtil.isNullOrEmpty(name))
+      {
+         return name;
+      }
       if (workbenchContext_.getActiveProjectDir() != null)
       {
          if (pUIPrefs_.get().fullProjectPathInWindowTitle().getValue())

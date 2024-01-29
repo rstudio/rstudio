@@ -163,10 +163,10 @@ public class TextEditingTargetCopilotHelper
                               // Copilot includes trailing '```' for some reason in some cases,
                               // remove those if we're inserting in an R document.
                               if (completion.text.endsWith("\n```"))
-                                 completion.text = completion.text.substring(0, completion.text.length() - 3);
+                                 completion.text = StringUtil.substring(completion.text, 0, completion.text.length() - 3);
 
                               if (completion.displayText.endsWith("\n```"))
-                                 completion.displayText = completion.displayText.substring(0, completion.displayText.length() - 3);
+                                 completion.displayText = StringUtil.substring(completion.displayText, 0, completion.displayText.length() - 3);
 
                               activeCompletion_ = completion;
                               display_.setGhostText(activeCompletion_.displayText);
@@ -216,6 +216,10 @@ public class TextEditingTargetCopilotHelper
 
                display_.addCursorChangedHandler((event) ->
                {
+                  // Check if we've been toggled off
+                  if (!automaticCodeSuggestionsEnabled_)
+                     return;
+                           
                   // Allow one-time suppression of cursor change handler
                   if (suppressCursorChangeHandler_)
                   {
@@ -317,8 +321,8 @@ public class TextEditingTargetCopilotHelper
       if (match == null)
          return;
       
-      String insertedWord = text.substring(0, match.getIndex());
-      String leftoverText = text.substring(match.getIndex());
+      String insertedWord = StringUtil.substring(text, 0, match.getIndex());
+      String leftoverText = StringUtil.substring(text, match.getIndex());
       
       int n = insertedWord.length();
       activeCompletion_.displayText = leftoverText;
@@ -335,11 +339,29 @@ public class TextEditingTargetCopilotHelper
       });
    }
    
+   @Handler
+   public void onCopilotToggleAutomaticCompletions()
+   {
+      if (display_.isFocused())
+      {
+         automaticCodeSuggestionsEnabled_ = !automaticCodeSuggestionsEnabled_;
+         
+         if (automaticCodeSuggestionsEnabled_)
+         {
+            events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETIONS_ENABLED));
+         }
+         else
+         {
+            events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETIONS_DISABLED));
+         }
+      }
+   }
+   
    private void updateCompletion(String key)
    {
       int n = key.length();
-      activeCompletion_.displayText = activeCompletion_.displayText.substring(n);
-      activeCompletion_.text = activeCompletion_.text.substring(n);
+      activeCompletion_.displayText = StringUtil.substring(activeCompletion_.displayText, n);
+      activeCompletion_.text = StringUtil.substring(activeCompletion_.text, n);
       activeCompletion_.position.character += n;
       activeCompletion_.range.start.character += n;
       activeCompletion_.range.end.character += n;
@@ -378,6 +400,7 @@ public class TextEditingTargetCopilotHelper
    private boolean suppressCursorChangeHandler_;
    
    private CopilotCompletion activeCompletion_;
+   private boolean automaticCodeSuggestionsEnabled_ = true;
    
    
    // Injected ----

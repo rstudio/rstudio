@@ -1,0 +1,10 @@
+ARG BASE_IMAGE=ubuntu:bionic
+FROM 263245908434.dkr.ecr.us-east-1.amazonaws.com/$BASE_IMAGE
+
+# Install a separate version node and npm because the one used in the base image 
+# is difficult to access due to PATH issues
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install -y nodejs
+
+# install snyk
+RUN npm install -g snyk

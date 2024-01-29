@@ -2377,19 +2377,6 @@ core::Error UserPrefValues::setCleanBeforeInstall(bool val)
 }
 
 /**
- * Whether to use Internet2 for networking on R for Windows.
- */
-bool UserPrefValues::useInternet2()
-{
-   return readPref<bool>("use_internet2");
-}
-
-core::Error UserPrefValues::setUseInternet2(bool val)
-{
-   return writePref("use_internet2", val);
-}
-
-/**
  * Whether to use secure downloads when fetching R packages.
  */
 bool UserPrefValues::useSecureDownload()
@@ -3183,6 +3170,19 @@ core::Error UserPrefValues::setUiLanguage(std::string val)
 }
 
 /**
+ * Hide desktop menu bar until Alt key is pressed.
+ */
+bool UserPrefValues::autohideMenubar()
+{
+   return readPref<bool>("autohide_menubar");
+}
+
+core::Error UserPrefValues::setAutohideMenubar(bool val)
+{
+   return writePref("autohide_menubar", val);
+}
+
+/**
  * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
  */
 bool UserPrefValues::nativeFileDialogs()
@@ -3297,6 +3297,19 @@ bool UserPrefValues::copilotIndexingEnabled()
 core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
 {
    return writePref("copilot_indexing_enabled", val);
+}
+
+/**
+ * User-provided name for the currently opened R project.
+ */
+std::string UserPrefValues::projectName()
+{
+   return readPref<std::string>("project_name");
+}
+
+core::Error UserPrefValues::setProjectName(std::string val)
+{
+   return writePref("project_name", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -3483,7 +3496,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSshKeyType,
       kUseDevtools,
       kCleanBeforeInstall,
-      kUseInternet2,
       kUseSecureDownload,
       kCleanupAfterRCmdCheck,
       kViewDirAfterRCmdCheck,
@@ -3545,6 +3557,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonProjectEnvironmentAutomaticActivate,
       kCheckNullExternalPointers,
       kUiLanguage,
+      kAutohideMenubar,
       kNativeFileDialogs,
       kDiscardPendingConsoleInputOnError,
       kEditorScrollMultiplier,
@@ -3554,6 +3567,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotCompletionsDelay,
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,
+      kProjectName,
    });
 }
    

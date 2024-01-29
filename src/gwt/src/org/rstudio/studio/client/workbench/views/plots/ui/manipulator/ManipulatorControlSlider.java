@@ -18,17 +18,16 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.json.client.JSONNumber;
-import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.widgetideas.client.SliderBar;
 
-@SuppressWarnings("deprecation")
 public class ManipulatorControlSlider extends ManipulatorControl
                                       implements SliderBar.LabelFormatter
 {
+   @SuppressWarnings("deprecation")
    public ManipulatorControlSlider(String variable, 
                                    double value,
                                    Manipulator.Slider slider,
@@ -90,8 +89,9 @@ public class ManipulatorControlSlider extends ManipulatorControl
          sliderBar_.setNumTicks(1); 
       }
       
-      // update label on change
-      sliderBar_.addChangeListener(new ChangeListener() {
+      // update label on change (using full type for ChangeListener instead of import to avoid
+      // deprecation warnings on import which aren't suppressed by @SuppressWarnings)
+      sliderBar_.addChangeListener(new com.google.gwt.user.client.ui.ChangeListener() {
          @Override
          public void onChange(Widget sender)
          {
@@ -102,7 +102,7 @@ public class ManipulatorControlSlider extends ManipulatorControl
       sliderBar_.setCurrentValue(value);
       
       // fire changed even on slide completed
-      sliderBar_.addSlideCompletedListener(new ChangeListener() {
+      sliderBar_.addSlideCompletedListener(new com.google.gwt.user.client.ui.ChangeListener() {
          @Override
          public void onChange(Widget sender)
          {

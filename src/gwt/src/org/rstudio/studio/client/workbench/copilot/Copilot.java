@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -158,6 +159,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             }
          }
       });
+
    }
    
    public boolean isEnabled()
@@ -177,7 +179,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    
    public void ensureAgentInstalled(CommandWithArg<Boolean> callback)
    {
-      String progressLabel = "Verifying copilot installation...";
+      String progressLabel = constants_.copilotVerifyingInstallation();
       server_.copilotVerifyInstalled(
             new DelayedProgressRequestCallback<CopilotVerifyInstalledResponse>(progressLabel)
       {
@@ -252,7 +254,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    private void installAgent(ProgressIndicator indicator,
                              CommandWithArg<Boolean> callback)
    {
-      indicator.onProgress("Installing...");
+      indicator.onProgress(constants_.copilotInstalling());
       server_.copilotInstallAgent(
             new ServerRequestCallback<CopilotInstallAgentResponse>()
             {
@@ -264,17 +266,15 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                   String error = response.error;
                   if (error != null)
                   {
-                     display_.showErrorMessage(
-                           "An error occurred while installing GitHub Copilot.\n\n" +
-                                 error);
+                     display_.showErrorMessage(constants_.copilotErrorInstalling(error));
                      callback.execute(false);
                   }
                   else
                   {
                      display_.showMessage(
                            MessageDisplay.MSG_INFO,
-                           "GitHub Copilot: Install Agent",
-                           "GitHub Copilot agent successfully installed.");
+                           constants_.copilotInstallAgentDialogTitle(),
+                           constants_.copilotInstallAgentSuccess());
                      callback.execute(true);
                   }
                   
@@ -304,15 +304,15 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          {
             globalDisplay_.showMessage(
                   MessageDisplay.MSG_INFO,
-                  "GitHub Copilot: Sign in",
-                  "You are now signed in as '" + response.result.user + "'.");
+                  constants_.copilotSignInDialogTitle(),
+                  constants_.copilotSignedIn(response.result.user));
          });
       });
    }
    
    public void onCopilotSignIn(CommandWithArg<CopilotStatusResponse> callback)
    {
-      server_.copilotSignIn(new DelayedProgressRequestCallback<CopilotSignInResponse>("Signing in...")
+      server_.copilotSignIn(new DelayedProgressRequestCallback<CopilotSignInResponse>(constants_.copilotSigningIn())
       {
          private ModalDialogBase signInDialog_;
          private Timer statusTimer_;
@@ -325,8 +325,8 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             {
                globalDisplay_.showMessage(
                      MessageDisplay.MSG_ERROR,
-                     "GitHub Copilot: Sign in",
-                     "Error " + error.code + ": " + error.message);
+                     constants_.copilotSignInDialogTitle(),
+                     constants_.copilotError(error.code, error.message));
                return;
             }
             
@@ -372,20 +372,16 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             }
             else if (result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
             {
-               String message =
-                     "You are already signed in as '" + result.user + "'.\n\n" +
-                     "If you'd like to sign in as a different user, please " +
-                     "sign out from this account first.";
-                     
+               String message = constants_.copilotAlreadySignedIn(result.user);
                globalDisplay_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     "GitHub Copilot: Sign in",
+                     constants_.copilotSignInDialogTitle(),
                      message);
             }
             else
             {
                showGenericResponseMessage(
-                     "GitHub Copilot: Sign In",
+                     constants_.copilotSignInDialogTitle(),
                      response.result);
             }
          }
@@ -402,13 +398,13 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          {
             display_.showMessage(
                   MessageDisplay.MSG_INFO,
-                  "GitHub Copilot: Sign out",
-                  "You have successfully signed out from GitHub Copilot.");
+                  constants_.copilotSignOutDialogTitle(),
+                  constants_.copilotSignedOut());
          }
          else
          {
             showGenericResponseMessage(
-                  "GitHub Copilot: Sign out",
+                  constants_.copilotSignOutDialogTitle(),
                   response.result);
          }
       });
@@ -416,7 +412,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    
    public void onCopilotSignOut(CommandWithArg<CopilotSignOutResponse> callback)
    {
-      server_.copilotSignOut(new DelayedProgressRequestCallback<CopilotSignOutResponse>("Signing out...")
+      server_.copilotSignOut(new DelayedProgressRequestCallback<CopilotSignOutResponse>(constants_.copilotSigningOut())
       {
          @Override
          protected void onSuccess(CopilotSignOutResponse response)
@@ -437,7 +433,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    
    private void onCopilotStatusImpl()
    {
-      server_.copilotStatus(new DelayedProgressRequestCallback<CopilotStatusResponse>("Checking status...")
+      server_.copilotStatus(new DelayedProgressRequestCallback<CopilotStatusResponse>(constants_.copilotCheckingStatus())
       {
          @Override
          protected void onSuccess(CopilotStatusResponse response)
@@ -446,21 +442,22 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     "GitHub Copilot: Check Status",
-                     "RStudio received an unexpected empty response from the GitHub Copilot agent.");
+                     constants_.copilotCheckStatusDialogTitle(),
+                     constants_.copilotEmptyResponse());
                
             }
             else if (response.error != null)
             {
-               String message = StringUtil.join(new String[] {
-                     "An error occurred while starting the GitHub Copilot agent.",
-                     "Error: " + response.error.getEndUserMessage(),
-                     "Output: " + response.output
-               }, "\n\n");
+               String output = response.output;
+               if (StringUtil.isNullOrEmpty(output))
+                  output = constants_.copilotNoOutput();
+               
+               String message = constants_.copilotErrorStartingAgent(
+                     response.error.getEndUserMessage(), output);
                
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     "GitHub Copilot: Check Status",
+                     constants_.copilotCheckStatusDialogTitle(),
                      message);
             }
             else if (response.reason != null)
@@ -468,27 +465,27 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                int reason = (int) response.reason.valueOf();
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     "GitHub Copilot: Check Status",
+                     constants_.copilotCheckStatusDialogTitle(),
                      CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     "GitHub Copilot: Status",
-                     "The GitHub Copilot agent is running, but you have not yet signed in.");
+                     constants_.copilotStatusDialogTitle(),
+                     constants_.copilotNotSignedIn());
             }
             else if (response.result.status == CopilotConstants.STATUS_OK)
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     "GitHub Copilot: Status",
-                     "You are currently signed in as: " + response.result.user);
+                     constants_.copilotStatusDialogTitle(),
+                     constants_.copilotCurrentlySignedIn(response.result.user));
             }
             else
             {
                showGenericResponseMessage(
-                     "GitHub Copilot: Check Status",
+                     constants_.copilotCheckStatusDialogTitle(),
                      response.result);
             }
             
@@ -503,7 +500,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
       
       if (code == CopilotConstants.ErrorCodes.NOT_SIGNED_IN)
       {
-         return "Not signed in.";
+         return constants_.copilotNotSignedInShort();
       }
       else
       {
@@ -539,4 +536,6 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final CopilotServerOperations server_;
+
+   private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
 }

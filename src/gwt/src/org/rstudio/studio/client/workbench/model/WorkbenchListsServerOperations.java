@@ -43,7 +43,11 @@ public interface WorkbenchListsServerOperations
    void listRemoveItem(String listName,
                        String value,
                        ServerRequestCallback<Void> requestCallback);
-   
+
+   void listUpdateItemExtraData(String listName,
+                                String itemWithExtraData,
+                                ServerRequestCallback<Void> requestCallback);
+ 
    void listClear(String listName,
                   ServerRequestCallback<Void> requestCallback);
 }

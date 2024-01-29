@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
@@ -36,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -55,9 +58,12 @@ public class DataEditingTarget extends UrlContentEditingTarget
                             EventBus events)
    {
       super(server, commands, globalDisplay, events);
+      
       events_ = events;
       isActive_ = true;
-      events.addHandler(DataViewChangedEvent.TYPE, this);
+      handlers_ = new ArrayList<>();
+      
+      handlers_.add(events.addHandler(DataViewChangedEvent.TYPE, this));
    }
 
    @Override
@@ -148,6 +154,9 @@ public class DataEditingTarget extends UrlContentEditingTarget
    {
       // explicitly avoid calling super method as we don't
       // have an associated content URL to clean up
+      for (HandlerRegistration handler : handlers_)
+         handler.removeHandler();
+      handlers_.clear();
    }
    
    private void doQueuedRefresh()
@@ -259,5 +268,6 @@ public class DataEditingTarget extends UrlContentEditingTarget
    private final EventBus events_;
    private boolean isActive_;
    private QueuedRefreshType queuedRefresh_;
+   private final List<HandlerRegistration> handlers_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

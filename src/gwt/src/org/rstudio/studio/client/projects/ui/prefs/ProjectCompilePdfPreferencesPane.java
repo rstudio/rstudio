@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -144,7 +145,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
                            if (input.getPath().startsWith(proj + "/"))
                            {
                               String projRelative =
-                                input.getPath().substring(proj.length() + 1);
+                                StringUtil.substring(input.getPath(), proj.length() + 1);
                               setText(projRelative);
                            }
                            else

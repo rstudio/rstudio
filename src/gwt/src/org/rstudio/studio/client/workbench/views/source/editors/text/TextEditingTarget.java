@@ -1833,32 +1833,44 @@ public class TextEditingTarget implements
                   case COMPLETION_REQUESTED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           "Copilot: Waiting for completions...");
+                           constants_.copilotWaiting());
                      break;
                      
                   case COMPLETION_CANCELLED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           "Copilot: No completions available.");
+                           constants_.copilotNoCompletions());
                      break;
                      
                   case COMPLETION_RECEIVED_SOME:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_OK,
-                           "Copilot: Completion response received.");
+                           constants_.copilotResponseReceived());
                      break;
                      
                   case COMPLETION_RECEIVED_NONE:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           "Copilot: No completions available.");
+                           constants_.copilotNoCompletions());
                      break;
                      
                   case COMPLETION_ERROR:
                      String message = (String) event.getData();
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_ERROR,
-                           "Copilot: " + message);
+                           constants_.copilotResponseErrorMessage(message));
+                     break;
+                     
+                  case COMPLETIONS_ENABLED:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           constants_.copilotEnabled());
+                     break;
+                     
+                  case COMPLETIONS_DISABLED:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           constants_.copilotDisabled());
                      break;
                      
                   }
@@ -4575,7 +4587,7 @@ public class TextEditingTarget implements
             builder.append(commonIndent);
             builder.append(commentStart);
             builder.append(" ");
-            builder.append(line.substring(commonIndent.length()));
+            builder.append(StringUtil.substring(line, commonIndent.length()));
             if (commentEnd != null)
             {
                builder.append(" ");
@@ -4623,7 +4635,7 @@ public class TextEditingTarget implements
                startIdx++;
 
             int endIdx = commentEndIdx;
-            String afterComment = line.substring(startIdx, endIdx);
+            String afterComment = StringUtil.substring(line, startIdx, endIdx);
             builder.append(StringUtil.trimRight(commonIndent + afterComment));
 
             builder.append("\n");
@@ -4632,7 +4644,7 @@ public class TextEditingTarget implements
 
       String newSelection = dontCommentLastLine ?
             builder.toString() :
-            builder.substring(0, builder.length() - 1);
+            StringUtil.substring(builder, 0, builder.length() - 1);
 
       display.replaceSelection(newSelection);
 
@@ -5035,7 +5047,7 @@ public class TextEditingTarget implements
                String uiName = format;
                int nsLoc = uiName.indexOf("::");
                if (nsLoc != -1)
-                  uiName = uiName.substring(nsLoc + 2);
+                  uiName = StringUtil.substring(uiName, nsLoc + 2);
                formatList.add(uiName);
                valueList.add(format);
                extensionList.add(null);
@@ -5251,7 +5263,7 @@ public class TextEditingTarget implements
          boolean isWrappingEnabled = wordWrap.getWrappingEnabled();
          bullet = false;
 
-         String content = line.substring(Math.min(line.length(),
+         String content = StringUtil.substring(line, Math.min(line.length(),
                                                   prefix.length()));
 
          if (content.matches("^\\s*\\@examples\\b.*$"))
@@ -6032,7 +6044,7 @@ public class TextEditingTarget implements
                int maxLabelLength = length - 10;
                maxLabelLength = Math.max(maxLabelLength, 20);
                if (label.length() > maxLabelLength)
-                  label = label.substring(0, maxLabelLength-1);
+                  label = StringUtil.substring(label, 0, maxLabelLength-1);
 
                // prefix
                String prefix = "# ";

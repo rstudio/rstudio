@@ -328,12 +328,12 @@ public class TerminalLocalEchoTests extends GWTTestCase
       OutputCatcher output = new OutputCatcher();
       TerminalLocalEcho echo = new TerminalLocalEcho(output);
       
-      String password = "MySecretPassword!";
+      String input = "Typed text I don't want echoed";
       
       Assert.assertFalse(echo.paused());
       echo.pause(50);
       
-      echoString(echo, password);
+      echoString(echo, input);
       Assert.assertTrue(echo.paused());
       Assert.assertTrue(echo.isEmpty());
       Assert.assertTrue(output.isEmpty());

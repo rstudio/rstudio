@@ -449,9 +449,9 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       if (lastDot == -1) {
          return fileName + "." + extension;
       } else {
-         String fileNoExt = fileName.substring(0, lastDot);
-         return fileNoExt + "." + extension;   
-      }           
+         String fileNoExt = StringUtil.substring(fileName, 0, lastDot);
+         return fileNoExt + "." + extension;
+      }
 
    }
    private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);

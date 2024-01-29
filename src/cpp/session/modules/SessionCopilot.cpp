@@ -72,6 +72,8 @@
 # define kNodeExe "node.exe"
 #endif
 
+#define kMaxIndexingFileSize (1048576)
+
 using namespace rstudio::core;
 using namespace rstudio::core::system;
 
@@ -81,6 +83,43 @@ namespace modules {
 namespace copilot {
 
 namespace {
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
+std::map<std::string, std::string> s_extToLanguageIdMap = {
+   { ".bash", "shellscript" },
+   { ".bat",  "bat" },
+   { ".c",    "c" },
+   { ".cc",   "cpp" },
+   { ".cpp",  "cpp" },
+   { ".cs",   "csharp" },
+   { ".css",  "css" },
+   { ".erl",  "erlang" },
+   { ".go",   "go" },
+   { ".h",    "c" },
+   { ".hpp",  "cpp" },
+   { ".html", "html" },
+   { ".ini",  "ini" },
+   { ".java", "java" },
+   { ".js",   "javascript" },
+   { ".jsx",  "javascriptreact" },
+   { ".json", "json" },
+   { ".md",   "markdown" },
+   { ".mjs",  "javascript" },
+   { ".ps",   "powershell" },
+   { ".py",   "python" },
+   { ".tex",  "latex" },
+   { ".r",    "r" },
+   { ".rb",   "ruby" },
+   { ".rnw",  "r" },
+   { ".rnb",  "r" },
+   { ".rmd",  "r" },
+   { ".sh",   "shellscript" },
+   { ".tex",  "latex" },
+   { ".ts",   "typescript" },
+   { ".tsx",  "typescriptreact" },
+   { ".yml",  "yaml" },
+};
+   
 
 class CopilotContinuation
 {
@@ -194,20 +233,26 @@ bool isIndexableFile(const FilePath& documentPath)
    
    // Don't index R files which might contain secrets.
    std::string name = documentPath.getFilename();
-   if (name == ".Renviron" || name == "Renviron.site")
+   if (name == "Renviron.site")
       return false;
    
-   // Don't try to index SSH secrets.
+   // Don't index files within hidden folders (like .ssh)
    std::string path = documentPath.getAbsolutePath();
-   if (path.find("/.ssh/") != std::string::npos)
+   if (path.find("/.") != std::string::npos)
+      return false;
+   
+   // Don't index .Rproj files
+   std::string ext = documentPath.getExtensionLowerCase();
+   if (ext == ".rproj")
+      return false;
+   
+   // Don't index binary files.
+   // Perform this check last as it can be expensive; we use the 'file'
+   // utility to determine if a file is a text file as a fallback.
+   if (!module_context::isTextFile(documentPath))
       return false;
    
    return true;
-}
-
-bool isIndexableFile(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
-{
-   return isIndexableFile(FilePath(pDoc->path()));
 }
 
 FilePath copilotAgentPath()
@@ -325,44 +370,6 @@ std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocum
    return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
 }
 
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
-std::string languageIdFromExtension(const std::string& ext)
-{
-   static std::map<std::string, std::string> extToIdMap = {
-      { ".bash", "shellscript" },
-      { ".c",    "c" },
-      { ".cc",   "cpp" },
-      { ".cpp",  "cpp" },
-      { ".cs",   "csharp" },
-      { ".erl",  "erlang" },
-      { ".h",    "c" },
-      { ".hpp",  "cpp" },
-      { ".js",   "javascript" },
-      { ".jsx",  "javascriptreact" },
-      { ".md",   "markdown" },
-      { ".mjs",  "javascript" },
-      { ".ps",   "powershell" },
-      { ".py",   "python" },
-      { ".tex",  "latex" },
-      { ".rb",   "ruby" },
-      { ".rnw",  "r" },
-      { ".rnb",  "r" },
-      { ".rmd",  "r" },
-      { ".sh",   "shellscript" },
-      { ".ts",   "typescript" },
-      { ".tsx",  "typescriptreact" },
-      { ".yml",  "yaml" },
-   };
-   
-   if (extToIdMap.count(ext))
-      return extToIdMap.at(ext);
-   else if (ext.empty())
-      return "";
-   else
-      return ext.substr(1);
-}
-
-
 std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
@@ -404,19 +411,6 @@ Error findNode(FilePath* pNodePath,
    {
       *pNodePath = userNodePath;
       return Success();
-   }
-
-   // In Desktop builds of RStudio, we can re-use the version of node
-   // bundled with Electron.
-   if (session::options().programMode() == kSessionProgramModeDesktop)
-   {
-      std::string desktopExePath = core::system::getenv("RSTUDIO_DESKTOP_EXE");
-      if (!desktopExePath.empty() && FilePath(desktopExePath).exists())
-      {
-         *pNodePath = FilePath(desktopExePath);
-         pOptions->push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
-         return Success();
-      }
    }
 
    // Check for an admin-configured node path.
@@ -530,10 +524,18 @@ void setEditorInfo()
    // check strict ssl flag
    bool proxyStrictSsl = session::options().copilotProxyStrictSsl();
    
+   // allow override from envvar
+   std::string proxyStrictSslOverride = core::system::getenv("COPILOT_PROXY_STRICT_SSL");
+   if (!proxyStrictSslOverride.empty())
+      proxyStrictSsl = core::string_utils::isTruthy(proxyStrictSslOverride, true);
+   
    // check for server-configured proxy URL
    std::string proxyUrl = session::options().copilotProxyUrl();
-   if (proxyUrl.empty())
-      proxyUrl = core::system::getenv("COPILOT_PROXY_URL");
+   
+   // allow override from envvar
+   std::string proxyUrlOverride = core::system::getenv("COPILOT_PROXY_URL");
+   if (!proxyUrlOverride.empty())
+      proxyUrl = proxyUrlOverride;
    
    // if we have one now, try to parse it
    if (!proxyUrl.empty())
@@ -824,19 +826,33 @@ Error startAgent()
 
    // Set up process options
    core::system::ProcessOptions options;
-   options.environment = environment;
    options.allowParentSuspend = true;
    options.exitWithParent = true;
    options.callbacksRequireMainThread = true; // TODO: It'd be nice to drop this requirement!
+   options.reportHasSubprocs = false;
+   
+#ifndef _WIN32
+   options.detachSession = true;
+#else
+   options.detachProcess = true;
+#endif
 
    // Run the Copilot agent. If RStudio has been configured with a custom
    // Copilot agent script, use that; otherwise, just run the agent directly.
    FilePath copilotAgentHelper = session::options().copilotAgentHelper();
-   if (copilotAgentHelper.exists())
+   if (!copilotAgentHelper.isEmpty())
    {
+      if (!copilotAgentHelper.exists())
+         return fileNotFoundError(copilotAgentHelper, ERROR_LOCATION);
+      
+      FilePath agentPath = copilotAgentPath();
+      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_COPILOT_AGENT_PATH", agentPath.getAbsolutePath()));
+      options.environment = environment;
+
       error = module_context::processSupervisor().runProgram(
                copilotAgentHelper.getAbsolutePath(),
-               { nodePath.getAbsolutePath() },
+               {},
                options,
                callbacks);
    }
@@ -847,6 +863,8 @@ Error startAgent()
          return fileNotFoundError(agentPath, ERROR_LOCATION);
 
       options.workingDir = agentPath.getParent();
+      options.environment = environment;
+
       error = module_context::processSupervisor().runProgram(
                nodePath.getAbsolutePath(),
                { agentPath.getAbsolutePath() },
@@ -954,12 +972,13 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
 
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if (!isIndexableFile(pDoc))
-      return;
-   
    if (!ensureAgentRunning())
       return;
 
+   // Avoid indexing binary files
+   if (pDoc->contents().find('\0') != std::string::npos)
+      return;
+   
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
@@ -974,12 +993,13 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if (!isIndexableFile(pDoc))
-      return;
-   
    if (!ensureAgentRunning())
       return;
 
+   // Avoid indexing binary files
+   if (pDoc->contents().find('\0') != std::string::npos)
+      return;
+   
    // Synchronize document contents with Copilot
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocument(pDoc);
@@ -1089,18 +1109,26 @@ namespace {
 
 void indexFile(const core::FileInfo& info)
 {
+   // Don't index overly-large files
+   if (info.size() >= kMaxIndexingFileSize)
+      return;
+   
+   // Verify this file has an indexable type
    FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
    if (!isIndexableFile(documentPath))
       return;
    
+   std::string languageId;
    std::string ext = documentPath.getExtensionLowerCase();
-   std::string languageId = languageIdFromExtension(ext);
-   DLOG("Indexing document: {}", info.absolutePath());
-   
+   if (s_extToLanguageIdMap.count(ext))
+      languageId = s_extToLanguageIdMap[ext];
+      
    std::string contents;
    Error error = core::readStringFromFile(documentPath, &contents);
    if (error)
       return;
+   
+   DLOG("Indexing document: {}", info.absolutePath());
    
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());

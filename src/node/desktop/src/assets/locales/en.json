@@ -8,7 +8,8 @@
     "buttonYes": "Yes",
     "buttonNo": "No",
     "buttonQuit": "Quit",
-    "noFileSelected": "No file selected"
+    "noFileSelected": "No file selected",
+    "allFiles": "All Files"
   },
   "imgAlt": {
     "dialogQuestion": "Question Mark Icon",

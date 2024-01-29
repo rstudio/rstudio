@@ -208,15 +208,23 @@ public class Workbench implements BusyEvent.Handler,
 
       RStudioGinjector.INSTANCE.getFocusVisiblePolyfill().load(null);
 
-      if (Desktop.isDesktop() &&
-          StringUtil.equals(session_.getSessionInfo().getVcsName(), VCSConstants.GIT_ID))
+      if (StringUtil.equals(session_.getSessionInfo().getVcsName(), VCSConstants.GIT_ID))
       {
          pGitState_.get().addVcsRefreshHandler(vcsRefreshEvent ->
          {
             String title = workbenchContext_.createWindowTitle();
-            if (title != null)
-               Desktop.getFrame().setWindowTitle(title);
+
+            if (title != null) 
+            {
+               if (Desktop.isDesktop())
+                  Desktop.getFrame().setWindowTitle(title);
+               eventBus_.fireEventToAllSatellites(new UpdateWindowTitleEvent(title));
+            }
          });
+      }
+      if (BrowseCap.isElectron())
+      {
+         Desktop.getFrame().setAutohideMenubar(pPrefs_.get().autohideMenubar().getValue());
       }
    }
 

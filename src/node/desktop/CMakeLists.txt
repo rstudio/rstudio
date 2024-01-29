@@ -171,15 +171,44 @@ else()
 
 endif()
 
+
+# define custom command for fixing up Electron fuses post-hoc
+if (WIN32)
+
+   add_custom_command(
+      OUTPUT "${ELECTRON_BUILD_DIR}/out/fuses"
+      DEPENDS "${DESKTOP_SOURCES}"
+      COMMENT "Setting Electron fuses"
+      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      COMMAND ${NPM} run install-fuses
+   )
+
+else()
+
+   add_custom_command(
+      OUTPUT "${ELECTRON_BUILD_DIR}/out/fuses"
+      DEPENDS "${DESKTOP_SOURCES}"
+      COMMENT "Setting Electron fuses"
+      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      COMMAND
+         ${CMAKE_COMMAND} -E env
+         "PATH=${MODIFIED_PATH}"
+         "MAKEFLAGS="
+         ${NPM} run install-fuses
+   )
+
+endif()
+
 # define a target, indicating that building this target
 # requires that aforementioned OUTPUT file
 # (this effectively "links" this target with that command)
-add_custom_target(
-   electron_build ALL
-   DEPENDS "${ELECTRON_BUILD_DIR}/out"
-)
+add_custom_target(electron ALL)
+add_custom_target(electron_fuses DEPENDS "${ELECTRON_BUILD_DIR}/out/fuses")
+add_custom_target(electron_build DEPENDS "${ELECTRON_BUILD_DIR}/out")
 
 # add target dependencies, so we don't build too many things at once
+add_dependencies(electron electron_fuses)
+add_dependencies(electron_fuses electron_build)
 add_dependencies(electron_build rsession diagnostics)
 if(TARGET gwt_build)
    add_dependencies(electron_build gwt_build)
@@ -211,6 +240,10 @@ elseif(LINUX)
 
    install(
       DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-linux-${ELECTRON_ARCH}/"
+      DIRECTORY_PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE
+      GROUP_READ GROUP_EXECUTE
+      WORLD_READ WORLD_EXECUTE
       DESTINATION "${RSTUDIO_INSTALL_ELECTRON}"
       USE_SOURCE_PERMISSIONS
    )

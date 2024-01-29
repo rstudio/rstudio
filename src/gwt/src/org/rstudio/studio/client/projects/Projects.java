@@ -59,6 +59,7 @@ import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.OpenProjectParams;
+import org.rstudio.studio.client.projects.model.ProjectMRUEntry;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
@@ -156,8 +157,10 @@ public class Projects implements OpenProjectFileEvent.Handler,
          ProjectMRUList mruList = pMRUList_.get();
 
          // enable/disable commands
-         String activeProjectFile = sessionInfo.getActiveProjectFile();
-         boolean hasProject = activeProjectFile != null;
+         ProjectMRUEntry activeProject = new ProjectMRUEntry(
+            sessionInfo.getActiveProjectFile(),
+            sessionInfo.getActiveProjectName());
+         boolean hasProject = !StringUtil.isNullOrEmpty(activeProject.getProjectFilePath());
          commands.closeProject().setEnabled(hasProject);
          commands.projectOptions().setEnabled(hasProject);
          if (!hasProject)
@@ -209,7 +212,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
 
          // maintain mru
          if (hasProject)
-            mruList.add(activeProjectFile);
+            mruList.add(activeProject.getMRUValue());
       });
    }
 
@@ -590,7 +593,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
             else
             {
                String projectFile = newProject.getProjectFile();
-               String packageDirectory = projectFile.substring(0,
+               String packageDirectory = StringUtil.substring(projectFile, 0,
                      projectFile.lastIndexOf('/'));
 
                projServer_.packageSkeleton(

@@ -2604,18 +2604,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to use Internet2 for networking on R for Windows.
-    */
-   public PrefValue<Boolean> useInternet2()
-   {
-      return bool(
-         "use_internet2",
-         _constants.useInternet2Title(), 
-         _constants.useInternet2Description(), 
-         true);
-   }
-
-   /**
     * Whether to use secure downloads when fetching R packages.
     */
    public PrefValue<Boolean> useSecureDownload()
@@ -3475,6 +3463,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String UI_LANGUAGE_FR = "fr";
 
    /**
+    * Hide desktop menu bar until Alt key is pressed.
+    */
+   public PrefValue<Boolean> autohideMenubar()
+   {
+      return bool(
+         "autohide_menubar",
+         _constants.autohideMenubarTitle(), 
+         _constants.autohideMenubarDescription(), 
+         false);
+   }
+
+   /**
     * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
     */
    public PrefValue<Boolean> nativeFileDialogs()
@@ -3598,6 +3598,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.copilotIndexingEnabledTitle(), 
          _constants.copilotIndexingEnabledDescription(), 
          false);
+   }
+
+   /**
+    * User-provided name for the currently opened R project.
+    */
+   public PrefValue<String> projectName()
+   {
+      return string(
+         "project_name",
+         _constants.projectNameTitle(), 
+         _constants.projectNameDescription(), 
+         "");
    }
 
    public void syncPrefs(String layer, JsObject source)
@@ -3964,8 +3976,6 @@ public class UserPrefsAccessor extends Prefs
          useDevtools().setValue(layer, source.getBool("use_devtools"));
       if (source.hasKey("clean_before_install"))
          cleanBeforeInstall().setValue(layer, source.getBool("clean_before_install"));
-      if (source.hasKey("use_internet2"))
-         useInternet2().setValue(layer, source.getBool("use_internet2"));
       if (source.hasKey("use_secure_download"))
          useSecureDownload().setValue(layer, source.getBool("use_secure_download"));
       if (source.hasKey("cleanup_after_r_cmd_check"))
@@ -4088,6 +4098,8 @@ public class UserPrefsAccessor extends Prefs
          checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
       if (source.hasKey("ui_language"))
          uiLanguage().setValue(layer, source.getString("ui_language"));
+      if (source.hasKey("autohide_menubar"))
+         autohideMenubar().setValue(layer, source.getBool("autohide_menubar"));
       if (source.hasKey("native_file_dialogs"))
          nativeFileDialogs().setValue(layer, source.getBool("native_file_dialogs"));
       if (source.hasKey("discard_pending_console_input_on_error"))
@@ -4106,6 +4118,8 @@ public class UserPrefsAccessor extends Prefs
          copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
       if (source.hasKey("copilot_indexing_enabled"))
          copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
+      if (source.hasKey("project_name"))
+         projectName().setValue(layer, source.getString("project_name"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4291,7 +4305,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(sshKeyType());
       prefs.add(useDevtools());
       prefs.add(cleanBeforeInstall());
-      prefs.add(useInternet2());
       prefs.add(useSecureDownload());
       prefs.add(cleanupAfterRCmdCheck());
       prefs.add(viewDirAfterRCmdCheck());
@@ -4353,6 +4366,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonProjectEnvironmentAutomaticActivate());
       prefs.add(checkNullExternalPointers());
       prefs.add(uiLanguage());
+      prefs.add(autohideMenubar());
       prefs.add(nativeFileDialogs());
       prefs.add(discardPendingConsoleInputOnError());
       prefs.add(editorScrollMultiplier());
@@ -4362,6 +4376,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotCompletionsDelay());
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
+      prefs.add(projectName());
       return prefs;
    }
    

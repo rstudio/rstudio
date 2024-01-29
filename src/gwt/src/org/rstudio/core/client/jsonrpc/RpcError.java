@@ -27,7 +27,7 @@ public class RpcError extends JavaScriptObject
       error.message = message;
       return error;
    }-*/;
-   
+
    protected RpcError()
    {
    }
@@ -69,6 +69,7 @@ public class RpcError extends JavaScriptObject
      
    // transmission error (application state indeterminate)
    public final static int TRANSMISSION_ERROR = 200;
+   public final static int TRANSMISSION_ERROR_NO_RESPONSE = 201;
 
    // Unimplemented redirection request
    public final static int REDIRECTION_ERROR = 300;
