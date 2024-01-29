@@ -6,6 +6,7 @@
 - RStudio's GWT sources can now be built with JDKs > 11 (#11242)
 - R projects can be given a custom display name in Project Options (#1909)
 - RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$$ $$` and `$ $` instead (#12862)
+- Added cmake option to build RStudio without the check for updates feature (#13236)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
