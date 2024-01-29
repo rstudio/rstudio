@@ -1200,10 +1200,6 @@ bool FilePath::isDirectory() const
    {
       boost::system::error_code ec;
       return boost::filesystem::is_directory(m_impl->Path, ec);
-#ifdef _WIN32
-         || isJunction()
-#endif
-         ;
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
