@@ -212,7 +212,7 @@ if(WIN32)
      message(STATUS "Fetching yaml-cpp")
      FetchContent_Populate(yaml-cpp)
      message(STATUS "Fetching yaml-cpp - done")
-     add_subdirectory(${YAML_CPP_SOURCE_DIR} ${YAML_CPP_BINARY_DIR})
+     add_subdirectory(${yaml-cpp_SOURCE_DIR} ${yaml-cpp_BINARY_DIR})
    endif()
 
    set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_SOURCE_DIR}/include")
