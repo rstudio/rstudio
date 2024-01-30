@@ -32,6 +32,11 @@
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/system/PosixSystem.hpp>
 
+namespace {
+   const int kGetPWMinBufSize = 4096;
+   const int kGetPWMaxBufSize = 65536;
+}
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -52,54 +57,77 @@ struct User::Impl
 
       // Get the maximum size of a passwd for this system.
       long buffSize = ::sysconf(_SC_GETPW_R_SIZE_MAX);
-      if (buffSize < 0)
-         buffSize = 4096; // some systems return -1, be conservative!
 
-      std::vector<char> buffer(buffSize);
-      int result = in_getPasswdFunc(in_value, &pwd, &(buffer[0]), buffSize, &tempPtrPwd);
-      if (tempPtrPwd == nullptr)
+      if (buffSize < kGetPWMinBufSize)
+         buffSize = kGetPWMinBufSize; // some systems return -1, be conservative!
+
+      bool retry;
+      do
       {
-         Error error;
-         if (result == 0)
+         retry = false;
+         std::vector<char> buffer(buffSize);
+         int result = in_getPasswdFunc(in_value, &pwd, &(buffer[0]), buffSize, &tempPtrPwd);
+         if (tempPtrPwd == nullptr)
          {
-            // A successful result code but no user details means that we couldn't find the user.
-            // This could stem from a permissions issue but is more likely just an incorrectly
-            // formed username.
-            error = systemError(ENOENT, "User not found.", ERROR_LOCATION);
+            Error error;
+            if (result == ERANGE)
+            {
+               buffSize *= 2;
+               if (buffSize > kGetPWMaxBufSize)
+               {
+                  error = systemError(ERANGE, "Password entry too large for max buffer size", ERROR_LOCATION);
+                  error.addProperty("user-value", safe_convert::numberToString(in_value));
+                  return error;
+               }
+               else
+               {
+                  retry = true;
+               }
+            }
+            else
+            {
+               if (result == 0)
+               {
+                  // A successful result code but no user details means that we couldn't find the user.
+                  // This could stem from a permissions issue but is more likely just an incorrectly
+                  // formed username.
+                  error = systemError(ENOENT, "User not found.", ERROR_LOCATION);
+               }
+               else
+               {
+                  error = systemError(result, "Failed password entry database lookup for user", ERROR_LOCATION);
+               }
+
+               error.addProperty("user-value", safe_convert::numberToString(in_value));
+               return error;
+            }
          }
          else
          {
-            error = systemError(result, "Failed to get user details.", ERROR_LOCATION);
-         }
+            UserId = pwd.pw_uid;
+            GroupId = pwd.pw_gid;
+            Name = pwd.pw_name;
+            HomeDirectory = FilePath(pwd.pw_dir);
+            Shell = pwd.pw_shell;
 
-         error.addProperty("user-value", safe_convert::numberToString(in_value));
-         return error;
-      }
-      else
-      {
-         UserId = pwd.pw_uid;
-         GroupId = pwd.pw_gid;
-         Name = pwd.pw_name;
-         HomeDirectory = FilePath(pwd.pw_dir);
-         Shell = pwd.pw_shell;
-
-         // Default to empty real name unless specified in the GECOS field
-         RealName = "";
-         if (pwd.pw_gecos != nullptr)
-         {
-            std::string gecos(pwd.pw_gecos);
-            if (!gecos.empty())
+            // Default to empty real name unless specified in the GECOS field
+            RealName = "";
+            if (pwd.pw_gecos != nullptr)
             {
-               // The GECOS field is comma delimited; the first value is the user's real name.
-               std::vector<std::string> fields;
-               boost::algorithm::split(fields, gecos, boost::algorithm::is_any_of(","));
-               if (fields.size() > 0)
+               std::string gecos(pwd.pw_gecos);
+               if (!gecos.empty())
                {
-                  RealName = fields[0];
+                  // The GECOS field is comma delimited; the first value is the user's real name.
+                  std::vector<std::string> fields;
+                  boost::algorithm::split(fields, gecos, boost::algorithm::is_any_of(","));
+                  if (fields.size() > 0)
+                  {
+                     RealName = fields[0];
+                  }
                }
             }
          }
-      }
+      } while (retry);
 
       return Success();
    }
