@@ -196,33 +196,25 @@ endif()
 
 # yaml-cpp
 set(YAML_CPP_VERSION "0.8.0")
-if(WIN32)
+if(CMAKE_VERSION VERSION_GREATER "3.14")
 
-   # TODO: Use this on all platforms once we can depend on a new enough
-   # version of CMake universally.
+   if(_WIN32)
+      add_definitions(-DYAML_CPP_STATIC_DEFINE)
+   endif()
+      
    include(FetchContent)
    FetchContent_Declare(yaml-cpp
      GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-     GIT_TAG "${YAML_CPP_VERSION}"
-   )
+     GIT_TAG "${YAML_CPP_VERSION}")
 
-   FetchContent_GetProperties(yaml-cpp)
+   FetchContent_MakeAvailable(yaml-cpp)
 
-   add_definitions(-DYAML_CPP_STATIC_DEFINE)
-   if(NOT yaml-cpp_POPULATED)
-     message(STATUS "Fetching yaml-cpp")
-     FetchContent_Populate(yaml-cpp)
-     message(STATUS "Fetching yaml-cpp - done")
-     add_subdirectory(${yaml-cpp_SOURCE_DIR} ${yaml-cpp_BINARY_DIR})
-   endif()
-
-   set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_SOURCE_DIR}/include")
-   set(YAML_CPP_LIBRARIES "${YAML_CPP_BINARY_DIR}/yaml-cpp.lib")
+   set(YAML_CPP_INCLUDE_DIR "${yaml-cpp_SOURCE_DIR}/include")
+   set(YAML_CPP_LIBRARIES   yaml-cpp::yaml-cpp)
 
 elseif(NOT RSTUDIO_USE_SYSTEM_YAML_CPP)
    set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/include")
    set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/build/libyaml-cpp.a")
-
 else()
    # NOTE: defines the following CMake variables:
    # - YAML_CPP_INCLUDE_DIR
@@ -231,11 +223,13 @@ else()
 endif()
 
 if(yaml-cpp_FOUND AND NOT YAML_CPP_LIBRARIES)
-   set(YAML_CPP_LIBRARIES yaml-cpp)
-endif()
-
-if(NOT RSTUDIO_USE_SYSTEM_YAML_CPP AND NOT DEFINED YAML_CPP_LIBRARIES)
-   message(FATAL_ERROR "yaml-cpp not found (re-run dependencies script to install)")
+   if(TARGET yaml-cpp::yaml-cpp)
+      set(YAML_CPP_LIBRARIES yaml-cpp::yaml-cpp)
+   elseif(TARGET yaml-cpp)
+      set(YAML_CPP_LIBRARIES yaml-cpp)
+   else()
+      message(FATAL_ERROR "yaml-cpp was found but couldn't find a known target name")
+   endif()
 endif()
 
 if(YAML_CPP_INCLUDE_DIR)
