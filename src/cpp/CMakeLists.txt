@@ -195,27 +195,33 @@ if(RSTUDIO_PACKAGE_BUILD)
 endif()
 
 # yaml-cpp
+set(YAML_CPP_VERSION "0.8.0")
 if(WIN32)
 
-   if(RSTUDIO_SESSION_WIN32)
-      set(YAML_CPP_ARCH "x86")
-   else()
-      set(YAML_CPP_ARCH "x64")
+   # TODO: Use this on all platforms once we can depend on a new enough
+   # version of CMake universally.
+   include(FetchContent)
+   FetchContent_Declare(yaml-cpp
+     GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+     GIT_TAG "${YAML_CPP_VERSION}"
+   )
+
+   FetchContent_GetProperties(yaml-cpp)
+
+   add_definitions(-DYAML_CPP_STATIC_DEFINE)
+   if(NOT yaml-cpp_POPULATED)
+     message(STATUS "Fetching yaml-cpp")
+     FetchContent_Populate(yaml-cpp)
+     message(STATUS "Fetching yaml-cpp - done")
+     add_subdirectory(${yaml-cpp_SOURCE_DIR} ${yaml-cpp_BINARY_DIR})
    endif()
 
-   set(YAML_CPP_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/yaml-cpp-0.6.3")
-   set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_ROOT}/include")
-
-   if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(YAML_CPP_LIBRARIES "${YAML_CPP_ROOT}/lib/${YAML_CPP_ARCH}/libyaml-cppmdd.lib")
-  else()
-      set(YAML_CPP_LIBRARIES "${YAML_CPP_ROOT}/lib/${YAML_CPP_ARCH}/libyaml-cppmd.lib")
-  endif()
+   set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_SOURCE_DIR}/include")
+   set(YAML_CPP_LIBRARIES "${YAML_CPP_BINARY_DIR}/yaml-cpp.lib")
 
 elseif(NOT RSTUDIO_USE_SYSTEM_YAML_CPP)
-
-   set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/0.6.3/include")
-   set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/0.6.3/build/libyaml-cpp.a")
+   set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/include")
+   set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/build/libyaml-cpp.a")
 
 else()
    # NOTE: defines the following CMake variables:
@@ -228,7 +234,7 @@ if(yaml-cpp_FOUND AND NOT YAML_CPP_LIBRARIES)
    set(YAML_CPP_LIBRARIES yaml-cpp)
 endif()
 
-if(NOT RSTUDIO_USE_SYSTEM_YAML_CPP AND NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
+if(NOT RSTUDIO_USE_SYSTEM_YAML_CPP AND NOT DEFINED YAML_CPP_LIBRARIES)
    message(FATAL_ERROR "yaml-cpp not found (re-run dependencies script to install)")
 endif()
 
