@@ -198,7 +198,7 @@ endif()
 set(YAML_CPP_VERSION "0.8.0")
 if(CMAKE_VERSION VERSION_GREATER "3.14")
 
-   if(_WIN32)
+   if(WIN32)
       add_definitions(-DYAML_CPP_STATIC_DEFINE)
    endif()
       
