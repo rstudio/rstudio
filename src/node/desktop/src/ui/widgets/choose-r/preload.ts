@@ -27,6 +27,7 @@ export interface Callbacks {
   use(data: CallbackData): Promise<boolean>;
   browse(data: CallbackData): Promise<boolean>;
   cancel(): void;
+  downloadR(): void;
 }
 
 // this needs to be done in the preload of any widget wanting to use logging
@@ -46,6 +47,7 @@ ipcRenderer.on('initialize', (_event, data) => {
   const useCustomEl = document.getElementById('use-custom') as HTMLInputElement;
   const selectCustom = document.getElementById('select') as HTMLSelectElement;
   const buttonOk = document.getElementById('button-ok') as HTMLButtonElement;
+  const buttonDownload = document.getElementById('button-download') as HTMLButtonElement;
 
   // if we have a default 32-bit R installation, enable it
   const default32Bit = data.default32bitPath as string;
@@ -148,6 +150,9 @@ ipcRenderer.on('initialize', (_event, data) => {
 
   useCustomEl.checked = !default32Bit && !default64Bit && rInstalls.length > 0;
   selectWidget.disabled = !useCustomEl.checked;
+  if (rInstalls.length > 0) {
+    buttonDownload.remove();
+  }
 
   buttonOk.disabled = !((useCustomEl.checked && selectCustom.value) || use32.checked || use64.checked);
 });
@@ -176,6 +181,10 @@ const callbacks: Callbacks = {
 
   cancel: () => {
     ipcRenderer.send('cancel');
+  },
+
+  downloadR: async () => {
+    await ipcRenderer.invoke('download-r');
   },
 };
 

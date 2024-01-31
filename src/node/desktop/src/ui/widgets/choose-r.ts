@@ -27,6 +27,7 @@ import { existsSync } from 'fs';
 import { normalize } from 'path';
 import { kWindowsRExe } from '../utils';
 import { appState } from '../../main/app-state';
+import { loadRWebsite } from '../../main/utils';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
@@ -151,6 +152,11 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
         }
 
         return false;
+      });
+
+      this.addIpcHandler('download-r', () => {
+        loadRWebsite();
+        return resolve(null);
       });
 
       this.addIpcHandler('cancel', () => {
