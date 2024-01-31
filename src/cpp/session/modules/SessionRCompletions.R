@@ -2080,7 +2080,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("finishExpression", function(string)
 {
-   .Call("rs_finishExpression", as.character(string))
+   .Call("rs_finishExpression", as.character(string), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getCompletionsAttr", function(token,
@@ -2909,6 +2909,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # NOTE: We use 'eval()' here to ensure that things like datasets
    # are properly resolved; e.g. if working with mtcars from the datasets package.
+   source <- .rs.deparse(expr)
    value <- eval(expr, envir = envir)
    if (inherits(value, "gg"))
       value <- value$data
@@ -2918,6 +2919,7 @@ assign(x = ".rs.acCompletionTypes",
       results = .rs.selectFuzzyMatches(names(value), token),
       quote = FALSE,
       type = .rs.acCompletionTypes$COLUMN,
+      packages = source,
       excludeOtherCompletions = TRUE,
       excludeOtherArgumentCompletions = TRUE
    )
