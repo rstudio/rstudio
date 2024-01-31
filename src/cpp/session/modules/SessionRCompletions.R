@@ -2313,6 +2313,7 @@ assign(x = ".rs.acCompletionTypes",
                                                   context,
                                                   numCommas,
                                                   functionCallString,
+                                                  contextLines,
                                                   chainObjectName,
                                                   additionalArgs,
                                                   excludeArgs,
@@ -2520,6 +2521,15 @@ assign(x = ".rs.acCompletionTypes",
        string[[1]] %in% c("Sys.getenv", "Sys.setenv") &&
        numCommas[[1]] == 0)
       return(.rs.getCompletionsEnvironmentVariables(token))
+   
+   # ggplot2 aesthetics
+   if (length(context) &&
+       context[[1L]] %in% .rs.acContextTypes$ARGUMENT &&
+       is.call(functionCall) &&
+       identical(functionCall[[1L]], as.symbol("aes")))
+   {
+      return(.rs.getCompletionsAesthetics(token, contextLines, envir))
+   }
    
    # Python virtual environments
    if (length(string) &&
@@ -2854,6 +2864,60 @@ assign(x = ".rs.acCompletionTypes",
    completions$token <- token
    completions
    
+})
+
+.rs.addFunction("getCompletionsAesthetics", function(token, contextLines, envir)
+{
+   tryCatch(
+      .rs.getCompletionsAestheticsImpl(token, contextLines, envir),
+      error = function(e) .rs.emptyCompletions(token)
+   )
+})
+
+.rs.addFunction("getCompletionsAestheticsImpl", function(token, contextLines, envir)
+{
+   # pass in the provided expression
+   text <- .rs.finishExpression(contextLines)
+   expr <- parse(text = text)[[1L]]
+   stopifnot(is.call(expr))
+   
+   # find the call providing the relevant data argument
+   expr <- local({
+      
+      if (identical(expr[[1L]], as.symbol("+")))
+      {
+         rhs <- expr[[3L]]
+         if (!is.null(rhs[["data"]]))
+            return(rhs)
+      }
+      
+      while (is.call(expr))
+      {
+         if (identical(expr[[1L]], as.name("ggplot")))
+            break
+         
+         expr <- expr[[2L]]
+      }
+      
+      return(expr)
+      
+   })
+   
+   # retrieve the data object used by this expression
+   data <- .rs.nullCoalesce(expr[["data"]], expr[[2L]])
+   
+   # NOTE: We use 'eval()' here to ensure that things like datasets
+   # are properly resolved; e.g. if working with mtcars from the datasets package.
+   value <- eval(data, envir = envir)
+   
+   .rs.makeCompletions(
+      token = token,
+      results = .rs.selectFuzzyMatches(names(value), token),
+      quote = FALSE,
+      type = .rs.acCompletionTypes$COLUMN,
+      excludeOtherCompletions = TRUE,
+      excludeOtherArgumentCompletions = TRUE
+   )
 })
 
 .rs.addFunction("hasColumns", function(object)

@@ -14,19 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayBoolean;
-import com.google.gwt.core.client.JsArrayInteger;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -52,12 +51,13 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.RnwOptionCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayBoolean;
+import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.inject.Inject;
 
 public class CompletionRequester
 {
@@ -280,6 +280,7 @@ public class CompletionRequester
          final List<Integer> dataType,
          final List<Integer> numCommas,
          final String functionCallString,
+         final String contextLines,
          final String chainDataName,
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
@@ -303,6 +304,7 @@ public class CompletionRequester
             dataType,
             numCommas,
             functionCallString,
+            contextLines,
             chainDataName,
             chainAdditionalArgs,
             chainExcludeArgs,
@@ -629,6 +631,7 @@ public class CompletionRequester
          final List<Integer> dataType,
          final List<Integer> numCommas,
          final String functionCallString,
+         final String contextLines,
          final String chainObjectName,
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
@@ -653,6 +656,7 @@ public class CompletionRequester
                dataType,
                numCommas,
                functionCallString,
+               contextLines,
                chainObjectName,
                chainAdditionalArgs,
                chainExcludeArgs,

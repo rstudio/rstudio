@@ -17,7 +17,7 @@ package org.rstudio.studio.client.common.codetools;
 import java.util.List;
 
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionContext;
@@ -44,8 +44,9 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          List<String> assocData,
          List<Integer> dataType,
          List<Integer> numCommas,
-         String chainObjectName,
          String functionCallString,
+         String contextLines,
+         String chainObjectName,
          JsArrayString chainAdditionalArgs,
          JsArrayString chainExcludeArgs,
          boolean chainExcludeArgsFromObject,

@@ -1087,8 +1087,9 @@ public class RemoteServer implements Server
          List<String> assocData,
          List<Integer> dataType,
          List<Integer> numCommas,
-         String chainObjectName,
          String functionCallString,
+         String contextLines,
+         String chainObjectName,
          JsArrayString additionalArgs,
          JsArrayString excludeArgs,
          boolean excludeArgsFromObject,
@@ -1103,15 +1104,16 @@ public class RemoteServer implements Server
       setArrayString(params, 1, assocData);
       setArrayNumber(params, 2, dataType);
       setArrayNumber(params, 3, numCommas);
-      params.set(4, new JSONString(chainObjectName));
-      params.set(5, new JSONString(functionCallString));
-      setArrayString(params, 6, additionalArgs);
-      setArrayString(params, 7, excludeArgs);
-      params.set(8, JSONBoolean.getInstance(excludeArgsFromObject));
-      params.set(9, new JSONString(filePath));
-      params.set(10, new JSONString(documentId));
-      params.set(11, new JSONString(line));
-      params.set(12, JSONBoolean.getInstance(isConsole));
+      params.set(4, new JSONString(functionCallString));
+      params.set(5, new JSONString(contextLines));
+      params.set(6, new JSONString(chainObjectName));
+      setArrayString(params, 7, additionalArgs);
+      setArrayString(params, 8, excludeArgs);
+      params.set(9, JSONBoolean.getInstance(excludeArgsFromObject));
+      params.set(10, new JSONString(filePath));
+      params.set(11, new JSONString(documentId));
+      params.set(12, new JSONString(line));
+      params.set(13, JSONBoolean.getInstance(isConsole));
 
       sendRequest(RPC_SCOPE,
                   GET_COMPLETIONS,

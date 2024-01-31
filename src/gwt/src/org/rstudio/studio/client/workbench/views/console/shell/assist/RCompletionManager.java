@@ -950,7 +950,8 @@ public class RCompletionManager implements CompletionManager
    // 2. The associated function call (if any -- for arguments),
    // 3. The associated data for a `[` call (if any -- completions from data object),
    // 4. The associated data for a `[[` call (if any -- completions from data object)
-   public class AutocompletionContext {
+   public class AutocompletionContext
+   {
       
       // Be sure to sync these with 'SessionRCompletions.R'!
       public static final int TYPE_UNKNOWN = 0;
@@ -1078,6 +1079,16 @@ public class RCompletionManager implements CompletionManager
          this.functionCallString_ = functionCallString;
       }
       
+      public String getContextLines()
+      {
+         return contextLines_;
+      }
+      
+      public void setContextLines(String contextLines)
+      {
+         contextLines_ = contextLines;
+      }
+      
       public void add(String assocData, Integer dataType, Integer numCommas)
       {
          assocData_.add(assocData);
@@ -1100,6 +1111,7 @@ public class RCompletionManager implements CompletionManager
       private List<Integer> dataType_;
       private List<Integer> numCommas_;
       private String functionCallString_;
+      private String contextLines_ = "";
       
    }
    
@@ -1264,6 +1276,7 @@ public class RCompletionManager implements CompletionManager
             context.getDataType(),
             context.getNumCommas(),
             context.getFunctionCallString(),
+            context.getContextLines(),
             infixData.getDataName(),
             infixData.getAdditionalArgs(),
             infixData.getExcludeArgs(),
@@ -1640,7 +1653,7 @@ public class RCompletionManager implements CompletionManager
                   argsCursor.currentValue(),
                   AutocompletionContext.TYPE_ARGUMENT,
                   0);
-            return context;
+            break;
          }
          
       } while (argsCursor.moveToPreviousToken());
@@ -1653,13 +1666,15 @@ public class RCompletionManager implements CompletionManager
       // And the first context
       context.add(initialData, initialDataType, initialNumCommas);
 
-      // Get the rest of the single-bracket contexts for completions as well
+      // Get the rest of the parent contexts (function calls, subsetting)
       String assocData;
       int dataType;
       int numCommas;
+      String[] bracketTokens = new String[] { "[", "(" };
+      
       while (true)
       {
-         int commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
+         int commaCount = tokenCursor.findOpeningBracketCountCommas(bracketTokens, false);
          if (commaCount == -1)
             break;
          
@@ -1669,7 +1684,13 @@ public class RCompletionManager implements CompletionManager
          if (!tokenCursor.moveToPreviousToken())
             return context;
          
-         if (tokenCursor.currentValue() == "[")
+         if (tokenCursor.currentValue() == "(")
+         {
+            dataType = AutocompletionContext.TYPE_FUNCTION;
+            if (!tokenCursor.moveToPreviousToken())
+               return context;
+         }
+         else if (tokenCursor.currentValue() == "[")
          {
             if (!declEnd.moveToPreviousToken())
                return context;
@@ -1692,6 +1713,63 @@ public class RCompletionManager implements CompletionManager
          
          context.add(assocData, dataType, numCommas);
       }
+      
+      // Try to get information about the current expression.
+      TokenCursor cursor = tokenCursor.cloneCursor();
+      Position contextStartPos = cursor.currentPosition();
+      Position contextEndPos = cursor.currentPosition();
+      
+      while (true)
+      {
+         if (!cursor.findStartOfEvaluationContext())
+            break;
+         
+         TokenCursor savedCursor = cursor.cloneCursor();
+         if (!cursor.moveToPreviousToken())
+            break;
+        
+         if (!cursor.isLookingAtBinaryOp())
+         {
+            cursor = savedCursor;
+            break;
+         }
+         
+         if (!cursor.moveToPreviousToken())
+         {
+            cursor = savedCursor;
+            break;
+         }
+         
+         continue;
+      }
+      contextStartPos = cursor.currentPosition();
+      
+      // Include the context end.
+      while (true)
+      {
+         if (!cursor.moveToNextToken())
+            break;
+         
+         if (cursor.fwdToMatchingToken())
+            if (!cursor.moveToNextToken())
+               break;
+         
+         if (!cursor.isLookingAtBinaryOp())
+         {
+            cursor.moveToPreviousToken();
+            break;
+         }
+         
+         if (!cursor.moveToNextToken())
+            break;
+         
+         continue;
+      }
+      contextEndPos = cursor.currentPosition();
+      
+      Range contextRange = Range.fromPoints(contextStartPos, contextEndPos);
+      String contextLines = docDisplay_.getTextForRange(contextRange).trim();
+      context.setContextLines(contextLines);
       
       return context;
       
