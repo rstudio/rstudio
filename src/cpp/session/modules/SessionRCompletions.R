@@ -2904,11 +2904,14 @@ assign(x = ".rs.acCompletionTypes",
    })
    
    # retrieve the data object used by this expression
-   data <- .rs.nullCoalesce(expr[["data"]], expr[[2L]])
+   if (is.call(expr))
+      expr <- .rs.nullCoalesce(expr[["data"]], expr[[2L]])
    
    # NOTE: We use 'eval()' here to ensure that things like datasets
    # are properly resolved; e.g. if working with mtcars from the datasets package.
-   value <- eval(data, envir = envir)
+   value <- eval(expr, envir = envir)
+   if (inherits(value, "gg"))
+      value <- value$data
    
    .rs.makeCompletions(
       token = token,
