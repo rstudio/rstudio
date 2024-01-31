@@ -73,8 +73,6 @@
       # for plain character variables, we 'mock' the behavior of str()
       # while avoiding the potential for re-encoding (as this could mangle
       # UTF-8 characters on Windows)
-      #
-      # TODO: Trim this out once we drop support for R (<= 4.1.x).
       n <- length(val)
       if (n == 0)
       {
@@ -92,9 +90,8 @@
             na.encode = FALSE
          )
 
-         fmt <- "chr [%s] %s"
-         span <- paste("1", dim(val) %||% length(val), sep = ":", collapse = ", ")
-         txt <- sprintf(fmt, span, paste(encoded, collapse = " "))
+         fmt <- "chr [1:%i] %s"
+         txt <- sprintf(fmt, n, paste(encoded, collapse = " "))
          .rs.truncate(txt)
       }
    }
