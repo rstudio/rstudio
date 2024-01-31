@@ -21,6 +21,7 @@
 - Fixed current Git branch not always showing correctly in external editor windows (#14029)
 - Fixed tooltip to show correct keyboard shortcut when hovering over URLs in the editor (#12504)
 - Fixed Save As dialog on Windows not showing Save As Type field when extensions are hidden (#12965)
+- Fixed an issue with saving pane layouts for Desktop Pro (rstudio-pro#5612)
 - Fixed GitHub Copilot project preferences not showing correct status message (#14064)
 - Fixed an issue where Quarto chunk option completions were not displayed at the start of a comment (#14074)
 - Fixed an issue where pipes containing a large number of comments were not indented correctly (#12674)
