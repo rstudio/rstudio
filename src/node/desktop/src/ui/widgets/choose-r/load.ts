@@ -53,6 +53,7 @@ radioButtons.forEach((radioButton) => {
 const buttonOk = document.getElementById('button-ok') as HTMLButtonElement;
 const buttonCancel = document.getElementById('button-cancel') as HTMLButtonElement;
 const buttonBrowse = document.getElementById('button-browse') as HTMLButtonElement;
+const buttonDownload = document.getElementById('button-download') as HTMLButtonElement;
 
 // get reference to rendering engine select widget
 const renderingEngineSelect = document.getElementById('rendering-engine') as HTMLSelectElement;
@@ -94,6 +95,10 @@ buttonBrowse.addEventListener('click', async () => {
       isBrowseDialogOpen = false;
     }, 150);
   }
+});
+
+buttonDownload.addEventListener('click', async () => {
+  window.callbacks.downloadR();
 });
 
 window.addEventListener('load', () => {
