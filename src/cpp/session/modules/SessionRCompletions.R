@@ -2313,7 +2313,7 @@ assign(x = ".rs.acCompletionTypes",
                                                   context,
                                                   numCommas,
                                                   functionCallString,
-                                                  contextLines,
+                                                  statementBounds,
                                                   chainObjectName,
                                                   additionalArgs,
                                                   excludeArgs,
@@ -2526,7 +2526,12 @@ assign(x = ".rs.acCompletionTypes",
    if (is.call(functionCall) &&
        identical(functionCall[[1L]], as.symbol("aes")))
    {
-      return(.rs.getCompletionsAesthetics(token, string, context, contextLines, envir))
+      completions <- tryCatch(
+         .rs.getCompletionsAesthetics(token, string, context, statementBounds, documentId, envir),
+         error = function(e) .rs.emptyCompletions(token)
+      )
+      
+      return(completions)
    }
    
    # Python virtual environments
@@ -2864,20 +2869,15 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("getCompletionsAesthetics", function(...)
+.rs.addFunction("getCompletionsAesthetics", function(token,
+                                                     string,
+                                                     context,
+                                                     statementBounds,
+                                                     documentId,
+                                                     envir)
 {
-   tryCatch(
-      .rs.getCompletionsAestheticsImpl(...),
-      error = function(e) .rs.emptyCompletions(..1)
-   )
-})
-
-.rs.addFunction("getCompletionsAestheticsImpl", function(token,
-                                                         string,
-                                                         context,
-                                                         contextLines,
-                                                         envir)
-{
+   browser()
+   
    # pass in the provided expression
    text <- .rs.finishExpression(contextLines)
    expr <- parse(text = text)[[1L]]

@@ -1036,7 +1036,7 @@ public class RCompletionManager implements CompletionManager
 
       public void setToken(String token)
       {
-         this.token_ = token;
+         token_ = token;
       }
 
       public List<String> getAssocData()
@@ -1046,7 +1046,7 @@ public class RCompletionManager implements CompletionManager
 
       public void setAssocData(List<String> assocData)
       {
-         this.assocData_ = assocData;
+         assocData_ = assocData;
       }
 
       public List<Integer> getDataType()
@@ -1056,7 +1056,7 @@ public class RCompletionManager implements CompletionManager
 
       public void setDataType(List<Integer> dataType)
       {
-         this.dataType_ = dataType;
+         dataType_ = dataType;
       }
 
       public List<Integer> getNumCommas()
@@ -1066,7 +1066,7 @@ public class RCompletionManager implements CompletionManager
 
       public void setNumCommas(List<Integer> numCommas)
       {
-         this.numCommas_ = numCommas;
+         numCommas_ = numCommas;
       }
 
       public String getFunctionCallString()
@@ -1079,14 +1079,14 @@ public class RCompletionManager implements CompletionManager
          this.functionCallString_ = functionCallString;
       }
       
-      public String getContextLines()
+      public Range getStatementBounds()
       {
-         return contextLines_;
+         return statementBounds_;
       }
       
-      public void setContextLines(String contextLines)
+      public void setStatementBounds(Range statementBounds)
       {
-         contextLines_ = contextLines;
+         statementBounds_ = statementBounds;
       }
       
       public void add(String assocData, Integer dataType, Integer numCommas)
@@ -1111,7 +1111,7 @@ public class RCompletionManager implements CompletionManager
       private List<Integer> dataType_;
       private List<Integer> numCommas_;
       private String functionCallString_;
-      private String contextLines_ = "";
+      private Range statementBounds_;
       
    }
    
@@ -1276,7 +1276,7 @@ public class RCompletionManager implements CompletionManager
             context.getDataType(),
             context.getNumCommas(),
             context.getFunctionCallString(),
-            context.getContextLines(),
+            context.getStatementBounds(),
             infixData.getDataName(),
             infixData.getAdditionalArgs(),
             infixData.getExcludeArgs(),
@@ -1706,6 +1706,7 @@ public class RCompletionManager implements CompletionManager
          
          tokenCursor.findStartOfEvaluationContext();
          
+         // TODO: Include inner contents here as well.
          assocData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
@@ -1767,9 +1768,8 @@ public class RCompletionManager implements CompletionManager
       }
       contextEndPos = cursor.currentPosition();
       
-      Range contextRange = Range.fromPoints(contextStartPos, contextEndPos);
-      String contextLines = docDisplay_.getTextForRange(contextRange).trim();
-      context.setContextLines(contextLines);
+      Range statementBounds = Range.fromPoints(contextStartPos, contextEndPos);
+      context.setStatementBounds(statementBounds);
       
       return context;
       

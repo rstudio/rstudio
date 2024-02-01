@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonComp
 import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionParseContext;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -45,7 +46,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          List<Integer> dataType,
          List<Integer> numCommas,
          String functionCallString,
-         String contextLines,
+         Range statementBounds,
          String chainObjectName,
          JsArrayString chainAdditionalArgs,
          JsArrayString chainExcludeArgs,

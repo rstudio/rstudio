@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFuncti
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RScopeObject;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.RnwOptionCompletionResult;
@@ -280,7 +281,7 @@ public class CompletionRequester
          final List<Integer> dataType,
          final List<Integer> numCommas,
          final String functionCallString,
-         final String contextLines,
+         final Range statementBounds,
          final String chainDataName,
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
@@ -304,7 +305,7 @@ public class CompletionRequester
             dataType,
             numCommas,
             functionCallString,
-            contextLines,
+            statementBounds,
             chainDataName,
             chainAdditionalArgs,
             chainExcludeArgs,
@@ -631,7 +632,7 @@ public class CompletionRequester
          final List<Integer> dataType,
          final List<Integer> numCommas,
          final String functionCallString,
-         final String contextLines,
+         final Range statementBounds,
          final String chainObjectName,
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
@@ -656,7 +657,7 @@ public class CompletionRequester
                dataType,
                numCommas,
                functionCallString,
-               contextLines,
+               statementBounds,
                chainObjectName,
                chainAdditionalArgs,
                chainExcludeArgs,

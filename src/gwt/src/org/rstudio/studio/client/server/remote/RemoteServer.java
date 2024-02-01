@@ -214,6 +214,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.O
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
@@ -1088,7 +1089,7 @@ public class RemoteServer implements Server
          List<Integer> dataType,
          List<Integer> numCommas,
          String functionCallString,
-         String contextLines,
+         Range statementBounds,
          String chainObjectName,
          JsArrayString additionalArgs,
          JsArrayString excludeArgs,
@@ -1105,7 +1106,7 @@ public class RemoteServer implements Server
       setArrayNumber(params, 2, dataType);
       setArrayNumber(params, 3, numCommas);
       params.set(4, new JSONString(functionCallString));
-      params.set(5, new JSONString(contextLines));
+      params.set(5, new JSONObject(statementBounds));
       params.set(6, new JSONString(chainObjectName));
       setArrayString(params, 7, additionalArgs);
       setArrayString(params, 8, excludeArgs);
