@@ -1031,7 +1031,35 @@ assign(x = ".rs.acCompletionTypes",
       # arguments that are already used by the matched call
       used <- names(as.list(matchedCall)[-1]) 
       keep <- !names(formals$formals) %in% used
-
+      
+      # # TODO: Should we include aesthetics for 'geom_*()' functions?
+      # # for 'geom_' functions, try to get aesthetic names
+      # if (grepl("^geom_", fguess))
+      # {
+      #    .rs.tryCatch({
+      #       geomFunc <- eval(as.symbol(fguess), envir = envir)
+      #       layerInfo <- geomFunc()
+      #       aesthetics <- c(
+      #          layerInfo$geom$required_aes,
+      #          layerInfo$stat$required_aes,
+      #          names(layerInfo$geom$default_aes),
+      #          names(layerInfo$stat$default_aes)
+      #       )
+      #       aesthetics <- aesthetics[!duplicated(aesthetics)]
+      #       results <- .rs.selectFuzzyMatches(aesthetics, token)
+      #       argCompletions <- .rs.appendCompletions(
+      #          argCompletions,
+      #          .rs.makeCompletions(
+      #             token = token,
+      #             results = paste(results, "= "),
+      #             packages = fguess,
+      #             type = .rs.acCompletionTypes$ARGUMENT,
+      #             quote = FALSE
+      #          )
+      #       )
+      #    })
+      # }
+      
       result <- .rs.appendCompletions(
          argCompletions,
          .rs.makeCompletions(
