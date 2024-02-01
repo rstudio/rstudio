@@ -196,6 +196,7 @@ endif()
 
 # yaml-cpp
 set(YAML_CPP_VERSION "0.8.0")
+set(YAML_CPP_REVISION "f7320141120f720aecc4c32be25586e7da9eb978")
 if(CMAKE_VERSION VERSION_GREATER "3.14")
 
    if(WIN32)
@@ -205,7 +206,7 @@ if(CMAKE_VERSION VERSION_GREATER "3.14")
    include(FetchContent)
    FetchContent_Declare(yaml-cpp
      GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-     GIT_TAG "${YAML_CPP_VERSION}")
+     GIT_TAG "${YAML_CPP_REVISION}")
 
    FetchContent_MakeAvailable(yaml-cpp)
 
