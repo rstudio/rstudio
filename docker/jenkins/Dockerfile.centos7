@@ -8,7 +8,7 @@ RUN set -x \
     && yum install epel-release -y
 
 RUN yum install -y \
-ant \
+    ant \
     boost-devel \
     bzip2-devel \
     curl \
