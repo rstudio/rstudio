@@ -355,6 +355,7 @@ public abstract class MessageDisplay
 
    public void showErrorMessage(String caption, String message)
    {
+      if (message.isEmpty()) { return; }
       createDialog(MSG_ERROR, caption, message).showModal();
    }
 
@@ -362,6 +363,11 @@ public abstract class MessageDisplay
                                 String message,
                                 Operation dismissed)
    {
+      if (message.isEmpty())
+      {
+         dismissed.execute();
+         return; 
+      }
       createDialog(MSG_ERROR, caption, message)
             .addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, dismissed)
             .showModal();
@@ -371,6 +377,7 @@ public abstract class MessageDisplay
                                 String message,
                                 Focusable focusAfter)
    {
+      if (message.isEmpty()) { return; }
       showMessage(MSG_ERROR, caption, message, focusAfter);
    }
 
@@ -378,6 +385,7 @@ public abstract class MessageDisplay
                                 String message,
                                 CanFocus focusAfter)
    {
+      if (message.isEmpty()) { return; }
       showMessage(MSG_ERROR, caption, message, focusAfter);
    }
 

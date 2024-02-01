@@ -494,7 +494,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["disable_packages"] = module_context::disablePackages();
 
    sessionInfo["disable_check_for_updates"] =
+#ifdef DISABLE_UPDATE_CHECK // via cmake option RSTUDIO_DISABLE_CHECK_FOR_UPDATES=1
+          true;
+#else
           !core::system::getenv("RSTUDIO_DISABLE_CHECK_FOR_UPDATES").empty();
+#endif
 
    sessionInfo["allow_vcs_exe_edit"] = options.allowVcsExecutableEdit();
    sessionInfo["allow_cran_repos_edit"] = options.allowCRANReposEdit();

@@ -23,9 +23,9 @@ public class DiffChunk
                     ArrayList<Line> diffLines,
                     int diffIndex)
    {
-      this.ranges_ = ranges;
-      this.lineText_ = lineText;
-      this.diffLines_ = diffLines;
+      ranges_ = ranges;
+      lineText_ = lineText;
+      diffLines_ = diffLines;
       diffIndex_ = diffIndex;
    }
 

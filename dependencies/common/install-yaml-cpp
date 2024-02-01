@@ -20,8 +20,8 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing yaml-cpp"
 
-YAML_CPP_VERSION="0.6.3"
-YAML_CPP_BRANCH="yaml-cpp-${YAML_CPP_VERSION}"
+YAML_CPP_VERSION="0.8.0"
+YAML_CPP_BRANCH="${YAML_CPP_VERSION}"
 YAML_CPP_DIRECTORY="${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}"
 
 if [ -e "${YAML_CPP_DIRECTORY}" ]; then

@@ -413,19 +413,6 @@ Error findNode(FilePath* pNodePath,
       return Success();
    }
 
-   // In Desktop builds of RStudio, we can re-use the version of node
-   // bundled with Electron.
-   if (session::options().programMode() == kSessionProgramModeDesktop)
-   {
-      std::string desktopExePath = core::system::getenv("RSTUDIO_DESKTOP_EXE");
-      if (!desktopExePath.empty() && FilePath(desktopExePath).exists())
-      {
-         *pNodePath = FilePath(desktopExePath);
-         pOptions->push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
-         return Success();
-      }
-   }
-
    // Check for an admin-configured node path.
    FilePath nodePath = session::options().nodePath();
    if (!nodePath.isEmpty())

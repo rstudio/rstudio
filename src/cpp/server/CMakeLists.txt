@@ -250,12 +250,6 @@ if (UNIX AND NOT APPLE)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_SYSTEMD_PROFILE_REDHAT}
            DESTINATION ${RSERVER_SYSTEMD_DIR})
 
-   # install node
-   install(
-      DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_NODE_VERSION}/"
-      DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
-      USE_SOURCE_PERMISSIONS)
-
 elseif(APPLE)
 
    # install configured admin script

@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, Event, Menu, screen, shell, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, Event, Menu, screen, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -39,6 +39,7 @@ import {
   findComponents,
   initializeLang,
   initializeSharedSecret,
+  loadRWebsite,
   raiseAndActivateWindow,
   removeStaleOptionsLockfile,
   resolveAliasedPath,
@@ -324,8 +325,7 @@ export class Application implements AppState {
           .then((result) => {
             logger().logDebug(`You clicked ${result.response == 0 ? 'Yes' : 'No'}`);
             if (result.response == 0) {
-              const rProjectUrl = 'https://www.rstudio.org/links/r-project';
-              void shell.openExternal(rProjectUrl);
+              loadRWebsite();
             }
           })
           .catch((error: unknown) => logger().logError(error));

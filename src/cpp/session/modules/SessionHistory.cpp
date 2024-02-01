@@ -271,13 +271,9 @@ Error searchHistory(const json::JsonRpcRequest& request,
 
    // get all entries from console history
    std::vector<std::string> entries;
-   r::session::consoleHistory().subset(
-         0, r::session::consoleHistory().size() - 1, &entries);
+   r::session::consoleHistory().subset(0, r::session::consoleHistory().size(), &entries);
    std::vector<HistoryEntry> matchingEntries;
-   for (std::vector<std::string>::const_reverse_iterator 
-            it = entries.rbegin();
-            it != entries.rend();
-            ++it)
+   for (auto it = entries.rbegin(); it != entries.rend(); ++it)
    {
       // check limit
       if (matchingEntries.size() >= static_cast<std::size_t>(maxEntries))

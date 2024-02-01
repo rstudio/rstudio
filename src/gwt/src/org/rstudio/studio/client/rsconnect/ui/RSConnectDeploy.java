@@ -383,9 +383,14 @@ public class RSConnectDeploy extends Composite
    {
       if (info != null)
       {
-         urlAnchor_.setText(info.getUrl());
-         urlAnchor_.setHref(info.getUrl());
+         String url = info.getConfigUrl();
+         if (StringUtil.isNullOrEmpty(url))
+            url = info.getUrl();
+         
+         urlAnchor_.setText(url);
+         urlAnchor_.setHref(url);
       }
+      
       appDetailsPanel_.setVisible(true);
 
       if (isUpdate())

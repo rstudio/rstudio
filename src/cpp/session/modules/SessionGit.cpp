@@ -89,6 +89,13 @@ const char * const kVcsId = "Git";
 
 namespace {
 
+
+bool loggingEnabled()
+{
+   std::string log = core::system::getenv("RSTUDIO_GIT_LOG");
+   return string_utils::isTruthy(log);
+}
+
 // override gitArgs so that we can force Git to avoid
 // escaping UTF-8 paths (as Git understands them natively)
 ShellArgs gitArgs()
@@ -334,8 +341,7 @@ Error gitExec(const ShellArgs& args,
 #endif
 
    // log diagnostics if enabled
-   std::string log = core::system::getenv("RSTUDIO_GIT_LOG");
-   if (string_utils::isTruthy(log))
+   if (loggingEnabled())
       std::cout << gitText(args);
 
    Error error;
@@ -1148,6 +1154,17 @@ public:
       args << "--";
       args << patchFile;
 
+      if (loggingEnabled())
+      {
+         std::string contents;
+         Error error = core::readStringFromFile(patchFile, &contents);
+         if (error)
+            LOG_ERROR(error);
+         
+         std::cerr << "[git] applying patch:" << std::endl;
+         std::cerr << contents << std::endl << std::endl;
+      }
+      
       return runGit(args);
    }
 

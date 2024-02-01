@@ -1198,16 +1198,8 @@ bool FilePath::isDirectory() const
 {
    try
    {
-      if (!exists())
-         return false;
-      else
-      {
-         return boost::filesystem::is_directory(m_impl->Path)
-#ifdef _WIN32
-            || isJunction()
-#endif
-            ;
-      }
+      boost::system::error_code ec;
+      return boost::filesystem::is_directory(m_impl->Path, ec);
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
