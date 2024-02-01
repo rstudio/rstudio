@@ -2523,12 +2523,10 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.getCompletionsEnvironmentVariables(token))
    
    # ggplot2 aesthetics
-   if (length(context) &&
-       context[[1L]] %in% .rs.acContextTypes$ARGUMENT &&
-       is.call(functionCall) &&
+   if (is.call(functionCall) &&
        identical(functionCall[[1L]], as.symbol("aes")))
    {
-      return(.rs.getCompletionsAesthetics(token, contextLines, envir))
+      return(.rs.getCompletionsAesthetics(token, string, context, contextLines, envir))
    }
    
    # Python virtual environments
@@ -2866,15 +2864,19 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("getCompletionsAesthetics", function(token, contextLines, envir)
+.rs.addFunction("getCompletionsAesthetics", function(...)
 {
    tryCatch(
-      .rs.getCompletionsAestheticsImpl(token, contextLines, envir),
-      error = function(e) .rs.emptyCompletions(token)
+      .rs.getCompletionsAestheticsImpl(...),
+      error = function(e) .rs.emptyCompletions(..1)
    )
 })
 
-.rs.addFunction("getCompletionsAestheticsImpl", function(token, contextLines, envir)
+.rs.addFunction("getCompletionsAestheticsImpl", function(token,
+                                                         string,
+                                                         context,
+                                                         contextLines,
+                                                         envir)
 {
    # pass in the provided expression
    text <- .rs.finishExpression(contextLines)
@@ -2904,25 +2906,83 @@ assign(x = ".rs.acCompletionTypes",
    })
    
    # retrieve the data object used by this expression
-   if (is.call(expr))
-      expr <- .rs.nullCoalesce(expr[["data"]], expr[[2L]])
+   data <- if (is.call(expr))
+      .rs.nullCoalesce(expr[["data"]], expr[[2L]])
+   else if (is.symbol(expr))
+      expr
+   else
+      NULL
    
    # NOTE: We use 'eval()' here to ensure that things like datasets
    # are properly resolved; e.g. if working with mtcars from the datasets package.
-   source <- .rs.deparse(expr)
-   value <- eval(expr, envir = envir)
+   source <- .rs.deparse(data)
+   value <- eval(data, envir = envir)
    if (inherits(value, "gg"))
       value <- value$data
    
-   .rs.makeCompletions(
-      token = token,
-      results = .rs.selectFuzzyMatches(names(value), token),
-      quote = FALSE,
-      type = .rs.acCompletionTypes$COLUMN,
-      packages = source,
-      excludeOtherCompletions = TRUE,
-      excludeOtherArgumentCompletions = TRUE
+   # try to figure out what aesthetics are supported in this context
+   completions <- local({
+      
+      # need ggplot2 loaded in order to infer aesthetic names
+      ok <- "ggplot2" %in% loadedNamespaces() && .rs.acContextTypes$FUNCTION %in% context
+      if (!ok)
+         return(.rs.emptyCompletions(token))
+   
+      # search for a geom_ in the call stack
+      matches <- grep("^geom_", string, perl = TRUE, value = TRUE)
+      if (length(matches) == 0L)
+         return(.rs.emptyCompletions(token))
+      
+      geom <- tail(matches, n = 1L)
+      aesthetics <- tryCatch(
+         .rs.ggplot2.inferAesthetics(geom, envir),
+         error = function(e) NULL
+      )
+       
+      if (is.null(aesthetics))
+         return(.rs.emptyCompletions(token))
+      
+      results <- .rs.selectFuzzyMatches(aesthetics, token)
+      .rs.makeCompletions(
+         token = token,
+         results = paste(results, "="),
+         packages = attr(aesthetics, "prototype"),
+         type = .rs.acCompletionTypes$ARGUMENT,
+         quote = FALSE
+      )
+      
+   })
+
+   .rs.appendCompletions(
+      completions,
+      .rs.makeCompletions(
+         token = token,
+         results = .rs.selectFuzzyMatches(names(value), token),
+         quote = FALSE,
+         type = .rs.acCompletionTypes$COLUMN,
+         packages = source,
+         excludeOtherCompletions = TRUE,
+         excludeOtherArgumentCompletions = TRUE
+      )
    )
+   
+})
+
+.rs.addFunction("ggplot2.inferAesthetics", function(geomFunction, envir)
+{
+   # try to guess the associated Geom class from the function name
+   geomClass <- gsub("(?:^|_)(\\w)", "\\U\\1", geomFunction, perl = TRUE)
+   
+   # ask the prototype what the available aesthetics are
+   ggplot2 <- asNamespace("ggplot2")
+   proto <- ggplot2[[geomClass]]
+   
+   aes <- proto$aesthetics()
+   attr(aes, "prototype") <- geomFunction
+   
+   aes
+   
+   
 })
 
 .rs.addFunction("hasColumns", function(object)
