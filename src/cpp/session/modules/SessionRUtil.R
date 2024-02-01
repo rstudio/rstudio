@@ -206,3 +206,8 @@
 {
    .Call("rs_isSerializable", object, PACKAGE = "(embedding)")
 })
+
+.rs.addFunction("reindexRange", function(range, offset = 1)
+{
+   rapply(range, `+`, e2 = offset, how = "replace")
+})

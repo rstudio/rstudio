@@ -2321,6 +2321,16 @@ assign(x = ".rs.acCompletionTypes",
                                                   line,
                                                   isConsole)
 {
+   # Map from 0-based indexes to 1-based indexes in ranges
+   for (i in seq_along(contextData))
+   {
+      range <- contextData[[i]]$range
+      if (!is.null(range))
+         contextData[[i]]$range <- .rs.reindexRange(range)
+   }
+   
+   statementBounds <- .rs.reindexRange(statementBounds)
+   
    # To avoid too much code churn, unpack the contextData members into
    # the expected (older) variable names.
    string <- lapply(contextData, `[[`, 1L)
@@ -2876,15 +2886,16 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("getTextRange", function(contents, range)
 {
    # extract text from the rows in use
-   rows <- seq(from = range$start$row + 1L, to = range$end$row + 1L)
+   rows <- seq(from = range$start$row, to = range$end$row)
    inner <- contents[rows]
    n <- length(inner)
    
    # subset based on provided columns
-   inner[[1L]] <- substring(inner[[1L]], range$start$column + 1L)
-   inner[[n]] <- substring(inner[[n]], 1L, range$end$column + 1L)
+   inner[[1L]] <- substring(inner[[1L]], range$start$column)
+   inner[[n]] <- substring(inner[[n]], 1L, range$end$column)
    
    # return collapsed text
+   writeLines(inner)
    paste(inner, collapse = "\n")
 })
 
