@@ -209,5 +209,5 @@
 
 .rs.addFunction("reindexRange", function(range, offset = 1)
 {
-   rapply(range, `+`, e2 = offset, how = "replace")
+   rapply(as.list(range), `+`, e2 = offset, how = "replace")
 })
