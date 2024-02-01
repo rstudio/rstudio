@@ -1097,6 +1097,20 @@ SEXP rs_detectExtendedType(SEXP pathSEXP)
    return r::sexp::create(extendedType, &protect);
 }
 
+SEXP rs_getSourceDocument(SEXP idSEXP, SEXP includeContentsSEXP)
+{
+   std::string id = r::sexp::asString(idSEXP);
+   bool includeContents = r::sexp::asLogical(includeContentsSEXP);
+   
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument);
+   Error error = source_database::get(id, pDoc);
+   if (error)
+      return R_NilValue;
+
+   r::sexp::Protect protect;
+   SEXP object = pDoc->toRObject(&protect, includeContents);
+   return object;
+}
 
 } // anonymous namespace
 
@@ -1113,8 +1127,9 @@ Error initialize()
    if (error)
       return error;
 
-   RS_REGISTER_CALL_METHOD(rs_getDocumentProperties, 2);
-   RS_REGISTER_CALL_METHOD(rs_detectExtendedType, 1);
+   RS_REGISTER_CALL_METHOD(rs_getSourceDocument);
+   RS_REGISTER_CALL_METHOD(rs_getDocumentProperties);
+   RS_REGISTER_CALL_METHOD(rs_detectExtendedType);
 
    events().onDocUpdated.connect(onDocUpdated);
    events().onDocRemoved.connect(onDocRemoved);

@@ -2309,9 +2309,7 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 .rs.addJsonRpcHandler("get_completions", function(token,
-                                                  string,
-                                                  context,
-                                                  numCommas,
+                                                  contextData,
                                                   functionCallString,
                                                   statementBounds,
                                                   chainObjectName,
@@ -2323,6 +2321,12 @@ assign(x = ".rs.acCompletionTypes",
                                                   line,
                                                   isConsole)
 {
+   # To avoid too much code churn, unpack the contextData members into
+   # the expected (older) variable names.
+   string <- lapply(contextData, `[[`, 1L)
+   context <- lapply(contextData, `[[`, 2L)
+   numCommas <- lapply(contextData, `[[`, 3L)
+   
    # Ensure UTF-8 encoding, as that's the encoding set when passed down from
    # the client
    token <- .rs.setEncodingUnknownToUTF8(token)
@@ -2527,7 +2531,7 @@ assign(x = ".rs.acCompletionTypes",
        identical(functionCall[[1L]], as.symbol("aes")))
    {
       completions <- tryCatch(
-         .rs.getCompletionsAesthetics(token, string, context, statementBounds, documentId, envir),
+         .rs.getCompletionsAesthetics(token, contextData, statementBounds, documentId, envir),
          error = function(e) .rs.emptyCompletions(token)
       )
       
@@ -2869,49 +2873,69 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+.rs.addFunction("getTextRange", function(contents, range)
+{
+   # extract text from the rows in use
+   rows <- seq(from = range$start$row + 1L, to = range$end$row + 1L)
+   inner <- contents[rows]
+   n <- length(inner)
+   
+   # subset based on provided columns
+   inner[[1L]] <- substring(inner[[1L]], range$start$column + 1L)
+   inner[[n]] <- substring(inner[[n]], 1L, range$end$column + 1L)
+   
+   # return collapsed text
+   paste(inner, collapse = "\n")
+})
+
 .rs.addFunction("getCompletionsAesthetics", function(token,
-                                                     string,
-                                                     context,
+                                                     contextData,
                                                      statementBounds,
                                                      documentId,
                                                      envir)
 {
-   browser()
+   # get document contents
+   document <- .rs.getSourceDocument(documentId, TRUE)
+   contents <- strsplit(document$contents, "\n", fixed = TRUE)[[1L]]
    
-   # pass in the provided expression
-   text <- .rs.finishExpression(contextLines)
-   expr <- parse(text = text)[[1L]]
-   stopifnot(is.call(expr))
+   # the data object associated with the aes() call, if any
+   data <- NULL
    
-   # find the call providing the relevant data argument
-   expr <- local({
-      
-      if (identical(expr[[1L]], as.symbol("+")))
+   # search for a context relating to a geom_ invocation
+   geomContext <- NULL
+   for (i in seq_along(contextData))
+   {
+      if (grepl("^geom_", contextData[[i]]$data))
       {
-         rhs <- expr[[3L]]
-         if (!is.null(rhs[["data"]]))
-            return(rhs)
+         geomContext <- contextData[[i]]
+         break
       }
-      
-      while (is.call(expr))
-      {
-         if (identical(expr[[1L]], as.name("ggplot")))
-            break
-         
-         expr <- expr[[2L]]
-      }
-      
-      return(expr)
-      
-   })
+   }
    
-   # retrieve the data object used by this expression
-   data <- if (is.call(expr))
-      .rs.nullCoalesce(expr[["data"]], expr[[2L]])
-   else if (is.symbol(expr))
-      expr
-   else
-      NULL
+   # if we have a geom context, check it for a data argument
+   if (!is.null(geomContext))
+   {
+      geomText <- .rs.getTextRange(contents, geomContext$range)
+      geomCall <- parse(text = .rs.finishExpression(geomText))[[1L]]
+      if ("data" %in% names(geomCall))
+         data <- geomCall[["data"]]
+   }
+   
+   # if we don't have a data argument, check if we can extract it
+   # from the current statement being evaluated
+   if (is.null(data))
+   {
+      # get current call
+      currentStatement <- .rs.getTextRange(contents, statementBounds)
+      currentCall <- parse(text = .rs.finishExpression(currentStatement))[[1L]]
+      
+      # find the top-most call in the hierarchy
+      while (identical(currentCall[[1L]], as.symbol("+")))
+         currentCall <- currentCall[[2L]]
+      
+      # check for a data argument
+      data <- .rs.nullCoalesce(currentCall[["data"]], currentCall[[2L]])
+   }
    
    # NOTE: We use 'eval()' here to ensure that things like datasets
    # are properly resolved; e.g. if working with mtcars from the datasets package.
@@ -2920,39 +2944,45 @@ assign(x = ".rs.acCompletionTypes",
    if (inherits(value, "gg"))
       value <- value$data
    
-   # try to figure out what aesthetics are supported in this context
-   completions <- local({
-      
-      # need ggplot2 loaded in order to infer aesthetic names
-      ok <- "ggplot2" %in% loadedNamespaces() && .rs.acContextTypes$FUNCTION %in% context
-      if (!ok)
-         return(.rs.emptyCompletions(token))
+   # check whether we should complete aesthetic names in this context
+   completions <- .rs.emptyCompletions(token)
+   if (.rs.acContextTypes$FUNCTION %in% contextData[[1L]]$type && "ggplot2" %in% loadedNamespaces())
+   {
+      if (is.null(geomContext))
+      {
+         defaultAesthetics <- c("x", "y", "fill", "colour", "shape", "size")
+         results <- .rs.selectFuzzyMatches(defaultAesthetics, token)
+         completions <- .rs.makeCompletions(
+            token = token,
+            results = paste(results, "="),
+            packages = "ggplot",
+            type = .rs.acCompletionTypes$ARGUMENT,
+            quote = FALSE
+         )
+      }
+      else
+      {
+         geomFunc <- eval(as.symbol(geomContext$data), envir = envir)
+         layerInfo <- geomFunc()
+         aesthetics <- c(
+            layerInfo$geom$required_aes,
+            layerInfo$stat$required_aes,
+            names(layerInfo$geom$default_aes),
+            names(layerInfo$stat$default_aes)
+         )
+         aesthetics <- aesthetics[!duplicated(aesthetics)]
+         results <- .rs.selectFuzzyMatches(aesthetics, token)
+         completions <- .rs.makeCompletions(
+            token = token,
+            results = paste(results, "="),
+            packages = geomContext$data,
+            type = .rs.acCompletionTypes$ARGUMENT,
+            quote = FALSE
+         )
+      }
+   }
    
-      # search for a geom_ in the call stack
-      matches <- grep("^geom_", string, perl = TRUE, value = TRUE)
-      if (length(matches) == 0L)
-         return(.rs.emptyCompletions(token))
-      
-      geom <- tail(matches, n = 1L)
-      aesthetics <- tryCatch(
-         .rs.ggplot2.inferAesthetics(geom, envir),
-         error = function(e) NULL
-      )
-       
-      if (is.null(aesthetics))
-         return(.rs.emptyCompletions(token))
-      
-      results <- .rs.selectFuzzyMatches(aesthetics, token)
-      .rs.makeCompletions(
-         token = token,
-         results = paste(results, "="),
-         packages = attr(aesthetics, "prototype"),
-         type = .rs.acCompletionTypes$ARGUMENT,
-         quote = FALSE
-      )
-      
-   })
-
+   # now, add on completions from the source data object
    .rs.appendCompletions(
       completions,
       .rs.makeCompletions(
@@ -2965,23 +2995,6 @@ assign(x = ".rs.acCompletionTypes",
          excludeOtherArgumentCompletions = TRUE
       )
    )
-   
-})
-
-.rs.addFunction("ggplot2.inferAesthetics", function(geomFunction, envir)
-{
-   # try to guess the associated Geom class from the function name
-   geomClass <- gsub("(?:^|_)(\\w)", "\\U\\1", geomFunction, perl = TRUE)
-   
-   # ask the prototype what the available aesthetics are
-   ggplot2 <- asNamespace("ggplot2")
-   proto <- ggplot2[[geomClass]]
-   
-   aes <- proto$aesthetics()
-   attr(aes, "prototype") <- geomFunction
-   
-   aes
-   
    
 })
 

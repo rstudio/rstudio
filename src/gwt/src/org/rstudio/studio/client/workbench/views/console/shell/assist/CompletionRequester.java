@@ -19,8 +19,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContext;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContextData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
@@ -277,9 +278,7 @@ public class CompletionRequester
 
    public void getCompletions(
          final String token,
-         final List<String> assocData,
-         final List<Integer> dataType,
-         final List<Integer> numCommas,
+         final JsVector<AutocompletionContextData> contextData,
          final String functionCallString,
          final Range statementBounds,
          final String chainDataName,
@@ -293,17 +292,16 @@ public class CompletionRequester
          final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
-      boolean isHelp = dataType.size() > 0 &&
-            dataType.get(0) == AutocompletionContext.TYPE_HELP;
+      boolean isHelp =
+            contextData.length() > 0 &&
+            contextData.get(0).getType() == AutocompletionContext.TYPE_HELP;
 
       if (usingCache(token, isHelp, callback))
          return;
 
       doGetCompletions(
             token,
-            assocData,
-            dataType,
-            numCommas,
+            contextData,
             functionCallString,
             statementBounds,
             chainDataName,
@@ -628,9 +626,7 @@ public class CompletionRequester
 
    private void doGetCompletions(
          final String token,
-         final List<String> assocData,
-         final List<Integer> dataType,
-         final List<Integer> numCommas,
+         final JsVector<AutocompletionContextData> contextData,
          final String functionCallString,
          final Range statementBounds,
          final String chainObjectName,
@@ -653,9 +649,7 @@ public class CompletionRequester
       {
          server_.getCompletions(
                token,
-               assocData,
-               dataType,
-               numCommas,
+               contextData,
                functionCallString,
                statementBounds,
                chainObjectName,

@@ -14,12 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
@@ -77,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
@@ -943,16 +941,42 @@ public class RCompletionManager implements CompletionManager
          requester_.flushCache();
    }
    
-   
+   public static class AutocompletionContextData extends JavaScriptObject
+   {
+      protected AutocompletionContextData()
+      {
+      }
+      
+      public static final native AutocompletionContextData create(String data,
+                                                                  int type,
+                                                                  int numCommas,
+                                                                  Range range)
+      /*-{
+         return {
+            data: data,
+            type: type,
+            numCommas: numCommas,
+            range: range
+         };
+      }-*/;
+      
+      public static final AutocompletionContextData create(int type)
+      {
+         return create("", type, -1, null);
+      }
+      
+      public final native String getData() /*-{ return this.data; }-*/;
+      public final native int getType() /*-{ return this.type; }-*/;
+   }
+
    // Things we need to form an appropriate autocompletion:
    //
    // 1. The token to the left of the cursor,
    // 2. The associated function call (if any -- for arguments),
    // 3. The associated data for a `[` call (if any -- completions from data object),
    // 4. The associated data for a `[[` call (if any -- completions from data object)
-   public class AutocompletionContext
+   public static class AutocompletionContext
    {
-      
       // Be sure to sync these with 'SessionRCompletions.R'!
       public static final int TYPE_UNKNOWN = 0;
       public static final int TYPE_FUNCTION = 1;
@@ -970,63 +994,27 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_PACKAGE = 13;
       public static final int TYPE_PLUMBER = 14;
       
-      public AutocompletionContext(
-            String token,
-            List<String> assocData,
-            List<Integer> dataType,
-            List<Integer> numCommas,
-            String functionCallString)
+      public AutocompletionContext(String token,
+                                   JsVector<AutocompletionContextData> data,
+                                   String functionCallString)
       {
          token_ = token;
-         assocData_ = assocData;
-         dataType_ = dataType;
-         numCommas_ = numCommas;
+         contextData_ = data;
          functionCallString_ = functionCallString;
       }
       
-      public AutocompletionContext(
-            String token,
-            ArrayList<String> assocData,
-            ArrayList<Integer> dataType)
+      public AutocompletionContext(String token, int type)
       {
+         AutocompletionContextData data = AutocompletionContextData.create(type);
+         JsVector<AutocompletionContextData> contextData = JsVector.createVector().cast();
+         contextData.push(data);
+         
          token_ = token;
-         assocData_ = assocData;
-         dataType_ = dataType;
-         numCommas_ = Arrays.asList(0);
-         functionCallString_ = "";
-      }
-      
-      public AutocompletionContext(
-            String token,
-            String assocData,
-            int dataType)
-      {
-         token_ = token;
-         assocData_ = Arrays.asList(assocData);
-         dataType_ = Arrays.asList(dataType);
-         numCommas_ = Arrays.asList(0);
-         functionCallString_ = "";
-      }
-      
-      
-      public AutocompletionContext(
-            String token,
-            int dataType)
-      {
-         token_ = token;
-         assocData_ = Arrays.asList("");
-         dataType_ = Arrays.asList(dataType);
-         numCommas_ = Arrays.asList(0);
-         functionCallString_ = "";
+         contextData_ = contextData;
       }
       
       public AutocompletionContext()
       {
-         token_ = "";
-         assocData_ = new ArrayList<>();
-         dataType_ = new ArrayList<>();
-         numCommas_ = new ArrayList<>();
-         functionCallString_ = "";
       }
 
       public String getToken()
@@ -1039,36 +1027,6 @@ public class RCompletionManager implements CompletionManager
          token_ = token;
       }
 
-      public List<String> getAssocData()
-      {
-         return assocData_;
-      }
-
-      public void setAssocData(List<String> assocData)
-      {
-         assocData_ = assocData;
-      }
-
-      public List<Integer> getDataType()
-      {
-         return dataType_;
-      }
-
-      public void setDataType(List<Integer> dataType)
-      {
-         dataType_ = dataType;
-      }
-
-      public List<Integer> getNumCommas()
-      {
-         return numCommas_;
-      }
-
-      public void setNumCommas(List<Integer> numCommas)
-      {
-         numCommas_ = numCommas;
-      }
-
       public String getFunctionCallString()
       {
          return functionCallString_;
@@ -1076,7 +1034,7 @@ public class RCompletionManager implements CompletionManager
 
       public void setFunctionCallString(String functionCallString)
       {
-         this.functionCallString_ = functionCallString;
+         functionCallString_ = functionCallString;
       }
       
       public Range getStatementBounds()
@@ -1089,30 +1047,36 @@ public class RCompletionManager implements CompletionManager
          statementBounds_ = statementBounds;
       }
       
-      public void add(String assocData, Integer dataType, Integer numCommas)
+      public JsVector<AutocompletionContextData> getContextData()
       {
-         assocData_.add(assocData);
-         dataType_.add(dataType);
-         numCommas_.add(numCommas);
+         return contextData_;
       }
       
-      public void add(String assocData, Integer dataType)
+      public void add(AutocompletionContextData data)
       {
-         add(assocData, dataType, 0);
+         contextData_.push(data);
       }
       
-      public void add(String assocData)
+      public void add(String data, int type)
       {
-         add(assocData, AutocompletionContext.TYPE_UNKNOWN, 0);
+         contextData_.push(AutocompletionContextData.create(data, type, -1, null));
       }
-
-      private String token_;
-      private List<String> assocData_;
-      private List<Integer> dataType_;
-      private List<Integer> numCommas_;
-      private String functionCallString_;
-      private Range statementBounds_;
       
+      public void add(String data, int type, int numCommas)
+      {
+         contextData_.push(AutocompletionContextData.create(data, type, numCommas, null));
+      }
+      
+      public void add(String data, int type, int numCommas, Range range)
+      {
+         contextData_.push(AutocompletionContextData.create(data, type, numCommas, range));
+      }
+      
+      private String token_ = "";
+      private String functionCallString_ = "";
+      private JsVector<AutocompletionContextData> contextData_ = JsVector.createVector().cast();
+      
+      private Range statementBounds_ = null;
    }
    
    private boolean isLineInRoxygenComment(String line)
@@ -1272,9 +1236,7 @@ public class RCompletionManager implements CompletionManager
       
       requester_.getCompletions(
             context.getToken(),
-            context.getAssocData(),
-            context.getDataType(),
-            context.getNumCommas(),
+            context.getContextData(),
             context.getFunctionCallString(),
             context.getStatementBounds(),
             infixData.getDataName(),
@@ -1706,13 +1668,14 @@ public class RCompletionManager implements CompletionManager
          
          tokenCursor.findStartOfEvaluationContext();
          
-         // TODO: Include inner contents here as well.
          assocData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
                   declEnd.currentPosition())).trim();
          
-         context.add(assocData, dataType, numCommas);
+         declEnd.fwdToMatchingToken();
+         Range range = Range.fromPoints(tokenCursor.currentPosition(), declEnd.currentPosition());
+         context.add(assocData, dataType, numCommas, range);
       }
       
       // Try to get information about the current expression.
