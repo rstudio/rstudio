@@ -8,7 +8,7 @@ RUN set -x \
     && yum install epel-release -y
 
 RUN yum install -y \
-    ant \
+ant \
     boost-devel \
     bzip2-devel \
     curl \
@@ -22,8 +22,8 @@ RUN yum install -y \
     gdb \
     gpg \
     gtk3 \
-    java-1.8.0-openjdk \
-    java-1.8.0-openjdk-devel \
+    java-11-openjdk \
+    java-11-openjdk-devel \
     jq \
     libXScrnSaver-devel \
     libXcursor-devel \
@@ -60,6 +60,11 @@ RUN yum install -y \
     xml-commons-apis \
     xorg-x11-server-Xvfb \
     zlib-devel
+
+# ant install triggers java 8 installation but we use java 11 for builds
+RUN JDK_11_PATH=$(dirname $(dirname $(readlink -f $(find /usr/lib/jvm/ -name javac | grep java-11)))) && \
+    alternatives --set java $JDK_11_PATH/bin/java && \
+    alternatives --set javac $JDK_11_PATH/bin/javac
 
 # add scl repo and install additional dependencies
 RUN yum install -y \
