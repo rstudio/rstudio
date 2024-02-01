@@ -2895,7 +2895,6 @@ assign(x = ".rs.acCompletionTypes",
    inner[[n]] <- substring(inner[[n]], 1L, range$end$column)
    
    # return collapsed text
-   writeLines(inner)
    paste(inner, collapse = "\n")
 })
 
