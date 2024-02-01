@@ -473,11 +473,17 @@ core::Error rsaInit()
    // generate an RSA key pair
    s_pRSA = EVP_RSA_gen(kRsaKeySizeBits);
 
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
    // extract exponent + modulus for future use
-   const BIGNUM *bn, *be, *bd;
+   const BIGNUM *bn, *be;
+   RSA* pRsaKeyPair = EVP_PKEY_get1_RSA(s_pRSA);
+   bn = pRsaKeyPair->n;
+   be = pRsaKeyPair->e;
+#elif OPENSSL_VERSION_NUMBER < 0x30000000L
+   // extract exponent + modulus for future use
+   const BIGNUM *bn, *be;
    RSA* pRsaKeyPair = EVP_PKEY_get0_RSA(s_pRSA);
-   RSA_get0_key(pRsaKeyPair, &bn, &be, &bd);
+   RSA_get0_key(pRsaKeyPair, &bn, &be, nullptr);
 #else
    // extract exponent + modulus for future use
    BIGNUM* bn = nullptr;
@@ -497,6 +503,10 @@ core::Error rsaInit()
    s_exponent = e;
    OPENSSL_free(e);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   RSA_free(pRsaKeyPair);
+#endif
+   
    return Success();
 }
 

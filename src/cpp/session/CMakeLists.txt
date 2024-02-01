@@ -21,6 +21,12 @@ if(WIN32 AND NOT RSTUDIO_SESSION_WIN32)
    set(RSTUDIO_WIN32_BUILD_UTF8_SESSION TRUE)
 endif()
 
+option(RSTUDIO_DISABLE_CHECK_FOR_UPDATES "Disable the check for updates feature" OFF)
+if(RSTUDIO_DISABLE_CHECK_FOR_UPDATES)
+   add_definitions(-DDISABLE_UPDATE_CHECK)
+   message(STATUS "Configured to remove check for updates feature")
+endif()
+
 # verify that install-dictionaries, install-mathjax, install-pandoc,
 # and install-rmarkdown have been run as required
 
@@ -689,6 +695,12 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    # install mathjax for local html preview
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+
+   # install node
+   install(
+      DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_NODE_VERSION}/"
+      DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
+      USE_SOURCE_PERMISSIONS)
 
    # install quarto (or pandoc if quarto disabled)
    if(QUARTO_ENABLED)

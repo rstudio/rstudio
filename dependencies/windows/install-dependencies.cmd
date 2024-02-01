@@ -33,7 +33,6 @@ set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-3.1.4.zip
 set BOOST_FILES=boost-1.83.0-win-msvc142.zip
-set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
 set RESOURCE_HACKER=resource_hacker.zip
 
 set NSIS_NSPROCESS_VERSION=1.6
@@ -44,7 +43,7 @@ set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
 REM Pin to specific Quarto version for releases
-set QUARTO_VERSION=1.3.450
+set QUARTO_VERSION=1.4.549
 
 REM Get latest Quarto release version
 REM cd install-quarto
@@ -131,12 +130,6 @@ if not exist %BOOST_FILES:~0,-4%* (
   echo Unzipping %BOOST_FILES%
   unzip %UNZIP_ARGS% "%BOOST_FILES%"
   del %BOOST_FILES%
-)
-
-if not exist %YAML_CPP_FILES:~0,-4%* (
-  wget %WGET_ARGS% "%BASEURL%yaml-cpp/%YAML_CPP_FILES%
-  unzip %UNZIP_ARGS% "%YAML_CPP_FILES%"
-  del %YAML_CPP_FILES%
 )
 
 if not exist resource-hacker (

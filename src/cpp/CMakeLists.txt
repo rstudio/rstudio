@@ -195,28 +195,26 @@ if(RSTUDIO_PACKAGE_BUILD)
 endif()
 
 # yaml-cpp
-if(WIN32)
+set(YAML_CPP_VERSION "0.8.0")
+if(CMAKE_VERSION VERSION_GREATER "3.14")
 
-   if(RSTUDIO_SESSION_WIN32)
-      set(YAML_CPP_ARCH "x86")
-   else()
-      set(YAML_CPP_ARCH "x64")
+   if(WIN32)
+      add_definitions(-DYAML_CPP_STATIC_DEFINE)
    endif()
+      
+   include(FetchContent)
+   FetchContent_Declare(yaml-cpp
+     GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+     GIT_TAG "${YAML_CPP_VERSION}")
 
-   set(YAML_CPP_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/yaml-cpp-0.6.3")
-   set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_ROOT}/include")
+   FetchContent_MakeAvailable(yaml-cpp)
 
-   if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(YAML_CPP_LIBRARIES "${YAML_CPP_ROOT}/lib/${YAML_CPP_ARCH}/libyaml-cppmdd.lib")
-  else()
-      set(YAML_CPP_LIBRARIES "${YAML_CPP_ROOT}/lib/${YAML_CPP_ARCH}/libyaml-cppmd.lib")
-  endif()
+   set(YAML_CPP_INCLUDE_DIR "${yaml-cpp_SOURCE_DIR}/include")
+   set(YAML_CPP_LIBRARIES   yaml-cpp::yaml-cpp)
 
 elseif(NOT RSTUDIO_USE_SYSTEM_YAML_CPP)
-
-   set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/0.6.3/include")
-   set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/0.6.3/build/libyaml-cpp.a")
-
+   set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/include")
+   set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/build/libyaml-cpp.a")
 else()
    # NOTE: defines the following CMake variables:
    # - YAML_CPP_INCLUDE_DIR
@@ -225,11 +223,13 @@ else()
 endif()
 
 if(yaml-cpp_FOUND AND NOT YAML_CPP_LIBRARIES)
-   set(YAML_CPP_LIBRARIES yaml-cpp)
-endif()
-
-if(NOT RSTUDIO_USE_SYSTEM_YAML_CPP AND NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
-   message(FATAL_ERROR "yaml-cpp not found (re-run dependencies script to install)")
+   if(TARGET yaml-cpp::yaml-cpp)
+      set(YAML_CPP_LIBRARIES yaml-cpp::yaml-cpp)
+   elseif(TARGET yaml-cpp)
+      set(YAML_CPP_LIBRARIES yaml-cpp)
+   else()
+      message(FATAL_ERROR "yaml-cpp was found but couldn't find a known target name")
+   endif()
 endif()
 
 if(YAML_CPP_INCLUDE_DIR)

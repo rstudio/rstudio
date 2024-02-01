@@ -917,10 +917,16 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         next  : "start"
       },
       {
-        // R Markdown chunk metadata comments
+        // R Markdown chunk metadata comments.
+        // The Ace tokenizer seems to want us to return to the 'start'
+        // state in a number of places, so we need to check whether states
+        // have been encoded into the stack, and reuse an old state if possible.
         token : "comment.doc.tag",
-        regex : "#\\s*[|]\\s*",
-        next  : "yaml-start"
+        regex : "^\\s*#\\s*[|]",
+        onMatch: function(value, state, stack, line) {
+          this.next = stack.length ? stack[0] : state.replaceAll("start", "yaml-start");
+          return this.token;
+        }
       },
       {
         // Begin Roxygen with todo
@@ -1276,6 +1282,13 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
     this.normalizeRules();
 
+    // escape from yaml-start if the line doesn't start with a comment
+    this.$rules["yaml-start"].unshift({
+      token : "text",
+      regex : "^\\s*(?!#)",
+      next  : "start"
+    });
+
     // allow for multi-line strings in YAML comments
     this.$rules["yaml-multiline-string"].unshift({
       regex: /^(#[|])(\s*)/,
@@ -1304,32 +1317,29 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
     });
 
-    // similarly, we need to be able to exit multiline strings
-    this.$rules["yaml-multiline-string"].unshift({
-      token: "text",
-      regex: /^\s*(?!#)/,
-      next: "start"
-    });
+    for (var state in this.$rules) {
 
-    this.$rules["yaml-start"].unshift({
-      token: "comment.doc.tag",
-      regex: "^#[|]",
-      next: "yaml-start"
-    });
+      if (state.indexOf("yaml-") === 0) {
 
-    this.$rules["yaml-qstring"].unshift({
-      token: "comment.doc.tag",
-      regex: "^#[|]",
-      next: "yaml-qstring"
-    });
+        // make sure YAML rules can consume a leading #|
+        this.$rules[state].unshift({
+          token: ["whitespace", "comment.doc.tag"],
+          regex: "^(\\s*)(#[|])",
+          next: state
+        });
 
-    this.$rules["yaml-qqstring"].unshift({
-      token: "comment.doc.tag",
-      regex: "^#[|]",
-      next: "yaml-qqstring"
-    });
+        // make sure YAML rules exit when there's no leading #|
+        this.$rules[state].unshift({
+          token: "whitespace",
+          regex: "^\\s*(?!#)",
+          next: "start"
+        });
 
-  };
+      }
+
+    };
+
+  }
 
   oop.inherits(RHighlightRules, TextHighlightRules);
 

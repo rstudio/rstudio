@@ -30,10 +30,14 @@ label {
   right: 12px;
 }
 
-.button {
+button {
   width: 72px;
   padding: 3px 4px;
   margin: 4px 0 4px 4px;
   font-size: 8pt;
   user-select: none;
+}
+
+button.buttonDownload {
+  width: 82px;
 }

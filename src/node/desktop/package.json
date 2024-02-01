@@ -19,7 +19,8 @@
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
     "format": "npx prettier --write . --ignore-path .gitignore",
     "postinstall": "npx electron-rebuild && ts-node scripts/generate.ts",
-    "generate": "ts-node scripts/generate.ts"
+    "generate": "ts-node scripts/generate.ts",
+    "install-fuses": "node scripts/install-fuses.mjs"
   },
   "config": {
     "forge": "./forge.config.js"
@@ -71,6 +72,7 @@
     "webpack": "5.89.0"
   },
   "dependencies": {
+    "@electron/fuses": "^1.7.0",
     "@vueuse/core": "10.7.0",
     "crc": "4.3.2",
     "electron-squirrel-startup": "1.0.0",

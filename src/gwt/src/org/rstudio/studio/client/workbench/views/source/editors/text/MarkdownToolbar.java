@@ -34,30 +34,38 @@ public class MarkdownToolbar extends SecondaryToolbar implements RequiresResize
    {
       super(true, constants_.markdownEditingTools());
       addStyleName(RES.styles().markdownToolbar());
-      
+
       sourceMode_ = new LatchingToolbarButton(
             constants_.source(),
             commands.toggleRmdVisualMode().getTooltip(),
             false,
             null,
             visualModeClickHandler
-         );
-         sourceMode_.addStyleName("rstudio-themes-inverts");
-         sourceMode_.addStyleName(RES.styles().editorModeButton());
-         addLeftWidget(sourceMode_);
-      
-      visualMode_ = new LatchingToolbarButton(
-         constants_.visual(),
-         commands.toggleRmdVisualMode().getTooltip(),
-         false,
-         null,
-         visualModeClickHandler
       );
+      
+      sourceMode_.addStyleName("rstudio-themes-inverts");
+      sourceMode_.addStyleName(RES.styles().editorModeButton());
+
+      visualMode_ = new LatchingToolbarButton(
+            constants_.visual(),
+            commands.toggleRmdVisualMode().getTooltip(),
+            false,
+            null,
+            visualModeClickHandler
+      );
+      
       visualMode_.addStyleName("rstudio-themes-inverts");
       visualMode_.addStyleName(RES.styles().editorModeButton());
+      
+      resetDisplay(true);
+   }
+   
+   public void resetDisplay(boolean isVisualModeEnabled)
+   {
+      removeLeftWidgets();
+      visualMode_.setLatched(isVisualModeEnabled);
+      addLeftWidget(sourceMode_);
       addLeftWidget(visualMode_);
-      visualMode_.setLatched(true);
-            
    }
    
    public void setVisualMode(boolean visualMode)

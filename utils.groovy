@@ -60,6 +60,13 @@ def getVersion(boolean isHourly) {
   return [rstudioVersion, rstudioVersionMajor, rstudioVersionMinor, rstudioVersionPatch, rstudioVersionSuffix]
 }
 
+def getBaseCommit() {
+  return sh(
+            script: "docker/jenkins/rstudio-base-commit.sh",
+            returnStdout: true
+          ).trim()
+}
+
 def jenkins_user_build_args() {
   def jenkins_uid = sh (script: 'id -u jenkins', returnStdout: true).trim()
   def jenkins_gid = sh (script: 'id -g jenkins', returnStdout: true).trim()
@@ -231,6 +238,29 @@ def getDockerBuildOs(String osName) {
   */
 def getDockerTag() {
   return "${IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
+}
+
+boolean postReviewCheck(String name, String status, String title, String summary, String content) {
+  if (!env.GIT_BRANCH) { return false }
+  if (!env.GIT_BRANCH.startsWith('PR-')) { return false }
+
+  pullId = env.GIT_BRANCH.replaceAll("^PR-", "")
+  ownerAndRepo = env.GIT_URL.replaceAll('^https://github.com[/:]', '').replaceAll('.git$', '')
+  prApiUrl = "https://api.github.com/repos/${ownerAndRepo}/check-runs"
+
+  strippedQuotes = content.trim().replaceAll('^"', '').replaceAll('"$', '')
+  output = $/{"title": "${title}", "summary": "${summary}", "text": "${strippedQuotes}"}/$
+
+  sh 'curl -L ' +
+    '-X POST ' +
+    '-H "Accept: application/vnd.github+json" ' +
+    '-H "Authorization: token ${GITHUB_LOGIN_PSW}" ' +
+    '-H "X-GitHub-Api-Version: 2022-11-28" ' +
+    '-H "Content-Type: application/json" ' +
+    "-d '{\"conclusion\": \"${status}\", \"output\": ${output}, \"name\": \"${name}\", \"head_sha\": \"${GIT_COMMIT}\"}' " +
+    "${prApiUrl}"
+
+  return true
 }
 
 return this
