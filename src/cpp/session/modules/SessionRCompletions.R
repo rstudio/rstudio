@@ -2964,7 +2964,7 @@ assign(x = ".rs.acCompletionTypes",
          results <- .rs.selectFuzzyMatches(defaultAesthetics, token)
          completions <- .rs.makeCompletions(
             token = token,
-            results = paste(results, "="),
+            results = paste(results, "= "),
             packages = "ggplot",
             type = .rs.acCompletionTypes$ARGUMENT,
             quote = FALSE
@@ -2984,7 +2984,7 @@ assign(x = ".rs.acCompletionTypes",
          results <- .rs.selectFuzzyMatches(aesthetics, token)
          completions <- .rs.makeCompletions(
             token = token,
-            results = paste(results, "="),
+            results = paste(results, "= "),
             packages = geomContext$data,
             type = .rs.acCompletionTypes$ARGUMENT,
             quote = FALSE
