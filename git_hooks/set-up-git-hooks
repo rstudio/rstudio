@@ -2,8 +2,8 @@
 
 hooks_dir="hooks"
 git_hooks_dir="../.git/hooks"
-color_highlight='\e[1;95m'
-color_none='\e[0m'
+color_highlight='\033[1;95m'
+color_none='\033[0m'
 
 echo -e "${color_highlight}Setting up git hooks in $git_hooks_dir...${color_none}"
 
