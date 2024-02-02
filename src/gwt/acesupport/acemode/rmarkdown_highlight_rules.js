@@ -31,6 +31,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
 var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
+var LatexHighlightRules = require("mode/tex_highlight_rules").LatexHighlightRules;
 var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
 var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
@@ -234,6 +235,16 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
+   // Embed latex highlight rules
+   Utils.embedRules(
+      this,
+      LatexHighlightRules,
+      "tex",
+      this.$reLatexChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
    // Embed text highlight rules
    Utils.embedRules(
       this,
@@ -243,6 +254,14 @@ var RMarkdownHighlightRules = function() {
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
+
+   // Embed YAML highlighting rules
+   // This version of the YAML highlight rules is used specifically for Quarto comments.
+   this.embedRules(YamlHighlightRules, "quarto-yaml-", [{
+      token: "text",
+      regex: "$",
+      next: "start"
+   }]);
 
    // Embed YAML highlighting rules
    // (Handled specially: should only ever activate on first line of document)
@@ -265,6 +284,73 @@ var RMarkdownHighlightRules = function() {
    });
 
    this.normalizeRules();
+
+   // allow Quarto YAML comments within each kind of chunk
+   for (var state in this.$rules) {
+
+      // add rules for highlighting YAML comments
+      if (state.indexOf("-start") !== -1) {
+         this.$rules[state].unshift({
+            token: "comment.doc.tag",
+            regex: "^\\s*#\\s*[|]",
+            push: "quarto-yaml-start"
+         });
+      }
+
+      // allow Quarto YAML highlight rules to consume leading comments
+      if (state.indexOf("quarto-yaml-") === 0) {
+
+         // make sure YAML rules can consume a leading #|
+         this.$rules[state].unshift({
+            token: ["whitespace", "comment.doc.tag"],
+            regex: "^(\\s*)(#[|])",
+            next: state
+         });
+
+         // make sure YAML rules exit when there's no leading #|
+         this.$rules[state].unshift({
+            token: "whitespace",
+            regex: "^\\s*(?!#)",
+            next: "pop"
+         });
+
+      }
+
+      this.$rules["quarto-yaml-start"].unshift({
+         token: "text",
+         regex: "^\\s*(?!#)",
+         next: "pop"
+      });
+
+      // allow for multi-line strings in YAML comments
+      this.$rules["quarto-yaml-multiline-string"].unshift({
+         regex: /^(#[|])(\s*)/,
+         onMatch: function (value, state, stack) {
+
+            // if the indent has decreased relative to what
+            // was used to start the multiline string, then
+            // exit multiline string state
+            var next = stack[0];
+            var indent = stack[1];
+
+            if (indent >= value.length) {
+               this.next = next;
+               stack.shift();
+               stack.shift();
+            } else {
+               this.next = state;
+            }
+
+            // retrieve tokens for the matched value
+            var tokens = this.splitRegex.exec(value);
+            return [
+               { type: "comment.doc.tag", value: tokens[1] },
+               { type: "indent", value: tokens[2] }
+            ];
+         }
+      });
+
+   }
 
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
@@ -298,6 +384,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reSassChunkStartString       = engineRegex("sass");
    this.$reLessChunkStartString       = engineRegex("less");
    this.$reTextChunkStartString       = engineRegex("(?:asis|text)");
+   this.$reLatexChunkStartString      = engineRegex("(?:tikz|latex|tex)");
 
 }).call(RMarkdownHighlightRules.prototype);
 
