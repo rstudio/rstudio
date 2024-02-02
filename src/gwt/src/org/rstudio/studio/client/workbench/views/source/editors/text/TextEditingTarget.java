@@ -8375,8 +8375,8 @@ public class TextEditingTarget implements
       }
    };
 
-   private final CompletionContext rContext_ = new CompletionContext() {
-
+   private final CompletionContext rContext_ = new CompletionContext()
+   {
       @Override
       public String getId()
       {
@@ -8490,6 +8490,19 @@ public class TextEditingTarget implements
          }
          
          return null;   
+      }
+      
+      @Override
+      public void withSavedDocument(Command command)
+      {
+         if (docUpdateSentinel_ != null)
+         {
+            docUpdateSentinel_.withSavedDoc(command);
+         }
+         else
+         {
+            command.execute();
+         }
       }
       
       // cache front matter parse

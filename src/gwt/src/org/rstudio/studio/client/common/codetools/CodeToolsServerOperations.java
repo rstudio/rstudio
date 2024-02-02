@@ -14,16 +14,17 @@
  */
 package org.rstudio.studio.client.common.codetools;
 
-import java.util.List;
-
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionContext;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContextData;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionParseContext;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -41,11 +42,10 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    
    void getCompletions(
          String token,
-         List<String> assocData,
-         List<Integer> dataType,
-         List<Integer> numCommas,
-         String chainObjectName,
+         JsVector<AutocompletionContextData> contextData,
          String functionCallString,
+         Range statementBounds,
+         String chainObjectName,
          JsArrayString chainAdditionalArgs,
          JsArrayString chainExcludeArgs,
          boolean chainExcludeArgsFromObject,

@@ -245,7 +245,7 @@ public class DocUpdateSentinel
 
    private void withSavedDocImpl(final boolean retryWrite,
                                  final Command onSaved,
-         final CommandWithArg<String> onError)
+                                 final CommandWithArg<String> onError)
    {
       if (changeTracker_.hasChanged())
       {
