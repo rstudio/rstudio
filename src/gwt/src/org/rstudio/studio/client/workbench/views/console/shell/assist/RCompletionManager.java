@@ -122,7 +122,7 @@ public class RCompletionManager implements CompletionManager
       
       suggestTimer_ = new SuggestionTimer(this, userPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
-      requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
+      requester_ = new CompletionRequester(rContext, rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
       
       handlers_.add(input_.addClickHandler(event ->
@@ -1052,6 +1052,16 @@ public class RCompletionManager implements CompletionManager
          return contextData_;
       }
       
+      public void setNeedsDocSync(boolean needsDocSync)
+      {
+         needsDocSync_ = needsDocSync;
+      }
+      
+      public boolean getNeedsDocSync()
+      {
+         return needsDocSync_;
+      }
+      
       public void add(AutocompletionContextData data)
       {
          contextData_.push(data);
@@ -1077,6 +1087,7 @@ public class RCompletionManager implements CompletionManager
       private JsVector<AutocompletionContextData> contextData_ = JsVector.createVector().cast();
       
       private Range statementBounds_ = null;
+      private boolean needsDocSync_ = false;
    }
    
    private boolean isLineInRoxygenComment(String line)
@@ -1235,14 +1246,8 @@ public class RCompletionManager implements CompletionManager
       String line = docDisplay_.getCurrentLineUpToCursor();
       
       requester_.getCompletions(
-            context.getToken(),
-            context.getContextData(),
-            context.getFunctionCallString(),
-            context.getStatementBounds(),
-            infixData.getDataName(),
-            infixData.getAdditionalArgs(),
-            infixData.getExcludeArgs(),
-            infixData.getExcludeArgsFromObject(),
+            context,
+            infixData,
             filePath,
             docId,
             line,
@@ -1733,6 +1738,7 @@ public class RCompletionManager implements CompletionManager
       
       Range statementBounds = Range.fromPoints(contextStartPos, contextEndPos);
       context.setStatementBounds(statementBounds);
+      context.setNeedsDocSync(true);
       
       return context;
       

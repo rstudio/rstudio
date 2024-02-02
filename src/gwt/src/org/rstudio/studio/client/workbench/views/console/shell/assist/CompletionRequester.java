@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
-import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
@@ -39,15 +38,15 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContext;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContextData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RScopeObject;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.RnwOptionCompletionResult;
@@ -59,23 +58,29 @@ import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 public class CompletionRequester
 {
-   private CodeToolsServerOperations server_;
-   private UserPrefs uiPrefs_;
+   private final CompletionContext context_;
+   private final RnwCompletionContext rnwContext_;
    private final DocDisplay docDisplay_;
    private final SnippetHelper snippets_;
-
+   
    private String cachedLinePrefix_;
    private HashMap<String, CompletionResult> cachedCompletions_ = new HashMap<>();
-   private RnwCompletionContext rnwContext_;
 
-   public CompletionRequester(RnwCompletionContext rnwContext,
+   // Injected ----
+   private CodeToolsServerOperations server_;
+   private UserPrefs uiPrefs_;
+   
+   public CompletionRequester(CompletionContext context,
+                              RnwCompletionContext rnwContext,
                               DocDisplay docDisplay,
                               SnippetHelper snippets)
    {
+      context_ = context;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       snippets_ = snippets;
@@ -276,38 +281,26 @@ public class CompletionRequester
       return !RE_EXTRACTION.test(line);
    }
 
-   public void getCompletions(
-         final String token,
-         final JsVector<AutocompletionContextData> contextData,
-         final String functionCallString,
-         final Range statementBounds,
-         final String chainDataName,
-         final JsArrayString chainAdditionalArgs,
-         final JsArrayString chainExcludeArgs,
-         final boolean chainExcludeArgsFromObject,
-         final String filePath,
-         final String documentId,
-         final String line,
-         final boolean isConsole,
-         final boolean implicit,
-         final ServerRequestCallback<CompletionResult> callback)
+   public void getCompletions(final AutocompletionContext context,
+                              final RInfixData infixData,
+                              final String filePath,
+                              final String documentId,
+                              final String line,
+                              final boolean isConsole,
+                              final boolean implicit,
+                              final ServerRequestCallback<CompletionResult> callback)
    {
+      String token = context.getToken();
       boolean isHelp =
-            contextData.length() > 0 &&
-            contextData.get(0).getType() == AutocompletionContext.TYPE_HELP;
+            context.getContextData().length() > 0 &&
+            context.getContextData().get(0).getType() == AutocompletionContext.TYPE_HELP;
 
       if (usingCache(token, isHelp, callback))
          return;
 
       doGetCompletions(
-            token,
-            contextData,
-            functionCallString,
-            statementBounds,
-            chainDataName,
-            chainAdditionalArgs,
-            chainExcludeArgs,
-            chainExcludeArgsFromObject,
+            context,
+            infixData,
             filePath,
             documentId,
             line,
@@ -624,43 +617,50 @@ public class CompletionRequester
       }
    }
 
-   private void doGetCompletions(
-         final String token,
-         final JsVector<AutocompletionContextData> contextData,
-         final String functionCallString,
-         final Range statementBounds,
-         final String chainObjectName,
-         final JsArrayString chainAdditionalArgs,
-         final JsArrayString chainExcludeArgs,
-         final boolean chainExcludeArgsFromObject,
-         final String filePath,
-         final String documentId,
-         final String line,
-         final boolean isConsole,
-         final ServerRequestCallback<Completions> requestCallback)
+   private void doGetCompletions(AutocompletionContext context,
+                                 RInfixData infixData,
+                                 final String filePath,
+                                 final String documentId,
+                                 final String line,
+                                 final boolean isConsole,
+                                 final ServerRequestCallback<Completions> requestCallback)
    {
-      int optionsStartOffset;
-      if (rnwContext_ != null &&
-          (optionsStartOffset = rnwContext_.getRnwOptionsStart(token, token.length())) >= 0)
+      if (rnwContext_ != null)
       {
-         doGetSweaveCompletions(token, optionsStartOffset, token.length(), requestCallback);
+         String token = context.getToken();
+         int offset = rnwContext_.getRnwOptionsStart(token, token.length());
+         if (offset >= 0)
+         {
+            doGetSweaveCompletions(token, offset, token.length(), requestCallback);
+            return;
+         }
       }
-      else
+      
+      Command command = () ->
       {
          server_.getCompletions(
-               token,
-               contextData,
-               functionCallString,
-               statementBounds,
-               chainObjectName,
-               chainAdditionalArgs,
-               chainExcludeArgs,
-               chainExcludeArgsFromObject,
+               context.getToken(),
+               context.getContextData(),
+               context.getFunctionCallString(),
+               context.getStatementBounds(),
+               infixData.getDataName(),
+               infixData.getAdditionalArgs(),
+               infixData.getExcludeArgs(),
+               infixData.getExcludeArgsFromObject(),
                filePath,
                documentId,
                line,
                isConsole,
                requestCallback);
+      };
+         
+      if (context_ != null && context.getNeedsDocSync())
+      {
+         context_.withSavedDocument(command);
+      }
+      else
+      {
+         command.execute();
       }
    }
 
