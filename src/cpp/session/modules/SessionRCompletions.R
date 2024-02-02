@@ -848,12 +848,10 @@ assign(x = ".rs.acCompletionTypes",
    formals <- NULL
    
    ## Special cases
-   # We handle special cases for function argument
-   # completions first.
+   # We handle special cases for function argument completions first.
    # If we're completing a knitr getter function, then try
-   # to produce auto-completions for potential argument
-   # names
-   if (.rs.isKnitrObject(object))
+   # to produce auto-completions for potential argument names
+   if (.rs.isKnitrObject(object) && "knitr" %in% loadedNamespaces())
    {
       ns <- asNamespace("knitr")
       
@@ -961,8 +959,7 @@ assign(x = ".rs.acCompletionTypes",
    # by looking at which arguments have yet to be matched, and using the
    # first argument in that list.
    activeArg <- .rs.getActiveArgument(object, matchedCall)
-   
-   if (!length(activeArg) || is.na(activeArg))
+   if (length(activeArg) == 0L || is.na(activeArg))
       activeArg <- ""
    
    # Special casing for 'group_by' from dplyr
