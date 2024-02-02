@@ -2986,13 +2986,16 @@ assign(x = ".rs.acCompletionTypes",
       {
          defaultAesthetics <- c("x", "y", "fill", "colour", "shape", "size")
          results <- .rs.selectFuzzyMatches(defaultAesthetics, token)
-         completions <- .rs.makeCompletions(
-            token = token,
-            results = paste(results, "= "),
-            packages = "ggplot",
-            type = .rs.acCompletionTypes$ARGUMENT,
-            quote = FALSE
-         )
+         if (length(results))
+         {
+            completions <- .rs.makeCompletions(
+               token = token,
+               results = paste(results, "= "),
+               packages = "ggplot",
+               type = .rs.acCompletionTypes$ARGUMENT,
+               quote = FALSE
+            )
+         }
       }
       else
       {
@@ -3006,13 +3009,16 @@ assign(x = ".rs.acCompletionTypes",
          )
          aesthetics <- aesthetics[!duplicated(aesthetics)]
          results <- .rs.selectFuzzyMatches(aesthetics, token)
-         completions <- .rs.makeCompletions(
-            token = token,
-            results = paste(results, "= "),
-            packages = geomContext$data,
-            type = .rs.acCompletionTypes$ARGUMENT,
-            quote = FALSE
-         )
+         if (length(results))
+         {
+            completions <- .rs.makeCompletions(
+               token = token,
+               results = paste(results, "= "),
+               packages = geomContext$data,
+               type = .rs.acCompletionTypes$ARGUMENT,
+               quote = FALSE
+            )
+         }
       }
    }
    
