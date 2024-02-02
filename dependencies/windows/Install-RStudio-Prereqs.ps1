@@ -16,7 +16,7 @@ function Test-Administrator
     (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 
-function Download-File ($url, $output) {
+function Invoke-DownloadFile ($url, $output) {
     (New-Object System.Net.WebClient).DownloadFile($url, $output)
 }
 
@@ -45,7 +45,7 @@ if (-Not (Test-Path -Path "C:\R")) {
     $RSetupPackage = "C:\R-3.6.3-win.exe"
     if (-Not (Test-Path -Path $RSetupPackage)) {
         Write-Host "Downloading R 3.6.3..."
-        Download-File https://cran.rstudio.com/bin/windows/base/old/3.6.3/R-3.6.3-win.exe $RSetupPackage
+        Invoke-DownloadFile https://cran.rstudio.com/bin/windows/base/old/3.6.3/R-3.6.3-win.exe $RSetupPackage
     } else {
         Write-Host "Using previously downloaded R installer"
     }
@@ -59,14 +59,14 @@ if (-Not (Test-Path -Path "C:\R")) {
 }
 
 # install chocolatey
-iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 refreshenv
 
 # install some deps via chocolatey
 # pin python to 3.11 while this issue is pending: https://github.com/nodejs/node-gyp/issues/2869
 choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
-choco install -y jdk8
+choco install -y openjdk11
 choco install -y -i ant
 choco install -y 7zip
 choco install -y git
@@ -87,10 +87,8 @@ if (Test-Path $ChocoCPack) { Remove-Item -Force $ChocoCPack }
 
 Write-Host "-----------------------------------------------------------"
 Write-Host "Core dependencies successfully installed. Next steps:"
-Write-Host "(1) Install Qt 5.12.8 from https://qt.io for MSVC 2017 64-bit with QtWebEngine"
-Write-Host "(2) Start a non-administrator Command Prompt"
-Write-Host "(3) git clone https://github.com/rstudio/rstudio"
-Write-Host "(4) change working dir to rstudio\dependencies\windows"
-Write-Host "(5) install-dependencies.cmd"
-Write-Host "(6) open Qt Creator, load rstudio\src\cpp\CMakelists.txt"
+Write-Host "(1) Start a non-administrator Command Prompt"
+Write-Host "(2) git clone https://github.com/rstudio/rstudio"
+Write-Host "(3) change working dir to rstudio\dependencies\windows"
+Write-Host "(4) install-dependencies.cmd"
 Write-Host "-----------------------------------------------------------"
