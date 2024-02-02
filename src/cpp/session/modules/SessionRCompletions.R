@@ -2933,6 +2933,7 @@ assign(x = ".rs.acCompletionTypes",
 {
    c("x", "y", "fill", "colour", "alpha", "shape", "size", "linewidth", "linetype", "group")
 })
+
 .rs.addFunction("getCompletionsGgplot2", function(token,
                                                   contextData,
                                                   statementBounds,
@@ -3030,7 +3031,8 @@ assign(x = ".rs.acCompletionTypes",
             layerInfo$geom$required_aes,
             layerInfo$stat$required_aes,
             names(layerInfo$geom$default_aes),
-            names(layerInfo$stat$default_aes)
+            names(layerInfo$stat$default_aes),
+            "group"
          )
          aesthetics <- aesthetics[!duplicated(aesthetics)]
          results <- .rs.selectFuzzyMatches(aesthetics, token)
