@@ -2988,13 +2988,15 @@ assign(x = ".rs.acCompletionTypes",
    
    # NOTE: We use 'eval()' here to ensure that things like datasets
    # are properly resolved; e.g. if working with mtcars from the datasets package.
-   if (!is.symbol(data))
-      return(.rs.emptyCompletions(token))
+   value <- NULL
+   if (is.symbol(data))
+   {
+      source <- .rs.deparse(data)
+      value <- eval(data, envir = envir)
+      if (inherits(value, "gg"))
+         value <- value$data
+   }
    
-   source <- .rs.deparse(data)
-   value <- eval(data, envir = envir)
-   if (inherits(value, "gg"))
-      value <- value$data
    
    # check whether we should complete aesthetic names in this context
    completions <- .rs.emptyCompletions(token)
@@ -3046,18 +3048,23 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # now, add on completions from the source data object
-   .rs.appendCompletions(
-      completions,
-      .rs.makeCompletions(
-         token = token,
-         results = .rs.selectFuzzyMatches(names(value), token),
-         quote = FALSE,
-         type = .rs.acCompletionTypes$COLUMN,
-         packages = source,
-         excludeOtherCompletions = TRUE,
-         excludeOtherArgumentCompletions = TRUE
+   if (!is.null(value))
+   {
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.makeCompletions(
+            token = token,
+            results = .rs.selectFuzzyMatches(names(value), token),
+            quote = FALSE,
+            type = .rs.acCompletionTypes$COLUMN,
+            packages = source,
+            excludeOtherCompletions = TRUE,
+            excludeOtherArgumentCompletions = TRUE
+         )
       )
-   )
+   }
+   
+   completions
    
 })
 
