@@ -2560,16 +2560,23 @@ assign(x = ".rs.acCompletionTypes",
        numCommas[[1]] == 0)
       return(.rs.getCompletionsEnvironmentVariables(token))
    
-   # ggplot2 aesthetics
-   if (is.call(functionCall) &&
-       identical(functionCall[[1L]], as.symbol("aes")))
+   # ggplot2 completions
+   if (is.call(functionCall))
    {
-      completions <- tryCatch(
-         .rs.getCompletionsAesthetics(token, contextData, statementBounds, documentId, envir),
-         error = function(e) .rs.emptyCompletions(token)
-      )
-      
-      return(completions)
+      lhs <- functionCall[[1L]]
+      if (is.symbol(lhs))
+      {
+         lhs <- as.character(lhs)
+         if (lhs %in% c("aes") || grepl("^facet_", lhs))
+         {
+            completions <- tryCatch(
+               .rs.getCompletionsGgplot2(token, contextData, statementBounds, documentId, envir),
+               error = function(e) .rs.emptyCompletions(token)
+            )
+            
+            return(completions)
+         }
+      }
    }
    
    # Python virtual environments
@@ -2922,11 +2929,15 @@ assign(x = ".rs.acCompletionTypes",
    paste(inner, collapse = "\n")
 })
 
-.rs.addFunction("getCompletionsAesthetics", function(token,
-                                                     contextData,
-                                                     statementBounds,
-                                                     documentId,
-                                                     envir)
+.rs.addFunction("ggplot2.defaultAesthetics", function()
+{
+   c("x", "y", "fill", "colour", "alpha", "shape", "size", "linewidth", "linetype", "group")
+})
+.rs.addFunction("getCompletionsGgplot2", function(token,
+                                                  contextData,
+                                                  statementBounds,
+                                                  documentId,
+                                                  envir)
 {
    # get document contents
    document <- .rs.getSourceDocument(documentId, TRUE)
@@ -2939,7 +2950,11 @@ assign(x = ".rs.acCompletionTypes",
    geomContext <- NULL
    for (i in seq_along(contextData))
    {
-      if (grepl("^geom_", contextData[[i]]$data))
+      if (grepl("^facet_", contextData[[i]]$data))
+      {
+         break
+      }
+      else if (grepl("^geom_", contextData[[i]]$data))
       {
          geomContext <- contextData[[i]]
          break
@@ -2973,6 +2988,9 @@ assign(x = ".rs.acCompletionTypes",
    
    # NOTE: We use 'eval()' here to ensure that things like datasets
    # are properly resolved; e.g. if working with mtcars from the datasets package.
+   if (!is.symbol(data))
+      return(.rs.emptyCompletions(token))
+   
    source <- .rs.deparse(data)
    value <- eval(data, envir = envir)
    if (inherits(value, "gg"))
@@ -2980,11 +2998,16 @@ assign(x = ".rs.acCompletionTypes",
    
    # check whether we should complete aesthetic names in this context
    completions <- .rs.emptyCompletions(token)
-   if (.rs.acContextTypes$FUNCTION %in% contextData[[1L]]$type && "ggplot2" %in% loadedNamespaces())
+   includeAestheticNames <-
+      "aes" %in% contextData[[1L]]$data &&
+      .rs.acContextTypes$FUNCTION %in% contextData[[1L]]$type &&
+      "ggplot2" %in% loadedNamespaces()
+   
+   if (includeAestheticNames)
    {
       if (is.null(geomContext))
       {
-         defaultAesthetics <- c("x", "y", "fill", "colour", "shape", "size")
+         defaultAesthetics <- .rs.ggplot2.defaultAesthetics()
          results <- .rs.selectFuzzyMatches(defaultAesthetics, token)
          if (length(results))
          {

@@ -31,6 +31,7 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <core/system/FileScanner.hpp>
+#include <core/text/TextCursor.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSourceIndex.hpp>
@@ -53,8 +54,9 @@ namespace r_packages {
 
 namespace {
 
-char ends(char begins) {
-   switch(begins) {
+char ends(char begins)
+{
+   switch (begins) {
    case '(': return ')';
    case '[': return ']';
    case '{': return '}';
@@ -62,91 +64,139 @@ char ends(char begins) {
    return '\0';
 }
 
-bool isBinaryOp(char character)
+bool isOperator(char character)
 {
-  switch(character) {
-    case '~':
-    case '!':
-    case '@':
-    case '$':
-    case '%':
-    case '^':
-    case '&':
-    case '-':
-    case '+':
-    case '*':
-    case '/':
-    case '=':
-    case '|':
-    case '<':
-    case '>':
-    case '?':
-    return true;
-    default:
-    return false;
-  }
+   switch (character)
+   {
+   case '~':
+   case '!':
+   case '@':
+   case '$':
+   case '%':
+   case '^':
+   case '&':
+   case '+':
+   case '-':
+   case '*':
+   case '/':
+   case '=':
+   case '|':
+   case '<':
+   case '>':
+   case '?':
+      return true;
+   default:
+      return false;
+   }
 }
 
 } // end anonymous namespace
 
 std::string finishExpression(const std::string& expression)
 {
-   std::string result = expression;
-
-   // If the last character of the expression is a binary op, then we
-   // place a '.' after it
-   int n = gsl::narrow_cast<int>(expression.length());
-   if (n > 0 && isBinaryOp(expression[n - 1]))
-      result.append(".");
-
+   using namespace string_utils;
+   
+   std::string result;
    std::vector<char> terminators;
 
    char top = '\0';
    terminators.push_back(top);
 
-   bool in_string = false;
-   bool in_escape = false;
+   bool inString = false;
+   bool inEscape = false;
+   bool sawOperator = false;
+   bool sawIdentifier = false;
 
-   for (int i = 0; i < n; i++) {
+   for (int i = 0, n = expression.size(); i < n; i++)
+   {
+      char ch = expression[i];
+      
+      // skip over whitespace
+      if (isspace(ch))
+      {
+         // if we see a newline, assume it ends the current expression, so it's okay
+         // to have consecutive identifiers if a newline separates them
+         if (sawIdentifier && ch == '\n')
+            sawIdentifier = false;
+         
+         // only add whitespace if we didn't previously see an identifier character
+         // this has the effect of concatenating adjacent identifiers; e.g.
+         //
+         //     foo(a b c)  =>  foo(abc)
+         //
+         // which helps ensure the statement is parsable by R
+         if (!sawIdentifier)
+            result.push_back(ch);
+         
+         // keep going
+         continue;
+      }
+      
+      // if we saw an operator previously, check for closing parens
+      // this allows us to support common code structure like
+      //
+      //    foo(a + )
+      //
+      // where the user hasn't yet "filled in" the rhs of an operator
+      if (sawOperator)
+      {
+         if (ch == ')' || ch == '}' || ch == ']')
+         {
+            result.push_back('.');
+         }
+      }
 
-      char cur = expression[i];
-
-      if (in_string) {
-
-         if (in_escape) {
-            in_escape = false;
+      // push back the current character
+      result.push_back(ch);
+      
+      // handle strings
+      if (inString)
+      {
+         if (inEscape)
+         {
+            inEscape = false;
             continue;
          }
 
-         if (cur == '\\') {
-            in_escape = true;
+         if (ch == '\\')
+         {
+            inEscape = true;
             continue;
          }
 
-         if (cur != top) {
+         if (ch != top)
+         {
             continue;
          }
 
-         in_string = false;
+         inString = false;
          terminators.pop_back();
          top = terminators.back();
          continue;
-
       }
+      
+      // check for operators
+      sawOperator = isOperator(ch);
+      
+      // check for identifiers
+      sawIdentifier = isalnum(ch) || ch == '.' || ch == '_';
 
-      if (cur == top) {
+      if (ch == top)
+      {
          terminators.pop_back();
          top = terminators.back();
-      } else if (cur == '(' || cur == '{' || cur == '[') {
-         char end = ends(cur);
-         top = end;
-         terminators.push_back(top);
-      } else if (cur == '"' || cur == '`' || cur == '\'') {
-         top = cur;
-         in_string = true;
+      }
+      else if (ch == '(' || ch == '{' || ch == '[')
+      {
+         top = ends(ch);
          terminators.push_back(top);
       }
-
+      else if (ch == '"' || ch == '`' || ch == '\'')
+      {
+         top = ch;
+         inString = true;
+         terminators.push_back(top);
+      }
    }
 
    // append to the output
