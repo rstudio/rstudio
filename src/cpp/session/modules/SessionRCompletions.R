@@ -2351,11 +2351,7 @@ assign(x = ".rs.acCompletionTypes",
 {
    # Map from 0-based indexes to 1-based indexes in ranges
    for (i in seq_along(contextData))
-   {
-      range <- contextData[[i]]$range
-      if (!is.null(range))
-         contextData[[i]]$range <- .rs.reindexRange(range)
-   }
+      contextData[[i]]$range <- .rs.reindexRange(contextData[[i]]$range)
    
    statementBounds <- .rs.reindexRange(statementBounds)
    
