@@ -1181,6 +1181,7 @@ public class Application implements ApplicationEventHandlers
          {
             commands_.showLicenseDialog().remove();
             commands_.showSessionServerOptionsDialog().remove();
+            commands_.activateDatabricks().remove();
          }
          else if (BrowseCap.isElectron())
          {

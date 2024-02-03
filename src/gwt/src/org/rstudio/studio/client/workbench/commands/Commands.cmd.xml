@@ -360,6 +360,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="activateDeployContent"/>
             <cmd refid="activateMarkers"/>
             <cmd refid="activateSQLResults"/>
+            <cmd refid="activateDatabricks"/>
          </menu>
 
          <separator/>
@@ -1525,6 +1526,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="activateSQLResults"
         label="Show SQL Results Pane"
         menuLabel = "Show S_QL Results"
+        windowMode="main"/>
+
+   <cmd id="activateDatabricks"
+        label="Show Databricks Pane"
+        menuLabel="Show _Databricks"
         windowMode="main"/>
 
    <cmd id="layoutZoomSource"
