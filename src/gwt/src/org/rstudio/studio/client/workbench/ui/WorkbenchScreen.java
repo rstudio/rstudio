@@ -42,6 +42,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
@@ -102,6 +103,11 @@ public class WorkbenchScreen extends Composite
       if (!BrowseCap.isMacintoshDesktop())
       {
          commands.macPreferences().remove();
+      }
+
+      // toggleFullScreen command is desktop-only, and also not supported on QtWebEngine except on Mac
+      if (!Desktop.isDesktop() || (BrowseCap.isQtWebEngine() && !BrowseCap.isMacintoshDesktop()))
+      {
          commands.toggleFullScreen().remove();
       }
 

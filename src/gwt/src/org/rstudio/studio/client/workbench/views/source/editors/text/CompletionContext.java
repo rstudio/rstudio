@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.user.client.Command;
+
 public interface CompletionContext
 {
    String getId();
@@ -23,5 +25,5 @@ public interface CompletionContext
    String[] getQuartoFormats();
    String[] getQuartoProjectFormats();
    String getQuartoEngine();
-   
+   void withSavedDocument(Command command);
 }

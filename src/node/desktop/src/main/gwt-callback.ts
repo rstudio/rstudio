@@ -798,9 +798,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_toggle_fullscreen_mode', () => {
-      if (process.platform === 'darwin') {
-        this.mainWindow.window.fullScreen = !this.mainWindow.window.fullScreen;
-      }
+      this.mainWindow.window.fullScreen = !this.mainWindow.window.fullScreen;
     });
 
     ipcMain.on('desktop_show_keyboard_shortcut_help', () => {

@@ -1174,7 +1174,10 @@ public class Application implements ApplicationEventHandlers
       if (pEdition_.get() != null)
       {
          if (!pEdition_.get().proLicense())
+         {
             commands_.rstudioSupport().remove();
+            commands_.activateDatabricks().remove();
+         }
 
          // pro-only menu items
          if (!pEdition_.get().proLicense() || !Desktop.hasDesktopFrame())

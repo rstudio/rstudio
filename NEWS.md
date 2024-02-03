@@ -2,7 +2,9 @@
 
 ### New
 #### RStudio
+- RStudio's auto-completion system now supports ggplot2 aesthetic names and data columns (#8444)
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
+- RStudio Desktop on Windows and Linux supports full-screen mode via F11 (#3243)
 - RStudio's GWT sources can now be built with JDKs > 11 (#11242)
 - R projects can be given a custom display name in Project Options (#1909)
 - RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$$ $$` and `$ $` instead (#12862)

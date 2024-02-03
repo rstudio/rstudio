@@ -19,6 +19,7 @@ import { assert } from 'chai';
 import { Application } from '../../../src/main/application';
 import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 
+
 describe('AppState', () => {
   beforeEach(() => {
     clearApplicationSingleton();
