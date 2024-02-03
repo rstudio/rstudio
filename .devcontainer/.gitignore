@@ -1,4 +1,0 @@
-.env
-dev-*
-init-dev.sh
-devcontainer_dev.json
