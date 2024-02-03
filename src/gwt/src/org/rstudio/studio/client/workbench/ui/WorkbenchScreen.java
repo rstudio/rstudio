@@ -105,7 +105,8 @@ public class WorkbenchScreen extends Composite
          commands.macPreferences().remove();
       }
 
-      if (!Desktop.isDesktop())
+      // toggleFullScreen command is desktop-only, and also not supported on QtWebEngine except on Mac
+      if (!Desktop.isDesktop() || (BrowseCap.isQtWebEngine() && !BrowseCap.isMacintoshDesktop()))
       {
          commands.toggleFullScreen().remove();
       }
