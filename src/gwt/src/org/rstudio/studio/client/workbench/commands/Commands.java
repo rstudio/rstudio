@@ -741,6 +741,9 @@ public abstract class
    public abstract AppCommand copilotAcceptNextWord();
    public abstract AppCommand copilotToggleAutomaticCompletions();
 
+   // Databricks
+   public abstract AppCommand layoutZoomDatabricks();
+
    // Internal
    public abstract AppCommand showDomElements();
    public abstract AppCommand showShortcutCommand();
