@@ -71,12 +71,10 @@ var Mode = function(suppressHighlighting, session) {
 
    var rMarkdownFoldingRules = new RMarkdownFoldMode();
    var cFoldingRules = new CFoldMode();
-   
+
    // Patch tokenizer to allow for YAML start at beginning of document
-   this.$tokenizer.getLineTokens = function(line, state, row) {
-      if (row === 0)
-         state = "firstLine";
-      return Tokenizer.prototype.getLineTokens.call(this, line, state, row);
+   this.$tokenizer.getLineTokens = function(line, state, context) {
+      return Tokenizer.prototype.getLineTokens.call(this, line, context.row === 0 ? "_start" : state, context);
    }
 
    // NOTE: R Markdown is in charge of generating all 'top-level' folds.
@@ -102,7 +100,7 @@ var Mode = function(suppressHighlighting, session) {
          var position = {row: row, column: 0};
          var mode = that.getLanguageMode(position);
          var line = session.getLine(row);
-         
+
          if (mode === "Markdown" || Utils.startsWith(line, "```") || row === 0)
             return rMarkdownFoldingRules.getFoldWidgetRange(session, foldStyle, row);
          else if (mode === "C_CPP")

@@ -827,7 +827,7 @@ exports.emacsKeys = {
     "S-M-5": "replace",
     "Backspace": "backspace",
     "Delete|C-d": "del",
-    "Return|C-m": { command: "insertstring", args: "\n" },
+    "Return|C-m": { command: "insertstring", args: "\n" }, // "newline"
     "C-o": "splitline",
     "M-d|C-Delete": { command: "killWord", args: "right" },
     "C-Backspace|M-Backspace|M-Delete": { command: "killWord", args: "left" },
@@ -840,13 +840,13 @@ exports.emacsKeys = {
     "C-Space": "setMark",
     "C-x C-x": "exchangePointAndMark",
     "C-t": "transposeletters",
-    "M-u": "touppercase",
+    "M-u": "touppercase", // Doesn't work
     "M-l": "tolowercase",
-    "M-/": "autocomplete",
+    "M-/": "autocomplete", // Doesn't work
     "C-u": "universalArgument",
     "M-;": "togglecomment",
     "C-/|C-x u|S-C--|C-z": "undo",
-    "S-C-/|S-C-x u|C--|S-C-z": "redo",
+    "S-C-/|S-C-x u|C--|S-C-z": "redo", // infinite undo?
     "C-x r": "selectRectangularRegion",
     "M-x": { command: "focusCommandLine", args: "M-x " }
 };

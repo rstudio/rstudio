@@ -469,14 +469,8 @@ exports.supportsLookbehind = function () {
     }
     return true;
 };
-exports.supportsUnicodeFlag = function () {
-    try {
-        new RegExp('^.$', 'u');
-    }
-    catch (error) {
-        return false;
-    }
-    return true;
+exports.skipEmptyMatch = function (line, last, supportsUnicodeFlag) {
+    return supportsUnicodeFlag && line.codePointAt(last) > 0xffff ? 2 : 1;
 };
 
 });
@@ -511,14 +505,15 @@ exports.isIE =
         : parseFloat((ua.match(/(?:Trident\/[0-9]+[\.0-9]+;.*rv:)([0-9]+[\.0-9]+)/) || [])[1]); // for ie
 exports.isOldIE = exports.isIE && exports.isIE < 9;
 exports.isGecko = exports.isMozilla = ua.match(/ Gecko\/\d+/);
-exports.isOpera = typeof opera == "object" && Object.prototype.toString.call(window.opera) == "[object Opera]";
+exports.isOpera = typeof opera == "object" && Object.prototype.toString.call(window["opera"]) == "[object Opera]";
 exports.isWebKit = parseFloat(ua.split("WebKit/")[1]) || undefined;
 exports.isChrome = parseFloat(ua.split(" Chrome/")[1]) || undefined;
+exports.isSafari = parseFloat(ua.split(" Safari/")[1]) && !exports.isChrome || undefined;
 exports.isEdge = parseFloat(ua.split(" Edge/")[1]) || undefined;
 exports.isAIR = ua.indexOf("AdobeAIR") >= 0;
 exports.isAndroid = ua.indexOf("Android") >= 0;
 exports.isChromeOS = ua.indexOf(" CrOS ") >= 0;
-exports.isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+exports.isIOS = /iPad|iPhone|iPod/.test(ua) && !window["MSStream"];
 if (exports.isIOS)
     exports.isMac = true;
 exports.isMobile = exports.isIOS || exports.isAndroid;
@@ -962,7 +957,7 @@ exports.EventEmitter = EventEmitter;
 
 define("ace/lib/report_error",["require","exports","module"], function(require, exports, module){exports.reportError = function reportError(msg, data) {
     var e = new Error(msg);
-    e.data = data;
+    e["data"] = data;
     if (typeof console == "object" && console.error)
         console.error(e);
     setTimeout(function () { throw e; });
@@ -1189,11 +1184,14 @@ exports.setLoader = function (cb) {
 exports.dynamicModules = Object.create(null);
 exports.$loading = {};
 exports.$loaded = {};
-exports.loadModule = function (moduleName, onLoad) {
-    var loadedModule, moduleType;
-    if (Array.isArray(moduleName)) {
-        moduleType = moduleName[0];
-        moduleName = moduleName[1];
+exports.loadModule = function (moduleId, onLoad) {
+    var loadedModule;
+    if (Array.isArray(moduleId)) {
+        var moduleType = moduleId[0];
+        var moduleName = moduleId[1];
+    }
+    else if (typeof moduleId == "string") {
+        var moduleName = moduleId;
     }
     var load = function (module) {
         if (module && !exports.$loading[moduleName])
@@ -1239,7 +1237,7 @@ exports.loadModule = function (moduleName, onLoad) {
     }
 };
 exports.$require = function (moduleName) {
-    if (typeof module.require == "function") {
+    if (typeof module["require"] == "function") {
         var req = "require";
         return module[req](moduleName);
     }
@@ -1255,7 +1253,7 @@ var reportErrorIfPathIsNotConfigured = function () {
         reportErrorIfPathIsNotConfigured = function () { };
     }
 };
-exports.version = "1.28.0";
+exports.version = "1.32.5";
 
 });
 
@@ -1340,461 +1338,7 @@ function deHyphenate(str) {
 }
 });
 
-define("ace/snippets/abc.snippets",["require","exports","module"], function(require, exports, module){module.exports = "\nsnippet zupfnoter.print\n\t%%%%hn.print {\"startpos\": ${1:pos_y}, \"t\":\"${2:title}\", \"v\":[${3:voices}], \"s\":[[${4:syncvoices}1,2]], \"f\":[${5:flowlines}],  \"sf\":[${6:subflowlines}], \"j\":[${7:jumplines}]}\n\nsnippet zupfnoter.note\n\t%%%%hn.note {\"pos\": [${1:pos_x},${2:pos_y}], \"text\": \"${3:text}\", \"style\": \"${4:style}\"}\n\nsnippet zupfnoter.annotation\n\t%%%%hn.annotation {\"id\": \"${1:id}\", \"pos\": [${2:pos}], \"text\": \"${3:text}\"}\n\nsnippet zupfnoter.lyrics\n\t%%%%hn.lyrics {\"pos\": [${1:x_pos},${2:y_pos}]}\n\nsnippet zupfnoter.legend\n\t%%%%hn.legend {\"pos\": [${1:x_pos},${2:y_pos}]}\n\n\n\nsnippet zupfnoter.target\n\t\"^:${1:target}\"\n\nsnippet zupfnoter.goto\n\t\"^@${1:target}@${2:distance}\"\n\nsnippet zupfnoter.annotationref\n\t\"^#${1:target}\"\n\nsnippet zupfnoter.annotation\n\t\"^!${1:text}@${2:x_offset},${3:y_offset}\"\n\n\n";
-
-});
-
-define("ace/snippets/abc",["require","exports","module","ace/snippets/abc.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./abc.snippets");
-exports.scope = "abc";
-
-});
-
-define("ace/snippets/actionscript.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet main\n\tpackage {\n\t\timport flash.display.*;\n\t\timport flash.Events.*;\n\t\n\t\tpublic class Main extends Sprite {\n\t\t\tpublic function Main (\t) {\n\t\t\t\ttrace(\"start\");\n\t\t\t\tstage.scaleMode = StageScaleMode.NO_SCALE;\n\t\t\t\tstage.addEventListener(Event.RESIZE, resizeListener);\n\t\t\t}\n\t\n\t\t\tprivate function resizeListener (e:Event):void {\n\t\t\t\ttrace(\"The application window changed size!\");\n\t\t\t\ttrace(\"New width:  \" + stage.stageWidth);\n\t\t\t\ttrace(\"New height: \" + stage.stageHeight);\n\t\t\t}\n\t\n\t\t}\n\t\n\t}\nsnippet class\n\t${1:public|internal} class ${2:name} ${3:extends } {\n\t\tpublic function $2 (\t) {\n\t\t\t(\"start\");\n\t\t}\n\t}\nsnippet all\n\tpackage name {\n\n\t\t${1:public|internal|final} class ${2:name} ${3:extends } {\n\t\t\tprivate|public| static const FOO = \"abc\";\n\t\t\tprivate|public| static var BAR = \"abc\";\n\n\t\t\t// class initializer - no JIT !! one time setup\n\t\t\tif Cababilities.os == \"Linux|MacOS\" {\n\t\t\t\tFOO = \"other\";\n\t\t\t}\n\n\t\t\t// constructor:\n\t\t\tpublic function $2 (\t){\n\t\t\t\tsuper2();\n\t\t\t\ttrace(\"start\");\n\t\t\t}\n\t\t\tpublic function name (a, b...){\n\t\t\t\tsuper.name(..);\n\t\t\t\tlable:break\n\t\t\t}\n\t\t}\n\t}\n\n\tfunction A(){\n\t\t// A can only be accessed within this file\n\t}\nsnippet switch\n\tswitch(${1}){\n\t\tcase ${2}:\n\t\t\t${3}\n\t\tbreak;\n\t\tdefault:\n\t}\nsnippet case\n\t\tcase ${1}:\n\t\t\t${2}\n\t\tbreak;\nsnippet package\n\tpackage ${1:package}{\n\t\t${2}\n\t}\nsnippet wh\n\twhile ${1:cond}{\n\t\t${2}\n\t}\nsnippet do\n\tdo {\n\t\t${2}\n\t} while (${1:cond})\nsnippet while\n\twhile ${1:cond}{\n\t\t${2}\n\t}\nsnippet for enumerate names\n\tfor (${1:var} in ${2:object}){\n\t\t${3}\n\t}\nsnippet for enumerate values\n\tfor each (${1:var} in ${2:object}){\n\t\t${3}\n\t}\nsnippet get_set\n\tfunction get ${1:name} {\n\t\treturn ${2}\n\t}\n\tfunction set $1 (newValue) {\n\t\t${3}\n\t}\nsnippet interface\n\tinterface name {\n\t\tfunction method(${1}):${2:returntype};\n\t}\nsnippet try\n\ttry {\n\t\t${1}\n\t} catch (error:ErrorType) {\n\t\t${2}\n\t} finally {\n\t\t${3}\n\t}\n# For Loop (same as c.snippet)\nsnippet for for (..) {..}\n\tfor (${2:i} = 0; $2 < ${1:count}; $2${3:++}) {\n\t\t${4:/* code */}\n\t}\n# Custom For Loop\nsnippet forr\n\tfor (${1:i} = ${2:0}; ${3:$1 < 10}; $1${4:++}) {\n\t\t${5:/* code */}\n\t}\n# If Condition\nsnippet if\n\tif (${1:/* condition */}) {\n\t\t${2:/* code */}\n\t}\nsnippet el\n\telse {\n\t\t${1}\n\t}\n# Ternary conditional\nsnippet t\n\t${1:/* condition */} ? ${2:a} : ${3:b}\nsnippet fun\n\tfunction ${1:function_name}(${2})${3}\n\t{\n\t\t${4:/* code */}\n\t}\n# FlxSprite (usefull when using the flixel library)\nsnippet FlxSprite\n\tpackage\n\t{\n\t\timport org.flixel.*\n\n\t\tpublic class ${1:ClassName} extends ${2:FlxSprite}\n\t\t{\n\t\t\tpublic function $1(${3: X:Number, Y:Number}):void\n\t\t\t{\n\t\t\t\tsuper(X,Y);\n\t\t\t\t${4: //code...}\n\t\t\t}\n\n\t\t\toverride public function update():void\n\t\t\t{\n\t\t\t\tsuper.update();\n\t\t\t\t${5: //code...}\n\t\t\t}\n\t\t}\n\t}\n\n";
-
-});
-
-define("ace/snippets/actionscript",["require","exports","module","ace/snippets/actionscript.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./actionscript.snippets");
-exports.scope = "actionscript";
-
-});
-
-define("ace/snippets/c_cpp.snippets",["require","exports","module"], function(require, exports, module){module.exports = "## STL Collections\n# std::array\nsnippet array\n\tstd::array<${1:T}, ${2:N}> ${3};${4}\n# std::vector\nsnippet vector\n\tstd::vector<${1:T}> ${2};${3}\n# std::deque\nsnippet deque\n\tstd::deque<${1:T}> ${2};${3}\n# std::forward_list\nsnippet flist\n\tstd::forward_list<${1:T}> ${2};${3}\n# std::list\nsnippet list\n\tstd::list<${1:T}> ${2};${3}\n# std::set\nsnippet set\n\tstd::set<${1:T}> ${2};${3}\n# std::map\nsnippet map\n\tstd::map<${1:Key}, ${2:T}> ${3};${4}\n# std::multiset\nsnippet mset\n\tstd::multiset<${1:T}> ${2};${3}\n# std::multimap\nsnippet mmap\n\tstd::multimap<${1:Key}, ${2:T}> ${3};${4}\n# std::unordered_set\nsnippet uset\n\tstd::unordered_set<${1:T}> ${2};${3}\n# std::unordered_map\nsnippet umap\n\tstd::unordered_map<${1:Key}, ${2:T}> ${3};${4}\n# std::unordered_multiset\nsnippet umset\n\tstd::unordered_multiset<${1:T}> ${2};${3}\n# std::unordered_multimap\nsnippet ummap\n\tstd::unordered_multimap<${1:Key}, ${2:T}> ${3};${4}\n# std::stack\nsnippet stack\n\tstd::stack<${1:T}> ${2};${3}\n# std::queue\nsnippet queue\n\tstd::queue<${1:T}> ${2};${3}\n# std::priority_queue\nsnippet pqueue\n\tstd::priority_queue<${1:T}> ${2};${3}\n##\n## Access Modifiers\n# private\nsnippet pri\n\tprivate\n# protected\nsnippet pro\n\tprotected\n# public\nsnippet pub\n\tpublic\n# friend\nsnippet fr\n\tfriend\n# mutable\nsnippet mu\n\tmutable\n## \n## Class\n# class\nsnippet cl\n\tclass ${1:`Filename('$1', 'name')`} \n\t{\n\tpublic:\n\t\t$1(${2});\n\t\t~$1();\n\n\tprivate:\n\t\t${3:/* data */}\n\t};\n# member function implementation\nsnippet mfun\n\t${4:void} ${1:`Filename('$1', 'ClassName')`}::${2:memberFunction}(${3}) {\n\t\t${5:/* code */}\n\t}\n# namespace\nsnippet ns\n\tnamespace ${1:`Filename('', 'my')`} {\n\t\t${2}\n\t} /* namespace $1 */\n##\n## Input/Output\n# std::cout\nsnippet cout\n\tstd::cout << ${1} << std::endl;${2}\n# std::cin\nsnippet cin\n\tstd::cin >> ${1};${2}\n##\n## Iteration\n# for i \nsnippet fori\n\tfor (int ${2:i} = 0; $2 < ${1:count}; $2${3:++}) {\n\t\t${4:/* code */}\n\t}${5}\n\n# foreach\nsnippet fore\n\tfor (${1:auto} ${2:i} : ${3:container}) {\n\t\t${4:/* code */}\n\t}${5}\n# iterator\nsnippet iter\n\tfor (${1:std::vector}<${2:type}>::${3:const_iterator} ${4:i} = ${5:container}.begin(); $4 != $5.end(); ++$4) {\n\t\t${6}\n\t}${7}\n\n# auto iterator\nsnippet itera\n\tfor (auto ${1:i} = $1.begin(); $1 != $1.end(); ++$1) {\n\t\t${2:std::cout << *$1 << std::endl;}\n\t}${3}\n##\n## Lambdas\n# lamda (one line)\nsnippet ld\n\t[${1}](${2}){${3:/* code */}}${4}\n# lambda (multi-line)\nsnippet lld\n\t[${1}](${2}){\n\t\t${3:/* code */}\n\t}${4}\n";
-
-});
-
-define("ace/snippets/c_cpp",["require","exports","module","ace/snippets/c_cpp.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./c_cpp.snippets");
-exports.scope = "c_cpp";
-
-});
-
-define("ace/snippets/clojure.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet comm\n\t(comment\n\t  ${1}\n\t  )\nsnippet condp\n\t(condp ${1:pred} ${2:expr}\n\t  ${3})\nsnippet def\n\t(def ${1})\nsnippet defm\n\t(defmethod ${1:multifn} \"${2:doc-string}\" ${3:dispatch-val} [${4:args}]\n\t  ${5})\nsnippet defmm\n\t(defmulti ${1:name} \"${2:doc-string}\" ${3:dispatch-fn})\nsnippet defma\n\t(defmacro ${1:name} \"${2:doc-string}\" ${3:dispatch-fn})\nsnippet defn\n\t(defn ${1:name} \"${2:doc-string}\" [${3:arg-list}]\n\t  ${4})\nsnippet defp\n\t(defprotocol ${1:name}\n\t  ${2})\nsnippet defr\n\t(defrecord ${1:name} [${2:fields}]\n\t  ${3:protocol}\n\t  ${4})\nsnippet deft\n\t(deftest ${1:name}\n\t    (is (= ${2:assertion})))\n\t  ${3})\nsnippet is\n\t(is (= ${1} ${2}))\nsnippet defty\n\t(deftype ${1:Name} [${2:fields}]\n\t  ${3:Protocol}\n\t  ${4})\nsnippet doseq\n\t(doseq [${1:elem} ${2:coll}]\n\t  ${3})\nsnippet fn\n\t(fn [${1:arg-list}] ${2})\nsnippet if\n\t(if ${1:test-expr}\n\t  ${2:then-expr}\n\t  ${3:else-expr})\nsnippet if-let \n\t(if-let [${1:result} ${2:test-expr}]\n\t\t(${3:then-expr} $1)\n\t\t(${4:else-expr}))\nsnippet imp\n\t(:import [${1:package}])\n\t& {:keys [${1:keys}] :or {${2:defaults}}}\nsnippet let\n\t(let [${1:name} ${2:expr}]\n\t\t${3})\nsnippet letfn\n\t(letfn [(${1:name) [${2:args}]\n\t          ${3})])\nsnippet map\n\t(map ${1:func} ${2:coll})\nsnippet mapl\n\t(map #(${1:lambda}) ${2:coll})\nsnippet met\n\t(${1:name} [${2:this} ${3:args}]\n\t  ${4})\nsnippet ns\n\t(ns ${1:name}\n\t  ${2})\nsnippet dotimes\n\t(dotimes [_ 10]\n\t  (time\n\t    (dotimes [_ ${1:times}]\n\t      ${2})))\nsnippet pmethod\n\t(${1:name} [${2:this} ${3:args}])\nsnippet refer\n\t(:refer-clojure :exclude [${1}])\nsnippet require\n\t(:require [${1:namespace} :as [${2}]])\nsnippet use\n\t(:use [${1:namespace} :only [${2}]])\nsnippet print\n\t(println ${1})\nsnippet reduce\n\t(reduce ${1:(fn [p n] ${3})} ${2})\nsnippet when\n\t(when ${1:test} ${2:body})\nsnippet when-let\n\t(when-let [${1:result} ${2:test}]\n\t\t${3:body})\n";
-
-});
-
-define("ace/snippets/clojure",["require","exports","module","ace/snippets/clojure.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./clojure.snippets");
-exports.scope = "clojure";
-
-});
-
-define("ace/snippets/coffee.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Closure loop\nsnippet forindo\n\tfor ${1:name} in ${2:array}\n\t\tdo ($1) ->\n\t\t\t${3:// body}\n# Array comprehension\nsnippet fora\n\tfor ${1:name} in ${2:array}\n\t\t${3:// body...}\n# Object comprehension\nsnippet foro\n\tfor ${1:key}, ${2:value} of ${3:object}\n\t\t${4:// body...}\n# Range comprehension (inclusive)\nsnippet forr\n\tfor ${1:name} in [${2:start}..${3:finish}]\n\t\t${4:// body...}\nsnippet forrb\n\tfor ${1:name} in [${2:start}..${3:finish}] by ${4:step}\n\t\t${5:// body...}\n# Range comprehension (exclusive)\nsnippet forrex\n\tfor ${1:name} in [${2:start}...${3:finish}]\n\t\t${4:// body...}\nsnippet forrexb\n\tfor ${1:name} in [${2:start}...${3:finish}] by ${4:step}\n\t\t${5:// body...}\n# Function\nsnippet fun\n\t(${1:args}) ->\n\t\t${2:// body...}\n# Function (bound)\nsnippet bfun\n\t(${1:args}) =>\n\t\t${2:// body...}\n# Class\nsnippet cla class ..\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\t${2}\nsnippet cla class .. constructor: ..\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\tconstructor: (${2:args}) ->\n\t\t\t${3}\n\n\t\t${4}\nsnippet cla class .. extends ..\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} extends ${2:ParentClass}\n\t\t${3}\nsnippet cla class .. extends .. constructor: ..\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} extends ${2:ParentClass}\n\t\tconstructor: (${3:args}) ->\n\t\t\t${4}\n\n\t\t${5}\n# If\nsnippet if\n\tif ${1:condition}\n\t\t${2:// body...}\n# If __ Else\nsnippet ife\n\tif ${1:condition}\n\t\t${2:// body...}\n\telse\n\t\t${3:// body...}\n# Else if\nsnippet elif\n\telse if ${1:condition}\n\t\t${2:// body...}\n# Ternary If\nsnippet ifte\n\tif ${1:condition} then ${2:value} else ${3:other}\n# Unless\nsnippet unl\n\t${1:action} unless ${2:condition}\n# Switch\nsnippet swi\n\tswitch ${1:object}\n\t\twhen ${2:value}\n\t\t\t${3:// body...}\n\n# Log\nsnippet log\n\tconsole.log ${1}\n# Try __ Catch\nsnippet try\n\ttry\n\t\t${1}\n\tcatch ${2:error}\n\t\t${3}\n# Require\nsnippet req\n\t${2:$1} = require '${1:sys}'${3}\n# Export\nsnippet exp\n\t${1:root} = exports ? this\n";
-
-});
-
-define("ace/snippets/coffee",["require","exports","module","ace/snippets/coffee.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./coffee.snippets");
-exports.scope = "coffee";
-
-});
-
-define("ace/snippets/csound_document.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# <CsoundSynthesizer>\nsnippet synth\n\t<CsoundSynthesizer>\n\t<CsInstruments>\n\t${1}\n\t</CsInstruments>\n\t<CsScore>\n\te\n\t</CsScore>\n\t</CsoundSynthesizer>\n";
-
-});
-
-define("ace/snippets/csound_document",["require","exports","module","ace/snippets/csound_document.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./csound_document.snippets");
-exports.scope = "csound_document";
-
-});
-
-define("ace/snippets/csound_orchestra.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# else\nsnippet else\n\telse\n\t\t${1:/* statements */}\n# elseif\nsnippet elseif\n\telseif ${1:/* condition */} then\n\t\t${2:/* statements */}\n# if\nsnippet if\n\tif ${1:/* condition */} then\n\t\t${2:/* statements */}\n\tendif\n# instrument block\nsnippet instr\n\tinstr ${1:name}\n\t\t${2:/* statements */}\n\tendin\n# i-time while loop\nsnippet iwhile\n\ti${1:Index} = ${2:0}\n\twhile i${1:Index} < ${3:/* count */} do\n\t\t${4:/* statements */}\n\t\ti${1:Index} += 1\n\tod\n# k-rate while loop\nsnippet kwhile\n\tk${1:Index} = ${2:0}\n\twhile k${1:Index} < ${3:/* count */} do\n\t\t${4:/* statements */}\n\t\tk${1:Index} += 1\n\tod\n# opcode\nsnippet opcode\n\topcode ${1:name}, ${2:/* output types */ 0}, ${3:/* input types */ 0}\n\t\t${4:/* statements */}\n\tendop\n# until loop\nsnippet until\n\tuntil ${1:/* condition */} do\n\t\t${2:/* statements */}\n\tod\n# while loop\nsnippet while\n\twhile ${1:/* condition */} do\n\t\t${2:/* statements */}\n\tod\n";
-
-});
-
-define("ace/snippets/csound_orchestra",["require","exports","module","ace/snippets/csound_orchestra.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./csound_orchestra.snippets");
-exports.scope = "csound_orchestra";
-
-});
-
-define("ace/snippets/css.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet .\n\t${1} {\n\t\t${2}\n\t}\nsnippet !\n\t !important\nsnippet bdi:m+\n\t-moz-border-image: url(${1}) ${2:0} ${3:0} ${4:0} ${5:0} ${6:stretch} ${7:stretch};\nsnippet bdi:m\n\t-moz-border-image: ${1};\nsnippet bdrz:m\n\t-moz-border-radius: ${1};\nsnippet bxsh:m+\n\t-moz-box-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\nsnippet bxsh:m\n\t-moz-box-shadow: ${1};\nsnippet bdi:w+\n\t-webkit-border-image: url(${1}) ${2:0} ${3:0} ${4:0} ${5:0} ${6:stretch} ${7:stretch};\nsnippet bdi:w\n\t-webkit-border-image: ${1};\nsnippet bdrz:w\n\t-webkit-border-radius: ${1};\nsnippet bxsh:w+\n\t-webkit-box-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\nsnippet bxsh:w\n\t-webkit-box-shadow: ${1};\nsnippet @f\n\t@font-face {\n\t\tfont-family: ${1};\n\t\tsrc: url(${2});\n\t}\nsnippet @i\n\t@import url(${1});\nsnippet @m\n\t@media ${1:print} {\n\t\t${2}\n\t}\nsnippet bg+\n\tbackground: #${1:FFF} url(${2}) ${3:0} ${4:0} ${5:no-repeat};\nsnippet bga\n\tbackground-attachment: ${1};\nsnippet bga:f\n\tbackground-attachment: fixed;\nsnippet bga:s\n\tbackground-attachment: scroll;\nsnippet bgbk\n\tbackground-break: ${1};\nsnippet bgbk:bb\n\tbackground-break: bounding-box;\nsnippet bgbk:c\n\tbackground-break: continuous;\nsnippet bgbk:eb\n\tbackground-break: each-box;\nsnippet bgcp\n\tbackground-clip: ${1};\nsnippet bgcp:bb\n\tbackground-clip: border-box;\nsnippet bgcp:cb\n\tbackground-clip: content-box;\nsnippet bgcp:nc\n\tbackground-clip: no-clip;\nsnippet bgcp:pb\n\tbackground-clip: padding-box;\nsnippet bgc\n\tbackground-color: #${1:FFF};\nsnippet bgc:t\n\tbackground-color: transparent;\nsnippet bgi\n\tbackground-image: url(${1});\nsnippet bgi:n\n\tbackground-image: none;\nsnippet bgo\n\tbackground-origin: ${1};\nsnippet bgo:bb\n\tbackground-origin: border-box;\nsnippet bgo:cb\n\tbackground-origin: content-box;\nsnippet bgo:pb\n\tbackground-origin: padding-box;\nsnippet bgpx\n\tbackground-position-x: ${1};\nsnippet bgpy\n\tbackground-position-y: ${1};\nsnippet bgp\n\tbackground-position: ${1:0} ${2:0};\nsnippet bgr\n\tbackground-repeat: ${1};\nsnippet bgr:n\n\tbackground-repeat: no-repeat;\nsnippet bgr:x\n\tbackground-repeat: repeat-x;\nsnippet bgr:y\n\tbackground-repeat: repeat-y;\nsnippet bgr:r\n\tbackground-repeat: repeat;\nsnippet bgz\n\tbackground-size: ${1};\nsnippet bgz:a\n\tbackground-size: auto;\nsnippet bgz:ct\n\tbackground-size: contain;\nsnippet bgz:cv\n\tbackground-size: cover;\nsnippet bg\n\tbackground: ${1};\nsnippet bg:ie\n\tfilter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='${1}',sizingMethod='${2:crop}');\nsnippet bg:n\n\tbackground: none;\nsnippet bd+\n\tborder: ${1:1px} ${2:solid} #${3:000};\nsnippet bdb+\n\tborder-bottom: ${1:1px} ${2:solid} #${3:000};\nsnippet bdbc\n\tborder-bottom-color: #${1:000};\nsnippet bdbi\n\tborder-bottom-image: url(${1});\nsnippet bdbi:n\n\tborder-bottom-image: none;\nsnippet bdbli\n\tborder-bottom-left-image: url(${1});\nsnippet bdbli:c\n\tborder-bottom-left-image: continue;\nsnippet bdbli:n\n\tborder-bottom-left-image: none;\nsnippet bdblrz\n\tborder-bottom-left-radius: ${1};\nsnippet bdbri\n\tborder-bottom-right-image: url(${1});\nsnippet bdbri:c\n\tborder-bottom-right-image: continue;\nsnippet bdbri:n\n\tborder-bottom-right-image: none;\nsnippet bdbrrz\n\tborder-bottom-right-radius: ${1};\nsnippet bdbs\n\tborder-bottom-style: ${1};\nsnippet bdbs:n\n\tborder-bottom-style: none;\nsnippet bdbw\n\tborder-bottom-width: ${1};\nsnippet bdb\n\tborder-bottom: ${1};\nsnippet bdb:n\n\tborder-bottom: none;\nsnippet bdbk\n\tborder-break: ${1};\nsnippet bdbk:c\n\tborder-break: close;\nsnippet bdcl\n\tborder-collapse: ${1};\nsnippet bdcl:c\n\tborder-collapse: collapse;\nsnippet bdcl:s\n\tborder-collapse: separate;\nsnippet bdc\n\tborder-color: #${1:000};\nsnippet bdci\n\tborder-corner-image: url(${1});\nsnippet bdci:c\n\tborder-corner-image: continue;\nsnippet bdci:n\n\tborder-corner-image: none;\nsnippet bdf\n\tborder-fit: ${1};\nsnippet bdf:c\n\tborder-fit: clip;\nsnippet bdf:of\n\tborder-fit: overwrite;\nsnippet bdf:ow\n\tborder-fit: overwrite;\nsnippet bdf:r\n\tborder-fit: repeat;\nsnippet bdf:sc\n\tborder-fit: scale;\nsnippet bdf:sp\n\tborder-fit: space;\nsnippet bdf:st\n\tborder-fit: stretch;\nsnippet bdi\n\tborder-image: url(${1}) ${2:0} ${3:0} ${4:0} ${5:0} ${6:stretch} ${7:stretch};\nsnippet bdi:n\n\tborder-image: none;\nsnippet bdl+\n\tborder-left: ${1:1px} ${2:solid} #${3:000};\nsnippet bdlc\n\tborder-left-color: #${1:000};\nsnippet bdli\n\tborder-left-image: url(${1});\nsnippet bdli:n\n\tborder-left-image: none;\nsnippet bdls\n\tborder-left-style: ${1};\nsnippet bdls:n\n\tborder-left-style: none;\nsnippet bdlw\n\tborder-left-width: ${1};\nsnippet bdl\n\tborder-left: ${1};\nsnippet bdl:n\n\tborder-left: none;\nsnippet bdlt\n\tborder-length: ${1};\nsnippet bdlt:a\n\tborder-length: auto;\nsnippet bdrz\n\tborder-radius: ${1};\nsnippet bdr+\n\tborder-right: ${1:1px} ${2:solid} #${3:000};\nsnippet bdrc\n\tborder-right-color: #${1:000};\nsnippet bdri\n\tborder-right-image: url(${1});\nsnippet bdri:n\n\tborder-right-image: none;\nsnippet bdrs\n\tborder-right-style: ${1};\nsnippet bdrs:n\n\tborder-right-style: none;\nsnippet bdrw\n\tborder-right-width: ${1};\nsnippet bdr\n\tborder-right: ${1};\nsnippet bdr:n\n\tborder-right: none;\nsnippet bdsp\n\tborder-spacing: ${1};\nsnippet bds\n\tborder-style: ${1};\nsnippet bds:ds\n\tborder-style: dashed;\nsnippet bds:dtds\n\tborder-style: dot-dash;\nsnippet bds:dtdtds\n\tborder-style: dot-dot-dash;\nsnippet bds:dt\n\tborder-style: dotted;\nsnippet bds:db\n\tborder-style: double;\nsnippet bds:g\n\tborder-style: groove;\nsnippet bds:h\n\tborder-style: hidden;\nsnippet bds:i\n\tborder-style: inset;\nsnippet bds:n\n\tborder-style: none;\nsnippet bds:o\n\tborder-style: outset;\nsnippet bds:r\n\tborder-style: ridge;\nsnippet bds:s\n\tborder-style: solid;\nsnippet bds:w\n\tborder-style: wave;\nsnippet bdt+\n\tborder-top: ${1:1px} ${2:solid} #${3:000};\nsnippet bdtc\n\tborder-top-color: #${1:000};\nsnippet bdti\n\tborder-top-image: url(${1});\nsnippet bdti:n\n\tborder-top-image: none;\nsnippet bdtli\n\tborder-top-left-image: url(${1});\nsnippet bdtli:c\n\tborder-corner-image: continue;\nsnippet bdtli:n\n\tborder-corner-image: none;\nsnippet bdtlrz\n\tborder-top-left-radius: ${1};\nsnippet bdtri\n\tborder-top-right-image: url(${1});\nsnippet bdtri:c\n\tborder-top-right-image: continue;\nsnippet bdtri:n\n\tborder-top-right-image: none;\nsnippet bdtrrz\n\tborder-top-right-radius: ${1};\nsnippet bdts\n\tborder-top-style: ${1};\nsnippet bdts:n\n\tborder-top-style: none;\nsnippet bdtw\n\tborder-top-width: ${1};\nsnippet bdt\n\tborder-top: ${1};\nsnippet bdt:n\n\tborder-top: none;\nsnippet bdw\n\tborder-width: ${1};\nsnippet bd\n\tborder: ${1};\nsnippet bd:n\n\tborder: none;\nsnippet b\n\tbottom: ${1};\nsnippet b:a\n\tbottom: auto;\nsnippet bxsh+\n\tbox-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\nsnippet bxsh\n\tbox-shadow: ${1};\nsnippet bxsh:n\n\tbox-shadow: none;\nsnippet bxz\n\tbox-sizing: ${1};\nsnippet bxz:bb\n\tbox-sizing: border-box;\nsnippet bxz:cb\n\tbox-sizing: content-box;\nsnippet cps\n\tcaption-side: ${1};\nsnippet cps:b\n\tcaption-side: bottom;\nsnippet cps:t\n\tcaption-side: top;\nsnippet cl\n\tclear: ${1};\nsnippet cl:b\n\tclear: both;\nsnippet cl:l\n\tclear: left;\nsnippet cl:n\n\tclear: none;\nsnippet cl:r\n\tclear: right;\nsnippet cp\n\tclip: ${1};\nsnippet cp:a\n\tclip: auto;\nsnippet cp:r\n\tclip: rect(${1:0} ${2:0} ${3:0} ${4:0});\nsnippet c\n\tcolor: #${1:000};\nsnippet ct\n\tcontent: ${1};\nsnippet ct:a\n\tcontent: attr(${1});\nsnippet ct:cq\n\tcontent: close-quote;\nsnippet ct:c\n\tcontent: counter(${1});\nsnippet ct:cs\n\tcontent: counters(${1});\nsnippet ct:ncq\n\tcontent: no-close-quote;\nsnippet ct:noq\n\tcontent: no-open-quote;\nsnippet ct:n\n\tcontent: normal;\nsnippet ct:oq\n\tcontent: open-quote;\nsnippet coi\n\tcounter-increment: ${1};\nsnippet cor\n\tcounter-reset: ${1};\nsnippet cur\n\tcursor: ${1};\nsnippet cur:a\n\tcursor: auto;\nsnippet cur:c\n\tcursor: crosshair;\nsnippet cur:d\n\tcursor: default;\nsnippet cur:ha\n\tcursor: hand;\nsnippet cur:he\n\tcursor: help;\nsnippet cur:m\n\tcursor: move;\nsnippet cur:p\n\tcursor: pointer;\nsnippet cur:t\n\tcursor: text;\nsnippet d\n\tdisplay: ${1};\nsnippet d:mib\n\tdisplay: -moz-inline-box;\nsnippet d:mis\n\tdisplay: -moz-inline-stack;\nsnippet d:b\n\tdisplay: block;\nsnippet d:cp\n\tdisplay: compact;\nsnippet d:ib\n\tdisplay: inline-block;\nsnippet d:itb\n\tdisplay: inline-table;\nsnippet d:i\n\tdisplay: inline;\nsnippet d:li\n\tdisplay: list-item;\nsnippet d:n\n\tdisplay: none;\nsnippet d:ri\n\tdisplay: run-in;\nsnippet d:tbcp\n\tdisplay: table-caption;\nsnippet d:tbc\n\tdisplay: table-cell;\nsnippet d:tbclg\n\tdisplay: table-column-group;\nsnippet d:tbcl\n\tdisplay: table-column;\nsnippet d:tbfg\n\tdisplay: table-footer-group;\nsnippet d:tbhg\n\tdisplay: table-header-group;\nsnippet d:tbrg\n\tdisplay: table-row-group;\nsnippet d:tbr\n\tdisplay: table-row;\nsnippet d:tb\n\tdisplay: table;\nsnippet ec\n\tempty-cells: ${1};\nsnippet ec:h\n\tempty-cells: hide;\nsnippet ec:s\n\tempty-cells: show;\nsnippet exp\n\texpression()\nsnippet fl\n\tfloat: ${1};\nsnippet fl:l\n\tfloat: left;\nsnippet fl:n\n\tfloat: none;\nsnippet fl:r\n\tfloat: right;\nsnippet f+\n\tfont: ${1:1em} ${2:Arial},${3:sans-serif};\nsnippet fef\n\tfont-effect: ${1};\nsnippet fef:eb\n\tfont-effect: emboss;\nsnippet fef:eg\n\tfont-effect: engrave;\nsnippet fef:n\n\tfont-effect: none;\nsnippet fef:o\n\tfont-effect: outline;\nsnippet femp\n\tfont-emphasize-position: ${1};\nsnippet femp:a\n\tfont-emphasize-position: after;\nsnippet femp:b\n\tfont-emphasize-position: before;\nsnippet fems\n\tfont-emphasize-style: ${1};\nsnippet fems:ac\n\tfont-emphasize-style: accent;\nsnippet fems:c\n\tfont-emphasize-style: circle;\nsnippet fems:ds\n\tfont-emphasize-style: disc;\nsnippet fems:dt\n\tfont-emphasize-style: dot;\nsnippet fems:n\n\tfont-emphasize-style: none;\nsnippet fem\n\tfont-emphasize: ${1};\nsnippet ff\n\tfont-family: ${1};\nsnippet ff:c\n\tfont-family: ${1:'Monotype Corsiva','Comic Sans MS'},cursive;\nsnippet ff:f\n\tfont-family: ${1:Capitals,Impact},fantasy;\nsnippet ff:m\n\tfont-family: ${1:Monaco,'Courier New'},monospace;\nsnippet ff:ss\n\tfont-family: ${1:Helvetica,Arial},sans-serif;\nsnippet ff:s\n\tfont-family: ${1:Georgia,'Times New Roman'},serif;\nsnippet fza\n\tfont-size-adjust: ${1};\nsnippet fza:n\n\tfont-size-adjust: none;\nsnippet fz\n\tfont-size: ${1};\nsnippet fsm\n\tfont-smooth: ${1};\nsnippet fsm:aw\n\tfont-smooth: always;\nsnippet fsm:a\n\tfont-smooth: auto;\nsnippet fsm:n\n\tfont-smooth: never;\nsnippet fst\n\tfont-stretch: ${1};\nsnippet fst:c\n\tfont-stretch: condensed;\nsnippet fst:e\n\tfont-stretch: expanded;\nsnippet fst:ec\n\tfont-stretch: extra-condensed;\nsnippet fst:ee\n\tfont-stretch: extra-expanded;\nsnippet fst:n\n\tfont-stretch: normal;\nsnippet fst:sc\n\tfont-stretch: semi-condensed;\nsnippet fst:se\n\tfont-stretch: semi-expanded;\nsnippet fst:uc\n\tfont-stretch: ultra-condensed;\nsnippet fst:ue\n\tfont-stretch: ultra-expanded;\nsnippet fs\n\tfont-style: ${1};\nsnippet fs:i\n\tfont-style: italic;\nsnippet fs:n\n\tfont-style: normal;\nsnippet fs:o\n\tfont-style: oblique;\nsnippet fv\n\tfont-variant: ${1};\nsnippet fv:n\n\tfont-variant: normal;\nsnippet fv:sc\n\tfont-variant: small-caps;\nsnippet fw\n\tfont-weight: ${1};\nsnippet fw:b\n\tfont-weight: bold;\nsnippet fw:br\n\tfont-weight: bolder;\nsnippet fw:lr\n\tfont-weight: lighter;\nsnippet fw:n\n\tfont-weight: normal;\nsnippet f\n\tfont: ${1};\nsnippet h\n\theight: ${1};\nsnippet h:a\n\theight: auto;\nsnippet l\n\tleft: ${1};\nsnippet l:a\n\tleft: auto;\nsnippet lts\n\tletter-spacing: ${1};\nsnippet lh\n\tline-height: ${1};\nsnippet lisi\n\tlist-style-image: url(${1});\nsnippet lisi:n\n\tlist-style-image: none;\nsnippet lisp\n\tlist-style-position: ${1};\nsnippet lisp:i\n\tlist-style-position: inside;\nsnippet lisp:o\n\tlist-style-position: outside;\nsnippet list\n\tlist-style-type: ${1};\nsnippet list:c\n\tlist-style-type: circle;\nsnippet list:dclz\n\tlist-style-type: decimal-leading-zero;\nsnippet list:dc\n\tlist-style-type: decimal;\nsnippet list:d\n\tlist-style-type: disc;\nsnippet list:lr\n\tlist-style-type: lower-roman;\nsnippet list:n\n\tlist-style-type: none;\nsnippet list:s\n\tlist-style-type: square;\nsnippet list:ur\n\tlist-style-type: upper-roman;\nsnippet lis\n\tlist-style: ${1};\nsnippet lis:n\n\tlist-style: none;\nsnippet mb\n\tmargin-bottom: ${1};\nsnippet mb:a\n\tmargin-bottom: auto;\nsnippet ml\n\tmargin-left: ${1};\nsnippet ml:a\n\tmargin-left: auto;\nsnippet mr\n\tmargin-right: ${1};\nsnippet mr:a\n\tmargin-right: auto;\nsnippet mt\n\tmargin-top: ${1};\nsnippet mt:a\n\tmargin-top: auto;\nsnippet m\n\tmargin: ${1};\nsnippet m:4\n\tmargin: ${1:0} ${2:0} ${3:0} ${4:0};\nsnippet m:3\n\tmargin: ${1:0} ${2:0} ${3:0};\nsnippet m:2\n\tmargin: ${1:0} ${2:0};\nsnippet m:0\n\tmargin: 0;\nsnippet m:a\n\tmargin: auto;\nsnippet mah\n\tmax-height: ${1};\nsnippet mah:n\n\tmax-height: none;\nsnippet maw\n\tmax-width: ${1};\nsnippet maw:n\n\tmax-width: none;\nsnippet mih\n\tmin-height: ${1};\nsnippet miw\n\tmin-width: ${1};\nsnippet op\n\topacity: ${1};\nsnippet op:ie\n\tfilter: progid:DXImageTransform.Microsoft.Alpha(Opacity=${1:100});\nsnippet op:ms\n\t-ms-filter: 'progid:DXImageTransform.Microsoft.Alpha(Opacity=${1:100})';\nsnippet orp\n\torphans: ${1};\nsnippet o+\n\toutline: ${1:1px} ${2:solid} #${3:000};\nsnippet oc\n\toutline-color: ${1:#000};\nsnippet oc:i\n\toutline-color: invert;\nsnippet oo\n\toutline-offset: ${1};\nsnippet os\n\toutline-style: ${1};\nsnippet ow\n\toutline-width: ${1};\nsnippet o\n\toutline: ${1};\nsnippet o:n\n\toutline: none;\nsnippet ovs\n\toverflow-style: ${1};\nsnippet ovs:a\n\toverflow-style: auto;\nsnippet ovs:mq\n\toverflow-style: marquee;\nsnippet ovs:mv\n\toverflow-style: move;\nsnippet ovs:p\n\toverflow-style: panner;\nsnippet ovs:s\n\toverflow-style: scrollbar;\nsnippet ovx\n\toverflow-x: ${1};\nsnippet ovx:a\n\toverflow-x: auto;\nsnippet ovx:h\n\toverflow-x: hidden;\nsnippet ovx:s\n\toverflow-x: scroll;\nsnippet ovx:v\n\toverflow-x: visible;\nsnippet ovy\n\toverflow-y: ${1};\nsnippet ovy:a\n\toverflow-y: auto;\nsnippet ovy:h\n\toverflow-y: hidden;\nsnippet ovy:s\n\toverflow-y: scroll;\nsnippet ovy:v\n\toverflow-y: visible;\nsnippet ov\n\toverflow: ${1};\nsnippet ov:a\n\toverflow: auto;\nsnippet ov:h\n\toverflow: hidden;\nsnippet ov:s\n\toverflow: scroll;\nsnippet ov:v\n\toverflow: visible;\nsnippet pb\n\tpadding-bottom: ${1};\nsnippet pl\n\tpadding-left: ${1};\nsnippet pr\n\tpadding-right: ${1};\nsnippet pt\n\tpadding-top: ${1};\nsnippet p\n\tpadding: ${1};\nsnippet p:4\n\tpadding: ${1:0} ${2:0} ${3:0} ${4:0};\nsnippet p:3\n\tpadding: ${1:0} ${2:0} ${3:0};\nsnippet p:2\n\tpadding: ${1:0} ${2:0};\nsnippet p:0\n\tpadding: 0;\nsnippet pgba\n\tpage-break-after: ${1};\nsnippet pgba:aw\n\tpage-break-after: always;\nsnippet pgba:a\n\tpage-break-after: auto;\nsnippet pgba:l\n\tpage-break-after: left;\nsnippet pgba:r\n\tpage-break-after: right;\nsnippet pgbb\n\tpage-break-before: ${1};\nsnippet pgbb:aw\n\tpage-break-before: always;\nsnippet pgbb:a\n\tpage-break-before: auto;\nsnippet pgbb:l\n\tpage-break-before: left;\nsnippet pgbb:r\n\tpage-break-before: right;\nsnippet pgbi\n\tpage-break-inside: ${1};\nsnippet pgbi:a\n\tpage-break-inside: auto;\nsnippet pgbi:av\n\tpage-break-inside: avoid;\nsnippet pos\n\tposition: ${1};\nsnippet pos:a\n\tposition: absolute;\nsnippet pos:f\n\tposition: fixed;\nsnippet pos:r\n\tposition: relative;\nsnippet pos:s\n\tposition: static;\nsnippet q\n\tquotes: ${1};\nsnippet q:en\n\tquotes: '\\201C' '\\201D' '\\2018' '\\2019';\nsnippet q:n\n\tquotes: none;\nsnippet q:ru\n\tquotes: '\\00AB' '\\00BB' '\\201E' '\\201C';\nsnippet rz\n\tresize: ${1};\nsnippet rz:b\n\tresize: both;\nsnippet rz:h\n\tresize: horizontal;\nsnippet rz:n\n\tresize: none;\nsnippet rz:v\n\tresize: vertical;\nsnippet r\n\tright: ${1};\nsnippet r:a\n\tright: auto;\nsnippet tbl\n\ttable-layout: ${1};\nsnippet tbl:a\n\ttable-layout: auto;\nsnippet tbl:f\n\ttable-layout: fixed;\nsnippet tal\n\ttext-align-last: ${1};\nsnippet tal:a\n\ttext-align-last: auto;\nsnippet tal:c\n\ttext-align-last: center;\nsnippet tal:l\n\ttext-align-last: left;\nsnippet tal:r\n\ttext-align-last: right;\nsnippet ta\n\ttext-align: ${1};\nsnippet ta:c\n\ttext-align: center;\nsnippet ta:l\n\ttext-align: left;\nsnippet ta:r\n\ttext-align: right;\nsnippet td\n\ttext-decoration: ${1};\nsnippet td:l\n\ttext-decoration: line-through;\nsnippet td:n\n\ttext-decoration: none;\nsnippet td:o\n\ttext-decoration: overline;\nsnippet td:u\n\ttext-decoration: underline;\nsnippet te\n\ttext-emphasis: ${1};\nsnippet te:ac\n\ttext-emphasis: accent;\nsnippet te:a\n\ttext-emphasis: after;\nsnippet te:b\n\ttext-emphasis: before;\nsnippet te:c\n\ttext-emphasis: circle;\nsnippet te:ds\n\ttext-emphasis: disc;\nsnippet te:dt\n\ttext-emphasis: dot;\nsnippet te:n\n\ttext-emphasis: none;\nsnippet th\n\ttext-height: ${1};\nsnippet th:a\n\ttext-height: auto;\nsnippet th:f\n\ttext-height: font-size;\nsnippet th:m\n\ttext-height: max-size;\nsnippet th:t\n\ttext-height: text-size;\nsnippet ti\n\ttext-indent: ${1};\nsnippet ti:-\n\ttext-indent: -9999px;\nsnippet tj\n\ttext-justify: ${1};\nsnippet tj:a\n\ttext-justify: auto;\nsnippet tj:d\n\ttext-justify: distribute;\nsnippet tj:ic\n\ttext-justify: inter-cluster;\nsnippet tj:ii\n\ttext-justify: inter-ideograph;\nsnippet tj:iw\n\ttext-justify: inter-word;\nsnippet tj:k\n\ttext-justify: kashida;\nsnippet tj:t\n\ttext-justify: tibetan;\nsnippet to+\n\ttext-outline: ${1:0} ${2:0} #${3:000};\nsnippet to\n\ttext-outline: ${1};\nsnippet to:n\n\ttext-outline: none;\nsnippet tr\n\ttext-replace: ${1};\nsnippet tr:n\n\ttext-replace: none;\nsnippet tsh+\n\ttext-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\nsnippet tsh\n\ttext-shadow: ${1};\nsnippet tsh:n\n\ttext-shadow: none;\nsnippet tt\n\ttext-transform: ${1};\nsnippet tt:c\n\ttext-transform: capitalize;\nsnippet tt:l\n\ttext-transform: lowercase;\nsnippet tt:n\n\ttext-transform: none;\nsnippet tt:u\n\ttext-transform: uppercase;\nsnippet tw\n\ttext-wrap: ${1};\nsnippet tw:no\n\ttext-wrap: none;\nsnippet tw:n\n\ttext-wrap: normal;\nsnippet tw:s\n\ttext-wrap: suppress;\nsnippet tw:u\n\ttext-wrap: unrestricted;\nsnippet t\n\ttop: ${1};\nsnippet t:a\n\ttop: auto;\nsnippet va\n\tvertical-align: ${1};\nsnippet va:bl\n\tvertical-align: baseline;\nsnippet va:b\n\tvertical-align: bottom;\nsnippet va:m\n\tvertical-align: middle;\nsnippet va:sub\n\tvertical-align: sub;\nsnippet va:sup\n\tvertical-align: super;\nsnippet va:tb\n\tvertical-align: text-bottom;\nsnippet va:tt\n\tvertical-align: text-top;\nsnippet va:t\n\tvertical-align: top;\nsnippet v\n\tvisibility: ${1};\nsnippet v:c\n\tvisibility: collapse;\nsnippet v:h\n\tvisibility: hidden;\nsnippet v:v\n\tvisibility: visible;\nsnippet whsc\n\twhite-space-collapse: ${1};\nsnippet whsc:ba\n\twhite-space-collapse: break-all;\nsnippet whsc:bs\n\twhite-space-collapse: break-strict;\nsnippet whsc:k\n\twhite-space-collapse: keep-all;\nsnippet whsc:l\n\twhite-space-collapse: loose;\nsnippet whsc:n\n\twhite-space-collapse: normal;\nsnippet whs\n\twhite-space: ${1};\nsnippet whs:n\n\twhite-space: normal;\nsnippet whs:nw\n\twhite-space: nowrap;\nsnippet whs:pl\n\twhite-space: pre-line;\nsnippet whs:pw\n\twhite-space: pre-wrap;\nsnippet whs:p\n\twhite-space: pre;\nsnippet wid\n\twidows: ${1};\nsnippet w\n\twidth: ${1};\nsnippet w:a\n\twidth: auto;\nsnippet wob\n\tword-break: ${1};\nsnippet wob:ba\n\tword-break: break-all;\nsnippet wob:bs\n\tword-break: break-strict;\nsnippet wob:k\n\tword-break: keep-all;\nsnippet wob:l\n\tword-break: loose;\nsnippet wob:n\n\tword-break: normal;\nsnippet wos\n\tword-spacing: ${1};\nsnippet wow\n\tword-wrap: ${1};\nsnippet wow:no\n\tword-wrap: none;\nsnippet wow:n\n\tword-wrap: normal;\nsnippet wow:s\n\tword-wrap: suppress;\nsnippet wow:u\n\tword-wrap: unrestricted;\nsnippet z\n\tz-index: ${1};\nsnippet z:a\n\tz-index: auto;\nsnippet zoo\n\tzoom: 1;\n";
-
-});
-
-define("ace/snippets/css",["require","exports","module","ace/snippets/css.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./css.snippets");
-exports.scope = "css";
-
-});
-
-define("ace/snippets/dart.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet lib\n\tlibrary ${1};\n\t${2}\nsnippet im\n\timport '${1}';\n\t${2}\nsnippet pa\n\tpart '${1}';\n\t${2}\nsnippet pao\n\tpart of ${1};\n\t${2}\nsnippet main\n\tvoid main() {\n\t  ${1:/* code */}\n\t}\nsnippet st\n\tstatic ${1}\nsnippet fi\n\tfinal ${1}\nsnippet re\n\treturn ${1}\nsnippet br\n\tbreak;\nsnippet th\n\tthrow ${1}\nsnippet cl\n\tclass ${1:`Filename(\"\", \"untitled\")`} ${2}\nsnippet imp\n\timplements ${1}\nsnippet ext\n\textends ${1}\nsnippet if\n\tif (${1:true}) {\n\t  ${2}\n\t}\nsnippet ife\n\tif (${1:true}) {\n\t  ${2}\n\t} else {\n\t  ${3}\n\t}\nsnippet el\n\telse\nsnippet sw\n\tswitch (${1}) {\n\t  ${2}\n\t}\nsnippet cs\n\tcase ${1}:\n\t  ${2}\nsnippet de\n\tdefault:\n\t  ${1}\nsnippet for\n\tfor (var ${2:i} = 0, len = ${1:things}.length; $2 < len; ${3:++}$2) {\n\t  ${4:$1[$2]}\n\t}\nsnippet fore\n\tfor (final ${2:item} in ${1:itemList}) {\n\t  ${3:/* code */}\n\t}\nsnippet wh\n\twhile (${1:/* condition */}) {\n\t  ${2:/* code */}\n\t}\nsnippet dowh\n\tdo {\n\t  ${2:/* code */}\n\t} while (${1:/* condition */});\nsnippet as\n\tassert(${1:/* condition */});\nsnippet try\n\ttry {\n\t  ${2}\n\t} catch (${1:Exception e}) {\n\t}\nsnippet tryf\n\ttry {\n\t  ${2}\n\t} catch (${1:Exception e}) {\n\t} finally {\n\t}\n";
-
-});
-
-define("ace/snippets/dart",["require","exports","module","ace/snippets/dart.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./dart.snippets");
-exports.scope = "dart";
-
-});
-
-define("ace/snippets/diff.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# DEP-3 (http://dep.debian.net/deps/dep3/) style patch header\nsnippet header DEP-3 style header\n\tDescription: ${1}\n\tOrigin: ${2:vendor|upstream|other}, ${3:url of the original patch}\n\tBug: ${4:url in upstream bugtracker}\n\tForwarded: ${5:no|not-needed|url}\n\tAuthor: ${6:`g:snips_author`}\n\tReviewed-by: ${7:name and email}\n\tLast-Update: ${8:`strftime(\"%Y-%m-%d\")`}\n\tApplied-Upstream: ${9:upstream version|url|commit}\n\n";
-
-});
-
-define("ace/snippets/diff",["require","exports","module","ace/snippets/diff.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./diff.snippets");
-exports.scope = "diff";
-
-});
-
-define("ace/snippets/django.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Model Fields\n\n# Note: Optional arguments are using defaults that match what Django will use\n# as a default, e.g. with max_length fields.  Doing this as a form of self\n# documentation and to make it easy to know whether you should override the\n# default or not.\n\n# Note: Optional arguments that are booleans will use the opposite since you\n# can either not specify them, or override them, e.g. auto_now_add=False.\n\nsnippet auto\n\t${1:FIELDNAME} = models.AutoField(${2})\nsnippet bool\n\t${1:FIELDNAME} = models.BooleanField(${2:default=True})\nsnippet char\n\t${1:FIELDNAME} = models.CharField(max_length=${2}${3:, blank=True})\nsnippet comma\n\t${1:FIELDNAME} = models.CommaSeparatedIntegerField(max_length=${2}${3:, blank=True})\nsnippet date\n\t${1:FIELDNAME} = models.DateField(${2:auto_now_add=True, auto_now=True}${3:, blank=True, null=True})\nsnippet datetime\n\t${1:FIELDNAME} = models.DateTimeField(${2:auto_now_add=True, auto_now=True}${3:, blank=True, null=True})\nsnippet decimal\n\t${1:FIELDNAME} = models.DecimalField(max_digits=${2}, decimal_places=${3})\nsnippet email\n\t${1:FIELDNAME} = models.EmailField(max_length=${2:75}${3:, blank=True})\nsnippet file\n\t${1:FIELDNAME} = models.FileField(upload_to=${2:path/for/upload}${3:, max_length=100})\nsnippet filepath\n\t${1:FIELDNAME} = models.FilePathField(path=${2:\"/abs/path/to/dir\"}${3:, max_length=100}${4:, match=\"*.ext\"}${5:, recursive=True}${6:, blank=True, })\nsnippet float\n\t${1:FIELDNAME} = models.FloatField(${2})\nsnippet image\n\t${1:FIELDNAME} = models.ImageField(upload_to=${2:path/for/upload}${3:, height_field=height, width_field=width}${4:, max_length=100})\nsnippet int\n\t${1:FIELDNAME} = models.IntegerField(${2})\nsnippet ip\n\t${1:FIELDNAME} = models.IPAddressField(${2})\nsnippet nullbool\n\t${1:FIELDNAME} = models.NullBooleanField(${2})\nsnippet posint\n\t${1:FIELDNAME} = models.PositiveIntegerField(${2})\nsnippet possmallint\n\t${1:FIELDNAME} = models.PositiveSmallIntegerField(${2})\nsnippet slug\n\t${1:FIELDNAME} = models.SlugField(max_length=${2:50}${3:, blank=True})\nsnippet smallint\n\t${1:FIELDNAME} = models.SmallIntegerField(${2})\nsnippet text\n\t${1:FIELDNAME} = models.TextField(${2:blank=True})\nsnippet time\n\t${1:FIELDNAME} = models.TimeField(${2:auto_now_add=True, auto_now=True}${3:, blank=True, null=True})\nsnippet url\n\t${1:FIELDNAME} = models.URLField(${2:verify_exists=False}${3:, max_length=200}${4:, blank=True})\nsnippet xml\n\t${1:FIELDNAME} = models.XMLField(schema_path=${2:None}${3:, blank=True})\n# Relational Fields\nsnippet fk\n\t${1:FIELDNAME} = models.ForeignKey(${2:OtherModel}${3:, related_name=''}${4:, limit_choices_to=}${5:, to_field=''})\nsnippet m2m\n\t${1:FIELDNAME} = models.ManyToManyField(${2:OtherModel}${3:, related_name=''}${4:, limit_choices_to=}${5:, symmetrical=False}${6:, through=''}${7:, db_table=''})\nsnippet o2o\n\t${1:FIELDNAME} = models.OneToOneField(${2:OtherModel}${3:, parent_link=True}${4:, related_name=''}${5:, limit_choices_to=}${6:, to_field=''})\n\n# Code Skeletons\n\nsnippet form\n\tclass ${1:FormName}(forms.Form):\n\t\t\"\"\"${2:docstring}\"\"\"\n\t\t${3}\n\nsnippet model\n\tclass ${1:ModelName}(models.Model):\n\t\t\"\"\"${2:docstring}\"\"\"\n\t\t${3}\n\t\t\n\t\tclass Meta:\n\t\t\t${4}\n\t\t\n\t\tdef __unicode__(self):\n\t\t\t${5}\n\t\t\n\t\tdef save(self, force_insert=False, force_update=False):\n\t\t\t${6}\n\t\t\n\t\t@models.permalink\n\t\tdef get_absolute_url(self):\n\t\t\treturn ('${7:view_or_url_name}' ${8})\n\nsnippet modeladmin\n\tclass ${1:ModelName}Admin(admin.ModelAdmin):\n\t\t${2}\n\t\n\tadmin.site.register($1, $1Admin)\n\t\nsnippet tabularinline\n\tclass ${1:ModelName}Inline(admin.TabularInline):\n\t\tmodel = $1\n\nsnippet stackedinline\n\tclass ${1:ModelName}Inline(admin.StackedInline):\n\t\tmodel = $1\n\nsnippet r2r\n\treturn render_to_response('${1:template.html}', {\n\t\t\t${2}\n\t\t}${3:, context_instance=RequestContext(request)}\n\t)\n";
-
-});
-
-define("ace/snippets/django",["require","exports","module","ace/snippets/django.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./django.snippets");
-exports.scope = "django";
-
-});
-
-define("ace/snippets/drools.snippets",["require","exports","module"], function(require, exports, module){module.exports = "\nsnippet rule\n\trule \"${1?:rule_name}\"\n\twhen\n\t\t${2:// when...} \n\tthen\n\t\t${3:// then...}\n\tend\n\nsnippet query\n\tquery ${1?:query_name}\n\t\t${2:// find} \n\tend\n\t\nsnippet declare\n\tdeclare ${1?:type_name}\n\t\t${2:// attributes} \n\tend\n\n";
-
-});
-
-define("ace/snippets/drools",["require","exports","module","ace/snippets/drools.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./drools.snippets");
-exports.scope = "drools";
-
-});
-
-define("ace/snippets/edifact.snippets",["require","exports","module"], function(require, exports, module){module.exports = "## Access Modifiers\nsnippet u\n\tUN\nsnippet un\n\tUNB\nsnippet pr\n\tprivate\n##\n## Annotations\nsnippet before\n\t@Before\n\tstatic void ${1:intercept}(${2:args}) { ${3} }\nsnippet mm\n\t@ManyToMany\n\t${1}\nsnippet mo\n\t@ManyToOne\n\t${1}\nsnippet om\n\t@OneToMany${1:(cascade=CascadeType.ALL)}\n\t${2}\nsnippet oo\n\t@OneToOne\n\t${1}\n##\n## Basic Java packages and import\nsnippet im\n\timport\nsnippet j.b\n\tjava.beans.\nsnippet j.i\n\tjava.io.\nsnippet j.m\n\tjava.math.\nsnippet j.n\n\tjava.net.\nsnippet j.u\n\tjava.util.\n##\n## Class\nsnippet cl\n\tclass ${1:`Filename(\"\", \"untitled\")`} ${2}\nsnippet in\n\tinterface ${1:`Filename(\"\", \"untitled\")`} ${2:extends Parent}${3}\nsnippet tc\n\tpublic class ${1:`Filename()`} extends ${2:TestCase}\n##\n## Class Enhancements\nsnippet ext\n\textends \nsnippet imp\n\timplements\n##\n## Comments\nsnippet /*\n\t/*\n\t * ${1}\n\t */\n##\n## Constants\nsnippet co\n\tstatic public final ${1:String} ${2:var} = ${3};${4}\nsnippet cos\n\tstatic public final String ${1:var} = \"${2}\";${3}\n##\n## Control Statements\nsnippet case\n\tcase ${1}:\n\t\t${2}\nsnippet def\n\tdefault:\n\t\t${2}\nsnippet el\n\telse\nsnippet elif\n\telse if (${1}) ${2}\nsnippet if\n\tif (${1}) ${2}\nsnippet sw\n\tswitch (${1}) {\n\t\t${2}\n\t}\n##\n## Create a Method\nsnippet m\n\t${1:void} ${2:method}(${3}) ${4:throws }${5}\n##\n## Create a Variable\nsnippet v\n\t${1:String} ${2:var}${3: = null}${4};${5}\n##\n## Enhancements to Methods, variables, classes, etc.\nsnippet ab\n\tabstract\nsnippet fi\n\tfinal\nsnippet st\n\tstatic\nsnippet sy\n\tsynchronized\n##\n## Error Methods\nsnippet err\n\tSystem.err.print(\"${1:Message}\");\nsnippet errf\n\tSystem.err.printf(\"${1:Message}\", ${2:exception});\nsnippet errln\n\tSystem.err.println(\"${1:Message}\");\n##\n## Exception Handling\nsnippet as\n\tassert ${1:test} : \"${2:Failure message}\";${3}\nsnippet ca\n\tcatch(${1:Exception} ${2:e}) ${3}\nsnippet thr\n\tthrow\nsnippet ths\n\tthrows\nsnippet try\n\ttry {\n\t\t${3}\n\t} catch(${1:Exception} ${2:e}) {\n\t}\nsnippet tryf\n\ttry {\n\t\t${3}\n\t} catch(${1:Exception} ${2:e}) {\n\t} finally {\n\t}\n##\n## Find Methods\nsnippet findall\n\tList<${1:listName}> ${2:items} = ${1}.findAll();${3}\nsnippet findbyid\n\t${1:var} ${2:item} = ${1}.findById(${3});${4}\n##\n## Javadocs\nsnippet /**\n\t/**\n\t * ${1}\n\t */\nsnippet @au\n\t@author `system(\"grep \\`id -un\\` /etc/passwd | cut -d \\\":\\\" -f5 | cut -d \\\",\\\" -f1\")`\nsnippet @br\n\t@brief ${1:Description}\nsnippet @fi\n\t@file ${1:`Filename()`}.java\nsnippet @pa\n\t@param ${1:param}\nsnippet @re\n\t@return ${1:param}\n##\n## Logger Methods\nsnippet debug\n\tLogger.debug(${1:param});${2}\nsnippet error\n\tLogger.error(${1:param});${2}\nsnippet info\n\tLogger.info(${1:param});${2}\nsnippet warn\n\tLogger.warn(${1:param});${2}\n##\n## Loops\nsnippet enfor\n\tfor (${1} : ${2}) ${3}\nsnippet for\n\tfor (${1}; ${2}; ${3}) ${4}\nsnippet wh\n\twhile (${1}) ${2}\n##\n## Main method\nsnippet main\n\tpublic static void main (String[] args) {\n\t\t${1:/* code */}\n\t}\n##\n## Print Methods\nsnippet print\n\tSystem.out.print(\"${1:Message}\");\nsnippet printf\n\tSystem.out.printf(\"${1:Message}\", ${2:args});\nsnippet println\n\tSystem.out.println(${1});\n##\n## Render Methods\nsnippet ren\n\trender(${1:param});${2}\nsnippet rena\n\trenderArgs.put(\"${1}\", ${2});${3}\nsnippet renb\n\trenderBinary(${1:param});${2}\nsnippet renj\n\trenderJSON(${1:param});${2}\nsnippet renx\n\trenderXml(${1:param});${2}\n##\n## Setter and Getter Methods\nsnippet set\n\t${1:public} void set${3:}(${2:String} ${4:}){\n\t\tthis.$4 = $4;\n\t}\nsnippet get\n\t${1:public} ${2:String} get${3:}(){\n\t\treturn this.${4:};\n\t}\n##\n## Terminate Methods or Loops\nsnippet re\n\treturn\nsnippet br\n\tbreak;\n##\n## Test Methods\nsnippet t\n\tpublic void test${1:Name}() throws Exception {\n\t\t${2}\n\t}\nsnippet test\n\t@Test\n\tpublic void test${1:Name}() throws Exception {\n\t\t${2}\n\t}\n##\n## Utils\nsnippet Sc\n\tScanner\n##\n## Miscellaneous\nsnippet action\n\tpublic static void ${1:index}(${2:args}) { ${3} }\nsnippet rnf\n\tnotFound(${1:param});${2}\nsnippet rnfin\n\tnotFoundIfNull(${1:param});${2}\nsnippet rr\n\tredirect(${1:param});${2}\nsnippet ru\n\tunauthorized(${1:param});${2}\nsnippet unless\n\t(unless=${1:param});${2}\n";
-
-});
-
-define("ace/snippets/edifact",["require","exports","module","ace/snippets/edifact.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./edifact.snippets");
-exports.scope = "edifact";
-
-});
-
-define("ace/snippets/erlang.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# module and export all\nsnippet mod\n\t-module(${1:`Filename('', 'my')`}).\n\t\n\t-compile([export_all]).\n\t\n\tstart() ->\n\t    ${2}\n\t\n\tstop() ->\n\t    ok.\n# define directive\nsnippet def\n\t-define(${1:macro}, ${2:body}).${3}\n# export directive\nsnippet exp\n\t-export([${1:function}/${2:arity}]).\n# include directive\nsnippet inc\n\t-include(\"${1:file}\").${2}\n# behavior directive\nsnippet beh\n\t-behaviour(${1:behaviour}).${2}\n# if expression\nsnippet if\n\tif\n\t    ${1:guard} ->\n\t        ${2:body}\n\tend\n# case expression\nsnippet case\n\tcase ${1:expression} of\n\t    ${2:pattern} ->\n\t        ${3:body};\n\tend\n# anonymous function\nsnippet fun\n\tfun (${1:Parameters}) -> ${2:body} end${3}\n# try...catch\nsnippet try\n\ttry\n\t    ${1}\n\tcatch\n\t    ${2:_:_} -> ${3:got_some_exception}\n\tend\n# record directive\nsnippet rec\n\t-record(${1:record}, {\n\t    ${2:field}=${3:value}}).${4}\n# todo comment\nsnippet todo\n\t%% TODO: ${1}\n## Snippets below (starting with '%') are in EDoc format.\n## See http://www.erlang.org/doc/apps/edoc/chapter.html#id56887 for more details\n# doc comment\nsnippet %d\n\t%% @doc ${1}\n# end of doc comment\nsnippet %e\n\t%% @end\n# specification comment\nsnippet %s\n\t%% @spec ${1}\n# private function marker\nsnippet %p\n\t%% @private\n# OTP application\nsnippet application\n\t-module(${1:`Filename('', 'my')`}).\n\n\t-behaviour(application).\n\n\t-export([start/2, stop/1]).\n\n\tstart(_Type, _StartArgs) ->\n\t    case ${2:root_supervisor}:start_link() of\n\t        {ok, Pid} ->\n\t            {ok, Pid};\n\t        Other ->\n\t\t          {error, Other}\n\t    end.\n\n\tstop(_State) ->\n\t    ok.\t\n# OTP supervisor\nsnippet supervisor\n\t-module(${1:`Filename('', 'my')`}).\n\n\t-behaviour(supervisor).\n\n\t%% API\n\t-export([start_link/0]).\n\n\t%% Supervisor callbacks\n\t-export([init/1]).\n\n\t-define(SERVER, ?MODULE).\n\n\tstart_link() ->\n\t    supervisor:start_link({local, ?SERVER}, ?MODULE, []).\n\n\tinit([]) ->\n\t    Server = {${2:my_server}, {$2, start_link, []},\n\t      permanent, 2000, worker, [$2]},\n\t    Children = [Server],\n\t    RestartStrategy = {one_for_one, 0, 1},\n\t    {ok, {RestartStrategy, Children}}.\n# OTP gen_server\nsnippet gen_server\n\t-module(${1:`Filename('', 'my')`}).\n\n\t-behaviour(gen_server).\n\n\t%% API\n\t-export([\n\t         start_link/0\n\t        ]).\n\n\t%% gen_server callbacks\n\t-export([init/1, handle_call/3, handle_cast/2, handle_info/2,\n\t         terminate/2, code_change/3]).\n\n\t-define(SERVER, ?MODULE).\n\n\t-record(state, {}).\n\n\t%%%===================================================================\n\t%%% API\n\t%%%===================================================================\n\n\tstart_link() ->\n\t    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).\n\n\t%%%===================================================================\n\t%%% gen_server callbacks\n\t%%%===================================================================\n\n\tinit([]) ->\n\t    {ok, #state{}}.\n\n\thandle_call(_Request, _From, State) ->\n\t    Reply = ok,\n\t    {reply, Reply, State}.\n\n\thandle_cast(_Msg, State) ->\n\t    {noreply, State}.\n\n\thandle_info(_Info, State) ->\n\t    {noreply, State}.\n\n\tterminate(_Reason, _State) ->\n\t    ok.\n\n\tcode_change(_OldVsn, State, _Extra) ->\n\t    {ok, State}.\n\n\t%%%===================================================================\n\t%%% Internal functions\n\t%%%===================================================================\n\n";
-
-});
-
-define("ace/snippets/erlang",["require","exports","module","ace/snippets/erlang.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./erlang.snippets");
-exports.scope = "erlang";
-
-});
-
-define("ace/snippets/fsl.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet header\n\tmachine_name     : \"\";\n\tmachine_author   : \"\";\n\tmachine_license  : MIT;\n\tmachine_comment  : \"\";\n\tmachine_language : en;\n\tmachine_version  : 1.0.0;\n\tfsl_version      : 1.0.0;\n\tstart_states     : [];\n";
-
-});
-
-define("ace/snippets/fsl",["require","exports","module","ace/snippets/fsl.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./fsl.snippets");
-exports.scope = "fsl";
-
-});
-
-define("ace/snippets/gobstones.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# scope: gobstones\n\n# program\nsnippet program\n\tprogram {\n\t\t${1:// cuerpo...}\n\t}\n\n# interactive program\nsnippet interactive program\n\tinteractive program {\n\t\t${1:INIT} -> { ${2:// cuerpo...} }\n\t\t${3:TIMEOUT(${4:5000}) -> { ${5:// cuerpo...} }\n\t\t${6:K_ENTER} -> { ${7:// cuerpo...} }\n\t\t_ -> {}\n\t}\n\n# procedure\nsnippet procedure\n\tprocedure ${1:Nombre}(${2:parametros}) {\n\t\t${3:// cuerpo...}\n\t}\n\n# function\nsnippet function\n\tfunction ${1:nombre}(${2:parametros}) {\n\t\treturn (${3:expresi\u00F3n..})\n\t}\n\n# return\nsnippet return\n\treturn (${1:expresi\u00F3n...})\n\n# type\nsnippet type\n\ttype ${1:Nombre}\n\n# is variant\nsnippet is variant\n\tis variant {\n\t\tcase ${1:NombreDelValor1} {}\n\t\tcase ${2:NombreDelValor2} {}\n\t\tcase ${3:NombreDelValor3} {}\n\t\tcase ${4:NombreDelValor4} {}\n\t}\n\n# is record\nsnippet is record\n\tis record {\n\t\tfield ${1:campo1} // ${2:Tipo}\n\t\tfield ${3:campo2} // ${4:Tipo}\n\t\tfield ${5:campo3} // ${6:Tipo}\n\t\tfield ${7:campo4} // ${8:Tipo}\n\t}\n\n# type _ is variant\nsnippet type _ is variant\n\ttype ${1:Nombre} is variant {\n\t\tcase ${2:NombreDelValor1} {}\n\t\tcase ${3:NombreDelValor2} {}\n\t\tcase ${4:NombreDelValor3} {}\n\t\tcase ${5:NombreDelValor4} {}\n\t}\n\n# type _ is record\nsnippet type _ is record\n\ttype ${1:Nombre} is record {\n\t\tfield ${2:campo1} // ${3:Tipo}\n\t\tfield ${4:campo2} // ${5:Tipo}\n\t\tfield ${6:campo3} // ${7:Tipo}\n\t\tfield ${8:campo4} // ${9:Tipo}\n\t}\n\n# repeat\nsnippet repeat\n\trepeat ${1:cantidad} {\n\t\t${2:// cuerpo...}\n\t}\n\n# foreach\nsnippet foreach\n\tforeach ${1:\u00EDndice} in ${2:lista} {\n\t\t${3:// cuerpo...}\n\t}\n\n# while\nsnippet while\n\twhile (${1?:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t}\n\n# if\nsnippet if\n\tif (${1?:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t}\n\n# elseif\nsnippet elseif\n\telseif (${1?:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t}\n\n# else\nsnippet else\n\telse {\n\t\t${1:// cuerpo...}\n\t}\n\n# if (con else)\nsnippet if (con else)\n\tif (${1:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t} else {\n\t\t${3:// cuerpo....}\n\t}\n\n# if (con elseif)\nsnippet if (con elseif)\n\tif (${1:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t} elseif (${3:condici\u00F3n}) {\n\t\t${4:// cuerpo...}\n\t}\n\n# if (con elseif y else)\nsnippet if (con elseif y else)\n\tif (${1:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t} elseif (${3:condici\u00F3n}) {\n\t\t${4:// cuerpo...}\n\t} else {\n\t\t${5:// cuerpo....}\n\t}\n\n# if (con 3 elseif)\nsnippet if (con 3 elseif)\n\tif (${1:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t} elseif (${3:condici\u00F3n}) {\n\t\t${4:// cuerpo...}\n\t} elseif (${5:condici\u00F3n}) {\n\t\t${6:// cuerpo...}\n\t} elseif (${7:condici\u00F3n}) {\n\t\t${8:// cuerpo...}\n\t}\n\n# choose (2 valores)\nsnippet choose (2 valores)\n\tchoose\n\t\t${1:Valor1} when (${2:condici\u00F3n})\n\t\t${3:Valor2} otherwise\n\n# choose (2 valores y boom)\nsnippet choose (2 valores y boom)\n\tchoose\n\t\t${1:Valor1} when (${2:condici\u00F3n})\n\t\t${3:Valor2} when (${4:condici\u00F3n})\n\t\t${5:Valor3} when (${6:condici\u00F3n})\n\t\t${7:Valor4} when (${8:condici\u00F3n})\n\t\tboom(\"${9:No es un valor v\u00E1lido}\") otherwise\n\n# matching (4 valores)\nsnippet matching (4 valores)\n\tmatching (${1:variable}) select\n\t\t${2:Valor1} on ${3:opci\u00F3n1}\n\t\t${4:Valor2} on ${5:opci\u00F3n2}\n\t\t${6:Valor3} on ${7:opci\u00F3n3}\n\t\t${8:Valor4} on ${9:opci\u00F3n4}\n\t\tboom(\"${10:No es un valor v\u00E1lido}\") otherwise\n\n# select (4 casos)\nsnippet select (4 casos)\n\tselect\n\t\t${1:Valor1} on (${2:opci\u00F3n1})\n\t\t${3:Valor2} on (${4:opci\u00F3n2})\n\t\t${5:Valor3} on (${6:opci\u00F3n3})\n\t\t${7:Valor4} on (${8:opci\u00F3n4})\n\t\tboom(\"${9:No es un valor v\u00E1lido}\") otherwise\n\n# switch\nsnippet switch\n\tswitch (${1:variable}) {\n\t\t${2:Valor1} -> {${3:// cuerpo...}}\n\t\t${4:Valor2} -> {${5:// cuerpo...}}\n\t\t${6:Valor3} -> {${7:// cuerpo...}}\n\t\t${8:Valor4} -> {${9:// cuerpo...}}\n\t\t_ -> {${10:// cuerpo...}}\n\t}\n\n# Poner\nsnippet Poner\n\tPoner(${1:color})\n\n# Sacar\nsnippet Sacar\n\tSacar(${1:color})\n\n# Mover\nsnippet Mover\n\tMover(${1:direcci\u00F3n})\n\n# IrAlBorde\nsnippet IrAlBorde\n\tIrAlBorde(${1:direcci\u00F3n})\n\n# VaciarTablero\nsnippet VaciarTablero\n\tVaciarTablero()\n\n# BOOM\nsnippet BOOM\n\tBOOM(\"${1:Mensaje de error}\")\n\n# hayBolitas\nsnippet hayBolitas\n\thayBolitas(${1:color})\n\n# nroBolitas\nsnippet nroBolitas\n\tnroBolitas(${1:color})\n\n# puedeMover\nsnippet puedeMover\n\tpuedeMover(${1:direcci\u00F3n})\n\n# siguiente\nsnippet siguiente\n\tsiguiente(${1:color|direcci\u00F3n})\n\n# previo\nsnippet previo\n\tprevio(${1:color|direcci\u00F3n})\n\n# opuesto\nsnippet opuesto\n\topuesto(${1:direcci\u00F3n})\n\n# minDir\nsnippet minDir\n\tminDir()\n\n# maxDir\nsnippet maxDir\n\tmaxDir()\n\n# minColor\nsnippet minColor\n\tminDir()\n\n# maxColor\nsnippet maxColor\n\tmaxDir()\n\n# minBool\nsnippet minBool\n\tminBool()\n\n# maxBool\nsnippet maxBool\n\tmaxBool()\n\n# primero\nsnippet primero\n\tprimero(${1:lista})\n\n# sinElPrimero\nsnippet sinElPrimero\n\tsinElPrimero(${1:lista})\n\n# esVac\u00EDa\nsnippet esVac\u00EDa\n\tesVac\u00EDa(${1:lista})\n\n# boom\nsnippet boom\n\tboom(\"${1:Mensaje de error}\")\n\n# Azul\nsnippet Azul\n\tAzul\n\n# Negro\nsnippet Negro\n\tNegro\n\n# Rojo\nsnippet Rojo\n\tRojo\n\n# Verde\nsnippet Verde\n\tVerde\n\n# Norte\nsnippet Norte\n\tNorte\n\n# Este\nsnippet Este\n\tEste\n\n# Sur\nsnippet Sur\n\tSur\n\n# Oeste\nsnippet Oeste\n\tOeste\n\n# True\nsnippet True\n\tTrue\n\n# False\nsnippet False\n\tFalse\n\n# INIT\nsnippet INIT\n\tINIT -> {$1:// cuerpo...}\n\n# TIMEOUT\nsnippet TIMEOUT\n\tTIMEOUT(${1:5000}) -> {$2:// cuerpo...}\n\n# K_A\nsnippet K_A\n\tK_A -> { ${1://cuerpo...} }\n# K_CTRL_A\nsnippet K_CTRL_A\n\tK_CTRL_A -> { ${1://cuerpo...} }\n# K_ALT_A\nsnippet K_ALT_A\n\tK_ALT_A -> { ${1://cuerpo...} }\n# K_SHIFT_A\nsnippet K_SHIFT_A\n\tK_SHIFT_A -> { ${1://cuerpo...} }\n# K_CTRL_ALT_A\nsnippet K_CTRL_ALT_A\n\tK_CTRL_ALT_A -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_A\nsnippet K_CTRL_SHIFT_A\n\tK_CTRL_SHIFT_A -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_A\nsnippet K_CTRL_ALT_SHIFT_A\n\tK_CTRL_ALT_SHIFT_A -> { ${1://cuerpo...} }\n\n# K_B\nsnippet K_B\n\tK_B -> { ${1://cuerpo...} }\n# K_CTRL_B\nsnippet K_CTRL_B\n\tK_CTRL_B -> { ${1://cuerpo...} }\n# K_ALT_B\nsnippet K_ALT_B\n\tK_ALT_B -> { ${1://cuerpo...} }\n# K_SHIFT_B\nsnippet K_SHIFT_B\n\tK_SHIFT_B -> { ${1://cuerpo...} }\n# K_CTRL_ALT_B\nsnippet K_CTRL_ALT_B\n\tK_CTRL_ALT_B -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_B\nsnippet K_CTRL_SHIFT_B\n\tK_CTRL_SHIFT_B -> { ${1://cuerpo...} }\n# K_ALT_SHIFT_C\nsnippet K_ALT_SHIFT_C\n\tK_ALT_SHIFT_C -> { ${1://cuerpo...} }\n# K_CTRL_BLT_SHIFT_B\nsnippet K_CTRL_BLT_SHIFT_B\n\tK_CTRL_ALT_SHIFT_B -> { ${1://cuerpo...} }\n\n# K_C\nsnippet K_C\n\tK_C -> { ${1://cuerpo...} }\n# K_CTRL_C\nsnippet K_CTRL_C\n\tK_CTRL_C -> { ${1://cuerpo...} }\n# K_ALT_C\nsnippet K_ALT_C\n\tK_ALT_C -> { ${1://cuerpo...} }\n# K_SHIFT_C\nsnippet K_SHIFT_C\n\tK_SHIFT_C -> { ${1://cuerpo...} }\n# K_CTRL_ALT_C\nsnippet K_CTRL_ALT_C\n\tK_CTRL_ALT_C -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_C\nsnippet K_CTRL_SHIFT_C\n\tK_CTRL_SHIFT_C -> { ${1://cuerpo...} }\n# K_ALT_SHIFT_C\nsnippet K_ALT_SHIFT_C\n\tK_ALT_SHIFT_C -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_C\nsnippet K_CTRL_ALT_SHIFT_C\n\tK_CTRL_ALT_SHIFT_C -> { ${1://cuerpo...} }\n\n# K_D\nsnippet K_D\n\tK_D -> { ${1://cuerpo...} }\n# K_CTRL_D\nsnippet K_CTRL_D\n\tK_CTRL_D -> { ${1://cuerpo...} }\n# K_ALT_D\nsnippet K_ALT_D\n\tK_DLT_D -> { ${1://cuerpo...} }\n# K_SHIFT_D\nsnippet K_SHIFT_D\n\tK_SHIFT_D -> { ${1://cuerpo...} }\n# K_CTRL_ALT_D\nsnippet K_CTRL_ALT_D\n\tK_CTRL_DLT_D -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_D\nsnippet K_CTRL_SHIFT_D\n\tK_CTRL_SHIFT_D -> { ${1://cuerpo...} }\n# K_ALT_SHIFT_D\nsnippet K_ALT_SHIFT_D\n\tK_ALT_SHIFT_D -> { ${1://cuerpo...} }\n# K_CTRL_DLT_SHIFT_D\nsnippet K_CTRL_DLT_SHIFT_D\n\tK_CTRL_ALT_SHIFT_D -> { ${1://cuerpo...} }\n\n# K_E\nsnippet K_E\n\tK_E -> { ${1://cuerpo...} }\n# K_CTRL_E\nsnippet K_CTRL_E\n\tK_CTRL_E -> { ${1://cuerpo...} }\n# K_ALT_E\nsnippet K_ALT_E\n\tK_ALT_E -> { ${1://cuerpo...} }\n# K_SHIFT_E\nsnippet K_SHIFT_E\n\tK_SHIFT_E -> { ${1://cuerpo...} }\n# K_CTRL_ALT_E\nsnippet K_CTRL_ALT_E\n\tK_CTRL_ALT_E -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_E\nsnippet K_CTRL_SHIFT_E\n\tK_CTRL_SHIFT_E -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_E\nsnippet K_CTRL_ALT_SHIFT_E\n\tK_CTRL_ALT_SHIFT_E -> { ${1://cuerpo...} }\n\n# K_F\nsnippet K_F\n\tK_F -> { ${1://cuerpo...} }\n# K_CTRL_F\nsnippet K_CTRL_F\n\tK_CTRL_F -> { ${1://cuerpo...} }\n# K_ALT_F\nsnippet K_ALT_F\n\tK_ALT_F -> { ${1://cuerpo...} }\n# K_SHIFT_F\nsnippet K_SHIFT_F\n\tK_SHIFT_F -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F\nsnippet K_CTRL_ALT_F\n\tK_CTRL_ALT_F -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F\nsnippet K_CTRL_SHIFT_F\n\tK_CTRL_SHIFT_F -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F\nsnippet K_CTRL_ALT_SHIFT_F\n\tK_CTRL_ALT_SHIFT_F -> { ${1://cuerpo...} }\n\n# K_G\nsnippet K_G\n\tK_G -> { ${1://cuerpo...} }\n# K_CTRL_G\nsnippet K_CTRL_G\n\tK_CTRL_G -> { ${1://cuerpo...} }\n# K_ALT_G\nsnippet K_ALT_G\n\tK_ALT_G -> { ${1://cuerpo...} }\n# K_SHIFT_G\nsnippet K_SHIFT_G\n\tK_SHIFT_G -> { ${1://cuerpo...} }\n# K_CTRL_ALT_G\nsnippet K_CTRL_ALT_G\n\tK_CTRL_ALT_G -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_G\nsnippet K_CTRL_SHIFT_G\n\tK_CTRL_SHIFT_G -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_G\nsnippet K_CTRL_ALT_SHIFT_G\n\tK_CTRL_ALT_SHIFT_G -> { ${1://cuerpo...} }\n\n# K_H\nsnippet K_H\n\tK_H -> { ${1://cuerpo...} }\n# K_CTRL_H\nsnippet K_CTRL_H\n\tK_CTRL_H -> { ${1://cuerpo...} }\n# K_ALT_H\nsnippet K_ALT_H\n\tK_ALT_H -> { ${1://cuerpo...} }\n# K_SHIFT_H\nsnippet K_SHIFT_H\n\tK_SHIFT_H -> { ${1://cuerpo...} }\n# K_CTRL_ALT_H\nsnippet K_CTRL_ALT_H\n\tK_CTRL_ALT_H -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_H\nsnippet K_CTRL_SHIFT_H\n\tK_CTRL_SHIFT_H -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_H\nsnippet K_CTRL_ALT_SHIFT_H\n\tK_CTRL_ALT_SHIFT_H -> { ${1://cuerpo...} }\n\n# K_I\nsnippet K_I\n\tK_I -> { ${1://cuerpo...} }\n# K_CTRL_I\nsnippet K_CTRL_I\n\tK_CTRL_I -> { ${1://cuerpo...} }\n# K_ALT_I\nsnippet K_ALT_I\n\tK_ALT_I -> { ${1://cuerpo...} }\n# K_SHIFT_I\nsnippet K_SHIFT_I\n\tK_SHIFT_I -> { ${1://cuerpo...} }\n# K_CTRL_ALT_I\nsnippet K_CTRL_ALT_I\n\tK_CTRL_ALT_I -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_I\nsnippet K_CTRL_SHIFT_I\n\tK_CTRL_SHIFT_I -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_I\nsnippet K_CTRL_ALT_SHIFT_I\n\tK_CTRL_ALT_SHIFT_I -> { ${1://cuerpo...} }\n\n# K_J\nsnippet K_J\n\tK_J -> { ${1://cuerpo...} }\n# K_CTRL_J\nsnippet K_CTRL_J\n\tK_CTRL_J -> { ${1://cuerpo...} }\n# K_ALT_J\nsnippet K_ALT_J\n\tK_ALT_J -> { ${1://cuerpo...} }\n# K_SHIFT_J\nsnippet K_SHIFT_J\n\tK_SHIFT_J -> { ${1://cuerpo...} }\n# K_CTRL_ALT_J\nsnippet K_CTRL_ALT_J\n\tK_CTRL_ALT_J -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_J\nsnippet K_CTRL_SHIFT_J\n\tK_CTRL_SHIFT_J -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_J\nsnippet K_CTRL_ALT_SHIFT_J\n\tK_CTRL_ALT_SHIFT_J -> { ${1://cuerpo...} }\n\n# K_K\nsnippet K_K\n\tK_K -> { ${1://cuerpo...} }\n# K_CTRL_K\nsnippet K_CTRL_K\n\tK_CTRL_K -> { ${1://cuerpo...} }\n# K_ALT_K\nsnippet K_ALT_K\n\tK_ALT_K -> { ${1://cuerpo...} }\n# K_SHIFT_K\nsnippet K_SHIFT_K\n\tK_SHIFT_K -> { ${1://cuerpo...} }\n# K_CTRL_ALT_K\nsnippet K_CTRL_ALT_K\n\tK_CTRL_ALT_K -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_K\nsnippet K_CTRL_SHIFT_K\n\tK_CTRL_SHIFT_K -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_K\nsnippet K_CTRL_ALT_SHIFT_K\n\tK_CTRL_ALT_SHIFT_K -> { ${1://cuerpo...} }\n\n# K_L\nsnippet K_L\n\tK_L -> { ${1://cuerpo...} }\n# K_CTRL_L\nsnippet K_CTRL_L\n\tK_CTRL_L -> { ${1://cuerpo...} }\n# K_ALT_L\nsnippet K_ALT_L\n\tK_ALT_L -> { ${1://cuerpo...} }\n# K_SHIFT_L\nsnippet K_SHIFT_L\n\tK_SHIFT_L -> { ${1://cuerpo...} }\n# K_CTRL_ALT_L\nsnippet K_CTRL_ALT_L\n\tK_CTRL_ALT_L -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_L\nsnippet K_CTRL_SHIFT_L\n\tK_CTRL_SHIFT_L -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_L\nsnippet K_CTRL_ALT_SHIFT_L\n\tK_CTRL_ALT_SHIFT_L -> { ${1://cuerpo...} }\n\n# K_M\nsnippet K_M\n\tK_M -> { ${1://cuerpo...} }\n# K_CTRL_M\nsnippet K_CTRL_M\n\tK_CTRL_M -> { ${1://cuerpo...} }\n# K_ALT_M\nsnippet K_ALT_M\n\tK_ALT_M -> { ${1://cuerpo...} }\n# K_SHIFT_M\nsnippet K_SHIFT_M\n\tK_SHIFT_M -> { ${1://cuerpo...} }\n# K_CTRL_ALT_M\nsnippet K_CTRL_ALT_M\n\tK_CTRL_ALT_M -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_M\nsnippet K_CTRL_SHIFT_M\n\tK_CTRL_SHIFT_M -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_M\nsnippet K_CTRL_ALT_SHIFT_M\n\tK_CTRL_ALT_SHIFT_M -> { ${1://cuerpo...} }\n\n# K_N\nsnippet K_N\n\tK_N -> { ${1://cuerpo...} }\n# K_CTRL_N\nsnippet K_CTRL_N\n\tK_CTRL_N -> { ${1://cuerpo...} }\n# K_ALT_N\nsnippet K_ALT_N\n\tK_ALT_N -> { ${1://cuerpo...} }\n# K_SHIFT_N\nsnippet K_SHIFT_N\n\tK_SHIFT_N -> { ${1://cuerpo...} }\n# K_CTRL_ALT_N\nsnippet K_CTRL_ALT_N\n\tK_CTRL_ALT_N -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_N\nsnippet K_CTRL_SHIFT_N\n\tK_CTRL_SHIFT_N -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_N\nsnippet K_CTRL_ALT_SHIFT_N\n\tK_CTRL_ALT_SHIFT_N -> { ${1://cuerpo...} }\n\n# K_\u00D1\nsnippet K_\u00D1\n\tK_\u00D1 -> { ${1://cuerpo...} }\n# K_CTRL_\u00D1\nsnippet K_CTRL_\u00D1\n\tK_CTRL_\u00D1 -> { ${1://cuerpo...} }\n# K_ALT_\u00D1\nsnippet K_ALT_\u00D1\n\tK_ALT_\u00D1 -> { ${1://cuerpo...} }\n# K_SHIFT_\u00D1\nsnippet K_SHIFT_\u00D1\n\tK_SHIFT_\u00D1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_\u00D1\nsnippet K_CTRL_ALT_\u00D1\n\tK_CTRL_ALT_\u00D1 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_\u00D1\nsnippet K_CTRL_SHIFT_\u00D1\n\tK_CTRL_SHIFT_\u00D1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_\u00D1\nsnippet K_CTRL_ALT_SHIFT_\u00D1\n\tK_CTRL_ALT_SHIFT_\u00D1 -> { ${1://cuerpo...} }\n\n# K_O\nsnippet K_O\n\tK_O -> { ${1://cuerpo...} }\n# K_CTRL_O\nsnippet K_CTRL_O\n\tK_CTRL_O -> { ${1://cuerpo...} }\n# K_ALT_O\nsnippet K_ALT_O\n\tK_ALT_O -> { ${1://cuerpo...} }\n# K_SHIFT_O\nsnippet K_SHIFT_O\n\tK_SHIFT_O -> { ${1://cuerpo...} }\n# K_CTRL_ALT_O\nsnippet K_CTRL_ALT_O\n\tK_CTRL_ALT_O -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_O\nsnippet K_CTRL_SHIFT_O\n\tK_CTRL_SHIFT_O -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_O\nsnippet K_CTRL_ALT_SHIFT_O\n\tK_CTRL_ALT_SHIFT_O -> { ${1://cuerpo...} }\n\n# K_P\nsnippet K_P\n\tK_P -> { ${1://cuerpo...} }\n# K_CTRL_P\nsnippet K_CTRL_P\n\tK_CTRL_P -> { ${1://cuerpo...} }\n# K_ALT_P\nsnippet K_ALT_P\n\tK_ALT_P -> { ${1://cuerpo...} }\n# K_SHIFT_P\nsnippet K_SHIFT_P\n\tK_SHIFT_P -> { ${1://cuerpo...} }\n# K_CTRL_ALT_P\nsnippet K_CTRL_ALT_P\n\tK_CTRL_ALT_P -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_P\nsnippet K_CTRL_SHIFT_P\n\tK_CTRL_SHIFT_P -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_P\nsnippet K_CTRL_ALT_SHIFT_P\n\tK_CTRL_ALT_SHIFT_P -> { ${1://cuerpo...} }\n\n# K_Q\nsnippet K_Q\n\tK_Q -> { ${1://cuerpo...} }\n# K_CTRL_Q\nsnippet K_CTRL_Q\n\tK_CTRL_Q -> { ${1://cuerpo...} }\n# K_ALT_Q\nsnippet K_ALT_Q\n\tK_ALT_Q -> { ${1://cuerpo...} }\n# K_SHIFT_Q\nsnippet K_SHIFT_Q\n\tK_SHIFT_Q -> { ${1://cuerpo...} }\n# K_CTRL_ALT_Q\nsnippet K_CTRL_ALT_Q\n\tK_CTRL_ALT_Q -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_Q\nsnippet K_CTRL_SHIFT_Q\n\tK_CTRL_SHIFT_Q -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_Q\nsnippet K_CTRL_ALT_SHIFT_Q\n\tK_CTRL_ALT_SHIFT_Q -> { ${1://cuerpo...} }\n\n# K_R\nsnippet K_R\n\tK_R -> { ${1://cuerpo...} }\n# K_CTRL_R\nsnippet K_CTRL_R\n\tK_CTRL_R -> { ${1://cuerpo...} }\n# K_ALT_R\nsnippet K_ALT_R\n\tK_ALT_R -> { ${1://cuerpo...} }\n# K_SHIFT_R\nsnippet K_SHIFT_R\n\tK_SHIFT_R -> { ${1://cuerpo...} }\n# K_CTRL_ALT_R\nsnippet K_CTRL_ALT_R\n\tK_CTRL_ALT_R -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_R\nsnippet K_CTRL_SHIFT_R\n\tK_CTRL_SHIFT_R -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_R\nsnippet K_CTRL_ALT_SHIFT_R\n\tK_CTRL_ALT_SHIFT_R -> { ${1://cuerpo...} }\n\n# K_S\nsnippet K_S\n\tK_S -> { ${1://cuerpo...} }\n# K_CTRL_S\nsnippet K_CTRL_S\n\tK_CTRL_S -> { ${1://cuerpo...} }\n# K_ALT_S\nsnippet K_ALT_S\n\tK_ALT_S -> { ${1://cuerpo...} }\n# K_SHIFT_S\nsnippet K_SHIFT_S\n\tK_SHIFT_S -> { ${1://cuerpo...} }\n# K_CTRL_ALT_S\nsnippet K_CTRL_ALT_S\n\tK_CTRL_ALT_S -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_S\nsnippet K_CTRL_SHIFT_S\n\tK_CTRL_SHIFT_S -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_S\nsnippet K_CTRL_ALT_SHIFT_S\n\tK_CTRL_ALT_SHIFT_S -> { ${1://cuerpo...} }\n\n# K_T\nsnippet K_T\n\tK_T -> { ${1://cuerpo...} }\n# K_CTRL_T\nsnippet K_CTRL_T\n\tK_CTRL_T -> { ${1://cuerpo...} }\n# K_ALT_T\nsnippet K_ALT_T\n\tK_ALT_T -> { ${1://cuerpo...} }\n# K_SHIFT_T\nsnippet K_SHIFT_T\n\tK_SHIFT_T -> { ${1://cuerpo...} }\n# K_CTRL_ALT_T\nsnippet K_CTRL_ALT_T\n\tK_CTRL_ALT_T -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_T\nsnippet K_CTRL_SHIFT_T\n\tK_CTRL_SHIFT_T -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_T\nsnippet K_CTRL_ALT_SHIFT_T\n\tK_CTRL_ALT_SHIFT_T -> { ${1://cuerpo...} }\n\n# K_U\nsnippet K_U\n\tK_U -> { ${1://cuerpo...} }\n# K_CTRL_U\nsnippet K_CTRL_U\n\tK_CTRL_U -> { ${1://cuerpo...} }\n# K_ALT_U\nsnippet K_ALT_U\n\tK_ALT_U -> { ${1://cuerpo...} }\n# K_SHIFT_U\nsnippet K_SHIFT_U\n\tK_SHIFT_U -> { ${1://cuerpo...} }\n# K_CTRL_ALT_U\nsnippet K_CTRL_ALT_U\n\tK_CTRL_ALT_U -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_U\nsnippet K_CTRL_SHIFT_U\n\tK_CTRL_SHIFT_U -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_U\nsnippet K_CTRL_ALT_SHIFT_U\n\tK_CTRL_ALT_SHIFT_U -> { ${1://cuerpo...} }\n\n# K_V\nsnippet K_V\n\tK_V -> { ${1://cuerpo...} }\n# K_CTRL_V\nsnippet K_CTRL_V\n\tK_CTRL_V -> { ${1://cuerpo...} }\n# K_ALT_V\nsnippet K_ALT_V\n\tK_ALT_V -> { ${1://cuerpo...} }\n# K_SHIFT_V\nsnippet K_SHIFT_V\n\tK_SHIFT_V -> { ${1://cuerpo...} }\n# K_CTRL_ALT_V\nsnippet K_CTRL_ALT_V\n\tK_CTRL_ALT_V -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_V\nsnippet K_CTRL_SHIFT_V\n\tK_CTRL_SHIFT_V -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_V\nsnippet K_CTRL_ALT_SHIFT_V\n\tK_CTRL_ALT_SHIFT_V -> { ${1://cuerpo...} }\n\n# K_W\nsnippet K_W\n\tK_W -> { ${1://cuerpo...} }\n# K_CTRL_W\nsnippet K_CTRL_W\n\tK_CTRL_W -> { ${1://cuerpo...} }\n# K_ALT_W\nsnippet K_ALT_W\n\tK_ALT_W -> { ${1://cuerpo...} }\n# K_SHIFT_W\nsnippet K_SHIFT_W\n\tK_SHIFT_W -> { ${1://cuerpo...} }\n# K_CTRL_ALT_W\nsnippet K_CTRL_ALT_W\n\tK_CTRL_ALT_W -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_W\nsnippet K_CTRL_SHIFT_W\n\tK_CTRL_SHIFT_W -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_W\nsnippet K_CTRL_ALT_SHIFT_W\n\tK_CTRL_ALT_SHIFT_W -> { ${1://cuerpo...} }\n\n# K_X\nsnippet K_X\n\tK_X -> { ${1://cuerpo...} }\n# K_CTRL_X\nsnippet K_CTRL_X\n\tK_CTRL_X -> { ${1://cuerpo...} }\n# K_ALT_X\nsnippet K_ALT_X\n\tK_ALT_X -> { ${1://cuerpo...} }\n# K_SHIFT_X\nsnippet K_SHIFT_X\n\tK_SHIFT_X -> { ${1://cuerpo...} }\n# K_CTRL_ALT_X\nsnippet K_CTRL_ALT_X\n\tK_CTRL_ALT_X -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_X\nsnippet K_CTRL_SHIFT_X\n\tK_CTRL_SHIFT_X -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_X\nsnippet K_CTRL_ALT_SHIFT_X\n\tK_CTRL_ALT_SHIFT_X -> { ${1://cuerpo...} }\n\n# K_Y\nsnippet K_Y\n\tK_Y -> { ${1://cuerpo...} }\n# K_CTRL_Y\nsnippet K_CTRL_Y\n\tK_CTRL_Y -> { ${1://cuerpo...} }\n# K_ALT_Y\nsnippet K_ALT_Y\n\tK_ALT_Y -> { ${1://cuerpo...} }\n# K_SHIFT_Y\nsnippet K_SHIFT_Y\n\tK_SHIFT_Y -> { ${1://cuerpo...} }\n# K_CTRL_ALT_Y\nsnippet K_CTRL_ALT_Y\n\tK_CTRL_ALT_Y -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_Y\nsnippet K_CTRL_SHIFT_Y\n\tK_CTRL_SHIFT_Y -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_Y\nsnippet K_CTRL_ALT_SHIFT_Y\n\tK_CTRL_ALT_SHIFT_Y -> { ${1://cuerpo...} }\n\n# K_Z\nsnippet K_Z\n\tK_Z -> { ${1://cuerpo...} }\n# K_CTRL_Z\nsnippet K_CTRL_Z\n\tK_CTRL_Z -> { ${1://cuerpo...} }\n# K_ALT_Z\nsnippet K_ALT_Z\n\tK_ALT_Z -> { ${1://cuerpo...} }\n# K_SHIFT_Z\nsnippet K_SHIFT_Z\n\tK_SHIFT_Z -> { ${1://cuerpo...} }\n# K_CTRL_ALT_Z\nsnippet K_CTRL_ALT_Z\n\tK_CTRL_ALT_Z -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_Z\nsnippet K_CTRL_SHIFT_Z\n\tK_CTRL_SHIFT_Z -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_Z\nsnippet K_CTRL_ALT_SHIFT_Z\n\tK_CTRL_ALT_SHIFT_Z -> { ${1://cuerpo...} }\n\n# K_0\nsnippet K_0\n\tK_0 -> { ${1://cuerpo...} }\n# K_CTRL_0\nsnippet K_CTRL_0\n\tK_CTRL_0 -> { ${1://cuerpo...} }\n# K_ALT_0\nsnippet K_ALT_0\n\tK_ALT_0 -> { ${1://cuerpo...} }\n# K_SHIFT_0\nsnippet K_SHIFT_0\n\tK_SHIFT_0 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_0\nsnippet K_CTRL_ALT_0\n\tK_CTRL_ALT_0 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_0\nsnippet K_CTRL_SHIFT_0\n\tK_CTRL_SHIFT_0 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_0\nsnippet K_CTRL_ALT_SHIFT_0\n\tK_CTRL_ALT_SHIFT_0 -> { ${1://cuerpo...} }\n\n# K_1\nsnippet K_1\n\tK_1 -> { ${1://cuerpo...} }\n# K_CTRL_1\nsnippet K_CTRL_1\n\tK_CTRL_1 -> { ${1://cuerpo...} }\n# K_ALT_1\nsnippet K_ALT_1\n\tK_ALT_1 -> { ${1://cuerpo...} }\n# K_SHIFT_1\nsnippet K_SHIFT_1\n\tK_SHIFT_1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_1\nsnippet K_CTRL_ALT_1\n\tK_CTRL_ALT_1 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_1\nsnippet K_CTRL_SHIFT_1\n\tK_CTRL_SHIFT_1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_1\nsnippet K_CTRL_ALT_SHIFT_1\n\tK_CTRL_ALT_SHIFT_1 -> { ${1://cuerpo...} }\n\n# K_2\nsnippet K_2\n\tK_2 -> { ${1://cuerpo...} }\n# K_CTRL_2\nsnippet K_CTRL_2\n\tK_CTRL_2 -> { ${1://cuerpo...} }\n# K_ALT_2\nsnippet K_ALT_2\n\tK_ALT_2 -> { ${1://cuerpo...} }\n# K_SHIFT_2\nsnippet K_SHIFT_2\n\tK_SHIFT_2 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_2\nsnippet K_CTRL_ALT_2\n\tK_CTRL_ALT_2 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_2\nsnippet K_CTRL_SHIFT_2\n\tK_CTRL_SHIFT_2 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_2\nsnippet K_CTRL_ALT_SHIFT_2\n\tK_CTRL_ALT_SHIFT_2 -> { ${1://cuerpo...} }\n\n# K_3\nsnippet K_3\n\tK_3 -> { ${1://cuerpo...} }\n# K_CTRL_3\nsnippet K_CTRL_3\n\tK_CTRL_3 -> { ${1://cuerpo...} }\n# K_ALT_3\nsnippet K_ALT_3\n\tK_ALT_3 -> { ${1://cuerpo...} }\n# K_SHIFT_3\nsnippet K_SHIFT_3\n\tK_SHIFT_3 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_3\nsnippet K_CTRL_ALT_3\n\tK_CTRL_ALT_3 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_3\nsnippet K_CTRL_SHIFT_3\n\tK_CTRL_SHIFT_3 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_3\nsnippet K_CTRL_ALT_SHIFT_3\n\tK_CTRL_ALT_SHIFT_3 -> { ${1://cuerpo...} }\n\n# K_4\nsnippet K_4\n\tK_4 -> { ${1://cuerpo...} }\n# K_CTRL_4\nsnippet K_CTRL_4\n\tK_CTRL_4 -> { ${1://cuerpo...} }\n# K_ALT_4\nsnippet K_ALT_4\n\tK_ALT_4 -> { ${1://cuerpo...} }\n# K_SHIFT_4\nsnippet K_SHIFT_4\n\tK_SHIFT_4 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_4\nsnippet K_CTRL_ALT_4\n\tK_CTRL_ALT_4 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_4\nsnippet K_CTRL_SHIFT_4\n\tK_CTRL_SHIFT_4 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_4\nsnippet K_CTRL_ALT_SHIFT_4\n\tK_CTRL_ALT_SHIFT_4 -> { ${1://cuerpo...} }\n\n# K_5\nsnippet K_5\n\tK_5 -> { ${1://cuerpo...} }\n# K_CTRL_5\nsnippet K_CTRL_5\n\tK_CTRL_5 -> { ${1://cuerpo...} }\n# K_ALT_5\nsnippet K_ALT_5\n\tK_ALT_5 -> { ${1://cuerpo...} }\n# K_SHIFT_5\nsnippet K_SHIFT_5\n\tK_SHIFT_5 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_5\nsnippet K_CTRL_ALT_5\n\tK_CTRL_ALT_5 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_5\nsnippet K_CTRL_SHIFT_5\n\tK_CTRL_SHIFT_5 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_5\nsnippet K_CTRL_ALT_SHIFT_5\n\tK_CTRL_ALT_SHIFT_5 -> { ${1://cuerpo...} }\n\n# K_6\nsnippet K_6\n\tK_6 -> { ${1://cuerpo...} }\n# K_CTRL_6\nsnippet K_CTRL_6\n\tK_CTRL_6 -> { ${1://cuerpo...} }\n# K_ALT_6\nsnippet K_ALT_6\n\tK_ALT_6 -> { ${1://cuerpo...} }\n# K_SHIFT_6\nsnippet K_SHIFT_6\n\tK_SHIFT_6 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_6\nsnippet K_CTRL_ALT_6\n\tK_CTRL_ALT_6 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_6\nsnippet K_CTRL_SHIFT_6\n\tK_CTRL_SHIFT_6 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_6\nsnippet K_CTRL_ALT_SHIFT_6\n\tK_CTRL_ALT_SHIFT_6 -> { ${1://cuerpo...} }\n\n# K_7\nsnippet K_7\n\tK_7 -> { ${1://cuerpo...} }\n# K_CTRL_7\nsnippet K_CTRL_7\n\tK_CTRL_7 -> { ${1://cuerpo...} }\n# K_ALT_7\nsnippet K_ALT_7\n\tK_ALT_7 -> { ${1://cuerpo...} }\n# K_SHIFT_7\nsnippet K_SHIFT_7\n\tK_SHIFT_7 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_7\nsnippet K_CTRL_ALT_7\n\tK_CTRL_ALT_7 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_7\nsnippet K_CTRL_SHIFT_7\n\tK_CTRL_SHIFT_7 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_7\nsnippet K_CTRL_ALT_SHIFT_7\n\tK_CTRL_ALT_SHIFT_7 -> { ${1://cuerpo...} }\n\n# K_8\nsnippet K_8\n\tK_8 -> { ${1://cuerpo...} }\n# K_CTRL_8\nsnippet K_CTRL_8\n\tK_CTRL_8 -> { ${1://cuerpo...} }\n# K_ALT_8\nsnippet K_ALT_8\n\tK_ALT_8 -> { ${1://cuerpo...} }\n# K_SHIFT_8\nsnippet K_SHIFT_8\n\tK_SHIFT_8 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_8\nsnippet K_CTRL_ALT_8\n\tK_CTRL_ALT_8 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_8\nsnippet K_CTRL_SHIFT_8\n\tK_CTRL_SHIFT_8 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_8\nsnippet K_CTRL_ALT_SHIFT_8\n\tK_CTRL_ALT_SHIFT_8 -> { ${1://cuerpo...} }\n\n# K_9\nsnippet K_9\n\tK_9 -> { ${1://cuerpo...} }\n# K_CTRL_9\nsnippet K_CTRL_9\n\tK_CTRL_9 -> { ${1://cuerpo...} }\n# K_ALT_9\nsnippet K_ALT_9\n\tK_ALT_9 -> { ${1://cuerpo...} }\n# K_SHIFT_9\nsnippet K_SHIFT_9\n\tK_SHIFT_9 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_9\nsnippet K_CTRL_ALT_9\n\tK_CTRL_ALT_9 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_9\nsnippet K_CTRL_SHIFT_9\n\tK_CTRL_SHIFT_9 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_9\nsnippet K_CTRL_ALT_SHIFT_9\n\tK_CTRL_ALT_SHIFT_9 -> { ${1://cuerpo...} }\n\n# K_F1\nsnippet K_F1\n\tK_F1 -> { ${1://cuerpo...} }\n# K_CTRL_F1\nsnippet K_CTRL_F1\n\tK_CTRL_F1 -> { ${1://cuerpo...} }\n# K_ALT_F1\nsnippet K_ALT_F1\n\tK_ALT_F1 -> { ${1://cuerpo...} }\n# K_SHIFT_F1\nsnippet K_SHIFT_F1\n\tK_SHIFT_F1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F1\nsnippet K_CTRL_ALT_F1\n\tK_CTRL_ALT_F1 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F1\nsnippet K_CTRL_SHIFT_F1\n\tK_CTRL_SHIFT_F1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F1\nsnippet K_CTRL_ALT_SHIFT_F1\n\tK_CTRL_ALT_SHIFT_F1 -> { ${1://cuerpo...} }\n\n# K_F2\nsnippet K_F2\n\tK_F2 -> { ${1://cuerpo...} }\n# K_CTRL_F2\nsnippet K_CTRL_F2\n\tK_CTRL_F2 -> { ${1://cuerpo...} }\n# K_ALT_F2\nsnippet K_ALT_F2\n\tK_ALT_F2 -> { ${1://cuerpo...} }\n# K_SHIFT_F2\nsnippet K_SHIFT_F2\n\tK_SHIFT_F2 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F2\nsnippet K_CTRL_ALT_F2\n\tK_CTRL_ALT_F2 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F2\nsnippet K_CTRL_SHIFT_F2\n\tK_CTRL_SHIFT_F2 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F2\nsnippet K_CTRL_ALT_SHIFT_F2\n\tK_CTRL_ALT_SHIFT_F2 -> { ${1://cuerpo...} }\n\n# K_F3\nsnippet K_F3\n\tK_F3 -> { ${1://cuerpo...} }\n# K_CTRL_F3\nsnippet K_CTRL_F3\n\tK_CTRL_F3 -> { ${1://cuerpo...} }\n# K_ALT_F3\nsnippet K_ALT_F3\n\tK_ALT_F3 -> { ${1://cuerpo...} }\n# K_SHIFT_F3\nsnippet K_SHIFT_F3\n\tK_SHIFT_F3 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F3\nsnippet K_CTRL_ALT_F3\n\tK_CTRL_ALT_F3 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F3\nsnippet K_CTRL_SHIFT_F3\n\tK_CTRL_SHIFT_F3 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F3\nsnippet K_CTRL_ALT_SHIFT_F3\n\tK_CTRL_ALT_SHIFT_F3 -> { ${1://cuerpo...} }\n\n# K_A\nsnippet K_A\n\tK_A -> { ${1://cuerpo...} }\n# K_CTRL_A\nsnippet K_CTRL_A\n\tK_CTRL_A -> { ${1://cuerpo...} }\n# K_ALT_A\nsnippet K_ALT_A\n\tK_ALT_A -> { ${1://cuerpo...} }\n# K_SHIFT_A\nsnippet K_SHIFT_A\n\tK_SHIFT_A -> { ${1://cuerpo...} }\n# K_CTRL_ALT_A\nsnippet K_CTRL_ALT_A\n\tK_CTRL_ALT_A -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_A\nsnippet K_CTRL_SHIFT_A\n\tK_CTRL_SHIFT_A -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_A\nsnippet K_CTRL_ALT_SHIFT_A\n\tK_CTRL_ALT_SHIFT_A -> { ${1://cuerpo...} }\n\n# K_F5\nsnippet K_F5\n\tK_F5 -> { ${1://cuerpo...} }\n# K_CTRL_F5\nsnippet K_CTRL_F5\n\tK_CTRL_F5 -> { ${1://cuerpo...} }\n# K_ALT_F5\nsnippet K_ALT_F5\n\tK_ALT_F5 -> { ${1://cuerpo...} }\n# K_SHIFT_F5\nsnippet K_SHIFT_F5\n\tK_SHIFT_F5 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F5\nsnippet K_CTRL_ALT_F5\n\tK_CTRL_ALT_F5 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F5\nsnippet K_CTRL_SHIFT_F5\n\tK_CTRL_SHIFT_F5 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F5\nsnippet K_CTRL_ALT_SHIFT_F5\n\tK_CTRL_ALT_SHIFT_F5 -> { ${1://cuerpo...} }\n\n# K_F6\nsnippet K_F6\n\tK_F6 -> { ${1://cuerpo...} }\n# K_CTRL_F6\nsnippet K_CTRL_F6\n\tK_CTRL_F6 -> { ${1://cuerpo...} }\n# K_ALT_F6\nsnippet K_ALT_F6\n\tK_ALT_F6 -> { ${1://cuerpo...} }\n# K_SHIFT_F6\nsnippet K_SHIFT_F6\n\tK_SHIFT_F6 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F6\nsnippet K_CTRL_ALT_F6\n\tK_CTRL_ALT_F6 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F6\nsnippet K_CTRL_SHIFT_F6\n\tK_CTRL_SHIFT_F6 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F6\nsnippet K_CTRL_ALT_SHIFT_F6\n\tK_CTRL_ALT_SHIFT_F6 -> { ${1://cuerpo...} }\n\n# K_F7\nsnippet K_F7\n\tK_F7 -> { ${1://cuerpo...} }\n# K_CTRL_F7\nsnippet K_CTRL_F7\n\tK_CTRL_F7 -> { ${1://cuerpo...} }\n# K_ALT_F7\nsnippet K_ALT_F7\n\tK_ALT_F7 -> { ${1://cuerpo...} }\n# K_SHIFT_F7\nsnippet K_SHIFT_F7\n\tK_SHIFT_F7 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F7\nsnippet K_CTRL_ALT_F7\n\tK_CTRL_ALT_F7 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F7\nsnippet K_CTRL_SHIFT_F7\n\tK_CTRL_SHIFT_F7 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F7\nsnippet K_CTRL_ALT_SHIFT_F7\n\tK_CTRL_ALT_SHIFT_F7 -> { ${1://cuerpo...} }\n\n# K_F8\nsnippet K_F8\n\tK_F8 -> { ${1://cuerpo...} }\n# K_CTRL_F8\nsnippet K_CTRL_F8\n\tK_CTRL_F8 -> { ${1://cuerpo...} }\n# K_ALT_F8\nsnippet K_ALT_F8\n\tK_ALT_F8 -> { ${1://cuerpo...} }\n# K_SHIFT_F8\nsnippet K_SHIFT_F8\n\tK_SHIFT_F8 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F8\nsnippet K_CTRL_ALT_F8\n\tK_CTRL_ALT_F8 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F8\nsnippet K_CTRL_SHIFT_F8\n\tK_CTRL_SHIFT_F8 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F8\nsnippet K_CTRL_ALT_SHIFT_F8\n\tK_CTRL_ALT_SHIFT_F8 -> { ${1://cuerpo...} }\n\n# K_F9\nsnippet K_F9\n\tK_F9 -> { ${1://cuerpo...} }\n# K_CTRL_F9\nsnippet K_CTRL_F9\n\tK_CTRL_F9 -> { ${1://cuerpo...} }\n# K_ALT_F9\nsnippet K_ALT_F9\n\tK_ALT_F9 -> { ${1://cuerpo...} }\n# K_SHIFT_F9\nsnippet K_SHIFT_F9\n\tK_SHIFT_F9 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F9\nsnippet K_CTRL_ALT_F9\n\tK_CTRL_ALT_F9 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F9\nsnippet K_CTRL_SHIFT_F9\n\tK_CTRL_SHIFT_F9 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F9\nsnippet K_CTRL_ALT_SHIFT_F9\n\tK_CTRL_ALT_SHIFT_F9 -> { ${1://cuerpo...} }\n\n# K_F10\nsnippet K_F10\n\tK_F10 -> { ${1://cuerpo...} }\n# K_CTRL_F10\nsnippet K_CTRL_F10\n\tK_CTRL_F10 -> { ${1://cuerpo...} }\n# K_ALT_F10\nsnippet K_ALT_F10\n\tK_ALT_F10 -> { ${1://cuerpo...} }\n# K_SHIFT_F10\nsnippet K_SHIFT_F10\n\tK_SHIFT_F10 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F10\nsnippet K_CTRL_ALT_F10\n\tK_CTRL_ALT_F10 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F10\nsnippet K_CTRL_SHIFT_F10\n\tK_CTRL_SHIFT_F10 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F10\nsnippet K_CTRL_ALT_SHIFT_F10\n\tK_CTRL_ALT_SHIFT_F10 -> { ${1://cuerpo...} }\n\n# K_F11\nsnippet K_F11\n\tK_F11 -> { ${1://cuerpo...} }\n# K_CTRL_F11\nsnippet K_CTRL_F11\n\tK_CTRL_F11 -> { ${1://cuerpo...} }\n# K_ALT_F11\nsnippet K_ALT_F11\n\tK_ALT_F11 -> { ${1://cuerpo...} }\n# K_SHIFT_F11\nsnippet K_SHIFT_F11\n\tK_SHIFT_F11 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F11\nsnippet K_CTRL_ALT_F11\n\tK_CTRL_ALT_F11 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F11\nsnippet K_CTRL_SHIFT_F11\n\tK_CTRL_SHIFT_F11 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F11\nsnippet K_CTRL_ALT_SHIFT_F11\n\tK_CTRL_ALT_SHIFT_F11 -> { ${1://cuerpo...} }\n\n# K_F12\nsnippet K_F12\n\tK_F12 -> { ${1://cuerpo...} }\n# K_CTRL_F12\nsnippet K_CTRL_F12\n\tK_CTRL_F12 -> { ${1://cuerpo...} }\n# K_ALT_F12\nsnippet K_ALT_F12\n\tK_ALT_F12 -> { ${1://cuerpo...} }\n# K_SHIFT_F12\nsnippet K_SHIFT_F12\n\tK_SHIFT_F12 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F12\nsnippet K_CTRL_ALT_F12\n\tK_CTRL_ALT_F12 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F12\nsnippet K_CTRL_SHIFT_F12\n\tK_CTRL_SHIFT_F12 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F12\nsnippet K_CTRL_ALT_SHIFT_F12\n\tK_CTRL_ALT_SHIFT_F12 -> { ${1://cuerpo...} }\n\n# K_RETURN\nsnippet K_RETURN\n\tK_RETURN -> { ${1://cuerpo...} }\n# K_CTRL_RETURN\nsnippet K_CTRL_RETURN\n\tK_CTRL_RETURN -> { ${1://cuerpo...} }\n# K_ALT_RETURN\nsnippet K_ALT_RETURN\n\tK_ALT_RETURN -> { ${1://cuerpo...} }\n# K_SHIFT_RETURN\nsnippet K_SHIFT_RETURN\n\tK_SHIFT_RETURN -> { ${1://cuerpo...} }\n# K_CTRL_ALT_RETURN\nsnippet K_CTRL_ALT_RETURN\n\tK_CTRL_ALT_RETURN -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_RETURN\nsnippet K_CTRL_SHIFT_RETURN\n\tK_CTRL_SHIFT_RETURN -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_RETURN\nsnippet K_CTRL_ALT_SHIFT_RETURN\n\tK_CTRL_ALT_SHIFT_RETURN -> { ${1://cuerpo...} }\n\n# K_SPACE\nsnippet K_SPACE\n\tK_SPACE -> { ${1://cuerpo...} }\n# K_CTRL_SPACE\nsnippet K_CTRL_SPACE\n\tK_CTRL_SPACE -> { ${1://cuerpo...} }\n# K_ALT_SPACE\nsnippet K_ALT_SPACE\n\tK_ALT_SPACE -> { ${1://cuerpo...} }\n# K_SHIFT_SPACE\nsnippet K_SHIFT_SPACE\n\tK_SHIFT_SPACE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SPACE\nsnippet K_CTRL_ALT_SPACE\n\tK_CTRL_ALT_SPACE -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_SPACE\nsnippet K_CTRL_SHIFT_SPACE\n\tK_CTRL_SHIFT_SPACE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_SPACE\nsnippet K_CTRL_ALT_SHIFT_SPACE\n\tK_CTRL_ALT_SHIFT_SPACE -> { ${1://cuerpo...} }\n\n# K_ESCAPE\nsnippet K_ESCAPE\n\tK_ESCAPE -> { ${1://cuerpo...} }\n# K_CTRL_ESCAPE\nsnippet K_CTRL_ESCAPE\n\tK_CTRL_ESCAPE -> { ${1://cuerpo...} }\n# K_ALT_ESCAPE\nsnippet K_ALT_ESCAPE\n\tK_ALT_ESCAPE -> { ${1://cuerpo...} }\n# K_SHIFT_ESCAPE\nsnippet K_SHIFT_ESCAPE\n\tK_SHIFT_ESCAPE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_ESCAPE\nsnippet K_CTRL_ALT_ESCAPE\n\tK_CTRL_ALT_ESCAPE -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_ESCAPE\nsnippet K_CTRL_SHIFT_ESCAPE\n\tK_CTRL_SHIFT_ESCAPE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_ESCAPE\nsnippet K_CTRL_ALT_SHIFT_ESCAPE\n\tK_CTRL_ALT_SHIFT_ESCAPE -> { ${1://cuerpo...} }\n\n# K_BACKSPACE\nsnippet K_BACKSPACE\n\tK_BACKSPACE -> { ${1://cuerpo...} }\n# K_CTRL_BACKSPACE\nsnippet K_CTRL_BACKSPACE\n\tK_CTRL_BACKSPACE -> { ${1://cuerpo...} }\n# K_ALT_BACKSPACE\nsnippet K_ALT_BACKSPACE\n\tK_ALT_BACKSPACE -> { ${1://cuerpo...} }\n# K_SHIFT_BACKSPACE\nsnippet K_SHIFT_BACKSPACE\n\tK_SHIFT_BACKSPACE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_BACKSPACE\nsnippet K_CTRL_ALT_BACKSPACE\n\tK_CTRL_ALT_BACKSPACE -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_BACKSPACE\nsnippet K_CTRL_SHIFT_BACKSPACE\n\tK_CTRL_SHIFT_BACKSPACE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_BACKSPACE\nsnippet K_CTRL_ALT_SHIFT_BACKSPACE\n\tK_CTRL_ALT_SHIFT_BACKSPACE -> { ${1://cuerpo...} }\n\n# K_TAB\nsnippet K_TAB\n\tK_TAB -> { ${1://cuerpo...} }\n# K_CTRL_TAB\nsnippet K_CTRL_TAB\n\tK_CTRL_TAB -> { ${1://cuerpo...} }\n# K_ALT_TAB\nsnippet K_ALT_TAB\n\tK_ALT_TAB -> { ${1://cuerpo...} }\n# K_SHIFT_TAB\nsnippet K_SHIFT_TAB\n\tK_SHIFT_TAB -> { ${1://cuerpo...} }\n# K_CTRL_ALT_TAB\nsnippet K_CTRL_ALT_TAB\n\tK_CTRL_ALT_TAB -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_TAB\nsnippet K_CTRL_SHIFT_TAB\n\tK_CTRL_SHIFT_TAB -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_TAB\nsnippet K_CTRL_ALT_SHIFT_TAB\n\tK_CTRL_ALT_SHIFT_TAB -> { ${1://cuerpo...} }\n\n# K_UP\nsnippet K_UP\n\tK_UP -> { ${1://cuerpo...} }\n# K_CTRL_UP\nsnippet K_CTRL_UP\n\tK_CTRL_UP -> { ${1://cuerpo...} }\n# K_ALT_UP\nsnippet K_ALT_UP\n\tK_ALT_UP -> { ${1://cuerpo...} }\n# K_SHIFT_UP\nsnippet K_SHIFT_UP\n\tK_SHIFT_UP -> { ${1://cuerpo...} }\n# K_CTRL_ALT_UP\nsnippet K_CTRL_ALT_UP\n\tK_CTRL_ALT_UP -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_UP\nsnippet K_CTRL_SHIFT_UP\n\tK_CTRL_SHIFT_UP -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_UP\nsnippet K_CTRL_ALT_SHIFT_UP\n\tK_CTRL_ALT_SHIFT_UP -> { ${1://cuerpo...} }\n\n# K_DOWN\nsnippet K_DOWN\n\tK_DOWN -> { ${1://cuerpo...} }\n# K_CTRL_DOWN\nsnippet K_CTRL_DOWN\n\tK_CTRL_DOWN -> { ${1://cuerpo...} }\n# K_ALT_DOWN\nsnippet K_ALT_DOWN\n\tK_ALT_DOWN -> { ${1://cuerpo...} }\n# K_SHIFT_DOWN\nsnippet K_SHIFT_DOWN\n\tK_SHIFT_DOWN -> { ${1://cuerpo...} }\n# K_CTRL_ALT_DOWN\nsnippet K_CTRL_ALT_DOWN\n\tK_CTRL_ALT_DOWN -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_DOWN\nsnippet K_CTRL_SHIFT_DOWN\n\tK_CTRL_SHIFT_DOWN -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_DOWN\nsnippet K_CTRL_ALT_SHIFT_DOWN\n\tK_CTRL_ALT_SHIFT_DOWN -> { ${1://cuerpo...} }\n\n# K_LEFT\nsnippet K_LEFT\n\tK_LEFT -> { ${1://cuerpo...} }\n# K_CTRL_LEFT\nsnippet K_CTRL_LEFT\n\tK_CTRL_LEFT -> { ${1://cuerpo...} }\n# K_ALT_LEFT\nsnippet K_ALT_LEFT\n\tK_ALT_LEFT -> { ${1://cuerpo...} }\n# K_SHIFT_LEFT\nsnippet K_SHIFT_LEFT\n\tK_SHIFT_LEFT -> { ${1://cuerpo...} }\n# K_CTRL_ALT_LEFT\nsnippet K_CTRL_ALT_LEFT\n\tK_CTRL_ALT_LEFT -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_LEFT\nsnippet K_CTRL_SHIFT_LEFT\n\tK_CTRL_SHIFT_LEFT -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_LEFT\nsnippet K_CTRL_ALT_SHIFT_LEFT\n\tK_CTRL_ALT_SHIFT_LEFT -> { ${1://cuerpo...} }\n\n# K_RIGHT\nsnippet K_RIGHT\n\tK_RIGHT -> { ${1://cuerpo...} }\n# K_CTRL_RIGHT\nsnippet K_CTRL_RIGHT\n\tK_CTRL_RIGHT -> { ${1://cuerpo...} }\n# K_ALT_RIGHT\nsnippet K_ALT_RIGHT\n\tK_ALT_RIGHT -> { ${1://cuerpo...} }\n# K_SHIFT_RIGHT\nsnippet K_SHIFT_RIGHT\n\tK_SHIFT_RIGHT -> { ${1://cuerpo...} }\n# K_CTRL_ALT_RIGHT\nsnippet K_CTRL_ALT_RIGHT\n\tK_CTRL_ALT_RIGHT -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_RIGHT\nsnippet K_CTRL_SHIFT_RIGHT\n\tK_CTRL_SHIFT_RIGHT -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_RIGHT\nsnippet K_CTRL_ALT_SHIFT_RIGHT\n\tK_CTRL_ALT_SHIFT_RIGHT -> { ${1://cuerpo...} }\n\n# recorrido (simple)\nsnippet recorrido (simple)\n\t${1:// Ir al inicio}\n\twhile (not ${2:// es \u00FAltimo elemento}) {\n\t\t${3:// Procesar el elemento}\n\t\t${4:// Ir al pr\u00F3ximo elemento}\n\t}\n\t${5:// Finalizar}\n\n# recorrido (de acumulaci\u00F3n)\nsnippet recorrido (de acumulaci\u00F3n)\n\t${1:// Ir al inicio}\n\t${2:cantidadVistos} := ${3:// contar elementos en lugar actual}\n\twhile (not ${4:// es \u00FAltimo elemento}) {\n\t\t${4:// Ir al pr\u00F3ximo elemento}\n\t\t${2:cantidadVistos} := ${2:cantidadVistos} + ${3:// contar elementos en lugar actual}\n\t}\n\treturn (${2:cantidadVistos})\n\n# recorrido (de b\u00FAsqueda)\nsnippet recorrido (de b\u00FAsqueda)\n\t${1:// Ir al inicio}\n\twhile (not ${2:// encontr\u00E9 lo que buscaba}) {\n\t\t${3:// Ir al pr\u00F3ximo elemento}\n\t}\n\treturn (${2:// encontr\u00E9 lo que buscaba })\n\n# recorrido (de b\u00FAsqueda con borde)\nsnippet recorrido (de b\u00FAsqueda con borde)\n\t${1:// Ir al inicio}\n\twhile (not ${2:// encontr\u00E9 lo que buscaba} && not ${3:// es \u00FAltimo elemento}) {\n\t\t${4:// Ir al pr\u00F3ximo elemento}\n\t}\n\treturn (${2:// encontr\u00E9 lo que buscaba })\n\n# recorrido (de tipos enumerativos)\nsnippet recorrido (de tipos enumerativos)\n\t${1:elementoActual} := ${2:minElemento()}\n\twhile (${1:elementoActual} /= ${3:maxElemento()}) {\n\t\t${4:// Procesar con elemento actual}\n\t\t${1:elementoActual} := siguiente(${1:elementoActual})\n\t}\n\t${4:// Procesar con elemento actual}\n\n# recorrido (de b\u00FAsqueda sobre lista)\nsnippet recorrido (de b\u00FAsqueda sobre lista)\n\t${1:listaRecorrida} := ${2:lista}\n\twhile (primero(${1:listaRecorrida}) /= ${3://elemento buscado}) {\n\t\t${1:elementoActual} := sinElPrimero(${1:elementoActual})\n\t}\n\treturn (primero(${1:listaRecorrida}))\n\n# recorrido (de b\u00FAsqueda sobre lista con borde)\nsnippet recorrido (de b\u00FAsqueda sobre lista con borde)\n\t${1:listaRecorrida} := ${2:lista}\n\twhile (not esVac\u00EDa(${1:listaRecorrida}) && primero(${1:listaRecorrida}) /= ${3://elemento buscado}) {\n\t\t${1:elementoActual} := sinElPrimero(${1:elementoActual})\n\t}\n\treturn (not esVac\u00EDa(${1:listaRecorrida}))\n\n# docs (procedimiento)\nsnippet docs (procedimiento)\n\t/*\n\t\t@PROP\u00D3SITO: ${1:...}\n\t\t@PRECONDICI\u00D3N: ${2:...}\n\t*/\n\n# docs (procedimiento con par\u00E1metros)\nsnippet docs (procedimiento con par\u00E1metros)\n\t/*\n\t\t@PROP\u00D3SITO: ${1:...}\n\t\t@PRECONDICI\u00D3N: ${2:...}\n\t\t@PAR\u00C1METROS:\n\t\t\t\t* ${3:nombreDelPar\u00E1metro} : ${4:Tipo} - ${5:descripci\u00F3n}\n\t*/\n\n# docs (funci\u00F3n)\nsnippet docs (funci\u00F3n)\n\t/*\n\t\t@PROP\u00D3SITO: ${1:...}\n\t\t@PRECONDICI\u00D3N: ${2:...}\n\t\t@TIPO: ${3:...}\n\t*/\n\n# docs (funci\u00F3n con par\u00E1metros)\nsnippet docs (funci\u00F3n con par\u00E1metros)\n\t/*\n\t\t@PROP\u00D3SITO: ${1:...}\n\t\t@PRECONDICI\u00D3N: ${2:...}\n\t\t@PAR\u00C1METROS:\n\t\t\t\t* ${3:nombreDelPar\u00E1metro} : ${4:Tipo} - ${5:descripci\u00F3n}\n\t\t@TIPO: ${6:...}\n\t*/\n";
-
-});
-
-define("ace/snippets/gobstones",["require","exports","module","ace/snippets/gobstones.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./gobstones.snippets");
-exports.scope = "gobstones";
-
-});
-
-define("ace/snippets/graphqlschema.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Type Snippet\ntrigger type\nsnippet type\n\ttype ${1:type_name} {\n\t\t${2:type_siblings}\n\t}\n\n# Input Snippet\ntrigger input\nsnippet input\n\tinput ${1:input_name} {\n\t\t${2:input_siblings}\n\t}\n\n# Interface Snippet\ntrigger interface\nsnippet interface\n\tinterface ${1:interface_name} {\n\t\t${2:interface_siblings}\n\t}\n\n# Interface Snippet\ntrigger union\nsnippet union\n\tunion ${1:union_name} = ${2:type} | ${3: type}\n\n# Enum Snippet\ntrigger enum\nsnippet enum\n\tenum ${1:enum_name} {\n\t\t${2:enum_siblings}\n\t}\n";
-
-});
-
-define("ace/snippets/graphqlschema",["require","exports","module","ace/snippets/graphqlschema.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./graphqlschema.snippets");
-exports.scope = "graphqlschema";
-
-});
-
-define("ace/snippets/haml.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet t\n\t%table\n\t\t%tr\n\t\t\t%th\n\t\t\t\t${1:headers}\n\t\t%tr\n\t\t\t%td\n\t\t\t\t${2:headers}\nsnippet ul\n\t%ul\n\t\t%li\n\t\t\t${1:item}\n\t\t%li\nsnippet =rp\n\t= render :partial => '${1:partial}'\nsnippet =rpl\n\t= render :partial => '${1:partial}', :locals => {}\nsnippet =rpc\n\t= render :partial => '${1:partial}', :collection => @$1\n\n";
-
-});
-
-define("ace/snippets/haml",["require","exports","module","ace/snippets/haml.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./haml.snippets");
-exports.scope = "haml";
-
-});
-
-define("ace/snippets/haskell.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet lang\n\t{-# LANGUAGE ${1:OverloadedStrings} #-}\nsnippet info\n\t-- |\n\t-- Module      :  ${1:Module.Namespace}\n\t-- Copyright   :  ${2:Author} ${3:2011-2012}\n\t-- License     :  ${4:BSD3}\n\t--\n\t-- Maintainer  :  ${5:email@something.com}\n\t-- Stability   :  ${6:experimental}\n\t-- Portability :  ${7:unknown}\n\t--\n\t-- ${8:Description}\n\t--\nsnippet import\n\timport           ${1:Data.Text}\nsnippet import2\n\timport           ${1:Data.Text} (${2:head})\nsnippet importq\n\timport qualified ${1:Data.Text} as ${2:T}\nsnippet inst\n\tinstance ${1:Monoid} ${2:Type} where\n\t\t${3}\nsnippet type\n\ttype ${1:Type} = ${2:Type}\nsnippet data\n\tdata ${1:Type} = ${2:$1} ${3:Int}\nsnippet newtype\n\tnewtype ${1:Type} = ${2:$1} ${3:Int}\nsnippet class\n\tclass ${1:Class} a where\n\t\t${2}\nsnippet module\n\tmodule `substitute(substitute(expand('%:r'), '[/\\\\]','.','g'),'^\\%(\\l*\\.\\)\\?','','')` (\n\t)\twhere\n\t`expand('%') =~ 'Main' ? \"\\n\\nmain = do\\n  print \\\"hello world\\\"\" : \"\"`\n\nsnippet const\n\t${1:name} :: ${2:a}\n\t$1 = ${3:undefined}\nsnippet fn\n\t${1:fn} :: ${2:a} -> ${3:a}\n\t$1 ${4} = ${5:undefined}\nsnippet fn2\n\t${1:fn} :: ${2:a} -> ${3:a} -> ${4:a}\n\t$1 ${5} = ${6:undefined}\nsnippet ap\n\t${1:map} ${2:fn} ${3:list}\nsnippet do\n\tdo\n\t\t\nsnippet \u03BB\n\t\\${1:x} -> ${2}\nsnippet \\\n\t\\${1:x} -> ${2}\nsnippet <-\n\t${1:a} <- ${2:m a}\nsnippet \u2190\n\t${1:a} <- ${2:m a}\nsnippet ->\n\t${1:m a} -> ${2:a}\nsnippet \u2192\n\t${1:m a} -> ${2:a}\nsnippet tup\n\t(${1:a}, ${2:b})\nsnippet tup2\n\t(${1:a}, ${2:b}, ${3:c})\nsnippet tup3\n\t(${1:a}, ${2:b}, ${3:c}, ${4:d})\nsnippet rec\n\t${1:Record} { ${2:recFieldA} = ${3:undefined}\n\t\t\t\t, ${4:recFieldB} = ${5:undefined}\n\t\t\t\t}\nsnippet case\n\tcase ${1:something} of\n\t\t${2} -> ${3}\nsnippet let\n\tlet ${1} = ${2}\n\tin ${3}\nsnippet where\n\twhere\n\t\t${1:fn} = ${2:undefined}\n";
-
-});
-
-define("ace/snippets/haskell",["require","exports","module","ace/snippets/haskell.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./haskell.snippets");
-exports.scope = "haskell";
-
-});
-
-define("ace/snippets/html.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Some useful Unicode entities\n# Non-Breaking Space\nsnippet nbs\n\t&nbsp;\n# \u2190\nsnippet left\n\t&#x2190;\n# \u2192\nsnippet right\n\t&#x2192;\n# \u2191\nsnippet up\n\t&#x2191;\n# \u2193\nsnippet down\n\t&#x2193;\n# \u21A9\nsnippet return\n\t&#x21A9;\n# \u21E4\nsnippet backtab\n\t&#x21E4;\n# \u21E5\nsnippet tab\n\t&#x21E5;\n# \u21E7\nsnippet shift\n\t&#x21E7;\n# \u2303\nsnippet ctrl\n\t&#x2303;\n# \u2305\nsnippet enter\n\t&#x2305;\n# \u2318\nsnippet cmd\n\t&#x2318;\n# \u2325\nsnippet option\n\t&#x2325;\n# \u2326\nsnippet delete\n\t&#x2326;\n# \u232B\nsnippet backspace\n\t&#x232B;\n# \u238B\nsnippet esc\n\t&#x238B;\n# Generic Doctype\nsnippet doctype HTML 4.01 Strict\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\t\"http://www.w3.org/TR/html4/strict.dtd\">\nsnippet doctype HTML 4.01 Transitional\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\t\"http://www.w3.org/TR/html4/loose.dtd\">\nsnippet doctype HTML 5\n\t<!DOCTYPE HTML>\nsnippet doctype XHTML 1.0 Frameset\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\nsnippet doctype XHTML 1.0 Strict\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\nsnippet doctype XHTML 1.0 Transitional\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\nsnippet doctype XHTML 1.1\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\t\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n# HTML Doctype 4.01 Strict\nsnippet docts\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\t\"http://www.w3.org/TR/html4/strict.dtd\">\n# HTML Doctype 4.01 Transitional\nsnippet doct\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\t\"http://www.w3.org/TR/html4/loose.dtd\">\n# HTML Doctype 5\nsnippet doct5\n\t<!DOCTYPE html>\n# XHTML Doctype 1.0 Frameset\nsnippet docxf\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n# XHTML Doctype 1.0 Strict\nsnippet docxs\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n# XHTML Doctype 1.0 Transitional\nsnippet docxt\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n# XHTML Doctype 1.1\nsnippet docx\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\t\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n# html5shiv\nsnippet html5shiv\n\t<!--[if lte IE 8]>\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js\"></script>\n\t<![endif]-->\nsnippet html5printshiv\n\t<!--[if lte IE 8]>\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js\"></script>\n\t<![endif]-->\n# Attributes\nsnippet attr\n\t${1:attribute}=\"${2:property}\"\nsnippet attr+\n\t${1:attribute}=\"${2:property}\" attr+${3}\nsnippet .\n\tclass=\"${1}\"${2}\nsnippet #\n\tid=\"${1}\"${2}\nsnippet alt\n\talt=\"${1}\"${2}\nsnippet charset\n\tcharset=\"${1:utf-8}\"${2}\nsnippet data\n\tdata-${1}=\"${2:$1}\"${3}\nsnippet for\n\tfor=\"${1}\"${2}\nsnippet height\n\theight=\"${1}\"${2}\nsnippet href\n\thref=\"${1:#}\"${2}\nsnippet lang\n\tlang=\"${1:en}\"${2}\nsnippet media\n\tmedia=\"${1}\"${2}\nsnippet name\n\tname=\"${1}\"${2}\nsnippet rel\n\trel=\"${1}\"${2}\nsnippet scope\n\tscope=\"${1:row}\"${2}\nsnippet src\n\tsrc=\"${1}\"${2}\nsnippet title=\n\ttitle=\"${1}\"${2}\nsnippet type\n\ttype=\"${1}\"${2}\nsnippet value\n\tvalue=\"${1}\"${2}\nsnippet width\n\twidth=\"${1}\"${2}\n# Elements\nsnippet a\n\t<a href=\"${1:#}\">${2:$1}</a>\nsnippet a.\n\t<a class=\"${1}\" href=\"${2:#}\">${3:$1}</a>\nsnippet a#\n\t<a id=\"${1}\" href=\"${2:#}\">${3:$1}</a>\nsnippet a:ext\n\t<a href=\"http://${1:example.com}\">${2:$1}</a>\nsnippet a:mail\n\t<a href=\"mailto:${1:joe@example.com}?subject=${2:feedback}\">${3:email me}</a>\nsnippet abbr\n\t<abbr title=\"${1}\">${2}</abbr>\nsnippet address\n\t<address>\n\t\t${1}\n\t</address>\nsnippet area\n\t<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\nsnippet area+\n\t<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\n\tarea+${5}\nsnippet area:c\n\t<area shape=\"circle\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:d\n\t<area shape=\"default\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:p\n\t<area shape=\"poly\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:r\n\t<area shape=\"rect\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet article\n\t<article>\n\t\t${1}\n\t</article>\nsnippet article.\n\t<article class=\"${1}\">\n\t\t${2}\n\t</article>\nsnippet article#\n\t<article id=\"${1}\">\n\t\t${2}\n\t</article>\nsnippet aside\n\t<aside>\n\t\t${1}\n\t</aside>\nsnippet aside.\n\t<aside class=\"${1}\">\n\t\t${2}\n\t</aside>\nsnippet aside#\n\t<aside id=\"${1}\">\n\t\t${2}\n\t</aside>\nsnippet audio\n\t<audio src=\"${1}>${2}</audio>\nsnippet b\n\t<b>${1}</b>\nsnippet base\n\t<base href=\"${1}\" target=\"${2}\" />\nsnippet bdi\n\t<bdi>${1}</bdo>\nsnippet bdo\n\t<bdo dir=\"${1}\">${2}</bdo>\nsnippet bdo:l\n\t<bdo dir=\"ltr\">${1}</bdo>\nsnippet bdo:r\n\t<bdo dir=\"rtl\">${1}</bdo>\nsnippet blockquote\n\t<blockquote>\n\t\t${1}\n\t</blockquote>\nsnippet body\n\t<body>\n\t\t${1}\n\t</body>\nsnippet br\n\t<br />${1}\nsnippet button\n\t<button type=\"${1:submit}\">${2}</button>\nsnippet button.\n\t<button class=\"${1:button}\" type=\"${2:submit}\">${3}</button>\nsnippet button#\n\t<button id=\"${1}\" type=\"${2:submit}\">${3}</button>\nsnippet button:s\n\t<button type=\"submit\">${1}</button>\nsnippet button:r\n\t<button type=\"reset\">${1}</button>\nsnippet canvas\n\t<canvas id=\"${1:canvas}\"></canvas>\nsnippet caption\n\t<caption>${1}</caption>\nsnippet cite\n\t<cite>${1}</cite>\nsnippet code\n\t<code>${1}</code>\nsnippet col\n\t<col />${1}\nsnippet col+\n\t<col />\n\tcol+${1}\nsnippet colgroup\n\t<colgroup>\n\t\t${1}\n\t</colgroup>\nsnippet colgroup+\n\t<colgroup>\n\t\t<col />\n\t\tcol+${1}\n\t</colgroup>\nsnippet command\n\t<command type=\"command\" label=\"${1}\" icon=\"${2}\" />\nsnippet command:c\n\t<command type=\"checkbox\" label=\"${1}\" icon=\"${2}\" />\nsnippet command:r\n\t<command type=\"radio\" radiogroup=\"${1}\" label=\"${2}\" icon=\"${3}\" />\nsnippet datagrid\n\t<datagrid>\n\t\t${1}\n\t</datagrid>\nsnippet datalist\n\t<datalist>\n\t\t${1}\n\t</datalist>\nsnippet datatemplate\n\t<datatemplate>\n\t\t${1}\n\t</datatemplate>\nsnippet dd\n\t<dd>${1}</dd>\nsnippet dd.\n\t<dd class=\"${1}\">${2}</dd>\nsnippet dd#\n\t<dd id=\"${1}\">${2}</dd>\nsnippet del\n\t<del>${1}</del>\nsnippet details\n\t<details>${1}</details>\nsnippet dfn\n\t<dfn>${1}</dfn>\nsnippet dialog\n\t<dialog>\n\t\t${1}\n\t</dialog>\nsnippet div\n\t<div>\n\t\t${1}\n\t</div>\nsnippet div.\n\t<div class=\"${1}\">\n\t\t${2}\n\t</div>\nsnippet div#\n\t<div id=\"${1}\">\n\t\t${2}\n\t</div>\nsnippet dl\n\t<dl>\n\t\t${1}\n\t</dl>\nsnippet dl.\n\t<dl class=\"${1}\">\n\t\t${2}\n\t</dl>\nsnippet dl#\n\t<dl id=\"${1}\">\n\t\t${2}\n\t</dl>\nsnippet dl+\n\t<dl>\n\t\t<dt>${1}</dt>\n\t\t<dd>${2}</dd>\n\t\tdt+${3}\n\t</dl>\nsnippet dt\n\t<dt>${1}</dt>\nsnippet dt.\n\t<dt class=\"${1}\">${2}</dt>\nsnippet dt#\n\t<dt id=\"${1}\">${2}</dt>\nsnippet dt+\n\t<dt>${1}</dt>\n\t<dd>${2}</dd>\n\tdt+${3}\nsnippet em\n\t<em>${1}</em>\nsnippet embed\n\t<embed src=${1} type=\"${2} />\nsnippet fieldset\n\t<fieldset>\n\t\t${1}\n\t</fieldset>\nsnippet fieldset.\n\t<fieldset class=\"${1}\">\n\t\t${2}\n\t</fieldset>\nsnippet fieldset#\n\t<fieldset id=\"${1}\">\n\t\t${2}\n\t</fieldset>\nsnippet fieldset+\n\t<fieldset>\n\t\t<legend><span>${1}</span></legend>\n\t\t${2}\n\t</fieldset>\n\tfieldset+${3}\nsnippet figcaption\n\t<figcaption>${1}</figcaption>\nsnippet figure\n\t<figure>${1}</figure>\nsnippet footer\n\t<footer>\n\t\t${1}\n\t</footer>\nsnippet footer.\n\t<footer class=\"${1}\">\n\t\t${2}\n\t</footer>\nsnippet footer#\n\t<footer id=\"${1}\">\n\t\t${2}\n\t</footer>\nsnippet form\n\t<form action=\"${1}\" method=\"${2:get}\" accept-charset=\"utf-8\">\n\t\t${3}\n\t</form>\nsnippet form.\n\t<form class=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\t\t${4}\n\t</form>\nsnippet form#\n\t<form id=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\t\t${4}\n\t</form>\nsnippet h1\n\t<h1>${1}</h1>\nsnippet h1.\n\t<h1 class=\"${1}\">${2}</h1>\nsnippet h1#\n\t<h1 id=\"${1}\">${2}</h1>\nsnippet h2\n\t<h2>${1}</h2>\nsnippet h2.\n\t<h2 class=\"${1}\">${2}</h2>\nsnippet h2#\n\t<h2 id=\"${1}\">${2}</h2>\nsnippet h3\n\t<h3>${1}</h3>\nsnippet h3.\n\t<h3 class=\"${1}\">${2}</h3>\nsnippet h3#\n\t<h3 id=\"${1}\">${2}</h3>\nsnippet h4\n\t<h4>${1}</h4>\nsnippet h4.\n\t<h4 class=\"${1}\">${2}</h4>\nsnippet h4#\n\t<h4 id=\"${1}\">${2}</h4>\nsnippet h5\n\t<h5>${1}</h5>\nsnippet h5.\n\t<h5 class=\"${1}\">${2}</h5>\nsnippet h5#\n\t<h5 id=\"${1}\">${2}</h5>\nsnippet h6\n\t<h6>${1}</h6>\nsnippet h6.\n\t<h6 class=\"${1}\">${2}</h6>\nsnippet h6#\n\t<h6 id=\"${1}\">${2}</h6>\nsnippet head\n\t<head>\n\t\t<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\n\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t${2}\n\t</head>\nsnippet header\n\t<header>\n\t\t${1}\n\t</header>\nsnippet header.\n\t<header class=\"${1}\">\n\t\t${2}\n\t</header>\nsnippet header#\n\t<header id=\"${1}\">\n\t\t${2}\n\t</header>\nsnippet hgroup\n\t<hgroup>\n\t\t${1}\n\t</hgroup>\nsnippet hgroup.\n\t<hgroup class=\"${1}>\n\t\t${2}\n\t</hgroup>\nsnippet hr\n\t<hr />${1}\nsnippet html\n\t<html>\n\t${1}\n\t</html>\nsnippet xhtml\n\t<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\t${1}\n\t</html>\nsnippet html5\n\t<!DOCTYPE html>\n\t<html>\n\t\t<head>\n\t\t\t<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\t\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t\t${2:meta}\n\t\t</head>\n\t\t<body>\n\t\t\t${3:body}\n\t\t</body>\n\t</html>\nsnippet xhtml5\n\t<!DOCTYPE html>\n\t<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\t\t<head>\n\t\t\t<meta http-equiv=\"content-type\" content=\"application/xhtml+xml; charset=utf-8\" />\n\t\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t\t${2:meta}\n\t\t</head>\n\t\t<body>\n\t\t\t${3:body}\n\t\t</body>\n\t</html>\nsnippet i\n\t<i>${1}</i>\nsnippet iframe\n\t<iframe src=\"${1}\" frameborder=\"0\"></iframe>${2}\nsnippet iframe.\n\t<iframe class=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\nsnippet iframe#\n\t<iframe id=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\nsnippet img\n\t<img src=\"${1}\" alt=\"${2}\" />${3}\nsnippet img.\n\t<img class=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\nsnippet img#\n\t<img id=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\nsnippet input\n\t<input type=\"${1:text/submit/hidden/button/image}\" name=\"${2}\" id=\"${3:$2}\" value=\"${4}\" />${5}\nsnippet input.\n\t<input class=\"${1}\" type=\"${2:text/submit/hidden/button/image}\" name=\"${3}\" id=\"${4:$3}\" value=\"${5}\" />${6}\nsnippet input:text\n\t<input type=\"text\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:submit\n\t<input type=\"submit\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:hidden\n\t<input type=\"hidden\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:button\n\t<input type=\"button\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:image\n\t<input type=\"image\" name=\"${1}\" id=\"${2:$1}\" src=\"${3}\" alt=\"${4}\" />${5}\nsnippet input:checkbox\n\t<input type=\"checkbox\" name=\"${1}\" id=\"${2:$1}\" />${3}\nsnippet input:radio\n\t<input type=\"radio\" name=\"${1}\" id=\"${2:$1}\" />${3}\nsnippet input:color\n\t<input type=\"color\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:date\n\t<input type=\"date\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:datetime\n\t<input type=\"datetime\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:datetime-local\n\t<input type=\"datetime-local\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:email\n\t<input type=\"email\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:file\n\t<input type=\"file\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:month\n\t<input type=\"month\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:number\n\t<input type=\"number\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:password\n\t<input type=\"password\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:range\n\t<input type=\"range\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:reset\n\t<input type=\"reset\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:search\n\t<input type=\"search\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:time\n\t<input type=\"time\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:url\n\t<input type=\"url\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:week\n\t<input type=\"week\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet ins\n\t<ins>${1}</ins>\nsnippet kbd\n\t<kbd>${1}</kbd>\nsnippet keygen\n\t<keygen>${1}</keygen>\nsnippet label\n\t<label for=\"${2:$1}\">${1}</label>\nsnippet label:i\n\t<label for=\"${2:$1}\">${1}</label>\n\t<input type=\"${3:text/submit/hidden/button}\" name=\"${4:$2}\" id=\"${5:$2}\" value=\"${6}\" />${7}\nsnippet label:s\n\t<label for=\"${2:$1}\">${1}</label>\n\t<select name=\"${3:$2}\" id=\"${4:$2}\">\n\t\t<option value=\"${5}\">${6:$5}</option>\n\t</select>\nsnippet legend\n\t<legend>${1}</legend>\nsnippet legend+\n\t<legend><span>${1}</span></legend>\nsnippet li\n\t<li>${1}</li>\nsnippet li.\n\t<li class=\"${1}\">${2}</li>\nsnippet li+\n\t<li>${1}</li>\n\tli+${2}\nsnippet lia\n\t<li><a href=\"${2:#}\">${1}</a></li>\nsnippet lia+\n\t<li><a href=\"${2:#}\">${1}</a></li>\n\tlia+${3}\nsnippet link\n\t<link rel=\"${1}\" href=\"${2}\" title=\"${3}\" type=\"${4}\" />${5}\nsnippet link:atom\n\t<link rel=\"alternate\" href=\"${1:atom.xml}\" title=\"Atom\" type=\"application/atom+xml\" />${2}\nsnippet link:css\n\t<link rel=\"stylesheet\" href=\"${2:style.css}\" type=\"text/css\" media=\"${3:all}\" />${4}\nsnippet link:favicon\n\t<link rel=\"shortcut icon\" href=\"${1:favicon.ico}\" type=\"image/x-icon\" />${2}\nsnippet link:rss\n\t<link rel=\"alternate\" href=\"${1:rss.xml}\" title=\"RSS\" type=\"application/atom+xml\" />${2}\nsnippet link:touch\n\t<link rel=\"apple-touch-icon\" href=\"${1:favicon.png}\" />${2}\nsnippet map\n\t<map name=\"${1}\">\n\t\t${2}\n\t</map>\nsnippet map.\n\t<map class=\"${1}\" name=\"${2}\">\n\t\t${3}\n\t</map>\nsnippet map#\n\t<map name=\"${1}\" id=\"${2:$1}>\n\t\t${3}\n\t</map>\nsnippet map+\n\t<map name=\"${1}\">\n\t\t<area shape=\"${2}\" coords=\"${3}\" href=\"${4}\" alt=\"${5}\" />${6}\n\t</map>${7}\nsnippet mark\n\t<mark>${1}</mark>\nsnippet menu\n\t<menu>\n\t\t${1}\n\t</menu>\nsnippet menu:c\n\t<menu type=\"context\">\n\t\t${1}\n\t</menu>\nsnippet menu:t\n\t<menu type=\"toolbar\">\n\t\t${1}\n\t</menu>\nsnippet meta\n\t<meta http-equiv=\"${1}\" content=\"${2}\" />${3}\nsnippet meta:compat\n\t<meta http-equiv=\"X-UA-Compatible\" content=\"IE=${1:7,8,edge}\" />${3}\nsnippet meta:refresh\n\t<meta http-equiv=\"refresh\" content=\"text/html;charset=UTF-8\" />${3}\nsnippet meta:utf\n\t<meta http-equiv=\"content-type\" content=\"text/html;charset=UTF-8\" />${3}\nsnippet meter\n\t<meter>${1}</meter>\nsnippet nav\n\t<nav>\n\t\t${1}\n\t</nav>\nsnippet nav.\n\t<nav class=\"${1}\">\n\t\t${2}\n\t</nav>\nsnippet nav#\n\t<nav id=\"${1}\">\n\t\t${2}\n\t</nav>\nsnippet noscript\n\t<noscript>\n\t\t${1}\n\t</noscript>\nsnippet object\n\t<object data=\"${1}\" type=\"${2}\">\n\t\t${3}\n\t</object>${4}\n# Embed QT Movie\nsnippet movie\n\t<object width=\"$2\" height=\"$3\" classid=\"clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B\"\n\t codebase=\"http://www.apple.com/qtactivex/qtplugin.cab\">\n\t\t<param name=\"src\" value=\"$1\" />\n\t\t<param name=\"controller\" value=\"$4\" />\n\t\t<param name=\"autoplay\" value=\"$5\" />\n\t\t<embed src=\"${1:movie.mov}\"\n\t\t\twidth=\"${2:320}\" height=\"${3:240}\"\n\t\t\tcontroller=\"${4:true}\" autoplay=\"${5:true}\"\n\t\t\tscale=\"tofit\" cache=\"true\"\n\t\t\tpluginspage=\"http://www.apple.com/quicktime/download/\" />\n\t</object>${6}\nsnippet ol\n\t<ol>\n\t\t${1}\n\t</ol>\nsnippet ol.\n\t<ol class=\"${1}>\n\t\t${2}\n\t</ol>\nsnippet ol#\n\t<ol id=\"${1}>\n\t\t${2}\n\t</ol>\nsnippet ol+\n\t<ol>\n\t\t<li>${1}</li>\n\t\tli+${2}\n\t</ol>\nsnippet opt\n\t<option value=\"${1}\">${2:$1}</option>\nsnippet opt+\n\t<option value=\"${1}\">${2:$1}</option>\n\topt+${3}\nsnippet optt\n\t<option>${1}</option>\nsnippet optgroup\n\t<optgroup>\n\t\t<option value=\"${1}\">${2:$1}</option>\n\t\topt+${3}\n\t</optgroup>\nsnippet output\n\t<output>${1}</output>\nsnippet p\n\t<p>${1}</p>\nsnippet param\n\t<param name=\"${1}\" value=\"${2}\" />${3}\nsnippet pre\n\t<pre>\n\t\t${1}\n\t</pre>\nsnippet progress\n\t<progress>${1}</progress>\nsnippet q\n\t<q>${1}</q>\nsnippet rp\n\t<rp>${1}</rp>\nsnippet rt\n\t<rt>${1}</rt>\nsnippet ruby\n\t<ruby>\n\t\t<rp><rt>${1}</rt></rp>\n\t</ruby>\nsnippet s\n\t<s>${1}</s>\nsnippet samp\n\t<samp>\n\t\t${1}\n\t</samp>\nsnippet script\n\t<script type=\"text/javascript\" charset=\"utf-8\">\n\t\t${1}\n\t</script>\nsnippet scriptsrc\n\t<script src=\"${1}.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\nsnippet newscript\n\t<script type=\"application/javascript\" charset=\"utf-8\">\n\t\t${1}\n\t</script>\nsnippet newscriptsrc\n\t<script src=\"${1}.js\" type=\"application/javascript\" charset=\"utf-8\"></script>\nsnippet section\n\t<section>\n\t\t${1}\n\t</section>\nsnippet section.\n\t<section class=\"${1}\">\n\t\t${2}\n\t</section>\nsnippet section#\n\t<section id=\"${1}\">\n\t\t${2}\n\t</section>\nsnippet select\n\t<select name=\"${1}\" id=\"${2:$1}\">\n\t\t${3}\n\t</select>\nsnippet select.\n\t<select name=\"${1}\" id=\"${2:$1}\" class=\"${3}>\n\t\t${4}\n\t</select>\nsnippet select+\n\t<select name=\"${1}\" id=\"${2:$1}\">\n\t\t<option value=\"${3}\">${4:$3}</option>\n\t\topt+${5}\n\t</select>\nsnippet small\n\t<small>${1}</small>\nsnippet source\n\t<source src=\"${1}\" type=\"${2}\" media=\"${3}\" />\nsnippet span\n\t<span>${1}</span>\nsnippet strong\n\t<strong>${1}</strong>\nsnippet style\n\t<style type=\"text/css\" media=\"${1:all}\">\n\t\t${2}\n\t</style>\nsnippet sub\n\t<sub>${1}</sub>\nsnippet summary\n\t<summary>\n\t\t${1}\n\t</summary>\nsnippet sup\n\t<sup>${1}</sup>\nsnippet table\n\t<table border=\"${1:0}\">\n\t\t${2}\n\t</table>\nsnippet table.\n\t<table class=\"${1}\" border=\"${2:0}\">\n\t\t${3}\n\t</table>\nsnippet table#\n\t<table id=\"${1}\" border=\"${2:0}\">\n\t\t${3}\n\t</table>\nsnippet tbody\n\t<tbody>\n\t\t${1}\n\t</tbody>\nsnippet td\n\t<td>${1}</td>\nsnippet td.\n\t<td class=\"${1}\">${2}</td>\nsnippet td#\n\t<td id=\"${1}\">${2}</td>\nsnippet td+\n\t<td>${1}</td>\n\ttd+${2}\nsnippet textarea\n\t<textarea name=\"${1}\" id=${2:$1} rows=\"${3:8}\" cols=\"${4:40}\">${5}</textarea>${6}\nsnippet tfoot\n\t<tfoot>\n\t\t${1}\n\t</tfoot>\nsnippet th\n\t<th>${1}</th>\nsnippet th.\n\t<th class=\"${1}\">${2}</th>\nsnippet th#\n\t<th id=\"${1}\">${2}</th>\nsnippet th+\n\t<th>${1}</th>\n\tth+${2}\nsnippet thead\n\t<thead>\n\t\t${1}\n\t</thead>\nsnippet time\n\t<time datetime=\"${1}\" pubdate=\"${2:$1}>${3:$1}</time>\nsnippet title\n\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\nsnippet tr\n\t<tr>\n\t\t${1}\n\t</tr>\nsnippet tr+\n\t<tr>\n\t\t<td>${1}</td>\n\t\ttd+${2}\n\t</tr>\nsnippet track\n\t<track src=\"${1}\" srclang=\"${2}\" label=\"${3}\" default=\"${4:default}>${5}</track>${6}\nsnippet ul\n\t<ul>\n\t\t${1}\n\t</ul>\nsnippet ul.\n\t<ul class=\"${1}\">\n\t\t${2}\n\t</ul>\nsnippet ul#\n\t<ul id=\"${1}\">\n\t\t${2}\n\t</ul>\nsnippet ul+\n\t<ul>\n\t\t<li>${1}</li>\n\t\tli+${2}\n\t</ul>\nsnippet var\n\t<var>${1}</var>\nsnippet video\n\t<video src=\"${1}\" height=\"${2}\" width=\"${3}\" preload=\"${5:none}\" autoplay=\"${6:autoplay}\">${7}</video>${8}\nsnippet wbr\n\t<wbr />${1}\n";
-
-});
-
-define("ace/snippets/html",["require","exports","module","ace/snippets/html.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./html.snippets");
-exports.scope = "html";
-
-});
-
-define("ace/snippets/java.snippets",["require","exports","module"], function(require, exports, module){module.exports = "## Access Modifiers\nsnippet po\n\tprotected\nsnippet pu\n\tpublic\nsnippet pr\n\tprivate\n##\n## Annotations\nsnippet before\n\t@Before\n\tstatic void ${1:intercept}(${2:args}) { ${3} }\nsnippet mm\n\t@ManyToMany\n\t${1}\nsnippet mo\n\t@ManyToOne\n\t${1}\nsnippet om\n\t@OneToMany${1:(cascade=CascadeType.ALL)}\n\t${2}\nsnippet oo\n\t@OneToOne\n\t${1}\n##\n## Basic Java packages and import\nsnippet im\n\timport\nsnippet j.b\n\tjava.beans.\nsnippet j.i\n\tjava.io.\nsnippet j.m\n\tjava.math.\nsnippet j.n\n\tjava.net.\nsnippet j.u\n\tjava.util.\n##\n## Class\nsnippet cl\n\tclass ${1:`Filename(\"\", \"untitled\")`} ${2}\nsnippet in\n\tinterface ${1:`Filename(\"\", \"untitled\")`} ${2:extends Parent}${3}\nsnippet tc\n\tpublic class ${1:`Filename()`} extends ${2:TestCase}\n##\n## Class Enhancements\nsnippet ext\n\textends \nsnippet imp\n\timplements\n##\n## Comments\nsnippet /*\n\t/*\n\t * ${1}\n\t */\n##\n## Constants\nsnippet co\n\tstatic public final ${1:String} ${2:var} = ${3};${4}\nsnippet cos\n\tstatic public final String ${1:var} = \"${2}\";${3}\n##\n## Control Statements\nsnippet case\n\tcase ${1}:\n\t\t${2}\nsnippet def\n\tdefault:\n\t\t${2}\nsnippet el\n\telse\nsnippet elif\n\telse if (${1}) ${2}\nsnippet if\n\tif (${1}) ${2}\nsnippet sw\n\tswitch (${1}) {\n\t\t${2}\n\t}\n##\n## Create a Method\nsnippet m\n\t${1:void} ${2:method}(${3}) ${4:throws }${5}\n##\n## Create a Variable\nsnippet v\n\t${1:String} ${2:var}${3: = null}${4};${5}\n##\n## Enhancements to Methods, variables, classes, etc.\nsnippet ab\n\tabstract\nsnippet fi\n\tfinal\nsnippet st\n\tstatic\nsnippet sy\n\tsynchronized\n##\n## Error Methods\nsnippet err\n\tSystem.err.print(\"${1:Message}\");\nsnippet errf\n\tSystem.err.printf(\"${1:Message}\", ${2:exception});\nsnippet errln\n\tSystem.err.println(\"${1:Message}\");\n##\n## Exception Handling\nsnippet as\n\tassert ${1:test} : \"${2:Failure message}\";${3}\nsnippet ca\n\tcatch(${1:Exception} ${2:e}) ${3}\nsnippet thr\n\tthrow\nsnippet ths\n\tthrows\nsnippet try\n\ttry {\n\t\t${3}\n\t} catch(${1:Exception} ${2:e}) {\n\t}\nsnippet tryf\n\ttry {\n\t\t${3}\n\t} catch(${1:Exception} ${2:e}) {\n\t} finally {\n\t}\n##\n## Find Methods\nsnippet findall\n\tList<${1:listName}> ${2:items} = ${1}.findAll();${3}\nsnippet findbyid\n\t${1:var} ${2:item} = ${1}.findById(${3});${4}\n##\n## Javadocs\nsnippet /**\n\t/**\n\t * ${1}\n\t */\nsnippet @au\n\t@author `system(\"grep \\`id -un\\` /etc/passwd | cut -d \\\":\\\" -f5 | cut -d \\\",\\\" -f1\")`\nsnippet @br\n\t@brief ${1:Description}\nsnippet @fi\n\t@file ${1:`Filename()`}.java\nsnippet @pa\n\t@param ${1:param}\nsnippet @re\n\t@return ${1:param}\n##\n## Logger Methods\nsnippet debug\n\tLogger.debug(${1:param});${2}\nsnippet error\n\tLogger.error(${1:param});${2}\nsnippet info\n\tLogger.info(${1:param});${2}\nsnippet warn\n\tLogger.warn(${1:param});${2}\n##\n## Loops\nsnippet enfor\n\tfor (${1} : ${2}) ${3}\nsnippet for\n\tfor (${1}; ${2}; ${3}) ${4}\nsnippet wh\n\twhile (${1}) ${2}\n##\n## Main method\nsnippet main\n\tpublic static void main (String[] args) {\n\t\t${1:/* code */}\n\t}\n##\n## Print Methods\nsnippet print\n\tSystem.out.print(\"${1:Message}\");\nsnippet printf\n\tSystem.out.printf(\"${1:Message}\", ${2:args});\nsnippet println\n\tSystem.out.println(${1});\n##\n## Render Methods\nsnippet ren\n\trender(${1:param});${2}\nsnippet rena\n\trenderArgs.put(\"${1}\", ${2});${3}\nsnippet renb\n\trenderBinary(${1:param});${2}\nsnippet renj\n\trenderJSON(${1:param});${2}\nsnippet renx\n\trenderXml(${1:param});${2}\n##\n## Setter and Getter Methods\nsnippet set\n\t${1:public} void set${3:}(${2:String} ${4:}){\n\t\tthis.$4 = $4;\n\t}\nsnippet get\n\t${1:public} ${2:String} get${3:}(){\n\t\treturn this.${4:};\n\t}\n##\n## Terminate Methods or Loops\nsnippet re\n\treturn\nsnippet br\n\tbreak;\n##\n## Test Methods\nsnippet t\n\tpublic void test${1:Name}() throws Exception {\n\t\t${2}\n\t}\nsnippet test\n\t@Test\n\tpublic void test${1:Name}() throws Exception {\n\t\t${2}\n\t}\n##\n## Utils\nsnippet Sc\n\tScanner\n##\n## Miscellaneous\nsnippet action\n\tpublic static void ${1:index}(${2:args}) { ${3} }\nsnippet rnf\n\tnotFound(${1:param});${2}\nsnippet rnfin\n\tnotFoundIfNull(${1:param});${2}\nsnippet rr\n\tredirect(${1:param});${2}\nsnippet ru\n\tunauthorized(${1:param});${2}\nsnippet unless\n\t(unless=${1:param});${2}\n";
-
-});
-
-define("ace/snippets/java",["require","exports","module","ace/snippets/java.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./java.snippets");
-exports.scope = "java";
-
-});
-
-define("ace/snippets/javascript.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Prototype\nsnippet proto\n\t${1:class_name}.prototype.${2:method_name} = function(${3:first_argument}) {\n\t\t${4:// body...}\n\t};\n# Function\nsnippet fun\n\tfunction ${1?:function_name}(${2:argument}) {\n\t\t${3:// body...}\n\t}\n# Anonymous Function\nregex /((=)\\s*|(:)\\s*|(\\()|\\b)/f/(\\))?/\nsnippet f\n\tfunction${M1?: ${1:functionName}}($2) {\n\t\t${0:$TM_SELECTED_TEXT}\n\t}${M2?;}${M3?,}${M4?)}\n# Immediate function\ntrigger \\(?f\\(\nendTrigger \\)?\nsnippet f(\n\t(function(${1}) {\n\t\t${0:${TM_SELECTED_TEXT:/* code */}}\n\t}(${1}));\n# if\nsnippet if\n\tif (${1:true}) {\n\t\t${0}\n\t}\n# if ... else\nsnippet ife\n\tif (${1:true}) {\n\t\t${2}\n\t} else {\n\t\t${0}\n\t}\n# tertiary conditional\nsnippet ter\n\t${1:/* condition */} ? ${2:a} : ${3:b}\n# switch\nsnippet switch\n\tswitch (${1:expression}) {\n\t\tcase '${3:case}':\n\t\t\t${4:// code}\n\t\t\tbreak;\n\t\t${5}\n\t\tdefault:\n\t\t\t${2:// code}\n\t}\n# case\nsnippet case\n\tcase '${1:case}':\n\t\t${2:// code}\n\t\tbreak;\n\t${3}\n\n# while (...) {...}\nsnippet wh\n\twhile (${1:/* condition */}) {\n\t\t${0:/* code */}\n\t}\n# try\nsnippet try\n\ttry {\n\t\t${0:/* code */}\n\t} catch (e) {}\n# do...while\nsnippet do\n\tdo {\n\t\t${2:/* code */}\n\t} while (${1:/* condition */});\n# Object Method\nsnippet :f\nregex /([,{[])|^\\s*/:f/\n\t${1:method_name}: function(${2:attribute}) {\n\t\t${0}\n\t}${3:,}\n# setTimeout function\nsnippet setTimeout\nregex /\\b/st|timeout|setTimeo?u?t?/\n\tsetTimeout(function() {${3:$TM_SELECTED_TEXT}}, ${1:10});\n# Get Elements\nsnippet gett\n\tgetElementsBy${1:TagName}('${2}')${3}\n# Get Element\nsnippet get\n\tgetElementBy${1:Id}('${2}')${3}\n# console.log (Firebug)\nsnippet cl\n\tconsole.log(${1});\n# return\nsnippet ret\n\treturn ${1:result}\n# for (property in object ) { ... }\nsnippet fori\n\tfor (var ${1:prop} in ${2:Things}) {\n\t\t${0:$2[$1]}\n\t}\n# hasOwnProperty\nsnippet has\n\thasOwnProperty(${1})\n# docstring\nsnippet /**\n\t/**\n\t * ${1:description}\n\t *\n\t */\nsnippet @par\nregex /^\\s*\\*\\s*/@(para?m?)?/\n\t@param {${1:type}} ${2:name} ${3:description}\nsnippet @ret\n\t@return {${1:type}} ${2:description}\n# JSON.parse\nsnippet jsonp\n\tJSON.parse(${1:jstr});\n# JSON.stringify\nsnippet jsons\n\tJSON.stringify(${1:object});\n# self-defining function\nsnippet sdf\n\tvar ${1:function_name} = function(${2:argument}) {\n\t\t${3:// initial code ...}\n\n\t\t$1 = function($2) {\n\t\t\t${4:// main code}\n\t\t};\n\t}\n# singleton\nsnippet sing\n\tfunction ${1:Singleton} (${2:argument}) {\n\t\t// the cached instance\n\t\tvar instance;\n\n\t\t// rewrite the constructor\n\t\t$1 = function $1($2) {\n\t\t\treturn instance;\n\t\t};\n\t\t\n\t\t// carry over the prototype properties\n\t\t$1.prototype = this;\n\n\t\t// the instance\n\t\tinstance = new $1();\n\n\t\t// reset the constructor pointer\n\t\tinstance.constructor = $1;\n\n\t\t${3:// code ...}\n\n\t\treturn instance;\n\t}\n# class\nsnippet class\nregex /^\\s*/clas{0,2}/\n\tvar ${1:class} = function(${20}) {\n\t\t$40$0\n\t};\n\t\n\t(function() {\n\t\t${60:this.prop = \"\"}\n\t}).call(${1:class}.prototype);\n\t\n\texports.${1:class} = ${1:class};\n# \nsnippet for-\n\tfor (var ${1:i} = ${2:Things}.length; ${1:i}--; ) {\n\t\t${0:${2:Things}[${1:i}];}\n\t}\n# for (...) {...}\nsnippet for\n\tfor (var ${1:i} = 0; $1 < ${2:Things}.length; $1++) {\n\t\t${3:$2[$1]}$0\n\t}\n# for (...) {...} (Improved Native For-Loop)\nsnippet forr\n\tfor (var ${1:i} = ${2:Things}.length - 1; $1 >= 0; $1--) {\n\t\t${3:$2[$1]}$0\n\t}\n\n\n#modules\nsnippet def\n\tdefine(function(require, exports, module) {\n\t\"use strict\";\n\tvar ${1/.*\\///} = require(\"${1}\");\n\t\n\t$TM_SELECTED_TEXT\n\t});\nsnippet req\nguard ^\\s*\n\tvar ${1/.*\\///} = require(\"${1}\");\n\t$0\nsnippet requ\nguard ^\\s*\n\tvar ${1/.*\\/(.)/\\u$1/} = require(\"${1}\").${1/.*\\/(.)/\\u$1/};\n\t$0\n";
-
-});
-
-define("ace/snippets/javascript",["require","exports","module","ace/snippets/javascript.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./javascript.snippets");
-exports.scope = "javascript";
-
-});
-
-define("ace/snippets/jsp.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet @page\n\t<%@page contentType=\"text/html\" pageEncoding=\"UTF-8\"%>\nsnippet jstl\n\t<%@ taglib uri=\"http://java.sun.com/jsp/jstl/core\" prefix=\"c\" %>\n\t<%@ taglib uri=\"http://java.sun.com/jsp/jstl/functions\" prefix=\"fn\" %>\nsnippet jstl:c\n\t<%@ taglib uri=\"http://java.sun.com/jsp/jstl/core\" prefix=\"c\" %>\nsnippet jstl:fn\n\t<%@ taglib uri=\"http://java.sun.com/jsp/jstl/functions\" prefix=\"fn\" %>\nsnippet cpath\n\t${pageContext.request.contextPath}\nsnippet cout\n\t<c:out value=\"${1}\" default=\"${2}\" />\nsnippet cset\n\t<c:set var=\"${1}\" value=\"${2}\" />\nsnippet cremove\n\t<c:remove var=\"${1}\" scope=\"${2:page}\" />\nsnippet ccatch\n\t<c:catch var=\"${1}\" />\nsnippet cif\n\t<c:if test=\"${${1}}\">\n\t\t${2}\n\t</c:if>\nsnippet cchoose\n\t<c:choose>\n\t\t${1}\n\t</c:choose>\nsnippet cwhen\n\t<c:when test=\"${${1}}\">\n\t\t${2}\n\t</c:when>\nsnippet cother\n\t<c:otherwise>\n\t\t${1}\n\t</c:otherwise>\nsnippet cfore\n\t<c:forEach items=\"${${1}}\" var=\"${2}\" varStatus=\"${3}\">\n\t\t${4:<c:out value=\"$2\" />}\n\t</c:forEach>\nsnippet cfort\n\t<c:set var=\"${1}\">${2:item1,item2,item3}</c:set>\n\t<c:forTokens var=\"${3}\" items=\"${$1}\" delims=\"${4:,}\">\n\t\t${5:<c:out value=\"$3\" />}\n\t</c:forTokens>\nsnippet cparam\n\t<c:param name=\"${1}\" value=\"${2}\" />\nsnippet cparam+\n\t<c:param name=\"${1}\" value=\"${2}\" />\n\tcparam+${3}\nsnippet cimport\n\t<c:import url=\"${1}\" />\nsnippet cimport+\n\t<c:import url=\"${1}\">\n\t\t<c:param name=\"${2}\" value=\"${3}\" />\n\t\tcparam+${4}\n\t</c:import>\nsnippet curl\n\t<c:url value=\"${1}\" var=\"${2}\" />\n\t<a href=\"${$2}\">${3}</a>\nsnippet curl+\n\t<c:url value=\"${1}\" var=\"${2}\">\n\t\t<c:param name=\"${4}\" value=\"${5}\" />\n\t\tcparam+${6}\n\t</c:url>\n\t<a href=\"${$2}\">${3}</a>\nsnippet credirect\n\t<c:redirect url=\"${1}\" />\nsnippet contains\n\t${fn:contains(${1:string}, ${2:substr})}\nsnippet contains:i\n\t${fn:containsIgnoreCase(${1:string}, ${2:substr})}\nsnippet endswith\n\t${fn:endsWith(${1:string}, ${2:suffix})}\nsnippet escape\n\t${fn:escapeXml(${1:string})}\nsnippet indexof\n\t${fn:indexOf(${1:string}, ${2:substr})}\nsnippet join\n\t${fn:join(${1:collection}, ${2:delims})}\nsnippet length\n\t${fn:length(${1:collection_or_string})}\nsnippet replace\n\t${fn:replace(${1:string}, ${2:substr}, ${3:replace})}\nsnippet split\n\t${fn:split(${1:string}, ${2:delims})}\nsnippet startswith\n\t${fn:startsWith(${1:string}, ${2:prefix})}\nsnippet substr\n\t${fn:substring(${1:string}, ${2:begin}, ${3:end})}\nsnippet substr:a\n\t${fn:substringAfter(${1:string}, ${2:substr})}\nsnippet substr:b\n\t${fn:substringBefore(${1:string}, ${2:substr})}\nsnippet lc\n\t${fn:toLowerCase(${1:string})}\nsnippet uc\n\t${fn:toUpperCase(${1:string})}\nsnippet trim\n\t${fn:trim(${1:string})}\n";
-
-});
-
-define("ace/snippets/jsp",["require","exports","module","ace/snippets/jsp.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./jsp.snippets");
-exports.scope = "jsp";
-
-});
-
-define("ace/snippets/liquid.snippets",["require","exports","module"], function(require, exports, module){module.exports = "\n# liquid specific snippets\nsnippet ife\n\t{% if ${1:condition} %}\n\n\t{% else %}\n\n\t{% endif %}\nsnippet if\n\t{% if ${1:condition} %}\n\t\t\n\t{% endif %}\nsnippet for\n\t{% for in ${1:iterator} %}\n\n\t{% endfor %}\nsnippet capture\n\t{% capture ${1} %}\n\n\t{% endcapture %}\nsnippet comment\n\t{% comment %}\n\t  ${1:comment}\n\t{% endcomment %}\n\n# Include html.snippets\n# Some useful Unicode entities\n# Non-Breaking Space\nsnippet nbs\n\t&nbsp;\n# \u2190\nsnippet left\n\t&#x2190;\n# \u2192\nsnippet right\n\t&#x2192;\n# \u2191\nsnippet up\n\t&#x2191;\n# \u2193\nsnippet down\n\t&#x2193;\n# \u21A9\nsnippet return\n\t&#x21A9;\n# \u21E4\nsnippet backtab\n\t&#x21E4;\n# \u21E5\nsnippet tab\n\t&#x21E5;\n# \u21E7\nsnippet shift\n\t&#x21E7;\n# \u2303\nsnippet ctrl\n\t&#x2303;\n# \u2305\nsnippet enter\n\t&#x2305;\n# \u2318\nsnippet cmd\n\t&#x2318;\n# \u2325\nsnippet option\n\t&#x2325;\n# \u2326\nsnippet delete\n\t&#x2326;\n# \u232B\nsnippet backspace\n\t&#x232B;\n# \u238B\nsnippet esc\n\t&#x238B;\n# Generic Doctype\nsnippet doctype HTML 4.01 Strict\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\t\"http://www.w3.org/TR/html4/strict.dtd\">\nsnippet doctype HTML 4.01 Transitional\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\t\"http://www.w3.org/TR/html4/loose.dtd\">\nsnippet doctype HTML 5\n\t<!DOCTYPE HTML>\nsnippet doctype XHTML 1.0 Frameset\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\nsnippet doctype XHTML 1.0 Strict\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\nsnippet doctype XHTML 1.0 Transitional\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\nsnippet doctype XHTML 1.1\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\t\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n# HTML Doctype 4.01 Strict\nsnippet docts\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\t\"http://www.w3.org/TR/html4/strict.dtd\">\n# HTML Doctype 4.01 Transitional\nsnippet doct\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\t\"http://www.w3.org/TR/html4/loose.dtd\">\n# HTML Doctype 5\nsnippet doct5\n\t<!DOCTYPE html>\n# XHTML Doctype 1.0 Frameset\nsnippet docxf\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n# XHTML Doctype 1.0 Strict\nsnippet docxs\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n# XHTML Doctype 1.0 Transitional\nsnippet docxt\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n# XHTML Doctype 1.1\nsnippet docx\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\t\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n# html5shiv\nsnippet html5shiv\n\t<!--[if lte IE 8]>\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js\"></script>\n\t<![endif]-->\nsnippet html5printshiv\n\t<!--[if lte IE 8]>\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js\"></script>\n\t<![endif]-->\n# Attributes\nsnippet attr\n\t${1:attribute}=\"${2:property}\"\nsnippet attr+\n\t${1:attribute}=\"${2:property}\" attr+${3}\nsnippet .\n\tclass=\"${1}\"${2}\nsnippet #\n\tid=\"${1}\"${2}\nsnippet alt\n\talt=\"${1}\"${2}\nsnippet charset\n\tcharset=\"${1:utf-8}\"${2}\nsnippet data\n\tdata-${1}=\"${2:$1}\"${3}\nsnippet for\n\tfor=\"${1}\"${2}\nsnippet height\n\theight=\"${1}\"${2}\nsnippet href\n\thref=\"${1:#}\"${2}\nsnippet lang\n\tlang=\"${1:en}\"${2}\nsnippet media\n\tmedia=\"${1}\"${2}\nsnippet name\n\tname=\"${1}\"${2}\nsnippet rel\n\trel=\"${1}\"${2}\nsnippet scope\n\tscope=\"${1:row}\"${2}\nsnippet src\n\tsrc=\"${1}\"${2}\nsnippet title=\n\ttitle=\"${1}\"${2}\nsnippet type\n\ttype=\"${1}\"${2}\nsnippet value\n\tvalue=\"${1}\"${2}\nsnippet width\n\twidth=\"${1}\"${2}\n# Elements\nsnippet a\n\t<a href=\"${1:#}\">${2:$1}</a>\nsnippet a.\n\t<a class=\"${1}\" href=\"${2:#}\">${3:$1}</a>\nsnippet a#\n\t<a id=\"${1}\" href=\"${2:#}\">${3:$1}</a>\nsnippet a:ext\n\t<a href=\"http://${1:example.com}\">${2:$1}</a>\nsnippet a:mail\n\t<a href=\"mailto:${1:joe@example.com}?subject=${2:feedback}\">${3:email me}</a>\nsnippet abbr\n\t<abbr title=\"${1}\">${2}</abbr>\nsnippet address\n\t<address>\n\t\t${1}\n\t</address>\nsnippet area\n\t<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\nsnippet area+\n\t<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\n\tarea+${5}\nsnippet area:c\n\t<area shape=\"circle\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:d\n\t<area shape=\"default\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:p\n\t<area shape=\"poly\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:r\n\t<area shape=\"rect\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet article\n\t<article>\n\t\t${1}\n\t</article>\nsnippet article.\n\t<article class=\"${1}\">\n\t\t${2}\n\t</article>\nsnippet article#\n\t<article id=\"${1}\">\n\t\t${2}\n\t</article>\nsnippet aside\n\t<aside>\n\t\t${1}\n\t</aside>\nsnippet aside.\n\t<aside class=\"${1}\">\n\t\t${2}\n\t</aside>\nsnippet aside#\n\t<aside id=\"${1}\">\n\t\t${2}\n\t</aside>\nsnippet audio\n\t<audio src=\"${1}>${2}</audio>\nsnippet b\n\t<b>${1}</b>\nsnippet base\n\t<base href=\"${1}\" target=\"${2}\" />\nsnippet bdi\n\t<bdi>${1}</bdo>\nsnippet bdo\n\t<bdo dir=\"${1}\">${2}</bdo>\nsnippet bdo:l\n\t<bdo dir=\"ltr\">${1}</bdo>\nsnippet bdo:r\n\t<bdo dir=\"rtl\">${1}</bdo>\nsnippet blockquote\n\t<blockquote>\n\t\t${1}\n\t</blockquote>\nsnippet body\n\t<body>\n\t\t${1}\n\t</body>\nsnippet br\n\t<br />${1}\nsnippet button\n\t<button type=\"${1:submit}\">${2}</button>\nsnippet button.\n\t<button class=\"${1:button}\" type=\"${2:submit}\">${3}</button>\nsnippet button#\n\t<button id=\"${1}\" type=\"${2:submit}\">${3}</button>\nsnippet button:s\n\t<button type=\"submit\">${1}</button>\nsnippet button:r\n\t<button type=\"reset\">${1}</button>\nsnippet canvas\n\t<canvas>\n\t\t${1}\n\t</canvas>\nsnippet caption\n\t<caption>${1}</caption>\nsnippet cite\n\t<cite>${1}</cite>\nsnippet code\n\t<code>${1}</code>\nsnippet col\n\t<col />${1}\nsnippet col+\n\t<col />\n\tcol+${1}\nsnippet colgroup\n\t<colgroup>\n\t\t${1}\n\t</colgroup>\nsnippet colgroup+\n\t<colgroup>\n\t\t<col />\n\t\tcol+${1}\n\t</colgroup>\nsnippet command\n\t<command type=\"command\" label=\"${1}\" icon=\"${2}\" />\nsnippet command:c\n\t<command type=\"checkbox\" label=\"${1}\" icon=\"${2}\" />\nsnippet command:r\n\t<command type=\"radio\" radiogroup=\"${1}\" label=\"${2}\" icon=\"${3}\" />\nsnippet datagrid\n\t<datagrid>\n\t\t${1}\n\t</datagrid>\nsnippet datalist\n\t<datalist>\n\t\t${1}\n\t</datalist>\nsnippet datatemplate\n\t<datatemplate>\n\t\t${1}\n\t</datatemplate>\nsnippet dd\n\t<dd>${1}</dd>\nsnippet dd.\n\t<dd class=\"${1}\">${2}</dd>\nsnippet dd#\n\t<dd id=\"${1}\">${2}</dd>\nsnippet del\n\t<del>${1}</del>\nsnippet details\n\t<details>${1}</details>\nsnippet dfn\n\t<dfn>${1}</dfn>\nsnippet dialog\n\t<dialog>\n\t\t${1}\n\t</dialog>\nsnippet div\n\t<div>\n\t\t${1}\n\t</div>\nsnippet div.\n\t<div class=\"${1}\">\n\t\t${2}\n\t</div>\nsnippet div#\n\t<div id=\"${1}\">\n\t\t${2}\n\t</div>\nsnippet dl\n\t<dl>\n\t\t${1}\n\t</dl>\nsnippet dl.\n\t<dl class=\"${1}\">\n\t\t${2}\n\t</dl>\nsnippet dl#\n\t<dl id=\"${1}\">\n\t\t${2}\n\t</dl>\nsnippet dl+\n\t<dl>\n\t\t<dt>${1}</dt>\n\t\t<dd>${2}</dd>\n\t\tdt+${3}\n\t</dl>\nsnippet dt\n\t<dt>${1}</dt>\nsnippet dt.\n\t<dt class=\"${1}\">${2}</dt>\nsnippet dt#\n\t<dt id=\"${1}\">${2}</dt>\nsnippet dt+\n\t<dt>${1}</dt>\n\t<dd>${2}</dd>\n\tdt+${3}\nsnippet em\n\t<em>${1}</em>\nsnippet embed\n\t<embed src=${1} type=\"${2} />\nsnippet fieldset\n\t<fieldset>\n\t\t${1}\n\t</fieldset>\nsnippet fieldset.\n\t<fieldset class=\"${1}\">\n\t\t${2}\n\t</fieldset>\nsnippet fieldset#\n\t<fieldset id=\"${1}\">\n\t\t${2}\n\t</fieldset>\nsnippet fieldset+\n\t<fieldset>\n\t\t<legend><span>${1}</span></legend>\n\t\t${2}\n\t</fieldset>\n\tfieldset+${3}\nsnippet figcaption\n\t<figcaption>${1}</figcaption>\nsnippet figure\n\t<figure>${1}</figure>\nsnippet footer\n\t<footer>\n\t\t${1}\n\t</footer>\nsnippet footer.\n\t<footer class=\"${1}\">\n\t\t${2}\n\t</footer>\nsnippet footer#\n\t<footer id=\"${1}\">\n\t\t${2}\n\t</footer>\nsnippet form\n\t<form action=\"${1}\" method=\"${2:get}\" accept-charset=\"utf-8\">\n\t\t${3}\n\t</form>\nsnippet form.\n\t<form class=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\t\t${4}\n\t</form>\nsnippet form#\n\t<form id=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\t\t${4}\n\t</form>\nsnippet h1\n\t<h1>${1}</h1>\nsnippet h1.\n\t<h1 class=\"${1}\">${2}</h1>\nsnippet h1#\n\t<h1 id=\"${1}\">${2}</h1>\nsnippet h2\n\t<h2>${1}</h2>\nsnippet h2.\n\t<h2 class=\"${1}\">${2}</h2>\nsnippet h2#\n\t<h2 id=\"${1}\">${2}</h2>\nsnippet h3\n\t<h3>${1}</h3>\nsnippet h3.\n\t<h3 class=\"${1}\">${2}</h3>\nsnippet h3#\n\t<h3 id=\"${1}\">${2}</h3>\nsnippet h4\n\t<h4>${1}</h4>\nsnippet h4.\n\t<h4 class=\"${1}\">${2}</h4>\nsnippet h4#\n\t<h4 id=\"${1}\">${2}</h4>\nsnippet h5\n\t<h5>${1}</h5>\nsnippet h5.\n\t<h5 class=\"${1}\">${2}</h5>\nsnippet h5#\n\t<h5 id=\"${1}\">${2}</h5>\nsnippet h6\n\t<h6>${1}</h6>\nsnippet h6.\n\t<h6 class=\"${1}\">${2}</h6>\nsnippet h6#\n\t<h6 id=\"${1}\">${2}</h6>\nsnippet head\n\t<head>\n\t\t<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\n\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t${2}\n\t</head>\nsnippet header\n\t<header>\n\t\t${1}\n\t</header>\nsnippet header.\n\t<header class=\"${1}\">\n\t\t${2}\n\t</header>\nsnippet header#\n\t<header id=\"${1}\">\n\t\t${2}\n\t</header>\nsnippet hgroup\n\t<hgroup>\n\t\t${1}\n\t</hgroup>\nsnippet hgroup.\n\t<hgroup class=\"${1}>\n\t\t${2}\n\t</hgroup>\nsnippet hr\n\t<hr />${1}\nsnippet html\n\t<html>\n\t${1}\n\t</html>\nsnippet xhtml\n\t<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\t${1}\n\t</html>\nsnippet html5\n\t<!DOCTYPE html>\n\t<html>\n\t\t<head>\n\t\t\t<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\t\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t\t${2:meta}\n\t\t</head>\n\t\t<body>\n\t\t\t${3:body}\n\t\t</body>\n\t</html>\nsnippet xhtml5\n\t<!DOCTYPE html>\n\t<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\t\t<head>\n\t\t\t<meta http-equiv=\"content-type\" content=\"application/xhtml+xml; charset=utf-8\" />\n\t\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t\t${2:meta}\n\t\t</head>\n\t\t<body>\n\t\t\t${3:body}\n\t\t</body>\n\t</html>\nsnippet i\n\t<i>${1}</i>\nsnippet iframe\n\t<iframe src=\"${1}\" frameborder=\"0\"></iframe>${2}\nsnippet iframe.\n\t<iframe class=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\nsnippet iframe#\n\t<iframe id=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\nsnippet img\n\t<img src=\"${1}\" alt=\"${2}\" />${3}\nsnippet img.\n\t<img class=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\nsnippet img#\n\t<img id=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\nsnippet input\n\t<input type=\"${1:text/submit/hidden/button/image}\" name=\"${2}\" id=\"${3:$2}\" value=\"${4}\" />${5}\nsnippet input.\n\t<input class=\"${1}\" type=\"${2:text/submit/hidden/button/image}\" name=\"${3}\" id=\"${4:$3}\" value=\"${5}\" />${6}\nsnippet input:text\n\t<input type=\"text\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:submit\n\t<input type=\"submit\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:hidden\n\t<input type=\"hidden\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:button\n\t<input type=\"button\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:image\n\t<input type=\"image\" name=\"${1}\" id=\"${2:$1}\" src=\"${3}\" alt=\"${4}\" />${5}\nsnippet input:checkbox\n\t<input type=\"checkbox\" name=\"${1}\" id=\"${2:$1}\" />${3}\nsnippet input:radio\n\t<input type=\"radio\" name=\"${1}\" id=\"${2:$1}\" />${3}\nsnippet input:color\n\t<input type=\"color\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:date\n\t<input type=\"date\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:datetime\n\t<input type=\"datetime\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:datetime-local\n\t<input type=\"datetime-local\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:email\n\t<input type=\"email\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:file\n\t<input type=\"file\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:month\n\t<input type=\"month\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:number\n\t<input type=\"number\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:password\n\t<input type=\"password\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:range\n\t<input type=\"range\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:reset\n\t<input type=\"reset\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:search\n\t<input type=\"search\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:time\n\t<input type=\"time\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:url\n\t<input type=\"url\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:week\n\t<input type=\"week\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet ins\n\t<ins>${1}</ins>\nsnippet kbd\n\t<kbd>${1}</kbd>\nsnippet keygen\n\t<keygen>${1}</keygen>\nsnippet label\n\t<label for=\"${2:$1}\">${1}</label>\nsnippet label:i\n\t<label for=\"${2:$1}\">${1}</label>\n\t<input type=\"${3:text/submit/hidden/button}\" name=\"${4:$2}\" id=\"${5:$2}\" value=\"${6}\" />${7}\nsnippet label:s\n\t<label for=\"${2:$1}\">${1}</label>\n\t<select name=\"${3:$2}\" id=\"${4:$2}\">\n\t\t<option value=\"${5}\">${6:$5}</option>\n\t</select>\nsnippet legend\n\t<legend>${1}</legend>\nsnippet legend+\n\t<legend><span>${1}</span></legend>\nsnippet li\n\t<li>${1}</li>\nsnippet li.\n\t<li class=\"${1}\">${2}</li>\nsnippet li+\n\t<li>${1}</li>\n\tli+${2}\nsnippet lia\n\t<li><a href=\"${2:#}\">${1}</a></li>\nsnippet lia+\n\t<li><a href=\"${2:#}\">${1}</a></li>\n\tlia+${3}\nsnippet link\n\t<link rel=\"${1}\" href=\"${2}\" title=\"${3}\" type=\"${4}\" />${5}\nsnippet link:atom\n\t<link rel=\"alternate\" href=\"${1:atom.xml}\" title=\"Atom\" type=\"application/atom+xml\" />${2}\nsnippet link:css\n\t<link rel=\"stylesheet\" href=\"${2:style.css}\" type=\"text/css\" media=\"${3:all}\" />${4}\nsnippet link:favicon\n\t<link rel=\"shortcut icon\" href=\"${1:favicon.ico}\" type=\"image/x-icon\" />${2}\nsnippet link:rss\n\t<link rel=\"alternate\" href=\"${1:rss.xml}\" title=\"RSS\" type=\"application/atom+xml\" />${2}\nsnippet link:touch\n\t<link rel=\"apple-touch-icon\" href=\"${1:favicon.png}\" />${2}\nsnippet map\n\t<map name=\"${1}\">\n\t\t${2}\n\t</map>\nsnippet map.\n\t<map class=\"${1}\" name=\"${2}\">\n\t\t${3}\n\t</map>\nsnippet map#\n\t<map name=\"${1}\" id=\"${2:$1}>\n\t\t${3}\n\t</map>\nsnippet map+\n\t<map name=\"${1}\">\n\t\t<area shape=\"${2}\" coords=\"${3}\" href=\"${4}\" alt=\"${5}\" />${6}\n\t</map>${7}\nsnippet mark\n\t<mark>${1}</mark>\nsnippet menu\n\t<menu>\n\t\t${1}\n\t</menu>\nsnippet menu:c\n\t<menu type=\"context\">\n\t\t${1}\n\t</menu>\nsnippet menu:t\n\t<menu type=\"toolbar\">\n\t\t${1}\n\t</menu>\nsnippet meta\n\t<meta http-equiv=\"${1}\" content=\"${2}\" />${3}\nsnippet meta:compat\n\t<meta http-equiv=\"X-UA-Compatible\" content=\"IE=${1:7,8,edge}\" />${3}\nsnippet meta:refresh\n\t<meta http-equiv=\"refresh\" content=\"text/html;charset=UTF-8\" />${3}\nsnippet meta:utf\n\t<meta http-equiv=\"content-type\" content=\"text/html;charset=UTF-8\" />${3}\nsnippet meter\n\t<meter>${1}</meter>\nsnippet nav\n\t<nav>\n\t\t${1}\n\t</nav>\nsnippet nav.\n\t<nav class=\"${1}\">\n\t\t${2}\n\t</nav>\nsnippet nav#\n\t<nav id=\"${1}\">\n\t\t${2}\n\t</nav>\nsnippet noscript\n\t<noscript>\n\t\t${1}\n\t</noscript>\nsnippet object\n\t<object data=\"${1}\" type=\"${2}\">\n\t\t${3}\n\t</object>${4}\n# Embed QT Movie\nsnippet movie\n\t<object width=\"$2\" height=\"$3\" classid=\"clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B\"\n\t codebase=\"http://www.apple.com/qtactivex/qtplugin.cab\">\n\t\t<param name=\"src\" value=\"$1\" />\n\t\t<param name=\"controller\" value=\"$4\" />\n\t\t<param name=\"autoplay\" value=\"$5\" />\n\t\t<embed src=\"${1:movie.mov}\"\n\t\t\twidth=\"${2:320}\" height=\"${3:240}\"\n\t\t\tcontroller=\"${4:true}\" autoplay=\"${5:true}\"\n\t\t\tscale=\"tofit\" cache=\"true\"\n\t\t\tpluginspage=\"http://www.apple.com/quicktime/download/\" />\n\t</object>${6}\nsnippet ol\n\t<ol>\n\t\t${1}\n\t</ol>\nsnippet ol.\n\t<ol class=\"${1}>\n\t\t${2}\n\t</ol>\nsnippet ol#\n\t<ol id=\"${1}>\n\t\t${2}\n\t</ol>\nsnippet ol+\n\t<ol>\n\t\t<li>${1}</li>\n\t\tli+${2}\n\t</ol>\nsnippet opt\n\t<option value=\"${1}\">${2:$1}</option>\nsnippet opt+\n\t<option value=\"${1}\">${2:$1}</option>\n\topt+${3}\nsnippet optt\n\t<option>${1}</option>\nsnippet optgroup\n\t<optgroup>\n\t\t<option value=\"${1}\">${2:$1}</option>\n\t\topt+${3}\n\t</optgroup>\nsnippet output\n\t<output>${1}</output>\nsnippet p\n\t<p>${1}</p>\nsnippet param\n\t<param name=\"${1}\" value=\"${2}\" />${3}\nsnippet pre\n\t<pre>\n\t\t${1}\n\t</pre>\nsnippet progress\n\t<progress>${1}</progress>\nsnippet q\n\t<q>${1}</q>\nsnippet rp\n\t<rp>${1}</rp>\nsnippet rt\n\t<rt>${1}</rt>\nsnippet ruby\n\t<ruby>\n\t\t<rp><rt>${1}</rt></rp>\n\t</ruby>\nsnippet s\n\t<s>${1}</s>\nsnippet samp\n\t<samp>\n\t\t${1}\n\t</samp>\nsnippet script\n\t<script type=\"text/javascript\" charset=\"utf-8\">\n\t\t${1}\n\t</script>\nsnippet scriptsrc\n\t<script src=\"${1}.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\nsnippet newscript\n\t<script type=\"application/javascript\" charset=\"utf-8\">\n\t\t${1}\n\t</script>\nsnippet newscriptsrc\n\t<script src=\"${1}.js\" type=\"application/javascript\" charset=\"utf-8\"></script>\nsnippet section\n\t<section>\n\t\t${1}\n\t</section>\nsnippet section.\n\t<section class=\"${1}\">\n\t\t${2}\n\t</section>\nsnippet section#\n\t<section id=\"${1}\">\n\t\t${2}\n\t</section>\nsnippet select\n\t<select name=\"${1}\" id=\"${2:$1}\">\n\t\t${3}\n\t</select>\nsnippet select.\n\t<select name=\"${1}\" id=\"${2:$1}\" class=\"${3}>\n\t\t${4}\n\t</select>\nsnippet select+\n\t<select name=\"${1}\" id=\"${2:$1}\">\n\t\t<option value=\"${3}\">${4:$3}</option>\n\t\topt+${5}\n\t</select>\nsnippet small\n\t<small>${1}</small>\nsnippet source\n\t<source src=\"${1}\" type=\"${2}\" media=\"${3}\" />\nsnippet span\n\t<span>${1}</span>\nsnippet strong\n\t<strong>${1}</strong>\nsnippet style\n\t<style type=\"text/css\" media=\"${1:all}\">\n\t\t${2}\n\t</style>\nsnippet sub\n\t<sub>${1}</sub>\nsnippet summary\n\t<summary>\n\t\t${1}\n\t</summary>\nsnippet sup\n\t<sup>${1}</sup>\nsnippet table\n\t<table border=\"${1:0}\">\n\t\t${2}\n\t</table>\nsnippet table.\n\t<table class=\"${1}\" border=\"${2:0}\">\n\t\t${3}\n\t</table>\nsnippet table#\n\t<table id=\"${1}\" border=\"${2:0}\">\n\t\t${3}\n\t</table>\nsnippet tbody\n\t<tbody>\n\t\t${1}\n\t</tbody>\nsnippet td\n\t<td>${1}</td>\nsnippet td.\n\t<td class=\"${1}\">${2}</td>\nsnippet td#\n\t<td id=\"${1}\">${2}</td>\nsnippet td+\n\t<td>${1}</td>\n\ttd+${2}\nsnippet textarea\n\t<textarea name=\"${1}\" id=${2:$1} rows=\"${3:8}\" cols=\"${4:40}\">${5}</textarea>${6}\nsnippet tfoot\n\t<tfoot>\n\t\t${1}\n\t</tfoot>\nsnippet th\n\t<th>${1}</th>\nsnippet th.\n\t<th class=\"${1}\">${2}</th>\nsnippet th#\n\t<th id=\"${1}\">${2}</th>\nsnippet th+\n\t<th>${1}</th>\n\tth+${2}\nsnippet thead\n\t<thead>\n\t\t${1}\n\t</thead>\nsnippet time\n\t<time datetime=\"${1}\" pubdate=\"${2:$1}>${3:$1}</time>\nsnippet title\n\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\nsnippet tr\n\t<tr>\n\t\t${1}\n\t</tr>\nsnippet tr+\n\t<tr>\n\t\t<td>${1}</td>\n\t\ttd+${2}\n\t</tr>\nsnippet track\n\t<track src=\"${1}\" srclang=\"${2}\" label=\"${3}\" default=\"${4:default}>${5}</track>${6}\nsnippet ul\n\t<ul>\n\t\t${1}\n\t</ul>\nsnippet ul.\n\t<ul class=\"${1}\">\n\t\t${2}\n\t</ul>\nsnippet ul#\n\t<ul id=\"${1}\">\n\t\t${2}\n\t</ul>\nsnippet ul+\n\t<ul>\n\t\t<li>${1}</li>\n\t\tli+${2}\n\t</ul>\nsnippet var\n\t<var>${1}</var>\nsnippet video\n\t<video src=\"${1} height=\"${2}\" width=\"${3}\" preload=\"${5:none}\" autoplay=\"${6:autoplay}>${7}</video>${8}\nsnippet wbr\n\t<wbr />${1}\n";
-
-});
-
-define("ace/snippets/liquid",["require","exports","module","ace/snippets/liquid.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./liquid.snippets");
-exports.scope = "liquid";
-
-});
-
-define("ace/snippets/lsl.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet @\n\t@${1:label};\nsnippet CAMERA_ACTIVE\n\tCAMERA_ACTIVE, ${1:integer isActive}, $0\nsnippet CAMERA_BEHINDNESS_ANGLE\n\tCAMERA_BEHINDNESS_ANGLE, ${1:float degrees}, $0\nsnippet CAMERA_BEHINDNESS_LAG\n\tCAMERA_BEHINDNESS_LAG, ${1:float seconds}, $0\nsnippet CAMERA_DISTANCE\n\tCAMERA_DISTANCE, ${1:float meters}, $0\nsnippet CAMERA_FOCUS\n\tCAMERA_FOCUS, ${1:vector position}, $0\nsnippet CAMERA_FOCUS_LAG\n\tCAMERA_FOCUS_LAG, ${1:float seconds}, $0\nsnippet CAMERA_FOCUS_LOCKED\n\tCAMERA_FOCUS_LOCKED, ${1:integer isLocked}, $0\nsnippet CAMERA_FOCUS_OFFSET\n\tCAMERA_FOCUS_OFFSET, ${1:vector meters}, $0\nsnippet CAMERA_FOCUS_THRESHOLD\n\tCAMERA_FOCUS_THRESHOLD, ${1:float meters}, $0\nsnippet CAMERA_PITCH\n\tCAMERA_PITCH, ${1:float degrees}, $0\nsnippet CAMERA_POSITION\n\tCAMERA_POSITION, ${1:vector position}, $0\nsnippet CAMERA_POSITION_LAG\n\tCAMERA_POSITION_LAG, ${1:float seconds}, $0\nsnippet CAMERA_POSITION_LOCKED\n\tCAMERA_POSITION_LOCKED, ${1:integer isLocked}, $0\nsnippet CAMERA_POSITION_THRESHOLD\n\tCAMERA_POSITION_THRESHOLD, ${1:float meters}, $0\nsnippet CHARACTER_AVOIDANCE_MODE\n\tCHARACTER_AVOIDANCE_MODE, ${1:integer flags}, $0\nsnippet CHARACTER_DESIRED_SPEED\n\tCHARACTER_DESIRED_SPEED, ${1:float speed}, $0\nsnippet CHARACTER_DESIRED_TURN_SPEED\n\tCHARACTER_DESIRED_TURN_SPEED, ${1:float speed}, $0\nsnippet CHARACTER_LENGTH\n\tCHARACTER_LENGTH, ${1:float length}, $0\nsnippet CHARACTER_MAX_TURN_RADIUS\n\tCHARACTER_MAX_TURN_RADIUS, ${1:float radius}, $0\nsnippet CHARACTER_ORIENTATION\n\tCHARACTER_ORIENTATION, ${1:integer orientation}, $0\nsnippet CHARACTER_RADIUS\n\tCHARACTER_RADIUS, ${1:float radius}, $0\nsnippet CHARACTER_STAY_WITHIN_PARCEL\n\tCHARACTER_STAY_WITHIN_PARCEL, ${1:boolean stay}, $0\nsnippet CHARACTER_TYPE\n\tCHARACTER_TYPE, ${1:integer type}, $0\nsnippet HTTP_BODY_MAXLENGTH\n\tHTTP_BODY_MAXLENGTH, ${1:integer length}, $0\nsnippet HTTP_CUSTOM_HEADER\n\tHTTP_CUSTOM_HEADER, ${1:string name}, ${2:string value}, $0\nsnippet HTTP_METHOD\n\tHTTP_METHOD, ${1:string method}, $0\nsnippet HTTP_MIMETYPE\n\tHTTP_MIMETYPE, ${1:string mimeType}, $0\nsnippet HTTP_PRAGMA_NO_CACHE\n\tHTTP_PRAGMA_NO_CACHE, ${1:integer send_header}, $0\nsnippet HTTP_VERBOSE_THROTTLE\n\tHTTP_VERBOSE_THROTTLE, ${1:integer noisy}, $0\nsnippet HTTP_VERIFY_CERT\n\tHTTP_VERIFY_CERT, ${1:integer verify}, $0\nsnippet RC_DATA_FLAGS\n\tRC_DATA_FLAGS, ${1:integer flags}, $0\nsnippet RC_DETECT_PHANTOM\n\tRC_DETECT_PHANTOM, ${1:integer dectedPhantom}, $0\nsnippet RC_MAX_HITS\n\tRC_MAX_HITS, ${1:integer maxHits}, $0\nsnippet RC_REJECT_TYPES\n\tRC_REJECT_TYPES, ${1:integer filterMask}, $0\nsnippet at_rot_target\n\tat_rot_target(${1:integer handle}, ${2:rotation targetrot}, ${3:rotation ourrot})\n\t{\n\t\t$0\n\t}\nsnippet at_target\n\tat_target(${1:integer tnum}, ${2:vector targetpos}, ${3:vector ourpos})\n\t{\n\t\t$0\n\t}\nsnippet attach\n\tattach(${1:key id})\n\t{\n\t\t$0\n\t}\nsnippet changed\n\tchanged(${1:integer change})\n\t{\n\t\t$0\n\t}\nsnippet collision\n\tcollision(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet collision_end\n\tcollision_end(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet collision_start\n\tcollision_start(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet control\n\tcontrol(${1:key id}, ${2:integer level}, ${3:integer edge})\n\t{\n\t\t$0\n\t}\nsnippet dataserver\n\tdataserver(${1:key query_id}, ${2:string data})\n\t{\n\t\t$0\n\t}\nsnippet do\n\tdo\n\t{\n\t\t$0\n\t}\n\twhile (${1:condition});\nsnippet else\n\telse\n\t{\n\t\t$0\n\t}\nsnippet email\n\temail(${1:string time}, ${2:string address}, ${3:string subject}, ${4:string message}, ${5:integer num_left})\n\t{\n\t\t$0\n\t}\nsnippet experience_permissions\n\texperience_permissions(${1:key agent_id})\n\t{\n\t\t$0\n\t}\nsnippet experience_permissions_denied\n\texperience_permissions_denied(${1:key agent_id}, ${2:integer reason})\n\t{\n\t\t$0\n\t}\nsnippet for\n\tfor (${1:start}; ${3:condition}; ${3:step})\n\t{\n\t\t$0\n\t}\nsnippet http_request\n\thttp_request(${1:key request_id}, ${2:string method}, ${3:string body})\n\t{\n\t\t$0\n\t}\nsnippet http_response\n\thttp_response(${1:key request_id}, ${2:integer status}, ${3:list metadata}, ${4:string body})\n\t{\n\t\t$0\n\t}\nsnippet if\n\tif (${1:condition})\n\t{\n\t\t$0\n\t}\nsnippet jump\n\tjump ${1:label};\nsnippet land_collision\n\tland_collision(${1:vector pos})\n\t{\n\t\t$0\n\t}\nsnippet land_collision_end\n\tland_collision_end(${1:vector pos})\n\t{\n\t\t$0\n\t}\nsnippet land_collision_start\n\tland_collision_start(${1:vector pos})\n\t{\n\t\t$0\n\t}\nsnippet link_message\n\tlink_message(${1:integer sender_num}, ${2:integer num}, ${3:string str}, ${4:key id})\n\t{\n\t\t$0\n\t}\nsnippet listen\n\tlisten(${1:integer channel}, ${2:string name}, ${3:key id}, ${4:string message})\n\t{\n\t\t$0\n\t}\nsnippet llAbs\n\tllAbs(${1:integer val})\nsnippet llAcos\n\tllAcos(${1:float val})\nsnippet llAddToLandBanList\n\tllAddToLandBanList(${1:key agent}, ${2:float hours});\n\t$0\nsnippet llAddToLandPassList\n\tllAddToLandPassList(${1:key agent}, ${2:float hours});\n\t$0\nsnippet llAdjustSoundVolume\n\tllAdjustSoundVolume(${1:float volume});\n\t$0\nsnippet llAgentInExperience\n\tllAgentInExperience(${1:key agent})\nsnippet llAllowInventoryDrop\n\tllAllowInventoryDrop(${1:integer add});\n\t$0\nsnippet llAngleBetween\n\tllAngleBetween(${1:rotation a}, ${2:rotation b})\nsnippet llApplyImpulse\n\tllApplyImpulse(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llApplyRotationalImpulse\n\tllApplyRotationalImpulse(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llAsin\n\tllAsin(${1:float val})\nsnippet llAtan2\n\tllAtan2(${1:float y}, ${2:float x})\nsnippet llAttachToAvatar\n\tllAttachToAvatar(${1:integer attach_point});\n\t$0\nsnippet llAttachToAvatarTemp\n\tllAttachToAvatarTemp(${1:integer attach_point});\n\t$0\nsnippet llAvatarOnLinkSitTarget\n\tllAvatarOnLinkSitTarget(${1:integer link})\nsnippet llAvatarOnSitTarget\n\tllAvatarOnSitTarget()\nsnippet llAxes2Rot\n\tllAxes2Rot(${1:vector fwd}, ${2:vector left}, ${3:vector up})\nsnippet llAxisAngle2Rot\n\tllAxisAngle2Rot(${1:vector axis}, ${2:float angle})\nsnippet llBase64ToInteger\n\tllBase64ToInteger(${1:string str})\nsnippet llBase64ToString\n\tllBase64ToString(${1:string str})\nsnippet llBreakAllLinks\n\tllBreakAllLinks();\n\t$0\nsnippet llBreakLink\n\tllBreakLink(${1:integer link});\n\t$0\nsnippet llCastRay\n\tllCastRay(${1:vector start}, ${2:vector end}, ${3:list options});\n\t$0\nsnippet llCeil\n\tllCeil(${1:float val})\nsnippet llClearCameraParams\n\tllClearCameraParams();\n\t$0\nsnippet llClearLinkMedia\n\tllClearLinkMedia(${1:integer link}, ${2:integer face});\n\t$0\nsnippet llClearPrimMedia\n\tllClearPrimMedia(${1:integer face});\n\t$0\nsnippet llCloseRemoteDataChannel\n\tllCloseRemoteDataChannel(${1:key channel});\n\t$0\nsnippet llCollisionFilter\n\tllCollisionFilter(${1:string name}, ${2:key id}, ${3:integer accept});\n\t$0\nsnippet llCollisionSound\n\tllCollisionSound(${1:string impact_sound}, ${2:float impact_volume});\n\t$0\nsnippet llCos\n\tllCos(${1:float theta})\nsnippet llCreateCharacter\n\tllCreateCharacter(${1:list options});\n\t$0\nsnippet llCreateKeyValue\n\tllCreateKeyValue(${1:string k})\nsnippet llCreateLink\n\tllCreateLink(${1:key target}, ${2:integer parent});\n\t$0\nsnippet llCSV2List\n\tllCSV2List(${1:string src})\nsnippet llDataSizeKeyValue\n\tllDataSizeKeyValue()\nsnippet llDeleteCharacter\n\tllDeleteCharacter();\n\t$0\nsnippet llDeleteKeyValue\n\tllDeleteKeyValue(${1:string k})\nsnippet llDeleteSubList\n\tllDeleteSubList(${1:list src}, ${2:integer start}, ${3:integer end})\nsnippet llDeleteSubString\n\tllDeleteSubString(${1:string src}, ${2:integer start}, ${3:integer end})\nsnippet llDetachFromAvatar\n\tllDetachFromAvatar();\n\t$0\nsnippet llDetectedGrab\n\tllDetectedGrab(${1:integer number})\nsnippet llDetectedGroup\n\tllDetectedGroup(${1:integer number})\nsnippet llDetectedKey\n\tllDetectedKey(${1:integer number})\nsnippet llDetectedLinkNumber\n\tllDetectedLinkNumber(${1:integer number})\nsnippet llDetectedName\n\tllDetectedName(${1:integer number})\nsnippet llDetectedOwner\n\tllDetectedOwner(${1:integer number})\nsnippet llDetectedPos\n\tllDetectedPosl(${1:integer number})\nsnippet llDetectedRot\n\tllDetectedRot(${1:integer number})\nsnippet llDetectedTouchBinormal\n\tllDetectedTouchBinormal(${1:integer number})\nsnippet llDetectedTouchFace\n\tllDetectedTouchFace(${1:integer number})\nsnippet llDetectedTouchNormal\n\tllDetectedTouchNormal(${1:integer number})\nsnippet llDetectedTouchPos\n\tllDetectedTouchPos(${1:integer number})\nsnippet llDetectedTouchST\n\tllDetectedTouchST(${1:integer number})\nsnippet llDetectedTouchUV\n\tllDetectedTouchUV(${1:integer number})\nsnippet llDetectedType\n\tllDetectedType(${1:integer number})\nsnippet llDetectedVel\n\tllDetectedVel(${1:integer number})\nsnippet llDialog\n\tllDialog(${1:key agent}, ${2:string message}, ${3:list buttons}, ${4:integer channel});\n\t$0\nsnippet llDie\n\tllDie();\n\t$0\nsnippet llDumpList2String\n\tllDumpList2String(${1:list src}, ${2:string separator})\nsnippet llEdgeOfWorld\n\tllEdgeOfWorld(${1:vector pos}, ${2:vector dir})\nsnippet llEjectFromLand\n\tllEjectFromLand(${1:key agent});\n\t$0\nsnippet llEmail\n\tllEmail(${1:string address}, ${2:string subject}, ${3:string message});\n\t$0\nsnippet llEscapeURL\n\tllEscapeURL(${1:string url})\nsnippet llEuler2Rot\n\tllEuler2Rot(${1:vector v})\nsnippet llExecCharacterCmd\n\tllExecCharacterCmd(${1:integer command}, ${2:list options});\n\t$0\nsnippet llEvade\n\tllEvade(${1:key target}, ${2:list options});\n\t$0\nsnippet llFabs\n\tllFabs(${1:float val})\nsnippet llFleeFrom\n\tllFleeFrom(${1:vector position}, ${2:float distance}, ${3:list options});\n\t$0\nsnippet llFloor\n\tllFloor(${1:float val})\nsnippet llForceMouselook\n\tllForceMouselook(${1:integer mouselook});\n\t$0\nsnippet llFrand\n\tllFrand(${1:float mag})\nsnippet llGenerateKey\n\tllGenerateKey()\nsnippet llGetAccel\n\tllGetAccel()\nsnippet llGetAgentInfo\n\tllGetAgentInfo(${1:key id})\nsnippet llGetAgentLanguage\n\tllGetAgentLanguage(${1:key agent})\nsnippet llGetAgentList\n\tllGetAgentList(${1:integer scope}, ${2:list options})\nsnippet llGetAgentSize\n\tllGetAgentSize(${1:key agent})\nsnippet llGetAlpha\n\tllGetAlpha(${1:integer face})\nsnippet llGetAndResetTime\n\tllGetAndResetTime()\nsnippet llGetAnimation\n\tllGetAnimation(${1:key id})\nsnippet llGetAnimationList\n\tllGetAnimationList(${1:key agent})\nsnippet llGetAnimationOverride\n\tllGetAnimationOverride(${1:string anim_state})\nsnippet llGetAttached\n\tllGetAttached()\nsnippet llGetAttachedList\n\tllGetAttachedList(${1:key id})\nsnippet llGetBoundingBox\n\tllGetBoundingBox(${1:key object})\nsnippet llGetCameraPos\n\tllGetCameraPos()\nsnippet llGetCameraRot\n\tllGetCameraRot()\nsnippet llGetCenterOfMass\n\tllGetCenterOfMass()\nsnippet llGetClosestNavPoint\n\tllGetClosestNavPoint(${1:vector point}, ${2:list options})\nsnippet llGetColor\n\tllGetColor(${1:integer face})\nsnippet llGetCreator\n\tllGetCreator()\nsnippet llGetDate\n\tllGetDate()\nsnippet llGetDisplayName\n\tllGetDisplayName(${1:key id})\nsnippet llGetEnergy\n\tllGetEnergy()\nsnippet llGetEnv\n\tllGetEnv(${1:string name})\nsnippet llGetExperienceDetails\n\tllGetExperienceDetails(${1:key experience_id})\nsnippet llGetExperienceErrorMessage\n\tllGetExperienceErrorMessage(${1:integer error})\nsnippet llGetForce\n\tllGetForce()\nsnippet llGetFreeMemory\n\tllGetFreeMemory()\nsnippet llGetFreeURLs\n\tllGetFreeURLs()\nsnippet llGetGeometricCenter\n\tllGetGeometricCenter()\nsnippet llGetGMTclock\n\tllGetGMTclock()\nsnippet llGetHTTPHeader\n\tllGetHTTPHeader(${1:key request_id}, ${2:string header})\nsnippet llGetInventoryCreator\n\tllGetInventoryCreator(${1:string item})\nsnippet llGetInventoryKey\n\tllGetInventoryKey(${1:string name})\nsnippet llGetInventoryName\n\tllGetInventoryName(${1:integer type}, ${2:integer number})\nsnippet llGetInventoryNumber\n\tllGetInventoryNumber(${1:integer type})\nsnippet llGetInventoryPermMask\n\tllGetInventoryPermMask(${1:string item}, ${2:integer mask})\nsnippet llGetInventoryType\n\tllGetInventoryType(${1:string name})\nsnippet llGetKey\n\tllGetKey()\nsnippet llGetLandOwnerAt\n\tllGetLandOwnerAt(${1:vector pos})\nsnippet llGetLinkKey\n\tllGetLinkKey(${1:integer link})\nsnippet llGetLinkMedia\n\tllGetLinkMedia(${1:integer link}, ${2:integer face}, ${3:list params})\nsnippet llGetLinkName\n\tllGetLinkName(${1:integer link})\nsnippet llGetLinkNumber\n\tllGetLinkNumber()\nsnippet llGetLinkNumberOfSides\n\tllGetLinkNumberOfSides(${1:integer link})\nsnippet llGetLinkPrimitiveParams\n\tllGetLinkPrimitiveParams(${1:integer link}, ${2:list params})\nsnippet llGetListEntryType\n\tllGetListEntryType(${1:list src}, ${2:integer index})\nsnippet llGetListLength\n\tllGetListLength(${1:list src})\nsnippet llGetLocalPos\n\tllGetLocalPos()\nsnippet llGetLocalRot\n\tllGetLocalRot()\nsnippet llGetMass\n\tllGetMass()\nsnippet llGetMassMKS\n\tllGetMassMKS()\nsnippet llGetMaxScaleFactor\n\tllGetMaxScaleFactor()\nsnippet llGetMemoryLimit\n\tllGetMemoryLimit()\nsnippet llGetMinScaleFactor\n\tllGetMinScaleFactor()\nsnippet llGetNextEmail\n\tllGetNextEmail(${1:string address}, ${2:string subject});\n\t$0\nsnippet llGetNotecardLine\n\tllGetNotecardLine(${1:string name}, ${2:integer line})\nsnippet llGetNumberOfNotecardLines\n\tllGetNumberOfNotecardLines(${1:string name})\nsnippet llGetNumberOfPrims\n\tllGetNumberOfPrims()\nsnippet llGetNumberOfSides\n\tllGetNumberOfSides()\nsnippet llGetObjectDesc\n\tllGetObjectDesc()\nsnippet llGetObjectDetails\n\tllGetObjectDetails(${1:key id}, ${2:list params})\nsnippet llGetObjectMass\n\tllGetObjectMass(${1:key id})\nsnippet llGetObjectName\n\tllGetObjectName()\nsnippet llGetObjectPermMask\n\tllGetObjectPermMask(${1:integer mask})\nsnippet llGetObjectPrimCount\n\tllGetObjectPrimCount(${1:key prim})\nsnippet llGetOmega\n\tllGetOmega()\nsnippet llGetOwner\n\tllGetOwner()\nsnippet llGetOwnerKey\n\tllGetOwnerKey(${1:key id})\nsnippet llGetParcelDetails\n\tllGetParcelDetails(${1:vector pos}, ${2:list params})\nsnippet llGetParcelFlags\n\tllGetParcelFlags(${1:vector pos})\nsnippet llGetParcelMaxPrims\n\tllGetParcelMaxPrims(${1:vector pos}, ${2:integer sim_wide})\nsnippet llGetParcelMusicURL\n\tllGetParcelMusicURL()\nsnippet llGetParcelPrimCount\n\tllGetParcelPrimCount(${1:vector pos}, ${2:integer category}, ${3:integer sim_wide})\nsnippet llGetParcelPrimOwners\n\tllGetParcelPrimOwners(${1:vector pos})\nsnippet llGetPermissions\n\tllGetPermissions()\nsnippet llGetPermissionsKey\n\tllGetPermissionsKey()\nsnippet llGetPhysicsMaterial\n\tllGetPhysicsMaterial()\nsnippet llGetPos\n\tllGetPos()\nsnippet llGetPrimitiveParams\n\tllGetPrimitiveParams(${1:list params})\nsnippet llGetPrimMediaParams\n\tllGetPrimMediaParams(${1:integer face}, ${2:list params})\nsnippet llGetRegionAgentCount\n\tllGetRegionAgentCount()\nsnippet llGetRegionCorner\n\tllGetRegionCorner()\nsnippet llGetRegionFlags\n\tllGetRegionFlags()\nsnippet llGetRegionFPS\n\tllGetRegionFPS()\nsnippet llGetRegionName\n\tllGetRegionName()\nsnippet llGetRegionTimeDilation\n\tllGetRegionTimeDilation()\nsnippet llGetRootPosition\n\tllGetRootPosition()\nsnippet llGetRootRotation\n\tllGetRootRotation()\nsnippet llGetRot\n\tllGetRot()\nsnippet llGetScale\n\tllGetScale()\nsnippet llGetScriptName\n\tllGetScriptName()\nsnippet llGetScriptState\n\tllGetScriptState(${1:string script})\nsnippet llGetSimStats\n\tllGetSimStats(${1:integer stat_type})\nsnippet llGetSimulatorHostname\n\tllGetSimulatorHostname()\nsnippet llGetSPMaxMemory\n\tllGetSPMaxMemory()\nsnippet llGetStartParameter\n\tllGetStartParameter()\nsnippet llGetStaticPath\n\tllGetStaticPath(${1:vector start}, ${2:vector end}, ${3:float radius}, ${4:list params})\nsnippet llGetStatus\n\tllGetStatus(${1:integer status})\nsnippet llGetSubString\n\tllGetSubString(${1:string src}, ${2:integer start}, ${3:integer end})\nsnippet llGetSunDirection\n\tllGetSunDirection()\nsnippet llGetTexture\n\tllGetTexture(${1:integer face})\nsnippet llGetTextureOffset\n\tllGetTextureOffset(${1:integer face})\nsnippet llGetTextureRot\n\tllGetTextureRot(${1:integer face})\nsnippet llGetTextureScale\n\tllGetTextureScale(${1:integer face})\nsnippet llGetTime\n\tllGetTime()\nsnippet llGetTimeOfDay\n\tllGetTimeOfDay()\nsnippet llGetTimestamp\n\tllGetTimestamp()\nsnippet llGetTorque\n\tllGetTorque()\nsnippet llGetUnixTime\n\tllGetUnixTime()\nsnippet llGetUsedMemory\n\tllGetUsedMemory()\nsnippet llGetUsername\n\tllGetUsername(${1:key id})\nsnippet llGetVel\n\tllGetVel()\nsnippet llGetWallclock\n\tllGetWallclock()\nsnippet llGiveInventory\n\tllGiveInventory(${1:key destination}, ${2:string inventory});\n\t$0\nsnippet llGiveInventoryList\n\tllGiveInventoryList(${1:key target}, ${2:string folder}, ${3:list inventory});\n\t$0\nsnippet llGiveMoney\n\tllGiveMoney(${1:key destination}, ${2:integer amount})\nsnippet llGround\n\tllGround(${1:vector offset})\nsnippet llGroundContour\n\tllGroundContour(${1:vector offset})\nsnippet llGroundNormal\n\tllGroundNormal(${1:vector offset})\nsnippet llGroundRepel\n\tllGroundRepel(${1:float height}, ${2:integer water}, ${3:float tau});\n\t$0\nsnippet llGroundSlope\n\tllGroundSlope(${1:vector offset})\nsnippet llHTTPRequest\n\tllHTTPRequest(${1:string url}, ${2:list parameters}, ${3:string body})\nsnippet llHTTPResponse\n\tllHTTPResponse(${1:key request_id}, ${2:integer status}, ${3:string body});\n\t$0\nsnippet llInsertString\n\tllInsertString(${1:string dst}, ${2:integer pos}, ${3:string src})\nsnippet llInstantMessage\n\tllInstantMessage(${1:key user}, ${2:string message});\n\t$0\nsnippet llIntegerToBase64\n\tllIntegerToBase64(${1:integer number})\nsnippet llJson2List\n\tllJson2List(${1:string json})\nsnippet llJsonGetValue\n\tllJsonGetValue(${1:string json}, ${2:list specifiers})\nsnippet llJsonSetValue\n\tllJsonSetValue(${1:string json}, ${2:list specifiers}, ${3:string newValue})\nsnippet llJsonValueType\n\tllJsonValueType(${1:string json}, ${2:list specifiers})\nsnippet llKey2Name\n\tllKey2Name(${1:key id})\nsnippet llKeyCountKeyValue\n\tllKeyCountKeyValue()\nsnippet llKeysKeyValue\n\tllKeysKeyValue(${1:integer first}, ${2:integer count})\nsnippet llLinkParticleSystem\n\tllLinkParticleSystem(${1:integer link}, ${2:list rules});\n\t$0\nsnippet llLinkSitTarget\n\tllLinkSitTarget(${1:integer link}, ${2:vector offset}, ${3:rotation rot});\n\t$0\nsnippet llList2CSV\n\tllList2CSV(${1:list src})\nsnippet llList2Float\n\tllList2Float(${1:list src}, ${2:integer index})\nsnippet llList2Integer\n\tllList2Integer(${1:list src}, ${2:integer index})\nsnippet llList2Json\n\tllList2Json(${1:string type}, ${2:list values})\nsnippet llList2Key\n\tllList2Key(${1:list src}, ${2:integer index})\nsnippet llList2List\n\tllList2List(${1:list src}, ${2:integer start}, ${3:integer end})\nsnippet llList2ListStrided\n\tllList2ListStrided(${1:list src}, ${2:integer start}, ${3:integer end}, ${4:integer stride})\nsnippet llList2Rot\n\tllList2Rot(${1:list src}, ${2:integer index})\nsnippet llList2String\n\tllList2String(${1:list src}, ${2:integer index})\nsnippet llList2Vector\n\tllList2Vector(${1:list src}, ${2:integer index})\nsnippet llListen\n\tllListen(${1:integer channel}, ${2:string name}, ${3:key id}, ${4:string msg})\nsnippet llListenControl\n\tllListenControl(${1:integer handle}, ${2:integer active});\n\t$0\nsnippet llListenRemove\n\tllListenRemove(${1:integer handle});\n\t$0\nsnippet llListFindList\n\tllListFindList(${1:list src}, ${2:list test})\nsnippet llListInsertList\n\tllListInsertList(${1:list dest}, ${2:list src}, ${3:integer start})\nsnippet llListRandomize\n\tllListRandomize(${1:list src}, ${2:integer stride})\nsnippet llListReplaceList\n\tllListReplaceList(${1:list dest}, ${2:list src}, ${3:integer start}, ${4:integer end})\nsnippet llListSort\n\tllListSort(${1:list src}, ${2:integer stride}, ${3:integer ascending})\nsnippet llListStatistics\n\tllListStatistics(${1:integer operation}, ${2:list src})\nsnippet llLoadURL\n\tllLoadURL(${1:key agent}, ${2:string message}, ${3:string url});\n\t$0\nsnippet llLog\n\tllLog(${1:float val})\nsnippet llLog10\n\tllLog10(${1:float val})\nsnippet llLookAt\n\tllLookAt(${1:vector target}, ${2:float strength}, ${3:float damping});\n\t$0\nsnippet llLoopSound\n\tllLoopSound(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llLoopSoundMaster\n\tllLoopSoundMaster(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llLoopSoundSlave\n\tllLoopSoundSlave(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llManageEstateAccess\n\tllManageEstateAccess(${1:integer action}, ${2:key agent})\nsnippet llMapDestination\n\tllMapDestination(${1:string simname}, ${2:vector pos}, ${3:vector look_at});\n\t$0\nsnippet llMD5String\n\tllMD5String(${1:string src}, ${2:integer nonce})\nsnippet llMessageLinked\n\tllMessageLinked(${1:integer link}, ${2:integer num}, ${3:string str}, ${4:key id});\n\t$0\nsnippet llMinEventDelay\n\tllMinEventDelay(${1:float delay});\n\t$0\nsnippet llModifyLand\n\tllModifyLand(${1:integer action}, ${2:integer brush});\n\t$0\nsnippet llModPow\n\tllModPow(${1:integer a}, ${2:integer b}, ${3:integer c})\nsnippet llMoveToTarget\n\tllMoveToTarget(${1:vector target}, ${2:float tau});\n\t$0\nsnippet llNavigateTo\n\tllNavigateTo(${1:vector pos}, ${2:list options});\n\t$0\nsnippet llOffsetTexture\n\tllOffsetTexture(${1:float u}, ${2:float v}, ${3:integer face});\n\t$0\nsnippet llOpenRemoteDataChannel\n\tllOpenRemoteDataChannel();\n\t$0\nsnippet llOverMyLand\n\tllOverMyLand(${1:key id})\nsnippet llOwnerSay\n\tllOwnerSay(${1:string msg});\n\t$0\nsnippet llParcelMediaCommandList\n\tllParcelMediaCommandList(${1:list commandList});\n\t$0\nsnippet llParcelMediaQuery\n\tllParcelMediaQuery(${1:list query})\nsnippet llParseString2List\n\tllParseString2List(${1:string src}, ${2:list separators}, ${3:list spacers})\nsnippet llParseStringKeepNulls\n\tllParseStringKeepNulls(${1:string src}, ${2:list separators}, ${3:list spacers})\nsnippet llParticleSystem\n\tllParticleSystem(${1:list rules});\n\t$0\nsnippet llPassCollisions\n\tllPassCollisions(${1:integer pass});\n\t$0\nsnippet llPassTouches\n\tllPassTouches(${1:integer pass});\n\t$0\nsnippet llPatrolPoints\n\tllPatrolPoints(${1:list patrolPoints}, ${2:list options});\n\t$0\nsnippet llPlaySound\n\tllPlaySound(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llPlaySoundSlave\n\tllPlaySoundSlave(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llPow\n\tllPow(${1:float base}, ${2:float exponent})\nsnippet llPreloadSound\n\tllPreloadSound(${1:string sound});\n\t$0\nsnippet llPursue\n\tllPursue(${1:key target}, ${2:list options});\n\t$0\nsnippet llPushObject\n\tllPushObject(${1:key target}, ${2:vector impulse}, ${3:vector ang_impulse}, ${4:integer local});\n\t$0\nsnippet llReadKeyValue\n\tllReadKeyValue(${1:string k})\nsnippet llRegionSay\n\tllRegionSay(${1:integer channel}, ${2:string msg});\n\t$0\nsnippet llRegionSayTo\n\tllRegionSayTo(${1:key target}, ${2:integer channel}, ${3:string msg});\n\t$0\nsnippet llReleaseControls\n\tllReleaseControls();\n\t$0\nsnippet llReleaseURL\n\tllReleaseURL(${1:string url});\n\t$0\nsnippet llRemoteDataReply\n\tllRemoteDataReply(${1:key channel}, ${2:key message_id}, ${3:string sdata}, ${4:integer idata});\n\t$0\nsnippet llRemoteLoadScriptPin\n\tllRemoteLoadScriptPin(${1:key target}, ${2:string name}, ${3:integer pin}, ${4:integer running}, ${5:integer start_param});\n\t$0\nsnippet llRemoveFromLandBanList\n\tllRemoveFromLandBanList(${1:key agent});\n\t$0\nsnippet llRemoveFromLandPassList\n\tllRemoveFromLandPassList(${1:key agent});\n\t$0\nsnippet llRemoveInventory\n\tllRemoveInventory(${1:string item});\n\t$0\nsnippet llRemoveVehicleFlags\n\tllRemoveVehicleFlags(${1:integer flags});\n\t$0\nsnippet llRequestAgentData\n\tllRequestAgentData(${1:key id}, ${2:integer data})\nsnippet llRequestDisplayName\n\tllRequestDisplayName(${1:key id})\nsnippet llRequestExperiencePermissions\n\tllRequestExperiencePermissions(${1:key agent}, ${2:string name})\nsnippet llRequestInventoryData\n\tllRequestInventoryData(${1:string name})\nsnippet llRequestPermissions\n\tllRequestPermissions(${1:key agent}, ${2:integer permissions})\nsnippet llRequestSecureURL\n\tllRequestSecureURL()\nsnippet llRequestSimulatorData\n\tllRequestSimulatorData(${1:string region}, ${2:integer data})\nsnippet llRequestURL\n\tllRequestURL()\nsnippet llRequestUsername\n\tllRequestUsername(${1:key id})\nsnippet llResetAnimationOverride\n\tllResetAnimationOverride(${1:string anim_state});\n\t$0\nsnippet llResetLandBanList\n\tllResetLandBanList();\n\t$0\nsnippet llResetLandPassList\n\tllResetLandPassList();\n\t$0\nsnippet llResetOtherScript\n\tllResetOtherScript(${1:string name});\n\t$0\nsnippet llResetScript\n\tllResetScript();\n\t$0\nsnippet llResetTime\n\tllResetTime();\n\t$0\nsnippet llReturnObjectsByID\n\tllReturnObjectsByID(${1:list objects})\nsnippet llReturnObjectsByOwner\n\tllReturnObjectsByOwner(${1:key owner}, ${2:integer scope})\nsnippet llRezAtRoot\n\tllRezAtRoot(${1:string inventory}, ${2:vector position}, ${3:vector velocity}, ${4:rotation rot}, ${5:integer param});\n\t$0\nsnippet llRezObject\n\tllRezObject(${1:string inventory}, ${2:vector pos}, ${3:vector vel}, ${4:rotation rot}, ${5:integer param});\n\t$0\nsnippet llRot2Angle\n\tllRot2Angle(${1:rotation rot})\nsnippet llRot2Axis\n\tllRot2Axis(${1:rotation rot})\nsnippet llRot2Euler\n\tllRot2Euler(${1:rotation quat})\nsnippet llRot2Fwd\n\tllRot2Fwd(${1:rotation q})\nsnippet llRot2Left\n\tllRot2Left(${1:rotation q})\nsnippet llRot2Up\n\tllRot2Up(${1:rotation q})\nsnippet llRotateTexture\n\tllRotateTexture(${1:float angle}, ${2:integer face});\n\t$0\nsnippet llRotBetween\n\tllRotBetween(${1:vector start}, ${2:vector end})\nsnippet llRotLookAt\n\tllRotLookAt(${1:rotation target_direction}, ${2:float strength}, ${3:float damping});\n\t$0\nsnippet llRotTarget\n\tllRotTarget(${1:rotation rot}, ${2:float error})\nsnippet llRotTargetRemove\n\tllRotTargetRemove(${1:integer handle});\n\t$0\nsnippet llRound\n\tllRound(${1:float val})\nsnippet llSameGroup\n\tllSameGroup(${1:key group})\nsnippet llSay\n\tllSay(${1:integer channel}, ${2:string msg});\n\t$0\nsnippet llScaleByFactor\n\tllScaleByFactor(${1:float scaling_factor})\nsnippet llScaleTexture\n\tllScaleTexture(${1:float u}, ${2:float v}, ${3:integer face});\n\t$0\nsnippet llScriptDanger\n\tllScriptDanger(${1:vector pos})\nsnippet llScriptProfiler\n\tllScriptProfiler(${1:integer flags});\n\t$0\nsnippet llSendRemoteData\n\tllSendRemoteData(${1:key channel}, ${2:string dest}, ${3:integer idata}, ${4:string sdata})\nsnippet llSensor\n\tllSensor(${1:string name}, ${2:key id}, ${3:integer type}, ${4:float range}, ${5:float arc});\n\t$0\nsnippet llSensorRepeat\n\tllSensorRepeat(${1:string name}, ${2:key id}, ${3:integer type}, ${4:float range}, ${5:float arc}, ${6:float rate});\n\t$0\nsnippet llSetAlpha\n\tllSetAlpha(${1:float alpha}, ${2:integer face});\n\t$0\nsnippet llSetAngularVelocity\n\tllSetAngularVelocity(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llSetAnimationOverride\n\tllSetAnimationOverride(${1:string anim_state}, ${2:string anim})\nsnippet llSetBuoyancy\n\tllSetBuoyancy(${1:float buoyancy});\n\t$0\nsnippet llSetCameraAtOffset\n\tllSetCameraAtOffset(${1:vector offset});\n\t$0\nsnippet llSetCameraEyeOffset\n\tllSetCameraEyeOffset(${1:vector offset});\n\t$0\nsnippet llSetCameraParams\n\tllSetCameraParams(${1:list rules});\n\t$0\nsnippet llSetClickAction\n\tllSetClickAction(${1:integer action});\n\t$0\nsnippet llSetColor\n\tllSetColor(${1:vector color}, ${2:integer face});\n\t$0\nsnippet llSetContentType\n\tllSetContentType(${1:key request_id}, ${2:integer content_type});\n\t$0\nsnippet llSetDamage\n\tllSetDamage(${1:float damage});\n\t$0\nsnippet llSetForce\n\tllSetForce(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llSetForceAndTorque\n\tllSetForceAndTorque(${1:vector force}, ${2:vector torque}, ${3:integer local});\n\t$0\nsnippet llSetHoverHeight\n\tllSetHoverHeight(${1:float height}, ${2:integer water}, ${3:float tau});\n\t$0\nsnippet llSetKeyframedMotion\n\tllSetKeyframedMotion(${1:list keyframes}, ${2:list options});\n\t$0\nsnippet llSetLinkAlpha\n\tllSetLinkAlpha(${1:integer link}, ${2:float alpha}, ${3:integer face});\n\t$0\nsnippet llSetLinkCamera\n\tllSetLinkCamera(${1:integer link}, ${2:vector eye}, ${3:vector at});\n\t$0\nsnippet llSetLinkColor\n\tllSetLinkColor(${1:integer link}, ${2:vector color}, ${3:integer face});\n\t$0\nsnippet llSetLinkMedia\n\tllSetLinkMedia(${1:integer link}, ${2:integer face}, ${3:list params});\n\t$0\nsnippet llSetLinkPrimitiveParams\n\tllSetLinkPrimitiveParams(${1:integer link}, ${2:list rules});\n\t$0\nsnippet llSetLinkPrimitiveParamsFast\n\tllSetLinkPrimitiveParamsFast(${1:integer link}, ${2:list rules});\n\t$0\nsnippet llSetLinkTexture\n\tllSetLinkTexture(${1:integer link}, ${2:string texture}, ${3:integer face});\n\t$0\nsnippet llSetLinkTextureAnim\n\tllSetLinkTextureAnim(${1:integer link}, ${2:integer mode}, ${3:integer face}, ${4:integer sizex}, ${5:integer sizey}, ${6:float start}, ${7:float length}, ${8:float rate});\n\t$0\nsnippet llSetLocalRot\n\tllSetLocalRot(${1:rotation rot});\n\t$0\nsnippet llSetMemoryLimit\n\tllSetMemoryLimit(${1:integer limit})\nsnippet llSetObjectDesc\n\tllSetObjectDesc(${1:string description});\n\t$0\nsnippet llSetObjectName\n\tllSetObjectName(${1:string name});\n\t$0\nsnippet llSetParcelMusicURL\n\tllSetParcelMusicURL(${1:string url});\n\t$0\nsnippet llSetPayPrice\n\tllSetPayPrice(${1:integer price}, [${2:integer price_button_a}, ${3:integer price_button_b}, ${4:integer price_button_c}, ${5:integer price_button_d}]);\n\t$0\nsnippet llSetPhysicsMaterial\n\tllSetPhysicsMaterial(${1:integer mask}, ${2:float gravity_multiplier}, ${3:float restitution}, ${4:float friction}, ${5:float density});\n\t$0\nsnippet llSetPos\n\tllSetPos(${1:vector pos});\n\t$0\nsnippet llSetPrimitiveParams\n\tllSetPrimitiveParams(${1:list rules});\n\t$0\nsnippet llSetPrimMediaParams\n\tllSetPrimMediaParams(${1:integer face}, ${2:list params});\n\t$0\nsnippet llSetRegionPos\n\tllSetRegionPos(${1:vector position})\nsnippet llSetRemoteScriptAccessPin\n\tllSetRemoteScriptAccessPin(${1:integer pin});\n\t$0\nsnippet llSetRot\n\tllSetRot(${1:rotation rot});\n\t$0\nsnippet llSetScale\n\tllSetScale(${1:vector size});\n\t$0\nsnippet llSetScriptState\n\tllSetScriptState(${1:string name}, ${2:integer run});\n\t$0\nsnippet llSetSitText\n\tllSetSitText(${1:string text});\n\t$0\nsnippet llSetSoundQueueing\n\tllSetSoundQueueing(${1:integer queue});\n\t$0\nsnippet llSetSoundRadius\n\tllSetSoundRadius(${1:float radius});\n\t$0\nsnippet llSetStatus\n\tllSetStatus(${1:integer status}, ${2:integer value});\n\t$0\nsnippet llSetText\n\tllSetText(${1:string text}, ${2:vector color}, ${3:float alpha});\n\t$0\nsnippet llSetTexture\n\tllSetTexture(${1:string texture}, ${2:integer face});\n\t$0\nsnippet llSetTextureAnim\n\tllSetTextureAnim(${1:integer mode}, ${2:integer face}, ${3:integer sizex}, ${4:integer sizey}, ${5:float start}, ${6:float length}, ${7:float rate});\n\t$0\nsnippet llSetTimerEvent\n\tllSetTimerEvent(${1:float sec});\n\t$0\nsnippet llSetTorque\n\tllSetTorque(${1:vector torque}, ${2:integer local});\n\t$0\nsnippet llSetTouchText\n\tllSetTouchText(${1:string text});\n\t$0\nsnippet llSetVehicleFlags\n\tllSetVehicleFlags(${1:integer flags});\n\t$0\nsnippet llSetVehicleFloatParam\n\tllSetVehicleFloatParam(${1:integer param}, ${2:float value});\n\t$0\nsnippet llSetVehicleRotationParam\n\tllSetVehicleRotationParam(${1:integer param}, ${2:rotation rot});\n\t$0\nsnippet llSetVehicleType\n\tllSetVehicleType(${1:integer type});\n\t$0\nsnippet llSetVehicleVectorParam\n\tllSetVehicleVectorParam(${1:integer param}, ${2:vector vec});\n\t$0\nsnippet llSetVelocity\n\tllSetVelocity(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llSHA1String\n\tllSHA1String(${1:string src})\nsnippet llShout\n\tllShout(${1:integer channel}, ${2:string msg});\n\t$0\nsnippet llSin\n\tllSin(${1:float theta})\nsnippet llSitTarget\n\tllSitTarget(${1:vector offset}, ${2:rotation rot});\n\t$0\nsnippet llSleep\n\tllSleep(${1:float sec});\n\t$0\nsnippet llSqrt\n\tllSqrt(${1:float val})\nsnippet llStartAnimation\n\tllStartAnimation(${1:string anim});\n\t$0\nsnippet llStopAnimation\n\tllStopAnimation(${1:string anim});\n\t$0\nsnippet llStopHover\n\tllStopHover();\n\t$0\nsnippet llStopLookAt\n\tllStopLookAt();\n\t$0\nsnippet llStopMoveToTarget\n\tllStopMoveToTarget();\n\t$0\nsnippet llStopSound\n\tllStopSound();\n\t$0\nsnippet llStringLength\n\tllStringLength(${1:string str})\nsnippet llStringToBase64\n\tllStringToBase64(${1:string str})\nsnippet llStringTrim\n\tllStringTrim(${1:string src}, ${2:integer type})\nsnippet llSubStringIndex\n\tllSubStringIndex(${1:string source}, ${2:string pattern})\nsnippet llTakeControls\n\tllTakeControls(${1:integer controls}, ${2:integer accept}, ${3:integer pass_on});\n\t$0\nsnippet llTan\n\tllTan(${1:float theta})\nsnippet llTarget\n\tllTarget(${1:vector position}, ${2:float range})\nsnippet llTargetOmega\n\tllTargetOmega(${1:vector axis}, ${2:float spinrate}, ${3:float gain});\n\t$0\nsnippet llTargetRemove\n\tllTargetRemove(${1:integer handle});\n\t$0\nsnippet llTeleportAgent\n\tllTeleportAgent(${1:key agent}, ${2:string landmark}, ${3:vector position}, ${4:vector look_at});\n\t$0\nsnippet llTeleportAgentGlobalCoords\n\tllTeleportAgentGlobalCoords(${1:key agent}, ${2:vector global_coordinates}, ${3:vector region_coordinates}, ${4:vector look_at});\n\t$0\nsnippet llTeleportAgentHome\n\tllTeleportAgentHome(${1:key agent});\n\t$0\nsnippet llTextBox\n\tllTextBox(${1:key agent}, ${2:string message}, ${3:integer channel});\n\t$0\nsnippet llToLower\n\tllToLower(${1:string src})\nsnippet llToUpper\n\tllToUpper(${1:string src})\nsnippet llTransferLindenDollars\n\tllTransferLindenDollars(${1:key destination}, ${2:integer amount})\nsnippet llTriggerSound\n\tllTriggerSound(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llTriggerSoundLimited\n\tllTriggerSoundLimited(${1:string sound}, ${2:float volume}, ${3:vector top_north_east}, ${4:vector bottom_south_west});\n\t$0\nsnippet llUnescapeURL\n\tllUnescapeURL(${1:string url})\nsnippet llUnSit\n\tllUnSit(${1:key id});\n\t$0\nsnippet llUpdateCharacter\n\tllUpdateCharacter(${1:list options})\nsnippet llUpdateKeyValue\n\tllUpdateKeyValue(${1:string k}, ${2:string v}, ${3:integer checked}, ${4:string ov})\nsnippet llVecDist\n\tllVecDist(${1:vector vec_a}, ${2:vector vec_b})\nsnippet llVecMag\n\tllVecMag(${1:vector vec})\nsnippet llVecNorm\n\tllVecNorm(${1:vector vec})\nsnippet llVolumeDetect\n\tllVolumeDetect(${1:integer detect});\n\t$0\nsnippet llWanderWithin\n\tllWanderWithin(${1:vector origin}, ${2:vector dist}, ${3:list options});\n\t$0\nsnippet llWater\n\tllWater(${1:vector offset});\n\t$0\nsnippet llWhisper\n\tllWhisper(${1:integer channel}, ${2:string msg});\n\t$0\nsnippet llWind\n\tllWind(${1:vector offset});\n\t$0\nsnippet llXorBase64\n\tllXorBase64(${1:string str1}, ${2:string str2})\nsnippet money\n\tmoney(${1:key id}, ${2:integer amount})\n\t{\n\t\t$0\n\t}\nsnippet object_rez\n\tobject_rez(${1:key id})\n\t{\n\t\t$0\n\t}\nsnippet on_rez\n\ton_rez(${1:integer start_param})\n\t{\n\t\t$0\n\t}\nsnippet path_update\n\tpath_update(${1:integer type}, ${2:list reserved})\n\t{\n\t\t$0\n\t}\nsnippet remote_data\n\tremote_data(${1:integer event_type}, ${2:key channel}, ${3:key message_id}, ${4:string sender}, ${5:integer idata}, ${6:string sdata})\n\t{\n\t\t$0\n\t}\nsnippet run_time_permissions\n\trun_time_permissions(${1:integer perm})\n\t{\n\t\t$0\n\t}\nsnippet sensor\n\tsensor(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet state\n\tstate ${1:name}\nsnippet touch\n\ttouch(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet touch_end\n\ttouch_end(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet touch_start\n\ttouch_start(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet transaction_result\n\ttransaction_result(${1:key id}, ${2:integer success}, ${3:string data})\n\t{\n\t\t$0\n\t}\nsnippet while\n\twhile (${1:condition})\n\t{\n\t\t$0\n\t}\n";
-
-});
-
-define("ace/snippets/lsl",["require","exports","module","ace/snippets/lsl.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./lsl.snippets");
-exports.scope = "lsl";
-
-});
-
-define("ace/snippets/lua.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet #!\n\t#!/usr/bin/env lua\n\t$1\nsnippet local\n\tlocal ${1:x} = ${2:1}\nsnippet fun\n\tfunction ${1:fname}(${2:...})\n\t\t${3:-- body}\n\tend\nsnippet for\n\tfor ${1:i}=${2:1},${3:10} do\n\t\t${4:print(i)}\n\tend\nsnippet forp\n\tfor ${1:i},${2:v} in pairs(${3:table_name}) do\n\t   ${4:-- body}\n\tend\nsnippet fori\n\tfor ${1:i},${2:v} in ipairs(${3:table_name}) do\n\t   ${4:-- body}\n\tend\n";
-
-});
-
-define("ace/snippets/lua",["require","exports","module","ace/snippets/lua.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./lua.snippets");
-exports.scope = "lua";
-
-});
-
-define("ace/snippets/makefile.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet ifeq\n\tifeq (${1:cond0},${2:cond1})\n\t\t${3:code}\n\tendif\n";
-
-});
-
-define("ace/snippets/makefile",["require","exports","module","ace/snippets/makefile.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./makefile.snippets");
-exports.scope = "makefile";
-
-});
-
-define("ace/snippets/markdown.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Markdown\n\n# Includes octopress (http://octopress.org/) snippets\n\nsnippet [\n\t[${1:text}](http://${2:address} \"${3:title}\")\nsnippet [*\n\t[${1:link}](${2:`@*`} \"${3:title}\")${4}\n\nsnippet [:\n\t[${1:id}]: http://${2:url} \"${3:title}\"\nsnippet [:*\n\t[${1:id}]: ${2:`@*`} \"${3:title}\"\n\nsnippet ![\n\t![${1:alttext}](${2:/images/image.jpg} \"${3:title}\")\nsnippet ![*\n\t![${1:alt}](${2:`@*`} \"${3:title}\")${4}\n\nsnippet ![:\n\t![${1:id}]: ${2:url} \"${3:title}\"\nsnippet ![:*\n\t![${1:id}]: ${2:`@*`} \"${3:title}\"\n\nsnippet ===\nregex /^/=+/=*//\n\t${PREV_LINE/./=/g}\n\t\n\t${0}\nsnippet ---\nregex /^/-+/-*//\n\t${PREV_LINE/./-/g}\n\t\n\t${0}\nsnippet blockquote\n\t{% blockquote %}\n\t${1:quote}\n\t{% endblockquote %}\n\nsnippet blockquote-author\n\t{% blockquote ${1:author}, ${2:title} %}\n\t${3:quote}\n\t{% endblockquote %}\n\nsnippet blockquote-link\n\t{% blockquote ${1:author} ${2:URL} ${3:link_text} %}\n\t${4:quote}\n\t{% endblockquote %}\n\nsnippet bt-codeblock-short\n\t```\n\t${1:code_snippet}\n\t```\n\nsnippet bt-codeblock-full\n\t``` ${1:language} ${2:title} ${3:URL} ${4:link_text}\n\t${5:code_snippet}\n\t```\n\nsnippet codeblock-short\n\t{% codeblock %}\n\t${1:code_snippet}\n\t{% endcodeblock %}\n\nsnippet codeblock-full\n\t{% codeblock ${1:title} lang:${2:language} ${3:URL} ${4:link_text} %}\n\t${5:code_snippet}\n\t{% endcodeblock %}\n\nsnippet gist-full\n\t{% gist ${1:gist_id} ${2:filename} %}\n\nsnippet gist-short\n\t{% gist ${1:gist_id} %}\n\nsnippet img\n\t{% img ${1:class} ${2:URL} ${3:width} ${4:height} ${5:title_text} ${6:alt_text} %}\n\nsnippet youtube\n\t{% youtube ${1:video_id} %}\n\n# The quote should appear only once in the text. It is inherently part of it.\n# See http://octopress.org/docs/plugins/pullquote/ for more info.\n\nsnippet pullquote\n\t{% pullquote %}\n\t${1:text} {\" ${2:quote} \"} ${3:text}\n\t{% endpullquote %}\n";
-
-});
-
-define("ace/snippets/markdown",["require","exports","module","ace/snippets/markdown.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./markdown.snippets");
-exports.scope = "markdown";
-
-});
-
-define("ace/snippets/maze.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet >\ndescription assignment\nscope maze\n\t-> ${1}= ${2}\n\nsnippet >\ndescription if\nscope maze\n\t-> IF ${2:**} THEN %${3:L} ELSE %${4:R}\n";
-
-});
-
-define("ace/snippets/maze",["require","exports","module","ace/snippets/maze.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./maze.snippets");
-exports.scope = "maze";
-
-});
-
-define("ace/snippets/perl.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# #!/usr/bin/perl\nsnippet #!\n\t#!/usr/bin/env perl\n\n# Hash Pointer\nsnippet .\n\t =>\n# Function\nsnippet sub\n\tsub ${1:function_name} {\n\t\t${2:#body ...}\n\t}\n# Conditional\nsnippet if\n\tif (${1}) {\n\t\t${2:# body...}\n\t}\n# Conditional if..else\nsnippet ife\n\tif (${1}) {\n\t\t${2:# body...}\n\t}\n\telse {\n\t\t${3:# else...}\n\t}\n# Conditional if..elsif..else\nsnippet ifee\n\tif (${1}) {\n\t\t${2:# body...}\n\t}\n\telsif (${3}) {\n\t\t${4:# elsif...}\n\t}\n\telse {\n\t\t${5:# else...}\n\t}\n# Conditional One-line\nsnippet xif\n\t${1:expression} if ${2:condition};${3}\n# Unless conditional\nsnippet unless\n\tunless (${1}) {\n\t\t${2:# body...}\n\t}\n# Unless conditional One-line\nsnippet xunless\n\t${1:expression} unless ${2:condition};${3}\n# Try/Except\nsnippet eval\n\tlocal $@;\n\teval {\n\t\t${1:# do something risky...}\n\t};\n\tif (my $e = $@) {\n\t\t${2:# handle failure...}\n\t}\n# While Loop\nsnippet wh\n\twhile (${1}) {\n\t\t${2:# body...}\n\t}\n# While Loop One-line\nsnippet xwh\n\t${1:expression} while ${2:condition};${3}\n# C-style For Loop\nsnippet cfor\n\tfor (my $${2:var} = 0; $$2 < ${1:count}; $$2${3:++}) {\n\t\t${4:# body...}\n\t}\n# For loop one-line\nsnippet xfor\n\t${1:expression} for @${2:array};${3}\n# Foreach Loop\nsnippet for\n\tforeach my $${1:x} (@${2:array}) {\n\t\t${3:# body...}\n\t}\n# Foreach Loop One-line\nsnippet fore\n\t${1:expression} foreach @${2:array};${3}\n# Package\nsnippet package\n\tpackage ${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`};\n\n\t${2}\n\n\t1;\n\n\t__END__\n# Package syntax perl >= 5.14\nsnippet packagev514\n\tpackage ${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`} ${2:0.99};\n\n\t${3}\n\n\t1;\n\n\t__END__\n#moose\nsnippet moose\n\tuse Moose;\n\tuse namespace::autoclean;\n\t${1:#}BEGIN {extends '${2:ParentClass}'};\n\n\t${3}\n# parent\nsnippet parent\n\tuse parent qw(${1:Parent Class});\n# Read File\nsnippet slurp\n\tmy $${1:var} = do { local $/; open my $file, '<', \"${2:file}\"; <$file> };\n\t${3}\n# strict warnings\nsnippet strwar\n\tuse strict;\n\tuse warnings;\n# older versioning with perlcritic bypass\nsnippet vers\n\t## no critic\n\tour $VERSION = '${1:version}';\n\teval $VERSION;\n\t## use critic\n# new 'switch' like feature\nsnippet switch\n\tuse feature 'switch';\n\n# Anonymous subroutine\nsnippet asub\n\tsub {\n\t \t${1:# body }\n\t}\n\n\n\n# Begin block\nsnippet begin\n\tBEGIN {\n\t\t${1:# begin body}\n\t}\n\n# call package function with some parameter\nsnippet pkgmv\n\t__PACKAGE__->${1:package_method}(${2:var})\n\n# call package function without a parameter\nsnippet pkgm\n\t__PACKAGE__->${1:package_method}()\n\n# call package \"get_\" function without a parameter\nsnippet pkget\n\t__PACKAGE__->get_${1:package_method}()\n\n# call package function with a parameter\nsnippet pkgetv\n\t__PACKAGE__->get_${1:package_method}(${2:var})\n\n# complex regex\nsnippet qrx\n\tqr/\n\t     ${1:regex}\n\t/xms\n\n#simpler regex\nsnippet qr/\n\tqr/${1:regex}/x\n\n#given\nsnippet given\n\tgiven ($${1:var}) {\n\t\t${2:# cases}\n\t\t${3:# default}\n\t}\n\n# switch-like case\nsnippet when\n\twhen (${1:case}) {\n\t\t${2:# body}\n\t}\n\n# hash slice\nsnippet hslice\n\t@{ ${1:hash}  }{ ${2:array} }\n\n\n# map\nsnippet map\n\tmap {  ${2: body }    }  ${1: @array } ;\n\n\n\n# Pod stub\nsnippet ppod\n\t=head1 NAME\n\n\t${1:ClassName} - ${2:ShortDesc}\n\n\t=head1 SYNOPSIS\n\n\t  use $1;\n\n\t  ${3:# synopsis...}\n\n\t=head1 DESCRIPTION\n\n\t${4:# longer description...}\n\n\n\t=head1 INTERFACE\n\n\n\t=head1 DEPENDENCIES\n\n\n\t=head1 SEE ALSO\n\n\n# Heading for a subroutine stub\nsnippet psub\n\t=head2 ${1:MethodName}\n\n\t${2:Summary....}\n\n# Heading for inline subroutine pod\nsnippet psubi\n\t=head2 ${1:MethodName}\n\n\t${2:Summary...}\n\n\n\t=cut\n# inline documented subroutine\nsnippet subpod\n\t=head2 $1\n\n\tSummary of $1\n\n\t=cut\n\n\tsub ${1:subroutine_name} {\n\t\t${2:# body...}\n\t}\n# Subroutine signature\nsnippet parg\n\t=over 2\n\n\t=item\n\tArguments\n\n\n\t=over 3\n\n\t=item\n\tC<${1:DataStructure}>\n\n\t  ${2:Sample}\n\n\n\t=back\n\n\n\t=item\n\tReturn\n\n\t=over 3\n\n\n\t=item\n\tC<${3:...return data}>\n\n\n\t=back\n\n\n\t=back\n\n\n\n# Moose has\nsnippet has\n\thas ${1:attribute} => (\n\t\tis\t    => '${2:ro|rw}',\n\t\tisa \t=> '${3:Str|Int|HashRef|ArrayRef|etc}',\n\t\tdefault => sub {\n\t\t\t${4:defaultvalue}\n\t\t},\n\t\t${5:# other attributes}\n\t);\n\n\n# override\nsnippet override\n\toverride ${1:attribute} => sub {\n\t\t${2:# my $self = shift;};\n\t\t${3:# my ($self, $args) = @_;};\n\t};\n\n\n# use test classes\nsnippet tuse\n\tuse Test::More;\n\tuse Test::Deep; # (); # uncomment to stop prototype errors\n\tuse Test::Exception;\n\n# local test lib\nsnippet tlib\n\tuse lib qw{ ./t/lib };\n\n#test methods\nsnippet tmeths\n\t$ENV{TEST_METHOD} = '${1:regex}';\n\n# runtestclass\nsnippet trunner\n\tuse ${1:test_class};\n\t$1->runtests();\n\n# Test::Class-style test\nsnippet tsub\n\tsub t${1:number}_${2:test_case} :Test(${3:num_of_tests}) {\n\t\tmy $self = shift;\n\t\t${4:#  body}\n\n\t}\n\n# Test::Routine-style test\nsnippet trsub\n\ttest ${1:test_name} => { description => '${2:Description of test.}'} => sub {\n\t\tmy ($self) = @_;\n\t\t${3:# test code}\n\t};\n\n#prep test method\nsnippet tprep\n\tsub prep${1:number}_${2:test_case} :Test(startup) {\n\t\tmy $self = shift;\n\t\t${4:#  body}\n\t}\n\n# cause failures to print stack trace\nsnippet debug_trace\n\tuse Carp; # 'verbose';\n\t# cloak \"die\"\n\t# warn \"warning\"\n\t$SIG{'__DIE__'} = sub {\n\t\trequire Carp; Carp::confess\n\t};\n\n";
-
-});
-
-define("ace/snippets/perl",["require","exports","module","ace/snippets/perl.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./perl.snippets");
-exports.scope = "perl";
-
-});
-
-define("ace/snippets/php.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet ec\n\techo ${1};\nsnippet ns\n\tnamespace ${1:Foo\\Bar\\Baz};\n\t${2}\nsnippet use\n\tuse ${1:Foo\\Bar\\Baz};\n\t${2}\nsnippet c\n\t${1:abstract }class ${2:$FILENAME}\n\t{\n\t\t${3}\n\t}\nsnippet i\n\tinterface ${1:$FILENAME}\n\t{\n\t\t${2}\n\t}\nsnippet t.\n\t$this->${1}\nsnippet f\n\tfunction ${1:foo}(${2:array }${3:$bar})\n\t{\n\t\t${4}\n\t}\n# method\nsnippet m\n\t${1:abstract }${2:protected}${3: static} function ${4:foo}(${5:array }${6:$bar})\n\t{\n\t\t${7}\n\t}\n# setter method\nsnippet sm\n\t/**\n\t * Sets the value of ${1:foo}\n\t *\n\t * @param ${2:$1} $$1 ${3:description}\n\t *\n\t * @return ${4:$FILENAME}\n\t */\n\t${5:public} function set${6:$2}(${7:$2 }$$1)\n\t{\n\t\t$this->${8:$1} = $$1;\n\t\treturn $this;\n\t}${9}\n# getter method\nsnippet gm\n\t/**\n\t * Gets the value of ${1:foo}\n\t *\n\t * @return ${2:$1}\n\t */\n\t${3:public} function get${4:$2}()\n\t{\n\t\treturn $this->${5:$1};\n\t}${6}\n#setter\nsnippet $s\n\t${1:$foo}->set${2:Bar}(${3});\n#getter\nsnippet $g\n\t${1:$foo}->get${2:Bar}();\n\n# Tertiary conditional\nsnippet =?:\n\t$${1:foo} = ${2:true} ? ${3:a} : ${4};\nsnippet ?:\n\t${1:true} ? ${2:a} : ${3}\n\nsnippet C\n\t$_COOKIE['${1:variable}']${2}\nsnippet E\n\t$_ENV['${1:variable}']${2}\nsnippet F\n\t$_FILES['${1:variable}']${2}\nsnippet G\n\t$_GET['${1:variable}']${2}\nsnippet P\n\t$_POST['${1:variable}']${2}\nsnippet R\n\t$_REQUEST['${1:variable}']${2}\nsnippet S\n\t$_SERVER['${1:variable}']${2}\nsnippet SS\n\t$_SESSION['${1:variable}']${2}\n\n# the following are old ones\nsnippet inc\n\tinclude '${1:file}';${2}\nsnippet inc1\n\tinclude_once '${1:file}';${2}\nsnippet req\n\trequire '${1:file}';${2}\nsnippet req1\n\trequire_once '${1:file}';${2}\n# Start Docblock\nsnippet /*\n\t/**\n\t * ${1}\n\t */\n# Class - post doc\nsnippet doc_cp\n\t/**\n\t * ${1:undocumented class}\n\t *\n\t * @package ${2:default}\n\t * @subpackage ${3:default}\n\t * @author ${4:`g:snips_author`}\n\t */${5}\n# Class Variable - post doc\nsnippet doc_vp\n\t/**\n\t * ${1:undocumented class variable}\n\t *\n\t * @var ${2:string}\n\t */${3}\n# Class Variable\nsnippet doc_v\n\t/**\n\t * ${3:undocumented class variable}\n\t *\n\t * @var ${4:string}\n\t */\n\t${1:var} $${2};${5}\n# Class\nsnippet doc_c\n\t/**\n\t * ${3:undocumented class}\n\t *\n\t * @package ${4:default}\n\t * @subpackage ${5:default}\n\t * @author ${6:`g:snips_author`}\n\t */\n\t${1:}class ${2:}\n\t{\n\t\t${7}\n\t} // END $1class $2\n# Constant Definition - post doc\nsnippet doc_dp\n\t/**\n\t * ${1:undocumented constant}\n\t */${2}\n# Constant Definition\nsnippet doc_d\n\t/**\n\t * ${3:undocumented constant}\n\t */\n\tdefine(${1}, ${2});${4}\n# Function - post doc\nsnippet doc_fp\n\t/**\n\t * ${1:undocumented function}\n\t *\n\t * @return ${2:void}\n\t * @author ${3:`g:snips_author`}\n\t */${4}\n# Function signature\nsnippet doc_s\n\t/**\n\t * ${4:undocumented function}\n\t *\n\t * @return ${5:void}\n\t * @author ${6:`g:snips_author`}\n\t */\n\t${1}function ${2}(${3});${7}\n# Function\nsnippet doc_f\n\t/**\n\t * ${4:undocumented function}\n\t *\n\t * @return ${5:void}\n\t * @author ${6:`g:snips_author`}\n\t */\n\t${1}function ${2}(${3})\n\t{${7}\n\t}\n# Header\nsnippet doc_h\n\t/**\n\t * ${1}\n\t *\n\t * @author ${2:`g:snips_author`}\n\t * @version ${3:$Id$}\n\t * @copyright ${4:$2}, `strftime('%d %B, %Y')`\n\t * @package ${5:default}\n\t */\n\n# Interface\nsnippet interface\n\t/**\n\t * ${2:undocumented class}\n\t *\n\t * @package ${3:default}\n\t * @author ${4:`g:snips_author`}\n\t */\n\tinterface ${1:$FILENAME}\n\t{\n\t\t${5}\n\t}\n# class ...\nsnippet class\n\t/**\n\t * ${1}\n\t */\n\tclass ${2:$FILENAME}\n\t{\n\t\t${3}\n\t\t/**\n\t\t * ${4}\n\t\t */\n\t\t${5:public} function ${6:__construct}(${7:argument})\n\t\t{\n\t\t\t${8:// code...}\n\t\t}\n\t}\n# define(...)\nsnippet def\n\tdefine('${1}'${2});${3}\n# defined(...)\nsnippet def?\n\t${1}defined('${2}')${3}\nsnippet wh\n\twhile (${1:/* condition */}) {\n\t\t${2:// code...}\n\t}\n# do ... while\nsnippet do\n\tdo {\n\t\t${2:// code... }\n\t} while (${1:/* condition */});\nsnippet if\n\tif (${1:/* condition */}) {\n\t\t${2:// code...}\n\t}\nsnippet ife\n\tif (${1:/* condition */}) {\n\t\t${2:// code...}\n\t} else {\n\t\t${3:// code...}\n\t}\n\t${4}\nsnippet else\n\telse {\n\t\t${1:// code...}\n\t}\nsnippet elseif\n\telseif (${1:/* condition */}) {\n\t\t${2:// code...}\n\t}\nsnippet switch\n\tswitch ($${1:variable}) {\n\t\tcase '${2:value}':\n\t\t\t${3:// code...}\n\t\t\tbreak;\n\t\t${5}\n\t\tdefault:\n\t\t\t${4:// code...}\n\t\t\tbreak;\n\t}\nsnippet case\n\tcase '${1:value}':\n\t\t${2:// code...}\n\t\tbreak;${3}\nsnippet for\n\tfor ($${2:i} = 0; $$2 < ${1:count}; $$2${3:++}) {\n\t\t${4: // code...}\n\t}\nsnippet foreach\n\tforeach ($${1:variable} as $${2:value}) {\n\t\t${3:// code...}\n\t}\nsnippet foreachk\n\tforeach ($${1:variable} as $${2:key} => $${3:value}) {\n\t\t${4:// code...}\n\t}\n# $... = array (...)\nsnippet array\n\t$${1:arrayName} = array('${2}' => ${3});${4}\nsnippet try\n\ttry {\n\t\t${2}\n\t} catch (${1:Exception} $e) {\n\t}\n# lambda with closure\nsnippet lambda\n\t${1:static }function (${2:args}) use (${3:&$x, $y /*put vars in scope (closure) */}) {\n\t\t${4}\n\t};\n# pre_dump();\nsnippet pd\n\techo '<pre>'; var_dump(${1}); echo '</pre>';\n# pre_dump(); die();\nsnippet pdd\n\techo '<pre>'; var_dump(${1}); echo '</pre>'; die(${2:});\nsnippet vd\n\tvar_dump(${1});\nsnippet vdd\n\tvar_dump(${1}); die(${2:});\nsnippet http_redirect\n\theader (\"HTTP/1.1 301 Moved Permanently\");\n\theader (\"Location: \".URL);\n\texit();\n# Getters & Setters\nsnippet gs\n\t/**\n\t * Gets the value of ${1:foo}\n\t *\n\t * @return ${2:$1}\n\t */\n\tpublic function get${3:$2}()\n\t{\n\t\treturn $this->${4:$1};\n\t}\n\n\t/**\n\t * Sets the value of $1\n\t *\n\t * @param $2 $$1 ${5:description}\n\t *\n\t * @return ${6:$FILENAME}\n\t */\n\tpublic function set$3(${7:$2 }$$1)\n\t{\n\t\t$this->$4 = $$1;\n\t\treturn $this;\n\t}${8}\n# anotation, get, and set, useful for doctrine\nsnippet ags\n\t/**\n\t * ${1:description}\n\t *\n\t * @${7}\n\t */\n\t${2:protected} $${3:foo};\n\n\tpublic function get${4:$3}()\n\t{\n\t\treturn $this->$3;\n\t}\n\n\tpublic function set$4(${5:$4 }$${6:$3})\n\t{\n\t\t$this->$3 = $$6;\n\t\treturn $this;\n\t}\nsnippet rett\n\treturn true;\nsnippet retf\n\treturn false;\nscope html\nsnippet <?\n\t<?php\n\n\t${1}\nsnippet <?e\n\t<?php echo ${1} ?>\n# this one is for php5.4\nsnippet <?=\n\t<?=${1}?>\nsnippet ifil\n\t<?php if (${1:/* condition */}): ?>\n\t\t${2:<!-- code... -->}\n\t<?php endif; ?>\nsnippet ifeil\n\t<?php if (${1:/* condition */}): ?>\n\t\t${2:<!-- html... -->}\n\t<?php else: ?>\n\t\t${3:<!-- html... -->}\n\t<?php endif; ?>\n\t${4}\nsnippet foreachil\n\t<?php foreach ($${1:variable} as $${2:value}): ?>\n\t\t${3:<!-- html... -->}\n\t<?php endforeach; ?>\nsnippet foreachkil\n\t<?php foreach ($${1:variable} as $${2:key} => $${3:value}): ?>\n\t\t${4:<!-- html... -->}\n\t<?php endforeach; ?>\nscope html-tag\nsnippet ifil\\n\\\n\t<?php if (${1:true}): ?>${2:code}<?php endif; ?>\nsnippet ifeil\\n\\\n\t<?php if (${1:true}): ?>${2:code}<?php else: ?>${3:code}<?php endif; ?>${4}\n";
-
-});
-
-define("ace/snippets/php",["require","exports","module","ace/snippets/php.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./php.snippets");
-exports.scope = "php";
-
-});
-
-define("ace/snippets/python.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet #!\n\t#!/usr/bin/env python\nsnippet imp\n\timport ${1:module}\nsnippet from\n\tfrom ${1:package} import ${2:module}\n# Module Docstring\nsnippet docs\n\t'''\n\tFile: ${1:FILENAME:file_name}\n\tAuthor: ${2:author}\n\tDescription: ${3}\n\t'''\nsnippet wh\n\twhile ${1:condition}:\n\t\t${2:# TODO: write code...}\n# dowh - does the same as do...while in other languages\nsnippet dowh\n\twhile True:\n\t\t${1:# TODO: write code...}\n\t\tif ${2:condition}:\n\t\t\tbreak\nsnippet with\n\twith ${1:expr} as ${2:var}:\n\t\t${3:# TODO: write code...}\n# New Class\nsnippet cl\n\tclass ${1:ClassName}(${2:object}):\n\t\t\"\"\"${3:docstring for $1}\"\"\"\n\t\tdef __init__(self, ${4:arg}):\n\t\t\t${5:super($1, self).__init__()}\n\t\t\tself.$4 = $4\n\t\t\t${6}\n# New Function\nsnippet def\n\tdef ${1:fname}(${2:`indent('.') ? 'self' : ''`}):\n\t\t\"\"\"${3:docstring for $1}\"\"\"\n\t\t${4:# TODO: write code...}\nsnippet deff\n\tdef ${1:fname}(${2:`indent('.') ? 'self' : ''`}):\n\t\t${3:# TODO: write code...}\n# New Method\nsnippet defs\n\tdef ${1:mname}(self, ${2:arg}):\n\t\t${3:# TODO: write code...}\n# New Property\nsnippet property\n\tdef ${1:foo}():\n\t\tdoc = \"${2:The $1 property.}\"\n\t\tdef fget(self):\n\t\t\t${3:return self._$1}\n\t\tdef fset(self, value):\n\t\t\t${4:self._$1 = value}\n# Ifs\nsnippet if\n\tif ${1:condition}:\n\t\t${2:# TODO: write code...}\nsnippet el\n\telse:\n\t\t${1:# TODO: write code...}\nsnippet ei\n\telif ${1:condition}:\n\t\t${2:# TODO: write code...}\n# For\nsnippet for\n\tfor ${1:item} in ${2:items}:\n\t\t${3:# TODO: write code...}\n# Encodes\nsnippet cutf8\n\t# -*- coding: utf-8 -*-\nsnippet clatin1\n\t# -*- coding: latin-1 -*-\nsnippet cascii\n\t# -*- coding: ascii -*-\n# Lambda\nsnippet ld\n\t${1:var} = lambda ${2:vars} : ${3:action}\nsnippet .\n\tself.\nsnippet try Try/Except\n\ttry:\n\t\t${1:# TODO: write code...}\n\texcept ${2:Exception}, ${3:e}:\n\t\t${4:raise $3}\nsnippet try Try/Except/Else\n\ttry:\n\t\t${1:# TODO: write code...}\n\texcept ${2:Exception}, ${3:e}:\n\t\t${4:raise $3}\n\telse:\n\t\t${5:# TODO: write code...}\nsnippet try Try/Except/Finally\n\ttry:\n\t\t${1:# TODO: write code...}\n\texcept ${2:Exception}, ${3:e}:\n\t\t${4:raise $3}\n\tfinally:\n\t\t${5:# TODO: write code...}\nsnippet try Try/Except/Else/Finally\n\ttry:\n\t\t${1:# TODO: write code...}\n\texcept ${2:Exception}, ${3:e}:\n\t\t${4:raise $3}\n\telse:\n\t\t${5:# TODO: write code...}\n\tfinally:\n\t\t${6:# TODO: write code...}\n# if __name__ == '__main__':\nsnippet ifmain\n\tif __name__ == '__main__':\n\t\t${1:main()}\n# __magic__\nsnippet _\n\t__${1:init}__${2}\n# python debugger (pdb)\nsnippet pdb\n\timport pdb; pdb.set_trace()\n# ipython debugger (ipdb)\nsnippet ipdb\n\timport ipdb; ipdb.set_trace()\n# ipython debugger (pdbbb)\nsnippet pdbbb\n\timport pdbpp; pdbpp.set_trace()\nsnippet pprint\n\timport pprint; pprint.pprint(${1})${2}\nsnippet \"\n\t\"\"\"\n\t${1:doc}\n\t\"\"\"\n# test function/method\nsnippet test\n\tdef test_${1:description}(${2:self}):\n\t\t${3:# TODO: write code...}\n# test case\nsnippet testcase\n\tclass ${1:ExampleCase}(unittest.TestCase):\n\t\t\n\t\tdef test_${2:description}(self):\n\t\t\t${3:# TODO: write code...}\nsnippet fut\n\tfrom __future__ import ${1}\n#getopt\nsnippet getopt\n\ttry:\n\t\t# Short option syntax: \"hv:\"\n\t\t# Long option syntax: \"help\" or \"verbose=\"\n\t\topts, args = getopt.getopt(sys.argv[1:], \"${1:short_options}\", [${2:long_options}])\n\t\n\texcept getopt.GetoptError, err:\n\t\t# Print debug info\n\t\tprint str(err)\n\t\t${3:error_action}\n\n\tfor option, argument in opts:\n\t\tif option in (\"-h\", \"--help\"):\n\t\t\t${4}\n\t\telif option in (\"-v\", \"--verbose\"):\n\t\t\tverbose = argument\n";
-
-});
-
-define("ace/snippets/python",["require","exports","module","ace/snippets/python.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./python.snippets");
-exports.scope = "python";
-
-});
-
-define("ace/snippets/r.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet #!\n\t#!/usr/bin/env Rscript\n\n# includes\nsnippet lib\n\tlibrary(${1:package})\nsnippet req\n\trequire(${1:package})\nsnippet source\n\tsource('${1:file}')\n\n# conditionals\nsnippet if\n\tif (${1:condition}) {\n\t\t${2:code}\n\t}\nsnippet el\n\telse {\n\t\t${1:code}\n\t}\nsnippet ei\n\telse if (${1:condition}) {\n\t\t${2:code}\n\t}\n\n# functions\nsnippet fun\n\t${1:name} = function (${2:variables}) {\n\t\t${3:code}\n\t}\nsnippet ret\n\treturn(${1:code})\n\n# dataframes, lists, etc\nsnippet df\n\t${1:name}[${2:rows}, ${3:cols}]\nsnippet c\n\tc(${1:items})\nsnippet li\n\tlist(${1:items})\nsnippet mat\n\tmatrix(${1:data}, nrow=${2:rows}, ncol=${3:cols})\n\n# apply functions\nsnippet apply\n\tapply(${1:array}, ${2:margin}, ${3:function})\nsnippet lapply\n\tlapply(${1:list}, ${2:function})\nsnippet sapply\n\tsapply(${1:list}, ${2:function})\nsnippet vapply\n\tvapply(${1:list}, ${2:function}, ${3:type})\nsnippet mapply\n\tmapply(${1:function}, ${2:...})\nsnippet tapply\n\ttapply(${1:vector}, ${2:index}, ${3:function})\nsnippet rapply\n\trapply(${1:list}, ${2:function})\n\n# plyr functions\nsnippet dd\n\tddply(${1:frame}, ${2:variables}, ${3:function})\nsnippet dl\n\tdlply(${1:frame}, ${2:variables}, ${3:function})\nsnippet da\n\tdaply(${1:frame}, ${2:variables}, ${3:function})\nsnippet d_\n\td_ply(${1:frame}, ${2:variables}, ${3:function})\n\nsnippet ad\n\tadply(${1:array}, ${2:margin}, ${3:function})\nsnippet al\n\talply(${1:array}, ${2:margin}, ${3:function})\nsnippet aa\n\taaply(${1:array}, ${2:margin}, ${3:function})\nsnippet a_\n\ta_ply(${1:array}, ${2:margin}, ${3:function})\n\nsnippet ld\n\tldply(${1:list}, ${2:function})\nsnippet ll\n\tllply(${1:list}, ${2:function})\nsnippet la\n\tlaply(${1:list}, ${2:function})\nsnippet l_\n\tl_ply(${1:list}, ${2:function})\n\nsnippet md\n\tmdply(${1:matrix}, ${2:function})\nsnippet ml\n\tmlply(${1:matrix}, ${2:function})\nsnippet ma\n\tmaply(${1:matrix}, ${2:function})\nsnippet m_\n\tm_ply(${1:matrix}, ${2:function})\n\n# plot functions\nsnippet pl\n\tplot(${1:x}, ${2:y})\nsnippet ggp\n\tggplot(${1:data}, aes(${2:aesthetics}))\nsnippet img\n\t${1:(jpeg,bmp,png,tiff)}(filename=\"${2:filename}\", width=${3}, height=${4}, unit=\"${5}\")\n\t${6:plot}\n\tdev.off()\n\n# statistical test functions\nsnippet fis\n\tfisher.test(${1:x}, ${2:y})\nsnippet chi\n\tchisq.test(${1:x}, ${2:y})\nsnippet tt\n\tt.test(${1:x}, ${2:y})\nsnippet wil\n\twilcox.test(${1:x}, ${2:y})\nsnippet cor\n\tcor.test(${1:x}, ${2:y})\nsnippet fte\n\tvar.test(${1:x}, ${2:y})\nsnippet kvt \n\tkv.test(${1:x}, ${2:y})\n";
-
-});
-
-define("ace/snippets/r",["require","exports","module","ace/snippets/r.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./r.snippets");
-exports.scope = "r";
-
-});
-
-define("ace/snippets/razor.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet if\n(${1} == ${2}) {\n\t${3}\n}";
-
-});
-
-define("ace/snippets/razor",["require","exports","module","ace/snippets/razor.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./razor.snippets");
-exports.scope = "razor";
-
-});
-
-define("ace/snippets/robot.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# scope: robot\n### Sections\nsnippet settingssection\ndescription *** Settings *** section\n\t*** Settings ***\n\tLibrary    ${1}\n\nsnippet keywordssection\ndescription *** Keywords *** section\n\t*** Keywords ***\n\t${1:Keyword Name}\n\t    [Arguments]    \\${${2:Example Arg 1}}\n\t\nsnippet testcasessection\ndescription *** Test Cases *** section\n\t*** Test Cases ***\n\t${1:First Test Case}\n\t    ${2:Log    Example Arg}\n\nsnippet variablessection\ndescription *** Variables *** section\n\t*** Variables ***\n\t\\${${1:Variable Name}}=    ${2:Variable Value}\n\n### Helpful keywords\nsnippet testcase\ndescription A test case\n\t${1:Test Case Name}\n\t    ${2:Log    Example log message}\n\t\nsnippet keyword\ndescription A keyword\n\t${1:Example Keyword}\n\t    [Arguments]    \\${${2:Example Arg 1}}\n\n### Built Ins\nsnippet forinr\ndescription For In Range Loop\n\tFOR    \\${${1:Index}}    IN RANGE     \\${${2:10}}\n\t    Log     \\${${1:Index}}\n\tEND\n\nsnippet forin\ndescription For In Loop\n\tFOR    \\${${1:Item}}    IN     @{${2:List Variable}}\n\t    Log     \\${${1:Item}}\n\tEND\n\nsnippet if\ndescription If Statement\n\tIF    ${1:condition}\n\t    ${2:Do something}\n\tEND\n\nsnippet else\ndescription If Statement\n\tIF    ${1:Condition}\n\t    ${2:Do something}\n\tELSE\n\t    ${3:Otherwise do this}\n\tEND\n\nsnippet elif\ndescription Else-If Statement\n\tIF    ${1:Condition 1}\n\t    ${2:Do something}\n\tELSE IF    ${3:Condition 2}\n\t    ${4:Do something else}\n\tEND\n";
-
-});
-
-define("ace/snippets/robot",["require","exports","module","ace/snippets/robot.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./robot.snippets");
-exports.scope = "robot";
-
-});
-
-define("ace/snippets/rst.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# rst\n\nsnippet :\n\t:${1:field name}: ${2:field body}\nsnippet *\n\t*${1:Emphasis}*\nsnippet **\n\t**${1:Strong emphasis}**\nsnippet _\n\t\\`${1:hyperlink-name}\\`_\n\t.. _\\`$1\\`: ${2:link-block}\nsnippet =\n\t${1:Title}\n\t=====${2:=}\n\t${3}\nsnippet -\n\t${1:Title}\n\t-----${2:-}\n\t${3}\nsnippet cont:\n\t.. contents::\n\t\n";
-
-});
-
-define("ace/snippets/rst",["require","exports","module","ace/snippets/rst.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./rst.snippets");
-exports.scope = "rst";
-
-});
-
-define("ace/snippets/ruby.snippets",["require","exports","module"], function(require, exports, module){module.exports = "########################################\n# Ruby snippets - for Rails, see below #\n########################################\n\n# encoding for Ruby 1.9\nsnippet enc\n\t# encoding: utf-8\n\n# #!/usr/bin/env ruby\nsnippet #!\n\t#!/usr/bin/env ruby\n\t# encoding: utf-8\n\n# New Block\nsnippet =b\n\t=begin rdoc\n\t\t${1}\n\t=end\nsnippet y\n\t:yields: ${1:arguments}\nsnippet rb\n\t#!/usr/bin/env ruby -wKU\nsnippet beg\n\tbegin\n\t\t${3}\n\trescue ${1:Exception} => ${2:e}\n\tend\n\nsnippet req require\n\trequire \"${1}\"${2}\nsnippet #\n\t# =>\nsnippet end\n\t__END__\nsnippet case\n\tcase ${1:object}\n\twhen ${2:condition}\n\t\t${3}\n\tend\nsnippet when\n\twhen ${1:condition}\n\t\t${2}\nsnippet def\n\tdef ${1:method_name}\n\t\t${2}\n\tend\nsnippet deft\n\tdef test_${1:case_name}\n\t\t${2}\n\tend\nsnippet if\n\tif ${1:condition}\n\t\t${2}\n\tend\nsnippet ife\n\tif ${1:condition}\n\t\t${2}\n\telse\n\t\t${3}\n\tend\nsnippet elsif\n\telsif ${1:condition}\n\t\t${2}\nsnippet unless\n\tunless ${1:condition}\n\t\t${2}\n\tend\nsnippet while\n\twhile ${1:condition}\n\t\t${2}\n\tend\nsnippet for\n\tfor ${1:e} in ${2:c}\n\t\t${3}\n\tend\nsnippet until\n\tuntil ${1:condition}\n\t\t${2}\n\tend\nsnippet cla class .. end\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\t${2}\n\tend\nsnippet cla class .. initialize .. end\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\tdef initialize(${2:args})\n\t\t\t${3}\n\t\tend\n\tend\nsnippet cla class .. < ParentClass .. initialize .. end\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} < ${2:ParentClass}\n\t\tdef initialize(${3:args})\n\t\t\t${4}\n\t\tend\n\tend\nsnippet cla ClassName = Struct .. do .. end\n\t${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} = Struct.new(:${2:attr_names}) do\n\t\tdef ${3:method_name}\n\t\t\t${4}\n\t\tend\n\tend\nsnippet cla class BlankSlate .. initialize .. end\n\tclass ${1:BlankSlate}\n\t\tinstance_methods.each { |meth| undef_method(meth) unless meth =~ /\\A__/ }\n\tend\nsnippet cla class << self .. end\n\tclass << ${1:self}\n\t\t${2}\n\tend\n# class .. < DelegateClass .. initialize .. end\nsnippet cla-\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} < DelegateClass(${2:ParentClass})\n\t\tdef initialize(${3:args})\n\t\t\tsuper(${4:del_obj})\n\n\t\t\t${5}\n\t\tend\n\tend\nsnippet mod module .. end\n\tmodule ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\t${2}\n\tend\nsnippet mod module .. module_function .. end\n\tmodule ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\tmodule_function\n\n\t\t${2}\n\tend\nsnippet mod module .. ClassMethods .. end\n\tmodule ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\tmodule ClassMethods\n\t\t\t${2}\n\t\tend\n\n\t\tmodule InstanceMethods\n\n\t\tend\n\n\t\tdef self.included(receiver)\n\t\t\treceiver.extend         ClassMethods\n\t\t\treceiver.send :include, InstanceMethods\n\t\tend\n\tend\n# attr_reader\nsnippet r\n\tattr_reader :${1:attr_names}\n# attr_writer\nsnippet w\n\tattr_writer :${1:attr_names}\n# attr_accessor\nsnippet rw\n\tattr_accessor :${1:attr_names}\nsnippet atp\n\tattr_protected :${1:attr_names}\nsnippet ata\n\tattr_accessible :${1:attr_names}\n# include Enumerable\nsnippet Enum\n\tinclude Enumerable\n\n\tdef each(&block)\n\t\t${1}\n\tend\n# include Comparable\nsnippet Comp\n\tinclude Comparable\n\n\tdef <=>(other)\n\t\t${1}\n\tend\n# extend Forwardable\nsnippet Forw-\n\textend Forwardable\n# def self\nsnippet defs\n\tdef self.${1:class_method_name}\n\t\t${2}\n\tend\n# def method_missing\nsnippet defmm\n\tdef method_missing(meth, *args, &blk)\n\t\t${1}\n\tend\nsnippet defd\n\tdef_delegator :${1:@del_obj}, :${2:del_meth}, :${3:new_name}\nsnippet defds\n\tdef_delegators :${1:@del_obj}, :${2:del_methods}\nsnippet am\n\talias_method :${1:new_name}, :${2:old_name}\nsnippet app\n\tif __FILE__ == $PROGRAM_NAME\n\t\t${1}\n\tend\n# usage_if()\nsnippet usai\n\tif ARGV.${1}\n\t\tabort \"Usage: #{$PROGRAM_NAME} ${2:ARGS_GO_HERE}\"${3}\n\tend\n# usage_unless()\nsnippet usau\n\tunless ARGV.${1}\n\t\tabort \"Usage: #{$PROGRAM_NAME} ${2:ARGS_GO_HERE}\"${3}\n\tend\nsnippet array\n\tArray.new(${1:10}) { |${2:i}| ${3} }\nsnippet hash\n\tHash.new { |${1:hash}, ${2:key}| $1[$2] = ${3} }\nsnippet file File.foreach() { |line| .. }\n\tFile.foreach(${1:\"path/to/file\"}) { |${2:line}| ${3} }\nsnippet file File.read()\n\tFile.read(${1:\"path/to/file\"})${2}\nsnippet Dir Dir.global() { |file| .. }\n\tDir.glob(${1:\"dir/glob/*\"}) { |${2:file}| ${3} }\nsnippet Dir Dir[\"..\"]\n\tDir[${1:\"glob/**/*.rb\"}]${2}\nsnippet dir\n\tFilename.dirname(__FILE__)\nsnippet deli\n\tdelete_if { |${1:e}| ${2} }\nsnippet fil\n\tfill(${1:range}) { |${2:i}| ${3} }\n# flatten_once()\nsnippet flao\n\tinject(Array.new) { |${1:arr}, ${2:a}| $1.push(*$2)}${3}\nsnippet zip\n\tzip(${1:enums}) { |${2:row}| ${3} }\n# downto(0) { |n| .. }\nsnippet dow\n\tdownto(${1:0}) { |${2:n}| ${3} }\nsnippet ste\n\tstep(${1:2}) { |${2:n}| ${3} }\nsnippet tim\n\ttimes { |${1:n}| ${2} }\nsnippet upt\n\tupto(${1:1.0/0.0}) { |${2:n}| ${3} }\nsnippet loo\n\tloop { ${1} }\nsnippet ea\n\teach { |${1:e}| ${2} }\nsnippet ead\n\teach do |${1:e}|\n\t\t${2}\n\tend\nsnippet eab\n\teach_byte { |${1:byte}| ${2} }\nsnippet eac- each_char { |chr| .. }\n\teach_char { |${1:chr}| ${2} }\nsnippet eac- each_cons(..) { |group| .. }\n\teach_cons(${1:2}) { |${2:group}| ${3} }\nsnippet eai\n\teach_index { |${1:i}| ${2} }\nsnippet eaid\n\teach_index do |${1:i}|\n\t\t${2}\n\tend\nsnippet eak\n\teach_key { |${1:key}| ${2} }\nsnippet eakd\n\teach_key do |${1:key}|\n\t\t${2}\n\tend\nsnippet eal\n\teach_line { |${1:line}| ${2} }\nsnippet eald\n\teach_line do |${1:line}|\n\t\t${2}\n\tend\nsnippet eap\n\teach_pair { |${1:name}, ${2:val}| ${3} }\nsnippet eapd\n\teach_pair do |${1:name}, ${2:val}|\n\t\t${3}\n\tend\nsnippet eas-\n\teach_slice(${1:2}) { |${2:group}| ${3} }\nsnippet easd-\n\teach_slice(${1:2}) do |${2:group}|\n\t\t${3}\n\tend\nsnippet eav\n\teach_value { |${1:val}| ${2} }\nsnippet eavd\n\teach_value do |${1:val}|\n\t\t${2}\n\tend\nsnippet eawi\n\teach_with_index { |${1:e}, ${2:i}| ${3} }\nsnippet eawid\n\teach_with_index do |${1:e},${2:i}|\n\t\t${3}\n\tend\nsnippet reve\n\treverse_each { |${1:e}| ${2} }\nsnippet reved\n\treverse_each do |${1:e}|\n\t\t${2}\n\tend\nsnippet inj\n\tinject(${1:init}) { |${2:mem}, ${3:var}| ${4} }\nsnippet injd\n\tinject(${1:init}) do |${2:mem}, ${3:var}|\n\t\t${4}\n\tend\nsnippet map\n\tmap { |${1:e}| ${2} }\nsnippet mapd\n\tmap do |${1:e}|\n\t\t${2}\n\tend\nsnippet mapwi-\n\tenum_with_index.map { |${1:e}, ${2:i}| ${3} }\nsnippet sor\n\tsort { |a, b| ${1} }\nsnippet sorb\n\tsort_by { |${1:e}| ${2} }\nsnippet ran\n\tsort_by { rand }\nsnippet all\n\tall? { |${1:e}| ${2} }\nsnippet any\n\tany? { |${1:e}| ${2} }\nsnippet cl\n\tclassify { |${1:e}| ${2} }\nsnippet col\n\tcollect { |${1:e}| ${2} }\nsnippet cold\n\tcollect do |${1:e}|\n\t\t${2}\n\tend\nsnippet det\n\tdetect { |${1:e}| ${2} }\nsnippet detd\n\tdetect do |${1:e}|\n\t\t${2}\n\tend\nsnippet fet\n\tfetch(${1:name}) { |${2:key}| ${3} }\nsnippet fin\n\tfind { |${1:e}| ${2} }\nsnippet find\n\tfind do |${1:e}|\n\t\t${2}\n\tend\nsnippet fina\n\tfind_all { |${1:e}| ${2} }\nsnippet finad\n\tfind_all do |${1:e}|\n\t\t${2}\n\tend\nsnippet gre\n\tgrep(${1:/pattern/}) { |${2:match}| ${3} }\nsnippet sub\n\t${1:g}sub(${2:/pattern/}) { |${3:match}| ${4} }\nsnippet sca\n\tscan(${1:/pattern/}) { |${2:match}| ${3} }\nsnippet scad\n\tscan(${1:/pattern/}) do |${2:match}|\n\t\t${3}\n\tend\nsnippet max\n\tmax { |a, b| ${1} }\nsnippet min\n\tmin { |a, b| ${1} }\nsnippet par\n\tpartition { |${1:e}| ${2} }\nsnippet pard\n\tpartition do |${1:e}|\n\t\t${2}\n\tend\nsnippet rej\n\treject { |${1:e}| ${2} }\nsnippet rejd\n\treject do |${1:e}|\n\t\t${2}\n\tend\nsnippet sel\n\tselect { |${1:e}| ${2} }\nsnippet seld\n\tselect do |${1:e}|\n\t\t${2}\n\tend\nsnippet lam\n\tlambda { |${1:args}| ${2} }\nsnippet doo\n\tdo\n\t\t${1}\n\tend\nsnippet dov\n\tdo |${1:variable}|\n\t\t${2}\n\tend\nsnippet :\n\t:${1:key} => ${2:\"value\"}${3}\nsnippet ope\n\topen(${1:\"path/or/url/or/pipe\"}, \"${2:w}\") { |${3:io}| ${4} }\n# path_from_here()\nsnippet fpath\n\tFile.join(File.dirname(__FILE__), *%2[${1:rel path here}])${2}\n# unix_filter {}\nsnippet unif\n\tARGF.each_line${1} do |${2:line}|\n\t\t${3}\n\tend\n# option_parse {}\nsnippet optp\n\trequire \"optparse\"\n\n\toptions = {${1:default => \"args\"}}\n\n\tARGV.options do |opts|\n\t\topts.banner = \"Usage: #{File.basename($PROGRAM_NAME)}\nsnippet opt\n\topts.on( \"-${1:o}\", \"--${2:long-option-name}\", ${3:String},\n\t         \"${4:Option description.}\") do |${5:opt}|\n\t\t${6}\n\tend\nsnippet tc\n\trequire \"test/unit\"\n\n\trequire \"${1:library_file_name}\"\n\n\tclass Test${2:$1} < Test::Unit::TestCase\n\t\tdef test_${3:case_name}\n\t\t\t${4}\n\t\tend\n\tend\nsnippet ts\n\trequire \"test/unit\"\n\n\trequire \"tc_${1:test_case_file}\"\n\trequire \"tc_${2:test_case_file}\"${3}\nsnippet as\n\tassert ${1:test}, \"${2:Failure message.}\"${3}\nsnippet ase\n\tassert_equal ${1:expected}, ${2:actual}${3}\nsnippet asne\n\tassert_not_equal ${1:unexpected}, ${2:actual}${3}\nsnippet asid\n\tassert_in_delta ${1:expected_float}, ${2:actual_float}, ${3:2 ** -20}${4}\nsnippet asio\n\tassert_instance_of ${1:ExpectedClass}, ${2:actual_instance}${3}\nsnippet asko\n\tassert_kind_of ${1:ExpectedKind}, ${2:actual_instance}${3}\nsnippet asn\n\tassert_nil ${1:instance}${2}\nsnippet asnn\n\tassert_not_nil ${1:instance}${2}\nsnippet asm\n\tassert_match /${1:expected_pattern}/, ${2:actual_string}${3}\nsnippet asnm\n\tassert_no_match /${1:unexpected_pattern}/, ${2:actual_string}${3}\nsnippet aso\n\tassert_operator ${1:left}, :${2:operator}, ${3:right}${4}\nsnippet asr\n\tassert_raise ${1:Exception} { ${2} }\nsnippet asrd\n\tassert_raise ${1:Exception} do\n\t\t${2}\n\tend\nsnippet asnr\n\tassert_nothing_raised ${1:Exception} { ${2} }\nsnippet asnrd\n\tassert_nothing_raised ${1:Exception} do\n\t\t${2}\n\tend\nsnippet asrt\n\tassert_respond_to ${1:object}, :${2:method}${3}\nsnippet ass assert_same(..)\n\tassert_same ${1:expected}, ${2:actual}${3}\nsnippet ass assert_send(..)\n\tassert_send [${1:object}, :${2:message}, ${3:args}]${4}\nsnippet asns\n\tassert_not_same ${1:unexpected}, ${2:actual}${3}\nsnippet ast\n\tassert_throws :${1:expected} { ${2} }\nsnippet astd\n\tassert_throws :${1:expected} do\n\t\t${2}\n\tend\nsnippet asnt\n\tassert_nothing_thrown { ${1} }\nsnippet asntd\n\tassert_nothing_thrown do\n\t\t${1}\n\tend\nsnippet fl\n\tflunk \"${1:Failure message.}\"${2}\n# Benchmark.bmbm do .. end\nsnippet bm-\n\tTESTS = ${1:10_000}\n\tBenchmark.bmbm do |results|\n\t\t${2}\n\tend\nsnippet rep\n\tresults.report(\"${1:name}:\") { TESTS.times { ${2} }}\n# Marshal.dump(.., file)\nsnippet Md\n\tFile.open(${1:\"path/to/file.dump\"}, \"wb\") { |${2:file}| Marshal.dump(${3:obj}, $2) }${4}\n# Mashal.load(obj)\nsnippet Ml\n\tFile.open(${1:\"path/to/file.dump\"}, \"rb\") { |${2:file}| Marshal.load($2) }${3}\n# deep_copy(..)\nsnippet deec\n\tMarshal.load(Marshal.dump(${1:obj_to_copy}))${2}\nsnippet Pn-\n\tPStore.new(${1:\"file_name.pstore\"})${2}\nsnippet tra\n\ttransaction(${1:true}) { ${2} }\n# xmlread(..)\nsnippet xml-\n\tREXML::Document.new(File.read(${1:\"path/to/file\"}))${2}\n# xpath(..) { .. }\nsnippet xpa\n\telements.each(${1:\"//Xpath\"}) do |${2:node}|\n\t\t${3}\n\tend\n# class_from_name()\nsnippet clafn\n\tsplit(\"::\").inject(Object) { |par, const| par.const_get(const) }\n# singleton_class()\nsnippet sinc\n\tclass << self; self end\nsnippet nam\n\tnamespace :${1:`Filename()`} do\n\t\t${2}\n\tend\nsnippet tas\n\tdesc \"${1:Task description}\"\n\ttask :${2:task_name => [:dependent, :tasks]} do\n\t\t${3}\n\tend\n# block\nsnippet b\n\t{ |${1:var}| ${2} }\nsnippet begin\n\tbegin\n\t\traise 'A test exception.'\n\trescue Exception => e\n\t\tputs e.message\n\t\tputs e.backtrace.inspect\n\telse\n\t\t# other exception\n\tensure\n\t\t# always executed\n\tend\n\n#debugging\nsnippet debug\n\trequire 'ruby-debug'; debugger; true;\nsnippet pry\n\trequire 'pry'; binding.pry\n\n#############################################\n# Rails snippets - for pure Ruby, see above #\n#############################################\nsnippet art\n\tassert_redirected_to ${1::action => \"${2:index}\"}\nsnippet artnp\n\tassert_redirected_to ${1:parent}_${2:child}_path(${3:@$1}, ${4:@$2})\nsnippet artnpp\n\tassert_redirected_to ${1:parent}_${2:child}_path(${3:@$1})\nsnippet artp\n\tassert_redirected_to ${1:model}_path(${2:@$1})\nsnippet artpp\n\tassert_redirected_to ${1:model}s_path\nsnippet asd\n\tassert_difference \"${1:Model}.${2:count}\", $1 do\n\t\t${3}\n\tend\nsnippet asnd\n\tassert_no_difference \"${1:Model}.${2:count}\" do\n\t\t${3}\n\tend\nsnippet asre\n\tassert_response :${1:success}, @response.body${2}\nsnippet asrj\n\tassert_rjs :${1:replace}, \"${2:dom id}\"\nsnippet ass assert_select(..)\n\tassert_select '${1:path}', :${2:text} => '${3:inner_html' ${4:do}\nsnippet bf\n\tbefore_filter :${1:method}\nsnippet bt\n\tbelongs_to :${1:association}\nsnippet crw\n\tcattr_accessor :${1:attr_names}\nsnippet defcreate\n\tdef create\n\t\t@${1:model_class_name} = ${2:ModelClassName}.new(params[:$1])\n\n\t\trespond_to do |wants|\n\t\t\tif @$1.save\n\t\t\t\tflash[:notice] = '$2 was successfully created.'\n\t\t\t\twants.html { redirect_to(@$1) }\n\t\t\t\twants.xml  { render :xml => @$1, :status => :created, :location => @$1 }\n\t\t\telse\n\t\t\t\twants.html { render :action => \"new\" }\n\t\t\t\twants.xml  { render :xml => @$1.errors, :status => :unprocessable_entity }\n\t\t\tend\n\t\tend\n\tend${3}\nsnippet defdestroy\n\tdef destroy\n\t\t@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\t\t@$1.destroy\n\n\t\trespond_to do |wants|\n\t\t\twants.html { redirect_to($1s_url) }\n\t\t\twants.xml  { head :ok }\n\t\tend\n\tend${3}\nsnippet defedit\n\tdef edit\n\t\t@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\tend\nsnippet defindex\n\tdef index\n\t\t@${1:model_class_name} = ${2:ModelClassName}.all\n\n\t\trespond_to do |wants|\n\t\t\twants.html # index.html.erb\n\t\t\twants.xml  { render :xml => @$1s }\n\t\tend\n\tend${3}\nsnippet defnew\n\tdef new\n\t\t@${1:model_class_name} = ${2:ModelClassName}.new\n\n\t\trespond_to do |wants|\n\t\t\twants.html # new.html.erb\n\t\t\twants.xml  { render :xml => @$1 }\n\t\tend\n\tend${3}\nsnippet defshow\n\tdef show\n\t\t@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\n\t\trespond_to do |wants|\n\t\t\twants.html # show.html.erb\n\t\t\twants.xml  { render :xml => @$1 }\n\t\tend\n\tend${3}\nsnippet defupdate\n\tdef update\n\t\t@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\n\t\trespond_to do |wants|\n\t\t\tif @$1.update_attributes(params[:$1])\n\t\t\t\tflash[:notice] = '$2 was successfully updated.'\n\t\t\t\twants.html { redirect_to(@$1) }\n\t\t\t\twants.xml  { head :ok }\n\t\t\telse\n\t\t\t\twants.html { render :action => \"edit\" }\n\t\t\t\twants.xml  { render :xml => @$1.errors, :status => :unprocessable_entity }\n\t\t\tend\n\t\tend\n\tend${3}\nsnippet flash\n\tflash[:${1:notice}] = \"${2}\"\nsnippet habtm\n\thas_and_belongs_to_many :${1:object}, :join_table => \"${2:table_name}\", :foreign_key => \"${3}_id\"${4}\nsnippet hm\n\thas_many :${1:object}\nsnippet hmd\n\thas_many :${1:other}s, :class_name => \"${2:$1}\", :foreign_key => \"${3:$1}_id\", :dependent => :destroy${4}\nsnippet hmt\n\thas_many :${1:object}, :through => :${2:object}\nsnippet ho\n\thas_one :${1:object}\nsnippet i18\n\tI18n.t('${1:type.key}')${2}\nsnippet ist\n\t<%= image_submit_tag(\"${1:agree.png}\", :id => \"${2:id}\"${3} %>\nsnippet log\n\tRails.logger.${1:debug} ${2}\nsnippet log2\n\tRAILS_DEFAULT_LOGGER.${1:debug} ${2}\nsnippet logd\n\tlogger.debug { \"${1:message}\" }${2}\nsnippet loge\n\tlogger.error { \"${1:message}\" }${2}\nsnippet logf\n\tlogger.fatal { \"${1:message}\" }${2}\nsnippet logi\n\tlogger.info { \"${1:message}\" }${2}\nsnippet logw\n\tlogger.warn { \"${1:message}\" }${2}\nsnippet mapc\n\t${1:map}.${2:connect} '${3:controller/:action/:id}'\nsnippet mapca\n\t${1:map}.catch_all \"*${2:anything}\", :controller => \"${3:default}\", :action => \"${4:error}\"${5}\nsnippet mapr\n\t${1:map}.resource :${2:resource}\nsnippet maprs\n\t${1:map}.resources :${2:resource}\nsnippet mapwo\n\t${1:map}.with_options :${2:controller} => '${3:thing}' do |$3|\n\t\t${4}\n\tend\nsnippet mbs\n\tbefore_save :${1:method}\nsnippet mcht\n\tchange_table :${1:table_name} do |t|\n\t\t${2}\n\tend\nsnippet mp\n\tmap(&:${1:id})\nsnippet mrw\n\tmattr_accessor :${1:attr_names}\nsnippet oa\n\torder(\"${1:field}\")\nsnippet od\n\torder(\"${1:field} DESC\")\nsnippet pa\n\tparams[:${1:id}]${2}\nsnippet ra\n\trender :action => \"${1:action}\"\nsnippet ral\n\trender :action => \"${1:action}\", :layout => \"${2:layoutname}\"\nsnippet rest\n\trespond_to do |wants|\n\t\twants.${1:html} { ${2} }\n\tend\nsnippet rf\n\trender :file => \"${1:filepath}\"\nsnippet rfu\n\trender :file => \"${1:filepath}\", :use_full_path => ${2:false}\nsnippet ri\n\trender :inline => \"${1:<%= 'hello' %>}\"\nsnippet ril\n\trender :inline => \"${1:<%= 'hello' %>}\", :locals => { ${2::name} => \"${3:value}\"${4} }\nsnippet rit\n\trender :inline => \"${1:<%= 'hello' %>}\", :type => ${2::rxml}\nsnippet rjson\n\trender :json => ${1:text to render}\nsnippet rl\n\trender :layout => \"${1:layoutname}\"\nsnippet rn\n\trender :nothing => ${1:true}\nsnippet rns\n\trender :nothing => ${1:true}, :status => ${2:401}\nsnippet rp\n\trender :partial => \"${1:item}\"\nsnippet rpc\n\trender :partial => \"${1:item}\", :collection => ${2:@$1s}\nsnippet rpl\n\trender :partial => \"${1:item}\", :locals => { :${2:$1} => ${3:@$1}\nsnippet rpo\n\trender :partial => \"${1:item}\", :object => ${2:@$1}\nsnippet rps\n\trender :partial => \"${1:item}\", :status => ${2:500}\nsnippet rt\n\trender :text => \"${1:text to render}\"\nsnippet rtl\n\trender :text => \"${1:text to render}\", :layout => \"${2:layoutname}\"\nsnippet rtlt\n\trender :text => \"${1:text to render}\", :layout => ${2:true}\nsnippet rts\n\trender :text => \"${1:text to render}\", :status => ${2:401}\nsnippet ru\n\trender :update do |${1:page}|\n\t\t$1.${2}\n\tend\nsnippet rxml\n\trender :xml => ${1:text to render}\nsnippet sc\n\tscope :${1:name}, :where(:@${2:field} => ${3:value})\nsnippet sl\n\tscope :${1:name}, lambda do |${2:value}|\n\t\twhere(\"${3:field = ?}\", ${4:bind var})\n\tend\nsnippet sha1\n\tDigest::SHA1.hexdigest(${1:string})\nsnippet sweeper\n\tclass ${1:ModelClassName}Sweeper < ActionController::Caching::Sweeper\n\t\tobserve $1\n\n\t\tdef after_save(${2:model_class_name})\n\t\t\texpire_cache($2)\n\t\tend\n\n\t\tdef after_destroy($2)\n\t\t\texpire_cache($2)\n\t\tend\n\n\t\tdef expire_cache($2)\n\t\t\texpire_page\n\t\tend\n\tend\nsnippet tcb\n\tt.boolean :${1:title}\n\t${2}\nsnippet tcbi\n\tt.binary :${1:title}, :limit => ${2:2}.megabytes\n\t${3}\nsnippet tcd\n\tt.decimal :${1:title}, :precision => ${2:10}, :scale => ${3:2}\n\t${4}\nsnippet tcda\n\tt.date :${1:title}\n\t${2}\nsnippet tcdt\n\tt.datetime :${1:title}\n\t${2}\nsnippet tcf\n\tt.float :${1:title}\n\t${2}\nsnippet tch\n\tt.change :${1:name}, :${2:string}, :${3:limit} => ${4:80}\n\t${5}\nsnippet tci\n\tt.integer :${1:title}\n\t${2}\nsnippet tcl\n\tt.integer :lock_version, :null => false, :default => 0\n\t${1}\nsnippet tcr\n\tt.references :${1:taggable}, :polymorphic => { :default => '${2:Photo}' }\n\t${3}\nsnippet tcs\n\tt.string :${1:title}\n\t${2}\nsnippet tct\n\tt.text :${1:title}\n\t${2}\nsnippet tcti\n\tt.time :${1:title}\n\t${2}\nsnippet tcts\n\tt.timestamp :${1:title}\n\t${2}\nsnippet tctss\n\tt.timestamps\n\t${1}\nsnippet va\n\tvalidates_associated :${1:attribute}\nsnippet vao\n\tvalidates_acceptance_of :${1:terms}\nsnippet vc\n\tvalidates_confirmation_of :${1:attribute}\nsnippet ve\n\tvalidates_exclusion_of :${1:attribute}, :in => ${2:%w( mov avi )}\nsnippet vf\n\tvalidates_format_of :${1:attribute}, :with => /${2:regex}/\nsnippet vi\n\tvalidates_inclusion_of :${1:attribute}, :in => %w(${2: mov avi })\nsnippet vl\n\tvalidates_length_of :${1:attribute}, :within => ${2:3}..${3:20}\nsnippet vn\n\tvalidates_numericality_of :${1:attribute}\nsnippet vpo\n\tvalidates_presence_of :${1:attribute}\nsnippet vu\n\tvalidates_uniqueness_of :${1:attribute}\nsnippet wants\n\twants.${1:js|xml|html} { ${2} }\nsnippet wc\n\twhere(${1:\"conditions\"}${2:, bind_var})\nsnippet wh\n\twhere(${1:field} => ${2:value})\nsnippet xdelete\n\txhr :delete, :${1:destroy}, :id => ${2:1}${3}\nsnippet xget\n\txhr :get, :${1:show}, :id => ${2:1}${3}\nsnippet xpost\n\txhr :post, :${1:create}, :${2:object} => { ${3} }\nsnippet xput\n\txhr :put, :${1:update}, :id => ${2:1}, :${3:object} => { ${4} }${5}\nsnippet test\n\ttest \"should ${1:do something}\" do\n\t\t${2}\n\tend\n#migrations\nsnippet mac\n\tadd_column :${1:table_name}, :${2:column_name}, :${3:data_type}\nsnippet mrc\n\tremove_column :${1:table_name}, :${2:column_name}\nsnippet mrnc\n\trename_column :${1:table_name}, :${2:old_column_name}, :${3:new_column_name}\nsnippet mcc\n\tchange_column :${1:table}, :${2:column}, :${3:type}\nsnippet mccc\n\tt.column :${1:title}, :${2:string}\nsnippet mct\n\tcreate_table :${1:table_name} do |t|\n\t\tt.column :${2:name}, :${3:type}\n\tend\nsnippet migration\n\tclass ${1:class_name} < ActiveRecord::Migration\n\t\tdef self.up\n\t\t\t${2}\n\t\tend\n\n\t\tdef self.down\n\t\tend\n\tend\n\nsnippet trc\n\tt.remove :${1:column}\nsnippet tre\n\tt.rename :${1:old_column_name}, :${2:new_column_name}\n\t${3}\nsnippet tref\n\tt.references :${1:model}\n\n#rspec\nsnippet it\n\tit \"${1:spec_name}\" do\n\t\t${2}\n\tend\nsnippet itp\n\tit \"${1:spec_name}\"\n\t${2}\nsnippet desc\n\tdescribe ${1:class_name} do\n\t\t${2}\n\tend\nsnippet cont\n\tcontext \"${1:message}\" do\n\t\t${2}\n\tend\nsnippet bef\n\tbefore :${1:each} do\n\t\t${2}\n\tend\nsnippet aft\n\tafter :${1:each} do\n\t\t${2}\n\tend\n";
-
-});
-
-define("ace/snippets/ruby",["require","exports","module","ace/snippets/ruby.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./ruby.snippets");
-exports.scope = "ruby";
-
-});
-
-define("ace/snippets/sh.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Shebang. Executing bash via /usr/bin/env makes scripts more portable.\nsnippet #!\n\t#!/usr/bin/env bash\n\t\nsnippet if\n\tif [[ ${1:condition} ]]; then\n\t\t${2:#statements}\n\tfi\nsnippet elif\n\telif [[ ${1:condition} ]]; then\n\t\t${2:#statements}\nsnippet for\n\tfor (( ${2:i} = 0; $2 < ${1:count}; $2++ )); do\n\t\t${3:#statements}\n\tdone\nsnippet fori\n\tfor ${1:needle} in ${2:haystack} ; do\n\t\t${3:#statements}\n\tdone\nsnippet wh\n\twhile [[ ${1:condition} ]]; do\n\t\t${2:#statements}\n\tdone\nsnippet until\n\tuntil [[ ${1:condition} ]]; do\n\t\t${2:#statements}\n\tdone\nsnippet case\n\tcase ${1:word} in\n\t\t${2:pattern})\n\t\t\t${3};;\n\tesac\nsnippet go \n\twhile getopts '${1:o}' ${2:opts} \n\tdo \n\t\tcase $$2 in\n\t\t${3:o0})\n\t\t\t${4:#staments};;\n\t\tesac\n\tdone\n# Set SCRIPT_DIR variable to directory script is located.\nsnippet sdir\n\tSCRIPT_DIR=\"$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" && pwd )\"\n# getopt\nsnippet getopt\n\t__ScriptVersion=\"${1:version}\"\n\n\t#===  FUNCTION  ================================================================\n\t#         NAME:  usage\n\t#  DESCRIPTION:  Display usage information.\n\t#===============================================================================\n\tfunction usage ()\n\t{\n\t\t\tcat <<- EOT\n\n\t  Usage :  $${0:0} [options] [--] \n\n\t  Options: \n\t  -h|help       Display this message\n\t  -v|version    Display script version\n\n\tEOT\n\t}    # ----------  end of function usage  ----------\n\n\t#-----------------------------------------------------------------------\n\t#  Handle command line arguments\n\t#-----------------------------------------------------------------------\n\n\twhile getopts \":hv\" opt\n\tdo\n\t  case $opt in\n\n\t\th|help     )  usage; exit 0   ;;\n\n\t\tv|version  )  echo \"$${0:0} -- Version $__ScriptVersion\"; exit 0   ;;\n\n\t\t\\? )  echo -e \"\\n  Option does not exist : $OPTARG\\n\"\n\t\t\t  usage; exit 1   ;;\n\n\t  esac    # --- end of case ---\n\tdone\n\tshift $(($OPTIND-1))\n\n";
-
-});
-
-define("ace/snippets/sh",["require","exports","module","ace/snippets/sh.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./sh.snippets");
-exports.scope = "sh";
-
-});
-
-define("ace/snippets/sql.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet tbl\n\tcreate table ${1:table} (\n\t\t${2:columns}\n\t);\nsnippet col\n\t${1:name}\t${2:type}\t${3:default ''}\t${4:not null}\nsnippet ccol\n\t${1:name}\tvarchar2(${2:size})\t${3:default ''}\t${4:not null}\nsnippet ncol\n\t${1:name}\tnumber\t${3:default 0}\t${4:not null}\nsnippet dcol\n\t${1:name}\tdate\t${3:default sysdate}\t${4:not null}\nsnippet ind\n\tcreate index ${3:$1_$2} on ${1:table}(${2:column});\nsnippet uind\n\tcreate unique index ${1:name} on ${2:table}(${3:column});\nsnippet tblcom\n\tcomment on table ${1:table} is '${2:comment}';\nsnippet colcom\n\tcomment on column ${1:table}.${2:column} is '${3:comment}';\nsnippet addcol\n\talter table ${1:table} add (${2:column} ${3:type});\nsnippet seq\n\tcreate sequence ${1:name} start with ${2:1} increment by ${3:1} minvalue ${4:1};\nsnippet s*\n\tselect * from ${1:table}\n";
-
-});
-
-define("ace/snippets/sql",["require","exports","module","ace/snippets/sql.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./sql.snippets");
-exports.scope = "sql";
-
-});
-
-define("ace/snippets/sqlserver.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# ISNULL\nsnippet isnull\n\tISNULL(${1:check_expression}, ${2:replacement_value})\n# FORMAT\nsnippet format\n\tFORMAT(${1:value}, ${2:format})\n# CAST\nsnippet cast\n\tCAST(${1:expression} AS ${2:data_type})\n# CONVERT\nsnippet convert\n\tCONVERT(${1:data_type}, ${2:expression})\n# DATEPART\nsnippet datepart\n\tDATEPART(${1:datepart}, ${2:date})\n# DATEDIFF\nsnippet datediff\n\tDATEDIFF(${1:datepart}, ${2:startdate}, ${3:enddate})\n# DATEADD\nsnippet dateadd\n\tDATEADD(${1:datepart}, ${2:number}, ${3:date})\n# DATEFROMPARTS \nsnippet datefromparts\n\tDATEFROMPARTS(${1:year}, ${2:month}, ${3:day})\n# OBJECT_DEFINITION\nsnippet objectdef\n\tSELECT OBJECT_DEFINITION(OBJECT_ID('${1:sys.server_permissions /*object name*/}'))\n# STUFF XML\nsnippet stuffxml\n\tSTUFF((SELECT ', ' + ${1:ColumnName}\n\t\tFROM ${2:TableName}\n\t\tWHERE ${3:WhereClause}\n\t\tFOR XML PATH('')), 1, 1, '') AS ${4:Alias}\n\t${5:/*https://msdn.microsoft.com/en-us/library/ms188043.aspx*/}\n# Create Procedure\nsnippet createproc\n\t-- =============================================\n\t-- Author:\t\t${1:Author}\n\t-- Create date: ${2:Date}\n\t-- Description:\t${3:Description}\n\t-- =============================================\n\tCREATE PROCEDURE ${4:Procedure_Name}\n\t\t${5:/*Add the parameters for the stored procedure here*/}\n\tAS\n\tBEGIN\n\t\t-- SET NOCOUNT ON added to prevent extra result sets from interfering with SELECT statements.\n\t\tSET NOCOUNT ON;\n\t\t\n\t\t${6:/*Add the T-SQL statements to compute the return value here*/}\n\t\t\n\tEND\n\tGO\n# Create Scalar Function\nsnippet createfn\n\t-- =============================================\n\t-- Author:\t\t${1:Author}\n\t-- Create date: ${2:Date}\n\t-- Description:\t${3:Description}\n\t-- =============================================\n\tCREATE FUNCTION ${4:Scalar_Function_Name}\n\t\t-- Add the parameters for the function here\n\tRETURNS ${5:Function_Data_Type}\n\tAS\n\tBEGIN\n\t\tDECLARE @Result ${5:Function_Data_Type}\n\t\t\n\t\t${6:/*Add the T-SQL statements to compute the return value here*/}\n\t\t\n\tEND\n\tGO";
-
-});
-
-define("ace/snippets/sqlserver",["require","exports","module","ace/snippets/sqlserver.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./sqlserver.snippets");
-exports.scope = "sqlserver";
-
-});
-
-define("ace/snippets/tcl.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# #!/usr/bin/env tclsh\nsnippet #!\n\t#!/usr/bin/env tclsh\n\t\n# Process\nsnippet pro\n\tproc ${1:function_name} {${2:args}} {\n\t\t${3:#body ...}\n\t}\n#xif\nsnippet xif\n\t${1:expr}? ${2:true} : ${3:false}\n# Conditional\nsnippet if\n\tif {${1}} {\n\t\t${2:# body...}\n\t}\n# Conditional if..else\nsnippet ife\n\tif {${1}} {\n\t\t${2:# body...}\n\t} else {\n\t\t${3:# else...}\n\t}\n# Conditional if..elsif..else\nsnippet ifee\n\tif {${1}} {\n\t\t${2:# body...}\n\t} elseif {${3}} {\n\t\t${4:# elsif...}\n\t} else {\n\t\t${5:# else...}\n\t}\n# If catch then\nsnippet ifc\n\tif { [catch {${1:#do something...}} ${2:err}] } {\n\t\t${3:# handle failure...}\n\t}\n# Catch\nsnippet catch\n\tcatch {${1}} ${2:err} ${3:options}\n# While Loop\nsnippet wh\n\twhile {${1}} {\n\t\t${2:# body...}\n\t}\n# For Loop\nsnippet for\n\tfor {set ${2:var} 0} {$$2 < ${1:count}} {${3:incr} $2} {\n\t\t${4:# body...}\n\t}\n# Foreach Loop\nsnippet fore\n\tforeach ${1:x} {${2:#list}} {\n\t\t${3:# body...}\n\t}\n# after ms script...\nsnippet af\n\tafter ${1:ms} ${2:#do something}\n# after cancel id\nsnippet afc\n\tafter cancel ${1:id or script}\n# after idle\nsnippet afi\n\tafter idle ${1:script}\n# after info id\nsnippet afin\n\tafter info ${1:id}\n# Expr\nsnippet exp\n\texpr {${1:#expression here}}\n# Switch\nsnippet sw\n\tswitch ${1:var} {\n\t\t${3:pattern 1} {\n\t\t\t${4:#do something}\n\t\t}\n\t\tdefault {\n\t\t\t${2:#do something}\n\t\t}\n\t}\n# Case\nsnippet ca\n\t${1:pattern} {\n\t\t${2:#do something}\n\t}${3}\n# Namespace eval\nsnippet ns\n\tnamespace eval ${1:path} {${2:#script...}}\n# Namespace current\nsnippet nsc\n\tnamespace current\n";
-
-});
-
-define("ace/snippets/tcl",["require","exports","module","ace/snippets/tcl.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./tcl.snippets");
-exports.scope = "tcl";
-
-});
-
-define("ace/snippets/tex.snippets",["require","exports","module"], function(require, exports, module){module.exports = "#PREAMBLE\n#newcommand\nsnippet nc\n\t\\newcommand{\\${1:cmd}}[${2:opt}]{${3:realcmd}}${4}\n#usepackage\nsnippet up\n\t\\usepackage[${1:[options}]{${2:package}}\n#newunicodechar\nsnippet nuc\n\t\\newunicodechar{${1}}{${2:\\ensuremath}${3:tex-substitute}}}\n#DeclareMathOperator\nsnippet dmo\n\t\\DeclareMathOperator{${1}}{${2}}\n\n#DOCUMENT\n# \\begin{}...\\end{}\nsnippet begin\n\t\\begin{${1:env}}\n\t\t${2}\n\t\\end{$1}\n# Tabular\nsnippet tab\n\t\\begin{${1:tabular}}{${2:c}}\n\t${3}\n\t\\end{$1}\nsnippet thm\n\t\\begin[${1:author}]{${2:thm}}\n\t${3}\n\t\\end{$1}\nsnippet center\n\t\\begin{center}\n\t\t${1}\n\t\\end{center}\n# Align(ed)\nsnippet ali\n\t\\begin{align${1:ed}}\n\t\t${2}\n\t\\end{align$1}\n# Gather(ed)\nsnippet gat\n\t\\begin{gather${1:ed}}\n\t\t${2}\n\t\\end{gather$1}\n# Equation\nsnippet eq\n\t\\begin{equation}\n\t\t${1}\n\t\\end{equation}\n# Equation\nsnippet eq*\n\t\\begin{equation*}\n\t\t${1}\n\t\\end{equation*}\n# Unnumbered Equation\nsnippet \\\n\t\\[\n\t\t${1}\n\t\\]\n# Enumerate\nsnippet enum\n\t\\begin{enumerate}\n\t\t\\item ${1}\n\t\\end{enumerate}\n# Itemize\nsnippet itemize\n\t\\begin{itemize}\n\t\t\\item ${1}\n\t\\end{itemize}\n# Description\nsnippet desc\n\t\\begin{description}\n\t\t\\item[${1}] ${2}\n\t\\end{description}\n# Matrix\nsnippet mat\n\t\\begin{${1:p/b/v/V/B/small}matrix}\n\t\t${2}\n\t\\end{$1matrix}\n# Cases\nsnippet cas\n\t\\begin{cases}\n\t\t${1:equation}, &\\text{ if }${2:case}\\\\\n\t\t${3}\n\t\\end{cases}\n# Split\nsnippet spl\n\t\\begin{split}\n\t\t${1}\n\t\\end{split}\n# Part\nsnippet part\n\t\\part{${1:part name}} % (fold)\n\t\\label{prt:${2:$1}}\n\t${3}\n\t% part $2 (end)\n# Chapter\nsnippet cha\n\t\\chapter{${1:chapter name}}\n\t\\label{cha:${2:$1}}\n\t${3}\n# Section\nsnippet sec\n\t\\section{${1:section name}}\n\t\\label{sec:${2:$1}}\n\t${3}\n# Sub Section\nsnippet sub\n\t\\subsection{${1:subsection name}}\n\t\\label{sub:${2:$1}}\n\t${3}\n# Sub Sub Section\nsnippet subs\n\t\\subsubsection{${1:subsubsection name}}\n\t\\label{ssub:${2:$1}}\n\t${3}\n# Paragraph\nsnippet par\n\t\\paragraph{${1:paragraph name}}\n\t\\label{par:${2:$1}}\n\t${3}\n# Sub Paragraph\nsnippet subp\n\t\\subparagraph{${1:subparagraph name}}\n\t\\label{subp:${2:$1}}\n\t${3}\n#References\nsnippet itd\n\t\\item[${1:description}] ${2:item}\nsnippet figure\n\t${1:Figure}~\\ref{${2:fig:}}${3}\nsnippet table\n\t${1:Table}~\\ref{${2:tab:}}${3}\nsnippet listing\n\t${1:Listing}~\\ref{${2:list}}${3}\nsnippet section\n\t${1:Section}~\\ref{${2:sec:}}${3}\nsnippet page\n\t${1:page}~\\pageref{${2}}${3}\nsnippet index\n\t\\index{${1:index}}${2}\n#Citations\nsnippet cite\n\t\\cite[${1}]{${2}}${3}\nsnippet fcite\n\t\\footcite[${1}]{${2}}${3}\n#Formating text: italic, bold, underline, small capital, emphase ..\nsnippet it\n\t\\textit{${1:text}}\nsnippet bf\n\t\\textbf{${1:text}}\nsnippet under\n\t\\underline{${1:text}}\nsnippet emp\n\t\\emph{${1:text}}\nsnippet sc\n\t\\textsc{${1:text}}\n#Choosing font\nsnippet sf\n\t\\textsf{${1:text}}\nsnippet rm\n\t\\textrm{${1:text}}\nsnippet tt\n\t\\texttt{${1:text}}\n#misc\nsnippet ft\n\t\\footnote{${1:text}}\nsnippet fig\n\t\\begin{figure}\n\t\\begin{center}\n\t    \\includegraphics[scale=${1}]{Figures/${2}}\n\t\\end{center}\n\t\\caption{${3}}\n\t\\label{fig:${4}}\n\t\\end{figure}\nsnippet tikz\n\t\\begin{figure}\n\t\\begin{center}\n\t\\begin{tikzpicture}[scale=${1:1}]\n\t\t${2}\n\t\\end{tikzpicture}\n\t\\end{center}\n\t\\caption{${3}}\n\t\\label{fig:${4}}\n\t\\end{figure}\n#math\nsnippet stackrel\n\t\\stackrel{${1:above}}{${2:below}} ${3}\nsnippet frac\n\t\\frac{${1:num}}{${2:denom}}\nsnippet sum\n\t\\sum^{${1:n}}_{${2:i=1}}{${3}}";
-
-});
-
-define("ace/snippets/tex",["require","exports","module","ace/snippets/tex.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./tex.snippets");
-exports.scope = "tex";
-
-});
-
-define("ace/snippets/textile.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Jekyll post header\nsnippet header\n\t---\n\ttitle: ${1:title}\n\tlayout: post\n\tdate: ${2:date} ${3:hour:minute:second} -05:00\n\t---\n\n# Image\nsnippet img\n\t!${1:url}(${2:title}):${3:link}!\n\n# Table\nsnippet |\n\t|${1}|${2}\n\n# Link\nsnippet link\n\t\"${1:link text}\":${2:url}\n\n# Acronym\nsnippet (\n\t(${1:Expand acronym})${2}\n\n# Footnote\nsnippet fn\n\t[${1:ref number}] ${3}\n\n\tfn$1. ${2:footnote}\n\t\n";
-
-});
-
-define("ace/snippets/textile",["require","exports","module","ace/snippets/textile.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./textile.snippets");
-exports.scope = "textile";
-
-});
-
-define("ace/snippets/velocity.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# macro\nsnippet #macro\n\t#macro ( ${1:macroName} ${2:\\$var1, [\\$var2, ...]} )\n\t\t${3:## macro code}\n\t#end\n# foreach\nsnippet #foreach\n\t#foreach ( ${1:\\$item} in ${2:\\$collection} )\n\t\t${3:## foreach code}\n\t#end\n# if\nsnippet #if\n\t#if ( ${1:true} )\n\t\t${0}\n\t#end\n# if ... else\nsnippet #ife\n\t#if ( ${1:true} )\n\t\t${2}\n\t#else\n\t\t${0}\n\t#end\n#import\nsnippet #import\n\t#import ( \"${1:path/to/velocity/format}\" )\n# set\nsnippet #set\n\t#set ( $${1:var} = ${0} )\n";
-
-});
-
-define("ace/snippets/velocity",["require","exports","module","ace/snippets/velocity.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./velocity.snippets");
-exports.scope = "velocity";
-exports.includeScopes = ["html", "javascript", "css"];
-
-});
-
-define("ace/snippets/wollok.snippets",["require","exports","module"], function(require, exports, module){module.exports = "##\n## Basic Java packages and import\nsnippet im\n\timport\nsnippet w.l\n\twollok.lang\nsnippet w.i\n\twollok.lib\n\n## Class and object\nsnippet cl\n\tclass ${1:`Filename(\"\", \"untitled\")`} ${2}\nsnippet obj\n\tobject ${1:`Filename(\"\", \"untitled\")`} ${2:inherits Parent}${3}\nsnippet te\n\ttest ${1:`Filename(\"\", \"untitled\")`}\n\n##\n## Enhancements\nsnippet inh\n\tinherits\n\n##\n## Comments\nsnippet /*\n\t/*\n\t * ${1}\n\t */\n\n##\n## Control Statements\nsnippet el\n\telse\nsnippet if\n\tif (${1}) ${2}\n\n##\n## Create a Method\nsnippet m\n\tmethod ${1:method}(${2}) ${5}\n\n##  \n## Tests\nsnippet as\n\tassert.equals(${1:expected}, ${2:actual})\n\n##\n## Exceptions\nsnippet ca\n\tcatch ${1:e} : (${2:Exception} ) ${3}\nsnippet thr\n\tthrow\nsnippet try\n\ttry {\n\t\t${3}\n\t} catch ${1:e} : ${2:Exception} {\n\t}\n\n##\n## Javadocs\nsnippet /**\n\t/**\n\t * ${1}\n\t */\n\n##\n## Print Methods\nsnippet print\n\tconsole.println(\"${1:Message}\")\n\n##\n## Setter and Getter Methods\nsnippet set\n\tmethod set${1:}(${2:}) {\n\t\t$1 = $2\n\t}\nsnippet get\n\tmethod get${1:}() {\n\t\treturn ${1:};\n\t}\n\n##\n## Terminate Methods or Loops\nsnippet re\n\treturn";
-
-});
-
-define("ace/snippets/wollok",["require","exports","module","ace/snippets/wollok.snippets"], function(require, exports, module){"use strict";
-exports.snippetText = require("./wollok.snippets");
-exports.scope = "wollok";
-
-});
-
 define("ace/range",["require","exports","module"], function(require, exports, module){"use strict";
-var comparePoints = function (p1, p2) {
-    return p1.row - p2.row || p1.column - p2.column;
-};
 var Range = /** @class */ (function () {
     function Range(startRow, startColumn, endRow, endColumn) {
         this.start = {
@@ -2014,7 +1558,6 @@ var Range = /** @class */ (function () {
 Range.fromPoints = function (start, end) {
     return new Range(start.row, start.column, end.row, end.column);
 };
-Range.comparePoints = comparePoints;
 Range.comparePoints = function (p1, p2) {
     return p1.row - p2.row || p1.column - p2.column;
 };
@@ -2022,9 +1565,902 @@ exports.Range = Range;
 
 });
 
+define("ace/range_list",["require","exports","module","ace/range"], function(require, exports, module){"use strict";
+var Range = require("./range").Range;
+var comparePoints = Range.comparePoints;
+var RangeList = /** @class */ (function () {
+    function RangeList() {
+        this.ranges = [];
+        this.$bias = 1;
+    }
+    RangeList.prototype.pointIndex = function (pos, excludeEdges, startIndex) {
+        var list = this.ranges;
+        for (var i = startIndex || 0; i < list.length; i++) {
+            var range = list[i];
+            var cmpEnd = comparePoints(pos, range.end);
+            if (cmpEnd > 0)
+                continue;
+            var cmpStart = comparePoints(pos, range.start);
+            if (cmpEnd === 0)
+                return excludeEdges && cmpStart !== 0 ? -i - 2 : i;
+            if (cmpStart > 0 || (cmpStart === 0 && !excludeEdges))
+                return i;
+            return -i - 1;
+        }
+        return -i - 1;
+    };
+    RangeList.prototype.add = function (range) {
+        var excludeEdges = !range.isEmpty();
+        var startIndex = this.pointIndex(range.start, excludeEdges);
+        if (startIndex < 0)
+            startIndex = -startIndex - 1;
+        var endIndex = this.pointIndex(range.end, excludeEdges, startIndex);
+        if (endIndex < 0)
+            endIndex = -endIndex - 1;
+        else
+            endIndex++;
+        return this.ranges.splice(startIndex, endIndex - startIndex, range);
+    };
+    RangeList.prototype.addList = function (list) {
+        var removed = [];
+        for (var i = list.length; i--;) {
+            removed.push.apply(removed, this.add(list[i]));
+        }
+        return removed;
+    };
+    RangeList.prototype.substractPoint = function (pos) {
+        var i = this.pointIndex(pos);
+        if (i >= 0)
+            return this.ranges.splice(i, 1);
+    };
+    RangeList.prototype.merge = function () {
+        var removed = [];
+        var list = this.ranges;
+        list = list.sort(function (a, b) {
+            return comparePoints(a.start, b.start);
+        });
+        var next = list[0], range;
+        for (var i = 1; i < list.length; i++) {
+            range = next;
+            next = list[i];
+            var cmp = comparePoints(range.end, next.start);
+            if (cmp < 0)
+                continue;
+            if (cmp == 0 && !range.isEmpty() && !next.isEmpty())
+                continue;
+            if (comparePoints(range.end, next.end) < 0) {
+                range.end.row = next.end.row;
+                range.end.column = next.end.column;
+            }
+            list.splice(i, 1);
+            removed.push(next);
+            next = range;
+            i--;
+        }
+        this.ranges = list;
+        return removed;
+    };
+    RangeList.prototype.contains = function (row, column) {
+        return this.pointIndex({ row: row, column: column }) >= 0;
+    };
+    RangeList.prototype.containsPoint = function (pos) {
+        return this.pointIndex(pos) >= 0;
+    };
+    RangeList.prototype.rangeAtPoint = function (pos) {
+        var i = this.pointIndex(pos);
+        if (i >= 0)
+            return this.ranges[i];
+    };
+    RangeList.prototype.clipRows = function (startRow, endRow) {
+        var list = this.ranges;
+        if (list[0].start.row > endRow || list[list.length - 1].start.row < startRow)
+            return [];
+        var startIndex = this.pointIndex({ row: startRow, column: 0 });
+        if (startIndex < 0)
+            startIndex = -startIndex - 1;
+        var endIndex = this.pointIndex({ row: endRow, column: 0 }, startIndex);
+        if (endIndex < 0)
+            endIndex = -endIndex - 1;
+        var clipped = [];
+        for (var i = startIndex; i < endIndex; i++) {
+            clipped.push(list[i]);
+        }
+        return clipped;
+    };
+    RangeList.prototype.removeAll = function () {
+        return this.ranges.splice(0, this.ranges.length);
+    };
+    RangeList.prototype.attach = function (session) {
+        if (this.session)
+            this.detach();
+        this.session = session;
+        this.onChange = this.$onChange.bind(this);
+        this.session.on('change', this.onChange);
+    };
+    RangeList.prototype.detach = function () {
+        if (!this.session)
+            return;
+        this.session.removeListener('change', this.onChange);
+        this.session = null;
+    };
+    RangeList.prototype.$onChange = function (delta) {
+        var start = delta.start;
+        var end = delta.end;
+        var startRow = start.row;
+        var endRow = end.row;
+        var ranges = this.ranges;
+        for (var i = 0, n = ranges.length; i < n; i++) {
+            var r = ranges[i];
+            if (r.end.row >= startRow)
+                break;
+        }
+        if (delta.action == "insert") {
+            var lineDif = endRow - startRow;
+            var colDiff = -start.column + end.column;
+            for (; i < n; i++) {
+                var r = ranges[i];
+                if (r.start.row > startRow)
+                    break;
+                if (r.start.row == startRow && r.start.column >= start.column) {
+                    if (r.start.column == start.column && this.$bias <= 0) {
+                    }
+                    else {
+                        r.start.column += colDiff;
+                        r.start.row += lineDif;
+                    }
+                }
+                if (r.end.row == startRow && r.end.column >= start.column) {
+                    if (r.end.column == start.column && this.$bias < 0) {
+                        continue;
+                    }
+                    if (r.end.column == start.column && colDiff > 0 && i < n - 1) {
+                        if (r.end.column > r.start.column && r.end.column == ranges[i + 1].start.column)
+                            r.end.column -= colDiff;
+                    }
+                    r.end.column += colDiff;
+                    r.end.row += lineDif;
+                }
+            }
+        }
+        else {
+            var lineDif = startRow - endRow;
+            var colDiff = start.column - end.column;
+            for (; i < n; i++) {
+                var r = ranges[i];
+                if (r.start.row > endRow)
+                    break;
+                if (r.end.row < endRow
+                    && (startRow < r.end.row
+                        || startRow == r.end.row && start.column < r.end.column)) {
+                    r.end.row = startRow;
+                    r.end.column = start.column;
+                }
+                else if (r.end.row == endRow) {
+                    if (r.end.column <= end.column) {
+                        if (lineDif || r.end.column > start.column) {
+                            r.end.column = start.column;
+                            r.end.row = start.row;
+                        }
+                    }
+                    else {
+                        r.end.column += colDiff;
+                        r.end.row += lineDif;
+                    }
+                }
+                else if (r.end.row > endRow) {
+                    r.end.row += lineDif;
+                }
+                if (r.start.row < endRow
+                    && (startRow < r.start.row
+                        || startRow == r.start.row && start.column < r.start.column)) {
+                    r.start.row = startRow;
+                    r.start.column = start.column;
+                }
+                else if (r.start.row == endRow) {
+                    if (r.start.column <= end.column) {
+                        if (lineDif || r.start.column > start.column) {
+                            r.start.column = start.column;
+                            r.start.row = start.row;
+                        }
+                    }
+                    else {
+                        r.start.column += colDiff;
+                        r.start.row += lineDif;
+                    }
+                }
+                else if (r.start.row > endRow) {
+                    r.start.row += lineDif;
+                }
+            }
+        }
+        if (lineDif != 0 && i < n) {
+            for (; i < n; i++) {
+                var r = ranges[i];
+                r.start.row += lineDif;
+                r.end.row += lineDif;
+            }
+        }
+    };
+    return RangeList;
+}());
+RangeList.prototype.comparePoints = comparePoints;
+exports.RangeList = RangeList;
+
+});
+
+define("ace/lib/keys",["require","exports","module","ace/lib/oop"], function(require, exports, module){/*! @license
+==========================================================================
+SproutCore -- JavaScript Application Framework
+copyright 2006-2009, Sprout Systems Inc., Apple Inc. and contributors.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+SproutCore and the SproutCore logo are trademarks of Sprout Systems, Inc.
+
+For more information about SproutCore, visit http://www.sproutcore.com
+
+
+==========================================================================
+@license */
+"use strict";
+var oop = require("./oop");
+var Keys = (function () {
+    var ret = {
+        MODIFIER_KEYS: {
+            16: 'Shift', 17: 'Ctrl', 18: 'Alt', 224: 'Meta',
+            91: 'MetaLeft', 92: 'MetaRight', 93: 'ContextMenu'
+        },
+        KEY_MODS: {
+            "ctrl": 1, "alt": 2, "option": 2, "shift": 4,
+            "super": 8, "meta": 8, "command": 8, "cmd": 8,
+            "control": 1
+        },
+        FUNCTION_KEYS: {
+            8: "Backspace",
+            9: "Tab",
+            13: "Return",
+            19: "Pause",
+            27: "Esc",
+            32: "Space",
+            33: "PageUp",
+            34: "PageDown",
+            35: "End",
+            36: "Home",
+            37: "Left",
+            38: "Up",
+            39: "Right",
+            40: "Down",
+            44: "Print",
+            45: "Insert",
+            46: "Delete",
+            96: "Numpad0",
+            97: "Numpad1",
+            98: "Numpad2",
+            99: "Numpad3",
+            100: "Numpad4",
+            101: "Numpad5",
+            102: "Numpad6",
+            103: "Numpad7",
+            104: "Numpad8",
+            105: "Numpad9",
+            '-13': "NumpadEnter",
+            112: "F1",
+            113: "F2",
+            114: "F3",
+            115: "F4",
+            116: "F5",
+            117: "F6",
+            118: "F7",
+            119: "F8",
+            120: "F9",
+            121: "F10",
+            122: "F11",
+            123: "F12",
+            144: "Numlock",
+            145: "Scrolllock"
+        },
+        PRINTABLE_KEYS: {
+            32: ' ', 48: '0', 49: '1', 50: '2', 51: '3', 52: '4', 53: '5',
+            54: '6', 55: '7', 56: '8', 57: '9', 59: ';', 61: '=', 65: 'a',
+            66: 'b', 67: 'c', 68: 'd', 69: 'e', 70: 'f', 71: 'g', 72: 'h',
+            73: 'i', 74: 'j', 75: 'k', 76: 'l', 77: 'm', 78: 'n', 79: 'o',
+            80: 'p', 81: 'q', 82: 'r', 83: 's', 84: 't', 85: 'u', 86: 'v',
+            87: 'w', 88: 'x', 89: 'y', 90: 'z', 107: '+', 109: '-', 110: '.',
+            186: ';', 187: '=', 188: ',', 189: '-', 190: '.', 191: '/', 192: '`',
+            219: '[', 220: '\\', 221: ']', 222: "'", 111: '/', 106: '*'
+        }
+    };
+    ret.PRINTABLE_KEYS[173] = '-';
+    var name, i;
+    for (i in ret.FUNCTION_KEYS) {
+        name = ret.FUNCTION_KEYS[i].toLowerCase();
+        ret[name] = parseInt(i, 10);
+    }
+    for (i in ret.PRINTABLE_KEYS) {
+        name = ret.PRINTABLE_KEYS[i].toLowerCase();
+        ret[name] = parseInt(i, 10);
+    }
+    oop.mixin(ret, ret.MODIFIER_KEYS);
+    oop.mixin(ret, ret.PRINTABLE_KEYS);
+    oop.mixin(ret, ret.FUNCTION_KEYS);
+    ret.enter = ret["return"];
+    ret.escape = ret.esc;
+    ret.del = ret["delete"];
+    (function () {
+        var mods = ["cmd", "ctrl", "alt", "shift"];
+        for (var i = Math.pow(2, mods.length); i--;) {
+            ret.KEY_MODS[i] = mods.filter(function (x) {
+                return i & ret.KEY_MODS[x];
+            }).join("-") + "-";
+        }
+    })();
+    ret.KEY_MODS[0] = "";
+    ret.KEY_MODS[-1] = "input-";
+    return ret;
+})();
+oop.mixin(exports, Keys);
+exports.default = exports;
+exports.keyCodeToString = function (keyCode) {
+    var keyString = Keys[keyCode];
+    if (typeof keyString != "string")
+        keyString = String.fromCharCode(keyCode);
+    return keyString.toLowerCase();
+};
+
+});
+
+define("ace/keyboard/hash_handler",["require","exports","module","ace/lib/keys","ace/lib/useragent"], function(require, exports, module){"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})(); var keyUtil = require("../lib/keys");
+var useragent = require("../lib/useragent");
+var KEY_MODS = keyUtil.KEY_MODS;
+var MultiHashHandler = /** @class */ (function () {
+    function MultiHashHandler(config, platform) {
+        this.$init(config, platform, false);
+    }
+    MultiHashHandler.prototype.$init = function (config, platform, $singleCommand) {
+        this.platform = platform || (useragent.isMac ? "mac" : "win");
+        this.commands = {};
+        this.commandKeyBinding = {};
+        this.addCommands(config);
+        this.$singleCommand = $singleCommand;
+    };
+    MultiHashHandler.prototype.addCommand = function (command) {
+        if (this.commands[command.name])
+            this.removeCommand(command);
+        this.commands[command.name] = command;
+        if (command.bindKey)
+            this._buildKeyHash(command);
+    };
+    MultiHashHandler.prototype.removeCommand = function (command, keepCommand) {
+        var name = command && (typeof command === 'string' ? command : command.name);
+        command = this.commands[name];
+        if (!keepCommand)
+            delete this.commands[name];
+        var ckb = this.commandKeyBinding;
+        for (var keyId in ckb) {
+            var cmdGroup = ckb[keyId];
+            if (cmdGroup == command) {
+                delete ckb[keyId];
+            }
+            else if (Array.isArray(cmdGroup)) {
+                var i = cmdGroup.indexOf(command);
+                if (i != -1) {
+                    cmdGroup.splice(i, 1);
+                    if (cmdGroup.length == 1)
+                        ckb[keyId] = cmdGroup[0];
+                }
+            }
+        }
+    };
+    MultiHashHandler.prototype.bindKey = function (key, command, position) {
+        if (typeof key == "object" && key) {
+            if (position == undefined)
+                position = key.position;
+            key = key[this.platform];
+        }
+        if (!key)
+            return;
+        if (typeof command == "function")
+            return this.addCommand({ exec: command, bindKey: key, name: command.name || /**@type{string}*/ (key) }); (key).split("|").forEach(function (keyPart) {
+            var chain = "";
+            if (keyPart.indexOf(" ") != -1) {
+                var parts = keyPart.split(/\s+/);
+                keyPart = parts.pop();
+                parts.forEach(function (keyPart) {
+                    var binding = this.parseKeys(keyPart);
+                    var id = KEY_MODS[binding.hashId] + binding.key;
+                    chain += (chain ? " " : "") + id;
+                    this._addCommandToBinding(chain, "chainKeys");
+                }, this);
+                chain += " ";
+            }
+            var binding = this.parseKeys(keyPart);
+            var id = KEY_MODS[binding.hashId] + binding.key;
+            this._addCommandToBinding(chain + id, command, position);
+        }, this);
+    };
+    MultiHashHandler.prototype._addCommandToBinding = function (keyId, command, position) {
+        var ckb = this.commandKeyBinding, i;
+        if (!command) {
+            delete ckb[keyId];
+        }
+        else if (!ckb[keyId] || this.$singleCommand) {
+            ckb[keyId] = command;
+        }
+        else {
+            if (!Array.isArray(ckb[keyId])) {
+                ckb[keyId] = [ckb[keyId]];
+            }
+            else if ((i = ckb[keyId].indexOf(command)) != -1) {
+                ckb[keyId].splice(i, 1);
+            }
+            if (typeof position != "number") {
+                position = getPosition(command);
+            }
+            var commands = ckb[keyId];
+            for (i = 0; i < commands.length; i++) {
+                var other = commands[i];
+                var otherPos = getPosition(other);
+                if (otherPos > position)
+                    break;
+            }
+            commands.splice(i, 0, command);
+        }
+    };
+    MultiHashHandler.prototype.addCommands = function (commands) {
+        commands && Object.keys(commands).forEach(function (name) {
+            var command = commands[name];
+            if (!command)
+                return;
+            if (typeof command === "string")
+                return this.bindKey(command, name);
+            if (typeof command === "function")
+                command = { exec: command };
+            if (typeof command !== "object")
+                return;
+            if (!command.name)
+                command.name = name;
+            this.addCommand(command);
+        }, this);
+    };
+    MultiHashHandler.prototype.removeCommands = function (commands) {
+        Object.keys(commands).forEach(function (name) {
+            this.removeCommand(commands[name]);
+        }, this);
+    };
+    MultiHashHandler.prototype.bindKeys = function (keyList) {
+        Object.keys(keyList).forEach(function (key) {
+            this.bindKey(key, keyList[key]);
+        }, this);
+    };
+    MultiHashHandler.prototype._buildKeyHash = function (command) {
+        this.bindKey(command.bindKey, command);
+    };
+    MultiHashHandler.prototype.parseKeys = function (keys) {
+        var parts = keys.toLowerCase().split(/[\-\+]([\-\+])?/).filter(function (x) { return x; });
+        var key = parts.pop();
+        var keyCode = keyUtil[key];
+        if (keyUtil.FUNCTION_KEYS[keyCode])
+            key = keyUtil.FUNCTION_KEYS[keyCode].toLowerCase();
+        else if (!parts.length)
+            return { key: key, hashId: -1 };
+        else if (parts.length == 1 && parts[0] == "shift")
+            return { key: key.toUpperCase(), hashId: -1 };
+        var hashId = 0;
+        for (var i = parts.length; i--;) {
+            var modifier = keyUtil.KEY_MODS[parts[i]];
+            if (modifier == null) {
+                if (typeof console != "undefined")
+                    console.error("invalid modifier " + parts[i] + " in " + keys);
+                return false;
+            }
+            hashId |= modifier;
+        }
+        return { key: key, hashId: hashId };
+    };
+    MultiHashHandler.prototype.findKeyCommand = function (hashId, keyString) {
+        var key = KEY_MODS[hashId] + keyString;
+        return this.commandKeyBinding[key];
+    };
+    MultiHashHandler.prototype.handleKeyboard = function (data, hashId, keyString, keyCode) {
+        if (keyCode < 0)
+            return;
+        var key = KEY_MODS[hashId] + keyString;
+        var command = this.commandKeyBinding[key];
+        if (data.$keyChain) {
+            data.$keyChain += " " + key;
+            command = this.commandKeyBinding[data.$keyChain] || command;
+        }
+        if (command) {
+            if (command == "chainKeys" || command[command.length - 1] == "chainKeys") {
+                data.$keyChain = data.$keyChain || key;
+                return { command: "null" };
+            }
+        }
+        if (data.$keyChain) {
+            if ((!hashId || hashId == 4) && keyString.length == 1)
+                data.$keyChain = data.$keyChain.slice(0, -key.length - 1); // wait for input
+            else if (hashId == -1 || keyCode > 0)
+                data.$keyChain = ""; // reset keyChain
+        }
+        return { command: command };
+    };
+    MultiHashHandler.prototype.getStatusText = function (editor, data) {
+        return data.$keyChain || "";
+    };
+    return MultiHashHandler;
+}());
+function getPosition(command) {
+    return typeof command == "object" && command.bindKey
+        && command.bindKey.position
+        || (command.isDefault ? -100 : 0);
+}
+var HashHandler = /** @class */ (function (_super) {
+    __extends(HashHandler, _super);
+    function HashHandler(config, platform) {
+        var _this = _super.call(this, config, platform) || this;
+        _this.$singleCommand = true;
+        return _this;
+    }
+    return HashHandler;
+}(MultiHashHandler));
+HashHandler.call = function (thisArg, config, platform) {
+    MultiHashHandler.prototype.$init.call(thisArg, config, platform, true);
+};
+MultiHashHandler.call = function (thisArg, config, platform) {
+    MultiHashHandler.prototype.$init.call(thisArg, config, platform, false);
+};
+exports.HashHandler = HashHandler;
+exports.MultiHashHandler = MultiHashHandler;
+
+});
+
+define("ace/tokenizer",["require","exports","module","ace/lib/report_error"], function(require, exports, module){"use strict";
+var reportError = require("./lib/report_error").reportError;
+var MAX_TOKEN_COUNT = 2000;
+var Tokenizer = /** @class */ (function () {
+    function Tokenizer(rules) {
+        this.splitRegex;
+        this.states = rules;
+        this.regExps = {};
+        this.matchMappings = {};
+        for (var key in this.states) {
+            var state = this.states[key];
+            var ruleRegExps = [];
+            var matchTotal = 0;
+            var mapping = this.matchMappings[key] = { defaultToken: "text" };
+            var flag = "g";
+            var splitterRurles = [];
+            for (var i = 0; i < state.length; i++) {
+                var rule = state[i];
+                if (rule.defaultToken)
+                    mapping.defaultToken = rule.defaultToken;
+                if (rule.caseInsensitive && flag.indexOf("i") === -1)
+                    flag += "i";
+                if (rule.unicode && flag.indexOf("u") === -1)
+                    flag += "u";
+                if (rule.regex == null)
+                    continue;
+                if (rule.regex instanceof RegExp)
+                    rule.regex = rule.regex.toString().slice(1, -1);
+                var adjustedregex = rule.regex;
+                var matchcount = new RegExp("(?:(" + adjustedregex + ")|(.))").exec("a").length - 2;
+                if (Array.isArray(rule.token)) {
+                    if (rule.token.length == 1 || matchcount == 1) {
+                        rule.token = rule.token[0];
+                    }
+                    else if (matchcount - 1 != rule.token.length) {
+                        this.reportError("number of classes and regexp groups doesn't match", {
+                            rule: rule,
+                            groupCount: matchcount - 1
+                        });
+                        rule.token = rule.token[0];
+                    }
+                    else {
+                        rule.tokenArray = rule.token;
+                        rule.token = null;
+                        rule.onMatch = this.$arrayTokens;
+                    }
+                }
+                else if (typeof rule.token == "function" && !rule.onMatch) {
+                    if (matchcount > 1)
+                        rule.onMatch = this.$applyToken;
+                    else
+                        rule.onMatch = rule.token;
+                }
+                if (matchcount > 1) {
+                    if (/\\\d/.test(rule.regex)) {
+                        adjustedregex = rule.regex.replace(/\\([0-9]+)/g, function (match, digit) {
+                            return "\\" + (parseInt(digit, 10) + matchTotal + 1);
+                        });
+                    }
+                    else {
+                        matchcount = 1;
+                        adjustedregex = this.removeCapturingGroups(rule.regex);
+                    }
+                    if (!rule.splitRegex && typeof rule.token != "string")
+                        splitterRurles.push(rule); // flag will be known only at the very end
+                }
+                mapping[matchTotal] = i;
+                matchTotal += matchcount;
+                ruleRegExps.push(adjustedregex);
+                if (!rule.onMatch)
+                    rule.onMatch = null;
+            }
+            if (!ruleRegExps.length) {
+                mapping[0] = 0;
+                ruleRegExps.push("$");
+            }
+            splitterRurles.forEach(function (rule) {
+                rule.splitRegex = this.createSplitterRegexp(rule.regex, flag);
+            }, this);
+            this.regExps[key] = new RegExp("(" + ruleRegExps.join(")|(") + ")|($)", flag);
+        }
+    }
+    Tokenizer.prototype.$setMaxTokenCount = function (m) {
+        MAX_TOKEN_COUNT = m | 0;
+    };
+    Tokenizer.prototype.$applyToken = function (str) {
+        var values = this.splitRegex.exec(str).slice(1);
+        var types = this.token.apply(this, values);
+        if (typeof types === "string")
+            return [{ type: types, value: str }];
+        var tokens = [];
+        for (var i = 0, l = types.length; i < l; i++) {
+            if (values[i])
+                tokens[tokens.length] = {
+                    type: types[i],
+                    value: values[i]
+                };
+        }
+        return tokens;
+    };
+    Tokenizer.prototype.$arrayTokens = function (str) {
+        if (!str)
+            return [];
+        var values = this.splitRegex.exec(str);
+        if (!values)
+            return "text";
+        var tokens = [];
+        var types = this.tokenArray;
+        for (var i = 0, l = types.length; i < l; i++) {
+            if (values[i + 1])
+                tokens[tokens.length] = {
+                    type: types[i],
+                    value: values[i + 1]
+                };
+        }
+        return tokens;
+    };
+    Tokenizer.prototype.removeCapturingGroups = function (src) {
+        var r = src.replace(/\\.|\[(?:\\.|[^\\\]])*|\(\?[:=!<]|(\()/g, function (x, y) { return y ? "(?:" : x; });
+        return r;
+    };
+    Tokenizer.prototype.createSplitterRegexp = function (src, flag) {
+        if (src.indexOf("(?=") != -1) {
+            var stack = 0;
+            var inChClass = false;
+            var lastCapture = {};
+            src.replace(/(\\.)|(\((?:\?[=!])?)|(\))|([\[\]])/g, function (m, esc, parenOpen, parenClose, square, index) {
+                if (inChClass) {
+                    inChClass = square != "]";
+                }
+                else if (square) {
+                    inChClass = true;
+                }
+                else if (parenClose) {
+                    if (stack == lastCapture.stack) {
+                        lastCapture.end = index + 1;
+                        lastCapture.stack = -1;
+                    }
+                    stack--;
+                }
+                else if (parenOpen) {
+                    stack++;
+                    if (parenOpen.length != 1) {
+                        lastCapture.stack = stack;
+                        lastCapture.start = index;
+                    }
+                }
+                return m;
+            });
+            if (lastCapture.end != null && /^\)*$/.test(src.substr(lastCapture.end)))
+                src = src.substring(0, lastCapture.start) + src.substr(lastCapture.end);
+        }
+        if (src.charAt(0) != "^")
+            src = "^" + src;
+        if (src.charAt(src.length - 1) != "$")
+            src += "$";
+        return new RegExp(src, (flag || "").replace("g", ""));
+    };
+    Tokenizer.prototype.getLineTokens = function (line, startState, context) {
+        var stack = [];
+        if (startState && typeof startState != "string") {
+            stack = startState.slice(0);
+            startState = stack[0];
+            if (startState === "#tmp") {
+                stack.shift();
+                startState = stack.shift();
+            }
+        }
+        var currentState = /**@type{string}*/ (startState) || "start";
+        var state = this.states[currentState];
+        if (!state) {
+            currentState = "start";
+            state = this.states[currentState];
+        }
+        var mapping = this.matchMappings[currentState];
+        var re = this.regExps[currentState];
+        re.lastIndex = 0;
+        var match, tokens = [];
+        var lastIndex = 0;
+        var matchAttempts = 0;
+        var token = { type: null, value: "" };
+        while (match = re.exec(line)) {
+            var type = mapping.defaultToken;
+            var rule = null;
+            var value = match[0];
+            var index = re.lastIndex;
+            if (index - value.length > lastIndex) {
+                var skipped = line.substring(lastIndex, index - value.length);
+                if (token.type == type) {
+                    token.value += skipped;
+                }
+                else {
+                    if (token.type)
+                        tokens.push(token);
+                    token = { type: type, value: skipped, column: match.index };
+                }
+            }
+            for (var i = 0; i < match.length - 2; i++) {
+                if (match[i + 1] === undefined)
+                    continue;
+                rule = state[mapping[i]];
+                if (rule.onMatch)
+                    type = rule.onMatch(value, currentState, stack, line, context);
+                else
+                    type = rule.token;
+                if (rule.next) {
+                    if (typeof rule.next == "string") {
+                        currentState = rule.next;
+                    }
+                    else {
+                        currentState = rule.next(currentState, stack);
+                    }
+                    state = this.states[currentState];
+                    if (!state) {
+                        this.reportError("state doesn't exist", currentState);
+                        currentState = "start";
+                        state = this.states[currentState];
+                    }
+                    mapping = this.matchMappings[currentState];
+                    lastIndex = index;
+                    re = this.regExps[currentState];
+                    re.lastIndex = index;
+                }
+                if (rule.consumeLineEnd)
+                    lastIndex = index;
+                break;
+            }
+            if (value) {
+                if (typeof type === "string") {
+                    if ((!rule || rule.merge !== false) && token.type === type) {
+                        token.value += value;
+                    }
+                    else {
+                        if (token.type)
+                            tokens.push(token);
+                        token = { type: type, value: value, column: match.index };
+                    }
+                }
+                else if (type) {
+                    if (token.type)
+                        tokens.push(token);
+                    var matchIndex = match.index;
+                    token = { type: null, value: "" };
+                    for (var i = 0; i < type.length; i++) {
+                        if (type[i].type) {
+                            if (type[i].column === undefined) {
+                                type[i].column = matchIndex;
+                            }
+                            matchIndex = matchIndex + type[i].value.length;
+                        }
+                        tokens.push(type[i]);
+                    }
+                }
+            }
+            if (lastIndex == line.length)
+                break;
+            lastIndex = index;
+            if (matchAttempts++ > MAX_TOKEN_COUNT) {
+                if (matchAttempts > 2 * line.length) {
+                    this.reportError("infinite loop with in ace tokenizer", {
+                        startState: startState,
+                        line: line
+                    });
+                }
+                while (lastIndex < line.length) {
+                    if (token.type)
+                        tokens.push(token);
+                    token = {
+                        value: line.substring(lastIndex, lastIndex += 500),
+                        type: "overflow"
+                    };
+                }
+                currentState = "start";
+                stack = [];
+                break;
+            }
+        }
+        token.column = lastIndex - token.value.length;
+        if (token.type)
+            tokens.push(token);
+        if (stack.length > 1) {
+            if (stack[0] !== currentState)
+                stack.unshift("#tmp", currentState);
+        }
+        return {
+            tokens: tokens,
+            state: stack.length ? stack : currentState
+        };
+    };
+    return Tokenizer;
+}());
+Tokenizer.prototype.reportError = reportError;
+exports.Tokenizer = Tokenizer;
+
+});
+
+define("ace/clipboard",["require","exports","module"], function(require, exports, module){"use strict";
+var $cancelT;
+module.exports = {
+    lineMode: false,
+    pasteCancelled: function () {
+        if ($cancelT && $cancelT > Date.now() - 50)
+            return true;
+        return $cancelT = false;
+    },
+    cancel: function () {
+        $cancelT = Date.now();
+    }
+};
+
+});
+
 define("ace/mode/text_highlight_rules",["require","exports","module","ace/lib/deep_copy"], function(require, exports, module){"use strict";
 var deepCopy = require("../lib/deep_copy").deepCopy;
-var TextHighlightRules = function () {
+var TextHighlightRules;
+TextHighlightRules = function () {
     this.$rules = {
         "start": [{
                 token: "empty_line",
@@ -2100,7 +2536,7 @@ var TextHighlightRules = function () {
         var rules = this.$rules;
         function processState(key) {
             var state = rules[key];
-            state.processed = true;
+            state["processed"] = true;
             for (var i = 0; i < state.length; i++) {
                 var rule = state[i];
                 var toInsert = null;
@@ -2379,10 +2815,7 @@ var Range = require("../../range").Range;
 var FoldMode = exports.FoldMode = function () { };
 oop.inherits(FoldMode, BaseFoldMode);
 (function () {
-    this.getFoldWidgetRange = function (session, foldStyle, row) {
-        var range = this.indentationBlock(session, row);
-        if (range)
-            return range;
+    this.commentBlock = function (session, row) {
         var re = /\S/;
         var line = session.getLine(row);
         var startLevel = line.search(re);
@@ -2405,6 +2838,14 @@ oop.inherits(FoldMode, BaseFoldMode);
             var endColumn = session.getLine(endRow).length;
             return new Range(startRow, startColumn, endRow, endColumn);
         }
+    };
+    this.getFoldWidgetRange = function (session, foldStyle, row) {
+        var range = this.indentationBlock(session, row);
+        if (range)
+            return range;
+        range = this.commentBlock(session, row);
+        if (range)
+            return range;
     };
     this.getFoldWidget = function (session, foldStyle, row) {
         var line = session.getLine(row);
@@ -2444,304 +2885,9 @@ oop.inherits(FoldMode, BaseFoldMode);
 
 });
 
-define("ace/tokenizer",["require","exports","module","ace/lib/report_error"], function(require, exports, module){"use strict";
-var reportError = require("./lib/report_error").reportError;
-var MAX_TOKEN_COUNT = 2000;
-var Tokenizer = /** @class */ (function () {
-    function Tokenizer(rules) {
-        this.states = rules;
-        this.regExps = {};
-        this.matchMappings = {};
-        for (var key in this.states) {
-            var state = this.states[key];
-            var ruleRegExps = [];
-            var matchTotal = 0;
-            var mapping = this.matchMappings[key] = { defaultToken: "text" };
-            var flag = "g";
-            var splitterRurles = [];
-            for (var i = 0; i < state.length; i++) {
-                var rule = state[i];
-                if (rule.defaultToken)
-                    mapping.defaultToken = rule.defaultToken;
-                if (rule.caseInsensitive && flag.indexOf("i") === -1)
-                    flag += "i";
-                if (rule.unicode && flag.indexOf("u") === -1)
-                    flag += "u";
-                if (rule.regex == null)
-                    continue;
-                if (rule.regex instanceof RegExp)
-                    rule.regex = rule.regex.toString().slice(1, -1);
-                var adjustedregex = rule.regex;
-                var matchcount = new RegExp("(?:(" + adjustedregex + ")|(.))").exec("a").length - 2;
-                if (Array.isArray(rule.token)) {
-                    if (rule.token.length == 1 || matchcount == 1) {
-                        rule.token = rule.token[0];
-                    }
-                    else if (matchcount - 1 != rule.token.length) {
-                        this.reportError("number of classes and regexp groups doesn't match", {
-                            rule: rule,
-                            groupCount: matchcount - 1
-                        });
-                        rule.token = rule.token[0];
-                    }
-                    else {
-                        rule.tokenArray = rule.token;
-                        rule.token = null;
-                        rule.onMatch = this.$arrayTokens;
-                    }
-                }
-                else if (typeof rule.token == "function" && !rule.onMatch) {
-                    if (matchcount > 1)
-                        rule.onMatch = this.$applyToken;
-                    else
-                        rule.onMatch = rule.token;
-                }
-                if (matchcount > 1) {
-                    if (/\\\d/.test(rule.regex)) {
-                        adjustedregex = rule.regex.replace(/\\([0-9]+)/g, function (match, digit) {
-                            return "\\" + (parseInt(digit, 10) + matchTotal + 1);
-                        });
-                    }
-                    else {
-                        matchcount = 1;
-                        adjustedregex = this.removeCapturingGroups(rule.regex);
-                    }
-                    if (!rule.splitRegex && typeof rule.token != "string")
-                        splitterRurles.push(rule); // flag will be known only at the very end
-                }
-                mapping[matchTotal] = i;
-                matchTotal += matchcount;
-                ruleRegExps.push(adjustedregex);
-                if (!rule.onMatch)
-                    rule.onMatch = null;
-            }
-            if (!ruleRegExps.length) {
-                mapping[0] = 0;
-                ruleRegExps.push("$");
-            }
-            splitterRurles.forEach(function (rule) {
-                rule.splitRegex = this.createSplitterRegexp(rule.regex, flag);
-            }, this);
-            this.regExps[key] = new RegExp("(" + ruleRegExps.join(")|(") + ")|($)", flag);
-        }
-    }
-    Tokenizer.prototype.$setMaxTokenCount = function (m) {
-        MAX_TOKEN_COUNT = m | 0;
-    };
-    Tokenizer.prototype.$applyToken = function (str) {
-        var values = this.splitRegex.exec(str).slice(1);
-        var types = this.token.apply(this, values);
-        if (typeof types === "string")
-            return [{ type: types, value: str }];
-        var tokens = [];
-        for (var i = 0, l = types.length; i < l; i++) {
-            if (values[i])
-                tokens[tokens.length] = {
-                    type: types[i],
-                    value: values[i]
-                };
-        }
-        return tokens;
-    };
-    Tokenizer.prototype.$arrayTokens = function (str) {
-        if (!str)
-            return [];
-        var values = this.splitRegex.exec(str);
-        if (!values)
-            return "text";
-        var tokens = [];
-        var types = this.tokenArray;
-        for (var i = 0, l = types.length; i < l; i++) {
-            if (values[i + 1])
-                tokens[tokens.length] = {
-                    type: types[i],
-                    value: values[i + 1]
-                };
-        }
-        return tokens;
-    };
-    Tokenizer.prototype.removeCapturingGroups = function (src) {
-        var r = src.replace(/\\.|\[(?:\\.|[^\\\]])*|\(\?[:=!<]|(\()/g, function (x, y) { return y ? "(?:" : x; });
-        return r;
-    };
-    Tokenizer.prototype.createSplitterRegexp = function (src, flag) {
-        if (src.indexOf("(?=") != -1) {
-            var stack = 0;
-            var inChClass = false;
-            var lastCapture = {};
-            src.replace(/(\\.)|(\((?:\?[=!])?)|(\))|([\[\]])/g, function (m, esc, parenOpen, parenClose, square, index) {
-                if (inChClass) {
-                    inChClass = square != "]";
-                }
-                else if (square) {
-                    inChClass = true;
-                }
-                else if (parenClose) {
-                    if (stack == lastCapture.stack) {
-                        lastCapture.end = index + 1;
-                        lastCapture.stack = -1;
-                    }
-                    stack--;
-                }
-                else if (parenOpen) {
-                    stack++;
-                    if (parenOpen.length != 1) {
-                        lastCapture.stack = stack;
-                        lastCapture.start = index;
-                    }
-                }
-                return m;
-            });
-            if (lastCapture.end != null && /^\)*$/.test(src.substr(lastCapture.end)))
-                src = src.substring(0, lastCapture.start) + src.substr(lastCapture.end);
-        }
-        if (src.charAt(0) != "^")
-            src = "^" + src;
-        if (src.charAt(src.length - 1) != "$")
-            src += "$";
-        return new RegExp(src, (flag || "").replace("g", ""));
-    };
-    Tokenizer.prototype.getLineTokens = function (line, startState) {
-        if (startState && typeof startState != "string") {
-            var stack = startState.slice(0);
-            startState = stack[0];
-            if (startState === "#tmp") {
-                stack.shift();
-                startState = stack.shift();
-            }
-        }
-        else
-            var stack = [];
-        var currentState = startState || "start";
-        var state = this.states[currentState];
-        if (!state) {
-            currentState = "start";
-            state = this.states[currentState];
-        }
-        var mapping = this.matchMappings[currentState];
-        var re = this.regExps[currentState];
-        re.lastIndex = 0;
-        var match, tokens = [];
-        var lastIndex = 0;
-        var matchAttempts = 0;
-        var token = { type: null, value: "" };
-        while (match = re.exec(line)) {
-            var type = mapping.defaultToken;
-            var rule = null;
-            var value = match[0];
-            var index = re.lastIndex;
-            if (index - value.length > lastIndex) {
-                var skipped = line.substring(lastIndex, index - value.length);
-                if (token.type == type) {
-                    token.value += skipped;
-                }
-                else {
-                    if (token.type)
-                        tokens.push(token);
-                    token = { type: type, value: skipped, column: match.index };
-                }
-            }
-            for (var i = 0; i < match.length - 2; i++) {
-                if (match[i + 1] === undefined)
-                    continue;
-                rule = state[mapping[i]];
-                if (rule.onMatch)
-                    type = rule.onMatch(value, currentState, stack, line);
-                else
-                    type = rule.token;
-                if (rule.next) {
-                    if (typeof rule.next == "string") {
-                        currentState = rule.next;
-                    }
-                    else {
-                        currentState = rule.next(currentState, stack);
-                    }
-                    state = this.states[currentState];
-                    if (!state) {
-                        this.reportError("state doesn't exist", currentState);
-                        currentState = "start";
-                        state = this.states[currentState];
-                    }
-                    mapping = this.matchMappings[currentState];
-                    lastIndex = index;
-                    re = this.regExps[currentState];
-                    re.lastIndex = index;
-                }
-                if (rule.consumeLineEnd)
-                    lastIndex = index;
-                break;
-            }
-            if (value) {
-                if (typeof type === "string") {
-                    if ((!rule || rule.merge !== false) && token.type === type) {
-                        token.value += value;
-                    }
-                    else {
-                        if (token.type)
-                            tokens.push(token);
-                        token = { type: type, value: value, column: match.index };
-                    }
-                }
-                else if (type) {
-                    if (token.type)
-                        tokens.push(token);
-                    var matchIndex = match.index;
-                    token = { type: null, value: "" };
-                    for (var i = 0; i < type.length; i++) {
-                        if (type[i].type) {
-                            if (type[i].column === undefined) {
-                                type[i].column = matchIndex;
-                            }
-                            matchIndex = matchIndex + type[i].value.length;
-                        }
-                        tokens.push(type[i]);
-                    }
-                }
-            }
-            if (lastIndex == line.length)
-                break;
-            lastIndex = index;
-            if (matchAttempts++ > MAX_TOKEN_COUNT) {
-                if (matchAttempts > 2 * line.length) {
-                    this.reportError("infinite loop with in ace tokenizer", {
-                        startState: startState,
-                        line: line
-                    });
-                }
-                while (lastIndex < line.length) {
-                    if (token.type)
-                        tokens.push(token);
-                    token = {
-                        value: line.substring(lastIndex, lastIndex += 500),
-                        type: "overflow"
-                    };
-                }
-                currentState = "start";
-                stack = [];
-                break;
-            }
-        }
-        token.column = lastIndex - token.value.length;
-        if (token.type)
-            tokens.push(token);
-        if (stack.length > 1) {
-            if (stack[0] !== currentState)
-                stack.unshift("#tmp", currentState);
-        }
-        return {
-            tokens: tokens,
-            state: stack.length ? stack : currentState
-        };
-    };
-    return Tokenizer;
-}());
-Tokenizer.prototype.reportError = reportError;
-exports.Tokenizer = Tokenizer;
-
-});
-
 define("ace/mode/behaviour",["require","exports","module"], function(require, exports, module){"use strict";
-var Behaviour = function () {
+var Behaviour;
+Behaviour = function () {
     this.$behaviours = {};
 };
 (function () {
@@ -2907,7 +3053,8 @@ var getWrapped = function (selection, selected, opening, closing) {
         ]
     };
 };
-var CstyleBehaviour = function (options) {
+var CstyleBehaviour;
+CstyleBehaviour = function (options) {
     options = options || {};
     this.add("braces", "insertion", function (state, action, editor, session, text) {
         var cursor = editor.getCursorPosition();
@@ -3201,45 +3348,45 @@ CstyleBehaviour.isSaneInsertion = function (editor, session) {
     return iterator.getCurrentTokenRow() !== cursor.row ||
         this.$matchTokenType(iterator.getCurrentToken() || "text", SAFE_INSERT_BEFORE_TOKENS);
 };
-CstyleBehaviour.$matchTokenType = function (token, types) {
+CstyleBehaviour["$matchTokenType"] = function (token, types) {
     return types.indexOf(token.type || token) > -1;
 };
-CstyleBehaviour.recordAutoInsert = function (editor, session, bracket) {
+CstyleBehaviour["recordAutoInsert"] = function (editor, session, bracket) {
     var cursor = editor.getCursorPosition();
     var line = session.doc.getLine(cursor.row);
-    if (!this.isAutoInsertedClosing(cursor, line, context.autoInsertedLineEnd[0]))
+    if (!this["isAutoInsertedClosing"](cursor, line, context.autoInsertedLineEnd[0]))
         context.autoInsertedBrackets = 0;
     context.autoInsertedRow = cursor.row;
     context.autoInsertedLineEnd = bracket + line.substr(cursor.column);
     context.autoInsertedBrackets++;
 };
-CstyleBehaviour.recordMaybeInsert = function (editor, session, bracket) {
+CstyleBehaviour["recordMaybeInsert"] = function (editor, session, bracket) {
     var cursor = editor.getCursorPosition();
     var line = session.doc.getLine(cursor.row);
-    if (!this.isMaybeInsertedClosing(cursor, line))
+    if (!this["isMaybeInsertedClosing"](cursor, line))
         context.maybeInsertedBrackets = 0;
     context.maybeInsertedRow = cursor.row;
     context.maybeInsertedLineStart = line.substr(0, cursor.column) + bracket;
     context.maybeInsertedLineEnd = line.substr(cursor.column);
     context.maybeInsertedBrackets++;
 };
-CstyleBehaviour.isAutoInsertedClosing = function (cursor, line, bracket) {
+CstyleBehaviour["isAutoInsertedClosing"] = function (cursor, line, bracket) {
     return context.autoInsertedBrackets > 0 &&
         cursor.row === context.autoInsertedRow &&
         bracket === context.autoInsertedLineEnd[0] &&
         line.substr(cursor.column) === context.autoInsertedLineEnd;
 };
-CstyleBehaviour.isMaybeInsertedClosing = function (cursor, line) {
+CstyleBehaviour["isMaybeInsertedClosing"] = function (cursor, line) {
     return context.maybeInsertedBrackets > 0 &&
         cursor.row === context.maybeInsertedRow &&
         line.substr(cursor.column) === context.maybeInsertedLineEnd &&
         line.substr(0, cursor.column) == context.maybeInsertedLineStart;
 };
-CstyleBehaviour.popAutoInsertedClosing = function () {
+CstyleBehaviour["popAutoInsertedClosing"] = function () {
     context.autoInsertedLineEnd = context.autoInsertedLineEnd.substr(1);
     context.autoInsertedBrackets--;
 };
-CstyleBehaviour.clearMaybeInsertedClosing = function () {
+CstyleBehaviour["clearMaybeInsertedClosing"] = function () {
     if (context) {
         context.maybeInsertedBrackets = 0;
         context.maybeInsertedRow = -1;
@@ -3272,7 +3419,8 @@ var unicode = require("../unicode");
 var lang = require("../lib/lang");
 var TokenIterator = require("../token_iterator").TokenIterator;
 var Range = require("../range").Range;
-var Mode = function () {
+var Mode;
+Mode = function () {
     this.HighlightRules = TextHighlightRules;
 };
 (function () {
@@ -3487,14 +3635,19 @@ var Mode = function () {
         }
         var delegations = ["toggleBlockComment", "toggleCommentLines", "getNextLineIndent",
             "checkOutdent", "autoOutdent", "transformAction", "getCompletions"];
-        for (var i = 0; i < delegations.length; i++) {
+        var _loop_1 = function (i) {
             (function (scope) {
                 var functionName = delegations[i];
                 var defaultHandler = scope[functionName];
-                scope[delegations[i]] = function () {
-                    return this.$delegator(functionName, arguments, defaultHandler);
-                };
-            }(this));
+                scope[delegations[i]] =
+                    function () {
+                        return this.$delegator(functionName, arguments, defaultHandler);
+                    };
+            }(this_1));
+        };
+        var this_1 = this;
+        for (var i = 0; i < delegations.length; i++) {
+            _loop_1(i);
         }
     };
     this.$delegator = function (method, args, defaultHandler) {
@@ -3536,7 +3689,7 @@ var Mode = function () {
     };
     this.getKeywords = function (append) {
         if (!this.completionKeywords) {
-            var rules = this.$tokenizer.rules;
+            var rules = this.$tokenizer["rules"];
             var completionKeywords = [];
             for (var rule in rules) {
                 var ruleItr = rules[rule];
@@ -3855,13 +4008,13 @@ var AdaHighlightRules = function () {
                 token: "comment",
                 regex: "--.*$"
             }, {
-                token: "string",
+                token: "string", // " string
                 regex: '".*?"'
             }, {
-                token: "string",
+                token: "string", // character
                 regex: "'.'"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
@@ -3969,12 +4122,12 @@ var AppleScriptHighlightRules = function () {
                 regex: "--.*$"
             },
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\(\\*",
                 next: "comment"
             },
             {
-                token: "string",
+                token: "string", // " string
                 regex: '".*?"'
             },
             {
@@ -4011,7 +4164,7 @@ var AppleScriptHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\)",
                 next: "start"
             }, {
@@ -4636,7 +4789,7 @@ var C9SearchHighlightRules = function () {
                 next: "numbers"
             },
             {
-                token: "string",
+                token: "string", // single line
                 regex: "^\\S:?[^:]+",
                 next: "numbers"
             }
@@ -4953,38 +5106,38 @@ var ClojureHighlightRules = function () {
                 token: "comment",
                 regex: ";.*$"
             }, {
-                token: "keyword",
+                token: "keyword", //parens
                 regex: "[\\(|\\)]"
             }, {
-                token: "keyword",
+                token: "keyword", //lists
                 regex: "[\\'\\(]"
             }, {
-                token: "keyword",
+                token: "keyword", //vectors
                 regex: "[\\[|\\]]"
             }, {
-                token: "string.regexp",
+                token: "string.regexp", //Regular Expressions
                 regex: '#"',
                 next: "regex"
             }, {
-                token: "keyword",
+                token: "keyword", //sets and maps
                 regex: "[\\{|\\}|\\#\\{|\\#\\}]"
             }, {
-                token: "keyword",
+                token: "keyword", // ampersands
                 regex: '[\\&]'
             }, {
-                token: "keyword",
+                token: "keyword", // metadata
                 regex: '[\\#\\^\\{]'
             }, {
-                token: "keyword",
+                token: "keyword", // anonymous fn syntactic sugar
                 regex: '[\\%]'
             }, {
-                token: "keyword",
+                token: "keyword", // deref reader macro
                 regex: '[@]'
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: "constant.language",
@@ -4993,11 +5146,11 @@ var ClojureHighlightRules = function () {
                 token: keywordMapper,
                 regex: "[a-zA-Z_$][a-zA-Z0-9_$\\-]*\\b"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '"',
                 next: "string"
             }, {
-                token: "constant",
+                token: "constant", // symbol
                 regex: /:[^()\[\]{}'"\^%`,;\s]+/
             }
         ],
@@ -5211,13 +5364,13 @@ var CobolHighlightRules = function () {
                 token: "comment",
                 regex: "\\*.*$"
             }, {
-                token: "string",
+                token: "string", // " string
                 regex: '".*?"'
             }, {
-                token: "string",
+                token: "string", // ' string
                 regex: "'.*?'"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
@@ -5824,14 +5977,14 @@ JsDocCommentHighlightRules.getTagRule = function (start) {
 };
 JsDocCommentHighlightRules.getStartRule = function (start) {
     return {
-        token: "comment.doc",
+        token: "comment.doc", // doc comment
         regex: "\\/\\*(?=\\*)",
         next: start
     };
 };
 JsDocCommentHighlightRules.getEndRule = function (start) {
     return {
-        token: "comment.doc",
+        token: "comment.doc", // closing comment
         regex: "\\*\\/",
         next: start
     };
@@ -5856,7 +6009,7 @@ var JavaScriptHighlightRules = function (options) {
             "decodeURI|decodeURIComponent|encodeURI|encodeURIComponent|eval|isFinite|" + // Non-constructor functions
             "isNaN|parseFloat|parseInt|" +
             "JSON|Math|" + // Other
-            "this|arguments|prototype|window|document",
+            "this|arguments|prototype|window|document", // Pseudo
         "keyword": "const|yield|import|get|set|async|await|" +
             "break|case|catch|continue|default|delete|do|else|finally|for|function|" +
             "if|in|of|instanceof|new|return|switch|throw|try|typeof|let|var|while|with|debugger|" +
@@ -5888,10 +6041,10 @@ var JavaScriptHighlightRules = function (options) {
                 regex: '"(?=.)',
                 next: "qqstring"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hexadecimal, octal and binary
                 regex: /0(?:[xX][0-9a-fA-F]+|[oO][0-7]+|[bB][01]+)\b/
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // decimal integers and floats
                 regex: /(?:\d\d*(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+\b)?/
             }, {
                 token: [
@@ -5953,7 +6106,7 @@ var JavaScriptHighlightRules = function (options) {
                 regex: /that\b/
             }, {
                 token: ["storage.type", "punctuation.operator", "support.function.firebug"],
-                regex: /(console)(\.)(warn|info|log|error|time|trace|timeEnd|assert)\b/
+                regex: /(console)(\.)(warn|info|log|error|debug|time|trace|timeEnd|assert)\b/
             }, {
                 token: keywordMapper,
                 regex: identifierRe
@@ -6111,10 +6264,10 @@ var JavaScriptHighlightRules = function (options) {
                 token: "constant.language",
                 regex: "null|Infinity|NaN|undefined"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hexadecimal, octal and binary
                 regex: /0(?:[xX][0-9a-fA-F]+|[oO][0-7]+|[bB][01]+)\b/
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // decimal integers and floats
                 regex: /(?:\d\d*(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+\b)?/
             }, {
                 token: "punctuation.operator",
@@ -6355,7 +6508,7 @@ function JSX() {
 function comments(next) {
     return [
         {
-            token: "comment",
+            token: "comment", // multi line comment
             regex: /\/\*/,
             next: [
                 DocCommentHighlightRules.getTagRule(),
@@ -6559,7 +6712,7 @@ var CssHighlightRules = function () {
                     + "|swash|ornaments|annotation|stylistic|styleset|character-variant)"
             }],
         "comments": [{
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 push: [{
                         token: "comment",
@@ -6591,13 +6744,13 @@ var CssHighlightRules = function () {
                 regex: rgb256Regex,
                 onMatch: rgb256Token
             }, {
-                regex: "#[a-fA-F0-9]{8}",
+                regex: "#[a-fA-F0-9]{8}", // hex8 color
                 onMatch: colorToken
             }, {
-                regex: "#[a-fA-F0-9]{6}",
+                regex: "#[a-fA-F0-9]{6}", // hex6 color
                 onMatch: colorToken
             }, {
-                regex: "#[A-Fa-f0-9]{3}",
+                regex: "#[A-Fa-f0-9]{3}", // hex3 color
                 onMatch: colorToken
             }, {
                 token: ["punctuation", "entity.other.attribute-name.pseudo-element.css"],
@@ -7984,14 +8137,14 @@ DocCommentHighlightRules.getTagRule = function (start) {
 };
 DocCommentHighlightRules.getStartRule = function (start) {
     return {
-        token: "comment.doc",
+        token: "comment.doc", // doc comment
         regex: "\\/\\*(?=\\*)",
         next: start
     };
 };
 DocCommentHighlightRules.getEndRule = function (start) {
     return {
-        token: "comment.doc",
+        token: "comment.doc", // closing comment
         regex: "\\*\\/",
         next: start
     };
@@ -8018,11 +8171,11 @@ var CSharpHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
-                token: "string",
+                token: "string", // character
                 regex: /'(?:.|\\(:?u[\da-fA-F]+|x[\da-fA-F]+|[tbrf'"n]))?'/
             }, {
                 token: "string", start: '"', end: '"|$', next: [
@@ -8040,10 +8193,10 @@ var CSharpHighlightRules = function () {
                     { token: "invalid", regex: /\\./ }
                 ]
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: "constant.language.boolean",
@@ -8073,7 +8226,7 @@ var CSharpHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -8312,7 +8465,7 @@ var DHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "star-comment"
             }, {
@@ -8337,15 +8490,15 @@ var DHighlightRules = function () {
                 regex: 'q"(?:[a-zA-Z_]+)$',
                 next: 'identifier-heredoc-string'
             }, {
-                token: "string",
+                token: "string", // multi line string start
                 regex: '[xr]?"',
                 next: "quote-string"
             }, {
-                token: "string",
+                token: "string", // multi line string start
                 regex: '[xr]?`',
                 next: "backtick-string"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: "[xr]?['](?:(?:\\\\.)|(?:[^'\\\\]))*?['][cdw]?"
             }, {
                 token: ["keyword", "text", "paren.lparen"],
@@ -8364,10 +8517,10 @@ var DHighlightRules = function () {
                 token: ["keyword", "text", "variable.storage", "text"],
                 regex: "(alias|typedef)(\\s*)(" + identifierRe + ")(\\s*)"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F_]+(l|ul|u|f|F|L|U|UL)?\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d[\\d_]*(?:(?:\\.[\\d_]*)?(?:[eE][+-]?[\\d_]+)?)?(l|ul|u|f|F|L|U|UL)?\\b"
             }, {
                 token: "entity.other.attribute-name",
@@ -8394,7 +8547,7 @@ var DHighlightRules = function () {
         ],
         "star-comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -8403,7 +8556,7 @@ var DHighlightRules = function () {
         ],
         "plus-comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\+\\/",
                 next: "start"
             }, {
@@ -8599,11 +8752,11 @@ var c_cppHighlightRules = function (extraKeywords) {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
-                token: "string",
+                token: "string", // character
                 regex: "'(?:" + escapeRe + "|.)?'"
             }, {
                 token: "string.start",
@@ -8625,17 +8778,17 @@ var c_cppHighlightRules = function (extraKeywords) {
                     { defaultToken: "string" }
                 ]
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+(L|l|UL|ul|u|U|F|f|ll|LL|ull|ULL)?\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?(L|l|UL|ul|u|U|F|f|ll|LL|ull|ULL)?\\b"
             }, {
-                token: "keyword",
+                token: "keyword", // pre-compiler directives
                 regex: "#\\s*(?:include|import|pragma|line|define|undef)\\b",
                 next: "directive"
             }, {
-                token: "keyword",
+                token: "keyword", // special case pre-compiler directive
                 regex: "#\\s*(?:endif|if|ifdef|else|elif|ifndef)\\b"
             }, {
                 token: keywordMapper,
@@ -8659,7 +8812,7 @@ var c_cppHighlightRules = function (extraKeywords) {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -8694,12 +8847,12 @@ var c_cppHighlightRules = function (extraKeywords) {
                 next: "start"
             },
             {
-                token: "constant.other",
+                token: "constant.other", // single line
                 regex: '\\s*["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]',
                 next: "start"
             },
             {
-                token: "constant.other",
+                token: "constant.other", // single line
                 regex: "\\s*['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']",
                 next: "start"
             },
@@ -8813,7 +8966,7 @@ var DartHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: /\/\*/,
                 next: "comment"
             },
@@ -8894,11 +9047,11 @@ var DartHighlightRules = function () {
                 token: ["keyword.operator.logical.dart"]
             },
             {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             },
             {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             },
             {
@@ -8908,7 +9061,7 @@ var DartHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -9323,13 +9476,13 @@ var ShHighlightRules = function () {
                 token: "support.function",
                 regex: fileDescriptor
             }, {
-                token: "string",
+                token: "string", // ' string
                 start: "'", end: "'"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: floatNumber
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // integer
                 regex: integer + "\\b"
             }, {
                 token: keywordMapper,
@@ -9498,7 +9651,7 @@ var DotHighlightRules = function () {
                 token: "comment",
                 regex: /#.*$/
             }, {
-                token: "comment",
+                token: "comment", // multi line comment
                 merge: true,
                 regex: /\/\*/,
                 next: "comment"
@@ -9545,7 +9698,7 @@ var DotHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -9661,11 +9814,11 @@ var EiffelHighlightRules = function () {
     var simpleString = /(?:[^"%\b\f\v]|%[A-DFHLNQR-V%'"()<>]|%\/(?:0[xX][\da-fA-F](?:_*[\da-fA-F])*|0[cC][0-7](?:_*[0-7])*|0[bB][01](?:_*[01])*|\d(?:_*\d)*)\/)+?/;
     this.$rules = {
         "start": [{
-                token: "string.quoted.other",
+                token: "string.quoted.other", // Aligned-verbatim-strings (verbatim option not supported)
                 regex: /"\[/,
                 next: "aligned_verbatim_string"
             }, {
-                token: "string.quoted.other",
+                token: "string.quoted.other", // Non-aligned-verbatim-strings (verbatim option not supported)
                 regex: /"\{/,
                 next: "non-aligned_verbatim_string"
             }, {
@@ -9678,7 +9831,7 @@ var EiffelHighlightRules = function () {
                 token: "constant.character",
                 regex: /'(?:[^%\b\f\n\r\t\v]|%[A-DFHLNQR-V%'"()<>]|%\/(?:0[xX][\da-fA-F](?:_*[\da-fA-F])*|0[cC][0-7](?:_*[0-7])*|0[bB][01](?:_*[01])*|\d(?:_*\d)*)\/)'/
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hexa | octal | bin
                 regex: /\b0(?:[xX][\da-fA-F](?:_*[\da-fA-F])*|[cC][0-7](?:_*[0-7])*|[bB][01](?:_*[01])*)\b/
             }, {
                 token: "constant.numeric",
@@ -9690,7 +9843,7 @@ var EiffelHighlightRules = function () {
                 token: "paren.rparen",
                 regex: /[\])}]|>>|\|\)/
             }, {
-                token: "keyword.operator",
+                token: "keyword.operator", // punctuation
                 regex: /:=|->|\.(?=\w)|[;,:?]/
             }, {
                 token: "keyword.operator",
@@ -11157,7 +11310,7 @@ var FtlLangHighlightRules = function () {
                 token: "entity.other.attribute-name",
                 regex: attributes
             }, {
-                token: "string",
+                token: "string", //
                 regex: /['"]/,
                 next: "qstring"
             }, {
@@ -11283,16 +11436,16 @@ var GcodeHighlightRules = function () {
                 token: "comment",
                 regex: "\\(.*\\)"
             }, {
-                token: "comment",
+                token: "comment", // block number
                 regex: "([N])([0-9]+)"
             }, {
-                token: "string",
+                token: "string", // " string
                 regex: "([G])([0-9]+\\.?[0-9]?)"
             }, {
-                token: "string",
+                token: "string", // ' string
                 regex: "([M])([0-9]+\\.?[0-9]?)"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "([-+]?([0-9]*\\.?[0-9]+\\.?))|(\\b0[xX][a-fA-F0-9]+|(\\b\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)"
             }, {
                 token: keywordMapper,
@@ -11364,11 +11517,11 @@ var GherkinHighlightRules = function () {
                 token: "keyword",
                 regex: "\\*"
             }, {
-                token: "string",
+                token: "string", // multi line """ string start
                 regex: '"{3}',
                 next: "qqstring3"
             }, {
-                token: "string",
+                token: "string", // " string
                 regex: '"',
                 next: "qqstring"
             }, {
@@ -11401,7 +11554,7 @@ var GherkinHighlightRules = function () {
                 token: "constant.language.escape",
                 regex: stringEscape
             }, {
-                token: "string",
+                token: "string", // multi line """ string end
                 regex: '"{3}',
                 next: "start"
             }, {
@@ -11492,7 +11645,7 @@ var GitignoreHighlightRules = function () {
                 token: "comment",
                 regex: /^\s*#.*$/
             }, {
-                token: "keyword",
+                token: "keyword", // negated patterns
                 regex: /^\s*!.*$/
             }
         ]
@@ -11610,24 +11763,24 @@ var GolangHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment.start",
+                token: "comment.start", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: /"(?:[^"\\]|\\.)*?"/
             }, {
-                token: "string",
+                token: "string", // raw
                 regex: '`',
                 next: "bqstring"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // rune
                 regex: "'(?:[^\\'\uD800-\uDBFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|" + stringEscapeRe.replace('"', '') + ")'"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: ["keyword", "text", "entity.name.function"],
@@ -11786,7 +11939,7 @@ var GroovyHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
@@ -11801,16 +11954,16 @@ var GroovyHighlightRules = function () {
                 regex: "'''",
                 next: "qstring"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: "constant.language.boolean",
@@ -11834,7 +11987,7 @@ var GroovyHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -11905,23 +12058,23 @@ define("ace/mode/ruby_highlight_rules",["require","exports","module","ace/lib/oo
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var constantOtherSymbol = exports.constantOtherSymbol = {
-    token: "constant.other.symbol.ruby",
+    token: "constant.other.symbol.ruby", // symbol
     regex: "[:](?:[A-Za-z_]|[@$](?=[a-zA-Z0-9_]))[a-zA-Z0-9_]*[!=?]?"
 };
 exports.qString = {
-    token: "string",
+    token: "string", // single line
     regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
 };
 exports.qqString = {
-    token: "string",
+    token: "string", // single line
     regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
 };
 exports.tString = {
-    token: "string",
+    token: "string", // backtick string
     regex: "[`](?:(?:\\\\.)|(?:[^'\\\\]))*?[`]"
 };
 var constantNumericHex = exports.constantNumericHex = {
-    token: "constant.numeric",
+    token: "constant.numeric", // hex
     regex: "0[xX][0-9a-fA-F](?:[0-9a-fA-F]|_(?=[0-9a-fA-F]))*\\b"
 };
 var constantNumericBinary = exports.constantNumericBinary = {
@@ -11937,19 +12090,19 @@ var constantNumericOctal = exports.constantNumericDecimal = {
     regex: /\b(0[oO]?(?:[1-7](?:[0-7]|_(?=[0-7]))*|0))\b/
 };
 var constantNumericRational = exports.constantNumericRational = {
-    token: "constant.numeric",
+    token: "constant.numeric", //rational + complex
     regex: /\b([\d]+(?:[./][\d]+)?ri?)\b/
 };
 var constantNumericComplex = exports.constantNumericComplex = {
-    token: "constant.numeric",
+    token: "constant.numeric", //simple complex numbers
     regex: /\b([\d]i)\b/
 };
 var constantNumericFloat = exports.constantNumericFloat = {
-    token: "constant.numeric",
+    token: "constant.numeric", // float + complex
     regex: "[+-]?\\d(?:\\d|_(?=\\d))*(?:(?:\\.\\d(?:\\d|_(?=\\d))*)?(?:[eE][+-]?\\d+)?)?i?\\b"
 };
 var instanceVariable = exports.instanceVariable = {
-    token: "variable.instance",
+    token: "variable.instance", // instance variable
     regex: "@{1,2}[a-zA-Z_\\d]+"
 };
 var RubyHighlightRules = function () {
@@ -12014,7 +12167,7 @@ var RubyHighlightRules = function () {
                 token: "comment",
                 regex: "#.*$"
             }, {
-                token: "comment.multiline",
+                token: "comment.multiline", // multi line comment
                 regex: "^=begin(?=$|\\s.*$)",
                 next: "comment"
             }, {
@@ -12070,7 +12223,7 @@ var RubyHighlightRules = function () {
                             defaultToken: "string"
                         }]
                 }, {
-                    token: "string.start",
+                    token: "string.start", //doesn't see any differences between strings and array of strings in highlighting
                     regex: /%[qwx]([(\[<{^|%])/, onMatch: function (val, state, stack) {
                         if (stack.length)
                             stack = [];
@@ -12080,7 +12233,7 @@ var RubyHighlightRules = function () {
                         return this.token;
                     }
                 }, {
-                    token: "string.start",
+                    token: "string.start", //doesn't see any differences between strings and array of strings in highlighting
                     regex: /%[QWX]?([(\[<{^|%])/, onMatch: function (val, state, stack) {
                         if (stack.length)
                             stack = [];
@@ -12090,7 +12243,7 @@ var RubyHighlightRules = function () {
                         return this.token;
                     }
                 }, {
-                    token: "constant.other.symbol.ruby",
+                    token: "constant.other.symbol.ruby", //doesn't see any differences between symbols and array of symbols in highlighting
                     regex: /%[si]([(\[<{^|%])/, onMatch: function (val, state, stack) {
                         if (stack.length)
                             stack = [];
@@ -12100,7 +12253,7 @@ var RubyHighlightRules = function () {
                         return this.token;
                     }
                 }, {
-                    token: "constant.other.symbol.ruby",
+                    token: "constant.other.symbol.ruby", //doesn't see any differences between symbols and array of symbols in highlighting
                     regex: /%[SI]([(\[<{^|%])/, onMatch: function (val, state, stack) {
                         if (stack.length)
                             stack = [];
@@ -12121,15 +12274,15 @@ var RubyHighlightRules = function () {
                     }
                 }],
             {
-                token: "punctuation",
+                token: "punctuation", // namespaces aren't symbols
                 regex: "::"
             },
             instanceVariable,
             {
-                token: "variable.global",
+                token: "variable.global", // global variable
                 regex: "[$][a-zA-Z_\\d]+"
             }, {
-                token: "support.class",
+                token: "support.class", // class name
                 regex: "[A-Z][a-zA-Z_\\d]*"
             }, {
                 token: ["punctuation.operator", "support.function"],
@@ -12243,16 +12396,16 @@ var RubyHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment.multiline",
+                token: "comment.multiline", // closing comment
                 regex: "^=end(?=$|\\s.*$)",
                 next: "start"
             }, {
-                token: "comment",
+                token: "comment", // comment spanning whole line
                 regex: ".+"
             }
         ],
         "qStateWithInterpolation": [{
-                token: "string.start",
+                token: "string.start", // excluded nested |^% due to difficulty in realization
                 regex: /[(\[<{]/, onMatch: function (val, state, stack) {
                     if (stack.length && val === stack[0]) {
                         stack.unshift(val, state);
@@ -12285,7 +12438,7 @@ var RubyHighlightRules = function () {
                 defaultToken: "string"
             }],
         "qStateWithoutInterpolation": [{
-                token: "string.start",
+                token: "string.start", // excluded nested |^% due to difficulty in realization
                 regex: /[(\[<{]/, onMatch: function (val, state, stack) {
                     if (stack.length && val === stack[0]) {
                         stack.unshift(val, state);
@@ -12314,7 +12467,7 @@ var RubyHighlightRules = function () {
                 defaultToken: "string"
             }],
         "sStateWithoutInterpolation": [{
-                token: "constant.other.symbol.ruby",
+                token: "constant.other.symbol.ruby", // excluded nested |^% due to difficulty in realization
                 regex: /[(\[<{]/, onMatch: function (val, state, stack) {
                     if (stack.length && val === stack[0]) {
                         stack.unshift(val, state);
@@ -12337,7 +12490,7 @@ var RubyHighlightRules = function () {
                 defaultToken: "constant.other.symbol.ruby"
             }],
         "sStateWithInterpolation": [{
-                token: "constant.other.symbol.ruby",
+                token: "constant.other.symbol.ruby", // excluded nested |^% due to difficulty in realization
                 regex: /[(\[<{]/, onMatch: function (val, state, stack) {
                     if (stack.length && val === stack[0]) {
                         stack.unshift(val, state);
@@ -12370,7 +12523,7 @@ var RubyHighlightRules = function () {
                 defaultToken: "constant.other.symbol.ruby"
             }],
         "rState": [{
-                token: "string.regexp",
+                token: "string.regexp", // excluded nested |^% due to difficulty in realization
                 regex: /[(\[<{]/, onMatch: function (val, state, stack) {
                     if (stack.length && val === stack[0]) {
                         stack.unshift(val, state);
@@ -12484,21 +12637,21 @@ var HamlHighlightRules = function () {
     this.$rules = {
         "start": [
             {
-                token: "comment.block",
+                token: "comment.block", // multiline HTML comment
                 regex: /^\/$/,
                 next: "comment"
             },
             {
-                token: "comment.block",
+                token: "comment.block", // multiline HAML comment
                 regex: /^\-#$/,
                 next: "comment"
             },
             {
-                token: "comment.line",
+                token: "comment.line", // HTML comment
                 regex: /\/\s*.*/
             },
             {
-                token: "comment.line",
+                token: "comment.line", // HAML comment
                 regex: /-#\s*.*/
             },
             {
@@ -12568,7 +12721,7 @@ var HamlHighlightRules = function () {
             RubyExports.qqString,
             RubyExports.tString,
             {
-                token: "support.class",
+                token: "support.class", // class name
                 regex: "[A-Z][a-zA-Z_\\d]+"
             },
             {
@@ -12598,7 +12751,7 @@ var HamlHighlightRules = function () {
                 next: "start"
             },
             {
-                token: "comment.block",
+                token: "comment.block", // comment spanning the whole line
                 regex: /\s+.*/
             }
         ]
@@ -12671,7 +12824,7 @@ var HandlebarsHighlightRules = function () {
                     defaultToken: "comment"
                 }]
         }, {
-            token: "support.function",
+            token: "support.function", // unescaped variable
             regex: "{{{",
             push: [{
                     token: "support.function",
@@ -12682,7 +12835,7 @@ var HandlebarsHighlightRules = function () {
                     regex: "[a-zA-Z_$][a-zA-Z0-9_$]*"
                 }]
         }, {
-            token: "storage.type.start",
+            token: "storage.type.start", // begin section
             regex: "{{[#\\^/&]?",
             push: [{
                     token: "storage.type.end",
@@ -12954,23 +13107,23 @@ var HaxeHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
                 token: "string.regexp",
                 regex: "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/]\\w*\\s*(?=[).,;]|$)"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: "constant.language.boolean",
@@ -12997,7 +13150,7 @@ var HaxeHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -13290,10 +13443,10 @@ var JackHighlightRules = function () {
                 regex: "'",
                 next: "string1"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "-?0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "(?:0|[-+]?[1-9][0-9]*)\\b"
             }, {
                 token: "constant.binary",
@@ -13621,21 +13774,21 @@ var ScssHighlightRules = function () {
                 regex: "\\/\\/.*$"
             },
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
-                token: "string",
+                token: "string", // multi line string start
                 regex: '["].*\\\\$',
                 next: "qqstring"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
             }, {
-                token: "string",
+                token: "string", // multi line string start
                 regex: "['].*\\\\$",
                 next: "qstring"
             }, {
@@ -13645,13 +13798,13 @@ var ScssHighlightRules = function () {
                 regex: rgb256Regex,
                 onMatch: rgb256Token
             }, {
-                regex: "#[a-fA-F0-9]{8}",
+                regex: "#[a-fA-F0-9]{8}", // hex8 color
                 onMatch: colorToken
             }, {
-                regex: "#[a-fA-F0-9]{6}",
+                regex: "#[a-fA-F0-9]{6}", // hex6 color
                 onMatch: colorToken
             }, {
-                regex: "#[A-Fa-f0-9]{3}",
+                regex: "#[A-Fa-f0-9]{3}", // hex3 color
                 onMatch: colorToken
             }, {
                 token: "constant.numeric",
@@ -13710,7 +13863,7 @@ var ScssHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -13771,14 +13924,14 @@ var LessHighlightRules = function () {
                 regex: "\\/\\/.*$"
             },
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
             }, {
                 token: ["constant.numeric", "keyword"],
@@ -13787,13 +13940,13 @@ var LessHighlightRules = function () {
                 regex: rgb256Regex,
                 onMatch: rgb256Token
             }, {
-                regex: "#[a-fA-F0-9]{8}",
+                regex: "#[a-fA-F0-9]{8}", // hex8 color
                 onMatch: colorToken
             }, {
-                regex: "#[a-fA-F0-9]{6}",
+                regex: "#[a-fA-F0-9]{6}", // hex6 color
                 onMatch: colorToken
             }, {
-                regex: "#[A-Fa-f0-9]{3}",
+                regex: "#[A-Fa-f0-9]{3}", // hex3 color
                 onMatch: colorToken
             }, {
                 token: "constant.numeric",
@@ -13867,7 +14020,7 @@ var LessHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -14116,6 +14269,7 @@ var oop = require("../lib/oop");
 var DocCommentHighlightRules = require("./doc_comment_highlight_rules").DocCommentHighlightRules;
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var JavaHighlightRules = function () {
+    var identifierRe = "[a-zA-Z_$][a-zA-Z0-9_$]*";
     var keywords = ("abstract|continue|for|new|switch|" +
         "assert|default|goto|package|synchronized|" +
         "boolean|do|if|private|this|" +
@@ -14126,7 +14280,10 @@ var JavaHighlightRules = function () {
         "char|final|interface|static|void|" +
         "class|finally|long|strictfp|volatile|" +
         "const|float|native|super|while|" +
-        "var");
+        "var|exports|opens|requires|uses|yield|" +
+        "module|permits|(?:non\\-)?sealed|var|" +
+        "provides|to|when|" +
+        "open|record|transitive|with");
     var buildinConstants = ("null|Infinity|NaN|undefined");
     var langClasses = ("AbstractMethodError|AssertionError|ClassCircularityError|" +
         "ClassFormatError|Deprecated|EnumConstantNotPresentException|" +
@@ -14154,7 +14311,6 @@ var JavaHighlightRules = function () {
         "Cloneable|Class|CharSequence|Comparable|String|Object");
     var keywordMapper = this.createKeywordMapper({
         "variable.language": "this",
-        "keyword": keywords,
         "constant.language": buildinConstants,
         "support.function": langClasses
     }, "identifier");
@@ -14166,25 +14322,14 @@ var JavaHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
-            }, {
-                token: "string",
-                regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
-            }, {
-                token: "string",
-                regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
-            }, {
-                token: "constant.numeric",
-                regex: /0(?:[xX][0-9a-fA-F][0-9a-fA-F_]*|[bB][01][01_]*)[LlSsDdFfYy]?\b/
-            }, {
-                token: "constant.numeric",
-                regex: /[+-]?\d[\d_]*(?:(?:\.[\d_]*)?(?:[eE][+-]?[\d_]+)?)?[LlSsDdFfYy]?\b/
-            }, {
-                token: "constant.language.boolean",
-                regex: "(?:true|false)\\b"
-            }, {
+            },
+            { include: "multiline-strings" },
+            { include: "strings" },
+            { include: "constants" },
+            {
                 regex: "(open(?:\\s+))?module(?=\\s*\\w)",
                 token: "keyword",
                 next: [{
@@ -14211,12 +14356,147 @@ var JavaHighlightRules = function () {
                         token: "text",
                         regex: "\\s+"
                     }, {
-                        regex: "",
+                        regex: "", // exit if there is anything else
                         next: "start"
                     }]
+            },
+            { include: "statements" }
+        ],
+        "comment": [
+            {
+                token: "comment", // closing comment
+                regex: "\\*\\/",
+                next: "start"
             }, {
-                token: keywordMapper,
-                regex: "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
+                defaultToken: "comment"
+            }
+        ],
+        "strings": [
+            {
+                token: ["punctuation", "string"],
+                regex: /(\.)(")/,
+                push: [
+                    {
+                        token: "lparen",
+                        regex: /\\\{/,
+                        push: [
+                            {
+                                token: "text",
+                                regex: /$/,
+                                next: "start"
+                            }, {
+                                token: "rparen",
+                                regex: /}/,
+                                next: "pop"
+                            }, {
+                                include: "strings"
+                            }, {
+                                include: "constants"
+                            }, {
+                                include: "statements"
+                            }
+                        ]
+                    }, {
+                        token: "string",
+                        regex: /"/,
+                        next: "pop"
+                    }, {
+                        defaultToken: "string"
+                    }
+                ]
+            }, {
+                token: "string", // single line
+                regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+            }, {
+                token: "string", // single line
+                regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+            }
+        ],
+        "multiline-strings": [
+            {
+                token: ["punctuation", "string"],
+                regex: /(\.)(""")/,
+                push: [
+                    {
+                        token: "string",
+                        regex: '"""',
+                        next: "pop"
+                    }, {
+                        token: "lparen",
+                        regex: /\\\{/,
+                        push: [
+                            {
+                                token: "text",
+                                regex: /$/,
+                                next: "start"
+                            }, {
+                                token: "rparen",
+                                regex: /}/,
+                                next: "pop"
+                            }, {
+                                include: "multiline-strings"
+                            }, {
+                                include: "strings"
+                            }, {
+                                include: "constants"
+                            }, {
+                                include: "statements"
+                            }
+                        ]
+                    }, {
+                        token: "constant.language.escape",
+                        regex: /\\./
+                    }, {
+                        defaultToken: "string"
+                    }
+                ]
+            },
+            {
+                token: "string",
+                regex: '"""',
+                push: [
+                    {
+                        token: "string",
+                        regex: '"""',
+                        next: "pop"
+                    }, {
+                        token: "constant.language.escape",
+                        regex: /\\./
+                    }, {
+                        defaultToken: "string"
+                    }
+                ]
+            }
+        ],
+        "constants": [
+            {
+                token: "constant.numeric", // hex
+                regex: /0(?:[xX][0-9a-fA-F][0-9a-fA-F_]*|[bB][01][01_]*)[LlSsDdFfYy]?\b/
+            }, {
+                token: "constant.numeric", // float
+                regex: /[+-]?\d[\d_]*(?:(?:\.[\d_]*)?(?:[eE][+-]?[\d_]+)?)?[LlSsDdFfYy]?\b/
+            }, {
+                token: "constant.language.boolean",
+                regex: "(?:true|false)\\b"
+            }
+        ],
+        "statements": [
+            {
+                token: ["keyword", "text", "identifier"],
+                regex: "(record)(\\s+)(" + identifierRe + ")\\b"
+            },
+            {
+                token: "keyword",
+                regex: "(?:" + keywords + ")\\b"
+            }, {
+                token: "storage.type.annotation",
+                regex: "@" + identifierRe + "\\b"
+            }, {
+                token: "entity.name.function",
+                regex: identifierRe + "(?=\\()"
+            }, {
+                token: keywordMapper, // TODO: Unicode escape sequences
+                regex: identifierRe + "\\b"
             }, {
                 token: "keyword.operator",
                 regex: "!|\\$|%|&|\\||\\^|\\*|\\/|\\-\\-|\\-|\\+\\+|\\+|~|===|==|=|!=|!==|<=|>=|<<=|>>=|>>>=|<>|<|>|!|&&|\\|\\||\\?|\\:|\\*=|\\/=|%=|\\+=|\\-=|&=|\\|=|\\^=|\\b(?:in|instanceof|new|delete|typeof|void)"
@@ -14229,15 +14509,6 @@ var JavaHighlightRules = function () {
             }, {
                 token: "text",
                 regex: "\\s+"
-            }
-        ],
-        "comment": [
-            {
-                token: "comment",
-                regex: "\\*\\/",
-                next: "start"
-            }, {
-                defaultToken: "comment"
             }
         ]
     };
@@ -14748,29 +15019,29 @@ var JsonHighlightRules = function () {
     this.$rules = {
         "start": [
             {
-                token: "variable",
+                token: "variable", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]\\s*(?=:)'
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '"',
                 next: "string"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: "constant.language.boolean",
                 regex: "(?:true|false)\\b"
             }, {
-                token: "text",
+                token: "text", // single quoted strings are not allowed
                 regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
             }, {
-                token: "comment",
+                token: "comment", // comments are not allowed, but who cares?
                 regex: "\\/\\/.*$"
             }, {
-                token: "comment.start",
+                token: "comment.start", // comments are not allowed, but who cares?
                 regex: "\\/\\*",
                 next: "comment"
             }, {
@@ -14801,7 +15072,7 @@ var JsonHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment.end",
+                token: "comment.end", // comments are not allowed, but who cares?
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -15179,11 +15450,11 @@ var LispHighlightRules = function () {
                     regex: "(\\*)(\\S*)(\\*)"
                 },
                 {
-                    token: "constant.numeric",
+                    token: "constant.numeric", // hex
                     regex: "0[xX][0-9a-fA-F]+(?:L|l|UL|ul|u|U|F|f|ll|LL|ull|ULL)?\\b"
                 },
                 {
-                    token: "constant.numeric",
+                    token: "constant.numeric", // float
                     regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?(?:L|l|UL|ul|u|U|F|f|ll|LL|ull|ULL)?\\b"
                 },
                 {
@@ -15880,16 +16151,16 @@ var LuaHighlightRules = function () {
                 ]
             },
             {
-                token: "string",
+                token: "string", // " string
                 regex: '"(?:[^\\\\]|\\\\.)*?"'
             }, {
-                token: "string",
+                token: "string", // ' string
                 regex: "'(?:[^\\\\]|\\\\.)*?'"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: floatNumber
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // integer
                 regex: integer + "\\b"
             }, {
                 token: keywordMapper,
@@ -17041,7 +17312,7 @@ var MatlabHighlightRules = function () {
                         defaultToken: "string"
                     }]
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
@@ -17698,15 +17969,15 @@ var MushCodeRules = function () {
     this.$rules = {
         "start": [
             {
-                token: "variable",
+                token: "variable", // mush substitution register
                 regex: "%[0-9]{1}"
             },
             {
-                token: "variable",
+                token: "variable", // mush substitution register
                 regex: "%q[0-9A-Za-z]{1}"
             },
             {
-                token: "variable",
+                token: "variable", // mush special character register
                 regex: "%[a-zA-Z]{1}"
             },
             {
@@ -17714,16 +17985,16 @@ var MushCodeRules = function () {
                 regex: "%[a-z0-9-_]+"
             },
             {
-                token: "constant.numeric",
+                token: "constant.numeric", // imaginary
                 regex: "(?:" + floatNumber + "|\\d+)[jJ]\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: floatNumber
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // long integer
                 regex: integer + "[lL]\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // integer
                 regex: integer + "\\b"
             }, {
                 token: keywordMapper,
@@ -17875,14 +18146,14 @@ var MysqlHighlightRules = function () {
             string({ start: "'", escape: /\\[0'"bnrtZ\\%_]?/ }),
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: /\/\*/,
                 next: "comment"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: /0[xX][0-9a-fA-F]+|[xX]'[0-9a-fA-F]+'|0[bB][01]+|[bB]'[01]+'/
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
@@ -17981,10 +18252,10 @@ var NixHighlightRules = function () {
                 regex: '"',
                 push: "qqstring"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
@@ -17997,7 +18268,7 @@ var NixHighlightRules = function () {
                 next: "pop"
             }],
         "comment": [{
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -18117,7 +18388,7 @@ var ObjectiveCHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             },
@@ -18314,7 +18585,7 @@ var ObjectiveCHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: ".*?\\*\\/",
                 next: "start"
             }, {
@@ -18587,28 +18858,28 @@ var OcamlHighlightRules = function () {
                 next: "comment"
             },
             {
-                token: "string",
+                token: "string", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             },
             {
-                token: "string",
+                token: "string", // single char
                 regex: "'.'"
             },
             {
-                token: "string",
+                token: "string", // " string
                 regex: '"',
                 next: "qstring"
             },
             {
-                token: "constant.numeric",
+                token: "constant.numeric", // imaginary
                 regex: "(?:" + floatNumber + "|\\d+)[jJ]\\b"
             },
             {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: floatNumber
             },
             {
-                token: "constant.numeric",
+                token: "constant.numeric", // integer
                 regex: integer + "\\b"
             },
             {
@@ -18634,7 +18905,7 @@ var OcamlHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\)",
                 next: "start"
             },
@@ -18877,24 +19148,24 @@ var PerlHighlightRules = function () {
                 token: "string.regexp",
                 regex: "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/]\\w*\\s*(?=[).,;]|$)"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
-                token: "string",
+                token: "string", // multi line string start
                 regex: '["].*\\\\$',
                 next: "qqstring"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
             }, {
-                token: "string",
+                token: "string", // multi line string start
                 regex: "['].*\\\\$",
                 next: "qstring"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0x[0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
@@ -19048,19 +19319,19 @@ var PythonHighlightRules = function () {
                 token: "comment",
                 regex: "#.*$"
             }, {
-                token: "string",
+                token: "string", // multi line """ string start
                 regex: strPre + '"{3}',
                 next: "qqstring3"
             }, {
-                token: "string",
+                token: "string", // " string
                 regex: strPre + '"(?=.)',
                 next: "qqstring"
             }, {
-                token: "string",
+                token: "string", // multi line ''' string start
                 regex: strPre + "'{3}",
                 next: "qstring3"
             }, {
-                token: "string",
+                token: "string", // ' string
                 regex: strPre + "'(?=.)",
                 next: "qstring"
             }, {
@@ -19136,7 +19407,7 @@ var PythonHighlightRules = function () {
                 token: "constant.language.escape",
                 regex: stringEscape
             }, {
-                token: "string",
+                token: "string", // multi line """ string end
                 regex: '"{3}',
                 next: "start"
             }, {
@@ -19146,7 +19417,7 @@ var PythonHighlightRules = function () {
                 token: "constant.language.escape",
                 regex: stringEscape
             }, {
-                token: "string",
+                token: "string", // multi line ''' string end
                 regex: "'{3}",
                 next: "start"
             }, {
@@ -19181,14 +19452,14 @@ var PythonHighlightRules = function () {
                 defaultToken: "string"
             }],
         "rawqqstring3": [{
-                token: "string",
+                token: "string", // multi line """ string end
                 regex: '"{3}',
                 next: "start"
             }, {
                 defaultToken: "string"
             }],
         "rawqstring3": [{
-                token: "string",
+                token: "string", // multi line ''' string end
                 regex: "'{3}",
                 next: "start"
             }, {
@@ -19220,7 +19491,7 @@ var PythonHighlightRules = function () {
                 token: "constant.language.escape",
                 regex: stringEscape
             }, {
-                token: "string",
+                token: "string", // multi line """ string end
                 regex: '"{3}',
                 next: "start"
             }, {
@@ -19234,7 +19505,7 @@ var PythonHighlightRules = function () {
                 token: "constant.language.escape",
                 regex: stringEscape
             }, {
-                token: "string",
+                token: "string", // multi line ''' string end
                 regex: "'{3}",
                 next: "start"
             }, {
@@ -19277,7 +19548,7 @@ var PythonHighlightRules = function () {
                 defaultToken: "string"
             }],
         "rfqqstring3": [{
-                token: "string",
+                token: "string", // multi line """ string end
                 regex: '"{3}',
                 next: "start"
             }, {
@@ -19288,7 +19559,7 @@ var PythonHighlightRules = function () {
                 defaultToken: "string"
             }],
         "rfqstring3": [{
-                token: "string",
+                token: "string", // multi line ''' string end
                 regex: "'{3}",
                 next: "start"
             }, {
@@ -19354,19 +19625,19 @@ var PythonHighlightRules = function () {
                 push: "fqstringParRules"
             }],
         "constants": [{
-                token: "constant.numeric",
+                token: "constant.numeric", // imaginary
                 regex: "(?:" + floatNumber + "|\\d+)[jJ]\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: floatNumber
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // long integer
                 regex: integer + "[lL]\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // integer
                 regex: integer + "\\b"
             }, {
-                token: ["punctuation", "function.support"],
+                token: ["punctuation", "function.support"], // method
                 regex: "(\\.)([a-zA-Z_]+)\\b"
             }, {
                 token: keywordMapper,
@@ -19785,13 +20056,13 @@ var PgsqlHighlightRules = function () {
         "keyword": keywords
     }, "identifier", true);
     var sqlRules = [{
-            token: "string",
+            token: "string", // single line string -- assume dollar strings if multi-line for now
             regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
         }, {
-            token: "variable.language",
+            token: "variable.language", // pg identifier
             regex: '".*?"'
         }, {
-            token: "constant.numeric",
+            token: "constant.numeric", // float
             regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
         }, {
             token: keywordMapper,
@@ -19820,15 +20091,15 @@ var PgsqlHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi-line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
                 token: "keyword.statementBegin",
-                regex: "[a-zA-Z]+",
+                regex: "[a-zA-Z]+", // Could enumerate starting keywords but this allows things to work when new statements are added.
                 next: "statement"
             }, {
-                token: "support.buildin",
+                token: "support.buildin", // psql directive
                 regex: "^\\\\[\\S]+.*$"
             }
         ],
@@ -19836,7 +20107,7 @@ var PgsqlHighlightRules = function () {
                 token: "comment",
                 regex: "--.*$"
             }, {
-                token: "comment",
+                token: "comment", // multi-line comment
                 regex: "\\/\\*",
                 next: "commentStatement"
             }, {
@@ -19873,11 +20144,11 @@ var PgsqlHighlightRules = function () {
                 token: "comment",
                 regex: "--.*$"
             }, {
-                token: "comment",
+                token: "comment", // multi-line comment
                 regex: "\\/\\*",
                 next: "commentDollarSql"
             }, {
-                token: ["keyword", "statementEnd", "text", "string"],
+                token: ["keyword", "statementEnd", "text", "string"], // end quoting with dollar at the start of a line
                 regex: "(^|END)(;)?(\\s*)(\\$\\$)",
                 next: "statement"
             }, {
@@ -19887,7 +20158,7 @@ var PgsqlHighlightRules = function () {
             }
         ].concat(sqlRules),
         "comment": [{
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -19895,7 +20166,7 @@ var PgsqlHighlightRules = function () {
             }
         ],
         "commentStatement": [{
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "statement"
             }, {
@@ -19903,7 +20174,7 @@ var PgsqlHighlightRules = function () {
             }
         ],
         "commentDollarSql": [{
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "dollarSql"
             }, {
@@ -19911,20 +20182,20 @@ var PgsqlHighlightRules = function () {
             }
         ],
         "dollarStatementString": [{
-                token: "string",
+                token: "string", // closing dollarstring
                 regex: ".*?\\$[\\w_0-9]*\\$",
                 next: "statement"
             }, {
-                token: "string",
+                token: "string", // dollarstring spanning whole line
                 regex: ".+"
             }
         ],
         "dollarSqlString": [{
-                token: "string",
+                token: "string", // closing dollarstring
                 regex: ".*?\\$[\\w_0-9]*\\$",
                 next: "dollarSql"
             }, {
-                token: "string",
+                token: "string", // dollarstring spanning whole line
                 regex: ".+"
             }
         ]
@@ -20822,28 +21093,28 @@ sql_regcase'.split('|'));
             },
             docComment.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
                 token: "string.regexp",
                 regex: "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/][gimy]*\\s*(?=[).,;]|$)"
             }, {
-                token: "string",
+                token: "string", // " string start
                 regex: '"',
                 next: "qqstring"
             }, {
-                token: "string",
+                token: "string", // ' string start
                 regex: "'",
                 next: "qstring"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
-                token: "constant.language",
+                token: "constant.language", // constants
                 regex: "\\b(?:DEFAULT_INCLUDE_PATH|E_(?:ALL|CO(?:MPILE_(?:ERROR|WARNING)|RE_(?:ERROR|WARNING))|" +
                     "ERROR|NOTICE|PARSE|STRICT|USER_(?:ERROR|NOTICE|WARNING)|WARNING)|P(?:EAR_(?:EXTENSION_DIR|INSTALL_DIR)|" +
                     "HP_(?:BINDIR|CONFIG_FILE_(?:PATH|SCAN_DIR)|DATADIR|E(?:OL|XTENSION_DIR)|INT_(?:MAX|SIZE)|" +
@@ -20856,7 +21127,7 @@ sql_regcase'.split('|'));
                 token: ["support.class", "keyword.operator"],
                 regex: "\\b(\\w+)(::)"
             }, {
-                token: "constant.language",
+                token: "constant.language", // constants
                 regex: "\\b(?:A(?:B(?:DAY_(?:1|2|3|4|5|6|7)|MON_(?:1(?:0|1|2|)|2|3|4|5|6|7|8|9))|LT_DIGITS|M_STR|" +
                     "SSERT_(?:ACTIVE|BAIL|CALLBACK|QUIET_EVAL|WARNING))|C(?:ASE_(?:LOWER|UPPER)|HAR_MAX|" +
                     "O(?:DESET|NNECTION_(?:ABORTED|NORMAL|TIMEOUT)|UNT_(?:NORMAL|RECURSIVE))|" +
@@ -20974,14 +21245,14 @@ var PhpHighlightRules = function () {
     HtmlHighlightRules.call(this);
     var startRules = [
         {
-            token: "support.php_tag",
+            token: "support.php_tag", // php open tag
             regex: "<\\?(?:php|=)?",
             push: "php-start"
         }
     ];
     var endRules = [
         {
-            token: "support.php_tag",
+            token: "support.php_tag", // php close tag
             regex: "\\?>",
             next: "pop"
         }
@@ -31539,29 +31810,60 @@ define("ace/mode/powershell_highlight_rules",["require","exports","module","ace/
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var PowershellHighlightRules = function () {
-    var keywords = ("begin|break|catch|continue|data|do|dynamicparam|else|elseif|end|exit|filter|" +
+    var identifierRe = "[a-zA-Z\\?_\u00a1-\uffff][a-zA-Z\\d\\?_\u00a1-\uffff]*";
+    var keywords = ("begin|break|catch|class|continue|data|define|do|dynamicparam|else|elseif|end|enum|exit|filter|" +
         "finally|for|foreach|from|function|if|in|inlinescript|hidden|parallel|param|" +
-        "process|return|sequence|switch|throw|trap|try|until|while|workflow");
+        "process|return|static|sequence|switch|throw|trap|try|until|using|while|workflow|var");
     var builtinFunctions = (
     "Get-AppBackgroundTask|Start-AppBackgroundTask|Unregister-AppBackgroundTask|Disable-AppBackgroundTaskDiagnosticLog|Enable-AppBackgroundTaskDiagnosticLog|Set-AppBackgroundTaskResourcePolicy|" +
         "Get-AppLockerFileInformation|Get-AppLockerPolicy|New-AppLockerPolicy|Set-AppLockerPolicy|Test-AppLockerPolicy|" +
-        "Get-AppxLastError|Get-AppxLog|Add-AppxPackage|Add-AppxVolume|Dismount-AppxVolume|Get-AppxDefaultVolume|Get-AppxPackage|Get-AppxPackageManifest|Get-AppxVolume|Mount-AppxVolume|Move-AppxPackage|Remove-AppxPackage|Remove-AppxVolume|Set-AppxDefaultVolume|" +
+        "Add-AppvClientConnectionGroup|Add-AppvClientPackage|Add-AppvPublishingServer|Disable-Appv|Disable-AppvClientConnectionGroup|Disable-AppvClientMode|Disable-AppvPublishingServer|Enable-Appv|Enable-AppvClientConnectionGroup|Enable-AppvClientMode|Enable-AppvPublishingServer|Get-AppvClientApplication|Get-AppvClientConfiguration|Get-AppvClientConnectionGroup|Get-AppvClientMode|Get-AppvClientPackage|Get-AppvClientPackageStatus|Get-AppvClientPackageVersion|Get-AppvClientPackageVersionHistory|Get-AppvClientPackageVersionStatus|Get-AppvClientPublishingServer|Get-AppvClientSFTFileSystem|Get-AppvClientStatus|Get-AppvPublishingServer|Get-AppvVirtualProcess|Publish-AppvClientPackage|Remove-AppvClientConnectionGroup|Remove-AppvClientPackage|Remove-AppvPublishingServer|Set-AppvClientConfiguration|Set-AppvClientMode|Set-AppvClientPackage|Set-AppvClientPublishingServer|Set-AppvVirtualProcess|Sync-AppvPublishingServer|Get-AppvStatus|Mount-AppvClientConnectionGroup|Repair-AppvClientConnectionGroup|Repair-AppvClientPackage|Send-AppvClientReport|Set-AppvPublishingServer|Start-AppvVirtualProcess|Stop-AppvClientConnectionGroup|Stop-AppvClientPackage|Unpublish-AppvClientPackage|" +
+        "Expand-AppvSequencerPackage|New-AppvPackageAccelerator|New-AppvSequencerPackage|Update-AppvSequencerPackage|" +
+        "Add-AppSharedPackageContainer|Add-AppxPackage|Add-AppxVolume|Dismount-AppxVolume|Get-AppSharedPackageContainer|Get-AppxDefaultVolume|Get-AppxLastError|Get-AppxLog|Get-AppxPackage|Get-AppxPackageAutoUpdateSettings|Get-AppxPackageManifest|Get-AppxVolume|Invoke-CommandInDesktopPackage|Mount-AppxVolume|Move-AppxPackage|Remove-AppSharedPackageContainer|Remove-AppxPackage|Remove-AppxPackageAutoUpdateSettings|Remove-AppxVolume|Reset-AppSharedPackageContainer|Reset-AppxPackage|Set-AppxDefaultVolume|Set-AppxPackageAutoUpdateSettings|" +
         "Clear-AssignedAccess|Get-AssignedAccess|Set-AssignedAccess|" +
-        "Add-BitLockerKeyProtector|Backup-BitLockerKeyProtector|Clear-BitLockerAutoUnlock|Disable-BitLocker|Disable-BitLockerAutoUnlock|Enable-BitLocker|Enable-BitLockerAutoUnlock|Get-BitLockerVolume|Lock-BitLocker|Remove-BitLockerKeyProtector|Resume-BitLocker|Suspend-BitLocker|Unlock-BitLocker|" +
+        "Get-BpaModel|Get-BpaResult|Invoke-BpaModel|Set-BpaResult|" +
+        "Add-BitLockerKeyProtector|Backup-BitLockerKeyProtector|BackupToAAD-BitLockerKeyProtector|Clear-BitLockerAutoUnlock|Disable-BitLocker|Disable-BitLockerAutoUnlock|Enable-BitLocker|Enable-BitLockerAutoUnlock|Get-BitLockerVolume|Lock-BitLocker|Remove-BitLockerKeyProtector|Resume-BitLocker|Suspend-BitLocker|Unlock-BitLocker|" +
         "Add-BitsFile|Complete-BitsTransfer|Get-BitsTransfer|Remove-BitsTransfer|Resume-BitsTransfer|Set-BitsTransfer|Start-BitsTransfer|Suspend-BitsTransfer|" +
+        "Checkpoint-SbecActiveConfig|Clear-SbecProviderCache|Disable-SbecAutologger|Disable-SbecBcd|Enable-SbecAutologger|Enable-SbecBcd|Enable-SbecBootImage|Enable-SbecWdsBcd|Get-SbecActiveConfig|Get-SbecBackupConfig|Get-SbecDestination|Get-SbecForwarding|Get-SbecHistory|Get-SbecLocalizedMessage|Get-SbecLogSession|Get-SbecTraceProviders|New-SbecUnattendFragment|Redo-SbecActiveConfig|Restore-SbecBackupConfig|Save-SbecInstance|Save-SbecLogSession|Set-SbecActiveConfig|Set-SbecLogSession|Start-SbecInstance|Start-SbecLogSession|Start-SbecNtKernelLogSession|Start-SbecSimpleLogSession|Stop-SbecInstance|Stop-SbecLogSession|Test-SbecActiveConfig|Test-SbecConfig|Undo-SbecActiveConfig|" +
         "Add-BCDataCacheExtension|Clear-BCCache|Disable-BC|Disable-BCDowngrading|Disable-BCServeOnBattery|Enable-BCDistributed|Enable-BCDowngrading|Enable-BCHostedClient|Enable-BCHostedServer|Enable-BCLocal|Enable-BCServeOnBattery|Export-BCCachePackage|Export-BCSecretKey|Get-BCClientConfiguration|Get-BCContentServerConfiguration|Get-BCDataCache|Get-BCDataCacheExtension|Get-BCHashCache|Get-BCHostedCacheServerConfiguration|Get-BCNetworkConfiguration|Get-BCStatus|Import-BCCachePackage|Import-BCSecretKey|Publish-BCFileContent|Publish-BCWebContent|Remove-BCDataCacheExtension|Reset-BC|Set-BCAuthentication|Set-BCCache|Set-BCDataCacheEntryMaxAge|Set-BCMinSMBLatency|Set-BCSecretKey|" +
+        "Add-CauClusterRole|Disable-CauClusterRole|Enable-CauClusterRole|Export-CauReport|Get-CauClusterRole|Get-CauPlugin|Get-CauReport|Get-CauRun|Invoke-CauRun|Invoke-CauScan|Register-CauPlugin|Remove-CauClusterRole|Save-CauDebugTrace|Set-CauClusterRole|Stop-CauRun|Test-CauSetup|Unregister-CauPlugin|" +
         "Export-BinaryMiLog|Get-CimAssociatedInstance|Get-CimClass|Get-CimInstance|Get-CimSession|Import-BinaryMiLog|Invoke-CimMethod|New-CimInstance|New-CimSession|New-CimSessionOption|Register-CimIndicationEvent|Remove-CimInstance|Remove-CimSession|Set-CimInstance|" +
         "ConvertFrom-CIPolicy|" +
-        "Add-SignerRule|Edit-CIPolicyRule|Get-CIPolicy|Get-CIPolicyInfo|Get-SystemDriver|Merge-CIPolicy|New-CIPolicy|New-CIPolicyRule|Remove-CIPolicyRule|Set-CIPolicyVersion|Set-HVCIOptions|Set-RuleOption|" +
+        "Add-SignerRule|ConvertFrom-CIPolicy|Edit-CIPolicyRule|Get-CIPolicy|Get-CIPolicyIdInfo|Get-CIPolicyInfo|Get-SystemDriver|Merge-CIPolicy|New-CIPolicy|New-CIPolicyRule|Remove-CIPolicyRule|Set-CIPolicyIdInfo|Set-CIPolicySetting|Set-CIPolicyVersion|Set-HVCIOptions|Set-RuleOption|" +
+        "Disable-NetQosFlowControl|Enable-NetQosFlowControl|Get-NetQosDcbxSetting|Get-NetQosFlowControl|Get-NetQosTrafficClass|New-NetQosTrafficClass|Remove-NetQosTrafficClass|Set-NetQosDcbxSetting|Set-NetQosFlowControl|Set-NetQosTrafficClass|Switch-NetQosDcbxSetting|Switch-NetQosFlowControl|Switch-NetQosTrafficClass|" +
+        "Disable-DedupVolume|Enable-DedupVolume|Expand-DedupFile|Get-DedupJob|Get-DedupMetadata|Get-DedupSchedule|Get-DedupStatus|Get-DedupVolume|Measure-DedupFileMetadata|New-DedupSchedule|Remove-DedupSchedule|Set-DedupSchedule|Set-DedupVolume|Start-DedupJob|Stop-DedupJob|Update-DedupStatus|" +
         "Add-MpPreference|Get-MpComputerStatus|Get-MpPreference|Get-MpThreat|Get-MpThreatCatalog|Get-MpThreatDetection|Remove-MpPreference|Remove-MpThreat|Set-MpPreference|Start-MpScan|Start-MpWDOScan|Update-MpSignature|" +
+        "Backup-DHASConfiguration|Get-DHASActiveEncryptionCertificate|Get-DHASActiveSigningCertificate|Get-DHASCertificateChainPolicy|Get-DHASInactiveEncryptionCertificate|Get-DHASInactiveSigningCertificate|Install-DeviceHealthAttestation|Remove-DHASInactiveEncryptionCertificate|Remove-DHASInactiveSigningCertificate|Restore-DHASConfiguration|Set-DHASActiveEncryptionCertificate|Set-DHASActiveSigningCertificate|Set-DHASCertificateChainPolicy|Set-DHASSupportedAuthenticationSchema|Uninstall-DeviceHealthAttestation||" +
+        "Get-DfsnAccess|Get-DfsnFolder|Get-DfsnFolderTarget|Get-DfsnRoot|Get-DfsnRootTarget|Get-DfsnServerConfiguration|Grant-DfsnAccess|Move-DfsnFolder|New-DfsnFolder|New-DfsnFolderTarget|New-DfsnRoot|New-DfsnRootTarget|Remove-DfsnAccess|Remove-DfsnFolder|Remove-DfsnFolderTarget|Remove-DfsnRoot|Remove-DfsnRootTarget|Revoke-DfsnAccess|Set-DfsnFolder|Set-DfsnFolderTarget|Set-DfsnRoot|Set-DfsnRootTarget|Set-DfsnServerConfiguration|" +
+        "Add-DfsrConnection|Add-DfsrMember|ConvertFrom-DfsrGuid|Export-DfsrClone|Get-DfsrBacklog|Get-DfsrCloneState|Get-DfsrConnection|Get-DfsrConnectionSchedule|Get-DfsrDelegation|Get-DfsReplicatedFolder|Get-DfsReplicationGroup|Get-DfsrFileHash|Get-DfsrGroupSchedule|Get-DfsrIdRecord|Get-DfsrMember|Get-DfsrMembership|Get-DfsrPreservedFiles|Get-DfsrServiceConfiguration|Get-DfsrState|Grant-DfsrDelegation|Import-DfsrClone|New-DfsReplicatedFolder|New-DfsReplicationGroup|Remove-DfsrConnection|Remove-DfsReplicatedFolder|Remove-DfsReplicationGroup|Remove-DfsrMember|Remove-DfsrPropagationTestFile|Reset-DfsrCloneState|Restore-DfsrPreservedFiles|Revoke-DfsrDelegation|Set-DfsrConnection|Set-DfsrConnectionSchedule|Set-DfsReplicatedFolder|Set-DfsReplicationGroup|Set-DfsrGroupSchedule|Set-DfsrMember|Set-DfsrMembership|Set-DfsrServiceConfiguration|Start-DfsrPropagationTest|Suspend-DfsReplicationGroup|Sync-DfsReplicationGroup|Update-DfsrConfigurationFromAD|Write-DfsrHealthReport|Write-DfsrPropagationReport|" +
+        "Add-DhcpServerInDC|Add-DhcpServerSecurityGroup|Add-DhcpServerv4Class|Add-DhcpServerv4ExclusionRange|Add-DhcpServerv4Failover|Add-DhcpServerv4FailoverScope|Add-DhcpServerv4Filter|Add-DhcpServerv4Lease|Add-DhcpServerv4MulticastExclusionRange|Add-DhcpServerv4MulticastScope|Add-DhcpServerv4OptionDefinition|Add-DhcpServerv4Policy|Add-DhcpServerv4PolicyIPRange|Add-DhcpServerv4Reservation|Add-DhcpServerv4Scope|Add-DhcpServerv4Superscope|Add-DhcpServerv6Class|Add-DhcpServerv6ExclusionRange|Add-DhcpServerv6Lease|Add-DhcpServerv6OptionDefinition|Add-DhcpServerv6Reservation|Add-DhcpServerv6Scope|Backup-DhcpServer|Export-DhcpServer|Get-DhcpServerAuditLog|Get-DhcpServerDatabase|Get-DhcpServerDnsCredential|Get-DhcpServerInDC|Get-DhcpServerSetting|Get-DhcpServerv4Binding|Get-DhcpServerv4Class|Get-DhcpServerv4DnsSetting|Get-DhcpServerv4ExclusionRange|Get-DhcpServerv4Failover|Get-DhcpServerv4Filter|Get-DhcpServerv4FilterList|Get-DhcpServerv4FreeIPAddress|Get-DhcpServerv4Lease|Get-DhcpServerv4MulticastExclusionRange|Get-DhcpServerv4MulticastLease|Get-DhcpServerv4MulticastScope|Get-DhcpServerv4MulticastScopeStatistics|Get-DhcpServerv4OptionDefinition|Get-DhcpServerv4OptionValue|Get-DhcpServerv4Policy|Get-DhcpServerv4PolicyIPRange|Get-DhcpServerv4Reservation|Get-DhcpServerv4Scope|Get-DhcpServerv4ScopeStatistics|Get-DhcpServerv4Statistics|Get-DhcpServerv4Superscope|Get-DhcpServerv4SuperscopeStatistics|Get-DhcpServerv6Binding|Get-DhcpServerv6Class|Get-DhcpServerv6DnsSetting|Get-DhcpServerv6ExclusionRange|Get-DhcpServerv6FreeIPAddress|Get-DhcpServerv6Lease|Get-DhcpServerv6OptionDefinition|Get-DhcpServerv6OptionValue|Get-DhcpServerv6Reservation|Get-DhcpServerv6Scope|Get-DhcpServerv6ScopeStatistics|Get-DhcpServerv6StatelessStatistics|Get-DhcpServerv6StatelessStore|Get-DhcpServerv6Statistics|Get-DhcpServerVersion|Import-DhcpServer|Invoke-DhcpServerv4FailoverReplication|Remove-DhcpServerDnsCredential|Remove-DhcpServerInDC|Remove-DhcpServerv4Class|Remove-DhcpServerv4ExclusionRange|Remove-DhcpServerv4Failover|Remove-DhcpServerv4FailoverScope|Remove-DhcpServerv4Filter|Remove-DhcpServerv4Lease|Remove-DhcpServerv4MulticastExclusionRange|Remove-DhcpServerv4MulticastLease|Remove-DhcpServerv4MulticastScope|Remove-DhcpServerv4OptionDefinition|Remove-DhcpServerv4OptionValue|Remove-DhcpServerv4Policy|Remove-DhcpServerv4PolicyIPRange|Remove-DhcpServerv4Reservation|Remove-DhcpServerv4Scope|Remove-DhcpServerv4Superscope|Remove-DhcpServerv6Class|Remove-DhcpServerv6ExclusionRange|Remove-DhcpServerv6Lease|Remove-DhcpServerv6OptionDefinition|Remove-DhcpServerv6OptionValue|Remove-DhcpServerv6Reservation|Remove-DhcpServerv6Scope|Rename-DhcpServerv4Superscope|Repair-DhcpServerv4IPRecord|Restore-DhcpServer|Set-DhcpServerAuditLog|Set-DhcpServerDatabase|Set-DhcpServerDnsCredential|Set-DhcpServerSetting|Set-DhcpServerv4Binding|Set-DhcpServerv4Class|Set-DhcpServerv4DnsSetting|Set-DhcpServerv4Failover|Set-DhcpServerv4FilterList|Set-DhcpServerv4MulticastScope|Set-DhcpServerv4OptionDefinition|Set-DhcpServerv4OptionValue|Set-DhcpServerv4Policy|Set-DhcpServerv4Reservation|Set-DhcpServerv4Scope|Set-DhcpServerv6Binding|Set-DhcpServerv6Class|Set-DhcpServerv6DnsSetting|Set-DhcpServerv6OptionDefinition|Set-DhcpServerv6OptionValue|Set-DhcpServerv6Reservation|Set-DhcpServerv6Scope|Set-DhcpServerv6StatelessStore|" +
         "Disable-DAManualEntryPointSelection|Enable-DAManualEntryPointSelection|Get-DAClientExperienceConfiguration|Get-DAEntryPointTableItem|New-DAEntryPointTableItem|Remove-DAEntryPointTableItem|Rename-DAEntryPointTableItem|Reset-DAClientExperienceConfiguration|Reset-DAEntryPointTableItem|Set-DAClientExperienceConfiguration|Set-DAEntryPointTableItem|" +
-        "Add-ProvisionedAppxPackage|Apply-WindowsUnattend|Get-ProvisionedAppxPackage|Remove-ProvisionedAppxPackage|Add-AppxProvisionedPackage|Add-WindowsCapability|Add-WindowsDriver|Add-WindowsImage|Add-WindowsPackage|Clear-WindowsCorruptMountPoint|Disable-WindowsOptionalFeature|Dismount-WindowsImage|Enable-WindowsOptionalFeature|Expand-WindowsCustomDataImage|Expand-WindowsImage|Export-WindowsDriver|Export-WindowsImage|Get-AppxProvisionedPackage|Get-WIMBootEntry|Get-WindowsCapability|Get-WindowsDriver|Get-WindowsEdition|Get-WindowsImage|Get-WindowsImageContent|Get-WindowsOptionalFeature|Get-WindowsPackage|Mount-WindowsImage|New-WindowsCustomImage|New-WindowsImage|Optimize-WindowsImage|Remove-AppxProvisionedPackage|Remove-WindowsCapability|Remove-WindowsDriver|Remove-WindowsImage|Remove-WindowsPackage|Repair-WindowsImage|Save-WindowsImage|Set-AppXProvisionedDataFile|Set-WindowsEdition|Set-WindowsProductKey|Split-WindowsImage|Update-WIMBootEntry|Use-WindowsUnattend|" +
-        "Add-DnsClientNrptRule|Clear-DnsClientCache|Get-DnsClient|Get-DnsClientCache|Get-DnsClientGlobalSetting|Get-DnsClientNrptGlobal|Get-DnsClientNrptPolicy|Get-DnsClientNrptRule|Get-DnsClientServerAddress|Register-DnsClient|Remove-DnsClientNrptRule|Set-DnsClient|Set-DnsClientGlobalSetting|Set-DnsClientNrptGlobal|Set-DnsClientNrptRule|Set-DnsClientServerAddress|Resolve-DnsName|" +
-        "Add-EtwTraceProvider|Get-AutologgerConfig|Get-EtwTraceProvider|Get-EtwTraceSession|New-AutologgerConfig|New-EtwTraceSession|Remove-AutologgerConfig|Remove-EtwTraceProvider|Remove-EtwTraceSession|Send-EtwTraceSession|Set-AutologgerConfig|Set-EtwTraceProvider|Set-EtwTraceSession|" +
-        "Get-WinAcceptLanguageFromLanguageListOptOut|Get-WinCultureFromLanguageListOptOut|Get-WinDefaultInputMethodOverride|Get-WinHomeLocation|Get-WinLanguageBarOption|Get-WinSystemLocale|Get-WinUILanguageOverride|Get-WinUserLanguageList|New-WinUserLanguageList|Set-Culture|Set-WinAcceptLanguageFromLanguageListOptOut|Set-WinCultureFromLanguageListOptOut|Set-WinDefaultInputMethodOverride|Set-WinHomeLocation|Set-WinLanguageBarOption|Set-WinSystemLocale|Set-WinUILanguageOverride|Set-WinUserLanguageList|" +
+        "Add-AppxProvisionedPackage|Add-WindowsCapability|Add-WindowsDriver|Add-WindowsImage|Add-WindowsPackage|Clear-WindowsCorruptMountPoint|Disable-WindowsOptionalFeature|Dismount-WindowsImage|Enable-WindowsOptionalFeature|Expand-WindowsCustomDataImage|Expand-WindowsImage|Export-WindowsCapabilitySource|Export-WindowsDriver|Export-WindowsImage|Get-AppxProvisionedPackage|Get-NonRemovableAppsPolicy|Get-WIMBootEntry|Get-WindowsCapability|Get-WindowsDriver|Get-WindowsEdition|Get-WindowsImage|Get-WindowsImageContent|Get-WindowsOptionalFeature|Get-WindowsPackage|Get-WindowsReservedStorageState|Mount-WindowsImage|New-WindowsCustomImage|New-WindowsImage|Optimize-AppXProvisionedPackages|Optimize-WindowsImage|Remove-AppxProvisionedPackage|Remove-WindowsCapability|Remove-WindowsDriver|Remove-WindowsImage|Remove-WindowsPackage|Repair-WindowsImage|Save-WindowsImage|Set-AppXProvisionedDataFile|Set-NonRemovableAppsPolicy|Set-WindowsEdition|Set-WindowsProductKey|Set-WindowsReservedStorageState|Split-WindowsImage|Start-OSUninstall|Update-WIMBootEntry|Use-WindowsUnattend|" +
+        "Add-DnsClientDohServerAddress|Add-DnsClientNrptRule|Clear-DnsClientCache|Get-DnsClient|Get-DnsClientCache|Get-DnsClientDohServerAddress|Get-DnsClientGlobalSetting|Get-DnsClientNrptGlobal|Get-DnsClientNrptPolicy|Get-DnsClientNrptRule|Get-DnsClientServerAddress|Register-DnsClient|Remove-DnsClientDohServerAddress|Remove-DnsClientNrptRule|Resolve-DnsName|Set-DnsClient|Set-DnsClientDohServerAddress|Set-DnsClientGlobalSetting|Set-DnsClientNrptGlobal|Set-DnsClientNrptRule|Set-DnsClientServerAddress|" +
+        "Add-DnsServerClientSubnet|Add-DnsServerConditionalForwarderZone|Add-DnsServerDirectoryPartition|Add-DnsServerForwarder|Add-DnsServerPrimaryZone|Add-DnsServerQueryResolutionPolicy|Add-DnsServerRecursionScope|Add-DnsServerResourceRecord|Add-DnsServerResourceRecordA|Add-DnsServerResourceRecordAAAA|Add-DnsServerResourceRecordCName|Add-DnsServerResourceRecordDnsKey|Add-DnsServerResourceRecordDS|Add-DnsServerResourceRecordMX|Add-DnsServerResourceRecordPtr|Add-DnsServerResponseRateLimitingExceptionlist|Add-DnsServerRootHint|Add-DnsServerSecondaryZone|Add-DnsServerSigningKey|Add-DnsServerStubZone|Add-DnsServerTrustAnchor|Add-DnsServerVirtualizationInstance|Add-DnsServerZoneDelegation|Add-DnsServerZoneScope|Add-DnsServerZoneTransferPolicy|Clear-DnsServerCache|Clear-DnsServerStatistics|ConvertTo-DnsServerPrimaryZone|ConvertTo-DnsServerSecondaryZone|Disable-DnsServerPolicy|Disable-DnsServerSigningKeyRollover|Enable-DnsServerPolicy|Enable-DnsServerSigningKeyRollover|Export-DnsServerDnsSecPublicKey|Export-DnsServerZone|Get-DnsServer|Get-DnsServerCache|Get-DnsServerClientSubnet|Get-DnsServerDiagnostics|Get-DnsServerDirectoryPartition|Get-DnsServerDnsSecZoneSetting|Get-DnsServerDsSetting|Get-DnsServerEDns|Get-DnsServerForwarder|Get-DnsServerGlobalNameZone|Get-DnsServerGlobalQueryBlockList|Get-DnsServerQueryResolutionPolicy|Get-DnsServerRecursion|Get-DnsServerRecursionScope|Get-DnsServerResourceRecord|Get-DnsServerResponseRateLimiting|Get-DnsServerResponseRateLimitingExceptionlist|Get-DnsServerRootHint|Get-DnsServerScavenging|Get-DnsServerSetting|Get-DnsServerSigningKey|Get-DnsServerStatistics|Get-DnsServerTrustAnchor|Get-DnsServerTrustPoint|Get-DnsServerVirtualizationInstance|Get-DnsServerZone|Get-DnsServerZoneAging|Get-DnsServerZoneDelegation|Get-DnsServerZoneScope|Get-DnsServerZoneTransferPolicy|Import-DnsServerResourceRecordDS|Import-DnsServerRootHint|Import-DnsServerTrustAnchor|Invoke-DnsServerSigningKeyRollover|Invoke-DnsServerZoneSign|Invoke-DnsServerZoneUnsign|Register-DnsServerDirectoryPartition|Remove-DnsServerClientSubnet|Remove-DnsServerDirectoryPartition|Remove-DnsServerForwarder|Remove-DnsServerQueryResolutionPolicy|Remove-DnsServerRecursionScope|Remove-DnsServerResourceRecord|Remove-DnsServerResponseRateLimitingExceptionlist|Remove-DnsServerRootHint|Remove-DnsServerSigningKey|Remove-DnsServerTrustAnchor|Remove-DnsServerVirtualizationInstance|Remove-DnsServerZone|Remove-DnsServerZoneDelegation|Remove-DnsServerZoneScope|Remove-DnsServerZoneTransferPolicy|Reset-DnsServerZoneKeyMasterRole|Restore-DnsServerPrimaryZone|Restore-DnsServerSecondaryZone|Resume-DnsServerZone|Set-DnsServer|Set-DnsServerCache|Set-DnsServerClientSubnet|Set-DnsServerConditionalForwarderZone|Set-DnsServerDiagnostics|Set-DnsServerDnsSecZoneSetting|Set-DnsServerDsSetting|Set-DnsServerEDns|Set-DnsServerForwarder|Set-DnsServerGlobalNameZone|Set-DnsServerGlobalQueryBlockList|Set-DnsServerPrimaryZone|Set-DnsServerQueryResolutionPolicy|Set-DnsServerRecursion|Set-DnsServerRecursionScope|Set-DnsServerResourceRecord|Set-DnsServerResourceRecordAging|Set-DnsServerResponseRateLimiting|Set-DnsServerResponseRateLimitingExceptionlist|Set-DnsServerRootHint|Set-DnsServerScavenging|Set-DnsServerSecondaryZone|Set-DnsServerSetting|Set-DnsServerSigningKey|Set-DnsServerStubZone|Set-DnsServerVirtualizationInstance|Set-DnsServerZoneAging|Set-DnsServerZoneDelegation|Set-DnsServerZoneTransferPolicy|Show-DnsServerCache|Show-DnsServerKeyStorageProvider|Start-DnsServerScavenging|Start-DnsServerZoneTransfer|Step-DnsServerSigningKeyRollover|Suspend-DnsServerZone|Sync-DnsServerZone|Test-DnsServer|Test-DnsServerDnsSecZoneSetting|Unregister-DnsServerDirectoryPartition|Update-DnsServerTrustPoint|" +
+        "Add-EtwTraceProvider|Get-AutologgerConfig|Get-EtwTraceProvider|Get-EtwTraceSession|New-AutologgerConfig|New-EtwTraceSession|Remove-AutologgerConfig|Remove-EtwTraceProvider|Save-EtwTraceSession|Send-EtwTraceSession|Set-EtwTraceProvider|Start-EtwTraceSession|Stop-EtwTraceSession|Update-AutologgerConfig|Update-EtwTraceSession|" +
+        "Add-ClusterCheckpoint|Add-ClusterDisk|Add-ClusterFileServerRole|Add-ClusterGenericApplicationRole|Add-ClusterGenericScriptRole|Add-ClusterGenericServiceRole|Add-ClusterGroup|Add-ClusterGroupSetDependency|Add-ClusterGroupToSet|Add-ClusteriSCSITargetServerRole|Add-ClusterNode|Add-ClusterResource|Add-ClusterResourceDependency|Add-ClusterResourceType|Add-ClusterScaleOutFileServerRole|Add-ClusterSharedVolume|Add-ClusterVirtualMachineRole|Add-ClusterVMMonitoredItem|Block-ClusterAccess|Clear-ClusterDiskReservation|Clear-ClusterNode|Disable-ClusterStorageSpacesDirect|Enable-ClusterStorageSpacesDirect|Get-Cluster|Get-ClusterAccess|Get-ClusterAvailableDisk|Get-ClusterCheckpoint|Get-ClusterDiagnosticInfo|Get-ClusterFaultDomain|Get-ClusterFaultDomainXML|Get-ClusterGroup|Get-ClusterGroupSet|Get-ClusterGroupSetDependency|Get-ClusterLog|Get-ClusterNetwork|Get-ClusterNetworkInterface|Get-ClusterNode|Get-ClusterOwnerNode|Get-ClusterParameter|Get-ClusterQuorum|Get-ClusterResource|Get-ClusterResourceDependency|Get-ClusterResourceDependencyReport|Get-ClusterResourceType|Get-ClusterSharedVolume|Get-ClusterSharedVolumeState|Get-ClusterStorageSpacesDirect|Get-ClusterVMMonitoredItem|Grant-ClusterAccess|Move-ClusterGroup|Move-ClusterResource|Move-ClusterSharedVolume|Move-ClusterVirtualMachineRole|New-Cluster|New-ClusterFaultDomain|New-ClusterGroupSet|New-ClusterNameAccount|Remove-Cluster|Remove-ClusterAccess|Remove-ClusterCheckpoint|Remove-ClusterFaultDomain|Remove-ClusterGroup|Remove-ClusterGroupFromSet|Remove-ClusterGroupSet|Remove-ClusterGroupSetDependency|Remove-ClusterNode|Remove-ClusterResource|Remove-ClusterResourceDependency|Remove-ClusterResourceType|Remove-ClusterSharedVolume|Remove-ClusterVMMonitoredItem|Repair-ClusterStorageSpacesDirect|Reset-ClusterVMMonitoredState|Resume-ClusterNode|Resume-ClusterResource|Set-ClusterFaultDomain|Set-ClusterFaultDomainXML|Set-ClusterGroupSet|Set-ClusterLog|Set-ClusterOwnerNode|Set-ClusterParameter|Set-ClusterQuorum|Set-ClusterResourceDependency|Set-ClusterStorageSpacesDirect|Set-ClusterStorageSpacesDirectDisk|Start-Cluster|Start-ClusterGroup|Start-ClusterNode|Start-ClusterResource|Stop-Cluster|Stop-ClusterGroup|Stop-ClusterNode|Stop-ClusterResource|Suspend-ClusterNode|Suspend-ClusterResource|Test-Cluster|Test-ClusterResourceFailure|Update-ClusterFunctionalLevel|Update-ClusterIPResource|Update-ClusterNetworkNameResource|Update-ClusterVirtualMachineConfiguration|" +
+        "Get-FsrmAdrSetting|Get-FsrmAutoQuota|Get-FsrmClassification|Get-FsrmClassificationPropertyDefinition|Get-FsrmClassificationRule|Get-FsrmEffectiveNamespace|Get-FsrmFileGroup|Get-FsrmFileManagementJob|Get-FsrmFileScreen|Get-FsrmFileScreenException|Get-FsrmFileScreenTemplate|Get-FsrmMacro|Get-FsrmMgmtProperty|Get-FsrmQuota|Get-FsrmQuotaTemplate|Get-FsrmRmsTemplate|Get-FsrmSetting|Get-FsrmStorageReport|New-FsrmAction|New-FsrmAutoQuota|New-FsrmClassificationPropertyDefinition|New-FsrmClassificationPropertyValue|New-FsrmClassificationRule|New-FsrmFileGroup|New-FsrmFileManagementJob|New-FsrmFileScreen|New-FsrmFileScreenException|New-FsrmFileScreenTemplate|New-FsrmFmjAction|New-FsrmFmjCondition|New-FsrmFMJNotification|New-FsrmFmjNotificationAction|New-FsrmQuota|New-FsrmQuotaTemplate|New-FsrmQuotaThreshold|New-FsrmScheduledTask|New-FsrmStorageReport|Remove-FsrmAutoQuota|Remove-FsrmClassificationPropertyDefinition|Remove-FsrmClassificationRule|Remove-FsrmFileGroup|Remove-FsrmFileManagementJob|Remove-FsrmFileScreen|Remove-FsrmFileScreenException|Remove-FsrmFileScreenTemplate|Remove-FsrmMgmtProperty|Remove-FsrmQuota|Remove-FsrmQuotaTemplate|Remove-FsrmStorageReport|Reset-FsrmFileScreen|Reset-FsrmQuota|Send-FsrmTestEmail|Set-FsrmAdrSetting|Set-FsrmAutoQuota|Set-FsrmClassification|Set-FsrmClassificationPropertyDefinition|Set-FsrmClassificationRule|Set-FsrmFileGroup|Set-FsrmFileManagementJob|Set-FsrmFileScreen|Set-FsrmFileScreenException|Set-FsrmFileScreenTemplate|Set-FsrmMgmtProperty|Set-FsrmQuota|Set-FsrmQuotaTemplate|Set-FsrmSetting|Set-FsrmStorageReport|Start-FsrmClassification|Start-FsrmFileManagementJob|Start-FsrmStorageReport|Stop-FsrmClassification|Stop-FsrmFileManagementJob|Stop-FsrmStorageReport|Update-FsrmAutoQuota|Update-FsrmClassificationPropertyDefinition|Update-FsrmQuota|Wait-FsrmClassification|Wait-FsrmFileManagementJob|Wait-FsrmStorageReport|" +
+        "Backup-GPO|Copy-GPO|Get-GPInheritance|Get-GPO|Get-GPOReport|Get-GPPermission|Get-GPPrefRegistryValue|Get-GPRegistryValue|Get-GPResultantSetOfPolicy|Get-GPStarterGPO|Import-GPO|Invoke-GPUpdate|New-GPLink|New-GPO|New-GPStarterGPO|Remove-GPLink|Remove-GPO|Remove-GPPrefRegistryValue|Remove-GPRegistryValue|Rename-GPO|Restore-GPO|Set-GPInheritance|Set-GPLink|Set-GPPermission|Set-GPPrefRegistryValue|Set-GPRegistryValue|" +
+        "Export-HwCertTestCollectionToXml|Import-HwCertTestCollectionFromXml|Merge-HwCertTestCollectionFromPackage|Merge-HwCertTestCollectionFromXml|New-HwCertProjectDefinitionFile|New-HwCertTestCollection|New-HwCertTestCollectionExcelReport|" +
+        "Add-HgsAttestationCIPolicy|Add-HgsAttestationDumpPolicy|Add-HgsAttestationHostGroup|Add-HgsAttestationTpmHost|Add-HgsAttestationTpmPolicy|Disable-HgsAttestationPolicy|Enable-HgsAttestationPolicy|Get-HgsAttestationHostGroup|Get-HgsAttestationPolicy|Get-HgsAttestationSignerCertificate|Get-HgsAttestationTpmHost|Remove-HgsAttestationHostGroup|Remove-HgsAttestationPolicy|Remove-HgsAttestationTpmHost|" +
+        "ConvertTo-HgsKeyProtector|Export-HgsGuardian|Get-HgsAttestationBaselinePolicy|Get-HgsClientConfiguration|Get-HgsGuardian|Grant-HgsKeyProtectorAccess|Import-HgsGuardian|New-HgsGuardian|New-HgsKeyProtector|Remove-HgsGuardian|Revoke-HgsKeyProtectorAccess|Set-HgsClientConfiguration|Test-HgsClientConfiguration|" +
+        "Get-HgsTrace|Get-HgsTraceFileData|New-HgsTraceTarget|Test-HgsTraceTarget|" +
+        "Add-HgsKeyProtectionAttestationSignerCertificate|Add-HgsKeyProtectionCertificate|Export-HgsKeyProtectionState|Get-HgsKeyProtectionAttestationSignerCertificate|Get-HgsKeyProtectionCertificate|Get-HgsKeyProtectionConfiguration|Import-HgsKeyProtectionState|Remove-HgsKeyProtectionAttestationSignerCertificate|Remove-HgsKeyProtectionCertificate|Set-HgsKeyProtectionAttestationSignerCertificatePolicy|Set-HgsKeyProtectionCertificate|Set-HgsKeyProtectionConfiguration|" +
+        "Clear-HgsServer|Export-HgsServerState|Get-HgsServer|Import-HgsServerState|Initialize-HgsServer|Install-HgsServer|Set-HgsServer|Test-HgsServer|Uninstall-HgsServer|" +
+        "Debug-SlbDatapath|Debug-VirtualMachineQueueOperation|Disable-MuxEchoResponder|Enable-MuxEchoResponder|Get-CustomerRoute|Get-NetworkControllerVipResource|Get-PACAMapping|Get-ProviderAddress|Get-VipHostMapping|Get-VMNetworkAdapterPortId|Get-VMSwitchExternalPortId|Test-DipHostReachability|Test-EncapOverheadSettings|Test-LogicalNetworkConnection|Test-LogicalNetworkSupportsJumboPacket|Test-VipReachability|Test-VirtualNetworkConnection|" +
+        "Get-ComputeProcess|Stop-ComputeProcess|" +
+        "Add-VMDvdDrive|Add-VMFibreChannelHba|Add-VMGpuPartitionAdapter|Add-VMGroupMember|Add-VMHardDiskDrive|Add-VMMigrationNetwork|Add-VMNetworkAdapter|Add-VMNetworkAdapterAcl|Add-VMNetworkAdapterExtendedAcl|Add-VmNetworkAdapterRoutingDomainMapping|Add-VMRemoteFx3dVideoAdapter|Add-VMScsiController|Add-VMStoragePath|Add-VMSwitch|Add-VMSwitchExtensionPortFeature|Add-VMSwitchExtensionSwitchFeature|Add-VMSwitchTeamMember|Checkpoint-VM|Compare-VM|Complete-VMFailover|Connect-VMNetworkAdapter|Connect-VMSan|Convert-VHD|Copy-VMFile|Debug-VM|Disable-VMConsoleSupport|Disable-VMEventing|Disable-VMIntegrationService|Disable-VMMigration|Disable-VMRemoteFXPhysicalVideoAdapter|Disable-VMResourceMetering|Disable-VMSwitchExtension|Disable-VMTPM|Disconnect-VMNetworkAdapter|Disconnect-VMSan|Dismount-VHD|Enable-VMConsoleSupport|Enable-VMEventing|Enable-VMIntegrationService|Enable-VMMigration|Enable-VMRemoteFXPhysicalVideoAdapter|Enable-VMReplication|Enable-VMResourceMetering|Enable-VMSwitchExtension|Enable-VMTPM|Export-VM|Export-VMSnapshot|Get-VHD|Get-VHDSet|Get-VHDSnapshot|Get-VM|Get-VMBios|Get-VMComPort|Get-VMConnectAccess|Get-VMDvdDrive|Get-VMFibreChannelHba|Get-VMFirmware|Get-VMFloppyDiskDrive|Get-VMGpuPartitionAdapter|Get-VMGroup|Get-VMHardDiskDrive|Get-VMHost|Get-VMHostCluster|Get-VMHostNumaNode|Get-VMHostNumaNodeStatus|Get-VMHostPartitionableGpu|Get-VMHostSupportedVersion|Get-VMIdeController|Get-VMIntegrationService|Get-VMKeyProtector|Get-VMMemory|Get-VMMigrationNetwork|Get-VMNetworkAdapter|Get-VMNetworkAdapterAcl|Get-VMNetworkAdapterExtendedAcl|Get-VMNetworkAdapterFailoverConfiguration|Get-VmNetworkAdapterIsolation|Get-VMNetworkAdapterRoutingDomainMapping|Get-VMNetworkAdapterTeamMapping|Get-VMNetworkAdapterVlan|Get-VMProcessor|Get-VMRemoteFx3dVideoAdapter|Get-VMRemoteFXPhysicalVideoAdapter|Get-VMReplication|Get-VMReplicationAuthorizationEntry|Get-VMReplicationServer|Get-VMResourcePool|Get-VMSan|Get-VMScsiController|Get-VMSecurity|Get-VMSnapshot|Get-VMStoragePath|Get-VMSwitch|Get-VMSwitchExtension|Get-VMSwitchExtensionPortData|Get-VMSwitchExtensionPortFeature|Get-VMSwitchExtensionSwitchData|Get-VMSwitchExtensionSwitchFeature|Get-VMSwitchTeam|Get-VMSystemSwitchExtension|Get-VMSystemSwitchExtensionPortFeature|Get-VMSystemSwitchExtensionSwitchFeature|Get-VMVideo|Grant-VMConnectAccess|Import-VM|Import-VMInitialReplication|Measure-VM|Measure-VMReplication|Measure-VMResourcePool|Merge-VHD|Mount-VHD|Move-VM|Move-VMStorage|New-VFD|New-VHD|New-VM|New-VMGroup|||New-VMReplicationAuthorizationEntry|New-VMResourcePool|New-VMSan|New-VMSwitch|Optimize-VHD|Optimize-VHDSet|Remove-VHDSnapshot|Remove-VM|Remove-VMDvdDrive|Remove-VMFibreChannelHba|Remove-VMGpuPartitionAdapter|Remove-VMGroup|Remove-VMGroupMember|Remove-VMHardDiskDrive|Remove-VMMigrationNetwork|Remove-VMNetworkAdapter|Remove-VMNetworkAdapterAcl|Remove-VMNetworkAdapterExtendedAcl|Remove-VMNetworkAdapterRoutingDomainMapping|Remove-VMNetworkAdapterTeamMapping|Remove-VMRemoteFx3dVideoAdapter|Remove-VMReplication|Remove-VMReplicationAuthorizationEntry|Remove-VMResourcePool|Remove-VMSan|Remove-VMSavedState|Remove-VMScsiController|Remove-VMSnapshot|Remove-VMStoragePath|Remove-VMSwitch|Remove-VMSwitchExtensionPortFeature|Remove-VMSwitchExtensionSwitchFeature|Remove-VMSwitchTeamMember|Rename-VM|Rename-VMGroup|Rename-VMNetworkAdapter|Rename-VMResourcePool|Rename-VMSan|Rename-VMSnapshot|Rename-VMSwitch|Repair-VM|Reset-VMReplicationStatistics|Reset-VMResourceMetering|Resize-VHD|Restart-VM|Restore-VMSnapshot|Resume-VM|Resume-VMReplication|Revoke-VMConnectAccess|Save-VM|Set-VHD|Set-VM|Set-VMBios|Set-VMComPort|Set-VMDvdDrive|Set-VMFibreChannelHba|Set-VMFirmware|Set-VMFloppyDiskDrive|Set-VMGpuPartitionAdapter|Set-VMHardDiskDrive|Set-VMHost|Set-VMHostCluster|Set-VMHostPartitionableGpu|Set-VMKeyProtector|Set-VMMemory|Set-VMMigrationNetwork|Set-VMNetworkAdapter|Set-VMNetworkAdapterFailoverConfiguration|Set-VmNetworkAdapterIsolation|Set-VmNetworkAdapterRoutingDomainMapping|Set-VMNetworkAdapterTeamMapping|Set-VMNetworkAdapterVlan|Set-VMProcessor|Set-VMRemoteFx3dVideoAdapter|Set-VMReplication|Set-VMReplicationAuthorizationEntry|Set-VMReplicationServer|Set-VMResourcePool|Set-VMSan|Set-VMSecurity|Set-VMSecurityPolicy|Set-VMSwitch|Set-VMSwitchExtensionPortFeature|Set-VMSwitchExtensionSwitchFeature|Set-VMSwitchTeam|Set-VMVideo|Start-VM|Start-VMFailover|Start-VMInitialReplication|Start-VMTrace|Stop-VM|Stop-VMFailover|Stop-VMInitialReplication|Stop-VMReplication|Stop-VMTrace|Suspend-VM|Suspend-VMReplication|Test-VHD|Test-VMNetworkAdapter|Test-VMReplicationConnection|Update-VMVersion|" +
+        "Clear-IISCentralCertProvider|Clear-IISConfigCollection|Disable-IISCentralCertProvider|Disable-IISSharedConfig|Enable-IISCentralCertProvider|Enable-IISSharedConfig|Export-IISConfiguration|Get-IISAppPool|Get-IISCentralCertProvider|Get-IISConfigAttributeValue|Get-IISConfigCollection|Get-IISConfigCollectionElement|Get-IISConfigElement|Get-IISConfigSection|Get-IISServerManager|Get-IISSharedConfig|Get-IISSite|Get-IISSiteBinding|New-IISConfigCollectionElement|New-IISSite|New-IISSiteBinding|Remove-IISConfigAttribute|Remove-IISConfigCollectionElement|Remove-IISConfigElement|Remove-IISSite|Remove-IISSiteBinding|Reset-IISServerManager|Set-IISCentralCertProvider|Set-IISCentralCertProviderCredential|Set-IISConfigAttributeValue|Start-IISCommitDelay|Start-IISSite|Stop-IISCommitDelay|Stop-IISSite|" +
+        "Copy-UserInternationalSettingsToSystem|Get-WinAcceptLanguageFromLanguageListOptOut|Get-WinCultureFromLanguageListOptOut|Get-WinDefaultInputMethodOverride|Get-WinHomeLocation|Get-WinLanguageBarOption|Get-WinSystemLocale|Get-WinUILanguageOverride|Get-WinUserLanguageList|New-WinUserLanguageList|Set-Culture|Set-WinAcceptLanguageFromLanguageListOptOut|Set-WinCultureFromLanguageListOptOut|Set-WinDefaultInputMethodOverride|Set-WinHomeLocation|Set-WinLanguageBarOption|Set-WinSystemLocale|Set-WinUILanguageOverride|Set-WinUserLanguageList|" +
+        "Add-IpamAddress|Add-IpamAddressSpace|Add-IpamBlock|Add-IpamCustomField|Add-IpamCustomFieldAssociation|Add-IpamCustomValue|Add-IpamDiscoveryDomain|" +
         "Connect-IscsiTarget|Disconnect-IscsiTarget|Get-IscsiConnection|Get-IscsiSession|Get-IscsiTarget|Get-IscsiTargetPortal|New-IscsiTargetPortal|Register-IscsiSession|Remove-IscsiTargetPortal|Set-IscsiChapSecret|Unregister-IscsiSession|Update-IscsiTarget|Update-IscsiTargetPortal|" +
+        "Add-IscsiVirtualDiskTargetMapping|Checkpoint-IscsiVirtualDisk|Convert-IscsiVirtualDisk|Dismount-IscsiVirtualDiskSnapshot|Export-IscsiTargetServerConfiguration|Export-IscsiVirtualDiskSnapshot|Get-IscsiServerTarget|Get-IscsiTargetServerSetting|Get-IscsiVirtualDisk|Get-IscsiVirtualDiskSnapshot|Import-IscsiTargetServerConfiguration|Import-IscsiVirtualDisk|Mount-IscsiVirtualDiskSnapshot|New-IscsiServerTarget|New-IscsiVirtualDisk|Remove-IscsiServerTarget|Remove-IscsiVirtualDisk|Remove-IscsiVirtualDiskSnapshot|Remove-IscsiVirtualDiskTargetMapping|Resize-IscsiVirtualDisk|Restore-IscsiVirtualDisk|Set-IscsiServerTarget|Set-IscsiTargetServerSetting|Set-IscsiVirtualDisk|Set-IscsiVirtualDiskSnapshot|Stop-IscsiVirtualDiskOperation|" +
         "Get-IseSnippet|Import-IseSnippet|New-IseSnippet|" +
         "Add-KdsRootKey|Clear-KdsCache|Get-KdsConfiguration|Get-KdsRootKey|Set-KdsConfiguration|Test-KdsRootKey|" +
+        "Get-InstalledLanguage|Get-SystemPreferredUILanguage|Install-Language|Set-SystemPreferredUILanguage|Uninstall-Language|" +
+        "Find-LapsADExtendedRights|Get-LapsAADPassword|Get-LapsADPassword|Get-LapsDiagnostics|Invoke-LapsPolicyProcessing|Reset-LapsPassword|Set-LapsADAuditing|Set-LapsADComputerSelfPermission|Set-LapsADPasswordExpirationTime|Set-LapsADReadPasswordPermission|Set-LapsADResetPasswordPermission|Update-LapsADSchema|" +
+        "Disable-DiagnosticDataViewing|Enable-DiagnosticDataViewing|Get-DiagnosticData|Get-DiagnosticDataTypes|Get-DiagnosticDataViewingSetting|Get-DiagnosticStoreCapacity|Set-DiagnosticStoreCapacity|" +
         "Compress-Archive|Expand-Archive|" +
         "Export-Counter|Get-Counter|Get-WinEvent|Import-Counter|New-WinEvent|" +
         "Start-Transcript|Stop-Transcript|" +
@@ -31571,46 +31873,86 @@ var PowershellHighlightRules = function () {
         "ConvertFrom-SddlString|Format-Hex|Get-FileHash|Import-PowerShellDataFile|New-Guid|New-TemporaryFile|Add-Member|Add-Type|Clear-Variable|Compare-Object|ConvertFrom-Csv|ConvertFrom-Json|ConvertFrom-String|ConvertFrom-StringData|Convert-String|ConvertTo-Csv|ConvertTo-Html|ConvertTo-Json|ConvertTo-Xml|Debug-Runspace|Disable-PSBreakpoint|Disable-RunspaceDebug|Enable-PSBreakpoint|Enable-RunspaceDebug|Export-Alias|Export-Clixml|Export-Csv|Export-FormatData|Export-PSSession|Format-Custom|Format-List|Format-Table|Format-Wide|Get-Alias|Get-Culture|Get-Date|Get-Event|Get-EventSubscriber|Get-FormatData|Get-Host|Get-Member|Get-PSBreakpoint|Get-PSCallStack|Get-Random|Get-Runspace|Get-RunspaceDebug|Get-TraceSource|Get-TypeData|Get-UICulture|Get-Unique|Get-Variable|Group-Object|Import-Alias|Import-Clixml|Import-Csv|Import-LocalizedData|Import-PSSession|Invoke-Expression|Invoke-RestMethod|Invoke-WebRequest|Measure-Command|Measure-Object|New-Alias|New-Event|New-Object|New-TimeSpan|New-Variable|Out-File|Out-GridView|Out-Printer|Out-String|Read-Host|Register-EngineEvent|Register-ObjectEvent|Remove-Event|Remove-PSBreakpoint|Remove-TypeData|Remove-Variable|Select-Object|Select-String|Select-Xml|Send-MailMessage|Set-Alias|Set-Date|Set-PSBreakpoint|Set-TraceSource|Set-Variable|Show-Command|Sort-Object|Start-Sleep|Tee-Object|Trace-Command|Unblock-File|Unregister-Event|Update-FormatData|Update-List|Update-TypeData|Wait-Debugger|Wait-Event|Write-Debug|Write-Error|Write-Host|Write-Information|Write-Output|Write-Progress|Write-Verbose|Write-Warning|" +
         "Connect-WSMan|Disable-WSManCredSSP|Disconnect-WSMan|Enable-WSManCredSSP|Get-WSManCredSSP|Get-WSManInstance|Invoke-WSManAction|New-WSManInstance|New-WSManSessionOption|Remove-WSManInstance|Set-WSManInstance|Set-WSManQuickConfig|Test-WSMan|" +
         "Debug-MMAppPrelaunch|Disable-MMAgent|Enable-MMAgent|Get-MMAgent|Set-MMAgent|" +
-        "Add-DtcClusterTMMapping|Get-Dtc|Get-DtcAdvancedHostSetting|Get-DtcAdvancedSetting|Get-DtcClusterDefault|Get-DtcClusterTMMapping|Get-DtcDefault|Get-DtcLog|Get-DtcNetworkSetting|Get-DtcTransaction|Get-DtcTransactionsStatistics|Get-DtcTransactionsTraceSession|Get-DtcTransactionsTraceSetting|Install-Dtc|Remove-DtcClusterTMMapping|Reset-DtcLog|Set-DtcAdvancedHostSetting|Set-DtcAdvancedSetting|Set-DtcClusterDefault|Set-DtcClusterTMMapping|Set-DtcDefault|Set-DtcLog|Set-DtcNetworkSetting|Set-DtcTransaction|Set-DtcTransactionsTraceSession|Set-DtcTransactionsTraceSetting|Start-Dtc|Start-DtcTransactionsTraceSession|Stop-Dtc|Stop-DtcTransactionsTraceSession|Test-Dtc|Uninstall-Dtc|Write-DtcTransactionsTraceSession|Complete-DtcDiagnosticTransaction|Join-DtcDiagnosticResourceManager|New-DtcDiagnosticTransaction|Receive-DtcDiagnosticTransaction|Send-DtcDiagnosticTransaction|Start-DtcDiagnosticResourceManager|Stop-DtcDiagnosticResourceManager|Undo-DtcDiagnosticTransaction|" +
-        "Disable-NetAdapter|Disable-NetAdapterBinding|Disable-NetAdapterChecksumOffload|Disable-NetAdapterEncapsulatedPacketTaskOffload|Disable-NetAdapterIPsecOffload|Disable-NetAdapterLso|Disable-NetAdapterPacketDirect|Disable-NetAdapterPowerManagement|Disable-NetAdapterQos|Disable-NetAdapterRdma|Disable-NetAdapterRsc|Disable-NetAdapterRss|Disable-NetAdapterSriov|Disable-NetAdapterVmq|Enable-NetAdapter|Enable-NetAdapterBinding|Enable-NetAdapterChecksumOffload|Enable-NetAdapterEncapsulatedPacketTaskOffload|Enable-NetAdapterIPsecOffload|Enable-NetAdapterLso|Enable-NetAdapterPacketDirect|Enable-NetAdapterPowerManagement|Enable-NetAdapterQos|Enable-NetAdapterRdma|Enable-NetAdapterRsc|Enable-NetAdapterRss|Enable-NetAdapterSriov|Enable-NetAdapterVmq|Get-NetAdapter|Get-NetAdapterAdvancedProperty|Get-NetAdapterBinding|Get-NetAdapterChecksumOffload|Get-NetAdapterEncapsulatedPacketTaskOffload|Get-NetAdapterHardwareInfo|Get-NetAdapterIPsecOffload|Get-NetAdapterLso|Get-NetAdapterPacketDirect|Get-NetAdapterPowerManagement|Get-NetAdapterQos|Get-NetAdapterRdma|Get-NetAdapterRsc|Get-NetAdapterRss|Get-NetAdapterSriov|Get-NetAdapterSriovVf|Get-NetAdapterStatistics|Get-NetAdapterVmq|Get-NetAdapterVmqQueue|Get-NetAdapterVPort|New-NetAdapterAdvancedProperty|Remove-NetAdapterAdvancedProperty|Rename-NetAdapter|Reset-NetAdapterAdvancedProperty|Restart-NetAdapter|Set-NetAdapter|Set-NetAdapterAdvancedProperty|Set-NetAdapterBinding|Set-NetAdapterChecksumOffload|Set-NetAdapterEncapsulatedPacketTaskOffload|Set-NetAdapterIPsecOffload|Set-NetAdapterLso|Set-NetAdapterPacketDirect|Set-NetAdapterPowerManagement|Set-NetAdapterQos|Set-NetAdapterRdma|Set-NetAdapterRsc|Set-NetAdapterRss|Set-NetAdapterSriov|Set-NetAdapterVmq|" +
+        "Clear-MSDSMSupportedHW|Disable-MSDSMAutomaticClaim|Enable-MSDSMAutomaticClaim|Get-MPIOAvailableHW|Get-MPIOSetting|Get-MSDSMAutomaticClaimSettings|Get-MSDSMGlobalDefaultLoadBalancePolicy|Get-MSDSMSupportedHW|New-MSDSMSupportedHW|Remove-MSDSMSupportedHW|Set-MPIOSetting|Set-MSDSMGlobalDefaultLoadBalancePolicy|Update-MPIOClaimedHW|" +
+        "Add-DtcClusterTMMapping|Complete-DtcDiagnosticTransaction|Get-Dtc|Get-DtcAdvancedHostSetting|Get-DtcAdvancedSetting|Get-DtcClusterDefault|Get-DtcClusterTMMapping|Get-DtcDefault|Get-DtcLog|Get-DtcNetworkSetting|Get-DtcTransaction|Get-DtcTransactionsStatistics|Get-DtcTransactionsTraceSession|Get-DtcTransactionsTraceSetting|Install-Dtc|Join-DtcDiagnosticResourceManager|New-DtcDiagnosticTransaction|Receive-DtcDiagnosticTransaction|Remove-DtcClusterTMMapping|Reset-DtcLog|Send-DtcDiagnosticTransaction|Set-DtcAdvancedHostSetting|Set-DtcAdvancedSetting|Set-DtcClusterDefault|Set-DtcClusterTMMapping|Set-DtcDefault|Set-DtcLog|Set-DtcNetworkSetting|Set-DtcTransaction|Set-DtcTransactionsTraceSession|Set-DtcTransactionsTraceSetting|Start-Dtc|Start-DtcDiagnosticResourceManager|Start-DtcTransactionsTraceSession|Stop-Dtc|Stop-DtcDiagnosticResourceManager|Stop-DtcTransactionsTraceSession|Test-Dtc|Undo-DtcDiagnosticTransaction|Uninstall-Dtc|Write-DtcTransactionsTraceSession|" +
+        "Clear-MSMQOutgoingQueue|Clear-MSMQQueue|Enable-MSMQCertificate|Get-MSMQCertificate|Get-MSMQOutgoingQueue|Get-MsmqQueue|Get-MsmqQueueACL|Get-MsmqQueueManager|Get-MsmqQueueManagerACL|Move-MsmqMessage|New-MsmqMessage|New-MsmqQueue|Receive-MsmqQueue|Remove-MsmqCertificate|Remove-MsmqQueue|Resume-MsmqOutgoingQueue|Send-MsmqQueue|Set-MsmqQueue|Set-MsmqQueueACL|Set-MsmqQueueManager|Set-MsmqQueueManagerACL|Suspend-MsmqOutgoingQueue|" +
+        "Add-WmsSystem|Clear-WmsStation|Close-WmsApp|Close-WmsSession|Disable-WmsDiskProtection|Disable-WmsScheduledUpdate|Disable-WmsWebLimiting|Disconnect-WmsSession|Enable-WmsDiskProtection|Enable-WmsScheduledUpdate|Enable-WmsWebLimiting|Get-WmsAlert|Get-WmsApp|Get-WmsDiskProtection|Get-WmsScheduledUpdate|Get-WmsSession|Get-WmsStation|Get-WmsSystem|Get-WmsUser|Get-WmsVersion|Get-WmsWebLimiting|Hide-WmsIdentifier|Join-WmsStation|Lock-WmsSession|Lock-WmsUsbStorage|New-WmsUser|Open-WmsApp|Publish-WmsDesktop|Remove-WmsSystem|Remove-WmsUser|Restart-WmsSystem|Resume-WmsDiskProtection|Search-WmsSystem|Set-WmsScheduledUpdate|Set-WmsStation|Set-WmsSystem|Set-WmsUser|Set-WmsWebLimiting|Show-WmsDesktop|Show-WmsIdentifier|Split-WmsStation|Stop-WmsSystem|Suspend-WmsDiskProtection|Unlock-WmsSession|Unlock-WmsUsbStorage|Unpublish-WmsDesktop|Update-WmsStation|" +
+        "Disable-WmsVirtualDesktopRole|Enable-WmsVirtualDesktopRole|Get-WmsVirtualDesktop|Import-WmsVirtualDesktop|New-WmsVirtualDesktop|New-WmsVirtualDesktopTemplate|Open-WmsVirtualDesktop|" +
+        "Edit-NanoServerImage|Get-NanoServerPackage|New-NanoServerImage|" +
+        "Disable-NetAdapter|Disable-NetAdapterBinding|Disable-NetAdapterChecksumOffload|Disable-NetAdapterEncapsulatedPacketTaskOffload|Disable-NetAdapterIPsecOffload|Disable-NetAdapterLso|Disable-NetAdapterPowerManagement|Disable-NetAdapterQos|Disable-NetAdapterRdma|Disable-NetAdapterRsc|Disable-NetAdapterRss|Disable-NetAdapterSriov|Disable-NetAdapterUso|Disable-NetAdapterVmq|Enable-NetAdapter|Enable-NetAdapterBinding|Enable-NetAdapterChecksumOffload|Enable-NetAdapterEncapsulatedPacketTaskOffload|Enable-NetAdapterIPsecOffload|Enable-NetAdapterLso|Enable-NetAdapterPowerManagement|Enable-NetAdapterQos|Enable-NetAdapterRdma|Enable-NetAdapterRsc|Enable-NetAdapterRss|Enable-NetAdapterSriov|Enable-NetAdapterUso|Enable-NetAdapterVmq|Get-NetAdapter|Get-NetAdapterAdvancedProperty|Get-NetAdapterBinding|Get-NetAdapterChecksumOffload|Get-NetAdapterDataPathConfiguration|Get-NetAdapterEncapsulatedPacketTaskOffload|Get-NetAdapterHardwareInfo|Get-NetAdapterIPsecOffload|Get-NetAdapterLso|Get-NetAdapterPowerManagement|Get-NetAdapterQos|Get-NetAdapterRdma|Get-NetAdapterRsc|Get-NetAdapterRss|Get-NetAdapterSriov|Get-NetAdapterSriovVf|Get-NetAdapterStatistics|Get-NetAdapterUso|Get-NetAdapterVmq|Get-NetAdapterVmqQueue|Get-NetAdapterVPort|New-NetAdapterAdvancedProperty|Remove-NetAdapterAdvancedProperty|Rename-NetAdapter|Reset-NetAdapterAdvancedProperty|Restart-NetAdapter|Set-NetAdapter|Set-NetAdapterAdvancedProperty|Set-NetAdapterBinding|Set-NetAdapterChecksumOffload|Set-NetAdapterDataPathConfiguration|Set-NetAdapterEncapsulatedPacketTaskOffload|Set-NetAdapterIPsecOffload|Set-NetAdapterLso|Set-NetAdapterPowerManagement|Set-NetAdapterQos|Set-NetAdapterRdma|Set-NetAdapterRsc|Set-NetAdapterRss|Set-NetAdapterSriov|Set-NetAdapterUso|Set-NetAdapterVmq|" +
         "Get-NetConnectionProfile|Set-NetConnectionProfile|" +
-        "Add-NetEventNetworkAdapter|Add-NetEventPacketCaptureProvider|Add-NetEventProvider|Add-NetEventVmNetworkAdapter|Add-NetEventVmSwitch|Add-NetEventWFPCaptureProvider|Get-NetEventNetworkAdapter|Get-NetEventPacketCaptureProvider|Get-NetEventProvider|Get-NetEventSession|Get-NetEventVmNetworkAdapter|Get-NetEventVmSwitch|Get-NetEventWFPCaptureProvider|New-NetEventSession|Remove-NetEventNetworkAdapter|Remove-NetEventPacketCaptureProvider|Remove-NetEventProvider|Remove-NetEventSession|Remove-NetEventVmNetworkAdapter|Remove-NetEventVmSwitch|Remove-NetEventWFPCaptureProvider|Set-NetEventPacketCaptureProvider|Set-NetEventProvider|Set-NetEventSession|Set-NetEventWFPCaptureProvider|Start-NetEventSession|Stop-NetEventSession|" +
+        "Add-NetEventNetworkAdapter|Add-NetEventPacketCaptureProvider|Add-NetEventProvider|Add-NetEventVFPProvider|Add-NetEventVmNetworkAdapter|Add-NetEventVmSwitch|Add-NetEventVmSwitchProvider|Add-NetEventWFPCaptureProvider|Get-NetEventNetworkAdapter|Get-NetEventPacketCaptureProvider|Get-NetEventProvider|Get-NetEventSession|Get-NetEventVFPProvider|Get-NetEventVmNetworkAdapter|Get-NetEventVmSwitch|Get-NetEventVmSwitchProvider|Get-NetEventWFPCaptureProvider|New-NetEventSession|Remove-NetEventNetworkAdapter|Remove-NetEventPacketCaptureProvider|Remove-NetEventProvider|Remove-NetEventSession|Remove-NetEventVFPProvider|Remove-NetEventVmNetworkAdapter|Remove-NetEventVmSwitch|Remove-NetEventVmSwitchProvider|Remove-NetEventWFPCaptureProvider|Set-NetEventPacketCaptureProvider|Set-NetEventProvider|Set-NetEventSession|Set-NetEventVFPProvider|Set-NetEventVmSwitchProvider|Set-NetEventWFPCaptureProvider|Start-NetEventSession|Stop-NetEventSession|" +
         "Add-NetLbfoTeamMember|Add-NetLbfoTeamNic|Get-NetLbfoTeam|Get-NetLbfoTeamMember|Get-NetLbfoTeamNic|New-NetLbfoTeam|Remove-NetLbfoTeam|Remove-NetLbfoTeamMember|Remove-NetLbfoTeamNic|Rename-NetLbfoTeam|Set-NetLbfoTeam|Set-NetLbfoTeamMember|Set-NetLbfoTeamNic|" +
+        "Disable-NetLldpAgent|Enable-NetLldpAgent|Get-NetLldpAgent|" +
         "Add-NetNatExternalAddress|Add-NetNatStaticMapping|Get-NetNat|Get-NetNatExternalAddress|Get-NetNatGlobal|Get-NetNatSession|Get-NetNatStaticMapping|New-NetNat|Remove-NetNat|Remove-NetNatExternalAddress|Remove-NetNatStaticMapping|Set-NetNat|Set-NetNatGlobal|" +
         "Get-NetQosPolicy|New-NetQosPolicy|Remove-NetQosPolicy|Set-NetQosPolicy|" +
-        "Copy-NetFirewallRule|Copy-NetIPsecMainModeCryptoSet|Copy-NetIPsecMainModeRule|Copy-NetIPsecPhase1AuthSet|Copy-NetIPsecPhase2AuthSet|Copy-NetIPsecQuickModeCryptoSet|Copy-NetIPsecRule|Disable-NetFirewallRule|Disable-NetIPsecMainModeRule|Disable-NetIPsecRule|Enable-NetFirewallRule|Enable-NetIPsecMainModeRule|Enable-NetIPsecRule|Find-NetIPsecRule|Get-NetFirewallAddressFilter|Get-NetFirewallApplicationFilter|Get-NetFirewallInterfaceFilter|Get-NetFirewallInterfaceTypeFilter|Get-NetFirewallPortFilter|Get-NetFirewallProfile|Get-NetFirewallRule|Get-NetFirewallSecurityFilter|Get-NetFirewallServiceFilter|Get-NetFirewallSetting|Get-NetIPsecDospSetting|Get-NetIPsecMainModeCryptoSet|Get-NetIPsecMainModeRule|Get-NetIPsecMainModeSA|Get-NetIPsecPhase1AuthSet|Get-NetIPsecPhase2AuthSet|Get-NetIPsecQuickModeCryptoSet|Get-NetIPsecQuickModeSA|Get-NetIPsecRule|New-NetFirewallRule|New-NetIPsecDospSetting|New-NetIPsecMainModeCryptoSet|New-NetIPsecMainModeRule|New-NetIPsecPhase1AuthSet|New-NetIPsecPhase2AuthSet|New-NetIPsecQuickModeCryptoSet|New-NetIPsecRule|Open-NetGPO|Remove-NetFirewallRule|Remove-NetIPsecDospSetting|Remove-NetIPsecMainModeCryptoSet|Remove-NetIPsecMainModeRule|Remove-NetIPsecMainModeSA|Remove-NetIPsecPhase1AuthSet|Remove-NetIPsecPhase2AuthSet|Remove-NetIPsecQuickModeCryptoSet|Remove-NetIPsecQuickModeSA|Remove-NetIPsecRule|Rename-NetFirewallRule|Rename-NetIPsecMainModeCryptoSet|Rename-NetIPsecMainModeRule|Rename-NetIPsecPhase1AuthSet|Rename-NetIPsecPhase2AuthSet|Rename-NetIPsecQuickModeCryptoSet|Rename-NetIPsecRule|Save-NetGPO|Set-NetFirewallAddressFilter|Set-NetFirewallApplicationFilter|Set-NetFirewallInterfaceFilter|Set-NetFirewallInterfaceTypeFilter|Set-NetFirewallPortFilter|Set-NetFirewallProfile|Set-NetFirewallRule|Set-NetFirewallSecurityFilter|Set-NetFirewallServiceFilter|Set-NetFirewallSetting|Set-NetIPsecDospSetting|Set-NetIPsecMainModeCryptoSet|Set-NetIPsecMainModeRule|Set-NetIPsecPhase1AuthSet|Set-NetIPsecPhase2AuthSet|Set-NetIPsecQuickModeCryptoSet|Set-NetIPsecRule|Show-NetFirewallRule|Show-NetIPsecRule|Sync-NetIPsecRule|Update-NetIPsecRule|Get-DAPolicyChange|New-NetIPsecAuthProposal|New-NetIPsecMainModeCryptoProposal|New-NetIPsecQuickModeCryptoProposal|" +
+        "Copy-NetFirewallRule|Copy-NetIPsecMainModeCryptoSet|Copy-NetIPsecMainModeRule|Copy-NetIPsecPhase1AuthSet|Copy-NetIPsecPhase2AuthSet|Copy-NetIPsecQuickModeCryptoSet|Copy-NetIPsecRule|Disable-NetFirewallRule|Disable-NetIPsecMainModeRule|Disable-NetIPsecRule|Enable-NetFirewallRule|Enable-NetIPsecMainModeRule|Enable-NetIPsecRule|Find-NetIPsecRule|Get-DAPolicyChange|Get-NetFirewallAddressFilter|Get-NetFirewallApplicationFilter|Get-NetFirewallDynamicKeywordAddress|Get-NetFirewallInterfaceFilter|Get-NetFirewallInterfaceTypeFilter|Get-NetFirewallPortFilter|Get-NetFirewallProfile|Get-NetFirewallRule|Get-NetFirewallSecurityFilter|Get-NetFirewallServiceFilter|Get-NetFirewallSetting|Get-NetIPsecDospSetting|Get-NetIPsecMainModeCryptoSet|Get-NetIPsecMainModeRule|Get-NetIPsecMainModeSA|Get-NetIPsecPhase1AuthSet|Get-NetIPsecPhase2AuthSet|Get-NetIPsecQuickModeCryptoSet|Get-NetIPsecQuickModeSA|Get-NetIPsecRule|New-NetFirewallDynamicKeywordAddress|New-NetFirewallRule|New-NetIPsecAuthProposal|New-NetIPsecDospSetting|New-NetIPsecMainModeCryptoProposal|New-NetIPsecMainModeCryptoSet|New-NetIPsecMainModeRule|New-NetIPsecPhase1AuthSet|New-NetIPsecPhase2AuthSet|New-NetIPsecQuickModeCryptoProposal|New-NetIPsecQuickModeCryptoSet|New-NetIPsecRule|Open-NetGPO|Remove-NetFirewallDynamicKeywordAddress|Remove-NetFirewallRule|Remove-NetIPsecDospSetting|Remove-NetIPsecMainModeCryptoSet|Remove-NetIPsecMainModeRule|Remove-NetIPsecMainModeSA|Remove-NetIPsecPhase1AuthSet|Remove-NetIPsecPhase2AuthSet|Remove-NetIPsecQuickModeCryptoSet|Remove-NetIPsecQuickModeSA|Remove-NetIPsecRule|Rename-NetFirewallRule|Rename-NetIPsecMainModeCryptoSet|Rename-NetIPsecMainModeRule|Rename-NetIPsecPhase1AuthSet|Rename-NetIPsecPhase2AuthSet|Rename-NetIPsecQuickModeCryptoSet|Rename-NetIPsecRule|Save-NetGPO|Set-NetFirewallAddressFilter|Set-NetFirewallApplicationFilter|Set-NetFirewallInterfaceFilter|Set-NetFirewallInterfaceTypeFilter|Set-NetFirewallPortFilter|Set-NetFirewallProfile|Set-NetFirewallRule|Set-NetFirewallSecurityFilter|Set-NetFirewallServiceFilter|Set-NetFirewallSetting|Set-NetIPsecDospSetting|Set-NetIPsecMainModeCryptoSet|Set-NetIPsecMainModeRule|Set-NetIPsecPhase1AuthSet|Set-NetIPsecPhase2AuthSet|Set-NetIPsecQuickModeCryptoSet|Set-NetIPsecRule|Show-NetFirewallRule|Show-NetIPsecRule|Sync-NetIPsecRule|Update-NetFirewallDynamicKeywordAddress|Update-NetIPsecRule|" +
         "Add-NetSwitchTeamMember|Get-NetSwitchTeam|Get-NetSwitchTeamMember|New-NetSwitchTeam|Remove-NetSwitchTeam|Remove-NetSwitchTeamMember|Rename-NetSwitchTeam|" +
         "Find-NetRoute|Get-NetCompartment|Get-NetIPAddress|Get-NetIPConfiguration|Get-NetIPInterface|Get-NetIPv4Protocol|Get-NetIPv6Protocol|Get-NetNeighbor|Get-NetOffloadGlobalSetting|Get-NetPrefixPolicy|Get-NetRoute|Get-NetTCPConnection|Get-NetTCPSetting|Get-NetTransportFilter|Get-NetUDPEndpoint|Get-NetUDPSetting|New-NetIPAddress|New-NetNeighbor|New-NetRoute|New-NetTransportFilter|Remove-NetIPAddress|Remove-NetNeighbor|Remove-NetRoute|Remove-NetTransportFilter|Set-NetIPAddress|Set-NetIPInterface|Set-NetIPv4Protocol|Set-NetIPv6Protocol|Set-NetNeighbor|Set-NetOffloadGlobalSetting|Set-NetRoute|Set-NetTCPSetting|Set-NetUDPSetting|Test-NetConnection|" +
+        "Get-NetVirtualizationCustomerRoute|Get-NetVirtualizationGlobal|Get-NetVirtualizationLookupRecord|Get-NetVirtualizationProviderAddress|Get-NetVirtualizationProviderRoute|New-NetVirtualizationCustomerRoute|New-NetVirtualizationLookupRecord|New-NetVirtualizationProviderAddress|New-NetVirtualizationProviderRoute|Remove-NetVirtualizationCustomerRoute|Remove-NetVirtualizationLookupRecord|Remove-NetVirtualizationProviderAddress|Remove-NetVirtualizationProviderRoute|Select-NetVirtualizationNextHop|Set-NetVirtualizationCustomerRoute|Set-NetVirtualizationGlobal|Set-NetVirtualizationLookupRecord|Set-NetVirtualizationProviderAddress|Set-NetVirtualizationProviderRoute|" +
         "Get-DAConnectionStatus|Get-NCSIPolicyConfiguration|Reset-NCSIPolicyConfiguration|Set-NCSIPolicyConfiguration|" +
+        "Add-NetworkControllerNode|Clear-NetworkControllerNodeContent|Disable-NetworkControllerNode|Enable-NetworkControllerNode|Get-NetworkController|Get-NetworkControllerAccessControlList|Get-NetworkControllerAccessControlListRule|Get-NetworkControllerAuditingSettingsConfiguration|Get-NetworkControllerBackup|Get-NetworkControllerCluster|Get-NetworkControllerConnectivityCheck|Get-NetworkControllerConnectivityCheckResult|Get-NetworkControllerCredential|Get-NetworkControllerDiagnostic|Get-NetworkControllerDiscovery|Get-NetworkControllerFabricRoute|Get-NetworkControllerGateway|Get-NetworkControllerGatewayPool|Get-NetworkControllerIDnsServerConfiguration|Get-NetworkControllerInternalResourceInstances|Get-NetworkControllerIpPool|Get-NetworkControllerIpReservation|Get-NetworkControllerLoadBalancer|Get-NetworkControllerLoadBalancerBackendAddressPool|Get-NetworkControllerLoadBalancerConfiguration|Get-NetworkControllerLoadBalancerFrontendIpConfiguration|Get-NetworkControllerLoadBalancerInboundNatRule|Get-NetworkControllerLoadBalancerMux|Get-NetworkControllerLoadBalancerOutboundNatRule|Get-NetworkControllerLoadBalancerProbe|Get-NetworkControllerLoadBalancingRule|Get-NetworkControllerLogicalNetwork|Get-NetworkControllerLogicalSubnet|Get-NetworkControllerMacPool|Get-NetworkControllerNetworkInterface|Get-NetworkControllerNetworkInterfaceIpConfiguration|Get-NetworkControllerNode|Get-NetworkControllerPublicIpAddress|Get-NetworkControllerRestore|Get-NetworkControllerRoute|Get-NetworkControllerRouteTable|Get-NetworkControllerServer|Get-NetworkControllerServerInterface|Get-NetworkControllerServiceInsertion|Get-NetworkControllerState|Get-NetworkControllerStatistics|Get-NetworkControllerSubnetEgressReset|Get-NetworkControllerVirtualGateway|Get-NetworkControllerVirtualGatewayBgpPeer|Get-NetworkControllerVirtualGatewayBgpRouter|Get-NetworkControllerVirtualGatewayNetworkConnection|Get-NetworkControllerVirtualGatewayPolicyMap|Get-NetworkControllerVirtualNetwork|Get-NetworkControllerVirtualNetworkConfiguration|Get-NetworkControllerVirtualNetworkPeering|Get-NetworkControllerVirtualServer|Get-NetworkControllerVirtualSubnet|Get-NetworkControllerVirtualSwitchConfiguration|Install-NetworkController|Install-NetworkControllerCluster|Invoke-NetworkControllerConnectivityCheck|Invoke-NetworkControllerState|Invoke-NetworkControllerSubnetEgressReset|New-NetworkControllerAccessControlList|New-NetworkControllerAccessControlListRule|New-NetworkControllerBackup|New-NetworkControllerCredential|New-NetworkControllerFabricRoute|New-NetworkControllerGateway|New-NetworkControllerGatewayPool|New-NetworkControllerIDnsServerConfiguration|New-NetworkControllerIpPool|New-NetworkControllerIpReservation|New-NetworkControllerLoadBalancer|New-NetworkControllerLoadBalancerBackendAddressPool|New-NetworkControllerLoadBalancerConfiguration|New-NetworkControllerLoadBalancerFrontendIpConfiguration|New-NetworkControllerLoadBalancerInboundNatRule|New-NetworkControllerLoadBalancerMux|New-NetworkControllerLoadBalancerOutboundNatRule|New-NetworkControllerLoadBalancerProbe|New-NetworkControllerLoadBalancingRule|New-NetworkControllerLogicalNetwork|New-NetworkControllerLogicalSubnet|New-NetworkControllerMacPool|New-NetworkControllerNetworkInterface|New-NetworkControllerNetworkInterfaceIpConfiguration|New-NetworkControllerNodeObject|New-NetworkControllerPublicIpAddress|New-NetworkControllerRestore|New-NetworkControllerRoute|New-NetworkControllerRouteTable|New-NetworkControllerServer|New-NetworkControllerServerInterface|New-NetworkControllerServiceInsertion|New-NetworkControllerVirtualGateway|New-NetworkControllerVirtualGatewayBgpPeer|New-NetworkControllerVirtualGatewayBgpRouter|New-NetworkControllerVirtualGatewayNetworkConnection|New-NetworkControllerVirtualGatewayPolicyMap|New-NetworkControllerVirtualNetwork|New-NetworkControllerVirtualNetworkPeering|New-NetworkControllerVirtualServer|New-NetworkControllerVirtualSubnet|Remove-NetworkControllerAccessControlList|Remove-NetworkControllerAccessControlListRule|Remove-NetworkControllerBackup|Remove-NetworkControllerCredential|Remove-NetworkControllerFabricRoute|Remove-NetworkControllerGateway|Remove-NetworkControllerGatewayPool|Remove-NetworkControllerIpPool|Remove-NetworkControllerIpReservation|Remove-NetworkControllerLoadBalancer|Remove-NetworkControllerLoadBalancerBackendAddressPool|Remove-NetworkControllerLoadBalancerConfiguration|Remove-NetworkControllerLoadBalancerFrontendIpConfiguration|Remove-NetworkControllerLoadBalancerInboundNatRule|Remove-NetworkControllerLoadBalancerMux|Remove-NetworkControllerLoadBalancerOutboundNatRule|Remove-NetworkControllerLoadBalancerProbe|Remove-NetworkControllerLoadBalancingRule|Remove-NetworkControllerLogicalNetwork|Remove-NetworkControllerLogicalSubnet|Remove-NetworkControllerMacPool|Remove-NetworkControllerNetworkInterface|Remove-NetworkControllerNetworkInterfaceIpConfiguration|Remove-NetworkControllerNode|Remove-NetworkControllerPublicIpAddress|Remove-NetworkControllerRestore|Remove-NetworkControllerRoute|Remove-NetworkControllerRouteTable|Remove-NetworkControllerServer|Remove-NetworkControllerServerInterface|Remove-NetworkControllerServiceInsertion|Remove-NetworkControllerVirtualGateway|Remove-NetworkControllerVirtualGatewayBgpPeer|Remove-NetworkControllerVirtualGatewayBgpRouter|Remove-NetworkControllerVirtualGatewayNetworkConnection|Remove-NetworkControllerVirtualGatewayPolicyMap|Remove-NetworkControllerVirtualNetwork|Remove-NetworkControllerVirtualNetworkPeering|Remove-NetworkControllerVirtualServer|Remove-NetworkControllerVirtualSubnet|Repair-NetworkControllerCluster|Set-NetworkController|Set-NetworkControllerAuditingSettingsConfiguration|Set-NetworkControllerCluster|Set-NetworkControllerDiagnostic|Set-NetworkControllerNode|Set-NetworkControllerVirtualNetworkConfiguration|Set-NetworkControllerVirtualSwitchConfiguration|Uninstall-NetworkController|Uninstall-NetworkControllerCluster|Update-NetworkController|" +
+        "Debug-NetworkController|Debug-NetworkControllerConfigurationState|Debug-ServiceFabricNodeStatus|Get-NetworkControllerDeploymentInfo|Get-NetworkControllerManagedDevices|Get-NetworkControllerReplica|" +
+        "Add-NlbClusterNode|Add-NlbClusterNodeDip|Add-NlbClusterPortRule|Add-NlbClusterVip|Disable-NlbClusterPortRule|Enable-NlbClusterPortRule|Get-NlbCluster|Get-NlbClusterDriverInfo|Get-NlbClusterNode|Get-NlbClusterNodeDip|Get-NlbClusterNodeNetworkInterface|Get-NlbClusterPortRule|Get-NlbClusterVip|New-NlbCluster|New-NlbClusterIpv6Address|Remove-NlbCluster|Remove-NlbClusterNode|Remove-NlbClusterNodeDip|Remove-NlbClusterPortRule|Remove-NlbClusterVip|Resume-NlbCluster|Resume-NlbClusterNode|Set-NlbCluster|Set-NlbClusterNode|Set-NlbClusterNodeDip|Set-NlbClusterPortRule|Set-NlbClusterPortRuleNodeHandlingPriority|Set-NlbClusterPortRuleNodeWeight|Set-NlbClusterVip|Start-NlbCluster|Start-NlbClusterNode|Stop-NlbCluster|Stop-NlbClusterNode|Suspend-NlbCluster|Suspend-NlbClusterNode|" +
         "Disable-NetworkSwitchEthernetPort|Disable-NetworkSwitchFeature|Disable-NetworkSwitchVlan|Enable-NetworkSwitchEthernetPort|Enable-NetworkSwitchFeature|Enable-NetworkSwitchVlan|Get-NetworkSwitchEthernetPort|Get-NetworkSwitchFeature|Get-NetworkSwitchGlobalData|Get-NetworkSwitchVlan|New-NetworkSwitchVlan|Remove-NetworkSwitchEthernetPortIPAddress|Remove-NetworkSwitchVlan|Restore-NetworkSwitchConfiguration|Save-NetworkSwitchConfiguration|Set-NetworkSwitchEthernetPortIPAddress|Set-NetworkSwitchPortMode|Set-NetworkSwitchPortProperty|Set-NetworkSwitchVlanProperty|" +
         "Add-NetIPHttpsCertBinding|Disable-NetDnsTransitionConfiguration|Disable-NetIPHttpsProfile|Disable-NetNatTransitionConfiguration|Enable-NetDnsTransitionConfiguration|Enable-NetIPHttpsProfile|Enable-NetNatTransitionConfiguration|Get-Net6to4Configuration|Get-NetDnsTransitionConfiguration|Get-NetDnsTransitionMonitoring|Get-NetIPHttpsConfiguration|Get-NetIPHttpsState|Get-NetIsatapConfiguration|Get-NetNatTransitionConfiguration|Get-NetNatTransitionMonitoring|Get-NetTeredoConfiguration|Get-NetTeredoState|New-NetIPHttpsConfiguration|New-NetNatTransitionConfiguration|Remove-NetIPHttpsCertBinding|Remove-NetIPHttpsConfiguration|Remove-NetNatTransitionConfiguration|Rename-NetIPHttpsConfiguration|Reset-Net6to4Configuration|Reset-NetDnsTransitionConfiguration|Reset-NetIPHttpsConfiguration|Reset-NetIsatapConfiguration|Reset-NetTeredoConfiguration|Set-Net6to4Configuration|Set-NetDnsTransitionConfiguration|Set-NetIPHttpsConfiguration|Set-NetIsatapConfiguration|Set-NetNatTransitionConfiguration|Set-NetTeredoConfiguration|" +
+        "Disconnect-NfsSession|Get-NfsClientConfiguration|Get-NfsClientgroup|Get-NfsClientLock|Get-NfsMappedIdentity|Get-NfsMappingStore|Get-NfsMountedClient|Get-NfsNetgroup|Get-NfsNetgroupStore|Get-NfsOpenFile|Get-NfsServerConfiguration|Get-NfsSession|Get-NfsShare|Get-NfsSharePermission|Get-NfsStatistics|Grant-NfsSharePermission|Install-NfsMappingStore|New-NfsClientgroup|New-NfsMappedIdentity|New-NfsNetgroup|New-NfsShare|Remove-NfsClientgroup|Remove-NfsMappedIdentity|Remove-NfsNetgroup|Remove-NfsShare|Rename-NfsClientgroup|Reset-NfsStatistics|Resolve-NfsMappedIdentity|Revoke-NfsClientLock|Revoke-NfsMountedClient|Revoke-NfsOpenFile|Revoke-NfsSharePermission|Set-NfsClientConfiguration|Set-NfsClientgroup|Set-NfsMappedIdentity|Set-NfsMappingStore|Set-NfsNetgroup|Set-NfsNetgroupStore|Set-NfsServerConfiguration|Set-NfsShare|Test-NfsMappedIdentity|Test-NfsMappingStore|" +
+        "Export-NpsConfiguration|Get-NpsRadiusClient|Get-NpsSharedSecretTemplate|Import-NpsConfiguration|New-NpsRadiusClient|Remove-NpsRadiusClient|Set-NpsRadiusClient|" +
         "Find-Package|Find-PackageProvider|Get-Package|Get-PackageProvider|Get-PackageSource|Import-PackageProvider|Install-Package|Install-PackageProvider|Register-PackageSource|Save-Package|Set-PackageSource|Uninstall-Package|Unregister-PackageSource|" +
         "Clear-PcsvDeviceLog|Get-PcsvDevice|Get-PcsvDeviceLog|Restart-PcsvDevice|Set-PcsvDeviceBootConfiguration|Set-PcsvDeviceNetworkConfiguration|Set-PcsvDeviceUserPassword|Start-PcsvDevice|Stop-PcsvDevice|" +
+        "Get-PmemDedicatedMemory|Get-PmemDisk|Get-PmemPhysicalDevice|Get-PmemUnusedRegion|Initialize-PmemPhysicalDevice|New-PmemDedicatedMemory|New-PmemDisk|Remove-PmemDedicatedMemory|Remove-PmemDisk|" +
         "AfterAll|AfterEach|Assert-MockCalled|Assert-VerifiableMocks|BeforeAll|BeforeEach|Context|Describe|Get-MockDynamicParameters|Get-TestDriveItem|In|InModuleScope|Invoke-Mock|Invoke-Pester|It|Mock|New-Fixture|Set-DynamicParameterVariables|Setup|Should|" +
         "Add-CertificateEnrollmentPolicyServer|Export-Certificate|Export-PfxCertificate|Get-Certificate|Get-CertificateAutoEnrollmentPolicy|Get-CertificateEnrollmentPolicyServer|Get-CertificateNotificationTask|Get-PfxData|Import-Certificate|Import-PfxCertificate|New-CertificateNotificationTask|New-SelfSignedCertificate|Remove-CertificateEnrollmentPolicyServer|Remove-CertificateNotificationTask|Set-CertificateAutoEnrollmentPolicy|Switch-Certificate|Test-Certificate|" +
+        "Get-PlatformIdentifier|" +
         "Disable-PnpDevice|Enable-PnpDevice|Get-PnpDevice|Get-PnpDeviceProperty|" +
         "Find-DscResource|Find-Module|Find-Script|Get-InstalledModule|Get-InstalledScript|Get-PSRepository|Install-Module|Install-Script|New-ScriptFileInfo|Publish-Module|Publish-Script|Register-PSRepository|Save-Module|Save-Script|Set-PSRepository|Test-ScriptFileInfo|Uninstall-Module|Uninstall-Script|Unregister-PSRepository|Update-Module|Update-ModuleManifest|Update-Script|Update-ScriptFileInfo|" +
         "Add-Printer|Add-PrinterDriver|Add-PrinterPort|Get-PrintConfiguration|Get-Printer|Get-PrinterDriver|Get-PrinterPort|Get-PrinterProperty|Get-PrintJob|Read-PrinterNfcTag|Remove-Printer|Remove-PrinterDriver|Remove-PrinterPort|Remove-PrintJob|Rename-Printer|Restart-PrintJob|Resume-PrintJob|Set-PrintConfiguration|Set-Printer|Set-PrinterProperty|Suspend-PrintJob|Write-PrinterNfcTag|" +
+        "ConvertTo-ProcessMitigationPolicy|Get-ProcessMitigation|Set-ProcessMitigation|" +
+        "Export-ProvisioningPackage|Export-Trace|Get-ProvisioningPackage|Get-TrustedProvisioningCertificate|Install-ProvisioningPackage|Install-TrustedProvisioningCertificate|Uninstall-ProvisioningPackage|Uninstall-TrustedProvisioningCertificate|" +
         "Configuration|Disable-DscDebug|Enable-DscDebug|Get-DscConfiguration|Get-DscConfigurationStatus|Get-DscLocalConfigurationManager|Get-DscResource|New-DscChecksum|Remove-DscConfigurationDocument|Restore-DscConfiguration|Stop-DscConfiguration|Invoke-DscResource|Publish-DscConfiguration|Set-DscLocalConfigurationManager|Start-DscConfiguration|Test-DscConfiguration|Update-DscConfiguration|" +
         "Disable-PSTrace|Disable-PSWSManCombinedTrace|Disable-WSManTrace|Enable-PSTrace|Enable-PSWSManCombinedTrace|Enable-WSManTrace|Get-LogProperties|Set-LogProperties|Start-Trace|Stop-Trace|" +
         "PSConsoleHostReadline|Get-PSReadlineKeyHandler|Get-PSReadlineOption|Remove-PSReadlineKeyHandler|Set-PSReadlineKeyHandler|Set-PSReadlineOption|" +
         "Add-JobTrigger|Disable-JobTrigger|Disable-ScheduledJob|Enable-JobTrigger|Enable-ScheduledJob|Get-JobTrigger|Get-ScheduledJob|Get-ScheduledJobOption|New-JobTrigger|New-ScheduledJobOption|Register-ScheduledJob|Remove-JobTrigger|Set-JobTrigger|Set-ScheduledJob|Set-ScheduledJobOption|Unregister-ScheduledJob|" +
         "New-PSWorkflowSession|New-PSWorkflowExecutionOption|" +
         "Invoke-AsWorkflow|" +
+        "Add-RDServer|Add-RDSessionHost|Add-RDVirtualDesktopToCollection|Disable-RDVirtualDesktopADMachineAccountReuse|Disconnect-RDUser|Enable-RDVirtualDesktopADMachineAccountReuse|Export-RDPersonalSessionDesktopAssignment|Export-RDPersonalVirtualDesktopAssignment|Get-RDAvailableApp|Get-RDCertificate|Get-RDConnectionBrokerHighAvailability|Get-RDDeploymentGatewayConfiguration|Get-RDFileTypeAssociation|Get-RDLicenseConfiguration|Get-RDPersonalSessionDesktopAssignment|Get-RDPersonalVirtualDesktopAssignment|Get-RDPersonalVirtualDesktopPatchSchedule|Get-RDRemoteApp|Get-RDRemoteDesktop|Get-RDServer|Get-RDSessionCollection|Get-RDSessionCollectionConfiguration|Get-RDSessionHost|Get-RDUserSession|Get-RDVirtualDesktop|Get-RDVirtualDesktopCollection|Get-RDVirtualDesktopCollectionConfiguration|Get-RDVirtualDesktopCollectionJobStatus|Get-RDVirtualDesktopConcurrency|Get-RDVirtualDesktopIdleCount|Get-RDVirtualDesktopTemplateExportPath|Get-RDWorkspace|Grant-RDOUAccess|Import-RDPersonalSessionDesktopAssignment|Import-RDPersonalVirtualDesktopAssignment|Invoke-RDUserLogoff|Move-RDVirtualDesktop|New-RDCertificate|New-RDPersonalVirtualDesktopPatchSchedule|New-RDRemoteApp|New-RDSessionCollection|New-RDSessionDeployment|New-RDVirtualDesktopCollection|New-RDVirtualDesktopDeployment|Remove-RDDatabaseConnectionString|Remove-RDPersonalSessionDesktopAssignment|Remove-RDPersonalVirtualDesktopAssignment|Remove-RDPersonalVirtualDesktopPatchSchedule|Remove-RDRemoteApp|Remove-RDServer|Remove-RDSessionCollection|Remove-RDSessionHost|Remove-RDVirtualDesktopCollection|Remove-RDVirtualDesktopFromCollection|Send-RDUserMessage|Set-RDActiveManagementServer|Set-RDCertificate|Set-RDClientAccessName|Set-RDConnectionBrokerHighAvailability|Set-RDDatabaseConnectionString|Set-RDDeploymentGatewayConfiguration|Set-RDFileTypeAssociation|Set-RDLicenseConfiguration|Set-RDPersonalSessionDesktopAssignment|Set-RDPersonalVirtualDesktopAssignment|Set-RDPersonalVirtualDesktopPatchSchedule|Set-RDRemoteApp|Set-RDRemoteDesktop|Set-RDSessionCollectionConfiguration|Set-RDSessionHost|Set-RDVirtualDesktopCollectionConfiguration|Set-RDVirtualDesktopConcurrency|Set-RDVirtualDesktopIdleCount|Set-RDVirtualDesktopTemplateExportPath|Set-RDWorkspace|Stop-RDVirtualDesktopCollectionJob|Test-RDOUAccess|Test-RDVirtualDesktopADMachineAccountReuse|Update-RDVirtualDesktopCollection|" +
+        "Add-BgpCustomRoute|Add-BgpPeer|Add-BgpRouteAggregate|Add-BgpRouter|Add-BgpRoutingPolicy|Add-BgpRoutingPolicyForPeer|Add-DAAppServer|Add-DAClient|Add-DAClientDnsConfiguration|Add-DAEntryPoint|Add-DAMgmtServer|Add-RemoteAccessIpFilter|Add-RemoteAccessLoadBalancerNode|Add-RemoteAccessRadius|Add-VpnIPAddressRange|Add-VpnS2SInterface|Add-VpnSstpProxyRule|Clear-BgpRouteFlapDampening|Clear-RemoteAccessInboxAccountingStore|Clear-VpnS2SInterfaceStatistics|Connect-VpnS2SInterface|Disable-BgpRouteFlapDampening|Disable-DAMultiSite|Disable-DAOtpAuthentication|Disable-RemoteAccessRoutingDomain|Disconnect-VpnS2SInterface|Disconnect-VpnUser|Enable-BgpRouteFlapDampening|Enable-DAMultiSite|Enable-DAOtpAuthentication|Enable-RemoteAccessRoutingDomain|Get-BgpCustomRoute|Get-BgpPeer|Get-BgpRouteAggregate|Get-BgpRouteFlapDampening|Get-BgpRouteInformation|Get-BgpRouter|Get-BgpRoutingPolicy|Get-BgpStatistics|Get-DAAppServer|Get-DAClient|Get-DAClientDnsConfiguration|Get-DAEntryPoint|Get-DAEntryPointDC|Get-DAMgmtServer|Get-DAMultiSite|Get-DANetworkLocationServer|Get-DAOtpAuthentication|Get-DAServer|Get-RemoteAccess|Get-RemoteAccessAccounting|Get-RemoteAccessConfiguration|Get-RemoteAccessConnectionStatistics|Get-RemoteAccessConnectionStatisticsSummary|Get-RemoteAccessHealth|Get-RemoteAccessIpFilter|Get-RemoteAccessLoadBalancer|Get-RemoteAccessRadius|Get-RemoteAccessRoutingDomain|Get-RemoteAccessUserActivity|Get-RoutingProtocolPreference|Get-VpnAuthProtocol|Get-VpnS2SInterface|Get-VpnS2SInterfaceStatistics|Get-VpnServerConfiguration|Get-VpnSstpProxyRule|Install-RemoteAccess|New-VpnSstpProxyRule|New-VpnTrafficSelector|Remove-BgpCustomRoute|Remove-BgpPeer|Remove-BgpRouteAggregate|Remove-BgpRouter|Remove-BgpRoutingPolicy|Remove-BgpRoutingPolicyForPeer|Remove-DAAppServer|Remove-DAClient|Remove-DAClientDnsConfiguration|Remove-DAEntryPoint|Remove-DAMgmtServer|Remove-RemoteAccessIpFilter|Remove-RemoteAccessLoadBalancerNode|Remove-RemoteAccessRadius|Remove-VpnIPAddressRange|Remove-VpnS2SInterface|Remove-VpnSstpProxyRule|Set-BgpPeer|Set-BgpRouteAggregate|Set-BgpRouteFlapDampening|Set-BgpRouter|Set-BgpRoutingPolicy|Set-BgpRoutingPolicyForPeer|Set-DAAppServerConnection|Set-DAClient|Set-DAClientDnsConfiguration|Set-DAEntryPoint|Set-DAEntryPointDC|Set-DAMultiSite|Set-DANetworkLocationServer|Set-DAOtpAuthentication|Set-DAServer|Set-RemoteAccess|Set-RemoteAccessAccounting|Set-RemoteAccessConfiguration|Set-RemoteAccessInboxAccountingStore|Set-RemoteAccessIpFilter|Set-RemoteAccessLoadBalancer|Set-RemoteAccessRadius|Set-RemoteAccessRoutingDomain|Set-RoutingProtocolPreference|Set-VpnAuthProtocol|Set-VpnAuthType|Set-VpnIPAddressAssignment|Set-VpnS2SInterface|Set-VpnServerConfiguration|Set-VpnSstpProxyRule|Start-BgpPeer|Stop-BgpPeer|Uninstall-RemoteAccess|Update-DAMgmtServer|" +
+        "Convert-License|" +
         "Disable-ScheduledTask|Enable-ScheduledTask|Export-ScheduledTask|Get-ClusteredScheduledTask|Get-ScheduledTask|Get-ScheduledTaskInfo|New-ScheduledTask|New-ScheduledTaskAction|New-ScheduledTaskPrincipal|New-ScheduledTaskSettingsSet|New-ScheduledTaskTrigger|Register-ClusteredScheduledTask|Register-ScheduledTask|Set-ClusteredScheduledTask|Set-ScheduledTask|Start-ScheduledTask|Stop-ScheduledTask|Unregister-ClusteredScheduledTask|Unregister-ScheduledTask|" +
         "Confirm-SecureBootUEFI|Format-SecureBootUEFI|Get-SecureBootPolicy|Get-SecureBootUEFI|Set-SecureBootUEFI|" +
-        "Block-SmbShareAccess|Close-SmbOpenFile|Close-SmbSession|Disable-SmbDelegation|Enable-SmbDelegation|Get-SmbBandwidthLimit|Get-SmbClientConfiguration|Get-SmbClientNetworkInterface|Get-SmbConnection|Get-SmbDelegation|Get-SmbMapping|Get-SmbMultichannelConnection|Get-SmbMultichannelConstraint|Get-SmbOpenFile|Get-SmbServerConfiguration|Get-SmbServerNetworkInterface|Get-SmbSession|Get-SmbShare|Get-SmbShareAccess|Grant-SmbShareAccess|New-SmbMapping|New-SmbMultichannelConstraint|New-SmbShare|Remove-SmbBandwidthLimit|Remove-SmbMapping|Remove-SmbMultichannelConstraint|Remove-SmbShare|Revoke-SmbShareAccess|Set-SmbBandwidthLimit|Set-SmbClientConfiguration|Set-SmbPathAcl|Set-SmbServerConfiguration|Set-SmbShare|Unblock-SmbShareAccess|Update-SmbMultichannelConnection|" +
+        "Get-DisplayResolution|Set-DisplayResolution|" +
+        "Disable-ServerManagerStandardUserRemoting|Enable-ServerManagerStandardUserRemoting|Get-WindowsFeature|Install-WindowsFeature|Uninstall-WindowsFeature|" +
+        "Get-SMCounterSample|Get-SMPerformanceCollector|Get-SMServerBpaResult|Get-SMServerClusterName|Get-SMServerEvent|Get-SMServerFeature|Get-SMServerInventory|Get-SMServerService|Remove-SMServerPerformanceLog|Start-SMPerformanceCollector|Stop-SMPerformanceCollector|" +
+        "Get-KeyProtectorFromShieldingDataFile|Get-ShieldedVMProvisioningStatus|Initialize-ShieldedVM|New-ShieldedVMSpecializationDataFile|Test-ShieldingDataApplicability|" +
+        "Import-ShieldingDataFile|New-ShieldingDataFile|New-VolumeIDQualifier|Save-ShieldedVMRecoveryKey|Save-VolumeSignatureCatalog|Unprotect-ShieldedVMRecoveryKey|" +
+        "Initialize-VMShieldingHelperVHD|Protect-TemplateDisk|" +
+        "Block-SmbShareAccess|Close-SmbOpenFile|Close-SmbSession|Disable-SmbDelegation|Enable-SmbDelegation|Get-SmbBandwidthLimit|Get-SmbClientConfiguration|Get-SmbClientNetworkInterface|Get-SmbConnection|Get-SmbDelegation|Get-SmbGlobalMapping|Get-SmbMapping|Get-SmbMultichannelConnection|Get-SmbMultichannelConstraint|Get-SmbOpenFile|Get-SmbServerCertificateMapping|Get-SmbServerCertProps|Get-SmbServerConfiguration|Get-SmbServerNetworkInterface|Get-SmbSession|Get-SmbShare|Get-SmbShareAccess|Grant-SmbShareAccess|New-SmbGlobalMapping|New-SmbMapping|New-SmbMultichannelConstraint|New-SmbServerCertificateMapping|New-SmbShare|Remove-SmbBandwidthLimit|Remove-SmbComponent|Remove-SmbGlobalMapping|Remove-SmbMapping|Remove-SmbMultichannelConstraint|Remove-SmbServerCertificateMapping|Remove-SmbShare|Reset-SmbClientConfiguration|Reset-SmbServerConfiguration|Revoke-SmbShareAccess|Set-SmbBandwidthLimit|Set-SmbClientConfiguration|Set-SmbPathAcl|Set-SmbServerCertificateMapping|Set-SmbServerConfiguration|Set-SmbShare|Unblock-SmbShareAccess|Update-SmbMultichannelConnection|" +
         "Move-SmbClient|Get-SmbWitnessClient|Move-SmbWitnessClient|" +
-        "Get-StartApps|Export-StartLayout|Import-StartLayout|" +
-        "Disable-PhysicalDiskIndication|Disable-StorageDiagnosticLog|Enable-PhysicalDiskIndication|Enable-StorageDiagnosticLog|Flush-Volume|Get-DiskSNV|Get-PhysicalDiskSNV|Get-StorageEnclosureSNV|Initialize-Volume|Write-FileSystemCache|Add-InitiatorIdToMaskingSet|Add-PartitionAccessPath|Add-PhysicalDisk|Add-TargetPortToMaskingSet|Add-VirtualDiskToMaskingSet|Block-FileShareAccess|Clear-Disk|Clear-FileStorageTier|Clear-StorageDiagnosticInfo|Connect-VirtualDisk|Debug-FileShare|Debug-StorageSubSystem|Debug-Volume|Disable-PhysicalDiskIdentification|Disable-StorageEnclosureIdentification|Disable-StorageHighAvailability|Disconnect-VirtualDisk|Dismount-DiskImage|Enable-PhysicalDiskIdentification|Enable-StorageEnclosureIdentification|Enable-StorageHighAvailability|Format-Volume|Get-DedupProperties|Get-Disk|Get-DiskImage|Get-DiskStorageNodeView|Get-FileIntegrity|Get-FileShare|Get-FileShareAccessControlEntry|Get-FileStorageTier|Get-InitiatorId|Get-InitiatorPort|Get-MaskingSet|Get-OffloadDataTransferSetting|Get-Partition|Get-PartitionSupportedSize|Get-PhysicalDisk|Get-PhysicalDiskStorageNodeView|Get-ResiliencySetting|Get-StorageAdvancedProperty|Get-StorageDiagnosticInfo|Get-StorageEnclosure|Get-StorageEnclosureStorageNodeView|Get-StorageEnclosureVendorData|Get-StorageFaultDomain|Get-StorageFileServer|Get-StorageFirmwareInformation|Get-StorageHealthAction|Get-StorageHealthReport|Get-StorageHealthSetting|Get-StorageJob|Get-StorageNode|Get-StoragePool|Get-StorageProvider|Get-StorageReliabilityCounter|Get-StorageSetting|Get-StorageSubSystem|Get-StorageTier|Get-StorageTierSupportedSize|Get-SupportedClusterSizes|Get-SupportedFileSystems|Get-TargetPort|Get-TargetPortal|Get-VirtualDisk|Get-VirtualDiskSupportedSize|Get-Volume|Get-VolumeCorruptionCount|Get-VolumeScrubPolicy|Grant-FileShareAccess|Hide-VirtualDisk|Initialize-Disk|Mount-DiskImage|New-FileShare|New-MaskingSet|New-Partition|New-StorageFileServer|New-StoragePool|New-StorageSubsystemVirtualDisk|New-StorageTier|New-VirtualDisk|New-VirtualDiskClone|New-VirtualDiskSnapshot|New-Volume|Optimize-StoragePool|Optimize-Volume|Register-StorageSubsystem|Remove-FileShare|Remove-InitiatorId|Remove-InitiatorIdFromMaskingSet|Remove-MaskingSet|Remove-Partition|Remove-PartitionAccessPath|Remove-PhysicalDisk|Remove-StorageFileServer|Remove-StorageHealthSetting|Remove-StoragePool|Remove-StorageTier|Remove-TargetPortFromMaskingSet|Remove-VirtualDisk|Remove-VirtualDiskFromMaskingSet|Rename-MaskingSet|Repair-FileIntegrity|Repair-VirtualDisk|Repair-Volume|Reset-PhysicalDisk|Reset-StorageReliabilityCounter|Resize-Partition|Resize-StorageTier|Resize-VirtualDisk|Revoke-FileShareAccess|Set-Disk|Set-FileIntegrity|Set-FileShare|Set-FileStorageTier|Set-InitiatorPort|Set-Partition|Set-PhysicalDisk|Set-ResiliencySetting|Set-StorageFileServer|Set-StorageHealthSetting|Set-StoragePool|Set-StorageProvider|Set-StorageSetting|Set-StorageSubSystem|Set-StorageTier|Set-VirtualDisk|Set-Volume|Set-VolumeScrubPolicy|Show-VirtualDisk|Start-StorageDiagnosticLog|Stop-StorageDiagnosticLog|Stop-StorageJob|Unblock-FileShareAccess|Unregister-StorageSubsystem|Update-Disk|Update-HostStorageCache|Update-StorageFirmware|Update-StoragePool|Update-StorageProviderCache|Write-VolumeCache|" +
-        "Disable-TlsCipherSuite|Disable-TlsSessionTicketKey|Enable-TlsCipherSuite|Enable-TlsSessionTicketKey|Export-TlsSessionTicketKey|Get-TlsCipherSuite|New-TlsSessionTicketKey|" +
+        "Register-SmisProvider|Search-SmisProvider|Unregister-SmisProvider|" +
+        "Get-SilComputer|Get-SilComputerIdentity|Get-SilData|Get-SilLogging|Get-SilSoftware|Get-SilUalAccess|Get-SilWindowsUpdate|Publish-SilData|Set-SilLogging|Start-SilLogging|Stop-SilLogging|" +
+        "Get-StartApps|Export-StartLayout|Import-StartLayout|Export-StartLayoutEdgeAssets|" +
+        "Add-InitiatorIdToMaskingSet|Add-PartitionAccessPath|Add-PhysicalDisk|Add-TargetPortToMaskingSet|Add-VirtualDiskToMaskingSet|Block-FileShareAccess|Clear-Disk|Clear-FileStorageTier|Connect-VirtualDisk|Debug-FileShare|Debug-StorageSubSystem|Debug-Volume|Disable-PhysicalDiskIdentification|Disable-StorageEnclosureIdentification|Disable-StorageHighAvailability|Disable-StorageMaintenanceMode|Disconnect-VirtualDisk|Dismount-DiskImage|Enable-PhysicalDiskIdentification|Enable-StorageEnclosureIdentification|Enable-StorageHighAvailability|Enable-StorageMaintenanceMode|Format-Volume|Get-DedupProperties|Get-Disk|||||Get-DiskImage|Get-DiskStorageNodeView|Get-FileIntegrity|Get-FileShare|Get-FileShareAccessControlEntry|Get-FileStorageTier|Get-InitiatorId|Get-InitiatorPort|Get-MaskingSet|Get-OffloadDataTransferSetting|Get-Partition|Get-PartitionSupportedSize|Get-PhysicalDisk|Get-PhysicalDiskStorageNodeView|Get-PhysicalExtent|Get-PhysicalExtentAssociation|Get-ResiliencySetting|Get-StorageAdvancedProperty|Get-StorageDiagnosticInfo|Get-StorageEnclosure|Get-StorageEnclosureStorageNodeView|Get-StorageEnclosureVendorData|Get-StorageFaultDomain|Get-StorageFileServer|Get-StorageFirmwareInformation|Get-StorageHealthAction|Get-StorageHealthReport|Get-StorageHealthSetting|Get-StorageJob|Get-StorageNode|Get-StoragePool|Get-StorageProvider|Get-StorageReliabilityCounter|Get-StorageSetting|Get-StorageSubSystem|Get-StorageTier|Get-StorageTierSupportedSize|Get-SupportedClusterSizes|Get-SupportedFileSystems|Get-TargetPort|Get-TargetPortal|Get-VirtualDisk|Get-VirtualDiskSupportedSize|Get-Volume|Get-VolumeCorruptionCount|Get-VolumeScrubPolicy|Grant-FileShareAccess|Hide-VirtualDisk|Initialize-Disk|Mount-DiskImage|New-FileShare|New-MaskingSet|New-Partition|New-StorageFileServer|New-StoragePool|New-StorageSubsystemVirtualDisk|New-StorageTier|New-VirtualDisk|New-VirtualDiskClone|New-VirtualDiskSnapshot|New-Volume|Optimize-StoragePool|Optimize-Volume|Register-StorageSubsystem|Remove-FileShare|Remove-InitiatorId|Remove-InitiatorIdFromMaskingSet|Remove-MaskingSet|Remove-Partition|Remove-PartitionAccessPath|Remove-PhysicalDisk|Remove-StorageFileServer|Remove-StorageHealthSetting|Remove-StoragePool|Remove-StorageTier|Remove-TargetPortFromMaskingSet|Remove-VirtualDisk|Remove-VirtualDiskFromMaskingSet|Rename-MaskingSet|Repair-FileIntegrity|Repair-VirtualDisk|Repair-Volume|Reset-PhysicalDisk|Reset-StorageReliabilityCounter|Resize-Partition|Resize-StorageTier|Resize-VirtualDisk|Revoke-FileShareAccess|Set-Disk|Set-FileIntegrity|Set-FileShare|Set-FileStorageTier|Set-InitiatorPort|Set-Partition|Set-PhysicalDisk|Set-ResiliencySetting|Set-StorageFileServer|Set-StorageHealthSetting|Set-StoragePool|Set-StorageProvider|Set-StorageSetting|Set-StorageSubSystem|Set-StorageTier|Set-VirtualDisk|Set-Volume|Set-VolumeScrubPolicy|Show-VirtualDisk|Start-StorageDiagnosticLog|Stop-StorageDiagnosticLog|Stop-StorageJob|Unblock-FileShareAccess|Unregister-StorageSubsystem|Update-Disk|Update-HostStorageCache|Update-StorageFirmware|Update-StoragePool|Update-StorageProviderCache|Write-VolumeCache|" +
+        "Get-StorageQoSFlow|Get-StorageQosPolicy|Get-StorageQosPolicyStore|Get-StorageQosVolume|New-StorageQosPolicy|Remove-StorageQosPolicy|Set-StorageQosPolicy|Set-StorageQosPolicyStore|" +
+        "Clear-SRMetadata|Dismount-SRDestination|Export-SRConfiguration|Get-SRAccess|Get-SRDelegation|Get-SRGroup|Get-SRNetworkConstraint|Get-SRPartnership|Grant-SRAccess|Grant-SRDelegation|Mount-SRDestination|New-SRGroup|New-SRPartnership|Remove-SRGroup|Remove-SRNetworkConstraint|Remove-SRPartnership|Revoke-SRAccess|Revoke-SRDelegation|Set-SRGroup|Set-SRNetworkConstraint|Set-SRPartnership|Suspend-SRGroup|Sync-SRGroup|Test-SRTopology|" +
+        "Disable-SyncShare|Enable-SyncShare|Get-SyncServerSetting|Get-SyncShare|Get-SyncUserStatus|New-SyncShare|Remove-SyncShare|Repair-SyncShare|Set-SyncServerSetting|Set-SyncShare|" +
+        "Add-InsightsCapability|Disable-InsightsCapability|Disable-InsightsCapabilitySchedule|Enable-InsightsCapability|Enable-InsightsCapabilitySchedule|Get-InsightsCapability|Get-InsightsCapabilityAction|Get-InsightsCapabilityResult|Get-InsightsCapabilitySchedule|Invoke-InsightsCapability|Remove-InsightsCapability|Remove-InsightsCapabilityAction|Set-InsightsCapabilityAction|Set-InsightsCapabilitySchedule|Update-InsightsCapability|" +
+        "Disable-TlsCipherSuite|Disable-TlsEccCurve|Disable-TlsSessionTicketKey|Enable-TlsCipherSuite|Enable-TlsEccCurve|Enable-TlsSessionTicketKey|Export-TlsSessionTicketKey|Get-TlsCipherSuite|Get-TlsEccCurve|New-TlsSessionTicketKey|" +
         "Get-TroubleshootingPack|Invoke-TroubleshootingPack|" +
         "Clear-Tpm|ConvertTo-TpmOwnerAuth|Disable-TpmAutoProvisioning|Enable-TpmAutoProvisioning|Get-Tpm|Get-TpmEndorsementKeyInfo|Get-TpmSupportedFeature|Import-TpmOwnerAuth|Initialize-Tpm|Set-TpmOwnerAuth|Unblock-Tpm|" +
+        "Clear-UevAppxPackage|Clear-UevConfiguration|Disable-Uev|Disable-UevAppxPackage|Disable-UevTemplate|Enable-Uev|Enable-UevAppxPackage|Enable-UevTemplate|Export-UevConfiguration|Export-UevPackage|Get-UevAppxPackage|Get-UevConfiguration|Get-UevStatus|Get-UevTemplate|Get-UevTemplateProgram|Import-UevConfiguration|Register-UevTemplate|Repair-UevTemplateIndex|Restore-UevBackup|Restore-UevUserSetting|Set-UevConfiguration|Set-UevTemplateProfile|Test-UevTemplate|Unregister-UevTemplate|Update-UevTemplate|" +
+        "Add-WsusComputer|Add-WsusDynamicCategory|Approve-WsusUpdate|Deny-WsusUpdate|Get-WsusClassification|Get-WsusComputer|Get-WsusDynamicCategory|Get-WsusProduct|Get-WsusServer|Get-WsusUpdate|Invoke-WsusServerCleanup|Remove-WsusDynamicCategory|Set-WsusClassification|Set-WsusDynamicCategory|Set-WsusProduct|Set-WsusServerSynchronization|" +
+        "Disable-Ual|Enable-Ual|Get-Ual|Get-UalDailyAccess|Get-UalDailyDeviceAccess|Get-UalDailyUserAccess|Get-UalDeviceAccess|Get-UalDns|Get-UalHyperV|Get-UalOverview|Get-UalServerDevice|Get-UalServerUser|Get-UalSystemId|Get-UalUserAccess|" +
+        "Add-VamtProductKey|Export-VamtData|Find-VamtManagedMachine|Get-VamtConfirmationId|Get-VamtProduct|Get-VamtProductKey|Import-VamtData|Initialize-VamtData|Install-VamtConfirmationId|Install-VamtProductActivation|Install-VamtProductKey|Update-VamtProduct|" +
         "Add-VpnConnection|Add-VpnConnectionRoute|Add-VpnConnectionTriggerApplication|Add-VpnConnectionTriggerDnsConfiguration|Add-VpnConnectionTriggerTrustedNetwork|Get-VpnConnection|Get-VpnConnectionTrigger|New-EapConfiguration|New-VpnServerAddress|Remove-VpnConnection|Remove-VpnConnectionRoute|Remove-VpnConnectionTriggerApplication|Remove-VpnConnectionTriggerDnsConfiguration|Remove-VpnConnectionTriggerTrustedNetwork|Set-VpnConnection|Set-VpnConnectionIPsecConfiguration|Set-VpnConnectionProxy|Set-VpnConnectionTriggerDnsConfiguration|Set-VpnConnectionTriggerTrustedNetwork|" +
-        "Add-OdbcDsn|Disable-OdbcPerfCounter|Disable-WdacBidTrace|Enable-OdbcPerfCounter|Enable-WdacBidTrace|Get-OdbcDriver|Get-OdbcDsn|Get-OdbcPerfCounter|Get-WdacBidTrace|Remove-OdbcDsn|Set-OdbcDriver|Set-OdbcDsn|" +
+        "Add-WdsDriverPackage|Approve-WdsClient|Copy-WdsInstallImage|Deny-WdsClient|Disable-WdsBootImage|Disable-WdsDriverPackage|Disable-WdsInstallImage|Disconnect-WdsMulticastClient|Enable-WdsBootImage|Enable-WdsDriverPackage|Enable-WdsInstallImage|Export-WdsBootImage|Export-WdsInstallImage|Get-WdsBootImage|Get-WdsClient|Get-WdsDriverPackage|Get-WdsInstallImage|Get-WdsInstallImageGroup|Get-WdsMulticastClient|Import-WdsBootImage|Import-WdsDriverPackage|Import-WdsInstallImage|New-WdsClient|New-WdsInstallImageGroup|Remove-WdsBootImage|Remove-WdsClient|Remove-WdsDriverPackage|Remove-WdsInstallImage|Remove-WdsInstallImageGroup|Set-WdsBootImage|Set-WdsClient|Set-WdsInstallImage|Set-WdsInstallImageGroup|" +
+        "Add-WebConfiguration|Add-WebConfigurationLock|Add-WebConfigurationProperty|Backup-WebConfiguration|Clear-WebCentralCertProvider|Clear-WebConfiguration|Clear-WebRequestTracingSetting|Clear-WebRequestTracingSettings|ConvertTo-WebApplication|Disable-WebCentralCertProvider|Disable-WebGlobalModule|Disable-WebRequestTracing|Enable-WebCentralCertProvider|Enable-WebGlobalModule|Enable-WebRequestTracing|Get-WebAppDomain|Get-WebApplication|Get-WebAppPoolState|Get-WebBinding|Get-WebCentralCertProvider|Get-WebConfigFile|Get-WebConfiguration|Get-WebConfigurationBackup|Get-WebConfigurationLocation|Get-WebConfigurationLock|Get-WebConfigurationProperty|Get-WebFilePath|Get-WebGlobalModule|Get-WebHandler|Get-WebItemState|Get-WebManagedModule|Get-WebRequest|Get-Website|Get-WebsiteState|Get-WebURL|Get-WebVirtualDirectory|New-WebApplication|New-WebAppPool|New-WebBinding|New-WebFtpSite|New-WebGlobalModule|New-WebHandler|New-WebManagedModule|New-Website|New-WebVirtualDirectory|Remove-WebApplication|Remove-WebAppPool|Remove-WebBinding|Remove-WebConfigurationBackup|Remove-WebConfigurationLocation|Remove-WebConfigurationLock|Remove-WebConfigurationProperty|Remove-WebGlobalModule|Remove-WebHandler|Remove-WebManagedModule|Remove-Website|Remove-WebVirtualDirectory|Rename-WebConfigurationLocation|Restart-WebAppPool|Restart-WebItem|Restore-WebConfiguration|Select-WebConfiguration|Set-WebBinding|Set-WebCentralCertProvider|Set-WebCentralCertProviderCredential|Set-WebConfiguration|Set-WebConfigurationProperty|Set-WebGlobalModule|Set-WebHandler|Set-WebManagedModule|Start-WebAppPool|Start-WebCommitDelay|Start-WebItem|Start-Website|Stop-WebAppPool|Stop-WebCommitDelay|Stop-WebItem|Stop-Website|" +
+        "Add-WebApplicationProxyApplication|Get-WebApplicationProxyApplication|Get-WebApplicationProxyAvailableADFSRelyingParty|Get-WebApplicationProxyConfiguration|Get-WebApplicationProxyHealth|Get-WebApplicationProxySslCertificate|Install-WebApplicationProxy|Remove-WebApplicationProxyApplication|Set-WebApplicationProxyApplication|Set-WebApplicationProxyConfiguration|Set-WebApplicationProxySslCertificate|Update-WebApplicationProxyDeviceRegistration|" +
+        "Get-WheaMemoryPolicy|Set-WheaMemoryPolicy|" +
         "Get-WindowsDeveloperLicense|Show-WindowsDeveloperLicenseRegistration|Unregister-WindowsDeveloperLicense|" +
+        "Clear-WindowsDiagnosticData|" +
         "Disable-WindowsErrorReporting|Enable-WindowsErrorReporting|Get-WindowsErrorReporting|" +
         "Get-WindowsSearchSetting|Set-WindowsSearchSetting|" +
+        "Add-WBBackupTarget|Add-WBBareMetalRecovery|Add-WBFileSpec|Add-WBSystemState|Add-WBVirtualMachine|Add-WBVolume|Backup-ACL|Get-WBBackupSet|Get-WBBackupTarget|Get-WBBackupVolumeBrowsePath|Get-WBBareMetalRecovery|Get-WBDisk|Get-WBFileSpec|Get-WBJob|Get-WBPerformanceConfiguration|Get-WBPolicy|Get-WBSchedule|Get-WBSummary|Get-WBSystemState|Get-WBVirtualMachine|Get-WBVolume|Get-WBVssBackupOption|New-WBBackupTarget|New-WBFileSpec|New-WBPolicy|Remove-WBBackupSet|Remove-WBBackupTarget|Remove-WBBareMetalRecovery|Remove-WBCatalog|Remove-WBFileSpec|Remove-WBPolicy|Remove-WBSystemState|Remove-WBVirtualMachine|Remove-WBVolume|Restore-ACL|Restore-WBCatalog|Resume-WBBackup|Resume-WBVolumeRecovery|Set-WBPerformanceConfiguration|Set-WBPolicy|Set-WBSchedule|Set-WBVssBackupOption|Start-WBApplicationRecovery|Start-WBBackup|Start-WBFileRecovery|Start-WBHyperVRecovery|Start-WBSystemStateRecovery|Start-WBVolumeRecovery|Stop-WBJob|" +
         "Get-WindowsUpdateLog");
     var keywordMapper = this.createKeywordMapper({
         "support.function": builtinFunctions,
@@ -31636,42 +31978,46 @@ var PowershellHighlightRules = function () {
                 regex: "<#",
                 next: "comment"
             }, {
-                token: "string",
-                regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+                token: "string", // multi line
+                regex: /@'$/,
+                push: [
+                    {
+                        token: "string",
+                        regex: /^'@/,
+                        next: "pop"
+                    },
+                    {
+                        defaultToken: "string"
+                    }
+                ]
             }, {
-                token: "string",
-                regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
-            }, {
-                token: "constant.numeric",
-                regex: "0[xX][0-9a-fA-F]+\\b"
-            }, {
-                token: "constant.numeric",
-                regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
-            }, {
-                token: "constant.language.boolean",
-                regex: "[$](?:[Tt]rue|[Ff]alse)\\b"
-            }, {
-                token: "constant.language",
-                regex: "[$][Nn]ull\\b"
-            }, {
-                token: "variable.instance",
-                regex: "[$][a-zA-Z][a-zA-Z0-9_]*\\b"
-            }, {
-                token: keywordMapper,
-                regex: "[a-zA-Z_$][a-zA-Z0-9_$\\-]*\\b"
-            }, {
-                token: "keyword.operator",
-                regex: "\\-(?:" + binaryOperatorsRe + ")"
-            }, {
-                token: "keyword.operator",
-                regex: "&|\\+|\\-|\\*|\\/|\\%|\\=|\\>|\\&|\\!|\\|"
-            }, {
+                token: "string", // multi line
+                regex: /@"$/,
+                push: [
+                    {
+                        token: "string",
+                        regex: /^"@/,
+                        next: "pop"
+                    },
+                    { include: "expressions" },
+                    { include: "expandable-strings" },
+                    {
+                        defaultToken: "string"
+                    }
+                ]
+            },
+            { include: "strings" },
+            { include: "variables" },
+            { include: "statements" },
+            { include: "expressions" },
+            {
                 token: "lparen",
                 regex: "[[({]"
             }, {
                 token: "rparen",
                 regex: "[\\])}]"
-            }, {
+            },
+            {
                 token: "text",
                 regex: "\\s+"
             }
@@ -31687,8 +32033,143 @@ var PowershellHighlightRules = function () {
             }, {
                 defaultToken: "comment"
             }
+        ],
+        "expandable-strings": [
+            {
+                token: "constant.language.escape",
+                regex: /`./
+            },
+            { include: "variables" }
+        ],
+        "variables": [
+            {
+                token: "variable.instance",
+                regex: "[$]" + identifierRe + "\\b"
+            },
+            {
+                token: "variable.braced",
+                regex: /\$\{/,
+                push: [
+                    {
+                        token: "variable.braced",
+                        regex: /\}/,
+                        next: "pop"
+                    },
+                    {
+                        token: "constant.language.escape",
+                        regex: /`./
+                    },
+                    { defaultToken: "variable.braced" }
+                ]
+            }
+        ],
+        "statements": [
+            {
+                token: "punctuation",
+                regex: ";"
+            },
+            {
+                token: "keyword.operator",
+                regex: "\\-(?:" + binaryOperatorsRe + ")"
+            }, {
+                token: "keyword.operator",
+                regex: "&|\\+|\\-|\\*|\\/|\\%|\\=|\\>|\\&|\\!|\\|"
+            },
+            { include: "constants" },
+            {
+                token: keywordMapper,
+                regex: "[a-zA-Z_$][a-zA-Z0-9_$\\-]*\\b"
+            }
+        ],
+        "constants": [
+            {
+                token: "constant.numeric", // hex
+                regex: "0[xX][0-9a-fA-F]+\\b"
+            }, {
+                token: "constant.numeric", // float
+                regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
+            }, {
+                token: "constant.language.boolean",
+                regex: "[$](?:[Tt]rue|[Ff]alse)\\b"
+            }, {
+                token: "constant.language",
+                regex: "[$][Nn]ull\\b"
+            }
+        ],
+        "strings": [
+            {
+                token: "string", // single line
+                regex: "['][^']*[']"
+            },
+            {
+                token: "string", // single line
+                regex: /"/,
+                push: [
+                    {
+                        token: "string",
+                        regex: /"|$/,
+                        next: "pop"
+                    },
+                    { include: "expressions" },
+                    { include: "expandable-strings" },
+                    {
+                        defaultToken: "string"
+                    }
+                ]
+            }
+        ],
+        "expressions": [
+            {
+                token: "keyword.operator",
+                regex: /[$@]\(/,
+                push: [
+                    {
+                        token: "keyword.operator",
+                        regex: /\)/,
+                        next: "pop"
+                    },
+                    { include: "parens-block" },
+                    { include: "expressions" },
+                    { include: "strings" },
+                    { include: "variables" },
+                    { include: "statements" }
+                ]
+            },
+            {
+                token: "keyword.operator",
+                regex: /@\{/,
+                push: [
+                    {
+                        token: "keyword.operator",
+                        regex: /\}/,
+                        next: "pop"
+                    },
+                    { include: "parens-block" },
+                    { include: "strings" },
+                    { include: "variables" },
+                    { include: "statements" }
+                ]
+            }
+        ],
+        "parens-block": [
+            {
+                token: "paren.lparen",
+                regex: /\(/,
+                push: [
+                    {
+                        token: "paren.rparen",
+                        regex: /\)/,
+                        next: "pop"
+                    },
+                    { include: "parens-block" },
+                    { include: "strings" },
+                    { include: "variables" },
+                    { include: "statements" }
+                ]
+            }
         ]
     };
+    this.normalizeRules();
 };
 oop.inherits(PowershellHighlightRules, TextHighlightRules);
 exports.PowershellHighlightRules = PowershellHighlightRules;
@@ -32276,23 +32757,23 @@ var ProtobufHighlightRules = function () {
                 regex: "=",
                 token: "keyword.operator.assignment.protobuf"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '[\'](?:(?:\\\\.)|(?:[^\'\\\\]))*?[\']'
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
                 regex: "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
             }],
         "comment": [{
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -32737,7 +33218,7 @@ var RustHighlightRules = function () {
     this.$rules = {
         start: [
             {
-                token: 'variable.other.source.rust',
+                token: 'variable.other.source.rust', // `(?![\\\'])` to keep a lifetime name highlighting from continuing one character
                 regex: '\'' + wordPattern + '(?![\\\'])'
             }, {
                 token: 'string.quoted.single.source.rust',
@@ -32838,7 +33319,7 @@ var RustHighlightRules = function () {
                         regex: "<",
                         push: "generics"
                     }, {
-                        token: 'variable.other.source.rust',
+                        token: 'variable.other.source.rust', // `(?![\\\'])` to keep a lifetime name highlighting from continuing one character
                         regex: '\'' + wordPattern + '(?![\\\'])'
                     }, {
                         token: "storage.type.source.rust",
@@ -32871,7 +33352,7 @@ var RustHighlightRules = function () {
                 token: keywordMapper,
                 regex: wordPattern
             }, {
-                token: 'keyword.operator',
+                token: 'keyword.operator', // `[*/](?![*/])=?` is separated because `//` and `/* */` become comments and must be
                 regex: /\$|[-=]>|[-+%^=!&|<>]=?|[*/](?![*/])=?/
             }, {
                 token: "punctuation.operator",
@@ -33015,34 +33496,34 @@ var scadHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
-                token: "string",
+                token: "string", // multi line string start
                 regex: '["].*\\\\$',
                 next: "qqstring"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
             }, {
-                token: "string",
+                token: "string", // multi line string start
                 regex: "['].*\\\\$",
                 next: "qstring"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
-                token: "constant",
+                token: "constant", // <CONSTANT>
                 regex: "<[a-zA-Z0-9.]+>"
             }, {
-                token: "keyword",
+                token: "keyword", // pre-compiler directivs
                 regex: "(?:use|include)"
             }, {
                 token: keywordMapper,
@@ -33063,7 +33544,7 @@ var scadHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -33211,7 +33692,7 @@ var ScalaHighlightRules = function () {
             },
             DocCommentHighlightRules.getStartRule("doc-start"),
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: "\\/\\*",
                 next: "comment"
             }, {
@@ -33223,16 +33704,16 @@ var ScalaHighlightRules = function () {
                 next: "tstring"
             }, {
                 token: "string",
-                regex: '"(?=.)',
+                regex: '"(?=.)', // " strings can't span multiple lines
                 next: "string"
             }, {
-                token: "symbol.constant",
+                token: "symbol.constant", // single line
                 regex: "'[\\w\\d_]+"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex
                 regex: "0[xX][0-9a-fA-F]+\\b"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: "constant.language.boolean",
@@ -33256,7 +33737,7 @@ var ScalaHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -33350,11 +33831,11 @@ var SchemeHighlightRules = function () {
                     "regex": "(\\*)(\\S*)(\\*)"
                 },
                 {
-                    "token": "constant.numeric",
+                    "token": "constant.numeric", // hex
                     "regex": "#[xXoObB][0-9a-fA-F]+"
                 },
                 {
-                    "token": "constant.numeric",
+                    "token": "constant.numeric", // float
                     "regex": "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?"
                 },
                 {
@@ -34006,12 +34487,18 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var SqlHighlightRules = function () {
     var keywords = ("select|insert|update|delete|from|where|and|or|group|by|order|limit|offset|having|as|case|" +
         "when|then|else|end|type|left|right|join|on|outer|desc|asc|union|create|table|primary|key|if|" +
-        "foreign|not|references|default|null|inner|cross|natural|database|drop|grant|distinct|is|in");
+        "foreign|not|references|default|null|inner|cross|natural|database|drop|grant|distinct|is|in|" +
+        "all|alter|any|array|at|authorization|between|both|cast|check|collate|column|commit|constraint|" +
+        "cube|current|current_date|current_time|current_timestamp|current_user|describe|escape|except|" +
+        "exists|external|extract|fetch|filter|for|full|function|global|grouping|intersect|interval|" +
+        "into|leading|like|local|no|of|only|out|overlaps|partition|position|range|revoke|rollback|rollup|" +
+        "row|rows|session_user|set|some|start|tablesample|time|to|trailing|truncate|unique|unknown|" +
+        "user|using|values|window|with");
     var builtinConstants = ("true|false");
     var builtinFunctions = ("avg|count|first|last|max|min|sum|ucase|lcase|mid|len|round|rank|now|format|" +
         "coalesce|ifnull|isnull|nvl");
     var dataTypes = ("int|numeric|decimal|date|varchar|char|bigint|float|double|bit|binary|text|set|timestamp|" +
-        "money|real|number|integer");
+        "money|real|number|integer|string");
     var keywordMapper = this.createKeywordMapper({
         "support.function": builtinFunctions,
         "keyword": keywords,
@@ -34027,16 +34514,16 @@ var SqlHighlightRules = function () {
                 start: "/\\*",
                 end: "\\*/"
             }, {
-                token: "string",
+                token: "string", // " string
                 regex: '".*?"'
             }, {
-                token: "string",
+                token: "string", // ' string
                 regex: "'.*?'"
             }, {
-                token: "string",
+                token: "string", // ` string (apache drill)
                 regex: "`.*?`"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
@@ -34114,7 +34601,7 @@ var StylusHighlightRules = function () {
                 regex: /\/\/.*$/
             },
             {
-                token: "comment",
+                token: "comment", // multi line comment
                 regex: /\/\*/,
                 next: "comment"
             },
@@ -34150,11 +34637,11 @@ var StylusHighlightRules = function () {
                 regex: "(?:\\b)(a|abbr|acronym|address|area|article|aside|audio|b|base|big|blockquote|body|br|button|canvas|caption|cite|code|col|colgroup|datalist|dd|del|details|dfn|dialog|div|dl|dt|em|eventsource|fieldset|figure|figcaption|footer|form|frame|frameset|(?:h[1-6])|head|header|hgroup|hr|html|i|iframe|img|input|ins|kbd|label|legend|li|link|map|mark|menu|meta|meter|nav|noframes|noscript|object|ol|optgroup|option|output|p|param|pre|progress|q|samp|script|section|select|small|span|strike|strong|style|sub|summary|sup|table|tbody|td|textarea|tfoot|th|thead|time|title|tr|tt|ul|var|video)(?:\\b)"
             },
             {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex6 color
                 regex: "#[a-fA-F0-9]{6}"
             },
             {
-                token: "constant.numeric",
+                token: "constant.numeric", // hex3 color
                 regex: "#[a-fA-F0-9]{3}"
             },
             {
@@ -34201,7 +34688,7 @@ var StylusHighlightRules = function () {
         ],
         "comment": [
             {
-                token: "comment",
+                token: "comment", // closing comment
                 regex: "\\*\\/",
                 next: "start"
             }, {
@@ -34512,14 +34999,14 @@ var TclHighlightRules = function () {
                 token: "text",
                 regex: /\\(?:["{}\[\]$\\])/
             }, {
-                token: "text",
+                token: "text", // last value before command
                 regex: '^|[^{][;][^}]|[/\r/]',
                 next: "commandItem"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '[ ]*["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
-                token: "string",
+                token: "string", // multi line """ string start
                 regex: '[ ]*["]',
                 next: "qqstring"
             }, {
@@ -34557,7 +35044,7 @@ var TclHighlightRules = function () {
                 regex: "#.*$",
                 next: "start"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '[ ]*["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
                 token: "variable.instance",
@@ -34610,17 +35097,17 @@ var TclHighlightRules = function () {
         ],
         "variable": [
             {
-                token: "variable.instance",
+                token: "variable.instance", // variable tcl
                 regex: "[a-zA-Z_\\d]+(?:[(][a-zA-Z_\\d]+[)])?",
                 next: "start"
             }, {
-                token: "variable.instance",
+                token: "variable.instance", // variable tcl with braces
                 regex: "{?[a-zA-Z_\\d]+}?",
                 next: "start"
             }
         ],
         "qqstring": [{
-                token: "string",
+                token: "string", // multi line """ string end
                 regex: '(?:[^\\\\]|\\\\.)*?["]',
                 next: "start"
             }, {
@@ -34728,14 +35215,14 @@ var TexHighlightRules = function (textClass) {
                 token: "comment",
                 regex: "%.*$"
             }, {
-                token: textClass,
+                token: textClass, // non-command
                 regex: "\\\\[$&%#\\{\\}]"
             }, {
-                token: "keyword",
+                token: "keyword", // command
                 regex: "\\\\(?:documentclass|usepackage|newcounter|setcounter|addtocounter|value|arabic|stepcounter|newenvironment|renewenvironment|ref|vref|eqref|pageref|label|cite[a-zA-Z]*|tag|begin|end|bibitem)\\b",
                 next: "nospell"
             }, {
-                token: "keyword",
+                token: "keyword", // command
                 regex: "\\\\(?:[a-zA-Z0-9]+|[^a-zA-Z0-9])"
             }, {
                 token: "paren.keyword.operator",
@@ -34754,13 +35241,13 @@ var TexHighlightRules = function (textClass) {
                 regex: "%.*$",
                 next: "start"
             }, {
-                token: "nospell." + textClass,
+                token: "nospell." + textClass, // non-command
                 regex: "\\\\[$&%#\\{\\}]"
             }, {
-                token: "keyword",
+                token: "keyword", // command
                 regex: "\\\\(?:documentclass|usepackage|newcounter|setcounter|addtocounter|value|arabic|stepcounter|newenvironment|renewenvironment|ref|vref|eqref|pageref|label|cite[a-zA-Z]*|tag|begin|end|bibitem)\\b"
             }, {
-                token: "keyword",
+                token: "keyword", // command
                 regex: "\\\\(?:[a-zA-Z0-9]+|[^a-zA-Z0-9])",
                 next: "start"
             }, {
@@ -35087,10 +35574,10 @@ var TwigHighlightRules = function () {
             regex: '"',
             next: "twig-qqstring"
         }, {
-            token: "constant.numeric",
+            token: "constant.numeric", // hex
             regex: "0[xX][0-9a-fA-F]+\\b"
         }, {
-            token: "constant.numeric",
+            token: "constant.numeric", // float
             regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
         }, {
             token: "constant.language.boolean",
@@ -36272,23 +36759,23 @@ var VelocityHighlightRules = function () {
         token: "comment",
         regex: "##.*$"
     }, {
-        token: "comment.block",
+        token: "comment.block", // multi line comment
         regex: "#\\*",
         next: "vm_comment"
     }, {
         token: "string.regexp",
         regex: "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/]\\w*\\s*(?=[).,;]|$)"
     }, {
-        token: "string",
+        token: "string", // single line
         regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
     }, {
-        token: "string",
+        token: "string", // single line
         regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
     }, {
-        token: "constant.numeric",
+        token: "constant.numeric", // hex
         regex: "0[xX][0-9a-fA-F]+\\b"
     }, {
-        token: "constant.numeric",
+        token: "constant.numeric", // float
         regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
     }, {
         token: "constant.language.boolean",
@@ -36325,7 +36812,7 @@ var VelocityHighlightRules = function () {
     });
     this.$rules["vm_comment"] = [
         {
-            token: "comment",
+            token: "comment", // closing comment
             regex: "\\*#|-->",
             next: "start"
         }, {
@@ -36341,16 +36828,16 @@ var VelocityHighlightRules = function () {
             token: "string.regexp",
             regex: "[/](?:(?:\\[(?:\\\\]|[^\\]])+\\])|(?:\\\\/|[^\\]/]))*[/]\\w*\\s*(?=[).,;]|$)"
         }, {
-            token: "string",
+            token: "string", // single line
             regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
         }, {
-            token: "string",
+            token: "string", // single line
             regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
         }, {
-            token: "constant.numeric",
+            token: "constant.numeric", // hex
             regex: "0[xX][0-9a-fA-F]+\\b"
         }, {
-            token: "constant.numeric",
+            token: "constant.numeric", // float
             regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
         }, {
             token: "constant.language.boolean",
@@ -36542,7 +37029,7 @@ var VerilogHighlightRules = function () {
                 token: "string",
                 regex: "'^[']'"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
@@ -36622,16 +37109,16 @@ var VHDLHighlightRules = function () {
                 token: "comment",
                 regex: "--.*$"
             }, {
-                token: "string",
+                token: "string", // " string
                 regex: '".*?"'
             }, {
-                token: "string",
+                token: "string", // ' string
                 regex: "'.*?'"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
-                token: "keyword",
+                token: "keyword", // pre-compiler directives
                 regex: "\\s*(?:library|package|use)\\b"
             }, {
                 token: keywordMapper,
@@ -36710,10 +37197,10 @@ var YamlHighlightRules = function () {
                 token: "keyword.operator",
                 regex: "-\\s*(?=[{])"
             }, {
-                token: "string",
+                token: "string", // single line
                 regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
-                token: "string",
+                token: "string", // multi line string start
                 regex: /[|>][-+\d]*(?:$|\s+(?:$|#))/,
                 onMatch: function (val, state, stack, line) {
                     line = line.replace(/ #.*/, "");
@@ -36739,13 +37226,13 @@ var YamlHighlightRules = function () {
                 },
                 next: "mlString"
             }, {
-                token: "string",
+                token: "string", // single quoted string
                 regex: "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // float
                 regex: /(\b|[+\-\.])[\d_]+(?:(?:\.[\d_]*)?(?:[eE][+\-]?[\d_]+)?)(?=[^\d-\w]|$)$/
             }, {
-                token: "constant.numeric",
+                token: "constant.numeric", // other number
                 regex: /[+\-]?\.inf\b|NaN\b|0x[\dA-Fa-f_]+|0b[10_]+/
             }, {
                 token: "constant.language.boolean",
@@ -36818,12 +37305,104 @@ exports.YamlHighlightRules = YamlHighlightRules;
 
 });
 
-define("ace/mode/yaml",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/yaml_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/coffee","ace/worker/worker_client"], function(require, exports, module){"use strict";
+define("ace/mode/folding/yaml",["require","exports","module","ace/lib/oop","ace/mode/folding/coffee","ace/range"], function(require, exports, module){"use strict";
+var oop = require("../../lib/oop");
+var CoffeeFoldMode = require("./coffee").FoldMode;
+var Range = require("../../range").Range;
+var FoldMode = exports.FoldMode = function () { };
+oop.inherits(FoldMode, CoffeeFoldMode);
+(function () {
+    this.getFoldWidgetRange = function (session, foldStyle, row) {
+        var re = /\S/;
+        var line = session.getLine(row);
+        var startLevel = line.search(re);
+        var isCommentFold = line[startLevel] === "#";
+        var isDashFold = line[startLevel] === "-";
+        if (startLevel == -1)
+            return;
+        var startColumn = line.length;
+        var maxRow = session.getLength();
+        var startRow = row;
+        var endRow = row;
+        if (isCommentFold) {
+            var range = this.commentBlock(session, row);
+            if (range)
+                return range;
+        }
+        else if (isDashFold) {
+            var range = this.indentationBlock(session, row);
+            if (range)
+                return range;
+        }
+        else {
+            while (++row < maxRow) {
+                var line = session.getLine(row);
+                var level = line.search(re);
+                if (level == -1)
+                    continue;
+                if (level <= startLevel && line[startLevel] !== '-') {
+                    var token = session.getTokenAt(row, 0);
+                    if (!token || token.type !== "string")
+                        break;
+                }
+                endRow = row;
+            }
+        }
+        if (endRow > startRow) {
+            var endColumn = session.getLine(endRow).length;
+            return new Range(startRow, startColumn, endRow, endColumn);
+        }
+    };
+    this.getFoldWidget = function (session, foldStyle, row) {
+        var line = session.getLine(row);
+        var indent = line.search(/\S/);
+        var next = session.getLine(row + 1);
+        var prev = session.getLine(row - 1);
+        var prevIndent = prev.search(/\S/);
+        var nextIndent = next.search(/\S/);
+        var lineStartsWithDash = line[indent] === '-';
+        if (indent == -1) {
+            session.foldWidgets[row - 1] = prevIndent != -1 && prevIndent < nextIndent ? "start" : "";
+            return "";
+        }
+        if (prevIndent == -1) {
+            if (indent == nextIndent && line[indent] == "#" && next[indent] == "#") {
+                session.foldWidgets[row - 1] = "";
+                session.foldWidgets[row + 1] = "";
+                return "start";
+            }
+        }
+        else if (prevIndent == indent && line[indent] == "#" && prev[indent] == "#") {
+            if (session.getLine(row - 2).search(/\S/) == -1) {
+                session.foldWidgets[row - 1] = "start";
+                session.foldWidgets[row + 1] = "";
+                return "";
+            }
+        }
+        if (prevIndent != -1 && prevIndent < indent) {
+            session.foldWidgets[row - 1] = "start";
+        }
+        else if (prevIndent != -1 && (prevIndent == indent && lineStartsWithDash)) {
+            session.foldWidgets[row - 1] = "start";
+        }
+        else {
+            session.foldWidgets[row - 1] = "";
+        }
+        if (indent < nextIndent)
+            return "start";
+        else
+            return "";
+    };
+}).call(FoldMode.prototype);
+
+});
+
+define("ace/mode/yaml",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/yaml_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/yaml","ace/worker/worker_client"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var YamlHighlightRules = require("./yaml_highlight_rules").YamlHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var FoldMode = require("./folding/coffee").FoldMode;
+var FoldMode = require("./folding/yaml").FoldMode;
 var WorkerClient = require("../worker/worker_client").WorkerClient;
 var Mode = function () {
     this.HighlightRules = YamlHighlightRules;
@@ -36867,145 +37446,7 @@ exports.Mode = Mode;
 
 });
 
-define("ace/lib/keys",["require","exports","module","ace/lib/oop"], function(require, exports, module){/*! @license
-==========================================================================
-SproutCore -- JavaScript Application Framework
-copyright 2006-2009, Sprout Systems Inc., Apple Inc. and contributors.
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-
-SproutCore and the SproutCore logo are trademarks of Sprout Systems, Inc.
-
-For more information about SproutCore, visit http://www.sproutcore.com
-
-
-==========================================================================
-@license */
-"use strict";
-var oop = require("./oop");
-var Keys = (function () {
-    var ret = {
-        MODIFIER_KEYS: {
-            16: 'Shift', 17: 'Ctrl', 18: 'Alt', 224: 'Meta',
-            91: 'MetaLeft', 92: 'MetaRight', 93: 'ContextMenu'
-        },
-        KEY_MODS: {
-            "ctrl": 1, "alt": 2, "option": 2, "shift": 4,
-            "super": 8, "meta": 8, "command": 8, "cmd": 8,
-            "control": 1
-        },
-        FUNCTION_KEYS: {
-            8: "Backspace",
-            9: "Tab",
-            13: "Return",
-            19: "Pause",
-            27: "Esc",
-            32: "Space",
-            33: "PageUp",
-            34: "PageDown",
-            35: "End",
-            36: "Home",
-            37: "Left",
-            38: "Up",
-            39: "Right",
-            40: "Down",
-            44: "Print",
-            45: "Insert",
-            46: "Delete",
-            96: "Numpad0",
-            97: "Numpad1",
-            98: "Numpad2",
-            99: "Numpad3",
-            100: "Numpad4",
-            101: "Numpad5",
-            102: "Numpad6",
-            103: "Numpad7",
-            104: "Numpad8",
-            105: "Numpad9",
-            '-13': "NumpadEnter",
-            112: "F1",
-            113: "F2",
-            114: "F3",
-            115: "F4",
-            116: "F5",
-            117: "F6",
-            118: "F7",
-            119: "F8",
-            120: "F9",
-            121: "F10",
-            122: "F11",
-            123: "F12",
-            144: "Numlock",
-            145: "Scrolllock"
-        },
-        PRINTABLE_KEYS: {
-            32: ' ', 48: '0', 49: '1', 50: '2', 51: '3', 52: '4', 53: '5',
-            54: '6', 55: '7', 56: '8', 57: '9', 59: ';', 61: '=', 65: 'a',
-            66: 'b', 67: 'c', 68: 'd', 69: 'e', 70: 'f', 71: 'g', 72: 'h',
-            73: 'i', 74: 'j', 75: 'k', 76: 'l', 77: 'm', 78: 'n', 79: 'o',
-            80: 'p', 81: 'q', 82: 'r', 83: 's', 84: 't', 85: 'u', 86: 'v',
-            87: 'w', 88: 'x', 89: 'y', 90: 'z', 107: '+', 109: '-', 110: '.',
-            186: ';', 187: '=', 188: ',', 189: '-', 190: '.', 191: '/', 192: '`',
-            219: '[', 220: '\\', 221: ']', 222: "'", 111: '/', 106: '*'
-        }
-    };
-    ret.PRINTABLE_KEYS[173] = '-';
-    var name, i;
-    for (i in ret.FUNCTION_KEYS) {
-        name = ret.FUNCTION_KEYS[i].toLowerCase();
-        ret[name] = parseInt(i, 10);
-    }
-    for (i in ret.PRINTABLE_KEYS) {
-        name = ret.PRINTABLE_KEYS[i].toLowerCase();
-        ret[name] = parseInt(i, 10);
-    }
-    oop.mixin(ret, ret.MODIFIER_KEYS);
-    oop.mixin(ret, ret.PRINTABLE_KEYS);
-    oop.mixin(ret, ret.FUNCTION_KEYS);
-    ret.enter = ret["return"];
-    ret.escape = ret.esc;
-    ret.del = ret["delete"];
-    (function () {
-        var mods = ["cmd", "ctrl", "alt", "shift"];
-        for (var i = Math.pow(2, mods.length); i--;) {
-            ret.KEY_MODS[i] = mods.filter(function (x) {
-                return i & ret.KEY_MODS[x];
-            }).join("-") + "-";
-        }
-    })();
-    ret.KEY_MODS[0] = "";
-    ret.KEY_MODS[-1] = "input-";
-    return ret;
-})();
-oop.mixin(exports, Keys);
-exports.default = exports;
-exports.keyCodeToString = function (keyCode) {
-    var keyString = Keys[keyCode];
-    if (typeof keyString != "string")
-        keyString = String.fromCharCode(keyCode);
-    return keyString.toLowerCase();
-};
-
-});
-
-define("ace/lib/event",["require","exports","module","ace/lib/keys","ace/lib/useragent"], function(require, exports, module){"use strict";
-var keys = require("./keys");
+define("ace/lib/event",["require","exports","module","ace/lib/keys","ace/lib/useragent"], function(require, exports, module){"use strict"; var keys = require("./keys");
 var useragent = require("./useragent");
 var pressedKeys = null;
 var ts = 0;
@@ -37016,6 +37457,7 @@ function detectListenerOptionsSupport() {
         document.createComment("").addEventListener("test", function () { }, {
             get passive() {
                 activeListenerOptions = { passive: false };
+                return true;
             }
         });
     }
@@ -37035,7 +37477,7 @@ EventListener.prototype.destroy = function () {
     removeListener(this.elem, this.type, this.callback);
     this.elem = this.type = this.callback = undefined;
 };
-var addListener = exports.addListener = function (elem, type, callback, destroyer) {
+var addListener = exports.addListener = function (elem, type, callback, /**@type{any?}*/ destroyer) {
     elem.addEventListener(type, callback, getListenerOptions());
     if (destroyer)
         destroyer.$toDestroy.push(new EventListener(elem, type, callback));
@@ -37146,9 +37588,9 @@ exports.addMultiMouseDownListener = function (elements, timeouts, eventHandler, 
         addListener(el, "mousedown", onMousedown, destroyer);
     });
 };
-var getModifierHash = function (e) {
+function getModifierHash(e) {
     return 0 | (e.ctrlKey ? 1 : 0) | (e.altKey ? 2 : 0) | (e.shiftKey ? 4 : 0) | (e.metaKey ? 8 : 0);
-};
+}
 exports.getModifierString = function (e) {
     return keys.KEY_MODS[getModifierHash(e)];
 };
@@ -37164,7 +37606,7 @@ function normalizeCommandKeys(callback, e, keyCode) {
                 return;
         }
         if (keyCode === 18 || keyCode === 17) {
-            var location = "location" in e ? e.location : e.keyLocation;
+            var location = e.location;
             if (keyCode === 17 && location === 1) {
                 if (pressedKeys[keyCode] == 1)
                     ts = e.timeStamp;
@@ -37180,8 +37622,7 @@ function normalizeCommandKeys(callback, e, keyCode) {
         keyCode = -1;
     }
     if (!hashId && keyCode === 13) {
-        var location = "location" in e ? e.location : e.keyLocation;
-        if (location === 3) {
+        if (e.location === 3) {
             callback(e, hashId, -keyCode);
             if (e.defaultPrevented)
                 return;
@@ -37200,36 +37641,25 @@ function normalizeCommandKeys(callback, e, keyCode) {
     return callback(e, hashId, keyCode);
 }
 exports.addCommandKeyListener = function (el, callback, destroyer) {
-    if (useragent.isOldGecko || (useragent.isOpera && !("KeyboardEvent" in window))) {
-        var lastKeyDownKeyCode = null;
-        addListener(el, "keydown", function (e) {
-            lastKeyDownKeyCode = e.keyCode;
-        }, destroyer);
-        addListener(el, "keypress", function (e) {
-            return normalizeCommandKeys(callback, e, lastKeyDownKeyCode);
-        }, destroyer);
-    }
-    else {
-        var lastDefaultPrevented = null;
-        addListener(el, "keydown", function (e) {
-            pressedKeys[e.keyCode] = (pressedKeys[e.keyCode] || 0) + 1;
-            var result = normalizeCommandKeys(callback, e, e.keyCode);
-            lastDefaultPrevented = e.defaultPrevented;
-            return result;
-        }, destroyer);
-        addListener(el, "keypress", function (e) {
-            if (lastDefaultPrevented && (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey)) {
-                exports.stopEvent(e);
-                lastDefaultPrevented = null;
-            }
-        }, destroyer);
-        addListener(el, "keyup", function (e) {
-            pressedKeys[e.keyCode] = null;
-        }, destroyer);
-        if (!pressedKeys) {
-            resetPressedKeys();
-            addListener(window, "focus", resetPressedKeys);
+    var lastDefaultPrevented = null;
+    addListener(el, "keydown", function (e) {
+        pressedKeys[e.keyCode] = (pressedKeys[e.keyCode] || 0) + 1;
+        var result = normalizeCommandKeys(callback, e, e.keyCode);
+        lastDefaultPrevented = e.defaultPrevented;
+        return result;
+    }, destroyer);
+    addListener(el, "keypress", function (e) {
+        if (lastDefaultPrevented && (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey)) {
+            exports.stopEvent(e);
+            lastDefaultPrevented = null;
         }
+    }, destroyer);
+    addListener(el, "keyup", function (e) {
+        pressedKeys[e.keyCode] = null;
+    }, destroyer);
+    if (!pressedKeys) {
+        resetPressedKeys();
+        addListener(window, "focus", resetPressedKeys);
     }
 };
 function resetPressedKeys() {
@@ -37272,32 +37702,16 @@ exports.blockIdle = function (delay) {
     }, delay || 100);
 };
 exports.nextFrame = typeof window == "object" && (window.requestAnimationFrame
-    || window.mozRequestAnimationFrame
-    || window.webkitRequestAnimationFrame
-    || window.msRequestAnimationFrame
-    || window.oRequestAnimationFrame);
+    || window["mozRequestAnimationFrame"]
+    || window["webkitRequestAnimationFrame"]
+    || window["msRequestAnimationFrame"]
+    || window["oRequestAnimationFrame"]);
 if (exports.nextFrame)
     exports.nextFrame = exports.nextFrame.bind(window);
 else
     exports.nextFrame = function (callback) {
         setTimeout(callback, 17);
     };
-
-});
-
-define("ace/clipboard",["require","exports","module"], function(require, exports, module){"use strict";
-var $cancelT;
-module.exports = {
-    lineMode: false,
-    pasteCancelled: function () {
-        if ($cancelT && $cancelT > Date.now() - 50)
-            return true;
-        return $cancelT = false;
-    },
-    cancel: function () {
-        $cancelT = Date.now();
-    }
-};
 
 });
 
@@ -37317,13 +37731,14 @@ var MODS = KEYS.KEY_MODS;
 var isIOS = useragent.isIOS;
 var valueResetRegex = isIOS ? /\s/ : /\n/;
 var isMobile = useragent.isMobile;
-var TextInput = function (parentNode, host) {
+var TextInput;
+TextInput = function (parentNode, host) {
     var text = dom.createElement("textarea");
     text.className = "ace_text-input";
     text.setAttribute("wrap", "off");
     text.setAttribute("autocorrect", "off");
     text.setAttribute("autocapitalize", "off");
-    text.setAttribute("spellcheck", false);
+    text.setAttribute("spellcheck", "false");
     text.style.opacity = "0";
     parentNode.insertBefore(text, parentNode.firstChild);
     var copied = false;
@@ -37422,9 +37837,9 @@ var TextInput = function (parentNode, host) {
             var t = text.parentElement;
             while (t && t.nodeType == 1) {
                 ancestors.push(t);
-                t.setAttribute("ace_nocontext", true);
+                t.setAttribute("ace_nocontext", "true");
                 if (!t.parentElement && t.getRootNode)
-                    t = t.getRootNode().host;
+                    t = t.getRootNode()["host"];
                 else
                     t = t.parentElement;
             }
@@ -37678,7 +38093,7 @@ var TextInput = function (parentNode, host) {
         }
     };
     var handleClipboardData = function (e, data, forceIEMime) {
-        var clipboardData = e.clipboardData || window.clipboardData;
+        var clipboardData = e.clipboardData || window["clipboardData"];
         if (!clipboardData || BROKEN_SETDATA)
             return;
         var mime = USE_IE_MIME_TYPE || forceIEMime ? "Text" : "text/plain";
@@ -37743,7 +38158,11 @@ var TextInput = function (parentNode, host) {
             pasted = true;
         }
     };
-    event.addCommandKeyListener(text, host.onCommandKey.bind(host), host);
+    event.addCommandKeyListener(text, function (e, hashId, keyCode) {
+        if (inComposition)
+            return;
+        return host.onCommandKey(e, hashId, keyCode);
+    }, host);
     event.addListener(text, "select", onSelect, host);
     event.addListener(text, "input", onInput, host);
     event.addListener(text, "cut", onCut, host);
@@ -38022,8 +38441,8 @@ var DefaultHandlers = /** @class */ (function () {
         exports.forEach(function (x) {
             mouseHandler[x] = this[x];
         }, this);
-        mouseHandler.selectByLines = this.extendSelectionBy.bind(mouseHandler, "getLineRange");
-        mouseHandler.selectByWords = this.extendSelectionBy.bind(mouseHandler, "getWordRange");
+        mouseHandler["selectByLines"] = this.extendSelectionBy.bind(mouseHandler, "getLineRange");
+        mouseHandler["selectByWords"] = this.extendSelectionBy.bind(mouseHandler, "getWordRange");
     }
     DefaultHandlers.prototype.onMouseDown = function (ev) {
         var inSelection = ev.inSelection();
@@ -38242,7 +38661,18 @@ function calcRangeOrientation(range, cursor) {
 
 });
 
-define("ace/tooltip",["require","exports","module","ace/lib/dom","ace/range"], function(require, exports, module){"use strict";
+define("ace/lib/scroll",["require","exports","module"], function(require, exports, module){exports.preventParentScroll = function preventParentScroll(event) {
+    event.stopPropagation();
+    var target = event.currentTarget;
+    var contentOverflows = target.scrollHeight > target.clientHeight;
+    if (!contentOverflows) {
+        event.preventDefault();
+    }
+};
+
+});
+
+define("ace/tooltip",["require","exports","module","ace/lib/dom","ace/lib/event","ace/range","ace/lib/scroll"], function(require, exports, module){"use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -38270,7 +38700,9 @@ var __values = (this && this.__values) || function(o) {
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var dom = require("./lib/dom");
+var event = require("./lib/event");
 var Range = require("./range").Range;
+var preventParentScroll = require("./lib/scroll").preventParentScroll;
 var CLASSNAME = "ace_tooltip";
 var Tooltip = /** @class */ (function () {
     function Tooltip(parentNode) {
@@ -38315,7 +38747,7 @@ var Tooltip = /** @class */ (function () {
             this.isOpen = true;
         }
     };
-    Tooltip.prototype.hide = function () {
+    Tooltip.prototype.hide = function (e) {
         if (this.isOpen) {
             this.getElement().style.display = "none";
             this.getElement().className = CLASSNAME;
@@ -38424,6 +38856,7 @@ var HoverTooltip = /** @class */ (function (_super) {
             if (!el.contains(document.activeElement))
                 this.hide();
         }.bind(_this));
+        el.addEventListener("wheel", preventParentScroll);
         return _this;
     }
     HoverTooltip.prototype.addToEditor = function (editor) {
@@ -38489,6 +38922,7 @@ var HoverTooltip = /** @class */ (function (_super) {
         this.$gatherData = value;
     };
     HoverTooltip.prototype.showForRange = function (editor, range, domNode, startingEvent) {
+        var MARGIN = 10;
         if (startingEvent && startingEvent != this.lastEvent)
             return;
         if (this.isOpen && document.activeElement == this.getElement())
@@ -38502,25 +38936,26 @@ var HoverTooltip = /** @class */ (function (_super) {
         this.isOpen = true;
         this.addMarker(range, editor.session);
         this.range = Range.fromPoints(range.start, range.end);
+        var position = renderer.textToScreenCoordinates(range.start.row, range.start.column);
+        var rect = renderer.scroller.getBoundingClientRect();
+        if (position.pageX < rect.left)
+            position.pageX = rect.left;
         var element = this.getElement();
         element.innerHTML = "";
         element.appendChild(domNode);
+        element.style.maxHeight = "";
         element.style.display = "block";
-        var position = renderer.textToScreenCoordinates(range.start.row, range.start.column);
         var labelHeight = element.clientHeight;
-        var rect = renderer.scroller.getBoundingClientRect();
+        var labelWidth = element.clientWidth;
+        var spaceBelow = window.innerHeight - position.pageY - renderer.lineHeight;
         var isAbove = true;
-        if (position.pageY - labelHeight < 0) {
+        if (position.pageY - labelHeight < 0 && position.pageY < spaceBelow) {
             isAbove = false;
         }
-        if (isAbove) {
-            position.pageY -= labelHeight;
-        }
-        else {
-            position.pageY += renderer.lineHeight;
-        }
-        element.style.maxWidth = rect.width - (position.pageX - rect.left) + "px";
-        this.setPosition(position.pageX, position.pageY);
+        element.style.maxHeight = (isAbove ? position.pageY : spaceBelow) - MARGIN + "px";
+        element.style.top = isAbove ? "" : position.pageY + renderer.lineHeight + "px";
+        element.style.bottom = isAbove ? window.innerHeight - position.pageY + "px" : "";
+        element.style.left = Math.min(position.pageX, window.innerWidth - labelWidth - MARGIN) + "px";
     };
     HoverTooltip.prototype.addMarker = function (range, session) {
         if (this.marker) {
@@ -38548,12 +38983,12 @@ var HoverTooltip = /** @class */ (function (_super) {
     };
     HoverTooltip.prototype.$registerCloseEvents = function () {
         window.addEventListener("keydown", this.hide, true);
-        window.addEventListener("mousewheel", this.hide, true);
+        window.addEventListener("wheel", this.hide, true);
         window.addEventListener("mousedown", this.hide, true);
     };
     HoverTooltip.prototype.$removeCloseEvents = function () {
         window.removeEventListener("keydown", this.hide, true);
-        window.removeEventListener("mousewheel", this.hide, true);
+        window.removeEventListener("wheel", this.hide, true);
         window.removeEventListener("mousedown", this.hide, true);
     };
     HoverTooltip.prototype.onMouseOut = function (e) {
@@ -38564,7 +38999,7 @@ var HoverTooltip = /** @class */ (function (_super) {
         this.lastEvent = null;
         if (!this.isOpen)
             return;
-        if (!e.relatedTarget || e.relatedTarget == this.getElement())
+        if (!e.relatedTarget || this.getElement().contains(e.relatedTarget))
             return;
         if (e && e.currentTarget.contains(e.relatedTarget))
             return;
@@ -38828,7 +39263,7 @@ define("ace/mouse/mouse_event",["require","exports","module","ace/lib/event","ac
 var event = require("../lib/event");
 var useragent = require("../lib/useragent");
 var MouseEvent = /** @class */ (function () {
-    function MouseEvent(domEvent, editor) {
+    function MouseEvent(domEvent, editor) { this.speed; this.wheelX; this.wheelY;
         this.domEvent = domEvent;
         this.editor = editor;
         this.x = this.clientX = domEvent.clientX;
@@ -39261,7 +39696,7 @@ exports.addTouchListeners = function (el, editor) {
                 clipboard && ["span", { class: "ace_mobile-button", action: "paste" }, "Paste"],
                 hasUndo && ["span", { class: "ace_mobile-button", action: "undo" }, "Undo"],
                 ["span", { class: "ace_mobile-button", action: "find" }, "Find"],
-                ["span", { class: "ace_mobile-button", action: "openCommandPallete" }, "Palette"]
+                ["span", { class: "ace_mobile-button", action: "openCommandPalette" }, "Palette"]
             ] : ["span"]), contextMenu.firstChild);
         };
         var handleClick = function (e) {
@@ -39286,7 +39721,7 @@ exports.addTouchListeners = function (el, editor) {
             }
             contextMenu.firstChild.style.display = "none";
             isOpen = false;
-            if (action != "openCommandPallete")
+            if (action != "openCommandPalette")
                 editor.focus();
         };
         contextMenu = dom.buildDom(["div",
@@ -39541,7 +39976,7 @@ var DragdropHandler = require("./dragdrop_handler").DragdropHandler;
 var addTouchListeners = require("./touch_handler").addTouchListeners;
 var config = require("../config");
 var MouseHandler = /** @class */ (function () {
-    function MouseHandler(editor) {
+    function MouseHandler(editor) { this.$dragDelay; this.$dragEnabled; this.$mouseMoved; this.mouseEvent; this.$focusTimeout;
         var _self = this;
         this.editor = editor;
         new DefaultHandlers(this);
@@ -39592,7 +40027,8 @@ var MouseHandler = /** @class */ (function () {
             else {
                 renderer.setCursorStyle("");
             }
-        }, editor);
+        }, //@ts-expect-error TODO: seems mistyping - should be boolean
+        editor);
     }
     MouseHandler.prototype.onMouseEvent = function (name, e) {
         if (!this.editor.session)
@@ -39823,7 +40259,8 @@ var KeyBinding = /** @class */ (function () {
         var success = false;
         var commands = this.$editor.commands;
         for (var i = this.$handlers.length; i--;) {
-            toExecute = this.$handlers[i].handleKeyboard(this.$data, hashId, keyString, keyCode, e);
+            toExecute = this.$handlers[i].handleKeyboard(
+            this.$data, hashId, keyString, keyCode, e);
             if (!toExecute || !toExecute.command)
                 continue;
             if (toExecute.command == "null") {
@@ -39833,7 +40270,7 @@ var KeyBinding = /** @class */ (function () {
                 success = commands.exec(toExecute.command, this.$editor, toExecute.args, e);
             }
             if (success && e && hashId != -1 &&
-                toExecute.passEvent != true && toExecute.command.passEvent != true) {
+                toExecute["passEvent"] != true && toExecute.command["passEvent"] != true) {
                 event.stopEvent(e);
             }
             if (success)
@@ -40948,15 +41385,13 @@ var Selection = /** @class */ (function () {
         }
     };
     Selection.prototype.toJSON = function () {
-        if (this.rangeCount) {
-            var data = this.ranges.map(function (r) {
+        if (this.rangeCount) { var data = this.ranges.map(function (r) {
                 var r1 = r.clone();
                 r1.isBackwards = r.cursor == r.start;
                 return r1;
             });
         }
-        else {
-            var data = this.getRange();
+        else { var data = this.getRange();
             data.isBackwards = this.isBackwards();
         }
         return data;
@@ -41068,7 +41503,7 @@ var Anchor = /** @class */ (function () {
     function Anchor(doc, row, column) {
         this.$onChange = this.onChange.bind(this);
         this.attach(doc);
-        if (typeof column == "undefined")
+        if (typeof row != "number")
             this.setPosition(row.row, row.column);
         else
             this.setPosition(row, column);
@@ -41512,10 +41947,11 @@ define("ace/background_tokenizer",["require","exports","module","ace/lib/oop","a
 var oop = require("./lib/oop");
 var EventEmitter = require("./lib/event_emitter").EventEmitter;
 var BackgroundTokenizer = /** @class */ (function () {
-    function BackgroundTokenizer(tokenizer, editor) {
+    function BackgroundTokenizer(tokenizer, session) {
         this.running = false;
         this.lines = [];
         this.states = [];
+        this.contexts = [];
         this.currentLine = 0;
         this.tokenizer = tokenizer;
         var self = this;
@@ -41556,12 +41992,14 @@ var BackgroundTokenizer = /** @class */ (function () {
         this.tokenizer = tokenizer;
         this.lines = [];
         this.states = [];
+        this.contexts = [];
         this.start(0);
     };
     BackgroundTokenizer.prototype.setDocument = function (doc) {
         this.doc = doc;
         this.lines = [];
         this.states = [];
+        this.contexts = [];
         this.stop();
     };
     BackgroundTokenizer.prototype.fireUpdateEvent = function (firstRow, lastRow) {
@@ -41575,6 +42013,7 @@ var BackgroundTokenizer = /** @class */ (function () {
         this.currentLine = Math.min(startRow || 0, this.currentLine, this.doc.getLength());
         this.lines.splice(this.currentLine, this.lines.length);
         this.states.splice(this.currentLine, this.states.length);
+        this.contexts.splice(this.currentLine, this.contexts.length);
         this.stop();
         this.running = setTimeout(this.$worker, 700);
     };
@@ -41591,12 +42030,14 @@ var BackgroundTokenizer = /** @class */ (function () {
         else if (delta.action == "remove") {
             this.lines.splice(startRow, len + 1, null);
             this.states.splice(startRow, len + 1, null);
+            this.contexts.splice(startRow, len + 1, null);
         }
         else {
             var args = Array(len + 1);
             args.unshift(startRow, 1);
             this.lines.splice.apply(this.lines, args);
             this.states.splice.apply(this.states, args);
+            this.contexts.splice.apply(this.contexts, args);
         }
         this.currentLine = Math.min(startRow, this.currentLine, this.doc.getLength());
         this.stop();
@@ -41617,7 +42058,10 @@ var BackgroundTokenizer = /** @class */ (function () {
     BackgroundTokenizer.prototype.$tokenizeRow = function (row) {
         var line = this.doc.getLine(row);
         var state = this.states[row - 1];
-        var data = this.tokenizer.getLineTokens(line, state, row);
+        var context = Object.assign({}, this.contexts[row - 1] || {});
+        context.row = row;
+        var data = this.tokenizer.getLineTokens(line, state, context);
+        this.contexts[row] = context;
         if (this.states[row] + "" !== data.state + "") {
             this.states[row] = data.state;
             this.lines[row + 1] = null;
@@ -41633,6 +42077,7 @@ var BackgroundTokenizer = /** @class */ (function () {
         this.running = false;
         this.lines = [];
         this.states = [];
+        this.contexts = [];
         this.currentLine = 0;
         this.removeAllListeners();
     };
@@ -41689,6 +42134,487 @@ var SearchHighlight = /** @class */ (function () {
 }());
 SearchHighlight.prototype.MAX_RANGES = 500;
 exports.SearchHighlight = SearchHighlight;
+
+});
+
+define("ace/undomanager",["require","exports","module","ace/range"], function(require, exports, module){"use strict";
+var UndoManager = /** @class */ (function () {
+    function UndoManager() {
+        this.$keepRedoStack;
+        this.$maxRev = 0;
+        this.$fromUndo = false;
+        this.$undoDepth = Infinity;
+        this.reset();
+    }
+    UndoManager.prototype.addSession = function (session) {
+        this.$session = session;
+    };
+    UndoManager.prototype.add = function (delta, allowMerge, session) {
+        if (this.$fromUndo)
+            return;
+        if (delta == this.$lastDelta)
+            return;
+        if (!this.$keepRedoStack)
+            this.$redoStack.length = 0;
+        if (allowMerge === false || !this.lastDeltas) {
+            this.lastDeltas = [];
+            var undoStackLength = this.$undoStack.length;
+            if (undoStackLength > this.$undoDepth - 1) {
+                this.$undoStack.splice(0, undoStackLength - this.$undoDepth + 1);
+            }
+            this.$undoStack.push(this.lastDeltas);
+            delta.id = this.$rev = ++this.$maxRev;
+        }
+        if (delta.action == "remove" || delta.action == "insert")
+            this.$lastDelta = delta;
+        this.lastDeltas.push(delta);
+    };
+    UndoManager.prototype.addSelection = function (selection, rev) {
+        this.selections.push({
+            value: selection,
+            rev: rev || this.$rev
+        });
+    };
+    UndoManager.prototype.startNewGroup = function () {
+        this.lastDeltas = null;
+        return this.$rev;
+    };
+    UndoManager.prototype.markIgnored = function (from, to) {
+        if (to == null)
+            to = this.$rev + 1;
+        var stack = this.$undoStack;
+        for (var i = stack.length; i--;) {
+            var delta = stack[i][0];
+            if (delta.id <= from)
+                break;
+            if (delta.id < to)
+                delta.ignore = true;
+        }
+        this.lastDeltas = null;
+    };
+    UndoManager.prototype.getSelection = function (rev, after) {
+        var stack = this.selections;
+        for (var i = stack.length; i--;) {
+            var selection = stack[i];
+            if (selection.rev < rev) {
+                if (after)
+                    selection = stack[i + 1];
+                return selection;
+            }
+        }
+    };
+    UndoManager.prototype.getRevision = function () {
+        return this.$rev;
+    };
+    UndoManager.prototype.getDeltas = function (from, to) {
+        if (to == null)
+            to = this.$rev + 1;
+        var stack = this.$undoStack;
+        var end = null, start = 0;
+        for (var i = stack.length; i--;) {
+            var delta = stack[i][0];
+            if (delta.id < to && !end)
+                end = i + 1;
+            if (delta.id <= from) {
+                start = i + 1;
+                break;
+            }
+        }
+        return stack.slice(start, end);
+    };
+    UndoManager.prototype.getChangedRanges = function (from, to) {
+        if (to == null)
+            to = this.$rev + 1;
+    };
+    UndoManager.prototype.getChangedLines = function (from, to) {
+        if (to == null)
+            to = this.$rev + 1;
+    };
+    UndoManager.prototype.undo = function (session, dontSelect) {
+        this.lastDeltas = null;
+        var stack = this.$undoStack;
+        if (!rearrangeUndoStack(stack, stack.length))
+            return;
+        if (!session)
+            session = this.$session;
+        if (this.$redoStackBaseRev !== this.$rev && this.$redoStack.length)
+            this.$redoStack = [];
+        this.$fromUndo = true;
+        var deltaSet = stack.pop();
+        var undoSelectionRange = null;
+        if (deltaSet) {
+            undoSelectionRange = session.undoChanges(deltaSet, dontSelect);
+            this.$redoStack.push(deltaSet);
+            this.$syncRev();
+        }
+        this.$fromUndo = false;
+        return undoSelectionRange;
+    };
+    UndoManager.prototype.redo = function (session, dontSelect) {
+        this.lastDeltas = null;
+        if (!session)
+            session = this.$session;
+        this.$fromUndo = true;
+        if (this.$redoStackBaseRev != this.$rev) {
+            var diff = this.getDeltas(this.$redoStackBaseRev, this.$rev + 1);
+            rebaseRedoStack(this.$redoStack, diff);
+            this.$redoStackBaseRev = this.$rev;
+            this.$redoStack.forEach(function (x) {
+                x[0].id = ++this.$maxRev;
+            }, this);
+        }
+        var deltaSet = this.$redoStack.pop();
+        var redoSelectionRange = null;
+        if (deltaSet) {
+            redoSelectionRange = session.redoChanges(deltaSet, dontSelect);
+            this.$undoStack.push(deltaSet);
+            this.$syncRev();
+        }
+        this.$fromUndo = false;
+        return redoSelectionRange;
+    };
+    UndoManager.prototype.$syncRev = function () {
+        var stack = this.$undoStack;
+        var nextDelta = stack[stack.length - 1];
+        var id = nextDelta && nextDelta[0].id || 0;
+        this.$redoStackBaseRev = id;
+        this.$rev = id;
+    };
+    UndoManager.prototype.reset = function () {
+        this.lastDeltas = null;
+        this.$lastDelta = null;
+        this.$undoStack = [];
+        this.$redoStack = [];
+        this.$rev = 0;
+        this.mark = 0;
+        this.$redoStackBaseRev = this.$rev;
+        this.selections = [];
+    };
+    UndoManager.prototype.canUndo = function () {
+        return this.$undoStack.length > 0;
+    };
+    UndoManager.prototype.canRedo = function () {
+        return this.$redoStack.length > 0;
+    };
+    UndoManager.prototype.bookmark = function (rev) {
+        if (rev == undefined)
+            rev = this.$rev;
+        this.mark = rev;
+    };
+    UndoManager.prototype.isAtBookmark = function () {
+        return this.$rev === this.mark;
+    };
+    UndoManager.prototype.toJSON = function () {
+        return {
+            $redoStack: this.$redoStack,
+            $undoStack: this.$undoStack
+        };
+    };
+    UndoManager.prototype.fromJSON = function (json) {
+        this.reset();
+        this.$undoStack = json.$undoStack;
+        this.$redoStack = json.$redoStack;
+    };
+    UndoManager.prototype.$prettyPrint = function (delta) {
+        if (delta)
+            return stringifyDelta(delta);
+        return stringifyDelta(this.$undoStack) + "\n---\n" + stringifyDelta(this.$redoStack);
+    };
+    return UndoManager;
+}());
+UndoManager.prototype.hasUndo = UndoManager.prototype.canUndo;
+UndoManager.prototype.hasRedo = UndoManager.prototype.canRedo;
+UndoManager.prototype.isClean = UndoManager.prototype.isAtBookmark;
+UndoManager.prototype.markClean = UndoManager.prototype.bookmark;
+function rearrangeUndoStack(stack, pos) {
+    for (var i = pos; i--;) {
+        var deltaSet = stack[i];
+        if (deltaSet && !deltaSet[0].ignore) {
+            while (i < pos - 1) {
+                var swapped = swapGroups(stack[i], stack[i + 1]);
+                stack[i] = swapped[0];
+                stack[i + 1] = swapped[1];
+                i++;
+            }
+            return true;
+        }
+    }
+}
+var Range = require("./range").Range;
+var cmp = Range.comparePoints;
+var comparePoints = Range.comparePoints;
+function $updateMarkers(delta) {
+    var isInsert = delta.action == "insert";
+    var start = delta.start;
+    var end = delta.end;
+    var rowShift = (end.row - start.row) * (isInsert ? 1 : -1);
+    var colShift = (end.column - start.column) * (isInsert ? 1 : -1);
+    if (isInsert)
+        end = start;
+    for (var i in this.marks) {
+        var point = this.marks[i];
+        var cmp = comparePoints(point, start);
+        if (cmp < 0) {
+            continue; // delta starts after the range
+        }
+        if (cmp === 0) {
+            if (isInsert) {
+                if (point.bias == 1) {
+                    cmp = 1;
+                }
+                else {
+                    point.bias == -1;
+                    continue;
+                }
+            }
+        }
+        var cmp2 = isInsert ? cmp : comparePoints(point, end);
+        if (cmp2 > 0) {
+            point.row += rowShift;
+            point.column += point.row == end.row ? colShift : 0;
+            continue;
+        }
+        if (!isInsert && cmp2 <= 0) {
+            point.row = start.row;
+            point.column = start.column;
+            if (cmp2 === 0)
+                point.bias = 1;
+        }
+    }
+}
+function clonePos(pos) {
+    return { row: pos.row, column: pos.column };
+}
+function cloneDelta(d) {
+    return {
+        start: clonePos(d.start),
+        end: clonePos(d.end),
+        action: d.action,
+        lines: d.lines.slice()
+    };
+}
+function stringifyDelta(d) {
+    d = d || this;
+    if (Array.isArray(d)) {
+        return d.map(stringifyDelta).join("\n");
+    }
+    var type = "";
+    if (d.action) {
+        type = d.action == "insert" ? "+" : "-";
+        type += "[" + d.lines + "]";
+    }
+    else if (d.value) {
+        if (Array.isArray(d.value)) {
+            type = d.value.map(stringifyRange).join("\n");
+        }
+        else {
+            type = stringifyRange(d.value);
+        }
+    }
+    if (d.start) {
+        type += stringifyRange(d);
+    }
+    if (d.id || d.rev) {
+        type += "\t(" + (d.id || d.rev) + ")";
+    }
+    return type;
+}
+function stringifyRange(r) {
+    return r.start.row + ":" + r.start.column
+        + "=>" + r.end.row + ":" + r.end.column;
+}
+function swap(d1, d2) {
+    var i1 = d1.action == "insert";
+    var i2 = d2.action == "insert";
+    if (i1 && i2) {
+        if (cmp(d2.start, d1.end) >= 0) {
+            shift(d2, d1, -1);
+        }
+        else if (cmp(d2.start, d1.start) <= 0) {
+            shift(d1, d2, +1);
+        }
+        else {
+            return null;
+        }
+    }
+    else if (i1 && !i2) {
+        if (cmp(d2.start, d1.end) >= 0) {
+            shift(d2, d1, -1);
+        }
+        else if (cmp(d2.end, d1.start) <= 0) {
+            shift(d1, d2, -1);
+        }
+        else {
+            return null;
+        }
+    }
+    else if (!i1 && i2) {
+        if (cmp(d2.start, d1.start) >= 0) {
+            shift(d2, d1, +1);
+        }
+        else if (cmp(d2.start, d1.start) <= 0) {
+            shift(d1, d2, +1);
+        }
+        else {
+            return null;
+        }
+    }
+    else if (!i1 && !i2) {
+        if (cmp(d2.start, d1.start) >= 0) {
+            shift(d2, d1, +1);
+        }
+        else if (cmp(d2.end, d1.start) <= 0) {
+            shift(d1, d2, -1);
+        }
+        else {
+            return null;
+        }
+    }
+    return [d2, d1];
+}
+function swapGroups(ds1, ds2) {
+    for (var i = ds1.length; i--;) {
+        for (var j = 0; j < ds2.length; j++) {
+            if (!swap(ds1[i], ds2[j])) {
+                while (i < ds1.length) {
+                    while (j--) {
+                        swap(ds2[j], ds1[i]);
+                    }
+                    j = ds2.length;
+                    i++;
+                }
+                return [ds1, ds2];
+            }
+        }
+    }
+    ds1.selectionBefore = ds2.selectionBefore =
+        ds1.selectionAfter = ds2.selectionAfter = null;
+    return [ds2, ds1];
+}
+function xform(d1, c1) {
+    var i1 = d1.action == "insert";
+    var i2 = c1.action == "insert";
+    if (i1 && i2) {
+        if (cmp(d1.start, c1.start) < 0) {
+            shift(c1, d1, 1);
+        }
+        else {
+            shift(d1, c1, 1);
+        }
+    }
+    else if (i1 && !i2) {
+        if (cmp(d1.start, c1.end) >= 0) {
+            shift(d1, c1, -1);
+        }
+        else if (cmp(d1.start, c1.start) <= 0) {
+            shift(c1, d1, +1);
+        }
+        else {
+            shift(d1, Range.fromPoints(c1.start, d1.start), -1);
+            shift(c1, d1, +1);
+        }
+    }
+    else if (!i1 && i2) {
+        if (cmp(c1.start, d1.end) >= 0) {
+            shift(c1, d1, -1);
+        }
+        else if (cmp(c1.start, d1.start) <= 0) {
+            shift(d1, c1, +1);
+        }
+        else {
+            shift(c1, Range.fromPoints(d1.start, c1.start), -1);
+            shift(d1, c1, +1);
+        }
+    }
+    else if (!i1 && !i2) {
+        if (cmp(c1.start, d1.end) >= 0) {
+            shift(c1, d1, -1);
+        }
+        else if (cmp(c1.end, d1.start) <= 0) {
+            shift(d1, c1, -1);
+        }
+        else {
+            var before, after;
+            if (cmp(d1.start, c1.start) < 0) {
+                before = d1;
+                d1 = splitDelta(d1, c1.start);
+            }
+            if (cmp(d1.end, c1.end) > 0) {
+                after = splitDelta(d1, c1.end);
+            }
+            shiftPos(c1.end, d1.start, d1.end, -1);
+            if (after && !before) {
+                d1.lines = after.lines;
+                d1.start = after.start;
+                d1.end = after.end;
+                after = d1;
+            }
+            return [c1, before, after].filter(Boolean);
+        }
+    }
+    return [c1, d1];
+}
+function shift(d1, d2, dir) {
+    shiftPos(d1.start, d2.start, d2.end, dir);
+    shiftPos(d1.end, d2.start, d2.end, dir);
+}
+function shiftPos(pos, start, end, dir) {
+    if (pos.row == (dir == 1 ? start : end).row) {
+        pos.column += dir * (end.column - start.column);
+    }
+    pos.row += dir * (end.row - start.row);
+}
+function splitDelta(c, pos) {
+    var lines = c.lines;
+    var end = c.end;
+    c.end = clonePos(pos);
+    var rowsBefore = c.end.row - c.start.row;
+    var otherLines = lines.splice(rowsBefore, lines.length);
+    var col = rowsBefore ? pos.column : pos.column - c.start.column;
+    lines.push(otherLines[0].substring(0, col));
+    otherLines[0] = otherLines[0].substr(col);
+    var rest = {
+        start: clonePos(pos),
+        end: end,
+        lines: otherLines,
+        action: c.action
+    };
+    return rest;
+}
+function moveDeltasByOne(redoStack, d) {
+    d = cloneDelta(d);
+    for (var j = redoStack.length; j--;) {
+        var deltaSet = redoStack[j];
+        for (var i = 0; i < deltaSet.length; i++) {
+            var x = deltaSet[i];
+            var xformed = xform(x, d);
+            d = xformed[0];
+            if (xformed.length != 2) {
+                if (xformed[2]) {
+                    deltaSet.splice(i + 1, 1, xformed[1], xformed[2]);
+                    i++;
+                }
+                else if (!xformed[1]) {
+                    deltaSet.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+        if (!deltaSet.length) {
+            redoStack.splice(j, 1);
+        }
+    }
+    return redoStack;
+}
+function rebaseRedoStack(redoStack, deltaSets) {
+    for (var i = 0; i < deltaSets.length; i++) {
+        var deltas = deltaSets[i];
+        for (var j = 0; j < deltas.length; j++) {
+            moveDeltasByOne(redoStack, deltas[j]);
+        }
+    }
+}
+exports.UndoManager = UndoManager;
 
 });
 
@@ -41885,229 +42811,6 @@ exports.FoldLine = FoldLine;
 
 });
 
-define("ace/range_list",["require","exports","module","ace/range"], function(require, exports, module){"use strict";
-var Range = require("./range").Range;
-var comparePoints = Range.comparePoints;
-var RangeList = /** @class */ (function () {
-    function RangeList() {
-        this.ranges = [];
-        this.$bias = 1;
-    }
-    RangeList.prototype.pointIndex = function (pos, excludeEdges, startIndex) {
-        var list = this.ranges;
-        for (var i = startIndex || 0; i < list.length; i++) {
-            var range = list[i];
-            var cmpEnd = comparePoints(pos, range.end);
-            if (cmpEnd > 0)
-                continue;
-            var cmpStart = comparePoints(pos, range.start);
-            if (cmpEnd === 0)
-                return excludeEdges && cmpStart !== 0 ? -i - 2 : i;
-            if (cmpStart > 0 || (cmpStart === 0 && !excludeEdges))
-                return i;
-            return -i - 1;
-        }
-        return -i - 1;
-    };
-    RangeList.prototype.add = function (range) {
-        var excludeEdges = !range.isEmpty();
-        var startIndex = this.pointIndex(range.start, excludeEdges);
-        if (startIndex < 0)
-            startIndex = -startIndex - 1;
-        var endIndex = this.pointIndex(range.end, excludeEdges, startIndex);
-        if (endIndex < 0)
-            endIndex = -endIndex - 1;
-        else
-            endIndex++;
-        return this.ranges.splice(startIndex, endIndex - startIndex, range);
-    };
-    RangeList.prototype.addList = function (list) {
-        var removed = [];
-        for (var i = list.length; i--;) {
-            removed.push.apply(removed, this.add(list[i]));
-        }
-        return removed;
-    };
-    RangeList.prototype.substractPoint = function (pos) {
-        var i = this.pointIndex(pos);
-        if (i >= 0)
-            return this.ranges.splice(i, 1);
-    };
-    RangeList.prototype.merge = function () {
-        var removed = [];
-        var list = this.ranges;
-        list = list.sort(function (a, b) {
-            return comparePoints(a.start, b.start);
-        });
-        var next = list[0], range;
-        for (var i = 1; i < list.length; i++) {
-            range = next;
-            next = list[i];
-            var cmp = comparePoints(range.end, next.start);
-            if (cmp < 0)
-                continue;
-            if (cmp == 0 && !range.isEmpty() && !next.isEmpty())
-                continue;
-            if (comparePoints(range.end, next.end) < 0) {
-                range.end.row = next.end.row;
-                range.end.column = next.end.column;
-            }
-            list.splice(i, 1);
-            removed.push(next);
-            next = range;
-            i--;
-        }
-        this.ranges = list;
-        return removed;
-    };
-    RangeList.prototype.contains = function (row, column) {
-        return this.pointIndex({ row: row, column: column }) >= 0;
-    };
-    RangeList.prototype.containsPoint = function (pos) {
-        return this.pointIndex(pos) >= 0;
-    };
-    RangeList.prototype.rangeAtPoint = function (pos) {
-        var i = this.pointIndex(pos);
-        if (i >= 0)
-            return this.ranges[i];
-    };
-    RangeList.prototype.clipRows = function (startRow, endRow) {
-        var list = this.ranges;
-        if (list[0].start.row > endRow || list[list.length - 1].start.row < startRow)
-            return [];
-        var startIndex = this.pointIndex({ row: startRow, column: 0 });
-        if (startIndex < 0)
-            startIndex = -startIndex - 1;
-        var endIndex = this.pointIndex({ row: endRow, column: 0 }, startIndex);
-        if (endIndex < 0)
-            endIndex = -endIndex - 1;
-        var clipped = [];
-        for (var i = startIndex; i < endIndex; i++) {
-            clipped.push(list[i]);
-        }
-        return clipped;
-    };
-    RangeList.prototype.removeAll = function () {
-        return this.ranges.splice(0, this.ranges.length);
-    };
-    RangeList.prototype.attach = function (session) {
-        if (this.session)
-            this.detach();
-        this.session = session;
-        this.onChange = this.$onChange.bind(this);
-        this.session.on('change', this.onChange);
-    };
-    RangeList.prototype.detach = function () {
-        if (!this.session)
-            return;
-        this.session.removeListener('change', this.onChange);
-        this.session = null;
-    };
-    RangeList.prototype.$onChange = function (delta) {
-        var start = delta.start;
-        var end = delta.end;
-        var startRow = start.row;
-        var endRow = end.row;
-        var ranges = this.ranges;
-        for (var i = 0, n = ranges.length; i < n; i++) {
-            var r = ranges[i];
-            if (r.end.row >= startRow)
-                break;
-        }
-        if (delta.action == "insert") {
-            var lineDif = endRow - startRow;
-            var colDiff = -start.column + end.column;
-            for (; i < n; i++) {
-                var r = ranges[i];
-                if (r.start.row > startRow)
-                    break;
-                if (r.start.row == startRow && r.start.column >= start.column) {
-                    if (r.start.column == start.column && this.$bias <= 0) {
-                    }
-                    else {
-                        r.start.column += colDiff;
-                        r.start.row += lineDif;
-                    }
-                }
-                if (r.end.row == startRow && r.end.column >= start.column) {
-                    if (r.end.column == start.column && this.$bias < 0) {
-                        continue;
-                    }
-                    if (r.end.column == start.column && colDiff > 0 && i < n - 1) {
-                        if (r.end.column > r.start.column && r.end.column == ranges[i + 1].start.column)
-                            r.end.column -= colDiff;
-                    }
-                    r.end.column += colDiff;
-                    r.end.row += lineDif;
-                }
-            }
-        }
-        else {
-            var lineDif = startRow - endRow;
-            var colDiff = start.column - end.column;
-            for (; i < n; i++) {
-                var r = ranges[i];
-                if (r.start.row > endRow)
-                    break;
-                if (r.end.row < endRow
-                    && (startRow < r.end.row
-                        || startRow == r.end.row && start.column < r.end.column)) {
-                    r.end.row = startRow;
-                    r.end.column = start.column;
-                }
-                else if (r.end.row == endRow) {
-                    if (r.end.column <= end.column) {
-                        if (lineDif || r.end.column > start.column) {
-                            r.end.column = start.column;
-                            r.end.row = start.row;
-                        }
-                    }
-                    else {
-                        r.end.column += colDiff;
-                        r.end.row += lineDif;
-                    }
-                }
-                else if (r.end.row > endRow) {
-                    r.end.row += lineDif;
-                }
-                if (r.start.row < endRow
-                    && (startRow < r.start.row
-                        || startRow == r.start.row && start.column < r.start.column)) {
-                    r.start.row = startRow;
-                    r.start.column = start.column;
-                }
-                else if (r.start.row == endRow) {
-                    if (r.start.column <= end.column) {
-                        if (lineDif || r.start.column > start.column) {
-                            r.start.column = start.column;
-                            r.start.row = start.row;
-                        }
-                    }
-                    else {
-                        r.start.column += colDiff;
-                        r.start.row += lineDif;
-                    }
-                }
-                else if (r.start.row > endRow) {
-                    r.start.row += lineDif;
-                }
-            }
-        }
-        if (lineDif != 0 && i < n) {
-            for (; i < n; i++) {
-                var r = ranges[i];
-                r.start.row += lineDif;
-                r.end.row += lineDif;
-            }
-        }
-    };
-    return RangeList;
-}());
-RangeList.prototype.comparePoints = comparePoints;
-exports.RangeList = RangeList;
-
-});
-
 define("ace/edit_session/fold",["require","exports","module","ace/range_list"], function(require, exports, module){"use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
@@ -42217,7 +42920,8 @@ exports.Fold = Fold;
 
 });
 
-define("ace/edit_session/folding",["require","exports","module","ace/range","ace/edit_session/fold_line","ace/edit_session/fold","ace/token_iterator","ace/mouse/mouse_event"], function(require, exports, module){"use strict";
+define("ace/edit_session/folding",["require","exports","module","ace/range","ace/edit_session/fold_line","ace/edit_session/fold","ace/token_iterator","ace/mouse/mouse_event"], function(require, exports, module){// @ts-nocheck
+"use strict";
 var Range = require("../range").Range;
 var FoldLine = require("./fold_line").FoldLine;
 var Fold = require("./fold").Fold;
@@ -43282,7 +43986,7 @@ exports.BracketMatch = BracketMatch;
 
 });
 
-define("ace/edit_session",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/bidihandler","ace/config","ace/lib/event_emitter","ace/selection","ace/mode/text","ace/range","ace/document","ace/background_tokenizer","ace/search_highlight","ace/edit_session/folding","ace/edit_session/bracket_match"], function(require, exports, module){"use strict";
+define("ace/edit_session",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/bidihandler","ace/config","ace/lib/event_emitter","ace/selection","ace/mode/text","ace/range","ace/document","ace/background_tokenizer","ace/search_highlight","ace/undomanager","ace/edit_session/folding","ace/edit_session/bracket_match"], function(require, exports, module){"use strict";
 var oop = require("./lib/oop");
 var lang = require("./lib/lang");
 var BidiHandler = require("./bidihandler").BidiHandler;
@@ -43294,8 +43998,9 @@ var Range = require("./range").Range;
 var Document = require("./document").Document;
 var BackgroundTokenizer = require("./background_tokenizer").BackgroundTokenizer;
 var SearchHighlight = require("./search_highlight").SearchHighlight;
+var UndoManager = require("./undomanager").UndoManager;
 var EditSession = /** @class */ (function () {
-    function EditSession(text, mode) {
+    function EditSession(text, mode) { this.doc;
         this.$breakpoints = [];
         this.$decorations = [];
         this.$frontMarkers = {};
@@ -43315,7 +44020,7 @@ var EditSession = /** @class */ (function () {
         this.on("changeFold", this.onChangeFold.bind(this));
         this.$onChange = this.onChange.bind(this);
         if (typeof text != "object" || !text.getLine)
-            text = new Document(text);
+            text = new Document(/**@type{string}*/ (text));
         this.setDocument(text);
         this.selection = new Selection(this);
         this.$bidiHandler = new BidiHandler(this);
@@ -43401,6 +44106,42 @@ var EditSession = /** @class */ (function () {
         this.$resetRowCache(0);
         this.setUndoManager(this.$undoManager);
         this.getUndoManager().reset();
+    };
+    EditSession.fromJSON = function (session) {
+        if (typeof session == "string")
+            session = JSON.parse(session);
+        var undoManager = new UndoManager();
+        undoManager.$undoStack = session.history.undo;
+        undoManager.$redoStack = session.history.redo;
+        undoManager.mark = session.history.mark;
+        undoManager.$rev = session.history.rev;
+        var editSession = new EditSession(session.value);
+        session.folds.forEach(function (fold) {
+            editSession.addFold("...", Range.fromPoints(fold.start, fold.end));
+        });
+        editSession.setAnnotations(session.annotations);
+        editSession.setBreakpoints(session.breakpoints);
+        editSession.setMode(session.mode);
+        editSession.setScrollLeft(session.scrollLeft);
+        editSession.setScrollTop(session.scrollTop);
+        editSession.setUndoManager(undoManager);
+        editSession.selection.fromJSON(session.selection);
+        return editSession;
+    };
+    EditSession.prototype.toJSON = function () {
+        return {
+            annotations: this.$annotations,
+            breakpoints: this.$breakpoints,
+            folds: this.getAllFolds().map(function (fold) {
+                return fold.range;
+            }),
+            history: this.getUndoManager(),
+            mode: this.$mode.$id,
+            scrollLeft: this.$scrollLeft,
+            scrollTop: this.$scrollTop,
+            selection: this.selection.toJSON(),
+            value: this.doc.getValue()
+        };
     };
     EditSession.prototype.toString = function () {
         return this.doc.getValue();
@@ -43674,7 +44415,7 @@ var EditSession = /** @class */ (function () {
             var path = options.path;
         }
         else {
-            path = mode || "ace/mode/text";
+            path = /**@type{string}*/ (mode) || "ace/mode/text";
         }
         if (!this.$modes["ace/mode/text"])
             this.$modes["ace/mode/text"] = new TextMode();
@@ -44220,7 +44961,7 @@ var EditSession = /** @class */ (function () {
             this.$updateRowLengthCache(firstRow, lastRow);
         return removedFolds;
     };
-    EditSession.prototype.$updateRowLengthCache = function (firstRow, lastRow, b) {
+    EditSession.prototype.$updateRowLengthCache = function (firstRow, lastRow) {
         this.$rowLengthCache[firstRow] = null;
         this.$rowLengthCache[lastRow] = null;
     };
@@ -44552,9 +45293,9 @@ var EditSession = /** @class */ (function () {
     };
     EditSession.prototype.documentToScreenPosition = function (docRow, docColumn) {
         if (typeof docColumn === "undefined")
-            var pos = this.$clipPositionToDocument(docRow.row, docRow.column);
+            var pos = this.$clipPositionToDocument(/**@type{Point}*/ (docRow).row, /**@type{Point}*/ (docRow).column);
         else
-            pos = this.$clipPositionToDocument(docRow, docColumn);
+            pos = this.$clipPositionToDocument(/**@type{number}*/ (docRow), docColumn);
         docRow = pos.row;
         docColumn = pos.column;
         var screenRow = 0;
@@ -44906,8 +45647,8 @@ var Search = /** @class */ (function () {
         var firstRange = null;
         iterator.forEach(function (sr, sc, er, ec) {
             firstRange = new Range(sr, sc, er, ec);
-            if (sc == ec && options.start && options.start.start
-                && options.skipCurrent != false && firstRange.isEqual(options.start)) {
+            if (sc == ec && options.start && /**@type{Range}*/ (options.start).start
+                && options.skipCurrent != false && firstRange.isEqual(/**@type{Range}*/ (options.start))) {
                 firstRange = null;
                 return false;
             }
@@ -45003,23 +45744,19 @@ var Search = /** @class */ (function () {
         var needle = options.needle;
         if (!options.needle)
             return options.re = false;
-        if (options.$supportsUnicodeFlag === undefined) {
-            options.$supportsUnicodeFlag = lang.supportsUnicodeFlag();
-        }
+        if (!options.regExp)
+            needle = lang.escapeRegExp(needle);
+        var modifier = options.caseSensitive ? "gm" : "gmi";
         try {
             new RegExp(needle, "u");
+            options.$supportsUnicodeFlag = true;
+            modifier += "u";
         }
         catch (e) {
             options.$supportsUnicodeFlag = false; //left for backward compatibility with previous versions for cases like /ab\{2}/gu
         }
-        if (!options.regExp)
-            needle = lang.escapeRegExp(needle);
         if (options.wholeWord)
             needle = addWordBoundary(needle, options);
-        var modifier = options.caseSensitive ? "gm" : "gmi";
-        if (options.$supportsUnicodeFlag) {
-            modifier += "u";
-        }
         options.$isMultiLine = !$disableFakeMultiline && /[\n\r]/.test(needle);
         if (options.$isMultiLine)
             return options.re = this.$assembleMultilineRegExp(needle, modifier);
@@ -45049,6 +45786,7 @@ var Search = /** @class */ (function () {
             return false;
         var backwards = options.backwards == true;
         var skipCurrent = options.skipCurrent != false;
+        var supportsUnicodeFlag = re.unicode;
         var range = options.range;
         var start = options.start;
         if (!start)
@@ -45121,7 +45859,7 @@ var Search = /** @class */ (function () {
                     if (!length) {
                         if (last >= line.length)
                             break;
-                        re.lastIndex = last += 1;
+                        re.lastIndex = last += lang.skipEmptyMatch(line, last, supportsUnicodeFlag);
                     }
                     if (m.index + length > endIndex)
                         break;
@@ -45147,7 +45885,7 @@ var Search = /** @class */ (function () {
                     if (callback(row, last, row, last + length))
                         return true;
                     if (!length) {
-                        re.lastIndex = last += 1;
+                        re.lastIndex = last += lang.skipEmptyMatch(line, last, supportsUnicodeFlag);
                         if (last >= line.length)
                             return false;
                     }
@@ -45179,228 +45917,6 @@ function addWordBoundary(needle, options) {
     return wordBoundary(firstChar) + needle + wordBoundary(lastChar, false);
 }
 exports.Search = Search;
-
-});
-
-define("ace/keyboard/hash_handler",["require","exports","module","ace/lib/keys","ace/lib/useragent"], function(require, exports, module){"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var keyUtil = require("../lib/keys");
-var useragent = require("../lib/useragent");
-var KEY_MODS = keyUtil.KEY_MODS;
-var MultiHashHandler = /** @class */ (function () {
-    function MultiHashHandler(config, platform) {
-        this.$init(config, platform, false);
-    }
-    MultiHashHandler.prototype.$init = function (config, platform, $singleCommand) {
-        this.platform = platform || (useragent.isMac ? "mac" : "win");
-        this.commands = {};
-        this.commandKeyBinding = {};
-        this.addCommands(config);
-        this.$singleCommand = $singleCommand;
-    };
-    MultiHashHandler.prototype.addCommand = function (command) {
-        if (this.commands[command.name])
-            this.removeCommand(command);
-        this.commands[command.name] = command;
-        if (command.bindKey)
-            this._buildKeyHash(command);
-    };
-    MultiHashHandler.prototype.removeCommand = function (command, keepCommand) {
-        var name = command && (typeof command === 'string' ? command : command.name);
-        command = this.commands[name];
-        if (!keepCommand)
-            delete this.commands[name];
-        var ckb = this.commandKeyBinding;
-        for (var keyId in ckb) {
-            var cmdGroup = ckb[keyId];
-            if (cmdGroup == command) {
-                delete ckb[keyId];
-            }
-            else if (Array.isArray(cmdGroup)) {
-                var i = cmdGroup.indexOf(command);
-                if (i != -1) {
-                    cmdGroup.splice(i, 1);
-                    if (cmdGroup.length == 1)
-                        ckb[keyId] = cmdGroup[0];
-                }
-            }
-        }
-    };
-    MultiHashHandler.prototype.bindKey = function (key, command, position) {
-        if (typeof key == "object" && key) {
-            if (position == undefined)
-                position = key.position;
-            key = key[this.platform];
-        }
-        if (!key)
-            return;
-        if (typeof command == "function")
-            return this.addCommand({ exec: command, bindKey: key, name: command.name || key });
-        key.split("|").forEach(function (keyPart) {
-            var chain = "";
-            if (keyPart.indexOf(" ") != -1) {
-                var parts = keyPart.split(/\s+/);
-                keyPart = parts.pop();
-                parts.forEach(function (keyPart) {
-                    var binding = this.parseKeys(keyPart);
-                    var id = KEY_MODS[binding.hashId] + binding.key;
-                    chain += (chain ? " " : "") + id;
-                    this._addCommandToBinding(chain, "chainKeys");
-                }, this);
-                chain += " ";
-            }
-            var binding = this.parseKeys(keyPart);
-            var id = KEY_MODS[binding.hashId] + binding.key;
-            this._addCommandToBinding(chain + id, command, position);
-        }, this);
-    };
-    MultiHashHandler.prototype._addCommandToBinding = function (keyId, command, position) {
-        var ckb = this.commandKeyBinding, i;
-        if (!command) {
-            delete ckb[keyId];
-        }
-        else if (!ckb[keyId] || this.$singleCommand) {
-            ckb[keyId] = command;
-        }
-        else {
-            if (!Array.isArray(ckb[keyId])) {
-                ckb[keyId] = [ckb[keyId]];
-            }
-            else if ((i = ckb[keyId].indexOf(command)) != -1) {
-                ckb[keyId].splice(i, 1);
-            }
-            if (typeof position != "number") {
-                position = getPosition(command);
-            }
-            var commands = ckb[keyId];
-            for (i = 0; i < commands.length; i++) {
-                var other = commands[i];
-                var otherPos = getPosition(other);
-                if (otherPos > position)
-                    break;
-            }
-            commands.splice(i, 0, command);
-        }
-    };
-    MultiHashHandler.prototype.addCommands = function (commands) {
-        commands && Object.keys(commands).forEach(function (name) {
-            var command = commands[name];
-            if (!command)
-                return;
-            if (typeof command === "string")
-                return this.bindKey(command, name);
-            if (typeof command === "function")
-                command = { exec: command };
-            if (typeof command !== "object")
-                return;
-            if (!command.name)
-                command.name = name;
-            this.addCommand(command);
-        }, this);
-    };
-    MultiHashHandler.prototype.removeCommands = function (commands) {
-        Object.keys(commands).forEach(function (name) {
-            this.removeCommand(commands[name]);
-        }, this);
-    };
-    MultiHashHandler.prototype.bindKeys = function (keyList) {
-        Object.keys(keyList).forEach(function (key) {
-            this.bindKey(key, keyList[key]);
-        }, this);
-    };
-    MultiHashHandler.prototype._buildKeyHash = function (command) {
-        this.bindKey(command.bindKey, command);
-    };
-    MultiHashHandler.prototype.parseKeys = function (keys) {
-        var parts = keys.toLowerCase().split(/[\-\+]([\-\+])?/).filter(function (x) { return x; });
-        var key = parts.pop();
-        var keyCode = keyUtil[key];
-        if (keyUtil.FUNCTION_KEYS[keyCode])
-            key = keyUtil.FUNCTION_KEYS[keyCode].toLowerCase();
-        else if (!parts.length)
-            return { key: key, hashId: -1 };
-        else if (parts.length == 1 && parts[0] == "shift")
-            return { key: key.toUpperCase(), hashId: -1 };
-        var hashId = 0;
-        for (var i = parts.length; i--;) {
-            var modifier = keyUtil.KEY_MODS[parts[i]];
-            if (modifier == null) {
-                if (typeof console != "undefined")
-                    console.error("invalid modifier " + parts[i] + " in " + keys);
-                return false;
-            }
-            hashId |= modifier;
-        }
-        return { key: key, hashId: hashId };
-    };
-    MultiHashHandler.prototype.findKeyCommand = function (hashId, keyString) {
-        var key = KEY_MODS[hashId] + keyString;
-        return this.commandKeyBinding[key];
-    };
-    MultiHashHandler.prototype.handleKeyboard = function (data, hashId, keyString, keyCode) {
-        if (keyCode < 0)
-            return;
-        var key = KEY_MODS[hashId] + keyString;
-        var command = this.commandKeyBinding[key];
-        if (data.$keyChain) {
-            data.$keyChain += " " + key;
-            command = this.commandKeyBinding[data.$keyChain] || command;
-        }
-        if (command) {
-            if (command == "chainKeys" || command[command.length - 1] == "chainKeys") {
-                data.$keyChain = data.$keyChain || key;
-                return { command: "null" };
-            }
-        }
-        if (data.$keyChain) {
-            if ((!hashId || hashId == 4) && keyString.length == 1)
-                data.$keyChain = data.$keyChain.slice(0, -key.length - 1); // wait for input
-            else if (hashId == -1 || keyCode > 0)
-                data.$keyChain = ""; // reset keyChain
-        }
-        return { command: command };
-    };
-    MultiHashHandler.prototype.getStatusText = function (editor, data) {
-        return data.$keyChain || "";
-    };
-    return MultiHashHandler;
-}());
-function getPosition(command) {
-    return typeof command == "object" && command.bindKey
-        && command.bindKey.position
-        || (command.isDefault ? -100 : 0);
-}
-var HashHandler = /** @class */ (function (_super) {
-    __extends(HashHandler, _super);
-    function HashHandler(config, platform) {
-        var _this = _super.call(this, config, platform) || this;
-        _this.$singleCommand = true;
-        return _this;
-    }
-    return HashHandler;
-}(MultiHashHandler));
-HashHandler.call = function (thisArg, config, platform) {
-    MultiHashHandler.prototype.$init.call(thisArg, config, platform, true);
-};
-MultiHashHandler.call = function (thisArg, config, platform) {
-    MultiHashHandler.prototype.$init.call(thisArg, config, platform, false);
-};
-exports.HashHandler = HashHandler;
-exports.MultiHashHandler = MultiHashHandler;
 
 });
 
@@ -46228,7 +46744,6 @@ exports.commands = [{
         description: "Auto Indent",
         bindKey: bindKey(null, null),
         exec: function (editor) { editor.autoIndent(); },
-        multiSelectAction: "forEachLine",
         scrollIntoView: "animate"
     }, {
         name: "expandtoline",
@@ -46342,6 +46857,13 @@ exports.commands = [{
         scrollIntoView: "cursor"
     }, {
         name: "openCommandPallete",
+        exec: function (editor) {
+            console.warn("This is an obsolete command. Please use `openCommandPalette` instead.");
+            editor.prompt({ $type: "commands" });
+        },
+        readOnly: true
+    }, {
+        name: "openCommandPalette",
         description: "Open command palette",
         bindKey: bindKey("F1", "F1"),
         exec: function (editor) {
@@ -46542,11 +47064,11 @@ var LineWidgets = /** @class */ (function () {
                 dom.addCssClass(w.el, w.className);
             }
             w.el.style.position = "absolute";
-            w.el.style.zIndex = 5;
+            w.el.style.zIndex = "5";
             renderer.container.appendChild(w.el);
             w._inDocument = true;
             if (!w.coverGutter) {
-                w.el.style.zIndex = 3;
+                w.el.style.zIndex = "3";
             }
             if (w.pixelHeight == null) {
                 w.pixelHeight = w.el.offsetHeight;
@@ -46742,7 +47264,8 @@ var GutterKeyboardHandler = /** @class */ (function () {
             var row = this.editor.getCursorPosition().row;
             if (!this.editor.isRowVisible(row))
                 this.editor.scrollToLine(row, true, true);
-            setTimeout(function () {
+            setTimeout(
+            function () {
                 var index = this.$rowToRowIndex(this.gutterLayer.$cursorCell.row);
                 var nearestFoldIndex = this.$findNearestFoldWidget(index);
                 var nearestAnnotationIndex = this.$findNearestAnnotation(index);
@@ -46833,7 +47356,8 @@ var GutterKeyboardHandler = /** @class */ (function () {
                     if (this.gutterLayer.session.foldWidgets[this.$rowIndexToRow(this.activeRowIndex)] === 'start') {
                         var rowFoldingWidget = this.$rowIndexToRow(this.activeRowIndex);
                         this.editor.session.onFoldWidgetClick(this.$rowIndexToRow(this.activeRowIndex), e);
-                        setTimeout(function () {
+                        setTimeout(
+                        function () {
                             if (this.$rowIndexToRow(this.activeRowIndex) !== rowFoldingWidget) {
                                 this.$blurFoldWidget(this.activeRowIndex);
                                 this.activeRowIndex = this.$rowToRowIndex(rowFoldingWidget);
@@ -47208,7 +47732,7 @@ var nls = require("./config").nls;
 var clipboard = require("./clipboard");
 var keys = require('./lib/keys');
 var Editor = /** @class */ (function () {
-    function Editor(renderer, session, options) {
+    function Editor(renderer, session, options) { this.session;
         this.$toDestroy = [];
         var container = renderer.getContainerElement();
         this.container = container;
@@ -47791,7 +48315,7 @@ var Editor = /** @class */ (function () {
             this.clearSelection();
         }
         else if (this.session.getOverwrite() && text.indexOf("\n") == -1) {
-            var range = new Range.fromPoints(cursor, cursor);
+            var range = Range.fromPoints(cursor, cursor);
             range.end.column += text.length;
             this.session.remove(range);
         }
@@ -47828,39 +48352,35 @@ var Editor = /** @class */ (function () {
     Editor.prototype.autoIndent = function () {
         var session = this.session;
         var mode = session.getMode();
-        var startRow, endRow;
-        if (this.selection.isEmpty()) {
-            startRow = 0;
-            endRow = session.doc.getLength() - 1;
-        }
-        else {
-            var selectedRange = this.getSelectionRange();
-            startRow = selectedRange.start.row;
-            endRow = selectedRange.end.row;
-        }
+        var ranges = this.selection.isEmpty()
+            ? [new Range(0, 0, session.doc.getLength() - 1, 0)]
+            : this.selection.getAllRanges();
         var prevLineState = "";
         var prevLine = "";
         var lineIndent = "";
-        var line, currIndent, range;
         var tab = session.getTabString();
-        for (var row = startRow; row <= endRow; row++) {
-            if (row > 0) {
-                prevLineState = session.getState(row - 1);
-                prevLine = session.getLine(row - 1);
-                lineIndent = mode.getNextLineIndent(prevLineState, prevLine, tab);
-            }
-            line = session.getLine(row);
-            currIndent = mode.$getIndent(line);
-            if (lineIndent !== currIndent) {
-                if (currIndent.length > 0) {
-                    range = new Range(row, 0, row, currIndent.length);
-                    session.remove(range);
+        for (var i = 0; i < ranges.length; i++) {
+            var startRow = ranges[i].start.row;
+            var endRow = ranges[i].end.row;
+            for (var row = startRow; row <= endRow; row++) {
+                if (row > 0) {
+                    prevLineState = session.getState(row - 1);
+                    prevLine = session.getLine(row - 1);
+                    lineIndent = mode.getNextLineIndent(prevLineState, prevLine, tab);
                 }
-                if (lineIndent.length > 0) {
-                    session.insert({ row: row, column: 0 }, lineIndent);
+                var line = session.getLine(row);
+                var currIndent = mode.$getIndent(line);
+                if (lineIndent !== currIndent) {
+                    if (currIndent.length > 0) {
+                        var range = new Range(row, 0, row, currIndent.length);
+                        session.remove(range);
+                    }
+                    if (lineIndent.length > 0) {
+                        session.insert({ row: row, column: 0 }, lineIndent);
+                    }
                 }
+                mode.autoOutdent(prevLineState, session, row);
             }
-            mode.autoOutdent(prevLineState, session, row);
         }
     };
     Editor.prototype.onTextInput = function (text, composition) {
@@ -48357,7 +48877,7 @@ var Editor = /** @class */ (function () {
         }
         else {
             var point = reverse ? range.start : range.end;
-            var endPoint = doc.insert(point, doc.getTextRange(range), false);
+            var endPoint = doc.insert(point, doc.getTextRange(range));
             range.start = point;
             range.end = endPoint;
             sel.setSelectionRange(range, reverse);
@@ -49180,21 +49700,21 @@ config.defineOptions(Editor.prototype, "editor", {
     mode: "session"
 });
 var relativeNumberRenderer = {
-    getText: function (session, row) {
+    getText: function (/**@type{EditSession}*/ session, /**@type{number}*/ row) {
         return (Math.abs(session.selection.lead.row - row) || (row + 1 + (row < 9 ? "\xb7" : ""))) + "";
     },
-    getWidth: function (session, lastLineNumber, config) {
+    getWidth: function (session, /**@type{number}*/ lastLineNumber, config) {
         return Math.max(lastLineNumber.toString().length, (config.lastRow + 1).toString().length, 2) * config.characterWidth;
     },
-    update: function (e, editor) {
+    update: function (e, /**@type{Editor}*/ editor) {
         editor.renderer.$loop.schedule(editor.renderer.CHANGE_GUTTER);
     },
-    attach: function (editor) {
+    attach: function (/**@type{Editor}*/ editor) {
         editor.renderer.$gutterLayer.$renderer = this;
         editor.on("changeSelection", this.update);
         this.update(null, editor);
     },
-    detach: function (editor) {
+    detach: function (/**@type{Editor}*/ editor) {
         if (editor.renderer.$gutterLayer.$renderer == this)
             editor.renderer.$gutterLayer.$renderer = null;
         editor.off("changeSelection", this.update);
@@ -49205,476 +49725,1682 @@ exports.Editor = Editor;
 
 });
 
-define("ace/undomanager",["require","exports","module","ace/range"], function(require, exports, module){"use strict";
-var UndoManager = /** @class */ (function () {
-    function UndoManager() {
-        this.$maxRev = 0;
-        this.$fromUndo = false;
-        this.$undoDepth = Infinity;
-        this.reset();
+define("ace/snippets",["require","exports","module","ace/lib/dom","ace/lib/oop","ace/lib/event_emitter","ace/lib/lang","ace/range","ace/range_list","ace/keyboard/hash_handler","ace/tokenizer","ace/clipboard","ace/editor"], function(require, exports, module){"use strict";
+var dom = require("./lib/dom");
+var oop = require("./lib/oop");
+var EventEmitter = require("./lib/event_emitter").EventEmitter;
+var lang = require("./lib/lang");
+var Range = require("./range").Range;
+var RangeList = require("./range_list").RangeList;
+var HashHandler = require("./keyboard/hash_handler").HashHandler;
+var Tokenizer = require("./tokenizer").Tokenizer;
+var clipboard = require("./clipboard");
+var VARIABLES = {
+    CURRENT_WORD: function (editor) {
+        return editor.session.getTextRange(editor.session.getWordRange());
+    },
+    SELECTION: function (editor, name, indentation) {
+        var text = editor.session.getTextRange();
+        if (indentation)
+            return text.replace(/\n\r?([ \t]*\S)/g, "\n" + indentation + "$1");
+        return text;
+    },
+    CURRENT_LINE: function (editor) {
+        return editor.session.getLine(editor.getCursorPosition().row);
+    },
+    PREV_LINE: function (editor) {
+        return editor.session.getLine(editor.getCursorPosition().row - 1);
+    },
+    LINE_INDEX: function (editor) {
+        return editor.getCursorPosition().row;
+    },
+    LINE_NUMBER: function (editor) {
+        return editor.getCursorPosition().row + 1;
+    },
+    SOFT_TABS: function (editor) {
+        return editor.session.getUseSoftTabs() ? "YES" : "NO";
+    },
+    TAB_SIZE: function (editor) {
+        return editor.session.getTabSize();
+    },
+    CLIPBOARD: function (editor) {
+        return clipboard.getText && clipboard.getText();
+    },
+    FILENAME: function (editor) {
+        return /[^/\\]*$/.exec(this.FILEPATH(editor))[0];
+    },
+    FILENAME_BASE: function (editor) {
+        return /[^/\\]*$/.exec(this.FILEPATH(editor))[0].replace(/\.[^.]*$/, "");
+    },
+    DIRECTORY: function (editor) {
+        return this.FILEPATH(editor).replace(/[^/\\]*$/, "");
+    },
+    FILEPATH: function (editor) { return "/not implemented.txt"; },
+    WORKSPACE_NAME: function () { return "Unknown"; },
+    FULLNAME: function () { return "Unknown"; },
+    BLOCK_COMMENT_START: function (editor) {
+        var mode = editor.session.$mode || {};
+        return mode.blockComment && mode.blockComment.start || "";
+    },
+    BLOCK_COMMENT_END: function (editor) {
+        var mode = editor.session.$mode || {};
+        return mode.blockComment && mode.blockComment.end || "";
+    },
+    LINE_COMMENT: function (editor) {
+        var mode = editor.session.$mode || {};
+        return mode.lineCommentStart || "";
+    },
+    CURRENT_YEAR: date.bind(null, { year: "numeric" }),
+    CURRENT_YEAR_SHORT: date.bind(null, { year: "2-digit" }),
+    CURRENT_MONTH: date.bind(null, { month: "numeric" }),
+    CURRENT_MONTH_NAME: date.bind(null, { month: "long" }),
+    CURRENT_MONTH_NAME_SHORT: date.bind(null, { month: "short" }),
+    CURRENT_DATE: date.bind(null, { day: "2-digit" }),
+    CURRENT_DAY_NAME: date.bind(null, { weekday: "long" }),
+    CURRENT_DAY_NAME_SHORT: date.bind(null, { weekday: "short" }),
+    CURRENT_HOUR: date.bind(null, { hour: "2-digit", hour12: false }),
+    CURRENT_MINUTE: date.bind(null, { minute: "2-digit" }),
+    CURRENT_SECOND: date.bind(null, { second: "2-digit" })
+};
+VARIABLES.SELECTED_TEXT = VARIABLES.SELECTION;
+function date(dateFormat) {
+    var str = new Date().toLocaleString("en-us", dateFormat);
+    return str.length == 1 ? "0" + str : str;
+}
+var SnippetManager = /** @class */ (function () {
+    function SnippetManager() {
+        this.snippetMap = {};
+        this.snippetNameMap = {};
+        this.variables = VARIABLES;
     }
-    UndoManager.prototype.addSession = function (session) {
-        this.$session = session;
+    SnippetManager.prototype.getTokenizer = function () {
+        return SnippetManager["$tokenizer"] || this.createTokenizer();
     };
-    UndoManager.prototype.add = function (delta, allowMerge, session) {
-        if (this.$fromUndo)
-            return;
-        if (delta == this.$lastDelta)
-            return;
-        if (!this.$keepRedoStack)
-            this.$redoStack.length = 0;
-        if (allowMerge === false || !this.lastDeltas) {
-            this.lastDeltas = [];
-            var undoStackLength = this.$undoStack.length;
-            if (undoStackLength > this.$undoDepth - 1) {
-                this.$undoStack.splice(0, undoStackLength - this.$undoDepth + 1);
-            }
-            this.$undoStack.push(this.lastDeltas);
-            delta.id = this.$rev = ++this.$maxRev;
+    SnippetManager.prototype.createTokenizer = function () {
+        function TabstopToken(str) {
+            str = str.substr(1);
+            if (/^\d+$/.test(str))
+                return [{ tabstopId: parseInt(str, 10) }];
+            return [{ text: str }];
         }
-        if (delta.action == "remove" || delta.action == "insert")
-            this.$lastDelta = delta;
-        this.lastDeltas.push(delta);
+        function escape(ch) {
+            return "(?:[^\\\\" + ch + "]|\\\\.)";
+        }
+        var formatMatcher = {
+            regex: "/(" + escape("/") + "+)/",
+            onMatch: function (val, state, stack) {
+                var ts = stack[0];
+                ts.fmtString = true;
+                ts.guard = val.slice(1, -1);
+                ts.flag = "";
+                return "";
+            },
+            next: "formatString"
+        };
+        SnippetManager["$tokenizer"] = new Tokenizer({
+            start: [
+                { regex: /\\./, onMatch: function (val, state, stack) {
+                        var ch = val[1];
+                        if (ch == "}" && stack.length) {
+                            val = ch;
+                        }
+                        else if ("`$\\".indexOf(ch) != -1) {
+                            val = ch;
+                        }
+                        return [val];
+                    } },
+                { regex: /}/, onMatch: function (val, state, stack) {
+                        return [stack.length ? stack.shift() : val];
+                    } },
+                { regex: /\$(?:\d+|\w+)/, onMatch: TabstopToken },
+                { regex: /\$\{[\dA-Z_a-z]+/, onMatch: function (str, state, stack) {
+                        var t = TabstopToken(str.substr(1));
+                        stack.unshift(t[0]);
+                        return t;
+                    }, next: "snippetVar" },
+                { regex: /\n/, token: "newline", merge: false }
+            ],
+            snippetVar: [
+                { regex: "\\|" + escape("\\|") + "*\\|", onMatch: function (val, state, stack) {
+                        var choices = val.slice(1, -1).replace(/\\[,|\\]|,/g, function (operator) {
+                            return operator.length == 2 ? operator[1] : "\x00";
+                        }).split("\x00").map(function (value) {
+                            return { value: value };
+                        });
+                        stack[0].choices = choices;
+                        return [choices[0]];
+                    }, next: "start" },
+                formatMatcher,
+                { regex: "([^:}\\\\]|\\\\.)*:?", token: "", next: "start" }
+            ],
+            formatString: [
+                { regex: /:/, onMatch: function (val, state, stack) {
+                        if (stack.length && stack[0].expectElse) {
+                            stack[0].expectElse = false;
+                            stack[0].ifEnd = { elseEnd: stack[0] };
+                            return [stack[0].ifEnd];
+                        }
+                        return ":";
+                    } },
+                { regex: /\\./, onMatch: function (val, state, stack) {
+                        var ch = val[1];
+                        if (ch == "}" && stack.length)
+                            val = ch;
+                        else if ("`$\\".indexOf(ch) != -1)
+                            val = ch;
+                        else if (ch == "n")
+                            val = "\n";
+                        else if (ch == "t")
+                            val = "\t";
+                        else if ("ulULE".indexOf(ch) != -1)
+                            val = { changeCase: ch, local: ch > "a" };
+                        return [val];
+                    } },
+                { regex: "/\\w*}", onMatch: function (val, state, stack) {
+                        var next = stack.shift();
+                        if (next)
+                            next.flag = val.slice(1, -1);
+                        this.next = next && next.tabstopId ? "start" : "";
+                        return [next || val];
+                    }, next: "start" },
+                { regex: /\$(?:\d+|\w+)/, onMatch: function (val, state, stack) {
+                        return [{ text: val.slice(1) }];
+                    } },
+                { regex: /\${\w+/, onMatch: function (val, state, stack) {
+                        var token = { text: val.slice(2) };
+                        stack.unshift(token);
+                        return [token];
+                    }, next: "formatStringVar" },
+                { regex: /\n/, token: "newline", merge: false },
+                { regex: /}/, onMatch: function (val, state, stack) {
+                        var next = stack.shift();
+                        this.next = next && next.tabstopId ? "start" : "";
+                        return [next || val];
+                    }, next: "start" }
+            ],
+            formatStringVar: [
+                { regex: /:\/\w+}/, onMatch: function (val, state, stack) {
+                        var ts = stack[0];
+                        ts.formatFunction = val.slice(2, -1);
+                        return [stack.shift()];
+                    }, next: "formatString" },
+                formatMatcher,
+                { regex: /:[\?\-+]?/, onMatch: function (val, state, stack) {
+                        if (val[1] == "+")
+                            stack[0].ifEnd = stack[0];
+                        if (val[1] == "?")
+                            stack[0].expectElse = true;
+                    }, next: "formatString" },
+                { regex: "([^:}\\\\]|\\\\.)*:?", token: "", next: "formatString" }
+            ]
+        });
+        return SnippetManager["$tokenizer"];
     };
-    UndoManager.prototype.addSelection = function (selection, rev) {
-        this.selections.push({
-            value: selection,
-            rev: rev || this.$rev
+    SnippetManager.prototype.tokenizeTmSnippet = function (str, startState) {
+        return this.getTokenizer().getLineTokens(str, startState).tokens.map(function (x) {
+            return x.value || x;
         });
     };
-    UndoManager.prototype.startNewGroup = function () {
-        this.lastDeltas = null;
-        return this.$rev;
+    SnippetManager.prototype.getVariableValue = function (editor, name, indentation) {
+        if (/^\d+$/.test(name))
+            return (this.variables.__ || {})[name] || "";
+        if (/^[A-Z]\d+$/.test(name))
+            return (this.variables[name[0] + "__"] || {})[name.substr(1)] || "";
+        name = name.replace(/^TM_/, "");
+        if (!this.variables.hasOwnProperty(name))
+            return "";
+        var value = this.variables[name];
+        if (typeof value == "function")
+            value = this.variables[name](editor, name, indentation);
+        return value == null ? "" : value;
     };
-    UndoManager.prototype.markIgnored = function (from, to) {
-        if (to == null)
-            to = this.$rev + 1;
-        var stack = this.$undoStack;
-        for (var i = stack.length; i--;) {
-            var delta = stack[i][0];
-            if (delta.id <= from)
-                break;
-            if (delta.id < to)
-                delta.ignore = true;
-        }
-        this.lastDeltas = null;
+    SnippetManager.prototype.tmStrFormat = function (str, ch, editor) {
+        if (!ch.fmt)
+            return str;
+        var flag = ch.flag || "";
+        var re = ch.guard;
+        re = new RegExp(re, flag.replace(/[^gim]/g, ""));
+        var fmtTokens = typeof ch.fmt == "string" ? this.tokenizeTmSnippet(ch.fmt, "formatString") : ch.fmt;
+        var _self = this;
+        var formatted = str.replace(re, function () {
+            var oldArgs = _self.variables.__;
+            _self.variables.__ = [].slice.call(arguments);
+            var fmtParts = _self.resolveVariables(fmtTokens, editor);
+            var gChangeCase = "E";
+            for (var i = 0; i < fmtParts.length; i++) {
+                var ch = fmtParts[i];
+                if (typeof ch == "object") {
+                    fmtParts[i] = "";
+                    if (ch.changeCase && ch.local) {
+                        var next = fmtParts[i + 1];
+                        if (next && typeof next == "string") {
+                            if (ch.changeCase == "u")
+                                fmtParts[i] = next[0].toUpperCase();
+                            else
+                                fmtParts[i] = next[0].toLowerCase();
+                            fmtParts[i + 1] = next.substr(1);
+                        }
+                    }
+                    else if (ch.changeCase) {
+                        gChangeCase = ch.changeCase;
+                    }
+                }
+                else if (gChangeCase == "U") {
+                    fmtParts[i] = ch.toUpperCase();
+                }
+                else if (gChangeCase == "L") {
+                    fmtParts[i] = ch.toLowerCase();
+                }
+            }
+            _self.variables.__ = oldArgs;
+            return fmtParts.join("");
+        });
+        return formatted;
     };
-    UndoManager.prototype.getSelection = function (rev, after) {
-        var stack = this.selections;
-        for (var i = stack.length; i--;) {
-            var selection = stack[i];
-            if (selection.rev < rev) {
-                if (after)
-                    selection = stack[i + 1];
-                return selection;
+    SnippetManager.prototype.tmFormatFunction = function (str, ch, editor) {
+        if (ch.formatFunction == "upcase")
+            return str.toUpperCase();
+        if (ch.formatFunction == "downcase")
+            return str.toLowerCase();
+        return str;
+    };
+    SnippetManager.prototype.resolveVariables = function (snippet, editor) {
+        var result = [];
+        var indentation = "";
+        var afterNewLine = true;
+        for (var i = 0; i < snippet.length; i++) {
+            var ch = snippet[i];
+            if (typeof ch == "string") {
+                result.push(ch);
+                if (ch == "\n") {
+                    afterNewLine = true;
+                    indentation = "";
+                }
+                else if (afterNewLine) {
+                    indentation = /^\t*/.exec(ch)[0];
+                    afterNewLine = /\S/.test(ch);
+                }
+                continue;
+            }
+            if (!ch)
+                continue;
+            afterNewLine = false;
+            if (ch.fmtString) {
+                var j = snippet.indexOf(ch, i + 1);
+                if (j == -1)
+                    j = snippet.length;
+                ch.fmt = snippet.slice(i + 1, j);
+                i = j;
+            }
+            if (ch.text) {
+                var value = this.getVariableValue(editor, ch.text, indentation) + "";
+                if (ch.fmtString)
+                    value = this.tmStrFormat(value, ch, editor);
+                if (ch.formatFunction)
+                    value = this.tmFormatFunction(value, ch, editor);
+                if (value && !ch.ifEnd) {
+                    result.push(value);
+                    gotoNext(ch);
+                }
+                else if (!value && ch.ifEnd) {
+                    gotoNext(ch.ifEnd);
+                }
+            }
+            else if (ch.elseEnd) {
+                gotoNext(ch.elseEnd);
+            }
+            else if (ch.tabstopId != null) {
+                result.push(ch);
+            }
+            else if (ch.changeCase != null) {
+                result.push(ch);
             }
         }
+        function gotoNext(ch) {
+            var i1 = snippet.indexOf(ch, i + 1);
+            if (i1 != -1)
+                i = i1;
+        }
+        return result;
     };
-    UndoManager.prototype.getRevision = function () {
-        return this.$rev;
+    SnippetManager.prototype.getDisplayTextForSnippet = function (editor, snippetText) {
+        var processedSnippet = processSnippetText.call(this, editor, snippetText);
+        return processedSnippet.text;
     };
-    UndoManager.prototype.getDeltas = function (from, to) {
-        if (to == null)
-            to = this.$rev + 1;
-        var stack = this.$undoStack;
-        var end = null, start = 0;
-        for (var i = stack.length; i--;) {
-            var delta = stack[i][0];
-            if (delta.id < to && !end)
-                end = i + 1;
-            if (delta.id <= from) {
-                start = i + 1;
-                break;
+    SnippetManager.prototype.insertSnippetForSelection = function (editor, snippetText, options) {
+        if (options === void 0) { options = {}; }
+        var processedSnippet = processSnippetText.call(this, editor, snippetText, options);
+        var range = editor.getSelectionRange();
+        var end = editor.session.replace(range, processedSnippet.text);
+        var tabstopManager = new TabstopManager(editor);
+        var selectionId = editor.inVirtualSelectionMode && editor.selection.index;
+        tabstopManager.addTabstops(processedSnippet.tabstops, range.start, end, selectionId);
+    };
+    SnippetManager.prototype.insertSnippet = function (editor, snippetText, options) {
+        if (options === void 0) { options = {}; }
+        var self = this;
+        if (editor.inVirtualSelectionMode)
+            return self.insertSnippetForSelection(editor, snippetText, options);
+        editor.forEachSelection(function () {
+            self.insertSnippetForSelection(editor, snippetText, options);
+        }, null, { keepOrder: true });
+        if (editor.tabstopManager)
+            editor.tabstopManager.tabNext();
+    };
+    SnippetManager.prototype.$getScope = function (editor) {
+        var scope = editor.session.$mode.$id || "";
+        scope = scope.split("/").pop();
+        if (scope === "html" || scope === "php") {
+            if (scope === "php" && !editor.session.$mode.inlinePhp)
+                scope = "html";
+            var c = editor.getCursorPosition();
+            var state = editor.session.getState(c.row);
+            if (typeof state === "object") {
+                state = state[0];
+            }
+            if (state.substring) {
+                if (state.substring(0, 3) == "js-")
+                    scope = "javascript";
+                else if (state.substring(0, 4) == "css-")
+                    scope = "css";
+                else if (state.substring(0, 4) == "php-")
+                    scope = "php";
             }
         }
-        return stack.slice(start, end);
+        return scope;
     };
-    UndoManager.prototype.getChangedRanges = function (from, to) {
-        if (to == null)
-            to = this.$rev + 1;
-    };
-    UndoManager.prototype.getChangedLines = function (from, to) {
-        if (to == null)
-            to = this.$rev + 1;
-    };
-    UndoManager.prototype.undo = function (session, dontSelect) {
-        this.lastDeltas = null;
-        var stack = this.$undoStack;
-        if (!rearrangeUndoStack(stack, stack.length))
-            return;
-        if (!session)
-            session = this.$session;
-        if (this.$redoStackBaseRev !== this.$rev && this.$redoStack.length)
-            this.$redoStack = [];
-        this.$fromUndo = true;
-        var deltaSet = stack.pop();
-        var undoSelectionRange = null;
-        if (deltaSet) {
-            undoSelectionRange = session.undoChanges(deltaSet, dontSelect);
-            this.$redoStack.push(deltaSet);
-            this.$syncRev();
+    SnippetManager.prototype.getActiveScopes = function (editor) {
+        var scope = this.$getScope(editor);
+        var scopes = [scope];
+        var snippetMap = this.snippetMap;
+        if (snippetMap[scope] && snippetMap[scope].includeScopes) {
+            scopes.push.apply(scopes, snippetMap[scope].includeScopes);
         }
-        this.$fromUndo = false;
-        return undoSelectionRange;
+        scopes.push("_");
+        return scopes;
     };
-    UndoManager.prototype.redo = function (session, dontSelect) {
-        this.lastDeltas = null;
-        if (!session)
-            session = this.$session;
-        this.$fromUndo = true;
-        if (this.$redoStackBaseRev != this.$rev) {
-            var diff = this.getDeltas(this.$redoStackBaseRev, this.$rev + 1);
-            rebaseRedoStack(this.$redoStack, diff);
-            this.$redoStackBaseRev = this.$rev;
-            this.$redoStack.forEach(function (x) {
-                x[0].id = ++this.$maxRev;
-            }, this);
-        }
-        var deltaSet = this.$redoStack.pop();
-        var redoSelectionRange = null;
-        if (deltaSet) {
-            redoSelectionRange = session.redoChanges(deltaSet, dontSelect);
-            this.$undoStack.push(deltaSet);
-            this.$syncRev();
-        }
-        this.$fromUndo = false;
-        return redoSelectionRange;
+    SnippetManager.prototype.expandWithTab = function (editor, options) {
+        var self = this;
+        var result = editor.forEachSelection(function () {
+            return self.expandSnippetForSelection(editor, options);
+        }, null, { keepOrder: true });
+        if (result && editor.tabstopManager)
+            editor.tabstopManager.tabNext();
+        return result;
     };
-    UndoManager.prototype.$syncRev = function () {
-        var stack = this.$undoStack;
-        var nextDelta = stack[stack.length - 1];
-        var id = nextDelta && nextDelta[0].id || 0;
-        this.$redoStackBaseRev = id;
-        this.$rev = id;
-    };
-    UndoManager.prototype.reset = function () {
-        this.lastDeltas = null;
-        this.$lastDelta = null;
-        this.$undoStack = [];
-        this.$redoStack = [];
-        this.$rev = 0;
-        this.mark = 0;
-        this.$redoStackBaseRev = this.$rev;
-        this.selections = [];
-    };
-    UndoManager.prototype.canUndo = function () {
-        return this.$undoStack.length > 0;
-    };
-    UndoManager.prototype.canRedo = function () {
-        return this.$redoStack.length > 0;
-    };
-    UndoManager.prototype.bookmark = function (rev) {
-        if (rev == undefined)
-            rev = this.$rev;
-        this.mark = rev;
-    };
-    UndoManager.prototype.isAtBookmark = function () {
-        return this.$rev === this.mark;
-    };
-    UndoManager.prototype.toJSON = function () {
-    };
-    UndoManager.prototype.fromJSON = function () {
-    };
-    UndoManager.prototype.$prettyPrint = function (delta) {
-        if (delta)
-            return stringifyDelta(delta);
-        return stringifyDelta(this.$undoStack) + "\n---\n" + stringifyDelta(this.$redoStack);
-    };
-    return UndoManager;
-}());
-UndoManager.prototype.hasUndo = UndoManager.prototype.canUndo;
-UndoManager.prototype.hasRedo = UndoManager.prototype.canRedo;
-UndoManager.prototype.isClean = UndoManager.prototype.isAtBookmark;
-UndoManager.prototype.markClean = UndoManager.prototype.bookmark;
-function rearrangeUndoStack(stack, pos) {
-    for (var i = pos; i--;) {
-        var deltaSet = stack[i];
-        if (deltaSet && !deltaSet[0].ignore) {
-            while (i < pos - 1) {
-                var swapped = swapGroups(stack[i], stack[i + 1]);
-                stack[i] = swapped[0];
-                stack[i + 1] = swapped[1];
-                i++;
-            }
+    SnippetManager.prototype.expandSnippetForSelection = function (editor, options) {
+        var cursor = editor.getCursorPosition();
+        var line = editor.session.getLine(cursor.row);
+        var before = line.substring(0, cursor.column);
+        var after = line.substr(cursor.column);
+        var snippetMap = this.snippetMap;
+        var snippet;
+        this.getActiveScopes(editor).some(function (scope) {
+            var snippets = snippetMap[scope];
+            if (snippets)
+                snippet = this.findMatchingSnippet(snippets, before, after);
+            return !!snippet;
+        }, this);
+        if (!snippet)
+            return false;
+        if (options && options.dryRun)
             return true;
+        editor.session.doc.removeInLine(cursor.row, cursor.column - snippet.replaceBefore.length, cursor.column + snippet.replaceAfter.length);
+        this.variables.M__ = snippet.matchBefore;
+        this.variables.T__ = snippet.matchAfter;
+        this.insertSnippetForSelection(editor, snippet.content);
+        this.variables.M__ = this.variables.T__ = null;
+        return true;
+    };
+    SnippetManager.prototype.findMatchingSnippet = function (snippetList, before, after) {
+        for (var i = snippetList.length; i--;) {
+            var s = snippetList[i];
+            if (s.startRe && !s.startRe.test(before))
+                continue;
+            if (s.endRe && !s.endRe.test(after))
+                continue;
+            if (!s.startRe && !s.endRe)
+                continue;
+            s.matchBefore = s.startRe ? s.startRe.exec(before) : [""];
+            s.matchAfter = s.endRe ? s.endRe.exec(after) : [""];
+            s.replaceBefore = s.triggerRe ? s.triggerRe.exec(before)[0] : "";
+            s.replaceAfter = s.endTriggerRe ? s.endTriggerRe.exec(after)[0] : "";
+            return s;
         }
-    }
-}
-var Range = require("./range").Range;
-var cmp = Range.comparePoints;
-var comparePoints = Range.comparePoints;
-function $updateMarkers(delta) {
-    var isInsert = delta.action == "insert";
-    var start = delta.start;
-    var end = delta.end;
-    var rowShift = (end.row - start.row) * (isInsert ? 1 : -1);
-    var colShift = (end.column - start.column) * (isInsert ? 1 : -1);
-    if (isInsert)
-        end = start;
-    for (var i in this.marks) {
-        var point = this.marks[i];
-        var cmp = comparePoints(point, start);
-        if (cmp < 0) {
-            continue; // delta starts after the range
+    };
+    SnippetManager.prototype.register = function (snippets, scope) {
+        var snippetMap = this.snippetMap;
+        var snippetNameMap = this.snippetNameMap;
+        var self = this;
+        if (!snippets)
+            snippets = [];
+        function wrapRegexp(src) {
+            if (src && !/^\^?\(.*\)\$?$|^\\b$/.test(src))
+                src = "(?:" + src + ")";
+            return src || "";
         }
-        if (cmp === 0) {
-            if (isInsert) {
-                if (point.bias == 1) {
-                    cmp = 1;
+        function guardedRegexp(re, guard, opening) {
+            re = wrapRegexp(re);
+            guard = wrapRegexp(guard);
+            if (opening) {
+                re = guard + re;
+                if (re && re[re.length - 1] != "$")
+                    re = re + "$";
+            }
+            else {
+                re = re + guard;
+                if (re && re[0] != "^")
+                    re = "^" + re;
+            }
+            return new RegExp(re);
+        }
+        function addSnippet(s) {
+            if (!s.scope)
+                s.scope = scope || "_";
+            scope = s.scope;
+            if (!snippetMap[scope]) {
+                snippetMap[scope] = [];
+                snippetNameMap[scope] = {};
+            }
+            var map = snippetNameMap[scope];
+            if (s.name) {
+                var old = map[s.name];
+                if (old)
+                    self.unregister(old);
+                map[s.name] = s;
+            }
+            snippetMap[scope].push(s);
+            if (s.prefix)
+                s.tabTrigger = s.prefix;
+            if (!s.content && s.body)
+                s.content = Array.isArray(s.body) ? s.body.join("\n") : s.body;
+            if (s.tabTrigger && !s.trigger) {
+                if (!s.guard && /^\w/.test(s.tabTrigger))
+                    s.guard = "\\b";
+                s.trigger = lang.escapeRegExp(s.tabTrigger);
+            }
+            if (!s.trigger && !s.guard && !s.endTrigger && !s.endGuard)
+                return;
+            s.startRe = guardedRegexp(s.trigger, s.guard, true);
+            s.triggerRe = new RegExp(s.trigger);
+            s.endRe = guardedRegexp(s.endTrigger, s.endGuard, true);
+            s.endTriggerRe = new RegExp(s.endTrigger);
+        }
+        if (Array.isArray(snippets)) {
+            snippets.forEach(addSnippet);
+        }
+        else {
+            Object.keys(snippets).forEach(function (key) {
+                addSnippet(snippets[key]);
+            });
+        }
+        this._signal("registerSnippets", { scope: scope });
+    };
+    SnippetManager.prototype.unregister = function (snippets, scope) {
+        var snippetMap = this.snippetMap;
+        var snippetNameMap = this.snippetNameMap;
+        function removeSnippet(s) {
+            var nameMap = snippetNameMap[s.scope || scope];
+            if (nameMap && nameMap[s.name]) {
+                delete nameMap[s.name];
+                var map = snippetMap[s.scope || scope];
+                var i = map && map.indexOf(s);
+                if (i >= 0)
+                    map.splice(i, 1);
+            }
+        }
+        if (snippets.content)
+            removeSnippet(snippets);
+        else if (Array.isArray(snippets))
+            snippets.forEach(removeSnippet);
+    };
+    SnippetManager.prototype.parseSnippetFile = function (str) {
+        str = str.replace(/\r/g, "");
+        var list = [], /**@type{Snippet}*/ snippet = {};
+        var re = /^#.*|^({[\s\S]*})\s*$|^(\S+) (.*)$|^((?:\n*\t.*)+)/gm;
+        var m;
+        while (m = re.exec(str)) {
+            if (m[1]) {
+                try {
+                    snippet = JSON.parse(m[1]);
+                    list.push(snippet);
                 }
-                else {
-                    point.bias == -1;
-                    continue;
+                catch (e) { }
+            }
+            if (m[4]) {
+                snippet.content = m[4].replace(/^\t/gm, "");
+                list.push(snippet);
+                snippet = {};
+            }
+            else {
+                var key = m[2], val = m[3];
+                if (key == "regex") {
+                    var guardRe = /\/((?:[^\/\\]|\\.)*)|$/g;
+                    snippet.guard = guardRe.exec(val)[1];
+                    snippet.trigger = guardRe.exec(val)[1];
+                    snippet.endTrigger = guardRe.exec(val)[1];
+                    snippet.endGuard = guardRe.exec(val)[1];
+                }
+                else if (key == "snippet") {
+                    snippet.tabTrigger = val.match(/^\S*/)[0];
+                    if (!snippet.name)
+                        snippet.name = val;
+                }
+                else if (key) {
+                    snippet[key] = val;
                 }
             }
         }
-        var cmp2 = isInsert ? cmp : comparePoints(point, end);
-        if (cmp2 > 0) {
-            point.row += rowShift;
-            point.column += point.row == end.row ? colShift : 0;
+        return list;
+    };
+    SnippetManager.prototype.getSnippetByName = function (name, editor) {
+        var snippetMap = this.snippetNameMap;
+        var snippet;
+        this.getActiveScopes(editor).some(function (scope) {
+            var snippets = snippetMap[scope];
+            if (snippets)
+                snippet = snippets[name];
+            return !!snippet;
+        }, this);
+        return snippet;
+    };
+    return SnippetManager;
+}());
+oop.implement(SnippetManager.prototype, EventEmitter);
+var processSnippetText = function (editor, snippetText, options) {
+    if (options === void 0) { options = {}; }
+    var cursor = editor.getCursorPosition();
+    var line = editor.session.getLine(cursor.row);
+    var tabString = editor.session.getTabString();
+    var indentString = line.match(/^\s*/)[0];
+    if (cursor.column < indentString.length)
+        indentString = indentString.slice(0, cursor.column);
+    snippetText = snippetText.replace(/\r/g, "");
+    var tokens = this.tokenizeTmSnippet(snippetText);
+    tokens = this.resolveVariables(tokens, editor);
+    tokens = tokens.map(function (x) {
+        if (x == "\n" && !options.excludeExtraIndent)
+            return x + indentString;
+        if (typeof x == "string")
+            return x.replace(/\t/g, tabString);
+        return x;
+    });
+    var tabstops = [];
+    tokens.forEach(function (p, i) {
+        if (typeof p != "object")
+            return;
+        var id = p.tabstopId;
+        var ts = tabstops[id];
+        if (!ts) {
+            ts = tabstops[id] = [];
+            ts.index = id;
+            ts.value = "";
+            ts.parents = {};
+        }
+        if (ts.indexOf(p) !== -1)
+            return;
+        if (p.choices && !ts.choices)
+            ts.choices = p.choices;
+        ts.push(p);
+        var i1 = tokens.indexOf(p, i + 1);
+        if (i1 === -1)
+            return;
+        var value = tokens.slice(i + 1, i1);
+        var isNested = value.some(function (t) { return typeof t === "object"; });
+        if (isNested && !ts.value) {
+            ts.value = value;
+        }
+        else if (value.length && (!ts.value || typeof ts.value !== "string")) {
+            ts.value = value.join("");
+        }
+    });
+    tabstops.forEach(function (ts) { ts.length = 0; });
+    var expanding = {};
+    function copyValue(val) {
+        var copy = [];
+        for (var i = 0; i < val.length; i++) {
+            var p = val[i];
+            if (typeof p == "object") {
+                if (expanding[p.tabstopId])
+                    continue;
+                var j = val.lastIndexOf(p, i - 1);
+                p = copy[j] || { tabstopId: p.tabstopId };
+            }
+            copy[i] = p;
+        }
+        return copy;
+    }
+    for (var i = 0; i < tokens.length; i++) {
+        var p = tokens[i];
+        if (typeof p != "object")
+            continue;
+        var id = p.tabstopId;
+        var ts = tabstops[id];
+        var i1 = tokens.indexOf(p, i + 1);
+        if (expanding[id]) {
+            if (expanding[id] === p) {
+                delete expanding[id];
+                Object.keys(expanding).forEach(function (parentId) {
+                    ts.parents[parentId] = true;
+                });
+            }
             continue;
         }
-        if (!isInsert && cmp2 <= 0) {
-            point.row = start.row;
-            point.column = start.column;
-            if (cmp2 === 0)
-                point.bias = 1;
-        }
+        expanding[id] = p;
+        var value = ts.value;
+        if (typeof value !== "string")
+            value = copyValue(value);
+        else if (p.fmt)
+            value = this.tmStrFormat(value, p, editor);
+        tokens.splice.apply(tokens, [i + 1, Math.max(0, i1 - i)].concat(value, p));
+        if (ts.indexOf(p) === -1)
+            ts.push(p);
     }
-}
-function clonePos(pos) {
-    return { row: pos.row, column: pos.column };
-}
-function cloneDelta(d) {
+    var row = 0, column = 0;
+    var text = "";
+    tokens.forEach(function (t) {
+        if (typeof t === "string") {
+            var lines = t.split("\n");
+            if (lines.length > 1) {
+                column = lines[lines.length - 1].length;
+                row += lines.length - 1;
+            }
+            else
+                column += t.length;
+            text += t;
+        }
+        else if (t) {
+            if (!t.start)
+                t.start = { row: row, column: column };
+            else
+                t.end = { row: row, column: column };
+        }
+    });
     return {
-        start: clonePos(d.start),
-        end: clonePos(d.end),
-        action: d.action,
-        lines: d.lines.slice()
+        text: text,
+        tabstops: tabstops,
+        tokens: tokens
     };
-}
-function stringifyDelta(d) {
-    d = d || this;
-    if (Array.isArray(d)) {
-        return d.map(stringifyDelta).join("\n");
+};
+var TabstopManager = /** @class */ (function () {
+    function TabstopManager(editor) {
+        this.index = 0;
+        this.ranges = [];
+        this.tabstops = [];
+        if (editor.tabstopManager)
+            return editor.tabstopManager;
+        editor.tabstopManager = this;
+        this.$onChange = this.onChange.bind(this);
+        this.$onChangeSelection = lang.delayedCall(this.onChangeSelection.bind(this)).schedule;
+        this.$onChangeSession = this.onChangeSession.bind(this);
+        this.$onAfterExec = this.onAfterExec.bind(this);
+        this.attach(editor);
     }
-    var type = "";
-    if (d.action) {
-        type = d.action == "insert" ? "+" : "-";
-        type += "[" + d.lines + "]";
-    }
-    else if (d.value) {
-        if (Array.isArray(d.value)) {
-            type = d.value.map(stringifyRange).join("\n");
-        }
-        else {
-            type = stringifyRange(d.value);
-        }
-    }
-    if (d.start) {
-        type += stringifyRange(d);
-    }
-    if (d.id || d.rev) {
-        type += "\t(" + (d.id || d.rev) + ")";
-    }
-    return type;
-}
-function stringifyRange(r) {
-    return r.start.row + ":" + r.start.column
-        + "=>" + r.end.row + ":" + r.end.column;
-}
-function swap(d1, d2) {
-    var i1 = d1.action == "insert";
-    var i2 = d2.action == "insert";
-    if (i1 && i2) {
-        if (cmp(d2.start, d1.end) >= 0) {
-            shift(d2, d1, -1);
-        }
-        else if (cmp(d2.start, d1.start) <= 0) {
-            shift(d1, d2, +1);
-        }
-        else {
-            return null;
-        }
-    }
-    else if (i1 && !i2) {
-        if (cmp(d2.start, d1.end) >= 0) {
-            shift(d2, d1, -1);
-        }
-        else if (cmp(d2.end, d1.start) <= 0) {
-            shift(d1, d2, -1);
-        }
-        else {
-            return null;
-        }
-    }
-    else if (!i1 && i2) {
-        if (cmp(d2.start, d1.start) >= 0) {
-            shift(d2, d1, +1);
-        }
-        else if (cmp(d2.start, d1.start) <= 0) {
-            shift(d1, d2, +1);
-        }
-        else {
-            return null;
-        }
-    }
-    else if (!i1 && !i2) {
-        if (cmp(d2.start, d1.start) >= 0) {
-            shift(d2, d1, +1);
-        }
-        else if (cmp(d2.end, d1.start) <= 0) {
-            shift(d1, d2, -1);
-        }
-        else {
-            return null;
-        }
-    }
-    return [d2, d1];
-}
-function swapGroups(ds1, ds2) {
-    for (var i = ds1.length; i--;) {
-        for (var j = 0; j < ds2.length; j++) {
-            if (!swap(ds1[i], ds2[j])) {
-                while (i < ds1.length) {
-                    while (j--) {
-                        swap(ds2[j], ds1[i]);
-                    }
-                    j = ds2.length;
-                    i++;
-                }
-                return [ds1, ds2];
-            }
-        }
-    }
-    ds1.selectionBefore = ds2.selectionBefore =
-        ds1.selectionAfter = ds2.selectionAfter = null;
-    return [ds2, ds1];
-}
-function xform(d1, c1) {
-    var i1 = d1.action == "insert";
-    var i2 = c1.action == "insert";
-    if (i1 && i2) {
-        if (cmp(d1.start, c1.start) < 0) {
-            shift(c1, d1, 1);
-        }
-        else {
-            shift(d1, c1, 1);
-        }
-    }
-    else if (i1 && !i2) {
-        if (cmp(d1.start, c1.end) >= 0) {
-            shift(d1, c1, -1);
-        }
-        else if (cmp(d1.start, c1.start) <= 0) {
-            shift(c1, d1, +1);
-        }
-        else {
-            shift(d1, Range.fromPoints(c1.start, d1.start), -1);
-            shift(c1, d1, +1);
-        }
-    }
-    else if (!i1 && i2) {
-        if (cmp(c1.start, d1.end) >= 0) {
-            shift(c1, d1, -1);
-        }
-        else if (cmp(c1.start, d1.start) <= 0) {
-            shift(d1, c1, +1);
-        }
-        else {
-            shift(c1, Range.fromPoints(d1.start, c1.start), -1);
-            shift(d1, c1, +1);
-        }
-    }
-    else if (!i1 && !i2) {
-        if (cmp(c1.start, d1.end) >= 0) {
-            shift(c1, d1, -1);
-        }
-        else if (cmp(c1.end, d1.start) <= 0) {
-            shift(d1, c1, -1);
-        }
-        else {
-            var before, after;
-            if (cmp(d1.start, c1.start) < 0) {
-                before = d1;
-                d1 = splitDelta(d1, c1.start);
-            }
-            if (cmp(d1.end, c1.end) > 0) {
-                after = splitDelta(d1, c1.end);
-            }
-            shiftPos(c1.end, d1.start, d1.end, -1);
-            if (after && !before) {
-                d1.lines = after.lines;
-                d1.start = after.start;
-                d1.end = after.end;
-                after = d1;
-            }
-            return [c1, before, after].filter(Boolean);
-        }
-    }
-    return [c1, d1];
-}
-function shift(d1, d2, dir) {
-    shiftPos(d1.start, d2.start, d2.end, dir);
-    shiftPos(d1.end, d2.start, d2.end, dir);
-}
-function shiftPos(pos, start, end, dir) {
-    if (pos.row == (dir == 1 ? start : end).row) {
-        pos.column += dir * (end.column - start.column);
-    }
-    pos.row += dir * (end.row - start.row);
-}
-function splitDelta(c, pos) {
-    var lines = c.lines;
-    var end = c.end;
-    c.end = clonePos(pos);
-    var rowsBefore = c.end.row - c.start.row;
-    var otherLines = lines.splice(rowsBefore, lines.length);
-    var col = rowsBefore ? pos.column : pos.column - c.start.column;
-    lines.push(otherLines[0].substring(0, col));
-    otherLines[0] = otherLines[0].substr(col);
-    var rest = {
-        start: clonePos(pos),
-        end: end,
-        lines: otherLines,
-        action: c.action
+    TabstopManager.prototype.attach = function (editor) {
+        this.$openTabstops = null;
+        this.selectedTabstop = null;
+        this.editor = editor;
+        this.session = editor.session;
+        this.editor.on("change", this.$onChange);
+        this.editor.on("changeSelection", this.$onChangeSelection);
+        this.editor.on("changeSession", this.$onChangeSession);
+        this.editor.commands.on("afterExec", this.$onAfterExec);
+        this.editor.keyBinding.addKeyboardHandler(this.keyboardHandler);
     };
-    return rest;
-}
-function moveDeltasByOne(redoStack, d) {
-    d = cloneDelta(d);
-    for (var j = redoStack.length; j--;) {
-        var deltaSet = redoStack[j];
-        for (var i = 0; i < deltaSet.length; i++) {
-            var x = deltaSet[i];
-            var xformed = xform(x, d);
-            d = xformed[0];
-            if (xformed.length != 2) {
-                if (xformed[2]) {
-                    deltaSet.splice(i + 1, 1, xformed[1], xformed[2]);
-                    i++;
-                }
-                else if (!xformed[1]) {
-                    deltaSet.splice(i, 1);
-                    i--;
-                }
+    TabstopManager.prototype.detach = function () {
+        this.tabstops.forEach(this.removeTabstopMarkers, this);
+        this.ranges.length = 0;
+        this.tabstops.length = 0;
+        this.selectedTabstop = null;
+        this.editor.off("change", this.$onChange);
+        this.editor.off("changeSelection", this.$onChangeSelection);
+        this.editor.off("changeSession", this.$onChangeSession);
+        this.editor.commands.off("afterExec", this.$onAfterExec);
+        this.editor.keyBinding.removeKeyboardHandler(this.keyboardHandler);
+        this.editor.tabstopManager = null;
+        this.session = null;
+        this.editor = null;
+    };
+    TabstopManager.prototype.onChange = function (delta) {
+        var isRemove = delta.action[0] == "r";
+        var selectedTabstop = this.selectedTabstop || {};
+        var parents = selectedTabstop.parents || {};
+        var tabstops = this.tabstops.slice();
+        for (var i = 0; i < tabstops.length; i++) {
+            var ts = tabstops[i];
+            var active = ts == selectedTabstop || parents[ts.index];
+            ts.rangeList.$bias = active ? 0 : 1;
+            if (delta.action == "remove" && ts !== selectedTabstop) {
+                var parentActive = ts.parents && ts.parents[selectedTabstop.index];
+                var startIndex = ts.rangeList.pointIndex(delta.start, parentActive);
+                startIndex = startIndex < 0 ? -startIndex - 1 : startIndex + 1;
+                var endIndex = ts.rangeList.pointIndex(delta.end, parentActive);
+                endIndex = endIndex < 0 ? -endIndex - 1 : endIndex - 1;
+                var toRemove = ts.rangeList.ranges.slice(startIndex, endIndex);
+                for (var j = 0; j < toRemove.length; j++)
+                    this.removeRange(toRemove[j]);
+            }
+            ts.rangeList.$onChange(delta);
+        }
+        var session = this.session;
+        if (!this.$inChange && isRemove && session.getLength() == 1 && !session.getValue())
+            this.detach();
+    };
+    TabstopManager.prototype.updateLinkedFields = function () {
+        var ts = this.selectedTabstop;
+        if (!ts || !ts.hasLinkedRanges || !ts.firstNonLinked)
+            return;
+        this.$inChange = true;
+        var session = this.session;
+        var text = session.getTextRange(ts.firstNonLinked);
+        for (var i = 0; i < ts.length; i++) {
+            var range = ts[i];
+            if (!range.linked)
+                continue;
+            var original = range.original;
+            var fmt = exports.snippetManager.tmStrFormat(text, original, this.editor);
+            session.replace(range, fmt);
+        }
+        this.$inChange = false;
+    };
+    TabstopManager.prototype.onAfterExec = function (e) {
+        if (e.command && !e.command.readOnly)
+            this.updateLinkedFields();
+    };
+    TabstopManager.prototype.onChangeSelection = function () {
+        if (!this.editor)
+            return;
+        var lead = this.editor.selection.lead;
+        var anchor = this.editor.selection.anchor;
+        var isEmpty = this.editor.selection.isEmpty();
+        for (var i = 0; i < this.ranges.length; i++) {
+            if (this.ranges[i].linked)
+                continue;
+            var containsLead = this.ranges[i].contains(lead.row, lead.column);
+            var containsAnchor = isEmpty || this.ranges[i].contains(anchor.row, anchor.column);
+            if (containsLead && containsAnchor)
+                return;
+        }
+        this.detach();
+    };
+    TabstopManager.prototype.onChangeSession = function () {
+        this.detach();
+    };
+    TabstopManager.prototype.tabNext = function (dir) {
+        var max = this.tabstops.length;
+        var index = this.index + (dir || 1);
+        index = Math.min(Math.max(index, 1), max);
+        if (index == max)
+            index = 0;
+        this.selectTabstop(index);
+        if (index === 0)
+            this.detach();
+    };
+    TabstopManager.prototype.selectTabstop = function (index) {
+        this.$openTabstops = null;
+        var ts = this.tabstops[this.index];
+        if (ts)
+            this.addTabstopMarkers(ts);
+        this.index = index;
+        ts = this.tabstops[this.index];
+        if (!ts || !ts.length)
+            return;
+        this.selectedTabstop = ts;
+        var range = ts.firstNonLinked || ts;
+        if (ts.choices)
+            range.cursor = range.start;
+        if (!this.editor.inVirtualSelectionMode) {
+            var sel = this.editor.multiSelect;
+            sel.toSingleRange(range);
+            for (var i = 0; i < ts.length; i++) {
+                if (ts.hasLinkedRanges && ts[i].linked)
+                    continue;
+                sel.addRange(ts[i].clone(), true);
             }
         }
-        if (!deltaSet.length) {
-            redoStack.splice(j, 1);
+        else {
+            this.editor.selection.fromOrientedRange(range);
         }
-    }
-    return redoStack;
-}
-function rebaseRedoStack(redoStack, deltaSets) {
-    for (var i = 0; i < deltaSets.length; i++) {
-        var deltas = deltaSets[i];
-        for (var j = 0; j < deltas.length; j++) {
-            moveDeltasByOne(redoStack, deltas[j]);
+        this.editor.keyBinding.addKeyboardHandler(this.keyboardHandler);
+        if (this.selectedTabstop && this.selectedTabstop.choices)
+            this.editor.execCommand("startAutocomplete", { matches: this.selectedTabstop.choices });
+    };
+    TabstopManager.prototype.addTabstops = function (tabstops, start, end) {
+        var useLink = this.useLink || !this.editor.getOption("enableMultiselect");
+        if (!this.$openTabstops)
+            this.$openTabstops = [];
+        if (!tabstops[0]) {
+            var p = Range.fromPoints(end, end);
+            moveRelative(p.start, start);
+            moveRelative(p.end, start);
+            tabstops[0] = [p];
+            tabstops[0].index = 0;
         }
+        var i = this.index;
+        var arg = [i + 1, 0];
+        var ranges = this.ranges;
+        tabstops.forEach(function (ts, index) {
+            var dest = this.$openTabstops[index] || ts;
+            for (var i = 0; i < ts.length; i++) {
+                var p = ts[i];
+                var range = Range.fromPoints(p.start, p.end || p.start);
+                movePoint(range.start, start);
+                movePoint(range.end, start);
+                range.original = p;
+                range.tabstop = dest;
+                ranges.push(range);
+                if (dest != ts)
+                    dest.unshift(range);
+                else
+                    dest[i] = range;
+                if (p.fmtString || (dest.firstNonLinked && useLink)) {
+                    range.linked = true;
+                    dest.hasLinkedRanges = true;
+                }
+                else if (!dest.firstNonLinked)
+                    dest.firstNonLinked = range;
+            }
+            if (!dest.firstNonLinked)
+                dest.hasLinkedRanges = false;
+            if (dest === ts) {
+                arg.push(dest);
+                this.$openTabstops[index] = dest;
+            }
+            this.addTabstopMarkers(dest);
+            dest.rangeList = dest.rangeList || new RangeList();
+            dest.rangeList.$bias = 0;
+            dest.rangeList.addList(dest);
+        }, this);
+        if (arg.length > 2) {
+            if (this.tabstops.length)
+                arg.push(arg.splice(2, 1)[0]);
+            this.tabstops.splice.apply(this.tabstops, arg);
+        }
+    };
+    TabstopManager.prototype.addTabstopMarkers = function (ts) {
+        var session = this.session;
+        ts.forEach(function (range) {
+            if (!range.markerId)
+                range.markerId = session.addMarker(range, "ace_snippet-marker", "text");
+        });
+    };
+    TabstopManager.prototype.removeTabstopMarkers = function (ts) {
+        var session = this.session;
+        ts.forEach(function (range) {
+            session.removeMarker(range.markerId);
+            range.markerId = null;
+        });
+    };
+    TabstopManager.prototype.removeRange = function (range) {
+        var i = range.tabstop.indexOf(range);
+        if (i != -1)
+            range.tabstop.splice(i, 1);
+        i = this.ranges.indexOf(range);
+        if (i != -1)
+            this.ranges.splice(i, 1);
+        i = range.tabstop.rangeList.ranges.indexOf(range);
+        if (i != -1)
+            range.tabstop.splice(i, 1);
+        this.session.removeMarker(range.markerId);
+        if (!range.tabstop.length) {
+            i = this.tabstops.indexOf(range.tabstop);
+            if (i != -1)
+                this.tabstops.splice(i, 1);
+            if (!this.tabstops.length)
+                this.detach();
+        }
+    };
+    return TabstopManager;
+}());
+TabstopManager.prototype.keyboardHandler = new HashHandler();
+TabstopManager.prototype.keyboardHandler.bindKeys({
+    "Tab": function (editor) {
+        if (exports.snippetManager && exports.snippetManager.expandWithTab(editor))
+            return;
+        editor.tabstopManager.tabNext(1);
+        editor.renderer.scrollCursorIntoView();
+    },
+    "Shift-Tab": function (editor) {
+        editor.tabstopManager.tabNext(-1);
+        editor.renderer.scrollCursorIntoView();
+    },
+    "Esc": function (editor) {
+        editor.tabstopManager.detach();
     }
-}
-exports.UndoManager = UndoManager;
+});
+var movePoint = function (point, diff) {
+    if (point.row == 0)
+        point.column += diff.column;
+    point.row += diff.row;
+};
+var moveRelative = function (point, start) {
+    if (point.row == start.row)
+        point.column -= start.column;
+    point.row -= start.row;
+};
+dom.importCssString("\n.ace_snippet-marker {\n    -moz-box-sizing: border-box;\n    box-sizing: border-box;\n    background: rgba(194, 193, 208, 0.09);\n    border: 1px dotted rgba(211, 208, 235, 0.62);\n    position: absolute;\n}", "snippets.css", false);
+exports.snippetManager = new SnippetManager();
+var Editor = require("./editor").Editor;
+(function () {
+    this.insertSnippet = function (content, options) {
+        return exports.snippetManager.insertSnippet(this, content, options);
+    };
+    this.expandSnippet = function (options) {
+        return exports.snippetManager.expandWithTab(this, options);
+    };
+}).call(Editor.prototype);
+
+});
+
+define("ace/snippets/abc.snippets",["require","exports","module"], function(require, exports, module){module.exports = "\nsnippet zupfnoter.print\n\t%%%%hn.print {\"startpos\": ${1:pos_y}, \"t\":\"${2:title}\", \"v\":[${3:voices}], \"s\":[[${4:syncvoices}1,2]], \"f\":[${5:flowlines}],  \"sf\":[${6:subflowlines}], \"j\":[${7:jumplines}]}\n\nsnippet zupfnoter.note\n\t%%%%hn.note {\"pos\": [${1:pos_x},${2:pos_y}], \"text\": \"${3:text}\", \"style\": \"${4:style}\"}\n\nsnippet zupfnoter.annotation\n\t%%%%hn.annotation {\"id\": \"${1:id}\", \"pos\": [${2:pos}], \"text\": \"${3:text}\"}\n\nsnippet zupfnoter.lyrics\n\t%%%%hn.lyrics {\"pos\": [${1:x_pos},${2:y_pos}]}\n\nsnippet zupfnoter.legend\n\t%%%%hn.legend {\"pos\": [${1:x_pos},${2:y_pos}]}\n\n\n\nsnippet zupfnoter.target\n\t\"^:${1:target}\"\n\nsnippet zupfnoter.goto\n\t\"^@${1:target}@${2:distance}\"\n\nsnippet zupfnoter.annotationref\n\t\"^#${1:target}\"\n\nsnippet zupfnoter.annotation\n\t\"^!${1:text}@${2:x_offset},${3:y_offset}\"\n\n\n";
+
+});
+
+define("ace/snippets/abc",["require","exports","module","ace/snippets/abc.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./abc.snippets");
+exports.scope = "abc";
+
+});
+
+define("ace/snippets/actionscript.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet main\n\tpackage {\n\t\timport flash.display.*;\n\t\timport flash.Events.*;\n\t\n\t\tpublic class Main extends Sprite {\n\t\t\tpublic function Main (\t) {\n\t\t\t\ttrace(\"start\");\n\t\t\t\tstage.scaleMode = StageScaleMode.NO_SCALE;\n\t\t\t\tstage.addEventListener(Event.RESIZE, resizeListener);\n\t\t\t}\n\t\n\t\t\tprivate function resizeListener (e:Event):void {\n\t\t\t\ttrace(\"The application window changed size!\");\n\t\t\t\ttrace(\"New width:  \" + stage.stageWidth);\n\t\t\t\ttrace(\"New height: \" + stage.stageHeight);\n\t\t\t}\n\t\n\t\t}\n\t\n\t}\nsnippet class\n\t${1:public|internal} class ${2:name} ${3:extends } {\n\t\tpublic function $2 (\t) {\n\t\t\t(\"start\");\n\t\t}\n\t}\nsnippet all\n\tpackage name {\n\n\t\t${1:public|internal|final} class ${2:name} ${3:extends } {\n\t\t\tprivate|public| static const FOO = \"abc\";\n\t\t\tprivate|public| static var BAR = \"abc\";\n\n\t\t\t// class initializer - no JIT !! one time setup\n\t\t\tif Cababilities.os == \"Linux|MacOS\" {\n\t\t\t\tFOO = \"other\";\n\t\t\t}\n\n\t\t\t// constructor:\n\t\t\tpublic function $2 (\t){\n\t\t\t\tsuper2();\n\t\t\t\ttrace(\"start\");\n\t\t\t}\n\t\t\tpublic function name (a, b...){\n\t\t\t\tsuper.name(..);\n\t\t\t\tlable:break\n\t\t\t}\n\t\t}\n\t}\n\n\tfunction A(){\n\t\t// A can only be accessed within this file\n\t}\nsnippet switch\n\tswitch(${1}){\n\t\tcase ${2}:\n\t\t\t${3}\n\t\tbreak;\n\t\tdefault:\n\t}\nsnippet case\n\t\tcase ${1}:\n\t\t\t${2}\n\t\tbreak;\nsnippet package\n\tpackage ${1:package}{\n\t\t${2}\n\t}\nsnippet wh\n\twhile ${1:cond}{\n\t\t${2}\n\t}\nsnippet do\n\tdo {\n\t\t${2}\n\t} while (${1:cond})\nsnippet while\n\twhile ${1:cond}{\n\t\t${2}\n\t}\nsnippet for enumerate names\n\tfor (${1:var} in ${2:object}){\n\t\t${3}\n\t}\nsnippet for enumerate values\n\tfor each (${1:var} in ${2:object}){\n\t\t${3}\n\t}\nsnippet get_set\n\tfunction get ${1:name} {\n\t\treturn ${2}\n\t}\n\tfunction set $1 (newValue) {\n\t\t${3}\n\t}\nsnippet interface\n\tinterface name {\n\t\tfunction method(${1}):${2:returntype};\n\t}\nsnippet try\n\ttry {\n\t\t${1}\n\t} catch (error:ErrorType) {\n\t\t${2}\n\t} finally {\n\t\t${3}\n\t}\n# For Loop (same as c.snippet)\nsnippet for for (..) {..}\n\tfor (${2:i} = 0; $2 < ${1:count}; $2${3:++}) {\n\t\t${4:/* code */}\n\t}\n# Custom For Loop\nsnippet forr\n\tfor (${1:i} = ${2:0}; ${3:$1 < 10}; $1${4:++}) {\n\t\t${5:/* code */}\n\t}\n# If Condition\nsnippet if\n\tif (${1:/* condition */}) {\n\t\t${2:/* code */}\n\t}\nsnippet el\n\telse {\n\t\t${1}\n\t}\n# Ternary conditional\nsnippet t\n\t${1:/* condition */} ? ${2:a} : ${3:b}\nsnippet fun\n\tfunction ${1:function_name}(${2})${3}\n\t{\n\t\t${4:/* code */}\n\t}\n# FlxSprite (usefull when using the flixel library)\nsnippet FlxSprite\n\tpackage\n\t{\n\t\timport org.flixel.*\n\n\t\tpublic class ${1:ClassName} extends ${2:FlxSprite}\n\t\t{\n\t\t\tpublic function $1(${3: X:Number, Y:Number}):void\n\t\t\t{\n\t\t\t\tsuper(X,Y);\n\t\t\t\t${4: //code...}\n\t\t\t}\n\n\t\t\toverride public function update():void\n\t\t\t{\n\t\t\t\tsuper.update();\n\t\t\t\t${5: //code...}\n\t\t\t}\n\t\t}\n\t}\n\n";
+
+});
+
+define("ace/snippets/actionscript",["require","exports","module","ace/snippets/actionscript.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./actionscript.snippets");
+exports.scope = "actionscript";
+
+});
+
+define("ace/snippets/c_cpp.snippets",["require","exports","module"], function(require, exports, module){module.exports = "## STL Collections\n# std::array\nsnippet array\n\tstd::array<${1:T}, ${2:N}> ${3};${4}\n# std::vector\nsnippet vector\n\tstd::vector<${1:T}> ${2};${3}\n# std::deque\nsnippet deque\n\tstd::deque<${1:T}> ${2};${3}\n# std::forward_list\nsnippet flist\n\tstd::forward_list<${1:T}> ${2};${3}\n# std::list\nsnippet list\n\tstd::list<${1:T}> ${2};${3}\n# std::set\nsnippet set\n\tstd::set<${1:T}> ${2};${3}\n# std::map\nsnippet map\n\tstd::map<${1:Key}, ${2:T}> ${3};${4}\n# std::multiset\nsnippet mset\n\tstd::multiset<${1:T}> ${2};${3}\n# std::multimap\nsnippet mmap\n\tstd::multimap<${1:Key}, ${2:T}> ${3};${4}\n# std::unordered_set\nsnippet uset\n\tstd::unordered_set<${1:T}> ${2};${3}\n# std::unordered_map\nsnippet umap\n\tstd::unordered_map<${1:Key}, ${2:T}> ${3};${4}\n# std::unordered_multiset\nsnippet umset\n\tstd::unordered_multiset<${1:T}> ${2};${3}\n# std::unordered_multimap\nsnippet ummap\n\tstd::unordered_multimap<${1:Key}, ${2:T}> ${3};${4}\n# std::stack\nsnippet stack\n\tstd::stack<${1:T}> ${2};${3}\n# std::queue\nsnippet queue\n\tstd::queue<${1:T}> ${2};${3}\n# std::priority_queue\nsnippet pqueue\n\tstd::priority_queue<${1:T}> ${2};${3}\n##\n## Access Modifiers\n# private\nsnippet pri\n\tprivate\n# protected\nsnippet pro\n\tprotected\n# public\nsnippet pub\n\tpublic\n# friend\nsnippet fr\n\tfriend\n# mutable\nsnippet mu\n\tmutable\n## \n## Class\n# class\nsnippet cl\n\tclass ${1:`Filename('$1', 'name')`} \n\t{\n\tpublic:\n\t\t$1(${2});\n\t\t~$1();\n\n\tprivate:\n\t\t${3:/* data */}\n\t};\n# member function implementation\nsnippet mfun\n\t${4:void} ${1:`Filename('$1', 'ClassName')`}::${2:memberFunction}(${3}) {\n\t\t${5:/* code */}\n\t}\n# namespace\nsnippet ns\n\tnamespace ${1:`Filename('', 'my')`} {\n\t\t${2}\n\t} /* namespace $1 */\n##\n## Input/Output\n# std::cout\nsnippet cout\n\tstd::cout << ${1} << std::endl;${2}\n# std::cin\nsnippet cin\n\tstd::cin >> ${1};${2}\n##\n## Iteration\n# for i \nsnippet fori\n\tfor (int ${2:i} = 0; $2 < ${1:count}; $2${3:++}) {\n\t\t${4:/* code */}\n\t}${5}\n\n# foreach\nsnippet fore\n\tfor (${1:auto} ${2:i} : ${3:container}) {\n\t\t${4:/* code */}\n\t}${5}\n# iterator\nsnippet iter\n\tfor (${1:std::vector}<${2:type}>::${3:const_iterator} ${4:i} = ${5:container}.begin(); $4 != $5.end(); ++$4) {\n\t\t${6}\n\t}${7}\n\n# auto iterator\nsnippet itera\n\tfor (auto ${1:i} = $1.begin(); $1 != $1.end(); ++$1) {\n\t\t${2:std::cout << *$1 << std::endl;}\n\t}${3}\n##\n## Lambdas\n# lamda (one line)\nsnippet ld\n\t[${1}](${2}){${3:/* code */}}${4}\n# lambda (multi-line)\nsnippet lld\n\t[${1}](${2}){\n\t\t${3:/* code */}\n\t}${4}\n";
+
+});
+
+define("ace/snippets/c_cpp",["require","exports","module","ace/snippets/c_cpp.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./c_cpp.snippets");
+exports.scope = "c_cpp";
+
+});
+
+define("ace/snippets/clojure.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet comm\n\t(comment\n\t  ${1}\n\t  )\nsnippet condp\n\t(condp ${1:pred} ${2:expr}\n\t  ${3})\nsnippet def\n\t(def ${1})\nsnippet defm\n\t(defmethod ${1:multifn} \"${2:doc-string}\" ${3:dispatch-val} [${4:args}]\n\t  ${5})\nsnippet defmm\n\t(defmulti ${1:name} \"${2:doc-string}\" ${3:dispatch-fn})\nsnippet defma\n\t(defmacro ${1:name} \"${2:doc-string}\" ${3:dispatch-fn})\nsnippet defn\n\t(defn ${1:name} \"${2:doc-string}\" [${3:arg-list}]\n\t  ${4})\nsnippet defp\n\t(defprotocol ${1:name}\n\t  ${2})\nsnippet defr\n\t(defrecord ${1:name} [${2:fields}]\n\t  ${3:protocol}\n\t  ${4})\nsnippet deft\n\t(deftest ${1:name}\n\t    (is (= ${2:assertion})))\n\t  ${3})\nsnippet is\n\t(is (= ${1} ${2}))\nsnippet defty\n\t(deftype ${1:Name} [${2:fields}]\n\t  ${3:Protocol}\n\t  ${4})\nsnippet doseq\n\t(doseq [${1:elem} ${2:coll}]\n\t  ${3})\nsnippet fn\n\t(fn [${1:arg-list}] ${2})\nsnippet if\n\t(if ${1:test-expr}\n\t  ${2:then-expr}\n\t  ${3:else-expr})\nsnippet if-let \n\t(if-let [${1:result} ${2:test-expr}]\n\t\t(${3:then-expr} $1)\n\t\t(${4:else-expr}))\nsnippet imp\n\t(:import [${1:package}])\n\t& {:keys [${1:keys}] :or {${2:defaults}}}\nsnippet let\n\t(let [${1:name} ${2:expr}]\n\t\t${3})\nsnippet letfn\n\t(letfn [(${1:name) [${2:args}]\n\t          ${3})])\nsnippet map\n\t(map ${1:func} ${2:coll})\nsnippet mapl\n\t(map #(${1:lambda}) ${2:coll})\nsnippet met\n\t(${1:name} [${2:this} ${3:args}]\n\t  ${4})\nsnippet ns\n\t(ns ${1:name}\n\t  ${2})\nsnippet dotimes\n\t(dotimes [_ 10]\n\t  (time\n\t    (dotimes [_ ${1:times}]\n\t      ${2})))\nsnippet pmethod\n\t(${1:name} [${2:this} ${3:args}])\nsnippet refer\n\t(:refer-clojure :exclude [${1}])\nsnippet require\n\t(:require [${1:namespace} :as [${2}]])\nsnippet use\n\t(:use [${1:namespace} :only [${2}]])\nsnippet print\n\t(println ${1})\nsnippet reduce\n\t(reduce ${1:(fn [p n] ${3})} ${2})\nsnippet when\n\t(when ${1:test} ${2:body})\nsnippet when-let\n\t(when-let [${1:result} ${2:test}]\n\t\t${3:body})\n";
+
+});
+
+define("ace/snippets/clojure",["require","exports","module","ace/snippets/clojure.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./clojure.snippets");
+exports.scope = "clojure";
+
+});
+
+define("ace/snippets/coffee.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Closure loop\nsnippet forindo\n\tfor ${1:name} in ${2:array}\n\t\tdo ($1) ->\n\t\t\t${3:// body}\n# Array comprehension\nsnippet fora\n\tfor ${1:name} in ${2:array}\n\t\t${3:// body...}\n# Object comprehension\nsnippet foro\n\tfor ${1:key}, ${2:value} of ${3:object}\n\t\t${4:// body...}\n# Range comprehension (inclusive)\nsnippet forr\n\tfor ${1:name} in [${2:start}..${3:finish}]\n\t\t${4:// body...}\nsnippet forrb\n\tfor ${1:name} in [${2:start}..${3:finish}] by ${4:step}\n\t\t${5:// body...}\n# Range comprehension (exclusive)\nsnippet forrex\n\tfor ${1:name} in [${2:start}...${3:finish}]\n\t\t${4:// body...}\nsnippet forrexb\n\tfor ${1:name} in [${2:start}...${3:finish}] by ${4:step}\n\t\t${5:// body...}\n# Function\nsnippet fun\n\t(${1:args}) ->\n\t\t${2:// body...}\n# Function (bound)\nsnippet bfun\n\t(${1:args}) =>\n\t\t${2:// body...}\n# Class\nsnippet cla class ..\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\t${2}\nsnippet cla class .. constructor: ..\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\tconstructor: (${2:args}) ->\n\t\t\t${3}\n\n\t\t${4}\nsnippet cla class .. extends ..\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} extends ${2:ParentClass}\n\t\t${3}\nsnippet cla class .. extends .. constructor: ..\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} extends ${2:ParentClass}\n\t\tconstructor: (${3:args}) ->\n\t\t\t${4}\n\n\t\t${5}\n# If\nsnippet if\n\tif ${1:condition}\n\t\t${2:// body...}\n# If __ Else\nsnippet ife\n\tif ${1:condition}\n\t\t${2:// body...}\n\telse\n\t\t${3:// body...}\n# Else if\nsnippet elif\n\telse if ${1:condition}\n\t\t${2:// body...}\n# Ternary If\nsnippet ifte\n\tif ${1:condition} then ${2:value} else ${3:other}\n# Unless\nsnippet unl\n\t${1:action} unless ${2:condition}\n# Switch\nsnippet swi\n\tswitch ${1:object}\n\t\twhen ${2:value}\n\t\t\t${3:// body...}\n\n# Log\nsnippet log\n\tconsole.log ${1}\n# Try __ Catch\nsnippet try\n\ttry\n\t\t${1}\n\tcatch ${2:error}\n\t\t${3}\n# Require\nsnippet req\n\t${2:$1} = require '${1:sys}'${3}\n# Export\nsnippet exp\n\t${1:root} = exports ? this\n";
+
+});
+
+define("ace/snippets/coffee",["require","exports","module","ace/snippets/coffee.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./coffee.snippets");
+exports.scope = "coffee";
+
+});
+
+define("ace/snippets/csound_document.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# <CsoundSynthesizer>\nsnippet synth\n\t<CsoundSynthesizer>\n\t<CsInstruments>\n\t${1}\n\t</CsInstruments>\n\t<CsScore>\n\te\n\t</CsScore>\n\t</CsoundSynthesizer>\n";
+
+});
+
+define("ace/snippets/csound_document",["require","exports","module","ace/snippets/csound_document.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./csound_document.snippets");
+exports.scope = "csound_document";
+
+});
+
+define("ace/snippets/csound_orchestra.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# else\nsnippet else\n\telse\n\t\t${1:/* statements */}\n# elseif\nsnippet elseif\n\telseif ${1:/* condition */} then\n\t\t${2:/* statements */}\n# if\nsnippet if\n\tif ${1:/* condition */} then\n\t\t${2:/* statements */}\n\tendif\n# instrument block\nsnippet instr\n\tinstr ${1:name}\n\t\t${2:/* statements */}\n\tendin\n# i-time while loop\nsnippet iwhile\n\ti${1:Index} = ${2:0}\n\twhile i${1:Index} < ${3:/* count */} do\n\t\t${4:/* statements */}\n\t\ti${1:Index} += 1\n\tod\n# k-rate while loop\nsnippet kwhile\n\tk${1:Index} = ${2:0}\n\twhile k${1:Index} < ${3:/* count */} do\n\t\t${4:/* statements */}\n\t\tk${1:Index} += 1\n\tod\n# opcode\nsnippet opcode\n\topcode ${1:name}, ${2:/* output types */ 0}, ${3:/* input types */ 0}\n\t\t${4:/* statements */}\n\tendop\n# until loop\nsnippet until\n\tuntil ${1:/* condition */} do\n\t\t${2:/* statements */}\n\tod\n# while loop\nsnippet while\n\twhile ${1:/* condition */} do\n\t\t${2:/* statements */}\n\tod\n";
+
+});
+
+define("ace/snippets/csound_orchestra",["require","exports","module","ace/snippets/csound_orchestra.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./csound_orchestra.snippets");
+exports.scope = "csound_orchestra";
+
+});
+
+define("ace/snippets/css.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet .\n\t${1} {\n\t\t${2}\n\t}\nsnippet !\n\t !important\nsnippet bdi:m+\n\t-moz-border-image: url(${1}) ${2:0} ${3:0} ${4:0} ${5:0} ${6:stretch} ${7:stretch};\nsnippet bdi:m\n\t-moz-border-image: ${1};\nsnippet bdrz:m\n\t-moz-border-radius: ${1};\nsnippet bxsh:m+\n\t-moz-box-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\nsnippet bxsh:m\n\t-moz-box-shadow: ${1};\nsnippet bdi:w+\n\t-webkit-border-image: url(${1}) ${2:0} ${3:0} ${4:0} ${5:0} ${6:stretch} ${7:stretch};\nsnippet bdi:w\n\t-webkit-border-image: ${1};\nsnippet bdrz:w\n\t-webkit-border-radius: ${1};\nsnippet bxsh:w+\n\t-webkit-box-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\nsnippet bxsh:w\n\t-webkit-box-shadow: ${1};\nsnippet @f\n\t@font-face {\n\t\tfont-family: ${1};\n\t\tsrc: url(${2});\n\t}\nsnippet @i\n\t@import url(${1});\nsnippet @m\n\t@media ${1:print} {\n\t\t${2}\n\t}\nsnippet bg+\n\tbackground: #${1:FFF} url(${2}) ${3:0} ${4:0} ${5:no-repeat};\nsnippet bga\n\tbackground-attachment: ${1};\nsnippet bga:f\n\tbackground-attachment: fixed;\nsnippet bga:s\n\tbackground-attachment: scroll;\nsnippet bgbk\n\tbackground-break: ${1};\nsnippet bgbk:bb\n\tbackground-break: bounding-box;\nsnippet bgbk:c\n\tbackground-break: continuous;\nsnippet bgbk:eb\n\tbackground-break: each-box;\nsnippet bgcp\n\tbackground-clip: ${1};\nsnippet bgcp:bb\n\tbackground-clip: border-box;\nsnippet bgcp:cb\n\tbackground-clip: content-box;\nsnippet bgcp:nc\n\tbackground-clip: no-clip;\nsnippet bgcp:pb\n\tbackground-clip: padding-box;\nsnippet bgc\n\tbackground-color: #${1:FFF};\nsnippet bgc:t\n\tbackground-color: transparent;\nsnippet bgi\n\tbackground-image: url(${1});\nsnippet bgi:n\n\tbackground-image: none;\nsnippet bgo\n\tbackground-origin: ${1};\nsnippet bgo:bb\n\tbackground-origin: border-box;\nsnippet bgo:cb\n\tbackground-origin: content-box;\nsnippet bgo:pb\n\tbackground-origin: padding-box;\nsnippet bgpx\n\tbackground-position-x: ${1};\nsnippet bgpy\n\tbackground-position-y: ${1};\nsnippet bgp\n\tbackground-position: ${1:0} ${2:0};\nsnippet bgr\n\tbackground-repeat: ${1};\nsnippet bgr:n\n\tbackground-repeat: no-repeat;\nsnippet bgr:x\n\tbackground-repeat: repeat-x;\nsnippet bgr:y\n\tbackground-repeat: repeat-y;\nsnippet bgr:r\n\tbackground-repeat: repeat;\nsnippet bgz\n\tbackground-size: ${1};\nsnippet bgz:a\n\tbackground-size: auto;\nsnippet bgz:ct\n\tbackground-size: contain;\nsnippet bgz:cv\n\tbackground-size: cover;\nsnippet bg\n\tbackground: ${1};\nsnippet bg:ie\n\tfilter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='${1}',sizingMethod='${2:crop}');\nsnippet bg:n\n\tbackground: none;\nsnippet bd+\n\tborder: ${1:1px} ${2:solid} #${3:000};\nsnippet bdb+\n\tborder-bottom: ${1:1px} ${2:solid} #${3:000};\nsnippet bdbc\n\tborder-bottom-color: #${1:000};\nsnippet bdbi\n\tborder-bottom-image: url(${1});\nsnippet bdbi:n\n\tborder-bottom-image: none;\nsnippet bdbli\n\tborder-bottom-left-image: url(${1});\nsnippet bdbli:c\n\tborder-bottom-left-image: continue;\nsnippet bdbli:n\n\tborder-bottom-left-image: none;\nsnippet bdblrz\n\tborder-bottom-left-radius: ${1};\nsnippet bdbri\n\tborder-bottom-right-image: url(${1});\nsnippet bdbri:c\n\tborder-bottom-right-image: continue;\nsnippet bdbri:n\n\tborder-bottom-right-image: none;\nsnippet bdbrrz\n\tborder-bottom-right-radius: ${1};\nsnippet bdbs\n\tborder-bottom-style: ${1};\nsnippet bdbs:n\n\tborder-bottom-style: none;\nsnippet bdbw\n\tborder-bottom-width: ${1};\nsnippet bdb\n\tborder-bottom: ${1};\nsnippet bdb:n\n\tborder-bottom: none;\nsnippet bdbk\n\tborder-break: ${1};\nsnippet bdbk:c\n\tborder-break: close;\nsnippet bdcl\n\tborder-collapse: ${1};\nsnippet bdcl:c\n\tborder-collapse: collapse;\nsnippet bdcl:s\n\tborder-collapse: separate;\nsnippet bdc\n\tborder-color: #${1:000};\nsnippet bdci\n\tborder-corner-image: url(${1});\nsnippet bdci:c\n\tborder-corner-image: continue;\nsnippet bdci:n\n\tborder-corner-image: none;\nsnippet bdf\n\tborder-fit: ${1};\nsnippet bdf:c\n\tborder-fit: clip;\nsnippet bdf:of\n\tborder-fit: overwrite;\nsnippet bdf:ow\n\tborder-fit: overwrite;\nsnippet bdf:r\n\tborder-fit: repeat;\nsnippet bdf:sc\n\tborder-fit: scale;\nsnippet bdf:sp\n\tborder-fit: space;\nsnippet bdf:st\n\tborder-fit: stretch;\nsnippet bdi\n\tborder-image: url(${1}) ${2:0} ${3:0} ${4:0} ${5:0} ${6:stretch} ${7:stretch};\nsnippet bdi:n\n\tborder-image: none;\nsnippet bdl+\n\tborder-left: ${1:1px} ${2:solid} #${3:000};\nsnippet bdlc\n\tborder-left-color: #${1:000};\nsnippet bdli\n\tborder-left-image: url(${1});\nsnippet bdli:n\n\tborder-left-image: none;\nsnippet bdls\n\tborder-left-style: ${1};\nsnippet bdls:n\n\tborder-left-style: none;\nsnippet bdlw\n\tborder-left-width: ${1};\nsnippet bdl\n\tborder-left: ${1};\nsnippet bdl:n\n\tborder-left: none;\nsnippet bdlt\n\tborder-length: ${1};\nsnippet bdlt:a\n\tborder-length: auto;\nsnippet bdrz\n\tborder-radius: ${1};\nsnippet bdr+\n\tborder-right: ${1:1px} ${2:solid} #${3:000};\nsnippet bdrc\n\tborder-right-color: #${1:000};\nsnippet bdri\n\tborder-right-image: url(${1});\nsnippet bdri:n\n\tborder-right-image: none;\nsnippet bdrs\n\tborder-right-style: ${1};\nsnippet bdrs:n\n\tborder-right-style: none;\nsnippet bdrw\n\tborder-right-width: ${1};\nsnippet bdr\n\tborder-right: ${1};\nsnippet bdr:n\n\tborder-right: none;\nsnippet bdsp\n\tborder-spacing: ${1};\nsnippet bds\n\tborder-style: ${1};\nsnippet bds:ds\n\tborder-style: dashed;\nsnippet bds:dtds\n\tborder-style: dot-dash;\nsnippet bds:dtdtds\n\tborder-style: dot-dot-dash;\nsnippet bds:dt\n\tborder-style: dotted;\nsnippet bds:db\n\tborder-style: double;\nsnippet bds:g\n\tborder-style: groove;\nsnippet bds:h\n\tborder-style: hidden;\nsnippet bds:i\n\tborder-style: inset;\nsnippet bds:n\n\tborder-style: none;\nsnippet bds:o\n\tborder-style: outset;\nsnippet bds:r\n\tborder-style: ridge;\nsnippet bds:s\n\tborder-style: solid;\nsnippet bds:w\n\tborder-style: wave;\nsnippet bdt+\n\tborder-top: ${1:1px} ${2:solid} #${3:000};\nsnippet bdtc\n\tborder-top-color: #${1:000};\nsnippet bdti\n\tborder-top-image: url(${1});\nsnippet bdti:n\n\tborder-top-image: none;\nsnippet bdtli\n\tborder-top-left-image: url(${1});\nsnippet bdtli:c\n\tborder-corner-image: continue;\nsnippet bdtli:n\n\tborder-corner-image: none;\nsnippet bdtlrz\n\tborder-top-left-radius: ${1};\nsnippet bdtri\n\tborder-top-right-image: url(${1});\nsnippet bdtri:c\n\tborder-top-right-image: continue;\nsnippet bdtri:n\n\tborder-top-right-image: none;\nsnippet bdtrrz\n\tborder-top-right-radius: ${1};\nsnippet bdts\n\tborder-top-style: ${1};\nsnippet bdts:n\n\tborder-top-style: none;\nsnippet bdtw\n\tborder-top-width: ${1};\nsnippet bdt\n\tborder-top: ${1};\nsnippet bdt:n\n\tborder-top: none;\nsnippet bdw\n\tborder-width: ${1};\nsnippet bd\n\tborder: ${1};\nsnippet bd:n\n\tborder: none;\nsnippet b\n\tbottom: ${1};\nsnippet b:a\n\tbottom: auto;\nsnippet bxsh+\n\tbox-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\nsnippet bxsh\n\tbox-shadow: ${1};\nsnippet bxsh:n\n\tbox-shadow: none;\nsnippet bxz\n\tbox-sizing: ${1};\nsnippet bxz:bb\n\tbox-sizing: border-box;\nsnippet bxz:cb\n\tbox-sizing: content-box;\nsnippet cps\n\tcaption-side: ${1};\nsnippet cps:b\n\tcaption-side: bottom;\nsnippet cps:t\n\tcaption-side: top;\nsnippet cl\n\tclear: ${1};\nsnippet cl:b\n\tclear: both;\nsnippet cl:l\n\tclear: left;\nsnippet cl:n\n\tclear: none;\nsnippet cl:r\n\tclear: right;\nsnippet cp\n\tclip: ${1};\nsnippet cp:a\n\tclip: auto;\nsnippet cp:r\n\tclip: rect(${1:0} ${2:0} ${3:0} ${4:0});\nsnippet c\n\tcolor: #${1:000};\nsnippet ct\n\tcontent: ${1};\nsnippet ct:a\n\tcontent: attr(${1});\nsnippet ct:cq\n\tcontent: close-quote;\nsnippet ct:c\n\tcontent: counter(${1});\nsnippet ct:cs\n\tcontent: counters(${1});\nsnippet ct:ncq\n\tcontent: no-close-quote;\nsnippet ct:noq\n\tcontent: no-open-quote;\nsnippet ct:n\n\tcontent: normal;\nsnippet ct:oq\n\tcontent: open-quote;\nsnippet coi\n\tcounter-increment: ${1};\nsnippet cor\n\tcounter-reset: ${1};\nsnippet cur\n\tcursor: ${1};\nsnippet cur:a\n\tcursor: auto;\nsnippet cur:c\n\tcursor: crosshair;\nsnippet cur:d\n\tcursor: default;\nsnippet cur:ha\n\tcursor: hand;\nsnippet cur:he\n\tcursor: help;\nsnippet cur:m\n\tcursor: move;\nsnippet cur:p\n\tcursor: pointer;\nsnippet cur:t\n\tcursor: text;\nsnippet d\n\tdisplay: ${1};\nsnippet d:mib\n\tdisplay: -moz-inline-box;\nsnippet d:mis\n\tdisplay: -moz-inline-stack;\nsnippet d:b\n\tdisplay: block;\nsnippet d:cp\n\tdisplay: compact;\nsnippet d:ib\n\tdisplay: inline-block;\nsnippet d:itb\n\tdisplay: inline-table;\nsnippet d:i\n\tdisplay: inline;\nsnippet d:li\n\tdisplay: list-item;\nsnippet d:n\n\tdisplay: none;\nsnippet d:ri\n\tdisplay: run-in;\nsnippet d:tbcp\n\tdisplay: table-caption;\nsnippet d:tbc\n\tdisplay: table-cell;\nsnippet d:tbclg\n\tdisplay: table-column-group;\nsnippet d:tbcl\n\tdisplay: table-column;\nsnippet d:tbfg\n\tdisplay: table-footer-group;\nsnippet d:tbhg\n\tdisplay: table-header-group;\nsnippet d:tbrg\n\tdisplay: table-row-group;\nsnippet d:tbr\n\tdisplay: table-row;\nsnippet d:tb\n\tdisplay: table;\nsnippet ec\n\tempty-cells: ${1};\nsnippet ec:h\n\tempty-cells: hide;\nsnippet ec:s\n\tempty-cells: show;\nsnippet exp\n\texpression()\nsnippet fl\n\tfloat: ${1};\nsnippet fl:l\n\tfloat: left;\nsnippet fl:n\n\tfloat: none;\nsnippet fl:r\n\tfloat: right;\nsnippet f+\n\tfont: ${1:1em} ${2:Arial},${3:sans-serif};\nsnippet fef\n\tfont-effect: ${1};\nsnippet fef:eb\n\tfont-effect: emboss;\nsnippet fef:eg\n\tfont-effect: engrave;\nsnippet fef:n\n\tfont-effect: none;\nsnippet fef:o\n\tfont-effect: outline;\nsnippet femp\n\tfont-emphasize-position: ${1};\nsnippet femp:a\n\tfont-emphasize-position: after;\nsnippet femp:b\n\tfont-emphasize-position: before;\nsnippet fems\n\tfont-emphasize-style: ${1};\nsnippet fems:ac\n\tfont-emphasize-style: accent;\nsnippet fems:c\n\tfont-emphasize-style: circle;\nsnippet fems:ds\n\tfont-emphasize-style: disc;\nsnippet fems:dt\n\tfont-emphasize-style: dot;\nsnippet fems:n\n\tfont-emphasize-style: none;\nsnippet fem\n\tfont-emphasize: ${1};\nsnippet ff\n\tfont-family: ${1};\nsnippet ff:c\n\tfont-family: ${1:'Monotype Corsiva','Comic Sans MS'},cursive;\nsnippet ff:f\n\tfont-family: ${1:Capitals,Impact},fantasy;\nsnippet ff:m\n\tfont-family: ${1:Monaco,'Courier New'},monospace;\nsnippet ff:ss\n\tfont-family: ${1:Helvetica,Arial},sans-serif;\nsnippet ff:s\n\tfont-family: ${1:Georgia,'Times New Roman'},serif;\nsnippet fza\n\tfont-size-adjust: ${1};\nsnippet fza:n\n\tfont-size-adjust: none;\nsnippet fz\n\tfont-size: ${1};\nsnippet fsm\n\tfont-smooth: ${1};\nsnippet fsm:aw\n\tfont-smooth: always;\nsnippet fsm:a\n\tfont-smooth: auto;\nsnippet fsm:n\n\tfont-smooth: never;\nsnippet fst\n\tfont-stretch: ${1};\nsnippet fst:c\n\tfont-stretch: condensed;\nsnippet fst:e\n\tfont-stretch: expanded;\nsnippet fst:ec\n\tfont-stretch: extra-condensed;\nsnippet fst:ee\n\tfont-stretch: extra-expanded;\nsnippet fst:n\n\tfont-stretch: normal;\nsnippet fst:sc\n\tfont-stretch: semi-condensed;\nsnippet fst:se\n\tfont-stretch: semi-expanded;\nsnippet fst:uc\n\tfont-stretch: ultra-condensed;\nsnippet fst:ue\n\tfont-stretch: ultra-expanded;\nsnippet fs\n\tfont-style: ${1};\nsnippet fs:i\n\tfont-style: italic;\nsnippet fs:n\n\tfont-style: normal;\nsnippet fs:o\n\tfont-style: oblique;\nsnippet fv\n\tfont-variant: ${1};\nsnippet fv:n\n\tfont-variant: normal;\nsnippet fv:sc\n\tfont-variant: small-caps;\nsnippet fw\n\tfont-weight: ${1};\nsnippet fw:b\n\tfont-weight: bold;\nsnippet fw:br\n\tfont-weight: bolder;\nsnippet fw:lr\n\tfont-weight: lighter;\nsnippet fw:n\n\tfont-weight: normal;\nsnippet f\n\tfont: ${1};\nsnippet h\n\theight: ${1};\nsnippet h:a\n\theight: auto;\nsnippet l\n\tleft: ${1};\nsnippet l:a\n\tleft: auto;\nsnippet lts\n\tletter-spacing: ${1};\nsnippet lh\n\tline-height: ${1};\nsnippet lisi\n\tlist-style-image: url(${1});\nsnippet lisi:n\n\tlist-style-image: none;\nsnippet lisp\n\tlist-style-position: ${1};\nsnippet lisp:i\n\tlist-style-position: inside;\nsnippet lisp:o\n\tlist-style-position: outside;\nsnippet list\n\tlist-style-type: ${1};\nsnippet list:c\n\tlist-style-type: circle;\nsnippet list:dclz\n\tlist-style-type: decimal-leading-zero;\nsnippet list:dc\n\tlist-style-type: decimal;\nsnippet list:d\n\tlist-style-type: disc;\nsnippet list:lr\n\tlist-style-type: lower-roman;\nsnippet list:n\n\tlist-style-type: none;\nsnippet list:s\n\tlist-style-type: square;\nsnippet list:ur\n\tlist-style-type: upper-roman;\nsnippet lis\n\tlist-style: ${1};\nsnippet lis:n\n\tlist-style: none;\nsnippet mb\n\tmargin-bottom: ${1};\nsnippet mb:a\n\tmargin-bottom: auto;\nsnippet ml\n\tmargin-left: ${1};\nsnippet ml:a\n\tmargin-left: auto;\nsnippet mr\n\tmargin-right: ${1};\nsnippet mr:a\n\tmargin-right: auto;\nsnippet mt\n\tmargin-top: ${1};\nsnippet mt:a\n\tmargin-top: auto;\nsnippet m\n\tmargin: ${1};\nsnippet m:4\n\tmargin: ${1:0} ${2:0} ${3:0} ${4:0};\nsnippet m:3\n\tmargin: ${1:0} ${2:0} ${3:0};\nsnippet m:2\n\tmargin: ${1:0} ${2:0};\nsnippet m:0\n\tmargin: 0;\nsnippet m:a\n\tmargin: auto;\nsnippet mah\n\tmax-height: ${1};\nsnippet mah:n\n\tmax-height: none;\nsnippet maw\n\tmax-width: ${1};\nsnippet maw:n\n\tmax-width: none;\nsnippet mih\n\tmin-height: ${1};\nsnippet miw\n\tmin-width: ${1};\nsnippet op\n\topacity: ${1};\nsnippet op:ie\n\tfilter: progid:DXImageTransform.Microsoft.Alpha(Opacity=${1:100});\nsnippet op:ms\n\t-ms-filter: 'progid:DXImageTransform.Microsoft.Alpha(Opacity=${1:100})';\nsnippet orp\n\torphans: ${1};\nsnippet o+\n\toutline: ${1:1px} ${2:solid} #${3:000};\nsnippet oc\n\toutline-color: ${1:#000};\nsnippet oc:i\n\toutline-color: invert;\nsnippet oo\n\toutline-offset: ${1};\nsnippet os\n\toutline-style: ${1};\nsnippet ow\n\toutline-width: ${1};\nsnippet o\n\toutline: ${1};\nsnippet o:n\n\toutline: none;\nsnippet ovs\n\toverflow-style: ${1};\nsnippet ovs:a\n\toverflow-style: auto;\nsnippet ovs:mq\n\toverflow-style: marquee;\nsnippet ovs:mv\n\toverflow-style: move;\nsnippet ovs:p\n\toverflow-style: panner;\nsnippet ovs:s\n\toverflow-style: scrollbar;\nsnippet ovx\n\toverflow-x: ${1};\nsnippet ovx:a\n\toverflow-x: auto;\nsnippet ovx:h\n\toverflow-x: hidden;\nsnippet ovx:s\n\toverflow-x: scroll;\nsnippet ovx:v\n\toverflow-x: visible;\nsnippet ovy\n\toverflow-y: ${1};\nsnippet ovy:a\n\toverflow-y: auto;\nsnippet ovy:h\n\toverflow-y: hidden;\nsnippet ovy:s\n\toverflow-y: scroll;\nsnippet ovy:v\n\toverflow-y: visible;\nsnippet ov\n\toverflow: ${1};\nsnippet ov:a\n\toverflow: auto;\nsnippet ov:h\n\toverflow: hidden;\nsnippet ov:s\n\toverflow: scroll;\nsnippet ov:v\n\toverflow: visible;\nsnippet pb\n\tpadding-bottom: ${1};\nsnippet pl\n\tpadding-left: ${1};\nsnippet pr\n\tpadding-right: ${1};\nsnippet pt\n\tpadding-top: ${1};\nsnippet p\n\tpadding: ${1};\nsnippet p:4\n\tpadding: ${1:0} ${2:0} ${3:0} ${4:0};\nsnippet p:3\n\tpadding: ${1:0} ${2:0} ${3:0};\nsnippet p:2\n\tpadding: ${1:0} ${2:0};\nsnippet p:0\n\tpadding: 0;\nsnippet pgba\n\tpage-break-after: ${1};\nsnippet pgba:aw\n\tpage-break-after: always;\nsnippet pgba:a\n\tpage-break-after: auto;\nsnippet pgba:l\n\tpage-break-after: left;\nsnippet pgba:r\n\tpage-break-after: right;\nsnippet pgbb\n\tpage-break-before: ${1};\nsnippet pgbb:aw\n\tpage-break-before: always;\nsnippet pgbb:a\n\tpage-break-before: auto;\nsnippet pgbb:l\n\tpage-break-before: left;\nsnippet pgbb:r\n\tpage-break-before: right;\nsnippet pgbi\n\tpage-break-inside: ${1};\nsnippet pgbi:a\n\tpage-break-inside: auto;\nsnippet pgbi:av\n\tpage-break-inside: avoid;\nsnippet pos\n\tposition: ${1};\nsnippet pos:a\n\tposition: absolute;\nsnippet pos:f\n\tposition: fixed;\nsnippet pos:r\n\tposition: relative;\nsnippet pos:s\n\tposition: static;\nsnippet q\n\tquotes: ${1};\nsnippet q:en\n\tquotes: '\\201C' '\\201D' '\\2018' '\\2019';\nsnippet q:n\n\tquotes: none;\nsnippet q:ru\n\tquotes: '\\00AB' '\\00BB' '\\201E' '\\201C';\nsnippet rz\n\tresize: ${1};\nsnippet rz:b\n\tresize: both;\nsnippet rz:h\n\tresize: horizontal;\nsnippet rz:n\n\tresize: none;\nsnippet rz:v\n\tresize: vertical;\nsnippet r\n\tright: ${1};\nsnippet r:a\n\tright: auto;\nsnippet tbl\n\ttable-layout: ${1};\nsnippet tbl:a\n\ttable-layout: auto;\nsnippet tbl:f\n\ttable-layout: fixed;\nsnippet tal\n\ttext-align-last: ${1};\nsnippet tal:a\n\ttext-align-last: auto;\nsnippet tal:c\n\ttext-align-last: center;\nsnippet tal:l\n\ttext-align-last: left;\nsnippet tal:r\n\ttext-align-last: right;\nsnippet ta\n\ttext-align: ${1};\nsnippet ta:c\n\ttext-align: center;\nsnippet ta:l\n\ttext-align: left;\nsnippet ta:r\n\ttext-align: right;\nsnippet td\n\ttext-decoration: ${1};\nsnippet td:l\n\ttext-decoration: line-through;\nsnippet td:n\n\ttext-decoration: none;\nsnippet td:o\n\ttext-decoration: overline;\nsnippet td:u\n\ttext-decoration: underline;\nsnippet te\n\ttext-emphasis: ${1};\nsnippet te:ac\n\ttext-emphasis: accent;\nsnippet te:a\n\ttext-emphasis: after;\nsnippet te:b\n\ttext-emphasis: before;\nsnippet te:c\n\ttext-emphasis: circle;\nsnippet te:ds\n\ttext-emphasis: disc;\nsnippet te:dt\n\ttext-emphasis: dot;\nsnippet te:n\n\ttext-emphasis: none;\nsnippet th\n\ttext-height: ${1};\nsnippet th:a\n\ttext-height: auto;\nsnippet th:f\n\ttext-height: font-size;\nsnippet th:m\n\ttext-height: max-size;\nsnippet th:t\n\ttext-height: text-size;\nsnippet ti\n\ttext-indent: ${1};\nsnippet ti:-\n\ttext-indent: -9999px;\nsnippet tj\n\ttext-justify: ${1};\nsnippet tj:a\n\ttext-justify: auto;\nsnippet tj:d\n\ttext-justify: distribute;\nsnippet tj:ic\n\ttext-justify: inter-cluster;\nsnippet tj:ii\n\ttext-justify: inter-ideograph;\nsnippet tj:iw\n\ttext-justify: inter-word;\nsnippet tj:k\n\ttext-justify: kashida;\nsnippet tj:t\n\ttext-justify: tibetan;\nsnippet to+\n\ttext-outline: ${1:0} ${2:0} #${3:000};\nsnippet to\n\ttext-outline: ${1};\nsnippet to:n\n\ttext-outline: none;\nsnippet tr\n\ttext-replace: ${1};\nsnippet tr:n\n\ttext-replace: none;\nsnippet tsh+\n\ttext-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\nsnippet tsh\n\ttext-shadow: ${1};\nsnippet tsh:n\n\ttext-shadow: none;\nsnippet tt\n\ttext-transform: ${1};\nsnippet tt:c\n\ttext-transform: capitalize;\nsnippet tt:l\n\ttext-transform: lowercase;\nsnippet tt:n\n\ttext-transform: none;\nsnippet tt:u\n\ttext-transform: uppercase;\nsnippet tw\n\ttext-wrap: ${1};\nsnippet tw:no\n\ttext-wrap: none;\nsnippet tw:n\n\ttext-wrap: normal;\nsnippet tw:s\n\ttext-wrap: suppress;\nsnippet tw:u\n\ttext-wrap: unrestricted;\nsnippet t\n\ttop: ${1};\nsnippet t:a\n\ttop: auto;\nsnippet va\n\tvertical-align: ${1};\nsnippet va:bl\n\tvertical-align: baseline;\nsnippet va:b\n\tvertical-align: bottom;\nsnippet va:m\n\tvertical-align: middle;\nsnippet va:sub\n\tvertical-align: sub;\nsnippet va:sup\n\tvertical-align: super;\nsnippet va:tb\n\tvertical-align: text-bottom;\nsnippet va:tt\n\tvertical-align: text-top;\nsnippet va:t\n\tvertical-align: top;\nsnippet v\n\tvisibility: ${1};\nsnippet v:c\n\tvisibility: collapse;\nsnippet v:h\n\tvisibility: hidden;\nsnippet v:v\n\tvisibility: visible;\nsnippet whsc\n\twhite-space-collapse: ${1};\nsnippet whsc:ba\n\twhite-space-collapse: break-all;\nsnippet whsc:bs\n\twhite-space-collapse: break-strict;\nsnippet whsc:k\n\twhite-space-collapse: keep-all;\nsnippet whsc:l\n\twhite-space-collapse: loose;\nsnippet whsc:n\n\twhite-space-collapse: normal;\nsnippet whs\n\twhite-space: ${1};\nsnippet whs:n\n\twhite-space: normal;\nsnippet whs:nw\n\twhite-space: nowrap;\nsnippet whs:pl\n\twhite-space: pre-line;\nsnippet whs:pw\n\twhite-space: pre-wrap;\nsnippet whs:p\n\twhite-space: pre;\nsnippet wid\n\twidows: ${1};\nsnippet w\n\twidth: ${1};\nsnippet w:a\n\twidth: auto;\nsnippet wob\n\tword-break: ${1};\nsnippet wob:ba\n\tword-break: break-all;\nsnippet wob:bs\n\tword-break: break-strict;\nsnippet wob:k\n\tword-break: keep-all;\nsnippet wob:l\n\tword-break: loose;\nsnippet wob:n\n\tword-break: normal;\nsnippet wos\n\tword-spacing: ${1};\nsnippet wow\n\tword-wrap: ${1};\nsnippet wow:no\n\tword-wrap: none;\nsnippet wow:n\n\tword-wrap: normal;\nsnippet wow:s\n\tword-wrap: suppress;\nsnippet wow:u\n\tword-wrap: unrestricted;\nsnippet z\n\tz-index: ${1};\nsnippet z:a\n\tz-index: auto;\nsnippet zoo\n\tzoom: 1;\n";
+
+});
+
+define("ace/snippets/css",["require","exports","module","ace/snippets/css.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./css.snippets");
+exports.scope = "css";
+
+});
+
+define("ace/snippets/dart.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet lib\n\tlibrary ${1};\n\t${2}\nsnippet im\n\timport '${1}';\n\t${2}\nsnippet pa\n\tpart '${1}';\n\t${2}\nsnippet pao\n\tpart of ${1};\n\t${2}\nsnippet main\n\tvoid main() {\n\t  ${1:/* code */}\n\t}\nsnippet st\n\tstatic ${1}\nsnippet fi\n\tfinal ${1}\nsnippet re\n\treturn ${1}\nsnippet br\n\tbreak;\nsnippet th\n\tthrow ${1}\nsnippet cl\n\tclass ${1:`Filename(\"\", \"untitled\")`} ${2}\nsnippet imp\n\timplements ${1}\nsnippet ext\n\textends ${1}\nsnippet if\n\tif (${1:true}) {\n\t  ${2}\n\t}\nsnippet ife\n\tif (${1:true}) {\n\t  ${2}\n\t} else {\n\t  ${3}\n\t}\nsnippet el\n\telse\nsnippet sw\n\tswitch (${1}) {\n\t  ${2}\n\t}\nsnippet cs\n\tcase ${1}:\n\t  ${2}\nsnippet de\n\tdefault:\n\t  ${1}\nsnippet for\n\tfor (var ${2:i} = 0, len = ${1:things}.length; $2 < len; ${3:++}$2) {\n\t  ${4:$1[$2]}\n\t}\nsnippet fore\n\tfor (final ${2:item} in ${1:itemList}) {\n\t  ${3:/* code */}\n\t}\nsnippet wh\n\twhile (${1:/* condition */}) {\n\t  ${2:/* code */}\n\t}\nsnippet dowh\n\tdo {\n\t  ${2:/* code */}\n\t} while (${1:/* condition */});\nsnippet as\n\tassert(${1:/* condition */});\nsnippet try\n\ttry {\n\t  ${2}\n\t} catch (${1:Exception e}) {\n\t}\nsnippet tryf\n\ttry {\n\t  ${2}\n\t} catch (${1:Exception e}) {\n\t} finally {\n\t}\n";
+
+});
+
+define("ace/snippets/dart",["require","exports","module","ace/snippets/dart.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./dart.snippets");
+exports.scope = "dart";
+
+});
+
+define("ace/snippets/diff.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# DEP-3 (http://dep.debian.net/deps/dep3/) style patch header\nsnippet header DEP-3 style header\n\tDescription: ${1}\n\tOrigin: ${2:vendor|upstream|other}, ${3:url of the original patch}\n\tBug: ${4:url in upstream bugtracker}\n\tForwarded: ${5:no|not-needed|url}\n\tAuthor: ${6:`g:snips_author`}\n\tReviewed-by: ${7:name and email}\n\tLast-Update: ${8:`strftime(\"%Y-%m-%d\")`}\n\tApplied-Upstream: ${9:upstream version|url|commit}\n\n";
+
+});
+
+define("ace/snippets/diff",["require","exports","module","ace/snippets/diff.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./diff.snippets");
+exports.scope = "diff";
+
+});
+
+define("ace/snippets/django.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Model Fields\n\n# Note: Optional arguments are using defaults that match what Django will use\n# as a default, e.g. with max_length fields.  Doing this as a form of self\n# documentation and to make it easy to know whether you should override the\n# default or not.\n\n# Note: Optional arguments that are booleans will use the opposite since you\n# can either not specify them, or override them, e.g. auto_now_add=False.\n\nsnippet auto\n\t${1:FIELDNAME} = models.AutoField(${2})\nsnippet bool\n\t${1:FIELDNAME} = models.BooleanField(${2:default=True})\nsnippet char\n\t${1:FIELDNAME} = models.CharField(max_length=${2}${3:, blank=True})\nsnippet comma\n\t${1:FIELDNAME} = models.CommaSeparatedIntegerField(max_length=${2}${3:, blank=True})\nsnippet date\n\t${1:FIELDNAME} = models.DateField(${2:auto_now_add=True, auto_now=True}${3:, blank=True, null=True})\nsnippet datetime\n\t${1:FIELDNAME} = models.DateTimeField(${2:auto_now_add=True, auto_now=True}${3:, blank=True, null=True})\nsnippet decimal\n\t${1:FIELDNAME} = models.DecimalField(max_digits=${2}, decimal_places=${3})\nsnippet email\n\t${1:FIELDNAME} = models.EmailField(max_length=${2:75}${3:, blank=True})\nsnippet file\n\t${1:FIELDNAME} = models.FileField(upload_to=${2:path/for/upload}${3:, max_length=100})\nsnippet filepath\n\t${1:FIELDNAME} = models.FilePathField(path=${2:\"/abs/path/to/dir\"}${3:, max_length=100}${4:, match=\"*.ext\"}${5:, recursive=True}${6:, blank=True, })\nsnippet float\n\t${1:FIELDNAME} = models.FloatField(${2})\nsnippet image\n\t${1:FIELDNAME} = models.ImageField(upload_to=${2:path/for/upload}${3:, height_field=height, width_field=width}${4:, max_length=100})\nsnippet int\n\t${1:FIELDNAME} = models.IntegerField(${2})\nsnippet ip\n\t${1:FIELDNAME} = models.IPAddressField(${2})\nsnippet nullbool\n\t${1:FIELDNAME} = models.NullBooleanField(${2})\nsnippet posint\n\t${1:FIELDNAME} = models.PositiveIntegerField(${2})\nsnippet possmallint\n\t${1:FIELDNAME} = models.PositiveSmallIntegerField(${2})\nsnippet slug\n\t${1:FIELDNAME} = models.SlugField(max_length=${2:50}${3:, blank=True})\nsnippet smallint\n\t${1:FIELDNAME} = models.SmallIntegerField(${2})\nsnippet text\n\t${1:FIELDNAME} = models.TextField(${2:blank=True})\nsnippet time\n\t${1:FIELDNAME} = models.TimeField(${2:auto_now_add=True, auto_now=True}${3:, blank=True, null=True})\nsnippet url\n\t${1:FIELDNAME} = models.URLField(${2:verify_exists=False}${3:, max_length=200}${4:, blank=True})\nsnippet xml\n\t${1:FIELDNAME} = models.XMLField(schema_path=${2:None}${3:, blank=True})\n# Relational Fields\nsnippet fk\n\t${1:FIELDNAME} = models.ForeignKey(${2:OtherModel}${3:, related_name=''}${4:, limit_choices_to=}${5:, to_field=''})\nsnippet m2m\n\t${1:FIELDNAME} = models.ManyToManyField(${2:OtherModel}${3:, related_name=''}${4:, limit_choices_to=}${5:, symmetrical=False}${6:, through=''}${7:, db_table=''})\nsnippet o2o\n\t${1:FIELDNAME} = models.OneToOneField(${2:OtherModel}${3:, parent_link=True}${4:, related_name=''}${5:, limit_choices_to=}${6:, to_field=''})\n\n# Code Skeletons\n\nsnippet form\n\tclass ${1:FormName}(forms.Form):\n\t\t\"\"\"${2:docstring}\"\"\"\n\t\t${3}\n\nsnippet model\n\tclass ${1:ModelName}(models.Model):\n\t\t\"\"\"${2:docstring}\"\"\"\n\t\t${3}\n\t\t\n\t\tclass Meta:\n\t\t\t${4}\n\t\t\n\t\tdef __unicode__(self):\n\t\t\t${5}\n\t\t\n\t\tdef save(self, force_insert=False, force_update=False):\n\t\t\t${6}\n\t\t\n\t\t@models.permalink\n\t\tdef get_absolute_url(self):\n\t\t\treturn ('${7:view_or_url_name}' ${8})\n\nsnippet modeladmin\n\tclass ${1:ModelName}Admin(admin.ModelAdmin):\n\t\t${2}\n\t\n\tadmin.site.register($1, $1Admin)\n\t\nsnippet tabularinline\n\tclass ${1:ModelName}Inline(admin.TabularInline):\n\t\tmodel = $1\n\nsnippet stackedinline\n\tclass ${1:ModelName}Inline(admin.StackedInline):\n\t\tmodel = $1\n\nsnippet r2r\n\treturn render_to_response('${1:template.html}', {\n\t\t\t${2}\n\t\t}${3:, context_instance=RequestContext(request)}\n\t)\n";
+
+});
+
+define("ace/snippets/django",["require","exports","module","ace/snippets/django.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./django.snippets");
+exports.scope = "django";
+
+});
+
+define("ace/snippets/drools.snippets",["require","exports","module"], function(require, exports, module){module.exports = "\nsnippet rule\n\trule \"${1?:rule_name}\"\n\twhen\n\t\t${2:// when...} \n\tthen\n\t\t${3:// then...}\n\tend\n\nsnippet query\n\tquery ${1?:query_name}\n\t\t${2:// find} \n\tend\n\t\nsnippet declare\n\tdeclare ${1?:type_name}\n\t\t${2:// attributes} \n\tend\n\n";
+
+});
+
+define("ace/snippets/drools",["require","exports","module","ace/snippets/drools.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./drools.snippets");
+exports.scope = "drools";
+
+});
+
+define("ace/snippets/edifact.snippets",["require","exports","module"], function(require, exports, module){module.exports = "## Access Modifiers\nsnippet u\n\tUN\nsnippet un\n\tUNB\nsnippet pr\n\tprivate\n##\n## Annotations\nsnippet before\n\t@Before\n\tstatic void ${1:intercept}(${2:args}) { ${3} }\nsnippet mm\n\t@ManyToMany\n\t${1}\nsnippet mo\n\t@ManyToOne\n\t${1}\nsnippet om\n\t@OneToMany${1:(cascade=CascadeType.ALL)}\n\t${2}\nsnippet oo\n\t@OneToOne\n\t${1}\n##\n## Basic Java packages and import\nsnippet im\n\timport\nsnippet j.b\n\tjava.beans.\nsnippet j.i\n\tjava.io.\nsnippet j.m\n\tjava.math.\nsnippet j.n\n\tjava.net.\nsnippet j.u\n\tjava.util.\n##\n## Class\nsnippet cl\n\tclass ${1:`Filename(\"\", \"untitled\")`} ${2}\nsnippet in\n\tinterface ${1:`Filename(\"\", \"untitled\")`} ${2:extends Parent}${3}\nsnippet tc\n\tpublic class ${1:`Filename()`} extends ${2:TestCase}\n##\n## Class Enhancements\nsnippet ext\n\textends \nsnippet imp\n\timplements\n##\n## Comments\nsnippet /*\n\t/*\n\t * ${1}\n\t */\n##\n## Constants\nsnippet co\n\tstatic public final ${1:String} ${2:var} = ${3};${4}\nsnippet cos\n\tstatic public final String ${1:var} = \"${2}\";${3}\n##\n## Control Statements\nsnippet case\n\tcase ${1}:\n\t\t${2}\nsnippet def\n\tdefault:\n\t\t${2}\nsnippet el\n\telse\nsnippet elif\n\telse if (${1}) ${2}\nsnippet if\n\tif (${1}) ${2}\nsnippet sw\n\tswitch (${1}) {\n\t\t${2}\n\t}\n##\n## Create a Method\nsnippet m\n\t${1:void} ${2:method}(${3}) ${4:throws }${5}\n##\n## Create a Variable\nsnippet v\n\t${1:String} ${2:var}${3: = null}${4};${5}\n##\n## Enhancements to Methods, variables, classes, etc.\nsnippet ab\n\tabstract\nsnippet fi\n\tfinal\nsnippet st\n\tstatic\nsnippet sy\n\tsynchronized\n##\n## Error Methods\nsnippet err\n\tSystem.err.print(\"${1:Message}\");\nsnippet errf\n\tSystem.err.printf(\"${1:Message}\", ${2:exception});\nsnippet errln\n\tSystem.err.println(\"${1:Message}\");\n##\n## Exception Handling\nsnippet as\n\tassert ${1:test} : \"${2:Failure message}\";${3}\nsnippet ca\n\tcatch(${1:Exception} ${2:e}) ${3}\nsnippet thr\n\tthrow\nsnippet ths\n\tthrows\nsnippet try\n\ttry {\n\t\t${3}\n\t} catch(${1:Exception} ${2:e}) {\n\t}\nsnippet tryf\n\ttry {\n\t\t${3}\n\t} catch(${1:Exception} ${2:e}) {\n\t} finally {\n\t}\n##\n## Find Methods\nsnippet findall\n\tList<${1:listName}> ${2:items} = ${1}.findAll();${3}\nsnippet findbyid\n\t${1:var} ${2:item} = ${1}.findById(${3});${4}\n##\n## Javadocs\nsnippet /**\n\t/**\n\t * ${1}\n\t */\nsnippet @au\n\t@author `system(\"grep \\`id -un\\` /etc/passwd | cut -d \\\":\\\" -f5 | cut -d \\\",\\\" -f1\")`\nsnippet @br\n\t@brief ${1:Description}\nsnippet @fi\n\t@file ${1:`Filename()`}.java\nsnippet @pa\n\t@param ${1:param}\nsnippet @re\n\t@return ${1:param}\n##\n## Logger Methods\nsnippet debug\n\tLogger.debug(${1:param});${2}\nsnippet error\n\tLogger.error(${1:param});${2}\nsnippet info\n\tLogger.info(${1:param});${2}\nsnippet warn\n\tLogger.warn(${1:param});${2}\n##\n## Loops\nsnippet enfor\n\tfor (${1} : ${2}) ${3}\nsnippet for\n\tfor (${1}; ${2}; ${3}) ${4}\nsnippet wh\n\twhile (${1}) ${2}\n##\n## Main method\nsnippet main\n\tpublic static void main (String[] args) {\n\t\t${1:/* code */}\n\t}\n##\n## Print Methods\nsnippet print\n\tSystem.out.print(\"${1:Message}\");\nsnippet printf\n\tSystem.out.printf(\"${1:Message}\", ${2:args});\nsnippet println\n\tSystem.out.println(${1});\n##\n## Render Methods\nsnippet ren\n\trender(${1:param});${2}\nsnippet rena\n\trenderArgs.put(\"${1}\", ${2});${3}\nsnippet renb\n\trenderBinary(${1:param});${2}\nsnippet renj\n\trenderJSON(${1:param});${2}\nsnippet renx\n\trenderXml(${1:param});${2}\n##\n## Setter and Getter Methods\nsnippet set\n\t${1:public} void set${3:}(${2:String} ${4:}){\n\t\tthis.$4 = $4;\n\t}\nsnippet get\n\t${1:public} ${2:String} get${3:}(){\n\t\treturn this.${4:};\n\t}\n##\n## Terminate Methods or Loops\nsnippet re\n\treturn\nsnippet br\n\tbreak;\n##\n## Test Methods\nsnippet t\n\tpublic void test${1:Name}() throws Exception {\n\t\t${2}\n\t}\nsnippet test\n\t@Test\n\tpublic void test${1:Name}() throws Exception {\n\t\t${2}\n\t}\n##\n## Utils\nsnippet Sc\n\tScanner\n##\n## Miscellaneous\nsnippet action\n\tpublic static void ${1:index}(${2:args}) { ${3} }\nsnippet rnf\n\tnotFound(${1:param});${2}\nsnippet rnfin\n\tnotFoundIfNull(${1:param});${2}\nsnippet rr\n\tredirect(${1:param});${2}\nsnippet ru\n\tunauthorized(${1:param});${2}\nsnippet unless\n\t(unless=${1:param});${2}\n";
+
+});
+
+define("ace/snippets/edifact",["require","exports","module","ace/snippets/edifact.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./edifact.snippets");
+exports.scope = "edifact";
+
+});
+
+define("ace/snippets/erlang.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# module and export all\nsnippet mod\n\t-module(${1:`Filename('', 'my')`}).\n\t\n\t-compile([export_all]).\n\t\n\tstart() ->\n\t    ${2}\n\t\n\tstop() ->\n\t    ok.\n# define directive\nsnippet def\n\t-define(${1:macro}, ${2:body}).${3}\n# export directive\nsnippet exp\n\t-export([${1:function}/${2:arity}]).\n# include directive\nsnippet inc\n\t-include(\"${1:file}\").${2}\n# behavior directive\nsnippet beh\n\t-behaviour(${1:behaviour}).${2}\n# if expression\nsnippet if\n\tif\n\t    ${1:guard} ->\n\t        ${2:body}\n\tend\n# case expression\nsnippet case\n\tcase ${1:expression} of\n\t    ${2:pattern} ->\n\t        ${3:body};\n\tend\n# anonymous function\nsnippet fun\n\tfun (${1:Parameters}) -> ${2:body} end${3}\n# try...catch\nsnippet try\n\ttry\n\t    ${1}\n\tcatch\n\t    ${2:_:_} -> ${3:got_some_exception}\n\tend\n# record directive\nsnippet rec\n\t-record(${1:record}, {\n\t    ${2:field}=${3:value}}).${4}\n# todo comment\nsnippet todo\n\t%% TODO: ${1}\n## Snippets below (starting with '%') are in EDoc format.\n## See http://www.erlang.org/doc/apps/edoc/chapter.html#id56887 for more details\n# doc comment\nsnippet %d\n\t%% @doc ${1}\n# end of doc comment\nsnippet %e\n\t%% @end\n# specification comment\nsnippet %s\n\t%% @spec ${1}\n# private function marker\nsnippet %p\n\t%% @private\n# OTP application\nsnippet application\n\t-module(${1:`Filename('', 'my')`}).\n\n\t-behaviour(application).\n\n\t-export([start/2, stop/1]).\n\n\tstart(_Type, _StartArgs) ->\n\t    case ${2:root_supervisor}:start_link() of\n\t        {ok, Pid} ->\n\t            {ok, Pid};\n\t        Other ->\n\t\t          {error, Other}\n\t    end.\n\n\tstop(_State) ->\n\t    ok.\t\n# OTP supervisor\nsnippet supervisor\n\t-module(${1:`Filename('', 'my')`}).\n\n\t-behaviour(supervisor).\n\n\t%% API\n\t-export([start_link/0]).\n\n\t%% Supervisor callbacks\n\t-export([init/1]).\n\n\t-define(SERVER, ?MODULE).\n\n\tstart_link() ->\n\t    supervisor:start_link({local, ?SERVER}, ?MODULE, []).\n\n\tinit([]) ->\n\t    Server = {${2:my_server}, {$2, start_link, []},\n\t      permanent, 2000, worker, [$2]},\n\t    Children = [Server],\n\t    RestartStrategy = {one_for_one, 0, 1},\n\t    {ok, {RestartStrategy, Children}}.\n# OTP gen_server\nsnippet gen_server\n\t-module(${1:`Filename('', 'my')`}).\n\n\t-behaviour(gen_server).\n\n\t%% API\n\t-export([\n\t         start_link/0\n\t        ]).\n\n\t%% gen_server callbacks\n\t-export([init/1, handle_call/3, handle_cast/2, handle_info/2,\n\t         terminate/2, code_change/3]).\n\n\t-define(SERVER, ?MODULE).\n\n\t-record(state, {}).\n\n\t%%%===================================================================\n\t%%% API\n\t%%%===================================================================\n\n\tstart_link() ->\n\t    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).\n\n\t%%%===================================================================\n\t%%% gen_server callbacks\n\t%%%===================================================================\n\n\tinit([]) ->\n\t    {ok, #state{}}.\n\n\thandle_call(_Request, _From, State) ->\n\t    Reply = ok,\n\t    {reply, Reply, State}.\n\n\thandle_cast(_Msg, State) ->\n\t    {noreply, State}.\n\n\thandle_info(_Info, State) ->\n\t    {noreply, State}.\n\n\tterminate(_Reason, _State) ->\n\t    ok.\n\n\tcode_change(_OldVsn, State, _Extra) ->\n\t    {ok, State}.\n\n\t%%%===================================================================\n\t%%% Internal functions\n\t%%%===================================================================\n\n";
+
+});
+
+define("ace/snippets/erlang",["require","exports","module","ace/snippets/erlang.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./erlang.snippets");
+exports.scope = "erlang";
+
+});
+
+define("ace/snippets/fsl.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet header\n\tmachine_name     : \"\";\n\tmachine_author   : \"\";\n\tmachine_license  : MIT;\n\tmachine_comment  : \"\";\n\tmachine_language : en;\n\tmachine_version  : 1.0.0;\n\tfsl_version      : 1.0.0;\n\tstart_states     : [];\n";
+
+});
+
+define("ace/snippets/fsl",["require","exports","module","ace/snippets/fsl.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./fsl.snippets");
+exports.scope = "fsl";
+
+});
+
+define("ace/snippets/gobstones.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# scope: gobstones\n\n# program\nsnippet program\n\tprogram {\n\t\t${1:// cuerpo...}\n\t}\n\n# interactive program\nsnippet interactive program\n\tinteractive program {\n\t\t${1:INIT} -> { ${2:// cuerpo...} }\n\t\t${3:TIMEOUT(${4:5000}) -> { ${5:// cuerpo...} }\n\t\t${6:K_ENTER} -> { ${7:// cuerpo...} }\n\t\t_ -> {}\n\t}\n\n# procedure\nsnippet procedure\n\tprocedure ${1:Nombre}(${2:parametros}) {\n\t\t${3:// cuerpo...}\n\t}\n\n# function\nsnippet function\n\tfunction ${1:nombre}(${2:parametros}) {\n\t\treturn (${3:expresi\u00F3n..})\n\t}\n\n# return\nsnippet return\n\treturn (${1:expresi\u00F3n...})\n\n# type\nsnippet type\n\ttype ${1:Nombre}\n\n# is variant\nsnippet is variant\n\tis variant {\n\t\tcase ${1:NombreDelValor1} {}\n\t\tcase ${2:NombreDelValor2} {}\n\t\tcase ${3:NombreDelValor3} {}\n\t\tcase ${4:NombreDelValor4} {}\n\t}\n\n# is record\nsnippet is record\n\tis record {\n\t\tfield ${1:campo1} // ${2:Tipo}\n\t\tfield ${3:campo2} // ${4:Tipo}\n\t\tfield ${5:campo3} // ${6:Tipo}\n\t\tfield ${7:campo4} // ${8:Tipo}\n\t}\n\n# type _ is variant\nsnippet type _ is variant\n\ttype ${1:Nombre} is variant {\n\t\tcase ${2:NombreDelValor1} {}\n\t\tcase ${3:NombreDelValor2} {}\n\t\tcase ${4:NombreDelValor3} {}\n\t\tcase ${5:NombreDelValor4} {}\n\t}\n\n# type _ is record\nsnippet type _ is record\n\ttype ${1:Nombre} is record {\n\t\tfield ${2:campo1} // ${3:Tipo}\n\t\tfield ${4:campo2} // ${5:Tipo}\n\t\tfield ${6:campo3} // ${7:Tipo}\n\t\tfield ${8:campo4} // ${9:Tipo}\n\t}\n\n# repeat\nsnippet repeat\n\trepeat ${1:cantidad} {\n\t\t${2:// cuerpo...}\n\t}\n\n# foreach\nsnippet foreach\n\tforeach ${1:\u00EDndice} in ${2:lista} {\n\t\t${3:// cuerpo...}\n\t}\n\n# while\nsnippet while\n\twhile (${1?:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t}\n\n# if\nsnippet if\n\tif (${1?:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t}\n\n# elseif\nsnippet elseif\n\telseif (${1?:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t}\n\n# else\nsnippet else\n\telse {\n\t\t${1:// cuerpo...}\n\t}\n\n# if (con else)\nsnippet if (con else)\n\tif (${1:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t} else {\n\t\t${3:// cuerpo....}\n\t}\n\n# if (con elseif)\nsnippet if (con elseif)\n\tif (${1:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t} elseif (${3:condici\u00F3n}) {\n\t\t${4:// cuerpo...}\n\t}\n\n# if (con elseif y else)\nsnippet if (con elseif y else)\n\tif (${1:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t} elseif (${3:condici\u00F3n}) {\n\t\t${4:// cuerpo...}\n\t} else {\n\t\t${5:// cuerpo....}\n\t}\n\n# if (con 3 elseif)\nsnippet if (con 3 elseif)\n\tif (${1:condici\u00F3n}) {\n\t\t${2:// cuerpo...}\n\t} elseif (${3:condici\u00F3n}) {\n\t\t${4:// cuerpo...}\n\t} elseif (${5:condici\u00F3n}) {\n\t\t${6:// cuerpo...}\n\t} elseif (${7:condici\u00F3n}) {\n\t\t${8:// cuerpo...}\n\t}\n\n# choose (2 valores)\nsnippet choose (2 valores)\n\tchoose\n\t\t${1:Valor1} when (${2:condici\u00F3n})\n\t\t${3:Valor2} otherwise\n\n# choose (2 valores y boom)\nsnippet choose (2 valores y boom)\n\tchoose\n\t\t${1:Valor1} when (${2:condici\u00F3n})\n\t\t${3:Valor2} when (${4:condici\u00F3n})\n\t\t${5:Valor3} when (${6:condici\u00F3n})\n\t\t${7:Valor4} when (${8:condici\u00F3n})\n\t\tboom(\"${9:No es un valor v\u00E1lido}\") otherwise\n\n# matching (4 valores)\nsnippet matching (4 valores)\n\tmatching (${1:variable}) select\n\t\t${2:Valor1} on ${3:opci\u00F3n1}\n\t\t${4:Valor2} on ${5:opci\u00F3n2}\n\t\t${6:Valor3} on ${7:opci\u00F3n3}\n\t\t${8:Valor4} on ${9:opci\u00F3n4}\n\t\tboom(\"${10:No es un valor v\u00E1lido}\") otherwise\n\n# select (4 casos)\nsnippet select (4 casos)\n\tselect\n\t\t${1:Valor1} on (${2:opci\u00F3n1})\n\t\t${3:Valor2} on (${4:opci\u00F3n2})\n\t\t${5:Valor3} on (${6:opci\u00F3n3})\n\t\t${7:Valor4} on (${8:opci\u00F3n4})\n\t\tboom(\"${9:No es un valor v\u00E1lido}\") otherwise\n\n# switch\nsnippet switch\n\tswitch (${1:variable}) {\n\t\t${2:Valor1} -> {${3:// cuerpo...}}\n\t\t${4:Valor2} -> {${5:// cuerpo...}}\n\t\t${6:Valor3} -> {${7:// cuerpo...}}\n\t\t${8:Valor4} -> {${9:// cuerpo...}}\n\t\t_ -> {${10:// cuerpo...}}\n\t}\n\n# Poner\nsnippet Poner\n\tPoner(${1:color})\n\n# Sacar\nsnippet Sacar\n\tSacar(${1:color})\n\n# Mover\nsnippet Mover\n\tMover(${1:direcci\u00F3n})\n\n# IrAlBorde\nsnippet IrAlBorde\n\tIrAlBorde(${1:direcci\u00F3n})\n\n# VaciarTablero\nsnippet VaciarTablero\n\tVaciarTablero()\n\n# BOOM\nsnippet BOOM\n\tBOOM(\"${1:Mensaje de error}\")\n\n# hayBolitas\nsnippet hayBolitas\n\thayBolitas(${1:color})\n\n# nroBolitas\nsnippet nroBolitas\n\tnroBolitas(${1:color})\n\n# puedeMover\nsnippet puedeMover\n\tpuedeMover(${1:direcci\u00F3n})\n\n# siguiente\nsnippet siguiente\n\tsiguiente(${1:color|direcci\u00F3n})\n\n# previo\nsnippet previo\n\tprevio(${1:color|direcci\u00F3n})\n\n# opuesto\nsnippet opuesto\n\topuesto(${1:direcci\u00F3n})\n\n# minDir\nsnippet minDir\n\tminDir()\n\n# maxDir\nsnippet maxDir\n\tmaxDir()\n\n# minColor\nsnippet minColor\n\tminDir()\n\n# maxColor\nsnippet maxColor\n\tmaxDir()\n\n# minBool\nsnippet minBool\n\tminBool()\n\n# maxBool\nsnippet maxBool\n\tmaxBool()\n\n# primero\nsnippet primero\n\tprimero(${1:lista})\n\n# sinElPrimero\nsnippet sinElPrimero\n\tsinElPrimero(${1:lista})\n\n# esVac\u00EDa\nsnippet esVac\u00EDa\n\tesVac\u00EDa(${1:lista})\n\n# boom\nsnippet boom\n\tboom(\"${1:Mensaje de error}\")\n\n# Azul\nsnippet Azul\n\tAzul\n\n# Negro\nsnippet Negro\n\tNegro\n\n# Rojo\nsnippet Rojo\n\tRojo\n\n# Verde\nsnippet Verde\n\tVerde\n\n# Norte\nsnippet Norte\n\tNorte\n\n# Este\nsnippet Este\n\tEste\n\n# Sur\nsnippet Sur\n\tSur\n\n# Oeste\nsnippet Oeste\n\tOeste\n\n# True\nsnippet True\n\tTrue\n\n# False\nsnippet False\n\tFalse\n\n# INIT\nsnippet INIT\n\tINIT -> {$1:// cuerpo...}\n\n# TIMEOUT\nsnippet TIMEOUT\n\tTIMEOUT(${1:5000}) -> {$2:// cuerpo...}\n\n# K_A\nsnippet K_A\n\tK_A -> { ${1://cuerpo...} }\n# K_CTRL_A\nsnippet K_CTRL_A\n\tK_CTRL_A -> { ${1://cuerpo...} }\n# K_ALT_A\nsnippet K_ALT_A\n\tK_ALT_A -> { ${1://cuerpo...} }\n# K_SHIFT_A\nsnippet K_SHIFT_A\n\tK_SHIFT_A -> { ${1://cuerpo...} }\n# K_CTRL_ALT_A\nsnippet K_CTRL_ALT_A\n\tK_CTRL_ALT_A -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_A\nsnippet K_CTRL_SHIFT_A\n\tK_CTRL_SHIFT_A -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_A\nsnippet K_CTRL_ALT_SHIFT_A\n\tK_CTRL_ALT_SHIFT_A -> { ${1://cuerpo...} }\n\n# K_B\nsnippet K_B\n\tK_B -> { ${1://cuerpo...} }\n# K_CTRL_B\nsnippet K_CTRL_B\n\tK_CTRL_B -> { ${1://cuerpo...} }\n# K_ALT_B\nsnippet K_ALT_B\n\tK_ALT_B -> { ${1://cuerpo...} }\n# K_SHIFT_B\nsnippet K_SHIFT_B\n\tK_SHIFT_B -> { ${1://cuerpo...} }\n# K_CTRL_ALT_B\nsnippet K_CTRL_ALT_B\n\tK_CTRL_ALT_B -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_B\nsnippet K_CTRL_SHIFT_B\n\tK_CTRL_SHIFT_B -> { ${1://cuerpo...} }\n# K_ALT_SHIFT_C\nsnippet K_ALT_SHIFT_C\n\tK_ALT_SHIFT_C -> { ${1://cuerpo...} }\n# K_CTRL_BLT_SHIFT_B\nsnippet K_CTRL_BLT_SHIFT_B\n\tK_CTRL_ALT_SHIFT_B -> { ${1://cuerpo...} }\n\n# K_C\nsnippet K_C\n\tK_C -> { ${1://cuerpo...} }\n# K_CTRL_C\nsnippet K_CTRL_C\n\tK_CTRL_C -> { ${1://cuerpo...} }\n# K_ALT_C\nsnippet K_ALT_C\n\tK_ALT_C -> { ${1://cuerpo...} }\n# K_SHIFT_C\nsnippet K_SHIFT_C\n\tK_SHIFT_C -> { ${1://cuerpo...} }\n# K_CTRL_ALT_C\nsnippet K_CTRL_ALT_C\n\tK_CTRL_ALT_C -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_C\nsnippet K_CTRL_SHIFT_C\n\tK_CTRL_SHIFT_C -> { ${1://cuerpo...} }\n# K_ALT_SHIFT_C\nsnippet K_ALT_SHIFT_C\n\tK_ALT_SHIFT_C -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_C\nsnippet K_CTRL_ALT_SHIFT_C\n\tK_CTRL_ALT_SHIFT_C -> { ${1://cuerpo...} }\n\n# K_D\nsnippet K_D\n\tK_D -> { ${1://cuerpo...} }\n# K_CTRL_D\nsnippet K_CTRL_D\n\tK_CTRL_D -> { ${1://cuerpo...} }\n# K_ALT_D\nsnippet K_ALT_D\n\tK_DLT_D -> { ${1://cuerpo...} }\n# K_SHIFT_D\nsnippet K_SHIFT_D\n\tK_SHIFT_D -> { ${1://cuerpo...} }\n# K_CTRL_ALT_D\nsnippet K_CTRL_ALT_D\n\tK_CTRL_DLT_D -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_D\nsnippet K_CTRL_SHIFT_D\n\tK_CTRL_SHIFT_D -> { ${1://cuerpo...} }\n# K_ALT_SHIFT_D\nsnippet K_ALT_SHIFT_D\n\tK_ALT_SHIFT_D -> { ${1://cuerpo...} }\n# K_CTRL_DLT_SHIFT_D\nsnippet K_CTRL_DLT_SHIFT_D\n\tK_CTRL_ALT_SHIFT_D -> { ${1://cuerpo...} }\n\n# K_E\nsnippet K_E\n\tK_E -> { ${1://cuerpo...} }\n# K_CTRL_E\nsnippet K_CTRL_E\n\tK_CTRL_E -> { ${1://cuerpo...} }\n# K_ALT_E\nsnippet K_ALT_E\n\tK_ALT_E -> { ${1://cuerpo...} }\n# K_SHIFT_E\nsnippet K_SHIFT_E\n\tK_SHIFT_E -> { ${1://cuerpo...} }\n# K_CTRL_ALT_E\nsnippet K_CTRL_ALT_E\n\tK_CTRL_ALT_E -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_E\nsnippet K_CTRL_SHIFT_E\n\tK_CTRL_SHIFT_E -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_E\nsnippet K_CTRL_ALT_SHIFT_E\n\tK_CTRL_ALT_SHIFT_E -> { ${1://cuerpo...} }\n\n# K_F\nsnippet K_F\n\tK_F -> { ${1://cuerpo...} }\n# K_CTRL_F\nsnippet K_CTRL_F\n\tK_CTRL_F -> { ${1://cuerpo...} }\n# K_ALT_F\nsnippet K_ALT_F\n\tK_ALT_F -> { ${1://cuerpo...} }\n# K_SHIFT_F\nsnippet K_SHIFT_F\n\tK_SHIFT_F -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F\nsnippet K_CTRL_ALT_F\n\tK_CTRL_ALT_F -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F\nsnippet K_CTRL_SHIFT_F\n\tK_CTRL_SHIFT_F -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F\nsnippet K_CTRL_ALT_SHIFT_F\n\tK_CTRL_ALT_SHIFT_F -> { ${1://cuerpo...} }\n\n# K_G\nsnippet K_G\n\tK_G -> { ${1://cuerpo...} }\n# K_CTRL_G\nsnippet K_CTRL_G\n\tK_CTRL_G -> { ${1://cuerpo...} }\n# K_ALT_G\nsnippet K_ALT_G\n\tK_ALT_G -> { ${1://cuerpo...} }\n# K_SHIFT_G\nsnippet K_SHIFT_G\n\tK_SHIFT_G -> { ${1://cuerpo...} }\n# K_CTRL_ALT_G\nsnippet K_CTRL_ALT_G\n\tK_CTRL_ALT_G -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_G\nsnippet K_CTRL_SHIFT_G\n\tK_CTRL_SHIFT_G -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_G\nsnippet K_CTRL_ALT_SHIFT_G\n\tK_CTRL_ALT_SHIFT_G -> { ${1://cuerpo...} }\n\n# K_H\nsnippet K_H\n\tK_H -> { ${1://cuerpo...} }\n# K_CTRL_H\nsnippet K_CTRL_H\n\tK_CTRL_H -> { ${1://cuerpo...} }\n# K_ALT_H\nsnippet K_ALT_H\n\tK_ALT_H -> { ${1://cuerpo...} }\n# K_SHIFT_H\nsnippet K_SHIFT_H\n\tK_SHIFT_H -> { ${1://cuerpo...} }\n# K_CTRL_ALT_H\nsnippet K_CTRL_ALT_H\n\tK_CTRL_ALT_H -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_H\nsnippet K_CTRL_SHIFT_H\n\tK_CTRL_SHIFT_H -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_H\nsnippet K_CTRL_ALT_SHIFT_H\n\tK_CTRL_ALT_SHIFT_H -> { ${1://cuerpo...} }\n\n# K_I\nsnippet K_I\n\tK_I -> { ${1://cuerpo...} }\n# K_CTRL_I\nsnippet K_CTRL_I\n\tK_CTRL_I -> { ${1://cuerpo...} }\n# K_ALT_I\nsnippet K_ALT_I\n\tK_ALT_I -> { ${1://cuerpo...} }\n# K_SHIFT_I\nsnippet K_SHIFT_I\n\tK_SHIFT_I -> { ${1://cuerpo...} }\n# K_CTRL_ALT_I\nsnippet K_CTRL_ALT_I\n\tK_CTRL_ALT_I -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_I\nsnippet K_CTRL_SHIFT_I\n\tK_CTRL_SHIFT_I -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_I\nsnippet K_CTRL_ALT_SHIFT_I\n\tK_CTRL_ALT_SHIFT_I -> { ${1://cuerpo...} }\n\n# K_J\nsnippet K_J\n\tK_J -> { ${1://cuerpo...} }\n# K_CTRL_J\nsnippet K_CTRL_J\n\tK_CTRL_J -> { ${1://cuerpo...} }\n# K_ALT_J\nsnippet K_ALT_J\n\tK_ALT_J -> { ${1://cuerpo...} }\n# K_SHIFT_J\nsnippet K_SHIFT_J\n\tK_SHIFT_J -> { ${1://cuerpo...} }\n# K_CTRL_ALT_J\nsnippet K_CTRL_ALT_J\n\tK_CTRL_ALT_J -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_J\nsnippet K_CTRL_SHIFT_J\n\tK_CTRL_SHIFT_J -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_J\nsnippet K_CTRL_ALT_SHIFT_J\n\tK_CTRL_ALT_SHIFT_J -> { ${1://cuerpo...} }\n\n# K_K\nsnippet K_K\n\tK_K -> { ${1://cuerpo...} }\n# K_CTRL_K\nsnippet K_CTRL_K\n\tK_CTRL_K -> { ${1://cuerpo...} }\n# K_ALT_K\nsnippet K_ALT_K\n\tK_ALT_K -> { ${1://cuerpo...} }\n# K_SHIFT_K\nsnippet K_SHIFT_K\n\tK_SHIFT_K -> { ${1://cuerpo...} }\n# K_CTRL_ALT_K\nsnippet K_CTRL_ALT_K\n\tK_CTRL_ALT_K -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_K\nsnippet K_CTRL_SHIFT_K\n\tK_CTRL_SHIFT_K -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_K\nsnippet K_CTRL_ALT_SHIFT_K\n\tK_CTRL_ALT_SHIFT_K -> { ${1://cuerpo...} }\n\n# K_L\nsnippet K_L\n\tK_L -> { ${1://cuerpo...} }\n# K_CTRL_L\nsnippet K_CTRL_L\n\tK_CTRL_L -> { ${1://cuerpo...} }\n# K_ALT_L\nsnippet K_ALT_L\n\tK_ALT_L -> { ${1://cuerpo...} }\n# K_SHIFT_L\nsnippet K_SHIFT_L\n\tK_SHIFT_L -> { ${1://cuerpo...} }\n# K_CTRL_ALT_L\nsnippet K_CTRL_ALT_L\n\tK_CTRL_ALT_L -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_L\nsnippet K_CTRL_SHIFT_L\n\tK_CTRL_SHIFT_L -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_L\nsnippet K_CTRL_ALT_SHIFT_L\n\tK_CTRL_ALT_SHIFT_L -> { ${1://cuerpo...} }\n\n# K_M\nsnippet K_M\n\tK_M -> { ${1://cuerpo...} }\n# K_CTRL_M\nsnippet K_CTRL_M\n\tK_CTRL_M -> { ${1://cuerpo...} }\n# K_ALT_M\nsnippet K_ALT_M\n\tK_ALT_M -> { ${1://cuerpo...} }\n# K_SHIFT_M\nsnippet K_SHIFT_M\n\tK_SHIFT_M -> { ${1://cuerpo...} }\n# K_CTRL_ALT_M\nsnippet K_CTRL_ALT_M\n\tK_CTRL_ALT_M -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_M\nsnippet K_CTRL_SHIFT_M\n\tK_CTRL_SHIFT_M -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_M\nsnippet K_CTRL_ALT_SHIFT_M\n\tK_CTRL_ALT_SHIFT_M -> { ${1://cuerpo...} }\n\n# K_N\nsnippet K_N\n\tK_N -> { ${1://cuerpo...} }\n# K_CTRL_N\nsnippet K_CTRL_N\n\tK_CTRL_N -> { ${1://cuerpo...} }\n# K_ALT_N\nsnippet K_ALT_N\n\tK_ALT_N -> { ${1://cuerpo...} }\n# K_SHIFT_N\nsnippet K_SHIFT_N\n\tK_SHIFT_N -> { ${1://cuerpo...} }\n# K_CTRL_ALT_N\nsnippet K_CTRL_ALT_N\n\tK_CTRL_ALT_N -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_N\nsnippet K_CTRL_SHIFT_N\n\tK_CTRL_SHIFT_N -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_N\nsnippet K_CTRL_ALT_SHIFT_N\n\tK_CTRL_ALT_SHIFT_N -> { ${1://cuerpo...} }\n\n# K_\u00D1\nsnippet K_\u00D1\n\tK_\u00D1 -> { ${1://cuerpo...} }\n# K_CTRL_\u00D1\nsnippet K_CTRL_\u00D1\n\tK_CTRL_\u00D1 -> { ${1://cuerpo...} }\n# K_ALT_\u00D1\nsnippet K_ALT_\u00D1\n\tK_ALT_\u00D1 -> { ${1://cuerpo...} }\n# K_SHIFT_\u00D1\nsnippet K_SHIFT_\u00D1\n\tK_SHIFT_\u00D1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_\u00D1\nsnippet K_CTRL_ALT_\u00D1\n\tK_CTRL_ALT_\u00D1 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_\u00D1\nsnippet K_CTRL_SHIFT_\u00D1\n\tK_CTRL_SHIFT_\u00D1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_\u00D1\nsnippet K_CTRL_ALT_SHIFT_\u00D1\n\tK_CTRL_ALT_SHIFT_\u00D1 -> { ${1://cuerpo...} }\n\n# K_O\nsnippet K_O\n\tK_O -> { ${1://cuerpo...} }\n# K_CTRL_O\nsnippet K_CTRL_O\n\tK_CTRL_O -> { ${1://cuerpo...} }\n# K_ALT_O\nsnippet K_ALT_O\n\tK_ALT_O -> { ${1://cuerpo...} }\n# K_SHIFT_O\nsnippet K_SHIFT_O\n\tK_SHIFT_O -> { ${1://cuerpo...} }\n# K_CTRL_ALT_O\nsnippet K_CTRL_ALT_O\n\tK_CTRL_ALT_O -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_O\nsnippet K_CTRL_SHIFT_O\n\tK_CTRL_SHIFT_O -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_O\nsnippet K_CTRL_ALT_SHIFT_O\n\tK_CTRL_ALT_SHIFT_O -> { ${1://cuerpo...} }\n\n# K_P\nsnippet K_P\n\tK_P -> { ${1://cuerpo...} }\n# K_CTRL_P\nsnippet K_CTRL_P\n\tK_CTRL_P -> { ${1://cuerpo...} }\n# K_ALT_P\nsnippet K_ALT_P\n\tK_ALT_P -> { ${1://cuerpo...} }\n# K_SHIFT_P\nsnippet K_SHIFT_P\n\tK_SHIFT_P -> { ${1://cuerpo...} }\n# K_CTRL_ALT_P\nsnippet K_CTRL_ALT_P\n\tK_CTRL_ALT_P -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_P\nsnippet K_CTRL_SHIFT_P\n\tK_CTRL_SHIFT_P -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_P\nsnippet K_CTRL_ALT_SHIFT_P\n\tK_CTRL_ALT_SHIFT_P -> { ${1://cuerpo...} }\n\n# K_Q\nsnippet K_Q\n\tK_Q -> { ${1://cuerpo...} }\n# K_CTRL_Q\nsnippet K_CTRL_Q\n\tK_CTRL_Q -> { ${1://cuerpo...} }\n# K_ALT_Q\nsnippet K_ALT_Q\n\tK_ALT_Q -> { ${1://cuerpo...} }\n# K_SHIFT_Q\nsnippet K_SHIFT_Q\n\tK_SHIFT_Q -> { ${1://cuerpo...} }\n# K_CTRL_ALT_Q\nsnippet K_CTRL_ALT_Q\n\tK_CTRL_ALT_Q -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_Q\nsnippet K_CTRL_SHIFT_Q\n\tK_CTRL_SHIFT_Q -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_Q\nsnippet K_CTRL_ALT_SHIFT_Q\n\tK_CTRL_ALT_SHIFT_Q -> { ${1://cuerpo...} }\n\n# K_R\nsnippet K_R\n\tK_R -> { ${1://cuerpo...} }\n# K_CTRL_R\nsnippet K_CTRL_R\n\tK_CTRL_R -> { ${1://cuerpo...} }\n# K_ALT_R\nsnippet K_ALT_R\n\tK_ALT_R -> { ${1://cuerpo...} }\n# K_SHIFT_R\nsnippet K_SHIFT_R\n\tK_SHIFT_R -> { ${1://cuerpo...} }\n# K_CTRL_ALT_R\nsnippet K_CTRL_ALT_R\n\tK_CTRL_ALT_R -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_R\nsnippet K_CTRL_SHIFT_R\n\tK_CTRL_SHIFT_R -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_R\nsnippet K_CTRL_ALT_SHIFT_R\n\tK_CTRL_ALT_SHIFT_R -> { ${1://cuerpo...} }\n\n# K_S\nsnippet K_S\n\tK_S -> { ${1://cuerpo...} }\n# K_CTRL_S\nsnippet K_CTRL_S\n\tK_CTRL_S -> { ${1://cuerpo...} }\n# K_ALT_S\nsnippet K_ALT_S\n\tK_ALT_S -> { ${1://cuerpo...} }\n# K_SHIFT_S\nsnippet K_SHIFT_S\n\tK_SHIFT_S -> { ${1://cuerpo...} }\n# K_CTRL_ALT_S\nsnippet K_CTRL_ALT_S\n\tK_CTRL_ALT_S -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_S\nsnippet K_CTRL_SHIFT_S\n\tK_CTRL_SHIFT_S -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_S\nsnippet K_CTRL_ALT_SHIFT_S\n\tK_CTRL_ALT_SHIFT_S -> { ${1://cuerpo...} }\n\n# K_T\nsnippet K_T\n\tK_T -> { ${1://cuerpo...} }\n# K_CTRL_T\nsnippet K_CTRL_T\n\tK_CTRL_T -> { ${1://cuerpo...} }\n# K_ALT_T\nsnippet K_ALT_T\n\tK_ALT_T -> { ${1://cuerpo...} }\n# K_SHIFT_T\nsnippet K_SHIFT_T\n\tK_SHIFT_T -> { ${1://cuerpo...} }\n# K_CTRL_ALT_T\nsnippet K_CTRL_ALT_T\n\tK_CTRL_ALT_T -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_T\nsnippet K_CTRL_SHIFT_T\n\tK_CTRL_SHIFT_T -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_T\nsnippet K_CTRL_ALT_SHIFT_T\n\tK_CTRL_ALT_SHIFT_T -> { ${1://cuerpo...} }\n\n# K_U\nsnippet K_U\n\tK_U -> { ${1://cuerpo...} }\n# K_CTRL_U\nsnippet K_CTRL_U\n\tK_CTRL_U -> { ${1://cuerpo...} }\n# K_ALT_U\nsnippet K_ALT_U\n\tK_ALT_U -> { ${1://cuerpo...} }\n# K_SHIFT_U\nsnippet K_SHIFT_U\n\tK_SHIFT_U -> { ${1://cuerpo...} }\n# K_CTRL_ALT_U\nsnippet K_CTRL_ALT_U\n\tK_CTRL_ALT_U -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_U\nsnippet K_CTRL_SHIFT_U\n\tK_CTRL_SHIFT_U -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_U\nsnippet K_CTRL_ALT_SHIFT_U\n\tK_CTRL_ALT_SHIFT_U -> { ${1://cuerpo...} }\n\n# K_V\nsnippet K_V\n\tK_V -> { ${1://cuerpo...} }\n# K_CTRL_V\nsnippet K_CTRL_V\n\tK_CTRL_V -> { ${1://cuerpo...} }\n# K_ALT_V\nsnippet K_ALT_V\n\tK_ALT_V -> { ${1://cuerpo...} }\n# K_SHIFT_V\nsnippet K_SHIFT_V\n\tK_SHIFT_V -> { ${1://cuerpo...} }\n# K_CTRL_ALT_V\nsnippet K_CTRL_ALT_V\n\tK_CTRL_ALT_V -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_V\nsnippet K_CTRL_SHIFT_V\n\tK_CTRL_SHIFT_V -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_V\nsnippet K_CTRL_ALT_SHIFT_V\n\tK_CTRL_ALT_SHIFT_V -> { ${1://cuerpo...} }\n\n# K_W\nsnippet K_W\n\tK_W -> { ${1://cuerpo...} }\n# K_CTRL_W\nsnippet K_CTRL_W\n\tK_CTRL_W -> { ${1://cuerpo...} }\n# K_ALT_W\nsnippet K_ALT_W\n\tK_ALT_W -> { ${1://cuerpo...} }\n# K_SHIFT_W\nsnippet K_SHIFT_W\n\tK_SHIFT_W -> { ${1://cuerpo...} }\n# K_CTRL_ALT_W\nsnippet K_CTRL_ALT_W\n\tK_CTRL_ALT_W -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_W\nsnippet K_CTRL_SHIFT_W\n\tK_CTRL_SHIFT_W -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_W\nsnippet K_CTRL_ALT_SHIFT_W\n\tK_CTRL_ALT_SHIFT_W -> { ${1://cuerpo...} }\n\n# K_X\nsnippet K_X\n\tK_X -> { ${1://cuerpo...} }\n# K_CTRL_X\nsnippet K_CTRL_X\n\tK_CTRL_X -> { ${1://cuerpo...} }\n# K_ALT_X\nsnippet K_ALT_X\n\tK_ALT_X -> { ${1://cuerpo...} }\n# K_SHIFT_X\nsnippet K_SHIFT_X\n\tK_SHIFT_X -> { ${1://cuerpo...} }\n# K_CTRL_ALT_X\nsnippet K_CTRL_ALT_X\n\tK_CTRL_ALT_X -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_X\nsnippet K_CTRL_SHIFT_X\n\tK_CTRL_SHIFT_X -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_X\nsnippet K_CTRL_ALT_SHIFT_X\n\tK_CTRL_ALT_SHIFT_X -> { ${1://cuerpo...} }\n\n# K_Y\nsnippet K_Y\n\tK_Y -> { ${1://cuerpo...} }\n# K_CTRL_Y\nsnippet K_CTRL_Y\n\tK_CTRL_Y -> { ${1://cuerpo...} }\n# K_ALT_Y\nsnippet K_ALT_Y\n\tK_ALT_Y -> { ${1://cuerpo...} }\n# K_SHIFT_Y\nsnippet K_SHIFT_Y\n\tK_SHIFT_Y -> { ${1://cuerpo...} }\n# K_CTRL_ALT_Y\nsnippet K_CTRL_ALT_Y\n\tK_CTRL_ALT_Y -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_Y\nsnippet K_CTRL_SHIFT_Y\n\tK_CTRL_SHIFT_Y -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_Y\nsnippet K_CTRL_ALT_SHIFT_Y\n\tK_CTRL_ALT_SHIFT_Y -> { ${1://cuerpo...} }\n\n# K_Z\nsnippet K_Z\n\tK_Z -> { ${1://cuerpo...} }\n# K_CTRL_Z\nsnippet K_CTRL_Z\n\tK_CTRL_Z -> { ${1://cuerpo...} }\n# K_ALT_Z\nsnippet K_ALT_Z\n\tK_ALT_Z -> { ${1://cuerpo...} }\n# K_SHIFT_Z\nsnippet K_SHIFT_Z\n\tK_SHIFT_Z -> { ${1://cuerpo...} }\n# K_CTRL_ALT_Z\nsnippet K_CTRL_ALT_Z\n\tK_CTRL_ALT_Z -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_Z\nsnippet K_CTRL_SHIFT_Z\n\tK_CTRL_SHIFT_Z -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_Z\nsnippet K_CTRL_ALT_SHIFT_Z\n\tK_CTRL_ALT_SHIFT_Z -> { ${1://cuerpo...} }\n\n# K_0\nsnippet K_0\n\tK_0 -> { ${1://cuerpo...} }\n# K_CTRL_0\nsnippet K_CTRL_0\n\tK_CTRL_0 -> { ${1://cuerpo...} }\n# K_ALT_0\nsnippet K_ALT_0\n\tK_ALT_0 -> { ${1://cuerpo...} }\n# K_SHIFT_0\nsnippet K_SHIFT_0\n\tK_SHIFT_0 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_0\nsnippet K_CTRL_ALT_0\n\tK_CTRL_ALT_0 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_0\nsnippet K_CTRL_SHIFT_0\n\tK_CTRL_SHIFT_0 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_0\nsnippet K_CTRL_ALT_SHIFT_0\n\tK_CTRL_ALT_SHIFT_0 -> { ${1://cuerpo...} }\n\n# K_1\nsnippet K_1\n\tK_1 -> { ${1://cuerpo...} }\n# K_CTRL_1\nsnippet K_CTRL_1\n\tK_CTRL_1 -> { ${1://cuerpo...} }\n# K_ALT_1\nsnippet K_ALT_1\n\tK_ALT_1 -> { ${1://cuerpo...} }\n# K_SHIFT_1\nsnippet K_SHIFT_1\n\tK_SHIFT_1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_1\nsnippet K_CTRL_ALT_1\n\tK_CTRL_ALT_1 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_1\nsnippet K_CTRL_SHIFT_1\n\tK_CTRL_SHIFT_1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_1\nsnippet K_CTRL_ALT_SHIFT_1\n\tK_CTRL_ALT_SHIFT_1 -> { ${1://cuerpo...} }\n\n# K_2\nsnippet K_2\n\tK_2 -> { ${1://cuerpo...} }\n# K_CTRL_2\nsnippet K_CTRL_2\n\tK_CTRL_2 -> { ${1://cuerpo...} }\n# K_ALT_2\nsnippet K_ALT_2\n\tK_ALT_2 -> { ${1://cuerpo...} }\n# K_SHIFT_2\nsnippet K_SHIFT_2\n\tK_SHIFT_2 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_2\nsnippet K_CTRL_ALT_2\n\tK_CTRL_ALT_2 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_2\nsnippet K_CTRL_SHIFT_2\n\tK_CTRL_SHIFT_2 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_2\nsnippet K_CTRL_ALT_SHIFT_2\n\tK_CTRL_ALT_SHIFT_2 -> { ${1://cuerpo...} }\n\n# K_3\nsnippet K_3\n\tK_3 -> { ${1://cuerpo...} }\n# K_CTRL_3\nsnippet K_CTRL_3\n\tK_CTRL_3 -> { ${1://cuerpo...} }\n# K_ALT_3\nsnippet K_ALT_3\n\tK_ALT_3 -> { ${1://cuerpo...} }\n# K_SHIFT_3\nsnippet K_SHIFT_3\n\tK_SHIFT_3 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_3\nsnippet K_CTRL_ALT_3\n\tK_CTRL_ALT_3 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_3\nsnippet K_CTRL_SHIFT_3\n\tK_CTRL_SHIFT_3 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_3\nsnippet K_CTRL_ALT_SHIFT_3\n\tK_CTRL_ALT_SHIFT_3 -> { ${1://cuerpo...} }\n\n# K_4\nsnippet K_4\n\tK_4 -> { ${1://cuerpo...} }\n# K_CTRL_4\nsnippet K_CTRL_4\n\tK_CTRL_4 -> { ${1://cuerpo...} }\n# K_ALT_4\nsnippet K_ALT_4\n\tK_ALT_4 -> { ${1://cuerpo...} }\n# K_SHIFT_4\nsnippet K_SHIFT_4\n\tK_SHIFT_4 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_4\nsnippet K_CTRL_ALT_4\n\tK_CTRL_ALT_4 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_4\nsnippet K_CTRL_SHIFT_4\n\tK_CTRL_SHIFT_4 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_4\nsnippet K_CTRL_ALT_SHIFT_4\n\tK_CTRL_ALT_SHIFT_4 -> { ${1://cuerpo...} }\n\n# K_5\nsnippet K_5\n\tK_5 -> { ${1://cuerpo...} }\n# K_CTRL_5\nsnippet K_CTRL_5\n\tK_CTRL_5 -> { ${1://cuerpo...} }\n# K_ALT_5\nsnippet K_ALT_5\n\tK_ALT_5 -> { ${1://cuerpo...} }\n# K_SHIFT_5\nsnippet K_SHIFT_5\n\tK_SHIFT_5 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_5\nsnippet K_CTRL_ALT_5\n\tK_CTRL_ALT_5 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_5\nsnippet K_CTRL_SHIFT_5\n\tK_CTRL_SHIFT_5 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_5\nsnippet K_CTRL_ALT_SHIFT_5\n\tK_CTRL_ALT_SHIFT_5 -> { ${1://cuerpo...} }\n\n# K_6\nsnippet K_6\n\tK_6 -> { ${1://cuerpo...} }\n# K_CTRL_6\nsnippet K_CTRL_6\n\tK_CTRL_6 -> { ${1://cuerpo...} }\n# K_ALT_6\nsnippet K_ALT_6\n\tK_ALT_6 -> { ${1://cuerpo...} }\n# K_SHIFT_6\nsnippet K_SHIFT_6\n\tK_SHIFT_6 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_6\nsnippet K_CTRL_ALT_6\n\tK_CTRL_ALT_6 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_6\nsnippet K_CTRL_SHIFT_6\n\tK_CTRL_SHIFT_6 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_6\nsnippet K_CTRL_ALT_SHIFT_6\n\tK_CTRL_ALT_SHIFT_6 -> { ${1://cuerpo...} }\n\n# K_7\nsnippet K_7\n\tK_7 -> { ${1://cuerpo...} }\n# K_CTRL_7\nsnippet K_CTRL_7\n\tK_CTRL_7 -> { ${1://cuerpo...} }\n# K_ALT_7\nsnippet K_ALT_7\n\tK_ALT_7 -> { ${1://cuerpo...} }\n# K_SHIFT_7\nsnippet K_SHIFT_7\n\tK_SHIFT_7 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_7\nsnippet K_CTRL_ALT_7\n\tK_CTRL_ALT_7 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_7\nsnippet K_CTRL_SHIFT_7\n\tK_CTRL_SHIFT_7 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_7\nsnippet K_CTRL_ALT_SHIFT_7\n\tK_CTRL_ALT_SHIFT_7 -> { ${1://cuerpo...} }\n\n# K_8\nsnippet K_8\n\tK_8 -> { ${1://cuerpo...} }\n# K_CTRL_8\nsnippet K_CTRL_8\n\tK_CTRL_8 -> { ${1://cuerpo...} }\n# K_ALT_8\nsnippet K_ALT_8\n\tK_ALT_8 -> { ${1://cuerpo...} }\n# K_SHIFT_8\nsnippet K_SHIFT_8\n\tK_SHIFT_8 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_8\nsnippet K_CTRL_ALT_8\n\tK_CTRL_ALT_8 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_8\nsnippet K_CTRL_SHIFT_8\n\tK_CTRL_SHIFT_8 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_8\nsnippet K_CTRL_ALT_SHIFT_8\n\tK_CTRL_ALT_SHIFT_8 -> { ${1://cuerpo...} }\n\n# K_9\nsnippet K_9\n\tK_9 -> { ${1://cuerpo...} }\n# K_CTRL_9\nsnippet K_CTRL_9\n\tK_CTRL_9 -> { ${1://cuerpo...} }\n# K_ALT_9\nsnippet K_ALT_9\n\tK_ALT_9 -> { ${1://cuerpo...} }\n# K_SHIFT_9\nsnippet K_SHIFT_9\n\tK_SHIFT_9 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_9\nsnippet K_CTRL_ALT_9\n\tK_CTRL_ALT_9 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_9\nsnippet K_CTRL_SHIFT_9\n\tK_CTRL_SHIFT_9 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_9\nsnippet K_CTRL_ALT_SHIFT_9\n\tK_CTRL_ALT_SHIFT_9 -> { ${1://cuerpo...} }\n\n# K_F1\nsnippet K_F1\n\tK_F1 -> { ${1://cuerpo...} }\n# K_CTRL_F1\nsnippet K_CTRL_F1\n\tK_CTRL_F1 -> { ${1://cuerpo...} }\n# K_ALT_F1\nsnippet K_ALT_F1\n\tK_ALT_F1 -> { ${1://cuerpo...} }\n# K_SHIFT_F1\nsnippet K_SHIFT_F1\n\tK_SHIFT_F1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F1\nsnippet K_CTRL_ALT_F1\n\tK_CTRL_ALT_F1 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F1\nsnippet K_CTRL_SHIFT_F1\n\tK_CTRL_SHIFT_F1 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F1\nsnippet K_CTRL_ALT_SHIFT_F1\n\tK_CTRL_ALT_SHIFT_F1 -> { ${1://cuerpo...} }\n\n# K_F2\nsnippet K_F2\n\tK_F2 -> { ${1://cuerpo...} }\n# K_CTRL_F2\nsnippet K_CTRL_F2\n\tK_CTRL_F2 -> { ${1://cuerpo...} }\n# K_ALT_F2\nsnippet K_ALT_F2\n\tK_ALT_F2 -> { ${1://cuerpo...} }\n# K_SHIFT_F2\nsnippet K_SHIFT_F2\n\tK_SHIFT_F2 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F2\nsnippet K_CTRL_ALT_F2\n\tK_CTRL_ALT_F2 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F2\nsnippet K_CTRL_SHIFT_F2\n\tK_CTRL_SHIFT_F2 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F2\nsnippet K_CTRL_ALT_SHIFT_F2\n\tK_CTRL_ALT_SHIFT_F2 -> { ${1://cuerpo...} }\n\n# K_F3\nsnippet K_F3\n\tK_F3 -> { ${1://cuerpo...} }\n# K_CTRL_F3\nsnippet K_CTRL_F3\n\tK_CTRL_F3 -> { ${1://cuerpo...} }\n# K_ALT_F3\nsnippet K_ALT_F3\n\tK_ALT_F3 -> { ${1://cuerpo...} }\n# K_SHIFT_F3\nsnippet K_SHIFT_F3\n\tK_SHIFT_F3 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F3\nsnippet K_CTRL_ALT_F3\n\tK_CTRL_ALT_F3 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F3\nsnippet K_CTRL_SHIFT_F3\n\tK_CTRL_SHIFT_F3 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F3\nsnippet K_CTRL_ALT_SHIFT_F3\n\tK_CTRL_ALT_SHIFT_F3 -> { ${1://cuerpo...} }\n\n# K_A\nsnippet K_A\n\tK_A -> { ${1://cuerpo...} }\n# K_CTRL_A\nsnippet K_CTRL_A\n\tK_CTRL_A -> { ${1://cuerpo...} }\n# K_ALT_A\nsnippet K_ALT_A\n\tK_ALT_A -> { ${1://cuerpo...} }\n# K_SHIFT_A\nsnippet K_SHIFT_A\n\tK_SHIFT_A -> { ${1://cuerpo...} }\n# K_CTRL_ALT_A\nsnippet K_CTRL_ALT_A\n\tK_CTRL_ALT_A -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_A\nsnippet K_CTRL_SHIFT_A\n\tK_CTRL_SHIFT_A -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_A\nsnippet K_CTRL_ALT_SHIFT_A\n\tK_CTRL_ALT_SHIFT_A -> { ${1://cuerpo...} }\n\n# K_F5\nsnippet K_F5\n\tK_F5 -> { ${1://cuerpo...} }\n# K_CTRL_F5\nsnippet K_CTRL_F5\n\tK_CTRL_F5 -> { ${1://cuerpo...} }\n# K_ALT_F5\nsnippet K_ALT_F5\n\tK_ALT_F5 -> { ${1://cuerpo...} }\n# K_SHIFT_F5\nsnippet K_SHIFT_F5\n\tK_SHIFT_F5 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F5\nsnippet K_CTRL_ALT_F5\n\tK_CTRL_ALT_F5 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F5\nsnippet K_CTRL_SHIFT_F5\n\tK_CTRL_SHIFT_F5 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F5\nsnippet K_CTRL_ALT_SHIFT_F5\n\tK_CTRL_ALT_SHIFT_F5 -> { ${1://cuerpo...} }\n\n# K_F6\nsnippet K_F6\n\tK_F6 -> { ${1://cuerpo...} }\n# K_CTRL_F6\nsnippet K_CTRL_F6\n\tK_CTRL_F6 -> { ${1://cuerpo...} }\n# K_ALT_F6\nsnippet K_ALT_F6\n\tK_ALT_F6 -> { ${1://cuerpo...} }\n# K_SHIFT_F6\nsnippet K_SHIFT_F6\n\tK_SHIFT_F6 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F6\nsnippet K_CTRL_ALT_F6\n\tK_CTRL_ALT_F6 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F6\nsnippet K_CTRL_SHIFT_F6\n\tK_CTRL_SHIFT_F6 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F6\nsnippet K_CTRL_ALT_SHIFT_F6\n\tK_CTRL_ALT_SHIFT_F6 -> { ${1://cuerpo...} }\n\n# K_F7\nsnippet K_F7\n\tK_F7 -> { ${1://cuerpo...} }\n# K_CTRL_F7\nsnippet K_CTRL_F7\n\tK_CTRL_F7 -> { ${1://cuerpo...} }\n# K_ALT_F7\nsnippet K_ALT_F7\n\tK_ALT_F7 -> { ${1://cuerpo...} }\n# K_SHIFT_F7\nsnippet K_SHIFT_F7\n\tK_SHIFT_F7 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F7\nsnippet K_CTRL_ALT_F7\n\tK_CTRL_ALT_F7 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F7\nsnippet K_CTRL_SHIFT_F7\n\tK_CTRL_SHIFT_F7 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F7\nsnippet K_CTRL_ALT_SHIFT_F7\n\tK_CTRL_ALT_SHIFT_F7 -> { ${1://cuerpo...} }\n\n# K_F8\nsnippet K_F8\n\tK_F8 -> { ${1://cuerpo...} }\n# K_CTRL_F8\nsnippet K_CTRL_F8\n\tK_CTRL_F8 -> { ${1://cuerpo...} }\n# K_ALT_F8\nsnippet K_ALT_F8\n\tK_ALT_F8 -> { ${1://cuerpo...} }\n# K_SHIFT_F8\nsnippet K_SHIFT_F8\n\tK_SHIFT_F8 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F8\nsnippet K_CTRL_ALT_F8\n\tK_CTRL_ALT_F8 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F8\nsnippet K_CTRL_SHIFT_F8\n\tK_CTRL_SHIFT_F8 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F8\nsnippet K_CTRL_ALT_SHIFT_F8\n\tK_CTRL_ALT_SHIFT_F8 -> { ${1://cuerpo...} }\n\n# K_F9\nsnippet K_F9\n\tK_F9 -> { ${1://cuerpo...} }\n# K_CTRL_F9\nsnippet K_CTRL_F9\n\tK_CTRL_F9 -> { ${1://cuerpo...} }\n# K_ALT_F9\nsnippet K_ALT_F9\n\tK_ALT_F9 -> { ${1://cuerpo...} }\n# K_SHIFT_F9\nsnippet K_SHIFT_F9\n\tK_SHIFT_F9 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F9\nsnippet K_CTRL_ALT_F9\n\tK_CTRL_ALT_F9 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F9\nsnippet K_CTRL_SHIFT_F9\n\tK_CTRL_SHIFT_F9 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F9\nsnippet K_CTRL_ALT_SHIFT_F9\n\tK_CTRL_ALT_SHIFT_F9 -> { ${1://cuerpo...} }\n\n# K_F10\nsnippet K_F10\n\tK_F10 -> { ${1://cuerpo...} }\n# K_CTRL_F10\nsnippet K_CTRL_F10\n\tK_CTRL_F10 -> { ${1://cuerpo...} }\n# K_ALT_F10\nsnippet K_ALT_F10\n\tK_ALT_F10 -> { ${1://cuerpo...} }\n# K_SHIFT_F10\nsnippet K_SHIFT_F10\n\tK_SHIFT_F10 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F10\nsnippet K_CTRL_ALT_F10\n\tK_CTRL_ALT_F10 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F10\nsnippet K_CTRL_SHIFT_F10\n\tK_CTRL_SHIFT_F10 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F10\nsnippet K_CTRL_ALT_SHIFT_F10\n\tK_CTRL_ALT_SHIFT_F10 -> { ${1://cuerpo...} }\n\n# K_F11\nsnippet K_F11\n\tK_F11 -> { ${1://cuerpo...} }\n# K_CTRL_F11\nsnippet K_CTRL_F11\n\tK_CTRL_F11 -> { ${1://cuerpo...} }\n# K_ALT_F11\nsnippet K_ALT_F11\n\tK_ALT_F11 -> { ${1://cuerpo...} }\n# K_SHIFT_F11\nsnippet K_SHIFT_F11\n\tK_SHIFT_F11 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F11\nsnippet K_CTRL_ALT_F11\n\tK_CTRL_ALT_F11 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F11\nsnippet K_CTRL_SHIFT_F11\n\tK_CTRL_SHIFT_F11 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F11\nsnippet K_CTRL_ALT_SHIFT_F11\n\tK_CTRL_ALT_SHIFT_F11 -> { ${1://cuerpo...} }\n\n# K_F12\nsnippet K_F12\n\tK_F12 -> { ${1://cuerpo...} }\n# K_CTRL_F12\nsnippet K_CTRL_F12\n\tK_CTRL_F12 -> { ${1://cuerpo...} }\n# K_ALT_F12\nsnippet K_ALT_F12\n\tK_ALT_F12 -> { ${1://cuerpo...} }\n# K_SHIFT_F12\nsnippet K_SHIFT_F12\n\tK_SHIFT_F12 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_F12\nsnippet K_CTRL_ALT_F12\n\tK_CTRL_ALT_F12 -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_F12\nsnippet K_CTRL_SHIFT_F12\n\tK_CTRL_SHIFT_F12 -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_F12\nsnippet K_CTRL_ALT_SHIFT_F12\n\tK_CTRL_ALT_SHIFT_F12 -> { ${1://cuerpo...} }\n\n# K_RETURN\nsnippet K_RETURN\n\tK_RETURN -> { ${1://cuerpo...} }\n# K_CTRL_RETURN\nsnippet K_CTRL_RETURN\n\tK_CTRL_RETURN -> { ${1://cuerpo...} }\n# K_ALT_RETURN\nsnippet K_ALT_RETURN\n\tK_ALT_RETURN -> { ${1://cuerpo...} }\n# K_SHIFT_RETURN\nsnippet K_SHIFT_RETURN\n\tK_SHIFT_RETURN -> { ${1://cuerpo...} }\n# K_CTRL_ALT_RETURN\nsnippet K_CTRL_ALT_RETURN\n\tK_CTRL_ALT_RETURN -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_RETURN\nsnippet K_CTRL_SHIFT_RETURN\n\tK_CTRL_SHIFT_RETURN -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_RETURN\nsnippet K_CTRL_ALT_SHIFT_RETURN\n\tK_CTRL_ALT_SHIFT_RETURN -> { ${1://cuerpo...} }\n\n# K_SPACE\nsnippet K_SPACE\n\tK_SPACE -> { ${1://cuerpo...} }\n# K_CTRL_SPACE\nsnippet K_CTRL_SPACE\n\tK_CTRL_SPACE -> { ${1://cuerpo...} }\n# K_ALT_SPACE\nsnippet K_ALT_SPACE\n\tK_ALT_SPACE -> { ${1://cuerpo...} }\n# K_SHIFT_SPACE\nsnippet K_SHIFT_SPACE\n\tK_SHIFT_SPACE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SPACE\nsnippet K_CTRL_ALT_SPACE\n\tK_CTRL_ALT_SPACE -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_SPACE\nsnippet K_CTRL_SHIFT_SPACE\n\tK_CTRL_SHIFT_SPACE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_SPACE\nsnippet K_CTRL_ALT_SHIFT_SPACE\n\tK_CTRL_ALT_SHIFT_SPACE -> { ${1://cuerpo...} }\n\n# K_ESCAPE\nsnippet K_ESCAPE\n\tK_ESCAPE -> { ${1://cuerpo...} }\n# K_CTRL_ESCAPE\nsnippet K_CTRL_ESCAPE\n\tK_CTRL_ESCAPE -> { ${1://cuerpo...} }\n# K_ALT_ESCAPE\nsnippet K_ALT_ESCAPE\n\tK_ALT_ESCAPE -> { ${1://cuerpo...} }\n# K_SHIFT_ESCAPE\nsnippet K_SHIFT_ESCAPE\n\tK_SHIFT_ESCAPE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_ESCAPE\nsnippet K_CTRL_ALT_ESCAPE\n\tK_CTRL_ALT_ESCAPE -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_ESCAPE\nsnippet K_CTRL_SHIFT_ESCAPE\n\tK_CTRL_SHIFT_ESCAPE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_ESCAPE\nsnippet K_CTRL_ALT_SHIFT_ESCAPE\n\tK_CTRL_ALT_SHIFT_ESCAPE -> { ${1://cuerpo...} }\n\n# K_BACKSPACE\nsnippet K_BACKSPACE\n\tK_BACKSPACE -> { ${1://cuerpo...} }\n# K_CTRL_BACKSPACE\nsnippet K_CTRL_BACKSPACE\n\tK_CTRL_BACKSPACE -> { ${1://cuerpo...} }\n# K_ALT_BACKSPACE\nsnippet K_ALT_BACKSPACE\n\tK_ALT_BACKSPACE -> { ${1://cuerpo...} }\n# K_SHIFT_BACKSPACE\nsnippet K_SHIFT_BACKSPACE\n\tK_SHIFT_BACKSPACE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_BACKSPACE\nsnippet K_CTRL_ALT_BACKSPACE\n\tK_CTRL_ALT_BACKSPACE -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_BACKSPACE\nsnippet K_CTRL_SHIFT_BACKSPACE\n\tK_CTRL_SHIFT_BACKSPACE -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_BACKSPACE\nsnippet K_CTRL_ALT_SHIFT_BACKSPACE\n\tK_CTRL_ALT_SHIFT_BACKSPACE -> { ${1://cuerpo...} }\n\n# K_TAB\nsnippet K_TAB\n\tK_TAB -> { ${1://cuerpo...} }\n# K_CTRL_TAB\nsnippet K_CTRL_TAB\n\tK_CTRL_TAB -> { ${1://cuerpo...} }\n# K_ALT_TAB\nsnippet K_ALT_TAB\n\tK_ALT_TAB -> { ${1://cuerpo...} }\n# K_SHIFT_TAB\nsnippet K_SHIFT_TAB\n\tK_SHIFT_TAB -> { ${1://cuerpo...} }\n# K_CTRL_ALT_TAB\nsnippet K_CTRL_ALT_TAB\n\tK_CTRL_ALT_TAB -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_TAB\nsnippet K_CTRL_SHIFT_TAB\n\tK_CTRL_SHIFT_TAB -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_TAB\nsnippet K_CTRL_ALT_SHIFT_TAB\n\tK_CTRL_ALT_SHIFT_TAB -> { ${1://cuerpo...} }\n\n# K_UP\nsnippet K_UP\n\tK_UP -> { ${1://cuerpo...} }\n# K_CTRL_UP\nsnippet K_CTRL_UP\n\tK_CTRL_UP -> { ${1://cuerpo...} }\n# K_ALT_UP\nsnippet K_ALT_UP\n\tK_ALT_UP -> { ${1://cuerpo...} }\n# K_SHIFT_UP\nsnippet K_SHIFT_UP\n\tK_SHIFT_UP -> { ${1://cuerpo...} }\n# K_CTRL_ALT_UP\nsnippet K_CTRL_ALT_UP\n\tK_CTRL_ALT_UP -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_UP\nsnippet K_CTRL_SHIFT_UP\n\tK_CTRL_SHIFT_UP -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_UP\nsnippet K_CTRL_ALT_SHIFT_UP\n\tK_CTRL_ALT_SHIFT_UP -> { ${1://cuerpo...} }\n\n# K_DOWN\nsnippet K_DOWN\n\tK_DOWN -> { ${1://cuerpo...} }\n# K_CTRL_DOWN\nsnippet K_CTRL_DOWN\n\tK_CTRL_DOWN -> { ${1://cuerpo...} }\n# K_ALT_DOWN\nsnippet K_ALT_DOWN\n\tK_ALT_DOWN -> { ${1://cuerpo...} }\n# K_SHIFT_DOWN\nsnippet K_SHIFT_DOWN\n\tK_SHIFT_DOWN -> { ${1://cuerpo...} }\n# K_CTRL_ALT_DOWN\nsnippet K_CTRL_ALT_DOWN\n\tK_CTRL_ALT_DOWN -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_DOWN\nsnippet K_CTRL_SHIFT_DOWN\n\tK_CTRL_SHIFT_DOWN -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_DOWN\nsnippet K_CTRL_ALT_SHIFT_DOWN\n\tK_CTRL_ALT_SHIFT_DOWN -> { ${1://cuerpo...} }\n\n# K_LEFT\nsnippet K_LEFT\n\tK_LEFT -> { ${1://cuerpo...} }\n# K_CTRL_LEFT\nsnippet K_CTRL_LEFT\n\tK_CTRL_LEFT -> { ${1://cuerpo...} }\n# K_ALT_LEFT\nsnippet K_ALT_LEFT\n\tK_ALT_LEFT -> { ${1://cuerpo...} }\n# K_SHIFT_LEFT\nsnippet K_SHIFT_LEFT\n\tK_SHIFT_LEFT -> { ${1://cuerpo...} }\n# K_CTRL_ALT_LEFT\nsnippet K_CTRL_ALT_LEFT\n\tK_CTRL_ALT_LEFT -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_LEFT\nsnippet K_CTRL_SHIFT_LEFT\n\tK_CTRL_SHIFT_LEFT -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_LEFT\nsnippet K_CTRL_ALT_SHIFT_LEFT\n\tK_CTRL_ALT_SHIFT_LEFT -> { ${1://cuerpo...} }\n\n# K_RIGHT\nsnippet K_RIGHT\n\tK_RIGHT -> { ${1://cuerpo...} }\n# K_CTRL_RIGHT\nsnippet K_CTRL_RIGHT\n\tK_CTRL_RIGHT -> { ${1://cuerpo...} }\n# K_ALT_RIGHT\nsnippet K_ALT_RIGHT\n\tK_ALT_RIGHT -> { ${1://cuerpo...} }\n# K_SHIFT_RIGHT\nsnippet K_SHIFT_RIGHT\n\tK_SHIFT_RIGHT -> { ${1://cuerpo...} }\n# K_CTRL_ALT_RIGHT\nsnippet K_CTRL_ALT_RIGHT\n\tK_CTRL_ALT_RIGHT -> { ${1://cuerpo...} }\n# K_CTRL_SHIFT_RIGHT\nsnippet K_CTRL_SHIFT_RIGHT\n\tK_CTRL_SHIFT_RIGHT -> { ${1://cuerpo...} }\n# K_CTRL_ALT_SHIFT_RIGHT\nsnippet K_CTRL_ALT_SHIFT_RIGHT\n\tK_CTRL_ALT_SHIFT_RIGHT -> { ${1://cuerpo...} }\n\n# recorrido (simple)\nsnippet recorrido (simple)\n\t${1:// Ir al inicio}\n\twhile (not ${2:// es \u00FAltimo elemento}) {\n\t\t${3:// Procesar el elemento}\n\t\t${4:// Ir al pr\u00F3ximo elemento}\n\t}\n\t${5:// Finalizar}\n\n# recorrido (de acumulaci\u00F3n)\nsnippet recorrido (de acumulaci\u00F3n)\n\t${1:// Ir al inicio}\n\t${2:cantidadVistos} := ${3:// contar elementos en lugar actual}\n\twhile (not ${4:// es \u00FAltimo elemento}) {\n\t\t${4:// Ir al pr\u00F3ximo elemento}\n\t\t${2:cantidadVistos} := ${2:cantidadVistos} + ${3:// contar elementos en lugar actual}\n\t}\n\treturn (${2:cantidadVistos})\n\n# recorrido (de b\u00FAsqueda)\nsnippet recorrido (de b\u00FAsqueda)\n\t${1:// Ir al inicio}\n\twhile (not ${2:// encontr\u00E9 lo que buscaba}) {\n\t\t${3:// Ir al pr\u00F3ximo elemento}\n\t}\n\treturn (${2:// encontr\u00E9 lo que buscaba })\n\n# recorrido (de b\u00FAsqueda con borde)\nsnippet recorrido (de b\u00FAsqueda con borde)\n\t${1:// Ir al inicio}\n\twhile (not ${2:// encontr\u00E9 lo que buscaba} && not ${3:// es \u00FAltimo elemento}) {\n\t\t${4:// Ir al pr\u00F3ximo elemento}\n\t}\n\treturn (${2:// encontr\u00E9 lo que buscaba })\n\n# recorrido (de tipos enumerativos)\nsnippet recorrido (de tipos enumerativos)\n\t${1:elementoActual} := ${2:minElemento()}\n\twhile (${1:elementoActual} /= ${3:maxElemento()}) {\n\t\t${4:// Procesar con elemento actual}\n\t\t${1:elementoActual} := siguiente(${1:elementoActual})\n\t}\n\t${4:// Procesar con elemento actual}\n\n# recorrido (de b\u00FAsqueda sobre lista)\nsnippet recorrido (de b\u00FAsqueda sobre lista)\n\t${1:listaRecorrida} := ${2:lista}\n\twhile (primero(${1:listaRecorrida}) /= ${3://elemento buscado}) {\n\t\t${1:elementoActual} := sinElPrimero(${1:elementoActual})\n\t}\n\treturn (primero(${1:listaRecorrida}))\n\n# recorrido (de b\u00FAsqueda sobre lista con borde)\nsnippet recorrido (de b\u00FAsqueda sobre lista con borde)\n\t${1:listaRecorrida} := ${2:lista}\n\twhile (not esVac\u00EDa(${1:listaRecorrida}) && primero(${1:listaRecorrida}) /= ${3://elemento buscado}) {\n\t\t${1:elementoActual} := sinElPrimero(${1:elementoActual})\n\t}\n\treturn (not esVac\u00EDa(${1:listaRecorrida}))\n\n# docs (procedimiento)\nsnippet docs (procedimiento)\n\t/*\n\t\t@PROP\u00D3SITO: ${1:...}\n\t\t@PRECONDICI\u00D3N: ${2:...}\n\t*/\n\n# docs (procedimiento con par\u00E1metros)\nsnippet docs (procedimiento con par\u00E1metros)\n\t/*\n\t\t@PROP\u00D3SITO: ${1:...}\n\t\t@PRECONDICI\u00D3N: ${2:...}\n\t\t@PAR\u00C1METROS:\n\t\t\t\t* ${3:nombreDelPar\u00E1metro} : ${4:Tipo} - ${5:descripci\u00F3n}\n\t*/\n\n# docs (funci\u00F3n)\nsnippet docs (funci\u00F3n)\n\t/*\n\t\t@PROP\u00D3SITO: ${1:...}\n\t\t@PRECONDICI\u00D3N: ${2:...}\n\t\t@TIPO: ${3:...}\n\t*/\n\n# docs (funci\u00F3n con par\u00E1metros)\nsnippet docs (funci\u00F3n con par\u00E1metros)\n\t/*\n\t\t@PROP\u00D3SITO: ${1:...}\n\t\t@PRECONDICI\u00D3N: ${2:...}\n\t\t@PAR\u00C1METROS:\n\t\t\t\t* ${3:nombreDelPar\u00E1metro} : ${4:Tipo} - ${5:descripci\u00F3n}\n\t\t@TIPO: ${6:...}\n\t*/\n";
+
+});
+
+define("ace/snippets/gobstones",["require","exports","module","ace/snippets/gobstones.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./gobstones.snippets");
+exports.scope = "gobstones";
+
+});
+
+define("ace/snippets/graphqlschema.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Type Snippet\ntrigger type\nsnippet type\n\ttype ${1:type_name} {\n\t\t${2:type_siblings}\n\t}\n\n# Input Snippet\ntrigger input\nsnippet input\n\tinput ${1:input_name} {\n\t\t${2:input_siblings}\n\t}\n\n# Interface Snippet\ntrigger interface\nsnippet interface\n\tinterface ${1:interface_name} {\n\t\t${2:interface_siblings}\n\t}\n\n# Interface Snippet\ntrigger union\nsnippet union\n\tunion ${1:union_name} = ${2:type} | ${3: type}\n\n# Enum Snippet\ntrigger enum\nsnippet enum\n\tenum ${1:enum_name} {\n\t\t${2:enum_siblings}\n\t}\n";
+
+});
+
+define("ace/snippets/graphqlschema",["require","exports","module","ace/snippets/graphqlschema.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./graphqlschema.snippets");
+exports.scope = "graphqlschema";
+
+});
+
+define("ace/snippets/haml.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet t\n\t%table\n\t\t%tr\n\t\t\t%th\n\t\t\t\t${1:headers}\n\t\t%tr\n\t\t\t%td\n\t\t\t\t${2:headers}\nsnippet ul\n\t%ul\n\t\t%li\n\t\t\t${1:item}\n\t\t%li\nsnippet =rp\n\t= render :partial => '${1:partial}'\nsnippet =rpl\n\t= render :partial => '${1:partial}', :locals => {}\nsnippet =rpc\n\t= render :partial => '${1:partial}', :collection => @$1\n\n";
+
+});
+
+define("ace/snippets/haml",["require","exports","module","ace/snippets/haml.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./haml.snippets");
+exports.scope = "haml";
+
+});
+
+define("ace/snippets/haskell.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet lang\n\t{-# LANGUAGE ${1:OverloadedStrings} #-}\nsnippet info\n\t-- |\n\t-- Module      :  ${1:Module.Namespace}\n\t-- Copyright   :  ${2:Author} ${3:2011-2012}\n\t-- License     :  ${4:BSD3}\n\t--\n\t-- Maintainer  :  ${5:email@something.com}\n\t-- Stability   :  ${6:experimental}\n\t-- Portability :  ${7:unknown}\n\t--\n\t-- ${8:Description}\n\t--\nsnippet import\n\timport           ${1:Data.Text}\nsnippet import2\n\timport           ${1:Data.Text} (${2:head})\nsnippet importq\n\timport qualified ${1:Data.Text} as ${2:T}\nsnippet inst\n\tinstance ${1:Monoid} ${2:Type} where\n\t\t${3}\nsnippet type\n\ttype ${1:Type} = ${2:Type}\nsnippet data\n\tdata ${1:Type} = ${2:$1} ${3:Int}\nsnippet newtype\n\tnewtype ${1:Type} = ${2:$1} ${3:Int}\nsnippet class\n\tclass ${1:Class} a where\n\t\t${2}\nsnippet module\n\tmodule `substitute(substitute(expand('%:r'), '[/\\\\]','.','g'),'^\\%(\\l*\\.\\)\\?','','')` (\n\t)\twhere\n\t`expand('%') =~ 'Main' ? \"\\n\\nmain = do\\n  print \\\"hello world\\\"\" : \"\"`\n\nsnippet const\n\t${1:name} :: ${2:a}\n\t$1 = ${3:undefined}\nsnippet fn\n\t${1:fn} :: ${2:a} -> ${3:a}\n\t$1 ${4} = ${5:undefined}\nsnippet fn2\n\t${1:fn} :: ${2:a} -> ${3:a} -> ${4:a}\n\t$1 ${5} = ${6:undefined}\nsnippet ap\n\t${1:map} ${2:fn} ${3:list}\nsnippet do\n\tdo\n\t\t\nsnippet \u03BB\n\t\\${1:x} -> ${2}\nsnippet \\\n\t\\${1:x} -> ${2}\nsnippet <-\n\t${1:a} <- ${2:m a}\nsnippet \u2190\n\t${1:a} <- ${2:m a}\nsnippet ->\n\t${1:m a} -> ${2:a}\nsnippet \u2192\n\t${1:m a} -> ${2:a}\nsnippet tup\n\t(${1:a}, ${2:b})\nsnippet tup2\n\t(${1:a}, ${2:b}, ${3:c})\nsnippet tup3\n\t(${1:a}, ${2:b}, ${3:c}, ${4:d})\nsnippet rec\n\t${1:Record} { ${2:recFieldA} = ${3:undefined}\n\t\t\t\t, ${4:recFieldB} = ${5:undefined}\n\t\t\t\t}\nsnippet case\n\tcase ${1:something} of\n\t\t${2} -> ${3}\nsnippet let\n\tlet ${1} = ${2}\n\tin ${3}\nsnippet where\n\twhere\n\t\t${1:fn} = ${2:undefined}\n";
+
+});
+
+define("ace/snippets/haskell",["require","exports","module","ace/snippets/haskell.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./haskell.snippets");
+exports.scope = "haskell";
+
+});
+
+define("ace/snippets/html.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Some useful Unicode entities\n# Non-Breaking Space\nsnippet nbs\n\t&nbsp;\n# \u2190\nsnippet left\n\t&#x2190;\n# \u2192\nsnippet right\n\t&#x2192;\n# \u2191\nsnippet up\n\t&#x2191;\n# \u2193\nsnippet down\n\t&#x2193;\n# \u21A9\nsnippet return\n\t&#x21A9;\n# \u21E4\nsnippet backtab\n\t&#x21E4;\n# \u21E5\nsnippet tab\n\t&#x21E5;\n# \u21E7\nsnippet shift\n\t&#x21E7;\n# \u2303\nsnippet ctrl\n\t&#x2303;\n# \u2305\nsnippet enter\n\t&#x2305;\n# \u2318\nsnippet cmd\n\t&#x2318;\n# \u2325\nsnippet option\n\t&#x2325;\n# \u2326\nsnippet delete\n\t&#x2326;\n# \u232B\nsnippet backspace\n\t&#x232B;\n# \u238B\nsnippet esc\n\t&#x238B;\n# Generic Doctype\nsnippet doctype HTML 4.01 Strict\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\t\"http://www.w3.org/TR/html4/strict.dtd\">\nsnippet doctype HTML 4.01 Transitional\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\t\"http://www.w3.org/TR/html4/loose.dtd\">\nsnippet doctype HTML 5\n\t<!DOCTYPE HTML>\nsnippet doctype XHTML 1.0 Frameset\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\nsnippet doctype XHTML 1.0 Strict\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\nsnippet doctype XHTML 1.0 Transitional\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\nsnippet doctype XHTML 1.1\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\t\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n# HTML Doctype 4.01 Strict\nsnippet docts\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\t\"http://www.w3.org/TR/html4/strict.dtd\">\n# HTML Doctype 4.01 Transitional\nsnippet doct\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\t\"http://www.w3.org/TR/html4/loose.dtd\">\n# HTML Doctype 5\nsnippet doct5\n\t<!DOCTYPE html>\n# XHTML Doctype 1.0 Frameset\nsnippet docxf\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n# XHTML Doctype 1.0 Strict\nsnippet docxs\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n# XHTML Doctype 1.0 Transitional\nsnippet docxt\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n# XHTML Doctype 1.1\nsnippet docx\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\t\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n# html5shiv\nsnippet html5shiv\n\t<!--[if lte IE 8]>\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js\"></script>\n\t<![endif]-->\nsnippet html5printshiv\n\t<!--[if lte IE 8]>\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js\"></script>\n\t<![endif]-->\n# Attributes\nsnippet attr\n\t${1:attribute}=\"${2:property}\"\nsnippet attr+\n\t${1:attribute}=\"${2:property}\" attr+${3}\nsnippet .\n\tclass=\"${1}\"${2}\nsnippet #\n\tid=\"${1}\"${2}\nsnippet alt\n\talt=\"${1}\"${2}\nsnippet charset\n\tcharset=\"${1:utf-8}\"${2}\nsnippet data\n\tdata-${1}=\"${2:$1}\"${3}\nsnippet for\n\tfor=\"${1}\"${2}\nsnippet height\n\theight=\"${1}\"${2}\nsnippet href\n\thref=\"${1:#}\"${2}\nsnippet lang\n\tlang=\"${1:en}\"${2}\nsnippet media\n\tmedia=\"${1}\"${2}\nsnippet name\n\tname=\"${1}\"${2}\nsnippet rel\n\trel=\"${1}\"${2}\nsnippet scope\n\tscope=\"${1:row}\"${2}\nsnippet src\n\tsrc=\"${1}\"${2}\nsnippet title=\n\ttitle=\"${1}\"${2}\nsnippet type\n\ttype=\"${1}\"${2}\nsnippet value\n\tvalue=\"${1}\"${2}\nsnippet width\n\twidth=\"${1}\"${2}\n# Elements\nsnippet a\n\t<a href=\"${1:#}\">${2:$1}</a>\nsnippet a.\n\t<a class=\"${1}\" href=\"${2:#}\">${3:$1}</a>\nsnippet a#\n\t<a id=\"${1}\" href=\"${2:#}\">${3:$1}</a>\nsnippet a:ext\n\t<a href=\"http://${1:example.com}\">${2:$1}</a>\nsnippet a:mail\n\t<a href=\"mailto:${1:joe@example.com}?subject=${2:feedback}\">${3:email me}</a>\nsnippet abbr\n\t<abbr title=\"${1}\">${2}</abbr>\nsnippet address\n\t<address>\n\t\t${1}\n\t</address>\nsnippet area\n\t<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\nsnippet area+\n\t<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\n\tarea+${5}\nsnippet area:c\n\t<area shape=\"circle\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:d\n\t<area shape=\"default\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:p\n\t<area shape=\"poly\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:r\n\t<area shape=\"rect\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet article\n\t<article>\n\t\t${1}\n\t</article>\nsnippet article.\n\t<article class=\"${1}\">\n\t\t${2}\n\t</article>\nsnippet article#\n\t<article id=\"${1}\">\n\t\t${2}\n\t</article>\nsnippet aside\n\t<aside>\n\t\t${1}\n\t</aside>\nsnippet aside.\n\t<aside class=\"${1}\">\n\t\t${2}\n\t</aside>\nsnippet aside#\n\t<aside id=\"${1}\">\n\t\t${2}\n\t</aside>\nsnippet audio\n\t<audio src=\"${1}>${2}</audio>\nsnippet b\n\t<b>${1}</b>\nsnippet base\n\t<base href=\"${1}\" target=\"${2}\" />\nsnippet bdi\n\t<bdi>${1}</bdo>\nsnippet bdo\n\t<bdo dir=\"${1}\">${2}</bdo>\nsnippet bdo:l\n\t<bdo dir=\"ltr\">${1}</bdo>\nsnippet bdo:r\n\t<bdo dir=\"rtl\">${1}</bdo>\nsnippet blockquote\n\t<blockquote>\n\t\t${1}\n\t</blockquote>\nsnippet body\n\t<body>\n\t\t${1}\n\t</body>\nsnippet br\n\t<br />${1}\nsnippet button\n\t<button type=\"${1:submit}\">${2}</button>\nsnippet button.\n\t<button class=\"${1:button}\" type=\"${2:submit}\">${3}</button>\nsnippet button#\n\t<button id=\"${1}\" type=\"${2:submit}\">${3}</button>\nsnippet button:s\n\t<button type=\"submit\">${1}</button>\nsnippet button:r\n\t<button type=\"reset\">${1}</button>\nsnippet canvas\n\t<canvas id=\"${1:canvas}\"></canvas>\nsnippet caption\n\t<caption>${1}</caption>\nsnippet cite\n\t<cite>${1}</cite>\nsnippet code\n\t<code>${1}</code>\nsnippet col\n\t<col />${1}\nsnippet col+\n\t<col />\n\tcol+${1}\nsnippet colgroup\n\t<colgroup>\n\t\t${1}\n\t</colgroup>\nsnippet colgroup+\n\t<colgroup>\n\t\t<col />\n\t\tcol+${1}\n\t</colgroup>\nsnippet command\n\t<command type=\"command\" label=\"${1}\" icon=\"${2}\" />\nsnippet command:c\n\t<command type=\"checkbox\" label=\"${1}\" icon=\"${2}\" />\nsnippet command:r\n\t<command type=\"radio\" radiogroup=\"${1}\" label=\"${2}\" icon=\"${3}\" />\nsnippet datagrid\n\t<datagrid>\n\t\t${1}\n\t</datagrid>\nsnippet datalist\n\t<datalist>\n\t\t${1}\n\t</datalist>\nsnippet datatemplate\n\t<datatemplate>\n\t\t${1}\n\t</datatemplate>\nsnippet dd\n\t<dd>${1}</dd>\nsnippet dd.\n\t<dd class=\"${1}\">${2}</dd>\nsnippet dd#\n\t<dd id=\"${1}\">${2}</dd>\nsnippet del\n\t<del>${1}</del>\nsnippet details\n\t<details>${1}</details>\nsnippet dfn\n\t<dfn>${1}</dfn>\nsnippet dialog\n\t<dialog>\n\t\t${1}\n\t</dialog>\nsnippet div\n\t<div>\n\t\t${1}\n\t</div>\nsnippet div.\n\t<div class=\"${1}\">\n\t\t${2}\n\t</div>\nsnippet div#\n\t<div id=\"${1}\">\n\t\t${2}\n\t</div>\nsnippet dl\n\t<dl>\n\t\t${1}\n\t</dl>\nsnippet dl.\n\t<dl class=\"${1}\">\n\t\t${2}\n\t</dl>\nsnippet dl#\n\t<dl id=\"${1}\">\n\t\t${2}\n\t</dl>\nsnippet dl+\n\t<dl>\n\t\t<dt>${1}</dt>\n\t\t<dd>${2}</dd>\n\t\tdt+${3}\n\t</dl>\nsnippet dt\n\t<dt>${1}</dt>\nsnippet dt.\n\t<dt class=\"${1}\">${2}</dt>\nsnippet dt#\n\t<dt id=\"${1}\">${2}</dt>\nsnippet dt+\n\t<dt>${1}</dt>\n\t<dd>${2}</dd>\n\tdt+${3}\nsnippet em\n\t<em>${1}</em>\nsnippet embed\n\t<embed src=${1} type=\"${2} />\nsnippet fieldset\n\t<fieldset>\n\t\t${1}\n\t</fieldset>\nsnippet fieldset.\n\t<fieldset class=\"${1}\">\n\t\t${2}\n\t</fieldset>\nsnippet fieldset#\n\t<fieldset id=\"${1}\">\n\t\t${2}\n\t</fieldset>\nsnippet fieldset+\n\t<fieldset>\n\t\t<legend><span>${1}</span></legend>\n\t\t${2}\n\t</fieldset>\n\tfieldset+${3}\nsnippet figcaption\n\t<figcaption>${1}</figcaption>\nsnippet figure\n\t<figure>${1}</figure>\nsnippet footer\n\t<footer>\n\t\t${1}\n\t</footer>\nsnippet footer.\n\t<footer class=\"${1}\">\n\t\t${2}\n\t</footer>\nsnippet footer#\n\t<footer id=\"${1}\">\n\t\t${2}\n\t</footer>\nsnippet form\n\t<form action=\"${1}\" method=\"${2:get}\" accept-charset=\"utf-8\">\n\t\t${3}\n\t</form>\nsnippet form.\n\t<form class=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\t\t${4}\n\t</form>\nsnippet form#\n\t<form id=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\t\t${4}\n\t</form>\nsnippet h1\n\t<h1>${1}</h1>\nsnippet h1.\n\t<h1 class=\"${1}\">${2}</h1>\nsnippet h1#\n\t<h1 id=\"${1}\">${2}</h1>\nsnippet h2\n\t<h2>${1}</h2>\nsnippet h2.\n\t<h2 class=\"${1}\">${2}</h2>\nsnippet h2#\n\t<h2 id=\"${1}\">${2}</h2>\nsnippet h3\n\t<h3>${1}</h3>\nsnippet h3.\n\t<h3 class=\"${1}\">${2}</h3>\nsnippet h3#\n\t<h3 id=\"${1}\">${2}</h3>\nsnippet h4\n\t<h4>${1}</h4>\nsnippet h4.\n\t<h4 class=\"${1}\">${2}</h4>\nsnippet h4#\n\t<h4 id=\"${1}\">${2}</h4>\nsnippet h5\n\t<h5>${1}</h5>\nsnippet h5.\n\t<h5 class=\"${1}\">${2}</h5>\nsnippet h5#\n\t<h5 id=\"${1}\">${2}</h5>\nsnippet h6\n\t<h6>${1}</h6>\nsnippet h6.\n\t<h6 class=\"${1}\">${2}</h6>\nsnippet h6#\n\t<h6 id=\"${1}\">${2}</h6>\nsnippet head\n\t<head>\n\t\t<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\n\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t${2}\n\t</head>\nsnippet header\n\t<header>\n\t\t${1}\n\t</header>\nsnippet header.\n\t<header class=\"${1}\">\n\t\t${2}\n\t</header>\nsnippet header#\n\t<header id=\"${1}\">\n\t\t${2}\n\t</header>\nsnippet hgroup\n\t<hgroup>\n\t\t${1}\n\t</hgroup>\nsnippet hgroup.\n\t<hgroup class=\"${1}>\n\t\t${2}\n\t</hgroup>\nsnippet hr\n\t<hr />${1}\nsnippet html\n\t<html>\n\t${1}\n\t</html>\nsnippet xhtml\n\t<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\t${1}\n\t</html>\nsnippet html5\n\t<!DOCTYPE html>\n\t<html>\n\t\t<head>\n\t\t\t<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\t\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t\t${2:meta}\n\t\t</head>\n\t\t<body>\n\t\t\t${3:body}\n\t\t</body>\n\t</html>\nsnippet xhtml5\n\t<!DOCTYPE html>\n\t<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\t\t<head>\n\t\t\t<meta http-equiv=\"content-type\" content=\"application/xhtml+xml; charset=utf-8\" />\n\t\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t\t${2:meta}\n\t\t</head>\n\t\t<body>\n\t\t\t${3:body}\n\t\t</body>\n\t</html>\nsnippet i\n\t<i>${1}</i>\nsnippet iframe\n\t<iframe src=\"${1}\" frameborder=\"0\"></iframe>${2}\nsnippet iframe.\n\t<iframe class=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\nsnippet iframe#\n\t<iframe id=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\nsnippet img\n\t<img src=\"${1}\" alt=\"${2}\" />${3}\nsnippet img.\n\t<img class=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\nsnippet img#\n\t<img id=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\nsnippet input\n\t<input type=\"${1:text/submit/hidden/button/image}\" name=\"${2}\" id=\"${3:$2}\" value=\"${4}\" />${5}\nsnippet input.\n\t<input class=\"${1}\" type=\"${2:text/submit/hidden/button/image}\" name=\"${3}\" id=\"${4:$3}\" value=\"${5}\" />${6}\nsnippet input:text\n\t<input type=\"text\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:submit\n\t<input type=\"submit\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:hidden\n\t<input type=\"hidden\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:button\n\t<input type=\"button\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:image\n\t<input type=\"image\" name=\"${1}\" id=\"${2:$1}\" src=\"${3}\" alt=\"${4}\" />${5}\nsnippet input:checkbox\n\t<input type=\"checkbox\" name=\"${1}\" id=\"${2:$1}\" />${3}\nsnippet input:radio\n\t<input type=\"radio\" name=\"${1}\" id=\"${2:$1}\" />${3}\nsnippet input:color\n\t<input type=\"color\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:date\n\t<input type=\"date\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:datetime\n\t<input type=\"datetime\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:datetime-local\n\t<input type=\"datetime-local\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:email\n\t<input type=\"email\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:file\n\t<input type=\"file\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:month\n\t<input type=\"month\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:number\n\t<input type=\"number\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:password\n\t<input type=\"password\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:range\n\t<input type=\"range\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:reset\n\t<input type=\"reset\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:search\n\t<input type=\"search\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:time\n\t<input type=\"time\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:url\n\t<input type=\"url\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:week\n\t<input type=\"week\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet ins\n\t<ins>${1}</ins>\nsnippet kbd\n\t<kbd>${1}</kbd>\nsnippet keygen\n\t<keygen>${1}</keygen>\nsnippet label\n\t<label for=\"${2:$1}\">${1}</label>\nsnippet label:i\n\t<label for=\"${2:$1}\">${1}</label>\n\t<input type=\"${3:text/submit/hidden/button}\" name=\"${4:$2}\" id=\"${5:$2}\" value=\"${6}\" />${7}\nsnippet label:s\n\t<label for=\"${2:$1}\">${1}</label>\n\t<select name=\"${3:$2}\" id=\"${4:$2}\">\n\t\t<option value=\"${5}\">${6:$5}</option>\n\t</select>\nsnippet legend\n\t<legend>${1}</legend>\nsnippet legend+\n\t<legend><span>${1}</span></legend>\nsnippet li\n\t<li>${1}</li>\nsnippet li.\n\t<li class=\"${1}\">${2}</li>\nsnippet li+\n\t<li>${1}</li>\n\tli+${2}\nsnippet lia\n\t<li><a href=\"${2:#}\">${1}</a></li>\nsnippet lia+\n\t<li><a href=\"${2:#}\">${1}</a></li>\n\tlia+${3}\nsnippet link\n\t<link rel=\"${1}\" href=\"${2}\" title=\"${3}\" type=\"${4}\" />${5}\nsnippet link:atom\n\t<link rel=\"alternate\" href=\"${1:atom.xml}\" title=\"Atom\" type=\"application/atom+xml\" />${2}\nsnippet link:css\n\t<link rel=\"stylesheet\" href=\"${2:style.css}\" type=\"text/css\" media=\"${3:all}\" />${4}\nsnippet link:favicon\n\t<link rel=\"shortcut icon\" href=\"${1:favicon.ico}\" type=\"image/x-icon\" />${2}\nsnippet link:rss\n\t<link rel=\"alternate\" href=\"${1:rss.xml}\" title=\"RSS\" type=\"application/atom+xml\" />${2}\nsnippet link:touch\n\t<link rel=\"apple-touch-icon\" href=\"${1:favicon.png}\" />${2}\nsnippet map\n\t<map name=\"${1}\">\n\t\t${2}\n\t</map>\nsnippet map.\n\t<map class=\"${1}\" name=\"${2}\">\n\t\t${3}\n\t</map>\nsnippet map#\n\t<map name=\"${1}\" id=\"${2:$1}>\n\t\t${3}\n\t</map>\nsnippet map+\n\t<map name=\"${1}\">\n\t\t<area shape=\"${2}\" coords=\"${3}\" href=\"${4}\" alt=\"${5}\" />${6}\n\t</map>${7}\nsnippet mark\n\t<mark>${1}</mark>\nsnippet menu\n\t<menu>\n\t\t${1}\n\t</menu>\nsnippet menu:c\n\t<menu type=\"context\">\n\t\t${1}\n\t</menu>\nsnippet menu:t\n\t<menu type=\"toolbar\">\n\t\t${1}\n\t</menu>\nsnippet meta\n\t<meta http-equiv=\"${1}\" content=\"${2}\" />${3}\nsnippet meta:compat\n\t<meta http-equiv=\"X-UA-Compatible\" content=\"IE=${1:7,8,edge}\" />${3}\nsnippet meta:refresh\n\t<meta http-equiv=\"refresh\" content=\"text/html;charset=UTF-8\" />${3}\nsnippet meta:utf\n\t<meta http-equiv=\"content-type\" content=\"text/html;charset=UTF-8\" />${3}\nsnippet meter\n\t<meter>${1}</meter>\nsnippet nav\n\t<nav>\n\t\t${1}\n\t</nav>\nsnippet nav.\n\t<nav class=\"${1}\">\n\t\t${2}\n\t</nav>\nsnippet nav#\n\t<nav id=\"${1}\">\n\t\t${2}\n\t</nav>\nsnippet noscript\n\t<noscript>\n\t\t${1}\n\t</noscript>\nsnippet object\n\t<object data=\"${1}\" type=\"${2}\">\n\t\t${3}\n\t</object>${4}\n# Embed QT Movie\nsnippet movie\n\t<object width=\"$2\" height=\"$3\" classid=\"clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B\"\n\t codebase=\"http://www.apple.com/qtactivex/qtplugin.cab\">\n\t\t<param name=\"src\" value=\"$1\" />\n\t\t<param name=\"controller\" value=\"$4\" />\n\t\t<param name=\"autoplay\" value=\"$5\" />\n\t\t<embed src=\"${1:movie.mov}\"\n\t\t\twidth=\"${2:320}\" height=\"${3:240}\"\n\t\t\tcontroller=\"${4:true}\" autoplay=\"${5:true}\"\n\t\t\tscale=\"tofit\" cache=\"true\"\n\t\t\tpluginspage=\"http://www.apple.com/quicktime/download/\" />\n\t</object>${6}\nsnippet ol\n\t<ol>\n\t\t${1}\n\t</ol>\nsnippet ol.\n\t<ol class=\"${1}>\n\t\t${2}\n\t</ol>\nsnippet ol#\n\t<ol id=\"${1}>\n\t\t${2}\n\t</ol>\nsnippet ol+\n\t<ol>\n\t\t<li>${1}</li>\n\t\tli+${2}\n\t</ol>\nsnippet opt\n\t<option value=\"${1}\">${2:$1}</option>\nsnippet opt+\n\t<option value=\"${1}\">${2:$1}</option>\n\topt+${3}\nsnippet optt\n\t<option>${1}</option>\nsnippet optgroup\n\t<optgroup>\n\t\t<option value=\"${1}\">${2:$1}</option>\n\t\topt+${3}\n\t</optgroup>\nsnippet output\n\t<output>${1}</output>\nsnippet p\n\t<p>${1}</p>\nsnippet param\n\t<param name=\"${1}\" value=\"${2}\" />${3}\nsnippet pre\n\t<pre>\n\t\t${1}\n\t</pre>\nsnippet progress\n\t<progress>${1}</progress>\nsnippet q\n\t<q>${1}</q>\nsnippet rp\n\t<rp>${1}</rp>\nsnippet rt\n\t<rt>${1}</rt>\nsnippet ruby\n\t<ruby>\n\t\t<rp><rt>${1}</rt></rp>\n\t</ruby>\nsnippet s\n\t<s>${1}</s>\nsnippet samp\n\t<samp>\n\t\t${1}\n\t</samp>\nsnippet script\n\t<script type=\"text/javascript\" charset=\"utf-8\">\n\t\t${1}\n\t</script>\nsnippet scriptsrc\n\t<script src=\"${1}.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\nsnippet newscript\n\t<script type=\"application/javascript\" charset=\"utf-8\">\n\t\t${1}\n\t</script>\nsnippet newscriptsrc\n\t<script src=\"${1}.js\" type=\"application/javascript\" charset=\"utf-8\"></script>\nsnippet section\n\t<section>\n\t\t${1}\n\t</section>\nsnippet section.\n\t<section class=\"${1}\">\n\t\t${2}\n\t</section>\nsnippet section#\n\t<section id=\"${1}\">\n\t\t${2}\n\t</section>\nsnippet select\n\t<select name=\"${1}\" id=\"${2:$1}\">\n\t\t${3}\n\t</select>\nsnippet select.\n\t<select name=\"${1}\" id=\"${2:$1}\" class=\"${3}>\n\t\t${4}\n\t</select>\nsnippet select+\n\t<select name=\"${1}\" id=\"${2:$1}\">\n\t\t<option value=\"${3}\">${4:$3}</option>\n\t\topt+${5}\n\t</select>\nsnippet small\n\t<small>${1}</small>\nsnippet source\n\t<source src=\"${1}\" type=\"${2}\" media=\"${3}\" />\nsnippet span\n\t<span>${1}</span>\nsnippet strong\n\t<strong>${1}</strong>\nsnippet style\n\t<style type=\"text/css\" media=\"${1:all}\">\n\t\t${2}\n\t</style>\nsnippet sub\n\t<sub>${1}</sub>\nsnippet summary\n\t<summary>\n\t\t${1}\n\t</summary>\nsnippet sup\n\t<sup>${1}</sup>\nsnippet table\n\t<table border=\"${1:0}\">\n\t\t${2}\n\t</table>\nsnippet table.\n\t<table class=\"${1}\" border=\"${2:0}\">\n\t\t${3}\n\t</table>\nsnippet table#\n\t<table id=\"${1}\" border=\"${2:0}\">\n\t\t${3}\n\t</table>\nsnippet tbody\n\t<tbody>\n\t\t${1}\n\t</tbody>\nsnippet td\n\t<td>${1}</td>\nsnippet td.\n\t<td class=\"${1}\">${2}</td>\nsnippet td#\n\t<td id=\"${1}\">${2}</td>\nsnippet td+\n\t<td>${1}</td>\n\ttd+${2}\nsnippet textarea\n\t<textarea name=\"${1}\" id=${2:$1} rows=\"${3:8}\" cols=\"${4:40}\">${5}</textarea>${6}\nsnippet tfoot\n\t<tfoot>\n\t\t${1}\n\t</tfoot>\nsnippet th\n\t<th>${1}</th>\nsnippet th.\n\t<th class=\"${1}\">${2}</th>\nsnippet th#\n\t<th id=\"${1}\">${2}</th>\nsnippet th+\n\t<th>${1}</th>\n\tth+${2}\nsnippet thead\n\t<thead>\n\t\t${1}\n\t</thead>\nsnippet time\n\t<time datetime=\"${1}\" pubdate=\"${2:$1}>${3:$1}</time>\nsnippet title\n\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\nsnippet tr\n\t<tr>\n\t\t${1}\n\t</tr>\nsnippet tr+\n\t<tr>\n\t\t<td>${1}</td>\n\t\ttd+${2}\n\t</tr>\nsnippet track\n\t<track src=\"${1}\" srclang=\"${2}\" label=\"${3}\" default=\"${4:default}>${5}</track>${6}\nsnippet ul\n\t<ul>\n\t\t${1}\n\t</ul>\nsnippet ul.\n\t<ul class=\"${1}\">\n\t\t${2}\n\t</ul>\nsnippet ul#\n\t<ul id=\"${1}\">\n\t\t${2}\n\t</ul>\nsnippet ul+\n\t<ul>\n\t\t<li>${1}</li>\n\t\tli+${2}\n\t</ul>\nsnippet var\n\t<var>${1}</var>\nsnippet video\n\t<video src=\"${1}\" height=\"${2}\" width=\"${3}\" preload=\"${5:none}\" autoplay=\"${6:autoplay}\">${7}</video>${8}\nsnippet wbr\n\t<wbr />${1}\n";
+
+});
+
+define("ace/snippets/html",["require","exports","module","ace/snippets/html.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./html.snippets");
+exports.scope = "html";
+
+});
+
+define("ace/snippets/io",["require","exports","module"], function(require, exports, module){"use strict";
+exports.snippets = [
+    {
+        "content": "assertEquals(${1:expected}, ${2:expr})",
+        "name": "assertEquals",
+        "scope": "io",
+        "tabTrigger": "ae"
+    },
+    {
+        "content": "${1:${2:newValue} := ${3:Object} }clone do(\n\t$0\n)",
+        "name": "clone do",
+        "scope": "io",
+        "tabTrigger": "cdo"
+    },
+    {
+        "content": "docSlot(\"${1:slotName}\", \"${2:documentation}\")",
+        "name": "docSlot",
+        "scope": "io",
+        "tabTrigger": "ds"
+    },
+    {
+        "content": "(${1:header,}\n\t${2:body}\n)$0",
+        "keyEquivalent": "@(",
+        "name": "Indented Bracketed Line",
+        "scope": "io",
+        "tabTrigger": "("
+    },
+    {
+        "content": "\n\t$0\n",
+        "keyEquivalent": "\r",
+        "name": "Special: Return Inside Empty Parenthesis",
+        "scope": "io meta.empty-parenthesis.io, io meta.comma-parenthesis.io"
+    },
+    {
+        "content": "${1:methodName} := method(${2:args,}\n\t$0\n)",
+        "name": "method",
+        "scope": "io",
+        "tabTrigger": "m"
+    },
+    {
+        "content": "newSlot(\"${1:slotName}\", ${2:defaultValue}, \"${3:docString}\")$0",
+        "name": "newSlot",
+        "scope": "io",
+        "tabTrigger": "ns"
+    },
+    {
+        "content": "${1:name} := Object clone do(\n\t$0\n)",
+        "name": "Object clone do",
+        "scope": "io",
+        "tabTrigger": "ocdo"
+    },
+    {
+        "content": "test${1:SomeFeature} := method(\n\t$0\n)",
+        "name": "testMethod",
+        "scope": "io",
+        "tabTrigger": "ts"
+    },
+    {
+        "content": "${1:Something}Test := ${2:UnitTest} clone do(\n\t$0\n)",
+        "name": "UnitTest",
+        "scope": "io",
+        "tabTrigger": "ut"
+    }
+];
+exports.scope = "io";
+
+});
+
+define("ace/snippets/java.snippets",["require","exports","module"], function(require, exports, module){module.exports = "## Access Modifiers\nsnippet po\n\tprotected\nsnippet pu\n\tpublic\nsnippet pr\n\tprivate\n##\n## Annotations\nsnippet before\n\t@Before\n\tstatic void ${1:intercept}(${2:args}) { ${3} }\nsnippet mm\n\t@ManyToMany\n\t${1}\nsnippet mo\n\t@ManyToOne\n\t${1}\nsnippet om\n\t@OneToMany${1:(cascade=CascadeType.ALL)}\n\t${2}\nsnippet oo\n\t@OneToOne\n\t${1}\n##\n## Basic Java packages and import\nsnippet im\n\timport\nsnippet j.b\n\tjava.beans.\nsnippet j.i\n\tjava.io.\nsnippet j.m\n\tjava.math.\nsnippet j.n\n\tjava.net.\nsnippet j.u\n\tjava.util.\n##\n## Class\nsnippet cl\n\tclass ${1:`Filename(\"\", \"untitled\")`} ${2}\nsnippet in\n\tinterface ${1:`Filename(\"\", \"untitled\")`} ${2:extends Parent}${3}\nsnippet tc\n\tpublic class ${1:`Filename()`} extends ${2:TestCase}\n##\n## Class Enhancements\nsnippet ext\n\textends \nsnippet imp\n\timplements\n##\n## Comments\nsnippet /*\n\t/*\n\t * ${1}\n\t */\n##\n## Constants\nsnippet co\n\tstatic public final ${1:String} ${2:var} = ${3};${4}\nsnippet cos\n\tstatic public final String ${1:var} = \"${2}\";${3}\n##\n## Control Statements\nsnippet case\n\tcase ${1}:\n\t\t${2}\nsnippet def\n\tdefault:\n\t\t${2}\nsnippet el\n\telse\nsnippet elif\n\telse if (${1}) ${2}\nsnippet if\n\tif (${1}) ${2}\nsnippet sw\n\tswitch (${1}) {\n\t\t${2}\n\t}\n##\n## Create a Method\nsnippet m\n\t${1:void} ${2:method}(${3}) ${4:throws }${5}\n##\n## Create a Variable\nsnippet v\n\t${1:String} ${2:var}${3: = null}${4};${5}\n##\n## Enhancements to Methods, variables, classes, etc.\nsnippet ab\n\tabstract\nsnippet fi\n\tfinal\nsnippet st\n\tstatic\nsnippet sy\n\tsynchronized\n##\n## Error Methods\nsnippet err\n\tSystem.err.print(\"${1:Message}\");\nsnippet errf\n\tSystem.err.printf(\"${1:Message}\", ${2:exception});\nsnippet errln\n\tSystem.err.println(\"${1:Message}\");\n##\n## Exception Handling\nsnippet as\n\tassert ${1:test} : \"${2:Failure message}\";${3}\nsnippet ca\n\tcatch(${1:Exception} ${2:e}) ${3}\nsnippet thr\n\tthrow\nsnippet ths\n\tthrows\nsnippet try\n\ttry {\n\t\t${3}\n\t} catch(${1:Exception} ${2:e}) {\n\t}\nsnippet tryf\n\ttry {\n\t\t${3}\n\t} catch(${1:Exception} ${2:e}) {\n\t} finally {\n\t}\n##\n## Find Methods\nsnippet findall\n\tList<${1:listName}> ${2:items} = ${1}.findAll();${3}\nsnippet findbyid\n\t${1:var} ${2:item} = ${1}.findById(${3});${4}\n##\n## Javadocs\nsnippet /**\n\t/**\n\t * ${1}\n\t */\nsnippet @au\n\t@author `system(\"grep \\`id -un\\` /etc/passwd | cut -d \\\":\\\" -f5 | cut -d \\\",\\\" -f1\")`\nsnippet @br\n\t@brief ${1:Description}\nsnippet @fi\n\t@file ${1:`Filename()`}.java\nsnippet @pa\n\t@param ${1:param}\nsnippet @re\n\t@return ${1:param}\n##\n## Logger Methods\nsnippet debug\n\tLogger.debug(${1:param});${2}\nsnippet error\n\tLogger.error(${1:param});${2}\nsnippet info\n\tLogger.info(${1:param});${2}\nsnippet warn\n\tLogger.warn(${1:param});${2}\n##\n## Loops\nsnippet enfor\n\tfor (${1} : ${2}) ${3}\nsnippet for\n\tfor (${1}; ${2}; ${3}) ${4}\nsnippet wh\n\twhile (${1}) ${2}\n##\n## Main method\nsnippet main\n\tpublic static void main (String[] args) {\n\t\t${1:/* code */}\n\t}\n##\n## Print Methods\nsnippet print\n\tSystem.out.print(\"${1:Message}\");\nsnippet printf\n\tSystem.out.printf(\"${1:Message}\", ${2:args});\nsnippet println\n\tSystem.out.println(${1});\n##\n## Render Methods\nsnippet ren\n\trender(${1:param});${2}\nsnippet rena\n\trenderArgs.put(\"${1}\", ${2});${3}\nsnippet renb\n\trenderBinary(${1:param});${2}\nsnippet renj\n\trenderJSON(${1:param});${2}\nsnippet renx\n\trenderXml(${1:param});${2}\n##\n## Setter and Getter Methods\nsnippet set\n\t${1:public} void set${3:}(${2:String} ${4:}){\n\t\tthis.$4 = $4;\n\t}\nsnippet get\n\t${1:public} ${2:String} get${3:}(){\n\t\treturn this.${4:};\n\t}\n##\n## Terminate Methods or Loops\nsnippet re\n\treturn\nsnippet br\n\tbreak;\n##\n## Test Methods\nsnippet t\n\tpublic void test${1:Name}() throws Exception {\n\t\t${2}\n\t}\nsnippet test\n\t@Test\n\tpublic void test${1:Name}() throws Exception {\n\t\t${2}\n\t}\n##\n## Utils\nsnippet Sc\n\tScanner\n##\n## Miscellaneous\nsnippet action\n\tpublic static void ${1:index}(${2:args}) { ${3} }\nsnippet rnf\n\tnotFound(${1:param});${2}\nsnippet rnfin\n\tnotFoundIfNull(${1:param});${2}\nsnippet rr\n\tredirect(${1:param});${2}\nsnippet ru\n\tunauthorized(${1:param});${2}\nsnippet unless\n\t(unless=${1:param});${2}\n";
+
+});
+
+define("ace/snippets/java",["require","exports","module","ace/snippets/java.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./java.snippets");
+exports.scope = "java";
+
+});
+
+define("ace/snippets/javascript.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Prototype\nsnippet proto\n\t${1:class_name}.prototype.${2:method_name} = function(${3:first_argument}) {\n\t\t${4:// body...}\n\t};\n# Function\nsnippet fun\n\tfunction ${1?:function_name}(${2:argument}) {\n\t\t${3:// body...}\n\t}\n# Anonymous Function\nregex /((=)\\s*|(:)\\s*|(\\()|\\b)/f/(\\))?/\nsnippet f\n\tfunction${M1?: ${1:functionName}}($2) {\n\t\t${0:$TM_SELECTED_TEXT}\n\t}${M2?;}${M3?,}${M4?)}\n# Immediate function\ntrigger \\(?f\\(\nendTrigger \\)?\nsnippet f(\n\t(function(${1}) {\n\t\t${0:${TM_SELECTED_TEXT:/* code */}}\n\t}(${1}));\n# if\nsnippet if\n\tif (${1:true}) {\n\t\t${0}\n\t}\n# if ... else\nsnippet ife\n\tif (${1:true}) {\n\t\t${2}\n\t} else {\n\t\t${0}\n\t}\n# tertiary conditional\nsnippet ter\n\t${1:/* condition */} ? ${2:a} : ${3:b}\n# switch\nsnippet switch\n\tswitch (${1:expression}) {\n\t\tcase '${3:case}':\n\t\t\t${4:// code}\n\t\t\tbreak;\n\t\t${5}\n\t\tdefault:\n\t\t\t${2:// code}\n\t}\n# case\nsnippet case\n\tcase '${1:case}':\n\t\t${2:// code}\n\t\tbreak;\n\t${3}\n\n# while (...) {...}\nsnippet wh\n\twhile (${1:/* condition */}) {\n\t\t${0:/* code */}\n\t}\n# try\nsnippet try\n\ttry {\n\t\t${0:/* code */}\n\t} catch (e) {}\n# do...while\nsnippet do\n\tdo {\n\t\t${2:/* code */}\n\t} while (${1:/* condition */});\n# Object Method\nsnippet :f\nregex /([,{[])|^\\s*/:f/\n\t${1:method_name}: function(${2:attribute}) {\n\t\t${0}\n\t}${3:,}\n# setTimeout function\nsnippet setTimeout\nregex /\\b/st|timeout|setTimeo?u?t?/\n\tsetTimeout(function() {${3:$TM_SELECTED_TEXT}}, ${1:10});\n# Get Elements\nsnippet gett\n\tgetElementsBy${1:TagName}('${2}')${3}\n# Get Element\nsnippet get\n\tgetElementBy${1:Id}('${2}')${3}\n# console.log (Firebug)\nsnippet cl\n\tconsole.log(${1});\n# return\nsnippet ret\n\treturn ${1:result}\n# for (property in object ) { ... }\nsnippet fori\n\tfor (var ${1:prop} in ${2:Things}) {\n\t\t${0:$2[$1]}\n\t}\n# hasOwnProperty\nsnippet has\n\thasOwnProperty(${1})\n# docstring\nsnippet /**\n\t/**\n\t * ${1:description}\n\t *\n\t */\nsnippet @par\nregex /^\\s*\\*\\s*/@(para?m?)?/\n\t@param {${1:type}} ${2:name} ${3:description}\nsnippet @ret\n\t@return {${1:type}} ${2:description}\n# JSON.parse\nsnippet jsonp\n\tJSON.parse(${1:jstr});\n# JSON.stringify\nsnippet jsons\n\tJSON.stringify(${1:object});\n# self-defining function\nsnippet sdf\n\tvar ${1:function_name} = function(${2:argument}) {\n\t\t${3:// initial code ...}\n\n\t\t$1 = function($2) {\n\t\t\t${4:// main code}\n\t\t};\n\t}\n# singleton\nsnippet sing\n\tfunction ${1:Singleton} (${2:argument}) {\n\t\t// the cached instance\n\t\tvar instance;\n\n\t\t// rewrite the constructor\n\t\t$1 = function $1($2) {\n\t\t\treturn instance;\n\t\t};\n\t\t\n\t\t// carry over the prototype properties\n\t\t$1.prototype = this;\n\n\t\t// the instance\n\t\tinstance = new $1();\n\n\t\t// reset the constructor pointer\n\t\tinstance.constructor = $1;\n\n\t\t${3:// code ...}\n\n\t\treturn instance;\n\t}\n# class\nsnippet class\nregex /^\\s*/clas{0,2}/\n\tvar ${1:class} = function(${20}) {\n\t\t$40$0\n\t};\n\t\n\t(function() {\n\t\t${60:this.prop = \"\"}\n\t}).call(${1:class}.prototype);\n\t\n\texports.${1:class} = ${1:class};\n# \nsnippet for-\n\tfor (var ${1:i} = ${2:Things}.length; ${1:i}--; ) {\n\t\t${0:${2:Things}[${1:i}];}\n\t}\n# for (...) {...}\nsnippet for\n\tfor (var ${1:i} = 0; $1 < ${2:Things}.length; $1++) {\n\t\t${3:$2[$1]}$0\n\t}\n# for (...) {...} (Improved Native For-Loop)\nsnippet forr\n\tfor (var ${1:i} = ${2:Things}.length - 1; $1 >= 0; $1--) {\n\t\t${3:$2[$1]}$0\n\t}\n\n\n#modules\nsnippet def\n\tdefine(function(require, exports, module) {\n\t\"use strict\";\n\tvar ${1/.*\\///} = require(\"${1}\");\n\t\n\t$TM_SELECTED_TEXT\n\t});\nsnippet req\nguard ^\\s*\n\tvar ${1/.*\\///} = require(\"${1}\");\n\t$0\nsnippet requ\nguard ^\\s*\n\tvar ${1/.*\\/(.)/\\u$1/} = require(\"${1}\").${1/.*\\/(.)/\\u$1/};\n\t$0\n";
+
+});
+
+define("ace/snippets/javascript",["require","exports","module","ace/snippets/javascript.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./javascript.snippets");
+exports.scope = "javascript";
+
+});
+
+define("ace/snippets/jsp.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet @page\n\t<%@page contentType=\"text/html\" pageEncoding=\"UTF-8\"%>\nsnippet jstl\n\t<%@ taglib uri=\"http://java.sun.com/jsp/jstl/core\" prefix=\"c\" %>\n\t<%@ taglib uri=\"http://java.sun.com/jsp/jstl/functions\" prefix=\"fn\" %>\nsnippet jstl:c\n\t<%@ taglib uri=\"http://java.sun.com/jsp/jstl/core\" prefix=\"c\" %>\nsnippet jstl:fn\n\t<%@ taglib uri=\"http://java.sun.com/jsp/jstl/functions\" prefix=\"fn\" %>\nsnippet cpath\n\t${pageContext.request.contextPath}\nsnippet cout\n\t<c:out value=\"${1}\" default=\"${2}\" />\nsnippet cset\n\t<c:set var=\"${1}\" value=\"${2}\" />\nsnippet cremove\n\t<c:remove var=\"${1}\" scope=\"${2:page}\" />\nsnippet ccatch\n\t<c:catch var=\"${1}\" />\nsnippet cif\n\t<c:if test=\"${${1}}\">\n\t\t${2}\n\t</c:if>\nsnippet cchoose\n\t<c:choose>\n\t\t${1}\n\t</c:choose>\nsnippet cwhen\n\t<c:when test=\"${${1}}\">\n\t\t${2}\n\t</c:when>\nsnippet cother\n\t<c:otherwise>\n\t\t${1}\n\t</c:otherwise>\nsnippet cfore\n\t<c:forEach items=\"${${1}}\" var=\"${2}\" varStatus=\"${3}\">\n\t\t${4:<c:out value=\"$2\" />}\n\t</c:forEach>\nsnippet cfort\n\t<c:set var=\"${1}\">${2:item1,item2,item3}</c:set>\n\t<c:forTokens var=\"${3}\" items=\"${$1}\" delims=\"${4:,}\">\n\t\t${5:<c:out value=\"$3\" />}\n\t</c:forTokens>\nsnippet cparam\n\t<c:param name=\"${1}\" value=\"${2}\" />\nsnippet cparam+\n\t<c:param name=\"${1}\" value=\"${2}\" />\n\tcparam+${3}\nsnippet cimport\n\t<c:import url=\"${1}\" />\nsnippet cimport+\n\t<c:import url=\"${1}\">\n\t\t<c:param name=\"${2}\" value=\"${3}\" />\n\t\tcparam+${4}\n\t</c:import>\nsnippet curl\n\t<c:url value=\"${1}\" var=\"${2}\" />\n\t<a href=\"${$2}\">${3}</a>\nsnippet curl+\n\t<c:url value=\"${1}\" var=\"${2}\">\n\t\t<c:param name=\"${4}\" value=\"${5}\" />\n\t\tcparam+${6}\n\t</c:url>\n\t<a href=\"${$2}\">${3}</a>\nsnippet credirect\n\t<c:redirect url=\"${1}\" />\nsnippet contains\n\t${fn:contains(${1:string}, ${2:substr})}\nsnippet contains:i\n\t${fn:containsIgnoreCase(${1:string}, ${2:substr})}\nsnippet endswith\n\t${fn:endsWith(${1:string}, ${2:suffix})}\nsnippet escape\n\t${fn:escapeXml(${1:string})}\nsnippet indexof\n\t${fn:indexOf(${1:string}, ${2:substr})}\nsnippet join\n\t${fn:join(${1:collection}, ${2:delims})}\nsnippet length\n\t${fn:length(${1:collection_or_string})}\nsnippet replace\n\t${fn:replace(${1:string}, ${2:substr}, ${3:replace})}\nsnippet split\n\t${fn:split(${1:string}, ${2:delims})}\nsnippet startswith\n\t${fn:startsWith(${1:string}, ${2:prefix})}\nsnippet substr\n\t${fn:substring(${1:string}, ${2:begin}, ${3:end})}\nsnippet substr:a\n\t${fn:substringAfter(${1:string}, ${2:substr})}\nsnippet substr:b\n\t${fn:substringBefore(${1:string}, ${2:substr})}\nsnippet lc\n\t${fn:toLowerCase(${1:string})}\nsnippet uc\n\t${fn:toUpperCase(${1:string})}\nsnippet trim\n\t${fn:trim(${1:string})}\n";
+
+});
+
+define("ace/snippets/jsp",["require","exports","module","ace/snippets/jsp.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./jsp.snippets");
+exports.scope = "jsp";
+
+});
+
+define("ace/snippets/liquid.snippets",["require","exports","module"], function(require, exports, module){module.exports = "\n# liquid specific snippets\nsnippet ife\n\t{% if ${1:condition} %}\n\n\t{% else %}\n\n\t{% endif %}\nsnippet if\n\t{% if ${1:condition} %}\n\t\t\n\t{% endif %}\nsnippet for\n\t{% for in ${1:iterator} %}\n\n\t{% endfor %}\nsnippet capture\n\t{% capture ${1} %}\n\n\t{% endcapture %}\nsnippet comment\n\t{% comment %}\n\t  ${1:comment}\n\t{% endcomment %}\n\n# Include html.snippets\n# Some useful Unicode entities\n# Non-Breaking Space\nsnippet nbs\n\t&nbsp;\n# \u2190\nsnippet left\n\t&#x2190;\n# \u2192\nsnippet right\n\t&#x2192;\n# \u2191\nsnippet up\n\t&#x2191;\n# \u2193\nsnippet down\n\t&#x2193;\n# \u21A9\nsnippet return\n\t&#x21A9;\n# \u21E4\nsnippet backtab\n\t&#x21E4;\n# \u21E5\nsnippet tab\n\t&#x21E5;\n# \u21E7\nsnippet shift\n\t&#x21E7;\n# \u2303\nsnippet ctrl\n\t&#x2303;\n# \u2305\nsnippet enter\n\t&#x2305;\n# \u2318\nsnippet cmd\n\t&#x2318;\n# \u2325\nsnippet option\n\t&#x2325;\n# \u2326\nsnippet delete\n\t&#x2326;\n# \u232B\nsnippet backspace\n\t&#x232B;\n# \u238B\nsnippet esc\n\t&#x238B;\n# Generic Doctype\nsnippet doctype HTML 4.01 Strict\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\t\"http://www.w3.org/TR/html4/strict.dtd\">\nsnippet doctype HTML 4.01 Transitional\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\t\"http://www.w3.org/TR/html4/loose.dtd\">\nsnippet doctype HTML 5\n\t<!DOCTYPE HTML>\nsnippet doctype XHTML 1.0 Frameset\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\nsnippet doctype XHTML 1.0 Strict\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\nsnippet doctype XHTML 1.0 Transitional\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\nsnippet doctype XHTML 1.1\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\t\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n# HTML Doctype 4.01 Strict\nsnippet docts\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\t\"http://www.w3.org/TR/html4/strict.dtd\">\n# HTML Doctype 4.01 Transitional\nsnippet doct\n\t<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\t\"http://www.w3.org/TR/html4/loose.dtd\">\n# HTML Doctype 5\nsnippet doct5\n\t<!DOCTYPE html>\n# XHTML Doctype 1.0 Frameset\nsnippet docxf\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n# XHTML Doctype 1.0 Strict\nsnippet docxs\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n# XHTML Doctype 1.0 Transitional\nsnippet docxt\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\t\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n# XHTML Doctype 1.1\nsnippet docx\n\t<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\t\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n# html5shiv\nsnippet html5shiv\n\t<!--[if lte IE 8]>\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js\"></script>\n\t<![endif]-->\nsnippet html5printshiv\n\t<!--[if lte IE 8]>\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js\"></script>\n\t<![endif]-->\n# Attributes\nsnippet attr\n\t${1:attribute}=\"${2:property}\"\nsnippet attr+\n\t${1:attribute}=\"${2:property}\" attr+${3}\nsnippet .\n\tclass=\"${1}\"${2}\nsnippet #\n\tid=\"${1}\"${2}\nsnippet alt\n\talt=\"${1}\"${2}\nsnippet charset\n\tcharset=\"${1:utf-8}\"${2}\nsnippet data\n\tdata-${1}=\"${2:$1}\"${3}\nsnippet for\n\tfor=\"${1}\"${2}\nsnippet height\n\theight=\"${1}\"${2}\nsnippet href\n\thref=\"${1:#}\"${2}\nsnippet lang\n\tlang=\"${1:en}\"${2}\nsnippet media\n\tmedia=\"${1}\"${2}\nsnippet name\n\tname=\"${1}\"${2}\nsnippet rel\n\trel=\"${1}\"${2}\nsnippet scope\n\tscope=\"${1:row}\"${2}\nsnippet src\n\tsrc=\"${1}\"${2}\nsnippet title=\n\ttitle=\"${1}\"${2}\nsnippet type\n\ttype=\"${1}\"${2}\nsnippet value\n\tvalue=\"${1}\"${2}\nsnippet width\n\twidth=\"${1}\"${2}\n# Elements\nsnippet a\n\t<a href=\"${1:#}\">${2:$1}</a>\nsnippet a.\n\t<a class=\"${1}\" href=\"${2:#}\">${3:$1}</a>\nsnippet a#\n\t<a id=\"${1}\" href=\"${2:#}\">${3:$1}</a>\nsnippet a:ext\n\t<a href=\"http://${1:example.com}\">${2:$1}</a>\nsnippet a:mail\n\t<a href=\"mailto:${1:joe@example.com}?subject=${2:feedback}\">${3:email me}</a>\nsnippet abbr\n\t<abbr title=\"${1}\">${2}</abbr>\nsnippet address\n\t<address>\n\t\t${1}\n\t</address>\nsnippet area\n\t<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\nsnippet area+\n\t<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\n\tarea+${5}\nsnippet area:c\n\t<area shape=\"circle\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:d\n\t<area shape=\"default\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:p\n\t<area shape=\"poly\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet area:r\n\t<area shape=\"rect\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\nsnippet article\n\t<article>\n\t\t${1}\n\t</article>\nsnippet article.\n\t<article class=\"${1}\">\n\t\t${2}\n\t</article>\nsnippet article#\n\t<article id=\"${1}\">\n\t\t${2}\n\t</article>\nsnippet aside\n\t<aside>\n\t\t${1}\n\t</aside>\nsnippet aside.\n\t<aside class=\"${1}\">\n\t\t${2}\n\t</aside>\nsnippet aside#\n\t<aside id=\"${1}\">\n\t\t${2}\n\t</aside>\nsnippet audio\n\t<audio src=\"${1}>${2}</audio>\nsnippet b\n\t<b>${1}</b>\nsnippet base\n\t<base href=\"${1}\" target=\"${2}\" />\nsnippet bdi\n\t<bdi>${1}</bdo>\nsnippet bdo\n\t<bdo dir=\"${1}\">${2}</bdo>\nsnippet bdo:l\n\t<bdo dir=\"ltr\">${1}</bdo>\nsnippet bdo:r\n\t<bdo dir=\"rtl\">${1}</bdo>\nsnippet blockquote\n\t<blockquote>\n\t\t${1}\n\t</blockquote>\nsnippet body\n\t<body>\n\t\t${1}\n\t</body>\nsnippet br\n\t<br />${1}\nsnippet button\n\t<button type=\"${1:submit}\">${2}</button>\nsnippet button.\n\t<button class=\"${1:button}\" type=\"${2:submit}\">${3}</button>\nsnippet button#\n\t<button id=\"${1}\" type=\"${2:submit}\">${3}</button>\nsnippet button:s\n\t<button type=\"submit\">${1}</button>\nsnippet button:r\n\t<button type=\"reset\">${1}</button>\nsnippet canvas\n\t<canvas>\n\t\t${1}\n\t</canvas>\nsnippet caption\n\t<caption>${1}</caption>\nsnippet cite\n\t<cite>${1}</cite>\nsnippet code\n\t<code>${1}</code>\nsnippet col\n\t<col />${1}\nsnippet col+\n\t<col />\n\tcol+${1}\nsnippet colgroup\n\t<colgroup>\n\t\t${1}\n\t</colgroup>\nsnippet colgroup+\n\t<colgroup>\n\t\t<col />\n\t\tcol+${1}\n\t</colgroup>\nsnippet command\n\t<command type=\"command\" label=\"${1}\" icon=\"${2}\" />\nsnippet command:c\n\t<command type=\"checkbox\" label=\"${1}\" icon=\"${2}\" />\nsnippet command:r\n\t<command type=\"radio\" radiogroup=\"${1}\" label=\"${2}\" icon=\"${3}\" />\nsnippet datagrid\n\t<datagrid>\n\t\t${1}\n\t</datagrid>\nsnippet datalist\n\t<datalist>\n\t\t${1}\n\t</datalist>\nsnippet datatemplate\n\t<datatemplate>\n\t\t${1}\n\t</datatemplate>\nsnippet dd\n\t<dd>${1}</dd>\nsnippet dd.\n\t<dd class=\"${1}\">${2}</dd>\nsnippet dd#\n\t<dd id=\"${1}\">${2}</dd>\nsnippet del\n\t<del>${1}</del>\nsnippet details\n\t<details>${1}</details>\nsnippet dfn\n\t<dfn>${1}</dfn>\nsnippet dialog\n\t<dialog>\n\t\t${1}\n\t</dialog>\nsnippet div\n\t<div>\n\t\t${1}\n\t</div>\nsnippet div.\n\t<div class=\"${1}\">\n\t\t${2}\n\t</div>\nsnippet div#\n\t<div id=\"${1}\">\n\t\t${2}\n\t</div>\nsnippet dl\n\t<dl>\n\t\t${1}\n\t</dl>\nsnippet dl.\n\t<dl class=\"${1}\">\n\t\t${2}\n\t</dl>\nsnippet dl#\n\t<dl id=\"${1}\">\n\t\t${2}\n\t</dl>\nsnippet dl+\n\t<dl>\n\t\t<dt>${1}</dt>\n\t\t<dd>${2}</dd>\n\t\tdt+${3}\n\t</dl>\nsnippet dt\n\t<dt>${1}</dt>\nsnippet dt.\n\t<dt class=\"${1}\">${2}</dt>\nsnippet dt#\n\t<dt id=\"${1}\">${2}</dt>\nsnippet dt+\n\t<dt>${1}</dt>\n\t<dd>${2}</dd>\n\tdt+${3}\nsnippet em\n\t<em>${1}</em>\nsnippet embed\n\t<embed src=${1} type=\"${2} />\nsnippet fieldset\n\t<fieldset>\n\t\t${1}\n\t</fieldset>\nsnippet fieldset.\n\t<fieldset class=\"${1}\">\n\t\t${2}\n\t</fieldset>\nsnippet fieldset#\n\t<fieldset id=\"${1}\">\n\t\t${2}\n\t</fieldset>\nsnippet fieldset+\n\t<fieldset>\n\t\t<legend><span>${1}</span></legend>\n\t\t${2}\n\t</fieldset>\n\tfieldset+${3}\nsnippet figcaption\n\t<figcaption>${1}</figcaption>\nsnippet figure\n\t<figure>${1}</figure>\nsnippet footer\n\t<footer>\n\t\t${1}\n\t</footer>\nsnippet footer.\n\t<footer class=\"${1}\">\n\t\t${2}\n\t</footer>\nsnippet footer#\n\t<footer id=\"${1}\">\n\t\t${2}\n\t</footer>\nsnippet form\n\t<form action=\"${1}\" method=\"${2:get}\" accept-charset=\"utf-8\">\n\t\t${3}\n\t</form>\nsnippet form.\n\t<form class=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\t\t${4}\n\t</form>\nsnippet form#\n\t<form id=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\t\t${4}\n\t</form>\nsnippet h1\n\t<h1>${1}</h1>\nsnippet h1.\n\t<h1 class=\"${1}\">${2}</h1>\nsnippet h1#\n\t<h1 id=\"${1}\">${2}</h1>\nsnippet h2\n\t<h2>${1}</h2>\nsnippet h2.\n\t<h2 class=\"${1}\">${2}</h2>\nsnippet h2#\n\t<h2 id=\"${1}\">${2}</h2>\nsnippet h3\n\t<h3>${1}</h3>\nsnippet h3.\n\t<h3 class=\"${1}\">${2}</h3>\nsnippet h3#\n\t<h3 id=\"${1}\">${2}</h3>\nsnippet h4\n\t<h4>${1}</h4>\nsnippet h4.\n\t<h4 class=\"${1}\">${2}</h4>\nsnippet h4#\n\t<h4 id=\"${1}\">${2}</h4>\nsnippet h5\n\t<h5>${1}</h5>\nsnippet h5.\n\t<h5 class=\"${1}\">${2}</h5>\nsnippet h5#\n\t<h5 id=\"${1}\">${2}</h5>\nsnippet h6\n\t<h6>${1}</h6>\nsnippet h6.\n\t<h6 class=\"${1}\">${2}</h6>\nsnippet h6#\n\t<h6 id=\"${1}\">${2}</h6>\nsnippet head\n\t<head>\n\t\t<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\n\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t${2}\n\t</head>\nsnippet header\n\t<header>\n\t\t${1}\n\t</header>\nsnippet header.\n\t<header class=\"${1}\">\n\t\t${2}\n\t</header>\nsnippet header#\n\t<header id=\"${1}\">\n\t\t${2}\n\t</header>\nsnippet hgroup\n\t<hgroup>\n\t\t${1}\n\t</hgroup>\nsnippet hgroup.\n\t<hgroup class=\"${1}>\n\t\t${2}\n\t</hgroup>\nsnippet hr\n\t<hr />${1}\nsnippet html\n\t<html>\n\t${1}\n\t</html>\nsnippet xhtml\n\t<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\t${1}\n\t</html>\nsnippet html5\n\t<!DOCTYPE html>\n\t<html>\n\t\t<head>\n\t\t\t<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\t\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t\t${2:meta}\n\t\t</head>\n\t\t<body>\n\t\t\t${3:body}\n\t\t</body>\n\t</html>\nsnippet xhtml5\n\t<!DOCTYPE html>\n\t<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\t\t<head>\n\t\t\t<meta http-equiv=\"content-type\" content=\"application/xhtml+xml; charset=utf-8\" />\n\t\t\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\t\t\t${2:meta}\n\t\t</head>\n\t\t<body>\n\t\t\t${3:body}\n\t\t</body>\n\t</html>\nsnippet i\n\t<i>${1}</i>\nsnippet iframe\n\t<iframe src=\"${1}\" frameborder=\"0\"></iframe>${2}\nsnippet iframe.\n\t<iframe class=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\nsnippet iframe#\n\t<iframe id=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\nsnippet img\n\t<img src=\"${1}\" alt=\"${2}\" />${3}\nsnippet img.\n\t<img class=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\nsnippet img#\n\t<img id=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\nsnippet input\n\t<input type=\"${1:text/submit/hidden/button/image}\" name=\"${2}\" id=\"${3:$2}\" value=\"${4}\" />${5}\nsnippet input.\n\t<input class=\"${1}\" type=\"${2:text/submit/hidden/button/image}\" name=\"${3}\" id=\"${4:$3}\" value=\"${5}\" />${6}\nsnippet input:text\n\t<input type=\"text\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:submit\n\t<input type=\"submit\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:hidden\n\t<input type=\"hidden\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:button\n\t<input type=\"button\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:image\n\t<input type=\"image\" name=\"${1}\" id=\"${2:$1}\" src=\"${3}\" alt=\"${4}\" />${5}\nsnippet input:checkbox\n\t<input type=\"checkbox\" name=\"${1}\" id=\"${2:$1}\" />${3}\nsnippet input:radio\n\t<input type=\"radio\" name=\"${1}\" id=\"${2:$1}\" />${3}\nsnippet input:color\n\t<input type=\"color\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:date\n\t<input type=\"date\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:datetime\n\t<input type=\"datetime\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:datetime-local\n\t<input type=\"datetime-local\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:email\n\t<input type=\"email\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:file\n\t<input type=\"file\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:month\n\t<input type=\"month\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:number\n\t<input type=\"number\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:password\n\t<input type=\"password\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:range\n\t<input type=\"range\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:reset\n\t<input type=\"reset\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:search\n\t<input type=\"search\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:time\n\t<input type=\"time\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:url\n\t<input type=\"url\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet input:week\n\t<input type=\"week\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\nsnippet ins\n\t<ins>${1}</ins>\nsnippet kbd\n\t<kbd>${1}</kbd>\nsnippet keygen\n\t<keygen>${1}</keygen>\nsnippet label\n\t<label for=\"${2:$1}\">${1}</label>\nsnippet label:i\n\t<label for=\"${2:$1}\">${1}</label>\n\t<input type=\"${3:text/submit/hidden/button}\" name=\"${4:$2}\" id=\"${5:$2}\" value=\"${6}\" />${7}\nsnippet label:s\n\t<label for=\"${2:$1}\">${1}</label>\n\t<select name=\"${3:$2}\" id=\"${4:$2}\">\n\t\t<option value=\"${5}\">${6:$5}</option>\n\t</select>\nsnippet legend\n\t<legend>${1}</legend>\nsnippet legend+\n\t<legend><span>${1}</span></legend>\nsnippet li\n\t<li>${1}</li>\nsnippet li.\n\t<li class=\"${1}\">${2}</li>\nsnippet li+\n\t<li>${1}</li>\n\tli+${2}\nsnippet lia\n\t<li><a href=\"${2:#}\">${1}</a></li>\nsnippet lia+\n\t<li><a href=\"${2:#}\">${1}</a></li>\n\tlia+${3}\nsnippet link\n\t<link rel=\"${1}\" href=\"${2}\" title=\"${3}\" type=\"${4}\" />${5}\nsnippet link:atom\n\t<link rel=\"alternate\" href=\"${1:atom.xml}\" title=\"Atom\" type=\"application/atom+xml\" />${2}\nsnippet link:css\n\t<link rel=\"stylesheet\" href=\"${2:style.css}\" type=\"text/css\" media=\"${3:all}\" />${4}\nsnippet link:favicon\n\t<link rel=\"shortcut icon\" href=\"${1:favicon.ico}\" type=\"image/x-icon\" />${2}\nsnippet link:rss\n\t<link rel=\"alternate\" href=\"${1:rss.xml}\" title=\"RSS\" type=\"application/atom+xml\" />${2}\nsnippet link:touch\n\t<link rel=\"apple-touch-icon\" href=\"${1:favicon.png}\" />${2}\nsnippet map\n\t<map name=\"${1}\">\n\t\t${2}\n\t</map>\nsnippet map.\n\t<map class=\"${1}\" name=\"${2}\">\n\t\t${3}\n\t</map>\nsnippet map#\n\t<map name=\"${1}\" id=\"${2:$1}>\n\t\t${3}\n\t</map>\nsnippet map+\n\t<map name=\"${1}\">\n\t\t<area shape=\"${2}\" coords=\"${3}\" href=\"${4}\" alt=\"${5}\" />${6}\n\t</map>${7}\nsnippet mark\n\t<mark>${1}</mark>\nsnippet menu\n\t<menu>\n\t\t${1}\n\t</menu>\nsnippet menu:c\n\t<menu type=\"context\">\n\t\t${1}\n\t</menu>\nsnippet menu:t\n\t<menu type=\"toolbar\">\n\t\t${1}\n\t</menu>\nsnippet meta\n\t<meta http-equiv=\"${1}\" content=\"${2}\" />${3}\nsnippet meta:compat\n\t<meta http-equiv=\"X-UA-Compatible\" content=\"IE=${1:7,8,edge}\" />${3}\nsnippet meta:refresh\n\t<meta http-equiv=\"refresh\" content=\"text/html;charset=UTF-8\" />${3}\nsnippet meta:utf\n\t<meta http-equiv=\"content-type\" content=\"text/html;charset=UTF-8\" />${3}\nsnippet meter\n\t<meter>${1}</meter>\nsnippet nav\n\t<nav>\n\t\t${1}\n\t</nav>\nsnippet nav.\n\t<nav class=\"${1}\">\n\t\t${2}\n\t</nav>\nsnippet nav#\n\t<nav id=\"${1}\">\n\t\t${2}\n\t</nav>\nsnippet noscript\n\t<noscript>\n\t\t${1}\n\t</noscript>\nsnippet object\n\t<object data=\"${1}\" type=\"${2}\">\n\t\t${3}\n\t</object>${4}\n# Embed QT Movie\nsnippet movie\n\t<object width=\"$2\" height=\"$3\" classid=\"clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B\"\n\t codebase=\"http://www.apple.com/qtactivex/qtplugin.cab\">\n\t\t<param name=\"src\" value=\"$1\" />\n\t\t<param name=\"controller\" value=\"$4\" />\n\t\t<param name=\"autoplay\" value=\"$5\" />\n\t\t<embed src=\"${1:movie.mov}\"\n\t\t\twidth=\"${2:320}\" height=\"${3:240}\"\n\t\t\tcontroller=\"${4:true}\" autoplay=\"${5:true}\"\n\t\t\tscale=\"tofit\" cache=\"true\"\n\t\t\tpluginspage=\"http://www.apple.com/quicktime/download/\" />\n\t</object>${6}\nsnippet ol\n\t<ol>\n\t\t${1}\n\t</ol>\nsnippet ol.\n\t<ol class=\"${1}>\n\t\t${2}\n\t</ol>\nsnippet ol#\n\t<ol id=\"${1}>\n\t\t${2}\n\t</ol>\nsnippet ol+\n\t<ol>\n\t\t<li>${1}</li>\n\t\tli+${2}\n\t</ol>\nsnippet opt\n\t<option value=\"${1}\">${2:$1}</option>\nsnippet opt+\n\t<option value=\"${1}\">${2:$1}</option>\n\topt+${3}\nsnippet optt\n\t<option>${1}</option>\nsnippet optgroup\n\t<optgroup>\n\t\t<option value=\"${1}\">${2:$1}</option>\n\t\topt+${3}\n\t</optgroup>\nsnippet output\n\t<output>${1}</output>\nsnippet p\n\t<p>${1}</p>\nsnippet param\n\t<param name=\"${1}\" value=\"${2}\" />${3}\nsnippet pre\n\t<pre>\n\t\t${1}\n\t</pre>\nsnippet progress\n\t<progress>${1}</progress>\nsnippet q\n\t<q>${1}</q>\nsnippet rp\n\t<rp>${1}</rp>\nsnippet rt\n\t<rt>${1}</rt>\nsnippet ruby\n\t<ruby>\n\t\t<rp><rt>${1}</rt></rp>\n\t</ruby>\nsnippet s\n\t<s>${1}</s>\nsnippet samp\n\t<samp>\n\t\t${1}\n\t</samp>\nsnippet script\n\t<script type=\"text/javascript\" charset=\"utf-8\">\n\t\t${1}\n\t</script>\nsnippet scriptsrc\n\t<script src=\"${1}.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\nsnippet newscript\n\t<script type=\"application/javascript\" charset=\"utf-8\">\n\t\t${1}\n\t</script>\nsnippet newscriptsrc\n\t<script src=\"${1}.js\" type=\"application/javascript\" charset=\"utf-8\"></script>\nsnippet section\n\t<section>\n\t\t${1}\n\t</section>\nsnippet section.\n\t<section class=\"${1}\">\n\t\t${2}\n\t</section>\nsnippet section#\n\t<section id=\"${1}\">\n\t\t${2}\n\t</section>\nsnippet select\n\t<select name=\"${1}\" id=\"${2:$1}\">\n\t\t${3}\n\t</select>\nsnippet select.\n\t<select name=\"${1}\" id=\"${2:$1}\" class=\"${3}>\n\t\t${4}\n\t</select>\nsnippet select+\n\t<select name=\"${1}\" id=\"${2:$1}\">\n\t\t<option value=\"${3}\">${4:$3}</option>\n\t\topt+${5}\n\t</select>\nsnippet small\n\t<small>${1}</small>\nsnippet source\n\t<source src=\"${1}\" type=\"${2}\" media=\"${3}\" />\nsnippet span\n\t<span>${1}</span>\nsnippet strong\n\t<strong>${1}</strong>\nsnippet style\n\t<style type=\"text/css\" media=\"${1:all}\">\n\t\t${2}\n\t</style>\nsnippet sub\n\t<sub>${1}</sub>\nsnippet summary\n\t<summary>\n\t\t${1}\n\t</summary>\nsnippet sup\n\t<sup>${1}</sup>\nsnippet table\n\t<table border=\"${1:0}\">\n\t\t${2}\n\t</table>\nsnippet table.\n\t<table class=\"${1}\" border=\"${2:0}\">\n\t\t${3}\n\t</table>\nsnippet table#\n\t<table id=\"${1}\" border=\"${2:0}\">\n\t\t${3}\n\t</table>\nsnippet tbody\n\t<tbody>\n\t\t${1}\n\t</tbody>\nsnippet td\n\t<td>${1}</td>\nsnippet td.\n\t<td class=\"${1}\">${2}</td>\nsnippet td#\n\t<td id=\"${1}\">${2}</td>\nsnippet td+\n\t<td>${1}</td>\n\ttd+${2}\nsnippet textarea\n\t<textarea name=\"${1}\" id=${2:$1} rows=\"${3:8}\" cols=\"${4:40}\">${5}</textarea>${6}\nsnippet tfoot\n\t<tfoot>\n\t\t${1}\n\t</tfoot>\nsnippet th\n\t<th>${1}</th>\nsnippet th.\n\t<th class=\"${1}\">${2}</th>\nsnippet th#\n\t<th id=\"${1}\">${2}</th>\nsnippet th+\n\t<th>${1}</th>\n\tth+${2}\nsnippet thead\n\t<thead>\n\t\t${1}\n\t</thead>\nsnippet time\n\t<time datetime=\"${1}\" pubdate=\"${2:$1}>${3:$1}</time>\nsnippet title\n\t<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\nsnippet tr\n\t<tr>\n\t\t${1}\n\t</tr>\nsnippet tr+\n\t<tr>\n\t\t<td>${1}</td>\n\t\ttd+${2}\n\t</tr>\nsnippet track\n\t<track src=\"${1}\" srclang=\"${2}\" label=\"${3}\" default=\"${4:default}>${5}</track>${6}\nsnippet ul\n\t<ul>\n\t\t${1}\n\t</ul>\nsnippet ul.\n\t<ul class=\"${1}\">\n\t\t${2}\n\t</ul>\nsnippet ul#\n\t<ul id=\"${1}\">\n\t\t${2}\n\t</ul>\nsnippet ul+\n\t<ul>\n\t\t<li>${1}</li>\n\t\tli+${2}\n\t</ul>\nsnippet var\n\t<var>${1}</var>\nsnippet video\n\t<video src=\"${1} height=\"${2}\" width=\"${3}\" preload=\"${5:none}\" autoplay=\"${6:autoplay}>${7}</video>${8}\nsnippet wbr\n\t<wbr />${1}\n";
+
+});
+
+define("ace/snippets/liquid",["require","exports","module","ace/snippets/liquid.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./liquid.snippets");
+exports.scope = "liquid";
+
+});
+
+define("ace/snippets/lsl.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet @\n\t@${1:label};\nsnippet CAMERA_ACTIVE\n\tCAMERA_ACTIVE, ${1:integer isActive}, $0\nsnippet CAMERA_BEHINDNESS_ANGLE\n\tCAMERA_BEHINDNESS_ANGLE, ${1:float degrees}, $0\nsnippet CAMERA_BEHINDNESS_LAG\n\tCAMERA_BEHINDNESS_LAG, ${1:float seconds}, $0\nsnippet CAMERA_DISTANCE\n\tCAMERA_DISTANCE, ${1:float meters}, $0\nsnippet CAMERA_FOCUS\n\tCAMERA_FOCUS, ${1:vector position}, $0\nsnippet CAMERA_FOCUS_LAG\n\tCAMERA_FOCUS_LAG, ${1:float seconds}, $0\nsnippet CAMERA_FOCUS_LOCKED\n\tCAMERA_FOCUS_LOCKED, ${1:integer isLocked}, $0\nsnippet CAMERA_FOCUS_OFFSET\n\tCAMERA_FOCUS_OFFSET, ${1:vector meters}, $0\nsnippet CAMERA_FOCUS_THRESHOLD\n\tCAMERA_FOCUS_THRESHOLD, ${1:float meters}, $0\nsnippet CAMERA_PITCH\n\tCAMERA_PITCH, ${1:float degrees}, $0\nsnippet CAMERA_POSITION\n\tCAMERA_POSITION, ${1:vector position}, $0\nsnippet CAMERA_POSITION_LAG\n\tCAMERA_POSITION_LAG, ${1:float seconds}, $0\nsnippet CAMERA_POSITION_LOCKED\n\tCAMERA_POSITION_LOCKED, ${1:integer isLocked}, $0\nsnippet CAMERA_POSITION_THRESHOLD\n\tCAMERA_POSITION_THRESHOLD, ${1:float meters}, $0\nsnippet CHARACTER_AVOIDANCE_MODE\n\tCHARACTER_AVOIDANCE_MODE, ${1:integer flags}, $0\nsnippet CHARACTER_DESIRED_SPEED\n\tCHARACTER_DESIRED_SPEED, ${1:float speed}, $0\nsnippet CHARACTER_DESIRED_TURN_SPEED\n\tCHARACTER_DESIRED_TURN_SPEED, ${1:float speed}, $0\nsnippet CHARACTER_LENGTH\n\tCHARACTER_LENGTH, ${1:float length}, $0\nsnippet CHARACTER_MAX_TURN_RADIUS\n\tCHARACTER_MAX_TURN_RADIUS, ${1:float radius}, $0\nsnippet CHARACTER_ORIENTATION\n\tCHARACTER_ORIENTATION, ${1:integer orientation}, $0\nsnippet CHARACTER_RADIUS\n\tCHARACTER_RADIUS, ${1:float radius}, $0\nsnippet CHARACTER_STAY_WITHIN_PARCEL\n\tCHARACTER_STAY_WITHIN_PARCEL, ${1:boolean stay}, $0\nsnippet CHARACTER_TYPE\n\tCHARACTER_TYPE, ${1:integer type}, $0\nsnippet HTTP_BODY_MAXLENGTH\n\tHTTP_BODY_MAXLENGTH, ${1:integer length}, $0\nsnippet HTTP_CUSTOM_HEADER\n\tHTTP_CUSTOM_HEADER, ${1:string name}, ${2:string value}, $0\nsnippet HTTP_METHOD\n\tHTTP_METHOD, ${1:string method}, $0\nsnippet HTTP_MIMETYPE\n\tHTTP_MIMETYPE, ${1:string mimeType}, $0\nsnippet HTTP_PRAGMA_NO_CACHE\n\tHTTP_PRAGMA_NO_CACHE, ${1:integer send_header}, $0\nsnippet HTTP_VERBOSE_THROTTLE\n\tHTTP_VERBOSE_THROTTLE, ${1:integer noisy}, $0\nsnippet HTTP_VERIFY_CERT\n\tHTTP_VERIFY_CERT, ${1:integer verify}, $0\nsnippet RC_DATA_FLAGS\n\tRC_DATA_FLAGS, ${1:integer flags}, $0\nsnippet RC_DETECT_PHANTOM\n\tRC_DETECT_PHANTOM, ${1:integer dectedPhantom}, $0\nsnippet RC_MAX_HITS\n\tRC_MAX_HITS, ${1:integer maxHits}, $0\nsnippet RC_REJECT_TYPES\n\tRC_REJECT_TYPES, ${1:integer filterMask}, $0\nsnippet at_rot_target\n\tat_rot_target(${1:integer handle}, ${2:rotation targetrot}, ${3:rotation ourrot})\n\t{\n\t\t$0\n\t}\nsnippet at_target\n\tat_target(${1:integer tnum}, ${2:vector targetpos}, ${3:vector ourpos})\n\t{\n\t\t$0\n\t}\nsnippet attach\n\tattach(${1:key id})\n\t{\n\t\t$0\n\t}\nsnippet changed\n\tchanged(${1:integer change})\n\t{\n\t\t$0\n\t}\nsnippet collision\n\tcollision(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet collision_end\n\tcollision_end(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet collision_start\n\tcollision_start(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet control\n\tcontrol(${1:key id}, ${2:integer level}, ${3:integer edge})\n\t{\n\t\t$0\n\t}\nsnippet dataserver\n\tdataserver(${1:key query_id}, ${2:string data})\n\t{\n\t\t$0\n\t}\nsnippet do\n\tdo\n\t{\n\t\t$0\n\t}\n\twhile (${1:condition});\nsnippet else\n\telse\n\t{\n\t\t$0\n\t}\nsnippet email\n\temail(${1:string time}, ${2:string address}, ${3:string subject}, ${4:string message}, ${5:integer num_left})\n\t{\n\t\t$0\n\t}\nsnippet experience_permissions\n\texperience_permissions(${1:key agent_id})\n\t{\n\t\t$0\n\t}\nsnippet experience_permissions_denied\n\texperience_permissions_denied(${1:key agent_id}, ${2:integer reason})\n\t{\n\t\t$0\n\t}\nsnippet for\n\tfor (${1:start}; ${3:condition}; ${3:step})\n\t{\n\t\t$0\n\t}\nsnippet http_request\n\thttp_request(${1:key request_id}, ${2:string method}, ${3:string body})\n\t{\n\t\t$0\n\t}\nsnippet http_response\n\thttp_response(${1:key request_id}, ${2:integer status}, ${3:list metadata}, ${4:string body})\n\t{\n\t\t$0\n\t}\nsnippet if\n\tif (${1:condition})\n\t{\n\t\t$0\n\t}\nsnippet jump\n\tjump ${1:label};\nsnippet land_collision\n\tland_collision(${1:vector pos})\n\t{\n\t\t$0\n\t}\nsnippet land_collision_end\n\tland_collision_end(${1:vector pos})\n\t{\n\t\t$0\n\t}\nsnippet land_collision_start\n\tland_collision_start(${1:vector pos})\n\t{\n\t\t$0\n\t}\nsnippet link_message\n\tlink_message(${1:integer sender_num}, ${2:integer num}, ${3:string str}, ${4:key id})\n\t{\n\t\t$0\n\t}\nsnippet listen\n\tlisten(${1:integer channel}, ${2:string name}, ${3:key id}, ${4:string message})\n\t{\n\t\t$0\n\t}\nsnippet llAbs\n\tllAbs(${1:integer val})\nsnippet llAcos\n\tllAcos(${1:float val})\nsnippet llAddToLandBanList\n\tllAddToLandBanList(${1:key agent}, ${2:float hours});\n\t$0\nsnippet llAddToLandPassList\n\tllAddToLandPassList(${1:key agent}, ${2:float hours});\n\t$0\nsnippet llAdjustSoundVolume\n\tllAdjustSoundVolume(${1:float volume});\n\t$0\nsnippet llAgentInExperience\n\tllAgentInExperience(${1:key agent})\nsnippet llAllowInventoryDrop\n\tllAllowInventoryDrop(${1:integer add});\n\t$0\nsnippet llAngleBetween\n\tllAngleBetween(${1:rotation a}, ${2:rotation b})\nsnippet llApplyImpulse\n\tllApplyImpulse(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llApplyRotationalImpulse\n\tllApplyRotationalImpulse(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llAsin\n\tllAsin(${1:float val})\nsnippet llAtan2\n\tllAtan2(${1:float y}, ${2:float x})\nsnippet llAttachToAvatar\n\tllAttachToAvatar(${1:integer attach_point});\n\t$0\nsnippet llAttachToAvatarTemp\n\tllAttachToAvatarTemp(${1:integer attach_point});\n\t$0\nsnippet llAvatarOnLinkSitTarget\n\tllAvatarOnLinkSitTarget(${1:integer link})\nsnippet llAvatarOnSitTarget\n\tllAvatarOnSitTarget()\nsnippet llAxes2Rot\n\tllAxes2Rot(${1:vector fwd}, ${2:vector left}, ${3:vector up})\nsnippet llAxisAngle2Rot\n\tllAxisAngle2Rot(${1:vector axis}, ${2:float angle})\nsnippet llBase64ToInteger\n\tllBase64ToInteger(${1:string str})\nsnippet llBase64ToString\n\tllBase64ToString(${1:string str})\nsnippet llBreakAllLinks\n\tllBreakAllLinks();\n\t$0\nsnippet llBreakLink\n\tllBreakLink(${1:integer link});\n\t$0\nsnippet llCastRay\n\tllCastRay(${1:vector start}, ${2:vector end}, ${3:list options});\n\t$0\nsnippet llCeil\n\tllCeil(${1:float val})\nsnippet llClearCameraParams\n\tllClearCameraParams();\n\t$0\nsnippet llClearLinkMedia\n\tllClearLinkMedia(${1:integer link}, ${2:integer face});\n\t$0\nsnippet llClearPrimMedia\n\tllClearPrimMedia(${1:integer face});\n\t$0\nsnippet llCloseRemoteDataChannel\n\tllCloseRemoteDataChannel(${1:key channel});\n\t$0\nsnippet llCollisionFilter\n\tllCollisionFilter(${1:string name}, ${2:key id}, ${3:integer accept});\n\t$0\nsnippet llCollisionSound\n\tllCollisionSound(${1:string impact_sound}, ${2:float impact_volume});\n\t$0\nsnippet llCos\n\tllCos(${1:float theta})\nsnippet llCreateCharacter\n\tllCreateCharacter(${1:list options});\n\t$0\nsnippet llCreateKeyValue\n\tllCreateKeyValue(${1:string k})\nsnippet llCreateLink\n\tllCreateLink(${1:key target}, ${2:integer parent});\n\t$0\nsnippet llCSV2List\n\tllCSV2List(${1:string src})\nsnippet llDataSizeKeyValue\n\tllDataSizeKeyValue()\nsnippet llDeleteCharacter\n\tllDeleteCharacter();\n\t$0\nsnippet llDeleteKeyValue\n\tllDeleteKeyValue(${1:string k})\nsnippet llDeleteSubList\n\tllDeleteSubList(${1:list src}, ${2:integer start}, ${3:integer end})\nsnippet llDeleteSubString\n\tllDeleteSubString(${1:string src}, ${2:integer start}, ${3:integer end})\nsnippet llDetachFromAvatar\n\tllDetachFromAvatar();\n\t$0\nsnippet llDetectedGrab\n\tllDetectedGrab(${1:integer number})\nsnippet llDetectedGroup\n\tllDetectedGroup(${1:integer number})\nsnippet llDetectedKey\n\tllDetectedKey(${1:integer number})\nsnippet llDetectedLinkNumber\n\tllDetectedLinkNumber(${1:integer number})\nsnippet llDetectedName\n\tllDetectedName(${1:integer number})\nsnippet llDetectedOwner\n\tllDetectedOwner(${1:integer number})\nsnippet llDetectedPos\n\tllDetectedPosl(${1:integer number})\nsnippet llDetectedRot\n\tllDetectedRot(${1:integer number})\nsnippet llDetectedTouchBinormal\n\tllDetectedTouchBinormal(${1:integer number})\nsnippet llDetectedTouchFace\n\tllDetectedTouchFace(${1:integer number})\nsnippet llDetectedTouchNormal\n\tllDetectedTouchNormal(${1:integer number})\nsnippet llDetectedTouchPos\n\tllDetectedTouchPos(${1:integer number})\nsnippet llDetectedTouchST\n\tllDetectedTouchST(${1:integer number})\nsnippet llDetectedTouchUV\n\tllDetectedTouchUV(${1:integer number})\nsnippet llDetectedType\n\tllDetectedType(${1:integer number})\nsnippet llDetectedVel\n\tllDetectedVel(${1:integer number})\nsnippet llDialog\n\tllDialog(${1:key agent}, ${2:string message}, ${3:list buttons}, ${4:integer channel});\n\t$0\nsnippet llDie\n\tllDie();\n\t$0\nsnippet llDumpList2String\n\tllDumpList2String(${1:list src}, ${2:string separator})\nsnippet llEdgeOfWorld\n\tllEdgeOfWorld(${1:vector pos}, ${2:vector dir})\nsnippet llEjectFromLand\n\tllEjectFromLand(${1:key agent});\n\t$0\nsnippet llEmail\n\tllEmail(${1:string address}, ${2:string subject}, ${3:string message});\n\t$0\nsnippet llEscapeURL\n\tllEscapeURL(${1:string url})\nsnippet llEuler2Rot\n\tllEuler2Rot(${1:vector v})\nsnippet llExecCharacterCmd\n\tllExecCharacterCmd(${1:integer command}, ${2:list options});\n\t$0\nsnippet llEvade\n\tllEvade(${1:key target}, ${2:list options});\n\t$0\nsnippet llFabs\n\tllFabs(${1:float val})\nsnippet llFleeFrom\n\tllFleeFrom(${1:vector position}, ${2:float distance}, ${3:list options});\n\t$0\nsnippet llFloor\n\tllFloor(${1:float val})\nsnippet llForceMouselook\n\tllForceMouselook(${1:integer mouselook});\n\t$0\nsnippet llFrand\n\tllFrand(${1:float mag})\nsnippet llGenerateKey\n\tllGenerateKey()\nsnippet llGetAccel\n\tllGetAccel()\nsnippet llGetAgentInfo\n\tllGetAgentInfo(${1:key id})\nsnippet llGetAgentLanguage\n\tllGetAgentLanguage(${1:key agent})\nsnippet llGetAgentList\n\tllGetAgentList(${1:integer scope}, ${2:list options})\nsnippet llGetAgentSize\n\tllGetAgentSize(${1:key agent})\nsnippet llGetAlpha\n\tllGetAlpha(${1:integer face})\nsnippet llGetAndResetTime\n\tllGetAndResetTime()\nsnippet llGetAnimation\n\tllGetAnimation(${1:key id})\nsnippet llGetAnimationList\n\tllGetAnimationList(${1:key agent})\nsnippet llGetAnimationOverride\n\tllGetAnimationOverride(${1:string anim_state})\nsnippet llGetAttached\n\tllGetAttached()\nsnippet llGetAttachedList\n\tllGetAttachedList(${1:key id})\nsnippet llGetBoundingBox\n\tllGetBoundingBox(${1:key object})\nsnippet llGetCameraPos\n\tllGetCameraPos()\nsnippet llGetCameraRot\n\tllGetCameraRot()\nsnippet llGetCenterOfMass\n\tllGetCenterOfMass()\nsnippet llGetClosestNavPoint\n\tllGetClosestNavPoint(${1:vector point}, ${2:list options})\nsnippet llGetColor\n\tllGetColor(${1:integer face})\nsnippet llGetCreator\n\tllGetCreator()\nsnippet llGetDate\n\tllGetDate()\nsnippet llGetDisplayName\n\tllGetDisplayName(${1:key id})\nsnippet llGetEnergy\n\tllGetEnergy()\nsnippet llGetEnv\n\tllGetEnv(${1:string name})\nsnippet llGetExperienceDetails\n\tllGetExperienceDetails(${1:key experience_id})\nsnippet llGetExperienceErrorMessage\n\tllGetExperienceErrorMessage(${1:integer error})\nsnippet llGetForce\n\tllGetForce()\nsnippet llGetFreeMemory\n\tllGetFreeMemory()\nsnippet llGetFreeURLs\n\tllGetFreeURLs()\nsnippet llGetGeometricCenter\n\tllGetGeometricCenter()\nsnippet llGetGMTclock\n\tllGetGMTclock()\nsnippet llGetHTTPHeader\n\tllGetHTTPHeader(${1:key request_id}, ${2:string header})\nsnippet llGetInventoryCreator\n\tllGetInventoryCreator(${1:string item})\nsnippet llGetInventoryKey\n\tllGetInventoryKey(${1:string name})\nsnippet llGetInventoryName\n\tllGetInventoryName(${1:integer type}, ${2:integer number})\nsnippet llGetInventoryNumber\n\tllGetInventoryNumber(${1:integer type})\nsnippet llGetInventoryPermMask\n\tllGetInventoryPermMask(${1:string item}, ${2:integer mask})\nsnippet llGetInventoryType\n\tllGetInventoryType(${1:string name})\nsnippet llGetKey\n\tllGetKey()\nsnippet llGetLandOwnerAt\n\tllGetLandOwnerAt(${1:vector pos})\nsnippet llGetLinkKey\n\tllGetLinkKey(${1:integer link})\nsnippet llGetLinkMedia\n\tllGetLinkMedia(${1:integer link}, ${2:integer face}, ${3:list params})\nsnippet llGetLinkName\n\tllGetLinkName(${1:integer link})\nsnippet llGetLinkNumber\n\tllGetLinkNumber()\nsnippet llGetLinkNumberOfSides\n\tllGetLinkNumberOfSides(${1:integer link})\nsnippet llGetLinkPrimitiveParams\n\tllGetLinkPrimitiveParams(${1:integer link}, ${2:list params})\nsnippet llGetListEntryType\n\tllGetListEntryType(${1:list src}, ${2:integer index})\nsnippet llGetListLength\n\tllGetListLength(${1:list src})\nsnippet llGetLocalPos\n\tllGetLocalPos()\nsnippet llGetLocalRot\n\tllGetLocalRot()\nsnippet llGetMass\n\tllGetMass()\nsnippet llGetMassMKS\n\tllGetMassMKS()\nsnippet llGetMaxScaleFactor\n\tllGetMaxScaleFactor()\nsnippet llGetMemoryLimit\n\tllGetMemoryLimit()\nsnippet llGetMinScaleFactor\n\tllGetMinScaleFactor()\nsnippet llGetNextEmail\n\tllGetNextEmail(${1:string address}, ${2:string subject});\n\t$0\nsnippet llGetNotecardLine\n\tllGetNotecardLine(${1:string name}, ${2:integer line})\nsnippet llGetNumberOfNotecardLines\n\tllGetNumberOfNotecardLines(${1:string name})\nsnippet llGetNumberOfPrims\n\tllGetNumberOfPrims()\nsnippet llGetNumberOfSides\n\tllGetNumberOfSides()\nsnippet llGetObjectDesc\n\tllGetObjectDesc()\nsnippet llGetObjectDetails\n\tllGetObjectDetails(${1:key id}, ${2:list params})\nsnippet llGetObjectMass\n\tllGetObjectMass(${1:key id})\nsnippet llGetObjectName\n\tllGetObjectName()\nsnippet llGetObjectPermMask\n\tllGetObjectPermMask(${1:integer mask})\nsnippet llGetObjectPrimCount\n\tllGetObjectPrimCount(${1:key prim})\nsnippet llGetOmega\n\tllGetOmega()\nsnippet llGetOwner\n\tllGetOwner()\nsnippet llGetOwnerKey\n\tllGetOwnerKey(${1:key id})\nsnippet llGetParcelDetails\n\tllGetParcelDetails(${1:vector pos}, ${2:list params})\nsnippet llGetParcelFlags\n\tllGetParcelFlags(${1:vector pos})\nsnippet llGetParcelMaxPrims\n\tllGetParcelMaxPrims(${1:vector pos}, ${2:integer sim_wide})\nsnippet llGetParcelMusicURL\n\tllGetParcelMusicURL()\nsnippet llGetParcelPrimCount\n\tllGetParcelPrimCount(${1:vector pos}, ${2:integer category}, ${3:integer sim_wide})\nsnippet llGetParcelPrimOwners\n\tllGetParcelPrimOwners(${1:vector pos})\nsnippet llGetPermissions\n\tllGetPermissions()\nsnippet llGetPermissionsKey\n\tllGetPermissionsKey()\nsnippet llGetPhysicsMaterial\n\tllGetPhysicsMaterial()\nsnippet llGetPos\n\tllGetPos()\nsnippet llGetPrimitiveParams\n\tllGetPrimitiveParams(${1:list params})\nsnippet llGetPrimMediaParams\n\tllGetPrimMediaParams(${1:integer face}, ${2:list params})\nsnippet llGetRegionAgentCount\n\tllGetRegionAgentCount()\nsnippet llGetRegionCorner\n\tllGetRegionCorner()\nsnippet llGetRegionFlags\n\tllGetRegionFlags()\nsnippet llGetRegionFPS\n\tllGetRegionFPS()\nsnippet llGetRegionName\n\tllGetRegionName()\nsnippet llGetRegionTimeDilation\n\tllGetRegionTimeDilation()\nsnippet llGetRootPosition\n\tllGetRootPosition()\nsnippet llGetRootRotation\n\tllGetRootRotation()\nsnippet llGetRot\n\tllGetRot()\nsnippet llGetScale\n\tllGetScale()\nsnippet llGetScriptName\n\tllGetScriptName()\nsnippet llGetScriptState\n\tllGetScriptState(${1:string script})\nsnippet llGetSimStats\n\tllGetSimStats(${1:integer stat_type})\nsnippet llGetSimulatorHostname\n\tllGetSimulatorHostname()\nsnippet llGetSPMaxMemory\n\tllGetSPMaxMemory()\nsnippet llGetStartParameter\n\tllGetStartParameter()\nsnippet llGetStaticPath\n\tllGetStaticPath(${1:vector start}, ${2:vector end}, ${3:float radius}, ${4:list params})\nsnippet llGetStatus\n\tllGetStatus(${1:integer status})\nsnippet llGetSubString\n\tllGetSubString(${1:string src}, ${2:integer start}, ${3:integer end})\nsnippet llGetSunDirection\n\tllGetSunDirection()\nsnippet llGetTexture\n\tllGetTexture(${1:integer face})\nsnippet llGetTextureOffset\n\tllGetTextureOffset(${1:integer face})\nsnippet llGetTextureRot\n\tllGetTextureRot(${1:integer face})\nsnippet llGetTextureScale\n\tllGetTextureScale(${1:integer face})\nsnippet llGetTime\n\tllGetTime()\nsnippet llGetTimeOfDay\n\tllGetTimeOfDay()\nsnippet llGetTimestamp\n\tllGetTimestamp()\nsnippet llGetTorque\n\tllGetTorque()\nsnippet llGetUnixTime\n\tllGetUnixTime()\nsnippet llGetUsedMemory\n\tllGetUsedMemory()\nsnippet llGetUsername\n\tllGetUsername(${1:key id})\nsnippet llGetVel\n\tllGetVel()\nsnippet llGetWallclock\n\tllGetWallclock()\nsnippet llGiveInventory\n\tllGiveInventory(${1:key destination}, ${2:string inventory});\n\t$0\nsnippet llGiveInventoryList\n\tllGiveInventoryList(${1:key target}, ${2:string folder}, ${3:list inventory});\n\t$0\nsnippet llGiveMoney\n\tllGiveMoney(${1:key destination}, ${2:integer amount})\nsnippet llGround\n\tllGround(${1:vector offset})\nsnippet llGroundContour\n\tllGroundContour(${1:vector offset})\nsnippet llGroundNormal\n\tllGroundNormal(${1:vector offset})\nsnippet llGroundRepel\n\tllGroundRepel(${1:float height}, ${2:integer water}, ${3:float tau});\n\t$0\nsnippet llGroundSlope\n\tllGroundSlope(${1:vector offset})\nsnippet llHTTPRequest\n\tllHTTPRequest(${1:string url}, ${2:list parameters}, ${3:string body})\nsnippet llHTTPResponse\n\tllHTTPResponse(${1:key request_id}, ${2:integer status}, ${3:string body});\n\t$0\nsnippet llInsertString\n\tllInsertString(${1:string dst}, ${2:integer pos}, ${3:string src})\nsnippet llInstantMessage\n\tllInstantMessage(${1:key user}, ${2:string message});\n\t$0\nsnippet llIntegerToBase64\n\tllIntegerToBase64(${1:integer number})\nsnippet llJson2List\n\tllJson2List(${1:string json})\nsnippet llJsonGetValue\n\tllJsonGetValue(${1:string json}, ${2:list specifiers})\nsnippet llJsonSetValue\n\tllJsonSetValue(${1:string json}, ${2:list specifiers}, ${3:string newValue})\nsnippet llJsonValueType\n\tllJsonValueType(${1:string json}, ${2:list specifiers})\nsnippet llKey2Name\n\tllKey2Name(${1:key id})\nsnippet llKeyCountKeyValue\n\tllKeyCountKeyValue()\nsnippet llKeysKeyValue\n\tllKeysKeyValue(${1:integer first}, ${2:integer count})\nsnippet llLinkParticleSystem\n\tllLinkParticleSystem(${1:integer link}, ${2:list rules});\n\t$0\nsnippet llLinkSitTarget\n\tllLinkSitTarget(${1:integer link}, ${2:vector offset}, ${3:rotation rot});\n\t$0\nsnippet llList2CSV\n\tllList2CSV(${1:list src})\nsnippet llList2Float\n\tllList2Float(${1:list src}, ${2:integer index})\nsnippet llList2Integer\n\tllList2Integer(${1:list src}, ${2:integer index})\nsnippet llList2Json\n\tllList2Json(${1:string type}, ${2:list values})\nsnippet llList2Key\n\tllList2Key(${1:list src}, ${2:integer index})\nsnippet llList2List\n\tllList2List(${1:list src}, ${2:integer start}, ${3:integer end})\nsnippet llList2ListStrided\n\tllList2ListStrided(${1:list src}, ${2:integer start}, ${3:integer end}, ${4:integer stride})\nsnippet llList2Rot\n\tllList2Rot(${1:list src}, ${2:integer index})\nsnippet llList2String\n\tllList2String(${1:list src}, ${2:integer index})\nsnippet llList2Vector\n\tllList2Vector(${1:list src}, ${2:integer index})\nsnippet llListen\n\tllListen(${1:integer channel}, ${2:string name}, ${3:key id}, ${4:string msg})\nsnippet llListenControl\n\tllListenControl(${1:integer handle}, ${2:integer active});\n\t$0\nsnippet llListenRemove\n\tllListenRemove(${1:integer handle});\n\t$0\nsnippet llListFindList\n\tllListFindList(${1:list src}, ${2:list test})\nsnippet llListInsertList\n\tllListInsertList(${1:list dest}, ${2:list src}, ${3:integer start})\nsnippet llListRandomize\n\tllListRandomize(${1:list src}, ${2:integer stride})\nsnippet llListReplaceList\n\tllListReplaceList(${1:list dest}, ${2:list src}, ${3:integer start}, ${4:integer end})\nsnippet llListSort\n\tllListSort(${1:list src}, ${2:integer stride}, ${3:integer ascending})\nsnippet llListStatistics\n\tllListStatistics(${1:integer operation}, ${2:list src})\nsnippet llLoadURL\n\tllLoadURL(${1:key agent}, ${2:string message}, ${3:string url});\n\t$0\nsnippet llLog\n\tllLog(${1:float val})\nsnippet llLog10\n\tllLog10(${1:float val})\nsnippet llLookAt\n\tllLookAt(${1:vector target}, ${2:float strength}, ${3:float damping});\n\t$0\nsnippet llLoopSound\n\tllLoopSound(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llLoopSoundMaster\n\tllLoopSoundMaster(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llLoopSoundSlave\n\tllLoopSoundSlave(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llManageEstateAccess\n\tllManageEstateAccess(${1:integer action}, ${2:key agent})\nsnippet llMapDestination\n\tllMapDestination(${1:string simname}, ${2:vector pos}, ${3:vector look_at});\n\t$0\nsnippet llMD5String\n\tllMD5String(${1:string src}, ${2:integer nonce})\nsnippet llMessageLinked\n\tllMessageLinked(${1:integer link}, ${2:integer num}, ${3:string str}, ${4:key id});\n\t$0\nsnippet llMinEventDelay\n\tllMinEventDelay(${1:float delay});\n\t$0\nsnippet llModifyLand\n\tllModifyLand(${1:integer action}, ${2:integer brush});\n\t$0\nsnippet llModPow\n\tllModPow(${1:integer a}, ${2:integer b}, ${3:integer c})\nsnippet llMoveToTarget\n\tllMoveToTarget(${1:vector target}, ${2:float tau});\n\t$0\nsnippet llNavigateTo\n\tllNavigateTo(${1:vector pos}, ${2:list options});\n\t$0\nsnippet llOffsetTexture\n\tllOffsetTexture(${1:float u}, ${2:float v}, ${3:integer face});\n\t$0\nsnippet llOpenRemoteDataChannel\n\tllOpenRemoteDataChannel();\n\t$0\nsnippet llOverMyLand\n\tllOverMyLand(${1:key id})\nsnippet llOwnerSay\n\tllOwnerSay(${1:string msg});\n\t$0\nsnippet llParcelMediaCommandList\n\tllParcelMediaCommandList(${1:list commandList});\n\t$0\nsnippet llParcelMediaQuery\n\tllParcelMediaQuery(${1:list query})\nsnippet llParseString2List\n\tllParseString2List(${1:string src}, ${2:list separators}, ${3:list spacers})\nsnippet llParseStringKeepNulls\n\tllParseStringKeepNulls(${1:string src}, ${2:list separators}, ${3:list spacers})\nsnippet llParticleSystem\n\tllParticleSystem(${1:list rules});\n\t$0\nsnippet llPassCollisions\n\tllPassCollisions(${1:integer pass});\n\t$0\nsnippet llPassTouches\n\tllPassTouches(${1:integer pass});\n\t$0\nsnippet llPatrolPoints\n\tllPatrolPoints(${1:list patrolPoints}, ${2:list options});\n\t$0\nsnippet llPlaySound\n\tllPlaySound(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llPlaySoundSlave\n\tllPlaySoundSlave(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llPow\n\tllPow(${1:float base}, ${2:float exponent})\nsnippet llPreloadSound\n\tllPreloadSound(${1:string sound});\n\t$0\nsnippet llPursue\n\tllPursue(${1:key target}, ${2:list options});\n\t$0\nsnippet llPushObject\n\tllPushObject(${1:key target}, ${2:vector impulse}, ${3:vector ang_impulse}, ${4:integer local});\n\t$0\nsnippet llReadKeyValue\n\tllReadKeyValue(${1:string k})\nsnippet llRegionSay\n\tllRegionSay(${1:integer channel}, ${2:string msg});\n\t$0\nsnippet llRegionSayTo\n\tllRegionSayTo(${1:key target}, ${2:integer channel}, ${3:string msg});\n\t$0\nsnippet llReleaseControls\n\tllReleaseControls();\n\t$0\nsnippet llReleaseURL\n\tllReleaseURL(${1:string url});\n\t$0\nsnippet llRemoteDataReply\n\tllRemoteDataReply(${1:key channel}, ${2:key message_id}, ${3:string sdata}, ${4:integer idata});\n\t$0\nsnippet llRemoteLoadScriptPin\n\tllRemoteLoadScriptPin(${1:key target}, ${2:string name}, ${3:integer pin}, ${4:integer running}, ${5:integer start_param});\n\t$0\nsnippet llRemoveFromLandBanList\n\tllRemoveFromLandBanList(${1:key agent});\n\t$0\nsnippet llRemoveFromLandPassList\n\tllRemoveFromLandPassList(${1:key agent});\n\t$0\nsnippet llRemoveInventory\n\tllRemoveInventory(${1:string item});\n\t$0\nsnippet llRemoveVehicleFlags\n\tllRemoveVehicleFlags(${1:integer flags});\n\t$0\nsnippet llRequestAgentData\n\tllRequestAgentData(${1:key id}, ${2:integer data})\nsnippet llRequestDisplayName\n\tllRequestDisplayName(${1:key id})\nsnippet llRequestExperiencePermissions\n\tllRequestExperiencePermissions(${1:key agent}, ${2:string name})\nsnippet llRequestInventoryData\n\tllRequestInventoryData(${1:string name})\nsnippet llRequestPermissions\n\tllRequestPermissions(${1:key agent}, ${2:integer permissions})\nsnippet llRequestSecureURL\n\tllRequestSecureURL()\nsnippet llRequestSimulatorData\n\tllRequestSimulatorData(${1:string region}, ${2:integer data})\nsnippet llRequestURL\n\tllRequestURL()\nsnippet llRequestUsername\n\tllRequestUsername(${1:key id})\nsnippet llResetAnimationOverride\n\tllResetAnimationOverride(${1:string anim_state});\n\t$0\nsnippet llResetLandBanList\n\tllResetLandBanList();\n\t$0\nsnippet llResetLandPassList\n\tllResetLandPassList();\n\t$0\nsnippet llResetOtherScript\n\tllResetOtherScript(${1:string name});\n\t$0\nsnippet llResetScript\n\tllResetScript();\n\t$0\nsnippet llResetTime\n\tllResetTime();\n\t$0\nsnippet llReturnObjectsByID\n\tllReturnObjectsByID(${1:list objects})\nsnippet llReturnObjectsByOwner\n\tllReturnObjectsByOwner(${1:key owner}, ${2:integer scope})\nsnippet llRezAtRoot\n\tllRezAtRoot(${1:string inventory}, ${2:vector position}, ${3:vector velocity}, ${4:rotation rot}, ${5:integer param});\n\t$0\nsnippet llRezObject\n\tllRezObject(${1:string inventory}, ${2:vector pos}, ${3:vector vel}, ${4:rotation rot}, ${5:integer param});\n\t$0\nsnippet llRot2Angle\n\tllRot2Angle(${1:rotation rot})\nsnippet llRot2Axis\n\tllRot2Axis(${1:rotation rot})\nsnippet llRot2Euler\n\tllRot2Euler(${1:rotation quat})\nsnippet llRot2Fwd\n\tllRot2Fwd(${1:rotation q})\nsnippet llRot2Left\n\tllRot2Left(${1:rotation q})\nsnippet llRot2Up\n\tllRot2Up(${1:rotation q})\nsnippet llRotateTexture\n\tllRotateTexture(${1:float angle}, ${2:integer face});\n\t$0\nsnippet llRotBetween\n\tllRotBetween(${1:vector start}, ${2:vector end})\nsnippet llRotLookAt\n\tllRotLookAt(${1:rotation target_direction}, ${2:float strength}, ${3:float damping});\n\t$0\nsnippet llRotTarget\n\tllRotTarget(${1:rotation rot}, ${2:float error})\nsnippet llRotTargetRemove\n\tllRotTargetRemove(${1:integer handle});\n\t$0\nsnippet llRound\n\tllRound(${1:float val})\nsnippet llSameGroup\n\tllSameGroup(${1:key group})\nsnippet llSay\n\tllSay(${1:integer channel}, ${2:string msg});\n\t$0\nsnippet llScaleByFactor\n\tllScaleByFactor(${1:float scaling_factor})\nsnippet llScaleTexture\n\tllScaleTexture(${1:float u}, ${2:float v}, ${3:integer face});\n\t$0\nsnippet llScriptDanger\n\tllScriptDanger(${1:vector pos})\nsnippet llScriptProfiler\n\tllScriptProfiler(${1:integer flags});\n\t$0\nsnippet llSendRemoteData\n\tllSendRemoteData(${1:key channel}, ${2:string dest}, ${3:integer idata}, ${4:string sdata})\nsnippet llSensor\n\tllSensor(${1:string name}, ${2:key id}, ${3:integer type}, ${4:float range}, ${5:float arc});\n\t$0\nsnippet llSensorRepeat\n\tllSensorRepeat(${1:string name}, ${2:key id}, ${3:integer type}, ${4:float range}, ${5:float arc}, ${6:float rate});\n\t$0\nsnippet llSetAlpha\n\tllSetAlpha(${1:float alpha}, ${2:integer face});\n\t$0\nsnippet llSetAngularVelocity\n\tllSetAngularVelocity(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llSetAnimationOverride\n\tllSetAnimationOverride(${1:string anim_state}, ${2:string anim})\nsnippet llSetBuoyancy\n\tllSetBuoyancy(${1:float buoyancy});\n\t$0\nsnippet llSetCameraAtOffset\n\tllSetCameraAtOffset(${1:vector offset});\n\t$0\nsnippet llSetCameraEyeOffset\n\tllSetCameraEyeOffset(${1:vector offset});\n\t$0\nsnippet llSetCameraParams\n\tllSetCameraParams(${1:list rules});\n\t$0\nsnippet llSetClickAction\n\tllSetClickAction(${1:integer action});\n\t$0\nsnippet llSetColor\n\tllSetColor(${1:vector color}, ${2:integer face});\n\t$0\nsnippet llSetContentType\n\tllSetContentType(${1:key request_id}, ${2:integer content_type});\n\t$0\nsnippet llSetDamage\n\tllSetDamage(${1:float damage});\n\t$0\nsnippet llSetForce\n\tllSetForce(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llSetForceAndTorque\n\tllSetForceAndTorque(${1:vector force}, ${2:vector torque}, ${3:integer local});\n\t$0\nsnippet llSetHoverHeight\n\tllSetHoverHeight(${1:float height}, ${2:integer water}, ${3:float tau});\n\t$0\nsnippet llSetKeyframedMotion\n\tllSetKeyframedMotion(${1:list keyframes}, ${2:list options});\n\t$0\nsnippet llSetLinkAlpha\n\tllSetLinkAlpha(${1:integer link}, ${2:float alpha}, ${3:integer face});\n\t$0\nsnippet llSetLinkCamera\n\tllSetLinkCamera(${1:integer link}, ${2:vector eye}, ${3:vector at});\n\t$0\nsnippet llSetLinkColor\n\tllSetLinkColor(${1:integer link}, ${2:vector color}, ${3:integer face});\n\t$0\nsnippet llSetLinkMedia\n\tllSetLinkMedia(${1:integer link}, ${2:integer face}, ${3:list params});\n\t$0\nsnippet llSetLinkPrimitiveParams\n\tllSetLinkPrimitiveParams(${1:integer link}, ${2:list rules});\n\t$0\nsnippet llSetLinkPrimitiveParamsFast\n\tllSetLinkPrimitiveParamsFast(${1:integer link}, ${2:list rules});\n\t$0\nsnippet llSetLinkTexture\n\tllSetLinkTexture(${1:integer link}, ${2:string texture}, ${3:integer face});\n\t$0\nsnippet llSetLinkTextureAnim\n\tllSetLinkTextureAnim(${1:integer link}, ${2:integer mode}, ${3:integer face}, ${4:integer sizex}, ${5:integer sizey}, ${6:float start}, ${7:float length}, ${8:float rate});\n\t$0\nsnippet llSetLocalRot\n\tllSetLocalRot(${1:rotation rot});\n\t$0\nsnippet llSetMemoryLimit\n\tllSetMemoryLimit(${1:integer limit})\nsnippet llSetObjectDesc\n\tllSetObjectDesc(${1:string description});\n\t$0\nsnippet llSetObjectName\n\tllSetObjectName(${1:string name});\n\t$0\nsnippet llSetParcelMusicURL\n\tllSetParcelMusicURL(${1:string url});\n\t$0\nsnippet llSetPayPrice\n\tllSetPayPrice(${1:integer price}, [${2:integer price_button_a}, ${3:integer price_button_b}, ${4:integer price_button_c}, ${5:integer price_button_d}]);\n\t$0\nsnippet llSetPhysicsMaterial\n\tllSetPhysicsMaterial(${1:integer mask}, ${2:float gravity_multiplier}, ${3:float restitution}, ${4:float friction}, ${5:float density});\n\t$0\nsnippet llSetPos\n\tllSetPos(${1:vector pos});\n\t$0\nsnippet llSetPrimitiveParams\n\tllSetPrimitiveParams(${1:list rules});\n\t$0\nsnippet llSetPrimMediaParams\n\tllSetPrimMediaParams(${1:integer face}, ${2:list params});\n\t$0\nsnippet llSetRegionPos\n\tllSetRegionPos(${1:vector position})\nsnippet llSetRemoteScriptAccessPin\n\tllSetRemoteScriptAccessPin(${1:integer pin});\n\t$0\nsnippet llSetRot\n\tllSetRot(${1:rotation rot});\n\t$0\nsnippet llSetScale\n\tllSetScale(${1:vector size});\n\t$0\nsnippet llSetScriptState\n\tllSetScriptState(${1:string name}, ${2:integer run});\n\t$0\nsnippet llSetSitText\n\tllSetSitText(${1:string text});\n\t$0\nsnippet llSetSoundQueueing\n\tllSetSoundQueueing(${1:integer queue});\n\t$0\nsnippet llSetSoundRadius\n\tllSetSoundRadius(${1:float radius});\n\t$0\nsnippet llSetStatus\n\tllSetStatus(${1:integer status}, ${2:integer value});\n\t$0\nsnippet llSetText\n\tllSetText(${1:string text}, ${2:vector color}, ${3:float alpha});\n\t$0\nsnippet llSetTexture\n\tllSetTexture(${1:string texture}, ${2:integer face});\n\t$0\nsnippet llSetTextureAnim\n\tllSetTextureAnim(${1:integer mode}, ${2:integer face}, ${3:integer sizex}, ${4:integer sizey}, ${5:float start}, ${6:float length}, ${7:float rate});\n\t$0\nsnippet llSetTimerEvent\n\tllSetTimerEvent(${1:float sec});\n\t$0\nsnippet llSetTorque\n\tllSetTorque(${1:vector torque}, ${2:integer local});\n\t$0\nsnippet llSetTouchText\n\tllSetTouchText(${1:string text});\n\t$0\nsnippet llSetVehicleFlags\n\tllSetVehicleFlags(${1:integer flags});\n\t$0\nsnippet llSetVehicleFloatParam\n\tllSetVehicleFloatParam(${1:integer param}, ${2:float value});\n\t$0\nsnippet llSetVehicleRotationParam\n\tllSetVehicleRotationParam(${1:integer param}, ${2:rotation rot});\n\t$0\nsnippet llSetVehicleType\n\tllSetVehicleType(${1:integer type});\n\t$0\nsnippet llSetVehicleVectorParam\n\tllSetVehicleVectorParam(${1:integer param}, ${2:vector vec});\n\t$0\nsnippet llSetVelocity\n\tllSetVelocity(${1:vector force}, ${2:integer local});\n\t$0\nsnippet llSHA1String\n\tllSHA1String(${1:string src})\nsnippet llShout\n\tllShout(${1:integer channel}, ${2:string msg});\n\t$0\nsnippet llSin\n\tllSin(${1:float theta})\nsnippet llSitTarget\n\tllSitTarget(${1:vector offset}, ${2:rotation rot});\n\t$0\nsnippet llSleep\n\tllSleep(${1:float sec});\n\t$0\nsnippet llSqrt\n\tllSqrt(${1:float val})\nsnippet llStartAnimation\n\tllStartAnimation(${1:string anim});\n\t$0\nsnippet llStopAnimation\n\tllStopAnimation(${1:string anim});\n\t$0\nsnippet llStopHover\n\tllStopHover();\n\t$0\nsnippet llStopLookAt\n\tllStopLookAt();\n\t$0\nsnippet llStopMoveToTarget\n\tllStopMoveToTarget();\n\t$0\nsnippet llStopSound\n\tllStopSound();\n\t$0\nsnippet llStringLength\n\tllStringLength(${1:string str})\nsnippet llStringToBase64\n\tllStringToBase64(${1:string str})\nsnippet llStringTrim\n\tllStringTrim(${1:string src}, ${2:integer type})\nsnippet llSubStringIndex\n\tllSubStringIndex(${1:string source}, ${2:string pattern})\nsnippet llTakeControls\n\tllTakeControls(${1:integer controls}, ${2:integer accept}, ${3:integer pass_on});\n\t$0\nsnippet llTan\n\tllTan(${1:float theta})\nsnippet llTarget\n\tllTarget(${1:vector position}, ${2:float range})\nsnippet llTargetOmega\n\tllTargetOmega(${1:vector axis}, ${2:float spinrate}, ${3:float gain});\n\t$0\nsnippet llTargetRemove\n\tllTargetRemove(${1:integer handle});\n\t$0\nsnippet llTeleportAgent\n\tllTeleportAgent(${1:key agent}, ${2:string landmark}, ${3:vector position}, ${4:vector look_at});\n\t$0\nsnippet llTeleportAgentGlobalCoords\n\tllTeleportAgentGlobalCoords(${1:key agent}, ${2:vector global_coordinates}, ${3:vector region_coordinates}, ${4:vector look_at});\n\t$0\nsnippet llTeleportAgentHome\n\tllTeleportAgentHome(${1:key agent});\n\t$0\nsnippet llTextBox\n\tllTextBox(${1:key agent}, ${2:string message}, ${3:integer channel});\n\t$0\nsnippet llToLower\n\tllToLower(${1:string src})\nsnippet llToUpper\n\tllToUpper(${1:string src})\nsnippet llTransferLindenDollars\n\tllTransferLindenDollars(${1:key destination}, ${2:integer amount})\nsnippet llTriggerSound\n\tllTriggerSound(${1:string sound}, ${2:float volume});\n\t$0\nsnippet llTriggerSoundLimited\n\tllTriggerSoundLimited(${1:string sound}, ${2:float volume}, ${3:vector top_north_east}, ${4:vector bottom_south_west});\n\t$0\nsnippet llUnescapeURL\n\tllUnescapeURL(${1:string url})\nsnippet llUnSit\n\tllUnSit(${1:key id});\n\t$0\nsnippet llUpdateCharacter\n\tllUpdateCharacter(${1:list options})\nsnippet llUpdateKeyValue\n\tllUpdateKeyValue(${1:string k}, ${2:string v}, ${3:integer checked}, ${4:string ov})\nsnippet llVecDist\n\tllVecDist(${1:vector vec_a}, ${2:vector vec_b})\nsnippet llVecMag\n\tllVecMag(${1:vector vec})\nsnippet llVecNorm\n\tllVecNorm(${1:vector vec})\nsnippet llVolumeDetect\n\tllVolumeDetect(${1:integer detect});\n\t$0\nsnippet llWanderWithin\n\tllWanderWithin(${1:vector origin}, ${2:vector dist}, ${3:list options});\n\t$0\nsnippet llWater\n\tllWater(${1:vector offset});\n\t$0\nsnippet llWhisper\n\tllWhisper(${1:integer channel}, ${2:string msg});\n\t$0\nsnippet llWind\n\tllWind(${1:vector offset});\n\t$0\nsnippet llXorBase64\n\tllXorBase64(${1:string str1}, ${2:string str2})\nsnippet money\n\tmoney(${1:key id}, ${2:integer amount})\n\t{\n\t\t$0\n\t}\nsnippet object_rez\n\tobject_rez(${1:key id})\n\t{\n\t\t$0\n\t}\nsnippet on_rez\n\ton_rez(${1:integer start_param})\n\t{\n\t\t$0\n\t}\nsnippet path_update\n\tpath_update(${1:integer type}, ${2:list reserved})\n\t{\n\t\t$0\n\t}\nsnippet remote_data\n\tremote_data(${1:integer event_type}, ${2:key channel}, ${3:key message_id}, ${4:string sender}, ${5:integer idata}, ${6:string sdata})\n\t{\n\t\t$0\n\t}\nsnippet run_time_permissions\n\trun_time_permissions(${1:integer perm})\n\t{\n\t\t$0\n\t}\nsnippet sensor\n\tsensor(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet state\n\tstate ${1:name}\nsnippet touch\n\ttouch(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet touch_end\n\ttouch_end(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet touch_start\n\ttouch_start(${1:integer index})\n\t{\n\t\t$0\n\t}\nsnippet transaction_result\n\ttransaction_result(${1:key id}, ${2:integer success}, ${3:string data})\n\t{\n\t\t$0\n\t}\nsnippet while\n\twhile (${1:condition})\n\t{\n\t\t$0\n\t}\n";
+
+});
+
+define("ace/snippets/lsl",["require","exports","module","ace/snippets/lsl.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./lsl.snippets");
+exports.scope = "lsl";
+
+});
+
+define("ace/snippets/lua.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet #!\n\t#!/usr/bin/env lua\n\t$1\nsnippet local\n\tlocal ${1:x} = ${2:1}\nsnippet fun\n\tfunction ${1:fname}(${2:...})\n\t\t${3:-- body}\n\tend\nsnippet for\n\tfor ${1:i}=${2:1},${3:10} do\n\t\t${4:print(i)}\n\tend\nsnippet forp\n\tfor ${1:i},${2:v} in pairs(${3:table_name}) do\n\t   ${4:-- body}\n\tend\nsnippet fori\n\tfor ${1:i},${2:v} in ipairs(${3:table_name}) do\n\t   ${4:-- body}\n\tend\n";
+
+});
+
+define("ace/snippets/lua",["require","exports","module","ace/snippets/lua.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./lua.snippets");
+exports.scope = "lua";
+
+});
+
+define("ace/snippets/makefile.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet ifeq\n\tifeq (${1:cond0},${2:cond1})\n\t\t${3:code}\n\tendif\n";
+
+});
+
+define("ace/snippets/makefile",["require","exports","module","ace/snippets/makefile.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./makefile.snippets");
+exports.scope = "makefile";
+
+});
+
+define("ace/snippets/markdown.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Markdown\n\n# Includes octopress (http://octopress.org/) snippets\n\nsnippet [\n\t[${1:text}](http://${2:address} \"${3:title}\")\nsnippet [*\n\t[${1:link}](${2:`@*`} \"${3:title}\")${4}\n\nsnippet [:\n\t[${1:id}]: http://${2:url} \"${3:title}\"\nsnippet [:*\n\t[${1:id}]: ${2:`@*`} \"${3:title}\"\n\nsnippet ![\n\t![${1:alttext}](${2:/images/image.jpg} \"${3:title}\")\nsnippet ![*\n\t![${1:alt}](${2:`@*`} \"${3:title}\")${4}\n\nsnippet ![:\n\t![${1:id}]: ${2:url} \"${3:title}\"\nsnippet ![:*\n\t![${1:id}]: ${2:`@*`} \"${3:title}\"\n\nsnippet ===\nregex /^/=+/=*//\n\t${PREV_LINE/./=/g}\n\t\n\t${0}\nsnippet ---\nregex /^/-+/-*//\n\t${PREV_LINE/./-/g}\n\t\n\t${0}\nsnippet blockquote\n\t{% blockquote %}\n\t${1:quote}\n\t{% endblockquote %}\n\nsnippet blockquote-author\n\t{% blockquote ${1:author}, ${2:title} %}\n\t${3:quote}\n\t{% endblockquote %}\n\nsnippet blockquote-link\n\t{% blockquote ${1:author} ${2:URL} ${3:link_text} %}\n\t${4:quote}\n\t{% endblockquote %}\n\nsnippet bt-codeblock-short\n\t```\n\t${1:code_snippet}\n\t```\n\nsnippet bt-codeblock-full\n\t``` ${1:language} ${2:title} ${3:URL} ${4:link_text}\n\t${5:code_snippet}\n\t```\n\nsnippet codeblock-short\n\t{% codeblock %}\n\t${1:code_snippet}\n\t{% endcodeblock %}\n\nsnippet codeblock-full\n\t{% codeblock ${1:title} lang:${2:language} ${3:URL} ${4:link_text} %}\n\t${5:code_snippet}\n\t{% endcodeblock %}\n\nsnippet gist-full\n\t{% gist ${1:gist_id} ${2:filename} %}\n\nsnippet gist-short\n\t{% gist ${1:gist_id} %}\n\nsnippet img\n\t{% img ${1:class} ${2:URL} ${3:width} ${4:height} ${5:title_text} ${6:alt_text} %}\n\nsnippet youtube\n\t{% youtube ${1:video_id} %}\n\n# The quote should appear only once in the text. It is inherently part of it.\n# See http://octopress.org/docs/plugins/pullquote/ for more info.\n\nsnippet pullquote\n\t{% pullquote %}\n\t${1:text} {\" ${2:quote} \"} ${3:text}\n\t{% endpullquote %}\n";
+
+});
+
+define("ace/snippets/markdown",["require","exports","module","ace/snippets/markdown.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./markdown.snippets");
+exports.scope = "markdown";
+
+});
+
+define("ace/snippets/maze.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet >\ndescription assignment\nscope maze\n\t-> ${1}= ${2}\n\nsnippet >\ndescription if\nscope maze\n\t-> IF ${2:**} THEN %${3:L} ELSE %${4:R}\n";
+
+});
+
+define("ace/snippets/maze",["require","exports","module","ace/snippets/maze.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./maze.snippets");
+exports.scope = "maze";
+
+});
+
+define("ace/snippets/perl.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# #!/usr/bin/perl\nsnippet #!\n\t#!/usr/bin/env perl\n\n# Hash Pointer\nsnippet .\n\t =>\n# Function\nsnippet sub\n\tsub ${1:function_name} {\n\t\t${2:#body ...}\n\t}\n# Conditional\nsnippet if\n\tif (${1}) {\n\t\t${2:# body...}\n\t}\n# Conditional if..else\nsnippet ife\n\tif (${1}) {\n\t\t${2:# body...}\n\t}\n\telse {\n\t\t${3:# else...}\n\t}\n# Conditional if..elsif..else\nsnippet ifee\n\tif (${1}) {\n\t\t${2:# body...}\n\t}\n\telsif (${3}) {\n\t\t${4:# elsif...}\n\t}\n\telse {\n\t\t${5:# else...}\n\t}\n# Conditional One-line\nsnippet xif\n\t${1:expression} if ${2:condition};${3}\n# Unless conditional\nsnippet unless\n\tunless (${1}) {\n\t\t${2:# body...}\n\t}\n# Unless conditional One-line\nsnippet xunless\n\t${1:expression} unless ${2:condition};${3}\n# Try/Except\nsnippet eval\n\tlocal $@;\n\teval {\n\t\t${1:# do something risky...}\n\t};\n\tif (my $e = $@) {\n\t\t${2:# handle failure...}\n\t}\n# While Loop\nsnippet wh\n\twhile (${1}) {\n\t\t${2:# body...}\n\t}\n# While Loop One-line\nsnippet xwh\n\t${1:expression} while ${2:condition};${3}\n# C-style For Loop\nsnippet cfor\n\tfor (my $${2:var} = 0; $$2 < ${1:count}; $$2${3:++}) {\n\t\t${4:# body...}\n\t}\n# For loop one-line\nsnippet xfor\n\t${1:expression} for @${2:array};${3}\n# Foreach Loop\nsnippet for\n\tforeach my $${1:x} (@${2:array}) {\n\t\t${3:# body...}\n\t}\n# Foreach Loop One-line\nsnippet fore\n\t${1:expression} foreach @${2:array};${3}\n# Package\nsnippet package\n\tpackage ${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`};\n\n\t${2}\n\n\t1;\n\n\t__END__\n# Package syntax perl >= 5.14\nsnippet packagev514\n\tpackage ${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`} ${2:0.99};\n\n\t${3}\n\n\t1;\n\n\t__END__\n#moose\nsnippet moose\n\tuse Moose;\n\tuse namespace::autoclean;\n\t${1:#}BEGIN {extends '${2:ParentClass}'};\n\n\t${3}\n# parent\nsnippet parent\n\tuse parent qw(${1:Parent Class});\n# Read File\nsnippet slurp\n\tmy $${1:var} = do { local $/; open my $file, '<', \"${2:file}\"; <$file> };\n\t${3}\n# strict warnings\nsnippet strwar\n\tuse strict;\n\tuse warnings;\n# older versioning with perlcritic bypass\nsnippet vers\n\t## no critic\n\tour $VERSION = '${1:version}';\n\teval $VERSION;\n\t## use critic\n# new 'switch' like feature\nsnippet switch\n\tuse feature 'switch';\n\n# Anonymous subroutine\nsnippet asub\n\tsub {\n\t \t${1:# body }\n\t}\n\n\n\n# Begin block\nsnippet begin\n\tBEGIN {\n\t\t${1:# begin body}\n\t}\n\n# call package function with some parameter\nsnippet pkgmv\n\t__PACKAGE__->${1:package_method}(${2:var})\n\n# call package function without a parameter\nsnippet pkgm\n\t__PACKAGE__->${1:package_method}()\n\n# call package \"get_\" function without a parameter\nsnippet pkget\n\t__PACKAGE__->get_${1:package_method}()\n\n# call package function with a parameter\nsnippet pkgetv\n\t__PACKAGE__->get_${1:package_method}(${2:var})\n\n# complex regex\nsnippet qrx\n\tqr/\n\t     ${1:regex}\n\t/xms\n\n#simpler regex\nsnippet qr/\n\tqr/${1:regex}/x\n\n#given\nsnippet given\n\tgiven ($${1:var}) {\n\t\t${2:# cases}\n\t\t${3:# default}\n\t}\n\n# switch-like case\nsnippet when\n\twhen (${1:case}) {\n\t\t${2:# body}\n\t}\n\n# hash slice\nsnippet hslice\n\t@{ ${1:hash}  }{ ${2:array} }\n\n\n# map\nsnippet map\n\tmap {  ${2: body }    }  ${1: @array } ;\n\n\n\n# Pod stub\nsnippet ppod\n\t=head1 NAME\n\n\t${1:ClassName} - ${2:ShortDesc}\n\n\t=head1 SYNOPSIS\n\n\t  use $1;\n\n\t  ${3:# synopsis...}\n\n\t=head1 DESCRIPTION\n\n\t${4:# longer description...}\n\n\n\t=head1 INTERFACE\n\n\n\t=head1 DEPENDENCIES\n\n\n\t=head1 SEE ALSO\n\n\n# Heading for a subroutine stub\nsnippet psub\n\t=head2 ${1:MethodName}\n\n\t${2:Summary....}\n\n# Heading for inline subroutine pod\nsnippet psubi\n\t=head2 ${1:MethodName}\n\n\t${2:Summary...}\n\n\n\t=cut\n# inline documented subroutine\nsnippet subpod\n\t=head2 $1\n\n\tSummary of $1\n\n\t=cut\n\n\tsub ${1:subroutine_name} {\n\t\t${2:# body...}\n\t}\n# Subroutine signature\nsnippet parg\n\t=over 2\n\n\t=item\n\tArguments\n\n\n\t=over 3\n\n\t=item\n\tC<${1:DataStructure}>\n\n\t  ${2:Sample}\n\n\n\t=back\n\n\n\t=item\n\tReturn\n\n\t=over 3\n\n\n\t=item\n\tC<${3:...return data}>\n\n\n\t=back\n\n\n\t=back\n\n\n\n# Moose has\nsnippet has\n\thas ${1:attribute} => (\n\t\tis\t    => '${2:ro|rw}',\n\t\tisa \t=> '${3:Str|Int|HashRef|ArrayRef|etc}',\n\t\tdefault => sub {\n\t\t\t${4:defaultvalue}\n\t\t},\n\t\t${5:# other attributes}\n\t);\n\n\n# override\nsnippet override\n\toverride ${1:attribute} => sub {\n\t\t${2:# my $self = shift;};\n\t\t${3:# my ($self, $args) = @_;};\n\t};\n\n\n# use test classes\nsnippet tuse\n\tuse Test::More;\n\tuse Test::Deep; # (); # uncomment to stop prototype errors\n\tuse Test::Exception;\n\n# local test lib\nsnippet tlib\n\tuse lib qw{ ./t/lib };\n\n#test methods\nsnippet tmeths\n\t$ENV{TEST_METHOD} = '${1:regex}';\n\n# runtestclass\nsnippet trunner\n\tuse ${1:test_class};\n\t$1->runtests();\n\n# Test::Class-style test\nsnippet tsub\n\tsub t${1:number}_${2:test_case} :Test(${3:num_of_tests}) {\n\t\tmy $self = shift;\n\t\t${4:#  body}\n\n\t}\n\n# Test::Routine-style test\nsnippet trsub\n\ttest ${1:test_name} => { description => '${2:Description of test.}'} => sub {\n\t\tmy ($self) = @_;\n\t\t${3:# test code}\n\t};\n\n#prep test method\nsnippet tprep\n\tsub prep${1:number}_${2:test_case} :Test(startup) {\n\t\tmy $self = shift;\n\t\t${4:#  body}\n\t}\n\n# cause failures to print stack trace\nsnippet debug_trace\n\tuse Carp; # 'verbose';\n\t# cloak \"die\"\n\t# warn \"warning\"\n\t$SIG{'__DIE__'} = sub {\n\t\trequire Carp; Carp::confess\n\t};\n\n";
+
+});
+
+define("ace/snippets/perl",["require","exports","module","ace/snippets/perl.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./perl.snippets");
+exports.scope = "perl";
+
+});
+
+define("ace/snippets/php.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet ec\n\techo ${1};\nsnippet ns\n\tnamespace ${1:Foo\\Bar\\Baz};\n\t${2}\nsnippet use\n\tuse ${1:Foo\\Bar\\Baz};\n\t${2}\nsnippet c\n\t${1:abstract }class ${2:$FILENAME}\n\t{\n\t\t${3}\n\t}\nsnippet i\n\tinterface ${1:$FILENAME}\n\t{\n\t\t${2}\n\t}\nsnippet t.\n\t$this->${1}\nsnippet f\n\tfunction ${1:foo}(${2:array }${3:$bar})\n\t{\n\t\t${4}\n\t}\n# method\nsnippet m\n\t${1:abstract }${2:protected}${3: static} function ${4:foo}(${5:array }${6:$bar})\n\t{\n\t\t${7}\n\t}\n# setter method\nsnippet sm\n\t/**\n\t * Sets the value of ${1:foo}\n\t *\n\t * @param ${2:$1} $$1 ${3:description}\n\t *\n\t * @return ${4:$FILENAME}\n\t */\n\t${5:public} function set${6:$2}(${7:$2 }$$1)\n\t{\n\t\t$this->${8:$1} = $$1;\n\t\treturn $this;\n\t}${9}\n# getter method\nsnippet gm\n\t/**\n\t * Gets the value of ${1:foo}\n\t *\n\t * @return ${2:$1}\n\t */\n\t${3:public} function get${4:$2}()\n\t{\n\t\treturn $this->${5:$1};\n\t}${6}\n#setter\nsnippet $s\n\t${1:$foo}->set${2:Bar}(${3});\n#getter\nsnippet $g\n\t${1:$foo}->get${2:Bar}();\n\n# Tertiary conditional\nsnippet =?:\n\t$${1:foo} = ${2:true} ? ${3:a} : ${4};\nsnippet ?:\n\t${1:true} ? ${2:a} : ${3}\n\nsnippet C\n\t$_COOKIE['${1:variable}']${2}\nsnippet E\n\t$_ENV['${1:variable}']${2}\nsnippet F\n\t$_FILES['${1:variable}']${2}\nsnippet G\n\t$_GET['${1:variable}']${2}\nsnippet P\n\t$_POST['${1:variable}']${2}\nsnippet R\n\t$_REQUEST['${1:variable}']${2}\nsnippet S\n\t$_SERVER['${1:variable}']${2}\nsnippet SS\n\t$_SESSION['${1:variable}']${2}\n\n# the following are old ones\nsnippet inc\n\tinclude '${1:file}';${2}\nsnippet inc1\n\tinclude_once '${1:file}';${2}\nsnippet req\n\trequire '${1:file}';${2}\nsnippet req1\n\trequire_once '${1:file}';${2}\n# Start Docblock\nsnippet /*\n\t/**\n\t * ${1}\n\t */\n# Class - post doc\nsnippet doc_cp\n\t/**\n\t * ${1:undocumented class}\n\t *\n\t * @package ${2:default}\n\t * @subpackage ${3:default}\n\t * @author ${4:`g:snips_author`}\n\t */${5}\n# Class Variable - post doc\nsnippet doc_vp\n\t/**\n\t * ${1:undocumented class variable}\n\t *\n\t * @var ${2:string}\n\t */${3}\n# Class Variable\nsnippet doc_v\n\t/**\n\t * ${3:undocumented class variable}\n\t *\n\t * @var ${4:string}\n\t */\n\t${1:var} $${2};${5}\n# Class\nsnippet doc_c\n\t/**\n\t * ${3:undocumented class}\n\t *\n\t * @package ${4:default}\n\t * @subpackage ${5:default}\n\t * @author ${6:`g:snips_author`}\n\t */\n\t${1:}class ${2:}\n\t{\n\t\t${7}\n\t} // END $1class $2\n# Constant Definition - post doc\nsnippet doc_dp\n\t/**\n\t * ${1:undocumented constant}\n\t */${2}\n# Constant Definition\nsnippet doc_d\n\t/**\n\t * ${3:undocumented constant}\n\t */\n\tdefine(${1}, ${2});${4}\n# Function - post doc\nsnippet doc_fp\n\t/**\n\t * ${1:undocumented function}\n\t *\n\t * @return ${2:void}\n\t * @author ${3:`g:snips_author`}\n\t */${4}\n# Function signature\nsnippet doc_s\n\t/**\n\t * ${4:undocumented function}\n\t *\n\t * @return ${5:void}\n\t * @author ${6:`g:snips_author`}\n\t */\n\t${1}function ${2}(${3});${7}\n# Function\nsnippet doc_f\n\t/**\n\t * ${4:undocumented function}\n\t *\n\t * @return ${5:void}\n\t * @author ${6:`g:snips_author`}\n\t */\n\t${1}function ${2}(${3})\n\t{${7}\n\t}\n# Header\nsnippet doc_h\n\t/**\n\t * ${1}\n\t *\n\t * @author ${2:`g:snips_author`}\n\t * @version ${3:$Id$}\n\t * @copyright ${4:$2}, `strftime('%d %B, %Y')`\n\t * @package ${5:default}\n\t */\n\n# Interface\nsnippet interface\n\t/**\n\t * ${2:undocumented class}\n\t *\n\t * @package ${3:default}\n\t * @author ${4:`g:snips_author`}\n\t */\n\tinterface ${1:$FILENAME}\n\t{\n\t\t${5}\n\t}\n# class ...\nsnippet class\n\t/**\n\t * ${1}\n\t */\n\tclass ${2:$FILENAME}\n\t{\n\t\t${3}\n\t\t/**\n\t\t * ${4}\n\t\t */\n\t\t${5:public} function ${6:__construct}(${7:argument})\n\t\t{\n\t\t\t${8:// code...}\n\t\t}\n\t}\n# define(...)\nsnippet def\n\tdefine('${1}'${2});${3}\n# defined(...)\nsnippet def?\n\t${1}defined('${2}')${3}\nsnippet wh\n\twhile (${1:/* condition */}) {\n\t\t${2:// code...}\n\t}\n# do ... while\nsnippet do\n\tdo {\n\t\t${2:// code... }\n\t} while (${1:/* condition */});\nsnippet if\n\tif (${1:/* condition */}) {\n\t\t${2:// code...}\n\t}\nsnippet ife\n\tif (${1:/* condition */}) {\n\t\t${2:// code...}\n\t} else {\n\t\t${3:// code...}\n\t}\n\t${4}\nsnippet else\n\telse {\n\t\t${1:// code...}\n\t}\nsnippet elseif\n\telseif (${1:/* condition */}) {\n\t\t${2:// code...}\n\t}\nsnippet switch\n\tswitch ($${1:variable}) {\n\t\tcase '${2:value}':\n\t\t\t${3:// code...}\n\t\t\tbreak;\n\t\t${5}\n\t\tdefault:\n\t\t\t${4:// code...}\n\t\t\tbreak;\n\t}\nsnippet case\n\tcase '${1:value}':\n\t\t${2:// code...}\n\t\tbreak;${3}\nsnippet for\n\tfor ($${2:i} = 0; $$2 < ${1:count}; $$2${3:++}) {\n\t\t${4: // code...}\n\t}\nsnippet foreach\n\tforeach ($${1:variable} as $${2:value}) {\n\t\t${3:// code...}\n\t}\nsnippet foreachk\n\tforeach ($${1:variable} as $${2:key} => $${3:value}) {\n\t\t${4:// code...}\n\t}\n# $... = array (...)\nsnippet array\n\t$${1:arrayName} = array('${2}' => ${3});${4}\nsnippet try\n\ttry {\n\t\t${2}\n\t} catch (${1:Exception} $e) {\n\t}\n# lambda with closure\nsnippet lambda\n\t${1:static }function (${2:args}) use (${3:&$x, $y /*put vars in scope (closure) */}) {\n\t\t${4}\n\t};\n# pre_dump();\nsnippet pd\n\techo '<pre>'; var_dump(${1}); echo '</pre>';\n# pre_dump(); die();\nsnippet pdd\n\techo '<pre>'; var_dump(${1}); echo '</pre>'; die(${2:});\nsnippet vd\n\tvar_dump(${1});\nsnippet vdd\n\tvar_dump(${1}); die(${2:});\nsnippet http_redirect\n\theader (\"HTTP/1.1 301 Moved Permanently\");\n\theader (\"Location: \".URL);\n\texit();\n# Getters & Setters\nsnippet gs\n\t/**\n\t * Gets the value of ${1:foo}\n\t *\n\t * @return ${2:$1}\n\t */\n\tpublic function get${3:$2}()\n\t{\n\t\treturn $this->${4:$1};\n\t}\n\n\t/**\n\t * Sets the value of $1\n\t *\n\t * @param $2 $$1 ${5:description}\n\t *\n\t * @return ${6:$FILENAME}\n\t */\n\tpublic function set$3(${7:$2 }$$1)\n\t{\n\t\t$this->$4 = $$1;\n\t\treturn $this;\n\t}${8}\n# anotation, get, and set, useful for doctrine\nsnippet ags\n\t/**\n\t * ${1:description}\n\t *\n\t * @${7}\n\t */\n\t${2:protected} $${3:foo};\n\n\tpublic function get${4:$3}()\n\t{\n\t\treturn $this->$3;\n\t}\n\n\tpublic function set$4(${5:$4 }$${6:$3})\n\t{\n\t\t$this->$3 = $$6;\n\t\treturn $this;\n\t}\nsnippet rett\n\treturn true;\nsnippet retf\n\treturn false;\nscope html\nsnippet <?\n\t<?php\n\n\t${1}\nsnippet <?e\n\t<?php echo ${1} ?>\n# this one is for php5.4\nsnippet <?=\n\t<?=${1}?>\nsnippet ifil\n\t<?php if (${1:/* condition */}): ?>\n\t\t${2:<!-- code... -->}\n\t<?php endif; ?>\nsnippet ifeil\n\t<?php if (${1:/* condition */}): ?>\n\t\t${2:<!-- html... -->}\n\t<?php else: ?>\n\t\t${3:<!-- html... -->}\n\t<?php endif; ?>\n\t${4}\nsnippet foreachil\n\t<?php foreach ($${1:variable} as $${2:value}): ?>\n\t\t${3:<!-- html... -->}\n\t<?php endforeach; ?>\nsnippet foreachkil\n\t<?php foreach ($${1:variable} as $${2:key} => $${3:value}): ?>\n\t\t${4:<!-- html... -->}\n\t<?php endforeach; ?>\nscope html-tag\nsnippet ifil\\n\\\n\t<?php if (${1:true}): ?>${2:code}<?php endif; ?>\nsnippet ifeil\\n\\\n\t<?php if (${1:true}): ?>${2:code}<?php else: ?>${3:code}<?php endif; ?>${4}\n";
+
+});
+
+define("ace/snippets/php",["require","exports","module","ace/snippets/php.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./php.snippets");
+exports.scope = "php";
+
+});
+
+define("ace/snippets/python.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet #!\n\t#!/usr/bin/env python\nsnippet imp\n\timport ${1:module}\nsnippet from\n\tfrom ${1:package} import ${2:module}\n# Module Docstring\nsnippet docs\n\t'''\n\tFile: ${1:FILENAME:file_name}\n\tAuthor: ${2:author}\n\tDescription: ${3}\n\t'''\nsnippet wh\n\twhile ${1:condition}:\n\t\t${2:# TODO: write code...}\n# dowh - does the same as do...while in other languages\nsnippet dowh\n\twhile True:\n\t\t${1:# TODO: write code...}\n\t\tif ${2:condition}:\n\t\t\tbreak\nsnippet with\n\twith ${1:expr} as ${2:var}:\n\t\t${3:# TODO: write code...}\n# New Class\nsnippet cl\n\tclass ${1:ClassName}(${2:object}):\n\t\t\"\"\"${3:docstring for $1}\"\"\"\n\t\tdef __init__(self, ${4:arg}):\n\t\t\t${5:super($1, self).__init__()}\n\t\t\tself.$4 = $4\n\t\t\t${6}\n# New Function\nsnippet def\n\tdef ${1:fname}(${2:`indent('.') ? 'self' : ''`}):\n\t\t\"\"\"${3:docstring for $1}\"\"\"\n\t\t${4:# TODO: write code...}\nsnippet deff\n\tdef ${1:fname}(${2:`indent('.') ? 'self' : ''`}):\n\t\t${3:# TODO: write code...}\n# New Method\nsnippet defs\n\tdef ${1:mname}(self, ${2:arg}):\n\t\t${3:# TODO: write code...}\n# New Property\nsnippet property\n\tdef ${1:foo}():\n\t\tdoc = \"${2:The $1 property.}\"\n\t\tdef fget(self):\n\t\t\t${3:return self._$1}\n\t\tdef fset(self, value):\n\t\t\t${4:self._$1 = value}\n# Ifs\nsnippet if\n\tif ${1:condition}:\n\t\t${2:# TODO: write code...}\nsnippet el\n\telse:\n\t\t${1:# TODO: write code...}\nsnippet ei\n\telif ${1:condition}:\n\t\t${2:# TODO: write code...}\n# For\nsnippet for\n\tfor ${1:item} in ${2:items}:\n\t\t${3:# TODO: write code...}\n# Encodes\nsnippet cutf8\n\t# -*- coding: utf-8 -*-\nsnippet clatin1\n\t# -*- coding: latin-1 -*-\nsnippet cascii\n\t# -*- coding: ascii -*-\n# Lambda\nsnippet ld\n\t${1:var} = lambda ${2:vars} : ${3:action}\nsnippet .\n\tself.\nsnippet try Try/Except\n\ttry:\n\t\t${1:# TODO: write code...}\n\texcept ${2:Exception}, ${3:e}:\n\t\t${4:raise $3}\nsnippet try Try/Except/Else\n\ttry:\n\t\t${1:# TODO: write code...}\n\texcept ${2:Exception}, ${3:e}:\n\t\t${4:raise $3}\n\telse:\n\t\t${5:# TODO: write code...}\nsnippet try Try/Except/Finally\n\ttry:\n\t\t${1:# TODO: write code...}\n\texcept ${2:Exception}, ${3:e}:\n\t\t${4:raise $3}\n\tfinally:\n\t\t${5:# TODO: write code...}\nsnippet try Try/Except/Else/Finally\n\ttry:\n\t\t${1:# TODO: write code...}\n\texcept ${2:Exception}, ${3:e}:\n\t\t${4:raise $3}\n\telse:\n\t\t${5:# TODO: write code...}\n\tfinally:\n\t\t${6:# TODO: write code...}\n# if __name__ == '__main__':\nsnippet ifmain\n\tif __name__ == '__main__':\n\t\t${1:main()}\n# __magic__\nsnippet _\n\t__${1:init}__${2}\n# python debugger (pdb)\nsnippet pdb\n\timport pdb; pdb.set_trace()\n# ipython debugger (ipdb)\nsnippet ipdb\n\timport ipdb; ipdb.set_trace()\n# ipython debugger (pdbbb)\nsnippet pdbbb\n\timport pdbpp; pdbpp.set_trace()\nsnippet pprint\n\timport pprint; pprint.pprint(${1})${2}\nsnippet \"\n\t\"\"\"\n\t${1:doc}\n\t\"\"\"\n# test function/method\nsnippet test\n\tdef test_${1:description}(${2:self}):\n\t\t${3:# TODO: write code...}\n# test case\nsnippet testcase\n\tclass ${1:ExampleCase}(unittest.TestCase):\n\t\t\n\t\tdef test_${2:description}(self):\n\t\t\t${3:# TODO: write code...}\nsnippet fut\n\tfrom __future__ import ${1}\n#getopt\nsnippet getopt\n\ttry:\n\t\t# Short option syntax: \"hv:\"\n\t\t# Long option syntax: \"help\" or \"verbose=\"\n\t\topts, args = getopt.getopt(sys.argv[1:], \"${1:short_options}\", [${2:long_options}])\n\t\n\texcept getopt.GetoptError, err:\n\t\t# Print debug info\n\t\tprint str(err)\n\t\t${3:error_action}\n\n\tfor option, argument in opts:\n\t\tif option in (\"-h\", \"--help\"):\n\t\t\t${4}\n\t\telif option in (\"-v\", \"--verbose\"):\n\t\t\tverbose = argument\n";
+
+});
+
+define("ace/snippets/python",["require","exports","module","ace/snippets/python.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./python.snippets");
+exports.scope = "python";
+
+});
+
+define("ace/snippets/r.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet #!\n\t#!/usr/bin/env Rscript\n\n# includes\nsnippet lib\n\tlibrary(${1:package})\nsnippet req\n\trequire(${1:package})\nsnippet source\n\tsource('${1:file}')\n\n# conditionals\nsnippet if\n\tif (${1:condition}) {\n\t\t${2:code}\n\t}\nsnippet el\n\telse {\n\t\t${1:code}\n\t}\nsnippet ei\n\telse if (${1:condition}) {\n\t\t${2:code}\n\t}\n\n# functions\nsnippet fun\n\t${1:name} = function (${2:variables}) {\n\t\t${3:code}\n\t}\nsnippet ret\n\treturn(${1:code})\n\n# dataframes, lists, etc\nsnippet df\n\t${1:name}[${2:rows}, ${3:cols}]\nsnippet c\n\tc(${1:items})\nsnippet li\n\tlist(${1:items})\nsnippet mat\n\tmatrix(${1:data}, nrow=${2:rows}, ncol=${3:cols})\n\n# apply functions\nsnippet apply\n\tapply(${1:array}, ${2:margin}, ${3:function})\nsnippet lapply\n\tlapply(${1:list}, ${2:function})\nsnippet sapply\n\tsapply(${1:list}, ${2:function})\nsnippet vapply\n\tvapply(${1:list}, ${2:function}, ${3:type})\nsnippet mapply\n\tmapply(${1:function}, ${2:...})\nsnippet tapply\n\ttapply(${1:vector}, ${2:index}, ${3:function})\nsnippet rapply\n\trapply(${1:list}, ${2:function})\n\n# plyr functions\nsnippet dd\n\tddply(${1:frame}, ${2:variables}, ${3:function})\nsnippet dl\n\tdlply(${1:frame}, ${2:variables}, ${3:function})\nsnippet da\n\tdaply(${1:frame}, ${2:variables}, ${3:function})\nsnippet d_\n\td_ply(${1:frame}, ${2:variables}, ${3:function})\n\nsnippet ad\n\tadply(${1:array}, ${2:margin}, ${3:function})\nsnippet al\n\talply(${1:array}, ${2:margin}, ${3:function})\nsnippet aa\n\taaply(${1:array}, ${2:margin}, ${3:function})\nsnippet a_\n\ta_ply(${1:array}, ${2:margin}, ${3:function})\n\nsnippet ld\n\tldply(${1:list}, ${2:function})\nsnippet ll\n\tllply(${1:list}, ${2:function})\nsnippet la\n\tlaply(${1:list}, ${2:function})\nsnippet l_\n\tl_ply(${1:list}, ${2:function})\n\nsnippet md\n\tmdply(${1:matrix}, ${2:function})\nsnippet ml\n\tmlply(${1:matrix}, ${2:function})\nsnippet ma\n\tmaply(${1:matrix}, ${2:function})\nsnippet m_\n\tm_ply(${1:matrix}, ${2:function})\n\n# plot functions\nsnippet pl\n\tplot(${1:x}, ${2:y})\nsnippet ggp\n\tggplot(${1:data}, aes(${2:aesthetics}))\nsnippet img\n\t${1:(jpeg,bmp,png,tiff)}(filename=\"${2:filename}\", width=${3}, height=${4}, unit=\"${5}\")\n\t${6:plot}\n\tdev.off()\n\n# statistical test functions\nsnippet fis\n\tfisher.test(${1:x}, ${2:y})\nsnippet chi\n\tchisq.test(${1:x}, ${2:y})\nsnippet tt\n\tt.test(${1:x}, ${2:y})\nsnippet wil\n\twilcox.test(${1:x}, ${2:y})\nsnippet cor\n\tcor.test(${1:x}, ${2:y})\nsnippet fte\n\tvar.test(${1:x}, ${2:y})\nsnippet kvt \n\tkv.test(${1:x}, ${2:y})\n";
+
+});
+
+define("ace/snippets/r",["require","exports","module","ace/snippets/r.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./r.snippets");
+exports.scope = "r";
+
+});
+
+define("ace/snippets/razor.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet if\n(${1} == ${2}) {\n\t${3}\n}";
+
+});
+
+define("ace/snippets/razor",["require","exports","module","ace/snippets/razor.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./razor.snippets");
+exports.scope = "razor";
+
+});
+
+define("ace/snippets/robot.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# scope: robot\n### Sections\nsnippet settingssection\ndescription *** Settings *** section\n\t*** Settings ***\n\tLibrary    ${1}\n\nsnippet keywordssection\ndescription *** Keywords *** section\n\t*** Keywords ***\n\t${1:Keyword Name}\n\t    [Arguments]    \\${${2:Example Arg 1}}\n\t\nsnippet testcasessection\ndescription *** Test Cases *** section\n\t*** Test Cases ***\n\t${1:First Test Case}\n\t    ${2:Log    Example Arg}\n\nsnippet variablessection\ndescription *** Variables *** section\n\t*** Variables ***\n\t\\${${1:Variable Name}}=    ${2:Variable Value}\n\n### Helpful keywords\nsnippet testcase\ndescription A test case\n\t${1:Test Case Name}\n\t    ${2:Log    Example log message}\n\t\nsnippet keyword\ndescription A keyword\n\t${1:Example Keyword}\n\t    [Arguments]    \\${${2:Example Arg 1}}\n\n### Built Ins\nsnippet forinr\ndescription For In Range Loop\n\tFOR    \\${${1:Index}}    IN RANGE     \\${${2:10}}\n\t    Log     \\${${1:Index}}\n\tEND\n\nsnippet forin\ndescription For In Loop\n\tFOR    \\${${1:Item}}    IN     @{${2:List Variable}}\n\t    Log     \\${${1:Item}}\n\tEND\n\nsnippet if\ndescription If Statement\n\tIF    ${1:condition}\n\t    ${2:Do something}\n\tEND\n\nsnippet else\ndescription If Statement\n\tIF    ${1:Condition}\n\t    ${2:Do something}\n\tELSE\n\t    ${3:Otherwise do this}\n\tEND\n\nsnippet elif\ndescription Else-If Statement\n\tIF    ${1:Condition 1}\n\t    ${2:Do something}\n\tELSE IF    ${3:Condition 2}\n\t    ${4:Do something else}\n\tEND\n";
+
+});
+
+define("ace/snippets/robot",["require","exports","module","ace/snippets/robot.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./robot.snippets");
+exports.scope = "robot";
+
+});
+
+define("ace/snippets/rst.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# rst\n\nsnippet :\n\t:${1:field name}: ${2:field body}\nsnippet *\n\t*${1:Emphasis}*\nsnippet **\n\t**${1:Strong emphasis}**\nsnippet _\n\t\\`${1:hyperlink-name}\\`_\n\t.. _\\`$1\\`: ${2:link-block}\nsnippet =\n\t${1:Title}\n\t=====${2:=}\n\t${3}\nsnippet -\n\t${1:Title}\n\t-----${2:-}\n\t${3}\nsnippet cont:\n\t.. contents::\n\t\n";
+
+});
+
+define("ace/snippets/rst",["require","exports","module","ace/snippets/rst.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./rst.snippets");
+exports.scope = "rst";
+
+});
+
+define("ace/snippets/ruby.snippets",["require","exports","module"], function(require, exports, module){module.exports = "########################################\n# Ruby snippets - for Rails, see below #\n########################################\n\n# encoding for Ruby 1.9\nsnippet enc\n\t# encoding: utf-8\n\n# #!/usr/bin/env ruby\nsnippet #!\n\t#!/usr/bin/env ruby\n\t# encoding: utf-8\n\n# New Block\nsnippet =b\n\t=begin rdoc\n\t\t${1}\n\t=end\nsnippet y\n\t:yields: ${1:arguments}\nsnippet rb\n\t#!/usr/bin/env ruby -wKU\nsnippet beg\n\tbegin\n\t\t${3}\n\trescue ${1:Exception} => ${2:e}\n\tend\n\nsnippet req require\n\trequire \"${1}\"${2}\nsnippet #\n\t# =>\nsnippet end\n\t__END__\nsnippet case\n\tcase ${1:object}\n\twhen ${2:condition}\n\t\t${3}\n\tend\nsnippet when\n\twhen ${1:condition}\n\t\t${2}\nsnippet def\n\tdef ${1:method_name}\n\t\t${2}\n\tend\nsnippet deft\n\tdef test_${1:case_name}\n\t\t${2}\n\tend\nsnippet if\n\tif ${1:condition}\n\t\t${2}\n\tend\nsnippet ife\n\tif ${1:condition}\n\t\t${2}\n\telse\n\t\t${3}\n\tend\nsnippet elsif\n\telsif ${1:condition}\n\t\t${2}\nsnippet unless\n\tunless ${1:condition}\n\t\t${2}\n\tend\nsnippet while\n\twhile ${1:condition}\n\t\t${2}\n\tend\nsnippet for\n\tfor ${1:e} in ${2:c}\n\t\t${3}\n\tend\nsnippet until\n\tuntil ${1:condition}\n\t\t${2}\n\tend\nsnippet cla class .. end\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\t${2}\n\tend\nsnippet cla class .. initialize .. end\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\tdef initialize(${2:args})\n\t\t\t${3}\n\t\tend\n\tend\nsnippet cla class .. < ParentClass .. initialize .. end\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} < ${2:ParentClass}\n\t\tdef initialize(${3:args})\n\t\t\t${4}\n\t\tend\n\tend\nsnippet cla ClassName = Struct .. do .. end\n\t${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} = Struct.new(:${2:attr_names}) do\n\t\tdef ${3:method_name}\n\t\t\t${4}\n\t\tend\n\tend\nsnippet cla class BlankSlate .. initialize .. end\n\tclass ${1:BlankSlate}\n\t\tinstance_methods.each { |meth| undef_method(meth) unless meth =~ /\\A__/ }\n\tend\nsnippet cla class << self .. end\n\tclass << ${1:self}\n\t\t${2}\n\tend\n# class .. < DelegateClass .. initialize .. end\nsnippet cla-\n\tclass ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} < DelegateClass(${2:ParentClass})\n\t\tdef initialize(${3:args})\n\t\t\tsuper(${4:del_obj})\n\n\t\t\t${5}\n\t\tend\n\tend\nsnippet mod module .. end\n\tmodule ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\t${2}\n\tend\nsnippet mod module .. module_function .. end\n\tmodule ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\tmodule_function\n\n\t\t${2}\n\tend\nsnippet mod module .. ClassMethods .. end\n\tmodule ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\t\tmodule ClassMethods\n\t\t\t${2}\n\t\tend\n\n\t\tmodule InstanceMethods\n\n\t\tend\n\n\t\tdef self.included(receiver)\n\t\t\treceiver.extend         ClassMethods\n\t\t\treceiver.send :include, InstanceMethods\n\t\tend\n\tend\n# attr_reader\nsnippet r\n\tattr_reader :${1:attr_names}\n# attr_writer\nsnippet w\n\tattr_writer :${1:attr_names}\n# attr_accessor\nsnippet rw\n\tattr_accessor :${1:attr_names}\nsnippet atp\n\tattr_protected :${1:attr_names}\nsnippet ata\n\tattr_accessible :${1:attr_names}\n# include Enumerable\nsnippet Enum\n\tinclude Enumerable\n\n\tdef each(&block)\n\t\t${1}\n\tend\n# include Comparable\nsnippet Comp\n\tinclude Comparable\n\n\tdef <=>(other)\n\t\t${1}\n\tend\n# extend Forwardable\nsnippet Forw-\n\textend Forwardable\n# def self\nsnippet defs\n\tdef self.${1:class_method_name}\n\t\t${2}\n\tend\n# def method_missing\nsnippet defmm\n\tdef method_missing(meth, *args, &blk)\n\t\t${1}\n\tend\nsnippet defd\n\tdef_delegator :${1:@del_obj}, :${2:del_meth}, :${3:new_name}\nsnippet defds\n\tdef_delegators :${1:@del_obj}, :${2:del_methods}\nsnippet am\n\talias_method :${1:new_name}, :${2:old_name}\nsnippet app\n\tif __FILE__ == $PROGRAM_NAME\n\t\t${1}\n\tend\n# usage_if()\nsnippet usai\n\tif ARGV.${1}\n\t\tabort \"Usage: #{$PROGRAM_NAME} ${2:ARGS_GO_HERE}\"${3}\n\tend\n# usage_unless()\nsnippet usau\n\tunless ARGV.${1}\n\t\tabort \"Usage: #{$PROGRAM_NAME} ${2:ARGS_GO_HERE}\"${3}\n\tend\nsnippet array\n\tArray.new(${1:10}) { |${2:i}| ${3} }\nsnippet hash\n\tHash.new { |${1:hash}, ${2:key}| $1[$2] = ${3} }\nsnippet file File.foreach() { |line| .. }\n\tFile.foreach(${1:\"path/to/file\"}) { |${2:line}| ${3} }\nsnippet file File.read()\n\tFile.read(${1:\"path/to/file\"})${2}\nsnippet Dir Dir.global() { |file| .. }\n\tDir.glob(${1:\"dir/glob/*\"}) { |${2:file}| ${3} }\nsnippet Dir Dir[\"..\"]\n\tDir[${1:\"glob/**/*.rb\"}]${2}\nsnippet dir\n\tFilename.dirname(__FILE__)\nsnippet deli\n\tdelete_if { |${1:e}| ${2} }\nsnippet fil\n\tfill(${1:range}) { |${2:i}| ${3} }\n# flatten_once()\nsnippet flao\n\tinject(Array.new) { |${1:arr}, ${2:a}| $1.push(*$2)}${3}\nsnippet zip\n\tzip(${1:enums}) { |${2:row}| ${3} }\n# downto(0) { |n| .. }\nsnippet dow\n\tdownto(${1:0}) { |${2:n}| ${3} }\nsnippet ste\n\tstep(${1:2}) { |${2:n}| ${3} }\nsnippet tim\n\ttimes { |${1:n}| ${2} }\nsnippet upt\n\tupto(${1:1.0/0.0}) { |${2:n}| ${3} }\nsnippet loo\n\tloop { ${1} }\nsnippet ea\n\teach { |${1:e}| ${2} }\nsnippet ead\n\teach do |${1:e}|\n\t\t${2}\n\tend\nsnippet eab\n\teach_byte { |${1:byte}| ${2} }\nsnippet eac- each_char { |chr| .. }\n\teach_char { |${1:chr}| ${2} }\nsnippet eac- each_cons(..) { |group| .. }\n\teach_cons(${1:2}) { |${2:group}| ${3} }\nsnippet eai\n\teach_index { |${1:i}| ${2} }\nsnippet eaid\n\teach_index do |${1:i}|\n\t\t${2}\n\tend\nsnippet eak\n\teach_key { |${1:key}| ${2} }\nsnippet eakd\n\teach_key do |${1:key}|\n\t\t${2}\n\tend\nsnippet eal\n\teach_line { |${1:line}| ${2} }\nsnippet eald\n\teach_line do |${1:line}|\n\t\t${2}\n\tend\nsnippet eap\n\teach_pair { |${1:name}, ${2:val}| ${3} }\nsnippet eapd\n\teach_pair do |${1:name}, ${2:val}|\n\t\t${3}\n\tend\nsnippet eas-\n\teach_slice(${1:2}) { |${2:group}| ${3} }\nsnippet easd-\n\teach_slice(${1:2}) do |${2:group}|\n\t\t${3}\n\tend\nsnippet eav\n\teach_value { |${1:val}| ${2} }\nsnippet eavd\n\teach_value do |${1:val}|\n\t\t${2}\n\tend\nsnippet eawi\n\teach_with_index { |${1:e}, ${2:i}| ${3} }\nsnippet eawid\n\teach_with_index do |${1:e},${2:i}|\n\t\t${3}\n\tend\nsnippet reve\n\treverse_each { |${1:e}| ${2} }\nsnippet reved\n\treverse_each do |${1:e}|\n\t\t${2}\n\tend\nsnippet inj\n\tinject(${1:init}) { |${2:mem}, ${3:var}| ${4} }\nsnippet injd\n\tinject(${1:init}) do |${2:mem}, ${3:var}|\n\t\t${4}\n\tend\nsnippet map\n\tmap { |${1:e}| ${2} }\nsnippet mapd\n\tmap do |${1:e}|\n\t\t${2}\n\tend\nsnippet mapwi-\n\tenum_with_index.map { |${1:e}, ${2:i}| ${3} }\nsnippet sor\n\tsort { |a, b| ${1} }\nsnippet sorb\n\tsort_by { |${1:e}| ${2} }\nsnippet ran\n\tsort_by { rand }\nsnippet all\n\tall? { |${1:e}| ${2} }\nsnippet any\n\tany? { |${1:e}| ${2} }\nsnippet cl\n\tclassify { |${1:e}| ${2} }\nsnippet col\n\tcollect { |${1:e}| ${2} }\nsnippet cold\n\tcollect do |${1:e}|\n\t\t${2}\n\tend\nsnippet det\n\tdetect { |${1:e}| ${2} }\nsnippet detd\n\tdetect do |${1:e}|\n\t\t${2}\n\tend\nsnippet fet\n\tfetch(${1:name}) { |${2:key}| ${3} }\nsnippet fin\n\tfind { |${1:e}| ${2} }\nsnippet find\n\tfind do |${1:e}|\n\t\t${2}\n\tend\nsnippet fina\n\tfind_all { |${1:e}| ${2} }\nsnippet finad\n\tfind_all do |${1:e}|\n\t\t${2}\n\tend\nsnippet gre\n\tgrep(${1:/pattern/}) { |${2:match}| ${3} }\nsnippet sub\n\t${1:g}sub(${2:/pattern/}) { |${3:match}| ${4} }\nsnippet sca\n\tscan(${1:/pattern/}) { |${2:match}| ${3} }\nsnippet scad\n\tscan(${1:/pattern/}) do |${2:match}|\n\t\t${3}\n\tend\nsnippet max\n\tmax { |a, b| ${1} }\nsnippet min\n\tmin { |a, b| ${1} }\nsnippet par\n\tpartition { |${1:e}| ${2} }\nsnippet pard\n\tpartition do |${1:e}|\n\t\t${2}\n\tend\nsnippet rej\n\treject { |${1:e}| ${2} }\nsnippet rejd\n\treject do |${1:e}|\n\t\t${2}\n\tend\nsnippet sel\n\tselect { |${1:e}| ${2} }\nsnippet seld\n\tselect do |${1:e}|\n\t\t${2}\n\tend\nsnippet lam\n\tlambda { |${1:args}| ${2} }\nsnippet doo\n\tdo\n\t\t${1}\n\tend\nsnippet dov\n\tdo |${1:variable}|\n\t\t${2}\n\tend\nsnippet :\n\t:${1:key} => ${2:\"value\"}${3}\nsnippet ope\n\topen(${1:\"path/or/url/or/pipe\"}, \"${2:w}\") { |${3:io}| ${4} }\n# path_from_here()\nsnippet fpath\n\tFile.join(File.dirname(__FILE__), *%2[${1:rel path here}])${2}\n# unix_filter {}\nsnippet unif\n\tARGF.each_line${1} do |${2:line}|\n\t\t${3}\n\tend\n# option_parse {}\nsnippet optp\n\trequire \"optparse\"\n\n\toptions = {${1:default => \"args\"}}\n\n\tARGV.options do |opts|\n\t\topts.banner = \"Usage: #{File.basename($PROGRAM_NAME)}\nsnippet opt\n\topts.on( \"-${1:o}\", \"--${2:long-option-name}\", ${3:String},\n\t         \"${4:Option description.}\") do |${5:opt}|\n\t\t${6}\n\tend\nsnippet tc\n\trequire \"test/unit\"\n\n\trequire \"${1:library_file_name}\"\n\n\tclass Test${2:$1} < Test::Unit::TestCase\n\t\tdef test_${3:case_name}\n\t\t\t${4}\n\t\tend\n\tend\nsnippet ts\n\trequire \"test/unit\"\n\n\trequire \"tc_${1:test_case_file}\"\n\trequire \"tc_${2:test_case_file}\"${3}\nsnippet as\n\tassert ${1:test}, \"${2:Failure message.}\"${3}\nsnippet ase\n\tassert_equal ${1:expected}, ${2:actual}${3}\nsnippet asne\n\tassert_not_equal ${1:unexpected}, ${2:actual}${3}\nsnippet asid\n\tassert_in_delta ${1:expected_float}, ${2:actual_float}, ${3:2 ** -20}${4}\nsnippet asio\n\tassert_instance_of ${1:ExpectedClass}, ${2:actual_instance}${3}\nsnippet asko\n\tassert_kind_of ${1:ExpectedKind}, ${2:actual_instance}${3}\nsnippet asn\n\tassert_nil ${1:instance}${2}\nsnippet asnn\n\tassert_not_nil ${1:instance}${2}\nsnippet asm\n\tassert_match /${1:expected_pattern}/, ${2:actual_string}${3}\nsnippet asnm\n\tassert_no_match /${1:unexpected_pattern}/, ${2:actual_string}${3}\nsnippet aso\n\tassert_operator ${1:left}, :${2:operator}, ${3:right}${4}\nsnippet asr\n\tassert_raise ${1:Exception} { ${2} }\nsnippet asrd\n\tassert_raise ${1:Exception} do\n\t\t${2}\n\tend\nsnippet asnr\n\tassert_nothing_raised ${1:Exception} { ${2} }\nsnippet asnrd\n\tassert_nothing_raised ${1:Exception} do\n\t\t${2}\n\tend\nsnippet asrt\n\tassert_respond_to ${1:object}, :${2:method}${3}\nsnippet ass assert_same(..)\n\tassert_same ${1:expected}, ${2:actual}${3}\nsnippet ass assert_send(..)\n\tassert_send [${1:object}, :${2:message}, ${3:args}]${4}\nsnippet asns\n\tassert_not_same ${1:unexpected}, ${2:actual}${3}\nsnippet ast\n\tassert_throws :${1:expected} { ${2} }\nsnippet astd\n\tassert_throws :${1:expected} do\n\t\t${2}\n\tend\nsnippet asnt\n\tassert_nothing_thrown { ${1} }\nsnippet asntd\n\tassert_nothing_thrown do\n\t\t${1}\n\tend\nsnippet fl\n\tflunk \"${1:Failure message.}\"${2}\n# Benchmark.bmbm do .. end\nsnippet bm-\n\tTESTS = ${1:10_000}\n\tBenchmark.bmbm do |results|\n\t\t${2}\n\tend\nsnippet rep\n\tresults.report(\"${1:name}:\") { TESTS.times { ${2} }}\n# Marshal.dump(.., file)\nsnippet Md\n\tFile.open(${1:\"path/to/file.dump\"}, \"wb\") { |${2:file}| Marshal.dump(${3:obj}, $2) }${4}\n# Mashal.load(obj)\nsnippet Ml\n\tFile.open(${1:\"path/to/file.dump\"}, \"rb\") { |${2:file}| Marshal.load($2) }${3}\n# deep_copy(..)\nsnippet deec\n\tMarshal.load(Marshal.dump(${1:obj_to_copy}))${2}\nsnippet Pn-\n\tPStore.new(${1:\"file_name.pstore\"})${2}\nsnippet tra\n\ttransaction(${1:true}) { ${2} }\n# xmlread(..)\nsnippet xml-\n\tREXML::Document.new(File.read(${1:\"path/to/file\"}))${2}\n# xpath(..) { .. }\nsnippet xpa\n\telements.each(${1:\"//Xpath\"}) do |${2:node}|\n\t\t${3}\n\tend\n# class_from_name()\nsnippet clafn\n\tsplit(\"::\").inject(Object) { |par, const| par.const_get(const) }\n# singleton_class()\nsnippet sinc\n\tclass << self; self end\nsnippet nam\n\tnamespace :${1:`Filename()`} do\n\t\t${2}\n\tend\nsnippet tas\n\tdesc \"${1:Task description}\"\n\ttask :${2:task_name => [:dependent, :tasks]} do\n\t\t${3}\n\tend\n# block\nsnippet b\n\t{ |${1:var}| ${2} }\nsnippet begin\n\tbegin\n\t\traise 'A test exception.'\n\trescue Exception => e\n\t\tputs e.message\n\t\tputs e.backtrace.inspect\n\telse\n\t\t# other exception\n\tensure\n\t\t# always executed\n\tend\n\n#debugging\nsnippet debug\n\trequire 'ruby-debug'; debugger; true;\nsnippet pry\n\trequire 'pry'; binding.pry\n\n#############################################\n# Rails snippets - for pure Ruby, see above #\n#############################################\nsnippet art\n\tassert_redirected_to ${1::action => \"${2:index}\"}\nsnippet artnp\n\tassert_redirected_to ${1:parent}_${2:child}_path(${3:@$1}, ${4:@$2})\nsnippet artnpp\n\tassert_redirected_to ${1:parent}_${2:child}_path(${3:@$1})\nsnippet artp\n\tassert_redirected_to ${1:model}_path(${2:@$1})\nsnippet artpp\n\tassert_redirected_to ${1:model}s_path\nsnippet asd\n\tassert_difference \"${1:Model}.${2:count}\", $1 do\n\t\t${3}\n\tend\nsnippet asnd\n\tassert_no_difference \"${1:Model}.${2:count}\" do\n\t\t${3}\n\tend\nsnippet asre\n\tassert_response :${1:success}, @response.body${2}\nsnippet asrj\n\tassert_rjs :${1:replace}, \"${2:dom id}\"\nsnippet ass assert_select(..)\n\tassert_select '${1:path}', :${2:text} => '${3:inner_html' ${4:do}\nsnippet bf\n\tbefore_filter :${1:method}\nsnippet bt\n\tbelongs_to :${1:association}\nsnippet crw\n\tcattr_accessor :${1:attr_names}\nsnippet defcreate\n\tdef create\n\t\t@${1:model_class_name} = ${2:ModelClassName}.new(params[:$1])\n\n\t\trespond_to do |wants|\n\t\t\tif @$1.save\n\t\t\t\tflash[:notice] = '$2 was successfully created.'\n\t\t\t\twants.html { redirect_to(@$1) }\n\t\t\t\twants.xml  { render :xml => @$1, :status => :created, :location => @$1 }\n\t\t\telse\n\t\t\t\twants.html { render :action => \"new\" }\n\t\t\t\twants.xml  { render :xml => @$1.errors, :status => :unprocessable_entity }\n\t\t\tend\n\t\tend\n\tend${3}\nsnippet defdestroy\n\tdef destroy\n\t\t@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\t\t@$1.destroy\n\n\t\trespond_to do |wants|\n\t\t\twants.html { redirect_to($1s_url) }\n\t\t\twants.xml  { head :ok }\n\t\tend\n\tend${3}\nsnippet defedit\n\tdef edit\n\t\t@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\tend\nsnippet defindex\n\tdef index\n\t\t@${1:model_class_name} = ${2:ModelClassName}.all\n\n\t\trespond_to do |wants|\n\t\t\twants.html # index.html.erb\n\t\t\twants.xml  { render :xml => @$1s }\n\t\tend\n\tend${3}\nsnippet defnew\n\tdef new\n\t\t@${1:model_class_name} = ${2:ModelClassName}.new\n\n\t\trespond_to do |wants|\n\t\t\twants.html # new.html.erb\n\t\t\twants.xml  { render :xml => @$1 }\n\t\tend\n\tend${3}\nsnippet defshow\n\tdef show\n\t\t@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\n\t\trespond_to do |wants|\n\t\t\twants.html # show.html.erb\n\t\t\twants.xml  { render :xml => @$1 }\n\t\tend\n\tend${3}\nsnippet defupdate\n\tdef update\n\t\t@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\n\t\trespond_to do |wants|\n\t\t\tif @$1.update_attributes(params[:$1])\n\t\t\t\tflash[:notice] = '$2 was successfully updated.'\n\t\t\t\twants.html { redirect_to(@$1) }\n\t\t\t\twants.xml  { head :ok }\n\t\t\telse\n\t\t\t\twants.html { render :action => \"edit\" }\n\t\t\t\twants.xml  { render :xml => @$1.errors, :status => :unprocessable_entity }\n\t\t\tend\n\t\tend\n\tend${3}\nsnippet flash\n\tflash[:${1:notice}] = \"${2}\"\nsnippet habtm\n\thas_and_belongs_to_many :${1:object}, :join_table => \"${2:table_name}\", :foreign_key => \"${3}_id\"${4}\nsnippet hm\n\thas_many :${1:object}\nsnippet hmd\n\thas_many :${1:other}s, :class_name => \"${2:$1}\", :foreign_key => \"${3:$1}_id\", :dependent => :destroy${4}\nsnippet hmt\n\thas_many :${1:object}, :through => :${2:object}\nsnippet ho\n\thas_one :${1:object}\nsnippet i18\n\tI18n.t('${1:type.key}')${2}\nsnippet ist\n\t<%= image_submit_tag(\"${1:agree.png}\", :id => \"${2:id}\"${3} %>\nsnippet log\n\tRails.logger.${1:debug} ${2}\nsnippet log2\n\tRAILS_DEFAULT_LOGGER.${1:debug} ${2}\nsnippet logd\n\tlogger.debug { \"${1:message}\" }${2}\nsnippet loge\n\tlogger.error { \"${1:message}\" }${2}\nsnippet logf\n\tlogger.fatal { \"${1:message}\" }${2}\nsnippet logi\n\tlogger.info { \"${1:message}\" }${2}\nsnippet logw\n\tlogger.warn { \"${1:message}\" }${2}\nsnippet mapc\n\t${1:map}.${2:connect} '${3:controller/:action/:id}'\nsnippet mapca\n\t${1:map}.catch_all \"*${2:anything}\", :controller => \"${3:default}\", :action => \"${4:error}\"${5}\nsnippet mapr\n\t${1:map}.resource :${2:resource}\nsnippet maprs\n\t${1:map}.resources :${2:resource}\nsnippet mapwo\n\t${1:map}.with_options :${2:controller} => '${3:thing}' do |$3|\n\t\t${4}\n\tend\nsnippet mbs\n\tbefore_save :${1:method}\nsnippet mcht\n\tchange_table :${1:table_name} do |t|\n\t\t${2}\n\tend\nsnippet mp\n\tmap(&:${1:id})\nsnippet mrw\n\tmattr_accessor :${1:attr_names}\nsnippet oa\n\torder(\"${1:field}\")\nsnippet od\n\torder(\"${1:field} DESC\")\nsnippet pa\n\tparams[:${1:id}]${2}\nsnippet ra\n\trender :action => \"${1:action}\"\nsnippet ral\n\trender :action => \"${1:action}\", :layout => \"${2:layoutname}\"\nsnippet rest\n\trespond_to do |wants|\n\t\twants.${1:html} { ${2} }\n\tend\nsnippet rf\n\trender :file => \"${1:filepath}\"\nsnippet rfu\n\trender :file => \"${1:filepath}\", :use_full_path => ${2:false}\nsnippet ri\n\trender :inline => \"${1:<%= 'hello' %>}\"\nsnippet ril\n\trender :inline => \"${1:<%= 'hello' %>}\", :locals => { ${2::name} => \"${3:value}\"${4} }\nsnippet rit\n\trender :inline => \"${1:<%= 'hello' %>}\", :type => ${2::rxml}\nsnippet rjson\n\trender :json => ${1:text to render}\nsnippet rl\n\trender :layout => \"${1:layoutname}\"\nsnippet rn\n\trender :nothing => ${1:true}\nsnippet rns\n\trender :nothing => ${1:true}, :status => ${2:401}\nsnippet rp\n\trender :partial => \"${1:item}\"\nsnippet rpc\n\trender :partial => \"${1:item}\", :collection => ${2:@$1s}\nsnippet rpl\n\trender :partial => \"${1:item}\", :locals => { :${2:$1} => ${3:@$1}\nsnippet rpo\n\trender :partial => \"${1:item}\", :object => ${2:@$1}\nsnippet rps\n\trender :partial => \"${1:item}\", :status => ${2:500}\nsnippet rt\n\trender :text => \"${1:text to render}\"\nsnippet rtl\n\trender :text => \"${1:text to render}\", :layout => \"${2:layoutname}\"\nsnippet rtlt\n\trender :text => \"${1:text to render}\", :layout => ${2:true}\nsnippet rts\n\trender :text => \"${1:text to render}\", :status => ${2:401}\nsnippet ru\n\trender :update do |${1:page}|\n\t\t$1.${2}\n\tend\nsnippet rxml\n\trender :xml => ${1:text to render}\nsnippet sc\n\tscope :${1:name}, :where(:@${2:field} => ${3:value})\nsnippet sl\n\tscope :${1:name}, lambda do |${2:value}|\n\t\twhere(\"${3:field = ?}\", ${4:bind var})\n\tend\nsnippet sha1\n\tDigest::SHA1.hexdigest(${1:string})\nsnippet sweeper\n\tclass ${1:ModelClassName}Sweeper < ActionController::Caching::Sweeper\n\t\tobserve $1\n\n\t\tdef after_save(${2:model_class_name})\n\t\t\texpire_cache($2)\n\t\tend\n\n\t\tdef after_destroy($2)\n\t\t\texpire_cache($2)\n\t\tend\n\n\t\tdef expire_cache($2)\n\t\t\texpire_page\n\t\tend\n\tend\nsnippet tcb\n\tt.boolean :${1:title}\n\t${2}\nsnippet tcbi\n\tt.binary :${1:title}, :limit => ${2:2}.megabytes\n\t${3}\nsnippet tcd\n\tt.decimal :${1:title}, :precision => ${2:10}, :scale => ${3:2}\n\t${4}\nsnippet tcda\n\tt.date :${1:title}\n\t${2}\nsnippet tcdt\n\tt.datetime :${1:title}\n\t${2}\nsnippet tcf\n\tt.float :${1:title}\n\t${2}\nsnippet tch\n\tt.change :${1:name}, :${2:string}, :${3:limit} => ${4:80}\n\t${5}\nsnippet tci\n\tt.integer :${1:title}\n\t${2}\nsnippet tcl\n\tt.integer :lock_version, :null => false, :default => 0\n\t${1}\nsnippet tcr\n\tt.references :${1:taggable}, :polymorphic => { :default => '${2:Photo}' }\n\t${3}\nsnippet tcs\n\tt.string :${1:title}\n\t${2}\nsnippet tct\n\tt.text :${1:title}\n\t${2}\nsnippet tcti\n\tt.time :${1:title}\n\t${2}\nsnippet tcts\n\tt.timestamp :${1:title}\n\t${2}\nsnippet tctss\n\tt.timestamps\n\t${1}\nsnippet va\n\tvalidates_associated :${1:attribute}\nsnippet vao\n\tvalidates_acceptance_of :${1:terms}\nsnippet vc\n\tvalidates_confirmation_of :${1:attribute}\nsnippet ve\n\tvalidates_exclusion_of :${1:attribute}, :in => ${2:%w( mov avi )}\nsnippet vf\n\tvalidates_format_of :${1:attribute}, :with => /${2:regex}/\nsnippet vi\n\tvalidates_inclusion_of :${1:attribute}, :in => %w(${2: mov avi })\nsnippet vl\n\tvalidates_length_of :${1:attribute}, :within => ${2:3}..${3:20}\nsnippet vn\n\tvalidates_numericality_of :${1:attribute}\nsnippet vpo\n\tvalidates_presence_of :${1:attribute}\nsnippet vu\n\tvalidates_uniqueness_of :${1:attribute}\nsnippet wants\n\twants.${1:js|xml|html} { ${2} }\nsnippet wc\n\twhere(${1:\"conditions\"}${2:, bind_var})\nsnippet wh\n\twhere(${1:field} => ${2:value})\nsnippet xdelete\n\txhr :delete, :${1:destroy}, :id => ${2:1}${3}\nsnippet xget\n\txhr :get, :${1:show}, :id => ${2:1}${3}\nsnippet xpost\n\txhr :post, :${1:create}, :${2:object} => { ${3} }\nsnippet xput\n\txhr :put, :${1:update}, :id => ${2:1}, :${3:object} => { ${4} }${5}\nsnippet test\n\ttest \"should ${1:do something}\" do\n\t\t${2}\n\tend\n#migrations\nsnippet mac\n\tadd_column :${1:table_name}, :${2:column_name}, :${3:data_type}\nsnippet mrc\n\tremove_column :${1:table_name}, :${2:column_name}\nsnippet mrnc\n\trename_column :${1:table_name}, :${2:old_column_name}, :${3:new_column_name}\nsnippet mcc\n\tchange_column :${1:table}, :${2:column}, :${3:type}\nsnippet mccc\n\tt.column :${1:title}, :${2:string}\nsnippet mct\n\tcreate_table :${1:table_name} do |t|\n\t\tt.column :${2:name}, :${3:type}\n\tend\nsnippet migration\n\tclass ${1:class_name} < ActiveRecord::Migration\n\t\tdef self.up\n\t\t\t${2}\n\t\tend\n\n\t\tdef self.down\n\t\tend\n\tend\n\nsnippet trc\n\tt.remove :${1:column}\nsnippet tre\n\tt.rename :${1:old_column_name}, :${2:new_column_name}\n\t${3}\nsnippet tref\n\tt.references :${1:model}\n\n#rspec\nsnippet it\n\tit \"${1:spec_name}\" do\n\t\t${2}\n\tend\nsnippet itp\n\tit \"${1:spec_name}\"\n\t${2}\nsnippet desc\n\tdescribe ${1:class_name} do\n\t\t${2}\n\tend\nsnippet cont\n\tcontext \"${1:message}\" do\n\t\t${2}\n\tend\nsnippet bef\n\tbefore :${1:each} do\n\t\t${2}\n\tend\nsnippet aft\n\tafter :${1:each} do\n\t\t${2}\n\tend\n";
+
+});
+
+define("ace/snippets/ruby",["require","exports","module","ace/snippets/ruby.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./ruby.snippets");
+exports.scope = "ruby";
+
+});
+
+define("ace/snippets/sh.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Shebang. Executing bash via /usr/bin/env makes scripts more portable.\nsnippet #!\n\t#!/usr/bin/env bash\n\t\nsnippet if\n\tif [[ ${1:condition} ]]; then\n\t\t${2:#statements}\n\tfi\nsnippet elif\n\telif [[ ${1:condition} ]]; then\n\t\t${2:#statements}\nsnippet for\n\tfor (( ${2:i} = 0; $2 < ${1:count}; $2++ )); do\n\t\t${3:#statements}\n\tdone\nsnippet fori\n\tfor ${1:needle} in ${2:haystack} ; do\n\t\t${3:#statements}\n\tdone\nsnippet wh\n\twhile [[ ${1:condition} ]]; do\n\t\t${2:#statements}\n\tdone\nsnippet until\n\tuntil [[ ${1:condition} ]]; do\n\t\t${2:#statements}\n\tdone\nsnippet case\n\tcase ${1:word} in\n\t\t${2:pattern})\n\t\t\t${3};;\n\tesac\nsnippet go \n\twhile getopts '${1:o}' ${2:opts} \n\tdo \n\t\tcase $$2 in\n\t\t${3:o0})\n\t\t\t${4:#staments};;\n\t\tesac\n\tdone\n# Set SCRIPT_DIR variable to directory script is located.\nsnippet sdir\n\tSCRIPT_DIR=\"$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" && pwd )\"\n# getopt\nsnippet getopt\n\t__ScriptVersion=\"${1:version}\"\n\n\t#===  FUNCTION  ================================================================\n\t#         NAME:  usage\n\t#  DESCRIPTION:  Display usage information.\n\t#===============================================================================\n\tfunction usage ()\n\t{\n\t\t\tcat <<- EOT\n\n\t  Usage :  $${0:0} [options] [--] \n\n\t  Options: \n\t  -h|help       Display this message\n\t  -v|version    Display script version\n\n\tEOT\n\t}    # ----------  end of function usage  ----------\n\n\t#-----------------------------------------------------------------------\n\t#  Handle command line arguments\n\t#-----------------------------------------------------------------------\n\n\twhile getopts \":hv\" opt\n\tdo\n\t  case $opt in\n\n\t\th|help     )  usage; exit 0   ;;\n\n\t\tv|version  )  echo \"$${0:0} -- Version $__ScriptVersion\"; exit 0   ;;\n\n\t\t\\? )  echo -e \"\\n  Option does not exist : $OPTARG\\n\"\n\t\t\t  usage; exit 1   ;;\n\n\t  esac    # --- end of case ---\n\tdone\n\tshift $(($OPTIND-1))\n\n";
+
+});
+
+define("ace/snippets/sh",["require","exports","module","ace/snippets/sh.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./sh.snippets");
+exports.scope = "sh";
+
+});
+
+define("ace/snippets/sql.snippets",["require","exports","module"], function(require, exports, module){module.exports = "snippet tbl\n\tcreate table ${1:table} (\n\t\t${2:columns}\n\t);\nsnippet col\n\t${1:name}\t${2:type}\t${3:default ''}\t${4:not null}\nsnippet ccol\n\t${1:name}\tvarchar2(${2:size})\t${3:default ''}\t${4:not null}\nsnippet ncol\n\t${1:name}\tnumber\t${3:default 0}\t${4:not null}\nsnippet dcol\n\t${1:name}\tdate\t${3:default sysdate}\t${4:not null}\nsnippet ind\n\tcreate index ${3:$1_$2} on ${1:table}(${2:column});\nsnippet uind\n\tcreate unique index ${1:name} on ${2:table}(${3:column});\nsnippet tblcom\n\tcomment on table ${1:table} is '${2:comment}';\nsnippet colcom\n\tcomment on column ${1:table}.${2:column} is '${3:comment}';\nsnippet addcol\n\talter table ${1:table} add (${2:column} ${3:type});\nsnippet seq\n\tcreate sequence ${1:name} start with ${2:1} increment by ${3:1} minvalue ${4:1};\nsnippet s*\n\tselect * from ${1:table}\n";
+
+});
+
+define("ace/snippets/sql",["require","exports","module","ace/snippets/sql.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./sql.snippets");
+exports.scope = "sql";
+
+});
+
+define("ace/snippets/sqlserver.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# ISNULL\nsnippet isnull\n\tISNULL(${1:check_expression}, ${2:replacement_value})\n# FORMAT\nsnippet format\n\tFORMAT(${1:value}, ${2:format})\n# CAST\nsnippet cast\n\tCAST(${1:expression} AS ${2:data_type})\n# CONVERT\nsnippet convert\n\tCONVERT(${1:data_type}, ${2:expression})\n# DATEPART\nsnippet datepart\n\tDATEPART(${1:datepart}, ${2:date})\n# DATEDIFF\nsnippet datediff\n\tDATEDIFF(${1:datepart}, ${2:startdate}, ${3:enddate})\n# DATEADD\nsnippet dateadd\n\tDATEADD(${1:datepart}, ${2:number}, ${3:date})\n# DATEFROMPARTS \nsnippet datefromparts\n\tDATEFROMPARTS(${1:year}, ${2:month}, ${3:day})\n# OBJECT_DEFINITION\nsnippet objectdef\n\tSELECT OBJECT_DEFINITION(OBJECT_ID('${1:sys.server_permissions /*object name*/}'))\n# STUFF XML\nsnippet stuffxml\n\tSTUFF((SELECT ', ' + ${1:ColumnName}\n\t\tFROM ${2:TableName}\n\t\tWHERE ${3:WhereClause}\n\t\tFOR XML PATH('')), 1, 1, '') AS ${4:Alias}\n\t${5:/*https://msdn.microsoft.com/en-us/library/ms188043.aspx*/}\n# Create Procedure\nsnippet createproc\n\t-- =============================================\n\t-- Author:\t\t${1:Author}\n\t-- Create date: ${2:Date}\n\t-- Description:\t${3:Description}\n\t-- =============================================\n\tCREATE PROCEDURE ${4:Procedure_Name}\n\t\t${5:/*Add the parameters for the stored procedure here*/}\n\tAS\n\tBEGIN\n\t\t-- SET NOCOUNT ON added to prevent extra result sets from interfering with SELECT statements.\n\t\tSET NOCOUNT ON;\n\t\t\n\t\t${6:/*Add the T-SQL statements to compute the return value here*/}\n\t\t\n\tEND\n\tGO\n# Create Scalar Function\nsnippet createfn\n\t-- =============================================\n\t-- Author:\t\t${1:Author}\n\t-- Create date: ${2:Date}\n\t-- Description:\t${3:Description}\n\t-- =============================================\n\tCREATE FUNCTION ${4:Scalar_Function_Name}\n\t\t-- Add the parameters for the function here\n\tRETURNS ${5:Function_Data_Type}\n\tAS\n\tBEGIN\n\t\tDECLARE @Result ${5:Function_Data_Type}\n\t\t\n\t\t${6:/*Add the T-SQL statements to compute the return value here*/}\n\t\t\n\tEND\n\tGO";
+
+});
+
+define("ace/snippets/sqlserver",["require","exports","module","ace/snippets/sqlserver.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./sqlserver.snippets");
+exports.scope = "sqlserver";
+
+});
+
+define("ace/snippets/tcl.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# #!/usr/bin/env tclsh\nsnippet #!\n\t#!/usr/bin/env tclsh\n\t\n# Process\nsnippet pro\n\tproc ${1:function_name} {${2:args}} {\n\t\t${3:#body ...}\n\t}\n#xif\nsnippet xif\n\t${1:expr}? ${2:true} : ${3:false}\n# Conditional\nsnippet if\n\tif {${1}} {\n\t\t${2:# body...}\n\t}\n# Conditional if..else\nsnippet ife\n\tif {${1}} {\n\t\t${2:# body...}\n\t} else {\n\t\t${3:# else...}\n\t}\n# Conditional if..elsif..else\nsnippet ifee\n\tif {${1}} {\n\t\t${2:# body...}\n\t} elseif {${3}} {\n\t\t${4:# elsif...}\n\t} else {\n\t\t${5:# else...}\n\t}\n# If catch then\nsnippet ifc\n\tif { [catch {${1:#do something...}} ${2:err}] } {\n\t\t${3:# handle failure...}\n\t}\n# Catch\nsnippet catch\n\tcatch {${1}} ${2:err} ${3:options}\n# While Loop\nsnippet wh\n\twhile {${1}} {\n\t\t${2:# body...}\n\t}\n# For Loop\nsnippet for\n\tfor {set ${2:var} 0} {$$2 < ${1:count}} {${3:incr} $2} {\n\t\t${4:# body...}\n\t}\n# Foreach Loop\nsnippet fore\n\tforeach ${1:x} {${2:#list}} {\n\t\t${3:# body...}\n\t}\n# after ms script...\nsnippet af\n\tafter ${1:ms} ${2:#do something}\n# after cancel id\nsnippet afc\n\tafter cancel ${1:id or script}\n# after idle\nsnippet afi\n\tafter idle ${1:script}\n# after info id\nsnippet afin\n\tafter info ${1:id}\n# Expr\nsnippet exp\n\texpr {${1:#expression here}}\n# Switch\nsnippet sw\n\tswitch ${1:var} {\n\t\t${3:pattern 1} {\n\t\t\t${4:#do something}\n\t\t}\n\t\tdefault {\n\t\t\t${2:#do something}\n\t\t}\n\t}\n# Case\nsnippet ca\n\t${1:pattern} {\n\t\t${2:#do something}\n\t}${3}\n# Namespace eval\nsnippet ns\n\tnamespace eval ${1:path} {${2:#script...}}\n# Namespace current\nsnippet nsc\n\tnamespace current\n";
+
+});
+
+define("ace/snippets/tcl",["require","exports","module","ace/snippets/tcl.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./tcl.snippets");
+exports.scope = "tcl";
+
+});
+
+define("ace/snippets/tex.snippets",["require","exports","module"], function(require, exports, module){module.exports = "#PREAMBLE\n#newcommand\nsnippet nc\n\t\\newcommand{\\${1:cmd}}[${2:opt}]{${3:realcmd}}${4}\n#usepackage\nsnippet up\n\t\\usepackage[${1:[options}]{${2:package}}\n#newunicodechar\nsnippet nuc\n\t\\newunicodechar{${1}}{${2:\\ensuremath}${3:tex-substitute}}}\n#DeclareMathOperator\nsnippet dmo\n\t\\DeclareMathOperator{${1}}{${2}}\n\n#DOCUMENT\n# \\begin{}...\\end{}\nsnippet begin\n\t\\begin{${1:env}}\n\t\t${2}\n\t\\end{$1}\n# Tabular\nsnippet tab\n\t\\begin{${1:tabular}}{${2:c}}\n\t${3}\n\t\\end{$1}\nsnippet thm\n\t\\begin[${1:author}]{${2:thm}}\n\t${3}\n\t\\end{$1}\nsnippet center\n\t\\begin{center}\n\t\t${1}\n\t\\end{center}\n# Align(ed)\nsnippet ali\n\t\\begin{align${1:ed}}\n\t\t${2}\n\t\\end{align$1}\n# Gather(ed)\nsnippet gat\n\t\\begin{gather${1:ed}}\n\t\t${2}\n\t\\end{gather$1}\n# Equation\nsnippet eq\n\t\\begin{equation}\n\t\t${1}\n\t\\end{equation}\n# Equation\nsnippet eq*\n\t\\begin{equation*}\n\t\t${1}\n\t\\end{equation*}\n# Unnumbered Equation\nsnippet \\\n\t\\[\n\t\t${1}\n\t\\]\n# Enumerate\nsnippet enum\n\t\\begin{enumerate}\n\t\t\\item ${1}\n\t\\end{enumerate}\n# Itemize\nsnippet itemize\n\t\\begin{itemize}\n\t\t\\item ${1}\n\t\\end{itemize}\n# Description\nsnippet desc\n\t\\begin{description}\n\t\t\\item[${1}] ${2}\n\t\\end{description}\n# Matrix\nsnippet mat\n\t\\begin{${1:p/b/v/V/B/small}matrix}\n\t\t${2}\n\t\\end{$1matrix}\n# Cases\nsnippet cas\n\t\\begin{cases}\n\t\t${1:equation}, &\\text{ if }${2:case}\\\\\n\t\t${3}\n\t\\end{cases}\n# Split\nsnippet spl\n\t\\begin{split}\n\t\t${1}\n\t\\end{split}\n# Part\nsnippet part\n\t\\part{${1:part name}} % (fold)\n\t\\label{prt:${2:$1}}\n\t${3}\n\t% part $2 (end)\n# Chapter\nsnippet cha\n\t\\chapter{${1:chapter name}}\n\t\\label{cha:${2:$1}}\n\t${3}\n# Section\nsnippet sec\n\t\\section{${1:section name}}\n\t\\label{sec:${2:$1}}\n\t${3}\n# Sub Section\nsnippet sub\n\t\\subsection{${1:subsection name}}\n\t\\label{sub:${2:$1}}\n\t${3}\n# Sub Sub Section\nsnippet subs\n\t\\subsubsection{${1:subsubsection name}}\n\t\\label{ssub:${2:$1}}\n\t${3}\n# Paragraph\nsnippet par\n\t\\paragraph{${1:paragraph name}}\n\t\\label{par:${2:$1}}\n\t${3}\n# Sub Paragraph\nsnippet subp\n\t\\subparagraph{${1:subparagraph name}}\n\t\\label{subp:${2:$1}}\n\t${3}\n#References\nsnippet itd\n\t\\item[${1:description}] ${2:item}\nsnippet figure\n\t${1:Figure}~\\ref{${2:fig:}}${3}\nsnippet table\n\t${1:Table}~\\ref{${2:tab:}}${3}\nsnippet listing\n\t${1:Listing}~\\ref{${2:list}}${3}\nsnippet section\n\t${1:Section}~\\ref{${2:sec:}}${3}\nsnippet page\n\t${1:page}~\\pageref{${2}}${3}\nsnippet index\n\t\\index{${1:index}}${2}\n#Citations\nsnippet cite\n\t\\cite[${1}]{${2}}${3}\nsnippet fcite\n\t\\footcite[${1}]{${2}}${3}\n#Formating text: italic, bold, underline, small capital, emphase ..\nsnippet it\n\t\\textit{${1:text}}\nsnippet bf\n\t\\textbf{${1:text}}\nsnippet under\n\t\\underline{${1:text}}\nsnippet emp\n\t\\emph{${1:text}}\nsnippet sc\n\t\\textsc{${1:text}}\n#Choosing font\nsnippet sf\n\t\\textsf{${1:text}}\nsnippet rm\n\t\\textrm{${1:text}}\nsnippet tt\n\t\\texttt{${1:text}}\n#misc\nsnippet ft\n\t\\footnote{${1:text}}\nsnippet fig\n\t\\begin{figure}\n\t\\begin{center}\n\t    \\includegraphics[scale=${1}]{Figures/${2}}\n\t\\end{center}\n\t\\caption{${3}}\n\t\\label{fig:${4}}\n\t\\end{figure}\nsnippet tikz\n\t\\begin{figure}\n\t\\begin{center}\n\t\\begin{tikzpicture}[scale=${1:1}]\n\t\t${2}\n\t\\end{tikzpicture}\n\t\\end{center}\n\t\\caption{${3}}\n\t\\label{fig:${4}}\n\t\\end{figure}\n#math\nsnippet stackrel\n\t\\stackrel{${1:above}}{${2:below}} ${3}\nsnippet frac\n\t\\frac{${1:num}}{${2:denom}}\nsnippet sum\n\t\\sum^{${1:n}}_{${2:i=1}}{${3}}";
+
+});
+
+define("ace/snippets/tex",["require","exports","module","ace/snippets/tex.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./tex.snippets");
+exports.scope = "tex";
+
+});
+
+define("ace/snippets/textile.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# Jekyll post header\nsnippet header\n\t---\n\ttitle: ${1:title}\n\tlayout: post\n\tdate: ${2:date} ${3:hour:minute:second} -05:00\n\t---\n\n# Image\nsnippet img\n\t!${1:url}(${2:title}):${3:link}!\n\n# Table\nsnippet |\n\t|${1}|${2}\n\n# Link\nsnippet link\n\t\"${1:link text}\":${2:url}\n\n# Acronym\nsnippet (\n\t(${1:Expand acronym})${2}\n\n# Footnote\nsnippet fn\n\t[${1:ref number}] ${3}\n\n\tfn$1. ${2:footnote}\n\t\n";
+
+});
+
+define("ace/snippets/textile",["require","exports","module","ace/snippets/textile.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./textile.snippets");
+exports.scope = "textile";
+
+});
+
+define("ace/snippets/vala",["require","exports","module"], function(require, exports, module){"use strict";
+exports.snippets = [
+    {
+        "content": "case ${1:condition}:\n\t$0\n\tbreak;\n",
+        "name": "case",
+        "scope": "vala",
+        "tabTrigger": "case"
+    },
+    {
+        "content": "/**\n * ${6}\n */\n${1:public} class ${2:MethodName}${3: : GLib.Object} {\n\n\t/**\n\t * ${7}\n\t */\n\tpublic ${2}(${4}) {\n\t\t${5}\n\t}\n\n\t$0\n}",
+        "name": "class",
+        "scope": "vala",
+        "tabTrigger": "class"
+    },
+    {
+        "content": "(${1}) => {\n\t${0}\n}\n",
+        "name": "closure",
+        "scope": "vala",
+        "tabTrigger": "=>"
+    },
+    {
+        "content": "/*\n * $0\n */",
+        "name": "Comment (multiline)",
+        "scope": "vala",
+        "tabTrigger": "/*"
+    },
+    {
+        "content": "Console.WriteLine($1);\n$0",
+        "name": "Console.WriteLine (writeline)",
+        "scope": "vala",
+        "tabTrigger": "writeline"
+    },
+    {
+        "content": "[DBus(name = \"$0\")]",
+        "name": "DBus annotation",
+        "scope": "vala",
+        "tabTrigger": "[DBus"
+    },
+    {
+        "content": "delegate ${1:void} ${2:DelegateName}($0);",
+        "name": "delegate",
+        "scope": "vala",
+        "tabTrigger": "delegate"
+    },
+    {
+        "content": "do {\n\t$0\n} while ($1);\n",
+        "name": "do while",
+        "scope": "vala",
+        "tabTrigger": "dowhile"
+    },
+    {
+        "content": "/**\n * $0\n */",
+        "name": "DocBlock",
+        "scope": "vala",
+        "tabTrigger": "/**"
+    },
+    {
+        "content": "else if ($1) {\n\t$0\n}\n",
+        "name": "else if (elseif)",
+        "scope": "vala",
+        "tabTrigger": "elseif"
+    },
+    {
+        "content": "else {\n\t$0\n}",
+        "name": "else",
+        "scope": "vala",
+        "tabTrigger": "else"
+    },
+    {
+        "content": "enum {$1:EnumName} {\n\t$0\n}",
+        "name": "enum",
+        "scope": "vala",
+        "tabTrigger": "enum"
+    },
+    {
+        "content": "public errordomain ${1:Error} {\n\t$0\n}",
+        "name": "error domain",
+        "scope": "vala",
+        "tabTrigger": "errordomain"
+    },
+    {
+        "content": "for ($1;$2;$3) {\n\t$0\n}",
+        "name": "for",
+        "scope": "vala",
+        "tabTrigger": "for"
+    },
+    {
+        "content": "foreach ($1 in $2) {\n\t$0\n}",
+        "name": "foreach",
+        "scope": "vala",
+        "tabTrigger": "foreach"
+    },
+    {
+        "content": "Gee.ArrayList<${1:G}>($0);",
+        "name": "Gee.ArrayList",
+        "scope": "vala",
+        "tabTrigger": "ArrayList"
+    },
+    {
+        "content": "Gee.HashMap<${1:K},${2:V}>($0);",
+        "name": "Gee.HashMap",
+        "scope": "vala",
+        "tabTrigger": "HashMap"
+    },
+    {
+        "content": "Gee.HashSet<${1:G}>($0);",
+        "name": "Gee.HashSet",
+        "scope": "vala",
+        "tabTrigger": "HashSet"
+    },
+    {
+        "content": "if ($1) {\n\t$0\n}",
+        "name": "if",
+        "scope": "vala",
+        "tabTrigger": "if"
+    },
+    {
+        "content": "interface ${1:InterfaceName}{$2: : SuperInterface} {\n\t$0\n}",
+        "name": "interface",
+        "scope": "vala",
+        "tabTrigger": "interface"
+    },
+    {
+        "content": "public static int main(string [] argv) {\n\t${0}\n\treturn 0;\n}",
+        "name": "Main function",
+        "scope": "vala",
+        "tabTrigger": "main"
+    },
+    {
+        "content": "namespace $1 {\n\t$0\n}\n",
+        "name": "namespace (ns)",
+        "scope": "vala",
+        "tabTrigger": "ns"
+    },
+    {
+        "content": "stdout.printf($0);",
+        "name": "printf",
+        "scope": "vala",
+        "tabTrigger": "printf"
+    },
+    {
+        "content": "${1:public} ${2:Type} ${3:Name} {\n\tset {\n\t\t$0\n\t}\n\tget {\n\n\t}\n}",
+        "name": "property (prop)",
+        "scope": "vala",
+        "tabTrigger": "prop"
+    },
+    {
+        "content": "${1:public} ${2:Type} ${3:Name} {\n\tget {\n\t\t$0\n\t}\n}",
+        "name": "read-only property (roprop)",
+        "scope": "vala",
+        "tabTrigger": "roprop"
+    },
+    {
+        "content": "@\"${1:\\$var}\"",
+        "name": "String template (@)",
+        "scope": "vala",
+        "tabTrigger": "@"
+    },
+    {
+        "content": "struct ${1:StructName} {\n\t$0\n}",
+        "name": "struct",
+        "scope": "vala",
+        "tabTrigger": "struct"
+    },
+    {
+        "content": "switch ($1) {\n\t$0\n}",
+        "name": "switch",
+        "scope": "vala",
+        "tabTrigger": "switch"
+    },
+    {
+        "content": "try {\n\t$2\n} catch (${1:Error} e) {\n\t$0\n}",
+        "name": "try/catch",
+        "scope": "vala",
+        "tabTrigger": "try"
+    },
+    {
+        "content": "\"\"\"$0\"\"\";",
+        "name": "Verbatim string (\"\"\")",
+        "scope": "vala",
+        "tabTrigger": "verbatim"
+    },
+    {
+        "content": "while ($1) {\n\t$0\n}",
+        "name": "while",
+        "scope": "vala",
+        "tabTrigger": "while"
+    }
+];
+exports.scope = "";
+
+});
+
+define("ace/snippets/velocity.snippets",["require","exports","module"], function(require, exports, module){module.exports = "# macro\nsnippet #macro\n\t#macro ( ${1:macroName} ${2:\\$var1, [\\$var2, ...]} )\n\t\t${3:## macro code}\n\t#end\n# foreach\nsnippet #foreach\n\t#foreach ( ${1:\\$item} in ${2:\\$collection} )\n\t\t${3:## foreach code}\n\t#end\n# if\nsnippet #if\n\t#if ( ${1:true} )\n\t\t${0}\n\t#end\n# if ... else\nsnippet #ife\n\t#if ( ${1:true} )\n\t\t${2}\n\t#else\n\t\t${0}\n\t#end\n#import\nsnippet #import\n\t#import ( \"${1:path/to/velocity/format}\" )\n# set\nsnippet #set\n\t#set ( $${1:var} = ${0} )\n";
+
+});
+
+define("ace/snippets/velocity",["require","exports","module","ace/snippets/velocity.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./velocity.snippets");
+exports.scope = "velocity";
+exports.includeScopes = ["html", "javascript", "css"];
+
+});
+
+define("ace/snippets/wollok.snippets",["require","exports","module"], function(require, exports, module){module.exports = "##\n## Basic Java packages and import\nsnippet im\n\timport\nsnippet w.l\n\twollok.lang\nsnippet w.i\n\twollok.lib\n\n## Class and object\nsnippet cl\n\tclass ${1:`Filename(\"\", \"untitled\")`} ${2}\nsnippet obj\n\tobject ${1:`Filename(\"\", \"untitled\")`} ${2:inherits Parent}${3}\nsnippet te\n\ttest ${1:`Filename(\"\", \"untitled\")`}\n\n##\n## Enhancements\nsnippet inh\n\tinherits\n\n##\n## Comments\nsnippet /*\n\t/*\n\t * ${1}\n\t */\n\n##\n## Control Statements\nsnippet el\n\telse\nsnippet if\n\tif (${1}) ${2}\n\n##\n## Create a Method\nsnippet m\n\tmethod ${1:method}(${2}) ${5}\n\n##  \n## Tests\nsnippet as\n\tassert.equals(${1:expected}, ${2:actual})\n\n##\n## Exceptions\nsnippet ca\n\tcatch ${1:e} : (${2:Exception} ) ${3}\nsnippet thr\n\tthrow\nsnippet try\n\ttry {\n\t\t${3}\n\t} catch ${1:e} : ${2:Exception} {\n\t}\n\n##\n## Javadocs\nsnippet /**\n\t/**\n\t * ${1}\n\t */\n\n##\n## Print Methods\nsnippet print\n\tconsole.println(\"${1:Message}\")\n\n##\n## Setter and Getter Methods\nsnippet set\n\tmethod set${1:}(${2:}) {\n\t\t$1 = $2\n\t}\nsnippet get\n\tmethod get${1:}() {\n\t\treturn ${1:};\n\t}\n\n##\n## Terminate Methods or Loops\nsnippet re\n\treturn";
+
+});
+
+define("ace/snippets/wollok",["require","exports","module","ace/snippets/wollok.snippets"], function(require, exports, module){"use strict";
+exports.snippetText = require("./wollok.snippets");
+exports.scope = "wollok";
 
 });
 
@@ -49913,8 +51639,7 @@ var Gutter = /** @class */ (function () {
         var padding = this.$padding || this.$computePadding();
         gutterWidth += padding.left + padding.right;
         if (gutterWidth !== this.gutterWidth && !isNaN(gutterWidth)) {
-            this.gutterWidth = gutterWidth;
-            this.element.parentNode.style.width =
+            this.gutterWidth = gutterWidth; (this.element.parentNode).style.width =
                 this.element.style.width = Math.ceil(this.gutterWidth) + "px";
             this._signal("changeGutterWidth", gutterWidth);
         }
@@ -50038,7 +51763,7 @@ var Gutter = /** @class */ (function () {
             className += breakpoints[row];
         if (decorations[row])
             className += decorations[row];
-        if (this.$annotations[row] && this.$annotations[row].className)
+        if (this.$annotations[row] && this.$annotations[row].className && row !== foldStart)
             className += this.$annotations[row].className;
         if (foldWidgets) {
             var c = foldWidgets[row];
@@ -50175,7 +51900,7 @@ var Gutter = /** @class */ (function () {
     Gutter.prototype.$computePadding = function () {
         if (!this.element.firstChild)
             return { left: 0, right: 0 };
-        var style = dom.computedStyle(this.element.firstChild);
+        var style = dom.computedStyle(/**@type{Element}*/ (this.element.firstChild));
         this.$padding = {};
         this.$padding.left = (parseInt(style.borderLeftWidth) || 0)
             + (parseInt(style.paddingLeft) || 0) + 1;
@@ -50621,7 +52346,8 @@ var Text = /** @class */ (function () {
     };
     Text.prototype.$setFontMetrics = function (measure) {
         this.$fontMetrics = measure;
-        this.$fontMetrics.on("changeCharacterSize", function (e) {
+        this.$fontMetrics.on("changeCharacterSize", 
+        function (e) {
             this._signal("changeCharacterSize", e);
         }.bind(this));
         this.$pollSizeChanges();
@@ -50673,8 +52399,7 @@ var Text = /** @class */ (function () {
     };
     Text.prototype.$computeTabString = function () {
         var tabSize = this.session.getTabSize();
-        this.tabSize = tabSize;
-        var tabStr = this.$tabStrings = [0];
+        this.tabSize = tabSize; var tabStr = this.$tabStrings = [0];
         for (var i = 1; i < tabSize + 1; i++) {
             if (this.showTabs) {
                 var span = this.dom.createElement("span");
@@ -50741,8 +52466,7 @@ var Text = /** @class */ (function () {
                 foldStart = foldLine ? foldLine.start.row : Infinity;
             }
             if (row > last)
-                break;
-            var lineElement = lineElements[lineElementsIdx++];
+                break; var lineElement = lineElements[lineElementsIdx++];
             if (lineElement) {
                 this.dom.removeChildren(lineElement);
                 this.$renderLine(lineElement, row, row == foldStart ? foldLine : false);
@@ -50901,7 +52625,7 @@ var Text = /** @class */ (function () {
             }
             if (token.bg && this.showColorPreview)
                 span.setAttribute("style", bgStyle(token.bg, this.backgroundColor));
-            if (token.style)
+            else if (token.style)
                 span.setAttribute("style", token.style);
             span.className = classes;
             span.appendChild(valueFragment);
@@ -51342,7 +53066,7 @@ var Cursor = /** @class */ (function () {
             this.$startCssAnimation();
         }
         else {
-            var blink = function () {
+            var blink = /**@this{Cursor}*/ function () {
                 this.timeoutId = setTimeout(function () {
                     update(false);
                 }, 0.6 * this.blinkInterval);
@@ -51962,7 +53686,7 @@ var FontMetrics = /** @class */ (function () {
     FontMetrics.prototype.$getZoom = function (element) {
         if (!element || !element.parentElement)
             return 1;
-        return (window.getComputedStyle(element).zoom || 1) * this.$getZoom(element.parentElement);
+        return (window.getComputedStyle(element)["zoom"] || 1) * this.$getZoom(element.parentElement);
     };
     FontMetrics.prototype.$initTransformMeasureNodes = function () {
         var t = function (t, l) {
@@ -52029,7 +53753,7 @@ for (var i = 1; i < 16; i++) {
 }
 styles.join("\\n")
 */
-module.exports = "\n.ace_br1 {border-top-left-radius    : 3px;}\n.ace_br2 {border-top-right-radius   : 3px;}\n.ace_br3 {border-top-left-radius    : 3px; border-top-right-radius:    3px;}\n.ace_br4 {border-bottom-right-radius: 3px;}\n.ace_br5 {border-top-left-radius    : 3px; border-bottom-right-radius: 3px;}\n.ace_br6 {border-top-right-radius   : 3px; border-bottom-right-radius: 3px;}\n.ace_br7 {border-top-left-radius    : 3px; border-top-right-radius:    3px; border-bottom-right-radius: 3px;}\n.ace_br8 {border-bottom-left-radius : 3px;}\n.ace_br9 {border-top-left-radius    : 3px; border-bottom-left-radius:  3px;}\n.ace_br10{border-top-right-radius   : 3px; border-bottom-left-radius:  3px;}\n.ace_br11{border-top-left-radius    : 3px; border-top-right-radius:    3px; border-bottom-left-radius:  3px;}\n.ace_br12{border-bottom-right-radius: 3px; border-bottom-left-radius:  3px;}\n.ace_br13{border-top-left-radius    : 3px; border-bottom-right-radius: 3px; border-bottom-left-radius:  3px;}\n.ace_br14{border-top-right-radius   : 3px; border-bottom-right-radius: 3px; border-bottom-left-radius:  3px;}\n.ace_br15{border-top-left-radius    : 3px; border-top-right-radius:    3px; border-bottom-right-radius: 3px; border-bottom-left-radius: 3px;}\n\n\n.ace_editor {\n    position: relative;\n    overflow: hidden;\n    padding: 0;\n    font: 12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace;\n    direction: ltr;\n    text-align: left;\n    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);\n}\n\n.ace_scroller {\n    position: absolute;\n    overflow: hidden;\n    top: 0;\n    bottom: 0;\n    background-color: inherit;\n    -ms-user-select: none;\n    -moz-user-select: none;\n    -webkit-user-select: none;\n    user-select: none;\n    cursor: text;\n}\n\n.ace_content {\n    position: absolute;\n    box-sizing: border-box;\n    min-width: 100%;\n    contain: style size layout;\n    font-variant-ligatures: no-common-ligatures;\n}\n\n.ace_keyboard-focus:focus {\n    box-shadow: inset 0 0 0 2px #5E9ED6;\n    outline: none;\n}\n\n.ace_dragging .ace_scroller:before{\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n    bottom: 0;\n    content: '';\n    background: rgba(250, 250, 250, 0.01);\n    z-index: 1000;\n}\n.ace_dragging.ace_dark .ace_scroller:before{\n    background: rgba(0, 0, 0, 0.01);\n}\n\n.ace_gutter {\n    position: absolute;\n    overflow : hidden;\n    width: auto;\n    top: 0;\n    bottom: 0;\n    left: 0;\n    cursor: default;\n    z-index: 4;\n    -ms-user-select: none;\n    -moz-user-select: none;\n    -webkit-user-select: none;\n    user-select: none;\n    contain: style size layout;\n}\n\n.ace_gutter-active-line {\n    position: absolute;\n    left: 0;\n    right: 0;\n}\n\n.ace_scroller.ace_scroll-left:after {\n    content: \"\";\n    position: absolute;\n    top: 0;\n    right: 0;\n    bottom: 0;\n    left: 0;\n    box-shadow: 17px 0 16px -16px rgba(0, 0, 0, 0.4) inset;\n    pointer-events: none;\n}\n\n.ace_gutter-cell, .ace_gutter-cell_svg-icons {\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n    padding-left: 19px;\n    padding-right: 6px;\n    background-repeat: no-repeat;\n}\n\n.ace_gutter-cell_svg-icons .ace_gutter_annotation {\n    margin-left: -14px;\n    float: left;\n}\n\n.ace_gutter-cell .ace_gutter_annotation {\n    margin-left: -19px;\n    float: left;\n}\n\n.ace_gutter-cell.ace_error, .ace_icon.ace_error, .ace_icon.ace_error_fold {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABOFBMVEX/////////QRswFAb/Ui4wFAYwFAYwFAaWGAfDRymzOSH/PxswFAb/SiUwFAYwFAbUPRvjQiDllog5HhHdRybsTi3/Tyv9Tir+Syj/UC3////XurebMBIwFAb/RSHbPx/gUzfdwL3kzMivKBAwFAbbvbnhPx66NhowFAYwFAaZJg8wFAaxKBDZurf/RB6mMxb/SCMwFAYwFAbxQB3+RB4wFAb/Qhy4Oh+4QifbNRcwFAYwFAYwFAb/QRzdNhgwFAYwFAbav7v/Uy7oaE68MBK5LxLewr/r2NXewLswFAaxJw4wFAbkPRy2PyYwFAaxKhLm1tMwFAazPiQwFAaUGAb/QBrfOx3bvrv/VC/maE4wFAbRPBq6MRO8Qynew8Dp2tjfwb0wFAbx6eju5+by6uns4uH9/f36+vr/GkHjAAAAYnRSTlMAGt+64rnWu/bo8eAA4InH3+DwoN7j4eLi4xP99Nfg4+b+/u9B/eDs1MD1mO7+4PHg2MXa347g7vDizMLN4eG+Pv7i5evs/v79yu7S3/DV7/498Yv24eH+4ufQ3Ozu/v7+y13sRqwAAADLSURBVHjaZc/XDsFgGIBhtDrshlitmk2IrbHFqL2pvXf/+78DPokj7+Fz9qpU/9UXJIlhmPaTaQ6QPaz0mm+5gwkgovcV6GZzd5JtCQwgsxoHOvJO15kleRLAnMgHFIESUEPmawB9ngmelTtipwwfASilxOLyiV5UVUyVAfbG0cCPHig+GBkzAENHS0AstVF6bacZIOzgLmxsHbt2OecNgJC83JERmePUYq8ARGkJx6XtFsdddBQgZE2nPR6CICZhawjA4Fb/chv+399kfR+MMMDGOQAAAABJRU5ErkJggg==\");\n    background-repeat: no-repeat;\n    background-position: 2px center;\n}\n\n.ace_gutter-cell.ace_warning, .ace_icon.ace_warning, .ace_icon.ace_warning_fold {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAmVBMVEX///8AAAD///8AAAAAAABPSzb/5sAAAAB/blH/73z/ulkAAAAAAAD85pkAAAAAAAACAgP/vGz/rkDerGbGrV7/pkQICAf////e0IsAAAD/oED/qTvhrnUAAAD/yHD/njcAAADuv2r/nz//oTj/p064oGf/zHAAAAA9Nir/tFIAAAD/tlTiuWf/tkIAAACynXEAAAAAAAAtIRW7zBpBAAAAM3RSTlMAABR1m7RXO8Ln31Z36zT+neXe5OzooRDfn+TZ4p3h2hTf4t3k3ucyrN1K5+Xaks52Sfs9CXgrAAAAjklEQVR42o3PbQ+CIBQFYEwboPhSYgoYunIqqLn6/z8uYdH8Vmdnu9vz4WwXgN/xTPRD2+sgOcZjsge/whXZgUaYYvT8QnuJaUrjrHUQreGczuEafQCO/SJTufTbroWsPgsllVhq3wJEk2jUSzX3CUEDJC84707djRc5MTAQxoLgupWRwW6UB5fS++NV8AbOZgnsC7BpEAAAAABJRU5ErkJggg==\");\n    background-repeat: no-repeat;\n    background-position: 2px center;\n}\n\n.ace_gutter-cell.ace_info, .ace_icon.ace_info {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAAAAAA6mKC9AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAAJ0Uk5TAAB2k804AAAAPklEQVQY02NgIB68QuO3tiLznjAwpKTgNyDbMegwisCHZUETUZV0ZqOquBpXj2rtnpSJT1AEnnRmL2OgGgAAIKkRQap2htgAAAAASUVORK5CYII=\");\n    background-repeat: no-repeat;\n    background-position: 2px center;\n}\n.ace_dark .ace_gutter-cell.ace_info, .ace_dark .ace_icon.ace_info {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAJFBMVEUAAAChoaGAgIAqKiq+vr6tra1ZWVmUlJSbm5s8PDxubm56enrdgzg3AAAAAXRSTlMAQObYZgAAAClJREFUeNpjYMAPdsMYHegyJZFQBlsUlMFVCWUYKkAZMxZAGdxlDMQBAG+TBP4B6RyJAAAAAElFTkSuQmCC\");\n}\n\n.ace_icon_svg.ace_error {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxNiI+CjxnIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJyZWQiIHNoYXBlLXJlbmRlcmluZz0iZ2VvbWV0cmljUHJlY2lzaW9uIj4KPGNpcmNsZSBmaWxsPSJub25lIiBjeD0iOCIgY3k9IjgiIHI9IjciIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPGxpbmUgeDE9IjExIiB5MT0iNSIgeDI9IjUiIHkyPSIxMSIvPgo8bGluZSB4MT0iMTEiIHkxPSIxMSIgeDI9IjUiIHkyPSI1Ii8+CjwvZz4KPC9zdmc+\");\n    background-color: crimson;\n}\n.ace_icon_svg.ace_warning {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxNiI+CjxnIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJkYXJrb3JhbmdlIiBzaGFwZS1yZW5kZXJpbmc9Imdlb21ldHJpY1ByZWNpc2lvbiI+Cjxwb2x5Z29uIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiIHBvaW50cz0iOCAxIDE1IDE1IDEgMTUgOCAxIi8+CjxyZWN0IHg9IjgiIHk9IjEyIiB3aWR0aD0iMC4wMSIgaGVpZ2h0PSIwLjAxIi8+CjxsaW5lIHgxPSI4IiB5MT0iNiIgeDI9IjgiIHkyPSIxMCIvPgo8L2c+Cjwvc3ZnPg==\");\n    background-color: darkorange;\n}\n.ace_icon_svg.ace_info {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxNiI+CjxnIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJibHVlIiBzaGFwZS1yZW5kZXJpbmc9Imdlb21ldHJpY1ByZWNpc2lvbiI+CjxjaXJjbGUgZmlsbD0ibm9uZSIgY3g9IjgiIGN5PSI4IiByPSI3IiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjxwb2x5bGluZSBwb2ludHM9IjggMTEgOCA4Ii8+Cjxwb2x5bGluZSBwb2ludHM9IjkgOCA2IDgiLz4KPGxpbmUgeDE9IjEwIiB5MT0iMTEiIHgyPSI2IiB5Mj0iMTEiLz4KPHJlY3QgeD0iOCIgeT0iNSIgd2lkdGg9IjAuMDEiIGhlaWdodD0iMC4wMSIvPgo8L2c+Cjwvc3ZnPg==\");\n    background-color: royalblue;\n}\n\n.ace_icon_svg.ace_error_fold {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxNiIgZmlsbD0ibm9uZSI+CiAgPHBhdGggZD0ibSAxOC45Mjk4NTEsNy44Mjk4MDc2IGMgMC4xNDYzNTMsNi4zMzc0NjA0IC02LjMyMzE0Nyw3Ljc3Nzg0NDQgLTcuNDc3OTEyLDcuNzc3ODQ0NCAtMi4xMDcyNzI2LC0wLjEyODc1IDUuMTE3Njc4LDAuMzU2MjQ5IDUuMDUxNjk4LC03Ljg3MDA2MTggLTAuNjA0NjcyLC04LjAwMzk3MzQ5IC03LjA3NzI3MDYsLTcuNTYzMTE4OSAtNC44NTczLC03LjQzMDM5NTU2IDEuNjA2LC0wLjExNTE0MjI1IDYuODk3NDg1LDEuMjYyNTQ1OTYgNy4yODM1MTQsNy41MjI2MTI5NiB6IiBmaWxsPSJjcmltc29uIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0ibSA4LjExNDc1NjIsMi4wNTI5ODI4IGMgMy4zNDkxNjk4LDAgNi4wNjQxMzI4LDIuNjc2ODYyNyA2LjA2NDEzMjgsNS45Nzg5NTMgMCwzLjMwMjExMjIgLTIuNzE0OTYzLDUuOTc4OTIwMiAtNi4wNjQxMzI4LDUuOTc4OTIwMiAtMy4zNDkxNDczLDAgLTYuMDY0MTc3MiwtMi42NzY4MDggLTYuMDY0MTc3MiwtNS45Nzg5MjAyIDAuMDA1MzksLTMuMjk5ODg2MSAyLjcxNzI2NTYsLTUuOTczNjQwOCA2LjA2NDE3NzIsLTUuOTc4OTUzIHogbSAwLC0xLjczNTgyNzE5IGMgLTQuMzIxNDgzNiwwIC03LjgyNDc0MDM4LDMuNDU0MDE4NDkgLTcuODI0NzQwMzgsNy43MTQ3ODAxOSAwLDQuMjYwNzI4MiAzLjUwMzI1Njc4LDcuNzE0NzQ1MiA3LjgyNDc0MDM4LDcuNzE0NzQ1MiA0LjMyMTQ0OTgsMCA3LjgyNDY5OTgsLTMuNDU0MDE3IDcuODI0Njk5OCwtNy43MTQ3NDUyIDAsLTIuMDQ2MDkxNCAtMC44MjQzOTIsLTQuMDA4MzY3MiAtMi4yOTE3NTYsLTUuNDU1MTc0NiBDIDEyLjE4MDIyNSwxLjEyOTk2NDggMTAuMTkwMDEzLDAuMzE3MTU1NjEgOC4xMTQ3NTYyLDAuMzE3MTU1NjEgWiBNIDYuOTM3NDU2Myw4LjI0MDU5ODUgNC42NzE4Njg1LDEwLjQ4NTg1MiA2LjAwODY4MTQsMTEuODc2NzI4IDguMzE3MDAzNSw5LjYwMDc5MTEgMTAuNjI1MzM3LDExLjg3NjcyOCAxMS45NjIxMzgsMTAuNDg1ODUyIDkuNjk2NTUwOCw4LjI0MDU5ODUgMTEuOTYyMTM4LDYuMDA2ODA2NiAxMC41NzMyNDYsNC42Mzc0MzM1IDguMzE3MDAzNSw2Ljg3MzQyOTcgNi4wNjA3NjA3LDQuNjM3NDMzNSA0LjY3MTg2ODUsNi4wMDY4MDY2IFoiIGZpbGw9ImNyaW1zb24iIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=\");\n    background-color: crimson;\n}\n.ace_icon_svg.ace_warning_fold {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyMCAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xNC43NzY5IDE0LjczMzdMOC42NTE5MiAyLjQ4MzY5QzguMzI5NDYgMS44Mzg3NyA3LjQwOTEzIDEuODM4NzcgNy4wODY2NyAyLjQ4MzY5TDAuOTYxNjY5IDE0LjczMzdDMC42NzA3NzUgMTUuMzE1NSAxLjA5MzgzIDE2IDEuNzQ0MjkgMTZIMTMuOTk0M0MxNC42NDQ4IDE2IDE1LjA2NzggMTUuMzE1NSAxNC43NzY5IDE0LjczMzdaTTMuMTYwMDcgMTQuMjVMNy44NjkyOSA0LjgzMTU2TDEyLjU3ODUgMTQuMjVIMy4xNjAwN1pNOC43NDQyOSAxMS42MjVWMTMuMzc1SDYuOTk0MjlWMTEuNjI1SDguNzQ0MjlaTTYuOTk0MjkgMTAuNzVWNy4yNUg4Ljc0NDI5VjEwLjc1SDYuOTk0MjlaIiBmaWxsPSIjRUM3MjExIi8+CjxwYXRoIGQ9Ik0xMS4xOTkxIDIuOTUyMzhDMTAuODgwOSAyLjMxNDY3IDEwLjM1MzcgMS44MDUyNiA5LjcwNTUgMS41MDlMMTEuMDQxIDEuMDY5NzhDMTEuNjg4MyAwLjk0OTgxNCAxMi4zMzcgMS4yNzI2MyAxMi42MzE3IDEuODYxNDFMMTcuNjEzNiAxMS44MTYxQzE4LjM1MjcgMTMuMjkyOSAxNy41OTM4IDE1LjA4MDQgMTYuMDE4IDE1LjU3NDVDMTYuNDA0NCAxNC40NTA3IDE2LjMyMzEgMTMuMjE4OCAxNS43OTI0IDEyLjE1NTVMMTEuMTk5MSAyLjk1MjM4WiIgZmlsbD0iI0VDNzIxMSIvPgo8L3N2Zz4=\");\n    background-color: darkorange;\n}\n\n.ace_scrollbar {\n    contain: strict;\n    position: absolute;\n    right: 0;\n    bottom: 0;\n    z-index: 6;\n}\n\n.ace_scrollbar-inner {\n    position: absolute;\n    cursor: text;\n    left: 0;\n    top: 0;\n}\n\n.ace_scrollbar-v{\n    overflow-x: hidden;\n    overflow-y: scroll;\n    top: 0;\n}\n\n.ace_scrollbar-h {\n    overflow-x: scroll;\n    overflow-y: hidden;\n    left: 0;\n}\n\n.ace_print-margin {\n    position: absolute;\n    height: 100%;\n}\n\n.ace_text-input {\n    position: absolute;\n    z-index: 0;\n    width: 0.5em;\n    height: 1em;\n    opacity: 0;\n    background: transparent;\n    -moz-appearance: none;\n    appearance: none;\n    border: none;\n    resize: none;\n    outline: none;\n    overflow: hidden;\n    font: inherit;\n    padding: 0 1px;\n    margin: 0 -1px;\n    contain: strict;\n    -ms-user-select: text;\n    -moz-user-select: text;\n    -webkit-user-select: text;\n    user-select: text;\n    /*with `pre-line` chrome inserts &nbsp; instead of space*/\n    white-space: pre!important;\n}\n.ace_text-input.ace_composition {\n    background: transparent;\n    color: inherit;\n    z-index: 1000;\n    opacity: 1;\n}\n.ace_composition_placeholder { color: transparent }\n.ace_composition_marker { \n    border-bottom: 1px solid;\n    position: absolute;\n    border-radius: 0;\n    margin-top: 1px;\n}\n\n[ace_nocontext=true] {\n    transform: none!important;\n    filter: none!important;\n    clip-path: none!important;\n    mask : none!important;\n    contain: none!important;\n    perspective: none!important;\n    mix-blend-mode: initial!important;\n    z-index: auto;\n}\n\n.ace_layer {\n    z-index: 1;\n    position: absolute;\n    overflow: hidden;\n    /* workaround for chrome bug https://github.com/ajaxorg/ace/issues/2312*/\n    word-wrap: normal;\n    white-space: pre;\n    height: 100%;\n    width: 100%;\n    box-sizing: border-box;\n    /* setting pointer-events: auto; on node under the mouse, which changes\n        during scroll, will break mouse wheel scrolling in Safari */\n    pointer-events: none;\n}\n\n.ace_gutter-layer {\n    position: relative;\n    width: auto;\n    text-align: right;\n    pointer-events: auto;\n    height: 1000000px;\n    contain: style size layout;\n}\n\n.ace_text-layer {\n    font: inherit !important;\n    position: absolute;\n    height: 1000000px;\n    width: 1000000px;\n    contain: style size layout;\n}\n\n.ace_text-layer > .ace_line, .ace_text-layer > .ace_line_group {\n    contain: style size layout;\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n}\n\n.ace_hidpi .ace_text-layer,\n.ace_hidpi .ace_gutter-layer,\n.ace_hidpi .ace_content,\n.ace_hidpi .ace_gutter {\n    contain: strict;\n}\n.ace_hidpi .ace_text-layer > .ace_line, \n.ace_hidpi .ace_text-layer > .ace_line_group {\n    contain: strict;\n}\n\n.ace_cjk {\n    display: inline-block;\n    text-align: center;\n}\n\n.ace_cursor-layer {\n    z-index: 4;\n}\n\n.ace_cursor {\n    z-index: 4;\n    position: absolute;\n    box-sizing: border-box;\n    border-left: 2px solid;\n    /* workaround for smooth cursor repaintng whole screen in chrome */\n    transform: translatez(0);\n}\n\n.ace_multiselect .ace_cursor {\n    border-left-width: 1px;\n}\n\n.ace_slim-cursors .ace_cursor {\n    border-left-width: 1px;\n}\n\n.ace_overwrite-cursors .ace_cursor {\n    border-left-width: 0;\n    border-bottom: 1px solid;\n}\n\n.ace_hidden-cursors .ace_cursor {\n    opacity: 0.2;\n}\n\n.ace_hasPlaceholder .ace_hidden-cursors .ace_cursor {\n    opacity: 0;\n}\n\n.ace_smooth-blinking .ace_cursor {\n    transition: opacity 0.18s;\n}\n\n.ace_animate-blinking .ace_cursor {\n    animation-duration: 1000ms;\n    animation-timing-function: step-end;\n    animation-name: blink-ace-animate;\n    animation-iteration-count: infinite;\n}\n\n.ace_animate-blinking.ace_smooth-blinking .ace_cursor {\n    animation-duration: 1000ms;\n    animation-timing-function: ease-in-out;\n    animation-name: blink-ace-animate-smooth;\n}\n    \n@keyframes blink-ace-animate {\n    from, to { opacity: 1; }\n    60% { opacity: 0; }\n}\n\n@keyframes blink-ace-animate-smooth {\n    from, to { opacity: 1; }\n    45% { opacity: 1; }\n    60% { opacity: 0; }\n    85% { opacity: 0; }\n}\n\n.ace_marker-layer .ace_step, .ace_marker-layer .ace_stack {\n    position: absolute;\n    z-index: 3;\n}\n\n.ace_marker-layer .ace_selection {\n    position: absolute;\n    z-index: 5;\n}\n\n.ace_marker-layer .ace_bracket {\n    position: absolute;\n    z-index: 6;\n}\n\n.ace_marker-layer .ace_error_bracket {\n    position: absolute;\n    border-bottom: 1px solid #DE5555;\n    border-radius: 0;\n}\n\n.ace_marker-layer .ace_active-line {\n    position: absolute;\n    z-index: 2;\n}\n\n.ace_marker-layer .ace_selected-word {\n    position: absolute;\n    z-index: 4;\n    box-sizing: border-box;\n}\n\n.ace_line .ace_fold {\n    box-sizing: border-box;\n\n    display: inline-block;\n    height: 11px;\n    margin-top: -2px;\n    vertical-align: middle;\n\n    background-image:\n        url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAJCAYAAADU6McMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAJpJREFUeNpi/P//PwOlgAXGYGRklAVSokD8GmjwY1wasKljQpYACtpCFeADcHVQfQyMQAwzwAZI3wJKvCLkfKBaMSClBlR7BOQikCFGQEErIH0VqkabiGCAqwUadAzZJRxQr/0gwiXIal8zQQPnNVTgJ1TdawL0T5gBIP1MUJNhBv2HKoQHHjqNrA4WO4zY0glyNKLT2KIfIMAAQsdgGiXvgnYAAAAASUVORK5CYII=\"),\n        url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAA3CAYAAADNNiA5AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACJJREFUeNpi+P//fxgTAwPDBxDxD078RSX+YeEyDFMCIMAAI3INmXiwf2YAAAAASUVORK5CYII=\");\n    background-repeat: no-repeat, repeat-x;\n    background-position: center center, top left;\n    color: transparent;\n\n    border: 1px solid black;\n    border-radius: 2px;\n\n    cursor: pointer;\n    pointer-events: auto;\n}\n\n.ace_dark .ace_fold {\n}\n\n.ace_fold:hover{\n    background-image:\n        url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAJCAYAAADU6McMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAJpJREFUeNpi/P//PwOlgAXGYGRklAVSokD8GmjwY1wasKljQpYACtpCFeADcHVQfQyMQAwzwAZI3wJKvCLkfKBaMSClBlR7BOQikCFGQEErIH0VqkabiGCAqwUadAzZJRxQr/0gwiXIal8zQQPnNVTgJ1TdawL0T5gBIP1MUJNhBv2HKoQHHjqNrA4WO4zY0glyNKLT2KIfIMAAQsdgGiXvgnYAAAAASUVORK5CYII=\"),\n        url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAA3CAYAAADNNiA5AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACBJREFUeNpi+P//fz4TAwPDZxDxD5X4i5fLMEwJgAADAEPVDbjNw87ZAAAAAElFTkSuQmCC\");\n}\n\n.ace_tooltip {\n    background-color: #f5f5f5;\n    border: 1px solid gray;\n    border-radius: 1px;\n    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);\n    color: black;\n    max-width: 100%;\n    padding: 3px 4px;\n    position: fixed;\n    z-index: 999999;\n    box-sizing: border-box;\n    cursor: default;\n    white-space: pre;\n    word-wrap: break-word;\n    line-height: normal;\n    font-style: normal;\n    font-weight: normal;\n    letter-spacing: normal;\n    pointer-events: none;\n}\n\n.ace_tooltip.ace_dark {\n    background-color: #636363;\n    color: #fff;\n}\n\n.ace_tooltip:focus {\n    outline: 1px solid #5E9ED6;\n}\n\n.ace_icon {\n    display: inline-block;\n    width: 18px;\n    vertical-align: top;\n}\n\n.ace_icon_svg {\n    display: inline-block;\n    width: 12px;\n    vertical-align: top;\n    -webkit-mask-repeat: no-repeat;\n    -webkit-mask-size: 12px;\n    -webkit-mask-position: center;\n}\n\n.ace_folding-enabled > .ace_gutter-cell, .ace_folding-enabled > .ace_gutter-cell_svg-icons {\n    padding-right: 13px;\n}\n\n.ace_fold-widget {\n    box-sizing: border-box;\n\n    margin: 0 -12px 0 1px;\n    display: none;\n    width: 11px;\n    vertical-align: top;\n\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAANElEQVR42mWKsQ0AMAzC8ixLlrzQjzmBiEjp0A6WwBCSPgKAXoLkqSot7nN3yMwR7pZ32NzpKkVoDBUxKAAAAABJRU5ErkJggg==\");\n    background-repeat: no-repeat;\n    background-position: center;\n\n    border-radius: 3px;\n    \n    border: 1px solid transparent;\n    cursor: pointer;\n}\n\n.ace_folding-enabled .ace_fold-widget {\n    display: inline-block;   \n}\n\n.ace_fold-widget.ace_end {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAANElEQVR42m3HwQkAMAhD0YzsRchFKI7sAikeWkrxwScEB0nh5e7KTPWimZki4tYfVbX+MNl4pyZXejUO1QAAAABJRU5ErkJggg==\");\n}\n\n.ace_fold-widget.ace_closed {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAMAAAAGCAYAAAAG5SQMAAAAOUlEQVR42jXKwQkAMAgDwKwqKD4EwQ26sSOkVWjgIIHAzPiCgaqiqnJHZnKICBERHN194O5b9vbLuAVRL+l0YWnZAAAAAElFTkSuQmCCXA==\");\n}\n\n.ace_fold-widget:hover {\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    background-color: rgba(255, 255, 255, 0.2);\n    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);\n}\n\n.ace_fold-widget:active {\n    border: 1px solid rgba(0, 0, 0, 0.4);\n    background-color: rgba(0, 0, 0, 0.05);\n    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);\n}\n/**\n * Dark version for fold widgets\n */\n.ace_dark .ace_fold-widget {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHklEQVQIW2P4//8/AzoGEQ7oGCaLLAhWiSwB146BAQCSTPYocqT0AAAAAElFTkSuQmCC\");\n}\n.ace_dark .ace_fold-widget.ace_end {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAH0lEQVQIW2P4//8/AxQ7wNjIAjDMgC4AxjCVKBirIAAF0kz2rlhxpAAAAABJRU5ErkJggg==\");\n}\n.ace_dark .ace_fold-widget.ace_closed {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAMAAAAFCAYAAACAcVaiAAAAHElEQVQIW2P4//+/AxAzgDADlOOAznHAKgPWAwARji8UIDTfQQAAAABJRU5ErkJggg==\");\n}\n.ace_dark .ace_fold-widget:hover {\n    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.2);\n    background-color: rgba(255, 255, 255, 0.1);\n}\n.ace_dark .ace_fold-widget:active {\n    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.2);\n}\n\n.ace_inline_button {\n    border: 1px solid lightgray;\n    display: inline-block;\n    margin: -1px 8px;\n    padding: 0 5px;\n    pointer-events: auto;\n    cursor: pointer;\n}\n.ace_inline_button:hover {\n    border-color: gray;\n    background: rgba(200,200,200,0.2);\n    display: inline-block;\n    pointer-events: auto;\n}\n\n.ace_fold-widget.ace_invalid {\n    background-color: #FFB4B4;\n    border-color: #DE5555;\n}\n\n.ace_fade-fold-widgets .ace_fold-widget {\n    transition: opacity 0.4s ease 0.05s;\n    opacity: 0;\n}\n\n.ace_fade-fold-widgets:hover .ace_fold-widget {\n    transition: opacity 0.05s ease 0.05s;\n    opacity:1;\n}\n\n.ace_underline {\n    text-decoration: underline;\n}\n\n.ace_bold {\n    font-weight: bold;\n}\n\n.ace_nobold .ace_bold {\n    font-weight: normal;\n}\n\n.ace_italic {\n    font-style: italic;\n}\n\n\n.ace_error-marker {\n    background-color: rgba(255, 0, 0,0.2);\n    position: absolute;\n    z-index: 9;\n}\n\n.ace_highlight-marker {\n    background-color: rgba(255, 255, 0,0.2);\n    position: absolute;\n    z-index: 8;\n}\n\n.ace_mobile-menu {\n    position: absolute;\n    line-height: 1.5;\n    border-radius: 4px;\n    -ms-user-select: none;\n    -moz-user-select: none;\n    -webkit-user-select: none;\n    user-select: none;\n    background: white;\n    box-shadow: 1px 3px 2px grey;\n    border: 1px solid #dcdcdc;\n    color: black;\n}\n.ace_dark > .ace_mobile-menu {\n    background: #333;\n    color: #ccc;\n    box-shadow: 1px 3px 2px grey;\n    border: 1px solid #444;\n\n}\n.ace_mobile-button {\n    padding: 2px;\n    cursor: pointer;\n    overflow: hidden;\n}\n.ace_mobile-button:hover {\n    background-color: #eee;\n    opacity:1;\n}\n.ace_mobile-button:active {\n    background-color: #ddd;\n}\n\n.ace_placeholder {\n    font-family: arial;\n    transform: scale(0.9);\n    transform-origin: left;\n    white-space: pre;\n    opacity: 0.7;\n    margin: 0 10px;\n}\n\n.ace_ghost_text {\n    opacity: 0.5;\n    font-style: italic;\n    white-space: pre;\n}";
+module.exports = "\n.ace_br1 {border-top-left-radius    : 3px;}\n.ace_br2 {border-top-right-radius   : 3px;}\n.ace_br3 {border-top-left-radius    : 3px; border-top-right-radius:    3px;}\n.ace_br4 {border-bottom-right-radius: 3px;}\n.ace_br5 {border-top-left-radius    : 3px; border-bottom-right-radius: 3px;}\n.ace_br6 {border-top-right-radius   : 3px; border-bottom-right-radius: 3px;}\n.ace_br7 {border-top-left-radius    : 3px; border-top-right-radius:    3px; border-bottom-right-radius: 3px;}\n.ace_br8 {border-bottom-left-radius : 3px;}\n.ace_br9 {border-top-left-radius    : 3px; border-bottom-left-radius:  3px;}\n.ace_br10{border-top-right-radius   : 3px; border-bottom-left-radius:  3px;}\n.ace_br11{border-top-left-radius    : 3px; border-top-right-radius:    3px; border-bottom-left-radius:  3px;}\n.ace_br12{border-bottom-right-radius: 3px; border-bottom-left-radius:  3px;}\n.ace_br13{border-top-left-radius    : 3px; border-bottom-right-radius: 3px; border-bottom-left-radius:  3px;}\n.ace_br14{border-top-right-radius   : 3px; border-bottom-right-radius: 3px; border-bottom-left-radius:  3px;}\n.ace_br15{border-top-left-radius    : 3px; border-top-right-radius:    3px; border-bottom-right-radius: 3px; border-bottom-left-radius: 3px;}\n\n\n.ace_editor {\n    position: relative;\n    overflow: hidden;\n    padding: 0;\n    font: 12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace;\n    direction: ltr;\n    text-align: left;\n    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);\n}\n\n.ace_scroller {\n    position: absolute;\n    overflow: hidden;\n    top: 0;\n    bottom: 0;\n    background-color: inherit;\n    -ms-user-select: none;\n    -moz-user-select: none;\n    -webkit-user-select: none;\n    user-select: none;\n    cursor: text;\n}\n\n.ace_content {\n    position: absolute;\n    box-sizing: border-box;\n    min-width: 100%;\n    contain: style size layout;\n    font-variant-ligatures: no-common-ligatures;\n}\n\n.ace_keyboard-focus:focus {\n    box-shadow: inset 0 0 0 2px #5E9ED6;\n    outline: none;\n}\n\n.ace_dragging .ace_scroller:before{\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n    bottom: 0;\n    content: '';\n    background: rgba(250, 250, 250, 0.01);\n    z-index: 1000;\n}\n.ace_dragging.ace_dark .ace_scroller:before{\n    background: rgba(0, 0, 0, 0.01);\n}\n\n.ace_gutter {\n    position: absolute;\n    overflow : hidden;\n    width: auto;\n    top: 0;\n    bottom: 0;\n    left: 0;\n    cursor: default;\n    z-index: 4;\n    -ms-user-select: none;\n    -moz-user-select: none;\n    -webkit-user-select: none;\n    user-select: none;\n    contain: style size layout;\n}\n\n.ace_gutter-active-line {\n    position: absolute;\n    left: 0;\n    right: 0;\n}\n\n.ace_scroller.ace_scroll-left:after {\n    content: \"\";\n    position: absolute;\n    top: 0;\n    right: 0;\n    bottom: 0;\n    left: 0;\n    box-shadow: 17px 0 16px -16px rgba(0, 0, 0, 0.4) inset;\n    pointer-events: none;\n}\n\n.ace_gutter-cell, .ace_gutter-cell_svg-icons {\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n    padding-left: 19px;\n    padding-right: 6px;\n    background-repeat: no-repeat;\n}\n\n.ace_gutter-cell_svg-icons .ace_gutter_annotation {\n    margin-left: -14px;\n    float: left;\n}\n\n.ace_gutter-cell .ace_gutter_annotation {\n    margin-left: -19px;\n    float: left;\n}\n\n.ace_gutter-cell.ace_error, .ace_icon.ace_error, .ace_icon.ace_error_fold {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABOFBMVEX/////////QRswFAb/Ui4wFAYwFAYwFAaWGAfDRymzOSH/PxswFAb/SiUwFAYwFAbUPRvjQiDllog5HhHdRybsTi3/Tyv9Tir+Syj/UC3////XurebMBIwFAb/RSHbPx/gUzfdwL3kzMivKBAwFAbbvbnhPx66NhowFAYwFAaZJg8wFAaxKBDZurf/RB6mMxb/SCMwFAYwFAbxQB3+RB4wFAb/Qhy4Oh+4QifbNRcwFAYwFAYwFAb/QRzdNhgwFAYwFAbav7v/Uy7oaE68MBK5LxLewr/r2NXewLswFAaxJw4wFAbkPRy2PyYwFAaxKhLm1tMwFAazPiQwFAaUGAb/QBrfOx3bvrv/VC/maE4wFAbRPBq6MRO8Qynew8Dp2tjfwb0wFAbx6eju5+by6uns4uH9/f36+vr/GkHjAAAAYnRSTlMAGt+64rnWu/bo8eAA4InH3+DwoN7j4eLi4xP99Nfg4+b+/u9B/eDs1MD1mO7+4PHg2MXa347g7vDizMLN4eG+Pv7i5evs/v79yu7S3/DV7/498Yv24eH+4ufQ3Ozu/v7+y13sRqwAAADLSURBVHjaZc/XDsFgGIBhtDrshlitmk2IrbHFqL2pvXf/+78DPokj7+Fz9qpU/9UXJIlhmPaTaQ6QPaz0mm+5gwkgovcV6GZzd5JtCQwgsxoHOvJO15kleRLAnMgHFIESUEPmawB9ngmelTtipwwfASilxOLyiV5UVUyVAfbG0cCPHig+GBkzAENHS0AstVF6bacZIOzgLmxsHbt2OecNgJC83JERmePUYq8ARGkJx6XtFsdddBQgZE2nPR6CICZhawjA4Fb/chv+399kfR+MMMDGOQAAAABJRU5ErkJggg==\");\n    background-repeat: no-repeat;\n    background-position: 2px center;\n}\n\n.ace_gutter-cell.ace_warning, .ace_icon.ace_warning, .ace_icon.ace_warning_fold {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAmVBMVEX///8AAAD///8AAAAAAABPSzb/5sAAAAB/blH/73z/ulkAAAAAAAD85pkAAAAAAAACAgP/vGz/rkDerGbGrV7/pkQICAf////e0IsAAAD/oED/qTvhrnUAAAD/yHD/njcAAADuv2r/nz//oTj/p064oGf/zHAAAAA9Nir/tFIAAAD/tlTiuWf/tkIAAACynXEAAAAAAAAtIRW7zBpBAAAAM3RSTlMAABR1m7RXO8Ln31Z36zT+neXe5OzooRDfn+TZ4p3h2hTf4t3k3ucyrN1K5+Xaks52Sfs9CXgrAAAAjklEQVR42o3PbQ+CIBQFYEwboPhSYgoYunIqqLn6/z8uYdH8Vmdnu9vz4WwXgN/xTPRD2+sgOcZjsge/whXZgUaYYvT8QnuJaUrjrHUQreGczuEafQCO/SJTufTbroWsPgsllVhq3wJEk2jUSzX3CUEDJC84707djRc5MTAQxoLgupWRwW6UB5fS++NV8AbOZgnsC7BpEAAAAABJRU5ErkJggg==\");\n    background-repeat: no-repeat;\n    background-position: 2px center;\n}\n\n.ace_gutter-cell.ace_info, .ace_icon.ace_info {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAAAAAA6mKC9AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAAJ0Uk5TAAB2k804AAAAPklEQVQY02NgIB68QuO3tiLznjAwpKTgNyDbMegwisCHZUETUZV0ZqOquBpXj2rtnpSJT1AEnnRmL2OgGgAAIKkRQap2htgAAAAASUVORK5CYII=\");\n    background-repeat: no-repeat;\n    background-position: 2px center;\n}\n.ace_dark .ace_gutter-cell.ace_info, .ace_dark .ace_icon.ace_info {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAJFBMVEUAAAChoaGAgIAqKiq+vr6tra1ZWVmUlJSbm5s8PDxubm56enrdgzg3AAAAAXRSTlMAQObYZgAAAClJREFUeNpjYMAPdsMYHegyJZFQBlsUlMFVCWUYKkAZMxZAGdxlDMQBAG+TBP4B6RyJAAAAAElFTkSuQmCC\");\n}\n\n.ace_icon_svg.ace_error {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxNiI+CjxnIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJyZWQiIHNoYXBlLXJlbmRlcmluZz0iZ2VvbWV0cmljUHJlY2lzaW9uIj4KPGNpcmNsZSBmaWxsPSJub25lIiBjeD0iOCIgY3k9IjgiIHI9IjciIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPGxpbmUgeDE9IjExIiB5MT0iNSIgeDI9IjUiIHkyPSIxMSIvPgo8bGluZSB4MT0iMTEiIHkxPSIxMSIgeDI9IjUiIHkyPSI1Ii8+CjwvZz4KPC9zdmc+\");\n    background-color: crimson;\n}\n.ace_icon_svg.ace_warning {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxNiI+CjxnIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJkYXJrb3JhbmdlIiBzaGFwZS1yZW5kZXJpbmc9Imdlb21ldHJpY1ByZWNpc2lvbiI+Cjxwb2x5Z29uIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiIHBvaW50cz0iOCAxIDE1IDE1IDEgMTUgOCAxIi8+CjxyZWN0IHg9IjgiIHk9IjEyIiB3aWR0aD0iMC4wMSIgaGVpZ2h0PSIwLjAxIi8+CjxsaW5lIHgxPSI4IiB5MT0iNiIgeDI9IjgiIHkyPSIxMCIvPgo8L2c+Cjwvc3ZnPg==\");\n    background-color: darkorange;\n}\n.ace_icon_svg.ace_info {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxNiI+CjxnIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlPSJibHVlIiBzaGFwZS1yZW5kZXJpbmc9Imdlb21ldHJpY1ByZWNpc2lvbiI+CjxjaXJjbGUgZmlsbD0ibm9uZSIgY3g9IjgiIGN5PSI4IiByPSI3IiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjxwb2x5bGluZSBwb2ludHM9IjggMTEgOCA4Ii8+Cjxwb2x5bGluZSBwb2ludHM9IjkgOCA2IDgiLz4KPGxpbmUgeDE9IjEwIiB5MT0iMTEiIHgyPSI2IiB5Mj0iMTEiLz4KPHJlY3QgeD0iOCIgeT0iNSIgd2lkdGg9IjAuMDEiIGhlaWdodD0iMC4wMSIvPgo8L2c+Cjwvc3ZnPg==\");\n    background-color: royalblue;\n}\n\n.ace_icon_svg.ace_error_fold {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxNiIgZmlsbD0ibm9uZSI+CiAgPHBhdGggZD0ibSAxOC45Mjk4NTEsNy44Mjk4MDc2IGMgMC4xNDYzNTMsNi4zMzc0NjA0IC02LjMyMzE0Nyw3Ljc3Nzg0NDQgLTcuNDc3OTEyLDcuNzc3ODQ0NCAtMi4xMDcyNzI2LC0wLjEyODc1IDUuMTE3Njc4LDAuMzU2MjQ5IDUuMDUxNjk4LC03Ljg3MDA2MTggLTAuNjA0NjcyLC04LjAwMzk3MzQ5IC03LjA3NzI3MDYsLTcuNTYzMTE4OSAtNC44NTczLC03LjQzMDM5NTU2IDEuNjA2LC0wLjExNTE0MjI1IDYuODk3NDg1LDEuMjYyNTQ1OTYgNy4yODM1MTQsNy41MjI2MTI5NiB6IiBmaWxsPSJjcmltc29uIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0ibSA4LjExNDc1NjIsMi4wNTI5ODI4IGMgMy4zNDkxNjk4LDAgNi4wNjQxMzI4LDIuNjc2ODYyNyA2LjA2NDEzMjgsNS45Nzg5NTMgMCwzLjMwMjExMjIgLTIuNzE0OTYzLDUuOTc4OTIwMiAtNi4wNjQxMzI4LDUuOTc4OTIwMiAtMy4zNDkxNDczLDAgLTYuMDY0MTc3MiwtMi42NzY4MDggLTYuMDY0MTc3MiwtNS45Nzg5MjAyIDAuMDA1MzksLTMuMjk5ODg2MSAyLjcxNzI2NTYsLTUuOTczNjQwOCA2LjA2NDE3NzIsLTUuOTc4OTUzIHogbSAwLC0xLjczNTgyNzE5IGMgLTQuMzIxNDgzNiwwIC03LjgyNDc0MDM4LDMuNDU0MDE4NDkgLTcuODI0NzQwMzgsNy43MTQ3ODAxOSAwLDQuMjYwNzI4MiAzLjUwMzI1Njc4LDcuNzE0NzQ1MiA3LjgyNDc0MDM4LDcuNzE0NzQ1MiA0LjMyMTQ0OTgsMCA3LjgyNDY5OTgsLTMuNDU0MDE3IDcuODI0Njk5OCwtNy43MTQ3NDUyIDAsLTIuMDQ2MDkxNCAtMC44MjQzOTIsLTQuMDA4MzY3MiAtMi4yOTE3NTYsLTUuNDU1MTc0NiBDIDEyLjE4MDIyNSwxLjEyOTk2NDggMTAuMTkwMDEzLDAuMzE3MTU1NjEgOC4xMTQ3NTYyLDAuMzE3MTU1NjEgWiBNIDYuOTM3NDU2Myw4LjI0MDU5ODUgNC42NzE4Njg1LDEwLjQ4NTg1MiA2LjAwODY4MTQsMTEuODc2NzI4IDguMzE3MDAzNSw5LjYwMDc5MTEgMTAuNjI1MzM3LDExLjg3NjcyOCAxMS45NjIxMzgsMTAuNDg1ODUyIDkuNjk2NTUwOCw4LjI0MDU5ODUgMTEuOTYyMTM4LDYuMDA2ODA2NiAxMC41NzMyNDYsNC42Mzc0MzM1IDguMzE3MDAzNSw2Ljg3MzQyOTcgNi4wNjA3NjA3LDQuNjM3NDMzNSA0LjY3MTg2ODUsNi4wMDY4MDY2IFoiIGZpbGw9ImNyaW1zb24iIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=\");\n    background-color: crimson;\n}\n.ace_icon_svg.ace_warning_fold {\n    -webkit-mask-image: url(\"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyMCAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xNC43NzY5IDE0LjczMzdMOC42NTE5MiAyLjQ4MzY5QzguMzI5NDYgMS44Mzg3NyA3LjQwOTEzIDEuODM4NzcgNy4wODY2NyAyLjQ4MzY5TDAuOTYxNjY5IDE0LjczMzdDMC42NzA3NzUgMTUuMzE1NSAxLjA5MzgzIDE2IDEuNzQ0MjkgMTZIMTMuOTk0M0MxNC42NDQ4IDE2IDE1LjA2NzggMTUuMzE1NSAxNC43NzY5IDE0LjczMzdaTTMuMTYwMDcgMTQuMjVMNy44NjkyOSA0LjgzMTU2TDEyLjU3ODUgMTQuMjVIMy4xNjAwN1pNOC43NDQyOSAxMS42MjVWMTMuMzc1SDYuOTk0MjlWMTEuNjI1SDguNzQ0MjlaTTYuOTk0MjkgMTAuNzVWNy4yNUg4Ljc0NDI5VjEwLjc1SDYuOTk0MjlaIiBmaWxsPSIjRUM3MjExIi8+CjxwYXRoIGQ9Ik0xMS4xOTkxIDIuOTUyMzhDMTAuODgwOSAyLjMxNDY3IDEwLjM1MzcgMS44MDUyNiA5LjcwNTUgMS41MDlMMTEuMDQxIDEuMDY5NzhDMTEuNjg4MyAwLjk0OTgxNCAxMi4zMzcgMS4yNzI2MyAxMi42MzE3IDEuODYxNDFMMTcuNjEzNiAxMS44MTYxQzE4LjM1MjcgMTMuMjkyOSAxNy41OTM4IDE1LjA4MDQgMTYuMDE4IDE1LjU3NDVDMTYuNDA0NCAxNC40NTA3IDE2LjMyMzEgMTMuMjE4OCAxNS43OTI0IDEyLjE1NTVMMTEuMTk5MSAyLjk1MjM4WiIgZmlsbD0iI0VDNzIxMSIvPgo8L3N2Zz4=\");\n    background-color: darkorange;\n}\n\n.ace_scrollbar {\n    contain: strict;\n    position: absolute;\n    right: 0;\n    bottom: 0;\n    z-index: 6;\n}\n\n.ace_scrollbar-inner {\n    position: absolute;\n    cursor: text;\n    left: 0;\n    top: 0;\n}\n\n.ace_scrollbar-v{\n    overflow-x: hidden;\n    overflow-y: scroll;\n    top: 0;\n}\n\n.ace_scrollbar-h {\n    overflow-x: scroll;\n    overflow-y: hidden;\n    left: 0;\n}\n\n.ace_print-margin {\n    position: absolute;\n    height: 100%;\n}\n\n.ace_text-input {\n    position: absolute;\n    z-index: 0;\n    width: 0.5em;\n    height: 1em;\n    opacity: 0;\n    background: transparent;\n    -moz-appearance: none;\n    appearance: none;\n    border: none;\n    resize: none;\n    outline: none;\n    overflow: hidden;\n    font: inherit;\n    padding: 0 1px;\n    margin: 0 -1px;\n    contain: strict;\n    -ms-user-select: text;\n    -moz-user-select: text;\n    -webkit-user-select: text;\n    user-select: text;\n    /*with `pre-line` chrome inserts &nbsp; instead of space*/\n    white-space: pre!important;\n}\n.ace_text-input.ace_composition {\n    background: transparent;\n    color: inherit;\n    z-index: 1000;\n    opacity: 1;\n}\n.ace_composition_placeholder { color: transparent }\n.ace_composition_marker { \n    border-bottom: 1px solid;\n    position: absolute;\n    border-radius: 0;\n    margin-top: 1px;\n}\n\n[ace_nocontext=true] {\n    transform: none!important;\n    filter: none!important;\n    clip-path: none!important;\n    mask : none!important;\n    contain: none!important;\n    perspective: none!important;\n    mix-blend-mode: initial!important;\n    z-index: auto;\n}\n\n.ace_layer {\n    z-index: 1;\n    position: absolute;\n    overflow: hidden;\n    /* workaround for chrome bug https://github.com/ajaxorg/ace/issues/2312*/\n    word-wrap: normal;\n    white-space: pre;\n    height: 100%;\n    width: 100%;\n    box-sizing: border-box;\n    /* setting pointer-events: auto; on node under the mouse, which changes\n        during scroll, will break mouse wheel scrolling in Safari */\n    pointer-events: none;\n}\n\n.ace_gutter-layer {\n    position: relative;\n    width: auto;\n    text-align: right;\n    pointer-events: auto;\n    height: 1000000px;\n    contain: style size layout;\n}\n\n.ace_text-layer {\n    font: inherit !important;\n    position: absolute;\n    height: 1000000px;\n    width: 1000000px;\n    contain: style size layout;\n}\n\n.ace_text-layer > .ace_line, .ace_text-layer > .ace_line_group {\n    contain: style size layout;\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n}\n\n.ace_hidpi .ace_text-layer,\n.ace_hidpi .ace_gutter-layer,\n.ace_hidpi .ace_content,\n.ace_hidpi .ace_gutter {\n    contain: strict;\n}\n.ace_hidpi .ace_text-layer > .ace_line, \n.ace_hidpi .ace_text-layer > .ace_line_group {\n    contain: strict;\n}\n\n.ace_cjk {\n    display: inline-block;\n    text-align: center;\n}\n\n.ace_cursor-layer {\n    z-index: 4;\n}\n\n.ace_cursor {\n    z-index: 4;\n    position: absolute;\n    box-sizing: border-box;\n    border-left: 2px solid;\n    /* workaround for smooth cursor repaintng whole screen in chrome */\n    transform: translatez(0);\n}\n\n.ace_multiselect .ace_cursor {\n    border-left-width: 1px;\n}\n\n.ace_slim-cursors .ace_cursor {\n    border-left-width: 1px;\n}\n\n.ace_overwrite-cursors .ace_cursor {\n    border-left-width: 0;\n    border-bottom: 1px solid;\n}\n\n.ace_hidden-cursors .ace_cursor {\n    opacity: 0.2;\n}\n\n.ace_hasPlaceholder .ace_hidden-cursors .ace_cursor {\n    opacity: 0;\n}\n\n.ace_smooth-blinking .ace_cursor {\n    transition: opacity 0.18s;\n}\n\n.ace_animate-blinking .ace_cursor {\n    animation-duration: 1000ms;\n    animation-timing-function: step-end;\n    animation-name: blink-ace-animate;\n    animation-iteration-count: infinite;\n}\n\n.ace_animate-blinking.ace_smooth-blinking .ace_cursor {\n    animation-duration: 1000ms;\n    animation-timing-function: ease-in-out;\n    animation-name: blink-ace-animate-smooth;\n}\n    \n@keyframes blink-ace-animate {\n    from, to { opacity: 1; }\n    60% { opacity: 0; }\n}\n\n@keyframes blink-ace-animate-smooth {\n    from, to { opacity: 1; }\n    45% { opacity: 1; }\n    60% { opacity: 0; }\n    85% { opacity: 0; }\n}\n\n.ace_marker-layer .ace_step, .ace_marker-layer .ace_stack {\n    position: absolute;\n    z-index: 3;\n}\n\n.ace_marker-layer .ace_selection {\n    position: absolute;\n    z-index: 5;\n}\n\n.ace_marker-layer .ace_bracket {\n    position: absolute;\n    z-index: 6;\n}\n\n.ace_marker-layer .ace_error_bracket {\n    position: absolute;\n    border-bottom: 1px solid #DE5555;\n    border-radius: 0;\n}\n\n.ace_marker-layer .ace_active-line {\n    position: absolute;\n    z-index: 2;\n}\n\n.ace_marker-layer .ace_selected-word {\n    position: absolute;\n    z-index: 4;\n    box-sizing: border-box;\n}\n\n.ace_line .ace_fold {\n    box-sizing: border-box;\n\n    display: inline-block;\n    height: 11px;\n    margin-top: -2px;\n    vertical-align: middle;\n\n    background-image:\n        url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAJCAYAAADU6McMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAJpJREFUeNpi/P//PwOlgAXGYGRklAVSokD8GmjwY1wasKljQpYACtpCFeADcHVQfQyMQAwzwAZI3wJKvCLkfKBaMSClBlR7BOQikCFGQEErIH0VqkabiGCAqwUadAzZJRxQr/0gwiXIal8zQQPnNVTgJ1TdawL0T5gBIP1MUJNhBv2HKoQHHjqNrA4WO4zY0glyNKLT2KIfIMAAQsdgGiXvgnYAAAAASUVORK5CYII=\"),\n        url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAA3CAYAAADNNiA5AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACJJREFUeNpi+P//fxgTAwPDBxDxD078RSX+YeEyDFMCIMAAI3INmXiwf2YAAAAASUVORK5CYII=\");\n    background-repeat: no-repeat, repeat-x;\n    background-position: center center, top left;\n    color: transparent;\n\n    border: 1px solid black;\n    border-radius: 2px;\n\n    cursor: pointer;\n    pointer-events: auto;\n}\n\n.ace_dark .ace_fold {\n}\n\n.ace_fold:hover{\n    background-image:\n        url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAJCAYAAADU6McMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAJpJREFUeNpi/P//PwOlgAXGYGRklAVSokD8GmjwY1wasKljQpYACtpCFeADcHVQfQyMQAwzwAZI3wJKvCLkfKBaMSClBlR7BOQikCFGQEErIH0VqkabiGCAqwUadAzZJRxQr/0gwiXIal8zQQPnNVTgJ1TdawL0T5gBIP1MUJNhBv2HKoQHHjqNrA4WO4zY0glyNKLT2KIfIMAAQsdgGiXvgnYAAAAASUVORK5CYII=\"),\n        url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAA3CAYAAADNNiA5AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACBJREFUeNpi+P//fz4TAwPDZxDxD5X4i5fLMEwJgAADAEPVDbjNw87ZAAAAAElFTkSuQmCC\");\n}\n\n.ace_tooltip {\n    background-color: #f5f5f5;\n    border: 1px solid gray;\n    border-radius: 1px;\n    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);\n    color: black;\n    max-width: 100%;\n    padding: 3px 4px;\n    position: fixed;\n    z-index: 999999;\n    box-sizing: border-box;\n    cursor: default;\n    white-space: pre-wrap;\n    word-wrap: break-word;\n    line-height: normal;\n    font-style: normal;\n    font-weight: normal;\n    letter-spacing: normal;\n    pointer-events: none;\n    overflow: auto;\n    max-width: min(60em, 66vw);\n    overscroll-behavior: contain;\n}\n.ace_tooltip pre {\n    white-space: pre-wrap;\n}\n\n.ace_tooltip.ace_dark {\n    background-color: #636363;\n    color: #fff;\n}\n\n.ace_tooltip:focus {\n    outline: 1px solid #5E9ED6;\n}\n\n.ace_icon {\n    display: inline-block;\n    width: 18px;\n    vertical-align: top;\n}\n\n.ace_icon_svg {\n    display: inline-block;\n    width: 12px;\n    vertical-align: top;\n    -webkit-mask-repeat: no-repeat;\n    -webkit-mask-size: 12px;\n    -webkit-mask-position: center;\n}\n\n.ace_folding-enabled > .ace_gutter-cell, .ace_folding-enabled > .ace_gutter-cell_svg-icons {\n    padding-right: 13px;\n}\n\n.ace_fold-widget {\n    box-sizing: border-box;\n\n    margin: 0 -12px 0 1px;\n    display: none;\n    width: 11px;\n    vertical-align: top;\n\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAANElEQVR42mWKsQ0AMAzC8ixLlrzQjzmBiEjp0A6WwBCSPgKAXoLkqSot7nN3yMwR7pZ32NzpKkVoDBUxKAAAAABJRU5ErkJggg==\");\n    background-repeat: no-repeat;\n    background-position: center;\n\n    border-radius: 3px;\n    \n    border: 1px solid transparent;\n    cursor: pointer;\n}\n\n.ace_folding-enabled .ace_fold-widget {\n    display: inline-block;   \n}\n\n.ace_fold-widget.ace_end {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAANElEQVR42m3HwQkAMAhD0YzsRchFKI7sAikeWkrxwScEB0nh5e7KTPWimZki4tYfVbX+MNl4pyZXejUO1QAAAABJRU5ErkJggg==\");\n}\n\n.ace_fold-widget.ace_closed {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAMAAAAGCAYAAAAG5SQMAAAAOUlEQVR42jXKwQkAMAgDwKwqKD4EwQ26sSOkVWjgIIHAzPiCgaqiqnJHZnKICBERHN194O5b9vbLuAVRL+l0YWnZAAAAAElFTkSuQmCCXA==\");\n}\n\n.ace_fold-widget:hover {\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    background-color: rgba(255, 255, 255, 0.2);\n    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);\n}\n\n.ace_fold-widget:active {\n    border: 1px solid rgba(0, 0, 0, 0.4);\n    background-color: rgba(0, 0, 0, 0.05);\n    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);\n}\n/**\n * Dark version for fold widgets\n */\n.ace_dark .ace_fold-widget {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHklEQVQIW2P4//8/AzoGEQ7oGCaLLAhWiSwB146BAQCSTPYocqT0AAAAAElFTkSuQmCC\");\n}\n.ace_dark .ace_fold-widget.ace_end {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAH0lEQVQIW2P4//8/AxQ7wNjIAjDMgC4AxjCVKBirIAAF0kz2rlhxpAAAAABJRU5ErkJggg==\");\n}\n.ace_dark .ace_fold-widget.ace_closed {\n    background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAMAAAAFCAYAAACAcVaiAAAAHElEQVQIW2P4//+/AxAzgDADlOOAznHAKgPWAwARji8UIDTfQQAAAABJRU5ErkJggg==\");\n}\n.ace_dark .ace_fold-widget:hover {\n    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.2);\n    background-color: rgba(255, 255, 255, 0.1);\n}\n.ace_dark .ace_fold-widget:active {\n    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.2);\n}\n\n.ace_inline_button {\n    border: 1px solid lightgray;\n    display: inline-block;\n    margin: -1px 8px;\n    padding: 0 5px;\n    pointer-events: auto;\n    cursor: pointer;\n}\n.ace_inline_button:hover {\n    border-color: gray;\n    background: rgba(200,200,200,0.2);\n    display: inline-block;\n    pointer-events: auto;\n}\n\n.ace_fold-widget.ace_invalid {\n    background-color: #FFB4B4;\n    border-color: #DE5555;\n}\n\n.ace_fade-fold-widgets .ace_fold-widget {\n    transition: opacity 0.4s ease 0.05s;\n    opacity: 0;\n}\n\n.ace_fade-fold-widgets:hover .ace_fold-widget {\n    transition: opacity 0.05s ease 0.05s;\n    opacity:1;\n}\n\n.ace_underline {\n    text-decoration: underline;\n}\n\n.ace_bold {\n    font-weight: bold;\n}\n\n.ace_nobold .ace_bold {\n    font-weight: normal;\n}\n\n.ace_italic {\n    font-style: italic;\n}\n\n\n.ace_error-marker {\n    background-color: rgba(255, 0, 0,0.2);\n    position: absolute;\n    z-index: 9;\n}\n\n.ace_highlight-marker {\n    background-color: rgba(255, 255, 0,0.2);\n    position: absolute;\n    z-index: 8;\n}\n\n.ace_mobile-menu {\n    position: absolute;\n    line-height: 1.5;\n    border-radius: 4px;\n    -ms-user-select: none;\n    -moz-user-select: none;\n    -webkit-user-select: none;\n    user-select: none;\n    background: white;\n    box-shadow: 1px 3px 2px grey;\n    border: 1px solid #dcdcdc;\n    color: black;\n}\n.ace_dark > .ace_mobile-menu {\n    background: #333;\n    color: #ccc;\n    box-shadow: 1px 3px 2px grey;\n    border: 1px solid #444;\n\n}\n.ace_mobile-button {\n    padding: 2px;\n    cursor: pointer;\n    overflow: hidden;\n}\n.ace_mobile-button:hover {\n    background-color: #eee;\n    opacity:1;\n}\n.ace_mobile-button:active {\n    background-color: #ddd;\n}\n\n.ace_placeholder {\n    font-family: arial;\n    transform: scale(0.9);\n    transform-origin: left;\n    white-space: pre;\n    opacity: 0.7;\n    margin: 0 10px;\n}\n\n.ace_ghost_text {\n    opacity: 0.5;\n    font-style: italic;\n    white-space: pre;\n}\n\n.ace_screenreader-only {\n    position:absolute;\n    left:-10000px;\n    top:auto;\n    width:1px;\n    height:1px;\n    overflow:hidden;\n}";
 
 });
 
@@ -52187,7 +53911,7 @@ var VirtualRenderer = /** @class */ (function () {
         this.$gutter = dom.createElement("div");
         this.$gutter.className = "ace_gutter";
         this.container.appendChild(this.$gutter);
-        this.$gutter.setAttribute("aria-hidden", true);
+        this.$gutter.setAttribute("aria-hidden", "true");
         this.scroller = dom.createElement("div");
         this.scroller.className = "ace_scroller";
         this.container.appendChild(this.scroller);
@@ -52481,8 +54205,8 @@ var VirtualRenderer = /** @class */ (function () {
     VirtualRenderer.prototype.getShowPrintMargin = function () {
         return this.getOption("showPrintMargin");
     };
-    VirtualRenderer.prototype.setPrintMarginColumn = function (showPrintMargin) {
-        this.setOption("printMarginColumn", showPrintMargin);
+    VirtualRenderer.prototype.setPrintMarginColumn = function (printMarginColumn) {
+        this.setOption("printMarginColumn", printMarginColumn);
     };
     VirtualRenderer.prototype.getPrintMarginColumn = function () {
         return this.getOption("printMarginColumn");
@@ -52934,6 +54658,7 @@ var VirtualRenderer = /** @class */ (function () {
         this.$gutterLayer.removeGutterDecoration(row, className);
     };
     VirtualRenderer.prototype.updateBreakpoints = function (rows) {
+        this._rows = rows;
         this.$loop.schedule(this.CHANGE_GUTTER);
     };
     VirtualRenderer.prototype.setAnnotations = function (annotations) {
@@ -53226,6 +54951,19 @@ var VirtualRenderer = /** @class */ (function () {
                 className: "ace_ghost_text"
             };
             this.session.widgetManager.addLineWidget(this.$ghostTextWidget);
+            var pixelPosition = this.$cursorLayer.getPixelPosition(insertPosition, true);
+            var el = this.container;
+            var height = el.getBoundingClientRect().height;
+            var ghostTextHeight = textLines.length * this.lineHeight;
+            var fitsY = ghostTextHeight < height - pixelPosition.top;
+            if (fitsY)
+                return;
+            if (ghostTextHeight < height) {
+                this.scrollBy(0, (textLines.length - 1) * this.lineHeight);
+            }
+            else {
+                this.scrollBy(0, pixelPosition.top);
+            }
         }
     };
     VirtualRenderer.prototype.removeGhostText = function () {
@@ -53610,7 +55348,7 @@ var PlaceHolder = /** @class */ (function () {
             });
         };
         this.$pos = pos;
-        var undoStack = session.getUndoManager().$undoStack || session.getUndoManager().$undostack || { length: -1 };
+        var undoStack = session.getUndoManager().$undoStack || session.getUndoManager()["$undostack"] || { length: -1 };
         this.$undoStackDepth = undoStack.length;
         this.setup();
         session.selection.on("changeCursor", this.$onCursorChange);
@@ -53732,7 +55470,7 @@ var PlaceHolder = /** @class */ (function () {
         if (this.$undoStackDepth === -1)
             return;
         var undoManager = this.session.getUndoManager();
-        var undosRequired = (undoManager.$undoStack || undoManager.$undostack).length - this.$undoStackDepth;
+        var undosRequired = (undoManager.$undoStack || undoManager["$undostack"]).length - this.$undoStackDepth;
         for (var i = 0; i < undosRequired; i++) {
             undoManager.undo(this.session, true);
         }
@@ -53881,7 +55619,10 @@ exports.onMouseDown = onMouseDown;
 
 });
 
-define("ace/commands/multi_select_commands",["require","exports","module","ace/keyboard/hash_handler"], function(require, exports, module){// commands to enter multiselect mode
+define("ace/commands/multi_select_commands",["require","exports","module","ace/keyboard/hash_handler"], function(require, exports, module){/**
+ * commands to enter multiselect mode
+ * @type {import("../../ace-internal").Ace.Command[]}
+ */
 exports.defaultCommands = [{
         name: "addCursorAbove",
         description: "Add cursor above",
@@ -53982,7 +55723,12 @@ exports.keyboardHandler = new HashHandler(exports.multiSelectCommands);
 
 });
 
-define("ace/multi_select",["require","exports","module","ace/range_list","ace/range","ace/selection","ace/mouse/multi_select_handler","ace/lib/event","ace/lib/lang","ace/commands/multi_select_commands","ace/search","ace/edit_session","ace/editor","ace/config"], function(require, exports, module){var RangeList = require("./range_list").RangeList;
+define("ace/multi_select",["require","exports","module","ace/range_list","ace/range","ace/selection","ace/mouse/multi_select_handler","ace/lib/event","ace/lib/lang","ace/commands/multi_select_commands","ace/search","ace/edit_session","ace/editor","ace/config"], function(require, exports, module){/**
+ * @typedef {import("./anchor").Anchor} Anchor
+ * @typedef {import("../ace-internal").Ace.Point} Point
+ * @typedef {import("../ace-internal").Ace.ScreenCoordinates} ScreenCoordinates
+ */
+var RangeList = require("./range_list").RangeList;
 var Range = require("./range").Range;
 var Selection = require("./selection").Selection;
 var onMouseDown = require("./mouse/multi_select_handler").onMouseDown;
@@ -54434,11 +56180,11 @@ var Editor = require("./editor").Editor;
         for (var i = all.length; i--;) {
             var range = all[i];
             if (range.isEmpty()) {
-                var tmp = session.getWordRange(range.start.row, range.start.column);
-                range.start.row = tmp.start.row;
-                range.start.column = tmp.start.column;
-                range.end.row = tmp.end.row;
-                range.end.column = tmp.end.column;
+                var tmp_1 = session.getWordRange(range.start.row, range.start.column);
+                range.start.row = tmp_1.start.row;
+                range.start.column = tmp_1.start.column;
+                range.end.row = tmp_1.end.row;
+                range.end.column = tmp_1.end.column;
             }
         }
         sel.mergeOverlappingRanges();
@@ -54833,13 +56579,14 @@ dom.importCssString("\n    .error_widget_wrapper {\n        background: inherit;
 
 });
 
-define("ace/ace",["require","exports","module","ace/snippets/abc","ace/snippets/actionscript","ace/snippets/c_cpp","ace/snippets/clojure","ace/snippets/coffee","ace/snippets/csound_document","ace/snippets/csound_orchestra","ace/snippets/css","ace/snippets/dart","ace/snippets/diff","ace/snippets/django","ace/snippets/drools","ace/snippets/edifact","ace/snippets/erlang","ace/snippets/fsl","ace/snippets/gobstones","ace/snippets/graphqlschema","ace/snippets/haml","ace/snippets/haskell","ace/snippets/html","ace/snippets/java","ace/snippets/javascript","ace/snippets/jsp","ace/snippets/liquid","ace/snippets/lsl","ace/snippets/lua","ace/snippets/makefile","ace/snippets/markdown","ace/snippets/maze","ace/snippets/perl","ace/snippets/php","ace/snippets/python","ace/snippets/r","ace/snippets/razor","ace/snippets/robot","ace/snippets/rst","ace/snippets/ruby","ace/snippets/sh","ace/snippets/sql","ace/snippets/sqlserver","ace/snippets/tcl","ace/snippets/tex","ace/snippets/textile","ace/snippets/velocity","ace/snippets/wollok","ace/lib/dom","ace/range","ace/editor","ace/edit_session","ace/undomanager","ace/virtual_renderer","ace/worker/worker_client","ace/keyboard/hash_handler","ace/placeholder","ace/multi_select","ace/mode/folding/fold_mode","ace/ext/error_marker","ace/config","ace/loader_build"], function(require, exports, module){/**
+define("ace/ace",["require","exports","module","ace/snippets","ace/snippets/abc","ace/snippets/actionscript","ace/snippets/c_cpp","ace/snippets/clojure","ace/snippets/coffee","ace/snippets/csound_document","ace/snippets/csound_orchestra","ace/snippets/css","ace/snippets/dart","ace/snippets/diff","ace/snippets/django","ace/snippets/drools","ace/snippets/edifact","ace/snippets/erlang","ace/snippets/fsl","ace/snippets/gobstones","ace/snippets/graphqlschema","ace/snippets/haml","ace/snippets/haskell","ace/snippets/html","ace/snippets/io","ace/snippets/java","ace/snippets/javascript","ace/snippets/jsp","ace/snippets/liquid","ace/snippets/lsl","ace/snippets/lua","ace/snippets/makefile","ace/snippets/markdown","ace/snippets/maze","ace/snippets/perl","ace/snippets/php","ace/snippets/python","ace/snippets/r","ace/snippets/razor","ace/snippets/robot","ace/snippets/rst","ace/snippets/ruby","ace/snippets/sh","ace/snippets/sql","ace/snippets/sqlserver","ace/snippets/tcl","ace/snippets/tex","ace/snippets/textile","ace/snippets/vala","ace/snippets/velocity","ace/snippets/wollok","ace/lib/dom","ace/range","ace/editor","ace/edit_session","ace/undomanager","ace/virtual_renderer","ace/worker/worker_client","ace/keyboard/hash_handler","ace/placeholder","ace/multi_select","ace/mode/folding/fold_mode","ace/ext/error_marker","ace/config","ace/loader_build"], function(require, exports, module){/**
  * The main class required to set up an Ace instance in the browser.
  *
- * @class Ace
+ * @namespace Ace
  **/
 "use strict";
 require("./loader_build")(exports)
+require("./snippets");
 require("./snippets/abc");
 require("./snippets/actionscript");
 require("./snippets/c_cpp");
@@ -54860,6 +56607,7 @@ require("./snippets/graphqlschema");
 require("./snippets/haml");
 require("./snippets/haskell");
 require("./snippets/html");
+require("./snippets/io");
 require("./snippets/java");
 require("./snippets/javascript");
 require("./snippets/jsp");
@@ -54883,6 +56631,7 @@ require("./snippets/sqlserver");
 require("./snippets/tcl");
 require("./snippets/tex");
 require("./snippets/textile");
+require("./snippets/vala");
 require("./snippets/velocity");
 require("./snippets/wollok");
 var dom = require("./lib/dom");
