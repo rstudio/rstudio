@@ -890,6 +890,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="viewerSaveAllAndRefresh" value="Cmd+Shift+F5"/>
          <shortcut refid="helpKeyboardShortcuts" value="Alt+Shift+K"/>
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
+         <shortcut refid="toggleFullScreen" value="F11" if="org.rstudio.studio.client.application.Desktop.isDesktop() &amp;&amp; !org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showOptions" value="Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; !org.rstudio.core.client.BrowseCap.isSafariOrFirefox()"/>
          <shortcut refid="showOptions" value="Meta+Alt+," if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isSafariOrFirefox()"/>
          <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -2054,7 +2055,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    
    <cmd id="copilotAcceptNextWord"
         label="Copilot: Accept Next Word"
-        menuLabel="Request Completions"
+        menuLabel="Accept Next Word"
         desc="Accept the next word of the current Copilot suggestion, if any."/>
    
    <cmd id="copilotToggleAutomaticCompletions"
