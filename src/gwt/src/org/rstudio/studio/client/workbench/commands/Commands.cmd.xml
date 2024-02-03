@@ -2055,7 +2055,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    
    <cmd id="copilotAcceptNextWord"
         label="Copilot: Accept Next Word"
-        menuLabel="Request Completions"
+        menuLabel="Accept Next Word"
         desc="Accept the next word of the current Copilot suggestion, if any."/>
    
    <cmd id="copilotToggleAutomaticCompletions"
