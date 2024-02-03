@@ -376,6 +376,7 @@ public abstract class
    public abstract AppCommand activateDeployContent();
    public abstract AppCommand activateMarkers();
    public abstract AppCommand activateSQLResults();
+   public abstract AppCommand activateDatabricks();
 
    // History
    public abstract AppCommand historySendToSource();

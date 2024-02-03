@@ -728,6 +728,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show S_QL Results") // $NON-NLS-1$
     String activateSQLResultsMenuLabel();
     
+    // activateDatabricks
+    @DefaultStringValue("Show Databricks Pane") // $NON-NLS-1$
+    String activateDatabricksLabel();
+    @DefaultStringValue("Show _Databricks") // $NON-NLS-1$
+    String activateDatabricksMenuLabel();
+    
     // layoutZoomSource
     @DefaultStringValue("Zoom Source") // $NON-NLS-1$
     String layoutZoomSourceLabel();
