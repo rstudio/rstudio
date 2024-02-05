@@ -24,7 +24,7 @@ pipeline {
     booleanParam name: 'FORCE_BUILD_DOCKER', defaultValue: false, description: 'Force rebuild docker images even if there are no dockerfile changes'
     string name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS'
     string name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH'
-    string name: 'SLACK_CHANNEL' defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', trim: true
+    string name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', trim: true
   }
 
   stages {
