@@ -309,12 +309,12 @@ def shouldBuild(boolean isDaily, boolean isPro) {
 
 /**
   * Check if this specific arch/product/os build exists on the dailies
-  * page, or if FORCE_REBUILD is set.
+  * page, or if FORCE_BUILD_BINARIES is set.
   * Return true if we should build, false otherwise.
   */
 def rebuildCheck() {
-  if (params.FORCE_REBUILD) {
-    echo "Building ${env.ARCH} ${env.PRODUCT} on ${env.OS} because FORCE_REBUILD is set"
+  if (params.FORCE_BUILD_BINARIES) {
+    echo "Building ${env.ARCH} ${env.PRODUCT} on ${env.OS} because FORCE_BUILD_BINARIES is set"
     return true
   } 
   else {

@@ -18,14 +18,13 @@ pipeline {
   }
   
   parameters {
-    string defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', name: 'SLACK_CHANNEL', trim: true
-    booleanParam defaultValue: true, description: 'Publish the build to S3 and sentry.', name: 'PUBLISH'
-    booleanParam defaultValue: true, description: 'Force build binaries even if there are no changes.', name: 'FORCE_BUILD_BINARIES'
-    booleanParam defaultValue: false, description: 'Force rebuild docker images', name: 'FORCE_BUILD_DOCKER'
-    booleanParam defaultValue: false, description: 'Rebuild binaries even if they already exist on dailies page' name: 'FORCE_REBUILD'
+    booleanParam name: 'DAILY', defaultValue: true, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
+    booleanParam name: 'PUBLISH', defaultValue: true, description: 'Publish the build to S3 and sentry.'
+    booleanParam name: 'FORCE_BUILD_BINARIES', defaultValue: false, description: 'Force build binaries even if there are no changes, and even if they have already been built previously'
+    booleanParam name: 'FORCE_BUILD_DOCKER', defaultValue: false, description: 'Force build docker images even if there are no dockerfile changes'
     string name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS'
     string name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH'
-    booleanParam name: 'DAILY', defaultValue: true, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
+    string name: 'SLACK_CHANNEL' defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', trim: true
   }
   
   stages {
@@ -37,9 +36,8 @@ pipeline {
               job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
               parameters: [
                 string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
-                booleanParam(name: "FORCE_BUILD", value: params.FORCE_BUILD_BINARIES),
+                booleanParam(name: "FORCE_BUILD_BINARIES", value: params.FORCE_BUILD_BINARIES),
                 booleanParam(name: "FORCE_BUILD_DOCKER", value: params.FORCE_BUILD_DOCKER),
-                booleanParam(name: "FORCE_REBUILD", value: params.FORCE_REBUILD),
                 booleanParam(name: "DAILY", value: params.DAILY),
                 booleanParam(name: "PUBLISH", value: params.PUBLISH),
                 string(name: "OS_FILTER", value: params.OS_FILTER),
@@ -56,7 +54,7 @@ pipeline {
               job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
               parameters: [
                 string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
-                booleanParam(name: "FORCE_BUILD", true),
+                booleanParam(name: "FORCE_BUILD_BINARIES", true),
                 booleanParam(name: "FORCE_BUILD_DOCKER", false),
                 booleanParam(name: "FORCE_REBUILD", true),
                 booleanParam(name: "DAILY", true),

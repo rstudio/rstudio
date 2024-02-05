@@ -25,14 +25,13 @@ pipeline {
   }
   
   parameters {
-    string defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', name: 'SLACK_CHANNEL', trim: true
-    booleanParam defaultValue: true, description: 'Publish the build to S3 and sentry.', name: 'PUBLISH'
-    booleanParam defaultValue: false, description: 'Force build of docker images even if there are no changes.', name: 'FORCE_BUILD_DOCKER'
-    booleanParam defaultValue: true, description: 'Force the regular build even if there are no changes.', name: 'FORCE_BUILD'
-    booleanParam defaultValue: false, description: 'Rebuild binaries even if they already exist on dailies page', name: 'FORCE_REBUILD'
+    booleanParam name: 'DAILY', defaultValue: true, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
+    booleanParam name: 'PUBLISH', defaultValue: true, description: 'Publish the build to S3 and sentry.'
+    booleanParam name: 'FORCE_BUILD_BINARIES', defaultValue: false, description: 'Force build binaries even if there are no changes, and even if they have already been built previously'
+    booleanParam name: 'FORCE_BUILD_DOCKER', defaultValue: false, description: 'Force build docker images even if there are no dockerfile changes'
     string name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS'
     string name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH'
-    booleanParam name: 'DAILY', defaultValue: true, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
+    string name: 'SLACK_CHANNEL' defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', trim: true
   }
   
   environment {
@@ -160,7 +159,7 @@ pipeline {
     stage ("Setup and Trigger Builds") {
       when {
         anyOf {
-          expression { return params.FORCE_BUILD }
+          expression { return params.FORCE_BUILD_BINARIES }
           changeset comparator: 'REGEXP', pattern: '(?:(?!docs/).+|(?!jenkins/Jenkinsfile\\.build))'
         }
       }
@@ -214,9 +213,10 @@ pipeline {
                   job: "${JOB_ROOT}/windows-pipeline/${env.BUILD_BRANCH}",
                   parameters: [
                     gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
                     booleanParam(name: "DAILY", value: params.DAILY),
-                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH),
+                    booleanParam(name: "FORCE_BUILD_BINARIES", value: params.FORCE_BUILD_BINARIES),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
                   ]
           }
         }
@@ -234,12 +234,12 @@ pipeline {
                   job: "${JOB_ROOT}/linux-pipeline/${env.BUILD_BRANCH}",
                   parameters: [
                     gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
-                    string(name: "OS_FILTER", value: params.OS_FILTER),
-                    string(name: "ARCH_FILTER", value: params.ARCH_FILTER),
                     booleanParam(name: "DAILY", value: params.DAILY),
                     booleanParam(name: "PUBLISH", value: params.PUBLISH),
-                    booleanParam(name: "FORCE_REBUILD", value: params.FORCE_REBUILD)
+                    booleanParam(name: "FORCE_BUILD_BINARIES", value: params.FORCE_BUILD_BINARIES),
+                    string(name: "OS_FILTER", value: params.OS_FILTER),
+                    string(name: "ARCH_FILTER", value: params.ARCH_FILTER),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
                   ]
           }
         }
@@ -257,9 +257,10 @@ pipeline {
                   job: "${JOB_ROOT}/macos-pipeline/${env.BUILD_BRANCH}",
                   parameters: [
                     gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
                     booleanParam(name: "DAILY", value: params.DAILY),
-                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH),
+                    booleanParam(name: "FORCE_BUILD_BINARIES", value: params.FORCE_BUILD_BINARIES),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
                   ]
           }
         }

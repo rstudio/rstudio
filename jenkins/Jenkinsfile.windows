@@ -19,12 +19,12 @@ pipeline {
   }
 
   parameters {
-    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
+    string(name: 'COMMIT_HASH' , defaultValue: '')
     booleanParam(name: 'RSTUDIO_SKIP_QT', defaultValue: false, description: 'Skips installing and bulding for QT')
     booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
     booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
-    string(name: 'COMMIT_HASH' , defaultValue: '')
-    booleanParam(name: 'FORCE_REBUILD', defaultValue: false, description: 'Rebuild binaries even if they already exist on dailies page')
+    booleanParam(name: 'FORCE_BUILD_BINARIES', defaultValue: false, description: 'Force build binaries even if there are no changes, and even if they have already been built previously')
+    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
   }
 
   environment {
