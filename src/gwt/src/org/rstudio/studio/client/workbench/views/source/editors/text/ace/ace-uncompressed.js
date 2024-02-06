@@ -2303,7 +2303,7 @@ var Tokenizer = /** @class */ (function () {
             src += "$";
         return new RegExp(src, (flag || "").replace("g", ""));
     };
-    Tokenizer.prototype.getLineTokens = function (line, startState, context) {
+    Tokenizer.prototype.getLineTokens = function (line, startState, row, context) {
         var stack = [];
         if (startState && typeof startState != "string") {
             stack = startState.slice(0);
@@ -2347,7 +2347,7 @@ var Tokenizer = /** @class */ (function () {
                     continue;
                 rule = state[mapping[i]];
                 if (rule.onMatch)
-                    type = rule.onMatch(value, currentState, stack, line, context);
+                    type = rule.onMatch(value, currentState, stack, line, context || {});
                 else
                     type = rule.token;
                 if (rule.next) {
