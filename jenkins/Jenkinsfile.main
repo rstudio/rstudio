@@ -18,7 +18,7 @@ pipeline {
   }
   
   parameters {
-    booleanParam name: 'DAILY', defaultValue: true, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
+    booleanParam name: 'DAILY', defaultValue: false, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
     booleanParam name: 'PUBLISH', defaultValue: true, description: 'Publish the build to S3 and sentry.'
     booleanParam name: 'FORCE_BUILD_BINARIES', defaultValue: false, description: 'Force build binaries even if there are no changes, and even if they have already been built previously'
     booleanParam name: 'FORCE_BUILD_DOCKER', defaultValue: false, description: 'Force rebuild docker images even if there are no dockerfile changes'
@@ -32,13 +32,15 @@ pipeline {
     // Manual build with DAILY=false triggers hourly builds
     stage('Trigger Hourly Build') {
       when {
-        anyOf {
-          allOf {
+        allOf {
+          anyOf {
             triggeredBy 'SCMTrigger'
+            expression { return params.DAILY == false }
+          }
+          anyOf {
             expression { return params.FORCE_BUILD_BINARIES }
             changeset comparator: 'REGEXP', pattern: '?:(?!docs/).+'
           }
-          expression { return params.DAILY == false }
         }
       }
       steps {
@@ -62,18 +64,22 @@ pipeline {
       when {
         anyOf {
           allOf {
-            triggeredBy 'TimerTrigger'
-            expression { return params.FORCE_BUILD_BINARIES }
-            changeset comparator: 'REGEXP', pattern: '?:(?!docs/).+'
+            anyOf {
+              triggeredBy 'TimerTrigger'
+              expression { return params.DAILY == true }
+            }
+            anyOf {
+              expression { return params.FORCE_BUILD_BINARIES }
+              changeset comparator: 'REGEXP', pattern: '?:(?!docs/).+'
+            }
           }
-          expression { return params.DAILY == true }
         }
       }
       steps {
         build wait: false,
               job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
               parameters: [
-                booleanParam(name: "DAILY", value: false),
+                booleanParam(name: "DAILY", value: true),
                 booleanParam(name: "PUBLISH", value: params.PUBLISH),
                 booleanParam(name: "FORCE_BUILD_BINARIES", value: params.FORCE_BUILD_BINARIES),
                 booleanParam(name: "FORCE_BUILD_DOCKER", value: params.FORCE_BUILD_DOCKER),
