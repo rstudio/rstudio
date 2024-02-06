@@ -73,7 +73,7 @@ pipeline {
         build wait: false,
               job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
               parameters: [
-                booleanParam(name: "DAILY", value: false),
+                booleanParam(name: "DAILY", value: true),
                 booleanParam(name: "PUBLISH", value: params.PUBLISH),
                 booleanParam(name: "FORCE_BUILD_BINARIES", value: params.FORCE_BUILD_BINARIES),
                 booleanParam(name: "FORCE_BUILD_DOCKER", value: params.FORCE_BUILD_DOCKER),
