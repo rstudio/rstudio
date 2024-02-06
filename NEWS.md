@@ -4,11 +4,12 @@
 #### RStudio
 - RStudio's auto-completion system now supports ggplot2 aesthetic names and data columns (#8444)
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
-- RStudio's GWT sources can now be built with JDKs > 11 (#11242)
 - R projects can be given a custom display name in Project Options (#1909)
+- RStudio now highlights and lints Quarto chunk options in Python code chunks
 - RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$$ $$` and `$ $` instead (#12862)
 - Added cmake option to build RStudio without the check for updates feature (#13236)
 - Allow choosing R from non-standard location at startup (#14180; Windows Desktop)
+- RStudio's GWT sources can now be built with JDKs > 11 (#11242)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
@@ -38,7 +39,9 @@
 -
 
 ### Dependencies
+- Updated Ace to version 1.32.5 (#14227; Desktop + Server)
 - Updated Electron to version 28.0.0 (#14055; Desktop)
 - Updated GWT to version 2.10.0 (#11505; Desktop + Server)
 - Updated NSIS to version 3.09 (#14123; Windows Desktop)
 - Updated OpenSSL to version 3.1.4 (Windows Desktop)
+
