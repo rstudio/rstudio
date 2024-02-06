@@ -52,6 +52,7 @@ var ScopeNode = require("mode/r_scope_tree").ScopeNode;
 var RCodeModel = function(session, tokenizer,
                           statePattern, codeBeginPattern, codeEndPattern) {
 
+   // TODO: Use this.$session.bgTokenizer instead of having a duplicate tokenizer...
    this.$session = session;
    this.$doc = session.getDocument();
    this.$tokenizer = tokenizer;
@@ -82,8 +83,6 @@ var RCodeModel = function(session, tokenizer,
 
    this.$session.on('changeMode', onChangeMode);
    this.$doc.on('change', onDocChange);
-
-   var that = this;
 };
 
 (function () {

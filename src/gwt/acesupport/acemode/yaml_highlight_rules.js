@@ -115,20 +115,21 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
       {
         token: "string", // multi line string start
         regex: /[|>][-+\d\s]*$/,
-        onMatch: function (val, state, stack, line) {
+        onMatch: function (val, state, stack, line, context) {
 
           // compute indent (allow for comment prefix for comment-embedded YAML)
           var match = /^(?:#[|])?(\s*)/.exec(line);
           var indent = match[1];
 
           // save prior state + indent length
-          stack = stack || [];
-          stack.unshift(indent.length);
-          stack.unshift(state);
+          context.yaml = context.yaml || {};
+          context.yaml.state = state;
+          context.yaml.indent = indent.length;
 
+          // return token
+          this.next = "multiline-string";
           return this.token;
-        },
-        next: "multiline-string"
+        }
       },
       {
         include: "#number"
@@ -274,7 +275,7 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
       {
         token: "string",
         regex: /\s*/,
-        onMatch: function (value, state, stack, line) {
+        onMatch: function (value, state, stack, line, context) {
 
           // skip blank lines (include Quarto comment prefixes)
           if (/^\s*(?:#[|])?\s*$/.test(line)) {
@@ -285,13 +286,8 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
           // if the indent has decreased relative to what
           // was used to start the multiline string, then
           // exit multiline string state
-          var next = stack[0];
-          var indent = stack[1];
-
-          if (indent >= value.length) {
-            this.next = next;
-            stack.shift();
-            stack.shift();
+          if (context.yaml.indent >= value.length) {
+            this.next = context.yaml.state;
           } else {
             this.next = state + "-rest";
           }
