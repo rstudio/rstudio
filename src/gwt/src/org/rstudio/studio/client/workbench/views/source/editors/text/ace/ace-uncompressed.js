@@ -42059,8 +42059,7 @@ var BackgroundTokenizer = /** @class */ (function () {
         var line = this.doc.getLine(row);
         var state = this.states[row - 1];
         var context = Object.assign({}, this.contexts[row - 1] || {});
-        context.row = row;
-        var data = this.tokenizer.getLineTokens(line, state, context);
+        var data = this.tokenizer.getLineTokens(line, state, row, context);
         this.contexts[row] = context;
         if (this.states[row] + "" !== data.state + "") {
             this.states[row] = data.state;

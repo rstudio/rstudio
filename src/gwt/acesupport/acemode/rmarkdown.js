@@ -73,8 +73,8 @@ var Mode = function(suppressHighlighting, session) {
    var cFoldingRules = new CFoldMode();
 
    // Patch tokenizer to allow for YAML start at beginning of document
-   this.$tokenizer.getLineTokens = function(line, state, context) {
-      return Tokenizer.prototype.getLineTokens.call(this, line, context.row === 0 ? "_start" : state, context);
+   this.$tokenizer.getLineTokens = function(line, state, row, context) {
+      return Tokenizer.prototype.getLineTokens.call(this, line, row === 0 ? "_start" : state, row, context);
    }
 
    // NOTE: R Markdown is in charge of generating all 'top-level' folds.
