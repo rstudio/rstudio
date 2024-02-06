@@ -186,11 +186,6 @@ public class MessageDialog extends ModalDialogBase
       addAnchorWidget(anchor);
    }
 
-   public void removeAnchorRegion()
-   {
-      removeAnchorPanel();
-   }
-
    private final int type_;
    private final Widget messageWidget_;
    private ProgressIndicator progress_;
