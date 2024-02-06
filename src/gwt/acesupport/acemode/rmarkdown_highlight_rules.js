@@ -177,12 +177,12 @@ var RMarkdownHighlightRules = function() {
 
    // Embed dot highlight rules
    Utils.embedRules(
-	  this,
-	  DotHighlightRules,
-	  "dot",
-	  this.$reDotChunkStartString,
-	  this.$reChunkEndString,
-	  ["start", "listblock", "allowBlock"]
+      this,
+      DotHighlightRules,
+      "dot",
+      this.$reDotChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
    );
 
    // Embed JavaScript highlighting rules
@@ -255,16 +255,7 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
-   // Embed YAML highlighting rules
-   // This version of the YAML highlight rules is used specifically for Quarto comments.
-   this.embedRules(YamlHighlightRules, "quarto-yaml-", [{
-      token: "text",
-      regex: "$",
-      next: "start"
-   }]);
-
-   // Embed YAML highlighting rules
-   // (Handled specially: should only ever activate on first line of document)
+   // Embed YAML header highlighting rules
    Utils.embedRules(
       this,
       YamlHighlightRules,
@@ -284,73 +275,6 @@ var RMarkdownHighlightRules = function() {
    });
 
    this.normalizeRules();
-
-   // allow Quarto YAML comments within each kind of chunk
-   for (var state in this.$rules) {
-
-      // add rules for highlighting YAML comments
-      if (state.indexOf("-start") !== -1) {
-         this.$rules[state].unshift({
-            token: "comment.doc.tag",
-            regex: "^\\s*#\\s*[|]",
-            push: "quarto-yaml-start"
-         });
-      }
-
-      // allow Quarto YAML highlight rules to consume leading comments
-      if (state.indexOf("quarto-yaml-") === 0) {
-
-         // make sure YAML rules can consume a leading #|
-         this.$rules[state].unshift({
-            token: ["whitespace", "comment.doc.tag"],
-            regex: "^(\\s*)(#[|])",
-            next: state
-         });
-
-         // make sure YAML rules exit when there's no leading #|
-         this.$rules[state].unshift({
-            token: "whitespace",
-            regex: "^\\s*(?!#)",
-            next: "pop"
-         });
-
-      }
-
-      this.$rules["quarto-yaml-start"].unshift({
-         token: "text",
-         regex: "^\\s*(?!#)",
-         next: "pop"
-      });
-
-      // allow for multi-line strings in YAML comments
-      this.$rules["quarto-yaml-multiline-string"].unshift({
-         regex: /^(#[|])(\s*)/,
-         onMatch: function (value, state, stack) {
-
-            // if the indent has decreased relative to what
-            // was used to start the multiline string, then
-            // exit multiline string state
-            var next = stack[0];
-            var indent = stack[1];
-
-            if (indent >= value.length) {
-               this.next = next;
-               stack.shift();
-               stack.shift();
-            } else {
-               this.next = state;
-            }
-
-            // retrieve tokens for the matched value
-            var tokens = this.splitRegex.exec(value);
-            return [
-               { type: "comment.doc.tag", value: tokens[1] },
-               { type: "indent", value: tokens[2] }
-            ];
-         }
-      });
-
-   }
 
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);

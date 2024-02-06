@@ -30,287 +30,287 @@
 
 define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (require, exports, module) {
 
-  var oop = require("ace/lib/oop");
-  var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+   var oop = require("ace/lib/oop");
+   var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
-  var YamlHighlightRules = function () {
+   var YamlHighlightRules = function () {
 
-    var rules = {};
+      var rules = {};
 
-    rules["#keyword"] = [
-      {
-        token: "constant.language.boolean",
-        regex: "\\b(?:true|false|TRUE|FALSE|True|False|yes|no)\\b"
-      }
-    ];
+      rules["#keyword"] = [
+         {
+            token: "constant.language.boolean",
+            regex: "\\b(?:true|false|TRUE|FALSE|True|False|yes|no)\\b"
+         }
+      ];
 
-    rules["#number"] = [
-      {
-        token: "constant.numeric",
-        regex: "[-+]?(?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE][+-]?\\d*)?(?:$|(?![\\w.]))",
-      }
-    ];
+      rules["#number"] = [
+         {
+            token: "constant.numeric",
+            regex: "[-+]?(?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE][+-]?\\d*)?(?:$|(?![\\w.]))",
+         }
+      ];
 
-    rules["#string"] = [
-      {
-        token: "string",
-        regex: "'",
-        push: "qstring"
-      },
-      {
-        token: "string",
-        regex: "\"",
-        push: "qqstring"
-      }
-    ];
+      rules["#string"] = [
+         {
+            token: "string",
+            regex: "'",
+            push: "qstring"
+         },
+         {
+            token: "string",
+            regex: "\"",
+            push: "qqstring"
+         }
+      ];
 
-    rules["start"] = [
-      {
-        token: "comment",
-        regex: "#.*"
-      },
-      {
-        token: "whitespace",
-        regex: "\\s+"
-      },
-      {
-        token: "list.markup",
-        regex: /^(?:-{3}|\.{3})\s*(?=#|$)/
-      },
-      {
-        token: "list.markup.keyword.operator",
-        regex: /[-?](?=$|\s)/
-      },
-      {
-        token: "constant",
-        regex: "!![\\w//]+"
-      },
-      {
-        token: "constant.language",
-        regex: "[&\\*][a-zA-Z0-9-_]+"
-      },
-      {
-        token: ["meta.tag", "keyword", "meta.tag", "keyword.operator"],
-        regex: /^(\s*[\w\-].*?)(:{2,3})(\s*[\w\-].*?)(:(?:\s+|$))/
-      },
-      {
-        token: ["meta.tag", "keyword.operator"],
-        regex: /^(\s*[\w\-].*?)(:(?:\s+|$))/
-      },
-      {
-        token: ["meta.tag", "keyword.operator"],
-        regex: /([\w\-]+?)(\s*:(?:\s+|$))/
-      },
-      {
-        token: "keyword.operator",
-        regex: "<<\\w*:\\w*"
-      },
-      {
-        token: "keyword.operator",
-        regex: "-\\s*(?=[{])"
-      },
-      {
-        include: "#string"
-      },
-      {
-        token: "string", // multi line string start
-        regex: /[|>][-+\d\s]*$/,
-        onMatch: function (val, state, stack, line, context) {
+      rules["start"] = [
+         {
+            token: "comment",
+            regex: "#.*"
+         },
+         {
+            token: "whitespace",
+            regex: "\\s+"
+         },
+         {
+            token: "list.markup",
+            regex: /^(?:-{3}|\.{3})\s*(?=#|$)/
+         },
+         {
+            token: "list.markup.keyword.operator",
+            regex: /[-?](?=$|\s)/
+         },
+         {
+            token: "constant",
+            regex: "!![\\w//]+"
+         },
+         {
+            token: "constant.language",
+            regex: "[&\\*][a-zA-Z0-9-_]+"
+         },
+         {
+            token: ["meta.tag", "keyword", "meta.tag", "keyword.operator"],
+            regex: /^(\s*[\w\-].*?)(:{2,3})(\s*[\w\-].*?)(:(?:\s+|$))/
+         },
+         {
+            token: ["meta.tag", "keyword.operator"],
+            regex: /^(\s*[\w\-].*?)(:(?:\s+|$))/
+         },
+         {
+            token: ["meta.tag", "keyword.operator"],
+            regex: /([\w\-]+?)(\s*:(?:\s+|$))/
+         },
+         {
+            token: "keyword.operator",
+            regex: "<<\\w*:\\w*"
+         },
+         {
+            token: "keyword.operator",
+            regex: "-\\s*(?=[{])"
+         },
+         {
+            include: "#string"
+         },
+         {
+            token: "string", // multi line string start
+            regex: /[|>][-+\d\s]*$/,
+            onMatch: function (val, state, stack, line, context) {
 
-          // compute indent (allow for comment prefix for comment-embedded YAML)
-          var match = /^(?:#[|])?(\s*)/.exec(line);
-          var indent = match[1];
+               // compute indent (allow for comment prefix for comment-embedded YAML)
+               var match = /^(?:#[|])?(\s*)/.exec(line);
+               var indent = match[1];
 
-          // save prior state + indent length
-          context.yaml = context.yaml || {};
-          context.yaml.state = state;
-          context.yaml.indent = indent.length;
+               // save prior state + indent length
+               context.yaml = context.yaml || {};
+               context.yaml.state = state;
+               context.yaml.indent = indent.length;
 
-          // return token
-          this.next = "multiline-string";
-          return this.token;
-        }
-      },
-      {
-        include: "#number"
-      },
-      {
-        include: "#keyword"
-      },
-      {
-        token: "paren.lparen.keyword.operator",
-        regex: "\\[",
-        push: "list"
-      },
-      {
-        token: "paren.lparen.keyword.operator",
-        regex: "\\{",
-        push: "dictionary"
-      },
-      {
-        token: "paren.lparen",
-        regex: "[[({]"
-      },
-      {
-        token: "paren.rparen",
-        regex: "[\\])}]"
-      },
-      {
-        token: ["text", "whitespace", "comment"],
-        regex: "(.+?)(?:$|(\\s+)(#.*))",
-      }
-    ];
+               // return token
+               this.next = state.replace(/start$/, "multiline-string");
+               return this.token;
+            }
+         },
+         {
+            include: "#number"
+         },
+         {
+            include: "#keyword"
+         },
+         {
+            token: "paren.lparen.keyword.operator",
+            regex: "\\[",
+            push: "list"
+         },
+         {
+            token: "paren.lparen.keyword.operator",
+            regex: "\\{",
+            push: "dictionary"
+         },
+         {
+            token: "paren.lparen",
+            regex: "[[({]"
+         },
+         {
+            token: "paren.rparen",
+            regex: "[\\])}]"
+         },
+         {
+            token: ["text", "whitespace", "comment"],
+            regex: "(.+?)(?:$|(\\s+)(#.*))",
+         }
+      ];
 
-    rules["list"] = [
-      {
-        token: "paren.rparen.keyword.operator",
-        regex: "\\]",
-        next: "pop"
-      },
-      {
-        token: "whitespace",
-        regex: "\\s+"
-      },
-      {
-        token: "punctuation.keyword.operator",
-        regex: ","
-      },
-      {
-        token: "paren.lparen.keyword.operator",
-        regex: "\\[",
-        push: "list"
-      },
-      {
-        token: "paren.lparen.keyword.operator",
-        regex: "\\{",
-        push: "dictionary"
-      },
-      {
-        include: "#string"
-      },
-      {
-        include: "#number"
-      },
-      {
-        include: "#keyword"
-      },
-      {
-        token: "text",
-        regex: "[^,]+",
-      }
-    ];
+      rules["list"] = [
+         {
+            token: "paren.rparen.keyword.operator",
+            regex: "\\]",
+            next: "pop"
+         },
+         {
+            token: "whitespace",
+            regex: "\\s+"
+         },
+         {
+            token: "punctuation.keyword.operator",
+            regex: ","
+         },
+         {
+            token: "paren.lparen.keyword.operator",
+            regex: "\\[",
+            push: "list"
+         },
+         {
+            token: "paren.lparen.keyword.operator",
+            regex: "\\{",
+            push: "dictionary"
+         },
+         {
+            include: "#string"
+         },
+         {
+            include: "#number"
+         },
+         {
+            include: "#keyword"
+         },
+         {
+            token: "text",
+            regex: "[^,]+",
+         }
+      ];
 
-    rules["dictionary"] = [
-      {
-        token: "paren.rparen.keyword.operator",
-        regex: "\\}",
-        next: "pop"
-      },
-      {
-        token: "whitespace",
-        regex: "\\s+"
-      },
-      {
-        token: "punctuation.keyword.operator",
-        regex: "[:,]"
-      },
-      {
-        token: "paren.lparen.keyword.operator",
-        regex: "\\[",
-        push: "list"
-      },
-      {
-        token: "paren.lparen.keyword.operator",
-        regex: "\\{",
-        push: "dictionary"
-      },
-      {
-        include: "#string"
-      },
-      {
-        include: "#number"
-      },
-      {
-        include: "#keyword"
-      },
-      {
-        token: "text",
-        regex: "[^:,]+",
-      }
-    ];
+      rules["dictionary"] = [
+         {
+            token: "paren.rparen.keyword.operator",
+            regex: "\\}",
+            next: "pop"
+         },
+         {
+            token: "whitespace",
+            regex: "\\s+"
+         },
+         {
+            token: "punctuation.keyword.operator",
+            regex: "[:,]"
+         },
+         {
+            token: "paren.lparen.keyword.operator",
+            regex: "\\[",
+            push: "list"
+         },
+         {
+            token: "paren.lparen.keyword.operator",
+            regex: "\\{",
+            push: "dictionary"
+         },
+         {
+            include: "#string"
+         },
+         {
+            include: "#number"
+         },
+         {
+            include: "#keyword"
+         },
+         {
+            token: "text",
+            regex: "[^:,]+",
+         }
+      ];
 
-    rules["qstring"] = [
-      {
-        token: "constant.language.escape",
-        regex: "''"
-      },
-      {
-        token: "string",
-        regex: "'",
-        next: "pop"
-      },
-      {
-        token: "string",
-        regex: "[^']+"
-      }
-    ];
+      rules["qstring"] = [
+         {
+            token: "constant.language.escape",
+            regex: "''"
+         },
+         {
+            token: "string",
+            regex: "'",
+            next: "pop"
+         },
+         {
+            token: "string",
+            regex: "[^']+"
+         }
+      ];
 
-    rules["qqstring"] = [
-      {
-        token: "constant.language.escape",
-        regex: "\\\\."
-      },
-      {
-        token: "string",
-        regex: "\"",
-        next: "pop"
-      },
-      {
-        token: "string",
-        regex: "[^\\\\\"]+"
-      }
-    ];
+      rules["qqstring"] = [
+         {
+            token: "constant.language.escape",
+            regex: "\\\\."
+         },
+         {
+            token: "string",
+            regex: "\"",
+            next: "pop"
+         },
+         {
+            token: "string",
+            regex: "[^\\\\\"]+"
+         }
+      ];
 
-    rules["multiline-string"] = [
-      {
-        token: "string",
-        regex: /\s*/,
-        onMatch: function (value, state, stack, line, context) {
+      rules["multiline-string"] = [
+         {
+            token: "string",
+            regex: /\s*/,
+            onMatch: function (value, state, stack, line, context) {
 
-          // skip blank lines (include Quarto comment prefixes)
-          if (/^\s*(?:#[|])?\s*$/.test(line)) {
-            this.next = state;
-            return this.token;
-          }
+               // skip blank lines (include Quarto comment prefixes)
+               if (/^\s*(?:#[|])?\s*$/.test(line)) {
+                  this.next = state;
+                  return this.token;
+               }
 
-          // if the indent has decreased relative to what
-          // was used to start the multiline string, then
-          // exit multiline string state
-          if (context.yaml.indent >= value.length) {
-            this.next = context.yaml.state;
-          } else {
-            this.next = state + "-rest";
-          }
+               // if the indent has decreased relative to what
+               // was used to start the multiline string, then
+               // exit multiline string state
+               if (context.yaml.indent >= value.length) {
+                  this.next = context.yaml.state;
+               } else {
+                  this.next = state + "-rest";
+               }
 
-          return this.token;
-        }
-      }
-    ];
+               return this.token;
+            }
+         }
+      ];
 
-    rules["multiline-string-rest"] = [
-      {
-        token: "string",
-        regex: ".+",
-        next: "multiline-string"
-      }
-    ];
+      rules["multiline-string-rest"] = [
+         {
+            token: "string",
+            regex: ".+",
+            next: "multiline-string"
+         }
+      ];
 
-    this.$rules = rules;
-    this.normalizeRules();
+      this.$rules = rules;
+      this.normalizeRules();
 
-  };
+   };
 
-  oop.inherits(YamlHighlightRules, TextHighlightRules);
+   oop.inherits(YamlHighlightRules, TextHighlightRules);
 
-  exports.YamlHighlightRules = YamlHighlightRules;
+   exports.YamlHighlightRules = YamlHighlightRules;
 });
