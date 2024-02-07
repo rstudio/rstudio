@@ -2818,6 +2818,9 @@ assign(x = ".rs.acCompletionTypes",
                                 documentId,
                                 envir)
          )
+         
+         if (context[[i]] == .rs.acContextTypes$ARGUMENT)
+            break
       }
    }
    
@@ -2919,8 +2922,19 @@ assign(x = ".rs.acCompletionTypes",
    n <- length(inner)
    
    # subset based on provided columns
-   inner[[1L]] <- substring(inner[[1L]], range$start$column)
-   inner[[n]] <- substring(inner[[n]], 1L, range$end$column)
+   if (n == 1L)
+   {
+      inner[[1L]] <- substring(
+         inner[[1L]],
+         range$start$column,
+         range$end$column
+      )
+   }
+   else
+   {
+      inner[[1L]] <- substring(inner[[1L]], range$start$column)
+      inner[[n]] <- substring(inner[[n]], 1L, range$end$column)
+   }
    
    # return collapsed text
    paste(inner, collapse = "\n")
@@ -3002,31 +3016,15 @@ assign(x = ".rs.acCompletionTypes",
    completions <- .rs.emptyCompletions(token)
    
    # skip arguments on context stack
-   index <- 1L
-   if (.rs.acContextTypes$ARGUMENT %in% contextData[[1L]]$type)
-      index <- 2L
-   
    includeAestheticNames <-
-      "aes" %in% contextData[[index]]$data &&
-      .rs.acContextTypes$FUNCTION %in% contextData[[index]]$type &&
-      "ggplot2" %in% loadedNamespaces()
+      "aes" %in% contextData[[1L]]$data &&
+      .rs.acContextTypes$FUNCTION %in% contextData[[1L]]$type
    
    if (includeAestheticNames)
    {
-      if (is.null(geomContext))
+      aestheticNames <- if (is.null(geomContext))
       {
-         defaultAesthetics <- .rs.ggplot2.defaultAesthetics()
-         results <- .rs.selectFuzzyMatches(defaultAesthetics, token)
-         if (length(results))
-         {
-            completions <- .rs.makeCompletions(
-               token = token,
-               results = paste(results, "= "),
-               packages = "ggplot",
-               type = .rs.acCompletionTypes$ARGUMENT,
-               quote = FALSE
-            )
-         }
+         .rs.ggplot2.defaultAesthetics()
       }
       else
       {
@@ -3039,18 +3037,27 @@ assign(x = ".rs.acCompletionTypes",
             names(layerInfo$stat$default_aes),
             "group"
          )
-         aesthetics <- aesthetics[!duplicated(aesthetics)]
-         results <- .rs.selectFuzzyMatches(aesthetics, token)
-         if (length(results))
-         {
-            completions <- .rs.makeCompletions(
-               token = token,
-               results = paste(results, "= "),
-               packages = geomContext$data,
-               type = .rs.acCompletionTypes$ARGUMENT,
-               quote = FALSE
-            )
-         }
+         aesthetics[!duplicated(aesthetics)]
+      }
+      
+      # exclude argument names which already been used
+      .rs.tryCatch({
+         aesRange <- contextData[[1]]$range
+         aesText <- .rs.getTextRange(contents, aesRange)
+         aesCall <- parse(text = aesText)
+         aestheticNames <- setdiff(aestheticNames, names(aesCall))
+      })
+      
+      results <- .rs.selectFuzzyMatches(aestheticNames, token)
+      if (length(results))
+      {
+         completions <- .rs.makeCompletions(
+            token = token,
+            results = paste(results, "= "),
+            packages = geomContext$data,
+            type = .rs.acCompletionTypes$ARGUMENT,
+            quote = FALSE
+         )
       }
    }
    
