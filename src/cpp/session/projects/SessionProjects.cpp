@@ -1201,9 +1201,8 @@ void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::str
             &scratchPath,
             &sharedScratchPath);
 
-   for(auto doc : docs) {
+   for (auto doc : docs)
       addFirstRunDoc(scratchPath, doc);
-   }
 }
 
 

@@ -22,17 +22,15 @@
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <core/BoostSignals.hpp>
-#include <core/FileInfo.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/Settings.hpp>
-
-#include <core/system/FileMonitor.hpp>
-#include <core/system/FileChangeEvent.hpp>
-
 #include <shared_core/json/Json.hpp>
 
+#include <core/BoostSignals.hpp>
+#include <core/FileInfo.hpp>
+#include <core/Settings.hpp>
 #include <core/collection/Tree.hpp>
+#include <core/system/FileMonitor.hpp>
+#include <core/system/FileChangeEvent.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSourceIndex.hpp>

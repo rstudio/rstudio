@@ -530,6 +530,9 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       
       // mostly for internal use
       "/RStudio.app/",
+      
+      // node modules
+      "/node_modules/",
 
       // ignore things marked .noindex
       ".noindex/"
@@ -672,7 +675,7 @@ bool ProjectContext::fileMonitorFilter(
    for (auto&& component : context.ignoredComponents)
       if (boost::algorithm::icontains(path, component))
          return false;
-
+   
    return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);
 }
 
