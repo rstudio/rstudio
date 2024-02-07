@@ -33,8 +33,8 @@ public class SuspendOptions extends JavaScriptObject
    }
    
    private static native final SuspendOptions create(boolean saveMinimal,
-                                                    boolean saveWorkspace,
-                                                    boolean excludePackages) /*-{
+                                                     boolean saveWorkspace,
+                                                     boolean excludePackages) /*-{
       var options = new Object();
       options.save_minimal = saveMinimal;
       options.save_workspace = saveWorkspace;
