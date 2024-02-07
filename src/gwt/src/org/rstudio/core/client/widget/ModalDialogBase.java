@@ -101,7 +101,6 @@ public abstract class ModalDialogBase extends DialogBox
       bottomPanel_.add(ariaLiveStatusWidget_);
 
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-      mainPanel_.add(anchorPanel_);
       mainPanel_.add(bottomPanel_);
 
       // embed main panel in a custom container if specified
@@ -446,12 +445,7 @@ public abstract class ModalDialogBase extends DialogBox
    protected void addAnchorWidget(Widget widget)
    {
       anchorPanel_.add(widget);
-   }
-
-   protected void removeAnchorPanel()
-   {
-      anchorPanel_.removeFromParent();
-      anchorPanel_ = null;
+      mainPanel_.insert(anchorPanel_, 0);
    }
 
    protected ProgressIndicator addProgressIndicator()

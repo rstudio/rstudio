@@ -371,8 +371,6 @@ export class Application implements AppState {
       return exitFailure();
     }
 
-    // TODO: desktop pro session handling
-
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
     this.sessionLauncher.launchFirstSession(installPath, !app.isPackaged);

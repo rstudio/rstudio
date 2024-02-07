@@ -1651,6 +1651,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand activateDatabricks() {
+        return null;
+    }
+
+    @Override
     public AppCommand historySendToSource() {
         return null;
     }
@@ -3160,5 +3165,10 @@ public class DummyCommands extends Commands {
         return null;
     }
     
+
+    @Override
+    public AppCommand layoutZoomDatabricks() {
+        return null;
+    }
 
 }

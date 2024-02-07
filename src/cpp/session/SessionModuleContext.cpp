@@ -507,13 +507,26 @@ SEXP rs_userPrompt(SEXP typeSEXP,
    return r::sexp::create(response, &rProtect);
 }
 
-SEXP rs_restartR(SEXP afterRestartSEXP)
+SEXP rs_restartR(SEXP afterRestartSEXP, SEXP cleanSEXP)
 {
    std::string afterRestart = r::sexp::safeAsString(afterRestartSEXP);
+   bool clean = r::sexp::asLogical(cleanSEXP);
+   
    json::Object dataJson;
    dataJson["after_restart"] = afterRestart;
+   
+   if (clean)
+   {
+      json::Object suspendOptionsJson;
+      suspendOptionsJson["save_minimal"] = true;
+      suspendOptionsJson["save_workspace"] = false;
+      suspendOptionsJson["exclude_packages"] = true;
+      dataJson["options"] = suspendOptionsJson;
+   }
+   
    ClientEvent event(client_events::kSuspendAndRestart, dataJson);
    module_context::enqueClientEvent(event);
+   
    return R_NilValue;
 }
 
