@@ -20,56 +20,6 @@ def package_os =
   'opensuse15': 'OpenSUSE 15'
 ]
 
-// Use a function to keep the pipeline length down.
-def shouldBuild(boolean isDaily, boolean isPro) {
-  def matchesFilter = ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
-    (params.ARCH_FILTER == env.ARCH ||  params.ARCH_FILTER == 'all') &&
-    (params.FLAVOR_FILTER == env.FLAVOR ||  params.FLAVOR_FILTER == 'all'))
-
-  // Filter hourlies based on https://github.com/rstudio/rstudio-pro/issues/4143#issuecomment-1362142399
-  def inHourlySubset = true
-  if (!isDaily) {
-    if (isPro) {
-      // build an x86_64 rhel8 WB, x86_64 rhel9 QT RDP, and an arm64 jammy Electron RDP 
-      inHourlySubset = ((env.OS == 'rhel8' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server') ||
-        (env.OS == 'centos7' && env.ARCH == 'x86_64' && env.FLAVOR == 'Desktop') || 
-        (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron'))
-    } else {
-      // build an arm64 rhel9 Desktop and an x86_64 focal Server
-      inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron') ||
-        (env.OS == 'focal' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
-    }
-  }
-
-  // The focal builds are being build on bionic, hence the name confusion here
-  def bionicProArm = (env.OS == 'focal' && env.ARCH == 'arm64' && isPro)
-
-  return matchesFilter && inHourlySubset && !bionicProArm
-}
-
-def renameFile(String dir, String match) {
-  def file = sh(script: "basename `ls ${dir}/${match}`", returnStdout: true).trim()
-  def renamedFile = file.replace('-relwithdebinfo', '')
-  sh "mv ${dir}/${file} ${dir}/${renamedFile}"
-  return renamedFile
-}
-
-def renameTarFile(String dir) {
-  if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
-    return renameFile(dir, "*.tar.gz")
-  }
-
-  return ""
-}
-
-def getAgentLabel(String arch) {
-  if (arch == 'arm64') {
-    return 'linux && arm64 && 4x'
-  }
-
-  return 'linux-4x && x86_64'
-}
-
 pipeline {
   agent none
 
@@ -84,13 +34,14 @@ pipeline {
   }
 
   parameters {
-    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
+    string(name: 'COMMIT_HASH' , defaultValue: '')
+    booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
+    booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
+    booleanParam(name: 'FORCE_BUILD_BINARIES', defaultValue: false, description: 'Force build binaries even if there are no changes, and even if they have already been built previously')
     string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
     string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
     string(name: 'FLAVOR_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching FLAVOR')
-    booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
-    booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
-    string(name: 'COMMIT_HASH' , defaultValue: '')
+    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
   }
 
   environment {
@@ -100,6 +51,7 @@ pipeline {
     RSTUDIO_VERSION_PATCH = ""
     RSTUDIO_VERSION_SUFFIX = ""
     RSTUDIO_VERSION_FLOWER = ""
+    RSTUDIO_VERSION_FILENAME = ""
     ENV = ""
     IS_PRO = false
     AWS_ACCOUNT_ID = '749683154838'
@@ -141,6 +93,7 @@ pipeline {
                 RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
               RSTUDIO_VERSION_FLOWER = utils.getFlower()
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+              RSTUDIO_VERSION_FILENAME = utils.getVersionFilename(RSTUDIO_VERSION) // Define here for use later in utils.rebuildCheck()
               
               // Set up environment for builds.
               ENV = utils.getBuildEnv(!params.DAILY)
@@ -155,7 +108,7 @@ pipeline {
 
     stage('Build Matrix') {
       matrix {
-        when { expression { return shouldBuild(params.DAILY, IS_PRO) } }
+        when { expression { return utils.shouldBuild(params.DAILY, IS_PRO) }}
 
         axes {
           axis {
@@ -209,15 +162,18 @@ pipeline {
                 image "jenkins/ide:${utils.getDockerTag()}"
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
                 registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
-                label "${getAgentLabel(ARCH)}"
+                label "${utils.getAgentLabel(ARCH)}"
               }
             }
 
             when {
-              anyOf {
-                environment name: 'FLAVOR', value: 'Electron'
-                environment name: 'FLAVOR', value: 'Server'
-                expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+              allOf {
+                anyOf {
+                  environment name: 'FLAVOR', value: 'Electron'
+                  environment name: 'FLAVOR', value: 'Server'
+                  expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+                }
+                expression { return utils.rebuildCheck() == true }
               }
             }
 
@@ -351,9 +307,9 @@ pipeline {
 
                 environment {
                   PACKAGE_DIR = "package/linux/${BUILD_LOCATION}"
-                  PACKAGE_FILE = "${renameFile(PACKAGE_DIR, 'rstudio-*.' + ext_map[env.OS])}"
+                  PACKAGE_FILE = "${utils.renameFile(PACKAGE_DIR, 'rstudio-*.' + ext_map[env.OS])}"
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
-                  TAR_PACKAGE_FILE = "${renameTarFile(TAR_PACKAGE_DIR)}"
+                  TAR_PACKAGE_FILE = "${utils.renameTarFile(TAR_PACKAGE_DIR)}"
                   BUILD_TYPE = "sh(script: 'cat version/BUILDTYPE', returnStdout: true).trim().toLowerCase()"
                   AWS_PATH = "${FLAVOR.toLowerCase()}/${OS}/${utils.getArchForOs(OS, ARCH)}"
                 }

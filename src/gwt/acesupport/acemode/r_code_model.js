@@ -52,11 +52,13 @@ var ScopeNode = require("mode/r_scope_tree").ScopeNode;
 var RCodeModel = function(session, tokenizer,
                           statePattern, codeBeginPattern, codeEndPattern) {
 
+   // TODO: Use this.$session.bgTokenizer instead of having a duplicate tokenizer...
    this.$session = session;
    this.$doc = session.getDocument();
    this.$tokenizer = tokenizer;
    this.$tokens = new Array(this.$doc.getLength());
    this.$endStates = new Array(this.$doc.getLength());
+   this.$contexts = new Array(this.$doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
    this.$codeEndPattern = codeEndPattern;
@@ -82,8 +84,6 @@ var RCodeModel = function(session, tokenizer,
 
    this.$session.on('changeMode', onChangeMode);
    this.$doc.on('change', onDocChange);
-
-   var that = this;
 };
 
 (function () {
@@ -110,13 +110,13 @@ var RCodeModel = function(session, tokenizer,
    };
 
    var $truncate = function(text, width) {
-      
+
       if (typeof width === "undefined")
          width = 80;
-      
+
       if (text.length > width)
          text = text.substring(0, width) + "...";
-      
+
       return text;
    };
 
@@ -161,7 +161,7 @@ var RCodeModel = function(session, tokenizer,
    }
 
    // Find the associated test_that() token from an open brace, e.g.
-   // 
+   //
    // test_that("foo() does this", {
    // ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<^
    function findAssocTestToken(tokenCursor)
@@ -169,7 +169,7 @@ var RCodeModel = function(session, tokenizer,
       var clonedCursor = tokenCursor.cloneCursor();
       if (clonedCursor.currentValue() !== "{")
          return false;
-      if (!clonedCursor.moveToPreviousToken()) 
+      if (!clonedCursor.moveToPreviousToken())
          return false;
       if (!clonedCursor.currentToken().value == ",")
          return false;
@@ -228,7 +228,7 @@ var RCodeModel = function(session, tokenizer,
       return true;
    }
 
-   // Move from the function call token to the end of the 
+   // Move from the function call token to the end of the
    // assigned token
    //
    //     result <- foo(a, b, c) {
@@ -282,7 +282,7 @@ var RCodeModel = function(session, tokenizer,
       {
          if (data.excludeArgsFromObject)
             excludeArgsFromObject = data.excludeArgsFromObject;
-         
+
          var clone = tokenCursor.cloneCursor();
          clone.findStartOfEvaluationContext();
 
@@ -293,7 +293,7 @@ var RCodeModel = function(session, tokenizer,
             tokenCursor.currentPosition().row,
             tokenCursor.currentPosition().column + tokenCursor.currentValue().length
          ));
-         
+
          // name = tokenCursor.currentValue();
          additionalArgs = data.additionalArgs;
          excludeArgs = data.excludeArgs;
@@ -312,7 +312,7 @@ var RCodeModel = function(session, tokenizer,
          "excludeArgs": excludeArgs,
          "excludeArgsFromObject": excludeArgsFromObject
       };
-      
+
    };
 
    var $dplyrMutaterVerbs = [
@@ -342,7 +342,7 @@ var RCodeModel = function(session, tokenizer,
 
       if (cursor.hasType("identifier"))
          data.additionalArgs.push(cursor.currentValue());
-      
+
       if (fnName === "rename")
       {
          if (!cursor.moveToNextToken())
@@ -352,7 +352,7 @@ var RCodeModel = function(session, tokenizer,
          {
             if (!cursor.moveToNextToken())
                return false;
-            
+
             data.excludeArgs.push(cursor.currentValue());
          }
       }
@@ -366,11 +366,11 @@ var RCodeModel = function(session, tokenizer,
       {
          if (cursor.currentValue() === ")")
             break;
-         
+
          if ((cursor.$row > limit.$row) ||
              (cursor.$row === limit.$row && cursor.$offset >= limit.$offset))
             break;
-         
+
          if (cursor.fwdToMatchingToken())
          {
             if (!cursor.moveToNextToken())
@@ -385,7 +385,7 @@ var RCodeModel = function(session, tokenizer,
 
             if (cursor.hasType("identifier"))
                data.additionalArgs.push(cursor.currentValue());
-            
+
             if (!cursor.moveToNextToken())
                return false;
 
@@ -401,11 +401,11 @@ var RCodeModel = function(session, tokenizer,
 
             }
          }
-         
+
       } while (cursor.moveToNextToken());
 
       return true;
-      
+
    };
 
    var findChainScope = function(cursor)
@@ -443,12 +443,12 @@ var RCodeModel = function(session, tokenizer,
          }
 
          // keep trying!
-         
+
       }
 
       // give up
       return false;
-      
+
    };
 
    // Attempt to move a token cursor from a function call within
@@ -467,10 +467,10 @@ var RCodeModel = function(session, tokenizer,
       // Fill custom args
       var data = {
          additionalArgs: [],
-         excludeArgs: [], 
+         excludeArgs: [],
          cancel: false
       };
-      
+
       // Repeat the walk -- keep walking as we can find '%%'
       while (true)
       {
@@ -494,14 +494,14 @@ var RCodeModel = function(session, tokenizer,
          // If this identifier is a dplyr 'mutate'r, then parse
          // those variables.
          var value = clone.currentValue();
-         
+
          // pull() cancels the column completions
          if (value === "pull")
             data.cancel = true;
-         
+
          if (contains($dplyrMutaterVerbs, value))
             addDplyrArguments(clone.cloneCursor(), data, tokenCursor, value);
-         
+
          // Move off of identifier, on to new infix operator.
          // Note that we may already be at the start of the document,
          // so check for that.
@@ -583,7 +583,7 @@ var RCodeModel = function(session, tokenizer,
 
       if (!clone.moveToPreviousToken())
          return false;
-      
+
       tokenCursor.$row = clone.$row;
       tokenCursor.$offset = clone.$offset;
       return true;
@@ -601,11 +601,11 @@ var RCodeModel = function(session, tokenizer,
       //
       // we don't pick up 'func', 'x', and 'y' as potential completions
       // since they will not be valid in all contexts
-      // 
-      // same for these calls: 
-      // 
+      //
+      // same for these calls:
+      //
       //     y <- data[ x = 1, y = 2, |
-      // 
+      //
       // we don't pick up 'x', 'data', or 'y'
       while (moveOutOfArgList(tokenCursor))
       {
@@ -613,18 +613,18 @@ var RCodeModel = function(session, tokenizer,
 
          if (pFunction(tokenCursor.currentToken()))
          {
-            moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 
+            moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor);
          }
-         else 
+         else
          {
             moved = moveFromFunctionCallTokenToEndOfResultName(tokenCursor);
          }
-         
+
          // previous statements will move the cursor as necessary
-         if (moved) 
+         if (moved)
             tokenCursor.findStartOfEvaluationContext();
       }
-         
+
       var scopedVariables = {};
       do
       {
@@ -633,7 +633,7 @@ var RCodeModel = function(session, tokenizer,
 
          // Handle 'for (x in bar)'
          addForInToken(tokenCursor, scopedVariables);
-         
+
          // Default -- assignment case
          if (pAssign(tokenCursor.currentToken()))
          {
@@ -647,17 +647,17 @@ var RCodeModel = function(session, tokenizer,
                   type = "function";
                }
             }
-            
+
             var clone = tokenCursor.cloneCursor();
             if (!clone.moveToPreviousToken()) continue;
-            
+
             if (pIdentifier(clone.currentToken()))
             {
                var arg = clone.currentValue();
                scopedVariables[arg] = type;
                continue;
             }
-            
+
          }
       } while (tokenCursor.moveToPreviousToken());
 
@@ -667,7 +667,7 @@ var RCodeModel = function(session, tokenizer,
             "token": key,
             "type": scopedVariables[key]
          });
-      
+
       result.sort();
       return result;
    };
@@ -692,7 +692,7 @@ var RCodeModel = function(session, tokenizer,
       var functionArgs = [];
       if (pIdentifier(tokenCursor.currentToken()))
          functionArgs.push(tokenCursor.currentValue());
-      
+
       while (tokenCursor.moveToNextToken())
       {
          if (tokenCursor.fwdToMatchingToken())
@@ -711,13 +711,13 @@ var RCodeModel = function(session, tokenizer,
             while (tokenCursor.currentValue() === ",")
                if (!tokenCursor.moveToNextToken())
                   break;
-            
+
             if (pIdentifier(tokenCursor.currentToken()))
                functionArgs.push(tokenCursor.currentValue());
          }
       }
       return functionArgs;
-      
+
    }
 
    function $extractYamlTitle(session)
@@ -756,7 +756,7 @@ var RCodeModel = function(session, tokenizer,
 
          if (typeof reOptions === "undefined")
             return "";
-         
+
          var match = reOptions.exec(comment);
          if (match)
          {
@@ -771,7 +771,7 @@ var RCodeModel = function(session, tokenizer,
                   if (label.length)
                      return label;
                }
-            
+
                for (var i = 0; i < values.length; i++) {
                   match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
                   if (match)
@@ -779,9 +779,9 @@ var RCodeModel = function(session, tokenizer,
                }
             }
          }
-         
+
          // then look for yaml label, i.e.
-         // 
+         //
          // ```{r}
          // #| label: foo
          var it = iterator.clone();
@@ -792,10 +792,10 @@ var RCodeModel = function(session, tokenizer,
             var labelRegex = /^#\|\s*label\s*:\s*(.*)$/;
             if (labelRegex.test(value))
                return value.replace(labelRegex, "$1");
-            
+
             token = it.moveToStartOfNextRowWithTokens();
          }
-         
+
          return null;
       }
 
@@ -829,14 +829,14 @@ var RCodeModel = function(session, tokenizer,
       // model, but ...
       iterator.tokenizeUpToRow(maxRow);
       this.$tokenizeUpToRow(maxRow);
-      
+
 
       var row = this.$scopes.parsePos.row;
       var column = this.$scopes.parsePos.column;
       iterator.moveToPosition({row: row, column: column}, true);
 
       var token = iterator.getCurrentToken();
-      
+
       // If this failed, give up.
       if (token == null)
          return row;
@@ -901,7 +901,7 @@ var RCodeModel = function(session, tokenizer,
             var labelStartPos = {row: position.row, column: 0};
             var labelEndPos = {row: position.row + 1, column: 0};
             var depth = 0;
-            
+
             // Check if this is a single-line heading, e.g. '# foo'.
             if (/^\s*#+\s*$/.test(value))
             {
@@ -946,11 +946,11 @@ var RCodeModel = function(session, tokenizer,
          {
             // Extract the section name from the header. These
             // have the form e.g.
-            // 
+            //
             //    # Foo ----
             //
             // but note that the section name can be empty, and e.g.
-            // 
+            //
             //    #####
             //
             // is accepted for folding purposes.
@@ -962,7 +962,7 @@ var RCodeModel = function(session, tokenizer,
             }
 
             // Detect Markdown-style headers, of the form
-            // 
+            //
             //   ## Header 2 ----
             //
             // When we have such a header, we can provide a depth.
@@ -1109,7 +1109,7 @@ var RCodeModel = function(session, tokenizer,
             var tokenCursor = this.getTokenCursor();
             tokenCursor.moveToPosition(position, true);
             var localCursor = tokenCursor.cloneCursor();
-            
+
             var startPos;
             if (findAssocFuncToken(localCursor))
             {
@@ -1155,7 +1155,7 @@ var RCodeModel = function(session, tokenizer,
                      ));
                   }
                }
-               
+
                startPos = localCursor.currentPosition();
                if (localCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
@@ -1192,7 +1192,7 @@ var RCodeModel = function(session, tokenizer,
                   testthatCursor.currentPosition(),
                   tokenCursor.currentPosition()
                );
-            } 
+            }
             else
             {
                startPos = tokenCursor.currentPosition();
@@ -1328,7 +1328,7 @@ var RCodeModel = function(session, tokenizer,
             pos,
             Utils.getTokenTypeRegex("paren")
          );
-         
+
          if (!start)
             return;
 
@@ -1368,7 +1368,7 @@ var RCodeModel = function(session, tokenizer,
          return;
       }
       else if (/\bsectionhead\b/.test(foldToken.type)) {
-         
+
          // Find the position of the section 'tail'.
          var line = session.getLine(row);
 
@@ -1521,12 +1521,12 @@ var RCodeModel = function(session, tokenizer,
       var tabSize = this.$session.getTabSize();
       var tabAsSpaces = new Array(tabSize + 1).join(" ");
 
-      // This lineOverrides nonsense is necessary because the line has not 
+      // This lineOverrides nonsense is necessary because the line has not
       // changed in the real document yet. We need to simulate it by replacing
       // the real line with the `line` param, and when we finish with this
       // method, undo the damage and invalidate the row.
       // To repro the problem without using lineOverrides, comment out this
-      // block of code, and in the editor hit Enter in the middle of a line 
+      // block of code, and in the editor hit Enter in the middle of a line
       // that contains a }.
       this.$lineOverrides = null;
       if (!(this.$doc.getLine(row) === line))
@@ -1535,11 +1535,11 @@ var RCodeModel = function(session, tokenizer,
          this.$lineOverrides[row] = line;
          this.$invalidateRow(row);
       }
-      
+
       try
       {
          var defaultIndent = row < 0 ?
-                "" : 
+                "" :
                 this.$getIndent(this.$getLine(row));
 
          // jcheng 12/7/2013: It doesn't look to me like $tokenizeUpToRow can return
@@ -1668,7 +1668,7 @@ var RCodeModel = function(session, tokenizer,
                   this.$doc.getLine(tokenCursor.$row)
                ) + tab;
             }
-             
+
             // Walk over matching braces ('()', '{}', '[]')
             if (tokenCursor.bwdToMatchingToken())
                continue;
@@ -1727,7 +1727,7 @@ var RCodeModel = function(session, tokenizer,
                else
                {
                   // Return indent up to next token position.
-                  // Note that in hard tab mode, the tab character only counts 
+                  // Note that in hard tab mode, the tab character only counts
                   // as a single character unfortunately. What we really want
                   // is the screen column, but what we have is the document
                   // column, which we can't convert to screen column without
@@ -1772,10 +1772,10 @@ var RCodeModel = function(session, tokenizer,
                      // If a line contains only whitespace, it doesn't count
                      if (!/[^\s]/.test(this.$getLine(i)))
                         continue;
-                     // If this line is is a continuation of a multi-line string, 
+                     // If this line is is a continuation of a multi-line string,
                      // ignore it.
-                     var rowEndState = this.$endStates[i-1];
-                     if (rowEndState === "qstring" || rowEndState === "qqstring") 
+                     var rowEndState = this.$endStates[i - 1];
+                     if (rowEndState === "qstring" || rowEndState === "qqstring")
                         continue;
                      thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
                      var thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
@@ -1823,7 +1823,7 @@ var RCodeModel = function(session, tokenizer,
             // Walk over matching parens.
             if (tokenCursor.bwdToMatchingToken())
                continue;
-            
+
             // If we find an open brace, use its associated indentation
             // plus a tab.
             if (tokenCursor.currentValue() === "{")
@@ -1920,13 +1920,13 @@ var RCodeModel = function(session, tokenizer,
          {
             var maxTokensToWalk = 20;
             var count = 0;
-            
+
             tokenCursor = this.getTokenCursor();
             tokenCursor.moveToPosition(startPos);
 
             // Move off of the operator
             tokenCursor.moveToPreviousToken();
-               
+
             do
             {
                // If we encounter an 'if' or 'else' statement, add to
@@ -1936,7 +1936,7 @@ var RCodeModel = function(session, tokenizer,
                   continuationIndent += tab;
                   break;
                }
-               
+
                // If we're on a constant, then we need to find an
                // operator beforehand, or give up.
                if (tokenCursor.hasType("constant", "identifier"))
@@ -1974,7 +1974,7 @@ var RCodeModel = function(session, tokenizer,
 
                   continue;
                }
-               
+
                // Move over a generic 'evaluation', e.g.
                // foo::bar()[1]
                if (!tokenCursor.findStartOfEvaluationContext())
@@ -1989,7 +1989,7 @@ var RCodeModel = function(session, tokenizer,
             {row: 0, column: 0},
             row
          );
-         
+
          if (firstToken)
             return this.$getIndent(
                this.$getLine(firstToken.row)
@@ -2075,7 +2075,6 @@ var RCodeModel = function(session, tokenizer,
 
    this.$tokenizeUpToRow = function(lastRow)
    {
-
       // Don't let lastRow be past the end of the document
       lastRow = Math.min(lastRow, this.$endStates.length - 1);
 
@@ -2087,12 +2086,14 @@ var RCodeModel = function(session, tokenizer,
          // invalidated.
          if (assumeGood && this.$endStates[row])
             continue;
-         
+
          assumeGood = false;
 
          var state = (row === 0) ? 'start' : this.$endStates[row - 1];
+         var context = Object.assign({}, this.$contexts[row - 1]);
          var line = this.$getLine(row);
-         var lineTokens = this.$tokenizer.getLineTokens(line, state, row);
+         var lineTokens = this.$tokenizer.getLineTokens(line, state, row, context || {});
+         this.$contexts[row] = context;
 
          if (!this.$statePattern ||
              this.$statePattern.test(lineTokens.state) ||
@@ -2109,7 +2110,7 @@ var RCodeModel = function(session, tokenizer,
          else
             this.$endStates[row] = lineTokens.state;
       }
-      
+
       if (!assumeGood)
       {
          // If we get here, it means the last row we saw before we exited
@@ -2119,7 +2120,7 @@ var RCodeModel = function(session, tokenizer,
          if (row < this.$tokens.length)
             this.$invalidateRow(row);
       }
-      
+
       return true;
    };
 
@@ -2133,28 +2134,32 @@ var RCodeModel = function(session, tokenizer,
       this.$invalidateRow(evt.start.row);
       this.$scopes.invalidateFrom(evt.start);
    };
-   
+
    this.$invalidateRow = function(row)
    {
       this.$tokens[row] = null;
       this.$endStates[row] = null;
+      this.$contexts[row] = null;
    };
-   
+
    this.$insertNewRows = function(row, count)
    {
       var args = [row, 0];
       for (var i = 0; i < count; i++)
          args.push(null);
+
       this.$tokens.splice.apply(this.$tokens, args);
       this.$endStates.splice.apply(this.$endStates, args);
+      this.$contexts.splice.apply(this.$contexts, args);
    };
-   
+
    this.$removeRows = function(row, count)
    {
       this.$tokens.splice(row, count);
       this.$endStates.splice(row, count);
+      this.$contexts.splice(row, count);
    };
-   
+
    this.$getIndent = function(line)
    {
       var match = /^([ \t]*)/.exec(line);
@@ -2259,13 +2264,13 @@ var RCodeModel = function(session, tokenizer,
 
       return result;
    };
-   
+
    this.$findNextSignificantToken = function(pos, lastRow)
    {
       if (this.$tokens.length == 0)
          return null;
       lastRow = Math.min(lastRow, this.$tokens.length - 1);
-      
+
       var row = pos.row;
       var col = pos.column;
       for ( ; row <= lastRow; row++)
@@ -2277,8 +2282,8 @@ var RCodeModel = function(session, tokenizer,
             if (tokens[i].column + tokens[i].value.length > col)
             {
                return {
-                  token: tokens[i], 
-                  row: row, 
+                  token: tokens[i],
+                  row: row,
                   column: Math.max(tokens[i].column, col),
                   offset: i
                };
@@ -2294,20 +2299,20 @@ var RCodeModel = function(session, tokenizer,
    {
 	   return this.$findNextSignificantToken(pos, this.$tokens.length - 1);
    };
-   
+
    this.$findPreviousSignificantToken = function(pos, firstRow)
    {
       if (this.$tokens.length === 0)
          return null;
       firstRow = Math.max(0, firstRow);
-      
+
       var row = Math.min(pos.row, this.$tokens.length - 1);
       for ( ; row >= firstRow; row--)
       {
          var tokens = this.$tokens[row];
          if (tokens.length === 0)
             continue;
-         
+
          if (row != pos.row)
             return {
                row: row,
@@ -2315,7 +2320,7 @@ var RCodeModel = function(session, tokenizer,
                token: tokens[tokens.length - 1],
                offset: tokens.length - 1
             };
-         
+
          for (var i = tokens.length - 1; i >= 0; i--)
          {
             if (tokens[i].column < pos.column)
@@ -2330,7 +2335,7 @@ var RCodeModel = function(session, tokenizer,
          }
       }
    };
-   
+
    function isWhitespaceOrComment(token)
    {
       // virtual-comment is for roxygen content that needs to be highlighted

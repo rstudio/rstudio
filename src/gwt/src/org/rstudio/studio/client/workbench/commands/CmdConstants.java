@@ -728,6 +728,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show S_QL Results") // $NON-NLS-1$
     String activateSQLResultsMenuLabel();
     
+    // activateDatabricks
+    @DefaultStringValue("Show Databricks Pane") // $NON-NLS-1$
+    String activateDatabricksLabel();
+    @DefaultStringValue("Show _Databricks") // $NON-NLS-1$
+    String activateDatabricksMenuLabel();
+    
     // layoutZoomSource
     @DefaultStringValue("Zoom Source") // $NON-NLS-1$
     String layoutZoomSourceLabel();
@@ -1373,7 +1379,7 @@ public interface CmdConstants extends Constants {
     // copilotAcceptNextWord
     @DefaultStringValue("Copilot: Accept Next Word") // $NON-NLS-1$
     String copilotAcceptNextWordLabel();
-    @DefaultStringValue("Request Completions") // $NON-NLS-1$
+    @DefaultStringValue("Accept Next Word") // $NON-NLS-1$
     String copilotAcceptNextWordMenuLabel();
     @DefaultStringValue("Accept the next word of the current Copilot suggestion, if any.") // $NON-NLS-1$
     String copilotAcceptNextWordDesc();

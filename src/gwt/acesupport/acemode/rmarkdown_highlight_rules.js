@@ -31,6 +31,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
 var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
+var LatexHighlightRules = require("mode/tex_highlight_rules").LatexHighlightRules;
 var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
 var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
@@ -58,8 +59,8 @@ var RMarkdownHighlightRules = function() {
    // Base rule set (markdown)
    this.$rules = new MarkdownHighlightRules().getRules();
 
-   // use 'firstLine' rule so that YAML rules can apply only there
-   this.$rules["firstLine"] = this.$rules["allowBlock"].slice();
+   // use '_start' rule so that YAML rules can apply only there
+   this.$rules["_start"] = this.$rules["allowBlock"].slice();
 
    // Embed R highlight rules
    Utils.embedRules(
@@ -176,12 +177,12 @@ var RMarkdownHighlightRules = function() {
 
    // Embed dot highlight rules
    Utils.embedRules(
-	  this,
-	  DotHighlightRules,
-	  "dot",
-	  this.$reDotChunkStartString,
-	  this.$reChunkEndString,
-	  ["start", "listblock", "allowBlock"]
+      this,
+      DotHighlightRules,
+      "dot",
+      this.$reDotChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
    );
 
    // Embed JavaScript highlighting rules
@@ -234,6 +235,16 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
+   // Embed latex highlight rules
+   Utils.embedRules(
+      this,
+      LatexHighlightRules,
+      "tex",
+      this.$reLatexChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
    // Embed text highlight rules
    Utils.embedRules(
       this,
@@ -244,15 +255,14 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
-   // Embed YAML highlighting rules
-   // (Handled specially: should only ever activate on first line of document)
+   // Embed YAML header highlighting rules
    Utils.embedRules(
       this,
       YamlHighlightRules,
       "yaml",
       "^\\s*---\\s*$",
       "^\\s*(?:---|\\.\\.\\.)\\s*$",
-      ["firstLine"]
+      ["_start"]
    );
 
    this.$rules["yaml-start"].unshift({
@@ -298,6 +308,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reSassChunkStartString       = engineRegex("sass");
    this.$reLessChunkStartString       = engineRegex("less");
    this.$reTextChunkStartString       = engineRegex("(?:asis|text)");
+   this.$reLatexChunkStartString      = engineRegex("(?:tikz|latex|tex)");
 
 }).call(RMarkdownHighlightRules.prototype);
 

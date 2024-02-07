@@ -164,5 +164,19 @@ std::vector<std::string> ConfigProfile::getLevelNames(uint32_t level) const
    return levelNames;
 }
 
+bool ConfigProfile::isParamDefined(const std::string& paramName) const
+{
+   for (const auto& levelValue: levels_)
+   {
+      for (const auto& value: levelValue.second)
+      {
+         if (value.first == paramName)
+            return true;
+      }
+   }
+
+   return false;
+}
+
 } // core
 } // namespace rstudio

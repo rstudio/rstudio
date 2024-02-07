@@ -24,8 +24,8 @@ RUN yum install -y \
     gdb \
     git \
     gtk3 \
-    java-1.8.0-openjdk \
-    java-1.8.0-openjdk-devel \
+    java-11-openjdk \
+    java-11-openjdk-devel \
     jq \
     libXScrnSaver-devel \
     libXcursor-devel \
@@ -64,6 +64,11 @@ RUN yum install -y \
     whois \
     xorg-x11-server-Xvfb \
     zlib-devel
+
+# ant install triggers java 8 installation but we use java 11 for builds
+RUN JDK_11_PATH=$(dirname $(dirname $(readlink -f $(find /usr/lib/jvm/ -name javac | grep java-11)))) && \
+    alternatives --set java $JDK_11_PATH/bin/java && \
+    alternatives --set javac $JDK_11_PATH/bin/javac
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools

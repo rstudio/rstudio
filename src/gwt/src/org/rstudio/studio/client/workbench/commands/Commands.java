@@ -376,6 +376,7 @@ public abstract class
    public abstract AppCommand activateDeployContent();
    public abstract AppCommand activateMarkers();
    public abstract AppCommand activateSQLResults();
+   public abstract AppCommand activateDatabricks();
 
    // History
    public abstract AppCommand historySendToSource();
@@ -739,6 +740,9 @@ public abstract class
    public abstract AppCommand copilotRequestCompletions();
    public abstract AppCommand copilotAcceptNextWord();
    public abstract AppCommand copilotToggleAutomaticCompletions();
+
+   // Databricks
+   public abstract AppCommand layoutZoomDatabricks();
 
    // Internal
    public abstract AppCommand showDomElements();

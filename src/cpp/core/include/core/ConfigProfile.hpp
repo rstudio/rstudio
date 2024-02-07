@@ -88,6 +88,10 @@ public:
    // must only be called after a call to load()
    std::vector<std::string> getLevelNames(uint32_t level) const;
 
+   // Returns true if named parameter is overridden at any level, and false otherwise.
+   // NOTE: result is only valid after a call to load().
+   bool isParamDefined(const std::string& paramName) const;
+
    // gets a param's value given the level values for each level
    // see unit tests for more examples
    template <typename T>
