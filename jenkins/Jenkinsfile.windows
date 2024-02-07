@@ -103,12 +103,9 @@ pipeline {
         }
 
         when {
-          allOf {
-            anyOf {
-              environment name: 'FLAVOR', value: 'Electron'
-              expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
-            }
-            expression { return SHOULD_REBUILD == true }
+          anyOf {
+            environment name: 'FLAVOR', value: 'Electron'
+            expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
           }
         }
 
