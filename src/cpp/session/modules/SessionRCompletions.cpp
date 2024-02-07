@@ -198,6 +198,10 @@ std::string finishExpression(const std::string& expression)
          terminators.push_back(top);
       }
    }
+   
+   // finish an operator if necessary
+   if (sawOperator)
+      result.push_back('.');
 
    // append to the output
    for (std::size_t i = terminators.size() - 1; i > 0; --i)

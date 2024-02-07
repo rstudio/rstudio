@@ -10,6 +10,7 @@
 - RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$$ $$` and `$ $` instead (#12862)
 - Added cmake option to build RStudio without the check for updates feature (#13236)
 - Allow choosing R from non-standard location at startup (#14180; Windows Desktop)
+- Add `EnvironmentFile` support to systemd service definitions. (#13819)
 - RStudio's GWT sources can now be built with JDKs > 11 (#11242)
 - Show grey background instead of solid-white during Desktop startup (#13768)
 - The 'restartSession()' API method gains the 'clean' argument. (#2841)
@@ -39,6 +40,7 @@
 - Fixed an issue where the Visual Editor's toolbar controls were duplicated on format change (#12227)
 - Fixed regression that caused extra whitespace at bottom of some popups (#14223)
 - Fix type dropdowns not working in dataset import when user-interface is in French (#14224)
+- Fixed an issue where RStudio failed to retrieve help for certain S3 methods (#14232)
 
 #### Posit Workbench
 -
