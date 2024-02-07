@@ -47,16 +47,16 @@ public class DataImportColumnTypesMenu extends PopupPanel
       
       public MenuItem(String name, Widget widget)
       {
-                  name_ = name;
+         name_ = name;
          widget_ = widget;
       }
-            
+      
       String getName()
       {
          return name_;
       }
-
-       Widget getWidget()
+      
+      Widget getWidget()
       {
          return widget_;
       }
