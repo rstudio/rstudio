@@ -2571,12 +2571,11 @@ assign(x = ".rs.acCompletionTypes",
    if (!length(string))
    {
       # If there was no token, give up
-      if (is.null(completions) && !nzchar(token))
+      if (!nzchar(token))
          return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
       
       # Otherwise, complete from the search path + available packages
       completions <- Reduce(.rs.appendCompletions, list(
-         .rs.nullCoalesce(completions, .rs.emptyCompletions(token)),
          .rs.getCompletionsSearchPath(token),
          .rs.getCompletionsNAMESPACE(token, documentId),
          .rs.getCompletionsPackages(token, TRUE),
