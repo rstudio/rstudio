@@ -8,6 +8,7 @@ Type=forking
 PIDFile=/run/rstudio-server.pid
 ExecStart=${CMAKE_INSTALL_PREFIX}/bin/rserver
 ExecReload=/bin/kill -HUP $MAINPID
+EnvironmentFile=-/etc/default/rstudio-server
 Restart=on-failure
 
 [Install]
