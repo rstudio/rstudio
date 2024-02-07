@@ -39,9 +39,11 @@
    TYPE_ALL_WINDOWS   = 2L
 ))
 
-.rs.addApiFunction("restartSession", function(command = NULL) {
-   command <- as.character(command)
-   invisible(.rs.restartR(command))
+.rs.addApiFunction("restartSession", function(command = NULL, clean = FALSE) {
+   .rs.restartR(
+      afterRestartCommand = as.character(command),
+      clean = as.logical(clean)
+   )
 })
 
 .rs.addApiFunction("initializeProject", function(path = getwd())

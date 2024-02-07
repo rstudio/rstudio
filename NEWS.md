@@ -12,6 +12,7 @@
 - Allow choosing R from non-standard location at startup (#14180; Windows Desktop)
 - RStudio's GWT sources can now be built with JDKs > 11 (#11242)
 - Show grey background instead of solid-white during Desktop startup (#13768)
+- The 'restartSession()' API method gains the 'clean' argument. (#2841)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
