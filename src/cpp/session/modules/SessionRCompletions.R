@@ -2811,6 +2811,7 @@ assign(x = ".rs.acCompletionTypes",
                                 context[[i]],
                                 numCommas[[i]],
                                 functionCall,
+                                completions$excludeOtherCompletions,
                                 documentId,
                                 envir)
          )
@@ -3000,8 +3001,8 @@ assign(x = ".rs.acCompletionTypes",
    if (is.call(data))
    {
       .rs.tryCatch({
-         trimmedContents <- contents[nzchar(contents)]
-         firstLine <- head(trimmedContents, n = 1L)
+         newlineIndex <- regexpr("\n", currentStatement, fixed = TRUE)
+         firstLine <- substring(currentStatement, 1L, newlineIndex - 1L)
          firstLine <- gsub("|>", "", firstLine, fixed = TRUE)
          firstLine <- gsub("%[^%]+%", "", firstLine)
          firstCall <- parse(text = .rs.finishExpression(firstLine))[[1L]]
@@ -3093,8 +3094,8 @@ assign(x = ".rs.acCompletionTypes",
             quote = FALSE,
             type = .rs.acCompletionTypes$COLUMN,
             packages = source,
-            excludeOtherCompletions = FALSE,
-            excludeOtherArgumentCompletions = FALSE
+            excludeOtherCompletions = TRUE,
+            excludeOtherArgumentCompletions = TRUE
          )
       )
    }
@@ -3184,6 +3185,7 @@ assign(x = ".rs.acCompletionTypes",
                                             context,
                                             numCommas,
                                             functionCall,
+                                            excludeOtherCompletions,
                                             documentId,
                                             envir)
 {
@@ -3198,7 +3200,7 @@ assign(x = ".rs.acCompletionTypes",
    else
       .rs.emptyCompletions()
    
-   if (index == 1L)
+   if (index == 1L && !excludeOtherCompletions)
    {
       libraryContextCompletions <- .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, documentId, envir)
       
