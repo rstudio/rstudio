@@ -14,6 +14,10 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.MiniPopupPanel;
+import org.rstudio.studio.client.server.ServerError;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
@@ -25,10 +29,6 @@ import com.google.gwt.user.client.ui.AttachDetachException;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
-
-import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.widget.MiniPopupPanel;
-import org.rstudio.studio.client.server.ServerError;
 
 public class Debug
 {
@@ -148,6 +148,11 @@ public class Debug
       devlog(format);
    }
 
+   public static void logToRConsole(Object object)
+   {
+      logToRConsole(JSON.stringify(object));
+   }
+   
    public static void logToRConsole(String message)
    {
       Element consoleEl = Document.get().getElementById(ElementIds.getElementId(ElementIds.CONSOLE_OUTPUT));
