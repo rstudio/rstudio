@@ -295,7 +295,6 @@ assign(x = ".rs.acCompletionTypes",
                        context  = .rs.acContextTypes$ROXYGEN, 
                        meta     = descriptions[keep], 
                        packages = vignette[keep],
-                       
                        excludeOtherCompletions = TRUE, 
    )
 })
@@ -2760,11 +2759,8 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
-   # no special case (start with empty completions)
-   else
-   {
-      .rs.emptyCompletions()
-   }
+   if (is.null(completions))
+      completions <- .rs.emptyCompletions(token)
    
    ## If we are getting completions from a '$', '@', '::' or ':::' then we do not
    ## want to look for completions in other contexts
@@ -3000,6 +2996,22 @@ assign(x = ".rs.acCompletionTypes",
          data <- currentCall[[2L]]
    }
    
+   # if 'data' is a call, check the contents to see if this is a plain pipe usage
+   if (is.call(data))
+   {
+      .rs.tryCatch({
+         trimmedContents <- contents[nzchar(contents)]
+         firstLine <- head(trimmedContents, n = 1L)
+         firstLine <- gsub("|>", "", firstLine, fixed = TRUE)
+         firstLine <- gsub("%[^%]+%", "", firstLine)
+         firstCall <- parse(text = .rs.finishExpression(firstLine))[[1L]]
+         if (is.call(firstCall) && length(firstCall) == 3L)
+            firstCall <- firstCall[[2L]]
+         if (is.symbol(firstCall))
+            data <- firstCall
+      })
+   }
+   
    # NOTE: We use 'eval()' here to ensure that things like datasets
    # are properly resolved; e.g. if working with mtcars from the datasets package.
    value <- NULL
@@ -3020,15 +3032,22 @@ assign(x = ".rs.acCompletionTypes",
       "aes" %in% contextData[[1L]]$data &&
       .rs.acContextTypes$FUNCTION %in% contextData[[1L]]$type
    
-   if (includeAestheticNames)
+   if (includeAestheticNames && requireNamespace("ggplot2", quietly = TRUE))
    {
-      aestheticNames <- if (is.null(geomContext))
+      if (is.null(geomContext))
       {
-         .rs.ggplot2.defaultAesthetics()
+         aestheticNames <- .rs.ggplot2.defaultAesthetics()
+         aestheticSource <- "ggplot2"
       }
       else
       {
-         geomFunc <- eval(as.symbol(geomContext$data), envir = envir)
+         ggplot2 <- asNamespace("ggplot2")
+         geomName <- geomContext$data
+         geomFunc <- if (exists(geomName, envir = envir))
+            eval(as.symbol(geomName), envir = envir)
+         else if (exists(geomName, envir = ggplot2))
+            eval(as.symbol(geomName), envir = ggplot2)
+            
          layerInfo <- geomFunc()
          aesthetics <- c(
             layerInfo$geom$required_aes,
@@ -3037,14 +3056,16 @@ assign(x = ".rs.acCompletionTypes",
             names(layerInfo$stat$default_aes),
             "group"
          )
-         aesthetics[!duplicated(aesthetics)]
+         
+         aestheticNames <- aesthetics[!duplicated(aesthetics)]
+         aestheticSource <- geomName
       }
       
       # exclude argument names which already been used
       .rs.tryCatch({
          aesRange <- contextData[[1]]$range
          aesText <- .rs.getTextRange(contents, aesRange)
-         aesCall <- parse(text = aesText)
+         aesCall <- parse(text = aesText)[[1L]]
          aestheticNames <- setdiff(aestheticNames, names(aesCall))
       })
       
@@ -3054,7 +3075,7 @@ assign(x = ".rs.acCompletionTypes",
          completions <- .rs.makeCompletions(
             token = token,
             results = paste(results, "= "),
-            packages = geomContext$data,
+            packages = aestheticSource,
             type = .rs.acCompletionTypes$ARGUMENT,
             quote = FALSE
          )
@@ -3072,8 +3093,8 @@ assign(x = ".rs.acCompletionTypes",
             quote = FALSE,
             type = .rs.acCompletionTypes$COLUMN,
             packages = source,
-            excludeOtherCompletions = TRUE,
-            excludeOtherArgumentCompletions = TRUE
+            excludeOtherCompletions = FALSE,
+            excludeOtherArgumentCompletions = FALSE
          )
       )
    }
