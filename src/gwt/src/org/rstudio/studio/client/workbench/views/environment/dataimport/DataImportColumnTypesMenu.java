@@ -30,7 +30,6 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 
 public class DataImportColumnTypesMenu extends PopupPanel
 {
@@ -48,16 +47,16 @@ public class DataImportColumnTypesMenu extends PopupPanel
       
       public MenuItem(String name, Widget widget)
       {
-         name_ = name;
+                  name_ = name;
          widget_ = widget;
       }
-      
+            
       String getName()
       {
          return name_;
       }
-      
-      Widget getWidget()
+
+       Widget getWidget()
       {
          return widget_;
       }
@@ -86,19 +85,19 @@ public class DataImportColumnTypesMenu extends PopupPanel
       menuItemsMap_ = new HashMap<>();
       
       menuItems_ = new ArrayList<>();
-      menuItems_.add(new MenuItem(constants_.includeMenuItem(), (Widget)include_));
-      menuItems_.add(new MenuItem(constants_.skipMenuItem(), (Widget)skip_));
-      menuItems_.add(new MenuItem(constants_.onlyMenuItem(), (Widget)only_));
-      menuItems_.add(new MenuItem(constants_.guessMenuItem(), (Widget)guess_));
-      menuItems_.add(new MenuItem(constants_.characterMenuItem(), (Widget)character_));
-      menuItems_.add(new MenuItem(constants_.doubleMenuItem(), (Widget)double_));
-      menuItems_.add(new MenuItem(constants_.integerMenuItem(), (Widget)integer_));
-      menuItems_.add(new MenuItem(constants_.numericMenuItem(), (Widget)numeric_));
-      menuItems_.add(new MenuItem(constants_.logicalMenuItem(), (Widget)logical_));
-      menuItems_.add(new MenuItem(constants_.dateMenuItem(), (Widget)date_));
-      menuItems_.add(new MenuItem(constants_.timeMenuItem(), (Widget)time_));
-      menuItems_.add(new MenuItem(constants_.dateTimeMenuItem(), (Widget)dateTime_));
-      menuItems_.add(new MenuItem(constants_.factorMenuItem(), (Widget)factor_));
+      menuItems_.add(new MenuItem("include", (Widget)include_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("skip", (Widget)skip_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("only", (Widget)only_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("guess", (Widget)guess_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("character", (Widget)character_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("double", (Widget)double_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("integer", (Widget)integer_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("numeric", (Widget)numeric_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("logical", (Widget)logical_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("date", (Widget)date_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("time", (Widget)time_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("dateTime", (Widget)dateTime_)); //$NON-NLS-1$
+      menuItems_.add(new MenuItem("factor", (Widget)factor_)); //$NON-NLS-1$
       
       for (int idx = 0; idx < menuItems_.size(); idx++)
       {
@@ -306,5 +305,4 @@ public class DataImportColumnTypesMenu extends PopupPanel
    
    @UiField
    Label error_;
-   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }
