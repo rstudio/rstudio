@@ -18,7 +18,7 @@ var $numParenColors = 7;
 
 define("mode/rainbow_paren_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
-  var RainbowParenHighlightRules = function() {
+  var RainbowParenHighlightRules = function () {
   };
 
   exports.RainbowParenHighlightRules = RainbowParenHighlightRules;
@@ -34,46 +34,34 @@ define("mode/rainbow_paren_highlight_rules", ["require", "exports", "module"], f
 
   RainbowParenHighlightRules.getParenRule = function() {
     return {
-      token : "paren.keyword.operator.nomatch",
-      regex : "[[({})\\]]",
-      merge : false,
-      onMatch: function(val, state, stack) {
+      token: "paren.keyword.operator.nomatch",
+      regex: "[[({})\\]]",
+      merge: false,
+      onMatch: function (value, state, stack, line, context) {
 
         if (!$rainbowParentheses) {
           this.token = "paren.keyword.operator.nomatch";
           return this.token;
         }
 
-        // NOTE: The 'stack' object here (which is really just an array) is
-        // shared by different highlight rules, and is a general way to set and
-        // persist state in the tokenizer. However, because it's visible to
-        // each matching highlight rule, and each individual highlight rule
-        // might want to manipulate that stack, we need to choose the index
-        // carefully to avoid stomping on state declared from other highlight
-        // rules. 15 is chosen as a "large enough" number to avoid stepping
-        // other rules, which normally would be manipulating the first few
-        // slots of the 'stack' array.
-        //
-        // https://github.com/rstudio/rstudio/issues/11087
-        stack = stack || [];
-        stack[0] = state;
-        stack[15] = stack[15] || 0;
+        context.rainbow = context.rainbow || 0;
 
-        switch(val) {
+        switch (value) {
 
-        case "[": case "{": case "(":
-          this.token = "paren.paren_color_" + (stack[15] % $numParenColors);
-          stack[15] = stack[15] + 1;
-          break;
-        case "]": case "}": case ")":
-          stack[15] = Math.max(0, stack[15] - 1);
-          this.token = "paren.paren_color_" + (stack[15] % $numParenColors);
-          break;
+          case "[": case "{": case "(":
+            this.token = `paren.paren_color_${context.rainbow % $numParenColors}`;
+            context.rainbow += 1;
+            break;
+
+          case "]": case "}": case ")":
+            context.rainbow = Math.max(0, context.rainbow - 1);
+            this.token = `paren.paren_color_${context.rainbow % $numParenColors}`;
+            break;
         }
 
-      return this.token;
-    },
-      next: "start"
-    }
-  };
+        return this.token;
+      }
+    };
+  }
+
 });

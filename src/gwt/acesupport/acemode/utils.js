@@ -18,6 +18,7 @@ define("mode/utils", ["require", "exports", "module"], function(require, exports
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
 var unicode = require("ace/unicode");
+var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules;
 
 (function() {
 
@@ -106,40 +107,21 @@ var unicode = require("ace/unicode");
          endState = "start";
 
       startStates = that.asArray(startStates);
-
       var rules = HighlightRules.$rules;
 
-      // some highlight modes (notably, YAML) can have rules
-      // that manipulate a stack of saved states -- in the
-      // context of YAML, this is done to handle e.g. multiline
-      // strings (tracking the indent used for those strings).
-      // we need to clear that stack whenever we switch from one
-      // mode to another.
-      var onMatch = function(value, state, stack, line) {
-         stack.splice(0);
-         return this.token;
-      }
+      HighlightRules.embedRules(EmbedRules, prefix + "-", [{
+         token: "support.function.codeend",
+         regex: reEnd,
+         next: "pop"
+      }]);
 
-      // define the highlight rules that allow us to transition
-      // into the embedded mode
       for (var i = 0; i < startStates.length; i++) {
          rules[startStates[i]].unshift({
             token: "support.function.codebegin",
             regex: reStart,
-            onMatch: onMatch,
-            next: prefix + "-start"
+            push: prefix + "-start"
          });
       }
-
-      // call into Ace to embed rules with given 'prefix', and
-      // define the rule that's used to return to parent mode
-      HighlightRules.embedRules(EmbedRules, prefix + "-", [{
-         token: "support.function.codeend",
-         regex: reEnd,
-         onMatch: onMatch,
-         next: "start"
-      }]);
-      
    };
 
    this.isSingleLineString = function(string)
@@ -202,7 +184,7 @@ var unicode = require("ace/unicode");
       return string === "{" || string === "}" ||
              string === "(" || string === ")" ||
              string === "[" || string === "]";
-             
+
    };
 
    this.isOpeningBracket = function(string, allowArrow)
@@ -238,7 +220,7 @@ var unicode = require("ace/unicode");
       var n = string.length;
       if (n < 2)
          return string;
-      
+
       var firstChar = string[0];
       var isQuote =
              firstChar === "'" ||
@@ -271,6 +253,84 @@ var unicode = require("ace/unicode");
    this.getTokenTypeRegex = function(type)
    {
       return new RegExp("(?:^|[.])" + type + "(?:$|[.])", "");
+   }
+
+   this.embedQuartoHighlightRules = function(self)
+   {
+      // Embed YAML highlighting rules
+      var prefix = "quarto-yaml-";
+      self.embedRules(YamlHighlightRules, prefix);
+
+      // allow Quarto YAML comments within each kind of chunk
+      for (var state in self.$rules) {
+
+         // add rules for highlighting YAML comments
+         // TODO: Associate embedded rules with their comment tokens
+         if (state === "start" || state.indexOf("-start") !== -1) {
+            self.$rules[state].unshift({
+               token: "comment.doc.tag",
+               regex: "^\\s*#\\s*[|]",
+               push: prefix + "start"
+            });
+         }
+
+         // allow Quarto YAML highlight rules to consume leading comments
+         if (state.indexOf(prefix) === 0) {
+
+            // make sure YAML rules can consume a leading #|
+            self.$rules[state].unshift({
+               token: ["whitespace", "comment.doc.tag"],
+               regex: "^(\\s*)(#[|])",
+               next: state
+            });
+
+            // make sure YAML rules exit when there's no leading #|
+            self.$rules[state].unshift({
+               token: "whitespace",
+               regex: "^\\s*(?!#)",
+               next: "pop"
+            });
+
+         }
+
+         self.$rules[prefix + "start"].unshift({
+            token: "text",
+            regex: "^\\s*(?!#)",
+            next: "pop"
+         });
+
+         // allow for multi-line strings in YAML comments
+         self.$rules[prefix + "multiline-string"].unshift({
+            regex: /^(#[|])(\s*)/,
+            onMatch: function(value, state, stack, line, context) {
+
+               // apply token splitter regex
+               var tokens = this.splitRegex.exec(value);
+
+               // if we matched the whole line, continue in the multi-string state
+               if (line === tokens[1] + tokens[2]) {
+                  this.next = state;
+               } else {
+                  // if the indent has decreased relative to what
+                  // was used to start the multiline string, then
+                  // exit multiline string state
+                  var indent = tokens[2].length;
+                  if (context.yaml.indent >= indent) {
+                     this.next = context.yaml.state;
+                  } else {
+                     this.next = state + "-rest";
+                  }
+               }
+
+               // retrieve tokens for the matched value
+               return [
+                  { type: "comment.doc.tag", value: tokens[1] },
+                  { type: "indent", value: tokens[2] }
+               ];
+            }
+         });
+
+      }
    }
 
 

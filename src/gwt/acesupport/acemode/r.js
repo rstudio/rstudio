@@ -59,7 +59,7 @@ define("mode/r", ["require", "exports", "module"], function(require, exports, mo
       this.autoOutdent = function(state, session, row) {
          return this.$outdent.autoOutdent(state, session, row);
       };
-      
+
       this.tokenRe = new RegExp("^[" + unicode.wordChars + "._]+", "g");
       this.nonTokenRe = new RegExp("^(?:[^" + unicode.wordChars + "._]|\\s)+", "g");
 

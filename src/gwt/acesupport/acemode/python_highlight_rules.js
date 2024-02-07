@@ -24,7 +24,7 @@
  *
  * Copyright (c) 2010, Ajax.org B.V.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -35,7 +35,7 @@
  *     * Neither the name of Ajax.org B.V. nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -57,6 +57,7 @@ define("mode/python_highlight_rules", ["require", "exports", "module"], function
 var oop = require("ace/lib/oop");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var RainbowParenHighlightRules = require("mode/rainbow_paren_highlight_rules").RainbowParenHighlightRules;
+var Utils = require("mode/utils");
 
 var PythonHighlightRules = function() {
 
@@ -209,7 +210,11 @@ var PythonHighlightRules = function() {
         }, {
             defaultToken: "string"
         }]
+
     };
+
+   Utils.embedQuartoHighlightRules(this);
+   this.normalizeRules();
 };
 
 oop.inherits(PythonHighlightRules, TextHighlightRules);
