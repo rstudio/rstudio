@@ -29,9 +29,7 @@ import { GwtWindow } from './gwt-window';
 import { MenuCallback } from './menu-callback';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RCommandEvaluator } from './r-command-evaluator';
-import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { SessionLauncher } from './session-launcher';
-import { CloseServerSessions } from './session-servers-overlay';
 import { waitForUrlWithTimeout } from './url-utils';
 import { registerWebContentsDebugHandlers } from './utils';
 
@@ -61,7 +59,6 @@ export class MainWindow extends GwtWindow {
   static URL_CHANGED = 'main-window-url_changed';
 
   sessionLauncher?: SessionLauncher;
-  remoteSessionLauncher?: RemoteDesktopSessionLauncher;
   appLauncher?: ApplicationLaunch;
   menuCallback: MenuCallback;
   quitConfirmed = false;
@@ -72,36 +69,18 @@ export class MainWindow extends GwtWindow {
   private isErrorDisplayed = false;
   private didMainFrameLoadSuccessfully = true;
 
-  // TODO
-  //#ifdef _WIN32
-  // HWINEVENTHOOK eventHook_ = nullptr;
-  //#endif
-
-  constructor(url: string, public isRemoteDesktop = false) {
+  constructor(url: string) {
     super({
       name: '',
       baseUrl: url,
-      allowExternalNavigate: isRemoteDesktop,
+      allowExternalNavigate: false,
       addApiKeys: ['desktop', 'desktopMenuCallback'],
     });
 
-    appState().gwtCallback = new GwtCallback(this, isRemoteDesktop);
+    appState().gwtCallback = new GwtCallback(this);
     this.menuCallback = new MenuCallback();
 
     RCommandEvaluator.setMainWindow(this);
-
-    if (this.isRemoteDesktop) {
-      // TODO - determine if we need to replicate this
-      // since the object registration is asynchronous, during the GWT setup code
-      // there is a race condition where the initialization can happen before the
-      // remoteDesktop object is registered, making the GWT application think that
-      // it should use regular desktop objects - to circumvent this, we use a custom
-      // user agent string that the GWT code can detect with 100% success rate to
-      // get around this race condition
-      // QString userAgent = webPage()->profile()->httpUserAgent().append(QStringLiteral("; RStudio Remote Desktop"));
-      // webPage()->profile()->setHttpUserAgent(userAgent);
-      // channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
-    }
 
     this.menuCallback.showPlaceholderMenu();
 
@@ -181,28 +160,7 @@ export class MainWindow extends GwtWindow {
       }
     });
 
-    // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
-    //    QString js = QStringLiteral(
-    //       "if (typeof window.onFontListReady === 'function') window.onFontListReady()");
-    //    this->webPage()->runJavaScript(js);
-    // });
-
-    // connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)),
-    //         this, SLOT(commitDataRequest(QSessionManager&)),
-    //         Qt::DirectConnection);
-
-    // setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
     this.window.setTitle(appState().activation().editionName());
-
-    // Error error = pLauncher_->initialize();
-    // if (error) {
-    //   LOG_ERROR(error);
-    //   showError(nullptr,
-    //             QStringLiteral("Initialization error"),
-    //             QStringLiteral("Could not initialize Job Launcher"),
-    //             QString());
-    //   ::_exit(EXIT_FAILURE);
-    // }
   }
 
   launchSession(reload: boolean): void {
@@ -229,19 +187,6 @@ export class MainWindow extends GwtWindow {
     this.appLauncher?.launchRStudio(options);
   }
 
-  saveRemoteAuthCookies(): void {
-    // TODO
-  }
-
-  launchRemoteRStudio(): void {
-    // TODO
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  launchRemoteRStudioProject(projectUrl: string): void {
-    // TODO
-  }
-
   onWorkbenchInitialized(): void {
     // reset state (in case this occurred in response to a manual reload
     // or reload for a new project context)
@@ -264,21 +209,6 @@ export class MainWindow extends GwtWindow {
         logger().logError(error);
       });
   }
-
-  // TODO - REVIEW
-  // https://github.com/electron/electron/issues/9613
-  // https://github.com/electron/electron/issues/8762
-  // this notification occurs when windows or X11 is shutting
-  // down -- in this case we want to be a good citizen and just
-  // exit right away so we notify the gwt callback that a legit
-  // quit and exit is on the way and we set the quitConfirmed_
-  // flag so no prompting occurs (note that source documents
-  // have already been auto-saved so will be restored next time
-  // the current project context is opened)
-  // commitDataRequest(QSessionManager &manager) {
-  //   gwtCallback_.setPendingQuit(PendingQuitAndExit);
-  //   quitConfirmed_ = true;
-  // }
 
   async loadUrl(url: string, updateBaseUrl = true): Promise<void> {
     // pass along the shared secret with every request
@@ -326,54 +256,15 @@ export class MainWindow extends GwtWindow {
   }
 
   onSessionQuit(): void {
-    let doQuit = true;
-    if (this.isRemoteDesktop) {
-      const pendingQuit = this.collectPendingQuitRequest();
-      doQuit = pendingQuit === PendingQuit.PendingQuitAndExit || this.quitConfirmed;
-    }
-    if (doQuit) {
-      closeAllSatellites(this.window);
-      this.quit();
-    }
+    closeAllSatellites(this.window);
+    this.quit();
   }
 
   setSessionProcess(sessionProcess: ChildProcess | undefined): void {
     this.sessionProcess = sessionProcess;
-
-    // TODO implement Win32 eventHook
-    // when R creates dialogs (e.g. through utils::askYesNo), their first
-    // invocation might show behind the RStudio window. this allows us
-    // to detect when those Windows are opened and focused, and raise them
-    // to the front.
-    // if (process.platform === 'win32') {
-    //   if (eventHook_) {
-    //     ::UnhookWinEvent(eventHook_);
-    //   }
-
-    //   if (this.sessionProcess) {
-    //     eventHook_ = ::SetWinEventHook(
-    //       EVENT_SYSTEM_DIALOGSTART, EVENT_SYSTEM_DIALOGSTART,
-    //       nullptr,
-    //       onDialogStart,
-    //       pSessionProcess -> processId(),
-    //       0,
-    //       WINEVENT_OUTOFCONTEXT);
-    //   }
-    // }
   }
 
   closeEvent(event: Electron.Event): void {
-    if (process.platform === 'win32') {
-      // TODO
-      // if (eventHook_) {
-      // :: UnhookWinEvent(eventHook_);
-      // }
-    }
-
-    // desktopInfo().onClose();
-    // saveRemoteAuthCookies(boost::bind(&Options::authCookies, &options()),
-    //                      boost::bind(&Options::setAuthCookies, &options(), _1),
-    //                      false);
 
     if (!this.geometrySaved) {
       const bounds = this.window.getNormalBounds();
@@ -381,12 +272,10 @@ export class MainWindow extends GwtWindow {
       this.geometrySaved = true;
     }
 
-    const close: CloseServerSessions = 'Always'; // TODO sessionServerSettings().closeServerSessionsOnExit();
-
     if (
       this.quitConfirmed ||
-      (!this.isRemoteDesktop && !this.sessionProcess) ||
-      (!this.isRemoteDesktop && (!this.sessionProcess || this.sessionProcess.exitCode !== null))
+      !this.sessionProcess ||
+      this.sessionProcess.exitCode !== null
     ) {
       closeAllSatellites(this.window);
       return;
@@ -406,18 +295,9 @@ export class MainWindow extends GwtWindow {
           // exit to avoid user having to kill/force-close the application
           quit();
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          if (!this.isRemoteDesktop || close === 'Always') {
-            this.executeJavaScript('window.desktopHooks.quitR()')
-              .then(() => (this.quitConfirmed = true))
-              .catch(logger().logError);
-          } else if (close === 'Never') {
-            quit();
-          } else {
-            this.executeJavaScript('window.desktopHooks.promptToQuitR()')
-              .then(() => (this.quitConfirmed = true))
-              .catch(logger().logError);
-          }
+          this.executeJavaScript('window.desktopHooks.quitR()')
+            .then(() => (this.quitConfirmed = true))
+            .catch(logger().logError);
         }
       })
       .catch(logger().logError);
@@ -471,7 +351,7 @@ export class MainWindow extends GwtWindow {
   }
 
   onLoadFailed(): void {
-    if (this.remoteSessionLauncher || this.isErrorDisplayed) {
+    if (this.isErrorDisplayed) {
       return;
     }
 

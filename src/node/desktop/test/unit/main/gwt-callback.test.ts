@@ -27,9 +27,8 @@ describe('DesktopCallback', () => {
   });
 
   it('can be constructed', () => {
-    const isRemoteDesktop = false;
     const mainWindow = createSinonStubInstance(MainWindow);
-    const callback = new GwtCallback(mainWindow, isRemoteDesktop);
-    assert.equal(callback.isRemoteDesktop, isRemoteDesktop);
+    const callback = new GwtCallback(mainWindow);
+    assert.isNotEmpty(callback);
   });
 });

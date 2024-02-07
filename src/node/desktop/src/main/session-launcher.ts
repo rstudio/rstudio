@@ -237,18 +237,6 @@ export class SessionLauncher {
 
     logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
 
-    // TODO - reimplement
-    // pMainWindow_->connect(pAppLaunch_,
-    //                       SIGNAL(openFileRequest(QString)),
-    //                       pMainWindow_,
-    //                       SLOT(openFileInRStudio(QString)));
-    // pMainWindow_->connect(&activation(),
-    //                       SIGNAL(licenseLost(QString)),
-    //                       pMainWindow_,
-    //                       SLOT(onLicenseLost(QString)));
-    // pMainWindow_->connect(&activation(), &DesktopActivation::updateLicenseWarningBar,
-    //                       pMainWindow_, &MainWindow::onUpdateLicenseWarningBar);
-
     // On Windows, we have to close the log file when running diagnostics or diagnostics.exe
     // fails to inject the log contents into the diagnostics report due to access-denied due
     // to file being in use by another process
@@ -425,24 +413,6 @@ export class SessionLauncher {
 
     // otherwise this is a restart so we need to launch the next session
     else {
-      // TODO
-      // if (!activation().allowProductUsage())
-      // {
-      //    std::string message = "Unable to obtain a license. Please restart RStudio to try again.";
-      //    std::string licenseMessage = activation().currentLicenseStateMessage();
-      //    if (licenseMessage.empty())
-      //       licenseMessage = "None Available";
-      //    message += "\n\nDetails: ";
-      //    message += licenseMessage;
-      //    showMessageBox(QMessageBox::Critical,
-      //                   pMainWindow_,
-      //                   desktop::activation().editionName(),
-      //                   QString::fromUtf8(message.c_str()), QString());
-      //    closeAllSatellites();
-      //    pMainWindow_->quit();
-      //    return;
-      // }
-
       // close all satellite windows if we are reloading
       const reload = pendingQuit === PendingQuit.PendingQuitRestartAndReload;
       if (reload) {
