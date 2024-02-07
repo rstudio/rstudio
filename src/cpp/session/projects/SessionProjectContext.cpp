@@ -528,6 +528,13 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/packrat/lib/",
       "/packrat/src/",
       
+      // node packages
+      "/node_modules/",
+      
+      // python virtual environments
+      "/virtualenv/"
+      "/venv/",
+      
       // mostly for internal use
       "/RStudio.app/",
 
