@@ -38,6 +38,7 @@
 - Fixed an issue where RStudio's R diagnostics warned about potentially missing arguments even when disabled via preferences (#14046)
 - Fixed an issue where the Visual Editor's toolbar controls were duplicated on format change (#12227)
 - Fixed regression that caused extra whitespace at bottom of some popups (#14223)
+- Fix type dropdowns not working in dataset import when user-interface is in French (#14224)
 
 #### Posit Workbench
 -
