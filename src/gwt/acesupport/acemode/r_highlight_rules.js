@@ -917,18 +917,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         next  : "start"
       },
       {
-        // R Markdown chunk metadata comments.
-        // The Ace tokenizer seems to want us to return to the 'start'
-        // state in a number of places, so we need to check whether states
-        // have been encoded into the stack, and reuse an old state if possible.
-        token : "comment.doc.tag",
-        regex : "^\\s*#\\s*[|]",
-        onMatch: function(value, state, stack, line) {
-          this.next = stack.length ? stack[0] : state.replaceAll("start", "yaml-start");
-          return this.token;
-        }
-      },
-      {
         // Begin Roxygen with todo
         token : ["comment", "comment.keyword.operator"],
         regex : "(#+['*]\\s*)(TODO|FIXME)\\b",
@@ -1251,7 +1239,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
     this.$rules = rules;
 
-
     // Embed Roxygen highlight Roxygen highlight rules
     var rdRules = new RoxygenHighlightRules().getRules();
 
@@ -1274,71 +1261,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       next  : "start"
     }]);
 
-    this.embedRules(YamlHighlightRules, "yaml-", [{
-      token : "text",
-      regex : "$",
-      next  : "start"
-    }]);
-
+    Utils.embedQuartoHighlightRules(this);
     this.normalizeRules();
-
-    // escape from yaml-start if the line doesn't start with a comment
-    this.$rules["yaml-start"].unshift({
-      token : "text",
-      regex : "^\\s*(?!#)",
-      next  : "start"
-    });
-
-    // allow for multi-line strings in YAML comments
-    this.$rules["yaml-multiline-string"].unshift({
-      regex: /^(#[|])(\s*)/,
-      onMatch: function (value, state, stack) {
-
-        // if the indent has decreased relative to what
-        // was used to start the multiline string, then
-        // exit multiline string state
-        var next = stack[0];
-        var indent = stack[1];
-
-        if (indent >= value.length) {
-          this.next = next;
-          stack.shift();
-          stack.shift();
-        } else {
-          this.next = state;
-        }
-
-        // retrieve tokens for the matched value
-        var tokens = this.splitRegex.exec(value);
-        return [
-          { type: "comment.doc.tag", value: tokens[1] },
-          { type: "indent", value: tokens[2] }
-        ];
-      }
-    });
-
-    for (var state in this.$rules) {
-
-      if (state.indexOf("yaml-") === 0) {
-
-        // make sure YAML rules can consume a leading #|
-        this.$rules[state].unshift({
-          token: ["whitespace", "comment.doc.tag"],
-          regex: "^(\\s*)(#[|])",
-          next: state
-        });
-
-        // make sure YAML rules exit when there's no leading #|
-        this.$rules[state].unshift({
-          token: "whitespace",
-          regex: "^\\s*(?!#)",
-          next: "start"
-        });
-
-      }
-
-    };
-
   }
 
   oop.inherits(RHighlightRules, TextHighlightRules);
