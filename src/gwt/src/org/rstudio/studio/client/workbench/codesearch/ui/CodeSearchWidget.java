@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.codesearch.ui;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SearchDisplay;
@@ -24,7 +23,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 
-import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 
@@ -37,9 +36,9 @@ public class CodeSearchWidget extends SearchWidget
       super(constants_.codeSearchLabel(),
             oracle,
             new TextBoxWithCue(constants_.textBoxWithCue()),
-            new SuggestBox.DefaultSuggestionDisplay());
+            null);
       
-      oracle_ = oracle;   
+      oracle_ = oracle;
       
       CodeSearchResources res = CodeSearchResources.INSTANCE;
       setIcon(new ImageResource2x(res.gotoFunction2x()));
