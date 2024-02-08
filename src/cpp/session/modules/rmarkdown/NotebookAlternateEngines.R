@@ -116,6 +116,8 @@
    
    # when invoking engines, we don't want to echo user code
    mergedOptions$echo <- FALSE
+
+   # avoid knitr writing a message re: the command about to be run
    mergedOptions$message <- FALSE
    
    # invoke engine
