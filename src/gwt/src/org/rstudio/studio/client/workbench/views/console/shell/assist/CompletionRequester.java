@@ -189,7 +189,8 @@ public class CompletionRequester
             }
             else
             {
-               value = qname.name + qname.meta;
+               String displayMeta = StringUtil.truncate(qname.meta, META_DISPLAY_LIMIT_CHARACTERS, " <...>");
+               value = qname.name + displayMeta;
             }
             
             if (StringUtil.isSubsequence(value, tokenFuzzy, true) &&
@@ -986,10 +987,10 @@ public class CompletionRequester
          // Append metadata for display if available
          if (type != RCompletionType.ROXYGEN && !StringUtil.isNullOrEmpty(meta))
          {
-            String displayMeta = StringUtil.truncate(meta, 64, meta);
+            String displayMeta = StringUtil.truncate(meta, META_DISPLAY_LIMIT_CHARACTERS, " <...>");
             SafeHtml openTag = SafeHtmlUtil.createOpenTag("span",
                   "class", RES.styles().meta(),
-                  "title", meta);
+                  "title", StringUtil.truncate(meta, 256, " <...>"));
             sb.append(openTag);
             sb.appendEscaped(displayMeta);
             sb.appendHtmlConstant("</span>");
@@ -1126,6 +1127,8 @@ public class CompletionRequester
             RStudioGinjector.INSTANCE.getFileTypeRegistry();
    }
 
+   private static final int META_DISPLAY_LIMIT_CHARACTERS = 32;
+   
    private static final CompletionRequesterResources RES =
          CompletionRequesterResources.INSTANCE;
 
