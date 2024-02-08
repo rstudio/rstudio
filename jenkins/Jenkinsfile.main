@@ -32,15 +32,9 @@ pipeline {
     // Manual build with DAILY=false triggers hourly builds
     stage('Trigger Hourly Build') {
       when {
-        allOf {
-          anyOf {
-            triggeredBy 'SCMTrigger'
-            expression { return params.DAILY == false }
-          }
-          anyOf {
-            expression { return params.FORCE_BUILD_BINARIES }
-            changeset comparator: 'REGEXP', pattern: '?:(?!docs/).+'
-          }
+        anyOf {
+          triggeredBy 'SCMTrigger'
+          expression { return params.DAILY == false }
         }
       }
       steps {
@@ -63,16 +57,8 @@ pipeline {
     stage('Trigger Daily Build') {
       when {
         anyOf {
-          allOf {
-            anyOf {
-              triggeredBy 'TimerTrigger'
-              expression { return params.DAILY == true }
-            }
-            anyOf {
-              expression { return params.FORCE_BUILD_BINARIES }
-              changeset comparator: 'REGEXP', pattern: '?:(?!docs/).+'
-            }
-          }
+          triggeredBy 'TimerTrigger'
+          expression { return params.DAILY == true }
         }
       }
       steps {
