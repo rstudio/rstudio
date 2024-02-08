@@ -22,7 +22,7 @@ import { clearApplicationSingleton, setApplication } from '../../../src/main/app
 import { Application } from '../../../src/main/application';
 import { GwtWindow } from '../../../src/main/gwt-window';
 
-class TestGwtWindow extends GwtWindow {
+class TestMinimalGwtWindow extends GwtWindow {
   onActivated(): void {
     throw new Error('Method not implemented.');
   }
@@ -38,9 +38,10 @@ if (!isWindowsDocker()) {
     });
 
     it('can be constructed', () => {
-      const gwtWindow = new TestGwtWindow({ name: '' });
+      const gwtWindow = new TestMinimalGwtWindow({ name: '' });
       const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
       assert.isObject(minWin);
+      minWin.close();
     });
   });
 }
