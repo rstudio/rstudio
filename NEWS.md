@@ -3,6 +3,7 @@
 ### New
 #### RStudio
 - RStudio's auto-completion system now supports ggplot2 aesthetic names and data columns (#8444)
+- RStudio's auto-completion system now supports the display of the "label" attribute (#14242)
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
 - RStudio Desktop on Windows and Linux supports full-screen mode via F11 (#3243)
 - R projects can be given a custom display name in Project Options (#1909)
