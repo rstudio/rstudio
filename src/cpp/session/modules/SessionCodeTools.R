@@ -617,7 +617,7 @@
 
 .rs.addFunction("getNamesImpl", function(object)
 {
-   names <-  if (is.environment(object) && !inherits(object, "R6"))
+   names <- if (is.environment(object) && !inherits(object, "R6"))
       ls(object, all.names = TRUE)
    else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
       dplyr::tbl_vars(object)
