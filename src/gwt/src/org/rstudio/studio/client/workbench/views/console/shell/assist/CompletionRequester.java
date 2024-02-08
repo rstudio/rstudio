@@ -182,8 +182,18 @@ public class CompletionRequester
          }
          else
          {
-            if (StringUtil.isSubsequence(qname.name, tokenFuzzy, true) &&
-                filterStartsWithDot(qname.name, token))
+            String value;
+            if (qname.type == RCompletionType.ROXYGEN)
+            {
+               value = qname.name.replaceAll("\\s.*", "");
+            }
+            else
+            {
+               value = qname.name + qname.meta;
+            }
+            
+            if (StringUtil.isSubsequence(value, tokenFuzzy, true) &&
+                filterStartsWithDot(value, token))
                newCompletions.add(qname);
          }
       }
