@@ -110,6 +110,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 
 import elemental2.dom.ClipboardEvent;
+import elemental2.dom.FileList;
 import jsinterop.base.Js;
 
 public class AceEditorWidget extends Composite
@@ -385,31 +386,48 @@ public class AceEditorWidget extends Composite
       
       if (BrowseCap.isElectron())
       {
-         addNativePasteHandler(getElement());
+         addDesktopNativePasteHandler(getElement());
       }
    }
    
-   private final native void addNativePasteHandler(Element el)
+   private final native void addDesktopNativePasteHandler(Element el)
    /*-{
       var self = this;
       el.addEventListener("paste", $entry(function(event) {
-         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget::onPaste(*)(event);
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget::onDesktopPaste(*)(event);
       }));
    }-*/;
    
-   private void onPaste(NativeEvent event)
+   private String formatDesktopPath(String path)
+   {
+      if (StringUtil.isNullOrEmpty(path))
+         return "";
+      
+      return "\"" + path.replace('\\', '/').replaceAll("\"", "\\\"") + "\"";
+   }
+   
+   private void onDesktopPaste(NativeEvent event)
    {
       ClipboardEvent clipboardEvent = Js.cast(event);
       elemental2.core.JsArray<String> types = clipboardEvent.clipboardData.types;
       if (types.length == 1 && types.getAt(0) == "Files")
       {
-         File file = Js.cast(clipboardEvent.clipboardData.files.getAt(0));
-         if (file != null && file.path != null)
+         FileList fileList = clipboardEvent.clipboardData.files;
+         if (fileList.length == 0)
+            return;
+         
+         File file = Js.cast(fileList.getAt(0));
+         String code = formatDesktopPath(file.path);
+         
+         for (int i = 1; i < fileList.length; i++)
          {
-            event.stopPropagation();
-            event.preventDefault();
-            editor_.insert(file.path.replace('\\', '/'));
+            file = Js.cast(fileList.getAt(i));
+            code = code + ",\n" + formatDesktopPath(file.path);
          }
+         
+         event.stopPropagation();
+         event.preventDefault();
+         editor_.insert(code);
       }
    }
 
