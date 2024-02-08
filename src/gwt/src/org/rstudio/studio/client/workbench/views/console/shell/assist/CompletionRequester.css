@@ -38,3 +38,9 @@
 .column {
    font-style: italic;
 }
+
+.meta {
+	float: right;
+    padding-right: 8px;
+    font-style: italic;
+}

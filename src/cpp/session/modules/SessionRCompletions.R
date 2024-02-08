@@ -1207,10 +1207,13 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("selectFuzzyMatches", function(completions, token)
 {
    types <- attr(completions, "types")
+   meta <- attr(completions, "meta")
    matches <- .rs.fuzzyMatches(completions, token)
    completions <- completions[matches]
    if (!is.null(types))
       attr(completions, "types") <- types[matches]
+   if (!is.null(meta))
+      attr(completions, "meta") <- meta[matches]
    completions
 })
 
@@ -1249,6 +1252,11 @@ assign(x = ".rs.acCompletionTypes",
    if (is.null(token))
       token <- ""
    
+   if (length(meta) == 0L)
+   {
+      meta <- attr(results, "meta", exact = TRUE)
+   }
+   
    # Ensure other 'vector' completions are of the same length as 'results'
    n        <- length(results)
    packages <- .rs.formCompletionVector(packages, "", n)
@@ -1274,6 +1282,7 @@ assign(x = ".rs.acCompletionTypes",
       quote    <- quote[order]
       type     <- type[order]
       meta     <- meta[order]
+      context  <- context[order]
       
       if (!is.null(suggestOnAccept))
          suggestOnAccept <- suggestOnAccept[order]
@@ -1777,7 +1786,9 @@ assign(x = ".rs.acCompletionTypes",
    else if (inherits(object, "data.frame") &&
             numCommas == 0)
    {
-      completions <- rownames(object)
+      info <- .row_names_info(object, type = 0L)
+      if (is.character(info))
+         completions <- info
    }
    
    # Just get the names of the object
@@ -1790,12 +1801,17 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(completions))
    {
+      type <- if (is.data.frame(object))
+         .rs.acCompletionTypes$COLUMN
+      else
+         .rs.acCompletionTypes$STRING
+      
       result <- .rs.makeCompletions(
          token = token,
          results = completions,
          packages = string,
          quote = !inherits(object, "data.table"),
-         type = .rs.acCompletionTypes$STRING
+         type = type
       )
    }
    
@@ -1824,12 +1840,17 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(completions))
    {
+      type <- if (is.data.frame(object))
+         .rs.acCompletionTypes$COLUMN
+      else
+         .rs.acCompletionTypes$STRING
+      
       result <- .rs.makeCompletions(
          token = token,
          results = completions,
          packages = string,
          quote = TRUE,
-         type = .rs.acCompletionTypes$STRING,
+         type = type,
          overrideInsertParens = TRUE
       )
    }
@@ -2803,6 +2824,16 @@ assign(x = ".rs.acCompletionTypes",
    {
       for (i in seq_along(string))
       {
+         # Don't provide function completions if we just provided
+         # argument name completions
+         stopGeneratingCompletions <-
+            i > 1 &&
+            context[[i]] == .rs.acContextTypes$FUNCTION &&
+            context[[i - 1]] == .rs.acContextTypes$ARGUMENT
+         
+         if (stopGeneratingCompletions)
+            break
+         
          completions <- .rs.appendCompletions(
             completions,
             .rs.getRCompletions(token,
@@ -2815,9 +2846,6 @@ assign(x = ".rs.acCompletionTypes",
                                 documentId,
                                 envir)
          )
-         
-         if (context[[i]] == .rs.acContextTypes$ARGUMENT)
-            break
       }
    }
    
