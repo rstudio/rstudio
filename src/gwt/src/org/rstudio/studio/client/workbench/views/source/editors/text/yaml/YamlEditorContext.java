@@ -71,7 +71,7 @@ public class YamlEditorContext extends JavaScriptObject
       for (int i = 0, n = lines.length(); i < n; i++)
       {
          String prefix = filetype == FILETYPE_MARKDOWN ? "```" : "";
-         Pattern pattern = Pattern.create("^\\s*" + prefix + "\\{([^\\s}]+).*?\\}\\s*$", "");
+         Pattern pattern = Pattern.create("^\\s*" + prefix + "\\{([^\\s]+).*\\}\\s*$", "");
          Match match = pattern.match(lines.get(i), 0);
          if (match != null)
             lines.set(i, prefix + "{" + match.getGroup(1) + "}");
