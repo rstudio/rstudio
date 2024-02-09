@@ -224,7 +224,7 @@ protected:
       "Duration in millis before requests are converted to async - i.e. how fast will the server free up connections when it's busy")
       (kSessionHandleOfflineEnabled,
       value<bool>(&handleOfflineEnabled_)->default_value(true),
-      "Enables offline request handling. When the R session is busy, some requests are allowed to run")
+      "Enables offline request handling. When the R process is busy, some requests are allowed to run")
       (kSessionHandleOfflineTimeoutMs,
       value<int>(&handleOfflineTimeoutMs_)->default_value(200),
       "Duration in millis before requests that can be handled offline are processed by the offline handler thread.")
