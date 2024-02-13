@@ -353,9 +353,9 @@ export function parseFilter(filters: string): FileFilter[] {
     // Grab the extensions string within
     const exts = filter.substring(openIndex + 1, closeIndex).trim();
 
-    // Split when multiple etensions are provided.
+    // Split when multiple extensions are provided.
     // Intentionally allow multiple different kinds of delimiters here;
-    // for example, the following should be accepted.
+    // for example, the following should all be accepted.
     //
     //    Data Files (*.csv *.xls)
     //    Data Files (*.csv; *.xls)
