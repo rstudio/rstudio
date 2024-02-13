@@ -28,6 +28,10 @@
 
 # API functions --------------------------------------------------------------
 
+.rs.addApiFunction("listJobs", function() {
+   .Call("rs_listJobs", PACKAGE = "(embedding)")
+})
+
 .rs.addApiFunction("addJob", function(name, status = "", progressUnits = 0L,
       actions = NULL, running = FALSE, autoRemove = TRUE, group = "", show = TRUE,
       launcherJob = FALSE, tags = NULL) {
