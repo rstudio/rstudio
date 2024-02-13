@@ -1842,6 +1842,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       
       warning = function(cnd) {
          warnings[[length(warnings) + 1L]] <<- cnd
+         restart <- findRestart("muffleWarning")
+         if (isRestart(restart))
+            invokeRestart(restart)
       }
       
    )

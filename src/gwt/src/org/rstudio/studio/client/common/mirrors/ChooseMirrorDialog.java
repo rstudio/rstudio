@@ -126,15 +126,16 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                   {
                      progressIndicator_.onCompleted();
 
-                     if (result.valid)
+                     if (result.isValid())
                      {
                         onValidated.execute(true);
                      }
                      else
                      {
                         String message = constants_.progressIndicatorError();
-                        if (!StringUtil.isNullOrEmpty(result.error))
-                           message = message + "\n" + result.error;
+                        String errorMessage = result.getErrorMessage();
+                        if (!StringUtil.isNullOrEmpty(errorMessage))
+                           message = message + "\n\n" + errorMessage;
 
                         progressIndicator_.onError(message);
                         onValidated.execute(false);

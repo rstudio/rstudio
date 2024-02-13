@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.repos;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.FormLabel;
@@ -66,7 +67,9 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       cranRepoUrl_ = cranRepoUrl;
       cranIsCustom_ = cranIsCustom;
 
-      progressIndicator_ = addProgressIndicator(false);
+      DialogOptions options = new DialogOptions();
+      options.width = "600px";
+      progressIndicator_ = addProgressIndicator(false, true, options);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
@@ -143,19 +146,21 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 
          mirrorOperations_.validateCranRepo(input.getURL(), new ServerRequestCallback<RepoValidationResult>()
          {
+            @Override
             public void onResponseReceived(RepoValidationResult result)
             {
                progressIndicator_.onCompleted();
 
-               if (result.valid)
+               if (result.isValid())
                {
                   onValidated.execute(true);
                }
                else
                {
                   String message = constants_.onResponseReceived();
-                  if (!StringUtil.isNullOrEmpty(result.error))
-                     message = message + "\n" + message;
+                  String errorMessage = result.getErrorMessage();
+                  if (!StringUtil.isNullOrEmpty(errorMessage))
+                     message = message + "\n\n" + errorMessage;
                   
                   progressIndicator_.onError(message);
                   onValidated.execute(false);

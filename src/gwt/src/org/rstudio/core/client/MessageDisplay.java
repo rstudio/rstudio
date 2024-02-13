@@ -355,8 +355,22 @@ public abstract class MessageDisplay
 
    public void showErrorMessage(String caption, String message)
    {
-      if (message.isEmpty()) { return; }
-      createDialog(MSG_ERROR, caption, message).showModal();
+      if (message.isEmpty())
+      {
+         DialogBuilder builder = createDialog(MSG_ERROR, caption, message);
+         builder.showModal();
+      }
+   }
+   
+   public void showErrorMessage(String caption,
+                                String message,
+                                DialogOptions options)
+   {
+      if (!message.isEmpty())
+      {
+         DialogBuilder builder = createDialog(MSG_ERROR, caption, message, options);
+         builder.showModal();
+      }
    }
 
    public void showErrorMessage(String caption,

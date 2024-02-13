@@ -14,11 +14,14 @@
  */
 package org.rstudio.studio.client.common.mirrors.model;
 
-import jsinterop.annotations.JsType;
+import com.google.gwt.core.client.JavaScriptObject;
 
-@JsType(isNative = true)
-public class RepoValidationResult
+public class RepoValidationResult extends JavaScriptObject
 {
-   public boolean valid;
-   public String error;
+   protected RepoValidationResult()
+   {
+   }
+   
+   public final native boolean isValid() /*-{ return this["valid"]; }-*/;
+   public final native String getErrorMessage() /*-{ return this["error"] || ""; }-*/;
 }
