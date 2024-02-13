@@ -48,7 +48,7 @@ import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import {
-  filterFromQFileDialogFilter,
+  parseFilter,
   findRepoRoot,
   getAppPath,
   handleLocaleCookies,
@@ -165,7 +165,7 @@ export class GwtCallback extends EventEmitter {
         }
 
         if (filter) {
-          openDialogOptions.filters = filterFromQFileDialogFilter(filter);
+          openDialogOptions.filters = parseFilter(filter);
         }
 
         let focusedWindow = BrowserWindow.getFocusedWindow();

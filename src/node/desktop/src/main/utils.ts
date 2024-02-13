@@ -325,37 +325,60 @@ export function resolveAliasedPath(path: string): string {
   return resolved.getAbsolutePath();
 }
 
-export function filterFromQFileDialogFilter(qtFilters: string): FileFilter[] {
-  // Qt filters are specified in this format:
-  //   "Images (*.png *.xpm *.jpg);;Text files (*.txt);;XML files (*.xml)"
+export function parseFilter(filters: string): FileFilter[] {
 
+  // This function receives a variety of filter types, including the old-fashioned
+  // Qt filter (as used with older releases of RStudio) which separates disparate
+  // filters with the ';;' delimiter. We intentionally try to be permissive
+  // when parsing the filter entries.
   const result: FileFilter[] = [];
 
-  const filters = qtFilters.split(';;');
-  for (const filter of filters) {
-    // get the name portion
-    const extopen = filter.indexOf(' (*.');
-    if (extopen === -1) {
-      logger().logDebug(`Skipping malformed filter: '${filter}'`);
+  for (const filter of filters.split(';;')) {
+
+    // Find the opening parenthesis
+    const openIndex = filter.indexOf('(', 0);
+    if (openIndex === -1) {
       continue;
     }
-    const name = filter.substring(0, extopen);
 
-    // remove the name and opening ' (*.'
-    let extensions = filter.substring(extopen + 4);
+    // Consume the name
+    const name = filter.substring(0, openIndex).trim();
 
-    // remove the trailing ')'
-    const extclose = extensions.lastIndexOf(')');
-    if (extclose === -1) {
-      logger().logDebug(`Skipping malformed filter: '${filter}`);
+    // Find the closing parenthesis
+    const closeIndex = filter.indexOf(')', openIndex + 1);
+    if (closeIndex === -1) {
       continue;
     }
-    extensions = extensions.substring(0, extclose);
 
-    // capture the extensions minus each ' *.'
-    const exts: string[] = extensions.split(' *.');
-    result.push({ name: name, extensions: exts });
+    // Grab the extensions string within
+    const exts = filter.substring(openIndex + 1, closeIndex).trim();
+
+    // Split when multiple extensions are provided.
+    // Intentionally allow multiple different kinds of delimiters here;
+    // for example, the following should all be accepted.
+    //
+    //    Data Files (*.csv *.xls)
+    //    Data Files (*.csv; *.xls)
+    //    Data Files (*.csv | *.xls)
+    //
+    const extensions = exts.trim().split(/[\s;,|]+/g).map((value) => {
+      if (value.startsWith('*.')) {
+        return value.substring(2);
+      } else if (value.startsWith('.')) {
+        return value.substring(1);
+      } else {
+        return value;
+      }
+    });
+
+    // Add our result
+    result.push({
+      name: name,
+      extensions: extensions
+    });
+
   }
+
   return result;
 }
 
