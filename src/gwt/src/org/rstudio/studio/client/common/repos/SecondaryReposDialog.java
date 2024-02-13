@@ -16,7 +16,6 @@ package org.rstudio.studio.client.common.repos;
 
 import java.util.ArrayList;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -31,11 +30,14 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.common.mirrors.model.RepoValidationResult;
 import org.rstudio.studio.client.common.repos.model.SecondaryReposResult;
 import org.rstudio.studio.client.common.repos.model.SecondaryReposServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
@@ -48,9 +50,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 {
@@ -141,21 +141,24 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       {
          progressIndicator_.onProgress(constants_.validateAsyncProgress());
 
-         mirrorOperations_.validateCranRepo(new ServerRequestCallback<Boolean>()
+         mirrorOperations_.validateCranRepo(input.getURL(), new ServerRequestCallback<RepoValidationResult>()
          {
-            public void onResponseReceived(Boolean validated)
+            public void onResponseReceived(RepoValidationResult result)
             {
                progressIndicator_.onCompleted();
 
-               if (!validated)
+               if (result.valid)
                {
-                  progressIndicator_.onError(
-                        constants_.onResponseReceived());
-                  onValidated.execute(false);
+                  onValidated.execute(true);
                }
                else
                {
-                  onValidated.execute(true);
+                  String message = constants_.onResponseReceived();
+                  if (!StringUtil.isNullOrEmpty(result.error))
+                     message = message + "\n" + message;
+                  
+                  progressIndicator_.onError(message);
+                  onValidated.execute(false);
                }
             }
 
@@ -169,7 +172,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 
                onValidated.execute(false);
             }
-         }, input.getURL());
+         });
       }
       else
       {

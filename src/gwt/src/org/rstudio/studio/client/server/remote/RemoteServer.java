@@ -69,6 +69,7 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.RepoValidationResult;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
@@ -6401,8 +6402,8 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void validateCranRepo(ServerRequestCallback<Boolean> callback,
-                                String cranRepoUrl)
+   public void validateCranRepo(String cranRepoUrl,
+                                ServerRequestCallback<RepoValidationResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(cranRepoUrl));
@@ -6411,7 +6412,7 @@ public class RemoteServer implements Server
                   VALIDATE_CRAN_REPO,
                   params,
                   true,
-                  callback);
+                  requestCallback);
    }
 
    @Override

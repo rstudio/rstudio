@@ -1821,19 +1821,49 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 })
 
 .rs.addJsonRpcHandler("validate_cran_repo", function(url) {
+   
+   url <- .rs.completeUrl(.rs.appendSlashIfNeeded(url), "src/contrib/PACKAGES.gz")
    packagesFile <- tempfile(fileext = ".gz")
    
-   tryCatch({
-      download.file(
-         .rs.completeUrl(.rs.appendSlashIfNeeded(url), "src/contrib/PACKAGES.gz"),
-         packagesFile,
-         quiet = TRUE
-      )
-
-      .rs.scalar(TRUE)
-   }, error = function(e) {
-      .rs.scalar(FALSE)
-   })
+   # ensure warnings are not suppressed in this scope
+   op <- options(warn = 1L)
+   on.exit(options(op), add = TRUE)
+   
+   # execute download.file(), but capture warnings and errors
+   warnings <- list()
+   error <- NULL
+   
+   withCallingHandlers(
+      
+      tryCatch(
+         download.file(url, packagesFile, quiet = TRUE),
+         error = function(cnd) error <<- cnd
+      ),
+      
+      warning = function(cnd) {
+         warnings[[length(warnings) + 1L]] <<- cnd
+      }
+      
+   )
+      
+   
+   # build a message for display to client if an error occurred
+   message <- ""
+   if (length(error))
+      message <- paste("Error:", conditionMessage(error))
+   
+   if (length(warnings)) {
+      msgs <- vapply(warnings, conditionMessage, FUN.VALUE = character(1))
+      message <- paste(message, paste("Warning:", msgs, collapse = "\n"), sep = "\n")
+   }
+   
+   result <- list(
+      valid = file.exists(packagesFile) && is.null(error),
+      error = message
+   )
+   
+   .rs.scalarListFromList(result)
+   
 })
 
 .rs.addJsonRpcHandler("is_package_installed", function(package, version)

@@ -16,7 +16,6 @@ package org.rstudio.studio.client.common.mirrors;
 
 import java.util.ArrayList;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FormLabel;
@@ -29,10 +28,13 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
+import org.rstudio.studio.client.common.mirrors.model.RepoValidationResult;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
@@ -44,7 +46,6 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
 {
@@ -118,35 +119,39 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
          progressIndicator_.onProgress(constants_.progressIndicatorMessage());
          
          mirrorOperations_.validateCranRepo(
-            new ServerRequestCallback<Boolean>()
-            {
-               public void onResponseReceived(Boolean validated)
+               input.getURL(),
+               new ServerRequestCallback<RepoValidationResult>()
                {
-                  progressIndicator_.onCompleted();
-                  
-                  if (!validated)
+                  public void onResponseReceived(RepoValidationResult result)
                   {
-                     progressIndicator_.onError(constants_.progressIndicatorError());
+                     progressIndicator_.onCompleted();
+
+                     if (result.valid)
+                     {
+                        onValidated.execute(true);
+                     }
+                     else
+                     {
+                        String message = constants_.progressIndicatorError();
+                        if (!StringUtil.isNullOrEmpty(result.error))
+                           message = message + "\n" + result.error;
+
+                        progressIndicator_.onError(message);
+                        onValidated.execute(false);
+                     }
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     progressIndicator_.onCompleted();
+
+                     Debug.logError(error);
+                     progressIndicator_.onError(error.getMessage());
+
                      onValidated.execute(false);
                   }
-                  else
-                  {
-                     onValidated.execute(true);
-                  }
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  progressIndicator_.onCompleted();
-                  
-                  Debug.logError(error);
-                  progressIndicator_.onError(error.getMessage());
-   
-                  onValidated.execute(false);
-               }
-            },
-            input.getURL());
+               });
       }
       else
       {
