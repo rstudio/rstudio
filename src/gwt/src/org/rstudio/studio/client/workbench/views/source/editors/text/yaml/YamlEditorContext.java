@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
@@ -23,6 +25,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class YamlEditorContext extends JavaScriptObject
 {
@@ -62,18 +65,30 @@ public class YamlEditorContext extends JavaScriptObject
          filetype = FILETYPE_MARKDOWN;
       }
       
+      // Quarto's YAML autocompletion engine doesn't handle chunk headers
+      // with inline options, so remove those before creating context
+      JsArrayString lines = docDisplay.getLines();
+      for (int i = 0, n = lines.length(); i < n; i++)
+      {
+         String prefix = filetype == FILETYPE_MARKDOWN ? "```" : "";
+         Pattern pattern = Pattern.create("^\\s*" + prefix + "\\{([^\\s]+).*\\}\\s*$", "");
+         Match match = pattern.match(lines.get(i), 0);
+         if (match != null)
+            lines.set(i, prefix + "{" + match.getGroup(1) + "}");
+      }
+      String code = lines.join("\n");
+      
       return create(
-        context.getPath(),
-        filetype,
-        docDisplay.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded,
-        context.getQuartoFormats(),
-        context.getQuartoProjectFormats(),
-        context.getQuartoEngine(),
-        docDisplay.getCurrentLineUpToCursor(),
-        docDisplay.getCode(),
-        docDisplay.getCursorPosition(),
-        explicit
-      );
+            context.getPath(),
+            filetype,
+            docDisplay.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded,
+            context.getQuartoFormats(),
+            context.getQuartoProjectFormats(),
+            context.getQuartoEngine(),
+            docDisplay.getCurrentLineUpToCursor(),
+            code,
+            docDisplay.getCursorPosition(),
+            explicit);
    }
    
    private static native YamlEditorContext create(
