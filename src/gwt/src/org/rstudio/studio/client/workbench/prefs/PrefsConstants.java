@@ -2292,11 +2292,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String nameLabel();
 
     /**
-     * Translated "Url:".
+     * Translated "URL:".
      *
-     * @return translated "Url:"
+     * @return translated "URL:"
      */
-    @DefaultMessage("Url:")
+    @DefaultMessage("URL:")
     @Key("urlLabel")
     String urlLabel();
 
