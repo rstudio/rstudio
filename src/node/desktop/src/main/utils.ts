@@ -361,7 +361,7 @@ export function parseFilter(filters: string): FileFilter[] {
     //    Data Files (*.csv; *.xls)
     //    Data Files (*.csv | *.xls)
     //
-    const extensions = exts.trim().split(/[\s;|]+/g).map((value) => {
+    const extensions = exts.trim().split(/[\s;,|]+/g).map((value) => {
       if (value.startsWith('*.')) {
         return value.substring(2);
       } else if (value.startsWith('.')) {

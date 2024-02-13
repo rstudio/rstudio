@@ -48,7 +48,7 @@ import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import {
-  parseFilter as parseFilter,
+  parseFilter,
   findRepoRoot,
   getAppPath,
   handleLocaleCookies,

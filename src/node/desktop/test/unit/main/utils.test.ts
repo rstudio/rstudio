@@ -116,24 +116,32 @@ describe('Utils', () => {
     assert.notEqual(resultStr.charAt(0), '~');
     assert.isAbove(resultStr.lastIndexOf('/foo/bar'), -1);
   });
-  it('filterFromQFileDialogFilter converts file filter with one extension', () => {
+  it('parseFilter converts file filter with one extension', () => {
     const input = 'R Projects (*.Rproj)';
     const expected: FileFilter[] = [{ name: 'R Projects', extensions: ['Rproj'] }];
     const result = Utils.parseFilter(input);
     assert.deepEqual(expected, result);
   });
-  it('filterFromQFileDialogFilter converts file filter with multiple extensions', () => {
+  it('parseFilter converts file filter with multiple extensions', () => {
     const input = 'Theme Files (*.tmTheme *.rstheme)';
     const expected: FileFilter[] = [{ name: 'Theme Files', extensions: ['tmTheme', 'rstheme'] }];
     const result = Utils.parseFilter(input);
     assert.deepEqual(expected, result);
   });
-  it('filterFromQFileDialogFilter converts file filter with file types', () => {
+  it('parseFilter converts file filter with file types', () => {
     const input = 'Images (*.png *.xpm *.jpg);;Text files (*.txt);;XML files (*.xml)';
     const expected: FileFilter[] = [
       { name: 'Images', extensions: ['png', 'xpm', 'jpg'] },
       { name: 'Text files', extensions: ['txt'] },
       { name: 'XML files', extensions: ['xml'] },
+    ];
+    const result = Utils.parseFilter(input);
+    assert.deepEqual(expected, result);
+  });
+  it('parseFilter accepts a variety of delimiters between extensions', () => {
+    const input = 'Images (*.png; *.xpm, *.jpg *.tiff)';
+    const expected: FileFilter[] = [
+      { name: 'Images', extensions: ['png', 'xpm', 'jpg', 'tiff'] },
     ];
     const result = Utils.parseFilter(input);
     assert.deepEqual(expected, result);
