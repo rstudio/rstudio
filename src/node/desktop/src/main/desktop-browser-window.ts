@@ -529,6 +529,13 @@ export class DesktopBrowserWindow extends EventEmitter {
     }
   }
 
+  /*
+   * Close the window
+   */
+  close(): void {
+    this.window.close();
+  }
+
   /**
    *
    * @returns Path to preload script

@@ -57,6 +57,7 @@ import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -181,8 +182,19 @@ public class CompletionRequester
          }
          else
          {
-            if (StringUtil.isSubsequence(qname.name, tokenFuzzy, true) &&
-                filterStartsWithDot(qname.name, token))
+            String value;
+            if (qname.type == RCompletionType.ROXYGEN)
+            {
+               value = qname.name.replaceAll("\\s.*", "");
+            }
+            else
+            {
+               String displayMeta = StringUtil.truncate(qname.meta, META_DISPLAY_LIMIT_CHARACTERS, " <...>");
+               value = qname.name + displayMeta;
+            }
+            
+            if (StringUtil.isSubsequence(value, tokenFuzzy, true) &&
+                filterStartsWithDot(value, token))
                newCompletions.add(qname);
          }
       }
@@ -312,6 +324,13 @@ public class CompletionRequester
          {
             callback.onError(error);
          }
+         
+         private boolean isPriorityCompletion(int type)
+         {
+            return
+                  type == RCompletionType.ARGUMENT ||
+                  type == RCompletionType.COLUMN;
+         }
 
          @Override
          public void onResponseReceived(Completions response)
@@ -329,9 +348,10 @@ public class CompletionRequester
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
+            // Add higher-priority completions first
             for (int i = 0; i < comp.length(); i++)
             {
-               if (comp.get(i).endsWith(" = "))
+               if (isPriorityCompletion(type.get(i)))
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
@@ -367,10 +387,10 @@ public class CompletionRequester
                addScopedCompletions(token, newComp, "function");
             }
 
-            // Get other server completions
+            // Add lower-priority completions next
             for (int i = 0; i < comp.length(); i++)
             {
-               if (!comp.get(i).endsWith(" = "))
+               if (!isPriorityCompletion(type.get(i)))
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
@@ -923,26 +943,14 @@ public class CompletionRequester
       {
          String style = RES.styles().completion();
          if (type == RCompletionType.COLUMN) 
-         {
             style = style + " " + RES.styles().column();
-         }
 
          // Get the name for the completion
-         if (type == RCompletionType.ROXYGEN)
-         {
-            // remove the snippet part
-            SafeHtmlUtil.appendSpan(
-               sb,
-               style,
-               display.split("\n")[0].replaceFirst(" .*", ""));
-         }
-         else 
-         {
-            SafeHtmlUtil.appendSpan(
-               sb,
-               style,
-               display);
-         }
+         String displayName = (type == RCompletionType.ROXYGEN)
+               ? display.split("\n")[0].replaceFirst(" .*", "")
+               : display;
+         
+         SafeHtmlUtil.appendSpan(sb, style, displayName);
          
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
@@ -975,6 +983,19 @@ public class CompletionRequester
                   RES.styles().argument(),
                   source + "()");
          }
+         
+         // Append metadata for display if available
+         if (type != RCompletionType.ROXYGEN && !StringUtil.isNullOrEmpty(meta))
+         {
+            String displayMeta = StringUtil.truncate(meta, META_DISPLAY_LIMIT_CHARACTERS, " <...>");
+            SafeHtml openTag = SafeHtmlUtil.createOpenTag("span",
+                  "class", RES.styles().meta(),
+                  "title", StringUtil.truncate(meta, 256, " <...>"));
+            sb.append(openTag);
+            sb.appendEscaped(displayMeta);
+            sb.appendHtmlConstant("</span>");
+         }
+         
       }
 
       private ImageResource getIcon()
@@ -1106,6 +1127,8 @@ public class CompletionRequester
             RStudioGinjector.INSTANCE.getFileTypeRegistry();
    }
 
+   private static final int META_DISPLAY_LIMIT_CHARACTERS = 32;
+   
    private static final CompletionRequesterResources RES =
          CompletionRequesterResources.INSTANCE;
 

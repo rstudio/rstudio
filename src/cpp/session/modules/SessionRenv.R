@@ -136,6 +136,11 @@
    df
 })
 
+.rs.addFunction("renv.activeProjectPath", function()
+{
+   tryCatch(renv:::project(), error = function(e) NULL)
+})
+
 .rs.addFunction("renv.listPackages", function(project) {
    
    # get list of packages

@@ -37,12 +37,12 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
 
       var rules = {};
 
-      rules["#keyword"] = [
-         {
-            token: "constant.language.boolean",
-            regex: "\\b(?:true|false|TRUE|FALSE|True|False|yes|no)\\b"
-         }
-      ];
+      var makeKeywordRule = function(suffix) {
+        return {
+            token: ["constant.language.boolean", "text"],
+            regex: `\\b(true|false|TRUE|FALSE|True|False|yes|no)(\\s*)${suffix}`
+        }
+      }
 
       rules["#number"] = [
          {
@@ -134,9 +134,9 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
          {
             include: "#number"
          },
-         {
-            include: "#keyword"
-         },
+
+         makeKeywordRule("(?=$)"),
+
          {
             token: "paren.lparen.keyword.operator",
             regex: "\\[",
@@ -191,12 +191,12 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
          {
             include: "#number"
          },
-         {
-            include: "#keyword"
-         },
+
+         makeKeywordRule("(?=$|[,\\]])"),
+
          {
             token: "text",
-            regex: "[^,]+",
+            regex: "[^,\\]]+",
          }
       ];
 
@@ -230,9 +230,9 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
          {
             include: "#number"
          },
-         {
-            include: "#keyword"
-         },
+
+         makeKeywordRule("(?=$|[:,}])"),
+
          {
             token: "text",
             regex: "[^:,]+",

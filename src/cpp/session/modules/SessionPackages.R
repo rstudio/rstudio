@@ -580,20 +580,23 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addJsonRpcHandler("check_for_package_updates", function()
 {
-   # get updates writeable libraries and convert to a data frame
+   # by default, check for updates in all writable library paths
+   libPaths <- .rs.writeableLibraryPaths()
+   
+   # if this is an renv project, check only the project library path
+   if ("renv" %in% loadedNamespaces())
+   {
+      activeProjectPath <- .rs.renv.activeProjectPath()
+      if (!is.null(activeProjectPath))
+         libPaths <- .libPaths()[[1L]]
+   }
+   
+   # get updates writable libraries and convert to a data frame
    updates <- as.data.frame(
-      utils::old.packages(lib.loc = .rs.writeableLibraryPaths()),
+      utils::old.packages(lib.loc = libPaths),
       stringsAsFactors = FALSE
    )
    row.names(updates) <- NULL
-   
-   # see which ones are from CRAN and add a news column for them
-   # NOTE: defend against length-one repos with no name set
-   repos <- getOption("repos")
-   cranRep <- if ("CRAN" %in% names(repos))
-      repos["CRAN"]
-   else
-      c(CRAN = repos[[1]])
    
    data.frame(
       packageName = updates$Package,

@@ -302,6 +302,12 @@ SEXP rs_executeJobAction(SEXP sexpId, SEXP action)
    return R_NilValue;
 }
 
+SEXP rs_listJobs()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(jobsAsJson(), &protect);
+}
+
 Error getJobs(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
@@ -489,6 +495,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_stopScriptJob);
    RS_REGISTER_CALL_METHOD(rs_replayScriptJob);
    RS_REGISTER_CALL_METHOD(rs_executeJobAction);
+   RS_REGISTER_CALL_METHOD(rs_listJobs);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
             onSuspend, onResume));

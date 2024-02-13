@@ -1472,6 +1472,7 @@ public class RCompletionManager implements CompletionManager
       
       // Figure out whether we're looking at '(', '[', or '[[',
       // and place the token cursor on the first token preceding.
+      TokenCursor parenCursor = tokenCursor.cloneCursor();
       TokenCursor endOfDecl = tokenCursor.cloneCursor();
       int initialDataType = AutocompletionContext.TYPE_UNKNOWN;
       if (tokenCursor.currentValue() == "(")
@@ -1631,7 +1632,14 @@ public class RCompletionManager implements CompletionManager
                   endOfDecl.currentPosition())).trim();
       
       // And the first context
-      context.add(initialData, initialDataType, initialNumCommas);
+      Range initialRange = null;
+      if (parenCursor.fwdToMatchingToken())
+      {
+         initialRange = Range.fromPoints(
+               tokenCursor.currentPosition(),
+               parenCursor.currentPosition());
+      }
+      context.add(initialData, initialDataType, initialNumCommas, initialRange);
 
       // Get the rest of the parent contexts (function calls, subsetting)
       String assocData;

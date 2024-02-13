@@ -14,24 +14,18 @@
 #
 
 
-.rs.addFunction( "knitrChunkOptions", function()
+.rs.addFunction("knitrChunkOptions", function()
 {
-   # starting with v0.4.2 this is avavilable directly from knitr
-   if (.rs.getPackageVersion("knitr") >= "0.4.2")
-      return(knitr:::opts_chunk_attr)
-
-   # still try to return correct results for previous versions
-   knitrOptions <- knitr:::opts_chunk$get()
-   knitrOptions <- as.list(sapply(knitrOptions, class))
-   knitrOptions[knitrOptions == "NULL"] <- "character"
-   knitrOptions$results <- list("markup", "asis", "hide")
-   knitrOptions$fig.show <- list("asis", "hold", "animate")
-   knitrOptions$fig.keep <- list("high", "none", "all", "first", "last")
-   knitrOptions$fig.align <- list("left", "right", "center")
-   if (.rs.getPackageVersion("knitr") >= "0.4")
-      knitrOptions$dev <- as.list(names(knitr:::auto_exts))
+   if (!requireNamespace("knitr", quietly = TRUE))
+      return(list())
    
-   return (knitrOptions)
+   chunkOptions <- knitr:::opts_chunk_attr
+   
+   # paged.print is numeric, but it's normally used as logical
+   # https://github.com/rstudio/rstudio/issues/9895
+   chunkOptions$paged.print <- "logical"
+   
+   chunkOptions
 })
 
 .rs.addFunction( "sweaveChunkOptions", function()

@@ -102,7 +102,7 @@ Might generate an answer like:
 ```
 
 ::: {.callout-note title="Chat interfaces"}
-Copilot is must effective when used to generate code, so it is best to use purpose-built generative AI interfaces for chat, such as the [`{chattr}` R package](https://mlverse.github.io/chattr/) which is an R interface to local or remote LLMs (Large Language Models). `{chattr}` includes a RStudio add-in as well as a built in app for interacting with LLMs via RStudio's Viewer Pane.
+Copilot is most effective when used to generate code, so it is best to use purpose-built generative AI interfaces for chat, such as the [`{chattr}` R package](https://mlverse.github.io/chattr/) which is an R interface to local or remote LLMs (Large Language Models). `{chattr}` includes a RStudio add-in as well as a built in app for interacting with LLMs via RStudio's Viewer Pane.
 :::
 
 ### Comments
