@@ -119,13 +119,13 @@ describe('Utils', () => {
   it('filterFromQFileDialogFilter converts file filter with one extension', () => {
     const input = 'R Projects (*.Rproj)';
     const expected: FileFilter[] = [{ name: 'R Projects', extensions: ['Rproj'] }];
-    const result = Utils.filterFromQFileDialogFilter(input);
+    const result = Utils.parseFilter(input);
     assert.deepEqual(expected, result);
   });
   it('filterFromQFileDialogFilter converts file filter with multiple extensions', () => {
     const input = 'Theme Files (*.tmTheme *.rstheme)';
     const expected: FileFilter[] = [{ name: 'Theme Files', extensions: ['tmTheme', 'rstheme'] }];
-    const result = Utils.filterFromQFileDialogFilter(input);
+    const result = Utils.parseFilter(input);
     assert.deepEqual(expected, result);
   });
   it('filterFromQFileDialogFilter converts file filter with file types', () => {
@@ -135,7 +135,7 @@ describe('Utils', () => {
       { name: 'Text files', extensions: ['txt'] },
       { name: 'XML files', extensions: ['xml'] },
     ];
-    const result = Utils.filterFromQFileDialogFilter(input);
+    const result = Utils.parseFilter(input);
     assert.deepEqual(expected, result);
   });
   it('getNumericEnvVar returns number for numeric values', () => {
