@@ -9,13 +9,12 @@ pipeline {
         artifactNumToKeepStr: '',
         daysToKeepStr: '',
         numToKeepStr: '100'))
-    rateLimitBuilds(throttle: [count: 1, durationName: 'minute', userBoost: true])
+    rateLimitBuilds(throttle: [count: 1, durationName: 'day', userBoost: true])
   }
 
   triggers {
-    // The first Sunday of every month at 2-7am UTC or 12-5am EST
-    // cron '0 0 2-7 * 0'
-    cron '1 23 * * *'
+    // The first Sunday of every month at 6am UTC or 1am EST
+    cron '0 6 1-7 * 0'
   }
   
   parameters {
@@ -33,7 +32,7 @@ pipeline {
 
       steps {
         build wait: false,
-              job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/builders/daily-build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
+              job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/Builders/daily-build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
               parameters: [
                 booleanParam(name: "DAILY", value: true),
                 booleanParam(name: "PUBLISH", value: params.PUBLISH),

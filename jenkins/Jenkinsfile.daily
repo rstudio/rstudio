@@ -12,8 +12,8 @@ pipeline {
   }
 
   triggers {
-    // 5-7am UTC or 12-2am EST
-    cron '0 23 * * *'
+    // 6am UTC or 1am EST
+    cron '0 6 * * *'
   }
   
   parameters {

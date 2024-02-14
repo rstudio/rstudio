@@ -9,7 +9,7 @@ pipeline {
         artifactNumToKeepStr: '',
         daysToKeepStr: '',
         numToKeepStr: '100'))
-    rateLimitBuilds(throttle: [count: 1, durationName: 'minute', userBoost: true])
+    rateLimitBuilds(throttle: [count: 1, durationName: 'hour', userBoost: true])
   }
   
   parameters {
@@ -29,30 +29,6 @@ pipeline {
                 booleanParam(name: "PUBLISH", value: params.PUBLISH),
                 booleanParam(name: "FORCE_BUILD_BINARIES", value: false),
                 booleanParam(name: "FORCE_BUILD_DOCKER", value: false),
-                string(name: "OS_FILTER", value: params.OS_FILTER),
-                string(name: "ARCH_FILTER", value: params.ARCH_FILTER),
-                string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
-              ]
-      }
-    }
-
-    // Daily timer triggers daily builds
-    // Manual build with DAILY=true triggers daily builds
-    stage('Trigger Daily Build') {
-      when {
-        anyOf {
-          triggeredBy 'TimerTrigger'
-          expression { return params.DAILY == true }
-        }
-      }
-      steps {
-        build wait: false,
-              job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
-              parameters: [
-                booleanParam(name: "DAILY", value: true),
-                booleanParam(name: "PUBLISH", value: params.PUBLISH),
-                booleanParam(name: "FORCE_BUILD_BINARIES", value: params.FORCE_BUILD_BINARIES),
-                booleanParam(name: "FORCE_BUILD_DOCKER", value: params.FORCE_BUILD_DOCKER),
                 string(name: "OS_FILTER", value: params.OS_FILTER),
                 string(name: "ARCH_FILTER", value: params.ARCH_FILTER),
                 string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
