@@ -76,6 +76,14 @@ FilePath s_userInstalledPath;
 FilePath s_quartoPath;
 std::string s_quartoVersion;
 
+#ifndef WIN32
+const std::string quarto = "quarto";
+const std::string qvm = "qvm";
+#else
+const std::string quarto = "quarto.exe";
+const std::string qvm = "qvm.exe";
+#endif
+
 /*
 bool haveRequiredQuartoVersion(const std::string& version)
 {
@@ -139,11 +147,11 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
    bool env = false;
    FilePath quartoPath;
 
-   // first check RSTUDIO_QUARTO environment variable
+      // first check RSTUDIO_QUARTO environment variable
    std::string rstudioQuarto = core::system::getenv(kRStudioQuarto);
    if (!rstudioQuarto.empty())
    {
-#ifdef WIN32
+      #ifdef WIN32
       if (!boost::algorithm::ends_with(rstudioQuarto, ".cmd"))
          rstudioQuarto = rstudioQuarto + ".cmd";
 #endif
@@ -167,15 +175,23 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
       if (qvmPath.exists())
       {
          core::system::ProcessResult result;
+         core::system::ProcessOptions options;
+         options.workingDir = qvmPath.getParent();
          Error error = core::system::runProgram(
-                  "qvm",
+                  qvm,
                   { "path", "active" },
-                  core::system::ProcessOptions(),
+                  options,
                   &result);
          if (error)
             LOG_ERROR(error);
-         
-         quartoPath = FilePath(core::string_utils::trimWhitespace(result.stdOut));
+         else if (result.exitStatus == EXIT_SUCCESS)
+         {
+            FilePath quartoFolder = FilePath(core::string_utils::trimWhitespace(result.stdOut));
+            if (quartoFolder.exists())
+            {
+               quartoPath = quartoFolder.completeChildPath(quarto);
+            }
+         }
       }
    }
 
@@ -255,15 +271,9 @@ void detectQuartoInstallation()
    }
 
    // embedded version of quarto (subject to required version)
-#ifndef WIN32
-   std::string target = "quarto";
-#else
-   std::string target = "quarto.exe";
-#endif
-
    FilePath embeddedQuartoPath = session::options().quartoPath()
       .completeChildPath("bin")
-      .completeChildPath(target);
+      .completeChildPath(quarto);
 
    if (embeddedQuartoPath.isEmpty())
       return;
