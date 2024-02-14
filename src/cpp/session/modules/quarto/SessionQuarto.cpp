@@ -147,11 +147,11 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
    bool env = false;
    FilePath quartoPath;
 
-      // first check RSTUDIO_QUARTO environment variable
+   // first check RSTUDIO_QUARTO environment variable
    std::string rstudioQuarto = core::system::getenv(kRStudioQuarto);
    if (!rstudioQuarto.empty())
    {
-      #ifdef WIN32
+#ifdef WIN32
       if (!boost::algorithm::ends_with(rstudioQuarto, ".cmd"))
          rstudioQuarto = rstudioQuarto + ".cmd";
 #endif
