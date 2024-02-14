@@ -9,13 +9,13 @@ pipeline {
         artifactNumToKeepStr: '',
         daysToKeepStr: '',
         numToKeepStr: '100'))
-    rateLimitBuilds(throttle: [count: 1, durationName: 'day', userBoost: true])
+    rateLimitBuilds(throttle: [count: 1, durationName: 'minute', userBoost: true])
   }
 
   triggers {
     // The first Sunday of every month at 2-7am UTC or 12-5am EST
     // cron '0 0 2-7 * 0'
-    cron 'H 22 31 * *'
+    cron '1 23 * * *'
   }
   
   parameters {
