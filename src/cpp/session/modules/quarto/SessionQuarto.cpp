@@ -168,14 +168,27 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
       {
          core::system::ProcessResult result;
          Error error = core::system::runProgram(
-                  "qvm",
+                  qvmPath.getAbsolutePath(),
                   { "path", "active" },
                   core::system::ProcessOptions(),
                   &result);
          if (error)
             LOG_ERROR(error);
-         
-         quartoPath = FilePath(core::string_utils::trimWhitespace(result.stdOut));
+         else if (result.exitStatus == EXIT_SUCCESS)
+         {
+            FilePath quartoFolder = FilePath(core::string_utils::trimWhitespace(result.stdOut));
+            if (quartoFolder.exists())
+            {
+#ifndef _WIN32
+               const std::string quarto = "quarto";
+#else
+               const std::string quarto = "quarto.cmd";
+#endif
+               FilePath qvmLink = quartoFolder.completeChildPath(quarto);
+               if (qvmLink.exists())
+                  quartoPath = FilePath(qvmLink.getCanonicalPath());
+            }
+         }
       }
    }
 
