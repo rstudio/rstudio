@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 
 import com.google.gwt.animation.client.Animation;
@@ -450,16 +452,23 @@ public abstract class ModalDialogBase extends DialogBox
 
    protected ProgressIndicator addProgressIndicator()
    {
-      return addProgressIndicator(true, true);
+      return addProgressIndicator(true, true, null);
    }
 
    protected ProgressIndicator addProgressIndicator(final boolean closeOnCompleted)
    {
-      return addProgressIndicator(closeOnCompleted, true);
+      return addProgressIndicator(closeOnCompleted, true, null);
+   }
+ 
+   protected ProgressIndicator addProgressIndicator(final boolean closeOnCompleted,
+                                                    final boolean disableCancelOnProgress)
+   {
+      return addProgressIndicator(closeOnCompleted, disableCancelOnProgress, null);
    }
    
    protected ProgressIndicator addProgressIndicator(final boolean closeOnCompleted,
-                                                    final boolean disableCancelOnProgress)
+                                                    final boolean disableCancelOnProgress,
+                                                    final DialogOptions errorDialogOptions)
    {
       final SlideLabel label = new SlideLabel(true);
       Element labelEl = label.getElement();
@@ -511,8 +520,16 @@ public abstract class ModalDialogBase extends DialogBox
          public void onError(String message)
          {
             clearProgress();
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  constants_.errorCaption(), message);
+            
+            GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
+            if (errorDialogOptions == null)
+            {
+               display.showErrorMessage(constants_.errorCaption(), message);
+            }
+            else
+            {
+               display.showErrorMessage(constants_.errorCaption(), message, errorDialogOptions);
+            }
          }
 
          @Override
