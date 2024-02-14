@@ -76,14 +76,6 @@ FilePath s_userInstalledPath;
 FilePath s_quartoPath;
 std::string s_quartoVersion;
 
-#ifndef WIN32
-const std::string quarto = "quarto";
-const std::string qvm = "qvm";
-#else
-const std::string quarto = "quarto.exe";
-const std::string qvm = "qvm.exe";
-#endif
-
 /*
 bool haveRequiredQuartoVersion(const std::string& version)
 {
@@ -178,7 +170,7 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
          core::system::ProcessOptions options;
          options.workingDir = qvmPath.getParent();
          Error error = core::system::runProgram(
-                  qvm,
+                  "qvm",
                   { "path", "active" },
                   options,
                   &result);
@@ -189,7 +181,11 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
             FilePath quartoFolder = FilePath(core::string_utils::trimWhitespace(result.stdOut));
             if (quartoFolder.exists())
             {
-               quartoPath = quartoFolder.completeChildPath(quarto);
+#ifndef _WIN32
+               quartoPath = quartoFolder.completeChildPath("quarto");
+#else
+               quartoPath = FilePath(quartoFolder.completeChildPath("quarto.cmd").getCanonicalPath());
+#endif
             }
          }
       }
@@ -271,9 +267,15 @@ void detectQuartoInstallation()
    }
 
    // embedded version of quarto (subject to required version)
+#ifndef WIN32
+   std::string target = "quarto";
+#else
+   std::string target = "quarto.exe";
+#endif
+
    FilePath embeddedQuartoPath = session::options().quartoPath()
       .completeChildPath("bin")
-      .completeChildPath(quarto);
+      .completeChildPath(target);
 
    if (embeddedQuartoPath.isEmpty())
       return;
