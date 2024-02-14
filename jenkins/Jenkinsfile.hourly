@@ -9,7 +9,7 @@ pipeline {
         artifactNumToKeepStr: '',
         daysToKeepStr: '',
         numToKeepStr: '100'))
-    rateLimitBuilds(throttle: [count: 1, durationName: 'hour', userBoost: true])
+    rateLimitBuilds(throttle: [count: 1, durationName: 'minute', userBoost: true])
   }
   
   parameters {
