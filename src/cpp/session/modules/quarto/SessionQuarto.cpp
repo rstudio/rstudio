@@ -186,7 +186,9 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
 #else
                const std::string quarto = "quarto.cmd";
 #endif
-               quartoPath = FilePath(quartoFolder.completeChildPath(quarto).getCanonicalPath());
+               FilePath qvmLink = quartoFolder.completeChildPath(quarto);
+               if (qvmLink.exists())
+                  quartoPath = FilePath(qvmLink.getCanonicalPath());
             }
          }
       }
