@@ -167,12 +167,10 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
       if (qvmPath.exists())
       {
          core::system::ProcessResult result;
-         core::system::ProcessOptions options;
-         options.workingDir = qvmPath.getParent();
          Error error = core::system::runProgram(
-                  "qvm",
+                  qvmPath.getAbsolutePath(),
                   { "path", "active" },
-                  options,
+                  core::system::ProcessOptions(),
                   &result);
          if (error)
             LOG_ERROR(error);
