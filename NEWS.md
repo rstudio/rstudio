@@ -16,7 +16,8 @@
 - Show grey background instead of solid-white during Desktop startup (#13768)
 - The 'restartSession()' API method gains the 'clean' argument. (#2841)
 - 'dot' chunks in R Markdown documents are now executable (#14063)
-- (rstudioapi) Fixed an issue where selectFile() did not parse filter strings in a cross-platform way. (#13994)
+- (rstudioapi) Fixed an issue where selectFile() did not parse filter strings in a cross-platform way (#13994)
+- Show Quarto version information in the About dialog (#14263)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
