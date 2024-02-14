@@ -18,6 +18,7 @@
 - 'dot' chunks in R Markdown documents are now executable (#14063)
 - (rstudioapi) Fixed an issue where selectFile() did not parse filter strings in a cross-platform way (#13994)
 - Show Quarto version information in the About dialog (#14263)
+- RStudio now reports repository validation errors (if any) when adding secondary repositories in the Global Options -> Packages pane. (#13842)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
