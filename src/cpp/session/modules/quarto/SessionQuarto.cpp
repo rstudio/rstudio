@@ -182,10 +182,11 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
             if (quartoFolder.exists())
             {
 #ifndef _WIN32
-               quartoPath = quartoFolder.completeChildPath("quarto");
+               const std::string quarto = "quarto";
 #else
-               quartoPath = FilePath(quartoFolder.completeChildPath("quarto.cmd").getCanonicalPath());
+               const std::string quarto = "quarto.cmd";
 #endif
+               quartoPath = FilePath(quartoFolder.completeChildPath(quarto).getCanonicalPath());
             }
          }
       }
