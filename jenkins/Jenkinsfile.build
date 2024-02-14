@@ -160,6 +160,7 @@ pipeline {
       when {
         anyOf {
           expression { return params.FORCE_BUILD_BINARIES }
+          expression { return params.DAILY }
           changeset comparator: 'REGEXP', pattern: '(?:(?!docs/).+|(?!jenkins/Jenkinsfile\\.build))'
         }
       }
