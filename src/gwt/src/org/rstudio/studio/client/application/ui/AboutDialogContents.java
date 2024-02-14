@@ -61,7 +61,7 @@ public class AboutDialogContents extends Composite
       uiBinder.createAndBindUi(this);
    }
 
-   public AboutDialogContents(ProductInfo info, ProductEditionInfo editionInfo)
+   public AboutDialogContents(ProductInfo info, ProductEditionInfo editionInfo, String quartoDetails)
    {
       initWidget(uiBinder.createAndBindUi(this));
       versionMajorLabel.setText(info.version_major + "." + info.version_minor + "." + info.version_patch);
@@ -72,8 +72,7 @@ public class AboutDialogContents extends Composite
       gplLinkLabel.getElement().setId("gplLinkLabel");
       Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), Id.of(gplLinkLabel.getElement()));
 
-      userAgentLabel.setText(
-            Window.Navigator.getUserAgent());
+      userAgentLabel.setText(Window.Navigator.getUserAgent() + quartoDetails);
       buildLabel.setText(
            "\"" + info.release_name + "\" " + info.build_type + " (" + StringUtil.substring(info.commit, 0, 8) + ", " +
            info.date + constants_.buildLabelForText() + info.os);
