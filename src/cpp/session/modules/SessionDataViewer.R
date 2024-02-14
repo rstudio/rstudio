@@ -276,16 +276,24 @@
                                              sliceEnd = 1)
 {
    totalCols <- ncol(x)
-   
    if (totalCols == 0)
       return(NULL)
    
    if (sliceEnd > totalCols || sliceEnd < 1)
       sliceEnd <- totalCols
+   
    if (sliceStart > totalCols || sliceStart < 1 || sliceStart > sliceEnd)
       sliceStart <- 1
    
-   colSlice <- x[sliceStart:sliceEnd]
+   indices <- sliceStart:sliceEnd
+   colSlice <- x[indices]
+   
+   # Make sure we preserve variable.labels if set
+   # https://github.com/rstudio/rstudio/issues/14265
+   colLabels <- attr(x, "variable.labels", exact = TRUE)
+   if (!is.null(colLabels))
+      attr(colSlice, "variable.labels") <- colLabels[indices]
+   
    .rs.describeCols(colSlice, -1, -1, 64, totalCols)
 })
 
