@@ -46,6 +46,7 @@
 - Fixed regression that caused extra whitespace at bottom of some popups (#14223)
 - Fix type dropdowns not working in dataset import when user-interface is in French (#14224)
 - Fixed an issue where RStudio failed to retrieve help for certain S3 methods (#14232)
+- Fixed a regression where the Data Viewer did not display 'variable.labels' for columns (#14265)
 
 #### Posit Workbench
 -
