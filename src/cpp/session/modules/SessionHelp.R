@@ -777,15 +777,20 @@ options(help_type = "html")
    if (length(helpfiles) <= 0)
       return()
    
-   # support devtools help
-   if (inherits(helpfiles, "dev_topic") && "pkgload" %in% loadedNamespaces())
+   # handle devtools help topics specially
+   isDevTopic <- inherits(helpfiles, "dev_topic") && "pkgload" %in% loadedNamespaces()
+   if (isDevTopic)
    {
-      .rs.tryCatch({
-         pkgname <- helpfiles$pkg
+      # devtools help
+      status <- .rs.tryCatch({
+         package <- helpfiles$pkg
          docPath <- file.path(tempdir(), sprintf(".R/doc/html/%s.html", helpfiles$topic))
          dir.create(dirname(docPath), recursive = TRUE, showWarnings = FALSE)
          pkgload:::topic_write_html(helpfiles, path = docPath)
       })
+      
+      if (inherits(status, "error"))
+         return()
       
       html <- paste(readLines(docPath, warn = FALSE), collapse = "\n")
    }
@@ -795,38 +800,14 @@ options(help_type = "html")
       file <- helpfiles[[1]]
       path <- dirname(file)
       dirpath <- dirname(path)
-      pkgname <- basename(dirpath)
+      package <- basename(dirpath)
       
-      query <- paste("/library/", pkgname, "/html/", basename(file), ".html", sep = "")
+      query <- sprintf("/library/%s/html/%s.html", package, basename(file))
       html <- suppressWarnings(tools:::httpd(query, NULL, NULL))$payload
    }
    
-   # resolve associated package from helpfile path -- note that help file
-   # paths have the format:
-   #
-   #    <libpath>/<package>/help/<...>
-   #
-   # so we look for the 'help' component and parse from there
-   if (package == "")
-   {
-      parts <- strsplit(file, "/", fixed = TRUE)[[1L]]
-      
-      index <- 0L
-      for (i in rev(seq_along(parts)))
-      {
-         if (identical(parts[[i]], "help"))
-         {
-            index <- i - 1L
-            break
-         }
-      }
-      
-      if (index > 0)
-         package <- parts[[index]]
-   }
-   
    # try to figure out the encoding for the provided HTML
-   if (package != "")
+   if (nzchar(package))
    {
       packagePath <- system.file(package = package)
       if (nzchar(packagePath))
@@ -839,7 +820,6 @@ options(help_type = "html")
    
    # try to extract HTML body
    match <- suppressWarnings(regexpr('<body>.*</body>', html))
-   
    if (match < 0)
    {
       html <- NULL
@@ -855,7 +835,7 @@ options(help_type = "html")
          
          match <- if (slotsMatch > detailsMatch) slotsMatch else detailsMatch
          if (match >= 0)
-            html = substring(html, 1, match - 1)
+            html <- substring(html, 1, match - 1)
       }
    }
    
@@ -883,7 +863,11 @@ options(help_type = "html")
       sig <- gsub('^function ', topic, sig)
    }
    
-   list('html' = html, 'signature' = sig, 'pkgname' = pkgname)
+   list(
+      html = html,
+      signature = sig,
+      pkgname = package
+   )
 })
 
 .rs.addJsonRpcHandler("show_help_topic", function(what, from, type)
