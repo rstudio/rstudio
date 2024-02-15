@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -68,6 +69,7 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.RepoValidationResult;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
@@ -185,6 +187,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.NewConnection
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionContext;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContextData;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionParseContext;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
@@ -214,6 +217,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.O
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
@@ -1084,11 +1088,10 @@ public class RemoteServer implements Server
 
    public void getCompletions(
          String token,
-         List<String> assocData,
-         List<Integer> dataType,
-         List<Integer> numCommas,
-         String chainObjectName,
+         JsVector<AutocompletionContextData> contextData,
          String functionCallString,
+         Range statementBounds,
+         String chainObjectName,
          JsArrayString additionalArgs,
          JsArrayString excludeArgs,
          boolean excludeArgsFromObject,
@@ -1098,20 +1101,20 @@ public class RemoteServer implements Server
          boolean isConsole,
          ServerRequestCallback<Completions> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(token));
-      setArrayString(params, 1, assocData);
-      setArrayNumber(params, 2, dataType);
-      setArrayNumber(params, 3, numCommas);
-      params.set(4, new JSONString(chainObjectName));
-      params.set(5, new JSONString(functionCallString));
-      setArrayString(params, 6, additionalArgs);
-      setArrayString(params, 7, excludeArgs);
-      params.set(8, JSONBoolean.getInstance(excludeArgsFromObject));
-      params.set(9, new JSONString(filePath));
-      params.set(10, new JSONString(documentId));
-      params.set(11, new JSONString(line));
-      params.set(12, JSONBoolean.getInstance(isConsole));
+      JSONArray params = new JSONArrayBuilder()
+            .add(token)
+            .add(contextData)
+            .add(functionCallString)
+            .add(statementBounds)
+            .add(chainObjectName)
+            .add(additionalArgs)
+            .add(excludeArgs)
+            .add(excludeArgsFromObject)
+            .add(filePath)
+            .add(documentId)
+            .add(line)
+            .add(isConsole)
+            .get();
 
       sendRequest(RPC_SCOPE,
                   GET_COMPLETIONS,
@@ -6399,8 +6402,8 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void validateCranRepo(ServerRequestCallback<Boolean> callback,
-                                String cranRepoUrl)
+   public void validateCranRepo(String cranRepoUrl,
+                                ServerRequestCallback<RepoValidationResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(cranRepoUrl));
@@ -6409,7 +6412,7 @@ public class RemoteServer implements Server
                   VALIDATE_CRAN_REPO,
                   params,
                   true,
-                  callback);
+                  requestCallback);
    }
 
    @Override

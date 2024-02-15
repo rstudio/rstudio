@@ -25,7 +25,7 @@ import { GwtWindow } from '../../../src/main/gwt-window';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 import { setTimeoutPromise } from '../../../src/core/wait-utils';
 
-class TestGwtWindow extends GwtWindow {
+class TestWindowTrackerGwtWindow extends GwtWindow {
   onActivated(): void {
     throw new Error('Method not implemented.');
   }
@@ -68,7 +68,7 @@ describe('WindowTracker', () => {
       const tracker = new WindowTracker();
       const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
       tracker.addWindow('one', oneWin);
-      const twoWin = new TestGwtWindow({ name: 'the gwt window', skipLocaleDetection: true });
+      const twoWin = new TestWindowTrackerGwtWindow({ name: 'the gwt window', skipLocaleDetection: true });
       tracker.addWindow('one', twoWin);
       assert.equal(tracker.length(), 1);
       const result = tracker.getWindow('one');

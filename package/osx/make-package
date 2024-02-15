@@ -217,6 +217,10 @@ find-program NPX npx \
    "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin" \
    "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
 
+# put node on the path
+NODE_PATH=$(dirname "${NODE}")
+PATH="${NODE_PATH}:${PATH}"
+
 # determine architectures to build for
 if is-m1-mac; then
    arch=x86_64,arm64

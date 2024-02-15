@@ -2,12 +2,23 @@
 
 ### New
 #### RStudio
+- RStudio's auto-completion system now supports ggplot2 aesthetic names and data columns (#8444)
+- RStudio's auto-completion system now supports the display of the "label" attribute (#14242)
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
-- RStudio's GWT sources can now be built with JDKs > 11 (#11242)
+- RStudio Desktop on Windows and Linux supports full-screen mode via F11 (#3243)
 - R projects can be given a custom display name in Project Options (#1909)
+- RStudio now highlights and lints Quarto chunk options in Python code chunks
 - RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$$ $$` and `$ $` instead (#12862)
 - Added cmake option to build RStudio without the check for updates feature (#13236)
 - Allow choosing R from non-standard location at startup (#14180; Windows Desktop)
+- Add `EnvironmentFile` support to systemd service definitions (#13819)
+- RStudio's GWT sources can now be built with JDKs > 11 (#11242)
+- Show grey background instead of solid-white during Desktop startup (#13768)
+- The 'restartSession()' API method gains the 'clean' argument. (#2841)
+- 'dot' chunks in R Markdown documents are now executable (#14063)
+- (rstudioapi) Fixed an issue where selectFile() did not parse filter strings in a cross-platform way (#13994)
+- Show Quarto version information in the About dialog (#14263)
+- RStudio now reports repository validation errors (if any) when adding secondary repositories in the Global Options -> Packages pane. (#13842)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
@@ -33,12 +44,17 @@
 - Fixed exception being logged when copying or cutting from editor in a separate window (#14140)
 - Fixed an issue where RStudio's R diagnostics warned about potentially missing arguments even when disabled via preferences (#14046)
 - Fixed an issue where the Visual Editor's toolbar controls were duplicated on format change (#12227)
+- Fixed regression that caused extra whitespace at bottom of some popups (#14223)
+- Fix type dropdowns not working in dataset import when user-interface is in French (#14224)
+- Fixed an issue where RStudio failed to retrieve help for certain S3 methods (#14232)
 
 #### Posit Workbench
 -
 
 ### Dependencies
-- Updated Electron to version 28.0.0 (#14055; Desktop)
+- Updated Ace to version 1.32.5 (#14227; Desktop + Server)
+- Updated Electron to version 28.2.2 (#14055; Desktop)
 - Updated GWT to version 2.10.0 (#11505; Desktop + Server)
 - Updated NSIS to version 3.09 (#14123; Windows Desktop)
 - Updated OpenSSL to version 3.1.4 (Windows Desktop)
+

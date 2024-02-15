@@ -64,8 +64,10 @@ public class ChunkContextToolbar extends Composite
    public final static ChunkContextResources RES =
          GWT.create(ChunkContextResources.class);
 
-   public ChunkContextToolbar(Host host, boolean dark, boolean runPrevious,
-         String engine)
+   public ChunkContextToolbar(Host host,
+                              boolean dark,
+                              boolean runPrevious,
+                              String engine)
    {
       host_ = host;
       state_ = STATE_RESTING;

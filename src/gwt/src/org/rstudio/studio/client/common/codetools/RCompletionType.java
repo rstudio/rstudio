@@ -71,7 +71,8 @@ public class RCompletionType
    public static int score(int type, int context) 
    {
       // same logic as .rs.sortCompletions() on the server side
-      switch(type){
+      switch (type)
+      {
          case ARGUMENT: return 1;
          case COLUMN: return 2;
          case DATATABLE_SPECIAL_SYMBOL: return 3;

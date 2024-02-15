@@ -130,9 +130,12 @@ export class DesktopBrowserWindow extends EventEmitter {
     } else {
       const preload = DesktopBrowserWindow.getPreload();
 
+      // Match BACKGROUNDGRADIENT in themeStyles.css to reduce flashbulb effect while loading
+      // https://github.com/rstudio/rstudio/issues/13768
+      const backgroundColor = '#e1e2e5';
+
       this.window = new BrowserWindow({
-        // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-        backgroundColor: '#fff',
+        backgroundColor: backgroundColor,
         autoHideMenuBar: this.options.autohideMenu,
         webPreferences: {
           additionalArguments: apiKeys,
@@ -524,6 +527,13 @@ export class DesktopBrowserWindow extends EventEmitter {
       this.removeMenuBound = this.removeMenu.bind(this);
       getEventBus().on('appmenu-set', this.removeMenuBound);
     }
+  }
+
+  /*
+   * Close the window
+   */
+  close(): void {
+    this.window.close();
   }
 
   /**

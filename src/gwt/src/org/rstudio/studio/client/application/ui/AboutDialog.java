@@ -30,6 +30,8 @@ import org.rstudio.studio.client.application.model.ProductInfo;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 public class AboutDialog extends ModalDialogBase
 {
@@ -46,7 +48,7 @@ public class AboutDialog extends ModalDialogBase
             "\"" + info.release_name + "\" " + info.build_type +
             " (" + info.commit + ", " + info.date + ") " +
             constants_.forText() + info.os + "\n" +
-            Window.Navigator.getUserAgent());
+            Window.Navigator.getUserAgent() + quartoDetails());
          RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(GlobalDisplay.MSG_INFO, constants_.versionCopiedText(),
                  constants_.versionInformationCopiedText());
       });
@@ -64,7 +66,7 @@ public class AboutDialog extends ModalDialogBase
          });
          addLeftButton(licenseButton, ElementIds.ABOUT_MANAGE_LICENSE_BUTTON);
       }
-      contents_ = new AboutDialogContents(info, editionInfo_);
+      contents_ = new AboutDialogContents(info, editionInfo_, quartoDetails());
       setARIADescribedBy(contents_.getDescriptionElement());
       setWidth("600px"); //$NON-NLS-1$
    }
@@ -82,12 +84,29 @@ public class AboutDialog extends ModalDialogBase
    }
 
    @Inject
-   private void initialize(ProductEditionInfo editionInfo)
+   private void initialize(ProductEditionInfo editionInfo, Session session)
    {
       editionInfo_ = editionInfo;
+      session_ = session;
+   }
+
+   private String quartoDetails()
+   {
+      String quartoDetails = "";
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      if (sessionInfo.getQuartoConfig().enabled && sessionInfo.getQuartoConfig().version.length() > 0)
+      {
+         quartoDetails = ", Quarto " + sessionInfo.getQuartoConfig().version;
+         if (sessionInfo.getQuartoConfig().user_installed.length() > 0)
+         {
+            quartoDetails += " (" + sessionInfo.getQuartoConfig().user_installed + ")";
+         }
+      }
+      return quartoDetails;
    }
 
    private AboutDialogContents contents_;
    private ProductEditionInfo editionInfo_;
+   private Session session_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

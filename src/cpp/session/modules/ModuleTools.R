@@ -291,10 +291,11 @@
       stop("Invalid result")
 })
 
-.rs.addFunction("restartR", function(afterRestartCommand = "") {
-   afterRestartCommand <- paste(as.character(afterRestartCommand),
-                                collapse = "\n")
-   .Call("rs_restartR", afterRestartCommand, PACKAGE = "(embedding)")
+.rs.addFunction("restartR", function(afterRestartCommand = "", clean = FALSE) {
+   afterRestartCommand <- paste(as.character(afterRestartCommand), collapse = "\n")
+   clean <- as.logical(clean)
+   result <- .Call("rs_restartR", afterRestartCommand, clean, PACKAGE = "(embedding)")
+   invisible(result)
 })
 
 .rs.addFunction("markdownToHTML", function(content) {

@@ -48,7 +48,7 @@ import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import {
-  filterFromQFileDialogFilter,
+  parseFilter,
   findRepoRoot,
   getAppPath,
   handleLocaleCookies,
@@ -100,7 +100,7 @@ export class GwtCallback extends EventEmitter {
   monospaceFonts: string[] = [];
   proportionalFonts: string[] = [];
 
-  constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
+  constructor(public mainWindow: MainWindow) {
     super();
     this.owners.add(mainWindow);
 
@@ -165,7 +165,7 @@ export class GwtCallback extends EventEmitter {
         }
 
         if (filter) {
-          openDialogOptions.filters = filterFromQFileDialogFilter(filter);
+          openDialogOptions.filters = parseFilter(filter);
         }
 
         let focusedWindow = BrowserWindow.getFocusedWindow();
@@ -511,7 +511,7 @@ export class GwtCallback extends EventEmitter {
           screenY: y,
           width: width,
           height: height,
-          allowExternalNavigate: this.mainWindow.isRemoteDesktop,
+          allowExternalNavigate: false,
         });
       },
     );
@@ -643,25 +643,15 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
-      if (!this.isRemoteDesktop) {
-        this.mainWindow.launchRStudio({
-          projectFilePath: resolveAliasedPath(projectFilePath),
-        });
-      } else {
-        // start new Remote Desktop RStudio process with the session URL
-        this.mainWindow.launchRemoteRStudioProject(projectFilePath);
-      }
+      this.mainWindow.launchRStudio({
+        projectFilePath: resolveAliasedPath(projectFilePath),
+      });
     });
 
     ipcMain.on('desktop_open_session_in_new_window', (event, workingDirectoryPath) => {
-      if (!this.isRemoteDesktop) {
-        this.mainWindow.launchRStudio({
-          workingDirectory: resolveAliasedPath(workingDirectoryPath),
-        });
-      } else {
-        // start the new session on the currently connected server
-        this.mainWindow.launchRemoteRStudio();
-      }
+      this.mainWindow.launchRStudio({
+        workingDirectory: resolveAliasedPath(workingDirectoryPath),
+      });
     });
 
     ipcMain.on('desktop_get_fixed_width_font_list', (event) => {
@@ -798,9 +788,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_toggle_fullscreen_mode', () => {
-      if (process.platform === 'darwin') {
-        this.mainWindow.window.fullScreen = !this.mainWindow.window.fullScreen;
-      }
+      this.mainWindow.window.fullScreen = !this.mainWindow.window.fullScreen;
     });
 
     ipcMain.on('desktop_show_keyboard_shortcut_help', () => {
@@ -998,10 +986,6 @@ export class GwtCallback extends EventEmitter {
         this.errorPageData.set('process_error', versionError);
       }
     }
-  }
-
-  setRemoteDesktop(isRemoteDesktop: boolean): void {
-    this.isRemoteDesktop = isRemoteDesktop;
   }
 
   static unimpl(ipcName: string): void {

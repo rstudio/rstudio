@@ -136,11 +136,10 @@ void showQuartoVersionWarning(const Version& version, const Version& requiredVer
 
 std::tuple<FilePath,Version,bool> userInstalledQuarto()
 {
-   // start with quarto on the path
    bool env = false;
-   FilePath quartoPath = module_context::findProgram("quarto");
+   FilePath quartoPath;
 
-   // refine with RSTUDIO_QUARTO environment variable
+   // first check RSTUDIO_QUARTO environment variable
    std::string rstudioQuarto = core::system::getenv(kRStudioQuarto);
    if (!rstudioQuarto.empty())
    {
@@ -154,7 +153,46 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
          quartoPath = FilePath(rstudioQuarto);
       }
    }
+   
+   // next, look for quarto on the PATH
+   if (quartoPath.isEmpty())
+   {
+      quartoPath = module_context::findProgram("quarto");
+   }
+   
+   // next, look for quarto from qvm
+   if (quartoPath.isEmpty())
+   {
+      FilePath qvmPath = module_context::findProgram("qvm");
+      if (qvmPath.exists())
+      {
+         core::system::ProcessResult result;
+         Error error = core::system::runProgram(
+                  qvmPath.getAbsolutePath(),
+                  { "path", "active" },
+                  core::system::ProcessOptions(),
+                  &result);
+         if (error)
+            LOG_ERROR(error);
+         else if (result.exitStatus == EXIT_SUCCESS)
+         {
+            FilePath quartoFolder = FilePath(core::string_utils::trimWhitespace(result.stdOut));
+            if (quartoFolder.exists())
+            {
+#ifndef _WIN32
+               const std::string quarto = "quarto";
+#else
+               const std::string quarto = "quarto.cmd";
+#endif
+               FilePath qvmLink = quartoFolder.completeChildPath(quarto);
+               if (qvmLink.exists())
+                  quartoPath = FilePath(qvmLink.getCanonicalPath());
+            }
+         }
+      }
+   }
 
+   // if we found a quarto path, try to use it
    if (!quartoPath.isEmpty())
    {
       Error error = core::system::realPath(quartoPath, &quartoPath);
@@ -171,6 +209,7 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
          LOG_ERROR(error);
       }
    }
+   
    return std::make_tuple(FilePath(), Version(), false);
 }
 

@@ -14,19 +14,6 @@
  */
 package org.rstudio.core.client.command;
 
-import com.google.gwt.aria.client.MenuitemRole;
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.MenuItem;
-
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
@@ -43,6 +30,19 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+
+import com.google.gwt.aria.client.MenuitemRole;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.MenuItem;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
@@ -156,9 +156,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       assert enabled_ : "AppCommand executed when it was not enabled";
       if (!enabled_)
-         return;
-      assert visible_ : "AppCommand executed when it was not visible";
-      if (!visible_)
          return;
 
       // if this window is a satellite but the command only wants to be handled

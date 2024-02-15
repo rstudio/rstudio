@@ -1,5 +1,5 @@
 /*
- * remote-desktop-session-launcher-overlay.ts
+ * RepoValidationResult.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -12,5 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.common.mirrors.model;
 
-export class RemoteDesktopSessionLauncher {}
+import com.google.gwt.core.client.JavaScriptObject;
+
+public class RepoValidationResult extends JavaScriptObject
+{
+   protected RepoValidationResult()
+   {
+   }
+   
+   public final native boolean isValid() /*-{ return this["valid"]; }-*/;
+   public final native String getErrorMessage() /*-{ return this["error"] || ""; }-*/;
+}

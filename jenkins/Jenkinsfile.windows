@@ -19,11 +19,12 @@ pipeline {
   }
 
   parameters {
-    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
+    string(name: 'COMMIT_HASH' , defaultValue: '')
     booleanParam(name: 'RSTUDIO_SKIP_QT', defaultValue: false, description: 'Skips installing and bulding for QT')
     booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
     booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
-    string(name: 'COMMIT_HASH' , defaultValue: '')
+    booleanParam(name: 'FORCE_BUILD_BINARIES', defaultValue: false, description: 'Force build binaries even if there are no changes, and even if they have already been built previously')
+    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
   }
 
   environment {
@@ -32,6 +33,9 @@ pipeline {
     PACKAGE_OS = 'Windows'
     AWS_ACCOUNT_ID = '749683154838'
     GIT_URL = "https://github.com/rstudio/rstudio"
+    RSTUDIO_VERSION_FLOWER = ""
+    RSTUDIO_VERSION_FILENAME = ""
+    SHOULD_REBUILD = true // Set to true for now until rebuildCheck can run on Windows agents
   }
 
   stages{
@@ -72,6 +76,11 @@ pipeline {
               currentBuild.displayName = "${RSTUDIO_VERSION}"
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
               PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${RSTUDIO_VERSION.replace('+', '-')}"
+              RSTUDIO_VERSION_FILENAME = utils.getVersionFilename(RSTUDIO_VERSION) // Define here for use later in utils.rebuildCheck()
+
+              // Check if we should rebuild here on linux before moving into Windows build agent
+              // Disabling for now since rebuildCheck uses FLAVOR, which isn't defined until we're in the matrix
+              // SHOULD_REBUILD = utils.rebuildCheck()
             }
           }
         }
@@ -94,10 +103,13 @@ pipeline {
         }
 
         when {
+          // allOf {
           anyOf {
             environment name: 'FLAVOR', value: 'Electron'
             expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
           }
+          //   expression { return SHOULD_REBUILD == true } // Disabling for now (see above)
+          // }
         }
 
         stages {

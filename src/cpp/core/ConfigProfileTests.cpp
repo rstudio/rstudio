@@ -282,6 +282,70 @@ TEST_CASE("config profile")
       REQUIRE(std::find(level2Names.begin(), level2Names.end(), "bdylan") != level2Names.end());
       REQUIRE(std::find(level2Names.begin(), level2Names.end(), "bdaylan") == level2Names.end());
    }
+
+   SECTION("Can check if parameter defined")
+   {
+      std::string profileStr = R"([*]
+          param=val
+          param2=val2
+
+          [@user]
+          param=user-param
+          param1=user-param1
+          param3=user-param3
+
+          [@admin]
+          adminParam=admin-param
+          param3=admin-param3
+
+          [kcobain]
+          adminParam=bad-admin)";
+
+      ConfigProfile profile;
+
+      // Does checking for a parameter before loading a profile cause any issues?
+      REQUIRE_FALSE(profile.isParamDefined("adminParam"));
+
+      profile.addSections({{0, "*"},
+                          {1, "@"},
+                          {2, std::string()}});
+
+      profile.addParams("param", std::string(),
+                        "param1", std::string(),
+                        "param2", std::string(),
+                        "param3", std::string(),
+                        "adminParam", std::string(),
+                        "neverUsedParam", std::string("never used"),
+                        "booleanNotUsed", true);
+
+      Error error = profile.parseString(profileStr);
+      REQUIRE_FALSE(error);
+
+      // Param that's not defined.
+      REQUIRE_FALSE(profile.isParamDefined("neverUsedParam"));
+
+      // Param that doesn't exist.
+      REQUIRE_FALSE(profile.isParamDefined("nonExistentParam"));
+
+      // Param that exists in multiple levels.
+      REQUIRE(profile.isParamDefined("param3"));
+
+      // Param that exists in one level.
+      REQUIRE(profile.isParamDefined("param1"));
+
+      // Empty param name.
+      REQUIRE_FALSE(profile.isParamDefined(""));
+
+      // Check a profile with only a single level and single param (potential edge cases).
+      ConfigProfile singleLevelProfile;
+      singleLevelProfile.addSections({{0, "*"}});
+      singleLevelProfile.addParams("param", std::string());
+      error = singleLevelProfile.parseString("[*]\nparam=val");
+      REQUIRE_FALSE(error);
+
+      REQUIRE(singleLevelProfile.isParamDefined("param"));
+      REQUIRE_FALSE(singleLevelProfile.isParamDefined("nonExistentParam"));
+   }
 }
 
 } // end namespace tests

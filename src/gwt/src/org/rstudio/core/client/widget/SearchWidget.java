@@ -14,6 +14,16 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.Collection;
+
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -40,47 +50,75 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
+import com.google.gwt.user.client.ui.SuggestBox.SuggestionCallback;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
-
 import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.ValueBoxBase;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.CoreClientConstants;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 
 public class SearchWidget extends Composite implements SearchDisplay
 {
    interface MyUiBinder extends UiBinder<Widget, SearchWidget> {}
    private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
-
-   class FocusSuggestBox extends SuggestBox implements HasAllFocusHandlers
+   
+   // This class exists entirely so that we can inject some event handlers
+   // on top of the menu that is presented to the user after a suggestion
+   // list has been received. In particular, we suppress the first "mouseover"
+   // event, to help prevent a bug that occurs where, if the mouse cursor happened
+   // to be positioned within the area where the suggestion menu were about to be
+   // displayed, that menu item would be selected (and so would be selected without
+   // any explicit gesture initiated by the user.)
+   private static class SearchSuggestionDisplay extends DefaultSuggestionDisplay
    {
-      FocusSuggestBox(SuggestOracle oracle)
+      private boolean hasHooks_ = false;
+      
+      @Override
+      protected void showSuggestions(SuggestBox arg0, Collection<? extends Suggestion> arg1,
+                                     boolean arg2, boolean arg3, SuggestionCallback arg4)
       {
-         super(oracle);
+         MenuBar suggestMenu = getSuggestionMenu();
+         suppressFirstMouseOver(suggestMenu.getElement());
+         super.showSuggestions(arg0, arg1, arg2, arg3, arg4);
       }
+      
+      
+      
+      private static final native void suppressFirstMouseOver(Element el)
+      /*-{
+      
+         el.addEventListener("mouseover", function(event) {
+            
+            // Suppress this mouse over.
+            event.stopPropagation();
+            event.preventDefault();
+            
+            // Dispatch a 'mouseover' event to the event target on next move.
+            // This ensures the menu item under the cursor position is
+            // immediately selected after the user moves their cursor.
+            el.addEventListener("mousemove", function(event) {
+               event.target.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+            }, { once: true });
+            
+         }, { capture: true, once: true });
+         
+      }-*/;
+   }
 
-      FocusSuggestBox(SuggestOracle oracle, TextBoxBase textBox)
-      {
-         super(oracle, textBox);
-      }
-
+   static class FocusSuggestBox extends SuggestBox implements HasAllFocusHandlers
+   {
       FocusSuggestBox(SuggestOracle oracle,
                       TextBoxBase textBox,
                       SuggestionDisplay suggestDisplay)
       {
          super(oracle, textBox, suggestDisplay);
       }
-
+      
       public HandlerRegistration addBlurHandler(BlurHandler handler)
       {
          return addDomHandler(handler, BlurEvent.getType());
@@ -90,6 +128,7 @@ public class SearchWidget extends Composite implements SearchDisplay
       {
          return addDomHandler(handler, FocusEvent.getType());
       }
+      
    }
 
    public SearchWidget(String label)
@@ -132,11 +171,10 @@ public class SearchWidget extends Composite implements SearchDisplay
    {
       DomUtils.disableSpellcheck(textBox);
 
-      if (suggestDisplay != null)
-         suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
-      else
-         suggestBox_ = new FocusSuggestBox(oracle, textBox);
-
+      if (suggestDisplay == null)
+         suggestDisplay = new SearchSuggestionDisplay();
+      
+      suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
       initWidget(uiBinder.createAndBindUi(this));
       clearFilter_.setVisible(false);
       clearFilter_.setDescription(constants_.searchWidgetClearText());
@@ -213,6 +251,7 @@ public class SearchWidget extends Composite implements SearchDisplay
             }
          });
       }
+      
       suggestBox_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
          public void onValueChange(ValueChangeEvent<String> evt)

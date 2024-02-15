@@ -609,19 +609,35 @@
 
 .rs.addFunction("getNames", function(object)
 {
-   tryCatch({
-      if (is.environment(object) && !inherits(object, "R6"))
-         ls(object, all.names = TRUE)
-      else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
-         dplyr::tbl_vars(object)
-      # For some reason, `jobjRef` objects (from rJava) return names containing
-      # parentheses after the associated function call, which confuses our completion
-      # system.
-      else if (inherits(object, "jobjRef"))
-         gsub("[\\(\\)]", "", names(object))
-      else
-         names(object)
-   }, error = function(e) NULL)
+   tryCatch(
+      .rs.getNamesImpl(object),
+      error = function(e) NULL
+   )
+})
+
+.rs.addFunction("getNamesImpl", function(object)
+{
+   names <- if (is.environment(object) && !inherits(object, "R6"))
+      ls(object, all.names = TRUE)
+   else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
+      dplyr::tbl_vars(object)
+   # For some reason, `jobjRef` objects (from rJava) return names containing
+   # parentheses after the associated function call, which confuses our completion
+   # system.
+   else if (inherits(object, "jobjRef"))
+      return(gsub("[\\(\\)]", "", names(object)))
+   else
+      names(object)
+   
+   meta <- if (!inherits(object, "tbl_sql"))
+   {
+      vapply(names, function(name) {
+         .rs.nullCoalesce(attr(object[[name]], "label"), "")
+      }, FUN.VALUE = character(1))
+   }
+   
+   attr(names, "meta") <- unname(meta)
+   names
 })
 
 .rs.addJsonRpcHandler("get_help_at_cursor", function(line, cursorPos)

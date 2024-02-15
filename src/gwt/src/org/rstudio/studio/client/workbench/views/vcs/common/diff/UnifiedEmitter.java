@@ -84,8 +84,23 @@ public class UnifiedEmitter
 
       for (DiffChunk chunk : chunks)
       {
-         p.append(createChunkString(chunk));
-
+         // Skip chunks which seem to have no changes
+         boolean hasChanges = false;
+         for (Line line : chunk.getLines())
+         {
+            if (line.getType() == Type.Insertion ||
+                line.getType() == Type.Deletion)
+            {
+               hasChanges = true;
+               break;
+            }
+         }
+         
+         if (!hasChanges)
+            continue;
+         
+         String chunkString = createChunkString(chunk);
+         p.append(chunkString);
          p.append(EOL);
 
          for (Line line : chunk.getLines())

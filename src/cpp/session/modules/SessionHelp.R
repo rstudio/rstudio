@@ -758,21 +758,20 @@ options(help_type = "html")
       package <- splat[[1]]
    }
    
-   helpfiles <- NULL
-   if (package == "") {
-      helpfiles <- utils::help(topic, help_type = "html")
-   } else {
-      helpfiles <- tryCatch(
-         
-         expr = {
-            call <- .rs.makeHelpCall(topic, package)
-            eval(call, envir = globalenv())
-         },
-         
-         error = function(e) {
-            return(NULL)
-         }
-      )
+   helpfiles <- .rs.tryCatch({
+      call <- .rs.makeHelpCall(topic, if (nzchar(package)) package)
+      eval(call, envir = globalenv())
+   })
+   
+   # if we failed to retrieve any help files, check if this might
+   # happen to be an S3 method where the generic is documented
+   #
+   # https://github.com/rstudio/rstudio/issues/14232
+   if (length(helpfiles) <= 0)
+   {
+      topic <- gsub("\\..*", "", topic)
+      call <- .rs.makeHelpCall(topic, if (nzchar(package)) package)
+      helpfiles <- eval(call, envir = globalenv())
    }
    
    if (length(helpfiles) <= 0)

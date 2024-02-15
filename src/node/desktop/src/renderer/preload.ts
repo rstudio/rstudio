@@ -53,9 +53,6 @@ for (const apiKey of apiKeys) {
       logString('debug', '[preload] connecting desktopMenuCallback hooks');
       contextBridge.exposeInMainWorld(apiKey, getMenuBridge());
       break;
-    // case 'remoteDesktop':
-    //   // TODO: RDP-only
-    //   break;
     default:
       logString('debug', `[preload] ignoring unsupported apiKey: '${apiKey}'`);
   }

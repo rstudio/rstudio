@@ -70,7 +70,7 @@ assign(x = ".rs.acCompletionTypes",
           DATATABLE_SPECIAL_SYMBOL = 29,
           SECUNDARY_ARGUMENT       = 30,
           ACTIVE_BINDING = 31,
-
+          
           CONTEXT     = 99
        )
 )
@@ -90,7 +90,7 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$R5_CLASS
    else if (inherits(object, "refClass"))
       .rs.acCompletionTypes$R5_OBJECT
-
+   
    # R6
    else if (inherits(object, "R6"))
       .rs.acCompletionTypes$R6_OBJECT
@@ -134,7 +134,7 @@ assign(x = ".rs.acCompletionTypes",
       contents <- readLines(tagsFile, warn = FALSE)
       yaml <- .rs.fromYAML(contents)
       n <- length(yaml)
-
+      
       map_chr <- function(...) vapply(..., FUN.VALUE = character(1), USE.NAMES = FALSE)
       map_lgl <- function(...) vapply(..., FUN.VALUE = logical(1), USE.NAMES = FALSE)
       tags <- map_chr(yaml, function(.) .$name)
@@ -228,7 +228,7 @@ assign(x = ".rs.acCompletionTypes",
       vignette <- rep("", n)
       recommend <- rep(TRUE, n)
    }
-
+   
    list(
       tags = tags, 
       descriptions = descriptions, 
@@ -283,9 +283,9 @@ assign(x = ".rs.acCompletionTypes",
    recommend <- metadata$recommend
    descriptions <- metadata$descriptions
    vignette <- metadata$vignette
-
+   
    matching <- grepl(paste("^", tag, sep = ""), tags)
-
+   
    # put recommended tags first
    keep <- c(which(matching & recommend), which(matching & !recommend))
    
@@ -295,9 +295,8 @@ assign(x = ".rs.acCompletionTypes",
                        context  = .rs.acContextTypes$ROXYGEN, 
                        meta     = descriptions[keep], 
                        packages = vignette[keep],
-
                        excludeOtherCompletions = TRUE, 
-                       )
+   )
 })
 
 .rs.addFunction("attemptPlumberTagCompletion", function(token, line)
@@ -647,7 +646,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # handle e.g. dplyr::mutate(): the generic is "mutate", not "dplyr::mutate"
    functionName <- sub("^.*:{2,3}", "", functionName)
-
+   
    # iterate over the known classes for the object, and see if we have
    # an appropriate S3 method that could be used for dispatch
    classes <- class(objectForDispatch)
@@ -718,7 +717,7 @@ assign(x = ".rs.acCompletionTypes",
          # keep this argument, and move on to the next one
          i <- i + 1
       }  
-
+      
       # in any case, this has seen one more comma
       j <- j + 1L
    }
@@ -830,222 +829,246 @@ assign(x = ".rs.acCompletionTypes",
                                                    object = .rs.resolveObjectFromFunctionCall(functionCall, envir))
 {
    result <- .rs.emptyCompletions()
+   if (is.null(object) || !is.function(object))
+      return(result)
    
-   if (!is.null(object) && is.function(object))
+   # If we're attempting to get completions for an R6 'new()' function,
+   # then use a separate code path to derive that -- derive formals from
+   # the 'initialize()' method instead.
+   if (.rs.isR6NewMethod(object))
+      object <- .rs.getR6ClassGeneratorMethod(object, "initialize")
+   
+   matchedCall <- .rs.matchCall(object, functionCall, numCommas = numCommas)
+   
+   # Try to figure out what function arguments are
+   # eligible for completion. Note that, on success,
+   # this should be an R list with character fields
+   # 'formals' and (optionally) 'methods'.
+   formals <- NULL
+   
+   ## Special cases
+   # We handle special cases for function argument completions first.
+   # If we're completing a knitr getter function, then try
+   # to produce auto-completions for potential argument names
+   if (.rs.isKnitrObject(object) && "knitr" %in% loadedNamespaces())
    {
-      # If we're attempting to get completions for an R6 'new()' function,
-      # then use a separate code path to derive that -- derive formals from
-      # the 'initialize()' method instead.
-      if (.rs.isR6NewMethod(object))
-         object <- .rs.getR6ClassGeneratorMethod(object, "initialize")
+      ns <- asNamespace("knitr")
       
-      matchedCall <- .rs.matchCall(object, functionCall, numCommas = numCommas)
+      # Get the knitr getters and setters for various
+      # options
+      tryGetKnitrGetter <- function(name, ns = asNamespace("knitr"))
+         tryCatch(get(name, envir = ns)$get, error = function(e) NULL)
       
-      # Try to figure out what function arguments are
-      # eligible for completion. Note that, on success,
-      # this should be an R list with character fields
-      # 'formals' and (optionally) 'methods'.
-      formals <- NULL
+      tryGetKnitrSetter <- function(name, ns = asNamespace("knitr"))
+         tryCatch(get(name, envir = ns)$set, error = function(e) NULL)
       
-      ## Special cases
-      # We handle special cases for function argument
-      # completions first.
-      # If we're completing a knitr getter function, then try
-      # to produce auto-completions for potential argument
-      # names
-      if (.rs.isKnitrObject(object))
+      tryGet <- function(name, ns = asNamespace("knitr"))
+         list(getter = tryGetKnitrGetter(name, ns),
+              setter = tryGetKnitrSetter(name, ns))
+      
+      knitrOpts <- list(
+         tryGet("opts_chunk", ns),
+         tryGet("opts_knit", ns),
+         tryGet("opts_current", ns),
+         tryGet("opts_template", ns),
+         tryGet("knit_hooks", ns),
+         tryGet("knit_theme", ns)
+      )
+      
+      for (opt in knitrOpts)
       {
-         ns <- asNamespace("knitr")
-         
-         # Get the knitr getters and setters for various
-         # options
-         tryGetKnitrGetter <- function(name, ns = asNamespace("knitr"))
-            tryCatch(get(name, envir = ns)$get, error = function(e) NULL)
-         
-         tryGetKnitrSetter <- function(name, ns = asNamespace("knitr"))
-            tryCatch(get(name, envir = ns)$set, error = function(e) NULL)
-         
-         tryGet <- function(name, ns = asNamespace("knitr"))
-            list(getter = tryGetKnitrGetter(name, ns),
-                 setter = tryGetKnitrSetter(name, ns))
-         
-         knitrOpts <- list(
-            tryGet("opts_chunk", ns),
-            tryGet("opts_knit", ns),
-            tryGet("opts_current", ns),
-            tryGet("opts_template", ns),
-            tryGet("knit_hooks", ns),
-            tryGet("knit_theme", ns)
-         )
-         
-         for (opt in knitrOpts)
+         # If we're identical to the getter, short-circuit
+         # and just return the names of parameters
+         if (identical(object, opt$getter))
          {
-            # If we're identical to the getter, short-circuit
-            # and just return the names of parameters
-            if (identical(object, opt$getter))
+            results <- .rs.selectFuzzyMatches(
+               names(opt$getter()),
+               token
+            )
+            
+            return(.rs.makeCompletions(token = token,
+                                       results = results,
+                                       type = .rs.acCompletionTypes$STRING,
+                                       quote = TRUE))
+         }
+         
+         # If we're identical to the setter, get the
+         # names from the getter as named arguments to use
+         if (identical(object, opt$setter))
+         {
+            formals <- list(formals = names(opt$getter()))
+            break
+         }
+      }
+      
+   }
+   
+   # Resolve formals from a classGeneratorFunction based
+   # on its slots
+   if (is.null(formals) &&
+       inherits(object, "classGeneratorFunction"))
+   {
+      try(silent = TRUE, {
+         class <- object@className
+         defn <- getClass(class)
+         slots <- defn@slots
+         formals <- list(
+            formals = names(slots),
+            methods = rep(class, length(slots))
+         )
+      })
+   }
+   
+   # Resolve formals from the function itself
+   if (is.null(formals))
+   {
+      formals <- .rs.resolveFormals(token,
+                                    object,
+                                    string,
+                                    functionCall,
+                                    matchedCall,
+                                    envir)
+   }
+   
+   # If we have formals, quote them as appropriate and append ' = '.
+   if (length(formals$formals))
+   {
+      formals$formals <- vapply(formals$formals, function(fml) {
+         paste(deparse(as.name(fml), backtick = TRUE), "= ")
+      }, FUN.VALUE = character(1))
+   }
+   
+   # If we're getting completions for the `base::c` function, just discard
+   # the argument completions, since other context completions are more
+   # likely and more useful
+   if (identical(object, base::c) ||
+       identical(object, base::list))
+   {
+      formals <- list(formals = character(),
+                      methods = character())
+   }
+   
+   # Get the current argument -- we can resolve this based on
+   # 'numCommas' and the number of named formals. The idea is, e.g.
+   # in a function call
+   #
+   #     rnorm(|, n = 1, sd = 2)
+   #
+   # we should infer that the current argument name is 'mean'. We do this
+   # by looking at which arguments have yet to be matched, and using the
+   # first argument in that list.
+   activeArg <- .rs.getActiveArgument(object, matchedCall)
+   if (length(activeArg) == 0L || is.na(activeArg))
+      activeArg <- ""
+   
+   # Special casing for 'group_by' from dplyr
+   # TODO: Should we just allow for any function named 'group_by', ie,
+   # enable this even if 'dplyr' isn't loaded?
+   if (!is.null(activeArg) && activeArg == "..." &&
+       "dplyr" %in% loadedNamespaces() &&
+       identical(object, get("group_by", envir = asNamespace("dplyr"))))
+   {
+      .data <- .rs.getAnywhere(matchedCall[[".data"]], envir = envir)
+      if (!is.null(.data))
+      {
+         # potential completions
+         .names <- .rs.selectFuzzyMatches(.rs.getNames(.data), token)
+         
+         if (length(.names))
+         {
+            namesCall <- names(matchedCall)
+            
+            # drop from .names:
+            # - the named argument, e.g. group_by(a = foo())
+            .drop <- setdiff(namesCall, c("", ".data", ".drop", ".keep"))
+            
+            # - the unnamed arguments that are symbols
+            unnamed <- as.list(matchedCall)[namesCall == ""][-1]
+            for (arg in unnamed)
             {
-               results <- .rs.selectFuzzyMatches(
-                  names(opt$getter()),
-                  token
-               )
-               
-               return(.rs.makeCompletions(token = token,
-                                          results = results,
-                                          type = .rs.acCompletionTypes$STRING,
-                                          quote = TRUE))
+               if (is.symbol(arg))
+                  .drop <- c(.drop, as.character(arg))
             }
             
-            # If we're identical to the setter, get the
-            # names from the getter as named arguments to use
-            if (identical(object, opt$setter))
-            {
-               formals <- list(formals = names(opt$getter()))
-               break
-            }
-         }
-         
-      }
-      
-      # Resolve formals from a classGeneratorFunction based
-      # on its slots
-      if (is.null(formals) &&
-          inherits(object, "classGeneratorFunction"))
-      {
-         try(silent = TRUE, {
-            class <- object@className
-            defn <- getClass(class)
-            slots <- defn@slots
-            formals <- list(
-               formals = names(slots),
-               methods = rep(class, length(slots))
-            )
-         })
-      }
-      
-      # Resolve formals from the function itself
-      if (is.null(formals))
-      {
-         formals <- .rs.resolveFormals(token,
-                                       object,
-                                       string,
-                                       functionCall,
-                                       matchedCall,
-                                       envir)
-      }
-      
-      # If we have formals, quote them as appropriate and append ' = '.
-      if (length(formals$formals))
-      {
-         formals$formals <- vapply(formals$formals, function(fml) {
-            paste(deparse(as.name(fml), backtick = TRUE), "= ")
-         }, FUN.VALUE = character(1))
-      }
-      
-      # If we're getting completions for the `base::c` function, just discard
-      # the argument completions, since other context completions are more
-      # likely and more useful
-      if (identical(object, base::c) ||
-          identical(object, base::list))
-      {
-         formals <- list(formals = character(),
-                         methods = character())
-      }
-      
-      # Get the current argument -- we can resolve this based on
-      # 'numCommas' and the number of named formals. The idea is, e.g.
-      # in a function call
-      #
-      #     rnorm(|, n = 1, sd = 2)
-      #
-      # we should infer that the current argument name is 'mean'. We do this
-      # by looking at which arguments have yet to be matched, and using the
-      # first argument in that list.
-      activeArg <- .rs.getActiveArgument(object, matchedCall)
-      
-      if (!length(activeArg) || is.na(activeArg))
-         activeArg <- ""
-      
-      # Special casing for 'group_by' from dplyr
-      # TODO: Should we just allow for any function named 'group_by', ie,
-      # enable this even if 'dplyr' isn't loaded?
-      if (!is.null(activeArg) && activeArg == "..." &&
-          "dplyr" %in% loadedNamespaces() &&
-          identical(object, get("group_by", envir = asNamespace("dplyr"))))
-      {
-         .data <- .rs.getAnywhere(matchedCall[[".data"]], envir = envir)
-         if (!is.null(.data))
-         {
-            # potential completions
-            .names <- .rs.selectFuzzyMatches(.rs.getNames(.data), token)
-
-            if (length(.names))
-            {
-               namesCall <- names(matchedCall)
-               
-               # drop from .names:
-               # - the named argument, e.g. group_by(a = foo())
-               .drop <- setdiff(namesCall, c("", ".data", ".drop", ".keep"))
-               
-               # - the unnamed arguments that are symbols
-               unnamed <- as.list(matchedCall)[namesCall == ""][-1]
-               for (arg in unnamed)
-               {
-                  if (is.symbol(arg))
-                     .drop <- c(.drop, as.character(arg))
-               }
-
-               groupByCompletions <- .rs.makeCompletions(token = token,
-                                                         results = setdiff(.names, .drop),
-                                                         quote = FALSE,
-                                                         type = .rs.acCompletionTypes$COLUMN, 
-                                                         packages = as.character(matchedCall[[".data"]]))
-               return(groupByCompletions)
-            }
+            groupByCompletions <- .rs.makeCompletions(token = token,
+                                                      results = setdiff(.names, .drop),
+                                                      quote = FALSE,
+                                                      type = .rs.acCompletionTypes$COLUMN, 
+                                                      packages = as.character(matchedCall[[".data"]]))
+            return(groupByCompletions)
          }
       }
-      
-      # Get completions for the current active argument
-      argCompletions <- .rs.getCompletionsArgument(
-         token = token,
-         activeArg = activeArg,
-         functionCall = functionCall,
-         envir = envir
-      )
-      
-      # If the active argument was 'formula' and we were able
-      # to retrieve completions, it is unlikely that we also
-      # want search path completions or otherwise -- just return
-      # those completions.
-      if (identical(activeArg, "formula") &&
-          !is.null(argCompletions) &&
-          !.rs.isEmptyCompletion(argCompletions))
-      {
-         return(argCompletions)
-      }
-      
-      fguess <- if (length(formals$methods))
-         formals$methods[[1]]
-      else
-         ""
-      
-      # arguments that are already used by the matched call
-      used <- names(as.list(matchedCall)[-1]) 
-      keep <- !names(formals$formals) %in% used
-
-      result <- .rs.appendCompletions(
-         argCompletions,
-         .rs.makeCompletions(
-            token = token,
-            results = formals$formals[keep],
-            packages = formals$methods[keep],
-            type = .rs.acCompletionTypes$ARGUMENT,
-            excludeOtherCompletions = FALSE,
-            excludeOtherArgumentCompletions = TRUE,
-            fguess = fguess,
-            orderStartsWithAlnumFirst = FALSE
-         )
-      )
    }
+   
+   # Get completions for the current active argument
+   argCompletions <- .rs.getCompletionsArgument(
+      token = token,
+      activeArg = activeArg,
+      functionCall = functionCall,
+      envir = envir
+   )
+   
+   # If the active argument was 'formula' and we were able
+   # to retrieve completions, it is unlikely that we also
+   # want search path completions or otherwise -- just return
+   # those completions.
+   if (identical(activeArg, "formula") &&
+       !is.null(argCompletions) &&
+       !.rs.isEmptyCompletion(argCompletions))
+   {
+      return(argCompletions)
+   }
+   
+   fguess <- if (length(formals$methods))
+      formals$methods[[1]]
+   else
+      ""
+   
+   # arguments that are already used by the matched call
+   used <- names(as.list(matchedCall)[-1]) 
+   keep <- !names(formals$formals) %in% used
+   
+   # TODO: Should we include aesthetics for 'geom_*()' functions?
+   # for 'geom_' functions, try to get aesthetic names
+   ggplotCompletions <- NULL
+   if (grepl("^geom_", fguess))
+   {
+      .rs.tryCatch({
+         geomFunc <- eval(as.symbol(fguess), envir = envir)
+         layerInfo <- geomFunc()
+         aesthetics <- c(
+            layerInfo$geom$required_aes,
+            layerInfo$stat$required_aes,
+            names(layerInfo$geom$default_aes),
+            names(layerInfo$stat$default_aes)
+         )
+         aesthetics <- aesthetics[!duplicated(aesthetics)]
+         results <- .rs.selectFuzzyMatches(aesthetics, token)
+         ggplotCompletions <- .rs.makeCompletions(
+            token = token,
+            results = paste(results, "= "),
+            packages = fguess,
+            type = .rs.acCompletionTypes$ARGUMENT,
+            quote = FALSE
+         )
+      })
+   }
+   
+   result <- .rs.appendCompletions(
+      argCompletions,
+      .rs.makeCompletions(
+         token = token,
+         results = formals$formals[keep],
+         packages = formals$methods[keep],
+         type = .rs.acCompletionTypes$ARGUMENT,
+         excludeOtherCompletions = FALSE,
+         excludeOtherArgumentCompletions = TRUE,
+         fguess = fguess,
+         orderStartsWithAlnumFirst = FALSE
+      )
+   )
+   
+   result <- .rs.appendCompletions(result, ggplotCompletions)
    
    result
    
@@ -1184,10 +1207,13 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("selectFuzzyMatches", function(completions, token)
 {
    types <- attr(completions, "types")
+   meta <- attr(completions, "meta")
    matches <- .rs.fuzzyMatches(completions, token)
    completions <- completions[matches]
    if (!is.null(types))
       attr(completions, "types") <- types[matches]
+   if (!is.null(meta))
+      attr(completions, "meta") <- meta[matches]
    completions
 })
 
@@ -1226,6 +1252,11 @@ assign(x = ".rs.acCompletionTypes",
    if (is.null(token))
       token <- ""
    
+   if (length(meta) == 0L)
+   {
+      meta <- attr(results, "meta", exact = TRUE)
+   }
+   
    # Ensure other 'vector' completions are of the same length as 'results'
    n        <- length(results)
    packages <- .rs.formCompletionVector(packages, "", n)
@@ -1233,7 +1264,7 @@ assign(x = ".rs.acCompletionTypes",
    type     <- .rs.formCompletionVector(type, .rs.acCompletionTypes$UNKNOWN, n)
    meta     <- .rs.formCompletionVector(meta, "", n)
    context  <- .rs.formCompletionVector(context, .rs.acCompletionTypes$UNKNOWN, n)
-
+   
    if (!is.null(suggestOnAccept))
       suggestOnAccept <- .rs.formCompletionVector(suggestOnAccept, FALSE, n)
    
@@ -1251,7 +1282,8 @@ assign(x = ".rs.acCompletionTypes",
       quote    <- quote[order]
       type     <- type[order]
       meta     <- meta[order]
-
+      context  <- context[order]
+      
       if (!is.null(suggestOnAccept))
          suggestOnAccept <- suggestOnAccept[order]
    }
@@ -1269,7 +1301,7 @@ assign(x = ".rs.acCompletionTypes",
       type     <- type[idx]
       meta     <- meta[idx]
       context  <- context[idx]
-
+      
       if (!is.null(suggestOnAccept))
          suggestOnAccept <- suggestOnAccept[idx]
    }
@@ -1298,7 +1330,7 @@ assign(x = ".rs.acCompletionTypes",
    
    if (!is.null(completions[["suggestOnAccept"]]))
       completions[["suggestOnAccept"]] <- completions[["suggestOnAccept"]][indices]
-
+   
    completions
 })
 
@@ -1306,7 +1338,7 @@ assign(x = ".rs.acCompletionTypes",
 {
    oldHas <- !is.null(old[[name]])
    newHas <- !is.null(new[[name]])
-
+   
    if (oldHas)
    {
       if (newHas) {
@@ -1323,16 +1355,19 @@ assign(x = ".rs.acCompletionTypes",
          return(NULL)
       }
    }
-
+   
 })
 
 .rs.addFunction("appendCompletions", function(old, new)
 {
+   if (is.null(new))
+      return(old)
+   
    old[["suggestOnAccept"]] <- .rs.appendCompletionsOptionalElement(old, new, "suggestOnAccept", FALSE)
    
    for (name in c("results", "packages", "quote", "type", "meta", "context"))
       old[[name]] <- c(old[[name]], new[[name]])
-
+   
    # resolve duplicates -- a completion is duplicated if its result
    # and package are identical (if 'type' or 'quote' differs, it's probably a bug?)
    drop <- intersect(
@@ -1344,7 +1379,7 @@ assign(x = ".rs.acCompletionTypes",
    {
       for (name in c("results", "packages", "quote", "type", "meta", "context"))
          old[[name]] <- old[[name]][-c(drop)]
-
+      
       if (!is.null(old[["suggestOnAccept"]])) {
          old[["suggestOnAccept"]] <- old[["suggestOnAccept"]][-c(drop)]
       }
@@ -1358,7 +1393,7 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(new$excludeOtherCompletions) && new$excludeOtherCompletions)
       old$excludeOtherCompletions <- new$excludeOtherCompletions
-
+   
    if (length(new$excludeOtherArgumentCompletions) && new$excludeOtherArgumentCompletions)
       old$excludeOtherArgumentCompletions <- new$excludeOtherArgumentCompletions
    
@@ -1379,21 +1414,21 @@ assign(x = ".rs.acCompletionTypes",
                                             token,
                                             shortestFirst = FALSE)
 {
-
+   
    # type based scores
    typeScores <- rep(100, length(completions$results))
    typeScores[completions$type == .rs.acCompletionTypes$ARGUMENT] <- 1
    typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 2
    typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 3
-
+   
    # data has high priority, unless it's requested from a :: or ::: context
    # rationale: https://github.com/rstudio/rstudio/issues/12678)
    typeScores[
       completions$type == .rs.acCompletionTypes$DATAFRAME & 
-      ! completions$context %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL)
-      ] <- 4
+         ! completions$context %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL)
+   ] <- 4
    typeScores[completions$type == .rs.acCompletionTypes$SECUNDARY_ARGUMENT] <- 5
-
+   
    typeScores[completions$type == .rs.acCompletionTypes$PACKAGE] <- 101
    typeScores[completions$type == .rs.acCompletionTypes$CONTEXT] <- 102
    
@@ -1411,7 +1446,7 @@ assign(x = ".rs.acCompletionTypes",
    else
       order(typeScores, scores)
    completions <- .rs.subsetCompletions(completions, order)
-
+   
    completions
 })
 
@@ -1449,15 +1484,15 @@ assign(x = ".rs.acCompletionTypes",
 {
    # column names
    completions <- .rs.getDataTableColumnsCompletions(token, name, object)
-
+   
    # j = 
    if (numCommas == 1)
       completions <- .rs.appendCompletions(completions, .rs.getDataTableJCompletions(token))
-
+   
    # by|keyby =
    if (numCommas == 2 || numCommas == 3)
       completions <- .rs.appendCompletions(completions, .rs.getDataTableByCompletions(token))
-
+   
    # finally, offer the arguments of data.table:::`[.data.table` 
    if (isTRUE(includeArguments) && isNamespaceLoaded("data.table"))
    {
@@ -1481,13 +1516,13 @@ assign(x = ".rs.acCompletionTypes",
 {
    # column names
    completions <- .rs.getDataTableColumnsCompletions(token, as.character(name), object)
-
+   
    if (identical(activeArg, "j"))
       completions <- .rs.appendCompletions(completions, .rs.getDataTableJCompletions(token))
-
+   
    if (activeArg %in% c("by", "keyby"))
       completions <- .rs.appendCompletions(completions, .rs.getDataTableByCompletions(token))
-
+   
    completions
 })
 
@@ -1504,7 +1539,7 @@ assign(x = ".rs.acCompletionTypes",
       objectName <- substring(string, 1L, bracketIdx - 1L)
       inherits(.rs.getAnywhere(objectName, envir = envir), "data.table")
    }, error = function(e) FALSE)
-
+   
 })
 
 ## NOTE: for '@' as well (set in the 'isAt' parameter)
@@ -1514,11 +1549,11 @@ assign(x = ".rs.acCompletionTypes",
    # because this might side-effect modify the data table
    if (.rs.isDataTableExtractCall(string, envir = envir))
       return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
-
+   
    object <- .rs.getAnywhere(string, envir)
    if (is.null(object))
       return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
-
+   
    allNames <- character()
    names <- character()
    type <- numeric()
@@ -1613,8 +1648,8 @@ assign(x = ".rs.acCompletionTypes",
             
             # Place the 'less interesting' methods lower
             baseMethods <- c("callSuper", "copy", "export", "field",
-                              "getClass", "getRefClass", "import", "initFields",
-                              "show", "trace", "untrace", "usingMethods")
+                             "getClass", "getRefClass", "import", "initFields",
+                             "show", "trace", "untrace", "usingMethods")
             
             allNames <- c(
                setdiff(allNames, baseMethods),
@@ -1665,7 +1700,7 @@ assign(x = ".rs.acCompletionTypes",
       
       else if (inherits(object, "data.frame"))
          type <- .rs.acCompletionTypes$COLUMN
-
+      
       # NOTE: Getting the types forces evaluation; we avoid that if
       # there are too many names to evaluate.
       else if (length(names) > 2E2)
@@ -1711,11 +1746,11 @@ assign(x = ".rs.acCompletionTypes",
    # because this might side-effect modify the data table
    if (.rs.isDataTableExtractCall(string, envir = envir))
       return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
-
+   
    object <- .rs.getAnywhere(string, envir)
    if (is.null(object))
       return(result)
-
+   
    # data.table special case
    if (inherits(object, "data.table"))
    {
@@ -1751,7 +1786,9 @@ assign(x = ".rs.acCompletionTypes",
    else if (inherits(object, "data.frame") &&
             numCommas == 0)
    {
-      completions <- rownames(object)
+      info <- .row_names_info(object, type = 0L)
+      if (is.character(info))
+         completions <- info
    }
    
    # Just get the names of the object
@@ -1764,12 +1801,17 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(completions))
    {
+      type <- if (is.data.frame(object))
+         .rs.acCompletionTypes$COLUMN
+      else
+         .rs.acCompletionTypes$STRING
+      
       result <- .rs.makeCompletions(
          token = token,
          results = completions,
          packages = string,
          quote = !inherits(object, "data.table"),
-         type = .rs.acCompletionTypes$STRING
+         type = type
       )
    }
    
@@ -1798,12 +1840,17 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(completions))
    {
+      type <- if (is.data.frame(object))
+         .rs.acCompletionTypes$COLUMN
+      else
+         .rs.acCompletionTypes$STRING
+      
       result <- .rs.makeCompletions(
          token = token,
          results = completions,
          packages = string,
          quote = TRUE,
-         type = .rs.acCompletionTypes$STRING,
+         type = type,
          overrideInsertParens = TRUE
       )
    }
@@ -2041,10 +2088,10 @@ assign(x = ".rs.acCompletionTypes",
       
       name <- results[[i]]
       env <- as.environment(packages[[i]])
-
+      
       if (bindingIsActive(name, env))
          return(.rs.acCompletionTypes$ACTIVE_BINDING)
-
+      
       object <- tryCatch(
          get(name, envir = env),
          error = identity
@@ -2080,7 +2127,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("finishExpression", function(string)
 {
-   .Call("rs_finishExpression", as.character(string))
+   .Call("rs_finishExpression", as.character(string), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getCompletionsAttr", function(token,
@@ -2290,11 +2337,11 @@ assign(x = ".rs.acCompletionTypes",
          if (is.character(prompt) && grepl(rx, prompt)) 
          {
             results <- strsplit(sub(rx, "\\2", prompt), "/")[[1L]]
-
+            
             # capitalized first as this is likely to be the default
             cap <- grepl("^[A-Z]", results)
             c(results[cap], results[!cap])
-
+            
             return(.rs.makeCompletions(token = token,
                                        results = results,
                                        quote = FALSE,
@@ -2309,10 +2356,9 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 .rs.addJsonRpcHandler("get_completions", function(token,
-                                                  string,
-                                                  context,
-                                                  numCommas,
+                                                  contextData,
                                                   functionCallString,
+                                                  statementBounds,
                                                   chainObjectName,
                                                   additionalArgs,
                                                   excludeArgs,
@@ -2322,6 +2368,18 @@ assign(x = ".rs.acCompletionTypes",
                                                   line,
                                                   isConsole)
 {
+   # Map from 0-based indexes to 1-based indexes in ranges
+   for (i in seq_along(contextData))
+      contextData[[i]]$range <- .rs.reindexRange(contextData[[i]]$range)
+   
+   statementBounds <- .rs.reindexRange(statementBounds)
+   
+   # To avoid too much code churn, unpack the contextData members into
+   # the expected (older) variable names.
+   string <- lapply(contextData, `[[`, 1L)
+   context <- lapply(contextData, `[[`, 2L)
+   numCommas <- lapply(contextData, `[[`, 3L)
+   
    # Ensure UTF-8 encoding, as that's the encoding set when passed down from
    # the client
    token <- .rs.setEncodingUnknownToUTF8(token)
@@ -2338,7 +2396,7 @@ assign(x = ".rs.acCompletionTypes",
    readLineCompletions <- .rs.readlineCompletions(token)
    if (!is.null(readLineCompletions))
       return(readLineCompletions)
-
+   
    # If the R console is requesting completions, but the Python REPL is
    # active, then delegate to that machinery.
    if (isConsole && .rs.reticulate.replIsActive())
@@ -2414,7 +2472,7 @@ assign(x = ".rs.acCompletionTypes",
             functionCallString,
             fixed = TRUE
          )
-
+         
       } else if (nzchar(chainObjectName)) {
          
          functionCallString <- sub(
@@ -2425,7 +2483,7 @@ assign(x = ".rs.acCompletionTypes",
          )
       }
    }
-
+   
    # the functionCallString was altered, so we need to bump the first numCommas
    if (isPiped && length(context) && context[[1L]] == .rs.acContextTypes$FUNCTION)
       numCommas[[1L]] <- numCommas[[1L]] + 1L
@@ -2533,7 +2591,7 @@ assign(x = ".rs.acCompletionTypes",
    if (!length(string))
    {
       # If there was no token, give up
-      if (token == "")
+      if (!nzchar(token))
          return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
       
       # Otherwise, complete from the search path + available packages
@@ -2619,7 +2677,7 @@ assign(x = ".rs.acCompletionTypes",
       # function call string here, and use it as a signal to generate paths
       # relative to the R markdown path.
       isNotebook <- .rs.endsWith(tolower(filePath), ".rmd") ||
-                    .rs.endsWith(tolower(filePath), ".qmd")
+         .rs.endsWith(tolower(filePath), ".qmd")
       
       path <- NULL
       
@@ -2683,7 +2741,7 @@ assign(x = ".rs.acCompletionTypes",
       if (!is.null(completions))
          return(completions)
    }
-
+   
    ## Other special cases (but we may still want completions from
    ## other contexts)
    
@@ -2705,11 +2763,25 @@ assign(x = ".rs.acCompletionTypes",
       .rs.getCompletionsOptions(token)
    }
    
-   # no special case (start with empty completions)
-   else
+   # ggplot2
+   else if (is.call(functionCall))
    {
-      .rs.emptyCompletions()
+      lhs <- functionCall[[1L]]
+      if (is.symbol(lhs))
+      {
+         lhs <- as.character(lhs)
+         if (lhs %in% c("aes") || grepl("^facet_", lhs))
+         {
+            completions <- tryCatch(
+               .rs.getCompletionsGgplot2(token, contextData, statementBounds, documentId, envir),
+               error = function(e) .rs.emptyCompletions(token)
+            )
+         }
+      }
    }
+   
+   if (is.null(completions))
+      completions <- .rs.emptyCompletions(token)
    
    ## If we are getting completions from a '$', '@', '::' or ':::' then we do not
    ## want to look for completions in other contexts
@@ -2736,7 +2808,7 @@ assign(x = ".rs.acCompletionTypes",
       
       # namespace context
       else if (context[[1]] %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED,
-                                .rs.acContextTypes$NAMESPACE_ALL))
+                                   .rs.acContextTypes$NAMESPACE_ALL))
       {
          completions <- .rs.getCompletionsNamespace(
             token,
@@ -2752,6 +2824,16 @@ assign(x = ".rs.acCompletionTypes",
    {
       for (i in seq_along(string))
       {
+         # Don't provide function completions if we just provided
+         # argument name completions
+         stopGeneratingCompletions <-
+            i > 1 &&
+            context[[i]] == .rs.acContextTypes$FUNCTION &&
+            context[[i - 1]] == .rs.acContextTypes$ARGUMENT
+         
+         if (stopGeneratingCompletions)
+            break
+         
          completions <- .rs.appendCompletions(
             completions,
             .rs.getRCompletions(token,
@@ -2760,6 +2842,7 @@ assign(x = ".rs.acCompletionTypes",
                                 context[[i]],
                                 numCommas[[i]],
                                 functionCall,
+                                completions$excludeOtherCompletions,
                                 documentId,
                                 envir)
          )
@@ -2778,21 +2861,21 @@ assign(x = ".rs.acCompletionTypes",
       completions <- .rs.appendCompletions(
          completions,
          .rs.getRChainCompletions(token,
-                                 chainObjectName,
-                                 additionalArgs,
-                                 excludeArgs,
-                                 excludeArgsFromObject,
-                                 envir)
+                                  chainObjectName,
+                                  additionalArgs,
+                                  excludeArgs,
+                                  excludeArgsFromObject,
+                                  envir)
       )
    }
    
    # get completions from the search path for the 'generic' contexts
    if (token != "" &&
        context[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
-                        .rs.acContextTypes$FUNCTION,
-                        .rs.acContextTypes$ARGUMENT,
-                        .rs.acContextTypes$SINGLE_BRACKET,
-                        .rs.acContextTypes$DOUBLE_BRACKET))
+                           .rs.acContextTypes$FUNCTION,
+                           .rs.acContextTypes$ARGUMENT,
+                           .rs.acContextTypes$SINGLE_BRACKET,
+                           .rs.acContextTypes$DOUBLE_BRACKET))
    {
       completions <- Reduce(.rs.appendCompletions, list(
          completions,
@@ -2856,18 +2939,211 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+.rs.addFunction("getTextRange", function(contents, range)
+{
+   # extract text from the rows in use
+   rows <- seq(from = range$start$row, to = range$end$row)
+   inner <- contents[rows]
+   n <- length(inner)
+   
+   # subset based on provided columns
+   if (n == 1L)
+   {
+      inner[[1L]] <- substring(
+         inner[[1L]],
+         range$start$column,
+         range$end$column
+      )
+   }
+   else
+   {
+      inner[[1L]] <- substring(inner[[1L]], range$start$column)
+      inner[[n]] <- substring(inner[[n]], 1L, range$end$column)
+   }
+   
+   # return collapsed text
+   paste(inner, collapse = "\n")
+})
+
+.rs.addFunction("ggplot2.defaultAesthetics", function()
+{
+   c("x", "y", "fill", "colour", "alpha", "shape", "size", "linewidth", "linetype", "group")
+})
+
+.rs.addFunction("getCompletionsGgplot2", function(token,
+                                                  contextData,
+                                                  statementBounds,
+                                                  documentId,
+                                                  envir)
+{
+   # get document contents
+   document <- .rs.getSourceDocument(documentId, TRUE)
+   contents <- strsplit(document$contents, "\n", fixed = TRUE)[[1L]]
+   
+   # the data object associated with the aes() call, if any
+   data <- NULL
+   
+   # search for a context relating to a geom_ invocation
+   geomContext <- NULL
+   for (i in seq_along(contextData))
+   {
+      if (grepl("^facet_", contextData[[i]]$data))
+      {
+         break
+      }
+      else if (grepl("^geom_", contextData[[i]]$data))
+      {
+         geomContext <- contextData[[i]]
+         break
+      }
+   }
+   
+   # if we have a geom context, check it for a data argument
+   if (!is.null(geomContext))
+   {
+      geomText <- .rs.getTextRange(contents, geomContext$range)
+      geomCall <- parse(text = .rs.finishExpression(geomText))[[1L]]
+      if ("data" %in% names(geomCall))
+         data <- geomCall[["data"]]
+   }
+   
+   # if we don't have a data argument, check if we can extract it
+   # from the current statement being evaluated
+   if (is.null(data))
+   {
+      # get current call
+      currentStatement <- .rs.getTextRange(contents, statementBounds)
+      currentCall <- parse(text = .rs.finishExpression(currentStatement))[[1L]]
+      
+      # find the top-most call in the hierarchy
+      while (identical(currentCall[[1L]], as.symbol("+")))
+         currentCall <- currentCall[[2L]]
+      
+      # check for a data argument
+      data <- currentCall[["data"]]
+      if (is.null(data) && length(currentCall) >= 2L)
+         data <- currentCall[[2L]]
+   }
+   
+   # if 'data' is a call, check the contents to see if this is a plain pipe usage
+   if (is.call(data))
+   {
+      .rs.tryCatch({
+         newlineIndex <- regexpr("\n", currentStatement, fixed = TRUE)
+         firstLine <- substring(currentStatement, 1L, newlineIndex - 1L)
+         firstLine <- gsub("\\|\\>\\s*(?:#|$)", "", firstLine)
+         firstLine <- gsub("%[^%]+%\\s*(?:#|$)", "", firstLine)
+         firstCall <- parse(text = .rs.finishExpression(firstLine))[[1L]]
+         if (is.call(firstCall) && length(firstCall) == 3L)
+            firstCall <- firstCall[[2L]]
+         if (is.symbol(firstCall))
+            data <- firstCall
+      })
+   }
+   
+   # NOTE: We use 'eval()' here to ensure that things like datasets
+   # are properly resolved; e.g. if working with mtcars from the datasets package.
+   value <- NULL
+   if (is.symbol(data))
+   {
+      source <- .rs.deparse(data)
+      value <- eval(data, envir = envir)
+      if (inherits(value, "gg"))
+         value <- value$data
+   }
+   
+   
+   # check whether we should complete aesthetic names in this context
+   completions <- .rs.emptyCompletions(token)
+   
+   # skip arguments on context stack
+   includeAestheticNames <-
+      "aes" %in% contextData[[1L]]$data &&
+      .rs.acContextTypes$FUNCTION %in% contextData[[1L]]$type
+   
+   if (includeAestheticNames && requireNamespace("ggplot2", quietly = TRUE))
+   {
+      if (is.null(geomContext))
+      {
+         aestheticNames <- .rs.ggplot2.defaultAesthetics()
+         aestheticSource <- "ggplot2"
+      }
+      else
+      {
+         ggplot2 <- asNamespace("ggplot2")
+         geomName <- geomContext$data
+         geomFunc <- if (exists(geomName, envir = envir))
+            eval(as.symbol(geomName), envir = envir)
+         else if (exists(geomName, envir = ggplot2))
+            eval(as.symbol(geomName), envir = ggplot2)
+            
+         layerInfo <- geomFunc()
+         aesthetics <- c(
+            layerInfo$geom$required_aes,
+            layerInfo$stat$required_aes,
+            names(layerInfo$geom$default_aes),
+            names(layerInfo$stat$default_aes),
+            "group"
+         )
+         
+         aestheticNames <- aesthetics[!duplicated(aesthetics)]
+         aestheticSource <- geomName
+      }
+      
+      # exclude argument names which already been used
+      .rs.tryCatch({
+         aesRange <- contextData[[1]]$range
+         aesText <- .rs.getTextRange(contents, aesRange)
+         aesCall <- parse(text = aesText)[[1L]]
+         aestheticNames <- setdiff(aestheticNames, names(aesCall))
+      })
+      
+      results <- .rs.selectFuzzyMatches(aestheticNames, token)
+      if (length(results))
+      {
+         completions <- .rs.makeCompletions(
+            token = token,
+            results = paste(results, "= "),
+            packages = aestheticSource,
+            type = .rs.acCompletionTypes$ARGUMENT,
+            quote = FALSE
+         )
+      }
+   }
+   
+   # now, add on completions from the source data object
+   if (!is.null(value))
+   {
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.makeCompletions(
+            token = token,
+            results = .rs.selectFuzzyMatches(names(value), token),
+            quote = FALSE,
+            type = .rs.acCompletionTypes$COLUMN,
+            packages = source,
+            excludeOtherCompletions = TRUE,
+            excludeOtherArgumentCompletions = TRUE
+         )
+      )
+   }
+   
+   completions
+   
+})
+
 .rs.addFunction("hasColumns", function(object)
 {
    if (inherits(object, c("data.frame", "tbl")))
       return(TRUE)
-
+   
    arrow <-
       isNamespaceLoaded("arrow") &&
       inherits(object, c("ArrowTabular", "Dataset", "arrow_dplyr_query"))
-
+   
    if (arrow)
       return(TRUE)
-
+   
    FALSE
 })
 
@@ -2885,13 +3161,13 @@ assign(x = ".rs.acCompletionTypes",
    # `%>%` chain -- use completions from the associated data object.
    if (is.null(chainObjectName))
       return(result)
-
+   
    # prevent evaluation of data.table `[` calls, e.g.
    # 
    #     dt[, y := 2] %>% ... %>% filter()
    if (.rs.isDataTableExtractCall(chainObjectName, envir = envir))
       return(result)
-
+   
    object <- .rs.getAnywhere(chainObjectName, envir = envir)
    
    if (inherits(object, "python.builtin.object"))
@@ -2937,24 +3213,25 @@ assign(x = ".rs.acCompletionTypes",
                                             context,
                                             numCommas,
                                             functionCall,
+                                            excludeOtherCompletions,
                                             documentId,
                                             envir)
 {
    completions <- if (context == .rs.acContextTypes$FUNCTION)
-         .rs.getCompletionsFunction(token, string, functionCall, numCommas, envir)
-      else if (context == .rs.acContextTypes$ARGUMENT)
-         .rs.getCompletionsArgument(token, string, functionCall, envir)
-      else if (context == .rs.acContextTypes$SINGLE_BRACKET)
-         .rs.getCompletionsSingleBracket(token, string, functionCall, numCommas, index, envir)
-      else if (context == .rs.acContextTypes$DOUBLE_BRACKET)
-         .rs.getCompletionsDoubleBracket(token, string, functionCall, envir)
-      else
-         .rs.emptyCompletions()
-         
-   if (index == 1L)
+      .rs.getCompletionsFunction(token, string, functionCall, numCommas, envir)
+   else if (context == .rs.acContextTypes$ARGUMENT)
+      .rs.getCompletionsArgument(token, string, functionCall, envir)
+   else if (context == .rs.acContextTypes$SINGLE_BRACKET)
+      .rs.getCompletionsSingleBracket(token, string, functionCall, numCommas, index, envir)
+   else if (context == .rs.acContextTypes$DOUBLE_BRACKET)
+      .rs.getCompletionsDoubleBracket(token, string, functionCall, envir)
+   else
+      .rs.emptyCompletions()
+   
+   if (index == 1L && !excludeOtherCompletions)
    {
       libraryContextCompletions <- .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, documentId, envir)
-
+      
       # prefer argument completions from libraryContextCompletions
       # because it contains the package name too
       if (any(libraryContextCompletions$type == .rs.acCompletionTypes$ARGUMENT)) 
@@ -3508,10 +3785,10 @@ assign(x = ".rs.acCompletionTypes",
       if (is.symbol(name)) 
       {
          name <- as.character(name)
-
+         
          # and only consider data.table objects
          object <- try(.rs.getAnywhere(name, envir = envir))
-
+         
          if (inherits(object, "data.table")) 
          {
             return(.rs.getDataTableNamedArgumentCompletions(
@@ -3524,7 +3801,7 @@ assign(x = ".rs.acCompletionTypes",
          }
       }
    }
-
+   
    object <- if (!is.null(functionCall))
       .rs.resolveObjectFromFunctionCall(functionCall, envir)
    

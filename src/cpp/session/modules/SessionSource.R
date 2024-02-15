@@ -308,6 +308,16 @@
    })
 })
 
+.rs.addFunction("getSourceDocument", function(id, includeContents = FALSE)
+{
+   .Call(
+      "rs_getSourceDocument",
+      as.character(id),
+      as.logical(includeContents),
+      PACKAGE = "(embedding)"
+   )
+})
+
 .rs.addFunction("getSourceDocumentProperties", function(path, includeContents = FALSE)
 {
    if (is.null(path) || !file.exists(path))

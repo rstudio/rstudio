@@ -580,20 +580,23 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addJsonRpcHandler("check_for_package_updates", function()
 {
-   # get updates writeable libraries and convert to a data frame
+   # by default, check for updates in all writable library paths
+   libPaths <- .rs.writeableLibraryPaths()
+   
+   # if this is an renv project, check only the project library path
+   if ("renv" %in% loadedNamespaces())
+   {
+      activeProjectPath <- .rs.renv.activeProjectPath()
+      if (!is.null(activeProjectPath))
+         libPaths <- .libPaths()[[1L]]
+   }
+   
+   # get updates writable libraries and convert to a data frame
    updates <- as.data.frame(
-      utils::old.packages(lib.loc = .rs.writeableLibraryPaths()),
+      utils::old.packages(lib.loc = libPaths),
       stringsAsFactors = FALSE
    )
    row.names(updates) <- NULL
-   
-   # see which ones are from CRAN and add a news column for them
-   # NOTE: defend against length-one repos with no name set
-   repos <- getOption("repos")
-   cranRep <- if ("CRAN" %in% names(repos))
-      repos["CRAN"]
-   else
-      c(CRAN = repos[[1]])
    
    data.frame(
       packageName = updates$Package,
@@ -1818,19 +1821,52 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 })
 
 .rs.addJsonRpcHandler("validate_cran_repo", function(url) {
+   
+   url <- .rs.completeUrl(.rs.appendSlashIfNeeded(url), "src/contrib/PACKAGES.gz")
    packagesFile <- tempfile(fileext = ".gz")
    
-   tryCatch({
-      download.file(
-         .rs.completeUrl(.rs.appendSlashIfNeeded(url), "src/contrib/PACKAGES.gz"),
-         packagesFile,
-         quiet = TRUE
-      )
-
-      .rs.scalar(TRUE)
-   }, error = function(e) {
-      .rs.scalar(FALSE)
-   })
+   # ensure warnings are not suppressed in this scope
+   op <- options(warn = 1L)
+   on.exit(options(op), add = TRUE)
+   
+   # execute download.file(), but capture warnings and errors
+   warnings <- list()
+   error <- NULL
+   
+   withCallingHandlers(
+      
+      tryCatch(
+         download.file(url, packagesFile, quiet = TRUE),
+         error = function(cnd) error <<- cnd
+      ),
+      
+      warning = function(cnd) {
+         warnings[[length(warnings) + 1L]] <<- cnd
+         restart <- findRestart("muffleWarning")
+         if (isRestart(restart))
+            invokeRestart(restart)
+      }
+      
+   )
+      
+   
+   # build a message for display to client if an error occurred
+   message <- ""
+   if (length(error))
+      message <- paste("Error:", conditionMessage(error))
+   
+   if (length(warnings)) {
+      msgs <- vapply(warnings, conditionMessage, FUN.VALUE = character(1))
+      message <- paste(message, paste("Warning:", msgs, collapse = "\n"), sep = "\n")
+   }
+   
+   result <- list(
+      valid = file.exists(packagesFile) && is.null(error),
+      error = message
+   )
+   
+   .rs.scalarListFromList(result)
+   
 })
 
 .rs.addJsonRpcHandler("is_package_installed", function(package, version)

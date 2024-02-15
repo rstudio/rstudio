@@ -16,13 +16,13 @@ package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 
@@ -78,7 +78,6 @@ public class CodeSearch
 
       final SearchDisplay searchDisplay = display_.getSearchDisplay();
       searchDisplay.setAutoSelectEnabled(true);
-
       searchDisplay.addSelectionHandler(new SelectionHandler<Suggestion>() {
 
          @Override

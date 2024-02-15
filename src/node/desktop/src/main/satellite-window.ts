@@ -34,7 +34,7 @@ export class SatelliteWindow extends GwtWindow {
       autohideMenu: true,
       name: name,
       opener: opener,
-      allowExternalNavigate: mainWindow.isRemoteDesktop,
+      allowExternalNavigate: false,
       addApiKeys: ['desktop'],
       existingWindow: existingWindow,
     });
