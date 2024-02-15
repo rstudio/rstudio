@@ -744,7 +744,9 @@ options(help_type = "html")
    
    if (!length(topic))
       topic <- ""
-   
+   # avoid having file uninitalized
+   # and taken as the base file() function https://github.com/rstudio/rstudio/issues/14273
+   file <- ""
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
    package <- sub("package:", "", package, fixed = TRUE)
