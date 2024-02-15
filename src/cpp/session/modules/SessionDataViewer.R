@@ -179,10 +179,17 @@
       }
       else if (idx <= length(colLabels))
       {
-         if (col_name %in% names(colLabels))
-            colLabels[[col_name]]
+         if (!is.null(names(colLabels)))
+         {
+            if (col_name %in% names(colLabels))
+               colLabels[[col_name]]
+            else
+               ""
+         }
          else
+         {
             colLabels[[idx]]
+         }
       }
       else
       {
@@ -288,11 +295,30 @@
    indices <- sliceStart:sliceEnd
    colSlice <- x[indices]
    
-   # Make sure we preserve variable.labels if set
+   # Make sure we preserve variable.labels if set.
+   #
+   # The structure of 'variable.labels' is not documented,
+   # but it appears that the expectation is that it's a character
+   # vector of the same length as 'x'.
+   #
+   # The vector can be optionally named (with names matching that of 'x'),
+   # or it can be an unnamed vector -- in which case, the order of labels
+   # needs to match the column order of 'x'.
+   #
    # https://github.com/rstudio/rstudio/issues/14265
    colLabels <- attr(x, "variable.labels", exact = TRUE)
    if (!is.null(colLabels))
-      attr(colSlice, "variable.labels") <- colLabels[indices]
+   {
+      # Only subset 'variable.labels' if it's not named, since a named
+      # attribute could potentially be in a different order than the
+      # columns of 'x' itself. If 'variable.labels' is named, then all
+      # we require is that it's a super-set of the names of 'x'.
+      if (is.null(names(colLabels)))
+         colLabels <- colLabels[indices]
+      
+      attr(colSlice, "variable.labels") <- colLabels
+   }
+      
    
    .rs.describeCols(colSlice, -1, -1, 64, totalCols)
 })
