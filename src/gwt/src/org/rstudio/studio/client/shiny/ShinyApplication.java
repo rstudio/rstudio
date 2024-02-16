@@ -14,14 +14,11 @@
  */
 package org.rstudio.studio.client.shiny;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -29,7 +26,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
-import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
@@ -41,6 +37,7 @@ import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
@@ -59,8 +56,13 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 @Singleton
 public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
@@ -289,6 +291,32 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
 
    // Private methods ---------------------------------------------------------
    
+   private void stopShinyApplication(String id)
+   {
+      stopShinyApplication(id, null);
+   }
+   
+   private void stopShinyApplication(String id, Command onStopped)
+   {
+      server_.stopShinyApp(id, new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+            if (onStopped != null)
+               onStopped.execute();
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            if (onStopped != null)
+               onStopped.execute();
+         }
+      });
+   }
+   
    private void launchShinyApplication(final String filePath, 
          final String destination,
          final String extendedType)
@@ -321,14 +349,9 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          if (StringUtil.equals(destination, FOREGROUND_APP) && isBusy_ && 
                params.getId() == ShinyApplicationParams.ID_FOREGROUND)
          {
-            // There's another app running in the main session. Interrupt it and
-            // then start this one.
-            interrupt_.interruptR(new InterruptHandler() {
-               @Override
-               public void onInterruptFinished()
-               {
-                  launchShinyFile(filePath, destination, extendedType);
-               }
+            stopShinyApplication(params.getId(), () ->
+            {
+               launchShinyFile(filePath, destination, extendedType);
             });
             return;
          }
@@ -450,10 +473,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       {
          if (appState.getId() == ShinyApplicationParams.ID_FOREGROUND)
          {
-            // If this app is running in the foreground, stop it now. Background jobs will be stopped when we fire the
-            // status event (below).
-            if (commands_.interruptR().isEnabled())
-               commands_.interruptR().execute();
+            stopShinyApplication(appState.getId());
          }
          appState.setState(ShinyApplicationParams.STATE_STOPPED);
       }
