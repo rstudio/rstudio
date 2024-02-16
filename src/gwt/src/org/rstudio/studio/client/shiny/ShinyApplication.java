@@ -303,14 +303,16 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          @Override
          public void onResponseReceived(Void response)
          {
-            onStopped.execute();
+            if (onStopped != null)
+               onStopped.execute();
          }
          
          @Override
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            onStopped.execute();
+            if (onStopped != null)
+               onStopped.execute();
          }
       });
    }
