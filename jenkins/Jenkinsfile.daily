@@ -24,7 +24,7 @@ pipeline {
     string name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH'
     string name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', trim: true
   }
-  
+  // Release branch daily builds are defined in Jenkinsfile.release
   stages {
     stage('Trigger Main Daily Build') {
       steps {
