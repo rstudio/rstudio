@@ -88,10 +88,28 @@
 
 .rs.addJsonRpcHandler("stop_shiny_app", function(id)
 {
-   if (identical(id, "foreground")) {
-      # if the app is running in the foreground, tell Shiny to stop it directly
-      shiny::stopApp()
-   } else {
+   # If the app is running in the foreground, tell Shiny to stop it directly
+   if (identical(id, "foreground"))
+   {
+      # Suspend interrupts while stopping the application if possible.
+      suspendInterrupts <- if (exists("suspendInterrupts", envir = .BaseNamespaceEnv))
+         base::suspendInterrupts
+      else
+         identity
+      
+      suspendInterrupts(
+         withCallingHandlers(
+            shiny::stopApp(),
+            interrupt = function(cnd) {
+               restart <- findRestart("resume")
+               if (isRestart(restart))
+                  invokeRestart(restart)
+            }
+         )
+      )
+   }
+   else
+   {
       # it's running in the background; stop the associated job
       .rs.api.stopJob(id)
    }
