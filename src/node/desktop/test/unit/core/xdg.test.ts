@@ -175,10 +175,13 @@ describe('Xdg', () => {
   describe('Misc helpers', () => {
     it('SHGetKnownFolderPath returns a string', () => {
       if (process.platform === 'win32') {
-        const user = os.userInfo().username;
-        const expectedLocalAppData = `C:\\Users\\${user}\\AppData\\Local`;
+        // Can't use node's os.userInfo().username because on Windows the username and the
+        // name of the user's home directory are not necessarily the same.
+        const userProfile = process.env.USERPROFILE;
+        const profileFolderName = userProfile ? path.basename(userProfile) : '';
+        const expectedLocalAppData = `C:\\Users\\${profileFolderName}\\AppData\\Local`;
         const expectedProgramData = 'C:\\ProgramData';
-        const expectedRoamingAppData = `C:\\Users\\${user}\\AppData\\Roaming`;
+        const expectedRoamingAppData = `C:\\Users\\${profileFolderName}\\AppData\\Roaming`;
 
         let result = SHGetKnownFolderPath(WinFolderID.FOLDERID_LocalAppData);
         assert.strictEqual(result, expectedLocalAppData);
