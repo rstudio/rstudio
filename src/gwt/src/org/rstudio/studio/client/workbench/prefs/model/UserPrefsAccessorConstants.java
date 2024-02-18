@@ -2107,6 +2107,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("User-provided name for the currently opened R project.")
    String projectNameDescription();
 
+   /**
+    * Default working directory in background job dialog.
+    */
+   @DefaultStringValue("Run as background job default working directory")
+   String runBackgroundJobDefaultWorkingDirTitle();
+   @DefaultStringValue("Default working directory in background job dialog.")
+   String runBackgroundJobDefaultWorkingDirDescription();
+   @DefaultStringValue("Project folder")
+   String runBackgroundJobDefaultWorkingDirEnum_project();
+   @DefaultStringValue("Script folder")
+   String runBackgroundJobDefaultWorkingDirEnum_script();
+
 
 
 }
