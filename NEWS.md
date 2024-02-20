@@ -20,9 +20,11 @@
 - Show Quarto version information in the About dialog (#14263)
 - RStudio now reports repository validation errors (if any) when adding secondary repositories in the Global Options -> Packages pane (#13842)
 - The working directory of a background job now defaults to the .Rproj location when a project is open (#12600)
+- Add search results copy button and search results breadcrumbs to RStudio User Guide (#14069)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
+- Add search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
 
 ### Fixed
 #### RStudio
