@@ -58,8 +58,8 @@ pipeline {
           steps {
             script {
               sh 'printenv'
-              sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
-              utils = load "${env.WORKSPACE}/utils.groovy"
+              sh "echo 'Loading utils from ${env.WORKSPACE}/jenkins/utils.groovy'"
+              utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
             }
           }
         }
