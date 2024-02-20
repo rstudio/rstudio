@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
@@ -73,10 +74,12 @@ public class JobManager implements JobRefreshEvent.Handler,
                      JobsServerOperations server,
                      GlobalDisplay display,
                      Provider<SourceWindowManager> pSourceManager,
+                     Provider<UserPrefs> pUserPerfs,
                      Provider<WorkbenchContext> pWorkbench)
    {
       events_ = events;
       pSession_ = pSession;
+      pUserPrefs_ = pUserPerfs;
       state_ = JobState.create();
       server_ = server;
       display_ = display;
@@ -148,10 +151,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       if (event.path() != null)
          path = FileSystemItem.createFile(event.path());
 
-      FileSystemItem workingDir = path == null ?
-         pWorkbench_.get().getCurrentWorkingDir() : path.getParentPath();
-
-      showJobLauncherDialog(path, workingDir, event.code());
+      showJobLauncherDialog(path, computeWorkingDir(path), event.code());
    }
 
    @Override
@@ -402,6 +402,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       JobLauncherDialog dialog = new JobLauncherDialog(constants_.runScriptAsBackgroundJobCaption(),
             JobLauncherDialog.JobSource.Script,
             path,
+            computeWorkingDir(path),
             spec ->
             {
                // check to see if we know the encoding of this document
@@ -457,11 +458,33 @@ public class JobManager implements JobRefreshEvent.Handler,
       }
    };
 
+   /**
+    * Compute the default working directory for the "Run Script as Background Job" dialog
+    */
+   private FileSystemItem computeWorkingDir(FileSystemItem scriptPath)
+   {
+      if (scriptPath == null)
+         return pWorkbench_.get().getCurrentWorkingDir();
+
+      String defaultDirMode = pUserPrefs_.get().runBackgroundJobDefaultWorkingDir().getValue();
+      if (defaultDirMode == UserPrefs.RUN_BACKGROUND_JOB_DEFAULT_WORKING_DIR_PROJECT &&
+          pSession_.get().getSessionInfo().getActiveProjectDir() != null)
+      {
+         String projDir = pSession_.get().getSessionInfo().getActiveProjectDir().getPath();
+         if (projDir != null)
+            return FileSystemItem.createDir(projDir);
+      }
+
+      // default to the directory containing the script
+      return scriptPath.getParentPath();
+   }
+
    private JobState state_;
 
    // injected
    private final EventBus events_;
    private final Provider<Session> pSession_;
+   private final Provider<UserPrefs> pUserPrefs_;
    private final Provider<WorkbenchContext> pWorkbench_;
    private final JobsServerOperations server_;
    private final Provider<SourceWindowManager> pSourceManager_;
