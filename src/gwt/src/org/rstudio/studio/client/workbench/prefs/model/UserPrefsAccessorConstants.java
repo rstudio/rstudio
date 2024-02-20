@@ -2110,7 +2110,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * Default working directory in background job dialog.
     */
-   @DefaultStringValue("Run as background job default working directory")
+   @DefaultStringValue("Default working directory for background jobs")
    String runBackgroundJobDefaultWorkingDirTitle();
    @DefaultStringValue("Default working directory in background job dialog.")
    String runBackgroundJobDefaultWorkingDirDescription();

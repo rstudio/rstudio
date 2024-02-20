@@ -1723,7 +1723,7 @@
             "enum": ["project", "script"],
             "enumReadable": ["Project folder", "Script folder"],
             "default": "project",
-            "title": "Run as background job default working directory",
+            "title": "Default working directory for background jobs",
             "description": "Default working directory in background job dialog."
         }
       }
