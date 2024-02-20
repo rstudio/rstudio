@@ -1,0 +1,39 @@
+pipeline {
+  agent none
+
+  options {
+    disableConcurrentBuilds()
+    buildDiscarder(
+      logRotator(
+        artifactDaysToKeepStr: '',
+        artifactNumToKeepStr: '',
+        daysToKeepStr: '',
+        numToKeepStr: '100'))
+    rateLimitBuilds(throttle: [count: 1, durationName: 'hour', userBoost: true])
+  }
+  
+  parameters {
+    booleanParam name: 'PUBLISH', defaultValue: true, description: 'Publish the build to S3 and sentry.'
+    string name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS'
+    string name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH'
+    string name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', trim: true
+  }
+
+  stages {
+    stage('Trigger Hourly Build') {
+      steps {
+        build wait: false,
+              job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/Builders/hourly-build-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
+              parameters: [
+                booleanParam(name: "DAILY", value: false),
+                booleanParam(name: "PUBLISH", value: params.PUBLISH),
+                booleanParam(name: "FORCE_BUILD_BINARIES", value: false),
+                booleanParam(name: "FORCE_BUILD_DOCKER", value: false),
+                string(name: "OS_FILTER", value: params.OS_FILTER),
+                string(name: "ARCH_FILTER", value: params.ARCH_FILTER),
+                string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
+              ]
+      }
+    }
+  }
+}
