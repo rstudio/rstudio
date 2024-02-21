@@ -50,9 +50,11 @@
 - Fixed a regression where the Data Viewer did not display 'variable.labels' for columns (#14265)
 - Fixed an issue where autocompletion help was not properly displayed for development help topics (#14273)
 - Fixed an issue where Shiny onSessionEnded callbacks could be interrupted when stopped in RStudio (#13394)
+- Fixed Copyright date ranges for Release Notes and RStudio IDE User Guide (#14078)
 
 #### Posit Workbench
--
+
+- Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (#5865)
 
 ### Dependencies
 - Updated Ace to version 1.32.5 (#14227; Desktop + Server)
