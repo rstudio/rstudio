@@ -35,6 +35,7 @@ This page provides the release notes associated with each release of RStudio and
 - Fixed regression introduced in 2023.06 with `rstudio-server reload` where permission changed on nginx directories caused intermittent content loading errors (rstudio-pro#5636)
 - Fixed intermittent rworkspaces performance problem where in unusual circumstances, it would make repeated get_jobs requests (rstudio-pro#5690)
 - Fixed rworkspaces crash with debug logging enabled when get_jobs request returned an error (rstudio/rstudio-pro#5690)
+- Fixed supported Slurm versions in Integrating with Slurm - Administration Guide (rstudio-pro#5857) <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
 
 ## RStudio 2023.12.0
 
