@@ -1238,7 +1238,7 @@ void onDetectChanges(module_context::ChangeSource /* source */)
 
 namespace {
 
-SEXP inferDebugSourceRefs(boost::shared_ptr<LineDebugState> pLineDebugState)
+SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
 {
    using namespace r::context;
    
@@ -1249,11 +1249,10 @@ SEXP inferDebugSourceRefs(boost::shared_ptr<LineDebugState> pLineDebugState)
       return srcref;
    
    // no source reference available; try to find an appropriate context
-   // first, check and see if we can map the browser context to a closure
-   // on the context stack
    for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
    {
       // if we find a CTXT_BROWSER context, try to find its matching CTXT_FUNCTION
+      // these contexts are occasionally created when e.g. stepping into tryCatch
       if (it->callflag() & CTXT_BROWSER)
       {
          SEXP cloenv = it->cloenv();
@@ -1348,7 +1347,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0 && !r::context::inDebugHiddenContext())
    {
-      SEXP srcref = inferDebugSourceRefs(pLineDebugState);
+      SEXP srcref = inferDebugSrcrefs(pLineDebugState);
       enqueBrowserLineChangedEvent(srcref);
    }
    
