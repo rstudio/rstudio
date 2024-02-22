@@ -373,8 +373,6 @@ var RCodeModel = function(session, tokenizer,
 
          if (cursor.fwdToMatchingToken())
          {
-            if (!cursor.moveToNextToken())
-               break;
             continue;
          }
 
