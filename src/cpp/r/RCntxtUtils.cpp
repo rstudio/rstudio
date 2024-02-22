@@ -67,9 +67,11 @@ RCntxt getFunctionContext(const int depth,
       {
          browseEnv = ctxt->cloenv();
       }
+      
       if (ctxt->callflag() & CTXT_FUNCTION)
       {
          currentDepth++;
+         
          if (depth == BROWSER_FUNCTION && ctxt->cloenv() == browseEnv)
          {
             foundDepth = currentDepth;
@@ -93,12 +95,14 @@ RCntxt getFunctionContext(const int depth,
    {
       *pFoundDepth = foundDepth;
    }
+   
    if (pEnvironment)
    {
       *pEnvironment = (foundDepth == 0 || foundContext.isNull()) ?
          R_GlobalEnv : 
          foundContext.cloenv();
    }
+   
    return foundContext;
 }
 

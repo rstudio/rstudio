@@ -240,7 +240,7 @@ bool isGlobalEnvironmentSerializable()
 
 bool isValidSrcref(SEXP srcref)
 {
-   return srcref && TYPEOF(srcref) != NILSXP;
+   return srcref && TYPEOF(srcref) != NILSXP && TYPEOF(srcref) != SYMSXP;
 }
 
 bool handleRBrowseEnv(const core::FilePath& filePath)
@@ -624,22 +624,27 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
 {
    SEXP simulatedSrcref = R_NilValue;
    r::sexp::Protect protect;
+   
    // The objects we will later transmit to .rs.simulateSourceRefs below
    // include language objects that we need to protect from early evaluation.
    // Attach them to a carrier SEXP as attributes rather than passing directly.
    SEXP info = r::sexp::create("_rs_sourceinfo", &protect);
    r::sexp::setAttrib(info, "_rs_callfun", context.callfun());
    if (lineContext)
+   {
       r::sexp::setAttrib(info, "_rs_callobj", lineContext.call());
+   }
    else if (pLineDebugState != nullptr)
    {
       SEXP lastDebugSEXP = r::sexp::create(
                pLineDebugState->lastDebugText, &protect);
       r::sexp::setAttrib(info, "_rs_calltext", lastDebugSEXP);
+      
       SEXP lastLineSEXP = r::sexp::create(
                pLineDebugState->lastDebugLine, &protect);
       r::sexp::setAttrib(info, "_rs_lastline", lastLineSEXP);
    }
+   
    Error error = r::exec::RFunction(".rs.simulateSourceRefs", info)
          .call(&simulatedSrcref, &protect);
    if (error)
@@ -722,6 +727,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          else
          {
             varFrame["real_sourceref"] = false;
+            
             // if this is the top frame, we simulate the sourceref using R
             // output of the last debugged statement; if it isn't, we
             // construct it by deparsing calls in the context stack.
@@ -1599,7 +1605,7 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
       pLineDebugState->lastDebugText.append(output);
    }
    else if (type == module_context::ConsoleOutputNormal &&
-       output == "debug: ")
+            output == "debug: ")
    {
       // start capturing debug output when R outputs "debug: "
       pLineDebugState->lastDebugText = "";
