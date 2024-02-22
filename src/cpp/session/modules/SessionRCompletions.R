@@ -3043,8 +3043,8 @@ assign(x = ".rs.acCompletionTypes",
       .rs.tryCatch({
          newlineIndex <- regexpr("\n", currentStatement, fixed = TRUE)
          firstLine <- substring(currentStatement, 1L, newlineIndex - 1L)
-         firstLine <- gsub("\\|\\>\\s*(?:#|$)", "", firstLine)
-         firstLine <- gsub("%[^%]+%\\s*(?:#|$)", "", firstLine)
+         firstLine <- gsub("\\|\\>\\s*(?:#|$)", "", firstLine, perl = TRUE)
+         firstLine <- gsub("%[^%]+%\\s*(?:#|$)", "", firstLine, perl = TRUE)
          firstCall <- parse(text = .rs.finishExpression(firstLine))[[1L]]
          if (is.call(firstCall) && length(firstCall) == 3L)
             firstCall <- firstCall[[2L]]
