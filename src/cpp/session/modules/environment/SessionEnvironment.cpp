@@ -1130,8 +1130,9 @@ void enqueContextDepthChangedEvent(int depth,
 {
    // emit an event to the client indicating the new call frame and the
    // current state of the environment
-   ClientEvent event (client_events::kContextDepthChanged,
-                      commonEnvironmentStateData(depth, s_monitoring, pLineDebugState));
+   ClientEvent event(
+            client_events::kContextDepthChanged,
+            commonEnvironmentStateData(depth, s_monitoring, pLineDebugState));
    module_context::enqueClientEvent(event);
 }
 
@@ -1244,32 +1245,32 @@ SEXP inferDebugSourceRefs(boost::shared_ptr<LineDebugState> pLineDebugState)
    // no source reference available; try to find an appropriate context
    // first, check and see if we can map the browser context to a closure
    // on the context stack
-   SEXP debuggedClosure = nullptr;
    for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
    {
-      // record a CTXT_BROWSER entry if we find it
+      // if we find a CTXT_BROWSER context, try to find its matching CTXT_FUNCTION
       if (it->callflag() & CTXT_BROWSER)
       {
-         debuggedClosure = it->cloenv();
-         continue;
+         SEXP cloenv = it->cloenv();
+         for (; it != RCntxt::end(); it++)
+         {
+            if (it->callflag() & CTXT_FUNCTION)
+            {
+               if (cloenv == it->cloenv())
+               {
+                  return simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
+               }
+            }
+         }
       }
 
-      // check for the debugged closure
-      bool foundContext =
-            debuggedClosure != nullptr &&
-            it->callflag() & CTXT_FUNCTION &&
-            it->cloenv() == debuggedClosure;
-      
-      if (foundContext)
+      // if we find a CTXT_FUNCTION context, use it
+      if (it->callflag() & CTXT_FUNCTION)
+      {
          return simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
+      }
    }
 
-   // if that failed, just use the first function we find
-   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
-      if (it->callflag() & CTXT_FUNCTION)
-         return simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
-   
-   // shouldn't happen
+   // shouldn't happen, but just in case
    return R_NilValue;
 }
 
