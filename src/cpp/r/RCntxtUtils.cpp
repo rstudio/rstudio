@@ -51,16 +51,6 @@ RCntxt globalContext()
    return RCntxt(R_GlobalContext);
 }
 
-RCntxt firstFunctionContext()
-{
-   RCntxt::iterator firstFunContext = RCntxt::begin();
-   while ((firstFunContext->callfun() == nullptr ||
-           firstFunContext->callfun() == R_NilValue) &&
-          firstFunContext->callflag())
-      firstFunContext++;
-   return *firstFunContext;
-}
-
 RCntxt getFunctionContext(const int depth,
                           int* pFoundDepth,
                           SEXP* pEnvironment)
