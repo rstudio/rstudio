@@ -1,7 +1,9 @@
 ## RStudio 2024.04.0 "Chocolate Cosmos" Release Notes
 
 ### New
+
 #### RStudio
+- RStudio now requires R 3.6.0 or newer. (#14210)
 - RStudio's auto-completion system now supports ggplot2 aesthetic names and data columns (#8444)
 - RStudio's auto-completion system now supports the display of the "label" attribute (#14242)
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
