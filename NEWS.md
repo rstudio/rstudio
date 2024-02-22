@@ -50,6 +50,7 @@
 - Fixed a regression where the Data Viewer did not display 'variable.labels' for columns (#14265)
 - Fixed an issue where autocompletion help was not properly displayed for development help topics (#14273)
 - Fixed an issue where Shiny onSessionEnded callbacks could be interrupted when stopped in RStudio (#13394)
+- Fixed mis-encoded Hunspell dictionaries (#8147)
 
 #### Posit Workbench
 -
