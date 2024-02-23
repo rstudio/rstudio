@@ -8,11 +8,12 @@ website:
   open-graph: true
   page-navigation: true
   site-url: https://docs.posit.co/ide/user/
+  search:
+    copy-button: true
+    show-item-context: true
   repo-url: https://github.com/rstudio/rstudio/
   repo-subdir: "docs/user/rstudio/"
   repo-actions: [edit, source]
-  search:
-    show-item-context: true
   
   navbar:
     title: "RStudio User Guide<br>{{< var buildType >}} {{< var version >}}"
