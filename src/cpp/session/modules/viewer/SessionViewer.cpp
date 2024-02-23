@@ -427,6 +427,10 @@ void viewer(const std::string& url,
          }
          else
          {
+            // clear the existing viewer history
+            viewerHistory().clear();
+            
+            // navigate to the requested file
             viewerNavigate(module_context::sessionTempDirUrl(path),
                            height,
                            false,

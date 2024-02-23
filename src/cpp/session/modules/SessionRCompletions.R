@@ -2744,6 +2744,7 @@ assign(x = ".rs.acCompletionTypes",
    
    ## Other special cases (but we may still want completions from
    ## other contexts)
+   triedGgplot2Completions <- FALSE
    
    # attr
    completions <- if (string[[1]] == "attr")
@@ -2772,6 +2773,7 @@ assign(x = ".rs.acCompletionTypes",
          lhs <- as.character(lhs)
          if (lhs %in% c("aes") || grepl("^facet_", lhs))
          {
+            triedGgplot2Completions <- TRUE
             completions <- tryCatch(
                .rs.getCompletionsGgplot2(token, contextData, statementBounds, documentId, envir),
                error = function(e) .rs.emptyCompletions(token)
@@ -2833,6 +2835,16 @@ assign(x = ".rs.acCompletionTypes",
          
          if (stopGeneratingCompletions)
             break
+         
+         # Ignore completions from the 'aes()' function if we've
+         # already tried to retrieve more relevant aesthetics
+         skipFunctionCompletions <-
+            triedGgplot2Completions &&
+            context[[i]] == .rs.acContextTypes$FUNCTION &&
+            string[[i]] %in% "aes"
+         
+         if (skipFunctionCompletions)
+            next
          
          completions <- .rs.appendCompletions(
             completions,
@@ -3031,8 +3043,8 @@ assign(x = ".rs.acCompletionTypes",
       .rs.tryCatch({
          newlineIndex <- regexpr("\n", currentStatement, fixed = TRUE)
          firstLine <- substring(currentStatement, 1L, newlineIndex - 1L)
-         firstLine <- gsub("\\|\\>\\s*(?:#|$)", "", firstLine)
-         firstLine <- gsub("%[^%]+%\\s*(?:#|$)", "", firstLine)
+         firstLine <- gsub("\\|\\>\\s*(?:#|$)", "", firstLine, perl = TRUE)
+         firstLine <- gsub("%[^%]+%\\s*(?:#|$)", "", firstLine, perl = TRUE)
          firstCall <- parse(text = .rs.finishExpression(firstLine))[[1L]]
          if (is.call(firstCall) && length(firstCall) == 3L)
             firstCall <- firstCall[[2L]]
