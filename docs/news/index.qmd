@@ -36,6 +36,7 @@ This page provides the release notes associated with each release of RStudio and
 - Fixed intermittent rworkspaces performance problem where in unusual circumstances, it would make repeated get_jobs requests (rstudio-pro#5690)
 - Fixed rworkspaces crash with debug logging enabled when get_jobs request returned an error (rstudio/rstudio-pro#5690)
 - Fixed supported Slurm versions in Integrating with Slurm - Administration Guide (rstudio-pro#5857) <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
+- Added missing Slurm dependency to Integrating with Slurm documentation (rstudio-pro#5876) <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
 
 ## RStudio 2023.12.0
 
