@@ -59,7 +59,7 @@
 
 #### Posit Workbench
 
-- Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (#5865)
+- Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (rstudio-pro#5865)
 
 ### Dependencies
 - Updated Ace to version 1.32.5 (#14227; Desktop + Server)
