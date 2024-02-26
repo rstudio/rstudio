@@ -43,6 +43,7 @@ describe('WinstonLogger', () => {
       const logOptions = new LogOptions(undefined, { config: `[*]\nlog-level=${logLevel}\nlog-dir=./tmp` });
       const logger = new WinstonLogger(logOptions);
       assert.equal(logger.logLevel(), logLevel, 'Logger log level should be ' + logLevel);
+      logger.closeLogFile();
     });
   });
 
@@ -55,6 +56,7 @@ describe('WinstonLogger', () => {
       logger.setLogLevel(logLevel);
 
       assert.equal(logger.logLevel(), logLevel, 'Logger log level should be ' + logLevel);
+      logger.closeLogFile();
     });
   });
 
