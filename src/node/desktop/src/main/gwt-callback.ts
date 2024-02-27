@@ -203,7 +203,7 @@ export class GwtCallback extends EventEmitter {
         const filters: FileFilter[] = [{ name: i18next.t('common.allFiles'), extensions: ['*'] }];
         if (defaultExtension) {
           const extension = defaultExtension.replace('.', '');
-          filters.push({ name: extension, extensions: [extension] });
+          filters.unshift({ name: extension, extensions: [extension] });
         }
         saveDialogOptions['filters'] = filters;
         let focusedWindow = BrowserWindow.getFocusedWindow();

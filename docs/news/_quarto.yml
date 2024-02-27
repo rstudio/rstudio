@@ -29,7 +29,7 @@ website:
 
   page-footer:
     left: |
-      Copyright © 2022 Posit Software, PBC, formerly RStudio, PBC. All Rights Reserved.
+      Copyright © 2011-2024 Posit Software, PBC, formerly RStudio, PBC. All Rights Reserved.
     right:
       - icon: question-circle-fill
         href: https://support.posit.co/hc/en-us

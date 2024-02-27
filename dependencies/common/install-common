@@ -26,7 +26,6 @@ set -e
 ./install-sentry-cli
 ./install-npm-dependencies
 ./install-soci
-./install-yaml-cpp
 ./install-crashpad
 ./install-panmirror
 ./install-sccache

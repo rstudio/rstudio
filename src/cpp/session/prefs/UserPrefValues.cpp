@@ -3312,6 +3312,19 @@ core::Error UserPrefValues::setProjectName(std::string val)
    return writePref("project_name", val);
 }
 
+/**
+ * Default working directory in background job dialog.
+ */
+std::string UserPrefValues::runBackgroundJobDefaultWorkingDir()
+{
+   return readPref<std::string>("run_background_job_default_working_dir");
+}
+
+core::Error UserPrefValues::setRunBackgroundJobDefaultWorkingDir(std::string val)
+{
+   return writePref("run_background_job_default_working_dir", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3568,6 +3581,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,
       kProjectName,
+      kRunBackgroundJobDefaultWorkingDir,
    });
 }
    

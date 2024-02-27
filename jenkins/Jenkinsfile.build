@@ -57,7 +57,7 @@ pipeline {
       
       steps {
         script {
-          utils = load "${env.WORKSPACE}/utils.groovy"
+          utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
           
           // Get the current commit
           COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'

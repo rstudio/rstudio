@@ -1,7 +1,9 @@
 ## RStudio 2024.04.0 "Chocolate Cosmos" Release Notes
 
 ### New
+
 #### RStudio
+- RStudio now requires R 3.6.0 or newer. (#14210)
 - RStudio's auto-completion system now supports ggplot2 aesthetic names and data columns (#8444)
 - RStudio's auto-completion system now supports the display of the "label" attribute (#14242)
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
@@ -18,10 +20,13 @@
 - 'dot' chunks in R Markdown documents are now executable (#14063)
 - (rstudioapi) Fixed an issue where selectFile() did not parse filter strings in a cross-platform way (#13994)
 - Show Quarto version information in the About dialog (#14263)
-- RStudio now reports repository validation errors (if any) when adding secondary repositories in the Global Options -> Packages pane. (#13842)
+- RStudio now reports repository validation errors (if any) when adding secondary repositories in the Global Options -> Packages pane (#13842)
+- The working directory of a background job now defaults to the .Rproj location when a project is open (#12600)
+- Add search results copy button and search results breadcrumbs to RStudio User Guide (#13618, #14069)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
+- Add search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
 
 ### Fixed
 #### RStudio
@@ -47,9 +52,15 @@
 - Fixed regression that caused extra whitespace at bottom of some popups (#14223)
 - Fix type dropdowns not working in dataset import when user-interface is in French (#14224)
 - Fixed an issue where RStudio failed to retrieve help for certain S3 methods (#14232)
+- Fixed a regression where the Data Viewer did not display 'variable.labels' for columns (#14265)
+- Fixed an issue where autocompletion help was not properly displayed for development help topics (#14273)
+- Fixed an issue where Shiny onSessionEnded callbacks could be interrupted when stopped in RStudio (#13394)
+- Fixed Copyright date ranges for Release Notes and RStudio IDE User Guide (#14078)
+- Fixed mis-encoded Hunspell dictionaries (#8147)
 
 #### Posit Workbench
--
+
+- Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (rstudio-pro#5865)
 
 ### Dependencies
 - Updated Ace to version 1.32.5 (#14227; Desktop + Server)
