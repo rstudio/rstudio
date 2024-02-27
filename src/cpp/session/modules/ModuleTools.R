@@ -410,13 +410,10 @@
    args <- c(c("+RTS", paste0("-K", stack_size), "-RTS"), args)
    
    # additional options
-   if (requireNamespace("rmarkdown", quietly = TRUE) && rmarkdown::pandoc_available("2.19")) {
-     args <- c(args, "--embed-resources", "--standalone")
-   } else {
-     # --self-contained deprecated in pandoc 2.19
-     # https://github.com/rstudio/rstudio/issues/14332
-     args <- c(args, "--self-contained")
-   }
+   # --self-contained deprecated in pandoc 2.19
+   # https://github.com/rstudio/rstudio/issues/14332
+   args <- c(args, "--embed-resources", "--standalone")
+
    args <- c(args, "--template", template)
    
    # build the conversion command
