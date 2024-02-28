@@ -66,12 +66,10 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
            rVersions.getAvailableRVersions(),
            false,
            false,
-           false);
-         RVersionSpec rVersion = RVersionSpec.create(
-               rVersions.getDefaultRVersion(),
-               rVersions.getDefaultRVersionHome(),
-               rVersions.getRVersionLabel());
-         rVersionSelector_.setRVersion(rVersion);
+           false,
+           false,
+           // Use the current version by default.
+           rVersions.getRVersionSpec());
          addLeftWidget(rVersionSelector_);
          rVersionSelector_.getElement().getStyle().setMarginRight(8, Unit.PX);
          rVersionSelector_.setVisible(false);

@@ -54,6 +54,19 @@ public class RVersionSelectWidget extends SelectWidget
                                boolean fillContainer,
                                boolean includeUserSpecified)
    {
+      this(caption, uniqueId, rVersions, includeSystemDefault, includeHelpButton,
+           fillContainer, includeUserSpecified, null);
+   }
+
+   public RVersionSelectWidget(String caption,
+                               ElementIds.SelectWidgetId uniqueId,
+                               JsArray<RVersionSpec> rVersions,
+                               boolean includeSystemDefault,
+                               boolean includeHelpButton,
+                               boolean fillContainer,
+                               boolean includeUserSpecified,
+                               RVersionSpec defaultRVersion)
+   {
       super(caption,
             uniqueId,
             rVersionChoices(rVersions, includeSystemDefault, includeUserSpecified),
@@ -67,6 +80,8 @@ public class RVersionSelectWidget extends SelectWidget
       includeUserSpecified_ = includeUserSpecified;
       if (includeHelpButton)
          HelpButton.addHelpButton(this, "multiple_r_versions", constants_.helpOnRVersionsTitle());
+
+      setValue(rVersionSpecToString(defaultRVersion));
    }
 
    public void setIncludeUserSpecified(boolean includeUserSpecified) {
@@ -85,10 +100,13 @@ public class RVersionSelectWidget extends SelectWidget
    }
 
    private void updateChoices() {
+      String current = getValue();
       setChoices(
          rVersionChoices(rVersions_, includeSystemDefault_, includeUserSpecified_),
          rVersionValues(rVersions_, includeSystemDefault_, includeUserSpecified_)
       );
+      if (current != null)
+         setValue(current);
    }
    
    public void setRVersion(RVersionSpec version)
