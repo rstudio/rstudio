@@ -686,16 +686,15 @@ Error initializeDefinitionIndex()
       FilePath includePath = pkgPath.completeChildPath("inst/include");
       if (srcPath.exists() || includePath.exists())
       {
-         // create an incremental file change handler (on the heap so that it
-         // survives the call to this function and is never deleted)
-         IncrementalFileChangeHandler* pFileChangeHandler =
-           new IncrementalFileChangeHandler(
+         // create an incremental file change handler
+         // (lifetime of this handler should be same as the program itself)
+         static IncrementalFileChangeHandler handler(
                   boost::bind(isIndexableFile, _1, srcPath, includePath),
                   fileChangeHandler,
                   boost::posix_time::seconds(3),
                   boost::posix_time::milliseconds(500),
                   true);
-         pFileChangeHandler->subscribeToFileMonitor("Go to C/C++ Definition");
+         handler.subscribeToFileMonitor("Go to C/C++ Definition");
       }
 
       // set initialized flag
