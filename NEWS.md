@@ -56,6 +56,7 @@
 - Fixed an issue where Shiny onSessionEnded callbacks could be interrupted when stopped in RStudio (#13394)
 - Fixed Copyright date ranges for Release Notes and RStudio IDE User Guide (#14078)
 - Fixed mis-encoded Hunspell dictionaries (#8147)
+- Improved responsiveness of C / C++ editor intelligence features when switching Git branches (#14320)
 
 #### Posit Workbench
 
