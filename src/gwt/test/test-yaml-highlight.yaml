@@ -5,6 +5,8 @@ comments:
 - Some text# This is not a comment!
 - Some#text#with#embedded#hashes. # A real comment.
 - # This is a comment. The entry here should be parsed as NULL.
+- true # Keywords can have comments after them.
+- 42.0 # So can numbers.
 
 text:
 - This is a string. It has numbers like 1, 2, and 3.
@@ -46,6 +48,7 @@ lists:
 
 dictionaries:
 - { "a": 42, "b": 64 }
+- { "c": 64, "d": 86 }
 
 https://github.com/rstudio/rstudio/issues/13836:
 - label: fig-plot-no-1
@@ -53,3 +56,19 @@ https://github.com/rstudio/rstudio/issues/13836:
    - Caption for Plot 1
    - Caption for Plot 2
 - layout-ncol: 2.1
+
+
+label: fig-plot-no-1
+classes: fig plot no 1
+cache: no
+cache-vars: no fig plot 1
+fig-cap: A caption
+fig-subcap:
+  - Caption for Plot 1
+  - Caption for Plot 2
+  - Caption TRUE
+  - TRUE
+  - TRUE caption
+  - TRUE-caption
+layout-ncol: 2
+layout-nrow: 2 + 2
