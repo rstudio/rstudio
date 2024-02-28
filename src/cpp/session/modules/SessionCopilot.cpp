@@ -507,6 +507,28 @@ void sendRequest(const std::string& method,
    s_pendingRequests.push(request);
 }
 
+// Should only be used for debugging, as this will block the R session
+// while the request is being serviced.
+json::Object sendSynchronousRequest(const std::string& method,
+                                   const std::string& requestId,
+                                   const json::Value& paramsJson)
+{
+   json::Object result;
+   bool responseReceived = false;
+   
+   auto continuation = [&](const Error& error, json::JsonRpcResponse* pResponse)
+   {
+      responseReceived = true;
+      if (error == Success() && pResponse->result().isObject())
+         result = pResponse->result().getObject();
+   };
+   
+   sendRequest(method, requestId, paramsJson, CopilotContinuation(continuation));
+   waitFor([&]() { return responseReceived; });
+   
+   return result;
+}
+
 void setEditorInfo()
 {
    json::Object paramsJson;
@@ -1245,11 +1267,66 @@ void onShutdown(bool)
    s_agentPid = -1;
 }
 
+// Primarily intended for debugging / exploration.
+SEXP rs_copilotSendRequest(SEXP methodSEXP, SEXP paramsSEXP)
+{
+   std::string method = r::sexp::asString(methodSEXP);
+   
+   json::Object paramsJson;
+   if (r::sexp::length(paramsSEXP) != 0)
+   {
+      Error error = r::json::jsonValueFromObject(paramsSEXP, &paramsJson);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return R_NilValue;
+      }
+   }
+   
+   std::string requestId = core::system::generateUuid();
+   json::Object responseJson = sendSynchronousRequest(method, requestId, paramsJson);
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(responseJson, &protect);
+}
+
 SEXP rs_copilotSetLogLevel(SEXP logLevelSEXP)
 {
    int logLevel = r::sexp::asInteger(logLevelSEXP);
    s_copilotLogLevel = logLevel;
    return logLevelSEXP;
+}
+
+std::string copilotVersion()
+{
+   std::string requestId = core::system::generateUuid();
+   json::Object responseJson = sendSynchronousRequest("getVersion", requestId, json::Object());
+   
+   std::string version;
+   if (responseJson.hasMember("result"))
+   {
+      json::Object resultJson = responseJson["result"].getObject();
+      if (resultJson.hasMember("version"))
+      {
+         json::Value versionJson = resultJson["version"];
+         if (versionJson.isString())
+         {
+            version = versionJson.getString();
+         }
+      }
+   }
+   
+   return version;
+}
+
+SEXP rs_copilotVersion()
+{
+   if (!isCopilotEnabled())
+      return R_NilValue;
+   
+   std::string version = copilotVersion();
+   r::sexp::Protect protect;
+   return r::sexp::create(version, &protect);
 }
 
 Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
@@ -1424,7 +1501,9 @@ Error initialize()
    // editting preferences within the Copilot prefs dialog, anyhow.
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
+   RS_REGISTER_CALL_METHOD(rs_copilotSendRequest);
    RS_REGISTER_CALL_METHOD(rs_copilotSetLogLevel);
+   RS_REGISTER_CALL_METHOD(rs_copilotVersion);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
