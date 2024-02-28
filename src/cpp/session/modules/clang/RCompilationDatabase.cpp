@@ -294,7 +294,7 @@ std::string buildFileHash(const FilePath& filePath)
    }
 }
 
-std::string computeCompilerHash(bool isCpp)
+std::string computeCompilerHashImpl(bool isCpp)
 {
    // include hash of default compiler version, so we can
    // detect cases where the compiler version has changed
@@ -349,7 +349,25 @@ std::string computeCompilerHash(bool isCpp)
    
    std::stringstream ss;
    ss << std::hash<std::string>{}(string_utils::trimWhitespace(result.stdOut));
-   return ss.str();
+   std::string hash = ss.str();
+   
+   return hash;
+}
+
+// NOTE: We assume that the compiler will not change within a single R session.
+// If the user wants to change the compiler they're using, they should restart R.
+std::string computeCompilerHash(bool isCpp)
+{
+   if (isCpp)
+   {
+      static std::string hash = computeCompilerHashImpl(true);
+      return hash;
+   }
+   else
+   {
+      static std::string hash = computeCompilerHashImpl(false);
+      return hash;
+   }
 }
 
 std::string computePackageBuildFileHash()
@@ -984,7 +1002,8 @@ bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
 
 
 std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
-       const std::string& filename, bool usePrecompiledHeaders)
+      const std::string& filename,
+      bool usePrecompiledHeaders)
 {
    // args to return
    std::vector<std::string> args;

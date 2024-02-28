@@ -236,7 +236,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
       // get the compilation arguments for this file and use them to
       // create a translation unit
       std::vector<std::string> compileArgs =
-         rCompilationDatabase().compileArgsForTranslationUnit(file, true);
+            rCompilationDatabase().compileArgsForTranslationUnit(file, true);
 
       if (!compileArgs.empty())
       {
