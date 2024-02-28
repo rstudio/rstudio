@@ -57,6 +57,7 @@
 - Fixed Copyright date ranges for Release Notes and RStudio IDE User Guide (#14078)
 - Fixed Copyright date ranges for Workbench Administrator and Workbench User Guide, and RStudio Desktop Pro Administration Guide (#5614)
 - Fixed mis-encoded Hunspell dictionaries (#8147)
+- Fixed an issue where the RStudio debugger failed to step through statements within a tryCatch() call (#14306)
 - Improved responsiveness of C / C++ editor intelligence features when switching Git branches (#14320)
 
 #### Posit Workbench
