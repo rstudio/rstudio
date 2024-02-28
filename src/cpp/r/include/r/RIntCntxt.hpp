@@ -36,6 +36,11 @@ public:
    {
       return pCntxt_->callfun;
    }
+   
+   SEXP sysparent() const
+   {
+      return pCntxt_->sysparent;
+   }
 
    int callflag() const
    {

@@ -226,6 +226,11 @@ SEXP RCntxt::callfun() const
    return pCntxt_ ? pCntxt_->callfun() : R_NilValue;
 }
 
+SEXP RCntxt::sysparent() const
+{
+   return pCntxt_ ? pCntxt_->sysparent() : R_NilValue;
+}
+
 int RCntxt::callflag() const
 {
    return pCntxt_ ? pCntxt_->callflag() : 0;
@@ -254,6 +259,31 @@ SEXP RCntxt::cloenv() const
 RCntxt RCntxt::nextcontext() const
 {
    return pCntxt_ ? pCntxt_->nextcontext() : RCntxt(nullptr);
+}
+
+SEXP dumpContexts()
+{
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder contextList(&protect);
+   
+   for (auto it = RCntxt::begin();
+        it != RCntxt::end();
+        ++it)
+   {
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("callfun", it->callfun());
+      builder.add("sysparent", it->sysparent());
+      builder.add("callflag", it->callflag());
+      builder.add("call", it->call());
+      builder.add("srcref", it->srcref());
+      builder.add("cloenv", it->cloenv());
+      builder.add("evaldepth", it->evaldepth());
+   
+      SEXP elt = r::sexp::create(builder, &protect);
+      contextList.add(elt);
+   }
+   
+   return r::sexp::create(contextList, &protect);
 }
 
 } // namespace context

@@ -240,7 +240,7 @@ bool isGlobalEnvironmentSerializable()
 
 bool isValidSrcref(SEXP srcref)
 {
-   return srcref && TYPEOF(srcref) != NILSXP;
+   return srcref && TYPEOF(srcref) != NILSXP && TYPEOF(srcref) != SYMSXP;
 }
 
 bool handleRBrowseEnv(const core::FilePath& filePath)
@@ -624,22 +624,27 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
 {
    SEXP simulatedSrcref = R_NilValue;
    r::sexp::Protect protect;
+   
    // The objects we will later transmit to .rs.simulateSourceRefs below
    // include language objects that we need to protect from early evaluation.
    // Attach them to a carrier SEXP as attributes rather than passing directly.
    SEXP info = r::sexp::create("_rs_sourceinfo", &protect);
    r::sexp::setAttrib(info, "_rs_callfun", context.callfun());
    if (lineContext)
+   {
       r::sexp::setAttrib(info, "_rs_callobj", lineContext.call());
+   }
    else if (pLineDebugState != nullptr)
    {
       SEXP lastDebugSEXP = r::sexp::create(
                pLineDebugState->lastDebugText, &protect);
       r::sexp::setAttrib(info, "_rs_calltext", lastDebugSEXP);
+      
       SEXP lastLineSEXP = r::sexp::create(
                pLineDebugState->lastDebugLine, &protect);
       r::sexp::setAttrib(info, "_rs_lastline", lastLineSEXP);
    }
+   
    Error error = r::exec::RFunction(".rs.simulateSourceRefs", info)
          .call(&simulatedSrcref, &protect);
    if (error)
@@ -722,6 +727,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          else
          {
             varFrame["real_sourceref"] = false;
+            
             // if this is the top frame, we simulate the sourceref using R
             // output of the last debugged statement; if it isn't, we
             // construct it by deparsing calls in the context stack.
@@ -1130,8 +1136,9 @@ void enqueContextDepthChangedEvent(int depth,
 {
    // emit an event to the client indicating the new call frame and the
    // current state of the environment
-   ClientEvent event (client_events::kContextDepthChanged,
-                      commonEnvironmentStateData(depth, s_monitoring, pLineDebugState));
+   ClientEvent event(
+            client_events::kContextDepthChanged,
+            commonEnvironmentStateData(depth, s_monitoring, pLineDebugState));
    module_context::enqueClientEvent(event);
 }
 
@@ -1229,6 +1236,73 @@ void onDetectChanges(module_context::ChangeSource /* source */)
    s_pEnvironmentMonitor->checkForChanges();
 }
 
+namespace {
+
+bool isEvalContext(const r::context::RCntxt& ctx)
+{
+   SEXP call = ctx.call();
+   if (TYPEOF(call) != LANGSXP)
+      return false;
+   
+   SEXP lhs = CAR(call);
+   if (TYPEOF(lhs) != SYMSXP)
+      return false;
+   
+   std::string name = CHAR(PRINTNAME(lhs));
+   return name == "eval" || name == "evalq";
+}
+
+SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
+{
+   using namespace r::context;
+   
+   // check to see if we have real source references for the currently
+   // executing context
+   SEXP srcref = r::context::globalContext().srcref();
+   if (isValidSrcref(srcref))
+      return srcref;
+   
+   // no source reference available; try to find an appropriate context
+   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
+   {
+      // if we find a CTXT_BROWSER context, try to find its matching CTXT_FUNCTION
+      // these contexts are occasionally created when e.g. stepping into tryCatch
+      if (it->callflag() & CTXT_BROWSER)
+      {
+         SEXP cloenv = it->cloenv();
+         for (; it != RCntxt::end(); it++)
+         {
+            // skip 'eval' and 'evalq'
+            if (isEvalContext(*it))
+               continue;
+            
+            if (it->callflag() & CTXT_FUNCTION)
+            {
+               if (cloenv == it->cloenv())
+               {
+                  return simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
+               }
+            }
+         }
+      }
+
+      // skip 'eval' and 'evalq'
+      if (isEvalContext(*it))
+         continue;
+            
+      // if we find a CTXT_FUNCTION context, use it
+      if (it->callflag() & CTXT_FUNCTION)
+      {
+         return simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
+      }
+   }
+
+   // shouldn't happen, but just in case
+   return R_NilValue;
+}
+
+} // end anonymous namespace
+
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
                      boost::shared_ptr<LineDebugState> pLineDebugState,
                      boost::shared_ptr<bool> pCapturingDebugOutput,
@@ -1293,25 +1367,10 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
    
    // if we're debugging and stayed in the same frame, update the line number
-   else if (depth > 0)
+   else if (depth > 0 && !r::context::inDebugHiddenContext())
    {
-      // we don't want to send linenumber updates if the current depth is inside
-      // a debug-hidden function
-      if (!r::context::inDebugHiddenContext())
-      {
-         // check to see if we have real source references for the currently
-         // executing context
-         SEXP srcref = r::context::globalContext().srcref();
-         if (!isValidSrcref(srcref))
-         {
-            // we don't, so reconstruct them from R output
-            r::context::RCntxt firstFunContext =
-                  r::context::firstFunctionContext();
-            srcref = simulatedSourceRefsOfContext(firstFunContext, 
-                  r::context::RCntxt(), pLineDebugState.get());
-         }
-         enqueBrowserLineChangedEvent(srcref);
-      }
+      SEXP srcref = inferDebugSrcrefs(pLineDebugState);
+      enqueBrowserLineChangedEvent(srcref);
    }
    
 }
@@ -1567,7 +1626,7 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
       pLineDebugState->lastDebugText.append(output);
    }
    else if (type == module_context::ConsoleOutputNormal &&
-       output == "debug: ")
+            output == "debug: ")
    {
       // start capturing debug output when R outputs "debug: "
       pLineDebugState->lastDebugText = "";
@@ -1617,27 +1676,7 @@ SEXP rs_isBrowserActive()
 
 SEXP rs_dumpContexts()
 {
-   using namespace r::context;
-   
-   r::sexp::Protect protect;
-   r::sexp::ListBuilder contextList(&protect);
-   
-   for (auto it = RCntxt::begin();
-        it != RCntxt::end();
-        ++it)
-   {
-      r::sexp::ListBuilder builder(&protect);
-      builder.add("callfun", it->callfun());
-      builder.add("callflag", it->callflag());
-      builder.add("call", it->call());
-      builder.add("srcref", it->srcref());
-      builder.add("cloenv", it->cloenv());
-      
-      SEXP elt = r::sexp::create(builder, &protect);
-      contextList.add(elt);
-   }
-   
-   return r::sexp::create(contextList, &protect);
+   return r::context::dumpContexts();
 }
 
 bool isSuspendable()
