@@ -1238,6 +1238,20 @@ void onDetectChanges(module_context::ChangeSource /* source */)
 
 namespace {
 
+bool isEvalContext(const r::context::RCntxt& ctx)
+{
+   SEXP call = ctx.call();
+   if (TYPEOF(call) != LANGSXP)
+      return false;
+   
+   SEXP lhs = CAR(call);
+   if (TYPEOF(lhs) != SYMSXP)
+      return false;
+   
+   std::string name = CHAR(PRINTNAME(lhs));
+   return name == "eval" || name == "evalq";
+}
+
 SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
 {
    using namespace r::context;
@@ -1258,6 +1272,10 @@ SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
          SEXP cloenv = it->cloenv();
          for (; it != RCntxt::end(); it++)
          {
+            // skip 'eval' and 'evalq'
+            if (isEvalContext(*it))
+               continue;
+            
             if (it->callflag() & CTXT_FUNCTION)
             {
                if (cloenv == it->cloenv())
@@ -1268,6 +1286,10 @@ SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
          }
       }
 
+      // skip 'eval' and 'evalq'
+      if (isEvalContext(*it))
+         continue;
+            
       // if we find a CTXT_FUNCTION context, use it
       if (it->callflag() & CTXT_FUNCTION)
       {
