@@ -62,6 +62,7 @@
 #### Posit Workbench
 
 - Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (rstudio-pro#5865)
+- Fixed low-contrast text on Workbench pages [Accessibility] (rstudio-pro#4464)
 
 ### Dependencies
 - Updated Ace to version 1.32.5 (#14227; Desktop + Server)
