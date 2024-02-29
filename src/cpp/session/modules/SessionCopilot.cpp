@@ -795,14 +795,6 @@ void onExit(int status)
 {
    s_agentPid = -1;
    s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
-
-   if (s_isSessionShuttingDown)
-      return;
-
-   if (status != 0)
-   {
-      ELOG("Agent exited with status {}.", status);
-   }
 }
 
 } // end namespace agent
