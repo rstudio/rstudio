@@ -43,8 +43,6 @@ bool inBrowseContext();
 
 bool inDebugHiddenContext();
 
-RCntxt firstFunctionContext();
-
 RCntxt getFunctionContext(const int depth, 
                           int* pFoundDepth = nullptr,
                           SEXP* pEnvironment = nullptr);

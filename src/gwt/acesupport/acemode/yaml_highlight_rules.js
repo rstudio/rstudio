@@ -33,6 +33,13 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
    var oop = require("ace/lib/oop");
    var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
+   var makeNumberRule = function(suffix) {
+      return {
+         token: ["constant.numeric", "text"],
+         regex: `([-+]?(?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE][+-]?\\d*)?)(\\s*)${suffix}`
+      };
+   };
+
    var YamlHighlightRules = function () {
 
       var rules = {};
@@ -40,16 +47,9 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
       var makeKeywordRule = function(suffix) {
         return {
             token: ["constant.language.boolean", "text"],
-            regex: `\\b(true|false|TRUE|FALSE|True|False|yes|no)(\\s*)${suffix}`
+            regex: `\\b(true|false|TRUE|FALSE|True|False|yes|no|~)(\\s*)${suffix}`
         }
       }
-
-      rules["#number"] = [
-         {
-            token: "constant.numeric",
-            regex: "[-+]?(?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE][+-]?\\d*)?(?:$|(?![\\w.]))",
-         }
-      ];
 
       rules["#string"] = [
          {
@@ -131,12 +131,8 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
                return this.token;
             }
          },
-         {
-            include: "#number"
-         },
-
-         makeKeywordRule("(?=$)"),
-
+         makeNumberRule ("(?=(?:$|#))"),
+         makeKeywordRule("(?=(?:$|#))"),
          {
             token: "paren.lparen.keyword.operator",
             regex: "\\[",
@@ -188,12 +184,8 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
          {
             include: "#string"
          },
-         {
-            include: "#number"
-         },
-
-         makeKeywordRule("(?=$|[,\\]])"),
-
+         makeNumberRule ("(?=(?:$|[,\\]]))"),
+         makeKeywordRule("(?=(?:$|[,\\]]))"),
          {
             token: "text",
             regex: "[^,\\]]+",
@@ -227,15 +219,11 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
          {
             include: "#string"
          },
-         {
-            include: "#number"
-         },
-
-         makeKeywordRule("(?=$|[:,}])"),
-
+         makeNumberRule ("(?=(?:$|[:,}]))"),
+         makeKeywordRule("(?=(?:$|[:,}]))"),
          {
             token: "text",
-            regex: "[^:,]+",
+            regex: "[^}:,]+",
          }
       ];
 

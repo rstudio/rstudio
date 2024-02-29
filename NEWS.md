@@ -56,11 +56,15 @@
 - Fixed an issue where autocompletion help was not properly displayed for development help topics (#14273)
 - Fixed an issue where Shiny onSessionEnded callbacks could be interrupted when stopped in RStudio (#13394)
 - Fixed Copyright date ranges for Release Notes and RStudio IDE User Guide (#14078)
+- Fixed Copyright date ranges for Workbench Administrator and Workbench User Guide, and RStudio Desktop Pro Administration Guide (#5614)
 - Fixed mis-encoded Hunspell dictionaries (#8147)
+- Fixed an issue where the RStudio debugger failed to step through statements within a tryCatch() call (#14306)
+- Improved responsiveness of C / C++ editor intelligence features when switching Git branches (#14320)
 
 #### Posit Workbench
 
 - Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (rstudio-pro#5865)
+- Fixed low-contrast text on Workbench pages [Accessibility] (rstudio-pro#4464)
 
 ### Dependencies
 - Updated Ace to version 1.32.5 (#14227; Desktop + Server)

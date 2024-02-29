@@ -51,16 +51,6 @@ RCntxt globalContext()
    return RCntxt(R_GlobalContext);
 }
 
-RCntxt firstFunctionContext()
-{
-   RCntxt::iterator firstFunContext = RCntxt::begin();
-   while ((firstFunContext->callfun() == nullptr ||
-           firstFunContext->callfun() == R_NilValue) &&
-          firstFunContext->callflag())
-      firstFunContext++;
-   return *firstFunContext;
-}
-
 RCntxt getFunctionContext(const int depth,
                           int* pFoundDepth,
                           SEXP* pEnvironment)
@@ -77,9 +67,11 @@ RCntxt getFunctionContext(const int depth,
       {
          browseEnv = ctxt->cloenv();
       }
+      
       if (ctxt->callflag() & CTXT_FUNCTION)
       {
          currentDepth++;
+         
          if (depth == BROWSER_FUNCTION && ctxt->cloenv() == browseEnv)
          {
             foundDepth = currentDepth;
@@ -103,12 +95,14 @@ RCntxt getFunctionContext(const int depth,
    {
       *pFoundDepth = foundDepth;
    }
+   
    if (pEnvironment)
    {
       *pEnvironment = (foundDepth == 0 || foundContext.isNull()) ?
          R_GlobalEnv : 
          foundContext.cloenv();
    }
+   
    return foundContext;
 }
 

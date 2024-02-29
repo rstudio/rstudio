@@ -32,6 +32,7 @@ class RCntxtInterface
 public:
    // accessors for RCNTXT entries
    virtual SEXP callfun() const       = 0;
+   virtual SEXP sysparent() const     = 0;
    virtual int callflag() const       = 0;
    virtual int evaldepth() const      = 0;
    virtual SEXP call() const          = 0;

@@ -985,7 +985,13 @@ public class CompletionRequester
          }
          
          // Append metadata for display if available
-         if (type != RCompletionType.ROXYGEN && !StringUtil.isNullOrEmpty(meta))
+         boolean useMeta =
+               type != RCompletionType.ROXYGEN &&
+               type != RCompletionType.YAML_KEY &&
+               type != RCompletionType.YAML_VALUE &&
+               !StringUtil.isNullOrEmpty(meta);
+         
+         if (useMeta)
          {
             String displayMeta = StringUtil.truncate(meta, META_DISPLAY_LIMIT_CHARACTERS, " <...>");
             SafeHtml openTag = SafeHtmlUtil.createOpenTag("span",
