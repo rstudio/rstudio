@@ -348,12 +348,11 @@ public class TextEditingTargetReformatHelper
       public void ensureWhitespaceFollows()
       {
          String value = getValue();
-         boolean mightWantNewline = value == "&&" ||
-             value == "||" ||
-             value == "&" ||
-             value == "|" ||
-             value == "<-" ||
-             value == "<<-";
+         boolean mightWantNewline =
+               value == "&&" ||
+               value == "||" ||
+               value == "&" ||
+               value == "|";
          
          if (mightWantNewline && 
              getCurrentLineLength() >= 70)
@@ -979,10 +978,9 @@ public class TextEditingTargetReformatHelper
                      cursor.currentValue().replaceAll(",(?!\\n)", ",\n"));
             }
             
-            else if (!newlineAfterComma &&
-                     !cursor.peek(1).isWhitespaceOrNewline())
+            else if (!newlineAfterComma)
             {
-               cursor.setValue(", ");
+               cursor.ensureSingleSpaceFollows();
             }
          }
             
@@ -993,13 +991,20 @@ public class TextEditingTargetReformatHelper
             cursor.setValue("\n");
          }
          
+         // Skip consecutive pairs of '{{' tokens.
+         if (cursor.currentValue() == "{" &&
+             cursor.peek(1).currentValue() == "{")
+         {
+            cursor.fwdToMatchingToken();
+         }
+         
          // If we encounter an opening paren, recurse a new token cursor within,
          // and step over the block. This ensures that indentation rules are
          // consistent within a particular scope.
-         if (cursor.currentValue() == "{" ||
-             cursor.currentValue() == "(" ||
-             cursor.currentValue() == "[" ||
-             cursor.currentValue() == "[[")
+         else if (cursor.currentValue() == "{" ||
+                  cursor.currentValue() == "(" ||
+                  cursor.currentValue() == "[" ||
+                  cursor.currentValue() == "[[")
          {
             // If we encounter a non-paren opener, this implies that we can
             // reset the function nesting level.
