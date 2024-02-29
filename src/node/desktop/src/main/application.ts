@@ -350,7 +350,7 @@ export class Application implements AppState {
       const [scannedPath, error] = scanForR();
       if (error) {
         logger().logDebug(`Error scanning for R: ${error}`);
-        showRNotFoundError();
+        await showRNotFoundError();
         return exitFailure();
       }
 
