@@ -1031,7 +1031,7 @@ assign(x = ".rs.acCompletionTypes",
    # TODO: Should we include aesthetics for 'geom_*()' functions?
    # for 'geom_' functions, try to get aesthetic names
    ggplotCompletions <- NULL
-   if (grepl("^geom_", fguess))
+   if (grepl("(?:^|::)geom_", fguess))
    {
       .rs.tryCatch({
          geomFunc <- eval(as.symbol(fguess), envir = envir)
@@ -2999,11 +2999,11 @@ assign(x = ".rs.acCompletionTypes",
    geomContext <- NULL
    for (i in seq_along(contextData))
    {
-      if (grepl("^facet_", contextData[[i]]$data))
+      if (grepl("(?:^|::)facet_", contextData[[i]]$data))
       {
          break
       }
-      else if (grepl("^geom_", contextData[[i]]$data))
+      else if (grepl("(?:^|::)geom_", contextData[[i]]$data))
       {
          geomContext <- contextData[[i]]
          break
@@ -3082,8 +3082,15 @@ assign(x = ".rs.acCompletionTypes",
       }
       else
       {
-         ggplot2 <- asNamespace("ggplot2")
          geomName <- geomContext$data
+         parts <- strsplit(geomName, ":{2,3}")[[1L]]
+         if (length(parts) == 2L)
+         {
+            geomName <- parts[[2L]]
+            envir <- asNamespace(parts[[1L]])
+         }
+         
+         ggplot2 <- asNamespace("ggplot2")
          geomFunc <- if (exists(geomName, envir = envir))
             eval(as.symbol(geomName), envir = envir)
          else if (exists(geomName, envir = ggplot2))
