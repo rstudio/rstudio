@@ -907,23 +907,6 @@ Error startAgent()
    if (s_agentPid == -1)
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
    
-   // Wait for Copilot to report that it's started running, or that it's failed to start.
-   waitFor([]()
-   {
-      switch (s_agentRuntimeStatus)
-      {
-      case CopilotAgentRuntimeStatus::Running:
-      case CopilotAgentRuntimeStatus::Stopped:
-         return true;
-      default:
-         return false;
-      }
-      
-   });
-
-   if (s_agentPid == -1)
-      return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
-
    // Send an initialize request to the agent.
    json::Object clientInfoJson;
    clientInfoJson["name"] = "RStudio";
@@ -1088,7 +1071,7 @@ void onBackgroundProcessing(bool isIdle)
       if (methodJson.isString())
       {
          std::string method = methodJson.getString();
-         if (method == "LogMessage")
+         if (method == "LogMessage" || method == "window/logMessage")
             continue;
       }
 
