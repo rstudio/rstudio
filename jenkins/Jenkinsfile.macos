@@ -13,21 +13,24 @@ pipeline {
   }
 
   parameters {
-      string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
-      string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '3', description: 'RStudio Patch Version')
+      string(name: 'COMMIT_HASH', defaultValue: '')
       booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
       booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
-      string(name: 'COMMIT_HASH', defaultValue: '')
+      booleanParam(name: 'FORCE_BUILD_BINARIES', defaultValue: false, description: 'Force build binaries even if there are no changes, and even if they have already been built previously')
+      string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
   }
 
   environment {
     PATH = "$HOME/opt/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    OS = 'macos'
     PACKAGE_OS = 'macOS'
     RSTUDIO_VERSION = ""
     RSTUDIO_VERSION_MAJOR = ""
     RSTUDIO_VERSION_MINOR = ""
     RSTUDIO_VERSION_PATCH = ""
     RSTUDIO_VERSION_SUFFIX = ""
+    RSTUDIO_VERSION_FLOWER = ""
+    RSTUDIO_VERSION_FILENAME = ""
     IS_PRO = false
   }
   stages {
@@ -35,7 +38,7 @@ pipeline {
     stage('Load Utils') {
       steps {
         script {
-          utils = load "${env.WORKSPACE}/utils.groovy"
+          utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
         }
       }
     }
@@ -60,7 +63,9 @@ pipeline {
             RSTUDIO_VERSION_MINOR,
             RSTUDIO_VERSION_PATCH,
             RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
+          RSTUDIO_VERSION_FLOWER = utils.getFlower()
           IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+          RSTUDIO_VERSION_FILENAME = utils.getVersionFilename(RSTUDIO_VERSION) // Define here for use later in utils.rebuildCheck()
         }
 
         buildName "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
@@ -95,10 +100,13 @@ pipeline {
         }
 
         when {
+          // allOf {
           anyOf {
             expression { return FLAVOR == 'Electron' }
             expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
           }
+          //   expression { return utils.rebuildCheck() == true } // Disable for now (see Jenkinsfile.windows)
+          // }
         }
 
         stages {
