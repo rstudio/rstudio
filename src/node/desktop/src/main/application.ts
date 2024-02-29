@@ -361,7 +361,7 @@ export class Application implements AppState {
 
     // prepare the R environment
     logger().logDebug(`Preparing environment using R: ${rPath}`);
-    const prepareError = await prepareEnvironment(rPath);
+    const prepareError = prepareEnvironment(rPath);
     if (prepareError) {
       logger().logError(prepareError);
       await showRNotFoundError();
