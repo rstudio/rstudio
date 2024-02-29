@@ -118,16 +118,16 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile,
    json::Value val;
    std::string contents;
    Error error = readStringFromFile(prefsFile, &contents);
-   if (error)
+   if (error || contents.empty())
    {
-      // No prefs file; use an empty cache
+      // No prefs file or an empty one; use an empty cache
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
          cache_ = boost::make_shared<json::Object>();
       }
       END_LOCK_MUTEX
 
-      if (!isNotFoundError(error))
+      if (error && !isNotFoundError(error))
       {
          // If we hit an unexpected error (e.g. permission denied), it's still not fatal (we can live
          // without a prefs file) but users might like to know.

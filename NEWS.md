@@ -60,6 +60,7 @@
 - Fixed an issue where the RStudio debugger failed to step through statements within a tryCatch() call (#14306)
 - Improved responsiveness of C / C++ editor intelligence features when switching Git branches (#14320)
 - Show an error dialog if R is not found when starting RStudio Desktop on Linux and macOS (#14343)
+- An empty `rstudio-prefs.json` no longer logs spurious JSON parsing errors (rstudio-pro#4347)
 
 #### Posit Workbench
 
