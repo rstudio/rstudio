@@ -350,7 +350,7 @@ export class Application implements AppState {
       const [scannedPath, error] = scanForR();
       if (error) {
         logger().logDebug(`Error scanning for R: ${error}`);
-        showRNotFoundError();
+        await showRNotFoundError();
         return exitFailure();
       }
 
@@ -363,11 +363,8 @@ export class Application implements AppState {
     logger().logDebug(`Preparing environment using R: ${rPath}`);
     const prepareError = prepareEnvironment(rPath);
     if (prepareError) {
-      await createStandaloneErrorDialog(
-        i18next.t('applicationTs.errorFindingR'),
-        i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
-      );
       logger().logError(prepareError);
+      await showRNotFoundError();
       return exitFailure();
     }
 

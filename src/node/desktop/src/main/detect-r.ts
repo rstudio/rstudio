@@ -49,9 +49,9 @@ interface REnvironment {
   ldLibraryPath: string;
 }
 
-export function showRNotFoundError(error?: Error): void {
+export async function showRNotFoundError(error?: Error) {
   const message = error?.message ?? t('detectRTs.couldNotLocateAnRInstallationOnTheSystem');
-  void createStandaloneErrorDialog(t('detectRTs.rNotFound'), message);
+  await createStandaloneErrorDialog(t('detectRTs.rNotFound'), message);
 }
 
 function executeCommand(command: string): Expected<string> {
@@ -158,7 +158,6 @@ function prepareEnvironmentImpl(rPath: string): Err {
   // attempt to detect R environment
   const [rEnvironment, error] = detectREnvironment(rPath);
   if (error) {
-    showRNotFoundError(error);
     return error;
   }
 
