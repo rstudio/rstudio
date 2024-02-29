@@ -609,6 +609,7 @@ public class HelpPane extends WorkbenchPane
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
 
       final SmallButton btnNext = new SmallButton("&gt;", true);
+      btnNext.getElement().setAttribute("aria-label", constants_.findNextLabel());
       btnNext.setTitle(constants_.findNextLabel());
       btnNext.addStyleName(RES.styles().topicNavigationButton());
       btnNext.setVisible(false);
@@ -621,6 +622,7 @@ public class HelpPane extends WorkbenchPane
       });
 
       final SmallButton btnPrev = new SmallButton("&lt;", true);
+      btnPrev.getElement().setAttribute("aria-label", constants_.findPreviousLabel());
       btnPrev.setTitle(constants_.findPreviousLabel());
       btnPrev.addStyleName(RES.styles().topicNavigationButton());
       btnPrev.setVisible(false);
