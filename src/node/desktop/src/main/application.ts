@@ -361,13 +361,10 @@ export class Application implements AppState {
 
     // prepare the R environment
     logger().logDebug(`Preparing environment using R: ${rPath}`);
-    const prepareError = prepareEnvironment(rPath);
+    const prepareError = await prepareEnvironment(rPath);
     if (prepareError) {
-      await createStandaloneErrorDialog(
-        i18next.t('applicationTs.errorFindingR'),
-        i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
-      );
       logger().logError(prepareError);
+      await showRNotFoundError();
       return exitFailure();
     }
 

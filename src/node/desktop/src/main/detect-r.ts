@@ -158,7 +158,6 @@ function prepareEnvironmentImpl(rPath: string): Err {
   // attempt to detect R environment
   const [rEnvironment, error] = detectREnvironment(rPath);
   if (error) {
-    showRNotFoundError(error);
     return error;
   }
 
