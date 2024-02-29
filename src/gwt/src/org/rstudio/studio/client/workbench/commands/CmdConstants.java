@@ -1344,6 +1344,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Install the GitHub Copilot agent.") // $NON-NLS-1$
     String copilotInstallAgentDesc();
     
+    // copilotDiagnostics
+    @DefaultStringValue("Copilot: Show Diagnostics") // $NON-NLS-1$
+    String copilotDiagnosticsLabel();
+    @DefaultStringValue("Show Copilot Diagnostics") // $NON-NLS-1$
+    String copilotDiagnosticsMenuLabel();
+    @DefaultStringValue("Print a Copilot diagnostic report, indicating how the Copilot agent has been configured.") // $NON-NLS-1$
+    String copilotDiagnosticsDesc();
+    
     // copilotSignIn
     @DefaultStringValue("Copilot: Sign In") // $NON-NLS-1$
     String copilotSignInLabel();

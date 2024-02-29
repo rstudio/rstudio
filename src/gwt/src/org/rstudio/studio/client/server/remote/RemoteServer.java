@@ -157,6 +157,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
@@ -643,6 +644,12 @@ public class RemoteServer implements Server
    public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyInstalledResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
+   }
+   
+   @Override
+   public void copilotDiagnostics(ServerRequestCallback<CopilotDiagnosticsResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_diagnostics", requestCallback);
    }
 
    @Override

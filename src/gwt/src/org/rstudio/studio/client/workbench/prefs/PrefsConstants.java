@@ -5124,6 +5124,16 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Loading...")
     @Key("copilotLoadingMessage")
     String copilotLoadingMessage();
+    
+    
+    /**
+     * Translated "Generating diagnostic report..."
+     *
+     * @return translated "Generating diagnostic report..."
+     */
+    @DefaultMessage("Generating diagnostic report...")
+    @Key("copilotDiagnosticReportProgressLabel")
+    String copilotDiagnosticReportProgressLabel();
 
     /**
      * Translated "You are currently signed in as: {0}"
@@ -5178,7 +5188,16 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Refresh")
     @Key("copilotRefreshLabel")
     String copilotRefreshLabel();
-
+    
+    /**
+     * Translated "Diagnostics"
+     *
+     * @return translated "Diagnostics"
+     */
+    @DefaultMessage("Diagnostics")
+    @Key("copilotDiagnosticsLabel")
+    String copilotDiagnosticsLabel();
+    
     /**
      * Translated "Project Options..."
      *

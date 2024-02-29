@@ -25,6 +25,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.application.AriaLiveService;
@@ -126,6 +127,10 @@ public class CopilotPreferencesPane extends PreferencesPane
       btnRefresh_ = new SmallButton(constants_.copilotRefreshLabel());
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
+      
+      btnDiagnostics_ = new SmallButton(constants_.copilotDiagnosticsLabel());
+      btnDiagnostics_.addStyleName(RES.styles().button());
+      statusButtons_.add(btnDiagnostics_);
       
       btnProjectOptions_ = new SmallButton(constants_.copilotProjectOptionsLabel());
       btnProjectOptions_.addStyleName(RES.styles().button());
@@ -248,14 +253,14 @@ public class CopilotPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
+            // Prefer using a web dialog even on Desktop, as we want to allow customization
+            // of how the UI is presented. In particular, we want to allow users to select
+            // and copy text if they need to.
             DialogOptions options = new DialogOptions();
             options.width = "auto";
             options.height = "auto";
             options.userSelect = "text";
             
-            // Prefer using a web dialog even on Desktop, as we want to allow customization
-            // of how the UI is presented. In particular, we want to allow users to select
-            // and copy text if they need to.
             WebDialogBuilderFactory builder = GWT.create(WebDialogBuilderFactory.class);
             DialogBuilder dialog = builder.create(
                   GlobalDisplay.MSG_INFO,
@@ -302,6 +307,20 @@ public class CopilotPreferencesPane extends PreferencesPane
          public void onClick(ClickEvent event)
          {
             refresh();
+         }
+      });
+      
+      btnDiagnostics_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            ProgressIndicator indicator = getProgressIndicator();
+            indicator.onProgress(constants_.copilotDiagnosticReportProgressLabel());
+            copilot_.onCopilotDiagnostics(() ->
+            {
+               indicator.onCompleted();
+            });
          }
       });
       
@@ -363,17 +382,17 @@ public class CopilotPreferencesPane extends PreferencesPane
             else if (response.result.status == CopilotConstants.STATUS_OK ||
                      response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
             {
-               showButtons(btnSignOut_, btnRefresh_);
+               showButtons(btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotSignedInAsLabel(response.result.user));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
             {
-               showButtons(btnActivate_, btnSignOut_, btnRefresh_);
+               showButtons(btnActivate_, btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
-               showButtons(btnSignIn_, btnRefresh_);
+               showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
             }
             else
@@ -498,6 +517,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final SmallButton btnSignOut_;
    private final SmallButton btnActivate_;
    private final SmallButton btnRefresh_;
+   private final SmallButton btnDiagnostics_;
    private final SmallButton btnProjectOptions_;
    private final SelectWidget selCopilotTabKeyBehavior_;
    private final HelpLink linkCopilotTos_;

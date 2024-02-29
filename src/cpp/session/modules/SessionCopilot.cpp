@@ -1321,6 +1321,23 @@ SEXP rs_copilotVersion()
    return r::sexp::create(version, &protect);
 }
 
+Error copilotDiagnostics(const json::JsonRpcRequest& request,
+                         const json::JsonRpcFunctionContinuation& continuation)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+      return Success();
+   }
+   
+   std::string requestId = core::system::generateUuid();
+   sendRequest("debug/diagnostics", requestId, json::Object(), CopilotContinuation(continuation));
+   
+   return Success();
+}
+
 Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
                                  const json::JsonRpcFunctionContinuation& continuation)
 {
@@ -1499,6 +1516,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+         (bind(registerAsyncRpcMethod, "copilot_diagnostics", copilotDiagnostics))
          (bind(registerAsyncRpcMethod, "copilot_generate_completions", copilotGenerateCompletions))
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))

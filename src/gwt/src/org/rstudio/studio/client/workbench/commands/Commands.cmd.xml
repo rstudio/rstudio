@@ -2039,6 +2039,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Install Copilot Agent"
         desc="Install the GitHub Copilot agent."/>
         
+   <cmd id="copilotDiagnostics"
+        label="Copilot: Show Diagnostics"
+        menuLabel="Show Copilot Diagnostics"
+        desc="Print a Copilot diagnostic report, indicating how the Copilot agent has been configured."/>
+        
    <cmd id="copilotSignIn"
         label="Copilot: Sign In"
         menuLabel="Sign In"
