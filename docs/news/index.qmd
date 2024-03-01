@@ -39,7 +39,6 @@ This page provides the release notes associated with each release of RStudio and
 - Added missing Slurm dependency to Integrating with Slurm documentation (rstudio-pro#5876) <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
 - Removal of Debian 10 due to end of support (rstudio-pro#5925) <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
 
-
 ## RStudio 2023.12.0
 
 **"Ocean Storm"**
