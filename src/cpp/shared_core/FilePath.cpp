@@ -106,6 +106,7 @@ MimeType s_mimeTypes[] =
       // programming language types
       { "f",            "text/x-fortran" },
       { "py",           "text/x-python" },
+      { "smk",          "text/x-python" },
       { "sh",           "text/x-shell" },
       { "sql",          "text/x-sql" },
       { "stan",         "text/x-stan" },
