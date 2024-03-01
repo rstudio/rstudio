@@ -18,22 +18,18 @@ import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JSON;
-import org.rstudio.core.client.Markdown;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
 import org.rstudio.studio.client.projects.model.RProjectCopilotOptions;
 import org.rstudio.studio.client.projects.ui.prefs.YesNoAskDefault;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
@@ -54,6 +50,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.Co
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotDiagnostics;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.copilot.ui.CopilotDiagnosticsDialog;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotInstallDialog;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotSignInDialog;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -62,14 +59,12 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -323,26 +318,9 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                public void onResponseReceived(CopilotDiagnosticsResponse response)
                {
                   onCompleted.execute();
-                  CopilotDiagnostics diagnostics = response.result.cast();
                   
-                  // Prefer using a web dialog even on Desktop, as we want to allow customization
-                  // of how the UI is presented. In particular, we want to allow users to select
-                  // and copy text if they need to.
-                  DialogOptions options = new DialogOptions();
-                  options.width = "auto";
-                  options.height = "auto";
-                  options.userSelect = "text";
-
-                  String report = Markdown.markdownToHtml(diagnostics.report);
-                  HTML widget = new HTML(report);
-                  widget.getElement().getStyle().setPadding(12, Unit.PX);
-                  WebDialogBuilderFactory builder = GWT.create(WebDialogBuilderFactory.class);
-                  DialogBuilder dialog = builder.create(
-                        GlobalDisplay.MSG_INFO,
-                        constants_.copilotDiagnosticsTitle(),
-                        widget,
-                        options);
-
+                  CopilotDiagnostics diagnostics = response.result.cast();
+                  CopilotDiagnosticsDialog dialog = new CopilotDiagnosticsDialog(diagnostics.report);
                   dialog.showModal();
                }
                
