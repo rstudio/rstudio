@@ -321,9 +321,16 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                {
                   onCompleted.execute();
                   
-                  CopilotDiagnostics diagnostics = response.result.cast();
-                  CopilotDiagnosticsDialog dialog = new CopilotDiagnosticsDialog(diagnostics.report);
-                  dialog.showModal();
+                  if (response.error != null)
+                  {
+                     globalDisplay_.showErrorMessage(response.error.message);
+                  }
+                  else
+                  {
+                     CopilotDiagnostics diagnostics = response.result.cast();
+                     CopilotDiagnosticsDialog dialog = new CopilotDiagnosticsDialog(diagnostics.report);
+                     dialog.showModal();
+                  }
                }
                
                @Override
