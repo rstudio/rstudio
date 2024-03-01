@@ -40,9 +40,10 @@ public class CopilotDiagnosticsDialog extends ModalDialogBase
    {
       super(Roles.getDialogRole());
       setSize("560px", "460px");
-      String htmlContent = Markdown.markdownToHtml(markdownContent);
       
-      html_ = new HTML(htmlContent);
+      markdownContent_ = markdownContent;
+      
+      html_ = new HTML();
       html_.getElement().setTabIndex(0);
       html_.addStyleName(RES.styles().container());
       
@@ -68,11 +69,11 @@ public class CopilotDiagnosticsDialog extends ModalDialogBase
          {
             if (Desktop.isDesktop())
             {
-               Desktop.getFrame().setClipboardText(markdownContent);
+               Desktop.getFrame().setClipboardText(markdownContent_);
             }
             else
             {
-               Clipboard.setText(markdownContent);
+               Clipboard.setText(markdownContent_);
             }
          }
       });
@@ -80,6 +81,17 @@ public class CopilotDiagnosticsDialog extends ModalDialogBase
       setText(constants_.copilotDiagnosticsTitle());
       addLeftButton(copyButton_, ElementIds.COPILOT_DIAGNOSTICS_COPY_BUTTON);
       addOkButton(closeButton_, ElementIds.COPILOT_DIAGNOSTICS_CLOSE_BUTTON);
+   }
+   
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      
+      Markdown.markdownToHtml(markdownContent_, (String html) ->
+      {
+         html_.setHTML(html);
+      });
    }
    
    @Override
@@ -97,6 +109,7 @@ public class CopilotDiagnosticsDialog extends ModalDialogBase
       return scrollPanel_;
    }
 
+   private final String markdownContent_;
    private final ScrollPanel scrollPanel_;
    private final HTML html_;
    private final ThemedButton closeButton_;

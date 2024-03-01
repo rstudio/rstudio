@@ -1,7 +1,7 @@
 /*
  * Markdown.java
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2024 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -14,9 +14,28 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.resources.StaticDataResource;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+
 public class Markdown
 {
-   public static final native String markdownToHtml(String markdown)
+   public static final void markdownToHtml(String markdown,
+                                           CommandWithArg<String> callback)
+   {
+      LOADER.addCallback(new ExternalJavaScriptLoader.Callback()
+      {
+         @Override
+         public void onLoaded()
+         {
+            String html = markdownToHtmlImpl(markdown);
+            callback.execute(html);
+         }
+      });
+   }
+   
+   private static final native String markdownToHtmlImpl(String markdown)
    /*-{
       var showdown = $wnd.showdown;
       var converter = new showdown.Converter({
@@ -24,4 +43,17 @@ public class Markdown
       });
       return converter.makeHtml(markdown);
    }-*/;
+   
+   // Boilerplate ----
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("resources/js/showdown.min.js")
+      StaticDataResource showdownMinJs();
+   }
+   
+   public static final Resources RES = GWT.create(Resources.class);
+   
+   private static final ExternalJavaScriptLoader LOADER =
+         new ExternalJavaScriptLoader(RES.showdownMinJs().getSafeUri().asString());
 }
