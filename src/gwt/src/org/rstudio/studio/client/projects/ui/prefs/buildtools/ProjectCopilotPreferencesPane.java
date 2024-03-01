@@ -24,6 +24,7 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -41,8 +42,8 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
 import org.rstudio.studio.client.workbench.prefs.views.CopilotPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.events.CopilotEnabledEvent;
@@ -114,6 +115,10 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
       btnRefresh_ = new SmallButton(constants_.copilotRefreshLabel());
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
+      
+      btnDiagnostics_ = new SmallButton(constants_.copilotDiagnosticsLabel());
+      btnDiagnostics_.addStyleName(RES.styles().button());
+      statusButtons_.add(btnDiagnostics_);
       
       LayoutGrid grid = new LayoutGrid(2, 2);
       grid.addStyleName(RESOURCES.styles().workspaceGrid());
@@ -274,6 +279,20 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
             refresh();
          }
       });
+      
+      btnDiagnostics_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            ProgressIndicator indicator = getProgressIndicator();
+            indicator.onProgress(constants_.copilotDiagnosticReportProgressLabel());
+            copilot_.onCopilotDiagnostics(() ->
+            {
+               indicator.onCompleted();
+            });
+         }
+      }); 
    }
    
    private void refresh()
@@ -309,17 +328,17 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
             else if (response.result.status == CopilotConstants.STATUS_OK ||
                      response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
             {
-               showButtons(btnSignOut_, btnRefresh_);
+               showButtons(btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotSignedInAsLabel(response.result.user));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
             {
-               showButtons(btnActivate_, btnSignOut_, btnRefresh_);
+               showButtons(btnActivate_, btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
-               showButtons(btnSignIn_, btnRefresh_);
+               showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
             }
             else
@@ -389,6 +408,7 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
    private final SmallButton btnSignOut_;
    private final SmallButton btnActivate_;
    private final SmallButton btnRefresh_;
+   private final SmallButton btnDiagnostics_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
    
