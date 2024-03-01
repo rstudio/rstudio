@@ -14,15 +14,6 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
-import com.google.gwt.aria.client.DialogRole;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.*;
-import com.google.gwt.core.client.GWT;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +31,18 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+
+import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Widget;
 
 public abstract class FileSystemDialog extends ModalDialogBase
       implements SelectionCommitEvent.Handler<FileSystemItem>,
@@ -353,7 +356,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
       if (!StringUtil.isNullOrEmpty(filter))
       {
          Pattern listPattern = Pattern.create("\\(([^)]+)\\)");
-         Pattern singlePattern = Pattern.create("\\*([^\\s]+)");
+         Pattern singlePattern = Pattern.create("\\*([^\\s;]+)");
          Match listMatch = listPattern.match(filter, 0);
          while (listMatch != null)
          {

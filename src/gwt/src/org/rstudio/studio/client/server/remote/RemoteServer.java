@@ -69,6 +69,7 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.common.mirrors.model.RepoValidationResult;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
@@ -396,6 +397,8 @@ public class RemoteServer implements Server
       if (clientInitId_.isEmpty())
          clientInitId_ = StringUtil.makeRandomId(32);
 
+      initInProgress_ = true;
+
       // send init request (record clientId and version contained in response)
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(baseURL));
@@ -409,12 +412,14 @@ public class RemoteServer implements Server
          @Override
          public void cancel()
          {
+            initInProgress_ = false;
             super.cancel();
             requestCallback.cancel();
          }
 
          public void onResponseReceived(SessionInfo sessionInfo)
          {
+            initInProgress_ = false;
             clientId_ = sessionInfo.getClientId();
             clientVersion_ = sessionInfo.getClientVersion();
             launchParameters_ = sessionInfo.getLaunchParameters();
@@ -423,6 +428,7 @@ public class RemoteServer implements Server
 
          public void onError(ServerError error)
          {
+            initInProgress_ = false;
             requestCallback.onError(error);
          }
       });
@@ -431,6 +437,11 @@ public class RemoteServer implements Server
    @Override
    public void getJobConnectionStatus(final ServerRequestCallback<String> requestCallback)
    {
+   }
+
+   public boolean isInitInProgress()
+   {
+      return initInProgress_;
    }
 
    private void setArrayString(JSONArray params, int index, List<String> what) {
@@ -6401,8 +6412,8 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void validateCranRepo(ServerRequestCallback<Boolean> callback,
-                                String cranRepoUrl)
+   public void validateCranRepo(String cranRepoUrl,
+                                ServerRequestCallback<RepoValidationResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(cranRepoUrl));
@@ -6411,7 +6422,7 @@ public class RemoteServer implements Server
                   VALIDATE_CRAN_REPO,
                   params,
                   true,
-                  callback);
+                  requestCallback);
    }
 
    @Override
@@ -6691,6 +6702,7 @@ public class RemoteServer implements Server
    protected String clientInitId_ = "";
    private String clientId_;
    private String clientVersion_ = "";
+   private boolean initInProgress_ = false;
    private JsObject launchParameters_;
    private String userHomePath_;
    private boolean listeningForEvents_;

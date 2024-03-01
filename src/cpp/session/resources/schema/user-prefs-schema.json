@@ -1717,6 +1717,14 @@
             "description": "User-provided name for the currently opened R project.",
             "type": "string",
             "default": ""
+        },
+        "run_background_job_default_working_dir": {
+            "type": "string",
+            "enum": ["project", "script"],
+            "enumReadable": ["Project folder", "Script folder"],
+            "default": "project",
+            "title": "Default working directory for background jobs",
+            "description": "Default working directory in background job dialog."
         }
-     }
+      }
 }

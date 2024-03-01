@@ -68,7 +68,7 @@
    {
       "NULL"
    }
-   else if (is.character(val) && !is.object(val))
+   else if (is.character(val) && !is.object(val) && !is.array(val))
    {
       # for plain character variables, we 'mock' the behavior of str()
       # while avoiding the potential for re-encoding (as this could mangle

@@ -52,7 +52,7 @@ public:
    {
       return pCntxt_ != nullptr;
    }
-
+   
    // utility/accessor functions
    bool hasSourceRefs() const;
    bool isDebugHidden() const;
@@ -82,6 +82,7 @@ public:
    // symbol for contexts associated with bytecode evaluation!
    bool isNull() const;
    SEXP callfun() const;
+   SEXP sysparent() const;
    int callflag() const;
    int evaldepth() const;
    SEXP call() const;
@@ -139,6 +140,10 @@ private:
    core::Error invokeFunctionOnCall(const char* rFunction, 
                                     std::string* pResult) const;
 };
+
+// debugging helper
+SEXP dumpContexts();
+
 
 } // namespace context
 } // namespace r

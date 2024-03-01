@@ -36,9 +36,10 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
    public JobLauncherDialog(String caption,
                             JobSource source,
                             FileSystemItem scriptPath,
+                            FileSystemItem workingDir,
                             OperationWithInput<JobLaunchSpec> operation)
    {
-      this(caption, source, scriptPath, scriptPath.getParentPath(), null, operation);
+      this(caption, source, scriptPath, workingDir, null, operation);
    }
    
    public JobLauncherDialog(String caption,

@@ -2148,11 +2148,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String progressIndicatorMessage();
 
     /**
-     * Translated "The given URL does not appear to be a valid CRAN repository".
+     * Translated "The given URL does not appear to be a valid CRAN repository.".
      *
-     * @return translated "The given URL does not appear to be a valid CRAN repository"
+     * @return translated "The given URL does not appear to be a valid CRAN repository."
      */
-    @DefaultMessage("The given URL does not appear to be a valid CRAN repository")
+    @DefaultMessage("The given URL does not appear to be a valid CRAN repository.")
     @Key("progressIndicatorError")
     String progressIndicatorError();
 
@@ -2274,11 +2274,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String validateAsyncProgress();
 
     /**
-     * Translated "The given URL does not appear to be a valid CRAN repository".
+     * Translated "The given URL does not appear to be a valid CRAN repository.".
      *
-     * @return translated "The given URL does not appear to be a valid CRAN repository"
+     * @return translated "The given URL does not appear to be a valid CRAN repository."
      */
-    @DefaultMessage("The given URL does not appear to be a valid CRAN repository")
+    @DefaultMessage("The given URL does not appear to be a valid CRAN repository.")
     @Key("onResponseReceived")
     String onResponseReceived();
 
@@ -2292,11 +2292,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String nameLabel();
 
     /**
-     * Translated "Url:".
+     * Translated "URL:".
      *
-     * @return translated "Url:"
+     * @return translated "URL:"
      */
-    @DefaultMessage("Url:")
+    @DefaultMessage("URL:")
     @Key("urlLabel")
     String urlLabel();
 

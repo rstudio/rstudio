@@ -14,8 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.environment;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
@@ -65,11 +66,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
@@ -96,9 +92,11 @@ import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNaviga
 import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
 
 public class EnvironmentPresenter extends BasePresenter
         implements OpenDataFileEvent.Handler
@@ -788,8 +786,7 @@ public class EnvironmentPresenter extends BasePresenter
           contextDepth > 0)
       {
          view_.setCallFrames(callFrames, enteringDebugMode);
-         CallFrame browseFrame = callFrames.get(
-                 contextDepth_ - 1);
+         CallFrame browseFrame = callFrames.get(contextDepth_ - 1);
          String newBrowseFile = browseFrame.getAliasedFileName().trim();
          boolean sourceChanged = false;
 

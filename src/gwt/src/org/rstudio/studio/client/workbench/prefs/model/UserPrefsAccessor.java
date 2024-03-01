@@ -3612,6 +3612,29 @@ public class UserPrefsAccessor extends Prefs
          "");
    }
 
+   /**
+    * Default working directory in background job dialog.
+    */
+   public PrefValue<String> runBackgroundJobDefaultWorkingDir()
+   {
+      return enumeration(
+         "run_background_job_default_working_dir",
+         _constants.runBackgroundJobDefaultWorkingDirTitle(), 
+         _constants.runBackgroundJobDefaultWorkingDirDescription(), 
+         new String[] {
+            RUN_BACKGROUND_JOB_DEFAULT_WORKING_DIR_PROJECT,
+            RUN_BACKGROUND_JOB_DEFAULT_WORKING_DIR_SCRIPT
+         },
+         "project",
+         new String[] {
+            _constants.runBackgroundJobDefaultWorkingDirEnum_project(),
+            _constants.runBackgroundJobDefaultWorkingDirEnum_script()
+         });
+   }
+
+   public final static String RUN_BACKGROUND_JOB_DEFAULT_WORKING_DIR_PROJECT = "project";
+   public final static String RUN_BACKGROUND_JOB_DEFAULT_WORKING_DIR_SCRIPT = "script";
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -4120,6 +4143,8 @@ public class UserPrefsAccessor extends Prefs
          copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
       if (source.hasKey("project_name"))
          projectName().setValue(layer, source.getString("project_name"));
+      if (source.hasKey("run_background_job_default_working_dir"))
+         runBackgroundJobDefaultWorkingDir().setValue(layer, source.getString("run_background_job_default_working_dir"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4377,6 +4402,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
       prefs.add(projectName());
+      prefs.add(runBackgroundJobDefaultWorkingDir());
       return prefs;
    }
    

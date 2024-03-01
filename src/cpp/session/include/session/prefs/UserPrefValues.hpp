@@ -431,6 +431,9 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
 #define kProjectName "project_name"
+#define kRunBackgroundJobDefaultWorkingDir "run_background_job_default_working_dir"
+#define kRunBackgroundJobDefaultWorkingDirProject "project"
+#define kRunBackgroundJobDefaultWorkingDirScript "script"
 
 class UserPrefValues: public Preferences
 {
@@ -1953,6 +1956,12 @@ public:
     */
    std::string projectName();
    core::Error setProjectName(std::string val);
+
+   /**
+    * Default working directory in background job dialog.
+    */
+   std::string runBackgroundJobDefaultWorkingDir();
+   core::Error setRunBackgroundJobDefaultWorkingDir(std::string val);
 
 };
 
