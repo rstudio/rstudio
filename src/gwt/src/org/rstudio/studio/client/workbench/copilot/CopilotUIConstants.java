@@ -17,11 +17,11 @@ package org.rstudio.studio.client.workbench.copilot;
 public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
-     * Translated "GitHub Copilot: Diagnostics Report"
+     * Translated "GitHub Copilot: Diagnostic Report"
      *
-     * @return translated "GitHub Copilot: Diagnostics Report"
+     * @return translated "GitHub Copilot: Diagnostic Report"
      */
-    @DefaultMessage("GitHub Copilot: Diagnostics Report")
+    @DefaultMessage("GitHub Copilot: Diagnostic Report")
     @Key("copilotDiagnosticsTitle")
     String copilotDiagnosticsTitle();
    
