@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.copilot.ui;
 
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Markdown;
 import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -46,8 +48,8 @@ public class CopilotDiagnosticsDialog extends ModalDialogBase
       container_.setSize("560px", "460px");
       container_.add(html_);
       
-      okButton_ = new ThemedButton("OK");
-      okButton_.addClickHandler(new ClickHandler()
+      closeButton_ = new ThemedButton(coreConstants_.closeText());
+      closeButton_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -74,8 +76,8 @@ public class CopilotDiagnosticsDialog extends ModalDialogBase
       });
       
       setText(constants_.copilotDiagnosticsTitle());
-      addLeftButton(copyButton_, "copy");
-      addButton(okButton_, "ok");
+      addLeftButton(copyButton_, ElementIds.COPILOT_DIAGNOSTICS_COPY_BUTTON);
+      addButton(closeButton_, ElementIds.COPILOT_DIAGNOSTICS_CLOSE_BUTTON);
    }
    
    @Override
@@ -86,7 +88,7 @@ public class CopilotDiagnosticsDialog extends ModalDialogBase
 
    private final ScrollPanel container_;
    private final HTML html_;
-   private final ThemedButton okButton_;
+   private final ThemedButton closeButton_;
    private final ThemedButton copyButton_;
    
    
@@ -109,5 +111,6 @@ public class CopilotDiagnosticsDialog extends ModalDialogBase
       RES.styles().ensureInjected();
    }
 
+   private static final CoreClientConstants coreConstants_ = GWT.create(CoreClientConstants.class);
    private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
 }
