@@ -190,13 +190,13 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          @Override
          protected void onSuccess(CopilotVerifyInstalledResponse response)
          {
-            if (response.installed)
+            if (response.installed && response.current)
             {
                callback.execute(true);
             }
             else
             {
-               installAgentWithPrompt(callback);
+               installAgentWithPromptImpl(response.installed, response.current, callback);
             }
          }
       });
@@ -209,21 +209,23 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          @Override
          public void onResponseReceived(CopilotVerifyInstalledResponse response)
          {
-            installAgentWithPromptImpl(response.installed, callback);
+            installAgentWithPromptImpl(response.installed, response.current, callback);
          }
 
          @Override
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            installAgentWithPromptImpl(false, callback);
+            installAgentWithPromptImpl(false, false, callback);
          }
       });
    }
    
-   private void installAgentWithPromptImpl(boolean isAlreadyInstalled, CommandWithArg<Boolean> callback)
+   private void installAgentWithPromptImpl(boolean isAlreadyInstalled,
+                                           boolean isInstallationCurrent,
+                                           CommandWithArg<Boolean> callback)
    {
-      CopilotInstallDialog dialog = new CopilotInstallDialog(isAlreadyInstalled);
+      CopilotInstallDialog dialog = new CopilotInstallDialog(isAlreadyInstalled, isInstallationCurrent);
       
       dialog.addClickHandler(new ClickHandler()
       {

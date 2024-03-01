@@ -91,6 +91,7 @@ public class CopilotResponseTypes
    public static class CopilotVerifyInstalledResponse
    {
       public boolean installed;
+      public boolean current;
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

@@ -305,6 +305,15 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
     String copilotAlreadyInstalled();
 
     /**
+     * Translated "An updated version of the GitHub Copilot agent is available. Would you like to install it?"
+     *
+     * @return translated "An updated version of the GitHub Copilot agent is available. Would you like to install it?"
+     */
+    @DefaultMessage("An updated version of the GitHub Copilot agent is available. Would you like to install it?")
+    @Key("copilotOutOfDate")
+    String copilotOutOfDate();
+    
+    /**
      * Translated "The GitHub Copilot agent is not currently installed. Would you like to install it?"
      *
      * @return translated "The GitHub Copilot agent is not currently installed. Would you like to install it?"

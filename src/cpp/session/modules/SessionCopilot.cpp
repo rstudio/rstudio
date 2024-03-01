@@ -72,6 +72,7 @@
 # define kNodeExe "node.exe"
 #endif
 
+#define kCopilotAgentDefaultCommitHash ("69455be5d4a892206bc08365ba3648a597485943")
 #define kMaxIndexingFileSize (1048576)
 
 using namespace rstudio::core;
@@ -285,6 +286,51 @@ FilePath copilotAgentPath()
 bool isCopilotAgentInstalled()
 {
    return copilotAgentPath().exists();
+}
+
+std::string copilotAgentCommitHash()
+{
+   return r::options::getOption(
+            "rstudio.copilot.repositoryRef",
+            std::string(kCopilotAgentDefaultCommitHash),
+            false);
+}
+
+bool isCopilotAgentCurrent()
+{
+   Error error;
+   
+   // The Copilot agent.js is located in e.g. ~/.cache/rstudio/copilot/dist/agent.js.
+   // Compute path to the copilot 'root' directory.
+   FilePath versionPath = copilotAgentPath().getParent().getParent().completeChildPath("version.json");
+   if (!versionPath.exists())
+      return false;
+   
+   std::string versionContent;
+   error = core::readStringFromFile(versionPath, &versionContent);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   json::Object versionJson;
+   error = versionJson.parse(versionContent);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   std::string commitHash;
+   error = core::json::readObject(versionJson, "commit_hash", commitHash);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   return commitHash == copilotAgentCommitHash();
 }
 
 bool isCopilotEnabled()
@@ -1304,6 +1350,12 @@ SEXP rs_copilotVersion()
    return r::sexp::create(version, &protect);
 }
 
+SEXP rs_copilotAgentCommitHash()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(copilotAgentCommitHash(), &protect);
+}
+
 Error copilotDiagnostics(const json::JsonRpcRequest& request,
                          const json::JsonRpcFunctionContinuation& continuation)
 {
@@ -1440,6 +1492,7 @@ Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
 {
    json::Object responseJson;
    responseJson["installed"] = isCopilotAgentInstalled();
+   responseJson["current"] = isCopilotAgentCurrent();
    pResponse->setResult(responseJson);
    return Success();
 }
@@ -1496,6 +1549,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_copilotSendRequest);
    RS_REGISTER_CALL_METHOD(rs_copilotSetLogLevel);
    RS_REGISTER_CALL_METHOD(rs_copilotVersion);
+   RS_REGISTER_CALL_METHOD(rs_copilotAgentCommitHash);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
