@@ -198,9 +198,13 @@
 {
    # Try to retrieve source references from srcfile if available
    srcfile <- attr(srcref, "srcfile", exact = TRUE)
-   lines <- srcfile$original$lines
+   if (!is.null(srcfile$original))
+      srcfile <- srcfile$original
+   
+   lines <- srcfile$lines
    code <- if (is.character(lines))
    {
+      lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
       srcpos <- .rs.parseSrcref(srcref)
       lines[srcpos$first_parsed:srcpos$last_parsed]
    }
