@@ -91,7 +91,7 @@ public:
    RCntxt nextcontext() const;
    
    // for debugging
-   void dump() const;
+   SEXP dump() const;
 
    // define an iterator for easy traversal of the context stack
    template <class Value>
@@ -145,7 +145,7 @@ private:
 };
 
 // for debugging
-void dumpContexts();
+SEXP dumpContexts();
 
 } // namespace context
 } // namespace r

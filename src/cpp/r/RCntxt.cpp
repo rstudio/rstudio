@@ -268,7 +268,7 @@ RCntxt RCntxt::nextcontext() const
    return pCntxt_ ? pCntxt_->nextcontext() : RCntxt(nullptr);
 }
 
-void RCntxt::dump() const
+SEXP RCntxt::dump() const
 {
    r::sexp::Protect protect;
    r::sexp::ListBuilder builder(&protect);
@@ -279,23 +279,16 @@ void RCntxt::dump() const
    builder.add("srcref", srcref());
    builder.add("cloenv", cloenv());
    builder.add("evaldepth", evaldepth());
-   SEXP resultSEXP = r::sexp::create(builder, &protect);
-   
-   Error error = r::exec::RFunction("utils:::str")
-         .addParam(resultSEXP)
-         .call();
-   
-   if (error)
-      LOG_ERROR(error);
+   return r::sexp::create(builder, &protect);
 }
 
-void dumpContexts()
+SEXP dumpContexts()
 {
    r::sexp::Protect protect;
-   r::sexp::ListBuilder contextList(&protect);
-   
+   r::sexp::ListBuilder builder(&protect);
    for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
-      it->dump();
+      builder.add(it->dump());
+   return r::sexp::create(builder, &protect);
 }
 
 } // namespace context

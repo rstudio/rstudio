@@ -694,8 +694,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
          // attempt to find the refs for the source that invoked this function;
          // use our own refs otherwise
-         std::map<SEXP,r::context::RCntxt>::iterator srcCtx =
-            envSrcrefCtx.find(context->cloenv());
+         auto srcCtx = envSrcrefCtx.find(context->cloenv());
          if (srcCtx != envSrcrefCtx.end())
             srcContext = srcCtx->second;
          else
@@ -1699,8 +1698,7 @@ SEXP rs_isBrowserActive()
 
 SEXP rs_dumpContexts()
 {
-   r::context::dumpContexts();
-   return R_NilValue;
+   return r::context::dumpContexts();
 }
 
 bool isSuspendable()
