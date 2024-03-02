@@ -198,6 +198,7 @@ bool RCntxt::operator==(const RCntxt& other) const
    if (other.isNull() == isNull() &&
        other.call() == call() &&
        other.callflag() == callflag() &&
+       other.cloenv() == cloenv() &&
        other.evaldepth() == evaldepth() &&
        other.srcref() == srcref())
    {

@@ -180,6 +180,44 @@
    !is.null(attr(func, "srcref"))
 })
 
+.rs.addFunction("parseSrcref", function(srcref)
+{
+   srcref <- unclass(srcref)
+   
+   names(srcref) <- c(
+      "first_line", "first_byte",
+      "last_line", "last_byte",
+      "first_column", "last_column",
+      "first_parsed", "last_parsed"
+   )
+   
+   as.list(srcref)
+})
+
+.rs.addFunction("deparseSrcref", function(srcref, asString)
+{
+   # Try to retrieve source references from srcfile if available
+   srcfile <- attr(srcref, "srcfile", exact = TRUE)
+   lines <- srcfile$original$lines
+   code <- if (is.character(lines))
+   {
+      srcpos <- .rs.parseSrcref(srcref)
+      lines[srcpos$first_parsed:srcpos$last_parsed]
+   }
+   else
+   {
+      as.character(srcref, useSource = TRUE)
+   }
+   
+   if (asString)
+   {
+      code <- paste(code, collapse = "\n")
+   }
+   
+   code
+   
+})
+
 # Returns a function's code as a string. Arguments:
 # useSource -- Whether to use the function's source references (if available)
 # asString -- Whether to return the result as a single string
@@ -194,13 +232,7 @@
    {
       srcref <- attr(func, "srcref", exact = TRUE)
       if (!is.null(srcref))
-      {
-         code <- as.character(srcref, useSource = TRUE)
-         if (asString)
-           return(paste(code, collapse = "\n"))
-         else
-           return(code)
-      }
+         return(.rs.deparseSrcref(srcref, asString))
    }
 
    control <- c("keepInteger", "keepNA")
