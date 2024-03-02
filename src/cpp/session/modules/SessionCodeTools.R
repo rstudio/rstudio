@@ -189,6 +189,7 @@
    # are assumed to match. Lines (elements 1, 3) and parsed lines (elements 7,
    # 8) may differ if a #line directive is used in code: the former will respect
    # the directive, the latter will just count lines. If only 4 or 6 elements
+   # are given, the parsed lines will be assumed to match the lines.
    srcref <- if (length(srcref) == 4L)
    {
       c(srcref, srcref[c(2L, 4L, 1L, 3L)])
