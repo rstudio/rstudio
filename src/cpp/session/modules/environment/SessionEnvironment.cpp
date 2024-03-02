@@ -1676,7 +1676,8 @@ SEXP rs_isBrowserActive()
 
 SEXP rs_dumpContexts()
 {
-   return r::context::dumpContexts();
+   r::context::dumpContexts();
+   return R_NilValue;
 }
 
 bool isSuspendable()
@@ -1693,6 +1694,7 @@ Error initialize()
 
    boost::shared_ptr<int> pContextDepth =
          boost::make_shared<int>(0);
+   
    boost::shared_ptr<r::context::RCntxt> pCurrentContext =
          boost::make_shared<r::context::RCntxt>(r::context::globalContext());
    

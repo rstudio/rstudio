@@ -1542,21 +1542,24 @@ SEXP create(const std::set<std::string> &value, Protect *pProtect)
 
 SEXP create(const ListBuilder& builder, Protect *pProtect)
 {
-   int n = gsl::narrow_cast<int>(builder.names().size());
+   const auto& objects = builder.objects();
+   const auto& names = builder.names();
+   
+   int n = gsl::narrow_cast<int>(names.size());
 
    SEXP resultSEXP;
    pProtect->add(resultSEXP = Rf_allocVector(VECSXP, n));
 
    SEXP namesSEXP;
    pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
-
+   
    for (int i = 0; i < n; i++)
    {
-      SET_VECTOR_ELT(resultSEXP, i, builder.objects()[i]);
-      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(builder.names()[i].c_str()));
+      SET_VECTOR_ELT(resultSEXP, i, objects[i] == nullptr ? R_NilValue : objects[i]);
+      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names[i].c_str()));
    }
 
-   // NOTE: empty lists are unnamed
+   // NOTE: empty lists are intentionally left unnamed
    if (n > 0)
       Rf_setAttrib(resultSEXP, R_NamesSymbol, namesSEXP);
    

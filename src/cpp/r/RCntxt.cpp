@@ -189,14 +189,20 @@ bool RCntxt::operator==(const RCntxt& other) const
    // Equivalent if they refer to the same underlying object
    if (other.pCntxt_ == pCntxt_)
       return true;
+   
+   // Consider two null contexts to be equivalent
+   if (other.isNull() && isNull())
+      return true;
 
-   // Also equivalent if they refer to the same call at the same stack position and have the same
-   // source references
+   // Otherwise, check for matching fields in the context
    if (other.isNull() == isNull() &&
        other.call() == call() &&
+       other.callflag() == callflag() &&
        other.evaldepth() == evaldepth() &&
        other.srcref() == srcref())
+   {
       return true;
+   }
 
    return false;
 }
@@ -261,29 +267,34 @@ RCntxt RCntxt::nextcontext() const
    return pCntxt_ ? pCntxt_->nextcontext() : RCntxt(nullptr);
 }
 
-SEXP dumpContexts()
+void RCntxt::dump() const
+{
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("callfun", callfun());
+   builder.add("sysparent", sysparent());
+   builder.add("callflag", callflag());
+   builder.add("call", call());
+   builder.add("srcref", srcref());
+   builder.add("cloenv", cloenv());
+   builder.add("evaldepth", evaldepth());
+   SEXP resultSEXP = r::sexp::create(builder, &protect);
+   
+   Error error = r::exec::RFunction("utils:::str")
+         .addParam(resultSEXP)
+         .call();
+   
+   if (error)
+      LOG_ERROR(error);
+}
+
+void dumpContexts()
 {
    r::sexp::Protect protect;
    r::sexp::ListBuilder contextList(&protect);
    
-   for (auto it = RCntxt::begin();
-        it != RCntxt::end();
-        ++it)
-   {
-      r::sexp::ListBuilder builder(&protect);
-      builder.add("callfun", it->callfun());
-      builder.add("sysparent", it->sysparent());
-      builder.add("callflag", it->callflag());
-      builder.add("call", it->call());
-      builder.add("srcref", it->srcref());
-      builder.add("cloenv", it->cloenv());
-      builder.add("evaldepth", it->evaldepth());
-   
-      SEXP elt = r::sexp::create(builder, &protect);
-      contextList.add(elt);
-   }
-   
-   return r::sexp::create(contextList, &protect);
+   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
+      it->dump();
 }
 
 } // namespace context

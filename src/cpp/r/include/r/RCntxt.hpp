@@ -89,6 +89,9 @@ public:
    SEXP srcref() const;
    SEXP cloenv() const;
    RCntxt nextcontext() const;
+   
+   // for debugging
+   void dump() const;
 
    // define an iterator for easy traversal of the context stack
    template <class Value>
@@ -141,9 +144,8 @@ private:
                                     std::string* pResult) const;
 };
 
-// debugging helper
-SEXP dumpContexts();
-
+// for debugging
+void dumpContexts();
 
 } // namespace context
 } // namespace r
