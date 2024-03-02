@@ -202,9 +202,11 @@
       srcfile <- srcfile$original
    
    lines <- srcfile$lines
+   if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
+      lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
+   
    code <- if (is.character(lines))
    {
-      lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
       srcpos <- .rs.parseSrcref(srcref)
       lines[srcpos$first_parsed:srcpos$last_parsed]
    }

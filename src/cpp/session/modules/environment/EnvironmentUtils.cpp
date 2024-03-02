@@ -278,17 +278,17 @@ bool functionDiffersFromSource(
    // read the portion of the file pointed to by the source refs from disk
    // the sourceref structure (including the array offsets used below)
    // is documented here:
+   //
    // http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf
    std::string fileContent;
    error = readStringFromFile(
          sourceFilePath,
          &fileContent,
          string_utils::LineEndingPosix,
-         INTEGER(srcRef)[0],  // the first line
-         INTEGER(srcRef)[2],  // the last line
-         INTEGER(srcRef)[4],  // character position on the first line
-         INTEGER(srcRef)[5]   // character position on the last line
-         );
+         INTEGER(srcRef)[0],    // the first line
+         INTEGER(srcRef)[2] + 1 // the last line
+   );
+   
    if (error)
    {
       LOG_ERROR(error);
