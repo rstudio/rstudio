@@ -2099,7 +2099,7 @@ public class Source implements InsertSourceEvent.Handler,
                         (DebugFilePosition) position.cast();
                   endPosition = SourcePosition.create(
                         filePos.getEndLine() - 1,
-                        filePos.getEndColumn() + 1);
+                        filePos.getEndColumn());
 
                   if (Desktop.hasDesktopFrame() &&
                       navMethod != NavigationMethods.DEBUG_END)
@@ -2690,12 +2690,9 @@ public class Source implements InsertSourceEvent.Handler,
                                               DebugFilePosition pos,
                                               boolean executing)
    {
-      target.highlightDebugLocation(SourcePosition.create(
-               pos.getLine(),
-               pos.getColumn() - 1),
-            SourcePosition.create(
-               pos.getEndLine(),
-               pos.getEndColumn() + 1),
+      target.highlightDebugLocation(
+            SourcePosition.create(pos.getLine(), pos.getColumn() - 1),
+            SourcePosition.create(pos.getEndLine(), pos.getEndColumn()),
             executing);
    }
 

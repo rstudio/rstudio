@@ -393,7 +393,7 @@
   else
   {
      lastchar <- endpos - (if (lastline == 1) 0 else offsets[lastline - 1])
-     lastchar <- lastchar + indents[lastline]
+     lastchar <- lastchar + indents[lastline] - 1
   }
 
   result <- as.integer(c(firstline, firstchar,
