@@ -17,6 +17,15 @@ package org.rstudio.studio.client.workbench.copilot;
 public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
+     * Translated "GitHub Copilot: Diagnostic Report"
+     *
+     * @return translated "GitHub Copilot: Diagnostic Report"
+     */
+    @DefaultMessage("GitHub Copilot: Diagnostic Report")
+    @Key("copilotDiagnosticsTitle")
+    String copilotDiagnosticsTitle();
+   
+    /**
      * Translated "GitHub Copilot: Sign in"
      *
      * @return translated "GitHub Copilot: Sign in"
@@ -295,6 +304,15 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
     @Key("copilotAlreadyInstalled")
     String copilotAlreadyInstalled();
 
+    /**
+     * Translated "An updated version of the GitHub Copilot agent is available. Would you like to install it?"
+     *
+     * @return translated "An updated version of the GitHub Copilot agent is available. Would you like to install it?"
+     */
+    @DefaultMessage("An updated version of the GitHub Copilot agent is available. Would you like to install it?")
+    @Key("copilotOutOfDate")
+    String copilotOutOfDate();
+    
     /**
      * Translated "The GitHub Copilot agent is not currently installed. Would you like to install it?"
      *

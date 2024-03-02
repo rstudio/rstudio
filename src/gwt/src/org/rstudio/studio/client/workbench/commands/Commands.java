@@ -734,6 +734,7 @@ public abstract class
    
    // Copilot
    public abstract AppCommand copilotInstallAgent();
+   public abstract AppCommand copilotDiagnostics();
    public abstract AppCommand copilotSignIn();
    public abstract AppCommand copilotSignOut();
    public abstract AppCommand copilotStatus();

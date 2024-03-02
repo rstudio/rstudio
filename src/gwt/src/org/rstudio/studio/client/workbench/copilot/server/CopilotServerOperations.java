@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.copilot.server;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
@@ -24,6 +25,8 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.Co
 
 public interface CopilotServerOperations
 {
+   public void copilotDiagnostics(ServerRequestCallback<CopilotDiagnosticsResponse> requestCallback);
+   
    public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyInstalledResponse> requestCallback);
    
    public void copilotInstallAgent(ServerRequestCallback<CopilotInstallAgentResponse> requestCallback);

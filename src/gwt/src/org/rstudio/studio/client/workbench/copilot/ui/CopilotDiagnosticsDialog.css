@@ -1,0 +1,14 @@
+@charset "UTF-8";
+
+.container {
+	padding: 0 8px;
+}
+
+.container h2:first-child {
+	margin-top: 0px;
+}
+
+.container h2 {
+	margin-top: 16px;
+	margin-bottom: 0px;
+}

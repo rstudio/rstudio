@@ -40,14 +40,17 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponseResult;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotVerifyInstalledResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotDiagnostics;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.copilot.ui.CopilotDiagnosticsDialog;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotInstallDialog;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotSignInDialog;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -60,6 +63,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
@@ -186,13 +190,13 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          @Override
          protected void onSuccess(CopilotVerifyInstalledResponse response)
          {
-            if (response.installed)
+            if (response.installed && response.current)
             {
                callback.execute(true);
             }
             else
             {
-               installAgentWithPrompt(callback);
+               installAgentWithPromptImpl(response.installed, response.current, callback);
             }
          }
       });
@@ -205,21 +209,23 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          @Override
          public void onResponseReceived(CopilotVerifyInstalledResponse response)
          {
-            installAgentWithPromptImpl(response.installed, callback);
+            installAgentWithPromptImpl(response.installed, response.current, callback);
          }
 
          @Override
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            installAgentWithPromptImpl(false, callback);
+            installAgentWithPromptImpl(false, false, callback);
          }
       });
    }
    
-   private void installAgentWithPromptImpl(boolean isAlreadyInstalled, CommandWithArg<Boolean> callback)
+   private void installAgentWithPromptImpl(boolean isAlreadyInstalled,
+                                           boolean isInstallationCurrent,
+                                           CommandWithArg<Boolean> callback)
    {
-      CopilotInstallDialog dialog = new CopilotInstallDialog(isAlreadyInstalled);
+      CopilotInstallDialog dialog = new CopilotInstallDialog(isAlreadyInstalled, isInstallationCurrent);
       
       dialog.addClickHandler(new ClickHandler()
       {
@@ -296,17 +302,70 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    }
    
    @Handler
+   public void onCopilotDiagnostics()
+   {
+      onCopilotDiagnostics(() -> {});
+   }
+   
+   public void onCopilotDiagnostics(Command onCompleted)
+   {
+      ensureAgentInstalled((installed) ->
+      {
+         if (installed)
+         {
+            server_.copilotDiagnostics(new ServerRequestCallback<CopilotDiagnosticsResponse>()
+            {
+               
+               @Override
+               public void onResponseReceived(CopilotDiagnosticsResponse response)
+               {
+                  onCompleted.execute();
+                  
+                  if (response.error != null)
+                  {
+                     globalDisplay_.showErrorMessage(response.error.message);
+                  }
+                  else
+                  {
+                     CopilotDiagnostics diagnostics = response.result.cast();
+                     CopilotDiagnosticsDialog dialog = new CopilotDiagnosticsDialog(diagnostics.report);
+                     dialog.showModal();
+                  }
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  onCompleted.execute();
+                  Debug.logError(error);
+               }
+            });
+         }
+      });
+   }
+   
+   @Handler
    public void onCopilotSignIn()
    {
       ensureAgentInstalled((installed) ->
       {
-         onCopilotSignIn((response) ->
+         if (installed)
          {
-            globalDisplay_.showMessage(
-                  MessageDisplay.MSG_INFO,
-                  constants_.copilotSignInDialogTitle(),
-                  constants_.copilotSignedIn(response.result.user));
-         });
+            onCopilotSignIn((response) ->
+            {
+               if (response.error != null)
+               {
+                  globalDisplay_.showErrorMessage(response.error.getEndUserMessage());
+               }
+               else
+               {
+                  globalDisplay_.showMessage(
+                        MessageDisplay.MSG_INFO,
+                        constants_.copilotSignInDialogTitle(),
+                        constants_.copilotSignedIn(response.result.user));
+               }
+            });
+         }
       });
    }
    
