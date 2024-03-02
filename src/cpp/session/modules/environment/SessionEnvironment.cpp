@@ -1615,6 +1615,8 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
                      module_context::ConsoleOutputType type,
                      const std::string& output)
 {
+   static bool callingBrowser = false;
+   
    if (*pCapturingDebugOutput)
    {
       // stop capturing output if non-normal output occurs
@@ -1623,8 +1625,19 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
          *pCapturingDebugOutput = false;
          return;
       }
-      pLineDebugState->lastDebugText.append(output);
+      
+      if (callingBrowser)
+      {
+         // simulate a request to highlight a browser() call
+         callingBrowser = false;
+         pLineDebugState->lastDebugText.append("browser()");
+      }
+      else
+      {
+         pLineDebugState->lastDebugText.append(output);
+      }
    }
+   
    else if (type == module_context::ConsoleOutputNormal &&
             output == "debug: ")
    {
@@ -1632,6 +1645,16 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
       pLineDebugState->lastDebugText = "";
       *pCapturingDebugOutput = true;
    }
+   
+   else if (type == module_context::ConsoleOutputNormal &&
+            output.find("Called from: ") == 0)
+   {
+      // emitted by R when a 'browser()' statement is encountered
+      callingBrowser = true;
+      pLineDebugState->lastDebugText = "";
+      *pCapturingDebugOutput = true;
+   }
+   
 }
 
 

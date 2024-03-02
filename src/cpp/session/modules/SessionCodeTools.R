@@ -182,7 +182,25 @@
 
 .rs.addFunction("parseSrcref", function(srcref)
 {
-   srcref <- unclass(srcref)
+   srcref <- as.list(unclass(srcref))
+   
+   # Bytes (elements 2, 4) and columns (elements 5, 6) may be different due to
+   # multibyte characters. If only four values are given, the columns and bytes
+   # are assumed to match. Lines (elements 1, 3) and parsed lines (elements 7,
+   # 8) may differ if a #line directive is used in code: the former will respect
+   # the directive, the latter will just count lines. If only 4 or 6 elements
+   srcref <- if (length(srcref) == 4L)
+   {
+      c(srcref, srcref[c(2L, 4L, 1L, 3L)])
+   }
+   else if (length(srcref) == 6L)
+   {
+      c(srcref, srcref[c(1L, 3L)])
+   }
+   else
+   {
+      srcref
+   }
    
    names(srcref) <- c(
       "first_line", "first_byte",
