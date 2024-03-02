@@ -201,6 +201,9 @@
    if (!is.null(srcfile$original))
       srcfile <- srcfile$original
    
+   # It appears the 'lines' variable can either be a single string
+   # with embedded newlines, or a character vector already split by newlines.
+   # Normalize here so that we're always working with a split-by-newline vector.
    lines <- srcfile$lines
    if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
       lines <- unlist(strsplit(lines, "\n", fixed = TRUE))

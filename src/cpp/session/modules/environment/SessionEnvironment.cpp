@@ -784,8 +784,8 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["shiny_function_label"] = context->shinyFunctionLabel();
 
          listFrames.push_back(varFrame);
+         prevContext = *context;
       }
-      prevContext = *context;
    }
    return listFrames;
 }
