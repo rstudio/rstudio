@@ -760,6 +760,12 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
                simulatedSrcref =
                      simulatedSourceRefsOfContext(
                         *context, r::context::RCntxt(), pLineDebugState);
+               
+               if (isValidSrcref(simulatedSrcref))
+               {
+                  int lastDebugLine = INTEGER(simulatedSrcref)[0];
+                  pLineDebugState->lastDebugLine = lastDebugLine;
+               }
             }
             else
             {
@@ -1310,7 +1316,10 @@ SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
             {
                if (cloenv == it->cloenv())
                {
-                  return simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
+                  SEXP srcref = simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
+                  if (pLineDebugState && isValidSrcref(srcref))
+                     pLineDebugState->lastDebugLine = INTEGER(srcref)[0];
+                  return srcref;
                }
             }
          }
@@ -1323,7 +1332,10 @@ SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
       // if we find a CTXT_FUNCTION context, use it
       if (it->callflag() & CTXT_FUNCTION)
       {
-         return simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
+         SEXP srcref = simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
+         if (pLineDebugState && isValidSrcref(srcref))
+            pLineDebugState->lastDebugLine = INTEGER(srcref)[0];
+         return srcref;
       }
    }
 
@@ -1399,7 +1411,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0 && !r::context::inDebugHiddenContext())
    {
-      SEXP srcref = inferDebugSrcrefs(pLineDebugState);
+      SEXP srcref = inferDebugSrcrefs(depth == 1 ? pLineDebugState : nullptr);
       enqueBrowserLineChangedEvent(srcref);
    }
    
@@ -1678,7 +1690,6 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
       {
          *pCapturingDebugOutput = true;
          pLineDebugState->lastDebugText = "";
-         pLineDebugState->lastDebugLine = 0;
       }
       
       // emitted when browsing with srcref

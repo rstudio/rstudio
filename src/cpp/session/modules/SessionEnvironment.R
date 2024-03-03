@@ -356,7 +356,10 @@
         best <- which.min(abs(linepref - pos))
      }
      else
+     {
         best <- best[1]
+     }
+     
      endpos <- pos[best] + attr(pos, "match.length")[best]
      pos <- pos[best]
   }
@@ -396,10 +399,14 @@
      lastchar <- lastchar + indents[lastline] - 1
   }
 
-  result <- as.integer(c(firstline, firstchar,
-                         lastline,  lastchar,
-                         firstchar, lastchar))
-  return(result)
+  result <- c(
+     firstline, firstchar,
+     lastline,  lastchar,
+     firstchar, lastchar
+  )
+
+  as.integer(result)
+  
 })
 
 .rs.addFunction("functionNameFromCall", function(val)
