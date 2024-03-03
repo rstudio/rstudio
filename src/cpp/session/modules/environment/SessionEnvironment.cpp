@@ -25,20 +25,23 @@
 #include <core/system/LibraryLoader.hpp>
 
 #define INTERNAL_R_FUNCTIONS
-#include <r/RHelpers.hpp>
-#include <r/RJson.hpp>
-#include <r/RSexp.hpp>
-#include <r/RExec.hpp>
-#include <r/session/RSession.hpp>
-#include <r/RInterface.hpp>
-#include <r/RRoutines.hpp>
+
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
+#include <r/RExec.hpp>
+#include <r/RHelpers.hpp>
+#include <r/RInterface.hpp>
+#include <r/RJson.hpp>
+#include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
+#include <r/RSxpInfo.hpp>
+#include <r/RUtil.hpp>
+#include <r/session/RSession.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/prefs/UserPrefs.hpp>
-#include <r/RSxpInfo.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -656,12 +659,12 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
 json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 {
    r::context::RCntxt::iterator context = r::context::RCntxt::begin();
-   r::context::RCntxt prevContext = *context;
+   r::context::RCntxt prevContext;
    r::context::RCntxt srcContext = *context;
    json::Array listFrames;
    int contextDepth = 0;
    Error error;
-   std::map<SEXP,r::context::RCntxt> envSrcrefCtx;
+   std::map<SEXP, r::context::RCntxt> envSrcrefCtx;
 
    for (; context != r::context::RCntxt::end(); context++)
    {
@@ -672,9 +675,12 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
       if (isValidSrcref(context->contextSourceRefs()) &&
           !context->nextcontext().isNull())
       {
-         SEXP env = context->nextcontext().cloenv();
-         if (envSrcrefCtx.find(env) == envSrcrefCtx.end())
-            envSrcrefCtx[env] = *context;
+         SEXP cloenv = context->nextcontext().cloenv();
+         if (cloenv != R_NilValue)
+         {
+            if (envSrcrefCtx.find(cloenv) == envSrcrefCtx.end())
+               envSrcrefCtx[cloenv] = *context;
+         }
       }
 
       if (context->callflag() & CTXT_FUNCTION)
@@ -694,13 +700,19 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
          // attempt to find the refs for the source that invoked this function;
          // use our own refs otherwise
-         auto srcCtx = envSrcrefCtx.find(context->cloenv());
-         if (srcCtx != envSrcrefCtx.end())
-            srcContext = srcCtx->second;
+         if (context->cloenv() != R_NilValue)
+         {
+            auto srcCtx = envSrcrefCtx.find(context->cloenv());
+            if (srcCtx != envSrcrefCtx.end())
+               srcContext = srcCtx->second;
+            else
+               srcContext = *context;
+         }
          else
+         {
             srcContext = *context;
+         }
 
-         // extract source reference associated with source context
          SEXP srcref = srcContext.contextSourceRefs();
          
          // mark this as a source-equivalent function if it's evaluating user
@@ -718,10 +730,21 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["aliased_file_name"] =
                module_context::createAliasedPath(FilePath(filename));
 
-         if (isValidSrcref(srcref))
+         if (contextDepth != 1 && isValidSrcref(srcref))
          {
             varFrame["real_sourceref"] = true;
             sourceRefToJson(srcref, &varFrame);
+            
+            std::string lines;
+            Error error = r::exec::RFunction(".rs.readSrcrefLines")
+                  .addParam(srcref)
+                  .addParam(true)
+                  .call(&lines);
+            
+            if (error)
+               LOG_ERROR(error);
+            
+            varFrame["lines"] = lines;
          }
          else
          {
@@ -731,27 +754,32 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
             // output of the last debugged statement; if it isn't, we
             // construct it by deparsing calls in the context stack.
             SEXP simulatedSrcref;
-            if (contextDepth == 1 &&
-                pLineDebugState != nullptr &&
-                pLineDebugState->lastDebugText.length() > 0)
-               simulatedSrcref =
-                     simulatedSourceRefsOfContext(*context, 
-                           r::context::RCntxt(), pLineDebugState);
-            else
-               simulatedSrcref =
-                     simulatedSourceRefsOfContext(*context, prevContext,
-                                                  nullptr);
-
-            // store the line stepped over in the top frame, so we can infer
-            // that the next line stepped over will be near this one
-            if (contextDepth == 1 &&
-                pLineDebugState != nullptr &&
-                isValidSrcref(simulatedSrcref))
+            if (contextDepth == 1)
             {
-               int stepLine = INTEGER(simulatedSrcref)[0];
-               if (stepLine > 0)
-                  pLineDebugState->lastDebugLine = stepLine;
+               simulatedSrcref =
+                     simulatedSourceRefsOfContext(
+                        *context, r::context::RCntxt(), pLineDebugState);
             }
+            else
+            {
+               simulatedSrcref =
+                     simulatedSourceRefsOfContext(
+                        *context, prevContext, nullptr);
+            }
+
+            // // store the line stepped over in the top frame, so we can infer
+            // // that the next line stepped over will be near this one
+            // if (contextDepth == 1 &&
+            //     pLineDebugState != nullptr &&
+            //     pLineDebugState->lastDebugLine == 0 &&
+            //     isValidSrcref(simulatedSrcref))
+            // {
+            //    int stepLine = INTEGER(simulatedSrcref)[0];
+            //    if (stepLine > 0)
+            //    {
+            //       pLineDebugState->lastDebugLine = stepLine;
+            //    }
+            // }
 
             sourceRefToJson(simulatedSrcref, &varFrame);
          }
@@ -760,10 +788,10 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          // use this to compute the source location as an offset into the
          // function rather than as an absolute file position (useful when
          // we need to debug a copy of the function rather than the real deal).
-         SEXP srcRef = context->callFunSourceRefs();
-         if (isValidSrcref(srcRef) && TYPEOF(srcRef) == INTSXP)
+         srcref = context->callFunSourceRefs();
+         if (isValidSrcref(srcref) && TYPEOF(srcref) == INTSXP)
          {
-            varFrame["function_line_number"] = INTEGER(srcRef)[0];
+            varFrame["function_line_number"] = INTEGER(srcref)[0];
          }
          else
          {
@@ -786,6 +814,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          prevContext = *context;
       }
    }
+   
    return listFrames;
 }
 
@@ -969,6 +998,9 @@ bool functionIsOutOfSync(const r::context::RCntxt& context,
       return true;
    }
 
+   std::cerr << "Using deparsed function." << std::endl;
+   std::cerr << *pFunctionCode << std::endl;
+   
    // make sure the function has source references
    if (!context.hasSourceRefs())
    {
@@ -1043,14 +1075,15 @@ json::Object commonEnvironmentStateData(
    bool useProvidedSource = false;
    std::string functionCode;
    bool inFunctionEnvironment = false;
-
+   json::Array callFramesJson = callFramesAsJson(pLineDebugState);
+   
    // emit the current list of values in the environment, but only if not monitoring (as the intent
    // of the monitoring switch is to avoid implicit environment listing)
    varJson["environment_monitoring"] = s_monitoring;
    varJson["environment_list"] = includeContents ? environmentListAsJson() : json::Array();
    
    varJson["context_depth"] = depth;
-   varJson["call_frames"] = callFramesAsJson(pLineDebugState);
+   varJson["call_frames"] = callFramesJson;
    varJson["function_name"] = "";
 
    // if we're in a debug context, add information about the function currently
@@ -1060,6 +1093,8 @@ json::Object commonEnvironmentStateData(
       r::context::RCntxt context = r::context::getFunctionContext(depth);
       if (context)
       {
+         r::util::str(context.dump());
+         
          std::string functionName;
          Error error = context.functionName(&functionName);
          if (error)
@@ -1082,17 +1117,45 @@ json::Object commonEnvironmentStateData(
             inFunctionEnvironment = true;
          }
 
-         // The eval and evalq functions receive special treatment since they
-         // evaluate code from elsewhere (they don't have meaningful bodies we
-         // can test here)
-         if (functionName != "eval" && functionName != "evalq")
+         // Try to pull function information from srcref
+         bool hasCodeInFrame = false;
+         json::Value currentFrameJson = callFramesJson.getValueAt(depth);
+         if (currentFrameJson.isObject())
          {
-            // see if the function to be debugged is out of sync with its saved
-            // sources (if available).
-            useProvidedSource =
-                  functionIsOutOfSync(context, &functionCode) &&
-                  functionCode != "NULL";
+            std::string filename, lines;
+            Error error = core::json::readObject(
+                     currentFrameJson.getObject(),
+                     "file_name", filename,
+                     "lines", lines);
+            if (error)
+               LOG_ERROR(error);
+            
+            if (!lines.empty())
+            {
+               std::cerr << "Using lines from frame." << std::endl;
+               std::cerr << lines << std::endl;
+               
+               hasCodeInFrame = true;
+               useProvidedSource = filename.empty();
+               functionCode = lines;
+            }
          }
+         
+         if (!hasCodeInFrame)
+         {
+            // The eval and evalq functions receive special treatment since they
+            // evaluate code from elsewhere (they don't have meaningful bodies we
+            // can test here)
+            if (functionName != "eval" && functionName != "evalq")
+            {
+               // see if the function to be debugged is out of sync with its saved
+               // sources (if available).
+               useProvidedSource =
+                     functionIsOutOfSync(context, &functionCode) &&
+                     functionCode != "NULL";
+            }
+         }
+         
          varJson["function_name"] = functionName;
       }
    }
@@ -1637,23 +1700,42 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
       }
    }
    
-   else if (type == module_context::ConsoleOutputNormal &&
-            output == "debug: ")
+   else if (type == module_context::ConsoleOutputNormal)
+      
    {
       // start capturing debug output when R outputs "debug: "
-      pLineDebugState->lastDebugText = "";
-      *pCapturingDebugOutput = true;
-   }
-   
-   else if (type == module_context::ConsoleOutputNormal &&
-            output.find("Called from: ") == 0)
-   {
+      if (output == "debug: ")
+      {
+         pLineDebugState->lastDebugText = "";
+         *pCapturingDebugOutput = true;
+      }
+      
+      // emitted when browsing with srcref
+      else if (output.find("debug at") == 0)
+      {
+         boost::regex reLine("^debug at ([^#]+)#([^:]+):\\s*$");
+         boost::smatch match;
+         if (boost::regex_match(output, match, reLine))
+         {
+            std::string lineText = match[2];
+            auto lineNumber = safe_convert::stringTo<int>(lineText);
+            if (lineNumber)
+            {
+               *pCapturingDebugOutput = true;
+               pLineDebugState->lastDebugText = "";
+               pLineDebugState->lastDebugLine = *lineNumber;
+            }
+         }
+      }
+      
       // emitted by R when a 'browser()' statement is encountered
-      callingBrowser = true;
-      pLineDebugState->lastDebugText = "";
-      *pCapturingDebugOutput = true;
+      else if (output.find("Called from: ") == 0)
+      {
+         callingBrowser = true;
+         pLineDebugState->lastDebugText = "";
+         *pCapturingDebugOutput = true;
+      }
    }
-   
 }
 
 

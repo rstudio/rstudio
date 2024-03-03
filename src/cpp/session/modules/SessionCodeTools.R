@@ -213,6 +213,26 @@
    as.list(srcref)
 })
 
+.rs.addFunction("readSrcrefLines", function(srcref, asString)
+{
+   # Try to retrieve source references from srcfile if available
+   srcfile <- attr(srcref, "srcfile", exact = TRUE)
+   if (!is.null(srcfile$original))
+      srcfile <- srcfile$original
+   
+   # It appears the 'lines' variable can either be a single string
+   # with embedded newlines, or a character vector already split by newlines.
+   # Normalize here so that we're always working with a split-by-newline vector.
+   lines <- srcfile$lines
+   if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
+      lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
+   
+   if (asString)
+      paste(lines, collapse = "\n")
+   else
+      lines
+})
+
 .rs.addFunction("deparseSrcref", function(srcref, asString)
 {
    # Try to retrieve source references from srcfile if available
@@ -243,7 +263,6 @@
    }
    
    code
-   
 })
 
 # Returns a function's code as a string. Arguments:
