@@ -239,7 +239,8 @@
       if (length(index))
       {
          lines <- tail(lines, n = -index)
-         lines <- lines[srcref[[1L]]:srcref[[3L]]]
+         boundaries <- c(grep("#line 1 ", lines, fixed = TRUE), length(lines) + 1L)
+         lines <- head(lines, n = boundaries[[1L]] - 1)
       }
    }
    

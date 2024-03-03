@@ -6,6 +6,10 @@
 # even after evaluating some of the variables during the
 # debug session.
 #
+# Install the package with:
+#
+# install.packages("slider", type = "source", INSTALL_opts = "--with-keep.source")
+#
 
 library(slider)
 debugonce(slider:::slide_impl)

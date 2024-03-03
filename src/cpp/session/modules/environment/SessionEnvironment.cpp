@@ -773,21 +773,25 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
             sourceRefToJson(simulatedSrcref, &varFrame);
          }
 
-         // extract the first line of the function. the client can optionally
-         // use this to compute the source location as an offset into the
-         // function rather than as an absolute file position (useful when
-         // we need to debug a copy of the function rather than the real deal).
-         srcref = context->callFunSourceRefs();
-         if (isValidSrcref(srcref) && TYPEOF(srcref) == INTSXP)
-         {
-            varFrame["function_line_number"] = INTEGER(srcref)[0];
-         }
-         else
-         {
-            // if we don't have a source ref, we'll debug using a deparsed
-            // version of the function that starts on line 1
-            varFrame["function_line_number"] = 1;
-         }
+         varFrame["function_line_number"] = 1;
+         
+         // TODO: Is this code still necessary?
+         //
+         // // extract the first line of the function. the client can optionally
+         // // use this to compute the source location as an offset into the
+         // // function rather than as an absolute file position (useful when
+         // // we need to debug a copy of the function rather than the real deal).
+         // srcref = context->callFunSourceRefs();
+         // if (isValidSrcref(srcref) && TYPEOF(srcref) == INTSXP)
+         // {
+         //    varFrame["function_line_number"] = INTEGER(srcref)[0];
+         // }
+         // else
+         // {
+         //    // if we don't have a source ref, we'll debug using a deparsed
+         //    // version of the function that starts on line 1
+         //    varFrame["function_line_number"] = 1;
+         // }
 
          std::string callSummary;
          error = context->callSummary(&callSummary);
