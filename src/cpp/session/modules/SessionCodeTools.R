@@ -279,6 +279,11 @@
    if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
       lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
    
+   # We previously used 'as.character(srcref, useSource = TRUE)' by default, but
+   # this also trims the leading indent from the function definition. This
+   # causes issues when highlighting the first part of a source reference, as
+   # the expectation here is that the full line is preserved. For that reason,
+   # if we're able to, we keep all relevant lines from the source reference.
    code <- if (is.character(lines))
    {
       srcpos <- .rs.parseSrcref(srcref)
