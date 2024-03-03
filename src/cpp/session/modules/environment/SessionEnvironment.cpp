@@ -1,4 +1,6 @@
 /*
+ * SessionEnvironment.cpp
+ *
  * Copyright (C) 2022 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant

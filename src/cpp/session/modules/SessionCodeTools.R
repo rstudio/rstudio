@@ -184,6 +184,8 @@
 {
    srcref <- as.list(unclass(srcref))
    
+   # From ?srcref:
+   #
    # Bytes (elements 2, 4) and columns (elements 5, 6) may be different due to
    # multibyte characters. If only four values are given, the columns and bytes
    # are assumed to match. Lines (elements 1, 3) and parsed lines (elements 7,
