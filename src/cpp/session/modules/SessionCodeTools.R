@@ -219,6 +219,7 @@
 {
    # Try to retrieve source references from srcfile if available
    srcfile <- attr(srcref, "srcfile", exact = TRUE)
+   filename <- srcfile$filename
    if (!is.null(srcfile$original))
       srcfile <- srcfile$original
    
@@ -228,6 +229,19 @@
    lines <- srcfile$lines
    if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
       lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
+   
+   # Check whether this is an annotated srcref.
+   # If so, we'll only keep the srcref range of interest.
+   if (length(filename) && nzchar(filename))
+   {
+      pattern <- sprintf("#line 1 \"%s\"", filename)
+      index <- grep(pattern, lines, fixed = TRUE)
+      if (length(index))
+      {
+         lines <- tail(lines, n = -index)
+         lines <- lines[srcref[[1L]]:srcref[[3L]]]
+      }
+   }
    
    if (asString)
       paste(lines, collapse = "\n")
@@ -252,7 +266,8 @@
    code <- if (is.character(lines))
    {
       srcpos <- .rs.parseSrcref(srcref)
-      lines[srcpos$first_parsed:srcpos$last_parsed]
+      range <- seq(from = srcpos$first_parsed, to = srcpos$last_parsed)
+      lines[range]
    }
    else
    {

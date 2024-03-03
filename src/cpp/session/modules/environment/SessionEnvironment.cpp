@@ -633,7 +633,6 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
    // Attach them to a carrier SEXP as attributes rather than passing directly.
    SEXP info = r::sexp::create("_rs_sourceinfo", &protect);
    r::sexp::setAttrib(info, "_rs_callfun", context.callfun());
-   r::sexp::setAttrib(info, "_rs_srcref", context.srcref());
    
    if (lineContext)
    {
@@ -732,6 +731,8 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["aliased_file_name"] =
                module_context::createAliasedPath(FilePath(filename));
 
+         // Only use source references with the top context if they are
+         // associated with a real file.
          if (isValidSrcref(srcref))
          {
             varFrame["real_sourceref"] = true;
@@ -1119,7 +1120,7 @@ json::Object commonEnvironmentStateData(
             if (!lines.empty())
             {
                hasCodeInFrame = true;
-               useProvidedSource = filename.empty();
+               useProvidedSource = filename.empty() || !module_context::resolveAliasedPath(filename).exists();
                functionCode = lines;
             }
          }
