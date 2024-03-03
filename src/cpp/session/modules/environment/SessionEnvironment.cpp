@@ -675,7 +675,7 @@ json::Array callFramesAsJson(
    // map source contexts to closures
    for (auto context = RCntxt::begin(); context != RCntxt::end(); context++)
    {
-      bool isFunctionContext = (context->callflag() & CTXT_FUNCTION);
+      bool isFunctionContext = (context->callflag() & (CTXT_FUNCTION | CTXT_BROWSER));
       if (!isFunctionContext)
          continue;
       
@@ -1152,7 +1152,7 @@ json::Object commonEnvironmentStateData(
                // see if the function to be debugged is out of sync with its saved
                // sources (if available).
                useProvidedSource =
-                     functionIsOutOfSync(srcContext, &functionCode) &&
+                     functionIsOutOfSync(context, &functionCode) &&
                      functionCode != "NULL";
             }
          }
