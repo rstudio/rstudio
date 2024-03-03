@@ -769,20 +769,6 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
                         *context, prevContext, nullptr);
             }
 
-            // // store the line stepped over in the top frame, so we can infer
-            // // that the next line stepped over will be near this one
-            // if (contextDepth == 1 &&
-            //     pLineDebugState != nullptr &&
-            //     pLineDebugState->lastDebugLine == 0 &&
-            //     isValidSrcref(simulatedSrcref))
-            // {
-            //    int stepLine = INTEGER(simulatedSrcref)[0];
-            //    if (stepLine > 0)
-            //    {
-            //       pLineDebugState->lastDebugLine = stepLine;
-            //    }
-            // }
-
             sourceRefToJson(simulatedSrcref, &varFrame);
          }
 
@@ -1700,7 +1686,7 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
    else if (type == module_context::ConsoleOutputNormal)
    {
       boost::smatch match;
-      boost::regex reLine("debug at ([^#]*)#([^:]+): ");
+      boost::regex reDebugAtPosition("debug at ([^#]*)#([^:]+): ");
       
       // start capturing debug output when R outputs "debug: "
       if (output == "debug: ")
@@ -1711,7 +1697,7 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
       }
       
       // emitted when browsing with srcref
-      else if (boost::regex_match(output, match, reLine))
+      else if (boost::regex_match(output, match, reDebugAtPosition))
       {
          std::string lineText = match[2];
          auto lineNumber = safe_convert::stringTo<int>(lineText);
