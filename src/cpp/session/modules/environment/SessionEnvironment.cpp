@@ -657,33 +657,52 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
 }
 
 // Return the call frames and debug information as a JSON object.
-json::Array callFramesAsJson(LineDebugState* pLineDebugState)
+json::Array callFramesAsJson(
+      int depth,
+      r::context::RCntxt* pContext,
+      r::context::RCntxt* pSrcContext,
+      LineDebugState* pLineDebugState)
 {
-   r::context::RCntxt::iterator context = r::context::RCntxt::begin();
-   r::context::RCntxt prevContext;
-   r::context::RCntxt srcContext = *context;
+   using namespace r::context;
+   
+   RCntxt prevContext;
+   RCntxt srcContext = globalContext();
    json::Array listFrames;
    int contextDepth = 0;
    Error error;
-   std::map<SEXP, r::context::RCntxt> envSrcrefCtx;
+   std::map<SEXP, RCntxt> envSrcrefCtx;
 
-   for (; context != r::context::RCntxt::end(); context++)
+   // map source contexts to closures
+   for (auto context = RCntxt::begin(); context != RCntxt::end(); context++)
    {
+      bool isFunctionContext = (context->callflag() & CTXT_FUNCTION);
+      if (!isFunctionContext)
+         continue;
+      
       // if this context has a valid srcref, use it to supply the srcrefs for
       // debugging in the environment of the callee. note that there may be
       // multiple srcrefs on the stack for a given closure; in this case we
       // always want to take the first one as it's the most current/specific.
-      if (isValidSrcref(context->contextSourceRefs()) &&
-          !context->nextcontext().isNull())
-      {
-         SEXP cloenv = context->nextcontext().cloenv();
-         if (cloenv != R_NilValue)
-         {
-            if (envSrcrefCtx.find(cloenv) == envSrcrefCtx.end())
-               envSrcrefCtx[cloenv] = *context;
-         }
-      }
-
+      SEXP srcref = context->contextSourceRefs();
+      if (!isValidSrcref(srcref))
+         continue;
+      
+      RCntxt nextContext = context->nextcontext();
+      if (nextContext.isNull())
+         continue;
+      
+      SEXP cloenv = context->nextcontext().cloenv();
+      if (cloenv == R_NilValue)
+         continue;
+      
+      if (envSrcrefCtx.find(cloenv) != envSrcrefCtx.end())
+         continue;
+      
+      envSrcrefCtx[cloenv] = *context;
+   }
+   
+   for (auto context = RCntxt::begin(); context != r::context::RCntxt::end(); context++)
+   {
       if (context->callflag() & CTXT_FUNCTION)
       {
          json::Object varFrame;
@@ -759,7 +778,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
             {
                simulatedSrcref =
                      simulatedSourceRefsOfContext(
-                        *context, r::context::RCntxt(), pLineDebugState);
+                        *context, RCntxt(), pLineDebugState);
                
                if (isValidSrcref(simulatedSrcref))
                {
@@ -788,6 +807,12 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
          // If this is a Shiny function, provide its label
          varFrame["shiny_function_label"] = context->shinyFunctionLabel();
+         
+         if (depth == contextDepth)
+         {
+            *pContext = *context;
+            *pSrcContext = srcContext;
+         }
 
          listFrames.push_back(varFrame);
          prevContext = *context;
@@ -1051,7 +1076,10 @@ json::Object commonEnvironmentStateData(
    bool useProvidedSource = false;
    std::string functionCode;
    bool inFunctionEnvironment = false;
-   json::Array callFramesJson = callFramesAsJson(pLineDebugState);
+   
+   r::context::RCntxt context;
+   r::context::RCntxt srcContext;
+   json::Array callFramesJson = callFramesAsJson(depth, &context, &srcContext, pLineDebugState);
    
    // emit the current list of values in the environment, but only if not monitoring (as the intent
    // of the monitoring switch is to avoid implicit environment listing)
@@ -1066,8 +1094,7 @@ json::Object commonEnvironmentStateData(
    // being debugged
    if (depth > 0)
    {
-      r::context::RCntxt context = r::context::getFunctionContext(depth);
-      if (context)
+      if (!context.isNull())
       {
          std::string functionName;
          Error error = context.functionName(&functionName);
@@ -1125,7 +1152,7 @@ json::Object commonEnvironmentStateData(
                // see if the function to be debugged is out of sync with its saved
                // sources (if available).
                useProvidedSource =
-                     functionIsOutOfSync(context, &functionCode) &&
+                     functionIsOutOfSync(srcContext, &functionCode) &&
                      functionCode != "NULL";
             }
          }
@@ -1377,8 +1404,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // If we're not currently debugging, look for user code (we prefer to
       // show the user their own code on entering debug), but once debugging,
       // allow the user to explore other code.
-      context = r::context::getFunctionContext(BROWSER_FUNCTION,
-                                               &depth, &environmentTop);
+      context = r::context::getFunctionContext(BROWSER_FUNCTION, &depth, &environmentTop);
    }
    
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
@@ -1507,8 +1533,7 @@ void initEnvironmentMonitoring()
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
-   r::context::RCntxt context = r::context::getFunctionContext(
-            BROWSER_FUNCTION, &contextDepth);
+   r::context::RCntxt context = r::context::getFunctionContext(BROWSER_FUNCTION, &contextDepth);
    if (contextDepth == 0 || !r::context::inBrowseContext())
    {
       // Not actively debugging; see if we have a stored environment name to

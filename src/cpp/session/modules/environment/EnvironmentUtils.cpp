@@ -307,21 +307,19 @@ bool functionDiffersFromSource(
 // from the source reference to the JSON object.
 void sourceRefToJson(const SEXP srcref, json::Object* pObject)
 {
-   if (srcref == nullptr ||
-       r::sexp::isNull(srcref) ||
-       r::context::isByteCodeSrcRef(srcref))
-   {
-      (*pObject)["line_number"] = 0;
-      (*pObject)["end_line_number"] = 0;
-      (*pObject)["character_number"] = 0;
-      (*pObject)["end_character_number"] = 0;
-   }
-   else
+   if (srcref != nullptr && TYPEOF(srcref) == INTSXP)
    {
       (*pObject)["line_number"] = INTEGER(srcref)[0];
       (*pObject)["end_line_number"] = INTEGER(srcref)[2];
       (*pObject)["character_number"] = INTEGER(srcref)[4];
       (*pObject)["end_character_number"] = INTEGER(srcref)[5];
+   }
+   else
+   {
+      (*pObject)["line_number"] = 0;
+      (*pObject)["end_line_number"] = 0;
+      (*pObject)["character_number"] = 0;
+      (*pObject)["end_character_number"] = 0;
    }
 }
 
