@@ -1,6 +1,4 @@
 /*
- * SessionEnvironment.cpp
- *
  * Copyright (C) 2022 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
@@ -16,6 +14,8 @@
 #include "SessionEnvironment.hpp"
 #include "EnvironmentMonitor.hpp"
 
+#define INTERNAL_R_FUNCTIONS
+
 #include <algorithm>
 
 #include <boost/container/flat_map.hpp>
@@ -23,8 +23,6 @@
 #include <core/Exec.hpp>
 #include <core/RecursionGuard.hpp>
 #include <core/system/LibraryLoader.hpp>
-
-#define INTERNAL_R_FUNCTIONS
 
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
@@ -998,9 +996,6 @@ bool functionIsOutOfSync(const r::context::RCntxt& context,
       return true;
    }
 
-   std::cerr << "Using deparsed function." << std::endl;
-   std::cerr << *pFunctionCode << std::endl;
-   
    // make sure the function has source references
    if (!context.hasSourceRefs())
    {
@@ -1093,8 +1088,6 @@ json::Object commonEnvironmentStateData(
       r::context::RCntxt context = r::context::getFunctionContext(depth);
       if (context)
       {
-         r::util::str(context.dump());
-         
          std::string functionName;
          Error error = context.functionName(&functionName);
          if (error)
@@ -1107,34 +1100,34 @@ json::Object commonEnvironmentStateData(
          if (env != R_GlobalEnv && env == context.cloenv())
          {
             varJson["environment_name"] = functionName + "()";
+            
             std::string envLocation;
-            error = r::exec::RFunction(".rs.environmentName", 
-                  ENCLOS(context.cloenv())).call(&envLocation);
+            error = r::exec::RFunction(".rs.environmentName")
+                  .addParam(ENCLOS(context.cloenv()))
+                  .call(&envLocation);
+            
             if (error)
                LOG_ERROR(error);
+            
             varJson["function_environment_name"] = envLocation;
             varJson["environment_is_local"] = true;
             inFunctionEnvironment = true;
          }
 
-         // Try to pull function information from srcref
+         // Check whether we already have code associated with this frame
+         // from the call frames we previously queried.
          bool hasCodeInFrame = false;
-         json::Value currentFrameJson = callFramesJson.getValueAt(depth);
+         json::Value currentFrameJson = callFramesJson.getValueAt(depth - 1);
          if (currentFrameJson.isObject())
          {
             std::string filename, lines;
-            Error error = core::json::readObject(
-                     currentFrameJson.getObject(),
+            core::json::readObject(currentFrameJson.getObject(),
                      "file_name", filename,
                      "lines", lines);
-            if (error)
-               LOG_ERROR(error);
             
+            // TODO: Need to check if srcref code is in sync with file?
             if (!lines.empty())
             {
-               std::cerr << "Using lines from frame." << std::endl;
-               std::cerr << lines << std::endl;
-               
                hasCodeInFrame = true;
                useProvidedSource = filename.empty();
                functionCode = lines;
@@ -1701,39 +1694,37 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
    }
    
    else if (type == module_context::ConsoleOutputNormal)
-      
    {
+      boost::smatch match;
+      boost::regex reLine("debug at ([^#]*)#([^:]+): ");
+      
       // start capturing debug output when R outputs "debug: "
       if (output == "debug: ")
       {
-         pLineDebugState->lastDebugText = "";
          *pCapturingDebugOutput = true;
+         pLineDebugState->lastDebugText = "";
+         pLineDebugState->lastDebugLine = 0;
       }
       
       // emitted when browsing with srcref
-      else if (output.find("debug at") == 0)
+      else if (boost::regex_match(output, match, reLine))
       {
-         boost::regex reLine("^debug at ([^#]+)#([^:]+):\\s*$");
-         boost::smatch match;
-         if (boost::regex_match(output, match, reLine))
+         std::string lineText = match[2];
+         auto lineNumber = safe_convert::stringTo<int>(lineText);
+         if (lineNumber)
          {
-            std::string lineText = match[2];
-            auto lineNumber = safe_convert::stringTo<int>(lineText);
-            if (lineNumber)
-            {
-               *pCapturingDebugOutput = true;
-               pLineDebugState->lastDebugText = "";
-               pLineDebugState->lastDebugLine = *lineNumber;
-            }
+            *pCapturingDebugOutput = true;
+            pLineDebugState->lastDebugText = "";
+            pLineDebugState->lastDebugLine = *lineNumber - 1;
          }
       }
       
       // emitted by R when a 'browser()' statement is encountered
       else if (output.find("Called from: ") == 0)
       {
-         callingBrowser = true;
-         pLineDebugState->lastDebugText = "";
          *pCapturingDebugOutput = true;
+         pLineDebugState->lastDebugText = "";
+         callingBrowser = true;
       }
    }
 }

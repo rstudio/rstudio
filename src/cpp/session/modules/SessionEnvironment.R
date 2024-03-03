@@ -295,7 +295,7 @@
       (is.null(call) && is.null(calltext)) )
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
-  lines <- .rs.deparseFunction(fun, FALSE, FALSE)
+  lines <- .rs.deparseFunction(fun, TRUE, FALSE)
 
   # Remember the indentation level on each line (added by deparse), and remove
   # it along with any other leading or trailing whitespace.
