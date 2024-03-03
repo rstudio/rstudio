@@ -9,18 +9,17 @@ test <- function() {
 }
 
 apple <- function() {
-   1 + 1 # comment
+   'apple'
    browser()
-   2 + 2 # comment
 }
 
 banana <- function() {
-   3 + 3
+   'banana'
    browser()
-   4 + 4
 }
 
 cherry <- function() {
+   'cherry'
    browser()
 }
 "))
