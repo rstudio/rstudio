@@ -631,6 +631,8 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
    // Attach them to a carrier SEXP as attributes rather than passing directly.
    SEXP info = r::sexp::create("_rs_sourceinfo", &protect);
    r::sexp::setAttrib(info, "_rs_callfun", context.callfun());
+   r::sexp::setAttrib(info, "_rs_srcref", context.srcref());
+   
    if (lineContext)
    {
       r::sexp::setAttrib(info, "_rs_callobj", lineContext.call());
@@ -728,7 +730,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["aliased_file_name"] =
                module_context::createAliasedPath(FilePath(filename));
 
-         if (contextDepth != 1 && isValidSrcref(srcref))
+         if (isValidSrcref(srcref))
          {
             varFrame["real_sourceref"] = true;
             sourceRefToJson(srcref, &varFrame);
