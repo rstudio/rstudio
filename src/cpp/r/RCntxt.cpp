@@ -194,13 +194,14 @@ bool RCntxt::operator==(const RCntxt& other) const
    if (other.isNull() && isNull())
       return true;
 
-   // Otherwise, check for matching fields in the context
+   // Otherwise, check for matching fields in the context.
+   // Note that some fields, e.g. the source references,
+   // could change over time in a context (e.g. as a user
+   // steps through in a debugging session).
    if (other.isNull() == isNull() &&
        other.call() == call() &&
        other.callflag() == callflag() &&
-       other.cloenv() == cloenv() &&
-       other.evaldepth() == evaldepth() &&
-       other.srcref() == srcref())
+       other.evaldepth() == evaldepth())
    {
       return true;
    }

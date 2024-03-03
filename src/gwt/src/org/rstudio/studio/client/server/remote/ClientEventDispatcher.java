@@ -761,7 +761,7 @@ public class ClientEventDispatcher
          {
             SearchPathFunctionDefinition data = event.getData();
             eventBus_.dispatchEvent(new CodeBrowserNavigationEvent(
-                  data, null, false, true));
+                  data, null, false, true, false));
          }
          else if (type == ClientEvent.MarkersChanged)
          {

@@ -2566,6 +2566,7 @@ public class Source implements InsertSourceEvent.Handler,
          columnManager_.activateCodeBrowser(
             navigation.getPath(),
             false,
+            false,
             new SourceNavigationResultCallback<>(navigation.getPosition(), retryCommand));
       }
 
@@ -2613,7 +2614,8 @@ public class Source implements InsertSourceEvent.Handler,
             columnManager_.activateCodeBrowser(
                CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
                !event.serverDispatched(),
-               new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
+               event.closeOnDebugSessionEnded(),
+               new ResultCallback<CodeBrowserEditingTarget, ServerError>() {
                @Override
                public void onSuccess(CodeBrowserEditingTarget target)
                {
@@ -2633,16 +2635,6 @@ public class Source implements InsertSourceEvent.Handler,
    @Override
    public void onCodeBrowserFinished(final CodeBrowserFinishedEvent event)
    {
-      tryExternalCodeBrowser(event.getFunction(), event, new Command()
-      {
-         @Override
-         public void execute()
-         {
-            final String path = CodeBrowserEditingTarget.getCodeBrowserPath(
-                  event.getFunction());
-            columnManager_.closeTabWithPath(path, false);
-         }
-      });
    }
 
    @Override
@@ -2657,6 +2649,7 @@ public class Source implements InsertSourceEvent.Handler,
             columnManager_.activateCodeBrowser(
                CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
                false,
+               event.closeOnDebugSessionEnded(),
                new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
                @Override
                public void onSuccess(CodeBrowserEditingTarget target)
@@ -2665,8 +2658,8 @@ public class Source implements InsertSourceEvent.Handler,
                   // we may need to repopulate it
                   if (StringUtil.isNullOrEmpty(target.getContext()))
                      target.showFunction(event.getFunction());
-                  highlightDebugBrowserPosition(target, event.getDebugPosition(),
-                        true);
+                  
+                  highlightDebugBrowserPosition(target, event.getDebugPosition(), true);
                }
             });
          }

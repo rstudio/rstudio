@@ -921,9 +921,10 @@ public class EnvironmentPresenter extends BasePresenter
                // open it
                eventBus_.fireEvent(new CodeBrowserNavigationEvent(
                      searchFunction_,
-                     currentBrowsePosition_.functionRelativePosition(
-                           currentFunctionLineNumber_),
-                     contextDepth_ == 1, false));
+                     currentBrowsePosition_.functionRelativePosition(currentFunctionLineNumber_),
+                     contextDepth_ == 1,
+                     false,
+                     true));
             }
             else if (currentBrowsePosition_.getLine() > 0)
             {
@@ -931,8 +932,8 @@ public class EnvironmentPresenter extends BasePresenter
                // highlight
                eventBus_.fireEvent(new CodeBrowserHighlightEvent(
                      searchFunction_,
-                     currentBrowsePosition_.functionRelativePosition(
-                           currentFunctionLineNumber_)));
+                     currentBrowsePosition_.functionRelativePosition(currentFunctionLineNumber_),
+                     true));
             }
          }
          else
