@@ -9,15 +9,17 @@ bar <- function()
 {
    1 + 1
    browser()
-   2 + 2
+   3 + 3
 }
 
 foo <- function() {
    withCallingHandlers({
       tryCatch({
          identity({
-            bar()
-            2 + 2
+            eval({
+               bar()
+               2 + 2
+            })
          })
       })
    })

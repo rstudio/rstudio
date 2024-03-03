@@ -230,16 +230,31 @@
    if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
       lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
    
-   # Check whether this is an annotated srcref.
-   # If so, we'll only keep the srcref range of interest.
+   # For packages installed with '--with-keep.source', it appears that
+   # the source references for all files within the package are collected
+   # into a single file, with each file given a header of the form:
+   #
+   #    #line 1 "<filename>"
+   #
+   # The source references are given relative to those file contents,
+   # so try to pull out the text content of only that file.
+   #
+   # In theory, R supports referencing arbitrary lines within a file;
+   # in practice, whole files appear to be included?
+   #
+   # https://github.com/wch/r-source/blob/1bd4a842dac421b68b7a999de8342f131ce8387f/src/library/tools/src/install.c#L158-L159
+   #
    if (length(filename) && nzchar(filename))
    {
-      pattern <- sprintf("#line 1 \"%s\"", filename)
-      index <- grep(pattern, lines, fixed = TRUE)
+      header <- sprintf("#line 1 \"%s\"", filename)
+      index <- which(lines == header)
       if (length(index))
       {
          lines <- tail(lines, n = -index)
-         boundaries <- c(grep("#line 1 ", lines, fixed = TRUE), length(lines) + 1L)
+         boundaries <- c(
+            grep("^#line 1 \"", lines),
+            length(lines) + 1L
+         )
          lines <- head(lines, n = boundaries[[1L]] - 1)
       }
    }
