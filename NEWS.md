@@ -63,6 +63,7 @@
 - Show an error dialog if R is not found when starting RStudio Desktop on Linux and macOS (#14343)
 - An empty `rstudio-prefs.json` no longer logs spurious JSON parsing errors (rstudio-pro#4347)
 - Help pane's Next and Previous find-in-topic buttons now have meaningful accessible labels [Accessibility] (#14347)
+- Fixed an issue where PATH modifications in .Renviron / .Rprofile could be lost on macOS (#9815)
 
 #### Posit Workbench
 
