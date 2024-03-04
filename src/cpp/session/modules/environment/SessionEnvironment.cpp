@@ -1119,6 +1119,7 @@ json::Object commonEnvironmentStateData(
       bool includeContents,
       LineDebugState* pLineDebugState)
 {
+   bool hasCodeInFrame = false;
    json::Object varJson;
    bool useProvidedSource = false;
    std::string functionCode;
@@ -1133,7 +1134,7 @@ json::Object commonEnvironmentStateData(
    varJson["environment_monitoring"] = s_monitoring;
    varJson["environment_list"] = includeContents ? environmentListAsJson() : json::Array();
    
-   varJson["context_depth"] = isDebugStepping ? 1 : depth;
+   varJson["context_depth"] = depth;
    varJson["call_frames"] = callFramesJson;
    varJson["function_name"] = "";
 
@@ -1171,7 +1172,6 @@ json::Object commonEnvironmentStateData(
 
          // Check whether we already have code associated with this frame
          // from the call frames we previously queried.
-         bool hasCodeInFrame = false;
          json::Value currentFrameJson = callFramesJson.getValueAt(depth - 1);
          if (currentFrameJson.isObject())
          {
@@ -1230,6 +1230,11 @@ json::Object commonEnvironmentStateData(
       varJson["environment_name"] = environmentName;
       varJson["environment_is_local"] = local;
    }
+ 
+   // If we have source references while we're stepping through, then
+   // we can accurately provide the current context even for the top-most frame.
+   if (isDebugStepping && hasCodeInFrame)
+      varJson["context_depth"] = 1;
 
    // always emit the code for the function, even if we don't think that the
    // client's going to need it. we only checked the saved copy of the function
