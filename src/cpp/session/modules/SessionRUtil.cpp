@@ -340,6 +340,13 @@ SEXP rs_utf8ToSystem(SEXP stringSEXP)
    return r::sexp::create(asNative, &protect);
 }
 
+SEXP rs_promiseCode(SEXP promiseSEXP)
+{
+   return TYPEOF(promiseSEXP) == PROMSXP
+         ? PRCODE(promiseSEXP)
+         : R_NilValue;
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -353,6 +360,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_runAsyncRProcess);
    RS_REGISTER_CALL_METHOD(rs_systemToUtf8);
    RS_REGISTER_CALL_METHOD(rs_utf8ToSystem);
+   RS_REGISTER_CALL_METHOD(rs_promiseCode);
    
    using boost::bind;
    using namespace module_context;
