@@ -656,6 +656,30 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
    return simulatedSrcref;
 }
 
+r::context::RCntxt findParentContext(
+      const r::context::RCntxt& context,
+      const r::context::RCntxt& prevContext)
+{
+   SEXP sysparent = context.sysparent();
+   if (R_IsPackageEnv(sysparent) || R_IsNamespaceEnv(sysparent))
+      return prevContext;
+   
+   using namespace r::context;
+   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
+   {
+      if (it->callflag() & CTXT_FUNCTION)
+      {
+         SEXP cloenv = it->cloenv();
+         if (cloenv == sysparent)
+         {
+            return *it;
+         }
+      }
+   }
+   
+   return prevContext;
+}
+
 // Return the call frames and debug information as a JSON object.
 json::Array callFramesAsJson(
       int depth,
@@ -809,9 +833,10 @@ json::Array callFramesAsJson(
             }
             else
             {
+               // TODO: Figure out the parent context in a more robust way
                simulatedSrcref =
                      simulatedSourceRefsOfContext(
-                        *context, prevContext, nullptr);
+                        *context, findParentContext(*context, prevContext), nullptr);
             }
 
             sourceRefToJson(simulatedSrcref, &varFrame);
