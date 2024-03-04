@@ -64,7 +64,8 @@
 - An empty `rstudio-prefs.json` no longer logs spurious JSON parsing errors (rstudio-pro#4347)
 - Help pane's Next and Previous find-in-topic buttons now have meaningful accessible labels [Accessibility] (#14347)
 - Fixed an issue where the RStudio debugger would re-focus a debugged context over-aggressively (#10664)
-- The RStudio debugger makes better use of available source references (#13295)
+- Fixed handling of duplicated calls in debugger when source references not available (#14276)
+- Fixed issue where stepping through lines of code in tryCatch() would provide incorrect debug highlight (#14306)
 
 #### Posit Workbench
 

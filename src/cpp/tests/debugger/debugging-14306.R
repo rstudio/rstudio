@@ -8,19 +8,25 @@ fn <- NULL
 eval(parse(text = "
 fn <- function() {
   identity({
-    browser()
+    1 + 1
+    2 + 2
+    3 + 3
   })
 }
 ", keep.source = FALSE))
 
+debugonce(fn)
 fn()
 
 
 # Compare with source references
 fn <- function() {
   identity({
-    browser()
+    1 + 1
+    2 + 2
+    3 + 3
   })
 }
 
+debugonce(fn)
 fn()
