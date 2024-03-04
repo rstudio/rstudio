@@ -295,7 +295,7 @@
       (is.null(call) && is.null(calltext)) )
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
-  lines <- .rs.deparseFunction(fun, FALSE, FALSE)
+  lines <- .rs.deparseFunction(fun, TRUE, FALSE)
 
   # Remember the indentation level on each line (added by deparse), and remove
   # it along with any other leading or trailing whitespace.
@@ -356,7 +356,10 @@
         best <- which.min(abs(linepref - pos))
      }
      else
+     {
         best <- best[1]
+     }
+     
      endpos <- pos[best] + attr(pos, "match.length")[best]
      pos <- pos[best]
   }
@@ -393,13 +396,17 @@
   else
   {
      lastchar <- endpos - (if (lastline == 1) 0 else offsets[lastline - 1])
-     lastchar <- lastchar + indents[lastline]
+     lastchar <- lastchar + indents[lastline] - 1
   }
 
-  result <- as.integer(c(firstline, firstchar,
-                         lastline,  lastchar,
-                         firstchar, lastchar))
-  return(result)
+  result <- c(
+     firstline, firstchar,
+     lastline,  lastchar,
+     firstchar, lastchar
+  )
+
+  as.integer(result)
+  
 })
 
 .rs.addFunction("functionNameFromCall", function(val)

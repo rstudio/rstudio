@@ -81,14 +81,18 @@ public:
    // NOTE: 'srcref()' attribute may be set to <in-bc-interp>
    // symbol for contexts associated with bytecode evaluation!
    bool isNull() const;
-   SEXP callfun() const;
-   SEXP sysparent() const;
    int callflag() const;
    int evaldepth() const;
+   SEXP promargs() const;
+   SEXP callfun() const;
+   SEXP sysparent() const;
    SEXP call() const;
-   SEXP srcref() const;
    SEXP cloenv() const;
+   SEXP srcref() const;
    RCntxt nextcontext() const;
+   
+   // for debugging
+   SEXP dump() const;
 
    // define an iterator for easy traversal of the context stack
    template <class Value>
@@ -141,9 +145,8 @@ private:
                                     std::string* pResult) const;
 };
 
-// debugging helper
+// for debugging
 SEXP dumpContexts();
-
 
 } // namespace context
 } // namespace r

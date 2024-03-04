@@ -606,7 +606,8 @@ public class ClientEventDispatcher
             PrefLayer data = event.getData();
             eventBus_.dispatchEvent(new UserStateChangedEvent(data));
          }
-         else if (type == ClientEvent.ContextDepthChanged) {
+         else if (type == ClientEvent.ContextDepthChanged)
+         {
             EnvironmentContextData data = event.getData();
             eventBus_.dispatchEvent(new ContextDepthChangedEvent(data, true));
          }
@@ -761,7 +762,7 @@ public class ClientEventDispatcher
          {
             SearchPathFunctionDefinition data = event.getData();
             eventBus_.dispatchEvent(new CodeBrowserNavigationEvent(
-                  data, null, false, true));
+                  data, null, false, true, false));
          }
          else if (type == ClientEvent.MarkersChanged)
          {
