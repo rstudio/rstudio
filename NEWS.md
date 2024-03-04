@@ -66,6 +66,7 @@
 - Fixed an issue where the RStudio debugger would re-focus a debugged context over-aggressively (#10664)
 - Fixed handling of duplicated calls in debugger when source references not available (#14276)
 - Fixed issue where stepping through lines of code in tryCatch() would provide incorrect debug highlight (#14306)
+- Fixed an issue where PATH modifications in .Renviron / .Rprofile could be lost on macOS (#9815)
 
 #### Posit Workbench
 
