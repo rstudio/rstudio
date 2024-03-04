@@ -29,42 +29,8 @@ template<typename T> class RIntCntxt: public RCntxtInterface
 {
 public:
    explicit RIntCntxt(T *pCntxt) :
-     pCntxt_(pCntxt)
-   { }
-
-   SEXP callfun() const
+      pCntxt_(pCntxt)
    {
-      return pCntxt_->callfun;
-   }
-   
-   SEXP sysparent() const
-   {
-      return pCntxt_->sysparent;
-   }
-
-   int callflag() const
-   {
-      return pCntxt_->callflag;
-   }
-   
-   int evaldepth() const
-   {
-      return pCntxt_->evaldepth;
-   }
-
-   SEXP call() const
-   {
-      return pCntxt_->call;
-   }
-
-   SEXP srcref() const
-   {
-      return pCntxt_->srcref;
-   }
-
-   SEXP cloenv() const
-   {
-      return pCntxt_->cloenv;
    }
 
    RCntxt nextcontext() const
@@ -75,6 +41,46 @@ public:
          return RCntxt(pCntxt_->nextcontext);
    }
    
+   int callflag() const
+   {
+      return pCntxt_->callflag;
+   }
+   
+   int evaldepth() const
+   {
+      return pCntxt_->evaldepth;
+   }
+
+   SEXP promargs() const
+   {
+      return pCntxt_->promargs;
+   }
+   
+   SEXP callfun() const
+   {
+      return pCntxt_->callfun;
+   }
+   
+   SEXP sysparent() const
+   {
+      return pCntxt_->sysparent;
+   }
+   
+   SEXP call() const
+   {
+      return pCntxt_->call;
+   }
+
+   SEXP cloenv() const
+   {
+      return pCntxt_->cloenv;
+   }
+
+   SEXP srcref() const
+   {
+      return pCntxt_->srcref;
+   }
+
    bool isNull() const
    {
       return false;

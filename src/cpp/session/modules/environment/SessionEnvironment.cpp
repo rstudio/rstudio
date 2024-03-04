@@ -18,6 +18,8 @@
 
 #define INTERNAL_R_FUNCTIONS
 
+#include <fmt/format.h>
+
 #include <algorithm>
 
 #include <boost/container/flat_map.hpp>
@@ -640,12 +642,10 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
    }
    else if (pLineDebugState != nullptr)
    {
-      SEXP lastDebugSEXP = r::sexp::create(
-               pLineDebugState->lastDebugText, &protect);
+      SEXP lastDebugSEXP = r::sexp::create(pLineDebugState->lastDebugText, &protect);
       r::sexp::setAttrib(info, "_rs_calltext", lastDebugSEXP);
       
-      SEXP lastLineSEXP = r::sexp::create(
-               pLineDebugState->lastDebugLine, &protect);
+      SEXP lastLineSEXP = r::sexp::create(pLineDebugState->lastDebugLine, &protect);
       r::sexp::setAttrib(info, "_rs_lastline", lastLineSEXP);
    }
    
@@ -663,14 +663,25 @@ json::Array callFramesAsJson(
       r::context::RCntxt* pSrcContext,
       LineDebugState* pLineDebugState)
 {
+   Error error;
    using namespace r::context;
    
    RCntxt prevContext;
    RCntxt srcContext = globalContext();
    json::Array listFrames;
    int contextDepth = 0;
-   Error error;
    std::map<SEXP, RCntxt> envSrcrefCtx;
+   
+   // We want to treat the function associated with the top-level
+   // browser context specially. This allows us to do so.
+   enum BrowseContextState {
+      BrowserContextNone,
+      BrowserContextFound,
+      BrowserContextUsed,
+   };
+   
+   SEXP browserCloenv = R_NilValue;
+   BrowseContextState browserContextState = BrowserContextNone;
 
    // map source contexts to closures
    for (auto context = RCntxt::begin(); context != RCntxt::end(); context++)
@@ -703,6 +714,15 @@ json::Array callFramesAsJson(
    
    for (auto context = RCntxt::begin(); context != r::context::RCntxt::end(); context++)
    {
+      if (browserContextState == BrowserContextNone)
+      {
+         if (context->callflag() & CTXT_BROWSER)
+         {
+            browserCloenv = context->cloenv();
+            browserContextState = BrowserContextFound;
+         }
+      }
+      
       if (context->callflag() & CTXT_FUNCTION)
       {
          json::Object varFrame;
@@ -711,9 +731,8 @@ json::Array callFramesAsJson(
 
          error = context->functionName(&functionName);
          if (error)
-         {
             LOG_ERROR(error);
-         }
+         
          varFrame["function_name"] = functionName;
          varFrame["is_error_handler"] = context->isErrorHandler();
          varFrame["is_hidden"] = context->isDebugHidden();
@@ -770,19 +789,21 @@ json::Array callFramesAsJson(
          {
             varFrame["real_sourceref"] = false;
             
-            // if this is the top frame, we simulate the sourceref using R
-            // output of the last debugged statement; if it isn't, we
-            // construct it by deparsing calls in the context stack.
+            // if this frame is being debugged, we simulate the sourceref
+            // using the output of the last debugged statement; if it isn't,
+            // we construct it by deparsing calls in the context stack.
             SEXP simulatedSrcref;
-            if (contextDepth == 1)
+            if (browserContextState == BrowserContextFound &&
+                browserCloenv == context->cloenv())
             {
+               browserContextState = BrowserContextUsed;
                simulatedSrcref =
                      simulatedSourceRefsOfContext(
                         *context, RCntxt(), pLineDebugState);
                
                if (isValidSrcref(simulatedSrcref))
                {
-                  int lastDebugLine = INTEGER(simulatedSrcref)[0];
+                  int lastDebugLine = INTEGER(simulatedSrcref)[0] - 1;
                   pLineDebugState->lastDebugLine = lastDebugLine;
                }
             }
@@ -1315,7 +1336,9 @@ bool isEvalContext(const r::context::RCntxt& ctx)
    return name == "eval" || name == "evalq";
 }
 
-SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
+SEXP inferDebugSrcrefs(
+      int depth,
+      boost::shared_ptr<LineDebugState> pLineDebugState)
 {
    using namespace r::context;
    
@@ -1325,49 +1348,18 @@ SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
    if (isValidSrcref(srcref))
       return srcref;
    
-   // no source reference available; try to find an appropriate context
-   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
-   {
-      // if we find a CTXT_BROWSER context, try to find its matching CTXT_FUNCTION
-      // these contexts are occasionally created when e.g. stepping into tryCatch
-      if (it->callflag() & CTXT_BROWSER)
-      {
-         SEXP cloenv = it->cloenv();
-         for (; it != RCntxt::end(); it++)
-         {
-            // skip 'eval' and 'evalq'
-            if (isEvalContext(*it))
-               continue;
-            
-            if (it->callflag() & CTXT_FUNCTION)
-            {
-               if (cloenv == it->cloenv())
-               {
-                  SEXP srcref = simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
-                  if (pLineDebugState && isValidSrcref(srcref))
-                     pLineDebugState->lastDebugLine = INTEGER(srcref)[0];
-                  return srcref;
-               }
-            }
-         }
-      }
-
-      // skip 'eval' and 'evalq'
-      if (isEvalContext(*it))
-         continue;
-            
-      // if we find a CTXT_FUNCTION context, use it
-      if (it->callflag() & CTXT_FUNCTION)
-      {
-         SEXP srcref = simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
-         if (pLineDebugState && isValidSrcref(srcref))
-            pLineDebugState->lastDebugLine = INTEGER(srcref)[0];
-         return srcref;
-      }
-   }
-
-   // shouldn't happen, but just in case
-   return R_NilValue;
+   r::context::RCntxt context;
+   r::context::RCntxt srcContext;
+   json::Array callFramesJson = callFramesAsJson(
+            depth,
+            &context,
+            &srcContext,
+            pLineDebugState.get());
+   
+   srcref = simulatedSourceRefsOfContext(srcContext, RCntxt(), pLineDebugState.get());
+   if (pLineDebugState && isValidSrcref(srcref))
+      pLineDebugState->lastDebugLine = INTEGER(srcref)[0] - 1;
+   return srcref;
 }
 
 } // end anonymous namespace
@@ -1380,6 +1372,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
 
+   
    int depth = 0;
    SEXP environmentTop = nullptr;
    r::context::RCntxt context;
@@ -1437,7 +1430,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0 && !r::context::inDebugHiddenContext())
    {
-      SEXP srcref = inferDebugSrcrefs(depth == 1 ? pLineDebugState : nullptr);
+      SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
       enqueBrowserLineChangedEvent(srcref);
    }
    
@@ -1649,8 +1642,12 @@ Error requeryContext(boost::shared_ptr<int> pContextDepth,
                      const json::JsonRpcRequest&,
                      json::JsonRpcResponse*)
 {
-   onConsolePrompt(pContextDepth, pLineDebugState,
-                   boost::make_shared<bool>(false), pCurrentContext);
+   onConsolePrompt(
+            pContextDepth,
+            pLineDebugState,
+            boost::make_shared<bool>(false),
+            pCurrentContext);
+   
    return Success();
 }
 
@@ -1682,8 +1679,6 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
                      module_context::ConsoleOutputType type,
                      const std::string& output)
 {
-   static bool callingBrowser = false;
-   
    if (*pCapturingDebugOutput)
    {
       // stop capturing output if non-normal output occurs
@@ -1693,11 +1688,13 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
          return;
       }
       
-      if (callingBrowser)
+      // When printing things which are not symbols / calls in
+      // the debugger, R will prepend a '[1] ' as these objects
+      // will be printed in the "regular" way. Strip that off
+      // if it is present.
+      if (output.find("[1] ") == 0)
       {
-         // simulate a request to highlight a browser() call
-         callingBrowser = false;
-         pLineDebugState->lastDebugText.append("browser()");
+         pLineDebugState->lastDebugText.append(output.substr(4));
       }
       else
       {
@@ -1726,16 +1723,15 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
          {
             *pCapturingDebugOutput = true;
             pLineDebugState->lastDebugText = "";
-            pLineDebugState->lastDebugLine = *lineNumber - 1;
+            pLineDebugState->lastDebugLine = *lineNumber;
          }
       }
       
       // emitted by R when a 'browser()' statement is encountered
       else if (output.find("Called from: ") == 0)
       {
-         *pCapturingDebugOutput = true;
-         pLineDebugState->lastDebugText = "";
-         callingBrowser = true;
+         pLineDebugState->lastDebugLine = 0;
+         pLineDebugState->lastDebugText = "browser()";
       }
    }
 }
@@ -1815,6 +1811,7 @@ Error initialize()
    // for the purpose of reconstructing references when none are present.
    boost::shared_ptr<LineDebugState> pLineDebugState =
          boost::make_shared<LineDebugState>();
+   
    boost::shared_ptr<bool> pCapturingDebugOutput =
          boost::make_shared<bool>(false);
 

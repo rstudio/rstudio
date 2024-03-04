@@ -7,10 +7,10 @@
 
 bar <- function()
 {
+   browser()
    { 1 + 1; 2 +
          2}
    1 + 1
-   browser()
    3 + 3
 }
 

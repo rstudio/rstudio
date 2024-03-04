@@ -229,6 +229,11 @@ bool RCntxt::isNull() const
    return pCntxt_ == nullptr;
 }
 
+SEXP RCntxt::promargs() const
+{
+   return pCntxt_ ? pCntxt_->promargs() : R_NilValue;
+}
+
 SEXP RCntxt::callfun() const
 {
    return pCntxt_ ? pCntxt_->callfun() : R_NilValue;
@@ -273,13 +278,14 @@ SEXP RCntxt::dump() const
 {
    r::sexp::Protect protect;
    r::sexp::ListBuilder builder(&protect);
+   builder.add("callflag", callflag());
+   builder.add("evaldepth", evaldepth());
+   builder.add("promargs", promargs());
    builder.add("callfun", callfun());
    builder.add("sysparent", sysparent());
-   builder.add("callflag", callflag());
    builder.add("call", call());
-   builder.add("srcref", srcref());
    builder.add("cloenv", cloenv());
-   builder.add("evaldepth", evaldepth());
+   builder.add("srcref", srcref());
    return r::sexp::create(builder, &protect);
 }
 
