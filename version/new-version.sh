@@ -90,6 +90,9 @@ echo "${RELEASE_FLOWER}" > version/RELEASE
 # Update the CALENDAR_VERSION file
 echo "${CALENDAR_VERSION}" > version/CALENDAR_VERSION
 
+# Update the PATCH file
+echo "0" > version/PATCH
+
 # Create a NEWS.md file
 {
     echo "## RStudio ${CALENDAR_VERSION}.0 \"$RELEASE_FLOWER\" Release Notes"
