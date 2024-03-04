@@ -1330,20 +1330,6 @@ void onDetectChanges(module_context::ChangeSource /* source */)
 
 namespace {
 
-bool isEvalContext(const r::context::RCntxt& ctx)
-{
-   SEXP call = ctx.call();
-   if (TYPEOF(call) != LANGSXP)
-      return false;
-   
-   SEXP lhs = CAR(call);
-   if (TYPEOF(lhs) != SYMSXP)
-      return false;
-   
-   std::string name = CHAR(PRINTNAME(lhs));
-   return name == "eval" || name == "evalq";
-}
-
 SEXP inferDebugSrcrefs(
       int depth,
       boost::shared_ptr<LineDebugState> pLineDebugState)
