@@ -1114,9 +1114,10 @@ json::Object pythonEnvironmentStateData(const std::string& environment)
 // used both to initialize the environment state on first load and to send
 // information about the new environment on a context change
 json::Object commonEnvironmentStateData(
-   int depth,
-   bool includeContents,
-   LineDebugState* pLineDebugState)
+      bool isDebugStepping,
+      int depth,
+      bool includeContents,
+      LineDebugState* pLineDebugState)
 {
    json::Object varJson;
    bool useProvidedSource = false;
@@ -1132,7 +1133,7 @@ json::Object commonEnvironmentStateData(
    varJson["environment_monitoring"] = s_monitoring;
    varJson["environment_list"] = includeContents ? environmentListAsJson() : json::Array();
    
-   varJson["context_depth"] = depth;
+   varJson["context_depth"] = isDebugStepping ? 1 : depth;
    varJson["call_frames"] = callFramesJson;
    varJson["function_name"] = "";
 
@@ -1240,14 +1241,15 @@ json::Object commonEnvironmentStateData(
    return varJson;
 }
 
-void enqueContextDepthChangedEvent(int depth,
+void enqueContextDepthChangedEvent(bool isDebugStepping,
+                                   int depth,
                                    LineDebugState* pLineDebugState)
 {
    // emit an event to the client indicating the new call frame and the
    // current state of the environment
    ClientEvent event(
             client_events::kContextDepthChanged,
-            commonEnvironmentStateData(depth, s_monitoring, pLineDebugState));
+            commonEnvironmentStateData(isDebugStepping, depth, s_monitoring, pLineDebugState));
    module_context::enqueClientEvent(event);
 }
 
@@ -1277,7 +1279,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
-   enqueContextDepthChangedEvent(*pContextDepth, pLineDebugState.get());
+   enqueContextDepthChangedEvent(false, *pContextDepth, pLineDebugState.get());
 
    return Success();
 }
@@ -1298,6 +1300,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
    if (language == kEnvironmentLanguageR)
    {
       jsonState = commonEnvironmentStateData(
+               false,
                *pContextDepth,
                true,
                pLineDebugState.get());
@@ -1449,7 +1452,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
       *pCurrentContext = context;
-      enqueContextDepthChangedEvent(depth, pLineDebugState.get());
+      enqueContextDepthChangedEvent(true, depth, pLineDebugState.get());
    }
    
    // if we're debugging and stayed in the same frame, update the line number
@@ -1790,9 +1793,11 @@ json::Value environmentStateAsJson()
    if (!r::context::inBrowseContext())
       contextDepth = 0;
    
-   return commonEnvironmentStateData(contextDepth, 
-         s_monitoring, // include contents if actively monitoring
-         nullptr);
+   return commonEnvironmentStateData(
+            false,
+            contextDepth, 
+            s_monitoring, // include contents if actively monitoring
+            nullptr);
 }
 
 SEXP rs_isBrowserActive()
