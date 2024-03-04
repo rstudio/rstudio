@@ -1255,7 +1255,7 @@ void enqueBrowserLineChangedEvent(const SEXP srcref)
 {
    json::Object varJson;
    sourceRefToJson(srcref, &varJson);
-   ClientEvent event (client_events::kBrowserLineChanged, varJson);
+   ClientEvent event(client_events::kBrowserLineChanged, varJson);
    module_context::enqueClientEvent(event);
 }
 

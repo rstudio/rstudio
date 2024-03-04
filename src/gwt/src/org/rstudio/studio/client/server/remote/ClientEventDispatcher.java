@@ -606,7 +606,8 @@ public class ClientEventDispatcher
             PrefLayer data = event.getData();
             eventBus_.dispatchEvent(new UserStateChangedEvent(data));
          }
-         else if (type == ClientEvent.ContextDepthChanged) {
+         else if (type == ClientEvent.ContextDepthChanged)
+         {
             EnvironmentContextData data = event.getData();
             eventBus_.dispatchEvent(new ContextDepthChangedEvent(data, true));
          }

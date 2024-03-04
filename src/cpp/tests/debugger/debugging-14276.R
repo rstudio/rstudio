@@ -18,3 +18,19 @@ eval(parse(text = "fn <- function() {
 
 debugonce(fn)
 fn()
+
+
+# No issue stepping through when we have srcrefs.
+fn <- function() {
+  x <- 1
+  1 + 1
+  x <- 1
+  2 + 2
+  3 + 3
+  x <- 1
+  4 + 4
+}
+
+debugonce(fn)
+fn()
+
