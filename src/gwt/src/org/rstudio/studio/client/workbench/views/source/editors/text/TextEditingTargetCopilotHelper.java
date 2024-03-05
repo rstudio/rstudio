@@ -162,11 +162,8 @@ public class TextEditingTargetCopilotHelper
                               
                               // Copilot includes trailing '```' for some reason in some cases,
                               // remove those if we're inserting in an R document.
-                              if (completion.text.endsWith("\n```"))
-                                 completion.text = StringUtil.substring(completion.text, 0, completion.text.length() - 3);
-
-                              if (completion.displayText.endsWith("\n```"))
-                                 completion.displayText = StringUtil.substring(completion.displayText, 0, completion.displayText.length() - 3);
+                              completion.text = postProcessCompletion(completion.text);
+                              completion.displayText = postProcessCompletion(completion.displayText);
 
                               activeCompletion_ = completion;
                               display_.setGhostText(activeCompletion_.displayText);
@@ -373,6 +370,16 @@ public class TextEditingTargetCopilotHelper
       {
          display_.setGhostText(activeCompletion_.displayText);
       });
+   }
+   
+   private String postProcessCompletion(String text)
+   {
+      // Exclude chunk markers from completion results
+      int endChunkIndex = text.indexOf("\n```");
+      if (endChunkIndex != -1)
+         text = text.substring(0, endChunkIndex);
+      
+      return text;
    }
    
    @Inject
