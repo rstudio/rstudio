@@ -320,6 +320,7 @@ void ChunkExecContext::connect()
    if (error)
       LOG_ERROR(error);
 
+   setExecuting(true);
    NotebookCapture::connect();
 }
 
@@ -585,6 +586,7 @@ void ChunkExecContext::disconnect()
    }
 
    events().onChunkExecCompleted(docId_, chunkId_, chunkCode_, chunkLabel_, nbCtxId_);
+   setExecuting(false);
 }
 
 void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type, 
