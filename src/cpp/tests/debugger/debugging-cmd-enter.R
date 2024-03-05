@@ -6,6 +6,8 @@
 # on some heuristics (matching source references against
 # the document contents itself) so it may not be perfect.
 #
+# https://github.com/rstudio/rstudio/issues/13925
+#
 
 inner <- function() {
    3 + 3
