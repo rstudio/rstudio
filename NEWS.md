@@ -25,6 +25,7 @@
 - Add search results copy button and search results breadcrumbs to RStudio User Guide (#13618, #14069)
 - RStudio now supports generation of a Copilot diagnostic report from the Copilot preferences pane (#14358)
 - The RStudio debugger is now better at matching debugged code to source documents (#13925)
+- RStudio no longer includes spurious chunk markers from Copilot completion results (#13686)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
