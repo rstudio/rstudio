@@ -7,16 +7,16 @@
 # the document contents itself) so it may not be perfect.
 #
 
-test1 <- function() {
-   1 + 1
-   test2()
-   2 + 2
-}
-
-test2 <- function() {
+inner <- function() {
    3 + 3
-   browser()
    4 + 4
 }
 
-test()
+outer <- function() {
+   1 + 1
+   inner()
+   2 + 2
+}
+
+debugonce(outer)
+outer()
