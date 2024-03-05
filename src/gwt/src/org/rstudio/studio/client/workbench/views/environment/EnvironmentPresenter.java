@@ -858,6 +858,58 @@ public class EnvironmentPresenter extends BasePresenter
       return false;
    }
 
+   private boolean openBrowsePointUsingOpenTab(boolean debugging,
+                                               boolean sourceChanged)
+   {
+      boolean tryOpenDoc =
+            useCurrentBrowseSource_ &&
+            currentBrowseSource_.length() > 0 &&
+            debugging;
+      
+      if (!tryOpenDoc)
+         return false;
+      
+      SourceColumnManager manager = RStudioGinjector.INSTANCE.getSourceColumnManager();
+      for (SourceColumn column : manager.getColumnList())
+      {
+         for (EditingTarget editingTarget : column.getEditors())
+         {
+            if (!(editingTarget instanceof TextEditingTarget))
+               continue;
+            
+            TextEditingTarget target = (TextEditingTarget) editingTarget;
+            if (StringUtil.isNullOrEmpty(target.getPath()))
+               continue;
+            
+            String editorCode = target.getDocDisplay().getCode();
+            int codeIndex = editorCode.indexOf(currentBrowseSource_);
+            if (codeIndex == -1)
+               continue;
+            
+            // We've found the start of the function being debugged in a
+            // currently-open tab. Try to set the browse position accordingly.
+            Position position = target.getDocDisplay().positionFromIndex(codeIndex);
+            currentFunctionLineNumber_ = 0;
+            currentBrowseFile_ = target.getPath();
+            currentBrowsePosition_ = DebugFilePosition.create(
+                  currentBrowsePosition_.getLine() + position.getRow(),
+                  currentBrowsePosition_.getEndLine() + position.getRow(),
+                  currentBrowsePosition_.getColumn(),
+                  currentBrowsePosition_.getEndColumn());
+            
+            OpenSourceFileEvent event = new OpenSourceFileEvent(
+                  FileSystemItem.createFile(target.getPath()),
+                  (FilePosition) currentBrowsePosition_.cast(),
+                  FileTypeRegistry.R,
+                  NavigationMethods.DEBUG_STEP);
+            eventBus_.fireEvent(event);
+            return true;
+         }
+      }
+      
+      return false;
+   }
+   
    private void openOrUpdateFileBrowsePoint(boolean debugging,
                                             boolean sourceChanged)
    {
@@ -885,52 +937,12 @@ public class EnvironmentPresenter extends BasePresenter
          return;
       }
       
-      // if we have a copy of the source to be browsed, check and see
-      // if we can find that within any of the currently open files
-      // if so, open that file
-      boolean tryOpenDoc =
-            useCurrentBrowseSource_ &&
-            currentBrowseSource_.length() > 0 &&
-            debugging;
+      // check and see if we're debugging a function whose definition appears
+      // to match something in a currently-open file -- if we find that, then
+      // use that file for debug navigation, instead of the code browser
+      if (openBrowsePointUsingOpenTab(debugging, sourceChanged))
+         return;
       
-      if (tryOpenDoc)
-      {
-         SourceColumnManager manager = RStudioGinjector.INSTANCE.getSourceColumnManager();
-         for (SourceColumn column : manager.getColumnList())
-         {
-            for (EditingTarget editingTarget : column.getEditors())
-            {
-               if (editingTarget instanceof TextEditingTarget)
-               {
-                  TextEditingTarget target = (TextEditingTarget) editingTarget;
-                  String editorCode = target.getDocDisplay().getCode();
-                  int codeIndex = editorCode.indexOf(currentBrowseSource_);
-                  if (codeIndex != -1)
-                  {
-                     // We've found the start of the function being debugged in a
-                     // currently-open tab. Try to set the browse position accordingly.
-                     Position position = target.getDocDisplay().positionFromIndex(codeIndex);
-                     currentFunctionLineNumber_ = 0;
-                     currentBrowseFile_ = target.getPath();
-                     currentBrowsePosition_ = DebugFilePosition.create(
-                           currentBrowsePosition_.getLine() + position.getRow(),
-                           currentBrowsePosition_.getEndLine() + position.getRow(),
-                           currentBrowsePosition_.getColumn(),
-                           currentBrowsePosition_.getEndColumn());
-                     OpenSourceFileEvent event = new OpenSourceFileEvent(
-                           FileSystemItem.createFile(target.getPath()),
-                           (FilePosition) currentBrowsePosition_.cast(),
-                           FileTypeRegistry.R,
-                           NavigationMethods.DEBUG_STEP);
-                     eventBus_.fireEvent(event);
-                     return;
-                  }
-               }
-            }
-         }
-      }
-            
-
       // otherwise, if we have a copy of the source from the server, load
       // the copy from the server into the code browser window
       if (useCurrentBrowseSource_ && currentBrowseSource_.length() > 0)
