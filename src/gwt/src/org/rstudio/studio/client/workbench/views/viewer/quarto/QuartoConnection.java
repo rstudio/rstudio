@@ -76,6 +76,11 @@ public class QuartoConnection
          return null;
    }
    
+   public String getRawSrcFile()
+   {
+      return srcFile_;
+   }
+   
    public boolean isWebsite()
    {
       return url_ != null && website_;

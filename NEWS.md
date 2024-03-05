@@ -69,6 +69,7 @@
 - Fixed handling of duplicated calls in debugger when source references not available (#14276)
 - Fixed issue where stepping through lines of code in tryCatch() would provide incorrect debug highlight (#14306)
 - Fixed an issue where PATH modifications in .Renviron / .Rprofile could be lost on macOS (#9815)
+- Fixed an issue where the Edit button in the Viewer pane could fail for Quarto documents (#14325)
 
 #### Posit Workbench
 
