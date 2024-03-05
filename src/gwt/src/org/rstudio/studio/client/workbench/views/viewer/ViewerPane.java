@@ -238,9 +238,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void previewQuarto(String url, QuartoNavigate quartoNav)
    {
-      quartoNav_ = quartoNav;
       rmdPreviewParams_ = null;
-      navigate(url, false, false);
+      navigate(url, false, false, quartoNav);
       quartoConnection_.setQuartoUrl(url, quartoNav.isWebsite());
       publishButton_.setManuallyHidden(false);
       if (quartoNav.isWebsite())
@@ -324,7 +323,12 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       // https://github.com/rstudio/rstudio/issues/14325
       if (file == "<%- inputFile %>")
-         file = quartoNav_.getSourceFile();
+      {
+         if (quartoNav_ != null)
+         {
+            file = quartoNav_.getSourceFile();
+         }
+      }
       
       FileSystemItem srcFile = FileSystemItem.createFile(file);
       fileTypeRegistry_.editFile(srcFile, FilePosition.create(-1, -1));
@@ -438,8 +442,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    
    private void navigate(String url, boolean useRawURL, boolean viewerPaneParam)
    {
+      navigate(url, useRawURL, viewerPaneParam, null);
+   }
+   
+   private void navigate(String url, boolean useRawURL, boolean viewerPaneParam, QuartoNavigate quartoNav)
+   {
       // save the unmodified URL for pop-out
       unmodifiedUrl_ = url;
+      
+      // save quarto navigation
+      quartoNav_ = quartoNav;
 
       // in desktop mode we need to be careful about loading URLs which are
       // non-local; before changing the URL, set the iframe to be sandboxed
