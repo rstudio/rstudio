@@ -59,9 +59,6 @@ namespace notebook {
 
 namespace {
 
-// whether a chunk is currently executing
-std::atomic<bool> s_isExecuting;
-
 // the currently active console ID and chunk execution context
 std::string s_activeConsole;
 boost::shared_ptr<ChunkExecContext> s_execContext;
@@ -251,16 +248,6 @@ Events& events()
 {
    static Events instance;
    return instance;
-}
-
-bool isExecuting()
-{
-   return s_isExecuting.load();
-}
-
-void setExecuting(bool executing)
-{
-   s_isExecuting.store(executing);
 }
 
 // a notebook context is scoped to both a user and a session (which are only

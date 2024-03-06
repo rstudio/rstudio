@@ -70,9 +70,6 @@ enum Condition
    ConditionWarning = 1
 };
 
-bool isExecuting();
-void setExecuting(bool executing);
-
 std::string notebookCtxId();
 
 core::Error initialize();

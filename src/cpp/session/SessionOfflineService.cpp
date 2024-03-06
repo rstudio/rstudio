@@ -28,6 +28,8 @@
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionOptions.hpp>
 #include <session/SessionHttpConnection.hpp>
 #include <session/SessionHttpConnectionListener.hpp>
@@ -54,9 +56,7 @@ std::chrono::milliseconds s_asyncRpcDuration;
 
 bool isMainThreadBusy()
 {
-   return
-         console_input::executing() ||
-         modules::rmarkdown::notebook::isExecuting();
+   return console_input::executing() || r::exec::isExecuting();
 }
 
 } // end anonymous namespace
@@ -177,7 +177,7 @@ boost::shared_ptr<HttpConnection> asyncConnectionConverter(boost::shared_ptr<Htt
 void OfflineService::run()
 {
    try
-   {    
+   {
       // default time durations
       int asyncRpcMillis = options().asyncRpcTimeoutMs();
       int handleOfflineMillis = options().handleOfflineTimeoutMs();
@@ -240,12 +240,12 @@ void OfflineService::run()
             console_input::updateSessionExecuting();
 
             // If R is not occupying the main thread, we'll continue to wait.
-            if (isMainThreadBusy())
+            if (!isMainThreadBusy())
                continue;
 
             std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
-	    // Make sure session is initialized before doing any processing in the offline thread to avoid the call to lazily init it
+            // Make sure session is initialized before doing any processing in the offline thread to avoid the call to lazily init it
             if (handleOfflineMillis > 0 && init::isSessionInitializedAndRestored())
             {
                boost::shared_ptr<HttpConnection> ptrConnection;
