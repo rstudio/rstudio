@@ -73,9 +73,12 @@ var SweaveHighlightRules = function() {
         merge : false,
         onMatch: function(value, state, stack, line, context) {
             context.sexpr.count -= 1;
-            this.next = (context.sexpr.count === 0)
-                ? context.sexpr.state
-                : state;
+            if (context.sexpr.count === 0) {
+                this.next = context.sexpr.state;
+                delete context.sexpr;
+            } else {
+                this.next = state;
+            }
             return this.token;
         }
     });
