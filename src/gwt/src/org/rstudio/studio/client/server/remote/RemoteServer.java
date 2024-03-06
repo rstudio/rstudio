@@ -1375,7 +1375,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_PACKAGE_INSTALL_CONTEXT, requestCallback);
    }
 
-   public void isPackageLoaded(
+   public void isPackageAttached(
                        String packageName,
                        String libName,
                        ServerRequestCallback<Boolean> requestCallback)
@@ -1383,7 +1383,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(packageName));
       params.set(1, new JSONString(libName));
-      sendRequest(RPC_SCOPE, IS_PACKAGE_LOADED, params, requestCallback);
+      sendRequest(RPC_SCOPE, IS_PACKAGE_ATTACHED, params, requestCallback);
    }
 
    public void isPackageHyperlinkSafe(
@@ -6811,7 +6811,7 @@ public class RemoteServer implements Server
    private static final String IGNORE_NEXT_LOADED_PACKAGE_CHECK = "ignore_next_loaded_package_check";
    private static final String GET_PACKAGE_NEWS_URL = "get_package_news_url";
    private static final String GET_PACKAGE_INSTALL_CONTEXT = "get_package_install_context";
-   private static final String IS_PACKAGE_LOADED = "is_package_loaded";
+   private static final String IS_PACKAGE_ATTACHED = "is_package_attached";
    private static final String IS_PACKAGE_HYPERLINK_SAFE = "is_package_hyperlink_safe";
    private static final String IS_PACKAGE_INSTALLED = "is_package_installed";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";

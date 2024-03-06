@@ -252,29 +252,23 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
   .libPaths()[1]
 })
 
-.rs.addFunction("isPackageLoaded", function(packageName, libName)
+.rs.addJsonRpcHandler("is_package_attached", function(packageName, libName)
 {
-   if (packageName %in% loadedNamespaces())
-   {
-      # get the raw path to the package 
-      packagePath <- .rs.pathPackage(packageName, quiet = TRUE)
-
-      # alias (for comparison against libName, which comes from the client and
-      # is aliased)
-      packagePath <- .rs.createAliasedPath(packagePath)
-
-      # compare with the library given by the client
-      .rs.scalar(identical(packagePath, paste(libName, packageName, sep = "/")))
-   }
-   else
-   {
-      .rs.scalar(FALSE)
-   }
-})
-
-.rs.addJsonRpcHandler("is_package_loaded", function(packageName, libName)
-{
-   .rs.isPackageLoaded(packageName, libName)
+   # quick check first if the package is loaded
+   if (!isNamespaceLoaded(packageName))
+      return(.rs.scalar(FALSE))
+   
+   # get the raw path to the package
+   packagePath <- .rs.pathPackage(packageName, quiet = TRUE)
+   if (length(packagePath) == 0L)
+      return(.rs.scalar(FALSE))
+   
+   # libName from client is aliased, so compare aliased paths
+   packagePath <- .rs.createAliasedPath(packagePath)
+   
+   # compare with the library given by the client
+   samePath <- identical(packagePath, paste(libName, packageName, sep = "/"))
+   .rs.scalar(samePath)
 })
 
 .rs.addFunction("isPackageHyperlinkSafe", function(packageName)
