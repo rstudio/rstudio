@@ -254,23 +254,25 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("isPackageLoaded", function(packageName, libName)
 {
-   if (packageName %in% .packages())
+   if (packageName %in% loadedNamespaces())
    {
       # get the raw path to the package 
-      packagePath <- .rs.pathPackage(packageName, quiet=TRUE)
+      packagePath <- .rs.pathPackage(packageName, quiet = TRUE)
 
       # alias (for comparison against libName, which comes from the client and
       # is aliased)
       packagePath <- .rs.createAliasedPath(packagePath)
 
       # compare with the library given by the client
-      .rs.scalar(identical(packagePath, paste(libName, packageName, sep="/")))
+      .rs.scalar(identical(packagePath, paste(libName, packageName, sep = "/")))
    }
-   else 
+   else
+   {
       .rs.scalar(FALSE)
+   }
 })
 
-.rs.addJsonRpcHandler( "is_package_loaded", function(packageName, libName)
+.rs.addJsonRpcHandler("is_package_loaded", function(packageName, libName)
 {
    .rs.isPackageLoaded(packageName, libName)
 })
@@ -778,7 +780,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.scalar(candidates[[1]])
 })
 
-.rs.addFunction("packagesLoaded", function(pkgs) {
+.rs.addFunction("packagesLoaded", function(pkgs)
+{
    # first check loaded namespaces
    if (any(pkgs %in% loadedNamespaces()))
       return(TRUE)
@@ -797,73 +800,30 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
    if (ignore)
       return(FALSE)
-
-   # if the default set of namespaces in rstudio are loaded
-   # then skip the check
-   defaultNamespaces <- c("base", "datasets", "graphics", "grDevices",
-                          "methods", "stats", "tools", "utils")
-   if (identical(defaultNamespaces, loadedNamespaces()) &&
-       length(.dynLibs()) == 4)
-      return(FALSE)
-
-   if (.rs.packagesLoaded(pkgs)) {
+   
+   # first, check if the packages themselves are loaded
+   if (.rs.packagesLoaded(pkgs))
       return(TRUE)
-   }
-   else {
-      avail <- available.packages()
-      deps <- suppressMessages(suppressWarnings(
-         utils:::getDependencies(pkgs, available=avail)))
-      return(.rs.packagesLoaded(deps))
-   }
+   
+   # next, check if any of these package's dependencies are loaded
+   recdeps <- .rs.recursivePackageDependencies(pkgs)
+   if (.rs.packagesLoaded(recdeps))
+      return(TRUE)
+   
+   FALSE
 })
 
-.rs.addFunction("loadedPackagesAndDependencies", function(pkgs) {
-  
-  # if the default set of namespaces in rstudio are loaded
-  # then skip the check
-  defaultNamespaces <- c("base", "datasets", "graphics", "grDevices",
-                         "methods", "stats", "tools", "utils")
-  if (identical(defaultNamespaces, loadedNamespaces()) && length(.dynLibs()) == 4)
-    return(character())
-  
-  packagesLoaded <- function(pkgList) {
-    
-    # first check loaded namespaces
-    loaded <- pkgList[pkgList %in% loadedNamespaces()]
-    
-    # now check if there are libraries still loaded in spite of the
-    # namespace being unloaded 
-    libs <- .dynLibs()
-    libnames <- vapply(libs, "[[", character(1), "name")
-    loaded <- c(loaded, pkgList[pkgList %in% libnames])
-    loaded
-  }
-  
-  # package loaded
-  loaded <- packagesLoaded(pkgs)
-  
-  # dependencies loaded
-  avail <- available.packages()
-  deps <- suppressMessages(suppressWarnings(
-    utils:::getDependencies(pkgs, available=avail)))
-  loaded <- c(loaded, packagesLoaded(deps))
-  
-  # return unique list
-  unique(loaded)  
+.rs.addFunction("loadedPackagesAndDependencies", function(pkgs)
+{
+   recdeps <- .rs.recursivePackageDependencies(pkgs)
+   sort(unique(unlist(recdeps)))
 })
 
-.rs.addFunction("forceUnloadForPackageInstall", function(pkgs) {
-  
-  # figure out which packages are loaded and/or have dependencies loaded
-  pkgs <- .rs.loadedPackagesAndDependencies(pkgs)
-  
-  # force unload them
-  sapply(pkgs, .rs.forceUnloadPackage)
-  
-  # return packages unloaded
-  pkgs
+.rs.addFunction("forceUnloadForPackageInstall", function(pkgs)
+{
+   sapply(pkgs, .rs.forceUnloadPackage)
+   pkgs
 })
-
 
 .rs.addFunction("enqueLoadedPackageUpdates", function(installCmd)
 {
