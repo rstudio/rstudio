@@ -70,9 +70,9 @@ enum Condition
    ConditionWarning = 1
 };
 
-core::Error initialize();
-
 std::string notebookCtxId();
+
+core::Error initialize();
 
 struct Events : boost::noncopyable
 {
