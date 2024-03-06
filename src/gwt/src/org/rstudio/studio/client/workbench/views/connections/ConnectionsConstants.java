@@ -62,11 +62,11 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
     String failedToCheckUpdatesError();
 
     /**
-     * Translated "Preparing Connections...".
+     * Translated "Preparing connections...".
      *
-     * @return translated "Preparing Connections..."
+     * @return translated "Preparing connections..."
      */
-    @DefaultMessage("Preparing Connections...")
+    @DefaultMessage("Preparing connections...")
     @Key("preparingConnectionsProgressMessage")
     String preparingConnectionsProgressMessage();
 
@@ -637,5 +637,10 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("\"View table (up to 1,000 records)\"")
     @Key("viewTableHTML")
     String viewTableHTML();
+    
+    @DefaultMessage("Installation path:")
+    @Key("installationPath")
+    String installationPath();
+    
 
 }
