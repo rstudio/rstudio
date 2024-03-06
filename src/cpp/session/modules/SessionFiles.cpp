@@ -706,6 +706,42 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
       return Success();
    }
 }
+
+Error makeProjectRelative(const core::json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   json::Array paths;
+   Error error = json::readParams(request.params, &paths);
+   if (error)
+      LOG_ERROR(error);
+   
+   std::transform(
+            paths.begin(),
+            paths.end(),
+            paths.begin(),
+            [](const json::Value& value)
+   {
+      if (!value.isString())
+         return value;
+      
+      std::string relativePath;
+      FilePath path(value.getString());
+      if (projects::projectContext().hasProject() &&
+          path.isWithin(projects::projectContext().directory()))
+      {
+         relativePath = path.getRelativePath(projects::projectContext().directory());
+      }
+      else
+      {
+         relativePath = module_context::createAliasedPath(path);
+      }
+      
+      return json::Value(relativePath);
+   });
+   
+   pResponse->setResult(paths);
+   return Success();
+}
    
    
 Error detectZipFileOverwrites(const FilePath& uploadedZipFile,
@@ -1909,10 +1945,11 @@ Error initialize()
       (bind(registerRpcMethod, "move_files", moveFiles))
       (bind(registerRpcMethod, "rename_file", renameFile))
       (bind(registerRpcMethod, "touch_file", touchFile))
-      (bind(registerUriHandler, "/files", handleFilesRequest))
-      (bind(registerUploadHandler, "/upload", handleFileUploadRequestAsync))
-      (bind(registerUriHandler, "/export", handleFileExportRequest))
       (bind(registerRpcMethod, "complete_upload", completeUpload))
+      (bind(registerRpcMethod, "make_project_relative", makeProjectRelative))
+      (bind(registerUriHandler, "/files", handleFilesRequest))
+      (bind(registerUriHandler, "/export", handleFileExportRequest))
+      (bind(registerUploadHandler, "/upload", handleFileUploadRequestAsync))
       (bind(sourceModuleRFile, "SessionFiles.R"))
       (bind(quotas::initialize));
    return initBlock.execute();

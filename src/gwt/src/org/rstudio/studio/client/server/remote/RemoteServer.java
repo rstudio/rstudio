@@ -1862,6 +1862,14 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(id));
       sendRequest(RPC_SCOPE, GET_ISSUE_URL, params, requestCallback);
    }
+   
+   public void makeProjectRelative(JsArrayString paths,
+                                   ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(paths));
+      sendRequest(RPC_SCOPE, MAKE_PROJECT_RELATIVE, params, requestCallback);
+   }
 
    public String getFileExportUrl(String name,
                                   FileSystemItem parentDirectory,
@@ -6846,6 +6854,7 @@ public class RemoteServer implements Server
    private static final String TOUCH_FILE = "touch_file";
    private static final String COMPLETE_UPLOAD = "complete_upload";
    private static final String GET_ISSUE_URL = "get_issue_url";
+   private static final String MAKE_PROJECT_RELATIVE = "make_project_relative";
 
    private static final String GET_PLOT_TEMPDIR = "get_plot_tempdir";
    private static final String NEXT_PLOT = "next_plot";

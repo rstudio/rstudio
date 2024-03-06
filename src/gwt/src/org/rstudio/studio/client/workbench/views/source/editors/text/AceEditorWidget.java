@@ -21,6 +21,7 @@ import java.util.function.BiPredicate;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.elemental2.overlay.File;
 import org.rstudio.core.client.widget.CanSetControlId;
@@ -30,9 +31,12 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.EditEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -67,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -403,7 +408,13 @@ public class AceEditorWidget extends Composite
       if (StringUtil.isNullOrEmpty(path))
          return "";
       
-      return "\"" + path.replace('\\', '/').replaceAll("\"", "\\\"") + "\"";
+      
+      return "\"" + normalizeSlashes(path).replaceAll("\"", "\\\"") + "\"";
+   }
+   
+   private String normalizeSlashes(String path)
+   {
+      return path.replace('\\', '/');
    }
    
    private void onDesktopPaste(NativeEvent event)
@@ -416,18 +427,59 @@ public class AceEditorWidget extends Composite
          if (fileList.length == 0)
             return;
          
-         File file = Js.cast(fileList.getAt(0));
-         String code = formatDesktopPath(file.path);
-         
-         for (int i = 1; i < fileList.length; i++)
-         {
-            file = Js.cast(fileList.getAt(i));
-            code = code + ",\n" + formatDesktopPath(file.path);
-         }
-         
          event.stopPropagation();
          event.preventDefault();
-         editor_.insert(code);
+         
+         JsVectorString allFiles = JsVectorString.createVector();
+         for (int i = 0; i < fileList.length; i++)
+         {
+            File file = Js.cast(fileList.getAt(i));
+            allFiles.push(normalizeSlashes(file.path));
+         }
+         
+         String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());
+         if (!StringUtil.equals(mode, "R"))
+         {
+            String code = allFiles.join("\n");
+            editor_.insert(code);
+            return;
+         }
+         
+         filesServer_.makeProjectRelative(allFiles.cast(), new ServerRequestCallback<JsArrayString>()
+         {
+            @Override
+            public void onResponseReceived(JsArrayString response)
+            {
+               JsVectorString allFiles = response.cast();
+               
+               String code;
+               if (allFiles.size() == 1)
+               {
+                  code = allFiles.get(0);
+               }
+               else
+               {
+                  String currentLine =
+                        editor_.getSession().getLine(editor_.getCursorPosition().getRow());
+
+                  String indent = StringUtil.getIndent(currentLine);
+                  String tab = editor_.getSession().getTabString();
+                  for (int i = 0; i < allFiles.size(); i++)
+                     allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
+
+                  code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
+               }
+
+               editor_.insert(code);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+         
       }
    }
 
@@ -520,11 +572,13 @@ public class AceEditorWidget extends Composite
    @Inject
    private void initialize(EventBus events,
                            UserPrefs uiPrefs,
-                           AceThemes themes)
+                           AceThemes themes,
+                           FilesServerOperations filesServer)
    {
       events_ = events;
       uiPrefs_ = uiPrefs;
       themes_ = themes;
+      filesServer_ = filesServer;
    }
 
    public HandlerRegistration addCursorChangedHandler(CursorChangedEvent.Handler handler)
@@ -1378,4 +1432,5 @@ public class AceEditorWidget extends Composite
    private EventBus events_;
    private UserPrefs uiPrefs_;
    private AceThemes themes_;
+   private FilesServerOperations filesServer_;
 }
