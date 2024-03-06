@@ -452,24 +452,22 @@ public class AceEditorWidget extends Composite
             {
                JsVectorString allFiles = response.cast();
                
-               String code;
                if (allFiles.size() == 1)
                {
-                  code = allFiles.get(0);
+                  String code = formatDesktopPath(allFiles.get(0));
+                  editor_.insert(code);;
+                  return;
                }
-               else
-               {
-                  String currentLine =
-                        editor_.getSession().getLine(editor_.getCursorPosition().getRow());
+               
+               String currentLine =
+                     editor_.getSession().getLine(editor_.getCursorPosition().getRow());
 
-                  String indent = StringUtil.getIndent(currentLine);
-                  String tab = editor_.getSession().getTabString();
-                  for (int i = 0; i < allFiles.size(); i++)
-                     allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
+               String indent = StringUtil.getIndent(currentLine);
+               String tab = editor_.getSession().getTabString();
+               for (int i = 0; i < allFiles.size(); i++)
+                  allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
 
-                  code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
-               }
-
+               String code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
                editor_.insert(code);
             }
 
