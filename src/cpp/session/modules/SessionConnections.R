@@ -13,6 +13,21 @@
 #
 #
 
+# set a default ODBCSYSINI on Pro builds
+local({
+   
+   edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
+   if (!identical(edition, "Professional"))
+      return()
+   
+   ini <- Sys.getenv("ODBCSYSINI", unset = NA)
+   if (is.na(ini))
+      return()
+   
+   Sys.setenv(ODBCSYSINI = "/usr/local/etc")
+   
+})
+
 .rs.addFunction("validateParams", function(obj, params, type, optional = FALSE) {
    for (param in params) {
       value <- obj[[param]]
