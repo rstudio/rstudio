@@ -774,6 +774,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.scalar(candidates[[1]])
 })
 
+.rs.addFunction("recursivePackageDependenciesImpl", function(pkg, envir)
+{
+   if (exists(pkg, envir = envir))
+      return()
+   
+   imports <- getNamespaceInfo(pkg, "imports")
+   deps <- setdiff(sort(unique(unlist(names(imports)))), "base")
+   assign(pkg, deps, envir = envir)
+   
+   for (dep in deps)
+      .rs.recursivePackageDependenciesImpl(dep, envir)
+})
+
+.rs.addFunction("recursivePackageDependencies", function(pkgs)
+{
+   envir <- new.env(parent = emptyenv())
+   for (pkg in pkgs)
+      .rs.recursivePackageDependenciesImpl(pkg, envir)
+   as.list(envir, all.names = TRUE)
+})
+
 .rs.addFunction("packagesLoaded", function(pkgs)
 {
    # first check loaded namespaces
