@@ -54,7 +54,7 @@ pipeline {
       }
       steps {
         sh "mkdir --parents ${TMP_SNYK_PATH}"
-        sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
+        sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}...HEAD); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
         script {
           exitCode = sh(returnStatus: true, script: "snyk code test ${TMP_SNYK_PATH} > ${TMP_SNYK_PATH}/output.txt")
           sh "cat ${TMP_SNYK_PATH}/output.txt"
