@@ -12,17 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.LoadHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
-import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
@@ -38,6 +30,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
@@ -55,6 +48,14 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 import org.rstudio.studio.client.workbench.views.viewer.quarto.QuartoConnection;
+
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
@@ -238,7 +239,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void previewQuarto(String url, QuartoNavigate quartoNav)
    {
       rmdPreviewParams_ = null;
-      navigate(url, false, false);
+      navigate(url, false, false, quartoNav);
       quartoConnection_.setQuartoUrl(url, quartoNav.isWebsite());
       publishButton_.setManuallyHidden(false);
       if (quartoNav.isWebsite())
@@ -316,18 +317,26 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void editSource()
    {
-      FileSystemItem srcFile = quartoConnection_.getSrcFile();
-      if (srcFile != null)
+      String file = quartoConnection_.getRawSrcFile();
+      if (file == null)
+         return;
+      
+      // https://github.com/rstudio/rstudio/issues/14325
+      if (file == "<%- inputFile %>")
       {
-         fileTypeRegistry_.editFile(srcFile);
-         new Timer() {
-            @Override
-            public void run()
-            {
-               commands_.activateSource();
-            }
-         }.schedule(200);
+         if (quartoNav_ != null)
+         {
+            file = quartoNav_.getSourceFile();
+         }
       }
+      
+      FileSystemItem srcFile = FileSystemItem.createFile(file);
+      fileTypeRegistry_.editFile(srcFile, FilePosition.create(-1, -1));
+      
+      Timers.singleShot(200, () ->
+      {
+         commands_.activateSource();
+      });
    }
 
    @Override
@@ -433,8 +442,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    
    private void navigate(String url, boolean useRawURL, boolean viewerPaneParam)
    {
+      navigate(url, useRawURL, viewerPaneParam, null);
+   }
+   
+   private void navigate(String url, boolean useRawURL, boolean viewerPaneParam, QuartoNavigate quartoNav)
+   {
       // save the unmodified URL for pop-out
       unmodifiedUrl_ = url;
+      
+      // save quarto navigation
+      quartoNav_ = quartoNav;
 
       // in desktop mode we need to be careful about loading URLs which are
       // non-local; before changing the URL, set the iframe to be sandboxed
@@ -495,6 +512,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
    private RStudioFrame frame_;
    private String unmodifiedUrl_;
+   private QuartoNavigate quartoNav_;
    private RmdPreviewParams rmdPreviewParams_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
