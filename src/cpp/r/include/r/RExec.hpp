@@ -26,7 +26,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
 
-#include <core/BoostSignals.hpp>
 #include <core/system/System.hpp>
 
 #include <r/RSexp.hpp> 
