@@ -455,7 +455,7 @@ public class AceEditorWidget extends Composite
                if (allFiles.size() == 1)
                {
                   String code = formatDesktopPath(allFiles.get(0));
-                  editor_.insert(code);;
+                  editor_.insert(code);
                   return;
                }
                
