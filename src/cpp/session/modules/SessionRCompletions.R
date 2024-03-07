@@ -3106,6 +3106,7 @@ assign(x = ".rs.acCompletionTypes",
          )
          
          aestheticNames <- aesthetics[!duplicated(aesthetics)]
+         aestheticNames <- aestheticNames[!grepl("|", aestheticNames, fixed = TRUE)]
          aestheticSource <- geomName
       }
       
