@@ -20,11 +20,12 @@
 #include <vector>
 #include <stdexcept>
 
+#include <shared_core/Error.hpp>
+
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
 
-#include <shared_core/Error.hpp>
 #include <core/system/System.hpp>
 
 #include <r/RSexp.hpp> 
@@ -87,21 +88,6 @@ inline EvalFlags operator|(EvalFlags lhs, EvalFlags rhs)
    return static_cast<EvalFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
 }
 
-// parse and evaluate expressions
-core::Error executeCallUnsafe(SEXP callSEXP,
-                              SEXP envirSEXP,
-                              SEXP* pResultSEXP,
-                              sexp::Protect* pProtect);
-
-core::Error executeStringUnsafe(const std::string& str, 
-                                SEXP* pSEXP, 
-                                sexp::Protect* pProtect);
-
-core::Error executeStringUnsafe(const std::string& str,
-                                SEXP envirSEXP,
-                                SEXP* pSEXP,
-                                sexp::Protect* pProtect);
-
 core::Error executeString(const std::string& str);
 
 core::Error evaluateString(const std::string& str,
@@ -120,7 +106,15 @@ core::Error evaluateString(const std::string& str, T* pValue)
 
    return sexp::extract(valueSEXP, pValue);
 }
-   
+ 
+
+// use sparingly -- this evaluates an expression without any defense
+// against an R longjmp, so any usages of this must be carefully audited
+core::Error executeCallUnsafe(SEXP callSEXP,
+                              SEXP envirSEXP,
+                              SEXP* pResultSEXP,
+                              sexp::Protect* pProtect);
+
 // call R functions
 class RFunction : boost::noncopyable
 {
@@ -191,8 +185,7 @@ public:
 
    core::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
    core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
-   core::Error call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
-                    sexp::Protect* pProtect);
+   core::Error call(SEXP evalNS, bool safely, SEXP* pResultSEXP, sexp::Protect* pProtect);
 
    template <typename T>
    core::Error call(T* pValue)
@@ -340,6 +333,9 @@ class InterruptException {};
 // track whether the session was interrupted
 bool getWasInterrupted();
 void setWasInterrupted(bool wasInterrupted);
+
+// check whether R code is currently being executed
+bool isExecuting();
 
 } // namespace exec   
 } // namespace r
