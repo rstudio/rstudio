@@ -22,14 +22,11 @@
 
 #include <core/BoostThread.hpp>
 
-/*
 namespace rstudio {
 namespace core {
-   class Error;
-   class FilePath;
+class Error;
 }
 }
-*/
 
 namespace rstudio {
 namespace session {

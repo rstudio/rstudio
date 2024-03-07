@@ -70,6 +70,7 @@
 - Fixed issue where stepping through lines of code in tryCatch() would provide incorrect debug highlight (#14306)
 - Fixed an issue where PATH modifications in .Renviron / .Rprofile could be lost on macOS (#9815)
 - Fixed an issue where code highlight in Sweave \Sexpr{} expressions was incorrectly handled (#14382)
+- Fixed an issue where the Edit button in the Viewer pane could fail for Quarto documents (#14325)
 
 #### Posit Workbench
 

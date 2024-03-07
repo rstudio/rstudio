@@ -51,10 +51,31 @@ namespace rstudio {
 namespace r {
    
 namespace exec {
-   
+
 namespace {
 
+// was the R session interrupted?
 bool s_wasInterrupted;
+
+// are we currently executing R code? note that only one thread can ever
+// be executing code at a time, but we allow for an integer count so that
+// execution scope helpers can be nested
+int s_executionCount;
+
+class CodeExecutingScope : boost::noncopyable
+{
+public:
+   
+   CodeExecutingScope()
+   {
+      ++s_executionCount;
+   }
+   
+   ~CodeExecutingScope()
+   {
+      --s_executionCount;
+   }
+};
 
 // create a scope for disabling any installed error handlers (e.g. recover)
 // we need to do this so that recover isn't invoked while we are running
@@ -177,7 +198,7 @@ Error evaluateExpressionsUnsafe(SEXP expr,
    
    // detect if an error occurred (only relevant for EvalTry)
    int errorOccurred = 0;
-
+   
    // if we have an entire expression list, evaluate its contents one-by-one 
    // and return only the last one
    if (TYPEOF(expr) == EXPRSXP) 
@@ -243,6 +264,9 @@ Error evaluateExpressions(SEXP expr,
 {
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
+   
+   // note that we're executing R code in this scope
+   CodeExecutingScope executingScope;
 
    return evaluateExpressionsUnsafe(expr, env, pSEXP, pProtect, EvalTry);
 }
@@ -259,7 +283,13 @@ void topLevelExec(void *data)
 }
    
 } // anonymous namespace
-   
+
+
+bool isExecuting()
+{
+   return s_executionCount > 0;
+}
+
 Error executeSafely(boost::function<void()> function)
 {
    if (!ASSERT_MAIN_THREAD())
@@ -272,6 +302,9 @@ Error executeSafely(boost::function<void()> function)
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
    DisableDebugScope disableStepInto(R_GlobalEnv);
+   
+   // note that we're executing code in this scope
+   CodeExecutingScope executingScope;
 
    Rboolean success = R_ToplevelExec(topLevelExec, (void*) &function);
    if (!success)
@@ -296,26 +329,6 @@ Error executeCallUnsafe(SEXP callSEXP,
                                     EvalDirect);
 }
 
-Error executeStringUnsafe(const std::string& str,
-                          SEXP envirSEXP,
-                          SEXP* pSEXP, 
-                          sexp::Protect* pProtect)
-{
-   SEXP parsedSEXP = R_NilValue;
-   Error error = r::exec::parseString(str, &parsedSEXP, pProtect);
-   if (error)
-      return error;
-   
-   return evaluateExpressionsUnsafe(parsedSEXP, envirSEXP, pSEXP, pProtect, EvalDirect);
-}
-
-Error executeStringUnsafe(const std::string& str,
-                          SEXP* pSEXP, 
-                          sexp::Protect* pProtect)
-{
-   return executeStringUnsafe(str, R_GlobalEnv, pSEXP, pProtect);
-}
-  
 Error executeString(const std::string& str)
 {
    sexp::Protect rProtect;
@@ -453,6 +466,9 @@ Error RFunction::call(SEXP evalNS,
                       SEXP* pResultSEXP,
                       sexp::Protect* pProtect)
 {
+   // note that we're executing R code in this scope
+   CodeExecutingScope executingScope;
+   
    // check that the function exists
    if (functionSEXP_ != R_UnboundValue)
    {
