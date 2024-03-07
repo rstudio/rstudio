@@ -16,13 +16,13 @@ package org.rstudio.studio.client.workbench.views.packages.model;
 
 import java.util.List;
 
+import org.rstudio.studio.client.packrat.model.PackratServerOperations;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-
-import org.rstudio.studio.client.packrat.model.PackratServerOperations;
-import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface PackagesServerOperations extends PackratServerOperations
 {
@@ -34,8 +34,9 @@ public interface PackagesServerOperations extends PackratServerOperations
          String repository,
          ServerRequestCallback<JsArrayString> requestCallback);
    
-   void isPackageLoaded(String packageName, String libName,
-                        ServerRequestCallback<Boolean> requestCallback);
+   void isPackageAttached(String packageName,
+                          String libName,
+                          ServerRequestCallback<Boolean> requestCallback);
    
    void isPackageHyperlinkSafe(String packageName,
                                ServerRequestCallback<Boolean> requestCallback);
