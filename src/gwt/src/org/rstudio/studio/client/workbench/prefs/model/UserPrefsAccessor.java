@@ -3554,6 +3554,29 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Control when Copilot code suggestions are displayed in the editor.
+    */
+   public PrefValue<String> copilotCompletionsTrigger()
+   {
+      return enumeration(
+         "copilot_completions_trigger",
+         _constants.copilotCompletionsTriggerTitle(), 
+         _constants.copilotCompletionsTriggerDescription(), 
+         new String[] {
+            COPILOT_COMPLETIONS_TRIGGER_AUTO,
+            COPILOT_COMPLETIONS_TRIGGER_MANUAL
+         },
+         "auto",
+         new String[] {
+            _constants.copilotCompletionsTriggerEnum_auto(),
+            _constants.copilotCompletionsTriggerEnum_manual()
+         });
+   }
+
+   public final static String COPILOT_COMPLETIONS_TRIGGER_AUTO = "auto";
+   public final static String COPILOT_COMPLETIONS_TRIGGER_MANUAL = "manual";
+
+   /**
     * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
     */
    public PrefValue<Integer> copilotCompletionsDelay()
@@ -4135,6 +4158,8 @@ public class UserPrefsAccessor extends Prefs
          disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
+      if (source.hasKey("copilot_completions_trigger"))
+         copilotCompletionsTrigger().setValue(layer, source.getString("copilot_completions_trigger"));
       if (source.hasKey("copilot_completions_delay"))
          copilotCompletionsDelay().setValue(layer, source.getInteger("copilot_completions_delay"));
       if (source.hasKey("copilot_tab_key_behavior"))
@@ -4398,6 +4423,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(textRendering());
       prefs.add(disableRendererAccessibility());
       prefs.add(copilotEnabled());
+      prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());

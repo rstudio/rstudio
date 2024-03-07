@@ -2072,6 +2072,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotEnabledDescription();
 
    /**
+    * Control when Copilot code suggestions are displayed in the editor.
+    */
+   @DefaultStringValue("Show Copilot code suggestions:")
+   String copilotCompletionsTriggerTitle();
+   @DefaultStringValue("Control when Copilot code suggestions are displayed in the editor.")
+   String copilotCompletionsTriggerDescription();
+   @DefaultStringValue("Automatically")
+   String copilotCompletionsTriggerEnum_auto();
+   @DefaultStringValue("Manually (Ctrl + Backslash)")
+   String copilotCompletionsTriggerEnum_manual();
+
+   /**
     * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
     */
    @DefaultStringValue("GitHub Copilot completions delay")

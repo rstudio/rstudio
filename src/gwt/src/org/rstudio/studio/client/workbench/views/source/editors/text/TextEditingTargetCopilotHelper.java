@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCom
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -215,6 +216,11 @@ public class TextEditingTargetCopilotHelper
                {
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
+                     return;
+                  
+                  // Check preference value
+                  String trigger = prefs_.copilotCompletionsTrigger().getGlobalValue();
+                  if (trigger != UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO)
                      return;
                            
                   // Allow one-time suppression of cursor change handler
