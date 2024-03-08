@@ -40,6 +40,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotErr
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -292,10 +293,19 @@ public class TextEditingTargetCopilotHelper
                      {
                         display_.removeGhostText();
                      }
+                     else if (event.getKeyCode() == KeyCodes.KEY_RIGHT &&
+                              (event.getCtrlKey() || event.getMetaKey()))
+                     {
+                        event.stopPropagation();
+                        event.preventDefault();
+
+                        commands_.copilotAcceptNextWord().execute();
+                     }
+                     
                   }
                })
 
-               );
+         );
 
       }
       
@@ -319,7 +329,7 @@ public class TextEditingTargetCopilotHelper
          return;
       
       String text = activeCompletion_.displayText;
-      Pattern pattern = Pattern.create("\\b");
+      Pattern pattern = Pattern.create("(?:\\b|$)");
       Match match = pattern.match(text, 1);
       if (match == null)
          return;
@@ -337,8 +347,18 @@ public class TextEditingTargetCopilotHelper
       Timers.singleShot(() ->
       {
          suppressCursorChangeHandler_ = true;
-         display_.insertCode(insertedWord);
+         display_.insertCode(insertedWord, InsertionBehavior.EditorBehaviorsDisabled);
          display_.setGhostText(activeCompletion_.displayText);
+         
+         // Work around issue with ghost text not appearing after inserting
+         // a code suggestion containing a new line
+         if (insertedWord.indexOf('\n') != -1)
+         {
+            Timers.singleShot(20, () ->
+            {
+               display_.setGhostText(activeCompletion_.displayText);
+            });
+         }
       });
    }
    

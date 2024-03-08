@@ -1195,6 +1195,23 @@ public class AceEditor implements DocDisplay,
       insertCode(code);
    }
    
+   public void insertCode(String code, InsertionBehavior behavior)
+   {
+      if (behavior == InsertionBehavior.EditorBehaviorsEnabled)
+      {
+         insertCode(code);
+      }
+      else
+      {
+         // RStudio attaches a lot of custom behaviors to the 'insert' functions
+         // for AceEditor.insert and EditSession.insert, so side-step that by
+         // using the methods defined on the underyling document
+         widget_.getEditor().getSession().getDocument().insert(
+               widget_.getEditor().getCursorPosition(),
+               StringUtil.normalizeNewLines(code));
+      }
+   }
+   
    public void insertCode(String code)
    {
       String normalizedCode = StringUtil.normalizeNewLines(code);
