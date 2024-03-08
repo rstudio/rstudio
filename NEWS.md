@@ -87,4 +87,5 @@
 - Updated GWT to version 2.10.0 (#11505; Desktop + Server)
 - Updated NSIS to version 3.09 (#14123; Windows Desktop)
 - Updated OpenSSL to version 3.1.4 (Windows Desktop)
+- Updated node.js to version 18.19.1 (#14373)
 
