@@ -210,8 +210,8 @@ if not exist libclang\%LIBCLANG_VERSION% (
   del %LIBCLANG_FILE%
 )
 
-call install-node %RSTUDIO_NODE_VERSION% yarn
-call install-node %RSTUDIO_INSTALLED_NODE_VERSION%
+call :install-node %RSTUDIO_NODE_VERSION% yarn
+call :install-node %RSTUDIO_INSTALLED_NODE_VERSION%
 
 if not defined JENKINS_URL (
   if exist C:\Windows\py.exe (
