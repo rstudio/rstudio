@@ -74,7 +74,7 @@
 - Fixed an issue where the Edit button in the Viewer pane could fail for Quarto documents (#14325)
 
 #### Posit Workbench
-
+- Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
 - Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (rstudio-pro#5865)
 - Fixed low-contrast text on Workbench pages [Accessibility] (rstudio-pro#4464)
 

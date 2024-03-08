@@ -60,7 +60,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      dirChooser_ = new DirectoryChooserTextBox("", "", ElementIds.TextBoxButtonId.ODBC_PATH, null);
+      dirChooser_ = new DirectoryChooserTextBox(constants_.installationPath(), "", ElementIds.TextBoxButtonId.ODBC_PATH, null);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
  
       initWidget(createWidget());
