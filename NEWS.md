@@ -71,7 +71,7 @@
 - Fixed an issue where PATH modifications in .Renviron / .Rprofile could be lost on macOS (#9815)
 
 #### Posit Workbench
-
+- Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
 - Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (rstudio-pro#5865)
 - Fixed low-contrast text on Workbench pages [Accessibility] (rstudio-pro#4464)
 
