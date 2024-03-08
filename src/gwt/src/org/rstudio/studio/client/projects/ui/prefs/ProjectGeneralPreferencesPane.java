@@ -27,6 +27,7 @@ import org.rstudio.studio.client.projects.model.RProjectRVersion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.ElementIds;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
@@ -47,6 +48,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       
       String textboxWidth = "100%";
       projectName_ = new TextBox();
+      ElementIds.assignElementId(projectName_.getElement(), ElementIds.PROJ_DISPLAY_NAME);
       DomUtils.disableSpellcheck(projectName_);
       DomUtils.setPlaceholder(projectName_, sessionInfo_.getActiveProjectDir().getName());
       projectName_.setWidth(textboxWidth);
