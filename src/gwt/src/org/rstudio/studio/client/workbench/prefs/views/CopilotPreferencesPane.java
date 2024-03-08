@@ -25,6 +25,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
@@ -54,6 +55,8 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -75,6 +78,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    public RestartRequirement onApply(UserPrefs prefs)
    {
       prefs.copilotTabKeyBehavior().setGlobalValue(selCopilotTabKeyBehavior_.getValue());
+      prefs.copilotCompletionsTrigger().setGlobalValue(selCopilotCompletionsTrigger_.getValue());
       
       RestartRequirement requirement = super.onApply(prefs);
       if (initialCopilotIndexingEnabled_ != prefs.copilotIndexingEnabled().getGlobalValue())
@@ -155,6 +159,28 @@ public class CopilotPreferencesPane extends PreferencesPane
       
       selCopilotTabKeyBehavior_.setValue(prefs_.copilotTabKeyBehavior().getGlobalValue());
       
+      selCopilotCompletionsTrigger_ = new SelectWidget(
+            prefsConstants_.copilotCompletionsTriggerTitle(),
+            new String[] {
+                  prefsConstants_.copilotCompletionsTriggerEnum_auto(),
+                  prefsConstants_.copilotCompletionsTriggerEnum_manual()
+            },
+            new String[] {
+                  UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO,
+                  UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_MANUAL
+            },
+            false,
+            true,
+            false);
+      
+      selCopilotCompletionsTrigger_.setValue(prefs_.copilotCompletionsTrigger().getGlobalValue());
+ 
+      nvwCopilotCompletionsDelay_ = numericPref(
+            constants_.copilotCompletionsDelayLabel(),
+            10,
+            5000,
+            prefs_.copilotCompletionsDelay());
+      
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
             "github-copilot-terms-of-service",
@@ -182,10 +208,11 @@ public class CopilotPreferencesPane extends PreferencesPane
          add(spaced(cbCopilotIndexingEnabled_));
 
          add(spacedBefore(headerLabel(constants_.copilotCompletionsHeader())));
+         add(selCopilotCompletionsTrigger_);
+         add(nvwCopilotCompletionsDelay_);
 
          // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
          // add(selCopilotTabKeyBehavior_);
-         add(numericPref(constants_.copilotCompletionsDelayLabel(), 10, 5000, prefs_.copilotCompletionsDelay()));
       }
       else
       {
@@ -244,6 +271,23 @@ public class CopilotPreferencesPane extends PreferencesPane
                {
                   refresh();
                });
+            }
+         }
+      });
+      
+      selCopilotCompletionsTrigger_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            String value = selCopilotCompletionsTrigger_.getValue();
+            if (value == UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO)
+            {
+               nvwCopilotCompletionsDelay_.setVisible(true);
+            }
+            else
+            {
+               nvwCopilotCompletionsDelay_.setVisible(false);
             }
          }
       });
@@ -519,7 +563,9 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final SmallButton btnRefresh_;
    private final SmallButton btnDiagnostics_;
    private final SmallButton btnProjectOptions_;
+   private final NumericValueWidget nvwCopilotCompletionsDelay_;
    private final SelectWidget selCopilotTabKeyBehavior_;
+   private final SelectWidget selCopilotCompletionsTrigger_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
    

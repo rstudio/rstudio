@@ -685,6 +685,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="insertPipeOperator" value="Ctrl+Shift+M" title="Insert Pipe Operator" disableModes="sublime"/>
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
+         <shortcut refid="copilotRequestCompletions" value="Cmd+Backslash" title="Request Copilot Code Suggestions" />
+         
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>

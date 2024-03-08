@@ -425,6 +425,9 @@ namespace prefs {
 #define kTextRenderingGeometricPrecision "geometricPrecision"
 #define kDisableRendererAccessibility "disable_renderer_accessibility"
 #define kCopilotEnabled "copilot_enabled"
+#define kCopilotCompletionsTrigger "copilot_completions_trigger"
+#define kCopilotCompletionsTriggerAuto "auto"
+#define kCopilotCompletionsTriggerManual "manual"
 #define kCopilotCompletionsDelay "copilot_completions_delay"
 #define kCopilotTabKeyBehavior "copilot_tab_key_behavior"
 #define kCopilotTabKeyBehaviorSuggestion "suggestion"
@@ -1932,6 +1935,12 @@ public:
     */
    bool copilotEnabled();
    core::Error setCopilotEnabled(bool val);
+
+   /**
+    * Control when Copilot code suggestions are displayed in the editor.
+    */
+   std::string copilotCompletionsTrigger();
+   core::Error setCopilotCompletionsTrigger(std::string val);
 
    /**
     * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
