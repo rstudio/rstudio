@@ -772,28 +772,33 @@ void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
 struct QuartoNavigate
 {
-   QuartoNavigate() : website(false) {}
-   bool empty() const { return !website && source.empty(); }
-   static QuartoNavigate navWebsite(const std::string& jobId)
+   QuartoNavigate()
+      : website(false)
+   {}
+   
+   bool empty() const
    {
-      QuartoNavigate nav;
-      nav.website = true;
-      nav.job_id = jobId;
-      return nav;
+      return !website && source.empty();
    }
-   static QuartoNavigate navDoc(const std::string& source, const std::string& output, const std::string& jobId)
+   
+   static QuartoNavigate navigate(
+         const std::string& source,
+         const std::string& output,
+         const std::string& jobId,
+         bool isWebsite)
    {
       QuartoNavigate nav;
-      nav.website = false;
       nav.source = source;
       nav.output = output;
       nav.job_id = jobId;
+      nav.website = isWebsite;
       return nav;
    }
-   bool website;
+   
    std::string source;
    std::string output;
    std::string job_id;
+   bool website;
 };
 
 core::json::Value quartoNavigateAsJson(const QuartoNavigate& quartoNav);
