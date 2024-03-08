@@ -8,6 +8,7 @@
 - RStudio's auto-completion system now supports the display of the "label" attribute (#14242)
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
 - RStudio Desktop on Windows and Linux supports full-screen mode via F11 (#3243)
+- RStudio Desktop now supports pasting of file paths for files copied to the clipboard (#14240)
 - R projects can be given a custom display name in Project Options (#1909)
 - RStudio now highlights and lints Quarto chunk options in Python code chunks
 - RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$$ $$` and `$ $` instead (#12862)
