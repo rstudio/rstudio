@@ -83,7 +83,7 @@
 
 ### Dependencies
 - Updated Ace to version 1.32.5 (#14227; Desktop + Server)
-- Updated Electron to version 28.2.2 (#14055; Desktop)
+- Updated Electron to version 28.2.6 (#14055; Desktop)
 - Updated GWT to version 2.10.0 (#11505; Desktop + Server)
 - Updated NSIS to version 3.09 (#14123; Windows Desktop)
 - Updated OpenSSL to version 3.1.4 (Windows Desktop)
