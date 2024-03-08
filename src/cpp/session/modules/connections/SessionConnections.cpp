@@ -516,7 +516,7 @@ void initEnvironment()
       rstudioWinutils = session::options().winutilsPath().getAbsolutePath();
    
    Error error = r::exec::RFunction("base:::Sys.setenv")
-         .addParam(rstudioWinutils)
+         .addParam("RSTUDIO_WINUTILS", rstudioWinutils)
          .call();
    
    if (error)
