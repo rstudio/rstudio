@@ -21,6 +21,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -61,6 +62,12 @@ public class QuartoConnection
       url_ = url;
       website_ = website;
       srcFile_ = null;
+   }
+   
+   public void setQuartoNav(QuartoNavigate quartoNav)
+   {
+      quartoNav_ = quartoNav;
+      repairSrcFile();
    }
    
    public String getUrl()
@@ -136,6 +143,9 @@ public class QuartoConnection
          // record current source file
          srcFile_ = StringUtil.isNullOrEmpty(message.file) ? null : message.file;
          
+         // fix up unexpanded template in srcFile
+         repairSrcFile();
+         
          // let quarto know we can handle devhost requests
          postQuartoMessage("devhost-init", null);
          
@@ -151,6 +161,18 @@ public class QuartoConnection
            message.highlight
          );
       }
+   }
+   
+   private void repairSrcFile()
+   {
+      if (srcFile_ == null || quartoNav_ == null)
+         return;
+      
+      String srcFile = quartoNav_.getSourceFile();
+      if (StringUtil.isNullOrEmpty(srcFile))
+         return;
+      
+      srcFile_ = srcFile_.replace(INPUT_FILE_TEMPLATE, srcFile);
    }
    
    private void postQuartoMessage(String type, JavaScriptObject data)
@@ -170,6 +192,7 @@ public class QuartoConnection
    private ApplicationServerOperations server_;
    private Provider<UserState> pUserState_;
    private FileTypeRegistry fileTypeRegistry_;
+   private QuartoNavigate quartoNav_;
    
    private JavaScriptObject source_ = null;
    private String origin_ = null;
@@ -178,6 +201,6 @@ public class QuartoConnection
    private boolean website_ = false;
    private HandlerManager handlerManager_ = new HandlerManager(this);
    
-   
+   private static final String INPUT_FILE_TEMPLATE = "<%- inputFile %>";
 }
 

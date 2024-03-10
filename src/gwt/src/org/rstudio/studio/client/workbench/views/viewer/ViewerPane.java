@@ -317,20 +317,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void editSource()
    {
-      String file = quartoConnection_.getRawSrcFile();
-      if (file == null)
-         return;
-      
-      // https://github.com/rstudio/rstudio/issues/14325
-      if (file == "<%- inputFile %>")
-      {
-         if (quartoNav_ != null)
-         {
-            file = quartoNav_.getSourceFile();
-         }
-      }
-      
-      FileSystemItem srcFile = FileSystemItem.createFile(file);
+      FileSystemItem srcFile = quartoConnection_.getSrcFile();
       fileTypeRegistry_.editFile(srcFile, FilePosition.create(-1, -1));
       
       Timers.singleShot(200, () ->
@@ -452,6 +439,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       
       // save quarto navigation
       quartoNav_ = quartoNav;
+      
+      if (quartoConnection_ != null)
+      {
+         quartoConnection_.setQuartoNav(quartoNav);
+      }
 
       // in desktop mode we need to be careful about loading URLs which are
       // non-local; before changing the URL, set the iframe to be sandboxed
