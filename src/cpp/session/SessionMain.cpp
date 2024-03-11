@@ -385,12 +385,6 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
 }
 
 
-Error ping(const core::json::JsonRpcRequest& request,
-           json::JsonRpcResponse* pResponse)
-{
-   return Success();
-}
-
 Error startClientEventService()
 {
    return clientEventService().start(rsession::persistentState().activeClientId());
@@ -525,7 +519,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
       (bind(registerRpcMethod, "suspend_for_restart", suspendForRestart))
-      (bind(registerRpcMethod, "ping", ping))
 
       // signal handlers
       (registerSignalHandlers)
