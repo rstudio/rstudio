@@ -815,7 +815,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          }
 
          // interrupt
-         else if ( jsonRpcRequest.method == kInterrupt )
+         else if (jsonRpcRequest.method == kInterrupt)
          {
             // Discard any buffered input
             console_input::clearConsoleInputBuffer();
@@ -826,6 +826,12 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // only accept interrupts while R is processing input
             if (console_input::executing())
                rstudio::r::exec::setInterruptsPending(true);
+         }
+         
+         // ping
+         else if (jsonRpcRequest.method == kPing)
+         {
+            ptrConnection->sendJsonRpcResponse();
          }
 
          // other rpc method, handle it
