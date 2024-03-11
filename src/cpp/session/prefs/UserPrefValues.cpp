@@ -3261,6 +3261,19 @@ core::Error UserPrefValues::setCopilotEnabled(bool val)
 }
 
 /**
+ * Control when Copilot code suggestions are displayed in the editor.
+ */
+std::string UserPrefValues::copilotCompletionsTrigger()
+{
+   return readPref<std::string>("copilot_completions_trigger");
+}
+
+core::Error UserPrefValues::setCopilotCompletionsTrigger(std::string val)
+{
+   return writePref("copilot_completions_trigger", val);
+}
+
+/**
  * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
  */
 int UserPrefValues::copilotCompletionsDelay()
@@ -3577,6 +3590,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTextRendering,
       kDisableRendererAccessibility,
       kCopilotEnabled,
+      kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,

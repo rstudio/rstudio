@@ -68,9 +68,7 @@ public class Mode extends JavaScriptObject
    }-*/;
 
    public native final String getLanguageMode(Position position) /*-{
-      if (!this.getLanguageMode)
-         return null;
-      return this.getLanguageMode(position);
+      return this.getLanguageMode && this.getLanguageMode(position);
    }-*/;
 
    public native final FoldingRules getFoldingRules() /*-{

@@ -65,9 +65,7 @@
       </div>
 
       <div class="{style.row} {style.installPath}">
-        Installation Path:
-        <widget:DirectoryChooserTextBox ui:field="dirChooser_"
-                                        />
+        <widget:DirectoryChooserTextBox ui:field="dirChooser_" />
       </div>
 
       <div class="{style.licenseArea}">

@@ -896,7 +896,7 @@ public class Packages
                removeConsolePromptHandler();
 
                // check status and set it
-               server_.isPackageLoaded(
+               server_.isPackageAttached(
                          packageName,
                          libName,
                          new ServerRequestCallback<Boolean>() {

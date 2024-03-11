@@ -3129,6 +3129,11 @@ public class DummyCommands extends Commands {
     public AppCommand crashDesktopApplication() {
         return null;
     }
+    
+    @Override
+    public AppCommand copilotDiagnostics() {
+       return null;
+    }
 
     @Override
     public AppCommand copilotInstallAgent() {

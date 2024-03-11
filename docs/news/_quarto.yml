@@ -6,6 +6,9 @@ website:
   favicon: "images/favicon.svg"
   page-navigation: true
   site-url: https://docs.posit.co/ide/news/
+  search:
+    copy-button: true
+    show-item-context: true
   navbar:
     pinned: true
     logo: images/posit-icon-fullcolor.svg

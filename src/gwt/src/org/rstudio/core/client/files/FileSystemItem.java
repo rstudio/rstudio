@@ -387,6 +387,7 @@ public class FileSystemItem extends JavaScriptObject
       // programming languages
       MIME_TYPES.put( "f",         "text/x-fortran" );
       MIME_TYPES.put( "py",        "text/x-python" );
+      MIME_TYPES.put( "smk",       "text/x-python" );
       MIME_TYPES.put( "sh",        "text/x-shell" );
       MIME_TYPES.put( "sql",       "text/x-sql" );
       MIME_TYPES.put( "stan",      "text/x-stan" );

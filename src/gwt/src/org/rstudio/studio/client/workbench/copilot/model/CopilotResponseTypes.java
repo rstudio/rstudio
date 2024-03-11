@@ -15,11 +15,12 @@
 package org.rstudio.studio.client.workbench.copilot.model;
 
 import org.rstudio.core.client.jsonrpc.RpcError;
+import org.rstudio.studio.client.workbench.copilot.CopilotUIConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotResponse;
-import org.rstudio.studio.client.workbench.copilot.CopilotUIConstants;
 
 import com.google.gwt.core.client.GWT;
+
 import elemental2.core.JsNumber;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
@@ -75,6 +76,12 @@ public class CopilotResponseTypes
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotDiagnosticsResponse extends CopilotResponse
+   {
+   }
+   
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotResponseMetadata
    {
       String method;
@@ -84,6 +91,7 @@ public class CopilotResponseTypes
    public static class CopilotVerifyInstalledResponse
    {
       public boolean installed;
+      public boolean current;
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

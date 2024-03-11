@@ -18,13 +18,14 @@
    .Call("rs_copilotSetLogLevel", as.integer(level), PACKAGE = "(embedding)")
 })
 
-# TODO: What's the right way to allow the Copilot Agent version to change?
-# How should we handle updates?
+.rs.addFunction("copilot.sendRequest", function(method, params = list())
+{
+   .Call("rs_copilotSendRequest", as.character(method), as.list(params), PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
 {
-   # NOTE: Copilot 1.10.3 release.
-   defaultCopilotRef <- "998cf5ab1b85e844c7e8edb864a997e590df7182"
-   copilotRef <- getOption("rstudio.copilot.repositoryRef", defaultCopilotRef)
+   copilotRef <- .Call("rs_copilotAgentCommitHash", PACKAGE = "(embedding)")
    
    defaultCopilotBaseUrl <- "https://rstudio.org/links/github-copilot"
    copilotBaseUrl <- getOption("rstudio.copilot.repositoryUrl", defaultCopilotBaseUrl)
@@ -90,6 +91,13 @@
       msg <- sprintf(fmt, agentPath)
       stop(msg, call. = FALSE)
    }
+   
+   # Write out a meta.json object so we can detect whether this installation
+   # of Copilot is out-of-date.
+   metaPath <- file.path(targetDirectory, "../version.json")
+   dir.create(dirname(metaPath), recursive = TRUE, showWarnings = FALSE)
+   meta <- list(commit_hash = copilotRef)
+   writeLines(.rs.toJSON(meta, unbox = TRUE), con = metaPath)
    
    TRUE
 })

@@ -25,6 +25,10 @@ public class Document extends JavaScriptObject
    public native final void setValue(String value) /*-{
       this.setValue(value);
    }-*/;
+   
+   public native final void insert(Position position, String text) /*-{
+      this.insert(position, text);
+   }-*/;
 
    public native final String getLine(int row) /*-{
       return this.getLine(row);

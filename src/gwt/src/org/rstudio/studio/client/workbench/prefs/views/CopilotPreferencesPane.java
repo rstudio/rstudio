@@ -25,6 +25,8 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.application.AriaLiveService;
@@ -53,6 +55,8 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -74,6 +78,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    public RestartRequirement onApply(UserPrefs prefs)
    {
       prefs.copilotTabKeyBehavior().setGlobalValue(selCopilotTabKeyBehavior_.getValue());
+      prefs.copilotCompletionsTrigger().setGlobalValue(selCopilotCompletionsTrigger_.getValue());
       
       RestartRequirement requirement = super.onApply(prefs);
       if (initialCopilotIndexingEnabled_ != prefs.copilotIndexingEnabled().getGlobalValue())
@@ -127,6 +132,10 @@ public class CopilotPreferencesPane extends PreferencesPane
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
       
+      btnDiagnostics_ = new SmallButton(constants_.copilotDiagnosticsLabel());
+      btnDiagnostics_.addStyleName(RES.styles().button());
+      statusButtons_.add(btnDiagnostics_);
+      
       btnProjectOptions_ = new SmallButton(constants_.copilotProjectOptionsLabel());
       btnProjectOptions_.addStyleName(RES.styles().button());
       statusButtons_.add(btnProjectOptions_);
@@ -149,6 +158,28 @@ public class CopilotPreferencesPane extends PreferencesPane
             false);
       
       selCopilotTabKeyBehavior_.setValue(prefs_.copilotTabKeyBehavior().getGlobalValue());
+      
+      selCopilotCompletionsTrigger_ = new SelectWidget(
+            prefsConstants_.copilotCompletionsTriggerTitle(),
+            new String[] {
+                  prefsConstants_.copilotCompletionsTriggerEnum_auto(),
+                  prefsConstants_.copilotCompletionsTriggerEnum_manual()
+            },
+            new String[] {
+                  UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO,
+                  UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_MANUAL
+            },
+            false,
+            true,
+            false);
+      
+      selCopilotCompletionsTrigger_.setValue(prefs_.copilotCompletionsTrigger().getGlobalValue());
+ 
+      nvwCopilotCompletionsDelay_ = numericPref(
+            constants_.copilotCompletionsDelayLabel(),
+            10,
+            5000,
+            prefs_.copilotCompletionsDelay());
       
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
@@ -177,10 +208,11 @@ public class CopilotPreferencesPane extends PreferencesPane
          add(spaced(cbCopilotIndexingEnabled_));
 
          add(spacedBefore(headerLabel(constants_.copilotCompletionsHeader())));
+         add(selCopilotCompletionsTrigger_);
+         add(nvwCopilotCompletionsDelay_);
 
          // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
          // add(selCopilotTabKeyBehavior_);
-         add(numericPref(constants_.copilotCompletionsDelayLabel(), 10, 5000, prefs_.copilotCompletionsDelay()));
       }
       else
       {
@@ -243,19 +275,36 @@ public class CopilotPreferencesPane extends PreferencesPane
          }
       });
       
+      selCopilotCompletionsTrigger_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            String value = selCopilotCompletionsTrigger_.getValue();
+            if (value == UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO)
+            {
+               nvwCopilotCompletionsDelay_.setVisible(true);
+            }
+            else
+            {
+               nvwCopilotCompletionsDelay_.setVisible(false);
+            }
+         }
+      });
+      
       btnShowError_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
+            // Prefer using a web dialog even on Desktop, as we want to allow customization
+            // of how the UI is presented. In particular, we want to allow users to select
+            // and copy text if they need to.
             DialogOptions options = new DialogOptions();
             options.width = "auto";
             options.height = "auto";
             options.userSelect = "text";
             
-            // Prefer using a web dialog even on Desktop, as we want to allow customization
-            // of how the UI is presented. In particular, we want to allow users to select
-            // and copy text if they need to.
             WebDialogBuilderFactory builder = GWT.create(WebDialogBuilderFactory.class);
             DialogBuilder dialog = builder.create(
                   GlobalDisplay.MSG_INFO,
@@ -302,6 +351,20 @@ public class CopilotPreferencesPane extends PreferencesPane
          public void onClick(ClickEvent event)
          {
             refresh();
+         }
+      });
+      
+      btnDiagnostics_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            ProgressIndicator indicator = getProgressIndicator();
+            indicator.onProgress(constants_.copilotDiagnosticReportProgressLabel());
+            copilot_.onCopilotDiagnostics(() ->
+            {
+               indicator.onCompleted();
+            });
          }
       });
       
@@ -363,17 +426,17 @@ public class CopilotPreferencesPane extends PreferencesPane
             else if (response.result.status == CopilotConstants.STATUS_OK ||
                      response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
             {
-               showButtons(btnSignOut_, btnRefresh_);
+               showButtons(btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotSignedInAsLabel(response.result.user));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
             {
-               showButtons(btnActivate_, btnSignOut_, btnRefresh_);
+               showButtons(btnActivate_, btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
-               showButtons(btnSignIn_, btnRefresh_);
+               showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
             }
             else
@@ -498,8 +561,11 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final SmallButton btnSignOut_;
    private final SmallButton btnActivate_;
    private final SmallButton btnRefresh_;
+   private final SmallButton btnDiagnostics_;
    private final SmallButton btnProjectOptions_;
+   private final NumericValueWidget nvwCopilotCompletionsDelay_;
    private final SelectWidget selCopilotTabKeyBehavior_;
+   private final SelectWidget selCopilotCompletionsTrigger_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
    

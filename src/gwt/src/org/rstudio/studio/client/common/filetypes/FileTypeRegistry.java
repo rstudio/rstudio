@@ -427,6 +427,8 @@ public class FileTypeRegistry
       register("*.gv", GRAPHVIZ, new ImageResource2x(icons.iconGraphviz2x()));
       register("*.dot", GRAPHVIZ, new ImageResource2x(icons.iconGraphviz2x()));
       register("*.py", PYTHON, new ImageResource2x(icons.iconPython2x()));
+      register("Snakefile", PYTHON, new ImageResource2x(icons.iconPython2x()));
+      register("*.smk", PYTHON, new ImageResource2x(icons.iconPython2x()));
       register("*.sql", SQL, new ImageResource2x(icons.iconSql2x()));
       register("*.sh", SH, new ImageResource2x(icons.iconSh2x()));
       register("*.tml", TOML, new ImageResource2x(icons.iconToml2x()));

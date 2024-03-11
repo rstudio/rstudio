@@ -168,6 +168,24 @@ bool PrivateCommand::onTryCapture(core::system::ProcessOperations& ops, bool has
          lastPrivateCommand_ = boost::posix_time::pos_infin; // disable private commands
          return false;
       }
+      
+      // For zsh, we also have to deal with (from the man page for HIST_IGNORE_SPACE):
+      //
+      // > Note that the command lingers in the internal history until the next command is
+      // > entered before it vanishes, allowing you to briefly reuse or edit the line. If you
+      // > want to make it vanish right away without entering another command, type a space and
+      // > press return.
+      // 
+      // Handle this as suggested by executing a second hidden command consisting only of a space
+      // right after the first hidden command. It's fine to do this in all cases, not just zsh.
+      error = ops.writeToStdin(" \n", false);
+      if (error)
+      {
+         LOG_ERROR(error);
+         privateCommandLoop_ = false;
+         lastPrivateCommand_ = boost::posix_time::pos_infin; // disable private commands
+         return false;
+      }
       return true;
    }
    return false;

@@ -14,14 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.files.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
+import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
-import java.util.ArrayList;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public interface FilesServerOperations
 {
@@ -105,6 +105,9 @@ public interface FilesServerOperations
    void getIssueUrl(String id, 
                     ServerRequestCallback<String> requestCallback);
 
+   void makeProjectRelative(JsArrayString paths,
+                            ServerRequestCallback<JsArrayString> requestCallback);
+   
    /**
     * Use VERY sparingly; we generally don't want to expose
     * non-aliased paths to other parts of the client codebase

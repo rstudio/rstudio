@@ -1463,83 +1463,83 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String withShinyAddinsUserAction();
 
     /**
-     * Translated "Preparing Import from CSV".
+     * Translated "Preparing import from CSV".
      *
-     * @return translated "Preparing Import from CSV"
+     * @return translated "Preparing import from CSV"
      */
-    @DefaultMessage("Preparing Import from CSV")
+    @DefaultMessage("Preparing import from CSV")
     @Key("withDataImportCSVCaption")
     String withDataImportCSVCaption();
 
     /**
-     * Translated "Preparing Import from SPSS, SAS and Stata".
+     * Translated "Preparing import from SPSS, SAS and Stata".
      *
-     * @return translated "Preparing Import from SPSS, SAS and Stata"
+     * @return translated "Preparing import from SPSS, SAS and Stata"
      */
-    @DefaultMessage("Preparing Import from SPSS, SAS and Stata")
+    @DefaultMessage("Preparing import from SPSS, SAS and Stata")
     @Key("withDataImportSAV")
     String withDataImportSAV();
 
     /**
-     * Translated "Preparing Import from Excel".
+     * Translated "Preparing import from Excel".
      *
-     * @return translated "Preparing Import from Excel"
+     * @return translated "Preparing import from Excel"
      */
-    @DefaultMessage("Preparing Import from Excel")
+    @DefaultMessage("Preparing import from Excel")
     @Key("withDataImportXLS")
     String withDataImportXLS();
 
     /**
-     * Translated "Preparing Import from XML".
+     * Translated "Preparing import from XML".
      *
-     * @return translated "Preparing Import from XML"
+     * @return translated "Preparing import from XML"
      */
-    @DefaultMessage("Preparing Import from XML")
+    @DefaultMessage("Preparing import from XML")
     @Key("withDataImportXML")
     String withDataImportXML();
 
     /**
-     * Translated "Preparing Import from JSON".
+     * Translated "Preparing import from JSON".
      *
-     * @return translated "Preparing Import from JSON"
+     * @return translated "Preparing import from JSON"
      */
-    @DefaultMessage("Preparing Import from JSON")
+    @DefaultMessage("Preparing import from JSON")
     @Key("withDataImportJSON")
     String withDataImportJSON();
 
     /**
-     * Translated "Preparing Import from JDBC".
+     * Translated "Preparing import from JDBC".
      *
-     * @return translated "Preparing Import from JDBC"
+     * @return translated "Preparing import from JDBC"
      */
-    @DefaultMessage("Preparing Import from JDBC")
+    @DefaultMessage("Preparing import from JDBC")
     @Key("withDataImportJDBC")
     String withDataImportJDBC();
 
     /**
-     * Translated "Preparing Import from ODBC".
+     * Translated "Preparing import from ODBC".
      *
-     * @return translated "Preparing Import from ODBC"
+     * @return translated "Preparing import from ODBC"
      */
-    @DefaultMessage("Preparing Import from ODBC")
+    @DefaultMessage("Preparing import from ODBC")
     @Key("withDataImportODBC")
     String withDataImportODBC();
 
     /**
-     * Translated "Preparing Profiler".
+     * Translated "Preparing profiler".
      *
-     * @return translated "Preparing Profiler"
+     * @return translated "Preparing profiler"
      */
-    @DefaultMessage("Preparing Profiler")
+    @DefaultMessage("Preparing profiler")
     @Key("withProfvis")
     String withProfvis();
 
     /**
-     * Translated "Preparing Connection".
+     * Translated "Preparing connection".
      *
-     * @return translated "Preparing Connection"
+     * @return translated "Preparing connection"
      */
-    @DefaultMessage("Preparing Connection")
+    @DefaultMessage("Preparing connection")
     @Key("withConnectionPackage")
     String withConnectionPackage();
 

@@ -8,7 +8,11 @@
 - RStudio's auto-completion system now supports the display of the "label" attribute (#14242)
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
 - RStudio Desktop on Windows and Linux supports full-screen mode via F11 (#3243)
+- RStudio Desktop now supports pasting of file paths for files copied to the clipboard (#14240)
 - R projects can be given a custom display name in Project Options (#1909)
+- The automatic display of Copilot code completions can now be controlled via a user preference (#14033)
+- Copilot code suggestions can now be requested via the keyboard shortcut `Ctrl + \`
+- The next word in a Copilot code suggestion can now be accepted via `Ctrl + Right` (`Cmd + Right` on macOS) (#14395)
 - RStudio now highlights and lints Quarto chunk options in Python code chunks
 - RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$$ $$` and `$ $` instead (#12862)
 - Added cmake option to build RStudio without the check for updates feature (#13236)
@@ -23,6 +27,9 @@
 - RStudio now reports repository validation errors (if any) when adding secondary repositories in the Global Options -> Packages pane (#13842)
 - The working directory of a background job now defaults to the .Rproj location when a project is open (#12600)
 - Add search results copy button and search results breadcrumbs to RStudio User Guide (#13618, #14069)
+- RStudio now supports generation of a Copilot diagnostic report from the Copilot preferences pane (#14358)
+- The RStudio debugger is now better at matching debugged code to source documents (#13925)
+- RStudio no longer includes spurious chunk markers from Copilot completion results (#13686)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
@@ -62,16 +69,25 @@
 - Show an error dialog if R is not found when starting RStudio Desktop on Linux and macOS (#14343)
 - An empty `rstudio-prefs.json` no longer logs spurious JSON parsing errors (rstudio-pro#4347)
 - Help pane's Next and Previous find-in-topic buttons now have meaningful accessible labels [Accessibility] (#14347)
+- Fixed an issue where the RStudio debugger would re-focus a debugged context over-aggressively (#10664)
+- Fixed handling of duplicated calls in debugger when source references not available (#14276)
+- Fixed issue where stepping through lines of code in tryCatch() would provide incorrect debug highlight (#14306)
+- Fixed an issue where PATH modifications in .Renviron / .Rprofile could be lost on macOS (#9815)
+- Fixed an issue where custom headers were not propagated to `available.packages()` when calling `install.packages()` (#14282)
+- Fixed an issue where code highlight in Sweave \Sexpr{} expressions was incorrectly handled (#14382)
+- Fixed an issue where the Edit button in the Viewer pane could fail for Quarto documents (#14325)
+- Fixed an issue where terminal history would show internal commands (#9833)
 
 #### Posit Workbench
-
+- Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
 - Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (rstudio-pro#5865)
 - Fixed low-contrast text on Workbench pages [Accessibility] (rstudio-pro#4464)
 
 ### Dependencies
 - Updated Ace to version 1.32.5 (#14227; Desktop + Server)
-- Updated Electron to version 28.2.2 (#14055; Desktop)
+- Updated Electron to version 28.2.6 (#14055; Desktop)
 - Updated GWT to version 2.10.0 (#11505; Desktop + Server)
 - Updated NSIS to version 3.09 (#14123; Windows Desktop)
 - Updated OpenSSL to version 3.1.4 (Windows Desktop)
+- Updated node.js to version 18.19.1 (#14373)
 

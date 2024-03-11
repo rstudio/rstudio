@@ -360,15 +360,24 @@ private:
          std::string outputFile;
          if (!outputFile_.isEmpty())
             outputFile = module_context::createAliasedPath(outputFile_);
+         
          QuartoNavigate quartoNav;
+         std::string sourceFile = module_context::createAliasedPath(previewTarget_);
          if ((previewTarget()) == projDir || isFileInSessionQuartoProject((previewTarget())))
          {
-            quartoNav = module_context::QuartoNavigate::navWebsite(pJob_->id());
+            quartoNav = QuartoNavigate::navigate(
+                     sourceFile,
+                     "",
+                     pJob_->id(),
+                     true);
          }
-         else if (!this->previewTarget_.isDirectory())
+         else if (!previewTarget_.isDirectory())
          {
-           std::string sourceFile = module_context::createAliasedPath(previewTarget_);
-           quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
+           quartoNav = QuartoNavigate::navigate(
+                    sourceFile,
+                    outputFile,
+                    jobId(),
+                    false);
          }
 
          // route to either viewer or presentation pane (for reveal)
@@ -394,9 +403,9 @@ private:
                 (outputFile_.getExtensionLowerCase() == ".docx" ||
                  outputFile_.getExtensionLowerCase() == ".epub"))
             {
-               std::string sourceFile = module_context::createAliasedPath(previewDir()
-                   .completeChildPath("index.qmd"));
-               quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
+               FilePath indexPath = previewDir().completeChildPath("index.qmd");
+               std::string sourceFile = module_context::createAliasedPath(indexPath);
+               quartoNav = QuartoNavigate::navigate(sourceFile, outputFile, jobId(), false);
             }
 
             module_context::viewer(url,  minHeight, quartoNav);

@@ -430,6 +430,16 @@ void synchronizeLocale()
 #endif
 }
 
+void str(SEXP objectSEXP)
+{
+   Error error = r::exec::RFunction("utils:::str")
+         .addParam(objectSEXP)
+         .call();
+   
+   if (error)
+      LOG_ERROR(error);
+}
+
 } // namespace util
 } // namespace r
 } // namespace rstudio

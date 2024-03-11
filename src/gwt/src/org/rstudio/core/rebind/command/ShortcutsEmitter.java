@@ -14,23 +14,23 @@
  */
 package org.rstudio.core.rebind.command;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.user.rebind.SourceWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.transform.Result;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
 
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import javax.xml.transform.Result;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.user.rebind.SourceWriter;
 
 public class ShortcutsEmitter
 {
@@ -309,6 +309,8 @@ public class ShortcutsEmitter
          return "8";
       if (val.equals("["))
          return "219";
+      if (val.equals("Backslash"))
+         return "220";
       if (val.equals("]"))
          return "221";
 

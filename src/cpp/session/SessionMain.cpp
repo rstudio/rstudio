@@ -385,12 +385,6 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
 }
 
 
-Error ping(const core::json::JsonRpcRequest& request,
-           json::JsonRpcResponse* pResponse)
-{
-   return Success();
-}
-
 Error startClientEventService()
 {
    return clientEventService().start(rsession::persistentState().activeClientId());
@@ -525,7 +519,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
       (bind(registerRpcMethod, "suspend_for_restart", suspendForRestart))
-      (bind(registerRpcMethod, "ping", ping))
 
       // signal handlers
       (registerSignalHandlers)
@@ -570,7 +563,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
-      (modules::path::initialize)
       (modules::limits::initialize)
       (modules::ppe::initialize)
       (modules::ask_pass::initialize)
@@ -1961,6 +1953,14 @@ int main(int argc, char * const argv[])
       // initialize thread id
       core::thread::initializeMainThreadId(boost::this_thread::get_id());
       core::system::setEnableCallbacksRequireMainThread(true);
+      
+      // initialize PATH -- needs to happen early on to avoid stomping on environment
+      // variables set in a users .Renviron or .Rprofile
+      {
+         Error error = modules::path::initialize();
+         if (error)
+            LOG_ERROR(error);
+      }
 
       // terminate immediately with given exit code (for testing/debugging)
       std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");

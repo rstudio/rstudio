@@ -14,12 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.function.Consumer;
+
+import javax.inject.Inject;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.Application;
@@ -30,16 +28,19 @@ import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
-
-import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
-import javax.inject.Inject;
-import java.util.function.Consumer;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 @Singleton
 public class SessionOpener
@@ -200,8 +201,9 @@ public class SessionOpener
                          final int maxRetries,
                          final Command onCompleted)
    {
-      Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
-
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         private long startTime_ = System.currentTimeMillis();
          private int retries_ = 0;
          private boolean pingDelivered_ = false;
          private boolean pingInFlight_ = false;
@@ -211,13 +213,32 @@ public class SessionOpener
          {
             // if we've already delivered the ping or our retry count
             // is exhausted then return false
-            if (pingDelivered_ || (++retries_ > maxRetries))
+            if (pingDelivered_)
+            {
                return false;
+            }
+            
+            // if we hit our retry count, give up
+            if (retries_++ > maxRetries)
+            {
+               Debug.logWarning("Error connecting with session.");
+               return false;
+            }
+            
+            // if we have a ping in flight, but we don't receive a response
+            // after a few seconds, try again
+            long currentTime = System.currentTimeMillis();
+            if (pingInFlight_ && currentTime - startTime_ > 5000)
+            {
+               startTime_ = currentTime;
+               pingInFlight_ = false;
+            }
             
             if (!pingInFlight_)
             {
                pingInFlight_ = true;
-               pServer_.get().ping(new VoidServerRequestCallback() {
+               pServer_.get().ping(new VoidServerRequestCallback()
+               {
                   @Override
                   protected void onSuccess()
                   {

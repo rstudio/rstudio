@@ -21,6 +21,7 @@ import java.util.function.BiPredicate;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.elemental2.overlay.File;
 import org.rstudio.core.client.widget.CanSetControlId;
@@ -30,9 +31,12 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.EditEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -67,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -110,6 +115,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 
 import elemental2.dom.ClipboardEvent;
+import elemental2.dom.FileList;
 import jsinterop.base.Js;
 
 public class AceEditorWidget extends Composite
@@ -385,31 +391,93 @@ public class AceEditorWidget extends Composite
       
       if (BrowseCap.isElectron())
       {
-         addNativePasteHandler(getElement());
+         addDesktopNativePasteHandler(getElement());
       }
    }
    
-   private final native void addNativePasteHandler(Element el)
+   private final native void addDesktopNativePasteHandler(Element el)
    /*-{
       var self = this;
       el.addEventListener("paste", $entry(function(event) {
-         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget::onPaste(*)(event);
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget::onDesktopPaste(*)(event);
       }));
    }-*/;
    
-   private void onPaste(NativeEvent event)
+   private String formatDesktopPath(String path)
+   {
+      if (StringUtil.isNullOrEmpty(path))
+         return "";
+      
+      
+      return "\"" + normalizeSlashes(path).replaceAll("\"", "\\\"") + "\"";
+   }
+   
+   private String normalizeSlashes(String path)
+   {
+      return path.replace('\\', '/');
+   }
+   
+   private void onDesktopPaste(NativeEvent event)
    {
       ClipboardEvent clipboardEvent = Js.cast(event);
       elemental2.core.JsArray<String> types = clipboardEvent.clipboardData.types;
       if (types.length == 1 && types.getAt(0) == "Files")
       {
-         File file = Js.cast(clipboardEvent.clipboardData.files.getAt(0));
-         if (file != null && file.path != null)
+         FileList fileList = clipboardEvent.clipboardData.files;
+         if (fileList.length == 0)
+            return;
+         
+         event.stopPropagation();
+         event.preventDefault();
+         
+         JsVectorString allFiles = JsVectorString.createVector();
+         for (int i = 0; i < fileList.length; i++)
          {
-            event.stopPropagation();
-            event.preventDefault();
-            editor_.insert(file.path.replace('\\', '/'));
+            File file = Js.cast(fileList.getAt(i));
+            allFiles.push(normalizeSlashes(file.path));
          }
+         
+         String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());
+         if (!StringUtil.equals(mode, "R"))
+         {
+            String code = allFiles.join("\n");
+            editor_.insert(code);
+            return;
+         }
+         
+         filesServer_.makeProjectRelative(allFiles.cast(), new ServerRequestCallback<JsArrayString>()
+         {
+            @Override
+            public void onResponseReceived(JsArrayString response)
+            {
+               JsVectorString allFiles = response.cast();
+               
+               if (allFiles.size() == 1)
+               {
+                  String code = formatDesktopPath(allFiles.get(0));
+                  editor_.insert(code);
+                  return;
+               }
+               
+               String currentLine =
+                     editor_.getSession().getLine(editor_.getCursorPosition().getRow());
+
+               String indent = StringUtil.getIndent(currentLine);
+               String tab = editor_.getSession().getTabString();
+               for (int i = 0; i < allFiles.size(); i++)
+                  allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
+
+               String code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
+               editor_.insert(code);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+         
       }
    }
 
@@ -502,11 +570,13 @@ public class AceEditorWidget extends Composite
    @Inject
    private void initialize(EventBus events,
                            UserPrefs uiPrefs,
-                           AceThemes themes)
+                           AceThemes themes,
+                           FilesServerOperations filesServer)
    {
       events_ = events;
       uiPrefs_ = uiPrefs;
       themes_ = themes;
+      filesServer_ = filesServer;
    }
 
    public HandlerRegistration addCursorChangedHandler(CursorChangedEvent.Handler handler)
@@ -1360,4 +1430,5 @@ public class AceEditorWidget extends Composite
    private EventBus events_;
    private UserPrefs uiPrefs_;
    private AceThemes themes_;
+   private FilesServerOperations filesServer_;
 }

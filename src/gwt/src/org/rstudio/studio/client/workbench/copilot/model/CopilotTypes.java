@@ -23,6 +23,12 @@ import jsinterop.base.Any;
 public class CopilotTypes
 {
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotDiagnostics
+   {
+      public String report;
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotPosition
    {
       public int line;

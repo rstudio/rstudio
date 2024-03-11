@@ -14,11 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
-import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+
+import com.google.gwt.event.shared.EventHandler;
 
 
 @JavaScriptSerializable
@@ -39,18 +40,20 @@ public class CodeBrowserNavigationEvent
 
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function)
    {
-      this(function, null, false, false);
+      this(function, null, false, false, false);
    }
 
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function,
                                      DebugFilePosition debugPosition,
                                      boolean executing,
-                                     boolean serverDispatched)
+                                     boolean serverDispatched,
+                                     boolean closeOnDebugSessionEnded)
    {
       function_ = function;
       debugPosition_ = debugPosition;
       executing_ = executing;
       serverDispatched_ = serverDispatched;
+      closeOnDebugSessionEnded_ = closeOnDebugSessionEnded;
    }
 
    public SearchPathFunctionDefinition getFunction()
@@ -71,6 +74,11 @@ public class CodeBrowserNavigationEvent
    public boolean serverDispatched()
    {
       return serverDispatched_;
+   }
+   
+   public boolean closeOnDebugSessionEnded()
+   {
+      return closeOnDebugSessionEnded_;
    }
 
    @Override
@@ -95,5 +103,6 @@ public class CodeBrowserNavigationEvent
    SearchPathFunctionDefinition function_;
    boolean executing_;
    boolean serverDispatched_;
+   boolean closeOnDebugSessionEnded_;
 }
 
