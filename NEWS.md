@@ -76,6 +76,7 @@
 - Fixed an issue where custom headers were not propagated to `available.packages()` when calling `install.packages()` (#14282)
 - Fixed an issue where code highlight in Sweave \Sexpr{} expressions was incorrectly handled (#14382)
 - Fixed an issue where the Edit button in the Viewer pane could fail for Quarto documents (#14325)
+- Fixed an issue where terminal history would show internal commands (#9833)
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
