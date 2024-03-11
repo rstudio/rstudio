@@ -10,8 +10,9 @@
 - RStudio Desktop on Windows and Linux supports full-screen mode via F11 (#3243)
 - RStudio Desktop now supports pasting of file paths for files copied to the clipboard (#14240)
 - R projects can be given a custom display name in Project Options (#1909)
-- The automatic display of Copilot code completions can now be controlled via a user preference. (#14033)
-- Copilot code suggestions can now be requested via the keyboard shortcut `Ctrl + \`.
+- The automatic display of Copilot code completions can now be controlled via a user preference (#14033)
+- Copilot code suggestions can now be requested via the keyboard shortcut `Ctrl + \`
+- The next word in a Copilot code suggestion can now be accepted via `Ctrl + Right` (`Cmd + Right` on macOS) (#14395)
 - RStudio now highlights and lints Quarto chunk options in Python code chunks
 - RStudio no longer highlights `\[ \]` and `\( \)` Mathjax equations; prefer `$$ $$` and `$ $` instead (#12862)
 - Added cmake option to build RStudio without the check for updates feature (#13236)

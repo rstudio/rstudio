@@ -107,6 +107,13 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
       void apply();
       void detach();
    }
+   
+   public enum InsertionBehavior
+   {
+      EditorBehaviorsEnabled,
+      EditorBehaviorsDisabled,
+   }
+   
    TextFileType getFileType();
    void setFileType(TextFileType fileType);
    void setFileType(TextFileType fileType, boolean suppressCompletion);
@@ -124,6 +131,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code);
    void insertCode(String code, boolean unused);
+   void insertCode(String code, InsertionBehavior behavior);
    void insertCode(InputEditorPosition position, String code);
    void applyChanges(TextChange[] changes);
    void applyChanges(TextChange[] changes, boolean preserveCursorPosition);
