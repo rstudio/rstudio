@@ -20,6 +20,11 @@ set -e
 PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
 
+# ensure required environment variables
+if ! check_env_vars RSTUDIO_NODE_VERSION; then
+	exit 1
+fi
+
 # remember cwd for later restoration
 PREV_WD=$(pwd)
 
@@ -167,7 +172,6 @@ fi
 ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
 
 # find node and npm
-RSTUDIO_NODE_VERSION=18.18.2
 find-program NODE node \
    "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"

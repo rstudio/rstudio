@@ -64,13 +64,6 @@ set LIBCLANG_VERSION=13.0.1
 set LIBCLANG_NAME=libclang-windows-%LIBCLANG_VERSION%
 set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 
-set NODE_VERSION=%RSTUDIO_NODE_VERSION%
-set NODE_ROOT=node
-set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
-set NODE_BASE_URL=%BASEURL%node/v%NODE_VERSION%/
-set NODE_ARCHIVE_DIR=node-v%NODE_VERSION%-win-x64
-set NODE_ARCHIVE_FILE=%NODE_ARCHIVE_DIR%.zip
-
 if not exist gnudiff (
   wget %WGET_ARGS% "%BASEURL%%GNUDIFF_FILE%"
   mkdir gnudiff
@@ -217,20 +210,8 @@ if not exist libclang\%LIBCLANG_VERSION% (
   del %LIBCLANG_FILE%
 )
 
-if not exist %NODE_SUBDIR% (
-  wget %WGET_ARGS% %NODE_BASE_URL%%NODE_ARCHIVE_FILE%
-  echo Unzipping node %NODE_VERSION%
-  mkdir %NODE_ROOT%
-  unzip %UNZIP_ARGS% %NODE_ARCHIVE_FILE%
-  move %NODE_ARCHIVE_DIR% %NODE_SUBDIR%
-  del %NODE_ARCHIVE_FILE%
-)
-
-set YARN_DIR=%NODE_SUBDIR%\node_modules\yarn\bin
-if not exist %YARN_DIR%\yarn (
-  echo "Installing yarn"
-  call %NODE_SUBDIR%\npm install --global yarn
-)
+call :install-node %RSTUDIO_NODE_VERSION% yarn
+call :install-node %RSTUDIO_INSTALLED_NODE_VERSION%
 
 if not defined JENKINS_URL (
   if exist C:\Windows\py.exe (
@@ -257,3 +238,34 @@ regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\DIA 
 call install-crashpad.cmd
 call install-soci.cmd
 
+endlocal
+goto :EOF
+
+:: install node and optionally install yarn
+:install-node :: version [yarn]
+
+set NODE_VERSION=%~1
+set NODE_ROOT=node
+set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
+set NODE_BASE_URL=%BASEURL%node/v%NODE_VERSION%/
+set NODE_ARCHIVE_DIR=node-v%NODE_VERSION%-win-x64
+set NODE_ARCHIVE_FILE=%NODE_ARCHIVE_DIR%.zip
+
+if not exist %NODE_SUBDIR% (
+  wget %WGET_ARGS% %NODE_BASE_URL%%NODE_ARCHIVE_FILE%
+  echo Unzipping node %NODE_VERSION%
+  mkdir %NODE_ROOT%
+  unzip %UNZIP_ARGS% %NODE_ARCHIVE_FILE%
+  move %NODE_ARCHIVE_DIR% %NODE_SUBDIR%
+  del %NODE_ARCHIVE_FILE%
+)
+
+if "%~2"=="yarn" (
+  set YARN_DIR=%NODE_SUBDIR%\node_modules\yarn\bin
+  if not exist %YARN_DIR%\yarn (
+    echo "Installing yarn"
+    call %NODE_SUBDIR%\npm install --global yarn
+  )
+)
+
+goto :EOF

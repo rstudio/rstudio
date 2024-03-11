@@ -14,5 +14,10 @@
 :: AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 
 
+:: Node version used when building the product
 set RSTUDIO_NODE_VERSION=18.18.2
+
+:: Node version installed with the product
+set RSTUDIO_INSTALLED_NODE_VERSION=18.19.1
+
 set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com
