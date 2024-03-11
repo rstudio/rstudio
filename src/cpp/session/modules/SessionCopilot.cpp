@@ -865,6 +865,11 @@ Error startAgent()
    // Create environment for agent process
    core::system::Options environment;
    core::system::environment(&environment);
+   
+   // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
+   std::string certificatesFile = session::options().copilotSslCertificatesFile();
+   if (!certificatesFile.empty())
+      environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
    // For Desktop builds of RStudio, use the version of node embedded in Electron.
    FilePath nodePath;

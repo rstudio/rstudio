@@ -855,6 +855,13 @@
             "description": "The URL to the authentication provider to be used by GitHub Copilot."
          },
          {
+            "name": "copilot-ssl-certificates-file",
+            "type": "string",
+            "memberName": "copilotSslCertificatesFile_",
+            "defaultValue": "",
+            "description": "The path to a file containing one or more trusted certificates in PEM format."
+         },
+         {
             "name": "copilot-proxy-strict-ssl",
             "type": "bool",
             "memberName": "copilotProxyStrictSsl_",
