@@ -774,13 +774,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.scalar(candidates[[1]])
 })
 
+.rs.addFunction("readPackageImports", function(pkg)
+{
+   pkgPath <- find.package(pkg, quiet = TRUE)
+   if (length(pkgPath) == 0L)
+      return(character())
+   
+   metaPath <- file.path(pkgPath, "Meta/package.rds")
+   if (!file.exists(metaPath))
+      return(character())
+   
+   metaInfo <- readRDS(metaPath)
+   importInfo <- metaInfo$Imports
+   sort(unique(names(importInfo)))
+})
+
 .rs.addFunction("recursivePackageDependenciesImpl", function(pkg, envir)
 {
    if (exists(pkg, envir = envir))
       return()
    
-   imports <- getNamespaceInfo(pkg, "imports")
-   deps <- setdiff(sort(unique(unlist(names(imports)))), "base")
+   deps <- setdiff(.rs.readPackageImports(pkg), "base")
    assign(pkg, deps, envir = envir)
    
    for (dep in deps)
