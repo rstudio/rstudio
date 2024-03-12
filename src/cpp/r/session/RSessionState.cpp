@@ -77,6 +77,9 @@ std::string s_activeRVersion;
 std::string s_suspendedRVersion;
 bool s_isCompatibleSessionState = true;
 
+// session callbacks
+SessionStateCallbacks s_callbacks;
+
 Error saveLibPaths(const FilePath& libPathsFile)
 {
    std::string file = string_utils::utf8ToSystem(libPathsFile.getAbsolutePath());
@@ -236,7 +239,7 @@ Error executeAfterRestartCommand(const FilePath& afterRestartFile)
    if (command.empty())
       return Success();
    
-   Rprintf("> %s\n", command.c_str());
+   s_callbacks.consoleWriteInput(command);
    return r::exec::executeString(command);
 }
    
@@ -385,7 +388,10 @@ Error saveAfterRestartCommand(const FilePath& afterRestartCommandPath,
 
 } // anonymous namespace
  
-   
+void initialize(SessionStateCallbacks callbacks)
+{
+   s_callbacks = callbacks;
+}
 
 bool save(const FilePath& statePath,
           const std::string& afterRestartCommand,

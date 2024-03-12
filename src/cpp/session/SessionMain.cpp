@@ -385,7 +385,18 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+Error initializeSessionState()
+{
+   using namespace rstudio::r::session;
+   
+   state::SessionStateCallbacks callbacks;
+   callbacks.consoleWriteInput = console_input::emitConsoleInput;
+   state::initialize(callbacks);
+   
+   return Success();
+}
 
+   
 Error startClientEventService()
 {
    return clientEventService().start(rsession::persistentState().activeClientId());
@@ -516,6 +527,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       // client event service
       (startClientEventService)
+         
+      // session state
+      (initializeSessionState)
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))

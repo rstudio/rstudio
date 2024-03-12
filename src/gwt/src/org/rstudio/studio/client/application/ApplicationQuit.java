@@ -488,7 +488,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                terminalHelper_.warnBusyTerminalBeforeCommand(() ->
                {
                   boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
-                  SuspendOptions options = SuspendOptions.createSaveMinimal(saveChanges, null);
+                  SuspendOptions options = SuspendOptions.createSaveMinimal(saveChanges);
                   eventBus_.fireEvent(new SuspendAndRestartEvent(options));
                }, constants_.restartRCaption(), constants_.terminalJobTerminatedQuestion(),
                   pUserPrefs_.get().busyDetection().getValue());

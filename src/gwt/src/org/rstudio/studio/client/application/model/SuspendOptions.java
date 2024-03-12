@@ -21,17 +21,27 @@ public class SuspendOptions extends JavaScriptObject
    protected SuspendOptions()
    {  
    }
-   
+ 
    public static final SuspendOptions createSaveAll(boolean excludePackages,
                                                     String afterRestart)
    {
       return create(false, false, excludePackages, afterRestart);
    }
    
+   public static final SuspendOptions createSaveAll(boolean excludePackages)
+   {
+      return createSaveAll(excludePackages, null);
+   }
+ 
    public static final SuspendOptions createSaveMinimal(boolean saveWorkspace,
                                                         String afterRestart)
    {
       return create(true, saveWorkspace, false, afterRestart);
+   }
+   
+   public static final SuspendOptions createSaveMinimal(boolean saveWorkspace)
+   {
+      return createSaveMinimal(saveWorkspace, null);
    }
    
    private static native final SuspendOptions create(boolean saveMinimal,
