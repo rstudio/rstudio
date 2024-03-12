@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.packages;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -66,8 +68,8 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.RaisePackagePaneEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
@@ -84,14 +86,12 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackratActions;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.CleanUnusedDialog;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class Packages
       extends BasePresenter
@@ -1025,8 +1025,8 @@ public class Packages
             true,
             () ->
             {
-               events_.fireEvent(new SuspendAndRestartEvent(
-                      SuspendOptions.createSaveAll(true), installCmd));
+               SuspendOptions options = SuspendOptions.createSaveAll(true, installCmd);
+               events_.fireEvent(new SuspendAndRestartEvent(options));
             },
             () ->
             {

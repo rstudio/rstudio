@@ -21,25 +21,40 @@ public class SuspendOptions extends JavaScriptObject
    protected SuspendOptions()
    {  
    }
-   
-   public static final SuspendOptions createSaveAll(boolean excludePackages) 
+ 
+   public static final SuspendOptions createSaveAll(boolean excludePackages,
+                                                    String afterRestart)
    {
-      return create(false, false, excludePackages);
+      return create(false, false, excludePackages, afterRestart);
    }
    
-   public static final SuspendOptions createSaveMinimal(boolean saveWorkspace) 
+   public static final SuspendOptions createSaveAll(boolean excludePackages)
    {
-      return create(true, saveWorkspace, false);
+      return createSaveAll(excludePackages, null);
+   }
+ 
+   public static final SuspendOptions createSaveMinimal(boolean saveWorkspace,
+                                                        String afterRestart)
+   {
+      return create(true, saveWorkspace, false, afterRestart);
+   }
+   
+   public static final SuspendOptions createSaveMinimal(boolean saveWorkspace)
+   {
+      return createSaveMinimal(saveWorkspace, null);
    }
    
    private static native final SuspendOptions create(boolean saveMinimal,
                                                      boolean saveWorkspace,
-                                                     boolean excludePackages) /*-{
-      var options = new Object();
-      options.save_minimal = saveMinimal;
-      options.save_workspace = saveWorkspace;
-      options.exclude_packages = excludePackages;
-      return options;
+                                                     boolean excludePackages,
+                                                     String afterRestart)
+   /*-{
+      return {
+         save_minimal: saveMinimal,
+         save_workspace: saveWorkspace,
+         exclude_packages: excludePackages,
+         after_restart: afterRestart || ""
+      };
    }-*/;
    
    /*

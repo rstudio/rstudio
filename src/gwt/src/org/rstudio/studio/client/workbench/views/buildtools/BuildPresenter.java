@@ -204,10 +204,7 @@ public class BuildPresenter extends BasePresenter
                      ? SuspendOptions.createSaveAll(false)
                      : SuspendOptions.createSaveMinimal(false);
                
-               eventBus_.fireEvent(
-                  new SuspendAndRestartEvent(
-                        options,
-                        event.getAfterRestartCommand()));
+               eventBus_.fireEvent(new SuspendAndRestartEvent(options));
             }
          }
       });

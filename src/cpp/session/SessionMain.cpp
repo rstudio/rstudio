@@ -373,10 +373,11 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
 
    rstudio::r::session::RSuspendOptions options(exitStatus);
    Error error = json::readObjectParam(
-                               request.params, 0,
-                               "save_minimal", &(options.saveMinimal),
-                               "save_workspace", &(options.saveWorkspace),
-                               "exclude_packages", &(options.excludePackages));
+            request.params, 0,
+            "save_minimal", &(options.saveMinimal),
+            "save_workspace", &(options.saveWorkspace),
+            "exclude_packages", &(options.excludePackages),
+            "after_restart", &(options.afterRestartCommand));
    if (error)
       return error;
 
@@ -384,7 +385,26 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+void consoleWriteInput(const std::string& input)
+{
+   using namespace console_input;
+   
+   std::string prompt = rstudio::r::options::getOption<std::string>("prompt");
+   consoleInput(prompt + input);
+}
 
+Error initializeSessionState()
+{
+   using namespace rstudio::r::session;
+   
+   state::SessionStateCallbacks callbacks;
+   callbacks.consoleWriteInput = consoleWriteInput;
+   state::initialize(callbacks);
+   
+   return Success();
+}
+
+   
 Error startClientEventService()
 {
    return clientEventService().start(rsession::persistentState().activeClientId());
@@ -515,6 +535,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       // client event service
       (startClientEventService)
+         
+      // session state
+      (initializeSessionState)
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))

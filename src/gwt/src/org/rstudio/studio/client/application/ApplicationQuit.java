@@ -488,9 +488,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                terminalHelper_.warnBusyTerminalBeforeCommand(() ->
                {
                   boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
-                  eventBus_.fireEvent(new SuspendAndRestartEvent(
-                        SuspendOptions.createSaveMinimal(saveChanges),
-                        null));
+                  SuspendOptions options = SuspendOptions.createSaveMinimal(saveChanges);
+                  eventBus_.fireEvent(new SuspendAndRestartEvent(options));
                }, constants_.restartRCaption(), constants_.terminalJobTerminatedQuestion(),
                   pUserPrefs_.get().busyDetection().getValue());
             }
@@ -533,7 +532,6 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       suspendingAndRestarting_ = true;
       eventBus_.fireEvent(new RestartStatusEvent(RestartStatusEvent.RESTART_INITIATED));
       pSessionOpener_.get().suspendForRestart(
-         event.getAfterRestartCommand(),
          event.getSuspendOptions(),
          () -> { // success
             onRestartComplete.execute();
