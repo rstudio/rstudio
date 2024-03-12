@@ -115,6 +115,27 @@ void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
    clientEventQueue().add(inputEvent);
 }
 
+bool canSuspend(const std::string& prompt)
+{
+   bool suspendIsBlocked = false;
+   
+   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveDurableChildren(), suspend::kChildProcess);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::kCommandPrompt);
+
+   if (session::options().sessionConnectionsBlockSuspend())
+      suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
+   
+   if (session::options().sessionExternalPointersBlockSuspend())
+      suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
+   
+   suspendIsBlocked |= !modules::overlay::isSuspendable();
+   
+   return !suspendIsBlocked;
+}
+
+} // anonymous namespace
+
 void consolePrompt(const std::string& prompt, bool addToHistory)
 {
    // save the last prompt (for re-issuing)
@@ -139,26 +160,11 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    module_context::events().onConsolePrompt(prompt);
 }
 
-bool canSuspend(const std::string& prompt)
+void consoleInput(const std::string& input)
 {
-   bool suspendIsBlocked = false;
-   
-   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveDurableChildren(), suspend::kChildProcess);
-   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
-   suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::kCommandPrompt);
-
-   if (session::options().sessionConnectionsBlockSuspend())
-      suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
-   
-   if (session::options().sessionExternalPointersBlockSuspend())
-      suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
-   
-   suspendIsBlocked |= !modules::overlay::isSuspendable();
-   
-   return !suspendIsBlocked;
+   r::session::RConsoleInput consoleInput(input);
+   enqueueConsoleInput(consoleInput);
 }
-
-} // anonymous namespace
 
 // extract console input -- can be either null (user hit escape) or a string
 Error extractConsoleInput(const json::JsonRpcRequest& request)

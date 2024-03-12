@@ -239,7 +239,8 @@ Error executeAfterRestartCommand(const FilePath& afterRestartFile)
    if (command.empty())
       return Success();
    
-   s_callbacks.consoleWriteInput(command);
+   
+   s_callbacks.consoleWriteInput(core::string_utils::trimWhitespace(command));
    return r::exec::executeString(command);
 }
    

@@ -385,12 +385,20 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+void consoleWriteInput(const std::string& input)
+{
+   using namespace console_input;
+   
+   std::string prompt = rstudio::r::options::getOption<std::string>("prompt");
+   consoleInput(prompt + input);
+}
+
 Error initializeSessionState()
 {
    using namespace rstudio::r::session;
    
    state::SessionStateCallbacks callbacks;
-   callbacks.consoleWriteInput = console_input::emitConsoleInput;
+   callbacks.consoleWriteInput = consoleWriteInput;
    state::initialize(callbacks);
    
    return Success();
