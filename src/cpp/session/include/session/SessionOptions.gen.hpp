@@ -59,7 +59,8 @@ protected:
                 boost::program_options::options_description* pCopilot,
                 boost::program_options::options_description* pMisc,
                 std::string* pSaveActionDefault,
-                int* wwwSameSite)
+                int* wwwSameSite,
+                std::string* pSessionPortRange)
 {
    using namespace rstudio::core;
    using namespace boost::program_options;
@@ -210,6 +211,9 @@ protected:
       ("directory-view-allow-list",
       value<std::string>(&directoryViewAllowList_)->default_value(std::string()),
       "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:).")
+      ("session-port-range",
+      value<std::string>(pSessionPortRange)->default_value(std::string()),
+      "Constrain the range of TCP ports available to the session. Accepts a range in the form '<lower>-<upper>', e.g. 59000-59999.")
       (kSessionEphemeralEnvVars,
       value<std::string>(&ephemeralEnvVars_)->default_value(std::string()),
       "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:).")
@@ -484,6 +488,7 @@ public:
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
    std::string directoryViewAllowList() const { return directoryViewAllowList_; }
+   boost::optional<std::tuple<int,int>> sessionPortRange() const { return sessionPortRange_; }
    std::string ephemeralEnvVars() const { return ephemeralEnvVars_; }
    bool suspendOnIncompleteStatement() const { return suspendOnIncompleteStatement_; }
    bool asyncRpcEnabled() const { return asyncRpcEnabled_; }
@@ -597,6 +602,7 @@ protected:
    rstudio::core::http::Cookie::SameSite sameSite_;
    bool restrictDirectoryView_;
    std::string directoryViewAllowList_;
+   boost::optional<std::tuple<int,int>> sessionPortRange_;
    std::string ephemeralEnvVars_;
    bool suspendOnIncompleteStatement_;
    bool asyncRpcEnabled_;
