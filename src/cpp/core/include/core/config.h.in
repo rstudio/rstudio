@@ -1,0 +1,33 @@
+/*
+ * config.h.in
+ *
+ * Copyright (C) 2022 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#ifndef RSTUDIO_VERSION
+#define RSTUDIO_VERSION "${CPACK_PACKAGE_VERSION}"
+#endif
+
+#define RSTUDIO_RELEASE_NAME     "${RSTUDIO_RELEASE_NAME}"
+#define RSTUDIO_DEFAULT_LOG_PATH "${RSTUDIO_DEFAULT_LOG_PATH}"
+
+#cmakedefine HAVE_SA_NOCLDWAIT
+#cmakedefine HAVE_INOTIFY_INIT1
+#cmakedefine HAVE_SO_PEERCRED
+#cmakedefine HAVE_GETPEEREID
+#cmakedefine HAVE_PROCSELF
+#cmakedefine HAVE_SETRESUID
+#cmakedefine HAVE_SCANDIR_POSIX
+#cmakedefine HAVE_GROUP_MEMBER
+#cmakedefine HAVE_EXECINFO
+#cmakedefine RSTUDIO_SERVER
+#cmakedefine RSTUDIO_PRO_BUILD

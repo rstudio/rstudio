@@ -19,8 +19,9 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
+
+#include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Process.hpp>
@@ -42,6 +43,8 @@
 #include "ConnectionHistory.hpp"
 #include "ConnectionsIndexer.hpp"
 #include "Connection.hpp"
+
+#include "session-config.h"
 
 #define kConnectionsPath "connections"
 
