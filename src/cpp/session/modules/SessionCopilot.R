@@ -23,6 +23,42 @@
    .Call("rs_copilotSendRequest", as.character(method), as.list(params), PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("copilot.downloadCopilotAgent", function(copilotUrl, destfile)
+{
+   # Disable warnings in this scope
+   op <- options(warn = -1L)
+   on.exit(options(op), add = TRUE)
+   
+   # Attempt to download the file
+   status <- tryCatch(
+      download.file(copilotUrl, destfile, mode = "wb"),
+      error = identity
+   )
+   
+   # If the download failed, and we're on Windows, try again with a different
+   # download method. This may be necessary for certain proxy setups.
+   #
+   # https://github.com/rstudio/rstudio/issues/13868
+   tryAgain <-
+      .rs.platform.isWindows &&
+      inherits(status, "error") &&
+      !identical(getOption("download.file.method"), "wininet")
+   
+   if (tryAgain)
+   {
+      # Try to download the file using the 'wininet' method
+      status <- tryCatch(
+         download.file(copilotUrl, destfile, method = "wininet", mode = "wb", extra = NULL),
+         error = identity
+      )
+   }
+   
+   # If the download still failed, raise the error now
+   if (inherits(status, "error"))
+      stop(status)
+   
+})
+
 .rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
 {
    copilotRef <- .Call("rs_copilotAgentCommitHash", PACKAGE = "(embedding)")
@@ -40,7 +76,7 @@
    
    # Download the tarball.
    destfile <- file.path(downloadDir, "copilot.tar.gz")
-   download.file(copilotUrl, destfile = destfile, mode = "wb")
+   .rs.copilot.downloadCopilotAgent(copilotUrl, destfile)
    
    # Confirm the tarball exists.
    if (!file.exists(destfile)) {
