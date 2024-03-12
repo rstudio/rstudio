@@ -85,7 +85,7 @@ void completeDeferredSessionInit(bool newSession)
 {
    // suppress output which occurs during restore (packages can sometimes
    // print messages to the console indicating they have conflicts -- the
-   // has already seen these messages and doesn't expect them now so 
+   // user has already seen these messages and doesn't expect them now so
    // we suppress them
    utils::SuppressOutputInScope suppressOutput;
    
