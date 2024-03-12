@@ -23,6 +23,9 @@
 #include <boost/regex.hpp>
 #include <boost/bind/bind.hpp>
 
+#include <core/FileSerializer.hpp>
+#include <core/RegexUtils.hpp>
+
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RSourceManager.hpp>
@@ -34,9 +37,6 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
 #include <r/session/RSuspend.hpp>
-
-#include <core/FileSerializer.hpp>
-#include <core/RegexUtils.hpp>
 
 #include "RInit.hpp"
 #include "REmbedded.hpp"
@@ -79,7 +79,7 @@ RCallbacks s_callbacks;
 InternalCallbacks s_internalCallbacks;
 
 // temporarily suppress output
-bool s_suppressOutput = false;
+int s_suppressOutput = 0;
 
 class JumpToTopException
 {
@@ -435,7 +435,7 @@ void RShowMessage(const char* msg)
    CATCH_UNEXPECTED_EXCEPTION
 }
 
-void RWriteConsoleEx (const char *buf, int buflen, int otype)
+void RWriteConsoleEx(const char *buf, int buflen, int otype)
 {
    try
    {
@@ -788,12 +788,12 @@ namespace utils {
 
 SuppressOutputInScope::SuppressOutputInScope()
 {
-  s_suppressOutput = true;
+   s_suppressOutput += 1;
 }
 
 SuppressOutputInScope::~SuppressOutputInScope()
 {
-   s_suppressOutput = false;
+   s_suppressOutput -= 1;
 }
 
 } // namespace utils

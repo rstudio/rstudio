@@ -201,13 +201,10 @@ public class BuildPresenter extends BasePresenter
             if (event.getRestartR())
             {
                SuspendOptions options = userPrefs_.saveAndReloadWorkspaceOnBuild().getValue()
-                     ? SuspendOptions.createSaveAll(false)
-                     : SuspendOptions.createSaveMinimal(false);
+                     ? SuspendOptions.createSaveAll(false, null)
+                     : SuspendOptions.createSaveMinimal(false, null);
                
-               eventBus_.fireEvent(
-                  new SuspendAndRestartEvent(
-                        options,
-                        event.getAfterRestartCommand()));
+               eventBus_.fireEvent(new SuspendAndRestartEvent(options));
             }
          }
       });

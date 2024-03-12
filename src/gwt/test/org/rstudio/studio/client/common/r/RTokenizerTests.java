@@ -14,11 +14,9 @@
  */
 package org.rstudio.studio.client.common.r;
 
-import junit.framework.Assert;
-
 import com.google.gwt.junit.client.GWTTestCase;
-import org.rstudio.studio.client.common.r.RToken;
-import org.rstudio.studio.client.common.r.RTokenizer;
+
+import junit.framework.Assert;
 
 public class RTokenizerTests extends GWTTestCase
 {

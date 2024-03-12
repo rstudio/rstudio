@@ -41,6 +41,7 @@ struct SessionStateInfo
 };
 
 bool save(const core::FilePath& statePath,
+          const std::string& afterRestartCommand,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
@@ -48,6 +49,7 @@ bool save(const core::FilePath& statePath,
           const std::string& ephemeralEnvVars);
 
 bool saveMinimal(const core::FilePath& statePath,
+                 const std::string& afterRestartCommand,
                  bool saveGlobalEnvironment);
    
 

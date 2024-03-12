@@ -17,6 +17,7 @@
 
 #include <shared_core/FilePath.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -70,8 +71,10 @@ bool saveSessionState(const RSuspendOptions& options,
                options.saveWorkspace);
       
       // save minimal
-      return r::session::state::saveMinimal(suspendedSessionPath,
-                                            saveWorkspace);
+      return r::session::state::saveMinimal(
+               suspendedSessionPath,
+               options.afterRestartCommand,
+               saveWorkspace);
 
    }
    else
@@ -83,12 +86,14 @@ bool saveSessionState(const RSuspendOptions& options,
                saveWorkspaceOverride,
                true);
       
-      return r::session::state::save(suspendedSessionPath,
-                                     utils::isServerMode(),
-                                     options.excludePackages,
-                                     disableSaveCompression,
-                                     saveWorkspace,
-                                     options.ephemeralEnvVars);
+      return r::session::state::save(
+               suspendedSessionPath,
+               options.afterRestartCommand,
+               utils::isServerMode(),
+               options.excludePackages,
+               disableSaveCompression,
+               saveWorkspace,
+               options.ephemeralEnvVars);
    }
 }
    
@@ -145,7 +150,7 @@ bool suspend(const RSuspendOptions& options,
    }
    
    // only continue with exiting the process if we actually succeed in saving
-   if(suspend)
+   if (suspend)
    {      
       // set suspended flag so cleanup code can act accordingly
       s_suspended = true;
