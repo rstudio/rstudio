@@ -1224,12 +1224,10 @@ public class PaneManager
    @Handler
    public void onMaximizeConsole()
    {
+      // toggle the maximization state of the Console (i.e. maximize or restore depending
+      // on current UI state)
       LogicalWindow consoleWindow = panesByName_.get(PaneManager.CONSOLE_PANE);
-      if (consoleWindow.getState() != WindowState.MAXIMIZE)
-      {
-         consoleWindow.onWindowStateChange(
-                        new WindowStateChangeEvent(WindowState.MAXIMIZE));
-      }
+      consoleWindow.onWindowStateChange(new WindowStateChangeEvent(WindowState.MAXIMIZE));
    }
 
    private ArrayList<LogicalWindow> createPanes(PaneConfig config)

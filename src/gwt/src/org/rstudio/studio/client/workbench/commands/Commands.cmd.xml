@@ -3801,7 +3801,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="editor"/>
 
    <cmd id="maximizeConsole"
-        menuLabel="Maximize Console"/>
+        label="Maximize or Restore Console"
+        menuLabel="Maximize or Restore Console"/>
 
    <cmd id="debugBreakpoint"
         label="Toggle Breakpoint on Current Line"
