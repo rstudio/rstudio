@@ -270,7 +270,7 @@ writeLines(sep = "\x1F", c(
 
   // if this appears to be a conda installation of R, manually set LD_LIBRARY_PATH appropriately
   // https://github.com/rstudio/rstudio/issues/13184
-  if (rPlatform.indexOf('-conda-') !== -1) {
+  if (rLdLibraryPath.length === 0 && rPlatform.indexOf('-conda-') !== -1) {
     const rLibPath = `${rHome}/lib`;
     const rootLibraryPath = path.normalize(`${rHome}/../../lib`);
     rLdLibraryPath = `${rLibPath}:${rootLibraryPath}`;
