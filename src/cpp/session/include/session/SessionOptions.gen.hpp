@@ -224,7 +224,7 @@ protected:
       "Duration in millis before requests are converted to async - i.e. how fast will the server free up connections when it's busy")
       (kSessionHandleOfflineEnabled,
       value<bool>(&handleOfflineEnabled_)->default_value(true),
-      "Enables offline request handling. When the R session is busy, some requests are allowed to run")
+      "Enables offline request handling. When the R process is busy, some requests are allowed to run")
       (kSessionHandleOfflineTimeoutMs,
       value<int>(&handleOfflineTimeoutMs_)->default_value(200),
       "Duration in millis before requests that can be handled offline are processed by the offline handler thread.")
@@ -422,6 +422,9 @@ protected:
       ("copilot-auth-provider",
       value<std::string>(&copilotAuthProvider_)->default_value(""),
       "The URL to the authentication provider to be used by GitHub Copilot.")
+      ("copilot-ssl-certificates-file",
+      value<std::string>(&copilotSslCertificatesFile_)->default_value(""),
+      "The path to a file containing one or more trusted certificates in PEM format.")
       ("copilot-proxy-strict-ssl",
       value<bool>(&copilotProxyStrictSsl_)->default_value(true),
       "Should the GitHub Copilot agent perform SSL certificate validation when forming web requests?")
@@ -545,6 +548,7 @@ public:
    bool copilotEnabled() const { return copilotEnabled_; }
    std::string copilotProxyUrl() const { return copilotProxyUrl_; }
    std::string copilotAuthProvider() const { return copilotAuthProvider_; }
+   std::string copilotSslCertificatesFile() const { return copilotSslCertificatesFile_; }
    bool copilotProxyStrictSsl() const { return copilotProxyStrictSsl_; }
    core::FilePath copilotAgentHelper() const { return core::FilePath(copilotAgentHelper_); }
 
@@ -659,6 +663,7 @@ protected:
    bool copilotEnabled_;
    std::string copilotProxyUrl_;
    std::string copilotAuthProvider_;
+   std::string copilotSslCertificatesFile_;
    bool copilotProxyStrictSsl_;
    std::string copilotAgentHelper_;
    virtual bool allowOverlay() const { return false; };
