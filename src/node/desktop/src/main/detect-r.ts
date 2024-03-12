@@ -200,7 +200,8 @@ writeLines(sep = "\x1F", c(
   R.home("share"),
   paste(R.version$crt, collapse = ""),
   .Platform$r_arch,
-  Sys.getenv("${kLdLibraryPathVariable}")
+  Sys.getenv("${kLdLibraryPathVariable}"),
+  Sys.getenv("R_PLATFORM")
 ))`;
 
   logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
@@ -214,6 +215,7 @@ writeLines(sep = "\x1F", c(
   delete envCopy['R_RUNTIME'];
   delete envCopy['R_SHARE_DIR'];
   delete envCopy[kLdLibraryPathVariable];
+  delete envCopy['R_PLATFORM'];
 
   const [result, error] = expect(() => {
     return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
@@ -264,7 +266,16 @@ writeLines(sep = "\x1F", c(
   stdout = stdout.substring(index + 1);
 
   // unwrap query results
-  let [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath] = stdout.split('\x1F');
+  let [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath, rPlatform] = stdout.split('\x1F');
+
+  // if this appears to be a conda installation of R, manually set LD_LIBRARY_PATH appropriately
+  // https://github.com/rstudio/rstudio/issues/13184
+  if (rPlatform.indexOf('-conda-') !== -1) {
+    const rLibPath = `${rHome}/lib`;
+    const rootLibraryPath = path.normalize(`${rHome}/../../lib`);
+    rLdLibraryPath = `${rLibPath}:${rootLibraryPath}`;
+  }
+
   if (process.platform !== 'win32' && getenv(kLdLibraryPathVariable) != '') {
     logger().logDebug(`Pre-pending user-defined ${kLdLibraryPathVariable} to path set by R: ${rLdLibraryPath}`);
     rLdLibraryPath = getenv(kLdLibraryPathVariable) + ":" + rLdLibraryPath;
@@ -281,6 +292,7 @@ writeLines(sep = "\x1F", c(
       R_SHARE_DIR: rShareDir,
       R_RUNTIME: rRuntime,
       R_ARCH: rArch,
+      R_PLATFORM: rPlatform,
     },
     ldLibraryPath: rLdLibraryPath,
   });
