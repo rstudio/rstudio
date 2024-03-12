@@ -811,6 +811,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("packagesLoaded", function(pkgs)
 {
+   # exclude base packages
+   basePkgs <- rownames(installed.packages(lib.loc = .Library, priority = "base"))
+   pkgs <- setdiff(pkgs, basePkgs)
+   
    # first check loaded namespaces
    if (any(pkgs %in% loadedNamespaces()))
       return(TRUE)
