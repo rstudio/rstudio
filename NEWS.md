@@ -30,6 +30,7 @@
 - RStudio now supports generation of a Copilot diagnostic report from the Copilot preferences pane (#14358)
 - The RStudio debugger is now better at matching debugged code to source documents (#13925)
 - RStudio no longer includes spurious chunk markers from Copilot completion results (#13686)
+- Added new commands which toggle the maximized state of Console, Source, and Tab Group quadrants [Accessibility] (#7022)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)

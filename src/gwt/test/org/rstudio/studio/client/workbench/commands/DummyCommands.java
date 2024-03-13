@@ -2981,6 +2981,21 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand maximizeSource() {
+        return null;
+    }
+
+    @Override
+    public AppCommand maximizeTabSet1() {
+        return null;
+    }
+
+    @Override
+    public AppCommand maximizeTabSet2() {
+        return null;
+    }
+
+    @Override
     public AppCommand toggleEditorTokenInfo() {
         return null;
     }

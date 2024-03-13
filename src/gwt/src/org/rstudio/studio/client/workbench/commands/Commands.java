@@ -699,6 +699,9 @@ public abstract class
    public abstract AppCommand layoutConsoleOnRight();
    public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
+   public abstract AppCommand maximizeSource();
+   public abstract AppCommand maximizeTabSet1();
+   public abstract AppCommand maximizeTabSet2();
    public abstract AppCommand toggleEditorTokenInfo();
    public abstract AppCommand layoutZoomLeftColumn();
    public abstract AppCommand layoutZoomRightColumn();

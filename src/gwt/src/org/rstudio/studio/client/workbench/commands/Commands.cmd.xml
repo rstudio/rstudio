@@ -3801,7 +3801,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="editor"/>
 
    <cmd id="maximizeConsole"
-        menuLabel="Maximize Console"/>
+        label="Toggle Maximize Console Pane"/>
+
+   <cmd id="maximizeSource"
+        label="Toggle Maximize Source Pane"/>
+
+   <cmd id="maximizeTabSet1"
+        label="Toggle Maximize Tab Group One"/>
+
+   <cmd id="maximizeTabSet2"
+        label="Toggle Maximize Tab Group Two"/>
 
    <cmd id="debugBreakpoint"
         label="Toggle Breakpoint on Current Line"

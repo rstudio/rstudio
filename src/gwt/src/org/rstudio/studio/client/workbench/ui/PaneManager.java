@@ -1224,12 +1224,31 @@ public class PaneManager
    @Handler
    public void onMaximizeConsole()
    {
-      LogicalWindow consoleWindow = panesByName_.get(PaneManager.CONSOLE_PANE);
-      if (consoleWindow.getState() != WindowState.MAXIMIZE)
-      {
-         consoleWindow.onWindowStateChange(
-                        new WindowStateChangeEvent(WindowState.MAXIMIZE));
-      }
+      // acts as a toggle (maximize/restore)
+      getConsoleLogicalWindow().onWindowStateChange(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+   }
+
+   @Handler
+   public void onMaximizeSource()
+   {
+      // acts as a toggle (maximize/restore)
+      getSourceLogicalWindow().onWindowStateChange(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+   }
+
+   @Handler
+   public void onMaximizeTabSet1()
+   {
+      // acts as a toggle (maximize/restore)
+      LogicalWindow tabSet1 = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET1);
+      tabSet1.onWindowStateChange(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+   }
+
+   @Handler
+   public void onMaximizeTabSet2()
+   {
+      // acts as a toggle (maximize/restore)
+      LogicalWindow tabSet2 = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET2);
+      tabSet2.onWindowStateChange(new WindowStateChangeEvent(WindowState.MAXIMIZE));
    }
 
    private ArrayList<LogicalWindow> createPanes(PaneConfig config)
