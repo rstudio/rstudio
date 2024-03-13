@@ -3801,10 +3801,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="editor"/>
 
    <cmd id="maximizeConsole"
-        label="Toggle Maximize Console"/>
+        label="Toggle Maximize Console Pane"/>
 
    <cmd id="maximizeSource"
-        label="Toggle Maximize Source"/>
+        label="Toggle Maximize Source Pane"/>
 
    <cmd id="maximizeTabSet1"
         label="Toggle Maximize Tab Group One"/>

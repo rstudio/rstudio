@@ -3457,11 +3457,11 @@ public interface CmdConstants extends Constants {
     String toggleRainbowFencedDivsMenuLabel();
     
     // maximizeConsole
-    @DefaultStringValue("Toggle Maximize Console") // $NON-NLS-1$
+    @DefaultStringValue("Toggle Maximize Console Pane") // $NON-NLS-1$
     String maximizeConsoleLabel();
     
     // maximizeSource
-    @DefaultStringValue("Toggle Maximize Source") // $NON-NLS-1$
+    @DefaultStringValue("Toggle Maximize Source Pane") // $NON-NLS-1$
     String maximizeSourceLabel();
     
     // maximizeTabSet1
