@@ -77,6 +77,7 @@
 - Fixed an issue where code highlight in Sweave \Sexpr{} expressions was incorrectly handled (#14382)
 - Fixed an issue where the Edit button in the Viewer pane could fail for Quarto documents (#14325)
 - Fixed an issue where terminal history would show internal commands (#9833)
+- Fixed an issue where RStudio could fail to launch with Conda builds of R (#13184)
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
