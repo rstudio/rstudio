@@ -200,10 +200,10 @@ public class BuildPresenter extends BasePresenter
             view_.buildCompleted();
             if (event.getRestartR())
             {
+               String afterRestartCommand = event.getAfterRestartCommand();
                SuspendOptions options = userPrefs_.saveAndReloadWorkspaceOnBuild().getValue()
-                     ? SuspendOptions.createSaveAll(false)
-                     : SuspendOptions.createSaveMinimal(false);
-               
+                     ? SuspendOptions.createSaveAll(false, afterRestartCommand)
+                     : SuspendOptions.createSaveMinimal(false, afterRestartCommand);
                eventBus_.fireEvent(new SuspendAndRestartEvent(options));
             }
          }
