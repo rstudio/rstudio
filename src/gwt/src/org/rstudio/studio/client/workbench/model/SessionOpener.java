@@ -22,6 +22,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.ApplicationAction;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ActiveSession;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -31,13 +32,13 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
@@ -54,6 +55,31 @@ public class SessionOpener
       pDisplay_ = pGlobalDisplay;
       pServer_ = pServer;
       pEventBus_ = pEventBus;
+      
+      sessionRestartFailedTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            Debug.logWarning("Unable to establish connection with the R session.");
+         }
+      };
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            pEventBus_.get().addHandler(DeferredInitCompletedEvent.TYPE, new DeferredInitCompletedEvent.Handler()
+            {
+               @Override
+               public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
+               {
+                  executePendingCallbacks();
+               }
+            });
+         }
+      });
    }
 
    /**
@@ -163,10 +189,10 @@ public class SessionOpener
          @Override
          protected void onSuccess()
          {
-            waitForSessionJobExit(
-                  () -> waitForSessionRestart(onCompleted),
-                  onFailed);
+            sessionRestartFailedTimer_.schedule(60000);
+            onSessionRestarted_ = onCompleted;
          }
+         
          @Override
          protected void onFailure()
          {
@@ -182,85 +208,19 @@ public class SessionOpener
    {
    }
    
-   protected void waitForSessionJobExit(Command onClosed, Command onFailure)
+   private void executePendingCallbacks()
    {
-      // for regular sessions, no job to wait for
-      onClosed.execute();
-   }
-   
-   protected void waitForSessionRestart(Command onCompleted)
-   {
-      sendPing(200, 25, onCompleted);
-   }
-   
-   private void sendPing(int delayMs,
-                         final int maxRetries,
-                         final Command onCompleted)
-   {
-      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      sessionRestartFailedTimer_.cancel();
+      
+      if (onSessionRestarted_ != null)
       {
-         private int retries_ = 0;
-         private boolean pingDelivered_ = false;
-         private boolean pingInFlight_ = false;
-         
-         @Override
-         public boolean execute()
-         {
-            // if we've already delivered the ping, return false
-            if (pingDelivered_)
-            {
-               return false;
-            }
-            
-            // if we hit our retry count, give up
-            if (retries_++ > maxRetries)
-            {
-               Debug.logWarning("Error connecting with session.");
-               return false;
-            }
-            
-            if (!pingInFlight_)
-            {
-               pingInFlight_ = true;
-               pServer_.get().ping(new VoidServerRequestCallback()
-               {
-                  @Override
-                  protected void onSuccess()
-                  {
-                     pingInFlight_ = false;
-                     
-                     // if the ping was already handled separately, discard this
-                     if (pingDelivered_)
-                        return;
-                     
-                     pingDelivered_ = true;
-                     pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
-                     
-                     if (onCompleted != null)
-                        onCompleted.execute();
-                  }
-                  
-                  @Override
-                  protected void onFailure()
-                  {
-                     pingInFlight_ = false;
-                     
-                     // if the ping was already handled separately, discard this
-                     if (pingDelivered_)
-                        return;
-                     
-                     if (onCompleted != null)
-                        onCompleted.execute();
-                  }
-               });
-            }
-            
-            // keep trying until the ping is delivered
-            return true;
-         }
-         
-      }, delayMs);
+         onSessionRestarted_.execute();
+         onSessionRestarted_ = null;
+      }
    }
+   
+   Command onSessionRestarted_;
+   Timer sessionRestartFailedTimer_;
    
    // injected
    protected final Provider<Application> pApplication_;

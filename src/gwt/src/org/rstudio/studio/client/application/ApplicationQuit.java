@@ -522,7 +522,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             globalDisplay_.getProgressIndicator(constants_.progressErrorCaption()));
       progress.onTimedProgress(constants_.restartingRMessage(), 1000);
       
-      final Operation onRestartComplete = () -> {
+      final Operation onRestartComplete = () ->
+      {
          suspendingAndRestarting_ = false;
          progress.onCompleted();
          eventBus_.fireEvent(new RestartStatusEvent(RestartStatusEvent.RESTART_COMPLETED));
