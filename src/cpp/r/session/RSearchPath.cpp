@@ -340,6 +340,70 @@ Error saveGlobalEnvironment(const FilePath& statePath)
    return saveGlobalEnvironmentToFile(environmentFile);
 }
 
+void repairSearchPath()
+{
+   // find the 'tools:rstudio' environment on the search path,
+   // save a reference to it, and remove it from the search list
+   //
+   // NOTE: we cannot use 'detach()' and 'attach()' to handle this, as attach
+   // will actually create and attach a _copy_ of the environment, which causes
+   // trouble if we need to add or modify the 'tools:rstudio' environment in
+   // the future
+   SEXP toolsSEXP = R_NilValue;
+   
+   SEXP thisSEXP = R_GlobalEnv;
+   SEXP prevSEXP = R_NilValue;
+   while (thisSEXP != R_BaseEnv)
+   {
+      prevSEXP = thisSEXP;
+      thisSEXP = ENCLOS(thisSEXP);
+      
+      if (!R_IsPackageEnv(thisSEXP))
+         continue;
+      
+      SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
+      if (TYPEOF(nameSEXP) != STRSXP)
+         continue;
+      
+      std::string name = CHAR(STRING_ELT(nameSEXP, 0));
+      if (name != "tools:rstudio")
+         continue;
+      
+      toolsSEXP = thisSEXP;
+      
+      SET_ENCLOS(prevSEXP, ENCLOS(thisSEXP));
+   }
+   
+   // iterate through the search list once more and insert 'tools:rstudio' back
+   auto basePackages = { "methods", "grDevices", "graphics", "stats", "utils" };
+   
+   thisSEXP = R_GlobalEnv;
+   prevSEXP = R_NilValue;
+   while (thisSEXP != R_BaseEnv)
+   {
+      prevSEXP = thisSEXP;
+      thisSEXP = ENCLOS(thisSEXP);
+      
+      if (!R_IsPackageEnv(thisSEXP))
+         continue;
+      
+      SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
+      if (TYPEOF(nameSEXP) != STRSXP)
+         continue;
+      
+      std::string name = CHAR(STRING_ELT(nameSEXP, 0));
+      for (auto&& basePackage : basePackages)
+      {
+         if (name == basePackage)
+         {
+            SET_ENCLOS(prevSEXP, toolsSEXP);
+            SET_ENCLOS(toolsSEXP, thisSEXP);
+            break;
+         }
+      }
+   }
+}
+
 Error restoreSearchPath(
       const FilePath& statePath,
       const std::vector<std::string>& currentSearchPathList)
@@ -407,9 +471,7 @@ Error restoreSearchPath(
    }
    
    // ensure tools:rstudio is at front of search list
-   error = r::exec::RFunction(".rs.repairSearchPath").call();
-   if (error)
-      return error;
+   repairSearchPath();
    
    return Success();
 }
