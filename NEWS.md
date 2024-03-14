@@ -79,6 +79,7 @@
 - Fixed an issue where the Edit button in the Viewer pane could fail for Quarto documents (#14325)
 - Fixed an issue where terminal history would show internal commands (#9833)
 - Fixed an issue where RStudio could fail to launch with Conda builds of R (#13184)
+- Fixed an issue where hovering over S4 class names in the Help pane could produce an R error (#13344)
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
