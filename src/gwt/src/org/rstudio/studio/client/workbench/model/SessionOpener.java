@@ -199,7 +199,6 @@ public class SessionOpener
    {
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
-         private long startTime_ = System.currentTimeMillis();
          private int retries_ = 0;
          private boolean pingDelivered_ = false;
          private boolean pingInFlight_ = false;
@@ -218,15 +217,6 @@ public class SessionOpener
             {
                Debug.logWarning("Error connecting with session.");
                return false;
-            }
-            
-            // if we have a ping in flight, but we don't receive a response
-            // after a few seconds, try again
-            long currentTime = System.currentTimeMillis();
-            if (pingInFlight_ && currentTime - startTime_ > 1000)
-            {
-               startTime_ = currentTime;
-               pingInFlight_ = false;
             }
             
             if (!pingInFlight_)
