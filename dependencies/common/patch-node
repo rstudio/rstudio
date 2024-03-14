@@ -27,7 +27,6 @@ fi
 if [ "$NODE_VERSION" == "18.19.1" ]; then
 	section "Applying patches to node ${NODE_VERSION}"
 
-	# remove npm from the node installation; it is not needed for our purposes and
-	# currently has a component with known security vulnerabilities
+	# remove npm from the node installation
 	rm -rf "${NODE_SUBDIR}/lib/node_modules/npm"
 fi
