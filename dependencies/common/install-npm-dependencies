@@ -38,10 +38,19 @@ function install-node() {
 	    export NODE_FOLDER="${NODE_VERSION}-arm64"
 	    export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
 	fi
-	./install-node
+
+	if [ "${2}" == "applypatches" ]; then
+		./install-node reinstall
+		./patch-node
+	else
+		./install-node
+	fi
 }
 
-install-node ${RSTUDIO_INSTALLED_NODE_VERSION}
+# the version of node.js that gets installed with the product
+install-node ${RSTUDIO_INSTALLED_NODE_VERSION} applypatches
+
+# the version we use for building product components
 install-node ${RSTUDIO_NODE_VERSION}
 
 # install yarn
