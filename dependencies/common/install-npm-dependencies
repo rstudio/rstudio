@@ -39,7 +39,7 @@ function install-node() {
 	    export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
 	fi
 
-	if [ "${2}" == "applypatches" ]; then
+	if [ "${2}" == "apply-patches" ]; then
 		./install-node reinstall
 		./patch-node
 	else
@@ -48,7 +48,7 @@ function install-node() {
 }
 
 # the version of node.js that gets installed with the product
-install-node ${RSTUDIO_INSTALLED_NODE_VERSION} applypatches
+install-node ${RSTUDIO_INSTALLED_NODE_VERSION} apply-patches
 
 # the version we use for building product components
 install-node ${RSTUDIO_NODE_VERSION}
