@@ -29,4 +29,5 @@ if [ "$NODE_VERSION" == "18.19.1" ]; then
 
 	# remove npm from the node installation
 	rm -rf "${NODE_SUBDIR}/lib/node_modules/npm"
+	rm "${NODE_SUBDIR}/bin/npm"
 fi
