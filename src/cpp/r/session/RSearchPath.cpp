@@ -97,7 +97,7 @@ Error restoreGlobalEnvironment(const core::FilePath& environmentFile)
    if (!environmentFile.exists())
       return Success();
 
-   return RFunction("load", environmentFile.getAbsolutePath()).call();
+   return RFunction("base:::load", environmentFile.getAbsolutePath()).call();
 }
 
 bool isPackage(const std::string& elementName, std::string* pPackageName)
@@ -163,8 +163,8 @@ Error detachSearchPathElementsNotInList(
       std::string detachItem = *it;
       
       // don't allow detach of core packages
-      if ( detachItem == "tools:rstudio" ||
-           detachItem == "package:utils" )
+      if (detachItem == "tools:rstudio" ||
+          detachItem == "package:utils" )
       {
          continue;
       }
@@ -368,7 +368,7 @@ Error restoreSearchPath(const FilePath& statePath)
 
    // get the current search path
    std::vector<std::string> currentSearchPathList;
-   error = r::exec::RFunction("search").call(&currentSearchPathList);
+   error = r::exec::RFunction("base:::search").call(&currentSearchPathList);
    if (error)
       return error;
    
@@ -390,9 +390,9 @@ Error restoreSearchPath(const FilePath& statePath)
       
       // if it is a package then load it if it is not already loaded
       std::string packageName;
-      if ( isPackage(pathElement, &packageName) )
+      if (isPackage(pathElement, &packageName))
       {
-         if ( !packageIsLoaded(packageName, currentSearchPathList) )
+         if (!packageIsLoaded(packageName, currentSearchPathList))
             loadPackage(packageName, packagePaths[packageName]);
       }
       
