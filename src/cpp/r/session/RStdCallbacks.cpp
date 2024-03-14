@@ -81,6 +81,9 @@ InternalCallbacks s_internalCallbacks;
 // temporarily suppress output
 int s_suppressOutput = 0;
 
+// force output
+int s_forceOutput = 0;
+
 class JumpToTopException
 {
 };
@@ -435,36 +438,45 @@ void RShowMessage(const char* msg)
    CATCH_UNEXPECTED_EXCEPTION
 }
 
+namespace {
+
+bool isOutputSuppressed()
+{
+   return s_forceOutput == 0 && s_suppressOutput != 0;
+}
+
+} // end anonymous namespace
+
 void RWriteConsoleEx(const char *buf, int buflen, int otype)
 {
    try
    {
-      if (!s_suppressOutput)
+      if (isOutputSuppressed())
+         return;
+      
+      bool isInterruptOutput =
+            r::exec::getWasInterrupted() &&
+            otype == 1 &&
+            buflen == 1 &&
+            buf[0] == '\n';
+
+      if (isInterruptOutput)
       {
-         bool isInterruptOutput =
-               r::exec::getWasInterrupted() &&
-               otype == 1 &&
-               buflen == 1 &&
-               buf[0] == '\n';
-         
-         if (isInterruptOutput)
-         {
-            r::exec::setWasInterrupted(false);
-            return;
-         }
-         
-         // get output
-         std::string output = std::string(buf, buflen);
-         output = util::rconsole2utf8(output);
-         
-         // add to console actions
-         int type = otype == 1 ? kConsoleActionOutputError :
-                                 kConsoleActionOutput;
-         consoleActions().add(type, output);
-         
-         // write
-         s_callbacks.consoleWrite(output, otype);
+         r::exec::setWasInterrupted(false);
+         return;
       }
+
+      // get output
+      std::string output = std::string(buf, buflen);
+      output = util::rconsole2utf8(output);
+
+      // add to console actions
+      int type = otype == 1 ? kConsoleActionOutputError :
+                              kConsoleActionOutput;
+      consoleActions().add(type, output);
+
+      // write
+      s_callbacks.consoleWrite(output, otype);
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
@@ -794,6 +806,16 @@ SuppressOutputInScope::SuppressOutputInScope()
 SuppressOutputInScope::~SuppressOutputInScope()
 {
    s_suppressOutput -= 1;
+}
+
+ShowOutputInScope::ShowOutputInScope()
+{
+   s_forceOutput += 1;
+}
+
+ShowOutputInScope::~ShowOutputInScope()
+{
+   s_forceOutput -= 1;
 }
 
 } // namespace utils

@@ -233,12 +233,11 @@ Error executeAfterRestartCommand(const FilePath& afterRestartFile)
 {
    std::string command;
    Error error = core::readStringFromFile(afterRestartFile, &command);
-   if (error)
+   if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
    
    if (command.empty())
       return Success();
-   
    
    s_callbacks.consoleWriteInput(core::string_utils::trimWhitespace(command));
    return r::exec::executeString(command);
