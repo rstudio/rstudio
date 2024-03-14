@@ -470,7 +470,12 @@ Error restoreSearchPath(
       }
    }
    
-   // ensure tools:rstudio is at front of search list
+   // ensure 'tools:rstudio' is placed appropriately in the search list
+   // we want to make sure all of the 'base' R packages are visible to
+   // 'tools:rstudio', but we also need to make sure packages attached
+   // by the user are _not_ visible -- so we need to make sure that
+   // the tools environment is attached after any user-defined packages
+   // (or other attached environments), but before any base R packages
    repairSearchPath();
    
    return Success();
