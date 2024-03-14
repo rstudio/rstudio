@@ -340,6 +340,20 @@ Error saveGlobalEnvironment(const FilePath& statePath)
    return saveGlobalEnvironmentToFile(environmentFile);
 }
 
+bool isBasePackage(const std::string& name)
+{
+   static const auto basePackages = {
+      "package:methods",
+      "package:grDevices",
+      "package:graphics",
+      "package:stats",
+      "package:utils",
+   };
+   
+   auto index = std::find(basePackages.begin(), basePackages.end(), name);
+   return index != basePackages.end();
+}
+
 void repairSearchPath()
 {
    // find the 'tools:rstudio' environment on the search path,
@@ -358,9 +372,6 @@ void repairSearchPath()
       prevSEXP = thisSEXP;
       thisSEXP = ENCLOS(thisSEXP);
       
-      if (!R_IsPackageEnv(thisSEXP))
-         continue;
-      
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
       if (TYPEOF(nameSEXP) != STRSXP)
          continue;
@@ -370,12 +381,8 @@ void repairSearchPath()
          continue;
       
       toolsSEXP = thisSEXP;
-      
       SET_ENCLOS(prevSEXP, ENCLOS(thisSEXP));
    }
-   
-   // iterate through the search list once more and insert 'tools:rstudio' back
-   auto basePackages = { "methods", "grDevices", "graphics", "stats", "utils" };
    
    thisSEXP = R_GlobalEnv;
    prevSEXP = R_NilValue;
@@ -384,22 +391,16 @@ void repairSearchPath()
       prevSEXP = thisSEXP;
       thisSEXP = ENCLOS(thisSEXP);
       
-      if (!R_IsPackageEnv(thisSEXP))
-         continue;
-      
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
       if (TYPEOF(nameSEXP) != STRSXP)
          continue;
       
       std::string name = CHAR(STRING_ELT(nameSEXP, 0));
-      for (auto&& basePackage : basePackages)
+      if (isBasePackage(name))
       {
-         if (name == basePackage)
-         {
-            SET_ENCLOS(prevSEXP, toolsSEXP);
-            SET_ENCLOS(toolsSEXP, thisSEXP);
-            break;
-         }
+         SET_ENCLOS(prevSEXP, toolsSEXP);
+         SET_ENCLOS(toolsSEXP, thisSEXP);
+         return;
       }
    }
 }
