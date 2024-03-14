@@ -207,8 +207,7 @@ public class SessionOpener
          @Override
          public boolean execute()
          {
-            // if we've already delivered the ping or our retry count
-            // is exhausted then return false
+            // if we've already delivered the ping, return false
             if (pingDelivered_)
             {
                return false;
@@ -224,7 +223,7 @@ public class SessionOpener
             // if we have a ping in flight, but we don't receive a response
             // after a few seconds, try again
             long currentTime = System.currentTimeMillis();
-            if (pingInFlight_ && currentTime - startTime_ > 5000)
+            if (pingInFlight_ && currentTime - startTime_ > 1000)
             {
                startTime_ = currentTime;
                pingInFlight_ = false;
@@ -239,11 +238,13 @@ public class SessionOpener
                   protected void onSuccess()
                   {
                      pingInFlight_ = false;
-                     if (!pingDelivered_)
-                     {
-                        pingDelivered_ = true;
-                        pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
-                     }
+                     
+                     // if the ping was already handled separately, discard this
+                     if (pingDelivered_)
+                        return;
+                     
+                     pingDelivered_ = true;
+                     pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
                      
                      if (onCompleted != null)
                         onCompleted.execute();
@@ -253,6 +254,10 @@ public class SessionOpener
                   protected void onFailure()
                   {
                      pingInFlight_ = false;
+                     
+                     // if the ping was already handled separately, discard this
+                     if (pingDelivered_)
+                        return;
                      
                      if (onCompleted != null)
                         onCompleted.execute();

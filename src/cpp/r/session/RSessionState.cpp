@@ -233,12 +233,11 @@ Error executeAfterRestartCommand(const FilePath& afterRestartFile)
 {
    std::string command;
    Error error = core::readStringFromFile(afterRestartFile, &command);
-   if (error)
+   if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
    
    if (command.empty())
       return Success();
-   
    
    s_callbacks.consoleWriteInput(core::string_utils::trimWhitespace(command));
    return r::exec::executeString(command);
@@ -593,6 +592,14 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
 {
    Error error;
    
+   // get current search path list -- need to do this before executing
+   // the after restart command as that might load a package and modify
+   // the search list
+   std::vector<std::string> currentSearchPathList;
+   error = r::exec::RFunction("base:::search").call(&currentSearchPathList);
+   if (error)
+      return error;
+      
    // execute after restart command
    error = executeAfterRestartCommand(statePath.completePath(kAfterRestartCommand));
    if (error)
@@ -600,9 +607,9 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    
    // suppress other outputs
    utils::SuppressOutputInScope suppressOutput;
-      
-   // search path
-   error = search_path::restore(statePath, s_isCompatibleSessionState);
+   
+   // restore search path
+   error = search_path::restore(statePath, currentSearchPathList, s_isCompatibleSessionState);
    if (error)
       return error;
    

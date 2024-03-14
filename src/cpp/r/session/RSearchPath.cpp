@@ -97,7 +97,7 @@ Error restoreGlobalEnvironment(const core::FilePath& environmentFile)
    if (!environmentFile.exists())
       return Success();
 
-   return RFunction("load", environmentFile.getAbsolutePath()).call();
+   return RFunction("base:::load", environmentFile.getAbsolutePath()).call();
 }
 
 bool isPackage(const std::string& elementName, std::string* pPackageName)
@@ -163,8 +163,8 @@ Error detachSearchPathElementsNotInList(
       std::string detachItem = *it;
       
       // don't allow detach of core packages
-      if ( detachItem == "tools:rstudio" ||
-           detachItem == "package:utils" )
+      if (detachItem == "tools:rstudio" ||
+          detachItem == "package:utils" )
       {
          continue;
       }
@@ -340,7 +340,74 @@ Error saveGlobalEnvironment(const FilePath& statePath)
    return saveGlobalEnvironmentToFile(environmentFile);
 }
 
-Error restoreSearchPath(const FilePath& statePath)
+bool isBasePackage(const std::string& name)
+{
+   static const auto basePackages = {
+      "package:methods",
+      "package:grDevices",
+      "package:graphics",
+      "package:stats",
+      "package:utils",
+   };
+   
+   auto index = std::find(basePackages.begin(), basePackages.end(), name);
+   return index != basePackages.end();
+}
+
+void repairSearchPath()
+{
+   // find the 'tools:rstudio' environment on the search path,
+   // save a reference to it, and remove it from the search list
+   //
+   // NOTE: we cannot use 'detach()' and 'attach()' to handle this, as attach
+   // will actually create and attach a _copy_ of the environment, which causes
+   // trouble if we need to add or modify the 'tools:rstudio' environment in
+   // the future
+   SEXP toolsSEXP = R_NilValue;
+   
+   SEXP thisSEXP = R_GlobalEnv;
+   SEXP prevSEXP = R_NilValue;
+   while (thisSEXP != R_BaseEnv)
+   {
+      prevSEXP = thisSEXP;
+      thisSEXP = ENCLOS(thisSEXP);
+      
+      SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
+      if (TYPEOF(nameSEXP) != STRSXP)
+         continue;
+      
+      std::string name = CHAR(STRING_ELT(nameSEXP, 0));
+      if (name != "tools:rstudio")
+         continue;
+      
+      toolsSEXP = thisSEXP;
+      SET_ENCLOS(prevSEXP, ENCLOS(thisSEXP));
+   }
+   
+   thisSEXP = R_GlobalEnv;
+   prevSEXP = R_NilValue;
+   while (thisSEXP != R_BaseEnv)
+   {
+      prevSEXP = thisSEXP;
+      thisSEXP = ENCLOS(thisSEXP);
+      
+      SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
+      if (TYPEOF(nameSEXP) != STRSXP)
+         continue;
+      
+      std::string name = CHAR(STRING_ELT(nameSEXP, 0));
+      if (isBasePackage(name))
+      {
+         SET_ENCLOS(prevSEXP, toolsSEXP);
+         SET_ENCLOS(toolsSEXP, thisSEXP);
+         return;
+      }
+   }
+}
+
+Error restoreSearchPath(
+      const FilePath& statePath,
+      const std::vector<std::string>& currentSearchPathList)
 {
    Error error;
    
@@ -357,7 +424,7 @@ Error restoreSearchPath(const FilePath& statePath)
       return error;
 
    // read the package paths list
-   std::map<std::string,std::string> packagePaths;
+   std::map<std::string, std::string> packagePaths;
    FilePath packagePathsFile = searchPathDir.completePath(kPackagePaths);
    if (packagePathsFile.exists())
    {
@@ -366,12 +433,6 @@ Error restoreSearchPath(const FilePath& statePath)
          return error;
    }
 
-   // get the current search path
-   std::vector<std::string> currentSearchPathList;
-   error = r::exec::RFunction("search").call(&currentSearchPathList);
-   if (error)
-      return error;
-   
    // detach any items in the current list which aren't in the saved list
    error = detachSearchPathElementsNotInList(savedSearchPathList,
                                              currentSearchPathList);
@@ -390,9 +451,9 @@ Error restoreSearchPath(const FilePath& statePath)
       
       // if it is a package then load it if it is not already loaded
       std::string packageName;
-      if ( isPackage(pathElement, &packageName) )
+      if (isPackage(pathElement, &packageName))
       {
-         if ( !packageIsLoaded(packageName, currentSearchPathList) )
+         if (!packageIsLoaded(packageName, currentSearchPathList))
             loadPackage(packageName, packagePaths[packageName]);
       }
       
@@ -410,10 +471,21 @@ Error restoreSearchPath(const FilePath& statePath)
       }
    }
    
+   // ensure 'tools:rstudio' is placed appropriately in the search list
+   // we want to make sure all of the 'base' R packages are visible to
+   // 'tools:rstudio', but we also need to make sure packages attached
+   // by the user are _not_ visible -- so we need to make sure that
+   // the tools environment is attached after any user-defined packages
+   // (or other attached environments), but before any base R packages
+   repairSearchPath();
+   
    return Success();
 }
 
-Error restore(const FilePath& statePath, bool isCompatibleSessionState)
+Error restore(
+      const FilePath& statePath,
+      const std::vector<std::string>& currentSearchPathList,
+      bool isCompatibleSessionState)
 {
    // restore global environment unless suppressed
    if (utils::restoreEnvironmentOnResume())
@@ -429,7 +501,7 @@ Error restore(const FilePath& statePath, bool isCompatibleSessionState)
    // R session)
    if (isCompatibleSessionState)
    {
-      Error error = restoreSearchPath(statePath);
+      Error error = restoreSearchPath(statePath, currentSearchPathList);
       if (error)
          return error;
    }
