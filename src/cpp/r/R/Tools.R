@@ -1406,6 +1406,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    utils::browseURL(url)
 })
 
+.rs.addFunction("repairSearchPath", function()
+{
+   toolsEnv <- .rs.toolsEnv()
+   if ("tools:rstudio" %in% search())
+      detach("tools:rstudio")
+   
+   attach(toolsEnv, name = "tools:rstudio")
+})
+
 .rs.addFunction("initTools", function()
 {
    ostype <- .Platform$OS.type

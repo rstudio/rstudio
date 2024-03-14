@@ -593,6 +593,14 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
 {
    Error error;
    
+   // get current search path list -- need to do this before executing
+   // the after restart command as that might load a package and modify
+   // the search list
+   std::vector<std::string> currentSearchPathList;
+   error = r::exec::RFunction("base:::search").call(&currentSearchPathList);
+   if (error)
+      return error;
+      
    // execute after restart command
    error = executeAfterRestartCommand(statePath.completePath(kAfterRestartCommand));
    if (error)
@@ -600,9 +608,9 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    
    // suppress other outputs
    utils::SuppressOutputInScope suppressOutput;
-      
-   // search path
-   error = search_path::restore(statePath, s_isCompatibleSessionState);
+   
+   // restore search path
+   error = search_path::restore(statePath, currentSearchPathList, s_isCompatibleSessionState);
    if (error)
       return error;
    

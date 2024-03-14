@@ -340,7 +340,9 @@ Error saveGlobalEnvironment(const FilePath& statePath)
    return saveGlobalEnvironmentToFile(environmentFile);
 }
 
-Error restoreSearchPath(const FilePath& statePath)
+Error restoreSearchPath(
+      const FilePath& statePath,
+      const std::vector<std::string>& currentSearchPathList)
 {
    Error error;
    
@@ -357,7 +359,7 @@ Error restoreSearchPath(const FilePath& statePath)
       return error;
 
    // read the package paths list
-   std::map<std::string,std::string> packagePaths;
+   std::map<std::string, std::string> packagePaths;
    FilePath packagePathsFile = searchPathDir.completePath(kPackagePaths);
    if (packagePathsFile.exists())
    {
@@ -366,12 +368,6 @@ Error restoreSearchPath(const FilePath& statePath)
          return error;
    }
 
-   // get the current search path
-   std::vector<std::string> currentSearchPathList;
-   error = r::exec::RFunction("base:::search").call(&currentSearchPathList);
-   if (error)
-      return error;
-   
    // detach any items in the current list which aren't in the saved list
    error = detachSearchPathElementsNotInList(savedSearchPathList,
                                              currentSearchPathList);
@@ -410,10 +406,18 @@ Error restoreSearchPath(const FilePath& statePath)
       }
    }
    
+   // ensure tools:rstudio is at front of search list
+   error = r::exec::RFunction(".rs.repairSearchPath").call();
+   if (error)
+      return error;
+   
    return Success();
 }
 
-Error restore(const FilePath& statePath, bool isCompatibleSessionState)
+Error restore(
+      const FilePath& statePath,
+      const std::vector<std::string>& currentSearchPathList,
+      bool isCompatibleSessionState)
 {
    // restore global environment unless suppressed
    if (utils::restoreEnvironmentOnResume())
@@ -429,7 +433,7 @@ Error restore(const FilePath& statePath, bool isCompatibleSessionState)
    // R session)
    if (isCompatibleSessionState)
    {
-      Error error = restoreSearchPath(statePath);
+      Error error = restoreSearchPath(statePath, currentSearchPathList);
       if (error)
          return error;
    }
