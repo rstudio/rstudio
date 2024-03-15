@@ -859,8 +859,11 @@ options(help_type = "html")
          )
       }
       
-      sig <- .rs.getSignature(object)
-      sig <- gsub('^function ', topic, sig)
+      if (is.function(object))
+      {
+         sig <- .rs.getSignature(object)
+         sig <- gsub('^function ', topic, sig)
+      }
    }
    
    list(
