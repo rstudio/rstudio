@@ -1676,6 +1676,10 @@ void checkVariableAssignmentInArgumentList(RTokenCursor cursor,
    if (!cursor.isType(RToken::ID))
       return;
    
+   std::string identifier = cursor.contentAsUtf8();
+   if (identifier == ".")
+      return;
+   
    if (!cursor.moveToNextSignificantToken())
       return;
    
