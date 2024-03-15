@@ -359,7 +359,16 @@ int RReadConsole(const char *pmt,
             std::string::size_type maxLen = buflen - 2; // for \n\0
             rInput = string_utils::utf8ToSystem(rInput, true);
             if (rInput.length() > maxLen)
+            {
+               // print a loud warning when we're about to truncate input
+               std::cerr << std::endl;
+               std::cerr << "WARNING: Truncating console input of length " << rInput.length() << "." << std::endl;
+               std::cerr << "The maximum number of characters accepted by R in a single line of input is " << buflen - 2 << "." << std::endl;
+               std::cerr << std::endl;
+               
                rInput.resize(maxLen);
+            }
+            
             std::string::size_type inputLen = rInput.length();
             
             // add to console actions and history (if requested). note that

@@ -3,6 +3,7 @@
 ### New
 
 #### RStudio
+
 - RStudio now requires R 3.6.0 or newer. (#14210)
 - RStudio's auto-completion system now supports ggplot2 aesthetic names and data columns (#8444)
 - RStudio's auto-completion system now supports the display of the "label" attribute (#14242)
@@ -31,6 +32,7 @@
 - The RStudio debugger is now better at matching debugged code to source documents (#13925)
 - RStudio no longer includes spurious chunk markers from Copilot completion results (#13686)
 - Added new commands which toggle the maximized state of Console, Source, and Tab Group quadrants [Accessibility] (#7022)
+- RStudio now prints a warning if an overly-long line of console input is truncated when sending to R (#14420)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
@@ -38,6 +40,7 @@
 
 ### Fixed
 #### RStudio
+
 - Fixed an issue where Stage chunk and Stage line in the Review Changes UI failed in some scenarios (#5476)
 - Fixed shortcut for inserting an assignment operator to work on non-US English keyboards (#12457)
 - Fixed an issue where the menubar would show on secondary windows if Alt key was pressed (#13973)
