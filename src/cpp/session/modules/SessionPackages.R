@@ -1106,7 +1106,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          #
          # You can learn more about package authoring with RStudio at:
          #
-         #   http://r-pkgs.had.co.nz/
+         #   https://r-pkgs.org
          #
          # Some useful keyboard shortcuts for package authoring:
          #
@@ -1159,12 +1159,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
             //
             // Learn more about how to use Rcpp at:
             //
-            //   http://www.rcpp.org/
-            //   http://adv-r.had.co.nz/Rcpp.html
+            //   https://www.rcpp.org/
+            //   https://adv-r.hadley.nz/rcpp.html
             //
             // and browse examples of code using Rcpp at:
             // 
-            //   http://gallery.rcpp.org/
+            //   https://gallery.rcpp.org/
             //
 
             // [[Rcpp::export]]
@@ -1211,7 +1211,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          sourceFileExtensions,
          "R" = c("r", "q", "s"),
          "src" = c("c", "cc", "cpp", "h", "hpp"),
-         "vignettes" = c("rmd", "rnw"),
+         "vignettes" = c("rmd", "rnw", "qmd"),
          "man" = "rd",
          "data" = c("rda", "rdata"),
          default = ""
