@@ -210,8 +210,7 @@ if not exist libclang\%LIBCLANG_VERSION% (
   del %LIBCLANG_FILE%
 )
 
-call :install-node %RSTUDIO_NODE_VERSION% yarn
-call :install-node %RSTUDIO_INSTALLED_NODE_VERSION%
+call install-npm-dependencies.cmd
 
 if not defined JENKINS_URL (
   if exist C:\Windows\py.exe (
@@ -239,33 +238,3 @@ call install-crashpad.cmd
 call install-soci.cmd
 
 endlocal
-goto :EOF
-
-:: install node and optionally install yarn
-:install-node :: version [yarn]
-
-set NODE_VERSION=%~1
-set NODE_ROOT=node
-set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
-set NODE_BASE_URL=%BASEURL%node/v%NODE_VERSION%/
-set NODE_ARCHIVE_DIR=node-v%NODE_VERSION%-win-x64
-set NODE_ARCHIVE_FILE=%NODE_ARCHIVE_DIR%.zip
-
-if not exist %NODE_SUBDIR% (
-  wget %WGET_ARGS% %NODE_BASE_URL%%NODE_ARCHIVE_FILE%
-  echo Unzipping node %NODE_VERSION%
-  mkdir %NODE_ROOT%
-  unzip %UNZIP_ARGS% %NODE_ARCHIVE_FILE%
-  move %NODE_ARCHIVE_DIR% %NODE_SUBDIR%
-  del %NODE_ARCHIVE_FILE%
-)
-
-if "%~2"=="yarn" (
-  set YARN_DIR=%NODE_SUBDIR%\node_modules\yarn\bin
-  if not exist %YARN_DIR%\yarn (
-    echo "Installing yarn"
-    call %NODE_SUBDIR%\npm install --global yarn
-  )
-)
-
-goto :EOF
