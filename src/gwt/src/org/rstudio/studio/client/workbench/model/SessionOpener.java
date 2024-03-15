@@ -56,6 +56,9 @@ public class SessionOpener
       pServer_ = pServer;
       pEventBus_ = pEventBus;
       
+      // This timer gets started once we attempt to restart the R session, and
+      // should be cancelled once we receive a signal that we have successfully
+      // connected with the newly-launched session.
       sessionRestartFailedTimer_ = new Timer()
       {
          @Override
@@ -65,6 +68,8 @@ public class SessionOpener
          }
       };
       
+      // Listen for deferred initialization events; R sessions fire these after
+      // a new session has been fully initialized.
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
