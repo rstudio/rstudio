@@ -357,13 +357,16 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
 void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 {
    module_context::consoleWriteOutput("\nRestarting R session...\n\n");
-
    rstudio::r::session::suspendForRestart(options);
 }
 
 Error suspendForRestart(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
+   // stop the offline service thread -- we don't want to service any
+   // more incoming requests while preparing to restart
+   offlineService().stop();
+   
    // when launcher sessions restart, they need to set a special exit code
    // to ensure that the rsession-run script restarts the rsession process
    // instead of having to submit an entirely new launcher session
@@ -541,7 +544,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
-      (bind(registerRpcMethod, "suspend_for_restart", suspendForRestart))
+      (bind(registerRpcMethod, kSuspendForRestart, suspendForRestart))
 
       // signal handlers
       (registerSignalHandlers)

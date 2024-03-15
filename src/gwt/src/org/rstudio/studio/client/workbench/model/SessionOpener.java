@@ -190,7 +190,7 @@ public class SessionOpener
    
    protected void waitForSessionRestart(Command onCompleted)
    {
-      sendPing(200, 25, onCompleted);
+      sendPing(200, 50, onCompleted);
    }
    
    private void sendPing(int delayMs,

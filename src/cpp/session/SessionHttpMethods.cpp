@@ -65,6 +65,7 @@
 #endif
 
 #include "SessionAsyncRpcConnection.hpp"
+#include "SessionOfflineService.hpp"
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -808,6 +809,10 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          }
          else if (jsonRpcRequest.method == kSuspendSession)
          {
+            // stop the offline service thread -- we don't want to service any
+            // more incoming requests while preparing to restart
+            offlineService().stop();
+            
             // check for force
             bool force = true;
             Error error = json::readParams(jsonRpcRequest.params, &force);
