@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 
 set -e
 
@@ -6,7 +5,7 @@ echo "About to delete all per-user RStudio state and settings, proceed with caut
 echo "(Does not delete Project-specific state in .Rproj.user or global machine state)"
 read -p "Press [enter] to continue or Ctrl+C"
 
-PLATFORM=`uname`
+PLATFORM=$(uname)
 
 # r state
 rm -f ~/.RData
@@ -30,6 +29,12 @@ rm -rf ~/.rstudio-desktop
 rm -f ~/.r/crash-handler-permission
 rm -f ~/.r/crash-handler.conf
 
+# Posit-Connect publishing connections (Linux)
+rm -rf ~/.config/R/rsconnect
+
+# Copilot, misc. cache
+rm -rf ~/.cache/rstudio
+
 if [ "${PLATFORM}" = "Darwin" ]; then
   # Mac session state
   rm -rf ~/Library/Application\ Support/RStudio
@@ -38,6 +43,9 @@ if [ "${PLATFORM}" = "Darwin" ]; then
   defaults delete com.rstudio.desktop > /dev/null 2>&1 || true
   defaults delete com.RStudio.desktop > /dev/null 2>&1 || true
   defaults delete org.rstudio.RStudio > /dev/null 2>&1 || true
+
+  # Posit-Connect publishing connections
+  rm -rf ~/Library/Preferences/org.R-project.R/R/rsconnect
 fi
 
 echo Done cleaning RStudio settings and state

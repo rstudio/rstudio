@@ -18,6 +18,12 @@ if EXIST "%localappdata%\R\crash-handler-permission" (
 if EXIST "%localappdata%\R\crash-handler.conf" (
     del "%localappdata%\R\crash-handler.conf"
 )
+if EXIST "%appdata%\R\rsconnect" (
+    rd /q /s "%appdata%\R\rsconnect"
+)
+if EXIST "%appdata%\R\config\R\rsconnect" (
+    rd /q /s "%appdata%\R\config\R\rsconnect"
+)
 
 for /f "tokens=*" %%i in ('powershell /command "[System.Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments)"') do set MyDocsDir=%%i
 if EXIST "%MyDocsDir%\.RData" (
