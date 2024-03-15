@@ -14,7 +14,7 @@
 #
 
 # NOTE: this is an embedded version of zlib (used on Windows only) based
-# on zlib 1.2.13 from http://zlib.net/zlib-1.2.13.tar.gz. To update to a new
+# on zlib 1.3.1 from http://zlib.net/zlib-1.3.1.tar.gz. To update to a new
 # version of zlib you can just copy the .h and .c files from the root of
 # the zlib distribution (but note that rather than copying zconf.h you should
 # copy zconf.h.cmakein so zconf.h can by dynamically configured
