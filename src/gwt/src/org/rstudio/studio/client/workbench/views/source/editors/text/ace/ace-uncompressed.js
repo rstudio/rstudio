@@ -48038,6 +48038,17 @@ var Editor = /** @class */ (function () {
                 session.$bracketHighlight = null;
             }
             var pos = self.getCursorPosition();
+            if (self.$vimModeHandler != null) {
+                var status = self.$vimModeHandler.getStatusText(self);
+                if (status === '') {
+                    pos.column += 1;
+                }
+                else if (status !== 'INSERT') {
+                    if (self.getHighlightIndentGuides())
+                        self.renderer.$textLayer.$highlightIndentGuide();
+                    return;
+                }
+            }
             var handler = self.getKeyboardHandler();
             var isBackwards = handler && handler.$getDirectionForHighlight && handler.$getDirectionForHighlight(self);
             var ranges = session.getMatchingBracketRanges(pos, isBackwards);
