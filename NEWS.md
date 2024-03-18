@@ -35,6 +35,7 @@
 - RStudio now prints a warning if an overly-long line of console input is truncated when sending to R (#14420)
 - Updated zlib to 1.3.1 (rstudio/rstudio-pro#5971)
 - Vim: Fixed an issue where bracket highlight followed the bracket behind the cursor when in normal mode (#4152)
+- Updated nginx to 1.25.4 (rstudio/rstudio-pro#5970)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
