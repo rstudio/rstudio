@@ -34,6 +34,7 @@
 - Added new commands which toggle the maximized state of Console, Source, and Tab Group quadrants [Accessibility] (#7022)
 - RStudio now prints a warning if an overly-long line of console input is truncated when sending to R (#14420)
 - Updated zlib to 1.3.1 (rstudio/rstudio-pro#5971)
+- Vim: Fixed an issue where bracket highlight followed the bracket behind the cursor when in normal mode (#4152)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
