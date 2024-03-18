@@ -11,6 +11,8 @@ if "%NODE_VERSION%" == "18.19.1" (
 	rd /s /q "%NODE_SUBDIR%\node_modules\npm"
 	del "%NODE_SUBDIR%\npm"
 	del "%NODE_SUBDIR%\npm.cmd"
+	del "%NODE_SUBDIR%\npx"
+	del "%NODE_SUBDIR%\npx.cmd"
 )
 
 exit /b 0
