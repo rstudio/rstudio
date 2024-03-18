@@ -84,6 +84,7 @@
 - Fixed an issue where terminal history would show internal commands (#9833)
 - Fixed an issue where RStudio could fail to launch with Conda builds of R (#13184)
 - Fixed an issue where hovering over S4 class names in the Help pane could produce an R error (#13344)
+- Fixed an issue where defining custom viewer method was always produce an R error when View was called (#14439)
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
