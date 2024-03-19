@@ -55,6 +55,7 @@ pipeline {
       steps {
         sh "mkdir --parents ${TMP_SNYK_PATH}"
         sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}...HEAD); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
+        sh "for FILE in \$(git ls-files | grep '/.snyk'); do cp --parents \$FILE ${TMP_SNYK_PATH}; done"
         script {
           exitCode = sh(returnStatus: true, script: "snyk code test ${TMP_SNYK_PATH} > ${TMP_SNYK_PATH}/output.txt")
           sh "cat ${TMP_SNYK_PATH}/output.txt"
@@ -120,6 +121,15 @@ pipeline {
             }
 
           stages {
+            stage('Run Homepage Tests') {
+              when { expression { return FLAVOR == 'Server' && IS_PRO } }
+              steps {
+                dir ("src/cpp/session/workspaces/www-sources") {
+                  sh "./run-tests.sh"
+                }
+              }
+            }
+
             stage('Build Package') {
               steps {
                 dir ("package/linux") {
