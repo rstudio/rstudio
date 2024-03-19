@@ -87,6 +87,7 @@
 - Fixed an issue where RStudio could fail to launch with Conda builds of R (#13184)
 - Fixed an issue where hovering over S4 class names in the Help pane could produce an R error (#13344)
 - Fixed an issue where defining a custom viewer method produced an R error when View was called (#14439)
+- Fixed an issue where Quarto dashboards could not be previewed if their file path contained a single quote (#13900)
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
