@@ -126,11 +126,7 @@ public class TextBoxWithButton extends Composite
       if (label != null)
       {
          assert existingLabel == null : "Invalid usage, cannot provide both label and existingLabel";
-
-         if (!label.endsWith(":"))
-            label = label + ":";
-         
-         lblCaption_ = new FormLabel(label, true);
+         lblCaption_ = new FormLabel(StringUtil.ensureColonSuffix(label), true);
          if (helpButton != null)
          {
             helpButton_ = helpButton;
