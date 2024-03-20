@@ -228,27 +228,6 @@ select {
    font-size: 12px;
 }
 
-@if rstudio.desktop true {
-
-.macintosh select {
-   font-size: 11px;
-   padding-left: 0.1em;
-   padding-right: 0.1em;
-}
-
-/* Work around an issue with macOS 10.14 (Mojave) + Chrome
-   where select inputs and radio buttons are not rendered correctly. */
-.macintosh select,
-.macintosh input[type="radio"] {
-   background-color: white;
-}
-
-.macintosh input[type="radio"] {
-   zoom: 1.000001;
-}
-
-}
-
 input[type="radio"] + label {
    margin-left: 2px;
 }
@@ -2804,11 +2783,15 @@ body .rstudio-themes-alternate {
 	border-width: 1px;
 	border-color: rgb(133, 133, 133);
 	border-style: solid;
+	font-size: 12px;
 	padding-left: 4px;
 	padding-right: 4px;
+}
+
+.gwt-ListBox {
 	min-height: 20px;
 }
 
 .gwt-TextBox {
-	font-size: 12px;
+	min-height: 16px;
 }
