@@ -1039,6 +1039,22 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    sendNotification("textDocument/didOpen", paramsJson);
 }
 
+std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   std::string contents = pDoc->contents();
+   
+   // for SQL documents, remove a 'preview' header to avoid confusing Copilot
+   // into producing R completions in a SQL context
+   // https://github.com/rstudio/rstudio/issues/13432
+   if (pDoc->type() == kSourceDocumentTypeSQL)
+   {
+      boost::regex rePreview("(?:#+|[-]{2,})\\s*[!]preview[^\n]+\n");
+      contents = boost::regex_replace(contents, rePreview, "\n");
+   }
+   
+   return contents;
+}
+
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
@@ -1053,7 +1069,7 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
    textDocumentJson["version"] = 1;
-   textDocumentJson["text"] = pDoc->contents();
+   textDocumentJson["text"] = contentsFromDocument(pDoc);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
