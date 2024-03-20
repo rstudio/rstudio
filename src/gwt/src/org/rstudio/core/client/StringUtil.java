@@ -1506,6 +1506,21 @@ public class StringUtil
    {
       return value == null ? defaultValue : value;
    }
+   
+   public static final String ensureColonSuffix(String text)
+   {
+      if (text == null)
+         return null;
+      
+      if (text.trim().isEmpty())
+         return "";
+      
+      Match match = RE_TRAILING_COLON.match(text, 0);
+      if (match == null)
+         text = text + ":";
+      
+      return text;
+   }
 
    /**
     * Perform a natural order comparison between two strings. Natural ordering
@@ -1524,9 +1539,9 @@ public class StringUtil
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
-   private static final DateTimeFormat DATE_FORMAT
-                          = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
+   private static final DateTimeFormat DATE_FORMAT = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
    private static final Pattern RE_INDENT = Pattern.create("^\\s*", "");
    private static final Pattern BASH_RESERVED_CHAR = Pattern.create("[^a-zA-Z0-9,._+@%/-]");
+   private static final Pattern RE_TRAILING_COLON = Pattern.create(":\\s*$", "");
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

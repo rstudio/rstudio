@@ -16,7 +16,6 @@ package org.rstudio.studio.client.common.repos;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -24,9 +23,11 @@ import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -35,8 +36,8 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class SecondaryReposWidget extends Composite
 {
@@ -69,6 +70,7 @@ public class SecondaryReposWidget extends Composite
 
       buttonUp_ = createButton(constants_.buttonUpLabel());
       buttonUp_.addClickHandler(upButtonClicked_);
+      buttonUp_.getElement().getStyle().setMarginTop(10, Unit.PX);
       buttonPanel.add(buttonUp_);
 
       buttonDown_ = createButton(constants_.buttonDownLabel());

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -26,10 +28,9 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRVersion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.ElementIds;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
@@ -53,6 +54,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       DomUtils.setPlaceholder(projectName_, sessionInfo_.getActiveProjectDir().getName());
       projectName_.setWidth(textboxWidth);
       projectNameLabel_ = new FormLabel(constants_.customProjectNameLabel(), projectName_);
+      projectNameLabel_.getElement().getStyle().setMarginBottom(2, Unit.PX);
       if (sessionInfo_.getAllowFullUI())
       {
          container.add(headerLabel(constants_.generalTitle()));
