@@ -75,7 +75,7 @@ RCntxt::RCntxt(void *rawCntxt)
       
    case RVersionUnknown:
    {
-      LOG_WARNING_MESSAGE("Unable to determine R context version; assuming compatbile with version 4.4");
+      LOG_WARNING_MESSAGE("Unable to determine R context version; assuming compatible with version 4.4");
       pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_44>>(rawCntxt);
       break;
    }
