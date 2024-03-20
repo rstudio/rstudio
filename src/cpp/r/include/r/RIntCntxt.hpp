@@ -25,14 +25,15 @@ namespace context {
 
 // header-only implementation of the RCntxtInterface; can serve as an 
 // implementation for any memory layout (depending on the template parameter)
-template<typename T> class RIntCntxt: public RCntxtInterface
+template <typename T>
+class RIntCntxt: public RCntxtInterface
 {
 public:
-   explicit RIntCntxt(T *pCntxt) :
-      pCntxt_(pCntxt)
+   explicit RIntCntxt(void* pCntxt)
+      : pCntxt_(static_cast<T*>(pCntxt))
    {
    }
-
+   
    RCntxt nextcontext() const
    {
       if (pCntxt_->nextcontext == nullptr)
@@ -92,7 +93,7 @@ public:
    }
 
 private:
-   const T *pCntxt_;
+   const T* pCntxt_;
 };
 
 } // namespace context
