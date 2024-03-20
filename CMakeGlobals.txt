@@ -329,6 +329,15 @@ endif()
 
 message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
 
+# path to node (so we can find it in debug builds)
+if(WIN32)
+   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}/node.exe")
+else()
+   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}/bin/node")
+endif()
+
+set(RSTUDIO_NODE_PATH "${RSTUDIO_NODE_PATH}" CACHE INTERNAL "Path to bundled node binary")
+
 # special install directories for apple desktop
 if (APPLE)
    if (RSTUDIO_ELECTRON)
