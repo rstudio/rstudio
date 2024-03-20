@@ -969,8 +969,6 @@ void showSourceMarkers(const SourceMarkerSet& markerSet,
 
 bool isLoadBalanced();
 
-bool usingMingwGcc49();
-
 bool isWebsiteProject();
 bool isBookdownWebsite();
 bool isBookdownProject();

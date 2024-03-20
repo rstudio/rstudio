@@ -41,7 +41,7 @@ Do you want to install the additional tools now?
       return(FALSE)
    
    .Call("rs_installBuildTools", PACKAGE = "(embedding)")
-   return(TRUE)
+   invisible(TRUE)
    
 })
 
@@ -86,13 +86,6 @@ options(buildtools.with = function(code)
          siteDir
    else
       siteDir
-})
-
-.rs.addFunction("builtWithRtoolsGcc493", function()
-{
-   identical(.Platform$OS.type, "windows") &&
-      getRversion() >= "3.3" && 
-      .rs.haveRequiredRSvnRev(70462)
 })
 
 .rs.addFunction("readShinytestResultRds", function(rdsPath)

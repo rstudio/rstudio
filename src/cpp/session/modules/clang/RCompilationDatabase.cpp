@@ -1353,9 +1353,8 @@ core::r_util::RToolsInfo findRtools()
 {
    // scan for Rtools
    std::string rVersion = module_context::rVersion();
-   bool usingMingwGcc49 = module_context::usingMingwGcc49();
    std::vector<core::r_util::RToolsInfo> rTools;
-   core::r_util::scanForRTools(usingMingwGcc49, rVersion, &rTools);
+   core::r_util::scanForRTools(rVersion, &rTools);
 
    // enumerate them to see if we have a compatible version
    // (go in reverse order for most recent first)
