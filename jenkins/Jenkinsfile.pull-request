@@ -38,6 +38,17 @@ pipeline {
       }
     }
 
+    stage('Checkout') {
+      steps {
+        checkout([
+          $class: 'GitSCM',
+          branches: scm.branches,
+          doGenerateSubmoduleConfigurations: true,
+          extensions: scm.extensions + [[$class: 'SubmoduleOption', parentCredentials: true]],
+          userRemoteConfigs: scm.userRemoteConfigs])
+      }
+    }
+
     stage('Snyk Code Scan') {
       environment {
         SNYK_TOKEN = credentials('snyk-auth-token')
