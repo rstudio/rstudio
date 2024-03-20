@@ -426,7 +426,6 @@ export class GwtCallback extends EventEmitter {
       const rInstalls = findRInstallationsWin32();
       if (rInstalls.length === 0) {
         logger().logErrorMessage('No R installations found via registry or common R install locations.');
-        return '';
       }
 
       // ask the user what version of R they'd like to use
