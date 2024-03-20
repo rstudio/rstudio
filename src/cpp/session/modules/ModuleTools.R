@@ -363,11 +363,6 @@
   invisible(.Call("rs_removePref", prefName, PACKAGE = "(embedding)"))
 })
 
-.rs.addFunction("setUsingMingwGcc49", function(usingMingwGcc49) {
-  invisible(.Call("rs_setUsingMingwGcc49", usingMingwGcc49, PACKAGE = "(embedding)"))
-})
-
-
 .rs.addGlobalFunction("rstudioDiagnosticsReport", function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
 })

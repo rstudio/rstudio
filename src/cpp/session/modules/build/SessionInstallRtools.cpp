@@ -39,28 +39,17 @@ namespace session {
 namespace modules {
 namespace build {
 
-std::string kFallbackUrl = "https://rstudio.org/links/rtools43";
-
 Error installRtools()
 {
    // populate list of known Rtools installers
-   bool gcc49 = module_context::usingMingwGcc49();
    FilePath installPath("C:\\Rtools");
    std::vector<r_util::RToolsInfo> availableRtools;
-   availableRtools.push_back(r_util::RToolsInfo("4.3", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("4.2", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("4.0", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("3.5", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("3.4", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("3.3", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("3.2", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("3.1", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("3.0", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("2.15", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("2.14", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("2.13", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("2.12", installPath, gcc49));
-   availableRtools.push_back(r_util::RToolsInfo("2.11", installPath, gcc49));
+   availableRtools.push_back(r_util::RToolsInfo("4.4", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("4.3", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("4.2", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("4.0", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("3.5", installPath));
+   availableRtools.push_back(r_util::RToolsInfo("3.4", installPath));
 
    // determine appropriate version of Rtools for this copy of R
    std::string version, url;
@@ -97,18 +86,21 @@ Error installRtools()
    if (error)
       return error;
 
-   if (version == "4.3")
+   if (version == "4.3" || version == "4.4")
    {
-     Error error = r::exec::RFunction(".rs.findRtoolsInstaller")
-            .addParam("url", url)
-            .addParam("fallbackUrl", kFallbackUrl)
-            .call(&url);
-     if (error)
-     {
-        LOG_ERROR(error);
-        url = kFallbackUrl;
-     }
+      Error error = r::exec::RFunction(".rs.findRtoolsInstaller")
+                        .addParam("version", version)
+                        .addParam("url", url)
+                        .call(&url);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return error;
+      }
    }
+
+   if (url.empty())
+      return core::pathNotFoundError(ERROR_LOCATION);
 
    // form path to destination file
    std::string rtoolsBinary = url.substr(url.find_last_of('/') + 1);
@@ -119,9 +111,8 @@ Error installRtools()
    // and respect the user's original configured timeout settings
    int originalTimeoutOption = r::options::getOption<int>("timeout");
    error = r::options::setOption<int>("timeout", std::max(3600, originalTimeoutOption));
-
    if (error)
-       module_context::consoleWriteOutput("To avoid timeouts when downloading the installer, set `options(timeout=3600)`.\n");
+       module_context::consoleWriteOutput("To avoid timeouts when downloading the installer, set `options(timeout = 3600)`.\n");
 
    // download it
    error = r::exec::RFunction("utils:::download.file")
