@@ -300,6 +300,8 @@ test_context("Diagnostics")
       EXPECT_NO_LINT("mtcars %>% stats::lm(mpg ~ cyl, data = .)");
       
       EXPECT_NO_LINT("r'())'");
+
+      EXPECT_LINT("if (x = 1) {}");
    }
    
    test_that("RStudio files can be successfully linted")

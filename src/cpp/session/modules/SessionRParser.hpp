@@ -481,6 +481,15 @@ public:
                LintTypeWarning,
                "unexpected assignment in argument list; did you mean to use '='?");
    }
+
+   void unexpectedAssignmentInConditional(const RToken& rToken)
+   {
+      addLintItem(
+               rToken,
+               LintTypeWarning,
+               "unexpected assignment in conditional expression; did you mean to use '=='?");
+   }
+
    
    void addLintItem(const RToken& rToken,
                     LintType type,
