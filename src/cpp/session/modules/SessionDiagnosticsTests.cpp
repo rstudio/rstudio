@@ -301,8 +301,9 @@ test_context("Diagnostics")
       
       EXPECT_NO_LINT("r'())'");
 
-      EXPECT_LINT("if (x = 1) {}");
-      EXPECT_LINT("while (x = 42) {}");
+      EXPECT_ERRORS("if (x = 1) {}");
+      EXPECT_ERRORS("while (x = 42) {}");
+      EXPECT_ERRORS("for (x = 1:5) {}");
    }
    
    test_that("RStudio files can be successfully linted")
