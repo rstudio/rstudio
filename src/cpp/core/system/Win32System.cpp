@@ -327,6 +327,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    int csidl = CSIDL_LOCAL_APPDATA;
    if (ensureDirectory)
       csidl |= CSIDL_FLAG_CREATE;
+
    HRESULT hr = ::SHGetFolderPathAndSubDirW(
          nullptr,
          csidl,
@@ -335,14 +336,29 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
          appNameWide.c_str(),
          path);
 
-   if (hr != S_OK)
+   if (hr == S_OK)
+      return FilePath(std::wstring(path));
+
+   std::string localAppData = core::system::getenv("LOCALAPPDATA");
+   if (!localAppData.empty())
    {
-      LOG_ERROR_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
-                        safe_convert::numberToHexString(hr));
-      return FilePath();
+      FilePath settingsPath = FilePath(localAppData).completeChildPath(appName);
+      if (ensureDirectory)
+      {
+         Error error = settingsPath.ensureDirectory();
+         if (error)
+            LOG_ERROR(error);
+      }
+      return settingsPath;
    }
 
-   return FilePath(std::wstring(path));
+   Error error = systemError(
+       boost::system::errc::no_such_file_or_directory,
+       "unable to compute user settings path",
+       ERROR_LOCATION);
+
+   LOG_ERROR(error);
+   return FilePath();
 }
 
 FilePath systemSettingsPath(const std::string& appName, bool create)
