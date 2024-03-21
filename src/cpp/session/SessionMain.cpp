@@ -815,6 +815,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
 void rInitComplete()
 {
+   module_context::syncRSaveAction();
    module_context::events().onInitComplete();
 }
 
@@ -1673,7 +1674,7 @@ int saveWorkspaceAction()
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
    {
-      switch(projContext.config().saveWorkspace)
+      switch (projContext.config().saveWorkspace)
       {
       case r_util::YesValue:
          return rstudio::r::session::kSaveActionSave;
@@ -1701,7 +1702,7 @@ int saveWorkspaceAction()
 
 void syncRSaveAction()
 {
-   rstudio::r::session::setSaveAction(saveWorkspaceOption());
+   return r::session::setSaveAction(saveWorkspaceAction());
 }
 
 } // namespace module_context
