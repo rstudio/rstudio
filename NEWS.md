@@ -92,6 +92,7 @@
 - Fixed an issue where Quarto dashboards could not be previewed if their file path contained a single quote (#13900)
 - Fixed an issue where language objects (calls, formulas) were not described in the Environment pane (#14446)
 - Fixed an issue where searches in the Help pane could fail for entries like `[<-` (#10975)
+- Fixed an issue where the "Save workspace on exit" preference was ignored in some cases (#14258)
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)

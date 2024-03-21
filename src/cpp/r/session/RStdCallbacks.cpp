@@ -789,7 +789,7 @@ const int kSaveActionAsk = -1;
 
 void setSaveAction(int saveAction)
 {
-   switch(saveAction)
+   switch (saveAction)
    {
    case kSaveActionNoSave:
       SaveAction = SA_NOSAVE;
@@ -802,7 +802,6 @@ void setSaveAction(int saveAction)
       SaveAction = SA_SAVEASK;
       break;
    }
-
 }
 
 namespace utils {
