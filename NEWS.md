@@ -43,6 +43,7 @@
 - Add search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
 
 ### Fixed
+
 #### RStudio
 
 - Fixed an issue where Stage chunk and Stage line in the Review Changes UI failed in some scenarios (#5476)
@@ -90,6 +91,7 @@
 - Fixed an issue where defining a custom viewer method produced an R error when View was called (#14439)
 - Fixed an issue where Quarto dashboards could not be previewed if their file path contained a single quote (#13900)
 - Fixed an issue where language objects (calls, formulas) were not described in the Environment pane (#14446)
+- Fixed an issue where searches in the Help pane could fail for entries like `[<-` (#10975)
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
