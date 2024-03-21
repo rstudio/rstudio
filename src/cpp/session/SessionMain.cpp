@@ -1702,7 +1702,7 @@ int saveWorkspaceAction()
 
 void syncRSaveAction()
 {
-   return r::session::setSaveAction(saveWorkspaceAction());
+   r::session::setSaveAction(saveWorkspaceAction());
 }
 
 } // namespace module_context
