@@ -1689,18 +1689,29 @@ void checkVariableAssignmentInArgumentList(RTokenCursor cursor,
 void checkUnexpectedEqualsAssignment(RTokenCursor& cursor,
                                      ParseStatus& status)
 {
+   std::string context;
+
    switch (status.currentState())
    {
+
    case ParseStatus::ParseStateIfCondition:
-   case ParseStatus::ParseStateForCondition:
-   case ParseStatus::ParseStateWhileCondition:
+      context = "if";
       break;
+
+   case ParseStatus::ParseStateForCondition:
+      context = "for";
+      break;
+
+   case ParseStatus::ParseStateWhileCondition:
+      context = "while";
+      break;
+
    default:
       return;
    }
 
    if (cursor.contentEquals(L"="))
-      status.lint().unexpectedAssignmentInConditional(cursor);
+      status.lint().unexpectedAssignmentInConditional(cursor, context);
 }
 
 void checkBinaryOperatorWhitespace(RTokenCursor& cursor,

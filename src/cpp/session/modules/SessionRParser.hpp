@@ -482,12 +482,14 @@ public:
                "unexpected assignment in argument list; did you mean to use '='?");
    }
 
-   void unexpectedAssignmentInConditional(const RToken& rToken)
+   void unexpectedAssignmentInConditional(const RToken& rToken,
+                                          const std::string& context)
    {
-      addLintItem(
-               rToken,
-               LintTypeWarning,
-               "unexpected assignment in conditional expression; did you mean to use '=='?");
+      std::string message = fmt::format(
+          "unexpected '=' in '{}' conditional; did you mean to use '=='?",
+          context);
+
+      addLintItem(rToken, LintTypeError, message);
    }
 
    
