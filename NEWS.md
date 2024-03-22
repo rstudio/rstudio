@@ -89,6 +89,7 @@
 - Fixed an issue where defining a custom viewer method produced an R error when View was called (#14439)
 - Fixed an issue where Quarto dashboards could not be previewed if their file path contained a single quote (#13900)
 - Fixed an issue where language objects (calls, formulas) were not described in the Environment pane (#14446)
+- Improved some French translations of the UI
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
