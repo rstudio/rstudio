@@ -136,7 +136,7 @@ pipeline {
               when { expression { return FLAVOR == 'Server' && IS_PRO } }
               steps {
                 dir ("src/cpp/session/workspaces/www-sources") {
-                  sh "./run-tests.sh"
+                  sh "npm ci && ./run-tests.sh"
                 }
               }
             }
