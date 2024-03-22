@@ -120,7 +120,6 @@ Error NotebookQueueUnit::fromJson(
    Error error = json::readObject(source, 
          kQueueUnitCode,      code,
          kQueueUnitDocId,     unit.docId_,
-         kQueueUnitDocType,   unit.docType_,
          kQueueUnitChunkId,   unit.chunkId_,
          kQueueUnitCompleted, completed,
          kQueueUnitPending,   pending,
@@ -129,6 +128,29 @@ Error NotebookQueueUnit::fromJson(
    if (error)
       LOG_ERROR(error);
 
+   // extract document type separately -- we've seen it missing
+   // in some scenarios
+   std::string docType;
+   error = json::readObject(source, kQueueUnitDocType, docType);
+   if (error)
+   {
+      // try reading the source document from the database to recover the type
+      boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument());
+      Error dbError = source_database::get(unit.docId_, pDoc);
+      if (dbError)
+      {
+         LOG_ERROR(error);
+         LOG_ERROR(dbError);
+      }
+      else
+      {
+         docType = pDoc->type();
+      }
+   }
+   
+   // assume an R Markdown document type if we couldn't infer one
+   unit.docType_ = docType.empty() ? kSourceDocumentTypeRMarkdown : docType;
+   
    // convert enums
    unit.execMode_ = static_cast<ExecMode>(execMode);
    unit.execScope_ = static_cast<ExecScope>(execScope);
