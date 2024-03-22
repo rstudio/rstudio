@@ -45,7 +45,7 @@ if (-Not (Test-Path -Path "C:\R")) {
     $RSetupPackage = "C:\R-3.6.3-win.exe"
     if (-Not (Test-Path -Path $RSetupPackage)) {
         Write-Host "Downloading R 3.6.3..."
-        Invoke-DownloadFile https://cran.rstudio.com/bin/windows/base/old/3.6.3/R-3.6.3-win.exe $RSetupPackage
+        Invoke-DownloadFile https://rstudio-buildtools.s3.amazonaws.com/R/R-3.6.3-win.exe $RSetupPackage
     } else {
         Write-Host "Using previously downloaded R installer"
     }

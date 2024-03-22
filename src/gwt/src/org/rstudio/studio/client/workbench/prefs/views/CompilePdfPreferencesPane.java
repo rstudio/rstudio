@@ -14,13 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Label;
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -31,6 +24,13 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
+import com.google.inject.Inject;
 
 public class CompilePdfPreferencesPane extends PreferencesPane
 {
@@ -45,18 +45,14 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       add(headerLabel(constants_.headerPDFGenerationLabel()));
 
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
-      defaultSweaveEngine_.setValue(
-                              prefs.defaultSweaveEngine().getGlobalValue());
+      defaultSweaveEngine_.setValue(prefs.defaultSweaveEngine().getGlobalValue());
       add(defaultSweaveEngine_);
 
       defaultLatexProgram_ = new LatexProgramSelectWidget();
-      defaultLatexProgram_.setValue(
-                              prefs.defaultLatexProgram().getGlobalValue());
+      defaultLatexProgram_.setValue(prefs.defaultLatexProgram().getGlobalValue());
       add(defaultLatexProgram_);
 
-      Label perProjectLabel = new Label(
-            constants_.perProjectNoteLabel());
-
+      Label perProjectLabel = new Label(constants_.perProjectNoteLabel());
       perProjectLabel.addStyleName(baseRes.styles().infoLabel());
       nudgeRight(perProjectLabel);
       spaced(perProjectLabel);

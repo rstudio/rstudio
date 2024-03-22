@@ -10,6 +10,7 @@
 - RStudio Desktop on Windows and Linux supports auto-hiding the menu bar (#8932)
 - RStudio Desktop on Windows and Linux supports full-screen mode via F11 (#3243)
 - RStudio Desktop now supports pasting of file paths for files copied to the clipboard (#14240)
+- RStudio now reports a diagnostics warning when `=` (rather than `==`) is used in `if`, `for`, and `while` conditionals (#14455)
 - R projects can be given a custom display name in Project Options (#1909)
 - The automatic display of Copilot code completions can now be controlled via a user preference (#14033)
 - Copilot code suggestions can now be requested via the keyboard shortcut `Ctrl + \`
@@ -42,6 +43,7 @@
 - Add search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
 
 ### Fixed
+
 #### RStudio
 
 - Fixed an issue where Stage chunk and Stage line in the Review Changes UI failed in some scenarios (#5476)
@@ -90,6 +92,8 @@
 - Fixed an issue where Quarto dashboards could not be previewed if their file path contained a single quote (#13900)
 - Fixed an issue where language objects (calls, formulas) were not described in the Environment pane (#14446)
 - Improved some French translations of the UI
+- Fixed an issue where searches in the Help pane could fail for entries like `[<-` (#10975)
+- Fixed an issue where the "Save workspace on exit" preference was ignored in some cases (#14258)
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)

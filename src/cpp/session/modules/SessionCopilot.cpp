@@ -87,38 +87,45 @@ namespace {
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
 std::map<std::string, std::string> s_extToLanguageIdMap = {
-   { ".bash", "shellscript" },
-   { ".bat",  "bat" },
-   { ".c",    "c" },
-   { ".cc",   "cpp" },
-   { ".cpp",  "cpp" },
-   { ".cs",   "csharp" },
-   { ".css",  "css" },
-   { ".erl",  "erlang" },
-   { ".go",   "go" },
-   { ".h",    "c" },
-   { ".hpp",  "cpp" },
-   { ".html", "html" },
-   { ".ini",  "ini" },
-   { ".java", "java" },
-   { ".js",   "javascript" },
-   { ".jsx",  "javascriptreact" },
-   { ".json", "json" },
-   { ".md",   "markdown" },
-   { ".mjs",  "javascript" },
-   { ".ps",   "powershell" },
-   { ".py",   "python" },
-   { ".tex",  "latex" },
-   { ".r",    "r" },
-   { ".rb",   "ruby" },
-   { ".rnw",  "r" },
-   { ".rnb",  "r" },
-   { ".rmd",  "r" },
-   { ".sh",   "shellscript" },
-   { ".tex",  "latex" },
-   { ".ts",   "typescript" },
-   { ".tsx",  "typescriptreact" },
-   { ".yml",  "yaml" },
+   { ".bash",  "shellscript" },
+   { ".bat",   "bat" },
+   { ".c",     "c" },
+   { ".cc",    "cpp" },
+   { ".cpp",   "cpp" },
+   { ".cs",    "csharp" },
+   { ".css",   "css" },
+   { ".erl",   "erlang" },
+   { ".go",    "go" },
+   { ".h",     "c" },
+   { ".hpp",   "cpp" },
+   { ".html",  "html" },
+   { ".ini",   "ini" },
+   { ".java",  "java" },
+   { ".js",    "javascript" },
+   { ".jsx",   "javascriptreact" },
+   { ".json",  "json" },
+   { ".md",    "markdown" },
+   { ".mjs",   "javascript" },
+   { ".ps",    "powershell" },
+   { ".py",    "python" },
+   { ".tex",   "latex" },
+   { ".r",     "r" },
+   { ".rb",    "ruby" },
+   { ".rmd",   "r" },
+   { ".rnb",   "r" },
+   { ".rnw",   "r" },
+   { ".rs",    "rust" },
+   { ".sc",    "scala" },
+   { ".scala", "scala" },
+   { ".scss",  "scss" },
+   { ".sh",    "shellscript" },
+   { ".sql",   "sql" },
+   { ".swift", "swift" },
+   { ".tex",   "latex" },
+   { ".toml",  "toml" },
+   { ".ts",    "typescript" },
+   { ".tsx",   "typescriptreact" },
+   { ".yml",   "yaml" },
 };
    
 
@@ -1039,6 +1046,22 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    sendNotification("textDocument/didOpen", paramsJson);
 }
 
+std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   std::string contents = pDoc->contents();
+   
+   // for SQL documents, remove a 'preview' header to avoid confusing Copilot
+   // into producing R completions in a SQL context
+   // https://github.com/rstudio/rstudio/issues/13432
+   if (pDoc->type() == kSourceDocumentTypeSQL)
+   {
+      boost::regex rePreview("(?:#+|[-]{2,})\\s*[!]preview[^\n]+\n");
+      contents = boost::regex_replace(contents, rePreview, "\n");
+   }
+   
+   return contents;
+}
+
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
@@ -1053,7 +1076,7 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
    textDocumentJson["version"] = 1;
-   textDocumentJson["text"] = pDoc->contents();
+   textDocumentJson["text"] = contentsFromDocument(pDoc);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;

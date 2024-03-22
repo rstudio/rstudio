@@ -45,41 +45,15 @@ std::string asRBuildPath(const FilePath& filePath)
    return path;
 }
 
-std::vector<std::string> gcc463ClangArgs(const FilePath& installPath)
-{
-   std::vector<std::string> clangArgs;
-   clangArgs.push_back("-I" + installPath.completeChildPath(
-      "gcc-4.6.3/i686-w64-mingw32/include").getAbsolutePath());
-
-   clangArgs.push_back("-I" + installPath.completeChildPath(
-      "gcc-4.6.3/include/c++/4.6.3").getAbsolutePath());
-
-   std::string bits = "-I" + installPath.completeChildPath(
-      "gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32").getAbsolutePath();
-#ifdef _WIN64
-   bits += "/64";
-#endif
-   clangArgs.push_back(bits);
-   return clangArgs;
-}
-
-void gcc463Configuration(const FilePath& installPath,
-                         std::vector<std::string>* pRelativePathEntries,
-                         std::vector<std::string>* pClangArgs)
-{
-   pRelativePathEntries->push_back("bin");
-   pRelativePathEntries->push_back("gcc-4.6.3/bin");
-   *pClangArgs = gcc463ClangArgs(installPath);
-}
-
 } // anonymous namespace
 
 
 RToolsInfo::RToolsInfo(const std::string& name,
-                       const FilePath& installPath,
-                       bool usingMingwGcc49)
-   : name_(name), installPath_(installPath)
+                       const FilePath& installPath)
+   : name_(name),
+     installPath_(installPath)
 {
+   // NOTE: versionMin is inclusive; versionMax is exclusive
    std::string versionMin, versionMax;
    std::vector<std::string> relativePathEntries;
    std::vector<std::string> clangArgs;
@@ -88,78 +62,13 @@ RToolsInfo::RToolsInfo(const std::string& name,
    std::vector<std::string> cIncludePaths;
    std::vector<std::string> cppIncludePaths;
 
-   if (name == "2.11")
-   {
-      versionMin = "2.10.0";
-      versionMax = "2.11.1";
-      relativePathEntries.push_back("bin");
-      relativePathEntries.push_back("perl/bin");
-      relativePathEntries.push_back("MinGW/bin");
-   }
-   else if (name == "2.12")
-   {
-      versionMin = "2.12.0";
-      versionMax = "2.12.2";
-      relativePathEntries.push_back("bin");
-      relativePathEntries.push_back("perl/bin");
-      relativePathEntries.push_back("MinGW/bin");
-      relativePathEntries.push_back("MinGW64/bin");
-   }
-   else if (name == "2.13")
-   {
-      versionMin = "2.13.0";
-      versionMax = "2.13.2";
-      relativePathEntries.push_back("bin");
-      relativePathEntries.push_back("MinGW/bin");
-      relativePathEntries.push_back("MinGW64/bin");
-   }
-   else if (name == "2.14")
-   {
-      versionMin = "2.13.0";
-      versionMax = "2.14.2";
-      relativePathEntries.push_back("bin");
-      relativePathEntries.push_back("MinGW/bin");
-      relativePathEntries.push_back("MinGW64/bin");
-   }
-   else if (name == "2.15")
-   {
-      versionMin = "2.14.2";
-      versionMax = "2.15.1";
-      relativePathEntries.push_back("bin");
-      relativePathEntries.push_back("gcc-4.6.3/bin");
-      clangArgs = gcc463ClangArgs(installPath);
-   }
-   else if (name == "2.16" || name == "3.0")
-   {
-      versionMin = "2.15.2";
-      versionMax = "3.0.99";
-      gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
-   }
-   else if (name == "3.1")
-   {
-      versionMin = "3.0.0";
-      versionMax = "3.1.99";
-      gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
-   }
-   else if (name == "3.2")
-   {
-      versionMin = "3.1.0";
-      versionMax = "3.2.0";
-      gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
-   }
-   else if (name == "3.3")
-   {
-      versionMin = "3.2.0";
-      versionMax = "3.2.99";
-      gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
-   }
-   else if (name == "3.4" || name == "3.5")
+   if (name == "3.4" || name == "3.5")
    {
       versionMin = "3.3.0";
       if (name == "3.4")
-         versionMax = "3.5.99";  // Rtools 3.4
+         versionMax = "3.6.0";  // Rtools 3.4
       else 
-         versionMax = "3.6.99";  // Rtools 3.5
+         versionMax = "4.0.0";  // Rtools 3.5
 
       relativePathEntries.push_back("bin");
 
@@ -194,7 +103,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
    else if (name == "4.0")
    {
       versionMin = "4.0.0";
-      versionMax = "4.1.99";
+      versionMax = "4.2.0";
 
       // PATH for utilities
       relativePathEntries.push_back("usr/bin");
@@ -260,7 +169,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
    else if (name == "4.2")
    {
       versionMin = "4.2.0";
-      versionMax = "4.2.99";
+      versionMax = "4.3.0";
 
       // PATH for utilities
       relativePathEntries.push_back("usr/bin");
@@ -285,7 +194,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
    else if (name == "4.3")
    {
       versionMin = "4.3.0";
-      versionMax = "5.0.0";
+      versionMax = "4.4.0";
 
       // PATH for utilities
       relativePathEntries.push_back("usr/bin");
@@ -307,6 +216,31 @@ RToolsInfo::RToolsInfo(const std::string& name,
       clangArgs.push_back("-D__GNUC_MINOR__=2");
       clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
    }
+   else if (name == "4.4")
+   {
+      versionMin = "4.4.0";
+      versionMax = "5.0.0";
+
+      // PATH for utilities
+      relativePathEntries.push_back("usr/bin");
+
+      // set RTOOLS44_HOME
+      std::string rtoolsPath = installPath.getAbsolutePath();
+      std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
+      environmentVars.push_back({"RTOOLS44_HOME", rtoolsPath});
+
+      // undefine _MSC_VER, so that we can "pretend" to be gcc
+      // this is important for C++ libraries which might try to use
+      // MSVC-specific tools when _MSC_VER is defined (e.g. Eigen), which might
+      // not actually be defined or available in Rtools
+      clangArgs.push_back("-U_MSC_VER");
+
+      // set GNUC levels
+      // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
+      clangArgs.push_back("-D__GNUC__=13");
+      clangArgs.push_back("-D__GNUC_MINOR__=2");
+      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
+   }
    else
    {
       LOG_DEBUG_MESSAGE("Unrecognized Rtools installation at path '" + installPath.getAbsolutePath() + "'");
@@ -315,7 +249,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
    // build version predicate and path list if we can
    if (!versionMin.empty())
    {
-      boost::format fmt("getRversion() >= \"%1%\" && getRversion() <= \"%2%\"");
+      boost::format fmt("getRversion() >= \"%1%\" && getRversion() < \"%2%\"");
       versionPredicate_ = boost::str(fmt % versionMin % versionMax);
 
       for (const std::string& relativePath : relativePathEntries)
@@ -341,7 +275,12 @@ std::string RToolsInfo::url(const std::string& repos) const
 {
    std::string url;
 
-   if (name() == "4.3")
+   if (name() == "4.4")
+   {
+      std::string suffix = "bin/windows/Rtools/rtools44/rtools.html";
+      url = core::http::URL::complete(repos, suffix);
+   }
+   else if (name() == "4.3")
    {
       std::string suffix = "bin/windows/Rtools/rtools43/rtools.html";
       url = core::http::URL::complete(repos, suffix);
@@ -403,7 +342,7 @@ Error useRtools(const std::string& rToolsVersion,
    }
 
    // build info
-   RToolsInfo toolsInfo(rToolsVersion, installPath, false);
+   RToolsInfo toolsInfo(rToolsVersion, installPath);
 
    // check that recorded path is valid
    bool ok =
@@ -439,18 +378,21 @@ Error scanEnvironmentForRTools(const std::string& rVersion,
       // use RTOOLS42_HOME
       useRtools("4.2", "RTOOLS42_HOME", "C:/rtools42", pRTools);
    }
-   else if (version < Version("5.0.0"))
+   else if (version < Version("4.4.0"))
    {
       // use RTOOLS43_HOME
       useRtools("4.3", "RTOOLS43_HOME", "C:/rtools43", pRTools);
+   }
+   else if (version < Version("5.0.0"))
+   {
+      // use RTOOLS44_HOME
+      useRtools("4.4", "RTOOLS44_HOME", "C:/rtools44", pRTools);
    }
 
    return Success();
 }
 
-Error scanRegistryForRTools(HKEY key,
-                            bool usingMingwGcc49,
-                            std::vector<RToolsInfo>* pRTools)
+Error scanRegistryForRTools(HKEY key, std::vector<RToolsInfo>* pRTools)
 {
    core::system::RegistryKey regKey;
    Error error = regKey.open(key,
@@ -482,7 +424,7 @@ Error scanRegistryForRTools(HKEY key,
       if (!installPath.empty())
       {
          std::string utf8InstallPath = string_utils::systemToUtf8(installPath);
-         RToolsInfo toolsInfo(name, FilePath(utf8InstallPath), usingMingwGcc49);
+         RToolsInfo toolsInfo(name, FilePath(utf8InstallPath));
          if (toolsInfo.isStillInstalled())
          {
             if (toolsInfo.isRecognized())
@@ -496,31 +438,23 @@ Error scanRegistryForRTools(HKEY key,
    return Success();
 }
 
-void scanRegistryForRTools(bool usingMingwGcc49,
-                           std::vector<RToolsInfo>* pRTools)
+void scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
 {
    // try HKLM first (backwards compatible with previous code)
-   Error error = scanRegistryForRTools(
-            HKEY_LOCAL_MACHINE,
-            usingMingwGcc49,
-            pRTools);
-
+   Error error = scanRegistryForRTools(HKEY_LOCAL_MACHINE, pRTools);
    if (error)
       LOG_ERROR(error);
 
    // try HKCU as a fallback
    if (pRTools->empty())
    {
-      Error error = scanRegistryForRTools(
-               HKEY_CURRENT_USER,
-               usingMingwGcc49,
-               pRTools);
+      Error error = scanRegistryForRTools(HKEY_CURRENT_USER, pRTools);
       if (error)
          LOG_ERROR(error);
    }
 }
 
-void scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
+void scanFoldersForRTools(std::vector<RToolsInfo>* pRTools)
 {
    // look for Rtools as installed by RStudio
    std::string systemDrive = core::system::getenv("SYSTEMDRIVE");
@@ -540,7 +474,7 @@ void scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools
    // infer Rtools information from each directory
    for (const FilePath& buildDir : buildDirs)
    {
-      RToolsInfo toolsInfo(buildDir.getFilename(), buildDir, usingMingwGcc49);
+      RToolsInfo toolsInfo(buildDir.getFilename(), buildDir);
       if (toolsInfo.isRecognized())
       {
          pRTools->push_back(toolsInfo);
@@ -553,16 +487,14 @@ void scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools
 
 } // end anonymous namespace
 
-void scanForRTools(bool usingMingwGcc49,
-                   const std::string& rVersion,
-                   std::vector<RToolsInfo>* pRTools)
+void scanForRTools(const std::string& rVersion, std::vector<RToolsInfo>* pRTools)
 {
    std::vector<RToolsInfo> rtoolsInfo;
 
    // scan for Rtools
    scanEnvironmentForRTools(rVersion, &rtoolsInfo);
-   scanRegistryForRTools(usingMingwGcc49, &rtoolsInfo);
-   scanFoldersForRTools(usingMingwGcc49, &rtoolsInfo);
+   scanRegistryForRTools(&rtoolsInfo);
+   scanFoldersForRTools(&rtoolsInfo);
 
    // remove duplicates
    std::set<FilePath> knownPaths;
