@@ -1232,6 +1232,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       events_.fireEvent(new FindInFilesEvent(searchPattern));
    }
+   
+   private void endDebugHighlighting()
+   {
+      for (SourceColumn column : getColumnList())
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            target.endDebugHighlighting();
+         }
+      }
+   }
 
    @Override
    public void onDebugModeChanged(DebugModeChangedEvent evt)
@@ -1241,13 +1252,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // so just broadcast this to all open editors
       if (!evt.debugging())
       {
-         for (SourceColumn column : getColumnList())
-         {
-            for (EditingTarget target : column.getEditors())
-            {
-               target.endDebugHighlighting();
-            }
-         }
+         endDebugHighlighting();
       }
    }
 

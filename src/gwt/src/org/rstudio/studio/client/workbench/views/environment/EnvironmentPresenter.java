@@ -156,7 +156,8 @@ public class EnvironmentPresenter extends BasePresenter
                                Source source,
                                DebugCommander debugCommander,
                                FileTypeRegistry fileTypeRegistry,
-                               DataImportPresenter dataImportPresenter)
+                               DataImportPresenter dataImportPresenter,
+                               SourceColumnManager columnManager)
    {
       super(view);
       binder.bind(commands, this);
@@ -179,6 +180,7 @@ public class EnvironmentPresenter extends BasePresenter
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       dataImportPresenter_ = dataImportPresenter;
+      columnManager_ = columnManager;
 
       requeryContextTimer_ = new Timer()
       {
@@ -280,6 +282,12 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onBrowserLineChanged(BrowserLineChangedEvent event)
          {
+            if (isApproximateBrowsePosition_)
+            {
+               requeryContextTimer_.cancel();
+               return;
+            }
+            
             // Get the new range.
             DebugFilePosition range = event.getRange();
             
@@ -294,6 +302,7 @@ public class EnvironmentPresenter extends BasePresenter
                view_.setBrowserRange(currentBrowsePosition_);
                openOrUpdateFileBrowsePoint(true, false);
             }
+            
             requeryContextTimer_.cancel();
          }
       });
@@ -841,6 +850,7 @@ public class EnvironmentPresenter extends BasePresenter
       {
          openOrUpdateFileBrowsePoint(false, false);
          useCurrentBrowseSource_ = false;
+         isApproximateBrowsePosition_ = false;
          currentBrowseSource_ = "";
          currentBrowseFile_ = "";
          currentBrowsePosition_ = null;
@@ -892,6 +902,22 @@ public class EnvironmentPresenter extends BasePresenter
             String editorCode = target.getDocDisplay().getCode();
             int codeIndex = editorCode.indexOf(currentBrowseSource_);
             if (codeIndex == -1)
+            {
+               // Try a fuzzier search, but note that this is now an approximate position.
+               int newlineIndex = currentBrowseSource_.indexOf('\n');
+               String firstLine = editorCode.substring(0, newlineIndex);
+               codeIndex = editorCode.indexOf(firstLine);
+               if (codeIndex != -1)
+               {
+                  isApproximateBrowsePosition_ = true;
+               }
+            }
+            else
+            {
+               isApproximateBrowsePosition_ = false;
+            }
+            
+            if (codeIndex == -1)
                continue;
             
             // We've found the start of the function being debugged in a
@@ -910,9 +936,13 @@ public class EnvironmentPresenter extends BasePresenter
                   currentBrowsePosition_.getColumn(),
                   currentBrowsePosition_.getEndColumn());
             
+            FilePosition navPosition = isApproximateBrowsePosition_
+                  ? FilePosition.create(-1, -1)
+                  : currentBrowsePosition_.cast();
+            
             OpenSourceFileEvent event = new OpenSourceFileEvent(
                   FileSystemItem.createFile(target.getPath()),
-                  (FilePosition) currentBrowsePosition_.cast(),
+                  navPosition,
                   FileTypeRegistry.R,
                   NavigationMethods.DEBUG_STEP);
             eventBus_.fireEvent(event);
@@ -1179,6 +1209,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DataImportPresenter dataImportPresenter_;
+   private final SourceColumnManager columnManager_;
 
    private int contextDepth_;
    private boolean refreshingView_;
@@ -1187,6 +1218,7 @@ public class EnvironmentPresenter extends BasePresenter
    private int currentFunctionLineNumber_;
    private String currentBrowseFile_;
    private boolean useCurrentBrowseSource_;
+   private boolean isApproximateBrowsePosition_;
    private String currentBrowseSource_;
    private String environmentName_;
    private String functionEnvName_;
