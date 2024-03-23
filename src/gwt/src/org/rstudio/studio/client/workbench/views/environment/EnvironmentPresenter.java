@@ -156,8 +156,7 @@ public class EnvironmentPresenter extends BasePresenter
                                Source source,
                                DebugCommander debugCommander,
                                FileTypeRegistry fileTypeRegistry,
-                               DataImportPresenter dataImportPresenter,
-                               SourceColumnManager columnManager)
+                               DataImportPresenter dataImportPresenter)
    {
       super(view);
       binder.bind(commands, this);
@@ -180,7 +179,6 @@ public class EnvironmentPresenter extends BasePresenter
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       dataImportPresenter_ = dataImportPresenter;
-      columnManager_ = columnManager;
 
       requeryContextTimer_ = new Timer()
       {
@@ -1209,7 +1207,6 @@ public class EnvironmentPresenter extends BasePresenter
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DataImportPresenter dataImportPresenter_;
-   private final SourceColumnManager columnManager_;
 
    private int contextDepth_;
    private boolean refreshingView_;
