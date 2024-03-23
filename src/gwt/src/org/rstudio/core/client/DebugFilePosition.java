@@ -61,12 +61,12 @@ public class DebugFilePosition extends JavaScriptObject
       return getColumn() - other.getColumn();
    }
 
-   public native final DebugFilePosition functionRelativePosition(
-         int startLine) /*-{
+   public native final DebugFilePosition functionRelativePosition(int startLine)
+   /*-{
       return {
-         line: this.line - startLine,
-         column: this.column,
-         end_line: this.end_line - startLine,
+         line:       this.line - startLine,
+         end_line:   this.end_line - startLine,
+         column:     this.column,
          end_column: this.end_column
       }
    }-*/;

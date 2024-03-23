@@ -29,6 +29,7 @@ fn <- function() {
   3 + 3
   x <- 1
   4 + 4
+  5 + 5
 }
 
 debugonce(fn)

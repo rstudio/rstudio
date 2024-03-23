@@ -280,12 +280,27 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onBrowserLineChanged(BrowserLineChangedEvent event)
          {
-            if (currentBrowsePosition_.compareTo(event.getRange()) != 0)
+            if (isApproximateBrowsePosition_)
+            {
+               requeryContextTimer_.cancel();
+               return;
+            }
+            
+            // Get the new range.
+            DebugFilePosition range = event.getRange();
+            
+            // The updated range will be relative to the function start position.
+            // Convert to an absolute position in the debugged document.
+            // The debug positions used are also 1-index based, so add one.
+            range = range.functionRelativePosition(-currentFunctionLineNumber_ + 1);
+            
+            if (currentBrowsePosition_.compareTo(range) != 0)
             {
                currentBrowsePosition_ = event.getRange();
                view_.setBrowserRange(currentBrowsePosition_);
                openOrUpdateFileBrowsePoint(true, false);
             }
+            
             requeryContextTimer_.cancel();
          }
       });
@@ -833,6 +848,7 @@ public class EnvironmentPresenter extends BasePresenter
       {
          openOrUpdateFileBrowsePoint(false, false);
          useCurrentBrowseSource_ = false;
+         isApproximateBrowsePosition_ = false;
          currentBrowseSource_ = "";
          currentBrowseFile_ = "";
          currentBrowsePosition_ = null;
@@ -884,22 +900,47 @@ public class EnvironmentPresenter extends BasePresenter
             String editorCode = target.getDocDisplay().getCode();
             int codeIndex = editorCode.indexOf(currentBrowseSource_);
             if (codeIndex == -1)
+            {
+               // Try a fuzzier search, but note that this is now an approximate position.
+               int newlineIndex = currentBrowseSource_.indexOf('\n');
+               String firstLine = editorCode.substring(0, newlineIndex);
+               codeIndex = editorCode.indexOf(firstLine);
+               if (codeIndex != -1)
+               {
+                  isApproximateBrowsePosition_ = true;
+               }
+            }
+            else
+            {
+               isApproximateBrowsePosition_ = false;
+            }
+            
+            if (codeIndex == -1)
                continue;
             
             // We've found the start of the function being debugged in a
             // currently-open tab. Try to set the browse position accordingly.
             Position position = target.getDocDisplay().positionFromIndex(codeIndex);
-            currentFunctionLineNumber_ = 0;
+            
+            // Save function line number.
+            // Add one as this is a 1-based index into the document.
+            currentFunctionLineNumber_ = position.getRow() + 1;
             currentBrowseFile_ = target.getPath();
+            
+            // Set the browser position.
             currentBrowsePosition_ = DebugFilePosition.create(
                   currentBrowsePosition_.getLine() + position.getRow(),
                   currentBrowsePosition_.getEndLine() + position.getRow(),
                   currentBrowsePosition_.getColumn(),
                   currentBrowsePosition_.getEndColumn());
             
+            FilePosition navPosition = isApproximateBrowsePosition_
+                  ? FilePosition.create(-1, -1)
+                  : currentBrowsePosition_.cast();
+            
             OpenSourceFileEvent event = new OpenSourceFileEvent(
                   FileSystemItem.createFile(target.getPath()),
-                  (FilePosition) currentBrowsePosition_.cast(),
+                  navPosition,
                   FileTypeRegistry.R,
                   NavigationMethods.DEBUG_STEP);
             eventBus_.fireEvent(event);
@@ -1174,6 +1215,7 @@ public class EnvironmentPresenter extends BasePresenter
    private int currentFunctionLineNumber_;
    private String currentBrowseFile_;
    private boolean useCurrentBrowseSource_;
+   private boolean isApproximateBrowsePosition_;
    private String currentBrowseSource_;
    private String environmentName_;
    private String functionEnvName_;
