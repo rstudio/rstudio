@@ -1237,9 +1237,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void onDebugModeChanged(DebugModeChangedEvent evt)
    {
       // when debugging ends, always disengage any active debug highlights
-      if (!evt.debugging() && hasActiveEditor())
+      // note that the editor being debugged might not be currently active,
+      // so just broadcast this to all open editors
+      if (!evt.debugging())
       {
-         activeColumn_.getActiveEditor().endDebugHighlighting();
+         for (SourceColumn column : getColumnList())
+         {
+            for (EditingTarget target : column.getEditors())
+            {
+               target.endDebugHighlighting();
+            }
+         }
       }
    }
 

@@ -280,7 +280,15 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onBrowserLineChanged(BrowserLineChangedEvent event)
          {
-            if (currentBrowsePosition_.compareTo(event.getRange()) != 0)
+            // Get the new range.
+            DebugFilePosition range = event.getRange();
+            
+            // The updated range will be relative to the function start position.
+            // Convert to an absolute position in the debugged document.
+            // The debug positions used are also 1-index based, so add one.
+            range = range.functionRelativePosition(-currentFunctionLineNumber_ + 1);
+            
+            if (currentBrowsePosition_.compareTo(range) != 0)
             {
                currentBrowsePosition_ = event.getRange();
                view_.setBrowserRange(currentBrowsePosition_);
@@ -889,8 +897,13 @@ public class EnvironmentPresenter extends BasePresenter
             // We've found the start of the function being debugged in a
             // currently-open tab. Try to set the browse position accordingly.
             Position position = target.getDocDisplay().positionFromIndex(codeIndex);
-            currentFunctionLineNumber_ = 0;
+            
+            // Save function line number.
+            // Add one as this is a 1-based index into the document.
+            currentFunctionLineNumber_ = position.getRow() + 1;
             currentBrowseFile_ = target.getPath();
+            
+            // Set the browser position.
             currentBrowsePosition_ = DebugFilePosition.create(
                   currentBrowsePosition_.getLine() + position.getRow(),
                   currentBrowsePosition_.getEndLine() + position.getRow(),
