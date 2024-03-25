@@ -40,6 +40,8 @@
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
+- Added search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
+- Migrated Troubleshooting Launcher and Kubernetes guide from docs.posit.co site to Workbench Administration Guide: Job Launcher > Launcher Troubleshooting section (#5720)
 - Add search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
 - When launching sessions from the home page, memory is now shown in GB rather than MB (rstudio-pro#2722)
 - When running sessions on Kubernetes or Slurm with Singularity, the home page now remembers the container image used most recently and sets it as the default. This includes custom images, when permitted (rstudio-pro#3601, rstudio-pro#4079)
