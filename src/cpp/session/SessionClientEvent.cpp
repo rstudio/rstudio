@@ -212,6 +212,7 @@ const int kJobsActivate = 194;
 const int kPresentationPreview = 195;
 const int kSuspendBlocked = 196;
 const int kClipboardAction = 197;
+const int kDeploymentRecordsUpdated = 198;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -591,6 +592,8 @@ std::string ClientEvent::typeName() const
          return "session_suspend_blocked";
       case client_events::kClipboardAction:
          return "clipboard_action";
+      case client_events::kDeploymentRecordsUpdated:
+         return "deployment_records_updated";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

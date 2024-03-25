@@ -49,6 +49,10 @@ namespace rsconnect {
 
 namespace {
 
+// use an invalidation token (counter) to help debounce
+// multiple subsequent requests
+int s_deploymentsUpdatedToken = 0;
+
 // transforms a JSON array of file names into a single string. If 'quoted',
 // then the input strings are quoted and comma-delimited; otherwise, file names
 // are pipe-delimited.
@@ -665,6 +669,34 @@ Error initializeOptions()
    return Success();
 }
 
+void syncDeploymentRecordsImpl(int token)
+{
+   if (s_deploymentsUpdatedToken == token)
+   {
+      ClientEvent event(client_events::kDeploymentRecordsUpdated);
+      module_context::enqueClientEvent(event);
+   }
+}
+
+void syncDeploymentRecords()
+{
+   s_deploymentsUpdatedToken += 1;
+   module_context::scheduleDelayedWork(
+            boost::posix_time::seconds(1),
+            boost::bind(syncDeploymentRecordsImpl, s_deploymentsUpdatedToken));
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events,
+                    const FilePath& rsconnectPath)
+{
+   for (auto&& event : events)
+   {
+      FilePath changedPath(event.fileInfo().absolutePath());
+      if (changedPath.isWithin(rsconnectPath))
+         syncDeploymentRecords();
+   }
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -672,7 +704,15 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   module_context::events().onPreferencesSaved.connect(applyPreferences);
+   if (projects::projectContext().hasProject())
+   {
+      FilePath rsconnectPath = projects::projectContext().directory().completeChildPath("rsconnect");
+      session::projects::FileMonitorCallbacks callbacks;
+      callbacks.onFilesChanged = boost::bind(onFilesChanged, _1, rsconnectPath);
+      projects::projectContext().subscribeToFileMonitor("Connect", callbacks);
+   }
+   
+   events().onPreferencesSaved.connect(applyPreferences);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
