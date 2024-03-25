@@ -656,23 +656,34 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (exists(entry, envir = cache))
       return(get(entry, envir = cache))
    
-   # determine an appropriate CRAN URL
-   repos <- getOption("repos")
-   cran <- if ("CRAN" %in% names(repos))
-      repos[["CRAN"]]
-   else if (length(repos))
-      repos[[1]]
-   else
-      .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
-   cran <- gsub("/*$", "", cran)
+   # determine an appropriate repository URL for this package
+   # default to our public CRAN repository
+   cran <- .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
+   
+   # check whether the requested package is from a separate repository URL
+   db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
+   if ("Repository" %in% names(db)) {
+      index <- match(packageName, db$Package)
+      if (!is.na(index))
+         cran <- dirname(dirname(db$Repository[index]))
+   }
+   
+   # re-route PPM URLs to CRAN for now
+   # https://github.com/rstudio/rstudio/issues/12648
+   isPpm <-
+      grepl("^http://rspm/", cran, perl = TRUE) ||
+      grepl("^https://packagemanager.posit.co/", cran, perl = TRUE)
+   
+   if (isPpm)
+      cran <- "https://cloud.R-project.org"
    
    # check to see if this package was from Bioconductor. if so, we'll need
    # to construct a more appropriate url
    desc <- .rs.tryCatch(.rs.readPackageDescription(file.path(libraryPath, packageName)))
-   prefix <- if (inherits(desc, "error") || !"biocViews" %in% names(desc))
-      file.path(cran, "web/packages")
-   else
+   prefix <- if ("biocViews" %in% names(desc))
       "https://bioconductor.org/packages/release/bioc/news"
+   else
+      file.path(cran, "web/packages")
    
    # the set of candidate URLs -- we use the presence of a NEWS or NEWS.md
    # to help us prioritize the order of checking.
@@ -689,7 +700,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    } else {
       c("news/news.html", "news.html", "NEWS", "ChangeLog")
    }
-   
    
    # we do some special handling for 'curl'
    isCurl <- identical(getOption("download.file.method"), "curl")
