@@ -1232,14 +1232,27 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       events_.fireEvent(new FindInFilesEvent(searchPattern));
    }
+   
+   private void endDebugHighlighting()
+   {
+      for (SourceColumn column : getColumnList())
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            target.endDebugHighlighting();
+         }
+      }
+   }
 
    @Override
    public void onDebugModeChanged(DebugModeChangedEvent evt)
    {
       // when debugging ends, always disengage any active debug highlights
-      if (!evt.debugging() && hasActiveEditor())
+      // note that the editor being debugged might not be currently active,
+      // so just broadcast this to all open editors
+      if (!evt.debugging())
       {
-         activeColumn_.getActiveEditor().endDebugHighlighting();
+         endDebugHighlighting();
       }
    }
 

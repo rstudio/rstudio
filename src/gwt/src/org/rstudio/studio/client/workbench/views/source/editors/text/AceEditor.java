@@ -3737,6 +3737,7 @@ public class AceEditor implements DocDisplay,
          getSession().removeMarker(lineDebugMarkerId_);
          lineDebugMarkerId_ = null;
       }
+      
       if (executionLine_ != null)
       {
          widget_.getEditor().getRenderer().removeGutterDecoration(

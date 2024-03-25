@@ -42,6 +42,14 @@
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
 - Added search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
 - Migrated Troubleshooting Launcher and Kubernetes guide from docs.posit.co site to Workbench Administration Guide: Job Launcher > Launcher Troubleshooting section (#5720)
+- Add search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
+- When launching sessions from the home page, memory is now shown in GB rather than MB (rstudio-pro#2722)
+- When running sessions on Kubernetes or Slurm with Singularity, the home page now remembers the container image used most recently and sets it as the default. This includes custom images, when permitted (rstudio-pro#3601, rstudio-pro#4079)
+- When launching a session from the home page on Kubernetes or Slurm, the dropdown for available container images is now better organized and manages long image names more gracefully (rstudio-pro#5630)
+- Opening the job summary for a session on the home page now shows much more detailed information, including the session's host (if available), AWS role and/or Databricks Workspace (if any), queue (on Slurm), platform-native ID (on Slurm and Kubernetes) and resource profile (if applicable) (rstudio-pro#3690, rstudio-pro#5537)
+- The Databricks pane is now enabled by default if there are Databricks workspaces configured in the `databricks.conf` file. There is no need to enable it separately. To disable the pane, set `databricks-enabled=0` in the `rserver.conf` file (rstudio-pro#5556)
+- A new icon on the RStudio Pro toolbar shows information on active AWS or Databricks credentials, if present (rstudio-pro#5860)
+- The PostgreSQL password can now be set via environment variable (rstudio-pro#5332)
 
 ### Fixed
 
@@ -100,6 +108,9 @@
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
 - Fixed Copyright date ranges for Workbench Administrator Guide and Workbench User Guide (rstudio-pro#5865)
 - Fixed low-contrast text on Workbench pages [Accessibility] (rstudio-pro#4464)
+- The terminal pane of JupyterLab sessions now respects the user's default shell (rstudio-pro#5484)
+- The Databricks pane now respects the `databricks-enabled=1` setting in the `rserver.conf` file even when running in legacy RStudio Server Pro mode (rstudio-pro#5695)
+- When launching sessions on Slurm, pending or failed sessions will no longer erroneously appear in the Workbench Jobs pane on the home page (rstudio-pro#4846)
 
 ### Dependencies
 - Updated Ace to version 1.32.5 (#14227; Desktop + Server)
