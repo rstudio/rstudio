@@ -661,11 +661,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    cran <- .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
    
    # check whether the requested package is from a separate repository URL
+   # note that the 'Repository' entry below will include a suffix based on the
+   # package type, so we need to trim that after
    db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
    if ("Repository" %in% names(db)) {
       index <- match(packageName, db$Package)
-      if (!is.na(index))
-         cran <- dirname(dirname(db$Repository[index]))
+      if (!is.na(index)) {
+         repo <- db$Repository[index]
+         cran <- gsub("/(?:src|bin)/.*", "", repo)
+      }
    }
    
    # re-route PPM URLs to CRAN for now
