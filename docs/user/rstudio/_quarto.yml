@@ -45,6 +45,8 @@ website:
     - id: guide
       collapse-level: 2
       contents:
+      - text: "Introduction"
+        href: index.qmd
       - text: "Getting Started"
         href: ide/get-started/index.qmd
       - section: "Guide"
