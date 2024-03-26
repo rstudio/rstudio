@@ -22,6 +22,9 @@ public class DeploymentRecordsUpdatedEvent extends GwtEvent<DeploymentRecordsUpd
 {
    public static class Data extends JavaScriptObject
    {
+      protected Data ()
+      {
+      }
    }
 
    public DeploymentRecordsUpdatedEvent(Data data)
