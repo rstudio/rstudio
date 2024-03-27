@@ -648,11 +648,14 @@
    {
       condaRoots <- c(
          "~/opt/anaconda3",
-         "~/anaconda3",
          "~/opt/miniconda3",
+         "~/opt/miniforge3",
+         "~/anaconda3",
          "~/miniconda3",
+         "~/miniforge3",
          "/anaconda3",
-         "/miniconda3"
+         "/miniconda3",
+         "/miniforge3"
       )
    }
 
