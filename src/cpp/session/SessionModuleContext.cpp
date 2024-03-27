@@ -506,16 +506,12 @@ SEXP rs_restartR(SEXP afterRestartSEXP, SEXP cleanSEXP)
    bool clean = r::sexp::asLogical(cleanSEXP);
    
    json::Object dataJson;
-   dataJson["after_restart"] = afterRestart;
-   
-   if (clean)
-   {
-      json::Object suspendOptionsJson;
-      suspendOptionsJson["save_minimal"] = true;
-      suspendOptionsJson["save_workspace"] = false;
-      suspendOptionsJson["exclude_packages"] = true;
-      dataJson["options"] = suspendOptionsJson;
-   }
+   json::Object suspendOptionsJson;
+   suspendOptionsJson["save_minimal"] = clean;
+   suspendOptionsJson["save_workspace"] = !clean;
+   suspendOptionsJson["exclude_packages"] = clean;
+   suspendOptionsJson["after_restart"] = afterRestart;
+   dataJson["options"] = suspendOptionsJson;
    
    ClientEvent event(client_events::kSuspendAndRestart, dataJson);
    module_context::enqueClientEvent(event);
