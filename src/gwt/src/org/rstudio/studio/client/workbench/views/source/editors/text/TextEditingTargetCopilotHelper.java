@@ -77,6 +77,9 @@ public class TextEditingTargetCopilotHelper
          @Override
          public void run()
          {
+            if (copilotDisabledInThisDocument_)
+               return;
+            
             target_.withSavedDoc(() ->
             {
                requestId_ += 1;
@@ -105,6 +108,14 @@ public class TextEditingTargetCopilotHelper
                            Position currentCursorPosition = display_.getCursorPosition();
                            if (!currentCursorPosition.isEqualTo(savedCursorPosition))
                               return;
+                           
+                           // Check for null response. This might happen if no completions are permitted in this scope.
+                           if (response == null)
+                           {
+                              copilotDisabledInThisDocument_ = true;
+                              events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_CANCELLED));
+                              return;
+                           }
                            
                            // Check for error.
                            CopilotError error = response.error;
@@ -431,6 +442,7 @@ public class TextEditingTargetCopilotHelper
    
    private int requestId_;
    private boolean suppressCursorChangeHandler_;
+   private boolean copilotDisabledInThisDocument_;
    
    private CopilotCompletion activeCompletion_;
    private boolean automaticCodeSuggestionsEnabled_ = true;
