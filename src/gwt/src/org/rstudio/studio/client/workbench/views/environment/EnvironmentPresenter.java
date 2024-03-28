@@ -282,6 +282,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             if (isApproximateBrowsePosition_)
             {
+               openOrUpdateFileBrowsePoint(true, true);
                requeryContextTimer_.cancel();
                return;
             }

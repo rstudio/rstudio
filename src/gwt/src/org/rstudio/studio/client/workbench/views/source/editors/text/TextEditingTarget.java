@@ -428,14 +428,6 @@ public class TextEditingTarget implements
             name_.setValue(file_.getName(), true);
             // Make sure tooltip gets updated, even if name hasn't changed
             name_.fireChangeEvent();
-
-            // If we were dirty prior to saving, clean up the debug state so
-            // we don't continue highlighting after saving. (There are cases
-            // in which we want to restore highlighting after the dirty state
-            // is marked clean--i.e. when unwinding the undo stack.)
-            if (dirtyState_.getValue())
-               endDebugHighlighting();
-
             dirtyState_.markClean();
          }
 
@@ -1313,10 +1305,23 @@ public class TextEditingTarget implements
          SourcePosition endPos,
          boolean executing)
    {
-      debugStartPos_ = startPos;
-      debugEndPos_ = endPos;
-      docDisplay_.highlightDebugLocation(startPos, endPos, executing);
-      updateDebugWarningBar();
+      boolean isApproximate =
+            startPos.getRow() < 0 ||
+            startPos.getColumn() < 0;
+      
+      if (isApproximate)
+      {
+         docDisplay_.endDebugHighlighting();
+         updateDebugWarningBar(
+               "Debug location is approximate because the source code for the function currently being debugged has changed.");
+      }
+      else
+      {
+         debugStartPos_ = startPos;
+         debugEndPos_ = endPos;
+         docDisplay_.highlightDebugLocation(startPos, endPos, executing);
+         updateDebugWarningBar();
+      }
    }
 
    @Override
@@ -1426,16 +1431,26 @@ public class TextEditingTarget implements
       }
    }
 
-   private void updateDebugWarningBar()
+   private void updateDebugWarningBar(String message,
+                                      boolean force)
    {
+      if (force)
+      {
+         isDebugWarningVisible_ = true;
+         view_.hideWarningBar();
+         view_.showWarningBar(message);
+         return;
+      }
+      
       // show the warning bar if we're debugging and the document is dirty
       if (debugStartPos_ != null &&
           dirtyState().getValue() &&
           !isDebugWarningVisible_)
       {
-         view_.showWarningBar(constants_.updateDebugWarningBarMessage());
+         view_.showWarningBar(message);
          isDebugWarningVisible_ = true;
       }
+      
       // hide the warning bar if the dirty state or debug state change
       else if (isDebugWarningVisible_ &&
                (debugStartPos_ == null || dirtyState().getValue() == false))
@@ -1450,6 +1465,16 @@ public class TextEditingTarget implements
          }
          isDebugWarningVisible_ = false;
       }
+   }
+ 
+   private void updateDebugWarningBar(String message)
+   {
+      updateDebugWarningBar(message, true);
+   }
+   
+   private void updateDebugWarningBar()
+   {
+      updateDebugWarningBar(constants_.updateDebugWarningBarMessage(), false);
    }
 
    public void showWarningMessage(String message)
@@ -2132,13 +2157,12 @@ public class TextEditingTarget implements
       // this doesn't yet handle the case where the user saves the document,
       // in which case we should still show some sort of warning.)
       dirtyState().addValueChangeHandler(new ValueChangeHandler<Boolean>()
-            {
-               public void onValueChange(ValueChangeEvent<Boolean> evt)
-               {
-                  updateDebugWarningBar();
-               }
-            }
-      );
+      {
+         public void onValueChange(ValueChangeEvent<Boolean> evt)
+         {
+            updateDebugWarningBar();
+         }
+      });
 
       // find all of the debug breakpoints set in this document and replay them
       // onto the edit surface
