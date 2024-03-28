@@ -303,8 +303,9 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("getPackageVersion", function(packageName)
 {
-   package_version(utils:::packageDescription(packageName, 
-                                              fields="Version"))   
+   v <- suppressWarnings(utils:::packageDescription(packageName, 
+                                              fields="Version"))
+   package_version(v)   
 })
 
 # save an environment to a file
