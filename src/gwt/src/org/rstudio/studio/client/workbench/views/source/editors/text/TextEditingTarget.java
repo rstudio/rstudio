@@ -1305,32 +1305,45 @@ public class TextEditingTarget implements
          SourcePosition endPos,
          boolean executing)
    {
-      boolean isApproximate =
-            startPos.getRow() < 0 ||
-            startPos.getColumn() < 0;
+      if (documentDirtyHandler_ == null)
+      {
+         documentDirtyHandler_ = dirtyState_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+         {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event)
+            {
+               if (documentDirtyHandler_ != null)
+               {
+                  documentDirtyHandler_.removeHandler();
+                  documentDirtyHandler_ = null;
+               }
+               
+               documentChangedDuringDebugSession_ = true;
+               updateDebugWarningBar();
+            }
+         });
+      }
       
-      if (isApproximate)
-      {
-         docDisplay_.endDebugHighlighting();
-         updateDebugWarningBar(
-               "Debug location is approximate because the source code for the function currently being debugged has changed.");
-      }
-      else
-      {
-         debugStartPos_ = startPos;
-         debugEndPos_ = endPos;
-         docDisplay_.highlightDebugLocation(startPos, endPos, executing);
-         updateDebugWarningBar();
-      }
+      debugStartPos_ = startPos;
+      debugEndPos_ = endPos;
+      docDisplay_.highlightDebugLocation(startPos, endPos, executing);
+      updateDebugWarningBar();
    }
 
    @Override
    public void endDebugHighlighting()
    {
+      if (documentDirtyHandler_ != null)
+      {
+         documentDirtyHandler_.removeHandler();
+         documentDirtyHandler_ = null;
+      }
+      
       docDisplay_.endDebugHighlighting();
+      documentChangedDuringDebugSession_ = false;
       debugStartPos_ = null;
       debugEndPos_ = null;
-      updateDebugWarningBar();
+      hideDebugWarningBar();
    }
 
    @Override
@@ -1430,11 +1443,19 @@ public class TextEditingTarget implements
          queuedCollabParams_ = null;
       }
    }
-
-   private void updateDebugWarningBar(String message,
-                                      boolean force)
+   
+   private void hideDebugWarningBar()
    {
-      if (force)
+      if (isDebugWarningVisible_)
+      {
+         isDebugWarningVisible_ = false;
+         view_.hideWarningBar();
+      }
+   }
+
+   private void updateDebugWarningBar(String message, boolean force)
+   {
+      if (force || documentChangedDuringDebugSession_)
       {
          isDebugWarningVisible_ = true;
          view_.hideWarningBar();
@@ -2152,18 +2173,6 @@ public class TextEditingTarget implements
 
       spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_, prefs_);
 
-
-      // show/hide the debug toolbar when the dirty state changes. (note:
-      // this doesn't yet handle the case where the user saves the document,
-      // in which case we should still show some sort of warning.)
-      dirtyState().addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         public void onValueChange(ValueChangeEvent<Boolean> evt)
-         {
-            updateDebugWarningBar();
-         }
-      });
-
       // find all of the debug breakpoints set in this document and replay them
       // onto the edit surface
       ArrayList<Breakpoint> breakpoints =
@@ -2348,6 +2357,7 @@ public class TextEditingTarget implements
       if (isBreakpointWarningVisible_)
       {
          view_.hideWarningBar();
+         isDebugWarningVisible_ = false;
          isBreakpointWarningVisible_ = false;
       }
    }
@@ -9320,6 +9330,7 @@ public class TextEditingTarget implements
       private long saving_ = 0;
    };
 
+   private HandlerRegistration documentDirtyHandler_ = null;
    private SourcePosition debugStartPos_ = null;
    private SourcePosition debugEndPos_ = null;
    private boolean isDebugWarningVisible_ = false;
@@ -9327,6 +9338,7 @@ public class TextEditingTarget implements
    private String extendedType_;
 
    // prevent multiple manual saves from queuing up
+   private boolean documentChangedDuringDebugSession_ = false;
    private boolean isSaving_ = false;
 
    private abstract class RefactorServerRequestCallback

@@ -14,8 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -41,8 +42,8 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
 
 public class TextEditingTargetCompilePdfHelper
       implements RnwCompletionContext
@@ -136,8 +137,7 @@ public class TextEditingTargetCompilePdfHelper
    }
    
    
-   public void checkCompilers(final WarningBarDisplay display, 
-                              TextFileType fileType)
+   public void checkCompilers(WarningBarDisplay display, TextFileType fileType)
    {
       // for all tex files we need to parse magic comments and validate
       // any explicit latex program directive
@@ -153,10 +153,11 @@ public class TextEditingTargetCompilePdfHelper
             if (latexProgramRegistry_.findTypeIgnoreCase(latexProgramDirective)
                   == null)
             {
-               // show warning and bail 
-               display.showWarningBar(constants_.checkCompilersUnknownLatexType(latexProgramDirective,
-                       latexProgramRegistry_.getPrintableTypeNames()));
-               
+               // show warning and bail
+               String message = constants_.checkCompilersUnknownLatexType(
+                     latexProgramDirective,
+                     latexProgramRegistry_.getPrintableTypeNames());
+               showWarning(display, message);
                return;
             }
          }
@@ -174,9 +175,10 @@ public class TextEditingTargetCompilePdfHelper
             if (rnwWeave == null)
             {
                // show warning and bail 
-               display.showWarningBar(constants_.checkCompilersRnWWeaveTypeError(rnwWeaveDirective.getName(),
-                       rnwWeaveRegistry_.getPrintableTypeNames()));
-               
+               String message = constants_.checkCompilersRnWWeaveTypeError(
+                     rnwWeaveDirective.getName(),
+                     rnwWeaveRegistry_.getPrintableTypeNames());
+               showWarning(display, message);
                return;
             }    
          }
@@ -215,7 +217,7 @@ public class TextEditingTargetCompilePdfHelper
                      warning = constants_.checkCompilersDesktopWarning();
                   else
                      warning = constants_.checkCompilersServerWarning();
-                  display.showTexInstallationMissingWarning(warning);
+                  showWarning(display, warning);
                }
                else if (checkForRnwWeave && 
                         !response.isRnwWeaveAvailable(fRnwWeave))
@@ -228,12 +230,15 @@ public class TextEditingTargetCompilePdfHelper
                   else
                      forContext = constants_.rnwFiles();
                   
-                  display.showWarningBar(constants_.checkCompilersRnWPackageNotInstalled(fRnwWeave.getName(),
-                                  forContext, fRnwWeave.getPackageName()));
+                  String message = constants_.checkCompilersRnWPackageNotInstalled(
+                        fRnwWeave.getName(),
+                        forContext,
+                        fRnwWeave.getPackageName());
+                  showWarning(display, message);
                }
                else
                {
-                  display.hideWarningBar();
+                  hideWarning(display);
                }
             }
 
@@ -246,7 +251,7 @@ public class TextEditingTargetCompilePdfHelper
       }
       else
       {
-         display.hideWarningBar();
+         hideWarning(display);
       }
    }
    
@@ -442,7 +447,23 @@ public class TextEditingTargetCompilePdfHelper
       return null;
    }
    
+   private void showWarning(WarningBarDisplay display, String message)
+   {
+      isWarningShowing_ = true;
+      display.showWarningBar(message);
+   }
+   
+   private void hideWarning(WarningBarDisplay display)
+   {
+      if (isWarningShowing_)
+      {
+         isWarningShowing_ = false;
+         display.hideWarningBar();
+      }
+   }
+   
    private final DocDisplay docDisplay_;
+   private boolean isWarningShowing_ = false;
    
    private UserPrefs prefs_;
    private Session session_;
