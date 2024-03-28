@@ -2090,7 +2090,7 @@ public class Source implements InsertSourceEvent.Handler,
                   position != null &&
                   (position.getLine() != -1 || position.getColumn() != -1);
 
-            if (navigateToPosition)
+            if (isDebugNavigation || navigateToPosition)
             {
                SourcePosition endPosition = null;
                if (isDebugNavigation)

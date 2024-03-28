@@ -14,10 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors;
 
-import com.google.gwt.event.logical.shared.HasCloseHandlers;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.IsWidget;
+import java.util.HashSet;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
@@ -36,7 +33,10 @@ import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartPa
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-import java.util.HashSet;
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.IsWidget;
 
 public interface EditingTarget extends IsWidget,
                                        HasEnsureVisibleHandlers,
@@ -108,7 +108,7 @@ public interface EditingTarget extends IsWidget,
    void highlightDebugLocation(
          SourcePosition startPos,
          SourcePosition endPos,
-         boolean executing);   
+         boolean executing);
    void endDebugHighlighting();
    
    void beginCollabSession(CollabEditStartParams params);

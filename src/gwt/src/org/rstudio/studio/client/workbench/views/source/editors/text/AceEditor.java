@@ -3718,9 +3718,13 @@ public class AceEditor implements DocDisplay,
          boolean executing)
    {
       clearDebugLineHighlight();
+      if (startPos.getRow() < 0 || startPos.getColumn() < 0)
+         return;
+      
       lineDebugMarkerId_ = createRangeHighlightMarker(
             startPos, endPos,
             "ace_active_debug_line");
+      
       if (executing)
       {
          executionLine_ = startPos.getRow();
