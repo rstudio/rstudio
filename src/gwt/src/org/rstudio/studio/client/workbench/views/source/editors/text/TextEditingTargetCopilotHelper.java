@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.Objects;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.MathUtil;
@@ -109,8 +111,13 @@ public class TextEditingTargetCopilotHelper
                            if (!currentCursorPosition.isEqualTo(savedCursorPosition))
                               return;
                            
-                           // Check for null response. This might happen if no completions are permitted in this scope.
+                           // Check for null completion results -- this may occur if the Copilot
+                           // agent couldn't be started for some reason.
                            if (response == null)
+                              return;
+                           
+                           // Check whether completions are enabled in this document.
+                           if (Objects.equals(response.enabled, false))
                            {
                               copilotDisabledInThisDocument_ = true;
                               events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_CANCELLED));

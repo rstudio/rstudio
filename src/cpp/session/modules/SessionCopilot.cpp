@@ -1438,7 +1438,12 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    FilePath docPath = module_context::resolveAliasedPath(documentPath);
    if (!isIndexableFile(docPath))
    {
+      json::Object resultJson;
+      resultJson["enabled"] = false;
+      
       json::JsonRpcResponse response;
+      response.setResult(resultJson);
+      
       continuation(Success(), &response);
       return Success();
    }
