@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.Objects;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.MathUtil;
@@ -77,6 +79,9 @@ public class TextEditingTargetCopilotHelper
          @Override
          public void run()
          {
+            if (copilotDisabledInThisDocument_)
+               return;
+            
             target_.withSavedDoc(() ->
             {
                requestId_ += 1;
@@ -105,6 +110,19 @@ public class TextEditingTargetCopilotHelper
                            Position currentCursorPosition = display_.getCursorPosition();
                            if (!currentCursorPosition.isEqualTo(savedCursorPosition))
                               return;
+                           
+                           // Check for null completion results -- this may occur if the Copilot
+                           // agent couldn't be started for some reason.
+                           if (response == null)
+                              return;
+                           
+                           // Check whether completions are enabled in this document.
+                           if (Objects.equals(response.enabled, false))
+                           {
+                              copilotDisabledInThisDocument_ = true;
+                              events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_CANCELLED));
+                              return;
+                           }
                            
                            // Check for error.
                            CopilotError error = response.error;
@@ -431,6 +449,7 @@ public class TextEditingTargetCopilotHelper
    
    private int requestId_;
    private boolean suppressCursorChangeHandler_;
+   private boolean copilotDisabledInThisDocument_;
    
    private CopilotCompletion activeCompletion_;
    private boolean automaticCodeSuggestionsEnabled_ = true;

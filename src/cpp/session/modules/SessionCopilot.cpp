@@ -65,14 +65,14 @@
 # define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
 #endif
 
-
 #ifndef _WIN32
 # define kNodeExe "node"
 #else
 # define kNodeExe "node.exe"
 #endif
 
-#define kCopilotAgentDefaultCommitHash ("69455be5d4a892206bc08365ba3648a597485943")
+#define kCopilotAgentDefaultCommitHash ("69455be5d4a892206bc08365ba3648a597485943") // pragma: allowlist secret
+#define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
 using namespace rstudio::core;
@@ -261,6 +261,16 @@ bool isIndexableFile(const FilePath& documentPath)
       return false;
    
    return true;
+}
+
+bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   // Don't index binary files.
+   if (pDoc->contents().find('\0') != std::string::npos)
+      return false;
+   
+   FilePath docPath(pDoc->path());
+   return isIndexableFile(docPath);
 }
 
 FilePath copilotAgentPath()
@@ -1029,15 +1039,14 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
       return;
-
-   // Avoid indexing binary files
-   if (pDoc->contents().find('\0') != std::string::npos)
+   
+   if (!isIndexableDocument(pDoc))
       return;
    
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
-   textDocumentJson["version"] = 1;
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
    textDocumentJson["text"] = "";
 
    json::Object paramsJson;
@@ -1067,15 +1076,14 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    if (!ensureAgentRunning())
       return;
 
-   // Avoid indexing binary files
-   if (pDoc->contents().find('\0') != std::string::npos)
+   if (!isIndexableDocument(pDoc))
       return;
    
    // Synchronize document contents with Copilot
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
-   textDocumentJson["version"] = 1;
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
    textDocumentJson["text"] = contentsFromDocument(pDoc);
 
    json::Object paramsJson;
@@ -1204,7 +1212,7 @@ void indexFile(const core::FileInfo& info)
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = 1;
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
    textDocumentJson["text"] = contents;
 
    json::Object paramsJson;
@@ -1424,6 +1432,21 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
       return error;
    }
+   
+   // Disallow completion request in hidden files, since this might trigger
+   // the copilot agent to attempt to read the contents of that file
+   FilePath docPath = module_context::resolveAliasedPath(documentPath);
+   if (!isIndexableFile(docPath))
+   {
+      json::Object resultJson;
+      resultJson["enabled"] = false;
+      
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+      
+      continuation(Success(), &response);
+      return Success();
+   }
 
    // Build completion request
    json::Object positionJson;
@@ -1433,7 +1456,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    json::Object docJson;
    docJson["position"] = positionJson;
    docJson["uri"] = uriFromDocumentImpl(documentId, documentPath, isUntitled);
-   docJson["version"] = 1;
+   docJson["version"] = kCopilotDefaultDocumentVersion;
 
    json::Object paramsJson;
    paramsJson["doc"] = docJson;
