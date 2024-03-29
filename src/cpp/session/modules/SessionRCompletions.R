@@ -2759,7 +2759,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # options
-   else if (string[[1]] == "options" && context == .rs.acContextTypes$FUNCTION)
+   else if (string[[1]] == "options" && context[[1]] == .rs.acContextTypes$FUNCTION)
    {
       .rs.getCompletionsOptions(token)
    }
