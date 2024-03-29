@@ -1456,7 +1456,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    json::Object docJson;
    docJson["position"] = positionJson;
    docJson["uri"] = uriFromDocumentImpl(documentId, documentPath, isUntitled);
-   docJson["version"] = 0;
+   docJson["version"] = kCopilotDefaultDocumentVersion;
 
    json::Object paramsJson;
    paramsJson["doc"] = docJson;
