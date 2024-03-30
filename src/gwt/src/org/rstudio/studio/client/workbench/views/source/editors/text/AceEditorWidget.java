@@ -51,7 +51,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWid
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Tooltip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
@@ -214,12 +213,6 @@ public class AceEditorWidget extends Composite
       editor_.onChangeScrollTop(() -> {
          Position pos = Position.create(editor_.getFirstVisibleRow(), 0);
          fireEvent(new ScrollYEvent(pos));
-      });
-
-      // don't show gutter tooltips for spelling warnings
-      editor_.onShowGutterTooltip((Tooltip tooltip) -> {
-         if (tooltip.getTextContent().toLowerCase().contains("spellcheck"))
-            tooltip.hide();
       });
 
       editor_.onGutterMouseDown(new CommandWithArg<AceMouseEventNative>()
@@ -1244,7 +1237,7 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.style();
          else if (item.getType() == "spelling")
             clazz = lintStyles_.spelling();
-
+         
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
          annotations_.add(new AnchoredAceAnnotation(
             annotations.get(i),

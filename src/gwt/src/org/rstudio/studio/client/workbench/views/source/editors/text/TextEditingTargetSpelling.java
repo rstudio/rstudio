@@ -19,16 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -43,6 +33,17 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.MenuItem;
 
 
 public class TextEditingTargetSpelling extends SpellingContext
@@ -126,7 +127,14 @@ public class TextEditingTargetSpelling extends SpellingContext
                      }
                   }
                   
-                  lint.push(LintItem.create(wordStart.getRow(), wordStart.getColumn(), wordEnd.getRow(), wordEnd.getColumn(), constants_.spellcheck(), "spelling"));
+                  lint.push(
+                        LintItem.create(
+                              wordStart.getRow(),
+                              wordStart.getColumn(),
+                              wordEnd.getRow(),
+                              wordEnd.getColumn(),
+                              constants_.wordIsMisspelled(word),
+                              "spelling"));
                }
             }
 
