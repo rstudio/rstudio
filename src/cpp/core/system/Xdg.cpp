@@ -191,7 +191,7 @@ FilePath resolveXdgDir(
       FilePath rstudioXdgHome = FilePath(xdgPath).completeChildPath(kRStudioDataFolderName);
       if (rstudioXdgHome.exists())
       {
-         DLOGF("Using XDG directory: {} => {}", xdgPath, rstudioXdgHome.getAbsolutePath());
+         DLOGF("Using XDG directory: {} => {}", xdgEnvVar, rstudioXdgHome.getAbsolutePath());
          return resolveXdgDirImpl(rstudioXdgHome, user, homeDir, suffix);
       }
    }
@@ -202,7 +202,7 @@ FilePath resolveXdgDir(
       if (FilePath::exists(xdgPath))
       {
          FilePath rstudioXdgHome = FilePath(xdgPath).completeChildPath(kRStudioDataFolderName);
-         DLOGF("Using XDG directory: {} => {}", xdgPath, rstudioXdgHome.getAbsolutePath());
+         DLOGF("Using XDG directory: {} => {}", xdgEnvVar, rstudioXdgHome.getAbsolutePath());
          return resolveXdgDirImpl(rstudioXdgHome, user, homeDir, suffix);
       }
    }
