@@ -14,20 +14,21 @@
  */
 
 #ifdef _WIN32
-#include <Windows.h>
-#include <ShlObj_core.h>
-#include <KnownFolders.h>
-#include <winsock2.h>
+# include <Windows.h>
+# include <ShlObj_core.h>
+# include <KnownFolders.h>
+# include <winsock2.h>
 #endif
-
-#include <core/Algorithm.hpp>
-#include <core/system/Environment.hpp>
-#include <core/system/System.hpp>
-#include <core/system/Xdg.hpp>
-#include <core/Thread.hpp>
 
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/system/User.hpp>
+
+#include <core/Algorithm.hpp>
+#include <core/StringUtils.hpp>
+#include <core/Thread.hpp>
+#include <core/system/Environment.hpp>
+#include <core/system/System.hpp>
+#include <core/system/Xdg.hpp>
 
 #ifdef _WIN32
 # define kRStudioDataFolderName "RStudio"
@@ -79,24 +80,15 @@ std::string getHostname()
 namespace {
 
 FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
-                           const std::string& rstudioXdgSource,
                            const boost::optional<std::string>& user,
                            const boost::optional<FilePath>& homeDir,
                            const std::string& suffix)
 {
-   // double-check that the provided path exists
-   if (!rstudioXdgSource.empty() && !rstudioXdgPath.exists())
-   {
-      WLOGF(
-               "Requested XDG path ({} = {}) does not exist",
-               rstudioXdgPath.getAbsolutePath(),
-               rstudioXdgSource);
-   }
-   
    // expand HOME, USER, and HOSTNAME if given
-   std::string resolvedHostname = getenv("HOSTNAME").empty() ? getHostname() : getenv("HOSTNAME");
+   std::string hostname = getenv("HOSTNAME");
+   std::string resolvedHostname = hostname.empty() ? getHostname() : hostname;
    std::string resolvedUser = user ? *user : username();
-   FilePath resolvedHome = homeDir ? homeDir.get() : userHomePath();
+   FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
    
    core::system::Options environment;
    core::system::setenv(&environment, "HOME", resolvedHome.getAbsolutePath());
@@ -112,6 +104,34 @@ FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
       rstudioXdgPath = rstudioXdgPath.completePath(suffix);
 
    return rstudioXdgPath;
+}
+
+std::string xdgDefaultDir(const std::string& defaultDir)
+{
+   std::string xdgHomeDir;
+   
+#ifdef _WIN32
+   // On Windows, the default path is in Application Data/Roaming.
+   wchar_t* path = nullptr;
+   HRESULT hr = ::SHGetKnownFolderPath(windowsFolderId, 0, nullptr, &path);
+   if (hr == S_OK)
+   {
+      xdgHomeDir = core::string_utils::wideToUtf8(std::wstring(path));
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("Unable to retrieve app settings path. HRESULT: " +
+                        safe_convert::numberToHexString(hr));
+   }
+
+   // Free memory if allocated
+   if (path != nullptr)
+   {
+      ::CoTaskMemFree(path);
+   }
+#endif
+
+   return xdgHomeDir.empty() ? defaultDir : xdgHomeDir;
 }
 
 } // end anonymous namespace
@@ -143,62 +163,54 @@ FilePath resolveXdgDir(
       const std::string& suffix = std::string())
 {
    // If the RStudio-specific environment variable is provided, use it.
-   std::string rstudioXdgPath = getenv(rstudioEnvVar);
-   if (!rstudioXdgPath.empty())
-      return resolveXdgDirImpl(FilePath(rstudioXdgPath), rstudioEnvVar, user, homeDir, suffix);
-   
-   // Check the provided XDG directories. If the RStudio data directory
-   // exists within one of the provided directories, use it.
-   std::string xdgEnvValue = getenv(xdgEnvVar);
-   if (!xdgEnvValue.empty())
+   std::string rstudioEnvValue = getenv(rstudioEnvVar);
+   if (!rstudioEnvValue.empty())
    {
-      std::vector<std::string> xdgPaths = core::algorithm::split(xdgEnvValue, ":");
-      for (const std::string& xdgPath : xdgPaths)
+      // TODO: What if this variable is provided, but we cannot create or use
+      // the provided directory? Should we fall back to an XDG directory?
+      FilePath rstudioXdgPath(rstudioEnvValue);
+      Error error = rstudioXdgPath.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+      
+      DLOGF("Using XDG directory: {} => {}", rstudioEnvVar, rstudioXdgPath.getAbsolutePath());
+      return resolveXdgDirImpl(rstudioXdgPath, user, homeDir, suffix);
+   }
+   
+   // Build list of directories to search.
+   std::string xdgEnvValue = getenv(xdgEnvVar);
+   std::vector<std::string> xdgPaths = core::algorithm::split(xdgEnvValue, ":");
+   
+   // Include the default directory in the search list.
+   std::string xdgDefaultHome = xdgDefaultDir(defaultDir);
+   xdgPaths.push_back(xdgDefaultHome);
+   
+   // First, look for an already-existing RStudio directory.
+   for (const std::string& xdgPath : xdgPaths)
+   {
+      FilePath rstudioXdgHome = FilePath(xdgPath).completeChildPath(kRStudioDataFolderName);
+      if (rstudioXdgHome.exists())
       {
-         FilePath rstudioXdgHome = FilePath(xdgPath).completeChildPath(kRStudioDataFolderName);
-         if (rstudioXdgHome.exists())
-            return resolveXdgDirImpl(rstudioXdgHome, xdgEnvValue, user, homeDir, suffix);
+         DLOGF("Using XDG directory: {} => {}", xdgPath, rstudioXdgHome.getAbsolutePath());
+         return resolveXdgDirImpl(rstudioXdgHome, user, homeDir, suffix);
       }
    }
    
-   FilePath xdgHome;
-
-#ifdef _WIN32
-   // On Windows, the default path is in Application Data/Roaming.
-   wchar_t *path = nullptr;
-   HRESULT hr = ::SHGetKnownFolderPath(
-            windowsFolderId,
-            0,
-            nullptr, // current user
-            &path);
-
-   if (hr == S_OK)
+   // If we couldn't find an RStudio directory, use the first XDG path that exists.
+   for (const std::string& xdgPath : xdgPaths)
    {
-      xdgHome = FilePath(std::wstring(path));
+      if (FilePath::exists(xdgPath))
+      {
+         FilePath rstudioXdgHome = FilePath(xdgPath).completeChildPath(kRStudioDataFolderName);
+         DLOGF("Using XDG directory: {} => {}", xdgPath, rstudioXdgHome.getAbsolutePath());
+         return resolveXdgDirImpl(rstudioXdgHome, user, homeDir, suffix);
+      }
    }
-   else
-   {
-      LOG_WARNING_MESSAGE("Unable to retrieve app settings path. HRESULT: " +
-                        safe_convert::numberToHexString(hr));
-   }
-
-   // Free memory if allocated
-   if (path != nullptr)
-   {
-      ::CoTaskMemFree(path);
-   }
-
-#endif
-
-   if (xdgHome.isEmpty())
-   {
-      // Use the default subdir for POSIX. We also use this folder as a fallback on Windows
-      // if we couldn't read the app settings path.
-      xdgHome = FilePath(defaultDir);
-   }
- 
-   FilePath rstudioXdgHome = xdgHome.completeChildPath(kRStudioDataFolderName);
-   return resolveXdgDirImpl(rstudioXdgHome, defaultDir, user, homeDir, suffix);
+   
+   // If none of the provided directories exist (very unexpected!) use the default.
+   FilePath rstudioXdgHome = FilePath(xdgDefaultHome).completeChildPath(kRStudioDataFolderName);
+   DLOGF("Using XDG directory: {} => {}", xdgDefaultHome, rstudioXdgHome.getAbsolutePath());
+   return resolveXdgDirImpl(rstudioXdgHome, user, homeDir, suffix);
 }
 
 } // anonymous namespace
