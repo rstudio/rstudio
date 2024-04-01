@@ -132,15 +132,6 @@ pipeline {
             }
 
           stages {
-            stage('Run Homepage Tests') {
-              when { expression { return FLAVOR == 'Server' && IS_PRO } }
-              steps {
-                dir ("src/cpp/session/workspaces/www-sources") {
-                  sh "npm ci && ./run-tests.sh"
-                }
-              }
-            }
-
             stage('Build Package') {
               steps {
                 dir ("package/linux") {
@@ -196,6 +187,16 @@ pipeline {
                 }
               }
             }
+
+            stage('Run Homepage Tests') {
+              when { expression { return FLAVOR == 'Server' && IS_PRO } }
+              steps {
+                dir ("src/cpp/session/workspaces/www-sources") {
+                  sh "./run-tests.sh"
+                }
+              }
+            }
+
           }
         }
       }
