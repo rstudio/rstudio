@@ -108,7 +108,7 @@ FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
 
 std::string xdgDefaultDir(
 #ifdef _WIN32
-      const GUID windowsFolderId,
+      const GUID& windowsFolderId,
 #endif
       const std::string& defaultDir)
 {
@@ -159,7 +159,7 @@ FilePath resolveXdgDir(
       const std::string& rstudioEnvVar,
       const std::string& xdgEnvVar,
 #ifdef _WIN32
-      const GUID windowsFolderId,
+      const GUID& windowsFolderId,
 #endif
       const std::string& defaultDir,
       const boost::optional<std::string>& user,
