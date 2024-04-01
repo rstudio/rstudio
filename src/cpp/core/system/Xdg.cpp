@@ -106,7 +106,11 @@ FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
    return rstudioXdgPath;
 }
 
-std::string xdgDefaultDir(const std::string& defaultDir)
+std::string xdgDefaultDir(
+#ifdef _WIN32
+      const GUID windowsFolderId,
+#endif
+      const std::string& defaultDir)
 {
    std::string xdgHomeDir;
    
@@ -182,7 +186,12 @@ FilePath resolveXdgDir(
    std::vector<std::string> xdgPaths = core::algorithm::split(xdgEnvValue, ":");
    
    // Include the default directory in the search list.
-   std::string xdgDefaultHome = xdgDefaultDir(defaultDir);
+   std::string xdgDefaultHome = xdgDefaultDir(
+#ifdef _WIN32
+            windowsFolderId,
+#endif
+            defaultDir);
+   
    xdgPaths.push_back(xdgDefaultHome);
    
    // First, look for an already-existing RStudio directory.
