@@ -71,7 +71,6 @@ typedef struct RCNTXT_44 {
     struct RCNTXT_44 *nextcontext;
     int callflag;
     RS_JMP_BUF cjmpbuf;
-    RS_JMP_BUF *cjmpbuf_ptr;  // added in R 4.4
     int cstacktop;
     int evaldepth;
     SEXP promargs;
@@ -88,11 +87,12 @@ typedef struct RCNTXT_44 {
     int bcintactive;
     SEXP bcbody;
     void *bcpc;
+    ptrdiff_t relpc;  // added in R 4.4
     SEXP handlerstack;
     SEXP restartstack;
-    struct RPRSTACK *prstack;
-    R_BCSTACK_T *nodestack;
-    R_BCSTACK_T *bcprottop;
+    struct RPRSTACK* prstack;
+    R_BCSTACK_T* nodestack;
+    R_BCSTACK_T* bcprottop;
     void* bcframe;  // added in R 4.4
     SEXP srcref;
     int browserfinish;
