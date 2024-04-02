@@ -15,6 +15,7 @@
 
 #ifdef _WIN32
 # include <Windows.h>
+# include <comdef.h>
 # include <ShlObj_core.h>
 # include <KnownFolders.h>
 # include <winsock2.h>
@@ -109,6 +110,7 @@ FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
 std::string xdgDefaultDir(
 #ifdef _WIN32
       const GUID& windowsFolderId,
+      const std::string& windowsFolderIdName,
 #endif
       const std::string& defaultDir)
 {
@@ -124,15 +126,15 @@ std::string xdgDefaultDir(
    }
    else
    {
-      LOG_WARNING_MESSAGE("Unable to retrieve app settings path. HRESULT: " +
-                        safe_convert::numberToHexString(hr));
+      _com_error error(hr);
+      WLOGF(
+          "Error {} computing SHGetKnownFolderPath({}): {}",
+          safe_convert::numberToHexString(hr),
+          windowsFolderIdName,
+          error.ErrorMessage());
    }
 
-   // Free memory if allocated
-   if (path != nullptr)
-   {
-      ::CoTaskMemFree(path);
-   }
+   ::CoTaskMemFree(path);
 #endif
 
    return xdgHomeDir.empty() ? defaultDir : xdgHomeDir;
@@ -149,6 +151,7 @@ std::string xdgDefaultDir(
  * @param defaultDir Fallback default directory if neither environment variable
  *   is present
  * @param windowsFolderId The ID of the Windows folder to resolve against
+ * @param windowsFolderIdName The symbolic name of the Windows folder to resolve against
  * @param user Optionally, the user to return a directory for; if omitted the
  *   current user is used
  * @param homeDir Optionally, the home directory to resolve against; if omitted
@@ -160,6 +163,7 @@ FilePath resolveXdgDir(
       const std::string& xdgEnvVar,
 #ifdef _WIN32
       const GUID& windowsFolderId,
+      const std::string& windowsFolderIdName,
 #endif
       const std::string& defaultDir,
       const boost::optional<std::string>& user,
@@ -189,6 +193,7 @@ FilePath resolveXdgDir(
    std::string xdgDefaultHome = xdgDefaultDir(
 #ifdef _WIN32
             windowsFolderId,
+            windowsFolderIdName,
 #endif
             defaultDir);
    
@@ -232,6 +237,7 @@ FilePath userConfigDir(
         "XDG_CONFIG_HOME",
 #ifdef _WIN32
          FOLDERID_RoamingAppData,
+         "FOLDERID_RoamingAppData",
 #endif
          "~/.config",
          user,
@@ -247,6 +253,7 @@ FilePath userDataDir(
          "XDG_DATA_HOME",
 #ifdef _WIN32
          FOLDERID_LocalAppData,
+         "FOLDERID_LocalAppData",
 #endif
          "~/.local/share",
          user,
@@ -262,6 +269,7 @@ FilePath userCacheDir(
          "XDG_CACHE_HOME",
 #ifdef _WIN32
          FOLDERID_LocalAppData,
+         "FOLDERID_LocalAppData",
 #endif
          "~/.cache",
          user,
@@ -280,6 +288,7 @@ FilePath oldUserCacheDir(
          "XDG_CACHE_HOME",
 #ifdef _WIN32
          FOLDERID_InternetCache,
+         "FOLDERID_InternetCache",
 #endif
          "~/.cache",
          user,
@@ -360,6 +369,7 @@ FilePath systemConfigDir()
          "XDG_CONFIG_DIRS",
 #ifdef _WIN32
          FOLDERID_ProgramData,
+         "FOLDERID_ProgramData",
 #endif
          "/etc",
          boost::none,  // no specific user
