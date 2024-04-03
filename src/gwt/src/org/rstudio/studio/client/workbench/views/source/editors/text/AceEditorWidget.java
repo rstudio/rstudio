@@ -17,10 +17,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.elemental2.overlay.File;
@@ -1212,10 +1214,21 @@ public class AceEditorWidget extends Composite
       editor_.getSession().setAnnotations(annotations);
    }
 
-   public void showLint(JsArray<LintItem> lint)
+   public void showLint(JsVector<LintItem> lint)
    {
       clearAnnotations();
-      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(lint);
+      
+      // Set gutter annotations. Don't include 'spelling' items in gutter.
+      JsVector<LintItem> gutterLint = lint.filter(new Predicate<LintItem>()
+      {
+         @Override
+         public boolean test(LintItem item)
+         {
+            return item.getType() != "spelling";
+         }
+      });
+      
+      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(gutterLint.cast());
       editor_.getSession().setAnnotations(annotations);
 
       // Now, set (and cache) inline markers.

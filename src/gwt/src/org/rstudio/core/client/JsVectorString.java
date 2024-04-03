@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client;
 
+import java.util.function.Predicate;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class JsVectorString extends JavaScriptObject
@@ -61,6 +63,20 @@ public class JsVectorString extends JavaScriptObject
    public final void fill(String value)
    {
       fill(value, 0, length());
+   }
+   
+   public final JsVectorString filter(Predicate predicate)
+   {
+      JsVectorString result = JsVectorString.createVector();
+      
+      for (int i = 0, n = length(); i < n; i++)
+      {
+         String value = get(i);
+         if (predicate.test(value))
+            result.push(value);
+      }
+      
+      return result;
    }
 
    public final String get(int index)
