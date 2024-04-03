@@ -682,10 +682,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (isPpm)
       cran <- "https://cloud.R-project.org"
    
-   
-   if (isPpm)
-      cran <- "https://cloud.R-project.org"
-   
    # check to see if this package was from Bioconductor. if so, we'll need
    # to construct a more appropriate url
    desc <- .rs.tryCatch(.rs.readPackageDescription(file.path(libraryPath, packageName)))
