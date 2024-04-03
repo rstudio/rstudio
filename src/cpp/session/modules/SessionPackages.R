@@ -675,8 +675,13 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # re-route PPM URLs to CRAN for now
    # https://github.com/rstudio/rstudio/issues/12648
    isPpm <-
-      grepl("^http://rspm/", cran, perl = TRUE) ||
-      grepl("^https://packagemanager.posit.co/", cran, perl = TRUE)
+      grepl("^\\Qhttp://rspm/\\E", cran, perl = TRUE) ||
+      grepl("^\\Qhttps://packagemanager.posit.co/\\E", cran, perl = TRUE) ||
+      grepl("^\\Qhttps://packagemanager.rstudio.com/\\E", cran, perl = TRUE)
+   
+   if (isPpm)
+      cran <- "https://cloud.R-project.org"
+   
    
    if (isPpm)
       cran <- "https://cloud.R-project.org"
