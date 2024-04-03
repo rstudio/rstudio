@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client;
 
+import java.util.function.Predicate;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class JsVectorBoolean extends JavaScriptObject
@@ -61,6 +63,20 @@ public class JsVectorBoolean extends JavaScriptObject
    public final void fill(boolean value)
    {
       fill(value, 0, length());
+   }
+   
+   public final JsVectorBoolean filter(Predicate predicate)
+   {
+      JsVectorBoolean result = JsVectorBoolean.createVector();
+      
+      for (int i = 0, n = length(); i < n; i++)
+      {
+         boolean value = get(i);
+         if (predicate.test(value))
+            result.push(value);
+      }
+      
+      return result;
    }
 
    public final boolean get(int index)
