@@ -42,7 +42,7 @@ website:
             href: "https://support.posit.co/hc/en-us/"
 
   sidebar:
-    - id: guide
+   # - id: guide
       collapse-level: 2
       contents:
       - text: "Introduction"
