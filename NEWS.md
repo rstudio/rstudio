@@ -37,6 +37,7 @@
 - Updated zlib to 1.3.1 (rstudio/rstudio-pro#5971)
 - Vim: Fixed an issue where bracket highlight followed the bracket behind the cursor when in normal mode (#4152)
 - Updated nginx to 1.25.4 (rstudio/rstudio-pro#5970)
+- Implemented Posit Product Documentation theme to RStudio & Posit Workbench Release Notes and RStudio IDE User Guide via Quarto extension (#14513)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
@@ -50,7 +51,8 @@
 - The Databricks pane is now enabled by default if there are Databricks workspaces configured in the `databricks.conf` file. There is no need to enable it separately. To disable the pane, set `databricks-enabled=0` in the `rserver.conf` file (rstudio-pro#5556)
 - A new icon on the RStudio Pro toolbar shows information on active AWS or Databricks credentials, if present (rstudio-pro#5860)
 - The PostgreSQL password can now be set via environment variable (rstudio-pro#5332)
-
+- Implemented Posit Product Documentation theme to Posit Workbench Administration Guide, Posit Workbench Licenses, Posit Workbench User Guide, amd RStudio Desktop Administration Guide via Quarto extension (rstudio-pro/issues/5729)
+  
 ### Fixed
 
 #### RStudio
