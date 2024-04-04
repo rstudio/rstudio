@@ -3,7 +3,6 @@ project:
 
 website:
   title: "RStudio User Guide"
-  favicon: "images/favicon.svg"
   twitter-card: true
   open-graph: true
   page-navigation: true
@@ -11,6 +10,7 @@ website:
   search:
     copy-button: true
     show-item-context: true
+  back-to-top-navigation: true
   repo-url: https://github.com/rstudio/rstudio/
   repo-subdir: "docs/user/rstudio/"
   repo-actions: [edit, source]
@@ -135,9 +135,3 @@ format:
     include-in-header: _ga-header-tag.html
     include-before-body: _ga-body-tag.html
     code-overflow: scroll
-
-  # pdf:
-  #   toc: true
-  # 
-  # docx:
-  #   toc: true
