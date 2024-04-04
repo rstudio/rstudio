@@ -1,5 +1,5 @@
 project:
-  type: website
+  type: posit-docs
 
 website:
   title: "RStudio & Posit Workbench Release Notes"
@@ -44,24 +44,19 @@ website:
         url: "https://posit.co"
 
 format:
+  posit-docs-html: default
   html:
-    # Controls whether external links open in new windows
-    link-external-newwindow: true
-    # Controls whether an icon adorns external links (either true or the bootstrap icon name)
-    link-external-icon: true
-    number-sections: false
     theme:
-      - cosmo
       - styles/styles.scss
+    number-sections: false
     include-in-header: _ga-header-tag.html
     include-before-body: _ga-body-tag.html
-    toc: true
     code-overflow: scroll
 
-  pdf:
-    toc: true
+  #pdf:
+   # toc: true
 
-  docx:
-    toc: true
+  #docx:
+   # toc: true
 
 
