@@ -40,6 +40,7 @@
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
+- Added support for JupyterLab 4 through the Python extension [PWB JupyterLab](https://pypi.org/project/pwb-jupyterlab/) (rstudio-pro#5777)
 - Added search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
 - Migrated Troubleshooting Launcher and Kubernetes guide from docs.posit.co site to Workbench Administration Guide: Job Launcher > Launcher Troubleshooting section (#5720)
 - Add search results copy button and search results breadcrumbs to Workbench Administration Guide, Workbench User Guide, RStudio Desktop Pro Administration Guide (#5088, #5603)
