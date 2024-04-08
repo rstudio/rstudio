@@ -130,7 +130,6 @@ format:
   posit-docs-html:
     theme:
       - styles/styles.scss
-    number-sections: false
     fig-responsive: true
     include-in-header: _ga-header-tag.html
     include-before-body: _ga-body-tag.html
