@@ -36,7 +36,6 @@
 - RStudio now prints a warning if an overly-long line of console input is truncated when sending to R (#14420)
 - Updated zlib to 1.3.1 (rstudio/rstudio-pro#5971)
 - Vim: Fixed an issue where bracket highlight followed the bracket behind the cursor when in normal mode (#4152)
-- Updated nginx to 1.25.4 (rstudio/rstudio-pro#5970)
 
 #### Posit Workbench
 - Show custom project names on Workbench homepage (rstudio-pro#5589)
@@ -51,6 +50,14 @@
 - The Databricks pane is now enabled by default if there are Databricks workspaces configured in the `databricks.conf` file. There is no need to enable it separately. To disable the pane, set `databricks-enabled=0` in the `rserver.conf` file (rstudio-pro#5556)
 - A new icon on the RStudio Pro toolbar shows information on active AWS or Databricks credentials, if present (rstudio-pro#5860)
 - The PostgreSQL password can now be set via environment variable (rstudio-pro#5332)
+- Updated nginx to 1.25.4 (rstudio/rstudio-pro#5970)
+- Updated nodejs to 18.19.1 (rstudio/rstudio-pro#5935)
+- Performance improvement where nginx handles static files, configurable with nginx.static.conf file (rstudio/rstudio-pro#5671)
+- VSCode: upgraded coder/code-server to 4.22.1 (centos 4.16.1). Added preview of Code OSS - with Posit, pwb-code-server (rstudio/rstudio-pro#3777)
+- Robustness and scalability improvements for streaming connections. Close all streaming connections when tabs are invisible, and impose limits on "session output view". Added options for tuning large-scale system performance: launcher-sessions-proxy-timeout-seconds, max-streams-per-user, streaming-connection-timeout-seconds rserver.conf option.  (rstudio/rstudio-pro#5888, rstudio/rstudio-pro#5616, rstudio/rstudio-pro#5771, rstudio/rstudio-pro#3417)
+- Fixed sporadic CPU usage and crash in rworkspaces (rstudio/rstudio-pro#5690)
+- Fixed problem with `rstudio-server reload` changing permissions on nginx proxy/body dirs leading to user errors accessing the system (rstudio/rstudio-pro#5636)
+- Added support for debug, and strace session diagnostics for individual user sessions. Create a file with 'strace' or 'debug' in ~/.config/rstudio/rsession-diagnostics or ~/.config/pwb/jupyter-diagnostics, vscode-diagnostics. Logs in ~/.local/share/{rstudio,pwb}/log. (rstudio/rstudio-pro#5529)
 
 ### Fixed
 
