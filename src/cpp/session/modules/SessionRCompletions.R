@@ -1042,6 +1042,7 @@ assign(x = ".rs.acCompletionTypes",
             names(layerInfo$geom$default_aes),
             names(layerInfo$stat$default_aes)
          )
+         aesthetics <- aesthetics[!grepl("|", aesthetics, fixed = TRUE)]
          aesthetics <- aesthetics[!duplicated(aesthetics)]
          results <- .rs.selectFuzzyMatches(aesthetics, token)
          ggplotCompletions <- .rs.makeCompletions(
