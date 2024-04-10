@@ -2499,27 +2499,10 @@ assign(x = ".rs.acCompletionTypes",
    ## Handle some special cases early
    
    # custom help handler for arguments
-   if (.rs.acContextTypes$FUNCTION %in% context) {
-      scope <- string[[1]]
-      custom <- .rs.findCustomHelpContext(scope, "help_formals_handler")
-      if (!is.null(custom)) {
-         formals <- custom$handler(custom$topic, custom$source)
-         if (!is.null(formals)) {
-            results <- paste(formals$formals, "= ")
-            results <- .rs.selectFuzzyMatches(results, token)
-            return(.rs.makeCompletions(
-               token                   = token,
-               results                 = results,
-               packages                = scope,
-               type                    = .rs.acCompletionTypes$ARGUMENT,
-               excludeOtherCompletions = TRUE,
-               helpHandler             = formals$helpHandler, 
-               context                 = .rs.acContextTypes$FUNCTION)
-            )
-         } else {
-            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
-         }
-      }
+   if (length(context) && .rs.acContextTypes$FUNCTION %in% context[[1]]) {
+      completions <- .rs.getCompletionsCustomHelpHandler(token, string[[1]])
+      if (!is.null(completions))
+         return(completions)
    }
    
    # help
@@ -3262,6 +3245,31 @@ assign(x = ".rs.acCompletionTypes",
       completions <- .rs.appendCompletions(completions, libraryContextCompletions)
    }
    completions
+})
+
+.rs.addFunction("getCompletionsCustomHelpHandler", function(token, scope)
+{
+   custom <- .rs.findCustomHelpContext(scope, "help_formals_handler")
+   if (is.null(custom))
+      return(NULL)
+   
+   formals <- .rs.tryCatch(custom$handler(custom$topic, custom$source))
+   if (inherits(formals, "error"))
+      return(NULL)
+   
+   if (length(formals) == 0L)
+      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+   
+   completions <- paste(formals$formals, sep = "= ")
+   .rs.makeCompletions(
+      token                   = token,
+      results                 = .rs.selectFuzzyMatches(completions, token),
+      packages                = scope,
+      type                    = .rs.acCompletionTypes$ARGUMENT,
+      excludeOtherCompletions = TRUE,
+      helpHandler             = formals$helpHandler, 
+      context                 = .rs.acContextTypes$FUNCTION
+   )
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
