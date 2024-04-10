@@ -461,7 +461,6 @@ This page provides the release notes associated with each release of RStudio and
 - Add support for R 4.3 (#12751)
 
 #### Posit Workbench
-- Session components no longer link to libpq or its dependencies (rstudio/rstudio-pro#2138)
 - Sessions now have lower CPU priority during suspension on macOS and Linux (#12623)
 - Sessions run on Kubernetes or Slurm will no longer exit with nonzero codes under normal circumstances (rstudio/rstudio-pro#3375)
 - Updated code-server to version 4.9.1 (VS Code version 1.73.1) (rstudio/rstudio-pro#4150)
