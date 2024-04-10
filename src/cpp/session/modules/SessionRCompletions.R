@@ -2651,7 +2651,13 @@ assign(x = ".rs.acCompletionTypes",
          if (string[[whichIndex + 1]] %in% c("list.files",
                                              "list.dirs",
                                              "dir",
-                                             "setwd"))
+                                             "setwd",
+                                             "dir_ls", # fs dir helpers
+                                             "dir_walk",
+                                             "dir_tree",
+                                             "dir_delete",
+                                             "dir_info",
+                                             "dir_copy"))
          {
             directoriesOnly <- TRUE
          }
