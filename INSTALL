@@ -7,10 +7,6 @@ distribution. Information on obtaining the RStudio source code can be found
 in the file SOURCE. Note that precompiled binaries are also available for
 Windows, macOS, as well as recent versions of various Linux distributions.
 
-Note, the target "Electron" should be used when building the Desktop IDE.
-The "Desktop" target builds the legacy Qt application, is no longer 
-supported, and will eventually be removed.
-
 1) Installing Dependencies
 ----------------------------------------------------------------------------
 
@@ -89,7 +85,7 @@ c) Run the "make install" command:
    Linux & macOS:  sudo make install        OR
    Windows:        cmake --build . --config Release --target install
 
-   NOTE: For RStudio Desktop on Linux, make install automatically creates
+   NOTE: For RStudio Electron on Linux, make install automatically creates
    an entry in the Applications -> Programming menu for RStudio.
 
 

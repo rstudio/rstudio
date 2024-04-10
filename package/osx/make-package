@@ -28,7 +28,7 @@ function help() {
     cat <<EOF
 usage: make-package [options]
 
-Build RStudio Desktop (Qt or Electron) and redistributable package (DMG) on a Mac.
+Build RStudio Electron Desktop and redistributable package (DMG) on a Mac.
 
 Specify version by setting environment variables. The default is 99.9.9.
 
@@ -63,8 +63,7 @@ Options
         Jenkins, otherwise false (0).
 
   --electron, --rstudio-target=Electron
-        Whether to build the Electron version of RStudio; default is to build the Qt
-        version.
+        Ignored legacy option for backwards compatibility (always builds Electron)
 EOF
 exit 1
 }
@@ -126,20 +125,17 @@ install-npm-packages() {
 # their original state at the end of the package build.
 PACKAGE_VERSION_SET=0
 set-version () {
-   if [ "${rstudio_target}" = "Electron" ]; then
+   # Set package.json info
+   pushd ${ELECTRON_SOURCE_DIR}
+   install-npm-packages
+   save-original-file package.json
+   ${NPX} json -I -f package.json -e "this.version=\"$1\""
 
-      # Set package.json info
-      pushd ${ELECTRON_SOURCE_DIR}
-      install-npm-packages
-      save-original-file package.json
-      ${NPX} json -I -f package.json -e "this.version=\"$1\""
+   # Keep a backup of build-info.ts so we can restore it
+   save-original-file src/main/build-info.ts
 
-      # Keep a backup of build-info.ts so we can restore it
-      save-original-file src/main/build-info.ts
-
-      PACKAGE_VERSION_SET=1
-      popd
-   fi
+   PACKAGE_VERSION_SET=1
+   popd
 }
 
 restore-package-version () {
@@ -236,7 +232,7 @@ clean=0
 copy_gwt=1
 install=0
 use_creds=0
-rstudio_target=Desktop
+rstudio_target=Electron
 
 # by default, use RStudio credentials for builds on Jenkins
 if is-jenkins; then
@@ -258,18 +254,12 @@ for arg in "$@"; do
    --build-package=*)  build_package=${arg#*=} ;;
    --build-dmg=*)      build_dmg=${arg#*=} ;;
    --use-creds=*)      use_creds=${arg#*=} ;;
-   --electron)         rstudio_target=Electron ;;
-   --rstudio-target=*) rstudio_target=${arg#*=} ;;
+   --electron)         : ;;
+   --rstudio-target=*) : ;;
    *)                  help ;;
    esac
 
 done
-
-if [ "${rstudio_target}" != "Desktop" ] && [ "${rstudio_target}" != "Electron" ]
-then
-   echo "error: must specify --rstudio-target=Desktop|Electron (default Desktop)"
-   exit 1
-fi
 
 # configure Electron build info
 set-version ${RSTUDIO_VERSION_FULL}

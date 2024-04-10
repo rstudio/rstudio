@@ -11,14 +11,14 @@
 #     docker-compile.sh IMAGE-NAME FLAVOR-NAME [VERSION]
 #
 # where the image name is the platform and architecture, the flavor name is
-# the kind of package you wish to build (desktop, electron or server), and the
+# the kind of package you wish to build (electron or server), and the
 # version is the number to assign to the resulting build.
 #
 # For example:
 # 
-#     docker-compile.sh rhel8 desktop 1.2.345
+#     docker-compile.sh rhel8 electron 1.2.345
 #
-# will produce an RPM of RStudio Desktop from the RHEL8 container, 
+# will produce an RPM of RStudio Electron from the RHEL8 container, 
 # with build version 1.2.345, in your package/linux/ directory.
 #
 # For convenience, this script will build the required image if it doesn't
@@ -63,7 +63,6 @@ if [ -z "$IMAGE" ] || [ -z "$FLAVOR" ]; then
     echo -e "Valid images:\n"
     find docker/jenkins -name 'Dockerfile.*' | sed -e 's/.*Dockerfile.//'
     echo -e "\nValid flavors:\n"
-    echo -e "desktop"
     echo -e "electron"
     echo -e "server"
     exit 1

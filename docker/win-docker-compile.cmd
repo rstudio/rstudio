@@ -15,7 +15,7 @@ setlocal enableextensions enabledelayedexpansion
 :: later in this script on why this is).
 
 set IMAGE=windows
-set FLAVOR=desktop
+set FLAVOR=electron
 
 REM set destination folder
 set PKG_DIR="%cd%"\package
