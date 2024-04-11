@@ -2184,14 +2184,13 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 # Only display directory completions (not file completions)
-.rs.addFunction("isDirectoryOnlyCompletionFunction", function(string))
+.rs.addFunction("isDirectoryOnlyCompletionFunction", function(string)
 {
    # Base R functions + fs functions that deal with dir_
    # https://fs.r-lib.org/articles/function-comparisons.html#directory-functions
    dirOnlyFuncs <- c("list.files", "list.dirs", "dir", "setwd")
    string %in% dirOnlyFuncs || grep("^(?:fs:{2,3})?dir_", string)
-
-}
+})
 
 .rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
 {
