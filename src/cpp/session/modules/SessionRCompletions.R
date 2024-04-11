@@ -2189,7 +2189,7 @@ assign(x = ".rs.acCompletionTypes",
    # Base R functions + fs functions that deal with dir_
    # https://fs.r-lib.org/articles/function-comparisons.html#directory-functions
    dirOnlyFuncs <- c("list.files", "list.dirs", "dir", "setwd")
-   string %in% dirOnlyFuncs || grep("^(?:fs:{2,3})?dir_", string)
+   string %in% dirOnlyFuncs || grepl("^(?:fs:{2,3})?dir_", string)
 })
 
 .rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
