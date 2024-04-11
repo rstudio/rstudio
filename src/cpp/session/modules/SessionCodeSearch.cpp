@@ -953,6 +953,7 @@ private:
             filename == "NAMESPACE" ||
             filename == "NEWS" ||
             filename == "README" ||
+            filename == "WORDLIST" ||
             filename == "cleanup" ||
             filename == "cleanup.win" ||
             filename == "configure" ||

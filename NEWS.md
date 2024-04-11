@@ -112,6 +112,7 @@
 - Fixed an issue where searches in the Help pane could fail for entries like `[<-` (#10975)
 - Fixed an issue where the "Save workspace on exit" preference was ignored in some cases (#14258)
 - Fixed an issue where the NEWS button in the Update Packages dialog could fail to find the package NEWS file in some cases (#12648)
+- Fixed an issue where Tensorflow object completions were not generated in some contexts (#14524)
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS (rstudio-pro#5168)
