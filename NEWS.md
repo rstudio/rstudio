@@ -121,6 +121,7 @@
 - The terminal pane of JupyterLab sessions now respects the user's default shell (rstudio-pro#5484)
 - The Databricks pane now respects the `databricks-enabled=1` setting in the `rserver.conf` file even when running in legacy RStudio Server Pro mode (rstudio-pro#5695)
 - When launching sessions on Slurm, pending or failed sessions will no longer erroneously appear in the Workbench Jobs pane on the home page (rstudio-pro#4846)
+- VSCode sessions will now respect the `user-data-dir` option in `vscode.conf` when installing extensions in a user's directory on vscode session startup (rstudio-pro#6078)
 
 ### Dependencies
 - Updated Ace to version 1.32.5 (#14227; Desktop + Server)
