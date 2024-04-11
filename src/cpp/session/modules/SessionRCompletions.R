@@ -2183,6 +2183,16 @@ assign(x = ".rs.acCompletionTypes",
    frames[[length(frames) - 1L - offset]]
 })
 
+# Only display directory completions (not file completions)
+.rs.addFunction("isDirectoryOnlyCompletionFunction", function(string))
+{
+   # Base R functions + fs functions that deal with dir_
+   # https://fs.r-lib.org/articles/function-comparisons.html#directory-functions
+   dirOnlyFuncs <- c("list.files", "list.dirs", "dir", "setwd")
+   string %in% dirOnlyFuncs || grep("^(?:fs:{2,3})?dir_", string)
+
+}
+
 .rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
 {
    # For a package which has dynamic symbol loading, just get the strings.
@@ -2646,28 +2656,9 @@ assign(x = ".rs.acCompletionTypes",
       tokenToUse <- string[[whichIndex]]
       
       directoriesOnly <- FALSE
-      if (length(string) > whichIndex)
+      if (length(string) > whichIndex && .rs.isDirectoryOnlyCompletionFunction(string[[whichIndex + 1]]))
       {
-         if (string[[whichIndex + 1]] %in% c("list.files",
-                                             "list.dirs",
-                                             "dir",
-                                             "setwd",
-                                             "dir_ls", # fs dir helpers
-                                             "dir_walk",
-                                             "dir_tree",
-                                             "dir_delete",
-                                             "dir_info",
-                                             "dir_copy",
-                                             "fs::dir_ls", # fs dir helpers
-                                             "fs::dir_walk",
-                                             "fs::dir_tree",
-                                             "fs::dir_delete",
-                                             "fs::dir_info",
-                                             "fs::dir_copy",
-                                            ))
-         {
-            directoriesOnly <- TRUE
-         }
+         directoriesOnly <- TRUE
       }
       
       # NOTE: For Markdown link completions, we overload the meaning of the
