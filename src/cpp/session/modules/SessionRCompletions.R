@@ -2657,7 +2657,14 @@ assign(x = ".rs.acCompletionTypes",
                                              "dir_tree",
                                              "dir_delete",
                                              "dir_info",
-                                             "dir_copy"))
+                                             "dir_copy",
+                                             "fs::dir_ls", # fs dir helpers
+                                             "fs::dir_walk",
+                                             "fs::dir_tree",
+                                             "fs::dir_delete",
+                                             "fs::dir_info",
+                                             "fs::dir_copy",
+                                            ))
          {
             directoriesOnly <- TRUE
          }
