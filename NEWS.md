@@ -58,6 +58,12 @@
 - Fixed sporadic CPU usage and crash in rworkspaces (rstudio/rstudio-pro#5690)
 - Fixed problem with `rstudio-server reload` changing permissions on nginx proxy/body dirs leading to user errors accessing the system (rstudio/rstudio-pro#5636)
 - Added support for debug, and strace session diagnostics for individual user sessions. Create a file with 'strace' or 'debug' in ~/.config/rstudio/rsession-diagnostics or ~/.config/pwb/jupyter-diagnostics, vscode-diagnostics. Logs in ~/.local/share/{rstudio,pwb}/log. (rstudio/rstudio-pro#5529)
+- Posit Workbench no longer has a dependency on the `libuser` package (rstudio/rstudio-pro#4261)
+- Container users that have special characters in their names, such as `@`, can now be created at session start (rstudio/rstudio-pro#2714)
+- Prometheus metrics are now available as a Preview feature (rstudio/rstudio-pro#5793)
+- Prometheus metrics can now be enabled or disabled with `metrics-enabled=[1|0]` in `rserver.conf` (rstudio/rstudio-pro#5792)
+- Prometheus metrics can now be configured. For more details see [Promethes Metrics in the Workbench Admin Guide](https://docs.posit.co/ide/server-pro/2024.04.0/auditing_and_monitoring/prometheus_metrics.html) (rstudio/rstudio-pro#5791)
+- Add support for automatically provisioning users when using Okta or Microsoft Entra ID as an IdP. When using this feature, users can be assigned to Workbench from the IdP and do not need to be created as POSIX users. This feature also supports migrating from local, or ldap/sssd, users to IdP provisioned users. For more details the [User Provisioning section of the Admin Guide](https://docs.posit.co/ide/server-pro/2024.04.0/authenticating_users/user_provisioning.html) (rstudio/rstudio-pro#2784)
 
 ### Fixed
 
