@@ -99,14 +99,7 @@ pipeline {
           }
         }
 
-        when {
-          // allOf {
-          anyOf {
-            expression { return FLAVOR == 'Electron' }
-          }
-          //   expression { return utils.rebuildCheck() == true } // Disable for now (see Jenkinsfile.windows)
-          // }
-        }
+        when { expression { return FLAVOR == 'Electron' } }
 
         stages {
           stage('Sequential Matrix') {
