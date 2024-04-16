@@ -16,7 +16,7 @@ set BUILD_GWT=1
 set QUICK=
 set NOZIP=
 set CLEANBUILD=
-set RSTUDIO_TARGET=Desktop
+set RSTUDIO_TARGET=Electron
 set PACKAGE_VERSION_SET=
 set DEBUG_BUILD=
 
@@ -43,10 +43,6 @@ for %%A in (%*) do (
       )
       if /I "%%A" == "debug" (
             set DEBUG_BUILD=1
-            set KNOWN_ARG=1
-      )
-      if /I "%%A" == "desktop" (
-            set RSTUDIO_TARGET=Desktop
             set KNOWN_ARG=1
       )
       if /I "%%A" == "electron" (
@@ -162,11 +158,7 @@ REM perform 64-bit build
 cd "%PACKAGE_DIR%"
 
 REM Select the appropriate NSIS template
-if "%RSTUDIO_TARGET%" == "Electron" (
-      copy cmake\modules\NSIS.template.in.electron cmake\modules\NSIS.template.in >nul
-) else (
-      copy cmake\modules\NSIS.template.in.qt cmake\modules\NSIS.template.in >nul
-)
+copy cmake\modules\NSIS.template.in.electron cmake\modules\NSIS.template.in >nul
 
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
@@ -243,12 +235,11 @@ exit /b %ERRORLEVEL%
 
 :showhelp
 echo.
-echo make-package [clean] [debug] [desktop] [electron] [multiarch] [nogwt] [nozip] [quick]
+echo make-package [clean] [debug] [electron] [multiarch] [nogwt] [nozip] [quick]
 echo.
 echo     clean:      perform full rebuild
 echo     debug:      perform a debug build
-echo     desktop:    build Qt desktop (default)
-echo     electron:   build Electron instead of Qt desktop
+echo     electron:   build Electron desktop (default)
 echo     multiarch:  produce both 32-bit and 64-bit rsession executables
 echo     nogwt:      skip GWT build (use previous GWT build)
 echo     nozip:      skip creation of ZIP file

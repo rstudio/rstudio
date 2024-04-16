@@ -265,7 +265,7 @@ def renameFile(String dir, String match) {
   * Rename the file on the filesystem
   */
 def renameTarFile(String dir) {
-  if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
+  if (FLAVOR == "Electron") {
     return renameFile(dir, "*.tar.gz")
   }
 
@@ -292,10 +292,9 @@ def shouldBuild(boolean isDaily, boolean isPro) {
     if (isPro) {
       // build an x86_64 rhel8 WB, x86_64 rhel9 QT RDP, and an arm64 jammy Electron RDP 
       inHourlySubset = ((env.OS == 'rhel8' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server') ||
-        (env.OS == 'centos7' && env.ARCH == 'x86_64' && env.FLAVOR == 'Desktop') || 
         (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron'))
     } else {
-      // build an arm64 rhel9 Desktop and an x86_64 focal Server
+      // build an arm64 rhel9 Electron and an x86_64 focal Server
       inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron') ||
         (env.OS == 'focal' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
     }

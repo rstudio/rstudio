@@ -15,7 +15,7 @@
 cmake_minimum_required(VERSION 3.6.3)
 
 # don't add electron for development mode (since faster to work
-# iteratively using "yarn start" and so forth)
+# iteratively using "npm start" and so forth)
 if(RSTUDIO_ELECTRON AND NOT RSTUDIO_DEVELOPMENT)
    add_subdirectory(desktop)
 endif()

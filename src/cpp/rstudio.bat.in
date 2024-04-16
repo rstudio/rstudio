@@ -1,8 +1,0 @@
-@echo off
-setlocal
-
-set "RS_CRASH_HANDLER_PATH=@CMAKE_SOURCE_DIR@/../../dependencies/windows/crashpad-release/bin/crashpad_handler.exe"
-set "QT_PLUGIN_PATH=@QT_PLUGIN_PATH@"
-set "PATH=@QT_BINARY_PATH@;%PATH%"
-desktop\rstudio.exe
-

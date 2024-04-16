@@ -45,8 +45,8 @@ fi
 
 # sanity check a URL component to fail faster if the URL is not in the format
 # we expect
-if [ "$FLAVOR" != "desktop" ] && [ "$FLAVOR" != "server" ] && [ "$FLAVOR" != "electron" ]; then
-    echo "Unsupported flavor '$FLAVOR' (expected 'desktop', 'electron', or 'server')"
+if [ "$FLAVOR" != "server" ] && [ "$FLAVOR" != "electron" ]; then
+    echo "Unsupported flavor '$FLAVOR' (expected 'electron' or 'server')"
     exit 1
 fi
 

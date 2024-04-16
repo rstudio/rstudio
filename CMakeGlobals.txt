@@ -120,10 +120,10 @@ endif()
 # platform specific default for targets
 if(NOT RSTUDIO_TARGET)
 
-   # for macOS pro builds, default to desktop as otherwise
+   # for macOS pro builds, default to electron as otherwise
    # we will try (and fail) to build Linux-only launcher pieces
    if(APPLE AND RSTUDIO_PRO_BUILD)
-      set(RSTUDIO_TARGET "Desktop")
+      set(RSTUDIO_TARGET "Electron")
    else()
       set(RSTUDIO_TARGET "Development")
    endif()
@@ -140,17 +140,9 @@ if(NOT DEFINED RSTUDIO_SERVER)
    endif()
 endif()
 
-if(NOT DEFINED RSTUDIO_DESKTOP)
-   if(RSTUDIO_TARGET STREQUAL "Electron")
+if(NOT DEFINED RSTUDIO_ELECTRON)
+   if(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Electron")
       set(RSTUDIO_ELECTRON TRUE)
-   elseif(LINUX AND UNAME_M STREQUAL aarch64)
-      message(STATUS "Desktop builds not currently supported on aarch64; disabling RSTUDIO_DESKTOP")
-      set(RSTUDIO_DESKTOP FALSE)
-   elseif(APPLE AND UNAME_M STREQUAL arm64)
-      message(STATUS "Desktop builds not currently supported on arm64; disabling RSTUDIO_DESKTOP")
-      set(RSTUDIO_DESKTOP FALSE)
-   elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
-      set(RSTUDIO_DESKTOP TRUE)
    endif()
 endif()
 
@@ -160,8 +152,8 @@ if(NOT DEFINED RSTUDIO_ELECTRON)
 endif()
 
 # override if requested
-if(RSTUDIO_NO_DESKTOP)
-   set(RSTUDIO_DESKTOP FALSE)
+if(RSTUDIO_NO_ELECTRON)
+   set(RSTUDIO_ELECTRON FALSE)
 endif()
 
 # set session32 if specified
@@ -373,7 +365,7 @@ if(NOT DEFINED CMAKE_INSTALL_PREFIX)
    if(APPLE)
       set(CMAKE_INSTALL_PREFIX "/Applications")
    elseif(UNIX)
-      if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
+      if(RSTUDIO_ELECTRON)
          set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio")
       else()
          set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio-server")
