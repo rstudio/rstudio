@@ -17,10 +17,12 @@ website:
     right:
       - text: "Guides"
         menu:
-          - text: "Workbench Install Guide"
-            url: 'https://docs.posit.co/rsw/installation/'
+          - text: "Workbench Admin Guide"
+            url: 'https://docs.posit.co/ide/server-pro/'
           - text: "Workbench User Guide"
             url: 'https://docs.posit.co/ide/server-pro/user/'
+          - text: Workbench Licenses
+            url: 'https://docs.posit.co/ide/licenses/'
           - text: "RStudio Open Source User Guide"
             url: 'https://docs.posit.co/ide/user/'
       - icon: book

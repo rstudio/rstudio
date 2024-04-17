@@ -26,12 +26,12 @@ website:
         url: 'https://docs.posit.co/previous-versions/rstudio/'
       - text: "Guides"
         menu:
-          - text: "Workbench Install Guide"
-            url: 'https://docs.posit.co/ide/server-pro/getting_started/installation/'
           - text: "Workbench Admin Guide"
             url: 'https://docs.posit.co/ide/server-pro/'
           - text: "Posit Workbench User Guide"
             url: 'https://docs.posit.co/ide/server-pro/user/'
+          - text: Workbench Licenses
+            url: 'https://docs.posit.co/ide/licenses/'
       - text: "Release Notes"
         url: "https://docs.posit.co/ide/news/"      
       - icon: book
