@@ -40,6 +40,10 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
       };
    };
 
+   // NOTE: These highlight rules are embedded in e.g. R, for highlighting of
+   // Quarto YAML. Because the "start" of a YAML string might include the '#|'
+   // comment prefix, we avoid using the '^' anchor in regular expressions below,
+   // and instead just use '\b' to require a word boundary.
    var YamlHighlightRules = function () {
 
       var rules = {};
@@ -75,7 +79,7 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
          },
          {
             token: "list.markup",
-            regex: /^(?:-{3}|\.{3})\s*(?=#|$)/
+            regex: /\b(?:-{3}|\.{3})\s*(?=#|$)/
          },
          {
             token: "list.markup.keyword.operator",
@@ -90,16 +94,14 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
             regex: "[&\\*][a-zA-Z0-9-_]+"
          },
          {
+            // (package) (::) (function) (:)
             token: ["meta.tag", "keyword", "meta.tag", "keyword.operator"],
-            regex: /^(\s*[\w\-].*?)(:{2,3})(\s*[\w\-].*?)(:(?:\s+|$))/
+            regex: /\b(\s*[\w\-.]*?)(:{2,3})(\s*[\w\-.]*?)(:(?:\s+|$))/
          },
          {
+            // (dictionary-key) (:)
             token: ["meta.tag", "keyword.operator"],
-            regex: /^(\s*[\w\-].*?)(:(?:\s+|$))/
-         },
-         {
-            token: ["meta.tag", "keyword.operator"],
-            regex: /([\w\-]+?)(\s*:(?:\s+|$))/
+            regex: /\b(\s*[\w\-.]*?)(:(?:\s+|$))/
          },
          {
             token: "keyword.operator",
