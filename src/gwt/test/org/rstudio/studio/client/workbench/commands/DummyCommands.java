@@ -2501,11 +2501,6 @@ public class DummyCommands extends Commands {
     }
 
     @Override
-    public AppCommand showSessionServerOptionsDialog() {
-        return null;
-    }
-
-    @Override
     public AppCommand showWarningBar() {
         return null;
     }

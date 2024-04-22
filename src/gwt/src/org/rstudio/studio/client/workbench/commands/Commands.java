@@ -579,7 +579,6 @@ public abstract class
    public abstract AppCommand rstudioSupport();
    public abstract AppCommand rstudioCommunityForum();
    public abstract AppCommand rstudioAgreement();
-   public abstract AppCommand showSessionServerOptionsDialog();
    public abstract AppCommand showWarningBar();
    public abstract AppCommand signOut();
    public abstract AppCommand loadServerHome();

@@ -402,8 +402,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="setWorkingDir"/>
          </menu>
          <separator/>
-         <cmd refid="showSessionServerOptionsDialog"/>
-         <separator/>
          <cmd refid="loadWorkspace"/>
          <cmd refid="saveWorkspace"/>
          <separator/>
@@ -3584,13 +3582,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Force Quit Session..."
         buttonLabel=""
         desc="Quit the current R session even if busy"
-        windowMode="main"/>
-
-   <cmd id="showSessionServerOptionsDialog"
-        label="Session Server Settings..."
-        menuLabel="_Session Server Settings..."
-        buttonLabel=""
-        desc="Configure available session servers"
         windowMode="main"/>
 
    <cmd id="showAboutDialog"

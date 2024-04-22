@@ -761,10 +761,6 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
     });
 
-    ipcMain.on('desktop_show_session_server_options_dialog', () => {
-      GwtCallback.unimpl('desktop_show_session_server_options_dialog');
-    });
-
     ipcMain.handle('desktop_get_init_messages', () => {
       return '';
     });

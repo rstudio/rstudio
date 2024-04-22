@@ -3220,16 +3220,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Quit the current R session even if busy") // $NON-NLS-1$
     String forceQuitSessionDesc();
     
-    // showSessionServerOptionsDialog
-    @DefaultStringValue("Session Server Settings...") // $NON-NLS-1$
-    String showSessionServerOptionsDialogLabel();
-    @DefaultStringValue("") // $NON-NLS-1$
-    String showSessionServerOptionsDialogButtonLabel();
-    @DefaultStringValue("_Session Server Settings...") // $NON-NLS-1$
-    String showSessionServerOptionsDialogMenuLabel();
-    @DefaultStringValue("Configure available session servers") // $NON-NLS-1$
-    String showSessionServerOptionsDialogDesc();
-    
     // showAboutDialog
     @DefaultStringValue("About RStudio...") // $NON-NLS-1$
     String showAboutDialogLabel();
