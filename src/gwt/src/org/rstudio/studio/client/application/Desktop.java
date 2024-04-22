@@ -20,23 +20,17 @@ public class Desktop
 {
    public static native boolean isDesktop() /*-{
       // we're in desktop mode if the program mode is explicitly set that way;
-      // as a fallback, check for the desktop object injected by Qt
-      return ($wnd.program_mode === "desktop" || !!$wnd.desktop) &&
-              !$wnd.remoteDesktop;
+      // as a fallback, check for the desktop object injected by Electron
+      return ($wnd.program_mode === "desktop" || !!$wnd.desktop);
    }-*/;
 
-   public static native boolean isRemoteDesktop() /*-{
-      // we're in remote desktop mode if the remoteDesktop object was injected by Qt
-      return !!$wnd.remoteDesktop;
-   }-*/;
-   
    public static native boolean isDesktopReady() /*-{
       return !!$wnd.desktop;
    }-*/;
 
    public static boolean hasDesktopFrame()
    {
-      return isDesktop() || isRemoteDesktop();
+      return isDesktop();
    }
    
    public static DesktopFrame getFrame()

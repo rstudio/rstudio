@@ -25,20 +25,8 @@
       if (window.desktop)
          return "true";
 
-      // also true when run under Electron or QtWebEngine, which defer hook injection
-      return ((window.navigator.userAgent.indexOf("Electron") > 0) ||
-              (window.navigator.userAgent.indexOf("QtWebEngine") > 0)) ? "true" : "false";
-   ]]></property-provider>
-
-   <!-- Detect remote desktop builds -->
-   <define-property name="rstudio.remoteDesktop" values="true,false"/>
-   <property-provider name="rstudio.remoteDesktop"><![CDATA[
-      // true if remote desktop hooks are injected
-      if (window.remoteDesktop)
-         return "true";
-
-      // also true when run under Electron or QtWebEngine, which defer hook injection
-      return window.navigator.userAgent.indexOf("RStudio Remote Desktop") > 0 ? "true" : "false";
+      // also true when run under Electron, which defers hook injection
+      return (window.navigator.userAgent.indexOf("Electron") > 0) ? "true" : "false";
    ]]></property-provider>
 
    <!-- Detect RStudio Electron builds -->
@@ -96,7 +84,6 @@
       <all>
          <when-property-is name="rstudio.desktop" value="true"/>
          <when-property-is name="rstudio.useNativeDialogs" value="true"/>
-         <when-property-is name="rstudio.remoteDesktop" value="false"/>
       </all>
    </replace-with>
 

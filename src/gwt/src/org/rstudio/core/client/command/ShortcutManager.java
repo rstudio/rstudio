@@ -555,28 +555,7 @@ public class ShortcutManager implements NativePreviewHandler,
          }
       }
       
-      // Handle 'Ctrl + Z' (Undo) specially on Windows desktop.
-      // We basically detect attempts to use undo, and then re-fire
-      // those from Qt specifically since that will ensure a properly
-      // created key event is generated and used to perform the undo.
-      //
-      // https://github.com/rstudio/rstudio/issues/7960
-      if (!isExecutingUndoQtWorkaround_ &&
-            BrowseCap.isWindowsDesktop() &&
-            BrowseCap.isQtWebEngine() &&
-            !StringUtil.equals(keyCombination.key(), "z") &&
-            keyCombination.getKeyCode() == KeyCodes.KEY_Z &&
-            keyCombination.getModifier() == KeyboardShortcut.CTRL)
-      {
-         isExecutingUndoQtWorkaround_ = true;
-         clearKeyBuffer();
-         event.stopPropagation();
-         event.preventDefault();
-         commands_.undoDummy().execute();
-         return true;
-      }
-      isExecutingUndoQtWorkaround_ = false;
-            
+
       if (!(pending || isPrefixForEditor(keyCombination, event)))
          clearKeyBuffer();
 
@@ -829,8 +808,6 @@ public class ShortcutManager implements NativePreviewHandler,
    private final List<Pair<KeySequence, AppCommandBinding>> defaultBindings_;
    private boolean reportShortcutBinding_ = false;
    private boolean reportedPending_ = false;
-   
-   private boolean isExecutingUndoQtWorkaround_ = false;
 
    // Injected ----
    private UserCommandManager userCommands_;

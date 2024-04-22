@@ -18,7 +18,6 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.Version;
 import org.rstudio.core.client.dom.EventProperty;
 
 import com.google.gwt.dom.client.NativeEvent;
@@ -32,19 +31,6 @@ public class KeyCombination
       String key = EventProperty.key(event);
       int keyCode = event.getKeyCode();
       int modifiers = KeyboardShortcut.getModifierValue(event);
-
-      // Unfortunately, the 'key' event property is corrupt with
-      // certain versions of Qt. We need to check that we've received
-      // a valid 'key' entry; if it's not valid, then we infer the correct
-      // key based on the keycode. Note that this inference may be incorrect
-      // for alternate keyboard layouts.
-      //
-      // https://github.com/rstudio/rstudio/issues/6129
-      // https://bugreports.qt.io/browse/QTBUG-81783
-      if (requiresQtWebEngineWorkaround())
-      {
-         key = KeyboardHelper.keyNameFromKeyCode(keyCode);
-      }
 
       key_ = key;
       keyCode_ = normalizeKeyCode(keyCode, key_);
@@ -192,25 +178,6 @@ public class KeyCombination
             modifiers_ == other.modifiers_;
    }
 
-   private static boolean requiresQtWebEngineWorkaround()
-   {
-      if (REQUIRES_QT_WEBENGINE_WORKAROUND == null)
-      {
-         REQUIRES_QT_WEBENGINE_WORKAROUND = requiresQtWebEngineWorkaroundImpl();
-      }
-
-      return REQUIRES_QT_WEBENGINE_WORKAROUND;
-   }
-
-   private static boolean requiresQtWebEngineWorkaroundImpl()
-   {
-      if (!BrowseCap.isQtWebEngine())
-         return false;
-
-      String version = BrowseCap.qtWebEngineVersion();
-      return Version.compare(version, "5.15.0") < 0;
-   }
-
    private static int normalizeMinusKeyCode(int keyCode)
    {
       switch (keyCode)
@@ -249,8 +216,6 @@ public class KeyCombination
    private final String key_;
    private final int keyCode_;
    private final int modifiers_;
-
-   private static Boolean REQUIRES_QT_WEBENGINE_WORKAROUND = null;
 
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }
