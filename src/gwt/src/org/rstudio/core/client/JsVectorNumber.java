@@ -65,7 +65,7 @@ public class JsVectorNumber extends JavaScriptObject
       fill(value, 0, length());
    }
    
-   public final JsVectorNumber filter(Predicate predicate)
+   public final JsVectorNumber filter(Predicate<Double> predicate)
    {
       JsVectorNumber result = JsVectorNumber.createVector();
       

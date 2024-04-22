@@ -65,7 +65,7 @@ public class JsVectorInteger extends JavaScriptObject
       fill(value, 0, length());
    }
    
-   public final JsVectorInteger filter(Predicate predicate)
+   public final JsVectorInteger filter(Predicate<Integer> predicate)
    {
       JsVectorInteger result = JsVectorInteger.createVector();
       

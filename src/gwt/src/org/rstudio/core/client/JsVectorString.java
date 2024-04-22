@@ -65,7 +65,7 @@ public class JsVectorString extends JavaScriptObject
       fill(value, 0, length());
    }
    
-   public final JsVectorString filter(Predicate predicate)
+   public final JsVectorString filter(Predicate<String> predicate)
    {
       JsVectorString result = JsVectorString.createVector();
       

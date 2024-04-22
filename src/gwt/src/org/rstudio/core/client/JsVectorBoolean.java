@@ -65,7 +65,7 @@ public class JsVectorBoolean extends JavaScriptObject
       fill(value, 0, length());
    }
    
-   public final JsVectorBoolean filter(Predicate predicate)
+   public final JsVectorBoolean filter(Predicate<Boolean> predicate)
    {
       JsVectorBoolean result = JsVectorBoolean.createVector();
       
