@@ -423,8 +423,6 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    {
       if (Desktop.isDesktop())
          Desktop.getFrame().showFile(StringUtil.notNull(path));
-      else if (Desktop.isRemoteDesktop())
-         Desktop.getFrame().browseUrl(server_.getFileUrl(FileSystemItem.createFile(path)));
       else
          openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
    }

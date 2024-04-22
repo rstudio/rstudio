@@ -1071,23 +1071,12 @@ public class Projects implements OpenProjectFileEvent.Handler,
                                              RVersionSpec rVersion,
                                              final Command onSuccess)
    {
-      Consumer<String> onSessionCreated;
-      if (Desktop.isRemoteDesktop())
-      {
-         onSessionCreated = (String url) -> {
-            if (onSuccess != null)
-               onSuccess.execute();
-            Desktop.getFrame().openProjectInNewWindow(url);
-         };
-      }
-      else
-      {
-         onSessionCreated = (String url) -> {
-            if (onSuccess != null)
-               onSuccess.execute();
-            globalDisplay_.openWindow(url);
-         };
-      }
+      Consumer<String> onSessionCreated = (String url) -> {
+         if (onSuccess != null)
+            onSuccess.execute();
+         globalDisplay_.openWindow(url);
+      };
+
       sessionOpener_.navigateToNewSession(
             true, /*isProject*/
             project.getParentPathString(),

@@ -496,11 +496,6 @@ public class Application implements ApplicationEventHandlers
       DocumentEx.get().getBody().appendChild(form);
       form.submit();
 
-      if (Desktop.isRemoteDesktop())
-      {
-         // let the desktop application know that we are signing out
-         Desktop.getFrame().signOut();
-      }
    }
 
    @Handler
@@ -765,12 +760,6 @@ public class Application implements ApplicationEventHandlers
                view_.showApplicationQuit();
             }
 
-            if (Desktop.isRemoteDesktop())
-            {
-               // inform the desktop application that the remote session has finished quitting
-               Desktop.getFrame().onSessionQuit();
-            }
-
             // attempt to close the window if this is a quit
             // action (may or may not be able to depending on
             // how it was created)
@@ -786,8 +775,7 @@ public class Application implements ApplicationEventHandlers
             }
             else if (session_.getSessionInfo().getShowUserHomePage())
             {
-               if (!Desktop.isRemoteDesktop())
-                  loadUserHomePage();
+               loadUserHomePage();
             }
          }
       }
@@ -1019,7 +1007,7 @@ public class Application implements ApplicationEventHandlers
          removeProjectCommands();
       }
 
-      if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+      if (Desktop.isDesktop())
          commands_.signOut().remove();
       else if (!sessionInfo.getShowIdentity() || !sessionInfo.getAllowFullUI())
          commands_.signOut().remove();
