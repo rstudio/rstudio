@@ -21,6 +21,7 @@ import java.util.Iterator;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingContext;
@@ -159,6 +161,25 @@ public class TextEditingTargetSpelling extends SpellingContext
                  if (!prefs_.realTimeSpellchecking().getValue() || docDisplay_.hasSelection())
                     return;
 
+                 // Check for a spelling marker at the cursor position
+                 boolean hasMarker = false;
+                 
+                 Position cursorPos = docDisplay_.getCursorPosition();
+                 JsMap<Marker> markers = docDisplay_.getMarkers(true);
+                 JsArray<Marker> values = markers.values();
+                 for (int i = 0, n = values.length(); i < n; i++)
+                 {
+                    Marker marker = values.get(i);
+                    if (marker.getRange().contains(cursorPos))
+                    {
+                       hasMarker = true;
+                       break;
+                    }
+                 }
+                 
+                 if (!hasMarker)
+                    return;
+                 
                  SpellingDoc spellingDoc = docDisplay_.getSpellingDoc();
 
                  // Get the word under the cursor
