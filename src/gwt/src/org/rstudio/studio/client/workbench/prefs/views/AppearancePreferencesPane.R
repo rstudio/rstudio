@@ -1,12 +1,13 @@
 # compute five-number summary
-fivenum <- function(x) {
-  
+fivenum <- function(x = stats::rnorm(100)) {
+  # handle non-numeric input
+   if (!is.numeric(x))
+      stop("`x` must be numeric.")
+
   # handle empty input
   n <- length(x)
-  if (n == 0) {
-     message("No input")
+  if (n == 0)
      return(rep.int(NA, 5))
-  }
    
   # compute quartile indices
   n5 <- 1
@@ -17,7 +18,7 @@ fivenum <- function(x) {
   i <- c(n5, n4, n3, n2, n1)
   
   # compute quartile values
-  x <- base::sort(x)
+  x <- sort(x, decreasing = FALSE)
   xf <- x[floor(i)]
   xc <- x[ceiling(i)]
   0.5 * (xf + xc)
