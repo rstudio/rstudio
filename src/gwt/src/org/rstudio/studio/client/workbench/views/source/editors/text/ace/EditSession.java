@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -280,7 +281,7 @@ public class EditSession extends JavaScriptObject
       return this.getAnnotations();
    }-*/;
    
-   public native final Markers getMarkers(boolean inFront) /*-{
+   public native final JsMap<Marker> getMarkers(boolean inFront) /*-{
       return this.getMarkers(inFront);
    }-*/;
    

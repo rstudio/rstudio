@@ -4260,6 +4260,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.setAnnotations(annotations);
    }
+   
+   public JsMap<Marker> getMarkers(boolean inFront)
+   {
+      return widget_.getMarkers(inFront);
+   }
 
    @Override
    public void removeMarkersAtCursorPosition()

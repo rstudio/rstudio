@@ -20,6 +20,7 @@ package org.rstudio.core.client.js;
  */
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 public class JsMap<T extends JavaScriptObject> extends JavaScriptObject
@@ -28,7 +29,7 @@ public class JsMap<T extends JavaScriptObject> extends JavaScriptObject
 
    @SuppressWarnings("rawtypes")
    public static native final JsMap create() /*-{ return {}; }-*/;
-
+   
    public native final T get(String key) /*-{
       return this[key];
    }-*/;
@@ -39,6 +40,10 @@ public class JsMap<T extends JavaScriptObject> extends JavaScriptObject
 
    public native final JsArrayString keys() /*-{
       return Object.keys(this);
+   }-*/;
+   
+   public native final JsArray<T> values() /*-{
+      return Object.values(this);
    }-*/;
 
    public native final int size() /*-{

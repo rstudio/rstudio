@@ -26,6 +26,7 @@ import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.elemental2.overlay.File;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -1252,10 +1253,7 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.spelling();
          
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
-         annotations_.add(new AnchoredAceAnnotation(
-            annotations.get(i),
-            range,
-            id));
+         annotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
       }
    }
 
@@ -1289,6 +1287,11 @@ public class AceEditorWidget extends Composite
       for (int i = 0; i < annotations_.size(); i++)
          annotations_.get(i).detach();
       annotations_.clear();
+   }
+   
+   public JsMap<Marker> getMarkers(boolean inFront)
+   {
+      return editor_.getSession().getMarkers(inFront);
    }
 
    public void removeMarkersOnCursorLine()
