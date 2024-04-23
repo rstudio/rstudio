@@ -1,5 +1,5 @@
 # compute five-number summary
-fivenum <- function(x = stats::rnorm(100)) {
+fivenum <- function(x) {
   # handle non-numeric input
    if (!is.numeric(x))
       stop("`x` must be numeric.")
