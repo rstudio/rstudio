@@ -107,10 +107,7 @@ docker build                                \
   .
 
 # infer the package extension from the image name
-if [ "${IMAGE:0:6}" = "centos" ]; then
-    PACKAGE=RPM
-    INSTALLER=yum
-elif [ "${IMAGE:0:6}" = "fedora" ]; then
+if [ "${IMAGE:0:6}" = "fedora" ]; then
     PACKAGE=RPM
     INSTALLER=yum
 elif [ "${IMAGE:0:4}" = "rhel" ]; then
