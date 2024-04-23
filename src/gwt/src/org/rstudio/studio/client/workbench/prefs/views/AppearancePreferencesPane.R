@@ -18,7 +18,7 @@ fivenum <- function(x) {
   i <- c(n5, n4, n3, n2, n1)
   
   # compute quartile values
-  x <- sort(x, decreasing = FALSE)
+  x <- sort(x)
   xf <- x[floor(i)]
   xc <- x[ceiling(i)]
   0.5 * (xf + xc)
