@@ -3,9 +3,11 @@ fivenum <- function(x) {
   
   # handle empty input
   n <- length(x)
-  if (n == 0)
+  if (n == 0) {
+     message("No input")
      return(rep.int(NA, 5))
-  
+  }
+   
   # compute quartile indices
   n5 <- 1
   n4 <- ((n + 3) %/% 2) / 2
@@ -15,7 +17,7 @@ fivenum <- function(x) {
   i <- c(n5, n4, n3, n2, n1)
   
   # compute quartile values
-  x <- sort(x)
+  x <- base::sort(x)
   xf <- x[floor(i)]
   xc <- x[ceiling(i)]
   0.5 * (xf + xc)
