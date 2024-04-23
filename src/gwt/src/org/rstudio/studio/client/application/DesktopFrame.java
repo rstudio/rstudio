@@ -212,8 +212,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void installRtools(String version, String installerPath);
 
-   void showSessionServerOptionsDialog();
-
    void onSessionQuit();
 
    void crashDesktopApplication();

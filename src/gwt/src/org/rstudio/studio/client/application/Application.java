@@ -401,15 +401,6 @@ public class Application implements ApplicationEventHandlers
    }
 
    @Handler
-   void onShowSessionServerOptionsDialog()
-   {
-      if (pEdition_.get() != null)
-      {
-         pEdition_.get().showSessionServerOptionsDialog();
-      }
-   }
-
-   @Handler
    void onCrashDesktopApplication()
    {
       globalDisplay_.showYesNoMessage(
@@ -1171,12 +1162,6 @@ public class Application implements ApplicationEventHandlers
          if (!pEdition_.get().proLicense() || !Desktop.hasDesktopFrame())
          {
             commands_.showLicenseDialog().remove();
-            commands_.showSessionServerOptionsDialog().remove();
-         }
-         else if (BrowseCap.isElectron())
-         {
-         // Electron RDP does not support remote sessons
-            commands_.showSessionServerOptionsDialog().remove();
          }
       }
 

@@ -35,8 +35,5 @@ public class ProductEditionInfo
    {
    }
 
-   public void showSessionServerOptionsDialog()
-   {
-   }
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }
