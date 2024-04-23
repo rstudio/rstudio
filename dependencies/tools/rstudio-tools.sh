@@ -429,10 +429,6 @@ is-redhat () {
 	[ -f /etc/redhat-release ]
 }
 
-is-centos () {
-	[ "$(platform)" = "centos" ]
-}
-
 is-rhel () {
 	[ "$(platform)" = "rocky" ]
 }

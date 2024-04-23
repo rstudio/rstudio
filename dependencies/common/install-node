@@ -53,13 +53,6 @@ esac
 # Will be set if we need to use Node 16.
 needs-node-16 () {
 
-	# Use Node 16 on CentOS 7.
-	if [ -e /etc/centos-release ]; then
-		if grep -siq "release 7" /etc/centos-release; then
-			return 0
-		fi
-	fi
-
 	# Use Node 16 on Ubuntu Bionic (which is used to make Focal builds).
 	if [ -e /etc/os-release ]; then
 		. /etc/os-release
