@@ -13,5 +13,5 @@ popd
 echo Microsoft toolchain configured, can now use cmake. For example:
 echo mkdir rstudio\src\build
 echo cd rstudio\src\build
-echo cmake ..\cpp -GNinja -DRSTUDIO_TARGET=Electron
+echo cmake ..\cpp -GNinja
 echo ninja
