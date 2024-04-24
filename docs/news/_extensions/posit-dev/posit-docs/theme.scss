@@ -80,6 +80,13 @@ $list-group-color: $primary !default;
     font-weight: 500;
 }
 
+/* Style for the version included in the website title */
+.navbar-title small {
+    font-size: 14px;
+    display: block;
+    padding-left: 1em;
+}
+
 /* Posit logo - navbar or footer */
 #footer-right-posit-logo {
   width: 70px;
@@ -120,15 +127,14 @@ $list-group-color: $primary !default;
 .sidebar nav[role=doc-toc]>ul li a {
     text-transform: none !important;
     font-family: $font-family-sans-serif;
-    font-size: 16px;
-    font-weight: 300 !important;
-    letter-spacing: .05em !important;
+    font-weight: 400 !important;
+    letter-spacing: -0.2px !important;
 }
 
 /* Left nav - letter spacing */
 .sidebar-navigation li a {
-    letter-spacing: .03em;
-    font-size: 16px;
+    letter-spacing: -0.2px;
+    line-height: normal;
 }
 
 
@@ -143,10 +149,14 @@ $list-group-color: $primary !default;
     min-height: min-content;
 }
 
-/* List disc colors */
-li::marker {
-    color: $primary;
-}
+// Font
+
+/* Body font */
+body {
+  letter-spacing: -0.2px !important;
+ }
+
+// Specialty headers
 
 /* the feature PREVIEW header */
 .preview-header > h1:after,
@@ -179,6 +189,12 @@ div span.preview-feature {
   text-transform: uppercase;
 }
 
+// Lists
+
+/* List disc colors */
+li::marker {
+  color: $primary;
+}
 
 /* Callout steps for images with multiple items/steps shown in single image */
 ol.groovyAlpha {

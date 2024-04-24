@@ -120,6 +120,10 @@ website:
     center: |
       RStudio {{< var buildType >}} {{< var version >}}
     right:
+      - icon: question-circle-fill
+        href: https://support.posit.co/hc/en-us
+      - icon: lightbulb-fill
+        href: https://solutions.posit.co
       - text: "<img src='/images/posit-guide-ltmd.svg' id='footer-right-logo'>"
         href: https://docs.posit.co
       - text: "<img src='/images/posit-logo-black-TM.svg' id='footer-right-posit-logo'>"
@@ -127,7 +131,7 @@ website:
 
 
 format:
-  posit-docs-html:
+  html:
     fig-responsive: true
     include-in-header: _ga-header-tag.html
     include-before-body: _ga-body-tag.html
