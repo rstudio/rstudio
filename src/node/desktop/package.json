@@ -26,8 +26,8 @@
     "forge": "./forge.config.js"
   },
   "devDependencies": {
-    "@electron-forge/cli": "7.3.1",
-    "@electron-forge/plugin-webpack": "7.3.1",
+    "@electron-forge/cli": "7.2.0",
+    "@electron-forge/plugin-webpack": "7.2.0",
     "@types/chai": "4.3.11",
     "@types/crc": "3.8.3",
     "@types/line-reader": "0.0.37",
