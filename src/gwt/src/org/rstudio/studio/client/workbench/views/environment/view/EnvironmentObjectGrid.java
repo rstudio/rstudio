@@ -31,6 +31,7 @@ import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
@@ -38,12 +39,27 @@ import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.AbstractHeaderOrFooterBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.SelectionModel;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.TextBox;
 
 public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 {
+
+   private TextBox searchBox;
+   private Button nextButton;
+   private Button prevButton;
+   private String[] searchResults;
+   private int currentIndex;
+
    public interface Style extends CssResource
    {
       String objectGridColumn();
@@ -64,7 +80,37 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                                 EnvironmentObjectsObserver observer,
                                 String environmentName)
    {
+
       super(host, observer, environmentName);
+      searchBox = new TextBox();
+      searchBox.getElement().setPropertyString("placeholder", "Search...");
+      searchBox.addKeyUpHandler(new KeyUpHandler() {
+          @Override
+          public void onKeyUp(KeyUpEvent event) {
+              if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+                  performSearch();
+              }
+          }
+      });
+
+      // Initialize next button
+      nextButton = new Button("Next");
+      nextButton.addClickHandler(new ClickHandler() {
+          @Override
+          public void onClick(ClickEvent event) {
+              navigateToNext();
+          }
+      });
+
+      // Initialize previous button
+      prevButton = new Button("Previous");
+      prevButton.addClickHandler(new ClickHandler() {
+          @Override
+          public void onClick(ClickEvent event) {
+              navigateToPrevious();
+          }
+      });
+
       style_ = ((Resources)GWT.create(Resources.class)).style();
       style_.ensureInjected();
       selection_ = new MultiSelectionModel<>(RObjectEntry.KEY_PROVIDER);
@@ -78,6 +124,34 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       addStyleName(style_.objectGrid());
       addStyleName("ace_editor_theme");
    }
+
+   private void performSearch() {
+      String searchText = searchBox.getText();
+      searchResults = performActualSearch(searchText);
+      currentIndex = -1;
+      navigateToNext();
+  }
+
+  private void navigateToNext() {
+      if (searchResults == null || searchResults.length == 0) return;
+      currentIndex = (currentIndex + 1) % searchResults.length;
+      displaySearchResult(searchResults[currentIndex]);
+  }
+
+  private void navigateToPrevious() {
+      if (searchResults == null || searchResults.length == 0) return;
+      currentIndex = (currentIndex - 1 + searchResults.length) % searchResults.length;
+      displaySearchResult(searchResults[currentIndex]);
+  }
+
+  private void displaySearchResult(String result) {
+      System.out.println("Displaying search result: " + result);
+  }
+
+  // Placeholder method for actual search logic
+  private String[] performActualSearch(String searchText) {
+      return new String[]{"result1", "result2", "result3"};
+  }
 
    // Returns the objects that should be considered selected.
    // - If one or more objects are manually selected, that set of objects is
