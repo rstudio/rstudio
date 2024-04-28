@@ -1,7 +1,7 @@
 {
   "name": "rstudio",
   "productName": "RStudio",
-  "version": "99.9.9",
+  "version": "9999.99.9-dev+1.test9",
   "description": "RStudio",
   "main": "./.webpack/main",
   "repository": "https://github.com/rstudio/rstudio",
@@ -26,8 +26,9 @@
     "forge": "./forge.config.js"
   },
   "devDependencies": {
-    "@electron-forge/cli": "7.4.0",
-    "@electron-forge/plugin-webpack": "7.4.0",
+    "@electron/packager": "18.1.1",
+    "@electron-forge/cli": "7.2.0",
+    "@electron-forge/plugin-webpack": "7.2.0",
     "@types/chai": "4.3.11",
     "@types/crc": "3.8.3",
     "@types/line-reader": "0.0.37",
