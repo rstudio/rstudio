@@ -134,6 +134,7 @@
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAskSecret.hpp"
 #include "modules/SessionAuthoring.hpp"
+#include "modules/SessionAutomation.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionCpp.hpp"
 #include "modules/SessionHTMLPreview.hpp"
@@ -674,6 +675,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::fonts::initialize)
       (modules::system_resources::initialize)
       (modules::copilot::initialize)
+      (modules::automation::initialize)
 
       // workers
       (workers::web_request::initialize)

@@ -166,6 +166,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionAskSecret.cpp
    modules/SessionAsyncPackageInformation.cpp
    modules/SessionAuthoring.cpp
+   modules/SessionAutomation.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp

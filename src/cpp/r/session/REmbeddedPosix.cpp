@@ -228,22 +228,13 @@ bool polledEventHandlerInitialized()
 
 void processEvents()
 {
-#ifdef __APPLE__
+   // process regular events
    R_ProcessEvents();
 
-   // pickup X11 graphics device events (if any) via X11 input handler
-   fd_set* what = R_checkActivity(0,1);
-   if (what != nullptr)
-      R_runHandlers(R_InputHandlers, what);
-#else
    // check for activity on standard input handlers (but ignore stdin).
    // return immediately if there is no input currently available
-   fd_set* what = R_checkActivity(0,1);
-
-   // run handlers on the input (or run the polled event handler if there
-   // is no input currently available)
+   fd_set* what = R_checkActivity(0, 1);
    R_runHandlers(R_InputHandlers, what);
-#endif
 }
 
 } // namespace event_loop
