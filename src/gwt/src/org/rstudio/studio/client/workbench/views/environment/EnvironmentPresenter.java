@@ -86,6 +86,11 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.environment.view.MemoryUsageSummaryDialog;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
@@ -275,12 +280,28 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onBrowserLineChanged(BrowserLineChangedEvent event)
          {
-            if (currentBrowsePosition_.compareTo(event.getRange()) != 0)
+            if (isApproximateBrowsePosition_)
+            {
+               openOrUpdateFileBrowsePoint(true, true);
+               requeryContextTimer_.cancel();
+               return;
+            }
+            
+            // Get the new range.
+            DebugFilePosition range = event.getRange();
+            
+            // The updated range will be relative to the function start position.
+            // Convert to an absolute position in the debugged document.
+            // The debug positions used are also 1-index based, so add one.
+            range = range.functionRelativePosition(-currentFunctionLineNumber_ + 1);
+            
+            if (currentBrowsePosition_.compareTo(range) != 0)
             {
                currentBrowsePosition_ = event.getRange();
                view_.setBrowserRange(currentBrowsePosition_);
                openOrUpdateFileBrowsePoint(true, false);
             }
+            
             requeryContextTimer_.cancel();
          }
       });
@@ -828,6 +849,7 @@ public class EnvironmentPresenter extends BasePresenter
       {
          openOrUpdateFileBrowsePoint(false, false);
          useCurrentBrowseSource_ = false;
+         isApproximateBrowsePosition_ = false;
          currentBrowseSource_ = "";
          currentBrowseFile_ = "";
          currentBrowsePosition_ = null;
@@ -853,6 +875,83 @@ public class EnvironmentPresenter extends BasePresenter
       return false;
    }
 
+   private boolean openBrowsePointUsingOpenTab(boolean debugging,
+                                               boolean sourceChanged)
+   {
+      boolean tryOpenDoc =
+            useCurrentBrowseSource_ &&
+            currentBrowseSource_.length() > 0 &&
+            debugging;
+      
+      if (!tryOpenDoc)
+         return false;
+      
+      SourceColumnManager manager = RStudioGinjector.INSTANCE.getSourceColumnManager();
+      for (SourceColumn column : manager.getColumnList())
+      {
+         for (EditingTarget editingTarget : column.getEditors())
+         {
+            if (!(editingTarget instanceof TextEditingTarget))
+               continue;
+            
+            TextEditingTarget target = (TextEditingTarget) editingTarget;
+            if (StringUtil.isNullOrEmpty(target.getPath()))
+               continue;
+            
+            String editorCode = target.getDocDisplay().getCode();
+            int codeIndex = editorCode.indexOf(currentBrowseSource_);
+            if (codeIndex == -1)
+            {
+               // Try a fuzzier search, but note that this is now an approximate position.
+               int newlineIndex = currentBrowseSource_.indexOf('\n');
+               String firstLine = currentBrowseSource_.substring(0, newlineIndex);
+               codeIndex = editorCode.indexOf(firstLine);
+               if (codeIndex != -1)
+               {
+                  isApproximateBrowsePosition_ = true;
+               }
+            }
+            else
+            {
+               isApproximateBrowsePosition_ = false;
+            }
+            
+            if (codeIndex == -1)
+               continue;
+            
+            // We've found the start of the function being debugged in a
+            // currently-open tab. Try to set the browse position accordingly.
+            Position position = target.getDocDisplay().positionFromIndex(codeIndex);
+            
+            // Save function line number.
+            // Add one as this is a 1-based index into the document.
+            currentFunctionLineNumber_ = position.getRow() + 1;
+            currentBrowseFile_ = target.getPath();
+            
+            // Set the browser position.
+            currentBrowsePosition_ = DebugFilePosition.create(
+                  currentBrowsePosition_.getLine() + position.getRow(),
+                  currentBrowsePosition_.getEndLine() + position.getRow(),
+                  currentBrowsePosition_.getColumn(),
+                  currentBrowsePosition_.getEndColumn());
+            
+            FilePosition navPosition = isApproximateBrowsePosition_
+                  ? FilePosition.create(-1, -1)
+                  : currentBrowsePosition_.cast();
+            
+            OpenSourceFileEvent event = new OpenSourceFileEvent(
+                  FileSystemItem.createFile(target.getPath()),
+                  navPosition,
+                  FileTypeRegistry.R,
+                  NavigationMethods.DEBUG_STEP);
+            eventBus_.fireEvent(event);
+            return true;
+         }
+      }
+      
+      return false;
+   }
+   
    private void openOrUpdateFileBrowsePoint(boolean debugging,
                                             boolean sourceChanged)
    {
@@ -868,8 +967,7 @@ public class EnvironmentPresenter extends BasePresenter
       // if we have a real filename and sign from the server that the file
       // is in sync with the actual copy of the function, navigate to the
       // file itself
-      if (currentBrowsePosition_ != null &&
-          !useCurrentBrowseSource_)
+      if (currentBrowsePosition_ != null && !useCurrentBrowseSource_)
       {
          FileSystemItem sourceFile = FileSystemItem.createFile(file);
          eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
@@ -878,12 +976,18 @@ public class EnvironmentPresenter extends BasePresenter
                                 debugging ?
                                       NavigationMethods.DEBUG_STEP :
                                       NavigationMethods.DEBUG_END));
+         return;
       }
-
+      
+      // check and see if we're debugging a function whose definition appears
+      // to match something in a currently-open file -- if we find that, then
+      // use that file for debug navigation, instead of the code browser
+      if (openBrowsePointUsingOpenTab(debugging, sourceChanged))
+         return;
+      
       // otherwise, if we have a copy of the source from the server, load
       // the copy from the server into the code browser window
-      else if (useCurrentBrowseSource_ &&
-               currentBrowseSource_.length() > 0)
+      if (useCurrentBrowseSource_ && currentBrowseSource_.length() > 0)
       {
          if (debugging)
          {
@@ -921,9 +1025,10 @@ public class EnvironmentPresenter extends BasePresenter
                // open it
                eventBus_.fireEvent(new CodeBrowserNavigationEvent(
                      searchFunction_,
-                     currentBrowsePosition_.functionRelativePosition(
-                           currentFunctionLineNumber_),
-                     contextDepth_ == 1, false));
+                     currentBrowsePosition_.functionRelativePosition(currentFunctionLineNumber_),
+                     contextDepth_ == 1,
+                     false,
+                     true));
             }
             else if (currentBrowsePosition_.getLine() > 0)
             {
@@ -931,8 +1036,8 @@ public class EnvironmentPresenter extends BasePresenter
                // highlight
                eventBus_.fireEvent(new CodeBrowserHighlightEvent(
                      searchFunction_,
-                     currentBrowsePosition_.functionRelativePosition(
-                           currentFunctionLineNumber_)));
+                     currentBrowsePosition_.functionRelativePosition(currentFunctionLineNumber_),
+                     true));
             }
          }
          else
@@ -1111,6 +1216,7 @@ public class EnvironmentPresenter extends BasePresenter
    private int currentFunctionLineNumber_;
    private String currentBrowseFile_;
    private boolean useCurrentBrowseSource_;
+   private boolean isApproximateBrowsePosition_;
    private String currentBrowseSource_;
    private String environmentName_;
    private String functionEnvName_;

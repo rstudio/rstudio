@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
@@ -136,11 +137,8 @@ public class SelectWidget extends Composite
       if (values == null)
          values = options;
       
-      if ((label != null) && !label.endsWith(":"))
-         label = label + ":";
-
+      label = StringUtil.ensureColonSuffix(label);
       listBox_ = new ListBox();
-      listBox_.getElement().getStyle().setProperty("minHeight", "20px");
       listBox_.setMultipleSelect(isMultipleSelect);
 
       // set the element ID if one is provided, otherwise let it get auto generated
@@ -184,6 +182,7 @@ public class SelectWidget extends Composite
          }
 
          horizontalPanel_.setCellVerticalAlignment(label_, HasVerticalAlignment.ALIGN_MIDDLE);
+         horizontalPanel_.setCellVerticalAlignment(listBox_, HasVerticalAlignment.ALIGN_MIDDLE);
          panel = horizontalPanel_;
       }
       else
@@ -196,11 +195,15 @@ public class SelectWidget extends Composite
          {
             label_ = new FormLabel("", true); // to maintain layout
          }
+         
+         label_.getElement().getStyle().setMarginLeft(2, Unit.PX);
+         label_.getElement().getStyle().setMarginBottom(2, Unit.PX);
          flowPanel_ = new FlowPanel();
          flowPanel_.add(label_);
+         flowPanel_.add(listBox_);
          panel = flowPanel_;
-         panel.add(listBox_);
       }
+      
       if (!StringUtil.isNullOrEmpty(uniqueId_))
          ElementIds.assignElementId(label_, ElementIds.SELECT_WIDGET_LABEL + uniqueId_);
 

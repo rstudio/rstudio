@@ -16,6 +16,10 @@
 #include "SessionEnvironment.hpp"
 #include "EnvironmentMonitor.hpp"
 
+#define INTERNAL_R_FUNCTIONS
+
+#include <fmt/format.h>
+
 #include <algorithm>
 
 #include <boost/container/flat_map.hpp>
@@ -24,21 +28,22 @@
 #include <core/RecursionGuard.hpp>
 #include <core/system/LibraryLoader.hpp>
 
-#define INTERNAL_R_FUNCTIONS
-#include <r/RHelpers.hpp>
-#include <r/RJson.hpp>
-#include <r/RSexp.hpp>
-#include <r/RExec.hpp>
-#include <r/session/RSession.hpp>
-#include <r/RInterface.hpp>
-#include <r/RRoutines.hpp>
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
+#include <r/RExec.hpp>
+#include <r/RHelpers.hpp>
+#include <r/RInterface.hpp>
+#include <r/RJson.hpp>
+#include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
+#include <r/RSxpInfo.hpp>
+#include <r/RUtil.hpp>
+#include <r/session/RSession.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/prefs/UserPrefs.hpp>
-#include <r/RSxpInfo.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -221,12 +226,15 @@ bool isGlobalEnvironmentSerializable()
          // TODO: If an R environment is updated in-place with a value that
          // makes it no longer serializable, we would fail to detect this.
          // Is this okay? Or should we avoid caching results for environments?
-         SEXP valueSEXP = CAR(frameSEXP);
-         bool canBeSerialized = s_serializationCache.contains(valueSEXP)
-               ? s_serializationCache.at(valueSEXP)
-               : isSerializable(valueSEXP);
-         newCache[valueSEXP] = canBeSerialized;
-         allValuesSerializable = allValuesSerializable && canBeSerialized;
+         if (!r::internal::isImmediateBinding(frameSEXP))
+         {
+            SEXP valueSEXP = CAR(frameSEXP);
+            bool canBeSerialized = s_serializationCache.contains(valueSEXP)
+                  ? s_serializationCache.at(valueSEXP)
+                  : isSerializable(valueSEXP);
+            newCache[valueSEXP] = canBeSerialized;
+            allValuesSerializable = allValuesSerializable && canBeSerialized;
+         }
       }
    }
    
@@ -630,18 +638,17 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
    // Attach them to a carrier SEXP as attributes rather than passing directly.
    SEXP info = r::sexp::create("_rs_sourceinfo", &protect);
    r::sexp::setAttrib(info, "_rs_callfun", context.callfun());
+   
    if (lineContext)
    {
       r::sexp::setAttrib(info, "_rs_callobj", lineContext.call());
    }
    else if (pLineDebugState != nullptr)
    {
-      SEXP lastDebugSEXP = r::sexp::create(
-               pLineDebugState->lastDebugText, &protect);
+      SEXP lastDebugSEXP = r::sexp::create(pLineDebugState->lastDebugText, &protect);
       r::sexp::setAttrib(info, "_rs_calltext", lastDebugSEXP);
       
-      SEXP lastLineSEXP = r::sexp::create(
-               pLineDebugState->lastDebugLine, &protect);
+      SEXP lastLineSEXP = r::sexp::create(pLineDebugState->lastDebugLine, &protect);
       r::sexp::setAttrib(info, "_rs_lastline", lastLineSEXP);
    }
    
@@ -653,30 +660,72 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
 }
 
 // Return the call frames and debug information as a JSON object.
-json::Array callFramesAsJson(LineDebugState* pLineDebugState)
+json::Array callFramesAsJson(
+      int depth,
+      r::context::RCntxt* pContext,
+      r::context::RCntxt* pSrcContext,
+      LineDebugState* pLineDebugState)
 {
-   r::context::RCntxt::iterator context = r::context::RCntxt::begin();
-   r::context::RCntxt prevContext = *context;
-   r::context::RCntxt srcContext = *context;
+   Error error;
+   using namespace r::context;
+   
+   RCntxt prevContext;
+   RCntxt srcContext = globalContext();
    json::Array listFrames;
    int contextDepth = 0;
-   Error error;
-   std::map<SEXP,r::context::RCntxt> envSrcrefCtx;
+   std::map<SEXP, RCntxt> envSrcrefCtx;
+   
+   // We want to treat the function associated with the top-level
+   // browser context specially. This allows us to do so.
+   enum BrowseContextState {
+      BrowserContextNone,
+      BrowserContextFound,
+      BrowserContextUsed,
+   };
+   
+   SEXP browserCloenv = R_NilValue;
+   BrowseContextState browserContextState = BrowserContextNone;
 
-   for (; context != r::context::RCntxt::end(); context++)
+   // map source contexts to closures
+   for (auto context = RCntxt::begin(); context != RCntxt::end(); context++)
    {
+      bool isFunctionContext = (context->callflag() & (CTXT_FUNCTION | CTXT_BROWSER));
+      if (!isFunctionContext)
+         continue;
+      
       // if this context has a valid srcref, use it to supply the srcrefs for
       // debugging in the environment of the callee. note that there may be
       // multiple srcrefs on the stack for a given closure; in this case we
       // always want to take the first one as it's the most current/specific.
-      if (isValidSrcref(context->contextSourceRefs()) &&
-          !context->nextcontext().isNull())
+      SEXP srcref = context->contextSourceRefs();
+      if (!isValidSrcref(srcref))
+         continue;
+      
+      RCntxt nextContext = context->nextcontext();
+      if (nextContext.isNull())
+         continue;
+      
+      SEXP cloenv = context->nextcontext().cloenv();
+      if (cloenv == R_NilValue)
+         continue;
+      
+      if (envSrcrefCtx.find(cloenv) != envSrcrefCtx.end())
+         continue;
+      
+      envSrcrefCtx[cloenv] = *context;
+   }
+   
+   for (auto context = RCntxt::begin(); context != r::context::RCntxt::end(); context++)
+   {
+      if (browserContextState == BrowserContextNone)
       {
-         SEXP env = context->nextcontext().cloenv();
-         if (envSrcrefCtx.find(env) == envSrcrefCtx.end())
-            envSrcrefCtx[env] = *context;
+         if (context->callflag() & CTXT_BROWSER)
+         {
+            browserCloenv = context->cloenv();
+            browserContextState = BrowserContextFound;
+         }
       }
-
+      
       if (context->callflag() & CTXT_FUNCTION)
       {
          json::Object varFrame;
@@ -685,23 +734,27 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
          error = context->functionName(&functionName);
          if (error)
-         {
             LOG_ERROR(error);
-         }
+         
          varFrame["function_name"] = functionName;
          varFrame["is_error_handler"] = context->isErrorHandler();
          varFrame["is_hidden"] = context->isDebugHidden();
 
          // attempt to find the refs for the source that invoked this function;
          // use our own refs otherwise
-         std::map<SEXP,r::context::RCntxt>::iterator srcCtx =
-            envSrcrefCtx.find(context->cloenv());
-         if (srcCtx != envSrcrefCtx.end())
-            srcContext = srcCtx->second;
+         if (context->cloenv() != R_NilValue)
+         {
+            auto srcCtx = envSrcrefCtx.find(context->cloenv());
+            if (srcCtx != envSrcrefCtx.end())
+               srcContext = srcCtx->second;
+            else
+               srcContext = *context;
+         }
          else
+         {
             srcContext = *context;
+         }
 
-         // extract source reference associated with source context
          SEXP srcref = srcContext.contextSourceRefs();
          
          // mark this as a source-equivalent function if it's evaluating user
@@ -723,56 +776,52 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          {
             varFrame["real_sourceref"] = true;
             sourceRefToJson(srcref, &varFrame);
+            
+            std::string lines;
+            Error error = r::exec::RFunction(".rs.readSrcrefLines")
+                  .addParam(srcref)
+                  .addParam(true)
+                  .call(&lines);
+            
+            if (error)
+               LOG_ERROR(error);
+            
+            varFrame["lines"] = lines;
          }
          else
          {
             varFrame["real_sourceref"] = false;
             
-            // if this is the top frame, we simulate the sourceref using R
-            // output of the last debugged statement; if it isn't, we
-            // construct it by deparsing calls in the context stack.
+            // if this frame is being debugged, we simulate the sourceref
+            // using the output of the last debugged statement; if it isn't,
+            // we construct it by deparsing calls in the context stack.
             SEXP simulatedSrcref;
-            if (contextDepth == 1 &&
-                pLineDebugState != nullptr &&
-                pLineDebugState->lastDebugText.length() > 0)
-               simulatedSrcref =
-                     simulatedSourceRefsOfContext(*context, 
-                           r::context::RCntxt(), pLineDebugState);
-            else
-               simulatedSrcref =
-                     simulatedSourceRefsOfContext(*context, prevContext,
-                                                  nullptr);
-
-            // store the line stepped over in the top frame, so we can infer
-            // that the next line stepped over will be near this one
-            if (contextDepth == 1 &&
-                pLineDebugState != nullptr &&
-                isValidSrcref(simulatedSrcref))
+            if (browserContextState == BrowserContextFound &&
+                browserCloenv == context->cloenv())
             {
-               int stepLine = INTEGER(simulatedSrcref)[0];
-               if (stepLine > 0)
-                  pLineDebugState->lastDebugLine = stepLine;
+               browserContextState = BrowserContextUsed;
+               simulatedSrcref =
+                     simulatedSourceRefsOfContext(
+                        *context, RCntxt(), pLineDebugState);
+               
+               if (isValidSrcref(simulatedSrcref))
+               {
+                  int lastDebugLine = INTEGER(simulatedSrcref)[0] - 1;
+                  pLineDebugState->lastDebugLine = lastDebugLine;
+               }
+            }
+            else
+            {
+               simulatedSrcref =
+                     simulatedSourceRefsOfContext(
+                        *context, prevContext, nullptr);
             }
 
             sourceRefToJson(simulatedSrcref, &varFrame);
          }
 
-         // extract the first line of the function. the client can optionally
-         // use this to compute the source location as an offset into the
-         // function rather than as an absolute file position (useful when
-         // we need to debug a copy of the function rather than the real deal).
-         SEXP srcRef = context->callFunSourceRefs();
-         if (isValidSrcref(srcRef) && TYPEOF(srcRef) == INTSXP)
-         {
-            varFrame["function_line_number"] = INTEGER(srcRef)[0];
-         }
-         else
-         {
-            // if we don't have a source ref, we'll debug using a deparsed
-            // version of the function that starts on line 1
-            varFrame["function_line_number"] = 1;
-         }
-
+         varFrame["function_line_number"] = 1;
+         
          std::string callSummary;
          error = context->callSummary(&callSummary);
          if (error)
@@ -782,11 +831,18 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
          // If this is a Shiny function, provide its label
          varFrame["shiny_function_label"] = context->shinyFunctionLabel();
+         
+         if (depth == contextDepth)
+         {
+            *pContext = *context;
+            *pSrcContext = srcContext;
+         }
 
          listFrames.push_back(varFrame);
+         prevContext = *context;
       }
-      prevContext = *context;
    }
+   
    return listFrames;
 }
 
@@ -1036,30 +1092,35 @@ json::Object pythonEnvironmentStateData(const std::string& environment)
 // used both to initialize the environment state on first load and to send
 // information about the new environment on a context change
 json::Object commonEnvironmentStateData(
-   int depth,
-   bool includeContents,
-   LineDebugState* pLineDebugState)
+      bool isDebugStepping,
+      int depth,
+      bool includeContents,
+      LineDebugState* pLineDebugState)
 {
+   bool hasCodeInFrame = false;
    json::Object varJson;
    bool useProvidedSource = false;
    std::string functionCode;
    bool inFunctionEnvironment = false;
-
+   
+   r::context::RCntxt context;
+   r::context::RCntxt srcContext;
+   json::Array callFramesJson = callFramesAsJson(depth, &context, &srcContext, pLineDebugState);
+   
    // emit the current list of values in the environment, but only if not monitoring (as the intent
    // of the monitoring switch is to avoid implicit environment listing)
    varJson["environment_monitoring"] = s_monitoring;
    varJson["environment_list"] = includeContents ? environmentListAsJson() : json::Array();
    
    varJson["context_depth"] = depth;
-   varJson["call_frames"] = callFramesAsJson(pLineDebugState);
+   varJson["call_frames"] = callFramesJson;
    varJson["function_name"] = "";
 
    // if we're in a debug context, add information about the function currently
    // being debugged
    if (depth > 0)
    {
-      r::context::RCntxt context = r::context::getFunctionContext(depth);
-      if (context)
+      if (!context.isNull())
       {
          std::string functionName;
          Error error = context.functionName(&functionName);
@@ -1073,27 +1134,54 @@ json::Object commonEnvironmentStateData(
          if (env != R_GlobalEnv && env == context.cloenv())
          {
             varJson["environment_name"] = functionName + "()";
+            
             std::string envLocation;
-            error = r::exec::RFunction(".rs.environmentName", 
-                  ENCLOS(context.cloenv())).call(&envLocation);
+            error = r::exec::RFunction(".rs.environmentName")
+                  .addParam(ENCLOS(context.cloenv()))
+                  .call(&envLocation);
+            
             if (error)
                LOG_ERROR(error);
+            
             varJson["function_environment_name"] = envLocation;
             varJson["environment_is_local"] = true;
             inFunctionEnvironment = true;
          }
 
-         // The eval and evalq functions receive special treatment since they
-         // evaluate code from elsewhere (they don't have meaningful bodies we
-         // can test here)
-         if (functionName != "eval" && functionName != "evalq")
+         // Check whether we already have code associated with this frame
+         // from the call frames we previously queried.
+         json::Value currentFrameJson = callFramesJson.getValueAt(depth - 1);
+         if (currentFrameJson.isObject())
          {
-            // see if the function to be debugged is out of sync with its saved
-            // sources (if available).
-            useProvidedSource =
-                  functionIsOutOfSync(context, &functionCode) &&
-                  functionCode != "NULL";
+            std::string filename, lines;
+            core::json::readObject(currentFrameJson.getObject(),
+                     "file_name", filename,
+                     "lines", lines);
+            
+            // TODO: Need to check if srcref code is in sync with file?
+            if (!lines.empty())
+            {
+               hasCodeInFrame = true;
+               useProvidedSource = filename.empty() || !module_context::resolveAliasedPath(filename).exists();
+               functionCode = lines;
+            }
          }
+         
+         if (!hasCodeInFrame)
+         {
+            // The eval and evalq functions receive special treatment since they
+            // evaluate code from elsewhere (they don't have meaningful bodies we
+            // can test here)
+            if (functionName != "eval" && functionName != "evalq")
+            {
+               // see if the function to be debugged is out of sync with its saved
+               // sources (if available).
+               useProvidedSource =
+                     functionIsOutOfSync(context, &functionCode) &&
+                     functionCode != "NULL";
+            }
+         }
+         
          varJson["function_name"] = functionName;
       }
    }
@@ -1120,6 +1208,11 @@ json::Object commonEnvironmentStateData(
       varJson["environment_name"] = environmentName;
       varJson["environment_is_local"] = local;
    }
+ 
+   // If we have source references while we're stepping through, then
+   // we can accurately provide the current context even for the top-most frame.
+   if (isDebugStepping && hasCodeInFrame)
+      varJson["context_depth"] = 1;
 
    // always emit the code for the function, even if we don't think that the
    // client's going to need it. we only checked the saved copy of the function
@@ -1131,14 +1224,15 @@ json::Object commonEnvironmentStateData(
    return varJson;
 }
 
-void enqueContextDepthChangedEvent(int depth,
+void enqueContextDepthChangedEvent(bool isDebugStepping,
+                                   int depth,
                                    LineDebugState* pLineDebugState)
 {
    // emit an event to the client indicating the new call frame and the
    // current state of the environment
    ClientEvent event(
             client_events::kContextDepthChanged,
-            commonEnvironmentStateData(depth, s_monitoring, pLineDebugState));
+            commonEnvironmentStateData(isDebugStepping, depth, s_monitoring, pLineDebugState));
    module_context::enqueClientEvent(event);
 }
 
@@ -1146,7 +1240,7 @@ void enqueBrowserLineChangedEvent(const SEXP srcref)
 {
    json::Object varJson;
    sourceRefToJson(srcref, &varJson);
-   ClientEvent event (client_events::kBrowserLineChanged, varJson);
+   ClientEvent event(client_events::kBrowserLineChanged, varJson);
    module_context::enqueClientEvent(event);
 }
 
@@ -1168,7 +1262,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
-   enqueContextDepthChangedEvent(*pContextDepth, pLineDebugState.get());
+   enqueContextDepthChangedEvent(false, *pContextDepth, pLineDebugState.get());
 
    return Success();
 }
@@ -1189,6 +1283,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
    if (language == kEnvironmentLanguageR)
    {
       jsonState = commonEnvironmentStateData(
+               false,
                *pContextDepth,
                true,
                pLineDebugState.get());
@@ -1238,21 +1333,9 @@ void onDetectChanges(module_context::ChangeSource /* source */)
 
 namespace {
 
-bool isEvalContext(const r::context::RCntxt& ctx)
-{
-   SEXP call = ctx.call();
-   if (TYPEOF(call) != LANGSXP)
-      return false;
-   
-   SEXP lhs = CAR(call);
-   if (TYPEOF(lhs) != SYMSXP)
-      return false;
-   
-   std::string name = CHAR(PRINTNAME(lhs));
-   return name == "eval" || name == "evalq";
-}
-
-SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
+SEXP inferDebugSrcrefs(
+      int depth,
+      boost::shared_ptr<LineDebugState> pLineDebugState)
 {
    using namespace r::context;
    
@@ -1262,43 +1345,18 @@ SEXP inferDebugSrcrefs(boost::shared_ptr<LineDebugState> pLineDebugState)
    if (isValidSrcref(srcref))
       return srcref;
    
-   // no source reference available; try to find an appropriate context
-   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
-   {
-      // if we find a CTXT_BROWSER context, try to find its matching CTXT_FUNCTION
-      // these contexts are occasionally created when e.g. stepping into tryCatch
-      if (it->callflag() & CTXT_BROWSER)
-      {
-         SEXP cloenv = it->cloenv();
-         for (; it != RCntxt::end(); it++)
-         {
-            // skip 'eval' and 'evalq'
-            if (isEvalContext(*it))
-               continue;
-            
-            if (it->callflag() & CTXT_FUNCTION)
-            {
-               if (cloenv == it->cloenv())
-               {
-                  return simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
-               }
-            }
-         }
-      }
-
-      // skip 'eval' and 'evalq'
-      if (isEvalContext(*it))
-         continue;
-            
-      // if we find a CTXT_FUNCTION context, use it
-      if (it->callflag() & CTXT_FUNCTION)
-      {
-         return simulatedSourceRefsOfContext(*it, RCntxt(), pLineDebugState.get());
-      }
-   }
-
-   // shouldn't happen, but just in case
-   return R_NilValue;
+   r::context::RCntxt context;
+   r::context::RCntxt srcContext;
+   json::Array callFramesJson = callFramesAsJson(
+            depth,
+            &context,
+            &srcContext,
+            pLineDebugState.get());
+   
+   srcref = simulatedSourceRefsOfContext(srcContext, RCntxt(), pLineDebugState.get());
+   if (pLineDebugState && isValidSrcref(srcref))
+      pLineDebugState->lastDebugLine = INTEGER(srcref)[0] - 1;
+   return srcref;
 }
 
 } // end anonymous namespace
@@ -1311,6 +1369,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
 
+   
    int depth = 0;
    SEXP environmentTop = nullptr;
    r::context::RCntxt context;
@@ -1335,8 +1394,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // If we're not currently debugging, look for user code (we prefer to
       // show the user their own code on entering debug), but once debugging,
       // allow the user to explore other code.
-      context = r::context::getFunctionContext(BROWSER_FUNCTION,
-                                               &depth, &environmentTop);
+      context = r::context::getFunctionContext(BROWSER_FUNCTION, &depth, &environmentTop);
    }
    
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
@@ -1363,13 +1421,13 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
       *pCurrentContext = context;
-      enqueContextDepthChangedEvent(depth, pLineDebugState.get());
+      enqueContextDepthChangedEvent(true, depth, pLineDebugState.get());
    }
    
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0 && !r::context::inDebugHiddenContext())
    {
-      SEXP srcref = inferDebugSrcrefs(pLineDebugState);
+      SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
       enqueBrowserLineChangedEvent(srcref);
    }
    
@@ -1465,8 +1523,7 @@ void initEnvironmentMonitoring()
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
-   r::context::RCntxt context = r::context::getFunctionContext(
-            BROWSER_FUNCTION, &contextDepth);
+   r::context::RCntxt context = r::context::getFunctionContext(BROWSER_FUNCTION, &contextDepth);
    if (contextDepth == 0 || !r::context::inBrowseContext())
    {
       // Not actively debugging; see if we have a stored environment name to
@@ -1582,8 +1639,12 @@ Error requeryContext(boost::shared_ptr<int> pContextDepth,
                      const json::JsonRpcRequest&,
                      json::JsonRpcResponse*)
 {
-   onConsolePrompt(pContextDepth, pLineDebugState,
-                   boost::make_shared<bool>(false), pCurrentContext);
+   onConsolePrompt(
+            pContextDepth,
+            pLineDebugState,
+            boost::make_shared<bool>(false),
+            pCurrentContext);
+   
    return Success();
 }
 
@@ -1623,14 +1684,52 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
          *pCapturingDebugOutput = false;
          return;
       }
-      pLineDebugState->lastDebugText.append(output);
+      
+      // When printing things which are not symbols / calls in
+      // the debugger, R will prepend a '[1] ' as these objects
+      // will be printed in the "regular" way. Strip that off
+      // if it is present.
+      if (output.find("[1] ") == 0)
+      {
+         pLineDebugState->lastDebugText.append(output.substr(4));
+      }
+      else
+      {
+         pLineDebugState->lastDebugText.append(output);
+      }
    }
-   else if (type == module_context::ConsoleOutputNormal &&
-            output == "debug: ")
+   
+   else if (type == module_context::ConsoleOutputNormal)
    {
+      boost::smatch match;
+      boost::regex reDebugAtPosition("debug at ([^#]*)#([^:]+): ");
+      
       // start capturing debug output when R outputs "debug: "
-      pLineDebugState->lastDebugText = "";
-      *pCapturingDebugOutput = true;
+      if (output == "debug: ")
+      {
+         *pCapturingDebugOutput = true;
+         pLineDebugState->lastDebugText = "";
+      }
+      
+      // emitted when browsing with srcref
+      else if (boost::regex_match(output, match, reDebugAtPosition))
+      {
+         std::string lineText = match[2];
+         auto lineNumber = safe_convert::stringTo<int>(lineText);
+         if (lineNumber)
+         {
+            *pCapturingDebugOutput = true;
+            pLineDebugState->lastDebugText = "";
+            pLineDebugState->lastDebugLine = *lineNumber;
+         }
+      }
+      
+      // emitted by R when a 'browser()' statement is encountered
+      else if (output.find("Called from: ") == 0)
+      {
+         pLineDebugState->lastDebugLine = 0;
+         pLineDebugState->lastDebugText = "browser()";
+      }
    }
 }
 
@@ -1663,9 +1762,11 @@ json::Value environmentStateAsJson()
    if (!r::context::inBrowseContext())
       contextDepth = 0;
    
-   return commonEnvironmentStateData(contextDepth, 
-         s_monitoring, // include contents if actively monitoring
-         nullptr);
+   return commonEnvironmentStateData(
+            false,
+            contextDepth, 
+            s_monitoring, // include contents if actively monitoring
+            nullptr);
 }
 
 SEXP rs_isBrowserActive()
@@ -1693,6 +1794,7 @@ Error initialize()
 
    boost::shared_ptr<int> pContextDepth =
          boost::make_shared<int>(0);
+   
    boost::shared_ptr<r::context::RCntxt> pCurrentContext =
          boost::make_shared<r::context::RCntxt>(r::context::globalContext());
    
@@ -1708,6 +1810,7 @@ Error initialize()
    // for the purpose of reconstructing references when none are present.
    boost::shared_ptr<LineDebugState> pLineDebugState =
          boost::make_shared<LineDebugState>();
+   
    boost::shared_ptr<bool> pCapturingDebugOutput =
          boost::make_shared<bool>(false);
 

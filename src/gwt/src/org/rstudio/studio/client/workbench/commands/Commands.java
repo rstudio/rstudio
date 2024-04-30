@@ -579,7 +579,6 @@ public abstract class
    public abstract AppCommand rstudioSupport();
    public abstract AppCommand rstudioCommunityForum();
    public abstract AppCommand rstudioAgreement();
-   public abstract AppCommand showSessionServerOptionsDialog();
    public abstract AppCommand showWarningBar();
    public abstract AppCommand signOut();
    public abstract AppCommand loadServerHome();
@@ -699,6 +698,9 @@ public abstract class
    public abstract AppCommand layoutConsoleOnRight();
    public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
+   public abstract AppCommand maximizeSource();
+   public abstract AppCommand maximizeTabSet1();
+   public abstract AppCommand maximizeTabSet2();
    public abstract AppCommand toggleEditorTokenInfo();
    public abstract AppCommand layoutZoomLeftColumn();
    public abstract AppCommand layoutZoomRightColumn();
@@ -734,6 +736,7 @@ public abstract class
    
    // Copilot
    public abstract AppCommand copilotInstallAgent();
+   public abstract AppCommand copilotDiagnostics();
    public abstract AppCommand copilotSignIn();
    public abstract AppCommand copilotSignOut();
    public abstract AppCommand copilotStatus();

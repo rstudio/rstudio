@@ -1344,6 +1344,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Install the GitHub Copilot agent.") // $NON-NLS-1$
     String copilotInstallAgentDesc();
     
+    // copilotDiagnostics
+    @DefaultStringValue("Copilot: Show Diagnostics") // $NON-NLS-1$
+    String copilotDiagnosticsLabel();
+    @DefaultStringValue("Show Copilot Diagnostics") // $NON-NLS-1$
+    String copilotDiagnosticsMenuLabel();
+    @DefaultStringValue("Print a Copilot diagnostic report, indicating how the Copilot agent has been configured.") // $NON-NLS-1$
+    String copilotDiagnosticsDesc();
+    
     // copilotSignIn
     @DefaultStringValue("Copilot: Sign In") // $NON-NLS-1$
     String copilotSignInLabel();
@@ -3212,16 +3220,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Quit the current R session even if busy") // $NON-NLS-1$
     String forceQuitSessionDesc();
     
-    // showSessionServerOptionsDialog
-    @DefaultStringValue("Session Server Settings...") // $NON-NLS-1$
-    String showSessionServerOptionsDialogLabel();
-    @DefaultStringValue("") // $NON-NLS-1$
-    String showSessionServerOptionsDialogButtonLabel();
-    @DefaultStringValue("_Session Server Settings...") // $NON-NLS-1$
-    String showSessionServerOptionsDialogMenuLabel();
-    @DefaultStringValue("Configure available session servers") // $NON-NLS-1$
-    String showSessionServerOptionsDialogDesc();
-    
     // showAboutDialog
     @DefaultStringValue("About RStudio...") // $NON-NLS-1$
     String showAboutDialogLabel();
@@ -3449,8 +3447,20 @@ public interface CmdConstants extends Constants {
     String toggleRainbowFencedDivsMenuLabel();
     
     // maximizeConsole
-    @DefaultStringValue("Maximize Console") // $NON-NLS-1$
-    String maximizeConsoleMenuLabel();
+    @DefaultStringValue("Toggle Maximize Console Pane") // $NON-NLS-1$
+    String maximizeConsoleLabel();
+    
+    // maximizeSource
+    @DefaultStringValue("Toggle Maximize Source Pane") // $NON-NLS-1$
+    String maximizeSourceLabel();
+    
+    // maximizeTabSet1
+    @DefaultStringValue("Toggle Maximize Tab Group One") // $NON-NLS-1$
+    String maximizeTabSet1Label();
+    
+    // maximizeTabSet2
+    @DefaultStringValue("Toggle Maximize Tab Group Two") // $NON-NLS-1$
+    String maximizeTabSet2Label();
     
     // debugBreakpoint
     @DefaultStringValue("Toggle Breakpoint on Current Line") // $NON-NLS-1$

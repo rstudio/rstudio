@@ -51,6 +51,12 @@ typedef struct SEXPREC *SEXP;
 
 #endif
 
+#ifdef _WIN32
+# define RS_JMP_BUF struct { jmp_buf buf; int sigmask; int savedmask; }
+#else
+# define RS_JMP_BUF sigjmp_buf
+#endif
+
 typedef struct R_BCSTACK_T {
    int tag;
    int flags;
@@ -61,19 +67,44 @@ typedef struct R_BCSTACK_T {
    } u;
 } R_BCSTACK_T;
 
+typedef struct RCNTXT_44 {
+    struct RCNTXT_44 *nextcontext;
+    int callflag;
+    RS_JMP_BUF cjmpbuf;
+    int cstacktop;
+    int evaldepth;
+    SEXP promargs;
+    SEXP callfun;
+    SEXP sysparent;
+    SEXP call;
+    SEXP cloenv;
+    SEXP conexit;
+    void (*cend)(void *);
+    void *cenddata;
+    void *vmax;
+    int intsusp;
+    int gcenabled;
+    int bcintactive;
+    SEXP bcbody;
+    void *bcpc;
+    ptrdiff_t relpc;  // added in R 4.4
+    SEXP handlerstack;
+    SEXP restartstack;
+    struct RPRSTACK* prstack;
+    R_BCSTACK_T* nodestack;
+    R_BCSTACK_T* bcprottop;
+    void* bcframe;  // added in R 4.4
+    SEXP srcref;
+    int browserfinish;
+    R_BCSTACK_T returnValue;  // changed in R 4.4
+    struct RCNTXT_44 *jumptarget;
+    int jumpmask;
+} RCNTXT_44;
+
 typedef struct RCNTXT_40 {
     struct RCNTXT_40 *nextcontext;
     int callflag;
-#ifdef _WIN32
-    struct
-    {
-      jmp_buf buf;
-      int sigmask;
-      int savedmask;
-    } cjumpbuf;
-#else
-    sigjmp_buf cjmpbuf;
-#endif
+    RS_JMP_BUF cjmpbuf;
     int cstacktop;
     int evaldepth;
     SEXP promargs;
@@ -105,16 +136,7 @@ typedef struct RCNTXT_40 {
 typedef struct RCNTXT_34 {
     struct RCNTXT_34 *nextcontext;
     int callflag;
-#ifdef _WIN32
-    struct
-    {
-      jmp_buf buf;
-      int sigmask;
-      int savedmask;
-    } cjumpbuf;
-#else
-    sigjmp_buf cjmpbuf;
-#endif
+    RS_JMP_BUF cjmpbuf;
     int cstacktop;
     int evaldepth;
     SEXP promargs;
@@ -155,16 +177,7 @@ typedef struct RCNTXT_34 {
 typedef struct RCNTXT_33 {
     struct RCNTXT_33 *nextcontext;
     int callflag;
-#ifdef _WIN32
-    struct
-    {
-      jmp_buf buf;
-      int sigmask;
-      int savedmask;
-    } cjumpbuf;
-#else
-    sigjmp_buf cjmpbuf;
-#endif
+    RS_JMP_BUF cjmpbuf;
     int cstacktop;
     int evaldepth;
     SEXP promargs;
@@ -195,16 +208,7 @@ typedef struct RCNTXT_33 {
 typedef struct RCNTXT_32 {
     struct RCNTXT_32 *nextcontext;
     int callflag;
-#ifdef _WIN32
-    struct
-    {
-      jmp_buf buf;
-      int sigmask;
-      int savedmask;
-    } cjumpbuf;
-#else
-    sigjmp_buf cjmpbuf;
-#endif
+    RS_JMP_BUF cjmpbuf;
     int cstacktop;
     int evaldepth;
     SEXP promargs;
@@ -229,17 +233,19 @@ typedef struct RCNTXT_32 {
 
 enum {
     CTXT_TOPLEVEL = 0,
-    CTXT_NEXT	  = 1,
-    CTXT_BREAK	  = 2,
-    CTXT_LOOP	  = 3,
+    CTXT_NEXT	   = 1,
+    CTXT_BREAK	   = 2,
+    CTXT_LOOP	   = 3,
     CTXT_FUNCTION = 4,
-    CTXT_CCODE	  = 8,
-    CTXT_RETURN	  = 12,
+    CTXT_CCODE	   = 8,
+    CTXT_RETURN	= 12,
     CTXT_BROWSER  = 16,
     CTXT_GENERIC  = 20,
     CTXT_RESTART  = 32,
     CTXT_BUILTIN  = 64
 };
+
+#undef RS_JMP_BUF
 
 #endif // R_INTERFACE_HPP
 

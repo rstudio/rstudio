@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client;
 
+import java.util.function.Predicate;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class JsVectorInteger extends JavaScriptObject
@@ -61,6 +63,20 @@ public class JsVectorInteger extends JavaScriptObject
    public final void fill(int value)
    {
       fill(value, 0, length());
+   }
+   
+   public final JsVectorInteger filter(Predicate<Integer> predicate)
+   {
+      JsVectorInteger result = JsVectorInteger.createVector();
+      
+      for (int i = 0, n = length(); i < n; i++)
+      {
+         int value = get(i);
+         if (predicate.test(value))
+            result.push(value);
+      }
+      
+      return result;
    }
 
    public final int get(int index)

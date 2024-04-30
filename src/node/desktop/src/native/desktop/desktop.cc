@@ -443,6 +443,9 @@ void cleanClipboardImpl(bool stripHtml)
       std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
       std::string utf8Text = converter.to_bytes(pBytes, pBytes + length / 2);
 
+      // convert '\r' line endings to '\n' -- not sure why these sneak in?
+      std::replace(utf8Text.begin(), utf8Text.end(), '\r', '\n');
+
       CFReleaseHandle<CFDataRef> utf8TextRef = CFDataCreate(nullptr, (UInt8*) utf8Text.data(), utf8Text.size());
       if (utf8TextRef && utf8TextRef.value())
          ::PasteboardPutItemFlavor(clipboard, (PasteboardItemID) 1, CFSTR("public.utf8-plain-text"), utf8TextRef, 0);

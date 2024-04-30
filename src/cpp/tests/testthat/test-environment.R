@@ -98,11 +98,14 @@ test_that("all objects are removed when requested", {
 })
 
 test_that("functions with backslashes deparse correctly", {
+   # make diagnostics happy
+   f <- NULL
+   
    # character vector with code for a simple function
-   code <- "function() { \"first line\\nsecond line\" }"
+   code <- "f <- function() { \"first line\\nsecond line\" }"
 
    # parse and evaluate the expression (yielding a function f)
-   eval(parse(text = paste0("f <- ", code)))
+   eval(parse(text = code))
 
    # immediately deparse f back into a string
    output <- .rs.deparseFunction(f, TRUE, TRUE)

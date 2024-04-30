@@ -107,6 +107,13 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
       void apply();
       void detach();
    }
+   
+   public enum InsertionBehavior
+   {
+      EditorBehaviorsEnabled,
+      EditorBehaviorsDisabled,
+   }
+   
    TextFileType getFileType();
    void setFileType(TextFileType fileType);
    void setFileType(TextFileType fileType, boolean suppressCompletion);
@@ -124,6 +131,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code);
    void insertCode(String code, boolean unused);
+   void insertCode(String code, InsertionBehavior behavior);
    void insertCode(InputEditorPosition position, String code);
    void applyChanges(TextChange[] changes);
    void applyChanges(TextChange[] changes, boolean preserveCursorPosition);
@@ -411,11 +419,14 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setAnnotations(JsArray<AceAnnotation> annotations);
    void showLint(JsArray<LintItem> lint);
    void clearLint();
+   
+   JsMap<Marker> getMarkers(boolean inFront);
    void removeMarkersAtCursorPosition();
    void removeMarkersOnCursorLine();
    void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate);
    void removeMarkersAtWord(String word);
 
+   
    void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);
    boolean hasActiveCollabSession();
    boolean hasFollowingCollabSession();

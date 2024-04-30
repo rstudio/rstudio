@@ -112,14 +112,23 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
       HighlightRules.embedRules(EmbedRules, prefix + "-", [{
          token: "support.function.codeend",
          regex: reEnd,
-         next: "pop"
+         onMatch: function(value, state, stack, line, context) {
+            this.next = context.chunk.state || "start";
+            delete context.chunk;
+            return this.token;
+         }
       }]);
 
       for (var i = 0; i < startStates.length; i++) {
          rules[startStates[i]].unshift({
             token: "support.function.codebegin",
             regex: reStart,
-            push: prefix + "-start"
+            onMatch: function(value, state, stack, line, context) {
+               context.chunk = context.chunk || {};
+               context.chunk.state = state;
+               this.next = prefix + "-start";
+               return this.token;
+            }
          });
       }
    };

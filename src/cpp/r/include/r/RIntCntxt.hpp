@@ -25,23 +25,23 @@ namespace context {
 
 // header-only implementation of the RCntxtInterface; can serve as an 
 // implementation for any memory layout (depending on the template parameter)
-template<typename T> class RIntCntxt: public RCntxtInterface
+template <typename T>
+class RIntCntxt: public RCntxtInterface
 {
 public:
-   explicit RIntCntxt(T *pCntxt) :
-     pCntxt_(pCntxt)
-   { }
-
-   SEXP callfun() const
+   explicit RIntCntxt(void* pCntxt)
+      : pCntxt_(static_cast<T*>(pCntxt))
    {
-      return pCntxt_->callfun;
    }
    
-   SEXP sysparent() const
+   RCntxt nextcontext() const
    {
-      return pCntxt_->sysparent;
+      if (pCntxt_->nextcontext == nullptr)
+         return RCntxt();
+      else
+         return RCntxt(pCntxt_->nextcontext);
    }
-
+   
    int callflag() const
    {
       return pCntxt_->callflag;
@@ -52,14 +52,24 @@ public:
       return pCntxt_->evaldepth;
    }
 
+   SEXP promargs() const
+   {
+      return pCntxt_->promargs;
+   }
+   
+   SEXP callfun() const
+   {
+      return pCntxt_->callfun;
+   }
+   
+   SEXP sysparent() const
+   {
+      return pCntxt_->sysparent;
+   }
+   
    SEXP call() const
    {
       return pCntxt_->call;
-   }
-
-   SEXP srcref() const
-   {
-      return pCntxt_->srcref;
    }
 
    SEXP cloenv() const
@@ -67,14 +77,11 @@ public:
       return pCntxt_->cloenv;
    }
 
-   RCntxt nextcontext() const
+   SEXP srcref() const
    {
-      if (pCntxt_->nextcontext == nullptr)
-         return RCntxt();
-      else
-         return RCntxt(pCntxt_->nextcontext);
+      return pCntxt_->srcref;
    }
-   
+
    bool isNull() const
    {
       return false;
@@ -86,7 +93,7 @@ public:
    }
 
 private:
-   const T *pCntxt_;
+   const T* pCntxt_;
 };
 
 } // namespace context

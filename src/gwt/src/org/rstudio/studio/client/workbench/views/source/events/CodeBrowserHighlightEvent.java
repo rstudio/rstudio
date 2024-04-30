@@ -35,14 +35,16 @@ public class CodeBrowserHighlightEvent
    
    public CodeBrowserHighlightEvent()
    {
-      this(null, null);
+      this(null, null, false);
    }
    
    public CodeBrowserHighlightEvent(SearchPathFunctionDefinition function,
-         DebugFilePosition debugPosition)
+                                    DebugFilePosition debugPosition,
+                                    boolean closeOnDebugSessionEnded)
    {
       function_ = function;
       debugPosition_ = debugPosition;
+      closeOnDebugSessionEnded_ = closeOnDebugSessionEnded;
    }
    
    public DebugFilePosition getDebugPosition()
@@ -53,6 +55,11 @@ public class CodeBrowserHighlightEvent
    public SearchPathFunctionDefinition getFunction()
    {
       return function_;
+   }
+   
+   public boolean closeOnDebugSessionEnded()
+   {
+      return closeOnDebugSessionEnded_;
    }
    
    @Override
@@ -75,4 +82,5 @@ public class CodeBrowserHighlightEvent
 
    private DebugFilePosition debugPosition_;
    private SearchPathFunctionDefinition function_;
+   private boolean closeOnDebugSessionEnded_;
 }

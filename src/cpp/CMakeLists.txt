@@ -624,9 +624,6 @@ endif()
 if(RSTUDIO_SERVER)
    message(STATUS "Configured to build SERVER")
 endif()
-if (RSTUDIO_DESKTOP)
-   message(STATUS "Configured to build DESKTOP")
-endif()
 if (RSTUDIO_ELECTRON)
    message(STATUS "Configured to build ELECTRON")
 endif()
@@ -702,7 +699,7 @@ else()
       endif()
 
       # add desktop subprojects if we aren't building in server only mode
-      if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
+      if(RSTUDIO_ELECTRON)
          add_subdirectory(diagnostics)
          add_subdirectory(desktop)
       endif()
@@ -711,25 +708,12 @@ else()
       # processing which we do in desktop
       add_subdirectory(session)
 
-      # desktop conf file used for dev-mode for both Qt desktop and Electron desktop
-      if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON OR RSTUDIO_DEVELOPMENT)
+      # desktop conf file used for dev-mode for Electron desktop
+      if(RSTUDIO_ELECTRON OR RSTUDIO_DEVELOPMENT)
          configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
       endif()
 
       # configure desktop files
-      if(RSTUDIO_DESKTOP)
-         if(NOT WIN32)
-            if(NOT APPLE)
-               configure_file(rstudio-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-dev)
-            else()
-               configure_file(rstudio-mac.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-dev)
-            endif()
-         else()
-            configure_file(rstudio.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio.bat @ONLY)
-            configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
-         endif()
-      endif()
-
       if(RSTUDIO_ELECTRON AND WIN32)
          configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
       endif()

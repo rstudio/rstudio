@@ -95,19 +95,11 @@ pipeline {
         axes {
           axis {
             name 'FLAVOR'
-            values 'Electron', 'Desktop' // desktop denotes a Qt build
+            values 'Electron'
           }
         }
 
-        when {
-          // allOf {
-          anyOf {
-            expression { return FLAVOR == 'Electron' }
-            expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
-          }
-          //   expression { return utils.rebuildCheck() == true } // Disable for now (see Jenkinsfile.windows)
-          // }
-        }
+        when { expression { return FLAVOR == 'Electron' } }
 
         stages {
           stage('Sequential Matrix') {

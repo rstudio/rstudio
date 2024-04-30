@@ -411,26 +411,29 @@ Error setUserHandlerEnabled(bool handlerEnabled)
 
 bool hasUserBeenPromptedForPermission()
 {
-   if (!permissionFile().exists())
-   {
-      // check for the old (pre RStudio 1.4) permission file
-      FilePath oldPermissionFile = core::system::userSettingsPath(
-         core::system::userHomePath(),
-         "R",
-         false).completePath(kCrashPermissionFile);
-      if (oldPermissionFile.exists())
-          return true;
-
-      // if for some reason the parent directory is not writeable
-      // we will just treat the user as if they have been prompted
-      // to prevent indefinite repeated promptings
-      if (!file_utils::isDirectoryWriteable(permissionFile().getParent()))
-         return true;
-      else
-         return false;
-   }
-   else
+   // allow skip of check
+   std::string prompt = core::system::getenv("RS_CRASH_HANDLER_PROMPT");
+   if (!core::string_utils::isTruthy(prompt, true))
       return true;
+   
+   // if the permission file already exists, we're done
+   if (permissionFile().exists())
+      return true;
+
+   // check for the old (pre RStudio 1.4) permission file
+   FilePath oldSettingsPath = core::system::userSettingsPath(core::system::userHomePath(), "R", false);
+   FilePath oldPermissionFile = oldSettingsPath.completePath(kCrashPermissionFile);
+   if (oldPermissionFile.exists())
+      return true;
+
+   // if for some reason the parent directory is not writeable
+   // we will just treat the user as if they have been prompted
+   // to prevent indefinite repeated promptings
+   if (!file_utils::isDirectoryWriteable(permissionFile().getParent()))
+      return true;
+
+   // failed all checks; assume user hasn't been prompted
+   return false;
 }
 
 Error setUserHasBeenPromptedForPermission()

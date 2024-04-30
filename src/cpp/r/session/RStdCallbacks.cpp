@@ -23,6 +23,9 @@
 #include <boost/regex.hpp>
 #include <boost/bind/bind.hpp>
 
+#include <core/FileSerializer.hpp>
+#include <core/RegexUtils.hpp>
+
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RSourceManager.hpp>
@@ -34,9 +37,6 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
 #include <r/session/RSuspend.hpp>
-
-#include <core/FileSerializer.hpp>
-#include <core/RegexUtils.hpp>
 
 #include "RInit.hpp"
 #include "REmbedded.hpp"
@@ -79,7 +79,10 @@ RCallbacks s_callbacks;
 InternalCallbacks s_internalCallbacks;
 
 // temporarily suppress output
-bool s_suppressOutput = false;
+int s_suppressOutput = 0;
+
+// force output
+int s_forceOutput = 0;
 
 class JumpToTopException
 {
@@ -356,7 +359,16 @@ int RReadConsole(const char *pmt,
             std::string::size_type maxLen = buflen - 2; // for \n\0
             rInput = string_utils::utf8ToSystem(rInput, true);
             if (rInput.length() > maxLen)
+            {
+               // print a loud warning when we're about to truncate input
+               std::cerr << std::endl;
+               std::cerr << "WARNING: Truncating console input of length " << rInput.length() << "." << std::endl;
+               std::cerr << "The maximum number of characters accepted by R in a single line of input is " << buflen - 2 << "." << std::endl;
+               std::cerr << std::endl;
+               
                rInput.resize(maxLen);
+            }
+            
             std::string::size_type inputLen = rInput.length();
             
             // add to console actions and history (if requested). note that
@@ -435,36 +447,45 @@ void RShowMessage(const char* msg)
    CATCH_UNEXPECTED_EXCEPTION
 }
 
-void RWriteConsoleEx (const char *buf, int buflen, int otype)
+namespace {
+
+bool isOutputSuppressed()
+{
+   return s_forceOutput == 0 && s_suppressOutput != 0;
+}
+
+} // end anonymous namespace
+
+void RWriteConsoleEx(const char *buf, int buflen, int otype)
 {
    try
    {
-      if (!s_suppressOutput)
+      if (isOutputSuppressed())
+         return;
+      
+      bool isInterruptOutput =
+            r::exec::getWasInterrupted() &&
+            otype == 1 &&
+            buflen == 1 &&
+            buf[0] == '\n';
+
+      if (isInterruptOutput)
       {
-         bool isInterruptOutput =
-               r::exec::getWasInterrupted() &&
-               otype == 1 &&
-               buflen == 1 &&
-               buf[0] == '\n';
-         
-         if (isInterruptOutput)
-         {
-            r::exec::setWasInterrupted(false);
-            return;
-         }
-         
-         // get output
-         std::string output = std::string(buf, buflen);
-         output = util::rconsole2utf8(output);
-         
-         // add to console actions
-         int type = otype == 1 ? kConsoleActionOutputError :
-                                 kConsoleActionOutput;
-         consoleActions().add(type, output);
-         
-         // write
-         s_callbacks.consoleWrite(output, otype);
+         r::exec::setWasInterrupted(false);
+         return;
       }
+
+      // get output
+      std::string output = std::string(buf, buflen);
+      output = util::rconsole2utf8(output);
+
+      // add to console actions
+      int type = otype == 1 ? kConsoleActionOutputError :
+                              kConsoleActionOutput;
+      consoleActions().add(type, output);
+
+      // write
+      s_callbacks.consoleWrite(output, otype);
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
@@ -768,7 +789,7 @@ const int kSaveActionAsk = -1;
 
 void setSaveAction(int saveAction)
 {
-   switch(saveAction)
+   switch (saveAction)
    {
    case kSaveActionNoSave:
       SaveAction = SA_NOSAVE;
@@ -781,19 +802,28 @@ void setSaveAction(int saveAction)
       SaveAction = SA_SAVEASK;
       break;
    }
-
 }
 
 namespace utils {
 
 SuppressOutputInScope::SuppressOutputInScope()
 {
-  s_suppressOutput = true;
+   s_suppressOutput += 1;
 }
 
 SuppressOutputInScope::~SuppressOutputInScope()
 {
-   s_suppressOutput = false;
+   s_suppressOutput -= 1;
+}
+
+ShowOutputInScope::ShowOutputInScope()
+{
+   s_forceOutput += 1;
+}
+
+ShowOutputInScope::~ShowOutputInScope()
+{
+   s_forceOutput -= 1;
 }
 
 } // namespace utils

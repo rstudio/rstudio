@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.Objects;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.MathUtil;
@@ -39,6 +41,8 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCom
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -75,6 +79,9 @@ public class TextEditingTargetCopilotHelper
          @Override
          public void run()
          {
+            if (copilotDisabledInThisDocument_)
+               return;
+            
             target_.withSavedDoc(() ->
             {
                requestId_ += 1;
@@ -103,6 +110,19 @@ public class TextEditingTargetCopilotHelper
                            Position currentCursorPosition = display_.getCursorPosition();
                            if (!currentCursorPosition.isEqualTo(savedCursorPosition))
                               return;
+                           
+                           // Check for null completion results -- this may occur if the Copilot
+                           // agent couldn't be started for some reason.
+                           if (response == null)
+                              return;
+                           
+                           // Check whether completions are enabled in this document.
+                           if (Objects.equals(response.enabled, false))
+                           {
+                              copilotDisabledInThisDocument_ = true;
+                              events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_CANCELLED));
+                              return;
+                           }
                            
                            // Check for error.
                            CopilotError error = response.error;
@@ -162,11 +182,8 @@ public class TextEditingTargetCopilotHelper
                               
                               // Copilot includes trailing '```' for some reason in some cases,
                               // remove those if we're inserting in an R document.
-                              if (completion.text.endsWith("\n```"))
-                                 completion.text = StringUtil.substring(completion.text, 0, completion.text.length() - 3);
-
-                              if (completion.displayText.endsWith("\n```"))
-                                 completion.displayText = StringUtil.substring(completion.displayText, 0, completion.displayText.length() - 3);
+                              completion.text = postProcessCompletion(completion.text);
+                              completion.displayText = postProcessCompletion(completion.displayText);
 
                               activeCompletion_ = completion;
                               display_.setGhostText(activeCompletion_.displayText);
@@ -218,6 +235,11 @@ public class TextEditingTargetCopilotHelper
                {
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
+                     return;
+                  
+                  // Check preference value
+                  String trigger = prefs_.copilotCompletionsTrigger().getGlobalValue();
+                  if (trigger != UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO)
                      return;
                            
                   // Allow one-time suppression of cursor change handler
@@ -289,10 +311,19 @@ public class TextEditingTargetCopilotHelper
                      {
                         display_.removeGhostText();
                      }
+                     else if (event.getKeyCode() == KeyCodes.KEY_RIGHT &&
+                              (event.getCtrlKey() || event.getMetaKey()))
+                     {
+                        event.stopPropagation();
+                        event.preventDefault();
+
+                        commands_.copilotAcceptNextWord().execute();
+                     }
+                     
                   }
                })
 
-               );
+         );
 
       }
       
@@ -316,7 +347,7 @@ public class TextEditingTargetCopilotHelper
          return;
       
       String text = activeCompletion_.displayText;
-      Pattern pattern = Pattern.create("\\b");
+      Pattern pattern = Pattern.create("(?:\\b|$)");
       Match match = pattern.match(text, 1);
       if (match == null)
          return;
@@ -334,8 +365,18 @@ public class TextEditingTargetCopilotHelper
       Timers.singleShot(() ->
       {
          suppressCursorChangeHandler_ = true;
-         display_.insertCode(insertedWord);
+         display_.insertCode(insertedWord, InsertionBehavior.EditorBehaviorsDisabled);
          display_.setGhostText(activeCompletion_.displayText);
+         
+         // Work around issue with ghost text not appearing after inserting
+         // a code suggestion containing a new line
+         if (insertedWord.indexOf('\n') != -1)
+         {
+            Timers.singleShot(20, () ->
+            {
+               display_.setGhostText(activeCompletion_.displayText);
+            });
+         }
       });
    }
    
@@ -375,6 +416,16 @@ public class TextEditingTargetCopilotHelper
       });
    }
    
+   private String postProcessCompletion(String text)
+   {
+      // Exclude chunk markers from completion results
+      int endChunkIndex = text.indexOf("\n```");
+      if (endChunkIndex != -1)
+         text = text.substring(0, endChunkIndex);
+      
+      return text;
+   }
+   
    @Inject
    private void initialize(Copilot copilot,
                            EventBus events,
@@ -398,6 +449,7 @@ public class TextEditingTargetCopilotHelper
    
    private int requestId_;
    private boolean suppressCursorChangeHandler_;
+   private boolean copilotDisabledInThisDocument_;
    
    private CopilotCompletion activeCompletion_;
    private boolean automaticCodeSuggestionsEnabled_ = true;

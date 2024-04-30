@@ -278,17 +278,17 @@ bool functionDiffersFromSource(
    // read the portion of the file pointed to by the source refs from disk
    // the sourceref structure (including the array offsets used below)
    // is documented here:
+   //
    // http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf
    std::string fileContent;
    error = readStringFromFile(
          sourceFilePath,
          &fileContent,
          string_utils::LineEndingPosix,
-         INTEGER(srcRef)[0],  // the first line
-         INTEGER(srcRef)[2],  // the last line
-         INTEGER(srcRef)[4],  // character position on the first line
-         INTEGER(srcRef)[5]   // character position on the last line
-         );
+         INTEGER(srcRef)[0],    // the first line
+         INTEGER(srcRef)[2] + 1 // the last line
+   );
+   
    if (error)
    {
       LOG_ERROR(error);
@@ -307,21 +307,19 @@ bool functionDiffersFromSource(
 // from the source reference to the JSON object.
 void sourceRefToJson(const SEXP srcref, json::Object* pObject)
 {
-   if (srcref == nullptr ||
-       r::sexp::isNull(srcref) ||
-       r::context::isByteCodeSrcRef(srcref))
-   {
-      (*pObject)["line_number"] = 0;
-      (*pObject)["end_line_number"] = 0;
-      (*pObject)["character_number"] = 0;
-      (*pObject)["end_character_number"] = 0;
-   }
-   else
+   if (srcref != nullptr && TYPEOF(srcref) == INTSXP)
    {
       (*pObject)["line_number"] = INTEGER(srcref)[0];
       (*pObject)["end_line_number"] = INTEGER(srcref)[2];
       (*pObject)["character_number"] = INTEGER(srcref)[4];
       (*pObject)["end_character_number"] = INTEGER(srcref)[5];
+   }
+   else
+   {
+      (*pObject)["line_number"] = 0;
+      (*pObject)["end_line_number"] = 0;
+      (*pObject)["character_number"] = 0;
+      (*pObject)["end_character_number"] = 0;
    }
 }
 

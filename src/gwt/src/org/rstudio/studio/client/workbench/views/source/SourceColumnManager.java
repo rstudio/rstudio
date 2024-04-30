@@ -123,6 +123,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
@@ -910,6 +911,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void activateCodeBrowser(
       final String codeBrowserPath,
       boolean replaceIfActive,
+      boolean closeOnDebugSessionEnded,
       final ResultCallback<CodeBrowserEditingTarget, ServerError> callback)
    {
       // first check to see if this request can be fulfilled with an existing
@@ -937,12 +939,39 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       newDoc(FileTypeRegistry.CODEBROWSER,
          new ResultCallback<EditingTarget, ServerError>()
          {
+         
+            private HandlerRegistration handler_;
+         
             @Override
-            public void onSuccess(EditingTarget arg)
+            public void onSuccess(EditingTarget target)
             {
-               events_.fireEvent(new CodeBrowserCreatedEvent(
-                  arg.getId(), codeBrowserPath));
-               callback.onSuccess((CodeBrowserEditingTarget) arg);
+               events_.fireEvent(new CodeBrowserCreatedEvent(target.getId(), codeBrowserPath));
+               
+               CodeBrowserEditingTarget codeTarget = (CodeBrowserEditingTarget) target;
+               if (closeOnDebugSessionEnded)
+               {
+                  handler_ = events_.addHandler(DebugModeChangedEvent.TYPE, new DebugModeChangedEvent.Handler()
+                  {
+                     @Override
+                     public void onDebugModeChanged(DebugModeChangedEvent event)
+                     {
+                        if (!event.debugging())
+                        {
+                           handler_.removeHandler();
+                           try
+                           {
+                              closeTab(target, false);
+                           }
+                           catch (Exception e)
+                           {
+                              // nothing to do if an error occurs
+                           }
+                        }
+                     }
+                  });
+               }
+               
+               callback.onSuccess(codeTarget);
             }
 
             @Override
@@ -1203,14 +1232,27 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       events_.fireEvent(new FindInFilesEvent(searchPattern));
    }
+   
+   private void endDebugHighlighting()
+   {
+      for (SourceColumn column : getColumnList())
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            target.endDebugHighlighting();
+         }
+      }
+   }
 
    @Override
    public void onDebugModeChanged(DebugModeChangedEvent evt)
    {
       // when debugging ends, always disengage any active debug highlights
-      if (!evt.debugging() && hasActiveEditor())
+      // note that the editor being debugged might not be currently active,
+      // so just broadcast this to all open editors
+      if (!evt.debugging())
       {
-         activeColumn_.getActiveEditor().endDebugHighlighting();
+         endDebugHighlighting();
       }
    }
 

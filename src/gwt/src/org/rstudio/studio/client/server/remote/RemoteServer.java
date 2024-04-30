@@ -157,6 +157,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
@@ -643,6 +644,12 @@ public class RemoteServer implements Server
    public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyInstalledResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
+   }
+   
+   @Override
+   public void copilotDiagnostics(ServerRequestCallback<CopilotDiagnosticsResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_diagnostics", requestCallback);
    }
 
    @Override
@@ -1368,7 +1375,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_PACKAGE_INSTALL_CONTEXT, requestCallback);
    }
 
-   public void isPackageLoaded(
+   public void isPackageAttached(
                        String packageName,
                        String libName,
                        ServerRequestCallback<Boolean> requestCallback)
@@ -1376,7 +1383,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(packageName));
       params.set(1, new JSONString(libName));
-      sendRequest(RPC_SCOPE, IS_PACKAGE_LOADED, params, requestCallback);
+      sendRequest(RPC_SCOPE, IS_PACKAGE_ATTACHED, params, requestCallback);
    }
 
    public void isPackageHyperlinkSafe(
@@ -1854,6 +1861,14 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
       sendRequest(RPC_SCOPE, GET_ISSUE_URL, params, requestCallback);
+   }
+   
+   public void makeProjectRelative(JsArrayString paths,
+                                   ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(paths));
+      sendRequest(RPC_SCOPE, MAKE_PROJECT_RELATIVE, params, requestCallback);
    }
 
    public String getFileExportUrl(String name,
@@ -6804,7 +6819,7 @@ public class RemoteServer implements Server
    private static final String IGNORE_NEXT_LOADED_PACKAGE_CHECK = "ignore_next_loaded_package_check";
    private static final String GET_PACKAGE_NEWS_URL = "get_package_news_url";
    private static final String GET_PACKAGE_INSTALL_CONTEXT = "get_package_install_context";
-   private static final String IS_PACKAGE_LOADED = "is_package_loaded";
+   private static final String IS_PACKAGE_ATTACHED = "is_package_attached";
    private static final String IS_PACKAGE_HYPERLINK_SAFE = "is_package_hyperlink_safe";
    private static final String IS_PACKAGE_INSTALLED = "is_package_installed";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
@@ -6839,6 +6854,7 @@ public class RemoteServer implements Server
    private static final String TOUCH_FILE = "touch_file";
    private static final String COMPLETE_UPLOAD = "complete_upload";
    private static final String GET_ISSUE_URL = "get_issue_url";
+   private static final String MAKE_PROJECT_RELATIVE = "make_project_relative";
 
    private static final String GET_PLOT_TEMPDIR = "get_plot_tempdir";
    private static final String NEXT_PLOT = "next_plot";

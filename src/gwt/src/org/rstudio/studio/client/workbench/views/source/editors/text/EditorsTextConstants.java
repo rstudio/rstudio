@@ -1349,6 +1349,15 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String spellcheck();
 
     /**
+     * Translated "''{0}'' is misspelled".
+     *
+     * @return translated "''{0}'' is misspelled"
+     */
+    @DefaultMessage("''{0}'' is misspelled")
+    @Key("wordIsMisspelled")
+    String wordIsMisspelled(String word);
+    
+    /**
      * Translated "Ignore word".
      *
      * @return translated "Ignore word"

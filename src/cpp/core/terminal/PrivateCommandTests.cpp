@@ -225,7 +225,7 @@ test_context("Private Terminal Command Tests")
 
       expect_true(cmd.onTryCapture(ops, kNoChildProcess));
       expect_true(cmd.hasCaptured());
-      expect_true(ops.writes.size() == 1);
+      expect_true(ops.writes.size() == 2);
       expect_true(ops.writesEof.size() == ops.writes.size());
       std::string sentCommand = ops.writes[0];
       expect_true(*sentCommand.rbegin() == '\r' || *sentCommand.rbegin() == '\n');
@@ -239,7 +239,7 @@ test_context("Private Terminal Command Tests")
       boost::this_thread::sleep(milliseconds(kUser * 2));
 
       expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      expect_true(ops.writes.size() == 1);
+      expect_true(ops.writes.size() == 2);
       expect_true(ops.writesEof.size() == ops.writes.size());
       std::string sentCommand = ops.writes[0];
       expect_true(*sentCommand.rbegin() == '\r' || *sentCommand.rbegin() == '\n');
@@ -250,7 +250,7 @@ test_context("Private Terminal Command Tests")
       PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
       expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      expect_true(ops.writes.size() == 1);
+      expect_true(ops.writes.size() == 2);
       expect_true(ops.writesEof.size() == ops.writes.size());
    }
 

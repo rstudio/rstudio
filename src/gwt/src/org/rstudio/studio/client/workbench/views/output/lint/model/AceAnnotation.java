@@ -24,8 +24,13 @@ public class AceAnnotation extends JavaScriptObject
                                              int column,
                                              String html,
                                              String text,
-                                             String type) /*-{
-
+                                             String type)
+   /*-{
+      
+      if (type !== "error" && type !== "warning") {
+         type = "info";
+      }
+      
       var aceAnnotation = {
          row: row,
          column: column,

@@ -34,14 +34,29 @@ public class CopilotInstallDialog extends ModalDialogBase
    {
    }
 
-   public CopilotInstallDialog(boolean isAlreadyInstalled)
+   public CopilotInstallDialog(boolean isAlreadyInstalled,
+                               boolean isInstallationCurrent)
    {
       super(Roles.getDialogRole());
       ui_ = uiBinder.createAndBindUi(this);
       
-      String alreadyInstalledMessage = isAlreadyInstalled
-            ? constants_.copilotAlreadyInstalled()
-            : constants_.copilotNotInstalled();
+      String alreadyInstalledMessage;
+      if (isAlreadyInstalled)
+      {
+         if (isInstallationCurrent)
+         {
+            alreadyInstalledMessage = constants_.copilotAlreadyInstalled();
+            
+         }
+         else
+         {
+            alreadyInstalledMessage = constants_.copilotOutOfDate();
+         }
+      }
+      else
+      {
+         alreadyInstalledMessage = constants_.copilotNotInstalled();
+      }
       
       alreadyInstalledMessage_.setInnerText(alreadyInstalledMessage);
       

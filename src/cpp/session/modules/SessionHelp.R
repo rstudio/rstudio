@@ -859,8 +859,11 @@ options(help_type = "html")
          )
       }
       
-      sig <- .rs.getSignature(object)
-      sig <- gsub('^function ', topic, sig)
+      if (is.function(object))
+      {
+         sig <- .rs.getSignature(object)
+         sig <- gsub('^function ', topic, sig)
+      }
    }
    
    list(
@@ -947,6 +950,11 @@ options(help_type = "html")
    }
    
    # if that failed, then we'll do an explicit search
+   # if the search term is not a valid regular expression, then escape it
+   status <- .rs.tryCatch(grep(query, "", perl = TRUE))
+   if (inherits(status, "error"))
+      query <- .rs.escapeForRegex(query)
+   
    fmt <- "help/doc/html/Search?pattern=%s&title=1&keyword=1&alias=1"
    sprintf(fmt, utils::URLencode(query, reserved = TRUE))
 })

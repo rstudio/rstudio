@@ -180,6 +180,129 @@
    !is.null(attr(func, "srcref"))
 })
 
+.rs.addFunction("parseSrcref", function(srcref)
+{
+   srcref <- as.list(unclass(srcref))
+   
+   # From ?srcref:
+   #
+   # Bytes (elements 2, 4) and columns (elements 5, 6) may be different due to
+   # multibyte characters. If only four values are given, the columns and bytes
+   # are assumed to match. Lines (elements 1, 3) and parsed lines (elements 7,
+   # 8) may differ if a #line directive is used in code: the former will respect
+   # the directive, the latter will just count lines. If only 4 or 6 elements
+   # are given, the parsed lines will be assumed to match the lines.
+   srcref <- if (length(srcref) == 4L)
+   {
+      c(srcref, srcref[c(2L, 4L, 1L, 3L)])
+   }
+   else if (length(srcref) == 6L)
+   {
+      c(srcref, srcref[c(1L, 3L)])
+   }
+   else
+   {
+      srcref
+   }
+   
+   names(srcref) <- c(
+      "first_line", "first_byte",
+      "last_line", "last_byte",
+      "first_column", "last_column",
+      "first_parsed", "last_parsed"
+   )
+   
+   as.list(srcref)
+})
+
+.rs.addFunction("readSrcrefLines", function(srcref, asString)
+{
+   # Try to retrieve source references from srcfile if available
+   srcfile <- attr(srcref, "srcfile", exact = TRUE)
+   filename <- srcfile$filename
+   if (!is.null(srcfile$original))
+      srcfile <- srcfile$original
+   
+   # It appears the 'lines' variable can either be a single string
+   # with embedded newlines, or a character vector already split by newlines.
+   # Normalize here so that we're always working with a split-by-newline vector.
+   lines <- srcfile$lines
+   if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
+      lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
+   
+   # For packages installed with '--with-keep.source', it appears that
+   # the source references for all files within the package are collected
+   # into a single file, with each file given a header of the form:
+   #
+   #    #line 1 "<filename>"
+   #
+   # The source references are given relative to those file contents,
+   # so try to pull out the text content of only that file.
+   #
+   # In theory, R supports referencing arbitrary lines within a file;
+   # in practice, whole files appear to be included?
+   #
+   # https://github.com/wch/r-source/blob/1bd4a842dac421b68b7a999de8342f131ce8387f/src/library/tools/src/install.c#L158-L159
+   #
+   if (length(filename) && nzchar(filename))
+   {
+      header <- sprintf("#line 1 \"%s\"", filename)
+      index <- which(lines == header)
+      if (length(index))
+      {
+         lines <- tail(lines, n = -index)
+         boundaries <- c(
+            grep("^#line 1 \"", lines),
+            length(lines) + 1L
+         )
+         lines <- head(lines, n = boundaries[[1L]] - 1)
+      }
+   }
+   
+   if (asString)
+      paste(lines, collapse = "\n")
+   else
+      lines
+})
+
+.rs.addFunction("deparseSrcref", function(srcref, asString)
+{
+   # Try to retrieve source references from srcfile if available
+   srcfile <- attr(srcref, "srcfile", exact = TRUE)
+   if (!is.null(srcfile$original))
+      srcfile <- srcfile$original
+   
+   # It appears the 'lines' variable can either be a single string
+   # with embedded newlines, or a character vector already split by newlines.
+   # Normalize here so that we're always working with a split-by-newline vector.
+   lines <- srcfile$lines
+   if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
+      lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
+   
+   # We previously used 'as.character(srcref, useSource = TRUE)' by default, but
+   # this also trims the leading indent from the function definition. This
+   # causes issues when highlighting the first part of a source reference, as
+   # the expectation here is that the full line is preserved. For that reason,
+   # if we're able to, we keep all relevant lines from the source reference.
+   code <- if (is.character(lines))
+   {
+      srcpos <- .rs.parseSrcref(srcref)
+      range <- seq(from = srcpos$first_parsed, to = srcpos$last_parsed)
+      lines[range]
+   }
+   else
+   {
+      as.character(srcref, useSource = TRUE)
+   }
+   
+   if (asString)
+   {
+      code <- paste(code, collapse = "\n")
+   }
+   
+   code
+})
+
 # Returns a function's code as a string. Arguments:
 # useSource -- Whether to use the function's source references (if available)
 # asString -- Whether to return the result as a single string
@@ -194,13 +317,7 @@
    {
       srcref <- attr(func, "srcref", exact = TRUE)
       if (!is.null(srcref))
-      {
-         code <- as.character(srcref, useSource = TRUE)
-         if (asString)
-           return(paste(code, collapse = "\n"))
-         else
-           return(code)
-      }
+         return(.rs.deparseSrcref(srcref, asString))
    }
 
    control <- c("keepInteger", "keepNA")

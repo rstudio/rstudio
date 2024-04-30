@@ -402,8 +402,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="setWorkingDir"/>
          </menu>
          <separator/>
-         <cmd refid="showSessionServerOptionsDialog"/>
-         <separator/>
          <cmd refid="loadWorkspace"/>
          <cmd refid="saveWorkspace"/>
          <separator/>
@@ -685,6 +683,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="insertPipeOperator" value="Ctrl+Shift+M" title="Insert Pipe Operator" disableModes="sublime"/>
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
+         <shortcut refid="copilotRequestCompletions" value="Cmd+Backslash" title="Request Copilot Code Suggestions" />
+         
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
@@ -2038,6 +2038,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Copilot: Install Agent"
         menuLabel="Install Copilot Agent"
         desc="Install the GitHub Copilot agent."/>
+        
+   <cmd id="copilotDiagnostics"
+        label="Copilot: Show Diagnostics"
+        menuLabel="Show Copilot Diagnostics"
+        desc="Print a Copilot diagnostic report, indicating how the Copilot agent has been configured."/>
         
    <cmd id="copilotSignIn"
         label="Copilot: Sign In"
@@ -3579,13 +3584,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Quit the current R session even if busy"
         windowMode="main"/>
 
-   <cmd id="showSessionServerOptionsDialog"
-        label="Session Server Settings..."
-        menuLabel="_Session Server Settings..."
-        buttonLabel=""
-        desc="Configure available session servers"
-        windowMode="main"/>
-
    <cmd id="showAboutDialog"
         label="About RStudio..."
         menuLabel="A_bout RStudio"
@@ -3794,7 +3792,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="editor"/>
 
    <cmd id="maximizeConsole"
-        menuLabel="Maximize Console"/>
+        label="Toggle Maximize Console Pane"/>
+
+   <cmd id="maximizeSource"
+        label="Toggle Maximize Source Pane"/>
+
+   <cmd id="maximizeTabSet1"
+        label="Toggle Maximize Tab Group One"/>
+
+   <cmd id="maximizeTabSet2"
+        label="Toggle Maximize Tab Group Two"/>
 
    <cmd id="debugBreakpoint"
         label="Toggle Breakpoint on Current Line"

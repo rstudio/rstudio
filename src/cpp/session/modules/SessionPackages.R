@@ -252,27 +252,23 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
   .libPaths()[1]
 })
 
-.rs.addFunction("isPackageLoaded", function(packageName, libName)
+.rs.addJsonRpcHandler("is_package_attached", function(packageName, libPath)
 {
-   if (packageName %in% .packages())
-   {
-      # get the raw path to the package 
-      packagePath <- .rs.pathPackage(packageName, quiet=TRUE)
-
-      # alias (for comparison against libName, which comes from the client and
-      # is aliased)
-      packagePath <- .rs.createAliasedPath(packagePath)
-
-      # compare with the library given by the client
-      .rs.scalar(identical(packagePath, paste(libName, packageName, sep="/")))
-   }
-   else 
-      .rs.scalar(FALSE)
-})
-
-.rs.addJsonRpcHandler( "is_package_loaded", function(packageName, libName)
-{
-   .rs.isPackageLoaded(packageName, libName)
+   # quick check first if the package is loaded
+   if (!isNamespaceLoaded(packageName))
+      return(.rs.scalar(FALSE))
+   
+   # get the raw path to the package
+   packagePath <- .rs.pathPackage(packageName, quiet = TRUE)
+   if (length(packagePath) == 0L)
+      return(.rs.scalar(FALSE))
+   
+   # library path from client is aliased, so compare aliased paths
+   packagePath <- .rs.createAliasedPath(packagePath)
+   
+   # compare with the library given by the client
+   samePath <- identical(dirname(packagePath), libPath)
+   .rs.scalar(samePath)
 })
 
 .rs.addFunction("isPackageHyperlinkSafe", function(packageName)
@@ -660,23 +656,39 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (exists(entry, envir = cache))
       return(get(entry, envir = cache))
    
-   # determine an appropriate CRAN URL
-   repos <- getOption("repos")
-   cran <- if ("CRAN" %in% names(repos))
-      repos[["CRAN"]]
-   else if (length(repos))
-      repos[[1]]
-   else
-      .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
-   cran <- gsub("/*$", "", cran)
+   # determine an appropriate repository URL for this package
+   # default to our public CRAN repository
+   cran <- .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
+   
+   # check whether the requested package is from a separate repository URL
+   # note that the 'Repository' entry below will include a suffix based on the
+   # package type, so we need to trim that after
+   db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
+   if ("Repository" %in% names(db)) {
+      index <- match(packageName, db$Package)
+      if (!is.na(index)) {
+         repo <- db$Repository[index]
+         cran <- gsub("/(?:src|bin)/.*", "", repo)
+      }
+   }
+   
+   # re-route PPM URLs to CRAN for now
+   # https://github.com/rstudio/rstudio/issues/12648
+   isPpm <-
+      grepl("^\\Qhttp://rspm/\\E", cran, perl = TRUE) ||
+      grepl("^\\Qhttps://packagemanager.posit.co/\\E", cran, perl = TRUE) ||
+      grepl("^\\Qhttps://packagemanager.rstudio.com/\\E", cran, perl = TRUE)
+   
+   if (isPpm)
+      cran <- "https://cloud.R-project.org"
    
    # check to see if this package was from Bioconductor. if so, we'll need
    # to construct a more appropriate url
    desc <- .rs.tryCatch(.rs.readPackageDescription(file.path(libraryPath, packageName)))
-   prefix <- if (inherits(desc, "error") || !"biocViews" %in% names(desc))
-      file.path(cran, "web/packages")
-   else
+   prefix <- if ("biocViews" %in% names(desc))
       "https://bioconductor.org/packages/release/bioc/news"
+   else
+      file.path(cran, "web/packages")
    
    # the set of candidate URLs -- we use the presence of a NEWS or NEWS.md
    # to help us prioritize the order of checking.
@@ -693,7 +705,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    } else {
       c("news/news.html", "news.html", "NEWS", "ChangeLog")
    }
-   
    
    # we do some special handling for 'curl'
    isCurl <- identical(getOption("download.file.method"), "curl")
@@ -778,7 +789,47 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.scalar(candidates[[1]])
 })
 
-.rs.addFunction("packagesLoaded", function(pkgs) {
+.rs.addFunction("readPackageImports", function(pkg)
+{
+   pkgPath <- find.package(pkg, quiet = TRUE)
+   if (length(pkgPath) == 0L)
+      return(character())
+   
+   metaPath <- file.path(pkgPath, "Meta/package.rds")
+   if (!file.exists(metaPath))
+      return(character())
+   
+   metaInfo <- readRDS(metaPath)
+   importInfo <- metaInfo$Imports
+   sort(unique(names(importInfo)))
+})
+
+.rs.addFunction("recursivePackageDependenciesImpl", function(pkg, envir)
+{
+   if (exists(pkg, envir = envir))
+      return()
+   
+   deps <- setdiff(.rs.readPackageImports(pkg), "base")
+   assign(pkg, deps, envir = envir)
+   
+   for (dep in deps)
+      .rs.recursivePackageDependenciesImpl(dep, envir)
+})
+
+.rs.addFunction("recursivePackageDependencies", function(pkgs)
+{
+   envir <- new.env(parent = emptyenv())
+   for (pkg in pkgs)
+      .rs.recursivePackageDependenciesImpl(pkg, envir)
+   as.list(envir, all.names = TRUE)
+})
+
+.rs.addFunction("packagesLoaded", function(pkgs)
+{
+   # exclude base packages
+   basePkgs <- rownames(installed.packages(lib.loc = .Library, priority = "base"))
+   pkgs <- setdiff(pkgs, basePkgs)
+   
    # first check loaded namespaces
    if (any(pkgs %in% loadedNamespaces()))
       return(TRUE)
@@ -797,73 +848,30 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
    if (ignore)
       return(FALSE)
-
-   # if the default set of namespaces in rstudio are loaded
-   # then skip the check
-   defaultNamespaces <- c("base", "datasets", "graphics", "grDevices",
-                          "methods", "stats", "tools", "utils")
-   if (identical(defaultNamespaces, loadedNamespaces()) &&
-       length(.dynLibs()) == 4)
-      return(FALSE)
-
-   if (.rs.packagesLoaded(pkgs)) {
+   
+   # first, check if the packages themselves are loaded
+   if (.rs.packagesLoaded(pkgs))
       return(TRUE)
-   }
-   else {
-      avail <- available.packages()
-      deps <- suppressMessages(suppressWarnings(
-         utils:::getDependencies(pkgs, available=avail)))
-      return(.rs.packagesLoaded(deps))
-   }
+   
+   # next, check if any of these package's dependencies are loaded
+   recdeps <- .rs.recursivePackageDependencies(pkgs)
+   if (.rs.packagesLoaded(recdeps))
+      return(TRUE)
+   
+   FALSE
 })
 
-.rs.addFunction("loadedPackagesAndDependencies", function(pkgs) {
-  
-  # if the default set of namespaces in rstudio are loaded
-  # then skip the check
-  defaultNamespaces <- c("base", "datasets", "graphics", "grDevices",
-                         "methods", "stats", "tools", "utils")
-  if (identical(defaultNamespaces, loadedNamespaces()) && length(.dynLibs()) == 4)
-    return(character())
-  
-  packagesLoaded <- function(pkgList) {
-    
-    # first check loaded namespaces
-    loaded <- pkgList[pkgList %in% loadedNamespaces()]
-    
-    # now check if there are libraries still loaded in spite of the
-    # namespace being unloaded 
-    libs <- .dynLibs()
-    libnames <- vapply(libs, "[[", character(1), "name")
-    loaded <- c(loaded, pkgList[pkgList %in% libnames])
-    loaded
-  }
-  
-  # package loaded
-  loaded <- packagesLoaded(pkgs)
-  
-  # dependencies loaded
-  avail <- available.packages()
-  deps <- suppressMessages(suppressWarnings(
-    utils:::getDependencies(pkgs, available=avail)))
-  loaded <- c(loaded, packagesLoaded(deps))
-  
-  # return unique list
-  unique(loaded)  
+.rs.addFunction("loadedPackagesAndDependencies", function(pkgs)
+{
+   recdeps <- .rs.recursivePackageDependencies(pkgs)
+   sort(unique(unlist(recdeps)))
 })
 
-.rs.addFunction("forceUnloadForPackageInstall", function(pkgs) {
-  
-  # figure out which packages are loaded and/or have dependencies loaded
-  pkgs <- .rs.loadedPackagesAndDependencies(pkgs)
-  
-  # force unload them
-  sapply(pkgs, .rs.forceUnloadPackage)
-  
-  # return packages unloaded
-  pkgs
+.rs.addFunction("forceUnloadForPackageInstall", function(pkgs)
+{
+   sapply(pkgs, .rs.forceUnloadPackage)
+   pkgs
 })
-
 
 .rs.addFunction("enqueLoadedPackageUpdates", function(installCmd)
 {
@@ -1113,7 +1121,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          #
          # You can learn more about package authoring with RStudio at:
          #
-         #   http://r-pkgs.had.co.nz/
+         #   https://r-pkgs.org
          #
          # Some useful keyboard shortcuts for package authoring:
          #
@@ -1166,12 +1174,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
             //
             // Learn more about how to use Rcpp at:
             //
-            //   http://www.rcpp.org/
-            //   http://adv-r.had.co.nz/Rcpp.html
+            //   https://www.rcpp.org/
+            //   https://adv-r.hadley.nz/rcpp.html
             //
             // and browse examples of code using Rcpp at:
             // 
-            //   http://gallery.rcpp.org/
+            //   https://gallery.rcpp.org/
             //
 
             // [[Rcpp::export]]
@@ -1218,7 +1226,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          sourceFileExtensions,
          "R" = c("r", "q", "s"),
          "src" = c("c", "cc", "cpp", "h", "hpp"),
-         "vignettes" = c("rmd", "rnw"),
+         "vignettes" = c("rmd", "rnw", "qmd"),
          "man" = "rd",
          "data" = c("rda", "rdata"),
          default = ""

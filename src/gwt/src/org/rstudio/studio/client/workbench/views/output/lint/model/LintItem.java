@@ -14,10 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class LintItem extends JavaScriptObject
 {
@@ -112,14 +113,16 @@ public class LintItem extends JavaScriptObject
       {
          var item = items[key];
          var type = item["type"];
-         if (type === "style" || type === "note")
+         if (type !== "error" && type !== "warning") {
             type = "info";
+         }
 
          var annotation = {
             row: item["start.row"],
             column: item["start.column"],
             type: type
          };
+         
          var html = item["html"]
          if (html)
             annotation.html = html;

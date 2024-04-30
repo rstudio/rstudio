@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.common.spelling.ui;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -26,8 +25,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.json.client.JSONString;
@@ -52,8 +51,6 @@ public class SpellingLanguageSelectWidget extends SelectWidget
       
       includeDefaultOption_ = includeDefaultOption;
       languageOffset_ = includeDefaultOption_ ? 1 : 0;
-      
-      getLabel().getElement().getStyle().setMarginBottom(4, Unit.PX);
       
       HelpButton.addHelpButton(this, "spelling_dictionaries", constants_.addHelpButtonLabel(), 0);
       

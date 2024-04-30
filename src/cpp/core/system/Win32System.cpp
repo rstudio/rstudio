@@ -37,17 +37,17 @@
 #include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/system/User.hpp>
+
 #include <core/Algorithm.hpp>
 #include <core/Log.hpp>
 #include <core/FileInfo.hpp>
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
-
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
-#include <shared_core/SafeConvert.hpp>
-#include <shared_core/system/User.hpp>
 
 #ifndef JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
 #define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
@@ -322,27 +322,30 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
                           const std::string& appName,
                           bool ensureDirectory)
 {
-   wchar_t path[MAX_PATH + 1];
-   std::wstring appNameWide(appName.begin(), appName.end());
-   int csidl = CSIDL_LOCAL_APPDATA;
-   if (ensureDirectory)
-      csidl |= CSIDL_FLAG_CREATE;
-   HRESULT hr = ::SHGetFolderPathAndSubDirW(
-         nullptr,
-         csidl,
-         nullptr,
-         SHGFP_TYPE_CURRENT,
-         appNameWide.c_str(),
-         path);
-
-   if (hr != S_OK)
+   wchar_t* path = nullptr;
+   HRESULT result = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &path);
+   if (result != S_OK || path == nullptr)
    {
-      LOG_ERROR_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
-                        safe_convert::numberToHexString(hr));
+      Error error = systemError(
+          boost::system::errc::no_such_file_or_directory,
+          "unable to compute user settings (LocalAppData) path",
+          ERROR_LOCATION);
+
+      error.addProperty("error-code", core::safe_convert::numberToHexString(result));
+      LOG_ERROR(error);
       return FilePath();
    }
 
-   return FilePath(std::wstring(path));
+   FilePath localAppData = FilePath(std::wstring(path));
+   FilePath settingsPath = localAppData.completeChildPath(appName);
+   if (ensureDirectory)
+   {
+      Error error = settingsPath.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   return settingsPath;
 }
 
 FilePath systemSettingsPath(const std::string& appName, bool create)

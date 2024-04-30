@@ -25,10 +25,15 @@ if ! check_env_vars NODE_VERSION NODE_FOLDER NODE_ROOT NODE_SUBDIR NODE_BASE_URL
 	exit 1 # check_env_vars has already printed an error message
 fi
 
-# if we already have node, nothing to do
 if [ -d "${NODE_SUBDIR}" ]; then
-	echo "node is already installed at '${NODE_SUBDIR}'"
-	exit 0
+	if [ "${1}" == "reinstall" ]; then
+		echo "removing previous ${NODE_VERSION} from '${NODE_SUBDIR}'"
+		rm -rf "${NODE_SUBDIR}"
+	else
+		# if we already have node, nothing to do
+		echo "node ${NODE_VERSION} is already installed at '${NODE_SUBDIR}'"
+		exit 0
+	fi
 fi
 
 # complete url based on platform
@@ -47,13 +52,6 @@ esac
 
 # Will be set if we need to use Node 16.
 needs-node-16 () {
-
-	# Use Node 16 on CentOS 7.
-	if [ -e /etc/centos-release ]; then
-		if grep -siq "release 7" /etc/centos-release; then
-			return 0
-		fi
-	fi
 
 	# Use Node 16 on Ubuntu Bionic (which is used to make Focal builds).
 	if [ -e /etc/os-release ]; then

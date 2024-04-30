@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -62,11 +63,7 @@ public class NumericValueWidget extends Composite
     */
    public NumericValueWidget(String label, String tooltip, Integer minValue, Integer maxValue)
    {
-      // ensure labels end with ':' for consistency
-      if (!label.endsWith(":"))
-         label = label + ":";
-      
-      label_ = label;
+      label_ = StringUtil.ensureColonSuffix(label);
       tooltip_ = tooltip;
       FlowPanel flowPanel = new FlowPanel();
 
@@ -87,6 +84,7 @@ public class NumericValueWidget extends Composite
 
    public void setLabel(String text)
    {
+      text = StringUtil.ensureColonSuffix(text);
       label_ = text;
       textBoxLabel_.setText(text);
    }

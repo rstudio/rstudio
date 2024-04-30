@@ -26,6 +26,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.KeyboardTracker;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -1192,6 +1193,23 @@ public class AceEditor implements DocDisplay,
    public void insertCode(String code, boolean unused)
    {
       insertCode(code);
+   }
+   
+   public void insertCode(String code, InsertionBehavior behavior)
+   {
+      if (behavior == InsertionBehavior.EditorBehaviorsEnabled)
+      {
+         insertCode(code);
+      }
+      else
+      {
+         // RStudio attaches a lot of custom behaviors to the 'insert' functions
+         // for AceEditor.insert and EditSession.insert, so side-step that by
+         // using the methods defined on the underyling document
+         widget_.getEditor().getSession().getDocument().insert(
+               widget_.getEditor().getCursorPosition(),
+               StringUtil.normalizeNewLines(code));
+      }
    }
    
    public void insertCode(String code)
@@ -3252,7 +3270,27 @@ public class AceEditor implements DocDisplay,
       if (debugRow <= (firstRow + DEBUG_CONTEXT_LINES) ||
           debugRow >= (lastRow - DEBUG_CONTEXT_LINES))
       {
-         widget_.getEditor().scrollToLine(debugRow, true);
+         // all this mess so we can register a local handler, and then unregister it
+         // we defer the scroll because it seems like the scroll request can be dropped
+         // if it happens before the editor is ready
+         new ImmediatelyInvokedFunctionExpression()
+         {
+            @Override
+            protected void invoke()
+            {
+               handler_ = addRenderFinishedHandler(new RenderFinishedEvent.Handler()
+               {
+                  @Override
+                  public void onRenderFinished(RenderFinishedEvent event)
+                  {
+                     widget_.getEditor().scrollToLine(debugRow, true);
+                     handler_.removeHandler();
+                  }
+               });
+            }
+            
+            private HandlerRegistration handler_;
+         };
       }
 
       applyDebugLineHighlight(
@@ -3680,9 +3718,13 @@ public class AceEditor implements DocDisplay,
          boolean executing)
    {
       clearDebugLineHighlight();
+      if (startPos.getRow() < 0 || startPos.getColumn() < 0)
+         return;
+      
       lineDebugMarkerId_ = createRangeHighlightMarker(
             startPos, endPos,
             "ace_active_debug_line");
+      
       if (executing)
       {
          executionLine_ = startPos.getRow();
@@ -3699,6 +3741,7 @@ public class AceEditor implements DocDisplay,
          getSession().removeMarker(lineDebugMarkerId_);
          lineDebugMarkerId_ = null;
       }
+      
       if (executionLine_ != null)
       {
          widget_.getEditor().getRenderer().removeGutterDecoration(
@@ -4217,6 +4260,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.setAnnotations(annotations);
    }
+   
+   public JsMap<Marker> getMarkers(boolean inFront)
+   {
+      return widget_.getMarkers(inFront);
+   }
 
    @Override
    public void removeMarkersAtCursorPosition()
@@ -4245,7 +4293,7 @@ public class AceEditor implements DocDisplay,
    @Override
    public void showLint(JsArray<LintItem> lint)
    {
-      widget_.showLint(lint);
+      widget_.showLint(lint.cast());
    }
 
    @Override

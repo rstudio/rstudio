@@ -16,7 +16,10 @@
 #ifndef R_UTIL_HPP
 #define R_UTIL_HPP
 
+#define R_INTERNAL_FUNCTIONS
+
 #include <string>
+#include <r/RInternal.hpp>
 
 #ifdef _WIN32
 # include <core/system/Win32RuntimeLibrary.hpp>
@@ -89,6 +92,8 @@ bool isWindowsOnlyFunction(const std::string& name);
 bool isPackageAttached(const std::string& packageName);
 
 void synchronizeLocale();
+
+void str(SEXP objectSEXP);
 
 } // namespace util   
 } // namespace r

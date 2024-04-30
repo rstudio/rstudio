@@ -425,8 +425,7 @@ export class GwtCallback extends EventEmitter {
       // discover available R installations
       const rInstalls = findRInstallationsWin32();
       if (rInstalls.length === 0) {
-        logger().logErrorMessage('No R installations found via registry or common R install locations.');
-        return '';
+        logger().logInfo('No R installations found via registry or common R install locations.');
       }
 
       // ask the user what version of R they'd like to use
@@ -760,10 +759,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (event, disable: boolean) => {
       ElectronDesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
-    });
-
-    ipcMain.on('desktop_show_session_server_options_dialog', () => {
-      GwtCallback.unimpl('desktop_show_session_server_options_dialog');
     });
 
     ipcMain.handle('desktop_get_init_messages', () => {

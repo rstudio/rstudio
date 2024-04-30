@@ -140,6 +140,8 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
       }
 
       private final String message_;
+      
+      @SuppressWarnings("unused")
       private final DialogOptions options_;
       
       private Command dismissProgress_;

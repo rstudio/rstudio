@@ -65,13 +65,14 @@
 # define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
 #endif
 
-
 #ifndef _WIN32
 # define kNodeExe "node"
 #else
 # define kNodeExe "node.exe"
 #endif
 
+#define kCopilotAgentDefaultCommitHash ("69455be5d4a892206bc08365ba3648a597485943") // pragma: allowlist secret
+#define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
 using namespace rstudio::core;
@@ -86,38 +87,45 @@ namespace {
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
 std::map<std::string, std::string> s_extToLanguageIdMap = {
-   { ".bash", "shellscript" },
-   { ".bat",  "bat" },
-   { ".c",    "c" },
-   { ".cc",   "cpp" },
-   { ".cpp",  "cpp" },
-   { ".cs",   "csharp" },
-   { ".css",  "css" },
-   { ".erl",  "erlang" },
-   { ".go",   "go" },
-   { ".h",    "c" },
-   { ".hpp",  "cpp" },
-   { ".html", "html" },
-   { ".ini",  "ini" },
-   { ".java", "java" },
-   { ".js",   "javascript" },
-   { ".jsx",  "javascriptreact" },
-   { ".json", "json" },
-   { ".md",   "markdown" },
-   { ".mjs",  "javascript" },
-   { ".ps",   "powershell" },
-   { ".py",   "python" },
-   { ".tex",  "latex" },
-   { ".r",    "r" },
-   { ".rb",   "ruby" },
-   { ".rnw",  "r" },
-   { ".rnb",  "r" },
-   { ".rmd",  "r" },
-   { ".sh",   "shellscript" },
-   { ".tex",  "latex" },
-   { ".ts",   "typescript" },
-   { ".tsx",  "typescriptreact" },
-   { ".yml",  "yaml" },
+   { ".bash",  "shellscript" },
+   { ".bat",   "bat" },
+   { ".c",     "c" },
+   { ".cc",    "cpp" },
+   { ".cpp",   "cpp" },
+   { ".cs",    "csharp" },
+   { ".css",   "css" },
+   { ".erl",   "erlang" },
+   { ".go",    "go" },
+   { ".h",     "c" },
+   { ".hpp",   "cpp" },
+   { ".html",  "html" },
+   { ".ini",   "ini" },
+   { ".java",  "java" },
+   { ".js",    "javascript" },
+   { ".jsx",   "javascriptreact" },
+   { ".json",  "json" },
+   { ".md",    "markdown" },
+   { ".mjs",   "javascript" },
+   { ".ps",    "powershell" },
+   { ".py",    "python" },
+   { ".tex",   "latex" },
+   { ".r",     "r" },
+   { ".rb",    "ruby" },
+   { ".rmd",   "r" },
+   { ".rnb",   "r" },
+   { ".rnw",   "r" },
+   { ".rs",    "rust" },
+   { ".sc",    "scala" },
+   { ".scala", "scala" },
+   { ".scss",  "scss" },
+   { ".sh",    "shellscript" },
+   { ".sql",   "sql" },
+   { ".swift", "swift" },
+   { ".tex",   "latex" },
+   { ".toml",  "toml" },
+   { ".ts",    "typescript" },
+   { ".tsx",   "typescriptreact" },
+   { ".yml",   "yaml" },
 };
    
 
@@ -255,12 +263,37 @@ bool isIndexableFile(const FilePath& documentPath)
    return true;
 }
 
+bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   // Don't index binary files.
+   if (pDoc->contents().find('\0') != std::string::npos)
+      return false;
+   
+   FilePath docPath(pDoc->path());
+   return isIndexableFile(docPath);
+}
+
 FilePath copilotAgentPath()
 {
-   // Check for configured copilot path.
+   // Check for admin-configured copilot path.
    FilePath copilotPath = session::options().copilotAgentPath();
    if (copilotPath.exists())
+   {
+      if (copilotPath.isDirectory())
+      {
+         for (const std::string& suffix : { "dist/agent.js", "agent.js" })
+         {
+            FilePath candidatePath = copilotPath.completePath(suffix);
+            if (candidatePath.exists())
+            {
+               copilotPath = candidatePath;
+               break;
+            }
+         }
+      }
+      
       return copilotPath;
+   }
 
    using namespace core::system::xdg;
 
@@ -285,6 +318,51 @@ FilePath copilotAgentPath()
 bool isCopilotAgentInstalled()
 {
    return copilotAgentPath().exists();
+}
+
+std::string copilotAgentCommitHash()
+{
+   return r::options::getOption(
+            "rstudio.copilot.repositoryRef",
+            std::string(kCopilotAgentDefaultCommitHash),
+            false);
+}
+
+bool isCopilotAgentCurrent()
+{
+   Error error;
+   
+   // The Copilot agent.js is located in e.g. ~/.cache/rstudio/copilot/dist/agent.js.
+   // Compute path to the copilot 'root' directory.
+   FilePath versionPath = copilotAgentPath().getParent().getParent().completeChildPath("version.json");
+   if (!versionPath.exists())
+      return false;
+   
+   std::string versionContent;
+   error = core::readStringFromFile(versionPath, &versionContent);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   json::Object versionJson;
+   error = versionJson.parse(versionContent);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   std::string commitHash;
+   error = core::json::readObject(versionJson, "commit_hash", commitHash);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   return commitHash == copilotAgentCommitHash();
 }
 
 bool isCopilotEnabled()
@@ -505,6 +583,28 @@ void sendRequest(const std::string& method,
    // Create and enqueue the request.
    std::string request = createRequest(method, requestId, paramsJson);
    s_pendingRequests.push(request);
+}
+
+// Should only be used for debugging, as this will block the R session
+// while the request is being serviced.
+json::Object sendSynchronousRequest(const std::string& method,
+                                   const std::string& requestId,
+                                   const json::Value& paramsJson)
+{
+   json::Object result;
+   bool responseReceived = false;
+   
+   auto continuation = [&](const Error& error, json::JsonRpcResponse* pResponse)
+   {
+      responseReceived = true;
+      if (error == Success() && pResponse->result().isObject())
+         result = pResponse->result().getObject();
+   };
+   
+   sendRequest(method, requestId, paramsJson, CopilotContinuation(continuation));
+   waitFor([&]() { return responseReceived; });
+   
+   return result;
 }
 
 void setEditorInfo()
@@ -773,14 +873,6 @@ void onExit(int status)
 {
    s_agentPid = -1;
    s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
-
-   if (s_isSessionShuttingDown)
-      return;
-
-   if (status != 0)
-   {
-      ELOG("Agent exited with status {}.", status);
-   }
 }
 
 } // end namespace agent
@@ -805,6 +897,11 @@ Error startAgent()
    // Create environment for agent process
    core::system::Options environment;
    core::system::environment(&environment);
+   
+   // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
+   std::string certificatesFile = session::options().copilotSslCertificatesFile();
+   if (!certificatesFile.empty())
+      environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
    // For Desktop builds of RStudio, use the version of node embedded in Electron.
    FilePath nodePath;
@@ -893,23 +990,6 @@ Error startAgent()
    if (s_agentPid == -1)
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
    
-   // Wait for Copilot to report that it's started running, or that it's failed to start.
-   waitFor([]()
-   {
-      switch (s_agentRuntimeStatus)
-      {
-      case CopilotAgentRuntimeStatus::Running:
-      case CopilotAgentRuntimeStatus::Stopped:
-         return true;
-      default:
-         return false;
-      }
-      
-   });
-
-   if (s_agentPid == -1)
-      return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
-
    // Send an initialize request to the agent.
    json::Object clientInfoJson;
    clientInfoJson["name"] = "RStudio";
@@ -974,15 +1054,14 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
       return;
-
-   // Avoid indexing binary files
-   if (pDoc->contents().find('\0') != std::string::npos)
+   
+   if (!isIndexableDocument(pDoc))
       return;
    
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
-   textDocumentJson["version"] = 1;
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
    textDocumentJson["text"] = "";
 
    json::Object paramsJson;
@@ -991,21 +1070,36 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    sendNotification("textDocument/didOpen", paramsJson);
 }
 
+std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   std::string contents = pDoc->contents();
+   
+   // for SQL documents, remove a 'preview' header to avoid confusing Copilot
+   // into producing R completions in a SQL context
+   // https://github.com/rstudio/rstudio/issues/13432
+   if (pDoc->type() == kSourceDocumentTypeSQL)
+   {
+      boost::regex rePreview("(?:#+|[-]{2,})\\s*[!]preview[^\n]+\n");
+      contents = boost::regex_replace(contents, rePreview, "\n");
+   }
+   
+   return contents;
+}
+
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
       return;
 
-   // Avoid indexing binary files
-   if (pDoc->contents().find('\0') != std::string::npos)
+   if (!isIndexableDocument(pDoc))
       return;
    
    // Synchronize document contents with Copilot
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
-   textDocumentJson["version"] = 1;
-   textDocumentJson["text"] = pDoc->contents();
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
+   textDocumentJson["text"] = contentsFromDocument(pDoc);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
@@ -1074,7 +1168,7 @@ void onBackgroundProcessing(bool isIdle)
       if (methodJson.isString())
       {
          std::string method = methodJson.getString();
-         if (method == "LogMessage")
+         if (method == "LogMessage" || method == "window/logMessage")
             continue;
       }
 
@@ -1133,7 +1227,7 @@ void indexFile(const core::FileInfo& info)
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = 1;
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
    textDocumentJson["text"] = contents;
 
    json::Object paramsJson;
@@ -1245,11 +1339,89 @@ void onShutdown(bool)
    s_agentPid = -1;
 }
 
+// Primarily intended for debugging / exploration.
+SEXP rs_copilotSendRequest(SEXP methodSEXP, SEXP paramsSEXP)
+{
+   std::string method = r::sexp::asString(methodSEXP);
+   
+   json::Object paramsJson;
+   if (r::sexp::length(paramsSEXP) != 0)
+   {
+      Error error = r::json::jsonValueFromObject(paramsSEXP, &paramsJson);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return R_NilValue;
+      }
+   }
+   
+   std::string requestId = core::system::generateUuid();
+   json::Object responseJson = sendSynchronousRequest(method, requestId, paramsJson);
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(responseJson, &protect);
+}
+
 SEXP rs_copilotSetLogLevel(SEXP logLevelSEXP)
 {
    int logLevel = r::sexp::asInteger(logLevelSEXP);
    s_copilotLogLevel = logLevel;
    return logLevelSEXP;
+}
+
+std::string copilotVersion()
+{
+   std::string requestId = core::system::generateUuid();
+   json::Object responseJson = sendSynchronousRequest("getVersion", requestId, json::Object());
+   
+   std::string version;
+   if (responseJson.hasMember("result"))
+   {
+      json::Object resultJson = responseJson["result"].getObject();
+      if (resultJson.hasMember("version"))
+      {
+         json::Value versionJson = resultJson["version"];
+         if (versionJson.isString())
+         {
+            version = versionJson.getString();
+         }
+      }
+   }
+   
+   return version;
+}
+
+SEXP rs_copilotVersion()
+{
+   if (!isCopilotEnabled())
+      return R_NilValue;
+   
+   std::string version = copilotVersion();
+   r::sexp::Protect protect;
+   return r::sexp::create(version, &protect);
+}
+
+SEXP rs_copilotAgentCommitHash()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(copilotAgentCommitHash(), &protect);
+}
+
+Error copilotDiagnostics(const json::JsonRpcRequest& request,
+                         const json::JsonRpcFunctionContinuation& continuation)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+      return Success();
+   }
+   
+   std::string requestId = core::system::generateUuid();
+   sendRequest("debug/diagnostics", requestId, json::Object(), CopilotContinuation(continuation));
+   
+   return Success();
 }
 
 Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
@@ -1275,6 +1447,21 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
       return error;
    }
+   
+   // Disallow completion request in hidden files, since this might trigger
+   // the copilot agent to attempt to read the contents of that file
+   FilePath docPath = module_context::resolveAliasedPath(documentPath);
+   if (!isIndexableFile(docPath))
+   {
+      json::Object resultJson;
+      resultJson["enabled"] = false;
+      
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+      
+      continuation(Success(), &response);
+      return Success();
+   }
 
    // Build completion request
    json::Object positionJson;
@@ -1284,7 +1471,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    json::Object docJson;
    docJson["position"] = positionJson;
    docJson["uri"] = uriFromDocumentImpl(documentId, documentPath, isUntitled);
-   docJson["version"] = 1;
+   docJson["version"] = kCopilotDefaultDocumentVersion;
 
    json::Object paramsJson;
    paramsJson["doc"] = docJson;
@@ -1371,6 +1558,7 @@ Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
 {
    json::Object responseJson;
    responseJson["installed"] = isCopilotAgentInstalled();
+   responseJson["current"] = isCopilotAgentCurrent();
    pResponse->setResult(responseJson);
    return Success();
 }
@@ -1424,10 +1612,14 @@ Error initialize()
    // editting preferences within the Copilot prefs dialog, anyhow.
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
+   RS_REGISTER_CALL_METHOD(rs_copilotSendRequest);
    RS_REGISTER_CALL_METHOD(rs_copilotSetLogLevel);
+   RS_REGISTER_CALL_METHOD(rs_copilotVersion);
+   RS_REGISTER_CALL_METHOD(rs_copilotAgentCommitHash);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+         (bind(registerAsyncRpcMethod, "copilot_diagnostics", copilotDiagnostics))
          (bind(registerAsyncRpcMethod, "copilot_generate_completions", copilotGenerateCompletions))
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))

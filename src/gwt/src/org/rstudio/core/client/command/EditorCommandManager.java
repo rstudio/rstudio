@@ -29,7 +29,6 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.events.EditorKeybindingsChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
@@ -147,10 +146,9 @@ public class EditorCommandManager
       events_.addHandler(CopySourcePathEvent.TYPE, event ->
       {
          String path = event.getPath();
-         if (BrowseCap.isWindowsDesktop() && !Desktop.isRemoteDesktop())
+         if (BrowseCap.isWindowsDesktop())
          {
-            // on Windows desktop, with a regular session (versus an RDP remote
-            // session), resolve the "~" to a full path since Windows doesn't
+            // on Windows desktop resolve the "~" to a full path since Windows doesn't
             // natively understand "~"
             path = files_.resolveAliasedPath(FileSystemItem.createFile(path));
          }

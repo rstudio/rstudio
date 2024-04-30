@@ -31,6 +31,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.DeploymentRecordsUpdatedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -80,7 +81,8 @@ import com.google.inject.Provider;
 
 public class RSConnectPublishButton extends Composite
    implements RSConnectDeploymentCompletedEvent.Handler,
-              RPubsUploadStatusEvent.Handler
+              RPubsUploadStatusEvent.Handler,
+              DeploymentRecordsUpdatedEvent.Handler
 {
 
    class DeploymentPopupMenu extends ToolbarPopupMenu
@@ -93,8 +95,10 @@ public class RSConnectPublishButton extends Composite
       }
    }
 
-   public RSConnectPublishButton(String host, int contentType, boolean showCaption,
-         AppCommand boundCommand)
+   public RSConnectPublishButton(String host,
+                                 int contentType,
+                                 boolean showCaption,
+                                 AppCommand boundCommand)
    {
       host_ = host;
       contentType_ = contentType;
@@ -142,14 +146,14 @@ public class RSConnectPublishButton extends Composite
    
    @Inject
    public void initialize(RSConnectServerOperations server,
-         RMarkdownServerOperations rmdServer,
-         EventBus events, 
-         Commands commands,
-         GlobalDisplay display,
-         Provider<UserPrefs> pUserPrefs,
-         Provider<UserState> pUserState,
-         Session session,
-         PlotPublishMRUList plotMru)
+                          RMarkdownServerOperations rmdServer,
+                          EventBus events, 
+                          Commands commands,
+                          GlobalDisplay display,
+                          Provider<UserPrefs> pUserPrefs,
+                          Provider<UserState> pUserState,
+                          Session session,
+                          PlotPublishMRUList plotMru)
    {
       server_ = server;
       rmdServer_ = rmdServer;
@@ -187,6 +191,7 @@ public class RSConnectPublishButton extends Composite
       
       events_.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this);
       events_.addHandler(RPubsUploadStatusEvent.TYPE, this);
+      events_.addHandler(DeploymentRecordsUpdatedEvent.TYPE, this);
    }
    
    public void onPublishInvoked(Command onPublishInvoked)
@@ -400,6 +405,12 @@ public class RSConnectPublishButton extends Composite
       {
          populateDeployments(true);
       }
+   }
+   
+   @Override
+   public void onDeploymentRecordsUpdated(DeploymentRecordsUpdatedEvent event)
+   {
+      populateDeployments(true);
    }
    
    public void setShowCaption(boolean show)

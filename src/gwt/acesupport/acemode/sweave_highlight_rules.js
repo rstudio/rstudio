@@ -41,10 +41,10 @@ var SweaveHighlightRules = function() {
     this.$rules["start"].unshift({
         regex: "(\\\\Sexpr)([{])",
         next: "r-start",
-        onMatch: function(value, state, stack, line) {
-            stack.length = 2;
-            stack[0] = state;
-            stack[1] = 1;
+        onMatch: function(value, state, stack, line, context) {
+            context.sexpr = context.sexpr || {};
+            context.sexpr.state = state;
+            context.sexpr.count = 1;
             return [
                 { type: "keyword", value: "\\Sexpr" },
                 { type: "paren.keyword.operator", value: "{" }
@@ -61,9 +61,8 @@ var SweaveHighlightRules = function() {
         token : "paren.keyword.operator",
         regex : "[{]",
         merge : false,
-        onMatch: function(value, state, stack, line) {
-            if (stack.length)
-                stack[1] += 1;
+        onMatch: function(value, state, stack, line, context) {
+            context.sexpr.count += 1;
             return this.token;
         }
     });
@@ -72,14 +71,13 @@ var SweaveHighlightRules = function() {
         token : "paren.keyword.operator",
         regex : "[}]",
         merge : false,
-        onMatch: function(value, state, stack, line) {
-            this.next = "r-start";
-            if (stack.length) {
-                stack[1] -= 1;
-                if (stack[1] == 0) {
-                    this.next = stack[0];
-                    stack.splice(0);
-                }
+        onMatch: function(value, state, stack, line, context) {
+            context.sexpr.count -= 1;
+            if (context.sexpr.count === 0) {
+                this.next = context.sexpr.state;
+                delete context.sexpr;
+            } else {
+                this.next = state;
             }
             return this.token;
         }

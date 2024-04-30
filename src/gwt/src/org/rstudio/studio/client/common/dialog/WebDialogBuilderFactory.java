@@ -97,4 +97,9 @@ public class WebDialogBuilderFactory implements DialogBuilderFactory
    {
       return new Builder(type, caption, messageWidget, null);
    }
+   
+   public DialogBuilder create(int type, String caption, Widget messageWidget, DialogOptions options)
+   {
+      return new Builder(type, caption, messageWidget, options);
+   }
 }

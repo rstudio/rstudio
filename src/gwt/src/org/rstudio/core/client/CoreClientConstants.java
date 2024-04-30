@@ -51,6 +51,15 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     @DefaultMessage("OK")
     @Key("okayLabel")
     String okayLabel();
+    
+    /**
+     * Translated "Copy to Clipboard".
+     *
+     * @return translated "Copy to Clipboard"
+     */
+    @DefaultMessage("Copy to Clipboard")
+    @Key("copyToClipboardLabel")
+    String copyToClipboardLabel();
 
     /**
      * Translated "Not Yet Implemented".
@@ -1549,5 +1558,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     @DefaultMessage("Space")
     @Key("keyNameSpace")
     String keyNameSpace();
+    
 
 }

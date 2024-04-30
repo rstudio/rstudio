@@ -2501,11 +2501,6 @@ public class DummyCommands extends Commands {
     }
 
     @Override
-    public AppCommand showSessionServerOptionsDialog() {
-        return null;
-    }
-
-    @Override
     public AppCommand showWarningBar() {
         return null;
     }
@@ -2981,6 +2976,21 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand maximizeSource() {
+        return null;
+    }
+
+    @Override
+    public AppCommand maximizeTabSet1() {
+        return null;
+    }
+
+    @Override
+    public AppCommand maximizeTabSet2() {
+        return null;
+    }
+
+    @Override
     public AppCommand toggleEditorTokenInfo() {
         return null;
     }
@@ -3128,6 +3138,11 @@ public class DummyCommands extends Commands {
     @Override
     public AppCommand crashDesktopApplication() {
         return null;
+    }
+    
+    @Override
+    public AppCommand copilotDiagnostics() {
+       return null;
     }
 
     @Override

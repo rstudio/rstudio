@@ -17,26 +17,32 @@
 
 #include <boost/function.hpp>
 
+#include <shared_core/Error.hpp>
+
+#include <core/BoostErrors.hpp>
 #include <core/BoostThread.hpp>
 #include <core/Log.hpp>
-#include <shared_core/Error.hpp>
-#include <core/BoostErrors.hpp>
-#include <core/Thread.hpp>
-#include <core/system/System.hpp>
 #include <core/Macros.hpp>
+#include <core/Thread.hpp>
 
 #include <core/system/Process.hpp>
+#include <core/system/System.hpp>
+
+#include <r/RExec.hpp>
 
 #include <session/SessionOptions.hpp>
-#include "SessionConsoleInput.hpp"
 #include <session/SessionHttpConnection.hpp>
 #include <session/SessionHttpConnectionListener.hpp>
-#include "SessionRpc.hpp"
-#include "SessionOfflineService.hpp"
+#include <session/prefs/UserPrefs.hpp>
+
 #include "SessionAsyncRpcConnection.hpp"
-#include "modules/SessionSystemResources.hpp"
-#include "session/prefs/UserPrefs.hpp"
+#include "SessionConsoleInput.hpp"
 #include "SessionInit.hpp"
+#include "SessionOfflineService.hpp"
+#include "SessionRpc.hpp"
+
+#include "modules/SessionSystemResources.hpp"
+#include "modules/rmarkdown/SessionRmdNotebook.hpp"
 
 using namespace rstudio::core;
 
@@ -44,9 +50,16 @@ namespace rstudio {
 namespace session {
 
 namespace {
-   std::chrono::milliseconds s_handleOfflineDuration;
-   std::chrono::milliseconds s_asyncRpcDuration;
+
+std::chrono::milliseconds s_handleOfflineDuration;
+std::chrono::milliseconds s_asyncRpcDuration;
+
+bool isMainThreadBusy()
+{
+   return console_input::executing() || r::exec::isExecuting();
 }
+
+} // end anonymous namespace
 
 OfflineService& offlineService()
 {
@@ -164,7 +177,7 @@ boost::shared_ptr<HttpConnection> asyncConnectionConverter(boost::shared_ptr<Htt
 void OfflineService::run()
 {
    try
-   {    
+   {
       // default time durations
       int asyncRpcMillis = options().asyncRpcTimeoutMs();
       int handleOfflineMillis = options().handleOfflineTimeoutMs();
@@ -227,14 +240,12 @@ void OfflineService::run()
             console_input::updateSessionExecuting();
 
             // If R is not occupying the main thread, we'll continue to wait.
-            if (!console_input::executing())
-            {
+            if (!isMainThreadBusy())
                continue;
-            }
 
             std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
-	    // Make sure session is initialized before doing any processing in the offline thread to avoid the call to lazily init it
+            // Make sure session is initialized before doing any processing in the offline thread to avoid the call to lazily init it
             if (handleOfflineMillis > 0 && init::isSessionInitializedAndRestored())
             {
                boost::shared_ptr<HttpConnection> ptrConnection;
@@ -307,6 +318,6 @@ void OfflineService::run()
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
-      
+
 } // namespace session
 } // namespace rstudio

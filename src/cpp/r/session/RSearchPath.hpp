@@ -16,6 +16,9 @@
 #ifndef R_SESSION_SEARCH_PATH_HPP
 #define R_SESSION_SEARCH_PATH_HPP
 
+#include <vector>
+#include <string>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -30,7 +33,10 @@ namespace search_path {
 
 core::Error save(const core::FilePath& statePath);
 core::Error saveGlobalEnvironment(const core::FilePath& statePath);
-core::Error restore(const core::FilePath& statePath, bool isCompatibleSessionState = true);
+core::Error restore(
+      const core::FilePath& statePath,
+      const std::vector<std::string>& currentSearchPathList,
+      bool isCompatibleSessionState = true);
    
 } // namespace search_path
 } // namespace session

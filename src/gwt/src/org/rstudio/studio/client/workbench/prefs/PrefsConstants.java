@@ -5124,6 +5124,16 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Loading...")
     @Key("copilotLoadingMessage")
     String copilotLoadingMessage();
+    
+    
+    /**
+     * Translated "Generating diagnostic report..."
+     *
+     * @return translated "Generating diagnostic report..."
+     */
+    @DefaultMessage("Generating diagnostic report...")
+    @Key("copilotDiagnosticReportProgressLabel")
+    String copilotDiagnosticReportProgressLabel();
 
     /**
      * Translated "You are currently signed in as: {0}"
@@ -5178,7 +5188,16 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Refresh")
     @Key("copilotRefreshLabel")
     String copilotRefreshLabel();
-
+    
+    /**
+     * Translated "Diagnostics"
+     *
+     * @return translated "Diagnostics"
+     */
+    @DefaultMessage("Diagnostics")
+    @Key("copilotDiagnosticsLabel")
+    String copilotDiagnosticsLabel();
+    
     /**
      * Translated "Project Options..."
      *
@@ -5315,11 +5334,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String copilotAgentNotEnabled();
 
     /**
-     * Translated "You are currently signed in as {0}, but you haven''t yet activated your GitHub Copilot account."
+     * Translated "You are currently signed in as {0}, but you haven''t yet activated GitHub Copilot."
      *
-     * @return translated "You are currently signed in as {0}, but you haven''t yet activated your GitHub Copilot account."
+     * @return translated "You are currently signed in as {0}, but you haven''t yet activated GitHub Copilot."
      */
-    @DefaultMessage("You are currently signed in as {0}, but you haven''t yet activated your GitHub Copilot account.")
+    @DefaultMessage("You are currently signed in as {0}, but you haven''t yet activated GitHub Copilot.")
     @Key("copilotAccountNotActivated")
     String copilotAccountNotActivated(String name);
 

@@ -39,18 +39,48 @@ RCntxt::RCntxt(void *rawCntxt)
 {
    if (rawCntxt == nullptr)
       return;
-   else if (contextVersion() == RVersion40)
-      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_40> >(
-                                   static_cast<RCNTXT_40*>(rawCntxt));
-   else if (contextVersion() == RVersion34)
-      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_34> >(
-                                   static_cast<RCNTXT_34*>(rawCntxt));
-   else if (contextVersion() == RVersion33)
-      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_33> >(
-                                   static_cast<RCNTXT_33*>(rawCntxt));
-   else
-      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_32> >(
-                                   static_cast<RCNTXT_32*>(rawCntxt));
+   
+   switch (contextVersion())
+   {
+   
+   case RVersion44:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_44>>(rawCntxt);
+      break;
+   }
+   
+   case RVersion40:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_40>>(rawCntxt);
+      break;
+   }
+      
+   case RVersion34:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_34>>(rawCntxt);
+      break;
+   }
+      
+   case RVersion33:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_33>>(rawCntxt);
+      break;
+   }
+      
+   case RVersion32:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_32>>(rawCntxt);
+      break;
+   }
+      
+   case RVersionUnknown:
+   {
+      LOG_WARNING_MESSAGE("Unable to determine R context version; assuming compatible with version 4.4");
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_44>>(rawCntxt);
+      break;
+   }
+      
+   }
 }
 
 Error RCntxt::callSummary(std::string* pCallSummary) const
@@ -189,14 +219,22 @@ bool RCntxt::operator==(const RCntxt& other) const
    // Equivalent if they refer to the same underlying object
    if (other.pCntxt_ == pCntxt_)
       return true;
+   
+   // Consider two null contexts to be equivalent
+   if (other.isNull() && isNull())
+      return true;
 
-   // Also equivalent if they refer to the same call at the same stack position and have the same
-   // source references
+   // Otherwise, check for matching fields in the context.
+   // Note that some fields, e.g. the source references,
+   // could change over time in a context (e.g. as a user
+   // steps through in a debugging session).
    if (other.isNull() == isNull() &&
        other.call() == call() &&
-       other.evaldepth() == evaldepth() &&
-       other.srcref() == srcref())
+       other.callflag() == callflag() &&
+       other.evaldepth() == evaldepth())
+   {
       return true;
+   }
 
    return false;
 }
@@ -219,6 +257,11 @@ RCntxt::iterator RCntxt::end()
 bool RCntxt::isNull() const
 {
    return pCntxt_ == nullptr;
+}
+
+SEXP RCntxt::promargs() const
+{
+   return pCntxt_ ? pCntxt_->promargs() : R_NilValue;
 }
 
 SEXP RCntxt::callfun() const
@@ -261,29 +304,28 @@ RCntxt RCntxt::nextcontext() const
    return pCntxt_ ? pCntxt_->nextcontext() : RCntxt(nullptr);
 }
 
+SEXP RCntxt::dump() const
+{
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("callflag", callflag());
+   builder.add("evaldepth", evaldepth());
+   builder.add("promargs", promargs());
+   builder.add("callfun", callfun());
+   builder.add("sysparent", sysparent());
+   builder.add("call", call());
+   builder.add("cloenv", cloenv());
+   builder.add("srcref", srcref());
+   return r::sexp::create(builder, &protect);
+}
+
 SEXP dumpContexts()
 {
    r::sexp::Protect protect;
-   r::sexp::ListBuilder contextList(&protect);
-   
-   for (auto it = RCntxt::begin();
-        it != RCntxt::end();
-        ++it)
-   {
-      r::sexp::ListBuilder builder(&protect);
-      builder.add("callfun", it->callfun());
-      builder.add("sysparent", it->sysparent());
-      builder.add("callflag", it->callflag());
-      builder.add("call", it->call());
-      builder.add("srcref", it->srcref());
-      builder.add("cloenv", it->cloenv());
-      builder.add("evaldepth", it->evaldepth());
-   
-      SEXP elt = r::sexp::create(builder, &protect);
-      contextList.add(elt);
-   }
-   
-   return r::sexp::create(contextList, &protect);
+   r::sexp::ListBuilder builder(&protect);
+   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
+      builder.add(it->dump());
+   return r::sexp::create(builder, &protect);
 }
 
 } // namespace context

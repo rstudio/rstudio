@@ -31,13 +31,14 @@ class RCntxtInterface
 {
 public:
    // accessors for RCNTXT entries
-   virtual SEXP callfun() const       = 0;
-   virtual SEXP sysparent() const     = 0;
    virtual int callflag() const       = 0;
    virtual int evaldepth() const      = 0;
+   virtual SEXP promargs() const      = 0;
+   virtual SEXP callfun() const       = 0;
+   virtual SEXP sysparent() const     = 0;
    virtual SEXP call() const          = 0;
-   virtual SEXP srcref() const        = 0;
    virtual SEXP cloenv() const        = 0;
+   virtual SEXP srcref() const        = 0;
 
    // computed properties
    virtual bool isNull() const        = 0;

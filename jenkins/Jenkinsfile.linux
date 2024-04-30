@@ -4,7 +4,6 @@ def ext_map =
 [
   'focal':      'deb',
   'jammy':      'deb',
-  'centos7':    'rpm',
   'rhel8':      'rpm',
   'rhel9':      'rpm',
   'opensuse15': 'rpm'
@@ -14,7 +13,6 @@ def package_os =
 [
   'focal':      'Ubuntu Focal',
   'jammy':      'Ubuntu Jammy',
-  'centos7':    'CentOS 7',
   'rhel8':      'RHEL 8',
   'rhel9':      'RHEL 9',
   'opensuse15': 'OpenSUSE 15'
@@ -113,7 +111,7 @@ pipeline {
         axes {
           axis {
             name 'OS'
-            values 'focal', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+            values 'focal', 'jammy', 'rhel8', 'rhel9', 'opensuse15'
           }
           axis {
             name 'ARCH'
@@ -121,7 +119,7 @@ pipeline {
           }
           axis {
               name 'FLAVOR'
-              values 'Desktop', 'Server', 'Electron'
+              values 'Server', 'Electron'
           }
         }
 
@@ -129,17 +127,7 @@ pipeline {
           exclude {
             axis {
               name 'OS'
-              values 'centos7', 'rhel8', 'opensuse15'
-            }
-            axis {
-              name 'ARCH'
-              values 'arm64'
-            }
-          }
-          exclude {
-            axis {
-              name 'FLAVOR'
-              values 'Desktop'
+              values 'rhel8', 'opensuse15'
             }
             axis {
               name 'ARCH'
@@ -171,7 +159,6 @@ pipeline {
                 anyOf {
                   environment name: 'FLAVOR', value: 'Electron'
                   environment name: 'FLAVOR', value: 'Server'
-                  expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
                 }
                 expression { return utils.rebuildCheck() == true }
               }
@@ -325,7 +312,7 @@ pipeline {
                         }
 
                         script {
-                          if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
+                          if (FLAVOR == "Electron") {
                             retry(5) {
                               script {
                                 utils.uploadPackageToS3 "${TAR_PACKAGE_DIR}/${TAR_PACKAGE_FILE}", "${AWS_PATH}/"

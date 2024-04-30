@@ -574,6 +574,7 @@
    version = "") {
 
    name <- .rs.connectionStripRStudioDriver(name)
+   dir.create(installPath, recursive = TRUE, showWarnings = FALSE)
    installPath <- file.path(
       normalizePath(installPath, mustWork = FALSE),
       tolower(name)

@@ -31,6 +31,8 @@
 @external gwt-DecoratedPopupPanel;
 @external editor_dark;
 @external gwt-TextBox-readonly;
+@external gwt-TextBox;
+@external gwt-ListBox;
 
 /* These are exposed to allow users to customize RStudio further with their rsthemes. */
 @external rstheme_tabLayoutCenter;
@@ -224,26 +226,6 @@ body.windows iframe {
 
 select {
    font-size: 12px;
-}
-
-@if rstudio.desktop true {
-
-.macintosh select {
-   font-size: 11px;
-   text-indent: 0.1em;
-}
-
-/* Work around an issue with macOS 10.14 (Mojave) + Chrome
-   where select inputs and radio buttons are not rendered correctly. */
-.macintosh select,
-.macintosh input[type="radio"] {
-   background-color: white;
-}
-
-.macintosh input[type="radio"] {
-   zoom: 1.000001;
-}
-
 }
 
 input[type="radio"] + label {
@@ -1829,9 +1811,12 @@ td.environmentDataFrameCol {
 }
 
 .textBoxWithButton .gwt-Label {
-   margin-bottom: 1px;
+   margin-bottom: 2px;
 }
 
+.textBoxWithButton button {
+	padding-left: 6px;
+}
 
 .fullscreenCaptionIcon {
    margin-top: -1px;
@@ -2787,8 +2772,26 @@ body .rstudio-themes-alternate {
    text-align: center;
    font-size: 15px;
 }
+
 .jump-to-latest-console:hover {
    cursor: pointer;
    background: #75AADB;
 }
 
+.gwt-TextBox, .gwt-ListBox {
+	border-radius: 4px;
+	border-width: 1px;
+	border-color: rgb(133, 133, 133);
+	border-style: solid;
+	font-size: 12px;
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+.gwt-ListBox {
+	min-height: 20px;
+}
+
+.gwt-TextBox {
+	min-height: 16px;
+}

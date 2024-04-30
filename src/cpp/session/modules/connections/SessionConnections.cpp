@@ -19,8 +19,9 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
+
+#include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Process.hpp>
@@ -42,6 +43,8 @@
 #include "ConnectionHistory.hpp"
 #include "ConnectionsIndexer.hpp"
 #include "Connection.hpp"
+
+#include "session-config.h"
 
 #define kConnectionsPath "connections"
 
@@ -507,18 +510,31 @@ void onDeferredInit(bool newSession)
 
 void initEnvironment()
 {
+   
+#ifdef _WIN32
    // set RSTUDIO_WINUTILS (leave existing value alone)
    const char * const kRStudioWinutils = "RSTUDIO_WINUTILS";
    std::string rstudioWinutils = core::system::getenv(kRStudioWinutils);
    if (rstudioWinutils.empty())
       rstudioWinutils = session::options().winutilsPath().getAbsolutePath();
-   r::exec::RFunction sysSetenv("Sys.setenv");
-   sysSetenv.addParam(kRStudioWinutils, rstudioWinutils);
-
-   // call Sys.setenv
-   Error error = sysSetenv.call();
+   
+   Error error = r::exec::RFunction("base:::Sys.setenv")
+         .addParam("RSTUDIO_WINUTILS", rstudioWinutils)
+         .call();
+   
    if (error)
       LOG_ERROR(error);
+#endif
+   
+#ifdef __APPLE__
+# ifdef RSTUDIO_PRO_BUILD
+   // set a default path for odbc
+   std::string odbcSysIni = core::system::getenv("ODBCSYSINI");
+   if (odbcSysIni.empty())
+      core::system::setenv("ODBCSYSINI", "/usr/local/etc");
+# endif
+#endif
+
 }
 
 

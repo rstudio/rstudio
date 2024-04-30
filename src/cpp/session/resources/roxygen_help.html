@@ -90,7 +90,7 @@ h4 {
 #' @param x A description of the parameter 'x'. The
 #'   description can span multiple lines.
 #' @param y A description of the parameter 'y'.
-#'
+#' @returns The sum of `x` and `y`.
 #' @export
 #'
 #' @examples
@@ -151,7 +151,7 @@ add_numbers <- function(x, y) {
    
    <tr>
       <td>
-	 <code>@return</code>
+	 <code>@returns</code>
       </td>
       <td>
 	 Describe what this function returns.
@@ -220,23 +220,15 @@ add_numbers <- function(x, y) {
 <p>
    By convention, package documentation is usually included in a file
    <code>R/&lt;package-name&gt;-package.R</code>. The <code>roxygen</code> block
-   providing package documentation should contain the
-   <code>@docType package</code> field declaration, and should end with <code>NULL</code>.
+   providing package documentation should end with <code>"_PACKAGE"</code>.
+   Typically, you can achieve this by calling <code>usethis::use_package_doc()</code>
 </p>
 
 <h4>Example</h4>
 
 <pre>
-#' Package Name
-#'
-#' Package description.
-#'
-#' @docType package
-#' @name &lt;package-name&gt;
-#' @import assertthat
-#' @importFrom utils head tail
-#' @useDynLib &lt;package-name&gt;
-NULL
+#' @keywords internal
+"_PACKAGE"
 </pre>
 
 <h4>Common Tags</h4>
@@ -395,21 +387,21 @@ NULL
 <h3>Learning More</h3>
 
 <p>
-   Read Hadley Wickham's guide in <a href="http://r-pkgs.had.co.nz/">R Packages</a> to learn
+   Read <a href="https://r-pkgs.org">R Packages</a> by Hadley Wickham and Jenny Bryan to learn
    more about how to use <code>roxygen2</code> and <code>devtools</code> to produce
    documentation for your R packages.
 </p>
    
 <p>
    Read the
-   <code><a href="http://cran.r-project.org/web/packages/roxygen2/vignettes/roxygen2.html">roxygen</a></code>
+   <code><a href="https://cran.r-project.org/web/packages/roxygen2/vignettes/roxygen2.html">roxygen</a></code>
    vignettes: start with the introductory vignette
    with <code>vignette("roxygen2")</code>, and view other available vignettes with
    <code>vignette(package = "roxygen2")</code>.
 </p>
 
 <p>
-   Read <a href="http://cran.r-project.org/doc/manuals/r-release/R-exts.html#Rd-format">R-exts</a>
+   Read <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Rd-format">R-exts</a>
    for a comprehensive guide to <code>.Rd</code> documentation and the set of available
    tags (which are understood by <code>roxygen</code> as well).
 </p>

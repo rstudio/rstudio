@@ -65,6 +65,7 @@
 #endif
 
 #include "SessionAsyncRpcConnection.hpp"
+#include "SessionOfflineService.hpp"
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -85,8 +86,16 @@ std::vector<std::string> s_waitForMethodNames;
 // url for next session
 std::string s_nextSessionUrl;
 
+// are we shutting down?
+bool s_shuttingDown = false;
+
 bool s_protocolDebugEnabled = false;
 bool s_sessionDebugLogCreated = false;
+
+void onShutdown(bool)
+{
+   s_shuttingDown = true;
+}
 
 void processEvents()
 {
@@ -800,6 +809,10 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          }
          else if (jsonRpcRequest.method == kSuspendSession)
          {
+            // stop the offline service thread -- we don't want to service any
+            // more incoming requests while preparing to restart
+            offlineService().stop();
+            
             // check for force
             bool force = true;
             Error error = json::readParams(jsonRpcRequest.params, &force);
@@ -815,7 +828,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          }
 
          // interrupt
-         else if ( jsonRpcRequest.method == kInterrupt )
+         else if (jsonRpcRequest.method == kInterrupt)
          {
             // Discard any buffered input
             console_input::clearConsoleInputBuffer();
@@ -826,6 +839,21 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // only accept interrupts while R is processing input
             if (console_input::executing())
                rstudio::r::exec::setInterruptsPending(true);
+         }
+         
+         // ping -- don't respond if we're shutting down; assume the ping
+         // was intended for a session which will soon be launched anew
+         else if (jsonRpcRequest.method == kPing)
+         {
+            if (s_shuttingDown)
+            {
+               Error error = systemError(boost::system::errc::connection_refused, ERROR_LOCATION);
+               ptrConnection->sendJsonRpcError(error);
+            }
+            else
+            {
+               ptrConnection->sendJsonRpcResponse();
+            }
          }
 
          // other rpc method, handle it
@@ -948,9 +976,12 @@ void onUserPrefsChanged(const std::string& layer, const std::string& pref)
 core::Error initialize()
 {
    s_protocolDebugEnabled = prefs::userPrefs().sessionProtocolDebug();
-   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
    if (s_protocolDebugEnabled)
       initSessionDebugLog();
+   
+   module_context::events().onShutdown.connect(onShutdown);
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
+   
    return Success();
 }
 

@@ -245,12 +245,15 @@ struct RSuspendOptions
         ephemeralEnvVars(ephemeral)
    {
    }
+   
    int status;
-   bool saveMinimal { false };
-   bool saveWorkspace { false };
-   bool excludePackages { false };
+   bool saveMinimal = false;
+   bool saveWorkspace = false;
+   bool excludePackages = false;
    std::string ephemeralEnvVars;
+   std::string afterRestartCommand;
 };
+
 void suspendForRestart(const RSuspendOptions& options);
    
 // set save action

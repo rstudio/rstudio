@@ -907,40 +907,63 @@ private:
 
    static bool isSourceFile(const FileInfo& fileInfo)
    {
+      if (fileInfo.isDirectory())
+         return false;
+      
       FilePath filePath(fileInfo.absolutePath());
-
-      // screen directories
       if (!module_context::isUserFile(filePath))
          return false;
 
       // filter files by name and extension
       std::string ext = filePath.getExtensionLowerCase();
+      bool hasKnownExt =
+            ext == ".c" ||
+            ext == ".cpp" ||
+            ext == ".css" ||
+            ext == ".h" ||
+            ext == ".hpp" ||
+            ext == ".json" ||
+            ext == ".qmd" ||
+            ext == ".rd" ||
+            ext == ".r" ||
+            ext == ".rhtml" ||
+            ext == ".rmarkdown" ||
+            ext == ".rmd" ||
+            ext == ".rnw" ||
+            ext == ".rtex" ||
+            ext == ".sass" ||
+            ext == ".scala" ||
+            ext == ".scss" ||
+            ext == ".tex" ||
+            ext == ".toml";
+      
+      if (hasKnownExt)
+         return true;
+      
       std::string filename = filePath.getFilename();
-      return !filePath.isDirectory() &&
-              (ext == ".r" || ext == ".rnw" || ext == ".rtex" ||
-               ext == ".rmd" || ext == ".rmarkdown" || ext == ".qmd" ||
-               ext == ".rhtml" || ext == ".rd" ||
-               ext == ".h" || ext == ".hpp" ||
-               ext == ".c" || ext == ".cpp" ||
-               ext == ".json" || ext == ".tex" ||
-               ext == ".toml" || ext == ".scala" ||
-               ext == ".css" || ext == ".scss" || ext == ".sass" ||
-               filename == "DESCRIPTION" ||
-               filename == "Dockerfile" || 
-               filename == "NAMESPACE" ||
-               filename == "README" ||
-               filename == "NEWS" ||
-               filename == "Makefile" ||
-               filename == "configure" ||
-               filename == "configure.win" ||
-               filename == "cleanup" ||
-               filename == "cleanup.win" ||
-               filename == "Makevars" ||
-               filename == "Makevars.win" ||
-               filename == "LICENSE" ||
-               filename == "LICENCE" ||
-               filename == "CITATION" ||
-               filePath.hasTextMimeType());
+      bool hasKnownFilename =
+            filename == "CITATION" ||
+            filename == "DESCRIPTION" ||
+            filename == "Dockerfile" ||
+            filename == "LICENCE" ||
+            filename == "LICENSE" ||
+            filename == "Makefile" ||
+            filename == "Makevars" ||
+            filename == "Makevars.win" ||
+            filename == "NAMESPACE" ||
+            filename == "NEWS" ||
+            filename == "README" ||
+            filename == "WORDLIST" ||
+            filename == "cleanup" ||
+            filename == "cleanup.win" ||
+            filename == "configure" ||
+            filename == "configure.win" ||
+            filename == "renv.lock";
+      
+      if (hasKnownFilename)
+         return true;
+      
+      return filePath.hasTextMimeType();
    }
 
    static bool isIndexableSourceFile(const FileInfo& fileInfo)
