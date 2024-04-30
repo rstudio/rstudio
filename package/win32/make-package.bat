@@ -267,9 +267,6 @@ if "%RSTUDIO_TARGET%" == "Electron" (
       echo DEBUG: In if in set-version function
       pushd %ELECTRON_SOURCE_DIR%
 
-      echo ensure msvs_version=2019
-      call %NPM% set msvs_version 2019
-
       echo ensure node-gyp installed for node %RSTUDIO_NODE_VERSION%
       call %NPX% node-gyp install %RSTUDIO_NODE_VERSION%
       echo %LOCALAPPDATA%\node-gyp\Cache\%RSTUDIO_NODE_VERSION%\include\node
