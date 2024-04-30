@@ -10,7 +10,7 @@ assignees: ''
 <!--
 IMPORTANT: Please fill out this template fully! Failure to do so will result in the issue being closed automatically.
 
-This issue tracker is for bugs and feature requests in the RStudio IDE. If you're having trouble with R itself or an R package, see https://www.r-project.org/help.html, and if you want to ask a question rather than report a bug, go to https://community.rstudio.com/. Finally, if you use RStudio Server Pro, get in touch with Posit Support at support@posit.co.
+This issue tracker is for bugs and feature requests in the RStudio IDE. If you're having trouble with R itself or an R package, see https://www.r-project.org/help.html, and if you want to ask a question rather than report a bug, go to https://forum.posit.co/. Finally, if you use RStudio Server Pro, get in touch with Posit Support at support@posit.co.
 
 -->
 
