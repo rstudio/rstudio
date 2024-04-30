@@ -41,7 +41,6 @@ RUN dnf install -y \
     libjpeg-turbo-devel \
     libpng-devel \
     libtiff-devel \
-    libuser-devel \
     libuuid-devel \
     llvm-devel \
     lsof \
@@ -136,3 +135,5 @@ RUN /tmp/clean-uid.sh $JENKINS_UID && \
 RUN groupadd -g $JENKINS_GID jenkins && \
     useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
     echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+RUN if [ -d "/src" ]; then git config --global --add safe.directory /src; fi
