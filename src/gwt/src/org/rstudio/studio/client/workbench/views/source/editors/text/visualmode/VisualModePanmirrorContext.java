@@ -190,7 +190,7 @@ public class VisualModePanmirrorContext
 
 
       uiContext.droppedUris = () -> {
-        if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+        if (Desktop.isDesktop())
         {
            List<String> uris = workbenchContext_.getDroppedUrls();
            if (uris != null)
@@ -206,7 +206,7 @@ public class VisualModePanmirrorContext
 
       uiContext.clipboardUris = () -> {
          return new Promise<>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
-           if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+           if (Desktop.isDesktop())
            {
               Desktop.getFrame().getClipboardUris(uris -> {
                  resolve.onInvoke(uris);
@@ -221,7 +221,7 @@ public class VisualModePanmirrorContext
 
       uiContext.clipboardImage = () -> {
          return new Promise<>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
-            if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+            if (Desktop.isDesktop())
             {
                Desktop.getFrame().getClipboardImage(image -> {
                   if (!StringUtil.isNullOrEmpty(image))

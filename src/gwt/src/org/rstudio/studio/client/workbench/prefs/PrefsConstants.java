@@ -5334,11 +5334,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String copilotAgentNotEnabled();
 
     /**
-     * Translated "You are currently signed in as {0}, but you haven''t yet activated your GitHub Copilot account."
+     * Translated "You are currently signed in as {0}, but you haven''t yet activated GitHub Copilot."
      *
-     * @return translated "You are currently signed in as {0}, but you haven''t yet activated your GitHub Copilot account."
+     * @return translated "You are currently signed in as {0}, but you haven''t yet activated GitHub Copilot."
      */
-    @DefaultMessage("You are currently signed in as {0}, but you haven''t yet activated your GitHub Copilot account.")
+    @DefaultMessage("You are currently signed in as {0}, but you haven''t yet activated GitHub Copilot.")
     @Key("copilotAccountNotActivated")
     String copilotAccountNotActivated(String name);
 

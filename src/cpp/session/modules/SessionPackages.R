@@ -656,23 +656,39 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (exists(entry, envir = cache))
       return(get(entry, envir = cache))
    
-   # determine an appropriate CRAN URL
-   repos <- getOption("repos")
-   cran <- if ("CRAN" %in% names(repos))
-      repos[["CRAN"]]
-   else if (length(repos))
-      repos[[1]]
-   else
-      .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
-   cran <- gsub("/*$", "", cran)
+   # determine an appropriate repository URL for this package
+   # default to our public CRAN repository
+   cran <- .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
+   
+   # check whether the requested package is from a separate repository URL
+   # note that the 'Repository' entry below will include a suffix based on the
+   # package type, so we need to trim that after
+   db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
+   if ("Repository" %in% names(db)) {
+      index <- match(packageName, db$Package)
+      if (!is.na(index)) {
+         repo <- db$Repository[index]
+         cran <- gsub("/(?:src|bin)/.*", "", repo)
+      }
+   }
+   
+   # re-route PPM URLs to CRAN for now
+   # https://github.com/rstudio/rstudio/issues/12648
+   isPpm <-
+      grepl("^\\Qhttp://rspm/\\E", cran, perl = TRUE) ||
+      grepl("^\\Qhttps://packagemanager.posit.co/\\E", cran, perl = TRUE) ||
+      grepl("^\\Qhttps://packagemanager.rstudio.com/\\E", cran, perl = TRUE)
+   
+   if (isPpm)
+      cran <- "https://cloud.R-project.org"
    
    # check to see if this package was from Bioconductor. if so, we'll need
    # to construct a more appropriate url
    desc <- .rs.tryCatch(.rs.readPackageDescription(file.path(libraryPath, packageName)))
-   prefix <- if (inherits(desc, "error") || !"biocViews" %in% names(desc))
-      file.path(cran, "web/packages")
-   else
+   prefix <- if ("biocViews" %in% names(desc))
       "https://bioconductor.org/packages/release/bioc/news"
+   else
+      file.path(cran, "web/packages")
    
    # the set of candidate URLs -- we use the presence of a NEWS or NEWS.md
    # to help us prioritize the order of checking.
@@ -689,7 +705,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    } else {
       c("news/news.html", "news.html", "NEWS", "ChangeLog")
    }
-   
    
    # we do some special handling for 'curl'
    isCurl <- identical(getOption("download.file.method"), "curl")
@@ -811,6 +826,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("packagesLoaded", function(pkgs)
 {
+   # exclude base packages
+   basePkgs <- rownames(installed.packages(lib.loc = .Library, priority = "base"))
+   pkgs <- setdiff(pkgs, basePkgs)
+   
    # first check loaded namespaces
    if (any(pkgs %in% loadedNamespaces()))
       return(TRUE)
@@ -1102,7 +1121,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          #
          # You can learn more about package authoring with RStudio at:
          #
-         #   http://r-pkgs.had.co.nz/
+         #   https://r-pkgs.org
          #
          # Some useful keyboard shortcuts for package authoring:
          #
@@ -1155,12 +1174,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
             //
             // Learn more about how to use Rcpp at:
             //
-            //   http://www.rcpp.org/
-            //   http://adv-r.had.co.nz/Rcpp.html
+            //   https://www.rcpp.org/
+            //   https://adv-r.hadley.nz/rcpp.html
             //
             // and browse examples of code using Rcpp at:
             // 
-            //   http://gallery.rcpp.org/
+            //   https://gallery.rcpp.org/
             //
 
             // [[Rcpp::export]]
@@ -1207,7 +1226,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          sourceFileExtensions,
          "R" = c("r", "q", "s"),
          "src" = c("c", "cc", "cpp", "h", "hpp"),
-         "vignettes" = c("rmd", "rnw"),
+         "vignettes" = c("rmd", "rnw", "qmd"),
          "man" = "rd",
          "data" = c("rda", "rdata"),
          default = ""

@@ -28,10 +28,11 @@ namespace context {
 // represents the version of the memory layout of the RCNTXT structure
 enum RCntxtVersion
 {
-   RVersion40, // R 4.0 and above
-   RVersion34, // R 3.4 until R 4.0 (exclusive)
-   RVersion33, // R 3.3 (all versions)
-   RVersion32, // R 3.2.5 and below
+   RVersion44, // R (>= 4.4.0)
+   RVersion40, // R (>= 4.0.0)
+   RVersion34, // R (>= 3.4.0
+   RVersion33, // R (== 3.3.0)
+   RVersion32, // R (3.2.x and older)
    RVersionUnknown 
 };
 

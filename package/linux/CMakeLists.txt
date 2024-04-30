@@ -100,25 +100,15 @@ if(RSTUDIO_SERVER)
     list(APPEND RSTUDIO_DEBIAN_DEPENDS "libpq5")
   endif()
 
-elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
+elseif(RSTUDIO_ELECTRON)
 
-  if(RSTUDIO_DESKTOP)
-    # debian control files (Qt)
-    set(DEBIAN_POSTINST postinst-desktop.in)
-    set(DEBIAN_POSTRM postrm-desktop.in)
+  # debian control files (Electron)
+  set(DEBIAN_POSTINST postinst-electron.in)
+  set(DEBIAN_POSTRM postrm-electron.in)
 
-    # rpm scripts (Qt)
-    set(RPM_POSTINST postinst-desktop.sh.in)
-    set(RPM_POSTRM postrm-desktop.sh.in)
-  else()
-    # debian control files (Electron)
-    set(DEBIAN_POSTINST postinst-electron.in)
-    set(DEBIAN_POSTRM postrm-electron.in)
-
-    # rpm scripts (Electron)
-    set(RPM_POSTINST postinst-electron.sh.in)
-    set(RPM_POSTRM postrm-electron.sh.in)
-  endif()
+  # rpm scripts (Electron)
+  set(RPM_POSTINST postinst-electron.sh.in)
+  set(RPM_POSTRM postrm-electron.sh.in)
 
   # rpm dependencies
   string(FIND "${RSTUDIO_PACKAGE_OS}" "SUSE" SUSE_POS)

@@ -428,14 +428,6 @@ public class TextEditingTarget implements
             name_.setValue(file_.getName(), true);
             // Make sure tooltip gets updated, even if name hasn't changed
             name_.fireChangeEvent();
-
-            // If we were dirty prior to saving, clean up the debug state so
-            // we don't continue highlighting after saving. (There are cases
-            // in which we want to restore highlighting after the dirty state
-            // is marked clean--i.e. when unwinding the undo stack.)
-            if (dirtyState_.getValue())
-               endDebugHighlighting();
-
             dirtyState_.markClean();
          }
 
@@ -1313,6 +1305,25 @@ public class TextEditingTarget implements
          SourcePosition endPos,
          boolean executing)
    {
+      if (documentDirtyHandler_ == null)
+      {
+         documentDirtyHandler_ = dirtyState_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+         {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event)
+            {
+               if (documentDirtyHandler_ != null)
+               {
+                  documentDirtyHandler_.removeHandler();
+                  documentDirtyHandler_ = null;
+               }
+               
+               documentChangedDuringDebugSession_ = true;
+               updateDebugWarningBar();
+            }
+         });
+      }
+      
       debugStartPos_ = startPos;
       debugEndPos_ = endPos;
       docDisplay_.highlightDebugLocation(startPos, endPos, executing);
@@ -1322,10 +1333,17 @@ public class TextEditingTarget implements
    @Override
    public void endDebugHighlighting()
    {
+      if (documentDirtyHandler_ != null)
+      {
+         documentDirtyHandler_.removeHandler();
+         documentDirtyHandler_ = null;
+      }
+      
       docDisplay_.endDebugHighlighting();
+      documentChangedDuringDebugSession_ = false;
       debugStartPos_ = null;
       debugEndPos_ = null;
-      updateDebugWarningBar();
+      hideDebugWarningBar();
    }
 
    @Override
@@ -1425,17 +1443,35 @@ public class TextEditingTarget implements
          queuedCollabParams_ = null;
       }
    }
-
-   private void updateDebugWarningBar()
+   
+   private void hideDebugWarningBar()
    {
+      if (isDebugWarningVisible_)
+      {
+         isDebugWarningVisible_ = false;
+         view_.hideWarningBar();
+      }
+   }
+
+   private void updateDebugWarningBar(String message, boolean force)
+   {
+      if (force || documentChangedDuringDebugSession_)
+      {
+         isDebugWarningVisible_ = true;
+         view_.hideWarningBar();
+         view_.showWarningBar(message);
+         return;
+      }
+      
       // show the warning bar if we're debugging and the document is dirty
       if (debugStartPos_ != null &&
           dirtyState().getValue() &&
           !isDebugWarningVisible_)
       {
-         view_.showWarningBar(constants_.updateDebugWarningBarMessage());
+         view_.showWarningBar(message);
          isDebugWarningVisible_ = true;
       }
+      
       // hide the warning bar if the dirty state or debug state change
       else if (isDebugWarningVisible_ &&
                (debugStartPos_ == null || dirtyState().getValue() == false))
@@ -1450,6 +1486,16 @@ public class TextEditingTarget implements
          }
          isDebugWarningVisible_ = false;
       }
+   }
+ 
+   private void updateDebugWarningBar(String message)
+   {
+      updateDebugWarningBar(message, true);
+   }
+   
+   private void updateDebugWarningBar()
+   {
+      updateDebugWarningBar(constants_.updateDebugWarningBarMessage(), false);
    }
 
    public void showWarningMessage(String message)
@@ -2127,19 +2173,6 @@ public class TextEditingTarget implements
 
       spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_, prefs_);
 
-
-      // show/hide the debug toolbar when the dirty state changes. (note:
-      // this doesn't yet handle the case where the user saves the document,
-      // in which case we should still show some sort of warning.)
-      dirtyState().addValueChangeHandler(new ValueChangeHandler<Boolean>()
-            {
-               public void onValueChange(ValueChangeEvent<Boolean> evt)
-               {
-                  updateDebugWarningBar();
-               }
-            }
-      );
-
       // find all of the debug breakpoints set in this document and replay them
       // onto the edit surface
       ArrayList<Breakpoint> breakpoints =
@@ -2324,6 +2357,7 @@ public class TextEditingTarget implements
       if (isBreakpointWarningVisible_)
       {
          view_.hideWarningBar();
+         isDebugWarningVisible_ = false;
          isBreakpointWarningVisible_ = false;
       }
    }
@@ -9296,6 +9330,7 @@ public class TextEditingTarget implements
       private long saving_ = 0;
    };
 
+   private HandlerRegistration documentDirtyHandler_ = null;
    private SourcePosition debugStartPos_ = null;
    private SourcePosition debugEndPos_ = null;
    private boolean isDebugWarningVisible_ = false;
@@ -9303,6 +9338,7 @@ public class TextEditingTarget implements
    private String extendedType_;
 
    // prevent multiple manual saves from queuing up
+   private boolean documentChangedDuringDebugSession_ = false;
    private boolean isSaving_ = false;
 
    private abstract class RefactorServerRequestCallback

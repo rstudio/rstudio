@@ -412,6 +412,11 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                               signInDialog_.closeDialog();
                               callback.execute(response);
                            }
+                           else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
+                           {
+                              signInDialog_.closeDialog();
+                              callback.execute(response);
+                           }
                            else
                            {
                               statusTimer_.schedule(1000);

@@ -169,6 +169,9 @@ public class CopilotResponseTypes
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotGenerateCompletionsResponse extends CopilotResponse
    {
+      // These aren't part of a normal Copilot completions request; we append
+      // this extra information to report whether Copilot is enabled for this document.
+      public Boolean enabled;
    }
 
    private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);

@@ -14,10 +14,10 @@
  */
 package org.rstudio.studio.client.application.events;
 
-import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartEvent.Handler>
@@ -33,29 +33,21 @@ public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartEvent.Hand
       public native final SuspendOptions getOptions() /*-{
          return this.options;
       }-*/;
-
-      public native final String getAfterRestartCommand() /*-{
-         return this.after_restart;
-      }-*/;
    }
 
    public SuspendAndRestartEvent(Data data)
    {
-      this(data.getOptions(), data.getAfterRestartCommand());
+      this(data.getOptions());
    }
 
-   public SuspendAndRestartEvent(SuspendOptions suspendOptions,
-                                 String afterRestartCommand)
+   public SuspendAndRestartEvent(SuspendOptions suspendOptions)
    {
-      if (suspendOptions == null)
-         suspendOptions = SuspendOptions.createSaveAll(false);
       suspendOptions_ = suspendOptions;
-      afterRestartCommand_ = afterRestartCommand;
    }
 
    public SuspendAndRestartEvent(String afterRestartCommand)
    {
-      this(null, afterRestartCommand);
+      this(SuspendOptions.createSaveAll(false, afterRestartCommand));
    }
 
    public SuspendOptions getSuspendOptions()
@@ -63,11 +55,10 @@ public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartEvent.Hand
       return suspendOptions_;
    }
 
-   public String getAfterRestartCommand()
-   {
-      return afterRestartCommand_;
-   }
+   private final SuspendOptions suspendOptions_;
 
+   // Boilerplate ----
+   
    @Override
    protected void dispatch(Handler handler)
    {
@@ -79,9 +70,6 @@ public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartEvent.Hand
    {
       return TYPE;
    }
-
-   private final SuspendOptions suspendOptions_;
-   private final String afterRestartCommand_;
 
    public interface Handler extends EventHandler
    {

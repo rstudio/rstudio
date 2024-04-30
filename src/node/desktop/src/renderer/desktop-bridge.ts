@@ -491,10 +491,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_disable_gpu_driver_bug_workarounds', disable);
     },
 
-    showSessionServerOptionsDialog: () => {
-      ipcRenderer.send('desktop_show_session_server_options_dialog');
-    },
-
     getInitMessages: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_init_messages')

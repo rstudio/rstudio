@@ -1042,6 +1042,7 @@ assign(x = ".rs.acCompletionTypes",
             names(layerInfo$geom$default_aes),
             names(layerInfo$stat$default_aes)
          )
+         aesthetics <- aesthetics[!grepl("|", aesthetics, fixed = TRUE)]
          aesthetics <- aesthetics[!duplicated(aesthetics)]
          results <- .rs.selectFuzzyMatches(aesthetics, token)
          ggplotCompletions <- .rs.makeCompletions(
@@ -2182,6 +2183,15 @@ assign(x = ".rs.acCompletionTypes",
    frames[[length(frames) - 1L - offset]]
 })
 
+# Only display directory completions (not file completions)
+.rs.addFunction("isDirectoryOnlyCompletionFunction", function(string)
+{
+   # Base R functions + fs functions that deal with dir_
+   # https://fs.r-lib.org/articles/function-comparisons.html#directory-functions
+   dirOnlyFuncs <- c("list.files", "list.dirs", "dir", "setwd")
+   string %in% dirOnlyFuncs || grepl("^(?:fs:{2,3})?dir_", string)
+})
+
 .rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
 {
    # For a package which has dynamic symbol loading, just get the strings.
@@ -2498,27 +2508,10 @@ assign(x = ".rs.acCompletionTypes",
    ## Handle some special cases early
    
    # custom help handler for arguments
-   if (.rs.acContextTypes$FUNCTION %in% context) {
-      scope <- string[[1]]
-      custom <- .rs.findCustomHelpContext(scope, "help_formals_handler")
-      if (!is.null(custom)) {
-         formals <- custom$handler(custom$topic, custom$source)
-         if (!is.null(formals)) {
-            results <- paste(formals$formals, "= ")
-            results <- .rs.selectFuzzyMatches(results, token)
-            return(.rs.makeCompletions(
-               token                   = token,
-               results                 = results,
-               packages                = scope,
-               type                    = .rs.acCompletionTypes$ARGUMENT,
-               excludeOtherCompletions = TRUE,
-               helpHandler             = formals$helpHandler, 
-               context                 = .rs.acContextTypes$FUNCTION)
-            )
-         } else {
-            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
-         }
-      }
+   if (length(context) && .rs.acContextTypes$FUNCTION %in% context[[1]]) {
+      completions <- .rs.getCompletionsCustomHelpHandler(token, string[[1]])
+      if (!is.null(completions))
+         return(completions)
    }
    
    # help
@@ -2662,15 +2655,9 @@ assign(x = ".rs.acCompletionTypes",
       tokenToUse <- string[[whichIndex]]
       
       directoriesOnly <- FALSE
-      if (length(string) > whichIndex)
+      if (length(string) > whichIndex && .rs.isDirectoryOnlyCompletionFunction(string[[whichIndex + 1]]))
       {
-         if (string[[whichIndex + 1]] %in% c("list.files",
-                                             "list.dirs",
-                                             "dir",
-                                             "setwd"))
-         {
-            directoriesOnly <- TRUE
-         }
+         directoriesOnly <- TRUE
       }
       
       # NOTE: For Markdown link completions, we overload the meaning of the
@@ -2759,7 +2746,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # options
-   else if (string[[1]] == "options" && context == .rs.acContextTypes$FUNCTION)
+   else if (string[[1]] == "options" && context[[1]] == .rs.acContextTypes$FUNCTION)
    {
       .rs.getCompletionsOptions(token)
    }
@@ -3105,8 +3092,8 @@ assign(x = ".rs.acCompletionTypes",
             "group"
          )
          
-         aestheticNames <- aesthetics[!duplicated(aesthetics)]
-         aestheticNames <- aestheticNames[!grepl("|", aestheticNames, fixed = TRUE)]
+         aestheticNames <- unlist(strsplit(aesthetics, "|", fixed = TRUE))
+         aestheticNames <- aestheticNames[!duplicated(aestheticNames)]
          aestheticSource <- geomName
       }
       
@@ -3261,6 +3248,31 @@ assign(x = ".rs.acCompletionTypes",
       completions <- .rs.appendCompletions(completions, libraryContextCompletions)
    }
    completions
+})
+
+.rs.addFunction("getCompletionsCustomHelpHandler", function(token, scope)
+{
+   custom <- .rs.findCustomHelpContext(scope, "help_formals_handler")
+   if (is.null(custom))
+      return(NULL)
+   
+   formals <- .rs.tryCatch(custom$handler(custom$topic, custom$source))
+   if (inherits(formals, "error"))
+      return(NULL)
+   
+   if (length(formals) == 0L)
+      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+   
+   completions <- paste(formals$formals, sep = "= ")
+   .rs.makeCompletions(
+      token                   = token,
+      results                 = .rs.selectFuzzyMatches(completions, token),
+      packages                = scope,
+      type                    = .rs.acCompletionTypes$ARGUMENT,
+      excludeOtherCompletions = TRUE,
+      helpHandler             = formals$helpHandler, 
+      context                 = .rs.acContextTypes$FUNCTION
+   )
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'

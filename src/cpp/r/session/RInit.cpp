@@ -83,6 +83,12 @@ Error restoreGlobalEnvFromFile(const std::string& path, std::string* pErrMessage
 
 void completeDeferredSessionInit(bool newSession)
 {
+   // suppress output which occurs during restore (packages can sometimes
+   // print messages to the console indicating they have conflicts -- the
+   // user has already seen these messages and doesn't expect them now so
+   // we suppress them
+   utils::SuppressOutputInScope suppressOutput;
+   
    // always cleanup any restart context here
    restartContext().removeSessionState();
 
@@ -101,12 +107,6 @@ void deferredRestoreSuspendedSession(
    // suppress interrupts which occur during restore
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
  
-   // suppress output which occurs during restore (packages can sometimes
-   // print messages to the console indicating they have conflicts -- the
-   // has already seen these messages and doesn't expect them now so 
-   // we suppress them
-   utils::SuppressOutputInScope suppressOutput;
-   
    // restore action
    Error error = deferredRestoreAction();
    if (error)

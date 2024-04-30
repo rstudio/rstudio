@@ -97,6 +97,13 @@ public:
    ~SuppressOutputInScope();
 };
 
+class ShowOutputInScope
+{
+public:
+   ShowOutputInScope();
+   ~ShowOutputInScope();
+};
+
 } // namespace utils
 } // namespace session
 } // namespace r

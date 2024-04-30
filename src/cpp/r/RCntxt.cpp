@@ -39,18 +39,48 @@ RCntxt::RCntxt(void *rawCntxt)
 {
    if (rawCntxt == nullptr)
       return;
-   else if (contextVersion() == RVersion40)
-      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_40> >(
-                                   static_cast<RCNTXT_40*>(rawCntxt));
-   else if (contextVersion() == RVersion34)
-      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_34> >(
-                                   static_cast<RCNTXT_34*>(rawCntxt));
-   else if (contextVersion() == RVersion33)
-      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_33> >(
-                                   static_cast<RCNTXT_33*>(rawCntxt));
-   else
-      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_32> >(
-                                   static_cast<RCNTXT_32*>(rawCntxt));
+   
+   switch (contextVersion())
+   {
+   
+   case RVersion44:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_44>>(rawCntxt);
+      break;
+   }
+   
+   case RVersion40:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_40>>(rawCntxt);
+      break;
+   }
+      
+   case RVersion34:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_34>>(rawCntxt);
+      break;
+   }
+      
+   case RVersion33:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_33>>(rawCntxt);
+      break;
+   }
+      
+   case RVersion32:
+   {
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_32>>(rawCntxt);
+      break;
+   }
+      
+   case RVersionUnknown:
+   {
+      LOG_WARNING_MESSAGE("Unable to determine R context version; assuming compatible with version 4.4");
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_44>>(rawCntxt);
+      break;
+   }
+      
+   }
 }
 
 Error RCntxt::callSummary(std::string* pCallSummary) const

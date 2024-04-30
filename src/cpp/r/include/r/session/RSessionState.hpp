@@ -40,7 +40,15 @@ struct SessionStateInfo
    core::Version activeRVersion;
 };
 
+struct SessionStateCallbacks
+{
+   boost::function<void(const std::string&)> consoleWriteInput;
+};
+
+void initialize(SessionStateCallbacks callbacks);
+
 bool save(const core::FilePath& statePath,
+          const std::string& afterRestartCommand,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
@@ -48,6 +56,7 @@ bool save(const core::FilePath& statePath,
           const std::string& ephemeralEnvVars);
 
 bool saveMinimal(const core::FilePath& statePath,
+                 const std::string& afterRestartCommand,
                  bool saveGlobalEnvironment);
    
 

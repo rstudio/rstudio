@@ -318,6 +318,6 @@ void OfflineService::run()
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
-      
+
 } // namespace session
 } // namespace rstudio

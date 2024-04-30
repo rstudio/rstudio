@@ -357,13 +357,16 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
 void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 {
    module_context::consoleWriteOutput("\nRestarting R session...\n\n");
-
    rstudio::r::session::suspendForRestart(options);
 }
 
 Error suspendForRestart(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
+   // stop the offline service thread -- we don't want to service any
+   // more incoming requests while preparing to restart
+   offlineService().stop();
+   
    // when launcher sessions restart, they need to set a special exit code
    // to ensure that the rsession-run script restarts the rsession process
    // instead of having to submit an entirely new launcher session
@@ -373,10 +376,11 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
 
    rstudio::r::session::RSuspendOptions options(exitStatus);
    Error error = json::readObjectParam(
-                               request.params, 0,
-                               "save_minimal", &(options.saveMinimal),
-                               "save_workspace", &(options.saveWorkspace),
-                               "exclude_packages", &(options.excludePackages));
+            request.params, 0,
+            "save_minimal", &(options.saveMinimal),
+            "save_workspace", &(options.saveWorkspace),
+            "exclude_packages", &(options.excludePackages),
+            "after_restart", &(options.afterRestartCommand));
    if (error)
       return error;
 
@@ -384,7 +388,26 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+void consoleWriteInput(const std::string& input)
+{
+   using namespace console_input;
+   
+   std::string prompt = rstudio::r::options::getOption<std::string>("prompt");
+   consoleInput(prompt + input);
+}
 
+Error initializeSessionState()
+{
+   using namespace rstudio::r::session;
+   
+   state::SessionStateCallbacks callbacks;
+   callbacks.consoleWriteInput = consoleWriteInput;
+   state::initialize(callbacks);
+   
+   return Success();
+}
+
+   
 Error startClientEventService()
 {
    return clientEventService().start(rsession::persistentState().activeClientId());
@@ -515,10 +538,13 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       // client event service
       (startClientEventService)
+         
+      // session state
+      (initializeSessionState)
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
-      (bind(registerRpcMethod, "suspend_for_restart", suspendForRestart))
+      (bind(registerRpcMethod, kSuspendForRestart, suspendForRestart))
 
       // signal handlers
       (registerSignalHandlers)
@@ -789,6 +815,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
 void rInitComplete()
 {
+   module_context::syncRSaveAction();
    module_context::events().onInitComplete();
 }
 
@@ -1647,7 +1674,7 @@ int saveWorkspaceAction()
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
    {
-      switch(projContext.config().saveWorkspace)
+      switch (projContext.config().saveWorkspace)
       {
       case r_util::YesValue:
          return rstudio::r::session::kSaveActionSave;
@@ -1675,7 +1702,7 @@ int saveWorkspaceAction()
 
 void syncRSaveAction()
 {
-   rstudio::r::session::setSaveAction(saveWorkspaceOption());
+   r::session::setSaveAction(saveWorkspaceAction());
 }
 
 } // namespace module_context

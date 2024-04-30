@@ -13,24 +13,52 @@
 #
 #
 
-.rs.addFunction("findRtoolsInstaller", function(url, fallbackUrl)
+.rs.addFunction("findRtoolsInstaller", function(version, url)
 {
-   tryCatch({
-       tmp <- tempfile()
-       utils::download.file(url, tmp, mode = "w", quiet = TRUE)
-       homePageHtml <- paste(readLines(tmp), collapse = " ")
-       unlink(tmp)
-     },
-     error = function(e) {
-       return(fallbackUrl)
-     })
-     reLinkPattern <- ".*<a\\shref=\"(.*rtools.*\\.exe)\">\\s*.+<\\/a>.*"
-     if (grepl(reLinkPattern, homePageHtml)) {
-       urlRoot <- dirname(url)
-       # extract the relative url to the installer exe file
-       installerUrl <- gsub(reLinkPattern, "\\1", homePageHtml)
-       file.path(urlRoot, installerUrl)
-     }
-     else
-       fallbackUrl
+   tryCatch(
+      .rs.findRtoolsInstallerImpl(url),
+      error = function(cnd) {
+         .rs.findRtoolsInstallerFallback(version)
+      }
+   )
+})
+
+.rs.addFunction("findRtoolsInstallerImpl", function(url)
+{
+   # download contents of home page
+   destfile <- tempfile("rtools-home-", fileext = ".html")
+   download.file(url, destfile, mode = "wb", quiet = TRUE)
+   contents <- paste(readLines(destfile), collapse = "\n")
+   
+   # search for links included in the page
+   reLinkPattern <- 'href="([^"]+)"'
+   matches <- .rs.regexMatches(reLinkPattern, contents)
+   
+   # keep those which appear to be rtools links
+   links <- grep("[.]exe$", matches, value = TRUE, perl = TRUE)
+   links <- grep("rtools", links, value = TRUE, perl = TRUE)
+   
+   # TODO: support aarch64 builds of R on Windows
+   links <- grep("aarch64", links, perl = TRUE, value = TRUE, invert = TRUE)
+   if (length(links) == 0L)
+      stop("couldn't determine Rtools installer URL")
+   
+   rtoolsInstallerUrl <- links[[1]]
+   file.path(dirname(url), rtoolsInstallerUrl)
+})
+
+.rs.addFunction("findRtoolsInstallerFallback", function(version)
+{
+   if (version == "4.4")
+   {
+      "https://rstudio.org/links/rtools44"
+   }
+   else if (version == "4.3")
+   {
+      "https://rstudio.org/links/rtools43"
+   }
+   else
+   {
+      stop("don't know how to download and install Rtools ", version)
+   }
 })

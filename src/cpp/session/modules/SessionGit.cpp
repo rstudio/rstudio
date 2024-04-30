@@ -2209,8 +2209,8 @@ std::string githubUrl(const std::string& view,
       }
       else if (commitId.exitStatus != 0)
       {
-         if (!commitId.stdErr.empty())
-            LOG_ERROR_MESSAGE(commitId.stdErr);
+         // errors are common for repositories without an initial commit,
+         // don't log such errors here
          return std::string();
       }
       upstreamBranch = boost::algorithm::trim_copy(commitId.stdOut);

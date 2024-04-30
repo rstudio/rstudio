@@ -32,7 +32,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -155,19 +154,18 @@ public class SessionOpener
    /**
     * Suspend and restart current session
     */
-   public void suspendForRestart(final String afterRestartCommand,
-                                 SuspendOptions options,
+   public void suspendForRestart(SuspendOptions options,
                                  Command onCompleted,
                                  Command onFailed)
    {
-      pServer_.get().suspendForRestart(options,
-                                new VoidServerRequestCallback() {
+      pServer_.get().suspendForRestart(options, new VoidServerRequestCallback()
+      {
          @Override
          protected void onSuccess()
          {
-            waitForSessionJobExit(afterRestartCommand,
-                                  () -> waitForSessionRestart(afterRestartCommand, onCompleted),
-                                  onFailed);
+            waitForSessionJobExit(
+                  () -> waitForSessionRestart(onCompleted),
+                  onFailed);
          }
          @Override
          protected void onFailure()
@@ -184,26 +182,23 @@ public class SessionOpener
    {
    }
    
-   protected void waitForSessionJobExit(final String afterRestartCommand,
-                                        Command onClosed, Command onFailure)
+   protected void waitForSessionJobExit(Command onClosed, Command onFailure)
    {
       // for regular sessions, no job to wait for
       onClosed.execute();
    }
    
-   protected void waitForSessionRestart(final String afterRestartCommand, Command onCompleted)
+   protected void waitForSessionRestart(Command onCompleted)
    {
-      sendPing(afterRestartCommand, 200, 25, onCompleted);
+      sendPing(200, 50, onCompleted);
    }
    
-   private void sendPing(final String afterRestartCommand,
-                         int delayMs,
+   private void sendPing(int delayMs,
                          final int maxRetries,
                          final Command onCompleted)
    {
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
-         private long startTime_ = System.currentTimeMillis();
          private int retries_ = 0;
          private boolean pingDelivered_ = false;
          private boolean pingInFlight_ = false;
@@ -211,8 +206,7 @@ public class SessionOpener
          @Override
          public boolean execute()
          {
-            // if we've already delivered the ping or our retry count
-            // is exhausted then return false
+            // if we've already delivered the ping, return false
             if (pingDelivered_)
             {
                return false;
@@ -225,15 +219,6 @@ public class SessionOpener
                return false;
             }
             
-            // if we have a ping in flight, but we don't receive a response
-            // after a few seconds, try again
-            long currentTime = System.currentTimeMillis();
-            if (pingInFlight_ && currentTime - startTime_ > 5000)
-            {
-               startTime_ = currentTime;
-               pingInFlight_ = false;
-            }
-            
             if (!pingInFlight_)
             {
                pingInFlight_ = true;
@@ -243,25 +228,13 @@ public class SessionOpener
                   protected void onSuccess()
                   {
                      pingInFlight_ = false;
-                     if (!pingDelivered_)
-                     {
-                        pingDelivered_ = true;
-   
-                        // issue after restart command
-                        if (!StringUtil.isNullOrEmpty(afterRestartCommand))
-                        {
-                           pEventBus_.get().fireEvent(
-                                 new SendToConsoleEvent(afterRestartCommand,
-                                       true, true));
-                        }
-                        // otherwise make sure the console knows we
-                        // restarted (ensure prompt and set focus)
-                        else
-                        {
-                           pEventBus_.get().fireEvent(
-                                 new ConsoleRestartRCompletedEvent());
-                        }
-                     }
+                     
+                     // if the ping was already handled separately, discard this
+                     if (pingDelivered_)
+                        return;
+                     
+                     pingDelivered_ = true;
+                     pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
                      
                      if (onCompleted != null)
                         onCompleted.execute();
@@ -271,6 +244,10 @@ public class SessionOpener
                   protected void onFailure()
                   {
                      pingInFlight_ = false;
+                     
+                     // if the ping was already handled separately, discard this
+                     if (pingDelivered_)
+                        return;
                      
                      if (onCompleted != null)
                         onCompleted.execute();

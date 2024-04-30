@@ -3718,9 +3718,13 @@ public class AceEditor implements DocDisplay,
          boolean executing)
    {
       clearDebugLineHighlight();
+      if (startPos.getRow() < 0 || startPos.getColumn() < 0)
+         return;
+      
       lineDebugMarkerId_ = createRangeHighlightMarker(
             startPos, endPos,
             "ace_active_debug_line");
+      
       if (executing)
       {
          executionLine_ = startPos.getRow();
@@ -3737,6 +3741,7 @@ public class AceEditor implements DocDisplay,
          getSession().removeMarker(lineDebugMarkerId_);
          lineDebugMarkerId_ = null;
       }
+      
       if (executionLine_ != null)
       {
          widget_.getEditor().getRenderer().removeGutterDecoration(
@@ -4255,6 +4260,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.setAnnotations(annotations);
    }
+   
+   public JsMap<Marker> getMarkers(boolean inFront)
+   {
+      return widget_.getMarkers(inFront);
+   }
 
    @Override
    public void removeMarkersAtCursorPosition()
@@ -4283,7 +4293,7 @@ public class AceEditor implements DocDisplay,
    @Override
    public void showLint(JsArray<LintItem> lint)
    {
-      widget_.showLint(lint);
+      widget_.showLint(lint.cast());
    }
 
    @Override

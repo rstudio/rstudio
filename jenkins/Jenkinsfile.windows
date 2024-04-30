@@ -92,13 +92,13 @@ pipeline {
       }
     }
 
-    // Build on windows agent, use matrix for electron / desktop
+    // Build on windows agent, use matrix for electron
     stage ('Build Matrix') {
       matrix {
         axes {
           axis {
             name 'FLAVOR'
-              values 'Electron', 'Desktop' // desktop denotes a Qt build
+              values 'Electron'
           }
         }
 
@@ -106,7 +106,6 @@ pipeline {
           // allOf {
           anyOf {
             environment name: 'FLAVOR', value: 'Electron'
-            expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
           }
           //   expression { return SHOULD_REBUILD == true } // Disabling for now (see above)
           // }
@@ -206,34 +205,6 @@ pipeline {
                         retry(5) {
                           bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${BUILD_DEST}/${PACKAGE_NAME}.exe"
                           bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${BUILD_DEST}/${PACKAGE_NAME}.zip"
-                        }
-                      }
-                    }
-                  }
-
-                  stage('Sentry Upload') {
-                    when {
-                      allOf {
-                        expression { return params.DAILY }
-                        environment name: 'FLAVOR', value: 'Desktop'
-                      }
-                    }
-
-                    environment {
-                      SENTRY_API_KEY = credentials('ide-sentry-api-key')
-                    }
-
-                    steps {
-                      retry(5) {
-                        // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
-                        timeout(activity: true, time: 15) {
-                          bat '''
-                            cd package\\win32\\build
-                            FOR /F %%G IN ('dir /s /b *.pdb') DO (c:\\rstudio-tools\\dependencies\\windows\\breakpad-tools-windows\\dump_syms.exe %%G > %%G.sym)
-                          '''
-
-                          // upload the breakpad symbols, attempt to run sentry uplaod
-                          bat 'cd package\\win32\\build\\src\\cpp && c:\\rstudio-tools\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
                         }
                       }
                     }

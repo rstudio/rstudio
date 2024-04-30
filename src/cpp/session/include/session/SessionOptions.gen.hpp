@@ -59,7 +59,8 @@ protected:
                 boost::program_options::options_description* pCopilot,
                 boost::program_options::options_description* pMisc,
                 std::string* pSaveActionDefault,
-                int* wwwSameSite)
+                int* wwwSameSite,
+                std::string* pSessionPortRange)
 {
    using namespace rstudio::core;
    using namespace boost::program_options;
@@ -210,6 +211,9 @@ protected:
       ("directory-view-allow-list",
       value<std::string>(&directoryViewAllowList_)->default_value(std::string()),
       "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:).")
+      ("session-port-range",
+      value<std::string>(pSessionPortRange)->default_value(std::string()),
+      "Constrain the range of TCP ports available to the session. Accepts a range in the form '<lower>-<upper>', e.g. 59000-59999.")
       (kSessionEphemeralEnvVars,
       value<std::string>(&ephemeralEnvVars_)->default_value(std::string()),
       "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:).")
@@ -224,7 +228,7 @@ protected:
       "Duration in millis before requests are converted to async - i.e. how fast will the server free up connections when it's busy")
       (kSessionHandleOfflineEnabled,
       value<bool>(&handleOfflineEnabled_)->default_value(true),
-      "Enables offline request handling. When the R session is busy, some requests are allowed to run")
+      "Enables offline request handling. When the R process is busy, some requests are allowed to run")
       (kSessionHandleOfflineTimeoutMs,
       value<int>(&handleOfflineTimeoutMs_)->default_value(200),
       "Duration in millis before requests that can be handled offline are processed by the offline handler thread.")
@@ -422,6 +426,9 @@ protected:
       ("copilot-auth-provider",
       value<std::string>(&copilotAuthProvider_)->default_value(""),
       "The URL to the authentication provider to be used by GitHub Copilot.")
+      ("copilot-ssl-certificates-file",
+      value<std::string>(&copilotSslCertificatesFile_)->default_value(""),
+      "The path to a file containing one or more trusted certificates in PEM format.")
       ("copilot-proxy-strict-ssl",
       value<bool>(&copilotProxyStrictSsl_)->default_value(true),
       "Should the GitHub Copilot agent perform SSL certificate validation when forming web requests?")
@@ -481,6 +488,7 @@ public:
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
    std::string directoryViewAllowList() const { return directoryViewAllowList_; }
+   boost::optional<std::tuple<int,int>> sessionPortRange() const { return sessionPortRange_; }
    std::string ephemeralEnvVars() const { return ephemeralEnvVars_; }
    bool suspendOnIncompleteStatement() const { return suspendOnIncompleteStatement_; }
    bool asyncRpcEnabled() const { return asyncRpcEnabled_; }
@@ -545,6 +553,7 @@ public:
    bool copilotEnabled() const { return copilotEnabled_; }
    std::string copilotProxyUrl() const { return copilotProxyUrl_; }
    std::string copilotAuthProvider() const { return copilotAuthProvider_; }
+   std::string copilotSslCertificatesFile() const { return copilotSslCertificatesFile_; }
    bool copilotProxyStrictSsl() const { return copilotProxyStrictSsl_; }
    core::FilePath copilotAgentHelper() const { return core::FilePath(copilotAgentHelper_); }
 
@@ -593,6 +602,7 @@ protected:
    rstudio::core::http::Cookie::SameSite sameSite_;
    bool restrictDirectoryView_;
    std::string directoryViewAllowList_;
+   boost::optional<std::tuple<int,int>> sessionPortRange_;
    std::string ephemeralEnvVars_;
    bool suspendOnIncompleteStatement_;
    bool asyncRpcEnabled_;
@@ -659,6 +669,7 @@ protected:
    bool copilotEnabled_;
    std::string copilotProxyUrl_;
    std::string copilotAuthProvider_;
+   std::string copilotSslCertificatesFile_;
    bool copilotProxyStrictSsl_;
    std::string copilotAgentHelper_;
    virtual bool allowOverlay() const { return false; };

@@ -518,7 +518,7 @@
    if (!is.list(result))
       return(FALSE)
    
-   expected <- .rs.explorer.createInspectionResult(NULL)
+   expected <- .rs.explorer.createInspectionResult(NULL, context = .rs.explorer.createContext())
    keys <- names(expected)
    missing <- setdiff(keys, names(result))
    if (length(missing))
@@ -555,7 +555,7 @@
    # ensure we copy relevant context fields
    special <- c("name", "access", "tags")
    for (field in special)
-      if (is.null(result[[field]]))
+      if (is.null(result[[field]]) && !is.null(context[[field]]))
          result[[field]] <- context[[field]]
    
    # ensure that this is a valid inspection result

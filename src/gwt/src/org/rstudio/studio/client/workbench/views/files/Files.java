@@ -36,7 +36,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -1055,14 +1054,7 @@ public class Files
       String fileURL = server_.getFileUrl(file);
       if (fileURL != null)
       {
-         if (!Desktop.isRemoteDesktop())
-         {
-            globalDisplay_.openWindow(fileURL);
-         }
-         else
-         {
-            Desktop.getFrame().browseUrl(fileURL);
-         }
+         globalDisplay_.openWindow(fileURL);
       }
    }
 

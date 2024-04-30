@@ -402,8 +402,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="setWorkingDir"/>
          </menu>
          <separator/>
-         <cmd refid="showSessionServerOptionsDialog"/>
-         <separator/>
          <cmd refid="loadWorkspace"/>
          <cmd refid="saveWorkspace"/>
          <separator/>
@@ -3586,13 +3584,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Quit the current R session even if busy"
         windowMode="main"/>
 
-   <cmd id="showSessionServerOptionsDialog"
-        label="Session Server Settings..."
-        menuLabel="_Session Server Settings..."
-        buttonLabel=""
-        desc="Configure available session servers"
-        windowMode="main"/>
-
    <cmd id="showAboutDialog"
         label="About RStudio..."
         menuLabel="A_bout RStudio"
@@ -3801,7 +3792,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="editor"/>
 
    <cmd id="maximizeConsole"
-        menuLabel="Maximize Console"/>
+        label="Toggle Maximize Console Pane"/>
+
+   <cmd id="maximizeSource"
+        label="Toggle Maximize Source Pane"/>
+
+   <cmd id="maximizeTabSet1"
+        label="Toggle Maximize Tab Group One"/>
+
+   <cmd id="maximizeTabSet2"
+        label="Toggle Maximize Tab Group Two"/>
 
    <cmd id="debugBreakpoint"
         label="Toggle Breakpoint on Current Line"

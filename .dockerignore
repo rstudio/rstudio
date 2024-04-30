@@ -2,6 +2,7 @@
 *
 !dependencies/common/install-*
 !dependencies/common/lockfiles
+!dependencies/common/patch-node*
 !dependencies/linux/install-*
 !dependencies/osx/install-*
 !dependencies/windows/*

@@ -720,7 +720,7 @@
    }
    else if (is.language(obj))
    {
-      .rs.describeCall(obj)
+      val <- .rs.describeCall(obj)
    }
    else if (!hasNullPtr)
    {

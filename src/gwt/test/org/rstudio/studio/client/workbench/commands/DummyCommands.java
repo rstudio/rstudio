@@ -2501,11 +2501,6 @@ public class DummyCommands extends Commands {
     }
 
     @Override
-    public AppCommand showSessionServerOptionsDialog() {
-        return null;
-    }
-
-    @Override
     public AppCommand showWarningBar() {
         return null;
     }
@@ -2977,6 +2972,21 @@ public class DummyCommands extends Commands {
 
     @Override
     public AppCommand maximizeConsole() {
+        return null;
+    }
+
+    @Override
+    public AppCommand maximizeSource() {
+        return null;
+    }
+
+    @Override
+    public AppCommand maximizeTabSet1() {
+        return null;
+    }
+
+    @Override
+    public AppCommand maximizeTabSet2() {
         return null;
     }
 

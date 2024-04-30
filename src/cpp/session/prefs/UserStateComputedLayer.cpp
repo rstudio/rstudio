@@ -38,10 +38,6 @@ UserStateComputedLayer::UserStateComputedLayer():
 Error UserStateComputedLayer::readPrefs()
 {
    json::Object layer;
-
-   layer[kUsingMingwGcc49] = boost::algorithm::contains(
-         core::system::getenv("R_COMPILED_BY"), "4.9.3");
-
    cache_ = boost::make_shared<core::json::Object>(layer);
    return Success();
 }

@@ -17,13 +17,16 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.elemental2.overlay.File;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -51,7 +54,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWid
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Tooltip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
@@ -214,12 +216,6 @@ public class AceEditorWidget extends Composite
       editor_.onChangeScrollTop(() -> {
          Position pos = Position.create(editor_.getFirstVisibleRow(), 0);
          fireEvent(new ScrollYEvent(pos));
-      });
-
-      // don't show gutter tooltips for spelling warnings
-      editor_.onShowGutterTooltip((Tooltip tooltip) -> {
-         if (tooltip.getTextContent().toLowerCase().contains("spellcheck"))
-            tooltip.hide();
       });
 
       editor_.onGutterMouseDown(new CommandWithArg<AceMouseEventNative>()
@@ -1219,10 +1215,21 @@ public class AceEditorWidget extends Composite
       editor_.getSession().setAnnotations(annotations);
    }
 
-   public void showLint(JsArray<LintItem> lint)
+   public void showLint(JsVector<LintItem> lint)
    {
       clearAnnotations();
-      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(lint);
+      
+      // Set gutter annotations. Don't include 'spelling' items in gutter.
+      JsVector<LintItem> gutterLint = lint.filter(new Predicate<LintItem>()
+      {
+         @Override
+         public boolean test(LintItem item)
+         {
+            return item.getType() != "spelling";
+         }
+      });
+      
+      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(gutterLint.cast());
       editor_.getSession().setAnnotations(annotations);
 
       // Now, set (and cache) inline markers.
@@ -1244,12 +1251,9 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.style();
          else if (item.getType() == "spelling")
             clazz = lintStyles_.spelling();
-
+         
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
-         annotations_.add(new AnchoredAceAnnotation(
-            annotations.get(i),
-            range,
-            id));
+         annotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
       }
    }
 
@@ -1283,6 +1287,11 @@ public class AceEditorWidget extends Composite
       for (int i = 0; i < annotations_.size(); i++)
          annotations_.get(i).detach();
       annotations_.clear();
+   }
+   
+   public JsMap<Marker> getMarkers(boolean inFront)
+   {
+      return editor_.getSession().getMarkers(inFront);
    }
 
    public void removeMarkersOnCursorLine()

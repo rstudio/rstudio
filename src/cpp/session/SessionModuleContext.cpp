@@ -422,13 +422,6 @@ SEXP rs_rstudioCitation()
    }
 }
 
-SEXP rs_setUsingMingwGcc49(SEXP usingSEXP)
-{
-   bool usingMingwGcc49 = r::sexp::asLogical(usingSEXP);
-   prefs::userState().setUsingMingwGcc49(usingMingwGcc49);
-   return R_NilValue;
-}
-
 // ensure file hidden
 SEXP rs_ensureFileHidden(SEXP fileSEXP)
 {
@@ -513,16 +506,12 @@ SEXP rs_restartR(SEXP afterRestartSEXP, SEXP cleanSEXP)
    bool clean = r::sexp::asLogical(cleanSEXP);
    
    json::Object dataJson;
-   dataJson["after_restart"] = afterRestart;
-   
-   if (clean)
-   {
-      json::Object suspendOptionsJson;
-      suspendOptionsJson["save_minimal"] = true;
-      suspendOptionsJson["save_workspace"] = false;
-      suspendOptionsJson["exclude_packages"] = true;
-      dataJson["options"] = suspendOptionsJson;
-   }
+   json::Object suspendOptionsJson;
+   suspendOptionsJson["save_minimal"] = clean;
+   suspendOptionsJson["save_workspace"] = !clean;
+   suspendOptionsJson["exclude_packages"] = clean;
+   suspendOptionsJson["after_restart"] = afterRestart;
+   dataJson["options"] = suspendOptionsJson;
    
    ClientEvent event(client_events::kSuspendAndRestart, dataJson);
    module_context::enqueClientEvent(event);
@@ -2820,29 +2809,6 @@ bool isLoadBalanced()
    return !core::system::getenv(kRStudioSessionRoute).empty();
 }
 
-#ifdef _WIN32
-bool usingMingwGcc49()
-{
-   // return true if the setting is true
-   bool gcc49 = prefs::userState().usingMingwGcc49();
-   if (gcc49)
-      return true;
-
-   // otherwise check R version
-   r::exec::RFunction func(".rs.builtWithRtoolsGcc493");
-   Error error = func.call(&gcc49);
-   if (error)
-      LOG_ERROR(error);
-   return gcc49;
-
-}
-#else
-bool usingMingwGcc49()
-{
-   return false;
-}
-#endif
-
 namespace {
 
 #ifdef __APPLE__
@@ -3069,7 +3035,6 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_rstudioReleaseName);
    RS_REGISTER_CALL_METHOD(rs_sessionModulePath);
    RS_REGISTER_CALL_METHOD(rs_setPersistentValue);
-   RS_REGISTER_CALL_METHOD(rs_setUsingMingwGcc49);
    RS_REGISTER_CALL_METHOD(rs_showErrorMessage);
    RS_REGISTER_CALL_METHOD(rs_sourceDiagnostics);
    RS_REGISTER_CALL_METHOD(rs_threadSleep);

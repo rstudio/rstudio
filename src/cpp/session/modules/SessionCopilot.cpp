@@ -65,14 +65,14 @@
 # define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
 #endif
 
-
 #ifndef _WIN32
 # define kNodeExe "node"
 #else
 # define kNodeExe "node.exe"
 #endif
 
-#define kCopilotAgentDefaultCommitHash ("69455be5d4a892206bc08365ba3648a597485943")
+#define kCopilotAgentDefaultCommitHash ("69455be5d4a892206bc08365ba3648a597485943") // pragma: allowlist secret
+#define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
 using namespace rstudio::core;
@@ -87,38 +87,45 @@ namespace {
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
 std::map<std::string, std::string> s_extToLanguageIdMap = {
-   { ".bash", "shellscript" },
-   { ".bat",  "bat" },
-   { ".c",    "c" },
-   { ".cc",   "cpp" },
-   { ".cpp",  "cpp" },
-   { ".cs",   "csharp" },
-   { ".css",  "css" },
-   { ".erl",  "erlang" },
-   { ".go",   "go" },
-   { ".h",    "c" },
-   { ".hpp",  "cpp" },
-   { ".html", "html" },
-   { ".ini",  "ini" },
-   { ".java", "java" },
-   { ".js",   "javascript" },
-   { ".jsx",  "javascriptreact" },
-   { ".json", "json" },
-   { ".md",   "markdown" },
-   { ".mjs",  "javascript" },
-   { ".ps",   "powershell" },
-   { ".py",   "python" },
-   { ".tex",  "latex" },
-   { ".r",    "r" },
-   { ".rb",   "ruby" },
-   { ".rnw",  "r" },
-   { ".rnb",  "r" },
-   { ".rmd",  "r" },
-   { ".sh",   "shellscript" },
-   { ".tex",  "latex" },
-   { ".ts",   "typescript" },
-   { ".tsx",  "typescriptreact" },
-   { ".yml",  "yaml" },
+   { ".bash",  "shellscript" },
+   { ".bat",   "bat" },
+   { ".c",     "c" },
+   { ".cc",    "cpp" },
+   { ".cpp",   "cpp" },
+   { ".cs",    "csharp" },
+   { ".css",   "css" },
+   { ".erl",   "erlang" },
+   { ".go",    "go" },
+   { ".h",     "c" },
+   { ".hpp",   "cpp" },
+   { ".html",  "html" },
+   { ".ini",   "ini" },
+   { ".java",  "java" },
+   { ".js",    "javascript" },
+   { ".jsx",   "javascriptreact" },
+   { ".json",  "json" },
+   { ".md",    "markdown" },
+   { ".mjs",   "javascript" },
+   { ".ps",    "powershell" },
+   { ".py",    "python" },
+   { ".tex",   "latex" },
+   { ".r",     "r" },
+   { ".rb",    "ruby" },
+   { ".rmd",   "r" },
+   { ".rnb",   "r" },
+   { ".rnw",   "r" },
+   { ".rs",    "rust" },
+   { ".sc",    "scala" },
+   { ".scala", "scala" },
+   { ".scss",  "scss" },
+   { ".sh",    "shellscript" },
+   { ".sql",   "sql" },
+   { ".swift", "swift" },
+   { ".tex",   "latex" },
+   { ".toml",  "toml" },
+   { ".ts",    "typescript" },
+   { ".tsx",   "typescriptreact" },
+   { ".yml",   "yaml" },
 };
    
 
@@ -256,12 +263,37 @@ bool isIndexableFile(const FilePath& documentPath)
    return true;
 }
 
+bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   // Don't index binary files.
+   if (pDoc->contents().find('\0') != std::string::npos)
+      return false;
+   
+   FilePath docPath(pDoc->path());
+   return isIndexableFile(docPath);
+}
+
 FilePath copilotAgentPath()
 {
-   // Check for configured copilot path.
+   // Check for admin-configured copilot path.
    FilePath copilotPath = session::options().copilotAgentPath();
    if (copilotPath.exists())
+   {
+      if (copilotPath.isDirectory())
+      {
+         for (const std::string& suffix : { "dist/agent.js", "agent.js" })
+         {
+            FilePath candidatePath = copilotPath.completePath(suffix);
+            if (candidatePath.exists())
+            {
+               copilotPath = candidatePath;
+               break;
+            }
+         }
+      }
+      
       return copilotPath;
+   }
 
    using namespace core::system::xdg;
 
@@ -865,6 +897,11 @@ Error startAgent()
    // Create environment for agent process
    core::system::Options environment;
    core::system::environment(&environment);
+   
+   // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
+   std::string certificatesFile = session::options().copilotSslCertificatesFile();
+   if (!certificatesFile.empty())
+      environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
    // For Desktop builds of RStudio, use the version of node embedded in Electron.
    FilePath nodePath;
@@ -1017,15 +1054,14 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
       return;
-
-   // Avoid indexing binary files
-   if (pDoc->contents().find('\0') != std::string::npos)
+   
+   if (!isIndexableDocument(pDoc))
       return;
    
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
-   textDocumentJson["version"] = 1;
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
    textDocumentJson["text"] = "";
 
    json::Object paramsJson;
@@ -1034,21 +1070,36 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    sendNotification("textDocument/didOpen", paramsJson);
 }
 
+std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   std::string contents = pDoc->contents();
+   
+   // for SQL documents, remove a 'preview' header to avoid confusing Copilot
+   // into producing R completions in a SQL context
+   // https://github.com/rstudio/rstudio/issues/13432
+   if (pDoc->type() == kSourceDocumentTypeSQL)
+   {
+      boost::regex rePreview("(?:#+|[-]{2,})\\s*[!]preview[^\n]+\n");
+      contents = boost::regex_replace(contents, rePreview, "\n");
+   }
+   
+   return contents;
+}
+
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
       return;
 
-   // Avoid indexing binary files
-   if (pDoc->contents().find('\0') != std::string::npos)
+   if (!isIndexableDocument(pDoc))
       return;
    
    // Synchronize document contents with Copilot
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
-   textDocumentJson["version"] = 1;
-   textDocumentJson["text"] = pDoc->contents();
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
+   textDocumentJson["text"] = contentsFromDocument(pDoc);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
@@ -1176,7 +1227,7 @@ void indexFile(const core::FileInfo& info)
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = 1;
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
    textDocumentJson["text"] = contents;
 
    json::Object paramsJson;
@@ -1396,6 +1447,21 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
       return error;
    }
+   
+   // Disallow completion request in hidden files, since this might trigger
+   // the copilot agent to attempt to read the contents of that file
+   FilePath docPath = module_context::resolveAliasedPath(documentPath);
+   if (!isIndexableFile(docPath))
+   {
+      json::Object resultJson;
+      resultJson["enabled"] = false;
+      
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+      
+      continuation(Success(), &response);
+      return Success();
+   }
 
    // Build completion request
    json::Object positionJson;
@@ -1405,7 +1471,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    json::Object docJson;
    docJson["position"] = positionJson;
    docJson["uri"] = uriFromDocumentImpl(documentId, documentPath, isUntitled);
-   docJson["version"] = 1;
+   docJson["version"] = kCopilotDefaultDocumentVersion;
 
    json::Object paramsJson;
    paramsJson["doc"] = docJson;

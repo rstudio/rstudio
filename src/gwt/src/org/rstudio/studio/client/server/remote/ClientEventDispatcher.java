@@ -27,6 +27,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.ClipboardActionEvent;
 import org.rstudio.studio.client.application.events.ComputeThemeColorsEvent;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
+import org.rstudio.studio.client.application.events.DeploymentRecordsUpdatedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
 import org.rstudio.studio.client.application.events.QuitEvent;
@@ -1172,6 +1173,11 @@ public class ClientEventDispatcher
          {
             ClipboardActionEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ClipboardActionEvent(data));
+         }
+         else if (type == ClientEvent.DeploymentRecordsUpdated)
+         {
+            DeploymentRecordsUpdatedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new DeploymentRecordsUpdatedEvent(data));
          }
          else
          {

@@ -226,12 +226,15 @@ bool isGlobalEnvironmentSerializable()
          // TODO: If an R environment is updated in-place with a value that
          // makes it no longer serializable, we would fail to detect this.
          // Is this okay? Or should we avoid caching results for environments?
-         SEXP valueSEXP = CAR(frameSEXP);
-         bool canBeSerialized = s_serializationCache.contains(valueSEXP)
-               ? s_serializationCache.at(valueSEXP)
-               : isSerializable(valueSEXP);
-         newCache[valueSEXP] = canBeSerialized;
-         allValuesSerializable = allValuesSerializable && canBeSerialized;
+         if (!r::internal::isImmediateBinding(frameSEXP))
+         {
+            SEXP valueSEXP = CAR(frameSEXP);
+            bool canBeSerialized = s_serializationCache.contains(valueSEXP)
+                  ? s_serializationCache.at(valueSEXP)
+                  : isSerializable(valueSEXP);
+            newCache[valueSEXP] = canBeSerialized;
+            allValuesSerializable = allValuesSerializable && canBeSerialized;
+         }
       }
    }
    

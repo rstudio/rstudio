@@ -300,7 +300,7 @@ void ScriptJob::onCompleted(int exitStatus)
    if (!spec_.exportEnv().empty() && export_.exists())
    {
       setJobStatus(job_, "Loading results");
-      r::exec::RFunction load("load");
+      r::exec::RFunction load("base:::load");
       load.addParam("file", string_utils::utf8ToSystem(export_.getAbsolutePath()));
       if (spec_.exportEnv() == "R_GlobalEnv")
       {

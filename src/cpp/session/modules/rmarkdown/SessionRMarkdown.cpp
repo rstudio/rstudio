@@ -577,7 +577,7 @@ private:
          extraParams += "shiny_args = list(launch.browser = FALSE), "
                         "auto_reload = FALSE, ";
          std::string parentDir = utf8ToConsole(targetFile_.getParent().getAbsolutePath());
-         extraParams += "dir = '" + parentDir + "', ";
+         extraParams += "dir = '" + string_utils::singleQuotedStrEscape(parentDir) + "', ";
 
          // provide render_args in render_args parameter
          renderOptions = "render_args = list(" + renderOptions + ")";

@@ -26,31 +26,28 @@
 
 #include <fmt/format.h>
 
+#include <boost/bind/bind.hpp>
+#include <boost/container/flat_set.hpp>
+
 #include <core/Debug.hpp>
 #include <core/Macros.hpp>
-#include <core/algorithm/Set.hpp>
-#include <core/algorithm/Map.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
-
+#include <core/algorithm/Set.hpp>
+#include <core/algorithm/Map.hpp>
 #include <core/r_util/RTokenCursor.hpp>
 #include <core/text/TextCursor.hpp>
-
-#include "SessionRParser.hpp"
-#include "SessionCodeSearch.hpp"
-#include "SessionAsyncPackageInformation.hpp"
-
-#include <session/SessionModuleContext.hpp>
-#include <session/projects/SessionProjects.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
-
 #include <r/session/RSessionUtils.hpp>
 
-#include <boost/bind/bind.hpp>
-#include <boost/container/flat_set.hpp>
+#include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
+
+#include "SessionRParser.hpp"
+#include "SessionCodeSearch.hpp"
 
 using namespace boost::placeholders;
 
@@ -1676,6 +1673,10 @@ void checkVariableAssignmentInArgumentList(RTokenCursor cursor,
    if (!cursor.isType(RToken::ID))
       return;
    
+   std::string identifier = cursor.contentAsUtf8();
+   if (identifier == ".")
+      return;
+   
    if (!cursor.moveToNextSignificantToken())
       return;
    
@@ -1683,6 +1684,34 @@ void checkVariableAssignmentInArgumentList(RTokenCursor cursor,
       return;
    
    status.lint().unexpectedAssignmentInArgumentList(cursor);
+}
+
+void checkUnexpectedEqualsAssignment(RTokenCursor& cursor,
+                                     ParseStatus& status)
+{
+   std::string context;
+
+   switch (status.currentState())
+   {
+
+   case ParseStatus::ParseStateIfCondition:
+      context = "if";
+      break;
+
+   case ParseStatus::ParseStateForCondition:
+      context = "for";
+      break;
+
+   case ParseStatus::ParseStateWhileCondition:
+      context = "while";
+      break;
+
+   default:
+      return;
+   }
+
+   if (cursor.contentEquals(L"="))
+      status.lint().unexpectedAssignmentInConditional(cursor, context);
 }
 
 void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
@@ -2594,7 +2623,7 @@ START:
       DEBUG("== Cursor: " << cursor);
       
       checkIncorrectComparison(cursor, status);
-      
+
       // We want to skip over formulas if necessary.
       while (skipFormulas(cursor, status))
       {
@@ -2965,7 +2994,8 @@ START:
       GOTO_INVALID_TOKEN(cursor);
       
 BINARY_OPERATOR:
-      
+
+      checkUnexpectedEqualsAssignment(cursor, status);
       checkBinaryOperatorWhitespace(cursor, status);
       if (!cursor.isAtEndOfDocument() && !canFollowBinaryOperator(cursor.nextSignificantToken()))
          status.lint().unexpectedToken(cursor.nextSignificantToken());

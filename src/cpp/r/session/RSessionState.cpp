@@ -64,6 +64,7 @@ const char * const kPlotsFile = "plots";
 const char * const kPlotsDir = "plots_dir";
 const char * const kSearchPath = "search_path";
 const char * const kGlobalEnvironment = "global_environment";
+const char * const kAfterRestartCommand = "after_restart_command";
 
 // settings
 const char * const kWorkingDirectory = "working_directory";
@@ -75,6 +76,9 @@ const char * const kRProfileOnRestore = "r_profile_on_restore";
 std::string s_activeRVersion;
 std::string s_suspendedRVersion;
 bool s_isCompatibleSessionState = true;
+
+// session callbacks
+SessionStateCallbacks s_callbacks;
 
 Error saveLibPaths(const FilePath& libPathsFile)
 {
@@ -224,6 +228,20 @@ Error restoreEnvironmentVars(const FilePath& envFile)
 
    return Success();
 }
+
+Error executeAfterRestartCommand(const FilePath& afterRestartFile)
+{
+   std::string command;
+   Error error = core::readStringFromFile(afterRestartFile, &command);
+   if (error && !isFileNotFoundError(error))
+      LOG_ERROR(error);
+   
+   if (command.empty())
+      return Success();
+   
+   s_callbacks.consoleWriteInput(core::string_utils::trimWhitespace(command));
+   return r::exec::executeString(command);
+}
    
 Error restoreWorkingDirectory(const std::string& workingDirectory,
                               const FilePath& projectPath,
@@ -362,11 +380,21 @@ void saveWorkingContext(const FilePath& statePath,
    }
 }
 
+Error saveAfterRestartCommand(const FilePath& afterRestartCommandPath,
+                              const std::string& afterRestartCommand)
+{
+   return core::writeStringToFile(afterRestartCommandPath, afterRestartCommand);
+}
+
 } // anonymous namespace
  
-   
+void initialize(SessionStateCallbacks callbacks)
+{
+   s_callbacks = callbacks;
+}
 
 bool save(const FilePath& statePath,
+          const std::string& afterRestartCommand,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
@@ -374,6 +402,7 @@ bool save(const FilePath& statePath,
           const std::string& ephemeralEnvVars)
 {
    // initialize context
+   Error error;
    Settings settings;
    bool saved = true;
    initSaveContext(statePath, &settings, &saved);
@@ -385,8 +414,15 @@ bool save(const FilePath& statePath,
    // set r profile on restore (always run the .Rprofile in packrat mode)
    settings.set(kRProfileOnRestore, !excludePackages || packratModeOn);
    
+   // save after restart command
+   error = saveAfterRestartCommand(statePath.completePath(kAfterRestartCommand), afterRestartCommand);
+   if (error)
+   {
+      reportError(kSaving, kAfterRestartCommand, error, ERROR_LOCATION);
+   }
+   
    // save r version
-   Error error = saveRVersion(statePath.completePath(kRVersion));
+   error = saveRVersion(statePath.completePath(kRVersion));
    if (error)
    {
       reportError(kSaving, kRVersion, error, ERROR_LOCATION);
@@ -477,8 +513,8 @@ bool save(const FilePath& statePath,
    return saved;
 }
 
-
 bool saveMinimal(const core::FilePath& statePath,
+                 const std::string& afterRestartCommand,
                  bool saveGlobalEnvironment)
 {
    // initialize context
@@ -494,6 +530,11 @@ bool saveMinimal(const core::FilePath& statePath,
 
    // handle dev mode
    saveDevMode(&settings);
+   
+   // save after restart command
+   Error error = saveAfterRestartCommand(statePath.completeChildPath(kAfterRestartCommand), afterRestartCommand);
+   if (error)
+      LOG_ERROR(error);
 
    // save working context
    saveWorkingContext(statePath, &settings, &saved);
@@ -513,8 +554,6 @@ bool saveMinimal(const core::FilePath& statePath,
          saved = false;
       }
    }
-
-
 
    // return status
    return saved;
@@ -551,8 +590,26 @@ bool packratModeEnabled(const core::FilePath& statePath)
 
 Error deferredRestore(const FilePath& statePath, bool serverMode)
 {
-   // search path
-   Error error = search_path::restore(statePath, s_isCompatibleSessionState);
+   Error error;
+   
+   // get current search path list -- need to do this before executing
+   // the after restart command as that might load a package and modify
+   // the search list
+   std::vector<std::string> currentSearchPathList;
+   error = r::exec::RFunction("base:::search").call(&currentSearchPathList);
+   if (error)
+      return error;
+      
+   // execute after restart command
+   error = executeAfterRestartCommand(statePath.completePath(kAfterRestartCommand));
+   if (error)
+      return error;
+   
+   // suppress other outputs
+   utils::SuppressOutputInScope suppressOutput;
+   
+   // restore search path
+   error = search_path::restore(statePath, currentSearchPathList, s_isCompatibleSessionState);
    if (error)
       return error;
    
@@ -690,7 +747,7 @@ bool restore(const FilePath& statePath,
    error = restoreEnvironmentVars(statePath.completePath(kEnvironmentVars));
    if (error)
       reportError(kRestoring, kEnvironmentVars, error, ERROR_LOCATION, er);
-
+   
    // set deferred restore action. this encapsulates parts of the restore
    // process that are potentially highly latent. this allows clients
    // to bring their UI up and then receive an event indicating that the

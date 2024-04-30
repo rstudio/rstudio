@@ -21,8 +21,6 @@ var $colorFunctionCalls = false;
 
 define("mode/r_highlight_rules", ["require", "exports", "module"], function(require, exports, module)
 {
-  var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules;
-
   var Utils = require("mode/utils");
 
   function include(rules) {

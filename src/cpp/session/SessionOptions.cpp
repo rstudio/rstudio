@@ -144,13 +144,15 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    options_description user("user");
    options_description copilot("copilot");
    options_description misc("misc");
+   
    std::string saveActionDefault;
    int sameSite;
+   std::string sessionPortRange;
 
    program_options::OptionsDescription optionsDesc =
          buildOptions(&runTests, &runScript, &verify, &version, &program, &log, &docs, &www,
                       &session, &allow, &r, &limits, &external, &git, &user, &copilot, &misc,
-                      &saveActionDefault, &sameSite);
+                      &saveActionDefault, &sameSite, &sessionPortRange);
 
    addOverlayOptions(&misc);
 

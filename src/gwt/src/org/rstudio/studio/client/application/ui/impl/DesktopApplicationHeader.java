@@ -26,12 +26,9 @@ import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ApplicationQuit;
@@ -41,7 +38,6 @@ import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
 import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
@@ -115,11 +111,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
       pDesktopHooks.get();
 
-      if (!Desktop.isRemoteDesktop())
-      {
-         commands.uploadFile().remove();
-         commands.exportFiles().remove();
-      }
+      commands.uploadFile().remove();
+      commands.exportFiles().remove();
       commands.updateCredentials().remove();
 
       commands.checkForUpdates().setVisible(true);
@@ -143,20 +136,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       {
          final SessionInfo sessionInfo = session.getSessionInfo();
 
-         if (Desktop.isRemoteDesktop())
-            addSignoutToolbar();
-
-         if (!BrowseCap.isElectron())
-            overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
-
          toolbar_.completeInitialization(sessionInfo);
-
-         if (Desktop.isRemoteDesktop())
-         {
-            overlay_.addRVersionsToolbar(DesktopApplicationHeader.this);
-            overlay_.addSessionsToolbar(DesktopApplicationHeader.this);
-            addQuitSessionButton(commands);
-         }
 
          ignoredUpdatesState_ = new IgnoredUpdatesStateValue(sessionInfo.getClientState());
 
@@ -269,41 +249,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    private void fireEditEvent(final int type)
    {
       eventBus_.fireEvent(new EditEvent(true, type));
-   }
-
-   private void addSignoutToolbar()
-   {
-
-      if (session_.getSessionInfo().getShowIdentity() && session_.getSessionInfo().getAllowFullUI())
-      {
-         String userIdentity = session_.getSessionInfo().getUserIdentity();
-         ToolbarLabel usernameLabel = new ToolbarLabel();
-         usernameLabel.setTitle(userIdentity);
-         userIdentity = userIdentity.split("@")[0];
-         usernameLabel.setText(userIdentity);
-
-         addRightCommand(usernameLabel);
-
-         ToolbarButton signOutButton = new ToolbarButton(
-               ToolbarButton.NoText,
-               constants_.signOutButtonText(),
-               new ImageResource2x(RESOURCES.signOut2x()),
-               event -> eventBus_.fireEvent(new LogoutRequestedEvent()));
-
-
-         addRightCommand(signOutButton);
-         addRightCommandSeparator();
-      }
-   }
-
-   private void addQuitSessionButton(Commands commands)
-   {
-      if (session_.getSessionInfo().getAllowFullUI())
-      {
-         addRightCommandSeparator();
-         addRightCommand(commands.quitSession().createToolbarButton());
-      }
-
    }
 
    interface Resources extends ClientBundle

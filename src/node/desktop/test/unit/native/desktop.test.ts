@@ -55,7 +55,7 @@ describe('Desktop Native Code', () => {
     <p>Nullam augue</p>\
     </div></div>';
     const plainText = 'Summary\nNullam augue';
-    const expected = process.platform === 'darwin' ? `<meta charset='utf-8'>${htmlText}` : htmlText;
+    const expected = htmlText;
 
     clipboard.write({
       text: plainText,
