@@ -207,7 +207,7 @@ public class PathBreadcrumbWidget
 
    private void browse()
    {
-      if (Desktop.isDesktop())
+      if (!Desktop.isUsingWebFileDialogs())
       {
          FileSystemContext tempContext =
                RStudioGinjector.INSTANCE.getRemoteFileSystemContext();

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application;
 
+import org.rstudio.studio.client.RStudioGinjector;
 import com.google.gwt.core.client.GWT;
 
 public class Desktop
@@ -36,6 +37,13 @@ public class Desktop
    public static DesktopFrame getFrame()
    {
       return desktopFrame_;
+   }
+
+   /**
+    * @return true if using web-based file dialogs
+    */
+   public static boolean isUsingWebFileDialogs() {
+      return !isDesktop() || !RStudioGinjector.INSTANCE.getUserPrefs().nativeFileDialogs().getValue();
    }
 
    private static final DesktopFrame desktopFrame_ = GWT.create(DesktopFrame.class);
