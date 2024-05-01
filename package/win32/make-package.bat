@@ -157,9 +157,6 @@ if "%CMAKE_BUILD_TYPE%" == "Debug" set BUILD_DIR=build-debug
 REM perform 64-bit build
 cd "%PACKAGE_DIR%"
 
-REM Select the appropriate NSIS template
-copy cmake\modules\NSIS.template.in.electron cmake\modules\NSIS.template.in >nul
-
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
 
