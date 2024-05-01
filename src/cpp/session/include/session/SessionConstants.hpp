@@ -69,6 +69,7 @@
 
 #define kVerifyInstallationSessionOption  "verify-installation"
 
+#define kRunAutomationSessionOption       "run-automation"
 #define kRunTestsSessionOption            "run-tests"
 #define kRunScriptSessionOption           "run-script"
 

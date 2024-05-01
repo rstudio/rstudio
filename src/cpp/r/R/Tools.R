@@ -96,8 +96,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("setVar", function(name, var)
 { 
    envir <- .rs.toolsEnv()
+   if (!is.null(var))
+      environment(var) <- envir
+   
    fullName <- paste(".rs.", name, sep = "")
-   environment(var) <- envir
    assign(fullName, var, envir = envir)
 })
 

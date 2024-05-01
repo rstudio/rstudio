@@ -28,6 +28,15 @@
             "defaultValue": false,
             "implicitValue": true,
             "description": "Runs unit tests and exits."
+         },
+         {
+            "name": {"constant": "kRunAutomationSessionOption", "value": "run-automation"},
+            "isHidden": true,
+            "memberName": "runAutomation_",
+            "type": "bool",
+            "defaultValue": false,
+            "implicitValue": true,
+            "description": "Run automation tests and exit."
          }
       ],
       "script": [

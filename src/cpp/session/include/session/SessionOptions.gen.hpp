@@ -68,7 +68,10 @@ protected:
    pTests->add_options()
       (kRunTestsSessionOption,
       value<bool>(&runTests_)->default_value(false)->implicit_value(true),
-      "Runs unit tests and exits.");
+      "Runs unit tests and exits.")
+      (kRunAutomationSessionOption,
+      value<bool>(&runAutomation_)->default_value(false)->implicit_value(true),
+      "Run automation tests and exit.");
 
    pScript->add_options()
       (kRunScriptSessionOption,
@@ -446,6 +449,7 @@ protected:
 
 public:
    bool runTests() const { return runTests_; }
+   bool runAutomation() const { return runAutomation_; }
    std::string runScript() const { return runScript_; }
    bool verifyInstallation() const { return verifyInstallation_; }
    bool version() const { return version_; }
@@ -560,6 +564,7 @@ public:
 
 protected:
    bool runTests_;
+   bool runAutomation_;
    std::string runScript_;
    bool verifyInstallation_;
    bool version_;

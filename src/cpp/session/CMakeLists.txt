@@ -166,7 +166,6 @@ set(SESSION_SOURCE_FILES
    modules/SessionAskSecret.cpp
    modules/SessionAsyncPackageInformation.cpp
    modules/SessionAuthoring.cpp
-   modules/SessionAutomation.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp
@@ -238,6 +237,7 @@ set(SESSION_SOURCE_FILES
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
+   modules/automation/SessionAutomation.cpp
    modules/clang/CodeCompletion.cpp
    modules/clang/DefinitionIndex.cpp
    modules/clang/Diagnostics.cpp
@@ -382,7 +382,7 @@ else()
 endif()
 
 # R files
-file(GLOB_RECURSE SESSION_R_FILES CONFIGURE_DEPENDS "modules/*.R")
+file(GLOB_RECURSE SESSION_R_FILES CONFIGURE_DEPENDS "modules/**/*.R")
 
 # test files
 if (RSTUDIO_UNIT_TESTS_ENABLED)

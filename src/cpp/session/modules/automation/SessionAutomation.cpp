@@ -15,10 +15,13 @@
 
 #include "SessionAutomation.hpp"
 
+#include <boost/bind.hpp>
+
 #include <shared_core/Error.hpp>
 
-#include <r/RRoutines.hpp>
-#include <r/session/REventLoop.hpp>
+#include <core/Exec.hpp>
+
+#include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
 
@@ -29,18 +32,24 @@ namespace automation {
 
 namespace {
 
-SEXP rs_processEvents()
-{
-   r::session::event_loop::processEvents();
-   return R_NilValue;
-}
-
 } // end anonymous namespace
 
 Error initialize()
 {
-   RS_REGISTER_CALL_METHOD(rs_processEvents);
+   using namespace module_context;
+   
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (boost::bind(sourceModuleRFile, "SessionAutomation.R"))
+      (boost::bind(sourceModuleRFile, "SessionAutomationClient.R"))
+      (boost::bind(sourceModuleRFile, "SessionAutomationRemote.R"));
+   
+   Error error = initBlock.execute();
+   if (error)
+      LOG_ERROR(error);
+   
    return Success();
+   
 }
 
 } // end namespace automation
