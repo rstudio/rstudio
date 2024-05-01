@@ -45,7 +45,6 @@ RUN apt-get update && \
     libsqlite3-dev \
     libssl-dev \
     libtiff5-dev\
-    libuser1-dev \
     libxml2-dev \
     libxslt1-dev \
     lsof \
@@ -133,3 +132,4 @@ RUN groupadd -g $JENKINS_GID jenkins && \
     useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
     echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
+RUN if [ -d "/src" ]; then git config --global --add safe.directory /src; fi

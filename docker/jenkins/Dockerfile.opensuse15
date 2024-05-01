@@ -33,7 +33,6 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libopenssl-devel \
     libpng-devel  \
     libtiff-devel  \
-    libuser-devel \
     libuuid-devel \
     libxml2-devel \
     lsof \
@@ -130,3 +129,5 @@ ARG JENKINS_UID=999
 RUN groupadd -g $JENKINS_GID jenkins && \
     useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
     echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+RUN if [ -d "/src" ]; then git config --global --add safe.directory /src; fi
