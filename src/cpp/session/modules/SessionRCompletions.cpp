@@ -179,6 +179,9 @@ std::string finishExpression(const std::string& expression)
       sawOperator = isOperator(ch);
       
       // check for identifiers
+      //
+      // TODO: This is wrong for multibyte characters; we should really start
+      // using a proper library for handling UTF-8 inputs...
       sawIdentifier = isalnum(ch) || ch == '.' || ch == '_';
 
       if (ch == top)
