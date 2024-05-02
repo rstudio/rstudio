@@ -231,10 +231,6 @@ Error utf8Distance(InputIterator begin,
    return Success();
 }
 
-
-bool isalpha(wchar_t c);
-bool isalnum(wchar_t c);
-
 inline bool stringNotEmpty(const std::string& str)
 {
    return !str.empty();
@@ -325,76 +321,37 @@ std::string consumeStdin(StdinLines kind, unsigned maxChars = 1048576);
 // one risks bumping into undefined behavior (which MSVC is strict about)
 // see e.g. http://en.cppreference.com/w/cpp/string/byte/toupper for
 // motivation
+//
+// we also use some C++ template magic to avoid misuse; that is, we don't want
+// to allow callers to accidentally pass wchar_t or other non-char types into
+// these functions. then wrap it into a macro to generate code with less pain
 
-inline int isalnum(char ch)
-{
-   return std::isalnum(static_cast<unsigned char>(ch));
+#define RS_GENERATE_CCTYPE_ALIAS(__NAME__)                             \
+                                                                       \
+template <typename T>                                                  \
+inline int __NAME__(                                                   \
+    T ch,                                                              \
+    typename std::enable_if<std::is_same<T, char>::value>::type* = 0)  \
+{                                                                      \
+   return std::__NAME__(static_cast<unsigned char>(ch));               \
 }
 
-inline int isalpha(char ch)
-{
-   return std::isalpha(static_cast<unsigned char>(ch));
-}
+RS_GENERATE_CCTYPE_ALIAS(isalpha)
+RS_GENERATE_CCTYPE_ALIAS(isalnum)
+RS_GENERATE_CCTYPE_ALIAS(islower)
+RS_GENERATE_CCTYPE_ALIAS(isupper)
+RS_GENERATE_CCTYPE_ALIAS(isdigit)
+RS_GENERATE_CCTYPE_ALIAS(isxdigit)
+RS_GENERATE_CCTYPE_ALIAS(iscntrl)
+RS_GENERATE_CCTYPE_ALIAS(isgraph)
+RS_GENERATE_CCTYPE_ALIAS(isspace)
+RS_GENERATE_CCTYPE_ALIAS(isblank)
+RS_GENERATE_CCTYPE_ALIAS(isprint)
+RS_GENERATE_CCTYPE_ALIAS(ispunct)
+RS_GENERATE_CCTYPE_ALIAS(tolower)
+RS_GENERATE_CCTYPE_ALIAS(toupper)
 
-inline int islower(char ch)
-{
-   return std::islower(static_cast<unsigned char>(ch));
-}
-
-inline int isupper(char ch)
-{
-   return std::isupper(static_cast<unsigned char>(ch));
-}
-
-inline int isdigit(char ch)
-{
-   return std::isdigit(static_cast<unsigned char>(ch));
-}
-
-inline int isxdigit(char ch)
-{
-   return std::isxdigit(static_cast<unsigned char>(ch));
-}
-
-inline int iscntrl(char ch)
-{
-   return std::iscntrl(static_cast<unsigned char>(ch));
-}
-
-inline int isgraph(char ch)
-{
-   return std::isgraph(static_cast<unsigned char>(ch));
-}
-
-inline int isspace(char ch)
-{
-   return std::isspace(static_cast<unsigned char>(ch));
-}
-
-inline int isblank(char ch)
-{
-   return std::isblank(static_cast<unsigned char>(ch));
-}
-
-inline int isprint(char ch)
-{
-   return std::isprint(static_cast<unsigned char>(ch));
-}
-
-inline int ispunct(char ch)
-{
-   return std::ispunct(static_cast<unsigned char>(ch));
-}
-
-inline int tolower(char ch)
-{
-   return std::tolower(static_cast<unsigned char>(ch));
-}
-
-inline int toupper(char ch)
-{
-   return std::toupper(static_cast<unsigned char>(ch));
-}
+#undef RS_GENERATE_CCTYPE_ALIAS
 
 } // namespace core 
 } // namespace rstudio

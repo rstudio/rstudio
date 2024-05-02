@@ -15,11 +15,13 @@
 
 #include <core/StringUtils.hpp>
 
+#include <ctype.h>
 #include <stdarg.h>
 
 #include <algorithm>
 #include <map>
 #include <ostream>
+
 #include <gsl/gsl>
 
 #include <boost/algorithm/string.hpp>
@@ -29,10 +31,11 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/regex.hpp>
 
-#include <core/Algorithm.hpp>
-#include <core/Log.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/json/Json.hpp>
+
+#include <core/Algorithm.hpp>
+#include <core/Log.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -398,7 +401,7 @@ std::string toUpper(const std::string& str)
 std::string toLower(const std::string& str)
 {
    std::string lower = str;
-   std::transform(lower.begin(), lower.end(), lower.begin(), core::tolower);
+   std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
    return lower;
 }
    
@@ -549,16 +552,6 @@ std::string filterControlChars(const std::string& str)
    return boost::regex_replace(str,
                                boost::regex("[\\0000-\\0010\\0016-\\0037]+"),
                                "");
-}
-
-bool isalpha(wchar_t ch)
-{
-   return std::iswalpha(ch);
-}
-
-bool isalnum(wchar_t ch)
-{
-   return std::iswalnum(ch);
 }
 
 bool parseVersion(const std::string& str, uint64_t* pVersion)
