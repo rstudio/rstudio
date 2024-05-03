@@ -15,10 +15,10 @@
 
 #include <core/StringUtils.hpp>
 
-#include <ctype.h>
 #include <stdarg.h>
 
 #include <algorithm>
+#include <cctype>
 #include <map>
 #include <ostream>
 
@@ -391,17 +391,25 @@ std::string systemToUtf8(const std::string& str)
    return systemToUtf8(str, CP_ACP);
 }
 
+// https://en.cppreference.com/w/cpp/string/byte/toupper#Notes
 std::string toUpper(const std::string& str)
 {
    std::string upper = str;
-   std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+   std::transform(upper.begin(), upper.end(), upper.begin(), [](unsigned char ch)
+   {
+      return std::toupper(ch);
+   });
    return upper;
 }
 
+// https://en.cppreference.com/w/cpp/string/byte/tolower#Notes
 std::string toLower(const std::string& str)
 {
    std::string lower = str;
-   std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+   std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch)
+   {
+      return std::tolower(ch);
+   });
    return lower;
 }
    
