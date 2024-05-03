@@ -213,7 +213,8 @@ void testIdentifiers()
    v.verify(L"`$@!$@#$`");
    v.verify(L"`a\n\"'b`");
 
-   // these tests assume a unicode locale
+   // these tests assume a unicode locale -- note that RStudio
+   // will also try to set a UTF-8 locale by default on startup
    const char* locale = setlocale(LC_ALL, "C.UTF-8");
    if (locale != nullptr)
    {
