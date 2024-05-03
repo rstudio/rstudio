@@ -213,7 +213,7 @@ RToken RTokenizer::nextToken()
         return numberToken;
   }
 
-  if (std::iswalnum(c) || c == L'.')
+  if (iswalnum(c) || c == L'.')
   {
      // From Section 10.3.2, identifiers must not start with
      // a digit, nor may they start with a period followed by
@@ -418,7 +418,7 @@ RToken RTokenizer::matchIdentifier()
       eat();
     
       wchar_t ch = peek();
-      match = std::iswalnum(ch) || ch == L'.' || ch == L'_';
+      match = iswalnum(ch) || ch == L'.' || ch == L'_';
    }
    
    std::size_t row = row_;

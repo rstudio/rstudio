@@ -30,6 +30,7 @@
 #include <r/session/RClientState.hpp>
 #include <r/session/RSessionUtils.hpp>
 
+#include <core/StringUtils.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/text/TextCursor.hpp>
 
@@ -112,7 +113,7 @@ std::wstring finishExpression(const std::wstring& expression)
       wchar_t ch = expression[i];
       
       // skip over whitespace
-      if (std::iswspace(ch))
+      if (iswspace(ch))
       {
          // if we see a newline, assume it ends the current expression, so it's okay
          // to have consecutive identifiers if a newline separates them
@@ -182,7 +183,7 @@ std::wstring finishExpression(const std::wstring& expression)
       //
       // TODO: This is wrong for multibyte characters; we should really start
       // using a proper library for handling UTF-8 inputs...
-      sawIdentifier = std::iswalnum(ch) || ch == L'.' || ch == L'_';
+      sawIdentifier = iswalnum(ch) || ch == L'.' || ch == L'_';
 
       if (ch == top)
       {

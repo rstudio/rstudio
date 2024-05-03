@@ -16,6 +16,8 @@
 #ifndef CORE_STRING_UTILS_HPP
 #define CORE_STRING_UTILS_HPP
 
+#include <boost/type_traits.hpp>
+
 #include <cctype>
 #include <cstdio>
 #include <string>
@@ -326,41 +328,57 @@ std::string consumeStdin(StdinLines kind, unsigned maxChars = 1048576);
 // to allow callers to accidentally pass wchar_t or other non-char types into
 // these functions. then wrap it into a macro to generate code with less pain
 
-#define RS_GENERATE_CCTYPE_ALIAS(__NAME__, __WNAME__)                     \
-                                                                          \
-template <typename T>                                                     \
-inline bool __NAME__(                                                     \
-    T ch,                                                                 \
-    typename std::enable_if<std::is_same<T, char>::value>::type* = 0)     \
-{                                                                         \
-   return std::__NAME__(static_cast<unsigned char>(ch)) != 0;             \
-}                                                                         \
-                                                                          \
-template <typename T>                                                     \
-inline bool __WNAME__(                                                    \
-    T ch,                                                                 \
-    typename std::enable_if<std::is_same<T, wchar_t>::value>::type* = 0)  \
-{                                                                         \
-   return std::__WNAME__(static_cast<wchar_t>(ch)) != 0;                  \
+inline namespace cctype {
+
+namespace internal {
+
+template <typename T>
+using IsCharacter = boost::disjunction<
+    boost::is_same<T, char>,
+    boost::is_same<T, signed char>,
+    boost::is_same<T, unsigned char>
+>;
+
 }
 
-RS_GENERATE_CCTYPE_ALIAS(isalpha, iswalpha)
-RS_GENERATE_CCTYPE_ALIAS(isalnum, iswalnum)
-RS_GENERATE_CCTYPE_ALIAS(islower, iswlower)
-RS_GENERATE_CCTYPE_ALIAS(isupper, iswupper)
-RS_GENERATE_CCTYPE_ALIAS(isdigit, iswdigit)
+#define RS_GENERATE_CCTYPE_ALIAS(__NAME__, __WNAME__)          \
+                                                               \
+template <typename T>                                          \
+inline bool __NAME__(T ch)                                     \
+{                                                              \
+   static_assert(internal::IsCharacter<T>::value, "");         \
+   return std::__NAME__(static_cast<unsigned char>(ch)) != 0;  \
+}                                                              \
+                                                               \
+template <typename T>                                          \
+inline bool __WNAME__(T ch)                                    \
+{                                                              \
+   static_assert(std::is_same<T, wchar_t>::value, "");         \
+   return std::__NAME__(static_cast<wchar_t>(ch)) != 0;        \
+}                                                              \
+
+RS_GENERATE_CCTYPE_ALIAS(isalpha,  iswalpha)
+RS_GENERATE_CCTYPE_ALIAS(isalnum,  iswalnum)
+RS_GENERATE_CCTYPE_ALIAS(islower,  iswlower)
+RS_GENERATE_CCTYPE_ALIAS(isupper,  iswupper)
+RS_GENERATE_CCTYPE_ALIAS(isdigit,  iswdigit)
 RS_GENERATE_CCTYPE_ALIAS(isxdigit, iswxdigit)
-RS_GENERATE_CCTYPE_ALIAS(iscntrl, iswcntrl)
-RS_GENERATE_CCTYPE_ALIAS(isgraph, iswgraph)
-RS_GENERATE_CCTYPE_ALIAS(isspace, iswspace)
-RS_GENERATE_CCTYPE_ALIAS(isblank, iswblank)
-RS_GENERATE_CCTYPE_ALIAS(isprint, iswprint)
-RS_GENERATE_CCTYPE_ALIAS(ispunct, iswpunct)
+RS_GENERATE_CCTYPE_ALIAS(iscntrl,  iswcntrl)
+RS_GENERATE_CCTYPE_ALIAS(isgraph,  iswgraph)
+RS_GENERATE_CCTYPE_ALIAS(isspace,  iswspace)
+RS_GENERATE_CCTYPE_ALIAS(isblank,  iswblank)
+RS_GENERATE_CCTYPE_ALIAS(isprint,  iswprint)
+RS_GENERATE_CCTYPE_ALIAS(ispunct,  iswpunct)
 
 #undef RS_GENERATE_CCTYPE_ALIAS
 
+} // end inline namespace cctype
+
 } // namespace core 
 } // namespace rstudio
+
+// force our safe wrappers to be used
+using namespace rstudio::core::cctype;
 
 #endif // CORE_STRING_UTILS_HPP
 
