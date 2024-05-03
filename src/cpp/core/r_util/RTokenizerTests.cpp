@@ -217,8 +217,8 @@ void testIdentifiers()
    const char* locale = setlocale(LC_ALL, "C.UTF-8");
    if (locale != nullptr)
    {
-      v.verify(L"\x00C1" L"qc1");
-      v.verify(L"\x00C1" L"qc1" L"\x00C1");
+      v.verify(L"\x00C1" L"qc1");                     // 'Áqc1'
+      v.verify(L"\x00C1" L"qc1" L"\x00C1");           // 'Áqc1Á'
       setlocale(LC_ALL, locale);
    }
 }
