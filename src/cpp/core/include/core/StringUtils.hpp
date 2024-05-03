@@ -326,30 +326,36 @@ std::string consumeStdin(StdinLines kind, unsigned maxChars = 1048576);
 // to allow callers to accidentally pass wchar_t or other non-char types into
 // these functions. then wrap it into a macro to generate code with less pain
 
-#define RS_GENERATE_CCTYPE_ALIAS(__NAME__)                             \
-                                                                       \
-template <typename T>                                                  \
-inline int __NAME__(                                                   \
-    T ch,                                                              \
-    typename std::enable_if<std::is_same<T, char>::value>::type* = 0)  \
-{                                                                      \
-   return std::__NAME__(static_cast<unsigned char>(ch));               \
+#define RS_GENERATE_CCTYPE_ALIAS(__NAME__, __WNAME__)                     \
+                                                                          \
+template <typename T>                                                     \
+inline bool __NAME__(                                                     \
+    T ch,                                                                 \
+    typename std::enable_if<std::is_same<T, char>::value>::type* = 0)     \
+{                                                                         \
+   return std::__NAME__(static_cast<unsigned char>(ch)) != 0;             \
+}                                                                         \
+                                                                          \
+template <typename T>                                                     \
+inline bool __WNAME__(                                                    \
+    T ch,                                                                 \
+    typename std::enable_if<std::is_same<T, wchar_t>::value>::type* = 0)  \
+{                                                                         \
+   return std::__WNAME__(static_cast<wchar_t>(ch)) != 0;                  \
 }
 
-RS_GENERATE_CCTYPE_ALIAS(isalpha)
-RS_GENERATE_CCTYPE_ALIAS(isalnum)
-RS_GENERATE_CCTYPE_ALIAS(islower)
-RS_GENERATE_CCTYPE_ALIAS(isupper)
-RS_GENERATE_CCTYPE_ALIAS(isdigit)
-RS_GENERATE_CCTYPE_ALIAS(isxdigit)
-RS_GENERATE_CCTYPE_ALIAS(iscntrl)
-RS_GENERATE_CCTYPE_ALIAS(isgraph)
-RS_GENERATE_CCTYPE_ALIAS(isspace)
-RS_GENERATE_CCTYPE_ALIAS(isblank)
-RS_GENERATE_CCTYPE_ALIAS(isprint)
-RS_GENERATE_CCTYPE_ALIAS(ispunct)
-RS_GENERATE_CCTYPE_ALIAS(tolower)
-RS_GENERATE_CCTYPE_ALIAS(toupper)
+RS_GENERATE_CCTYPE_ALIAS(isalpha, iswalpha)
+RS_GENERATE_CCTYPE_ALIAS(isalnum, iswalnum)
+RS_GENERATE_CCTYPE_ALIAS(islower, iswlower)
+RS_GENERATE_CCTYPE_ALIAS(isupper, iswupper)
+RS_GENERATE_CCTYPE_ALIAS(isdigit, iswdigit)
+RS_GENERATE_CCTYPE_ALIAS(isxdigit, iswxdigit)
+RS_GENERATE_CCTYPE_ALIAS(iscntrl, iswcntrl)
+RS_GENERATE_CCTYPE_ALIAS(isgraph, iswgraph)
+RS_GENERATE_CCTYPE_ALIAS(isspace, iswspace)
+RS_GENERATE_CCTYPE_ALIAS(isblank, iswblank)
+RS_GENERATE_CCTYPE_ALIAS(isprint, iswprint)
+RS_GENERATE_CCTYPE_ALIAS(ispunct, iswpunct)
 
 #undef RS_GENERATE_CCTYPE_ALIAS
 

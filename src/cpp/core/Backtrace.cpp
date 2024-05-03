@@ -52,7 +52,7 @@ void printBacktrace(std::ostream& os)
    
    os << "Backtrace (most recent calls first):" << std::endl << std::endl;
    
-   std::size_t maxDepth = 100;
+   const std::size_t maxDepth = 100;
    std::size_t stackDepth;
    
    void* stackAddrs[maxDepth];

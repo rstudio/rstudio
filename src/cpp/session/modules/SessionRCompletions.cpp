@@ -92,14 +92,14 @@ bool isOperator(char character)
 
 } // end anonymous namespace
 
-std::string finishExpression(const std::string& expression)
+std::wstring finishExpression(const std::wstring& expression)
 {
    using namespace string_utils;
    
-   std::string result;
-   std::vector<char> terminators;
+   std::wstring result;
+   std::vector<wchar_t> terminators;
 
-   char top = '\0';
+   auto top = L'\0';
    terminators.push_back(top);
 
    bool inString = false;
@@ -109,14 +109,14 @@ std::string finishExpression(const std::string& expression)
 
    for (int i = 0, n = expression.size(); i < n; i++)
    {
-      char ch = expression[i];
+      wchar_t ch = expression[i];
       
       // skip over whitespace
-      if (isspace(ch))
+      if (std::iswspace(ch))
       {
          // if we see a newline, assume it ends the current expression, so it's okay
          // to have consecutive identifiers if a newline separates them
-         if (sawIdentifier && ch == '\n')
+         if (sawIdentifier && ch == L'\n')
             sawIdentifier = false;
          
          // only add whitespace if we didn't previously see an identifier character
@@ -140,9 +140,9 @@ std::string finishExpression(const std::string& expression)
       // where the user hasn't yet "filled in" the rhs of an operator
       if (sawOperator)
       {
-         if (ch == ')' || ch == '}' || ch == ']')
+         if (ch == L')' || ch == L'}' || ch == L']')
          {
-            result.push_back('.');
+            result.push_back(L'.');
          }
       }
 
@@ -158,7 +158,7 @@ std::string finishExpression(const std::string& expression)
             continue;
          }
 
-         if (ch == '\\')
+         if (ch == L'\\')
          {
             inEscape = true;
             continue;
@@ -182,19 +182,19 @@ std::string finishExpression(const std::string& expression)
       //
       // TODO: This is wrong for multibyte characters; we should really start
       // using a proper library for handling UTF-8 inputs...
-      sawIdentifier = isalnum(ch) || ch == '.' || ch == '_';
+      sawIdentifier = std::iswalnum(ch) || ch == L'.' || ch == L'_';
 
       if (ch == top)
       {
          terminators.pop_back();
          top = terminators.back();
       }
-      else if (ch == '(' || ch == '{' || ch == '[')
+      else if (ch == L'(' || ch == L'{' || ch == L'[')
       {
          top = ends(ch);
          terminators.push_back(top);
       }
-      else if (ch == '"' || ch == '`' || ch == '\'')
+      else if (ch == L'"' || ch == L'`' || ch == L'\'')
       {
          top = ch;
          inString = true;
@@ -204,13 +204,18 @@ std::string finishExpression(const std::string& expression)
    
    // finish an operator if necessary
    if (sawOperator)
-      result.push_back('.');
+      result.push_back(L'.');
 
    // append to the output
    for (std::size_t i = terminators.size() - 1; i > 0; --i)
       result.push_back(terminators[i]);
 
    return result;
+}
+
+std::string finishExpression(const std::string& expression)
+{
+   return string_utils::wideToUtf8(finishExpression(string_utils::utf8ToWide(expression)));
 }
 
 namespace {
@@ -222,8 +227,17 @@ SEXP rs_finishExpression(SEXP stringSEXP)
 
    std::vector<std::string> output;
    output.reserve(n);
+
+   void* vmax = vmaxget();
    for (int i = 0; i < n; ++i)
-      output.push_back(finishExpression(CHAR(STRING_ELT(stringSEXP, i))));
+   {
+      SEXP charSEXP = STRING_ELT(stringSEXP, i);
+      const char* inputText = Rf_translateCharUTF8(charSEXP);
+      std::wstring inputTextWide = string_utils::utf8ToWide(inputText);
+      std::wstring finishedExprWide = finishExpression(inputTextWide);
+      output.push_back(string_utils::wideToUtf8(finishedExprWide));
+   }
+   vmaxset(vmax);
 
    return r::sexp::create(output, &rProtect);
 }

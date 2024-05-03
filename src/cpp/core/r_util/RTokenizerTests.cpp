@@ -213,8 +213,14 @@ void testIdentifiers()
    v.verify(L"`$@!$@#$`");
    v.verify(L"`a\n\"'b`");
 
-   v.verify(L"\x00C1" L"qc1");
-   v.verify(L"\x00C1" L"qc1" L"\x00C1");
+   // these tests assume a unicode locale
+   const char* locale = setlocale(LC_ALL, "C.UTF-8");
+   if (locale != nullptr)
+   {
+      v.verify(L"\x00C1" L"qc1");
+      v.verify(L"\x00C1" L"qc1" L"\x00C1");
+      setlocale(LC_ALL, locale);
+   }
 }
 
 void testWhitespace()

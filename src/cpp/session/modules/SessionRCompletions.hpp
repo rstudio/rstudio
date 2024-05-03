@@ -32,6 +32,7 @@ namespace r_packages {
 core::Error initialize();
 
 std::string finishExpression(const std::string& expression);
+std::wstring finishExpression(const std::wstring& expression);
 
 } // namespace r_completions
 } // namespace modules
