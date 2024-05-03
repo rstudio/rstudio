@@ -354,7 +354,7 @@ template <typename T>                                          \
 inline bool __WNAME__(T ch)                                    \
 {                                                              \
    static_assert(std::is_same<T, wchar_t>::value, "");         \
-   return std::__NAME__(static_cast<wchar_t>(ch)) != 0;        \
+   return std::__WNAME__(static_cast<wchar_t>(ch)) != 0;       \
 }                                                              \
 
 RS_GENERATE_CCTYPE_ALIAS(isalpha,  iswalpha)
