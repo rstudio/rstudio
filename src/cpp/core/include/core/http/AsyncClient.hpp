@@ -353,12 +353,18 @@ private:
    virtual void connectAndWriteRequest() = 0;
    virtual std::string getDefaultHostHeader() = 0;
 
+   // A hook for LocalStreamAsyncClient connections to retry on permission denied errors that show up intermittently
+   virtual bool recentConnectionError(const Error& connectionError)
+   {
+      return false;
+   }
+
    bool retryConnectionIfRequired(const Error& connectionError,
                                   Error* pOtherError)
    {
       // retry if this is a connection unavailable error and the
       // caller has provided a connection retry profile
-      if (http::isConnectionUnavailableError(connectionError) &&
+      if ((http::isConnectionUnavailableError(connectionError) || recentConnectionError(connectionError)) &&
           !connectionRetryContext_.profile.empty())
       {
          // if this is our first retry then set our stop trying time
