@@ -59,6 +59,7 @@ public:
    {
       long size = 0;
       long resident = 0;
+
       try 
       {
          std::ifstream statm("/proc/self/statm");
@@ -74,7 +75,9 @@ public:
       }
 
       long pageKib = ::sysconf(_SC_PAGE_SIZE) / 1024;
-      *pUsedKb = resident * pageKib;
+      long long usedKb = resident * pageKib;
+      *pUsedKb = usedKb >= LONG_MAX ? LONG_MAX : static_cast<long>(usedKb);
+
       *pProvider = MemoryProviderLinuxProcFs;
       return Success();
    }
