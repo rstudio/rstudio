@@ -25,9 +25,18 @@ namespace core {
 template <typename T>
 class Truncating
 {
-   static_assert(std::is_integral<T>::value, "");
+   static_assert(std::is_integral_v<T> || std::is_floating_point_v<T>, "");
    static const T min = std::numeric_limits<T>::min();
    static const T max = std::numeric_limits<T>::max();
+
+   template <typename U>
+   void static_assert_compatible_types()
+   {
+      static_assert(sizeof(T) >= sizeof(U), "");
+      static_assert(std::is_floating_point_v<T> == std::is_floating_point_v<U>, "");
+      static_assert(std::is_integral_v<T> == std::is_integral_v<U>, "");
+      static_assert(std::is_signed_v<T> == std::is_signed_v<U>, "");
+   }
 
 public:
 
@@ -41,6 +50,7 @@ public:
       return value_;
    }
 
+   // Addition ----
    static T add(const T& lhs, const T& rhs)
    {
       if (rhs > 0 && lhs > (max - rhs))
@@ -62,6 +72,27 @@ public:
       return add(value_, rhs);
    }
 
+   Truncating<T> operator+(const Truncating<T>& rhs)
+   {
+      return add(value_, rhs);
+   }
+
+   template <typename U>
+   Truncating<T> operator+(const U& rhs)
+   {
+      static_assert_compatible_types<U>();
+      return add(value_, static_cast<T>(rhs));
+   }
+
+   template <typename U>
+   Truncating<T> operator+(const Truncating<U>& rhs)
+   {
+      static_assert_compatible_types<U>();
+      return add(value_, static_cast<T>(rhs));
+   }
+
+
+   // Subtraction ----
    static T sub(const T& lhs, const T& rhs)
    {
       if (rhs > 0 && lhs < min + rhs)
@@ -83,6 +114,27 @@ public:
       return sub(value_, rhs);
    }
 
+   Truncating<T> operator-(const Truncating<T>& rhs)
+   {
+      return sub(value_, rhs);
+   }
+
+   template <typename U>
+   Truncating<T> operator-(const U& rhs)
+   {
+      static_assert_compatible_types<U>();
+      return sub(value_, static_cast<T>(rhs));
+   }
+
+   template <typename U>
+   Truncating<T> operator-(const Truncating<U>& rhs)
+   {
+      static_assert_compatible_types<U>();
+      return sub(value_, static_cast<T>(rhs));
+   }
+
+
+   // Multiplication ----
    static T mul(const T& lhs, const T& rhs)
    {
       if (lhs == 0 || rhs == 0)
@@ -134,6 +186,26 @@ public:
    {
       return mul(value_, rhs);
    }
+
+   Truncating<T> operator*(const Truncating<T>& rhs)
+   {
+      return mul(value_, rhs);
+   }
+
+   template <typename U>
+   Truncating<T> operator*(const U& rhs)
+   {
+      static_assert_compatible_types<U>();
+      return mul(value_, static_cast<U>(rhs));
+   }
+
+   template <typename U>
+   Truncating<T> operator*(const Truncating<U>& rhs)
+   {
+      static_assert_compatible_types<U>();
+      return mul(value_, static_cast<U>(rhs));
+   }
+
 
 private:
    T value_;

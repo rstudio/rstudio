@@ -323,6 +323,14 @@ test_context("Truncating")
       auto y = x + 1;
       expect_true(y == INT_MAX);
    }
+
+   test_that("we can interact with types of lower size")
+   {
+      Truncating<long> x = 4;
+      Truncating<short> y = 4;
+      expect_equal(x + y, 8);
+      expect_equal(x - y, 0);
+   }
 }
 
 } // namespace unit_tests
