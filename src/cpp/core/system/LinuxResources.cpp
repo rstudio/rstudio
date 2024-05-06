@@ -75,7 +75,7 @@ public:
       }
 
       long pageKib = ::sysconf(_SC_PAGE_SIZE) / 1024;
-      long long usedKb = resident * pageKib;
+      long long usedKb = static_cast<long long>(resident) * pageKib;
       *pUsedKb = usedKb >= LONG_MAX ? LONG_MAX : static_cast<long>(usedKb);
 
       *pProvider = MemoryProviderLinuxProcFs;
