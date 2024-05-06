@@ -302,8 +302,8 @@ public class FindOutputPresenter extends BasePresenter
                      @Override
                      public void execute()
                      {
-                        view_.setStopReplaceButtonVisible(true);
                         stopAndClear();
+                        view_.setStopReplaceButtonVisible(true);
                         FileSystemItem searchPath =
                                                   FileSystemItem.createDir(dialogState_.getPath());
                         JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
