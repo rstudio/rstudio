@@ -19,12 +19,14 @@
 #include <string>
 #include <iostream>
 
+#include <shared_core/json/Json.hpp>
+
 #include <core/Algorithm.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/Truncating.hpp>
 #include <core/collection/LruCache.hpp>
 #include <core/collection/Position.hpp>
 #include <core/http/Request.hpp>
-#include <shared_core/json/Json.hpp>
 
 #include <core/system/Types.hpp>
 
@@ -286,6 +288,33 @@ test_context("Options")
          expect_true(options[i].first == options2[i].first);
          expect_true(options[i].second == options2[i].second);
       }
+   }
+}
+
+test_context("Truncating")
+{
+   test_that("Truncating<T> handles various kinds of overflow")
+   {
+      expect_true(Truncating<int>(42) + INT_MAX == INT_MAX);
+      expect_true(Truncating<int>(42) + INT_MIN == 42 + INT_MIN);
+      expect_true(Truncating<int>(42) - INT_MAX == 42 - INT_MAX);
+      expect_true(Truncating<int>(42) - INT_MIN == INT_MAX);
+      expect_true(Truncating<int>(42) * INT_MAX == INT_MAX);
+      expect_true(Truncating<int>(42) * INT_MIN == INT_MIN);
+
+      expect_true(Truncating<int>(-42) + INT_MAX == -42 + INT_MAX);
+      expect_true(Truncating<int>(-42) + INT_MIN == INT_MIN);
+      expect_true(Truncating<int>(-42) - INT_MAX == INT_MIN);
+      expect_true(Truncating<int>(-42) - INT_MIN == -42 - INT_MIN);
+      expect_true(Truncating<int>(-42) * INT_MAX == INT_MIN);
+      expect_true(Truncating<int>(-42) * INT_MIN == INT_MAX);
+   }
+
+   test_that("example usage works as expected")
+   {
+      auto x = Truncating<int>(INT_MAX) + 42;
+      auto y = x + 1;
+      expect_true(y == INT_MAX);
    }
 }
 
