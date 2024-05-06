@@ -80,7 +80,7 @@ function help() {
 }
 
 # Default values
-PATCH=0
+PATCH=""
 DEBUG=false
 CUSTOM_BUILD_TYPE=""
 HELP=false
