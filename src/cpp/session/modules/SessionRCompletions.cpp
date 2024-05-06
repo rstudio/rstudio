@@ -15,6 +15,8 @@
 
 #include "SessionRCompletions.hpp"
 
+#include <cctype>
+
 #include <gsl/gsl>
 
 #include <core/Exec.hpp>
@@ -112,7 +114,7 @@ std::string finishExpression(const std::string& expression)
       char ch = expression[i];
       
       // skip over whitespace
-      if (isspace(ch))
+      if (std::isspace((unsigned char) ch))
       {
          // if we see a newline, assume it ends the current expression, so it's okay
          // to have consecutive identifiers if a newline separates them
@@ -179,7 +181,7 @@ std::string finishExpression(const std::string& expression)
       sawOperator = isOperator(ch);
       
       // check for identifiers
-      sawIdentifier = isalnum(ch) || ch == '.' || ch == '_';
+      sawIdentifier = std::isalnum((unsigned char) ch) || ch == '.' || ch == '_';
 
       if (ch == top)
       {
