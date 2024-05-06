@@ -26,6 +26,8 @@ template <typename T>
 class Truncating
 {
    static_assert(std::is_integral<T>::value, "");
+   static const T min = std::numeric_limits<T>::min();
+   static const T max = std::numeric_limits<T>::max();
 
 public:
 
@@ -39,40 +41,96 @@ public:
       return value_;
    }
 
+   static T add(const T& lhs, const T& rhs)
+   {
+      if (rhs > 0 && lhs > (max - rhs))
+      {
+         return max;
+      }
+      else if (rhs < 0 && lhs < (min - rhs))
+      {
+         return min;
+      }
+      else
+      {
+         return lhs + rhs;
+      }
+   }
+
    Truncating<T> operator+(const T& rhs)
    {
-      T result = 0;
-      if (__builtin_add_overflow(value_, rhs, &result))
+      return add(value_, rhs);
+   }
+
+   static T sub(const T& lhs, const T& rhs)
+   {
+      if (rhs > 0 && lhs < min + rhs)
       {
-         result = (rhs >= 0)
-               ? std::numeric_limits<T>::max()
-               : std::numeric_limits<T>::min();
+         return min;
       }
-      return Truncating<T>(result);
+      else if (rhs < 0 && lhs > max + rhs)
+      {
+         return max;
+      }
+      else
+      {
+         return lhs - rhs;
+      }
    }
 
    Truncating<T> operator-(const T& rhs)
    {
-      T result = 0;
-      if (__builtin_sub_overflow(value_, rhs, &result))
+      return sub(value_, rhs);
+   }
+
+   static T mul(const T& lhs, const T& rhs)
+   {
+      if (lhs == 0 || rhs == 0)
       {
-         result = (rhs >= 0)
-               ? std::numeric_limits<T>::min()
-               : std::numeric_limits<T>::max();
+         return 0;
       }
-      return Truncating<T>(result);
+
+      T overflow = (lhs > 0 != rhs > 0) ? min : max;
+
+      if (lhs > 0)
+      {
+         if (rhs > 0)
+         {
+            if (lhs > (max / rhs))
+            {
+               return overflow;
+            }
+         }
+         else
+         {
+            if (rhs < (min / lhs))
+            {
+               return overflow;
+            }
+         }
+      }
+      else
+      {
+         if (rhs > 0)
+         {
+            if (lhs < (min / rhs))
+            {
+               return overflow;
+            }
+         }
+         else
+         {
+            if (rhs < (max / lhs))
+            {
+               return overflow;
+            }
+         }
+      }
    }
 
    Truncating<T> operator*(const T& rhs)
    {
-      T result = 0;
-      if (__builtin_mul_overflow(value_, rhs, &result))
-      {
-         result = ((value_ >= 0) == (rhs >= 0))
-               ? std::numeric_limits<T>::max()
-               : std::numeric_limits<T>::min();
-      }
-      return result;
+      return mul(value_, rhs);
    }
 
 private:
