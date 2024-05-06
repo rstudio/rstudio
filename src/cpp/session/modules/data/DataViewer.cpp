@@ -223,8 +223,7 @@ int safeDim(SEXP data, DimType dimType)
    return 0;
 }
 
-// CachedFrame represents an object that's currently active in a data viewer
-// window.
+// CachedFrame represents an object that's currently active in a data viewer window.
 struct CachedFrame
 {
    CachedFrame(const std::string& env, const std::string& obj, SEXP sexp):
@@ -253,8 +252,10 @@ struct CachedFrame
       // cache number of columns
       ncol = safeDim(sexp, DIM_COLS);
    };
-
-   CachedFrame() {};
+   
+   // Class is movable but not copyable
+   CachedFrame(CachedFrame&&) = default;
+   CachedFrame(const CachedFrame&) = delete;
 
    // The location of the frame (if we know it)
    std::string envName;
@@ -290,13 +291,14 @@ struct CachedFrame
    std::vector<int> workingOrderCols;
    std::vector<std::string> workingOrderDirs;
 
-   // NB: There's no protection on this SEXP and it may be a stale pointer!
-   // Used only to test for changes.
-   SEXP observedSEXP;
+   // The R underlying object being monitored
+   // Protection is required as we introspect the object for changes
+   r::sexp::PreservedSEXP observedSEXP;
 };
 
 // The set of active frames. Used primarily to check each for changes.
-std::map<std::string, CachedFrame> s_cachedFrames;
+using CachedFrames = std::map<std::string, CachedFrame>;
+CachedFrames s_cachedFrames;
 
 std::string viewerCacheDir() 
 {
@@ -895,7 +897,10 @@ Error getGridData(const http::Request& request,
          SEXP objSEXP = findInNamedEnvir(envName, objName);
          auto it = s_cachedFrames.find(cacheKey);
          if (it == s_cachedFrames.end())
-            s_cachedFrames[cacheKey] = CachedFrame(envName, objName, objSEXP);
+         {
+            // CachedFrame cachedFrame(envName, objName, objSEXP);
+            s_cachedFrames.emplace(cacheKey, CachedFrame(envName, objName, objSEXP));
+         }
       }
 
       // attempt to find the original copy of the object (loads from cache key
@@ -1084,14 +1089,15 @@ void onDetectChanges(module_context::ChangeSource source)
       r::exec::RFunction(".rs.removeWorkingData", i->first).call();
          
       // check for changes in the SEXP itself
-      bool sexpChanged = sexp != i->second.observedSEXP;
+      SEXP observedSEXP = i->second.observedSEXP.get();
+      bool sexpChanged = sexp != observedSEXP;
       
       // it's possible that the object was mutated in place;
       // attempt to detect this as well
       bool typeChanged = false;
-      if (i->second.observedSEXP != nullptr)
+      if (observedSEXP != nullptr)
       {
-         SEXP oldClass = Rf_getAttrib(i->second.observedSEXP, R_ClassSymbol);
+         SEXP oldClass = Rf_getAttrib(observedSEXP, R_ClassSymbol);
          SEXP newClass = Rf_getAttrib(sexp, R_ClassSymbol);
          typeChanged = !R_compute_identical(oldClass, newClass, 0);
       }
@@ -1130,7 +1136,7 @@ void onDetectChanges(module_context::ChangeSource source)
          module_context::enqueClientEvent(event);
 
          // replace old frame with new
-         s_cachedFrames[i->first] = newFrame;
+         s_cachedFrames.emplace(i->first, std::move(newFrame));
       }
    }
 }
