@@ -126,6 +126,8 @@ public:
             }
          }
       }
+
+      return lhs * rhs;
    }
 
    Truncating<T> operator*(const T& rhs)

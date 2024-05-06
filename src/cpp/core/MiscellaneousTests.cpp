@@ -293,6 +293,13 @@ test_context("Options")
 
 test_context("Truncating")
 {
+   test_that("Truncating<T> handles non-overflowing operations")
+   {
+      expect_true(Truncating<int>(4) + 4 == 8);
+      expect_true(Truncating<int>(4) - 4 == 0);
+      expect_true(Truncating<int>(4) * 4 == 16);
+   }
+
    test_that("Truncating<T> handles various kinds of overflow")
    {
       expect_true(Truncating<int>(42) + INT_MAX == INT_MAX);
