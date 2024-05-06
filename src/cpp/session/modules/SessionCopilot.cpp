@@ -281,7 +281,7 @@ FilePath copilotAgentPath()
    {
       if (copilotPath.isDirectory())
       {
-         for (const std::string& suffix : { "dist/agent.js", "agent.js" })
+         for (auto&& suffix : { "dist/agent.js", "agent.js" })
          {
             FilePath candidatePath = copilotPath.completePath(suffix);
             if (candidatePath.exists())

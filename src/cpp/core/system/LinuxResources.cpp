@@ -47,6 +47,10 @@ class LinuxMemoryProvider
 {
 public:
 
+   virtual ~LinuxMemoryProvider()
+   {
+   }
+
    virtual Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider) = 0;
 
    virtual Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider) = 0;

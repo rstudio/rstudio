@@ -26,9 +26,15 @@ test_context("r_completions")
 {
    test_that("finishExpression works")
    {
-      expect_true(
-               finishExpression("(abc") == "(abc)"
-               );
+      expect_true(finishExpression("(abc") == "(abc)");
+      expect_true(finishExpression(L"(abc") == L"(abc)");
+   }
+
+   https://github.com/rstudio/rstudio/issues/14625
+   test_that("finishExpression accepts non-ASCII inputs")
+   {
+      expect_true(finishExpression(L"(你好") == L"(你好)");
+      expect_true(finishExpression(L"(こんにちは") == L"(こんにちは)");
    }
 }
 
