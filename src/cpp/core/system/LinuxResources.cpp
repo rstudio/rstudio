@@ -75,8 +75,12 @@ public:
       }
 
       long pageKib = ::sysconf(_SC_PAGE_SIZE) / 1024;
-      long long usedKb = static_cast<long long>(resident) * pageKib;
-      *pUsedKb = usedKb >= LONG_MAX ? LONG_MAX : static_cast<long>(usedKb);
+
+      // avoid and handle potential overflow
+      if (__builtin_smull_overflow(resident, pageKib, pUsedKb))
+      {
+         *pUsedKb = LONG_MAX;
+      }
 
       *pProvider = MemoryProviderLinuxProcFs;
       return Success();
