@@ -25,7 +25,7 @@ namespace core {
 template <typename T>
 class Truncating
 {
-   static_assert(std::is_integral_v<T> || std::is_floating_point_v<T>, "");
+   static_assert(std::is_integral<T>::value || std::is_floating_point<T>::value, "");
    static const T min = std::numeric_limits<T>::min();
    static const T max = std::numeric_limits<T>::max();
 
@@ -33,9 +33,9 @@ class Truncating
    void static_assert_compatible_types()
    {
       static_assert(sizeof(T) >= sizeof(U), "");
-      static_assert(std::is_floating_point_v<T> == std::is_floating_point_v<U>, "");
-      static_assert(std::is_integral_v<T> == std::is_integral_v<U>, "");
-      static_assert(std::is_signed_v<T> == std::is_signed_v<U>, "");
+      static_assert(std::is_floating_point<T>::value == std::is_floating_point<U>::value, "");
+      static_assert(std::is_integral<T>::value == std::is_integral<U>::value, "");
+      static_assert(std::is_signed<T>::value == std::is_signed<U>::value, "");
    }
 
 public:
