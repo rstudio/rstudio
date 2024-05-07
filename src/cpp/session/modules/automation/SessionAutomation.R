@@ -207,10 +207,33 @@
    # Ensure that the new RStudio instance uses temporary storage.
    stateDir <- tempfile("rstudio-automation-state-")
    dir.create(stateDir, recursive = TRUE)
-   envVars[["RSTUDIO_CONFIG_HOME"]] <- file.path(stateDir, "config-home")
-   envVars[["RSTUDIO_CONFIG_DIR"]]  <- file.path(stateDir, "config-dir")
-   envVars[["RSTUDIO_DATA_HOME"]]   <- file.path(stateDir, "data-home")
    
+   configHome <- file.path(stateDir, "config-home")
+   configDir  <- file.path(stateDir, "config-dir")
+   dataHome   <- file.path(stateDir, "data-home")
+   
+   envVars[["RSTUDIO_CONFIG_HOME"]] <- configHome
+   envVars[["RSTUDIO_CONFIG_DIR"]]  <- configDir
+   envVars[["RSTUDIO_DATA_HOME"]]   <- dataHome
+   
+   # Create a default JSON configuration file.
+   config <- list(
+      auto_save_on_idle = "none",
+      continue_comments_on_newline = FALSE,
+      windows_terminal_shell = "win-cmd"
+   )
+   
+   configJson <- .rs.toJSON(config, unbox = TRUE)
+   configPath <- file.path(configHome, "rstudio-prefs.json")
+   .rs.ensureDirectory(dirname(configPath))
+   writeLines(configJson, con = configPath)
+   
+   # Avoid displaying modal dialogs on startup.
+   envVars[["RS_NO_SPLASH"]] <- "1"
+   envVars[["RS_CRASH_HANDLER_PROMPT"]] <- "false"
+   envVars[["RSTUDIO_DISABLE_CHECK_FOR_UPDATES"]] <- "1"
+   
+   # Start up RStudio.
    withr::with_envvar(envVars, {
       remoteDebuggingPortArg <- sprintf("--remote-debugging-port=%i", port)
       system2(rstudioPath, remoteDebuggingPortArg, wait = FALSE)
@@ -291,62 +314,9 @@
    
 })
 
-if (FALSE)
+.rs.addFunction("automation.run", function()
 {
-   # Create automation client.
-   client <- .rs.automation.initialize()
-   
-   # Get current target, and attach to it.
-   .rs.setVar("automation.sessionId", "")
-   
-   targets <- client$Target.getTargets()
-   currentTargetId <- targets$targetInfos[[1]]$targetId
-   response <- client$Target.attachToTarget(targetId = currentTargetId, flatten = TRUE)
-   .rs.setVar("automation.sessionId", response$sessionId)
-
-   # Try running some JavaScript.
-   client$Runtime.evaluate(expression = "1 + 1")
-   
-   # Try running some command.
-   client$Input.insertText(text = "Hello, world!")
-   
-   mod <- 0L
-   Sys.sleep(5)
-   client$Input.dispatchKeyEvent(
-      type = "rawKeyDown",
-      key = "Enter",
-      code = "Enter",
-      windowsVirtualKeyCode = 13L,
-      nativeVirtualKeyCode = 13L
-   )
-   client$Input.dispatchKeyEvent(type = "char", text = "\r", modifiers = mod)
-   client$Input.dispatchKeyEvent(type = "keyUp", text = "\r", modifiers = mod)
-   
-   client$Input.dispatchKeyEvent(type = "keyDown", code = "KeyA")
-   client$Runtime.evaluate(expression = "alert('Hello')")
-   
-   # # List the available targets.
-   # targets <- .rs.automation.sendSynchronousRequest(
-   #    socket = client$.socket,
-   #    method = "Target.getTargets"
-   # )
-   # 
-   # sessionId <- .rs.automation.sendSynchronousRequest(
-   #    socket = client$.socket,
-   #    method = "Target.attachToTarget",
-   #    params = list(targetId = targets$result$targetInfos[[2]]$targetId)
-   # )
-   # 
-   # .rs.automation.sendSynchronousRequest(
-   #    socket = client$.socket,
-   #    method = "Target.activateTarget",
-   #    params = list(targetId = targets$result$targetInfos[[2]]$targetId)
-   # )
-   # 
-   # .rs.automation.sendSynchronousRequest(
-   #    socket    = client$.socket,
-   #    method    = "Runtime.evaluate",
-   #    sessionId =
-   #    params = list(expression = "1 + 1")
-   # )
-}
+   projectRoot <- .rs.api.getActiveProject()
+   entrypoint <- file.path(projectRoot, "src/cpp/tests/automation/testthat.R")
+   source(entrypoint)
+})

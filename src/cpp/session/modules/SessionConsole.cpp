@@ -212,10 +212,14 @@ void syncConsoleColorEnv()
 }
 
 Error initialize()
-{    
-   if (!(session::options().verifyInstallation() ||
+{
+   bool isAutomated =
+         session::options().verifyInstallation() ||
          session::options().runTests() ||
-         !session::options().runScript().empty()))
+         session::options().runAutomation() ||
+         !session::options().runScript().empty();
+   
+   if (!isAutomated)
    {
       // capture standard streams
       Error error = initializeOutputCapture();

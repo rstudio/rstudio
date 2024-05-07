@@ -798,7 +798,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
-   if (!rsession::options().runTests())
+   bool isTesting =
+         rsession::options().runTests() ||
+         rsession::options().runAutomation();
+   
+   if (!isTesting)
    {
       rsession::persistentState().setAbend(true);
    }
@@ -1381,6 +1385,18 @@ void rSerialization(int action, const FilePath& targetPath)
 }
 
 void rRunTests()
+{
+   // run tests
+   int status = tests::run();
+   
+   // try to clean up session
+   rCleanup(true);
+   
+   // exit if we haven't already
+   exitEarly(status);
+}
+
+void rRunAutomation()
 {
    // run tests
    int status = tests::run();
@@ -2509,7 +2525,13 @@ int main(int argc, char * const argv[])
       
       // set test callback if enabled
       if (options.runTests())
+      {
          rCallbacks.runTests = rRunTests;
+      }
+      else if (options.runAutomation())
+      {
+         rCallbacks.runTests = rRunAutomation;
+      }
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);

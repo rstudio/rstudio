@@ -2,10 +2,11 @@
 library(testthat)
 
 remote <- .rs.automation.createRemote()
+client <- remote$client
 
 test_that("Quarto Documents are highlighted as expected", {
    
-   document <- .rs.heredoc('
+   documentContents <- .rs.heredoc('
       ---
       title: R Markdown Document
       ---
@@ -17,17 +18,31 @@ test_that("Quarto Documents are highlighted as expected", {
       1 + 1
    ')
    
-   remote$documentExecute(".Rmd", document, {
+   remote$documentExecute(".Rmd", documentContents, {
+      tokens <- remote$aceLineTokens(8L)
+      expect_length(tokens, 1L)
+      expect_equal(tokens[[1]]$value, "1 + 1")
+   })
+   
+})
+
+test_that("Sweave documents are highlighted as expected", {
+  
+   documentContents <- .rs.heredoc('
       
-      response <- remote$evaluateJavascript(r'{
-         var container = document.getElementById("rstudio_source_text_editor");
-         var editor = container.env.editor;
-         var tokens = editor.session.getTokens(8);
-         JSON.stringify(tokens[0].value);
-      }')
+      This is a Sweave document.
+      
+      <<>>=
+      
+      @
+      
+   ')
    
-      expect_equal(response$result$value, "\"1 + 1\"")
-   
+   remote$documentExecute(".Rnw", documentContents, {
+      remote$aceSetCursorPosition(3, 0)
+      client$Input.insertText(text = "{ 1 + 1 }")
+      tokens <- remote$aceLineTokens(row = 3L)
+      expect_length(tokens, 5L)
    })
    
 })

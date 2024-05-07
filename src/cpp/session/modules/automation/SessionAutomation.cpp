@@ -21,8 +21,11 @@
 
 #include <core/Exec.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
+using namespace rstudio;
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -33,6 +36,13 @@ namespace automation {
 namespace {
 
 } // end anonymous namespace
+
+Error run()
+{
+   SEXP resultSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   return r::exec::evaluateString(".rs.automation.run()", &resultSEXP, &protect);
+}
 
 Error initialize()
 {

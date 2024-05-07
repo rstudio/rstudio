@@ -115,8 +115,20 @@ void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
    clientEventQueue().add(inputEvent);
 }
 
+bool isIdleSuspendEnabled()
+{
+   std::string override = core::system::getenv("RS_IDLE_SUSPEND_ENABLED");
+   return string_utils::isTruthy(override, true);
+}
+
 bool canSuspend(const std::string& prompt)
 {
+#ifndef RSTUDIO_PACKAGE_BUILD
+   static bool idleSuspendEnabled = isIdleSuspendEnabled();
+   if (!idleSuspendEnabled)
+      return false;
+#endif
+   
    bool suspendIsBlocked = false;
    
    suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveDurableChildren(), suspend::kChildProcess);

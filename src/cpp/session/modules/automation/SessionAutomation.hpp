@@ -27,6 +27,8 @@ namespace session {
 namespace modules {
 namespace automation {
 
+core::Error run();
+
 core::Error initialize();
 
 } // namespace source_control

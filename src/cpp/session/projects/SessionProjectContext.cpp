@@ -539,9 +539,21 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/RStudio.app/",
 
       // ignore things marked .noindex
-      ".noindex/"
+      ".noindex/",
 
    };
+   
+#ifndef RSTUDIO_PACKAGE_BUILD
+   // hard-code some extra ignores for RStudio
+   if (projects::projectContext().hasProject())
+   {
+      FilePath projFilePath = projects::projectContext().file();
+      if (projFilePath.getFilename() == "rstudio.Rproj")
+      {
+         ignores.push_back("/dependencies/common/node/");
+      }
+   }
+#endif
 
    // now add user-defined ignores
    json::Array userIgnores = prefs::userPrefs().fileMonitorIgnoredComponents();
