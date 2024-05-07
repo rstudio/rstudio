@@ -15,6 +15,8 @@
 define("mode/sweave_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
+var Utils = require("mode/utils");
+
 var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
 var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
@@ -24,14 +26,29 @@ var SweaveHighlightRules = function() {
     // regexp must not have capturing parentheses
     // regexps are ordered -> the first match is used
 
+    // Use TeX highlight rules as a base
     this.$rules = new TexHighlightRules().getRules();
 
+    // Embed R highlight rules
+    this.addRules(new RHighlightRules().getRules(), "r-");          // Sweave code chunks
+    this.addRules(new RHighlightRules().getRules(), "r-sexpr-");    // \Sexpr{}
+
+
+    // enter an R code chunk
     this.$rules["start"].unshift({
         token: "comment.codebegin",
         regex: "^\\s*<<.*>>=.*$",
         next: "r-start"
     });
 
+    // exit an R code chunk
+    this.$rules["r-start"].unshift({
+        token: "comment.codeend",
+        regex: "^\\s*@(?:\\s.*)?$",
+        next: "start"
+    });
+
+    // Sweave comments start with an '@'
     this.$rules["start"].unshift({
         token: "comment",
         regex: "^\\s*@(?:\\s.*)?$"
@@ -40,7 +57,7 @@ var SweaveHighlightRules = function() {
     // embed R highlight rules within \Sexpr{}
     this.$rules["start"].unshift({
         regex: "(\\\\Sexpr)([{])",
-        next: "r-start",
+        next: "r-sexpr-start",
         onMatch: function(value, state, stack, line, context) {
             context.sexpr = context.sexpr || {};
             context.sexpr.state = state;
@@ -52,12 +69,8 @@ var SweaveHighlightRules = function() {
         }
     });
 
-    var rRules = new RHighlightRules().getRules();
-    this.addRules(rRules, "r-");
-
-    // special handling for '{' and '}', for Sexpr
-    // embeds
-    this.$rules["r-start"].unshift({
+    // special handling for '{' and '}', for Sexpr embeds
+    this.$rules["r-sexpr-start"].unshift({
         token : "paren.keyword.operator",
         regex : "[{]",
         merge : false,
@@ -67,7 +80,7 @@ var SweaveHighlightRules = function() {
         }
     });
 
-    this.$rules["r-start"].unshift({
+    this.$rules["r-sexpr-start"].unshift({
         token : "paren.keyword.operator",
         regex : "[}]",
         merge : false,
@@ -83,17 +96,6 @@ var SweaveHighlightRules = function() {
         }
     });
 
-    this.$rules["r-start"].unshift({
-        token: "comment.codeend",
-        regex: "^\\s*@(?:\\s.*)?$",
-        next: "start"
-    });
-
-    this.$rules["r-start"].unshift({
-        token: "comment.codebegin",
-        regex: "^<<.*>>=.*$",
-        next: "r-start"
-    });
 };
 
 oop.inherits(SweaveHighlightRules, TextHighlightRules);
