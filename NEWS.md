@@ -15,6 +15,7 @@
 - Fixed an issue where the "Go to directory..." button brought up the wrong dialog (#14501; Desktop)
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
+- Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
 
 #### Posit Workbench
 
