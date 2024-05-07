@@ -197,12 +197,7 @@ endif()
 # yaml-cpp
 set(YAML_CPP_VERSION "0.8.0")
 set(YAML_CPP_REVISION "f7320141120f720aecc4c32be25586e7da9eb978")
-if(RSTUDIO_USE_SYSTEM_YAML_CPP)
-   # NOTE: defines the following CMake variables:
-   # - YAML_CPP_INCLUDE_DIR
-   # - YAML_CPP_LIBRARIES
-   find_package(yaml-cpp REQUIRED)
-elseif(CMAKE_VERSION VERSION_GREATER "3.14")
+if(CMAKE_VERSION VERSION_GREATER "3.14")
 
    if(WIN32)
       add_definitions(-DYAML_CPP_STATIC_DEFINE)
@@ -218,9 +213,14 @@ elseif(CMAKE_VERSION VERSION_GREATER "3.14")
    set(YAML_CPP_INCLUDE_DIR "${yaml-cpp_SOURCE_DIR}/include")
    set(YAML_CPP_LIBRARIES   yaml-cpp::yaml-cpp)
 
-else()
+elseif(NOT RSTUDIO_USE_SYSTEM_YAML_CPP)
    set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/include")
    set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/build/libyaml-cpp.a")
+else()
+   # NOTE: defines the following CMake variables:
+   # - YAML_CPP_INCLUDE_DIR
+   # - YAML_CPP_LIBRARIES
+   find_package(yaml-cpp REQUIRED)
 endif()
 
 if(yaml-cpp_FOUND AND NOT YAML_CPP_LIBRARIES)
