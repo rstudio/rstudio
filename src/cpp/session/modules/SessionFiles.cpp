@@ -397,13 +397,22 @@ Error copyFile(const core::json::JsonRpcRequest& request,
                                   &overwrite);
    if (error)
       return error;
+
    FilePath targetFilePath = module_context::resolveAliasedPath(targetPath);
+   FilePath sourceFilePath = module_context::resolveAliasedPath(sourcePath);
    
    // make sure the target path doesn't exist
    if (targetFilePath.exists())
    {
       if (overwrite)
       {
+         // Treat an attempt to copy a file over itself as a no-op
+         // https://github.com/rstudio/rstudio/issues/14525
+         if (sourceFilePath.getCanonicalPath() == targetFilePath.getCanonicalPath())
+         {
+            return Success();
+         }
+
          Error error = targetFilePath.remove();
          if (error)
          {
@@ -417,9 +426,6 @@ Error copyFile(const core::json::JsonRpcRequest& request,
       }
    }
 
-   // compute the source file path
-   FilePath sourceFilePath = module_context::resolveAliasedPath(sourcePath);
-   
    // copy directories recursively
    Error copyError;
    if (sourceFilePath.isDirectory())
