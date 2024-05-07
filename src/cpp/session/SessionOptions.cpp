@@ -127,8 +127,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 #endif
 
    // build options
-   options_description runTests("tests");
-   options_description runScript("script");
+   options_description automation("automation");
+   options_description tests("tests");
+   options_description script("script");
    options_description verify("verify");
    options_description version("version");
    options_description program("program");
@@ -150,7 +151,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    std::string sessionPortRange;
 
    program_options::OptionsDescription optionsDesc =
-         buildOptions(&runTests, &runScript, &verify, &version, &program, &log, &docs, &www,
+         buildOptions(&automation, &tests, &script, &verify, &version, &program, &log, &docs, &www,
                       &session, &allow, &r, &limits, &external, &git, &user, &copilot, &misc,
                       &saveActionDefault, &sameSite, &sessionPortRange);
 
@@ -158,8 +159,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
    optionsDesc.commandLine.add(verify);
    optionsDesc.commandLine.add(version);
-   optionsDesc.commandLine.add(runTests);
-   optionsDesc.commandLine.add(runScript);
+   optionsDesc.commandLine.add(automation);
+   optionsDesc.commandLine.add(tests);
+   optionsDesc.commandLine.add(script);
    optionsDesc.commandLine.add(program);
    optionsDesc.commandLine.add(log);
    optionsDesc.commandLine.add(docs);

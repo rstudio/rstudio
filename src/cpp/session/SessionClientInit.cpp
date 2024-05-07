@@ -646,6 +646,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // copilot
    sessionInfo["copilot_enabled"] = options.copilotEnabled();
    
+   // automation agent
+   sessionInfo["is_automation_agent"] = options.isAutomationAgent();
+   
    if (projects::projectContext().hasProject())
    {
       projects::RProjectCopilotOptions options;

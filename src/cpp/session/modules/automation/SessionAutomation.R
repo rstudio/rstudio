@@ -236,7 +236,8 @@
    # Start up RStudio.
    withr::with_envvar(envVars, {
       remoteDebuggingPortArg <- sprintf("--remote-debugging-port=%i", port)
-      system2(rstudioPath, remoteDebuggingPortArg, wait = FALSE)
+      args <- c("--automation-agent", remoteDebuggingPortArg)
+      system2(rstudioPath, args, wait = FALSE)
    })
          
    # Wait a bit until we have a new RStudio instance.

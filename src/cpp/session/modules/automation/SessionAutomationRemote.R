@@ -3,10 +3,10 @@
 #
 # Copyright (C) 2024 by Posit Software, PBC
 #
-# Unless you have received this program directly from Posit Software pursuant
+# Unless you have received self program directly from Posit Software pursuant
 # to the terms of a commercial license agreement with Posit Software, then
-# this program is licensed to you under the terms of version 3 of the
-# GNU Affero General Public License. This program is distributed WITHOUT
+# self program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. self program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
 # MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
@@ -17,12 +17,12 @@
 # are given access to a special environment containing:
 #
 # - client: The client instance used to communicate with RStudio,
-# - self / this: The remote instance itself, so that other methods can be used.
+# - self / self: The remote instance itself, so that other methods can be used.
 #
-# This isn't the most idiomatic R code, but it helps ensure that new stateful
+# self isn't the most idiomatic R code, but it helps ensure that new stateful
 # methods can be easily added to the 'remote' instance.
 
-# !diagnostics suppress=client,self,this
+# !diagnostics suppress=client,self,self
 .rs.defineVar("automation.remotePrivateEnv", new.env(parent = .rs.toolsEnv()))
 .rs.defineVar("automation.remote", new.env(parent = emptyenv()))
 
@@ -32,7 +32,6 @@
    assign("client", client, envir = .rs.automation.remote)
    assign("client", client, envir = .rs.automation.remotePrivateEnv)
    assign("self", .rs.automation.remote, envir = .rs.automation.remotePrivateEnv)
-   assign("this", .rs.automation.remote, envir = .rs.automation.remotePrivateEnv)
    .rs.automation.remote
 })
 
@@ -75,6 +74,12 @@
    self$evaluateJavascript(jsCode)
 })
 
+.rs.automation.addRemoteFunction("commandExecute", function(command)
+{
+   code <- .rs.deparse(call(".rs.api.executeCommand", as.character(command)))
+   self$consoleExecute(code)
+})
+
 .rs.automation.addRemoteFunction("consoleExecute", function(code)
 {
    # Make sure the Console pane is focused.
@@ -102,7 +107,7 @@
    
    # Open that document in the attached editor.
    code <- sprintf(".rs.api.documentOpen(\"%s\")", documentPath)
-   this$consoleExecute(code)
+   self$consoleExecute(code)
    
    # TODO: Wait until source editor is focused.
 })
@@ -115,8 +120,8 @@
    
    # Open that document in the attached editor.
    code <- sprintf(".rs.api.documentOpen(\"%s\")", documentPath)
-   this$consoleExecute(code)
-   on.exit(this$documentClose(), add = TRUE)
+   self$consoleExecute(code)
+   on.exit(self$documentClose(), add = TRUE)
    
    # TODO: Wait until source editor is focused.
    
@@ -126,7 +131,7 @@
 
 .rs.automation.addRemoteFunction("documentClose", function()
 {
-   this$consoleExecute(".rs.api.documentClose()")
+   self$consoleExecute(".rs.api.documentClose()")
 })
 
 .rs.automation.addRemoteFunction("domGetNodeId", function(selector)
@@ -147,6 +152,11 @@
 .rs.automation.addRemoteFunction("evaluateJavascript", function(expression)
 {
    client$Runtime.evaluate(expression = expression)
+})
+
+.rs.automation.addRemoteFunction("quit", function()
+{
+   client$Browser.close()
 })
 
 .rs.automation.addRemoteFunction("waitFor", function(callback)
