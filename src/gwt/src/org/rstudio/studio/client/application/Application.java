@@ -234,8 +234,11 @@ public class Application implements ApplicationEventHandlers
             session_.setSessionInfo(sessionInfo);
             
             // initialize application hooks
-            ApplicationAutomationHooks appHooks = pApplicationHooks_.get();
-            appHooks.initialize();
+            if (sessionInfo.isAutomationAgent())
+            {
+               ApplicationAutomationHooks appHooks = pApplicationHooks_.get();
+               appHooks.initialize();
+            }
 
             // load MathJax
             MathJaxLoader.ensureMathJaxLoaded();

@@ -693,7 +693,7 @@ public class SessionInfo extends JavaScriptObject
       return this.copilot_project_options;
    }-*/;
    
-   public final native boolean getIsAutomationAgent() /*-{
+   public final native boolean isAutomationAgent() /*-{
       return this.is_automation_agent;
    }-*/;
 

@@ -73,19 +73,19 @@ public class ApplicationAutomationHooks
    
    private native final void initializeCallbacks()
    /*-{
-      $wnd.rstudio.callbacks = $wnd.rstudio.callbacks || {};
+      $wnd.rstudioCallbacks = $wnd.rstudioCallbacks || {};
    }-*/;
    
    private native final <R> void exportCallback(String name, NullaryCallback<R> callback)
    /*-{
-      $wnd.rstudio.callbacks[name] = $entry(function() {
+      $wnd.rstudioCallbacks[name] = $entry(function() {
          return callback.@org.rstudio.studio.client.application.ApplicationAutomationHooks.NullaryCallback::execute(*)();
       });
    }-*/;
    
    private native final <R, T> void exportCallback(String name, UnaryCallback<R, T> callback)
    /*-{
-      $wnd.rstudio.callbacks[name] = $entry(function(value) {
+      $wnd.rstudioCallbacks[name] = $entry(function(value) {
          return callback.@org.rstudio.studio.client.application.ApplicationAutomationHooks.UnaryCallback::execute(*)(value);
       });
    }-*/;
