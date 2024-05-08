@@ -28,14 +28,14 @@ import com.google.inject.Singleton;
 @Singleton
 public class ApplicationAutomationHooks
 {
-   static interface ExecuteCommandCallback
+   static interface NullaryCallback<R>
    {
-      public void execute(String commandId);
+      public R execute();
    }
    
-   static interface ListCommandsCallback
+   static interface UnaryCallback<R, T>
    {
-      public JsArrayString execute();
+      public R execute(T value);
    }
    
    @Inject
@@ -48,17 +48,18 @@ public class ApplicationAutomationHooks
    {
       initializeCallbacks();
       
-      exportExecuteCommandCallback("executeCommand", new ExecuteCommandCallback()
+      exportCallback("commandExecute", new UnaryCallback<Void, String>()
       {
          @Override
-         public void execute(String commandId)
+         public Void execute(String commandId)
          {
             AppCommand command = commands_.getCommandById(commandId);
             command.execute();
+            return null;
          }
       });
       
-      exportListCommandsCallback("listCommands", new ListCommandsCallback()
+      exportCallback("commandList", new NullaryCallback<JsArrayString>()
       {
          @Override
          public JsArrayString execute()
@@ -72,20 +73,20 @@ public class ApplicationAutomationHooks
    
    private native final void initializeCallbacks()
    /*-{
-      $wnd.rstudioCallbacks = $wnd.rstudio.callbacks || {};
+      $wnd.rstudio.callbacks = $wnd.rstudio.callbacks || {};
    }-*/;
-
-   private native final void exportExecuteCommandCallback(String name, ExecuteCommandCallback callback)
+   
+   private native final <R> void exportCallback(String name, NullaryCallback<R> callback)
    /*-{
-      $wnd.rstudioCallbacks[name] = $entry(function(value) {
-         return callback.@org.rstudio.studio.client.application.ApplicationHooks.ExecuteCommandCallback::execute(*)(value);
+      $wnd.rstudio.callbacks[name] = $entry(function() {
+         return callback.@org.rstudio.studio.client.application.ApplicationAutomationHooks.NullaryCallback::execute(*)();
       });
    }-*/;
    
-   private native final void exportListCommandsCallback(String name, ListCommandsCallback callback)
+   private native final <R, T> void exportCallback(String name, UnaryCallback<R, T> callback)
    /*-{
-      $wnd.rstudioCallbacks[name] = $entry(function(value) {
-         return callback.@org.rstudio.studio.client.application.ApplicationHooks.ListCommandsCallback::execute()();
+      $wnd.rstudio.callbacks[name] = $entry(function(value) {
+         return callback.@org.rstudio.studio.client.application.ApplicationAutomationHooks.UnaryCallback::execute(*)(value);
       });
    }-*/;
    
