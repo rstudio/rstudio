@@ -83,6 +83,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.events.VisualModeSpellingAddToDictionaryEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -1648,6 +1649,9 @@ public class VisualMode implements VisualModeEditorSync,
 
                   // Ensure keyboard shortcuts (e.g. Save File, Run Selected Code) are routed here
                   events_.fireEvent(new EditingTargetSelectedEvent(target_));
+
+                  // Route commands properly when editor is in a secondary window
+                  events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
                }
             });
              
