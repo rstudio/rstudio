@@ -29,7 +29,7 @@ junitResultsFile <- tempfile("junit-", fileext = ".xml")
 junitReporter <- testthat::JunitReporter$new(file = junitResultsFile)
 
 # Run the tests.
-local({
+status <- local({
    
    # Create an automation remote.
    remote <- .rs.automation.createRemote()

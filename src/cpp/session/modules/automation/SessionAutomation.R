@@ -13,7 +13,7 @@
 #
 #
 
-# Global handlers for Websocket messages and responses.
+# Global handlers for WebSocket messages and responses.
 .rs.setVar("automation.callbacks", new.env(parent = emptyenv()))
 .rs.setVar("automation.messageId", 0L)
 .rs.setVar("automation.responses", new.env(parent = emptyenv()))
@@ -22,6 +22,8 @@
 .rs.setVar("automation.client", NULL)
 .rs.setVar("automation.sessionId", NULL)
 
+# The default application mode.
+.rs.setVar("automation.applicationMode", "desktop")
 
 .rs.addFunction("automation.installRequiredPackages", function()
 {
@@ -177,7 +179,52 @@
    
 })
 
-.rs.addFunction("automation.initialize", function(rstudioPath = NULL, port = 9999L)
+.rs.addFunction("automation.applicationPathServer", function()
+{
+   if (.rs.platform.isMacos)
+   {
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+   }
+   else if (.rs.platform.isWindows)
+   {
+      "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"
+   }
+   else
+   {
+      Sys.which("chromium")
+   }
+})
+
+.rs.addFunction("automation.applicationPathDesktop", function()
+{
+   if (.rs.platform.isMacos)
+   {
+      "/Applications/RStudio.app/Contents/MacOS/RStudio"
+   }
+   else if (.rs.platform.isWindows)
+   {
+      "C:/Program Files/RStudio/rstudio.exe"
+   }
+   else
+   {
+      "/usr/bin/rstudio"
+   }
+})
+
+.rs.addFunction("automation.applicationPath", function()
+{
+   override <- Sys.getenv("RSTUDIO_AUTOMATION_APPLICATION_PATH", unset = NA)
+   if (!is.na(override))
+      return(override)
+   
+   switch(
+      .rs.automation.applicationMode,
+      server  = .rs.automation.applicationPathServer(),
+      desktop = .rs.automation.applicationPathDesktop(),
+   )
+})
+
+.rs.addFunction("automation.initialize", function(appPath = NULL, port = 9999L)
 {
    # Make sure all requisite packages are installed.
    .rs.automation.installRequiredPackages()
@@ -190,19 +237,13 @@
       return(.rs.automation.attach(baseUrl))
    
    # No existing session; start a new one and attach to it.
-   if (is.null(rstudioPath))
-   {
-      if (.rs.platform.isMacos)
-      {
-         rstudioPath <- "/Applications/RStudio.app/Contents/MacOS/RStudio"
-      }
-   }
+   appPath <- .rs.nullCoalesce(appPath, .rs.automation.applicationPath())
    
    # TODO: Do something smarter so we can get the PID. For example, start
    # RStudio with a flag indicating it should write its PID to a file at
    # some location.
    oldPid <- suppressWarnings(
-      system(paste("pgrep -nx", basename(rstudioPath)), intern = TRUE)
+      system(paste("pgrep -nx", basename(appPath)), intern = TRUE)
    )
    
    # Set up environment for newly-launched RStudio instance.
@@ -242,14 +283,14 @@
    withr::with_envvar(envVars, {
       remoteDebuggingPortArg <- sprintf("--remote-debugging-port=%i", port)
       args <- c("--automation-agent", remoteDebuggingPortArg)
-      system2(rstudioPath, args, wait = FALSE)
+      system2(appPath, args, wait = FALSE)
    })
          
    # Wait a bit until we have a new RStudio instance.
    while (TRUE)
    {
       newPid <- suppressWarnings(
-         system(paste("pgrep -nx", basename(rstudioPath)), intern = TRUE)
+         system(paste("pgrep -nx", basename(appPath)), intern = TRUE)
       )
       
       if (!identical(oldPid, newPid))
@@ -335,8 +376,11 @@
    
 })
 
-.rs.addFunction("automation.run", function()
+.rs.addFunction("automation.run", function(mode = c("server", "desktop"))
 {
+   mode <- match.arg(mode)
+   .rs.setVar("automation.applicationMode", mode)
+   
    projectRoot <- .rs.api.getActiveProject()
    entrypoint <- file.path(projectRoot, "src/cpp/tests/automation/testthat.R")
    source(entrypoint)
