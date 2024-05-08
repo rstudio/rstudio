@@ -65,4 +65,9 @@ public class RVersionsInfo extends JavaScriptObject
       return this.available_r_versions;
    }-*/;
    
+   public final RVersionSpec getRVersionSpec()
+   {
+      return RVersionSpec.create(getRVersion(), getRVersionHome(),
+                                 getRVersionLabel(), getRVersionModule());
+   }
 }
