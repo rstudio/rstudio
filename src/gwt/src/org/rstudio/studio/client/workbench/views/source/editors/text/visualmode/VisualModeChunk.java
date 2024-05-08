@@ -40,6 +40,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkCallbacks;
@@ -65,11 +66,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextPanmirrorUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.ui.VisualModeCollapseToggle;
+import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -115,6 +118,7 @@ public class VisualModeChunk
                           PanmirrorUIChunkCallbacks chunkCallbacks,
                           DocUpdateSentinel sentinel,
                           TextEditingTarget target,
+                          EventBus events,
                           VisualModeEditorSync sync)
    {
       element_ = element;
@@ -123,6 +127,7 @@ public class VisualModeChunk
       codeExecution_ = target.getCodeExecutor();
       parent_ = target.getDocDisplay();
       target_ = target;
+      events_ = events;
       active_ = false;
       markdownIndex_ = index;
       releaseOnDismiss_ = new ArrayList<>();
@@ -197,6 +202,12 @@ public class VisualModeChunk
       { 
          active_ = true; 
          target_.getVisualMode().setActiveEditor(editor_);
+
+         // Ensure keyboard shortcut commands (e.g. Save File) route here when using multiple source columns
+         events_.fireEvent(new EditingTargetSelectedEvent(target_));
+
+         // Route commands properly when editor is in a secondary window
+         events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
       }));
       releaseOnDismiss_.add(editor_.addBlurHandler((evt) ->
       {
@@ -1229,6 +1240,7 @@ public class VisualModeChunk
    private final DivElement summary_;
    private final Map<Integer,VisualModeChunkRowState> rowState_;
    private final TextEditingTarget target_;
+   private final EventBus events_;
    private final int markdownIndex_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

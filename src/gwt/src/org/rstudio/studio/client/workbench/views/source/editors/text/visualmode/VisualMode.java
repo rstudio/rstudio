@@ -76,6 +76,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -127,11 +128,12 @@ public class VisualMode implements VisualModeEditorSync,
       docDisplay_ = docDisplay;
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
+      events_ = eventBus;
       progress_ = new ProgressPanel(ProgressImages.createSmall(), 200);
       
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
-      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, releaseOnDismiss, this);
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, events_, releaseOnDismiss, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, docDisplay_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -1643,6 +1645,9 @@ public class VisualMode implements VisualModeEditorSync,
                   // focus has been moved to a new editor context, then we instead
                   // want to clear that state.
                   AceEditor.clearLastFocusedEditor();
+
+                  // Ensure keyboard shortcuts (e.g. Save File, Run Selected Code) are routed here
+                  events_.fireEvent(new EditingTargetSelectedEvent(target_));
                }
             });
              
@@ -1928,6 +1933,7 @@ public class VisualMode implements VisualModeEditorSync,
    private final DocDisplay docDisplay_;   // the parent editor
    private final DirtyState dirtyState_;
    private final DocUpdateSentinel docUpdateSentinel_;
+   private final EventBus events_;
    
    private final VisualModePanmirrorFormat visualModeFormat_;
    private final VisualModeChunks visualModeChunks_;
