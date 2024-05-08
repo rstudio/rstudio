@@ -22,9 +22,6 @@
 .rs.setVar("automation.client", NULL)
 .rs.setVar("automation.sessionId", NULL)
 
-# The default application mode.
-.rs.setVar("automation.applicationMode", "desktop")
-
 .rs.addFunction("automation.installRequiredPackages", function()
 {
    packages <- c("here", "httr", "later", "websocket", "withr", "xml2")
@@ -87,9 +84,9 @@
       
       # Remove the callback when we're done.
       finally = {
-        rm(list = as.character(id), envir = .rs.automation.callbacks)
-     }
-     
+         rm(list = as.character(id), envir = .rs.automation.callbacks)
+      }
+      
    )
    
 })
@@ -211,40 +208,41 @@
    }
 })
 
-.rs.addFunction("automation.applicationPath", function()
+.rs.addFunction("automation.applicationPath", function(mode)
 {
-   override <- Sys.getenv("RSTUDIO_AUTOMATION_APPLICATION_PATH", unset = NA)
-   if (!is.na(override))
-      return(override)
-   
    switch(
-      .rs.automation.applicationMode,
+      mode,
       server  = .rs.automation.applicationPathServer(),
       desktop = .rs.automation.applicationPathDesktop(),
    )
 })
 
-.rs.addFunction("automation.initialize", function(appPath = NULL, port = 9999L)
+.rs.addFunction("automation.initialize", function(appPath = NULL,
+                                                  mode = c("server", "desktop"),
+                                                  port = NULL)
 {
    # Make sure all requisite packages are installed.
    .rs.automation.installRequiredPackages()
+   
+   # Resolve arguments.
+   mode <- match.arg(mode)
+   port <- .rs.nullCoalesce(port, if (mode == "server") 9999L else 9998L)
    
    # Check for an existing session we can attach to.
    baseUrl <- sprintf("http://localhost:%i", port)
    jsonVersionUrl <- file.path(baseUrl, "json/version")
    response <- .rs.tryCatch(httr::GET(jsonVersionUrl))
    if (!inherits(response, "error"))
-      return(.rs.automation.attach(baseUrl))
+      return(.rs.automation.attach(baseUrl, mode))
    
    # No existing session; start a new one and attach to it.
-   appPath <- .rs.nullCoalesce(appPath, .rs.automation.applicationPath())
+   appPath <- .rs.nullCoalesce(appPath, .rs.automation.applicationPath(mode))
    
    # TODO: Do something smarter so we can get the PID. For example, start
    # RStudio with a flag indicating it should write its PID to a file at
-   # some location.
-   oldPid <- suppressWarnings(
-      system(paste("pgrep -nx", basename(appPath)), intern = TRUE)
-   )
+   # some location. Also, Windows.
+   command <- sprintf("pgrep -nx %s; true", shQuote(basename(appPath)))
+   oldPid <- system(command, intern = TRUE)
    
    # Set up environment for newly-launched RStudio instance.
    envVars <- Sys.getenv()
@@ -279,20 +277,22 @@
    envVars[["RS_CRASH_HANDLER_PROMPT"]] <- "false"
    envVars[["RSTUDIO_DISABLE_CHECK_FOR_UPDATES"]] <- "1"
    
+   # Build argument list.
+   args <- c(
+      if (mode == "desktop") "--automation-agent",
+      if (mode == "server")  "--no-first-run",
+      sprintf("--remote-debugging-port=%i", port),
+      sprintf("--user-data-dir=%s", shQuote(tempdir()))
+   )
+   
    # Start up RStudio.
-   withr::with_envvar(envVars, {
-      remoteDebuggingPortArg <- sprintf("--remote-debugging-port=%i", port)
-      args <- c("--automation-agent", remoteDebuggingPortArg)
-      system2(appPath, args, wait = FALSE)
-   })
-         
-   # Wait a bit until we have a new RStudio instance.
+   withr::with_envvar(envVars, system2(appPath, args, wait = FALSE))
+   
+   # Wait a bit until we have a new browser / RStudio instance.
    while (TRUE)
    {
-      newPid <- suppressWarnings(
-         system(paste("pgrep -nx", basename(appPath)), intern = TRUE)
-      )
-      
+      command <- sprintf("pgrep -nx %s; true", shQuote(basename(appPath)))
+      newPid <- system(command, intern = TRUE)
       if (!identical(oldPid, newPid))
          break
    }
@@ -301,11 +301,11 @@
    Sys.sleep(3)
    
    # The session is ready; attach now.
-   .rs.automation.attach(baseUrl)
+   .rs.automation.attach(baseUrl, mode)
    
 })
 
-.rs.addFunction("automation.attach", function(baseUrl)
+.rs.addFunction("automation.attach", function(baseUrl, mode)
 {
    # Clear a previous session ID if necessary.
    .rs.setVar("automation.client", NULL)
@@ -323,44 +323,19 @@
    socket$onClose(.rs.automation.onClose)
    
    # Wait until the socket is open.
-   while (socket$readyState() != 1L)
+   .rs.waitUntil(function()
    {
       later::run_now()
-      Sys.sleep(0.1)
-   }
+      socket$readyState() == 1L
+   }, waitTimeSecs = 0.1)
    
    # Create the automation client.
    client <- .rs.automation.createClient(socket)
    
    # Find and record the active session id.
-   for (i in 1:10) {
-      
-      # Try to get the available targets.
-      targets <- .rs.tryCatch(client$Target.getTargets())
-      if (inherits(targets, "error"))
-      {
-         Sys.sleep(1)
-         next
-      }
-      
-      # Check for the RStudio window.
-      currentTarget <- Find(function(target) target$title == "RStudio", targets$targetInfos)
-      if (is.null(currentTarget))
-      {
-         Sys.sleep(1)
-         next
-      }
-      
-      currentTargetId <- currentTarget$targetId
-      response <- client$Target.attachToTarget(targetId = currentTargetId, flatten = TRUE)
-      break
-   }
+   sessionId <- .rs.automation.attachToSession(client, mode)
    
-   # Update our global variables.
-   .rs.setVar("automation.client", client)
-   .rs.setVar("automation.sessionId", response$sessionId)
-   
-   # Wait until we have an RStudio console.
+   # Wait until the Console is available.
    document <- client$DOM.getDocument(depth = 0L)
    .rs.waitUntil(function()
    {
@@ -376,11 +351,92 @@
    
 })
 
+.rs.addFunction("automation.attachToSession", function(client, mode)
+{
+   callback <- switch(mode,
+                      desktop = .rs.automation.attachToSessionDesktop,
+                      server  = .rs.automation.attachToSessionServer
+   )
+   
+   for (i in 1:10)
+   {
+      sessionId <- tryCatch(callback(client), error = identity)
+      if (is.character(sessionId))
+         return(sessionId)
+      
+      Sys.sleep(1)
+   }
+   
+   stop("Couldn't attach to session")
+})
+
+.rs.addFunction("automation.attachToSessionDesktop", function(client)
+{
+   # Try to get the available targets.
+   targets <- .rs.tryCatch(client$Target.getTargets())
+   if (inherits(targets, "error"))
+      return(NULL)
+   
+   # Check for the RStudio window.
+   currentTarget <- Find(function(target) target$title == "RStudio", targets$targetInfos)
+   if (is.null(currentTarget))
+      return(NULL)
+   
+   # Attach to this target.
+   currentTargetId <- currentTarget$targetId
+   response <- client$Target.attachToTarget(targetId = currentTargetId, flatten = TRUE)
+   sessionId <- response$sessionId
+   
+   # Update our global variables.
+   .rs.setVar("automation.client", client)
+   .rs.setVar("automation.sessionId", sessionId)
+   
+   # Return the discovered session ID.
+   sessionId
+})
+
+.rs.addFunction("automation.attachToSessionServer", function(client)
+{
+   # Try to get the available targets.
+   targets <- .rs.tryCatch(client$Target.getTargets())
+   if (inherits(targets, "error"))
+      return(NULL)
+   
+   # If we don't have any targets, then create a new session.
+   if (length(targets) == 0L)
+   {
+      client$Target.createTarget(url = "about:blank")
+      targets <- .rs.tryCatch(client$Target.getTargets())
+      if (inherits(targets, "error"))
+         return(NULL)
+   }
+   
+   # Find a page.
+   currentTarget <- Find(function(target) target$type == "page", targets$targetInfos)
+   if (is.null(currentTarget))
+      return(NULL)
+   
+   # Attach to this target.
+   currentTargetId <- currentTarget$targetId
+   response <- client$Target.attachToTarget(targetId = currentTargetId, flatten = TRUE)
+   sessionId <- response$sessionId
+   
+   # Update our global variables.
+   .rs.setVar("automation.client", client)
+   .rs.setVar("automation.sessionId", sessionId)
+   
+   # Navigate the page to RStudio Server.
+   client$Page.navigate("http://localhost:8787")
+   
+   # TODO: Handle input of authentication credentials?
+   # Should that happen here, or elsewhere?
+   
+   # Return the session id.
+   sessionId
+})
+
 .rs.addFunction("automation.run", function(mode = c("server", "desktop"))
 {
-   mode <- match.arg(mode)
-   .rs.setVar("automation.applicationMode", mode)
-   
    projectRoot <- .rs.api.getActiveProject()
    entrypoint <- file.path(projectRoot, "src/cpp/tests/automation/testthat.R")
    source(entrypoint)

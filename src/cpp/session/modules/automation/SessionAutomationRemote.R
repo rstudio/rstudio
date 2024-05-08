@@ -26,9 +26,9 @@
 .rs.defineVar("automation.remotePrivateEnv", new.env(parent = .rs.toolsEnv()))
 .rs.defineVar("automation.remote", new.env(parent = emptyenv()))
 
-.rs.addFunction("automation.createRemote", function(client = NULL)
+.rs.addFunction("automation.createRemote", function(mode = c("desktop", "server"))
 {
-   client <- .rs.nullCoalesce(client, .rs.automation.initialize())
+   client <- .rs.automation.initialize(mode = match.arg(mode))
    assign("client", client, envir = .rs.automation.remote)
    assign("client", client, envir = .rs.automation.remotePrivateEnv)
    assign("self", .rs.automation.remote, envir = .rs.automation.remotePrivateEnv)
@@ -106,6 +106,7 @@
    writeLines(contents, con = documentPath)
    
    # Open that document in the attached editor.
+   # TODO: Use JavaScript API?
    code <- sprintf(".rs.api.documentOpen(\"%s\")", documentPath)
    self$consoleExecute(code)
    
@@ -119,6 +120,7 @@
    writeLines(contents, con = documentPath)
    
    # Open that document in the attached editor.
+   # TODO: Use JavaScript API?
    code <- sprintf(".rs.api.documentOpen(\"%s\")", documentPath)
    self$consoleExecute(code)
    on.exit(self$documentClose(), add = TRUE)

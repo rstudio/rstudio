@@ -1,7 +1,7 @@
 
 library(testthat)
 
-self <- remote <- .rs.automation.createRemote()
+self <- remote <- .rs.automation.createRemote(mode = "server")
 client <- remote$client
 
 test_that("Quarto Documents are highlighted as expected", {
@@ -19,6 +19,7 @@ test_that("Quarto Documents are highlighted as expected", {
    ')
    
    remote$documentExecute(".Rmd", documentContents, {
+      browser()
       tokens <- remote$aceLineTokens(8L)
       expect_length(tokens, 1L)
       expect_equal(tokens[[1]]$type,  "text")
