@@ -26,6 +26,11 @@
 .rs.addFunction("automation.installRequiredPackages", function()
 {
    packages <- c("here", "httr", "later", "websocket", "withr", "xml2")
+   pkgLocs <- find.package(packages, quiet = TRUE)
+   if (length(packages) == length(pkgLocs))
+      return()
+   
+   writeLines("==> Installing Packages")
    for (package in packages)
    {
       if (!requireNamespace(package, quietly = TRUE))
