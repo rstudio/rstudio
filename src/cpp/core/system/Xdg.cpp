@@ -233,7 +233,8 @@ FilePath userConfigDir(
    const boost::optional<std::string>& user,
    const boost::optional<FilePath>& homeDir)
 {
-   return resolveXdgDir("RSTUDIO_CONFIG_HOME",
+   static FilePath resolvedDir = resolveXdgDir(
+        "RSTUDIO_CONFIG_HOME",
         "XDG_CONFIG_HOME",
 #ifdef _WIN32
          FOLDERID_RoamingAppData,
@@ -243,13 +244,16 @@ FilePath userConfigDir(
          user,
          homeDir
    );
+   
+   return resolvedDir;
 }
 
 FilePath userDataDir(
         const boost::optional<std::string>& user,
         const boost::optional<FilePath>& homeDir)
 {
-   return resolveXdgDir("RSTUDIO_DATA_HOME",
+   static FilePath resolvedDir = resolveXdgDir(
+         "RSTUDIO_DATA_HOME",
          "XDG_DATA_HOME",
 #ifdef _WIN32
          FOLDERID_LocalAppData,
@@ -259,13 +263,16 @@ FilePath userDataDir(
          user,
          homeDir
    );
+   
+   return resolvedDir;
 }
 
 FilePath userCacheDir(
         const boost::optional<std::string>& user,
         const boost::optional<FilePath>& homeDir)
 {
-   return resolveXdgDir("RSTUDIO_CACHE_HOME",
+   static FilePath resolvedDir = resolveXdgDir(
+         "RSTUDIO_CACHE_HOME",
          "XDG_CACHE_HOME",
 #ifdef _WIN32
          FOLDERID_LocalAppData,
@@ -276,6 +283,8 @@ FilePath userCacheDir(
          homeDir,
          kRStudioCacheSuffix
    );
+   
+   return resolvedDir;
 }
 
 #ifdef _WIN32
@@ -284,7 +293,8 @@ FilePath oldUserCacheDir(
         const boost::optional<std::string>& user,
         const boost::optional<FilePath>& homeDir)
 {
-   return resolveXdgDir("RSTUDIO_CACHE_HOME",
+   static FilePath resolvedDir = resolveXdgDir(
+         "RSTUDIO_CACHE_HOME",
          "XDG_CACHE_HOME",
 #ifdef _WIN32
          FOLDERID_InternetCache,
@@ -294,13 +304,16 @@ FilePath oldUserCacheDir(
          user,
          homeDir
    );
+   
+   return resolvedDir;
 }
 
 #endif
 
 FilePath userLogDir()
 {
-   return userDataDir().completePath("log");
+   static FilePath resolvedDir = userDataDir().completePath("log");
+   return resolvedDir;
 }
 
 void verifyUserDirs(
@@ -342,8 +355,9 @@ void verifyUserDirs(
 #endif
 }
 
-FilePath systemConfigDir()
+FilePath systemConfigDirImpl()
 {
+   
 #ifndef _WIN32
    if (getenv("RSTUDIO_CONFIG_DIR").empty())
    {
@@ -365,7 +379,9 @@ FilePath systemConfigDir()
       }
    }
 #endif
-   return resolveXdgDir("RSTUDIO_CONFIG_DIR",
+   
+   return resolveXdgDir(
+         "RSTUDIO_CONFIG_DIR",
          "XDG_CONFIG_DIRS",
 #ifdef _WIN32
          FOLDERID_ProgramData,
@@ -377,7 +393,14 @@ FilePath systemConfigDir()
    );
 }
 
-FilePath systemConfigFile(const std::string& filename)
+
+FilePath systemConfigDir()
+{
+   static FilePath resolvedDir = systemConfigDirImpl();
+   return resolvedDir;
+}
+
+FilePath systemConfigFileImpl(const std::string& filename)
 {
 #ifdef _WIN32
     // Passthrough on Windows
@@ -407,6 +430,17 @@ FilePath systemConfigFile(const std::string& filename)
    // we expected to find it.
    return systemConfigDir().completeChildPath(filename);
 #endif
+}
+
+FilePath systemConfigFile(const std::string& filename)
+{
+   static std::map<std::string, FilePath> resolvedPaths;
+   if (resolvedPaths.count(filename))
+      return resolvedPaths[filename];
+   
+   FilePath resolvedConfigFile = systemConfigFileImpl(filename);
+   resolvedPaths[filename] = resolvedConfigFile;
+   return resolvedConfigFile;
 }
 
 FilePath findSystemConfigFile(const std::string& context, const std::string& filename)
