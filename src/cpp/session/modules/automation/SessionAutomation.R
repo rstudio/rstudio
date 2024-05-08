@@ -25,7 +25,7 @@
 
 .rs.addFunction("automation.installRequiredPackages", function()
 {
-   packages <- c("httr", "later", "websocket", "withr")
+   packages <- c("here", "httr", "later", "websocket", "withr", "xml2")
    for (package in packages)
    {
       if (!requireNamespace(package, quietly = TRUE))
@@ -289,17 +289,21 @@
    # Find and record the active session id.
    for (i in 1:10) {
       
-      Sys.sleep(1)
-      
       # Try to get the available targets.
       targets <- .rs.tryCatch(client$Target.getTargets())
       if (inherits(targets, "error"))
+      {
+         Sys.sleep(1)
          next
+      }
       
       # Check for the RStudio window.
       currentTarget <- Find(function(target) target$title == "RStudio", targets$targetInfos)
       if (is.null(currentTarget))
+      {
+         Sys.sleep(1)
          next
+      }
       
       currentTargetId <- currentTarget$targetId
       response <- client$Target.attachToTarget(targetId = currentTargetId, flatten = TRUE)
@@ -309,6 +313,17 @@
    # Update our global variables.
    .rs.setVar("automation.client", client)
    .rs.setVar("automation.sessionId", response$sessionId)
+   
+   # Wait until we have an RStudio console.
+   document <- client$DOM.getDocument(depth = 0L)
+   .rs.waitUntil(function()
+   {
+      consoleNode <- client$DOM.querySelector(document$root$nodeId, "#rstudio_console_input")
+      consoleNode$nodeId != 0L
+   })
+   
+   # Save the root document node ID, as we'll need it for queries later.
+   client$documentNodeId <- document$root$nodeId
    
    # Return the client.
    client

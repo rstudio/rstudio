@@ -1324,6 +1324,21 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    rendered
 })
 
+.rs.addFunction("waitUntil", function(predicate,
+                                      retryCount = 100L,
+                                      waitTimeSecs = 1)
+{
+   for (i in seq_len(retryCount))
+   {
+      if (predicate())
+         return(TRUE)
+      else
+         Sys.sleep(waitTimeSecs)
+   }
+   
+   stop("operation timed out")
+})
+
 .rs.addFunction("bugReport", function(pro = NULL)
 {
    # collect information about the running version of R / RStudio
