@@ -1,9 +1,8 @@
 project:
-  type: website
+  type: posit-docs
 
 website:
   title: "RStudio User Guide"
-  favicon: "images/favicon.svg"
   twitter-card: true
   open-graph: true
   page-navigation: true
@@ -11,6 +10,7 @@ website:
   search:
     copy-button: true
     show-item-context: true
+  back-to-top-navigation: true
   repo-url: https://github.com/rstudio/rstudio/
   repo-subdir: "docs/user/rstudio/"
   repo-actions: [edit, source]
@@ -26,23 +26,23 @@ website:
         url: 'https://docs.posit.co/previous-versions/rstudio/'
       - text: "Guides"
         menu:
-          - text: "Workbench Install Guide"
-            url: 'https://docs.posit.co/ide/server-pro/getting_started/installation/'
           - text: "Workbench Admin Guide"
             url: 'https://docs.posit.co/ide/server-pro/'
           - text: "Posit Workbench User Guide"
             url: 'https://docs.posit.co/ide/server-pro/user/'
+          - text: Workbench Licenses
+            url: 'https://docs.posit.co/ide/licenses/'
       - text: "Release Notes"
         url: "https://docs.posit.co/ide/news/"      
-      - icon: book
-        url: https://docs.posit.co/
-        aria-label: Posit Documentation website
-      - icon: question-circle
-        url: https://support.posit.co/
-        aria-label: Posit Professional Support
+      - icon: "list"
+        menu:
+          - text: "docs.posit.co"
+            href: "https://docs.posit.co"
+          - text: "Posit Support"
+            href: "https://support.posit.co/hc/en-us/"
 
   sidebar:
-    - id: guide
+   # - id: guide
       collapse-level: 2
       contents:
       - text: "Introduction"
@@ -116,36 +116,23 @@ website:
           
   page-footer:
     left: |
-      Copyright © 2009-2024 Posit Software, PBC formerly RStudio, PBC. All Rights Reserved.
+      Copyright © 2009-2024 Posit Software, PBC. All Rights Reserved.
+    center: |
+      RStudio {{< var buildType >}} {{< var version >}}
     right:
       - icon: question-circle-fill
         href: https://support.posit.co/hc/en-us
       - icon: lightbulb-fill
         href: https://solutions.posit.co
-      - icon: twitter
-        href: https://twitter.com/posit_pbc
-      - text: "<img src='/images/posit-logo-black-TM.png' id='navbar-right-logo'>"
-        url: "https://posit.co"
+      - text: "<img src='/images/posit-guide-ltmd.svg' id='footer-right-logo'>"
+        href: https://docs.posit.co
+      - text: "<img src='/images/posit-logo-black-TM.svg' id='footer-right-posit-logo'>"
+        href: "https://posit.co"
 
 
 format:
   html:
-    # Controls whether external links open in new windows
-    link-external-newwindow: true
-    # Controls whether an icon adorns external links (either true or the bootstrap icon name)
-    link-external-icon: true
-    number-sections: false
     fig-responsive: true
-    theme:
-      - cosmo
-      - styles/styles.scss
     include-in-header: _ga-header-tag.html
     include-before-body: _ga-body-tag.html
-    toc: true
     code-overflow: scroll
-
-  # pdf:
-  #   toc: true
-  # 
-  # docx:
-  #   toc: true

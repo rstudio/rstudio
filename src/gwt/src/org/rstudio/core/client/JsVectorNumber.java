@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client;
 
+import java.util.function.Predicate;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class JsVectorNumber extends JavaScriptObject
@@ -61,6 +63,20 @@ public class JsVectorNumber extends JavaScriptObject
    public final void fill(double value)
    {
       fill(value, 0, length());
+   }
+   
+   public final JsVectorNumber filter(Predicate<Double> predicate)
+   {
+      JsVectorNumber result = JsVectorNumber.createVector();
+      
+      for (int i = 0, n = length(); i < n; i++)
+      {
+         double value = get(i);
+         if (predicate.test(value))
+            result.push(value);
+      }
+      
+      return result;
    }
 
    public final double get(int index)

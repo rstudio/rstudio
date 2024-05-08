@@ -206,15 +206,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
     String desktopText();
 
     /**
-     * Translated "Remote:     ''".
-     *
-     * @return translated "Remote:     ''"
-     */
-    @DefaultMessage("Remote:     ''")
-    @Key("remoteText")
-    String remoteText();
-
-    /**
      * Translated "Platform:   ''".
      *
      * @return translated "Platform:   ''"

@@ -33,7 +33,6 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libopenssl-devel \
     libpng-devel  \
     libtiff-devel  \
-    libuser-devel \
     libuuid-devel \
     libxml2-devel \
     lsof \
@@ -94,12 +93,6 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common open
 # panmirror needs to be able to build in this location
 RUN chmod -R 777 /opt/rstudio-tools/src
 
-# install Qt SDK
-COPY dependencies/common/install-qt.sh /tmp/
-COPY dependencies/linux/install-qt-linux /tmp/
-RUN export QT_VERSION=5.12.8 && \
-    cd /tmp && /bin/bash ./install-qt-linux
-
 # install GnuPG 1.4 from source (needed for release signing)
 RUN cd /tmp && \
     wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
@@ -136,3 +129,5 @@ ARG JENKINS_UID=999
 RUN groupadd -g $JENKINS_GID jenkins && \
     useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
     echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+RUN if [ -d "/src" ]; then git config --global --add safe.directory /src; fi

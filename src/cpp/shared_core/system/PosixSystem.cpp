@@ -22,12 +22,15 @@
  */
 
 #include <shared_core/system/PosixSystem.hpp>
+
 #include <csignal>
 #include <grp.h>
 #include <ifaddrs.h>
 #include <memory.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <pwd.h>
+#include <sys/socket.h>
 
 #ifdef __linux__
 #include <sys/prctl.h>

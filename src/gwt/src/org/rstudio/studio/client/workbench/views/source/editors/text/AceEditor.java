@@ -4260,6 +4260,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.setAnnotations(annotations);
    }
+   
+   public JsMap<Marker> getMarkers(boolean inFront)
+   {
+      return widget_.getMarkers(inFront);
+   }
 
    @Override
    public void removeMarkersAtCursorPosition()
@@ -4288,7 +4293,7 @@ public class AceEditor implements DocDisplay,
    @Override
    public void showLint(JsArray<LintItem> lint)
    {
-      widget_.showLint(lint);
+      widget_.showLint(lint.cast());
    }
 
    @Override

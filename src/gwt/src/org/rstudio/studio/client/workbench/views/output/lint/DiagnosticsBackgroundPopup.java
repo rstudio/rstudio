@@ -16,12 +16,12 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Markers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
@@ -167,11 +167,11 @@ public class DiagnosticsBackgroundPopup
                currentPos = docDisplay_.getCursorPosition();
             }
             
-            Markers markers = editor_.getSession().getMarkers(true);
-            int keys[] = markers.getIds();
-            for (int i = 0; i < keys.length; i++)
+            JsMap<Marker> markers = editor_.getSession().getMarkers(true);
+            JsArray<Marker> markerValues = markers.values();
+            for (int i = 0; i < markerValues.length(); i++)
             {
-               Marker marker = markers.get(keys[i]);
+               Marker marker = markerValues.get(i);
                if (marker.getRange().containsRightExclusive(currentPos))
                {
                   displayMarkerDiagnostics(marker);

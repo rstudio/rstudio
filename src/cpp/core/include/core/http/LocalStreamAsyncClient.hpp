@@ -49,7 +49,8 @@ public:
                                                                 logToStderr),
        socket_(ioService),
        localStreamPath_(localStreamPath),
-       validateUid_(validateUid)
+       validateUid_(validateUid),
+       retriedPermDenied_(false)
    {
       setConnectionRetryProfile(retryProfile);
    }
@@ -144,10 +145,32 @@ private:
       return boost::static_pointer_cast<LocalStreamAsyncClient>(ptrShared);
    }
 
+   virtual bool recentConnectionError(const Error& connectionError)
+   {
+      bool permDeniedError = connectionError.getCode() == boost::system::errc::permission_denied;
+      if (!permDeniedError)
+         return false;
+      if (retriedPermDenied_) // Already been here once so it is probably a real perm denied error
+      {
+         LOG_DEBUG_MESSAGE("Not retrying local stream connection: " + localStreamPath_.getAbsolutePath() + " - 2nd permission denied error for same connection");
+         return false;
+      }
+
+      // Seen once in 5000 sessions during load tests. Possibly the local stream socket is in a weird state
+      // for an instant as it's being created by the remote side. So the fix here is to retry on this error just
+      // once. Don't wait a full timeout interval (possibly 10-45s) if it's a real permission denied error just in case
+      // that happens regularly.
+      LOG_DEBUG_MESSAGE("Retrying local stream connection: " + localStreamPath_.getAbsolutePath() + " due to permission denied error");
+
+      retriedPermDenied_ = true;
+      return true;
+   }
+
 private:
    boost::asio::local::stream_protocol::socket socket_;
    core::FilePath localStreamPath_;
    boost::optional<UidType> validateUid_;
+   bool retriedPermDenied_;
 };
    
    

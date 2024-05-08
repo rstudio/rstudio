@@ -14,34 +14,36 @@
  */
 package org.rstudio.studio.client.application;
 
+import org.rstudio.studio.client.RStudioGinjector;
 import com.google.gwt.core.client.GWT;
 
 public class Desktop
 {
    public static native boolean isDesktop() /*-{
       // we're in desktop mode if the program mode is explicitly set that way;
-      // as a fallback, check for the desktop object injected by Qt
-      return ($wnd.program_mode === "desktop" || !!$wnd.desktop) &&
-              !$wnd.remoteDesktop;
+      // as a fallback, check for the desktop object injected by Electron
+      return ($wnd.program_mode === "desktop" || !!$wnd.desktop);
    }-*/;
 
-   public static native boolean isRemoteDesktop() /*-{
-      // we're in remote desktop mode if the remoteDesktop object was injected by Qt
-      return !!$wnd.remoteDesktop;
-   }-*/;
-   
    public static native boolean isDesktopReady() /*-{
       return !!$wnd.desktop;
    }-*/;
 
    public static boolean hasDesktopFrame()
    {
-      return isDesktop() || isRemoteDesktop();
+      return isDesktop();
    }
    
    public static DesktopFrame getFrame()
    {
       return desktopFrame_;
+   }
+
+   /**
+    * @return true if using web-based file dialogs
+    */
+   public static boolean isUsingWebFileDialogs() {
+      return !isDesktop() || !RStudioGinjector.INSTANCE.getUserPrefs().nativeFileDialogs().getValue();
    }
 
    private static final DesktopFrame desktopFrame_ = GWT.create(DesktopFrame.class);

@@ -17,13 +17,13 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
 
-#include <core/system/Resources.hpp>
-
-#include <core/Log.hpp>
-#include <core/Thread.hpp>
-#include <core/StringUtils.hpp>
 #include <core/Algorithm.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Log.hpp>
+#include <core/StringUtils.hpp>
+#include <core/Thread.hpp>
+#include <core/Truncating.hpp>
+#include <core/system/Resources.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -47,6 +47,10 @@ class LinuxMemoryProvider
 {
 public:
 
+   virtual ~LinuxMemoryProvider()
+   {
+   }
+
    virtual Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider) = 0;
 
    virtual Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider) = 0;
@@ -55,6 +59,7 @@ public:
    {
       long size = 0;
       long resident = 0;
+
       try 
       {
          std::ifstream statm("/proc/self/statm");
@@ -70,7 +75,8 @@ public:
       }
 
       long pageKib = ::sysconf(_SC_PAGE_SIZE) / 1024;
-      *pUsedKb = resident * pageKib;
+
+      *pUsedKb = Truncating<long>(resident) * pageKib;
       *pProvider = MemoryProviderLinuxProcFs;
       return Success();
    }

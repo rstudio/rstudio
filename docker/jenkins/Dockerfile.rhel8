@@ -34,7 +34,6 @@ RUN yum install -y \
     libcap-devel \ 
     libcurl-devel \
     libpq-devel \
-    libuser \
     libuuid-devel \
     libxml2-devel \
     llvm-devel \
@@ -106,12 +105,6 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common rhel
 # panmirror needs to be able to build in this location
 RUN chmod -R 777 /opt/rstudio-tools/src
 
-# install Qt SDK
-COPY dependencies/common/install-qt.sh /tmp/
-COPY dependencies/linux/install-qt-linux /tmp/
-RUN export QT_VERSION=5.12.8 && \
-    cd /tmp && /bin/bash ./install-qt-linux
-
 # get libuser header files (libuser-devel not currently available on rhel8)
 RUN wget https://pagure.io/libuser/archive/libuser-0.62/libuser-libuser-0.62.tar.gz
 RUN tar zxvf libuser-libuser-0.62.tar.gz
@@ -152,3 +145,5 @@ RUN /tmp/clean-uid.sh $JENKINS_UID && \
 RUN groupadd -g $JENKINS_GID jenkins && \
     useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
     echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+RUN if [ -d "/src" ]; then git config --global --add safe.directory /src; fi

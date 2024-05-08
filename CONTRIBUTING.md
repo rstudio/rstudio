@@ -4,7 +4,7 @@ If you're experiencing behavior that appears to be a bug in RStudio, you're welc
 
 1. Is the source of the error or problem the RStudio IDE itself? Many errors you see inside RStudio come from R or R packages. If you're having trouble with R, read [Getting Help with R](https://www.r-project.org/help.html) for pointers.
 
-2. Is your issue a bug rather than a question? If you're having general trouble with RStudio or have questions for the RStudio community, the [RStudio Community Forum](https://community.rstudio.com/c/rstudio-ide) is an excellent resource.
+2. Is your issue a bug rather than a question? If you're having general trouble with RStudio or have questions for the RStudio community, the [RStudio Community Forum](https://forum.posit.co/c/rstudio-ide) is an excellent resource.
 
 3. Are you the first person to report this issue? [Search the issue list](https://github.com/rstudio/rstudio/issues) to find out. If you aren't, the most helpful thing you can do is vote for the existing issue (add a +1 reaction to it), and optionally add a comment describing your own experience.
 

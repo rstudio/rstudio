@@ -16,7 +16,6 @@ package org.rstudio.studio.client.common.filetypes;
 
 import java.util.HashMap;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -33,6 +32,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -375,6 +375,7 @@ public class FileTypeRegistry
       register("Makevars.win", MAKEFILE, new ImageResource2x(icons.iconMakefile2x()));
       register("TUTORIAL", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("NAMESPACE", NAMESPACE, new ImageResource2x(icons.iconText2x()));
+      register("Jenkinsfile", GROOVY, new ImageResource2x(icons.iconGroovy2x()));
       register("*.rhistory", RHISTORY, new ImageResource2x(icons.iconRhistory2x()));
       register("*.rproj", RPROJECT, new ImageResource2x(icons.iconRproject2x()));
       register("*.rnw", SWEAVE, new ImageResource2x(icons.iconRsweave2x()));

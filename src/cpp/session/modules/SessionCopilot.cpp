@@ -275,10 +275,25 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
 
 FilePath copilotAgentPath()
 {
-   // Check for configured copilot path.
+   // Check for admin-configured copilot path.
    FilePath copilotPath = session::options().copilotAgentPath();
    if (copilotPath.exists())
+   {
+      if (copilotPath.isDirectory())
+      {
+         for (auto&& suffix : { "dist/agent.js", "agent.js" })
+         {
+            FilePath candidatePath = copilotPath.completePath(suffix);
+            if (candidatePath.exists())
+            {
+               copilotPath = candidatePath;
+               break;
+            }
+         }
+      }
+      
       return copilotPath;
+   }
 
    using namespace core::system::xdg;
 

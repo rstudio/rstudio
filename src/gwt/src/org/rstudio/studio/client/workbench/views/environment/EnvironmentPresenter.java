@@ -904,7 +904,7 @@ public class EnvironmentPresenter extends BasePresenter
             {
                // Try a fuzzier search, but note that this is now an approximate position.
                int newlineIndex = currentBrowseSource_.indexOf('\n');
-               String firstLine = editorCode.substring(0, newlineIndex);
+               String firstLine = currentBrowseSource_.substring(0, newlineIndex);
                codeIndex = editorCode.indexOf(firstLine);
                if (codeIndex != -1)
                {

@@ -167,6 +167,18 @@ While Linux and Mac OSX both include SSH as part of the base system, Windows doe
 
 Subversion for Windows however does not include an SSH client. To overcome this limitation, RStudio includes a version of the Msys SSH client within the `RStudio\bin\msys_ssh directory`. This directory is automatically added to the PATH (for RStudio only rather than system-wide) and is also available on the PATH for command prompt windows opened using the **Tools** \> **Shell** command. A Windows shortcut (SSH Command Prompt) is also provided within the `RStudio\bin\msys_ssh` directory to launch a console from the Desktop that supports the svn+ssh protocol.
 
+### Git Commit Signing
+
+Git commit signing is a process used to verify the authenticity and integrity of commits within a Git repository. The **Review Changes** pop-up in RStudio includes a **Sign commit** check box. When it is selected, git will attempt to sign the commit.
+
+If commit signing is globally enabled via `git config --global commit.gpgsign true` it is not necessary to select the check box.
+
+::: {.callout-important}
+You are responsible for configuring git commit signing and ensuring the associated key is unlocked. Otherwise, you will receive an error if you attempt to sign a commit via the **Review Changes** pop-up. Please consult the git documentation for details on how to configure commit signing for your platform.
+:::
+
+![](images/git-sign-commit.png){fig-alt="A screenshot of the Review Changes pop-up, highlighting the Sign commit check box."}
+
 ## Troubleshooting
 
 ### Git is installed, but the Git pane doesn't appear
