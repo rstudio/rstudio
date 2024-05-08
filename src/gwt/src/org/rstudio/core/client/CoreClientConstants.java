@@ -1335,20 +1335,20 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String packages2Message(String package0, String package1);
 
     /**
-     * Translated "Packages {0} , {1} , and {2} required but are not installed."
+     * Translated "Packages {0}, {1}, and {2} required but are not installed."
      *
-     * @return translated "Packages {0} , {1} , and {2} required but are not installed."
+     * @return translated "Packages {0}, {1}, and {2} required but are not installed."
      */
-    @DefaultMessage("Packages {0} , {1} , and {2} required but are not installed.")
+    @DefaultMessage("Packages {0}, {1}, and {2} required but are not installed.")
     @Key("packages3Message")
     String packages3Message(String package0, String package1, String package2);
 
     /**
-     * Translated "Packages {0} , {1} , and {2} others required but are not installed."
+     * Translated "Packages {0}, {1}, and {2} others required but are not installed."
      *
-     * @return translated "Packages {0} , {1} , and {2} others required but are not installed."
+     * @return translated "Packages {0}, {1}, and {2} others required but are not installed."
      */
-    @DefaultMessage("Packages {0} , {1} , and {2} others required but are not installed.")
+    @DefaultMessage("Packages {0}, {1}, and {2} others required but are not installed.")
     @Key("otherPackagesMessage")
     String otherPackagesMessage(String package0, String package1, String package2);
 
