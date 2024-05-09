@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -43,10 +44,12 @@ public class VisualModeChunks implements ChunkDefinition.Provider
    public VisualModeChunks(DocUpdateSentinel sentinel,
                            DocDisplay display,
                            TextEditingTarget target,
+                           EventBus events,
                            final ArrayList<HandlerRegistration> releaseOnDismiss,
                            VisualModeEditorSync sync)
    {
       target_ = target;
+      events_ = events;
       sentinel_ = sentinel;
       parent_ = display;
       sync_ = sync;
@@ -88,7 +91,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          }
 
          VisualModeChunk chunk = new VisualModeChunk(
-               ele, index, expanded, classes, callbacks, sentinel_, target_, sync_);
+               ele, index, expanded, classes, callbacks, sentinel_, target_, events_, sync_);
 
          // Add the chunk to our index, and remove it when the underlying chunk
          // is removed in Prosemirror
@@ -447,6 +450,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
    private final DocUpdateSentinel sentinel_;
    private final DocDisplay parent_;
    private final TextEditingTarget target_;
+   private final EventBus events_;
    private final Timer saveCollapseTimer_;
    private ArrayList<Integer> collapsedChunkPos_;
    private String collapseState_;

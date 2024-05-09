@@ -20,6 +20,7 @@
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
+- Fix keyboard shortcuts acting on the wrong source file when using Visual Editor in source columns or separate windows (#12581, #11684)
 - Removed extra spaces after package names in warning message about required packages (#14608)
 
 #### Posit Workbench
