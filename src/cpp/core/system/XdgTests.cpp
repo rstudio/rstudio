@@ -130,6 +130,12 @@ test_context("XDG")
          boost::filesystem::create_directories(xdgConfigB);
          CHECK(systemConfigFile("logging.conf") == FilePath("/etc/rstudio/logging.conf"));
          
+         // The 'rstudio' directory exists in one of the XDG config directories, but it
+         // does not contain the system config file we're searching for, so it's skipped
+         FilePath rstudioXdgConfigB = FilePath(xdgConfigB).completePath("rstudio");
+         rstudioXdgConfigB.ensureDirectory();
+         CHECK(systemConfigFile("logging.conf") == FilePath("/etc/rstudio/logging.conf"));
+         
          // If we create the file now, it should be used.
          FilePath logFile = FilePath(xdgConfigB).completePath("rstudio/logging.conf");
          CHECK(logFile.getParent().ensureDirectory() == Success());
