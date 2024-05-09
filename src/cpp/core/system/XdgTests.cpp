@@ -17,6 +17,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -107,6 +108,38 @@ test_context("XDG")
       
       // clean up
       boost::filesystem::remove_all(testDir);
+   }
+   
+   test_that("systemConfigFile() searches XDG_CONFIG_DIRS for requested file")
+   {
+      // set up XDG directories in tempdir
+      char templateString[] = "/tmp/rstudio-XXXXXX";
+      char* testDir = ::mkdtemp(templateString);
+      std::string xdgConfigA = fmt::format("{}/xdg-a", testDir);
+      std::string xdgConfigB = fmt::format("{}/xdg-b", testDir);
+      std::string xdgConfigDirs = fmt::format("{}:{}", xdgConfigA, xdgConfigB);
+      
+      {
+         EnvironmentScope scope("XDG_CONFIG_DIRS", xdgConfigDirs.c_str());
+         
+         // Find logging.conf in default path
+         CHECK(systemConfigFile("logging.conf") == FilePath("/etc/rstudio/logging.conf"));
+         
+         // Even if one of the XDG directories exist, we ignore it since it doesn't contain
+         // the logging.conf file we're looking for.
+         boost::filesystem::create_directories(xdgConfigB);
+         CHECK(systemConfigFile("logging.conf") == FilePath("/etc/rstudio/logging.conf"));
+         
+         // If we create the file now, it should be used.
+         FilePath logFile = FilePath(xdgConfigB).completePath("rstudio/logging.conf");
+         CHECK(logFile.getParent().ensureDirectory() == Success());
+         CHECK(logFile.ensureFile() == Success());
+         CHECK(systemConfigFile("logging.conf") == logFile);
+      }
+      
+      // clean up
+      boost::filesystem::remove_all(testDir);
+      
    }
 }
 
