@@ -141,6 +141,13 @@ test_context("XDG")
          CHECK(logFile.getParent().ensureDirectory() == Success());
          CHECK(logFile.ensureFile() == Success());
          CHECK(systemConfigFile("logging.conf") == logFile);
+         
+         // If RSTUDIO_CONFIG_DIR is set, then that should be used, even if the logging.conf
+         // file does not yet exist in that directory. That is, RSTUDIO_CONFIG_DIR overrides.
+         {
+            EnvironmentScope scope("RSTUDIO_CONFIG_DIR", testDir);
+            CHECK(systemConfigFile("logging.conf") == FilePath(testDir).completeChildPath("logging.conf"));
+         }
       }
       
       // clean up

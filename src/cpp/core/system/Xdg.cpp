@@ -209,8 +209,13 @@ FilePath resolveXdgPath(
       if (error)
          LOG_ERROR(error);
       
-      DLOGF("Using XDG directory: {} => {}", rstudioEnvVar, rstudioXdgPath.getAbsolutePath());
-      return resolveXdgDirImpl(rstudioXdgPath, user, homeDir, suffix);
+      // Use requested file path if provided
+      FilePath resolvedXdgPath = rstudioXdgPath;
+      if (file)
+         resolvedXdgPath = rstudioXdgPath.completePath(file.get());
+      
+      DLOGF("Using RStudio XDG path: {} => {}", rstudioEnvVar, resolvedXdgPath.getAbsolutePath());
+      return resolveXdgDirImpl(resolvedXdgPath, user, homeDir, suffix);
    }
    
    // Compute the file we're searching for in the XDG directory
