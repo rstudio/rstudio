@@ -118,14 +118,13 @@ FilePath xdgDefaultDir(
 {
    
 #ifdef _WIN32
-   std::string xdgHomeDir;
-   
-   // On Windows, the default path is in Application Data/Roaming.
    wchar_t* path = nullptr;
    HRESULT hr = ::SHGetKnownFolderPath(windowsFolderId, 0, nullptr, &path);
    if (hr == S_OK)
    {
-      xdgHomeDir = core::string_utils::wideToUtf8(std::wstring(path));
+      std::string xdgHomeDir = core::string_utils::wideToUtf8(std::wstring(path));
+      ::CoTaskMemFree(path);
+      return xdgHomeDir;
    }
    else
    {
@@ -136,16 +135,10 @@ FilePath xdgDefaultDir(
           windowsFolderIdName,
           error.ErrorMessage());
    }
-
-   ::CoTaskMemFree(path);
-   
-   if (!xdgHomeDir.empty())
-      return xdgHomeDir;
 #endif
 
-   // The default directory might need to be resolved relative
-   // to the user's home directory, so do that now.
-   return resolveXdgDirImpl(FilePath(defaultDir), user, homeDir);
+   FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
+   return FilePath::resolveAliasedPath(defaultDir, resolvedHome);
 }
 
 } // end anonymous namespace
