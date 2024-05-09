@@ -52,7 +52,8 @@ Error initialize()
    initBlock.addFunctions()
       (boost::bind(sourceModuleRFile, "SessionAutomation.R"))
       (boost::bind(sourceModuleRFile, "SessionAutomationClient.R"))
-      (boost::bind(sourceModuleRFile, "SessionAutomationRemote.R"));
+      (boost::bind(sourceModuleRFile, "SessionAutomationRemote.R"))
+      (boost::bind(sourceModuleRFile, "SessionAutomationTargets.R"));
    
    Error error = initBlock.execute();
    if (error)
