@@ -10,6 +10,10 @@
 - Quitting Jupyter and VS Code sessions from the home page no longer force quits them immediately; instead, they are given time to exit gracefully, as with RStudio Pro sessions (rstudio-pro#5317)
 - Workbench jobs launched on Kubernetes or on Slurm with Singularity support will now default to using the same container image as the parent session (rstudio-pro#5875)
 - Workbench's Prometheus metrics now track R and Python jobs launched, in addition to sessions (rstudio-pro#6271)
+- When launching sessions on Slurm, environment variables set by the Slurm scheduler itself should now be available to sessions (rstudio-pro#5148, rstudio-pro#4692, rstudio-pro#3255)
+- The `launcher-sessions-forward-container-environment` flag has been deprecated and will be removed in a future version. Use `launcher-sessions-forward-environment=0` to disable environment variable forwarding instead (rstudio-pro#5895)
+- The New Project dialog in RStudio Pro now defaults to the R version of the current session, rather than the system default (rstudio-pro#4244)
+- Workbench jobs launched from RStudio Pro now default to the R version of the current session, rather than the system default (rstudio-pro#5903)
 
 ### Fixed
 
@@ -26,6 +30,7 @@
 #### Posit Workbench
 
 - Workbench jobs now set resource profiles correctly (rstudio-pro#5217)
+- When launching a Workbench job from RStudio Pro, changing fields in the Options tab no longer resets the selected R version in the Environment tab (rstudio-pro#5218)
 
 ### Dependencies
 
