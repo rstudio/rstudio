@@ -382,7 +382,7 @@ else()
 endif()
 
 # R files
-file(GLOB_RECURSE SESSION_R_FILES CONFIGURE_DEPENDS "modules/**/*.R")
+file(GLOB_RECURSE SESSION_R_FILES CONFIGURE_DEPENDS "modules/*.R")
 
 # test files
 if (RSTUDIO_UNIT_TESTS_ENABLED)
