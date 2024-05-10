@@ -249,6 +249,7 @@ FilePath resolveXdgPath(
    xdgPaths.push_back(xdgDefaultHome);
    
    // First, search for the requested path within the XDG paths.
+   // If we find it, use it.
    for (const FilePath& xdgPath : xdgPaths)
    {
       FilePath resolvedXdgPath = xdgPath.completePath(targetFile);
@@ -259,7 +260,10 @@ FilePath resolveXdgPath(
       }
    }
    
-   // If we couldn't find it, then use the first XDG path that exists.
+   // If we couldn't find the directory requested, then use the first XDG
+   // path that exists. Skip this if we received a file; that is, if the
+   // request was for a (presumedly existing) configuration file, rather
+   // than an XDG directory that can be used for storing state.
    if (!file)
    {
       for (const FilePath& xdgPath : xdgPaths)
