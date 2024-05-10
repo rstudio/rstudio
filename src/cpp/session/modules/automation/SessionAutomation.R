@@ -249,6 +249,7 @@
    # like a "fresh" RStudio session.
    rstudioEnvVars <- grep("^(?:RS|RSTUDIO)_", names(envVars))
    envVars[rstudioEnvVars] <- list(NULL)
+   envVars["R_SESSION_TMPDIR"] <- list(NULL)
    
    # Ensure that the new RStudio instance uses temporary storage.
    stateDir <- tempfile("rstudio-automation-state-")
@@ -288,10 +289,9 @@
    )
    
    # Start up RStudio.
-   # TODO: Consider using processx or something similar so we have more tools
-   # for managing the running process. In particular that will make it
-   # much easier to track the PID.
    process <- withr::with_envvar(envVars, {
+      owd <- setwd(stateDir)
+      on.exit(setwd(owd), add = TRUE)
       processx::process$new(appPath, args)
    })
    

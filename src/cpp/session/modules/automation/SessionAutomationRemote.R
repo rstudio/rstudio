@@ -16,10 +16,10 @@
 # NOTE: The functions created by '.rs.automation.addRemoteFunction()' here
 # are given access to a special environment containing:
 #
-# - client: The client instance used to communicate with RStudio,
-# - self: The remote instance itself, so that other methods can be used.
+# - client: The client instance used to communicate with the RStudio agent,
+# - self:   The remote itself, so that other existing remote methods can be used.
 #
-# 'self' isn't the most idiomatic R code, but it helps ensure that new stateful
+# This isn't the most idiomatic R code, but it helps ensure that new stateful
 # methods can be easily added to the 'remote' instance.
 
 # !diagnostics suppress=client,self
@@ -200,6 +200,16 @@
    # TODO: First attempt a graceful shutdown, and then later just
    # forcefully kill the process if necessary.
    client$Browser.close()
+   
+   alive <- TRUE
+   .rs.waitUntil(retryCount = 10, waitTimeSecs = 0.5, function()
+   {
+      alive <<- !.rs.automation.agentProcess$is_alive()
+   })
+   
+   # If the process is still alive, forcefully kill it.
+   if (alive)
+      .rs.automation.agentProcess$kill()
 })
 
 .rs.automation.addRemoteFunction("waitFor", function(callback)
