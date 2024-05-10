@@ -286,6 +286,9 @@
    )
    
    # Start up RStudio.
+   # TODO: Consider using processx or something similar so we have more tools
+   # for managing the running process. In particular that will make it
+   # much easier to track the PID.
    withr::with_envvar(envVars, system2(appPath, args, wait = FALSE))
    
    # Wait a bit until we have a new browser / RStudio instance.

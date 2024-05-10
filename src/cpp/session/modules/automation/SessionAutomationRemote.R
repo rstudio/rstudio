@@ -17,12 +17,12 @@
 # are given access to a special environment containing:
 #
 # - client: The client instance used to communicate with RStudio,
-# - self / self: The remote instance itself, so that other methods can be used.
+# - self: The remote instance itself, so that other methods can be used.
 #
-# self isn't the most idiomatic R code, but it helps ensure that new stateful
+# 'self' isn't the most idiomatic R code, but it helps ensure that new stateful
 # methods can be easily added to the 'remote' instance.
 
-# !diagnostics suppress=client,self,self
+# !diagnostics suppress=client,self
 .rs.defineVar("automation.remotePrivateEnv", new.env(parent = .rs.toolsEnv()))
 .rs.defineVar("automation.remote", new.env(parent = emptyenv()))
 
@@ -49,7 +49,8 @@
 .rs.automation.addRemoteFunction("aceLineTokens", function(row)
 {
    jsCode <- .rs.heredoc(r'{
-      var container = document.getElementById("rstudio_source_text_editor");
+      var id = $RStudio.last_focused_editor_id;
+      var container = document.getElementById(id);
       var editor = container.env.editor;
       var tokens = editor.session.getTokens(%i);
       JSON.stringify(tokens);
@@ -64,7 +65,8 @@
 .rs.automation.addRemoteFunction("aceSetCursorPosition", function(row, column = 0L)
 {
    jsCode <- .rs.heredoc(r'{
-      var container = document.getElementById("rstudio_source_text_editor");
+      var id = $RStudio.last_focused_editor_id;
+      var container = document.getElementById(id);
       var editor = container.env.editor;
       var position = { row: %i, column: %i };
       var range = { start: position, end: position };
@@ -158,10 +160,13 @@
 
 .rs.automation.addRemoteFunction("quit", function()
 {
+   # TODO: First attempt a graceful shutdown, and then later just
+   # forcefully kill the process if necessary.
    client$Browser.close()
 })
 
 .rs.automation.addRemoteFunction("waitFor", function(callback)
 {
+   # TODO
    client
 })
