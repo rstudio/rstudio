@@ -22,9 +22,13 @@
 .rs.setVar("automation.client", NULL)
 .rs.setVar("automation.sessionId", NULL)
 
+# Global variable for tracking the active automation agent.
+.rs.setVar("automation.agentProcess", NULL)
+
+
 .rs.addFunction("automation.installRequiredPackages", function()
 {
-   packages <- c("here", "httr", "later", "websocket", "withr", "xml2")
+   packages <- c("here", "httr", "later", "processx", "websocket", "withr", "xml2")
    pkgLocs <- find.package(packages, quiet = TRUE)
    if (length(packages) == length(pkgLocs))
       return()
@@ -238,12 +242,6 @@
    # No existing session; start a new one and attach to it.
    appPath <- .rs.nullCoalesce(appPath, .rs.automation.applicationPath(mode))
    
-   # TODO: Do something smarter so we can get the PID. For example, start
-   # RStudio with a flag indicating it should write its PID to a file at
-   # some location. Also, Windows.
-   command <- sprintf("pgrep -nx %s; true", shQuote(basename(appPath)))
-   oldPid <- system(command, intern = TRUE)
-   
    # Set up environment for newly-launched RStudio instance.
    envVars <- as.list(Sys.getenv())
    
@@ -293,36 +291,47 @@
    # TODO: Consider using processx or something similar so we have more tools
    # for managing the running process. In particular that will make it
    # much easier to track the PID.
-   withr::with_envvar(envVars, system2(appPath, args, wait = FALSE))
+   process <- withr::with_envvar(envVars, {
+      processx::process$new(appPath, args)
+   })
    
-   # Wait a bit until we have a new browser / RStudio instance.
-   while (TRUE)
+   # Wait until the process is running.
+   while (process$get_status() != "running")
+      Sys.sleep(0.1)
+   
+   # Start pinging the Chromium HTTP server.
+   response <- NULL
+   .rs.waitUntil(function()
    {
-      command <- sprintf("pgrep -nx %s; true", shQuote(basename(appPath)))
-      newPid <- system(command, intern = TRUE)
-      if (!identical(oldPid, newPid))
-         break
-   }
+      response <<- .rs.tryCatch(httr::GET(jsonVersionUrl))
+      !inherits(response, "error")
+   })
    
-   # Sleep for a second to let the Chromium HTTP server come to life.
-   Sys.sleep(3)
+   # We have a live process; save it so we can interact with it later.
+   .rs.setVar("automation.agentProcess", process)
    
    # The session is ready; attach now.
-   .rs.automation.attach(baseUrl, mode)
+   jsonResponse <- .rs.fromJSON(rawToChar(response$content))
+   .rs.automation.attach(baseUrl, mode, jsonResponse$webSocketDebuggerUrl)
    
 })
 
-.rs.addFunction("automation.attach", function(baseUrl, mode)
+.rs.addFunction("automation.attach", function(baseUrl, mode, url = NULL)
 {
    # Clear a previous session ID if necessary.
    .rs.setVar("automation.client", NULL)
    .rs.setVar("automation.sessionId", NULL)
    
    # Get the websocket debugger URL.
-   jsonVersionUrl <- file.path(baseUrl, "json/version")
-   response <- httr::GET(jsonVersionUrl)
-   version <- .rs.fromJSON(rawToChar(response$content))
-   socket <- websocket::WebSocket$new(version$webSocketDebuggerUrl)
+   url <- .rs.nullCoalesce(url, {
+      jsonVersionUrl <- file.path(baseUrl, "json/version")
+      response <- httr::GET(jsonVersionUrl)
+      jsonResponse <- .rs.fromJSON(rawToChar(response$content))
+      jsonResponse$webSocketDebuggerUrl
+   })
+   
+   # Create the websocket.
+   socket <- websocket::WebSocket$new(url)
    
    # Handle websocket messages.
    socket$onMessage(.rs.automation.onMessage)

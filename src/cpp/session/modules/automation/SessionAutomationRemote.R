@@ -149,8 +149,45 @@
    if (nodeId == 0L)
       stop("No element matching selector '", nodeId, "' could be found.")
    
-   # Return discovered node ID.
+   # Describe the discovered node.
    nodeId
+})
+
+.rs.automation.addRemoteFunction("domClickElement", function(selector, button = "left")
+{
+   # Query for the requested node.
+   nodeId <- self$domGetNodeId(selector)
+   
+   # Get a JavaScript object ID associated with this node.
+   response <- client$DOM.resolveNode(nodeId)
+   objectId <- response$object$objectId
+   
+   # Use that object ID to request the object's bounding rectangle.
+   code <- "function() {
+      return JSON.stringify(this.getBoundingClientRect());
+   }"
+   
+   response <- client$Runtime.callFunctionOn(
+      functionDeclaration = code,
+      objectId = objectId,
+   )
+   
+   domRect <- .rs.fromJSON(response$result$value)
+   
+   # Use the position of that element to simulate a click.
+   client$Input.dispatchMouseEvent(
+      type = "mousePressed",
+      x = domRect$x + (domRect$width / 2),
+      y = domRect$y + (domRect$height / 2),
+      button = button
+   )
+   
+   client$Input.dispatchMouseEvent(
+      type = "mouseReleased",
+      x = domRect$x + (domRect$width / 2),
+      y = domRect$y + (domRect$height / 2),
+      button = button
+   )
 })
 
 .rs.automation.addRemoteFunction("evaluateJavascript", function(expression)
@@ -170,3 +207,4 @@
    # TODO
    client
 })
+
