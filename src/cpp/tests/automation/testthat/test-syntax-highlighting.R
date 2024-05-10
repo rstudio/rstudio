@@ -1,7 +1,7 @@
 
 library(testthat)
 
-self <- remote <- .rs.automation.createRemote(mode = "server")
+self <- remote <- .rs.automation.createRemote(mode = "desktop")
 client <- remote$client
 
 test_that("Quarto Documents are highlighted as expected", {

@@ -245,8 +245,12 @@
    oldPid <- system(command, intern = TRUE)
    
    # Set up environment for newly-launched RStudio instance.
-   envVars <- Sys.getenv()
-   envVars <- envVars[grep("^(?:RS|RSTUDIO)_", names(envVars), invert = TRUE)]
+   envVars <- as.list(Sys.getenv())
+   
+   # Unset any RStudio-specific environment variables, so that this looks
+   # like a "fresh" RStudio session.
+   rstudioEnvVars <- grep("^(?:RS|RSTUDIO)_", names(envVars))
+   envVars[rstudioEnvVars] <- list(NULL)
    
    # Ensure that the new RStudio instance uses temporary storage.
    stateDir <- tempfile("rstudio-automation-state-")
