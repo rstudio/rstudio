@@ -2,6 +2,36 @@
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
+## RStudio 2024.04.1
+
+**"Chocolate Cosmos"**
+
+>Date: 2024-05-11
+
+
+### New
+
+#### RStudio
+
+#### Posit Workbench
+
+- On the homepage, launcher errors will now show a "details" drop-down containing the raw error output if launcher does not recognize the error type. (rstudio/rstudio-pro#4717)
+
+### Fixed
+
+#### RStudio
+
+- Fixed an issue where RStudio could crash when requesting completions within a ggplot2 aes() call, for datasets containing multi-byte variable names. (#14625)
+
+
+#### Posit Workbench
+
+
+### Dependencies
+
+
+### Deprecated / Removed
+
 ## RStudio 2024.04.0
 
 **"Chocolate Cosmos"**
