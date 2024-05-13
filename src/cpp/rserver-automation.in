@@ -23,5 +23,5 @@ export RSTUDIO_CONFIG_DIR="${ROOT}/rstudio-config-dir"
 export RSTUDIO_DATA_HOME="${ROOT}/rstudio-data-home"
 
 # run the usual server development script
-./rserver-dev "$@"
+./rserver-dev --auth-none=1 "$@"
 
