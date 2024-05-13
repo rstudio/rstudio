@@ -284,8 +284,8 @@
    args <- c(
       if (mode == "desktop") "--automation-agent",
       if (mode == "server")  "--no-first-run",
-      sprintf("--remote-debugging-port=%i", port),
-      sprintf("--user-data-dir=%s", shQuote(tempdir()))
+      shQuote(sprintf("--remote-debugging-port=%i", port)),
+      shQuote(sprintf("--user-data-dir=%s", tempdir()))
    )
    
    # Start up RStudio.
