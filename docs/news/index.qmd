@@ -6,10 +6,12 @@ This page provides the release notes associated with each release of RStudio and
 
 **"Chocolate Cosmos"**
 
->Date: 2024-05-11
+>Date: 2024-05-13
 
 
 ### New
+
+- Added support for R 4.4.0
 
 #### RStudio
 
