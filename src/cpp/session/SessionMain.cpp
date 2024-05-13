@@ -1399,13 +1399,15 @@ void rRunTests()
 void rRunAutomation()
 {
    // run tests
-   int status = tests::run();
+   Error error = modules::automation::run();
+   if (error)
+       LOG_ERROR(error);
    
    // try to clean up session
    rCleanup(true);
    
    // exit if we haven't already
-   exitEarly(status);
+   exitEarly(error.getCode());
 }
 
 void ensureRProfile()
