@@ -196,7 +196,7 @@ endif()
 
 # yaml-cpp
 set(YAML_CPP_VERSION "0.8.0")
-set(YAML_CPP_REVISION "f7320141120f720aecc4c32be25586e7da9eb978")
+set(YAML_CPP_REVISION "f7320141120f720aecc4c32be25586e7da9eb978") # pragma: allowlist secret
 if(RSTUDIO_USE_SYSTEM_YAML_CPP)
    # NOTE: defines the following CMake variables:
    # - YAML_CPP_INCLUDE_DIR
@@ -724,6 +724,7 @@ else()
          add_subdirectory(server)
          add_subdirectory(server/url-ports)
          configure_file(rserver-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rserver-dev)
+         configure_file(rserver-automation.in ${CMAKE_CURRENT_BINARY_DIR}/rserver-automation)
          configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)
          configure_file(conf/rsession-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf)
          configure_file(conf/database-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/database-dev.conf)
