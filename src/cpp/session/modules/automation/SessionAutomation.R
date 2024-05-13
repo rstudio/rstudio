@@ -282,10 +282,16 @@
    
    # Build argument list.
    args <- c(
+      sprintf("--remote-debugging-port=%i", port),
+      sprintf("--user-data-dir=%s", tempdir()),
       if (mode == "desktop") "--automation-agent",
-      if (mode == "server")  "--no-first-run",
-      shQuote(sprintf("--remote-debugging-port=%i", port)),
-      shQuote(sprintf("--user-data-dir=%s", tempdir()))
+      if (mode == "server") c(
+         "--no-default-browser-check",
+         "--no-first-run",
+         "--disable-extensions",
+         "--disable-features=PrivacySandboxSettings4",
+         "about:blank"
+      )
    )
    
    # Start up RStudio.
