@@ -41,7 +41,8 @@ public:
 
 protected:
    rstudio::core::program_options::OptionsDescription
-   buildOptions(boost::program_options::options_description* pTests,
+   buildOptions(boost::program_options::options_description* pAutomation,
+                boost::program_options::options_description* pTests,
                 boost::program_options::options_description* pScript,
                 boost::program_options::options_description* pVerify,
                 boost::program_options::options_description* pVersion,
@@ -64,6 +65,14 @@ protected:
 {
    using namespace rstudio::core;
    using namespace boost::program_options;
+
+   pAutomation->add_options()
+      (kRunAutomationSessionOption,
+      value<bool>(&runAutomation_)->default_value(false)->implicit_value(true),
+      "Run automation tests and exit.")
+      (kAutomationAgentSessionOption,
+      value<bool>(&isAutomationAgent_)->default_value(false)->implicit_value(true),
+      "Run RStudio as an automation agent.");
 
    pTests->add_options()
       (kRunTestsSessionOption,
@@ -445,6 +454,8 @@ protected:
 }
 
 public:
+   bool runAutomation() const { return runAutomation_; }
+   bool isAutomationAgent() const { return isAutomationAgent_; }
    bool runTests() const { return runTests_; }
    std::string runScript() const { return runScript_; }
    bool verifyInstallation() const { return verifyInstallation_; }
@@ -559,6 +570,8 @@ public:
 
 
 protected:
+   bool runAutomation_;
+   bool isAutomationAgent_;
    bool runTests_;
    std::string runScript_;
    bool verifyInstallation_;

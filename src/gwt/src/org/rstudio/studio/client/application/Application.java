@@ -17,6 +17,78 @@ package org.rstudio.studio.client.application;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Barrier;
+import org.rstudio.core.client.Barrier.Token;
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.Clipboard;
+import org.rstudio.core.client.dom.DocumentEx;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.ModalDialogTracker;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
+import org.rstudio.studio.client.application.events.ApplicationEventHandlers;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
+import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
+import org.rstudio.studio.client.application.events.ClipboardActionEvent;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.FileUploadEvent;
+import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
+import org.rstudio.studio.client.application.events.InvalidSessionEvent;
+import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
+import org.rstudio.studio.client.application.events.QuitEvent;
+import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.application.events.ServerOfflineEvent;
+import org.rstudio.studio.client.application.events.ServerUnavailableEvent;
+import org.rstudio.studio.client.application.events.SessionAbendWarningEvent;
+import org.rstudio.studio.client.application.events.SessionRelaunchEvent;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.events.SuicideEvent;
+import org.rstudio.studio.client.application.events.SwitchToRVersionEvent;
+import org.rstudio.studio.client.application.events.UnauthorizedEvent;
+import org.rstudio.studio.client.application.model.InvalidSessionInfo;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
+import org.rstudio.studio.client.application.model.ProductInfo;
+import org.rstudio.studio.client.application.model.SessionInitOptions;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.application.ui.AboutDialog;
+import org.rstudio.studio.client.application.ui.RTimeoutOptions;
+import org.rstudio.studio.client.application.ui.RequestLogVisualization;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
+import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.NewProjectEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectEvent;
+import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
+import org.rstudio.studio.client.server.Server;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.ClientStateUpdater;
+import org.rstudio.studio.client.workbench.Workbench;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.SessionOpener;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
+import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Document;
@@ -37,56 +109,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-
-import org.rstudio.core.client.Barrier;
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.Barrier.Token;
-import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.dom.Clipboard;
-import org.rstudio.core.client.dom.DocumentEx;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.widget.ModalDialogTracker;
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
-import org.rstudio.studio.client.application.events.*;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
-import org.rstudio.studio.client.application.model.InvalidSessionInfo;
-import org.rstudio.studio.client.application.model.ProductEditionInfo;
-import org.rstudio.studio.client.application.model.ProductInfo;
-import org.rstudio.studio.client.application.model.SessionInitOptions;
-import org.rstudio.studio.client.application.model.SessionSerializationAction;
-import org.rstudio.studio.client.application.ui.AboutDialog;
-import org.rstudio.studio.client.application.ui.RTimeoutOptions;
-import org.rstudio.studio.client.application.ui.RequestLogVisualization;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SuperDevMode;
-import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
-import org.rstudio.studio.client.common.satellite.Satellite;
-import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.projects.Projects;
-import org.rstudio.studio.client.projects.events.NewProjectEvent;
-import org.rstudio.studio.client.projects.events.OpenProjectEvent;
-import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
-import org.rstudio.studio.client.server.*;
-import org.rstudio.studio.client.workbench.ClientStateUpdater;
-import org.rstudio.studio.client.workbench.Workbench;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.model.SessionOpener;
-import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserState;
-import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -115,7 +137,8 @@ public class Application implements ApplicationEventHandlers
                       Provider<ApplicationQuit> pApplicationQuit,
                       Provider<ApplicationInterrupt> pApplicationInterrupt,
                       Provider<ApplicationThemes> pAppThemes,
-                      Provider<ProductEditionInfo> pEdition)
+                      Provider<ProductEditionInfo> pEdition,
+                      Provider<ApplicationAutomationHooks> pApplicationHooks)
    {
       // save references
       view_ = view;
@@ -136,6 +159,7 @@ public class Application implements ApplicationEventHandlers
       pApplicationInterrupt_ = pApplicationInterrupt;
       pEdition_ = pEdition;
       pAppThemes_ = pAppThemes;
+      pApplicationHooks_ = pApplicationHooks;
 
       // bind to commands
       binder.bind(commands_, this);
@@ -206,7 +230,15 @@ public class Application implements ApplicationEventHandlers
                dismissLoadingProgress.execute();
             }
 
+            // set session info
             session_.setSessionInfo(sessionInfo);
+            
+            // initialize application hooks
+            if (sessionInfo.isAutomationAgent())
+            {
+               ApplicationAutomationHooks appHooks = pApplicationHooks_.get();
+               appHooks.initialize();
+            }
 
             // load MathJax
             MathJaxLoader.ensureMathJaxLoaded();
@@ -1374,6 +1406,7 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<ProductEditionInfo> pEdition_;
    private final Provider<ApplicationThemes> pAppThemes_;
+   private final Provider<ApplicationAutomationHooks> pApplicationHooks_;
 
    private boolean fileUploadInProgress_ = false;
 

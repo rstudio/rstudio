@@ -692,6 +692,10 @@ public class SessionInfo extends JavaScriptObject
    public final native RProjectCopilotOptions getCopilotProjectOptions() /*-{
       return this.copilot_project_options;
    }-*/;
+   
+   public final native boolean isAutomationAgent() /*-{
+      return this.is_automation_agent;
+   }-*/;
 
    private static final ModelConstants constants_ = GWT.create(ModelConstants.class);
 }

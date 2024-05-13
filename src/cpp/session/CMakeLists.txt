@@ -237,6 +237,7 @@ set(SESSION_SOURCE_FILES
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
+   modules/automation/SessionAutomation.cpp
    modules/clang/CodeCompletion.cpp
    modules/clang/DefinitionIndex.cpp
    modules/clang/Diagnostics.cpp

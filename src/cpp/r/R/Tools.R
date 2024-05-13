@@ -96,9 +96,22 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("setVar", function(name, var)
 { 
    envir <- .rs.toolsEnv()
+   if (!is.null(var))
+      environment(var) <- envir
+   
    fullName <- paste(".rs.", name, sep = "")
-   environment(var) <- envir
    assign(fullName, var, envir = envir)
+})
+
+.rs.addFunction("defineVar", function(name, var)
+{
+   envir <- .rs.toolsEnv()
+   if (!is.null(var))
+      environment(var) <- envir
+   
+   fullName <- paste(".rs.", name, sep = "")
+   if (!exists(fullName, envir = envir, inherits = FALSE))
+      assign(fullName, var, envir = envir)
 })
 
 .rs.addFunction("clearVar", function(name)
@@ -1287,7 +1300,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    envirs
 })
 
-.rs.addFunction("heredoc", function(text)
+.rs.addFunction("heredoc", function(text, ...)
 {
    # remove leading, trailing whitespace
    trimmed <- gsub("^\\s*\\n|\\n\\s*$", "", text)
@@ -1298,7 +1311,32 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # compute common indent
    indent <- regexpr("[^[:space:]]", lines)
    common <- min(setdiff(indent, -1L))
-   paste(substring(lines, common), collapse = "\n")
+   
+   # put it together
+   rendered <- paste(substring(lines, common), collapse = "\n")
+   
+   # if any dots were supplied, assume they're sprintf format arguments
+   dots <- eval(substitute(alist(...)))
+   if (length(dots))
+      rendered <- sprintf(rendered, ...)
+   
+   # return rendered text
+   rendered
+})
+
+.rs.addFunction("waitUntil", function(predicate,
+                                      retryCount = 100L,
+                                      waitTimeSecs = 1)
+{
+   for (i in seq_len(retryCount))
+   {
+      if (predicate())
+         return(TRUE)
+      else
+         Sys.sleep(waitTimeSecs)
+   }
+   
+   stop("operation timed out")
 })
 
 .rs.addFunction("bugReport", function(pro = NULL)

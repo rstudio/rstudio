@@ -177,6 +177,7 @@
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
 #include "modules/SessionUserPrefs.hpp"
+#include "modules/automation/SessionAutomation.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/clang/SessionClang.hpp"
 #include "modules/connections/SessionConnections.hpp"
@@ -674,6 +675,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::fonts::initialize)
       (modules::system_resources::initialize)
       (modules::copilot::initialize)
+      (modules::automation::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -796,7 +798,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
-   if (!rsession::options().runTests())
+   bool isTesting =
+         rsession::options().runTests() ||
+         rsession::options().runAutomation();
+   
+   if (!isTesting)
    {
       rsession::persistentState().setAbend(true);
    }
@@ -1388,6 +1394,20 @@ void rRunTests()
    
    // exit if we haven't already
    exitEarly(status);
+}
+
+void rRunAutomation()
+{
+   // run tests
+   Error error = modules::automation::run();
+   if (error)
+       LOG_ERROR(error);
+   
+   // try to clean up session
+   rCleanup(true);
+   
+   // exit if we haven't already
+   exitEarly(error.getCode());
 }
 
 void ensureRProfile()
@@ -2507,7 +2527,13 @@ int main(int argc, char * const argv[])
       
       // set test callback if enabled
       if (options.runTests())
+      {
          rCallbacks.runTests = rRunTests;
+      }
+      else if (options.runAutomation())
+      {
+         rCallbacks.runTests = rRunAutomation;
+      }
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);
