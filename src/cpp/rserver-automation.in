@@ -16,12 +16,22 @@
 #
 
 # use temporary directory for RStudio state
-ROOT=$(mktemp -d)
+ROOT=/tmp/rstudio-automation
 
 export RSTUDIO_CONFIG_HOME="${ROOT}/rstudio-config-home"
 export RSTUDIO_CONFIG_DIR="${ROOT}/rstudio-config-dir"
 export RSTUDIO_DATA_HOME="${ROOT}/rstudio-data-home"
 
+cat <<- EOF > /tmp/rserver-database.conf
+provider=sqlite
+directory=${ROOT}
+EOF
+
 # run the usual server development script
-./rserver-dev --auth-none=1 "$@"
+./rserver-dev                                           \
+	--auth-none=1                                       \
+	--www-port=8788                                     \
+	--server-data-dir="${ROOT}"                         \
+	--database-config-file="/tmp/rserver-database.conf" \
+	"$@"
 

@@ -26,9 +26,10 @@
 .rs.defineVar("automation.remotePrivateEnv", new.env(parent = .rs.toolsEnv()))
 .rs.defineVar("automation.remote", new.env(parent = emptyenv()))
 
-.rs.addFunction("automation.createRemote", function(mode = c("desktop", "server"))
+.rs.addFunction("automation.createRemote", function(mode = NULL)
 {
-   client <- .rs.automation.initialize(mode = match.arg(mode))
+   mode <- .rs.nullCoalesce(mode, Sys.getenv("RSTUDIO_AUTOMATION_MODE", unset = "server"))
+   client <- .rs.automation.initialize(mode = mode)
    assign("client", client, envir = .rs.automation.remote)
    assign("client", client, envir = .rs.automation.remotePrivateEnv)
    assign("self", .rs.automation.remote, envir = .rs.automation.remotePrivateEnv)
@@ -58,7 +59,7 @@
    
    jsCode <- sprintf(jsCode, as.integer(row))
    
-   response <- self$evaluateJavascript(jsCode)
+   response <- self$jsExec(jsCode)
    .rs.fromJSON(response$result$value)
 })
 
@@ -73,7 +74,7 @@
       editor.selection.setSelectionRange(range);
    }', as.integer(row), as.integer(column))
    
-   self$evaluateJavascript(jsCode)
+   self$jsExec(jsCode)
 })
 
 .rs.automation.addRemoteFunction("commandExecute", function(command)
@@ -190,9 +191,24 @@
    )
 })
 
-.rs.automation.addRemoteFunction("evaluateJavascript", function(expression)
+.rs.automation.addRemoteFunction("jsExec", function(expression)
 {
    client$Runtime.evaluate(expression = expression)
+})
+
+.rs.automation.addRemoteFunction("jsCall", function(jsFunc,
+                                                    objectId = NULL,
+                                                    nodeId = NULL)
+{
+   objectId <- .rs.nullCoalesce(objectId, {
+      resolvedNode <- client$DOM.resolveNode(nodeId)
+      objectId <- resolvedNode$object$objectId
+   })
+   
+   client$Runtime.callFunctionOn(
+      functionDeclaration = jsFunc,
+      objectId = objectId
+   )
 })
 
 .rs.automation.addRemoteFunction("quit", function()

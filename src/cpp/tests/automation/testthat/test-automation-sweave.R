@@ -1,7 +1,7 @@
 
 library(testthat)
 
-self <- remote <- .rs.automation.createRemote(mode = "server")
+self <- remote <- .rs.automation.createRemote()
 client <- remote$client
 
 test_that("Braces are inserted and highlighted correctly in Sweave documents", {
