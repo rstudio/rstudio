@@ -400,7 +400,7 @@ pipeline {
       }
     }
 
-    stage('Trigger Automation Testing') {
+    stage('Trigger Testing Jobs') {
       agent { label 'linux' }
 
       // Skip for hourly builds, non-published builds, and branches that don't 
@@ -414,17 +414,39 @@ pipeline {
         }
       }
 
-      steps {
-        build wait: false,
-          job: "IDE/qa-${IS_PRO ? '' : 'opensource-'}automation",
-          parameters: [
-            string(name: 'RSTUDIO_VERSION_MAJOR', value: "${RSTUDIO_VERSION_MAJOR}"),
-            string(name: 'RSTUDIO_VERSION_MINOR', value: "${RSTUDIO_VERSION_MINOR}"),
-            string(name: 'RSTUDIO_VERSION_PATCH', value: "${RSTUDIO_VERSION_PATCH}"),
-            string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${RSTUDIO_VERSION_SUFFIX}"),
-            string(name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"),
-            string(name: 'BRANCH_NAME', value: "${env.BRANCH_NAME}")
-          ]
+      stages {
+
+        stage('Trigger Automation Testing') {
+          steps {
+            build wait: false,
+            job: "IDE/qa-${IS_PRO ? '' : 'opensource-'}automation",
+            parameters: [
+              string(name: 'RSTUDIO_VERSION_MAJOR', value: "${RSTUDIO_VERSION_MAJOR}"),
+              string(name: 'RSTUDIO_VERSION_MINOR', value: "${RSTUDIO_VERSION_MINOR}"),
+              string(name: 'RSTUDIO_VERSION_PATCH', value: "${RSTUDIO_VERSION_PATCH}"),
+              string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${RSTUDIO_VERSION_SUFFIX}"),
+              string(name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"),
+              string(name: 'BRANCH_NAME', value: "${env.BRANCH_NAME}")
+            ]
+          }
+        }
+
+        stage('Trigger Desktop Automation Testing') {
+          when {
+              expression { return !params.IS_PRO }
+          }
+
+          steps {
+            build(
+              wait: false,
+              job: "IDE/rstudio-ide-automation-desktop/desktop-ide-ec2-automation",
+              parameters: [
+                string(name: 'RSTUDIO_VERSION', value: "${RSTUDIO_VERSION}"),
+                string(name: 'GITHUB_BRANCH', value: "${env.BRANCH_NAME}")
+              ]
+            )
+          }
+        }
       }
     }
   }
