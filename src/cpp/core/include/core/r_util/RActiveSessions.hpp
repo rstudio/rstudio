@@ -550,8 +550,7 @@ public:
          return Success();
    }
 
-   bool validate(const FilePath& userHomePath,
-                 bool projectSharingEnabled) const
+   bool validate() const
    {
       if (empty())
       {
@@ -570,47 +569,17 @@ public:
       }
 
       bool isRSession = editor() == kWorkbenchRStudio || editor().empty();
+      if (!isRSession)
+         return true;
 
-      if (isRSession)
+      // ensure the properties are there but don't check properties like
+      // lastUsed() or workingDir() that will appear as briefly empty as they
+      // are being updated
+      std::string projectVal = projectWithRetry();
+      if (projectVal.empty())
       {
-         // ensure the properties are there but don't check properties like lastUsed() or workingDir() that will appear as briefly empty
-         // as they are being updated
-         std::string projectVal = projectWithRetry();
-         if (projectVal.empty())
-         {
-            LOG_DEBUG_MESSAGE("ActiveSession validation failed - project is empty");
-            return false;
-         }
-
-         // for projects validate that the base directory still exists
-         std::string theProject = projectVal;
-         if (theProject != kProjectNone)
-         {
-            FilePath projectDir = FilePath::resolveAliasedPath(theProject,
-                                                               userHomePath);
-            if (!projectDir.exists())
-            {
-               LOG_DEBUG_MESSAGE("ActiveSession validation failed: project directory: " + projectDir.getAbsolutePath() + " not accessible to the session user");
-               return false;
-            }
-
-           // check for project file
-           FilePath projectPath = r_util::projectFromDirectory(projectDir);
-           if (!projectPath.exists())
-           {
-              LOG_DEBUG_MESSAGE("ActiveSession validation failed: project path: " + projectPath.getAbsolutePath() + " not accessible to the session user");
-              return false;
-           }
-
-           // if we got this far the scope is valid, do one final check for
-           // trying to open a shared project if sharing is disabled
-           if (!projectSharingEnabled &&
-               r_util::isSharedPath(projectPath.getAbsolutePath(), userHomePath))
-           {
-              LOG_DEBUG_MESSAGE("ActiveSession validation failed. Project is shared but system has disabled project sharing for project: " + projectPath.getAbsolutePath());
-              return false;
-           }
-         }
+         LOG_DEBUG_MESSAGE("ActiveSession validation failed - project is empty");
+         return false;
       }
 
       // validated!
@@ -773,13 +742,10 @@ public:
                       const std::string& editor,
                       std::string* pId) const;
 
-   std::vector<boost::shared_ptr<ActiveSession> > list(FilePath userHomePath,
-                                                       bool projectSharingEnabled,
-                                                       bool validate,
+   std::vector<boost::shared_ptr<ActiveSession> > list(bool validate,
                                                        std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions = nullptr) const;
 
-   size_t count(const FilePath& userHomePath,
-                bool projectSharingEnabled) const;
+   size_t count() const;
 
    boost::shared_ptr<ActiveSession> get(const std::string& id) const;
 
@@ -838,8 +804,6 @@ private:
 
 void trackActiveSessionCount(std::shared_ptr<IActiveSessionsStorage> storage,
                              const FilePath& rootStoragePath,
-                             const FilePath& userHomePath,
-                             bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged);
 
 } // namespace r_util

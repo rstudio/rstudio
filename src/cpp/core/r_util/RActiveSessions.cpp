@@ -125,9 +125,7 @@ bool compareActivityLevel(boost::shared_ptr<ActiveSession> a,
 
 } // anonymous namespace
 
-std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath userHomePath,
-                                                                    bool projectSharingEnabled,
-                                                                    bool validate,
+std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(bool validate,
                                                                     std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions) const
 {
    std::vector<std::string> sessionIds = storage_->listSessionIds();
@@ -138,7 +136,7 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath use
       boost::shared_ptr<ActiveSession> candidateSession = get(id);
       if (validate)
       {
-         if (candidateSession->validate(userHomePath, projectSharingEnabled))
+         if (candidateSession->validate())
          {
             // Cache the sort conditions to ensure compareActivityLevel will provide a strict weak ordering.
             // Otherwise, the conditions on which we sort (e.g. lastUsed()) can be updated on disk during a sort
@@ -170,8 +168,7 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath use
    return sessions;
 }
 
-size_t ActiveSessions::count(const FilePath& userHomePath,
-                             bool projectSharingEnabled) const
+size_t ActiveSessions::count() const
 {
    return storage_->getSessionCount();
 }
@@ -230,19 +227,15 @@ GlobalActiveSessions::get(const std::string& id) const
 namespace {
 
 void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
-                        const FilePath& userHomePath,
-                        bool projectSharingEnabled,
                         boost::function<void(size_t)> onCountChanged)
 {
-   onCountChanged(pSessions->count(userHomePath, projectSharingEnabled));
+   onCountChanged(pSessions->count());
 }
 
 } // anonymous namespace
 
 void trackActiveSessionCount(std::shared_ptr<IActiveSessionsStorage> storage,
                              const FilePath& rootStoragePath,
-                             const FilePath& userHomePath,
-                             bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged)
 {
 
@@ -250,16 +243,8 @@ void trackActiveSessionCount(std::shared_ptr<IActiveSessionsStorage> storage,
                                           new ActiveSessions(storage, rootStoragePath));
 
    core::system::file_monitor::Callbacks cb;
-   cb.onRegistered = boost::bind(notifyCountChanged,
-                                 pSessions,
-                                 userHomePath,
-                                 projectSharingEnabled,
-                                 onCountChanged);
-   cb.onFilesChanged = boost::bind(notifyCountChanged,
-                                   pSessions,
-                                   userHomePath,
-                                   projectSharingEnabled,
-                                   onCountChanged);
+   cb.onRegistered = boost::bind(notifyCountChanged, pSessions, onCountChanged);
+   cb.onFilesChanged = boost::bind(notifyCountChanged, pSessions, onCountChanged);
    cb.onRegistrationError = boost::bind(log::logError, _1, ERROR_LOCATION);
 
    core::system::file_monitor::registerMonitor(
