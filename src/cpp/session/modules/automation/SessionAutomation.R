@@ -281,11 +281,18 @@
    envVars[["RSTUDIO_DISABLE_CHECK_FOR_UPDATES"]] <- "1"
    
    # Build argument list.
+   # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
    args <- c(
+      sprintf("--remote-debugging-port=%i", port),
+      sprintf("--user-data-dir=%s", tempdir()),
       if (mode == "desktop") "--automation-agent",
-      if (mode == "server")  "--no-first-run",
-      shQuote(sprintf("--remote-debugging-port=%i", port)),
-      shQuote(sprintf("--user-data-dir=%s", tempdir()))
+      if (mode == "server") c(
+         "--no-default-browser-check",
+         "--no-first-run",
+         "--disable-extensions",
+         "--disable-features=PrivacySandboxSettings4",
+         "about:blank"
+      )
    )
    
    # Start up RStudio.
