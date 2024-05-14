@@ -426,6 +426,20 @@ pipeline {
             string(name: 'BRANCH_NAME', value: "${env.BRANCH_NAME}")
           ]
       }
+    }
+
+    stage('Trigger Automation Testing') {
+      agent { label 'linux' }
+
+      when {
+        allOf {
+          expression { return params.DAILY }
+          expression { return params.PUBLISH }
+          expression { return !params.IS_PRO }
+          expression { return env.BRANCH_NAME != "release-ghost-orchid" }
+          expression { return env.BRANCH_NAME != "v1.4-juliet-rose" }
+        }
+      }
 
       steps {
         build(
@@ -437,8 +451,8 @@ pipeline {
           ]
         )
       }
-
     }
+
   }
 
   post {
