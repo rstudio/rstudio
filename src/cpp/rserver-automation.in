@@ -15,8 +15,13 @@
 #
 #
 
+# environment variables set from cmake
+export RS_CRASH_HANDLER_PATH="$(pwd)/server/crash-handler-proxy/crash-handler-proxy"
+export RS_CRASHPAD_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler"
+export RS_DB_MIGRATIONS_PATH="@CMAKE_CURRENT_SOURCE_DIR@/server/db"
+
 # use temporary directory for RStudio state
-ROOT=/tmp/rstudio-automation
+ROOT=$(mktemp -d -p /tmp rstudio-automation-XXXXXX)
 
 export RSTUDIO_CONFIG_HOME="${ROOT}/rstudio-config-home"
 export RSTUDIO_CONFIG_DIR="${ROOT}/rstudio-config-dir"
@@ -28,7 +33,9 @@ directory=${ROOT}
 EOF
 
 # run the usual server development script
-./rserver-dev                                           \
+server/rserver                                          \
+	--server-user="$(whoami)"                           \
+	--config-file="conf/rserver-dev.conf"               \
 	--auth-none=1                                       \
 	--www-port=8788                                     \
 	--server-data-dir="${ROOT}"                         \

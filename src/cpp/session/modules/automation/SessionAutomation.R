@@ -233,7 +233,21 @@
          return(TRUE)
    }
    
-   stop("rserver does not appear to be running on port 8788")
+   # See if we can figure out how the parent was launched, and use that
+   # to infer whether we can launch the automation helper.
+   parentHandle <- ps::ps_parent()
+   parentEnv <- ps::ps_environ(parentHandle)
+   parentPwd <- parentEnv[["PWD"]]
+   automationScript <- file.path(parentPwd, "rserver-automation")
+   if (file.exists(automationScript))
+   {
+      message("-- Starting rserver-automation ...")
+      withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
+   }
+   else
+   {
+      stop("rserver does not appear to be running on port 8788")
+   }
 })
 
 .rs.addFunction("automation.initialize", function(appPath = NULL,
