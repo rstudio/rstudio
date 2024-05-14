@@ -281,6 +281,7 @@
    envVars[["RSTUDIO_DISABLE_CHECK_FOR_UPDATES"]] <- "1"
    
    # Build argument list.
+   # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
    args <- c(
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", tempdir()),
