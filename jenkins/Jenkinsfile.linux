@@ -428,7 +428,7 @@ pipeline {
       }
     }
 
-    stage('Trigger Automation Testing') {
+    stage('Trigger Desktop Automation Testing') {
       agent { label 'linux' }
 
       when {
