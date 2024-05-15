@@ -3,7 +3,7 @@
 #
 # rserver-automation
 #
-# Copyright (C) 2022 by Posit Software, PBC
+# Copyright (C) 2024 by Posit Software, PBC
 #
 # Unless you have received this program directly from Posit Software pursuant
 # to the terms of a commercial license agreement with Posit Software, then
@@ -20,6 +20,7 @@ export RS_CRASH_HANDLER_PATH="$(pwd)/server/crash-handler-proxy/crash-handler-pr
 export RS_CRASHPAD_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler"
 export RS_DB_MIGRATIONS_PATH="@CMAKE_CURRENT_SOURCE_DIR@/server/db"
 
+
 # use temporary directory for RStudio state
 ROOT=$(mktemp -d -p /tmp rstudio-automation-XXXXXX)
 
@@ -27,18 +28,32 @@ export RSTUDIO_CONFIG_HOME="${ROOT}/rstudio-config-home"
 export RSTUDIO_CONFIG_DIR="${ROOT}/rstudio-config-dir"
 export RSTUDIO_DATA_HOME="${ROOT}/rstudio-data-home"
 
-cat <<- EOF > /tmp/rserver-database.conf
+
+# use local database file
+cat <<- EOF > "${ROOT}/rserver-database.conf"
 provider=sqlite
 directory=${ROOT}
 EOF
 
+
+# use the development rsession configuration file,
+# but make sure sessions run in automation mode
+RSESSION_CONFIG_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
+cp "${RSESSION_CONFIG_FILE}" "${ROOT}/rsession.conf"
+cat <<- EOF >> "${ROOT}/rsession.conf"
+# enable automation tools
+automation-agent=1
+EOF
+
+
 # run the usual server development script
-server/rserver                                          \
-	--server-user="$(whoami)"                           \
-	--config-file="conf/rserver-dev.conf"               \
-	--auth-none=1                                       \
-	--www-port=8788                                     \
-	--server-data-dir="${ROOT}"                         \
-	--database-config-file="/tmp/rserver-database.conf" \
+server/rserver                                             \
+	--server-user="$(whoami)"                              \
+	--config-file="conf/rserver-dev.conf"                  \
+	--auth-none=1                                          \
+	--www-port=8788                                        \
+	--server-data-dir="${ROOT}"                            \
+	--database-config-file="${ROOT}/rserver-database.conf" \
+	--rsession-config-file="${ROOT}/rsession.conf"         \
 	"$@"
 

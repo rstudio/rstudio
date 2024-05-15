@@ -18,8 +18,9 @@
 #include <iostream>
 
 #include <shared_core/Error.hpp>
-#include <core/Log.hpp>
 #include <shared_core/FilePath.hpp>
+
+#include <core/Log.hpp>
 #include <core/system/System.hpp>
 
 using namespace boost::program_options;

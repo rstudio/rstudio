@@ -227,10 +227,3 @@
    if (alive)
       .rs.automation.agentProcess$kill()
 })
-
-.rs.automation.addRemoteFunction("waitFor", function(callback)
-{
-   # TODO
-   client
-})
-
