@@ -28,7 +28,7 @@
 
 .rs.addFunction("automation.installRequiredPackages", function()
 {
-   packages <- c("here", "httr", "later", "processx", "websocket", "withr", "xml2")
+   packages <- c("here", "httr", "later", "processx", "ps", "websocket", "withr", "xml2")
    pkgLocs <- find.package(packages, quiet = TRUE)
    if (length(packages) == length(pkgLocs))
       return()
@@ -488,9 +488,40 @@
    sessionId
 })
 
-.rs.addFunction("automation.run", function(mode = c("server", "desktop"))
+.rs.addFunction("automation.run", function(ref = NULL, mode = c("server", "desktop"))
 {
-   projectRoot <- .rs.api.getActiveProject()
-   entrypoint <- file.path(projectRoot, "src/cpp/tests/automation/testthat.R")
-   source(entrypoint)
+   # Figure out the commit reference to use.
+   ref <- .rs.nullCoalesce(ref, {
+      productInfo <- .Call("rs_getProductInfo", PACKAGE = "(embedding)")
+      productInfo$commit
+   })
+   
+   # Work in a temporary directory.
+   automationDir <- tempfile("rstudio-automation-")
+   dir.create(automationDir)
+   owd <- setwd(automationDir)
+   on.exit(setwd(owd), add = TRUE)
+   
+   # Perform a sparse checkout to retrieve the automation files.
+   gitScript <- .rs.heredoc('
+      git init -b %1$s
+      git remote add origin git@github.com:rstudio/rstudio.git
+      git config core.sparseCheckout true
+      echo "src/cpp/tests/automation" >> .git/info/sparse-checkout
+      git fetch --depth=1 origin %1$s
+      git checkout %1$s
+   ', shQuote(ref))
+   
+   fileext <- if (.rs.platform.isWindows) ".bat" else ".sh"
+   gitScriptFile <- tempfile("git-checkout-", fileext = fileext)
+   writeLines(gitScript, con = gitScriptFile)
+   Sys.chmod(gitScriptFile, mode = "0755")
+   system2(gitScriptFile)
+   
+   # Move to the automation directory.
+   setwd("src/cpp/tests/automation")
+   
+   # Run the tests.
+   envVars <- list(RSTUDIO_AUTOMATION_MODE = mode)
+   withr::with_envvar(envVars, source("testthat.R"))
 })

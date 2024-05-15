@@ -550,7 +550,10 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       FilePath projFilePath = projects::projectContext().file();
       if (projFilePath.getFilename() == "rstudio.Rproj")
       {
+         ignores.push_back("/src/build-cpp-");
          ignores.push_back("/dependencies/common/node/");
+         ignores.push_back("/package/osx/build/");
+         ignores.push_back("/package/osx/install/");
       }
    }
 #endif

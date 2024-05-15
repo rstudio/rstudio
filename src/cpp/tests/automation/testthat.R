@@ -18,11 +18,16 @@ test_that <- function(desc, code) {
 }
 
 # Find the test directories.
-projectRoot <- here::here()
-testDir <- file.path(projectRoot, "src/cpp/tests/automation/testthat")
+# Assume that they exist in the 'testthat' directory.
+testDir <- getwd()
+if (!all(file.exists("testthat", "testthat.R"))) {
+   projectRoot <- here::here()
+   testDir <- file.path(projectRoot, "src/cpp/tests/automation/testthat")
+}
 
 # Set the working directory.
-setwd(testDir)
+owd <- setwd(testDir)
+on.exit(setwd(owd), add = TRUE)
 
 # Create a junit-style reporter.
 junitResultsFile <- tempfile("junit-", fileext = ".xml")
