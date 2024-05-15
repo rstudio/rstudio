@@ -16,8 +16,11 @@
 #include "SessionAbout.hpp"
 
 #include <shared_core/Error.hpp>
+
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
+
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -31,8 +34,7 @@ namespace modules {
 namespace about {
 namespace {
 
-Error productInfo(const json::JsonRpcRequest& request,
-                  json::JsonRpcResponse* pResponse)
+json::Object productInfo()
 {
    json::Object result;
    result["version"] = RSTUDIO_VERSION;
@@ -47,11 +49,17 @@ Error productInfo(const json::JsonRpcRequest& request,
    result["date"] = RSTUDIO_BUILD_DATE;
    result["copyright_year"] = RSTUDIO_COPYRIGHT_YEAR;
    result["os"] = RSTUDIO_PACKAGE_OS;
-   pResponse->setResult(result);
+   return result;
+}
+
+Error getProductInfo(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(productInfo());
    return Success();
 }
 
-Error productNotice(const json::JsonRpcRequest& request,
+Error getProductNotice(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
    json::Object result;
@@ -73,6 +81,11 @@ Error rVersion(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_getProductInfo()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(productInfo(), &protect);
+}
 
 } // anonymous namespace
 
@@ -80,11 +93,13 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+   
+   RS_REGISTER_CALL_METHOD(rs_getProductInfo);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "get_product_info", productInfo))
-      (bind(registerRpcMethod, "get_product_notice", productNotice))
+      (bind(registerRpcMethod, "get_product_info", getProductInfo))
+      (bind(registerRpcMethod, "get_product_notice", getProductNotice))
       (bind(registerRpcMethod, "get_rversion_info", rVersion))
    ;
    return initBlock.execute();
