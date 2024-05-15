@@ -490,33 +490,20 @@
 
 .rs.addFunction("automation.run", function(ref = NULL, mode = c("server", "desktop"))
 {
-   # Figure out the commit reference to use.
-   ref <- .rs.nullCoalesce(ref, {
-      productInfo <- .Call("rs_getProductInfo", PACKAGE = "(embedding)")
-      productInfo$commit
-   })
-   
    # Work in a temporary directory.
    automationDir <- tempfile("rstudio-automation-")
    dir.create(automationDir)
    owd <- setwd(automationDir)
    on.exit(setwd(owd), add = TRUE)
    
-   # Perform a sparse checkout to retrieve the automation files.
-   gitScript <- .rs.heredoc('
-      git init -b %1$s
-      git remote add origin git@github.com:rstudio/rstudio.git
-      git config core.sparseCheckout true
-      echo "src/cpp/tests/automation" >> .git/info/sparse-checkout
-      git fetch --depth=1 origin %1$s
-      git checkout %1$s
-   ', shQuote(ref))
+   # Figure out the commit reference to use.
+   ref <- .rs.nullCoalesce(ref, {
+      productInfo <- .Call("rs_getProductInfo", PACKAGE = "(embedding)")
+      productInfo$commit
+   })
    
-   fileext <- if (.rs.platform.isWindows) ".bat" else ".sh"
-   gitScriptFile <- tempfile("git-checkout-", fileext = fileext)
-   writeLines(gitScript, con = gitScriptFile)
-   Sys.chmod(gitScriptFile, mode = "0755")
-   system2(gitScriptFile)
+   # Retrieve test files.
+   .rs.automation.retrieveTests(ref = ref)
    
    # Move to the automation directory.
    setwd("src/cpp/tests/automation")
@@ -524,4 +511,59 @@
    # Run the tests.
    envVars <- list(RSTUDIO_AUTOMATION_MODE = mode)
    withr::with_envvar(envVars, source("testthat.R"))
+})
+
+.rs.addFunction("automation.retrieveTests", function(ref)
+{
+   # Retrieve the download URLs.
+   envir <- new.env(parent = emptyenv())
+   .rs.automation.listTestFiles("src/cpp/tests/automation", ref, envir)
+   paths <- as.list.environment(envir, all.names = TRUE)
+   storage.mode(paths) <- "character"
+   
+   # Make sure the requisite parent directories exist.
+   parentDirs <- unique(dirname(names(paths)))
+   for (parentDir in parentDirs)
+      .rs.ensureDirectory(parentDir)
+   
+   # Download these URLs. Do this in parallel with curl if possible.
+   # Fall back to the default R download machinery otherwise.
+   if (nzchar(Sys.which("curl")))
+   {
+      curlConfig <- sprintf("url = \"%s\"\noutput = \"%s\"\n", paths, names(paths))
+      curlConfigFile <- tempfile("curl-config-")
+      on.exit(unlink(curlConfigFile), add = TRUE)
+      writeLines(curlConfig, con = curlConfigFile)
+      args <- c("-Z", "--config", shQuote(curlConfigFile))
+      system2("curl", args)
+   }
+   else
+   {
+      .rs.enumerate(paths, function(path, url)
+      {
+         download.file(url = url, destfile = path)
+      })
+   }
+})
+
+.rs.addFunction("automation.listTestFiles", function(path, ref, envir)
+{
+   # Request the contents of this file / directory.
+   fmt <- "https://api.github.com/repos/rstudio/rstudio/contents/%s?ref=%s"
+   url <- sprintf(fmt, path, ref)
+   response <- httr::GET(url)
+   result <- httr::content(response, as = "parsed")
+   
+   # Iterate through the directory contents, and get download links.
+   for (entry in result)
+   {
+      if (identical(entry$type, "file"))
+      {
+         assign(entry$path, entry$download_url, envir = envir)
+      }
+      else if (identical(entry$type, "dir"))
+      {
+         .rs.automation.listTestFiles(entry$path, ref, envir)
+      }
+   }
 })
