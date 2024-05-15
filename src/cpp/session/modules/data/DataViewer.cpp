@@ -898,7 +898,6 @@ Error getGridData(const http::Request& request,
          auto it = s_cachedFrames.find(cacheKey);
          if (it == s_cachedFrames.end())
          {
-            // CachedFrame cachedFrame(envName, objName, objSEXP);
             s_cachedFrames.emplace(cacheKey, CachedFrame(envName, objName, objSEXP));
          }
       }
