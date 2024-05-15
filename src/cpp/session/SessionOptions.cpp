@@ -177,6 +177,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.commandLine.add(misc);
 
    // define groups included in config-file processing
+   optionsDesc.configFile.add(automation);
    optionsDesc.configFile.add(program);
    optionsDesc.configFile.add(log);
    optionsDesc.configFile.add(docs);

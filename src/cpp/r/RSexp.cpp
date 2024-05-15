@@ -1643,15 +1643,16 @@ SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
    return listSEXP;
 }
    
-PreservedSEXP::PreservedSEXP()
-   : sexp_(R_NilValue)
-{
-}
-
 PreservedSEXP::PreservedSEXP(SEXP sexp)
    : sexp_(R_NilValue)
 {
    set(sexp);
+}
+
+PreservedSEXP::PreservedSEXP(PreservedSEXP&& original)
+   : sexp_(original.sexp_)
+{
+   original.sexp_ = R_NilValue;
 }
 
 void PreservedSEXP::set(SEXP sexp)

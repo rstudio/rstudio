@@ -343,14 +343,14 @@ core::Error setNamedListElement(SEXP listSEXP,
 class PreservedSEXP : boost::noncopyable
 {
 public:
-   PreservedSEXP();
-   explicit PreservedSEXP(SEXP sexp);
-   virtual ~PreservedSEXP();
-
+   explicit PreservedSEXP(SEXP sexp = R_NilValue);
+   PreservedSEXP(PreservedSEXP&& other);
+   ~PreservedSEXP();
+   
    void set(SEXP sexp);
    SEXP get() const { return sexp_; }
    bool isNil() const { return sexp_ == R_NilValue; }
-
+   
    explicit operator bool() const
    {
       return !isNil();

@@ -221,6 +221,35 @@
    )
 })
 
+.rs.addFunction("automation.ensureRunningServerInstance", function()
+{
+   # Check and see if we already have an rserver instance listening.
+   procs <- subset(ps::ps(), name == "rserver")
+   for (i in seq_len(nrow(procs)))
+   {
+      proc <- procs[i, ]
+      conns <- ps::ps_connections(proc$ps_handle[[1L]])
+      if (8788L %in% conns$lport)
+         return(TRUE)
+   }
+   
+   # See if we can figure out how the parent was launched, and use that
+   # to infer whether we can launch the automation helper.
+   parentHandle <- ps::ps_parent()
+   parentEnv <- ps::ps_environ(parentHandle)
+   parentPwd <- parentEnv[["PWD"]]
+   automationScript <- file.path(parentPwd, "rserver-automation")
+   if (file.exists(automationScript))
+   {
+      message("-- Starting rserver-automation ...")
+      withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
+   }
+   else
+   {
+      stop("rserver does not appear to be running on port 8788")
+   }
+})
+
 .rs.addFunction("automation.initialize", function(appPath = NULL,
                                                   mode = c("server", "desktop"),
                                                   port = NULL)
@@ -231,6 +260,10 @@
    # Resolve arguments.
    mode <- match.arg(mode)
    port <- .rs.nullCoalesce(port, if (mode == "server") 9999L else 9998L)
+   
+   # Ensure that we have a running rserver instance.
+   if (mode == "server")
+      .rs.automation.ensureRunningServerInstance()
    
    # Check for an existing session we can attach to.
    baseUrl <- sprintf("http://localhost:%i", port)
@@ -291,7 +324,7 @@
          "--no-first-run",
          "--disable-extensions",
          "--disable-features=PrivacySandboxSettings4",
-         "about:blank"
+         "http://localhost:8788"
       )
    )
    
@@ -356,7 +389,7 @@
    client <- .rs.automation.createClient(socket)
    
    # Find and record the active session id.
-   sessionId <- .rs.automation.attachToSession(client, mode)
+   .rs.automation.attachToSession(client, mode)
    
    # Wait until the Console is available.
    document <- client$DOM.getDocument(depth = 0L)
@@ -447,9 +480,6 @@
    # Update our global variables.
    .rs.setVar("automation.client", client)
    .rs.setVar("automation.sessionId", sessionId)
-   
-   # Navigate the page to RStudio Server.
-   client$Page.navigate("http://localhost:8787")
    
    # TODO: Handle input of authentication credentials?
    # Should that happen here, or elsewhere?
