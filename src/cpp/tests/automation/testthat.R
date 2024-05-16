@@ -3,6 +3,10 @@
 
 library(testthat)
 
+# Return to original working directory when we're done.
+owd <- getwd()
+on.exit(setwd(owd), add = TRUE)
+
 # Create wrappers for 'test_that', which allow for timing out on error.
 test_that <- function(desc, code) {
    
@@ -17,17 +21,15 @@ test_that <- function(desc, code) {
    
 }
 
-# Find the test directories.
-# Assume that they exist in the 'testthat' directory.
-testDir <- getwd()
-if (!all(file.exists("testthat", "testthat.R"))) {
+# Find the test directory.
+testDir <- "testthat"
+if (!file.exists(testDir)) {
+   
+   # Helper for interactive usages.
    projectRoot <- here::here()
    testDir <- file.path(projectRoot, "src/cpp/tests/automation/testthat")
+   
 }
-
-# Set the working directory.
-owd <- setwd(testDir)
-on.exit(setwd(owd), add = TRUE)
 
 # Create a junit-style reporter.
 junitResultsFile <- tempfile("junit-", fileext = ".xml")
