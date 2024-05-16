@@ -40,6 +40,7 @@ import { waitForUrlWithTimeout } from './url-utils';
 import {
   createStandaloneErrorDialog,
   finalPlatformInitialize,
+  findRepoRoot,
   getCurrentlyUniqueFolderName,
   userLogPath,
 } from './utils';
@@ -90,8 +91,10 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     const rHome = new FilePath(getenv('R_HOME'));
     const rLib = rHome.completePath('lib/libR.dylib');
     const dyldArgs = [
-      '-e', `DYLD_INSERT_LIBRARIES=${rLib.getAbsolutePath()}`,
-      '-e', `DYLD_FALLBACK_LIBRARY_PATH=${dyldFallbackLibraryPath}`
+      '-e',
+      `DYLD_INSERT_LIBRARIES=${rLib.getAbsolutePath()}`,
+      '-e',
+      `DYLD_FALLBACK_LIBRARY_PATH=${dyldFallbackLibraryPath}`,
     ];
 
     // launch via /usr/bin/arch, so we can control whether the OS requests
@@ -555,6 +558,15 @@ export class SessionLauncher {
         logger().logDebug(`R is arm64; using ${this.sessionPath}`);
       } else {
         logger().logDebug(`R is x86_64; using ${this.sessionPath}`);
+      }
+    }
+
+    // if we're running automation tests, set that up now
+    if (app.commandLine.hasSwitch('run-automation')) {
+      argList.push('--run-automation');
+      if (!app.isPackaged) {
+        const projectRoot = findRepoRoot();
+        setenv('RSTUDIO_AUTOMATION_ROOT', projectRoot);
       }
     }
 

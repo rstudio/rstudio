@@ -1396,7 +1396,7 @@ void rRunTests()
    exitEarly(status);
 }
 
-void rRunAutomation()
+void rRunAutomationImpl()
 {
    // run tests
    Error error = modules::automation::run();
@@ -1408,6 +1408,15 @@ void rRunAutomation()
    
    // exit if we haven't already
    exitEarly(error.getCode());
+}
+
+void rRunAutomation()
+{
+   // delay execution of automation tests just so we can be sure
+   // the IDE has fully materialized
+   module_context::scheduleDelayedWork(
+            boost::posix_time::seconds(1),
+            rRunAutomationImpl);
 }
 
 void ensureRProfile()
@@ -2530,9 +2539,10 @@ int main(int argc, char * const argv[])
       {
          rCallbacks.runTests = rRunTests;
       }
-      else if (options.runAutomation())
+      
+      if (options.runAutomation())
       {
-         rCallbacks.runTests = rRunAutomation;
+         rCallbacks.runAutomation = rRunAutomation;
       }
 
       // run r (does not return, terminates process using exit)
