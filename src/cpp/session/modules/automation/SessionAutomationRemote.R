@@ -239,12 +239,18 @@
    # Close the websocket connection.
    self$client$socket$close()
    
+   # Wait until the socket is closed.
+   .rs.waitUntil(function()
+   {
+      self$client$socket$readyState() == 3L
+   })
+   
    # Kill the running process.
    .rs.automation.agentProcess$kill()
    
    # Wait until it's no longer around.
    alive <- TRUE
-   .rs.waitUntil(retryCount = 10, waitTimeSecs = 0.5, function()
+   .rs.waitUntil(function()
    {
       alive <<- !.rs.automation.agentProcess$is_alive()
    })
