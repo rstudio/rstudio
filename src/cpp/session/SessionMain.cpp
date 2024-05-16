@@ -1402,12 +1402,6 @@ void rRunAutomationImpl()
    Error error = modules::automation::run();
    if (error)
        LOG_ERROR(error);
-   
-   // try to clean up session
-   rCleanup(true);
-   
-   // exit if we haven't already
-   exitEarly(error.getCode());
 }
 
 void rRunAutomation()

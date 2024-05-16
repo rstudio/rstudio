@@ -273,7 +273,10 @@
       return(.rs.automation.attach(baseUrl, mode))
    
    # No existing session; start a new one and attach to it.
-   appPath <- .rs.nullCoalesce(appPath, .rs.automation.applicationPath(mode))
+   appPath <- .rs.nullCoalesce(appPath, {
+      defaultAppPath <- .rs.automation.applicationPath(mode)
+      Sys.getenv("RSTUDIO_AUTOMATION_EXE", unset = defaultAppPath)
+   })
    
    # Set up environment for newly-launched RStudio instance.
    envVars <- as.list(Sys.getenv())
@@ -315,7 +318,9 @@
    
    # Build argument list.
    # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
+   baseArgs <- Sys.getenv("RSTUDIO_AUTOMATION_ARGS", unset = NA)
    args <- c(
+      if (!is.na(baseArgs)) baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", tempdir()),
       if (mode == "desktop") "--automation-agent",
@@ -330,8 +335,6 @@
    
    # Start up RStudio.
    process <- withr::with_envvar(envVars, {
-      owd <- setwd(stateDir)
-      on.exit(setwd(owd), add = TRUE)
       processx::process$new(appPath, args)
    })
    
