@@ -39,7 +39,7 @@ junitReporter <- testthat::JunitReporter$new(file = junitResultsFile)
 status <- local({
    
    # Create an automation remote.
-   remote <- .rs.automation.createRemote()
+   remote <- .rs.automation.newRemote()
    on.exit(remote$quit(), add = TRUE)
    
    # Run tests with this active remote.

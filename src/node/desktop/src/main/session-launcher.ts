@@ -393,6 +393,12 @@ export class SessionLauncher {
       return;
     }
 
+    // if this was an automation run then just quit
+    if (app.commandLine.hasSwitch('run-automation')) {
+      this.mainWindow?.quit();
+      return;
+    }
+
     const pendingQuit = this.mainWindow?.collectPendingQuitRequest();
 
     // if there was no pending quit set then this is a crash

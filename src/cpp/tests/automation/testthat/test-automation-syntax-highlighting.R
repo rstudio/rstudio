@@ -1,8 +1,8 @@
 
 library(testthat)
 
-self <- remote <- .rs.automation.createRemote()
-client <- remote$client
+self <- remote <- .rs.automation.newRemote()
+on.exit(.rs.automation.deleteRemote(), add = TRUE)
 
 test_that("Quarto Documents are highlighted as expected", {
    

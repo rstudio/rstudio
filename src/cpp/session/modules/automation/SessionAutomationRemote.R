@@ -26,14 +26,37 @@
 .rs.defineVar("automation.remotePrivateEnv", new.env(parent = .rs.toolsEnv()))
 .rs.defineVar("automation.remote", new.env(parent = emptyenv()))
 
-.rs.addFunction("automation.createRemote", function(mode = NULL)
+.rs.setVar("automation.remoteInstance", NULL)
+
+.rs.addFunction("automation.newRemote", function(mode = NULL)
 {
    mode <- .rs.automation.resolveMode(mode)
    client <- .rs.automation.initialize(mode = mode)
    assign("client", client, envir = .rs.automation.remote)
    assign("client", client, envir = .rs.automation.remotePrivateEnv)
    assign("self", .rs.automation.remote, envir = .rs.automation.remotePrivateEnv)
-   .rs.automation.remote
+   .rs.setVar("automation.remoteInstance", .rs.automation.remote)
+   .rs.automation.remoteInstance
+})
+
+.rs.addFunction("automation.deleteRemote", function()
+{
+   remote <- .rs.getVar("automation.remoteInstance")
+   if (is.null(remote))
+      return(remote)
+   
+   remote$quit()
+   .rs.setVar("automation.remoteInstance", NULL)
+})
+
+.rs.addFunction("automation.getRemote", function(mode = NULL)
+{
+   remote <- .rs.nullCoalesce(.rs.automation.remoteInstance, {
+      .rs.automation.newRemote(mode = mode)
+   })
+   
+   .rs.setVar("automation.remoteInstance", remote)
+   remote
 })
 
 .rs.addFunction("automation.addRemoteFunction", function(name, callback)
@@ -45,36 +68,6 @@
 .rs.automation.addRemoteFunction("getClient", function()
 {
    client
-})
-
-.rs.automation.addRemoteFunction("aceLineTokens", function(row)
-{
-   jsCode <- .rs.heredoc(r'{
-      var id = $RStudio.last_focused_editor_id;
-      var container = document.getElementById(id);
-      var editor = container.env.editor;
-      var tokens = editor.session.getTokens(%i);
-      JSON.stringify(tokens);
-   }')
-   
-   jsCode <- sprintf(jsCode, as.integer(row))
-   
-   response <- self$jsExec(jsCode)
-   .rs.fromJSON(response$result$value)
-})
-
-.rs.automation.addRemoteFunction("aceSetCursorPosition", function(row, column = 0L)
-{
-   jsCode <- .rs.heredoc(r'{
-      var id = $RStudio.last_focused_editor_id;
-      var container = document.getElementById(id);
-      var editor = container.env.editor;
-      var position = { row: %i, column: %i };
-      var range = { start: position, end: position };
-      editor.selection.setSelectionRange(range);
-   }', as.integer(row), as.integer(column))
-   
-   self$jsExec(jsCode)
 })
 
 .rs.automation.addRemoteFunction("commandExecute", function(command)
@@ -191,6 +184,36 @@
    )
 })
 
+.rs.automation.addRemoteFunction("editorGetTokens", function(row)
+{
+   jsCode <- .rs.heredoc(r'{
+      var id = $RStudio.last_focused_editor_id;
+      var container = document.getElementById(id);
+      var editor = container.env.editor;
+      var tokens = editor.session.getTokens(%i);
+      JSON.stringify(tokens);
+   }')
+   
+   jsCode <- sprintf(jsCode, as.integer(row))
+   
+   response <- self$jsExec(jsCode)
+   .rs.fromJSON(response$result$value)
+})
+
+.rs.automation.addRemoteFunction("editorSetCursorPosition", function(row, column = 0L)
+{
+   jsCode <- .rs.heredoc(r'{
+      var id = $RStudio.last_focused_editor_id;
+      var container = document.getElementById(id);
+      var editor = container.env.editor;
+      var position = { row: %i, column: %i };
+      var range = { start: position, end: position };
+      editor.selection.setSelectionRange(range);
+   }', as.integer(row), as.integer(column))
+   
+   self$jsExec(jsCode)
+})
+
 .rs.automation.addRemoteFunction("jsExec", function(expression)
 {
    client$Runtime.evaluate(expression = expression)
@@ -213,17 +236,18 @@
 
 .rs.automation.addRemoteFunction("quit", function()
 {
-   # TODO: First attempt a graceful shutdown, and then later just
-   # forcefully kill the process if necessary.
-   client$Browser.close()
+   # Close the websocket connection.
+   self$client$socket$close()
    
+   # Kill the running process.
+   .rs.automation.agentProcess$kill()
+   
+   # Wait until it's no longer around.
    alive <- TRUE
    .rs.waitUntil(retryCount = 10, waitTimeSecs = 0.5, function()
    {
       alive <<- !.rs.automation.agentProcess$is_alive()
    })
    
-   # If the process is still alive, forcefully kill it.
-   if (alive)
-      .rs.automation.agentProcess$kill()
+   invisible(alive)
 })

@@ -391,6 +391,9 @@
    # Create the automation client.
    client <- .rs.automation.createClient(socket)
    
+   # Save a reference to the websocket.
+   client$socket <- socket
+   
    # Find and record the active session id.
    .rs.automation.attachToSession(client, mode)
    
@@ -401,9 +404,6 @@
       consoleNode <- client$DOM.querySelector(document$root$nodeId, "#rstudio_console_input")
       consoleNode$nodeId != 0L
    })
-   
-   # Save the root document node ID, as we'll need it for queries later.
-   client$documentNodeId <- document$root$nodeId
    
    # Return the client.
    client
@@ -498,11 +498,22 @@
    on.exit(setwd(owd), add = TRUE)
    
    # Move to the automation directory.
-   setwd("src/cpp/tests/automation")
+   withr::local_dir("src/cpp/tests/automation")
    
-   # Run the tests.
-   envVars <- list(RSTUDIO_AUTOMATION_MODE = mode)
-   withr::with_envvar(envVars, source("testthat.R"))
+   # Set up automation mode.
+   withr::local_envvar(RSTUDIO_AUTOMATION_MODE = mode)
+   
+   # Create a junit-style reporter.
+   junitResultsFile <- tempfile("junit-", fileext = ".xml")
+   junitReporter <- testthat::JunitReporter$new(file = junitResultsFile)
+   
+   # Run tests.
+   testthat::test_dir(
+      path = "testthat",
+      reporter = junitReporter,
+      stop_on_failure = FALSE,
+      stop_on_warning = FALSE
+   )
 })
 
 .rs.addFunction("automation.run", function(root = NULL,

@@ -1402,6 +1402,12 @@ void rRunAutomationImpl()
    Error error = modules::automation::run();
    if (error)
        LOG_ERROR(error);
+ 
+   // try to clean up session
+   rCleanup(true);
+   
+   // exit if we haven't already
+   exitEarly(0);
 }
 
 void rRunAutomation()
@@ -1409,7 +1415,7 @@ void rRunAutomation()
    // delay execution of automation tests just so we can be sure
    // the IDE has fully materialized
    module_context::scheduleDelayedWork(
-            boost::posix_time::seconds(1),
+            boost::posix_time::milliseconds(100),
             rRunAutomationImpl);
 }
 
@@ -2533,7 +2539,8 @@ int main(int argc, char * const argv[])
       {
          rCallbacks.runTests = rRunTests;
       }
-      
+     
+      // set automation callback if enabled
       if (options.runAutomation())
       {
          rCallbacks.runAutomation = rRunAutomation;
