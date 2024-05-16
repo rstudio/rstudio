@@ -590,7 +590,6 @@
    # Request the contents of this file / directory.
    fmt <- "https://api.github.com/repos/rstudio/rstudio/contents/%s?ref=%s"
    url <- sprintf(fmt, path, ref)
-   .Call("rs_logErrorMessage", paste(url, path, ref))
    
    response <- httr::GET(url)
    result <- httr::content(response, as = "parsed")
