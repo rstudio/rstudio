@@ -20,7 +20,29 @@
 #ifndef TESTS_TESTMAIN_HPP
 #define TESTS_TESTMAIN_HPP
 
-#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_RUNNER
 #include "vendor/catch.hpp"
+
+#include <shared_core/Logger.hpp>
+#include <shared_core/StderrLogDestination.hpp>
+
+#include <core/Log.hpp>
+#include <core/LogOptions.hpp>
+#include <core/system/Environment.hpp>
+#include <core/system/Xdg.hpp>
+#include <core/system/System.hpp>
+
+int main(int argc, const char* argv[])
+{
+   using namespace rstudio;
+   using namespace rstudio::core;
+   using namespace rstudio::core::log;
+   
+   std::string programId = "rstudio-tests-" + core::system::username();
+   core::log::setProgramId(programId);
+   core::system::initializeStderrLog(programId, LogLevel::WARN, false);
+   
+   return Catch::Session().run(argc, const_cast<char**>(argv));
+}
 
 #endif

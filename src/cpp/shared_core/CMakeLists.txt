@@ -97,7 +97,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    file(GLOB_RECURSE SHARED_CORE_TEST_FILES "*Tests.cpp")
 
    add_executable(rstudio-shared-core-tests
-      ${TESTS_INCLUDE_DIR}/tests/TestMain.cpp
+      TestMain.cpp
       ${SHARED_CORE_TEST_FILES}
       ${SHARED_CORE_HEADER_FILES}
    )
