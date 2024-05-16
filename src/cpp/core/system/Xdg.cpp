@@ -124,7 +124,7 @@ FilePath xdgDefaultDir(
    {
       std::string xdgHomeDir = core::string_utils::wideToUtf8(std::wstring(path));
       ::CoTaskMemFree(path);
-      return xdgHomeDir;
+      return FilePath(xdgHomeDir);
    }
    else
    {
@@ -344,7 +344,7 @@ FilePath oldUserCacheDir(
         const boost::optional<std::string>& user,
         const boost::optional<FilePath>& homeDir)
 {
-   return resolveXdgDir("RSTUDIO_CACHE_HOME",
+   return resolveXdgPath("RSTUDIO_CACHE_HOME",
          "XDG_CACHE_HOME",
 #ifdef _WIN32
          FOLDERID_InternetCache,
