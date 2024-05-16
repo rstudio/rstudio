@@ -38,6 +38,19 @@
 
 .rs.addFunction("automation.addRemoteFunction", function(name, callback)
 {
+   # Create a new function, with the body of the callback injected,
+   # so that we can effectively wrap execution of these callbacks with
+   # some other code.
+   body <- substitute({
+      on.exit(Sys.sleep(0.1), add = TRUE)
+      ..body..
+   }, list(..body.. = body(callback)))
+   
+   callback <- eval(
+      call("function", formals(callback), body),
+      envir = baseenv()
+   )
+   
    environment(callback) <- .rs.automation.remotePrivateEnv
    assign(name, callback, envir = .rs.automation.remote)
 })
