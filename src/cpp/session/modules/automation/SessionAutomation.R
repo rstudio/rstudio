@@ -511,11 +511,8 @@
       Sys.getenv("RSTUDIO_AUTOMATION_ROOT", unset = NA)
    })
    
-   # Resolve mode.
-   mode <- .rs.nullCoalesce(mode, {
-      defaultMode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
-      Sys.getenv("RSTUDIO_AUTOMATION_MODE", unset = defaultMode)
-   })
+   # Resolve mode
+   mode <- .rs.automation.resolveMode(mode)
    
    # If the path to a test directory was provided, use that.
    if (!is.na(root))
@@ -596,4 +593,12 @@
          .rs.automation.listTestFiles(entry$path, ref, envir)
       }
    }
+})
+
+.rs.addFunction("automation.resolveMode", function(mode)
+{
+   .rs.nullCoalesce(mode, {
+      defaultMode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
+      Sys.getenv("RSTUDIO_AUTOMATION_MODE", unset = defaultMode)
+   })
 })

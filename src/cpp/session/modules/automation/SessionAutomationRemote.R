@@ -28,7 +28,7 @@
 
 .rs.addFunction("automation.createRemote", function(mode = NULL)
 {
-   mode <- .rs.nullCoalesce(mode, Sys.getenv("RSTUDIO_AUTOMATION_MODE", unset = "server"))
+   mode <- .rs.automation.resolveMode(mode)
    client <- .rs.automation.initialize(mode = mode)
    assign("client", client, envir = .rs.automation.remote)
    assign("client", client, envir = .rs.automation.remotePrivateEnv)
