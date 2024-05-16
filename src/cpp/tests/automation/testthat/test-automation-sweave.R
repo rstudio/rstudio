@@ -4,7 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.createRemote()
 client <- remote$client
 
-test_that("Breditors are inserted and highlighted correctly in Sweave documents", {
+test_that("Braces are inserted and highlighted correctly in Sweave documents", {
    
    documentContents <- .rs.heredoc('
       This is a Sweave document.
