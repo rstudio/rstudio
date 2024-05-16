@@ -102,7 +102,7 @@
 
 .rs.addFunction("automation.onClose", function(event)
 {
-   print(event)
+   # TODO: Any cleanup we need to do?
 })
 
 .rs.addFunction("automation.sendRequest", function(socket, method, params, callback = NULL)
