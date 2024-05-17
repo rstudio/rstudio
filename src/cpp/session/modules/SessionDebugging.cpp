@@ -31,6 +31,7 @@
 #include <fcntl.h>
 
 #include <core/Exec.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -42,6 +43,7 @@
 #else
 # define DLL_EXPORT
 #endif
+
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -58,12 +60,9 @@ const char* debugFilename()
 #ifdef _WIN32
    static std::string instance = ([]()
    {
-      std::string result;
-      Error error = core::system::expandEnvironmentVariables("%LOCALAPPDATA%/RStudio/log/rstudio-debug.log", &result);
-      if (error)
-         LOG_ERROR(error);
-
-      return result;
+      return core::system::xdg::userLogDir()
+            .completePath("rstudio-debug.log")
+            .getAbsolutePath();
    })();
 
    return instance.c_str();
@@ -71,6 +70,7 @@ const char* debugFilename()
    return "/tmp/rstudio-debug.log";
 #endif
 }
+
 class RedirectOutputScope
 {
 public:
@@ -144,7 +144,7 @@ void printTraceback()
 
 extern "C" {
 
-DLL_EXPORT void traceback()
+DLL_EXPORT void rd_traceback()
 {
    RedirectOutputScope scope(debugFilename());
    printTraceback();
@@ -152,11 +152,11 @@ DLL_EXPORT void traceback()
 
 SEXP rs_traceback()
 {
-   traceback();
+   rd_traceback();
    return R_NilValue;
 }
 
-DLL_EXPORT void evaluate(const char* code)
+DLL_EXPORT void rd_evaluate(const char* code)
 {
    RedirectOutputScope scope(debugFilename());
    Error error = r::exec::executeString(code);
@@ -167,7 +167,7 @@ DLL_EXPORT void evaluate(const char* code)
 SEXP rs_evaluate(SEXP codeSEXP)
 {
    std::string code = r::sexp::asString(codeSEXP);
-   evaluate(code.c_str());
+   rd_evaluate(code.c_str());
    return R_NilValue;
 }
 
