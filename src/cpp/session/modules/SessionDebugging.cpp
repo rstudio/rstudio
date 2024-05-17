@@ -15,6 +15,19 @@
 
 #include "SessionDebugging.hpp"
 
+#ifdef _WIN32
+# include <Windows.h>
+# include <io.h>
+#endif
+
+#ifndef STDOUT_FILENO
+# define STDOUT_FILENO 1
+#endif
+
+#ifndef STDERR_FILENO
+# define STDERR_FILENO 2
+#endif
+
 #include <fcntl.h>
 
 #include <core/Exec.hpp>
@@ -23,6 +36,12 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#ifdef _WIN32
+# define DLL_EXPORT _declspec(dllexport)
+#else
+# define DLL_EXPORT
+#endif
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -34,22 +53,52 @@ namespace debugging {
 
 namespace {
 
+const char* debugFilename()
+{
+#ifdef _WIN32
+   static std::string instance = ([]()
+   {
+      std::string result;
+      Error error = core::system::expandEnvironmentVariables("%LOCALAPPDATA%/RStudio/log/rstudio-debug.log", &result);
+      if (error)
+         LOG_ERROR(error);
+
+      return result;
+   })();
+
+   return instance.c_str();
+#else
+   return "/tmp/rstudio-debug.log";
+#endif
+}
 class RedirectOutputScope
 {
 public:
    RedirectOutputScope(const char* filename)
    {
+      ::fflush(stdout);
+      ::fflush(stderr);
+
       // Save references to the stdout, stderr streams.
       stdout_ = ::dup(STDOUT_FILENO);
       stderr_ = ::dup(STDERR_FILENO);
       
       // Open file for writing.
       int fd = ::open(filename, O_WRONLY | O_APPEND | O_CREAT, 0600);
+      if (fd == -1)
+      {
+         LOG_ERROR(LAST_SYSTEM_ERROR());
+         return;
+      }
       
       // Redirect stdout, stderr to this file.
       ::dup2(fd, STDOUT_FILENO);
       ::dup2(fd, STDERR_FILENO);
-      
+
+      // Disable buffering on stdout and stderr.
+      ::setvbuf(stdout, NULL, _IONBF, 0);
+      ::setvbuf(stderr, NULL, _IONBF, 0);
+
       // Remove reference.
       ::close(fd);
       
@@ -70,7 +119,7 @@ public:
       
       if (error)
          LOG_ERROR(error);
-      
+
       // Restore stdout, stderr
       ::dup2(stdout_, STDOUT_FILENO);
       ::close(stdout_);
@@ -86,8 +135,6 @@ private:
 
 void printTraceback()
 {
-   RedirectOutputScope scope("/tmp/rstudio-debug.log");
-   
    Error error = r::exec::RFunction(".rs.debugging.printTraceback")
          .call();
    
@@ -95,11 +142,36 @@ void printTraceback()
       LOG_ERROR(error);
 }
 
-extern "C" SEXP rs_traceback()
+extern "C" {
+
+DLL_EXPORT void traceback()
 {
+   RedirectOutputScope scope(debugFilename());
    printTraceback();
+}
+
+SEXP rs_traceback()
+{
+   traceback();
    return R_NilValue;
 }
+
+DLL_EXPORT void evaluate(const char* code)
+{
+   RedirectOutputScope scope(debugFilename());
+   Error error = r::exec::executeString(code);
+   if (error)
+      LOG_ERROR(error);
+}
+
+SEXP rs_evaluate(SEXP codeSEXP)
+{
+   std::string code = r::sexp::asString(codeSEXP);
+   evaluate(code.c_str());
+   return R_NilValue;
+}
+
+} // extern "C"
 
 } // end anonymous namespace
 
@@ -108,7 +180,8 @@ core::Error initialize()
    using namespace module_context;
    
    RS_REGISTER_CALL_METHOD(rs_traceback);
-   
+   RS_REGISTER_CALL_METHOD(rs_evaluate);
+
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionDebugging.R"));

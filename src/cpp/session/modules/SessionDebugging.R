@@ -17,8 +17,8 @@
 
 .rs.addFunction("debugging.beginSinkOutput", function(file)
 {
-   # Open write connection to fifo.
-   conn <- file(file, open = "wb")
+   # Open write connection to file.
+   conn <- file(file, open = "a")
    .rs.setVar("debugging.activeSink", conn)
    
    # Sink output to this file.
