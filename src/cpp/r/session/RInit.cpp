@@ -390,14 +390,16 @@ void ensureDeserialized()
       // do the deferred action
       s_deferredDeserializationAction();
       s_deferredDeserializationAction.clear();
+      
+      // run automation tests if configured to do so
+      if (rCallbacks().runAutomation)
+         rCallbacks().runAutomation();
    }
 }
 
 bool isSessionRestored()
 {
-   if (s_deferredDeserializationAction)
-      return false;
-   return true;
+   return s_deferredDeserializationAction.empty();
 }
    
 FilePath rHistoryFilePath()

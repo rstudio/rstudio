@@ -213,13 +213,12 @@ void syncConsoleColorEnv()
 
 Error initialize()
 {
-   bool isAutomated =
+   bool isHeadless =
          session::options().verifyInstallation() ||
          session::options().runTests() ||
-         session::options().runAutomation() ||
          !session::options().runScript().empty();
    
-   if (!isAutomated)
+   if (!isHeadless)
    {
       // capture standard streams
       Error error = initializeOutputCapture();

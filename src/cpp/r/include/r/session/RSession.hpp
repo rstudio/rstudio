@@ -209,6 +209,7 @@ struct RCallbacks
    boost::function<void(bool)> cleanup;
    boost::function<void(int, const core::FilePath&)> serialization;
    boost::function<void()> runTests;
+   boost::function<void()> runAutomation;
 };
 
 // run the session   

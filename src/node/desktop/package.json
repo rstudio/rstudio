@@ -20,7 +20,8 @@
     "format": "npx prettier --write . --ignore-path .gitignore",
     "postinstall": "npx electron-rebuild && ts-node scripts/generate.ts",
     "generate": "ts-node scripts/generate.ts",
-    "install-fuses": "node scripts/install-fuses.mjs"
+    "install-fuses": "node scripts/install-fuses.mjs",
+    "automation": "npm start -- -- --run-automation"
   },
   "config": {
     "forge": "./forge.config.js"

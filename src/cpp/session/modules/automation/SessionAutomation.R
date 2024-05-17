@@ -102,7 +102,7 @@
 
 .rs.addFunction("automation.onClose", function(event)
 {
-   print(event)
+   # TODO: Any cleanup we need to do?
 })
 
 .rs.addFunction("automation.sendRequest", function(socket, method, params, callback = NULL)
@@ -273,7 +273,10 @@
       return(.rs.automation.attach(baseUrl, mode))
    
    # No existing session; start a new one and attach to it.
-   appPath <- .rs.nullCoalesce(appPath, .rs.automation.applicationPath(mode))
+   appPath <- .rs.nullCoalesce(appPath, {
+      defaultAppPath <- .rs.automation.applicationPath(mode)
+      Sys.getenv("RSTUDIO_AUTOMATION_EXE", unset = defaultAppPath)
+   })
    
    # Set up environment for newly-launched RStudio instance.
    envVars <- as.list(Sys.getenv())
@@ -315,7 +318,9 @@
    
    # Build argument list.
    # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
+   baseArgs <- Sys.getenv("RSTUDIO_AUTOMATION_ARGS", unset = NA)
    args <- c(
+      if (!is.na(baseArgs)) baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", tempdir()),
       if (mode == "desktop") "--automation-agent",
@@ -330,8 +335,6 @@
    
    # Start up RStudio.
    process <- withr::with_envvar(envVars, {
-      owd <- setwd(stateDir)
-      on.exit(setwd(owd), add = TRUE)
       processx::process$new(appPath, args)
    })
    
@@ -388,6 +391,9 @@
    # Create the automation client.
    client <- .rs.automation.createClient(socket)
    
+   # Save a reference to the websocket.
+   client$socket <- socket
+   
    # Find and record the active session id.
    .rs.automation.attachToSession(client, mode)
    
@@ -398,9 +404,6 @@
       consoleNode <- client$DOM.querySelector(document$root$nodeId, "#rstudio_console_input")
       consoleNode$nodeId != 0L
    })
-   
-   # Save the root document node ID, as we'll need it for queries later.
-   client$documentNodeId <- document$root$nodeId
    
    # Return the client.
    client
@@ -488,9 +491,49 @@
    sessionId
 })
 
-.rs.addFunction("automation.run", function(ref = NULL, mode = c("server", "desktop"))
+.rs.addFunction("automation.runImpl", function(root = getwd(), mode)
 {
-   # Work in a temporary directory.
+   # Move to the project root directory.
+   owd <- setwd(root)
+   on.exit(setwd(owd), add = TRUE)
+   
+   # Move to the automation directory.
+   withr::local_dir("src/cpp/tests/automation")
+   
+   # Set up automation mode.
+   withr::local_envvar(RSTUDIO_AUTOMATION_MODE = mode)
+   
+   # Create a junit-style reporter.
+   junitResultsFile <- tempfile("junit-", fileext = ".xml")
+   junitReporter <- testthat::JunitReporter$new(file = junitResultsFile)
+   
+   # Run tests.
+   testthat::test_dir(
+      path = "testthat",
+      reporter = junitReporter,
+      stop_on_failure = FALSE,
+      stop_on_warning = FALSE
+   )
+})
+
+.rs.addFunction("automation.run", function(root = NULL,
+                                           ref  = NULL,
+                                           mode = NULL)
+{
+   # Resolve root.
+   root <- .rs.nullCoalesce(root, {
+      Sys.getenv("RSTUDIO_AUTOMATION_ROOT", unset = NA)
+   })
+   
+   # Resolve mode
+   mode <- .rs.automation.resolveMode(mode)
+   
+   # If the path to a test directory was provided, use that.
+   if (!is.na(root))
+      return(.rs.automation.runImpl(root, mode))
+   
+   # Otherwise, try to resolve and retrieve the automation tests
+   # to be used based on the provided commit ref.
    automationDir <- tempfile("rstudio-automation-")
    dir.create(automationDir)
    owd <- setwd(automationDir)
@@ -499,18 +542,14 @@
    # Figure out the commit reference to use.
    ref <- .rs.nullCoalesce(ref, {
       productInfo <- .Call("rs_getProductInfo", PACKAGE = "(embedding)")
-      productInfo$commit
+      .rs.nullCoalesce(productInfo$commit, "main")
    })
    
    # Retrieve test files.
    .rs.automation.retrieveTests(ref = ref)
    
-   # Move to the automation directory.
-   setwd("src/cpp/tests/automation")
-   
-   # Run the tests.
-   envVars <- list(RSTUDIO_AUTOMATION_MODE = mode)
-   withr::with_envvar(envVars, source("testthat.R"))
+   # Run automation tests with retrieved files.
+   .rs.automation.runImpl(mode = mode)
 })
 
 .rs.addFunction("automation.retrieveTests", function(ref)
@@ -551,6 +590,7 @@
    # Request the contents of this file / directory.
    fmt <- "https://api.github.com/repos/rstudio/rstudio/contents/%s?ref=%s"
    url <- sprintf(fmt, path, ref)
+   
    response <- httr::GET(url)
    result <- httr::content(response, as = "parsed")
    
@@ -566,4 +606,12 @@
          .rs.automation.listTestFiles(entry$path, ref, envir)
       }
    }
+})
+
+.rs.addFunction("automation.resolveMode", function(mode)
+{
+   .rs.nullCoalesce(mode, {
+      defaultMode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
+      Sys.getenv("RSTUDIO_AUTOMATION_MODE", unset = defaultMode)
+   })
 })

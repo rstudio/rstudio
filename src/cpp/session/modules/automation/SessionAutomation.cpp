@@ -40,9 +40,10 @@ namespace {
 
 Error run()
 {
-   SEXP resultSEXP = R_NilValue;
-   r::sexp::Protect protect;
-   return r::exec::evaluateString(".rs.automation.run()", &resultSEXP, &protect);
+   SEXP exprSEXP = PROTECT(Rf_lang1(Rf_install(".rs.automation.run")));
+   Rf_eval(exprSEXP, R_GlobalEnv);
+   UNPROTECT(1);
+   return Success();
 }
 
 Error initialize()
