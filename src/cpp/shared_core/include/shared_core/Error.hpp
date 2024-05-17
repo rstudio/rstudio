@@ -571,9 +571,14 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error);
 // the ERROR_LOCATION macro may evaluate first and reset the Win32 error code to
 // zero (no error), causing the wrong value to be passed to systemError. This is currently
 // the case on debug builds using MSVC.
-#define LAST_SYSTEM_ERROR() []() {auto lastErr = ::GetLastError(); return systemError(lastErr, ERROR_LOCATION);}()
+# define LAST_SYSTEM_ERROR() []() {auto lastErr = ::GetLastError(); return systemError(lastErr, ERROR_LOCATION);}()
+
+#else
+
+# define LAST_SYSTEM_ERROR() []() { auto _errno = errno; return systemError(_errno, ERROR_LOCATION); }()
 
 #endif // _WIN32
+
 
 /**
  * @brief Function which creates a system error.
