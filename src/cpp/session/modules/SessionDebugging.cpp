@@ -156,9 +156,17 @@ SEXP rs_traceback()
 __declspec(dllexport) void rd_evaluate(const char* code)
 {
    RedirectOutputScope scope(debugFilename());
-   Error error = r::exec::executeString(code);
+   
+   r::sexp::Protect protect;
+   SEXP resultSEXP = R_NilValue;
+   Error error = r::exec::evaluateString(code, &resultSEXP, &protect);
    if (error)
+   {
       LOG_ERROR(error);
+      return;
+   }
+   
+   Rf_PrintValue(resultSEXP);
 }
 
 SEXP rs_evaluate(SEXP codeSEXP)
