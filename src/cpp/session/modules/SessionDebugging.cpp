@@ -16,7 +16,6 @@
 #include "SessionDebugging.hpp"
 
 #ifdef _WIN32
-# include <Windows.h>
 # include <io.h>
 #endif
 
@@ -38,10 +37,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#ifdef _WIN32
-# define DLL_EXPORT _declspec(dllexport)
-#else
-# define DLL_EXPORT
+#ifndef __declspec
+# define __declspec(...)
 #endif
 
 
@@ -144,7 +141,7 @@ void printTraceback()
 
 extern "C" {
 
-DLL_EXPORT void rd_traceback()
+__declspec(dllexport) void rd_traceback()
 {
    RedirectOutputScope scope(debugFilename());
    printTraceback();
@@ -156,7 +153,7 @@ SEXP rs_traceback()
    return R_NilValue;
 }
 
-DLL_EXPORT void rd_evaluate(const char* code)
+__declspec(dllexport) void rd_evaluate(const char* code)
 {
    RedirectOutputScope scope(debugFilename());
    Error error = r::exec::executeString(code);
