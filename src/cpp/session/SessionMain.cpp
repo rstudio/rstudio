@@ -144,6 +144,7 @@
 #include "modules/SessionCopilot.hpp"
 #include "modules/SessionCRANMirrors.hpp"
 #include "modules/SessionCrypto.hpp"
+#include "modules/SessionDebugging.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
@@ -549,9 +550,12 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       // signal handlers
       (registerSignalHandlers)
-
+         
       // main module context
       (module_context::initialize)
+
+      // debugging
+      (modules::debugging::initialize)
 
       // prefs (early init required -- many modules including projects below require
       // preference access)
