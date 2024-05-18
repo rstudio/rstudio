@@ -16,6 +16,9 @@
 # set minimum version
 cmake_minimum_required(VERSION 3.6.3)
 
+# initialize
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/init.cmake")
+
 # read release name
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/release.cmake")
 

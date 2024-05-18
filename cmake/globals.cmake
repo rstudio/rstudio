@@ -23,11 +23,6 @@ if(UNIX AND NOT APPLE)
    set(LINUX TRUE)
 endif()
 
-# cmake modules (compute path relative to this file)
-get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_DIR} DIRECTORY)
-set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
-set(RSTUDIO_PROJECT_ROOT "${ROOT_SRC_DIR}" CACHE INTERNAL "")
-
 # read /etc/os-release
 if(LINUX)
    include(OsRelease)
@@ -172,7 +167,7 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSTUDIO_GIT_REVISION_HASH)
    if(GIT_EXECUTABLE)
       execute_process(
          COMMAND git rev-parse HEAD
-         WORKING_DIRECTORY "${ROOT_SRC_DIR}"
+         WORKING_DIRECTORY "${RSTUDIO_PROJECT_ROOT}"
          OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH
          OUTPUT_STRIP_TRAILING_WHITESPACE)
       SET(RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}" CACHE STRING "Git Revision Hash")
@@ -270,7 +265,7 @@ if(WIN32)
       set(RSTUDIO_DEPENDENCIES_DIR "C:/rstudio-tools/dependencies")
       set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
    else()
-      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies/windows")
+      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies/windows")
    endif()
    set(CPACK_DEPENDENCIES_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}")
    set(CPACK_NSPROCESS_VERSION "1.6")
@@ -283,7 +278,7 @@ endif()
 
 # look for dependencies in the source folder if not installed globally
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}")
-   set(RSTUDIO_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies")
+   set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies")
 endif()
 
 # tools
