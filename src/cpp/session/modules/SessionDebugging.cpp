@@ -151,19 +151,6 @@ void printTraceback()
 
 extern "C" {
 
-RS_EXPORT void rd_traceback()
-{
-   using namespace rstudio::session::modules::debugging;
-   RedirectOutputScope scope(debugFilename());
-   printTraceback();
-}
-
-SEXP rs_traceback()
-{
-   rd_traceback();
-   return R_NilValue;
-}
-
 RS_EXPORT void rd_eval(const char* code)
 {
    using namespace rstudio::session::modules::debugging;
@@ -181,11 +168,12 @@ RS_EXPORT void rd_eval(const char* code)
    Rf_PrintValue(resultSEXP);
 }
 
-SEXP rs_eval(SEXP codeSEXP)
+
+RS_EXPORT void rd_traceback()
 {
-   std::string code = r::sexp::asString(codeSEXP);
-   rd_eval(code.c_str());
-   return R_NilValue;
+   using namespace rstudio::session::modules::debugging;
+   RedirectOutputScope scope(debugFilename());
+   printTraceback();
 }
 
 } // extern "C"
@@ -195,6 +183,23 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace debugging {
+
+namespace {
+
+SEXP rs_traceback()
+{
+   rd_traceback();
+   return R_NilValue;
+}
+
+SEXP rs_eval(SEXP codeSEXP)
+{
+   std::string code = r::sexp::asString(codeSEXP);
+   rd_eval(code.c_str());
+   return R_NilValue;
+}
+
+} // end anonymous namespace
 
 core::Error initialize()
 {
