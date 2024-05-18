@@ -1,7 +1,5 @@
-# vi: set ft=cmake:
-
 #
-# CMakeGlobals.txt
+# globals.cmake
 #
 # Copyright (C) 2022 by Posit Software, PBC
 #
@@ -27,7 +25,7 @@ endif()
 
 # cmake modules (compute path relative to this file)
 get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
-set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
+set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/../cmake/modules/")
 
 # read /etc/os-release
 if(LINUX)
@@ -435,15 +433,26 @@ macro(add_stripped_executable _target)
                             COMMAND objcopy --add-gnu-debuglink=${_target}.debug ${_target}
                             COMMENT "Stripping ${_target}")
       elseif(APPLE)
+         
          if(${ARGV1} STREQUAL "MACOSX_BUNDLE")
-            set(STRIP_TARGET "${_target}.app/contents/MacOS/${_target}")
+            set(STRIP_TARGET "${_target}.app/Contents/MacOS/${_target}")
          else()
             set(STRIP_TARGET "${_target}")
          endif()
-         add_custom_command(TARGET ${_target} POST_BUILD
-                            COMMAND dsymutil -o ./${_target}.dSYM ${STRIP_TARGET}
-                            COMMAND strip ${STRIP_TARGET}
-                            COMMENT "Stripping ${STRIP_TARGET}")
+         
+         set(_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${_target}.exports")
+         if (EXISTS "${_EXPORTS_FILE}")
+            add_custom_command(TARGET ${_target} POST_BUILD
+                               COMMAND dsymutil -o ./${_target}.dSYM ${STRIP_TARGET}
+                               COMMAND strip -s "${_EXPORTS_FILE}" ${STRIP_TARGET}
+                               COMMENT "Stripping ${STRIP_TARGET}")
+         else()
+            add_custom_command(TARGET ${_target} POST_BUILD
+                               COMMAND dsymutil -o ./${_target}.dSYM ${STRIP_TARGET}
+                               COMMAND strip ${STRIP_TARGET}
+                               COMMENT "Stripping ${STRIP_TARGET}")
+         endif()
+         
       endif()
    endif()
    define_source_file_names("${_target}")

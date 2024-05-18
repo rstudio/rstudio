@@ -31,7 +31,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeCompiler.txt")
 # include globals. normally these are included at the root but we also
 # include them here to support configuring at the src level (i.e. for
 # cpp-development-configurations)
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/globals.cmake")
 
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)

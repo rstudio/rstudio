@@ -25,7 +25,7 @@ project("RStudio [${RSTUDIO_RELEASE_NAME}]")
 include(CMakeCompiler.txt)
 
 # project globals
-include(CMakeGlobals.txt)
+include(cmake/globals.cmake)
 
 # remove previous installation if requested
 if(RSTUDIO_UNINSTALL_PREVIOUS)
