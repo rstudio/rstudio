@@ -440,18 +440,10 @@ macro(add_stripped_executable _target)
             set(STRIP_TARGET "${_target}")
          endif()
          
-         set(_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${_target}.exports")
-         if (EXISTS "${_EXPORTS_FILE}")
-            add_custom_command(TARGET ${_target} POST_BUILD
-                               COMMAND dsymutil -o ./${_target}.dSYM ${STRIP_TARGET}
-                               COMMAND strip -S ${STRIP_TARGET}
-                               COMMENT "Stripping ${STRIP_TARGET}")
-         else()
-            add_custom_command(TARGET ${_target} POST_BUILD
-                               COMMAND dsymutil -o ./${_target}.dSYM ${STRIP_TARGET}
-                               COMMAND strip ${STRIP_TARGET}
-                               COMMENT "Stripping ${STRIP_TARGET}")
-         endif()
+         add_custom_command(TARGET ${_target} POST_BUILD
+                            COMMAND dsymutil -o ./${_target}.dSYM ${STRIP_TARGET}
+                            COMMAND strip -x -S ${STRIP_TARGET}
+                            COMMENT "Stripping ${STRIP_TARGET}")
          
       endif()
    endif()

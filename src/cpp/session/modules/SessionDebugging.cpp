@@ -38,7 +38,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #ifndef _WIN32
-# define RS_EXPORT __attribute__ ((visibility ("hidden") ))
+# define RS_EXPORT __attribute__((visibility("default")))
 #else
 # define RS_EXPORT __declspec(dllexport)
 #endif
@@ -141,10 +141,19 @@ void printTraceback()
       LOG_ERROR(error);
 }
 
+} // end anonymous namespace
+
+
+} // namespace debugging
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
 extern "C" {
 
 RS_EXPORT void rd_traceback()
 {
+   using namespace rstudio::session::modules::debugging;
    RedirectOutputScope scope(debugFilename());
    printTraceback();
 }
@@ -157,6 +166,7 @@ SEXP rs_traceback()
 
 RS_EXPORT void rd_eval(const char* code)
 {
+   using namespace rstudio::session::modules::debugging;
    RedirectOutputScope scope(debugFilename());
    
    r::sexp::Protect protect;
@@ -180,7 +190,11 @@ SEXP rs_eval(SEXP codeSEXP)
 
 } // extern "C"
 
-} // end anonymous namespace
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace debugging {
 
 core::Error initialize()
 {
