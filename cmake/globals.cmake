@@ -24,8 +24,8 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # cmake modules (compute path relative to this file)
-get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
-set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/../cmake/modules/")
+get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_DIR} DIRECTORY)
+set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
 
 # read /etc/os-release
 if(LINUX)
@@ -444,7 +444,7 @@ macro(add_stripped_executable _target)
          if (EXISTS "${_EXPORTS_FILE}")
             add_custom_command(TARGET ${_target} POST_BUILD
                                COMMAND dsymutil -o ./${_target}.dSYM ${STRIP_TARGET}
-                               COMMAND strip -s "${_EXPORTS_FILE}" ${STRIP_TARGET}
+                               COMMAND strip -S ${STRIP_TARGET}
                                COMMENT "Stripping ${STRIP_TARGET}")
          else()
             add_custom_command(TARGET ${_target} POST_BUILD
