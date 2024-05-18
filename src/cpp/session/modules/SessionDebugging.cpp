@@ -153,7 +153,7 @@ SEXP rs_traceback()
    return R_NilValue;
 }
 
-__declspec(dllexport) void rd_evaluate(const char* code)
+__declspec(dllexport) void rd_eval(const char* code)
 {
    RedirectOutputScope scope(debugFilename());
    
@@ -169,10 +169,10 @@ __declspec(dllexport) void rd_evaluate(const char* code)
    Rf_PrintValue(resultSEXP);
 }
 
-SEXP rs_evaluate(SEXP codeSEXP)
+SEXP rs_eval(SEXP codeSEXP)
 {
    std::string code = r::sexp::asString(codeSEXP);
-   rd_evaluate(code.c_str());
+   rd_eval(code.c_str());
    return R_NilValue;
 }
 
@@ -185,7 +185,7 @@ core::Error initialize()
    using namespace module_context;
    
    RS_REGISTER_CALL_METHOD(rs_traceback);
-   RS_REGISTER_CALL_METHOD(rs_evaluate);
+   RS_REGISTER_CALL_METHOD(rs_eval);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
