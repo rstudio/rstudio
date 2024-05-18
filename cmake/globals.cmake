@@ -26,6 +26,7 @@ endif()
 # cmake modules (compute path relative to this file)
 get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_DIR} DIRECTORY)
 set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
+set(RSTUDIO_PROJECT_ROOT "${ROOT_SRC_DIR}" CACHE INTERNAL "")
 
 # read /etc/os-release
 if(LINUX)
@@ -64,7 +65,7 @@ set(CPACK_PACKAGE_VERSION_MAJOR_NUMERIC "${CPACK_PACKAGE_VERSION_MAJOR}${CPACK_P
 message(STATUS "Building RStudio ${CPACK_PACKAGE_VERSION}")
 
 # detect pro builds
-if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/upstream")
+if(EXISTS "${RSTUDIO_PROJECT_ROOT}/upstream")
    set(RSTUDIO_PRO_BUILD 1)
 else()
    set(RSTUDIO_PRO_BUILD 0)
