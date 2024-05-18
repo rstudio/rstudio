@@ -175,6 +175,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionConsole.cpp
    modules/SessionCopilot.cpp
    modules/SessionCpp.cpp
+   modules/SessionDebugging.cpp
    modules/SessionDependencies.cpp
    modules/SessionDependencyList.cpp
    modules/SessionDiagnostics.cpp
