@@ -100,7 +100,7 @@ target_link_libraries(rstudio-r rstudio-core)
 if(APPLE)
    target_link_libraries(rstudio-r "-undefined dynamic_lookup")
 else()
-   target_link_libraries(rstudio-r "${LIBR_LIBRARIES}")
+   target_link_libraries(rstudio-r ${LIBR_LIBRARIES} ${YAML_CPP_LIBRARIES})
 endif()
 
 # install rules
