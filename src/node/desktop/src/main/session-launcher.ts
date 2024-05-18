@@ -571,11 +571,11 @@ export class SessionLauncher {
     // if we're running automation tests, set that up now
     if (app.commandLine.hasSwitch('run-automation')) {
       argList.push('--run-automation');
+      setenv('RSTUDIO_AUTOMATION_EXE', process.argv0);
       if (!app.isPackaged) {
         const projectRoot = findRepoRoot();
         setenv('RSTUDIO_AUTOMATION_ROOT', projectRoot);
         setenv('RSTUDIO_AUTOMATION_MODE', 'desktop');
-        setenv('RSTUDIO_AUTOMATION_EXE', process.argv0);
         setenv('RSTUDIO_AUTOMATION_ARGS', process.cwd());
       }
     }
