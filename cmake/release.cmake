@@ -1,4 +1,4 @@
-# CMakeRelease.txt
+# cmake/release.cmake
 #
 # Copyright (C) 2022 by Posit Software, PBC
 #

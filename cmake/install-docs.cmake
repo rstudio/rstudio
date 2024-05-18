@@ -1,5 +1,5 @@
 #
-# CMakeInstallDocs.txt
+# cmake/install-docs.cmake
 #
 # Copyright (C) 2022 by Posit Software, PBC
 #

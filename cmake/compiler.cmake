@@ -1,5 +1,5 @@
 #
-# CMakeCompiler.txt
+# cmake/compiler.cmake
 #
 # Copyright (C) 2022 by Posit Software, PBC
 #
