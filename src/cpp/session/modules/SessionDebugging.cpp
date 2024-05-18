@@ -37,8 +37,10 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#ifndef __declspec
-# define __declspec(...)
+#ifndef _WIN32
+# define RS_EXPORT __attribute__ ((visibility ("hidden") ))
+#else
+# define RS_EXPORT __declspec(dllexport)
 #endif
 
 
@@ -141,7 +143,7 @@ void printTraceback()
 
 extern "C" {
 
-__declspec(dllexport) void rd_traceback()
+RS_EXPORT void rd_traceback()
 {
    RedirectOutputScope scope(debugFilename());
    printTraceback();
@@ -153,7 +155,7 @@ SEXP rs_traceback()
    return R_NilValue;
 }
 
-__declspec(dllexport) void rd_eval(const char* code)
+RS_EXPORT void rd_eval(const char* code)
 {
    RedirectOutputScope scope(debugFilename());
    
