@@ -1,5 +1,5 @@
 #
-# project.cmake
+# init.cmake
 #
 # Copyright (C) 2022 by Posit Software, PBC
 #
