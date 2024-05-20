@@ -573,6 +573,7 @@ endif()
 
 if(APPLE)
    target_link_libraries(rsession "-undefined dynamic_lookup")
+   target_link_libraries(rsession "-Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/rsession.exports")
 else()
    target_link_libraries(rsession "${LIBR_LIBRARIES}")
    if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)

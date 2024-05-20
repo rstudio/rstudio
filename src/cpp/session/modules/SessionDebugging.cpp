@@ -37,8 +37,10 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#ifndef __declspec
-# define __declspec(...)
+#ifndef _WIN32
+# define RS_EXPORT __attribute__((visibility("default")))
+#else
+# define RS_EXPORT __declspec(dllexport)
 #endif
 
 
@@ -139,22 +141,19 @@ void printTraceback()
       LOG_ERROR(error);
 }
 
+} // end anonymous namespace
+
+
+} // namespace debugging
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
 extern "C" {
 
-__declspec(dllexport) void rd_traceback()
+RS_EXPORT void rd_eval(const char* code)
 {
-   RedirectOutputScope scope(debugFilename());
-   printTraceback();
-}
-
-SEXP rs_traceback()
-{
-   rd_traceback();
-   return R_NilValue;
-}
-
-__declspec(dllexport) void rd_evaluate(const char* code)
-{
+   using namespace rstudio::session::modules::debugging;
    RedirectOutputScope scope(debugFilename());
    
    r::sexp::Protect protect;
@@ -169,14 +168,36 @@ __declspec(dllexport) void rd_evaluate(const char* code)
    Rf_PrintValue(resultSEXP);
 }
 
-SEXP rs_evaluate(SEXP codeSEXP)
+
+RS_EXPORT void rd_traceback()
 {
-   std::string code = r::sexp::asString(codeSEXP);
-   rd_evaluate(code.c_str());
-   return R_NilValue;
+   using namespace rstudio::session::modules::debugging;
+   RedirectOutputScope scope(debugFilename());
+   printTraceback();
 }
 
 } // extern "C"
+
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace debugging {
+
+namespace {
+
+SEXP rs_traceback()
+{
+   rd_traceback();
+   return R_NilValue;
+}
+
+SEXP rs_eval(SEXP codeSEXP)
+{
+   std::string code = r::sexp::asString(codeSEXP);
+   rd_eval(code.c_str());
+   return R_NilValue;
+}
 
 } // end anonymous namespace
 
@@ -185,7 +206,7 @@ core::Error initialize()
    using namespace module_context;
    
    RS_REGISTER_CALL_METHOD(rs_traceback);
-   RS_REGISTER_CALL_METHOD(rs_evaluate);
+   RS_REGISTER_CALL_METHOD(rs_eval);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

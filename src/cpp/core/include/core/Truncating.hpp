@@ -142,7 +142,7 @@ public:
          return 0;
       }
 
-      T overflow = (lhs > 0 != rhs > 0) ? min : max;
+      T overflow = ((lhs > 0) != (rhs > 0)) ? min : max;
 
       if (lhs > 0)
       {

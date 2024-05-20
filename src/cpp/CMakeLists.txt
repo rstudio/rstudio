@@ -16,8 +16,11 @@
 # set minimum version
 cmake_minimum_required(VERSION 3.6.3)
 
+# initialize
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/init.cmake")
+
 # read release name
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeRelease.txt")
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/release.cmake")
 
 # set project name
 project("RStudio [${RSTUDIO_RELEASE_NAME}]")
@@ -26,12 +29,12 @@ project("RStudio [${RSTUDIO_RELEASE_NAME}]")
 include(GetPrerequisites)
 
 # set compiler
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeCompiler.txt")
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/compiler.cmake")
 
 # include globals. normally these are included at the root but we also
 # include them here to support configuring at the src level (i.e. for
 # cpp-development-configurations)
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/globals.cmake")
 
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)

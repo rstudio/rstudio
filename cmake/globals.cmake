@@ -1,7 +1,5 @@
-# vi: set ft=cmake:
-
 #
-# CMakeGlobals.txt
+# globals.cmake
 #
 # Copyright (C) 2022 by Posit Software, PBC
 #
@@ -24,10 +22,6 @@ set(RSTUDIO_CMAKE_GLOBALS_INCLUDED YES)
 if(UNIX AND NOT APPLE)
    set(LINUX TRUE)
 endif()
-
-# cmake modules (compute path relative to this file)
-get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
-set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
 
 # read /etc/os-release
 if(LINUX)
@@ -66,7 +60,7 @@ set(CPACK_PACKAGE_VERSION_MAJOR_NUMERIC "${CPACK_PACKAGE_VERSION_MAJOR}${CPACK_P
 message(STATUS "Building RStudio ${CPACK_PACKAGE_VERSION}")
 
 # detect pro builds
-if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/upstream")
+if(EXISTS "${RSTUDIO_PROJECT_ROOT}/upstream")
    set(RSTUDIO_PRO_BUILD 1)
 else()
    set(RSTUDIO_PRO_BUILD 0)
@@ -173,7 +167,7 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSTUDIO_GIT_REVISION_HASH)
    if(GIT_EXECUTABLE)
       execute_process(
          COMMAND git rev-parse HEAD
-         WORKING_DIRECTORY "${ROOT_SRC_DIR}"
+         WORKING_DIRECTORY "${RSTUDIO_PROJECT_ROOT}"
          OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH
          OUTPUT_STRIP_TRAILING_WHITESPACE)
       SET(RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}" CACHE STRING "Git Revision Hash")
@@ -271,7 +265,7 @@ if(WIN32)
       set(RSTUDIO_DEPENDENCIES_DIR "C:/rstudio-tools/dependencies")
       set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
    else()
-      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies/windows")
+      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies/windows")
    endif()
    set(CPACK_DEPENDENCIES_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}")
    set(CPACK_NSPROCESS_VERSION "1.6")
@@ -284,7 +278,7 @@ endif()
 
 # look for dependencies in the source folder if not installed globally
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}")
-   set(RSTUDIO_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies")
+   set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies")
 endif()
 
 # tools
@@ -435,15 +429,18 @@ macro(add_stripped_executable _target)
                             COMMAND objcopy --add-gnu-debuglink=${_target}.debug ${_target}
                             COMMENT "Stripping ${_target}")
       elseif(APPLE)
+         
          if(${ARGV1} STREQUAL "MACOSX_BUNDLE")
-            set(STRIP_TARGET "${_target}.app/contents/MacOS/${_target}")
+            set(STRIP_TARGET "${_target}.app/Contents/MacOS/${_target}")
          else()
             set(STRIP_TARGET "${_target}")
          endif()
+         
          add_custom_command(TARGET ${_target} POST_BUILD
                             COMMAND dsymutil -o ./${_target}.dSYM ${STRIP_TARGET}
-                            COMMAND strip ${STRIP_TARGET}
+                            COMMAND strip -x -S ${STRIP_TARGET}
                             COMMENT "Stripping ${STRIP_TARGET}")
+         
       endif()
    endif()
    define_source_file_names("${_target}")

@@ -15,17 +15,20 @@
 
 cmake_minimum_required(VERSION 3.6.3)
 
+# initialize
+include(cmake/init.cmake)
+
 # release name
-include(CMakeRelease.txt)
+include(cmake/release.cmake)
 
 # project name
 project("RStudio [${RSTUDIO_RELEASE_NAME}]")
 
 # set compiler
-include(CMakeCompiler.txt)
+include(cmake/compiler.cmake)
 
 # project globals
-include(CMakeGlobals.txt)
+include(cmake/globals.cmake)
 
 # remove previous installation if requested
 if(RSTUDIO_UNINSTALL_PREVIOUS)
@@ -47,7 +50,7 @@ if (NOT RSTUDIO_SESSION_WIN32)
                   ${CMAKE_CURRENT_BINARY_DIR}/VERSION)
 
    # install root docs
-   include(CMakeInstallDocs.txt)
+   include(cmake/install-docs.cmake)
 endif()
 
 # overlay
