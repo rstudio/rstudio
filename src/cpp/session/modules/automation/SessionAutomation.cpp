@@ -45,7 +45,7 @@ Error run()
       reportFile = module_context::tempFile("automation-", ".xml");
    
    return r::exec::RFunction(".rs.automation.run")
-         .addParam("reportFile", reportFile)
+         .addParam("reportFile", reportFile.getAbsolutePath())
          .call();
 }
 
