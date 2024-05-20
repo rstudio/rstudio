@@ -571,11 +571,18 @@ export class SessionLauncher {
     // if we're running automation tests, set that up now
     if (app.commandLine.hasSwitch('run-automation')) {
       argList.push('--run-automation');
+
+      // forward 'automation-report-file' to session
+      const reportFile = app.commandLine.getSwitchValue('automation-report-file');
+      if (reportFile) {
+        argList.push(`--automation-report-file=${reportFile}`);
+      }
+
+      // set up environment variables to help find automation tests
       setenv('RSTUDIO_AUTOMATION_EXE', process.argv0);
       if (!app.isPackaged) {
         const projectRoot = findRepoRoot();
         setenv('RSTUDIO_AUTOMATION_ROOT', projectRoot);
-        setenv('RSTUDIO_AUTOMATION_MODE', 'desktop');
         setenv('RSTUDIO_AUTOMATION_ARGS', process.cwd());
       }
     }

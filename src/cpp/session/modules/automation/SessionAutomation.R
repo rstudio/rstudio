@@ -546,9 +546,9 @@
    
    # Otherwise, try to resolve and retrieve the automation tests
    # to be used based on the provided commit ref.
-   automationDir <- tempfile("rstudio-automation-")
-   dir.create(automationDir)
-   owd <- setwd(automationDir)
+   projectRoot <- tempfile("rstudio-automation-")
+   dir.create(projectRoot)
+   owd <- setwd(projectRoot)
    on.exit(setwd(owd), add = TRUE)
    
    # Figure out the commit reference to use.
