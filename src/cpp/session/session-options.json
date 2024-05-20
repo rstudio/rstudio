@@ -37,6 +37,13 @@
             "defaultValue": false,
             "implicitValue": true,
             "description": "Run RStudio as an automation agent."
+         },
+         {
+            "name": "automation-report-file",
+            "isHidden": true,
+            "memberName": "automationReportFile_",
+            "type": "core::FilePath",
+            "description": "The file where automation test results should be written."
          }
       ],
       "tests": [

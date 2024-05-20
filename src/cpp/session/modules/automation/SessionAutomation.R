@@ -344,7 +344,7 @@
    
    # Start pinging the Chromium HTTP server.
    response <- NULL
-   .rs.waitUntil(function()
+   .rs.waitUntil("Chromium HTTP server available", function()
    {
       response <<- .rs.tryCatch(httr::GET(jsonVersionUrl))
       !inherits(response, "error")
@@ -382,7 +382,7 @@
    socket$onClose(.rs.automation.onClose)
    
    # Wait until the socket is open.
-   .rs.waitUntil(function()
+   .rs.waitUntil("websocket open", function()
    {
       later::run_now()
       socket$readyState() == 1L
@@ -399,7 +399,7 @@
    
    # Wait until the Console is available.
    document <- client$DOM.getDocument(depth = 0L)
-   .rs.waitUntil(function()
+   .rs.waitUntil("Console input available", function()
    {
       consoleNode <- client$DOM.querySelector(document$root$nodeId, "#rstudio_console_input")
       consoleNode$nodeId != 0L
@@ -491,21 +491,30 @@
    sessionId
 })
 
-.rs.addFunction("automation.runImpl", function(root = getwd(), mode)
+.rs.addFunction("automation.runImpl", function(projectRoot = getwd(),
+                                               reportFile = NULL,
+                                               automationMode = NULL)
 {
+   # Resolve the automation mode.
+   automationMode <- .rs.automation.resolveMode(automationMode)
+   
    # Move to the project root directory.
-   owd <- setwd(root)
+   owd <- setwd(projectRoot)
    on.exit(setwd(owd), add = TRUE)
    
    # Move to the automation directory.
    withr::local_dir("src/cpp/tests/automation")
    
    # Set up automation mode.
-   withr::local_envvar(RSTUDIO_AUTOMATION_MODE = mode)
+   withr::local_envvar(RSTUDIO_AUTOMATION_MODE = automationMode)
+   
+   # Figure out where we're writing our test results.
+   reportFile <- .rs.nullCoalesce(reportFile, {
+      tempfile("junit-", fileext = ".xml")
+   })
    
    # Create a junit-style reporter.
-   junitResultsFile <- tempfile("junit-", fileext = ".xml")
-   junitReporter <- testthat::JunitReporter$new(file = junitResultsFile)
+   junitReporter <- testthat::JunitReporter$new(file = reportFile)
    
    # Run tests.
    testthat::test_dir(
@@ -514,42 +523,49 @@
       stop_on_failure = FALSE,
       stop_on_warning = FALSE
    )
+   
+   # Write the test results, and the file they came from.
+   writeLines(readLines(reportFile))
+   writeLines(reportFile)
 })
 
-.rs.addFunction("automation.run", function(root = NULL,
-                                           ref  = NULL,
-                                           mode = NULL)
+.rs.addFunction("automation.run", function(projectRoot = NULL,
+                                           reportFile = NULL,
+                                           automationMode = NULL,
+                                           gitRef = NULL)
 {
-   # Resolve root.
-   root <- .rs.nullCoalesce(root, {
+   # Resolve the project root. Note that test are expected to be found
+   # within the 'src/cpp/session/automation' sub-directory of this path.
+   projectRoot <- .rs.nullCoalesce(projectRoot, {
       Sys.getenv("RSTUDIO_AUTOMATION_ROOT", unset = NA)
    })
    
-   # Resolve mode
-   mode <- .rs.automation.resolveMode(mode)
-   
    # If the path to a test directory was provided, use that.
-   if (!is.na(root))
-      return(.rs.automation.runImpl(root, mode))
+   if (!is.na(projectRoot))
+      return(.rs.automation.runImpl(projectRoot, reportFile, automationMode))
    
    # Otherwise, try to resolve and retrieve the automation tests
    # to be used based on the provided commit ref.
-   automationDir <- tempfile("rstudio-automation-")
-   dir.create(automationDir)
-   owd <- setwd(automationDir)
+   projectRoot <- tempfile("rstudio-automation-")
+   dir.create(projectRoot)
+   owd <- setwd(projectRoot)
    on.exit(setwd(owd), add = TRUE)
    
    # Figure out the commit reference to use.
-   ref <- .rs.nullCoalesce(ref, {
+   gitRef <- .rs.nullCoalesce(gitRef, {
       productInfo <- .Call("rs_getProductInfo", PACKAGE = "(embedding)")
       .rs.nullCoalesce(productInfo$commit, "main")
    })
    
    # Retrieve test files.
-   .rs.automation.retrieveTests(ref = ref)
+   .rs.automation.retrieveTests(ref = gitRef)
    
    # Run automation tests with retrieved files.
-   .rs.automation.runImpl(mode = mode)
+   .rs.automation.runImpl(
+      projectRoot = projectRoot,
+      reportFile = reportFile,
+      automationMode = automationMode
+   )
 })
 
 .rs.addFunction("automation.retrieveTests", function(ref)

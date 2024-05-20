@@ -240,8 +240,9 @@
    self$client$socket$close()
    
    # Wait until the socket is closed.
-   .rs.waitUntil(function()
+   .rs.waitUntil("websocket closed", function()
    {
+      later::run_now()
       self$client$socket$readyState() == 3L
    })
    
@@ -250,7 +251,7 @@
    
    # Wait until it's no longer around.
    alive <- TRUE
-   .rs.waitUntil(function()
+   .rs.waitUntil("process stopped", function()
    {
       alive <<- !.rs.automation.agentProcess$is_alive()
    })

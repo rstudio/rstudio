@@ -40,10 +40,13 @@ namespace {
 
 Error run()
 {
-   SEXP exprSEXP = PROTECT(Rf_lang1(Rf_install(".rs.automation.run")));
-   Rf_eval(exprSEXP, R_GlobalEnv);
-   UNPROTECT(1);
-   return Success();
+   FilePath reportFile = session::options().automationReportFile();
+   if (reportFile.isEmpty())
+      reportFile = module_context::tempFile("automation-", ".xml");
+   
+   return r::exec::RFunction(".rs.automation.run")
+         .addParam("reportFile", reportFile.getAbsolutePath())
+         .call();
 }
 
 Error initialize()

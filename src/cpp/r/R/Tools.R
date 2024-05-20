@@ -1324,7 +1324,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    rendered
 })
 
-.rs.addFunction("waitUntil", function(predicate,
+.rs.addFunction("waitUntil", function(reason,
+                                      predicate,
                                       retryCount = 100L,
                                       waitTimeSecs = 1)
 {
@@ -1336,7 +1337,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          Sys.sleep(waitTimeSecs)
    }
    
-   stop("operation timed out")
+   stop(sprintf("timed out waiting until '%s'", reason))
 })
 
 .rs.addFunction("bugReport", function(pro = NULL)
