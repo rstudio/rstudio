@@ -18,6 +18,6 @@
 set RSTUDIO_NODE_VERSION=18.18.2
 
 :: Node version installed with the product
-set RSTUDIO_INSTALLED_NODE_VERSION=18.19.1
+set RSTUDIO_INSTALLED_NODE_VERSION=18.20.3
 
 set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com
