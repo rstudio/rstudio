@@ -1928,7 +1928,8 @@ void validateGlueCallImpl(RTokenCursor cursor,
    char stringDelimiter = 0;
    
    // The 'start' + 'end' markers for an inner piece of code.
-   std::size_t start, end = 0;
+   std::size_t start = 0;
+   std::size_t end = 0;
    
    // The string iterator. We start at index 1, so that we can
    // skip the initial quoting character.
