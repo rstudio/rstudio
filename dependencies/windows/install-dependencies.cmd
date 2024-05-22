@@ -169,7 +169,7 @@ if not exist "dictionaries\en_US.dic" (
   )
 )
 
-set MATHJAX=mathjax-27.zip
+set MATHJAX=mathjax-2.7.9.zip
 if not exist "mathjax-27" (
   wget %WGET_ARGS% "%BASEURL%%MATHJAX%"
   if exist "%MATHJAX%" (
