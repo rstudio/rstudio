@@ -311,12 +311,15 @@ void RpcActiveSessionsStorage::migrateSessions() const
    if (!rootMigratedFile.exists())
    {
       std::vector<FilePath> children;
-      Error error = storagePath_.getChildren(children);
-      if (error)
+      if (storagePath_.isDirectory())
       {
-         error.addProperty("operation", "Attempting to migrate old sessions for user " + user_.getUsername());
-         LOG_ERROR(error);
-         return;
+         Error error = storagePath_.getChildren(children);
+         if (error)
+         {
+            error.addProperty("operation", "Attempting to migrate old sessions for user " + user_.getUsername());
+            LOG_ERROR(error);
+            return;
+         }
       }
 
       for (const FilePath& child: children)
