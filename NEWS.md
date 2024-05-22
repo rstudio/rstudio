@@ -15,4 +15,5 @@
 
 ### Dependencies
 
-- Updated node.js to version 18.20.3. (#14731)
+- Updated node.js to version 18.20.3 (#14731)
+- Updated Electron to version 28.3.1 (#14732)
