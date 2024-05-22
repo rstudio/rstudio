@@ -473,7 +473,11 @@ export RSTUDIO_NODE_VERSION="18.18.2"
 #
 # When changing node version you must download the archives from https://nodejs.org/dist/vX.Y.Z/
 # and upload them to RSTUDIO_BUILDTOOLS/node/vX.Y.Z/.
-export RSTUDIO_INSTALLED_NODE_VERSION="18.19.1"
+#
+# In addition to updating the version here, also update rstudio-tools.cmd, and CMakeGlobals.txt
+# (look for RSTUDIO_INSTALLED_NODE_VERSION in both). Also double-check that the steps in
+# patch-node and patch-node.cmd work with the newer node (e.g. in case the layout has changed).
+export RSTUDIO_INSTALLED_NODE_VERSION="18.20.3"
 
 # version of go used for building
 export WORKBENCH_GO_VERSION="1.20.5"

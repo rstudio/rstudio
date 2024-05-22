@@ -1,4 +1,6 @@
 ## RStudio 2024.07.0 "Cranberry Hibiscus" Release Notes
+## RStudio 2024.04.2 "Chocolate Cosmos" Release Notes
+
 
 ### New
 
@@ -14,6 +16,8 @@
 - The `launcher-sessions-forward-container-environment` flag has been deprecated and will be removed in a future version. Use `launcher-sessions-forward-environment=0` to disable environment variable forwarding instead (rstudio-pro#5895)
 - The New Project dialog in RStudio Pro now defaults to the R version of the current session, rather than the system default (rstudio-pro#4244)
 - Workbench jobs launched from RStudio Pro now default to the R version of the current session, rather than the system default (rstudio-pro#5903)
+
+#### Posit Workbench
 
 ### Fixed
 
@@ -37,3 +41,9 @@
 
 - Updated Electron to version 30.x (#14582; Desktop)
 
+#### Posit Workbench
+
+### Dependencies
+
+- Updated node.js to version 18.20.3 (#14731)
+- Updated Electron to version 28.3.1 (#14732)
