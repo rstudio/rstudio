@@ -192,6 +192,7 @@ function findBuildRootImpl(rootDir: string): string {
     `${rootDir}`,
     `${rootDir}/src`,
     `${rootDir}/src/cpp`,
+    `${rootDir}/src/cpp/build`,
     `${rootDir}/package/linux`,
     `${rootDir}/package/osx`,
     `${rootDir}/package/win32`,
@@ -202,7 +203,7 @@ function findBuildRootImpl(rootDir: string): string {
   for (const buildDirParent of buildDirParents) {
     const buildDirFiles = fs.readdirSync(buildDirParent);
     for (const buildDirFile of buildDirFiles) {
-      if (buildDirFile.startsWith('build') || buildDirFile.startsWith('cmake-build-')) {
+      if (buildDirParent.endsWith('/build') || buildDirFile.startsWith('build') || buildDirFile.startsWith('cmake-build-')) {
         const buildDirPath = `${buildDirParent}/${buildDirFile}`;
         for (const buildFile of ['.ninja_log', 'CMakeFiles']) {
           const buildPath = `${buildDirPath}/${buildFile}`;
