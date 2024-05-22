@@ -1,5 +1,4 @@
 ## RStudio 2024.07.0 "Cranberry Hibiscus" Release Notes
-## RStudio 2024.04.2 "Chocolate Cosmos" Release Notes
 
 
 ### New
@@ -41,9 +40,3 @@
 
 - Updated Electron to version 30.x (#14582; Desktop)
 
-#### Posit Workbench
-
-### Dependencies
-
-- Updated node.js to version 18.20.3 (#14731)
-- Updated Electron to version 28.3.1 (#14732)
