@@ -108,7 +108,12 @@
    # Open that document in the attached editor.
    code <- sprintf(".rs.api.documentOpen(\"%s\")", documentPath)
    self$consoleExecute(code)
-   on.exit(self$documentClose(), add = TRUE)
+   
+   # Set an exit handler so we close and clean up the console history after.
+   on.exit({
+      self$documentClose()
+      self$shortcutExecute("Ctrl + L")
+   }, add = TRUE)
    
    # Wait until the element is focused.
    .rs.waitUntil("source editor is focused", function()
@@ -123,7 +128,7 @@
 
 .rs.automation.addRemoteFunction("documentClose", function()
 {
-   self$consoleExecute(".rs.api.documentClose()")
+   self$consoleExecute("invisible(.rs.api.documentClose())")
 })
 
 .rs.automation.addRemoteFunction("domGetNodeId", function(selector)
