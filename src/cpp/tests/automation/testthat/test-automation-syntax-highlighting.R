@@ -59,6 +59,9 @@ test_that("Quarto callout divs are tokenized correctly", {
       expect_equal(tokens[[1]]$value, ":::")
       expect_equal(tokens[[2]]$type,  "fenced_div_text_1")
       expect_equal(tokens[[2]]$value, " {.callout 1}")
+      
+      state <- remote$editorGetState(5L)
+      expect_equal(state, "start")
    })
    remote$consoleExecute(".rs.writeUserPref(\"rainbow_fenced_divs\", FALSE)")
    

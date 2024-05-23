@@ -200,6 +200,23 @@
    .rs.fromJSON(response$result$value)
 })
 
+.rs.automation.addRemoteFunction("editorGetState", function(row)
+{
+   jsCode <- .rs.heredoc(r'{
+      var id = $RStudio.last_focused_editor_id;
+      var container = document.getElementById(id);
+      var editor = container.env.editor;
+      var state = editor.session.getState(%i);
+      JSON.stringify(state);
+   }')
+   
+   jsCode <- sprintf(jsCode, as.integer(row))
+   
+   response <- self$jsExec(jsCode)
+   .rs.fromJSON(response$result$value)
+})
+
+
 .rs.automation.addRemoteFunction("editorSetCursorPosition", function(row, column = 0L)
 {
    jsCode <- .rs.heredoc(r'{
