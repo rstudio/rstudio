@@ -26,6 +26,7 @@
     "forge": "./forge.config.js"
   },
   "devDependencies": {
+    "@electron/packager": "18.1.1",
     "@electron-forge/cli": "7.2.0",
     "@electron-forge/plugin-webpack": "7.2.0",
     "@types/chai": "4.3.11",
@@ -61,6 +62,7 @@
     "nan": "2.18.0",
     "node-loader": "2.0.0",
     "nyc": "15.1.0",
+    "process": "0.11.10",
     "prettier": "3.1.1",
     "sinon": "17.0.1",
     "style-loader": "3.3.3",
