@@ -28,3 +28,38 @@ test_that("Quarto Documents are highlighted as expected", {
    })
    
 })
+
+# https://github.com/rstudio/rstudio/issues/14652
+test_that("Quarto callout divs are tokenized correctly", {
+   
+   documentContents <- .rs.heredoc('
+      ::: {.callout 0}
+      Hello, world!
+      :::
+      
+      ::: {.callout 1}
+      Goodbye, world!
+      :::
+   ')
+   
+   remote$consoleExecute(".rs.writeUserPref(\"rainbow_fenced_divs\", TRUE)")
+   remote$documentExecute(".Rmd", documentContents, {
+      Sys.sleep(0.1)
+      
+      tokens <- remote$editorGetTokens(0L)
+      expect_length(tokens, 2L)
+      expect_equal(tokens[[1]]$type,  "fenced_div_0")
+      expect_equal(tokens[[1]]$value, ":::")
+      expect_equal(tokens[[2]]$type,  "fenced_div_text_0")
+      expect_equal(tokens[[2]]$value, " {.callout 0}")
+      
+      tokens <- remote$editorGetTokens(4L)
+      expect_length(tokens, 2L)
+      expect_equal(tokens[[1]]$type,  "fenced_div_1")
+      expect_equal(tokens[[1]]$value, ":::")
+      expect_equal(tokens[[2]]$type,  "fenced_div_text_1")
+      expect_equal(tokens[[2]]$value, " {.callout 1}")
+   })
+   remote$consoleExecute(".rs.writeUserPref(\"rainbow_fenced_divs\", FALSE)")
+   
+})
