@@ -32,7 +32,8 @@ fi
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 cd "${RSTUDIO_TOOLS_ROOT}"
 
-MATHJAX=mathjax-27.zip
+# NOTE: Unpacks to 'mathjax-27' directory
+MATHJAX=mathjax-2.7.9.zip
 download "${URL}/${MATHJAX}"
 rm -rf "${MATHJAX_DIR}"
 unzip -q "$MATHJAX"
