@@ -115,8 +115,6 @@ Error handleReadAll(
       std::unique_ptr<ActiveSessions> activeSessions = getActiveSessions(user.get());
       std::vector<boost::shared_ptr<ActiveSession> > sessions = 
          activeSessions->list(
-            user->getHomePath(),
-            options().getOverlayOption("server-project-sharing") == "1",
             false); // don't validate sessions as there's no access to the project dir from the server
 
       std::string field;
@@ -188,7 +186,7 @@ Error handleValidate(
    const std::string& sessionId,
    bool* pValid)
 {
-   *pValid = getActiveSession(user, sessionId)->validate(user.getHomePath(), false);
+   *pValid = getActiveSession(user, sessionId)->validate();
    return Success();
 }
 
@@ -205,9 +203,7 @@ Error handleCount(const system::User& user, const boost::optional<std::string>& 
    }
    else
    {
-      *pCount = getActiveSessions(user)->count(
-         user.getHomePath(),
-         options().getOverlayOption("server-project-sharing") == "1");
+      *pCount = getActiveSessions(user)->count();
    }
 
    return Success();

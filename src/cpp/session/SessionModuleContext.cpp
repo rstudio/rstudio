@@ -1897,7 +1897,7 @@ r_util::ActiveSession& activeSession()
          // if no scope was specified, we are in singleton session mode
          // check to see if there is an existing active session, and use that
          std::vector<boost::shared_ptr<r_util::ActiveSession> > sessions =
-               activeSessions().list(userHomePath(), options().projectSharingEnabled(), true);
+               activeSessions().list(true);
          if (sessions.size() > 0)
          {
             // there is more than one session but no session id was passed in. This is OS server or pro with server-multiple-sessions=0
