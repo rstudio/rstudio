@@ -30,6 +30,7 @@
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
 - Fix keyboard shortcuts acting on the wrong source file when using Visual Editor in source columns or separate windows (#12581, #11684)
 - Removed extra spaces after package names in warning message about required packages (#14608)
+- Moved the "Sign commit" checkbox to Git/Svn global options panel (##14559)
 
 #### Posit Workbench
 

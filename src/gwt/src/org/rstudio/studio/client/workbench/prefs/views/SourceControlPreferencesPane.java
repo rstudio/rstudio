@@ -66,7 +66,6 @@ public class SourceControlPreferencesPane extends PreferencesPane
       add(headerLabel(projectConstants_.versionControlTitle()));
       
       chkVcsEnabled_ = new CheckBox(constants_.chkVcsEnabledLabel());
-      extraSpaced(chkVcsEnabled_);
       add(chkVcsEnabled_);
       chkVcsEnabled_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
@@ -81,6 +80,9 @@ public class SourceControlPreferencesPane extends PreferencesPane
          }
       });
 
+      chkSignGitCommits_ = new CheckBox(constants_.gitSignCommitLabel());
+      extraSpaced(chkSignGitCommits_);
+      add(chkSignGitCommits_);
 
       // git exe path chooser
       Command onGitExePathChosen = new Command()
@@ -149,6 +151,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       add(vcsHelpLink);
 
       chkVcsEnabled_.setEnabled(false);
+      chkSignGitCommits_.setEnabled(false);
       gitExePathChooser_.setEnabled(false);
       svnExePathChooser_.setEnabled(false);
       terminalPathChooser_.setEnabled(false);
@@ -158,11 +161,13 @@ public class SourceControlPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       chkVcsEnabled_.setEnabled(true);
+      chkSignGitCommits_.setEnabled(true);
       gitExePathChooser_.setEnabled(true);
       svnExePathChooser_.setEnabled(true);
       terminalPathChooser_.setEnabled(true);
 
       chkVcsEnabled_.setValue(prefs.vcsEnabled().getValue());
+      chkSignGitCommits_.setValue(prefs.gitSignedCommits().getValue());
       gitExePathChooser_.setText(prefs.gitExePath().getValue());
       svnExePathChooser_.setText(prefs.svnExePath().getValue());
       terminalPathChooser_.setText(prefs.terminalPath().getValue());
@@ -198,6 +203,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       RestartRequirement restartRequirement = super.onApply(prefs);
 
       prefs.vcsEnabled().setGlobalValue(chkVcsEnabled_.getValue());
+      prefs.gitSignedCommits().setGlobalValue(chkSignGitCommits_.getValue());
       prefs.gitExePath().setGlobalValue(gitExePathChooser_.getText());
       prefs.svnExePath().setGlobalValue(svnExePathChooser_.getText());
       prefs.terminalPath().setGlobalValue(terminalPathChooser_.getText());
@@ -234,6 +240,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private void manageControlVisibility()
    {
       boolean vcsEnabled = chkVcsEnabled_.getValue();
+      chkSignGitCommits_.setVisible(vcsEnabled);
       gitExePathLabel_.setVisible(vcsEnabled);
       gitExePathChooser_.setVisible(vcsEnabled);
       svnExePathLabel_.setVisible(vcsEnabled);
@@ -246,6 +253,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
 
    private final CheckBox chkVcsEnabled_;
+   private final CheckBox chkSignGitCommits_;
 
    private FormLabel svnExePathLabel_;
    private FormLabel gitExePathLabel_;
