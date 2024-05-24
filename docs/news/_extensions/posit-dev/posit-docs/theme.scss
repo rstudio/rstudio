@@ -1,26 +1,16 @@
 /*-- scss:defaults --*/
 
 // import font
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap");
+
+// import shared colors
+@import '_posit-colors';
 
 /*-- scss:variables --*/
-
-// scss-docs-start color-variables
-$posit-blue: #447099;
-$posit-dark-blue-1: #305775;
-$posit-dark-blue-2: #213D4F;
-$posit-orange:  #EE6331;
-$posit-gray:    #404041;
-$posit-teal:    #419599;
-$posit-green:   #72994E;
-$posit-burgundy:#9A4665;
-$posit-burgundy-1:#78384F;
-$posit-burgundy-2:#542938;
-
 $primary: $posit-blue;
 
 // Feature preview heading colors
-$preview-header: #EE6331; /* posit orange, contrast: 8.45 */
+$preview-header: #ee6331; /* posit orange, contrast: 8.45 */
 $preview-header-border: darken($preview-header, 5%);
 
 // scss-docs-end color-variables
@@ -29,17 +19,19 @@ $preview-header-border: darken($preview-header, 5%);
 // Font, line-height, and color for body text, headings, and more.
 
 //scss-font-start font-variables
-$font-family-sans-serif: "Open Sans", "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, system-ui;
+$font-family-sans-serif: "Open Sans", "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial,
+  sans-serif, system-ui;
 $font-family-monospace: "Source Code Pro", monospace;
 $font-family-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 $font-size-base: 1rem;
 // scss-docs-end font-variables
 
+//font and body color
 $body-color: $posit-gray;
 
 // scss-docs-start font-sizes
-$h1-font-size:44px;
-$h2-font-size:28px;x
+$h1-font-size: 44px;
+$h2-font-size: 28px;
 
 h1 {
   size: $h1-font-size;
@@ -48,7 +40,6 @@ h2 {
   size: $h2-font-size;
 }
 // scss-docs-end font-sizes
-
 
 // Headings
 // scss-docs-start headings-variables
@@ -69,92 +60,280 @@ $list-group-color: $primary !default;
 
 // CSS overrides
 
-.navbar {
-  box-shadow: 0 0 0.2rem #0000001a, 0 0.1rem 0.4rem #0003;
-  transition: transform .25s cubic-bezier(.1,.7,.1,1),box-shadow .25s;
-}
-
-.navbar-title {
-    font-family: $font-family-sans-serif;
-    font-size:  $font-size-base;
-    font-weight: 500;
-}
-
-/* Style for the version included in the website title */
-.navbar-title small {
-    font-size: 14px;
-    display: block;
-    padding-left: 1em;
-}
-
-/* Posit logo - navbar or footer */
-#footer-right-posit-logo {
-  width: 70px;
-  min-width: 70px;
-}
-
-#footer-right-logo {
-  width: 20px;
-  min-width: 20px;
-  margin-left: -3px !important;
-  margin-right: -3px !important;
-}
-
-.nav-link {
-    font-family: $font-family-monospace;
-    text-transform: uppercase;
-    letter-spacing: .03em;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-}
-
-.nav-footer {
-    font-family: $font-family-monospace;
-    text-transform: uppercase;
-    font-size: 14px;
-    border-top: solid #0000001a .01em;
-    align-items: center !important;
-}
-
-/* Tabs */ 
-
-.nav-tabs .nav-link {
-    text-transform: none !important;
-    font-family: $font-family-sans-serif;
-}
-
-/* Mini TOC */
-.sidebar nav[role=doc-toc]>ul li a {
-    text-transform: none !important;
-    font-family: $font-family-sans-serif;
-    font-weight: 400 !important;
-    letter-spacing: -0.2px !important;
-}
-
-/* Left nav - letter spacing */
-.sidebar-navigation li a {
-    letter-spacing: -0.2px;
-    line-height: normal;
-}
-
-
-/* Posit logo - footer */
-#footer-logo {
-    width: 70px;
-    min-width: 70px;
-}
-
-/* Footer */
-.nav-footer .nav-footer-center {
-    min-height: min-content;
-}
-
-// Font
+// Body
+//
+// Settings for the `<body>` element.
 
 /* Body font */
 body {
   letter-spacing: -0.2px !important;
- }
+  font-weight: 300 !important;
+}
+
+// Nav and footer
+
+/* Navbar */
+
+.navbar {
+  box-shadow:
+    0 0 0.2rem #0000001a,
+    0 0.1rem 0.4rem #0003;
+  transition:
+    transform 0.25s cubic-bezier(0.1, 0.7, 0.1, 1),
+    box-shadow 0.25s;
+}
+
+.navbar-title {
+  font-family: $font-family-sans-serif;
+  font-size: $font-size-base;
+  font-weight: 500;
+}
+
+/* Style for the version included in the website title */
+.navbar-title small {
+  font-size: 14px;
+  display: block;
+  padding-left: 1em;
+}
+
+.nav-link {
+  font-family: $font-family-monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: $posit-gray !important;
+}
+
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link.show {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Footer */
+
+.nav-footer {
+  font-family: $font-family-monospace;
+  text-transform: uppercase;
+  font-size: 14px;
+  border-top: solid #0000001a 0.01em;
+  align-items: center !important;
+}
+
+.nav-footer .nav-footer-center {
+  min-height: min-content;
+}
+
+/* Footer icons */
+
+/* Full Posit logo - currently, unused */
+#footer-right-full-posit-logo {
+  width: 70px;
+  min-width: 70px;
+}
+
+/* Posit guide book */
+#footer-right-logo {
+  width: 24px;
+  min-width: 24px;
+  margin-left: -3px !important;
+  margin-right: -3px !important;
+  padding-top: 1px;
+}
+
+/* Posit icon fullcolor */
+#footer-right-posit-logo {
+  width: 18px;
+  min-width: 18px;
+  margin-left: -3px !important;
+  margin-right: -3px !important;
+  padding-top: 1px;
+}
+
+/* Posit logo - footer
+#footer-logo {
+  width: 70px;
+  min-width: 70px;
+}
+*/
+
+.bi-question-circle-fill {
+  font-size: 18px !important;
+}
+
+.bi-lightbulb-fill {
+  font-size: 18px !important;
+}
+
+// Footnotes
+
+.footnote-back {
+  font-size: 16px !important;
+  font-weight: 900px !important;
+  color: $posit-dark-blue-1;
+}
+
+// Tabs and pills
+
+/* Tabs */
+
+.nav-tabs .nav-link {
+  text-transform: none !important;
+  font-family: $font-family-sans-serif;
+  color: $posit-gray !important;
+}
+
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+  color: #000000 !important;
+  font-weight: 700 !important;
+  text-decoration: underline 1px $posit-orange !important; 
+}
+
+.nav-tabs .nav-link:hover,
+.nav-link:focus {
+  color: $posit-blue !important;
+}
+
+/* Pills */
+
+.nav-pills {
+  border: none !important;
+}
+
+.nav-pills,
+.panel-underline {
+  > .nav {
+    display: flex;
+    border: none !important;
+    flex-direction: row;
+    justify-content: center;
+    .nav-link {
+      cursor: pointer;
+    }
+  }
+}
+
+.nav-pills > .nav .nav-link {
+  border: none !important;
+}
+
+.nav-pills,
+.panel-underline {
+  .tab-content {
+    padding-left: 0;
+    padding-right: 0;
+    border: none;
+  }
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .nav-item.show .nav-link {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+.nav-pills .nav-link:hover,
+.nav-link:focus {
+  isolation: isolate;
+  color: $posit-blue !important;
+  border: none !important;
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: #ffffff !important;
+}
+
+// Sidebar and toc
+
+/* Left nav */
+.sidebar-item-container .active {
+  font-weight: 500;
+}
+
+/* Left nav - letter spacing */
+.sidebar-navigation li a {
+  letter-spacing: 0.03em;
+  font-size: 16px;
+}
+
+/* Left nav - letter spacing */
+.sidebar-navigation li a {
+  letter-spacing: -0.2px;
+  line-height: normal;
+}
+
+/* Mini TOC */
+.sidebar nav[role="doc-toc"] > ul li a {
+  text-transform: none !important;
+  font-family: $font-family-sans-serif;
+  font-weight: 400 !important;
+  letter-spacing: -0.2px !important;
+}
+
+.sidebar nav[role="doc-toc"] ul > li > a.active,
+.sidebar nav[role="doc-toc"] ul > li > ul > li > a.active {
+  font-weight: 700 !important;
+}
+
+// Lists
+
+/* List disc colors */
+li::marker {
+  color: $primary;
+}
+
+// Callouts
+
+.callout.callout-style-default:not(.no-icon) div.callout-title-container {
+  color: $posit-dark-gray-1 !important;
+}
+
+/* Note */
+
+div.callout-note.callout {
+  border-left-color: $posit-blue !important;
+}
+
+div.callout-note .callout-icon::before {
+  // base64 -i _extensions/posit-docs/assets/images/info-circle.svg
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iIzE3MjEyQiIgY2xhc3M9ImJpIGJpLWluZm8tY2lyY2xlIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgogIDxwYXRoIGQ9Ik04IDE1QTcgNyAwIDEgMSA4IDFhNyA3IDAgMCAxIDAgMTRtMCAxQTggOCAwIDEgMCA4IDBhOCA4IDAgMCAwIDAgMTYiLz4KICA8cGF0aCBkPSJtOC45MyA2LjU4OC0yLjI5LjI4Ny0uMDgyLjM4LjQ1LjA4M2MuMjk0LjA3LjM1Mi4xNzYuMjg4LjQ2OWwtLjczOCAzLjQ2OGMtLjE5NC44OTcuMTA1IDEuMzE5LjgwOCAxLjMxOS41NDUgMCAxLjE3OC0uMjUyIDEuNDY1LS41OThsLjA4OC0uNDE2Yy0uMi4xNzYtLjQ5Mi4yNDYtLjY4Ni4yNDYtLjI3NSAwLS4zNzUtLjE5My0uMzA0LS41MzN6TTkgNC41YTEgMSAwIDEgMS0yIDAgMSAxIDAgMCAxIDIgMCIvPgo8L3N2Zz4=") !important;
+}
+
+div.callout-note.callout-style-default > .callout-header {
+  background-color: #dce7f2 !important;
+}
+
+/* Warning */
+div.callout-warning.callout {
+  border-left-color: $posit-orange !important;
+}
+
+div.callout-warning .callout-icon::before {
+  // base64 -i _extensions/posit-docs/assets/images/exclamation-triangle.svg
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iIzQ1MUYxMiIgY2xhc3M9ImJpIGJpLWV4Y2xhbWF0aW9uLXRyaWFuZ2xlIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgogIDxwYXRoIGQ9Ik03LjkzOCAyLjAxNkEuMTMuMTMgMCAwIDEgOC4wMDIgMmEuMTMuMTMgMCAwIDEgLjA2My4wMTYuMTUuMTUgMCAwIDEgLjA1NC4wNTdsNi44NTcgMTEuNjY3Yy4wMzYuMDYuMDM1LjEyNC4wMDIuMTgzYS4yLjIgMCAwIDEtLjA1NC4wNi4xLjEgMCAwIDEtLjA2Ni4wMTdIMS4xNDZhLjEuMSAwIDAgMS0uMDY2LS4wMTcuMi4yIDAgMCAxLS4wNTQtLjA2LjE4LjE4IDAgMCAxIC4wMDItLjE4M0w3Ljg4NCAyLjA3M2EuMTUuMTUgMCAwIDEgLjA1NC0uMDU3bTEuMDQ0LS40NWExLjEzIDEuMTMgMCAwIDAtMS45NiAwTC4xNjUgMTMuMjMzYy0uNDU3Ljc3OC4wOTEgMS43NjcuOTggMS43NjdoMTMuNzEzYy44ODkgMCAxLjQzOC0uOTkuOTgtMS43Njd6Ii8+CiAgPHBhdGggZD0iTTcuMDAyIDEyYTEgMSAwIDEgMSAyIDAgMSAxIDAgMCAxLTIgME03LjEgNS45OTVhLjkwNS45MDUgMCAxIDEgMS44IDBsLS4zNSAzLjUwN2EuNTUyLjU1MiAwIDAgMS0xLjEgMHoiLz4KPC9zdmc+") !important;
+}
+
+div.callout-warning.callout-style-default > .callout-header {
+  background-color: #fad8ca !important;
+}
+
+/* Important */
+
+div.callout-important.callout {
+  border-left-color: $posit-burgundy !important;
+}
+
+div.callout-important .callout-icon::before {
+  // base64 -i _extensions/posit-docs/assets/images/exclamation-circle.svg
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iIzJFMTcxRiIgY2xhc3M9ImJpIGJpLWV4Y2xhbWF0aW9uLWNpcmNsZSIgdmlld0JveD0iMCAwIDE2IDE2Ij4KICA8cGF0aCBkPSJNOCAxNUE3IDcgMCAxIDEgOCAxYTcgNyAwIDAgMSAwIDE0bTAgMUE4IDggMCAxIDAgOCAwYTggOCAwIDAgMCAwIDE2Ii8+CiAgPHBhdGggZD0iTTcuMDAyIDExYTEgMSAwIDEgMSAyIDAgMSAxIDAgMCAxLTIgME03LjEgNC45OTVhLjkwNS45MDUgMCAxIDEgMS44IDBsLS4zNSAzLjUwN2EuNTUyLjU1MiAwIDAgMS0xLjEgMHoiLz4KPC9zdmc+") !important;
+}
+
+div.callout-important.callout-style-default > .callout-header {
+  background-color: #f2dae3 !important;
+}
 
 // Specialty headers
 
@@ -189,34 +368,30 @@ div span.preview-feature {
   text-transform: uppercase;
 }
 
-// Lists
-
-/* List disc colors */
-li::marker {
-  color: $primary;
-}
+// Specialty lists
 
 /* Callout steps for images with multiple items/steps shown in single image */
+
 ol.groovyAlpha {
-    list-style: none;
-    counter-reset: list-counter;
-  }
-  
+  list-style: none;
+  counter-reset: list-counter;
+}
+
 ol.groovyAlpha li {
   counter-increment: list-counter;
 }
 
 ol.groovyAlpha li > p:before {
   content: counter(list-counter, lower-alpha);
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   text-align: center;
   margin-right: 10px;
   color: #fff;
   background-color: #fc403b;
   display: inline-block;
-  border-radius: 8px;
-  font-size: 9px;
+  border-radius: 10px;
+  font-size: 14px;
   line-height: 16px;
   vertical-align: middle;
 }
