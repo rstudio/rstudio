@@ -1,10 +1,10 @@
 ## RStudio 2024.07.0 "Cranberry Hibiscus" Release Notes
 
-
 ### New
 
-#### RStudio
+- Posit Product Documentation theme v4+, adds dark mode and several accessibility improvements (rstudio-pro#6373)
 
+#### RStudio
 
 #### Posit Workbench
 
