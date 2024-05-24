@@ -157,15 +157,11 @@
    
    .rs.automation.sendRequest(socket, method, params, callback)
    
-   # Wait for a response. Pump the later event loop while we wait.
-   for (i in 1:100)
+   # Wait for a response.
+   .rs.waitUntil("automation response received", function()
    {
-      later::run_now()
-      if (!is.null(response))
-         break
-      
-      Sys.sleep(0.1)
-   }
+      !is.null(response)
+   }, waitTimeSecs = 0.1)
    
    # Handle errors.
    error <- response[["error"]]
@@ -384,7 +380,6 @@
    # Wait until the socket is open.
    .rs.waitUntil("websocket open", function()
    {
-      later::run_now()
       socket$readyState() == 1L
    }, waitTimeSecs = 0.1)
    

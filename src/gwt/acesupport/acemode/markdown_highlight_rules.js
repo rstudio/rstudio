@@ -212,29 +212,22 @@ var MarkdownHighlightRules = function() {
             // opening fenced div
             token: "fenced_open", 
             regex: "^[:]{3,}\\s*.*$", 
-            onMatch: function(val, state, stack) {
+            onMatch: function(val, state, stack, line, context) {
+
                 if (!$rainbowFencedDivs) {
                     return "keyword.operator";
                 }
 
-                stack = stack || [];
-                stack[0] = state;
-                stack[16] = stack[16] || 0;  // next open color
-                stack[17] = stack[17] || []; // stack
-
+                var color = (context.fences || 0) % $numFencedDivsColors;
                 var close = /^[:]{3,}\s*$/.test(val);
 
                 if (close) 
                 {
-                    var color = stack[17].pop() || 0;
+                    context.fences = color + 1;
                     return "fenced_div_" + color;
                 }
                 else 
                 {
-                    var color = stack[16];
-                    stack[17].push(color);
-                    stack[16] = (color + 1 ) % $numFencedDivsColors;
-
                     // separating the fence (:::) from the follow up text
                     // in case we want to style them differently
                     var rx = /^([:]{3,})(.*)$/;
