@@ -17,7 +17,17 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, BrowserWindow, Cookie, dialog, FileFilter, MessageBoxOptions, shell, WebContents, WebRequest } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  Cookie,
+  dialog,
+  FileFilter,
+  MessageBoxOptions,
+  shell,
+  WebContents,
+  WebRequest,
+} from 'electron';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
@@ -201,15 +211,17 @@ function findBuildRootImpl(rootDir: string): string {
   // Look for build directories, and files within those build directories
   // that get eagerly modified after a build.
   for (const buildDirParent of buildDirParents) {
-    const buildDirFiles = fs.readdirSync(buildDirParent);
-    for (const buildDirFile of buildDirFiles) {
-      if (buildDirParent.endsWith('/build') || buildDirFile.startsWith('build') || buildDirFile.startsWith('cmake-build-')) {
-        const buildDirPath = `${buildDirParent}/${buildDirFile}`;
-        for (const buildFile of ['.ninja_log', 'CMakeFiles']) {
-          const buildPath = `${buildDirPath}/${buildFile}`;
-          if (fs.existsSync(buildPath)) {
-            const stat = fs.statSync(buildPath);
-            buildDirs.push({ path: buildDirPath, stat: stat });
+    if (fs.existsSync(buildDirParent)) {
+      const buildDirFiles = fs.readdirSync(buildDirParent);
+      for (const buildDirFile of buildDirFiles) {
+        if (/^(?:build|cmake-build-|Desktop-)/.test(buildDirFile)) {
+          const buildDirPath = `${buildDirParent}/${buildDirFile}`;
+          for (const buildFile of ['.ninja_log', 'CMakeFiles']) {
+            const buildPath = `${buildDirPath}/${buildFile}`;
+            if (fs.existsSync(buildPath)) {
+              const stat = fs.statSync(buildPath);
+              buildDirs.push({ path: buildDirPath, stat: stat });
+            }
           }
         }
       }
@@ -327,7 +339,6 @@ export function resolveAliasedPath(path: string): string {
 }
 
 export function parseFilter(filters: string): FileFilter[] {
-
   // This function receives a variety of filter types, including the old-fashioned
   // Qt filter (as used with older releases of RStudio) which separates disparate
   // filters with the ';;' delimiter. We intentionally try to be permissive
@@ -335,7 +346,6 @@ export function parseFilter(filters: string): FileFilter[] {
   const result: FileFilter[] = [];
 
   for (const filter of filters.split(';;')) {
-
     // Find the opening parenthesis
     const openIndex = filter.indexOf('(', 0);
     if (openIndex === -1) {
@@ -362,22 +372,24 @@ export function parseFilter(filters: string): FileFilter[] {
     //    Data Files (*.csv; *.xls)
     //    Data Files (*.csv | *.xls)
     //
-    const extensions = exts.trim().split(/[\s;,|]+/g).map((value) => {
-      if (value.startsWith('*.')) {
-        return value.substring(2);
-      } else if (value.startsWith('.')) {
-        return value.substring(1);
-      } else {
-        return value;
-      }
-    });
+    const extensions = exts
+      .trim()
+      .split(/[\s;,|]+/g)
+      .map((value) => {
+        if (value.startsWith('*.')) {
+          return value.substring(2);
+        } else if (value.startsWith('.')) {
+          return value.substring(1);
+        } else {
+          return value;
+        }
+      });
 
     // Add our result
     result.push({
       name: name,
-      extensions: extensions
+      extensions: extensions,
     });
-
   }
 
   return result;

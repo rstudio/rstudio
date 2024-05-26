@@ -1329,8 +1329,14 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
                                       retryCount = 100L,
                                       waitTimeSecs = 1)
 {
+   pollForEvents <- if (isNamespaceLoaded("later"))
+      later::run_now
+   else
+      function() {}
+   
    for (i in seq_len(retryCount))
    {
+      pollForEvents()
       if (predicate())
          return(TRUE)
       else
