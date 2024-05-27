@@ -40,5 +40,4 @@
 ### Dependencies
 
 - Updated MathJax to version 2.7.9 (#11535)
-- Updated Electron to version 30.x (#14582; Desktop)
-
+- Updated Electron to version 30.0.8 (#14582; Desktop)
