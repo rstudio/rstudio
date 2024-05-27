@@ -184,7 +184,7 @@ pipeline {
 
               stage('Build and Sign') {
                 environment {
-                  CODESIGN_KEY = credentials('gpg-codesign-private-key')
+                  CODESIGN_KEY = credentials('gpg-codesign-private-key-2027')
                   CODESIGN_PASS = credentials('gpg-codesign-passphrase')
                   PKG_EXTENSION = "${ext_map[env.OS]}"
                 }
