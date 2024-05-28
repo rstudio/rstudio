@@ -16,11 +16,11 @@ package org.rstudio.studio.client.common.filetypes;
 
 import java.util.HashSet;
 
-import com.google.gwt.resources.client.ImageResource;
-
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+
+import com.google.gwt.resources.client.ImageResource;
 
 public class WebContentFileType extends TextFileType
 {
@@ -37,7 +37,7 @@ public class WebContentFileType extends TextFileType
             editorLanguage, 
             defaultExtension,
             icon,
-            true,    // word-wrap
+            WordWrap.DEFAULT,    // word-wrap
             canSourceOnSave, 
             isMarkdown, // allow code execution in markdown 
             false, 

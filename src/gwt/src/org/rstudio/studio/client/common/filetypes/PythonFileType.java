@@ -14,13 +14,13 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import com.google.gwt.resources.client.ImageResource;
-
 import java.util.HashSet;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+
+import com.google.gwt.resources.client.ImageResource;
 
 public class PythonFileType extends TextFileType
 {
@@ -36,7 +36,7 @@ public class PythonFileType extends TextFileType
             editorLanguage,
             defaultExtension,
             defaultIcon,
-            false, // word wrap
+            WordWrap.DEFAULT, // word wrap
             false, // source on save
             true,  // execute code
             true,  // execute all code

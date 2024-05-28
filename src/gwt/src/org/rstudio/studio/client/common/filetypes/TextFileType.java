@@ -21,6 +21,7 @@ import org.rstudio.core.client.UnicodeLetters;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
@@ -36,12 +37,17 @@ import com.google.gwt.resources.client.ImageResource;
 
 public class TextFileType extends EditableFileType
 {
+   public static enum WordWrap
+   {
+      YES, NO, DEFAULT
+   }
+   
    TextFileType(String id,
                 String label,
                 EditorLanguage editorLanguage,
                 String defaultExtension,
                 ImageResource defaultIcon,
-                boolean wordWrap,
+                WordWrap wordWrap,
                 boolean canSourceOnSave,
                 boolean canExecuteCode,
                 boolean canExecuteAllCode,
@@ -58,7 +64,7 @@ public class TextFileType extends EditableFileType
       super(id, label, defaultIcon);
       editorLanguage_ = editorLanguage;
       defaultExtension_ = defaultExtension;
-      wordWrap_ = wordWrap;
+      wordWrap_ = resolveWordWrap(wordWrap);
       canSourceOnSave_ = canSourceOnSave;
       canExecuteCode_ = canExecuteCode;
       canExecuteAllCode_ = canExecuteAllCode;
@@ -554,6 +560,22 @@ public class TextFileType extends EditableFileType
    public Pattern getRnwStartPatternEnd()
    {
       return null;
+   }
+   
+   private static boolean resolveWordWrap(WordWrap wordWrap)
+   {
+      switch (wordWrap)
+      {
+      case YES:
+         return true;
+      case NO:
+         return false;
+      case DEFAULT:
+         return RStudioGinjector.INSTANCE.getUserPrefs().softWrapRFiles().getValue();
+      }
+      
+      assert false : "unexpected enumeration value for wordWrap";
+      return false;
    }
 
    private final EditorLanguage editorLanguage_;

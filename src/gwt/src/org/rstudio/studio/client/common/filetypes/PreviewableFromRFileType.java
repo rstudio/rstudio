@@ -33,7 +33,7 @@ public class PreviewableFromRFileType extends TextFileType
                                    boolean canShowScopeTree)
    {
       super(id, label, editorLanguage, defaultExtension, icon,
-            true, true, false, false, false, false, 
+            WordWrap.DEFAULT, true, false, false, false, false, 
             false, false, false, false, false, canShowScopeTree, true);
       
       previewFunction_ = previewFunction;

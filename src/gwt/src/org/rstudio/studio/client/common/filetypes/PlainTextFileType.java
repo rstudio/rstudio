@@ -14,23 +14,23 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
+
+import com.google.gwt.resources.client.ImageResource;
 
 public class PlainTextFileType extends TextFileType
 {
    PlainTextFileType(String id,
                      String label,
                      String defaultExtension,
-                     ImageResource defaultIcon,
-                     boolean wordWrap)
+                     ImageResource defaultIcon)
    {
       super(id, 
             label, 
             EditorLanguage.LANG_PLAIN, 
             defaultExtension, 
             defaultIcon, 
-            wordWrap,
+            WordWrap.DEFAULT,
             false,
             false,
             false,

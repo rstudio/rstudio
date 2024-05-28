@@ -14,12 +14,13 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import com.google.gwt.resources.client.ImageResource;
+import java.util.HashSet;
+
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
-import java.util.HashSet;
+import com.google.gwt.resources.client.ImageResource;
 
 public class TexFileType extends TextFileType
 {
@@ -34,7 +35,7 @@ public class TexFileType extends TextFileType
             editorLanguage, 
             defaultExtension,
             icon,
-            true,
+            WordWrap.DEFAULT,
             false, 
             false, 
             false, 
