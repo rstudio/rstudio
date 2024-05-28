@@ -505,8 +505,8 @@
         "soft_wrap_r_files": {
             "type": "boolean",
             "default": false,
-            "title": "Soft-wrap R source files",
-            "description": "Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters."
+            "title": "Soft-wrap source files",
+            "description": "Whether to soft-wrap source files, wrapping the text for display without inserting newline characters."
         },
         "soft_wrap_rmd_files": {
             "type": "boolean",

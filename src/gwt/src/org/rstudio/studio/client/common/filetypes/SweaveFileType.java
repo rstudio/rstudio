@@ -14,13 +14,15 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import com.google.gwt.resources.client.ImageResource;
+import java.util.HashSet;
+
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
-import java.util.HashSet;
+import com.google.gwt.resources.client.ImageResource;
 
 public class SweaveFileType extends TextFileType
 {
@@ -35,7 +37,7 @@ public class SweaveFileType extends TextFileType
             editorLanguage, 
             defaultExtension,
             icon,
-            true,
+            WordWrap.DEFAULT,
             false, 
             true, 
             true, 
@@ -49,7 +51,12 @@ public class SweaveFileType extends TextFileType
             true,
             false);
    }
-
+   
+   @Override
+   public boolean getWordWrap()
+   {
+      return RStudioGinjector.INSTANCE.getUserPrefs().softWrapRmdFiles().getValue();
+   }
 
    @Override
    public HashSet<AppCommand> getSupportedCommands(Commands commands)

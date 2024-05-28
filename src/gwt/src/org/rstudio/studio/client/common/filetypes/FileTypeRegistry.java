@@ -23,12 +23,14 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
+import org.rstudio.studio.client.common.filetypes.TextFileType.WordWrap;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 
@@ -48,7 +50,7 @@ public class FileTypeRegistry
    public static final TextFileType TEXT =
          new TextFileType("text", FileIcon.TEXT_ICON.getDescription(), EditorLanguage.LANG_PLAIN, "",
                           FileIcon.TEXT_ICON.getImageResource(),
-                          true,
+                          WordWrap.DEFAULT,
                           false, false, false, false, false, false, false, false, false, true, false, false);
 
    public static final TextFileType R =
@@ -58,7 +60,7 @@ public class FileTypeRegistry
    public static final TextFileType RD =
       new TextFileType("r_doc", constants_.rdFile(), EditorLanguage.LANG_RDOC, ".Rd",
                        new ImageResource2x(ICONS.iconRd2x()),
-                       true, // word-wrap
+                       WordWrap.DEFAULT, // word-wrap
                        true, // source on save aka preview on save
                        false, false, false,
                        true, // preview html
@@ -68,14 +70,14 @@ public class FileTypeRegistry
                        false);
 
    public static final TextFileType DCF =
-         new TextFileType("dcf", "DCF", EditorLanguage.LANG_DCF, ".dcf",
-                          new ImageResource2x(ICONS.iconDCF2x()), false, false, false, false, false,
+         new TextFileType("dcf", "DCF", EditorLanguage.LANG_DCF, ".dcf", new ImageResource2x(ICONS.iconDCF2x()),
+                          WordWrap.DEFAULT, false, false, false, false,
                           false, false, false, false, false, false, false, false);
 
    public static final TextFileType INI =
-         new TextFileType("ini", "INI", EditorLanguage.LANG_INI, ".ini",
-                          new ImageResource2x(ICONS.iconDCF2x()), false, false, false, false, false,
-                          false, false, false, false, false, false, false, false);
+         new TextFileType("ini", "INI", EditorLanguage.LANG_INI, ".ini", new ImageResource2x(ICONS.iconDCF2x()),
+               WordWrap.DEFAULT, false, false, false, false,
+               false, false, false, false, false, false, false, false);
 
 
    public static final TextFileType STAN = new StanFileType();
@@ -86,7 +88,7 @@ public class FileTypeRegistry
 
    public static final TextFileType NAMESPACE =
      new TextFileType("r_namespace", constants_.namespaceLabel(), EditorLanguage.LANG_R, "",
-                      new ImageResource2x(ICONS.iconText2x()), false, false, false, false, false,
+                      new ImageResource2x(ICONS.iconText2x()), WordWrap.DEFAULT, false, false, false, false,
                       false, false, false, false, false, false, false, false);
 
    public static final TextFileType SWEAVE =
@@ -99,8 +101,7 @@ public class FileTypeRegistry
 
    public static final PlainTextFileType RHISTORY =
       new PlainTextFileType("r_history", constants_.rHistoryLabel(), ".Rhistory",
-                            new ImageResource2x(ICONS.iconRhistory2x()),
-                            true);
+                            new ImageResource2x(ICONS.iconRhistory2x()));
 
    public static final RWebContentFileType RMARKDOWN =
          new RWebContentFileType("r_markdown", constants_.rMarkdownLabel(), EditorLanguage.LANG_RMARKDOWN,
@@ -130,37 +131,37 @@ public class FileTypeRegistry
    public static final TextFileType CSS =
          new TextFileType("css", "CSS", EditorLanguage.LANG_CSS, ".css",
                           new ImageResource2x(ICONS.iconCss2x()),
-                          true,
+                          WordWrap.DEFAULT,
                           false, false, false, false, false, false, false, false, false, false, false, false);
 
    public static final TextFileType SCSS =
          new TextFileType("scss", "SCSS", EditorLanguage.LANG_SCSS, ".scss",
                           new ImageResource2x(ICONS.iconScss2x()),
-                          true,
+                          WordWrap.DEFAULT,
                           false, false, false, false, false, false, false, false, false, false, false, false);
 
    public static final TextFileType SASS =
          new TextFileType("sass", "SASS", EditorLanguage.LANG_SASS, ".sass",
                           new ImageResource2x(ICONS.iconScss2x()),
-                          true,
+                          WordWrap.DEFAULT,
                           false, false, false, false, false, false, false, false, false, false, false, false);
    
    public static final TextFileType LESS =
          new TextFileType("less", "LESS", EditorLanguage.LANG_LESS, ".less",
                           new ImageResource2x(ICONS.iconLess2x()),
-                          true,
+                          WordWrap.DEFAULT,
                           false, false, false, false, false, false, false, false, false, false, false, false);
                  
    public static final TextFileType JS =
          new TextFileType("js", "JavaScript", EditorLanguage.LANG_JAVASCRIPT, ".js",
                           new ImageResource2x(ICONS.iconJavascript2x()),
-                          true,
+                          WordWrap.DEFAULT,
                           true, false, false, false, false, false, false, false, false, false, false, false);
 
    public static final TextFileType JSON =
          new TextFileType("json", "JSON", EditorLanguage.LANG_JAVASCRIPT, ".json",
                           new ImageResource2x(ICONS.iconJavascript2x()),
-                          true,
+                          WordWrap.DEFAULT,
                           false, false, false, false, false, false, false, false, false, false, false, false);
 
 
@@ -169,7 +170,8 @@ public class FileTypeRegistry
 
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
-                          new ImageResource2x(ICONS.iconSql2x()), false, true, false, false, false,
+                          new ImageResource2x(ICONS.iconSql2x()),
+                          WordWrap.DEFAULT, true, false, false, false,
                           false, false, false, false, false, false, false, false);
 
    public static final TextFileType SH = new ScriptFileType(
@@ -178,17 +180,20 @@ public class FileTypeRegistry
 
    public static final TextFileType TOML =
          new TextFileType("toml", "TOML", EditorLanguage.LANG_TOML, ".toml",
-                          new ImageResource2x(ICONS.iconToml2x()), false, false, false, false, false,
+                          new ImageResource2x(ICONS.iconToml2x()),
+                          WordWrap.DEFAULT, false, false, false, false,
                           false, false, false, false, false, false, false, false);
 
    public static final TextFileType YAML =
          new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yml",
-                          new ImageResource2x(ICONS.iconYaml2x()), false, false, false, false, false,
+                          new ImageResource2x(ICONS.iconYaml2x()),
+                          WordWrap.DEFAULT, false, false, false, false,
                           false, false, false, false, false, false, false, false);
 
    public static final TextFileType XML =
          new TextFileType("xml", "XML", EditorLanguage.LANG_XML, ".xml",
-                          new ImageResource2x(ICONS.iconXml2x()), false, false, false, false, false,
+                          new ImageResource2x(ICONS.iconXml2x()),
+                          WordWrap.DEFAULT, false, false, false, false,
                           false, false, false, false, false, false, false, false);
 
    public static final TextFileType H = new CppFileType("h", ".h", new ImageResource2x(ICONS.iconH2x()), true, false);
@@ -198,103 +203,103 @@ public class FileTypeRegistry
 
    public static final TextFileType CLOJURE =
          new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clj", new ImageResource2x(ICONS.iconClojure2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType COFFEE =
          new TextFileType("coffee", "Coffee", EditorLanguage.LANG_COFFEE, ".coffee", new ImageResource2x(ICONS.iconCoffee2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType CSHARP =
          new TextFileType("csharp", "C#", EditorLanguage.LANG_CSHARP, ".cs", new ImageResource2x(ICONS.iconCsharp2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
 
    public static final TextFileType DOCKERFILE =
          new TextFileType("dockerfile", "Dockerfile", EditorLanguage.LANG_DOCKERFILE, "Dockerfile", new ImageResource2x(ICONS.iconDockerfile2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
    public static final TextFileType GITIGNORE =
          new TextFileType("gitignore", "Gitignore", EditorLanguage.LANG_GITIGNORE, ".gitignore", new ImageResource2x(ICONS.iconGitignore2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType GO =
          new TextFileType("go", "Go", EditorLanguage.LANG_GO, ".go", new ImageResource2x(ICONS.iconGo2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType GROOVY =
          new TextFileType("groovy", "Groovy", EditorLanguage.LANG_GROOVY, ".groovy", new ImageResource2x(ICONS.iconGroovy2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType HASKELL =
          new TextFileType("haskell", "Haskell", EditorLanguage.LANG_HASKELL, ".haskell", new ImageResource2x(ICONS.iconHaskell2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType HAXE =
          new TextFileType("haxe", "Haxe", EditorLanguage.LANG_HAXE, ".haxe", new ImageResource2x(ICONS.iconHaxe2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType JAVA =
          new TextFileType("java", "Java", EditorLanguage.LANG_JAVA, ".java", new ImageResource2x(ICONS.iconJava2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType JULIA =
          new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".jl", new ImageResource2x(ICONS.iconJulia2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType LISP =
          new TextFileType("lisp", "Lisp", EditorLanguage.LANG_LISP, ".lisp", new ImageResource2x(ICONS.iconLisp2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType LUA =
          new TextFileType("lua", "Lua", EditorLanguage.LANG_LUA, ".lua", new ImageResource2x(ICONS.iconLua2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType MAKEFILE =
          new TextFileType("makefile", "Makefile", EditorLanguage.LANG_MAKEFILE, ".makefile", new ImageResource2x(ICONS.iconMakefile2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType MATLAB =
          new TextFileType("matlab", "Matlab", EditorLanguage.LANG_MATLAB, ".m", new ImageResource2x(ICONS.iconMatlab2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType PERL =
          new TextFileType("perl", "Perl", EditorLanguage.LANG_PERL, ".pl", new ImageResource2x(ICONS.iconPerl2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType RUBY =
          new TextFileType("ruby", "Ruby", EditorLanguage.LANG_RUBY, ".rb", new ImageResource2x(ICONS.iconRuby2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType RUST =
          new TextFileType("rust", "Rust", EditorLanguage.LANG_RUST, ".rs", new ImageResource2x(ICONS.iconRust2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType SCALA =
          new TextFileType("scala", "Scala", EditorLanguage.LANG_SCALA, ".scala", new ImageResource2x(ICONS.iconScala2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType SNIPPETS =
          new TextFileType("snippets", "Snippets", EditorLanguage.LANG_SNIPPETS, ".snippets", new ImageResource2x(ICONS.iconSnippets2x()),
-               false, false, false, false, false,
+               WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
    public static final RDataType RDATA = new RDataType();
@@ -313,6 +318,7 @@ public class FileTypeRegistry
    public FileTypeRegistry(EventBus eventBus,
                            Satellite satellite,
                            Session session,
+                           UserPrefs userPrefs,
                            GlobalDisplay globalDisplay,
                            FilesServerOperations server)
    {

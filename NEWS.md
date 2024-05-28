@@ -5,6 +5,7 @@
 
 #### RStudio
 
+- The "Soft-wrap R source files" preference now applies to all source files, and has been re-labelled appropriately. (#10940)
 
 #### Posit Workbench
 

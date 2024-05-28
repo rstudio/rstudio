@@ -895,7 +895,7 @@ core::Error UserPrefValues::setVerticallyAlignArgumentsIndent(bool val)
 }
 
 /**
- * Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters.
+ * Whether to soft-wrap source files, wrapping the text for display without inserting newline characters.
  */
 bool UserPrefValues::softWrapRFiles()
 {
