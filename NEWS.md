@@ -11,6 +11,9 @@
 
 #### RStudio
 
+- Fixed ability to build using system YAML (#14629)
+- Fixed an issue where insertion of braces in Sweave documents did not function as intended. (#14667; #14646)
+  
 #### Posit Workbench
 
 ### Dependencies
