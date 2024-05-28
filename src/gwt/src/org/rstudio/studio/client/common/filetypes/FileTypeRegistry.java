@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 
@@ -317,6 +318,7 @@ public class FileTypeRegistry
    public FileTypeRegistry(EventBus eventBus,
                            Satellite satellite,
                            Session session,
+                           UserPrefs userPrefs,
                            GlobalDisplay globalDisplay,
                            FilesServerOperations server)
    {

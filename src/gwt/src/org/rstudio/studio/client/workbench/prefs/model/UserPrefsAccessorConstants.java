@@ -596,11 +596,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String verticallyAlignArgumentsIndentDescription();
 
    /**
-    * Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters.
+    * Whether to soft-wrap source files, wrapping the text for display without inserting newline characters.
     */
-   @DefaultStringValue("Soft-wrap R source files")
+   @DefaultStringValue("Soft-wrap source files")
    String softWrapRFilesTitle();
-   @DefaultStringValue("Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters.")
+   @DefaultStringValue("Whether to soft-wrap source files, wrapping the text for display without inserting newline characters.")
    String softWrapRFilesDescription();
 
    /**

@@ -64,7 +64,7 @@ public class TextFileType extends EditableFileType
       super(id, label, defaultIcon);
       editorLanguage_ = editorLanguage;
       defaultExtension_ = defaultExtension;
-      wordWrap_ = resolveWordWrap(wordWrap);
+      wordWrap_ = wordWrap;
       canSourceOnSave_ = canSourceOnSave;
       canExecuteCode_ = canExecuteCode;
       canExecuteAllCode_ = canExecuteAllCode;
@@ -116,7 +116,15 @@ public class TextFileType extends EditableFileType
 
    public boolean getWordWrap()
    {
-      return wordWrap_;
+      switch (wordWrap_)
+      {
+      case YES:
+         return true;
+      case NO:
+         return false;
+      default:
+         return RStudioGinjector.INSTANCE.getUserPrefs().softWrapRFiles().getValue();
+      }
    }
 
    public boolean canSource()
@@ -562,24 +570,8 @@ public class TextFileType extends EditableFileType
       return null;
    }
    
-   private static boolean resolveWordWrap(WordWrap wordWrap)
-   {
-      switch (wordWrap)
-      {
-      case YES:
-         return true;
-      case NO:
-         return false;
-      case DEFAULT:
-         return RStudioGinjector.INSTANCE.getUserPrefs().softWrapRFiles().getValue();
-      }
-      
-      assert false : "unexpected enumeration value for wordWrap";
-      return false;
-   }
-
    private final EditorLanguage editorLanguage_;
-   private final boolean wordWrap_;
+   private final WordWrap wordWrap_;
    private final boolean canSourceOnSave_;
    private final boolean canExecuteCode_;
    private final boolean canExecuteAllCode_;
