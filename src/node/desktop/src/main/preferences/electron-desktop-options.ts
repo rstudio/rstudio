@@ -138,6 +138,11 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
     if (!zoomLevel) {
       zoomLevel = this.legacyOptions.zoomLevel() ?? properties.view.default.zoomLevel;
+      const min = properties.view.properties.zoomLevel.minimum;
+      const max = properties.view.properties.zoomLevel.maximum;
+      if (zoomLevel < min || zoomLevel > max) {
+        zoomLevel = properties.view.default.zoomLevel;
+      }
       this.config.set(kZoomLevel, zoomLevel);
     }
 

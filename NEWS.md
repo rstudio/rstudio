@@ -16,8 +16,6 @@
 - The New Project dialog in RStudio Pro now defaults to the R version of the current session, rather than the system default (rstudio-pro#4244)
 - Workbench jobs launched from RStudio Pro now default to the R version of the current session, rather than the system default (rstudio-pro#5903)
 
-#### Posit Workbench
-
 ### Fixed
 
 #### RStudio
@@ -29,6 +27,7 @@
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
 - Fix keyboard shortcuts acting on the wrong source file when using Visual Editor in source columns or separate windows (#12581, #11684)
+- Fix startup error due to invalid zoom setting triggering a config schema violation (#14690) 
 - Removed extra spaces after package names in warning message about required packages (#14608)
 - Moved the "Sign commit" checkbox to Git/Svn global options panel (##14559)
 
