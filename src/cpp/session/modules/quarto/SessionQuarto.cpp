@@ -58,8 +58,10 @@ using namespace rstudio::core;
 const char * const kRStudioQuarto = "RSTUDIO_QUARTO";
 
 #ifndef WIN32
+# define kQuartoCmd "quarto.cmd"
 # define kQuartoExe "quarto.exe"
 #else
+# define kQuartoCmd "quarto"
 # define kQuartoExe "quarto"
 #endif
 
@@ -194,12 +196,7 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
             FilePath quartoFolder = FilePath(core::string_utils::trimWhitespace(result.stdOut));
             if (quartoFolder.exists())
             {
-#ifndef _WIN32
-               const std::string quarto = "quarto";
-#else
-               const std::string quarto = "quarto.cmd";
-#endif
-               FilePath qvmLink = quartoFolder.completeChildPath(quarto);
+               FilePath qvmLink = quartoFolder.completeChildPath(kQuartoCmd);
                if (qvmLink.exists())
                   quartoPath = FilePath(qvmLink.getCanonicalPath());
             }
@@ -289,23 +286,23 @@ void detectQuartoInstallation()
    if (embeddedQuartoPath.exists())
    {
       auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
-      if (embeddedVersion >= kQuartoRequiredVersion)
-      {
-         s_quartoPath = embeddedQuartoPath;
-         s_quartoVersion = embeddedVersion;
-         const std::string quartoPath = string_utils::utf8ToSystem(
-             s_quartoPath.getParent().getAbsolutePath());
-         
-         if (sysPath.find(quartoPath) != std::string::npos)
-            return;
-         
-                // append to path
-         r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
-      }
-      else
+      if (embeddedVersion < kQuartoRequiredVersion)
       {
          showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
+         return;
       }
+      
+      s_quartoPath = embeddedQuartoPath;
+      s_quartoVersion = embeddedVersion;
+      const std::string quartoPath = string_utils::utf8ToSystem(
+          s_quartoPath.getParent().getAbsolutePath());
+      
+      if (sysPath.find(quartoPath) != std::string::npos)
+         return;
+      
+      // append to path
+      r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
+      return;
    }
    else
    {
