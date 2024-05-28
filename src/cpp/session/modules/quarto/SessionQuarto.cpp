@@ -57,12 +57,12 @@ using namespace rstudio::core;
 
 const char * const kRStudioQuarto = "RSTUDIO_QUARTO";
 
-#ifndef WIN32
-# define kQuartoCmd "quarto.cmd"
-# define kQuartoExe "quarto.exe"
-#else
+#ifndef _WIN32
 # define kQuartoCmd "quarto"
 # define kQuartoExe "quarto"
+#else
+# define kQuartoCmd "quarto.cmd"
+# define kQuartoExe "quarto.exe"
 #endif
 
 namespace rstudio {
@@ -160,7 +160,7 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
    std::string rstudioQuarto = core::system::getenv(kRStudioQuarto);
    if (!rstudioQuarto.empty())
    {
-#ifdef WIN32
+#ifdef _WIN32
       if (!boost::algorithm::ends_with(rstudioQuarto, ".cmd"))
          rstudioQuarto = rstudioQuarto + ".cmd";
 #endif
