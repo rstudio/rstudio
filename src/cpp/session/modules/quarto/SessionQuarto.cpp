@@ -57,10 +57,10 @@ using namespace rstudio::core;
 
 const char * const kRStudioQuarto = "RSTUDIO_QUARTO";
 
-// ignored unused functions when quarto not enabled
-#ifndef QUARTO_ENABLED
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+#ifndef WIN32
+# define kQuartoExe "quarto.exe"
+#else
+# define kQuartoExe "quarto"
 #endif
 
 namespace rstudio {
@@ -113,6 +113,21 @@ Version readQuartoVersion(const core::FilePath& quartoBinPath)
       version = "99.9.9";
    }
    return Version(version);
+}
+
+void showQuartoWarning()
+{
+   // enque a warning
+   const char * const kUpdateURL = "https://quarto.org/docs/getting-started/installation.html";
+   json::Object msgJson;
+   msgJson["severe"] = false;
+   boost::format fmt(
+     "Quarto is not installed. "
+     "Please install the latest version at <a href=\"%1%\" target=\"_blank\">%1%</a>"
+   );
+   msgJson["message"] = boost::str(fmt % kUpdateURL);
+   ClientEvent event(client_events::kShowWarningBar, msgJson);
+   module_context::enqueClientEvent(event);
 }
 
 void showQuartoVersionWarning(const Version& version, const Version& requiredVersion)
@@ -229,7 +244,6 @@ core::FilePath quartoConfigFilePath(const FilePath& dirPath)
 
 void detectQuartoInstallation()
 {
-#ifdef QUARTO_ENABLED
    // required quarto version (quarto features don't work w/o it)
    const Version kQuartoRequiredVersion("1.1.251");
 
@@ -268,38 +282,35 @@ void detectQuartoInstallation()
    }
 
    // embedded version of quarto (subject to required version)
-#ifndef WIN32
-   std::string target = "quarto";
-#else
-   std::string target = "quarto.exe";
-#endif
-
    FilePath embeddedQuartoPath = session::options().quartoPath()
       .completeChildPath("bin")
-      .completeChildPath(target);
+      .completeChildPath(kQuartoExe);
 
-   if (embeddedQuartoPath.isEmpty())
-      return;
-
-   auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
-   if (embeddedVersion >= kQuartoRequiredVersion)
+   if (embeddedQuartoPath.exists())
    {
-      s_quartoPath = embeddedQuartoPath;
-      s_quartoVersion = embeddedVersion;
-      const std::string quartoPath = string_utils::utf8ToSystem(
-               s_quartoPath.getParent().getAbsolutePath());
-
-      if (sysPath.find(quartoPath) != std::string::npos)
-         return;
-
-      // append to path
-      r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
+      auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
+      if (embeddedVersion >= kQuartoRequiredVersion)
+      {
+         s_quartoPath = embeddedQuartoPath;
+         s_quartoVersion = embeddedVersion;
+         const std::string quartoPath = string_utils::utf8ToSystem(
+             s_quartoPath.getParent().getAbsolutePath());
+         
+         if (sysPath.find(quartoPath) != std::string::npos)
+            return;
+         
+                // append to path
+         r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
+      }
+      else
+      {
+         showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
+      }
    }
    else
    {
-      showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
+      showQuartoWarning();
    }
-#endif
 }
 
 
@@ -644,7 +655,6 @@ SEXP rs_quartoFileResources(SEXP targetSEXP)
 {
    std::vector<std::string> resources;
    
-#ifdef QUARTO_ENABLED
    std::string target = r::sexp::safeAsString(targetSEXP);
    if (!target.empty())
    {
@@ -662,7 +672,6 @@ SEXP rs_quartoFileResources(SEXP targetSEXP)
          LOG_ERROR(error);
       }
    }
-#endif
 
    r::sexp::Protect protect;
    return r::sexp::create(resources, &protect);
@@ -673,7 +682,6 @@ SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
    std::vector<std::string> project;
    std::vector<std::string> resources;
 
-#ifdef QUARTO_ENABLED
    std::string basename = r::sexp::safeAsString(basenameSEXP);
    std::string dirname = r::sexp::safeAsString(dirnameSEXP);
 
@@ -709,7 +717,6 @@ SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
          jsonInspect["resources"].getArray().toVectorString(resources);   
       }
    }
-#endif
    
    r::sexp::Protect protect;
    SEXP out = r::sexp::createList({"project", "resources"}, &protect);
@@ -1448,8 +1455,3 @@ Error initialize()
 } // namespace modules
 } // namespace session
 } // namespace rstudio
-
-#ifndef QUARTO_ENABLED
-#pragma GCC diagnostic pop
-#endif
-

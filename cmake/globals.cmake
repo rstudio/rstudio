@@ -234,16 +234,8 @@ set(RSTUDIO_NODE_VERSION "18.18.2" CACHE INTERNAL "Node version for building")
 set(RSTUDIO_INSTALLED_NODE_VERSION "18.20.3" CACHE INTERNAL "Node version installed with product")
 
 # quarto support
-if(NOT DEFINED QUARTO_ENABLED)
-   if(LINUX AND UNAME_M STREQUAL aarch64)
-     message(STATUS "RStudio aarch64 builds supports quarto experimentally")
-   endif()
-   set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
-endif()
-
-if(QUARTO_ENABLED)
-   add_definitions(-DQUARTO_ENABLED)
-endif()
+set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+add_definitions(-DQUARTO_ENABLED)
 
 # install freedesktop integration files if we are installing into /usr
 if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)
