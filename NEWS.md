@@ -2,7 +2,7 @@
 
 ### New
 
-- Posit Product Documentation theme v4+, adds dark mode and several accessibility improvements (rstudio-pro#6373)
+- Posit Product Documentation theme v4.0.2; adds dark mode and several accessibility improvements (rstudio-pro#6373)
 
 #### RStudio
 
