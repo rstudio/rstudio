@@ -5359,4 +5359,13 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("RStudio received a Copilot response that it does not understand.\n{0}")
     @Key("copilotUnknownResponse")
     String copilotUnknownResponse(String response);
+
+    /**
+     * Translated "Sign git commits"
+     *
+     * @return translated "Sign git commits"
+     */
+    @DefaultMessage("Sign git commits")
+    @Key("gitSignCommitLabel")
+    String gitSignCommitLabel();
 }

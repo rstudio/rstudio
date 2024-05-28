@@ -169,7 +169,7 @@ Subversion for Windows however does not include an SSH client. To overcome this 
 
 ### Git Commit Signing
 
-Git commit signing is a process used to verify the authenticity and integrity of commits within a Git repository. The **Review Changes** pop-up in RStudio includes a **Sign commit** check box. When it is selected, git will attempt to sign the commit.
+Git commit signing is a process used to verify the authenticity and integrity of commits within a Git repository. The **Git/SVN** Global Options pop-up in RStudio includes a **Sign git commits** check box. When it is selected, git will attempt to sign all future commits.
 
 If commit signing is globally enabled via `git config --global commit.gpgsign true` it is not necessary to select the check box.
 
@@ -177,7 +177,7 @@ If commit signing is globally enabled via `git config --global commit.gpgsign tr
 You are responsible for configuring git commit signing and ensuring the associated key is unlocked. Otherwise, you will receive an error if you attempt to sign a commit via the **Review Changes** pop-up. Please consult the git documentation for details on how to configure commit signing for your platform.
 :::
 
-![](images/git-sign-commit.png){fig-alt="A screenshot of the Review Changes pop-up, highlighting the Sign commit check box."}
+![](images/git-sign-commit.png){fig-alt="A screenshot of the Global Options pop-up, highlighting the Sign git commits check box."}
 
 ## Troubleshooting
 
