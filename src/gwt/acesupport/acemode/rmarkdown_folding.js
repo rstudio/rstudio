@@ -23,75 +23,46 @@ define("rstudio/folding/rmarkdown", ["require", "exports", "module"], function(r
 var oop = require("ace/lib/oop");
 var BaseFoldMode = require("ace/mode/folding/fold_mode").FoldMode;
 var Range = require("ace/range").Range;
-
-var FoldMode = exports.FoldMode = function() {};
 var Utils = require("mode/utils");
 
+var FoldMode = exports.FoldMode = function() {};
 oop.inherits(FoldMode, BaseFoldMode);
+
+var RE_FOLD_BEGIN = /(?:^|[.])(?:codebegin|heading)(?:$|[.])/;
+var RE_FOLD_END   = /(?:^|[.])(?:codeend)(?:$|[.])/;
 
 (function() {
 
-   // Return:
-   // 'start' to begin a new code fold region,
-   // 'end' to end a new code fold region,
-   // '' to skip.
-   this.getFoldWidget = function(session, foldStyle, row) {
+   var $findNextHeader = function(session, state, row, depth) {
+      var n = session.getLength();
+      for (var i = row + 1; i < n; i++) {
+         // Check the state and guard against R comments
+         var rowState = session.getState(i);
+         if (rowState !== state)
+            continue;
 
-      var FOLD_NONE  = "";
-      var FOLD_START = "start";
-      var FOLD_END   = foldStyle === "markbeginend" ? "end" : "";
+         var line = session.getLine(i);
+         if (depth === 1 && /^[=]{3,}\s*/.test(line))
+            return i - 2;
+         
+         if (depth === 2 && /^[-]{3,}\s*/.test(line))
+            return i - 2;
 
-      var line = session.getLine(row);
-      var state = session.getState(row);
-      var beforeState = row > 0 ?
-             session.getState(row - 1) :
-             "start";
-
-      // Check for header starts. Note that we don't check the state
-      // explicitly here as not all headers will occur at the 'start' state;
-      // this is done to support YAML blocks and R Presentation features.
-      if (Utils.startsWith(line, "===") ||
-          Utils.startsWith(line, "---") ||
-          Utils.startsWith(line, "..."))
-      {
-         return Utils.startsWith(beforeState, "yaml") ? FOLD_END : FOLD_START;
+         var match = /^(#+)(?:.*)$/.exec(line);
+         if (match && match[1].length <= depth)
+            return i - 1;
       }
-
-      // Check for '#' header starts.
-      if (state === "start" && Utils.startsWith(line, "#"))
-         return FOLD_START;
-
-      var trimmed = line.trim();
-
-      // Chunk
-      if (Utils.startsWith(trimmed, "```"))
-      {
-         // I know this looks weird. However, the state associated
-         // with blocks that begin 'chunks', or GitHub-style fenced
-         // blocks, will be special (to indicate a transition into a
-         // separate mode); when ending that chunk and returning back
-         // to the 'start' state the session will instead report that
-         // state.
-         return state === "start" ? FOLD_END : FOLD_START;
-      }
-      
-      // No match (bail)
-      return "";
+      return n;
    };
 
    // NOTE: 'increment' is either 1 or -1, defining whether we are
    // looking forward or backwards. It's encoded this way both for
    // efficiency and to avoid duplicating this function for each
    // direction.
-   var $getBracedWidgetRange = function(session, state, row, prefix, prefix2)
-   {
-      var increment;
-      if (row === 0)
-         increment = 1;
-      else if (state === "start")
-         increment = -1;
-      else
-         increment = 1;
+   this.$getBracedWidgetRange = function(session, foldStyle, row, prefix, prefix2) {
+
+      var widget = this.getFoldWidget(session, foldStyle, row);
+      var increment = (widget === "start") ? 1 : -1;
       
       var startPos = {row: row, column: 0};
       if (increment === 1)
@@ -125,28 +96,24 @@ oop.inherits(FoldMode, BaseFoldMode);
       return range;
    };
 
-   var $findNextHeader = function(session, state, row, depth)
-   {
-      var n = session.getLength();
-      for (var i = row + 1; i < n; i++)
-      {
-         // Check the state and guard against R comments
-         var rowState = session.getState(i);
-         if (rowState !== state)
-            continue;
 
-         var line = session.getLine(i);
-         if (depth === 1 && /^[=]{3,}\s*/.test(line))
-            return i - 2;
-         
-         if (depth === 2 && /^[-]{3,}\s*/.test(line))
-            return i - 2;
+   this.getFoldWidget = function(session, foldStyle, row) {
 
-         var match = /^(#+)(?:.*)$/.exec(line);
-         if (match && match[1].length <= depth)
-            return i - 1;
+      var FOLD_NONE  = "";
+      var FOLD_START = "start";
+      var FOLD_END   = foldStyle === "markbeginend" ? "end" : "";
+
+      var tokens = session.getTokens(row);
+      for (var token of tokens) {
+         var type = token.type || "";
+         if (RE_FOLD_BEGIN.test(type)) {
+            return FOLD_START;
+         } else if (RE_FOLD_END.test(type)) {
+            return FOLD_END;
+         }
       }
-      return n;
+
+      return FOLD_NONE;
    };
 
    this.$getFoldWidgetRange = function(session, foldStyle, row) {
@@ -157,7 +124,7 @@ oop.inherits(FoldMode, BaseFoldMode);
 
       // Handle chunk folds.
       if (Utils.startsWith(line, "```"))
-         return $getBracedWidgetRange(session, state, row, "```");
+         return this.$getBracedWidgetRange(session, foldStyle, row, "```");
 
       // Handle YAML header.
       var prevState = row > 0 ? session.getState(row - 1) : "start";
@@ -165,7 +132,7 @@ oop.inherits(FoldMode, BaseFoldMode);
       var isYamlEnd = Utils.startsWith(prevState, "yaml");
       
       if (isYamlStart || isYamlEnd)
-         return $getBracedWidgetRange(session, state, row, "---", isYamlStart ? "..." : undefined);
+         return this.$getBracedWidgetRange(session, foldStyle, row, "---", isYamlStart ? "..." : undefined);
 
       // Handle Markdown header folds. They fold up until the next
       // header of the same depth.
@@ -191,8 +158,8 @@ oop.inherits(FoldMode, BaseFoldMode);
 
    };
 
-   this.getFoldWidgetRange = function(session, foldStyle, row)
-   {
+   this.getFoldWidgetRange = function(session, foldStyle, row) {
+
       var range = this.$getFoldWidgetRange(session, foldStyle, row);
 
       // Protect against null ranges

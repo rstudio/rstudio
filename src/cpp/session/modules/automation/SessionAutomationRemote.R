@@ -196,6 +196,19 @@
    self$jsExec(jsCode)
 })
 
+.rs.automation.addRemoteFunction("editorGetFoldWidget", function(row)
+{
+   jsCode <- .rs.heredoc(r'{
+      var id = $RStudio.last_focused_editor_id;
+      var container = document.getElementById(id);
+      var editor = container.env.editor;
+      var widget = editor.session.getFoldWidget(%i);
+      return widget;
+   }', as.integer(row))
+   
+   self$jsExec(jsCode)
+})
+
 .rs.automation.addRemoteFunction("editorGetState", function(row)
 {
    jsCode <- .rs.heredoc(r'{
