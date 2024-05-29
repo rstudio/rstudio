@@ -99,7 +99,7 @@
    self$waitForElement("#rstudio_source_text_editor")
 })
 
-.rs.automation.addRemoteFunction("documentExecute", function(ext, contents, expr)
+.rs.automation.addRemoteFunction("documentExecute", function(ext, contents, callback)
 {
    # Write document contents to file.
    documentPath <- tempfile("document-", fileext = ext)
@@ -122,8 +122,11 @@
       length(className) && grepl("ace_text-input", className)
    })
    
-   # Run the associated expression.
-   force(expr)
+   # Get a reference to the editor in that instance.
+   editor <- self$editorGetInstance()
+   
+   # Invoke callback with the editor instance.
+   callback(editor)
 })
 
 .rs.automation.addRemoteFunction("documentClose", function()
@@ -183,59 +186,18 @@
    )
 })
 
-.rs.automation.addRemoteFunction("editorGetTokens", function(row)
+.rs.automation.addRemoteFunction("editorGetInstance", function()
 {
    jsCode <- .rs.heredoc(r'{
       var id = $RStudio.last_focused_editor_id;
       var container = document.getElementById(id);
-      var editor = container.env.editor;
-      var tokens = editor.session.getTokens(%i);
-      return tokens;
-   }', as.integer(row))
+      container.env.editor
+   }')
    
-   self$jsExec(jsCode)
+   response <- self$client$Runtime.evaluate(expression = jsCode)
+   .rs.automation.wrapJsResponse(self, response)
 })
 
-.rs.automation.addRemoteFunction("editorGetFoldWidget", function(row)
-{
-   jsCode <- .rs.heredoc(r'{
-      var id = $RStudio.last_focused_editor_id;
-      var container = document.getElementById(id);
-      var editor = container.env.editor;
-      var widget = editor.session.getFoldWidget(%i);
-      return widget;
-   }', as.integer(row))
-   
-   self$jsExec(jsCode)
-})
-
-.rs.automation.addRemoteFunction("editorGetState", function(row)
-{
-   jsCode <- .rs.heredoc(r'{
-      var id = $RStudio.last_focused_editor_id;
-      var container = document.getElementById(id);
-      var editor = container.env.editor;
-      var state = editor.session.getState(%i);
-      return state;
-   }', as.integer(row))
-   
-   self$jsExec(jsCode)
-})
-
-
-.rs.automation.addRemoteFunction("editorSetCursorPosition", function(row, column = 0L)
-{
-   jsCode <- .rs.heredoc(r'{
-      var id = $RStudio.last_focused_editor_id;
-      var container = document.getElementById(id);
-      var editor = container.env.editor;
-      var position = { row: %i, column: %i };
-      var range = { start: position, end: position };
-      editor.selection.setSelectionRange(range);
-   }', as.integer(row), as.integer(column))
-   
-   self$jsExec(jsCode)
-})
 
 .rs.automation.addRemoteFunction("jsExec", function(expression)
 {
@@ -262,19 +224,38 @@
    .rs.fromJSON(jsonResponse$result$value)
 })
 
-.rs.automation.addRemoteFunction("jsCall", function(jsFunc,
-                                                    objectId = NULL,
-                                                    nodeId = NULL)
+.rs.automation.addRemoteFunction("jsCall", function(objectId, jsFunc)
 {
-   objectId <- .rs.nullCoalesce(objectId, {
-      resolvedNode <- self$client$DOM.resolveNode(nodeId)
-      objectId <- resolvedNode$object$objectId
-   })
+   # Wrap provided code into a function if necessary.
+   if (!grepl("^function\\b", jsFunc))
+   {
+      # Implicit return for single-line expressions.
+      lines <- strsplit(jsFunc, "\n", fixed = TRUE)[[1L]]
+      if (length(lines) == 1L && !.rs.startsWith(lines, "return "))
+         lines <- paste("return", lines)
+      
+      # Wrap into a function.
+      jsFunc <- sprintf("function() { %s }", paste(lines, collapse = "\n"))
+   }
    
+   # Wrap so that we can return JSON.
    self$client$Runtime.callFunctionOn(
       functionDeclaration = jsFunc,
       objectId = objectId
    )
+})
+
+.rs.automation.addRemoteFunction("jsObjectViaExpression", function(expression)
+{
+   response <- self$client$Runtime.evaluate(expression)
+   .rs.automation.wrapJsResponse(self, response)
+})
+
+.rs.automation.addRemoteFunction("jsObjectViaSelector", function(selector)
+{
+   nodeId <- self$domGetNodeId(selector)
+   response <- self$client$DOM.resolveNode(nodeId)
+   .rs.automation.wrapJsResponse(self, response)
 })
 
 .rs.automation.addRemoteFunction("quit", function()

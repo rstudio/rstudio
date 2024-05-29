@@ -18,8 +18,8 @@ test_that("Quarto Documents are highlighted as expected", {
       1 + 1
    ')
    
-   remote$documentExecute(".Rmd", documentContents, {
-      tokens <- remote$editorGetTokens(8L)
+   remote$documentExecute(".Rmd", documentContents, function(editor) {
+      tokens <- as.vector(editor$session$getTokens(8L))
       expect_length(tokens, 1L)
       expect_equal(tokens[[1]]$type,  "text")
       expect_equal(tokens[[1]]$value, "1 + 1")
@@ -41,24 +41,23 @@ test_that("Quarto callout divs are tokenized correctly", {
    ')
    
    remote$consoleExecute(".rs.writeUserPref(\"rainbow_fenced_divs\", TRUE)")
-   remote$documentExecute(".Rmd", documentContents, {
-      Sys.sleep(0.1)
+   remote$documentExecute(".Rmd", documentContents, function(editor) {
       
-      tokens <- remote$editorGetTokens(0L)
+      tokens <- as.vector(editor$session$getTokens(0L))
       expect_length(tokens, 2L)
       expect_equal(tokens[[1]]$type,  "fenced_div_0")
       expect_equal(tokens[[1]]$value, ":::")
       expect_equal(tokens[[2]]$type,  "fenced_div_text_0")
       expect_equal(tokens[[2]]$value, " {.callout 0}")
       
-      tokens <- remote$editorGetTokens(4L)
+      tokens <- as.vector(editor$session$getTokens(4L))
       expect_length(tokens, 2L)
       expect_equal(tokens[[1]]$type,  "fenced_div_1")
       expect_equal(tokens[[1]]$value, ":::")
       expect_equal(tokens[[2]]$type,  "fenced_div_text_1")
       expect_equal(tokens[[2]]$value, " {.callout 1}")
       
-      state <- remote$editorGetState(5L)
+      state <- editor$session$getState(5L)
       expect_equal(state, "start")
    })
    remote$consoleExecute(".rs.writeUserPref(\"rainbow_fenced_divs\", FALSE)")
@@ -78,13 +77,11 @@ test_that("Quarto chunks receive chunk begin / end markers as expected", {
       ```
    ')
    
-   remote$documentExecute(".Rmd", documentContents, {
-      Sys.sleep(0.1)
-      
-      startWidget <- remote$editorGetFoldWidget(4L)
+   remote$documentExecute(".qmd", documentContents, function(editor) {
+      startWidget <- editor$session$getFoldWidget(4L)
       expect_equal(startWidget, "start")
       
-      endWidget <- remote$editorGetFoldWidget(6L)
+      endWidget <- editor$session$getFoldWidget(6L)
       expect_equal(endWidget, "end")
    })
    
