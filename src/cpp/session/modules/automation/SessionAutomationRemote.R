@@ -149,16 +149,6 @@
    nodeId
 })
 
-.rs.automation.addRemoteFunction("domGetObjectId", function(selector)
-{
-   # Query for the requested node.
-   nodeId <- self$domGetNodeId(selector)
-   
-   # Get a JavaScript object ID associated with this node.
-   response <- self$client$DOM.resolveNode(nodeId)
-   response$object$objectId
-})
-
 .rs.automation.addRemoteFunction("domClickElement", function(selector, button = "left")
 {
    # Query for the requested node.
@@ -206,47 +196,6 @@
    
    response <- self$client$Runtime.evaluate(expression = jsCode)
    .rs.automation.wrapJsResponse(self, response)
-})
-
-.rs.automation.addRemoteFunction("editorGetTokens", function(row)
-{
-   jsCode <- .rs.heredoc(r'{
-      var id = $RStudio.last_focused_editor_id;
-      var container = document.getElementById(id);
-      var editor = container.env.editor;
-      var tokens = editor.session.getTokens(%i);
-      return tokens;
-   }', as.integer(row))
-   
-   self$jsExec(jsCode)
-})
-
-.rs.automation.addRemoteFunction("editorGetState", function(row)
-{
-   jsCode <- .rs.heredoc(r'{
-      var id = $RStudio.last_focused_editor_id;
-      var container = document.getElementById(id);
-      var editor = container.env.editor;
-      var state = editor.session.getState(%i);
-      return state;
-   }', as.integer(row))
-   
-   self$jsExec(jsCode)
-})
-
-
-.rs.automation.addRemoteFunction("editorSetCursorPosition", function(row, column = 0L)
-{
-   jsCode <- .rs.heredoc(r'{
-      var id = $RStudio.last_focused_editor_id;
-      var container = document.getElementById(id);
-      var editor = container.env.editor;
-      var position = { row: %i, column: %i };
-      var range = { start: position, end: position };
-      editor.selection.setSelectionRange(range);
-   }', as.integer(row), as.integer(column))
-   
-   self$jsExec(jsCode)
 })
 
 .rs.automation.addRemoteFunction("jsExec", function(expression)
