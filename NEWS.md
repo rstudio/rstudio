@@ -11,8 +11,9 @@
 
 #### RStudio
 
-- Fixed ability to build using system YAML (#14629)
+- Fixed an issue where editor tools (e.g. Reindent Lines) did not work in Quarto documents with `:::` blocks. (#14652; #14640)
 - Fixed an issue where insertion of braces in Sweave documents did not function as intended. (#14667; #14646)
+- Fixed ability to build using system YAML. (#14629)
   
 #### Posit Workbench
 
