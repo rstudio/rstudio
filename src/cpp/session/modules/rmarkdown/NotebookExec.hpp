@@ -109,7 +109,8 @@ private:
    int lastOutputType_;
    ExecScope execScope_;
    r::sexp::PreservedSEXP prevWarn_;
-
+   
+   core::FilePath consoleChunkOutputFile_;
    bool hasOutput_;
    bool hasErrors_;
 
