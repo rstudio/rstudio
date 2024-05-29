@@ -77,7 +77,7 @@ test_that("Quarto chunks receive chunk begin / end markers as expected", {
       ```
    ')
    
-   remote$documentExecute(".Rmd", documentContents, function(editor) {
+   remote$documentExecute(".qmd", documentContents, function(editor) {
       startWidget <- editor$session$getFoldWidget(4L)
       expect_equal(startWidget, "start")
       
