@@ -63,3 +63,26 @@ test_that("Quarto callout divs are tokenized correctly", {
    remote$consoleExecute(".rs.writeUserPref(\"rainbow_fenced_divs\", FALSE)")
    
 })
+
+# https://github.com/rstudio/rstudio/issues/14699
+test_that("Quarto chunks receive chunk begin / end markers as expected", {
+   
+   documentContents <- .rs.heredoc('
+      ---
+      title: Quarto Document
+      ---
+      
+      ```{r}
+      # This is a code chunk.
+      ```
+   ')
+   
+   remote$documentExecute(".Rmd", documentContents, function(editor) {
+      startWidget <- editor$session$getFoldWidget(4L)
+      expect_equal(startWidget, "start")
+      
+      endWidget <- editor$session$getFoldWidget(6L)
+      expect_equal(endWidget, "end")
+   })
+   
+})
