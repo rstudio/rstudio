@@ -16,6 +16,9 @@
 - The `launcher-sessions-forward-container-environment` flag has been deprecated and will be removed in a future version. Use `launcher-sessions-forward-environment=0` to disable environment variable forwarding instead (rstudio-pro#5895)
 - The New Project dialog in RStudio Pro now defaults to the R version of the current session, rather than the system default (rstudio-pro#4244)
 - Workbench jobs launched from RStudio Pro now default to the R version of the current session, rather than the system default (rstudio-pro#5903)
+- Added support for Jupyter Notebook 7 (rstudio-pro#6266)
+- Replaced code server binary with PWB Code Server. PWB Code Server is bundled with the PWB VS Code Extension, so a separate install is no longer required. It is a fork of VS Code 1.89.1. (rstudio-pro#6265)
+- Disabled Jupyter Notebooks by default on fresh installs of PWB (rstudio-pro#6269)
 
 ### Fixed
 
@@ -36,6 +39,8 @@
 
 - Workbench jobs now set resource profiles correctly (rstudio-pro#5217)
 - When launching a Workbench job from RStudio Pro, changing fields in the Options tab no longer resets the selected R version in the Environment tab (rstudio-pro#5218)
+- Fixed bug that prevented users from receiving the admin-configured default settings when launching VS Code sessions (rstudio-pro#6207)
+
 
 ### Dependencies
 
