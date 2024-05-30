@@ -18,8 +18,9 @@
 #include <string>
 
 #include <shared_core/Error.hpp>
-#include <core/Log.hpp>
 #include <shared_core/FilePath.hpp>
+
+#include <core/Log.hpp>
 #include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -54,7 +55,7 @@ FilePath historyDatabaseRotatedFilePath()
 void rotateHistoryDatabase()
 {
    FilePath historyDB = historyDatabaseFilePath();
-   if (historyDB.exists() && (historyDB.getSize() > kHistoryMaxBytes))
+   if (historyDB.getSize() > kHistoryMaxBytes)
    {
       // first remove the rotated file if it exists (ignore errors because
       // there's nothing we can do with them at this level)
@@ -128,26 +129,65 @@ HistoryArchive& historyArchive()
    return instance;
 }
 
+HistoryArchive::HistoryArchive()
+   : entryCacheLastWriteTime_(-1),
+     flushScheduled_(false)
+{
+   module_context::events().onShutdown.connect(boost::bind(&HistoryArchive::onShutdown, this));
+}
+
 Error HistoryArchive::add(const std::string& command)
 {
+   // create output line
+   std::ostringstream ostrEntry;
+   double currentTime = core::date_time::millisecondsSinceEpoch();
+   writeEntry(currentTime, command, &buffer_);
+   buffer_ << std::endl;
+   
+   // schedule work
+   if (!flushScheduled_)
+   {
+      flushScheduled_ = true;
+      module_context::scheduleDelayedWork(
+          boost::posix_time::seconds(1),
+          boost::bind(&HistoryArchive::flush, this));
+   }
+   
+   return Success();
+}
+
+void HistoryArchive::flush()
+{
+   // no-op when buffer is empty
+   if (buffer_.tellp() == std::streampos(0))
+      return;
+   
    // reset the cache (since this write will invalidate the current one,
    // no sense in keeping our cache around in memory)
    entries_.clear();
    entryCacheLastWriteTime_ = -1;
-
+   
    // rotate if necessary
    rotateHistoryDatabase();
-
-   // write the entry to the file
-   std::ostringstream ostrEntry;
-   double currentTime = core::date_time::millisecondsSinceEpoch();
-   writeEntry(currentTime, command, &ostrEntry);
-   ostrEntry << std::endl;
-   return appendToFile(historyDatabaseFilePath(), ostrEntry.str());
+   
+   // append buffer entries
+   std::string buffer = buffer_.str();
+   Error error = appendToFile(historyDatabaseFilePath(), buffer);
+   if (error)
+      LOG_ERROR(error);
+   
+   // reset buffer
+   buffer_.str(std::string());
+   buffer_.clear();
+   
+   flushScheduled_ = false;
 }
 
-const std::vector<HistoryEntry>& HistoryArchive::entries() const
+const std::vector<HistoryEntry>& HistoryArchive::entries()
 {
+   // flush any pending buffered outputs
+   flush();
+   
    // calculate path to history db
    FilePath historyDBPath = historyDatabaseFilePath();
 
@@ -211,6 +251,11 @@ void HistoryArchive::migrateRhistoryIfNecessary()
    FilePath historyDBPath = historyDatabaseFilePath();
    if (!historyDBPath.exists())
       attemptRhistoryMigration();
+}
+
+void HistoryArchive::onShutdown()
+{
+   flush();
 }
 
 

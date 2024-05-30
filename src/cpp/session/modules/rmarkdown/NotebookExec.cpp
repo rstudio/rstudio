@@ -475,11 +475,15 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 
    // determine output filename and ensure it exists
    FilePath outputCsv = chunkOutputFile(docId_, chunkId_, nbCtxId_, ChunkOutputText);
-   Error error = outputCsv.ensureFile();
-   if (error)
+   if (outputCsv != consoleChunkOutputFile_)
    {
-      LOG_ERROR(error);
-      return;
+      consoleChunkOutputFile_ = outputCsv;
+      Error error = outputCsv.ensureFile();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
    }
 
    // truncate if necessary

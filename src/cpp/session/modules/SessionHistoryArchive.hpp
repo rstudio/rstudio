@@ -16,6 +16,7 @@
 #ifndef SESSION_HISTORY_ARCHIVE_HPP
 #define SESSION_HISTORY_ARCHIVE_HPP
 
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -51,7 +52,7 @@ HistoryArchive& historyArchive();
 class HistoryArchive : boost::noncopyable
 {
 private:
-   HistoryArchive() : entryCacheLastWriteTime_(-1) {}
+   HistoryArchive();
    friend HistoryArchive& historyArchive();
 
 public:
@@ -59,11 +60,18 @@ public:
 
 public:
    core::Error add(const std::string& command);
-   const std::vector<HistoryEntry>& entries() const;
+   const std::vector<HistoryEntry>& entries();
 
 private:
    mutable time_t entryCacheLastWriteTime_;
    mutable std::vector<HistoryEntry> entries_;
+   
+   mutable std::stringstream buffer_;
+   mutable bool flushScheduled_;
+   void flush();
+   
+private:
+   void onShutdown();
 };
                        
 } // namespace history
