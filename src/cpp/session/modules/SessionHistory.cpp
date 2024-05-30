@@ -406,10 +406,10 @@ void onHistoryAdd(const std::string& command)
    module_context::enqueClientEvent(event);
 }
 
-SEXP rs_timestamp(SEXP stampSEXP) {
+SEXP rs_timestamp(SEXP stampSEXP)
+{
    std::string stamp = r::sexp::safeAsString(stampSEXP);
    r::session::consoleHistory().add(stamp);
-
    return R_NilValue;
 }
 

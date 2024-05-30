@@ -128,26 +128,63 @@ HistoryArchive& historyArchive()
    return instance;
 }
 
+HistoryArchive::HistoryArchive()
+   : entryCacheLastWriteTime_(-1),
+     flushScheduled_(false)
+{
+   module_context::events().onShutdown.connect(boost::bind(&HistoryArchive::onShutdown, this));
+}
+
 Error HistoryArchive::add(const std::string& command)
 {
+   // create output line
+   std::ostringstream ostrEntry;
+   double currentTime = core::date_time::millisecondsSinceEpoch();
+   writeEntry(currentTime, command, &buffer_);
+   buffer_ << std::endl;
+   
+   // schedule work
+   if (!flushScheduled_)
+   {
+      flushScheduled_ = true;
+      module_context::scheduleDelayedWork(
+          boost::posix_time::seconds(1),
+          boost::bind(&HistoryArchive::flush, this));
+   }
+   
+   return Success();
+}
+
+void HistoryArchive::flush()
+{
+   // no-op when buffer is empty
+   std::string buffer = buffer_.str();
+   if (buffer.empty())
+      return;
+   
    // reset the cache (since this write will invalidate the current one,
    // no sense in keeping our cache around in memory)
    entries_.clear();
    entryCacheLastWriteTime_ = -1;
-
+   
    // rotate if necessary
    rotateHistoryDatabase();
-
-   // write the entry to the file
-   std::ostringstream ostrEntry;
-   double currentTime = core::date_time::millisecondsSinceEpoch();
-   writeEntry(currentTime, command, &ostrEntry);
-   ostrEntry << std::endl;
-   return appendToFile(historyDatabaseFilePath(), ostrEntry.str());
+   
+   // append buffer entries
+   Error error = appendToFile(historyDatabaseFilePath(), buffer);
+   if (error)
+      LOG_ERROR(error);
+   
+   // clean up
+   buffer_.clear();
+   flushScheduled_ = false;
 }
 
-const std::vector<HistoryEntry>& HistoryArchive::entries() const
+const std::vector<HistoryEntry>& HistoryArchive::entries()
 {
+   // flush any pending buffered outputs
+   flush();
+   
    // calculate path to history db
    FilePath historyDBPath = historyDatabaseFilePath();
 
@@ -211,6 +248,11 @@ void HistoryArchive::migrateRhistoryIfNecessary()
    FilePath historyDBPath = historyDatabaseFilePath();
    if (!historyDBPath.exists())
       attemptRhistoryMigration();
+}
+
+void HistoryArchive::onShutdown()
+{
+   flush();
 }
 
 
