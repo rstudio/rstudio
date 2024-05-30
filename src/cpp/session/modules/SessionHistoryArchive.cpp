@@ -55,7 +55,7 @@ FilePath historyDatabaseRotatedFilePath()
 void rotateHistoryDatabase()
 {
    FilePath historyDB = historyDatabaseFilePath();
-   if (historyDB.exists() && (historyDB.getSize() > kHistoryMaxBytes))
+   if (historyDB.getSize() > kHistoryMaxBytes)
    {
       // first remove the rotated file if it exists (ignore errors because
       // there's nothing we can do with them at this level)
