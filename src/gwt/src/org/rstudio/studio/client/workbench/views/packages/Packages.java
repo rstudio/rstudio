@@ -1025,7 +1025,9 @@ public class Packages
             true,
             () ->
             {
-               SuspendOptions options = SuspendOptions.createSaveAll(true, installCmd);
+               // Use '@' prefix to signal this should be executed eagerly
+               String command = installCmd.startsWith("@") ? installCmd : "@" + installCmd;
+               SuspendOptions options = SuspendOptions.createSaveAll(true, command);
                events_.fireEvent(new SuspendAndRestartEvent(options));
             },
             () ->

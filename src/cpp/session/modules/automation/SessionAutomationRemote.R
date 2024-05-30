@@ -86,6 +86,12 @@
    self$client$Input.dispatchKeyEvent(type = "rawKeyDown", windowsVirtualKeyCode = 13L)
 })
 
+.rs.automation.addRemoteFunction("consoleOutput", function()
+{
+   consoleOutput <- self$jsObjectViaSelector("#rstudio_console_output")
+   strsplit(consoleOutput$innerText, split = "\n", fixed = TRUE)[[1L]]
+})
+
 .rs.automation.addRemoteFunction("documentOpen", function(ext, contents)
 {
    # Write document contents to file.
