@@ -229,13 +229,25 @@ Error restoreEnvironmentVars(const FilePath& envFile)
    return Success();
 }
 
-std::string getAfterRestartCommand(const FilePath& afterRestartFile)
+Error getAfterRestartCommand(const FilePath& afterRestartFile,
+                             std::string* pCommand,
+                             bool* pIsEager)
 {
    std::string command;
    Error error = core::readStringFromFile(afterRestartFile, &command);
    if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
-   return command;
+   
+   bool eager = false;
+   if (command.find("@") == 0)
+   {
+      eager = true;
+      command = command.substr(1);
+   }
+   
+   *pCommand = command;
+   *pIsEager = eager;
+   return Success();
 }
 
 Error executeAfterRestartCommand(const std::string& command)
@@ -605,12 +617,14 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
       return error;
       
    // execute after restart command
-   std::string command = getAfterRestartCommand(statePath.completePath(kAfterRestartCommand));
-   
-   // check if the commadn should be run before or after restoring search path
-   bool isEagerCommand = command.find("@") == 0;
-   if (isEagerCommand)
-      command = command.substr(1);
+   std::string command;
+   bool isEagerCommand = false;
+   error = getAfterRestartCommand(
+            statePath.completePath(kAfterRestartCommand),
+            &command,
+            &isEagerCommand);
+   if (error)
+      LOG_ERROR(error);
    
    // execute eager (non-deferred) restart commands
    if (isEagerCommand)
