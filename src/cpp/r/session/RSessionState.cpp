@@ -229,13 +229,17 @@ Error restoreEnvironmentVars(const FilePath& envFile)
    return Success();
 }
 
-Error executeAfterRestartCommand(const FilePath& afterRestartFile)
+std::string getAfterRestartCommand(const FilePath& afterRestartFile)
 {
    std::string command;
    Error error = core::readStringFromFile(afterRestartFile, &command);
    if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
-   
+   return command;
+}
+
+Error executeAfterRestartCommand(const std::string& command)
+{
    if (command.empty())
       return Success();
    
@@ -601,26 +605,48 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
       return error;
       
    // execute after restart command
-   error = executeAfterRestartCommand(statePath.completePath(kAfterRestartCommand));
-   if (error)
-      return error;
+   std::string command = getAfterRestartCommand(statePath.completePath(kAfterRestartCommand));
    
-   // suppress other outputs
-   utils::SuppressOutputInScope suppressOutput;
+   // check if the commadn should be run before or after restoring search path
+   bool isEagerCommand = command.find("@") == 0;
+   if (isEagerCommand)
+      command = command.substr(1);
    
-   // restore search path
-   error = search_path::restore(statePath, currentSearchPathList, s_isCompatibleSessionState);
-   if (error)
-      return error;
+   // execute eager (non-deferred) restart commands
+   if (isEagerCommand)
+   {
+      Error error = executeAfterRestartCommand(command);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   {
+      // restore search path
+      utils::SuppressOutputInScope suppressOutput;
+      error = search_path::restore(statePath, currentSearchPathList, s_isCompatibleSessionState);
+      if (error)
+         return error;
+   }
+   
+   // execute deferred restart commands
+   if (!isEagerCommand)
+   {
+      Error error = executeAfterRestartCommand(command);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
    
    // if we are in server mode we just need to read the plots state
    // file (because the location of the graphics directory is stable)
    if (serverMode)
    {
+      utils::SuppressOutputInScope suppressOutput;
       return graphics::plotManager().restorePlotsState();
    }
    else
    {
+      utils::SuppressOutputInScope suppressOutput;
       FilePath plotsDir = statePath.completePath(kPlotsDir);
       if (plotsDir.exists())
          return graphics::plotManager().deserialize(plotsDir);

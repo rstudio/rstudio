@@ -1886,7 +1886,7 @@ private:
       std::string afterRestartCommand;
       if (restartR_)
       {
-         afterRestartCommand = "library(" + pkgInfo_.name();
+         afterRestartCommand = "@library(" + pkgInfo_.name();
          
          // if --library="" was specified and we're not in devmode,
          // use it
