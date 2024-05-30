@@ -159,8 +159,7 @@ Error HistoryArchive::add(const std::string& command)
 void HistoryArchive::flush()
 {
    // no-op when buffer is empty
-   std::string buffer = buffer_.str();
-   if (buffer.empty())
+   if (buffer_.tellp() == std::streampos(0))
       return;
    
    // reset the cache (since this write will invalidate the current one,
@@ -172,12 +171,15 @@ void HistoryArchive::flush()
    rotateHistoryDatabase();
    
    // append buffer entries
+   std::string buffer = buffer_.str();
    Error error = appendToFile(historyDatabaseFilePath(), buffer);
    if (error)
       LOG_ERROR(error);
    
-   // clean up
+   // reset buffer
+   buffer_.str(std::string());
    buffer_.clear();
+   
    flushScheduled_ = false;
 }
 
