@@ -184,13 +184,15 @@ void syncConsoleColorEnv()
    // as package builds, which cannot query RStudio IDE settings.
    if (modeFromPref(prefs::userPrefs().ansiConsoleMode()) == core::text::AnsiColorOn)
    {
+      core::system::setenv("R_CLI_NUM_COLORS", "256");
       core::system::setenv("RSTUDIO_CONSOLE_COLOR", "256");
 
       if (rsession::options().defaultConsoleTerm().length() > 0)
          core::system::setenv("TERM", rsession::options().defaultConsoleTerm());
+
       if (rsession::options().defaultCliColorForce())
          core::system::setenv("CLICOLOR_FORCE", "1");
-      
+
       // Allow cli::style_hyperlink()
       core::system::setenv("RSTUDIO_CLI_HYPERLINKS", "true");
 
@@ -201,6 +203,7 @@ void syncConsoleColorEnv()
    }
    else
    {
+      core::system::unsetenv("R_CLI_NUM_COLORS");
       core::system::unsetenv("RSTUDIO_CONSOLE_COLOR");
       core::system::unsetenv("TERM");
       core::system::unsetenv("CLICOLOR_FORCE");

@@ -3002,7 +3002,7 @@ std::string rstudioVersion(bool normalizeSuffix)
    if (normalizeSuffix)
    {
       boost::regex reNonDigit("[^0-9]");
-      std::string suffix = boost::regex_replace(suffix, reNonDigit, "");
+      suffix = boost::regex_replace(suffix, reNonDigit, "");
    }
 
    return fmt::format(

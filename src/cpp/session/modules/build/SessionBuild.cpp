@@ -1166,7 +1166,6 @@ private:
       cmd << "--vanilla";
       cmd << "-s";
       cmd << "-e";
-      std::vector<std::string> rSourceCommands;
       
       boost::format fmt(
          "setwd('%1%');"
@@ -1293,7 +1292,6 @@ private:
       cmd << "--vanilla";
       cmd << "-s";
       cmd << "-e";
-      std::vector<std::string> rSourceCommands;
       
       if (type == kTestShiny)
       {
