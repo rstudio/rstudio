@@ -603,7 +603,6 @@ export class SessionLauncher {
     // to a separate location, so we can more easily build and restart
     // with an "active" rsession executable
     if (!app.isPackaged && process.platform == 'win32') {
-
       const sessionPath = this.sessionPath.getAbsolutePath();
       const sessionDir = path.dirname(sessionPath);
       const sessionName = path.basename(sessionPath).replaceAll('development-', '');
@@ -611,7 +610,6 @@ export class SessionLauncher {
       const newSessionPath = `${sessionDir}/development-${sessionName}`;
       fs.copyFileSync(this.sessionPath.getAbsolutePath(), newSessionPath);
       this.sessionPath = new FilePath(newSessionPath);
-      console.log(newSessionPath);
     }
 
     const sessionProc = launchProcess(this.sessionPath, argList);
