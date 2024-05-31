@@ -25,6 +25,7 @@ const loadPageLocalization = () => {
       'errorStartingR',
       'rLogo',
       'errorStartingR',
+      'sessionPath',
       'rSessionFailedToStart',
       'rstudioVersion',
       'output',
