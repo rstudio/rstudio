@@ -1,5 +1,5 @@
 ARG ARCH=amd64
-FROM --platform=linux/$ARCH opensuse/leap:15.3
+FROM --platform=linux/$ARCH opensuse/leap:15.5
 ARG ARCH
 
 ENV OPERATING_SYSTEM=opensuse_leap15
@@ -55,7 +55,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     wget \
     xml-commons-apis \
     xvfb-run \
-    zlib-devel
+    zlib-devel \
+    && zypper clean -a
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools
