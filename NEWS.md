@@ -25,6 +25,7 @@
 
 #### RStudio
 
+- Fixed an issue where Build output from 'Run Tests' was not appropriately coloured. (#13088)
 - Fixed an issue where various editor commands (Reindent Lines; Run Chunks) could fail in a document containing Quarto callout blocks. (#14640)
 - Fixed an issue where end fold markers were not rendered correctly in Quarto documents. (#14699)
 - Fixed an issue where the context menu sometimes did not display when right-clicking a word in the editor. (#14575)
