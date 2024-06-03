@@ -39,7 +39,14 @@
    TYPE_ALL_WINDOWS   = 2L
 ))
 
-.rs.addApiFunction("restartSession", function(command = NULL, clean = FALSE) {
+.rs.addApiFunction("restartSession", function(command = NULL,
+                                              clean = FALSE,
+                                              eager = FALSE)
+{
+   command <- paste(as.character(command), collapse = "\n")
+   if (eager && !grepl("^@", command))
+      command <- paste0("@", command)
+   
    .rs.restartR(
       afterRestartCommand = as.character(command),
       clean = as.logical(clean)

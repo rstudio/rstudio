@@ -14,14 +14,15 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import com.google.gwt.resources.client.ImageResource;
+import java.util.HashSet;
+
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 
-import java.util.HashSet;
+import com.google.gwt.resources.client.ImageResource;
 
 public class RFileType extends TextFileType
 {
@@ -36,7 +37,7 @@ public class RFileType extends TextFileType
             editorLanguage,
             defaultExtension,
             defaultIcon,
-            false, true, true, true, true, false, 
+            WordWrap.DEFAULT, true, true, true, true, false, 
             false, false, false, true, false, true, false);
    }
 

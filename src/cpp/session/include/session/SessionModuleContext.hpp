@@ -1046,6 +1046,8 @@ core::Error sendSessionRequest(const std::string& uri,
                                const std::string& body,
                                core::http::Response* pResponse);
 
+std::string rstudioVersion(bool normalizeSuffix = false);
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

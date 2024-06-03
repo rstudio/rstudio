@@ -184,7 +184,7 @@ pipeline {
 
               stage('Build and Sign') {
                 environment {
-                  CODESIGN_KEY = credentials('gpg-codesign-private-key')
+                  CODESIGN_KEY = credentials('gpg-codesign-private-key-2027')
                   CODESIGN_PASS = credentials('gpg-codesign-passphrase')
                   PKG_EXTENSION = "${ext_map[env.OS]}"
                 }
@@ -439,7 +439,7 @@ pipeline {
           steps {
             build(
               wait: false,
-              job: "IDE/rstudio-ide-automation-desktop/desktop-ide-ec2-automation",
+              job: "IDE/rstudio-ide-automation-desktop/main",
               parameters: [
                 string(name: 'RSTUDIO_VERSION', value: "${RSTUDIO_VERSION}"),
                 string(name: 'GITHUB_BRANCH', value: "${env.BRANCH_NAME}")

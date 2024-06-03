@@ -16,12 +16,12 @@ package org.rstudio.studio.client.common.filetypes;
 
 import java.util.HashSet;
 
-import com.google.gwt.resources.client.ImageResource;
-
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
+
+import com.google.gwt.resources.client.ImageResource;
 
 public class CppFileType extends TextFileType
 {
@@ -29,7 +29,7 @@ public class CppFileType extends TextFileType
                boolean isCpp, boolean canSource)
    {
       super(id, "C/C++", EditorLanguage.LANG_CPP, ext, icon,
-            false, false, isCpp, false, false, false,
+            WordWrap.DEFAULT, false, isCpp, false, false, false,
             false, false, false, true, false, true, false);
 
       isCpp_ = isCpp;

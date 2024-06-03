@@ -449,6 +449,7 @@ FilePath chunkOutputFile(const std::string& docId,
    OutputPair output = lastChunkOutput(docId, chunkId, nbCtxId);
    if (output.outputType == outputType)
       return chunkOutputFile(docId, chunkId, nbCtxId, output);
+   
    output.ordinal++;
    output.outputType = outputType;
    updateLastChunkOutput(docId, chunkId, output);

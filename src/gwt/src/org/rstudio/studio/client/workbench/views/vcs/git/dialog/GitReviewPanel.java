@@ -121,7 +121,6 @@ public class GitReviewPanel extends ResizeComposite implements Display
       String splitPanelCommit();
       String ignoreWhitespace();
 
-      String signedCommits();
    }
 
    @SuppressWarnings("unused")
@@ -576,11 +575,6 @@ public class GitReviewPanel extends ResizeComposite implements Display
    }
 
    @Override
-   public HasValue<Boolean> getSignedCommitsCheckBox() {
-     return signedCommitsCheckbox_;
-   }
-
-   @Override
    public LineTablePresenter.Display getLineTableDisplay()
    {
       return lines_;
@@ -763,8 +757,6 @@ public class GitReviewPanel extends ResizeComposite implements Display
    HorizontalPanel toolbarWrapper_;
    @UiField
    CheckBox ignoreWhitespaceCheckbox_;
-   @UiField
-   CheckBox signedCommitsCheckbox_;
 
    private ListBoxAdapter listBoxAdapter_;
 

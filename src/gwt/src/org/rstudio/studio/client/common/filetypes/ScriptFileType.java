@@ -16,12 +16,12 @@ package org.rstudio.studio.client.common.filetypes;
 
 import java.util.HashSet;
 
-import com.google.gwt.resources.client.ImageResource;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+
+import com.google.gwt.resources.client.ImageResource;
 
 public class ScriptFileType extends TextFileType
 {
@@ -35,7 +35,7 @@ public class ScriptFileType extends TextFileType
                          boolean windowsCompatible)
    {
       super(id, label, language, ext, icon,
-            false, false, canExecuteCode, false, false, false, 
+            WordWrap.DEFAULT, false, canExecuteCode, false, false, false, 
             false, false, false, false, false, false, false);
       interpreter_ = interpreter;
       windowsCompatible_ = windowsCompatible;
