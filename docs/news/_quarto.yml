@@ -15,6 +15,8 @@ website:
     title: "RStudio & Posit Workbench Release Notes"
     collapse: false
     right:
+      - text: "Versions"
+        url: 'https://docs.posit.co/previous-versions/rstudio/'
       - text: "Guides"
         menu:
           - text: "Workbench Admin Guide"
@@ -51,4 +53,4 @@ format:
     include-in-header: _ga-header-tag.html
     include-before-body: _ga-body-tag.html
     code-overflow: scroll
-    toc-expand: false
+    toc-expand: 1

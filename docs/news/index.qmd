@@ -1,3 +1,10 @@
+---
+format:
+  html:
+    toc: true
+    toc-depth: 3
+---
+
 ## Introduction
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.

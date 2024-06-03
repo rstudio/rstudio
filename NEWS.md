@@ -1,12 +1,14 @@
 ## RStudio 2024.07.0 "Cranberry Hibiscus" Release Notes
 
-
 ### New
+
+- Posit Product Documentation theme v4.0.2; adds dark mode and several accessibility improvements (rstudio-pro#6373)
 
 #### RStudio
 
 - Restart commands are now run after restoring the search path + global environment by default. (#14636)
 - The "Soft-wrap R source files" preference now applies to all source files, and has been re-labelled appropriately. (#10940)
+
 
 #### Posit Workbench
 

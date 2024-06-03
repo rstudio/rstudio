@@ -1,0 +1,408 @@
+/*-- scss:defaults --*/
+
+// import font
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap");
+
+// import shared colors
+@import '_posit-colors';
+
+/*-- scss:variables --*/
+$primary: $posit-teal;
+$dark-md-body: $posit-light-gray-1;
+$dark-md-background: #0c1721;
+
+// Feature preview heading colors
+$preview-header: $posit-orange; /* posit orange, contrast: 8.45 */
+$preview-header-border: darken($preview-header, 5%);
+
+// scss-docs-end color-variables
+
+// Typography
+// Font, line-height, and color for body text, headings, and more.
+
+//scss-font-start font-variables
+$font-family-sans-serif: "Open Sans", "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial,
+  sans-serif, system-ui;
+$font-family-monospace: "Source Code Pro", monospace;
+$font-family-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+$font-size-base: 1rem;
+// scss-docs-end font-variables
+
+//font and body color
+
+$body-color: $dark-md-body;
+$popover-bg: $posit-green !default;
+
+// scss-docs-start font-sizes - seems that I have to keep these in the style sheet?
+$h1-font-size: 44px;
+$h2-font-size: 28px;
+x h1 {
+  size: $h1-font-size;
+}
+h2 {
+  size: $h2-font-size;
+}
+// scss-docs-end font-sizes
+
+// Headings
+// scss-docs-start headings-variables
+$headings-color: #ffffff;
+// scss-docs-end headings-variables
+
+//  Customize the navbar
+$navbar-bg: lighten($dark-md-background, 5%);
+$navbar-fg: #ffffff;
+
+// CSS overrides
+
+// Body
+//
+// Settings for the `<body>` element.
+
+/* Body font */
+body {
+  font-weight: 400 !important;
+}
+
+//$body-color: $posit-green !default;
+$body-bg: $dark-md-background !default; // dark mode change
+
+// Nav and footer
+
+/* Nav bar */
+
+.navbar-title {
+  color: #ffffff; // dark theme change
+}
+
+.nav-link {
+  font-family: $font-family-monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #fff !important;
+}
+
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link.show {
+  color: $posit-teal !important;
+  font-weight: 700 !important;
+}
+
+/* Nav bar  right hamburger menu */
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  color: var(--bs-dropdown-link-hover-color);
+  background-color: #0f1c29 !important;
+}
+
+/* Search results */
+
+.aa-DetachedOverlay .aa-SourceHeader .search-result-header, #quarto-search-results .aa-SourceHeader .search-result-header {
+  font-weight: 600 !important;
+}
+
+.aa-DetachedOverlay a.search-result-link, #quarto-search-results a.search-result-link {
+  color: $posit-blue !important;
+  text-decoration: none;
+}
+
+.aa-DetachedOverlay .aa-Item .search-result-doc:not(.document-selectable) .search-result-title-container, #quarto-search-results .aa-Item .search-result-doc:not(.document-selectable) .search-result-title-container {
+  background-color: #c2c2c4 !important;
+  font-weight: 500 !important;
+}
+
+.aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item, #quarto-search-results li.aa-Item[aria-selected=false] .search-item {
+  background-color: #ffffff !important;
+
+}
+
+.aa-DetachedOverlay li.aa-Item[aria-selected=true] .search-item .search-result-section, .aa-DetachedOverlay li.aa-Item[aria-selected=true] .search-item .search-result-text, .aa-DetachedOverlay li.aa-Item[aria-selected=true] .search-item .search-result-title-container, .aa-DetachedOverlay li.aa-Item[aria-selected=true] .search-item .search-result-text-container, #quarto-search-results li.aa-Item[aria-selected=true] .search-item.search-result-more, #quarto-search-results li.aa-Item[aria-selected=true] .search-item .search-result-section, #quarto-search-results li.aa-Item[aria-selected=true] .search-item .search-result-text, #quarto-search-results li.aa-Item[aria-selected=true] .search-item .search-result-title-container, #quarto-search-results li.aa-Item[aria-selected=true] .search-item .search-result-text-container {
+  color: #ffffff !important;
+  background-color: $posit-blue !important;
+  font-weight: 400 !important;
+}
+
+.aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item .search-result-text, .aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item .search-result-title-container, .aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item .search-result-text-container, #quarto-search-results li.aa-Item[aria-selected=false] .search-item.search-result-more, #quarto-search-results li.aa-Item[aria-selected=false] .search-item .search-result-section, #quarto-search-results li.aa-Item[aria-selected=false] .search-item .search-result-text, #quarto-search-results li.aa-Item[aria-selected=false] .search-item .search-result-title-container, #quarto-search-results li.aa-Item[aria-selected=false] .search-item .search-result-text-container {
+  color: #000000 !important;
+}
+
+.aa-DetachedOverlay li.aa-Item[aria-selected=true] .search-item {
+    background-color: $posit-blue !important;
+}
+
+.aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item mark.search-match, .aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item .search-match.mark, #quarto-search-results li.aa-Item[aria-selected=false] .search-item mark.search-match, #quarto-search-results li.aa-Item[aria-selected=false] .search-item .search-match.mark {
+  color: $posit-dark-teal-1 !important;
+  background-color: #ffffff !important;
+  font-weight:700 !important;
+}
+
+.aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item.search-result-more, .aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item .search-result-section, .aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item .search-result-text, .aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item .search-result-title-container, .aa-DetachedOverlay li.aa-Item[aria-selected=false] .search-item .search-result-text-container, #quarto-search-results li.aa-Item[aria-selected=false] .search-item.search-result-more, #quarto-search-results li.aa-Item[aria-selected=false] .search-item .search-result-section, #quarto-search-results li.aa-Item[aria-selected=false] .search-item .search-result-text, #quarto-search-results li.aa-Item[aria-selected=false] .search-item .search-result-title-container, #quarto-search-results li.aa-Item[aria-selected=false] .search-item .search-result-text-container {
+  color: $posit-dark-gray-1 !important;
+}
+
+.aa-DetachedOverlay li.aa-Item[aria-selected=true] .search-item mark.search-match, .aa-DetachedOverlay li.aa-Item[aria-selected=true] .search-item .search-match.mark, #quarto-search-results li.aa-Item[aria-selected=true] .search-item mark.search-match, #quarto-search-results li.aa-Item[aria-selected=true] .search-item .search-match.mark {
+  color: #000000 !important;
+  background-color: $posit-light-gray-1 !important;
+}
+
+/* Footer */
+
+.nav-footer {
+  color: #ffffff !important;
+  border-top: solid $posit-gray 1px;
+}
+
+/* Footer icons */
+.nav-footer a {
+  color: #ffffff !important;
+}
+
+// Footnotes
+
+.footnote-back {
+  color: $posit-light-teal-2;
+}
+
+// Breadcrumbs
+
+.quarto-title-breadcrumbs .breadcrumb li:last-of-type a {
+  color: $posit-light-gray-1 !important;
+}
+
+// Page navigation
+
+.nav-page .nav-page-text {
+  color: $posit-light-gray-1;
+}
+
+/* Inline code */
+p code:not(.sourceCode),
+li code:not(.sourceCode),
+td code:not(.sourceCode) {
+  background-color: #6e768166 !important;
+  color: #ffffff;
+}
+
+// Code blocks
+
+pre code:not(.sourceCode) {
+  background-color: #1a3146 !important;
+  color: #ffffff;
+  padding: 9px !important;
+}
+
+/* Code block title*/
+
+.quarto-dark .code-with-filename .code-with-filename-file {
+  background-color: #000000 !important;
+  border: none;
+}
+
+.code-with-filename strong {
+  color: #6e9ac3;
+}
+
+/* Code block background */
+$code-block-bg: lighten($dark-md-background, 10%);
+
+/* Copy button */
+
+$btn-code-copy-color: #ffffff;
+$btn-code-copy-color-active: $posit-orange;
+$callout-icon-scale: 70%;
+$tooltip-color:  #ffffff !default; // Copied! color 
+
+// Tabs and pills
+
+/* Tabs */
+
+.nav-tabs .nav-link.active {
+  color: $posit-teal !important;
+}
+
+.nav-tabs .nav-link {
+  text-transform: none !important;
+  font-family: $font-family-sans-serif;
+  color: #ffffff !important;
+}
+
+.nav-tabs .nav-link:hover,
+.nav-link:focus {
+  color: $posit-teal !important;
+}
+
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+  text-decoration: none !important; 
+}
+/* Pills */
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  background-color: $posit-dark-teal-1 !important;
+}
+
+.nav-pills .nav-link:hover,
+.nav-link:focus {
+  isolation: isolate;
+  //  color: $posit-teal !important;
+  border: none !important;
+}
+
+.nav-pills .nav-link.active,
+.nav-link:hover {
+  color: #ffffff !important;
+}
+
+// Sidebar and toc
+
+/* Left nav - letter spacing */
+.sidebar-navigation li a {
+  color: #ffffff;
+}
+
+.sidebar-navigation li a:hover {
+  color: inherit;
+}
+
+.sidebar-item-container .active,
+div.sidebar-item-container .show > .nav-link,
+div.sidebar-item-container .sidebar-link > code {
+  color: $posit-teal !important;
+}
+
+// Lists
+
+/* List disc colors */
+li::marker {
+  color: $posit-teal;
+}
+
+// Callouts
+
+.callout.callout-style-default:not(.no-icon) div.callout-title-container {
+  color: #ffffff !important;
+}
+
+div.callout.callout-style-default > div.callout-header {
+  opacity: none;
+}
+
+/* Note */
+
+div.callout-note.callout {
+  border-left-color: $posit-dark-blue-2 !important;
+  border-right: 1px solid $posit-dark-blue-2 !important;
+  border-top: 1px solid $posit-dark-blue-2 !important;
+  border-bottom: 1px solid $posit-dark-blue-2 !important;
+}
+
+div.callout-note .callout-icon::before {
+  // base64 -i _extensions/posit-docs/assets/images/info-circle-dm.svg
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iIzAwMDAwMCIgY2xhc3M9ImJpIGJpLWluZm8tY2lyY2xlIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgogIDxwYXRoIGQ9Ik04IDE1QTcgNyAwIDEgMSA4IDFhNyA3IDAgMCAxIDAgMTRtMCAxQTggOCAwIDEgMCA4IDBhOCA4IDAgMCAwIDAgMTYiLz4KICA8cGF0aCBkPSJtOC45MyA2LjU4OC0yLjI5LjI4Ny0uMDgyLjM4LjQ1LjA4M2MuMjk0LjA3LjM1Mi4xNzYuMjg4LjQ2OWwtLjczOCAzLjQ2OGMtLjE5NC44OTcuMTA1IDEuMzE5LjgwOCAxLjMxOS41NDUgMCAxLjE3OC0uMjUyIDEuNDY1LS41OThsLjA4OC0uNDE2Yy0uMi4xNzYtLjQ5Mi4yNDYtLjY4Ni4yNDYtLjI3NSAwLS4zNzUtLjE5My0uMzA0LS41MzN6TTkgNC41YTEgMSAwIDEgMS0yIDAgMSAxIDAgMCAxIDIgMCIvPgo8L3N2Zz4=") !important;
+}
+
+div.callout-note.callout-style-default > .callout-header {
+  background-color: $posit-blue !important;
+}
+
+/* Warning */
+
+div.callout-warning.callout {
+  border-left-color: $posit-dark-orange-2 !important;
+  border-right: 1px solid $posit-dark-orange-2 !important;
+  border-top: 1px solid $posit-dark-orange-2 !important;
+  border-bottom: 1px solid $posit-dark-orange-2 !important;
+}
+
+div.callout-warning .callout-icon::before {
+  // base64 -i _extensions/posit-docs/assets/images/exclamation-triangle-dm.svg
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iIzAwMDAwMCIgY2xhc3M9ImJpIGJpLWV4Y2xhbWF0aW9uLXRyaWFuZ2xlIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgogIDxwYXRoIGQ9Ik03LjkzOCAyLjAxNkEuMTMuMTMgMCAwIDEgOC4wMDIgMmEuMTMuMTMgMCAwIDEgLjA2My4wMTYuMTUuMTUgMCAwIDEgLjA1NC4wNTdsNi44NTcgMTEuNjY3Yy4wMzYuMDYuMDM1LjEyNC4wMDIuMTgzYS4yLjIgMCAwIDEtLjA1NC4wNi4xLjEgMCAwIDEtLjA2Ni4wMTdIMS4xNDZhLjEuMSAwIDAgMS0uMDY2LS4wMTcuMi4yIDAgMCAxLS4wNTQtLjA2LjE4LjE4IDAgMCAxIC4wMDItLjE4M0w3Ljg4NCAyLjA3M2EuMTUuMTUgMCAwIDEgLjA1NC0uMDU3bTEuMDQ0LS40NWExLjEzIDEuMTMgMCAwIDAtMS45NiAwTC4xNjUgMTMuMjMzYy0uNDU3Ljc3OC4wOTEgMS43NjcuOTggMS43NjdoMTMuNzEzYy44ODkgMCAxLjQzOC0uOTkuOTgtMS43Njd6Ii8+CiAgPHBhdGggZD0iTTcuMDAyIDEyYTEgMSAwIDEgMSAyIDAgMSAxIDAgMCAxLTIgME03LjEgNS45OTVhLjkwNS45MDUgMCAxIDEgMS44IDBsLS4zNSAzLjUwN2EuNTUyLjU1MiAwIDAgMS0xLjEgMHoiLz4KPC9zdmc+") !important;
+}
+
+div.callout-warning.callout-style-default > .callout-header {
+  background-color: $posit-dark-orange-1 !important;
+}
+
+/* Important */
+
+div.callout-important.callout {
+  border-left-color: $posit-dark-burgundy-2 !important;
+  border-right: 1px solid $posit-dark-burgundy-2 !important;
+  border-top: 1px solid $posit-dark-burgundy-2 !important;
+  border-bottom: 1px solid $posit-dark-burgundy-2 !important;
+}
+
+div.callout-important .callout-icon::before {
+  // base64 -i _extensions/posit-docs/assets/images/exclamation-circle-dm.svg
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iIzAwMDAwMCIgY2xhc3M9ImJpIGJpLWV4Y2xhbWF0aW9uLWNpcmNsZSIgdmlld0JveD0iMCAwIDE2IDE2Ij4KICA8cGF0aCBkPSJNOCAxNUE3IDcgMCAxIDEgOCAxYTcgNyAwIDAgMSAwIDE0bTAgMUE4IDggMCAxIDAgOCAwYTggOCAwIDAgMCAwIDE2Ii8+CiAgPHBhdGggZD0iTTcuMDAyIDExYTEgMSAwIDEgMSAyIDAgMSAxIDAgMCAxLTIgME03LjEgNC45OTVhLjkwNS45MDUgMCAxIDEgMS44IDBsLS4zNSAzLjUwN2EuNTUyLjU1MiAwIDAgMS0xLjEgMHoiLz4KPC9zdmc+") !important;
+}
+
+div.callout-important.callout-style-default > .callout-header {
+  background-color: $posit-burgundy !important;
+}
+
+// Tables
+
+.table > :not(caption) > * > * {
+  border-top: 2px solid #101e2b;
+}
+
+/* Striped table styles */
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  //--bs-table-bg-type: #001C2B !important;
+  --bs-table-bg-type: #101e2b !important;
+}
+
+/* Striped table hover */
+
+.table-hover > tbody > tr:hover > * {
+  //--bs-table-color-state: var(--bs-table-hover-color);
+  --bs-table-bg-state: #001c2b !important;
+}
+
+// Table caption
+
+.panel-caption,
+.figure-caption,
+.subfigure-caption,
+.table-caption,
+figcaption,
+caption {
+  font-size: 1rem;
+  color: $body-color !important;
+}
+
+// Specialty headers
+
+/* the feature PREVIEW header */
+.preview-header > h1:after,
+.preview-header > h2:after,
+.preview-header > h3:after,
+.preview-header > h4:after,
+header h1 .preview-header,
+div span.preview-feature {
+  background-color: $preview-header;
+  color: #ffffff;
+  border: 1px solid $preview-header-border;
+  font-weight: 600;
+  font-size: 9pt !important;
+  padding: 0rem 0.4rem;
+}
+
+div span.preview-feature {
+  margin-left: 1em;
+  text-transform: uppercase;
+}
+
+// Specialty lists
+// Groovy list - dark mode change
+
+ol.groovyAlpha li > p:before {
+  content: counter(list-counter, lower-alpha);
+  font-weight: 600;
+}

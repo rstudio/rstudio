@@ -69,7 +69,7 @@ Posit Workbench has several features that differentiate it from the open-source 
 - [Posit Workbench](https://docs.posit.co/rsw/installation/) - administration guide for installation and configuration
 - [RStudio Desktop Pro](https://posit.co/download/rstudio-desktop-pro/) - available for Windows/Mac/Linux
 
-::: {.callout-caution }
+::: {.callout-warning }
 
 ### Daily Builds
 
