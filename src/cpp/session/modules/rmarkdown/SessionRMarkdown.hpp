@@ -45,8 +45,6 @@ bool pptAvailable();
 
 core::Error evaluateRmdParams(const std::string& docId);
 
-std::string parsableRStudioVersion();
-
 core::Error initialize();
 
 } // namespace rmarkdown

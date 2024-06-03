@@ -89,6 +89,7 @@
         if (ver) {
           ver.innerText += '\n\n' + navigator.userAgent;
         }
+        replaceVar('session_path');
         replaceVar('launch_failed');
         replaceVar('exit_code');
         replaceVar('process_error');
@@ -168,6 +169,8 @@
     <p id="i18n-rSessionFailedToStart"></p>
     <h2 id="i18n-rstudioVersion"></h2>
     <code id="version"></code>
+    <h2 id="i18n-sessionPath"></h2>
+    <code id="session_path"></code>
     <h2 id="i18n-errorMessage"></h2>
     <code id="launch_failed"></code>
     <h2 id="i18n-processOutput"></h2>
@@ -209,7 +212,7 @@ user_agent
 
 ### Process Output
 
-The R session exited with code #exit_code#. 
+The R session exited with code #exit_code#.
 
 Error output:
 

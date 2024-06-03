@@ -366,17 +366,8 @@ SEXP rs_rstudioEdition()
 // get version
 SEXP rs_rstudioVersion()
 {
-   std::string numericVersion(RSTUDIO_VERSION_MAJOR);
-   numericVersion.append(".")
-      .append(RSTUDIO_VERSION_MINOR).append(".")
-      .append(RSTUDIO_VERSION_PATCH).append(".")
-      .append(boost::regex_replace(
-         std::string(RSTUDIO_VERSION_SUFFIX),
-         boost::regex("[a-zA-Z\\-+]"),
-         ""));
-
    r::sexp::Protect rProtect;
-   return r::sexp::create(numericVersion, &rProtect);
+   return r::sexp::create(rstudioVersion(true), &rProtect);
 }
 
 // get long form version
@@ -3003,6 +2994,23 @@ Error adaptToLanguage(const std::string& language)
    }
    
    return Success();
+}
+
+std::string rstudioVersion(bool normalizeSuffix)
+{
+   std::string suffix = RSTUDIO_VERSION_SUFFIX;
+   if (normalizeSuffix)
+   {
+      boost::regex reNonDigit("[^0-9]");
+      suffix = boost::regex_replace(suffix, reNonDigit, "");
+   }
+
+   return fmt::format(
+            "{}.{}.{}.{}",
+            RSTUDIO_VERSION_MAJOR,
+            RSTUDIO_VERSION_MINOR,
+            RSTUDIO_VERSION_PATCH,
+            suffix);
 }
 
 Error initialize()

@@ -74,6 +74,7 @@
     "rLogo": "R Logo",
     "warning": "Warning",
     "rstudioVersion": "RStudio Version",
+    "sessionPath": "Session Path",
     "errorMessage": "Error Message",
     "processOutput": "Process Output",
     "rSessionExitedWithCode": "The R session process exited with code {{- exitCode}}.",
