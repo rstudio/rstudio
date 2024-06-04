@@ -805,6 +805,29 @@ Error isUserLicensed(const system::User& user,
    }
 }
 
+Result<int> getUserId(const std::string& username,
+                      database::DatabaseConnection connection)
+{
+   if (!connection)
+      connection = server_core::database::getConnection();
+
+   int userId = -1;
+   std::string statement = "SELECT id FROM licensed_users";
+   auto query = overlay::addUsernameCheckToQuery(connection, statement, username);
+   query.withOutput(userId);
+
+   Error error = connection->execute(query);
+   if (error)
+      return Unexpected(error);
+
+   if (userId == -1)
+      return Unexpected(systemError(boost::system::errc::invalid_argument,
+                                    "User " + username + " does not exist",
+                                    ERROR_LOCATION));
+
+   return userId;
+}
+
 std::string getExpiredDateStr()
 {
    boost::posix_time::ptime oneYearAgo = boost::posix_time::microsec_clock::universal_time() -

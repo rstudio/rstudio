@@ -167,6 +167,9 @@ public:
    virtual soci::session& session() = 0;
 };
 
+typedef boost::shared_ptr<IConnection> DatabaseConnection;
+typedef std::function<DatabaseConnection()> DatabaseConnectionFactory;
+
 class Connection : public IConnection
 {
 public:

@@ -156,6 +156,15 @@ std::string getUsernameDbColumnName()
    return "user_name";
 }
 
+database::Query addUsernameCheckToQuery(database::DatabaseConnection connection,
+                                        const std::string& statement,
+                                        const std::string& username)
+{
+   const auto queryString = statement + " WHERE user_name = :un";
+   return connection->query(queryString)
+         .withInput(username);
+}
+
 }// namespace overlay
 
 } // namespace handler

@@ -20,9 +20,11 @@
 
 #include <boost/function.hpp>
 
+#include <core/Database.hpp>
 #include <core/ExponentialBackoff.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
+#include <core/Result.hpp>
 
 #include <shared_core/json/Json.hpp>
 #include <shared_core/system/User.hpp>
@@ -231,6 +233,17 @@ core::Error isUserLicensed(const core::system::User& user,
                            bool isAdmin,
                            bool* pLicensed,
                            bool isSigningIn=true);
+/**
+ * Retrieves the database primary key ID associated with the given username.
+ * 
+ * Note: this ID is different than the user's system UID.
+ *
+ * @param username The username of the user.
+ * @param connection The database connection to use for the query.
+ * @return A Result object containing the ID if successful, or an error message if failed.
+ */
+core::Result<int> getUserId(const std::string& username,
+                      core::database::DatabaseConnection connection = nullptr);
 boost::posix_time::ptime parseDateStr(const std::string& strTime);
 std::string getExpiredDateStr();
 
