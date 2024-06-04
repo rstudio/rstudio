@@ -20,4 +20,5 @@
 ### Dependencies
 
 - Updated node.js to version 18.20.3 (#14731)
+- Updated Quarto to version 1.4.555 (#14779)
 - Updated Electron to version 28.3.1 (#14732)
