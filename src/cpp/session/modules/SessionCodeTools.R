@@ -748,7 +748,7 @@
    
    meta <- if (!inherits(object, "tbl_sql"))
    {
-      if (is.environment(object))
+      if (is.environment(object) && is.character(names))
       {
          vapply(names, function(name)
          {
