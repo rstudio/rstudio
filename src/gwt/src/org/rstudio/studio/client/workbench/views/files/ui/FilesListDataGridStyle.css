@@ -17,12 +17,21 @@
   border-right: none;
 }
 
-.dataGridEvenRowCell, .dataGridOddRowCell, .dataGridHoveredRowCell, .dataGridSelectedRowCell, .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedCell   {
+.dataGridHoveredRowCell {
+  border: none;
+}
+
+.dataGridEvenRowCell,
+.dataGridOddRowCell,
+.dataGridHoveredRowCell,
+.dataGridSelectedRowCell,
+.dataGridKeyboardSelectedRowCell,
+.dataGridKeyboardSelectedCell {
   border: selectionBorderWidth solid #ffffff;
 }
 
 .rstudio-themes-dark .dataGridCell img {
-   filter: brightness(90%) saturate(90%);
+  filter: brightness(90%) saturate(90%);
 }
 
 .dataGridWidget {
