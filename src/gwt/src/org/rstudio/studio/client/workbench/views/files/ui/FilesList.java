@@ -98,6 +98,12 @@ public class FilesList extends Composite
          {
             return "transparent";
          }
+         
+         @Override
+         protected boolean resetFocusOnCell()
+         {
+            return false;
+         }
       };
             
       selectionModel_ = new MultiSelectionModel<>(KEY_PROVIDER);
