@@ -679,6 +679,10 @@ public class AceEditorNative extends JavaScriptObject
       this.setOption("scrollSpeed", speed);
    }-*/;
    
+   public final native void setAnimatedScroll(boolean shouldAnimate) /*-{
+      this.setAnimatedScroll(shouldAnimate);
+   }-*/;
+   
    public final native void setIndentedSoftWrap(boolean softWrap) /*-{
       this.setOption("indentedSoftWrap", softWrap);
    }-*/;

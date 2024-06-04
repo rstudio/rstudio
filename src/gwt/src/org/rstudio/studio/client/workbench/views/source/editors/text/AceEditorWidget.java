@@ -25,6 +25,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.elemental2.overlay.File;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.widget.CanSetControlId;
@@ -158,6 +159,8 @@ public class AceEditorWidget extends Composite
       editor_.setHighlightGutterLine(false);
       editor_.setFixedWidthGutter(true);
       editor_.setIndentedSoftWrap(false);
+      editor_.setScrollSpeed(WindowEx.get().getDevicePixelRatio());
+      editor_.setAnimatedScroll(true);
       editor_.setTheme(themes_.getCurrentTheme());
       editor_.delegateEventsTo(AceEditorWidget.this);
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
@@ -640,6 +643,17 @@ public class AceEditorWidget extends Composite
             }
          }
       }));
+      
+      aceEventHandlers_.add(
+            uiPrefs_.editorScrollMultiplier().bind(new CommandWithArg<Integer>()
+            {
+               @Override
+               public void execute(Integer scrollFactor)
+               {
+                  syncScrollSpeed(scrollFactor);
+               }
+            })
+      );
 
       editor_.getRenderer().updateFontSize();
       onResize();
@@ -821,6 +835,19 @@ public class AceEditorWidget extends Composite
    public void forceCursorChange()
    {
       editor_.onCursorChange();
+   }
+   
+   public void syncScrollSpeed(double scrollRatio)
+   {
+      double devicePixelRatio = WindowEx.get().getDevicePixelRatio();
+      double scrollSpeed = devicePixelRatio * scrollRatio;
+      editor_.setScrollSpeed(2 * scrollSpeed);
+   }
+   
+   public void syncScrollSpeed()
+   {
+      double scrollPercentage = (double) uiPrefs_.editorScrollMultiplier().getValue();
+      syncScrollSpeed(scrollPercentage / 100.0);
    }
 
    public void addOrUpdateBreakpoint(Breakpoint breakpoint)
