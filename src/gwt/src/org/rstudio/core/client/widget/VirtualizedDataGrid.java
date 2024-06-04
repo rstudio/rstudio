@@ -99,6 +99,10 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
    // These two fields allow us to compute the expected total size of the widget.
    public abstract double getRowHeight();
    public abstract int getTotalNumberOfRows();
+   
+   // This field is primarily used to ensure the top + bottom padding rows
+   // are drawn with a matching style for the rest of the data grid.
+   // This can return 'null' if no special styling is required.
    public abstract String getBorderColor();
    
    public VirtualizedDataGrid()
