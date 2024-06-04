@@ -49,15 +49,21 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       {
          // if this is the first row, draw padding
          if (index == 0)
+         {
             drawTopRowPadding();
-         
-         // draw this row if it's in the visibility range
-         if (firstActiveRow_ <= index && index <= lastActiveRow_)
-            super.buildRowImpl(data, index);
+         }
          
          // if this is the last row, draw padding
-         if (index == lastActiveRow_)
+         else if (index == lastActiveRow_)
+         {
             drawBottomRowPadding();
+         }
+         
+         else if (firstActiveRow_ <= index && index <= lastActiveRow_)
+         {
+            // draw this row if it's in the visibility range
+            super.buildRowImpl(data, index);
+         }
       }
       
       private void drawTopRowPadding()
@@ -90,8 +96,7 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       }
    }
    
-   // These two fields allow us to compute the expected
-   // total size of the widget.
+   // These two fields allow us to compute the expected total size of the widget.
    public abstract double getRowHeight();
    public abstract int getTotalNumberOfRows();
    public abstract String getBorderColor();
@@ -249,6 +254,7 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       // determine the total number of rows visible
       int rowsActive = (int) (getOffsetHeight() / rowHeight);
       
+      // set our active rows -- use padding to allow smoother scrolling
       firstActiveRow_ = Math.max(0, numRowsScrolled - ROW_PADDING);
       lastActiveRow_ = Math.min(n, numRowsScrolled + rowsActive + ROW_PADDING);
    }
