@@ -22,4 +22,7 @@ test_that("autocompletion doesn't trigger active bindings", {
    output <- remote$consoleOutput()
    expect_false(tail(output, 1) == "[1] \"active\"")
    
+   remote$keyboardExecute("n", "<Tab>", "<Escape>", "<Backspace>")
+   expect_false(tail(output, 1) == "[1] \"active\"")
+   
 })
