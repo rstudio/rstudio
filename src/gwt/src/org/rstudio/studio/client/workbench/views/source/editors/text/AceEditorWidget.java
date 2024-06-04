@@ -159,7 +159,6 @@ public class AceEditorWidget extends Composite
       editor_.setHighlightGutterLine(false);
       editor_.setFixedWidthGutter(true);
       editor_.setIndentedSoftWrap(false);
-      editor_.setScrollSpeed(WindowEx.get().getDevicePixelRatio());
       editor_.setAnimatedScroll(true);
       editor_.setTheme(themes_.getCurrentTheme());
       editor_.delegateEventsTo(AceEditorWidget.this);
@@ -644,13 +643,15 @@ public class AceEditorWidget extends Composite
          }
       }));
       
+      syncScrollSpeed();
       aceEventHandlers_.add(
             uiPrefs_.editorScrollMultiplier().bind(new CommandWithArg<Integer>()
             {
                @Override
-               public void execute(Integer scrollFactor)
+               public void execute(Integer scrollPercentage)
                {
-                  syncScrollSpeed(scrollFactor);
+                  double scrollRatio = ((double) scrollPercentage) / 100.0;
+                  syncScrollSpeed(scrollRatio);
                }
             })
       );
@@ -839,9 +840,10 @@ public class AceEditorWidget extends Composite
    
    public void syncScrollSpeed(double scrollRatio)
    {
+      final double DEFAULT_SCROLL_FACTOR = 2.0;
       double devicePixelRatio = WindowEx.get().getDevicePixelRatio();
       double scrollSpeed = devicePixelRatio * scrollRatio;
-      editor_.setScrollSpeed(2 * scrollSpeed);
+      editor_.setScrollSpeed(DEFAULT_SCROLL_FACTOR * scrollSpeed);
    }
    
    public void syncScrollSpeed()
