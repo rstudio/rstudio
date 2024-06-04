@@ -748,9 +748,29 @@
    
    meta <- if (!inherits(object, "tbl_sql"))
    {
-      vapply(names, function(name) {
-         .rs.nullCoalesce(attr(object[[name]], "label"), "")
-      }, FUN.VALUE = character(1))
+      if (is.environment(object) && is.character(names))
+      {
+         vapply(names, function(name)
+         {
+            if (bindingIsActive(name, object))
+            {
+               ""
+            }
+            else
+            {
+               label <- attr(object[[name]], "label", exact = TRUE)
+               .rs.nullCoalesce(label, "")
+            }
+         }, FUN.VALUE = character(1))
+      }
+      else
+      {
+         vapply(names, function(name)
+         {
+            label <- attr(object[[name]], "label", exact = TRUE)
+            .rs.nullCoalesce(label, "")
+         }, FUN.VALUE = character(1))
+      }
    }
    
    attr(names, "meta") <- unname(meta)
