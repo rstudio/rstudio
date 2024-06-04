@@ -29,7 +29,7 @@ import {
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFile, writeFileSync } from 'fs';
 import { platform, release } from 'os';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
@@ -556,23 +556,16 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
-      const rect: Rectangle = { x: left, y: top, width, height };
-      targetPath = resolveAliasedPath(targetPath);
-      this.mainWindow.window
-        .capturePage(rect)
-        .then((image) => {
-          let buffer: Buffer;
-          if (format == 'jpeg') {
-            buffer = image.toJPEG(100);
-          } else {
-            buffer = image.toPNG();
-          }
-          writeFileSync(targetPath, buffer);
-        })
-        .catch((error) => {
-          logger().logError(error);
-        });
+    ipcMain.handle('desktop_export_page_region_to_file', async (event, targetPath, format, left, top, width, height) => {
+      try {
+        const rect: Rectangle = { x: left, y: top, width, height };
+        targetPath = resolveAliasedPath(targetPath);
+        const image = await this.mainWindow.window.capturePage(rect);
+        const buffer = format == 'jpeg' ? image.toJPEG(100) : image.toPNG();
+        writeFileSync(targetPath, buffer);
+      } catch (e: unknown) {
+        logger().logError(e);
+      }
     });
 
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
