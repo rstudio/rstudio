@@ -556,7 +556,7 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height, callback) => {
+    ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
       const rect: Rectangle = { x: left, y: top, width, height };
       targetPath = resolveAliasedPath(targetPath);
       this.mainWindow.window
@@ -569,7 +569,6 @@ export class GwtCallback extends EventEmitter {
             buffer = image.toPNG();
           }
           writeFileSync(targetPath, buffer);
-          callback();
         })
         .catch((error) => {
           logger().logError(error);

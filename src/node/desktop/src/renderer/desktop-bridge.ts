@@ -323,7 +323,10 @@ export function getDesktopBridge() {
       height: number,
       callback: () => void
     ) => {
-      ipcRenderer.send('desktop_export_page_region_to_file', targetPath, format, left, top, width, height, callback);
+      ipcRenderer
+        .invoke('desktop_export_page_region_to_file', targetPath, format, left, top, width, height)
+        .then(() => callback())
+        .catch((error) => reportIpcError('desktop_export_page_region_to_file', error));
     },
 
     supportsClipboardMetafile: (callback: VoidCallback<boolean>) => {
