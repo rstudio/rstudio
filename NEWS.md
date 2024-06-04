@@ -33,6 +33,7 @@
 - Fixed an issue where the context menu sometimes did not display when right-clicking a word in the editor. (#14575)
 - Fixed an issue where the "Go to directory..." button brought up the wrong dialog (#14501; Desktop)
 - Fixed an issue where "View plot after saving" in the Save Plot as Image dialog sometimes did not work. (#14702)
+- Fixed an issue where the IDE could hang when navigating the Files pane to a directory containing a very large number of files. (#13426)
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
