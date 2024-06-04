@@ -159,7 +159,6 @@ public class AceEditorWidget extends Composite
       editor_.setHighlightGutterLine(false);
       editor_.setFixedWidthGutter(true);
       editor_.setIndentedSoftWrap(false);
-      editor_.setAnimatedScroll(true);
       editor_.setTheme(themes_.getCurrentTheme());
       editor_.delegateEventsTo(AceEditorWidget.this);
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
