@@ -16,7 +16,7 @@
 import { app } from 'electron';
 import i18next from 'i18next';
 import { safeError } from '../core/err';
-import { logLevel } from '../core/logger';
+import { logLevel, logger } from '../core/logger';
 import { setApplication } from './app-state';
 import { Application } from './application';
 import { initI18n } from './i18n-manager';
@@ -24,6 +24,11 @@ import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { parseStatus } from './program-status';
 import { createStandaloneErrorDialog } from './utils';
 import { initCrashHandler } from './crash-handler';
+import { Xdg } from '../core/xdg';
+import { existsSync, readFileSync } from 'fs';
+import { getenv } from '../core/environment';
+import path from 'path';
+import os from 'os';
 
 /**
  * RStudio entrypoint
@@ -41,6 +46,33 @@ class RStudioMain {
         console.error(err.stack);
       }
       app.exit(1);
+    }
+  }
+
+  private initializeAppConfig() {
+    const configDirs = [Xdg.userConfigDir().getAbsolutePath(), app.getPath('appData')];
+    for (const configDir of configDirs) {
+      const configPath = path.join(configDir, 'electron-flags.conf');
+      if (existsSync(configPath)) {
+        logger().logDebug(`Using Electron flags from file ${configPath}`);
+        const configContents = readFileSync(configPath, { encoding: 'utf-8' });
+        const configLines = configContents.split(/\r?\n/);
+        for (const configLine of configLines) {
+          if (configLine.startsWith('--')) {
+            logger().logDebug(`Appending switch: ${configLine}`);
+            const equalsIndex = configLine.indexOf('=');
+            if (equalsIndex !== -1) {
+              const name = configLine.substring(2, equalsIndex);
+              const value = configLine.substring(equalsIndex + 1);
+              app.commandLine.appendSwitch(name, value);
+            } else {
+              const name = configLine.substring(2);
+              app.commandLine.appendSwitch(name);
+            }
+          }
+        }
+        return;
+      }
     }
   }
 
@@ -105,10 +137,10 @@ class RStudioMain {
     }
 
     const rstudio = new Application();
-
     rstudio.argsManager.handleLogLevel();
-
     setApplication(rstudio);
+
+    this.initializeAppConfig();
 
     if (!parseStatus(await rstudio.beforeAppReady())) {
       return;
