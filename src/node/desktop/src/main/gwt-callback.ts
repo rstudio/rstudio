@@ -534,17 +534,15 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
-      (_event, x: number, y: number, width: number, height: number) => {
-        const rect: Rectangle = { x, y, width, height };
-        this.mainWindow.window
-          .capturePage(rect)
-          .then((image) => {
-            clipboard.writeImage(image);
-          })
-          .catch((error) => {
-            logger().logError(error);
-          });
-      },
+      async (_event, x: number, y: number, width: number, height: number) => {
+        try {
+          const rect: Rectangle = { x, y, width, height };
+          const image = await this.mainWindow.window.capturePage(rect);
+          clipboard.writeImage(image);
+        } catch (e: unknown) {
+          logger().logError(e);
+        }
+      }
     );
 
     ipcMain.handle('desktop_copy_image_at_xy_to_clipboard', (_event, x: number, y: number) => {
