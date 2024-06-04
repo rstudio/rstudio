@@ -16,7 +16,7 @@
 import { app } from 'electron';
 import i18next from 'i18next';
 import { safeError } from '../core/err';
-import { logLevel } from '../core/logger';
+import { logLevel, logger } from '../core/logger';
 import { setApplication } from './app-state';
 import { Application } from './application';
 import { initI18n } from './i18n-manager';
@@ -54,10 +54,12 @@ class RStudioMain {
     for (const configDir of configDirs) {
       const configPath = path.join(configDir, 'electron-flags.conf');
       if (existsSync(configPath)) {
+        logger().logDebug(`Using Electron flags from file ${configPath}`);
         const configContents = readFileSync(configPath, { encoding: 'utf-8' });
         const configLines = configContents.split(/\r?\n/);
         for (const configLine of configLines) {
           if (configLine.startsWith('--')) {
+            logger().logDebug(`Appending switch: ${configLine}`);
             const equalsIndex = configLine.indexOf('=');
             if (equalsIndex !== -1) {
               const name = configLine.substring(2, equalsIndex);
@@ -120,7 +122,6 @@ class RStudioMain {
   }
 
   private async startup(): Promise<void> {
-    this.initializeAppConfig();
     await this.initializeRenderingEngine();
     await this.initializeAccessibility();
 
@@ -136,10 +137,10 @@ class RStudioMain {
     }
 
     const rstudio = new Application();
-
     rstudio.argsManager.handleLogLevel();
-
     setApplication(rstudio);
+
+    this.initializeAppConfig();
 
     if (!parseStatus(await rstudio.beforeAppReady())) {
       return;
