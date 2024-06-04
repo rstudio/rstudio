@@ -53,4 +53,3 @@
 
 - Updated MathJax to version 2.7.9 (#11535)
 - Updated Electron to version 30.0.8 (#14582; Desktop)
-- Updated Quarto to version 1.4.555 (#14779)
