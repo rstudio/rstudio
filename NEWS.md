@@ -17,6 +17,8 @@
   
 #### Posit Workbench
 
+- Fixed an issue introduced in 2024.04.0 with the create-container-user feature for job launcher plugins that reuse a container for more than one session (rstudio/rstudio-pro#6408)
+
 ### Dependencies
 
 - Updated node.js to version 18.20.3 (#14731)
