@@ -8,7 +8,7 @@
 
 - Restart commands are now run after restoring the search path + global environment by default. (#14636)
 - The "Soft-wrap R source files" preference now applies to all source files, and has been re-labelled appropriately. (#10940)
-- RStudio now supports Electron flags set via `~/.config/rstudio/electron-flags.conf` or `~/.config/electron-flags.conf` on Linux / macOS. (#14641)
+- RStudio now supports Electron flags set via `~/.config/rstudio/electron-flags.conf` or `~/.config/electron-flags.conf` on Linux / macOS. On Windows, the paths are `%LocalAppData%\RStudio\electron-flags.conf` and `%LocalAppData%\electron-flags.conf`. (#14641)
 
 #### Posit Workbench
 
