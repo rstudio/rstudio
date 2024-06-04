@@ -102,7 +102,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                int left, 
                                int top, 
                                int width, 
-                               int height);
+                               int height,
+                               CommandWithArg<Void> callback);
 
    void printText(String text);
    

@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.viewer.export;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -42,6 +43,12 @@ public class ViewerPaneSaveAsImageDesktopOperation implements SavePlotAsImageOpe
                @Override
                public void execute(Rectangle viewerRect)
                {
+                  CommandWithArg<Void> callback = (Void nil) ->
+                  {
+                     if (viewAfterSave)
+                        Desktop.getFrame().showFile(StringUtil.notNull(targetPath.getPath()));
+                  };
+                  
                   // perform the export
                   Desktop.getFrame().exportPageRegionToFile(
                         StringUtil.notNull(targetPath.getPath()),
@@ -49,10 +56,8 @@ public class ViewerPaneSaveAsImageDesktopOperation implements SavePlotAsImageOpe
                         viewerRect.getLeft(),
                         viewerRect.getTop(),
                         viewerRect.getWidth(),
-                        viewerRect.getHeight());
-
-                  if (viewAfterSave)
-                     Desktop.getFrame().showFile(StringUtil.notNull(targetPath.getPath()));
+                        viewerRect.getHeight(),
+                        callback);
                }
             },
             onCompleted
