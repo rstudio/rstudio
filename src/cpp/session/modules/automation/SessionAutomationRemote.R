@@ -264,6 +264,23 @@
    .rs.automation.wrapJsResponse(self, response)
 })
 
+.rs.automation.addRemoteFunction("keyboardExecute", function(...)
+{
+   reShortcut <- "^\\<(.*)\\>$"
+   for (input in list(...))
+   {
+      if (grepl(reShortcut, input, perl = TRUE))
+      {
+         shortcut <- sub(reShortcut, "\\1", input, perl = TRUE)
+         self$shortcutExecute(shortcut)
+      }
+      else
+      {
+         self$client$Input.insertText(input)
+      }
+   }
+})
+
 .rs.automation.addRemoteFunction("quit", function()
 {
    # Close the websocket connection.

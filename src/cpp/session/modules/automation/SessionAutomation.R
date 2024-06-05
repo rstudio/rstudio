@@ -283,6 +283,9 @@
    envVars[rstudioEnvVars] <- list(NULL)
    envVars["R_SESSION_TMPDIR"] <- list(NULL)
    
+   # Make sure the automation server uses the same R session executable.
+   envVars[["RSTUDIO_WHICH_R"]] <- ps::ps_exe()
+   
    # Ensure that the new RStudio instance uses temporary storage.
    stateDir <- tempfile("rstudio-automation-state-")
    dir.create(stateDir, recursive = TRUE)

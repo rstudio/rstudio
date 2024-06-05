@@ -34,6 +34,8 @@
 - Fixed an issue where the "Go to directory..." button brought up the wrong dialog (#14501; Desktop)
 - Fixed an issue where "View plot after saving" in the Save Plot as Image dialog sometimes did not work. (#14702)
 - Fixed an issue where the IDE could hang when navigating the Files pane to a directory containing a very large number of files. (#13426)
+- Fixed an issue where RStudio could trigger active bindings in environments when requesting completions. (#14784)
+- Fixed an issue where the editor scroll speed had inadvertently been decreased. (#14664)
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
@@ -53,4 +55,3 @@
 
 - Updated MathJax to version 2.7.9 (#11535)
 - Updated Electron to version 30.0.8 (#14582; Desktop)
-- Updated Quarto to version 1.4.555 (#14779)
