@@ -21,9 +21,9 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
@@ -1272,7 +1272,7 @@ public class ObjectExplorerDataGrid
    }
 
    @Override
-   public int getRowHeight()
+   public double getRowHeight()
    {
       return 24;
    }
@@ -1283,6 +1283,12 @@ public class ObjectExplorerDataGrid
       if (dataProvider_ == null)
          return 0;
       return getData().size();
+   }
+   
+   @Override
+   public String getBorderColor()
+   {
+      return null;
    }
 
    public Data getCurrentSelection()

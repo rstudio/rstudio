@@ -19,7 +19,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
@@ -28,7 +27,7 @@ import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.RStudioDataGrid;
+import org.rstudio.core.client.widget.VirtualizedDataGrid;
 import org.rstudio.studio.client.ResizableHeader;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
@@ -37,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesConstants;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -46,12 +46,11 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.gwt.user.cellview.client.ColumnSortEvent.Handler;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.cellview.client.ColumnSortEvent.Handler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
@@ -80,10 +79,33 @@ public class FilesList extends Composite
       sortHandler_ = new ColumnSortEvent.ListHandler<>(dataProvider_.getList());
 
       // create cell table
-      filesDataGrid_ = new RStudioDataGrid<>(
-                                          15,
-                                          FilesListDataGridResources.INSTANCE,
-                                          KEY_PROVIDER);
+      filesDataGrid_ = new VirtualizedDataGrid<FileSystemItem>(FilesListDataGridResources.INSTANCE, KEY_PROVIDER)
+      {
+         @Override
+         public double getRowHeight()
+         {
+            return 22.5;
+         }
+
+         @Override
+         public int getTotalNumberOfRows()
+         {
+            return dataProvider_.getList().size();
+         }
+         
+         @Override
+         public String getBorderColor()
+         {
+            return "transparent";
+         }
+         
+         @Override
+         protected boolean resetFocusOnCell()
+         {
+            return false;
+         }
+      };
+            
       selectionModel_ = new MultiSelectionModel<>(KEY_PROVIDER);
       filesDataGrid_.setSelectionModel(
          selectionModel_,
@@ -399,11 +421,14 @@ public class FilesList extends Composite
          fileList.add(parentPath_);
 
       // add files to table
-      for (int i=0; i<files.length(); i++)
+      for (int i = 0, n = files.length(); i < n; i++)
          fileList.add(files.get(i));
 
       // apply sort list
       applyColumnSortList();
+      
+      // force redraw of data grid
+      filesDataGrid_.redraw();
 
       // fire selection changed
       observer_.onFileSelectionChanged();
@@ -684,7 +709,7 @@ public class FilesList extends Composite
    private FileSystemItem containingPath_ = null;
    private FileSystemItem parentPath_ = null;
 
-   private final DataGrid<FileSystemItem> filesDataGrid_;
+   private final VirtualizedDataGrid<FileSystemItem> filesDataGrid_;
    private final LinkColumn<FileSystemItem> nameColumn_;
    private final TextColumn<FileSystemItem> sizeColumn_;
    private final TextColumn<FileSystemItem> modifiedColumn_;

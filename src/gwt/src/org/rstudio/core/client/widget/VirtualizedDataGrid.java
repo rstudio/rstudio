@@ -15,9 +15,11 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.theme.RStudioDataGridResources;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
@@ -27,6 +29,7 @@ import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HeaderPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.view.client.ProvidesKey;
 
 // This class acts as a DOM-virtualized version of a DataGrid, effectively
 // allowing the class to render large tables without overloading the DOM.
@@ -46,15 +49,21 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       {
          // if this is the first row, draw padding
          if (index == 0)
+         {
             drawTopRowPadding();
-         
-         // draw this row if it's in the visibility range
-         if (firstActiveRow_ <= index && index <= lastActiveRow_)
-            super.buildRowImpl(data, index);
+         }
          
          // if this is the last row, draw padding
-         if (index == lastActiveRow_)
+         else if (index == lastActiveRow_)
+         {
             drawBottomRowPadding();
+         }
+         
+         else if (firstActiveRow_ <= index && index <= lastActiveRow_)
+         {
+            // draw this row if it's in the visibility range
+            super.buildRowImpl(data, index);
+         }
       }
       
       private void drawTopRowPadding()
@@ -72,18 +81,29 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
          if (heightPx <= 0)
             return;
          
+         String borderColor = getBorderColor();
+         
          TableRowBuilder tr = startRow();
          tr.attribute("height", heightPx + "px");
          for (int i = 0; i < cellTable.getColumnCount(); i++)
-            tr.startTD().endTD();
+         {
+            TableCellBuilder builder = tr.startTD();
+            if (borderColor != null)
+               builder.style().trustedBorderColor("transparent");
+            builder.endTD();
+         }
          tr.endTR();
       }
    }
    
-   // These two fields allow us to compute the expected
-   // total size of the widget.
-   public abstract int getRowHeight();
+   // These two fields allow us to compute the expected total size of the widget.
+   public abstract double getRowHeight();
    public abstract int getTotalNumberOfRows();
+   
+   // This field is primarily used to ensure the top + bottom padding rows
+   // are drawn with a matching style for the rest of the data grid.
+   // This can return 'null' if no special styling is required.
+   public abstract String getBorderColor();
    
    public VirtualizedDataGrid()
    {
@@ -97,6 +117,14 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       commonInit();
    }
    
+   public VirtualizedDataGrid(Resources resources,
+                              ProvidesKey<T> keyProvider)
+   {
+      super(Integer.MAX_VALUE, resources, keyProvider);
+      commonInit();
+   }
+   
+   
    private void commonInit()
    {
       addScrollHandler(new ScrollHandler()
@@ -104,7 +132,7 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
          @Override
          public void onScroll(ScrollEvent event)
          {
-            redrawTimer_.schedule(700);
+            redrawTimer_.schedule(300);
          }
       });
       
@@ -191,13 +219,13 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
    public final int getTopPaddingHeight()
    {
       int pseudoRowCount = firstActiveRow_;
-      return pseudoRowCount * getRowHeight();
+      return (int) (pseudoRowCount * getRowHeight());
    }
    
    public final int getBottomPaddingHeight()
    {
       int pseudoRowCount = (getTotalNumberOfRows() - lastActiveRow_) - 1;
-      return pseudoRowCount * getRowHeight();
+      return (int) (pseudoRowCount * getRowHeight());
    }
    
    public final int getVerticalScrollPosition()
@@ -218,18 +246,19 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
    private final void updateActiveRows()
    {
       int n = getTotalNumberOfRows();
-      int rowHeight = getRowHeight();
+      double rowHeight = getRowHeight();
       
       // determine how much the table body element has been scrolled
       int scrollAmount = getVerticalScrollPosition();
       
       // determine the number of rows that have been scrolled
       // (this is, approximately, the first visible row)
-      int numRowsScrolled = scrollAmount / rowHeight;
+      int numRowsScrolled = (int) (scrollAmount / rowHeight);
       
       // determine the total number of rows visible
-      int rowsActive = getOffsetHeight() / rowHeight;
+      int rowsActive = (int) (getOffsetHeight() / rowHeight);
       
+      // set our active rows -- use padding to allow smoother scrolling
       firstActiveRow_ = Math.max(0, numRowsScrolled - ROW_PADDING);
       lastActiveRow_ = Math.min(n, numRowsScrolled + rowsActive + ROW_PADDING);
    }

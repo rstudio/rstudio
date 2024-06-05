@@ -33,6 +33,7 @@
 - Fixed an issue where the context menu sometimes did not display when right-clicking a word in the editor. (#14575)
 - Fixed an issue where the "Go to directory..." button brought up the wrong dialog (#14501; Desktop)
 - Fixed an issue where "View plot after saving" in the Save Plot as Image dialog sometimes did not work. (#14702)
+- Fixed an issue where the IDE could hang when navigating the Files pane to a directory containing a very large number of files. (#13426)
 - Fixed an issue where RStudio could trigger active bindings in environments when requesting completions. (#14784)
 - Fixed an issue where the editor scroll speed had inadvertently been decreased. (#14664)
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
