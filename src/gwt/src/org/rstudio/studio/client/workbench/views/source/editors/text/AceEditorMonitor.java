@@ -18,8 +18,6 @@ import org.rstudio.core.client.dom.WindowEx;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.AttachEvent;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class AceEditorMonitor
 {
@@ -31,8 +29,8 @@ public class AceEditorMonitor
    
    private void init()
    {
-      editor_.addAttachHandler((AttachEvent event) -> {
-         
+      editor_.addAttachHandler((AttachEvent event) ->
+      {
          if (event.isAttached())
          {
             beginMonitoring();
@@ -46,20 +44,17 @@ public class AceEditorMonitor
    
    private boolean monitor()
    {
-      if (!monitoring_)
+      if (!monitoring_ || editor_ == null)
          return false;
 
-      UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+      // check if the device pixel ratio has changed;
+      // if not, then nothing to do (but continue monitoring)
+      double devicePixelRatio = WindowEx.get().getDevicePixelRatio();
+      if (devicePixelRatio == devicePixelRatio_)
+         return true;
 
-      int scrollMultiplier = prefs.editorScrollMultiplier().getValue().intValue();
-      // calculate speed ratio, lower scroll speed = higher ratio = faster scroll
-      double ratio = WindowEx.get().getDevicePixelRatio() * (100.0 / scrollMultiplier);
-      if (devicePixelRatio_ != ratio && editor_ != null)
-      {
-         devicePixelRatio_ = ratio;
-         editor_.setScrollSpeed(ACE_EDITOR_DEFAULT_SCROLL_SPEED / ratio);
-      }
-
+      // the dpi has changed; synchronize the scroll speed
+      editor_.getWidget().syncScrollSpeed();
       return true;
    }
    
@@ -69,9 +64,7 @@ public class AceEditorMonitor
          return;
       
       monitoring_ = true;
-      Scheduler.get().scheduleFixedDelay(() -> {
-         return monitor();
-      }, 1000);
+      Scheduler.get().scheduleFixedDelay(this::monitor, 1000);
    }
    
    private void endMonitoring()
@@ -80,11 +73,8 @@ public class AceEditorMonitor
       editor_ = null;
    }
  
-   private boolean monitoring_ = false;
    private AceEditor editor_;
-   
-   private double devicePixelRatio_ = 1.0;
-   
-   private static final double ACE_EDITOR_DEFAULT_SCROLL_SPEED = 2.0;
+   private boolean monitoring_ = false;
+   private double devicePixelRatio_ = 0.0;
    
 }
