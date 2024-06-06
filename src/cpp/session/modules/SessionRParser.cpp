@@ -13,12 +13,12 @@
  *
  */
 
-// #define RSTUDIO_DEBUG_LABEL "r_parser"
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_DEBUG_LABEL "r_parser"
+#define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // Define this if you want extra debug printing for how
 // RStudio attempts to parse and diagnose glue expressions.
-// #define RSTUDIO_ENABLE_GLUE_DEBUG
+#define RSTUDIO_ENABLE_GLUE_DEBUG
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -252,12 +252,20 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       std::string ns = string_utils::strippedOfQuotes(
                cursor.previousSignificantToken(2).contentAsUtf8());
       
-      DEBUG("Resolving: '" << ns << ":::" << symbol << "'");
+      SEXP namespaceSEXP = r::sexp::findNamespace(ns);
+      if (TYPEOF(namespaceSEXP) == ENVSXP)
+      {
+         DEBUG("Resolving: '" << ns << ":::" << symbol << "'");
       
-      if (functionsOnly)
-         symbolSEXP = r::sexp::findFunction(symbol, ns);
+         if (functionsOnly)
+            symbolSEXP = r::sexp::findFunction(symbol, ns);
+         else
+            symbolSEXP = r::sexp::findVar(symbol, ns);
+      }
       else
-         symbolSEXP = r::sexp::findVar(symbol, ns);
+      {
+         DEBUG("Not resolving: '" << ns << ":::" << symbol << "' (not loaded)");
+      }
    }
    else
    {
