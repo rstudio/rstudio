@@ -351,8 +351,6 @@ private:
       }
       else if (config.buildType == r_util::kBuildTypeWebsite)
       {
-         options.workingDir = buildTargetPath;
-         
          // pass along R_LIBS
          std::string rLibs = module_context::libPathsString();
          if (!rLibs.empty())
@@ -363,7 +361,7 @@ private:
          core::system::setenv(&environment, "RSTUDIO_LONG_VERSION", RSTUDIO_VERSION);
 
          options.environment = environment;
-         
+         options.workingDir = buildTargetPath;
          executeWebsiteBuild(type, subType, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
@@ -601,21 +599,8 @@ private:
          core::system::setenv(&childEnv, "R_LIBS", libPaths);
       
       options.environment = childEnv;
-      
-      // build the roxygenize command
-      shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--vanilla";
-      cmd << "-s";
-      cmd << "-e";
-      cmd << buildRoxygenizeCall();
-
-      // use the package working dir
       options.workingDir = packagePath;
-
-      // run it
-      module_context::processSupervisor().runCommand(cmd,
-                                                     options,
-                                                     cb);
+      rExecute(buildRoxygenizeCall(), options, true, cb);
    }
 
    bool compileRcppAttributes(const FilePath& packagePath)
@@ -1016,8 +1001,7 @@ private:
    }
 
    bool rExecute(const std::string& command,
-                 const FilePath& workingDir,
-                 core::system::ProcessOptions pkgOptions,
+                 core::system::ProcessOptions options,
                  bool vanilla,
                  const core::system::ProcessCallbacks& cb)
    {
@@ -1029,9 +1013,6 @@ private:
          terminateWithError("attempting to locate R binary", error);
          return false;
       }
-
-      // execute within the package directory
-      pkgOptions.workingDir = workingDir;
       
       // build args
       std::vector<std::string> args;
@@ -1046,7 +1027,7 @@ private:
       module_context::processSupervisor().runProgram(
                string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
                args,
-               pkgOptions,
+               options,
                cb);
 
       return true;
@@ -1057,7 +1038,8 @@ private:
                         core::system::ProcessOptions pkgOptions,
                         const core::system::ProcessCallbacks& cb)
    {
-      if (!rExecute(command, packagePath, pkgOptions, true /* --vanilla */, cb))
+      pkgOptions.workingDir = packagePath;
+      if (!rExecute(command, pkgOptions, true /* --vanilla */, cb))
          return false;
 
       usedDevtools_ = true;
@@ -1203,31 +1185,24 @@ private:
          return;
       }
 
-      // construct a shell command to execute
-      shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--vanilla";
-      cmd << "-s";
-      cmd << "-e";
-      std::vector<std::string> rSourceCommands;
-      
-      boost::format fmt(
-         "if (nzchar('%1%')) devtools::load_all(dirname('%2%'));"
-         "testthat::test_file('%2%')"
-      );
-
+      // construct command to execute
+      using namespace string_utils;
       std::string testPathEscaped = 
-         string_utils::singleQuotedStrEscape(string_utils::utf8ToSystem(
-            testPath.getAbsolutePath()));
+         singleQuotedStrEscape(utf8ToSystem(testPath.getAbsolutePath()));
 
-      cmd << boost::str(fmt %
-                        pkgInfo_.name() %
-                        testPathEscaped);
-
+      // build default test command
+      std::string command = fmt::format("testthat::test_file('{}')", testPathEscaped);
+      
+      // use devtools::load_all() if this is a package project
+      if (!pkgInfo_.empty())
+      {
+         command = fmt::format("devtools::load_all(); {}", command);
+      }
+      
       enqueCommandString("Testing R file using 'testthat'");
       successMessage_ = "\nTest complete";
-      module_context::processSupervisor().runCommand(cmd,
-                                                     pkgOptions,
-                                                     cb);
+      
+      rExecute(command, pkgOptions, true, cb);
 
    }
 
@@ -1540,7 +1515,7 @@ private:
 
       // execute command
       enqueCommandString(command);
-      rExecute(command, websitePath, options, false /* --vanilla */, cb);
+      rExecute(command, options, false /* --vanilla */, cb);
    }
 
    void enquePreviewRmdEvent(const FilePath& sourceFile, const FilePath& outputFile)
