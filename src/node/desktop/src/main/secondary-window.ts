@@ -35,6 +35,7 @@ export class SecondaryWindow extends DesktopBrowserWindow {
       parent: parent,
       opener: opener,
       allowExternalNavigate: allowExternalNavigate,
+      openExternalLinksInBrowser: true,
       existingWindow: existingWindow,
     });
     this.ensureNoMenu();
