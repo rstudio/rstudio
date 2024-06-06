@@ -14,14 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
+import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
@@ -48,7 +42,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlDocumentLinter;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
-import java.util.List;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
 
 public class LintManager
 {
@@ -177,7 +178,7 @@ public class LintManager
                return;
             
             if (userPrefs_.diagnosticsOnSave().getValue())
-               lint(false, true, false);
+               lint(false, false, false);
          }
       }));
    }

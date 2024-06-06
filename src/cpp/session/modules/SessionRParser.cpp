@@ -205,6 +205,7 @@ NSEDatabase& nseDatabase()
 }
 
 SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
+                                     ParseStatus& status,
                                      r::sexp::Protect* pProtect,
                                      bool functionsOnly = false,
                                      bool* pCacheable = nullptr)
@@ -246,25 +247,35 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
    {
       DEBUG("Resolving as 'namespaced' call");
       
-      std::string symbol = string_utils::strippedOfQuotes(
-               cursor.contentAsUtf8());
+      RToken symbolToken = cursor.currentToken();
+      RToken packageToken = cursor.previousSignificantToken(2);
       
-      std::string ns = string_utils::strippedOfQuotes(
-               cursor.previousSignificantToken(2).contentAsUtf8());
+      std::string symbol  = string_utils::strippedOfQuotes(symbolToken.contentAsUtf8());
+      std::string package = string_utils::strippedOfQuotes(packageToken.contentAsUtf8());
       
-      SEXP namespaceSEXP = r::sexp::findNamespace(ns);
+      SEXP namespaceSEXP = r::sexp::findNamespace(package);
       if (TYPEOF(namespaceSEXP) == ENVSXP)
       {
-         DEBUG("Resolving: '" << ns << ":::" << symbol << "'");
+         DEBUG("Resolving: '" << package << ":::" << symbol << "'");
       
          if (functionsOnly)
-            symbolSEXP = r::sexp::findFunction(symbol, ns);
+            symbolSEXP = r::sexp::findFunction(symbol, package);
          else
-            symbolSEXP = r::sexp::findVar(symbol, ns);
+            symbolSEXP = r::sexp::findVar(symbol, package);
       }
       else
       {
          DEBUG("Not resolving: '" << ns << ":::" << symbol << "' (not loaded)");
+         
+         // Only display these warnings in 'explicit' requests (avoid being too noisy).
+         if (status.parseOptions().isExplicit())
+         {
+            if (status.parseOptions().checkArgumentsToRFunctionCalls() ||
+                status.parseOptions().lintRFunctions())
+            {
+               status.lint().packageNotLoaded(packageToken, symbolToken);
+            }
+         }
       }
    }
    else
@@ -300,10 +311,11 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
 }
 
 SEXP resolveFunctionAssociatedWithCall(RTokenCursor cursor,
+                                       ParseStatus& status,
                                        r::sexp::Protect* pProtect,
                                        bool* pCacheable = nullptr)
 {
-   return resolveObjectAssociatedWithCall(cursor, pProtect, true, pCacheable);
+   return resolveObjectAssociatedWithCall(cursor, status, pProtect, true, pCacheable);
 }
 
 std::set<std::wstring> makeWideNsePrimitives()
@@ -443,7 +455,7 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    // Drop down into R.
    bool cacheable = true;
    r::sexp::Protect protect;
-   SEXP symbolSEXP = resolveFunctionAssociatedWithCall(cursor, &protect, &cacheable);
+   SEXP symbolSEXP = resolveFunctionAssociatedWithCall(cursor, status, &protect, &cacheable);
    if (symbolSEXP == R_UnboundValue)
       return false;
    
@@ -811,7 +823,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
    // If the above failed, we'll fall back to evaluating and looking up
    // the symbol on the search path.
    r::sexp::Protect protect;
-   SEXP functionSEXP = resolveFunctionAssociatedWithCall(cursor, &protect);
+   SEXP functionSEXP = resolveFunctionAssociatedWithCall(cursor, status, &protect);
    if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
    {
       DEBUG("***** Function definition is not available on search path; giving up");
@@ -2583,7 +2595,7 @@ bool makeSymbolsAvailableInCallFromObjectNames(RTokenCursor cursor,
       return false;
    
    r::sexp::Protect protect;
-   SEXP objectSEXP = resolveObjectAssociatedWithCall(startCursor, &protect);
+   SEXP objectSEXP = resolveObjectAssociatedWithCall(startCursor, status, &protect);
    if (objectSEXP != R_UnboundValue)
    {
       r::exec::RFunction getNames(".rs.getNames");

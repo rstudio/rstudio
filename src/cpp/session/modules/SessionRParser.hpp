@@ -74,6 +74,16 @@ public:
         recordStyleLint_(recordStyleLint)
    {}
    
+   void setIsExplicit(bool isExplicit)
+   {
+      isExplicit_ = isExplicit;
+   }
+   
+   bool isExplicit() const
+   {
+      return isExplicit_;
+   }
+   
    void setRecordStyleLint(bool record)
    {
       recordStyleLint_ = record;
@@ -165,6 +175,7 @@ public:
    const std::set<std::string>& globals() const { return globals_; }
 
 private:
+   bool isExplicit_;
    bool lintRFunctions_;
    bool checkArgumentsToRFunctionCalls_;
    bool checkUnexpectedAssignmentInFunctionCall_;
@@ -228,12 +239,12 @@ using namespace core::r_util;
 struct LintItem
 {
 
-   LintItem (int startRow,
-             int startColumn,
-             int endRow,
-             int endColumn,
-             LintType type,
-             const std::string message)
+   LintItem(int startRow,
+            int startColumn,
+            int endRow,
+            int endColumn,
+            LintType type,
+            const std::string message)
       : startRow(startRow),
         startColumn(startColumn),
         endRow(endRow),
@@ -263,7 +274,7 @@ struct LintItem
         type(type),
         message(message)
    {}
-
+   
    int startRow;
    int startColumn;
    int endRow;
@@ -271,6 +282,17 @@ struct LintItem
    LintType type;
    std::string message;
 };
+
+inline bool operator==(const LintItem& lhs, const LintItem& rhs)
+{
+   return
+         lhs.startRow    == rhs.startRow &&
+         lhs.startColumn == rhs.startColumn &&
+         lhs.endRow      == rhs.endRow &&
+         lhs.endColumn   == rhs.endColumn &&
+         lhs.type        == rhs.type &&
+         lhs.message     == rhs.message;
+}
 
 class LintItems
 {
@@ -377,6 +399,23 @@ public:
       
       lintItems_.push_back(lint);
    }
+   
+   void packageNotLoaded(const RToken& packageToken,
+                         const RToken& symbolToken)
+   {
+      std::string message = fmt::format(
+               "package '{}' is not currently loaded; argument diagnostics unavailable",
+               packageToken.contentAsUtf8());
+      
+      add(
+               packageToken.row(),
+               packageToken.column(),
+               symbolToken.row(),
+               symbolToken.column() + symbolToken.length(),
+               LintTypeInfo,
+               message);
+   }
+   
    
    void expectedWhitespace(const RToken& token)
    {
@@ -541,6 +580,11 @@ private:
    {
       if (!parseOptions_.recordStyleLint() && item.type == LintTypeStyle)
          return;
+      
+      // Avoid duplicate lint items
+      for (auto&& lintItem : lintItems_)
+         if (lintItem == item)
+            return;
       
       lintItems_.push_back(item);
       errorCount_ += item.type == LintTypeError;
