@@ -171,12 +171,13 @@ public class AceEditorWidget extends Composite
             // recursion here.
             if (inOnChangeHandler_)
             {
-               Debug.log("Warning: ignoring recursive ACE change event");
+               Debug.log("Warning: ignoring recursive Ace editor change event");
                return;
             }
-            inOnChangeHandler_ = true;
+            
             try
             {
+               inOnChangeHandler_ = true;
                ValueChangeEvent.fire(AceEditorWidget.this, null);
                AceEditorWidget.this.fireEvent(new DocumentChangedEvent(event));
 
@@ -197,12 +198,17 @@ public class AceEditorWidget extends Composite
                   });
                }
             }
+            
             catch (Exception ex)
             {
-               Debug.log("Exception occurred during ACE change event: " +
+               Debug.log("Exception occurred during Ace editor change event: " +
                          ex.getMessage());
             }
-            inOnChangeHandler_ = false;
+            
+            finally
+            {
+               inOnChangeHandler_ = false;
+            }
          }
 
       });
