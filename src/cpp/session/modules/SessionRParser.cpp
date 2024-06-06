@@ -13,12 +13,12 @@
  *
  */
 
-#define RSTUDIO_DEBUG_LABEL "r_parser"
-#define RSTUDIO_ENABLE_DEBUG_MACROS
+// #define RSTUDIO_DEBUG_LABEL "r_parser"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // Define this if you want extra debug printing for how
 // RStudio attempts to parse and diagnose glue expressions.
-#define RSTUDIO_ENABLE_GLUE_DEBUG
+// #define RSTUDIO_ENABLE_GLUE_DEBUG
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
