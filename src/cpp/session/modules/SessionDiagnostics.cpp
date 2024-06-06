@@ -651,6 +651,8 @@ ParseResults parse(const std::wstring& rCode,
    ParseResults results;
    ParseOptions options;
    
+   options.setIsExplicit(isExplicit);
+   
    options.setLintRFunctions(
             prefs::userPrefs().diagnosticsInRFunctionCalls());
    
