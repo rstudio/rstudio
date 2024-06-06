@@ -506,49 +506,26 @@ private:
    }
 
 
-   std::string buildRoxygenizeCall()
+   std::string buildDocumentCall()
    {
-      // build the call to roxygenize
-      std::vector<std::string> roclets;
-      boost::algorithm::split(roclets,
-                              projectConfig().packageRoxygenize,
-                              boost::algorithm::is_any_of(","));
-
-      // remove vignette roclet if we don't have the requisite roxygen2 version
-      bool haveVignetteRoclet = module_context::isPackageVersionInstalled(
-                                                   "roxygen2", "4.1.0.9001");
-      if (!haveVignetteRoclet)
-      {
-         auto it = std::find(roclets.begin(), roclets.end(), "vignette");
-         if (it != roclets.end())
-            roclets.erase(it);
-      }
+      // get the package roclets
+      std::string roclets = projectConfig().packageRoxygenize;
       
-      for (std::string& roclet : roclets)
-      {
-         roclet = "'" + roclet + "'";
-      }
+      // format nicely
+      boost::regex reComma(",");
+      roclets = boost::regex_replace(roclets, reComma, ", ");
 
-      boost::format fmt;
-      if (useDevtools())
-         fmt = boost::format("devtools::document(roclets = c(%1%))");
-      else
-         fmt = boost::format("roxygen2::roxygenize('.', roclets = c(%1%))");
-      std::string roxygenizeCall = boost::str(
-         fmt % boost::algorithm::join(roclets, ", "));
+      std::string documentCall = useDevtools()
+            ? fmt::format("devtools::document(roclets = c({}))", roclets)
+            : fmt::format("roxygen2::roxygenzie('.', roclets = c({})", roclets);
+      
+      // show the user the call to document
+      enqueCommandString(documentCall);
 
-      // show the user the call to roxygenize
-      enqueCommandString(roxygenizeCall);
-
-      // format the command to send to R
-      boost::format cmdFmt(
-         "suppressPackageStartupMessages("
-            "{oldLC <- Sys.getlocale(category = 'LC_COLLATE'); "
-            " Sys.setlocale(category = 'LC_COLLATE', locale = 'C'); "
-            " on.exit(Sys.setlocale(category = 'LC_COLLATE', locale = oldLC));"
-            " %1%; }"
-          ")");
-      return boost::str(cmdFmt % roxygenizeCall);
+      return fmt::format(
+               "suppressPackageStartupMessages({ {}; {} })",
+               "Sys.setlocale('LC_COLLATE', 'C')",
+               documentCall);
    }
 
    void onRoxygenizeCompleted(int exitStatus,
@@ -600,7 +577,7 @@ private:
       
       options.environment = childEnv;
       options.workingDir = packagePath;
-      rExecute(buildRoxygenizeCall(), options, true, cb);
+      rExecute(true, buildDocumentCall(), options, cb);
    }
 
    bool compileRcppAttributes(const FilePath& packagePath)
@@ -1000,9 +977,9 @@ private:
                                                      buildCb);
    }
 
-   bool rExecute(const std::string& command,
-                 core::system::ProcessOptions options,
-                 bool vanilla,
+   bool rExecute(bool vanilla,
+                 const std::string& command,
+                 const core::system::ProcessOptions& pkgOptions,
                  const core::system::ProcessCallbacks& cb)
    {
       // Find the path to R
@@ -1027,7 +1004,7 @@ private:
       module_context::processSupervisor().runProgram(
                string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
                args,
-               options,
+               pkgOptions,
                cb);
 
       return true;
@@ -1039,7 +1016,7 @@ private:
                         const core::system::ProcessCallbacks& cb)
    {
       pkgOptions.workingDir = packagePath;
-      if (!rExecute(command, pkgOptions, true /* --vanilla */, cb))
+      if (!rExecute(true, command, pkgOptions, cb))
          return false;
 
       usedDevtools_ = true;
@@ -1196,14 +1173,14 @@ private:
       // use devtools::load_all() if this is a package project
       if (!pkgInfo_.empty())
       {
+         pkgOptions.workingDir = projects::projectContext().buildTargetPath();
          command = fmt::format("devtools::load_all(); {}", command);
       }
       
       enqueCommandString("Testing R file using 'testthat'");
       successMessage_ = "\nTest complete";
       
-      rExecute(command, pkgOptions, true, cb);
-
+      rExecute(true, command, pkgOptions, cb);
    }
 
    void testShiny(FilePath& shinyPath,
@@ -1515,7 +1492,7 @@ private:
 
       // execute command
       enqueCommandString(command);
-      rExecute(command, options, false /* --vanilla */, cb);
+      rExecute(false, command, options, cb);
    }
 
    void enquePreviewRmdEvent(const FilePath& sourceFile, const FilePath& outputFile)
