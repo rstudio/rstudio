@@ -320,6 +320,9 @@ private:
       // this runs in the build pane as a child process of this process
       core::system::setenv(&environment, "RSTUDIO_CHILD_PROCESS_PANE", "build");
       
+      // build pane processes support ANSI colors
+      core::system::setenv(&environment, "R_CLI_NUM_COLORS", "256");
+      
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
       if (type == kTestFile)
