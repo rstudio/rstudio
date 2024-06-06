@@ -837,7 +837,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
    {
       if (info.binding())
       {
-         DEBUG("***** Using definition from search path (" << info.binding()->name << " from " << info.binding()->origin);
+         DEBUG("***** Using definition from search path (" << info.binding()->name << " from " << info.binding()->origin << ")");
       }
       else
       {
