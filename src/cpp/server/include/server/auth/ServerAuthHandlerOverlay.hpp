@@ -96,6 +96,10 @@ bool isUserProvisioningEnabled();
 
 std::string getUsernameDbColumnName();
 
+core::database::Query addUsernameCheckToQuery(core::database::DatabaseConnection connection,
+                                        const std::string& statement,
+                                        const std::string& username);
+
 } // namespace overlay
 
 } // namespace handler
