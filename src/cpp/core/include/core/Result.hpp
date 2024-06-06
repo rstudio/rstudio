@@ -19,7 +19,8 @@
 #include <expected/expected.hpp>
 #include <shared_core/Error.hpp>
 
-namespace rstudio::core {
+namespace rstudio {
+namespace core {
 
 // Type alias "wrapper" around tl::expected to enforce usage of core::Error as the unexpected type.
 // API reference for expected: https://tl.tartanllama.xyz/en/latest/api/expected.html and
@@ -38,6 +39,7 @@ template <typename T> using Result = tl::expected<T, Error>;
 // Type alias for the unexpected (error) type of core::Result.
 using Unexpected = tl::unexpected<Error>;
 
-} // namespace rstudio::core
+} // end namespace core
+} // end namespace rstudio
 
 #endif
