@@ -253,7 +253,10 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       std::string symbol  = string_utils::strippedOfQuotes(symbolToken.contentAsUtf8());
       std::string package = string_utils::strippedOfQuotes(packageToken.contentAsUtf8());
       
-      SEXP namespaceSEXP = r::sexp::findNamespace(package);
+      SEXP namespaceSEXP = status.parseOptions().isExplicit()
+            ? r::sexp::asNamespace(package)
+            : r::sexp::findNamespace(package);
+ 
       if (TYPEOF(namespaceSEXP) == ENVSXP)
       {
          DEBUG("Resolving: '" << package << ":::" << symbol << "'");
@@ -265,7 +268,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       }
       else
       {
-         DEBUG("Not resolving: '" << ns << ":::" << symbol << "' (not loaded)");
+         DEBUG("Not resolving: '" << ns << ":::" << symbol << "' (not available)");
          
          // Only display these warnings in 'explicit' requests (avoid being too noisy).
          if (status.parseOptions().isExplicit())

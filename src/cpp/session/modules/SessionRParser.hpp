@@ -404,7 +404,7 @@ public:
                          const RToken& symbolToken)
    {
       std::string message = fmt::format(
-               "package '{}' is not currently loaded; argument diagnostics unavailable",
+               "package '{}' is not available; cannot provide argument diagnostics",
                packageToken.contentAsUtf8());
       
       add(
