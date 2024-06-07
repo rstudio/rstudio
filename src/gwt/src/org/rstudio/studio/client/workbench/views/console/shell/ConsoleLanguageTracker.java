@@ -18,14 +18,17 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -42,10 +45,12 @@ public class ConsoleLanguageTracker
    @Inject
    public ConsoleLanguageTracker(Session session,
                                  EventBus events,
+                                 DependencyManager depman,
                                  ConsoleServerOperations server)
    {
       session_ = session;
       events_ = events;
+      depman_ = depman;
       server_ = server;
 
       init();
@@ -54,7 +59,7 @@ public class ConsoleLanguageTracker
    public void adaptToLanguage(final String language,
                                final Command command)
    {
-      if (!StringUtil.equals(language, language_))
+      Command adaptCommand = () ->
       {
          server_.adaptToLanguage(
                language,
@@ -74,6 +79,21 @@ public class ConsoleLanguageTracker
                      command.execute();
                   }
                });
+      };
+      
+      if (!StringUtil.equals(language, language_))
+      {
+         if (language.equals(LANGUAGE_PYTHON))
+         {
+            depman_.withReticulate(
+                  CONSTANTS.executingPythonCodeProgressCaption(),
+                  CONSTANTS.executingPythonCodeProgressCaption(),
+                  adaptCommand::execute);
+         }
+         else
+         {
+            adaptCommand.execute();
+         }
       }
       else
       {
@@ -111,9 +131,12 @@ public class ConsoleLanguageTracker
    }
 
    private String language_;
+   
+   private static final ConsoleConstants CONSTANTS = GWT.create(ConsoleConstants.class);
 
    // Injected ----
    private final Session session_;
    private final EventBus events_;
+   private final DependencyManager depman_;
    private final ConsoleServerOperations server_;
 }
