@@ -56115,6 +56115,10 @@ var Editor = require("./editor").Editor;
     this.$checkMultiselectChange = function (e, anchor) {
         if (this.inMultiSelectMode && !this.inVirtualSelectionMode) {
             var range = this.multiSelect.ranges[0];
+            if (range == null) {
+                debugger; // TODO: remove this pending resolution of https://github.com/rstudio/rstudio/issues/13605
+                return;
+            }
             if (this.multiSelect.isEmpty() && anchor == this.multiSelect.anchor)
                 return;
             var pos = anchor == this.multiSelect.anchor
