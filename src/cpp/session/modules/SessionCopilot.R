@@ -119,12 +119,12 @@
    .rs.ensureDirectory(dirname(targetDirectory))
    file.copy(copilotAgentDirectory, dirname(targetDirectory), recursive = TRUE)
    
-   # Confirm the agent runtime exists
-   agentPath <- file.path(targetDirectory, "agent.js")
-   if (!file.exists(agentPath))
+   # Confirm the agent runtime exists. Note that the runtime name has changed;
+   # older versions used 'agent.js', while newer versions use 'language-server.js'.
+   agentPaths <- file.path(targetDirectory, c("language-server.js", "agent.js"))
+   if (!any(file.exists(agentPaths)))
    {
-      fmt <- "Copilot Agent installation failed: '%s' does not exist."
-      msg <- sprintf(fmt, agentPath)
+      msg <- "Copilot Agent installation failed: neither 'language-server.js' nor 'agent.js' exist."
       stop(msg, call. = FALSE)
    }
    

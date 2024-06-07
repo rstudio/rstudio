@@ -71,7 +71,7 @@
 # define kNodeExe "node.exe"
 #endif
 
-#define kCopilotAgentDefaultCommitHash ("69455be5d4a892206bc08365ba3648a597485943") // pragma: allowlist secret
+#define kCopilotAgentDefaultCommitHash ("1dcaf72099b436b5832d6117d9cd7a4a098a8d77") // pragma: allowlist secret
 #define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
@@ -281,7 +281,7 @@ FilePath copilotAgentPath()
    {
       if (copilotPath.isDirectory())
       {
-         for (auto&& suffix : { "dist/agent.js", "agent.js" })
+         for (auto&& suffix : { "dist/language-server.js", "language-server.js", "dist/agent.js", "agent.js" })
          {
             FilePath candidatePath = copilotPath.completePath(suffix);
             if (candidatePath.exists())
@@ -312,7 +312,15 @@ FilePath copilotAgentPath()
 #endif
 
    // Otherwise, use a default user location.
-   return userCacheDir().completeChildPath("copilot/dist/agent.js");
+   for (auto&& suffix : { "copilot/dist/language-server.js", "copilot/dist/agent.js" })
+   {
+      FilePath agentPath = userCacheDir().completePath(suffix);
+      if (agentPath.exists())
+         return agentPath;
+   }
+   
+   // Fall back to default location.
+   return userCacheDir().completeChildPath("copilot/dist/language-server.js");
 }
 
 bool isCopilotAgentInstalled()
@@ -332,7 +340,6 @@ bool isCopilotAgentCurrent()
 {
    Error error;
    
-   // The Copilot agent.js is located in e.g. ~/.cache/rstudio/copilot/dist/agent.js.
    // Compute path to the copilot 'root' directory.
    FilePath versionPath = copilotAgentPath().getParent().getParent().completeChildPath("version.json");
    if (!versionPath.exists())
@@ -983,7 +990,7 @@ Error startAgent()
    // method?
    //
    // This also has the downside of failing less gracefully if 'node' is able to start
-   // successfully, but it later dies after trying to run the 'agent.js' script.
+   // successfully, but it later dies after trying to run the Copilot node script.
    s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
    s_agentStartupError = std::string();
    waitFor([]() { return s_agentPid != -1; });
@@ -1001,16 +1008,22 @@ Error startAgent()
    paramsJson["capabilities"] = json::Object();
    
    // set up continuation after we've finished initializing
-   auto callback = [=](const Error& error, json::JsonRpcResponse* pResponse)
+   auto initializedCallback = [=](const Error& error, json::JsonRpcResponse* pResponse)
    {
       if (error)
+      {
          LOG_ERROR(error);
-      else
-         setEditorInfo();
+         return;
+      }
+      
+      // newer versions of Copilot require an 'initialized' notification, which is
+      // then used as a signal that they should start the agent process
+      sendNotification("initialized", json::Object());
+      setEditorInfo();
    };
    
    std::string requestId = core::system::generateUuid();
-   sendRequest("initialize", requestId, paramsJson, CopilotContinuation(callback));
+   sendRequest("initialize", requestId, paramsJson, CopilotContinuation(initializedCallback));
 
    // Okay, we're ready to go.
    return Success();
