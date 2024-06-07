@@ -320,9 +320,6 @@ private:
       // this runs in the build pane as a child process of this process
       core::system::setenv(&environment, "RSTUDIO_CHILD_PROCESS_PANE", "build");
       
-      // build pane processes support ANSI colors
-      core::system::setenv(&environment, "R_CLI_NUM_COLORS", "256");
-      
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
       if (type == kTestFile)
@@ -511,9 +508,9 @@ private:
       // get the package roclets
       std::string roclets = projectConfig().packageRoxygenize;
       
-      // format nicely
+      // format nicely and quote
       boost::regex reComma(",");
-      roclets = boost::regex_replace(roclets, reComma, ", ");
+      roclets = fmt::format("'{}'", boost::regex_replace(roclets, reComma, "', '"));
 
       std::string documentCall = useDevtools()
             ? fmt::format("devtools::document(roclets = c({}))", roclets)
@@ -523,7 +520,7 @@ private:
       enqueCommandString(documentCall);
 
       return fmt::format(
-               "suppressPackageStartupMessages({ {}; {} })",
+               "suppressPackageStartupMessages({{ {}; {} }})",
                "Sys.setlocale('LC_COLLATE', 'C')",
                documentCall);
    }
