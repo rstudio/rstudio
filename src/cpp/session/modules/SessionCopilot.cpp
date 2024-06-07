@@ -1000,16 +1000,22 @@ Error startAgent()
    paramsJson["capabilities"] = json::Object();
    
    // set up continuation after we've finished initializing
-   auto callback = [=](const Error& error, json::JsonRpcResponse* pResponse)
+   auto initializedCallback = [=](const Error& error, json::JsonRpcResponse* pResponse)
    {
       if (error)
+      {
          LOG_ERROR(error);
-      else
-         setEditorInfo();
+         return;
+      }
+      
+      // newer versions of Copilot require an 'initialized' notification, which is
+      // then used as a signal that they should start the agent process
+      sendNotification("initialized", json::Object());
+      setEditorInfo();
    };
    
    std::string requestId = core::system::generateUuid();
-   sendRequest("initialize", requestId, paramsJson, CopilotContinuation(callback));
+   sendRequest("initialize", requestId, paramsJson, CopilotContinuation(initializedCallback));
 
    // Okay, we're ready to go.
    return Success();
