@@ -52,17 +52,18 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
          {
             drawTopRowPadding();
          }
-         
-         // if this is the last row, draw padding
-         else if (index == lastActiveRow_)
-         {
-            drawBottomRowPadding();
-         }
-         
-         else if (firstActiveRow_ <= index && index <= lastActiveRow_)
+       
+         // draw this row if it's in view
+         if (firstActiveRow_ <= index && index <= lastActiveRow_)
          {
             // draw this row if it's in the visibility range
             super.buildRowImpl(data, index);
+         }
+         
+         // if this is the last row, draw padding
+         if (index == lastActiveRow_)
+         {
+            drawBottomRowPadding();
          }
       }
       
