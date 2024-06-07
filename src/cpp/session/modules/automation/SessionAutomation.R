@@ -195,18 +195,9 @@
 
 .rs.addFunction("automation.applicationPathDesktop", function()
 {
-   if (.rs.platform.isMacos)
-   {
-      "/Applications/RStudio.app/Contents/MacOS/RStudio"
-   }
-   else if (.rs.platform.isWindows)
-   {
-      "C:/Program Files/RStudio/rstudio.exe"
-   }
-   else
-   {
-      "/usr/bin/rstudio"
-   }
+   # Assume that the RStudio Desktop instance is the parent of
+   # the running R session.
+   ps::ps_exe(ps::ps_parent())
 })
 
 .rs.addFunction("automation.applicationPath", function(mode)
@@ -322,9 +313,16 @@
    
    # Build argument list.
    # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
-   baseArgs <- Sys.getenv("RSTUDIO_AUTOMATION_ARGS", unset = NA)
+   
+   # If it looks like we're running with Electron (that is, a development build)
+   # then we need to include the path to the appropriate working directory.
+   baseArgs <- if (grepl("electron", basename(appPath), ignore.case = TRUE))
+   {
+      ps::ps_cwd(ps::ps_parent())
+   }
+   
    args <- c(
-      if (!is.na(baseArgs)) baseArgs,
+      baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", tempdir()),
       if (mode == "desktop") "--automation-agent",

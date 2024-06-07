@@ -15,7 +15,7 @@
 
 import { ChildProcess, execSync, spawn } from 'child_process';
 import { app, BrowserWindow } from 'electron';
-import fs, { existsSync, readFileSync } from 'fs';
+import fs, { existsSync, readFileSync, rmSync } from 'fs';
 
 import { getenv, setenv, unsetenv } from '../core/environment';
 import { Err, safeError, success } from '../core/err';
@@ -23,7 +23,7 @@ import { FilePath } from '../core/file-path';
 import { readStringArrayFromFile } from '../core/file-serializer';
 import { logger } from '../core/logger';
 import { kRStudioInitialProject } from '../core/r-user-data';
-import { generateShortenedUuid, localPeer } from '../core/system';
+import { generateShortenedUuid, generateUuid, localPeer } from '../core/system';
 
 import i18next from 'i18next';
 import { setTimeoutPromise } from '../core/wait-utils';
@@ -389,6 +389,7 @@ export class SessionLauncher {
   }
 
   onRSessionExited(): void {
+
     // if this is a verify-installation session then just quit
     if (appState().runDiagnostics) {
       this.mainWindow?.quit();
@@ -603,13 +604,30 @@ export class SessionLauncher {
     // to a separate location, so we can more easily build and restart
     // with an "active" rsession executable
     if (!app.isPackaged && process.platform == 'win32') {
+
+      // Get the session path.
       const sessionPath = this.sessionPath.getAbsolutePath();
       const sessionDir = path.dirname(sessionPath);
-      const sessionName = path.basename(sessionPath).replaceAll('development-', '');
+      const sessionName = path.basename(sessionPath);
 
-      const newSessionPath = `${sessionDir}/development-${sessionName}`;
-      fs.copyFileSync(this.sessionPath.getAbsolutePath(), newSessionPath);
-      this.sessionPath = new FilePath(newSessionPath);
+      // Detect development sessions.
+      let orgSessionName: string;
+      let devSessionName: string;
+      const rsessionIndex = sessionName.indexOf('rsession');
+      if (rsessionIndex === 0) {
+        orgSessionName = sessionName;
+        devSessionName = `development.${generateShortenedUuid()}.${sessionName}`;
+        app.on('quit', (_event) => {
+          rmSync(path.join(sessionDir, devSessionName));
+        });
+      } else {
+        orgSessionName = sessionName.substring(rsessionIndex);
+        devSessionName = sessionName;
+      }
+
+      logger().logDebug(`Using development session: ${orgSessionName} => ${devSessionName}`);
+      fs.copyFileSync(path.join(sessionDir, orgSessionName), path.join(sessionDir, devSessionName));
+      this.sessionPath = new FilePath(`${sessionDir}/${devSessionName}`);
     }
 
     const sessionProc = launchProcess(this.sessionPath, argList);
