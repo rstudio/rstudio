@@ -312,6 +312,14 @@ FilePath copilotAgentPath()
 #endif
 
    // Otherwise, use a default user location.
+   for (auto&& suffix : { "copilot/dist/language-server.js", "copilot/dist/agent.js" })
+   {
+      FilePath agentPath = userCacheDir().completePath(suffix);
+      if (agentPath.exists())
+         return agentPath;
+   }
+   
+   // Fall back to default location.
    return userCacheDir().completeChildPath("copilot/dist/language-server.js");
 }
 
