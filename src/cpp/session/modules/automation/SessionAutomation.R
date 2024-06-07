@@ -20,6 +20,7 @@
 
 # Global state tracking the active client + session ID.
 .rs.setVar("automation.client", NULL)
+.rs.setVar("automation.targetId", NULL)
 .rs.setVar("automation.sessionId", NULL)
 
 # Global variable for tracking the active automation agent.
@@ -284,7 +285,10 @@
    envVars["R_SESSION_TMPDIR"] <- list(NULL)
    
    # Make sure the automation server uses the same R session executable.
-   envVars[["RSTUDIO_WHICH_R"]] <- ps::ps_exe()
+   envVars[["RSTUDIO_WHICH_R"]] <- if (.rs.platform.isWindows)
+      file.path(R.home("bin"), "R.exe")
+   else
+      file.path(R.home("bin", "R"))
    
    # Ensure that the new RStudio instance uses temporary storage.
    stateDir <- tempfile("rstudio-automation-state-")
@@ -362,6 +366,7 @@
 {
    # Clear a previous session ID if necessary.
    .rs.setVar("automation.client", NULL)
+   .rs.setVar("automation.targetId", NULL)
    .rs.setVar("automation.sessionId", NULL)
    
    # Get the websocket debugger URL.
@@ -446,6 +451,7 @@
    
    # Update our global variables.
    .rs.setVar("automation.client", client)
+   .rs.setVar("automation.targetId", currentTargetId)
    .rs.setVar("automation.sessionId", sessionId)
    
    # Return the discovered session ID.
@@ -480,6 +486,7 @@
    
    # Update our global variables.
    .rs.setVar("automation.client", client)
+   .rs.setVar("automation.targetId", currentTargetId)
    .rs.setVar("automation.sessionId", sessionId)
    
    # TODO: Handle input of authentication credentials?

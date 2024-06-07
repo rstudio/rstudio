@@ -109,6 +109,7 @@
 {
    # Write document contents to file.
    documentPath <- tempfile("document-", fileext = ext)
+   documentPath <- chartr("\\", "/", documentPath)
    writeLines(contents, con = documentPath)
    
    # Open that document in the attached editor.
