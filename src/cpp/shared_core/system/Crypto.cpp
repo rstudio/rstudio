@@ -43,8 +43,6 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/Logger.hpp>
 
-#include <shared_core/system/encryption/EncryptionVersion.hpp>
-
 namespace rstudio {
 namespace core {
 namespace system {
