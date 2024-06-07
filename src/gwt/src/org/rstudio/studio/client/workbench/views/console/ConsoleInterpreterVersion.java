@@ -58,8 +58,6 @@ public class ConsoleInterpreterVersion
    implements ReticulateEvent.Handler
 
 {
-   enum ActiveLanguage { R, PYTHON }
-   
    @Inject
    private void initialize(Session session,
                            Commands commands,
@@ -152,12 +150,10 @@ public class ConsoleInterpreterVersion
       if (isPythonActive())
       {
          logoContainer_.add(pythonLogo_);
-         activeLanguage_ = ActiveLanguage.PYTHON;
       }
       else
       {
          logoContainer_.add(rLogo_);
-         activeLanguage_ = ActiveLanguage.R;
       }
       container_.add(logoContainer_);
       
@@ -194,7 +190,6 @@ public class ConsoleInterpreterVersion
       logoContainer_.remove(0);
       logoContainer_.insert(rLogo_, 0);
       setRVersionLabel();
-      activeLanguage_ = ActiveLanguage.R;
    }
 
    private void adaptToPython(PythonInterpreter info)
@@ -202,7 +197,6 @@ public class ConsoleInterpreterVersion
       logoContainer_.remove(0);
       logoContainer_.insert(pythonLogo_, 0);
       label_.setText(pythonVersionLabel(info));
-      activeLanguage_ = ActiveLanguage.PYTHON;
    }
    
    private boolean isPythonActive()
@@ -281,7 +275,6 @@ public class ConsoleInterpreterVersion
    private final HTML rLogo_;
    private final HTML pythonLogo_;
    private final Label label_;
-   private ActiveLanguage activeLanguage_ = ActiveLanguage.R;
    
    // Injected ----
    private Session session_;
