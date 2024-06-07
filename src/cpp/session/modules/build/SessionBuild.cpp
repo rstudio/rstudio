@@ -514,7 +514,7 @@ private:
 
       std::string documentCall = useDevtools()
             ? fmt::format("devtools::document(roclets = c({}))", roclets)
-            : fmt::format("roxygen2::roxygenzie('.', roclets = c({})", roclets);
+            : fmt::format("roxygen2::roxygenize('.', roclets = c({})", roclets);
       
       // show the user the call to document
       enqueCommandString(documentCall);
