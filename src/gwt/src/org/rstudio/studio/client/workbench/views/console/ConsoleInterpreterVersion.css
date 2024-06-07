@@ -7,6 +7,12 @@
 
 .container {
    display: inline-block;
+   cursor: pointer;
+}
+
+.menuClicked {
+	position: relative;
+	top: 1px;
 }
 
 .icon {

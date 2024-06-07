@@ -14,24 +14,34 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.TextResource;
@@ -39,6 +49,8 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
 public class ConsoleInterpreterVersion
@@ -46,14 +58,22 @@ public class ConsoleInterpreterVersion
    implements ReticulateEvent.Handler
 
 {
+   enum ActiveLanguage { R, PYTHON }
+   
    @Inject
    private void initialize(Session session,
-                           ApplicationServerOperations server,
-                           EventBus events)
+                           Commands commands,
+                           EventBus events,
+                           ConsoleLanguageTracker tracker,
+                           DependencyManager depoman,
+                           ApplicationServerOperations server)
    {
       session_ = session;
-      server_ = server;
+      commands_ = commands;
       events_ = events;
+      tracker_ = tracker;
+      depoman_ = depoman;
+      server_ = server;
    }
    
    public ConsoleInterpreterVersion()
@@ -83,7 +103,44 @@ public class ConsoleInterpreterVersion
             RES.styles().iconPython(),
             isTabbedView);
       
+      logoContainer_ = new FlowPanel(SpanElement.TAG);
       container_.addStyleName(RES.styles().container());
+      container_.addDomHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            ToolbarPopupMenu menu = new ToolbarPopupMenu();
+            
+            menu.addItem(new MenuItem("R", () ->
+            {
+               tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_R, () ->
+               {
+                  commands_.activateConsole().execute();
+               });
+            }));
+            
+            menu.addItem(new MenuItem("Python", () ->
+            {
+               tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_PYTHON, () ->
+               {
+                  commands_.activateConsole().execute();
+               });
+            }));
+            
+            logoContainer_.addStyleName(RES.styles().menuClicked());
+            menu.addCloseHandler(new CloseHandler<PopupPanel>()
+            {
+               @Override
+               public void onClose(CloseEvent<PopupPanel> event)
+               {
+                  logoContainer_.removeStyleName(RES.styles().menuClicked());
+               }
+            });
+            
+            menu.showRelativeTo(container_);
+         }
+      }, ClickEvent.getType());
       
       label_.addStyleName(RES.styles().label());
       label_.addStyleName(ThemeStyles.INSTANCE.title());
@@ -94,12 +151,15 @@ public class ConsoleInterpreterVersion
 
       if (isPythonActive())
       {
-         container_.add(pythonLogo_);
+         logoContainer_.add(pythonLogo_);
+         activeLanguage_ = ActiveLanguage.PYTHON;
       }
       else
       {
-         container_.add(rLogo_);
+         logoContainer_.add(rLogo_);
+         activeLanguage_ = ActiveLanguage.R;
       }
+      container_.add(logoContainer_);
       
       container_.add(label_);
       initWidget(container_);
@@ -131,17 +191,18 @@ public class ConsoleInterpreterVersion
    
    public void adaptToR()
    {
-      container_.remove(0);
-      container_.insert(rLogo_, 0);
+      logoContainer_.remove(0);
+      logoContainer_.insert(rLogo_, 0);
       setRVersionLabel();
-      
+      activeLanguage_ = ActiveLanguage.R;
    }
 
    private void adaptToPython(PythonInterpreter info)
    {
-      container_.remove(0);
-      container_.insert(pythonLogo_, 0);
+      logoContainer_.remove(0);
+      logoContainer_.insert(pythonLogo_, 0);
       label_.setText(pythonVersionLabel(info));
+      activeLanguage_ = ActiveLanguage.PYTHON;
    }
    
    private boolean isPythonActive()
@@ -216,13 +277,18 @@ public class ConsoleInterpreterVersion
    }-*/;
    
    private final FlowPanel container_;
+   private final FlowPanel logoContainer_;
    private final HTML rLogo_;
    private final HTML pythonLogo_;
    private final Label label_;
+   private ActiveLanguage activeLanguage_ = ActiveLanguage.R;
    
    // Injected ----
    private Session session_;
+   private Commands commands_;
    private EventBus events_;
+   private ConsoleLanguageTracker tracker_;
+   private DependencyManager depoman_;
    private ApplicationServerOperations server_;
    
    // Resources ----
@@ -230,6 +296,7 @@ public class ConsoleInterpreterVersion
    public interface Styles extends CssResource
    {
       String container();
+      String menuClicked();
       
       String icon();
       String iconTabbed();

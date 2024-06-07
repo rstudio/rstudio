@@ -36,6 +36,9 @@ public class ConsoleLanguageTracker
                  ConsolePromptEvent.Handler,
                  RestartStatusEvent.Handler
 {
+   public static final String LANGUAGE_R      = "R";
+   public static final String LANGUAGE_PYTHON = "Python";
+   
    @Inject
    public ConsoleLanguageTracker(Session session,
                                  EventBus events,
@@ -106,9 +109,6 @@ public class ConsoleLanguageTracker
          language_ = LANGUAGE_R;
       }
    }
-
-   public static final String LANGUAGE_R      = "R";
-   public static final String LANGUAGE_PYTHON = "Python";
 
    private String language_;
 
