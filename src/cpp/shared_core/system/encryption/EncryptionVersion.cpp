@@ -190,6 +190,11 @@ Error aesDecrypt(
     std::vector<unsigned char>& out_decrypted)
 {
    out_decrypted.resize(in_data.size());
+
+   // if in_mac is wrong size, we'll fail below. Resize here to prevent other problems
+   if (in_mac.size() != 16)
+      in_mac.resize(16);
+
    int outLen = 0;
    int bytesDecrypted = 0;
 
@@ -222,12 +227,14 @@ Error aesDecrypt(
       return getLastCryptoError(ERROR_LOCATION);
    }
 
-   // perform final flush
+   // Finalize encryption
    // A positive return value indicates success,
    // anything else is a failure - the plaintext is not trustworthy.
-   if(EVP_DecryptFinal_ex(ctx, &out_decrypted[outLen], &outLen) < 0)
+   int finalLen = gsl::narrow_cast<int>(out_decrypted.size()) == outLen ? outLen - 1 : outLen;
+   if(EVP_DecryptFinal_ex(ctx, &out_decrypted[finalLen], &outLen) <= 0)
    {
       EVP_CIPHER_CTX_free(ctx);
+      out_decrypted.resize(0);
       return getLastCryptoError(ERROR_LOCATION);
    }
    bytesDecrypted += outLen;
@@ -252,15 +259,15 @@ Error aesEncrypt(
    out_encrypted.resize(data.size() + EVP_MAX_BLOCK_LENGTH);
 
    // ensure enough room in mac buffer
-   if (out_mac.size() != 2)
-      out_mac.resize(2);
+   if (out_mac.size() != 16)
+      out_mac.resize(16);
 
    int outlen = 0;
    int bytesEncrypted = 0;
 
    EVP_CIPHER_CTX *ctx;
    ctx = EVP_CIPHER_CTX_new();
-   EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &key[0], iv.empty() ? nullptr : &iv[0]);
+   EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr, &key[0], iv.empty() ? nullptr : &iv[0]);
 
    // provide any AAD data
    if (!aad.empty())

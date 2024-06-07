@@ -135,6 +135,69 @@ test_context("EncryptionVersionTests")
       REQUIRE_FALSE(error);
       REQUIRE(decryptedPayloadMatches(decryptedData));
    }
+
+   test_that("v2: Can AES encrypt/decrypt")
+   {
+      // setup
+      REQUIRE(generateKeys());
+
+      // encrypt the data
+      std::vector<unsigned char> encryptedData;
+      std::vector<unsigned char> aad = {2};
+      std::vector<unsigned char> mac;
+      Error error = core::system::crypto::v2::aesEncrypt(g_data, g_key, g_iv, aad, mac, encryptedData);
+      REQUIRE_FALSE(error);
+
+      // decrypt the encrypted data
+      std::vector<unsigned char> decryptedData;
+      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, aad, mac, decryptedData);
+      REQUIRE_FALSE(error);
+
+      // verify that the decryption gives us back the original data
+      REQUIRE(decryptedPayloadMatches(decryptedData));
+   }
+
+   test_that("v2: Can AES encrypt/decrypt detect tampering/corruption")
+   {
+      // setup
+      REQUIRE(generateKeys());
+
+      // encrypt the data
+      std::vector<unsigned char> encryptedData;
+      std::vector<unsigned char> aad = {2};
+      std::vector<unsigned char> mac;
+      Error error = core::system::crypto::v2::aesEncrypt(g_data, g_key, g_iv, aad, mac, encryptedData);
+      REQUIRE_FALSE(error);
+
+      // decrypt the encrypted data with wrong AAD
+      std::vector<unsigned char> decryptedData;
+      std::vector<unsigned char> bad_aad = {0};
+      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, bad_aad, mac, decryptedData);
+      REQUIRE(decryptedData.size() == 0);
+      REQUIRE(error != Success());
+
+      // decrypt the encrypted data with changed data
+
+      std::vector<unsigned char> bad_encryptedData = encryptedData;
+      bad_encryptedData[0] += 1;
+      error = core::system::crypto::v2::aesDecrypt(bad_encryptedData, g_key, g_iv, aad, mac, decryptedData);
+      REQUIRE(decryptedData.size() == 0);
+      REQUIRE(error != Success());
+
+      // decrypt the encrypted data with wrong MAC
+      std::vector<unsigned char> bad_mac(16);
+      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, aad, bad_mac, decryptedData);
+      REQUIRE(decryptedData.size() == 0);
+      REQUIRE(error != Success());
+
+      // Finally, decrypt the encrypted data correctly
+      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, aad, mac, decryptedData);
+      REQUIRE(decryptedData.size() > 0);
+      REQUIRE_FALSE(error);
+
+      // verify that the decryption gives us back the original data
+      REQUIRE(decryptedPayloadMatches(decryptedData));
+   }
 }
 
 } // end namespace tests

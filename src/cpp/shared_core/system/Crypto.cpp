@@ -28,6 +28,7 @@
  */
 
 #include <shared_core/system/Crypto.hpp>
+#include <shared_core/system/encryption/EncryptionVersion.hpp>
 
 #include <gsl/gsl>
 
@@ -41,8 +42,6 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/Logger.hpp>
-
-#include <shared_core/system/encryption/EncryptionVersion.hpp>
 
 namespace rstudio {
 namespace core {
@@ -84,7 +83,7 @@ Error aesDecrypt(
    const std::vector<unsigned char>& in_iv,
    std::vector<unsigned char>& out_decrypted)
 {
-   return v1::aesDecrypt(in_data, in_key, in_iv, out_decrypted);
+   return v0::aesDecrypt(in_data, in_key, in_iv, out_decrypted);
 }
 
 Error aesEncrypt(
@@ -101,7 +100,7 @@ Error aesEncrypt(
    const std::vector<unsigned char>& iv,
    std::vector<unsigned char>& out_encrypted)
 {
-   return v1::aesEncrypt(data, key, iv, out_encrypted);
+   return v0::aesEncrypt(data, key, iv, out_encrypted);
 }
 
 Error base64Encode(const std::vector<unsigned char>& in_data, std::string& out_encoded)
