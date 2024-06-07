@@ -69,6 +69,12 @@
    self$consoleExecute(code)
 })
 
+.rs.automation.addRemoteFunction("consoleExecuteExpr", function(expr)
+{
+   code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
+   self$consoleExecute(code)
+})
+
 .rs.automation.addRemoteFunction("consoleExecute", function(code)
 {
    # Make sure the Console pane is focused.
@@ -109,6 +115,7 @@
 {
    # Write document contents to file.
    documentPath <- tempfile("document-", fileext = ext)
+   documentPath <- chartr("\\", "/", documentPath)
    writeLines(contents, con = documentPath)
    
    # Open that document in the attached editor.
@@ -149,7 +156,7 @@
    # Check for failure.
    nodeId <- response$nodeId
    if (nodeId == 0L)
-      stop("No element matching selector '", nodeId, "' could be found.")
+      stop("No element matching selector '", selector, "' could be found.")
    
    # Describe the discovered node.
    nodeId
@@ -181,14 +188,16 @@
       type = "mousePressed",
       x = domRect$x + (domRect$width / 2),
       y = domRect$y + (domRect$height / 2),
-      button = button
+      button = button,
+      clickCount = 1L
    )
    
    self$client$Input.dispatchMouseEvent(
       type = "mouseReleased",
       x = domRect$x + (domRect$width / 2),
       y = domRect$y + (domRect$height / 2),
-      button = button
+      button = button,
+      clickCount = 1L
    )
 })
 

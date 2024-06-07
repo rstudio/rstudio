@@ -320,9 +320,6 @@ private:
       // this runs in the build pane as a child process of this process
       core::system::setenv(&environment, "RSTUDIO_CHILD_PROCESS_PANE", "build");
       
-      // build pane processes support ANSI colors
-      core::system::setenv(&environment, "R_CLI_NUM_COLORS", "256");
-      
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
       if (type == kTestFile)
@@ -351,8 +348,6 @@ private:
       }
       else if (config.buildType == r_util::kBuildTypeWebsite)
       {
-         options.workingDir = buildTargetPath;
-         
          // pass along R_LIBS
          std::string rLibs = module_context::libPathsString();
          if (!rLibs.empty())
@@ -363,7 +358,7 @@ private:
          core::system::setenv(&environment, "RSTUDIO_LONG_VERSION", RSTUDIO_VERSION);
 
          options.environment = environment;
-         
+         options.workingDir = buildTargetPath;
          executeWebsiteBuild(type, subType, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
@@ -508,49 +503,26 @@ private:
    }
 
 
-   std::string buildRoxygenizeCall()
+   std::string buildDocumentCall()
    {
-      // build the call to roxygenize
-      std::vector<std::string> roclets;
-      boost::algorithm::split(roclets,
-                              projectConfig().packageRoxygenize,
-                              boost::algorithm::is_any_of(","));
-
-      // remove vignette roclet if we don't have the requisite roxygen2 version
-      bool haveVignetteRoclet = module_context::isPackageVersionInstalled(
-                                                   "roxygen2", "4.1.0.9001");
-      if (!haveVignetteRoclet)
-      {
-         auto it = std::find(roclets.begin(), roclets.end(), "vignette");
-         if (it != roclets.end())
-            roclets.erase(it);
-      }
+      // get the package roclets
+      std::string roclets = projectConfig().packageRoxygenize;
       
-      for (std::string& roclet : roclets)
-      {
-         roclet = "'" + roclet + "'";
-      }
+      // format nicely and quote
+      boost::regex reComma(",");
+      roclets = fmt::format("'{}'", boost::regex_replace(roclets, reComma, "', '"));
 
-      boost::format fmt;
-      if (useDevtools())
-         fmt = boost::format("devtools::document(roclets = c(%1%))");
-      else
-         fmt = boost::format("roxygen2::roxygenize('.', roclets = c(%1%))");
-      std::string roxygenizeCall = boost::str(
-         fmt % boost::algorithm::join(roclets, ", "));
+      std::string documentCall = useDevtools()
+            ? fmt::format("devtools::document(roclets = c({}))", roclets)
+            : fmt::format("roxygen2::roxygenize('.', roclets = c({})", roclets);
+      
+      // show the user the call to document
+      enqueCommandString(documentCall);
 
-      // show the user the call to roxygenize
-      enqueCommandString(roxygenizeCall);
-
-      // format the command to send to R
-      boost::format cmdFmt(
-         "suppressPackageStartupMessages("
-            "{oldLC <- Sys.getlocale(category = 'LC_COLLATE'); "
-            " Sys.setlocale(category = 'LC_COLLATE', locale = 'C'); "
-            " on.exit(Sys.setlocale(category = 'LC_COLLATE', locale = oldLC));"
-            " %1%; }"
-          ")");
-      return boost::str(cmdFmt % roxygenizeCall);
+      return fmt::format(
+               "suppressPackageStartupMessages({{ {}; {} }})",
+               "Sys.setlocale('LC_COLLATE', 'C')",
+               documentCall);
    }
 
    void onRoxygenizeCompleted(int exitStatus,
@@ -601,21 +573,8 @@ private:
          core::system::setenv(&childEnv, "R_LIBS", libPaths);
       
       options.environment = childEnv;
-      
-      // build the roxygenize command
-      shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--vanilla";
-      cmd << "-s";
-      cmd << "-e";
-      cmd << buildRoxygenizeCall();
-
-      // use the package working dir
       options.workingDir = packagePath;
-
-      // run it
-      module_context::processSupervisor().runCommand(cmd,
-                                                     options,
-                                                     cb);
+      rExecute(true, buildDocumentCall(), options, cb);
    }
 
    bool compileRcppAttributes(const FilePath& packagePath)
@@ -1015,10 +974,9 @@ private:
                                                      buildCb);
    }
 
-   bool rExecute(const std::string& command,
-                 const FilePath& workingDir,
-                 core::system::ProcessOptions pkgOptions,
-                 bool vanilla,
+   bool rExecute(bool vanilla,
+                 const std::string& command,
+                 const core::system::ProcessOptions& pkgOptions,
                  const core::system::ProcessCallbacks& cb)
    {
       // Find the path to R
@@ -1029,9 +987,6 @@ private:
          terminateWithError("attempting to locate R binary", error);
          return false;
       }
-
-      // execute within the package directory
-      pkgOptions.workingDir = workingDir;
       
       // build args
       std::vector<std::string> args;
@@ -1057,7 +1012,8 @@ private:
                         core::system::ProcessOptions pkgOptions,
                         const core::system::ProcessCallbacks& cb)
    {
-      if (!rExecute(command, packagePath, pkgOptions, true /* --vanilla */, cb))
+      pkgOptions.workingDir = packagePath;
+      if (!rExecute(true, command, pkgOptions, cb))
          return false;
 
       usedDevtools_ = true;
@@ -1203,32 +1159,25 @@ private:
          return;
       }
 
-      // construct a shell command to execute
-      shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--vanilla";
-      cmd << "-s";
-      cmd << "-e";
-      std::vector<std::string> rSourceCommands;
-      
-      boost::format fmt(
-         "if (nzchar('%1%')) devtools::load_all(dirname('%2%'));"
-         "testthat::test_file('%2%')"
-      );
-
+      // construct command to execute
+      using namespace string_utils;
       std::string testPathEscaped = 
-         string_utils::singleQuotedStrEscape(string_utils::utf8ToSystem(
-            testPath.getAbsolutePath()));
+         singleQuotedStrEscape(utf8ToSystem(testPath.getAbsolutePath()));
 
-      cmd << boost::str(fmt %
-                        pkgInfo_.name() %
-                        testPathEscaped);
-
+      // build default test command
+      std::string command = fmt::format("testthat::test_file('{}')", testPathEscaped);
+      
+      // use devtools::load_all() if this is a package project
+      if (!pkgInfo_.empty())
+      {
+         pkgOptions.workingDir = projects::projectContext().buildTargetPath();
+         command = fmt::format("devtools::load_all(); {}", command);
+      }
+      
       enqueCommandString("Testing R file using 'testthat'");
       successMessage_ = "\nTest complete";
-      module_context::processSupervisor().runCommand(cmd,
-                                                     pkgOptions,
-                                                     cb);
-
+      
+      rExecute(true, command, pkgOptions, cb);
    }
 
    void testShiny(FilePath& shinyPath,
@@ -1540,7 +1489,7 @@ private:
 
       // execute command
       enqueCommandString(command);
-      rExecute(command, websitePath, options, false /* --vanilla */, cb);
+      rExecute(false, command, options, cb);
    }
 
    void enquePreviewRmdEvent(const FilePath& sourceFile, const FilePath& outputFile)

@@ -20,6 +20,7 @@
 
 # Global state tracking the active client + session ID.
 .rs.setVar("automation.client", NULL)
+.rs.setVar("automation.targetId", NULL)
 .rs.setVar("automation.sessionId", NULL)
 
 # Global variable for tracking the active automation agent.
@@ -194,18 +195,9 @@
 
 .rs.addFunction("automation.applicationPathDesktop", function()
 {
-   if (.rs.platform.isMacos)
-   {
-      "/Applications/RStudio.app/Contents/MacOS/RStudio"
-   }
-   else if (.rs.platform.isWindows)
-   {
-      "C:/Program Files/RStudio/rstudio.exe"
-   }
-   else
-   {
-      "/usr/bin/rstudio"
-   }
+   # Assume that the RStudio Desktop instance is the parent of
+   # the running R session.
+   ps::ps_exe(ps::ps_parent())
 })
 
 .rs.addFunction("automation.applicationPath", function(mode)
@@ -284,7 +276,10 @@
    envVars["R_SESSION_TMPDIR"] <- list(NULL)
    
    # Make sure the automation server uses the same R session executable.
-   envVars[["RSTUDIO_WHICH_R"]] <- ps::ps_exe()
+   envVars[["RSTUDIO_WHICH_R"]] <- if (.rs.platform.isWindows)
+      file.path(R.home("bin"), "R.exe")
+   else
+      file.path(R.home("bin", "R"))
    
    # Ensure that the new RStudio instance uses temporary storage.
    stateDir <- tempfile("rstudio-automation-state-")
@@ -302,6 +297,7 @@
    config <- list(
       auto_save_on_idle = "none",
       continue_comments_on_newline = FALSE,
+      save_workspace = "never",
       windows_terminal_shell = "win-cmd"
    )
    
@@ -317,9 +313,16 @@
    
    # Build argument list.
    # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
-   baseArgs <- Sys.getenv("RSTUDIO_AUTOMATION_ARGS", unset = NA)
+   
+   # If it looks like we're running with Electron (that is, a development build)
+   # then we need to include the path to the appropriate working directory.
+   baseArgs <- if (grepl("electron", basename(appPath), ignore.case = TRUE))
+   {
+      ps::ps_cwd(ps::ps_parent())
+   }
+   
    args <- c(
-      if (!is.na(baseArgs)) baseArgs,
+      baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", tempdir()),
       if (mode == "desktop") "--automation-agent",
@@ -362,6 +365,7 @@
 {
    # Clear a previous session ID if necessary.
    .rs.setVar("automation.client", NULL)
+   .rs.setVar("automation.targetId", NULL)
    .rs.setVar("automation.sessionId", NULL)
    
    # Get the websocket debugger URL.
@@ -446,6 +450,7 @@
    
    # Update our global variables.
    .rs.setVar("automation.client", client)
+   .rs.setVar("automation.targetId", currentTargetId)
    .rs.setVar("automation.sessionId", sessionId)
    
    # Return the discovered session ID.
@@ -480,6 +485,7 @@
    
    # Update our global variables.
    .rs.setVar("automation.client", client)
+   .rs.setVar("automation.targetId", currentTargetId)
    .rs.setVar("automation.sessionId", sessionId)
    
    # TODO: Handle input of authentication credentials?
