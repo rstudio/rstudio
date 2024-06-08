@@ -29,7 +29,7 @@
 
 .rs.addFunction("automation.installRequiredPackages", function()
 {
-   packages <- c("here", "httr", "later", "processx", "ps", "websocket", "withr", "xml2")
+   packages <- c("here", "httr", "later", "processx", "ps", "usethis", "websocket", "withr", "xml2")
    pkgLocs <- find.package(packages, quiet = TRUE)
    if (length(packages) == length(pkgLocs))
       return()
