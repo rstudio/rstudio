@@ -1419,7 +1419,7 @@ void rRunAutomation()
    // delay execution of automation tests just so we can be sure
    // the IDE has fully materialized
    module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(100),
+            boost::posix_time::milliseconds(2000),
             rRunAutomationImpl);
 }
 
