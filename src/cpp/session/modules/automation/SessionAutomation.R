@@ -279,7 +279,7 @@
    envVars[["RSTUDIO_WHICH_R"]] <- if (.rs.platform.isWindows)
       file.path(R.home("bin"), "R.exe")
    else
-      file.path(R.home("bin", "R"))
+      file.path(R.home("bin"), "R")
    
    # Ensure that the new RStudio instance uses temporary storage.
    stateDir <- tempfile("rstudio-automation-state-")
