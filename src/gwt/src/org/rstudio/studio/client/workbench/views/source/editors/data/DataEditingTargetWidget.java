@@ -16,13 +16,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.*;
-
 import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
@@ -42,6 +37,16 @@ import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public class DataEditingTargetWidget extends Composite
    implements UrlContentEditingTarget.Display, 
@@ -85,6 +90,7 @@ public class DataEditingTargetWidget extends Composite
          null,
          false);
       frame_.setSize("100%", "100%");
+      ElementIds.assignElementId(frame_, ElementIds.DATA_VIEWER_FRAME);
       table_ = new DataTable(this);
       column_ = column;
       
