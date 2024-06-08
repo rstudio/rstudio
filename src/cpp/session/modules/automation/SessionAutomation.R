@@ -517,20 +517,32 @@
       tempfile("junit-", fileext = ".xml")
    })
    
-   # Create a junit-style reporter.
+   # Create a junit-style reporter, for Jenkins.
    junitReporter <- testthat::JunitReporter$new(file = reportFile)
+   
+   # Create a regular progress reporter.
+   progressReporter <- testthat::ProgressReporter$new()
+   
+   # Combine with the default reporter.
+   multiReporter <- testthat::MultiReporter$new(
+      reporters = list(
+         progressReporter,
+         junitReporter
+      )
+   )
+   
+   # Clear the console, and show a header that indicates we're about to run automation tests.
+   invisible(.rs.api.executeCommand("consoleClear"))
+   writeLines(c("", "==> Running RStudio automation tests...", ""))
    
    # Run tests.
    testthat::test_dir(
       path = "testthat",
-      reporter = junitReporter,
+      reporter = multiReporter,
       stop_on_failure = FALSE,
       stop_on_warning = FALSE
    )
    
-   # Write the test results, and the file they came from.
-   writeLines(readLines(reportFile))
-   writeLines(reportFile)
 })
 
 .rs.addFunction("automation.run", function(projectRoot = NULL,
