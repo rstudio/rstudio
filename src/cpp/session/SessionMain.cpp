@@ -1407,11 +1407,17 @@ void rRunAutomationImpl()
    if (error)
        LOG_ERROR(error);
  
-   // try to clean up session
-   rCleanup(true);
+   // run cleanup delayed
+   auto cleanup = []()
+   {
+      rCleanup(true);
+      exitEarly(0);
+   };
    
-   // exit if we haven't already
-   exitEarly(0);
+   module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(3000),
+            cleanup);
+            
 }
 
 void rRunAutomation()
@@ -1419,7 +1425,7 @@ void rRunAutomation()
    // delay execution of automation tests just so we can be sure
    // the IDE has fully materialized
    module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(100),
+            boost::posix_time::milliseconds(3000),
             rRunAutomationImpl);
 }
 
