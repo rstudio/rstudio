@@ -4024,4 +4024,16 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("_Show Current Memory Usage") // $NON-NLS-1$
     String toggleShowMemoryUsageMenuLabel();
     
+    // consoleActivateR
+    @DefaultStringValue("Console: Activate R") // $NON-NLS-1$
+    String consoleActivateRLabel();
+    @DefaultStringValue("R") // $NON-NLS-1$
+    String consoleActivateRMenuLabel();
+    
+    // consoleActivatePython
+    @DefaultStringValue("Console: Activate Python") // $NON-NLS-1$
+    String consoleActivatePythonLabel();
+    @DefaultStringValue("Python") // $NON-NLS-1$
+    String consoleActivatePythonMenuLabel();
+    
 }
