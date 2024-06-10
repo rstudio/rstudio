@@ -127,7 +127,13 @@ std::map<std::string, std::string> s_extToLanguageIdMap = {
    { ".tsx",   "typescriptreact" },
    { ".yml",   "yaml" },
 };
-   
+
+struct CopilotRequest
+{
+   std::string method;
+   std::string id;
+   json::Value params;
+};
 
 class CopilotContinuation
 {
@@ -217,8 +223,12 @@ CopilotAgentNotRunningReason s_agentNotRunningReason = CopilotAgentNotRunningRea
 // The current runtime status of the Copilot agent process.
 CopilotAgentRuntimeStatus s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
 
+// Whether or not we've handled the Copilot 'initialized' notification.
+// Primarily done to allow proper sequencing of Copilot callbacks.
+bool s_agentInitialized = false;
+
 // A queue of pending requests, to be sent via the agent's stdin.
-std::queue<std::string> s_pendingRequests;
+std::vector<CopilotRequest> s_pendingRequests;
 
 // Metadata related to pending requests. Mainly used to map
 // responses to their expected result types.
@@ -548,48 +558,46 @@ Error installCopilotAgent()
          .call();
 }
 
-std::string createRequest(const std::string& method,
-                          const std::string& id,
-                          const json::Value& paramsJson)
+void sendNotification(const std::string& method,
+                      const json::Value& paramsJson)
+{
+   s_pendingRequests.push_back({ method, "", paramsJson });
+}
+
+std::string formatRequest(const CopilotRequest& request)
 {
    // Create the request body
    json::Object requestJson;
    requestJson["jsonrpc"] = "2.0";
-   requestJson["method"] = method;
-   requestJson["params"] = paramsJson;
+   requestJson["method"] = request.method;
+   requestJson["params"] = request.params;
 
    // Set id if available.
    // Requests without an id are 'notifications', and never receive a response.
+   std::string id = request.id;
    if (!id.empty())
       requestJson["id"] = id;
 
    // Convert to a JSON string
-   std::string request = requestJson.write();
+   std::string requestBody = requestJson.write();
 
    // Convert into HTTP request with JSON payload in body
-   return fmt::format("Content-Length: {}\r\n\r\n{}", request.size(), request);
+   return fmt::format("Content-Length: {}\r\n\r\n{}", requestBody.size(), requestBody);
 }
 
-void sendNotification(const std::string& method,
-                      const json::Value& paramsJson)
-{
-   std::string request = createRequest(method, std::string(), paramsJson);
-   s_pendingRequests.push(request);
-}
 
 void sendRequest(const std::string& method,
                  const std::string& requestId,
                  const json::Value& paramsJson,
                  const CopilotContinuation& continuation)
 {
-   DLOG("Sending request '{}' with id '{}'.", method, requestId);
+   DLOG("Enqueuing request '{}' with id '{}'.", method, requestId);
    
    // Add the continuation, which is executed in response to the request.
    s_pendingContinuations[requestId] = continuation;
 
    // Create and enqueue the request.
-   std::string request = createRequest(method, requestId, paramsJson);
-   s_pendingRequests.push(request);
+   s_pendingRequests.push_back({ method, requestId, paramsJson });
 }
 
 // Should only be used for debugging, as this will block the R session
@@ -738,23 +746,50 @@ void onStarted(ProcessOperations& operations)
 
 bool onContinue(ProcessOperations& operations)
 {
-   // Send any pending requests over stdin.
-   while (!s_pendingRequests.empty())
+   auto debugCallback = [](const std::string& htmlRequest)
    {
-      std::string request = s_pendingRequests.front();
-      s_pendingRequests.pop();
-
       if (copilotLogLevel() >= 2)
       {
          std::cerr << std::endl;
          std::cerr << "REQUEST" << std::endl;
          std::cerr << "----------------" << std::endl;
-         std::cerr << request << std::endl;
+         std::cerr << htmlRequest << std::endl;
          std::cerr << "----------------" << std::endl;
          std::cerr << std::endl << std::endl;
       }
-
-      operations.writeToStdin(request, false);
+   };
+   
+   if (s_agentInitialized)
+   {
+      for (auto&& request : s_pendingRequests)
+      {
+         std::string htmlRequest = formatRequest(request);
+         debugCallback(htmlRequest);
+         operations.writeToStdin(htmlRequest, false);
+      }
+      s_pendingRequests.clear();
+   }
+   else
+   {
+      // use expel_if to only process requests related to Copilot initialization
+      core::algorithm::expel_if(s_pendingRequests, [&](const CopilotRequest& request)
+      {
+         bool isInitMethod =
+               request.method == "initialize" ||
+               request.method == "initialized" ||
+               request.method == "setEditorInfo";
+         
+         if (!isInitMethod)
+            return false;
+         
+         if (request.method == "initialized")
+            s_agentInitialized = true;
+         
+         std::string htmlRequest = formatRequest(request);
+         debugCallback(htmlRequest);
+         operations.writeToStdin(htmlRequest, false);
+         return true;
+      });
    }
 
    return true;
