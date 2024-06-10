@@ -142,6 +142,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
@@ -6281,9 +6282,9 @@ public class TextEditingTarget implements
                         public void execute()
                         {
                            // compute the language for this chunk
-                           String language = "R";
-                           if (DocumentMode.isPositionInPythonMode(docDisplay_, positionFinal))
-                              language = "Python";
+                           String language = (DocumentMode.isPositionInPythonMode(docDisplay_, positionFinal))
+                                 ? ConsoleLanguageTracker.LANGUAGE_PYTHON
+                                 : ConsoleLanguageTracker.LANGUAGE_R;
 
                            events_.fireEvent(new SendToConsoleEvent(code, language, true));
                         }

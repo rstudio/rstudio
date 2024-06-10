@@ -16,16 +16,22 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -36,22 +42,50 @@ public class ConsoleLanguageTracker
                  ConsolePromptEvent.Handler,
                  RestartStatusEvent.Handler
 {
+   public interface Binder extends CommandBinder<Commands, ConsoleLanguageTracker> {}
+   
+   public static final String LANGUAGE_R      = "R";
+   public static final String LANGUAGE_PYTHON = "Python";
+   
    @Inject
    public ConsoleLanguageTracker(Session session,
+                                 Commands commands,
+                                 Binder binder,
                                  EventBus events,
+                                 DependencyManager depman,
                                  ConsoleServerOperations server)
    {
       session_ = session;
+      commands_ = commands;
       events_ = events;
+      depman_ = depman;
       server_ = server;
 
+      binder.bind(commands, this);
+      
+      events_.addHandler(SessionInitEvent.TYPE, this);
+      events_.addHandler(ConsolePromptEvent.TYPE, this);
+      events_.addHandler(RestartStatusEvent.TYPE, this);
+      
       init();
+   }
+   
+   @Handler
+   public void onConsoleActivateR()
+   {
+      adaptToLanguage(LANGUAGE_R, null);
+   }
+   
+   @Handler
+   public void onConsoleActivatePython()
+   {
+      adaptToLanguage(LANGUAGE_PYTHON, null);
    }
 
    public void adaptToLanguage(final String language,
                                final Command command)
    {
-      if (!StringUtil.equals(language, language_))
+      Command adaptCommand = () ->
       {
          server_.adaptToLanguage(
                language,
@@ -61,28 +95,50 @@ public class ConsoleLanguageTracker
                   public void onResponseReceived(Void response)
                   {
                      language_ = language;
-                     command.execute();
+                     
+                     if (command != null)
+                        command.execute();
                   }
 
                   @Override
                   public void onError(ServerError error)
                   {
                      Debug.logError(error);
-                     command.execute();
+                     
+                     if (command != null)
+                        command.execute();
                   }
                });
+      };
+      
+      if (!StringUtil.equals(language, language_))
+      {
+         if (language.equals(LANGUAGE_PYTHON))
+         {
+            depman_.withReticulate(
+                  CONSTANTS.executingPythonCodeProgressCaption(),
+                  CONSTANTS.executingPythonCodeProgressCaption(),
+                  adaptCommand::execute);
+         }
+         else
+         {
+            adaptCommand.execute();
+         }
       }
       else
       {
-         command.execute();
+         if (command != null)
+            command.execute();
       }
+   }
+   
+   public void adaptToLanguage(final String language)
+   {
+      adaptToLanguage(language, null);
    }
 
    private void init()
    {
-      events_.addHandler(SessionInitEvent.TYPE, this);
-      events_.addHandler(ConsolePromptEvent.TYPE, this);
-      events_.addHandler(RestartStatusEvent.TYPE, this);
    }
 
    @Override
@@ -107,13 +163,14 @@ public class ConsoleLanguageTracker
       }
    }
 
-   public static final String LANGUAGE_R      = "R";
-   public static final String LANGUAGE_PYTHON = "Python";
-
    private String language_;
+   
+   private static final ConsoleConstants CONSTANTS = GWT.create(ConsoleConstants.class);
 
    // Injected ----
    private final Session session_;
+   private final Commands commands_;
    private final EventBus events_;
+   private final DependencyManager depman_;
    private final ConsoleServerOperations server_;
 }

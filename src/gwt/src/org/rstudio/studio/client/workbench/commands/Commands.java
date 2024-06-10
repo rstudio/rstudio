@@ -250,6 +250,8 @@ public abstract class
    public abstract AppCommand layoutZoomConsole();
    public abstract AppCommand layoutZoomConsolePane();
    public abstract AppCommand activateConsolePanePane();
+   public abstract AppCommand consoleActivateR();
+   public abstract AppCommand consoleActivatePython();
 
    // Files
    public abstract AppCommand newFolder();

@@ -4274,4 +4274,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Toggle Memory Usage Display in Environment Pane"
         menuLabel="_Show Current Memory Usage"
         checkable="true" />
+        
+   <cmd id="consoleActivateR"
+        label="Console: Activate R"
+        menuLabel="R" />
+        
+   <cmd id="consoleActivatePython"
+        label="Console: Activate Python"
+        menuLabel="Python" />
+        
 </commands>

@@ -14,15 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
-import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
 public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Handler>
 {
+   public static final String LANGUAGE_R = "R";
+   public static final String LANGUAGE_PYTHON = "Python";
+   
    public static final Type<Handler> TYPE = new Type<>();
 
    public interface Handler extends EventHandler
