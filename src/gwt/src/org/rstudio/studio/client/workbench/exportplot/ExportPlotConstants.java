@@ -70,6 +70,24 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
     @DefaultMessage("View plot after saving")
     @Key("viewAfterSaveCheckBoxTitle")
     String viewAfterSaveCheckBoxTitle();
+ 
+    /**
+     * Translated "Use device pixel ratio".
+     *
+     * @return translated "Use device pixel ratio"
+     */
+    @DefaultMessage("Use device pixel ratio")
+    @Key("useDevicePixelRatioCheckBoxLabel")
+    String useDevicePixelRatioCheckBoxLabel();
+    
+    /**
+     * Translated "When set, the plot dimensions will be scaled according to the current display's device pixel ratio.".
+     *
+     * @return translated "When set, the plot dimensions will be scaled according to the current display's device pixel ratio."
+     */
+    @DefaultMessage("When set, the plot dimensions will be scaled according to the current display''s device pixel ratio.")
+    @Key("useDevicePixelRatioCheckBoxTitle")
+    String useDevicePixelRatioCheckBoxTitle();
 
     /**
      * Translated "File Name Required".

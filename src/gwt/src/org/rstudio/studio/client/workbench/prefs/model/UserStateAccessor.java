@@ -20,17 +20,16 @@
 
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
-
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 /**
  * Accessor class for user state.
@@ -327,6 +326,10 @@ public class UserStateAccessor extends Prefs
 
       public final native boolean getCopyAsMetafile() /*-{
          return this && this.copyAsMetafile || false;
+      }-*/;
+      
+      public final native boolean getUseDevicePixelRatio() /*-{
+         return this && this.useDevicePixelRatio || false;
       }-*/;
 
    }

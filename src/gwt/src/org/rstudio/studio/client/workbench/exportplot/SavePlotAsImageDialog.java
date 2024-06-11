@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -24,6 +23,8 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -73,7 +74,13 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       viewAfterSaveCheckBox_ = new CheckBox(constants_.viewAfterSaveCheckBoxTitle());
       viewAfterSaveCheckBox_.setValue(options.getViewAfterSave());
       addLeftWidget(viewAfterSaveCheckBox_);
-     
+      
+      // use device pixel ratio
+      useDevicePixelRatioCheckBox_ = new CheckBox(constants_.useDevicePixelRatioCheckBoxLabel());
+      useDevicePixelRatioCheckBox_.setTitle(constants_.useDevicePixelRatioCheckBoxTitle());
+      useDevicePixelRatioCheckBox_.setValue(options.getUseDevicePixelRatio());
+      useDevicePixelRatioCheckBox_.getElement().getStyle().setPaddingLeft(6, Unit.PX);
+      addLeftWidget(useDevicePixelRatioCheckBox_);
    }
 
    @Override
@@ -93,10 +100,11 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    {
       ExportPlotSizeEditor sizeEditor = getSizeEditor();
       return ExportPlotOptions.create(sizeEditor.getImageWidth(), 
-                                      sizeEditor.getImageHeight(), 
+                                      sizeEditor.getImageHeight(),
                                       sizeEditor.getKeepRatio(),
                                       saveAsTarget_.getFormat(),
                                       viewAfterSaveCheckBox_.getValue(),
+                                      useDevicePixelRatioCheckBox_.getValue(),
                                       previous.getCopyAsMetafile());
    }
    
@@ -123,7 +131,8 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
             format, 
             getSizeEditor(), 
             overwrite, 
-            viewAfterSaveCheckBox_.getValue(), 
+            viewAfterSaveCheckBox_.getValue(),
+            useDevicePixelRatioCheckBox_.getValue(),
             onCompleted);    
    }
   
@@ -132,5 +141,6 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    private final SavePlotAsImageOperation saveOperation_;
    private SavePlotAsImageTargetEditor saveAsTarget_;
    private CheckBox viewAfterSaveCheckBox_;
+   private CheckBox useDevicePixelRatioCheckBox_;
    private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }

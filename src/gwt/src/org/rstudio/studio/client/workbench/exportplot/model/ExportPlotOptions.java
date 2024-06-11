@@ -26,6 +26,7 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
                                                        boolean keepRatio,
                                                        String format,
                                                        boolean viewAfterSave,
+                                                       boolean useDevicePixelRatio,
                                                        boolean copyAsMetafile) 
    /*-{
       var options = new Object();
@@ -34,6 +35,7 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
       options.format = format;
       options.keepRatio = keepRatio;
       options.viewAfterSave = viewAfterSave;
+      options.useDevicePixelRatio = useDevicePixelRatio;
       options.copyAsMetafile = copyAsMetafile;
       return options;
    }-*/;
@@ -46,6 +48,7 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
                                       options.getKeepRatio(),
                                       options.getFormat(),
                                       options.getViewAfterSave(),
+                                      options.getUseDevicePixelRatio(),
                                       options.getCopyAsMetafile());
    }
 
@@ -59,6 +62,7 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
              a.height === b.height &&
              a.keepRatio === b.keepRatio &&
              a.viewAfterSave === b.viewAfterSave &&
-             a.copyAsMetafile === b.copyAsMetafile;    
+             a.useDevicePixelRatio === b.useDevicePixelRatio &&
+             a.copyAsMetafile === b.copyAsMetafile;
    }-*/;
 }
