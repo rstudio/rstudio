@@ -86,3 +86,31 @@ test_that("Quarto chunks receive chunk begin / end markers as expected", {
    })
    
 })
+
+# https://github.com/rstudio/rstudio/issues/14592
+test_that("The sequence '# |' is not tokenized as a Quarto comment prefix", {
+  
+   documentContents <- .rs.heredoc('
+      #|  yaml: true
+      # | yaml: false
+   ')
+   
+   remote$documentExecute(".R", documentContents, function(editor) {
+      
+      tokens <- as.vector(editor$session$getTokens(0L))
+      firstToken <- tokens[[1L]]
+      expect_equal(firstToken$type, "comment.doc.tag")
+      expect_equal(firstToken$value, "#|")
+      
+      tokens <- as.vector(editor$session$getTokens(1L))
+      expect_equal(tokens, list(
+         list(
+            type   = "comment",
+            value  = "# | yaml: false",
+            column = 0
+         )
+      ))
+      
+   })
+   
+})
