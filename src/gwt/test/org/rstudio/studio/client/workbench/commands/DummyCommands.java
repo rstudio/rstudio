@@ -3186,4 +3186,13 @@ public class DummyCommands extends Commands {
         return null;
     }
 
+    @Override
+    public AppCommand consoleActivatePython() {
+        return null;
+    }
+
+    @Override
+    public AppCommand consoleActivateR() {
+        return null;
+    }
 }
