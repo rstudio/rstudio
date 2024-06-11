@@ -46,6 +46,7 @@
 - Fix startup error due to invalid zoom setting triggering a config schema violation (#14690) 
 - Removed extra spaces after package names in warning message about required packages (#14608)
 - Moved the "Sign commit" checkbox to Git/Svn global options panel (##14559)
+- RStudio's editor highlighting no longer accepts embedded spaces in '#|' comment prefixes. (#14592)
 
 #### Posit Workbench
 
