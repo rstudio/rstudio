@@ -212,7 +212,6 @@ payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$ba
 echo "Sending to Github: $payload"
 httpCode=$(curl \
    -X PUT \
-   -w %{http_code} \
    -o $curlOutFname \
    -H "Accept: application/vnd.github.v3+json" \
    -H "Authorization: token $pat" \
@@ -231,17 +230,15 @@ if [[ $httpCode -eq 422 ]]; then
       -X GET \
       -H "Accept: application/vnd.github.v3+json" \
       -H "Authorization: token $pat" \
-      $githubUrl \
-      -d "$payload")
+      $githubUrl)
    echo $getShaResponse
 
-   updateSha=$(echo $getShaResponse | jq -r .sha)
+   fileSha=$(echo $getShaResponse | jq -r .sha)
 
-   payload="{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$updateSha\"}"
+   payload="{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$fileSha\"}"
    
    httpCode=$(curl \
       -X PUT \
-      -w %{http_code} \
       -o $curlOutFname \
       -H "Accept: application/vnd.github.v3+json" \
       -H "Authorization: token $pat" \
@@ -253,25 +250,33 @@ if [[ $httpCode -eq 422 ]]; then
    cat $curlOutFname
 fi
 
-# Separate this if block so if the 422 retry block above fails with a 409 we can handle that as well
+# Retry, sleeping for random 
 if [[ $httpCode -eq 409 ]]; then
-   echo "Received a 409 error, assuming it's a commit interleaving error, we'll back off for 3 seconds and retry".
-   sleep 3
 
-   #retry the command
-   echo "Retrying the command"
-   httpCode=$(curl \
-   -X PUT \
-   -w %{http_code} \
-   -o $curlOutFname \
-   -H "Accept: application/vnd.github.v3+json" \
-   -H "Authorization: token $pat" \
-   $githubUrl \
-   -d "$payload")
+   retry_count=0
+   while [[ $retry_count -lt 5 ]]; do
+      echo "Received a 409 error, assuming it's a commit interleaving error"
+      # Sleep for a random amount of time between 3-10 seconds: $(($RANDOM%($max-$min+1)+$min))
+      # Randomness is in case we're trying to upload at the same time as another process
+      sleep $((RANDOM % 6 + 3))
+      echo "Retrying the command (retry count: $((retry_count+1)) of $retry_count)"
 
-   echo "Github's Response"
-   echo "Http Code : $httpCode"
-   cat $curlOutFname
+       httpCode=$(curl \
+        -X PUT \
+        -o $curlOutFname \
+        -H "Accept: application/vnd.github.v3+json" \
+        -H "Authorization: token $pat" \
+        $githubUrl \
+        -d "$payload")
+
+      echo "Github's Response"
+      echo "Http Code : $httpCode"
+      cat $curlOutFname
+      if [[ $httpCode -ne 409 ]]; then
+         break
+      fi
+      retry_count=$((retry_count+1))
+   done
 fi
 
 if [[ $(($httpCode)) -ge 400 ]]; then
