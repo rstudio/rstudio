@@ -1,5 +1,6 @@
 /quarto-*.tar.gz
 /quarto-*.zip
 hunspell_dictionaries/
-
+/node-v*.tar.gz
+/node-v*.zip
 

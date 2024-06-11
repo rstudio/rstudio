@@ -465,17 +465,20 @@ export RSTUDIO_TOOLS_ROOT
 
 # version of node.js used for building
 #
-# When changing node version you must download the archives from https://nodejs.org/dist/vX.Y.Z/
-# and upload them to RSTUDIO_BUILDTOOLS/node/vX.Y.Z/.
-export RSTUDIO_NODE_VERSION="18.18.2"
+# When changing node version you must upload the corresponding archives to aws s3; use
+# rstudio/dependencies/tools/upload-node.sh
+
+# In addition to updating the version here, search the entire repo for other instances of
+# RSTUDIO_NODE_VERSION and update to match.
+export RSTUDIO_NODE_VERSION="20.14.0"
 
 # version of node.js installed with the product
 #
-# When changing node version you must download the archives from https://nodejs.org/dist/vX.Y.Z/
-# and upload them to RSTUDIO_BUILDTOOLS/node/vX.Y.Z/.
+# When changing node version you must upload the corresponding archives to aws s3; use
+# rstudio/dependencies/tools/upload-node.sh
 #
-# In addition to updating the version here, also update rstudio-tools.cmd, and CMakeGlobals.txt
-# (look for RSTUDIO_INSTALLED_NODE_VERSION in both). Also double-check that the steps in
+# In addition to updating the version here, search the entire repo for other instances of
+# RSTUDIO_INSTALLED_NODE_VERSION and update to match. Also double-check that the steps in
 # patch-node and patch-node.cmd work with the newer node (e.g. in case the layout has changed).
 export RSTUDIO_INSTALLED_NODE_VERSION="18.20.3"
 

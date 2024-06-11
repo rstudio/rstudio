@@ -41,7 +41,7 @@ PowerShell bootstrapping script above to pick up environment changes
 ## Build and run Electron
 
 - Ensure that `node.js` is installed and available on the path. It is
-  recommended to use the same version as set in CMakeGlobal.txt (root of the repo), search for
+  recommended to use the same version as set in globals.cmake (root of the repo), search for
   `RSTUDIO_NODE_VERSION` to find the current value
 - `cd rstudio\src\node\desktop`
 - `npm i`
