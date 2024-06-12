@@ -35,6 +35,7 @@ public class ViewerPaneSaveAsImageDesktopOperation implements SavePlotAsImageOpe
                            final ExportPlotSizeEditor sizeEditor,
                            final boolean overwrite,
                            final boolean viewAfterSave,
+                           final boolean useDevicePixelRatio,
                            final Operation onCompleted)
    {
       DesktopExport.export(

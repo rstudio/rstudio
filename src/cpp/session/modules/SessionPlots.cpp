@@ -134,13 +134,14 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    // get args
    std::string path, format;
    int width, height;
-   bool overwrite;
+   bool overwrite, useDevicePixelRatio;
    Error error = json::readParams(request.params,
                                   &path,
                                   &format,
                                   &width,
                                   &height,
-                                  &overwrite);
+                                  &overwrite,
+                                  &useDevicePixelRatio);
    if (error)
       return error;
 
@@ -157,7 +158,7 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    // save plot
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
-   error = display.savePlotAsImage(plotPath, format, width, height, true);
+   error = display.savePlotAsImage(plotPath, format, width, height, useDevicePixelRatio);
    if (error)
    {
        LOG_ERROR(error);

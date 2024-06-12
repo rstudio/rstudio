@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.Timers;
@@ -25,6 +24,7 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Label;
@@ -87,6 +87,7 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
                                       sizeEditor.getKeepRatio(),
                                       previous.getFormat(),
                                       previous.getViewAfterSave(),
+                                      previous.getUseDevicePixelRatio(),
                                       getCopyAsMetafile());    
    }
    

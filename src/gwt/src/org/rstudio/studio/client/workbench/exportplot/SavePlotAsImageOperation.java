@@ -27,5 +27,6 @@ public interface SavePlotAsImageOperation
                     ExportPlotSizeEditor sizeEditor,
                     boolean overwrite,
                     boolean viewAfterSave,
+                    boolean useDevicePixelRatio,
                     Operation onCompleted);
 }
