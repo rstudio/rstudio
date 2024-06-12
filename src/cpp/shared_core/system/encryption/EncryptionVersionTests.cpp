@@ -109,33 +109,6 @@ test_context("EncryptionVersionTests")
       REQUIRE(decryptedPayloadMatches(decryptedData));
    }
 
-   test_that("Are v0/v1 AES encrypt/decrypt enterchangable")
-   {
-      // setup
-      REQUIRE(generateKeys());
-
-      // encrypt with v0, decrypt with v1
-      std::vector<unsigned char> encryptedData;
-      Error error = core::system::crypto::v0::aesEncrypt(g_data, g_key, g_iv, encryptedData);
-      REQUIRE_FALSE(error);
-      std::vector<unsigned char> decryptedData;
-      error = core::system::crypto::v1::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE_FALSE(error);
-      REQUIRE(decryptedPayloadMatches(decryptedData));
-
-      // re-setup
-      REQUIRE(generateKeys());
-      encryptedData = {};
-      decryptedData = {};
-
-      // encrypt with v1, decrypt with v0
-      error = core::system::crypto::v1::aesEncrypt(g_data, g_key, g_iv, encryptedData);
-      REQUIRE_FALSE(error);
-      error = core::system::crypto::v0::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE_FALSE(error);
-      REQUIRE(decryptedPayloadMatches(decryptedData));
-   }
-
    test_that("v2: Can AES encrypt/decrypt")
    {
       // setup
@@ -143,14 +116,12 @@ test_context("EncryptionVersionTests")
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
-      std::vector<unsigned char> aad = {2};
-      std::vector<unsigned char> mac;
-      Error error = core::system::crypto::v2::aesEncrypt(g_data, g_key, g_iv, aad, mac, encryptedData);
+      Error error = core::system::crypto::v2::aesEncrypt(g_data, g_key, g_iv, encryptedData);
       REQUIRE_FALSE(error);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
-      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, aad, mac, decryptedData);
+      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
       REQUIRE_FALSE(error);
 
       // verify that the decryption gives us back the original data
@@ -164,34 +135,33 @@ test_context("EncryptionVersionTests")
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
-      std::vector<unsigned char> aad = {2};
-      std::vector<unsigned char> mac;
-      Error error = core::system::crypto::v2::aesEncrypt(g_data, g_key, g_iv, aad, mac, encryptedData);
+      Error error = core::system::crypto::v2::aesEncrypt(g_data, g_key, g_iv, encryptedData);
       REQUIRE_FALSE(error);
 
       // decrypt the encrypted data with wrong AAD
       std::vector<unsigned char> decryptedData;
-      std::vector<unsigned char> bad_aad = {0};
-      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, bad_aad, mac, decryptedData);
+      std::vector<unsigned char> bad_aad = encryptedData;
+      bad_aad[crypto::VERSION_BYTE_INDEX] += 1;
+      error = core::system::crypto::v2::aesDecrypt(bad_aad, g_key, g_iv, decryptedData);
       REQUIRE(decryptedData.size() == 0);
       REQUIRE(error != Success());
 
       // decrypt the encrypted data with changed data
-
       std::vector<unsigned char> bad_encryptedData = encryptedData;
-      bad_encryptedData[0] += 1;
-      error = core::system::crypto::v2::aesDecrypt(bad_encryptedData, g_key, g_iv, aad, mac, decryptedData);
+      bad_encryptedData[crypto::ENCRYPTION_VERSION_SIZE_BYTES] += 1;
+      error = core::system::crypto::v2::aesDecrypt(bad_encryptedData, g_key, g_iv, decryptedData);
       REQUIRE(decryptedData.size() == 0);
       REQUIRE(error != Success());
 
       // decrypt the encrypted data with wrong MAC
-      std::vector<unsigned char> bad_mac(16);
-      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, aad, bad_mac, decryptedData);
+      std::vector<unsigned char> bad_mac = encryptedData;
+      bad_mac.back() += 1;
+      error = core::system::crypto::v2::aesDecrypt(bad_mac, g_key, g_iv, decryptedData);
       REQUIRE(decryptedData.size() == 0);
       REQUIRE(error != Success());
 
       // Finally, decrypt the encrypted data correctly
-      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, aad, mac, decryptedData);
+      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
       REQUIRE(decryptedData.size() > 0);
       REQUIRE_FALSE(error);
 
