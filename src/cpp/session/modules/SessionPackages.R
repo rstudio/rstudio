@@ -308,7 +308,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       getNamespaceInfo(package, "path")
    }
    
-   
    # Now, try to unload the package. If it's attached, detach it;
    # if the namespace is loaded, unload it.
    searchPathName <- paste("package", package, sep = ":")
