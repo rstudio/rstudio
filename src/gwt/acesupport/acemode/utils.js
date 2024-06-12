@@ -278,7 +278,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
          if (state === "start" || state.indexOf("-start") !== -1) {
             self.$rules[state].unshift({
                token: "comment.doc.tag",
-               regex: "^\\s*#\\s*[|]",
+               regex: "^\\s*#[|]",
                push: prefix + "start"
             });
          }
