@@ -52,8 +52,8 @@ namespace crypto {
  * 
  * Encryption versioning is used to transition to newer encryption algorithms 
  * without breaking compatibility with older versions of the software. For newly
- * encrypted data, the encryption version is stored in the first byte of the 
- * encrypted data buffer (or, there is no encryption version byte in the case of
+ * encrypted data, the encryption version is stored in the first byte of the
+ * encrypted data buffer (or, there is no encryption version header in the case of
  * version 0 "legacy" encryption).
  * 
  * The expectation is that these versioned encryption functions will not be called
@@ -65,23 +65,30 @@ namespace crypto {
  * 
  * |Encryption Version | Encryption Used
  * |-------------------+------------------------------------------|
- * |     0  (legacy)   | AES 128 CBC, but with no version byte    |
+ * |     0  (legacy)   | AES 128 CBC, but with no version header  |
  * |-------------------+------------------------------------------|
- * |     1             | AES 128 CBC (with version byte)          |
+ * |     1             | AES 128 CBC (with version header)        |
  * |-------------------+------------------------------------------|
  * |     2             | AES 256 GCM                              |
  * |--------------------------------------------------------------|
  * 
+ * The version byte and any extra encryption version-relevant data are handled
+ * internally by the versioned functions.
  */
 
+const std::size_t ENCRYPTION_VERSION_SIZE_BYTES = 1;
+const int VERSION_BYTE_INDEX = 0;
+
 namespace v0 {
+
+const unsigned char VERSION_BYTE = 0;
 
 /**
  * @brief Legacy AES 128 decrypts the specified data using the specified initialization vector.
  *
  * This function is the inverse of v0::aesEncrypt.
  *
- * @param in_data           The data to be decrypted.
+ * @param in_v0_data        The v0 data to be decrypted.
  * @param in_key            The key with which to decrypt the data.
  * @param in_iv             The initialization vector that was used during encryption.
  * @param out_decrypted     The decrypted data.
@@ -89,7 +96,7 @@ namespace v0 {
  * @return Success if the data could be AES 128 decrypted; Error otherwise.
  */
 Error aesDecrypt(
-   const std::vector<unsigned char>& in_data,
+   const std::vector<unsigned char>& in_v0_data,
    const std::vector<unsigned char>& in_key,
    const std::vector<unsigned char>& in_iv,
    std::vector<unsigned char>& out_decrypted);
@@ -102,7 +109,7 @@ Error aesDecrypt(
  * @param in_data           The data to be encrypted.
  * @param in_key            The key with which to encrypt the data.
  * @param in_iv             The initialization vector to use during encryption.
- * @param out_encrypted     The encrypted data.
+ * @param out_v0_encrypted  The v0 encrypted data.
  *
  * @return Success if the data could be AES 128 encrypted; Error otherwise.
  */
@@ -110,18 +117,20 @@ Error aesEncrypt(
    const std::vector<unsigned char>& in_data,
    const std::vector<unsigned char>& in_key,
    const std::vector<unsigned char>& in_iv,
-   std::vector<unsigned char>& out_encrypted);
+   std::vector<unsigned char>& out_v0_encrypted);
 
 } // v0
 
 namespace v1 {
+
+const unsigned char VERSION_BYTE = 1;
 
 /**
  * @brief AES 128 decrypts the specified v1 data using the specified initialization vector.
  *
  * This function is the inverse of v1::aesEncrypt.
  *
- * @param in_data           The v1 data to be decrypted.
+ * @param in_v1_data        The v1 data to be decrypted.
  * @param in_key            The key with which to decrypt the v1 data.
  * @param in_iv             The initialization vector that was used during encryption.
  * @param out_decrypted     The decrypted data.
@@ -129,7 +138,7 @@ namespace v1 {
  * @return Success if the data could be AES 128 decrypted; Error otherwise.
  */
 Error aesDecrypt(
-   const std::vector<unsigned char>& in_data,
+   const std::vector<unsigned char>& in_v1_data,
    const std::vector<unsigned char>& in_key,
    const std::vector<unsigned char>& in_iv,
    std::vector<unsigned char>& out_decrypted);
@@ -139,10 +148,10 @@ Error aesDecrypt(
  *
  * This function is the inverse of v1::aesDecrypt.
  *
- * @param in_data           The v1 data to be encrypted.
+ * @param in_data           The data to be encrypted.
  * @param in_key            The key with which to encrypt the v1 data.
  * @param in_iv             The initialization vector to use during encryption.
- * @param out_encrypted     The encrypted data.
+ * @param out_v1_encrypted  The v1 encrypted data.
  *
  * @return Success if the data could be AES 128 encrypted; Error otherwise.
  */
@@ -150,32 +159,31 @@ Error aesEncrypt(
    const std::vector<unsigned char>& in_data,
    const std::vector<unsigned char>& in_key,
    const std::vector<unsigned char>& in_iv,
-   std::vector<unsigned char>& out_encrypted);
+   std::vector<unsigned char>& out_v1_encrypted);
 
 } // v1
 
 namespace v2 {
+
+const unsigned char VERSION_BYTE = 2;
+const unsigned char MAC_SIZE_BYTES = 16;
 
 /**
  * @brief AES 256 decrypts the specified v2 data using the specified initialization vector.
  *
  * This function is the inverse of v2::aesEncrypt.
  *
- * @param in_data           The v2 data to be decrypted.
+ * @param in_v2_data        The v2 data to be decrypted.
  * @param in_key            The key with which to decrypt the v2 data.
  * @param in_iv             The initialization vector that was used during encryption.
- * @param in_aad            The accompanying Additional Authenticated Data, if any, for this encrypted data.
- * @param in_mac            The Message Authentication Code for this encrypted data.
  * @param out_decrypted     The decrypted data.
  *
  * @return Success if the data could be AES 256 decrypted; Error otherwise.
  */
 Error aesDecrypt(
-   const std::vector<unsigned char>& in_data,
+   const std::vector<unsigned char>& in_v2_data,
    const std::vector<unsigned char>& in_key,
    const std::vector<unsigned char>& in_iv,
-   const std::vector<unsigned char>& in_aad,
-   std::vector<unsigned char>& in_mac,
    std::vector<unsigned char>& out_decrypted);
 
 /**
@@ -183,12 +191,10 @@ Error aesDecrypt(
  *
  * This function is the inverse of v2::aesDecrypt.
  *
- * @param data              The v2 data to be encrypted.
+ * @param data              The data to be encrypted.
  * @param key               The key with which to encrypt the v2 data.
  * @param iv                The initialization vector to use during encryption.
- * @param aad               The (optional) Additional Authenticated Data to include.
- * @param out_mac           The resulting Message Authentication Code of the encrypted data.
- * @param out_encrypted     The encrypted data.
+ * @param out_encrypted     The v2 encrypted data.
  *
  * @return Success if the data could be AES 256 encrypted; Error otherwise.
  */
@@ -196,9 +202,7 @@ Error aesEncrypt(
    const std::vector<unsigned char>& data,
    const std::vector<unsigned char>& key,
    const std::vector<unsigned char>& iv,
-   const std::vector<unsigned char>& aad,
-   std::vector<unsigned char>& out_mac,
-   std::vector<unsigned char>& out_encrypted);
+   std::vector<unsigned char>& out_v2_encrypted);
 
 } // v2
 
