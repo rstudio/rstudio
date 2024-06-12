@@ -326,7 +326,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       unloadNamespace(package)
    }
    
-   # Now, detach a loaded DLL (if any) associated with the package.
+   # Now, unload a loaded DLL (if any) associated with the package.
    dllInfo <- getLoadedDLLs()[[package]]
    if (!is.null(dllInfo) && !is.null(pkgPath))
    {
