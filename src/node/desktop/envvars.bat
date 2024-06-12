@@ -2,10 +2,11 @@
 
 REM Run this script with 'call envvars.bat' to update the PATH in your
 REM cmd.exe shell, so that the appropriate versions of node are found
+REM Node versions below should match RSTUDIO_NODE_VERSION
 set NODE_PATHS=^
-	..\..\..\dependencies\common\node\18.18.2^
-	..\..\dependencies\common\node\18.18.2^
-	c:\rstudio-tools\dependencies\common\node\18.18.2
+	..\..\..\dependencies\common\node\20.14.0^
+	..\..\dependencies\common\node\20.14.0^
+	c:\rstudio-tools\dependencies\common\node\20.14.0
 
 call :SetNodePath
 if not exist "%NODE_PATH%" (
