@@ -316,6 +316,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    {
       unloadNamespace(package)
    }
+   
+   dllInfo <- getLoadedDLLs()[[package]]
+   if (!is.null(dllInfo))
+      dyn.unload(dllInfo[["path"]])
 })
 
 .rs.addFunction("packageVersion", function(name, libPath, pkgs)
