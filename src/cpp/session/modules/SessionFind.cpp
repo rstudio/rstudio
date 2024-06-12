@@ -506,9 +506,7 @@ private:
    void addNewLine(std::string& str)
    {
       str.append("\n");
-#ifdef _WIN32
-      string_utils::convertLineEndings(&str, string_utils::LineEndingWindows);
-#endif
+      string_utils::convertLineEndings(&str, lineEnding_);
    }
 
    void adjustForPreview(std::string* contents)
@@ -718,6 +716,9 @@ private:
          if (error)
             return error;
       }
+      
+      lineEnding_ = string_utils::LineEndingNative;
+      string_utils::detectLineEndings(file, &lineEnding_);
 
       error = file.openForRead(inputStream_);
       if (error)
@@ -754,29 +755,27 @@ private:
    }
 
    Error writeToFile(
-      const std::string& line, const std::string& lineLeftContents,
-      const std::string& lineRightContents)
+         const std::string& line,
+         const std::string& lineLeftContents,
+         const std::string& lineRightContents)
    {
-      Error error;
       std::string newLine(line);
       newLine.insert(0, lineLeftContents);
       newLine.insert(newLine.length(), lineRightContents);
       addNewLine(newLine);
 
-      if (error)
-         return error;
-      else
+      Error error;
+      
+      try
       {
-         try
-         {
-            outputStream_->write(newLine.c_str(), newLine.size());
-            outputStream_->flush();
-         }
-         catch (const std::ios_base::failure& e)
-         {
-            error = systemError(errno, e.what(), ERROR_LOCATION);
-         }
+         outputStream_->write(newLine.c_str(), newLine.size());
+         outputStream_->flush();
       }
+      catch (const std::ios_base::failure& e)
+      {
+         error = systemError(errno, e.what(), ERROR_LOCATION);
+      }
+      
       return error;
    }
 
@@ -1228,6 +1227,7 @@ private:
 #endif
    int inputLineNum_;
    bool fileSuccess_;
+   string_utils::LineEnding lineEnding_;
 };
 
 } // end anonymous namespace
