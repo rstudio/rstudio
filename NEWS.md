@@ -40,6 +40,7 @@
 - Fixed an issue where RStudio could trigger active bindings in environments when requesting completions. (#14784)
 - Fixed an issue where the editor scroll speed had inadvertently been decreased. (#14664)
 - Fixed an issue where external links couldn't be opened from a popped-out Help pane window. (#14801; Desktop)
+- Fixed an issue where loaded package DLLs were not unloaded prior to attempting to build and install an under-development package from the Packages pane. (#13399)
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
