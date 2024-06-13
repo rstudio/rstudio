@@ -58,7 +58,7 @@
                 (normalizePath(fileattr$filename, mustWork = FALSE) == 
                  normalizePath(fileName)))
             {
-               return (env)
+               return(env)
             }
          }
       }
@@ -71,16 +71,23 @@
 # representation for a step with a given source reference line number.
 .rs.addFunction("stepsAtLine", function(funBody, line)
 {
-   if (typeof(funBody) != "language")
-   {
+   if (!is.call(funBody))
       return(NULL)
-   }
 
-   refs <- attr(funBody, "srcref")
+   # only consider source references attached to braced function bodies.
+   # otherwise, we could end up recursing into source references that
+   # aren't relevant to our current debug attempts.
+   #
+   # https://github.com/rstudio/rstudio/issues/14815
+   refs <- if (identical(funBody[[1L]], as.symbol("{")))
+   {
+      attr(funBody, "srcref", exact = TRUE)
+   }
+   
    for (idx in 1:length(funBody))
    {
       # if there's a source ref on this line, check it against the line number
-      # provided by the caller
+      # provided by the caller.
       ref <- refs[[idx]]
       if (length(ref) > 0)
       {
