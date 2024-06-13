@@ -28,6 +28,7 @@
  */
 
 #include <shared_core/system/Crypto.hpp>
+#include <shared_core/system/encryption/EncryptionVersion.hpp>
 
 #include <gsl/gsl>
 
@@ -48,10 +49,6 @@ namespace system {
 namespace crypto {
 
 namespace {
-
-// openssl encrypt/decrypt constants
-constexpr int s_encrypt = 1;
-constexpr int s_decrypt = 0;
 
 class BIOFreeAllScope : boost::noncopyable
 {
@@ -77,30 +74,8 @@ private:
 
 } // anonymous namespace
 
-Error getLastCryptoError(const ErrorLocation& in_location)
-{
-   // get the error code
-   unsigned long ec = ::ERR_get_error();
-   if (ec == 0)
-   {
-      log::logWarningMessage("getLastCryptoError called with no pending error");
-      return systemError(
-         boost::system::errc::not_supported,
-         "getLastCryptoError called with no pending error",
-         in_location);
-   }
-
-   // get the error message (docs say max len is 120)
-   const int ERR_BUFF_SIZE = 250;
-   char errorBuffer[ERR_BUFF_SIZE];
-   ::ERR_error_string_n(ec, errorBuffer, ERR_BUFF_SIZE);
-
-   // return the error
-   return systemError(
-      boost::system::errc::bad_message,
-      errorBuffer,
-      in_location);
-}
+// Forward Declaration. Defined in EncryptionVersion.cpp
+Error getLastCryptoError(const ErrorLocation& in_location);
 
 Error aesDecrypt(
    const std::vector<unsigned char>& in_data,
@@ -108,36 +83,7 @@ Error aesDecrypt(
    const std::vector<unsigned char>& in_iv,
    std::vector<unsigned char>& out_decrypted)
 {
-   out_decrypted.resize(in_data.size());
-   int outLen = 0;
-   int bytesDecrypted = 0;
-
-   EVP_CIPHER_CTX *ctx;
-   ctx = EVP_CIPHER_CTX_new();
-   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &in_key[0], &in_iv[0], s_decrypt);
-
-   // perform the decryption
-   if(!EVP_CipherUpdate(ctx, &out_decrypted[0], &outLen, &in_data[0], gsl::narrow_cast<int>(in_data.size())))
-   {
-      EVP_CIPHER_CTX_free(ctx);
-      return getLastCryptoError(ERROR_LOCATION);
-   }
-   bytesDecrypted += outLen;
-
-   // perform final flush
-   if(!EVP_CipherFinal_ex(ctx, &out_decrypted[outLen], &outLen))
-   {
-      EVP_CIPHER_CTX_free(ctx);
-      return getLastCryptoError(ERROR_LOCATION);
-   }
-   bytesDecrypted += outLen;
-
-   EVP_CIPHER_CTX_free(ctx);
-
-   // resize the container to the amount of actual bytes decrypted (padding is removed)
-   out_decrypted.resize(bytesDecrypted);
-
-   return Success();
+   return v0::aesDecrypt(in_data, in_key, in_iv, out_decrypted);
 }
 
 Error aesEncrypt(
@@ -154,37 +100,7 @@ Error aesEncrypt(
    const std::vector<unsigned char>& iv,
    std::vector<unsigned char>& out_encrypted)
 {
-   // allow enough space in output buffer for additional block
-   out_encrypted.resize(data.size() + EVP_MAX_BLOCK_LENGTH);
-   int outlen = 0;
-   int bytesEncrypted = 0;
-
-   EVP_CIPHER_CTX *ctx;
-   ctx = EVP_CIPHER_CTX_new();
-   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &key[0], iv.empty() ? nullptr : &iv[0], s_encrypt);
-
-   // perform the encryption
-   if(!EVP_CipherUpdate(ctx, &out_encrypted[0], &outlen, &data[0], gsl::narrow_cast<int>(data.size())))
-   {
-      EVP_CIPHER_CTX_free(ctx);
-      return getLastCryptoError(ERROR_LOCATION);
-   }
-   bytesEncrypted += outlen;
-
-   // perform final flush including left-over padding
-   if(!EVP_CipherFinal_ex(ctx, &out_encrypted[outlen], &outlen))
-   {
-      EVP_CIPHER_CTX_free(ctx);
-      return getLastCryptoError(ERROR_LOCATION);
-   }
-   bytesEncrypted += outlen;
-
-   EVP_CIPHER_CTX_free(ctx);
-
-   // resize the container to the amount of actual bytes encrypted (including padding)
-   out_encrypted.resize(bytesEncrypted);
-
-   return Success();
+   return v0::aesEncrypt(data, key, iv, out_encrypted);
 }
 
 Error base64Encode(const std::vector<unsigned char>& in_data, std::string& out_encoded)
