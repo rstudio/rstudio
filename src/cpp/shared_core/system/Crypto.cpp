@@ -83,6 +83,32 @@ Error aesDecrypt(
    const std::vector<unsigned char>& in_iv,
    std::vector<unsigned char>& out_decrypted)
 {
+   // Attempt versioned decryption. If unsuccessful, default to v0 decryption
+   // Decrypting with incompatible buffer sizes can cause segfaults.
+   // Wrap in a try/catch block to gracefully handle version decryption mismatches
+   try
+   {
+      Error result;
+      if (in_data.front() == v2::VERSION_BYTE)
+      {
+         if ((result = v2::aesDecrypt(in_data, in_key, in_iv, out_decrypted)) == Success())
+            return result;
+         else
+            throw EncryptionVersionMismatchException();
+      }
+      else if (in_data.front() == v1::VERSION_BYTE)
+      {
+         if ((result = v1::aesDecrypt(in_data, in_key, in_iv, out_decrypted)) == Success())
+            return result;
+         else
+            throw EncryptionVersionMismatchException();
+      }
+   }
+   catch(...)
+   {
+      log::logDebugMessage("Failed to decrypt versioned encryption. Attempting v0 decryption.");
+   }
+
    return v0::aesDecrypt(in_data, in_key, in_iv, out_decrypted);
 }
 

@@ -30,6 +30,7 @@
 #ifndef SHARED_CORE_SYSTEM_ENCRYPTION_VERSION_HPP
 #define SHARED_CORE_SYSTEM_ENCRYPTION_VERSION_HPP
 
+#include <stdexcept>
 #include <vector>
 
 namespace rstudio {
@@ -78,6 +79,14 @@ namespace crypto {
 
 const std::size_t ENCRYPTION_VERSION_SIZE_BYTES = 1;
 const int VERSION_BYTE_INDEX = 0;
+
+// Custom exception for handling the 1/256 chance that the first byte of a
+// v0 buffer is a valid version byte value
+class EncryptionVersionMismatchException : public std::logic_error {
+public:
+   EncryptionVersionMismatchException()
+       : std::logic_error("Encryption version mismatch error") {}
+};
 
 namespace v0 {
 
