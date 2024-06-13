@@ -77,7 +77,7 @@ namespace crypto {
  * internally by the versioned functions.
  */
 
-const std::size_t ENCRYPTION_VERSION_SIZE_BYTES = 1;
+const int ENCRYPTION_VERSION_SIZE_BYTES = 1;
 const int VERSION_BYTE_INDEX = 0;
 
 // Custom exception for handling the 1/256 chance that the first byte of a
@@ -178,7 +178,7 @@ namespace v2 {
 
 const unsigned char VERSION_BYTE = 2;
 const int KEY_LENGTH_BYTES = 32;
-const unsigned char MAC_SIZE_BYTES = 16;
+const int MAC_SIZE_BYTES = 16;
 
 /**
  * @brief AES 256 decrypts the specified v2 data using the specified initialization vector.
