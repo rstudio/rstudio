@@ -341,6 +341,10 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                }
             });
          }
+         else
+         {
+            onCompleted.execute();
+         }
       });
    }
    
