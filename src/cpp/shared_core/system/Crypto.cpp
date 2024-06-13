@@ -84,7 +84,7 @@ Error aesDecrypt(
    std::vector<unsigned char>& out_decrypted)
 {
    // Attempt versioned decryption. If unsuccessful, default to v0 decryption
-   // Decrypting with incompatible buffer sizes can cause segfaults.
+   // Decrypting with incompatible buffer or key sizes can cause segfaults.
    // Wrap in a try/catch block to gracefully handle version decryption mismatches
    try
    {

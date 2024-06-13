@@ -91,6 +91,7 @@ public:
 namespace v0 {
 
 const unsigned char VERSION_BYTE = 0;
+const int KEY_LENGTH_BYTES = 16;
 
 /**
  * @brief Legacy AES 128 decrypts the specified data using the specified initialization vector.
@@ -133,6 +134,7 @@ Error aesEncrypt(
 namespace v1 {
 
 const unsigned char VERSION_BYTE = 1;
+const int KEY_LENGTH_BYTES = 16;
 
 /**
  * @brief AES 128 decrypts the specified v1 data using the specified initialization vector.
@@ -175,6 +177,7 @@ Error aesEncrypt(
 namespace v2 {
 
 const unsigned char VERSION_BYTE = 2;
+const int KEY_LENGTH_BYTES = 32;
 const unsigned char MAC_SIZE_BYTES = 16;
 
 /**

@@ -97,6 +97,10 @@ Error aesDecrypt(
     const std::vector<unsigned char>& in_iv,
     std::vector<unsigned char>& out_decrypted)
 {
+   // Key size mismatches can silently read more/less data than intended. Prevent that upfront.
+   if (in_key.size() != KEY_LENGTH_BYTES )
+      throw EncryptionVersionMismatchException();
+
    out_decrypted.resize(gsl::narrow_cast<int>(in_v0_data.size()));
 
    return v1::aesDecrypt(in_v0_data.data(),
@@ -115,6 +119,10 @@ Error aesEncrypt(
     const std::vector<unsigned char>& iv,
     std::vector<unsigned char>& out_v0_encrypted)
 {
+   // Key size mismatches can silently read more/less data than intended. Prevent that upfront.
+   if (key.size() != KEY_LENGTH_BYTES )
+      throw EncryptionVersionMismatchException();
+
    int encryptedBytes = 0;
    // allow enough space in output buffer for version byte, data, and potential additional block
    out_v0_encrypted.resize(data.size() + EVP_MAX_BLOCK_LENGTH);
@@ -212,6 +220,10 @@ Error aesDecrypt(
    const std::vector<unsigned char>& in_iv,
    std::vector<unsigned char>& out_decrypted)
 {
+   // Key size mismatches can silently read more/less data than intended. Prevent that upfront.
+   if (in_key.size() != KEY_LENGTH_BYTES )
+      throw EncryptionVersionMismatchException();
+
    // Extract v1 byte info and only decrypt actual encrypted data:
    // [ version byte ][ v1 encrypted data ]
    // Use std::max to prevent index math going negative.
@@ -230,6 +242,10 @@ Error aesEncrypt(
     const std::vector<unsigned char>& iv,
     std::vector<unsigned char>& out_v1_encrypted)
 {
+   // Key size mismatches can silently read more/less data than intended. Prevent that upfront.
+   if (key.size() != KEY_LENGTH_BYTES )
+      throw EncryptionVersionMismatchException();
+
    int bytesEncrypted = 0;
 
    // allow enough space in output buffer for version byte, data, and potential additional block
@@ -376,6 +392,10 @@ Error aesDecrypt(
     const std::vector<unsigned char>& in_iv,
     std::vector<unsigned char>& out_decrypted)
 {
+   // Key size mismatches can silently read more/less data than intended. Prevent that upfront.
+   if (in_key.size() != KEY_LENGTH_BYTES )
+      throw EncryptionVersionMismatchException();
+
    // Index maths. v2 buffer structure is: [ version byte ][ v2 encrypted data ][ mac ]
    // Use std::max to prevent index math going negative.
    int dataLength = std::max(in_v2_data.size() - ENCRYPTION_VERSION_SIZE_BYTES - MAC_SIZE_BYTES, (size_t)0);
@@ -405,6 +425,10 @@ Error aesEncrypt(
     const std::vector<unsigned char>& iv,
     std::vector<unsigned char>& out_v2_encrypted)
 {
+   // Key size mismatches can silently read more/less data than intended. Prevent that upfront.
+   if (key.size() != KEY_LENGTH_BYTES )
+      throw EncryptionVersionMismatchException();
+
    int bytesEncrypted = 0;
 
    // allow enough space in output buffer for data and potential additional block

@@ -81,7 +81,7 @@ test_context("EncryptionVersionTests")
    test_that("v0: Can AES encrypt/decrypt")
    {
       // setup
-      REQUIRE(generateKeys(0));
+      REQUIRE(generateKeys(crypto::v0::VERSION_BYTE));
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
@@ -175,6 +175,21 @@ test_context("EncryptionVersionTests")
       // verify that the decryption gives us back the original data
       REQUIRE(decryptedPayloadMatches(decryptedData));
    }
+
+   test_that("Key size mismatches aren't allowed")
+   {
+      std::vector<unsigned char> iv(16);
+      std::vector<unsigned char> encryptedData;
+
+      // Encrypting v0/v1 with v2 key size throws
+      std::vector<unsigned char> key(crypto::v2::KEY_LENGTH_BYTES);
+      REQUIRE_THROWS(core::system::crypto::v0::aesEncrypt(g_data, key, iv, encryptedData));
+      REQUIRE_THROWS(core::system::crypto::v1::aesEncrypt(g_data, key, iv, encryptedData));
+
+      // Encrypting v2 with v1 key size throws
+      key.resize(crypto::v1::KEY_LENGTH_BYTES);
+      REQUIRE_THROWS(core::system::crypto::v2::aesEncrypt(g_data, key, iv, encryptedData));
+   }
 }
 
 test_context("Versioned Crypto Calls")
@@ -182,7 +197,7 @@ test_context("Versioned Crypto Calls")
    test_that("Crypto can decrypt v0 data")
    {
       // setup
-      REQUIRE(generateKeys(0));
+      REQUIRE(generateKeys(crypto::v0::VERSION_BYTE));
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
@@ -239,7 +254,7 @@ test_context("Versioned Crypto Calls")
    test_that("Crypto can decrypt v0 data with v1 version byte")
    {
       // setup
-      REQUIRE(generateKeys(0));
+      REQUIRE(generateKeys(crypto::v0::VERSION_BYTE));
 
       // Use a key/iv combo that will generate a v0 encrypted buffer that starts with a v1 version byte
       std::vector<unsigned char> encryptedData;
@@ -262,7 +277,7 @@ test_context("Versioned Crypto Calls")
    test_that("Crypto can decrypt v0 data with v2 version byte")
    {
       // setup
-      REQUIRE(generateKeys(0));
+      REQUIRE(generateKeys(crypto::v0::VERSION_BYTE));
 
       // Use a key/iv combo that will generate a v0 encrypted buffer that starts with a v2 version byte
       std::vector<unsigned char> encryptedData;
