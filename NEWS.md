@@ -44,6 +44,7 @@
 - Fixed an issue where loaded package DLLs were not unloaded prior to attempting to build and install an under-development package from the Packages pane. (#13399)
 - Fixed an issue where breakpoints could not be added to an already-sourced file in some cases. (#14682)
 - Fixed an issue where autocompletion results did not display for datasets imported via `haven::read_sav()` in some scenarios. (#14672)
+- Fixed an issue where paths were not tilde-aliased after selection in certain desktop dialogs. (#14851)
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)

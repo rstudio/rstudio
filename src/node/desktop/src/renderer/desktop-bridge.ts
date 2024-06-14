@@ -13,7 +13,7 @@
  *
  */
 
-import { ipcRenderer, SaveDialogReturnValue, webContents } from 'electron';
+import { ipcRenderer, OpenDialogReturnValue, SaveDialogReturnValue, webContents } from 'electron';
 import { logString } from './logger-bridge';
 import { normalizeSeparators } from '../ui/utils';
 import { safeError } from '../core/err';
@@ -31,6 +31,15 @@ function reportIpcError(name: string, error: Error) {
   logString('err', `IpcError: ${name}: ${error.message}`);
 }
 
+function resolveAliasedPath(filePath: string, userHomePath: string) {
+  filePath = normalizeSeparators(filePath);
+  const expandedHomePath = normalizeSeparators(userHomePath || '', '/');
+  if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
+    filePath = '~' + filePath.substring(expandedHomePath.length);
+  }
+  return filePath;
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function getDesktopBridge() {
   return {
@@ -38,7 +47,7 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_browse_url', url);
     },
 
-    getOpenFileName: (
+    getOpenFileName: async (
       caption: string,
       label: string,
       dir: string,
@@ -47,16 +56,28 @@ export function getDesktopBridge() {
       focusOwner: boolean,
       callback: VoidCallback<string>,
     ) => {
-      ipcRenderer
-        .invoke('desktop_get_open_file_name', caption, label, dir, filter, canChooseDirectories, focusOwner)
-        .then((result) => {
-          if (result.canceled as boolean) {
-            callback('');
-          } else {
-            callback(result.filePaths[0]);
-          }
-        })
-        .catch((error) => reportIpcError('getOpenFileName', error));
+      try {
+        const result: OpenDialogReturnValue = await ipcRenderer.invoke(
+          'desktop_get_open_file_name',
+          caption,
+          label,
+          dir,
+          filter,
+          canChooseDirectories,
+          focusOwner,
+        );
+
+        if (result.canceled || result.filePaths.length === 0) {
+          return callback('');
+        }
+
+        const selectedPath = result.filePaths[0];
+        const userHomePath: string = await ipcRenderer.invoke('desktop_get_user_home_path');
+        const aliasedPath = resolveAliasedPath(selectedPath, userHomePath);
+        return callback(aliasedPath);
+      } catch (error: unknown) {
+        reportIpcError('desktop_get_open_file_name', error as Error);
+      }
     },
 
     getSaveFileName: (
@@ -94,19 +115,22 @@ export function getDesktopBridge() {
             filePath = normalizeSeparators(filePath, '/');
           }
 
-          ipcRenderer.invoke('desktop_get_user_home_path').then((userHomePath: string) => {
-            const expandedHomePath = normalizeSeparators(userHomePath.length > 0 ? userHomePath : '', '/');
-            const homePath = '~';
+          ipcRenderer
+            .invoke('desktop_get_user_home_path')
+            .then((userHomePath: string) => {
+              const expandedHomePath = normalizeSeparators(userHomePath.length > 0 ? userHomePath : '', '/');
+              const homePath = '~';
 
-            /* this makes sure the file path and HOME path
+              /* this makes sure the file path and HOME path
               only contains forward slashes as separators for correct comparison */
-            if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
-              filePath = homePath + filePath.substring(expandedHomePath.length);
-            }
+              if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
+                filePath = homePath + filePath.substring(expandedHomePath.length);
+              }
 
-            // invoke callback
-            return callback(filePath);
-          });
+              // invoke callback
+              return callback(filePath);
+            })
+            .catch((error) => reportIpcError('getSaveFileName', error));
         })
         .catch((error) => reportIpcError('getSaveFileName', error));
     },
@@ -321,7 +345,7 @@ export function getDesktopBridge() {
       top: number,
       width: number,
       height: number,
-      callback: () => void
+      callback: () => void,
     ) => {
       ipcRenderer
         .invoke('desktop_export_page_region_to_file', targetPath, format, left, top, width, height)
