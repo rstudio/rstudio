@@ -345,25 +345,42 @@
    .rs.untraced(get(functionName, mode = "function", envir = envir))
 })
 
-.rs.addFunction("getFunctionSourceRefs", function(
-   functionName, fileName, packageName)
+.rs.addFunction("isFunctionInSync", function(functionName,
+                                             filePath,
+                                             packageName)
 {
-   functionName <- .rs.unquote(functionName)
-   fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
-   if (is.null(fun))
-   {
-      return(NULL)
-   }
-   attr(fun, "srcref")
+   tryCatch(
+      .rs.isFunctionInSyncImpl(functionName, filePath, packageName),
+      error = function(e) FALSE
+   )
 })
 
-.rs.addFunction("getFunctionSourceCode", function(
-   functionName, fileName, packageName)
+.rs.addFunction("isFunctionInSyncImpl", function(functionName,
+                                                 filePath,
+                                                 packageName)
 {
+   # Screen out ~/.active-rstudio-document, just in case.
+   if (identical(filePath, "~/.active-rstudio-document"))
+      return(FALSE)
+   
+   # Find the function definition.
    functionName <- .rs.unquote(functionName)
-   paste(capture.output(
-      .rs.getFunctionSourceRefs(functionName, fileName, packageName)),
-      collapse="\n")
+   fun <- .rs.getUntracedFunction(functionName, filePath, packageName)
+   if (is.null(fun))
+      return(FALSE)
+   
+   # Get the source definition of this function.
+   srcref <- attr(fun, "srcref")
+   functionLines <- .rs.deparseSrcref(srcref, FALSE)
+   
+   # Check if this matches the file contents.
+   fileContents <- .rs.readLines(filePath)
+   srcpos <- .rs.parseSrcref(srcref)
+   functionSrcLines <- fileContents[srcpos$first_parsed:srcpos$last_parsed]
+   
+   # Check if they match.
+   identical(functionLines, functionSrcLines)
+   
 })
 
 # Parses and executes a file for debugging
