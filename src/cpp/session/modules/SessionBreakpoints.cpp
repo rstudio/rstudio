@@ -215,40 +215,24 @@ Error getFunctionState(const json::JsonRpcRequest& request,
    json::Object response;
    std::string functionName, fileName, packageName;
    int lineNumber = 0;
-   bool inSync = false;
-   Error error = json::readParams(
-            request.params, &functionName, &fileName, &lineNumber);
+   
+   Error error = json::readParams(request.params, &functionName, &fileName, &lineNumber);
    if (error)
-   {
        return error;
-   }
 
    // check whether the function is in a package
    packageName = module_context::packageNameForSourceFile(
                     module_context::resolveAliasedPath(fileName));
 
-   // get the source refs and code for the function
-   SEXP srcRefs = nullptr;
-   Protect protect;
-   std::string functionCode;
-   error = r::exec::RFunction(".rs.getFunctionSourceRefs",
-                              functionName,
-                              fileName,
-                              packageName)
-         .call(&srcRefs, &protect);
-   if (!error)
-   {
-      error = r::exec::RFunction(".rs.getFunctionSourceCode",
-                                 functionName,
-                                 fileName,
-                                 packageName)
-            .call(&functionCode);
-   }
-   // compare with the disk if we were able to get the source code;
-   // otherwise, assume it's out of sync
-   if (!error)
-      inSync = !environment::functionDiffersFromSource(srcRefs, functionCode);
-
+   bool inSync = false;
+   error = r::exec::RFunction(".rs.isFunctionInSync")
+         .addUtf8Param(functionName)
+         .addUtf8Param(fileName)
+         .addUtf8Param(packageName)
+         .call(&inSync);
+   if (error)
+      LOG_ERROR(error);
+         
    response["sync_state"] = inSync;
    response["package_name"] = packageName;
    response["is_package_function"] = packageName.length() > 0;
