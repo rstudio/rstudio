@@ -376,27 +376,6 @@
    
 })
 
-.rs.addFunction("getFunctionSourceRefs", function(
-   functionName, fileName, packageName)
-{
-   functionName <- .rs.unquote(functionName)
-   fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
-   if (is.null(fun))
-   {
-      return(NULL)
-   }
-   attr(fun, "srcref")
-})
-
-.rs.addFunction("getFunctionSourceCode", function(
-   functionName, fileName, packageName)
-{
-   functionName <- .rs.unquote(functionName)
-   paste(capture.output(
-      .rs.getFunctionSourceRefs(functionName, fileName, packageName)),
-      collapse="\n")
-})
-
 # Parses and executes a file for debugging
 .rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines, local)
 {
