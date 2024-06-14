@@ -30,6 +30,7 @@
 #### RStudio
 
 - The RStudio diagnostics system no longer automatically loads packages when encountering calls of the form `dplyr::mutate()`. (#9692)
+- Fixed an issue where breakpoints set within `observeEvent()` calls in Shiny applications did not behave correctly. (#14815)
 - Fixed an issue where Build output from 'Run Tests' was not appropriately coloured. (#13088)
 - Fixed an issue where various editor commands (Reindent Lines; Run Chunks) could fail in a document containing Quarto callout blocks. (#14640)
 - Fixed an issue where end fold markers were not rendered correctly in Quarto documents. (#14699)
