@@ -181,8 +181,8 @@ test_context("EncryptionVersionTests")
       std::vector<unsigned char> iv(16);
       std::vector<unsigned char> encryptedData;
 
-      // Encrypting v0/v1 with v2 key size throws
-      std::vector<unsigned char> key(crypto::v2::KEY_LENGTH_BYTES);
+      // Encrypting v0/v1 with too small key size throws
+      std::vector<unsigned char> key = {};
       REQUIRE_THROWS(core::system::crypto::v0::aesEncrypt(g_data, key, iv, encryptedData));
       REQUIRE_THROWS(core::system::crypto::v1::aesEncrypt(g_data, key, iv, encryptedData));
 
