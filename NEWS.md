@@ -45,6 +45,7 @@
 - Fixed an issue where breakpoints could not be added to an already-sourced file in some cases. (#14682)
 - Fixed an issue where autocompletion results did not display for datasets imported via `haven::read_sav()` in some scenarios. (#14672)
 - Fixed an issue where paths were not tilde-aliased after selection in certain desktop dialogs. (#14851)
+- Fixed an issue where the RStudio diagnostics system could emit spurious errors for documents using the R pipebind placeholder `_`. (#14713)
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
