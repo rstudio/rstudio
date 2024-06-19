@@ -20,18 +20,19 @@
 #include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
-
 #include <core/system/Xdg.hpp>
-
-#include <session/prefs/UserPrefs.hpp>
-#include <session/prefs/UserState.hpp>
-#include <session/SessionModuleContext.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RJson.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
+#include <session/projects/SessionProjects.hpp>
+#include <session/SessionModuleContext.hpp>
+
 
 using namespace rstudio::core;
 using namespace rstudio::session::prefs;
@@ -250,6 +251,23 @@ SEXP rs_writeUserState(SEXP stateName, SEXP value)
    return R_NilValue;
 }
 
+SEXP rs_readProjectPref(SEXP prefNameSEXP)
+{
+   if (!projects::projectContext().hasProject())
+      return R_NilValue;
+   
+   std::string prefName = r::sexp::asString(prefNameSEXP);
+   if (prefName.empty())
+      return R_NilValue;
+   
+   auto value = userPrefs().readValue(kUserPrefsProjectLayer, prefName);
+   if (!value)
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(*value, &protect);
+}
+
 SEXP rs_allPrefs()
 {
    r::sexp::Protect protect;
@@ -384,6 +402,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_writeApiPref);
    RS_REGISTER_CALL_METHOD(rs_readUserState);
    RS_REGISTER_CALL_METHOD(rs_writeUserState);
+   RS_REGISTER_CALL_METHOD(rs_readProjectPref);
    RS_REGISTER_CALL_METHOD(rs_allPrefs);
    RS_REGISTER_CALL_METHOD(rs_removePref);
 
