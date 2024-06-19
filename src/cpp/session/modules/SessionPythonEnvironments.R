@@ -116,7 +116,7 @@
    pythonPath
 })
 
-.rs.addFunction("python.configuredInterpreterPath", function(projectDir)
+.rs.addFunction("python.configuredInterpreterPath", function(projectDir, checkProjectEnvs)
 {
    # on Windows, check if PY_PYTHON is defined; if it is, we should use 'py'
    # to determine the version of python to be used
@@ -140,19 +140,26 @@
          return(value)
    }
 
+   # check version of Python configured by user
+   prefsPython <- .rs.readUiPref("python_path")
+   if (file.exists(prefsPython))
+      return(path.expand(prefsPython))
+   
    # if this project has a local interpreter, use it
-   if (!is.null(projectDir))
+   if (checkProjectEnvs && !is.null(projectDir))
    {
       projectPython <- .rs.python.projectInterpreterPath(projectDir)
       if (file.exists(projectPython))
          return(projectPython)
    }
+   
+   # no interpreter configured; return "" as default
+   ""
+   
+})
 
-   # check version of Python configured by user
-   prefsPython <- .rs.readUiPref("python_path")
-   if (file.exists(prefsPython))
-      return(path.expand(prefsPython))
-
+.rs.addFunction("python.fallbackInterpreterPath", function()
+{
    # on Windows, help users find a default version of Python if possible
    if (.rs.platform.isWindows)
    {
@@ -224,13 +231,9 @@
 
 .rs.addFunction("python.initialize", function(projectDir)
 {
-   # do nothing if the user hasn't opted in
-   activate <- .rs.readUiPref("python_project_environment_automatic_activate")
-   if (!identical(activate, TRUE))
-      return()
-
    # find path to python interpreter for this project
-   pythonPath <- .rs.python.configuredInterpreterPath(projectDir)
+   checkProjectEnvs <- identical(.rs.readUiPref("python_project_environment_automatic_activate"), TRUE)
+   pythonPath <- .rs.python.configuredInterpreterPath(projectDir, checkProjectEnvs)
    if (!file.exists(pythonPath))
       return()
 

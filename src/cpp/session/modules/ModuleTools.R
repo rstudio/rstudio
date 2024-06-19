@@ -337,7 +337,12 @@
   }
   .rs.writePrefInternal("rs_writeUserPref", prefName, value)
 })
+
 .rs.addFunction("writeUserPref", .rs.writeUiPref)
+
+.rs.addFunction("readProjectPref", function(prefName) {
+   .rs.readPrefInternal("rs_readProjectPref", prefName)
+})
 
 .rs.addFunction("readUserState", function(stateName) {
   if (missing(stateName) || is.null(stateName))
