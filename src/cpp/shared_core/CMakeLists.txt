@@ -40,6 +40,7 @@ set (SHARED_CORE_SOURCE_FILES
    json/Json.cpp
    system/Crypto.cpp
    system/encryption/EncryptionVersion.cpp
+   system/encryption/EncryptionConfiguration.cpp
 )
 
 set (SHARED_INCLUDE_DIRS

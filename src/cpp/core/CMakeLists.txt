@@ -124,6 +124,7 @@ set(CORE_SOURCE_FILES
    system/System.cpp
    system/Xdg.cpp
    system/file_monitor/FileMonitor.cpp
+   system/encryption/Encryption.cpp
    terminal/PrivateCommand.cpp
    tex/TexLogParser.cpp
    tex/TexMagicComment.cpp
