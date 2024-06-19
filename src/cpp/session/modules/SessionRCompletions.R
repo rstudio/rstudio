@@ -1706,6 +1706,12 @@ assign(x = ".rs.acCompletionTypes",
       # there are too many names to evaluate.
       else if (length(names) > 2E2)
          type <- .rs.acCompletionTypes$UNKNOWN
+      
+      # Avoid requesting completion types for remote tables,
+      # as that could be prohibitively expensive.
+      else if (inherits(object, c("tbl_dbi", "tbl_sql", "tbl_lazy")))
+         type <- .rs.acCompletionTypes$UNKNOWN
+      
       else
       {
          type <- numeric(length(names))

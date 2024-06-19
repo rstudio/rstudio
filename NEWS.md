@@ -47,6 +47,7 @@
 - Fixed an issue where paths were not tilde-aliased after selection in certain desktop dialogs. (#14851)
 - Fixed an issue where the RStudio diagnostics system could emit spurious errors for documents using the R pipebind placeholder `_`. (#14713)
 - Fixed an issue where RStudio incorrectly modified the PATH when "Automatically activate project-local Python environments" was checked. (#14659)
+- Fixed an issue where column name completions could be very slow for SQL tables with dbplyr (>= 2.4.0). (#14864)
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
