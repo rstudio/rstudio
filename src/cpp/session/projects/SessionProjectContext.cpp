@@ -82,6 +82,50 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
    }
 }
 
+Error computeProjectId(const FilePath& userDir, std::string* pProjectId)
+{
+   FilePath projectIdPath = userDir.completePath("project-id");
+   if (!projectIdPath.exists())
+   {
+      std::string projectId = core::system::generateUuid();
+      Error error = core::writeStringToFile(projectIdPath, projectId);
+      if (error)
+         return error;
+   }
+   
+   std::string projectId;
+   Error error = core::readStringFromFile(projectIdPath, &projectId);
+   if (error)
+      return error;
+   
+   *pProjectId = projectId;
+   return Success();
+}
+
+FilePath computeUserDir(const FilePath& projectFile)
+{
+   FilePath defaultUserDir = projectFile.getParent().completePath(".Rproj.user");
+   
+   std::string userDir = core::system::getenv("RSTUDIO_PROJECT_SCRATCH_PATH");
+   if (userDir.empty())
+      return defaultUserDir;
+   
+   std::string projectId;
+   Error error = computeProjectId(defaultUserDir, &projectId);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return defaultUserDir;
+   }
+   
+   FilePath customUserDir = FilePath(userDir).completePath(projectId);
+   error = customUserDir.ensureDirectory();
+   if (error)
+      return defaultUserDir;
+   
+   return customUserDir;
+}
+
 }  // anonymous namespace
 
 
@@ -90,7 +134,7 @@ Error computeScratchPaths(const FilePath& projectFile,
                           FilePath* pSharedScratchPath)
 {
    // ensure project user dir
-   FilePath projectUserDir = projectFile.getParent().completePath(".Rproj.user");
+   FilePath projectUserDir = computeUserDir(projectFile);
    if (!projectUserDir.exists())
    {
       // create
