@@ -135,23 +135,33 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('getSaveFileName', error));
     },
 
-    getExistingDirectory: (
+    getExistingDirectory: async (
       caption: string,
       label: string,
       dir: string,
       focusOwner: boolean,
       callback: VoidCallback<string>,
     ) => {
-      ipcRenderer
-        .invoke('desktop_get_existing_directory', caption, label, dir, focusOwner)
-        .then((result) => {
-          if (result.canceled as boolean) {
-            callback('');
-          } else {
-            callback(result.filePaths[0]);
-          }
-        })
-        .catch((error) => reportIpcError('getExistingDirectory', error));
+      try {
+        const result: OpenDialogReturnValue = await ipcRenderer.invoke(
+          'desktop_get_existing_directory',
+          caption,
+          label,
+          dir,
+          focusOwner,
+        );
+
+        if (result.canceled as boolean) {
+          return callback('');
+        }
+
+        const selectedPath = result.filePaths[0];
+        const userHomePath: string = await ipcRenderer.invoke('desktop_get_user_home_path');
+        const aliasedPath = resolveAliasedPath(selectedPath, userHomePath);
+        return callback(aliasedPath);
+      } catch (error: unknown) {
+        reportIpcError('getExistingDirectory', error as Error);
+      }
     },
 
     getUserHomePath: (callback: VoidCallback<string>) => {
