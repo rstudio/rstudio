@@ -1714,7 +1714,9 @@ void checkVariableAssignmentInArgumentList(RTokenCursor cursor,
    if (!cursor.contentEquals(L"<-"))
       return;
    
-   status.lint().unexpectedAssignmentInArgumentList(cursor);
+   // too noisy
+   // https://github.com/rstudio/rstudio/issues/14870
+   // status.lint().unexpectedAssignmentInArgumentList(cursor);
 }
 
 void checkUnexpectedEqualsAssignment(RTokenCursor& cursor,
