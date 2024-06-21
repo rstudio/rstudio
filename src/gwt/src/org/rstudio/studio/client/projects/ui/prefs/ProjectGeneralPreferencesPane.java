@@ -59,17 +59,19 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       projectNameLabel_.getElement().getStyle().setMarginBottom(2, Unit.PX);
       
       scratchPath_ = new DirectoryChooserTextBox(
-            "Project scratch path",
+            constants_.scratchPathLabel(),
             ElementIds.TextBoxButtonId.PROJECT_SCRATCH_PATH);
       scratchPath_.setPlaceholder(".Rproj.user");
       scratchPath_.addClearButton();
+      scratchPath_.getElement().setTitle(
+            "You may want to customize the project scratch path if this project is located on a high-latency network filesystem.\n\n" +
+            "Consider using a local filesystem for RStudio's project scratch path.");
       
       if (sessionInfo_.getAllowFullUI())
       {
          container.add(headerLabel(constants_.generalTitle()));
          container.add(spacedBefore(projectNameLabel_));
          container.add(spaced(projectName_));
-         container.add(spaced(scratchPath_));
       }
  
       container.add(headerLabel(constants_.workspaceTitle()));
@@ -110,6 +112,12 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       quitChildProcessesOnExit_ = new CheckBox(constants_.quitChildProcessesOnExitText());
       container.add(nudgeRight(quitChildProcessesOnExit_));
 
+      if (sessionInfo_.getAllowFullUI())
+      {
+         container.add(spacedBefore(headerLabel("Advanced")));
+         container.add(spaced(scratchPath_));
+      }
+      
       add(container);
    }
 
@@ -199,11 +207,11 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
       config.setProjectName(projectName_.getValue());
+      config.setScratchPath(scratchPath_.getText());
       
       if (!StringUtil.equals(scratchPath_.getText(), initialConfig_.getScratchPath()))
       {
          needsRestart = true;
-         config.setScratchPath(scratchPath_.getText());
       }
       
       return new RestartRequirement(needsRestart, needsRestart, needsRestart);

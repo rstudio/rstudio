@@ -458,7 +458,7 @@ public class RProjectConfig extends JavaScriptObject
    }-*/;
    
    public native final String getScratchPath() /*-{
-      return this.scratch_path;
+      return this.scratch_path || "";
    }-*/;
    
    public native final void setScratchPath(String scratchPath) /*-{

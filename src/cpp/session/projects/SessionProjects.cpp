@@ -804,7 +804,7 @@ Error writeProjectConfig(const json::Object& configJson)
    // set the config
    setProjectConfig(config);
 
-   // persist the project scratch path if set
+   // persist the project scratch path
    error = writeProjectScratchPath(configJson);
    if (error)
       LOG_ERROR(error);
