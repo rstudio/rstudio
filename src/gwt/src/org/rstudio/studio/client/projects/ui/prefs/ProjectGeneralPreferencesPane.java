@@ -64,8 +64,9 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       scratchPath_.setPlaceholder(".Rproj.user");
       scratchPath_.addClearButton();
       scratchPath_.getElement().setTitle(
-            "You may want to customize the project scratch path if this project is located on a high-latency network filesystem.\n\n" +
-            "Consider using a local filesystem for RStudio's project scratch path.");
+            "The project scratch path is used to store internal RStudio state for this project. " +
+            "You may want to customize this path if the project is located on a high-latency network filesystem.\n\n" +
+            "In this scenario, consider using a local filesystem for RStudio's project scratch path.");
       
       if (sessionInfo_.getAllowFullUI())
       {
