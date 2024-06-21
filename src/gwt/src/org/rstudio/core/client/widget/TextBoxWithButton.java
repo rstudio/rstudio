@@ -295,6 +295,11 @@ public class TextBoxWithButton extends Composite
       if (lblCaption_ != null)
          lblCaption_.setFor(textBox_);
    }
+   
+   public void addClearButton()
+   {
+      inner_.add(clearButton_);
+   }
 
 
    private final HorizontalPanel inner_;

@@ -15,10 +15,12 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.studio.client.packrat.model.PackratContext;
@@ -55,11 +57,19 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       projectName_.setWidth(textboxWidth);
       projectNameLabel_ = new FormLabel(constants_.customProjectNameLabel(), projectName_);
       projectNameLabel_.getElement().getStyle().setMarginBottom(2, Unit.PX);
+      
+      scratchPath_ = new DirectoryChooserTextBox(
+            "Project scratch path",
+            ElementIds.TextBoxButtonId.PROJECT_SCRATCH_PATH);
+      scratchPath_.setPlaceholder(".Rproj.user");
+      scratchPath_.addClearButton();
+      
       if (sessionInfo_.getAllowFullUI())
       {
          container.add(headerLabel(constants_.generalTitle()));
          container.add(spacedBefore(projectNameLabel_));
          container.add(spaced(projectName_));
+         container.add(spaced(scratchPath_));
       }
  
       container.add(headerLabel(constants_.workspaceTitle()));
@@ -134,7 +144,9 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
          disableExecuteRprofile_.setValue(false);
       }
       else
+      {
          disableExecuteRprofile_.setValue(config.getDisableExecuteRprofile());
+      }
 
       // check or uncheck the checkbox for child processes based on the configuration value
       // if default is specified, we need to use the current session setting
@@ -155,11 +167,19 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       quitChildProcessesOnExit_.setValue(quitChildProcessesChecked);
 
       projectName_.setText(config.getProjectName());
+      
+      String scratchPath = config.getScratchPath();
+      if (!StringUtil.isNullOrEmpty(scratchPath))
+         scratchPath_.setText(config.getScratchPath());
+      
+      initialConfig_ = config;
    }
 
    @Override
    public RestartRequirement onApply(RProjectOptions options)
    {
+      boolean needsRestart = false;
+      
       RProjectConfig config = options.getConfig();
       config.setRestoreWorkspace(restoreWorkspace_.getSelectedIndex());
       config.setSaveWorkspace(saveWorkspace_.getSelectedIndex());
@@ -179,12 +199,19 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
       config.setProjectName(projectName_.getValue());
-
-      return new RestartRequirement();
+      
+      if (!StringUtil.equals(scratchPath_.getText(), initialConfig_.getScratchPath()))
+      {
+         needsRestart = true;
+         config.setScratchPath(scratchPath_.getText());
+      }
+      
+      return new RestartRequirement(needsRestart, needsRestart, needsRestart);
    }
 
    private final FormLabel projectNameLabel_;
    private final TextBox projectName_;
+   private final DirectoryChooserTextBox scratchPath_;
 
    private YesNoAskDefault restoreWorkspace_;
    private YesNoAskDefault saveWorkspace_;
@@ -195,6 +222,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 
    private String tutorialPath_;
 
+   private RProjectConfig initialConfig_;
    private RProjectRVersion rVersion_;
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

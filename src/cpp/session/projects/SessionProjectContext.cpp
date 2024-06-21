@@ -104,26 +104,45 @@ Error computeProjectId(const FilePath& userDir, std::string* pProjectId)
 
 FilePath computeUserDir(const FilePath& projectFile)
 {
+   // compute default .Rproj.user path
    FilePath defaultUserDir = projectFile.getParent().completePath(".Rproj.user");
    
-   std::string userDir = core::system::getenv("RSTUDIO_PROJECT_SCRATCH_PATH");
-   if (userDir.empty())
+   // check for an external scratch path location -- if that exists,
+   // and it appears to be a usable scratch path, use it
+   FilePath scratchPathFile = defaultUserDir
+         .completePath(prefs::userState().contextId())
+         .completePath("scratch-path");
+   
+   std::string scratchPathContents;
+   Error error = core::readStringFromFile(scratchPathFile, &scratchPathContents);
+   if (error && !isFileNotFoundError(error))
+      LOG_ERROR(error);
+   
+   FilePath scratchPath(scratchPathContents);
+   if (scratchPath.isEmpty())
       return defaultUserDir;
    
-   std::string projectId;
-   Error error = computeProjectId(defaultUserDir, &projectId);
+   error = scratchPath.ensureDirectory();
    if (error)
    {
       LOG_ERROR(error);
       return defaultUserDir;
    }
    
-   FilePath customUserDir = FilePath(userDir).completePath(projectId);
-   error = customUserDir.ensureDirectory();
+   bool writable = false;
+   error = scratchPath.isWriteable(writable);
    if (error)
+   {
+      LOG_ERROR(error);
       return defaultUserDir;
+   }
+   else if (!writable)
+   {
+      ELOGF("Project is configured with scratch-path {}, but that path is not writable", scratchPathContents);
+      return defaultUserDir;
+   }
    
-   return customUserDir;
+   return scratchPath;
 }
 
 }  // anonymous namespace
