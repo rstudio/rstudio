@@ -60,6 +60,9 @@ void onSuspend(Settings*)
 
 void onResume(const Settings&) {}
 
+// the project scratch path file, if it exists, contains the path
+// to an external project scratch path -- basically allowing users
+// to move .Rproj.user to an external location for a particular project
 FilePath projectScratchPathFile()
 {
    static FilePath instance = s_projectContext
