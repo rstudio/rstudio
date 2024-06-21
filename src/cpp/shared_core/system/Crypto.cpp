@@ -28,6 +28,7 @@
  */
 
 #include <shared_core/system/Crypto.hpp>
+#include <shared_core/system/encryption/EncryptionConfiguration.hpp>
 #include <shared_core/system/encryption/EncryptionVersion.hpp>
 
 #include <gsl/gsl>
@@ -86,9 +87,9 @@ Error aesDecrypt(
    // Attempt versioned decryption. If unsuccessful, default to v0 decryption
    // Decrypting with incompatible buffer or key sizes can cause segfaults.
    // Wrap in a try/catch block to gracefully handle version decryption mismatches
+   Error result;
    try
    {
-      Error result;
       if (in_data.front() == v2::VERSION_BYTE)
       {
          if ((result = v2::aesDecrypt(in_data, in_key, in_iv, out_decrypted)) == Success())
@@ -98,6 +99,8 @@ Error aesDecrypt(
       }
       else if (in_data.front() == v1::VERSION_BYTE)
       {
+         if ((result = isDecryptionVersionAllowed(v1::VERSION_BYTE)) != Success())
+            return result;
          if ((result = v1::aesDecrypt(in_data, in_key, in_iv, out_decrypted)) == Success())
             return result;
          else
@@ -108,6 +111,9 @@ Error aesDecrypt(
    {
       log::logDebugMessage("Failed to decrypt versioned encryption. Attempting v0 decryption.");
    }
+
+   if ((result = isDecryptionVersionAllowed(v0::VERSION_BYTE)) != Success())
+      return result;
 
    return v0::aesDecrypt(in_data, in_key, in_iv, out_decrypted);
 }
@@ -126,7 +132,24 @@ Error aesEncrypt(
    const std::vector<unsigned char>& iv,
    std::vector<unsigned char>& out_encrypted)
 {
-   return v0::aesEncrypt(data, key, iv, out_encrypted);
+   // Encrypt with the highest version allowed
+   switch (getMaximumEncryptionVersion())
+   {
+      case v0::VERSION_BYTE:
+         return v0::aesEncrypt(data, key, iv, out_encrypted);
+         break;
+      case v1::VERSION_BYTE:
+         return v1::aesEncrypt(data, key, iv, out_encrypted);
+         break;
+      case v2::VERSION_BYTE:
+         return v2::aesEncrypt(data, key, iv, out_encrypted);
+         break;
+      default:
+         return Error(boost::system::errc::invalid_argument,
+                      "Encryption version error: Unrecognized maximum version value: " + std::to_string(getMaximumEncryptionVersion()),
+                      ERROR_LOCATION);
+         break;
+   }
 }
 
 Error base64Encode(const std::vector<unsigned char>& in_data, std::string& out_encoded)

@@ -32,8 +32,22 @@
 
 namespace rstudio {
 namespace core {
+
+// Forward Declaration
+class Error;
+
 namespace system {
 namespace crypto {
+
+/**
+ * @brief Helper function to check *minimum* allowed encryption version set by the
+ * configuration and determine if a given version should be used
+ *
+ * @param version The encryption version to check if it's allowed for decryption
+ *
+ * @return Success if the configuration allows the supplied version, Error otherwise
+ */
+core::Error isDecryptionVersionAllowed(int version);
 
 /**
  * @brief Gets the minimum encryption version, as set by the environment variable

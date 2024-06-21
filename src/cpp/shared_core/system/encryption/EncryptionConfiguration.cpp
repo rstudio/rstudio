@@ -28,6 +28,7 @@
  */
 
 #include <shared_core/system/encryption/EncryptionConfiguration.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {
@@ -43,6 +44,16 @@ int minimumEncryptionVersion = defaultMinimumEncryptionVersion;
 int maximumEncryptionVersion = defaultMaximumEncryptionVersion;
 
 } // anonymous namespace
+
+Error isDecryptionVersionAllowed(int version)
+{
+   if (version < getMinimumEncryptionVersion())
+      return Error(boost::system::errc::invalid_argument,
+                   "Encryption version error: Attempted v" + std::to_string(version) + " decryption when minimum encryption version is: v" + std::to_string(getMinimumEncryptionVersion()),
+                   ERROR_LOCATION);
+
+   return Success();
+}
 
 int getMinimumEncryptionVersion()
 {
