@@ -38,9 +38,6 @@ namespace system {
 namespace crypto {
 namespace encryption {
 
-#define kEncryptionMinimumVersion   "POSIT_ENCRYPTION_MINIMUM_VERSION"
-#define kEncryptionMaximumVersion   "POSIT_ENCRYPTION_MAXIMUM_VERSION"
-
 void initialize()
 {
    // Set encryption versions if env vars are set. Otherwise leave at defaults
@@ -50,7 +47,7 @@ void initialize()
 
    std::string maxVersion = core::system::getenv(kEncryptionMaximumVersion);
    if (!maxVersion.empty())
-      setMinimumEncryptionVersion(std::stoi(maxVersion));
+      setMaximumEncryptionVersion(std::stoi(maxVersion));
 }
 
 } // encryption
