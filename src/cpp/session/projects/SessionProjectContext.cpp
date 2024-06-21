@@ -82,26 +82,6 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
    }
 }
 
-Error computeProjectId(const FilePath& userDir, std::string* pProjectId)
-{
-   FilePath projectIdPath = userDir.completePath("project-id");
-   if (!projectIdPath.exists())
-   {
-      std::string projectId = core::system::generateUuid();
-      Error error = core::writeStringToFile(projectIdPath, projectId);
-      if (error)
-         return error;
-   }
-   
-   std::string projectId;
-   Error error = core::readStringFromFile(projectIdPath, &projectId);
-   if (error)
-      return error;
-   
-   *pProjectId = projectId;
-   return Success();
-}
-
 FilePath computeUserDir(const FilePath& projectFile)
 {
    // compute default .Rproj.user path
