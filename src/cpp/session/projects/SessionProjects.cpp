@@ -66,8 +66,7 @@ void onResume(const Settings&) {}
 FilePath projectScratchPathFile()
 {
    static FilePath instance = s_projectContext
-         .file()
-         .getParent()
+         .directory()
          .completePath(".Rproj.user")
          .completePath(prefs::userState().contextId())
          .completePath("scratch-path");
