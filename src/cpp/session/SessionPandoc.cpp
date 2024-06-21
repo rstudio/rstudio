@@ -25,6 +25,12 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#ifdef _WIN32
+# define kPandocExe "pandoc.exe"
+#else
+# define kPandocExe "pandoc"
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -32,17 +38,6 @@ namespace session {
 namespace module_context {
 
 namespace {
-
-std::string pandocBinary(const std::string& binary)
-{
-#ifndef WIN32
-   std::string target = binary;
-#else
-   std::string target = binary + ".exe";
-#endif
-  FilePath pandocPath = session::options().pandocPath().completeChildPath(target);
-  return string_utils::utf8ToSystem(pandocPath.getAbsolutePath());
-}
 
 core::system::ProcessOptions withPandocDefaultOptions(core::system::ProcessOptions options)
 {
@@ -84,7 +79,21 @@ std::vector<std::string> prependStackSize(const std::vector<std::string>& args)
 
 std::string pandocPath()
 {
-   return pandocBinary("pandoc");
+   // if a bundled copy of pandoc is available, use it
+   FilePath pandocPath = session::options().pandocPath();
+   FilePath pandocBinary = pandocPath.completePath(kPandocExe);
+   if (pandocBinary.exists())
+      return string_utils::utf8ToSystem(pandocBinary.getAbsolutePath());
+   
+   // otherwise, try using whatever pandoc exists on the PATH
+   Error error = core::system::findProgramOnPath(kPandocExe, &pandocBinary);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return kPandocExe;
+   }
+   
+   return string_utils::utf8ToSystem(pandocBinary.getAbsolutePath());
 }
 
 Error runPandoc(const std::string& pandocPath,
