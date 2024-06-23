@@ -25,6 +25,7 @@
 #include <session/SessionScopes.hpp>
 #include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -46,6 +47,7 @@ ProjectContext s_projectContext;
 core::r_util::ProjectId s_projectId;
 
 
+
 void onSuspend(Settings*)
 {
    // on suspend write out current project path as the one to use
@@ -57,6 +59,47 @@ void onSuspend(Settings*)
 }
 
 void onResume(const Settings&) {}
+
+// the project scratch path file, if it exists, contains the path
+// to an external project scratch path -- basically allowing users
+// to move .Rproj.user to an external location for a particular project
+FilePath projectScratchPathFile()
+{
+   static FilePath instance = s_projectContext
+         .directory()
+         .completePath(".Rproj.user")
+         .completePath(prefs::userState().contextId())
+         .completePath("scratch-path");
+   
+   return instance;
+}
+
+Error readProjectScratchPath(std::string* pScratchPath)
+{
+   return core::readStringFromFile(projectScratchPathFile(), pScratchPath);
+}
+
+Error writeProjectScratchPath(const json::Object& configJson)
+{
+   std::string scratchPath;
+   Error error = json::readObject(configJson, "scratch_path", scratchPath);
+   if (error)
+      return error;
+   
+   FilePath scratchPathFile = projectScratchPathFile();
+   if (scratchPath.empty())
+      return scratchPathFile.removeIfExists();
+   
+   error = scratchPathFile.getParent().ensureDirectory();
+   if (error)
+      return error;
+
+   error = core::writeStringToFile(scratchPathFile, scratchPath);
+   if (error)
+      return error;
+   
+   return Success();
+}
 
 Error validateProjectPath(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
@@ -418,6 +461,16 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    else
       configJson["zotero_libraries"] = json::Value(); // null
    configJson["project_name"] = config.projectName;
+   
+   // scratch path
+   std::string scratchPath;
+   Error error = readProjectScratchPath(&scratchPath);
+   if (error && !isFileNotFoundError(error))
+      LOG_ERROR(error);
+
+   if (!scratchPath.empty())
+      configJson["scratch_path"] = scratchPath;
+   
    return configJson;
 }
 
@@ -609,6 +662,7 @@ Error rProjectCopilotOptionsFromJson(const json::Object& optionsJson,
    return Success();
 }
 
+
 Error writeProjectConfig(const json::Object& configJson)
 {
    // read the config
@@ -752,9 +806,12 @@ Error writeProjectConfig(const json::Object& configJson)
    // set the config
    setProjectConfig(config);
 
+   // persist the project scratch path
+   error = writeProjectScratchPath(configJson);
+   if (error)
+      LOG_ERROR(error);
+   
    return Success();
-
-
 }
 
 Error writeProjectConfigRpc(const json::JsonRpcRequest& request,
@@ -1201,7 +1258,8 @@ void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::str
             &scratchPath,
             &sharedScratchPath);
 
-   for(auto doc : docs) {
+   for (auto&& doc : docs)
+   {
       addFirstRunDoc(scratchPath, doc);
    }
 }
