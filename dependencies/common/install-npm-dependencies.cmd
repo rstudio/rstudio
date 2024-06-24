@@ -22,15 +22,19 @@ goto :EOF
 :install-node :: version [apply-patches]
 
 	set NODE_VERSION=%~1
-	set APPLY_PATCHES=%~2
+	if "%~2"=="apply-patches" (
+		set NODE_FOLDER=%NODE_VERSION%-patched
+	) else (
+		set NODE_FOLDER=%NODE_VERSION%
+	)
 	set NODE_ROOT=node
-	set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
+	set NODE_SUBDIR=%NODE_ROOT%\%NODE_FOLDER%
 	set NODE_BASE_URL=%BASEURL%node/v%NODE_VERSION%/
 	set NODE_ARCHIVE_DIR=node-v%NODE_VERSION%-win-x64
 	set NODE_ARCHIVE_FILE=%NODE_ARCHIVE_DIR%.zip
 
-	if "%APPLY_PATCHES%"=="apply-patches" (
-		call install-node.cmd reinstall
+	if "%~2"=="apply-patches" (
+		call install-node.cmd reinstall-patched
 		call patch-node.cmd
 	) else (
 		call install-node.cmd
