@@ -640,8 +640,6 @@ public:
     */
    bool isWithin(const FilePath& in_scopePath) const;
 
-#ifndef _WIN32
-
    /**
     * @brief Checks whether this file path is writeable.
     *
@@ -651,8 +649,6 @@ public:
     * @return Success if the writeability of this file could be checked; Error otherwise. (e.g. EACCES).
     */
    Error isWriteable(bool& out_writeable) const;
-
-#endif
 
    /**
     * @brief Changes the current working directory to location represented by this file path.
