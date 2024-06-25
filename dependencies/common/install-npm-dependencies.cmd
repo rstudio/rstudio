@@ -34,7 +34,7 @@ goto :EOF
 	set NODE_ARCHIVE_FILE=%NODE_ARCHIVE_DIR%.zip
 
 	if "%~2"=="apply-patches" (
-		call install-node.cmd reinstall-patched
+		call install-node.cmd reinstall
 		call patch-node.cmd
 	) else (
 		call install-node.cmd

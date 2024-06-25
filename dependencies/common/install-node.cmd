@@ -7,7 +7,7 @@ set PATH=%CD%\tools;%PATH%
 set ACTION=%~1
 
 if exist "%NODE_SUBDIR%" (
-	if "%ACTION%"=="reinstall-patched" (
+	if "%ACTION%"=="reinstall" (
 		echo removing previous node %NODE_VERSION% from '%NODE_SUBDIR%'
 		rd /s /q "%NODE_SUBDIR%"
 	) else (

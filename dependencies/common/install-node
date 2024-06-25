@@ -26,7 +26,7 @@ if ! check_env_vars NODE_VERSION NODE_FOLDER NODE_ROOT NODE_SUBDIR NODE_BASE_URL
 fi
 
 if [ -d "${NODE_SUBDIR}" ]; then
-	if [ "${1}" == "reinstall-patched" ]; then
+	if [ "${1}" == "reinstall" ]; then
 		echo "removing previous ${NODE_VERSION} from '${NODE_SUBDIR}'"
 		rm -rf "${NODE_SUBDIR}"
 	else
