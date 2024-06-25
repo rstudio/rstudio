@@ -231,7 +231,7 @@ set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
 set(RSTUDIO_NODE_VERSION "20.14.0" CACHE INTERNAL "Node version for building")
 
 # node version installed with the product
-set(RSTUDIO_INSTALLED_NODE_VERSION "18.20.3" CACHE INTERNAL "Node version installed with product")
+set(RSTUDIO_INSTALLED_NODE_VERSION "20.15.0" CACHE INTERNAL "Node version installed with product")
 
 # quarto support
 
@@ -299,9 +299,9 @@ message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
 
 # path to node (so we can find it in debug builds)
 if(WIN32)
-   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}/node.exe")
+   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-patched/node.exe")
 else()
-   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}/bin/node")
+   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-patched/bin/node")
 endif()
 
 set(RSTUDIO_NODE_PATH "${RSTUDIO_NODE_PATH}" CACHE INTERNAL "Path to bundled node binary")
