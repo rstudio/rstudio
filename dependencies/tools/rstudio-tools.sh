@@ -486,7 +486,7 @@ export RSTUDIO_NODE_VERSION="20.14.0"
 export RSTUDIO_INSTALLED_NODE_VERSION="20.15.0"
 
 # version of go used for building
-export WORKBENCH_GO_VERSION="1.20.5"
+export WORKBENCH_GO_VERSION="1.22.3"
 
 # RStudio dependency cache
 export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
