@@ -8,6 +8,7 @@ date-meta: 2023-08-25
 ## Prerequisites
 
 -   To use GitHub Copilot, you must have a GitHub account and an active subscription to Copilot for Individuals or Copilot for Business. For more information, see [billing for GitHub Copilot](https://docs.github.com/en/billing/managing-billing-for-github-copilot/about-billing-for-github-copilot).
+-   Students and faculty can use GitHub Copilot for free as part of the GitHub Education program. For more information, see the [GitHub Education page](https://education.github.com/).
 -   To use GitHub Copilot in RStudio, you must have a compatible version of RStudio installed. GitHub Copilot is available for RStudio Desktop 2023.09.0 and later. GitHub Copilot is disabled by default in RStudio Server and Posit Workbench, but can be enabled by an administrator.
 -   To use GitHub Copilot, you must have access to the internet in order to send requests to the Copilot APIs and receive suggestions from GitHub Copilot.
 
@@ -294,5 +295,7 @@ function resetClicks() {
 Posit does not provide support or assistance for any code written or generated in RStudio, with or without Copilot. Posit does not support the Copilot output, or test the logic used by Copilot to generate code from prompts.
 
 GitHub Copilot is a proprietary tool from GitHub. If you want to use GitHub Copilot, you need a [subscription for GitHub Copilot](https://docs.github.com/en/billing/managing-billing-for-github-copilot/about-billing-for-github-copilot) in your personal GitHub account or to be assigned a seat by an organization with a subscription for GitHub Copilot for Business. Individual snippets of source code or the contents of entire files may be sent to GitHub's servers to generate suggestions, for more information about how this information is handled, please see the [Copilot Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-copilot-for-business-privacy-statement).
+
+Students and faculty can use GitHub Copilot for free as part of the GitHub Education program. For more information, see the [GitHub Education page](https://education.github.com/).
 
 By using GitHub Copilot, you acknowledge that your use of GitHub Copilot is governed by their terms of service and you agree to abide by their [terms of service](https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features#github-copilot). GitHub Copilot is considered “Third Party Materials” as defined in the [RStudio End User License Agreement](https://posit.co/about/eula/) and Posit assumes no liability or other obligations with respect thereto and, without limiting the foregoing, is not liable for any loss or damage resulting from the use or access thereof.
