@@ -2,6 +2,7 @@
 title: "RStudio IDE User Guide"
 subtitle: "RStudio is an integrated development environment (IDE) designed to support multiple languages, including both R and Python."
 date: today
+description: "Revision {{< var revision >}}"
 date-format: iso
 ---
 
