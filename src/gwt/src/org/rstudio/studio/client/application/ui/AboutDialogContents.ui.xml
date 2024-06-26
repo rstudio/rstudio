@@ -175,7 +175,7 @@
             </g:HTMLPanel>
             <g:HTMLPanel styleName="{style.trademarkNotice}">
                <g:InlineLabel
-                  text="RStudio and Shiny are registered trademarks of Posit Software, PBC, all rights reserved. See">
+                  text="RStudio, Quarto, and Shiny are registered trademarks of Posit Software, PBC, all rights reserved. See">
                </g:InlineLabel>
                <g:Anchor
                   href="https://www.posit.co/about/trademark/"
