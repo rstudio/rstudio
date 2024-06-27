@@ -18,6 +18,7 @@
 #include <gsl/gsl>
 
 #include <shared_core/system/Crypto.hpp>
+#include <shared_core/system/encryption/EncryptionConfiguration.hpp>
 #include <shared_core/system/encryption/EncryptionVersion.hpp>
 
 #include <tests/TestThat.hpp>
@@ -55,6 +56,9 @@ bool random(uint32_t in_length, std::vector<unsigned char>& out_randomData)
 
 bool generateKeys(unsigned char version)
 {
+   crypto::setMinimumEncryptionVersion(0);
+   crypto::setMaximumEncryptionVersion(2);
+
    // construct the data to encrypt in tests
    if (g_data.empty())
       std::copy(g_payload.begin(), g_payload.end(), std::back_inserter(g_data));

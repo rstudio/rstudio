@@ -30,6 +30,8 @@
 #ifndef CORE_SYSTEM_ENCRYPTION_HPP
 #define CORE_SYSTEM_ENCRYPTION_HPP
 
+#include <core/system/Types.hpp>
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -39,6 +41,7 @@ namespace encryption {
 #define kEncryptionMinimumVersion   "POSIT_ENCRYPTION_MINIMUM_VERSION"
 #define kEncryptionMaximumVersion   "POSIT_ENCRYPTION_MAXIMUM_VERSION"
 
+void forwardEncryptionEnvVars(Options *pEnvironment);
 void initialize();
 
 } // encryption

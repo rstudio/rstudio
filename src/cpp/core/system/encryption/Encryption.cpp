@@ -38,6 +38,12 @@ namespace system {
 namespace crypto {
 namespace encryption {
 
+void forwardEncryptionEnvVars(Options *pEnvironment)
+{
+   core::system::setenv(pEnvironment, kEncryptionMinimumVersion, std::to_string(getMinimumEncryptionVersion()));
+   core::system::setenv(pEnvironment, kEncryptionMaximumVersion, std::to_string(getMaximumEncryptionVersion()));
+}
+
 void initialize()
 {
    // Set encryption versions if env vars are set. Otherwise leave at defaults

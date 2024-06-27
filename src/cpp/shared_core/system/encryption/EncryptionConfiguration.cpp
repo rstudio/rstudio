@@ -37,9 +37,6 @@ namespace crypto {
 
 namespace {
 
-const int defaultMinimumEncryptionVersion = 0;
-const int defaultMaximumEncryptionVersion = 0;
-
 int minimumEncryptionVersion = defaultMinimumEncryptionVersion;
 int maximumEncryptionVersion = defaultMaximumEncryptionVersion;
 

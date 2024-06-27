@@ -39,6 +39,9 @@ class Error;
 namespace system {
 namespace crypto {
 
+const int defaultMinimumEncryptionVersion = 0;
+const int defaultMaximumEncryptionVersion = 0;
+
 /**
  * @brief Helper function to check *minimum* allowed encryption version set by the
  * configuration and determine if a given version should be used
