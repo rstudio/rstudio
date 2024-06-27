@@ -456,4 +456,12 @@ public class RProjectConfig extends JavaScriptObject
    public native final void setProjectName(String projectName) /*-{
       this.project_name = projectName;
    }-*/;
+   
+   public native final String getScratchPath() /*-{
+      return this.scratch_path || "";
+   }-*/;
+   
+   public native final void setScratchPath(String scratchPath) /*-{
+      this.scratch_path = scratchPath;
+   }-*/;
 }

@@ -2179,4 +2179,14 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Project display name (defaults to folder name):")
     @Key("customProjectNameLabel")
     String customProjectNameLabel();
+    
+    /**
+     * Translated "Project scratch path:".
+     *
+     * @return translated "Project scratch path:"
+     */
+    @DefaultMessage("Project scratch path:")
+    @Key("scratchPathLabel")
+    String scratchPathLabel();
+    
 }

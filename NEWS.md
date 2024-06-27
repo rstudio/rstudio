@@ -7,6 +7,7 @@
 #### RStudio
 
 - You can now toggle between R and Python in the Console by clicking on the language's logo in the Console pane header. (#11613)
+- Allow customization of the project scratch path location. (#14875)
 - Restart commands are now run after restoring the search path + global environment by default. (#14636)
 - The "Save as Image" dialog now includes a checkbox "Use device pixel ratio", controlling whether plots are scaled according to the current display's DPI. (#14727)
 - The "Soft-wrap R source files" preference now applies to all source files, and has been re-labelled appropriately. (#10940)
@@ -68,4 +69,5 @@
 ### Dependencies
 
 - Updated MathJax to version 2.7.9 (#11535)
-- Updated Electron to version 30.1.0 (#14582; Desktop)
+- Updated node.js to version 20.15.0 (#14826)
+- Updated Electron to version 30.1.2 (#14582; Desktop)

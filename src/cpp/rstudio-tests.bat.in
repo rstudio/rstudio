@@ -1,14 +1,75 @@
 @echo off
+
+if "%1" == "--help" goto :showhelp
+if "%1" == "-h" goto :showhelp
+if "%1" == "help" goto :showhelp
+if "%1" == "/?" goto :showhelp
+
+
+SETLOCAL ENABLEDELAYEDEXPANSION
+set RUN_ALL=1
+for %%A in (%*) do (
+    set KNOWN_ARG=0
+    if /I "%%A" == "core" (
+        set RUN_ALL=0
+        set KNOWN_ARG=1
+        set RUN_CORE=1
+    )
+    if /I "%%A" == "shared_core" (
+        set RUN_ALL=0
+        set KNOWN_ARG=1
+        set RUN_SHARED_CORE=1
+    )
+    if /I "%%A" == "rsession" (
+        set RUN_ALL=0
+        set KNOWN_ARG=1
+        set RUN_RSESSION=1
+    )
+    if /I "%%A" == "session" (
+        set RUN_ALL=0
+        set KNOWN_ARG=1
+        set RUN_RSESSION=1
+    )
+    if "!KNOWN_ARG!" == "0" goto :showhelp
+)
+
+if "%RUN_ALL%"=="1" (
+    set RUN_CORE=1
+    set RUN_SHARED_CORE=1
+    set RUN_RSESSION=1
+)
+
 set "PATH=@LIBR_BIN_DIR@;%PATH%"
 
-echo Running 'core' tests...
-"@CMAKE_CURRENT_BINARY_DIR@/core/rstudio-core-tests.exe"
+if "%RUN_CORE%"=="1" (
+    echo Running 'core' tests...
+    "@CMAKE_CURRENT_BINARY_DIR@/core/rstudio-core-tests.exe"
+)
 
-echo Running 'shared_core' tests...
-"@CMAKE_CURRENT_BINARY_DIR@/shared_core/rstudio-shared-core-tests.exe"
+if "%RUN_SHARED_CORE%"=="1" (
+    echo Running 'shared_core' tests...
+    "@CMAKE_CURRENT_BINARY_DIR@/shared_core/rstudio-shared-core-tests.exe"
+)
 
-echo Running 'rsession' tests...
-set "RS_CRASH_HANDLER_PATH=@CMAKE_SOURCE_DIR@/../../dependencies/windows/crashpad-release/bin/crashpad_handler.com"
-"@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" ^
-    --run-tests ^
-    --config-file="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
+if "%RUN_RSESSION%"=="1" (
+    echo Running 'rsession' tests...
+    set "RS_CRASH_HANDLER_PATH=@CMAKE_SOURCE_DIR@/../../dependencies/windows/crashpad-release/bin/crashpad_handler.com"
+    "@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" ^
+        --run-tests ^
+        --config-file="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
+)
+
+endlocal
+goto :EOF
+
+:showhelp
+echo Runs the unit tests for C++ code. By default all are run, but you can specify individual
+echo subsets when debugging.
+echo.
+echo rstudio-tests [core] [shared_core] [rsession]
+echo.
+echo     core        run the core tests
+echo     shared_core run the shared_core tests
+echo     rsession    run the rsession tests
+echo.
+exit /b 0

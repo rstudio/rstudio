@@ -3,38 +3,95 @@ title: "GitHub Copilot"
 date-meta: 2023-08-25
 ---
 
-::: {.callout-note title="GitHub Copilot is currently in public Preview"}
-[GitHub Copilot](https://docs.github.com/en/copilot) is an "AI pair programmer that offers autocomplete-style suggestions as you code".  GitHub Copilot is available as an opt-in integration with RStudio. This feature is currently in Preview. Copilot support is expected to be generally available in RStudio desktop, RStudio server and Posit Workbench in a future release. To provide feedback or report bugs, please open a [GitHub Issue on the RStudio repo](https://github.com/rstudio/rstudio/issues).
-:::
-
+[GitHub Copilot](https://docs.github.com/en/copilot) is an "AI pair programmer that offers autocomplete-style suggestions as you code". GitHub Copilot is available as an opt-in integration with RStudio. To provide feedback or report bugs, please open a [GitHub Issue on the RStudio repository](https://github.com/rstudio/rstudio/issues).
 
 ## Prerequisites
 
 -   To use GitHub Copilot, you must have a GitHub account and an active subscription to Copilot for Individuals or Copilot for Business. For more information, see [billing for GitHub Copilot](https://docs.github.com/en/billing/managing-billing-for-github-copilot/about-billing-for-github-copilot).
+-   Students and faculty can use GitHub Copilot for free as part of the GitHub Education program. For more information, see the [GitHub Education page](https://education.github.com/).
 -   To use GitHub Copilot in RStudio, you must have a compatible version of RStudio installed. GitHub Copilot is available for RStudio Desktop 2023.09.0 and later. GitHub Copilot is disabled by default in RStudio Server and Posit Workbench, but can be enabled by an administrator.
 -   To use GitHub Copilot, you must have access to the internet in order to send requests to the Copilot APIs and receive suggestions from GitHub Copilot.
 
 ## Setup
 
+::: {.callout-note title="Using GitHub Copilot with RStudio Server and Posit Workbench"}
+With RStudio Server and Posit Workbench, GitHub Copilot must first be explicitly enabled by a system administrator. This can be done by adding the line:
+
+```         
+copilot-enabled=1
+```
+
+to `/etc/rstudio/rsession.conf`.
+:::
+
 To enable GitHub Copilot in RStudio:
 
-1.  Navigate to Tools \> Global Options \> Copilot.  \
-2.  Check the box to "Enable GitHub Copilot".  \
-3.  Download and install the Copilot Agent components.  \
-4.  Click the "Sign In" button.  \
-5.  In the "GitHub Copilot: Sign in" dialog, copy the Verification Code.  \
+1.  Navigate to Tools \> Global Options \> Copilot.\
+2.  Check the box to "Enable GitHub Copilot".\
+3.  Download and install the Copilot Agent components.\
+4.  Click the "Sign In" button.\
+5.  In the "GitHub Copilot: Sign in" dialog, copy the Verification Code.\
 
 ![](images/copilot_sign-in.png){fig-alt="GitHub Copilot: Sign in"}
 
-6.  Navigate to or click on the link to <https://github.com/login/device>, paste the Verification Code and click "Continue".  \
-7.  GitHub will request the necessary permissions for GitHub Copilot. To approve these permissions, click "Authorize GitHub Copilot Plugin".  
-8. After the permissions have been approved, your RStudio IDE will indicate the currently signed in user.  
-9.  Close the Global Options dialogue, open a source file (`.R`, `.py`, `.qmd`, etc) and begin coding with Copilot!  
+6.  Navigate to or click on the link to <https://github.com/login/device>, paste the Verification Code and click "Continue".\
+7.  GitHub will request the necessary permissions for GitHub Copilot. To approve these permissions, click "Authorize GitHub Copilot Plugin".\
+8.  After the permissions have been approved, your RStudio IDE will indicate the currently signed in user.\
+9.  Close the Global Options dialogue, open a source file (`.R`, `.py`, `.qmd`, etc) and begin coding with Copilot!
 
 To disable GitHub Copilot either:
 
--   Navigate to Tools \> Global Options \> Copilot and uncheck "Enable GitHub Copilot", or  
--   Use the Command Palette <kbd>Cmd+Shift+P</kbd> on Mac or <kbd>Ctrl+Shift+P</kbd> on Windows/Linux, search for "Enable GitHub Copilot" and then uncheck "Enable GitHub Copilot".  
+-   Navigate to Tools \> Global Options \> Copilot and uncheck "Enable GitHub Copilot", or\
+-   Use the Command Palette <kbd>Cmd+Shift+P</kbd> on Mac or <kbd>Ctrl+Shift+P</kbd> on Windows/Linux, search for "Enable GitHub Copilot" and then uncheck "Enable GitHub Copilot".
+
+### Using GitHub Copilot with Proxy Servers
+
+If you are using RStudio in an environment with limited public internet access, you may need to first instruct the GitHub Copilot agent to use your enterprise's internal proxy server. For RStudio Server and Posit Workbench, this can be done by a system administrator, by setting:
+
+```         
+copilot-proxy-url=<url>
+```
+
+in `/etc/rstudio/rsession.conf`. Alternatively, for RStudio Desktop installations, you can set the environment variable:
+
+```         
+COPILOT_PROXY_URL=<url>
+```
+
+in an appropriate R start-up file; for example, your own `~/.Renviron`, or in your R installation's `etc/Rprofile.site` file. Please consult `?Startup` in an R session for more details.
+
+### Using Custom Certificates with GitHub Copilot
+
+If you are using RStudio in an environment with custom SSL certificates, you may need to first instruct the GitHub Copilot agent to use your enterprise's custom SSL certificates. For RStudio Server and Posit Workbench, this can be done by a system administrator, by setting:
+
+```         
+copilot-ssl-certificates-file=<path>
+```
+
+in your `/etc/rstudio/rsession.conf`. Note that this is functionally equivalent to setting the `NODE_EXTRA_CA_CERTS` environment variable for the GitHub Copilot agent process -- see https://nodejs.org/api/cli.html#node_extra_ca_certsfile for more details.
+
+### External Services Used by GitHub Copilot
+
+The GitHub Copilot agent process will communicate with the following external services when authenticating the current user, and also when generating code suggestions:
+
+-   github.com
+-   copilot-proxy.githubusercontent.com
+-   api.githubcopilot.com
+-   default.exp-tas.com
+
+If you are having trouble setting up GitHub Copilot in an environment with limited public internet access, you may need to ensure that your network allows access to these services.
+
+### Copilot Diagnostics
+
+The GitHub Copilot agent used by RStudio can also generate a diagnostics report. This report is accessible from the Copilot preferences pane, using the `Diagnostics` button:
+
+![](images/copilot-diagnostics-button.png){fig-alt="GitHub Copilot: Diagnostics button"}
+
+After clicking this button, you will be presented with a small diagnostics report produced by the Copilot Agent. For example:
+
+![](images/copilot-diagnostics-report.png){fig-alt="GitHub Copilot: Diagnostics report"}
+
+This report may be useful when diagnosing Copilot connectivity issues.
 
 ## Using Copilot
 
@@ -42,16 +99,16 @@ Copilot offers autocomplete-style suggestions as you code as "ghost text". This 
 
 ![](images/copilot-rstudio.png){fig-alt="Copilot in RStudio"}
 
-1.  A simple but specific comment providing additional context to Copilot
-2.  Copilot suggestion, shown in light grey 'ghost text'
+1.  A simple but specific comment providing additional context to Copilot.
+2.  Copilot's code suggestion, shown in light grey "ghost text".
 3.  The Copilot status bar, which indicates whether RStudio is waiting on a response to be generated, a completion response has been received, or no completions are available.
 
 GitHub Copilot primarily relies on the context in the file you are actively editing. Any comments, code, or other context provided within the active document will be used as a "prompt" that Copilot will then use to provide a suggested completion. To expand the scope of the context used by Copilot beyond just the active document, there is a setting to also index and read from other R, Python, or SQL files in the current project. This setting can be toggled on or off in the Tools \> Global Options \> Copilot \> "Index project files with GitHub Copilot" setting.
 
-For general advice on how to use Copilot, please see:  
+For general advice on how to use Copilot, please see:
 
-- [How to use GitHub Copilot: Prompts, tips, and use cases](https://github.blog/2023-06-20-how-to-write-better-prompts-for-github-copilot/)\
-- [Learning GitHub Copilot video series](https://learn.microsoft.com/en-us/shows/introduction-to-github-copilot/)
+-   [How to use GitHub Copilot: Prompts, tips, and use cases](https://github.blog/2023-06-20-how-to-write-better-prompts-for-github-copilot/)\
+-   [Learning GitHub Copilot video series](https://learn.microsoft.com/en-us/shows/introduction-to-github-copilot/)
 
 ::: {.callout-warning title="Trust but Verify"}
 While Copilot often generates useful and functional code, it is important to note that the suggestions are not always valid code examples or completely solve the intended problem. Copilot suggestions are non-deterministic and Posit does not guarantee the quality, accuracy, or security of the outputs. It is important to review the suggestions and ensure that they are both accurate and appropriate for the intended use case. Copilot may generate code that contains insecure coding patterns, bugs, or outdated practices. You should always use best practices in code review, testing, and adherence to security standards when using Copilot. For more information, see the [FAQs on GitHub Copilot](https://github.com/features/copilot#faq) and [GitHub Copilot for Business](https://docs.github.com/en/copilot/overview-of-github-copilot/about-github-copilot-for-business).
@@ -63,9 +120,9 @@ The existing autocomplete in RStudio is a static list of possible completions ba
 
 Similar to normal autocomplete, Copilot suggestions will begin after a short delay. If you want to prompt Copilot directly in a new file, you can start typing a descriptive variable or function name and then pause for a moment. Copilot will then generate a suggestion based on the current context.
 
-At times, normal autocomplete and Copilot may seem to conflict with each other. In these cases, it is best to review the Copilot suggestion and determine if it is appropriate for the current context. If it is, you can accept the suggestion by pressing <kbd>Tab</kbd>. If it is not, you can ignore the suggestion and continue typing or force the normal autocomplete to show by pressing <kbd>Ctrl+Space</kbd>.
+At times, normal autocomplete and Copilot may seem to conflict with each other. In these cases, it is best to review the Copilot suggestion and determine if it is appropriate for the current context. If it is, you can accept the suggestion by pressing <kbd>Tab</kbd>. If it is not, you can ignore the suggestion and continue typing or force the normal autocomplete to show by pressing <kbd>Ctrl+Space</kbd>. You can also toggle Copilot on and off for a particular document using the `Copilot: Toggle Automatic Completions` command, accessible from the Command Palette via <kbd>Ctrl+Shift+P</kbd>.
 
-You can also disable the "Show code completions: Automatically" setting in the Tools > Global Options > Code > Completion section. 
+You can also disable the "Show code completions: Automatically" setting in the Tools \> Global Options \> Code \> Completion section.
 
 ![](images/autocomplete-settings.png){fig-alt="Autocomplete settings in RStudio"}
 
@@ -73,14 +130,13 @@ You can also disable the "Show code completions: Automatically" setting in the T
 
 The primary use case for Copilot is to generate code. Copilot will use the context of the active document to generate suggestions for code that might be useful.
 
-Copilot suggestions will be presented as grey "ghost text" which may be accepted by pressing the <kbd>Tab</kbd>, while the <kbd>Enter/Return</kbd> key will ignore the suggestion. Some suggestions will be a single entire line, inline of other code, or others with broader context may be multiple lines.
+Copilot suggestions will be presented as grey "ghost text" which may be accepted by pressing the <kbd>Tab</kbd>, while the <kbd>Enter/Return</kbd> key will ignore the suggestion. Some suggestions will be a single entire line, inline of other code, or others with broader context may span multiple lines.
 
 ![](images/copilot_ghost-text.png){fig-alt="Copilot ghost text"}
 
 Code suggestions are typically most useful when applied to a well-scoped and specific problem. When trying to solve larger problems or write longer functions, it is best to break the problem down into smaller pieces and use Copilot and your own expertise to generate code for each chunk. Similar to how a chef might use a recipe to cook each dish that makes up a larger meal, Copilot can be used to generate code for smaller pieces of a larger problem.
 
 ::: {.callout-info title="Copilot response limits"}
-
 There are upper limits to the amount of characters or code that can be returned at any one time, commonly referred to as "tokens". If the token limit is exceeded on a suggestion, Copilot will usually return a truncated suggestion. This is most common when Copilot is used to generate code for a long function or other multi-line code block. To avoid truncated outputs, it is best to scope the problem down into several smaller prompts or problems. Alternatively, after accepting the "partial" response, you could finish writing the rest of the code yourself or add additional inline comments to prompt Copilot to suggest additional outputs to complete the remainder of the code snippet.
 :::
 
@@ -238,6 +294,8 @@ function resetClicks() {
 
 Posit does not provide support or assistance for any code written or generated in RStudio, with or without Copilot. Posit does not support the Copilot output, or test the logic used by Copilot to generate code from prompts.
 
-GitHub Copilot is a proprietary tool from GitHub. If you want to use GitHub Copilot, you need a [subscription for GitHub Copilot](https://docs.github.com/en/billing/managing-billing-for-github-copilot/about-billing-for-github-copilot) in your personal GitHub account or to be assigned a seat by an organization with a subscription for GitHub Copilot for Business. Individual snippets of source code or the contents of entire files may be sent to GitHub's servers to generate suggestions, for more information about how this information is handled, please see the [Copilot Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-copilot-for-business-privacy-statement).  
+GitHub Copilot is a proprietary tool from GitHub. If you want to use GitHub Copilot, you need a [subscription for GitHub Copilot](https://docs.github.com/en/billing/managing-billing-for-github-copilot/about-billing-for-github-copilot) in your personal GitHub account or to be assigned a seat by an organization with a subscription for GitHub Copilot for Business. Individual snippets of source code or the contents of entire files may be sent to GitHub's servers to generate suggestions, for more information about how this information is handled, please see the [Copilot Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-copilot-for-business-privacy-statement).
+
+Students and faculty can use GitHub Copilot for free as part of the GitHub Education program. For more information, see the [GitHub Education page](https://education.github.com/).
 
 By using GitHub Copilot, you acknowledge that your use of GitHub Copilot is governed by their terms of service and you agree to abide by their [terms of service](https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features#github-copilot). GitHub Copilot is considered “Third Party Materials” as defined in the [RStudio End User License Agreement](https://posit.co/about/eula/) and Posit assumes no liability or other obligations with respect thereto and, without limiting the foregoing, is not liable for any loss or damage resulting from the use or access thereof.

@@ -242,6 +242,26 @@ TEST_CASE("Empty File Path tests")
       CHECK(aPath.getRelativePath(pPath) == "a");
    }
 
+   SECTION("directory write testing for Win32")
+   {
+      // create temporary directory
+      FilePath tempDir;
+      Error error = FilePath::tempFilePath(tempDir);
+      CHECK(!error);
+
+      error = tempDir.ensureDirectory();
+      CHECK(!error);
+
+      // it should now report as writeable
+      bool writeable = false;
+      error = tempDir.isWriteable(writeable);
+      CHECK(!error);
+      CHECK(writeable);
+
+      // clean up
+      tempDir.remove();
+   }
+
 #else
 
    // Non-Windows tests

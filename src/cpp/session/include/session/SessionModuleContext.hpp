@@ -1017,7 +1017,6 @@ core::Error adaptToLanguage(const std::string& language);
 // paths to pandoc and pandoc-citeproc suitable for passing to the shell
 // (string_utils::utf8ToSystem has been called on them)
 std::string pandocPath();
-std::string pandocCiteprocPath();
 
 core::Error runPandoc(const std::string& pandocPath,
                       const std::vector<std::string>& args,

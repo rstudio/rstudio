@@ -24,15 +24,13 @@ if ! check_env_vars NODE_VERSION NODE_FOLDER NODE_ROOT NODE_SUBDIR NODE_BASE_URL
 	exit 1 # check_env_vars has already printed an error message
 fi
 
-if [ "$NODE_VERSION" == "$RSTUDIO_INSTALLED_NODE_VERSION" ]; then
-	section "Applying patches to node ${NODE_VERSION}"
+section "Applying patches to node ${NODE_VERSION}"
 
-	# remove npm from the node installation
-	rm -rf "${NODE_SUBDIR}/lib/node_modules/npm"
-	rm "${NODE_SUBDIR}/lib/node_modules/corepack/shims/nodewin/npm"
-	rm "${NODE_SUBDIR}/lib/node_modules/corepack/shims/npm"
-	rm "${NODE_SUBDIR}/lib/node_modules/corepack/shims/nodewin/npx"
-	rm "${NODE_SUBDIR}/lib/node_modules/corepack/shims/npx"
-	rm "${NODE_SUBDIR}/bin/npm"
-	rm "${NODE_SUBDIR}/bin/npx"
-fi
+rm "${NODE_SUBDIR:?}/bin/npm"
+rm "${NODE_SUBDIR:?}/bin/npx"
+rm "${NODE_SUBDIR:?}/bin/corepack"
+rm "${NODE_SUBDIR:?}/CHANGELOG.md"
+rm "${NODE_SUBDIR:?}/README.md"
+rm -rf "${NODE_SUBDIR:?}/include"
+rm -rf "${NODE_SUBDIR:?}/lib"
+rm -rf "${NODE_SUBDIR:?}/share"

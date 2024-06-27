@@ -688,25 +688,55 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
       }
    }
    
-   if (!propertiesPath.exists())
-      return core::fileNotFoundError(propertiesPath, ERROR_LOCATION);
-   
-   // read the contents of the file
-   std::string properties;
-   Error error = readStringFromFile(propertiesPath,
-                                    &properties,
-                                    options().sourceLineEnding());
-   if (error)
-      return error;
-   
-   // parse the json
+
+   int retryCount = 3;
+   bool retry;
    json::Value value;
-   if (value.parse(properties))
+
+   int numAttempts = 0;
+   do
    {
-      Error error = systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-      error.addProperty("path", propertiesPath);
-      return error;
+      retry = false;
+      numAttempts++;
+      if (!propertiesPath.exists())
+         return core::fileNotFoundError(propertiesPath, ERROR_LOCATION);
+      else
+      {
+         // read the contents of the file
+         std::string properties;
+         Error error = readStringFromFile(propertiesPath,
+                                          &properties,
+                                          options().sourceLineEnding());
+         if (error)
+         {
+           LOG_DEBUG_MESSAGE("SourceDB: read string from file failed: " + std::to_string(numAttempts) + " path: " + propertiesPath.getAbsolutePath() + " error: " + error.asString());
+            retry = true;
+         }
+         else
+         {
+            // parse the json
+            if (properties.empty() || value.parse(properties))
+            {
+               retry = true;
+               if (properties.empty())
+                  LOG_DEBUG_MESSAGE("SourceDB: Found empty properties file - retry: " + std::to_string(numAttempts) + " path: " + propertiesPath.getAbsolutePath());
+               else
+                 LOG_DEBUG_MESSAGE("SourceDB: Found invalid properties: " + properties + " - retry: " + std::to_string(numAttempts) + " path: " + propertiesPath.getAbsolutePath());
+            }
+         }
+      }
+
+      if (retry && numAttempts >= retryCount)
+      {
+         LOG_ERROR_MESSAGE("SourceDB: Failed to get source properties after: " + std::to_string(numAttempts) + " tries");
+         Error error = systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+         error.addProperty("path", propertiesPath);
+         return error;
+      }
+      else
+         boost::this_thread::sleep(boost::posix_time::milliseconds(25));
    }
+   while (retry);
    
    // validate we got a JSON object
    if (!value.isObject())
@@ -721,7 +751,7 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
    
    // migration: if we have a 'contents' field, but no '-contents' side-car
    // file, perform a one-time generation of that sidecar file from contents
-   error = attemptContentsMigration(jsonDoc, propertiesPath);
+   Error error = attemptContentsMigration(jsonDoc, propertiesPath);
    if (error)
       LOG_ERROR(error);
    
