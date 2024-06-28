@@ -3,6 +3,7 @@
 ### New
 
 - Posit Product Documentation theme v4.0.2; adds dark mode and several accessibility improvements (rstudio-pro#6373)
+- Added ability for RStudio and Workbench to use AES 256 encryption (rstudio-pro#4011)
 
 #### RStudio
 

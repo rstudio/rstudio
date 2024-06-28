@@ -31,6 +31,7 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/User.hpp>
+#include <core/system/encryption/Encryption.hpp>
 
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
@@ -64,6 +65,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/system/User.hpp>
+#include <shared_core/system/encryption/EncryptionConfiguration.hpp>
 
 #include "server-config.h"
 #include "ServerAddins.hpp"
@@ -760,7 +762,10 @@ int main(int argc, char * const argv[])
       FileLock::initialize();
 
       // initialize crypto utils
+      core::system::crypto::encryption::initialize();
       core::system::crypto::initialize();
+      LOG_INFO_MESSAGE("Encryption versions set to max: " + std::to_string(system::crypto::getMaximumEncryptionVersion()) + \
+                       ", min: " + std::to_string(system::crypto::getMinimumEncryptionVersion()));
 
       // initialize secure cookie module
       error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
