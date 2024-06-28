@@ -705,11 +705,8 @@ else()
       # add desktop subprojects if we aren't building in server only mode
       if(RSTUDIO_ELECTRON)
          add_subdirectory(diagnostics)
-         add_subdirectory(desktop)
       endif()
 
-      # add this after desktop so it is not included in fixup_bundle
-      # processing which we do in desktop
       add_subdirectory(session)
 
       # desktop conf file used for dev-mode for Electron desktop
