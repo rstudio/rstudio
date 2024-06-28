@@ -55,8 +55,8 @@ test_context("EncryptionConfigurationTests")
    test_that("Env vars control encryption min/max versions")
    {
       // Unset any environment variable values
-      core::system::setenv(kEncryptionMinimumVersion, std::string());
-      core::system::setenv(kEncryptionMaximumVersion, std::string());
+      core::system::setenv(kEncryptionMinimumVersionEnvVar, std::string());
+      core::system::setenv(kEncryptionMaximumVersionEnvVar, std::string());
 
       // Set to defaults
       setToDefaults();
@@ -64,8 +64,8 @@ test_context("EncryptionConfigurationTests")
       REQUIRE(crypto::getMaximumEncryptionVersion() == 0);
 
       // Set environment variable values
-      core::system::setenv(kEncryptionMinimumVersion, "1");
-      core::system::setenv(kEncryptionMaximumVersion, "2");
+      core::system::setenv(kEncryptionMinimumVersionEnvVar, "1");
+      core::system::setenv(kEncryptionMaximumVersionEnvVar, "2");
 
       // Load env vars into config
       crypto::encryption::initialize();

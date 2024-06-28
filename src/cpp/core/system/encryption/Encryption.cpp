@@ -40,18 +40,18 @@ namespace encryption {
 
 void forwardEncryptionEnvVars(Options *pEnvironment)
 {
-   core::system::setenv(pEnvironment, kEncryptionMinimumVersion, std::to_string(getMinimumEncryptionVersion()));
-   core::system::setenv(pEnvironment, kEncryptionMaximumVersion, std::to_string(getMaximumEncryptionVersion()));
+   core::system::setenv(pEnvironment, kEncryptionMinimumVersionEnvVar, std::to_string(getMinimumEncryptionVersion()));
+   core::system::setenv(pEnvironment, kEncryptionMaximumVersionEnvVar, std::to_string(getMaximumEncryptionVersion()));
 }
 
 void initialize()
 {
    // Set encryption versions if env vars are set. Otherwise leave at defaults
-   std::string minVersion = core::system::getenv(kEncryptionMinimumVersion);
+   std::string minVersion = core::system::getenv(kEncryptionMinimumVersionEnvVar);
    if (!minVersion.empty())
       setMinimumEncryptionVersion(std::stoi(minVersion));
 
-   std::string maxVersion = core::system::getenv(kEncryptionMaximumVersion);
+   std::string maxVersion = core::system::getenv(kEncryptionMaximumVersionEnvVar);
    if (!maxVersion.empty())
       setMaximumEncryptionVersion(std::stoi(maxVersion));
 }

@@ -38,8 +38,8 @@ namespace system {
 namespace crypto {
 namespace encryption {
 
-#define kEncryptionMinimumVersion   "POSIT_ENCRYPTION_MINIMUM_VERSION"
-#define kEncryptionMaximumVersion   "POSIT_ENCRYPTION_MAXIMUM_VERSION"
+#define kEncryptionMinimumVersionEnvVar   "POSIT_ENCRYPTION_MINIMUM_VERSION"
+#define kEncryptionMaximumVersionEnvVar   "POSIT_ENCRYPTION_MAXIMUM_VERSION"
 
 void forwardEncryptionEnvVars(Options *pEnvironment);
 void initialize();
