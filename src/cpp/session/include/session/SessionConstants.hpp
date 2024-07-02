@@ -150,11 +150,7 @@
 #define kSessionTmpDirEnvVar       "RS_SESSION_TMP_DIR"
 #define kSessionTmpDir             "rstudio-rsession"
 
-#ifdef QUARTO_ENABLED
 # define kDefaultPandocPath        "bin/quarto/bin/tools"
-#else
-# define kDefaultPandocPath        "bin/pandoc"
-#endif
 
 #define kDefaultNodePath           "bin/node"
 #define kDefaultQuartoPath         "bin/quarto"
