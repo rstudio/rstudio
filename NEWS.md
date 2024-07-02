@@ -26,6 +26,8 @@
 - Added support for Jupyter Notebook 7 (rstudio-pro#6266)
 - Replaced code server binary with PWB Code Server. PWB Code Server is bundled with the PWB VS Code Extension, so a separate install is no longer required. It is a fork of VS Code 1.89.1. (rstudio-pro#6265)
 - Disabled Jupyter Notebooks by default on fresh installs of PWB (rstudio-pro#6269)
+- Workbench now respects the `SLURM_CONF` environment variable, which can be used to point to a non-standard location for the Slurm configuration file (launcher#767)
+- Workbench now does a better job of tracking which Slurm jobs it owns, allowing multiple independent Workbench servers to use the same Slurm cluster, or a single Workbench server to use the same backing Slurm cluster with different configurations (launcher#908)
 
 ### Fixed
 
@@ -66,7 +68,11 @@
 - Workbench jobs now set resource profiles correctly (rstudio-pro#5217)
 - When launching a Workbench job from RStudio Pro, changing fields in the Options tab no longer resets the selected R version in the Environment tab (rstudio-pro#5218)
 - Fixed bug that prevented users from receiving the admin-configured default settings when launching VS Code sessions (rstudio-pro#6207)
-
+- RStudio Pro sessions run inside Singularity containers on Slurm now respect the `modules-bin-path` setting (rstudio-pro#6319)
+- When user provisioning is enabled, server logs no longer contain related debug messages unless debug logging is enabled (rstudio-pro#6480)
+- Trailing slashes in Databricks workspace URLs in the `databricks.conf` file no longer prevent users from signing in to Databricks from the home page (rstudio-pro#6435)
+- Resource profiles on Kubernetes and Slurm are now listed in the order in which they appear in the config file (rstudio-pro#6485)
+- Switching the selected IDE when launching a session from the home page no longer resets the image selection (rstudio-pro#4079)
 
 ### Dependencies
 
