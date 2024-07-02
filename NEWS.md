@@ -59,6 +59,7 @@
 - Moved the "Sign commit" checkbox to Git/Svn global options panel (##14559)
 - RStudio's editor highlighting no longer accepts embedded spaces in '#|' comment prefixes. (#14592)
 - RStudio now preserves a file's existing line endings when performing a Find and Replace. (#14796)
+- Fixed an issue where headers without a label in R Markdown documents were not shown in the scope tree. (#13159)
 
 #### Posit Workbench
 
