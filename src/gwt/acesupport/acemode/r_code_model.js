@@ -923,14 +923,14 @@ var RCodeModel = function(session, tokenizer,
                   continue;
             }
 
-            // Add to scope tree.
-            if (label.length === 0)
-               label = "(Untitled)";
-
             // Trim off Markdown IDs from the label.
             var reBraces = /{.*}\s*$/;
             label = label.replace(reBraces, "");
 
+            // Make sure we have a non-empty label
+            label = label || "(Untitled)"
+
+            // Add to scope tree
             this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, true);
          }
 
