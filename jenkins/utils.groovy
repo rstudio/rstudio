@@ -343,27 +343,241 @@ def rebuildCheck() {
   }
 }
 
-boolean postReviewCheck(String name, String status, String title, String summary, String content) {
+def prApiUrl() {
+  ownerAndRepo = env.GIT_URL.replaceAll('^https://github.com[/:]', '').replaceAll('.git$', '')
+  return "https://api.github.com/repos/${ownerAndRepo}/check-runs"
+}
+
+checks = [:]
+
+/**
+  * Posts a review check to the GitHub /check-runs API with the specified args.
+  * 
+  * If the check does not exist, it will be created with default values.
+  * If the check has already been posted in the current pipeline build, existing values will be used.
+  *
+  * Map args:
+  *    title:   The title of the check (required)
+  *    status:  The status of the check, one of 'queued', 'in_progress', 
+  *             'action_required', 'cancelled', 'failure', 'neutral', 'success', 
+  *             'skipped', 'timed_out' (optional, default: 'queued')
+  *    summary: The summary of the check (optional, default: '')
+  *    details: The details of the check (optional, default: '')
+ */
+synchronized boolean postReviewCheck(Map args) {
   if (!env.GIT_BRANCH) { return false }
   if (!env.GIT_BRANCH.startsWith('PR-')) { return false }
 
-  pullId = env.GIT_BRANCH.replaceAll("^PR-", "")
-  ownerAndRepo = env.GIT_URL.replaceAll('^https://github.com[/:]', '').replaceAll('.git$', '')
-  prApiUrl = "https://api.github.com/repos/${ownerAndRepo}/check-runs"
+  def title
+  if (args.title) {
+    title = args.title
+  } else {
+    return false
+  }
+  
+  def check = checks.get(title)
+  if (!check) {
+    def name = title.toLowerCase().replaceAll(' ', '-')
+    check = [
+      title: title,
+      name: name,
+      status: 'queued',
+      summary: '',
+      details: '',
+    ]
+    checks.put(title, check)
+  }
 
-  strippedQuotes = content.trim().replaceAll('^"', '').replaceAll('"$', '')
-  output = $/{"title": "${title}", "summary": "${summary}", "text": "${strippedQuotes}"}/$
+  if (args.status) {
+    check.status = args.status
+  }
+  if (args.summary) {
+    check.summary = args.summary
+  }
+  if (args.details) {
+    check.details = args.details
+  }
 
-  sh 'curl -L ' +
-    '-X POST ' +
-    '-H "Accept: application/vnd.github+json" ' +
-    '-H "Authorization: token ${GITHUB_LOGIN_PSW}" ' +
-    '-H "X-GitHub-Api-Version: 2022-11-28" ' +
-    '-H "Content-Type: application/json" ' +
-    "-d '{\"conclusion\": \"${status}\", \"output\": ${output}, \"name\": \"${name}\", \"head_sha\": \"${GIT_COMMIT}\"}' " +
-    "${prApiUrl}"
+  text = check.details.trim()
+    .replaceAll('^"', '')
+    .replaceAll('"$', '')
+    .replaceAll("'", "\\'")
+    .replaceAll("\"", "\\\"")
+    .replaceAll(/\R/, "\\\n")
+    .replaceAll(/\\n/, "\\\n")
+  
+  if (text) {
+    text = "```bash\n${text}\n```"
+  }
+  output = [
+    "title": check.title,
+    "summary": check.summary,
+    "text": "${text}",
+  ]
+  def statusField = 'status'
+  switch(check.status) {
+    case 'queued':
+    case 'in_progress':
+      statusField = 'status'
+      break
+    case 'action_required':
+    case 'cancelled':
+    case 'failure':
+    case 'neutral':
+    case 'success':
+    case 'skipped':
+    case 'timed_out':
+      statusField = 'conclusion'
+      break
+  }
+  def payloadDict = [
+    "${statusField}": check.status,
+    "output": output,
+    "name": check.name,
+    "head_sha": GIT_COMMIT
+  ]
+  def payload = writeJSON(json: payloadDict, returnText: true)
 
-  return true
+  // archive the file
+  sh "echo Sending check for ${check.title} with payload ${payload}"
+  def response = httpRequest(
+    url: prApiUrl(),
+    httpMode: 'POST',
+    requestBody: payload,
+    customHeaders: [
+      [name: "Authorization", value: 'token ' + GITHUB_LOGIN_PSW, maskValue: true],
+      [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
+      [name: 'Accept', value: 'application/vnd.github+json'],
+    ]
+  )
+
+  if (response.status == 201) {
+    checks[title] = check
+    responseContent = readJSON(text: response.content)
+    checks[title].id = responseContent.id
+    return true
+  } else {
+    echo "Failed to post review check: ${response.status} ${response.content}"
+    return false
+  }
+}
+
+def finishReviewChecks(String buildResult) {
+  for (check in checks.values()) {
+    if (buildResult == 'ABORTED') {
+      postReviewCheck([
+        title: check.title,
+        status: 'cancelled',
+        summary: 'Build was aborted',
+      ])
+    }
+    else {
+      response = httpRequest(
+        url: "${prApiUrl()}/${check.id}",
+        httpMode: 'GET',
+        customHeaders: [
+          [name: "Authorization", value: 'token ' + GITHUB_LOGIN_PSW, maskValue: true],
+          [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
+          [name: 'Accept', value: 'application/vnd.github+json'],
+        ]
+      )
+
+      if (response.status != 200) {
+        echo "Failed to get check status: ${response.status} ${response.content}"
+        continue
+      }
+
+      checkResponse = readJSON(text: response.content)
+      check.status = checkResponse.status
+
+      if (check.status == 'in_progress') {
+        postReviewCheck([
+          title: check.title,
+          status: 'failure',
+        ])
+      }
+      else if (check.status == 'queued') {
+        postReviewCheck([
+          title: check.title,
+          status: 'skipped',
+        ])
+      }
+    }
+  }
+}
+
+def runCmd(String cmd) {
+  def out
+  def returnCode = 0
+  def tempOutfile = "${UUID.randomUUID()}"
+  returnCode = sh(
+    returnStatus: true,
+    script: """
+      set +x
+      exitCode=0
+      res=\$(${cmd} 2>&1) || exitCode=\$? || true
+      echo "\$res"
+      echo "\$res" > ${tempOutfile}
+      exit \$exitCode
+      set -x
+      """
+  )
+  out = readFile(file: tempOutfile)
+  return [returnCode, out]
+}
+
+def getResultsMarkdownLink(String name, String url) {
+  return "[View ${name} results in Jenkins :link:](${url})"
+}
+
+def runCheckCmd(String cmd, String checkName, String stageUrl, boolean hideDetails = false) {
+  postReviewCheck([
+    title: checkName,
+    status: 'in_progress',
+    summary: getResultsMarkdownLink(checkName, stageUrl),
+  ])
+
+  (exitCode, out) = runCmd(cmd)
+  success = exitCode == 0
+
+  status = success ? "success" : "failure"
+  text = hideDetails ? '' : out
+  postReviewCheck([
+    title: checkName,
+    status: status,
+    details: text,
+  ])
+  if (!success) {
+    sh "exit 1"
+  }
+}
+
+
+def getStageUrl(String stageDisplayName) {
+    buildUrl = env.BUILD_URL
+
+    nodeRequestUrl = "${buildUrl}api/json?tree="+ URLEncoder.encode("actions[parameters[name,value],nodes[displayName,id]]", "UTF-8")
+
+    jsonText = sh(
+      returnStdout: true, 
+      script: 'curl -u $JENKINS_CREDENTIALS -H "Content-Type: application/json" -H "Accept: application/json"' + " ${nodeRequestUrl}"
+    )
+    json = readJSON(text: jsonText)
+
+    nodes = json.actions.find { it._class == 'org.jenkinsci.plugins.workflow.job.views.FlowGraphAction' }?.nodes
+
+    if (nodes) {
+      // If there is a branch node, use that to find construct a valid URL
+      nodeId = nodes.find { it.displayName == "Branch: ${stageDisplayName}" }?.id
+      if (!nodeId) {
+        nodeId = nodes.find { it.displayName == stageDisplayName }?.id
+      }
+    }
+    if (!nodeId) {
+      // if we didn't couldn't find the right node, just link to the build
+      return buildUrl
+    }
+    return "${buildUrl}pipeline-console/?selected-node=${nodeId}"
 }
 
 return this

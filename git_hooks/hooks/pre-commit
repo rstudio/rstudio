@@ -36,6 +36,24 @@ echo -e "${color_highlight}Running pre-commit hook...${color_none}"
 #          Add hooks below          #
 #####################################
 
+detect_secrets_command() {
+    if command -v detect-secrets &> /dev/null; then
+        ./git_hooks/secrets/run-detect-secrets run-hook
+    else
+        docker compose -f ./git_hooks/secrets/docker-compose.yml --progress quiet run run-detect-secrets run-hook
+    fi
+}
+
+detect_secrets_installed() {
+    if command -v detect-secrets &> /dev/null; then
+        return 0
+    elif command -v docker &> /dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # Linting and formatting on RStudio Desktop IDE files
 if test -f ./src/node/desktop/.lintstagedrc
 then
@@ -52,14 +70,14 @@ else
 fi
 
 # Secret scanning on staged files
-if ! command -v detect-secrets &> /dev/null
+if ! detect_secrets_installed;
 then
     echo -e >&2 "${color_highlight}Note: secret scanning pre-commit hook is not being run because detect-secrets is not installed.${color_none}"
     echo -e >&2 "\tInstall ${color_highlight}detect-secrets${color_none} with 'pip install detect-secrets' or 'brew install detect-secrets'."
 else
     hook_setup
     echo "Running detect-secrets-hook on staged files..."
-    secrets_results=$(./git_hooks/secrets/run-detect-secrets run-hook)
+    secrets_results=$(detect_secrets_command)
     if [ -n "$secrets_results" ]; then
         fail_precommit=true
         echo -e "\n${color_error}Uh oh! It looks like you have secrets in your code. Please remove them before committing.${color_none}"

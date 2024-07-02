@@ -340,7 +340,7 @@ test_context("PosixSystemTests")
 
       if (pid == 0)
       {
-         ::sleep(2); // 1 sec was not enough time for lsof to run all the time in jenkins
+         ::sleep(10); // 1 sec was not enough time for lsof to run all the time in jenkins
          _exit(0);
       }
       else
