@@ -235,10 +235,16 @@ set(RSTUDIO_INSTALLED_NODE_VERSION "20.15.0" CACHE INTERNAL "Node version instal
 
 # quarto support
 
-# set QUARTO_ENABLED = TRUE to have RStudio bundle an embedded copy of Quarto (default)
-# set QUARTO_ENABLED = FALSE to force the use of an external Quarto installation
+# Note that Quarto support is now always enabled.
+#
+#   Set QUARTO_ENABLED = TRUE to have RStudio bundle an embedded copy of Quarto (default).
+#   Set QUARTO_ENABLED = FALSE to force the use of an external Quarto installation.
+#
 if(NOT DEFINED QUARTO_ENABLED)
    set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+endif()
+
+if(QUARTO_ENABLED)
    add_definitions(-DQUARTO_ENABLED)
 endif()
 
