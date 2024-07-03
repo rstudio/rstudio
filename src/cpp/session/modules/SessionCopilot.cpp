@@ -210,6 +210,9 @@ bool s_copilotEnabled = false;
 // Whether Copilot has been allowed to index project files.
 bool s_copilotIndexingEnabled = false;
 
+// Have we checked the config files at least once
+bool s_copilotInitialized = false;
+
 // The PID of the active Copilot agent process.
 PidType s_agentPid = -1;
 
@@ -923,7 +926,7 @@ void stopAgent()
 {
    if (s_agentPid == -1)
    {
-      DLOG("No agent running; nothing to do.");
+      //DLOG("No agent running; nothing to do.");
       return;
    }
 
@@ -1070,21 +1073,29 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    // with a running Copilot process, or just handle that separately?
    if (s_agentPid != -1)
    {
-      DLOG("Copilot is already running; nothing to do.");
+      //DLOG("Copilot is already running; nothing to do.");
       return true;
    }
 
    // bail if we haven't enabled copilot
    if (!s_copilotEnabled)
    {
-      DLOG("Copilot is not enabled; not starting agent.");
+      if (!s_copilotInitialized)
+      {
+         DLOG("Copilot is not enabled; not starting agent.");
+         s_copilotInitialized = true;
+      }
       return false;
    }
 
    // bail if we're shutting down
    if (s_isSessionShuttingDown)
    {
-      DLOG("Session is shutting down; not starting agent.");
+      if (!s_copilotInitialized)
+      {
+         DLOG("Session is shutting down; not starting agent.");
+         s_copilotInitialized = true;
+      }
       return false;
    }
 
@@ -1095,6 +1106,7 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    if (pAgentLaunchError)
       *pAgentLaunchError = error;
    
+   s_copilotInitialized = true;
    return error == Success();
 }
 

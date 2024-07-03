@@ -201,7 +201,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // calculate initialization parameters
    std::string clientId = persistentState().newActiveClientId();
-   bool resumed = suspend::sessionResumed() || init::isSessionInitialized();
+   // session was previously suspended
+   bool resumed = suspend::sessionResumed();
+   bool isSessionInitialized = init::isSessionInitialized();
+
+   LOG_DEBUG_MESSAGE("Begin /rpc/client_init for client: " + clientId + ": initialized: " + std::to_string(isSessionInitialized) + " resumed: " + std::to_string(resumed));
+
+   // resumed now also means re-joining
+   if (isSessionInitialized)
+     resumed = true;
 
    // if we are resuming then we don't need to worry about events queued up
    // by R during startup (e.g. printing of the banner) being sent to the
@@ -699,6 +707,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // call the init function
    initFunction();
+
+   LOG_DEBUG_MESSAGE("End /rpc/client_init for client: " + clientId);
 }
 
 } // namespace init
