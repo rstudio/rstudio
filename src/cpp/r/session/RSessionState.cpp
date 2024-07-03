@@ -255,8 +255,47 @@ Error executeAfterRestartCommand(const std::string& command)
    if (command.empty())
       return Success();
    
+   // we simulate the regular input + output REPL loop with code execution here
    s_callbacks.consoleWriteInput(core::string_utils::trimWhitespace(command));
-   return r::exec::executeString(command);
+   
+   std::string wrappedCommand = fmt::format(
+            "base::try(base::withVisible({{ {} }}), silent = TRUE)",
+            command);
+   
+   r::sexp::Protect protect;
+   SEXP parsedSEXP = R_NilValue;
+   Error error = r::exec::parseString(wrappedCommand, &parsedSEXP, &protect);
+   if (error)
+      return error;
+   
+   // if parsing returns an EXPRSXP, then we want to just evaluate the
+   // first element of that expression vector
+   if (TYPEOF(parsedSEXP) == EXPRSXP)
+   {
+      parsedSEXP = VECTOR_ELT(parsedSEXP, 0);
+   }
+   
+   SEXP resultSEXP = R_NilValue;
+   protect.add(resultSEXP = Rf_eval(parsedSEXP, R_GlobalEnv));
+   if (resultSEXP == R_NilValue)
+      return Success();
+   
+   bool visible = false;
+   error = r::sexp::getNamedListElement(resultSEXP, "visible", &visible);
+   if (error)
+      return (error);
+   
+   if (visible)
+   {
+      SEXP valueSEXP = R_NilValue;
+      Error error = r::sexp::getNamedListSEXP(resultSEXP, "value", &valueSEXP);
+      if (error)
+         return error;
+      
+      r::sexp::printValue(valueSEXP);
+   }
+   
+   return Success();
 }
    
 Error restoreWorkingDirectory(const std::string& workingDirectory,
