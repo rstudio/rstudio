@@ -34,8 +34,17 @@ function reportIpcError(name: string, error: Error) {
 function resolveAliasedPath(filePath: string, userHomePath: string) {
   filePath = normalizeSeparators(filePath);
   const expandedHomePath = normalizeSeparators(userHomePath || '', '/');
-  if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
-    filePath = '~' + filePath.substring(expandedHomePath.length);
+  if (expandedHomePath.length) {
+    if (expandedHomePath === filePath) {
+      return '~';
+    }
+    if (filePath.startsWith(expandedHomePath)) {
+      // watch out for case where homepath is /user/foo and filePath is /user/foobar/
+      const remainingPath = filePath.substring(expandedHomePath.length);
+      if (remainingPath.startsWith('/')) {
+        filePath = '~' + filePath.substring(expandedHomePath.length);
+      }
+    }
   }
   return filePath;
 }
@@ -119,13 +128,7 @@ export function getDesktopBridge() {
             .invoke('desktop_get_user_home_path')
             .then((userHomePath: string) => {
               const expandedHomePath = normalizeSeparators(userHomePath.length > 0 ? userHomePath : '', '/');
-              const homePath = '~';
-
-              /* this makes sure the file path and HOME path
-              only contains forward slashes as separators for correct comparison */
-              if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
-                filePath = homePath + filePath.substring(expandedHomePath.length);
-              }
+              filePath = resolveAliasedPath(filePath, expandedHomePath);
 
               // invoke callback
               return callback(filePath);
