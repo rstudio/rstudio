@@ -119,8 +119,6 @@ private:
    r::sexp::PreservedSEXP preservedSEXP_;
 };
 
-namespace {
-
 struct ParseStringData
 {
    SEXP codeSEXP;
@@ -143,7 +141,7 @@ Error parseString(const std::string& code, SEXP* pSEXP, sexp::Protect* pProtect)
    SEXP codeSEXP = sexp::create(code, pProtect);
 
    // NOTE: R_ParseVector can emit an R parse error, so we need
-   // to defend againts such longjmps here
+   // to defend against such longjmps here
    ParseStringData parseData;
    parseData.codeSEXP = codeSEXP;
    parseData.resultSEXP = R_NilValue;
@@ -174,6 +172,7 @@ Error parseString(const std::string& code, SEXP* pSEXP, sexp::Protect* pProtect)
    return Success();
 }
 
+namespace {
 
 // evaluate expressions without altering the error handler (use with caution--
 // a user-supplied error handler may be invoked if the expression raises
