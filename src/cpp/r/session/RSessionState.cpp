@@ -268,8 +268,15 @@ Error executeAfterRestartCommand(const std::string& command)
    if (error)
       return error;
    
+   // if parsing returns an EXPRSXP, then we want to just evaluate the
+   // first element of that expression vector
+   if (TYPEOF(parsedSEXP) == EXPRSXP)
+   {
+      parsedSEXP = VECTOR_ELT(parsedSEXP, 0);
+   }
+   
    SEXP resultSEXP = R_NilValue;
-   protect.add(resultSEXP = Rf_eval(VECTOR_ELT(parsedSEXP, 0), R_GlobalEnv));
+   protect.add(resultSEXP = Rf_eval(parsedSEXP, R_GlobalEnv));
    if (resultSEXP == R_NilValue)
       return Success();
    
@@ -285,7 +292,7 @@ Error executeAfterRestartCommand(const std::string& command)
       if (error)
          return error;
       
-      Rf_PrintValue(valueSEXP);
+      r::sexp::printValue(valueSEXP);
    }
    
    return Success();
