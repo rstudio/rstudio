@@ -41,7 +41,6 @@
 #include "graphics/RGraphicsPlotManager.hpp"
 
 extern bool R_Visible;
-extern char R_ParseErrorMsg[256];
 
 using namespace rstudio::core;
 
@@ -300,6 +299,9 @@ Error executeAfterRestartCommand(const std::string& command)
       data.resultSEXP = R_NilValue;
       data.visible = false;
 
+      // NOTE: we use R_ToplevelExec to ensure R longjmps from errors don't
+      // escape this context, and also so that we can capture whether evaluation
+      // sets the R_Visible flag (and so results should be printed)
       int success = R_ToplevelExec(executeAfterRestartCommandImpl, &data);
       if (success)
       {
