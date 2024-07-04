@@ -15,7 +15,7 @@
 
 import { ipcRenderer, OpenDialogReturnValue, SaveDialogReturnValue, webContents } from 'electron';
 import { logString } from './logger-bridge';
-import { normalizeSeparators } from '../ui/utils';
+import { createAliasedPath, normalizeSeparators } from '../ui/utils';
 import { safeError } from '../core/err';
 
 interface VoidCallback<Type> {
@@ -29,34 +29,6 @@ interface CursorPosition {
 
 function reportIpcError(name: string, error: Error) {
   logString('err', `IpcError: ${name}: ${error.message}`);
-}
-
-function resolveAliasedPath(filePath: string, userHomePath: string) {
-  filePath = normalizeSeparators(filePath);
-  const expandedHomePath = normalizeSeparators(userHomePath || '', '/');
-  if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
-    filePath = '~' + filePath.substring(expandedHomePath.length);
-  }
-  return filePath;
-}
-
-
-function resolveAliasedPathNew(filePath: string, userHomePath: string) {
-  filePath = normalizeSeparators(filePath);
-  const expandedHomePath = normalizeSeparators(userHomePath || '', '/');
-  if (expandedHomePath.length) {
-    if (expandedHomePath === filePath) {
-      return '~';
-    }
-    if (filePath.startsWith(expandedHomePath)) {
-      // watch out for case where homepath is /user/foo and filePath is /user/foobar/
-      const remainingPath = filePath.substring(expandedHomePath.length);
-      if (remainingPath.startsWith('/')) {
-        filePath = '~' + filePath.substring(expandedHomePath.length);
-      }
-    }
-  }
-  return filePath;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -92,7 +64,7 @@ export function getDesktopBridge() {
 
         const selectedPath = result.filePaths[0];
         const userHomePath: string = await ipcRenderer.invoke('desktop_get_user_home_path');
-        const aliasedPath = resolveAliasedPath(selectedPath, userHomePath);
+        const aliasedPath = createAliasedPath(selectedPath, userHomePath);
         return callback(aliasedPath);
       } catch (error: unknown) {
         reportIpcError('desktop_get_open_file_name', error as Error);
@@ -138,7 +110,7 @@ export function getDesktopBridge() {
             .invoke('desktop_get_user_home_path')
             .then((userHomePath: string) => {
               const expandedHomePath = normalizeSeparators(userHomePath.length > 0 ? userHomePath : '', '/');
-              filePath = resolveAliasedPath(filePath, expandedHomePath);
+              filePath = createAliasedPath(filePath, expandedHomePath);
 
               // invoke callback
               return callback(filePath);
@@ -170,7 +142,7 @@ export function getDesktopBridge() {
 
         const selectedPath = result.filePaths[0];
         const userHomePath: string = await ipcRenderer.invoke('desktop_get_user_home_path');
-        const aliasedPath = resolveAliasedPath(selectedPath, userHomePath);
+        const aliasedPath = createAliasedPath(selectedPath, userHomePath);
         return callback(aliasedPath);
       } catch (error: unknown) {
         reportIpcError('getExistingDirectory', error as Error);

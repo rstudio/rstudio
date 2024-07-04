@@ -13,6 +13,8 @@
  *
  */
 
+/****** NOTE: This code cannot use node.js. It is invoked from the renderer process. ******/
+
 const isLocalStorageItemSet = (key: string) => {
   if (typeof window !== 'undefined') {
     const value = window.localStorage.getItem(key);
@@ -69,6 +71,31 @@ export function normalizeSeparators(path: string, separator = '/') {
     path = path.substring(2);
   }
   return `${prefix}${path.replace(/[\\/]+/g, separator)}`;
+}
+
+/**
+ * Creates a path in which the user home path will be replaced by the ~ alias.
+ */
+export function createAliasedPath(filePath: string, userHomePath: string): string {
+  // first, retrieve and normalize paths
+  filePath = normalizeSeparators(filePath);
+  let home = normalizeSeparators(userHomePath || '');
+  if (home.endsWith('/')) {
+    home = home.slice(0, -1); // remove trailing slash
+  }
+
+  if (filePath === home) {
+    return '~';
+  }
+
+  if (filePath.startsWith(home)) {
+    // watch out for case where homepath is /user/foo and filePath is /user/foobar/
+    const remainingPath = filePath.substring(home.length);
+    if (remainingPath.startsWith('/')) {
+      filePath = '~' + filePath.substring(home.length);
+    }
+  }
+  return normalizeSeparators(filePath);
 }
 
 /**

@@ -23,7 +23,8 @@ import path from 'path';
 
 import { clearCoreSingleton } from '../../../src/core/core-state';
 import { isFailure, isSuccessful } from '../../../src/core/err';
-import { FilePath, normalizeSeparatorsNative } from '../../../src/core/file-path';
+import { FilePath } from '../../../src/core/file-path';
+import { normalizeSeparatorsNative } from '../../../src/ui/utils';
 import { NullLogger, setLogger } from '../../../src/core/logger';
 import { userHomePath } from '../../../src/core/user';
 import { randomString } from '../../../src/main/utils';
@@ -665,6 +666,13 @@ describe('FilePath', () => {
 
     it('Original path returned is aliasing fails', () => {
       const path = new FilePath('/home/other/path/to/project');
+      const home = new FilePath('/home/user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(new FilePath(aliasedPath).getAbsolutePath() === path.getAbsolutePath());
+    });
+
+    it('Path that matches homepath prefix does not get an alias', () => {
+      const path = new FilePath('/home/user2/path/to/project');
       const home = new FilePath('/home/user');
       const aliasedPath = FilePath.createAliasedPath(path, home);
       assert(new FilePath(aliasedPath).getAbsolutePath() === path.getAbsolutePath());
