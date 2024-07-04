@@ -88,8 +88,6 @@ inline EvalFlags operator|(EvalFlags lhs, EvalFlags rhs)
    return static_cast<EvalFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
 }
 
-core::Error parseString(const std::string& code, SEXP* pSEXP, sexp::Protect* pProtect);
-
 core::Error executeString(const std::string& str);
 
 core::Error evaluateString(const std::string& str,

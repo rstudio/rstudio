@@ -119,6 +119,8 @@ private:
    r::sexp::PreservedSEXP preservedSEXP_;
 };
 
+namespace {
+
 struct ParseStringData
 {
    SEXP codeSEXP;
@@ -172,7 +174,6 @@ Error parseString(const std::string& code, SEXP* pSEXP, sexp::Protect* pProtect)
    return Success();
 }
 
-namespace {
 
 // evaluate expressions without altering the error handler (use with caution--
 // a user-supplied error handler may be invoked if the expression raises
