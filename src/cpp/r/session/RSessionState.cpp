@@ -40,8 +40,6 @@
 #include "RSearchPath.hpp"
 #include "graphics/RGraphicsPlotManager.hpp"
 
-extern bool R_Visible;
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -252,68 +250,49 @@ Error getAfterRestartCommand(const FilePath& afterRestartFile,
    return Success();
 }
 
-struct AfterRestartCommandData
-{
-   SEXP elSEXP;
-   SEXP resultSEXP;
-   bool visible;
-};
-
-void executeAfterRestartCommandImpl(void* payload)
-{
-   AfterRestartCommandData* data = (AfterRestartCommandData*) payload;
-   data->resultSEXP = Rf_eval(data->elSEXP, R_GlobalEnv);
-   data->visible = R_Visible;
-}
-
 Error executeAfterRestartCommand(const std::string& command)
 {
    if (command.empty())
       return Success();
    
-   // simulate evaluation of code as though it were submitted to the console
-   // this implies printing expression results as they're evaluated
-   // TODO: should this be moved to RExec.hpp?
-   
-   // first, print the code we're going to evaluate
+   // we simulate the regular input + output REPL loop with code execution here
    s_callbacks.consoleWriteInput(core::string_utils::trimWhitespace(command));
    
-   // parse the code we're trying to evaluate
+   std::string wrappedCommand = fmt::format(
+            "base::try(base::withVisible({{ {} }}), silent = TRUE)",
+            command);
+   
    r::sexp::Protect protect;
    SEXP parsedSEXP = R_NilValue;
-   Error error = r::exec::RFunction("base:::parse")
-         .addParam("text", command)
-         .call(&parsedSEXP, &protect);
-   
-   // R will report parse errors to the console, so don't report those
-   // errors -- just exit early
+   Error error = r::exec::parseString(wrappedCommand, &parsedSEXP, &protect);
    if (error)
+      return error;
+   
+   // if parsing returns an EXPRSXP, then we want to just evaluate the
+   // first element of that expression vector
+   if (TYPEOF(parsedSEXP) == EXPRSXP)
+   {
+      parsedSEXP = VECTOR_ELT(parsedSEXP, 0);
+   }
+   
+   SEXP resultSEXP = R_NilValue;
+   protect.add(resultSEXP = Rf_eval(parsedSEXP, R_GlobalEnv));
+   if (resultSEXP == R_NilValue)
       return Success();
    
-   // iterate over the available expressions, evaluate them, and
-   // print their results if appropriate
-   for (int i = 0, n = r::sexp::length(parsedSEXP); i < n; i++)
+   bool visible = false;
+   error = r::sexp::getNamedListElement(resultSEXP, "visible", &visible);
+   if (error)
+      return (error);
+   
+   if (visible)
    {
-      AfterRestartCommandData data;
-      data.elSEXP = VECTOR_ELT(parsedSEXP, i);
-      data.resultSEXP = R_NilValue;
-      data.visible = false;
-
-      // NOTE: we use R_ToplevelExec to ensure R longjmps from errors don't
-      // escape this context, and also so that we can capture whether evaluation
-      // sets the R_Visible flag (and so results should be printed)
-      int success = R_ToplevelExec(executeAfterRestartCommandImpl, &data);
-      if (success)
-      {
-         if (data.visible)
-         {
-            r::sexp::printValue(data.resultSEXP);
-         }
-      }
-      else
-      {
-         break;
-      }
+      SEXP valueSEXP = R_NilValue;
+      Error error = r::sexp::getNamedListSEXP(resultSEXP, "value", &valueSEXP);
+      if (error)
+         return error;
+      
+      r::sexp::printValue(valueSEXP);
    }
    
    return Success();
