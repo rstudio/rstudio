@@ -40,6 +40,9 @@
 #include "RSearchPath.hpp"
 #include "graphics/RGraphicsPlotManager.hpp"
 
+extern bool R_Visible;
+extern char R_ParseErrorMsg[256];
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -250,13 +253,68 @@ Error getAfterRestartCommand(const FilePath& afterRestartFile,
    return Success();
 }
 
+struct AfterRestartCommandData
+{
+   SEXP elSEXP;
+   SEXP resultSEXP;
+   bool visible;
+};
+
+void executeAfterRestartCommandImpl(void* payload)
+{
+   AfterRestartCommandData* data = (AfterRestartCommandData*) payload;
+   data->resultSEXP = Rf_eval(data->elSEXP, R_GlobalEnv);
+   data->visible = R_Visible;
+}
+
 Error executeAfterRestartCommand(const std::string& command)
 {
    if (command.empty())
       return Success();
    
+   // simulate evaluation of code as though it were submitted to the console
+   // this implies printing expression results as they're evaluated
+   // TODO: should this be moved to RExec.hpp?
+   
+   // first, print the code we're going to evaluate
    s_callbacks.consoleWriteInput(core::string_utils::trimWhitespace(command));
-   return r::exec::executeString(command);
+   
+   // parse the code we're trying to evaluate
+   r::sexp::Protect protect;
+   SEXP parsedSEXP = R_NilValue;
+   Error error = r::exec::RFunction("base:::parse")
+         .addParam("text", command)
+         .call(&parsedSEXP, &protect);
+   
+   // R will report parse errors to the console, so don't report those
+   // errors -- just exit early
+   if (error)
+      return Success();
+   
+   // iterate over the available expressions, evaluate them, and
+   // print their results if appropriate
+   for (int i = 0, n = r::sexp::length(parsedSEXP); i < n; i++)
+   {
+      AfterRestartCommandData data;
+      data.elSEXP = VECTOR_ELT(parsedSEXP, i);
+      data.resultSEXP = R_NilValue;
+      data.visible = false;
+
+      int success = R_ToplevelExec(executeAfterRestartCommandImpl, &data);
+      if (success)
+      {
+         if (data.visible)
+         {
+            r::sexp::printValue(data.resultSEXP);
+         }
+      }
+      else
+      {
+         break;
+      }
+   }
+   
+   return Success();
 }
    
 Error restoreWorkingDirectory(const std::string& workingDirectory,
