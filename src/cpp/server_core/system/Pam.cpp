@@ -126,7 +126,11 @@ int conv(int num_msg,
          case PAM_PROMPT_ECHO_ON:
          case PAM_ERROR_MSG:
          default:
-            return PAM_CONV_ERR;
+            // Don't return an error here - some errors are for 'sufficient' steps that
+            // should not cause a login failure and this callback doesn't have the ability
+            // to differentiate them
+            // return PAM_CONV_ERR;
+            break;
          }
       }
 

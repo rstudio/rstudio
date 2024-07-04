@@ -14,10 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
-
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -48,9 +49,12 @@ import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class ConsoleInterpreterVersion
@@ -87,18 +91,13 @@ public class ConsoleInterpreterVersion
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       events_.addHandler(ReticulateEvent.TYPE, this);
-      container_ = new FlowPanel();
+      container_ = new HorizontalPanel();
       label_ = new Label(constants_.unknownLabel());
       setRVersionLabel();
       
-      rLogo_ = createLogo(
-           StandardIcons.INSTANCE.rLogoSvg(),
-           RES.styles().iconR(),
-           isTabbedView);
+      rLogo_ = createLogo(StandardIcons.INSTANCE.rLogoSvg(), RES.styles().iconR(), isTabbedView);
       
-      pythonLogo_ = createLogo(
-            StandardIcons.INSTANCE.pythonLogoSvg(),
-            RES.styles().iconPython(),
+      pythonLogo_ = createLogo(StandardIcons.INSTANCE.pythonLogoSvg(), RES.styles().iconPython(),
             isTabbedView);
       
       logoContainer_ = new FlowPanel(SpanElement.TAG);
@@ -110,18 +109,14 @@ public class ConsoleInterpreterVersion
          {
             ToolbarPopupMenu menu = new ToolbarPopupMenu();
             
-            menu.addItem(new MenuItem("R", () ->
-            {
-               tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_R, () ->
-               {
+            menu.addItem(new MenuItem("R", () -> {
+               tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_R, () -> {
                   commands_.activateConsole().execute();
                });
             }));
             
-            menu.addItem(new MenuItem("Python", () ->
-            {
-               tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_PYTHON, () ->
-               {
+            menu.addItem(new MenuItem("Python", () -> {
+               tracker_.adaptToLanguage(ConsoleLanguageTracker.LANGUAGE_PYTHON, () -> {
                   commands_.activateConsole().execute();
                });
             }));
@@ -142,10 +137,9 @@ public class ConsoleInterpreterVersion
       
       label_.addStyleName(RES.styles().label());
       label_.addStyleName(ThemeStyles.INSTANCE.title());
-      label_.addStyleName(isTabbedView
-            ? RES.styles().labelTabbed()
-            : RES.styles().labelUntabbed());
-      ElementIds.assignElementId(label_, ElementIds.CONSOLE_INTERPRETER_VERSION + (isTabbedView ? "_tabbed" : ""));
+      label_.addStyleName(isTabbedView ? RES.styles().labelTabbed() : RES.styles().labelUntabbed());
+      ElementIds.assignElementId(label_,
+            ElementIds.CONSOLE_INTERPRETER_VERSION + (isTabbedView ? "_tabbed" : ""));
 
       if (isPythonActive())
       {
@@ -163,10 +157,12 @@ public class ConsoleInterpreterVersion
       setVisible(true);
    }
    
-   private HTML createLogo(TextResource resource,
+   private Widget createLogo(TextResource resource,
                            String languageClass,
                            boolean isTabbedView)
    {
+      HorizontalPanel panel = new HorizontalPanel();
+      
       HTML html = new HTML();
       html.setHTML(resource.getText());
       html.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
@@ -182,7 +178,14 @@ public class ConsoleInterpreterVersion
             : RES.styles().iconUntabbed());
       addClassName(svg, languageClass);
       
-      return html;
+      panel.add(html);
+      
+      Image downArrow = new Image(new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
+      downArrow.getElement().addClassName("rstudio-themes-inverts");
+      downArrow.addStyleName(RES.styles().iconDownArrow());
+      panel.add(downArrow);
+      
+      return panel;
    }
    
    public void adaptToR()
@@ -231,7 +234,6 @@ public class ConsoleInterpreterVersion
       }
    }
 
-
    private void setRVersionLabel()
    {
       server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
@@ -241,6 +243,7 @@ public class ConsoleInterpreterVersion
          {
             label_.setText("R " + versionSpec.getVersion());
          }
+
          @Override
          public void onError(ServerError error)
          {
@@ -270,10 +273,10 @@ public class ConsoleInterpreterVersion
       element.classList.add(className);
    }-*/;
    
-   private final FlowPanel container_;
+   private final HorizontalPanel container_;
    private final FlowPanel logoContainer_;
-   private final HTML rLogo_;
-   private final HTML pythonLogo_;
+   private final Widget rLogo_;
+   private final Widget pythonLogo_;
    private final Label label_;
    
    // Injected ----
@@ -294,6 +297,7 @@ public class ConsoleInterpreterVersion
       String icon();
       String iconTabbed();
       String iconUntabbed();
+      String iconDownArrow();
       
       String iconR();
       String iconPython();

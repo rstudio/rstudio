@@ -2768,7 +2768,7 @@ assign(x = ".rs.acCompletionTypes",
          {
             triedGgplot2Completions <- TRUE
             completions <- tryCatch(
-               .rs.getCompletionsGgplot2(token, contextData, statementBounds, documentId, envir),
+               .rs.getCompletionsGgplot2(line, token, contextData, statementBounds, documentId, envir),
                error = function(e) .rs.emptyCompletions(token)
             )
          }
@@ -2975,15 +2975,24 @@ assign(x = ".rs.acCompletionTypes",
    c("x", "y", "fill", "colour", "alpha", "shape", "size", "linewidth", "linetype", "group")
 })
 
-.rs.addFunction("getCompletionsGgplot2", function(token,
+.rs.addFunction("getCompletionsGgplot2", function(line,
+                                                  token,
                                                   contextData,
                                                   statementBounds,
                                                   documentId,
                                                   envir)
 {
    # get document contents
-   document <- .rs.getSourceDocument(documentId, TRUE)
-   contents <- strsplit(document$contents, "\n", fixed = TRUE)[[1L]]
+   contents <- ""
+   if (nzchar(documentId))
+   {
+      document <- .rs.getSourceDocument(documentId, TRUE)
+      contents <- strsplit(document$contents, "\n", fixed = TRUE)[[1L]]
+   }
+   else
+   {
+      contents <- line
+   }
    
    # the data object associated with the aes() call, if any
    data <- NULL
