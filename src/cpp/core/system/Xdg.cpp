@@ -214,7 +214,7 @@ FilePath resolveXdgPath(
       if (file)
          resolvedXdgPath = rstudioXdgPath.completePath(file.get());
       
-      DLOGF("Using RStudio XDG path: {} => {}", rstudioEnvVar, resolvedXdgPath.getAbsolutePath());
+      //DLOGF("Using RStudio XDG path: {} => {}", rstudioEnvVar, resolvedXdgPath.getAbsolutePath());
       return resolveXdgDirImpl(resolvedXdgPath, user, homeDir, suffix);
    }
    
@@ -255,7 +255,8 @@ FilePath resolveXdgPath(
       FilePath resolvedXdgPath = xdgPath.completePath(targetFile);
       if (resolvedXdgPath.exists())
       {
-         DLOGF("Using pre-existing XDG path: {} => {}", xdgEnvVar, resolvedXdgPath.getAbsolutePath());
+         // This is the common case so not logging here
+         // DLOGF("Using pre-existing XDG path: {} => {}", xdgEnvVar, resolvedXdgPath.getAbsolutePath());
          return resolveXdgDirImpl(resolvedXdgPath, user, homeDir, suffix);
       }
    }
@@ -271,7 +272,7 @@ FilePath resolveXdgPath(
          if (xdgPath.exists())
          {
             FilePath resolvedXdgPath = FilePath(xdgPath).completePath(targetFile);
-            DLOGF("Using new XDG path: {} => {}", xdgEnvVar, resolvedXdgPath.getAbsolutePath());
+            //DLOGF("Using new XDG path: {} => {}", xdgEnvVar, resolvedXdgPath.getAbsolutePath());
             return resolveXdgDirImpl(resolvedXdgPath, user, homeDir, suffix);
          }
       }
@@ -279,7 +280,7 @@ FilePath resolveXdgPath(
    
    // If none of the provided directories exist (very unexpected!) use the default.
    FilePath resolvedXdgPath = xdgDefaultHome.completePath(targetFile);
-   DLOGF("Using fallback XDG path: {}", xdgDefaultHome.getAbsolutePath());
+   //DLOGF("Using fallback XDG path: {}", xdgDefaultHome.getAbsolutePath());
    return resolveXdgDirImpl(resolvedXdgPath, user, homeDir, suffix);
 }
 

@@ -142,7 +142,6 @@ Error updateUserCacheByUsername(const std::string& in_username, User& out_user, 
    if (!error)
    {
       addUserToCache(out_user);
-      LOG_DEBUG_MESSAGE(opNameForLog + " user to cache for user: " + in_username + ":" + std::to_string(out_user.getUserId()) + " by name");
 
       return Success();
    }
@@ -159,7 +158,6 @@ Error updateUserCacheByUserId(const UidType& in_userId, User& out_user, const st
    if (!error)
    {
       addUserToCache(out_user);
-      LOG_DEBUG_MESSAGE("Added user: " + out_user.getUsername() + ":" + std::to_string(in_userId) + " from id lookup");
 
        return Success();
    }
