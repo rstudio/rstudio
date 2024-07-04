@@ -3033,6 +3033,13 @@ assign(x = ".rs.acCompletionTypes",
       while (identical(currentCall[[1L]], as.symbol("+")))
          currentCall <- currentCall[[2L]]
       
+      while (identical(currentCall[[1L]], as.symbol("<<-")) ||
+             identical(currentCall[[1L]], as.symbol("<-")) ||
+             identical(currentCall[[1L]], as.symbol("=")))
+      {
+         currentCall <- currentCall[[3L]]
+      }
+      
       # check for a data argument
       data <- currentCall[["data"]]
       if (is.null(data) && length(currentCall) >= 2L)
