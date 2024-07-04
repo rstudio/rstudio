@@ -643,6 +643,28 @@ describe('FilePath', () => {
       assert(aliasedPath === '~/path/to/project');
     });
 
+    it('Home folder path is aliased correctly', () => {
+      const path = new FilePath('/Users/user');
+      const home = new FilePath('/Users/user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(aliasedPath === '~');
+    });
+
+    it('DOS paths are aliased correctly', () => {
+      const path = new FilePath('C:\\Users\\user\\Documents\\path\\to\\project');
+      const home = new FilePath('C:\\Users\\user\\Documents');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(aliasedPath === '~/path/to/project');
+    });
+
+    it('DOS home folder path is aliased correctly', () => {
+      const path = new FilePath('C:\\Users\\user\\Documents');
+      const home = new FilePath('C:\\Users\\user\\Documents');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(aliasedPath === '~');
+    });
+
+
     it('Paths are aliased correctly, even with trailing slash on home folder', () => {
       const path = new FilePath('/Users/user/path/to/project');
       const home = new FilePath('/Users/user/');
