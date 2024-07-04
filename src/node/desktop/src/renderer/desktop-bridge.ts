@@ -34,6 +34,16 @@ function reportIpcError(name: string, error: Error) {
 function resolveAliasedPath(filePath: string, userHomePath: string) {
   filePath = normalizeSeparators(filePath);
   const expandedHomePath = normalizeSeparators(userHomePath || '', '/');
+  if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
+    filePath = '~' + filePath.substring(expandedHomePath.length);
+  }
+  return filePath;
+}
+
+
+function resolveAliasedPathNew(filePath: string, userHomePath: string) {
+  filePath = normalizeSeparators(filePath);
+  const expandedHomePath = normalizeSeparators(userHomePath || '', '/');
   if (expandedHomePath.length) {
     if (expandedHomePath === filePath) {
       return '~';
