@@ -62,6 +62,7 @@
 - RStudio's editor highlighting no longer accepts embedded spaces in '#|' comment prefixes. (#14592)
 - RStudio now preserves a file's existing line endings when performing a Find and Replace. (#14796)
 - Fixed an issue where headers without a label in R Markdown documents were not shown in the scope tree. (#13159)
+- Fixed an issue where ggplot2 aesthetic completions were not provided for plots assigned to a variable. (#14566)
 
 #### Posit Workbench
 
