@@ -80,8 +80,13 @@ export function createAliasedPath(filePath: string, userHomePath: string): strin
   // first, retrieve and normalize paths
   filePath = normalizeSeparators(filePath);
   let home = normalizeSeparators(userHomePath || '');
+
+  // remove trailing slashes
+  if (filePath.endsWith('/')) {
+    filePath = filePath.slice(0, -1);
+  }
   if (home.endsWith('/')) {
-    home = home.slice(0, -1); // remove trailing slash
+    home = home.slice(0, -1);
   }
 
   if (filePath === home) {
