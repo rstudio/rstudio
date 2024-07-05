@@ -303,7 +303,6 @@
 .rs.addFunction("docDeployList", function(target, asMultipleDoc, quartoSrcFile) {
   file_list <- c()
   target <- normalizePath(target, winslash = "/")
-  quartoSrcFile <- normalizePath(quartoSrcFile, winslash = "/")
 
   # if deploying multiple documents, find all the files in the with a matching
   # extension; otherwise, just use the single document we were given
@@ -370,6 +369,7 @@
 
   if (nzchar(quartoSrcFile)) {
     # query quarto for project and resources
+    quartoSrcFile <- normalizePath(quartoSrcFile, winslash = "/")
     project <- .rs.quartoFileProject(quartoSrcFile)
     resources <- project$resources
     project <- project$project
