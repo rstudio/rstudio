@@ -66,6 +66,7 @@
 - Fixed an issue where headers without a label in R Markdown documents were not shown in the scope tree. (#13159)
 - Fixed an issue where RStudio could launch with an incorrect initial working directory when using multiple sessions. (#14695)
 - Fixed an issue where ggplot2 aesthetic completions were not provided for plots assigned to a variable. (#14566)
+- Fixed an issue where attempting to inspect a list-column entry in a View()-ed data.frame with custom row names would fail. (#14509)
 
 #### Posit Workbench
 
