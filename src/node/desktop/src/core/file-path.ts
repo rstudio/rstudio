@@ -23,6 +23,7 @@ import { userHomePath } from './user';
 import { err, Expected, ok } from './expected';
 import os from 'os';
 import { randomString } from '../main/utils';
+import { createAliasedPath, normalizeSeparators, normalizeSeparatorsNative } from '../ui/utils';
 
 /** An Error containing 'path' that triggered the error */
 export class FilePathError extends Error {
@@ -33,30 +34,7 @@ export class FilePathError extends Error {
   }
 }
 
-const homePathAlias = '~/';
 const homePathLeafAlias = '~';
-
-/**
- * Normalize separators of a given path.
- *
- * @param {string} path
- * @param {string} [separator='/']
- * @return {*}
- */
-function normalizeSeparators(path: string, separator = '/') {
-  return path.replace(/[\\/]/g, separator);
-}
-
-/**
- * Normalizes separators of a given path based on the current platform.
- *
- * @export
- * @param {string} path
- * @return {*}
- */
-export function normalizeSeparatorsNative(path: string) {
-  return normalizeSeparators(path, sep);
-}
 
 /**
  * Creates a random file name located in the tmp directory
@@ -108,21 +86,7 @@ export class FilePath {
     // first, retrieve and normalize paths
     const file = filePath.getAbsolutePath();
     const home = userHomePath.getAbsolutePath();
-    if (file === home) {
-      return homePathLeafAlias;
-    }
-
-    // try to compute home-relative path -- if that fails,
-    // or the computed path does not appear to be relative,
-    // then just return the original file path
-    const relative = path.relative(home, file);
-    if (!relative || path.isAbsolute(relative) || relative.startsWith('..')) {
-      return file;
-    }
-
-    // we computed a relative path; prefix it with tilde
-    const aliased = path.join(homePathLeafAlias, relative);
-    return normalizeSeparators(aliased);
+    return createAliasedPath(file, home);
   }
 
   /**

@@ -98,10 +98,10 @@ FilePath computeUserDir(const FilePath& projectFile)
    if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
    
-   FilePath scratchPath(scratchPathContents);
-   if (scratchPath.isEmpty())
+   if (scratchPathContents.empty())
       return defaultUserDir;
    
+   FilePath scratchPath = module_context::resolveAliasedPath(scratchPathContents);
    error = scratchPath.ensureDirectory();
    if (error)
    {

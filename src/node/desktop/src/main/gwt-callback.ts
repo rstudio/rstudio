@@ -29,13 +29,14 @@ import {
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
-import { existsSync, writeFile, writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import { platform, release } from 'os';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
 import { pathToFileURL } from 'url';
-import { FilePath, normalizeSeparatorsNative, tempFilename } from '../core/file-path';
+import { FilePath, tempFilename } from '../core/file-path';
+import { normalizeSeparatorsNative } from '../ui/utils';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
