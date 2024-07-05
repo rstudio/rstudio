@@ -181,6 +181,7 @@ ProgramStatus Options::read(int argc,
    options_description monitor("monitor");
    options_description databricks("databricks");
    options_description userProvisioning("userProvisioning");
+   options_description snowflake("snowflake");
    std::vector<std::string> wwwAllowedOrigins;
    std::string authLoginPageHtml;
    std::string authRdpLoginPageHtml;
@@ -193,10 +194,10 @@ ProgramStatus Options::read(int argc,
                       &authMinimumUserId);
 
    // overlay hook
-   addOverlayOptions(&verify, &server, &www, &rsession, &database, &auth, &monitor, &databricks, &userProvisioning);
+   addOverlayOptions(&verify, &server, &www, &rsession, &database, &auth, &monitor, &databricks, &userProvisioning, &snowflake);
 
-   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning);
-   optionsDesc.configFile.add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning);
+   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
+   optionsDesc.configFile.add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
  
    // read options
    bool help = false;
