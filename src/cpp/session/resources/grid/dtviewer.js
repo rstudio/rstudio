@@ -335,7 +335,7 @@
         '<a class="viewerLink" href="javascript:window.' +
         (clazz === "dataCell" ? "dataViewerCallback" : "listViewerCallback") +
         "(" +
-        row[0] +
+        (meta.row + 1) +
         ", " +
         (meta.col + columnOffset) +
         ')">' +

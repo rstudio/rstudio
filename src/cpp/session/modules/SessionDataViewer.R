@@ -105,6 +105,20 @@
       50L
    )
    
+   # handle data.frame entries in a column
+   # https://github.com/rstudio/rstudio/issues/14257
+   for (i in seq_along(col))
+   {
+      if (is.data.frame(col[[i]]))
+      {
+         col[[i]] <- sprintf("<data.frame[%i x %i]>", nrow(col[[i]]), ncol(col[[i]]))
+      }
+      else
+      {
+         col[[i]] <- format(col[[i]])
+      }
+   }
+   
    formatted <- as.character(col)
    na <- is.na(formatted)
    large <- !na & nchar(formatted) > limit
