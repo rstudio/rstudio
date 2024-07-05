@@ -29,7 +29,8 @@ void Options::addOverlayOptions(
                        boost::program_options::options_description* pAuth,
                        boost::program_options::options_description* pMonitor,
                        boost::program_options::options_description* pDatabricks,
-                       boost::program_options::options_description* pUserProvisioning)
+                       boost::program_options::options_description* pUserProvisioning,
+                       boost::program_options::options_description* pSnowflake)
 {
 }
 
