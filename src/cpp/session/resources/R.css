@@ -81,6 +81,12 @@ h6 {
    color: #FFF;
 }
 
+/* Force a more prominent background color for selected text. */
+/* This is also used for text search in the Help pane. */
+.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme ::selection {
+   background: rgb(71, 98, 135) !important;
+}
+
 img.toplogo {
    max-width: 4em;
    vertical-align: middle;
