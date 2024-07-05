@@ -36,6 +36,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <core/Log.hpp>
+#include <core/Macros.hpp>
 #include <core/r_util/RFunctionInformation.hpp>
 
 #include <r/RErrorCategory.hpp>
@@ -44,15 +45,9 @@
 // IMPORTANT NOTE: all code in r::sexp must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
 
-#ifdef _WIN32
-# define RS_IMPORT __declspec(dllimport)
-#else
-# define RS_IMPORT
-#endif
-
 extern "C" {
-extern RS_IMPORT SEXP R_TrueValue;
-extern RS_IMPORT SEXP R_FalseValue;
+RS_IMPORT SEXP R_TrueValue;
+RS_IMPORT SEXP R_FalseValue;
 } // extern "C"
 
 

@@ -37,13 +37,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#ifndef _WIN32
-# define RS_EXPORT __attribute__((visibility("default")))
-#else
-# define RS_EXPORT __declspec(dllexport)
-#endif
-
-
 using namespace rstudio;
 using namespace rstudio::core;
 
