@@ -40,7 +40,9 @@
 #include "RSearchPath.hpp"
 #include "graphics/RGraphicsPlotManager.hpp"
 
-extern bool R_Visible;
+extern "C" {
+RS_IMPORT bool R_Visible;
+}
 
 using namespace rstudio::core;
 
