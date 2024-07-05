@@ -202,7 +202,11 @@ public class FindOutputPresenter extends BasePresenter
                view_.showSearchCompleted();
                // replace may have been previously disabled
                view_.enableReplace();
-               view_.setRegexPreviewMode(dialogState_.isRegex());
+               
+               if (dialogState_ != null)
+               {
+                  view_.setRegexPreviewMode(dialogState_.isRegex());
+               }
             }
          }
       });
