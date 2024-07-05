@@ -88,5 +88,6 @@ export class ApplicationLaunch {
 
     // restore environment variables
     unsetenv(kRStudioInitialProject);
+    unsetenv(kRStudioInitialWorkingDir);
   }
 }
