@@ -2646,6 +2646,7 @@ void resetKeyring()
    // just in case permanentlyDropPrivs was used to change back to root for some reason
    if (realUserIsRoot())
       return;
+
    /*
     * Create a new session keyring, replacing the one owned by root. When the name arg is NULL, an anonymous keyring
     * is created and attached to the process.
@@ -2655,7 +2656,10 @@ void resetKeyring()
                      NULL);
    if (ret < 0)
    {
-      LOG_ERROR_MESSAGE("Unable to create new session keyring - errno: " + std::to_string(errno));
+      // EPERM is returned in a docker container when SYS_ADMIN capability is not present. In that case, nothing in
+      // the container can change the keyring omitting the error in that case.
+      if (errno != EPERM)
+         LOG_ERROR_MESSAGE("Unable to create new session keyring - errno: " + std::to_string(errno));
       return;
    }
 

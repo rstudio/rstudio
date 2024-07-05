@@ -19,6 +19,14 @@
 #include <iostream>
 #include <iomanip>
 
+#ifdef _WIN32
+# define RS_IMPORT extern __declspec(dllimport)
+# define RS_EXPORT __declspec(dllexport)
+#else
+# define RS_IMPORT extern
+# define RS_EXPORT __attribute__((visibility("default")))
+#endif
+
 #define RS_CALL_ONCE()                                                         \
    do                                                                          \
    {                                                                           \

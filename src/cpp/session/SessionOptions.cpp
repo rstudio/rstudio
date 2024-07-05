@@ -713,7 +713,7 @@ void Options::resolveNodePath(const FilePath& resourcePath,
 {
 #if defined(__linux__) && !defined(RSTUDIO_PACKAGE_BUILD)
    // node version should match RSTUDIO_INSTALLED_NODE_VERSION
-   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/18.20.3");
+   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/20.15.0-patched");
    resolvePath(dependenciesPath, pPath);
 #else
    resolvePath(resourcePath, pPath);

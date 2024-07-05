@@ -19,7 +19,8 @@ import { describe } from 'mocha';
 import sinon from 'sinon';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { Err, isSuccessful } from '../../../src/core/err';
-import { FilePath, normalizeSeparatorsNative } from '../../../src/core/file-path';
+import { FilePath } from '../../../src/core/file-path';
+import { normalizeSeparatorsNative } from '../../../src/ui/utils';
 import DesktopOptions from '../../../src/main/preferences/desktop-options';
 import {
   clearOptionsSingleton,

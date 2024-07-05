@@ -3,14 +3,17 @@
 ### New
 
 - Posit Product Documentation theme v4.0.2; adds dark mode and several accessibility improvements (rstudio-pro#6373)
+- Added ability for RStudio and Workbench to use AES 256 encryption (rstudio-pro#4011)
 
 #### RStudio
 
 - You can now toggle between R and Python in the Console by clicking on the language's logo in the Console pane header. (#11613)
+- Allow customization of the project scratch path location. (#14875)
 - Restart commands are now run after restoring the search path + global environment by default. (#14636)
 - The "Save as Image" dialog now includes a checkbox "Use device pixel ratio", controlling whether plots are scaled according to the current display's DPI. (#14727)
 - The "Soft-wrap R source files" preference now applies to all source files, and has been re-labelled appropriately. (#10940)
 - RStudio now supports Electron flags set via `~/.config/rstudio/electron-flags.conf` or `~/.config/electron-flags.conf` on Linux / macOS. On Windows, the paths are `%LocalAppData%\RStudio\electron-flags.conf` and `%LocalAppData%\electron-flags.conf`. (#14641)
+- RStudio now uses a glimpse-like display for data.frame list-column entries. (#14257)
 
 #### Posit Workbench
 
@@ -24,12 +27,15 @@
 - Added support for Jupyter Notebook 7 (rstudio-pro#6266)
 - Replaced code server binary with PWB Code Server. PWB Code Server is bundled with the PWB VS Code Extension, so a separate install is no longer required. It is a fork of VS Code 1.89.1. (rstudio-pro#6265)
 - Disabled Jupyter Notebooks by default on fresh installs of PWB (rstudio-pro#6269)
+- Workbench now respects the `SLURM_CONF` environment variable, which can be used to point to a non-standard location for the Slurm configuration file (launcher#767)
+- Workbench now does a better job of tracking which Slurm jobs it owns, allowing multiple independent Workbench servers to use the same Slurm cluster, or a single Workbench server to use the same backing Slurm cluster with different configurations (launcher#908)
 
 ### Fixed
 
 #### RStudio
 
 - The RStudio diagnostics system no longer automatically loads packages when encountering calls of the form `dplyr::mutate()`. (#9692)
+- Fixed an issue where breakpoints set within `observeEvent()` calls in Shiny applications did not behave correctly. (#14815)
 - Fixed an issue where Build output from 'Run Tests' was not appropriately coloured. (#13088)
 - Fixed an issue where various editor commands (Reindent Lines; Run Chunks) could fail in a document containing Quarto callout blocks. (#14640)
 - Fixed an issue where end fold markers were not rendered correctly in Quarto documents. (#14699)
@@ -40,6 +46,13 @@
 - Fixed an issue where RStudio could trigger active bindings in environments when requesting completions. (#14784)
 - Fixed an issue where the editor scroll speed had inadvertently been decreased. (#14664)
 - Fixed an issue where external links couldn't be opened from a popped-out Help pane window. (#14801; Desktop)
+- Fixed an issue where loaded package DLLs were not unloaded prior to attempting to build and install an under-development package from the Packages pane. (#13399)
+- Fixed an issue where breakpoints could not be added to an already-sourced file in some cases. (#14682)
+- Fixed an issue where autocompletion results did not display for datasets imported via `haven::read_sav()` in some scenarios. (#14672)
+- Fixed an issue where paths were not tilde-aliased after selection in certain desktop dialogs. (#14851)
+- Fixed an issue where the RStudio diagnostics system could emit spurious errors for documents using the R pipebind placeholder `_`. (#14713)
+- Fixed an issue where RStudio incorrectly modified the PATH when "Automatically activate project-local Python environments" was checked. (#14659)
+- Fixed an issue where column name completions could be very slow for SQL tables with dbplyr (>= 2.4.0). (#14864)
 - Remove superfluous Uninstall shortcut and Start Menu folder (#1900; Desktop installer on Windows)
 - Hide Refresh button while Replace All operation is running in the Find in Files pane (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same (#14525)
@@ -49,15 +62,26 @@
 - Moved the "Sign commit" checkbox to Git/Svn global options panel (##14559)
 - RStudio's editor highlighting no longer accepts embedded spaces in '#|' comment prefixes. (#14592)
 - RStudio now preserves a file's existing line endings when performing a Find and Replace. (#14796)
+- Fixed an issue with loading and saving files to folders whose path partially patches the user's home folder (#14764)
+- Fixed an issue where headers without a label in R Markdown documents were not shown in the scope tree. (#13159)
+- Fixed an issue where RStudio could launch with an incorrect initial working directory when using multiple sessions. (#14695)
+- Fixed an issue where ggplot2 aesthetic completions were not provided for plots assigned to a variable. (#14566)
+- Fixed an issue where attempting to inspect a list-column entry in a View()-ed data.frame with custom row names would fail. (#14509)
 
 #### Posit Workbench
 
 - Workbench jobs now set resource profiles correctly (rstudio-pro#5217)
 - When launching a Workbench job from RStudio Pro, changing fields in the Options tab no longer resets the selected R version in the Environment tab (rstudio-pro#5218)
 - Fixed bug that prevented users from receiving the admin-configured default settings when launching VS Code sessions (rstudio-pro#6207)
-
+- RStudio Pro sessions run inside Singularity containers on Slurm now respect the `modules-bin-path` setting (rstudio-pro#6319)
+- When user provisioning is enabled, server logs no longer contain related debug messages unless debug logging is enabled (rstudio-pro#6480)
+- Trailing slashes in Databricks workspace URLs in the `databricks.conf` file no longer prevent users from signing in to Databricks from the home page (rstudio-pro#6435)
+- Resource profiles on Kubernetes and Slurm are now listed in the order in which they appear in the config file (rstudio-pro#6485)
+- Switching the selected IDE when launching a session from the home page no longer resets the image selection (rstudio-pro#4079)
 
 ### Dependencies
 
 - Updated MathJax to version 2.7.9 (#11535)
-- Updated Electron to version 30.1.0 (#14582; Desktop)
+- Updated node.js to version 20.15.0 (#14826)
+- Updated Electron to version 30.1.2 (#14582; Desktop)
+- Updated Quarto to version 1.5.53 (#14884)

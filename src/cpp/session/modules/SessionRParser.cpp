@@ -93,6 +93,14 @@ Error safeEvaluateString(const std::string& string,
                          SEXP* pSEXP,
                          r::sexp::Protect* pProtect)
 {
+   // don't evaluate pipe placeholders
+   // https://github.com/rstudio/rstudio/issues/14713
+   if (string == "_")
+   {
+      *pSEXP = R_NilValue;
+      return Success();
+   }
+   
    // only evaluate strings that consist of identifiers + extraction
    // operators, e.g. 'foo$bar[[1]]'
    boost::regex reSafeEvaluation("^[a-zA-Z0-9_$@\\[\\]]+$");
@@ -1706,7 +1714,9 @@ void checkVariableAssignmentInArgumentList(RTokenCursor cursor,
    if (!cursor.contentEquals(L"<-"))
       return;
    
-   status.lint().unexpectedAssignmentInArgumentList(cursor);
+   // too noisy
+   // https://github.com/rstudio/rstudio/issues/14870
+   // status.lint().unexpectedAssignmentInArgumentList(cursor);
 }
 
 void checkUnexpectedEqualsAssignment(RTokenCursor& cursor,

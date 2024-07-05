@@ -19,7 +19,7 @@ import Store from 'electron-store';
 import { existsSync, lstatSync } from 'fs';
 import { basename, dirname, join } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
-import { normalizeSeparatorsNative } from '../../core/file-path';
+import { normalizeSeparatorsNative } from '../../ui/utils';
 import { logger } from '../../core/logger';
 import { RStudioUserState } from '../../types/user-state-schema';
 

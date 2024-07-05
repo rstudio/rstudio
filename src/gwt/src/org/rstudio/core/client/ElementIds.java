@@ -352,7 +352,8 @@ public class ElementIds
       VCS_IGNORE("vcs_ignore"),
       VCS_TERMINAL("vcs_terminal"),
       CHOOSE_IMAGE("choose_image"),
-      PYTHON_PATH("python_path");
+      PYTHON_PATH("python_path"),
+      PROJECT_SCRATCH_PATH("project_scratch_path");
 
       TextBoxButtonId(String value)
       {

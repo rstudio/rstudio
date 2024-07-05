@@ -58,7 +58,7 @@
                 (normalizePath(fileattr$filename, mustWork = FALSE) == 
                  normalizePath(fileName)))
             {
-               return (env)
+               return(env)
             }
          }
       }
@@ -71,16 +71,23 @@
 # representation for a step with a given source reference line number.
 .rs.addFunction("stepsAtLine", function(funBody, line)
 {
-   if (typeof(funBody) != "language")
-   {
+   if (!is.call(funBody))
       return(NULL)
-   }
 
-   refs <- attr(funBody, "srcref")
+   # only consider source references attached to braced function bodies.
+   # otherwise, we could end up recursing into source references that
+   # aren't relevant to our current debug attempts.
+   #
+   # https://github.com/rstudio/rstudio/issues/14815
+   refs <- if (identical(funBody[[1L]], as.symbol("{")))
+   {
+      attr(funBody, "srcref", exact = TRUE)
+   }
+   
    for (idx in 1:length(funBody))
    {
       # if there's a source ref on this line, check it against the line number
-      # provided by the caller
+      # provided by the caller.
       ref <- refs[[idx]]
       if (length(ref) > 0)
       {
@@ -338,25 +345,42 @@
    .rs.untraced(get(functionName, mode = "function", envir = envir))
 })
 
-.rs.addFunction("getFunctionSourceRefs", function(
-   functionName, fileName, packageName)
+.rs.addFunction("isFunctionInSync", function(functionName,
+                                             filePath,
+                                             packageName)
 {
-   functionName <- .rs.unquote(functionName)
-   fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
-   if (is.null(fun))
-   {
-      return(NULL)
-   }
-   attr(fun, "srcref")
+   tryCatch(
+      .rs.isFunctionInSyncImpl(functionName, filePath, packageName),
+      error = function(e) FALSE
+   )
 })
 
-.rs.addFunction("getFunctionSourceCode", function(
-   functionName, fileName, packageName)
+.rs.addFunction("isFunctionInSyncImpl", function(functionName,
+                                                 filePath,
+                                                 packageName)
 {
+   # Screen out ~/.active-rstudio-document, just in case.
+   if (identical(filePath, "~/.active-rstudio-document"))
+      return(FALSE)
+   
+   # Find the function definition.
    functionName <- .rs.unquote(functionName)
-   paste(capture.output(
-      .rs.getFunctionSourceRefs(functionName, fileName, packageName)),
-      collapse="\n")
+   fun <- .rs.getUntracedFunction(functionName, filePath, packageName)
+   if (is.null(fun))
+      return(FALSE)
+   
+   # Get the source definition of this function.
+   srcref <- attr(fun, "srcref")
+   functionLines <- .rs.deparseSrcref(srcref, FALSE)
+   
+   # Check if this matches the file contents.
+   fileContents <- .rs.readLines(filePath)
+   srcpos <- .rs.parseSrcref(srcref)
+   functionSrcLines <- fileContents[srcpos$first_parsed:srcpos$last_parsed]
+   
+   # Check if they match.
+   identical(functionLines, functionSrcLines)
+   
 })
 
 # Parses and executes a file for debugging

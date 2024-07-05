@@ -1373,7 +1373,34 @@ Error FilePath::isWriteable(bool &out_writeable) const
    return Success();
 }
 
-#endif
+#else
+
+Error FilePath::isWriteable(bool &out_writeable) const
+{
+   // Testing a folder for writeability on Windows is ugly to do entirely via APIs. If it's a 
+   // filesystem such as NTFS that supports ACLs, then need to check those, but that will fail
+   // on other filesystems such as FAT32; ditto for some networked file systems.
+   //
+   // Instead, to cover all bases, try to create and delete a temporary file in the folder.
+
+   LPCWSTR folder = m_impl->Path.wstring().c_str();
+
+   // create a unique temporary filename
+   WCHAR tempFileName[MAX_PATH+1];
+   UINT uRetVal = GetTempFileNameW(folder, L"TMP", 0, tempFileName);
+   if (uRetVal == 0) {
+      // assume any failure means "not writeable"
+      out_writeable = false;
+      return Success();
+   }
+
+   out_writeable = true;
+   DeleteFileW(tempFileName);
+
+   return Success();
+}
+
+#endif // _WIN32
 
 Error FilePath::makeCurrentPath(bool in_autoCreate) const
 {

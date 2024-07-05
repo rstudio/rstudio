@@ -1255,9 +1255,17 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("prependToPath", function(entry)
 {
-   oldPath <- Sys.getenv("PATH")
-   newPath <- paste(normalizePath(entry), oldPath, sep = .Platform$path.sep)
-   Sys.setenv(PATH = newPath)
+   # Make sure we use native separators, and expand tildes.
+   entry <- normalizePath(entry, mustWork = FALSE)
+   
+   # Get the current PATH.
+   oldPath <- strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed = TRUE)[[1L]]
+   
+   # Prepend the new entry, removing it from the old PATH if is already exists.
+   newPath <- c(entry, setdiff(oldPath, entry))
+   
+   # Update the PATH.
+   Sys.setenv(PATH = paste(newPath, collapse = .Platform$path.sep))
 })
 
 .rs.addFunction("callSafely", function(call, args)

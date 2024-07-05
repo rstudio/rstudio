@@ -51,13 +51,7 @@
 #include <Rembedded.h>
 
 extern "C" {
-
-#ifndef _WIN32
-SA_TYPE SaveAction;
-#else
-__declspec(dllimport) SA_TYPE SaveAction;
-#endif
-
+RS_IMPORT SA_TYPE SaveAction;
 }
 
 using namespace rstudio::core;

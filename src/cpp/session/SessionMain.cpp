@@ -68,6 +68,7 @@
 #include <core/system/LibraryLoader.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/Xdg.hpp>
+#include <core/system/encryption/Encryption.hpp>
 
 #ifdef _WIN32
 # include <core/system/Win32RuntimeLibrary.hpp>
@@ -110,6 +111,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/StderrLogDestination.hpp>
+#include <shared_core/system/encryption/EncryptionConfiguration.hpp>
 
 #include "SessionAddins.hpp"
 
@@ -2179,6 +2181,11 @@ int main(int argc, char * const argv[])
                                         true); // force log dir to be under user's home directory
          }
       }
+
+      // Initialize encryption customization early on
+      core::system::crypto::encryption::initialize();
+      LOG_INFO_MESSAGE("Encryption versions set to max: " + std::to_string(system::crypto::getMaximumEncryptionVersion()) + \
+                       ", min: " + std::to_string(system::crypto::getMinimumEncryptionVersion()));
 
       error = rpc::initialize();
       if (error)

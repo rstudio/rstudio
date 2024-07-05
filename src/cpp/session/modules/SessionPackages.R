@@ -302,6 +302,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 {
    .rs.beforePackageUnloaded(package)
    
+   # Figure out where the package was loaded from before unloading it.
+   pkgPath <- if (package %in% loadedNamespaces())
+   {
+      getNamespaceInfo(package, "path")
+   }
+   
+   # Now, try to unload the package. If it's attached, detach it;
+   # if the namespace is loaded, unload it.
    searchPathName <- paste("package", package, sep = ":")
    if (searchPathName %in% search())
    {
@@ -315,6 +323,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    else if (package %in% loadedNamespaces())
    {
       unloadNamespace(package)
+   }
+   
+   # Now, unload a loaded DLL (if any) associated with the package.
+   dllInfo <- getLoadedDLLs()[[package]]
+   if (!is.null(dllInfo) && !is.null(pkgPath))
+   {
+      suppressWarnings(
+         library.dynam.unload(package, pkgPath)
+      )
    }
 })
 

@@ -1706,6 +1706,12 @@ assign(x = ".rs.acCompletionTypes",
       # there are too many names to evaluate.
       else if (length(names) > 2E2)
          type <- .rs.acCompletionTypes$UNKNOWN
+      
+      # Avoid requesting completion types for remote tables,
+      # as that could be prohibitively expensive.
+      else if (inherits(object, c("tbl_dbi", "tbl_sql", "tbl_lazy")))
+         type <- .rs.acCompletionTypes$UNKNOWN
+      
       else
       {
          type <- numeric(length(names))
@@ -2762,7 +2768,7 @@ assign(x = ".rs.acCompletionTypes",
          {
             triedGgplot2Completions <- TRUE
             completions <- tryCatch(
-               .rs.getCompletionsGgplot2(token, contextData, statementBounds, documentId, envir),
+               .rs.getCompletionsGgplot2(line, token, contextData, statementBounds, documentId, envir),
                error = function(e) .rs.emptyCompletions(token)
             )
          }
@@ -2969,15 +2975,24 @@ assign(x = ".rs.acCompletionTypes",
    c("x", "y", "fill", "colour", "alpha", "shape", "size", "linewidth", "linetype", "group")
 })
 
-.rs.addFunction("getCompletionsGgplot2", function(token,
+.rs.addFunction("getCompletionsGgplot2", function(line,
+                                                  token,
                                                   contextData,
                                                   statementBounds,
                                                   documentId,
                                                   envir)
 {
    # get document contents
-   document <- .rs.getSourceDocument(documentId, TRUE)
-   contents <- strsplit(document$contents, "\n", fixed = TRUE)[[1L]]
+   contents <- ""
+   if (nzchar(documentId))
+   {
+      document <- .rs.getSourceDocument(documentId, TRUE)
+      contents <- strsplit(document$contents, "\n", fixed = TRUE)[[1L]]
+   }
+   else
+   {
+      contents <- line
+   }
    
    # the data object associated with the aes() call, if any
    data <- NULL
@@ -3017,6 +3032,13 @@ assign(x = ".rs.acCompletionTypes",
       # find the top-most call in the hierarchy
       while (identical(currentCall[[1L]], as.symbol("+")))
          currentCall <- currentCall[[2L]]
+      
+      while (identical(currentCall[[1L]], as.symbol("<<-")) ||
+             identical(currentCall[[1L]], as.symbol("<-")) ||
+             identical(currentCall[[1L]], as.symbol("=")))
+      {
+         currentCall <- currentCall[[3L]]
+      }
       
       # check for a data argument
       data <- currentCall[["data"]]
