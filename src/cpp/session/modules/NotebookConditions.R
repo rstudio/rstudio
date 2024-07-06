@@ -46,22 +46,23 @@
    # global environment, we need to avoid defining variables here.
    #
    # https://github.com/rstudio/rstudio/issues/8834
-   base::assign(
-      x = ".rs.notebookConditions.handlerStack",
-      envir = .rs.toolsEnv(),
-      value = base::.Internal(
-         .addCondHands(
-            c("warning", "message"),
-            base::list(
-               warning = .rs.notebookConditions.onWarning,
-               message = .rs.notebookConditions.onMessage
-            ),
-            base::globalenv(),
-            NULL,
-            TRUE
-         )
-      )
-   )
+   .rs.notebookConditions.handlerStack <-
+      .Internal(.addCondHands(
+         c("warning", "message"),
+         list(
+            warning = .rs.notebookConditions.onWarning,
+            message = .rs.notebookConditions.onMessage
+         ),
+         base::globalenv(),
+         NULL,
+         TRUE
+      ))
+   
+   base::assign(x = ".rs.notebookConditions.handlerStack",
+                value = .rs.notebookConditions.handlerStack,
+                envir = .rs.toolsEnv())
+   
+   base::rm(.rs.notebookConditions.handlerStack)
 })
 
 .rs.addFunction("notebookConditions.disconnectCall", function()
