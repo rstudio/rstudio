@@ -113,16 +113,6 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          if (this.equals(node))
             return;
 
-         // It's possible for this node to be already closed. If that's the
-         // case, we need to open it back up. Example:
-         //
-         // foo <- function() { bar <- function [HERE] }) {
-         //
-         // If [HERE] is replaced with (, then the final brace will cause this
-         // situation to be triggered because the previous brace belonged to
-         // foo but no longer does.
-         this.end = null;
-
          var index = this.$binarySearch(node.preamble);
          if (index >= 0) {
             // This node belongs inside an existing child
