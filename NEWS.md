@@ -67,6 +67,7 @@
 - Fixed an issue where RStudio could launch with an incorrect initial working directory when using multiple sessions. (#14695)
 - Fixed an issue where ggplot2 aesthetic completions were not provided for plots assigned to a variable. (#14566)
 - Fixed an issue where attempting to inspect a list-column entry in a View()-ed data.frame with custom row names would fail. (#14509)
+- Fixed an issue where the document outline in Quarto documents could incorrectly render in very long documents in some scenarios. (#14906)
 
 #### Posit Workbench
 
