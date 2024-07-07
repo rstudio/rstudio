@@ -37,7 +37,9 @@ http::AsyncServer* httpServerCreate(const http::Headers& additionalHeaders)
                                  core::FileMode::USER_READ_WRITE_EXECUTE,
                                  !options().wwwEnableOriginCheck(),
                                  options().wwwAllowedOrigins(),
-                                 additionalHeaders);
+                                 additionalHeaders,
+                                 options().statsMonitorSeconds(),
+                                 metrics::statsProvider());
    } else {
       return new http::TcpIpAsyncServer("RStudio",
                                  std::string(),
