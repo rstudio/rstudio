@@ -114,6 +114,14 @@
             "description": "The port that RStudio Server will bind to while listening for incoming connections. If left empty, the port will be automatically determined based on your SSL settings (443 for SSL, 80 for no SSL)."
          },
          {
+            "name": "www-socket",
+            "memberName": "wwwSocket_",
+            "type": "string",
+            "defaultValue": "",
+            "skipAccessorGeneration": true,
+            "description": "The socket that RStudio Server will bind to while listening for incoming connections. If left empty, a port will be used."
+         },
+         {
             "name": "www-root-path",
             "memberName": "wwwRootPath_",
             "type": "string",
