@@ -483,7 +483,7 @@ export RSTUDIO_NODE_VERSION="20.14.0"
 # In addition to updating the version here, search the entire repo for other instances of
 # RSTUDIO_INSTALLED_NODE_VERSION and update to match. Also double-check that the steps in
 # patch-node and patch-node.cmd work with the newer node (e.g. in case the layout has changed).
-export RSTUDIO_INSTALLED_NODE_VERSION="20.15.0"
+export RSTUDIO_INSTALLED_NODE_VERSION="20.15.1"
 
 # version of go used for building
 export WORKBENCH_GO_VERSION="1.22.3"

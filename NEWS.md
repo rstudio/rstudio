@@ -88,6 +88,6 @@
 ### Dependencies
 
 - Updated MathJax to version 2.7.9 (#11535)
-- Updated node.js to version 20.15.0 (#14826)
+- Updated node.js to version 20.15.1 (#14826)
 - Updated Electron to version 30.1.2 (#14582; Desktop)
 - Updated Quarto to version 1.5.53 (#14884)
