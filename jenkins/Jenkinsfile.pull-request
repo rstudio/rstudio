@@ -13,6 +13,7 @@ pipeline {
 
   environment {
     GITHUB_LOGIN = credentials('posit-jenkins')
+    JENKINS_CREDENTIALS = credentials('jenkins-api-creds')
     OS = 'jammy'
     ARCH = 'x86_64'
     FLAVOR = 'Server'
@@ -34,6 +35,8 @@ pipeline {
           RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
           IS_PRO = JOB_URL.contains('Pro')
           BASE_IMAGE = "jenkins/ide:pro-jammy-x86_64-${RSTUDIO_VERSION_FLOWER}"
+          // Passing true makes this return true if there are any changes outside of 'docs'
+          BUILD = utils.hasChangesIn('docs/', true)
         }
       }
     }
@@ -49,156 +52,108 @@ pipeline {
       }
     }
 
-    stage('Snyk Code Scan') {
-      environment {
-        SNYK_TOKEN = credentials('snyk-auth-token')
-        TMP_SNYK_PATH = "/tmp/snyk-code-scan"
-      }
-      agent {
-        dockerfile {
-          filename 'docker/jenkins/Dockerfile.snyk'
-          registryCredentialsId 'ecr:us-east-1:aws-build-role'
-          registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
-          additionalBuildArgs "--build-arg BASE_IMAGE=${BASE_IMAGE}" + ' --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}'
-          reuseNode true
-        }
-      }
+    // Initializes the pending checks for the PR so they show up in progress
+    stage('Initialize Pending Checks') {
       steps {
-        sh "mkdir --parents ${TMP_SNYK_PATH}"
-        sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}...HEAD); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
-        sh "for FILE in \$(git ls-files | grep '/.snyk'); do cp --parents \$FILE ${TMP_SNYK_PATH}; done"
         script {
-          exitCode = sh(returnStatus: true, script: "snyk code test ${TMP_SNYK_PATH} > ${TMP_SNYK_PATH}/output.txt")
-          sh "cat ${TMP_SNYK_PATH}/output.txt"
-          // - exit code 0: sucessful scan, no vulns identified in code
-          // - exit code 1: unsuccessful scan, code had vulns (real or false positive)
-          // - exit code 3: scan was not-applicable to files. This is typical for docs or NEWS commits
-          // 
-          // In the case of code 3, we don't want to post anything in order to avoid generating confusion
-          if (exitCode != 3) {
-            status = exitCode == 0 ? "success" : "failure"
-            text = !IS_PRO ? RUN_DISPLAY_URL : sh(returnStdout: true, script: "sed '/^Testing/d' ${TMP_SNYK_PATH}/output.txt | sed '/./,\$!d' | jq -Rs .")
-            utils.postReviewCheck('snyk-code-check', status, 'Snyk static code scan', 'Snyk static code analysis output', text)
-          }
+          utils.postReviewCheck(title: "Snyk Code Scan")
+          utils.postReviewCheck(title: "Detect Secrets")
         }
-        sh "rm -r ${TMP_SNYK_PATH}"
       }
     }
 
-    stage('Build') {
-      when {
-        expression {
-          // Passing true makes this return true if there are any changes outside of 'docs'
-          return utils.hasChangesIn('docs', true)
-        }
-      }
+    stage("Build and Scan") {
+      parallel {
 
-      stages {
-        stage('Prepare Build Container') {
-          when {
-            anyOf {
-              expression {
-                return utils.hasChangesIn('docker')
-              }
-              expression {
-                return utils.hasChangesIn('dependencies')
-              }
+        stage('Snyk Code Scan') {
+          environment {
+            SNYK_TOKEN = credentials('snyk-auth-token')
+            TMP_SNYK_PATH = "/tmp/snyk-code-scan"
+            STAGE_NODE_URL = utils.getStageUrl(STAGE_NAME)
+          }
+          agent {
+            dockerfile {
+              filename 'docker/jenkins/Dockerfile.snyk'
+              registryCredentialsId 'ecr:us-east-1:aws-build-role'
+              registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+              additionalBuildArgs "--build-arg BASE_IMAGE=${BASE_IMAGE}" + ' --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}'
+              reuseNode true
             }
           }
           steps {
-            // AWS is here for the S3 bucket that we use for sccache
-            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-              pullBuildPush(
-                image_name: 'jenkins/ide',
-                image_tag: "${utils.getDockerTag()}",
-                dockerfile: "docker/jenkins/Dockerfile.${OS}",
-                build_arg_jenkins_uid: 'JENKINS_UID',
-                build_arg_jenkins_gid: 'JENKINS_GID',
-                builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-                push: false)
+            catchError(buildResult: null, stageResult: 'FAILURE') {
+              sh "mkdir --parents ${TMP_SNYK_PATH}"
+              sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}...HEAD); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
+              sh "for FILE in \$(git ls-files | grep '/.snyk'); do cp --parents \$FILE ${TMP_SNYK_PATH}; done"
+              script {
+                utils.postReviewCheck(
+                  title: 'Snyk Code Scan',
+                  status: 'in_progress',
+                  summary: utils.getResultsMarkdownLink("Snyk Code Scan", STAGE_NODE_URL),
+                )
+                (exitCode, text) = utils.runCmd("snyk code test ${TMP_SNYK_PATH}")
+                // - exit code 0: sucessful scan, no vulns identified in code
+                // - exit code 1: unsuccessful scan, code had vulns (real or false positive)
+                // - exit code 3: scan was not-applicable to files. This is typical for docs or NEWS commits
+                // 
+                // In the case of code 3, we don't want to post anything in order to avoid generating confusion
+                if (exitCode != 3) {
+                  status = exitCode == 0 ? "success" : "failure"
+                  text = !IS_PRO ? RUN_DISPLAY_URL : sh(returnStdout: true, script: "echo \"${text}\" | sed '/^Testing/d' | sed '/./,\$!d' | jq -Rs .")
+                  utils.postReviewCheck(
+                    title: 'Snyk Code Scan',
+                    status: status,
+                    details: text,
+                  )
+                  if (status == "failure") {
+                    throw new Exception("Snyk Code Scan failed")
+                  }   
+                }
+              }
+            }
+          }
+          post {
+            always {
+              sh "rm -r ${TMP_SNYK_PATH}"
             }
           }
         }
 
-        stage('Build Package and Test') {
-          agent {
-              docker {
-                image "jenkins/ide:${utils.getDockerTag()}"
-                registryCredentialsId 'ecr:us-east-1:aws-build-role'
-                registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
-                label "${utils.getLinuxAgentLabel(ARCH)}"
-                reuseNode true
+        stage('Detect Secrets') {
+          environment {
+            STAGE_NODE_URL = utils.getStageUrl(STAGE_NAME)
+          }
+          steps {
+            catchError(buildResult: null, stageResult: 'FAILURE') {
+              script {
+
+                utils.runCheckCmd("docker compose -f ./git_hooks/secrets/docker-compose.yml run run-detect-secrets run-hook-all", "Detect Secrets", STAGE_NODE_URL, !IS_PRO)         
               }
             }
-
-          stages {
-            stage('Build Package') {
-              steps {
-                dir ("package/linux") {
-                  // AWS is here for the S3 bucket that we use for sccache
-                  withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                    // perform the compilation
-                    sh "SCCACHE_ENABLED=1 PACKAGE_OS=${OS} ./make-${FLAVOR.toLowerCase()}-package ${type} clean"
-                  }
-                }
-              }
-              //Archive the build
-              post {
-                success {
-                  archiveArtifacts artifacts: "package/linux/build-${FLAVOR}-${TYPE}/rstudio-*.${TYPE.toLowerCase()}", fingerprint: true
-                }
-              }
-            }
-
-            stage('Run GWT Unit Tests') {
-              steps {
-                dir ("package/linux/build-${FLAVOR}-${TYPE}/src/gwt") {
-                  // attempt to run ant (gwt) unit tests
-                  sh "./gwt-unit-tests.sh"
-                }
-              }
-            }
-
-            stage('Run C++ Unit Tests') {
-              steps {
-                dir ("package/linux/build-${FLAVOR}-${type}/src/cpp") {
-                  // attempt to run cpp unit tests
-                  sh "./rstudio-tests"
-                }
-              }
-            }
-
-            stage('Run Rust Unit Tests') {
-              when { expression { return FLAVOR == 'Server' && IS_PRO } } 
-              steps {
-                dir ("package/linux/build-${FLAVOR}-${type}") {
-                  // Just run the nss_pwb tests for now to keep it simple
-                  // We may want to consider adding a rust workspace in the future if we add more rust targets
-                  sh "ninja nss_pwb-test"
-                }
-              }
-            }
-
-            stage('Run Go Unit Tests') {
-              when { expression { return FLAVOR == 'Server' && IS_PRO } }
-              steps {
-                dir ("package/linux/build-${FLAVOR}-${type}") {
-                  sh "ninja workbench-user-service-test"
-                }
-              }
-            }
-
-            stage('Run Homepage Tests') {
-              when { expression { return FLAVOR == 'Server' && IS_PRO } }
-              steps {
-                dir ("src/cpp/session/workspaces/www-sources") {
-                  sh "./run-tests.sh"
-                }
-              }
-            }
-
           }
         }
+
+        stage('Build') {
+
+          when {
+            expression {
+              return BUILD
+            }
+          }
+
+          steps {
+            build job: "IDE/${env.JOB_URL.contains('Pro') ? 'Pro' : 'OS'}-Builds/pull-requests/${env.JOB_URL.contains('Pro') ? 'pro' : 'open-source'}-pull-request-build/${env.GIT_BRANCH}"
+          }
+        }
+      }
+    }
+
+  }
+
+  post {
+    always {
+      script {
+        utils.finishReviewChecks(currentBuild.result)
       }
     }
   }
