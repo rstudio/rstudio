@@ -29,6 +29,7 @@
 - Disabled Jupyter Notebooks by default on fresh installs of PWB (rstudio-pro#6269)
 - Workbench now respects the `SLURM_CONF` environment variable, which can be used to point to a non-standard location for the Slurm configuration file (launcher#767)
 - Workbench now does a better job of tracking which Slurm jobs it owns, allowing multiple independent Workbench servers to use the same Slurm cluster, or a single Workbench server to use the same backing Slurm cluster with different configurations (launcher#908)
+- Preview of the workbench api, using api-tokens for launching sessions and session status. See documentation for details.
 
 ### Fixed
 
@@ -67,6 +68,8 @@
 - Fixed an issue where RStudio could launch with an incorrect initial working directory when using multiple sessions. (#14695)
 - Fixed an issue where ggplot2 aesthetic completions were not provided for plots assigned to a variable. (#14566)
 - Fixed an issue where attempting to inspect a list-column entry in a View()-ed data.frame with custom row names would fail. (#14509)
+- Fixed an issue with a once-in-a-long-while auto-save error dialog (rstudio-pro#6468)
+- Fixed an issue with linux PAM session error handling (#12116)
 
 #### Posit Workbench
 
@@ -78,6 +81,7 @@
 - Trailing slashes in Databricks workspace URLs in the `databricks.conf` file no longer prevent users from signing in to Databricks from the home page (rstudio-pro#6435)
 - Resource profiles on Kubernetes and Slurm are now listed in the order in which they appear in the config file (rstudio-pro#6485)
 - Switching the selected IDE when launching a session from the home page no longer resets the image selection (rstudio-pro#4079)
+- Removed an error starting sessions in some docker containers about resetting keyrings, other unnecessary debug messages (rstudio-pro#6444)
 
 ### Dependencies
 
