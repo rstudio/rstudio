@@ -30,6 +30,7 @@
 - Workbench now respects the `SLURM_CONF` environment variable, which can be used to point to a non-standard location for the Slurm configuration file (launcher#767)
 - Workbench now does a better job of tracking which Slurm jobs it owns, allowing multiple independent Workbench servers to use the same Slurm cluster, or a single Workbench server to use the same backing Slurm cluster with different configurations (launcher#908)
 - Preview of the workbench api, using api-tokens for launching sessions and session status. See documentation for details.
+- Added support for Just-in-Time provisioning for Proxied Auth, OpenID Connect, and SAML Authentication methods, which allows for the automatic creation of user accounts when users log in (rstudio-pro#5909)
 
 ### Fixed
 
