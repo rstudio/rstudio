@@ -20,7 +20,6 @@ package org.rstudio.studio.client.panmirror.outline;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
@@ -33,6 +32,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
@@ -210,9 +210,9 @@ public class PanmirrorOutlineWidget extends Composite
       for (int i=0; i<items.length; i++)
       {
          PanmirrorOutlineItem item = items[i];
-         if (item.type == PanmirrorOutlineItemType.Heading && 
-               !StringUtil.isNullOrEmpty(item.title))
+         if (item.type == PanmirrorOutlineItemType.Heading)
          {
+            item.title = StringUtil.isNullOrEmpty(item.title) ? "(Untitled)" : item.title; 
             flattenedItems.add(item);
             doFlattenOutline(item.children, flattenedItems, chunkPref);
          }
