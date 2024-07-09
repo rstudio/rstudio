@@ -304,31 +304,30 @@
 
       # unlock the binding if necessary to inject the source references;
       # bindings are often locked in package environments
-      lockedBinding <- FALSE
-
+      if (bindingIsLocked(functionName, envir))
+      {
+         unlockBinding(functionName, envir)
+         on.exit(unlockBinding(functionName, envir), add = TRUE)
+      }
+      
       # remap the source references so that the code injected by trace() is
       # mapped back to the line on which the breakpoint was set.  We need to
       # assign directly to the @.Data internal slot since assignment to the
       # public-facing body of the function will remove the tracing information.
-      tryCatch({
-         if (bindingIsLocked(functionName, envir))
-         {
-            unlockBinding(functionName, envir)
-            lockedBinding <- TRUE
-         }
-         body(envir[[functionName]]@.Data) <- .rs.tracedSourceRefs(
-            body(envir[[functionName]]@.Data),
-            body(envir[[functionName]]@original))
-         },
-         finally =
-         {
-            # restore the lock
-            if (lockedBinding)
-            {
-               lockBinding(functionName, envir)
-            }
-         }
+      body(envir[[functionName]]@.Data) <- .rs.tracedSourceRefs(
+         body(envir[[functionName]]@.Data),
+         body(envir[[functionName]]@original)
       )
+      
+      # we also need to manually remap source references for registered S3 methods
+      s3methods <- envir$.__S3MethodsTable__.
+      if (is.function(s3methods[[functionName]]))
+      {
+         body(s3methods[[functionName]]@.Data) <- .rs.tracedSourceRefs(
+            body(s3methods[[functionName]]@.Data),
+            body(s3methods[[functionName]]@original)
+         )
+      }
    }
    return(functionName)
 })
