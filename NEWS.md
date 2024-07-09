@@ -72,6 +72,7 @@
 - Fixed an issue where the document outline in Quarto documents could incorrectly render in very long documents in some scenarios. (#14906)
 - Fixed an issue with a once-in-a-long-while auto-save error dialog. (rstudio-pro#6468)
 - Fixed an issue with linux PAM session error handling. (#12116)
+- Fixed an issue where the RStudio debugger location could be incorrect when debugging a package's S3 method. (#14499)
 
 #### Posit Workbench
 
