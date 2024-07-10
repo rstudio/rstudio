@@ -307,7 +307,7 @@
       if (bindingIsLocked(functionName, envir))
       {
          unlockBinding(functionName, envir)
-         on.exit(unlockBinding(functionName, envir), add = TRUE)
+         on.exit(lockBinding(functionName, envir), add = TRUE)
       }
       
       # remap the source references so that the code injected by trace() is
@@ -323,6 +323,14 @@
       s3methods <- envir$.__S3MethodsTable__.
       if (is.function(s3methods[[functionName]]))
       {
+         # unlock the binding if necessary to inject the source references;
+         # bindings are often locked in package environments
+         if (bindingIsLocked(functionName, s3methods))
+         {
+            unlockBinding(functionName, s3methods)
+            on.exit(lockBinding(functionName, s3methods), add = TRUE)
+         }
+
          body(s3methods[[functionName]]@.Data) <- .rs.tracedSourceRefs(
             body(s3methods[[functionName]]@.Data),
             body(s3methods[[functionName]]@original)
