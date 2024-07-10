@@ -905,10 +905,15 @@ public class EnvironmentPresenter extends BasePresenter
                // Try a fuzzier search, but note that this is now an approximate position.
                int newlineIndex = currentBrowseSource_.indexOf('\n');
                String firstLine = currentBrowseSource_.substring(0, newlineIndex);
-               codeIndex = editorCode.indexOf(firstLine);
-               if (codeIndex != -1)
+               
+               // Make sure that this looks like a function definition
+               if (firstLine.indexOf("function") != -1)
                {
-                  isApproximateBrowsePosition_ = true;
+                  codeIndex = editorCode.indexOf(firstLine);
+                  if (codeIndex != -1)
+                  {
+                     isApproximateBrowsePosition_ = true;
+                  }
                }
             }
             else
