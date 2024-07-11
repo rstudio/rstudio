@@ -205,9 +205,6 @@ FilePath resolveXdgPath(
       // TODO: What if this variable is provided, but we cannot create or use
       // the provided directory? Should we fall back to an XDG directory?
       FilePath rstudioXdgPath(rstudioEnvValue);
-      Error error = rstudioXdgPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
       
       // Use requested file path if provided
       FilePath resolvedXdgPath = rstudioXdgPath;
