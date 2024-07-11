@@ -31,6 +31,8 @@
 - Workbench now does a better job of tracking which Slurm jobs it owns, allowing multiple independent Workbench servers to use the same Slurm cluster, or a single Workbench server to use the same backing Slurm cluster with different configurations (launcher#908)
 - Preview of the workbench api, using api-tokens for launching sessions and session status. See documentation for details.
 - Added support for just-in-time provisioning of local user accounts for Proxied Auth, OpenID Connect, and SAML Authentication. Just-in-time provisioning creates users on first login, and can serve as an alternative to SCIM-based provisioning for Identity Providers that do not support the SCIM protocol (rstudio-pro#5909)
+- Added visual credential controls to the New Session dialog to quickly sign into and select credentials for new sessions (rstudio-pro#6287)
+- Added an Edit Credentials dialog to allow users to select and sign into Workbench-supported cloud providers, with a few additional controls over the selection widget (rstudio-pro#6287)
 
 ### Fixed
 
