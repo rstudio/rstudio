@@ -31,6 +31,8 @@
 - Workbench now does a better job of tracking which Slurm jobs it owns, allowing multiple independent Workbench servers to use the same Slurm cluster, or a single Workbench server to use the same backing Slurm cluster with different configurations (launcher#908)
 - Preview of the workbench api, using api-tokens for launching sessions and session status. See documentation for details.
 - Added support for just-in-time provisioning of local user accounts for Proxied Auth, OpenID Connect, and SAML Authentication. Just-in-time provisioning creates users on first login, and can serve as an alternative to SCIM-based provisioning for Identity Providers that do not support the SCIM protocol (rstudio-pro#5909)
+- Snowflake account credentials can now be configured through the `snowflake.conf` file (rstudio-pro#6028)
+- Workbench can now auto-discover additional Snowflake roles available to the user, and supports refreshing the list of available roles (rstudio-pro#63569)
 
 ### Fixed
 
