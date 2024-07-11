@@ -116,7 +116,7 @@ protected:
       "Indicates whether or not to use GWT's emulated stack.")
       ("www-thread-pool-size",
       value<int>(&wwwThreadPoolSize_)->default_value(6),
-      "The size of the threadpool from which requests will be serviced. This may be increased to enable more concurrency, but should only be done if the underlying hardware has more than 2 cores. It is recommended to use a value that is <= to the number of hardware cores, or <= to two times the number of hardware cores if the hardware utilizes hyperthreading.")
+      "The size of the threadpool from which requests will be serviced. This needs to have enough threads to avoid bottlenecks due to certain requests that block the request thread (e.g. a login fail might run into a delay caused by the pam configuration). For systems with lots of users a larger value is recommended. For systems with only one or two users, a value of 2 will be slightly more efficient.")
       ("www-proxy-localhost",
       value<bool>(&wwwProxyLocalhost_)->default_value(true),
       "Indicates whether or not to proxy requests to localhost ports over the main server port. This should generally be enabled, and is used to proxy HTTP traffic within a session that belongs to code running within the session (e.g. Shiny or Plumber APIs)")
