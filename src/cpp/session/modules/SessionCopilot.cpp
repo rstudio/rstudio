@@ -1099,6 +1099,12 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
       return false;
    }
 
+   // bail if we're not on the main thread; we make use of R when attempting
+   // to start R so we cannot safely start on a child thread
+   if (!thread::isMainThread())
+      return false;
+   
+   // preflight checks passed; try to start the agent
    Error error = startAgent();
    if (error)
       LOG_ERROR(error);
