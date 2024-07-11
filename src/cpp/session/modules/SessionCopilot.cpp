@@ -1467,6 +1467,18 @@ SEXP rs_copilotAgentCommitHash()
    return r::sexp::create(copilotAgentCommitHash(), &protect);
 }
 
+SEXP rs_copilotStopAgent()
+{
+   // stop the copilot agent
+   stopAgent();
+   
+   // wait until the process is gone
+   bool stopped = waitFor([]() { return s_agentPid == -1; });
+ 
+   // return status
+   return Rf_ScalarLogical(stopped);
+}
+
 Error copilotDiagnostics(const json::JsonRpcRequest& request,
                          const json::JsonRpcFunctionContinuation& continuation)
 {
@@ -1676,6 +1688,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_copilotSetLogLevel);
    RS_REGISTER_CALL_METHOD(rs_copilotVersion);
    RS_REGISTER_CALL_METHOD(rs_copilotAgentCommitHash);
+   RS_REGISTER_CALL_METHOD(rs_copilotStopAgent);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

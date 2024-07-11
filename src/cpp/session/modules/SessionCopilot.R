@@ -114,6 +114,12 @@
          break
    }
    
+   # Stop the Copilot agent if it's currently running.
+   # This is necessary as the node process hosting Copilot will try to load
+   # some bundled node libraries, and (at least on Windows) if those libraries
+   # are loaded, we won't be able to remove them.
+   .Call("rs_copilotStopAgent", PACKAGE = "(embedding)")
+   
    # Copy the directory recursively.
    unlink(targetDirectory, recursive = TRUE)
    .rs.ensureDirectory(dirname(targetDirectory))
