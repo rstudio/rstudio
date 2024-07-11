@@ -149,7 +149,7 @@
             "memberName": "wwwThreadPoolSize_",
             "type": "int",
             "defaultValue": 6,
-            "description": "The size of the threadpool from which requests will be serviced. This may be increased to enable more concurrency, but should only be done if the underlying hardware has more than 2 cores. It is recommended to use a value that is <= to the number of hardware cores, or <= to two times the number of hardware cores if the hardware utilizes hyperthreading."
+            "description": "The size of the threadpool from which requests will be serviced. This needs to have enough threads to avoid bottlenecks due to certain requests that block the request thread (e.g. a login fail might run into a delay caused by the pam configuration). For systems with lots of users a larger value is recommended. For systems with only one or two users, a value of 2 will be slightly more efficient."
          },
          {
             "name": "www-proxy-localhost",
