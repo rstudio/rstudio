@@ -3255,11 +3255,17 @@ public class TextEditingTarget implements
 
                         command.execute(newEncoding);
                      }
+                  },
+                  new Operation()
+                  {
+                     public void execute()
+                     {
+                        isSaving_ = false;
+                     }
                   }));
             d.getValue().showModal();
          }
       });
-
    }
 
    private void saveNewFileWithEncoding(String suggestedPath,

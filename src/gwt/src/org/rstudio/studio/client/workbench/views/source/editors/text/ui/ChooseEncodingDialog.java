@@ -28,6 +28,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FormCheckBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 public class ChooseEncodingDialog extends ModalDialog<String>
 {
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
+
    public ChooseEncodingDialog(JsArrayString commonEncodings,
                                JsArrayString allEncodings,
                                String currentEncoding,
@@ -42,7 +44,24 @@ public class ChooseEncodingDialog extends ModalDialog<String>
                                boolean includeSaveAsDefault,
                                OperationWithInput<String> operation)
    {
-      super(constants_.chooseEncoding(), Roles.getDialogRole(), operation);
+      this(commonEncodings,
+           allEncodings,
+           currentEncoding,
+           includePromptForEncoding,
+           includeSaveAsDefault,
+           operation,
+           null);
+   }
+
+   public ChooseEncodingDialog(JsArrayString commonEncodings,
+                               JsArrayString allEncodings,
+                               String currentEncoding,
+                               boolean includePromptForEncoding,
+                               boolean includeSaveAsDefault,
+                               OperationWithInput<String> operation,
+                               Operation cancelOperation)
+   {
+      super(constants_.chooseEncoding(), Roles.getDialogRole(), operation, cancelOperation);
       commonEncodings_ = commonEncodings;
       allEncodings_ = allEncodings;
       currentEncoding_ = currentEncoding;

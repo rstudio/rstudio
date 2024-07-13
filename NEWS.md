@@ -9,7 +9,7 @@
 
 ### Fixed
 #### RStudio
--
+- Fixed being unable to save file after cancelling the "Choose Encoding" window (#14896)
 
 #### Posit Workbench
 -
