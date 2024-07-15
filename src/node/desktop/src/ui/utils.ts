@@ -64,9 +64,9 @@ export const checkForNewLanguage = async () => {
  * @return {*}
  */
 export function normalizeSeparators(path: string, separator = '/') {
-  // don't mess with leading '\\' on a UNC path
+  // don't mess with leading '\\' or '//' on a UNC path
   let prefix = '';
-  if (path.startsWith('\\\\')) {
+  if (path.startsWith('\\\\') || path.startsWith('//')) {
     prefix = `${separator}${separator}`;
     path = path.substring(2);
   }
