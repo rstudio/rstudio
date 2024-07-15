@@ -155,6 +155,21 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
 }
 
 /**
+ * Sometimes a specific OS/ARCH/FLAVOR needs to do an additional publish.
+ * Handle that here.
+ */
+def optionalPublishToDailies(String packageFile, String destinationPath, String urlPath = '') {
+  // Noble and Jammy use the same binaries. Re-publish jammy builds under the noble path on the dailies site.
+  if (env.OS == "jammy") {
+    def noble_dalies_path = "${env.PRODUCT}/noble-${getArchForOs(env.OS, env.ARCH)}"
+    if (destinationPath.contains("-xcopy")) {
+      noble_dalies_path = "${noble_dalies_path}-xcopy"
+    }
+    publishToDailiesSite(packageFile, noble_dalies_path, urlPath)
+  }
+}
+
+/**
  * Return true if the file at the URL exists. Return false otherwise
  */
 def urlExists(String url) {
