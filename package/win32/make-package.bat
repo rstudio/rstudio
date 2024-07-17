@@ -145,6 +145,37 @@ if not defined RSTUDIO_VERSION_PATCH set RSTUDIO_VERSION_PATCH=9
 if not defined RSTUDIO_VERSION_SUFFIX set RSTUDIO_VERSION_SUFFIX=-dev+999
 set RSTUDIO_VERSION_FULL=%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%%RSTUDIO_VERSION_SUFFIX%
 
+REM electron-packager fails if we include the ".pro##" suffix, so remove that (if present)
+REM https://github.com/rstudio/rstudio-pro/issues/6242
+
+REM compute string length
+set str=%RSTUDIO_VERSION_FULL%
+set len=0
+:loop
+if not "!str:~%len%,1!"=="" (
+    set /a len+=1
+    goto loop
+)
+set newLen=!len!
+
+REM check for .pro# suffix
+set "last5=!RSTUDIO_VERSION_FULL:~-5!"
+if "!last5:~0,4!"==".pro" (
+      set /a newLen=!len!-5
+) else ( REM check for .pro## suffix
+      set "last6=!RSTUDIO_VERSION_FULL:~-6!"
+      if "!last6:~0,4!"==".pro" (
+            set /a newLen=!len!-6
+      ) else ( REM check for .pro### suffix; very unlikely but just in case)
+            set "last7=!RSTUDIO_VERSION_FULL:~-7!"
+            if "!last7:~0,4!"==".pro" (
+                  set /a newLen=!len!-7
+            )
+      )
+)
+
+set "RSTUDIO_VERSION_FULL=!RSTUDIO_VERSION_FULL:~0,%newLen%!"
+
 REM put version and product name into package.json
 echo DEBUG: Calling set-version function
 call :set-version %RSTUDIO_VERSION_FULL% RStudio

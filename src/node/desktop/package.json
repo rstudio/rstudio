@@ -27,7 +27,7 @@
     "forge": "./forge.config.js"
   },
   "devDependencies": {
-    "@electron/packager": "18.1.1",
+    "@electron/packager": "18.3.3",
     "@electron-forge/cli": "7.2.0",
     "@electron-forge/plugin-webpack": "7.2.0",
     "@types/chai": "4.3.11",
