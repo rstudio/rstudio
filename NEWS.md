@@ -2,7 +2,7 @@
 
 ### New
 #### RStudio
--
+- Use native file and message dialogs by default on Linux desktop (#14683; Linux Desktop)
 
 #### Posit Workbench
 -
@@ -15,4 +15,3 @@
 
 #### Posit Workbench
 -
-
