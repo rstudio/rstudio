@@ -470,7 +470,7 @@ export RSTUDIO_TOOLS_ROOT
 
 # In addition to updating the version here, search the entire repo for other instances of
 # RSTUDIO_NODE_VERSION and update to match.
-export RSTUDIO_NODE_VERSION="20.14.0"
+export RSTUDIO_NODE_VERSION="20.15.1"
 
 # version of node.js installed with the product
 #
