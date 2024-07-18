@@ -115,8 +115,8 @@ protected:
       value<bool>(&wwwUseEmulatedStack_)->default_value(false),
       "Indicates whether or not to use GWT's emulated stack.")
       ("www-thread-pool-size",
-      value<int>(&wwwThreadPoolSize_)->default_value(2),
-      "The size of the threadpool from which requests will be serviced. This may be increased to enable more concurrency, but should only be done if the underlying hardware has more than 2 cores. It is recommended to use a value that is <= to the number of hardware cores, or <= to two times the number of hardware cores if the hardware utilizes hyperthreading.")
+      value<int>(&wwwThreadPoolSize_)->default_value(6),
+      "The size of the threadpool from which requests will be serviced. This needs to have enough threads to avoid bottlenecks due to certain requests that block the request thread (e.g. a login fail might run into a delay caused by the pam configuration). For systems with lots of users a larger value is recommended. For systems with only one or two users, a value of 2 will be slightly more efficient.")
       ("www-proxy-localhost",
       value<bool>(&wwwProxyLocalhost_)->default_value(true),
       "Indicates whether or not to proxy requests to localhost ports over the main server port. This should generally be enabled, and is used to proxy HTTP traffic within a session that belongs to code running within the session (e.g. Shiny or Plumber APIs)")
@@ -159,7 +159,7 @@ protected:
       value<std::string>(&rsessionConfigFile_)->default_value(""),
       "If set, overrides the path to the /etc/rstudio/rsession.conf configuration file. The specified path may be a relative path from the RStudio installation directory, or an absolute path.")
       ("rsession-proxy-max-wait-secs",
-      value<int>(&rsessionProxyMaxWaitSeconds_)->default_value(10),
+      value<int>(&rsessionProxyMaxWaitSeconds_)->default_value(30),
       "The maximum time to wait in seconds for a successful response when proxying requests to rsession.")
       ("rsession-memory-limit-mb",
       value<int>(&deprecatedMemoryLimitMb_)->default_value(0),
