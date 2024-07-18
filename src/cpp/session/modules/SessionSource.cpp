@@ -651,22 +651,55 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 }
 
 Error formatDocument(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+                     const json::JsonRpcFunctionContinuation& continuation)
 {
+   auto onError = [&](const Error& error)
+   {
+      LOG_ERROR(error);
+      json::JsonRpcResponse response;
+      continuation(error, &response);
+      return error;
+   };
+   
    Error error;
    
-   std::string id, path;
-   error = json::readParams(request.params, &id, &path);
+   std::string documentId, documentPath;
+   error = json::readParams(request.params, &documentId, &documentPath);
    if (error)
-      LOG_ERROR(error);
+      return onError(error);
    
-   error = r::exec::RFunction(".rs.formatDocument")
-         .addUtf8Param(path)
+   FilePath rScriptPath;
+   error = module_context::rScriptPath(&rScriptPath);
+   if (error)
+      return onError(error);
+   
+   FilePath formatScriptPath = module_context::tempFile("rstudio-format-", ".R");
+   error = r::exec::RFunction(".rs.generateFormatDocumentScript")
+         .addUtf8Param(documentPath)
+         .addUtf8Param(formatScriptPath)
          .call();
-   if (error)
-      LOG_ERROR(error);
    
-   std::cerr << path << std::endl;
+   core::system::ProcessOptions options;
+   if (projects::projectContext().hasProject())
+      options.workingDir = projects::projectContext().directory();
+   
+   core::system::ProcessCallbacks callbacks;
+   
+   callbacks.onExit = [=](int exitStatus)
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+   };
+   
+   error = module_context::processSupervisor().runProgram(
+            rScriptPath.getAbsolutePath(),
+            { "-f", formatScriptPath.getAbsolutePath() },
+            options,
+            callbacks);
+            
+   if (error)
+      return onError(error);
+   
    return Success();
 }
 
@@ -1523,11 +1556,11 @@ Error initialize()
    using namespace rstudio::r::function_hook;
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerAsyncRpcMethod, "format_document", formatDocument))
       (bind(registerRpcMethod, "new_document", newDocument))
       (bind(registerRpcMethod, "open_document", openDocument))
       (bind(registerRpcMethod, "save_document", saveDocument))
       (bind(registerRpcMethod, "save_document_diff", saveDocumentDiff))
-      (bind(registerRpcMethod, "format_document", formatDocument))
       (bind(registerRpcMethod, "check_for_external_edit", checkForExternalEdit))
       (bind(registerRpcMethod, "ignore_external_edit", ignoreExternalEdit))
       (bind(registerRpcMethod, "set_source_document_on_save", setSourceDocumentOnSave))

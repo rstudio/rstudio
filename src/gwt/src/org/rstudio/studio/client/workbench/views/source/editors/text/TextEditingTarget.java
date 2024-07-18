@@ -8115,8 +8115,7 @@ public class TextEditingTarget implements
                   @Override
                   public void onResponseReceived(SourceDocument response)
                   {
-                     checkForExternalEdit();
-                     Debug.logObject(response);
+                     revertEdits();
                   }
 
                   @Override

@@ -1398,10 +1398,11 @@ Error rScriptPath(FilePath* pRScriptPath)
       return error;
 
 #ifdef _WIN32
-*pRScriptPath = rHomeBinPath.completePath("Rterm.exe");
+   *pRScriptPath = rHomeBinPath.completePath("Rterm.exe");
 #else
-*pRScriptPath = rHomeBinPath.completePath("R");
+   *pRScriptPath = rHomeBinPath.completePath("R");
 #endif
+   
    return Success();
 }
 

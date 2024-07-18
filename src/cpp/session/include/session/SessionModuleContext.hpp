@@ -24,18 +24,22 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+
 #include <core/BoostSignals.hpp>
 #include <core/HtmlUtils.hpp>
+#include <core/Thread.hpp>
 #include <core/Version.hpp>
-#include <core/system/Environment.hpp>
-#include <core/system/System.hpp>
-#include <core/system/ShellUtils.hpp>
-#include <core/system/FileChangeEvent.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <core/r_util/RToolsInfo.hpp>
 #include <core/r_util/RActiveSessions.hpp>
-#include <core/Thread.hpp>
+#include <core/r_util/RToolsInfo.hpp>
+#include <core/system/Environment.hpp>
+#include <core/system/FileChangeEvent.hpp>
+#include <core/system/Process.hpp>
+#include <core/system/ShellUtils.hpp>
+#include <core/system/System.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionClientEvent.hpp>
@@ -51,12 +55,6 @@ namespace core {
    class FilePath;
    class FileInfo;
    class Settings;
-   namespace system {
-      class ProcessSupervisor;
-      struct ProcessResult;
-      struct ProcessOptions;
-
-   }
    namespace shell_utils {
       class ShellCommand;
    }
