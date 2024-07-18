@@ -49,6 +49,12 @@
    return()
 })
 
+.rs.addFunction("formatDocument", function(path)
+{
+   cat("\n# hello from formatter!\n", file = path, append = TRUE)
+   
+})
+
 .rs.addFunction("iconvcommon", function()
 {
    # NOTE: we originally included MacRoman and HZ-GB-2312 in our list of

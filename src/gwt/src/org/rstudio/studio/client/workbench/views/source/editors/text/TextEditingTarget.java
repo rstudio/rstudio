@@ -500,7 +500,7 @@ public class TextEditingTarget implements
                      saveNewFile(
                            saveAsPath,
                            null,
-                           CommandUtil.join(postSaveCommand(), new Command() {
+                           CommandUtil.join(postSaveCommand(false), new Command() {
 
                               @Override
                               public void execute()
@@ -3085,12 +3085,12 @@ public class TextEditingTarget implements
 
    private void autoSave(Command onCompleted, Command onSilentFailure)
    {
-      saveThenExecute(null, false, CommandUtil.join(postSaveCommand(), onCompleted), onSilentFailure);
+      saveThenExecute(null, false, CommandUtil.join(postSaveCommand(false), onCompleted), onSilentFailure);
    }
 
    public void save(Command onCompleted)
    {
-      saveThenExecute(null, true, CommandUtil.join(postSaveCommand(), onCompleted));
+      saveThenExecute(null, true, CommandUtil.join(postSaveCommand(true), onCompleted));
    }
 
    public void saveWithPrompt(final Command command, final Command onCancelled)
@@ -4069,7 +4069,7 @@ public class TextEditingTarget implements
       if (isSaving_)
          return;
 
-      saveThenExecute(null, true, postSaveCommand());
+      saveThenExecute(null, true, postSaveCommand(true));
    }
 
    @Handler
@@ -4077,7 +4077,7 @@ public class TextEditingTarget implements
    {
       saveNewFile(docUpdateSentinel_.getPath(),
                   null,
-                  postSaveCommand());
+                  postSaveCommand(true));
    }
 
    @Handler
@@ -4105,7 +4105,7 @@ public class TextEditingTarget implements
             {
                public void execute(String encoding)
                {
-                  saveThenExecute(encoding, true, postSaveCommand());
+                  saveThenExecute(encoding, true, postSaveCommand(true));
                }
             });
    }
@@ -8058,7 +8058,7 @@ public class TextEditingTarget implements
       events_.fireEvent(event);
    }
 
-   private Command postSaveCommand()
+   private Command postSaveCommand(boolean formatOnSave)
    {
       return new Command()
       {
@@ -8102,6 +8102,29 @@ public class TextEditingTarget implements
                {
                   executeRSourceCommand(false, false);
                }
+            }
+            
+            // check for format on save
+            if (formatOnSave)
+            {
+               server_.formatDocument(
+                     docUpdateSentinel_.getId(),
+                     docUpdateSentinel_.getPath(),
+                     new ServerRequestCallback<SourceDocument>()
+               {
+                  @Override
+                  public void onResponseReceived(SourceDocument response)
+                  {
+                     checkForExternalEdit();
+                     Debug.logObject(response);
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             }
          }
       };

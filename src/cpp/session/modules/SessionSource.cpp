@@ -25,23 +25,21 @@
 #include <boost/utility.hpp>
 #include <boost/bind/bind.hpp>
 
-#include <core/r_util/RSourceIndex.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
-#include <core/text/TemplateFilter.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RPackageInfo.hpp>
-
-#include <core/json/JsonRpc.hpp>
-
+#include <core/r_util/RSourceIndex.hpp>
 #include <core/system/FileChangeEvent.hpp>
 #include <core/system/Xdg.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -649,6 +647,26 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    }
    CATCH_UNEXPECTED_EXCEPTION
    
+   return Success();
+}
+
+Error formatDocument(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   Error error;
+   
+   std::string id, path;
+   error = json::readParams(request.params, &id, &path);
+   if (error)
+      LOG_ERROR(error);
+   
+   error = r::exec::RFunction(".rs.formatDocument")
+         .addUtf8Param(path)
+         .call();
+   if (error)
+      LOG_ERROR(error);
+   
+   std::cerr << path << std::endl;
    return Success();
 }
 
@@ -1509,6 +1527,7 @@ Error initialize()
       (bind(registerRpcMethod, "open_document", openDocument))
       (bind(registerRpcMethod, "save_document", saveDocument))
       (bind(registerRpcMethod, "save_document_diff", saveDocumentDiff))
+      (bind(registerRpcMethod, "format_document", formatDocument))
       (bind(registerRpcMethod, "check_for_external_edit", checkForExternalEdit))
       (bind(registerRpcMethod, "ignore_external_edit", ignoreExternalEdit))
       (bind(registerRpcMethod, "set_source_document_on_save", setSourceDocumentOnSave))
