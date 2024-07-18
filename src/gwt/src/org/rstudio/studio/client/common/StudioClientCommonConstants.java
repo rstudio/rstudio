@@ -706,6 +706,24 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String passwordTitle();
 
     /**
+     * Translated "Personal Access Token".
+     *
+     * @return translated "Personal Access Token"
+     */
+    @DefaultMessage("Personal Access Token")
+    @Key("patTitle")
+    String patTitle();
+
+    /**
+     * Translated "Personal access token".
+     *
+     * @return translated "Personal access token"
+     */
+    @DefaultMessage("Personal access token")
+    @Key("patPrompt")
+    String patPrompt();
+
+    /**
      * Translated "Username".
      *
      * @return translated "Username"
