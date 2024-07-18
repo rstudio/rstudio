@@ -902,7 +902,8 @@ public class TextEditingTargetReformatHelper
                 value == "@" ||
                 value == ":" ||
                 value == "::" ||
-                value == ":::")
+                value == ":::" ||
+                value == "^")
             {
                cursor.peek(-1).trimWhitespaceBwd();
                cursor.peek(1).trimWhitespaceFwd();
