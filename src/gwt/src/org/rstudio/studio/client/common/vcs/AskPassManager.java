@@ -83,18 +83,30 @@ public class AskPassManager
             String prompt = e.getPrompt();
             
             // default to password prompt
+            String promptLowerCase = prompt.toLowerCase();
             String title = constants_.passwordTitle();
             int dialogType = MessageDisplay.INPUT_PASSWORD;
 
-            if (prompt.toLowerCase().indexOf("password") != -1)
+            if (promptLowerCase.indexOf("password") != -1)
             {
                // if password is mentioned in prompt, treat as password
-               title = constants_.passwordTitle();
+
+               // special case: github no longer supports passwords, only personal access tokens,
+               // but still prompts for "password", confusing new git users
+               if (promptLowerCase.indexOf("https://") != -1 && promptLowerCase.indexOf("github.com") != -1)
+               {
+                  title = constants_.patTitle();
+                  prompt = prompt.replaceFirst("Password", constants_.patPrompt());
+               }
+               else
+               {
+                  title = constants_.passwordTitle();
+               }
                dialogType = MessageDisplay.INPUT_PASSWORD;
             }
-            else if (prompt.toLowerCase().indexOf("username") != -1)
+            else if (promptLowerCase.indexOf("username") != -1)
             {
-               // if username is mentioned in prmopt, treat as username
+               // if username is mentioned in prompt, treat as username
                title = constants_.usernameTitle();
                dialogType = MessageDisplay.INPUT_USERNAME;
             }
