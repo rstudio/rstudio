@@ -17,17 +17,7 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import {
-  app,
-  BrowserWindow,
-  Cookie,
-  dialog,
-  FileFilter,
-  MessageBoxOptions,
-  shell,
-  WebContents,
-  WebRequest,
-} from 'electron';
+import { app, BrowserWindow, Cookie, dialog, FileFilter, MessageBoxOptions, shell, WebContents } from 'electron';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';

@@ -17,5 +17,7 @@ import { describe } from 'mocha';
 
 describe('DesktopInfoBridge', () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  describe('Currently no tests', () => {});
+  describe('Currently no tests', () => {
+    /**/
+  });
 });

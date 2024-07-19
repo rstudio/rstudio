@@ -17,5 +17,7 @@ import { describe } from 'mocha';
 
 describe('MenuBridge', () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  describe('Currently no tests', () => {});
+  describe('Currently no tests', () => {
+    /**/
+  });
 });

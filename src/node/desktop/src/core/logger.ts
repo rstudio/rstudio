@@ -47,15 +47,33 @@ export class NullLogger implements Logger {
   logError(err: unknown): void {
     this.logErrorAtLevel('error', err);
   }
-  logErrorAtLevel(level: string, err: unknown): void {}
-  logErrorMessage(message: string): void {}
-  logInfo(message: string): void {}
-  logWarning(warning: string): void {}
-  logDebug(message: string): void {}
-  logDiagnostic(message: string): void {}
-  logDiagnosticEnvVar(name: string): void {}
-  closeLogFile(): void {}
-  ensureTransport(): void {}
+  logErrorAtLevel(_level: string, _err: unknown): void {
+    /**/
+  }
+  logErrorMessage(_message: string): void {
+    /**/
+  }
+  logInfo(_message: string): void {
+    /**/
+  }
+  logWarning(_warning: string): void {
+    /**/
+  }
+  logDebug(_message: string): void {
+    /**/
+  }
+  logDiagnostic(_message: string): void {
+    /**/
+  }
+  logDiagnosticEnvVar(_name: string): void {
+    /**/
+  }
+  closeLogFile(): void {
+    /**/
+  }
+  ensureTransport(): void {
+    /**/
+  }
 }
 
 /**

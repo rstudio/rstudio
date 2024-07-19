@@ -48,13 +48,7 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import {
-  parseFilter,
-  findRepoRoot,
-  getAppPath,
-  handleLocaleCookies,
-  resolveAliasedPath,
-} from './utils';
+import { parseFilter, findRepoRoot, getAppPath, handleLocaleCookies, resolveAliasedPath } from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
@@ -127,7 +121,6 @@ export class GwtCallback extends EventEmitter {
     }
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-
       // shell.openExternal() seems unreliable on Windows
       // https://github.com/electron/electron/issues/31347
       if (process.platform === 'win32' && url.startsWith('file:///')) {
@@ -136,7 +129,6 @@ export class GwtCallback extends EventEmitter {
       } else {
         void shell.openExternal(url);
       }
-
     });
 
     ipcMain.handle(
@@ -401,7 +393,7 @@ export class GwtCallback extends EventEmitter {
       showFileInSystemViewer(pptDoc);
     });
 
-    ipcMain.on('desktop_show_pdf', (event, path: string, pdfPage: string) => {
+    ipcMain.on('desktop_show_pdf', (_event, path: string, _pdfPage: string) => {
       // TODO: when desktop_external_synctex_view is implemented, use synctex viewer as appropriate
       // pdfPage is only relevant for synctex
       showFileInSystemViewer(path);
@@ -543,7 +535,7 @@ export class GwtCallback extends EventEmitter {
         } catch (e: unknown) {
           logger().logError(e);
         }
-      }
+      },
     );
 
     ipcMain.handle('desktop_copy_image_at_xy_to_clipboard', (_event, x: number, y: number) => {
@@ -555,17 +547,20 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.handle('desktop_export_page_region_to_file', async (event, targetPath, format, left, top, width, height) => {
-      try {
-        const rect: Rectangle = { x: left, y: top, width, height };
-        targetPath = resolveAliasedPath(targetPath);
-        const image = await this.mainWindow.window.capturePage(rect);
-        const buffer = format == 'jpeg' ? image.toJPEG(100) : image.toPNG();
-        writeFileSync(targetPath, buffer);
-      } catch (e: unknown) {
-        logger().logError(e);
-      }
-    });
+    ipcMain.handle(
+      'desktop_export_page_region_to_file',
+      async (event, targetPath, format, left, top, width, height) => {
+        try {
+          const rect: Rectangle = { x: left, y: top, width, height };
+          targetPath = resolveAliasedPath(targetPath);
+          const image = await this.mainWindow.window.capturePage(rect);
+          const buffer = format == 'jpeg' ? image.toJPEG(100) : image.toPNG();
+          writeFileSync(targetPath, buffer);
+        } catch (e: unknown) {
+          logger().logError(e);
+        }
+      },
+    );
 
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
       return process.platform === 'win32';
@@ -573,7 +568,7 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.handle(
       'desktop_show_message_box',
-      async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
+      async (event, type, caption, message, buttons, _defaultButton, _cancelButton) => {
         let openDialogOptions: MessageBoxOptions;
         if (process.platform === 'darwin') {
           openDialogOptions = {
@@ -712,11 +707,15 @@ export class GwtCallback extends EventEmitter {
       this.getSender('desktop_zoom_actual_size', event.processId, event.frameId).zoomActualSize();
     });
 
-    ipcMain.on('desktop_set_background_color', (event, rgbColor) => {});
+    ipcMain.on('desktop_set_background_color', (_event, _rgbColor) => {
+      /**/
+    });
 
-    ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {});
+    ipcMain.on('desktop_change_title_bar_color', (_event, _red, _green, _blue) => {
+      /**/
+    });
 
-    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark: boolean) => {
+    ipcMain.on('desktop_sync_to_editor_theme', (_event, isDark: boolean) => {
       nativeTheme.themeSource = isDark ? 'dark' : 'light';
     });
 
@@ -724,7 +723,7 @@ export class GwtCallback extends EventEmitter {
       return ElectronDesktopOptions().accessibility();
     });
 
-    ipcMain.on('desktop_set_enable_accessibility', (event, enable) => {
+    ipcMain.on('desktop_set_enable_accessibility', (_event, enable) => {
       ElectronDesktopOptions().setAccessibility(enable);
     });
 
@@ -733,11 +732,11 @@ export class GwtCallback extends EventEmitter {
       this.mainWindow.window.setMenuBarVisibility(!autohide);
     });
 
-    ipcMain.on('desktop_set_disable_renderer_accessibility', (event, disable) => {
+    ipcMain.on('desktop_set_disable_renderer_accessibility', (_event, disable) => {
       ElectronDesktopOptions().setDisableRendererAccessibility(disable);
     });
 
-    ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
+    ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (_event, _ignore) => {
       return !ElectronDesktopOptions().useGpuExclusionList();
     });
 
@@ -762,11 +761,11 @@ export class GwtCallback extends EventEmitter {
       return '';
     });
 
-    ipcMain.on('desktop_external_synctex_preview', (event, pdfPath, page) => {
+    ipcMain.on('desktop_external_synctex_preview', (_event, _pdfPath, _page) => {
       GwtCallback.unimpl('desktop_external_synctex_preview');
     });
 
-    ipcMain.on('desktop_external_synctex_view', (event, pdfFile, srcFile, line, column) => {
+    ipcMain.on('desktop_external_synctex_view', (_event, _pdfFile, _srcFile, _line, _column) => {
       GwtCallback.unimpl('desktop_external_synctex_view');
     });
 
@@ -788,10 +787,10 @@ export class GwtCallback extends EventEmitter {
           new FilePath(findRepoRoot()).completeChildPath('src/gwt/www/docs/keyboard.htm').getAbsolutePath(),
         );
       }
-      shell.openExternal(docUrl.toString());
+      void shell.openExternal(docUrl.toString());
     });
 
-    ipcMain.on('desktop_launch_session', (event, reload) => {
+    ipcMain.on('desktop_launch_session', (_event, reload) => {
       this.mainWindow.launchSession(reload);
     });
 
@@ -837,7 +836,9 @@ export class GwtCallback extends EventEmitter {
       return isCentOS();
     });
 
-    ipcMain.on('desktop_set_busy', (event, busy) => {});
+    ipcMain.on('desktop_set_busy', (_event, _busy) => {
+      /**/
+    });
 
     ipcMain.on('desktop_set_window_title', (event, title: string) => {
       this.mainWindow.window.setTitle(`${title} - ${appState().activation().editionName()}`);
@@ -882,11 +883,11 @@ export class GwtCallback extends EventEmitter {
       return [];
     });
 
-    ipcMain.on('desktop_reconnect_to_session_server', (event, sessionServerJson) => {
+    ipcMain.on('desktop_reconnect_to_session_server', (_event, _sessionServerJson) => {
       GwtCallback.unimpl('desktop_reconnect_to_session_server');
     });
 
-    ipcMain.handle('desktop_set_launcher_server', (event, sessionServerJson) => {
+    ipcMain.handle('desktop_set_launcher_server', (_event, _sessionServerJson) => {
       GwtCallback.unimpl('desktop_set_launcher_server');
       return false;
     });
@@ -900,27 +901,27 @@ export class GwtCallback extends EventEmitter {
       return {};
     });
 
-    ipcMain.on('desktop_start_launcher_job_status_stream', (event, jobId) => {
+    ipcMain.on('desktop_start_launcher_job_status_stream', (_event, _jobId) => {
       GwtCallback.unimpl('desktop_start_launcher_job_status_stream');
     });
 
-    ipcMain.on('desktop_stop_launcher_job_status_stream', (event, jobId) => {
+    ipcMain.on('desktop_stop_launcher_job_status_stream', (_event, _jobId) => {
       GwtCallback.unimpl('desktop_stop_launcher_job_status_stream');
     });
 
-    ipcMain.on('desktop_start_launcher_job_output_stream', (event, jobId) => {
+    ipcMain.on('desktop_start_launcher_job_output_stream', (_event, _jobId) => {
       GwtCallback.unimpl('desktop_start_launcher_job_output_stream');
     });
 
-    ipcMain.on('desktop_stop_launcher_job_output_stream', (event, jobId) => {
+    ipcMain.on('desktop_stop_launcher_job_output_stream', (_event, _jobId) => {
       GwtCallback.unimpl('desktop_stop_launcher_job_output_stream');
     });
 
-    ipcMain.on('desktop_control_launcher_job', (event, jobId, operation) => {
+    ipcMain.on('desktop_control_launcher_job', (_event, _jobId, _operation) => {
       GwtCallback.unimpl('desktop_control_launcher_job');
     });
 
-    ipcMain.on('desktop_submit_launcher_job', (event, job) => {
+    ipcMain.on('desktop_submit_launcher_job', (_event, _job) => {
       GwtCallback.unimpl('desktop_submit_launcher_job');
     });
 

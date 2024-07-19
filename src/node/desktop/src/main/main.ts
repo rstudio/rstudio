@@ -26,9 +26,7 @@ import { createStandaloneErrorDialog } from './utils';
 import { initCrashHandler } from './crash-handler';
 import { Xdg } from '../core/xdg';
 import { existsSync, readFileSync } from 'fs';
-import { getenv } from '../core/environment';
 import path from 'path';
-import os from 'os';
 
 /**
  * RStudio entrypoint

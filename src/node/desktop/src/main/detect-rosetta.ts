@@ -52,26 +52,28 @@ export function detectRosetta(): boolean | undefined {
       message: t('detectRosetta.installWarningMessage'),
       detail: t('detectRosetta.installWarningDetail'),
     };
-    appState().modalTracker.trackElectronModalSync(async () => dialog.showMessageBox(dialogOptions).then((retVal) => {
-      switch (retVal.response) {
-        case 0:
-          // Selected 'More Information' button. Open link to Rosetta installation instructions.
-          shell.openExternal(
-            'https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#apple-silicon-mac-m1m2',
-          );
-          break;
-        case 1:
-          // Selected 'Remind Me Later' button. Set ElectronDesktopOptions to check for Rosetta on next startup.
-          ElectronDesktopOptions().setCheckForRosetta(true);
-          break;
-        case 2:
-          // Selected 'Don't Remind Me Again' button. Set ElectronDesktopOptions to not check for Rosetta.
-          ElectronDesktopOptions().setCheckForRosetta(false);
-          break;
-        default:
-          break;
-      }
-    }));
+    void appState().modalTracker.trackElectronModalSync(async () =>
+      dialog.showMessageBox(dialogOptions).then((retVal) => {
+        switch (retVal.response) {
+          case 0:
+            // Selected 'More Information' button. Open link to Rosetta installation instructions.
+            void shell.openExternal(
+              'https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#apple-silicon-mac-m1m2',
+            );
+            break;
+          case 1:
+            // Selected 'Remind Me Later' button. Set ElectronDesktopOptions to check for Rosetta on next startup.
+            ElectronDesktopOptions().setCheckForRosetta(true);
+            break;
+          case 2:
+            // Selected 'Don't Remind Me Again' button. Set ElectronDesktopOptions to not check for Rosetta.
+            ElectronDesktopOptions().setCheckForRosetta(false);
+            break;
+          default:
+            break;
+        }
+      }),
+    );
   }
   return isRosettaInstalled;
 }
@@ -109,7 +111,7 @@ function isRosettaRunning(): boolean {
       message: t('detectRosetta.checkFailedMessage'),
       detail: t('detectRosetta.checkFailedDetail'),
     };
-    appState().modalTracker.trackElectronModalSync(async () => dialog.showMessageBox(dialogOptions));
+    void appState().modalTracker.trackElectronModalSync(async () => dialog.showMessageBox(dialogOptions));
     throw error;
   }
 }
