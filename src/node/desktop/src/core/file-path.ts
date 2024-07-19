@@ -17,7 +17,7 @@ import fs from 'fs';
 import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
-import path, { sep } from 'path';
+import path from 'path';
 import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
 import { err, Expected, ok } from './expected';
@@ -58,7 +58,11 @@ export function tempFilename(extension = '', label = ''): FilePath {
  * regular file, etc.)
  */
 export class FilePath {
-  constructor(private path: string = '') {}
+  private path: string = '';
+
+  constructor(path: string = '') {
+    this.path = path;
+  }
 
   /**
    * Get string representation of object, for debugging purposes

@@ -266,25 +266,24 @@ writeLines(sep = "\x1F", c(
   stdout = stdout.substring(index + 1);
 
   // unwrap query results
-  let [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath, rPlatform] = stdout.split('\x1F');
+  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath, rPlatform] =
+    stdout.split('\x1F');
+
+  let adjustedRLdLibraryPath = rLdLibraryPath;
 
   // if this appears to be a conda installation of R, manually set LD_LIBRARY_PATH appropriately
   // https://github.com/rstudio/rstudio/issues/13184
-  if (rLdLibraryPath.length === 0 && rPlatform.indexOf('-conda-') !== -1) {
-
-    const rLibPaths = [
-      `${rHome}/lib`,
-      `${rHome}/../../lib`
-    ]
+  if (adjustedRLdLibraryPath.length === 0 && rPlatform.indexOf('-conda-') !== -1) {
+    const rLibPaths = [`${rHome}/lib`, `${rHome}/../../lib`]
       .filter((value) => existsSync(value))
-      .map((value) => path.normalize(value))
+      .map((value) => path.normalize(value));
 
-    rLdLibraryPath = rLibPaths.join(':');
+    adjustedRLdLibraryPath = rLibPaths.join(':');
   }
 
   if (process.platform !== 'win32' && getenv(kLdLibraryPathVariable) != '') {
-    logger().logDebug(`Pre-pending user-defined ${kLdLibraryPathVariable} to path set by R: ${rLdLibraryPath}`);
-    rLdLibraryPath = getenv(kLdLibraryPathVariable) + ":" + rLdLibraryPath;
+    logger().logDebug(`Pre-pending user-defined ${kLdLibraryPathVariable} to path set by R: ${adjustedRLdLibraryPath}`);
+    adjustedRLdLibraryPath = getenv(kLdLibraryPathVariable) + ':' + adjustedRLdLibraryPath;
   }
 
   // put it all together
@@ -300,7 +299,7 @@ writeLines(sep = "\x1F", c(
       R_ARCH: rArch,
       R_PLATFORM: rPlatform,
     },
-    ldLibraryPath: rLdLibraryPath,
+    ldLibraryPath: adjustedRLdLibraryPath,
   });
 }
 

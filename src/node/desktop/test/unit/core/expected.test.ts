@@ -36,6 +36,6 @@ describe('Expected', () => {
     const [result, error] = returnResult(false);
     assert.isNull(result);
     assert.isNotNull(error);
-    assert.deepEqual(error?.message, 'Try again');
+    assert.deepEqual(error.message, 'Try again');
   });
 });

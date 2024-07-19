@@ -41,10 +41,7 @@ export const _createContextMenuTemplate = (
   return template;
 };
 
-const createContextMenuImageTemplate = (
-  sender: WebContents,
-  params: Electron.ContextMenuParams,
-): ContextMenuItem[] => {
+const createContextMenuImageTemplate = (sender: WebContents, params: Electron.ContextMenuParams): ContextMenuItem[] => {
   return [
     // Save Image As...
     {
@@ -64,6 +61,7 @@ const createContextMenuImageTemplate = (
           }),
         );
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (downloadPath == null) {
           return;
         }
@@ -138,10 +136,7 @@ const createContextMenuImageTemplate = (
   ];
 };
 
-const createContextMenuTextTemplate = (
-  sender: WebContents,
-  params: Electron.ContextMenuParams,
-): ContextMenuItem[] => {
+const createContextMenuTextTemplate = (sender: WebContents, params: Electron.ContextMenuParams): ContextMenuItem[] => {
   // We would like to just always use the already-existing roles for clipboard
   // actions, but https://www.electronjs.org/docs/api/menu-item has:
   //

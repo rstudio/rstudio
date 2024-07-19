@@ -30,8 +30,6 @@ export interface ToolbarData {
 }
 
 export class ToolbarManager {
-  constructor() {}
-
   async createAndShowToolbar(window: BrowserWindow, toolbarData: ToolbarData) {
     const jsScript = this.createToolbarData(toolbarData.buttons);
 

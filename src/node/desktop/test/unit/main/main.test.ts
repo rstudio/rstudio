@@ -19,5 +19,7 @@ import { describe } from 'mocha';
 // start up RStudio, instead of electron-mocha!
 describe('Main', () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  describe('No tests (by design)', () => {});
+  describe('No tests (by design)', () => {
+    /**/
+  });
 });

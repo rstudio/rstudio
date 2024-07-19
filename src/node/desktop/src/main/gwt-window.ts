@@ -32,7 +32,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
     // which will fail
     //
     // https://github.com/rstudio/rstudio/issues/11016
-    this.window.webContents.on('did-navigate', (event, params) => {
+    this.window.webContents.on('did-navigate', (_event, _params) => {
       this.window.webContents.clearHistory();
     });
   }

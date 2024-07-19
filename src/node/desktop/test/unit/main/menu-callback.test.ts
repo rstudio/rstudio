@@ -31,7 +31,7 @@ describe('MenuCallback', () => {
   });
 
   afterEach(() => {
-    // MenuCallback is really intended to be a singleton, but we create a new one for 
+    // MenuCallback is really intended to be a singleton, but we create a new one for
     // each unit test. This causes listeners to accumulate on the underlying ipcMain
     // which eventually triggers a warning about potential leaks. We could up the limit,
     // but opting to cleanup after each test, instead.
@@ -91,7 +91,7 @@ describe('MenuCallback', () => {
     const updatedCommand = callback.mainMenu.getMenuItemById('a_command');
     assert.strictEqual(updatedCommand?.label, 'New Label');
     assert.isTrue(updatedCommand?.visible);
-    assert.isFalse(updatedCommand?.checked);
+    assert.isFalse(updatedCommand.checked);
   });
 
   it('can change visibility for a command', () => {
@@ -264,22 +264,31 @@ describe('MenuCallback', () => {
     callback.addCommand('cutDummy', 'Cut', '', 'Cmd+C', false, false, true);
     callback.addCommand('a_shortcut_cmd', 'Shortcut Command', '', 'Cmd+K', false, false, true);
     callback.updateMenus();
-    
-    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[0].enabled, 'expected cut action to be enabled by default');
-    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[1].enabled, 'expected shortcut action to be enabled by default');
+
+    assert.isTrue(
+      callback.mainMenu.items[menuIdx].submenu?.items[0].enabled,
+      'expected cut action to be enabled by default',
+    );
+    assert.isTrue(
+      callback.mainMenu.items[menuIdx].submenu.items[1].enabled,
+      'expected shortcut action to be enabled by default',
+    );
 
     appState().modalTracker.setNumGwtModalsShowing(1);
     callback.setMainMenuEnabled(false);
     callback.updateMenus();
 
-    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[0].enabled, 'expected cut action to be enabled');
-    assert.isFalse(callback.mainMenu.items[menuIdx].submenu?.items[1].enabled, 'expected shortcut action to be disabled');
+    assert.isTrue(callback.mainMenu.items[menuIdx].submenu.items[0].enabled, 'expected cut action to be enabled');
+    assert.isFalse(
+      callback.mainMenu.items[menuIdx].submenu.items[1].enabled,
+      'expected shortcut action to be disabled',
+    );
 
     appState().modalTracker.setNumGwtModalsShowing(0);
     callback.setMainMenuEnabled(true);
     callback.updateMenus();
 
-    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[0].enabled, 'expected cut action to be enabled');
-    assert.isTrue(callback.mainMenu.items[menuIdx].submenu?.items[1].enabled, 'expected shortcut action to be enabled');
+    assert.isTrue(callback.mainMenu.items[menuIdx].submenu.items[0].enabled, 'expected cut action to be enabled');
+    assert.isTrue(callback.mainMenu.items[menuIdx].submenu.items[1].enabled, 'expected shortcut action to be enabled');
   });
 });
