@@ -17,3 +17,7 @@
 
 #### Posit Workbench
 -
+
+### Dependencies
+
+- Updated Electron to version 31.2.1 (#14982; Desktop)
