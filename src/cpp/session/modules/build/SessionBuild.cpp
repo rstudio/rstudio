@@ -979,9 +979,11 @@ private:
                  const core::system::ProcessOptions& pkgOptions,
                  const core::system::ProcessCallbacks& cb)
    {
+      Error error;
+      
       // Find the path to R
       FilePath rProgramPath;
-      Error error = module_context::rScriptPath(&rProgramPath);
+      error = module_context::rScriptPath(&rProgramPath);
       if (error)
       {
          terminateWithError("attempting to locate R binary", error);
@@ -993,9 +995,26 @@ private:
       if (vanilla)
          args.push_back("--vanilla");
 
-      args.push_back("-s");
-      args.push_back("-e");
-      args.push_back(command);
+      // build script to be executed
+      std::string scriptPath;
+      error = r::exec::RFunction(".rs.generateCommandScript")
+            .addUtf8Param(command)
+            .callUtf8(&scriptPath);
+      
+      if (error)
+      {
+         // fall back to executing command directly, just in case
+         args.push_back("-s");
+         args.push_back("-e");
+         args.push_back(command);
+      }
+      else
+      {
+         // execute command from script
+         args.push_back("-s");
+         args.push_back("-f");
+         args.push_back(scriptPath);
+      }
 
       // run it
       module_context::processSupervisor().runProgram(

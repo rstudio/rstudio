@@ -112,3 +112,19 @@ options(buildtools.with = function(code)
    
 })
 
+.rs.addFunction("generateCommandScript", function(command)
+{
+   # Generate header, which allows us to forward the 'repos' option.
+   header <- substitute({
+      options(repos = repos)
+   }, list(repos = getOption("repos")))
+   
+   # Append the command to be executed.
+   all <- c(deparse(header), command)
+   
+   # Write to file and return that path.
+   scriptPath <- tempfile("rstudio-script-", fileext = ".R")
+   writeLines(all, con = scriptPath)
+   
+   scriptPath
+})
