@@ -61,7 +61,7 @@ public class ConsoleLanguageTracker
       depman_ = depman;
       server_ = server;
 
-      binder.bind(commands, this);
+      binder.bind(commands_, this);
       
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(ConsolePromptEvent.TYPE, this);

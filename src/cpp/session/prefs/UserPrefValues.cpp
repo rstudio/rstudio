@@ -3338,6 +3338,32 @@ core::Error UserPrefValues::setRunBackgroundJobDefaultWorkingDir(std::string val
    return writePref("run_background_job_default_working_dir", val);
 }
 
+/**
+ * When set, the selected formatter will be used to reformat documents on save.
+ */
+std::string UserPrefValues::reformatOnSave()
+{
+   return readPref<std::string>("reformat_on_save");
+}
+
+core::Error UserPrefValues::setReformatOnSave(std::string val)
+{
+   return writePref("reformat_on_save", val);
+}
+
+/**
+ * An external command, used to reformat documents on save.
+ */
+std::string UserPrefValues::reformatOnSaveCommand()
+{
+   return readPref<std::string>("reformat_on_save_command");
+}
+
+core::Error UserPrefValues::setReformatOnSaveCommand(std::string val)
+{
+   return writePref("reformat_on_save_command", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3596,6 +3622,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotIndexingEnabled,
       kProjectName,
       kRunBackgroundJobDefaultWorkingDir,
+      kReformatOnSave,
+      kReformatOnSaveCommand,
    });
 }
    

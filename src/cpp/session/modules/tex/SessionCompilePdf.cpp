@@ -711,7 +711,7 @@ private:
             "cat('Compiling document with tinytex ... ');"
             "invisible(tinytex::latexmk(" + arguments + "))";
 
-      codePath_ = module_context::tempFile("tinytex-runner-", ".R");
+      codePath_ = module_context::tempFile("tinytex-runner-", "R");
       error = writeStringToFile(codePath_, code);
       if (error)
       {

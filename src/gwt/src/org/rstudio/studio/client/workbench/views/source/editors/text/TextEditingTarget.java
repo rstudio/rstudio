@@ -139,6 +139,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -8107,23 +8108,27 @@ public class TextEditingTarget implements
             // check for format on save
             if (formatOnSave)
             {
-               server_.formatDocument(
-                     docUpdateSentinel_.getId(),
-                     docUpdateSentinel_.getPath(),
-                     new ServerRequestCallback<SourceDocument>()
+               String formatType = prefs_.reformatOnSave().getValue();
+               if (!StringUtil.equals(formatType, UserPrefsAccessor.REFORMAT_ON_SAVE_NONE))
                {
-                  @Override
-                  public void onResponseReceived(SourceDocument response)
-                  {
-                     revertEdits();
-                  }
+                  server_.formatDocument(
+                        docUpdateSentinel_.getId(),
+                        docUpdateSentinel_.getPath(),
+                        new ServerRequestCallback<SourceDocument>()
+                        {
+                           @Override
+                           public void onResponseReceived(SourceDocument response)
+                           {
+                              revertEdits();
+                           }
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                           }
+                        });
+               }
             }
          }
       };

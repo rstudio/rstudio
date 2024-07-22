@@ -1733,6 +1733,19 @@
             "default": "project",
             "title": "Default working directory for background jobs",
             "description": "Default working directory in background job dialog."
+        },
+        "reformat_on_save": {
+            "type": "string",
+            "enum": ["none", "styler", "external"],
+            "enumReadable": ["(None)", "styler", "External"],
+            "default": "none",
+            "title": "Format on save",
+            "description": "When set, the selected formatter will be used to reformat documents on save."
+        },
+        "reformat_on_save_command": {
+            "type": "string",
+            "default": "",
+            "description": "An external command, used to reformat documents on save."
         }
       }
 }

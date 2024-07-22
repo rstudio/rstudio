@@ -353,7 +353,8 @@ public class ElementIds
       VCS_TERMINAL("vcs_terminal"),
       CHOOSE_IMAGE("choose_image"),
       PYTHON_PATH("python_path"),
-      PROJECT_SCRATCH_PATH("project_scratch_path");
+      PROJECT_SCRATCH_PATH("project_scratch_path"),
+      REFORMAT_ON_SAVE_COMMAND("reformat_on_save_command");
 
       TextBoxButtonId(String value)
       {

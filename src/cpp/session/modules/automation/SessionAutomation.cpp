@@ -42,7 +42,7 @@ Error run()
 {
    FilePath reportFile = session::options().automationReportFile();
    if (reportFile.isEmpty())
-      reportFile = module_context::tempFile("automation-", ".xml");
+      reportFile = module_context::tempFile("automation-", "xml");
    
    return r::exec::RFunction(".rs.automation.run")
          .addParam("reportFile", reportFile.getAbsolutePath())

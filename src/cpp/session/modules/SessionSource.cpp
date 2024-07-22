@@ -650,12 +650,15 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error formatDocument(const json::JsonRpcRequest& request,
-                     const json::JsonRpcFunctionContinuation& continuation)
+Error formatDocument(
+      const json::JsonRpcRequest& request,
+      const json::JsonRpcFunctionContinuation& continuation)
 {
    auto onError = [&](const Error& error)
    {
-      LOG_ERROR(error);
+      if (error)
+         LOG_ERROR(error);
+      
       json::JsonRpcResponse response;
       continuation(error, &response);
       return error;
@@ -667,17 +670,6 @@ Error formatDocument(const json::JsonRpcRequest& request,
    error = json::readParams(request.params, &documentId, &documentPath);
    if (error)
       return onError(error);
-   
-   FilePath rScriptPath;
-   error = module_context::rScriptPath(&rScriptPath);
-   if (error)
-      return onError(error);
-   
-   FilePath formatScriptPath = module_context::tempFile("rstudio-format-", ".R");
-   error = r::exec::RFunction(".rs.generateFormatDocumentScript")
-         .addUtf8Param(documentPath)
-         .addUtf8Param(formatScriptPath)
-         .call();
    
    core::system::ProcessOptions options;
    if (projects::projectContext().hasProject())
@@ -691,16 +683,64 @@ Error formatDocument(const json::JsonRpcRequest& request,
       continuation(Success(), &response);
    };
    
-   error = module_context::processSupervisor().runProgram(
-            rScriptPath.getAbsolutePath(),
-            { "-f", formatScriptPath.getAbsolutePath() },
-            options,
-            callbacks);
-            
-   if (error)
-      return onError(error);
+   std::string formatType = prefs::userPrefs().reformatOnSave();
+   if (formatType == kReformatOnSaveExternal)
+   {
+      FilePath resolvedPath = module_context::resolveAliasedPath(documentPath);
+      std::string command = fmt::format(
+               "{} {}",
+               prefs::userPrefs().reformatOnSaveCommand(),
+               resolvedPath.getAbsolutePath());
+      
+      std::cerr << command << std::endl;
+      error = module_context::processSupervisor().runCommand(
+               command,
+               options,
+               callbacks);
+
+      if (error)
+         return onError(error);
    
-   return Success();
+      return Success();
+   }
+   else if (formatType == kReformatOnSaveStyler)
+   {
+      FilePath rScriptPath;
+      error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+         return onError(error);
+
+      FilePath formatScriptPath = module_context::tempFile("rstudio-format-", "R");
+      error = r::exec::RFunction(".rs.generateStylerFormatDocumentScript")
+            .addUtf8Param(documentPath)
+            .addUtf8Param(formatScriptPath)
+            .call();
+      if (error)
+         return onError(error);
+
+      // TODO: Log 'file not found error' after done testing
+      else if (!formatScriptPath.exists())
+         return onError(Success());
+
+      // TODO: How should we handle the case where a formatter is already
+      // running on the current file?
+      error = module_context::processSupervisor().runProgram(
+               rScriptPath.getAbsolutePath(),
+               { "-f", formatScriptPath.getAbsolutePath() },
+               options,
+               callbacks);
+
+      if (error)
+         return onError(error);
+
+      return Success();
+   }
+   else
+   {
+      Error error(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      error.addProperty("type", formatType);
+      return onError(error);
+   }
 }
 
 Error checkForExternalEdit(const json::JsonRpcRequest& request,

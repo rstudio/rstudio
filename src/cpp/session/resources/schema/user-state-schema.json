@@ -212,6 +212,9 @@
                 },
                 "copyAsMetafile": {
                     "type": "boolean"
+                },
+                "useDevicePixelRatio": {
+                    "type": "boolean"
                 }
             },
             "default": {
@@ -220,7 +223,8 @@
                 "keepRatio": false,
                 "format": "PNG",
                 "viewAfterSave": false,
-                "copyAsMetafile": false
+                "copyAsMetafile": false,
+                "useDevicePixelRatio": true
             },
             "description": "The most recently used plot export options."
         },

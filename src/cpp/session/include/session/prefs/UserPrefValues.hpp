@@ -437,6 +437,11 @@ namespace prefs {
 #define kRunBackgroundJobDefaultWorkingDir "run_background_job_default_working_dir"
 #define kRunBackgroundJobDefaultWorkingDirProject "project"
 #define kRunBackgroundJobDefaultWorkingDirScript "script"
+#define kReformatOnSave "reformat_on_save"
+#define kReformatOnSaveNone "none"
+#define kReformatOnSaveStyler "styler"
+#define kReformatOnSaveExternal "external"
+#define kReformatOnSaveCommand "reformat_on_save_command"
 
 class UserPrefValues: public Preferences
 {
@@ -1971,6 +1976,18 @@ public:
     */
    std::string runBackgroundJobDefaultWorkingDir();
    core::Error setRunBackgroundJobDefaultWorkingDir(std::string val);
+
+   /**
+    * When set, the selected formatter will be used to reformat documents on save.
+    */
+   std::string reformatOnSave();
+   core::Error setReformatOnSave(std::string val);
+
+   /**
+    * An external command, used to reformat documents on save.
+    */
+   std::string reformatOnSaveCommand();
+   core::Error setReformatOnSaveCommand(std::string val);
 
 };
 
