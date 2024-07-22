@@ -71,6 +71,11 @@ public:
       }
    }
 
+   std::string wwwSocket() const
+   {
+      return wwwSocket_;
+   }
+
    std::string monitorSharedSecret() const
    {
       return monitorSharedSecret_;
