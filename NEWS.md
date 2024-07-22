@@ -3,6 +3,7 @@
 ### New
 #### RStudio
 - Use native file and message dialogs by default on Linux desktop (#14683; Linux Desktop)
+- Added www-socket option to rserver.conf to enable server to listen on a Unix domain socket (#14938; Open-Source Server)
 
 #### Posit Workbench
 -
