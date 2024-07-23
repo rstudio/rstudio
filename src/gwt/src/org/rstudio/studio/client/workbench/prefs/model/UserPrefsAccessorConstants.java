@@ -2134,7 +2134,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * The formatter to use when reformatting code.
     */
-   @DefaultStringValue("Format on save")
+   @DefaultStringValue("Code formatter")
    String codeFormatterTitle();
    @DefaultStringValue("The formatter to use when reformatting code.")
    String codeFormatterDescription();
