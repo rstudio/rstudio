@@ -1745,7 +1745,7 @@
         "reformat_on_save": {
             "type": "boolean",
             "default": false,
-            "title": "Format on save",
+            "title": "Reformat documents on save",
             "description": "When set, the selected formatter will be used to reformat documents on save."
         },
 

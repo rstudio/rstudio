@@ -2148,7 +2148,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * When set, the selected formatter will be used to reformat documents on save.
     */
-   @DefaultStringValue("Format on save")
+   @DefaultStringValue("Reformat documents on save")
    String reformatOnSaveTitle();
    @DefaultStringValue("When set, the selected formatter will be used to reformat documents on save.")
    String reformatOnSaveDescription();

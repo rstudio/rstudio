@@ -244,7 +244,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       VerticalTabPanel formattingPanel = new VerticalTabPanel(ElementIds.EDIT_FORMATTING_PREFS);
       
-      formattingPanel.add(spacedBefore(headerLabel(constants_.codeFormattingHeaderLabel())));
+      formattingPanel.add(headerLabel(constants_.codeFormattingHeaderLabel()));
       codeFormatter_ = new SelectWidget(
             prefs_.codeFormatter(),
             false,
@@ -282,6 +282,7 @@ public class EditingPreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             String value = codeFormatter_.getValue();
+            reformatOnSave_.setVisible(!codeFormatter_.getValue().equals("none"));
             if (value.equals("none"))
             {
                formattingDetailsPanel.setWidget(null);
@@ -301,6 +302,7 @@ public class EditingPreferencesPane extends PreferencesPane
       formatterChangedHandler.onChange(null);
       
       formattingPanel.add(codeFormatter_);
+      formattingPanel.add(reformatOnSave_ = checkboxPref(prefs_.reformatOnSave()));
       formattingPanel.add(formattingDetailsPanel);
       
       
@@ -647,6 +649,7 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.autoSaveOnIdle().setGlobalValue(autoSaveOnIdle_.getValue());
       prefs_.autoSaveIdleMs().setGlobalValue(StringUtil.parseInt(autoSaveIdleMs_.getValue(), 1000));
       prefs_.codeFormatter().setGlobalValue(codeFormatter_.getValue());
+      prefs_.reformatOnSave().setGlobalValue(reformatOnSave_.getValue());
       prefs_.reformatOnSaveCommand().setGlobalValue(reformatOnSaveCommand_.getText());
 
       return restartRequirement;
@@ -708,6 +711,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget autoSaveOnIdle_;
    private final SelectWidget autoSaveIdleMs_;
    private final SelectWidget codeFormatter_;
+   private final CheckBox reformatOnSave_;
    private final FileChooserTextBox reformatOnSaveCommand_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
