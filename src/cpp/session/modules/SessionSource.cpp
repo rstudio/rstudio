@@ -683,8 +683,8 @@ Error formatDocument(
       continuation(Success(), &response);
    };
    
-   std::string formatType = prefs::userPrefs().reformatOnSave();
-   if (formatType == kReformatOnSaveExternal)
+   std::string formatType = prefs::userPrefs().codeFormatter();
+   if (formatType == kCodeFormatterExternal)
    {
       FilePath resolvedPath = module_context::resolveAliasedPath(documentPath);
       std::string command = fmt::format(
@@ -703,7 +703,7 @@ Error formatDocument(
    
       return Success();
    }
-   else if (formatType == kReformatOnSaveStyler)
+   else if (formatType == kCodeFormatterStyler)
    {
       FilePath rScriptPath;
       error = module_context::rScriptPath(&rScriptPath);

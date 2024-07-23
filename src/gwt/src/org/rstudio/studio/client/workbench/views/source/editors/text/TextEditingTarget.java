@@ -8108,8 +8108,8 @@ public class TextEditingTarget implements
             // check for format on save
             if (formatOnSave)
             {
-               String formatType = prefs_.reformatOnSave().getValue();
-               if (!StringUtil.equals(formatType, UserPrefsAccessor.REFORMAT_ON_SAVE_NONE))
+               String formatType = prefs_.codeFormatter().getValue();
+               if (!StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
                {
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),

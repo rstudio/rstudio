@@ -2132,25 +2132,33 @@ public interface UserPrefsAccessorConstants extends Constants {
    String runBackgroundJobDefaultWorkingDirEnum_script();
 
    /**
+    * The formatter to use when reformatting code.
+    */
+   @DefaultStringValue("Format on save")
+   String codeFormatterTitle();
+   @DefaultStringValue("The formatter to use when reformatting code.")
+   String codeFormatterDescription();
+   @DefaultStringValue("(None)")
+   String codeFormatterEnum_none();
+   @DefaultStringValue("styler")
+   String codeFormatterEnum_styler();
+   @DefaultStringValue("External")
+   String codeFormatterEnum_external();
+
+   /**
     * When set, the selected formatter will be used to reformat documents on save.
     */
    @DefaultStringValue("Format on save")
    String reformatOnSaveTitle();
    @DefaultStringValue("When set, the selected formatter will be used to reformat documents on save.")
    String reformatOnSaveDescription();
-   @DefaultStringValue("(None)")
-   String reformatOnSaveEnum_none();
-   @DefaultStringValue("styler")
-   String reformatOnSaveEnum_styler();
-   @DefaultStringValue("External")
-   String reformatOnSaveEnum_external();
 
    /**
-    * An external command, used to reformat documents on save.
+    * The external command to be used when reformatting code.
     */
    @DefaultStringValue("")
    String reformatOnSaveCommandTitle();
-   @DefaultStringValue("An external command, used to reformat documents on save.")
+   @DefaultStringValue("The external command to be used when reformatting code.")
    String reformatOnSaveCommandDescription();
 
 

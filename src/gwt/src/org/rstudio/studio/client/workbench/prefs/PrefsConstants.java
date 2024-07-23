@@ -4135,13 +4135,13 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String generalHeaderLabel();
     
     /**
-     * Translated "Formatting".
+     * Translated "Code Formatting".
      *
-     * @return translated "Formatting"
+     * @return translated "Code Formatting"
      */
-    @DefaultMessage("Formatting")
-    @Key("formattingHeaderLabel")
-    String formattingHeaderLabel();
+    @DefaultMessage("Code Formatting")
+    @Key("codeFormattingHeaderLabel")
+    String codeFormattingHeaderLabel();
  
     /**
      * Translated "Use formatter:".

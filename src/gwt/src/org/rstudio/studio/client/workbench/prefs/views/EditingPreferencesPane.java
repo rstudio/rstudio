@@ -338,16 +338,16 @@ public class EditingPreferencesPane extends PreferencesPane
             false);
       savePanel.add(autoSaveIdleMs_);
 
-      savePanel.add(spacedBefore(headerLabel(constants_.formattingHeaderLabel())));
-      useFormatter_ = new SelectWidget(
-            prefs_.reformatOnSave(),
+      savePanel.add(spacedBefore(headerLabel(constants_.codeFormattingHeaderLabel())));
+      codeFormatter_ = new SelectWidget(
+            prefs_.codeFormatter(),
             false,
             true,
             false);
-      useFormatter_.setValue(prefs_.reformatOnSave().getGlobalValue());
+      codeFormatter_.setValue(prefs_.codeFormatter().getGlobalValue());
       
       VerticalPanel stylerPanel = new VerticalPanel();
-      stylerPanel.add(new Label("Use the 'styler' package to reformat code on save."));
+      // TODO: Include a small blurb about using styler?
       
       reformatOnSaveCommand_ = new FileChooserTextBox(
             "Reformat command:",
@@ -375,7 +375,7 @@ public class EditingPreferencesPane extends PreferencesPane
          @Override
          public void onChange(ChangeEvent event)
          {
-            String value = useFormatter_.getValue();
+            String value = codeFormatter_.getValue();
             if (value.equals("none"))
             {
                formatterPanel.setWidget(null);
@@ -391,10 +391,10 @@ public class EditingPreferencesPane extends PreferencesPane
          }
       };
       
-      useFormatter_.addChangeHandler(formatterChangedHandler);
+      codeFormatter_.addChangeHandler(formatterChangedHandler);
       formatterChangedHandler.onChange(null);
       
-      savePanel.add(useFormatter_);
+      savePanel.add(codeFormatter_);
       savePanel.add(formatterPanel);
       
       
@@ -643,7 +643,7 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.executionBehavior().setGlobalValue(executionBehavior_.getValue());
       prefs_.autoSaveOnIdle().setGlobalValue(autoSaveOnIdle_.getValue());
       prefs_.autoSaveIdleMs().setGlobalValue(StringUtil.parseInt(autoSaveIdleMs_.getValue(), 1000));
-      prefs_.reformatOnSave().setGlobalValue(useFormatter_.getValue());
+      prefs_.codeFormatter().setGlobalValue(codeFormatter_.getValue());
       prefs_.reformatOnSaveCommand().setGlobalValue(reformatOnSaveCommand_.getText());
 
       return restartRequirement;
@@ -704,7 +704,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget executionBehavior_;
    private final SelectWidget autoSaveOnIdle_;
    private final SelectWidget autoSaveIdleMs_;
-   private final SelectWidget useFormatter_;
+   private final SelectWidget codeFormatter_;
    private final FileChooserTextBox reformatOnSaveCommand_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;

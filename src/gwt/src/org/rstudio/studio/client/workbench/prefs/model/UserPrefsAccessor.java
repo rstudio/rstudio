@@ -3659,33 +3659,45 @@ public class UserPrefsAccessor extends Prefs
    public final static String RUN_BACKGROUND_JOB_DEFAULT_WORKING_DIR_SCRIPT = "script";
 
    /**
-    * When set, the selected formatter will be used to reformat documents on save.
+    * The formatter to use when reformatting code.
     */
-   public PrefValue<String> reformatOnSave()
+   public PrefValue<String> codeFormatter()
    {
       return enumeration(
-         "reformat_on_save",
-         _constants.reformatOnSaveTitle(), 
-         _constants.reformatOnSaveDescription(), 
+         "code_formatter",
+         _constants.codeFormatterTitle(), 
+         _constants.codeFormatterDescription(), 
          new String[] {
-            REFORMAT_ON_SAVE_NONE,
-            REFORMAT_ON_SAVE_STYLER,
-            REFORMAT_ON_SAVE_EXTERNAL
+            CODE_FORMATTER_NONE,
+            CODE_FORMATTER_STYLER,
+            CODE_FORMATTER_EXTERNAL
          },
          "none",
          new String[] {
-            _constants.reformatOnSaveEnum_none(),
-            _constants.reformatOnSaveEnum_styler(),
-            _constants.reformatOnSaveEnum_external()
+            _constants.codeFormatterEnum_none(),
+            _constants.codeFormatterEnum_styler(),
+            _constants.codeFormatterEnum_external()
          });
    }
 
-   public final static String REFORMAT_ON_SAVE_NONE = "none";
-   public final static String REFORMAT_ON_SAVE_STYLER = "styler";
-   public final static String REFORMAT_ON_SAVE_EXTERNAL = "external";
+   public final static String CODE_FORMATTER_NONE = "none";
+   public final static String CODE_FORMATTER_STYLER = "styler";
+   public final static String CODE_FORMATTER_EXTERNAL = "external";
 
    /**
-    * An external command, used to reformat documents on save.
+    * When set, the selected formatter will be used to reformat documents on save.
+    */
+   public PrefValue<Boolean> reformatOnSave()
+   {
+      return bool(
+         "reformat_on_save",
+         _constants.reformatOnSaveTitle(), 
+         _constants.reformatOnSaveDescription(), 
+         false);
+   }
+
+   /**
+    * The external command to be used when reformatting code.
     */
    public PrefValue<String> reformatOnSaveCommand()
    {
@@ -4208,8 +4220,10 @@ public class UserPrefsAccessor extends Prefs
          projectName().setValue(layer, source.getString("project_name"));
       if (source.hasKey("run_background_job_default_working_dir"))
          runBackgroundJobDefaultWorkingDir().setValue(layer, source.getString("run_background_job_default_working_dir"));
+      if (source.hasKey("code_formatter"))
+         codeFormatter().setValue(layer, source.getString("code_formatter"));
       if (source.hasKey("reformat_on_save"))
-         reformatOnSave().setValue(layer, source.getString("reformat_on_save"));
+         reformatOnSave().setValue(layer, source.getBool("reformat_on_save"));
       if (source.hasKey("reformat_on_save_command"))
          reformatOnSaveCommand().setValue(layer, source.getString("reformat_on_save_command"));
    }
@@ -4471,6 +4485,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotIndexingEnabled());
       prefs.add(projectName());
       prefs.add(runBackgroundJobDefaultWorkingDir());
+      prefs.add(codeFormatter());
       prefs.add(reformatOnSave());
       prefs.add(reformatOnSaveCommand());
       return prefs;

@@ -3339,20 +3339,33 @@ core::Error UserPrefValues::setRunBackgroundJobDefaultWorkingDir(std::string val
 }
 
 /**
- * When set, the selected formatter will be used to reformat documents on save.
+ * The formatter to use when reformatting code.
  */
-std::string UserPrefValues::reformatOnSave()
+std::string UserPrefValues::codeFormatter()
 {
-   return readPref<std::string>("reformat_on_save");
+   return readPref<std::string>("code_formatter");
 }
 
-core::Error UserPrefValues::setReformatOnSave(std::string val)
+core::Error UserPrefValues::setCodeFormatter(std::string val)
+{
+   return writePref("code_formatter", val);
+}
+
+/**
+ * When set, the selected formatter will be used to reformat documents on save.
+ */
+bool UserPrefValues::reformatOnSave()
+{
+   return readPref<bool>("reformat_on_save");
+}
+
+core::Error UserPrefValues::setReformatOnSave(bool val)
 {
    return writePref("reformat_on_save", val);
 }
 
 /**
- * An external command, used to reformat documents on save.
+ * The external command to be used when reformatting code.
  */
 std::string UserPrefValues::reformatOnSaveCommand()
 {
@@ -3622,6 +3635,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotIndexingEnabled,
       kProjectName,
       kRunBackgroundJobDefaultWorkingDir,
+      kCodeFormatter,
       kReformatOnSave,
       kReformatOnSaveCommand,
    });
