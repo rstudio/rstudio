@@ -202,7 +202,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
    
    public void setTabPanelSize(DialogTabLayoutPanel panel)
    {
-      panel.setSize("448px", "570px");
+      panel.setSize("478px", "580px");
    }
 
    private ProgressIndicator progressIndicator_;

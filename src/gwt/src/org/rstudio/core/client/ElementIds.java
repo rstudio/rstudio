@@ -168,6 +168,7 @@ public class ElementIds
 
    public final static String EDIT_EDITING_PREFS = "edit_editing_prefs";
    public final static String EDIT_DISPLAY_PREFS = "edit_display_prefs";
+   public final static String EDIT_FORMATTING_PREFS = "edit_formatting_prefs";
    public final static String EDIT_SAVING_PREFS = "edit_saving_prefs";
    public final static String EDIT_COMPLETION_PREFS = "editing_completion_prefs";
    public final static String EDIT_DIAGNOSTICS_PREFS = "editing_diagnostics_prefs";

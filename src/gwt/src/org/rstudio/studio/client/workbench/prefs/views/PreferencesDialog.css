@@ -1,8 +1,8 @@
 
 @external gwt-CheckBox gwt-Label;
 
-@def PANEL_CONTAINER_WIDTH 610px;
-@def PANEL_CONTAINER_HEIGHT 570px;
+@def PANEL_CONTAINER_WIDTH 640px;
+@def PANEL_CONTAINER_HEIGHT 580px;
 
 .panelContainer {
    width: PANEL_CONTAINER_WIDTH;

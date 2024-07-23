@@ -242,6 +242,68 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(prefs_.colorPreview()));
       displayPanel.add(checkboxPref(prefs_.rainbowParentheses()));
       
+      VerticalTabPanel formattingPanel = new VerticalTabPanel(ElementIds.EDIT_FORMATTING_PREFS);
+      
+      formattingPanel.add(spacedBefore(headerLabel(constants_.codeFormattingHeaderLabel())));
+      codeFormatter_ = new SelectWidget(
+            prefs_.codeFormatter(),
+            false,
+            true,
+            false);
+      codeFormatter_.setValue(prefs_.codeFormatter().getGlobalValue());
+      
+      VerticalPanel stylerPanel = new VerticalPanel();
+      // TODO: Include a small blurb about using styler?
+      
+      reformatOnSaveCommand_ = new FileChooserTextBox(
+            "Reformat command:",
+            "",
+            ElementIds.TextBoxButtonId.REFORMAT_ON_SAVE_COMMAND,
+            false,
+            null,
+            null);
+      reformatOnSaveCommand_.setPlaceholder("(None)");
+      reformatOnSaveCommand_.setReadOnly(false);
+      reformatOnSaveCommand_.setEnabled(true);
+      reformatOnSaveCommand_.setTextWidth("250px");
+      
+      String command = prefs.reformatOnSaveCommand().getGlobalValue();
+      if (!StringUtil.isNullOrEmpty(command))
+         reformatOnSaveCommand_.setText(prefs.reformatOnSaveCommand().getGlobalValue());
+      
+      VerticalPanel externalPanel = new VerticalPanel();
+      externalPanel.add(reformatOnSaveCommand_);
+      
+      SimplePanel formattingDetailsPanel = new SimplePanel();
+      
+      ChangeHandler formatterChangedHandler = new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            String value = codeFormatter_.getValue();
+            if (value.equals("none"))
+            {
+               formattingDetailsPanel.setWidget(null);
+            }
+            else if (value.equals("styler"))
+            {
+               formattingDetailsPanel.setWidget(stylerPanel);
+            }
+            else if (value.equals("external"))
+            {
+               formattingDetailsPanel.setWidget(externalPanel);
+            }
+         }
+      };
+      
+      codeFormatter_.addChangeHandler(formatterChangedHandler);
+      formatterChangedHandler.onChange(null);
+      
+      formattingPanel.add(codeFormatter_);
+      formattingPanel.add(formattingDetailsPanel);
+      
+      
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
 
       savePanel.add(headerLabel(constants_.generalHeaderLabel()));
@@ -338,66 +400,6 @@ public class EditingPreferencesPane extends PreferencesPane
             false);
       savePanel.add(autoSaveIdleMs_);
 
-      savePanel.add(spacedBefore(headerLabel(constants_.codeFormattingHeaderLabel())));
-      codeFormatter_ = new SelectWidget(
-            prefs_.codeFormatter(),
-            false,
-            true,
-            false);
-      codeFormatter_.setValue(prefs_.codeFormatter().getGlobalValue());
-      
-      VerticalPanel stylerPanel = new VerticalPanel();
-      // TODO: Include a small blurb about using styler?
-      
-      reformatOnSaveCommand_ = new FileChooserTextBox(
-            "Reformat command:",
-            "",
-            ElementIds.TextBoxButtonId.REFORMAT_ON_SAVE_COMMAND,
-            false,
-            null,
-            null);
-      reformatOnSaveCommand_.setPlaceholder("(None)");
-      reformatOnSaveCommand_.setReadOnly(false);
-      reformatOnSaveCommand_.setEnabled(true);
-      reformatOnSaveCommand_.setTextWidth("250px");
-      
-      String command = prefs.reformatOnSaveCommand().getGlobalValue();
-      if (!StringUtil.isNullOrEmpty(command))
-         reformatOnSaveCommand_.setText(prefs.reformatOnSaveCommand().getGlobalValue());
-      
-      VerticalPanel externalPanel = new VerticalPanel();
-      externalPanel.add(reformatOnSaveCommand_);
-      
-      SimplePanel formatterPanel = new SimplePanel();
-      
-      ChangeHandler formatterChangedHandler = new ChangeHandler()
-      {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            String value = codeFormatter_.getValue();
-            if (value.equals("none"))
-            {
-               formatterPanel.setWidget(null);
-            }
-            else if (value.equals("styler"))
-            {
-               formatterPanel.setWidget(stylerPanel);
-            }
-            else if (value.equals("external"))
-            {
-               formatterPanel.setWidget(externalPanel);
-            }
-         }
-      };
-      
-      codeFormatter_.addChangeHandler(formatterChangedHandler);
-      formatterChangedHandler.onChange(null);
-      
-      savePanel.add(codeFormatter_);
-      savePanel.add(formatterPanel);
-      
-      
       VerticalTabPanel completionPanel = new VerticalTabPanel(ElementIds.EDIT_COMPLETION_PREFS);
 
       completionPanel.add(headerLabel(constants_.editingCompletionPanel()));
@@ -545,6 +547,7 @@ public class EditingPreferencesPane extends PreferencesPane
       setTabPanelSize(tabPanel);
       tabPanel.add(editingPanel, constants_.editingTabPanel(), editingPanel.getBasePanelId());
       tabPanel.add(displayPanel, constants_.editingTabPanelDisplayPanel(), displayPanel.getBasePanelId());
+      tabPanel.add(formattingPanel, constants_.editingTabPanelFormattingPanel(), formattingPanel.getBasePanelId());
       tabPanel.add(savePanel, constants_.editingTabPanelSavePanel(), savePanel.getBasePanelId());
       tabPanel.add(completionPanel, constants_.editingTabPanelCompletionPanel(), completionPanel.getBasePanelId());
       tabPanel.add(diagnosticsPanel, constants_.editingTabPanelDiagnosticsPanel(), diagnosticsPanel.getBasePanelId());

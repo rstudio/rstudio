@@ -4415,6 +4415,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingTabPanelDisplayPanel();
 
     /**
+     * Translated "Formatting".
+     *
+     * @return translated "Formatting"
+     */
+    @DefaultMessage("Formatting")
+    @Key("editingTabPanelFormattingPanel")
+    String editingTabPanelFormattingPanel();
+    
+    /**
      * Translated "Saving".
      *
      * @return translated "Saving"
