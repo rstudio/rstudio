@@ -3792,16 +3792,39 @@ public class TextEditingTarget implements
    @Handler
    void onReformatCode()
    {
-      withActiveEditor((disp) ->
+      withActiveEditor((editor) ->
       {
          // Only allow if entire selection in R mode for now
-         if (!DocumentMode.isSelectionInRMode(disp))
+         if (!DocumentMode.isSelectionInRMode(editor))
          {
             showRModeWarning("Reformat Code");
             return;
          }
 
-         new TextEditingTargetReformatHelper(disp).insertPrettyNewlines();
+         String formatType = prefs_.codeFormatter().getValue();
+         if (StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+         {
+            new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
+         }
+         else
+         {
+            Range range = editor.getSelectionRange();
+            String selection = editor.getSelectionValue();
+            server_.formatCode(selection, new ServerRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String response)
+               {
+                  editor.replaceRange(range, response);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+         }
       });
    }
 
@@ -8108,8 +8131,10 @@ public class TextEditingTarget implements
             // check for format on save
             if (formatOnSave)
             {
+               boolean formatOnSavePref = prefs_.reformatOnSave().getValue();
                String formatType = prefs_.codeFormatter().getValue();
-               if (!StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+               if (formatOnSavePref &&
+                     !StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
                {
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),

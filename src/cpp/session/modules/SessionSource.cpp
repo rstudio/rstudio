@@ -650,26 +650,30 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error formatDocument(
-      const json::JsonRpcRequest& request,
+Error onFormatError(
+      const Error& error,
       const json::JsonRpcFunctionContinuation& continuation)
+{
+   if (error)
+      LOG_ERROR(error);
+
+   json::JsonRpcResponse response;
+   continuation(error, &response);
+   return error;
+}
+
+template <typename F>
+Error formatDocumentImpl(
+      const std::string& documentPath,
+      const json::JsonRpcFunctionContinuation& continuation,
+      F&& callback)
 {
    auto onError = [&](const Error& error)
    {
-      if (error)
-         LOG_ERROR(error);
-      
-      json::JsonRpcResponse response;
-      continuation(error, &response);
-      return error;
+      return onFormatError(error, continuation);
    };
    
    Error error;
-   
-   std::string documentId, documentPath;
-   error = json::readParams(request.params, &documentId, &documentPath);
-   if (error)
-      return onError(error);
    
    core::system::ProcessOptions options;
    if (projects::projectContext().hasProject())
@@ -679,7 +683,7 @@ Error formatDocument(
    
    callbacks.onExit = [=](int exitStatus)
    {
-      json::JsonRpcResponse response;
+      json::JsonRpcResponse response = callback();
       continuation(Success(), &response);
    };
    
@@ -741,6 +745,77 @@ Error formatDocument(
       error.addProperty("type", formatType);
       return onError(error);
    }
+}
+
+Error formatDocument(
+      const json::JsonRpcRequest& request,
+      const json::JsonRpcFunctionContinuation& continuation)
+{
+   auto onError = [&](const Error& error)
+   {
+      return onFormatError(error, continuation);
+   };
+   
+   Error error;
+   
+   std::string documentId, documentPath;
+   error = json::readParams(request.params, &documentId, &documentPath);
+   if (error)
+      return onError(error);
+ 
+   return formatDocumentImpl(
+            documentPath,
+            continuation,
+            [=]()
+   {
+      return json::JsonRpcResponse();
+   });
+   
+}
+
+Error formatCode(
+      const json::JsonRpcRequest& request,
+      const json::JsonRpcFunctionContinuation& continuation)
+{
+   auto onError = [&](const Error& error)
+   {
+      return onFormatError(error, continuation);
+   };
+   
+   Error error;
+   
+   std::string code;
+   error = json::readParams(request.params, &code);
+   if (error)
+      return onError(error);
+   
+   FilePath documentPath = module_context::tempFile("rstudio-format-", "R");
+   error = writeStringToFile(documentPath, code);
+   if (error)
+      return onError(error);
+   
+   
+   return formatDocumentImpl(
+            documentPath.getAbsolutePath(),
+            continuation,
+            [=]()
+   {
+      std::string code;
+      Error error = readStringFromFile(documentPath, &code);
+      if (error)
+         LOG_ERROR(error);
+      
+      // trim a final newline in the formatted selection
+      if (boost::algorithm::ends_with(code, "\r\n"))
+         code = code.substr(0, code.length() - 2);
+      else if (boost::algorithm::ends_with(code, "\n"))
+         code = code.substr(0, code.length() - 1);
+      
+      json::JsonRpcResponse response;
+      response.setResult(code);
+      
+      return response;
+   });
 }
 
 Error checkForExternalEdit(const json::JsonRpcRequest& request,
@@ -1597,6 +1672,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerAsyncRpcMethod, "format_document", formatDocument))
+      (bind(registerAsyncRpcMethod, "format_code", formatCode))
       (bind(registerRpcMethod, "new_document", newDocument))
       (bind(registerRpcMethod, "open_document", openDocument))
       (bind(registerRpcMethod, "save_document", saveDocument))

@@ -141,6 +141,12 @@ public interface SourceServerOperations extends FilesServerOperations,
    void formatDocument(String id,
                        String path,
                        ServerRequestCallback<SourceDocument> requestCallback);
+ 
+   /**
+    * Format code with the active formatter.
+    */
+   void formatCode(String code,
+                   ServerRequestCallback<String> requestCallback);
    
 
    void checkForExternalEdit(
