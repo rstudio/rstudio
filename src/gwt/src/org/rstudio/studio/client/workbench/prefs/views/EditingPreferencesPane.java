@@ -276,6 +276,10 @@ public class EditingPreferencesPane extends PreferencesPane
       
       SimplePanel formattingDetailsPanel = new SimplePanel();
       
+      formattingPanel.add(codeFormatter_);
+      formattingPanel.add(reformatOnSave_ = checkboxPref(prefs_.reformatOnSave()));
+      formattingPanel.add(formattingDetailsPanel);
+      
       ChangeHandler formatterChangedHandler = new ChangeHandler()
       {
          @Override
@@ -300,10 +304,6 @@ public class EditingPreferencesPane extends PreferencesPane
       
       codeFormatter_.addChangeHandler(formatterChangedHandler);
       formatterChangedHandler.onChange(null);
-      
-      formattingPanel.add(codeFormatter_);
-      formattingPanel.add(reformatOnSave_ = checkboxPref(prefs_.reformatOnSave()));
-      formattingPanel.add(formattingDetailsPanel);
       
       
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
