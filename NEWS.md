@@ -2,6 +2,7 @@
 
 ### New
 #### RStudio
+- RStudio now supports code formatting using the 'styler' R package, as well via other external applications. (#2563)
 - Use native file and message dialogs by default on Linux desktop (#14683; Linux Desktop)
 
 #### Posit Workbench

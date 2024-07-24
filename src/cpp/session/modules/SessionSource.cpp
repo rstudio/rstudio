@@ -38,6 +38,7 @@
 #include <core/r_util/RPackageInfo.hpp>
 #include <core/r_util/RSourceIndex.hpp>
 #include <core/system/FileChangeEvent.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/system/Xdg.hpp>
 #include <core/text/TemplateFilter.hpp>
 
@@ -694,7 +695,7 @@ Error formatDocumentImpl(
       std::string command = fmt::format(
                "{} {}",
                prefs::userPrefs().codeFormatterExternalCommand(),
-               resolvedPath.getAbsolutePath());
+               shell_utils::escape(resolvedPath));
       
       error = module_context::processSupervisor().runCommand(
                command,
