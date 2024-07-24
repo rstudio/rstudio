@@ -2146,20 +2146,28 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeFormatterEnum_external();
 
    /**
+    * When set, strict transformers will be used when formatting code. See the `styler` package documentation for more details.
+    */
+   @DefaultStringValue("Use strict transformers when formatting code")
+   String codeFormatterStylerStrictTitle();
+   @DefaultStringValue("When set, strict transformers will be used when formatting code. See the `styler` package documentation for more details.")
+   String codeFormatterStylerStrictDescription();
+
+   /**
+    * The external command to be used when reformatting code.
+    */
+   @DefaultStringValue("")
+   String codeFormatterExternalCommandTitle();
+   @DefaultStringValue("The external command to be used when reformatting code.")
+   String codeFormatterExternalCommandDescription();
+
+   /**
     * When set, the selected formatter will be used to reformat documents on save.
     */
    @DefaultStringValue("Reformat documents on save")
    String reformatOnSaveTitle();
    @DefaultStringValue("When set, the selected formatter will be used to reformat documents on save.")
    String reformatOnSaveDescription();
-
-   /**
-    * The external command to be used when reformatting code.
-    */
-   @DefaultStringValue("")
-   String reformatOnSaveCommandTitle();
-   @DefaultStringValue("The external command to be used when reformatting code.")
-   String reformatOnSaveCommandDescription();
 
 
 

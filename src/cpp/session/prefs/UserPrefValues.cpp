@@ -3352,6 +3352,32 @@ core::Error UserPrefValues::setCodeFormatter(std::string val)
 }
 
 /**
+ * When set, strict transformers will be used when formatting code. See the `styler` package documentation for more details.
+ */
+bool UserPrefValues::codeFormatterStylerStrict()
+{
+   return readPref<bool>("code_formatter_styler_strict");
+}
+
+core::Error UserPrefValues::setCodeFormatterStylerStrict(bool val)
+{
+   return writePref("code_formatter_styler_strict", val);
+}
+
+/**
+ * The external command to be used when reformatting code.
+ */
+std::string UserPrefValues::codeFormatterExternalCommand()
+{
+   return readPref<std::string>("code_formatter_external_command");
+}
+
+core::Error UserPrefValues::setCodeFormatterExternalCommand(std::string val)
+{
+   return writePref("code_formatter_external_command", val);
+}
+
+/**
  * When set, the selected formatter will be used to reformat documents on save.
  */
 bool UserPrefValues::reformatOnSave()
@@ -3362,19 +3388,6 @@ bool UserPrefValues::reformatOnSave()
 core::Error UserPrefValues::setReformatOnSave(bool val)
 {
    return writePref("reformat_on_save", val);
-}
-
-/**
- * The external command to be used when reformatting code.
- */
-std::string UserPrefValues::reformatOnSaveCommand()
-{
-   return readPref<std::string>("reformat_on_save_command");
-}
-
-core::Error UserPrefValues::setReformatOnSaveCommand(std::string val)
-{
-   return writePref("reformat_on_save_command", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -3636,8 +3649,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kProjectName,
       kRunBackgroundJobDefaultWorkingDir,
       kCodeFormatter,
+      kCodeFormatterStylerStrict,
+      kCodeFormatterExternalCommand,
       kReformatOnSave,
-      kReformatOnSaveCommand,
    });
 }
    

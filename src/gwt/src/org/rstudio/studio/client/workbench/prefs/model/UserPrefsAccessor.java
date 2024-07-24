@@ -3685,6 +3685,30 @@ public class UserPrefsAccessor extends Prefs
    public final static String CODE_FORMATTER_EXTERNAL = "external";
 
    /**
+    * When set, strict transformers will be used when formatting code. See the `styler` package documentation for more details.
+    */
+   public PrefValue<Boolean> codeFormatterStylerStrict()
+   {
+      return bool(
+         "code_formatter_styler_strict",
+         _constants.codeFormatterStylerStrictTitle(), 
+         _constants.codeFormatterStylerStrictDescription(), 
+         true);
+   }
+
+   /**
+    * The external command to be used when reformatting code.
+    */
+   public PrefValue<String> codeFormatterExternalCommand()
+   {
+      return string(
+         "code_formatter_external_command",
+         _constants.codeFormatterExternalCommandTitle(), 
+         _constants.codeFormatterExternalCommandDescription(), 
+         "");
+   }
+
+   /**
     * When set, the selected formatter will be used to reformat documents on save.
     */
    public PrefValue<Boolean> reformatOnSave()
@@ -3694,18 +3718,6 @@ public class UserPrefsAccessor extends Prefs
          _constants.reformatOnSaveTitle(), 
          _constants.reformatOnSaveDescription(), 
          false);
-   }
-
-   /**
-    * The external command to be used when reformatting code.
-    */
-   public PrefValue<String> reformatOnSaveCommand()
-   {
-      return string(
-         "reformat_on_save_command",
-         _constants.reformatOnSaveCommandTitle(), 
-         _constants.reformatOnSaveCommandDescription(), 
-         "");
    }
 
    public void syncPrefs(String layer, JsObject source)
@@ -4222,10 +4234,12 @@ public class UserPrefsAccessor extends Prefs
          runBackgroundJobDefaultWorkingDir().setValue(layer, source.getString("run_background_job_default_working_dir"));
       if (source.hasKey("code_formatter"))
          codeFormatter().setValue(layer, source.getString("code_formatter"));
+      if (source.hasKey("code_formatter_styler_strict"))
+         codeFormatterStylerStrict().setValue(layer, source.getBool("code_formatter_styler_strict"));
+      if (source.hasKey("code_formatter_external_command"))
+         codeFormatterExternalCommand().setValue(layer, source.getString("code_formatter_external_command"));
       if (source.hasKey("reformat_on_save"))
          reformatOnSave().setValue(layer, source.getBool("reformat_on_save"));
-      if (source.hasKey("reformat_on_save_command"))
-         reformatOnSaveCommand().setValue(layer, source.getString("reformat_on_save_command"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4486,8 +4500,9 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(projectName());
       prefs.add(runBackgroundJobDefaultWorkingDir());
       prefs.add(codeFormatter());
+      prefs.add(codeFormatterStylerStrict());
+      prefs.add(codeFormatterExternalCommand());
       prefs.add(reformatOnSave());
-      prefs.add(reformatOnSaveCommand());
       return prefs;
    }
    

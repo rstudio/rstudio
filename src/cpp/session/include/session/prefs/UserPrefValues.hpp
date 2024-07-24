@@ -441,8 +441,9 @@ namespace prefs {
 #define kCodeFormatterNone "none"
 #define kCodeFormatterStyler "styler"
 #define kCodeFormatterExternal "external"
+#define kCodeFormatterStylerStrict "code_formatter_styler_strict"
+#define kCodeFormatterExternalCommand "code_formatter_external_command"
 #define kReformatOnSave "reformat_on_save"
-#define kReformatOnSaveCommand "reformat_on_save_command"
 
 class UserPrefValues: public Preferences
 {
@@ -1985,16 +1986,22 @@ public:
    core::Error setCodeFormatter(std::string val);
 
    /**
-    * When set, the selected formatter will be used to reformat documents on save.
+    * When set, strict transformers will be used when formatting code. See the `styler` package documentation for more details.
     */
-   bool reformatOnSave();
-   core::Error setReformatOnSave(bool val);
+   bool codeFormatterStylerStrict();
+   core::Error setCodeFormatterStylerStrict(bool val);
 
    /**
     * The external command to be used when reformatting code.
     */
-   std::string reformatOnSaveCommand();
-   core::Error setReformatOnSaveCommand(std::string val);
+   std::string codeFormatterExternalCommand();
+   core::Error setCodeFormatterExternalCommand(std::string val);
+
+   /**
+    * When set, the selected formatter will be used to reformat documents on save.
+    */
+   bool reformatOnSave();
+   core::Error setReformatOnSave(bool val);
 
 };
 

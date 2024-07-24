@@ -693,10 +693,9 @@ Error formatDocumentImpl(
       FilePath resolvedPath = module_context::resolveAliasedPath(documentPath);
       std::string command = fmt::format(
                "{} {}",
-               prefs::userPrefs().reformatOnSaveCommand(),
+               prefs::userPrefs().codeFormatterExternalCommand(),
                resolvedPath.getAbsolutePath());
       
-      std::cerr << command << std::endl;
       error = module_context::processSupervisor().runCommand(
                command,
                options,
@@ -793,7 +792,6 @@ Error formatCode(
    error = writeStringToFile(documentPath, code);
    if (error)
       return onError(error);
-   
    
    return formatDocumentImpl(
             documentPath.getAbsolutePath(),

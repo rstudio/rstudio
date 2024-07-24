@@ -340,13 +340,15 @@
       return()
    
    # create a tidyverse style guide, using the current indentation settings
-   indent <- .rs.readUserPref("num_spaces_for_tab")
+   indent <- .rs.readUserPref("num_spaces_for_tab", 2L)
+   strict <- .rs.readUserPref("code_formatter_styler_strict", TRUE)
    
    # generate and write code to file
    expr <- rlang::expr({
       styler::style_file(
          path = !!documentPath,
-         indent_by = !!indent
+         indent_by = !!indent,
+         strict = !!strict
       )
    })
    

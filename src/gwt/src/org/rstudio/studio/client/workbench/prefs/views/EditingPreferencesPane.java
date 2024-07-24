@@ -253,7 +253,9 @@ public class EditingPreferencesPane extends PreferencesPane
       codeFormatter_.setValue(prefs_.codeFormatter().getGlobalValue());
       
       VerticalPanel stylerPanel = new VerticalPanel();
-      // TODO: Include a small blurb about using styler?
+      stylerPanel.add(headerLabel("Format with styler"));
+      stylerPanel.add(new Label("Use the styler R package to reformat code."));
+      stylerPanel.add(extraSpacedBefore(checkboxPref(prefs_.codeFormatterStylerStrict())));
       
       reformatOnSaveCommand_ = new FileChooserTextBox(
             "Reformat command:",
@@ -267,17 +269,18 @@ public class EditingPreferencesPane extends PreferencesPane
       reformatOnSaveCommand_.setEnabled(true);
       reformatOnSaveCommand_.setTextWidth("250px");
       
-      String command = prefs.reformatOnSaveCommand().getGlobalValue();
+      String command = prefs.codeFormatterExternalCommand().getGlobalValue();
       if (!StringUtil.isNullOrEmpty(command))
-         reformatOnSaveCommand_.setText(prefs.reformatOnSaveCommand().getGlobalValue());
+         reformatOnSaveCommand_.setText(prefs.codeFormatterExternalCommand().getGlobalValue());
       
       VerticalPanel externalPanel = new VerticalPanel();
-      externalPanel.add(reformatOnSaveCommand_);
+      externalPanel.add(headerLabel("Format with an External Tool"));
+      externalPanel.add(new Label("Use an external application to reformat code."));
+      externalPanel.add(extraSpacedBefore(reformatOnSaveCommand_));
       
       SimplePanel formattingDetailsPanel = new SimplePanel();
       
       formattingPanel.add(codeFormatter_);
-      formattingPanel.add(reformatOnSave_ = checkboxPref(prefs_.reformatOnSave()));
       formattingPanel.add(formattingDetailsPanel);
       
       ChangeHandler formatterChangedHandler = new ChangeHandler()
@@ -286,7 +289,6 @@ public class EditingPreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             String value = codeFormatter_.getValue();
-            reformatOnSave_.setVisible(!codeFormatter_.getValue().equals("none"));
             if (value.equals("none"))
             {
                formattingDetailsPanel.setWidget(null);
@@ -312,6 +314,7 @@ public class EditingPreferencesPane extends PreferencesPane
       savePanel.add(checkboxPref(constants_.savingAutoAppendNewLineLabel(), prefs_.autoAppendNewline()));
       savePanel.add(checkboxPref(constants_.savingStripTrailingWhitespaceLabel(), prefs_.stripTrailingWhitespace()));
       savePanel.add(checkboxPref(constants_.savingRestoreSourceDocumentCursorPositionLabel(), prefs_.restoreSourceDocumentCursorPosition()));
+      savePanel.add(checkboxPref(prefs_.reformatOnSave()));
       
       Label serializationLabel = headerLabel(constants_.editingSerializationLabel());
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
@@ -649,8 +652,7 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.autoSaveOnIdle().setGlobalValue(autoSaveOnIdle_.getValue());
       prefs_.autoSaveIdleMs().setGlobalValue(StringUtil.parseInt(autoSaveIdleMs_.getValue(), 1000));
       prefs_.codeFormatter().setGlobalValue(codeFormatter_.getValue());
-      prefs_.reformatOnSave().setGlobalValue(reformatOnSave_.getValue());
-      prefs_.reformatOnSaveCommand().setGlobalValue(reformatOnSaveCommand_.getText());
+      prefs_.codeFormatterExternalCommand().setGlobalValue(reformatOnSaveCommand_.getText());
 
       return restartRequirement;
    }
@@ -711,7 +713,6 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget autoSaveOnIdle_;
    private final SelectWidget autoSaveIdleMs_;
    private final SelectWidget codeFormatter_;
-   private final CheckBox reformatOnSave_;
    private final FileChooserTextBox reformatOnSaveCommand_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
