@@ -689,25 +689,7 @@ Error formatDocumentImpl(
    };
    
    std::string formatType = prefs::userPrefs().codeFormatter();
-   if (formatType == kCodeFormatterExternal)
-   {
-      FilePath resolvedPath = module_context::resolveAliasedPath(documentPath);
-      std::string command = fmt::format(
-               "{} {}",
-               prefs::userPrefs().codeFormatterExternalCommand(),
-               shell_utils::escape(resolvedPath));
-      
-      error = module_context::processSupervisor().runCommand(
-               command,
-               options,
-               callbacks);
-
-      if (error)
-         return onError(error);
-   
-      return Success();
-   }
-   else if (formatType == kCodeFormatterStyler)
+   if (formatType == kCodeFormatterNone || formatType == kCodeFormatterStyler)
    {
       FilePath rScriptPath;
       error = module_context::rScriptPath(&rScriptPath);
@@ -737,6 +719,24 @@ Error formatDocumentImpl(
       if (error)
          return onError(error);
 
+      return Success();
+   }
+   else if (formatType == kCodeFormatterExternal)
+   {
+      FilePath resolvedPath = module_context::resolveAliasedPath(documentPath);
+      std::string command = fmt::format(
+               "{} {}",
+               prefs::userPrefs().codeFormatterExternalCommand(),
+               shell_utils::escape(resolvedPath));
+      
+      error = module_context::processSupervisor().runCommand(
+               command,
+               options,
+               callbacks);
+
+      if (error)
+         return onError(error);
+   
       return Success();
    }
    else

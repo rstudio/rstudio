@@ -65,7 +65,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
@@ -136,6 +135,19 @@ public class TextEditingTargetWidget
       events_ = events;
       sourceOnSave_ = new CheckBox();
       srcOnSaveLabel_ = new CheckboxLabel(sourceOnSave_, constants_.sourceOnSave()).getLabel();
+      
+      saveMenuButton_ =
+            new ToolbarPopupMenuButton(ToolbarButton.NoTitle, false, false);
+      
+      DocPropMenuItem reformatOnSaveMenuItem = new DocPropMenuItem(
+            constants_.reformatOnSave(),
+            docUpdateSentinel_,
+            false,
+            TextEditingTarget.REFORMAT_ON_SAVE,
+            DocUpdateSentinel.PROPERTY_TRUE);
+      
+      saveMenuButton_.addMenuItem(reformatOnSaveMenuItem, null);
+      
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
@@ -378,26 +390,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(sourceOnSave_);
       srcOnSaveLabel_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(srcOnSaveLabel_);
- 
-      boolean hasCodeFormatter =
-            userPrefs_.codeFormatter().getValue() != UserPrefsAccessor.CODE_FORMATTER_NONE;
-      
-      if (hasCodeFormatter)
-      {
-         ToolbarPopupMenuButton saveMenuButton =
-               new ToolbarPopupMenuButton(ToolbarButton.NoTitle, false, false);
-         saveMenuButton.addMenuItem(new DocPropMenuItem(
-               constants_.reformatOnSave(),
-               docUpdateSentinel_,
-               false,
-               TextEditingTarget.REFORMAT_ON_SAVE,
-               DocUpdateSentinel.PROPERTY_TRUE), null);
-         toolbar.addLeftWidget(saveMenuButton);
-      }
-      else
-      {
-         srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
-      }
+      toolbar.addLeftWidget(saveMenuButton_);
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(
@@ -892,6 +885,8 @@ public class TextEditingTargetWidget
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
       
+      boolean canReformatDocument = fileType.isR() || fileType.isRmd() || fileType.isQuartoMarkdown();
+      
       panel_.showSecondaryToolbar(isMarkdown);
 
       if (isScript && !terminalAllowed)
@@ -921,6 +916,7 @@ public class TextEditingTargetWidget
       codeTransform_.setVisible(
             (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
             fileType.isC() || fileType.isStan());
+      saveMenuButton_.setVisible(canReformatDocument);
 
       previewJsButton_.setVisible(fileType.isJS() && extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       previewSqlButton_.setVisible(fileType.isSql() && extendedType_.equals(SourceDocument.XT_SQL_PREVIEWABLE));
@@ -2104,6 +2100,7 @@ public class TextEditingTargetWidget
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;
+   private ToolbarPopupMenuButton saveMenuButton_;
    private TextEditorContainer editorContainer_;
    private DockLayoutPanel editorPanel_;
    private DocumentOutlineWidget docOutlineWidget_;

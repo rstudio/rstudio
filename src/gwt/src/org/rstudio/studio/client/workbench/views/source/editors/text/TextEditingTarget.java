@@ -8157,13 +8157,17 @@ public class TextEditingTarget implements
    
    private boolean formatOnSaveEnabled()
    {
+      // TODO: What should we do if a user tries to enable 'Reformat on Save' for a document
+      // without actually setting the code formatter? Should we just opt them into using
+      // the 'styler' formatter?
+      if (docUpdateSentinel_.hasProperty(TextEditingTarget.REFORMAT_ON_SAVE))
+         return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
+      
       String codeFormatter = prefs_.codeFormatter().getValue();
       if (codeFormatter == UserPrefsAccessor.CODE_FORMATTER_NONE)
          return false;
       
-      return docUpdateSentinel_.getBoolProperty(
-            TextEditingTarget.REFORMAT_ON_SAVE,
-            prefs_.reformatOnSave().getValue());
+      return prefs_.reformatOnSave().getValue();
    }
 
    private void executeRSourceCommand(boolean forceEcho, boolean focusAfterExec)
