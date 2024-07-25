@@ -4,8 +4,8 @@ pushd ..\..\..\src\gwt\lib
 
 if not exist quarto (
   echo "Cloning quarto repo"
-  git clone https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
-  REM git clone --branch release/rstudio-mountain-hydrangea https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
+  REM git clone https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
+  git clone --branch release/rstudio-cranberry-hibiscus https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
   pushd ..\..\..\src\gwt\lib\quarto
   git rev-parse HEAD
   popd
@@ -16,8 +16,8 @@ if not exist quarto (
   git fetch
   git reset --hard
   git clean -dfx
-  git checkout main
-  REM git checkout release/rstudio-mountain-hydrangea
+  REM git checkout main
+  git checkout release/rstudio-cranberry-hibiscus
   git pull
   git rev-parse HEAD
   popd
