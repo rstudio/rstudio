@@ -3790,6 +3790,51 @@ public class TextEditingTarget implements
    {
       visualMode_.activateDevTools();
    }
+   
+   @Handler
+   void onReformatDocument()
+   {
+      withActiveEditor((editor) ->
+      {
+         // Only allow if entire selection in R mode for now
+         if (!DocumentMode.isSelectionInRMode(editor))
+         {
+            showRModeWarning(commands_.reformatDocument().getLabel());
+            return;
+         }
+
+         String formatType = prefs_.codeFormatter().getValue();
+         if (StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+         {
+            Range currentRange = editor.getSelectionRange();
+            editor.setSelectionRange(Range.fromPoints(
+                  Position.create(0, 0),
+                  Position.create(editor.getCurrentLineCount() + 1, 0)));
+            new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
+            editor.setSelectionRange(currentRange);
+         }
+         else
+         {
+            server_.formatDocument(
+                  docUpdateSentinel_.getId(),
+                  docUpdateSentinel_.getPath(),
+                  new ServerRequestCallback<SourceDocument>()
+            {
+               @Override
+               public void onResponseReceived(SourceDocument document)
+               {
+                  revertEdits();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+         }
+      });
+   }
 
    @Handler
    void onReformatCode()
@@ -3799,7 +3844,7 @@ public class TextEditingTarget implements
          // Only allow if entire selection in R mode for now
          if (!DocumentMode.isSelectionInRMode(editor))
          {
-            showRModeWarning("Reformat Code");
+            showRModeWarning(commands_.reformatCode().getLabel());
             return;
          }
 

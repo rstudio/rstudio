@@ -26,6 +26,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand reformatDocument() {
+        return null;
+    }
+
+    @Override
     public AppCommand newSourceDoc() {
         return null;
     }

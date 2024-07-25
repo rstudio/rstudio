@@ -330,10 +330,6 @@
 .rs.addFunction("generateStylerFormatDocumentScript", function(documentPath,
                                                                scriptPath)
 {
-   # REMOVE ME: only invoke on files in 'scratch' directory for now
-   if (!grepl("/scratch/", documentPath))
-      return()
-   
    # only invoke 'styler' on supported file types
    ext <- tools::file_ext(documentPath)
    if (!tolower(ext) %in% c("r", "rmd", "rmarkdown", "qmd", "rnw"))

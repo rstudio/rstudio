@@ -2397,6 +2397,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.vcsBlameOnGitHub());
       dynamicCommands_.add(commands_.editRmdFormatOptions());
       dynamicCommands_.add(commands_.reformatCode());
+      dynamicCommands_.add(commands_.reformatDocument());
       dynamicCommands_.add(commands_.showDiagnosticsActiveDocument());
       dynamicCommands_.add(commands_.renameInScope());
       dynamicCommands_.add(commands_.insertRoxygenSkeleton());
