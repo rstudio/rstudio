@@ -328,7 +328,8 @@
 })
 
 .rs.addFunction("generateStylerFormatDocumentScript", function(documentPath,
-                                                               scriptPath) {
+                                                               scriptPath)
+{
    # only invoke 'styler' on supported file types
    ext <- tools::file_ext(documentPath)
    if (!tolower(ext) %in% c("r", "rmd", "rmarkdown", "qmd", "rnw"))
