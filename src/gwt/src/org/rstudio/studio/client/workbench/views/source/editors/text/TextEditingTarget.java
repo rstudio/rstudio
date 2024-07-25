@@ -8133,25 +8133,23 @@ public class TextEditingTarget implements
             // check for format on save
             if (formatOnSave && formatOnSaveEnabled())
             {
-               {
-                  server_.formatDocument(
-                        docUpdateSentinel_.getId(),
-                        docUpdateSentinel_.getPath(),
-                        new ServerRequestCallback<SourceDocument>()
+               server_.formatDocument(
+                     docUpdateSentinel_.getId(),
+                     docUpdateSentinel_.getPath(),
+                     new ServerRequestCallback<SourceDocument>()
+                     {
+                        @Override
+                        public void onResponseReceived(SourceDocument response)
                         {
-                           @Override
-                           public void onResponseReceived(SourceDocument response)
-                           {
-                              revertEdits();
-                           }
+                           revertEdits();
+                        }
 
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              Debug.logError(error);
-                           }
-                        });
-               }
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                        }
+                     });
             }
          }
       };
