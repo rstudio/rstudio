@@ -318,36 +318,39 @@
    )
 })
 
-.rs.addFunction("getSourceDocumentProperties", function(path, includeContents = FALSE)
-{
-   if (is.null(path) || !file.exists(path))
+.rs.addFunction("getSourceDocumentProperties", function(path, includeContents = FALSE) {
+   if (is.null(path) || !file.exists(path)) {
       return(NULL)
-   
+   }
+
    path <- normalizePath(path, winslash = "/", mustWork = TRUE)
    .Call("rs_getDocumentProperties", path, includeContents)
 })
 
 .rs.addFunction("generateStylerFormatDocumentScript", function(documentPath,
-                                                               scriptPath)
-{
+                                                               scriptPath) {
    # only invoke 'styler' on supported file types
    ext <- tools::file_ext(documentPath)
    if (!tolower(ext) %in% c("r", "rmd", "rmarkdown", "qmd", "rnw"))
       return()
-   
+
+   # figure out where 'styler' is installed
+   stylerPath <- find.package("styler")
+   libraryPaths <- .libPaths(c(dirname(stylerPath), .libPaths()))
+
    # create a tidyverse style guide, using the current indentation settings
    indent <- .rs.readUserPref("num_spaces_for_tab", 2L)
    strict <- .rs.readUserPref("code_formatter_styler_strict", TRUE)
-   
+
    # generate and write code to file
    expr <- rlang::expr({
+      .libPaths(!!libraryPaths)
       styler::style_file(
          path = !!documentPath,
          indent_by = !!indent,
          strict = !!strict
       )
    })
-   
+
    writeLines(deparse(expr), con = scriptPath)
 })
-
