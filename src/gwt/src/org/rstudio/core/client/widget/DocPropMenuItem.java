@@ -16,25 +16,32 @@ package org.rstudio.core.client.widget;
 
 import java.util.HashMap;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 
 public class DocPropMenuItem extends CheckableMenuItem
 { 
-   public DocPropMenuItem(String label, DocUpdateSentinel docUpdate, 
-                          boolean defaultChecked, String propName, String targetValue)
+   public DocPropMenuItem(String label,
+                          DocUpdateSentinel docUpdate, 
+                          boolean defaultChecked,
+                          String propName,
+                          String targetValue)
    {
       this(label, false, docUpdate, defaultChecked, propName, targetValue);
    }
    
-   public DocPropMenuItem(String label, boolean html, DocUpdateSentinel docUpdate, 
-         boolean defaultChecked, String propName, String targetValue)
+   public DocPropMenuItem(String label,
+                          boolean html,
+                          DocUpdateSentinel docUpdate, 
+                          boolean defaultChecked,
+                          String propName,
+                          String targetValue)
    {
       super(label, html);
       docUpdate_ = docUpdate;

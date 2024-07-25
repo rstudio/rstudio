@@ -2121,4 +2121,14 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("Copilot: Automatic completions have been disabled.")
     @Key("copilotDisabled")
     String copilotDisabled();
+    
+    /**
+     * Translated "Reformat on Save"
+     *
+     * @return translated "Reformat on Save"
+     */
+    @DefaultMessage("Reformat on Save")
+    @Key("reformatOnSave")
+    String reformatOnSave();
+    
 }

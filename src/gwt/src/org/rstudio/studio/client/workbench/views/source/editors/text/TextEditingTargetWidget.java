@@ -17,22 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.animation.client.Animation;
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.*;
-import com.google.gwt.core.client.GWT;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
@@ -48,7 +32,18 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.CheckboxLabel;
+import org.rstudio.core.client.widget.DocPropMenuItem;
+import org.rstudio.core.client.widget.DocShadowPropMenuItem;
+import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
+import org.rstudio.core.client.widget.InfoBar;
+import org.rstudio.core.client.widget.LatchingToolbarButton;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.ToolbarPopupMenuButton;
+import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -70,6 +65,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
@@ -84,6 +80,29 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+
+import com.google.gwt.animation.client.Animation;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.Widget;
 
 public class TextEditingTargetWidget
       extends ResizeComposite
@@ -357,8 +376,28 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.saveSourceDoc(), column_).createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
-      srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
+      srcOnSaveLabel_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(srcOnSaveLabel_);
+ 
+      boolean hasCodeFormatter =
+            userPrefs_.codeFormatter().getValue() != UserPrefsAccessor.CODE_FORMATTER_NONE;
+      
+      if (hasCodeFormatter)
+      {
+         ToolbarPopupMenuButton saveMenuButton =
+               new ToolbarPopupMenuButton(ToolbarButton.NoTitle, false, false);
+         saveMenuButton.addMenuItem(new DocPropMenuItem(
+               constants_.reformatOnSave(),
+               docUpdateSentinel_,
+               false,
+               TextEditingTarget.REFORMAT_ON_SAVE,
+               DocUpdateSentinel.PROPERTY_TRUE), null);
+         toolbar.addLeftWidget(saveMenuButton);
+      }
+      else
+      {
+         srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
+      }
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(

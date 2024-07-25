@@ -276,6 +276,8 @@ public class TextEditingTarget implements
          extends CommandBinder<Commands, TextEditingTarget>
    {
    }
+   
+   public static final String REFORMAT_ON_SAVE = "reformatOnSave";
 
    private static final String NOTEBOOK_TITLE = "notebook_title";
    private static final String NOTEBOOK_AUTHOR = "notebook_author";
@@ -8129,12 +8131,8 @@ public class TextEditingTarget implements
             }
             
             // check for format on save
-            if (formatOnSave)
+            if (formatOnSave && formatOnSaveEnabled())
             {
-               boolean formatOnSavePref = prefs_.reformatOnSave().getValue();
-               String formatType = prefs_.codeFormatter().getValue();
-               if (formatOnSavePref &&
-                     !StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
                {
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),
@@ -8157,6 +8155,17 @@ public class TextEditingTarget implements
             }
          }
       };
+   }
+   
+   private boolean formatOnSaveEnabled()
+   {
+      String codeFormatter = prefs_.codeFormatter().getValue();
+      if (codeFormatter == UserPrefsAccessor.CODE_FORMATTER_NONE)
+         return false;
+      
+      return docUpdateSentinel_.getBoolProperty(
+            TextEditingTarget.REFORMAT_ON_SAVE,
+            prefs_.reformatOnSave().getValue());
    }
 
    private void executeRSourceCommand(boolean forceEcho, boolean focusAfterExec)
