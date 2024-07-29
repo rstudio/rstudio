@@ -11,7 +11,8 @@ identify what work is needed.
 
 ## Usage
 
-The tool requires `node.js` **VERSION 16.x** and works on Mac, Windows, or Linux.
+The tool requires `node.js` on the path and works on Mac, Windows, or Linux. Recommend
+node.js 20.15.1 or newer but any recent node.js should work.
 
 ```bash
 cd rstudio/src/gwt/tools/locdiff
