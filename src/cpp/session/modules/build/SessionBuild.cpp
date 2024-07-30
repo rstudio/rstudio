@@ -36,6 +36,9 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
+#include <session/SessionOptions.hpp>
+#include "../modules/rmarkdown/SessionRMarkdown.hpp"
+
 #ifdef _WIN32
 # include <core/r_util/RToolsInfo.hpp>
 #endif
@@ -47,10 +50,9 @@
 #include <r/session/RSessionUtils.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
-#include <session/SessionModuleContext.hpp>
-#include <session/SessionOptions.hpp>
-#include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionModuleContext.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #include "SessionBuildErrors.hpp"
@@ -354,7 +356,7 @@ private:
             core::system::setenv(&environment, "R_LIBS", rLibs);
 
          // pass along RSTUDIO_VERSION
-         core::system::setenv(&environment, "RSTUDIO_VERSION", module_context::rstudioVersion(true));
+         core::system::setenv(&environment, "RSTUDIO_VERSION", modules::rmarkdown::parsableRStudioVersion());
          core::system::setenv(&environment, "RSTUDIO_LONG_VERSION", RSTUDIO_VERSION);
 
          options.environment = environment;
