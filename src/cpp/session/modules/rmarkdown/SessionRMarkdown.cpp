@@ -20,6 +20,8 @@
 #include <gsl/gsl>
 
 #include "SessionRmdNotebook.hpp"
+#include "../SessionHTMLPreview.hpp"
+#include "../build/SessionBuildErrors.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string.hpp>
@@ -57,7 +59,6 @@
 
 #include "SessionBlogdown.hpp"
 #include "RMarkdownPresentation.hpp"
-#include "../SessionHTMLPreview.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
@@ -618,7 +619,7 @@ private:
          LOG_ERROR(error);
 
       // pass along the RSTUDIO_VERSION
-      environment.push_back(std::make_pair("RSTUDIO_VERSION", module_context::rstudioVersion(true)));
+      environment.push_back(std::make_pair("RSTUDIO_VERSION", parsableRStudioVersion()));
       environment.push_back(std::make_pair("RSTUDIO_LONG_VERSION", RSTUDIO_VERSION));
 
       // inform that this runs in the Render pane
