@@ -7,7 +7,7 @@ on.exit(.rs.automation.deleteRemote(), add = TRUE)
 # https://github.com/rstudio/rstudio/issues/14784
 test_that("autocompletion doesn't trigger active bindings", {
    
-   code <- .rs.heredoc(r'{
+   code <- .rs.heredoc('
       Test <- R6::R6Class("Test",
         active  = list(active_test  = function(value) print("active")),
         private = list(private_test = function(value) print("private")),
@@ -16,7 +16,7 @@ test_that("autocompletion doesn't trigger active bindings", {
       
       n <- Test$new()
       nms <- .rs.getNames(n)
-   }')
+   ')
    
    remote$consoleExecute(code)
    output <- remote$consoleOutput()
