@@ -427,7 +427,8 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.runDocumentFromServerDotR(), column_).createToolbarButton());
 
       ToolbarPopupMenu shinyTestMenu = shinyTestMenu_;
-      if (fileType.canKnitToHTML()) {
+      if (fileType.canKnitToHTML())
+      {
          shinyLaunchButton_ = new ToolbarMenuButton(
                ToolbarButton.NoText,
                constants_.shinyTestOptions(),
@@ -836,6 +837,8 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.reindent(), column_).createMenuItem());
          menu.addItem(
          mgr.getSourceCommand(commands_.reformatCode(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.reformatDocument(), column_).createMenuItem());
          menu.addSeparator();
          menu.addItem(
          mgr.getSourceCommand(commands_.showDiagnosticsActiveDocument(), column_).createMenuItem());
