@@ -364,7 +364,7 @@ pipeline {
                         script {
                           if (FLAVOR == "Electron") {
                             utils.publishToDailiesSite TAR_PACKAGE_FILE, "${DAILIES_PATH}-xcopy", AWS_PATH
-                            utils.optionalPublishToDailies PACKAGE_FILE, "${DAILIES_PATH}-xcopy", AWS_PATH
+                            utils.optionalPublishToDailies TAR_PACKAGE_FILE, "${DAILIES_PATH}-xcopy", AWS_PATH
                           }
                         }
                       }
