@@ -156,7 +156,8 @@ void setProcessLimits(ProcessLimits limits);
 struct ProcessConfig
 {
    ProcessConfig()
-      : stdStreamBehavior(StdStreamInherit)
+      : stdStreamBehavior(StdStreamInherit),
+        user(User(true))
    {
    }
    core::system::Options args;
@@ -164,6 +165,7 @@ struct ProcessConfig
    std::string stdInput;
    StdStreamBehavior stdStreamBehavior;
    ProcessLimits limits;
+   User user;
 };
 
 core::Error waitForProcessExit(PidType processId);
