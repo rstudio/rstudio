@@ -455,6 +455,7 @@ public class FileTypeRegistry
       register("*.clojure", CLOJURE, new ImageResource2x(icons.iconClojure2x()));
       register("*.coffee", COFFEE, new ImageResource2x(icons.iconCoffee2x()));
       register("*.cs", CSHARP, new ImageResource2x(icons.iconCsharp2x()));
+      register("*.f", FORTRAN, new ImageResource2x(icons.iconFortran2x()));
       register("*.f90", FORTRAN, new ImageResource2x(icons.iconFortran2x()));
       register("*.f95", FORTRAN, new ImageResource2x(icons.iconFortran2x()));
       register("*.f03", FORTRAN, new ImageResource2x(icons.iconFortran2x()));
