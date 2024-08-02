@@ -9,8 +9,8 @@ test_that("Documents can be reformatted on save", {
    
    remote$consoleExecute(".rs.writeUserPref(\"reformat_on_save\", TRUE)")
    remote$consoleExecute(".rs.writeUserPref(\"code_formatter\", \"styler\")")
-   
-   documentContents <- .rs.heredoc('2+2')
+
+   documentContents <- .rs.heredoc("2+2")
    
    remote$documentOpen(".R", documentContents)
    editor <- remote$editorGetInstance()

@@ -3870,7 +3870,13 @@ public class TextEditingTarget implements
             withReformatDependencies(() ->
             {
                Range range = editor.getSelectionRange();
-               String selection = editor.getSelectionValue();
+               if (range.getStart().getRow() != range.getEnd().getRow())
+               {
+                  range.getStart().setColumn(0);
+                  range.getEnd().setColumn(Integer.MAX_VALUE);
+               }
+               
+               String selection = editor.getTextForRange(range);
                server_.formatCode(selection, new ServerRequestCallback<String>()
                {
                   @Override
