@@ -20,7 +20,7 @@ fi
 if $install_cmake ; then
  	CMAKE_VERSION=cmake-3.25.2
 	CMAKE_TARBALL=$CMAKE_VERSION.tar.gz
-	wget http://www.cmake.org/files/v3.25/$CMAKE_TARBALL
+	wget https://www.cmake.org/files/v3.25/$CMAKE_TARBALL
 	tar xf $CMAKE_TARBALL
 	cd $CMAKE_VERSION
 	./bootstrap 

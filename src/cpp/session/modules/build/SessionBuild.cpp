@@ -36,6 +36,9 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
+#include <session/SessionOptions.hpp>
+#include "../modules/rmarkdown/SessionRMarkdown.hpp"
+
 #ifdef _WIN32
 # include <core/r_util/RToolsInfo.hpp>
 #endif
@@ -47,10 +50,9 @@
 #include <r/session/RSessionUtils.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
-#include <session/SessionModuleContext.hpp>
-#include <session/SessionOptions.hpp>
-#include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionModuleContext.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #include "SessionBuildErrors.hpp"
@@ -354,7 +356,7 @@ private:
             core::system::setenv(&environment, "R_LIBS", rLibs);
 
          // pass along RSTUDIO_VERSION
-         core::system::setenv(&environment, "RSTUDIO_VERSION", module_context::rstudioVersion(true));
+         core::system::setenv(&environment, "RSTUDIO_VERSION", modules::rmarkdown::parsableRStudioVersion());
          core::system::setenv(&environment, "RSTUDIO_LONG_VERSION", RSTUDIO_VERSION);
 
          options.environment = environment;
@@ -979,9 +981,11 @@ private:
                  const core::system::ProcessOptions& pkgOptions,
                  const core::system::ProcessCallbacks& cb)
    {
+      Error error;
+      
       // Find the path to R
       FilePath rProgramPath;
-      Error error = module_context::rScriptPath(&rProgramPath);
+      error = module_context::rScriptPath(&rProgramPath);
       if (error)
       {
          terminateWithError("attempting to locate R binary", error);
@@ -993,9 +997,26 @@ private:
       if (vanilla)
          args.push_back("--vanilla");
 
-      args.push_back("-s");
-      args.push_back("-e");
-      args.push_back(command);
+      // build script to be executed
+      std::string scriptPath;
+      error = r::exec::RFunction(".rs.generateCommandScript")
+            .addUtf8Param(command)
+            .callUtf8(&scriptPath);
+      
+      if (error)
+      {
+         // fall back to executing command directly, just in case
+         args.push_back("-s");
+         args.push_back("-e");
+         args.push_back(command);
+      }
+      else
+      {
+         // execute command from script
+         args.push_back("-s");
+         args.push_back("-f");
+         args.push_back(scriptPath);
+      }
 
       // run it
       module_context::processSupervisor().runProgram(

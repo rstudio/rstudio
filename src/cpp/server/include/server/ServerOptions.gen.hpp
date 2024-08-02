@@ -102,6 +102,9 @@ protected:
       ("www-port",
       value<std::string>(&wwwPort_)->default_value(""),
       "The port that RStudio Server will bind to while listening for incoming connections. If left empty, the port will be automatically determined based on your SSL settings (443 for SSL, 80 for no SSL).")
+      ("www-socket",
+      value<std::string>(&wwwSocket_)->default_value(""),
+      "The socket that RStudio Server will bind to while listening for incoming connections. If left empty, a socket will not be used but a port instead.")
       ("www-root-path",
       value<std::string>(&wwwRootPath_)->default_value(kRequestDefaultRootPath),
       "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL.")
@@ -303,6 +306,7 @@ protected:
    std::vector<std::string> serverAddHeaders_;
    std::string wwwAddress_;
    std::string wwwPort_;
+   std::string wwwSocket_;
    std::string wwwRootPath_;
    std::string wwwLocalPath_;
    std::string wwwSymbolMapsPath_;

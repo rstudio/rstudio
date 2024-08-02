@@ -33,7 +33,7 @@ info "QUARTO_DIR: ${QUARTO_DIR}"
 if ! test -e "$QUARTO_DIR"; then
   echo "Cloning quarto repo"
   git clone https://github.com/quarto-dev/quarto.git "$QUARTO_DIR"
-  # git clone --branch release/rstudio-mountain-hydrangea https://github.com/quarto-dev/quarto.git "$QUARTO_DIR"
+  # git clone --branch release/rstudio-cranberry-hibiscus https://github.com/quarto-dev/quarto.git "$QUARTO_DIR"
   pushd $QUARTO_DIR
   git rev-parse HEAD
   popd
@@ -44,7 +44,7 @@ else
   git fetch
   git reset --hard && git clean -dfx
   git checkout main
-  # git checkout release/rstudio-mountain-hydrangea
+  # git checkout release/rstudio-cranberry-hibiscus
   git pull
   git rev-parse HEAD
   popd

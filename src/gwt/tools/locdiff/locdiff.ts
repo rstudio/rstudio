@@ -15,7 +15,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import glob from 'glob';
+import { glob } from 'glob';
 import readline from 'readline';
 import { createObjectCsvWriter } from 'csv-writer'
 
@@ -115,10 +115,6 @@ async function main() {
         }
         if (newFRPropFile?.strings.has(stringId)) {
           currentFRString = newFRPropFile.strings.get(stringId) ?? '';
-        }
-
-        if (stringId === 'quartoBlogTitle') {
-          console.log(`quartoBlogTitle: ${newENString} ${oldENPropFile.strings.get(stringId) ?? ''}`)
         }
 
         // did this string exist before?

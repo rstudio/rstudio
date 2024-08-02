@@ -108,6 +108,12 @@ pipeline {
                   if (status == "failure") {
                     throw new Exception("Snyk Code Scan failed")
                   }   
+                } else {
+                  utils.postReviewCheck(
+                    title: 'Snyk Code Scan',
+                    status: 'skipped',
+                    details: 'No code to scan',
+                  )
                 }
               }
             }
