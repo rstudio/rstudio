@@ -178,10 +178,13 @@ public class VirtualConsole
 
    private void backspace()
    {
+      backspace(1);
+   }
+   
+   private void backspace(int count)
+   {
       clearPartialAnsiCode();
-      if (cursor_ == 0)
-         return;
-      cursor_--;
+      cursor_ = Math.max(0, cursor_ - count);
    }
 
    private void carriageReturn()
@@ -645,20 +648,20 @@ public class VirtualConsole
             case '\f':
                formfeed();
                break;
-            case '\033':
-            case '\233':
+            case '\033': // \x1b
+            case '\233': // \x9b
 
                // VirtualConsole only supports ANSI SGR codes (colors, font, etc).
                // We want to identify and act on these codes, while discarding the codes
                // we don't support. Tricky part is we might get codes split across
                // submit calls.
 
-               // match hyperlink, either start or end (if [url] is empty
-               // <ESC> ] 8 ; [params] ; [url] \7
                if (ansi_ == null)
                   ansi_ = new AnsiCode();
                
                
+               // match hyperlink, either start or end (if [url] is empty
+               // <ESC> ] 8 ; [params] ; [url] \7
                HyperlinkMatch hyperlinkMatch = HyperlinkMatch.create(data, pos);
                if (hyperlinkMatch != null)
                {
@@ -676,6 +679,26 @@ public class VirtualConsole
                   }
 
                   tail = hyperlinkMatch.endIndex_;
+                  break;
+               }
+               
+               // match complete CSI codes
+               Match csiMatch = AnsiCode.CSI_PATTERN.match(data, pos);
+               if (csiMatch != null)
+               {
+                  int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
+                  String command = csiMatch.getGroup(2);
+                  
+                  if (command == "C")
+                  {
+                     cursor_ = Math.min(output_.length(), cursor_ + n);
+                  }
+                  else if (command == "D")
+                  {
+                     cursor_ = Math.max(0, cursor_ - n);
+                  }
+                  
+                  tail = pos + csiMatch.getValue().length();
                   break;
                }
                
