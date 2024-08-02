@@ -339,7 +339,7 @@
    stylerPath <- find.package("styler")
    libraryPaths <- .libPaths(c(dirname(stylerPath), .libPaths()))
 
-   # create a tidyverse style guide, using the current indentation settings
+   # create a tidyverse styler, using the current indentation settings
    indent <- .rs.readUserPref("num_spaces_for_tab", 2L)
    strict <- .rs.readUserPref("code_formatter_styler_strict", TRUE)
 

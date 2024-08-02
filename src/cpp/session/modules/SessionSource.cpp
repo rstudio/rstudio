@@ -704,9 +704,8 @@ Error formatDocumentImpl(
       if (error)
          return onError(error);
 
-      // TODO: Log 'file not found error' after done testing
       else if (!formatScriptPath.exists())
-         return onError(Success());
+         return onError(fileNotFoundError(formatScriptPath, ERROR_LOCATION));
 
       // TODO: How should we handle the case where a formatter is already
       // running on the current file?
