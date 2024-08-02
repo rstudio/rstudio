@@ -318,10 +318,10 @@
    )
 })
 
-.rs.addFunction("getSourceDocumentProperties", function(path, includeContents = FALSE) {
-   if (is.null(path) || !file.exists(path)) {
+.rs.addFunction("getSourceDocumentProperties", function(path, includeContents = FALSE)
+{
+   if (is.null(path) || !file.exists(path))
       return(NULL)
-   }
 
    path <- normalizePath(path, winslash = "/", mustWork = TRUE)
    .Call("rs_getDocumentProperties", path, includeContents)
