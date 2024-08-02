@@ -15,7 +15,7 @@ This page provides the release notes associated with each release of RStudio and
 - Added a Generic Architectures page to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
 - Added an AWS Single Server reference architecture to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
 - Added an AWS EKS reference architecture to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
-- Added an Background Jobs vs Workbench jobs page to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
+- Added a Background Jobs vs Workbench jobs page to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
 
 ### Fixed
 
