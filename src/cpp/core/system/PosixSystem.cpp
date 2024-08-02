@@ -2214,6 +2214,27 @@ Error launchChildProcess(std::string path,
                          ProcessConfigFilter configFilter,
                          PidType* pProcessId)
 {
+   // Ensure the config.user is populated before the fork so runProcess is not accessing the password db in the
+   // weird after-fork-before-exec state (i.e. skip the getCurrentUser call in runProcess)
+   if (config.user.isEmpty())
+   {
+      if (!runAsUser.empty())
+      {
+         Error error = getUserFromUsername(runAsUser, config.user);
+         if (error)
+         {
+            LOG_DEBUG_MESSAGE("Error from getUserFromUsername in launchChildProcess: " + error.asString());
+            return error;
+         }
+      }
+      else
+      {
+         Error error = User::getCurrentUser(config.user);
+         if (error)
+            return error;
+      }
+   }
+
    PidType pid = ::fork();
 
    // error
@@ -2286,12 +2307,21 @@ Error runProcess(const std::string& path,
    if (error)
       return error;
 
-   // get current user (before closing file handles since
-   // we might be using a PAM module that has open FDs...)
    User user;
-   error = User::getCurrentUser(user);
-   if (error)
-      return error;
+
+   // Hopefully, not calling getCurrentUser since this is "after fork, before exec" and life here is wonky
+   if (config.user.isEmpty())
+   {
+      // get current user (before closing file handles since
+      // we might be using a PAM module that has open FDs...)
+      error = User::getCurrentUser(user);
+      if (error)
+         return error;
+   }
+   else
+   {
+      user = config.user;
+   }
 
    // if we don't have privilege, the only user we can run as is ourselves, so if runAsUser is
    // specified, make sure it's the same account we're running from.
