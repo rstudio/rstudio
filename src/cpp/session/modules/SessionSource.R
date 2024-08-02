@@ -342,6 +342,11 @@
    # create a tidyverse styler, using the current indentation settings
    indent <- .rs.readUserPref("num_spaces_for_tab", 2L)
    strict <- .rs.readUserPref("code_formatter_styler_strict", TRUE)
+   
+   # try to infer the base indentation
+   contents <- readLines(documentPath, warn = FALSE)
+   indents <- regexpr("\\S", contents, perl = TRUE)
+   baseIndent <- min(indents[indents >= 0]) - 1L
 
    # generate and write code to file
    expr <- rlang::expr({
@@ -349,7 +354,8 @@
       styler::style_file(
          path = !!documentPath,
          indent_by = !!indent,
-         strict = !!strict
+         strict = !!strict,
+         base_indention = !!baseIndent
       )
    })
 
