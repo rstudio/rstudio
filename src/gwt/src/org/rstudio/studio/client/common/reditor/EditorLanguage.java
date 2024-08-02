@@ -88,6 +88,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", false, true);
    public static final EditorLanguage LANG_CSHARP = new EditorLanguage("ace/mode/csharp", false, true);
    public static final EditorLanguage LANG_DOCKERFILE = new EditorLanguage("ace/mode/dockerfile", false, true);
+   public static final EditorLanguage LANG_FORTRAN = new EditorLanguage("ace/mode/fortran", false, true);
    public static final EditorLanguage LANG_GITIGNORE = new EditorLanguage("ace/mode/gitignore", false, false);
    public static final EditorLanguage LANG_GO = new EditorLanguage("ace/mode/golang", false, true);
    public static final EditorLanguage LANG_GROOVY = new EditorLanguage("ace/mode/groovy", false, true);

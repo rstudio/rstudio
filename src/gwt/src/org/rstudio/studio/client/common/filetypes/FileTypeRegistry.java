@@ -221,6 +221,11 @@ public class FileTypeRegistry
          new TextFileType("dockerfile", "Dockerfile", EditorLanguage.LANG_DOCKERFILE, "Dockerfile", new ImageResource2x(ICONS.iconDockerfile2x()),
                WordWrap.DEFAULT, false, false, false, false,
                false, false, false, false, false, false, false, false);
+ 
+   public static final TextFileType FORTRAN =
+         new TextFileType("fortran", "Fortran", EditorLanguage.LANG_FORTRAN, ".f", new ImageResource2x(ICONS.iconFortran2x()),
+               WordWrap.DEFAULT, false, false, false, false,
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType GITIGNORE =
          new TextFileType("gitignore", "Gitignore", EditorLanguage.LANG_GITIGNORE, ".gitignore", new ImageResource2x(ICONS.iconGitignore2x()),
@@ -450,6 +455,10 @@ public class FileTypeRegistry
       register("*.clojure", CLOJURE, new ImageResource2x(icons.iconClojure2x()));
       register("*.coffee", COFFEE, new ImageResource2x(icons.iconCoffee2x()));
       register("*.cs", CSHARP, new ImageResource2x(icons.iconCsharp2x()));
+      register("*.f", FORTRAN, new ImageResource2x(icons.iconFortran2x()));
+      register("*.f90", FORTRAN, new ImageResource2x(icons.iconFortran2x()));
+      register("*.f95", FORTRAN, new ImageResource2x(icons.iconFortran2x()));
+      register("*.f03", FORTRAN, new ImageResource2x(icons.iconFortran2x()));
       register(".gitignore", GITIGNORE, new ImageResource2x(icons.iconGitignore2x()));
       register("*.go", GO, new ImageResource2x(icons.iconGo2x()));
       register("*.groovy", GROOVY, new ImageResource2x(icons.iconGroovy2x()));

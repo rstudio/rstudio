@@ -161,6 +161,9 @@ public interface FileIconResources extends ClientBundle
    @Source("iconCsharp_2x.png")
    ImageResource iconCsharp2x();
 
+   @Source("iconFortran_2x.png")
+   ImageResource iconFortran2x();
+   
    @Source("iconGitignore_2x.png")
    ImageResource iconGitignore2x();
 
