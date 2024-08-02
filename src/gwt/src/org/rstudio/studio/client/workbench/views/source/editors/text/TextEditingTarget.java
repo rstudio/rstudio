@@ -3791,18 +3791,24 @@ public class TextEditingTarget implements
       visualMode_.activateDevTools();
    }
    
+   private void withReformatDependencies(Command command)
+   {
+      String formatter = prefs_.codeFormatter().getValue();
+      if (StringUtil.equals(formatter, UserPrefsAccessor.CODE_FORMATTER_STYLER))
+      {
+         dependencyManager_.withStyler(command);
+      }
+      else
+      {
+         command.execute();
+      }
+   }
+   
    @Handler
    void onReformatDocument()
    {
       withActiveEditor((editor) ->
       {
-         // Only allow if entire selection in R mode for now
-         if (!DocumentMode.isSelectionInRMode(editor))
-         {
-            showRModeWarning(commands_.reformatDocument().getLabel());
-            return;
-         }
-
          String formatType = prefs_.codeFormatter().getValue();
          if (StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
          {
@@ -3815,22 +3821,28 @@ public class TextEditingTarget implements
          }
          else
          {
-            server_.formatDocument(
-                  docUpdateSentinel_.getId(),
-                  docUpdateSentinel_.getPath(),
-                  new ServerRequestCallback<SourceDocument>()
+            withReformatDependencies(() ->
             {
-               @Override
-               public void onResponseReceived(SourceDocument document)
+               withSavedDoc(() ->
                {
-                  revertEdits();
-               }
+                  server_.formatDocument(
+                        docUpdateSentinel_.getId(),
+                        docUpdateSentinel_.getPath(),
+                        new ServerRequestCallback<SourceDocument>()
+                        {
+                           @Override
+                           public void onResponseReceived(SourceDocument document)
+                           {
+                              revertEdits();
+                           }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                           }
+                        });
+               });
             });
          }
       });
@@ -3855,21 +3867,24 @@ public class TextEditingTarget implements
          }
          else
          {
-            Range range = editor.getSelectionRange();
-            String selection = editor.getSelectionValue();
-            server_.formatCode(selection, new ServerRequestCallback<String>()
+            withReformatDependencies(() ->
             {
-               @Override
-               public void onResponseReceived(String response)
+               Range range = editor.getSelectionRange();
+               String selection = editor.getSelectionValue();
+               server_.formatCode(selection, new ServerRequestCallback<String>()
                {
-                  editor.replaceRange(range, response);
-               }
+                  @Override
+                  public void onResponseReceived(String response)
+                  {
+                     editor.replaceRange(range, response);
+                  }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             });
          }
       });

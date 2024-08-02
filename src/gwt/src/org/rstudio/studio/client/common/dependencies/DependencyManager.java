@@ -387,6 +387,25 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         }
      );
    }
+   
+   public void withStyler(final Command command)
+   {
+      withDependencies(
+            constants_.withStylerCaption(),
+            constants_.withStylerUserAction(),
+            getFeatureDescription("styler"),
+            getFeatureDependencies("styler"),
+            false,
+            new CommandWithArg<Boolean>()
+            {
+               @Override
+               public void execute(Boolean succeeded)
+               {
+                  if (succeeded)
+                     command.execute();
+               }
+            });
+   }
 
    @Override
    public void onInstallShiny(InstallShinyEvent event)

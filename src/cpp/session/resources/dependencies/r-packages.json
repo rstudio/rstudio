@@ -290,6 +290,11 @@
             "location": "cran",
             "source": false
         },
+        "styler": {
+            "version": "1.10.3",
+            "location": "cran",
+            "source": false
+        },
         "testthat": {
             "version": "2.0.0",
             "location": "cran",
@@ -443,6 +448,13 @@
                 "rstan"
             ]
         },
+        "styler": {
+            "description": "styler",
+            "packages": [
+                "styler"
+            ]
+        },
+
         "tinytex": {
             "description": "TinyTeX",
             "packages": [

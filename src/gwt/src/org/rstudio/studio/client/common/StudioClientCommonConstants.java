@@ -1481,6 +1481,24 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String withShinyAddinsUserAction();
 
     /**
+     * Translated "Formatting with styler".
+     *
+     * @return translated "Formatting with styler"
+     */
+    @DefaultMessage("Formatting with styler CAPTION")
+    @Key("withStylerCaption")
+    String withStylerCaption();
+
+    /**
+     * Translated "Formatting with styler".
+     *
+     * @return translated "Formatting with styler"
+     */
+    @DefaultMessage("Formatting with styler ACTION")
+    @Key("withStylerUserAction")
+    String withStylerUserAction();
+
+    /**
      * Translated "Preparing import from CSV".
      *
      * @return translated "Preparing import from CSV"
