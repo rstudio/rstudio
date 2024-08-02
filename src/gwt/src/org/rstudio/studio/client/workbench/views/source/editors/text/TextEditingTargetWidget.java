@@ -593,7 +593,7 @@ public class TextEditingTargetWidget
          toolbar.addRightSeparator();
          publishButton_ = new RSConnectPublishButton(
                RSConnectPublishButton.HOST_EDITOR,
-               RSConnect.CONTENT_TYPE_APP, false, null);
+               RSConnect.CONTENT_TYPE_APP, true, null);
          publishButton_.onPublishInvoked(() ->
          {
             if (!StringUtil.isNullOrEmpty(target_.getPath()))
@@ -1105,17 +1105,18 @@ public class TextEditingTargetWidget
       
       texToolbarButton_.setText(width >= 520, constants_.format());
       runButton_.setText(((width >= 480) && !(isShinyFile() || isPyShinyFile())), constants_.run());
-      compilePdfButton_.setText(width >= 450, constants_.compilePdf());
-      previewHTMLButton_.setText(width >= 450, previewCommandText_);
-      knitDocumentButton_.setText(width >= 450, knitCommandText_);
-      quartoRenderButton_.setText(width >= 450, quartoCommandText_);
+      compilePdfButton_.setText(width >= 560, constants_.compilePdf());
+      previewHTMLButton_.setText(width >= 560, previewCommandText_);
+      knitDocumentButton_.setText(width >= 560, knitCommandText_);
+      quartoRenderButton_.setText(width >= 560, quartoCommandText_);
+      publishButton_.setShowCaption(width >= 530);
 
       String action = getSourceOnSaveAction();
-      srcOnSaveLabel_.setText(width < 450 ? action : constants_.actionOnSave(action));
+      srcOnSaveLabel_.setText(width < 490 ? action : constants_.actionOnSave(action));
       sourceButton_.setText(width >= 400, sourceCommandText_);
       
-      goToNextButton_.setVisible(commands_.goToNextChunk().isVisible() && width >= 650);
-      goToPrevButton_.setVisible(commands_.goToPrevChunk().isVisible() && width >= 650);
+      goToNextButton_.setVisible(commands_.goToNextChunk().isVisible() && width >= 640);
+      goToPrevButton_.setVisible(commands_.goToPrevChunk().isVisible() && width >= 640);
       toolbar_.invalidateSeparators();
    }
    

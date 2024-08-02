@@ -4,6 +4,7 @@
 #### RStudio
 - Use native file and message dialogs by default on Linux desktop (#14683; Linux Desktop)
 - Added www-socket option to rserver.conf to enable server to listen on a Unix domain socket (#14938; Open-Source Server)
+- Display label "Publish" next to the publish icon on editor toolbar (#13604)
 
 #### Posit Workbench
 -
