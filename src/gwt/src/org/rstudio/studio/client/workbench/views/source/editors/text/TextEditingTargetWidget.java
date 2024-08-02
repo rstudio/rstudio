@@ -17,22 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.animation.client.Animation;
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.*;
-import com.google.gwt.core.client.GWT;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
@@ -48,7 +32,18 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.CheckboxLabel;
+import org.rstudio.core.client.widget.DocPropMenuItem;
+import org.rstudio.core.client.widget.DocShadowPropMenuItem;
+import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
+import org.rstudio.core.client.widget.InfoBar;
+import org.rstudio.core.client.widget.LatchingToolbarButton;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.ToolbarPopupMenuButton;
+import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -85,6 +80,29 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
+import com.google.gwt.animation.client.Animation;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.Widget;
+
 public class TextEditingTargetWidget
       extends ResizeComposite
       implements Display, RequiresVisibilityChanged
@@ -117,6 +135,7 @@ public class TextEditingTargetWidget
       events_ = events;
       sourceOnSave_ = new CheckBox();
       srcOnSaveLabel_ = new CheckboxLabel(sourceOnSave_, constants_.sourceOnSave()).getLabel();
+      
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
@@ -395,7 +414,8 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.runDocumentFromServerDotR(), column_).createToolbarButton());
 
       ToolbarPopupMenu shinyTestMenu = shinyTestMenu_;
-      if (fileType.canKnitToHTML()) {
+      if (fileType.canKnitToHTML())
+      {
          shinyLaunchButton_ = new ToolbarMenuButton(
                ToolbarButton.NoText,
                constants_.shinyTestOptions(),
@@ -772,6 +792,13 @@ public class TextEditingTargetWidget
    {
       if (codeTransform_ == null)
       {
+         DocPropMenuItem reformatOnSaveMenuItem = new DocPropMenuItem(
+               constants_.reformatDocumentOnSave(),
+               docUpdateSentinel_,
+               false,
+               TextEditingTarget.REFORMAT_ON_SAVE,
+               DocUpdateSentinel.PROPERTY_TRUE);
+         
          SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
          ImageResource icon = new ImageResource2x(ThemeResources.INSTANCE.codeTransform2x());
 
@@ -804,6 +831,9 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.reindent(), column_).createMenuItem());
          menu.addItem(
          mgr.getSourceCommand(commands_.reformatCode(), column_).createMenuItem());
+         menu.addItem(
+         mgr.getSourceCommand(commands_.reformatDocument(), column_).createMenuItem());
+         menu.addItem(reformatOnSaveMenuItem);
          menu.addSeparator();
          menu.addItem(
          mgr.getSourceCommand(commands_.showDiagnosticsActiveDocument(), column_).createMenuItem());
@@ -852,6 +882,8 @@ public class TextEditingTargetWidget
       boolean isMarkdown = editor_.getFileType().isMarkdown();
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
+      
+      boolean canReformatDocument = fileType.isR() || fileType.isRmd() || fileType.isQuartoMarkdown();
       
       panel_.showSecondaryToolbar(isMarkdown);
 

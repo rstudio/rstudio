@@ -20,6 +20,7 @@ import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
@@ -194,15 +195,14 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
 
    protected void setPaneVisible(boolean visible)
    {
-      getElement().getStyle().setDisplay(visible
-                                              ? Display.BLOCK
-                                              : Display.NONE);
-
+      getElement().getStyle().setDisplay(visible ? Display.BLOCK : Display.NONE);
    }
    
    public void setTabPanelSize(DialogTabLayoutPanel panel)
    {
-      panel.setSize("448px", "570px");
+      int width = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH - 142;
+      int height = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT;
+      panel.setSize(width + "px", height + "px");
    }
 
    private ProgressIndicator progressIndicator_;

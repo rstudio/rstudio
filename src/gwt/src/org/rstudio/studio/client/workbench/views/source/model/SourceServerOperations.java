@@ -14,9 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
+import java.util.HashMap;
+import java.util.List;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -40,8 +39,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListRe
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
 
-import java.util.HashMap;
-import java.util.List;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 /**
  * The server manages a "working list" of documents that are being edited by
@@ -133,6 +133,21 @@ public interface SourceServerOperations extends FilesServerOperations,
                          String hash,
                          boolean retryWrite,
                          ServerRequestCallback<String> requestCallback);
+   
+   /**
+    * Given the path to a document on disk, request that it be reformatted
+    * via an external formatting tool.
+    */
+   void formatDocument(String id,
+                       String path,
+                       ServerRequestCallback<SourceDocument> requestCallback);
+ 
+   /**
+    * Format code with the active formatter.
+    */
+   void formatCode(String code,
+                   ServerRequestCallback<String> requestCallback);
+   
 
    void checkForExternalEdit(
          String id,

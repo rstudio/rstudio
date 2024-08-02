@@ -25,23 +25,22 @@
 #include <boost/utility.hpp>
 #include <boost/bind/bind.hpp>
 
-#include <core/r_util/RSourceIndex.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
-#include <core/text/TemplateFilter.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RPackageInfo.hpp>
-
-#include <core/json/JsonRpc.hpp>
-
+#include <core/r_util/RSourceIndex.hpp>
 #include <core/system/FileChangeEvent.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/system/Xdg.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -650,6 +649,171 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    CATCH_UNEXPECTED_EXCEPTION
    
    return Success();
+}
+
+Error onFormatError(
+      const Error& error,
+      const json::JsonRpcFunctionContinuation& continuation)
+{
+   if (error)
+      LOG_ERROR(error);
+
+   json::JsonRpcResponse response;
+   continuation(error, &response);
+   return error;
+}
+
+template <typename F>
+Error formatDocumentImpl(
+      const std::string& documentPath,
+      const json::JsonRpcFunctionContinuation& continuation,
+      F&& callback)
+{
+   auto onError = [&](const Error& error)
+   {
+      return onFormatError(error, continuation);
+   };
+   
+   Error error;
+   
+   core::system::ProcessOptions options;
+   if (projects::projectContext().hasProject())
+      options.workingDir = projects::projectContext().directory();
+   
+   core::system::ProcessCallbacks callbacks;
+   
+   callbacks.onExit = [=](int exitStatus)
+   {
+      json::JsonRpcResponse response = callback();
+      continuation(Success(), &response);
+   };
+   
+   std::string formatType = prefs::userPrefs().codeFormatter();
+   if (formatType == kCodeFormatterNone || formatType == kCodeFormatterStyler)
+   {
+      FilePath rScriptPath;
+      error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+         return onError(error);
+
+      FilePath formatScriptPath = module_context::tempFile("rstudio-format-", "R");
+      error = r::exec::RFunction(".rs.generateStylerFormatDocumentScript")
+            .addUtf8Param(documentPath)
+            .addUtf8Param(formatScriptPath)
+            .call();
+      if (error)
+         return onError(error);
+
+      else if (!formatScriptPath.exists())
+         return onError(fileNotFoundError(formatScriptPath, ERROR_LOCATION));
+
+      // TODO: How should we handle the case where a formatter is already
+      // running on the current file?
+      error = module_context::processSupervisor().runProgram(
+               rScriptPath.getAbsolutePath(),
+               { "-f", formatScriptPath.getAbsolutePath() },
+               options,
+               callbacks);
+
+      if (error)
+         return onError(error);
+
+      return Success();
+   }
+   else if (formatType == kCodeFormatterExternal)
+   {
+      FilePath resolvedPath = module_context::resolveAliasedPath(documentPath);
+      std::string command = fmt::format(
+               "{} {}",
+               prefs::userPrefs().codeFormatterExternalCommand(),
+               shell_utils::escape(resolvedPath));
+      
+      error = module_context::processSupervisor().runCommand(
+               command,
+               options,
+               callbacks);
+
+      if (error)
+         return onError(error);
+   
+      return Success();
+   }
+   else
+   {
+      Error error(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      error.addProperty("type", formatType);
+      return onError(error);
+   }
+}
+
+Error formatDocument(
+      const json::JsonRpcRequest& request,
+      const json::JsonRpcFunctionContinuation& continuation)
+{
+   auto onError = [&](const Error& error)
+   {
+      return onFormatError(error, continuation);
+   };
+   
+   Error error;
+   
+   std::string documentId, documentPath;
+   error = json::readParams(request.params, &documentId, &documentPath);
+   if (error)
+      return onError(error);
+ 
+   return formatDocumentImpl(
+            documentPath,
+            continuation,
+            [=]()
+   {
+      return json::JsonRpcResponse();
+   });
+   
+}
+
+Error formatCode(
+      const json::JsonRpcRequest& request,
+      const json::JsonRpcFunctionContinuation& continuation)
+{
+   auto onError = [&](const Error& error)
+   {
+      return onFormatError(error, continuation);
+   };
+   
+   Error error;
+   
+   std::string code;
+   error = json::readParams(request.params, &code);
+   if (error)
+      return onError(error);
+   
+   FilePath documentPath = module_context::tempFile("rstudio-format-", "R");
+   error = writeStringToFile(documentPath, code);
+   if (error)
+      return onError(error);
+   
+   return formatDocumentImpl(
+            documentPath.getAbsolutePath(),
+            continuation,
+            [=]()
+   {
+      std::string code;
+      Error error = readStringFromFile(documentPath, &code);
+      if (error)
+         LOG_ERROR(error);
+      
+      // trim a final newline in the formatted selection
+      if (boost::algorithm::ends_with(code, "\r\n"))
+         code = code.substr(0, code.length() - 2);
+      else if (boost::algorithm::ends_with(code, "\n"))
+         code = code.substr(0, code.length() - 1);
+      
+      json::JsonRpcResponse response;
+      response.setResult(code);
+      
+      return response;
+   });
 }
 
 Error checkForExternalEdit(const json::JsonRpcRequest& request,
@@ -1505,6 +1669,8 @@ Error initialize()
    using namespace rstudio::r::function_hook;
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerAsyncRpcMethod, "format_document", formatDocument))
+      (bind(registerAsyncRpcMethod, "format_code", formatCode))
       (bind(registerRpcMethod, "new_document", newDocument))
       (bind(registerRpcMethod, "open_document", openDocument))
       (bind(registerRpcMethod, "save_document", saveDocument))

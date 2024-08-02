@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
@@ -46,10 +47,6 @@ public class SelectWidget extends Composite
       this(ExternalLabel);
    }
 
-   /**
-    * Infers SelectWidget title, values, and default text from PrevValue
-    * @param enumValue
-    */
    public SelectWidget(EnumValue enumValue,
                        boolean isMultipleSelect,
                        boolean horizontalLayout,
@@ -58,11 +55,16 @@ public class SelectWidget extends Composite
       this(enumValue.getTitle(), enumValue.getReadableValues(), enumValue.getAllowedValues(),
          isMultipleSelect, horizontalLayout, listOnLeft);
    }
+   
+   public SelectWidget(PrefValue<String> prefValue,
+                       boolean isMultipleSelect,
+                       boolean horizontalLayout,
+                       boolean listOnLeft)
+   {
+      this((EnumValue) prefValue, isMultipleSelect, horizontalLayout, listOnLeft);
+   }
+   
 
-   /**
-    * Infers SelectWidget values, and default text from PrevValue
-    * @param enumValue
-    */
    public SelectWidget(String title,
                        EnumValue enumValue,
                        boolean isMultipleSelect,
@@ -72,6 +74,16 @@ public class SelectWidget extends Composite
       this(title, enumValue.getReadableValues(), enumValue.getAllowedValues(),
          isMultipleSelect, horizontalLayout, listOnLeft);
    }
+   
+   public SelectWidget(String title,
+                       PrefValue<String> prefValue,
+                       boolean isMultipleSelect,
+                       boolean horizontalLayout,
+                       boolean listOnLeft)
+   {
+      this(title, (EnumValue) prefValue, isMultipleSelect, horizontalLayout, listOnLeft);
+   }
+   
 
    public SelectWidget(String label)
    {

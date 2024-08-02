@@ -204,6 +204,7 @@ class ClientEvent extends JavaScriptObject
    public static final String SuspendBlocked = "session_suspend_blocked";
    public static final String ClipboardAction = "clipboard_action";
    public static final String DeploymentRecordsUpdated = "deployment_records_updated";
+   public static final String FormatDocumentCompleted = "format_document_completed";
    
    protected ClientEvent()
    {

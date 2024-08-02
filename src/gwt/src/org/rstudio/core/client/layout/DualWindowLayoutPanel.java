@@ -14,11 +14,12 @@
  */
 package org.rstudio.core.client.layout;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.*;
+import static org.rstudio.core.client.layout.WindowState.EXCLUSIVE;
+import static org.rstudio.core.client.layout.WindowState.HIDE;
+import static org.rstudio.core.client.layout.WindowState.MAXIMIZE;
+import static org.rstudio.core.client.layout.WindowState.MINIMIZE;
+import static org.rstudio.core.client.layout.WindowState.NORMAL;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -32,7 +33,18 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
-import static org.rstudio.core.client.layout.WindowState.*;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.SplitterBeforeResizeEvent;
+import com.google.gwt.user.client.ui.SplitterBeforeResizeHandler;
+import com.google.gwt.user.client.ui.SplitterResizedEvent;
+import com.google.gwt.user.client.ui.SplitterResizedHandler;
+import com.google.gwt.user.client.ui.Widget;
 
 
 /**
@@ -61,17 +73,23 @@ public class DualWindowLayoutPanel extends SimplePanel
 
       public int getContainerHeight(int defaultValue)
       {
-         assert defaultValue > 0;
          if (containerHeight_ == null)
+         {
+            assert defaultValue > 0;
             containerHeight_ = defaultValue;
+         }
+         
          return containerHeight_.intValue();
       }
 
       public int getWindowHeight(int defaultValue)
       {
-         assert defaultValue > 0;
          if (windowHeight_ == null)
+         {
+            assert defaultValue > 0;
             windowHeight_ = defaultValue;
+         }
+         
          return windowHeight_.intValue();
       }
 

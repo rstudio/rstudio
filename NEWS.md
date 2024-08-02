@@ -2,6 +2,7 @@
 
 ### New
 #### RStudio
+- RStudio now supports code formatting using the 'styler' R package, as well via other external applications. (#2563)
 - Use native file and message dialogs by default on Linux desktop (#14683; Linux Desktop)
 - Added www-socket option to rserver.conf to enable server to listen on a Unix domain socket (#14938; Open-Source Server)
 - Display label "Publish" next to the publish icon on editor toolbar (#13604)

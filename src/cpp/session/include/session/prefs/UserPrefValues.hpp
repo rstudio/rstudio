@@ -437,6 +437,13 @@ namespace prefs {
 #define kRunBackgroundJobDefaultWorkingDir "run_background_job_default_working_dir"
 #define kRunBackgroundJobDefaultWorkingDirProject "project"
 #define kRunBackgroundJobDefaultWorkingDirScript "script"
+#define kCodeFormatter "code_formatter"
+#define kCodeFormatterNone "none"
+#define kCodeFormatterStyler "styler"
+#define kCodeFormatterExternal "external"
+#define kCodeFormatterStylerStrict "code_formatter_styler_strict"
+#define kCodeFormatterExternalCommand "code_formatter_external_command"
+#define kReformatOnSave "reformat_on_save"
 
 class UserPrefValues: public Preferences
 {
@@ -1971,6 +1978,30 @@ public:
     */
    std::string runBackgroundJobDefaultWorkingDir();
    core::Error setRunBackgroundJobDefaultWorkingDir(std::string val);
+
+   /**
+    * The formatter to use when reformatting code.
+    */
+   std::string codeFormatter();
+   core::Error setCodeFormatter(std::string val);
+
+   /**
+    * When set, strict transformers will be used when formatting code. See the `styler` package documentation for more details.
+    */
+   bool codeFormatterStylerStrict();
+   core::Error setCodeFormatterStylerStrict(bool val);
+
+   /**
+    * The external command to be used when reformatting code.
+    */
+   std::string codeFormatterExternalCommand();
+   core::Error setCodeFormatterExternalCommand(std::string val);
+
+   /**
+    * When set, the selected formatter will be used to reformat documents on save.
+    */
+   bool reformatOnSave();
+   core::Error setReformatOnSave(bool val);
 
 };
 

@@ -14,11 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.SmallButton;
@@ -26,6 +21,11 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
@@ -37,7 +37,7 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
                                 Commands commands)
    {
 
-      super("420px", constants_.pythonPreferencesText(), false);
+      super("450px", constants_.pythonPreferencesText(), false);
 
       projectPrefsPanel_ = new HorizontalPanel();
       projectPrefsPanel_.getElement().getStyle().setMarginTop(5, Style.Unit.PX);

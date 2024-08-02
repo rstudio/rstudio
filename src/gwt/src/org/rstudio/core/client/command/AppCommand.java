@@ -690,9 +690,13 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          SafeHtml imageHtml = createRightImageHtml(rightImage, rightImageDesc);
          text.append("<td align=right width=\"25\"><div style=\"width: 25px; float: right; margin-top: -7px; margin-bottom: -10px;\">" + imageHtml.asString() + "</div></td>");
       }
-      else if (shortcut != null)
+      else if (!StringUtil.isNullOrEmpty(shortcut))
       {
          text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
+      }
+      else
+      {
+         text.append("<td width=\"16\"></td>");
       }
       text.append("</tr></table>");
 
