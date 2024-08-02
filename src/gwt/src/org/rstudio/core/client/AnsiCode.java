@@ -728,7 +728,7 @@ public class AnsiCode
 
    // RegEx to match complete CSI codes (only a small subset)
    public static final String CSI_REGEX =
-         "[\u001b\u009b]\\[([0-9]+)([A-Z])";
+         "[\u001b\u009b]\\[([0-9]*)([A-Z])";
    
    // Match ANSI SGR escape sequences
    public static final Pattern CSI_PATTERN = Pattern.create(CSI_REGEX);
