@@ -136,18 +136,6 @@ public class TextEditingTargetWidget
       sourceOnSave_ = new CheckBox();
       srcOnSaveLabel_ = new CheckboxLabel(sourceOnSave_, constants_.sourceOnSave()).getLabel();
       
-      saveMenuButton_ =
-            new ToolbarPopupMenuButton(ToolbarButton.NoTitle, false, false);
-      
-      DocPropMenuItem reformatOnSaveMenuItem = new DocPropMenuItem(
-            constants_.reformatOnSave(),
-            docUpdateSentinel_,
-            false,
-            TextEditingTarget.REFORMAT_ON_SAVE,
-            DocUpdateSentinel.PROPERTY_TRUE);
-      
-      saveMenuButton_.addMenuItem(reformatOnSaveMenuItem, null);
-      
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
@@ -388,9 +376,8 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.saveSourceDoc(), column_).createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
-      srcOnSaveLabel_.getElement().getStyle().setMarginRight(0, Unit.PX);
+      srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
       toolbar.addLeftWidget(srcOnSaveLabel_);
-      toolbar.addLeftWidget(saveMenuButton_);
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(
@@ -805,6 +792,13 @@ public class TextEditingTargetWidget
    {
       if (codeTransform_ == null)
       {
+         DocPropMenuItem reformatOnSaveMenuItem = new DocPropMenuItem(
+               constants_.reformatDocumentOnSave(),
+               docUpdateSentinel_,
+               false,
+               TextEditingTarget.REFORMAT_ON_SAVE,
+               DocUpdateSentinel.PROPERTY_TRUE);
+         
          SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
          ImageResource icon = new ImageResource2x(ThemeResources.INSTANCE.codeTransform2x());
 
@@ -839,6 +833,7 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.reformatCode(), column_).createMenuItem());
          menu.addItem(
          mgr.getSourceCommand(commands_.reformatDocument(), column_).createMenuItem());
+         menu.addItem(reformatOnSaveMenuItem);
          menu.addSeparator();
          menu.addItem(
          mgr.getSourceCommand(commands_.showDiagnosticsActiveDocument(), column_).createMenuItem());
@@ -919,7 +914,6 @@ public class TextEditingTargetWidget
       codeTransform_.setVisible(
             (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
             fileType.isC() || fileType.isStan());
-      saveMenuButton_.setVisible(canReformatDocument);
 
       previewJsButton_.setVisible(fileType.isJS() && extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       previewSqlButton_.setVisible(fileType.isSql() && extendedType_.equals(SourceDocument.XT_SQL_PREVIEWABLE));
@@ -2103,7 +2097,6 @@ public class TextEditingTargetWidget
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;
-   private ToolbarPopupMenuButton saveMenuButton_;
    private TextEditorContainer editorContainer_;
    private DockLayoutPanel editorPanel_;
    private DocumentOutlineWidget docOutlineWidget_;

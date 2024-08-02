@@ -2123,12 +2123,12 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String copilotDisabled();
     
     /**
-     * Translated "Reformat on Save"
+     * Translated "Reformat Document on Save"
      *
-     * @return translated "Reformat on Save"
+     * @return translated "Reformat Document on Save"
      */
-    @DefaultMessage("Reformat on Save")
-    @Key("reformatOnSave")
-    String reformatOnSave();
+    @DefaultMessage("Reformat Document on Save")
+    @Key("reformatDocumentOnSave")
+    String reformatDocumentOnSave();
     
 }
