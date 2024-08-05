@@ -2,7 +2,8 @@
 library(testthat)
 
 self <- remote <- .rs.automation.newRemote()
-on.exit(.rs.automation.deleteRemote(), add = TRUE)
+withr::defer(.rs.automation.deleteRemote())
+
 
 # https://github.com/rstudio/rstudio/issues/14636
 test_that("variables can be referenced after restart", {

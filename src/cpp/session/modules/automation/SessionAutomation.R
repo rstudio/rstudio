@@ -27,6 +27,11 @@
 .rs.setVar("automation.agentProcess", NULL)
 
 
+.rs.addFunction("automation.httrGet", function(url)
+{
+   httr::GET(url, config = httr::timeout(1))
+})
+
 .rs.addFunction("automation.installRequiredPackages", function()
 {
    packages <- c("here", "httr", "later", "processx", "ps", "usethis", "websocket", "withr", "xml2")
@@ -256,7 +261,7 @@
    # Check for an existing session we can attach to.
    baseUrl <- sprintf("http://localhost:%i", port)
    jsonVersionUrl <- file.path(baseUrl, "json/version")
-   response <- .rs.tryCatch(httr::GET(jsonVersionUrl))
+   response <- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
    if (!inherits(response, "error"))
       return(.rs.automation.attach(baseUrl, mode))
    
@@ -311,6 +316,9 @@
    envVars[["RS_CRASH_HANDLER_PROMPT"]] <- "false"
    envVars[["RSTUDIO_DISABLE_CHECK_FOR_UPDATES"]] <- "1"
    
+   # Avoid crashing on arm64 Linux.
+   envVars[["RSTUDIO_QUERY_FONTS"]] <- "0"
+   
    # Build argument list.
    # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
    
@@ -342,13 +350,22 @@
    
    # Wait until the process is running.
    while (process$get_status() != "running")
+   {
+      status <- process$get_exit_status()
+      if (!is.null(status))
+      {
+         fmt <- "RStudio agent exited unexpectedly [error code %i]"
+         stop(sprintf(fmt, status))
+      }
+      
       Sys.sleep(0.1)
+   }
    
    # Start pinging the Chromium HTTP server.
    response <- NULL
    .rs.waitUntil("Chromium HTTP server available", function()
    {
-      response <<- .rs.tryCatch(httr::GET(jsonVersionUrl))
+      response <<- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
       !inherits(response, "error")
    })
    
@@ -371,7 +388,7 @@
    # Get the websocket debugger URL.
    url <- .rs.nullCoalesce(url, {
       jsonVersionUrl <- file.path(baseUrl, "json/version")
-      response <- httr::GET(jsonVersionUrl)
+      response <- .rs.automation.httrGet(jsonVersionUrl)
       jsonResponse <- .rs.fromJSON(rawToChar(response$content))
       jsonResponse$webSocketDebuggerUrl
    })
@@ -623,7 +640,7 @@
    fmt <- "https://api.github.com/repos/rstudio/rstudio/contents/%s?ref=%s"
    url <- sprintf(fmt, path, ref)
    
-   response <- httr::GET(url)
+   response <- .rs.automation.httrGet(url)
    result <- httr::content(response, as = "parsed")
    
    # Iterate through the directory contents, and get download links.
