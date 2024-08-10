@@ -73,7 +73,7 @@
     "@vueuse/core": "10.11.0",
     "crc": "4.3.2",
     "electron-store": "8.2.0",
-    "i18next": "23.12.1",
+    "i18next": "23.12.2",
     "line-reader": "0.4.0",
     "lodash.debounce": "4.0.8",
     "net-ipc": "2.2.0",
