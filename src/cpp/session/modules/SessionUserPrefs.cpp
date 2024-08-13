@@ -63,6 +63,7 @@ Error setPreferences(const json::JsonRpcRequest& request,
 Error setState(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
+   LOG_INFO_MESSAGE("SessionUserPrefs::setState START");
    json::Value val;
    Error error = json::readParams(request.params, &val);
    if (error)
@@ -70,8 +71,10 @@ Error setState(const json::JsonRpcRequest& request,
 
    userState().writeLayer(STATE_LAYER_USER, val.getObject());
 
+   LOG_INFO_MESSAGE("2");
    module_context::events().onPreferencesSaved();
 
+   LOG_INFO_MESSAGE("SessionUserPrefs::setState DONE");
    return Success();
 }
 
@@ -89,7 +92,7 @@ Error clearPreferences(const json::JsonRpcRequest& ,
                        json::JsonRpcResponse* pResponse)
 {
    json::Value result;
-   FilePath prefsFile = 
+   FilePath prefsFile =
       core::system::xdg::userConfigDir().completePath(kUserPrefsFile);
    if (!prefsFile.exists())
    {
@@ -144,20 +147,20 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
       return false;
    }
 
-   // if this corresponds to an existing preference, ensure that we're not 
+   // if this corresponds to an existing preference, ensure that we're not
    // changing its data type
    boost::optional<json::Value> previous = prefs.readValue(pref);
    if (previous)
    {
       if ((*previous).getType() != prefValue.getType())
       {
-         r::exec::error("Type mismatch: expected " + 
+         r::exec::error("Type mismatch: expected " +
                   json::typeAsString((*previous).getType()) + "; got " +
                   json::typeAsString(prefValue.getType()));
          return false;
       }
    }
-   
+
    // write new pref value
    error = prefs.writeValue(pref, prefValue);
    if (error)
@@ -168,7 +171,7 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
 
    // let other modules know we've updated the prefs
    module_context::events().onPreferencesSaved();
-   
+
    return true;
 }
 
@@ -178,7 +181,7 @@ SEXP rs_removePref(SEXP prefName)
    std::string pref = r::sexp::safeAsString(prefName, "");
    if (pref.empty())
       return R_NilValue;
-   
+
    Error error = userPrefs().clearValue(pref);
    if (error)
    {
@@ -255,15 +258,15 @@ SEXP rs_readProjectPref(SEXP prefNameSEXP)
 {
    if (!projects::projectContext().hasProject())
       return R_NilValue;
-   
+
    std::string prefName = r::sexp::asString(prefNameSEXP);
    if (prefName.empty())
       return R_NilValue;
-   
+
    auto value = userPrefs().readValue(kUserPrefsProjectLayer, prefName);
    if (!value)
       return R_NilValue;
-   
+
    r::sexp::Protect protect;
    return r::sexp::create(*value, &protect);
 }
@@ -280,7 +283,7 @@ SEXP rs_allPrefs()
    // Sort preference keys alphabetically for convenience
    std::sort(keys.begin(), keys.end());
 
-   for (const auto& key : keys) 
+   for (const auto& key : keys)
    {
       std::string layer;
       auto val = userPrefs().readValue(key, &layer);
@@ -295,7 +298,7 @@ SEXP rs_allPrefs()
          values.push_back("");
       }
    }
-   
+
    // Convert to data frame
    std::vector<std::string> names({"Preference", "Source", "Value"});
    SEXP list = r::sexp::createList(names, &protect);
@@ -391,7 +394,7 @@ core::Error initialize()
       // This error is non-fatal (we'll just start with clean prefs if we cannot migrate)
       LOG_ERROR(error);
    }
-   
+
    // Register handlers for session suspend/shutdown
    events().onShutdown.connect(onShutdown);
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));

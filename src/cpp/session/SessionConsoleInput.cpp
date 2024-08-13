@@ -110,7 +110,7 @@ void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
    data[kConsoleText]  = input.text + "\n";
    data[kConsoleId]    = input.console;
    data[kConsoleFlags] = input.flags;
-   
+
    ClientEvent inputEvent(client_events::kConsoleWriteInput, data);
    clientEventQueue().add(inputEvent);
 }
@@ -123,31 +123,31 @@ bool canSuspend(const std::string& prompt)
       std::string override = core::system::getenv("RS_IDLE_SUSPEND_ENABLED");
       return string_utils::isTruthy(override, true);
    })();
-   
+
    if (!idleSuspendEnabled)
       return false;
 #endif
-   
+
    bool suspendIsBlocked = false;
-   
+
    suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveDurableChildren(), suspend::kChildProcess);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::kCommandPrompt);
 
    if (session::options().sessionConnectionsBlockSuspend())
       suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
-   
+
    if (session::options().sessionExternalPointersBlockSuspend())
       suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
-   
+
    suspendIsBlocked |= !modules::overlay::isSuspendable();
-   
+
    return !suspendIsBlocked;
 }
 
 } // anonymous namespace
 
-void consolePrompt(const std::string& prompt, bool addToHistory)
+void sendConsolePromptEvent(const std::string& prompt, bool addToHistory)
 {
    // save the last prompt (for re-issuing)
    s_lastPrompt = prompt;
@@ -156,14 +156,20 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    json::Object data;
    data["prompt"] = prompt;
    data["history"] = addToHistory;
-   bool isDefaultPrompt = 
-      prompt == rstudio::r::options::getOption<std::string>("prompt");
-   data["default"] = isDefaultPrompt;
+   // bool isDefaultPrompt =
+   //    prompt == rstudio::r::options::getOption<std::string>("prompt");
+   // data["default"] = isDefaultPrompt;
+   data["default"] = true; // fixme
    data["language"] = modules::reticulate::isReplActive() ? "Python" : "R";
-   
+
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
    clientEventQueue().add(consolePromptEvent);
-   
+}
+
+void consolePrompt(const std::string& prompt, bool addToHistory)
+{
+   sendConsolePromptEvent(prompt, addToHistory);
+
    // allow modules to detect changes after execution of previous REPL
    module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
 
@@ -183,19 +189,19 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
    std::string text;
    std::string console;
    int flags = 0;
-   
+
    Error error = core::json::readParams(
             request.params,
             &text,
             &console,
             &flags);
-   
+
    if (error)
       return error;
-   
+
    using namespace r::session;
    addToConsoleInputBuffer(RConsoleInput(text, console, flags));
-   
+
    return Success();
 }
 
@@ -233,47 +239,47 @@ namespace {
 void fixupPendingConsoleInput()
 {
    using namespace r::session;
-   
+
    // get next input
    auto input = s_consoleInputBuffer.front();
-   
+
    // nothing to do if this is a cancel
    if (input.isCancel() || input.isEof())
       return;
-   
+
    // if this has no newlines, then nothing to do
    auto index = input.text.find('\n');
    if (index == std::string::npos)
       return;
-   
+
    // if we're about to send code to the Python REPL, then
    // we need to fix whitespace in the code before sending
    bool pyReplActive = modules::reticulate::isReplActive();
-   
+
    // pop off current input (we're going to split and re-push now)
    s_consoleInputBuffer.pop_front();
-   
+
    // does this Python line start an indented block?
    // NOTE: should consider using tokenizer here
    boost::regex reBlockStart(":\\s*(?:#|$)");
-   
+
    // used to detect whitespace-only lines
    boost::regex reWhitespace("^\\s*$");
-   
+
    // keep track of the indentation used for the current block
    // of Python code (default to no indent)
    std::string blockIndent;
-   
+
    // pending console input (we'll need to push this to the front of the queue)
    std::vector<RConsoleInput> pendingInputs;
-   
+
    // split input into list of commands
    std::vector<std::string> lines = core::algorithm::split(input.text, "\n");
    for (std::size_t i = 0, n = lines.size(); i < n; i++)
    {
       // get current line
       std::string line = lines[i];
-      
+
       // fix up indentation if necessary
       if (pyReplActive)
       {
@@ -284,14 +290,14 @@ void fixupPendingConsoleInput()
          {
             line = blockIndent;
          }
-         
+
          // if this line would exit the reticulate REPL, then update that state
          else if (line == "quit" || line == "exit")
          {
             blockIndent.clear();
             pyReplActive = false;
          }
-         
+
          // if it looks like we're starting a new Python block,
          // then update our indent. perform a lookahead for the
          // next non-blank line, and use that line's indent
@@ -300,7 +306,7 @@ void fixupPendingConsoleInput()
             for (std::size_t j = i + 1; j < n; j++)
             {
                const std::string& lookahead = lines[j];
-               
+
                // skip blank / whitespace-only lines, to allow
                // for cases like:
                //
@@ -312,12 +318,12 @@ void fixupPendingConsoleInput()
                // the function definition and the start of its body
                if (regex_utils::match(lookahead, reWhitespace))
                   continue;
-               
+
                blockIndent = string_utils::extractIndent(lookahead);
                break;
             }
          }
-         
+
          // if the indent for this line has _decreased_, then we've
          // closed an inner block; e.g. for something like:
          //
@@ -343,13 +349,13 @@ void fixupPendingConsoleInput()
             pyReplActive = true;
          }
       }
-   
+
       // add to buffer
       pendingInputs.push_back(
                RConsoleInput(line, input.console, input.flags));
-      
+
    }
-   
+
    // now push the pending inputs to the front of the queue
    for (auto it = pendingInputs.rbegin();
         it != pendingInputs.rend();
@@ -392,7 +398,7 @@ bool rConsoleRead(const std::string& prompt,
    {
       popConsoleInput(pConsoleInput);
    }
-   
+
    // otherwise prompt and wait for console_input from the client
    else
    {
@@ -447,7 +453,7 @@ bool rConsoleRead(const std::string& prompt,
                pConsoleInput->text);
    }
 
-   if (!pConsoleInput->isNoEcho()) 
+   if (!pConsoleInput->isNoEcho())
    {
       ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
       clientEventQueue().add(promptEvent);
@@ -463,7 +469,7 @@ void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleIn
    s_consoleInputBuffer.push_back(consoleInput);
 }
 
-} // namespace console_input 
+} // namespace console_input
 } // namespace session
 } // namespace rstudio
 

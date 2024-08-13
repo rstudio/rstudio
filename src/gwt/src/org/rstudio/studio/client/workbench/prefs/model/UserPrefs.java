@@ -89,7 +89,7 @@ public class UserPrefs extends UserPrefsComputed
       eventBus.addHandler(SessionInitEvent.TYPE, this);
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
-      
+
       // Let desktop-side know when this changes
       if (BrowseCap.isElectron())
       {
@@ -105,42 +105,43 @@ public class UserPrefs extends UserPrefsComputed
    public void writeUserPrefs(CommandWithArg<Boolean> onCompleted)
    {
       updatePrefs(session_.getSessionInfo().getPrefs());
-      server_.setUserPrefs(
-         session_.getSessionInfo().getUserPrefs(),
-         new ServerRequestCallback<Void>()
-         {
-            @Override
-            public void onResponseReceived(Void v)
-            {
-               UserPrefsChangedEvent event = new UserPrefsChangedEvent(
-                     session_.getSessionInfo().getUserPrefLayer());
+      onCompleted.execute(true);
+      // server_.setUserPrefs(
+      //    session_.getSessionInfo().getUserPrefs(),
+      //    new ServerRequestCallback<Void>()
+      //    {
+      //       @Override
+      //       public void onResponseReceived(Void v)
+      //       {
+      //          UserPrefsChangedEvent event = new UserPrefsChangedEvent(
+      //                session_.getSessionInfo().getUserPrefLayer());
 
-               if (Satellite.isCurrentWindowSatellite())
-               {
-                  RStudioGinjector.INSTANCE.getEventBus()
-                     .fireEventToMainWindow(event);
-               }
-               else
-               {
-                  // let satellites know prefs have changed
-                  satelliteManager_.dispatchCrossWindowEvent(event);
-               }
+      //          if (Satellite.isCurrentWindowSatellite())
+      //          {
+      //             RStudioGinjector.INSTANCE.getEventBus()
+      //                .fireEventToMainWindow(event);
+      //          }
+      //          else
+      //          {
+      //             // let satellites know prefs have changed
+      //             satelliteManager_.dispatchCrossWindowEvent(event);
+      //          }
 
-               if (onCompleted != null)
-               {
-                  onCompleted.execute(true);
-               }
-            }
-            @Override
-            public void onError(ServerError error)
-            {
-               if (onCompleted != null)
-               {
-                  onCompleted.execute(false);
-               }
-               Debug.logError(error);
-            }
-         });
+      //          if (onCompleted != null)
+      //          {
+      //             onCompleted.execute(true);
+      //          }
+      //       }
+      //       @Override
+      //       public void onError(ServerError error)
+      //       {
+      //          if (onCompleted != null)
+      //          {
+      //             onCompleted.execute(false);
+      //          }
+      //          Debug.logError(error);
+      //       }
+      //    });
    }
 
    /**
@@ -221,7 +222,7 @@ public class UserPrefs extends UserPrefsComputed
          constants_.cancel(),
          false);
    }
-   
+
    @Override
    public void onSessionInit(SessionInitEvent event)
    {

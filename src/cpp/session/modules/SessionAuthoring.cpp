@@ -42,11 +42,13 @@
 #include "tex/SessionSynctex.hpp"
 #include "tex/SessionViewPdf.hpp"
 
+#include "../SessionConsoleInput.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace authoring {
 
 namespace {
@@ -185,7 +187,11 @@ json::Array supportedLatexProgramTypes()
 
 json::Object texCapabilitiesAsJson()
 {
-   json::Object obj;
+   static json::Object obj;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return obj;
 
    obj["tex_installed"] = tex::pdflatex::isInstalled();
 

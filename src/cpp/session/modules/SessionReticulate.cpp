@@ -26,6 +26,7 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <../SessionConsoleInput.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -72,7 +73,7 @@ SEXP rs_reticulateInitialized()
 {
    // set initialized flag
    s_pythonInitialized = true;
-   
+
    // Python will register its own console control handler,
    // which also blocks signals from reaching any previously
    // defined handlers (including RStudio's own). re-initialize
@@ -105,7 +106,16 @@ bool isPythonInitialized()
 
 bool isReplActive()
 {
-   bool active = false;
+   static bool active = false;
+
+   // return the last known value if the session is busy
+   if (console_input::executing())
+      return active;
+
+   if (!ASSERT_MAIN_THREAD("SessionReticulate.cpp isReplActive ")) {
+      return active;
+   }
+
    Error error = r::exec::RFunction(".rs.reticulate.replIsActive").call(&active);
    if (error)
       LOG_ERROR(error);
@@ -122,7 +132,7 @@ std::string reticulatePython()
 Error initialize()
 {
    using namespace module_context;
-   
+
    events().onDeferredInit.connect(onDeferredInit);
 
    RS_REGISTER_CALL_METHOD(rs_reticulateInitialized);
@@ -130,7 +140,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionReticulate.R"));
-   
+
    return initBlock.execute();
 }
 

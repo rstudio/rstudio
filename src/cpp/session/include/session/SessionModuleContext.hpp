@@ -72,7 +72,7 @@ namespace session {
 }
 
 namespace rstudio {
-namespace session {   
+namespace session {
 
 namespace module_context {
 
@@ -84,8 +84,8 @@ enum PackageCompatStatus
    COMPAT_TOO_NEW = 3,
    COMPAT_UNKNOWN = 4
 };
-    
-// paths 
+
+// paths
 core::FilePath userHomePath();
 std::string createAliasedPath(const core::FileInfo& fileInfo);
 std::string createAliasedPath(const core::FilePath& path);
@@ -109,7 +109,7 @@ core::json::Object createFileSystemItem(const core::FilePath& filePath);
 core::FilePath rPostbackPath();
 core::FilePath rPostbackScriptsDir();
 core::FilePath rPostbackScriptsPath(const std::string& scriptName);
-   
+
 // r session info
 std::string rVersion();
 std::string rVersionLabel();
@@ -121,12 +121,14 @@ core::r_util::ActiveSession& activeSession();
 core::r_util::ActiveSessions& activeSessions();
 
 // get a temp file
-core::FilePath tempFile(const std::string& prefix, 
+core::FilePath tempFile(const std::string& prefix,
                         const std::string& extension);
 
 core::FilePath tempDir();
 
 std::string rLibsUser();
+
+std::string rPrompt();
 
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
@@ -193,11 +195,11 @@ bool isUnmonitoredPackageSourceFile(const core::FilePath& filePath);
 // register a handler for rBrowseUrl
 typedef boost::function<bool(const std::string&)> RBrowseUrlHandler;
 core::Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler);
-   
+
 // register a handler for rBrowseFile
 typedef boost::function<bool(const core::FilePath&)> RBrowseFileHandler;
 core::Error registerRBrowseFileHandler(const RBrowseFileHandler& handler);
-   
+
 // register an inbound uri handler (include a leading slash)
 core::Error registerAsyncUriHandler(
                    const std::string& name,
@@ -226,7 +228,7 @@ core::Error registerLocalUriHandler(
 
 typedef boost::function<void(int, const std::string&)> PostbackHandlerContinuation;
 
-// register a postback handler. see docs in SessionPostback.cpp for 
+// register a postback handler. see docs in SessionPostback.cpp for
 // details on the requirements of postback handlers
 typedef boost::function<void(const std::string&, const PostbackHandlerContinuation&)>
                                                       PostbackHandlerFunction;
@@ -234,7 +236,7 @@ core::Error registerPostbackHandler(
                               const std::string& name,
                               const PostbackHandlerFunction& handlerFunction,
                               std::string* pShellCommand);
-                        
+
 // register an async rpc method
 core::Error registerAsyncRpcMethod(
                               const std::string& name,
@@ -319,7 +321,7 @@ enum ChangeSource
    ChangeSourceRPC,
    ChangeSourceURI
 };
-   
+
 
 // custom slot combiner that takes the first non empty value
 template<typename T>
@@ -441,7 +443,7 @@ core::Error sourceModuleRFile(const std::string& rSourceFile);
 core::Error sourceModuleRFileWithResult(const std::string& rSourceFile,
                                         const core::FilePath& workingDir,
                                         core::system::ProcessResult* pResult);
-   
+
 // enque client events (note R methods can do this via .rs.enqueClientEvent)
 void enqueClientEvent(const ClientEvent& event);
 
@@ -468,14 +470,14 @@ core::FilePath registerMonitoredUserScratchDir(const std::string& dirName,
 // enqueue new console input
 core::Error enqueueConsoleInput(const std::string& input);
 
-// write output to the console (convenience wrapper for enquing a 
+// write output to the console (convenience wrapper for enquing a
 // kConsoleWriteOutput event)
 void consoleWriteOutput(const std::string& output);
-   
-// write an error to the console (convenience wrapper for enquing a 
+
+// write an error to the console (convenience wrapper for enquing a
 // kConsoleWriteOutput event)
 void consoleWriteError(const std::string& message);
-   
+
 // show an error dialog (convenience wrapper for enquing kShowErrorMessage)
 void showErrorMessage(const std::string& title, const std::string& message);
 
@@ -533,7 +535,7 @@ std::string normalizeVcsOverride(const std::string& vcsOverride);
 core::FilePath shellWorkingDirectory();
 
 // persist state across suspend and resume
-   
+
 typedef boost::function<void (const r::session::RSuspendOptions&,
                               core::Settings*)> SuspendFunction;
 typedef boost::function<void(const core::Settings&)> ResumeFunction;
@@ -546,17 +548,17 @@ public:
       : suspend_(suspend), resume_(resume)
    {
    }
-   
+
    // COPYING: via compiler
-   
+
    const SuspendFunction& suspend() const { return suspend_; }
    const ResumeFunction& resume() const { return resume_; }
-   
+
 private:
    SuspendFunction suspend_;
    ResumeFunction resume_;
 };
-   
+
 void addSuspendHandler(const SuspendHandler& handler);
 
 bool rSessionResumed();
@@ -776,12 +778,12 @@ struct QuartoNavigate
    QuartoNavigate()
       : website(false)
    {}
-   
+
    bool empty() const
    {
       return !website && source.empty();
    }
-   
+
    static QuartoNavigate navigate(
          const std::string& source,
          const std::string& output,
@@ -795,7 +797,7 @@ struct QuartoNavigate
       nav.website = isWebsite;
       return nav;
    }
-   
+
    std::string source;
    std::string output;
    std::string job_id;
@@ -845,7 +847,7 @@ struct SourceMarker
       Warning = 1,
       Box     = 2,
       Info    = 3,
-      Style   = 4, 
+      Style   = 4,
       Usage   = 5,
       Empty   = 99
    };
@@ -888,7 +890,7 @@ struct SourceMarker
         isCustom(isCustom)
    {
    }
-   
+
    explicit operator bool() const
    {
       return type != Empty;
@@ -908,7 +910,7 @@ SourceMarker::Type sourceMarkerTypeFromString(const std::string& type);
 core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
 
 struct SourceMarkerSet
-{  
+{
    SourceMarkerSet() {}
 
    SourceMarkerSet(const std::string& name,

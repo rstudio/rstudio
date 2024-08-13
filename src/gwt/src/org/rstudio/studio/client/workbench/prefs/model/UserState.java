@@ -34,13 +34,13 @@ import org.rstudio.studio.client.workbench.prefs.events.UserStateChangedEvent;
 public class UserState extends UserStateAccessor implements UserStateChangedEvent.Handler
 {
    @Inject
-   public UserState(Session session, 
+   public UserState(Session session,
                   EventBus eventBus,
                   PrefsServerOperations server,
                   SatelliteManager satelliteManager)
    {
       super(session.getSessionInfo(),
-            (session.getSessionInfo() == null ? 
+            (session.getSessionInfo() == null ?
                JsArray.createArray().cast() :
                session.getSessionInfo().getUserState()));
 
@@ -50,7 +50,7 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
 
       eventBus.addHandler(UserStateChangedEvent.TYPE, this);
    }
-   
+
    public void writeState()
    {
       writeState(null);
@@ -59,39 +59,40 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
    public void writeState(CommandWithArg<Boolean> onCompleted)
    {
       updatePrefs(session_.getSessionInfo().getUserState());
-      server_.setUserState(
-         session_.getSessionInfo().getUserStateLayer().getValues(),
-         new ServerRequestCallback<Void>() 
-         {
-            @Override
-            public void onResponseReceived(Void v)
-            {
-               UserStateChangedEvent event = new UserStateChangedEvent(
-                              session_.getSessionInfo().getUserStateLayer());
+      onCompleted.execute(true);
+      // server_.setUserState(
+      //    session_.getSessionInfo().getUserStateLayer().getValues(),
+      //    new ServerRequestCallback<Void>()
+      //    {
+      //       @Override
+      //       public void onResponseReceived(Void v)
+      //       {
+      //          UserStateChangedEvent event = new UserStateChangedEvent(
+      //                         session_.getSessionInfo().getUserStateLayer());
 
-               if (Satellite.isCurrentWindowSatellite())
-               {
-                  RStudioGinjector.INSTANCE.getEventBus()
-                     .fireEventToMainWindow(event);
-               }
-               else
-               {
-                  // let satellites know prefs have changed
-                  satelliteManager_.dispatchCrossWindowEvent(event);
-               }
-               if (onCompleted != null)
-               {
-                  onCompleted.execute(true);
-               }
-            }
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
+      //          if (Satellite.isCurrentWindowSatellite())
+      //          {
+      //             RStudioGinjector.INSTANCE.getEventBus()
+      //                .fireEventToMainWindow(event);
+      //          }
+      //          else
+      //          {
+      //             // let satellites know prefs have changed
+      //             satelliteManager_.dispatchCrossWindowEvent(event);
+      //          }
+      //          if (onCompleted != null)
+      //          {
+      //             onCompleted.execute(true);
+      //          }
+      //       }
+      //       @Override
+      //       public void onError(ServerError error)
+      //       {
+      //          Debug.logError(error);
+      //       }
+      //    });
    }
-   
+
    @Override
    public void onUserStateChanged(UserStateChangedEvent e)
    {

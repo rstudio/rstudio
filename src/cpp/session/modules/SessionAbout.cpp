@@ -72,9 +72,11 @@ Error rVersion(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
    json::Object result;
-   result["version"] = module_context::rVersion();
+   // result["version"] = module_context::rVersion();
+   result["version"] = "4.1.2"; // fixme
    result["label"] = module_context::rVersionLabel();
-   result["r_home"] = module_context::rHomeDir();
+   // result["r_home"] = module_context::rHomeDir();
+   result["r_home"] = "/usr/lib/R"; // fixme
    result["module"] = module_context::rVersionModule();
 
    pResponse->setResult(result);
@@ -93,7 +95,7 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-   
+
    RS_REGISTER_CALL_METHOD(rs_getProductInfo);
 
    ExecBlock initBlock;

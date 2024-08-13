@@ -37,6 +37,7 @@ void reissueLastConsolePrompt();
 void addToConsoleInputBuffer(
       const rstudio::r::session::RConsoleInput& consoleInput);
 
+void sendConsolePromptEvent(const std::string& prompt, bool addToHistory);
 void consolePrompt(const std::string& prompt, bool addToHistory);
 void consoleInput(const std::string& input);
 

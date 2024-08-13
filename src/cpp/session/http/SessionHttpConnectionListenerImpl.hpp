@@ -22,6 +22,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/asio/placeholders.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Macros.hpp>
@@ -46,8 +47,11 @@
 #include <session/SessionHttpConnection.hpp>
 #include <session/SessionHttpConnectionQueue.hpp>
 #include <session/SessionHttpConnectionListener.hpp>
+#include <session/SessionModuleContext.hpp>
 
 #include "SessionHttpConnectionImpl.hpp"
+#include "../SessionConsoleInput.hpp"
+#include "../SessionClientInit.hpp"
 #include "../SessionUriHandlers.hpp"
 #include "../SessionHttpMethods.hpp"
 #include "../SessionRpc.hpp"
@@ -79,7 +83,7 @@ public:
 template <typename ProtocolType>
 class HttpConnectionListenerImpl : public HttpConnectionListener,
                                    boost::noncopyable
-{  
+{
 protected:
    HttpConnectionListenerImpl() : started_(false) {}
 
@@ -89,7 +93,7 @@ protected:
    }
 
    // COPYING: boost::noncopyable
-   
+
 public:
    virtual core::Error start()
    {
@@ -105,7 +109,7 @@ public:
 
       // accept next connection (asynchronously)
       acceptNextConnection();
-      
+
       // refresh locks
       core::FileLock::refreshPeriodically(acceptorService_.ioService());
 
@@ -330,12 +334,47 @@ private:
          return;
       }
 
+      if (init::isSessionInitializedAndRestored() && console_input::executing()) {
+         if (connection::isMethod(ptrHttpConnection, kClientInit)) {
+            eventsActive_ = false;
+
+
+            // we are executing, otherwise the below would be more appropriate
+            // boost::bind(
+            //    console_input::sendConsolePromptEvent,
+            //    "> ", // fixme
+            //    true),
+
+            ClientEvent busyEvent(client_events::kBusy, true);
+            client_init::handleClientInit(
+               boost::bind(rstudio::session::module_context::enqueClientEvent, busyEvent),
+               ptrConnection
+            );
+            return;
+         }
+
+         // respond to get_environment_state with the last known information
+         if (connection::isMethod(ptrHttpConnection, "read_config_json") ||
+             connection::isMethod(ptrHttpConnection, "get_rversion_info") ||
+             connection::isMethod(ptrHttpConnection, "list_files")) {
+            http_methods::handleConnection(ptrConnection, http_methods::ForegroundConnection);
+            return;
+         }
+
+         std::string uri = ptrConnection->request().uri();
+         if (boost::algorithm::starts_with(uri, "/mathjax/") ||
+             boost::algorithm::starts_with(uri, "/theme/default/textmate.rstheme")) {
+            http_methods::handleConnection(ptrConnection, http_methods::ForegroundConnection);
+            return;
+         }
+      }
+
       // check for a suspend_session. done here as well as in foreground to
       // allow clients without the requisite client-id and/or version header
       // to also initiate a suspend (e.g. an admin/supervisor process)
       if (connection::checkForSuspend(ptrHttpConnection))
          return;
-      
+
       if (connection::checkForInterrupt(ptrHttpConnection))
          return;
 
@@ -374,7 +413,7 @@ private:
          }
          if (options().asyncRpcEnabled() &&
              options().asyncRpcTimeoutMs() == 0 &&
-             http_methods::isAsyncJsonRpcRequest(ptrHttpConnection) && 
+             http_methods::isAsyncJsonRpcRequest(ptrHttpConnection) &&
              eventsActive_)
          {
             if (http_methods::protocolDebugEnabled())

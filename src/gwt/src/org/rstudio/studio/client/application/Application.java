@@ -186,7 +186,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(FileUploadEvent.TYPE, this);
       events.addHandler(AriaLiveStatusEvent.TYPE, this);
       events.addHandler(ClipboardActionEvent.TYPE, this);
-      
+
       // register for uncaught exceptions
       uncaughtExHandler.register();
    }
@@ -215,6 +215,7 @@ public class Application implements ApplicationEventHandlers
             // isn't then it's nice to reveal whatever progress
             // operation or error state is holding up the switch
             // directly to the user
+            Debug.printValue("ApplicationAction.isSwitchProject()", ApplicationAction.isSwitchProject());
             if (ApplicationAction.isSwitchProject())
             {
                new Timer() {
@@ -232,7 +233,7 @@ public class Application implements ApplicationEventHandlers
 
             // set session info
             session_.setSessionInfo(sessionInfo);
-            
+
             // initialize application hooks
             if (sessionInfo.isAutomationAgent())
             {
@@ -304,7 +305,7 @@ public class Application implements ApplicationEventHandlers
                {
                   buttonLabels.add(constants_.goHomeButtonLabel());
                   elementIds.add(ElementIds.DIALOG_HOME_BUTTON);
-                  buttonOperations.add(() -> 
+                  buttonOperations.add(() ->
                   {
                      Window.Location.assign(homepageLink);
                   });
@@ -469,29 +470,29 @@ public class Application implements ApplicationEventHandlers
       if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs, event.getSeverity()))
          view_.reportStatus(event.getMessage(), delayMs, event.getSeverity());
    }
-   
+
    @Override
    public void onClipboardAction(ClipboardActionEvent event)
    {
       ClipboardActionEvent.Data data = event.getData();
-      
+
       switch (data.getType())
       {
-      
+
       case SET:
       {
          Clipboard.setText(data.getText());
          return;
       }
-      
+
       default:
       {
          Debug.log("Unimplemented clipboard action '" + data.getText() + "'");
       }
-      
+
       }
    }
-   
+
    @Override
    public void onServerOffline(ServerOfflineEvent event)
    {
@@ -951,6 +952,8 @@ public class Application implements ApplicationEventHandlers
    }
    private void initializeWorkbench()
    {
+      Debug.log("initializeWorkbench");
+
       // Check if user interface language set in the User Preferences is also set as a cookie.
       // If not, we need to set it and reload the page to ensure the correct language is shown.
       // This would happen the first time in a new browser where the UI language was previously set to
@@ -964,6 +967,8 @@ public class Application implements ApplicationEventHandlers
          needReload = true;
       }
 
+      Debug.log("initializeWorkbench 1");
+
       // Check if cookie used to tell GWT to use web-based dialogs on Electron Desktop IDE matches the user
       // preference. If not, set it and reload the page.
       if (BrowseCap.isElectron())
@@ -976,15 +981,21 @@ public class Application implements ApplicationEventHandlers
          }
       }
 
+      Debug.log("initializeWorkbench 2");
+
       if (needReload)
       {
          RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
          return;
       }
 
+      Debug.log("initializeWorkbench 3");
+
       // Initialize application theme system
       pAppThemes_.get().initializeThemes(rootPanel_.getElement());
-      
+
+      Debug.log("initializeWorkbench 4");
+
       // Set default text rendering
       Document.get().getBody().getStyle().setProperty(
             "textRendering",
@@ -999,6 +1010,8 @@ public class Application implements ApplicationEventHandlers
       // interrupt hack(s)
       events_.addHandler(ClientDisconnectedEvent.TYPE, this);
 
+      Debug.log("initializeWorkbench 5");
+
       // create workbench
       Workbench wb = workbench_.get();
       eventBusProvider_.get().fireEvent(new SessionInitEvent());
@@ -1010,6 +1023,8 @@ public class Application implements ApplicationEventHandlers
       {
          commands_.interruptTerminal().remove();
       }
+
+      Debug.log("initializeWorkbench 6");
 
       if (!sessionInfo.getAllowShell())
       {
@@ -1029,6 +1044,8 @@ public class Application implements ApplicationEventHandlers
       {
          removeProjectCommands();
       }
+
+      Debug.log("initializeWorkbench 7");
 
       if (Desktop.isDesktop())
          commands_.signOut().remove();
@@ -1052,6 +1069,8 @@ public class Application implements ApplicationEventHandlers
       {
          removeWorkbenchJobCommands();
       }
+
+      Debug.log("initializeWorkbench 8");
 
       // only enable suspendSession() in devmode
       commands_.suspendSession().setVisible(SuperDevMode.isActive());
@@ -1083,6 +1102,8 @@ public class Application implements ApplicationEventHandlers
       // remove knit params if they aren't supported
       if (!sessionInfo.getKnitParamsAvailable())
          commands_.knitWithParameters().remove();
+
+      Debug.log("initializeWorkbench 9");
 
       // show the correct set of data import commands
       if (userPrefs_.get().useDataimport().getValue())
@@ -1124,6 +1145,8 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromXLS().remove();
       }
 
+      Debug.log("initializeWorkbench 10");
+
       Element el = Document.get().getElementById("rstudio_container");
       if (el == null)
       {
@@ -1156,6 +1179,8 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomOut().remove();
       }
 
+      Debug.log("initializeWorkbench 11");
+
       // remove main menu commands in desktop mode
       if (Desktop.hasDesktopFrame())
       {
@@ -1180,6 +1205,8 @@ public class Application implements ApplicationEventHandlers
          else
             commands_.newSession().remove();
       }
+
+      Debug.log("initializeWorkbench 12");
 
       // show support link only in RStudio Pro
       if (pEdition_.get() != null)
@@ -1206,6 +1233,8 @@ public class Application implements ApplicationEventHandlers
             valueChangeEvent -> showToolbar(valueChangeEvent.getValue(), true));
 
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
+
+      Debug.log("initializeWorkbench 13");
 
       // initiate action if requested. do this after a delay
       // so that the source database has time to load

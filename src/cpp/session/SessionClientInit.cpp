@@ -103,7 +103,7 @@ std::string userIdentityDisplay(const http::Request& request)
 }
 
 #ifdef RSTUDIO_SERVER
-Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection, 
+Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
       http::Response& response)
 {
    // extract the base URL
@@ -160,9 +160,9 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
 
    // create the cookie; don't set an expiry date as this will be a session cookie
    http::Cookie cookie(
-            ptrConnection->request(), 
-            kPortTokenCookie, 
-            persistentState().portToken(), 
+            ptrConnection->request(),
+            kPortTokenCookie,
+            persistentState().portToken(),
             path,
             options().sameSite(),
             true, // HTTP only -- client doesn't get to read this token
@@ -181,15 +181,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
 {
    // notify that we're about to initialize
    module_context::events().onBeforeClientInit();
-   
+
    // alias options
    Options& options = session::options();
-   
-   // check for valid CSRF headers in server mode 
-   if (options.programMode() == kSessionProgramModeServer && 
+
+   // check for valid CSRF headers in server mode
+   if (options.programMode() == kSessionProgramModeServer &&
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
-      LOG_WARNING_MESSAGE("Client init request to " + ptrConnection->request().uri() + 
+      LOG_WARNING_MESSAGE("Client init request to " + ptrConnection->request().uri() +
             " has missing or mismatched " + std::string(kCSRFTokenCookie) + " cookie or " +
             std::string(kCSRFTokenHeader) + " header");
       // Send an error that shows up in the alert box of the browser - if we send unauthorized here, it causes an infinite sign in loop
@@ -216,7 +216,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // client. so, clear out the events which might be pending in the
    // client event service and/or queue
    bool clearEvents = resumed;
-   
+
    // reset the client event service for the new client (will cause
    // outstanding http requests from old clients to fail with
    // InvalidClientId). note that we can't simply stop() the
@@ -233,7 +233,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
       // set RSTUDIO_USER_IDENTITY_DISPLAY environment variable based on
       // header value (complements RSTUDIO_USER_IDENTITY)
-      core::system::setenv("RSTUDIO_USER_IDENTITY_DISPLAY", 
+      core::system::setenv("RSTUDIO_USER_IDENTITY_DISPLAY",
             userIdentityDisplay(ptrConnection->request()));
 
       // read display name from upstream if set
@@ -245,7 +245,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
       }
    }
 
-   // prepare session info 
+   LOG_DEBUG_MESSAGE("1");
+
+   // prepare session info
    json::Object sessionInfo;
    sessionInfo["clientId"] = clientId;
    sessionInfo["mode"] = options.programMode();
@@ -255,9 +257,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    initOptions["restore_workspace"] = options.rRestoreWorkspace();
    initOptions["run_rprofile"] = options.rRunRprofile();
    sessionInfo["init_options"] = initOptions;
-   
+
    sessionInfo["userIdentity"] = userIdentityDisplay(ptrConnection->request());
    sessionInfo["systemUsername"] = core::system::username();
+
+   LOG_DEBUG_MESSAGE("2");
 
    // only send log_dir and scratch_dir if we are in desktop mode
    if (options.programMode() == kSessionProgramModeDesktop)
@@ -268,49 +272,59 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // R_LIBS_USER
    sessionInfo["r_libs_user"] = module_context::rLibsUser();
-   
+
    // user home path
    sessionInfo["user_home_path"] = session::options().userHomePath().getAbsolutePath();
-   
+
+   LOG_DEBUG_MESSAGE("2.5");
+
    // installed client version
    sessionInfo["client_version"] = http_methods::clientVersion();
-   
+
    // default prompt
-   sessionInfo["prompt"] = rstudio::r::options::getOption<std::string>("prompt");
+   sessionInfo["prompt"] = module_context::rPrompt();
+
+   LOG_DEBUG_MESSAGE("3");
 
    // client state
    json::Object clientStateObject;
    rstudio::r::session::clientState().currentState(&clientStateObject);
    sessionInfo["client_state"] = clientStateObject;
-   
+
    // source documents
    json::Array jsonDocs;
    Error error = modules::source::clientInitDocuments(&jsonDocs);
    if (error)
       LOG_ERROR(error);
    sessionInfo["source_documents"] = jsonDocs;
-   
+
+   LOG_DEBUG_MESSAGE("4");
+
    // docs url
    sessionInfo["docsURL"] = session::options().docsURL();
 
    // get alias to console_actions and get limit
    rstudio::r::session::ConsoleActions& consoleActions = rstudio::r::session::consoleActions();
    sessionInfo["console_actions_limit"] = consoleActions.capacity();
- 
+
    // check if reticulate's Python session has been initialized
    sessionInfo["python_initialized"] = modules::reticulate::isPythonInitialized();
-   
+
    // check if the Python REPL is active
    sessionInfo["python_repl_active"] = modules::reticulate::isReplActive();
-   
+
+   LOG_DEBUG_MESSAGE("5");
+
    // propagate RETICULATE_PYTHON if set
    std::string reticulate_python = core::system::getenv("RETICULATE_PYTHON");
    if (reticulate_python.empty())
       reticulate_python = core::system::getenv("RETICULATE_PYTHON_FALLBACK");
    sessionInfo["reticulate_python"] = reticulate_python;
-   
+
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
+
+   LOG_DEBUG_MESSAGE("6");
 
    // resumed
    sessionInfo["resumed"] = resumed;
@@ -335,12 +349,20 @@ void handleClientInit(const boost::function<void()>& initFunction,
       suspend::initFromResume();
    }
 
+   LOG_DEBUG_MESSAGE("6.2");
+
    sessionInfo["rnw_weave_types"] = modules::authoring::supportedRnwWeaveTypes();
    sessionInfo["latex_program_types"] = modules::authoring::supportedLatexProgramTypes();
    sessionInfo["tex_capabilities"] = modules::authoring::texCapabilitiesAsJson();
    sessionInfo["compile_pdf_state"] = modules::authoring::compilePdfStateAsJson();
 
-   sessionInfo["html_capabilities"] = modules::html_preview::capabilitiesAsJson();
+   LOG_DEBUG_MESSAGE("6.5");
+
+   // sessionInfo["html_capabilities"] = modules::html_preview::capabilitiesAsJson();
+   json::Object html_capabilities;
+   html_capabilities["r_markdown_supported"] = true;
+   html_capabilities["stitch_supported"] = true;
+   sessionInfo["html_capabilities"] = html_capabilities; // fixme
 
    sessionInfo["find_in_files_state"] = modules::find::findInFilesStateAsJson();
 
@@ -348,6 +370,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    std::string sessionVersion = std::string(RSTUDIO_VERSION);
    sessionInfo["rstudio_version"] = sessionVersion;
+
+   LOG_DEBUG_MESSAGE("7");
 
    // check to ensure the version of this rsession process matches the version
    // of the rserver that started us - we immediately clear this env var so that
@@ -365,9 +389,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["user_prefs"] = prefs::allPrefLayers();
    sessionInfo["user_state"] = prefs::allStateLayers();
 
-   sessionInfo["have_advanced_step_commands"] =
-                        modules::breakpoints::haveAdvancedStepCommands();
-   
+   // sessionInfo["have_advanced_step_commands"] =
+   //                      modules::breakpoints::haveAdvancedStepCommands();
+   sessionInfo["have_advanced_step_commands"] = true; // fixme
+
+   LOG_DEBUG_MESSAGE("8");
+
    // initial working directory
    std::string initialWorkingDir = module_context::createAliasedPath(
                                           dirs::getInitialWorkingDirectory());
@@ -379,6 +406,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // default project dir
    sessionInfo["default_project_dir"] = options.deprecatedDefaultProjectDir();
 
+   LOG_DEBUG_MESSAGE("9");
+
    // active project file
    if (projects::projectContext().hasProject())
    {
@@ -387,9 +416,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["active_project_name"] = projects::projectContext().projectName();
       sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
       sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
-      sessionInfo["project_supports_sharing"] = 
+      sessionInfo["project_supports_sharing"] =
          projects::projectContext().supportsSharing();
-      sessionInfo["project_parent_browseable"] = 
+      sessionInfo["project_parent_browseable"] =
          projects::projectContext().parentBrowseable();
       sessionInfo["project_user_data_directory"] =
        module_context::createAliasedPath(
@@ -406,6 +435,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["project_user_data_directory"] = json::Value();
    }
 
+   LOG_DEBUG_MESSAGE("10");
+
    sessionInfo["system_encoding"] = std::string(::locale2charset(nullptr));
 
    std::vector<std::string> vcsAvailable;
@@ -419,6 +450,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
                               modules::source_control::defaultSshKeyDir());
    sessionInfo["is_github_repo"] = modules::git::isGithubRepository();
 
+   LOG_DEBUG_MESSAGE("11");
+
    // contents of all lists
    sessionInfo["lists"] = modules::lists::allListsAsJson();
 
@@ -430,6 +463,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["sumatra_pdf_exe_path"] =
                options.sumatraPath().completePath("SumatraPDF.exe").getAbsolutePath();
 #endif
+
+   LOG_DEBUG_MESSAGE("12");
 
    // are build tools enabled
    if (projects::projectContext().hasProject())
@@ -473,13 +508,29 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["has_pkg_vig"] = false;
    }
 
-   sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
-   sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
-   sessionInfo["is_distill_project"] = module_context::isDistillProject();
+   LOG_DEBUG_MESSAGE("13");
+
+   // sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
+   json::Object blogdown_config;
+   blogdown_config["is_blogdown_project"] = false;
+   blogdown_config["is_hugo_project"] = false;
+   sessionInfo["blogdown_config"] = blogdown_config; // fixme
+
+   // sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
+   sessionInfo["is_bookdown_project"] = false; // fixme
+   // sessionInfo["is_distill_project"] = module_context::isDistillProject();
+   sessionInfo["is_distill_project"] = false; // fixme
 
    sessionInfo["quarto_config"] = quarto::quartoConfigJSON();
-   
-   sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
+
+   // sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
+   json::Array graphics_backends;
+   graphics_backends.push_back("cairo");
+   graphics_backends.push_back("cairo-png");
+   graphics_backends.push_back("ragg");
+   sessionInfo["graphics_backends"] = graphics_backends; // fixme
+
+   LOG_DEBUG_MESSAGE("14");
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
    sessionInfo["presentation_commands"] = options.allowPresentationCommands();
@@ -488,8 +539,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["tutorial_api_client_origin"] = json::Value();
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
-   sessionInfo["devtools_installed"] = module_context::isMinimumDevtoolsInstalled();
-   sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
+   // sessionInfo["devtools_installed"] = module_context::isMinimumDevtoolsInstalled();
+   sessionInfo["devtools_installed"] = true; // fixme
+   // sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
+    sessionInfo["have_cairo_pdf"] = true; // fixme
+
+   LOG_DEBUG_MESSAGE("15");
 
    // console history -- we do this at the end because
    // restoreBuildRestartContext may have reset it
@@ -507,6 +562,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #else
           !core::system::getenv("RSTUDIO_DISABLE_CHECK_FOR_UPDATES").empty();
 #endif
+
+   LOG_DEBUG_MESSAGE("16");
 
    sessionInfo["allow_vcs_exe_edit"] = options.allowVcsExecutableEdit();
    sessionInfo["allow_cran_repos_edit"] = options.allowCRANReposEdit();
@@ -532,57 +589,114 @@ void handleClientInit(const boost::function<void()>& initFunction,
       core::system::getenv("RSTUDIO_DISABLE_EXTERNAL_PUBLISH").empty() &&
       allowPublish;
 
+   LOG_DEBUG_MESSAGE("17");
+
    // allow opening shared projects if it's enabled, and if there's shared
    // storage from which we can discover the shared projects
-   sessionInfo["allow_open_shared_projects"] = 
+   sessionInfo["allow_open_shared_projects"] =
          core::system::getenv(kRStudioDisableProjectSharing).empty() &&
          !options.getOverlayOption(kSessionSharedStoragePath).empty();
 
    sessionInfo["project_sharing_enumerate_server_users"] = true;
    sessionInfo["launcher_session"] = false;
 
-   sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
+   LOG_DEBUG_MESSAGE("17.1");
+
+   // sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
+   json::Object environment_state;
+   environment_state["environment_monitoring"] = true;
+   environment_state["environment_list"] = json::Array();
+   environment_state["context_depth"] = 0;
+   environment_state["call_frames"] = json::Array();
+   environment_state["function_name"] = "";
+   environment_state["environment_name"] = ".GlobalEnv";
+   environment_state["environment_is_local"] = false;
+   environment_state["use_provided_source"] = false;
+   environment_state["function_code"] = "";
+   sessionInfo["environment_state"] = environment_state; // fixme
+
+   LOG_DEBUG_MESSAGE("17.2");
+
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
+
+   LOG_DEBUG_MESSAGE("17.3");
 
    // send whether we should show the user identity
    sessionInfo["show_identity"] =
            (options.programMode() == kSessionProgramModeServer) &&
            options.showUserIdentity();
 
-   sessionInfo["packrat_available"] =
-                     module_context::isRequiredPackratInstalled();
+   LOG_DEBUG_MESSAGE("17.4");
 
-   sessionInfo["renv_available"] =
-         module_context::isRequiredRenvInstalled();
+   // sessionInfo["packrat_available"] =
+   //                   module_context::isRequiredPackratInstalled();
+   sessionInfo["packrat_available"] = false; // fixme
+
+   LOG_DEBUG_MESSAGE("17.5");
+
+   // sessionInfo["renv_available"] =
+   //       module_context::isRequiredRenvInstalled();
+   sessionInfo["renv_available"] = false; // fixme
+
+   LOG_DEBUG_MESSAGE("18");
 
    // check rmarkdown package presence and capabilities
-   sessionInfo["rmarkdown_available"] =
-         modules::rmarkdown::rmarkdownPackageAvailable();
-   sessionInfo["knit_params_available"] =
-         modules::rmarkdown::knitParamsAvailable();
-   sessionInfo["knit_working_dir_available"] = 
-         modules::rmarkdown::knitWorkingDirAvailable();
-   sessionInfo["ppt_available"] = 
-         modules::rmarkdown::pptAvailable();
+   // sessionInfo["rmarkdown_available"] =
+   //       modules::rmarkdown::rmarkdownPackageAvailable();
+   sessionInfo["rmarkdown_available"] = true; // fixme
+
+   LOG_DEBUG_MESSAGE("18.1");
+
+   // sessionInfo["knit_params_available"] =
+   //       modules::rmarkdown::knitParamsAvailable();
+   sessionInfo["knit_params_available"] = true; // fixme
+
+   LOG_DEBUG_MESSAGE("18.2");
+
+   // sessionInfo["knit_working_dir_available"] =
+   //       modules::rmarkdown::knitWorkingDirAvailable();
+   sessionInfo["knit_working_dir_available"] = true; // fixme
+
+   LOG_DEBUG_MESSAGE("18.3");
+
+   // sessionInfo["ppt_available"] =
+   //       modules::rmarkdown::pptAvailable();
+   sessionInfo["ppt_available"] = true; // fixme
+
+   LOG_DEBUG_MESSAGE("18.4");
 
    sessionInfo["clang_available"] = modules::clang::isAvailable();
+
+   LOG_DEBUG_MESSAGE("18.5");
 
    // don't show help home until we figure out a sensible heuristic
    // sessionInfo["show_help_home"] = options.showHelpHome();
    sessionInfo["show_help_home"] = false;
 
+   LOG_DEBUG_MESSAGE("18.6");
+
    sessionInfo["multi_session"] = options.multiSession();
 
+   LOG_DEBUG_MESSAGE("18.7");
+
    json::Object rVersionsJson;
-   rVersionsJson["r_version"] = module_context::rVersion();
+   // rVersionsJson["r_version"] = module_context::rVersion();
+   rVersionsJson["r_version"] = "4.1.2"; // fixme
    rVersionsJson["r_version_label"] = module_context::rVersionLabel();
-   rVersionsJson["r_home_dir"] = module_context::rHomeDir();
+
+   LOG_DEBUG_MESSAGE("18.8");
+
+   // rVersionsJson["r_home_dir"] = module_context::rHomeDir();
+   rVersionsJson["r_home_dir"] = "/usr/lib/R"; // fixme
    rVersionsJson["r_version_module"] = module_context::rVersionModule();
+
    sessionInfo["r_versions_info"] = rVersionsJson;
+
+   LOG_DEBUG_MESSAGE("19");
 
    sessionInfo["show_user_home_page"] = options.showUserHomePage();
    sessionInfo["user_home_page_url"] = json::Value();
-   
+
    sessionInfo["r_addins"] = modules::r_addins::addinRegistryAsJson();
    sessionInfo["package_provided_extensions"] = modules::ppe::indexer().getPayload();
 
@@ -594,10 +708,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["session_id"] = module_context::activeSession().id();
    sessionInfo["session_label"] = module_context::activeSession().label();
 
+   LOG_DEBUG_MESSAGE("20");
+
    sessionInfo["drivers_support_licensing"] = options.supportsDriversLicensing();
 
    sessionInfo["quit_child_processes_on_exit"] = options.quitChildProcessesOnExit();
-   
+
    sessionInfo["git_commit_large_file_size"] = options.gitCommitLargeFileSize();
 
    sessionInfo["default_rsconnect_server"] = options.defaultRSConnectServer();
@@ -606,11 +722,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["workbench_jobs_enabled"] = modules::overlay::workbenchJobsFeatureDisplayed();
 
+   LOG_DEBUG_MESSAGE("21");
+
    json::Object packageDependencies;
    error = modules::dependency_list::getDependencyList(&packageDependencies);
    if (error)
       LOG_ERROR(error);
    sessionInfo["package_dependencies"] = packageDependencies;
+
+   LOG_DEBUG_MESSAGE("22");
 
    boost::shared_ptr<modules::system_resources::MemoryUsage> pUsage;
 
@@ -629,6 +749,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    {
       sessionInfo["memory_usage"] = pUsage->toJson();
    }
+
+   LOG_DEBUG_MESSAGE("23");
 
    // crash handler settings
    bool canModifyCrashSettings =
@@ -650,13 +772,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // session route for load balanced sessions
    sessionInfo["session_node"] = session::modules::overlay::sessionNode();
-   
+
    // copilot
    sessionInfo["copilot_enabled"] = options.copilotEnabled();
-   
+
    // automation agent
    sessionInfo["is_automation_agent"] = options.isAutomationAgent();
-   
+
+   LOG_DEBUG_MESSAGE("24");
+
    if (projects::projectContext().hasProject())
    {
       projects::RProjectCopilotOptions options;
@@ -674,6 +798,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       }
    }
 
+   LOG_DEBUG_MESSAGE("25");
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // create response  (we always set kEventsPending to false so that the client
@@ -681,6 +807,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    json::JsonRpcResponse jsonRpcResponse;
    jsonRpcResponse.setField(kEventsPending, "false");
    jsonRpcResponse.setResult(sessionInfo);
+
+   LOG_DEBUG_MESSAGE("26");
 
    // set response
    core::http::Response response;
@@ -697,14 +825,22 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 #endif
 
+   LOG_DEBUG_MESSAGE("27");
+
    ptrConnection->sendResponse(response);
+
+   LOG_DEBUG_MESSAGE("27.1");
 
    // complete initialization of session
    init::ensureSessionInitialized();
-   
+
+   LOG_DEBUG_MESSAGE("27.2");
+
    // notify modules of the client init
    module_context::events().onClientInit();
-   
+
+   LOG_DEBUG_MESSAGE("28");
+
    // call the init function
    initFunction();
 
