@@ -353,10 +353,10 @@ private:
             return;
          }
 
-         // respond to get_environment_state with the last known information
          if (connection::isMethod(ptrHttpConnection, "read_config_json") ||
              connection::isMethod(ptrHttpConnection, "get_rversion_info") ||
-             connection::isMethod(ptrHttpConnection, "list_files")) {
+             connection::isMethod(ptrHttpConnection, "list_files") ||
+             connection::isMethod(ptrHttpConnection, "get_environment_state")) {
             http_methods::handleConnection(ptrConnection, http_methods::ForegroundConnection);
             return;
          }

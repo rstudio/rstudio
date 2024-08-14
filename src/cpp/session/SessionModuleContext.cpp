@@ -1486,7 +1486,14 @@ bool isPackageVersionInstalled(const std::string& packageName,
 
 bool isMinimumDevtoolsInstalled()
 {
-   return isPackageVersionInstalled("devtools", "1.4.1");
+   static bool res = false;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return res;
+
+   res = isPackageVersionInstalled("devtools", "1.4.1");
+   return res;
 }
 
 bool isMinimumRoxygenInstalled()
@@ -1843,7 +1850,12 @@ json::Object createFileSystemItem(const FilePath& filePath)
 
 std::string rVersion()
 {
-   std::string rVersion;
+   static std::string rVersion;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return rVersion;
+
    Error error = rstudio::r::exec::RFunction(".rs.rVersionString")
          .call(&rVersion);
    if (error)
@@ -1861,7 +1873,12 @@ std::string rVersionLabel()
 std::string rHomeDir()
 {
    // get the current R home directory
-   std::string rVersionHome;
+   static std::string rVersionHome;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return rVersionHome;
+
    Error error = rstudio::r::exec::RFunction("R.home").call(&rVersionHome);
    if (error)
       LOG_ERROR(error);

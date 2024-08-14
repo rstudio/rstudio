@@ -58,6 +58,7 @@
 #include "SessionBlogdown.hpp"
 #include "RMarkdownPresentation.hpp"
 #include "../SessionHTMLPreview.hpp"
+#include "../../SessionConsoleInput.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
@@ -101,10 +102,10 @@ std::string utf8ToConsole(const std::string& string)
       LOG_ERROR(LAST_SYSTEM_ERROR());
       return string;
    }
-   
+
    std::ostringstream output;
    char buffer[16];
-   
+
    // force C locale (ensures that any non-ASCII characters
    // will fail to convert and hence must be unicode escaped)
    const char* locale = ::setlocale(LC_CTYPE, nullptr);
@@ -113,7 +114,7 @@ std::string utf8ToConsole(const std::string& string)
    for (int i = 0; i < chars; i++)
    {
       int n = ::wctomb(buffer, wide[i]);
-      
+
       // use Unicode escaping for characters that cannot be represented
       // as well as for single-byte upper ASCII
       if (n == -1 || (n == 1 && static_cast<unsigned char>(buffer[0]) > 127))
@@ -125,11 +126,11 @@ std::string utf8ToConsole(const std::string& string)
          output.write(buffer, n);
       }
    }
-   
+
    ::setlocale(LC_CTYPE, locale);
-   
+
    return output.str();
-   
+
 }
 
 #else
@@ -141,7 +142,7 @@ std::string utf8ToConsole(const std::string& string)
 
 #endif
 
-enum 
+enum
 {
    RExecutionReady = 0,
    RExecutionBusy  = 1
@@ -322,9 +323,9 @@ std::string assignOutputUrl(const std::string& outputFile)
             .callUtf8(&renderedPath);
       if (error)
          LOG_ERROR(error);
-      
+
       s_renderOutputs[s_currentRenderOutput] = renderedPath;
-      
+
       // compute relative path to target file and append it to the path
       std::string relativePath = outputPath.getRelativePath(websiteDir);
       path += relativePath;
@@ -402,7 +403,7 @@ public:
                                                          sourceLine,
                                                          sourceNavigation,
                                                          asShiny));
-      pRender->start(format, encoding, paramsFile, asTempfile, 
+      pRender->start(format, encoding, paramsFile, asTempfile,
                      existingOutputFile, workingDir, viewerType);
       return pRender;
    }
@@ -549,7 +550,7 @@ private:
       // (other render functions may not accept knit_root_dir)
       if (!workingDir.empty() && renderFunc == kStandardRenderFunc)
       {
-         renderOptions += ", knit_root_dir = '" + 
+         renderOptions += ", knit_root_dir = '" +
                           utf8ToConsole(workingDir) + "'";
       }
 
@@ -602,12 +603,12 @@ private:
                              string_utils::singleQuotedStrEscape(targetFile) %
                              extraParams %
                              renderOptions);
-      
+
       // un-escape unicode escapes
 #ifdef _WIN32
       cmd = boost::algorithm::replace_all_copy(cmd, "\\\\u{", "\\u{");
 #endif
-      
+
       // environment
       core::system::Options environment;
       std::string tempDir;
@@ -623,7 +624,7 @@ private:
 
       // inform that this runs in the Render pane
       environment.push_back(std::make_pair("RSTUDIO_CHILD_PROCESS_PANE", "render"));
-      
+
       // set the not cran env var
       environment.push_back(std::make_pair("NOT_CRAN", "true"));
 
@@ -632,16 +633,16 @@ private:
       error = r::exec::RFunction(".rs.inferReticulatePython").call(&reticulatePython);
       if (error)
          LOG_ERROR(error);
-      
+
       // pass along current PATH
       std::string currentPath = core::system::getenv("PATH");
       core::system::setenv(&environment, "PATH", currentPath);
-      
+
       if (!reticulatePython.empty())
       {
          // we found a Python version; forward it
          environment.push_back({"RETICULATE_PYTHON_FALLBACK", reticulatePython});
-         
+
          // also update the PATH so this version of Python is visible
          core::system::addToPath(
                   &environment,
@@ -724,7 +725,7 @@ private:
                      "^" kAnsiEscapeRegex
                      "(?:Listening on |Browse at )?(https?://[^\033]+)"
                      kAnsiEscapeRegex "$");
-            
+
             boost::smatch matches;
             if (regex_utils::match(outputLine, matches, shinyListening))
             {
@@ -822,7 +823,7 @@ private:
 
       std::string outputFile = createAliasedPath(outputFile_);
       resultJson["output_file"] = outputFile;
-      
+
       std::vector<SourceMarker> knitrErrors;
       if (renderErrorMarker_)
       {
@@ -899,7 +900,7 @@ private:
                           const std::string& output)
    {
       using namespace module_context;
-      
+
       if (type == kCompileOutputError && sourceNavigation_)
       {
          if (renderErrorMarker_)
@@ -920,7 +921,7 @@ private:
             // parse to to gather information for a source marker
             const char* renderErrorPattern =
                   "(?:.*?)Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)";
-            
+
             boost::regex reRenderError(renderErrorPattern);
             boost::smatch matches;
             if (regex_utils::match(output, matches, reRenderError))
@@ -934,7 +935,7 @@ private:
             }
          }
       }
-      
+
       // always enque quarto as normal output (it does it's own colorizing of error output)
       if (isQuarto_)
          type = module_context::kCompileOutputNormal;
@@ -1047,7 +1048,7 @@ void initEnvironment()
    std::string rstudioPandoc = core::system::getenv(kRStudioPandoc);
    if (rstudioPandoc.empty())
       rstudioPandoc = session::options().pandocPath().getAbsolutePath();
-   
+
    r::exec::RFunction sysSetenv("Sys.setenv");
    sysSetenv.addParam(kRStudioPandoc, rstudioPandoc);
 
@@ -1173,7 +1174,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
    {
       // if this is a notebook, it's pre-rendered
       FilePath inputFile = module_context::resolveAliasedPath(file);
-      FilePath outputFile = inputFile.getParent().completePath(inputFile.getStem() + 
+      FilePath outputFile = inputFile.getParent().completePath(inputFile.getStem() +
                                                         kNotebookExt);
 
       // extract the output format
@@ -1208,7 +1209,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
    {
       // not a notebook, do render work
       doRenderRmd(file, line, format, encoding, paramsFile,
-                  true, asTempfile, type == kRenderTypeShiny, existingOutputFile, 
+                  true, asTempfile, type == kRenderTypeShiny, existingOutputFile,
                   workingDir, viewerType, pResponse);
    }
 
@@ -1601,7 +1602,7 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
    error = imagesPath.ensureDirectory();
    if (error)
       return error;
-   
+
    // build list of target image paths
    std::vector<std::string> createdImages;
 
@@ -1617,7 +1618,7 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
                "(;base64)?"            // optional base64 declaration
                ",(.*)$"                // comma separating prefix from data
       );
-      
+
       boost::smatch match;
       if (boost::regex_match(image, match, reDataImage))
       {
@@ -1629,23 +1630,23 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
             if (error)
                LOG_ERROR(error);
          }
-         
+
          // figure out an appropriate extension
          std::string mimeType = match[1];
          std::string fileExtension = mimeType;
          if (mimeType == "svg+xml")
             fileExtension = "svg";
-         
+
          // create the file path
          std::string crcHash = core::hash::crc32Hash(rawData);
          std::string fileName = fmt::format("clipboard-{}.{}", crcHash, fileExtension);
          FilePath imagePath = imagesPath.completeChildPath(fileName);
-         
+
          // write to file
          Error error = core::writeStringToFile(imagePath, rawData);
          if (error)
             LOG_ERROR(error);
-         
+
          // return path to generated image
          std::string resolvedPath = fmt::format("images/{}", fileName);
          createdImages.push_back(resolvedPath);
@@ -1653,7 +1654,7 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
       else
       {
          static const boost::regex rePrefix("^(data:[^,]+,)");
-         
+
          boost::smatch match;
          if (boost::regex_match(image, match, rePrefix))
          {
@@ -1666,7 +1667,7 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
          }
       }
    }
-   
+
    // send back new image paths to client
    json::Array createdImagesJson = core::json::toJsonArray(createdImages);
    pResponse->setResult(createdImagesJson);
@@ -1702,7 +1703,7 @@ SEXP rs_getWebsiteOutputDir()
 
 void onShutdown(bool terminatedNormally)
 {
-   Error error = core::writeStringVectorToFile(outputCachePath(), 
+   Error error = core::writeStringVectorToFile(outputCachePath(),
                                                s_renderOutputs);
    if (error)
       LOG_ERROR(error);
@@ -1716,7 +1717,7 @@ void onShutdown(bool terminatedNormally)
    }
 #endif
 }
- 
+
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
    onShutdown(true);
@@ -1750,18 +1751,41 @@ Error evaluateRmdParams(const std::string& docId)
 
 bool knitParamsAvailable()
 {
-   return module_context::isPackageVersionInstalled("rmarkdown", "0.7.3") &&
-          module_context::isPackageVersionInstalled("knitr", "1.10.18");
+   static bool res = false;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return res;
+
+   res = module_context::isPackageVersionInstalled("rmarkdown", "0.7.3") &&
+         module_context::isPackageVersionInstalled("knitr", "1.10.18");
+
+   return res;
 }
 
 bool knitWorkingDirAvailable()
 {
-   return module_context::isPackageVersionInstalled("rmarkdown", "1.1.9017");
+   static bool res = false;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return res;
+
+   res = module_context::isPackageVersionInstalled("rmarkdown", "1.1.9017");
+
+   return res;
 }
 
 bool pptAvailable()
 {
-   return module_context::isPackageVersionInstalled("rmarkdown", "1.8.10");
+   static bool res = false;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return res;
+
+   res = module_context::isPackageVersionInstalled("rmarkdown", "1.8.10");
+   return res;
 }
 
 bool rmarkdownPackageAvailable()
@@ -1891,7 +1915,12 @@ bool isBookdownProject()
    if (!projects::projectContext().hasProject())
       return false;
 
-   bool isBookdown = false;
+   static bool isBookdown = false;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return isBookdown;
+
    std::string encoding = projects::projectContext().defaultEncoding();
    Error error = r::exec::RFunction(".rs.isBookdownDir",
                               projectBuildDir(), encoding).call(&isBookdown);
@@ -1904,8 +1933,15 @@ bool isDistillProject()
 {
    if (!isWebsiteProject())
       return false;
-   
-   return session::modules::rmarkdown::isSiteProject("distill_website");
+
+   static bool res = false;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return res;
+
+   res = session::modules::rmarkdown::isSiteProject("distill_website");
+   return res;
 }
 
 

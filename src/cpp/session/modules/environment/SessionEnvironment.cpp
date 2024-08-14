@@ -47,6 +47,8 @@
 
 #include "EnvironmentUtils.hpp"
 
+#include "../../SessionConsoleInput.hpp"
+
 #if defined(_WIN32)
 # define kLibraryName "R.dll"
 #elif defined(__APPLE__)
@@ -60,7 +62,7 @@ using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace environment {
 
 namespace {
@@ -83,7 +85,7 @@ std::string s_monitoredPythonModule;
 // browser state by pushing new contexts / frames on the stack
 bool s_browserActive = false;
 
-// are we currently monitoring the environment? this is almost always true, but can be 
+// are we currently monitoring the environment? this is almost always true, but can be
 // disabled by the user to help mitigate pathological cases in which environment monitoring
 // has undesirable side effects.
 bool s_monitoring = true;
@@ -143,54 +145,54 @@ bool isSerializableImpl(SEXP valueSEXP)
    // Check for SEXP types that we know can be safely serialized.
    switch (TYPEOF(valueSEXP))
    {
-   
+
    // Assume that promises can be safely serialized.
    // (We just want to avoid evaluating them here.)
    case PROMSXP:
       return true;
-      
+
    // Assume that functions can be serialized.
    // Technically, a function's closure _could_ contain arbitrary objects,
    // which might not be serializable, but that should be exceedingly rare.
    case CLOSXP:
       return true;
-      
+
    }
-   
+
    // Check for SEXP types that we know cannot be safely serialized.
    switch (TYPEOF(valueSEXP))
    {
-   
+
    // External pointers and weak references cannot be serialized.
    case EXTPTRSXP:
    case WEAKREFSXP:
       return false;
-      
+
    }
-   
+
    // Assume base environments can be serialized.
    if (valueSEXP == R_BaseEnv || valueSEXP == R_BaseNamespace)
       return true;
-   
+
    if (TYPEOF(valueSEXP) == ENVSXP)
    {
       // Assume package environments + namespaces can be serialized.
       if (R_IsNamespaceEnv(valueSEXP) || R_IsPackageEnv(valueSEXP))
          return true;
    }
-   
+
    // Check for 'known-safe' object classes.
    auto safeClasses = { "data.frame", "grf", "igraph" };
    for (auto&& safeClass : safeClasses)
       if (Rf_inherits(valueSEXP, safeClass))
          return true;
-   
+
    // Check for 'known-unsafe' object classes.
    auto unsafeClasses = { "ArrowObject", "DBIConnection", "python.builtin.object" };
    for (auto&& unsafeClass : unsafeClasses)
       if (Rf_inherits(valueSEXP, unsafeClass))
          return false;
-   
+
    // Assume other objects can be serialized.
    return true;
 }
@@ -208,10 +210,10 @@ bool isGlobalEnvironmentSerializable()
 {
    // Start building a new cache of serialized object state.
    SerializationCache newCache;
-   
+
    // Flag tracking whether we found an object which cannot be serialized.
    bool allValuesSerializable = true;
-   
+
    // Iterate over values in the global environment, and compute whether they can be serialized.
    SEXP hashTableSEXP = HASHTAB(R_GlobalEnv);
    R_xlen_t n = Rf_xlength(hashTableSEXP);
@@ -237,11 +239,11 @@ bool isGlobalEnvironmentSerializable()
          }
       }
    }
-   
+
    // Set the new cache.
    s_serializationCache.clear();
    s_serializationCache = newCache;
-   
+
    // Return true only if all values can be serialized.
    return allValuesSerializable;
 }
@@ -288,21 +290,21 @@ bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-bool frameBindingIsActive(SEXP binding) 
+bool frameBindingIsActive(SEXP binding)
 {
    static unsigned int ACTIVE_BINDING_MASK = (1<<15);
    return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
 }
 
-bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visited) 
+bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visited)
 {
    if (frameBindingIsActive(b))
       return false;
 
    // ->extra is only used for immediate bindings: this needs special care
-   // before we call CAR() because it might error with "bad binding access": 
-   // from Rinlinedfuns.h : 
-   // 
+   // before we call CAR() because it might error with "bad binding access":
+   // from Rinlinedfuns.h :
+   //
    //     INLINE_FUN SEXP CAR(SEXP e)
    //     {
    //        if (BNDCELL_TAG(e))
@@ -317,22 +319,22 @@ bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visite
       {
          reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
       }
-      else 
+      else
       {
          switch(typetag) {
             case INTSXP:
-            case REALSXP: 
+            case REALSXP:
             case LGLSXP:
                // this is an immediate binding, R_expand_binding_value() would expand to a scalar
                return false;
-            
+
             default:
                // otherwise (not sure this even hapens), ->extra should not be set: unset it
                reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
          }
       }
    }
-   
+
    // now safe to test the value in CAR()
    return hasExternalPointer(CAR(b), nullPtr, visited);
 }
@@ -343,7 +345,7 @@ bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
    {
       if (frameBindingHasExternalPointer(frame, nullPtr, visited))
          return true;
-      
+
       frame = CDR(frame);
    }
 
@@ -355,7 +357,7 @@ bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    SEXP hash = HASHTAB(obj);
    if (hash == R_NilValue)
       return frameHasExternalPointer(FRAME(obj), nullPtr, visited);
-   
+
    R_xlen_t n = XLENGTH(hash);
    for (R_xlen_t i = 0; i < n; i++)
    {
@@ -401,9 +403,9 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    visited.insert(obj);
 
    // check if this is an external pointer
-   if (r::sexp::isExternalPointer(obj)) 
+   if (r::sexp::isExternalPointer(obj))
    {
-      // NOTE: this includes UserDefinedDatabase, aka 
+      // NOTE: this includes UserDefinedDatabase, aka
       //       external pointers to R_ObjectTable
 
       // when nullPtr is true, only return true for null pointer xp
@@ -420,10 +422,10 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 
    switch(TYPEOF(obj))
    {
-      case SYMSXP: 
+      case SYMSXP:
          return false;
 
-      case ENVSXP: 
+      case ENVSXP:
       {
          if (envHasExternalPointer(obj, nullPtr, visited))
             return true;
@@ -436,7 +438,7 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
             return true;
          break;
       }
-         
+
       case LISTSXP:
       case LANGSXP:
       {
@@ -444,7 +446,7 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
             return true;
          break;
       }
-         
+
       case WEAKREFSXP:
       {
          if (weakrefHasExternalPointer(obj, nullPtr, visited))
@@ -452,7 +454,7 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 
          break;
       }
-      case PROMSXP: 
+      case PROMSXP:
       {
          SEXP value = PRVALUE(obj);
          if (value != R_UnboundValue)
@@ -460,7 +462,7 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
             if (hasExternalPointer(value, nullPtr, visited))
                return true;
          }
-         else 
+         else
          {
             if (hasExternalPointer(PRCODE(obj), nullPtr, visited))
                return true;
@@ -486,13 +488,13 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       default:
          break;
    }
-   
+
    // altrep objects use ATTRIB() to hold class info, so no need
-   // to check ATTRIB() on them, but altrepHasExternalPointer() 
+   // to check ATTRIB() on them, but altrepHasExternalPointer()
    // checks for their data1 and data2, aka CAR() and CDR()
    if (isAltrep(obj))
       return altrepHasExternalPointer(obj, nullPtr, visited);
-      
+
    // check attributes, this includes slots for S4 objects
    if (hasExternalPointer(ATTRIB(obj), nullPtr, visited))
       return true;
@@ -510,7 +512,7 @@ bool hasExternalPtr(SEXP obj,      // environment to search for external pointer
 SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
 {
    r::sexp::Protect protect;
-   
+
    bool nullPtr = r::sexp::asLogical(nullSEXP);
    return r::sexp::create(hasExternalPtr(objSEXP, nullPtr), &protect);
 }
@@ -523,7 +525,7 @@ SEXP rs_hasAltrep(SEXP obj)
    return r::sexp::create(hasAltrep(obj), &protect);
 }
 
-// Is an object an R ALTREP object? 
+// Is an object an R ALTREP object?
 SEXP rs_isAltrep(SEXP obj)
 {
    r::sexp::Protect protect;
@@ -538,10 +540,10 @@ SEXP rs_dim(SEXP objectSEXP)
       // default values for rows, columns
       int numRows = -1;
       int numCols = r::sexp::length(objectSEXP);
-      
+
       SEXP rowNamesInfoSEXP = R_NilValue;
       r::sexp::Protect protect;
-   
+
       Error error = r::exec::RFunction("base:::.row_names_info")
             .addParam(objectSEXP)
             .addParam(0)
@@ -551,7 +553,7 @@ SEXP rs_dim(SEXP objectSEXP)
          LOG_ERROR(error);
          return R_NilValue;
       }
-      
+
       // Avoid materializing certain ALTREP representations.
       //
       // https://github.com/rstudio/rstudio/issues/13907
@@ -577,7 +579,7 @@ SEXP rs_dim(SEXP objectSEXP)
                canComputeRows = false;
          }
       }
-      
+
       // Detect compact row names.
       if (canComputeRows)
       {
@@ -590,13 +592,13 @@ SEXP rs_dim(SEXP objectSEXP)
             numRows = r::sexp::length(rowNamesInfoSEXP);
          }
       }
-      
+
       SEXP resultSEXP = Rf_allocVector(INTSXP, 2);
       INTEGER(resultSEXP)[0] = numRows;
       INTEGER(resultSEXP)[1] = numCols;
       return resultSEXP;
    }
-   
+
    // Otherwise, just call 'dim()' directly
    r::sexp::Protect protect;
    SEXP dimSEXP = R_NilValue;
@@ -605,7 +607,7 @@ SEXP rs_dim(SEXP objectSEXP)
          .call(&dimSEXP, &protect);
    if (error)
       LOG_ERROR(error);
-   
+
    return dimSEXP;
 }
 
@@ -632,13 +634,13 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
 {
    SEXP simulatedSrcref = R_NilValue;
    r::sexp::Protect protect;
-   
+
    // The objects we will later transmit to .rs.simulateSourceRefs below
    // include language objects that we need to protect from early evaluation.
    // Attach them to a carrier SEXP as attributes rather than passing directly.
    SEXP info = r::sexp::create("_rs_sourceinfo", &protect);
    r::sexp::setAttrib(info, "_rs_callfun", context.callfun());
-   
+
    if (lineContext)
    {
       r::sexp::setAttrib(info, "_rs_callobj", lineContext.call());
@@ -647,11 +649,11 @@ SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
    {
       SEXP lastDebugSEXP = r::sexp::create(pLineDebugState->lastDebugText, &protect);
       r::sexp::setAttrib(info, "_rs_calltext", lastDebugSEXP);
-      
+
       SEXP lastLineSEXP = r::sexp::create(pLineDebugState->lastDebugLine, &protect);
       r::sexp::setAttrib(info, "_rs_lastline", lastLineSEXP);
    }
-   
+
    Error error = r::exec::RFunction(".rs.simulateSourceRefs", info)
          .call(&simulatedSrcref, &protect);
    if (error)
@@ -668,13 +670,13 @@ json::Array callFramesAsJson(
 {
    Error error;
    using namespace r::context;
-   
+
    RCntxt prevContext;
    RCntxt srcContext = globalContext();
    json::Array listFrames;
    int contextDepth = 0;
    std::map<SEXP, RCntxt> envSrcrefCtx;
-   
+
    // We want to treat the function associated with the top-level
    // browser context specially. This allows us to do so.
    enum BrowseContextState {
@@ -682,7 +684,7 @@ json::Array callFramesAsJson(
       BrowserContextFound,
       BrowserContextUsed,
    };
-   
+
    SEXP browserCloenv = R_NilValue;
    BrowseContextState browserContextState = BrowserContextNone;
 
@@ -692,7 +694,7 @@ json::Array callFramesAsJson(
       bool isFunctionContext = (context->callflag() & (CTXT_FUNCTION | CTXT_BROWSER));
       if (!isFunctionContext)
          continue;
-      
+
       // if this context has a valid srcref, use it to supply the srcrefs for
       // debugging in the environment of the callee. note that there may be
       // multiple srcrefs on the stack for a given closure; in this case we
@@ -700,21 +702,21 @@ json::Array callFramesAsJson(
       SEXP srcref = context->contextSourceRefs();
       if (!isValidSrcref(srcref))
          continue;
-      
+
       RCntxt nextContext = context->nextcontext();
       if (nextContext.isNull())
          continue;
-      
+
       SEXP cloenv = context->nextcontext().cloenv();
       if (cloenv == R_NilValue)
          continue;
-      
+
       if (envSrcrefCtx.find(cloenv) != envSrcrefCtx.end())
          continue;
-      
+
       envSrcrefCtx[cloenv] = *context;
    }
-   
+
    for (auto context = RCntxt::begin(); context != r::context::RCntxt::end(); context++)
    {
       if (browserContextState == BrowserContextNone)
@@ -725,7 +727,7 @@ json::Array callFramesAsJson(
             browserContextState = BrowserContextFound;
          }
       }
-      
+
       if (context->callflag() & CTXT_FUNCTION)
       {
          json::Object varFrame;
@@ -735,7 +737,7 @@ json::Array callFramesAsJson(
          error = context->functionName(&functionName);
          if (error)
             LOG_ERROR(error);
-         
+
          varFrame["function_name"] = functionName;
          varFrame["is_error_handler"] = context->isErrorHandler();
          varFrame["is_hidden"] = context->isDebugHidden();
@@ -756,7 +758,7 @@ json::Array callFramesAsJson(
          }
 
          SEXP srcref = srcContext.contextSourceRefs();
-         
+
          // mark this as a source-equivalent function if it's evaluating user
          // code into the global environment
          varFrame["is_source_equiv"] =
@@ -767,7 +769,7 @@ json::Array callFramesAsJson(
          error = srcContext.fileName(&filename);
          if (error)
             LOG_ERROR(error);
-         
+
          varFrame["file_name"] = filename;
          varFrame["aliased_file_name"] =
                module_context::createAliasedPath(FilePath(filename));
@@ -776,22 +778,22 @@ json::Array callFramesAsJson(
          {
             varFrame["real_sourceref"] = true;
             sourceRefToJson(srcref, &varFrame);
-            
+
             std::string lines;
             Error error = r::exec::RFunction(".rs.readSrcrefLines")
                   .addParam(srcref)
                   .addParam(true)
                   .call(&lines);
-            
+
             if (error)
                LOG_ERROR(error);
-            
+
             varFrame["lines"] = lines;
          }
          else
          {
             varFrame["real_sourceref"] = false;
-            
+
             // if this frame is being debugged, we simulate the sourceref
             // using the output of the last debugged statement; if it isn't,
             // we construct it by deparsing calls in the context stack.
@@ -803,7 +805,7 @@ json::Array callFramesAsJson(
                simulatedSrcref =
                      simulatedSourceRefsOfContext(
                         *context, RCntxt(), pLineDebugState);
-               
+
                if (isValidSrcref(simulatedSrcref))
                {
                   int lastDebugLine = INTEGER(simulatedSrcref)[0] - 1;
@@ -821,7 +823,7 @@ json::Array callFramesAsJson(
          }
 
          varFrame["function_line_number"] = 1;
-         
+
          std::string callSummary;
          error = context->callSummary(&callSummary);
          if (error)
@@ -831,7 +833,7 @@ json::Array callFramesAsJson(
 
          // If this is a Shiny function, provide its label
          varFrame["shiny_function_label"] = context->shinyFunctionLabel();
-         
+
          if (depth == contextDepth)
          {
             *pContext = *context;
@@ -842,7 +844,7 @@ json::Array callFramesAsJson(
          prevContext = *context;
       }
    }
-   
+
    return listFrames;
 }
 
@@ -947,7 +949,7 @@ Error setEnvironment(boost::shared_ptr<int> pContextDepth,
       return error;
 
    s_monitoredPythonModule = std::string();
-   
+
    if (s_environmentLanguage == kEnvironmentLanguageR)
    {
       error = setEnvironmentName(*pContextDepth,
@@ -959,7 +961,7 @@ Error setEnvironment(boost::shared_ptr<int> pContextDepth,
       if (environmentName != s_monitoredPythonModule)
       {
          s_monitoredPythonModule = environmentName;
-         
+
          ClientEvent event(client_events::kEnvironmentRefresh);
          module_context::enqueClientEvent(event);
       }
@@ -968,7 +970,7 @@ Error setEnvironment(boost::shared_ptr<int> pContextDepth,
    {
       LOG_WARNING_MESSAGE("Unexpected language '" + s_environmentLanguage + "'");
    }
-   
+
    if (error)
       return error;
 
@@ -1012,7 +1014,7 @@ bool functionIsOutOfSync(const r::context::RCntxt& context,
          .addParam(true)
          .addParam(true)
          .call(&sexpCode, &protect);
-   
+
    if (error)
    {
       LOG_ERROR(error);
@@ -1069,13 +1071,13 @@ json::Object pythonEnvironmentStateData(const std::string& environment)
          r::exec::RFunction(".rs.reticulate.environmentState")
          .addParam(environment)
          .call(&state, &protect);
-   
+
    if (error)
    {
       LOG_ERROR(error);
       return json::Object();
    }
-   
+
    json::Object jsonState;
    error = r::json::jsonValueFromObject(state, &jsonState);
    if (error)
@@ -1083,7 +1085,7 @@ json::Object pythonEnvironmentStateData(const std::string& environment)
       LOG_ERROR(error);
       return json::Object();
    }
-   
+
    jsonState["environment_monitoring"] = s_monitoring;
    return jsonState;
 }
@@ -1097,21 +1099,26 @@ json::Object commonEnvironmentStateData(
       bool includeContents,
       LineDebugState* pLineDebugState)
 {
+   static json::Object varJson;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return varJson;
+
    bool hasCodeInFrame = false;
-   json::Object varJson;
    bool useProvidedSource = false;
    std::string functionCode;
    bool inFunctionEnvironment = false;
-   
+
    r::context::RCntxt context;
    r::context::RCntxt srcContext;
    json::Array callFramesJson = callFramesAsJson(depth, &context, &srcContext, pLineDebugState);
-   
+
    // emit the current list of values in the environment, but only if not monitoring (as the intent
    // of the monitoring switch is to avoid implicit environment listing)
    varJson["environment_monitoring"] = s_monitoring;
    varJson["environment_list"] = includeContents ? environmentListAsJson() : json::Array();
-   
+
    varJson["context_depth"] = depth;
    varJson["call_frames"] = callFramesJson;
    varJson["function_name"] = "";
@@ -1134,15 +1141,15 @@ json::Object commonEnvironmentStateData(
          if (env != R_GlobalEnv && env == context.cloenv())
          {
             varJson["environment_name"] = functionName + "()";
-            
+
             std::string envLocation;
             error = r::exec::RFunction(".rs.environmentName")
                   .addParam(ENCLOS(context.cloenv()))
                   .call(&envLocation);
-            
+
             if (error)
                LOG_ERROR(error);
-            
+
             varJson["function_environment_name"] = envLocation;
             varJson["environment_is_local"] = true;
             inFunctionEnvironment = true;
@@ -1157,7 +1164,7 @@ json::Object commonEnvironmentStateData(
             core::json::readObject(currentFrameJson.getObject(),
                      "file_name", filename,
                      "lines", lines);
-            
+
             // TODO: Need to check if srcref code is in sync with file?
             if (!lines.empty())
             {
@@ -1166,7 +1173,7 @@ json::Object commonEnvironmentStateData(
                functionCode = lines;
             }
          }
-         
+
          if (!hasCodeInFrame)
          {
             // The eval and evalq functions receive special treatment since they
@@ -1181,7 +1188,7 @@ json::Object commonEnvironmentStateData(
                      functionCode != "NULL";
             }
          }
-         
+
          varJson["function_name"] = functionName;
       }
    }
@@ -1208,7 +1215,7 @@ json::Object commonEnvironmentStateData(
       varJson["environment_name"] = environmentName;
       varJson["environment_is_local"] = local;
    }
- 
+
    // If we have source references while we're stepping through, then
    // we can accurately provide the current context even for the top-most frame.
    if (isDebugStepping && hasCodeInFrame)
@@ -1277,9 +1284,9 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
    Error error = json::readParams(request.params, &language, &environment);
    if (error)
       LOG_ERROR(error);
-   
+
    json::Object jsonState;
-   
+
    if (language == kEnvironmentLanguageR)
    {
       jsonState = commonEnvironmentStateData(
@@ -1296,7 +1303,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
    {
       LOG_WARNING_MESSAGE("Unexpected language '" + language + "'");
    }
-   
+
    pResponse->setResult(jsonState);
    return Success();
 }
@@ -1322,11 +1329,11 @@ void onDetectChanges(module_context::ChangeSource /* source */)
             r::exec::RFunction(".rs.reticulate.detectChanges")
             .addParam(s_monitoredPythonModule)
             .call();
-      
+
       if (error)
          LOG_ERROR(error);
    }
-   
+
    // Check active environment for changes
    s_pEnvironmentMonitor->checkForChanges();
 }
@@ -1338,13 +1345,13 @@ SEXP inferDebugSrcrefs(
       boost::shared_ptr<LineDebugState> pLineDebugState)
 {
    using namespace r::context;
-   
+
    // check to see if we have real source references for the currently
    // executing context
    SEXP srcref = r::context::globalContext().srcref();
    if (isValidSrcref(srcref))
       return srcref;
-   
+
    r::context::RCntxt context;
    r::context::RCntxt srcContext;
    json::Array callFramesJson = callFramesAsJson(
@@ -1352,7 +1359,7 @@ SEXP inferDebugSrcrefs(
             &context,
             &srcContext,
             pLineDebugState.get());
-   
+
    srcref = simulatedSourceRefsOfContext(srcContext, RCntxt(), pLineDebugState.get());
    if (pLineDebugState && isValidSrcref(srcref))
       pLineDebugState->lastDebugLine = INTEGER(srcref)[0] - 1;
@@ -1369,14 +1376,14 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
 
-   
+
    int depth = 0;
    SEXP environmentTop = nullptr;
    r::context::RCntxt context;
 
    // End debug output capture every time a console prompt occurs
    *pCapturingDebugOutput = false;
-   
+
    // Update session suspendable state
    s_isGlobalEnvironmentSerializable = isGlobalEnvironmentSerializable();
 
@@ -1396,7 +1403,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // allow the user to explore other code.
       context = r::context::getFunctionContext(BROWSER_FUNCTION, &depth, &environmentTop);
    }
-   
+
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
        depth != *pContextDepth ||
        context != *pCurrentContext)
@@ -1423,14 +1430,14 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       *pCurrentContext = context;
       enqueContextDepthChangedEvent(true, depth, pLineDebugState.get());
    }
-   
+
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0 && !r::context::inDebugHiddenContext())
    {
       SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
       enqueBrowserLineChangedEvent(srcref);
    }
-   
+
 }
 
 void onBeforeExecute()
@@ -1471,22 +1478,22 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
       LOG_ERROR(error);
       return Success();
    }
-   
+
    if (language == kEnvironmentLanguagePython)
    {
       Error error;
-      
+
       SEXP environments = R_NilValue;
       r::sexp::Protect protect;
       error = r::exec::RFunction(".rs.reticulate.listLoadedModules")
             .call(&environments, &protect);
-      
+
       if (error)
       {
          LOG_ERROR(error);
          return Success();
       }
-      
+
       json::Value environmentsJson;
       error = r::json::jsonValueFromObject(environments, &environmentsJson);
       if (error)
@@ -1494,7 +1501,7 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
          LOG_ERROR(error);
          return Success();
       }
-      
+
       pResponse->setResult(environmentsJson);
       return Success();
    }
@@ -1511,7 +1518,7 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
    {
       LOG_WARNING_MESSAGE("Unexpected language '" + language + "'");
    }
-   
+
    return Success();
 }
 
@@ -1571,7 +1578,7 @@ Error removeObjects(const json::JsonRpcRequest& request,
          .addParam(objectNames)
          .addParam(s_pEnvironmentMonitor->getMonitoredEnvironment())
          .call();
-   
+
    if (error)
       return error;
 
@@ -1591,7 +1598,7 @@ Error removeAllObjects(const json::JsonRpcRequest& request,
          .addParam(includeHidden)
          .addParam( s_pEnvironmentMonitor->getMonitoredEnvironment())
          .call();
-   
+
    if (error)
       return error;
 
@@ -1609,14 +1616,14 @@ Error getObjectContents(const json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &objectName);
    if (error)
       return error;
-   
+
    SEXP objContents;
    r::sexp::Protect protect;
    error = r::exec::RFunction(".rs.getObjectContents")
          .addParam(objectName)
          .addParam(s_pEnvironmentMonitor->getMonitoredEnvironment())
           .call(&objContents, &protect);
-   
+
    if (error)
       return error;
 
@@ -1644,7 +1651,7 @@ Error requeryContext(boost::shared_ptr<int> pContextDepth,
             pLineDebugState,
             boost::make_shared<bool>(false),
             pCurrentContext);
-   
+
    return Success();
 }
 
@@ -1657,15 +1664,15 @@ Error environmentSetLanguage(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &language);
    if (error)
       LOG_ERROR(error);
-   
+
    s_environmentLanguage = language;
-  
+
    // reset Python module to 'main' after changing language
    if (language == kEnvironmentLanguagePython)
    {
       s_monitoredPythonModule = "__main__";
    }
-   
+
    return Success();
 }
 
@@ -1684,7 +1691,7 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
          *pCapturingDebugOutput = false;
          return;
       }
-      
+
       // When printing things which are not symbols / calls in
       // the debugger, R will prepend a '[1] ' as these objects
       // will be printed in the "regular" way. Strip that off
@@ -1698,19 +1705,19 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
          pLineDebugState->lastDebugText.append(output);
       }
    }
-   
+
    else if (type == module_context::ConsoleOutputNormal)
    {
       boost::smatch match;
       boost::regex reDebugAtPosition("debug at ([^#]*)#([^:]+): ");
-      
+
       // start capturing debug output when R outputs "debug: "
       if (output == "debug: ")
       {
          *pCapturingDebugOutput = true;
          pLineDebugState->lastDebugText = "";
       }
-      
+
       // emitted when browsing with srcref
       else if (boost::regex_match(output, match, reDebugAtPosition))
       {
@@ -1723,7 +1730,7 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
             pLineDebugState->lastDebugLine = *lineNumber;
          }
       }
-      
+
       // emitted by R when a 'browser()' statement is encountered
       else if (output.find("Called from: ") == 0)
       {
@@ -1753,18 +1760,18 @@ json::Value environmentStateAsJson()
 {
    if (s_environmentLanguage == kEnvironmentLanguagePython)
       return pythonEnvironmentStateData(s_monitoredPythonModule);
-   
+
    int contextDepth = 0;
    r::context::getFunctionContext(BROWSER_FUNCTION, &contextDepth);
-   
+
    // If there's no browser on the stack, stay at the top level even if
    // there are functions on the stack--this is not a user debug session.
    if (!r::context::inBrowseContext())
       contextDepth = 0;
-   
+
    return commonEnvironmentStateData(
             false,
-            contextDepth, 
+            contextDepth,
             s_monitoring, // include contents if actively monitoring
             nullptr);
 }
@@ -1794,10 +1801,10 @@ Error initialize()
 
    boost::shared_ptr<int> pContextDepth =
          boost::make_shared<int>(0);
-   
+
    boost::shared_ptr<r::context::RCntxt> pCurrentContext =
          boost::make_shared<r::context::RCntxt>(r::context::globalContext());
-   
+
    // get reference to INTEGER_OR_NULL if provided by this version of R
    {
       using core::system::Library;
@@ -1810,7 +1817,7 @@ Error initialize()
    // for the purpose of reconstructing references when none are present.
    boost::shared_ptr<LineDebugState> pLineDebugState =
          boost::make_shared<LineDebugState>();
-   
+
    boost::shared_ptr<bool> pCapturingDebugOutput =
          boost::make_shared<bool>(false);
 
@@ -1877,7 +1884,7 @@ Error initialize()
 
    return initBlock.execute();
 }
-   
+
 } // namespace environment
 } // namespace modules
 } // namespace session

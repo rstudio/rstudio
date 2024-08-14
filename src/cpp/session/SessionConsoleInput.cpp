@@ -156,10 +156,9 @@ void sendConsolePromptEvent(const std::string& prompt, bool addToHistory)
    json::Object data;
    data["prompt"] = prompt;
    data["history"] = addToHistory;
-   // bool isDefaultPrompt =
-   //    prompt == rstudio::r::options::getOption<std::string>("prompt");
-   // data["default"] = isDefaultPrompt;
-   data["default"] = true; // fixme
+   bool isDefaultPrompt =
+      prompt == module_context::rPrompt();;
+   data["default"] = isDefaultPrompt;
    data["language"] = modules::reticulate::isReplActive() ? "Python" : "R";
 
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);

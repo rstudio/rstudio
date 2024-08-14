@@ -72,11 +72,9 @@ Error rVersion(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
    json::Object result;
-   // result["version"] = module_context::rVersion();
-   result["version"] = "4.1.2"; // fixme
+   result["version"] = module_context::rVersion();
    result["label"] = module_context::rVersionLabel();
-   // result["r_home"] = module_context::rHomeDir();
-   result["r_home"] = "/usr/lib/R"; // fixme
+   result["r_home"] = module_context::rHomeDir();
    result["module"] = module_context::rVersionModule();
 
    pResponse->setResult(result);

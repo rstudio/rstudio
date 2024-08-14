@@ -43,6 +43,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "../SessionConsoleInput.hpp"
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -50,7 +52,7 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace plots {
-  
+
 namespace {
 
 #define MAX_FIG_SIZE 3840*2
@@ -58,36 +60,36 @@ namespace {
 // locations
 #define kGraphics "/graphics"
 
-Error getPlotTempdir(const json::JsonRpcRequest& request, 
+Error getPlotTempdir(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    std::string tempdir;
    Error error = r::exec::RFunction("tempdir").callUtf8(&tempdir);
    if (error)
       LOG_ERROR(error);
-   
+
    pResponse->setResult(tempdir);
    return Success();
 }
 
-Error nextPlot(const json::JsonRpcRequest& request, 
+Error nextPlot(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
-{   
+{
    r::session::graphics::Display& display = r::session::graphics::display();
    return display.setActivePlot(display.activePlotIndex() + 1);
-}     
-   
-Error previousPlot(const json::JsonRpcRequest& request, 
+}
+
+Error previousPlot(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
-{   
+{
    r::session::graphics::Display& display = r::session::graphics::display();
    return display.setActivePlot(display.activePlotIndex() - 1);
-}  
+}
 
-   
+
 Error removePlot(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
-{   
+{
    r::session::graphics::Display& display = r::session::graphics::display();
 
    if (display.plotCount() < 1)
@@ -104,10 +106,10 @@ Error removePlot(const json::JsonRpcRequest& request,
       int activePlot = display.activePlotIndex();
       return display.removePlot(activePlot);
    }
-} 
-   
-   
-Error clearPlots(const json::JsonRpcRequest& request, 
+}
+
+
+Error clearPlots(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    r::session::graphics::display().clear();
@@ -439,46 +441,46 @@ Error getSavePlotContext(const json::JsonRpcRequest& request,
 
    return Success();
 }
-   
+
 template <typename T>
 bool extractSizeParams(const http::Request& request,
-                       T min, 
+                       T min,
                        T max,
                        T* pWidth,
                        T* pHeight,
                        http::Response* pResponse)
-{      
+{
    // get the width and height parameters
-   if (!request.queryParamValue("width", 
-                                predicate::range(min, max), 
+   if (!request.queryParamValue("width",
+                                predicate::range(min, max),
                                 pWidth))
    {
       pResponse->setError(http::status::BadRequest, "invalid width");
       return false;
    }
-   if (!request.queryParamValue("height", 
+   if (!request.queryParamValue("height",
                                 predicate::range(min, max),
                                 pHeight))
    {
       pResponse->setError(http::status::BadRequest, "invalid height");
       return false;
    }
-   
+
    // got two valid params
    return true;
 }
-   
+
 void setImageFileResponse(const FilePath& imageFilePath,
-                          const http::Request& request, 
+                          const http::Request& request,
                           http::Response* pResponse)
 {
    // set content type
    pResponse->setContentType(imageFilePath.getMimeContentType());
-   
+
    // attempt gzip
    if (request.acceptsEncoding(http::kGzipEncoding))
       pResponse->setContentEncoding(http::kGzipEncoding);
-   
+
    // set file
    Error error = pResponse->setBody(imageFilePath);
    if (error)
@@ -490,16 +492,16 @@ void setImageFileResponse(const FilePath& imageFilePath,
    }
 }
 
-void setTemporaryFileResponse(const FilePath& filePath, 
-                              const http::Request& request, 
+void setTemporaryFileResponse(const FilePath& filePath,
+                              const http::Request& request,
                               http::Response* pResponse)
 {
    // no cache (dynamic content)
    pResponse->setNoCacheHeaders();
-   
+
    // return the file
    pResponse->setFile(filePath, request);
-   
+
    // delete the file
    Error error = filePath.remove();
    if (error)
@@ -571,7 +573,7 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    pResponse->setBody(templateStream, filter);
    pResponse->setContentType("text/html");
 }
-   
+
 void handleZoomPngRequest(const http::Request& request,
                           http::Response* pResponse)
 {
@@ -592,21 +594,21 @@ void handleZoomPngRequest(const http::Request& request,
                                                          true);
    if (saveError)
    {
-      pResponse->setError(http::status::InternalServerError, 
+      pResponse->setError(http::status::InternalServerError,
                           saveError.getMessage());
       return;
    }
-   
+
    // send it back
    setImageFileResponse(imagePath, request, pResponse);
-   
+
    // delete the temp file
    Error error = imagePath.remove();
    if (error)
       LOG_ERROR(error);
 }
 
-void handlePngRequest(const http::Request& request, 
+void handlePngRequest(const http::Request& request,
                       http::Response* pResponse)
 {
    // get the width and height parameters
@@ -649,14 +651,14 @@ void handlePngRequest(const http::Request& request,
 // plot's png). to handle this redirection we should always maintain an
 // entry point with these semantics. if we wish to have an entry point
 // for obtaining arbitrary pngs then it should be separate from this.
-   
-void handleGraphicsRequest(const http::Request& request, 
+
+void handleGraphicsRequest(const http::Request& request,
                            http::Response* pResponse)
-{    
+{
    // extract plot key from request (take everything after the last /)
    std::string uri = request.uri();
    std::size_t lastSlashPos = uri.find_last_of('/');
-   if (lastSlashPos == std::string::npos || 
+   if (lastSlashPos == std::string::npos ||
        lastSlashPos == (uri.length() - 1))
    {
       std::string errmsg = "invalid graphics uri: " + uri;
@@ -665,11 +667,11 @@ void handleGraphicsRequest(const http::Request& request,
       return;
    }
    std::string filename = uri.substr(lastSlashPos+1);
- 
+
    // calculate the path to the png
    using namespace rstudio::r::session;
    FilePath imagePath = graphics::display().imagePath(filename);
-      
+
    // if it exists then return it
    if (imagePath.exists())
    {
@@ -688,7 +690,7 @@ void handleGraphicsRequest(const http::Request& request,
          std::string imageFilename = graphics::display().imageFilename();
          std::string imageLocation = std::string(kGraphics "/") +
                                      imageFilename;
-                                 
+
          // redirect to it
          pResponse->setMovedTemporarily(request, imageLocation);
       }
@@ -700,7 +702,7 @@ void handleGraphicsRequest(const http::Request& request,
    }
 }
 
-   
+
 void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
                        bool activatePlots, bool showManipulator)
 {
@@ -715,14 +717,14 @@ void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
    jsonPlotsState["activatePlots"] = activatePlots &&
                                      (displayState.plotCount > 0);
    jsonPlotsState["showManipulator"] = showManipulator;
-   ClientEvent plotsStateChangedEvent(client_events::kPlotsStateChanged, 
+   ClientEvent plotsStateChangedEvent(client_events::kPlotsStateChanged,
                                       jsonPlotsState);
-      
+
    // fire it
    module_context::enqueClientEvent(plotsStateChangedEvent);
-  
+
 }
-   
+
 void renderGraphicsOutput(bool activatePlots, bool showManipulator)
 {
    using namespace rstudio::r::session;
@@ -867,8 +869,8 @@ SEXP rs_savePlotAsImage(SEXP fileSEXP,
 }
 
 
-} // anonymous namespace  
-   
+} // anonymous namespace
+
 bool haveCairoPdf()
 {
    // make sure there is a real x server running on osx
@@ -877,6 +879,12 @@ bool haveCairoPdf()
    if (display.empty() || (display == ":0"))
       return false;
 #endif
+
+   static bool res = false;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return res;
 
    SEXP functionSEXP = R_NilValue;
    r::sexp::Protect rProtect;
@@ -888,7 +896,8 @@ bool haveCairoPdf()
       return false;
    }
 
-   return functionSEXP != R_NilValue;
+   res = functionSEXP != R_NilValue;
+   return res;
 }
 
 Events& events()
@@ -914,7 +923,7 @@ Error initialize()
    // connect to onShowManipulator
    using namespace rstudio::r::session;
    graphics::display().onShowManipulator().connect(bind(onShowManipulator));
-   
+
    using namespace module_context;
    ExecBlock initBlock;
    initBlock.addFunctions()
@@ -941,9 +950,9 @@ Error initialize()
 
    return initBlock.execute();
 }
-         
+
 } // namespace plots
-} // namespace modules   
+} // namespace modules
 } // namespace session
 } // namespace rstudio
-  
+

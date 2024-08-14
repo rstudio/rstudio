@@ -63,7 +63,6 @@ Error setPreferences(const json::JsonRpcRequest& request,
 Error setState(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
-   LOG_INFO_MESSAGE("SessionUserPrefs::setState START");
    json::Value val;
    Error error = json::readParams(request.params, &val);
    if (error)
@@ -71,10 +70,8 @@ Error setState(const json::JsonRpcRequest& request,
 
    userState().writeLayer(STATE_LAYER_USER, val.getObject());
 
-   LOG_INFO_MESSAGE("2");
    module_context::events().onPreferencesSaved();
 
-   LOG_INFO_MESSAGE("SessionUserPrefs::setState DONE");
    return Success();
 }
 

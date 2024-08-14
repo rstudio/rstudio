@@ -24,6 +24,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "../SessionConsoleInput.hpp"
 
 using namespace rstudio::core;
 
@@ -33,7 +34,14 @@ namespace module_context {
 
 bool isRequiredRenvInstalled()
 {
-   return isPackageVersionInstalled("renv", "0.9.2");
+   static bool res = false;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return res;
+
+   res = isPackageVersionInstalled("renv", "0.9.2");
+   return res;
 }
 
 bool isRenvActive()

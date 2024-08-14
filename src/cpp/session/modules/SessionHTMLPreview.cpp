@@ -51,6 +51,8 @@
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionUrlPorts.hpp>
 
+#include "../SessionConsoleInput.hpp"
+
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
 
@@ -59,7 +61,7 @@ using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace html_preview {
 
 namespace {
@@ -505,7 +507,7 @@ Error previewHTML(const json::JsonRpcRequest& request,
 
    if (isNotebook)
       file = deriveNotebookPath(file);
-   
+
    FilePath filePath = module_context::resolveAliasedPath(file);
 
    // if we have a preview already running then just return false
@@ -1034,7 +1036,7 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP, SEXP selfContainedSEXP)
          {
              viewerFilePath = filePath;
          }
-          
+
          // set url to localhost previewer
          std::string tempPath = viewerFilePath.getRelativePath(module_context::tempDir());
          url = module_context::sessionTempDirUrl(tempPath);
@@ -1083,9 +1085,9 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP, SEXP selfContainedSEXP)
 }
 
 
-   
+
 } // anonymous namespace
-   
+
 
 void addFileSpecificHeaders(const FilePath& filePath, http::Response* pResponse)
 {
@@ -1104,7 +1106,12 @@ void addFileSpecificHeaders(const FilePath& filePath, http::Response* pResponse)
 core::json::Object capabilitiesAsJson()
 {
    // default to unsupported
-   json::Object capsJson;
+   static json::Object capsJson;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return capsJson;
+
    capsJson["r_markdown_supported"] = false;
    capsJson["stitch_supported"] = false;
 
@@ -1136,7 +1143,7 @@ core::json::Object capabilitiesAsJson()
 
 
 Error initialize()
-{  
+{
    RS_REGISTER_CALL_METHOD(rs_showPageViewer, 3);
 
    using boost::bind;
@@ -1152,7 +1159,7 @@ Error initialize()
    ;
    return initBlock.execute();
 }
-   
+
 
 
 } // namespace html_preview

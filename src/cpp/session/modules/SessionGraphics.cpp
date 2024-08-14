@@ -28,6 +28,8 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "../SessionConsoleInput.hpp"
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -57,7 +59,7 @@ void syncWithPrefs()
    r::options::setOption(
             kGraphicsOptionBackend,
             prefs::userPrefs().graphicsBackend());
-   
+
    r::options::setOption(
             kGraphicsOptionAntialias,
             prefs::userPrefs().graphicsAntialiasing());
@@ -79,6 +81,12 @@ SEXP rs_devicePixelRatio()
 
 core::json::Array supportedBackends()
 {
+   static core::json::Array backendsJson;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return backendsJson;
+
    r::sexp::Protect protect;
    SEXP backends;
    Error error = r::exec::RFunction(".rs.graphics.supportedBackends").call(&backends, &protect);
@@ -87,15 +95,14 @@ core::json::Array supportedBackends()
       LOG_ERROR(error);
       return json::Array();
    }
-   
-   core::json::Array backendsJson;
+
    error = r::json::jsonValueFromVector(backends, &backendsJson);
    if (error)
    {
       LOG_ERROR(error);
       return json::Array();
    }
-   
+
    return backendsJson;
 }
 
@@ -109,14 +116,14 @@ SEXP rs_traceGraphicsDevice(SEXP enableSEXP)
 core::Error initialize()
 {
    using namespace module_context;
-   
+
    events().onPreferencesSaved.connect(onPreferencesSaved);
-   
+
    syncWithPrefs();
-   
+
    RS_REGISTER_CALL_METHOD(rs_devicePixelRatio);
    RS_REGISTER_CALL_METHOD(rs_traceGraphicsDevice);
-   
+
    using boost::bind;
    ExecBlock initBlock;
    initBlock.addFunctions()

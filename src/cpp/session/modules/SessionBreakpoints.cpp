@@ -39,6 +39,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "../SessionConsoleInput.hpp"
+
 using namespace rstudio::core;
 using namespace rstudio::r::sexp;
 using namespace rstudio::r::exec;
@@ -215,7 +217,7 @@ Error getFunctionState(const json::JsonRpcRequest& request,
    json::Object response;
    std::string functionName, fileName, packageName;
    int lineNumber = 0;
-   
+
    Error error = json::readParams(request.params, &functionName, &fileName, &lineNumber);
    if (error)
        return error;
@@ -232,7 +234,7 @@ Error getFunctionState(const json::JsonRpcRequest& request,
          .call(&inSync);
    if (error)
       LOG_ERROR(error);
-         
+
    response["sync_state"] = inSync;
    response["package_name"] = packageName;
    response["is_package_function"] = packageName.length() > 0;
@@ -504,7 +506,7 @@ Error initBreakpoints()
        json::isType<core::json::Object>(breakpointStateValue))
    {
       json::Object breakpointState = breakpointStateValue.getObject();
-      
+
       // Protect against the breakpoint array being serialized as an
       // empty object
       json::Value jsonBreakpointArray = breakpointState["breakpoints"];
@@ -588,7 +590,12 @@ Error removeAllBreakpoints(const json::JsonRpcRequest&,
 
 bool haveAdvancedStepCommands()
 {
-   bool haveCommands = false;
+   static bool haveCommands = false;
+
+   // return the last known value if the session is busy to avoid touching the R runtime
+   if (console_input::executing())
+      return haveCommands;
+
    Error error = r::exec::RFunction(".rs.haveAdvancedSteppingCommands")
                                                       .call(&haveCommands);
    if (error)
