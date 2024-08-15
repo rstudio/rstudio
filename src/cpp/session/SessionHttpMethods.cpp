@@ -135,8 +135,8 @@ bool parseAndValidateJsonRpcConnection(
       return false;
    }
 
-   // check for valid CSRF headers in server mode
-   if (options().programMode() == kSessionProgramModeServer &&
+   // check for valid CSRF headers in server mode 
+   if (options().programMode() == kSessionProgramModeServer && 
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
       LOG_WARNING_MESSAGE("RPC request to '" + ptrConnection->request().uri() + "' has missing or "
@@ -349,7 +349,7 @@ bool registeredWaitForMethod(const std::string& method,
 
    // wait for method
    return http_methods::waitForMethod(method,
-                        boost::bind(http_methods::waitForMethodInitFunction,
+                        boost::bind(http_methods::waitForMethodInitFunction, 
                                     event),
                         suspend::disallowSuspend,
                         pRequest);
@@ -460,7 +460,7 @@ bool waitForMethod(const std::string& method,
       LOG_ERROR_MESSAGE("Waiting for method " + method + " after fork");
       return false;
    }
-
+   
    if (!ASSERT_MAIN_THREAD(method))
    {
       return false;
@@ -586,7 +586,7 @@ bool waitForMethod(const std::string& method,
 }
 
 
-// wait for the specified method (will either return the method or
+// wait for the specified method (will either return the method or 
 // exit the process as a result of suspend or quit)
 bool waitForMethod(const std::string& method,
                    const ClientEvent& initEvent,
@@ -677,7 +677,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                            &hostPageUrl);
             if (error)
                LOG_ERROR(error);
-
+            
             // note switch to project
             if (!switchToProject.empty())
             {
@@ -812,7 +812,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // stop the offline service thread -- we don't want to service any
             // more incoming requests while preparing to restart
             offlineService().stop();
-
+            
             // check for force
             bool force = true;
             Error error = json::readParams(jsonRpcRequest.params, &force);
@@ -840,7 +840,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             if (console_input::executing())
                rstudio::r::exec::setInterruptsPending(true);
          }
-
+         
          // ping -- don't respond if we're shutting down; assume the ping
          // was intended for a session which will soon be launched anew
          else if (jsonRpcRequest.method == kPing)
@@ -978,10 +978,10 @@ core::Error initialize()
    s_protocolDebugEnabled = prefs::userPrefs().sessionProtocolDebug();
    if (s_protocolDebugEnabled)
       initSessionDebugLog();
-
+   
    module_context::events().onShutdown.connect(onShutdown);
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
-
+   
    return Success();
 }
 

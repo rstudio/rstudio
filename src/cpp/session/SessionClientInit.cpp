@@ -544,7 +544,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["launcher_session"] = false;
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
-
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
 
    // send whether we should show the user identity
@@ -554,19 +553,17 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["packrat_available"] =
                      module_context::isRequiredPackratInstalled();
+
    sessionInfo["renv_available"] =
          module_context::isRequiredRenvInstalled();
 
    // check rmarkdown package presence and capabilities
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
-
    sessionInfo["knit_params_available"] =
          modules::rmarkdown::knitParamsAvailable();
-
    sessionInfo["knit_working_dir_available"] =
          modules::rmarkdown::knitWorkingDirAvailable();
-
    sessionInfo["ppt_available"] =
          modules::rmarkdown::pptAvailable();
 
@@ -581,10 +578,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    json::Object rVersionsJson;
    rVersionsJson["r_version"] = module_context::rVersion();
    rVersionsJson["r_version_label"] = module_context::rVersionLabel();
-
    rVersionsJson["r_home_dir"] = module_context::rHomeDir();
    rVersionsJson["r_version_module"] = module_context::rVersionModule();
-
    sessionInfo["r_versions_info"] = rVersionsJson;
 
    sessionInfo["show_user_home_page"] = options.showUserHomePage();
