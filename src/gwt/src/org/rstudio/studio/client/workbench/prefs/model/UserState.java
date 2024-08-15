@@ -56,41 +56,45 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
       writeState(null);
    }
 
-   public void writeState(CommandWithArg<Boolean> onCompleted)
+   public void writeState(CommandWithArg<Boolean> onCompleted) {
+      writeStateLocal();
+
+      server_.setUserState(
+         session_.getSessionInfo().getUserStateLayer().getValues(),
+         new ServerRequestCallback<Void>()
+         {
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               UserStateChangedEvent event = new UserStateChangedEvent(
+                              session_.getSessionInfo().getUserStateLayer());
+
+               if (Satellite.isCurrentWindowSatellite())
+               {
+                  RStudioGinjector.INSTANCE.getEventBus()
+                     .fireEventToMainWindow(event);
+               }
+               else
+               {
+                  // let satellites know prefs have changed
+                  satelliteManager_.dispatchCrossWindowEvent(event);
+               }
+               if (onCompleted != null)
+               {
+                  onCompleted.execute(true);
+               }
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+   }
+
+   public void writeStateLocal()
    {
       updatePrefs(session_.getSessionInfo().getUserState());
-      onCompleted.execute(true);
-      // server_.setUserState(
-      //    session_.getSessionInfo().getUserStateLayer().getValues(),
-      //    new ServerRequestCallback<Void>()
-      //    {
-      //       @Override
-      //       public void onResponseReceived(Void v)
-      //       {
-      //          UserStateChangedEvent event = new UserStateChangedEvent(
-      //                         session_.getSessionInfo().getUserStateLayer());
-
-      //          if (Satellite.isCurrentWindowSatellite())
-      //          {
-      //             RStudioGinjector.INSTANCE.getEventBus()
-      //                .fireEventToMainWindow(event);
-      //          }
-      //          else
-      //          {
-      //             // let satellites know prefs have changed
-      //             satelliteManager_.dispatchCrossWindowEvent(event);
-      //          }
-      //          if (onCompleted != null)
-      //          {
-      //             onCompleted.execute(true);
-      //          }
-      //       }
-      //       @Override
-      //       public void onError(ServerError error)
-      //       {
-      //          Debug.logError(error);
-      //       }
-      //    });
    }
 
    @Override

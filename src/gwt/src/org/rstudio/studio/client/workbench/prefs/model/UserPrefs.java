@@ -102,46 +102,50 @@ public class UserPrefs extends UserPrefsComputed
       writeUserPrefs(null);
    }
 
-   public void writeUserPrefs(CommandWithArg<Boolean> onCompleted)
+   public void writeUserPrefs(CommandWithArg<Boolean> onCompleted) {
+      writeUserPrefsLocal();
+
+      server_.setUserPrefs(
+         session_.getSessionInfo().getUserPrefs(),
+         new ServerRequestCallback<Void>()
+         {
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               UserPrefsChangedEvent event = new UserPrefsChangedEvent(
+                     session_.getSessionInfo().getUserPrefLayer());
+
+               if (Satellite.isCurrentWindowSatellite())
+               {
+                  RStudioGinjector.INSTANCE.getEventBus()
+                     .fireEventToMainWindow(event);
+               }
+               else
+               {
+                  // let satellites know prefs have changed
+                  satelliteManager_.dispatchCrossWindowEvent(event);
+               }
+
+               if (onCompleted != null)
+               {
+                  onCompleted.execute(true);
+               }
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+               if (onCompleted != null)
+               {
+                  onCompleted.execute(false);
+               }
+               Debug.logError(error);
+            }
+         });
+   }
+
+   public void writeUserPrefsLocal()
    {
       updatePrefs(session_.getSessionInfo().getPrefs());
-      onCompleted.execute(true);
-      // server_.setUserPrefs(
-      //    session_.getSessionInfo().getUserPrefs(),
-      //    new ServerRequestCallback<Void>()
-      //    {
-      //       @Override
-      //       public void onResponseReceived(Void v)
-      //       {
-      //          UserPrefsChangedEvent event = new UserPrefsChangedEvent(
-      //                session_.getSessionInfo().getUserPrefLayer());
-
-      //          if (Satellite.isCurrentWindowSatellite())
-      //          {
-      //             RStudioGinjector.INSTANCE.getEventBus()
-      //                .fireEventToMainWindow(event);
-      //          }
-      //          else
-      //          {
-      //             // let satellites know prefs have changed
-      //             satelliteManager_.dispatchCrossWindowEvent(event);
-      //          }
-
-      //          if (onCompleted != null)
-      //          {
-      //             onCompleted.execute(true);
-      //          }
-      //       }
-      //       @Override
-      //       public void onError(ServerError error)
-      //       {
-      //          if (onCompleted != null)
-      //          {
-      //             onCompleted.execute(false);
-      //          }
-      //          Debug.logError(error);
-      //       }
-      //    });
    }
 
    /**
