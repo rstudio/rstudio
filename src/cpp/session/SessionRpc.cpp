@@ -45,7 +45,7 @@ std::set<std::string> s_offlineableUris;
 
 // json rpc methods
 core::json::JsonRpcAsyncMethods* s_pJsonRpcMethods = nullptr;
-
+   
 void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
                          boost::posix_time::ptime executeStartTime,
                          const core::Error& executeError,
@@ -262,10 +262,10 @@ void endHandleRpcRequestIndirect(
 
    if (executeError)
       pJsonRpcResponse->setError(executeError);
-
+   
    if (!pJsonRpcResponse->hasField(kEventsPending))
       pJsonRpcResponse->setField(kEventsPending, "false");
-
+   
    json::Object value;
    value["handle"] = asyncHandle;
    value["response"] = pJsonRpcResponse->getRawResponse();
@@ -293,12 +293,12 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
    {
       boost::this_thread::sleep_for(boost::chrono::milliseconds(s_rpcDelayMs));
    }
-
+   
    // record the time just prior to execution of the event
    // (so we can determine if any events were added during execution)
    using namespace boost::posix_time;
    ptime executeStartTime = microsec_clock::universal_time();
-
+   
    // execute the method
    auto it = s_pJsonRpcMethods->find(request.method);
    if (it != s_pJsonRpcMethods->end())

@@ -112,10 +112,6 @@ bool isReplActive()
    if (console_input::executing())
       return active;
 
-   if (!ASSERT_MAIN_THREAD("SessionReticulate.cpp isReplActive ")) {
-      return active;
-   }
-
    Error error = r::exec::RFunction(".rs.reticulate.replIsActive").call(&active);
    if (error)
       LOG_ERROR(error);

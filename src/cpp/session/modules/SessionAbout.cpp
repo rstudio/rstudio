@@ -93,7 +93,7 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-
+   
    RS_REGISTER_CALL_METHOD(rs_getProductInfo);
 
    ExecBlock initBlock;

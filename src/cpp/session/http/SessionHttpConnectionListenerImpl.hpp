@@ -338,18 +338,14 @@ private:
          if (connection::isMethod(ptrHttpConnection, kClientInit)) {
             eventsActive_ = false;
 
-
-            // we are executing, otherwise the below would be more appropriate
-            // boost::bind(
-            //    console_input::sendConsolePromptEvent,
-            //    "> ", // fixme
-            //    true),
+            // if we were not `executing` we would need to console_input::sendConsolePromptEvent instead
 
             ClientEvent busyEvent(client_events::kBusy, true);
             client_init::handleClientInit(
                boost::bind(rstudio::session::module_context::enqueClientEvent, busyEvent),
                ptrConnection
             );
+
             return;
          }
 

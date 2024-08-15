@@ -207,6 +207,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    bool resumed = suspend::sessionResumed();
    bool isSessionInitialized = init::isSessionInitialized();
 
+   LOG_DEBUG_MESSAGE("Begin /rpc/client_init for client: " + clientId + ": initialized: " + std::to_string(isSessionInitialized) + " resumed: " + std::to_string(resumed));
+
    // resumed now also means re-joining
    if (isSessionInitialized)
      resumed = true;
@@ -712,6 +714,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // call the init function
    initFunction();
+
+   LOG_DEBUG_MESSAGE("End /rpc/client_init for client: " + clientId);
 }
 
 } // namespace init

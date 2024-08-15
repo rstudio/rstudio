@@ -16,8 +16,6 @@
 // We need LogLevel::DEBUG so don't #define DEBUG for this file
 #define RSTUDIO_DEBUG_MACROS_DISABLED
 
-#include <boost/format.hpp>
-
 #include "SessionHttpMethods.hpp"
 #include "SessionConsoleInput.hpp"
 #include "SessionMainProcess.hpp"
@@ -291,10 +289,6 @@ void polledEventHandler()
       std::string nextConnectionUri =
        httpConnectionListener().mainConnectionQueue().peekNextConnectionUri();
 
-      if (nextConnectionUri.empty()) return;
-
-      LOG_INFO_MESSAGE("SessionHttpMethods::polledEventHandler " + nextConnectionUri);
-
       // if the uri is empty or if it one of our special waitForMethod calls
       // then bails so that the waitForMethod logic can handle it
       if (nextConnectionUri.empty() || isWaitForMethodUri(nextConnectionUri))
@@ -369,8 +363,6 @@ namespace module_context
 module_context::WaitForMethodFunction registerWaitForMethod(
       const std::string& methodName)
 {
-   // LOG_INFO_MESSAGE("SessionHttpMethods::registerWaitForMethod " + methodName);
-
    s_waitForMethodNames.push_back(methodName);
    return boost::bind(registeredWaitForMethod, methodName, _2, _1);
 }
@@ -495,6 +487,7 @@ bool waitForMethod(const std::string& method,
       boost::shared_ptr<HttpConnection> ptrConnection =
           httpConnectionListener().mainConnectionQueue().dequeConnection(
                                             connectionQueueTimeout);
+
 
       // perform background processing (true for isIdle)
       module_context::onBackgroundProcessing(true);

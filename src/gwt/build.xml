@@ -205,7 +205,7 @@
          <arg value="-XdisableCastChecking"/>
          <arg line="-strict"/>
          <arg line="-gen gen"/>
-         <arg line="-style PRETTY"/>
+         <!--<arg line="-style PRETTY"/>-->
          <arg line="-extra ${extras.dir}"/>
          <arg line="-deploy ${extras.dir}"/>
          <arg line="${gwt.extra.args}"/>

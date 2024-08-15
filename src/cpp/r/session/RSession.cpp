@@ -89,7 +89,7 @@ namespace {
 ROptions s_options;
 
 } // anonymous namespace
-
+  
 
 const int kSerializationActionSaveDefaultWorkspace = 1;
 const int kSerializationActionLoadDefaultWorkspace = 2;
@@ -195,7 +195,7 @@ SEXP rs_createUUID()
    r::sexp::Protect rProtect;
    return r::sexp::create(core::system::generateUuid(false), &rProtect);
 }
-
+   
 SEXP rs_loadHistory(SEXP sFile)
 {
    std::string file = R_ExpandFileName(r::sexp::asString(sFile).c_str());
@@ -281,16 +281,16 @@ Error validateCompatible(const std::string& rHome)
 #endif
 
 } // end anonymous namespace
-
-Error run(const ROptions& options, const RCallbacks& callbacks)
-{
+   
+Error run(const ROptions& options, const RCallbacks& callbacks) 
+{   
    // copy options and callbacks
    s_options = options;
    setRCallbacks(callbacks);
-
+   
    // set to default "C" numeric locale as-per R embedding docs
    setlocale(LC_NUMERIC, "C");
-
+   
    // perform R discovery
    r::session::RLocations rLocations;
    Error error = r::session::discoverR(&rLocations);
@@ -299,7 +299,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 
    // R_HOME
    core::system::setenv("R_HOME", rLocations.homePath);
-
+   
    // R_DOC_DIR (required by help-links.sh)
    core::system::setenv("R_DOC_DIR", rLocations.docPath);
 
@@ -313,14 +313,14 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    if (error)
       return error;
 #endif
-
+   
    // set compatible graphics engine version
    int engineVersion = s_options.rCompatibleGraphicsEngineVersion;
    graphics::setCompatibleEngineVersion(engineVersion);
 
    // set source reloading behavior
    sourceManager().setAutoReload(options.autoReloadSource);
-
+   
    // initialize suspended session path
    FilePath userScratch = s_options.userScratchPath;
    FilePath oldSuspendedSessionPath = userScratch.completePath("suspended-session");
@@ -440,18 +440,18 @@ void doSetClientMetrics(const RClientMetrics& metrics)
    // set the metrics
    client_metrics::set(metrics);
 }
-
+   
 } // anonymous namespace
-
+   
 void setClientMetrics(const RClientMetrics& metrics)
 {
    // get existing values in case this results in an error
    RClientMetrics previousMetrics = client_metrics::get();
-
+   
    // attempt to set the metrics
-   Error error = r::exec::executeSafely(boost::bind(doSetClientMetrics,
+   Error error = r::exec::executeSafely(boost::bind(doSetClientMetrics, 
                                                     metrics));
-
+   
    if (error)
    {
       // report to user
@@ -482,7 +482,7 @@ bool isSuspendable(const std::string& currentPrompt)
    // NOTE: active file graphics devices (e.g. png or pdf) are wiped out
    // during a suspend as are open connections. there may or may not be a
    // way to make this more robust.
-
+   
    if (s_options.suspendOnIncompleteStatement)
    {
       // Always allow suspending, even if the statement is not complete.
@@ -500,7 +500,7 @@ bool isSuspendable(const std::string& currentPrompt)
          return false;
       }
    }
-
+    
    return true;
 }
 
@@ -509,9 +509,9 @@ bool browserContextActive()
 {
    return Rf_countContexts(CTXT_BROWSER, 1) > 0;
 }
-
+   
 namespace utils {
-
+   
 bool isPackratModeOn()
 {
    return !core::system::getenv("R_PACKRAT_MODE").empty();
@@ -638,7 +638,7 @@ FilePath tempDir()
 }
 
 } // namespace utils
-
+   
 } // namespace session
 } // namespace r
 } // namespace rstudio
