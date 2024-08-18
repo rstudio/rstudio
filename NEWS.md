@@ -25,4 +25,4 @@
 
 ### Dependencies
 
-- Updated Electron to version 31.3.1 (#14982; Desktop)
+- Updated Electron to version 31.4.0 (#14982; Desktop)
