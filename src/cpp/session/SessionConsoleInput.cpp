@@ -147,7 +147,7 @@ bool canSuspend(const std::string& prompt)
 
 } // anonymous namespace
 
-void sendConsolePromptEvent(const std::string& prompt, bool addToHistory)
+void consolePrompt(const std::string& prompt, bool addToHistory)
 {
    // save the last prompt (for re-issuing)
    s_lastPrompt = prompt;
@@ -157,17 +157,12 @@ void sendConsolePromptEvent(const std::string& prompt, bool addToHistory)
    data["prompt"] = prompt;
    data["history"] = addToHistory;
    bool isDefaultPrompt =
-      prompt == module_context::rPrompt();;
+      prompt == module_context::rPrompt();
    data["default"] = isDefaultPrompt;
    data["language"] = modules::reticulate::isReplActive() ? "Python" : "R";
 
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
    clientEventQueue().add(consolePromptEvent);
-}
-
-void consolePrompt(const std::string& prompt, bool addToHistory)
-{
-   sendConsolePromptEvent(prompt, addToHistory);
 
    // allow modules to detect changes after execution of previous REPL
    module_context::events().onDetectChanges(module_context::ChangeSourceREPL);

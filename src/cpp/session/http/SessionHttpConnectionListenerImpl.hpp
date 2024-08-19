@@ -338,7 +338,9 @@ private:
          if (connection::isMethod(ptrHttpConnection, kClientInit)) {
             eventsActive_ = false;
 
-            // if we were not `executing` we would need to console_input::sendConsolePromptEvent instead
+            // if we were not `executing` we would need to console_input::sendConsolePrompt instead
+            // (though we need a version that just sends the event without calling
+            // local event listeners)
 
             ClientEvent busyEvent(client_events::kBusy, true);
             client_init::handleClientInit(
