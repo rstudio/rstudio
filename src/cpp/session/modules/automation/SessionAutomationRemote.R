@@ -262,7 +262,7 @@
 
 .rs.automation.addRemoteFunction("jsObjectViaExpression", function(expression)
 {
-   response <- .rs.automation.withRetries(function()
+   response <- .rs.waitFor(expression, function()
    {
       self$client$Runtime.evaluate(expression)
    })
@@ -272,7 +272,7 @@
 
 .rs.automation.addRemoteFunction("jsObjectViaSelector", function(selector)
 {
-   response <- .rs.automation.withRetries(function()
+   response <- .rs.waitFor(selector, function()
    {
       nodeId <- self$domGetNodeId(selector)
       self$client$DOM.resolveNode(nodeId)

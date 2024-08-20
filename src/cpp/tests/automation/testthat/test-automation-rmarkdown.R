@@ -7,16 +7,16 @@ withr::defer(.rs.automation.deleteRemote())
 test_that("the warn option is preserved when running chunks", {
    
    contents <- .rs.heredoc('
-   ---
-   title: Chunk Warnings
-   ---
-   
-   ```{r warning=TRUE}
-   # check current option
-   getOption("warn")
-   # setting a global option
-   options(warn = 2)
-   ```
+      ---
+      title: Chunk Warnings
+      ---
+      
+      ```{r warning=TRUE}
+      # check current option
+      getOption("warn")
+      # setting a global option
+      options(warn = 2)
+      ```
    ')
    
    remote$consoleExecuteExpr({ options(warn = 0) })
