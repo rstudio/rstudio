@@ -664,3 +664,20 @@
       Sys.getenv("RSTUDIO_AUTOMATION_MODE", unset = defaultMode)
    })
 })
+
+.rs.addFunction("automation.withRetries", function(
+      callback,
+      retryCount = 10,
+      waitTimeSecs = if (interactive()) 0.1 else 0.5)
+{
+   for (i in seq_len(retryCount))
+   {
+      status <- tryCatch(callback(), error = identity)
+      if (!inherits(status, "error"))
+         return(status)
+      
+      Sys.sleep(waitTimeSecs)
+   }
+   
+   stop(status)
+})

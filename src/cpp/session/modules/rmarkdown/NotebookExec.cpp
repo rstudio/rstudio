@@ -551,6 +551,9 @@ void ChunkExecContext::disconnect()
    r::options::setOptionWidth(prevCharWidth_);
 
    // restore warn (if it wasn't changed in the chunk)
+   // note that we intentionally compare the pointers here;
+   // we only want to take action if the SEXP pointer returned
+   // via 'getOption()' has changed
    SEXP warningSEXP = r::options::getOption("warn");
    if (warningSEXP == rChunkWarningLevel_.get())
    {

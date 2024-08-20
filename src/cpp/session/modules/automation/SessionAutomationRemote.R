@@ -262,14 +262,22 @@
 
 .rs.automation.addRemoteFunction("jsObjectViaExpression", function(expression)
 {
-   response <- self$client$Runtime.evaluate(expression)
+   response <- .rs.automation.withRetries(function()
+   {
+      self$client$Runtime.evaluate(expression)
+   })
+   
    .rs.automation.wrapJsResponse(self, response)
 })
 
 .rs.automation.addRemoteFunction("jsObjectViaSelector", function(selector)
 {
-   nodeId <- self$domGetNodeId(selector)
-   response <- self$client$DOM.resolveNode(nodeId)
+   response <- .rs.automation.withRetries(function()
+   {
+      nodeId <- self$domGetNodeId(selector)
+      self$client$DOM.resolveNode(nodeId)
+   })
+   
    .rs.automation.wrapJsResponse(self, response)
 })
 
