@@ -113,8 +113,8 @@ private:
    // as well as the chunk warning level, so that
    // we can detect if users try to set options(warn = 2)
    // within a chunk directly (affecting global state)
-   int rWarningLevel_;
-   int chunkWarningLevel_;
+   r::sexp::PreservedSEXP rGlobalWarningLevel_;
+   r::sexp::PreservedSEXP rChunkWarningLevel_;
    
    core::FilePath consoleChunkOutputFile_;
    bool hasOutput_;

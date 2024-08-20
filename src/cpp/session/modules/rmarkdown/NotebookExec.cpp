@@ -265,34 +265,36 @@ void ChunkExecContext::connect()
    error = r::exec::RFunction("getOption", "warn").call(&rWarningLevel);
    if (!error)
    {
-      rWarningLevel_ = rWarningLevel;
+      // save the current warning level
+      rGlobalWarningLevel_.set(Rf_ScalarInteger(rWarningLevel));
 
       // default warning setting is 1 (log immediately), but if the warning
       // option is set to FALSE, we want to set it to -1 (ignore warnings)
+      int chunkWarningLevel;
       if (options_.hasOverlayOption("warning"))
       {
          bool warningsEnabled = options_.getOverlayOption("warning", true);
-         chunkWarningLevel_ = warningsEnabled ? 1 : -1;
+         chunkWarningLevel = warningsEnabled ? 1 : -1;
       }
       
       // ensure that warnings are shown by default
       else if (rWarningLevel == 0)
       {
-         chunkWarningLevel_ = 1;
+         chunkWarningLevel = 1;
       }
       
       // otherwise, just preserve the current warning level
       else
       {
-         chunkWarningLevel_ = rWarningLevel_;
+         chunkWarningLevel = rWarningLevel;
       }
       
       // update warning level for this chunk
-      if (rWarningLevel_ != chunkWarningLevel_)
+      if (rWarningLevel != chunkWarningLevel)
       {
-         error = r::options::setOption<int>("warn", chunkWarningLevel_);
-         if (error)
-            LOG_ERROR(error);
+         rChunkWarningLevel_.set(Rf_ScalarInteger(chunkWarningLevel));
+         SEXP cellSEXP = r::options::getOptionCell("warn");
+         SETCAR(cellSEXP, rChunkWarningLevel_.get());
       }
    }
 
@@ -548,11 +550,11 @@ void ChunkExecContext::disconnect()
    // restore width value
    r::options::setOptionWidth(prevCharWidth_);
 
-   // check if the warning option has changed
-   int currentWarningLevel = r::options::getOption<int>("warn", 1);
-   if (currentWarningLevel == chunkWarningLevel_)
+   // restore warn (if it wasn't changed in the chunk)
+   SEXP warningSEXP = r::options::getOption("warn");
+   if (warningSEXP == rChunkWarningLevel_.get())
    {
-      error = r::options::setOption("warn", rWarningLevel_);
+      error = r::options::setOption("warn", rGlobalWarningLevel_.get());
       if (error)
          LOG_ERROR(error);
    }
