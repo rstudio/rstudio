@@ -32,4 +32,7 @@ test_that("the warn option is preserved when running chunks", {
    output <- remote$consoleOutput()
    expect_equal(tail(output, n = 1L), "[1] 2")
    
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+   
 })
