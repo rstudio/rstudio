@@ -259,21 +259,41 @@ void ChunkExecContext::connect()
    if (error)
       LOG_ERROR(error);
 
-   // log warnings immediately (unless user's changed the default warning
-   // level)
-   r::sexp::Protect protect;
-   SEXP warnSEXP;
-   error = r::exec::RFunction("getOption", "warn").call(&warnSEXP, &protect);
+   // log warnings immediately
+   // (unless user's changed the default warning level)
+   int rWarningLevel = 1;
+   error = r::exec::RFunction("getOption", "warn").call(&rWarningLevel);
    if (!error)
    {
-      prevWarn_.set(warnSEXP);
+      rWarningLevel_ = rWarningLevel;
 
       // default warning setting is 1 (log immediately), but if the warning
       // option is set to FALSE, we want to set it to -1 (ignore warnings)
-      bool warning = options_.getOverlayOption("warning", true);
-      error = r::options::setOption<int>("warn", warning ? 1 : -1);
-      if (error)
-         LOG_ERROR(error);
+      if (options_.hasOverlayOption("warning"))
+      {
+         bool warningsEnabled = options_.getOverlayOption("warning", true);
+         chunkWarningLevel_ = warningsEnabled ? 1 : -1;
+      }
+      
+      // ensure that warnings are shown by default
+      else if (rWarningLevel == 0)
+      {
+         chunkWarningLevel_ = 1;
+      }
+      
+      // otherwise, just preserve the current warning level
+      else
+      {
+         chunkWarningLevel_ = rWarningLevel_;
+      }
+      
+      // update warning level for this chunk
+      if (rWarningLevel_ != chunkWarningLevel_)
+      {
+         error = r::options::setOption<int>("warn", chunkWarningLevel_);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 
    // broadcast that we're executing in a Notebook
@@ -528,10 +548,11 @@ void ChunkExecContext::disconnect()
    // restore width value
    r::options::setOptionWidth(prevCharWidth_);
 
-   // restore preserved warning level, if any
-   if (!prevWarn_.isNil())
+   // check if the warning option has changed
+   int currentWarningLevel = r::options::getOption<int>("warn", 1);
+   if (currentWarningLevel == chunkWarningLevel_)
    {
-      error = r::options::setOption("warn", prevWarn_.get());
+      error = r::options::setOption("warn", rWarningLevel_);
       if (error)
          LOG_ERROR(error);
    }
