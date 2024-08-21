@@ -171,7 +171,8 @@
    
    # Handle errors.
    error <- response[["error"]]
-   if (!is.null(error)) {
+   if (!is.null(error))
+   {
       fmt <- "execution of '%s' failed: %s [error code %i]"
       msg <- sprintf(fmt, method, error[["message"]], error[["code"]])
       stop(msg, call. = FALSE)

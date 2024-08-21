@@ -7,6 +7,7 @@
 - Added www-socket option to rserver.conf to enable server to listen on a Unix domain socket (#14938; Open-Source Server)
 - RStudio now supports syntax highlighting for Fortran source files (#10403)
 - Display label "Publish" next to the publish icon on editor toolbar (#13604)
+- RStudio supports `usethis.description` option values when creating projects via the RStudio New Project wizard (#15070)
 
 #### Posit Workbench
 -

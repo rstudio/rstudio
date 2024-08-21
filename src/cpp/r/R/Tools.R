@@ -1479,6 +1479,30 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    utils::browseURL(url)
 })
 
+.rs.addFunction("mapChr", function(x, f, ...)
+{
+   f <- match.fun(f)
+   vapply(x, f, ..., FUN.VALUE = character(1))
+})
+
+.rs.addFunction("mapDbl", function(x, f, ...)
+{
+   f <- match.fun(f)
+   vapply(x, f, ..., FUN.VALUE = double(1))
+})
+
+.rs.addFunction("mapInt", function(x, f, ...)
+{
+   f <- match.fun(f)
+   vapply(x, f, ..., FUN.VALUE = integer(1))
+})
+
+.rs.addFunction("mapLgl", function(x, f, ...)
+{
+   f <- match.fun(f)
+   vapply(x, f, ..., FUN.VALUE = logical(1))
+})
+
 .rs.addFunction("initTools", function()
 {
    ostype <- .Platform$OS.type
