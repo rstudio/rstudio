@@ -970,29 +970,19 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       for (descKey in c("usethis.description", "devtools.desc"))
       {
          descValue <- getOption(descKey)
-         if (length(descValue))
-         {
-            optionValue <- descValue[[optionName]]
-            if (length(optionValue))
-            {
-               if (inherits(optionValue, "person"))
-               {
-                  optionValue <- .rs.formatPerson(optionValue)
-               }
-               else if (is.list(optionValue))
-               {
-                  for (i in seq_along(optionValue))
-                  {
-                     if (inherits(optionValue[[i]], "person"))
-                     {
-                        optionValue[[i]] <- .rs.formatPerson(optionValue[[i]])
-                     }
-                  }
-               }
-               
-               return(paste(optionValue, collapse = collapse))
-            }
-         }
+         if (length(descValue) == 0L)
+            next
+         
+         optionValue <- descValue[[optionName]]
+         if (length(optionValue) == 0L)
+            next
+         
+         # Check for 'person' objects, and expand those in a way
+         # that will be formatted nicely in the DESCRIPTION file.
+         if (inherits(optionValue, "person"))
+            optionValue <- .rs.formatPerson(optionValue)
+         
+         return(paste(optionValue, collapse = collapse))
       }
       
       default
@@ -1000,11 +990,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    authorsDefault <- .rs.heredoc('
       c(
-         person(
-            "Jane", "Doe",
-            email = "jane@example.com",
-            role = c("aut", "cre")
-         )
+        person(
+          "Jane", "Doe",
+          email = "jane@example.com",
+          role = c("aut", "cre")
+        )
       )
    ')
    
