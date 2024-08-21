@@ -50,8 +50,8 @@ int getOptionWidth();
 void setBuildOptionWidth(int width);
 int getBuildOptionWidth();
 
-// generic get and set   
-   
+// generic get and set
+SEXP getOptionCell(const std::string& name);
 SEXP getOption(const std::string& name);
    
 template <typename T>
