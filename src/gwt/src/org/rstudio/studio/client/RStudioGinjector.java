@@ -400,7 +400,7 @@ public interface RStudioGinjector extends Ginjector
    SessionOpener getSessionOpener();
    VirtualConsoleFactory getVirtualConsoleFactory();
    JobItemFactory getJobItemFactory();
-   FocusVisibleStyles getFocusVisiblePolyfill();
+   FocusVisibleStyles getFocusVisibleStyles();
    AriaLiveService getAriaLiveService();
 
    // Pro-only below here

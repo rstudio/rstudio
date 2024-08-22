@@ -70,7 +70,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
       MathJaxLoader.ensureMathJaxLoaded();
 
       // load focus-visible css
-      RStudioGinjector.INSTANCE.getFocusVisiblePolyfill().load(null);
+      RStudioGinjector.INSTANCE.getFocusVisibleStyles().load(null);
 
       // NOTE: Desktop doesn't seem to get onWindowClosing events in Qt 4.8
       // so we instead rely on an explicit callback from the desktop frame
