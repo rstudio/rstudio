@@ -77,8 +77,6 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       generalPanel.add(checkboxPref(constants_.reducedMotionLabel(), prefs.reducedMotion()));
       chkTabMovesFocus_ = new CheckBox(constants_.chkTabMovesFocusLabel());
       generalPanel.add(lessSpaced(chkTabMovesFocus_));
-      chkShowFocusRectangles_ = new CheckBox(constants_.chkShowFocusLabel());
-      generalPanel.add(lessSpaced(chkShowFocusRectangles_));
       generalPanel.add(checkboxPref(constants_.generalPanelLabel(), prefs.showPanelFocusRectangle()));
 
       HelpLink helpLink = new HelpLink(constants_.helpLinkLabel(), "rstudio_a11y", false);
@@ -123,9 +121,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       initialScreenReaderEnabled_ = prefs.enableScreenReader().getValue();
-      initialShowFocusRectangles_ = prefs.showFocusRectangles().getValue();
       chkScreenReaderEnabled_.setValue(initialScreenReaderEnabled_);
-      chkShowFocusRectangles_.setValue(initialShowFocusRectangles_);
       chkTabMovesFocus_.setValue(prefs.tabKeyMoveFocus().getValue());
       populateAnnouncementList();
    }
@@ -140,13 +136,6 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       {
          initialScreenReaderEnabled_ = screenReaderEnabledSetting;
          prefs.setScreenReaderEnabled(screenReaderEnabledSetting);
-         restartRequirement.setRestartRequired();
-      }
-
-      if (chkShowFocusRectangles_.getValue() != initialShowFocusRectangles_)
-      {
-         initialShowFocusRectangles_ = chkShowFocusRectangles_.getValue();
-         prefs.showFocusRectangles().setGlobalValue(chkShowFocusRectangles_.getValue());
          restartRequirement.setRestartRequired();
       }
 
@@ -214,7 +203,6 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    }
 
    private final CheckBox chkScreenReaderEnabled_;
-   private final CheckBox chkShowFocusRectangles_;
    private final NumericValueWidget typingStatusDelay_;
    private final NumericValueWidget maxOutput_;
    private final CheckBox chkTabMovesFocus_;
@@ -222,7 +210,6 @@ public class AccessibilityPreferencesPane extends PreferencesPane
 
    // initial values of prefs that can trigger reloads (to avoid unnecessary reloads)
    private boolean initialScreenReaderEnabled_;
-   private boolean initialShowFocusRectangles_;
 
    private final PreferencesDialogResources res_;
    private final AriaLiveService ariaLive_;

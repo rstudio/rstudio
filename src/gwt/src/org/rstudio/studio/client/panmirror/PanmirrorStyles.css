@@ -1,8 +1,8 @@
 @charset "UTF-8";
 
-@external ProseMirror, js-focus-visible, focus-visible, pm-editing-root-node, body;
+@external ProseMirror, pm-editing-root-node, body;
 
-.js-focus-visible .ProseMirror.focus-visible {
+.ProseMirror:focus-visible {
    outline-style: none !important;
 }
 

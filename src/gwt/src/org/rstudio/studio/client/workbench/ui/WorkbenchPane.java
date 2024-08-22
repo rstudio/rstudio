@@ -71,7 +71,6 @@ public abstract class WorkbenchPane extends ToolbarPane
       {
          Element el = focusableElements.get(0);
          el.focus();
-         A11y.showFocusOutline(el);
       }
       else
          Debug.logWarning("Could not set focus, no focusable element on " + title_ + " pane");

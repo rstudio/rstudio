@@ -21,6 +21,8 @@
 - Prompt for personal access token instead of password when using github via https (#14103)
 - RStudio now forward the current 'repos' option for actions taken in the Build pane (#5793)
 - Executing `options(warn = ...)` in an R code chunk now persists beyond chunk execution (#15030)
+- Remove focus-visible polyfill and instead use native browser :focus-visible pseudoclass (#14352)
+- Fixed problems with mouse clicking/selecting on Visual Editor in newer Chrome releases (#15068)
 
 #### Posit Workbench
 -

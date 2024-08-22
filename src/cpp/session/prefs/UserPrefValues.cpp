@@ -2637,19 +2637,6 @@ core::Error UserPrefValues::setFindPanelLegacyTabSequence(bool val)
 }
 
 /**
- * Control with keyboard focus displays a visual focus indicator.
- */
-bool UserPrefValues::showFocusRectangles()
-{
-   return readPref<bool>("show_focus_rectangles");
-}
-
-core::Error UserPrefValues::setShowFocusRectangles(bool val)
-{
-   return writePref("show_focus_rectangles", val);
-}
-
-/**
  * Show which panel contains keyboard focus.
  */
 bool UserPrefValues::showPanelFocusRectangle()
@@ -3594,7 +3581,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReducedMotion,
       kTabKeyMoveFocus,
       kFindPanelLegacyTabSequence,
-      kShowFocusRectangles,
       kShowPanelFocusRectangle,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,

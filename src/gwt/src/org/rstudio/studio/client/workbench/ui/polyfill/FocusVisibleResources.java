@@ -22,9 +22,6 @@ public interface FocusVisibleResources extends ClientBundle
 {
    FocusVisibleResources INSTANCE = GWT.create(FocusVisibleResources.class);
 
-   @Source("js/focus-visible.min.js")
-   StaticDataResource focusVisibleJs();
-
    @Source("css/focus-visible.css")
    StaticDataResource focusVisibleCss();
 }

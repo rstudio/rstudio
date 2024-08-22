@@ -340,7 +340,6 @@ namespace prefs {
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
 #define kFindPanelLegacyTabSequence "find_panel_legacy_tab_sequence"
-#define kShowFocusRectangles "show_focus_rectangles"
 #define kShowPanelFocusRectangle "show_panel_focus_rectangle"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
@@ -1654,12 +1653,6 @@ public:
     */
    bool findPanelLegacyTabSequence();
    core::Error setFindPanelLegacyTabSequence(bool val);
-
-   /**
-    * Control with keyboard focus displays a visual focus indicator.
-    */
-   bool showFocusRectangles();
-   core::Error setShowFocusRectangles(bool val);
 
    /**
     * Show which panel contains keyboard focus.
