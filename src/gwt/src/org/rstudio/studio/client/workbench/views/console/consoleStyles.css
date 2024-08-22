@@ -48,7 +48,7 @@
    outline: none;
 }
 
-/* .console needed to increase specificity so it wins over themeStyles.css */
+/* .console needed to increase specificity so it wins over focus-visible.css */
 /* !important needed because :focus-visible uses it as well */
 .console .output:focus-visible,
 .console .outputChunk:focus-visible {
