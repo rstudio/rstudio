@@ -1355,7 +1355,11 @@ SEXP inferDebugSrcrefs(
    
    srcref = simulatedSourceRefsOfContext(srcContext, RCntxt(), pLineDebugState.get());
    if (pLineDebugState && isValidSrcref(srcref))
-      pLineDebugState->lastDebugLine = INTEGER(srcref)[0] - 1;
+   {
+      int lastDebugLine = INTEGER(srcref)[0] - 1;
+      pLineDebugState->lastDebugLine = lastDebugLine;
+   }
+   
    return srcref;
 }
 
