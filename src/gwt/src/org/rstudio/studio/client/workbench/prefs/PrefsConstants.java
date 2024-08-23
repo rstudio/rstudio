@@ -626,15 +626,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String chkTabMovesFocusLabel();
 
     /**
-     * Translated "Always show focus outlines (requires restart)".
-     *
-     * @return translated "Always show focus outlines (requires restart)"
-     */
-    @DefaultMessage("Always show focus outlines (requires restart)")
-    @Key("chkShowFocusLabel")
-    String chkShowFocusLabel();
-
-    /**
      * Translated "Highlight focused panel".
      *
      * @return translated "Highlight focused panel"

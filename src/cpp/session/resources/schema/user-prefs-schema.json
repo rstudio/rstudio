@@ -1362,7 +1362,7 @@
             "title": "Tab key moves focus directly from find text to replace text in find panel",
             "description": "In source editor find panel, tab key moves focus directly from find text to replace text."
         },
-       "show_panel_focus_rectangle": {
+        "show_panel_focus_rectangle": {
             "type": "boolean",
             "default": false,
             "title": "Show focus outline around focused panel",
