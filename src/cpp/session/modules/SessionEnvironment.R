@@ -345,7 +345,12 @@
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
   pos <- gregexpr(calltext, singleline, fixed = TRUE)[[1]]
-  if (length(pos) > 1)
+  if (length(linepref) == 0L || linepref <= 0L)
+  {
+     pos <- pos[[1L]]
+     endpos <- pos + attr(pos, "match.length")
+  }
+  else if (length(pos) > 1)
   {
      # There is more than one instance of the call text in the function; try
      # to pick the first match past the preferred line.
@@ -365,6 +370,7 @@
   }
   else
   {
+     pos <- pos[[1L]]
      endpos <- pos + attr(pos, "match.length")
   }
 

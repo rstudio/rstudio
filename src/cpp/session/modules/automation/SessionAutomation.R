@@ -120,6 +120,15 @@
       params <- list()
    }
    
+   # Convert jsobject to character.
+   for (i in seq_along(params))
+   {
+      if (inherits(params[[i]], "jsObject"))
+      {
+         params[[i]] <- as.character(unclass(params[[i]]))
+      }
+   }
+   
    # Generate an id for this request.
    id <- .rs.automation.messageId
    .rs.setVar("automation.messageId", .rs.automation.messageId + 1L)

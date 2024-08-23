@@ -162,14 +162,22 @@
    nodeId
 })
 
-.rs.automation.addRemoteFunction("domClickElement", function(selector, button = "left")
+.rs.automation.addRemoteFunction("domClickElement", function(selector,
+                                                             objectId = NULL,
+                                                             verticalOffset = 0L,
+                                                             horizontalOffset = 0L,
+                                                             button = "left")
 {
-   # Query for the requested node.
-   nodeId <- self$domGetNodeId(selector)
+   objectId <- .rs.nullCoalesce(objectId, {
+      
+      # Query for the requested node.   
+      nodeId <- self$domGetNodeId(selector)
+      
+      # Get a JavaScript object ID associated with this node.
+      response <- self$client$DOM.resolveNode(nodeId)
+      response$object$objectId
+   })
    
-   # Get a JavaScript object ID associated with this node.
-   response <- self$client$DOM.resolveNode(nodeId)
-   objectId <- response$object$objectId
    
    # Use that object ID to request the object's bounding rectangle.
    code <- "function() {
@@ -178,24 +186,28 @@
    
    response <- self$client$Runtime.callFunctionOn(
       functionDeclaration = code,
-      objectId = objectId,
+      objectId = objectId
    )
    
+   # Compute coordinates for click action. We'll try to target
+   # the center of the requested element.
    domRect <- .rs.fromJSON(response$result$value)
+   x <- domRect$x + (domRect$width / 2) + horizontalOffset
+   y <- domRect$y + (domRect$height / 2) + verticalOffset
    
    # Use the position of that element to simulate a click.
    self$client$Input.dispatchMouseEvent(
       type = "mousePressed",
-      x = domRect$x + (domRect$width / 2),
-      y = domRect$y + (domRect$height / 2),
+      x = x,
+      y = y,
       button = button,
       clickCount = 1L
    )
    
    self$client$Input.dispatchMouseEvent(
       type = "mouseReleased",
-      x = domRect$x + (domRect$width / 2),
-      y = domRect$y + (domRect$height / 2),
+      x = x,
+      y = y,
       button = button,
       clickCount = 1L
    )

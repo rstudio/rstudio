@@ -161,51 +161,55 @@
 # given a traced function body and the original function body, recursively copy
 # the source references from the original body to the traced body, adding
 # source references to the injected trace code from the line being traced
-.rs.addFunction("tracedSourceRefs",function(funBody, originalFunBody)
+.rs.addFunction("tracedSourceRefs", function(funBody, originalFunBody)
 {
-  if (is.symbol(funBody) || is.symbol(originalFunBody))
-  {
-    return (funBody)
-  }
-
-  # start with a copy of the original source references
-  attr(funBody, "srcref") <- attr(originalFunBody, "srcref")
-
-  for (idx in 1:length(funBody))
-  {
-    # Check to see if this is one of the several types of objects we can't do
-    # equality testing for. Note that these object types are all leaf nodes in
-    # the parse tree, so it's safe to stop recursion here. Also note that we
-    # can't use the helpful is.na() here since that function emits warnings
-    # for some types of objects in the parse tree.
-    if (is.null(funBody[[idx]]) || 
-        identical(funBody[[idx]], NA) || 
-        identical(funBody[[idx]], NA_character_) || 
-        identical(funBody[[idx]], NA_complex_) || 
-        identical(funBody[[idx]], NA_integer_) || 
-        identical(funBody[[idx]], NA_real_) || 
-        identical(funBody[[idx]], NaN) ||
-        is.pairlist(funBody[[idx]])) 
-       next
-
-    # if this expression was replaced by trace(), copy the source references
-    # from the original expression over each expression injected by trace()
-    if (length(funBody[[idx]]) != length(originalFunBody[[idx]]) ||
-        isTRUE(sum(funBody[[idx]] != originalFunBody[[idx]]) > 0))
-    {
-      attr(funBody[[idx]], "srcref") <-
-        rep(list(attr(originalFunBody, "srcref")[[idx]]), length(funBody[[idx]]))
-    }
-
-    # recurse to symbol level
-    else if (is.language(funBody[[idx]]))
-    {
-      funBody[[idx]] <- .rs.tracedSourceRefs(
-         funBody[[idx]],
-         originalFunBody[[idx]])
-    }
-  }
-  return(funBody)
+   if (is.call(funBody) &&
+       is.call(originalFunBody) &&
+       length(funBody) == length(originalFunBody))
+   {
+      for (i in seq_along(funBody))
+      {
+         # Check for an invocation of trace.
+         #
+         # {
+         #   .doTrace(browser())
+         #   <expr>
+         # }
+         #
+         isTraceCall <-
+            is.call(funBody[[i]]) &&
+            length(funBody[[i]]) >= 2 &&
+            identical(funBody[[i]][[1L]], as.symbol("{")) &&
+            is.call(funBody[[i]][[2L]]) &&
+            identical(funBody[[i]][[2L]][[1L]], as.symbol(".doTrace"))
+         
+         if (isTraceCall)
+         {
+            # We found a trace call; copy the source references from
+            # the original function body into each node of the call
+            # to `.doTrace(browser())`.
+            srcRefs <- .rs.nullCoalesce(
+               attr(funBody, "srcref")[[i]],
+               attr(originalFunBody, "srcref")[[i]]
+            )
+            
+            repSrcRefs <- rep(list(srcRefs), length(funBody[[i]]))
+            attr(funBody[[i]], "srcref") <- repSrcRefs
+         }
+         else if (is.call(funBody[[i]]) &&
+                  is.call(originalFunBody[[i]]) &&
+                  length(funBody[[i]]) == length(originalFunBody[[i]]))
+         {
+            # Recurse into non-traced body elements
+            funBody[[i]] <- .rs.tracedSourceRefs(
+               funBody[[i]],
+               originalFunBody[[i]]
+            )
+         }
+      }
+   }
+   
+   funBody
 })
 
 .rs.addFunction("getFunctionSteps", function(fun, functionName, lineNumbers)
