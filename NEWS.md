@@ -29,3 +29,7 @@
 ### Dependencies
 
 - Updated Electron to version 31.4.0 (#14982; Desktop)
+
+### Deprecated / Removed
+- Removed user prefernce for turning off focus indicator rectangles (#14352)
+
