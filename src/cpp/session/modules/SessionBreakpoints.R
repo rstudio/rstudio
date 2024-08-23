@@ -163,7 +163,9 @@
 # source references to the injected trace code from the line being traced
 .rs.addFunction("tracedSourceRefs", function(funBody, originalFunBody)
 {
-   if (is.call(funBody))
+   if (is.call(funBody) &&
+       is.call(originalFunBody) &&
+       length(funBody) == length(originalFunBody))
    {
       for (i in seq_along(funBody))
       {
@@ -183,6 +185,9 @@
          
          if (isTraceCall)
          {
+            # We found a trace call; copy the source references from
+            # the original function body into each node of the call
+            # to `.doTrace(browser())`.
             srcRefs <- .rs.nullCoalesce(
                attr(funBody, "srcref")[[i]],
                attr(originalFunBody, "srcref")[[i]]
@@ -191,7 +196,9 @@
             repSrcRefs <- rep(list(srcRefs), length(funBody[[i]]))
             attr(funBody[[i]], "srcref") <- repSrcRefs
          }
-         else if (is.call(funBody[[i]]))
+         else if (is.call(funBody[[i]]) &&
+                  is.call(originalFunBody[[i]]) &&
+                  length(funBody[[i]]) == length(originalFunBody[[i]]))
          {
             # Recurse into non-traced body elements
             funBody[[i]] <- .rs.tracedSourceRefs(
