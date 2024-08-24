@@ -13,7 +13,7 @@
     "@types/glob": "^8.1.0",
     "@types/node": "^22.0.0",
     "eslint": "^9.8.0",
-    "tsx": "^4.16.2",
+    "tsx": "^4.16.5",
     "typescript": "^5.5.4"
   } ,
   "scripts": {
