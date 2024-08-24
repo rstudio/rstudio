@@ -14,6 +14,7 @@
 
 ### Fixed
 #### RStudio
+- Fixed an issue where debugger breakpoints did not function correctly in some cases with R 4.4 (#15072)
 - Fixed being unable to save file after cancelling the "Choose Encoding" window (#14896)
 - Fixed problems creating new files and projects on a UNC path (#14963, #14964; Windows Desktop)
 - Prevent attempting to start Copilot on a non-main thread (#14952)
