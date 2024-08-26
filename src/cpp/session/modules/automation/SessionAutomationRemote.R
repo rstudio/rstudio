@@ -203,11 +203,11 @@
 
 .rs.automation.addRemoteFunction("editorGetInstance", function()
 {
-   jsCode <- .rs.heredoc(r'{
+   jsCode <- .rs.heredoc('
       var id = $RStudio.last_focused_editor_id;
       var container = document.getElementById(id);
       container.env.editor
-   }')
+   ')
    
    response <- self$client$Runtime.evaluate(expression = jsCode)
    .rs.automation.wrapJsResponse(self, response)
