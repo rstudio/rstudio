@@ -350,8 +350,18 @@
       return(as.character(range))
    }
    
-   # otherwise, extract row names and subset as usual
-   rowNames <- row.names(x)
+   # retrieve row names; use .row_names_info for data.frame so
+   # we can detect internal non-character row names
+   rowNames <- if (is.data.frame(x))
+   {
+      .row_names_info(x, type = 0L)
+   }
+   else
+   {
+      row.names(x)
+   }
+   
+   # subset the retrieved row names
    rowNames <- rowNames[start:min(length(rowNames), start + len)]
    
    # encode strings as JSON to force quoting + handle escaping
@@ -359,10 +369,12 @@
    # from explicitly-set row names
    if (is.character(rowNames))
    {
-      rowNames <- .rs.mapChr(rowNames, .rs.toJSON, unbox = TRUE)
+      .rs.mapChr(rowNames, .rs.toJSON, unbox = TRUE)
    }
-   
-   rowNames
+   else
+   {
+      as.character(rowNames)
+   }
 })
 
 # wrappers for nrow/ncol which will report the class of object for which we
