@@ -324,18 +324,23 @@
     }
 
     var escaped = escapeHtml(data);
+
+    var rowIndex = parseInt(row[0], 10);
+    if (isNaN(rowIndex)) {
+      rowIndex = "'" + row[0] + "'";
+    } else {
+      rowIndex = rowIndex;
+    }
     
     // special additional rendering for cells which themselves contain data frames or lists:
     // these include an icon that can be clicked to view contents
     if (clazz === "dataCell" || clazz === "listCell") {
       escaped =
-        "<i>" +
-        escaped +
-        "</i> " +
+        "<i>" + escaped + "</i> " +
         '<a class="viewerLink" href="javascript:window.' +
         (clazz === "dataCell" ? "dataViewerCallback" : "listViewerCallback") +
         "(" +
-        row[0] +
+        rowIndex +
         ", " +
         (meta.col + columnOffset) +
         ')">' +

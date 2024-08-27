@@ -339,24 +339,34 @@
 
 .rs.addFunction("formatRowNames", function(x, start, len) 
 {
-   # detect whether this is a data.frame that contains
-   # row names, or if the row names are stored compactly
+   # check for a data.frame with compact row names
    if (is.data.frame(x))
    {
       info <- .row_names_info(x, type = 0L)
-      if (is.integer(info) && length(info) > 0 && is.na(info[[1]]))
+      
+      isCompact <-
+         is.integer(info) &&
+         length(info) == 2L &&
+         is.na(info[[1L]])
+      
+      if (isCompact)
       {
-         # the second element indicates the number of rows, and is negative if they're 
-         # automatic
-         n <- abs(info[[2]])
+         # the second element indicates the number of rows, and
+         # is negative if they're so-called "automatic" row names
+         n <- abs(info[[2L]])
          range <- seq(from = start, to = min(n, start + len))
          return(as.character(range))
       }
    }
    
    # otherwise, extract row names and subset as usual
-   rownames <- row.names(x)
-   rownames[start:min(length(rownames), start + len)]
+   rowNames <- row.names(x)
+   rowNames <- rowNames[start:min(length(rowNames), start + len)]
+   
+   # encode strings as JSON to force quoting + handle escaping
+   # this also lets us differentiate numeric (automatic) row names
+   # from explicitly-set row names
+   .rs.mapChr(rowNames, .rs.toJSON, unbox = TRUE)
 })
 
 # wrappers for nrow/ncol which will report the class of object for which we

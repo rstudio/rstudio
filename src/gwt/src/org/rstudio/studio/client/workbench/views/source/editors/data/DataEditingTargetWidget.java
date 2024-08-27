@@ -16,8 +16,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
 
-import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
@@ -125,10 +125,22 @@ public class DataEditingTargetWidget extends Composite
                   lho = "`" + object + "`";
                }
             }
-            events.fireEvent(new SendToConsoleEvent(
-                  "View(" + lho + 
-                     "[[" + col + "]]" + 
-                     "[[" + row + "]])", true));
+            
+            int rowNumber = StringUtil.parseInt(row, -1);
+            row = JSON.stringify(row);
+            col = JSON.stringify(col);
+            
+            String code;
+            if (rowNumber == -1)
+            {
+               code = "View(" + lho + "[" + row + ", " + col + "])";
+            }
+            else
+            {
+               code = "View(" + lho +  "[[" + col + "]][[" + row + "]])";
+            }
+            
+            events.fireEvent(new SendToConsoleEvent(code, true));
          };
          
          table_.addKeyDownHandler();
