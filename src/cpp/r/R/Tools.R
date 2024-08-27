@@ -1503,6 +1503,12 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    vapply(x, f, ..., FUN.VALUE = logical(1))
 })
 
+.rs.addFunction("hasCompactRowNames", function(data)
+{
+   info <- .row_names_info(data, type = 0L)
+   is.integer(info) && length(info) == 2L && is.na(info[[1L]])
+})
+
 .rs.addFunction("initTools", function()
 {
    ostype <- .Platform$OS.type

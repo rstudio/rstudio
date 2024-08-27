@@ -366,7 +366,12 @@
    # encode strings as JSON to force quoting + handle escaping
    # this also lets us differentiate numeric (automatic) row names
    # from explicitly-set row names
-   .rs.mapChr(rowNames, .rs.toJSON, unbox = TRUE)
+   if (is.character(rowNames))
+   {
+      rowNames <- .rs.mapChr(rowNames, .rs.toJSON, unbox = TRUE)
+   }
+   
+   rowNames
 })
 
 # wrappers for nrow/ncol which will report the class of object for which we
@@ -401,14 +406,17 @@
       cols
 })
 
-.rs.addFunction("toDataFrame", function(x, name, flatten) {
-   
-   # if we have a data.table, convert it to a data.frame explicitly
-   if (inherits(x, "data.table"))
-      x <- as.data.frame(x)
+.rs.addFunction("toDataFrame", function(x, name, flatten)
+{
+   # force a non-subclassed data.frame
+   if (is.data.frame(x))
+   {
+      class(x) <- "data.frame"
+   }
    
    # if it's not already a frame, coerce it to a frame
-   if (!is.data.frame(x)) {
+   if (!is.data.frame(x))
+   {
       frame <- NULL
       # attempt to coerce to a data frame--this can throw errors in the case
       # where we're watching a named object in an environment and the user
@@ -543,19 +551,25 @@
          Encoding(colfilter) <- "UTF-8"
       colfilter
    }, "")
+   
    if (Encoding(search) == "unknown")
       Encoding(search) <- "UTF-8"
    
    # coerce argument to data frame--data.table objects (for example) report that
    # they're data frames, but don't actually support the subsetting operations
    # needed for search/sort/filter without an explicit cast
+   #
+   # similarly, we need to convert tibbles to regular data.frames so that we can
+   # properly invoke the list / data viewer on filtered rows
    x <- .rs.toDataFrame(x, "transformed", TRUE)
    
    # apply columnwise filters
-   for (i in seq_along(filtered)) {
-      if (nchar(filtered[i]) > 0 && length(x[[i]]) > 0) {
+   for (i in seq_along(filtered))
+   {
+      if (nchar(filtered[i]) > 0 && length(x[[i]]) > 0)
+      {
          # split filter--string format is "type|value" (e.g. "numeric|12-25") 
-         filter <- strsplit(filtered[i], split="|", fixed = TRUE)[[1]]
+         filter <- strsplit(filtered[i], split = "|", fixed = TRUE)[[1]]
          if (length(filter) < 2) 
          {
             # no filter type information
@@ -606,10 +620,31 @@
    # apply global search
    if (!is.null(search) && nchar(search) > 0)
    {
-      x <- x[Reduce("|", lapply(x, function(column) { 
-         grepl(paste("\\Q", search, "\\E", sep = ""), column, perl = TRUE,
-               ignore.case = TRUE)
-      })), , drop = FALSE]
+      # get columns for search
+      searchColumns <- unclass(x)
+      
+      # also apply on row names if available
+      if (is.data.frame(x))
+      {
+         info <- .row_names_info(x, type = 0L)
+         if (is.character(info))
+         {
+            searchColumns[[length(searchColumns) + 1]] <- info
+         }
+      }
+      
+      # apply global search on data columns
+      pattern <- paste0("\\Q", search, "\\E")
+      matches <- lapply(searchColumns, function(column) {
+         grepl(pattern, column, perl = TRUE, ignore.case = TRUE)
+      })
+      
+      # collapse into single vector
+      matches <- Reduce(`|`, matches)
+      
+      # update based on matches
+      x <- x[matches, , drop = FALSE]
+      
    }
    
    # apply sort

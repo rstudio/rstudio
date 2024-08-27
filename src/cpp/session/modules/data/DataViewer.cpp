@@ -834,13 +834,13 @@ json::Value getData(SEXP dataSEXP,
       // all done, add row data
       data.push_back(rowData);
    }
-
+   
    json::Object result;
    result["draw"] = draw;
    result["recordsTotal"] = nrow;
    result["recordsFiltered"] = filteredNRow;
    result["data"] = data;
-   return std::move(result);
+   return result;
 }
 
 Error getGridData(const http::Request& request,
@@ -957,7 +957,7 @@ Error getGridData(const http::Request& request,
          }
       }
    }
-   catch(r::exec::RErrorException& e)
+   catch (r::exec::RErrorException& e)
    {
       // marshal R errors to the client in the format DataTables (and our own
       // error handling code) expects

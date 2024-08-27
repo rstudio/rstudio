@@ -17,11 +17,11 @@ package org.rstudio.studio.client.workbench.views.source.editors.data;
 
 
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.GridViewerStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlCo
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -54,7 +55,7 @@ public class DataEditingTargetWidget extends Composite
 {
    public static interface DataViewerCallback
    {
-      public void execute(String row, String col);
+      public void execute(JavaScriptObject row, JavaScriptObject col);
    }
    
    interface Resources extends ClientBundle
@@ -77,6 +78,11 @@ public class DataEditingTargetWidget extends Composite
    {
       resources.styles().ensureInjected();
    }
+   
+   private static final native String formatCallbackDimension(JavaScriptObject object)
+   /*-{
+      return typeof object === "string" ? JSON.stringify(object) : object.toString();
+   }-*/;
 
    public DataEditingTargetWidget(String title,
                                   Commands commands, 
@@ -102,7 +108,7 @@ public class DataEditingTargetWidget extends Composite
       // when loaded, hook up event handlers
       frame_.addLoadHandler((event) ->
       {
-         DataViewerCallback callback = (row, col) ->
+         DataViewerCallback callback = (rowObject, colObject) ->
          {
             String lho = dataItem.getExpression();
             String object = dataItem.getObject();
@@ -126,12 +132,11 @@ public class DataEditingTargetWidget extends Composite
                }
             }
             
-            int rowNumber = StringUtil.parseInt(row, -1);
-            row = JSON.stringify(row);
-            col = JSON.stringify(col);
+            String row = formatCallbackDimension(rowObject);
+            String col = formatCallbackDimension(colObject);
             
             String code;
-            if (rowNumber == -1)
+            if (JsUtil.isTypeOf(rowObject, "string"))
             {
                code = "View(" + lho + "[" + row + ", " + col + "])";
             }

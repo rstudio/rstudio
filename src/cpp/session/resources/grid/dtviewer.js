@@ -298,7 +298,7 @@
 
     // handle row names specially
     if (rowNumbers && meta.col === 0) {
-      data = JSON.parse(data);
+      data = JSON.parse(data).toString();
     }
 
     if (clazz === "dataCell") {
