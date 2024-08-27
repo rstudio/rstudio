@@ -14,6 +14,7 @@
 
 ### Fixed
 #### RStudio
+- Fixed an issue in the data viewer where list-column cell navigation worked incorrectly when a search filter was active (#9960)
 - Fixed an issue where debugger breakpoints did not function correctly in some cases with R 4.4 (#15072)
 - Fixed being unable to save file after cancelling the "Choose Encoding" window (#14896)
 - Fixed problems creating new files and projects on a UNC path (#14963, #14964; Windows Desktop)
