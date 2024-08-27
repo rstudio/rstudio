@@ -135,6 +135,8 @@ public class DataEditingTargetWidget extends Composite
             String row = formatCallbackDimension(rowObject);
             String col = formatCallbackDimension(colObject);
             
+            // objects with explicitly-set row names need to be indexed
+            // using an alternate syntax. detect this case and handle
             String code;
             if (JsUtil.isTypeOf(rowObject, "string"))
             {

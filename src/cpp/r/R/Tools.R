@@ -1503,6 +1503,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    vapply(x, f, ..., FUN.VALUE = logical(1))
 })
 
+# An R data.frame may have so-called "compact row names", where
+# row names are set with an integer placeholder that defines the
+# number of rows in the data.frame, without actually having a
+# fully materialized vector of that length.
 .rs.addFunction("hasCompactRowNames", function(data)
 {
    info <- .row_names_info(data, type = 0L)

@@ -307,10 +307,8 @@
       // count and show that as a summary.
       if (data.substring(0, 5) === "list(" && data.indexOf("=") > 0) {
         var varCount = data.split("=").length - 1;
-        data = "" + varCount + " variable";
-        if (varCount > 1) {
-          data += "s";
-        }
+        var varLabel = (varCount > 1 ? "variables" : "variable");
+        data = `${varCount} ${varLabel}`;
       }
     } else if (cachedSearch.length > 0) {
       // if row matches because of a global search, highlight that
@@ -340,6 +338,9 @@
     // these include an icon that can be clicked to view contents
     if (clazz === "dataCell" || clazz === "listCell") {
 
+      // rather than generate HTML by hand (and deal with escaping issues),
+      // create actual elements for each cell, and let the browser handle
+      // escaping of fields where required
       var cbName = clazz === "dataCell" ? "dataViewerCallback" : "listViewerCallback";
       var cbRow = row[0];
       var cbCol = meta.col + columnOffset;

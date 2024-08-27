@@ -340,23 +340,14 @@
 .rs.addFunction("formatRowNames", function(x, start, len) 
 {
    # check for a data.frame with compact row names
-   if (is.data.frame(x))
+   if (.rs.hasCompactRowNames(x))
    {
+      # the second element indicates the number of rows, and
+      # is negative if they're so-called "automatic" row names
       info <- .row_names_info(x, type = 0L)
-      
-      isCompact <-
-         is.integer(info) &&
-         length(info) == 2L &&
-         is.na(info[[1L]])
-      
-      if (isCompact)
-      {
-         # the second element indicates the number of rows, and
-         # is negative if they're so-called "automatic" row names
-         n <- abs(info[[2L]])
-         range <- seq(from = start, to = min(n, start + len))
-         return(as.character(range))
-      }
+      n <- abs(info[[2L]])
+      range <- seq(from = start, to = min(n, start + len))
+      return(as.character(range))
    }
    
    # otherwise, extract row names and subset as usual
@@ -408,7 +399,10 @@
 
 .rs.addFunction("toDataFrame", function(x, name, flatten)
 {
-   # force a non-subclassed data.frame
+   # force a non-subclassed data.frame -- this is necessary to ensure
+   # that row names (or row numbers) are not dropped when subsetting
+   # data, since those row names are used when generating cell-specific
+   # callbacks (e.g. for viewing a cell of a list column)
    if (is.data.frame(x))
    {
       class(x) <- "data.frame"
