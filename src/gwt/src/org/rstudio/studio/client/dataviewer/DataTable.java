@@ -15,16 +15,7 @@
 
 package org.rstudio.studio.client.dataviewer;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.SuggestOracle;
-import com.google.gwt.user.client.ui.Widget;
+import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWith2Args;
@@ -35,10 +26,27 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.DataTableColumnWidget;
+import org.rstudio.core.client.widget.LatchingToolbarButton;
+import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.SearchWidget;
+import org.rstudio.core.client.widget.SimpleButton;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTargetWidget.DataViewerCallback;
 
-import java.util.ArrayList;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.Widget;
 
 public class DataTable
 {
@@ -251,12 +259,12 @@ public class DataTable
       return setFilterUIVisible(getWindow(), visible);
    }
    
-   public void setDataViewerCallback(CommandWith2Args<Double, Double> dataCallback)
+   public void setDataViewerCallback(DataViewerCallback dataCallback)
    {
       setDataViewerCallback(getWindow(), dataCallback);
    }
    
-   public void setListViewerCallback(CommandWith2Args<Double, Double> listCallback)
+   public void setListViewerCallback(DataViewerCallback listCallback)
    {
       setListViewerCallback(getWindow(), listCallback);
    }
@@ -372,23 +380,19 @@ public class DataTable
            frame.setOffsetAndMaxColumns(offset, max);
        }
    }-*/;
-   private static final native void setDataViewerCallback(
-      WindowEx frame,
-      CommandWith2Args<Double, Double> dataCallback) /*-{
+   private static final native void setDataViewerCallback(WindowEx frame, DataViewerCallback dataCallback) /*-{
       frame.setOption(
          "dataViewerCallback", 
          $entry(function(row, col) {
-            dataCallback.@org.rstudio.core.client.CommandWith2Args::execute(*)(row, col);
+            dataCallback.@org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTargetWidget.DataViewerCallback::execute(*)(row, col);
          }));
    }-*/;
    
-   private static final native void setListViewerCallback(
-      WindowEx frame,
-      CommandWith2Args<Double, Double> listCallback) /*-{
+   private static final native void setListViewerCallback(WindowEx frame, DataViewerCallback listCallback) /*-{
       frame.setOption(
          "listViewerCallback", 
          $entry(function(row, col) {
-            listCallback.@org.rstudio.core.client.CommandWith2Args::execute(*)(row, col);
+            listCallback.@org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTargetWidget.DataViewerCallback::execute(*)(row, col);
          }));
    }-*/;
 

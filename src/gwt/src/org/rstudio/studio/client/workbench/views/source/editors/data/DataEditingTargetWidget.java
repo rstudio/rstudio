@@ -52,6 +52,11 @@ public class DataEditingTargetWidget extends Composite
    implements UrlContentEditingTarget.Display, 
               DataTable.Host
 {
+   public static interface DataViewerCallback
+   {
+      public void execute(String row, String col);
+   }
+   
    interface Resources extends ClientBundle
    {
       @Source("DataEditingTargetWidget.css")
@@ -97,7 +102,7 @@ public class DataEditingTargetWidget extends Composite
       // when loaded, hook up event handlers
       frame_.addLoadHandler((event) ->
       {
-         CommandWith2Args<Double, Double> view = (row, col) ->
+         DataViewerCallback callback = (row, col) ->
          {
             String lho = dataItem.getExpression();
             String object = dataItem.getObject();
@@ -127,8 +132,8 @@ public class DataEditingTargetWidget extends Composite
          };
          
          table_.addKeyDownHandler();
-         table_.setDataViewerCallback(view);
-         table_.setListViewerCallback(view);
+         table_.setDataViewerCallback(callback);
+         table_.setListViewerCallback(callback);
          table_.setColumnFrameCallback();
          
       });
