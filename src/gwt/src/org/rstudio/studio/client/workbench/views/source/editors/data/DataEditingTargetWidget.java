@@ -199,10 +199,9 @@ public class DataEditingTargetWidget extends Composite
 
    private Toolbar createToolbar(DataItem dataItem, Styles styles)
    {
-
       Toolbar toolbar = new EditingTargetToolbar(commands_, true, column_);
+      toolbar.getElement().setId(ElementIds.DATA_EDITING_TOOLBAR);
       table_.initToolbar(toolbar, dataItem.isPreview());
-
       return toolbar;
    }
    

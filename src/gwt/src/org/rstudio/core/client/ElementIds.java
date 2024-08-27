@@ -747,6 +747,11 @@ public class ElementIds
    public final static String PROJ_DISPLAY_NAME = "proj_display_name";
    
    // Data viewer
+   public final static String DATA_EDITING_TOOLBAR = "data_editing_toolbar";
    public final static String DATA_VIEWER_FRAME = "data_viewer_frame";
+   
+   // DocTabLayoutPanel
+   public final static String DOC_TAB_PANEL_ACTIVE_TAB = "doc_tab_panel_active_tab";
+   
    
 }

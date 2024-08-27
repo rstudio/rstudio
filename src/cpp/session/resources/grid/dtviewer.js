@@ -307,7 +307,7 @@
       // count and show that as a summary.
       if (data.substring(0, 5) === "list(" && data.indexOf("=") > 0) {
         var varCount = data.split("=").length - 1;
-        var varLabel = (varCount > 1 ? "variables" : "variable");
+        var varLabel = varCount > 1 ? "variables" : "variable";
         data = `${varCount} ${varLabel}`;
       }
     } else if (cachedSearch.length > 0) {
