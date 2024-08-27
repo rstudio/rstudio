@@ -24,13 +24,14 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
+
+#include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RecursionGuard.hpp>
 #include <core/StringUtils.hpp>
-#include <shared_core/SafeConvert.hpp>
 
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
@@ -538,10 +539,10 @@ json::Value getColSlice(SEXP dataSEXP,
 // NB: may throw exceptions! these are expected to be handled by the handlers
 // in getGridData, where they will be marshaled to JSON and displayed on the
 // client.
-json::Value getData(SEXP dataSEXP,
-                    int maxRows,
-                    int maxCols,
-                    const http::Fields& fields)
+json::Object getData(SEXP dataSEXP,
+                     int maxRows,
+                     int maxCols,
+                     const http::Fields& fields)
 {
    Error error;
    r::sexp::Protect protect;
@@ -840,6 +841,7 @@ json::Value getData(SEXP dataSEXP,
    result["recordsTotal"] = nrow;
    result["recordsFiltered"] = filteredNRow;
    result["data"] = data;
+   
    return result;
 }
 
