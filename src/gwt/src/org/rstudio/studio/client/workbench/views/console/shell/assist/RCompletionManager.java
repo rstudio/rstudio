@@ -1235,7 +1235,9 @@ public class RCompletionManager implements CompletionManager
             // Try to see if there's an object name we should use to supplement
             // completions
             if (cursor.moveToPosition(input_.getCursorPosition()))
+            {
                infixData = codeModel.getDataFromInfixChain(cursor);
+            }
          }
       }
       
