@@ -1311,7 +1311,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("heredoc", function(text, ...)
 {
    # remove leading, trailing whitespace
-   trimmed <- gsub("^\\s*\\n|\\n\\s*$", "", text)
+   trimmed <- gsub("^[^\\S\\r\\n]*\\n|\\n[^\\S\\r\\n]$", "", text, perl = TRUE)
    
    # split into lines
    lines <- strsplit(trimmed, "\n", fixed = TRUE)[[1L]]
