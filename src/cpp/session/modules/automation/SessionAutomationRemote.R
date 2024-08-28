@@ -69,6 +69,11 @@
    self$consoleExecute(code)
 })
 
+.rs.automation.addRemoteFunction("consoleClear", function()
+{
+   self$keyboardExecute("<Ctrl + 2>", "<Escape>", "<Ctrl + A>", "<Backspace>", "<Ctrl + L>")
+})
+
 .rs.automation.addRemoteFunction("consoleExecuteExpr", function(expr)
 {
    code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
@@ -394,24 +399,6 @@
    # Return the resolved node id.
    nodeId
 })
-
-.rs.automation.addRemoteFunction("consoleClear", function() {
-   self$keyboardExecute("<Escape>", "<Ctrl + A>", "<Backspace>", "<Ctrl + L>")
-})
-
-
-# .rs.automation.addRemoteFunction("getCompletionList", function(completionListEl)
-# {
-#    # Get the completion list from the pop-up
-#    completionText <- completionListEl$innerText
-#    
-#    # Extract just the completion items (remove package annotations)
-#    parts <- strsplit(completionText, "\n{2,}")[[1]]
-#    parts <- gsub("\\n.*", "", parts)
-#    
-#    # Return the resolved node id.
-#    parts
-# })
 
 .rs.automation.addRemoteFunction("getCompletionList", function(partialObjectName)
 {
