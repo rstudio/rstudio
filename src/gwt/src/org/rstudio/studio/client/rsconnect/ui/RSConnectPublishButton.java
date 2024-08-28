@@ -595,6 +595,33 @@ public class RSConnectPublishButton extends Composite
       {
          applyCaption(constants_.republish());
 
+         // put Clear List option first in case the list is too long to see the bottom and
+         // the scrollbar isn't appearing (https://github.com/rstudio/rstudio/issues/10492)
+         publishMenu_.addItem(new MenuItem(
+               AppCommand.formatMenuLabel(null, constants_.clearList(), null),
+               true,
+               new Scheduler.ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     String appLabel = StringUtil.isNullOrEmpty(applicationPath_)
+                           ? constants_.thisApplication()
+                           : "'" + applicationPath_ + "'";
+                     
+                     display_.showYesNoMessage(
+                           GlobalDisplay.MSG_INFO,
+                           constants_.clearList(),
+                           constants_.removeLocalDeploymentMessage(appLabel),
+                           false,
+                           () -> { forgetDeployment(); },
+                           null,
+                           false);
+                  }
+               }));
+
+         publishMenu_.addSeparator();
+
          // find the default (last deployed record)--this needs to be done as
          // a first pass so we can identify the associated menu item in one
          // pass 
@@ -624,29 +651,6 @@ public class RSConnectPublishButton extends Composite
                });
             publishMenu_.addItem(menuItem);
          }
-         
-         publishMenu_.addItem(new MenuItem(
-               AppCommand.formatMenuLabel(null, constants_.clearList(), null),
-               true,
-               new Scheduler.ScheduledCommand()
-               {
-                  @Override
-                  public void execute()
-                  {
-                     String appLabel = StringUtil.isNullOrEmpty(applicationPath_)
-                           ? constants_.thisApplication()
-                           : "'" + applicationPath_ + "'";
-                     
-                     display_.showYesNoMessage(
-                           GlobalDisplay.MSG_INFO,
-                           constants_.clearList(),
-                           constants_.removeLocalDeploymentMessage(appLabel),
-                           false,
-                           () -> { forgetDeployment(); },
-                           null,
-                           false);
-                  }
-               }));
          
          publishMenu_.addSeparator();
          

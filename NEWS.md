@@ -23,6 +23,7 @@
 - Prompt for personal access token instead of password when using github via https (#14103)
 - RStudio now forward the current 'repos' option for actions taken in the Build pane (#5793)
 - Executing `options(warn = ...)` in an R code chunk now persists beyond chunk execution (#15030)
+- Moved the "Clear List" command in publishing dropdown to the beginning in case end of dropdown is unreachable (#10492)
 
 #### Posit Workbench
 -
