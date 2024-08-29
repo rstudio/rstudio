@@ -814,15 +814,18 @@ Error ChildProcess::run()
 #endif
       }
 
+      int savedErrno = -1;
       if (options_.environment)
       {
          // execute
          ::execve(exe_.c_str(), pProcessArgs->args(), pEnvironment->args());
+         savedErrno = errno;
       }
       else
       {
          // execute
          ::execv(exe_.c_str(), pProcessArgs->args());
+         savedErrno = errno;
       }
 
       if (!options_.threadSafe)
@@ -833,10 +836,11 @@ Error ChildProcess::run()
          Error error = systemError(errno, ERROR_LOCATION);
          error.addProperty("exe", exe_);
          LOG_ERROR(error);
-         ::exit(EXIT_FAILURE);
       }
-      else
-         ::_exit(errno);
+      
+      // a forked child should quit using _exit -- otherwise, we can run into
+      // hangs and other surprising issues when static destructors are run
+      ::_exit(savedErrno == -1 ? EXIT_FAILURE : savedErrno);
    }
 
    // parent
