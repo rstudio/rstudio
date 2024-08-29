@@ -224,6 +224,21 @@
    )
 })
 
+.rs.addFunction("automation.killAutomationServer", function(...)
+{
+   procs <- subset(ps::ps(), name == "rserver")
+   for (i in seq_len(nrow(procs)))
+   {
+      proc <- procs[i, ]
+      conns <- ps::ps_connections(proc$ps_handle[[1L]])
+      if (8788L %in% conns$lport)
+      {
+         handle <- ps::ps_handle(pid = proc$pid)
+         return(ps::ps_kill(handle))
+      }
+   }
+})
+
 .rs.addFunction("automation.ensureRunningServerInstance", function()
 {
    # Check and see if we already have an rserver instance listening.
@@ -242,15 +257,16 @@
    parentEnv <- ps::ps_environ(parentHandle)
    parentPwd <- parentEnv[["PWD"]]
    automationScript <- file.path(parentPwd, "rserver-automation")
-   if (file.exists(automationScript))
-   {
-      message("-- Starting rserver-automation ...")
-      withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
-   }
-   else
-   {
+   if (!file.exists(automationScript))
       stop("rserver does not appear to be running on port 8788")
-   }
+   
+   message("-- Starting rserver-automation ...")
+   withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
+   
+   # Kill the process on exit
+   reg.finalizer(globalenv(), .rs.automation.killAutomationServer, onexit = TRUE)
+   
+   
 })
 
 .rs.addFunction("automation.initialize", function(appPath = NULL,
