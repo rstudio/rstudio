@@ -36,18 +36,6 @@
 
 #include "SessionQuarto.hpp"
 
-#ifdef _WIN32
-# define kPandocExe "pandoc.exe"
-#else
-# define kPandocExe "pandoc"
-#endif
-
-#ifdef __aarch64__
-# define kArchDir "aarch64"
-#else
-# define kArchDir "x86_64"
-#endif
-
 using namespace rstudio::core;
 using namespace rstudio::session::module_context;
 using namespace boost::placeholders;
