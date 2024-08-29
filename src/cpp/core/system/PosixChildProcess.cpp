@@ -833,11 +833,11 @@ Error ChildProcess::run()
          savedErrno = errno;
       }
 
+      // in the normal case control should never return from execv (it starts
+      // anew at main of the process pointed to by path). therefore, if we get
+      // here then there was an error
       if (!options_.threadSafe)
       {
-         // in the normal case control should never return from execv (it starts
-         // anew at main of the process pointed to by path). therefore, if we get
-         // here then there was an error
          Error error = systemError(errno, ERROR_LOCATION);
          error.addProperty("exe", exe_);
          LOG_ERROR(error);
