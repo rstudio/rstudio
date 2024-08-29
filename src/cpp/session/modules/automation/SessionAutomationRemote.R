@@ -77,8 +77,12 @@
 
 .rs.automation.addRemoteFunction("commandExecute", function(command)
 {
-   code <- .rs.deparse(call(".rs.api.executeCommand", as.character(command)))
-   self$consoleExecute(code)
+   jsCode <- deparse(substitute(
+      window.rstudioCallbacks.commandExecute(command),
+      list(command = command)
+   ))
+   
+   self$jsExec(jsCode)
 })
 
 .rs.automation.addRemoteFunction("completionsRequest", function(text = "")
@@ -270,29 +274,28 @@
 })
 
 
-.rs.automation.addRemoteFunction("jsExec", function(expression)
+.rs.automation.addRemoteFunction("jsExec", function(jsExpr)
 {
    # Implicit return for single-line expressions.
-   expression <- strsplit(expression, "\n", fixed = TRUE)[[1L]]
-   if (length(expression) == 1L && !.rs.startsWith(expression, "return "))
-      expression <- paste("return", expression)
+   jsExpr <- strsplit(jsExpr, "\n", fixed = TRUE)[[1L]]
+   if (length(jsExpr) == 1L && !.rs.startsWith(jsExpr, "return "))
+      jsExpr <- paste("return", jsExpr)
    
    # Build a command that executes the Javascript, and returns as JSON.
-   jsonExpression <- sprintf(
+   jsStringifyExpr <- sprintf(
       "JSON.stringify((function() { %s })())",
-      paste(expression, collapse = "\n")
+      paste(jsExpr, collapse = "\n")
    )
    
    # Execute it.
-   self$client$Runtime.evaluate(expression = jsonExpression)
-   jsonResponse <- self$client$Runtime.evaluate(expression = jsonExpression)
+   jsResponse <- self$client$Runtime.evaluate(expression = jsStringifyExpr)
    
    # Check for error.
-   if (!is.null(jsonResponse$exceptionDetails))
-      stop(jsonResponse$exceptionDetails$exception$description)
+   if (!is.null(jsResponse$exceptionDetails))
+      stop(jsResponse$exceptionDetails$exception$description)
    
    # Marshal values back to R.
-   .rs.fromJSON(jsonResponse$result$value)
+   .rs.fromJSON(jsResponse$result$value)
 })
 
 .rs.automation.addRemoteFunction("jsCall", function(objectId, jsFunc)
