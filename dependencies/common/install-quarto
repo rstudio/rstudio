@@ -22,7 +22,7 @@ section "Installing Quarto"
 
 # variables that control download + installation process
 # specify a version to pin for releases
-QUARTO_VERSION=1.5.54
+QUARTO_VERSION=1.5.57
 
 # update to latest Quarto release
 # QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
