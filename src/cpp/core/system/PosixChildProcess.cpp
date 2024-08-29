@@ -445,16 +445,10 @@ bool ChildProcess::hasRecentOutput() const
 
 Error ChildProcess::run()
 {  
-   // verify that the executable pointed at via 'exe_' exists
-   struct stat sb;
-   int status = ::stat(exe_.c_str(), &sb);
+   // verify that the executable pointed at via 'exe_' is executable
+   int status = ::access(exe_.c_str(), X_OK);
    if (status == -1)
       return systemError(errno, ERROR_LOCATION);
-   
-   // if it does exist, verify that it's actually executable
-   bool isExecutable = sb.st_mode & S_IXUSR;
-   if (!isExecutable)
-      return systemError(EACCES, ERROR_LOCATION);
 
    // declarations
    PidType pid = 0;
