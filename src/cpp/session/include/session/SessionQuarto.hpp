@@ -55,6 +55,7 @@ struct QuartoConfig
    std::string version;
    std::string bin_path;
    std::string resources_path;
+   std::string pandoc_path;
 
    // project info
    bool is_project;
