@@ -359,7 +359,7 @@
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", tempdir()),
-      if (mode == "desktop") "--automation-agent",
+      if (mode == "desktop") c("--automation-agent"),
       if (mode == "server") c(
          "--no-default-browser-check",
          "--no-first-run",
