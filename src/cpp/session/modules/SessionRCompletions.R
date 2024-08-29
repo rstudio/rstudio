@@ -2169,7 +2169,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("isBrowserActive", function()
 {
-   .Call("rs_isBrowserActive")
+   .Call("rs_isBrowserActive", PACKAGE = "(embedding)")
 })
 
 # NOTE: This function attempts to find an active frame (if
@@ -2448,23 +2448,22 @@ assign(x = ".rs.acCompletionTypes",
    
    ## For magrittr completions, we may see a pipe thrown in as part of the 'string'
    ## and 'functionCallString'. In such a case, we need to strip off everything before
-   ## a '%>%' and augment the numCommas
+   ## a '%>%' and augment the numCommas.
    isPiped <- nzchar(chainObjectName)
-   if (length(string))
+   functionContexts <- which(context == .rs.acContextTypes$FUNCTION)
+   if (length(functionContexts) == 1L)
    {
+      i <- functionContexts
       pipes <- c("%>%", "%<>%", "%T>%", "%>>%", "\\|>")
       pattern <- paste(pipes, collapse = "|")
       
-      stringPipeMatches <- gregexpr(
-         pattern, string[[1]], perl = TRUE
-      )[[1]]
-      
+      stringPipeMatches <- gregexpr(pattern, string[[i]], perl = TRUE)[[1]]
       if (!identical(c(stringPipeMatches), -1L))
       {
          n <- length(stringPipeMatches)
          idx <- stringPipeMatches[n] + attr(stringPipeMatches, "match.length")[n]
          isPiped <- TRUE
-         string[[1]] <- gsub("^[\\s\\n]*", "", substring(string[[1]], idx), perl = TRUE)
+         string[[i]] <- gsub("^[\\s\\n]*", "", substring(string[[i]], idx), perl = TRUE)
          
          ## Figure out the 'parent object' of the call. We munge the
          ## function call and place that back in, so S3 dispatch and such
@@ -2489,7 +2488,9 @@ assign(x = ".rs.acCompletionTypes",
             fixed = TRUE
          )
          
-      } else if (nzchar(chainObjectName)) {
+      }
+      else if (nzchar(chainObjectName))
+      {
          
          functionCallString <- sub(
             "(",
@@ -2817,6 +2818,8 @@ assign(x = ".rs.acCompletionTypes",
    # otherwise, look through the contexts and pick up completions
    else
    {
+      didGetFunctionCompletions <- FALSE
+      
       for (i in seq_along(string))
       {
          # Don't provide function completions if we just provided
@@ -2838,6 +2841,16 @@ assign(x = ".rs.acCompletionTypes",
          
          if (skipFunctionCompletions)
             next
+         
+         # Only retrieve function completions for the 'nearest'
+         # function in the stack
+         if (context[[i]] == .rs.acContextTypes$FUNCTION)
+         {
+            if (didGetFunctionCompletions)
+               next
+            
+            didGetFunctionCompletions <- TRUE
+         }
          
          completions <- .rs.appendCompletions(
             completions,

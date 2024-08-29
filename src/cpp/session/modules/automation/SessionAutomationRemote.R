@@ -24,17 +24,29 @@
 # !diagnostics suppress=client,self
 .rs.defineVar("automation.remotePrivateEnv", new.env(parent = .rs.toolsEnv()))
 .rs.defineVar("automation.remote", new.env(parent = emptyenv()))
-
-.rs.setVar("automation.remoteInstance", NULL)
+.rs.defineVar("automation.remoteInstance", NULL)
 
 .rs.addFunction("automation.newRemote", function(mode = NULL)
 {
+   # Generate the remote instance.
    mode <- .rs.automation.resolveMode(mode)
    client <- .rs.automation.initialize(mode = mode)
    assign("client", client, envir = .rs.automation.remote)
    assign("self", .rs.automation.remote, envir = .rs.automation.remotePrivateEnv)
    .rs.setVar("automation.remoteInstance", .rs.automation.remote)
-   .rs.automation.remoteInstance
+   remote <- .rs.automation.remoteInstance
+   
+   # Load testthat, and provide a 'test_that' override which automatically cleans
+   # up various state when a test is run.
+   library(testthat)
+   .rs.addGlobalFunction("test_that", function(desc, code)
+   {
+      on.exit(.rs.automation.remoteInstance$sessionReset(), add = TRUE)
+      testthat::test_that(desc, code)
+   })
+   
+   # Return the remote instance.
+   remote
 })
 
 .rs.addFunction("automation.deleteRemote", function()
@@ -67,6 +79,32 @@
 {
    code <- .rs.deparse(call(".rs.api.executeCommand", as.character(command)))
    self$consoleExecute(code)
+})
+
+.rs.automation.addRemoteFunction("completionsRequest", function(text = "")
+{
+   # Generate the autocomplete pop-up.
+   self$keyboardExecute(text, "<Tab>")
+   
+   # Get the completion list from the pop-up
+   completionListEl <- self$jsObjectViaSelector("#rstudio_popup_completions")
+   completionText <- completionListEl$innerText
+   
+   # Dismiss the popup.
+   self$keyboardExecute("<Escape>")
+   
+   # Remove any inserted code.
+   for (i in seq_len(nchar(text)))
+   {
+      self$keyboardExecute("<Backspace>")
+   }
+   
+   # Extract just the completion items (remove package annotations)
+   parts <- strsplit(completionText, "\n{2,}")[[1]]
+   parts <- gsub("\\n.*", "", parts)
+   
+   # Return those parts
+   parts
 })
 
 .rs.automation.addRemoteFunction("consoleClear", function()
@@ -309,7 +347,7 @@
          shortcut <- sub(reShortcut, "\\1", input, perl = TRUE)
          self$shortcutExecute(shortcut)
       }
-      else
+      else if (nzchar(input))
       {
          self$client$Input.insertText(input)
       }
@@ -340,6 +378,20 @@
    invisible(alive)
 })
 
+.rs.automation.addRemoteFunction("sessionReset", function()
+{
+   # Clear any popups that might be visible.
+   self$keyboardExecute("<Escape>")
+   
+   # Clear any text that might be set.
+   self$keyboardExecute("<Command + A>", "<Backspace>")
+   
+   # Remove any existing R objects.
+   self$commandExecute("closeAllSourceDocs")
+   self$consoleExecuteExpr(rm(list = ls()))
+   self$keyboardExecute("<Ctrl + L>")
+})
+
 .rs.automation.addRemoteFunction("shortcutExecute", function(shortcut)
 {
    parts <- tolower(strsplit(shortcut, "\\s*\\+\\s*", perl = TRUE)[[1L]])
@@ -353,6 +405,13 @@
       modifiers <- bitwOr(modifiers, 4L)
    if ("shift" %in% parts)
       modifiers <- bitwOr(modifiers, 8L)
+   
+   # 'cmd' means 'meta' on macOS, 'ctrl' otherwise
+   if ("cmd" %in% parts || "command" %in% parts)
+   {
+      modifier <- ifelse(.rs.platform.isMacos, 4L, 2L)
+      modifiers <- bitwOr(modifiers, modifier)
+   }
    
    key <- tail(parts, n = 1L)
    code <- .rs.automationConstants.keyToKeyCodeMap[[key]]
@@ -398,22 +457,4 @@
    
    # Return the resolved node id.
    nodeId
-})
-
-.rs.automation.addRemoteFunction("getCompletionList", function(partialObjectName)
-{
-   # Generate the autocomplete pop-up
-   self$keyboardExecute(partialObjectName, "<Tab>")
-   Sys.sleep(0.5)
-   
-   # Get the completion list from the pop-up
-   completionListEl <- self$jsObjectViaSelector("#rstudio_popup_completions")
-   completionText <- completionListEl$innerText
-
-   # Extract just the completion items (remove package annotations)
-   parts <- strsplit(completionText, "\n{2,}")[[1]]
-   parts <- gsub("\\n.*", "", parts)
-
-   # Return the resolved node id.
-   parts
 })

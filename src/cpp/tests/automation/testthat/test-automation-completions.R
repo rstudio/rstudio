@@ -2,7 +2,7 @@
 library(testthat)
 
 self <- remote <- .rs.automation.newRemote()
-on.exit(.rs.automation.deleteRemote(), add = TRUE)
+withr::defer(.rs.automation.deleteRemote())
 
 # https://github.com/rstudio/rstudio/issues/14784
 test_that("autocompletion doesn't trigger active bindings", {
@@ -26,8 +26,6 @@ test_that("autocompletion doesn't trigger active bindings", {
    output <- remote$consoleOutput()
    expect_false(tail(output, 1) == "[1] \"active\"")
    
-   remote$consoleClear()
-   
 })
 
 test_that("autocompletion in console produces the expected completion list for new variables", {
@@ -44,9 +42,6 @@ test_that("autocompletion in console produces the expected completion list for n
    expect_true(grepl("foobar", completionText, fixed = TRUE))
    expect_true(grepl("foobaz", completionText, fixed = TRUE))
    
-   remote$keyboardExecute("<Escape>")
-   remote$consoleClear()
-   
 })
 
 # https://github.com/rstudio/rstudio/issues/13196
@@ -59,9 +54,6 @@ test_that("autocompletion in console produces the expected completion list in an
    expect_true(grepl("...", completionText, fixed = TRUE))
    expect_true(grepl("file", completionText, fixed = TRUE))
    expect_true(grepl("sep", completionText, fixed = TRUE))
-   
-   remote$keyboardExecute("<Escape>")
-   remote$consoleClear()
    
 })
 
@@ -76,9 +68,6 @@ test_that("autocompletion in console produces the expected completion list in an
    expect_true(grepl("mean =", completionText, fixed = TRUE))
    expect_true(grepl("sd =", completionText, fixed = TRUE))
    
-   remote$keyboardExecute("<Escape>")
-   remote$consoleClear()
-   
 })
 
 # https://github.com/rstudio/rstudio/issues/13196
@@ -91,9 +80,6 @@ test_that("autocompletion in console produces the expected completion list in a 
    expect_true(grepl("...", completionText, fixed = TRUE))
    expect_true(grepl("na.rm", completionText, fixed = TRUE))
    expect_true(grepl("sumWithEllipsesArg", completionText, fixed = TRUE))
- 
-   remote$keyboardExecute("<Escape>")  
-   remote$consoleClear()
    
 })
 
@@ -109,21 +95,22 @@ test_that("autocompletion in console produces the expected completion list when 
    expect_true(grepl("x", completionText, fixed = TRUE))
    expect_true(grepl("y", completionText, fixed = TRUE))
    
-   remote$keyboardExecute("<Escape>")
-   remote$consoleClear() 
-   
 })
 
 # https://github.com/rstudio/rstudio/issues/13291
 test_that("autocompletion in console produces the expected completion list in a preview of data frames that are part of another object.", {
    
    code <- .rs.heredoc('
-      test_df <- data.frame(col1 = rep(1, 3),
+      test_df <- data.frame(
+         col1 = rep(1, 3),
          col2 = rep(2, 3),
-         col3 = rep(3, 3))
+         col3 = rep(3, 3)
+      )
 
-      test_ls <- list(a = test_df,
-         b = test_df)
+      test_ls <- list(
+         a = test_df,
+         b = test_df
+      )
    ')
    
    remote$consoleExecute(code)
@@ -134,9 +121,6 @@ test_that("autocompletion in console produces the expected completion list in a 
    
    expect_true(grepl("a", completionText, fixed = TRUE))
    expect_true(grepl("b", completionText, fixed = TRUE))
-   
-   remote$keyboardExecute("<Escape>")
-   remote$consoleClear()
    
 })
 
@@ -150,11 +134,8 @@ test_that("autocompletion in console shows local variables first.", {
 
    remote$consoleExecute(code)
    
-   parts <- remote$getCompletionList("lef")
+   parts <- remote$completionsRequest("lef")
    expect_identical(parts, c("left_table", "left_join"))
-
-   remote$keyboardExecute("<Escape>")
-   remote$consoleClear()
    
 })
 
@@ -166,17 +147,11 @@ test_that("autocompletions within piped expressions work at start of document", 
       mtcars |> mutate(x = mean())
    ')
    
-   remote$documentOpen(".R", code)
-   editor <- remote$editorGetInstance()
-   editor$gotoLine(2L, 26L)
-   remote$keyboardExecute("<Tab>")
-   popupEl <- remote$jsObjectViaSelector("#rstudio_popup_completions")
-   popupText <- popupEl$innerText
-   expect_true(grepl("trim =",  popupText, fixed = TRUE))
-   expect_true(grepl("na.rm =", popupText, fixed = TRUE))
-   expect_true(grepl("... =",   popupText, fixed = TRUE))
-   remote$keyboardExecute("<Escape>")
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
+   remote$documentExecute(".R", code, function(editor)
+   {
+      editor$gotoLine(2L, 26L)
+      completions <- remote$completionsRequest("")
+      expect_equal(completions[1:2], c("x =", "... ="))
+   })
 
 })
