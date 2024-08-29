@@ -35,70 +35,41 @@ test_that("autocompletion in console produces the expected completion list for n
       foobaz <- 42
    ')
    
-   remote$keyboardExecute("foo", "<Tab>")
-   completionListEl <- remote$jsObjectViaSelector("#rstudio_popup_completions")
-   completionText <- completionListEl$innerText
-   
-   expect_true(grepl("foobar", completionText, fixed = TRUE))
-   expect_true(grepl("foobaz", completionText, fixed = TRUE))
+   completions <- remote$completionsRequest("foo")
+   expect_equal(completions, c("foobar", "foobaz"))
    
 })
 
 # https://github.com/rstudio/rstudio/issues/13196
 test_that("autocompletion in console produces the expected completion list in an existing base function", {
    
-   remote$keyboardExecute("cat(", "<Tab>")
-   completionListEl <- remote$jsObjectViaSelector("#rstudio_popup_completions")
-   completionText <- completionListEl$innerText
-   
-   expect_true(grepl("...", completionText, fixed = TRUE))
-   expect_true(grepl("file", completionText, fixed = TRUE))
-   expect_true(grepl("sep", completionText, fixed = TRUE))
+   completions <- remote$completionsRequest("cat(")
+   expect_equal(completions, c("... =", "file =", "sep =", "fill =", "labels =", "append ="))
    
 })
 
 # https://github.com/rstudio/rstudio/issues/13196
 test_that("autocompletion in console produces the expected completion list in an existing non-base function", {
    
-   remote$keyboardExecute("stats::rnorm(", "<Tab>")
-   completionListEl <- remote$jsObjectViaSelector("#rstudio_popup_completions")
-   completionText <- completionListEl$innerText
-   
-   expect_true(grepl("n =", completionText, fixed = TRUE))
-   expect_true(grepl("mean =", completionText, fixed = TRUE))
-   expect_true(grepl("sd =", completionText, fixed = TRUE))
-   
-})
-
-# https://github.com/rstudio/rstudio/issues/13196
-test_that("autocompletion in console produces the expected completion list in a new function defintion", {
-   
-   remote$keyboardExecute("sumWithEllipsesArg <- function(x, y, ..., a, b) { x+y+a+b+sum(", "<Tab>")
-   completionListEl <- remote$jsObjectViaSelector("#rstudio_popup_completions")
-   completionText <- completionListEl$innerText
-   
-   expect_true(grepl("...", completionText, fixed = TRUE))
-   expect_true(grepl("na.rm", completionText, fixed = TRUE))
-   expect_true(grepl("sumWithEllipsesArg", completionText, fixed = TRUE))
+   completions <- remote$completionsRequest("stats::rnorm(")
+   expect_equal(completions, c("n =", "mean =", "sd ="))
    
 })
 
 # https://github.com/rstudio/rstudio/issues/13196
 test_that("autocompletion in console produces the expected completion list when using a new function", {
    
-   remote$keyboardExecute("a <- function (..., x, y) { print(x + y) }", "<Enter>")
-   remote$keyboardExecute("a(", "<Tab>")
-   completionListEl <- remote$jsObjectViaSelector("#rstudio_popup_completions")
-   completionText <- completionListEl$innerText
+   # Define a function accepting some parameters.
+   remote$keyboardExecute("a <- function(x, y, z) { print(x + y) }", "<Enter>")
    
-   expect_true(grepl("...", completionText, fixed = TRUE))
-   expect_true(grepl("x", completionText, fixed = TRUE))
-   expect_true(grepl("y", completionText, fixed = TRUE))
+   # Request completions for that function.
+   completions <- remote$completionsRequest("a(")
+   expect_equal(completions, c("x =", "y =", "z ="))
    
 })
 
 # https://github.com/rstudio/rstudio/issues/13291
-test_that("autocompletion in console produces the expected completion list in a preview of data frames that are part of another object.", {
+test_that("list names are provided as completions following '$'", {
    
    code <- .rs.heredoc('
       test_df <- data.frame(
@@ -115,12 +86,8 @@ test_that("autocompletion in console produces the expected completion list in a 
    
    remote$consoleExecute(code)
    
-   remote$keyboardExecute("test_ls$", "<Tab>")
-   completionListEl <- remote$jsObjectViaSelector("#rstudio_popup_completions")
-   completionText <- completionListEl$innerText
-   
-   expect_true(grepl("a", completionText, fixed = TRUE))
-   expect_true(grepl("b", completionText, fixed = TRUE))
+   completions <- remote$completionsRequest("test_ls$")
+   expect_equal(completions, c("a", "b"))
    
 })
 
