@@ -25,7 +25,7 @@
 - Executing `options(warn = ...)` in an R code chunk now persists beyond chunk execution (#15030)
 
 #### Posit Workbench
--
+- Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
 
 ### Dependencies
 

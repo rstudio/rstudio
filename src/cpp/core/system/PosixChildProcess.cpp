@@ -445,6 +445,11 @@ bool ChildProcess::hasRecentOutput() const
 
 Error ChildProcess::run()
 {  
+   // verify that the executable pointed at via 'exe_' is executable
+   int status = ::access(exe_.c_str(), X_OK);
+   if (status == -1)
+      return systemError(errno, ERROR_LOCATION);
+
    // declarations
    PidType pid = 0;
    int fdInput[2] = {0,0};
@@ -814,29 +819,33 @@ Error ChildProcess::run()
 #endif
       }
 
+      int savedErrno = -1;
       if (options_.environment)
       {
          // execute
          ::execve(exe_.c_str(), pProcessArgs->args(), pEnvironment->args());
+         savedErrno = errno;
       }
       else
       {
          // execute
          ::execv(exe_.c_str(), pProcessArgs->args());
+         savedErrno = errno;
       }
 
+      // in the normal case control should never return from execv (it starts
+      // anew at main of the process pointed to by path). therefore, if we get
+      // here then there was an error
       if (!options_.threadSafe)
       {
-         // in the normal case control should never return from execv (it starts
-         // anew at main of the process pointed to by path). therefore, if we get
-         // here then there was an error
          Error error = systemError(errno, ERROR_LOCATION);
          error.addProperty("exe", exe_);
          LOG_ERROR(error);
-         ::exit(EXIT_FAILURE);
       }
-      else
-         ::_exit(errno);
+      
+      // a forked child should quit using _exit -- otherwise, we can run into
+      // hangs and other surprising issues when static destructors are run
+      ::_exit(savedErrno == -1 ? EXIT_FAILURE : savedErrno);
    }
 
    // parent

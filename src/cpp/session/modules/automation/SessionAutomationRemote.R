@@ -69,6 +69,11 @@
    self$consoleExecute(code)
 })
 
+.rs.automation.addRemoteFunction("consoleClear", function()
+{
+   self$keyboardExecute("<Ctrl + 2>", "<Escape>", "<Ctrl + A>", "<Backspace>", "<Ctrl + L>")
+})
+
 .rs.automation.addRemoteFunction("consoleExecuteExpr", function(expr)
 {
    code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
@@ -102,6 +107,7 @@
 {
    # Write document contents to file.
    documentPath <- tempfile("document-", fileext = ext)
+   documentPath <- chartr("\\", "/", documentPath)
    writeLines(contents, con = documentPath)
    
    # Open that document in the attached editor.
@@ -392,4 +398,22 @@
    
    # Return the resolved node id.
    nodeId
+})
+
+.rs.automation.addRemoteFunction("getCompletionList", function(partialObjectName)
+{
+   # Generate the autocomplete pop-up
+   self$keyboardExecute(partialObjectName, "<Tab>")
+   Sys.sleep(0.5)
+   
+   # Get the completion list from the pop-up
+   completionListEl <- self$jsObjectViaSelector("#rstudio_popup_completions")
+   completionText <- completionListEl$innerText
+
+   # Extract just the completion items (remove package annotations)
+   parts <- strsplit(completionText, "\n{2,}")[[1]]
+   parts <- gsub("\\n.*", "", parts)
+
+   # Return the resolved node id.
+   parts
 })

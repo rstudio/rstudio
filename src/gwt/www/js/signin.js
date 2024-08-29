@@ -61,7 +61,7 @@ function verifyMe() {
    activeSignIn = true;
 
    // Disable all sign-in controls to prevent attempts to sign in multiple times
-   document.getElementById('staySignedIn').disabled = true;
+   document.getElementById('staySignedIn').readOnly = true;
    document.getElementById('signinbutton').disabled = true;
    document.getElementById('signinbutton').classList.add('disabled');
    document.getElementById('spinner').classList.remove('signin-hidden');
