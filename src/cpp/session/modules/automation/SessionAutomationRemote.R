@@ -186,6 +186,9 @@
    # Get a reference to the editor in that instance.
    editor <- self$editorGetInstance()
    
+   # Wait a small bit, so Ace can tokenize the document.
+   Sys.sleep(0.2)
+   
    # Invoke callback with the editor instance.
    callback(editor)
 })
