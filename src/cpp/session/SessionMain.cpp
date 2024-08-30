@@ -584,7 +584,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       // console processes
       (console_process::initialize)
-
+         
+      // http methods
       (http_methods::initialize)
 
       // r utils
@@ -1402,33 +1403,10 @@ void rRunTests()
    exitEarly(status);
 }
 
-void rRunAutomationImpl()
-{
-   // run tests
-   Error error = modules::automation::run();
-   if (error)
-       LOG_ERROR(error);
- 
-   // run cleanup delayed
-   auto cleanup = []()
-   {
-      rCleanup(true);
-      exitEarly(0);
-   };
-   
-   module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(3000),
-            cleanup);
-            
-}
-
 void rRunAutomation()
 {
-   // delay execution of automation tests just so we can be sure
-   // the IDE has fully materialized
-   module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(3000),
-            rRunAutomationImpl);
+   ClientEvent event(client_events::kRunAutomation);
+   module_context::enqueClientEvent(event);
 }
 
 void ensureRProfile()
