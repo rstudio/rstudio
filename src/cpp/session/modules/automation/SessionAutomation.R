@@ -706,7 +706,7 @@
 .rs.addFunction("automation.onFinishedRunningAutomation", function()
 {
    isJenkins <- Sys.getenv("JENKINS_URL", unset = NA)
-   if (is.na(isJenkins))
+   if (!is.na(isJenkins))
       quit(status = 0L)
    
    message("- Automated tests have finished running.")
