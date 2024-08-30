@@ -602,9 +602,7 @@
    })
    
    # Resolve the report file from session options if provided.
-   reportFile <- .rs.nullCoalesce(reportFile, {
-      .Call("rs_automationReportFile", PACKAGE = "(embedding)")
-   })
+   reportFile <- .rs.nullCoalesce(reportFile, .rs.automation.reportFile())
    
    # If the path to a test directory was provided, use that.
    if (!is.na(projectRoot))
