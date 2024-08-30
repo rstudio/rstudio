@@ -465,9 +465,10 @@ Error ChildProcess::run()
    std::vector<std::string> args;
    args.push_back(exe_);
    args.insert(args.end(), args_.begin(), args_.end());
+   
    using core::system::ProcessArgs;
-   ProcessArgs* pProcessArgs = new ProcessArgs(args);
-   ProcessArgs* pEnvironment = nullptr;
+   std::unique_ptr<ProcessArgs> pProcessArgs(new ProcessArgs(args));
+   std::unique_ptr<ProcessArgs> pEnvironment = nullptr;
 
    // get rlimit for max files
    // in the thread-safe fork approach, this needs to be provided
@@ -482,12 +483,12 @@ Error ChildProcess::run()
       // build env (on heap, see comment above)
       std::vector<std::string> env;
       const Options& options = options_.environment.get();
-      for (Options::const_iterator
-               it = options.begin(); it != options.end(); ++it)
+      for (auto it = options.begin(); it != options.end(); ++it)
       {
          env.push_back(it->first + "=" + it->second);
       }
-      pEnvironment = new ProcessArgs(env);
+      
+      pEnvironment.reset(new ProcessArgs(env));
    }
 
    boost::optional<uid_t> runAsUser;
@@ -818,7 +819,7 @@ Error ChildProcess::run()
             LOG_ERROR(systemError(errno, ERROR_LOCATION));
 #endif
       }
-
+      
       int savedErrno = -1;
       if (options_.environment)
       {
@@ -875,9 +876,6 @@ Error ChildProcess::run()
          // record pipe handles
          pImpl_->init(pid, fdInput[WRITE], fdOutput[READ], fdError[READ]);
       }
-
-      delete pProcessArgs;
-      delete pEnvironment;
 
       if (options_.threadSafe)
       {
