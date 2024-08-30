@@ -593,10 +593,17 @@
                                            automationMode = NULL,
                                            gitRef = NULL)
 {
+   on.exit(.rs.automation.onFinishedRunningAutomation(), add = TRUE)
+   
    # Resolve the project root. Note that test are expected to be found
    # within the 'src/cpp/session/automation' sub-directory of this path.
    projectRoot <- .rs.nullCoalesce(projectRoot, {
       Sys.getenv("RSTUDIO_AUTOMATION_ROOT", unset = NA)
+   })
+   
+   # Resolve the report file from session options if provided.
+   reportFile <- .rs.nullCoalesce(reportFile, {
+      .Call("rs_automationReportFile", PACKAGE = "(embedding)")
    })
    
    # If the path to a test directory was provided, use that.
@@ -689,4 +696,19 @@
       defaultMode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
       Sys.getenv("RSTUDIO_AUTOMATION_MODE", unset = defaultMode)
    })
+})
+
+.rs.addFunction("automation.reportFile", function()
+{
+   .Call("rs_automationReportFile", PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("automation.onFinishedRunningAutomation", function()
+{
+   isJenkins <- Sys.getenv("JENKINS_URL", unset = NA)
+   if (is.na(isJenkins))
+      quit(status = 0L)
+   
+   message("- Automated tests have finished running.")
+   message("- You can now close this instance of RStudio.")
 })

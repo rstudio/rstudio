@@ -205,6 +205,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ClipboardAction = "clipboard_action";
    public static final String DeploymentRecordsUpdated = "deployment_records_updated";
    public static final String FormatDocumentCompleted = "format_document_completed";
+   public static final String RunAutomation = "run_automation";
    
    protected ClientEvent()
    {
