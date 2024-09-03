@@ -259,21 +259,43 @@ void ChunkExecContext::connect()
    if (error)
       LOG_ERROR(error);
 
-   // log warnings immediately (unless user's changed the default warning
-   // level)
-   r::sexp::Protect protect;
-   SEXP warnSEXP;
-   error = r::exec::RFunction("getOption", "warn").call(&warnSEXP, &protect);
+   // log warnings immediately
+   // (unless user's changed the default warning level)
+   int rWarningLevel = 1;
+   error = r::exec::RFunction("getOption", "warn").call(&rWarningLevel);
    if (!error)
    {
-      prevWarn_.set(warnSEXP);
+      // save the current warning level
+      rGlobalWarningLevel_.set(Rf_ScalarInteger(rWarningLevel));
 
       // default warning setting is 1 (log immediately), but if the warning
       // option is set to FALSE, we want to set it to -1 (ignore warnings)
-      bool warning = options_.getOverlayOption("warning", true);
-      error = r::options::setOption<int>("warn", warning ? 1 : -1);
-      if (error)
-         LOG_ERROR(error);
+      int chunkWarningLevel;
+      if (options_.hasOverlayOption("warning"))
+      {
+         bool warningsEnabled = options_.getOverlayOption("warning", true);
+         chunkWarningLevel = warningsEnabled ? 1 : -1;
+      }
+      
+      // ensure that warnings are shown by default
+      else if (rWarningLevel == 0)
+      {
+         chunkWarningLevel = 1;
+      }
+      
+      // otherwise, just preserve the current warning level
+      else
+      {
+         chunkWarningLevel = rWarningLevel;
+      }
+      
+      // update warning level for this chunk
+      if (rWarningLevel != chunkWarningLevel)
+      {
+         rChunkWarningLevel_.set(Rf_ScalarInteger(chunkWarningLevel));
+         SEXP cellSEXP = r::options::getOptionCell("warn");
+         SETCAR(cellSEXP, rChunkWarningLevel_.get());
+      }
    }
 
    // broadcast that we're executing in a Notebook
@@ -528,10 +550,14 @@ void ChunkExecContext::disconnect()
    // restore width value
    r::options::setOptionWidth(prevCharWidth_);
 
-   // restore preserved warning level, if any
-   if (!prevWarn_.isNil())
+   // restore warn (if it wasn't changed in the chunk)
+   // note that we intentionally compare the pointers here;
+   // we only want to take action if the SEXP pointer returned
+   // via 'getOption()' has changed
+   SEXP warningSEXP = r::options::getOption("warn");
+   if (warningSEXP == rChunkWarningLevel_.get())
    {
-      error = r::options::setOption("warn", prevWarn_.get());
+      error = r::options::setOption("warn", rGlobalWarningLevel_.get());
       if (error)
          LOG_ERROR(error);
    }

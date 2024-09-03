@@ -47,6 +47,7 @@ import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.application.events.RunAutomationEvent;
 import org.rstudio.studio.client.application.events.ServerOfflineEvent;
 import org.rstudio.studio.client.application.events.ServerUnavailableEvent;
 import org.rstudio.studio.client.application.events.SessionAbendWarningEvent;
@@ -88,6 +89,7 @@ import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
@@ -186,6 +188,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(FileUploadEvent.TYPE, this);
       events.addHandler(AriaLiveStatusEvent.TYPE, this);
       events.addHandler(ClipboardActionEvent.TYPE, this);
+      events.addHandler(RunAutomationEvent.TYPE, this);
 
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -486,6 +489,12 @@ public class Application implements ApplicationEventHandlers
       }
 
       }
+   }
+
+   @Override
+   public void onRunAutomation(RunAutomationEvent event)
+   {
+      events_.fireEvent(new SendToConsoleEvent(".rs.automation.run()", true));
    }
 
    @Override

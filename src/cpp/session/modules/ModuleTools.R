@@ -316,17 +316,20 @@
   invisible(.Call(method, prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
 })
 
-.rs.addFunction("readApiPref", function(prefName) {
-  .rs.readPrefInternal("rs_readApiPref", prefName)
+.rs.addFunction("readApiPref", function(prefName, default = NULL) {
+  value <- .rs.readPrefInternal("rs_readApiPref", prefName)
+  if (is.null(value)) default else value
 })
 
 .rs.addFunction("writeApiPref", function(prefName, value) {
   .rs.writePrefInternal("rs_writeApiPref", prefName, value)
 })
 
-.rs.addFunction("readUiPref", function(prefName) {
-  .rs.readPrefInternal("rs_readUserPref", prefName)
+.rs.addFunction("readUiPref", function(prefName, default = NULL) {
+  value <- .rs.readPrefInternal("rs_readUserPref", prefName)
+  if (is.null(value)) default else value
 })
+
 .rs.addFunction("readUserPref", .rs.readUiPref)
 
 .rs.addFunction("writeUiPref", function(prefName, value) {

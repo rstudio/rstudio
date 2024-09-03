@@ -24,17 +24,29 @@
 # !diagnostics suppress=client,self
 .rs.defineVar("automation.remotePrivateEnv", new.env(parent = .rs.toolsEnv()))
 .rs.defineVar("automation.remote", new.env(parent = emptyenv()))
-
-.rs.setVar("automation.remoteInstance", NULL)
+.rs.defineVar("automation.remoteInstance", NULL)
 
 .rs.addFunction("automation.newRemote", function(mode = NULL)
 {
+   # Generate the remote instance.
    mode <- .rs.automation.resolveMode(mode)
    client <- .rs.automation.initialize(mode = mode)
    assign("client", client, envir = .rs.automation.remote)
    assign("self", .rs.automation.remote, envir = .rs.automation.remotePrivateEnv)
    .rs.setVar("automation.remoteInstance", .rs.automation.remote)
-   .rs.automation.remoteInstance
+   remote <- .rs.automation.remoteInstance
+   
+   # Load testthat, and provide a 'test_that' override which automatically cleans
+   # up various state when a test is run.
+   library(testthat)
+   .rs.addGlobalFunction("test_that", function(desc, code)
+   {
+      on.exit(.rs.automation.remoteInstance$sessionReset(), add = TRUE)
+      testthat::test_that(desc, code)
+   })
+   
+   # Return the remote instance.
+   remote
 })
 
 .rs.addFunction("automation.deleteRemote", function()
@@ -65,8 +77,43 @@
 
 .rs.automation.addRemoteFunction("commandExecute", function(command)
 {
-   code <- .rs.deparse(call(".rs.api.executeCommand", as.character(command)))
-   self$consoleExecute(code)
+   jsCode <- deparse(substitute(
+      window.rstudioCallbacks.commandExecute(command),
+      list(command = command)
+   ))
+   
+   self$jsExec(jsCode)
+})
+
+.rs.automation.addRemoteFunction("completionsRequest", function(text = "")
+{
+   # Generate the autocomplete pop-up.
+   self$keyboardExecute(text, "<Tab>")
+   
+   # Get the completion list from the pop-up
+   completionListEl <- self$jsObjectViaSelector("#rstudio_popup_completions")
+   completionText <- completionListEl$innerText
+   
+   # Dismiss the popup.
+   self$keyboardExecute("<Escape>")
+   
+   # Remove any inserted code.
+   for (i in seq_len(nchar(text)))
+   {
+      self$keyboardExecute("<Backspace>")
+   }
+   
+   # Extract just the completion items (remove package annotations)
+   parts <- strsplit(completionText, "\n{2,}")[[1]]
+   parts <- gsub("\\n.*", "", parts)
+   
+   # Return those parts
+   parts
+})
+
+.rs.automation.addRemoteFunction("consoleClear", function()
+{
+   self$keyboardExecute("<Ctrl + 2>", "<Escape>", "<Ctrl + A>", "<Backspace>", "<Ctrl + L>")
 })
 
 .rs.automation.addRemoteFunction("consoleExecuteExpr", function(expr)
@@ -102,6 +149,7 @@
 {
    # Write document contents to file.
    documentPath <- tempfile("document-", fileext = ext)
+   documentPath <- chartr("\\", "/", documentPath)
    writeLines(contents, con = documentPath)
    
    # Open that document in the attached editor.
@@ -138,6 +186,9 @@
    # Get a reference to the editor in that instance.
    editor <- self$editorGetInstance()
    
+   # Wait a small bit, so Ace can tokenize the document.
+   Sys.sleep(0.2)
+   
    # Invoke callback with the editor instance.
    callback(editor)
 })
@@ -162,14 +213,22 @@
    nodeId
 })
 
-.rs.automation.addRemoteFunction("domClickElement", function(selector, button = "left")
+.rs.automation.addRemoteFunction("domClickElement", function(selector,
+                                                             objectId = NULL,
+                                                             verticalOffset = 0L,
+                                                             horizontalOffset = 0L,
+                                                             button = "left")
 {
-   # Query for the requested node.
-   nodeId <- self$domGetNodeId(selector)
+   objectId <- .rs.nullCoalesce(objectId, {
+      
+      # Query for the requested node.   
+      nodeId <- self$domGetNodeId(selector)
+      
+      # Get a JavaScript object ID associated with this node.
+      response <- self$client$DOM.resolveNode(nodeId)
+      response$object$objectId
+   })
    
-   # Get a JavaScript object ID associated with this node.
-   response <- self$client$DOM.resolveNode(nodeId)
-   objectId <- response$object$objectId
    
    # Use that object ID to request the object's bounding rectangle.
    code <- "function() {
@@ -178,24 +237,28 @@
    
    response <- self$client$Runtime.callFunctionOn(
       functionDeclaration = code,
-      objectId = objectId,
+      objectId = objectId
    )
    
+   # Compute coordinates for click action. We'll try to target
+   # the center of the requested element.
    domRect <- .rs.fromJSON(response$result$value)
+   x <- domRect$x + (domRect$width / 2) + horizontalOffset
+   y <- domRect$y + (domRect$height / 2) + verticalOffset
    
    # Use the position of that element to simulate a click.
    self$client$Input.dispatchMouseEvent(
       type = "mousePressed",
-      x = domRect$x + (domRect$width / 2),
-      y = domRect$y + (domRect$height / 2),
+      x = x,
+      y = y,
       button = button,
       clickCount = 1L
    )
    
    self$client$Input.dispatchMouseEvent(
       type = "mouseReleased",
-      x = domRect$x + (domRect$width / 2),
-      y = domRect$y + (domRect$height / 2),
+      x = x,
+      y = y,
       button = button,
       clickCount = 1L
    )
@@ -203,40 +266,39 @@
 
 .rs.automation.addRemoteFunction("editorGetInstance", function()
 {
-   jsCode <- .rs.heredoc(r'{
+   jsCode <- .rs.heredoc('
       var id = $RStudio.last_focused_editor_id;
       var container = document.getElementById(id);
       container.env.editor
-   }')
+   ')
    
    response <- self$client$Runtime.evaluate(expression = jsCode)
    .rs.automation.wrapJsResponse(self, response)
 })
 
 
-.rs.automation.addRemoteFunction("jsExec", function(expression)
+.rs.automation.addRemoteFunction("jsExec", function(jsExpr)
 {
    # Implicit return for single-line expressions.
-   expression <- strsplit(expression, "\n", fixed = TRUE)[[1L]]
-   if (length(expression) == 1L && !.rs.startsWith(expression, "return "))
-      expression <- paste("return", expression)
+   jsExpr <- strsplit(jsExpr, "\n", fixed = TRUE)[[1L]]
+   if (length(jsExpr) == 1L && !.rs.startsWith(jsExpr, "return "))
+      jsExpr <- paste("return", jsExpr)
    
    # Build a command that executes the Javascript, and returns as JSON.
-   jsonExpression <- sprintf(
+   jsStringifyExpr <- sprintf(
       "JSON.stringify((function() { %s })())",
-      paste(expression, collapse = "\n")
+      paste(jsExpr, collapse = "\n")
    )
    
    # Execute it.
-   self$client$Runtime.evaluate(expression = jsonExpression)
-   jsonResponse <- self$client$Runtime.evaluate(expression = jsonExpression)
+   jsResponse <- self$client$Runtime.evaluate(expression = jsStringifyExpr)
    
    # Check for error.
-   if (!is.null(jsonResponse$exceptionDetails))
-      stop(jsonResponse$exceptionDetails$exception$description)
+   if (!is.null(jsResponse$exceptionDetails))
+      stop(jsResponse$exceptionDetails$exception$description)
    
    # Marshal values back to R.
-   .rs.fromJSON(jsonResponse$result$value)
+   .rs.fromJSON(jsResponse$result$value)
 })
 
 .rs.automation.addRemoteFunction("jsCall", function(objectId, jsFunc)
@@ -262,14 +324,22 @@
 
 .rs.automation.addRemoteFunction("jsObjectViaExpression", function(expression)
 {
-   response <- self$client$Runtime.evaluate(expression)
+   response <- .rs.waitFor(expression, function()
+   {
+      self$client$Runtime.evaluate(expression)
+   })
+   
    .rs.automation.wrapJsResponse(self, response)
 })
 
 .rs.automation.addRemoteFunction("jsObjectViaSelector", function(selector)
 {
-   nodeId <- self$domGetNodeId(selector)
-   response <- self$client$DOM.resolveNode(nodeId)
+   response <- .rs.waitFor(selector, function()
+   {
+      nodeId <- self$domGetNodeId(selector)
+      self$client$DOM.resolveNode(nodeId)
+   })
+   
    .rs.automation.wrapJsResponse(self, response)
 })
 
@@ -283,7 +353,7 @@
          shortcut <- sub(reShortcut, "\\1", input, perl = TRUE)
          self$shortcutExecute(shortcut)
       }
-      else
+      else if (nzchar(input))
       {
          self$client$Input.insertText(input)
       }
@@ -314,6 +384,20 @@
    invisible(alive)
 })
 
+.rs.automation.addRemoteFunction("sessionReset", function()
+{
+   # Clear any popups that might be visible.
+   self$keyboardExecute("<Escape>")
+   
+   # Clear any text that might be set.
+   self$keyboardExecute("<Command + A>", "<Backspace>")
+   
+   # Remove any existing R objects.
+   self$commandExecute("closeAllSourceDocs")
+   self$consoleExecuteExpr(rm(list = ls()))
+   self$keyboardExecute("<Ctrl + L>")
+})
+
 .rs.automation.addRemoteFunction("shortcutExecute", function(shortcut)
 {
    parts <- tolower(strsplit(shortcut, "\\s*\\+\\s*", perl = TRUE)[[1L]])
@@ -327,6 +411,13 @@
       modifiers <- bitwOr(modifiers, 4L)
    if ("shift" %in% parts)
       modifiers <- bitwOr(modifiers, 8L)
+   
+   # 'cmd' means 'meta' on macOS, 'ctrl' otherwise
+   if ("cmd" %in% parts || "command" %in% parts)
+   {
+      modifier <- ifelse(.rs.platform.isMacos, 4L, 2L)
+      modifiers <- bitwOr(modifiers, modifier)
+   }
    
    key <- tail(parts, n = 1L)
    code <- .rs.automationConstants.keyToKeyCodeMap[[key]]

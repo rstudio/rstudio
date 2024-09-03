@@ -334,10 +334,12 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       FlowPanel previewPanel = new FlowPanel();
 
+      int previewWidth = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH - 312;
+      int previewHeight = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 38;
       previewPanel.setSize("100%", "100%");
       preview_ = new AceEditorPreview(RES.codeSample().getText());
-      preview_.setHeight(previewDefaultHeight_);
-      preview_.setWidth("278px");
+      preview_.setWidth(previewWidth + "px");
+      preview_.setHeight(previewHeight + "px");
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
       preview_.setTheme(currentTheme.getUrl());
       updatePreviewZoomLevel();
@@ -857,7 +859,6 @@ public class AppearancePreferencesPane extends PreferencesPane
    private String initialZoomLevel_;
    private final SelectWidget flatTheme_;
    private Boolean relaunchRequired_;
-   private static String previewDefaultHeight_ = "533px";
    private HashMap<String, AceTheme> themeList_;
    private final GlobalDisplay globalDisplay_;
    private final DependencyManager dependencyManager_;

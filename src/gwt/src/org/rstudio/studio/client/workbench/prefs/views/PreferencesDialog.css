@@ -1,8 +1,8 @@
 
 @external gwt-CheckBox gwt-Label;
 
-@def PANEL_CONTAINER_WIDTH 610px;
-@def PANEL_CONTAINER_HEIGHT 570px;
+@eval PANEL_CONTAINER_WIDTH org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerWidth();
+@eval PANEL_CONTAINER_HEIGHT org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerHeight();
 
 .panelContainer {
    width: PANEL_CONTAINER_WIDTH;

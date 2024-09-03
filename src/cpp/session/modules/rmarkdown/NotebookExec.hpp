@@ -108,7 +108,13 @@ private:
    int prevCharWidth_;
    int lastOutputType_;
    ExecScope execScope_;
-   r::sexp::PreservedSEXP prevWarn_;
+   
+   // we save both the previous R warning level,
+   // as well as the chunk warning level, so that
+   // we can detect if users try to set options(warn = 2)
+   // within a chunk directly (affecting global state)
+   r::sexp::PreservedSEXP rGlobalWarningLevel_;
+   r::sexp::PreservedSEXP rChunkWarningLevel_;
    
    core::FilePath consoleChunkOutputFile_;
    bool hasOutput_;

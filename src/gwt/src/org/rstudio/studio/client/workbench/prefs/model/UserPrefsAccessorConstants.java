@@ -2131,6 +2131,44 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("Script folder")
    String runBackgroundJobDefaultWorkingDirEnum_script();
 
+   /**
+    * The formatter to use when reformatting code.
+    */
+   @DefaultStringValue("Code formatter")
+   String codeFormatterTitle();
+   @DefaultStringValue("The formatter to use when reformatting code.")
+   String codeFormatterDescription();
+   @DefaultStringValue("(None)")
+   String codeFormatterEnum_none();
+   @DefaultStringValue("styler")
+   String codeFormatterEnum_styler();
+   @DefaultStringValue("External")
+   String codeFormatterEnum_external();
+
+   /**
+    * When set, strict transformers will be used when formatting code. See the `styler` package documentation for more details.
+    */
+   @DefaultStringValue("Use strict transformers when formatting code")
+   String codeFormatterStylerStrictTitle();
+   @DefaultStringValue("When set, strict transformers will be used when formatting code. See the `styler` package documentation for more details.")
+   String codeFormatterStylerStrictDescription();
+
+   /**
+    * The external command to be used when reformatting code.
+    */
+   @DefaultStringValue("")
+   String codeFormatterExternalCommandTitle();
+   @DefaultStringValue("The external command to be used when reformatting code.")
+   String codeFormatterExternalCommandDescription();
+
+   /**
+    * When set, the selected formatter will be used to reformat documents on save.
+    */
+   @DefaultStringValue("Reformat documents on save")
+   String reformatOnSaveTitle();
+   @DefaultStringValue("When set, the selected formatter will be used to reformat documents on save.")
+   String reformatOnSaveDescription();
+
 
 
 }

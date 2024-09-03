@@ -34,14 +34,15 @@
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
 
-#include <r/RExec.hpp>
-#include <r/RUtil.hpp>
+#include <r/RCntxt.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/RExec.hpp>
+#include <r/RFunctionHook.hpp>
+#include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
-#include <r/RInterface.hpp>
-#include <r/RFunctionHook.hpp>
 #include <r/RSourceManager.hpp>
+#include <r/RUtil.hpp>
 #include <r/session/RSessionState.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleHistory.hpp>
@@ -68,9 +69,6 @@
 
 #include <gsl/gsl>
 
-extern "C" {
-int Rf_countContexts(int, int);
-}
 #define CTXT_BROWSER 16
 
 // get rid of windows TRUE and FALSE definitions
@@ -507,7 +505,16 @@ bool isSuspendable(const std::string& currentPrompt)
 
 bool browserContextActive()
 {
-   return Rf_countContexts(CTXT_BROWSER, 1) > 0;
+   using namespace r::context;
+   for (auto it = RCntxt::begin(); it != RCntxt::end(); ++it)
+   {
+      if (it->callflag() & CTXT_BROWSER)
+      {
+         return true;
+      }
+   }
+   
+   return false;
 }
    
 namespace utils {

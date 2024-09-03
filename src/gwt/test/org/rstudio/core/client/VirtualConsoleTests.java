@@ -1249,4 +1249,12 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("i Some intermediate step with a \033[32mfield\033[39m-----------------------\r+++++++++++++++++++++++++++++++++++++\r\033[33m!\033[39m An alert message which is long enough\ni Some intermediate step with a \033[32mfield\033[39m\n");
       Assert.assertEquals("<span class=\"xtermColor3\">!</span><span> An alert message which is long enough</span><span>---------------------\ni Some intermediate step with a </span><span class=\"xtermColor2\">field</span><span>\n</span>", ele.getInnerHTML());
    }
+   
+   public void testCsiCursorMovement()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello world!\033[10DLL\033[4CRL");
+      Assert.assertEquals(ele.getInnerText(), "HeLLo woRLd!");
+   }
 }

@@ -962,29 +962,49 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    ## Create a DESCRIPTION file
    
    # Fill some bits based on devtools options if they're available.
-   # Protect against vectors with length > 1
-   getDevtoolsOption <- function(optionName, default, collapse = " ")
+   # Protect against vectors with length > 1.
+   getDevtoolsOption <- function(optionName,
+                                 default = NULL,
+                                 collapse = " ")
    {
-      devtoolsDesc <- getOption("devtools.desc")
-      if (!length(devtoolsDesc))
-         return(default)
+      for (descKey in c("usethis.description", "devtools.desc"))
+      {
+         descValue <- getOption(descKey)
+         if (length(descValue) == 0L)
+            next
+         
+         optionValue <- descValue[[optionName]]
+         if (length(optionValue) == 0L)
+            next
+         
+         # Check for 'person' objects, and expand those in a way
+         # that will be formatted nicely in the DESCRIPTION file.
+         if (inherits(optionValue, "person"))
+            optionValue <- .rs.formatPerson(optionValue)
+         
+         return(paste(optionValue, collapse = collapse))
+      }
       
-      option <- devtoolsDesc[[optionName]]
-      if (is.null(option))
-         return(default)
-      
-      paste(option, collapse = collapse)
+      default
    }
    
+   authorsDefault <- .rs.heredoc('
+      c(
+        person(
+          "Jane", "Doe",
+          email = "jane@example.com",
+          role = c("aut", "cre")
+        )
+      )
+   ')
    
-   Author <- getDevtoolsOption("Author", "Who wrote it")
-   
-   Maintainer <- getDevtoolsOption(
-      "Maintainer",
-      "The package maintainer <yourself@somewhere.net>"
+   authors <- getDevtoolsOption(
+      "Authors@R",
+      gsub("\n", "\n  ", authorsDefault, fixed = TRUE),
+      collapse = "\n"
    )
    
-   License <- getDevtoolsOption(
+   license <- getDevtoolsOption(
       "License",
       "What license is it under?",
       ", "
@@ -995,13 +1015,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       Type = "Package",
       Title = "What the Package Does (Title Case)",
       Version = "0.1.0",
-      Author = Author,
-      Maintainer = Maintainer,
+      "Authors@R" = authors,
       Description = c(
-         "More about what it does (maybe more than one line)",
-         "Use four spaces when indenting paragraphs within the Description."
+         "More about what it does (maybe more than one line).",
+         "Continuation lines should be indented."
       ),
-      License = License,
+      License = license,
       Encoding = "UTF-8",
       LazyData = "true"
    )
@@ -1041,19 +1060,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
    
    # Get other fields from devtools options
-   if (length(getOption("devtools.desc.suggests")))
-      DESCRIPTION$Suggests <- getOption("devtools.desc.suggests")
+   suggests <- .rs.nullCoalesce(
+      getOption("devtools.desc.suggests"),
+      getDevtoolsOption("Suggests")
+   )
    
-   if (length(getOption("devtools.desc")))
+   if (length(suggests))
+      DESCRIPTION$Suggests <- suggests
+   
+   # Add in any other options
+   desc <- .rs.nullCoalesce(
+      getOption("usethis.description"),
+      getOption("devtools.desc")
+   )
+   
+   .rs.enumerate(desc, function(key, value)
    {
-      devtools.desc <- getOption("devtools.desc")
-      for (i in seq_along(devtools.desc))
-      {
-         name <- names(devtools.desc)[[i]]
-         value <- devtools.desc[[i]]
-         DESCRIPTION[[name]] <- value
-      }
-   }
+      DESCRIPTION[[key]] <<- .rs.nullCoalesce(
+         DESCRIPTION[[key]],
+         value
+      )
+   })
    
    # If we are using 'testthat' and 'devtools' is available, use it to
    # add test infrastructure
@@ -1086,10 +1113,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (grepl("MIT\\s+\\+\\s+file\\s+LICEN[SC]E", DESCRIPTION$License, perl = TRUE))
    {
       # Guess the copyright holder
-      holder <- if (!is.null(getOption("devtools.name")))
-         Author
-      else
+      holder <- .rs.nullCoalesce(
+         getOption("usethis.full_name"),
+         getOption("devtools.name"),
          "<Copyright holder>"
+      )
       
       msg <- c(
          paste("YEAR:", format(Sys.time(), "%Y")),
@@ -1346,6 +1374,55 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
 })
 
+# Formats a person object in a way suitable for the Authors@R
+# section of a DESCRIPTION file.
+.rs.addFunction("formatPerson", function(person)
+{
+   personFields <- unclass(person)
+   if (length(personFields) == 1L)
+   {
+      formattedPerson <- .rs.formatPersonImpl(personFields[[1L]])
+      return(gsub("\n", "\n  ", formattedPerson))
+   }
+   
+   formattedPersons <- paste(
+      .rs.mapChr(personFields, .rs.formatPersonImpl, indent = "    "),
+      collapse = ",\n"
+   )
+   
+   paste(c("c(", formattedPersons, "  )"), collapse = "\n")
+})
+
+.rs.addFunction("formatPersonImpl", function(fields, indent = identity)
+{
+   if (is.character(indent))
+   {
+      indentWidth <- indent
+      indent <- function(x) sprintf("%s%s", indentWidth, x)
+   }
+   
+   # Build header from given + family name.
+   fullName <- c(fields$given, fields$family, fields$middle)
+   header <- paste(shQuote(fullName, type = "cmd"), collapse = ", ")
+   
+   # Build body from remaining fields
+   rest <- fields[setdiff(names(fields), c("given", "family", "middle"))]
+   other <- .rs.enumerate(rest, function(key, value)
+   {
+      sprintf("%s = %s", key, .rs.deparse(value))
+   })
+   
+   body <- as.character(c(header, other))
+   body <- sprintf("  %s", body)
+   
+   parts <- c(
+      indent("person("),
+      paste(indent(body), collapse = ",\n"),
+      indent(")")
+   )
+   
+   paste(parts, collapse = "\n")
+})
 
 .rs.addFunction("secureDownloadMethod", function()
 {

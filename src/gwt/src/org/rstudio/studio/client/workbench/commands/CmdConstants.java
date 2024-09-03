@@ -1486,10 +1486,18 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Comment or uncomment the current line/selection") // $NON-NLS-1$
     String commentUncommentDesc();
     
+    // reformatDocument
+    @DefaultStringValue("Reformat Current Document") // $NON-NLS-1$
+    String reformatDocumentLabel();
+    @DefaultStringValue("Reformat _Document") // $NON-NLS-1$
+    String reformatDocumentMenuLabel();
+    @DefaultStringValue("Reformat the current document") // $NON-NLS-1$
+    String reformatDocumentDesc();
+    
     // reformatCode
     @DefaultStringValue("Reformat Current Selection") // $NON-NLS-1$
     String reformatCodeLabel();
-    @DefaultStringValue("Re_format Code") // $NON-NLS-1$
+    @DefaultStringValue("Re_format Selection") // $NON-NLS-1$
     String reformatCodeMenuLabel();
     @DefaultStringValue("Reformat the current line/selection") // $NON-NLS-1$
     String reformatCodeDesc();

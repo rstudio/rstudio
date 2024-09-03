@@ -27,6 +27,11 @@
 .rs.setVar("automation.agentProcess", NULL)
 
 
+.rs.addFunction("automation.httrGet", function(url)
+{
+   httr::GET(url, config = httr::timeout(1))
+})
+
 .rs.addFunction("automation.installRequiredPackages", function()
 {
    packages <- c("here", "httr", "later", "processx", "ps", "usethis", "websocket", "withr", "xml2")
@@ -115,6 +120,15 @@
       params <- list()
    }
    
+   # Convert jsobject to character.
+   for (i in seq_along(params))
+   {
+      if (inherits(params[[i]], "jsObject"))
+      {
+         params[[i]] <- as.character(unclass(params[[i]]))
+      }
+   }
+   
    # Generate an id for this request.
    id <- .rs.automation.messageId
    .rs.setVar("automation.messageId", .rs.automation.messageId + 1L)
@@ -166,7 +180,8 @@
    
    # Handle errors.
    error <- response[["error"]]
-   if (!is.null(error)) {
+   if (!is.null(error))
+   {
       fmt <- "execution of '%s' failed: %s [error code %i]"
       msg <- sprintf(fmt, method, error[["message"]], error[["code"]])
       stop(msg, call. = FALSE)
@@ -209,6 +224,21 @@
    )
 })
 
+.rs.addFunction("automation.killAutomationServer", function(...)
+{
+   procs <- subset(ps::ps(), name == "rserver")
+   for (i in seq_len(nrow(procs)))
+   {
+      proc <- procs[i, ]
+      conns <- ps::ps_connections(proc$ps_handle[[1L]])
+      if (8788L %in% conns$lport)
+      {
+         handle <- ps::ps_handle(pid = proc$pid)
+         return(ps::ps_kill(handle))
+      }
+   }
+})
+
 .rs.addFunction("automation.ensureRunningServerInstance", function()
 {
    # Check and see if we already have an rserver instance listening.
@@ -227,15 +257,16 @@
    parentEnv <- ps::ps_environ(parentHandle)
    parentPwd <- parentEnv[["PWD"]]
    automationScript <- file.path(parentPwd, "rserver-automation")
-   if (file.exists(automationScript))
-   {
-      message("-- Starting rserver-automation ...")
-      withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
-   }
-   else
-   {
+   if (!file.exists(automationScript))
       stop("rserver does not appear to be running on port 8788")
-   }
+   
+   message("-- Starting rserver-automation ...")
+   withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
+   
+   # Kill the process on exit
+   reg.finalizer(globalenv(), .rs.automation.killAutomationServer, onexit = TRUE)
+   
+   
 })
 
 .rs.addFunction("automation.initialize", function(appPath = NULL,
@@ -256,7 +287,7 @@
    # Check for an existing session we can attach to.
    baseUrl <- sprintf("http://localhost:%i", port)
    jsonVersionUrl <- file.path(baseUrl, "json/version")
-   response <- .rs.tryCatch(httr::GET(jsonVersionUrl))
+   response <- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
    if (!inherits(response, "error"))
       return(.rs.automation.attach(baseUrl, mode))
    
@@ -311,6 +342,9 @@
    envVars[["RS_CRASH_HANDLER_PROMPT"]] <- "false"
    envVars[["RSTUDIO_DISABLE_CHECK_FOR_UPDATES"]] <- "1"
    
+   # Avoid crashing on arm64 Linux.
+   envVars[["RSTUDIO_QUERY_FONTS"]] <- "0"
+   
    # Build argument list.
    # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
    
@@ -325,7 +359,7 @@
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", tempdir()),
-      if (mode == "desktop") "--automation-agent",
+      if (mode == "desktop") c("--automation-agent"),
       if (mode == "server") c(
          "--no-default-browser-check",
          "--no-first-run",
@@ -342,13 +376,22 @@
    
    # Wait until the process is running.
    while (process$get_status() != "running")
+   {
+      status <- process$get_exit_status()
+      if (!is.null(status))
+      {
+         fmt <- "RStudio agent exited unexpectedly [error code %i]"
+         stop(sprintf(fmt, status))
+      }
+      
       Sys.sleep(0.1)
+   }
    
    # Start pinging the Chromium HTTP server.
    response <- NULL
    .rs.waitUntil("Chromium HTTP server available", function()
    {
-      response <<- .rs.tryCatch(httr::GET(jsonVersionUrl))
+      response <<- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
       !inherits(response, "error")
    })
    
@@ -371,7 +414,7 @@
    # Get the websocket debugger URL.
    url <- .rs.nullCoalesce(url, {
       jsonVersionUrl <- file.path(baseUrl, "json/version")
-      response <- httr::GET(jsonVersionUrl)
+      response <- .rs.automation.httrGet(jsonVersionUrl)
       jsonResponse <- .rs.fromJSON(rawToChar(response$content))
       jsonResponse$webSocketDebuggerUrl
    })
@@ -550,11 +593,16 @@
                                            automationMode = NULL,
                                            gitRef = NULL)
 {
+   on.exit(.rs.automation.onFinishedRunningAutomation(), add = TRUE)
+   
    # Resolve the project root. Note that test are expected to be found
    # within the 'src/cpp/session/automation' sub-directory of this path.
    projectRoot <- .rs.nullCoalesce(projectRoot, {
       Sys.getenv("RSTUDIO_AUTOMATION_ROOT", unset = NA)
    })
+   
+   # Resolve the report file from session options if provided.
+   reportFile <- .rs.nullCoalesce(reportFile, .rs.automation.reportFile())
    
    # If the path to a test directory was provided, use that.
    if (!is.na(projectRoot))
@@ -623,7 +671,7 @@
    fmt <- "https://api.github.com/repos/rstudio/rstudio/contents/%s?ref=%s"
    url <- sprintf(fmt, path, ref)
    
-   response <- httr::GET(url)
+   response <- .rs.automation.httrGet(url)
    result <- httr::content(response, as = "parsed")
    
    # Iterate through the directory contents, and get download links.
@@ -646,4 +694,19 @@
       defaultMode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
       Sys.getenv("RSTUDIO_AUTOMATION_MODE", unset = defaultMode)
    })
+})
+
+.rs.addFunction("automation.reportFile", function()
+{
+   .Call("rs_automationReportFile", PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("automation.onFinishedRunningAutomation", function()
+{
+   isJenkins <- Sys.getenv("JENKINS_URL", unset = NA)
+   if (!is.na(isJenkins))
+      quit(status = 0L)
+   
+   message("- Automated tests have finished running.")
+   message("- You can now close this instance of RStudio.")
 })

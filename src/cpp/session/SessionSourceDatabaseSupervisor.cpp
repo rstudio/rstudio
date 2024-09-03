@@ -146,8 +146,9 @@ Error removeSessionDir(const FilePath& sessionDir)
    // first remove children
    std::vector<FilePath> children;
    Error error = sessionDir.getChildren(children);
-   if (error)
+   if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
+
    for (const FilePath& filePath : children)
    {
       error = filePath.remove();

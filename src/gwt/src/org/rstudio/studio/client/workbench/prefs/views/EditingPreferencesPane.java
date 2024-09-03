@@ -23,6 +23,7 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
+import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.NumericValueWidget;
@@ -56,6 +57,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
@@ -240,13 +242,80 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(prefs_.colorPreview()));
       displayPanel.add(checkboxPref(prefs_.rainbowParentheses()));
       
+      VerticalTabPanel formattingPanel = new VerticalTabPanel(ElementIds.EDIT_FORMATTING_PREFS);
+      
+      formattingPanel.add(headerLabel(constants_.codeFormattingHeaderLabel()));
+      codeFormatter_ = new SelectWidget(
+            prefs_.codeFormatter(),
+            false,
+            true,
+            false);
+      codeFormatter_.setValue(prefs_.codeFormatter().getGlobalValue());
+      
+      VerticalPanel stylerPanel = new VerticalPanel();
+      stylerPanel.add(headerLabel("Format with styler"));
+      stylerPanel.add(new Label("Use the styler R package to reformat code."));
+      stylerPanel.add(extraSpacedBefore(checkboxPref(prefs_.codeFormatterStylerStrict())));
+      
+      reformatOnSaveCommand_ = new FileChooserTextBox(
+            "Reformat command:",
+            "",
+            ElementIds.TextBoxButtonId.REFORMAT_ON_SAVE_COMMAND,
+            false,
+            null,
+            null);
+      reformatOnSaveCommand_.setPlaceholder("(None)");
+      reformatOnSaveCommand_.setReadOnly(false);
+      reformatOnSaveCommand_.setEnabled(true);
+      reformatOnSaveCommand_.setTextWidth("250px");
+      
+      String command = prefs.codeFormatterExternalCommand().getGlobalValue();
+      if (!StringUtil.isNullOrEmpty(command))
+         reformatOnSaveCommand_.setText(prefs.codeFormatterExternalCommand().getGlobalValue());
+      
+      VerticalPanel externalPanel = new VerticalPanel();
+      externalPanel.add(headerLabel("Format with an External Tool"));
+      externalPanel.add(new Label("Use an external application to reformat code."));
+      externalPanel.add(extraSpacedBefore(reformatOnSaveCommand_));
+      
+      SimplePanel formattingDetailsPanel = new SimplePanel();
+      
+      formattingPanel.add(codeFormatter_);
+      formattingPanel.add(formattingDetailsPanel);
+      
+      ChangeHandler formatterChangedHandler = new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            String value = codeFormatter_.getValue();
+            if (value.equals("none"))
+            {
+               formattingDetailsPanel.setWidget(null);
+            }
+            else if (value.equals("styler"))
+            {
+               formattingDetailsPanel.setWidget(stylerPanel);
+            }
+            else if (value.equals("external"))
+            {
+               formattingDetailsPanel.setWidget(externalPanel);
+            }
+         }
+      };
+      
+      codeFormatter_.addChangeHandler(formatterChangedHandler);
+      formatterChangedHandler.onChange(null);
+      
+      
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
 
       savePanel.add(headerLabel(constants_.generalHeaderLabel()));
       savePanel.add(checkboxPref(constants_.savingAutoAppendNewLineLabel(), prefs_.autoAppendNewline()));
       savePanel.add(checkboxPref(constants_.savingStripTrailingWhitespaceLabel(), prefs_.stripTrailingWhitespace()));
       savePanel.add(checkboxPref(constants_.savingRestoreSourceDocumentCursorPositionLabel(), prefs_.restoreSourceDocumentCursorPosition()));
-
+      savePanel.add(checkboxPref(prefs_.reformatOnSave()));
+      
       Label serializationLabel = headerLabel(constants_.editingSerializationLabel());
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
       savePanel.add(serializationLabel);
@@ -483,6 +552,7 @@ public class EditingPreferencesPane extends PreferencesPane
       setTabPanelSize(tabPanel);
       tabPanel.add(editingPanel, constants_.editingTabPanel(), editingPanel.getBasePanelId());
       tabPanel.add(displayPanel, constants_.editingTabPanelDisplayPanel(), displayPanel.getBasePanelId());
+      tabPanel.add(formattingPanel, constants_.editingTabPanelFormattingPanel(), formattingPanel.getBasePanelId());
       tabPanel.add(savePanel, constants_.editingTabPanelSavePanel(), savePanel.getBasePanelId());
       tabPanel.add(completionPanel, constants_.editingTabPanelCompletionPanel(), completionPanel.getBasePanelId());
       tabPanel.add(diagnosticsPanel, constants_.editingTabPanelDiagnosticsPanel(), diagnosticsPanel.getBasePanelId());
@@ -581,6 +651,8 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.executionBehavior().setGlobalValue(executionBehavior_.getValue());
       prefs_.autoSaveOnIdle().setGlobalValue(autoSaveOnIdle_.getValue());
       prefs_.autoSaveIdleMs().setGlobalValue(StringUtil.parseInt(autoSaveIdleMs_.getValue(), 1000));
+      prefs_.codeFormatter().setGlobalValue(codeFormatter_.getValue());
+      prefs_.codeFormatterExternalCommand().setGlobalValue(reformatOnSaveCommand_.getText());
 
       return restartRequirement;
    }
@@ -640,6 +712,8 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget executionBehavior_;
    private final SelectWidget autoSaveOnIdle_;
    private final SelectWidget autoSaveIdleMs_;
+   private final SelectWidget codeFormatter_;
+   private final FileChooserTextBox reformatOnSaveCommand_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
 

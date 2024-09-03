@@ -32,18 +32,26 @@ public:
    ChunkOptions(const core::json::Object& defaultOptions, 
                 const core::json::Object& chunkOptions);
 
-   template<typename T> T getOverlayOption(const std::string& key, 
-                                           T defaultValue) const
+   template <typename T>
+   T getOverlayOption(const std::string& key, T defaultValue) const
    {
+      using namespace core::json;
+      
       // check overlay first
-      core::Error error = core::json::readObject(chunkOptions_, key, 
-            defaultValue);
+      core::Error error = readObject(chunkOptions_, key, defaultValue);
 
       // no overlay option, check base
       if (error)
-         core::json::readObject(defaultOptions_, key, defaultValue);
+         readObject(defaultOptions_, key, defaultValue);
 
       return defaultValue;
+   }
+   
+   bool hasOverlayOption(const std::string& key)
+   {
+      return
+            chunkOptions_.hasMember(key) ||
+            defaultOptions_.hasMember(key);
    }
 
    // return overlay only

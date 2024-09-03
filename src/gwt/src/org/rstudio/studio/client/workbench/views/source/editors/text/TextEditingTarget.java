@@ -139,6 +139,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -275,6 +276,8 @@ public class TextEditingTarget implements
          extends CommandBinder<Commands, TextEditingTarget>
    {
    }
+   
+   public static final String REFORMAT_ON_SAVE = "reformatOnSave";
 
    private static final String NOTEBOOK_TITLE = "notebook_title";
    private static final String NOTEBOOK_AUTHOR = "notebook_author";
@@ -500,7 +503,7 @@ public class TextEditingTarget implements
                      saveNewFile(
                            saveAsPath,
                            null,
-                           CommandUtil.join(postSaveCommand(), new Command() {
+                           CommandUtil.join(postSaveCommand(false), new Command() {
 
                               @Override
                               public void execute()
@@ -3085,12 +3088,12 @@ public class TextEditingTarget implements
 
    private void autoSave(Command onCompleted, Command onSilentFailure)
    {
-      saveThenExecute(null, false, CommandUtil.join(postSaveCommand(), onCompleted), onSilentFailure);
+      saveThenExecute(null, false, CommandUtil.join(postSaveCommand(false), onCompleted), onSilentFailure);
    }
 
    public void save(Command onCompleted)
    {
-      saveThenExecute(null, true, CommandUtil.join(postSaveCommand(), onCompleted));
+      saveThenExecute(null, true, CommandUtil.join(postSaveCommand(true), onCompleted));
    }
 
    public void saveWithPrompt(final Command command, final Command onCancelled)
@@ -3787,20 +3790,109 @@ public class TextEditingTarget implements
    {
       visualMode_.activateDevTools();
    }
+   
+   private void withReformatDependencies(Command command)
+   {
+      String formatter = prefs_.codeFormatter().getValue();
+      if (StringUtil.equals(formatter, UserPrefsAccessor.CODE_FORMATTER_STYLER))
+      {
+         dependencyManager_.withStyler(command);
+      }
+      else
+      {
+         command.execute();
+      }
+   }
+   
+   @Handler
+   void onReformatDocument()
+   {
+      withActiveEditor((editor) ->
+      {
+         String formatType = prefs_.codeFormatter().getValue();
+         if (StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+         {
+            Range currentRange = editor.getSelectionRange();
+            editor.setSelectionRange(Range.fromPoints(
+                  Position.create(0, 0),
+                  Position.create(editor.getCurrentLineCount() + 1, 0)));
+            new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
+            editor.setSelectionRange(currentRange);
+         }
+         else
+         {
+            withReformatDependencies(() ->
+            {
+               withSavedDoc(() ->
+               {
+                  server_.formatDocument(
+                        docUpdateSentinel_.getId(),
+                        docUpdateSentinel_.getPath(),
+                        new ServerRequestCallback<SourceDocument>()
+                        {
+                           @Override
+                           public void onResponseReceived(SourceDocument document)
+                           {
+                              revertEdits();
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                           }
+                        });
+               });
+            });
+         }
+      });
+   }
 
    @Handler
    void onReformatCode()
    {
-      withActiveEditor((disp) ->
+      withActiveEditor((editor) ->
       {
          // Only allow if entire selection in R mode for now
-         if (!DocumentMode.isSelectionInRMode(disp))
+         if (!DocumentMode.isSelectionInRMode(editor))
          {
-            showRModeWarning("Reformat Code");
+            showRModeWarning(commands_.reformatCode().getLabel());
             return;
          }
 
-         new TextEditingTargetReformatHelper(disp).insertPrettyNewlines();
+         String formatType = prefs_.codeFormatter().getValue();
+         if (StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+         {
+            new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
+         }
+         else
+         {
+            withReformatDependencies(() ->
+            {
+               Range range = editor.getSelectionRange();
+               if (range.getStart().getRow() != range.getEnd().getRow())
+               {
+                  range.getStart().setColumn(0);
+                  range.getEnd().setColumn(Integer.MAX_VALUE);
+               }
+               
+               String selection = editor.getTextForRange(range);
+               server_.formatCode(selection, new ServerRequestCallback<String>()
+               {
+                  @Override
+                  public void onResponseReceived(String response)
+                  {
+                     editor.replaceRange(range, response);
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
+            });
+         }
       });
    }
 
@@ -4069,7 +4161,7 @@ public class TextEditingTarget implements
       if (isSaving_)
          return;
 
-      saveThenExecute(null, true, postSaveCommand());
+      saveThenExecute(null, true, postSaveCommand(true));
    }
 
    @Handler
@@ -4077,7 +4169,7 @@ public class TextEditingTarget implements
    {
       saveNewFile(docUpdateSentinel_.getPath(),
                   null,
-                  postSaveCommand());
+                  postSaveCommand(true));
    }
 
    @Handler
@@ -4105,7 +4197,7 @@ public class TextEditingTarget implements
             {
                public void execute(String encoding)
                {
-                  saveThenExecute(encoding, true, postSaveCommand());
+                  saveThenExecute(encoding, true, postSaveCommand(true));
                }
             });
    }
@@ -8058,7 +8150,7 @@ public class TextEditingTarget implements
       events_.fireEvent(event);
    }
 
-   private Command postSaveCommand()
+   private Command postSaveCommand(boolean formatOnSave)
    {
       return new Command()
       {
@@ -8103,8 +8195,45 @@ public class TextEditingTarget implements
                   executeRSourceCommand(false, false);
                }
             }
+            
+            // check for format on save
+            if (formatOnSave && formatOnSaveEnabled())
+            {
+               server_.formatDocument(
+                     docUpdateSentinel_.getId(),
+                     docUpdateSentinel_.getPath(),
+                     new ServerRequestCallback<SourceDocument>()
+                     {
+                        @Override
+                        public void onResponseReceived(SourceDocument response)
+                        {
+                           revertEdits();
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                        }
+                     });
+            }
          }
       };
+   }
+   
+   private boolean formatOnSaveEnabled()
+   {
+      // TODO: What should we do if a user tries to enable 'Reformat on Save' for a document
+      // without actually setting the code formatter? Should we just opt them into using
+      // the 'styler' formatter?
+      if (docUpdateSentinel_.hasProperty(TextEditingTarget.REFORMAT_ON_SAVE))
+         return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
+      
+      String codeFormatter = prefs_.codeFormatter().getValue();
+      if (codeFormatter == UserPrefsAccessor.CODE_FORMATTER_NONE)
+         return false;
+      
+      return prefs_.reformatOnSave().getValue();
    }
 
    private void executeRSourceCommand(boolean forceEcho, boolean focusAfterExec)

@@ -168,6 +168,7 @@ public class ElementIds
 
    public final static String EDIT_EDITING_PREFS = "edit_editing_prefs";
    public final static String EDIT_DISPLAY_PREFS = "edit_display_prefs";
+   public final static String EDIT_FORMATTING_PREFS = "edit_formatting_prefs";
    public final static String EDIT_SAVING_PREFS = "edit_saving_prefs";
    public final static String EDIT_COMPLETION_PREFS = "editing_completion_prefs";
    public final static String EDIT_DIAGNOSTICS_PREFS = "editing_diagnostics_prefs";
@@ -353,7 +354,8 @@ public class ElementIds
       VCS_TERMINAL("vcs_terminal"),
       CHOOSE_IMAGE("choose_image"),
       PYTHON_PATH("python_path"),
-      PROJECT_SCRATCH_PATH("project_scratch_path");
+      PROJECT_SCRATCH_PATH("project_scratch_path"),
+      REFORMAT_ON_SAVE_COMMAND("reformat_on_save_command");
 
       TextBoxButtonId(String value)
       {
@@ -745,6 +747,11 @@ public class ElementIds
    public final static String PROJ_DISPLAY_NAME = "proj_display_name";
    
    // Data viewer
+   public final static String DATA_EDITING_TOOLBAR = "data_editing_toolbar";
    public final static String DATA_VIEWER_FRAME = "data_viewer_frame";
+   
+   // DocTabLayoutPanel
+   public final static String DOC_TAB_PANEL_ACTIVE_TAB = "doc_tab_panel_active_tab";
+   
    
 }

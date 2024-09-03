@@ -80,15 +80,36 @@ int getBuildOptionWidth()
    return s_buildWidth;
 }
 
-SEXP getOption(const std::string& name)
+SEXP getOptionCell(const std::string& name)
 {
    if (!ASSERT_MAIN_THREAD("Reading R option: " + name))
    {
       return R_NilValue;
    }
 
-   // NOTE: Values returned from Rf_GetOption() are protected implicitly by R
-   return Rf_GetOption(Rf_install(name.c_str()), R_BaseEnv);
+   // keep reference to R options list
+   static SEXP optionsSEXP =
+         Rf_findVarInFrame(R_BaseNamespace, Rf_install(".Options"));
+   
+   // we search through the options list directly and return
+   // the underlying value to avoid duplicating the underlying
+   // R object -- this allows us to detect changes if necessary
+   for (SEXP elSEXP = optionsSEXP;
+        elSEXP != R_NilValue;
+        elSEXP = CDR(elSEXP))
+   {
+      SEXP tagSEXP = TAG(elSEXP);
+      if (CHAR(PRINTNAME(tagSEXP)) == name)
+         return elSEXP;
+   }
+   
+   return R_NilValue;
+}
+
+SEXP getOption(const std::string& name)
+{
+   SEXP cellSEXP = getOptionCell(name);
+   return CAR(cellSEXP);
 }
 
 SEXP setErrorOption(SEXP value)

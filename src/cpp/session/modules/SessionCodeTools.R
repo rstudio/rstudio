@@ -2750,9 +2750,14 @@
    result
 })
 
-.rs.addFunction("nullCoalesce", function(x, y)
+.rs.addFunction("nullCoalesce", function(...)
 {
-   if (is.null(x)) y else x
+   for (i in seq_len(...length()))
+   {
+      value <- ...elt(i)
+      if (!is.null(value))
+         return(value)
+   }
 })
 
 .rs.addFunction("truncate", function(string, n = 200, marker = "<...>")

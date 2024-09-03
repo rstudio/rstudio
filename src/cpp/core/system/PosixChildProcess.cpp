@@ -445,6 +445,11 @@ bool ChildProcess::hasRecentOutput() const
 
 Error ChildProcess::run()
 {  
+   // verify that the executable pointed at via 'exe_' is executable
+   int status = ::access(exe_.c_str(), X_OK);
+   if (status == -1)
+      return systemError(errno, ERROR_LOCATION);
+
    // declarations
    PidType pid = 0;
    int fdInput[2] = {0,0};
@@ -460,9 +465,10 @@ Error ChildProcess::run()
    std::vector<std::string> args;
    args.push_back(exe_);
    args.insert(args.end(), args_.begin(), args_.end());
+   
    using core::system::ProcessArgs;
-   ProcessArgs* pProcessArgs = new ProcessArgs(args);
-   ProcessArgs* pEnvironment = nullptr;
+   std::unique_ptr<ProcessArgs> pProcessArgs(new ProcessArgs(args));
+   std::unique_ptr<ProcessArgs> pEnvironment = nullptr;
 
    // get rlimit for max files
    // in the thread-safe fork approach, this needs to be provided
@@ -477,12 +483,12 @@ Error ChildProcess::run()
       // build env (on heap, see comment above)
       std::vector<std::string> env;
       const Options& options = options_.environment.get();
-      for (Options::const_iterator
-               it = options.begin(); it != options.end(); ++it)
+      for (auto it = options.begin(); it != options.end(); ++it)
       {
          env.push_back(it->first + "=" + it->second);
       }
-      pEnvironment = new ProcessArgs(env);
+      
+      pEnvironment.reset(new ProcessArgs(env));
    }
 
    boost::optional<uid_t> runAsUser;
@@ -813,30 +819,34 @@ Error ChildProcess::run()
             LOG_ERROR(systemError(errno, ERROR_LOCATION));
 #endif
       }
-
+      
+      int savedErrno = -1;
       if (options_.environment)
       {
          // execute
          ::execve(exe_.c_str(), pProcessArgs->args(), pEnvironment->args());
+         savedErrno = errno;
       }
       else
       {
          // execute
          ::execv(exe_.c_str(), pProcessArgs->args());
+         savedErrno = errno;
       }
 
+      // in the normal case control should never return from execv (it starts
+      // anew at main of the process pointed to by path). therefore, if we get
+      // here then there was an error
       if (!options_.threadSafe)
       {
-         // in the normal case control should never return from execv (it starts
-         // anew at main of the process pointed to by path). therefore, if we get
-         // here then there was an error
          Error error = systemError(errno, ERROR_LOCATION);
          error.addProperty("exe", exe_);
          LOG_ERROR(error);
-         ::exit(EXIT_FAILURE);
       }
-      else
-         ::_exit(errno);
+      
+      // a forked child should quit using _exit -- otherwise, we can run into
+      // hangs and other surprising issues when static destructors are run
+      ::_exit(savedErrno == -1 ? EXIT_FAILURE : savedErrno);
    }
 
    // parent
@@ -866,9 +876,6 @@ Error ChildProcess::run()
          // record pipe handles
          pImpl_->init(pid, fdInput[WRITE], fdOutput[READ], fdError[READ]);
       }
-
-      delete pProcessArgs;
-      delete pEnvironment;
 
       if (options_.threadSafe)
       {

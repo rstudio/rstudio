@@ -364,7 +364,7 @@ pipeline {
                         script {
                           if (FLAVOR == "Electron") {
                             utils.publishToDailiesSite TAR_PACKAGE_FILE, "${DAILIES_PATH}-xcopy", AWS_PATH
-                            utils.optionalPublishToDailies PACKAGE_FILE, "${DAILIES_PATH}-xcopy", AWS_PATH
+                            utils.optionalPublishToDailies TAR_PACKAGE_FILE, "${DAILIES_PATH}-xcopy", AWS_PATH
                           }
                         }
                       }
@@ -441,7 +441,7 @@ pipeline {
           steps {
             build(
               wait: false,
-              job: "IDE/rstudio-ide-automation-desktop/main",
+              job: "IDE/qa-desktop-automation",
               parameters: [
                 string(name: 'RSTUDIO_VERSION', value: "${RSTUDIO_VERSION}"),
                 string(name: 'GITHUB_BRANCH', value: "${env.BRANCH_NAME}")

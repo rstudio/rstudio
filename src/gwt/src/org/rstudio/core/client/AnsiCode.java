@@ -712,10 +712,6 @@ public class AnsiCode
                   .replace("\b", "<BS>");
    }
 
-   // Control characters handled by R console, plus leading character of
-   // ANSI escape sequences
-   public static final String CONTROL_REGEX = "[\r\b\f\n\u001b\u009b]";
-
    // RegEx to match ANSI escape codes copied from https://github.com/chalk/ansi-regex
    public static final String ANSI_REGEX =
          "[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><@]";
@@ -723,9 +719,20 @@ public class AnsiCode
    // Match ANSI escape sequences
    public static final Pattern ANSI_ESCAPE_PATTERN = Pattern.create(ANSI_REGEX);
 
+   // Control characters handled by R console, plus leading character of
+   // ANSI escape sequences
+   public static final String CONTROL_REGEX = "[\r\b\f\n\u001b\u009b]";
+
    // Match control characters and start of ANSI sequences
    public static final Pattern CONTROL_PATTERN = Pattern.create(CONTROL_REGEX);
 
+   // RegEx to match complete CSI codes (only a small subset)
+   public static final String CSI_REGEX =
+         "[\u001b\u009b]\\[([0-9]*)([A-Z])";
+   
+   // Match ANSI SGR escape sequences
+   public static final Pattern CSI_PATTERN = Pattern.create(CSI_REGEX);
+   
    // RegEx to match complete SGR codes (colors, fonts, appearance)
    public static final String SGR_REGEX =
          "[\u001b\u009b]\\[(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[m]";

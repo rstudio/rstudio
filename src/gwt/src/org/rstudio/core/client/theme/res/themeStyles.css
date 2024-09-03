@@ -1982,10 +1982,10 @@ input[type="checkbox"]:checked:before {
 }
 
 .dialogTabPanel .gwt-TabLayoutPanelContent {
-   padding-top: 25px;
-   padding-right: 10px;
-   padding-left: 10px;
-   padding-bottom: 5px;
+   padding-top: 26px;
+   padding-right: 14px;
+   padding-left: 14px;
+   padding-bottom: 6px;
 }
 
 .dialogTabPanel .gwt-TabLayoutPanelTab:first-child {

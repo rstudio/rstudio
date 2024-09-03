@@ -1311,7 +1311,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("heredoc", function(text, ...)
 {
    # remove leading, trailing whitespace
-   trimmed <- gsub("^\\s*\\n|\\n\\s*$", "", text)
+   trimmed <- gsub("^[^\\S\\r\\n]*\\n|\\n[^\\S\\r\\n]$", "", text, perl = TRUE)
    
    # split into lines
    lines <- strsplit(trimmed, "\n", fixed = TRUE)[[1L]]
@@ -1332,6 +1332,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    rendered
 })
 
+# Wait until some 'predicate()' expression returns TRUE
 .rs.addFunction("waitUntil", function(reason,
                                       predicate,
                                       retryCount = 100L,
@@ -1352,6 +1353,24 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
    
    stop(sprintf("timed out waiting until '%s'", reason))
+})
+
+# Wait for a callback to return a non-error result,
+# and then produce that result after finishing
+.rs.addFunction("waitFor", function(reason,
+                                    callback,
+                                    retryCount = 100L,
+                                    waitTimeSecs = 1)
+{
+   result <- NULL
+   
+   .rs.waitUntil(reason, function()
+   {
+      result <<- tryCatch(callback(), error = identity)
+      !inherits(result, "error")
+   }, retryCount = retryCount, waitTimeSecs = waitTimeSecs)
+   
+   result
 })
 
 .rs.addFunction("bugReport", function(pro = NULL)
@@ -1458,6 +1477,40 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
    # perform navigation
    utils::browseURL(url)
+})
+
+.rs.addFunction("mapChr", function(x, f, ...)
+{
+   f <- match.fun(f)
+   vapply(x, f, ..., FUN.VALUE = character(1))
+})
+
+.rs.addFunction("mapDbl", function(x, f, ...)
+{
+   f <- match.fun(f)
+   vapply(x, f, ..., FUN.VALUE = double(1))
+})
+
+.rs.addFunction("mapInt", function(x, f, ...)
+{
+   f <- match.fun(f)
+   vapply(x, f, ..., FUN.VALUE = integer(1))
+})
+
+.rs.addFunction("mapLgl", function(x, f, ...)
+{
+   f <- match.fun(f)
+   vapply(x, f, ..., FUN.VALUE = logical(1))
+})
+
+# An R data.frame may have so-called "compact row names", where
+# row names are set with an integer placeholder that defines the
+# number of rows in the data.frame, without actually having a
+# fully materialized vector of that length.
+.rs.addFunction("hasCompactRowNames", function(data)
+{
+   info <- .row_names_info(data, type = 0L)
+   is.integer(info) && length(info) == 2L && is.na(info[[1L]])
 })
 
 .rs.addFunction("initTools", function()

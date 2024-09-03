@@ -5,7 +5,7 @@
 # tools (awscli) installed, and configured with a valid AWS account.
 
 # Modify to set the Quarto version to upload
-QUARTO_VERSION=1.5.54
+QUARTO_VERSION=1.5.57
 
 
 # Check that we're logged in with AWS

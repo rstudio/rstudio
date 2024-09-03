@@ -2,10 +2,10 @@
 set -e
 
 # Update this when updating to a new base GWT release
-GWT_VER=2.10.0
+GWT_VER=2.10.1
 
 # This script is intended to run from the rstudio/gwt/tools folder
-RUN_DIR=`pwd`
+RUN_DIR=$(pwd)
 
 GWT_DIR=${RUN_DIR}/../lib/gwt
 INST_DIR=${GWT_DIR}/gwt-rstudio
@@ -26,22 +26,22 @@ else
 fi
 
 # Build GWT disto with custom version
-cd ${RUN_DIR}/gwt/gwt
+cd "${RUN_DIR}"/gwt/gwt
 ant clean dist -Dgwt.version="${GWT_VER}"
 
 GWT_ZIP=${RUN_DIR}/gwt/gwt/build/dist/gwt-${GWT_VER}.zip
-if [ ! -f ${GWT_ZIP} ]; then
+if [ ! -f "${GWT_ZIP}" ]; then
     echo Error: GWT build unsuccessful
     exit 1
 fi
 
 # Delete existing distro, extract new one
-rm -rf ${INST_DIR}
-unzip -qd ${GWT_DIR} ${GWT_ZIP}
-mv ${GWT_DIR}/gwt-${GWT_VER} ${INST_DIR}
+rm -rf "${INST_DIR}"
+unzip -qd "${GWT_DIR}" "${GWT_ZIP}"
+mv "${GWT_DIR}"/gwt-${GWT_VER} "${INST_DIR}"
 
 # Delete javadoc, samples
-rm -rf ${INST_DIR}/doc/javadoc
-find ${INST_DIR}/samples/* -maxdepth 0 -not -name "build.xml" -type d -exec rm -rf {} \;
+rm -rf "${INST_DIR}"/doc/javadoc
+find "${INST_DIR}"/samples/* -maxdepth 0 -not -name "build.xml" -type d -exec rm -rf {} \;
 
-echo Success. GWT built and installed to ${INST_DIR}
+echo Success. GWT built and installed to "${INST_DIR}"

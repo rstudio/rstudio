@@ -1235,7 +1235,9 @@ public class RCompletionManager implements CompletionManager
             // Try to see if there's an object name we should use to supplement
             // completions
             if (cursor.moveToPosition(input_.getCursorPosition()))
+            {
                infixData = codeModel.getDataFromInfixChain(cursor);
+            }
          }
       }
       
@@ -1654,18 +1656,15 @@ public class RCompletionManager implements CompletionManager
             break;
          
          numCommas = commaCount;
+         dataType = tokenCursor.currentValue() == "("
+               ? AutocompletionContext.TYPE_FUNCTION
+               : AutocompletionContext.TYPE_SINGLE_BRACKET;
          
          TokenCursor declEnd = tokenCursor.cloneCursor();
          if (!tokenCursor.moveToPreviousToken())
             return context;
          
-         if (tokenCursor.currentValue() == "(")
-         {
-            dataType = AutocompletionContext.TYPE_FUNCTION;
-            if (!tokenCursor.moveToPreviousToken())
-               return context;
-         }
-         else if (tokenCursor.currentValue() == "[")
+         if (tokenCursor.currentValue() == "[")
          {
             if (!declEnd.moveToPreviousToken())
                return context;
@@ -1674,13 +1673,8 @@ public class RCompletionManager implements CompletionManager
             if (!tokenCursor.moveToPreviousToken())
                return context;
          }
-         else
-         {
-            dataType = AutocompletionContext.TYPE_SINGLE_BRACKET;
-         }
          
          tokenCursor.findStartOfEvaluationContext();
-         
          assocData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),

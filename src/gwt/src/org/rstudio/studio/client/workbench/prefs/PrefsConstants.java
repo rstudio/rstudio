@@ -4133,6 +4133,25 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("General")
     @Key("generalHeaderLabel")
     String generalHeaderLabel();
+    
+    /**
+     * Translated "Code Formatting".
+     *
+     * @return translated "Code Formatting"
+     */
+    @DefaultMessage("Code Formatting")
+    @Key("codeFormattingHeaderLabel")
+    String codeFormattingHeaderLabel();
+ 
+    /**
+     * Translated "Use formatter:".
+     *
+     * @return translated "Use formatter:"
+     */
+    @DefaultMessage("Use formatter:")
+    @Key("useFormatterLabel")
+    String useFormatterLabel();
+    
 
     /**
      * Translated "Syntax".
@@ -4395,6 +4414,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("editingTabPanelDisplayPanel")
     String editingTabPanelDisplayPanel();
 
+    /**
+     * Translated "Formatting".
+     *
+     * @return translated "Formatting"
+     */
+    @DefaultMessage("Formatting")
+    @Key("editingTabPanelFormattingPanel")
+    String editingTabPanelFormattingPanel();
+    
     /**
      * Translated "Saving".
      *

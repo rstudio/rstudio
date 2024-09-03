@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-BRANCH=rstudio/chocolate-cosmos
+BRANCH=rstudio/kousa-dogwood
 #
 # RStudio fork of GWT started with BRANCH off of GWT 2.8.2 plus our changes.
 # That is, started life with:
@@ -47,7 +47,7 @@ fi
 
 cd gwt
 
-if [ "`git status --porcelain`" != "" ]; then
+if [ "$(git status --porcelain)" != "" ]; then
     echo "ERROR: Can't merge, working tree is dirty"
     exit 1
 fi

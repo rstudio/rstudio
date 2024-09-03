@@ -245,6 +245,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <separator/>
          <cmd refid="reindent"/>
          <cmd refid="reformatCode"/>
+         <cmd refid="reformatDocument"/>
          <separator/>
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
@@ -2134,9 +2135,15 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Comment or uncomment the current line/selection"
         context="editor"/>
 
+   <cmd id="reformatDocument"
+        label="Reformat Current Document"
+        menuLabel="Reformat _Document"
+        desc="Reformat the current document"
+        context="editor"/>
+
    <cmd id="reformatCode"
         label="Reformat Current Selection"
-        menuLabel="Re_format Code"
+        menuLabel="Re_format Selection"
         desc="Reformat the current line/selection"
         context="editor"/>
 

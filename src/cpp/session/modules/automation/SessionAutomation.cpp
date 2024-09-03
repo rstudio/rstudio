@@ -22,6 +22,8 @@
 #include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -36,22 +38,23 @@ namespace automation {
 
 namespace {
 
-} // end anonymous namespace
-
-Error run()
+SEXP rs_automationReportFile()
 {
    FilePath reportFile = session::options().automationReportFile();
    if (reportFile.isEmpty())
-      reportFile = module_context::tempFile("automation-", ".xml");
+      return R_NilValue;
    
-   return r::exec::RFunction(".rs.automation.run")
-         .addParam("reportFile", reportFile.getAbsolutePath())
-         .call();
+   r::sexp::Protect protect;
+   return r::sexp::create(reportFile.getAbsolutePath(), &protect);
 }
+
+} // end anonymous namespace
 
 Error initialize()
 {
    using namespace module_context;
+   
+   RS_REGISTER_CALL_METHOD(rs_automationReportFile);
    
    ExecBlock initBlock;
    initBlock.addFunctions()

@@ -35,8 +35,9 @@ pipeline {
           RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
           IS_PRO = JOB_URL.contains('Pro')
           BASE_IMAGE = "jenkins/ide:pro-jammy-x86_64-${RSTUDIO_VERSION_FLOWER}"
-          // Passing true makes this return true if there are any changes outside of 'docs'
-          BUILD = utils.hasChangesIn('docs/', true)
+          // Invert the check and use regex - passing true makes this return true if 
+          //there are any changes outside of 'docs' and 'version/news'
+          BUILD = utils.hasChangesIn('docs/|version/news/', true)
         }
       }
     }

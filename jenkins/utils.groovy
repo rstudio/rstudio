@@ -4,9 +4,11 @@
   * Returns true if branch has changes in the specified path with the target branch.
   * If invertMatch is true, returns true if branch has changes that do not match the specified path.
   */
-boolean hasChangesIn(String module, boolean invertMatch = false) {
+boolean hasChangesIn(String module, boolean invertMatch = false, boolean useRegex = false) {
   sh "echo 'Comparing changes in ${module} with ${env.CHANGE_TARGET}..${env.BRANCH_NAME}'"
-  grepArgs = invertMatch ? '-v' : ''
+  grepArgs = invertMatch ? 'v' : ''
+  grepArgs = useRegex ? 'P' : grepArgs
+  grepArgs = grepArgs.isEmpty() ? '' : "-${grepArgs}"
   mergeBase = sh(
     returnStdout: true, script: "git merge-base origin/${env.BRANCH_NAME} origin/${env.CHANGE_TARGET}").trim()
   return !env.CHANGE_TARGET ||

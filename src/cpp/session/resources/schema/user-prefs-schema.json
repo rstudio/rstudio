@@ -1733,6 +1733,31 @@
             "default": "project",
             "title": "Default working directory for background jobs",
             "description": "Default working directory in background job dialog."
+        },
+        "code_formatter": {
+            "type": "string",
+            "enum": ["none", "styler", "external"],
+            "enumReadable": ["(None)", "styler", "External"],
+            "default": "none",
+            "title": "Code formatter",
+            "description": "The formatter to use when reformatting code."
+        },
+        "code_formatter_styler_strict": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use strict transformers when formatting code",
+            "description": "When set, strict transformers will be used when formatting code. See the `styler` package documentation for more details."
+        },
+        "code_formatter_external_command": {
+            "type": "string",
+            "default": "",
+            "description": "The external command to be used when reformatting code."
+        },
+        "reformat_on_save": {
+            "type": "boolean",
+            "default": false,
+            "title": "Reformat documents on save",
+            "description": "When set, the selected formatter will be used to reformat documents on save."
         }
       }
 }

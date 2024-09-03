@@ -20,6 +20,8 @@
 #include <gsl/gsl>
 
 #include "SessionRmdNotebook.hpp"
+#include "../SessionHTMLPreview.hpp"
+#include "../build/SessionBuildErrors.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string.hpp>
@@ -37,7 +39,6 @@
 #include <core/StringUtils.hpp>
 #include <core/Algorithm.hpp>
 #include <core/YamlUtil.hpp>
-#include <core/r_util/RProjectFile.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -46,6 +47,7 @@
 #include <r/RRoutines.hpp>
 #include <r/RCntxtUtils.hpp>
 
+#include <core/r_util/RProjectFile.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -57,7 +59,6 @@
 
 #include "SessionBlogdown.hpp"
 #include "RMarkdownPresentation.hpp"
-#include "../SessionHTMLPreview.hpp"
 #include "../../SessionConsoleInput.hpp"
 
 #define kRmdOutput "rmd_output"
@@ -619,7 +620,7 @@ private:
          LOG_ERROR(error);
 
       // pass along the RSTUDIO_VERSION
-      environment.push_back(std::make_pair("RSTUDIO_VERSION", module_context::rstudioVersion(true)));
+      environment.push_back(std::make_pair("RSTUDIO_VERSION", parsableRStudioVersion()));
       environment.push_back(std::make_pair("RSTUDIO_LONG_VERSION", RSTUDIO_VERSION));
 
       // inform that this runs in the Render pane

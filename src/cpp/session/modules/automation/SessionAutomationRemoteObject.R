@@ -68,11 +68,11 @@
 .rs.addFunction("automation.invokeJsFunction", function(self, objectId, parentObjectId, params)
 {
    # Create function we'll invoke.
-   jsFunc <- .rs.heredoc(r'{
+   jsFunc <- .rs.heredoc('
       function(context) {
          return this.apply(context, [].slice.call(arguments, 1));
       }
-   }')
+   ')
  
    # Initialize arguments array.
    arguments <- vector("list", length(params) + 1L)
@@ -117,7 +117,7 @@
       
       self <- attr(x, "self", exact = TRUE)
       
-      callback <- .rs.heredoc(r"{
+      callback <- .rs.heredoc('
          function() {
             var result = {};
             for (var key in this) {
@@ -125,7 +125,7 @@
             }
             return JSON.stringify(result);
          }
-      }")
+      ')
       
       objectId <- attr(x, "id", exact = TRUE)
       response <- self$jsCall(objectId, callback)

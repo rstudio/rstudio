@@ -14,12 +14,12 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -62,6 +62,10 @@ public abstract class CheckableMenuItem extends MenuItem
       });
       setChecked(checked);
    }
+   
+   public abstract String getLabel();
+   public abstract boolean isChecked();
+   public abstract void onInvoked();
 
    public void onStateChanged()
    {
@@ -69,10 +73,10 @@ public abstract class CheckableMenuItem extends MenuItem
       setChecked(isChecked());
    }
 
-   public abstract String getLabel();
-   public String getShortcut() { return ""; }
-   public abstract boolean isChecked();
-   public abstract void onInvoked();
+   public String getShortcut()
+   {
+      return "";
+   }
    
    public String getHTMLContent()
    {

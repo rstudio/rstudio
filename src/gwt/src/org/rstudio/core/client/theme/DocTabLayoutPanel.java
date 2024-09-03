@@ -15,9 +15,6 @@
  */
 package org.rstudio.core.client.theme;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
@@ -64,11 +61,13 @@ import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEv
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.BorderStyle;
@@ -89,6 +88,7 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -333,7 +333,7 @@ public class DocTabLayoutPanel
          // determine whether focus is currently inside the container
          focused = DomUtils.contains(getElement(), DomUtils.getActiveElement());
       }
-
+      
       // fire our own selection event
       fireEvent(new DocTabSelectionEvent(index, focused));
 

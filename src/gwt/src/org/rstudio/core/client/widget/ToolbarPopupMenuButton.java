@@ -64,7 +64,9 @@ public class ToolbarPopupMenuButton extends ToolbarMenuButton
          @Override
          public void execute()
          {
-            setText(value);
+            if (value != null)
+               setText(value);
+            
             if (cmd != null)
                cmd.execute();
          }

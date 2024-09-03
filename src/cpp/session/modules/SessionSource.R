@@ -322,8 +322,42 @@
 {
    if (is.null(path) || !file.exists(path))
       return(NULL)
-   
+
    path <- normalizePath(path, winslash = "/", mustWork = TRUE)
    .Call("rs_getDocumentProperties", path, includeContents)
 })
 
+.rs.addFunction("generateStylerFormatDocumentScript", function(documentPath,
+                                                               scriptPath)
+{
+   # only invoke 'styler' on supported file types
+   ext <- tools::file_ext(documentPath)
+   if (!tolower(ext) %in% c("r", "rmd", "rmarkdown", "qmd", "rnw"))
+      return()
+
+   # figure out where 'styler' is installed
+   stylerPath <- find.package("styler")
+   libraryPaths <- .libPaths(c(dirname(stylerPath), .libPaths()))
+
+   # create a tidyverse styler, using the current indentation settings
+   indent <- .rs.readUserPref("num_spaces_for_tab", 2L)
+   strict <- .rs.readUserPref("code_formatter_styler_strict", TRUE)
+   
+   # try to infer the base indentation
+   contents <- readLines(documentPath, warn = FALSE)
+   indents <- regexpr("\\S", contents, perl = TRUE)
+   baseIndent <- min(indents[indents >= 0]) - 1L
+
+   # generate and write code to file
+   expr <- rlang::expr({
+      .libPaths(!!libraryPaths)
+      styler::style_file(
+         path = !!documentPath,
+         indent_by = !!indent,
+         strict = !!strict,
+         base_indention = !!baseIndent
+      )
+   })
+
+   writeLines(deparse(expr), con = scriptPath)
+})
