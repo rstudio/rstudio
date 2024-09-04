@@ -1680,7 +1680,6 @@ assign(x = ".rs.acCompletionTypes",
       
       names <- .rs.selectFuzzyMatches(allNames, token)
       
-      
       # See if types were provided
       types <- attr(names, "types")
       if (is.integer(types) && length(types) == length(names))

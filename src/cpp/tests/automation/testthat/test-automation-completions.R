@@ -141,4 +141,13 @@ test_that(".DollarNames completions still produce types", {
    completions <- remote$completionsRequest(".$")
    expect_equal(completions, c("apple", "banana"))
    
+   remote$consoleExecuteExpr({
+      className <- basename(tempfile(pattern = "class-"))
+      registerS3method(".DollarNames", className, function(x, pattern) c("example1()", "example2()"))
+      . <- structure(list(), class = className)
+   })
+   
+   completions <- remote$completionsRequest(".$")
+   expect_equal(completions, c("example1", "example2"))
+   
 })
