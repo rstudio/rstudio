@@ -886,8 +886,6 @@ public class TextEditingTargetWidget
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
       
-      boolean canReformatDocument = fileType.isR() || fileType.isRmd() || fileType.isQuartoMarkdown();
-      
       panel_.showSecondaryToolbar(isMarkdown);
 
       if (isScript && !terminalAllowed)
