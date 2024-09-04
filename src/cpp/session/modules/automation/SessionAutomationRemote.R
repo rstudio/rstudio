@@ -213,6 +213,21 @@
    nodeId
 })
 
+.rs.automation.addRemoteFunction("domGetNodeIds", function(selector)
+{
+   # Query for all nodes matching the selector.
+   document <- self$client$DOM.getDocument(depth = 0L)
+   response <- self$client$DOM.querySelectorAll(document$root$nodeId, selector)
+   
+   # Check for failure.
+   nodeIds <- response$nodeIds
+   if (length(nodeIds) == 0L)
+      stop("No elements matching selector '", selector, "' could be found.")
+   
+   # Return the list of discovered nodes.
+   nodeIds
+})
+
 .rs.automation.addRemoteFunction("domClickElement", function(selector,
                                                              objectId = NULL,
                                                              verticalOffset = 0L,
@@ -341,6 +356,19 @@
    })
    
    .rs.automation.wrapJsResponse(self, response)
+})
+
+.rs.automation.addRemoteFunction("jsObjectsViaSelector", function(selector)
+{
+   response <- .rs.waitFor(selector, function()
+   {
+      nodeIds <- self$domGetNodeIds(selector)
+      resolvedNodes <- lapply(nodeIds, function(nodeId) {
+         self$client$DOM.resolveNode(nodeId)
+      })
+      resolvedNodes
+   })
+   .rs.automation.wrapJsListResponse(self, response)
 })
 
 .rs.automation.addRemoteFunction("keyboardExecute", function(...)
