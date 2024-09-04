@@ -40,11 +40,12 @@
 
 .rs.addFunction("automation.wrapJsListResponse", function(self, response, parentObjectId = NULL)
 {
-   if (is.list(response)) {
-      result_list <- lapply(response, function(element) {
+   if (is.list(response))
+   {
+      resultList <- lapply(response, function(element) {
          .rs.automation.wrapJsResponse(self, element, parentObjectId)
       })
-      return(result_list)
+      return(resultList)
    }
 })
 
