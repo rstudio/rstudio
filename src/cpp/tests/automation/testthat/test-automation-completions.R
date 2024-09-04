@@ -122,3 +122,23 @@ test_that("autocompletions within piped expressions work at start of document", 
    })
 
 })
+
+# https://github.com/rstudio/rstudio/issues/15115
+test_that(".DollarNames completions still produce types", {
+   
+   remote$consoleExecuteExpr({
+   
+      className <- basename(tempfile(pattern = "class-"))
+      registerS3method(".DollarNames", className, function(x, pattern) names(x))
+      
+      . <- structure(
+         list(apple = identity, banana = identity),
+         class = className
+      )
+      
+   })
+   
+   completions <- remote$completionsRequest(".$")
+   expect_equal(completions, c("apple", "banana"))
+   
+})

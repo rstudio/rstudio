@@ -1611,17 +1611,30 @@ assign(x = ".rs.acCompletionTypes",
          
          # detect completion systems that append closing parentheses
          # to the completion item, and assume those are functions
-         # rJava and Rcpp will do this for some objects
-         # for example:
+         # rJava and Rcpp will do this for some objects; for example:
+         #
          # - rJava:::.DollarNames.jobjref
          # - Rcpp:::.DollarNames.C++Object
-         types <- ifelse(
-            grepl("[()]\\s*$", allNames),
-            .rs.acCompletionTypes$FUNCTION,
-            .rs.acCompletionTypes$UNKNOWN
-         )
+         #
+         looksLikeFunction <- grepl("[()]\\s*$", allNames)
+         
+         # Remove any trailing parentheses from the completion items.
          allNames <- gsub("[()]*\\s*$", "", allNames)
-         attr(allNames, "types") <- as.integer(types)
+         
+         # If the completion list contained some function-looking completion
+         # items, then infer the completion results based on that.
+         if (any(looksLikeFunction))
+         {
+            types <- attr(allNames, "types", exact = TRUE)
+            attr(allNames, "types") <- .rs.nullCoalesce(
+               types,
+               ifelse(
+                  looksLikeFunction,
+                  .rs.acCompletionTypes$FUNCTION,
+                  .rs.acCompletionTypes$UNKNOWN
+               )
+            )
+         }
          
          # check for custom helpHandler
          helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
