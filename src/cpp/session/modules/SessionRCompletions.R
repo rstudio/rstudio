@@ -1609,33 +1609,6 @@ assign(x = ".rs.acCompletionTypes",
       {
          allNames <- dollarNamesMethod(object, "")
          
-         # detect completion systems that append closing parentheses
-         # to the completion item, and assume those are functions
-         # rJava and Rcpp will do this for some objects; for example:
-         #
-         # - rJava:::.DollarNames.jobjref
-         # - Rcpp:::.DollarNames.C++Object
-         #
-         looksLikeFunction <- grepl("[()]\\s*$", allNames)
-         
-         # Remove any trailing parentheses from the completion items.
-         allNames <- gsub("[()]*\\s*$", "", allNames)
-         
-         # If the completion list contained some function-looking completion
-         # items, then infer the completion results based on that.
-         if (any(looksLikeFunction))
-         {
-            types <- attr(allNames, "types", exact = TRUE)
-            attr(allNames, "types") <- .rs.nullCoalesce(
-               types,
-               ifelse(
-                  looksLikeFunction,
-                  .rs.acCompletionTypes$FUNCTION,
-                  .rs.acCompletionTypes$UNKNOWN
-               )
-            )
-         }
-         
          # check for custom helpHandler
          helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
       }
@@ -1707,6 +1680,7 @@ assign(x = ".rs.acCompletionTypes",
       
       names <- .rs.selectFuzzyMatches(allNames, token)
       
+      
       # See if types were provided
       types <- attr(names, "types")
       if (is.integer(types) && length(types) == length(names))
@@ -1728,15 +1702,24 @@ assign(x = ".rs.acCompletionTypes",
       else
       {
          type <- numeric(length(names))
+         looksLikeFunction <- grepl("[()]\\s*$", names, perl = TRUE)
          for (i in seq_along(names))
          {
-            type[[i]] <- suppressWarnings(tryCatch(
-               if (is.environment(object) && bindingIsActive(names[[i]], object))
-                  .rs.acCompletionTypes$UNKNOWN
-               else
-                  .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
-               error = function(e) .rs.acCompletionTypes$UNKNOWN
-            ))
+            if (looksLikeFunction[[i]])
+            {
+               names[[i]] <- gsub("[()]+\\s*$", "", names[[i]], perl = TRUE)
+               type[[i]] <- .rs.acCompletionTypes$FUNCTION
+            }
+            else
+            {
+               type[[i]] <- suppressWarnings(tryCatch(
+                  if (is.environment(object) && bindingIsActive(names[[i]], object))
+                     .rs.acCompletionTypes$UNKNOWN
+                  else
+                     .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
+                  error = function(e) .rs.acCompletionTypes$UNKNOWN
+               ))
+            }
          }
       }
    }
