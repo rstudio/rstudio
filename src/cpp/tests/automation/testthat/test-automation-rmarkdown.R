@@ -128,7 +128,6 @@ test_that("can cancel switching to visual editor", {
          }, error = function(e) FALSE)
       })
       remote$domClickElement("#rstudio_dlg_cancel")
-      Sys.sleep(1)
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
    }
