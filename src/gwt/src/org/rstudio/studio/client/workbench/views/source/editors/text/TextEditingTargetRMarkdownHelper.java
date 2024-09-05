@@ -877,8 +877,8 @@ public class TextEditingTargetRMarkdownHelper
    }
 
    public void addAdditionalResourceFiles(String yaml,
-         final ArrayList<String> files,
-         final CommandWithArg<String> onCompleted)
+                                          final List<String> files,
+                                          final CommandWithArg<String> onCompleted)
    {
       convertFromYaml(yaml, new CommandWithArg<RmdYamlData>()
       {
@@ -886,10 +886,13 @@ public class TextEditingTargetRMarkdownHelper
          public void execute(RmdYamlData arg)
          {
             if (!arg.parseSucceeded())
+            {
                onCompleted.execute(null);
+            }
             else
-               addAdditionalResourceFiles(arg.getFrontMatter(), files,
-                     onCompleted);
+            {
+               addAdditionalResourceFiles(arg.getFrontMatter(), files, onCompleted);
+            }
          }
       });
    }
@@ -1192,8 +1195,8 @@ public class TextEditingTargetRMarkdownHelper
    }
 
    private void addAdditionalResourceFiles(RmdFrontMatter frontMatter,
-         ArrayList<String> additionalFiles,
-         CommandWithArg<String> onCompleted)
+                                           List<String> additionalFiles,
+                                           CommandWithArg<String> onCompleted)
    {
       for (String file: additionalFiles)
       {

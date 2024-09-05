@@ -45,7 +45,7 @@ public interface RSConnectServerOperations extends QuartoServerOperations
                                    String outputFile,
                                    ServerRequestCallback<Void> requestCallback);
    
-   void getDeploymentFiles (String target, 
+   void getDeploymentFiles(String target, 
                boolean asMultipleRmd,
                String quartoSrcFile,
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
@@ -86,4 +86,6 @@ public interface RSConnectServerOperations extends QuartoServerOperations
    
    void generateAppName(String title, String appPath, String accountName,
                 ServerRequestCallback<RSConnectAppName> resultCallback);
+   
+   void listEnvironmentVariables(ServerRequestCallback<JsArrayString> resultCallback);
 }

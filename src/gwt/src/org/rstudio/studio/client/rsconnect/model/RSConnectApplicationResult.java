@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rsconnect.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RSConnectApplicationResult extends JavaScriptObject
 {
@@ -28,5 +29,9 @@ public class RSConnectApplicationResult extends JavaScriptObject
 
    public final native String getError() /*-{
       return this.error;
+   }-*/;
+   
+   public final native JsArrayString getEnvVars() /*-{
+      return this.envVars || [];
    }-*/;
 }

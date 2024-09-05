@@ -1491,4 +1491,9 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Our online service that lets you do, share, teach and learn data science in your web browser.")
     @Key("newPositCloudPageSubTitle")
     String newPositCloudPageSubTitle();
+    
+    @DefaultMessage("{0,number} environment variables will be published with this application.")
+    @AlternateMessage({"one", "1 environment variable will be published with this application."})
+    String envVarsPublishMessage(@PluralCount int itemCount);
+    
 }

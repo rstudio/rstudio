@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rsconnect.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RSConnectApplicationInfo extends JavaScriptObject
 {
@@ -52,5 +53,9 @@ public class RSConnectApplicationInfo extends JavaScriptObject
 
    public final native String getUpdatedTime() /*-{
       return this.updated_time;
+   }-*/;
+   
+   public final native JsArrayString getEnvVars() /*-{
+      return this.envVars || [];
    }-*/;
 }

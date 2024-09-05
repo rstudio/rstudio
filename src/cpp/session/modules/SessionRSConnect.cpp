@@ -143,6 +143,7 @@ public:
          const std::string& websiteDir,
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
+         const json::Array& envVarsList,
          bool asMultiple,
          bool asStatic,
          bool isQuarto,
@@ -220,10 +221,9 @@ public:
       }
 
       // join and quote incoming filenames to deploy
-      std::string additionalFiles = quotedFilesFromArray(additionalFilesList,
-            false);
-      std::string ignoredFiles = quotedFilesFromArray(ignoredFilesList,
-            false);
+      std::string additionalFiles = quotedFilesFromArray(additionalFilesList, false);
+      std::string ignoredFiles = quotedFilesFromArray(ignoredFilesList, false);
+      std::string envVars = quotedFilesFromArray(envVarsList, true);
 
       // if an R Markdown document or HTML document is being deployed, mark it
       // as the primary file, unless deploying a website
@@ -298,10 +298,9 @@ public:
                  quarto +
              "   asMultiple = " + (asMultiple ? "TRUE" : "FALSE") + ", "
              "   asStatic = " + (asStatic ? "TRUE" : "FALSE") + 
-                 (additionalFiles.empty() ? "" : ", additionalFiles = '" + 
-                    additionalFiles + "'") + 
-                 (ignoredFiles.empty() ? "" : ", ignoredFiles = '" + 
-                    ignoredFiles + "'") + 
+                 (additionalFiles.empty() ? "" : ", additionalFiles = '" +  additionalFiles + "'") + 
+                 (ignoredFiles.empty() ? "" : ", ignoredFiles = '" +  ignoredFiles + "'") + 
+                 (envVars.empty() ? "" : ", envVars = c(" + envVars + ")") +
              ")" + 
              (prefs::userPrefs().showPublishDiagnostics() ? ", logLevel = 'verbose'" : "") + 
              ")}";
@@ -428,10 +427,11 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
 
    // read publish settings
    bool asMultiple = false, asStatic = false;
-   json::Array deployFiles, additionalFiles, ignoredFiles;
+   json::Array deployFiles, additionalFiles, ignoredFiles, envVars;
    error = json::readObject(settings, "deploy_files",     deployFiles,
                                       "additional_files", additionalFiles,
                                       "ignored_files",    ignoredFiles,
+                                      "env_vars",         envVars,
                                       "as_multiple",      asMultiple,
                                       "as_static",        asStatic);
    if (error)
@@ -444,13 +444,23 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
    }
    else
    {
-      error = RSConnectPublish::create(sourceDir, deployFiles, 
-                                       sourceFile, sourceDoc, 
-                                       account, server, appName, appTitle, appId, 
+      error = RSConnectPublish::create(sourceDir,
+                                       deployFiles, 
+                                       sourceFile,
+                                       sourceDoc, 
+                                       account,
+                                       server,
+                                       appName,
+                                       appTitle,
+                                       appId,
                                        contentCategory,
                                        websiteDir,
                                        additionalFiles,
-                                       ignoredFiles, asMultiple, asStatic, isQuarto,
+                                       ignoredFiles,
+                                       envVars,
+                                       asMultiple,
+                                       asStatic,
+                                       isQuarto,
                                        &s_pRSConnectPublish_);
       if (error)
          return error;

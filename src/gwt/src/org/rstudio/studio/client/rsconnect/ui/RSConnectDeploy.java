@@ -15,6 +15,10 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -22,15 +26,18 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HyperlinkLabel;
+import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -56,6 +63,7 @@ import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.FontWeight;
@@ -79,6 +87,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -107,6 +116,7 @@ public class RSConnectDeploy extends Composite
       String deployIllustration();
       String deployLabel();
       String descriptionPanel();
+      String envVarsLabel();
       String fileList();
       String firstControlLabel();
       String gridControl();
@@ -152,6 +162,88 @@ public class RSConnectDeploy extends Composite
       RSPUBS,
       POSITCLOUD,
       SHINYAPPS
+   }
+   
+   public static class EnvironmentVariablesDialog extends ModalDialog<List<String>>
+   {
+      public EnvironmentVariablesDialog(List<String> sessionEnvVars,
+                                        List<String> appEnvVars,
+                                        OperationWithInput<List<String>> onClosed)
+      {
+         super(
+               "Environment variables",
+               Roles.getDialogRole(),
+               onClosed);
+         
+         setWidth("300px");
+         setHeight("300px");
+         
+         container_ = new VerticalPanel();
+         container_.setWidth("100%");
+         container_.setHeight("100%");
+         
+         container_.add(new Label("Select one more environment variables to publish with this application."));
+         container_.add(new VerticalSpacer("12px"));
+         
+         listBox_ = new ListBox();
+         listBox_.setHeight("200px");
+         listBox_.setMultipleSelect(true);
+         listBox_.setWidth("100%");
+         
+         // Initialize the list box values. We round trip between a set and a
+         // list here to remove duplicates, and also to ensure that environment
+         // variables are alphabetically sorted within.
+         Set<String> envVarsSet = new HashSet<String>();
+         envVarsSet.addAll(sessionEnvVars);
+         envVarsSet.addAll(appEnvVars);
+         
+         List<String> allEnvVars = new ArrayList<String>();
+         allEnvVars.addAll(envVarsSet);
+         Collections.sort(allEnvVars);
+         for (String envVar : allEnvVars)
+         {
+            listBox_.addItem(envVar);
+         }
+         
+         // Ensure any environment variables which were previously set for an application
+         // are also selected.
+         for (int i = 0, n = listBox_.getItemCount(); i < n; i++)
+         {
+            String itemText = listBox_.getItemText(i);
+            if (appEnvVars.contains(itemText))
+            {
+               listBox_.setItemSelected(i, true);
+            }
+         }
+         
+         container_.add(listBox_);
+         
+      }
+
+      @Override
+      protected Widget createMainWidget()
+      {
+         return container_;
+      }
+      
+      @Override
+      protected List<String> collectInput()
+      {
+         List<String> values = new ArrayList<String>();
+         
+         for (int i = 0, n = listBox_.getItemCount(); i < n; i++)
+         {
+            if (listBox_.isItemSelected(i))
+            {
+               values.add(listBox_.getItemText(i));
+            }
+         }
+         
+         return values;
+      }
+      
+      private final VerticalPanel container_;
+      private final ListBox listBox_;
    }
    
    public RSConnectDeploy(RSConnectPublishSource source,
@@ -209,19 +301,22 @@ public class RSConnectDeploy extends Composite
       {
          addAccountAnchor_.setClickHandler(() ->
          {
-            connector_.showAccountWizard(false,
+            boolean withCloudOption =
                   contentType == RSConnect.CONTENT_TYPE_APP ||
                   contentType == RSConnect.CONTENT_TYPE_APP_SINGLE ||
-                  positCloudEnabled,
-                  successful ->
-                  {
-                     if (successful)
-                     {
-                        accountList_.refreshAccountList();
-                     }
-                  });
+                  positCloudEnabled;
+            
+            connector_.showAccountWizard(false, withCloudOption, (successful) ->
+            {
+               if (successful)
+               {
+                  accountList_.refreshAccountList();
+               }
+            });
          });
-      } else {
+      }
+      else
+      {
          // if not deploying a Shiny app and RSConnect UI/ Posit Cloud UI are not enabled, then
          // there's no account we can add suitable for this content
          addAccountAnchor_.setVisible(false);
@@ -251,6 +346,42 @@ public class RSConnectDeploy extends Composite
          public void onClick(ClickEvent arg0)
          {
             onAddFileClick();
+         }
+      });
+      
+      envVarsButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            server_.listEnvironmentVariables(new ServerRequestCallback<JsArrayString>()
+            {
+               @Override
+               public void onResponseReceived(JsArrayString response)
+               {
+                  List<String> sessionEnvVars = JsUtil.toList(response);
+                  EnvironmentVariablesDialog dialog = new EnvironmentVariablesDialog(
+                        sessionEnvVars,
+                        appEnvVars_,
+                        new OperationWithInput<List<String>>()
+                        {
+                           @Override
+                           public void execute(List<String> envVars)
+                           {
+                              appEnvVars_ = envVars;
+                              updateEnvVarsLabel();
+                           }
+                        });
+                  
+                  dialog.showModal();
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
          }
       });
       
@@ -389,6 +520,8 @@ public class RSConnectDeploy extends Composite
          
          urlAnchor_.setText(url);
          urlAnchor_.setHref(url);
+         appEnvVars_ = JsUtil.toList(info.getEnvVars());
+         updateEnvVarsLabel();
       }
       
       appDetailsPanel_.setVisible(true);
@@ -518,6 +651,7 @@ public class RSConnectDeploy extends Composite
             new RSConnectPublishSettings(deployFiles, 
                additionalFiles, 
                getIgnoredFileList(),
+               appEnvVars_,
                asMultipleRmd_,
                asStatic_),
             isUpdate());
@@ -1223,11 +1357,13 @@ public class RSConnectDeploy extends Composite
       appName_.setVisible(true);
       if (fromPrevious_ != null)
          appName_.setDetails(fromPrevious_.getTitle(), fromPrevious_.getName());
+      
       appInfoPanel_.setVisible(false);
       newAppPanel_.setVisible(true);
 
       // pretend we're creating a brand-new app
       fromPrevious_ = null;
+      appEnvVars_.clear();
    }
    
    private void checkUncheckAll()
@@ -1311,6 +1447,20 @@ public class RSConnectDeploy extends Composite
       appErrorMessage_.setText(lines[lines.length - 1]);
       appErrorMessage_.setTitle(error);
    }
+   
+   private void updateEnvVarsLabel()
+   {
+      if (appEnvVars_.isEmpty())
+      {
+         envVarsLabel_.setText("");
+         envVarsLabel_.setVisible(false);
+      }
+      else
+      {
+         envVarsLabel_.setText(constants_.envVarsPublishMessage(appEnvVars_.size()));
+         envVarsLabel_.setVisible(true);
+      }
+   }
 
    @UiField HyperlinkLabel addAccountAnchor_;
    @UiField HyperlinkLabel createNewAnchor_;
@@ -1332,6 +1482,8 @@ public class RSConnectDeploy extends Composite
    @UiField FormLabel nameLabel_;
    @UiField Label publishToLabel_;
    @UiField ThemedButton addFileButton_;
+   @UiField ThemedButton envVarsButton_;
+   @UiField Label envVarsLabel_;
    @UiField ThemedButton checkUncheckAllButton_;
    @UiField ThemedButton previewButton_;
    @UiField VerticalPanel fileListPanel_;
@@ -1347,6 +1499,7 @@ public class RSConnectDeploy extends Composite
    
    private ArrayList<DirEntryCheckBox> fileChecks_;
    private ArrayList<String> filesAddedManually_ = new ArrayList<>();
+   private List<String> appEnvVars_ = new ArrayList<String>();
    
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;

@@ -723,7 +723,8 @@ public class RSConnectPublishButton extends Composite
                            new RSConnectPublishSettings(
                                  deployFiles, 
                                  new ArrayList<>(), 
-                                 new ArrayList<>(), 
+                                 new ArrayList<>(),
+                                 new ArrayList<>(),
                                  false, true);
                      events_.fireEvent(
                            new RSConnectDeployInitiatedEvent(source, settings,

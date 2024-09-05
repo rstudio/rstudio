@@ -14,6 +14,9 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -309,6 +312,21 @@ public class SelectWidget extends Composite
       return listBox_.getValue(listBox_.getSelectedIndex());
    }
 
+   public List<String> getValues()
+   {
+      List<String> values = new ArrayList<String>();
+      
+      for (int i = 0, n = listBox_.getItemCount(); i < n; i++)
+      {
+         if (listBox_.isItemSelected(i))
+         {
+            values.add(listBox_.getItemText(i));
+         }
+      }
+      
+      return values;
+   }
+   
    public int getIntValue()
    {
       return Integer.parseInt(getValue());

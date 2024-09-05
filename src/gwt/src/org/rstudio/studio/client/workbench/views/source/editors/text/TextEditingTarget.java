@@ -8756,14 +8756,16 @@ public class TextEditingTarget implements
       return docDisplay_;
    }
 
-   private void addAdditionalResourceFiles(ArrayList<String> additionalFiles)
+   private void addAdditionalResourceFiles(List<String> additionalFiles)
    {
       // it does--get the YAML front matter and modify it to include
       // the additional files named in the deployment
       String yaml = getRmdFrontMatter();
       if (yaml == null)
          return;
-      rmarkdownHelper_.addAdditionalResourceFiles(yaml,
+      
+      rmarkdownHelper_.addAdditionalResourceFiles(
+            yaml,
             additionalFiles,
             new CommandWithArg<String>()
             {

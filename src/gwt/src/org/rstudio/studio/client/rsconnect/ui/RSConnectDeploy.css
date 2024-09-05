@@ -20,6 +20,13 @@
    margin-left: 0;
 }
 
+.envVarsLabel
+{
+	margin-top: 6px;
+	margin-bottom: 6px;
+	font-style: oblique;
+}
+
 .sourceDestLabels
 {
    color: #808080;
@@ -85,7 +92,7 @@
 
 .wizard .fileList
 {
-   height: 140px;
+   height: 126px;
 }
 
 .fileList .gwt-CheckBox,

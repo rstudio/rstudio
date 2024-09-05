@@ -12,7 +12,8 @@
 
     <g:HTMLPanel ui:field="rootPanel_">
     <rw:DecorativeImage ui:field="deployIllustration_"/>
-    <rw:LayoutGrid><rw:row>
+    <rw:LayoutGrid>
+    <rw:row>
     <rw:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
          <g:VerticalPanel ui:field="filePanel_">
@@ -35,6 +36,11 @@
                                text="Add more..."
                                visible="false">
                   <ui:attribute name="text" key="addMoreButtonText"/>
+              </rw:ThemedButton>
+              <rw:ThemedButton ui:field="envVarsButton_" 
+                               text="Environment variables..."
+                               visible="true">
+                  <ui:attribute name="text" key="addEnvironmentVariablesButtonText"/>
               </rw:ThemedButton>
            </g:HorizontalPanel>
          </g:VerticalPanel>
@@ -125,6 +131,9 @@
          </g:HTMLPanel>
       </g:HTMLPanel>
      </rw:customCell>
-   </rw:row></rw:LayoutGrid>
+   </rw:row>
+   </rw:LayoutGrid>
+   <g:Label styleName="{res.style.envVarsLabel}" ui:field="envVarsLabel_" visible="true">
+   </g:Label>
    </g:HTMLPanel>
 </ui:UiBinder> 
