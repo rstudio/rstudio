@@ -97,4 +97,15 @@ public class ClassIds
    // VersionsPopupMenu
    public final static String VERSIONS_POPUP_VALUE = "versions_popup_value";
    public final static String VERSIONS_POPUP_CHECKED = "versions_popup_checked";
+
+   // Visual Editor mode switch buttons
+   public final static String VISUAL_MD_TOGGLE_OFF = "visual_md_off";
+   public final static String VISUAL_MD_TOGGLE_ON = "visual_md_on";
+
+   // Data Table filter button
+   public final static String DATA_TABLE_FILTER_TOGGLE = "dt_filter_toggle";
+
+   // Document outline toggle button
+   public final static String VISUAL_OUTLINE_TOGGLE = "visual_md_outline_toggle";
+   public final static String SOURCE_OUTLINE_TOGGLE = "source_outline_toggle";
 }

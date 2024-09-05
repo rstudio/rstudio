@@ -18,6 +18,7 @@ package org.rstudio.studio.client.dataviewer;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -66,6 +67,7 @@ public class DataTable
               constants_.filterButtonText(),
               ToolbarButton.NoTitle,
               false, /* textIndicatesState */
+              ClassIds.DATA_TABLE_FILTER_TOGGLE,
               new ImageResource2x(DataViewerResources.INSTANCE.filterIcon2x()),
               new ClickHandler() {
                  public void onClick(ClickEvent event)

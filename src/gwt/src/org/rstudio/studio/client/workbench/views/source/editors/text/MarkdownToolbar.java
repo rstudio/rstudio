@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -25,10 +26,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
-public class MarkdownToolbar extends SecondaryToolbar implements RequiresResize
+public class MarkdownToolbar extends SecondaryToolbar
 {
    public MarkdownToolbar(Commands commands, ClickHandler visualModeClickHandler)
    {
@@ -39,6 +39,7 @@ public class MarkdownToolbar extends SecondaryToolbar implements RequiresResize
             constants_.source(),
             commands.toggleRmdVisualMode().getTooltip(),
             false,
+            ClassIds.VISUAL_MD_TOGGLE_OFF,
             null,
             visualModeClickHandler
       );
@@ -50,6 +51,7 @@ public class MarkdownToolbar extends SecondaryToolbar implements RequiresResize
             constants_.visual(),
             commands.toggleRmdVisualMode().getTooltip(),
             false,
+            ClassIds.VISUAL_MD_TOGGLE_ON,
             null,
             visualModeClickHandler
       );
