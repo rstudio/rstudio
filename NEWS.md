@@ -25,6 +25,7 @@
 - Prompt for personal access token instead of password when using github via https (#14103)
 - RStudio now forward the current 'repos' option for actions taken in the Build pane (#5793)
 - Executing `options(warn = ...)` in an R code chunk now persists beyond chunk execution (#15030)
+- Fixed an issue where completion types for objects with a `.DollarNames` method were not properly displayed (#15115)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
