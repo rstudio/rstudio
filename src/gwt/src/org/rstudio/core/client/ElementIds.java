@@ -761,5 +761,7 @@ public class ElementIds
    public final static String CHUNK_OPTIONS_TABLES = "chunk_opt_tables";
    public final static String CHUNK_OPTIONS_FIGURESIZE = "chunk_opt_figuresize";
    public final static String CHUNK_OPTIONS_CACHE = "chunk_opt_cache";
+   public final static String CHUNK_OPTIONS_APPLY = "chunk_opt_apply";
+   public final static String CHUNK_OPTIONS_REVERT = "chunk_opt_revert";
    
 }

@@ -113,6 +113,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       tbChunkLabel_ = new TextBoxWithCue(constants_.unnamedChunk());
       tbChunkLabel_.addStyleName(RES.styles().textBox());
       tbChunkLabel_.addChangeHandler(changeEvent -> synchronize());
+      tbChunkLabel_.setElementId(ElementIds.CHUNK_OPTIONS_NAME);
       
       panel_.addHandler(keyUpEvent ->
       {
@@ -207,6 +208,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       FormLabel outputLabel = new FormLabel(constants_.outputColon());
       nameAndOutputGrid.setWidget(row, 0, outputLabel);
       nameAndOutputGrid.setWidget(row, 1, outputComboBox_);
+      ElementIds.assignElementId(outputComboBox_, ElementIds.CHUNK_OPTIONS_OUTPUT);
       outputLabel.setFor(outputComboBox_);
       
       panel_.add(nameAndOutputGrid);
@@ -346,7 +348,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       buttonPanel.addStyleName(RES.styles().buttonPanel());
       buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
-      revertButton_ = new SmallButton(constants_.revertCapitalized());
+      revertButton_ = new SmallButton(constants_.revertCapitalized(), ElementIds.CHUNK_OPTIONS_REVERT);
       revertButton_.getElement().getStyle().setMarginRight(8, Unit.PX);
       revertButton_.addClickHandler(clickEvent ->
       {
@@ -355,7 +357,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       });
       buttonPanel.add(revertButton_);
       
-      applyButton_ = new SmallButton(constants_.applyCapitalized());
+      applyButton_ = new SmallButton(constants_.applyCapitalized(), ElementIds.CHUNK_OPTIONS_APPLY);
       applyButton_.addClickHandler(clickEvent ->
       {
          synchronize();
