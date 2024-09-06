@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 
@@ -50,23 +51,24 @@ public class Toggle
       ON
    }
    
-   public Toggle(String label, boolean indeterminateStateEnabled)
+   public Toggle(String label, boolean indeterminateStateEnabled, final String id)
    {
-      this();
+      this(id);
       setText(label);
       setIndeterminateStateEnabled(indeterminateStateEnabled);
       setState(indeterminateStateEnabled ? State.INDETERMINATE : State.OFF);
    }
    
-   public Toggle(String label)
+   public Toggle(String label, final String id)
    {
-      this();
+      this(id);
       setText(label);
       setState(State.INDETERMINATE);
    }
    
-   private Toggle()
+   private Toggle(final String id)
    {
+      elementId_ = id;
       BINDER.createAndBindUi(this);
 
       container_.addDomHandler((ClickEvent clickEvent) ->
@@ -129,6 +131,13 @@ public class Toggle
       }
    }
    
+   @Override
+   protected void onAttach()
+   {
+      super.onAttach();
+      ElementIds.assignElementId(track_, elementId_);
+   }
+
    public void setState(State state)
    {
       setState(state, false);
@@ -189,6 +198,7 @@ public class Toggle
    
    private State state_ = State.OFF;
    private boolean indeterminateStateEnabled_ = true;
+   private final String elementId_;
    
    @UiField HorizontalPanel container_;
    @UiField FlowPanel track_;

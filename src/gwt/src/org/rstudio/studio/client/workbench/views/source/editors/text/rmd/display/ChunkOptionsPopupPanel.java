@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
@@ -212,27 +213,34 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       showWarningsInOutputCb_ = makeTriStateToggle(
             constants_.showWarnings(),
-            "warning");
+            "warning",
+            ElementIds.CHUNK_OPTIONS_WARNINGS);
       panel_.add(showWarningsInOutputCb_);
 
       showMessagesInOutputCb_ = makeTriStateToggle(
             constants_.showMessages(),
-            "message");
+            "message",
+            ElementIds.CHUNK_OPTIONS_MESSAGES);
       panel_.add(showMessagesInOutputCb_);
 
       cacheChunkCb_ = makeTriStateToggle(
             constants_.cacheChunk(),
-            "cache");
+            "cache",
+            ElementIds.CHUNK_OPTIONS_CACHE);
       panel_.add(cacheChunkCb_);
       cacheChunkCb_.setVisible(false);
 
       printTableAsTextCb_ = makeTriStateToggle(
             constants_.usePagedTables(),
-            "paged.print");
+            "paged.print",
+            ElementIds.CHUNK_OPTIONS_TABLES);
       panel_.add(printTableAsTextCb_);
       printTableAsTextCb_.setVisible(false);
       
-      useCustomFigureCheckbox_ = new Toggle(constants_.useCustomFigureSize(), false);
+      useCustomFigureCheckbox_ = new Toggle(
+            constants_.useCustomFigureSize(),
+            false,
+            ElementIds.CHUNK_OPTIONS_FIGURESIZE);
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
       useCustomFigureCheckbox_.addValueChangeHandler(new ValueChangeHandler<Toggle.State>()
       {
@@ -410,9 +418,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return box;
    }
    
-   private Toggle makeTriStateToggle(String label, final String option)
+   private Toggle makeTriStateToggle(String label, final String option, final String id)
    {
-      Toggle toggle = new Toggle(label, true);
+      Toggle toggle = new Toggle(label, true, id);
       toggle.addValueChangeHandler((ValueChangeEvent<State> event) -> {
          State state = event.getValue();
          switch (state)
