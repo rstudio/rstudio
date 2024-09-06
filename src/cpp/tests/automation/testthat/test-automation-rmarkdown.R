@@ -324,6 +324,7 @@ test_that("reverting chunk option changes restores original options ", {
       remote$domClickElement("#rstudio_chunk_opt_warnings")
       remote$domClickElement("#rstudio_chunk_opt_messages")
       remote$jsObjectViaSelector("#rstudio_chunk_opt_name")$focus()
+      remote$keyboardExecute("abcdefg hijklmnop 12345")
       remote$domClickElement("#rstudio_chunk_opt_tables")
       remote$domClickElement("#rstudio_chunk_opt_figuresize")
       remote$domClickElement("#rstudio_chunk_opt_revert")
@@ -369,8 +370,10 @@ test_that("modifying chunk options via UI doesn't mess up other options", {
    original <- editor$session$getLine(4)
    
    remote$domClickElement(".rstudio_modify_chunk")
-   
+   remote$domClickElement("#rstudio_chunk_opt_warnings")
+   remote$domClickElement("#rstudio_chunk_opt_messages")
    remote$keyboardExecute("<Escape>")
+   expect_equal(original, editor$session$getLine(4))
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
