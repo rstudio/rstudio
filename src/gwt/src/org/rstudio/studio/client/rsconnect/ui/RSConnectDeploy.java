@@ -15,10 +15,7 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -166,8 +163,7 @@ public class RSConnectDeploy extends Composite
    
    public static class EnvironmentVariablesDialog extends ModalDialog<List<String>>
    {
-      public EnvironmentVariablesDialog(List<String> sessionEnvVars,
-                                        List<String> appEnvVars,
+      public EnvironmentVariablesDialog(List<String> envVars,
                                         OperationWithInput<List<String>> onClosed)
       {
          super(
@@ -190,34 +186,12 @@ public class RSConnectDeploy extends Composite
          listBox_.setMultipleSelect(true);
          listBox_.setWidth("100%");
          
-         // Initialize the list box values. We round trip between a set and a
-         // list here to remove duplicates, and also to ensure that environment
-         // variables are alphabetically sorted within.
-         Set<String> envVarsSet = new HashSet<String>();
-         envVarsSet.addAll(sessionEnvVars);
-         envVarsSet.addAll(appEnvVars);
-         
-         List<String> allEnvVars = new ArrayList<String>();
-         allEnvVars.addAll(envVarsSet);
-         Collections.sort(allEnvVars);
-         for (String envVar : allEnvVars)
+         for (String envVar : envVars)
          {
             listBox_.addItem(envVar);
          }
          
-         // Ensure any environment variables which were previously set for an application
-         // are also selected.
-         for (int i = 0, n = listBox_.getItemCount(); i < n; i++)
-         {
-            String itemText = listBox_.getItemText(i);
-            if (appEnvVars.contains(itemText))
-            {
-               listBox_.setItemSelected(i, true);
-            }
-         }
-         
          container_.add(listBox_);
-         
       }
 
       @Override
@@ -359,10 +333,9 @@ public class RSConnectDeploy extends Composite
                @Override
                public void onResponseReceived(JsArrayString response)
                {
-                  List<String> sessionEnvVars = JsUtil.toList(response);
+                  List<String> envVars = JsUtil.toList(response);
                   EnvironmentVariablesDialog dialog = new EnvironmentVariablesDialog(
-                        sessionEnvVars,
-                        appEnvVars_,
+                        envVars,
                         new OperationWithInput<List<String>>()
                         {
                            @Override
