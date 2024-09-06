@@ -354,7 +354,7 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onClick(ClickEvent arg0)
          {
-            server_.listEnvironmentVariables(new ServerRequestCallback<JsArrayString>()
+            server_.getDeploymentEnvVars(new ServerRequestCallback<JsArrayString>()
             {
                @Override
                public void onResponseReceived(JsArrayString response)

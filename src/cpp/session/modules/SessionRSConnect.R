@@ -13,21 +13,17 @@
 #
 #
 
-.rs.addJsonRpcHandler("list_environment_variables", function()
+.rs.addJsonRpcHandler("get_deployment_env_vars", function()
 {
-  # get all available environment variables
-  vars <- names(Sys.getenv())
-  
-  # only keep variables which might be useful
-  pattern <- "(?:^|[\\b_])(?:user|pass|key|token|pat)(?:$|[\\b_])"
-  vars <- grep(pattern, vars, perl = TRUE, value = TRUE, ignore.case = TRUE)
-  
-  # remove R and RStudio-specific variables
-  pattern <- "^_?(?:RSTUDIO|RS|R)_"
-  vars <- grep(pattern, vars, perl = TRUE, value = TRUE, ignore.case = TRUE, invert = TRUE)
-  
-  # all done
-  vars
+   environFile <- .rs.findEnvironFile()
+   if (!nzchar(environFile))
+      return(character())
+   
+   contents <- readLines(environFile, warn = FALSE)
+   
+   pattern <- "^\\s*([\\w_]+)\\s*="
+   matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
+   gsub("\\s*=.*", "", matchedLines)
 })
 
 .rs.addJsonRpcHandler("forget_rsconnect_deployments", function(sourcePath, outputPath)
@@ -668,3 +664,23 @@
   client$getEnvVars(guid)
 })
 
+.rs.addFunction("findEnvironFile", function()
+{
+   environFile <- Sys.getenv("R_ENVIRON_USER", unset = NA)
+   if (!is.na(environFile))
+      return(environFile)
+   
+   project <- .rs.getProjectDirectory()
+   if (!is.null(project))
+   {
+      projectEnviron <- file.path(project, ".Renviron")
+      if (file.exists(projectEnviron))
+         return(projectEnviron)
+   }
+   
+   userEnviron <- path.expand("~/.Renviron")
+   if (file.exists(userEnviron))
+      return(userEnviron)
+   
+   ""
+})

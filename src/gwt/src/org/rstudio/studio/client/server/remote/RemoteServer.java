@@ -5473,9 +5473,9 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void listEnvironmentVariables(ServerRequestCallback<JsArrayString> resultCallback)
+   public void getDeploymentEnvVars(ServerRequestCallback<JsArrayString> resultCallback)
    {
-      sendRequest(RPC_SCOPE, "list_environment_variables", resultCallback);
+      sendRequest(RPC_SCOPE, "get_deployment_env_vars", resultCallback);
    }
    
    @Override
