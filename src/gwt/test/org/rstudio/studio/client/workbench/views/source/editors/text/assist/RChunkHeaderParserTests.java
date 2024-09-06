@@ -32,7 +32,7 @@ public class RChunkHeaderParserTests extends GWTTestCase
       Map<String, String> pieces = RChunkHeaderParser.parse(header);
       assertTrue(pieces.containsKey("label"));
       assertTrue(pieces.containsKey("echo"));
-      assertTrue(pieces.get("label").contentEquals("label"));
+      assertTrue(pieces.get("label").contentEquals("\"label\""));
       assertTrue(pieces.get("echo").contentEquals("TRUE"));
    }
    
