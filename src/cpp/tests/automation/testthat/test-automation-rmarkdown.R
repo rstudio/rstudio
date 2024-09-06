@@ -245,3 +245,133 @@ test_that("visual editor welcome dialog displays again if don't show again is un
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
+
+test_that("displaying and closing chunk options popup doesn't modify settings", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: "The Title"
+      ---
+      
+      ```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}
+      print("one")
+      ```
+      
+      ```{r}
+      print("two")
+      ```
+       
+      The end.
+   ')
+   
+   id <- remote$documentOpen(".Rmd", contents)
+   editor <- remote$editorGetInstance()
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   
+   checkChunkOption <- function(line, expected, widget)
+   {
+      original <- editor$session$getLine(line)
+      expect_equal(original, expected)
+      remote$domClickElementByNodeId(widget)
+      remote$keyboardExecute("<Escape>")
+      updated <- editor$session$getLine(line)
+      expect_equal(original, updated)
+   }
+   
+   checkChunkOption(
+      8,
+      "```{r}",
+      chunkOptionWidgetIds[[2]])
+   
+   checkChunkOption(
+      4,
+      "```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}",
+      chunkOptionWidgetIds[[1]])
+   
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
+
+test_that("reverting chunk option changes restores original options ", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: "The Title"
+      ---
+      
+      ```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}
+      print("one")
+      ```
+      
+      ```{r}
+      print("two")
+      ```
+       
+      The end.
+   ')
+   
+   id <- remote$documentOpen(".Rmd", contents)
+   editor <- remote$editorGetInstance()
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   
+   checkChunkOption <- function(line, expected, nodeId)
+   {
+      original <- editor$session$getLine(line)
+      expect_equal(original, expected)
+      remote$domClickElementByNodeId(nodeId)
+      remote$domClickElement("#rstudio_chunk_opt_warnings")
+      remote$domClickElement("#rstudio_chunk_opt_messages")
+      remote$domClickElement("#rstudio_chunk_opt_warnings")
+      remote$domClickElement("#rstudio_chunk_opt_messages")
+      remote$jsObjectViaSelector("#rstudio_chunk_opt_name")$focus()
+      remote$domClickElement("#rstudio_chunk_opt_tables")
+      remote$domClickElement("#rstudio_chunk_opt_figuresize")
+      remote$domClickElement("#rstudio_chunk_opt_revert")
+      remote$keyboardExecute("<Escape>")
+      updated <- editor$session$getLine(line)
+      expect_equal(original, updated)
+   }
+   
+   checkChunkOption(
+      8,
+      "```{r}",
+      chunkOptionWidgetIds[[2]])
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   checkChunkOption(
+      4,
+      "```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}",
+      chunkOptionWidgetIds[[1]])
+   
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+
+})
+
+# https://github.com/rstudio/rstudio/issues/6829
+test_that("modifying chunk options via UI doesn't mess up other options", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: "Issue 6829"
+      ---
+      
+      ```{r fig.cap = "a caption"}
+      print("Hello")
+      ```
+   
+      The end.
+      ```
+   ')
+   
+   id <- remote$documentOpen(".Rmd", contents)
+   editor <- remote$editorGetInstance()
+   
+   original <- editor$session$getLine(4)
+   
+   remote$domClickElement(".rstudio_modify_chunk")
+   
+   remote$keyboardExecute("<Escape>")
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
+

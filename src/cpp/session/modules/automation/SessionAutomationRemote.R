@@ -279,6 +279,21 @@
    )
 })
 
+.rs.automation.addRemoteFunction("domClickElementByNodeId", function(nodeId,
+                                                                     objectId = NULL,
+                                                                     verticalOffset = 0L,
+                                                                     horizontalOffset = 0L,
+                                                                     button = "left")
+{
+   objectId <- .rs.nullCoalesce(objectId, {
+      
+      # Get a JavaScript object ID associated with this node.
+      response <- self$client$DOM.resolveNode(nodeId)
+      response$object$objectId
+   })
+   self$domClickElement(NULL, objectId=objectId)
+})
+
 .rs.automation.addRemoteFunction("editorGetInstance", function()
 {
    jsCode <- .rs.heredoc('

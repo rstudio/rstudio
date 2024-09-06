@@ -113,7 +113,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       tbChunkLabel_ = new TextBoxWithCue(constants_.unnamedChunk());
       tbChunkLabel_.addStyleName(RES.styles().textBox());
       tbChunkLabel_.addChangeHandler(changeEvent -> synchronize());
-      tbChunkLabel_.setElementId(ElementIds.CHUNK_OPTIONS_NAME);
+      tbChunkLabel_.setElementId(ElementIds.getElementId(ElementIds.CHUNK_OPTIONS_NAME));
       
       panel_.addHandler(keyUpEvent ->
       {
