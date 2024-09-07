@@ -19,6 +19,7 @@ import org.rstudio.core.client.ConsoleOutputWriterTests;
 import org.rstudio.core.client.ElementIdsTests;
 import org.rstudio.core.client.SafeHtmlUtilTests;
 import org.rstudio.core.client.StringUtilTests;
+import org.rstudio.core.client.TextCursorTests;
 import org.rstudio.core.client.URIUtilsTests;
 import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
@@ -53,6 +54,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(JobManagerTests.class);
       suite.addTestSuite(URIUtilsTests.class);
       suite.addTestSuite(RChunkHeaderParserTests.class);
+      suite.addTestSuite(TextCursorTests.class);
       suite.addTestSuite(SessionScopeTests.class);
       suite.addTestSuite(JobsListTests.class);
       suite.addTestSuite(ElementIdsTests.class);
