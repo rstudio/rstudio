@@ -28,8 +28,7 @@ import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
-// Disabled in v1.3 due to failures. See #4249.
-// import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUiTests;
@@ -53,8 +52,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(TerminalSessionSocketTests.class);
       suite.addTestSuite(JobManagerTests.class);
       suite.addTestSuite(URIUtilsTests.class);
-      // Disabled in v1.3 due to failures. See #4249.
-      // suite.addTestSuite(RChunkHeaderParserTests.class);
+      suite.addTestSuite(RChunkHeaderParserTests.class);
       suite.addTestSuite(SessionScopeTests.class);
       suite.addTestSuite(JobsListTests.class);
       suite.addTestSuite(ElementIdsTests.class);
