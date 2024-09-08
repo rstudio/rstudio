@@ -248,7 +248,7 @@ public class TextCursorTests extends GWTTestCase
       TextCursor cursor = new TextCursor("0123456789abcdef", 17);
       try
       {
-         assertTrue(cursor.contentEquals('\0'));
+         cursor.contentEquals('\0');
          assertEquals("Expected exception to be thrown", "Nope");
       }
       catch (StringIndexOutOfBoundsException e)
@@ -262,7 +262,7 @@ public class TextCursorTests extends GWTTestCase
       TextCursor cursor = new TextCursor("0123456789abcdef", -1);
       try
       {
-         assertTrue(cursor.contentEquals('\0'));
+         cursor.contentEquals('\0');
          assertEquals("Expected exception to be thrown", "Nope");
       }
       catch (StringIndexOutOfBoundsException e)
@@ -441,6 +441,186 @@ public class TextCursorTests extends GWTTestCase
 
    // #endregion
    // #region FwdToMatchingCharacter
+
+   public void testFwdToMatchingCharacterEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertEquals(0, cursor.getIndex());
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testFwdToMatchingCharacterNonSpecialAdjacent()
+   {
+      TextCursor cursor = new TextCursor("XX");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(1, cursor.getIndex());
+   }
+
+   public void testFwdToMatchingCharacterNonSpecialNoMatch()
+   {
+      TextCursor cursor = new TextCursor("X");
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(0, cursor.getIndex());
+      cursor = new TextCursor(" T ", 1);
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(1, cursor.getIndex());
+   }
+
+   public void testFwdToMatchingCharacterNonSpecial()
+   {
+      TextCursor cursor = new TextCursor("XxX");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(2, cursor.getIndex());
+   }
+
+   public void testFwdToMatchingCharacterNonSpecialRepeated()
+   {
+      TextCursor cursor = new TextCursor("zZzZz");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(2, cursor.getIndex());
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(4, cursor.getIndex());
+   }
+
+   public void testFwdToMatchingCharacterBeforeStart()
+   {
+      TextCursor cursor = new TextCursor("zZzZz", -1);
+      try
+      {
+         cursor.fwdToMatchingCharacter();
+         assertEquals("Expected exception to be thrown", "Nope");
+      }
+      catch (StringIndexOutOfBoundsException e)
+      {
+         assertEquals("Exception thrown", "Exception thrown");
+      }
+   }
+
+   public void testFwdToMatchingCharacterAfterEnd()
+   {
+      TextCursor cursor = new TextCursor("01", 3);
+      try
+      {
+         cursor.fwdToMatchingCharacter();
+         assertEquals("Expected exception to be thrown", "Nope");
+      }
+      catch (StringIndexOutOfBoundsException e)
+      {
+         assertEquals("Exception thrown", "Exception thrown");
+      }
+   }
+
+   public void testFwdToMatchingCharacterBrackets()
+   {
+      TextCursor cursor = new TextCursor("()");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(1, cursor.getIndex());
+      cursor = new TextCursor("(  )  ");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(3, cursor.getIndex());
+      cursor = new TextCursor("[]");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(1, cursor.getIndex());
+      cursor = new TextCursor("[  ]  ");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(3, cursor.getIndex());
+      cursor = new TextCursor("{}");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(1, cursor.getIndex());
+      cursor = new TextCursor("{  }  ");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(3, cursor.getIndex());
+    }
+
+   public void testFwdToMatchingCharacterBracketsNoMatch()
+   {
+      TextCursor cursor = new TextCursor("(");
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(0, cursor.getIndex());
+      cursor = new TextCursor("01(23[{}4", 2);
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(2, cursor.getIndex());
+      cursor = new TextCursor("[");
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(0, cursor.getIndex());
+      cursor = new TextCursor("01[23({}4", 2);
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(2, cursor.getIndex());
+      cursor = new TextCursor("{");
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(0, cursor.getIndex());
+      cursor = new TextCursor("01{23([]4", 2);
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(2, cursor.getIndex());
+   }
+
+   public void testFwdToMatchingCharacterNestedBrackets()
+   {
+      TextCursor cursor = new TextCursor("((()))");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(5, cursor.getIndex());
+      cursor = new TextCursor("[[[]]]");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(5, cursor.getIndex());
+      cursor = new TextCursor("{{{}}}");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(5, cursor.getIndex());
+   }
+
+   public void testFwdToMatchingCharacterNestedBracketsAssorted()
+   {
+      TextCursor cursor = new TextCursor("({[hello world]})");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(16, cursor.getIndex());
+    }
+
+   public void testFwdToMatchingCharacterQuotes()
+   {
+      TextCursor cursor = new TextCursor("''");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(1, cursor.getIndex());
+      cursor = new TextCursor("'  '  ");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(3, cursor.getIndex());
+      cursor = new TextCursor(" \"\"", 1);
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(2, cursor.getIndex());
+      cursor = new TextCursor("\"  \"  ");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(3, cursor.getIndex());
+      cursor = new TextCursor("   ``   ", 3);
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(4, cursor.getIndex());
+      cursor = new TextCursor("`  `  ");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(3, cursor.getIndex());
+    }
+
+   public void testFwdToMatchingCharacterEscapedQuotes()
+   {
+      TextCursor cursor = new TextCursor("'\\''");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(3, cursor.getIndex());
+      cursor = new TextCursor("'\\'\" '  ");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(5, cursor.getIndex());
+      assertTrue(cursor.contentEquals('\''));
+      cursor = new TextCursor("\"\\\"\"");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(3, cursor.getIndex());
+      assertTrue(cursor.contentEquals('"'));
+      cursor = new TextCursor("\"  \\\"  \"");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(7, cursor.getIndex());
+      cursor = new TextCursor("   \"\\\"\"   ", 3);
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(6, cursor.getIndex());
+      assertTrue(cursor.contentEquals('\"'));
+      cursor = new TextCursor("\" \\\" \"  ");
+      assertTrue(cursor.fwdToMatchingCharacter());
+      assertEquals(5, cursor.getIndex());
+    }
 
    // #endregion
    // #region BwdToMatchingCharacter
