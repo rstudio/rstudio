@@ -282,7 +282,9 @@ test_that("displaying and closing chunk options popup doesn't modify settings", 
       8,
       "```{r}",
       chunkOptionWidgetIds[[2]])
-   
+
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+
    checkChunkOption(
       4,
       "```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}",
@@ -331,12 +333,14 @@ test_that("displaying chunk options popup and applying without making changes do
       8,
       "```{r}",
       chunkOptionWidgetIds[[2]])
+
    chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+
    checkChunkOption(
       4,
       "```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}",
       chunkOptionWidgetIds[[1]])
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   # chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
    # checkChunkOption(
    #    12,
    #    "```{r fig.cap = \"a caption\"}", # https://github.com/rstudio/rstudio/issues/6829 TODO
