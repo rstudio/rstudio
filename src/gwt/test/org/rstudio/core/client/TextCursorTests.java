@@ -24,6 +24,8 @@ public class TextCursorTests extends GWTTestCase
       return "org.rstudio.studio.RStudioTests";
    }
 
+   // #region Clone, Get and Set Index
+
    public void testClone()
    {
       TextCursor cursor = new TextCursor("0123456789abcdef");
@@ -78,6 +80,34 @@ public class TextCursorTests extends GWTTestCase
       cursor.setIndex(-5);
       assertEquals(-5, cursor.getIndex());
    }
+
+   public void testNonZeroStartingIndex()
+   {
+      TextCursor cursor = new TextCursor("0123456789", 0);
+      assertEquals(0, cursor.getIndex());
+      cursor = new TextCursor("0123456789", 5);
+      assertEquals(5, cursor.getIndex());
+      assertEquals('5', cursor.peek());
+      cursor = new TextCursor("0123456789", 10);
+      assertEquals(10, cursor.getIndex());
+      assertEquals('\0', cursor.peek());
+      cursor = new TextCursor("0123456789", 9);
+      assertEquals(9, cursor.getIndex());
+      assertEquals('9', cursor.peek());
+   }
+
+   public void testNegativeStartingIndex()
+   {
+      TextCursor cursor = new TextCursor("0123456789", -5);
+      assertEquals(-5, cursor.getIndex());
+      assertEquals('\0', cursor.peek());
+      assertTrue(cursor.advance(1));
+      assertEquals(-4, cursor.getIndex());
+      assertEquals('\0', cursor.peek());
+   }
+
+   // #endregion
+   // #region Peek
 
    public void testEmptyPeek()
    {
@@ -180,6 +210,9 @@ public class TextCursorTests extends GWTTestCase
       assertEquals('\0', cursor.peek(-4));
    }
 
+   // #endregion
+   // #region ContentEquals
+
    public void testContentEqualsEmpty()
    {
       TextCursor cursor = new TextCursor("");
@@ -203,6 +236,43 @@ public class TextCursorTests extends GWTTestCase
       TextCursor cursor = new TextCursor("0123456789abcdef", 15);
       assertTrue(cursor.contentEquals('f'));
    }
+
+   public void testContentEqualsNullTerminator()
+   {
+      TextCursor cursor = new TextCursor("0123456789abcdef", 16);
+      assertFalse(cursor.contentEquals('\0'));
+   }
+
+   public void testContentEqualsBeyondEnd()
+   {
+      TextCursor cursor = new TextCursor("0123456789abcdef", 17);
+      try
+      {
+         assertTrue(cursor.contentEquals('\0'));
+         assertEquals("Expected exception to be thrown", "Nope");
+      }
+      catch (StringIndexOutOfBoundsException e)
+      {
+         assertEquals("Exception thrown", "Exception thrown");
+      }
+   }
+
+   public void testContentEqualsBeforeStart()
+   {
+      TextCursor cursor = new TextCursor("0123456789abcdef", -1);
+      try
+      {
+         assertTrue(cursor.contentEquals('\0'));
+         assertEquals("Expected exception to be thrown", "Nope");
+      }
+      catch (StringIndexOutOfBoundsException e)
+      {
+         assertEquals("Exception thrown", "Exception thrown");
+      }
+   }
+
+   // #endregion
+   // #region Advance
 
    public void testEmptyStringAdvance()
    {
@@ -261,30 +331,8 @@ public class TextCursorTests extends GWTTestCase
       assertEquals(6, cursor.getIndex());
    }
 
-   public void testNonZeroStartingIndex()
-   {
-      TextCursor cursor = new TextCursor("0123456789", 0);
-      assertEquals(0, cursor.getIndex());
-      cursor = new TextCursor("0123456789", 5);
-      assertEquals(5, cursor.getIndex());
-      assertEquals('5', cursor.peek());
-      cursor = new TextCursor("0123456789", 10);
-      assertEquals(10, cursor.getIndex());
-      assertEquals('\0', cursor.peek());
-      cursor = new TextCursor("0123456789", 9);
-      assertEquals(9, cursor.getIndex());
-      assertEquals('9', cursor.peek());
-   }
-
-   public void testNegativeStartingIndex()
-   {
-      TextCursor cursor = new TextCursor("0123456789", -5);
-      assertEquals(-5, cursor.getIndex());
-      assertEquals('\0', cursor.peek());
-      assertTrue(cursor.advance(1));
-      assertEquals(-4, cursor.getIndex());
-      assertEquals('\0', cursor.peek());
-   }
+   // #endregion
+   // #region MoveToNextCharacter
 
    public void testMoveToNextCharacter()
    {
@@ -297,8 +345,17 @@ public class TextCursorTests extends GWTTestCase
       assertEquals('3', cursor.peek());
       assertTrue(cursor.moveToNextCharacter());
       assertEquals('\0', cursor.peek());
+      assertEquals(4, cursor.getIndex());
       assertFalse(cursor.moveToNextCharacter());
       assertEquals('\0', cursor.peek());
+      assertEquals(4, cursor.getIndex());
+   }
+
+   public void testMoveToNextCharacterEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertEquals(0, cursor.getIndex());
+      assertFalse(cursor.moveToNextCharacter());
    }
 
    public void testMoveToNextCharacterBeforeStart()
@@ -315,5 +372,79 @@ public class TextCursorTests extends GWTTestCase
       assertTrue(cursor.moveToNextCharacter());
       assertEquals('1', cursor.peek());
    }
+
+   public void testMoveToNextCharacterAfterEnd()
+   {
+      TextCursor cursor = new TextCursor("0123", 8);
+      assertEquals(8, cursor.getIndex());
+      assertEquals('\0', cursor.peek());
+      assertTrue(cursor.moveToNextCharacter());
+      assertEquals(9, cursor.getIndex());
+      assertEquals('\0', cursor.peek());
+   }
+
+   // #endregion
+   // #region MoveToPreviousCharacter
+
+   public void testMoveToPreviousCharacter()
+   {
+      TextCursor cursor = new TextCursor("0123", 3);
+      assertEquals('3', cursor.peek());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals('2', cursor.peek());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals('1', cursor.peek());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals('0', cursor.peek());
+      assertFalse(cursor.moveToPreviousCharacter());
+      assertEquals('0', cursor.peek());
+   }
+
+   public void testMoveToPreviousCharacterEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertEquals('\0', cursor.peek());
+      assertFalse(cursor.moveToPreviousCharacter());
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testMoveToPreviousCharacterBeforeStart()
+   {
+      TextCursor cursor = new TextCursor("0123", -2);
+      assertEquals(-2, cursor.getIndex());
+      assertEquals('\0', cursor.peek());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals(-3, cursor.getIndex());
+      assertEquals('\0', cursor.peek());
+   }
+
+   public void testMoveToPreviousCharacterAfterEnd()
+   {
+      TextCursor cursor = new TextCursor("0123", 6);
+      assertEquals('\0', cursor.peek());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals(5, cursor.getIndex());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals(4, cursor.getIndex());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals(3, cursor.getIndex());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals(2, cursor.getIndex());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals(1, cursor.getIndex());
+      assertTrue(cursor.moveToPreviousCharacter());
+      assertEquals(0, cursor.getIndex());
+      assertEquals('0', cursor.peek());
+      assertFalse(cursor.moveToPreviousCharacter());
+      assertEquals(0, cursor.getIndex());
+    }
+
+   // #endregion
+   // #region FwdToMatchingCharacter
+
+   // #endregion
+   // #region BwdToMatchingCharacter
+
+   // #endregion
 
 }
