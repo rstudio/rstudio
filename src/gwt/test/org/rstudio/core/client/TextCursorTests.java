@@ -1016,23 +1016,362 @@ public class TextCursorTests extends GWTTestCase
    // #endregion
    // #region FindNext
 
+   public void testFindNextEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertEquals(-1, cursor.findNext('\0'));
+      assertEquals(-1, cursor.findNext('a'));
+      assertEquals(-1, cursor.findNext('('));
+      assertEquals(-1, cursor.findNext('4'));
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testFindNextNoNext()
+   {
+      TextCursor cursor = new TextCursor("a");
+      assertEquals(-1, cursor.findNext('a'));
+   }
+
+   public void testFindNext()
+   {
+      TextCursor cursor = new TextCursor("012345012345");
+      assertEquals(6, cursor.findNext('0'));
+      assertEquals(0, cursor.getIndex());
+      assertEquals(1, cursor.findNext('1'));
+      cursor.setIndex(3);
+      assertEquals(8, cursor.findNext('2'));
+   }
+
+   public void testFindNextWhitespace()
+   {
+      TextCursor cursor = new TextCursor("012 4567\t12345");
+      assertEquals(3, cursor.findNext(' '));
+      assertEquals(8, cursor.findNext('\t'));
+   }
+
+   public void testFindNextNoMatches()
+   {
+      TextCursor cursor = new TextCursor("012345012345");
+      assertEquals(-1, cursor.findNext('a'));
+      assertEquals(-1, cursor.findNext('$'));
+   }
+
+   public void testFindNextAtEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 6);
+      assertEquals(-1, cursor.findNext('\0'));
+   }
+
+   public void testFindNextBeyondEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 7);
+      assertEquals(-1, cursor.findNext('\0'));
+   }
+
    // #endregion
-   // #region Consume
+   // #region ConsumeChar
+
+   public void testConsumeEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertFalse(cursor.consume('a'));
+      assertFalse(cursor.consume('7'));
+      assertFalse(cursor.consume('('));
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testConsumeFirstCharNotMatched()
+   {
+      TextCursor cursor = new TextCursor("zazz");
+      assertFalse(cursor.consume('a'));
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testConsumeFirstCharMatched()
+   {
+      TextCursor cursor = new TextCursor("zzzz");
+      assertTrue(cursor.consume('z'));
+      assertEquals(1, cursor.getIndex());
+      assertTrue(cursor.consume('z'));
+      assertEquals(2, cursor.getIndex());
+   }
+
+   public void testConsumeMiddleCharMatched()
+   {
+      TextCursor cursor = new TextCursor("zabz", 1);
+      assertTrue(cursor.consume('a'));
+      assertEquals(2, cursor.getIndex());
+      assertTrue(cursor.consume('b'));
+      assertEquals(3, cursor.getIndex());
+   }
+
+   public void testConsumeLastCharMatched()
+   {
+      TextCursor cursor = new TextCursor("zabz", 3);
+      assertTrue(cursor.consume('z'));
+      assertEquals(4, cursor.getIndex());
+   }
+
+   public void testConsumeAtEnd()
+   {
+      TextCursor cursor = new TextCursor("zabz", 4);
+      assertFalse(cursor.consume('\0'));
+   }
+
+   public void testConsumeBeyondEnd()
+   {
+      TextCursor cursor = new TextCursor("zabz", 5);
+      try
+      {
+         cursor.consume('\0');
+         assertEquals("Expected exception to be thrown", "Nope");
+      }
+      catch (StringIndexOutOfBoundsException e)
+      {
+         assertEquals("Exception thrown", "Exception thrown");
+      }
+   }
+
+   public void testConsumeBeforeStart()
+   {
+      TextCursor cursor = new TextCursor("zabz", -1);
+      try
+      {
+         cursor.consume('\0');
+         assertEquals("Expected exception to be thrown", "Nope");
+      }
+      catch (StringIndexOutOfBoundsException e)
+      {
+         assertEquals("Exception thrown", "Exception thrown");
+      }
+   }
+
+   // #endregion
+   // #region ConsumeString
+
+   public void testConsumeStringEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertTrue(cursor.consume(""));
+      assertFalse(cursor.consume(" "));
+      assertFalse(cursor.consume("hello"));
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testConsumeStringOneCharStart()
+   {
+      TextCursor cursor = new TextCursor("012345");
+      assertTrue(cursor.consume("0"));
+      assertEquals(1, cursor.getIndex());
+   }
+
+   public void testConsumeStringOneCharMiddle()
+   {
+      TextCursor cursor = new TextCursor("012345", 3);
+      assertTrue(cursor.consume("3"));
+      assertEquals(4, cursor.getIndex());
+   }
+
+   public void testConsumeStringOneCharEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 5);
+      assertTrue(cursor.consume("5"));
+      assertEquals(6, cursor.getIndex());
+   }
+
+   public void testConsumeStringStart()
+   {
+      TextCursor cursor = new TextCursor("012345");
+      assertTrue(cursor.consume("0123"));
+      assertEquals(4, cursor.getIndex());
+   }
+
+   public void testConsumeStringMiddle()
+   {
+      TextCursor cursor = new TextCursor("012345", 1);
+      assertTrue(cursor.consume("1234"));
+      assertEquals(5, cursor.getIndex());
+   }
+
+   public void testConsumeStringAtEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 3);
+      assertTrue(cursor.consume("345"));
+      assertEquals(6, cursor.getIndex());
+   }
+
+   public void testConsumeStringPartialStart()
+   {
+      TextCursor cursor = new TextCursor("012345");
+      assertFalse(cursor.consume("01ab"));
+      assertEquals(2, cursor.getIndex());
+   }
+
+   public void testConsumeStringPartialMiddle()
+   {
+      TextCursor cursor = new TextCursor("012345", 3);
+      assertFalse(cursor.consume("34b"));
+      assertEquals(5, cursor.getIndex());
+   }
+
+   public void testConsumeStringPartialAtEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 4);
+      assertFalse(cursor.consume("45a"));
+      assertEquals(6, cursor.getIndex());
+   }
+
+   public void testConsumeStringCursorAtEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 6);
+      assertFalse(cursor.consume("123"));
+   }
+
+   public void testConsumeStringBeyondEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 6);
+      assertFalse(cursor.consume("\0"));
+   }
+
+   public void testConsumeStringBeforeStart()
+   {
+      TextCursor cursor = new TextCursor("012345", -1);
+      try
+      {
+         cursor.consume("\0");
+         assertEquals("Expected exception to be thrown", "Nope");
+      }
+      catch (StringIndexOutOfBoundsException e)
+      {
+         assertEquals("Exception thrown", "Exception thrown");
+      }
+   }
 
    // #endregion
    // #region consumeUntilChar
 
+   public void testConsumeUntilCharEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertFalse(cursor.consumeUntil('a'));
+      assertFalse(cursor.consumeUntil('\0'));
+   }
+
+   public void testConsumeUntilCharSingleMatchingChar()
+   {
+      TextCursor cursor = new TextCursor("a");
+      assertTrue(cursor.consumeUntil('a'));
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testConsumeUntilCharMatch()
+   {
+      TextCursor cursor = new TextCursor("0123456");
+      assertTrue(cursor.consumeUntil('3'));
+      assertEquals(3, cursor.getIndex());
+   }
+
+   public void testConsumeUntilCharLastCharMatch()
+   {
+      TextCursor cursor = new TextCursor("0123456");
+      assertTrue(cursor.consumeUntil('6'));
+      assertEquals(6, cursor.getIndex());
+   }
+
+   public void testConsumeUntilCharAtEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 6);
+      assertFalse(cursor.consumeUntil('a'));
+      assertFalse(cursor.consumeUntil('\0'));
+   }
+
+   public void testConsumeUntilCharPastEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 9);
+      assertFalse(cursor.consumeUntil('a'));
+      assertFalse(cursor.consumeUntil('\0'));
+   }
+
+   public void testConsumeUntilCharBeforeStart()
+   {
+      TextCursor cursor = new TextCursor("012345", -2);
+      assertFalse(cursor.consumeUntil('a'));
+      assertFalse(cursor.consumeUntil('\0'));
+   }
+
    // #endregion
    // #region consumeUntilString
+
+   public void testConsumeUntilStringEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertFalse(cursor.consumeUntil("abc"));
+      assertFalse(cursor.consumeUntil("as\0asd"));
+   }
+
+   public void testConsumeUntilStringSingleMatchingChar()
+   {
+      TextCursor cursor = new TextCursor("a");
+      assertTrue(cursor.consumeUntil("a"));
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testConsumeUntilStringMatch()
+   {
+      TextCursor cursor = new TextCursor("0123456");
+      assertTrue(cursor.consumeUntil("345"));
+      assertEquals(3, cursor.getIndex());
+   }
+
+   public void testConsumeUntilStringMatchAtEnd()
+   {
+      TextCursor cursor = new TextCursor("012345");
+      assertTrue(cursor.consumeUntil("345"));
+      assertEquals(3, cursor.getIndex());
+   }
+
+   public void testConsumeUntilStringAtEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 6);
+      assertFalse(cursor.consumeUntil("\0"));
+   }
+
+   public void testConsumeUntilStringPastEnd()
+   {
+      TextCursor cursor = new TextCursor("012345", 9);
+      assertFalse(cursor.consumeUntil("a"));
+      assertFalse(cursor.consumeUntil("\0"));
+   }
+
+   public void testConsumeUntilStringBeforeStart()
+   {
+      TextCursor cursor = new TextCursor("012345", -2);
+      assertFalse(cursor.consumeUntil("a"));
+      assertFalse(cursor.consumeUntil("\0"));
+   }
 
    // #endregion
    // #region consumeUntilRegex
 
-   // #endregion
-   // #region GetData
+   public void testConsumeUntilRegExEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertFalse(cursor.consumeUntilRegex("ABC"));
+   }
+
+   public void testConsumeUntilRegExNoMatch()
+   {
+      TextCursor cursor = new TextCursor("helloABCDEFGworld");
+      assertFalse(cursor.consumeUntilRegex("abcdefg"));
+   }
+
+   public void testConsumeUntilRegExMatch()
+   {
+      TextCursor cursor = new TextCursor("helloABCDEFGworld");
+      assertTrue(cursor.consumeUntilRegex("ABCDEFG"));
+      assertEquals(5, cursor.getIndex());
+   }
 
    // #endregion
-   // #region IsBracketOrQuote
 
-   // #endregion
 }
