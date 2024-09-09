@@ -38,7 +38,7 @@
                   <ui:attribute name="text" key="addMoreButtonText"/>
               </rw:ThemedButton>
               <rw:ThemedButton ui:field="envVarsButton_" 
-                               text="Environment variables..."
+                               text="Add environment variables..."
                                visible="true">
                   <ui:attribute name="text" key="addEnvironmentVariablesButtonText"/>
               </rw:ThemedButton>

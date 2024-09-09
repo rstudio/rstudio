@@ -493,7 +493,7 @@ public class RSConnectDeploy extends Composite
          
          urlAnchor_.setText(url);
          urlAnchor_.setHref(url);
-         appEnvVars_ = JsUtil.toList(info.getEnvVars());
+         // appEnvVars_ = JsUtil.toList(info.getEnvVars());
          updateEnvVarsLabel();
       }
       
