@@ -1430,8 +1430,32 @@ public class RSConnectDeploy extends Composite
       }
       else
       {
-         envVarsLabel_.setText(constants_.envVarsPublishMessage(appEnvVars_.size()));
+         envVarsLabel_.setText(constants_.envVarsPublishMessage(appEnvVars_.size(), appContentType()));
          envVarsLabel_.setVisible(true);
+      }
+   }
+   
+   private String appContentType()
+   {
+      switch (contentType_)
+      {
+      case RSConnect.CONTENT_TYPE_NONE:
+      case RSConnect.CONTENT_TYPE_APP:
+      case RSConnect.CONTENT_TYPE_APP_SINGLE:
+         return "application";
+      case RSConnect.CONTENT_TYPE_PLOT:
+      case RSConnect.CONTENT_TYPE_HTML:
+         return "plot";
+      case RSConnect.CONTENT_TYPE_PRES:
+         return "presentation";
+      case RSConnect.CONTENT_TYPE_DOCUMENT:
+         return "document";
+      case RSConnect.CONTENT_TYPE_PLUMBER_API:
+         return "plumber API";
+      case RSConnect.CONTENT_TYPE_QUARTO_WEBSITE:
+         return "Quarto website";
+      default:
+         return "application";
       }
    }
 
