@@ -200,6 +200,10 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
       if (error && !isFileNotFoundError(error))
          return error;
 
+      // bail if file is empty
+      if (contents.empty())
+         return Success();
+      
       // parse JSON
       json::Object value;
       error = value.parse(contents);
