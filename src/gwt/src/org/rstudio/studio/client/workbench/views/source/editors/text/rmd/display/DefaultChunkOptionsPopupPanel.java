@@ -128,8 +128,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       return null;
    }
 
-   public static String extractChunkPreamble(String extractedChunkHeader,
-                                             String modeId)
+   private static String extractChunkPreamble(String extractedChunkHeader,
+                                              String modeId)
    {
       if (modeId == "mode/sweave")
          return "";
