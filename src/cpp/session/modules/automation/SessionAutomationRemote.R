@@ -291,7 +291,7 @@
       response <- self$client$DOM.resolveNode(nodeId)
       response$object$objectId
    })
-   self$domClickElement(NULL, objectId=objectId)
+   self$domClickElement(NULL, objectId = objectId)
 })
 
 .rs.automation.addRemoteFunction("editorGetInstance", function()
