@@ -43,7 +43,11 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    protected void initOptions(Command afterInit)
    {
       originalLine_ = display_.getLine(position_.getRow());
-      parseChunkHeader(originalLine_, originalChunkOptions_);
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      parseChunkHeader(originalLine_, display_.getModeId(), originalChunkOptions_, extraInfo);
+      chunkPreamble_ = extraInfo.chunkPreamble;
+      if (!StringUtil.isNullOrEmpty(extraInfo.chunkLabel))
+         tbChunkLabel_.setText(extraInfo.chunkLabel);
       for (Map.Entry<String, String> pair : originalChunkOptions_.entrySet())
          chunkOptions_.put(pair.getKey(), pair.getValue());
 
@@ -124,8 +128,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       return null;
    }
 
-   private String extractChunkPreamble(String extractedChunkHeader,
-                                       String modeId)
+   public static String extractChunkPreamble(String extractedChunkHeader,
+                                             String modeId)
    {
       if (modeId == "mode/sweave")
          return "";
@@ -144,10 +148,23 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       return label;
    }
 
-   private void parseChunkHeader(String line, HashMap<String, String> chunkOptions)
+   /**
+    * Supplemental information returned by parseChunkHeader()
+    */
+   public static class ChunkHeaderInfo
    {
-      String modeId = display_.getModeId();
+      public String chunkPreamble;
+      public String chunkLabel;
+   }
 
+   /**
+    * TODO: Consider consolidating parseChunkHeader() and the RChunkHeaderParser class.
+    */
+   public static void parseChunkHeader(String line,
+                                       String modeId,
+                                       HashMap<String, String> chunkOptions,
+                                       ChunkHeaderInfo extraInfo)
+   {
       Pattern pattern = null;
       if (modeId == "mode/rmarkdown")
          pattern = RegexUtil.RE_RMARKDOWN_CHUNK_BEGIN;
@@ -164,11 +181,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (match == null) return;
 
       String extracted = match.getGroup(1);
-      chunkPreamble_ = extractChunkPreamble(extracted, modeId);
+      extraInfo.chunkPreamble = extractChunkPreamble(extracted, modeId);
 
-      String chunkLabel = ChunkContextUi.extractChunkLabel(extracted);
-      if (!StringUtil.isNullOrEmpty(chunkLabel))
-         tbChunkLabel_.setText(chunkLabel);
+      extraInfo.chunkLabel = ChunkContextUi.extractChunkLabel(extracted);
 
       // if we had a chunk label, then we want to navigate our cursor to
       // the first comma in the chunk header; otherwise, we start at the
@@ -177,7 +192,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       //    ```{r message=FALSE}
       //
       // ie, those with no comma after the engine used
-      int argsStartIdx = StringUtil.isNullOrEmpty(chunkLabel)
+      int argsStartIdx = StringUtil.isNullOrEmpty(extraInfo.chunkLabel)
             ? extracted.indexOf(' ')
             : extracted.indexOf(',');
 
