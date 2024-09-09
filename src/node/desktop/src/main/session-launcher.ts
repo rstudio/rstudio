@@ -388,7 +388,6 @@ export class SessionLauncher {
   }
 
   onRSessionExited(): void {
-
     // if this is a verify-installation session then just quit
     if (appState().runDiagnostics) {
       this.mainWindow?.quit();
@@ -597,6 +596,11 @@ export class SessionLauncher {
         setenv('RSTUDIO_AUTOMATION_ROOT', projectRoot);
         setenv('RSTUDIO_AUTOMATION_ARGS', process.cwd());
       }
+    }
+
+    // if we're an automation agent, forward that to the R session
+    if (app.commandLine.hasSwitch('automation-agent')) {
+      argList.push('--automation-agent');
     }
 
     // In Windows development builds, move the session executable

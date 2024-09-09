@@ -1000,7 +1000,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    authors <- getDevtoolsOption(
       "Authors@R",
-      authorsDefault,
+      gsub("\n", "\n  ", authorsDefault, fixed = TRUE),
       collapse = "\n"
    )
    
@@ -1018,7 +1018,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       "Authors@R" = authors,
       Description = c(
          "More about what it does (maybe more than one line).",
-         "Use four spaces when indenting paragraphs within the Description."
+         "Continuation lines should be indented."
       ),
       License = license,
       Encoding = "UTF-8",

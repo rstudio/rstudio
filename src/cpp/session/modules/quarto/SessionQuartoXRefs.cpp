@@ -163,27 +163,6 @@ json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename
    return xrefs;
 }
 
-FilePath quartoPandocPath(const QuartoConfig& config)
-{
-#ifndef WIN32
-   std::string target = "pandoc";
-#else
-   std::string target = "pandoc.exe";
-#endif
-
-   // find quarto pandoc (it could be directly in the bin_path or it could be in the "tools"dir)
-   FilePath quartoPandoc = FilePath(config.bin_path).completeChildPath(target);
-   if (!quartoPandoc.exists())
-   {
-      FilePath quartoTools = FilePath(config.bin_path).completeChildPath("tools");
-      if (quartoTools.exists())
-      {
-         quartoPandoc = quartoTools.completeChildPath(target);
-      }
-   }
-  return quartoPandoc;
-}
-
 json::Array indexSourceFile(const std::string& contents, const std::string& filename)
 {
    QuartoConfig config = quartoConfig();
@@ -255,14 +234,13 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
    args.push_back(core::string_utils::utf8ToSystem(dataDirPath.getAbsolutePath()));
 
    core::system::ProcessResult result;
-
    error = module_context::runPandoc(
-      quartoPandocPath(config).getAbsolutePath(),
-      args,
-      contents,
-      options,
-      &result
-   );
+            config.pandoc_path,
+            args,
+            contents,
+            options,
+            &result);
+   
    if (!error)
    {
       if (result.exitStatus == EXIT_SUCCESS)

@@ -16,6 +16,8 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.PressedValue;
 import com.google.gwt.aria.client.Roles;
+
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -31,10 +33,12 @@ public class LatchingToolbarButton extends ToolbarButton
    public LatchingToolbarButton(String text, 
                                 String title,
                                 boolean textIndicatesState,
+                                String cssClass, // for automation
                                 ImageResource leftImage,
                                 ClickHandler clickHandler)
    {
       super(text, title, leftImage, clickHandler);
+      cssClass_ = cssClass;
       textIndicatesState_ = textIndicatesState;
       if (!textIndicatesState_)
          Roles.getButtonRole().setAriaPressedState(getElement(), PressedValue.FALSE);
@@ -61,7 +65,15 @@ public class LatchingToolbarButton extends ToolbarButton
          getElement().removeClassName(ThemeStyles.INSTANCE.toolbarButtonLatched());
       }
    }
-   
+
+   @Override
+   protected void onAttach()
+   {
+      super.onAttach();
+      ClassIds.assignClassId(getElement(), cssClass_);
+   }
+
    private boolean latched_ = false;
    private boolean textIndicatesState_;
+   private String cssClass_;
 }

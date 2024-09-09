@@ -501,17 +501,13 @@ var RCodeModel = function(session, tokenizer,
             addDplyrArguments(clone.cloneCursor(), data, tokenCursor, value);
 
          // Move off of identifier, on to new infix operator.
-         // Note that we may already be at the start of the document,
-         // so check for that.
+         // If this fails (e.g. we're already at the start of the document)
+         // then just return the associated data object.
          if (!clone.moveToPreviousToken())
          {
-            if (clone.$row === 0 && clone.$offset === 0)
-            {
-               tokenCursor.$row = 0;
-               tokenCursor.$offset = 0;
-               return data;
-            }
-            return false;
+            tokenCursor.$row = clone.$row;
+            tokenCursor.$offset = clone.$offset;
+            return data;
          }
 
          // Move over '::' qualifiers

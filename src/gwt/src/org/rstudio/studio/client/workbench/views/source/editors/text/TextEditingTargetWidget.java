@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -628,6 +629,7 @@ public class TextEditingTargetWidget
             ToolbarButton.NoText,
             ToolbarButton.NoTitle,
             false, /* textIndicatesState */
+            ClassIds.SOURCE_OUTLINE_TOGGLE,
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
             event -> {
                final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
@@ -741,6 +743,7 @@ public class TextEditingTargetWidget
       AppCommand cmdOutline = commands_.toggleDocumentOutline();
       toggleVisualModeOutlineButton_ = new LatchingToolbarButton(cmdOutline.getButtonLabel(),
             ToolbarButton.NoTitle, false, /* textIndicatesState */
+            ClassIds.VISUAL_OUTLINE_TOGGLE,
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()), event -> {
                target_.setPreferredOutlineWidgetVisibility(
                      !target_.getPreferredOutlineWidgetVisibility());
@@ -882,8 +885,6 @@ public class TextEditingTargetWidget
       boolean isMarkdown = editor_.getFileType().isMarkdown();
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
-      
-      boolean canReformatDocument = fileType.isR() || fileType.isRmd() || fileType.isQuartoMarkdown();
       
       panel_.showSecondaryToolbar(isMarkdown);
 

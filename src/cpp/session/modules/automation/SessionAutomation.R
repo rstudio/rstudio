@@ -34,7 +34,7 @@
 
 .rs.addFunction("automation.installRequiredPackages", function()
 {
-   packages <- c("here", "httr", "later", "processx", "ps", "usethis", "websocket", "withr", "xml2")
+   packages <- c("here", "httr", "later", "processx", "ps", "styler", "usethis", "websocket", "withr", "xml2")
    pkgLocs <- find.package(packages, quiet = TRUE)
    if (length(packages) == length(pkgLocs))
       return()
@@ -224,6 +224,21 @@
    )
 })
 
+.rs.addFunction("automation.killAutomationServer", function(...)
+{
+   procs <- subset(ps::ps(), name == "rserver")
+   for (i in seq_len(nrow(procs)))
+   {
+      proc <- procs[i, ]
+      conns <- ps::ps_connections(proc$ps_handle[[1L]])
+      if (8788L %in% conns$lport)
+      {
+         handle <- ps::ps_handle(pid = proc$pid)
+         return(ps::ps_kill(handle))
+      }
+   }
+})
+
 .rs.addFunction("automation.ensureRunningServerInstance", function()
 {
    # Check and see if we already have an rserver instance listening.
@@ -242,15 +257,16 @@
    parentEnv <- ps::ps_environ(parentHandle)
    parentPwd <- parentEnv[["PWD"]]
    automationScript <- file.path(parentPwd, "rserver-automation")
-   if (file.exists(automationScript))
-   {
-      message("-- Starting rserver-automation ...")
-      withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
-   }
-   else
-   {
+   if (!file.exists(automationScript))
       stop("rserver does not appear to be running on port 8788")
-   }
+   
+   message("-- Starting rserver-automation ...")
+   withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
+   
+   # Kill the process on exit
+   reg.finalizer(globalenv(), .rs.automation.killAutomationServer, onexit = TRUE)
+   
+   
 })
 
 .rs.addFunction("automation.initialize", function(appPath = NULL,
@@ -343,7 +359,7 @@
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", tempdir()),
-      if (mode == "desktop") "--automation-agent",
+      if (mode == "desktop") c("--automation-agent"),
       if (mode == "server") c(
          "--no-default-browser-check",
          "--no-first-run",
@@ -577,11 +593,16 @@
                                            automationMode = NULL,
                                            gitRef = NULL)
 {
+   on.exit(.rs.automation.onFinishedRunningAutomation(), add = TRUE)
+   
    # Resolve the project root. Note that test are expected to be found
    # within the 'src/cpp/session/automation' sub-directory of this path.
    projectRoot <- .rs.nullCoalesce(projectRoot, {
       Sys.getenv("RSTUDIO_AUTOMATION_ROOT", unset = NA)
    })
+   
+   # Resolve the report file from session options if provided.
+   reportFile <- .rs.nullCoalesce(reportFile, .rs.automation.reportFile())
    
    # If the path to a test directory was provided, use that.
    if (!is.na(projectRoot))
@@ -673,4 +694,19 @@
       defaultMode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
       Sys.getenv("RSTUDIO_AUTOMATION_MODE", unset = defaultMode)
    })
+})
+
+.rs.addFunction("automation.reportFile", function()
+{
+   .Call("rs_automationReportFile", PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("automation.onFinishedRunningAutomation", function()
+{
+   isJenkins <- Sys.getenv("JENKINS_URL", unset = NA)
+   if (!is.na(isJenkins))
+      quit(status = 0L)
+   
+   message("- Automated tests have finished running.")
+   message("- You can now close this instance of RStudio.")
 })

@@ -22,17 +22,17 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FocusWidget;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 
 public class SmallButton extends FocusWidget
-   implements HasClickHandlers
 {
    interface MyBinder extends UiBinder<Element, SmallButton> {}
    private static final MyBinder binder = GWT.create(MyBinder.class);
@@ -64,6 +64,12 @@ public class SmallButton extends FocusWidget
    public SmallButton(String text)
    {
       this(text, false);
+   }
+
+   public SmallButton(String text, final String id)
+   {
+      this(text, false);
+      elementId_ = id;
    }
 
    public SmallButton(String text, boolean asHtml)
@@ -105,6 +111,16 @@ public class SmallButton extends FocusWidget
    {
       ((ButtonElement)getElement().cast()).click();
    }
+
+   @Override
+   protected void onAttach()
+   {
+      super.onAttach();
+      if (!StringUtil.isNullOrEmpty(elementId_))
+         ElementIds.assignElementId(this, elementId_);
+   }
+
+   private String elementId_;
 
    @UiField
    DivElement content_;

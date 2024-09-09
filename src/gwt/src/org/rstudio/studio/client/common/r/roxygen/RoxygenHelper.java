@@ -687,7 +687,7 @@ public class RoxygenHelper
                   "#' Title\n" +
                   "#'\n" +
                   roxygenParams +
-                  "#' @return\n" +
+                  "#' @returns\n" +
                   "#' @export\n" +
                   "#'\n" +
                   "#' @examples\n";

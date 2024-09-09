@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
@@ -112,6 +113,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       tbChunkLabel_ = new TextBoxWithCue(constants_.unnamedChunk());
       tbChunkLabel_.addStyleName(RES.styles().textBox());
       tbChunkLabel_.addChangeHandler(changeEvent -> synchronize());
+      tbChunkLabel_.setElementId(ElementIds.getElementId(ElementIds.CHUNK_OPTIONS_NAME));
       
       panel_.addHandler(keyUpEvent ->
       {
@@ -206,33 +208,41 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       FormLabel outputLabel = new FormLabel(constants_.outputColon());
       nameAndOutputGrid.setWidget(row, 0, outputLabel);
       nameAndOutputGrid.setWidget(row, 1, outputComboBox_);
+      ElementIds.assignElementId(outputComboBox_, ElementIds.CHUNK_OPTIONS_OUTPUT);
       outputLabel.setFor(outputComboBox_);
       
       panel_.add(nameAndOutputGrid);
       
       showWarningsInOutputCb_ = makeTriStateToggle(
             constants_.showWarnings(),
-            "warning");
+            "warning",
+            ElementIds.CHUNK_OPTIONS_WARNINGS);
       panel_.add(showWarningsInOutputCb_);
 
       showMessagesInOutputCb_ = makeTriStateToggle(
             constants_.showMessages(),
-            "message");
+            "message",
+            ElementIds.CHUNK_OPTIONS_MESSAGES);
       panel_.add(showMessagesInOutputCb_);
 
       cacheChunkCb_ = makeTriStateToggle(
             constants_.cacheChunk(),
-            "cache");
+            "cache",
+            ElementIds.CHUNK_OPTIONS_CACHE);
       panel_.add(cacheChunkCb_);
       cacheChunkCb_.setVisible(false);
 
       printTableAsTextCb_ = makeTriStateToggle(
             constants_.usePagedTables(),
-            "paged.print");
+            "paged.print",
+            ElementIds.CHUNK_OPTIONS_TABLES);
       panel_.add(printTableAsTextCb_);
       printTableAsTextCb_.setVisible(false);
       
-      useCustomFigureCheckbox_ = new Toggle(constants_.useCustomFigureSize(), false);
+      useCustomFigureCheckbox_ = new Toggle(
+            constants_.useCustomFigureSize(),
+            false,
+            ElementIds.CHUNK_OPTIONS_FIGURESIZE);
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
       useCustomFigureCheckbox_.addValueChangeHandler(new ValueChangeHandler<Toggle.State>()
       {
@@ -338,7 +348,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       buttonPanel.addStyleName(RES.styles().buttonPanel());
       buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
-      revertButton_ = new SmallButton(constants_.revertCapitalized());
+      revertButton_ = new SmallButton(constants_.revertCapitalized(), ElementIds.CHUNK_OPTIONS_REVERT);
       revertButton_.getElement().getStyle().setMarginRight(8, Unit.PX);
       revertButton_.addClickHandler(clickEvent ->
       {
@@ -347,7 +357,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       });
       buttonPanel.add(revertButton_);
       
-      applyButton_ = new SmallButton(constants_.applyCapitalized());
+      applyButton_ = new SmallButton(constants_.applyCapitalized(), ElementIds.CHUNK_OPTIONS_APPLY);
       applyButton_.addClickHandler(clickEvent ->
       {
          synchronize();
@@ -410,9 +420,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return box;
    }
    
-   private Toggle makeTriStateToggle(String label, final String option)
+   private Toggle makeTriStateToggle(String label, final String option, final String id)
    {
-      Toggle toggle = new Toggle(label, true);
+      Toggle toggle = new Toggle(label, true, id);
       toggle.addValueChangeHandler((ValueChangeEvent<State> event) -> {
          State state = event.getValue();
          switch (state)

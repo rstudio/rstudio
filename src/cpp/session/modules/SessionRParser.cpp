@@ -1719,6 +1719,56 @@ void checkVariableAssignmentInArgumentList(RTokenCursor cursor,
    // status.lint().unexpectedAssignmentInArgumentList(cursor);
 }
 
+// NOTE: Intentionally passed by value to accept a copy
+void checkDottyAssignment(RTokenCursor cursor,
+                          ParseStatus& status)
+{
+   // First, check that we're sitting on top of an assignment
+   // into a dotty expression. This should be something of the form
+   //
+   //    .[x, y, z] <-
+   //
+   // with the cursor currently sitting on the left assignment.
+   bool isDottyAssignment =
+         isLeftAssign(cursor) &&
+         cursor.moveToPreviousSignificantToken() &&
+         cursor.isType(RToken::RBRACKET) &&
+         cursor.bwdToMatchingToken() &&
+         cursor.isType(RToken::LBRACKET) &&
+         cursor.moveToPreviousSignificantToken() &&
+         cursor.isType(RToken::ID) &&
+         cursor.contentEquals(L".");
+   
+   if (!isDottyAssignment)
+      return;
+   
+   if (cursor.moveToNextSignificantToken() &&
+       cursor.moveToNextSignificantToken() &&
+       cursor.isType(RToken::ID))
+   {
+      status.node()->addDefinedSymbol(cursor);
+   }
+   
+   do
+   {
+      if (cursor.fwdToMatchingToken())
+      {
+         continue;
+      }
+      else if (cursor.isType(RToken::COMMA) &&
+               cursor.moveToNextSignificantToken() &&
+               cursor.isType(RToken::ID))
+      {
+         status.node()->addDefinedSymbol(cursor);
+      }
+      else if (isRightBracket(cursor))
+      {
+         break;
+      }
+   }
+   while (cursor.moveToNextSignificantToken());
+}
+
 void checkUnexpectedEqualsAssignment(RTokenCursor& cursor,
                                      ParseStatus& status)
 {
@@ -3029,6 +3079,7 @@ START:
       
 BINARY_OPERATOR:
 
+      checkDottyAssignment(cursor, status);
       checkUnexpectedEqualsAssignment(cursor, status);
       checkBinaryOperatorWhitespace(cursor, status);
       if (!cursor.isAtEndOfDocument() && !canFollowBinaryOperator(cursor.nextSignificantToken()))

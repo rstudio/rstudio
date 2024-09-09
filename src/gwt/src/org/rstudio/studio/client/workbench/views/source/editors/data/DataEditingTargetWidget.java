@@ -16,12 +16,12 @@
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
 
-import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.GridViewerStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlCo
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -52,6 +53,11 @@ public class DataEditingTargetWidget extends Composite
    implements UrlContentEditingTarget.Display, 
               DataTable.Host
 {
+   public static interface DataViewerCallback
+   {
+      public void execute(JavaScriptObject row, JavaScriptObject col);
+   }
+   
    interface Resources extends ClientBundle
    {
       @Source("DataEditingTargetWidget.css")
@@ -72,6 +78,11 @@ public class DataEditingTargetWidget extends Composite
    {
       resources.styles().ensureInjected();
    }
+   
+   private static final native String formatCallbackDimension(JavaScriptObject object)
+   /*-{
+      return typeof object === "string" ? JSON.stringify(object) : object.toString();
+   }-*/;
 
    public DataEditingTargetWidget(String title,
                                   Commands commands, 
@@ -97,7 +108,7 @@ public class DataEditingTargetWidget extends Composite
       // when loaded, hook up event handlers
       frame_.addLoadHandler((event) ->
       {
-         CommandWith2Args<Double, Double> view = (row, col) ->
+         DataViewerCallback callback = (rowObject, colObject) ->
          {
             String lho = dataItem.getExpression();
             String object = dataItem.getObject();
@@ -120,15 +131,28 @@ public class DataEditingTargetWidget extends Composite
                   lho = "`" + object + "`";
                }
             }
-            events.fireEvent(new SendToConsoleEvent(
-                  "View(" + lho + 
-                     "[[" + col + "]]" + 
-                     "[[" + row + "]])", true));
+            
+            String row = formatCallbackDimension(rowObject);
+            String col = formatCallbackDimension(colObject);
+            
+            // objects with explicitly-set row names need to be indexed
+            // using an alternate syntax. detect this case and handle
+            String code;
+            if (JsUtil.isTypeOf(rowObject, "string"))
+            {
+               code = "View(" + lho + "[" + row + ", " + col + "])";
+            }
+            else
+            {
+               code = "View(" + lho +  "[[" + col + "]][[" + row + "]])";
+            }
+            
+            events.fireEvent(new SendToConsoleEvent(code, true));
          };
          
          table_.addKeyDownHandler();
-         table_.setDataViewerCallback(view);
-         table_.setListViewerCallback(view);
+         table_.setDataViewerCallback(callback);
+         table_.setListViewerCallback(callback);
          table_.setColumnFrameCallback();
          
       });
@@ -175,10 +199,9 @@ public class DataEditingTargetWidget extends Composite
 
    private Toolbar createToolbar(DataItem dataItem, Styles styles)
    {
-
       Toolbar toolbar = new EditingTargetToolbar(commands_, true, column_);
+      toolbar.getElement().setId(ElementIds.DATA_EDITING_TOOLBAR);
       table_.initToolbar(toolbar, dataItem.isPreview());
-
       return toolbar;
    }
    

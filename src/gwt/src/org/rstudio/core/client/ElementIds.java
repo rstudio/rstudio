@@ -747,6 +747,21 @@ public class ElementIds
    public final static String PROJ_DISPLAY_NAME = "proj_display_name";
    
    // Data viewer
+   public final static String DATA_EDITING_TOOLBAR = "data_editing_toolbar";
    public final static String DATA_VIEWER_FRAME = "data_viewer_frame";
+   
+   // DocTabLayoutPanel
+   public final static String DOC_TAB_PANEL_ACTIVE_TAB = "doc_tab_panel_active_tab";
+   
+   // Chunk Options Panels
+   public final static String CHUNK_OPTIONS_NAME = "chunk_opt_name";
+   public final static String CHUNK_OPTIONS_OUTPUT = "chunk_opt_output";
+   public final static String CHUNK_OPTIONS_WARNINGS = "chunk_opt_warnings";
+   public final static String CHUNK_OPTIONS_MESSAGES = "chunk_opt_messages";
+   public final static String CHUNK_OPTIONS_TABLES = "chunk_opt_tables";
+   public final static String CHUNK_OPTIONS_FIGURESIZE = "chunk_opt_figuresize";
+   public final static String CHUNK_OPTIONS_CACHE = "chunk_opt_cache";
+   public final static String CHUNK_OPTIONS_APPLY = "chunk_opt_apply";
+   public final static String CHUNK_OPTIONS_REVERT = "chunk_opt_revert";
    
 }

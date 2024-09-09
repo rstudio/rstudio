@@ -1311,7 +1311,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("heredoc", function(text, ...)
 {
    # remove leading, trailing whitespace
-   trimmed <- gsub("^\\s*\\n|\\n\\s*$", "", text)
+   trimmed <- gsub("^[^\\S\\r\\n]*\\n|\\n[^\\S\\r\\n]$", "", text, perl = TRUE)
    
    # split into lines
    lines <- strsplit(trimmed, "\n", fixed = TRUE)[[1L]]
@@ -1501,6 +1501,16 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 {
    f <- match.fun(f)
    vapply(x, f, ..., FUN.VALUE = logical(1))
+})
+
+# An R data.frame may have so-called "compact row names", where
+# row names are set with an integer placeholder that defines the
+# number of rows in the data.frame, without actually having a
+# fully materialized vector of that length.
+.rs.addFunction("hasCompactRowNames", function(data)
+{
+   info <- .row_names_info(data, type = 0L)
+   is.integer(info) && length(info) == 2L && is.na(info[[1L]])
 })
 
 .rs.addFunction("initTools", function()

@@ -60,9 +60,18 @@ const char * const kRStudioQuarto = "RSTUDIO_QUARTO";
 #ifndef _WIN32
 # define kQuartoCmd "quarto"
 # define kQuartoExe "quarto"
+# define kPandocExe "pandoc"
 #else
 # define kQuartoCmd "quarto.cmd"
 # define kQuartoExe "quarto.exe"
+# define kPandocExe "pandoc.exe"
+#endif
+
+
+#ifdef __aarch64__
+# define kArchDir "aarch64"
+#else
+# define kArchDir "x86_64"
 #endif
 
 namespace rstudio {
@@ -77,13 +86,34 @@ const char * const kQuartoXt = "quarto-document";
 FilePath s_userInstalledPath;
 FilePath s_quartoPath;
 std::string s_quartoVersion;
+QuartoConfig s_quartoConfig;
 
-/*
-bool haveRequiredQuartoVersion(const std::string& version)
+FilePath quartoPandocPath()
 {
-   return Version(s_quartoVersion) >= Version(version);
+   FilePath quartoPandoc;
+   
+   // find quarto pandoc -- its location has moved over time,
+   // so we check a variety of locations just in case
+   FilePath quartoBinPath(s_quartoConfig.bin_path);
+   quartoPandoc = quartoBinPath.completeChildPath("tools/" kArchDir "/" kPandocExe);
+   if (quartoPandoc.exists())
+      return quartoPandoc;
+   
+   quartoPandoc = quartoBinPath.completeChildPath("tools/" kPandocExe);
+   if (quartoPandoc.exists())
+      return quartoPandoc;
+   
+   quartoPandoc = quartoBinPath.completeChildPath(kPandocExe);
+   if (quartoPandoc.exists())
+      return quartoPandoc;
+   
+   // all else fails, just try to find pandoc on the PATH
+   Error error = core::system::findProgramOnPath(kPandocExe, &quartoPandoc);
+   if (error)
+      LOG_ERROR(error);
+   
+   return quartoPandoc;
 }
-*/
 
 Version readQuartoVersion(const core::FilePath& quartoBinPath)
 {
@@ -850,8 +880,6 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    return Success();
 }
 
-static QuartoConfig s_quartoConfig;
-
 void readQuartoConfig()
 {
    // detect installation
@@ -879,6 +907,7 @@ void readQuartoConfig()
       {
          s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);
          s_quartoConfig.resources_path = string_utils::systemToUtf8(paths[1]);
+         s_quartoConfig.pandoc_path = quartoPandocPath().getAbsolutePath();
       }
       else
       {
@@ -886,6 +915,7 @@ void readQuartoConfig()
          s_quartoConfig = QuartoConfig();
          return;
       }
+      
    }
 
    using namespace session::projects;
