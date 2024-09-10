@@ -180,8 +180,8 @@ pipeline {
                 stages {
                   stage('Sign') {
                     environment {
-                      PFX_FILE = credentials('ide-windows-signing-pfx')
-                      PFX_PASS = credentials('ide-pfx-passphrase')
+                      PFX_FILE = credentials('SM_CLIENT_CERT_FILE')
+                      PFX_PASS = credentials('SM_CLIENT_CERT_PASSWORD')
                     }
 
                     steps {
