@@ -170,13 +170,13 @@ public class RSConnectDeploy extends Composite
                                         Operation onCancel)
       {
          super(
-               "Environment variables",
+               constants_.environmentVariablesDialogTitle(),
                Roles.getDialogRole(),
                onClosed,
                onCancel);
          
          HelpLink publishLink = HelpLink.createExternal(
-               "Environment Variables",
+               constants_.environmentVariablesHelpLinkLabel(),
                "https://docs.posit.co/connect/admin/process-management/index.html#environment-variables");
          publishLink.getElement().getStyle().setMarginTop(4, Unit.PX);
          addLeftWidget(publishLink);
@@ -188,10 +188,15 @@ public class RSConnectDeploy extends Composite
          listBox_ = new ListBox();
          if (envVars.isEmpty())
          {
-            setWidth("360px");
+            setOkButtonVisible(false);
+            setCancelButtonCaption(constants_.close());
             
-            container_.add(new Label("No environment variables are currently available."));
-            container_.add(new VerticalSpacer("12px"));
+            VerticalPanel containerPanel = new VerticalPanel();
+            containerPanel.setWidth("360px");
+            Label noEnvVarsLabel = new Label(constants_.noEnvVarsAvailable());
+            containerPanel.add(noEnvVarsLabel);
+            containerPanel.add(new VerticalSpacer("12px"));
+            container_.add(containerPanel);
          }
          else
          {

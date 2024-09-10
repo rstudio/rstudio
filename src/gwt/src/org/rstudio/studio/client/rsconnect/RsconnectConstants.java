@@ -1499,4 +1499,16 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Select one or more environment variables to publish with this {0}.")
     String envVarsSelectMessage(String contentType);
     
+    @DefaultMessage("Close")
+    String close();
+    
+    @DefaultMessage("Environment variables")
+    String environmentVariablesDialogTitle();
+    
+    @DefaultMessage("Environment Variables")
+    String environmentVariablesHelpLinkLabel();
+    
+    @DefaultMessage("No environment variables are currently available.")
+    String noEnvVarsAvailable();
+    
 }

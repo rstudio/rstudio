@@ -334,6 +334,11 @@ public abstract class ModalDialogBase extends DialogBox
       FocusHelper.setFocusDeferred(okButton_);
       return true;
    }
+   
+   protected void setCancelButtonCaption(String caption)
+   {
+      cancelButton_.setText(caption);
+   }
 
    protected void enableCancelButton(boolean enabled)
    {
