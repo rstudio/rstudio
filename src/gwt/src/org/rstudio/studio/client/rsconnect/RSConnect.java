@@ -1124,8 +1124,8 @@ public class RSConnect implements SessionInitEvent.Handler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;
       $wnd.deployToRSConnect = $entry(
-         function(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, isQuarto, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, isQuarto, launch, record);
+         function(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, envVars, isSelfContained, isShiny, asMultiple, asStatic, isQuarto, launch, record) {
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(*)(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, envVars, isSelfContained, isShiny, asMultiple, asStatic, isQuarto, launch, record);
          }
       );
    }-*/;
@@ -1138,6 +1138,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                                   JsArrayString deployFiles,
                                   JsArrayString additionalFiles,
                                   JsArrayString ignoredFiles,
+                                  JsArrayString envVars,
                                   boolean isSelfContained,
                                   boolean isShiny,
                                   boolean asMultiple,
@@ -1153,19 +1154,21 @@ public class RSConnect implements SessionInitEvent.Handler,
       else
          WindowEx.get().focus();
 
-      ArrayList<String> deployFilesList =
+      List<String> deployFilesList =
             JsArrayUtil.fromJsArrayString(deployFiles);
-      ArrayList<String> additionalFilesList =
+      List<String> additionalFilesList =
             JsArrayUtil.fromJsArrayString(additionalFiles);
-      ArrayList<String> ignoredFilesList =
+      List<String> ignoredFilesList =
             JsArrayUtil.fromJsArrayString(ignoredFiles);
+      List<String> envVarsList =
+            JsArrayUtil.fromJsArrayString(envVars);
 
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
             new RSConnectPublishSource(sourceFile, deployDir, deployFile,
                   websiteDir, isSelfContained, asStatic, isShiny, isQuarto, description),
             new RSConnectPublishSettings(deployFilesList,
-                  additionalFilesList, ignoredFilesList, asMultiple, asStatic),
+                  additionalFilesList, ignoredFilesList, envVarsList, asMultiple, asStatic),
             launch, record));
    }
 

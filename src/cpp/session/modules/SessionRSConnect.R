@@ -13,6 +13,24 @@
 #
 #
 
+.rs.addJsonRpcHandler("get_deployment_env_vars", function()
+{
+   # Find active .Renviron file
+   environFile <- .rs.findEnvironFile()
+   if (!nzchar(environFile) || !file.exists(environFile))
+      return(character())
+   
+   # Read environment variable names from the file
+   contents <- readLines(environFile, warn = FALSE)
+   pattern <- "^\\s*([\\w_]+)\\s*="
+   matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
+   envVars <- gsub("\\s*=.*", "", matchedLines)
+   
+   # Keep only those tokens which would likely have secrets of interest
+   pattern <- "(?:^|[\\b_])(?:api|key|pass|pat|secret|token)(?:$|[\\b_])"
+   grep(pattern, envVars, perl = TRUE, value = TRUE, ignore.case = TRUE)
+})
+
 .rs.addJsonRpcHandler("forget_rsconnect_deployments", function(sourcePath, outputPath)
 {
   # for R files, assume that the containing directory is treated as the
@@ -180,19 +198,31 @@
    c(deployments, list(.rs.scalarListFromList(rpubsDeployment)))
 })
 
-.rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
-   accounts <- list()
-   # safely return an empty list--we want to consider there to be 0 connected
-   # accounts when the rsconnect package is not installed or broken
-   # (vs. raising an error)
-   tryCatch({
-     accountFrame <- rsconnect::accounts()
-     # if raw characters (older rsconnect), presume shinyapps.io
-     if (is.character(accountFrame))
-       accountFrame <- data.frame(name = accountFrame, server = "shinyapps.io")
-     accounts <- .rs.scalarListFromFrame(accountFrame)
-   }, error = function(e) { })
-   accounts
+.rs.addJsonRpcHandler("get_rsconnect_account_list", function()
+{
+   accountList <- tryCatch(
+     .rs.rsconnect.getAccountList(),
+     error = function(e) NULL
+   )
+   
+   .rs.scalarListFromFrame(accountList)
+})
+
+.rs.addFunction("rsconnect.getAccountList", function()
+{
+  accountList <- rsconnect::accounts()
+  
+  # if raw characters (older rsconnect), presume shinyapps.io
+  if (is.character(accountList))
+  {
+    accountList <- data.frame(
+      name   = accountList,
+      server = "shinyapps.io"
+    )
+  }
+  
+  accountList
+  
 })
 
 .rs.addJsonRpcHandler("remove_rsconnect_account", function(account, server) {
@@ -204,7 +234,6 @@
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
-   
    # NOTE: We previously used `rsconnect:::getAppById()`, but this API did not
    # provide the requisite 'config_url' entry, which we display in UI for redeployments.
    
@@ -225,10 +254,18 @@
    # keep only application records which:
    # - start with the provided host URL;
    # - have a matching id
-   apps <- apps[.rs.startsWith(apps$url, hostUrl) & apps$id == id, ]
-   
    # TODO: What should we do if we have nrow(apps) != 1?
-   list(error = NULL, app = .rs.scalarListFromList(apps))
+   apps <- apps[.rs.startsWith(apps$url, hostUrl) & apps$id == id, ]
+   app <- .rs.scalarListFromList(apps)
+   
+   # try and get environment variables for this deployment (if available)
+   app$envVars <- .rs.rsconnect.getApplicationEnvVars(
+     server  = server,
+     account = account,
+     guid    = apps$guid
+   )
+   
+   list(error = NULL, app = app)
 
 })
 
@@ -614,4 +651,41 @@
   list(name  = .rs.scalar(name),
        valid = .rs.scalar(valid),
        error = .rs.scalar(error))
+})
+
+.rs.addFunction("rsconnect.getApplicationEnvVars", function(server, account, guid)
+{
+  tryCatch(
+    .rs.rsconnect.getApplicationEnvVarsImpl(server, account, guid),
+    error = function(e) character()
+  )
+})
+
+.rs.addFunction("rsconnect.getApplicationEnvVarsImpl", function(server, account, guid)
+{
+  rsconnect <- asNamespace("rsconnect")
+  accountDetails <- rsconnect$accountInfo(account, server)
+  client <- rsconnect$clientForAccount(accountDetails)
+  client$getEnvVars(guid)
+})
+
+.rs.addFunction("findEnvironFile", function()
+{
+   environFile <- Sys.getenv("R_ENVIRON_USER", unset = NA)
+   if (!is.na(environFile))
+      return(environFile)
+   
+   project <- .rs.getProjectDirectory()
+   if (!is.null(project))
+   {
+      projectEnviron <- file.path(project, ".Renviron")
+      if (file.exists(projectEnviron))
+         return(projectEnviron)
+   }
+   
+   userEnviron <- path.expand("~/.Renviron")
+   if (file.exists(userEnviron))
+      return(userEnviron)
+   
+   ""
 })

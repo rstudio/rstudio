@@ -1491,4 +1491,24 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Our online service that lets you do, share, teach and learn data science in your web browser.")
     @Key("newPositCloudPageSubTitle")
     String newPositCloudPageSubTitle();
+    
+    @DefaultMessage("{0,number} environment variables will be published with this {1}.")
+    @AlternateMessage({"one", "1 environment variable will be published with this {1}."})
+    String envVarsPublishMessage(@PluralCount int itemCount, String contentType);
+    
+    @DefaultMessage("Select one or more environment variables to publish with this {0}.")
+    String envVarsSelectMessage(String contentType);
+    
+    @DefaultMessage("Close")
+    String close();
+    
+    @DefaultMessage("Environment variables")
+    String environmentVariablesDialogTitle();
+    
+    @DefaultMessage("Environment Variables")
+    String environmentVariablesHelpLinkLabel();
+    
+    @DefaultMessage("No environment variables are currently available.")
+    String noEnvVarsAvailable();
+    
 }

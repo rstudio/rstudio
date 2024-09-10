@@ -14,39 +14,47 @@
  */
 package org.rstudio.studio.client.rsconnect.model;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class RSConnectPublishSettings
 {
-   public RSConnectPublishSettings(ArrayList<String> deployFiles, 
-         ArrayList<String> additionalFiles, 
-         ArrayList<String> ignoredFiles,
-         boolean asMultiple,
-         boolean asStatic)
+   public RSConnectPublishSettings(List<String> deployFiles, 
+                                   List<String> additionalFiles, 
+                                   List<String> ignoredFiles,
+                                   List<String> envVars,
+                                   boolean asMultiple,
+                                   boolean asStatic)
    {
       deployFiles_ = deployFiles;
       additionalFiles_ = additionalFiles;
       ignoredFiles_ = ignoredFiles;
+      envVars_ = envVars;
       asMultiple_ = asMultiple;
       asStatic_ = asStatic;
    }
 
-   public ArrayList<String> getDeployFiles()
+   public RSConnectPublishSettings(List<String> deployFiles)
+   {
+      this(deployFiles, null, null, null, false, true);
+   }
+   
+   public List<String> getDeployFiles()
    {
       return deployFiles_;
    }
 
-   public ArrayList<String> getAdditionalFiles()
+   public List<String> getAdditionalFiles()
    {
       return additionalFiles_;
    }
 
-   public ArrayList<String> getIgnoredFiles()
+   public List<String> getIgnoredFiles()
    {
       return ignoredFiles_;
    }
@@ -70,14 +78,17 @@ public class RSConnectPublishSettings
             JsArrayUtil.toJsArrayString(getAdditionalFiles()));
       obj.setJsArrayString("ignored_files", 
             JsArrayUtil.toJsArrayString(getIgnoredFiles()));
+      obj.setJsArrayString("env_vars",
+            JsUtil.toJsArrayString(envVars_));
       obj.setBoolean("as_multiple", getAsMultiple());
       obj.setBoolean("as_static", getAsStatic());
       return obj.cast();
    }
 
-   private final ArrayList<String> deployFiles_;
-   private final ArrayList<String> additionalFiles_;
-   private final ArrayList<String> ignoredFiles_;
+   private final List<String> deployFiles_;
+   private final List<String> additionalFiles_;
+   private final List<String> ignoredFiles_;
+   private final List<String> envVars_;
    private final boolean asMultiple_;
    private final boolean asStatic_;
 }

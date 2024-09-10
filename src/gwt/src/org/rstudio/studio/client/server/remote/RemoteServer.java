@@ -5471,7 +5471,13 @@ public class RemoteServer implements Server
       params.set(2, new JSONString(accountName));
       sendRequest(RPC_SCOPE, "generate_app_name", params, resultCallback);
    }
-
+   
+   @Override
+   public void getDeploymentEnvVars(ServerRequestCallback<JsArrayString> resultCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_deployment_env_vars", resultCallback);
+   }
+   
    @Override
    public void getEditPublishedDocs(String appPath,
          ServerRequestCallback<JsArrayString> resultCallback)
