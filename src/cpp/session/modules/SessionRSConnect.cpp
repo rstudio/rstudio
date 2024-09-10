@@ -292,7 +292,8 @@ public:
              "launch.browser = function (url) { "
              "   message('" kFinishedMarker "', url) "
              "}, "
-             "lint = FALSE," +
+             "lint = FALSE, " +
+             (envVars.empty() ? "" : "envVars = c(" + envVars + "), ") +
              appModeOverride +
              "metadata = list(" +
                  quarto +
@@ -300,7 +301,6 @@ public:
              "   asStatic = " + (asStatic ? "TRUE" : "FALSE") + 
                  (additionalFiles.empty() ? "" : ", additionalFiles = '" +  additionalFiles + "'") + 
                  (ignoredFiles.empty() ? "" : ", ignoredFiles = '" +  ignoredFiles + "'") + 
-                 (envVars.empty() ? "" : ", envVars = c(" + envVars + ")") +
              ")" + 
              (prefs::userPrefs().showPublishDiagnostics() ? ", logLevel = 'verbose'" : "") + 
              ")}";
