@@ -15,7 +15,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
-#include <map>
+#include <sys/stat.h>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -38,8 +38,6 @@
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
-
-#include <sys/stat.h>
 
 #include "SessionProjectFirstRun.hpp"
 
@@ -82,58 +80,111 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
    }
 }
 
-FilePath computeUserDir(const FilePath& projectFile)
+Error validateScratchPath(const FilePath& scratchPath)
 {
-   // compute default .Rproj.user path
-   FilePath defaultUserDir = projectFile.getParent().completePath(".Rproj.user");
-   
-   // check for an external scratch path location -- if that exists,
-   // and it appears to be a usable scratch path, use it
-   FilePath scratchPathFile = defaultUserDir
-         .completePath(prefs::userState().contextId())
-         .completePath("scratch-path");
-   
-   std::string scratchPathContents;
-   Error error = core::readStringFromFile(scratchPathFile, &scratchPathContents);
-   if (error && !isFileNotFoundError(error))
-      LOG_ERROR(error);
-   
-   if (scratchPathContents.empty())
-      return defaultUserDir;
-   
-   FilePath scratchPath = module_context::resolveAliasedPath(scratchPathContents);
-   error = scratchPath.ensureDirectory();
+   Error error = scratchPath.ensureDirectory();
    if (error)
-   {
-      LOG_ERROR(error);
-      return defaultUserDir;
-   }
+      return error;
    
    bool writable = false;
    error = scratchPath.isWriteable(writable);
    if (error)
    {
-      LOG_ERROR(error);
-      return defaultUserDir;
+      return error;
    }
    else if (!writable)
    {
-      ELOGF("Project is configured with scratch-path {}, but that path is not writable", scratchPathContents);
-      return defaultUserDir;
+      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
    }
    
-   return scratchPath;
+   return Success();
+   
+}
+
+FilePath computeUserDir(const FilePath& projectFile,
+                        const r_util::RProjectConfig& projectConfig)
+{
+   Error error;
+   
+   // compute default .Rproj.user path -- note that some routines use the
+   // existence of this folder when attempting to find an RStudio project, so we
+   // create it eagerly even if we might not ultimately use it
+   FilePath defaultUserDir = projectFile.getParent().completePath(".Rproj.user");
+   error = defaultUserDir.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+
+   // first, check whether the user has configured a project-specific
+   // scratch path for themselves
+   if (session::options().sessionAllowProjectUserDataDirOverride())
+   {
+      // check for an external scratch path location -- if that exists,
+      // and it appears to be a usable scratch path, use it
+      FilePath scratchPathFile = defaultUserDir
+            .completePath(prefs::userState().contextId())
+            .completePath("scratch-path");
+
+      std::string scratchPathContents;
+      error = core::readStringFromFile(scratchPathFile, &scratchPathContents);
+      if (error && !isFileNotFoundError(error))
+         LOG_ERROR(error);
+
+      if (!scratchPathContents.empty())
+      {
+         FilePath scratchPath = module_context::resolveAliasedPath(scratchPathContents);
+         error = validateScratchPath(scratchPath);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return defaultUserDir;
+         }
+
+         return scratchPath;
+      }
+   }
+
+   std::string userDataDir;
+   
+   // check whether the user has configured a folder to host their project scratch path
+   // (and that the admin hasn't disallowed this)
+   if (session::options().sessionAllowProjectUserDataDirOverride())
+   {
+      userDataDir = prefs::userPrefs().projectUserDataDirectory();
+   }
+   
+   // check whether the administrator has configured a default project scratch path
+   if (userDataDir.empty())
+   {
+      userDataDir = session::options().sessionProjectUserDataDir();
+   }
+   
+   // if such a scratch path has been configured, use it if possible
+   if (!userDataDir.empty())
+   {
+      FilePath projectScratchPath = FilePath(userDataDir).completePath(projectConfig.projectId);
+      error = validateScratchPath(projectScratchPath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return defaultUserDir;
+      }
+      
+      LOG_ERROR_MESSAGE(projectScratchPath.getAbsolutePath());
+      return projectScratchPath;
+   }
+   
+   return defaultUserDir;
 }
 
 }  // anonymous namespace
 
-
 Error computeScratchPaths(const FilePath& projectFile,
+                          const r_util::RProjectConfig& projectConfig,
                           FilePath* pScratchPath,
                           FilePath* pSharedScratchPath)
 {
    // ensure project user dir
-   FilePath projectUserDir = computeUserDir(projectFile);
+   FilePath projectUserDir = computeUserDir(projectFile, projectConfig);
    if (!projectUserDir.exists())
    {
       // create
@@ -176,6 +227,27 @@ Error computeScratchPaths(const FilePath& projectFile,
 
    return Success();
 }
+
+Error computeScratchPaths(const FilePath& projectFile,
+                          FilePath* pScratchPath,
+                          FilePath* pSharedScratchPath)
+{
+   bool providedDefaults;
+   r_util::RProjectConfig projectConfig;
+   std::string errMsg;
+   Error error = r_util::readProjectFile(
+            projectFile,
+            ProjectContext::defaultConfig(),
+            ProjectContext::buildDefaults(),
+            &projectConfig,
+            &providedDefaults,
+            &errMsg);
+   if (error)
+      return error;
+   
+   return computeScratchPaths(projectFile, projectConfig, pScratchPath, pSharedScratchPath);
+}
+
 
 FilePath ProjectContext::oldScratchPath() const
 {
@@ -255,28 +327,29 @@ Error ProjectContext::startup(const FilePath& projectFile,
       isNewProject_ = true;
    }
 
+   // read project file config
+   bool providedDefaults;
+   r_util::RProjectConfig projectConfig;
+   Error error = r_util::readProjectFile(
+            projectFile,
+            defaultConfig(),
+            buildDefaults(),
+            &projectConfig,
+            &providedDefaults,
+            pUserErrMsg);
+   if (error)
+      return error;
+
+   
    // calculate project scratch path
    FilePath scratchPath;
    FilePath sharedScratchPath;
-   Error error = computeScratchPaths(projectFile, &scratchPath,
-         &sharedScratchPath);
+   error = computeScratchPaths(projectFile, projectConfig, &scratchPath, &sharedScratchPath);
    if (error)
    {
       *pUserErrMsg = "unable to initialize project - " + error.getSummary();
       return error;
    }
-
-   // read project file config
-   bool providedDefaults;
-   r_util::RProjectConfig config;
-   error = r_util::readProjectFile(projectFile,
-                                   defaultConfig(),
-                                   buildDefaults(),
-                                   &config,
-                                   &providedDefaults,
-                                   pUserErrMsg);
-   if (error)
-      return error;
 
    // update package install args with new defaults (one time only)
    ProjectsSettings projSettings(options().userScratchPath());
@@ -284,7 +357,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    if (projSettings.readSetting(kUpdatePackageInstallDefault).empty())
    {
       projSettings.writeSetting(kUpdatePackageInstallDefault, "1");
-      if (r_util::updateSetPackageInstallArgsDefault(&config))
+      if (r_util::updateSetPackageInstallArgsDefault(&projectConfig))
          providedDefaults = true;
    }
 
@@ -292,7 +365,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    // with the defaults
    if (providedDefaults)
    {
-      error = r_util::writeProjectFile(projectFile, buildDefaults(), config);
+      error = r_util::writeProjectFile(projectFile, buildDefaults(), projectConfig);
       if (error)
          LOG_ERROR(error);
    }
@@ -302,7 +375,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    directory_ = file_.getParent();
    scratchPath_ = scratchPath;
    sharedScratchPath_ = sharedScratchPath;
-   config_ = config;
+   config_ = projectConfig;
 
    // look for directories that contain python environments
    std::vector<FilePath> children;
@@ -457,15 +530,13 @@ SEXP rs_hasFileMonitor()
 
 SEXP rs_computeScratchPaths(SEXP projectFileSEXP)
 {
-   std::string projectFile = r::sexp::asString(projectFileSEXP);
-
+   Error error;
+   FilePath projectFile =
+         module_context::resolveAliasedPath(r::sexp::asString(projectFileSEXP));
+   
    FilePath scratchPath;
    FilePath sharedScratchPath;
-   Error error = computeScratchPaths(
-            module_context::resolveAliasedPath(projectFile),
-            &scratchPath,
-            &sharedScratchPath);
-
+   error = computeScratchPaths(projectFile, &scratchPath, &sharedScratchPath);
    if (error)
    {
       LOG_ERROR(error);

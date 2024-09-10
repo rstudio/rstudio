@@ -443,6 +443,7 @@ namespace prefs {
 #define kCodeFormatterStylerStrict "code_formatter_styler_strict"
 #define kCodeFormatterExternalCommand "code_formatter_external_command"
 #define kReformatOnSave "reformat_on_save"
+#define kProjectUserDataDirectory "project_user_data_directory"
 
 class UserPrefValues: public Preferences
 {
@@ -1995,6 +1996,12 @@ public:
     */
    bool reformatOnSave();
    core::Error setReformatOnSave(bool val);
+
+   /**
+    * The folder in which RStudio should store project (.Rproj.user) data.
+    */
+   std::string projectUserDataDirectory();
+   core::Error setProjectUserDataDirectory(std::string val);
 
 };
 

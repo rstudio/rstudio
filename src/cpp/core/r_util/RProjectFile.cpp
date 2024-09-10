@@ -24,13 +24,15 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/FileSerializer.hpp>
 #include <shared_core/SafeConvert.hpp>
+
+#include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>
 #include <core/text/DcfParser.hpp>
 #include <core/text/CsvParser.hpp>
+#include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
@@ -521,6 +523,18 @@ Error readProjectFile(const FilePath& projectFilePath,
                      "version of RStudio";
        return systemError(boost::system::errc::protocol_error,
                           ERROR_LOCATION);
+   }
+   
+   // extract or generate project ID
+   it = dcfFields.find("ProjectId");
+   if (it != dcfFields.end())
+   {
+      std::string projectId = it->second.empty() ? core::system::generateUuid(true) : it->second;
+      pConfig->projectId = projectId;
+   }
+   else
+   {
+      pConfig->projectId = core::system::generateUuid(true);
    }
 
    // extract R version
@@ -1027,22 +1041,24 @@ Error writeProjectFile(const FilePath& projectFilePath,
    // generate project file contents
    boost::format fmt(
       "Version: %1%\n"
+      "ProjectId: %2%\n"
       "\n"
-      "%2%"
-      "RestoreWorkspace: %3%\n"
-      "SaveWorkspace: %4%\n"
-      "AlwaysSaveHistory: %5%\n"
+      "%3%"
+      "RestoreWorkspace: %4%\n"
+      "SaveWorkspace: %5%\n"
+      "AlwaysSaveHistory: %6%\n"
       "\n"
-      "EnableCodeIndexing: %6%\n"
-      "UseSpacesForTab: %7%\n"
-      "NumSpacesForTab: %8%\n"
-      "Encoding: %9%\n"
+      "EnableCodeIndexing: %7%\n"
+      "UseSpacesForTab: %8%\n"
+      "NumSpacesForTab: %9%\n"
+      "Encoding: %10%\n"
       "\n"
-      "RnwWeave: %10%\n"
-      "LaTeX: %11%\n");
+      "RnwWeave: %11%\n"
+      "LaTeX: %12%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
+        config.projectId %
         rVersion %
         yesNoAskValueToString(config.restoreWorkspace) %
         yesNoAskValueToString(config.saveWorkspace) %

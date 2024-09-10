@@ -1752,6 +1752,11 @@
             "default": false,
             "title": "Reformat documents on save",
             "description": "When set, the selected formatter will be used to reformat documents on save."
+        },
+        "project_user_data_directory": {
+            "type": "string",
+            "default": "",
+            "description": "The folder in which RStudio should store project (.Rproj.user) data."
         }
       }
 }

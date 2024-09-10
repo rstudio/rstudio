@@ -76,6 +76,7 @@ struct RProjectConfig
 {
    RProjectConfig()
       : version(1.0),
+        projectId(),
         rVersion(kRVersionDefault),
         saveWorkspace(DefaultValue),
         restoreWorkspace(DefaultValue),
@@ -124,6 +125,7 @@ struct RProjectConfig
    }
 
    double version;
+   std::string projectId;
    RVersionInfo rVersion;
    int saveWorkspace;
    int restoreWorkspace;

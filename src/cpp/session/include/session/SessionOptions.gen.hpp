@@ -246,7 +246,13 @@ protected:
       "Duration in millis before requests that can be handled offline are processed by the offline handler thread.")
       (kSessionUseFileStorage,
       value<bool>(&sessionUseFileStorage_)->default_value(true),
-      "Controls whether the session should store its metadata on the file system or send it to the server to be stored in the internal database.");
+      "Controls whether the session should store its metadata on the file system or send it to the server to be stored in the internal database.")
+      ("session-project-user-data-dir",
+      value<std::string>(&sessionProjectUserDataDir_)->default_value(""),
+      "The folder in which RStudio should store project (.Rproj.user) data.")
+      ("session-allow-project-user-data-dir-override",
+      value<bool>(&sessionAllowProjectUserDataDirOverride_)->default_value(true),
+      "Whether or not users can override the default project (.Rproj.user) data directory via their own user preferences.");
 
    pAllow->add_options()
       ("allow-vcs-executable-edit",
@@ -511,6 +517,8 @@ public:
    bool handleOfflineEnabled() const { return handleOfflineEnabled_; }
    int handleOfflineTimeoutMs() const { return handleOfflineTimeoutMs_; }
    bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
+   std::string sessionProjectUserDataDir() const { return sessionProjectUserDataDir_; }
+   bool sessionAllowProjectUserDataDirOverride() const { return sessionAllowProjectUserDataDirOverride_; }
    bool allowVcsExecutableEdit() const { return allowVcsExecutableEdit_ || allowOverlay(); }
    bool allowCRANReposEdit() const { return allowCRANReposEdit_ || allowOverlay(); }
    bool allowVcs() const { return allowVcs_ || allowOverlay(); }
@@ -628,6 +636,8 @@ protected:
    bool handleOfflineEnabled_;
    int handleOfflineTimeoutMs_;
    bool sessionUseFileStorage_;
+   std::string sessionProjectUserDataDir_;
+   bool sessionAllowProjectUserDataDirOverride_;
    bool allowVcsExecutableEdit_;
    bool allowCRANReposEdit_;
    bool allowVcs_;

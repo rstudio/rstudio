@@ -2161,6 +2161,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("When set, the selected formatter will be used to reformat documents on save.")
    String reformatOnSaveDescription();
 
+   /**
+    * The folder in which RStudio should store project (.Rproj.user) data.
+    */
+   @DefaultStringValue("")
+   String projectUserDataDirectoryTitle();
+   @DefaultStringValue("The folder in which RStudio should store project (.Rproj.user) data.")
+   String projectUserDataDirectoryDescription();
+
 
 
 }

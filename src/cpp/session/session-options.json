@@ -435,6 +435,20 @@
             "memberName": "sessionUseFileStorage_",
             "defaultValue": true,
             "description": "Controls whether the session should store its metadata on the file system or send it to the server to be stored in the internal database."
+         },
+         {
+            "name": "session-project-user-data-dir",
+            "type": "string",
+            "memberName": "sessionProjectUserDataDir_",
+            "defaultValue": "",
+            "description": "The folder in which RStudio should store user-specific project (.Rproj.user) data."
+         },
+         {
+            "name": "session-allow-project-user-data-dir-override",
+            "type": "bool",
+            "memberName": "sessionAllowProjectUserDataDirOverride_",
+            "defaultValue": true,
+            "description": "Whether or not users can override the default project (.Rproj.user) data directory via their own user preferences."
          }
       ],
       "allow": [
