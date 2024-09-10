@@ -1811,12 +1811,6 @@ public class VisualMode implements VisualModeEditorSync,
       // highlight rmd example chunks
       options.rmdExampleHighlight = true;
       
-      // add focus-visible class to prevent interaction with focus-visible.js
-      // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
-      // is contentEditable, and that triggers a dom mutation event for ProseMirror,
-      // which in turn causes us to lose table selections)
-      options.className = "focus-visible";
-      
       return options;
    }
    

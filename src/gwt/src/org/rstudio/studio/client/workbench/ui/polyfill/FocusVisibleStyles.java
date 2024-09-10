@@ -15,51 +15,26 @@
 package org.rstudio.studio.client.workbench.ui.polyfill;
 
 import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalStyleSheetLoader;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 @Singleton
-public class FocusVisiblePolyfill
+public class FocusVisibleStyles
 {
-   @Inject
-   public FocusVisiblePolyfill(Provider<UserPrefs> pPrefs)
-   {
-      pPrefs_ = pPrefs;
-   }
-
    /**
-    * Load the polyfill
+    * Load the focus-visible css
     *
     * @param command An optional callback to invoke when loading is complete
     */
    public void load(final Command command)
    {
-      if (pPrefs_.get().showFocusRectangles().getValue())
+      focusVisibleCssLoader_.addCallback(() ->
       {
-         focusVisibleCssLoader_.addCallback(() ->
-         {
-            focusVisibleLoader_.addCallback(() ->
-            {
-               if (command != null)
-                  command.execute();
-            });
-         });
-      }
-      else if (command != null)
-      {
-         command.execute();
-      }
+         if (command != null)
+            command.execute();
+      });
    }
 
    private static final ExternalStyleSheetLoader focusVisibleCssLoader_ =
       new ExternalStyleSheetLoader(FocusVisibleResources.INSTANCE.focusVisibleCss().getSafeUri().asString());
-
-   private static final ExternalJavaScriptLoader focusVisibleLoader_ =
-      new ExternalJavaScriptLoader(FocusVisibleResources.INSTANCE.focusVisibleJs().getSafeUri().asString());
-
-   private final Provider<UserPrefs> pPrefs_;
 }

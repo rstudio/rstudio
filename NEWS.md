@@ -25,6 +25,7 @@
 - Prompt for personal access token instead of password when using github via https (#14103)
 - RStudio now forward the current 'repos' option for actions taken in the Build pane (#5793)
 - Executing `options(warn = ...)` in an R code chunk now persists beyond chunk execution (#15030)
+- Remove focus-visible polyfill and instead use native browser :focus-visible pseudoclass (#14352)
 - Fixed an issue where completion types for objects with a `.DollarNames` method were not properly displayed (#15115)
 
 #### Posit Workbench
@@ -34,3 +35,7 @@
 
 - Updated GWT to version 2.10.1 (#15011)
 - Updated Electron to version 31.4.0 (#14982; Desktop)
+
+### Deprecated / Removed
+- Removed user preference for turning off focus indicator rectangles (#14352)
+

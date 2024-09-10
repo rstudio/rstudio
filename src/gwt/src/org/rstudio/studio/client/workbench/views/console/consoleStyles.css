@@ -49,9 +49,9 @@
 }
 
 /* .console needed to increase specificity so it wins over focus-visible.css */
-/* !important needed because .focus-visible uses it as well */
-.js-focus-visible .console .output.focus-visible,
-.js-focus-visible .console .outputChunk.focus-visible {
+/* !important needed because :focus-visible uses it as well */
+.console .output:focus-visible,
+.console .outputChunk:focus-visible {
    outline-style: none !important;
 }
 

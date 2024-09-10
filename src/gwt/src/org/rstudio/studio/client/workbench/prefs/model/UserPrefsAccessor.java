@@ -2866,18 +2866,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Control with keyboard focus displays a visual focus indicator.
-    */
-   public PrefValue<Boolean> showFocusRectangles()
-   {
-      return bool(
-         "show_focus_rectangles",
-         _constants.showFocusRectanglesTitle(), 
-         _constants.showFocusRectanglesDescription(), 
-         true);
-   }
-
-   /**
     * Show which panel contains keyboard focus.
     */
    public PrefValue<Boolean> showPanelFocusRectangle()
@@ -4124,8 +4112,6 @@ public class UserPrefsAccessor extends Prefs
          tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
       if (source.hasKey("find_panel_legacy_tab_sequence"))
          findPanelLegacyTabSequence().setValue(layer, source.getBool("find_panel_legacy_tab_sequence"));
-      if (source.hasKey("show_focus_rectangles"))
-         showFocusRectangles().setValue(layer, source.getBool("show_focus_rectangles"));
       if (source.hasKey("show_panel_focus_rectangle"))
          showPanelFocusRectangle().setValue(layer, source.getBool("show_panel_focus_rectangle"));
       if (source.hasKey("auto_save_on_idle"))
@@ -4445,7 +4431,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(reducedMotion());
       prefs.add(tabKeyMoveFocus());
       prefs.add(findPanelLegacyTabSequence());
-      prefs.add(showFocusRectangles());
       prefs.add(showPanelFocusRectangle());
       prefs.add(autoSaveOnIdle());
       prefs.add(autoSaveIdleMs());

@@ -206,7 +206,7 @@ public class Workbench implements BusyEvent.Handler,
       checkForInitMessages();
       checkForLicenseMessage();
 
-      RStudioGinjector.INSTANCE.getFocusVisiblePolyfill().load(null);
+      RStudioGinjector.INSTANCE.getFocusVisibleStyles().load(null);
 
       if (StringUtil.equals(session_.getSessionInfo().getVcsName(), VCSConstants.GIT_ID))
       {

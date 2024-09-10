@@ -156,14 +156,4 @@ public class A11y
    {
       setARIAAutocomplete(widget.getElement(), val);
    }
-
-   /**
-    * Add a focus outline to the element; will be automatically removed when
-    * focus leaves the element. See the focus-visible.js polyfill for more details.
-    */
-   public static void showFocusOutline(Element el)
-   {
-      el.addClassName("focus-visible");
-      el.setAttribute("data-focus-visible-added", "");
-   }
 }

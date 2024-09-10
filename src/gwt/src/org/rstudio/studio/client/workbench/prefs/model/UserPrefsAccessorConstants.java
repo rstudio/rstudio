@@ -1682,14 +1682,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String findPanelLegacyTabSequenceDescription();
 
    /**
-    * Control with keyboard focus displays a visual focus indicator.
-    */
-   @DefaultStringValue("Always show focus outlines")
-   String showFocusRectanglesTitle();
-   @DefaultStringValue("Control with keyboard focus displays a visual focus indicator.")
-   String showFocusRectanglesDescription();
-
-   /**
     * Show which panel contains keyboard focus.
     */
    @DefaultStringValue("Show focus outline around focused panel")

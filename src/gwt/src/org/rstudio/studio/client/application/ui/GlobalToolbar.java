@@ -17,7 +17,6 @@ package org.rstudio.studio.client.application.ui;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
@@ -261,7 +260,6 @@ public class GlobalToolbar extends Toolbar
       Scheduler.get().scheduleDeferred(() ->
       {
          newButton_.setFocus(true);
-         A11y.showFocusOutline(newButton_.getElement());
       });
    }
 
