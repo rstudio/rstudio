@@ -169,7 +169,6 @@ FilePath computeUserDir(const FilePath& projectFile,
          return defaultUserDir;
       }
       
-      LOG_ERROR_MESSAGE(projectScratchPath.getAbsolutePath());
       return projectScratchPath;
    }
    

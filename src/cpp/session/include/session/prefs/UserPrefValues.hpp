@@ -1998,7 +1998,7 @@ public:
    core::Error setReformatOnSave(bool val);
 
    /**
-    * The folder in which RStudio should store project (.Rproj.user) data.
+    * The folder in which RStudio should store project .Rproj.user data.
     */
    std::string projectUserDataDirectory();
    core::Error setProjectUserDataDirectory(std::string val);

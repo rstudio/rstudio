@@ -104,7 +104,7 @@ public class TextBoxWithButton extends Composite
       
       clearButton_ = new ThemedButton(constants_.clearLabel(), (ClickEvent event) ->
       {
-         setText("");
+         setText(clearLabel_);
       });
       
       clearButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
@@ -298,6 +298,23 @@ public class TextBoxWithButton extends Composite
    
    public void addClearButton()
    {
+      addClearButton(null, "");
+   }
+   
+   public void addClearButton(String buttonLabel)
+   {
+      addClearButton(buttonLabel, "");
+   }
+   
+   public void addClearButton(String buttonLabel,
+                              String clearLabel)
+   {
+      if (buttonLabel != null)
+      {
+         clearButton_.setText(buttonLabel);
+      }
+      
+      clearLabel_ = clearLabel;
       inner_.add(clearButton_);
    }
 
@@ -308,6 +325,7 @@ public class TextBoxWithButton extends Composite
    private HelpButton helpButton_;
    private final ThemedButton themedButton_;
    private final ThemedButton clearButton_;
+   private String clearLabel_ = "";
    private final String emptyLabel_;
    private String useDefaultValue_;
    private String uniqueId_;

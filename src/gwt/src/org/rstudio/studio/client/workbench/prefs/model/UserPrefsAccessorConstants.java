@@ -2162,11 +2162,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String reformatOnSaveDescription();
 
    /**
-    * The folder in which RStudio should store project (.Rproj.user) data.
+    * The folder in which RStudio should store project .Rproj.user data.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("Default project user data directory")
    String projectUserDataDirectoryTitle();
-   @DefaultStringValue("The folder in which RStudio should store project (.Rproj.user) data.")
+   @DefaultStringValue("The folder in which RStudio should store project .Rproj.user data.")
    String projectUserDataDirectoryDescription();
 
 

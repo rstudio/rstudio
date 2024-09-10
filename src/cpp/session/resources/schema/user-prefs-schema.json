@@ -1756,7 +1756,8 @@
         "project_user_data_directory": {
             "type": "string",
             "default": "",
-            "description": "The folder in which RStudio should store project (.Rproj.user) data."
+            "title": "Default project user data directory",
+            "description": "The folder in which RStudio should store project .Rproj.user data."
         }
       }
 }

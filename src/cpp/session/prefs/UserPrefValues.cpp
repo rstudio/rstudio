@@ -3378,7 +3378,7 @@ core::Error UserPrefValues::setReformatOnSave(bool val)
 }
 
 /**
- * The folder in which RStudio should store project (.Rproj.user) data.
+ * The folder in which RStudio should store project .Rproj.user data.
  */
 std::string UserPrefValues::projectUserDataDirectory()
 {
