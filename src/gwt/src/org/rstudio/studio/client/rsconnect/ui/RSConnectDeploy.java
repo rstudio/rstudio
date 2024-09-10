@@ -39,6 +39,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
@@ -163,7 +164,8 @@ public class RSConnectDeploy extends Composite
    
    public static class EnvironmentVariablesDialog extends ModalDialog<List<String>>
    {
-      public EnvironmentVariablesDialog(List<String> envVars,
+      public EnvironmentVariablesDialog(String contentType,
+                                        List<String> envVars,
                                         OperationWithInput<List<String>> onClosed)
       {
          super(
@@ -171,27 +173,44 @@ public class RSConnectDeploy extends Composite
                Roles.getDialogRole(),
                onClosed);
          
-         setWidth("300px");
-         setHeight("300px");
+         HelpLink publishLink = HelpLink.createExternal(
+               "Environment Variables",
+               "https://docs.posit.co/connect/admin/process-management/index.html#environment-variables");
+         publishLink.getElement().getStyle().setMarginTop(4, Unit.PX);
+         addLeftWidget(publishLink);
          
          container_ = new VerticalPanel();
          container_.setWidth("100%");
          container_.setHeight("100%");
          
-         container_.add(new Label("Select one more environment variables to publish with this application."));
-         container_.add(new VerticalSpacer("12px"));
-         
          listBox_ = new ListBox();
-         listBox_.setHeight("200px");
-         listBox_.setMultipleSelect(true);
-         listBox_.setWidth("100%");
-         
-         for (String envVar : envVars)
+         if (envVars.isEmpty())
          {
-            listBox_.addItem(envVar);
+            setWidth("360px");
+            
+            container_.add(new Label("No environment variables are currently available."));
+            container_.add(new VerticalSpacer("12px"));
+         }
+         else
+         {
+            setWidth("360px");
+            setHeight("300px");
+         
+            container_.add(new Label(constants_.envVarsSelectMessage(contentType)));
+            container_.add(new VerticalSpacer("12px"));
+
+            listBox_.setHeight("200px");
+            listBox_.setMultipleSelect(true);
+            listBox_.setWidth("100%");
+
+            for (String envVar : envVars)
+            {
+               listBox_.addItem(envVar);
+            }
+
+            container_.add(listBox_);
          }
          
-         container_.add(listBox_);
       }
 
       @Override
@@ -335,6 +354,7 @@ public class RSConnectDeploy extends Composite
                {
                   List<String> envVars = JsUtil.toList(response);
                   EnvironmentVariablesDialog dialog = new EnvironmentVariablesDialog(
+                        appContentType(),
                         envVars,
                         new OperationWithInput<List<String>>()
                         {

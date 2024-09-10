@@ -17,7 +17,7 @@
 {
    # Find active .Renviron file
    environFile <- .rs.findEnvironFile()
-   if (!nzchar(environFile))
+   if (!nzchar(environFile) || !file.exists(environFile))
       return(character())
    
    # Read environment variable names from the file

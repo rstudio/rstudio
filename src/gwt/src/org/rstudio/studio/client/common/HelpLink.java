@@ -78,6 +78,11 @@ public class HelpLink extends Composite
 
       initWidget(helpPanel);
    }
+   
+   public static HelpLink createExternal(String caption, String link)
+   {
+      return new HelpLink(caption, link, false, false);
+   }
 
    public void setCaption(String caption)
    {

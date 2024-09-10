@@ -1496,4 +1496,7 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @AlternateMessage({"one", "1 environment variable will be published with this {1}."})
     String envVarsPublishMessage(@PluralCount int itemCount, String contentType);
     
+    @DefaultMessage("Select one or more environment variables to publish with this {0}.")
+    String envVarsSelectMessage(String contentType);
+    
 }
