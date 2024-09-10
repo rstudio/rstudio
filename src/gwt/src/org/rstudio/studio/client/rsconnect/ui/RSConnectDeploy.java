@@ -166,12 +166,14 @@ public class RSConnectDeploy extends Composite
    {
       public EnvironmentVariablesDialog(String contentType,
                                         List<String> envVars,
-                                        OperationWithInput<List<String>> onClosed)
+                                        OperationWithInput<List<String>> onClosed,
+                                        Operation onCancel)
       {
          super(
                "Environment variables",
                Roles.getDialogRole(),
-               onClosed);
+               onClosed,
+               onCancel);
          
          HelpLink publishLink = HelpLink.createExternal(
                "Environment Variables",
@@ -233,6 +235,18 @@ public class RSConnectDeploy extends Composite
          }
          
          return values;
+      }
+      
+      public void setItemSelected(String item)
+      {
+         for (int i = 0, n = listBox_.getItemCount(); i < n; i++)
+         {
+            if (StringUtil.equals(listBox_.getItemText(i), item))
+            {
+               listBox_.setItemSelected(i, true);
+               break;
+            }
+         }
       }
       
       private final VerticalPanel container_;
@@ -350,12 +364,11 @@ public class RSConnectDeploy extends Composite
             server_.getDeploymentEnvVars(new ServerRequestCallback<JsArrayString>()
             {
                @Override
-               public void onResponseReceived(JsArrayString response)
+               public void onResponseReceived(JsArrayString envVars)
                {
-                  List<String> envVars = JsUtil.toList(response);
                   EnvironmentVariablesDialog dialog = new EnvironmentVariablesDialog(
                         appContentType(),
-                        envVars,
+                        JsUtil.toList(envVars),
                         new OperationWithInput<List<String>>()
                         {
                            @Override
@@ -364,7 +377,21 @@ public class RSConnectDeploy extends Composite
                               appEnvVars_ = envVars;
                               updateEnvVarsLabel();
                            }
+                        },
+                        new Operation()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              appEnvVars_.clear();;
+                              updateEnvVarsLabel();
+                           }
                         });
+                  
+                  for (String envVar : appEnvVars_)
+                  {
+                     dialog.setItemSelected(envVar);
+                  }
                   
                   dialog.showModal();
                }
