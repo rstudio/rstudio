@@ -3476,7 +3476,7 @@ public class TextEditingTarget implements
          if (autoAppendNewline || isStartupFile || fileType_.isPython())
          {
             String lastLine = docDisplay_.getLine(lineCount - 1);
-            if (lastLine.trim().length() != 0)
+            if (lastLine.length() != 0)
             {
                docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
             }
