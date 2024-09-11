@@ -787,6 +787,9 @@ public class VisualModeChunk
       case "bash":
          editor.setFileType(FileTypeRegistry.SH);
          break;
+      case "stan":
+         editor.setFileType(FileTypeRegistry.STAN);
+         break;
       case "theorem":
       case "lemma":
       case "corollary":
@@ -797,6 +800,7 @@ public class VisualModeChunk
       case "exercise":
          // These are Bookdown theorem types
          editor.setFileType(FileTypeRegistry.TEX);
+         break;
       default:
          editor.setFileType(FileTypeRegistry.TEXT);
          break;
