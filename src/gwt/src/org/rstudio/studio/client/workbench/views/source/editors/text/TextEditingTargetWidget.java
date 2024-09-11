@@ -463,20 +463,15 @@ public class TextEditingTargetWidget
       // create menu of chunk skeletons based on common engine types
       ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
       insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkR(), column_).createMenuItem());
+      insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkPython(), column_).createMenuItem());
       insertChunksMenu.addSeparator();
-
-      insertChunksMenu.addItem(
-         mgr.getSourceCommand(commands_.insertChunkBash(), column_).createMenuItem());
-      insertChunksMenu.addItem(
-         mgr.getSourceCommand(commands_.insertChunkD3(), column_).createMenuItem());
-      insertChunksMenu.addItem(
-         mgr.getSourceCommand(commands_.insertChunkPython(), column_).createMenuItem());
-      insertChunksMenu.addItem(
-         mgr.getSourceCommand(commands_.insertChunkRCPP(), column_).createMenuItem());
-      insertChunksMenu.addItem(
-         mgr.getSourceCommand(commands_.insertChunkSQL(), column_).createMenuItem());
-      insertChunksMenu.addItem(
-         mgr.getSourceCommand(commands_.insertChunkStan(), column_).createMenuItem());
+      insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkGraphViz(), column_).createMenuItem());
+      insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkMermaid(), column_).createMenuItem());
+      insertChunksMenu.addSeparator();
+      insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkBash(), column_).createMenuItem());
+      insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkRCPP(), column_).createMenuItem());
+      insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkSQL(), column_).createMenuItem());
+      insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkStan(), column_).createMenuItem());
 
       insertChunkMenu_ = new ToolbarMenuButton(
                        "",
@@ -484,12 +479,11 @@ public class TextEditingTargetWidget
                        commands_.insertChunk().getImageResource(),
                        insertChunksMenu,
                        true);
-
+      
       toolbar.addRightWidget(insertChunkMenu_);
 
       // create button that just runs default chunk insertion
-      insertChunkButton_ = 
-         mgr.getSourceCommand(commands_.insertChunk(), column_).createUnsyncedToolbarButton();
+      insertChunkButton_ = mgr.getSourceCommand(commands_.insertChunk(), column_).createUnsyncedToolbarButton();
       toolbar.addRightWidget(insertChunkButton_);
 
       toolbar.addRightWidget(runButton_ = 
@@ -879,9 +873,9 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
-      boolean isRMarkdown2 = extendedType_ != null && 
-                             (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
-                              isQuarto);
+      boolean isRMarkdown = extendedType_ != null && 
+            extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
+      boolean isRMarkdown2 = isRMarkdown || isQuarto;
       boolean isMarkdown = editor_.getFileType().isMarkdown();
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
@@ -899,11 +893,8 @@ public class TextEditingTargetWidget
             !(isShinyFile() || isPyShinyFile() || isTestFile() || isPlumberFile()) && !(isScript && !terminalAllowed));
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
 
-      // show insertion options for various knitr engines in rmarkdown v2
-      insertChunkMenu_.setVisible(isRMarkdown2 && !isQuarto);
-
-      // otherwise just show the regular insert chunk button
-      insertChunkButton_.setVisible(canExecuteChunks && (!isRMarkdown2 || isQuarto));
+      insertChunkMenu_.setVisible(isQuarto || isRMarkdown);
+      insertChunkButton_.setVisible(canExecuteChunks && !isQuarto && !isRMarkdown);
 
       goToPrevButton_.setVisible(fileType.canGoNextPrevSection());
       goToNextButton_.setVisible(fileType.canGoNextPrevSection());

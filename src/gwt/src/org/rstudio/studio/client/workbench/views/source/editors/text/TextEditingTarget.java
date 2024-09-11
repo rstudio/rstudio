@@ -6067,6 +6067,18 @@ public class TextEditingTarget implements
    {
       onInsertChunk("```{bash}\n\n```\n", 1, 0);
    }
+   
+   @Handler
+   void onInsertChunkGraphViz()
+   {
+      onInsertChunk("```{dot}\n\n```\n", 1, 0);
+   }
+   
+   @Handler
+   void onInsertChunkMermaid()
+   {
+      onInsertChunk("```{mermaid}\n\n```\n", 1, 0);
+   }
 
    @Handler
    void onInsertChunkPython()
