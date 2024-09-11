@@ -181,7 +181,7 @@ pipeline {
                     }
 
                     steps {
-                      bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /csp "DigiCert Signing Manager KSP" /kc %PFX_ALIAS% /f %PFX_FILE% /p %PFX_PASS% /v /debug /n "Posit, PBC" /t http://timestamp.digicert.com /td SHA256 /fd SHA256 package\\win32\\build\\' + LONG_PACKAGE_NAME + '.exe'
+                      bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /csp "DigiCert Signing Manager KSP" /kc %PFX_ALIAS% /f %PFX_FILE% /p %PFX_PASS% /v /debug /n "Posit, PBC" /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 package\\win32\\build\\' + LONG_PACKAGE_NAME + '.exe'
                       bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${LONG_PACKAGE_NAME}.exe"
                     }
                   }
