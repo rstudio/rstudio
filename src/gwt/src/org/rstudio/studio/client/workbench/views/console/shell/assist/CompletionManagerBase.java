@@ -224,7 +224,7 @@ public abstract class CompletionManagerBase
          // only a single completion with the same value as the token, we need
          // to insert a literal tab to 'play' the tab key back into the document
          if (data.isTabTriggeredCompletion())
-            docDisplay_.insertCode("\t");
+            docDisplay_.blockIndent();
          
          return;
       }
@@ -308,14 +308,7 @@ public abstract class CompletionManagerBase
       if (completionCache_.satisfyRequest(line, context))
          return true;
       
-      boolean canComplete = getCompletions(line, context);
-      
-      // if tab was used to trigger the completion, but no completions
-      // are available in that context, then insert a literal tab
-      if (!canComplete && isTabTriggered)
-         docDisplay_.insertCode("\t");
-      
-      return canComplete;
+      return getCompletions(line, context);
    }
    
    public Invalidation.Token getInvalidationToken()
