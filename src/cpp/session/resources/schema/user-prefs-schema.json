@@ -900,7 +900,7 @@
         },
         "document_outline_font_size": {
             "type": "integer",
-            "default": "9",
+            "default": 9,
             "title": "Document outline font size",
             "description": "The font size to use for items in the document outline."
         },
