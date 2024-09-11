@@ -151,3 +151,28 @@ test_that(".DollarNames completions still produce types", {
    expect_equal(completions, c("example1", "example2"))
    
 })
+
+# https://github.com/rstudio/rstudio/issues/15046
+test_that("Tab keypresses indent multi-line selections", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: R Markdown Document
+      ---
+      
+      This is some prose.
+      This is some more prose.
+   ')
+   
+   remote$documentOpen(ext = ".Rmd", contents = contents)
+   
+   editor <- remote$editorGetInstance()
+   editor$gotoLine(5)
+   editor$selectPageDown()
+   
+   remote$keyboardExecute("<Tab>")
+   expect_equal(editor$session$getLine(4), "  This is some prose.")
+   expect_equal(editor$session$getLine(5), "  This is some more prose.")
+   
+   remote$documentClose()
+})
