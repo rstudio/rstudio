@@ -1122,7 +1122,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * The font size to use for items in the document outline.
     */
-   @DefaultStringValue("Font size")
+   @DefaultStringValue("Document outline font size")
    String documentOutlineFontSizeTitle();
    @DefaultStringValue("The font size to use for items in the document outline.")
    String documentOutlineFontSizeDescription();
