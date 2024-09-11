@@ -321,6 +321,7 @@ public class ElementIds
       CA_BUNDLE("ca_bundle"),
       DEFAULT_WORKING_DIR("default_working_dir"),
       DEFAULT_OPEN_PROJECT_DIR("default_open_project_dir"),
+      PROJECT_USER_DATA_DIR("project_user_data_dir"),
       ZOTERO_DATA_DIRECTORY("zotero_data_directory"),
       EXISTING_PROJECT_DIR("existing_project_dir"),
       FIND_IN("find_in"),

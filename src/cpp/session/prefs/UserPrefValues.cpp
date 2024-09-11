@@ -3377,6 +3377,19 @@ core::Error UserPrefValues::setReformatOnSave(bool val)
    return writePref("reformat_on_save", val);
 }
 
+/**
+ * The folder in which RStudio should store project .Rproj.user data.
+ */
+std::string UserPrefValues::projectUserDataDirectory()
+{
+   return readPref<std::string>("project_user_data_directory");
+}
+
+core::Error UserPrefValues::setProjectUserDataDirectory(std::string val)
+{
+   return writePref("project_user_data_directory", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3638,6 +3651,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCodeFormatterStylerStrict,
       kCodeFormatterExternalCommand,
       kReformatOnSave,
+      kProjectUserDataDirectory,
    });
 }
    

@@ -3708,6 +3708,18 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * The folder in which RStudio should store project .Rproj.user data.
+    */
+   public PrefValue<String> projectUserDataDirectory()
+   {
+      return string(
+         "project_user_data_directory",
+         _constants.projectUserDataDirectoryTitle(), 
+         _constants.projectUserDataDirectoryDescription(), 
+         "");
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -4226,6 +4238,8 @@ public class UserPrefsAccessor extends Prefs
          codeFormatterExternalCommand().setValue(layer, source.getString("code_formatter_external_command"));
       if (source.hasKey("reformat_on_save"))
          reformatOnSave().setValue(layer, source.getBool("reformat_on_save"));
+      if (source.hasKey("project_user_data_directory"))
+         projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4488,6 +4502,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeFormatterStylerStrict());
       prefs.add(codeFormatterExternalCommand());
       prefs.add(reformatOnSave());
+      prefs.add(projectUserDataDirectory());
       return prefs;
    }
    

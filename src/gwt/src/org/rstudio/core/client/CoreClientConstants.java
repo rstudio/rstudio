@@ -24,6 +24,15 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     @DefaultMessage("Cancel")
     @Key("cancelLabel")
     String cancelLabel();
+    
+    /**
+     * Translated "Reset".
+     *
+     * @return translated "Reset"
+     */
+    @DefaultMessage("Reset")
+    @Key("resetLabel")
+    String resetLabel();
 
     /**
      * Translated "No".
@@ -313,6 +322,15 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     @Key("projectIconDesc")
     String projectIconDesc();
 
+    /**
+     * Translated "Projects".
+     *
+     * @return translated "Projects"
+     */
+    @DefaultMessage("Projects")
+    @Key("projectsLabel")
+    String projectsLabel();
+    
     /**
      * Translated "Home".
      *

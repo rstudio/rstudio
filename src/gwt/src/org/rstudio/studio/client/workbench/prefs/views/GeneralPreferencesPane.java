@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -30,6 +31,7 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.RVersionSpec;
@@ -61,6 +63,7 @@ import com.google.inject.Inject;
 public class GeneralPreferencesPane extends PreferencesPane
 {
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+   private final static CoreClientConstants coreConstants_ = GWT.create(CoreClientConstants.class);
 
    @Inject
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
@@ -247,13 +250,32 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.GENERAL_ADVANCED_PREFS);
 
-      advanced.add(headerLabel("Projects"));
-      advanced.add(defaultOpenProjectLocationChooser_ = new DirectoryChooserTextBox(
+      advanced.add(headerLabel(coreConstants_.projectsLabel()));
+      
+      defaultOpenProjectLocationChooser_ = new DirectoryChooserTextBox(
             prefs_.defaultOpenProjectLocation().getTitle(),
             ElementIds.TextBoxButtonId.DEFAULT_OPEN_PROJECT_DIR,
             null,
             fileDialogs_,
-            fsContext_));
+            fsContext_);
+      defaultOpenProjectLocationChooser_.setWidth("400px");
+      defaultOpenProjectLocationChooser_.addClearButton(coreConstants_.resetLabel(), "~");
+           
+      advanced.add(defaultOpenProjectLocationChooser_);
+      advanced.add(new VerticalSpacer("16px"));
+      
+      projectUserDataDirChooser_ = new DirectoryChooserTextBox(
+            prefs_.projectUserDataDirectory().getTitle(),
+            ElementIds.TextBoxButtonId.PROJECT_USER_DATA_DIR,
+            null,
+            fileDialogs_,
+            fsContext_);
+      projectUserDataDirChooser_.setWidth("400px");
+      projectUserDataDirChooser_.setPlaceholder(".Rproj.user");
+      projectUserDataDirChooser_.addClearButton(coreConstants_.resetLabel());
+      
+      advanced.add(projectUserDataDirChooser_);
+      advanced.add(new VerticalSpacer("16px"));
 
       showServerHomePage_ = new SelectWidget(
               constants_.serverHomePageLabel(),
@@ -464,6 +486,10 @@ public class GeneralPreferencesPane extends PreferencesPane
          defaultOpenProjectLocation = "~";
       defaultOpenProjectLocationChooser_.setText(defaultOpenProjectLocation);
 
+      String projectUserDataDir = prefs.projectUserDataDirectory().getGlobalValue();
+      if (!StringUtil.isNullOrEmpty(projectUserDataDir))
+         projectUserDataDirChooser_.setText(projectUserDataDir);
+         
       alwaysSaveHistory_.setEnabled(true);
       removeHistoryDuplicates_.setEnabled(true);
 
@@ -498,6 +524,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       graphicsBackend_.setValue(prefs.graphicsBackend().getValue());
       graphicsAntialias_.setValue(prefs.graphicsAntialiasing().getValue());
 
+      initialProjectUserDataDir_ = prefs_.projectUserDataDirectory().getGlobalValue();
       initialUiLanguage_ = prefs_.uiLanguage().getValue();
       initialNativeFileDialogs_ = prefs_.nativeFileDialogs().getValue();
       initialDisableRendererAccessibility_ = prefs_.disableRendererAccessibility().getValue();
@@ -568,6 +595,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       prefs.runRprofileOnResume().setGlobalValue(rProfileOnResume_.getValue());
       prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
       prefs.defaultOpenProjectLocation().setGlobalValue(defaultOpenProjectLocationChooser_.getText());
+      prefs.projectUserDataDirectory().setGlobalValue(projectUserDataDirChooser_.getText());
       prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
       prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
       prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
@@ -579,6 +607,14 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (!StringUtil.equals(uiLanguagePrefValue, initialUiLanguage_))
       {
          prefs.uiLanguage().setGlobalValue(uiLanguagePrefValue);
+         restartRequirement.setUiReloadRequired(true);
+      }
+      
+      String projectUserDataDir = projectUserDataDirChooser_.getText();
+      if (!StringUtil.equals(projectUserDataDir, initialProjectUserDataDir_))
+      {
+         restartRequirement.setDesktopRestartRequired(true);
+         restartRequirement.setSessionRestartRequired(true);
          restartRequirement.setUiReloadRequired(true);
       }
 
@@ -731,6 +767,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton dirChooser_;
    private TextBoxWithButton defaultOpenProjectLocationChooser_;
+   private TextBoxWithButton projectUserDataDirChooser_;
    private CheckBox loadRData_;
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox removeHistoryDuplicates_;
@@ -740,6 +777,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox enableCrashReporting_;
    private final UserPrefs prefs_;
    private final Session session_;
+   private String initialProjectUserDataDir_;
    private String initialUiLanguage_;
    private boolean initialNativeFileDialogs_;
    private boolean initialDisableRendererAccessibility_;
