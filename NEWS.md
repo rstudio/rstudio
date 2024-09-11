@@ -31,6 +31,7 @@
 - Remove focus-visible polyfill and instead use native browser :focus-visible pseudoclass (#14352)
 - Fixed an issue where completion types for objects with a `.DollarNames` method were not properly displayed (#15115)
 - Fixed an issue where the Console header label was not properly layed out when other tabs (e.g. Terminal) were closed (#15106)
+- Fixed an issue where pressing Tab would insert a literal tab instead of indenting a multi-line selection (#15046)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
