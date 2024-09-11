@@ -55,7 +55,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane;
-import org.rstudio.studio.client.workbench.prefs.views.CompilePdfPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.SweavePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.ConsolePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.EditingPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.PackagesPreferencesPane;
@@ -439,7 +439,7 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onShowSweaveOptions()
    {
-      optionsLoader_.showOptions(CompilePdfPreferencesPane.class, true);
+      optionsLoader_.showOptions(SweavePreferencesPane.class, true);
    }
 
    @Handler

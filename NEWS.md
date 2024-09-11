@@ -10,6 +10,7 @@
 - RStudio now supports syntax highlighting for Fortran source files (#10403)
 - Display label "Publish" next to the publish icon on editor toolbar (#13604)
 - RStudio supports `usethis.description` option values when creating projects via the RStudio New Project wizard (#15070)
+- The font size used for the document outline can now be customized (#6887)
 - The RStudio diagnostics system now supports destructuring assignments as implemented and provided in the `dotty` package
 
 #### Posit Workbench

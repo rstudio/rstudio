@@ -233,6 +233,7 @@ namespace prefs {
 #define kPublishCaBundle "publish_ca_bundle"
 #define kRmdChunkOutputInline "rmd_chunk_output_inline"
 #define kShowDocOutlineRmd "show_doc_outline_rmd"
+#define kDocumentOutlineFontSize "document_outline_font_size"
 #define kAutoRunSetupChunk "auto_run_setup_chunk"
 #define kHideConsoleOnChunkExecute "hide_console_on_chunk_execute"
 #define kExecutionBehavior "execution_behavior"
@@ -1240,6 +1241,12 @@ public:
     */
    bool showDocOutlineRmd();
    core::Error setShowDocOutlineRmd(bool val);
+
+   /**
+    * The font size to use for items in the document outline.
+    */
+   int documentOutlineFontSize();
+   core::Error setDocumentOutlineFontSize(int val);
 
    /**
     * Whether to automatically run an R Markdown document's Setup chunk before running other chunks.

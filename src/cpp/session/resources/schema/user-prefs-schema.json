@@ -898,6 +898,12 @@
             "title": "Open document outline by default",
             "description": "Whether to show the document outline by default when opening R Markdown documents."
         },
+        "document_outline_font_size": {
+            "type": "integer",
+            "default": "9",
+            "title": "Font size",
+            "description": "The font size to use for items in the document outline."
+        },
         "auto_run_setup_chunk": {
             "type": "boolean",
             "default": true,

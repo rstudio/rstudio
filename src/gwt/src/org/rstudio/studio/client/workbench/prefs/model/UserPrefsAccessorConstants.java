@@ -1120,6 +1120,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showDocOutlineRmdDescription();
 
    /**
+    * The font size to use for items in the document outline.
+    */
+   @DefaultStringValue("Font size")
+   String documentOutlineFontSizeTitle();
+   @DefaultStringValue("The font size to use for items in the document outline.")
+   String documentOutlineFontSizeDescription();
+
+   /**
     * Whether to automatically run an R Markdown document's Setup chunk before running other chunks.
     */
    @DefaultStringValue("Automatically run Setup chunk when needed")
