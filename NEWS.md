@@ -11,6 +11,7 @@
 - Display label "Publish" next to the publish icon on editor toolbar (#13604)
 - RStudio supports `usethis.description` option values when creating projects via the RStudio New Project wizard (#15070)
 - The RStudio diagnostics system now supports destructuring assignments as implemented and provided in the `dotty` package
+- The "Insert Chunk" button now acts as a menu in Quarto documents as well as R Markdown documents (#14785)
 
 #### Posit Workbench
 -
