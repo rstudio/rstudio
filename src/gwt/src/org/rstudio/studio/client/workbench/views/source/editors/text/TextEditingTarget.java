@@ -3417,13 +3417,39 @@ public class TextEditingTarget implements
                name_.getValue().equals("DESCRIPTION");
 
          if (dontStripWhitespace)
+         {
             stripTrailingWhitespace = false;
+         }
 
          if (stripTrailingWhitespace)
          {
+            Pattern pattern = Pattern.create("[ \t]+$", "");
             String code = docDisplay_.getCode();
-            Pattern pattern = Pattern.create("[ \t]+$");
-            String strippedCode = pattern.replaceAll(code, "");
+            String strippedCode = "";
+            
+            // If this is being performed as part of an autosave, avoid
+            // mutating lines containing the cursor.
+            if (isAutoSaving())
+            {
+               int startRow = docDisplay_.getSelectionStart().getRow();
+               int endRow = docDisplay_.getSelectionEnd().getRow();
+               
+               JsArrayString lines = docDisplay_.getLines();
+               for (int i = 0, n = lines.length(); i < n; i++)
+               {
+                  if (i < startRow || i > endRow)
+                  {
+                     String line = lines.get(i);
+                     lines.set(i, pattern.replaceAll(line, ""));
+                  }
+               }
+               strippedCode = lines.join("\n");
+            }
+            else
+            {
+               strippedCode = pattern.replaceAll(code, "");
+            }
+            
             if (!strippedCode.equals(code))
             {
                // Calling 'setCode' can remove folds in the document; cache the folds
@@ -3450,8 +3476,10 @@ public class TextEditingTarget implements
          if (autoAppendNewline || isStartupFile || fileType_.isPython())
          {
             String lastLine = docDisplay_.getLine(lineCount - 1);
-            if (lastLine.length() != 0)
+            if (lastLine.trim().length() != 0)
+            {
                docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
+            }
          }
 
          // callback
@@ -9413,11 +9441,11 @@ public class TextEditingTarget implements
       {
          // It's unlikely, but if we attempt to autosave while running a
          // previous autosave, just nudge the timer so we try again.
-         if (saving_ != 0)
+         if (autosaveTimer_ != 0)
          {
             // If we've been trying to save for more than 5 seconds, we won't
             // nudge (just fall through and we'll attempt again below)
-            if (System.currentTimeMillis() - saving_ < 5000)
+            if (System.currentTimeMillis() - autosaveTimer_ < 5000)
             {
                nudgeAutosave();
                return;
@@ -9438,33 +9466,36 @@ public class TextEditingTarget implements
          }
 
          // Save (and keep track of when we initiated it)
-         saving_ = System.currentTimeMillis();
+         autosaveTimer_ = System.currentTimeMillis();
          try
          {
-            autoSave(
-            () ->
-            {
-               saving_ = 0;
-            },
-            () ->
-            {
-               // if this autosave operation silently fails, we want to automatically restart it
-               saving_ = 0;
-               nudgeAutosave();
-            });
+            autoSave(this::onCompleted, this::onSilentFailure);
          }
-         catch(Exception e)
+         catch (Exception e)
          {
             // Autosave exceptions are logged rather than displayed
-            saving_ = 0;
+            autosaveTimer_ = 0;
             Debug.logException(e);
          }
       }
-
-      // The time at which we attempted the current autosave operation, or zero
-      // if no autosave operation is in progress.
-      private long saving_ = 0;
+      
+      private void onCompleted()
+      {
+         autosaveTimer_ = 0;
+      }
+      
+      private void onSilentFailure()
+      {
+         // if this autosave operation silently fails, we want to automatically restart it
+         autosaveTimer_ = 0;
+         nudgeAutosave();
+      }
    };
+   
+   private boolean isAutoSaving()
+   {
+      return autosaveTimer_ != 0;
+   }
 
    private HandlerRegistration documentDirtyHandler_ = null;
    private SourcePosition debugStartPos_ = null;
@@ -9476,6 +9507,7 @@ public class TextEditingTarget implements
    // prevent multiple manual saves from queuing up
    private boolean documentChangedDuringDebugSession_ = false;
    private boolean isSaving_ = false;
+   private long autosaveTimer_ = 0;
 
    private abstract class RefactorServerRequestCallback
            extends ServerRequestCallback<JsArrayString>
