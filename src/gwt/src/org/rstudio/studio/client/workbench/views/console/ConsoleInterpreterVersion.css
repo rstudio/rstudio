@@ -4,10 +4,15 @@
 
 @external rstudio-themes-default;
 @external rstudio-themes-dark;
+@external rstudio-console-header-layout;
 
 .container {
    display: inline-block;
    cursor: pointer;
+}
+
+.rstudio-console-header-layout .container {
+	margin-top: -2px;
 }
 
 .menuClicked {
@@ -90,7 +95,7 @@
 
 .labelUntabbed {
    display: inline-block;
-   margin-top: 1px;
+   margin-top: 3px;
    margin-right: 6px;
    font-size: 9pt;
 }

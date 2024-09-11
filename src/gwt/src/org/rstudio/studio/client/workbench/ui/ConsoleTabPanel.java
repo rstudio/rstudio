@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.ui;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -31,16 +30,22 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersi
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
-import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
+import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 public class ConsoleTabPanel extends WorkbenchTabPanel
 {
+   public static final String RSTUDIO_CONSOLE_WIDGET_LAYOUT = "rstudio-console-widget-layout";
+   public static final String RSTUDIO_CONSOLE_HEADER_LAYOUT = "rstudio-console-header-layout";
+   public static final String RSTUDIO_CONSOLE_MINIMIZE_LAYOUT = "rstudio-console-minimize-layout";
+   public static final String RSTUDIO_CONSOLE_MAXIMIZE_LAYOUT = "rstudio-console-maximize-layout";
+   
    @Inject
    public void initialize(ConsoleInterruptButton consoleInterrupt,
                           ConsoleInterruptProfilerButton consoleInterruptProfiler,
@@ -485,10 +490,29 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                hasMaximizeClass = true;
          }
          
-         if (hasWidgetClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleWidgetLayout());
-         if (hasHeaderClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleHeaderLayout());
-         if (hasMinimizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMinimizeLayout());
-         if (hasMaximizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMaximizeLayout());
+         if (hasWidgetClass)
+         {
+            e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleWidgetLayout());
+            e.addClassName(RSTUDIO_CONSOLE_WIDGET_LAYOUT);
+         }
+         
+         if (hasHeaderClass)
+         {
+            e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleHeaderLayout());
+            e.addClassName(RSTUDIO_CONSOLE_HEADER_LAYOUT);
+         }
+         
+         if (hasMinimizeClass)
+         {
+            e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMinimizeLayout());
+            e.addClassName(RSTUDIO_CONSOLE_MINIMIZE_LAYOUT);
+         }
+         
+         if (hasMaximizeClass)
+         {
+            e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMaximizeLayout());
+            e.addClassName(RSTUDIO_CONSOLE_MAXIMIZE_LAYOUT);
+         }
       }
    }
 

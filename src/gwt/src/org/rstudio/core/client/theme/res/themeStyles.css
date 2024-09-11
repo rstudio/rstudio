@@ -825,6 +825,16 @@ table.header > tbody > tr > td {
 
 }
 
+.consoleHeaderLayout .subtitle {
+	position: relative;
+	top: -4px;
+}
+
+.consoleHeaderLayout .toolbarDotSeparator {
+	position: relative;
+	top: -4px;
+}
+
 .consoleMinimizeLayout {
 
 }

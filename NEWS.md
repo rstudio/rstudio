@@ -30,6 +30,7 @@
 - Executing `options(warn = ...)` in an R code chunk now persists beyond chunk execution (#15030)
 - Remove focus-visible polyfill and instead use native browser :focus-visible pseudoclass (#14352)
 - Fixed an issue where completion types for objects with a `.DollarNames` method were not properly displayed (#15115)
+- Fixed an issue where the Console header label was not properly layed out when other tabs (e.g. Terminal) were closed (#15106)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
