@@ -25,6 +25,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi.ChunkLabelInfo;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -183,19 +184,11 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       String extracted = match.getGroup(1);
       extraInfo.chunkPreamble = extractChunkPreamble(extracted, modeId);
 
-      extraInfo.chunkLabel = ChunkContextUi.extractChunkLabel(extracted);
+      ChunkLabelInfo labelDetails = ChunkContextUi.extractChunkLabel(extracted);
+      extraInfo.chunkLabel = labelDetails.label;
 
-      // if we had a chunk label, then we want to navigate our cursor to
-      // the first comma in the chunk header; otherwise, we start at the
-      // first space. this is done to accept chunk headers of the form
-      //
-      //    ```{r message=FALSE}
-      //
-      // ie, those with no comma after the engine used
-      int argsStartIdx = StringUtil.isNullOrEmpty(extraInfo.chunkLabel)
-            ? extracted.indexOf(' ')
-            : extracted.indexOf(',');
-
+      // continue parsing after the label
+      int argsStartIdx = labelDetails.nextSepIndex;
       String arguments = StringUtil.substring(extracted, argsStartIdx + 1);
       TextCursor cursor = new TextCursor(arguments);
 
