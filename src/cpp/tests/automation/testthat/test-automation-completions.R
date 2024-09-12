@@ -191,7 +191,7 @@ test_that("code_completion_include_already_used works as expected", {
    expect_equal(completions[1:4], c("file =", "ncolumns =", "append =", "sep ="))
    
    remote$consoleExecuteExpr({
-      .rs.writeUserPref("code_completion_include_already_used", TRUE)
+      .rs.uiPrefs$codeCompletionIncludeAlreadyUsed$set(TRUE)
    })
    
    remote$commandExecute("activateSource")
@@ -200,7 +200,7 @@ test_that("code_completion_include_already_used works as expected", {
    expect_equal(completions[1:5], c("x =", "file =", "ncolumns =", "append =", "sep ="))
    
    remote$consoleExecuteExpr({
-      .rs.clearUserPref("code_completion_include_already_used")
+      .rs.uiPrefs$codeCompletionIncludeAlreadyUsed$clear()
    })
    
 })

@@ -383,16 +383,18 @@ generate <- function(schemaPath, className) {
       # generate code for R wrapper
       fmt <- .rs.heredoc('
          %s
+         #
          %s
          .rs.uiPrefs$%s <- list(
             get = function() { .rs.getUserPref("%s") },
-            set = function(value) { .rs.setUserPref("%s", value) }
+            set = function(value) { .rs.setUserPref("%s", value) },
+            clear = function() { .rs.clearUserPref("%s") }
          )
       ')
       
-      rtitle <- paste("#", strwrap(def$title, width = 80))
-      rdesc <- paste("#", strwrap(def$description, width = 80))
-      rcode <- sprintf(fmt, rtitle, rdesc, camel, pref, pref)
+      rtitle <- paste(paste("#", strwrap(def$title, width = 80)), collapse = "\n")
+      rdesc <- paste(paste("#", strwrap(def$description, width = 80)), collapse = "\n")
+      rcode <- sprintf(fmt, rtitle, rdesc, camel, pref, pref, pref)
       r <- paste(r, rcode, sep = "\n")
    }
    
