@@ -61,6 +61,22 @@ public class ChunkContextUiTests extends GWTTestCase
       tests.add(new TestCase("```{r, testingChunks, echo=FALSE}", "testingChunks",  20));
       tests.add(new TestCase("```{r, label, echo=FALSE, ab=cd}",  "label",          12));
       tests.add(new TestCase("```{r,label,echo=FALSE,ab=cd}",     "label",          11));
+      tests.add(new TestCase("```{python}",                       "",               11));
+      tests.add(new TestCase("```{python,foo=BAR}",               "",               10));
+      tests.add(new TestCase("```{python, foo=BAR}",              "",               11));
+      tests.add(new TestCase("```{bash testingChunks}",           "testingChunks",  23));
+      tests.add(new TestCase("```{Rcpp  testingChunks  }",        "testingChunks",  26));
+      tests.add(new TestCase("```{d3   testing-Chunks}",          "testing-Chunks", 24));
+      tests.add(new TestCase("```{stan, testingChunks}",          "testingChunks",  24));
+      tests.add(new TestCase("```{sql,testingChunks}",            "testingChunks",  22));
+      tests.add(new TestCase("```{python echo=FALSE}",            "",               10));
+      tests.add(new TestCase("```{python,echo=FALSE}",            "",               10));
+      tests.add(new TestCase("```{python, echo=FALSE}",           "",               11));
+      tests.add(new TestCase("```{python testingChunks, a=b}",    "testingChunks",  24));
+      tests.add(new TestCase("```{d3 testingChunks,echo=FALSE}",  "testingChunks",  20));
+      tests.add(new TestCase("```{Rcpp, testingChunks, ab=cd}",   "testingChunks",  23));
+      tests.add(new TestCase("```{d3, label, echo=FALSE, ab=cd}", "label",          13));
+      tests.add(new TestCase("```{stan,label,echo=FALSE,ab=cd}",  "label",          14));
 
       for (TestCase test: tests)
       {
