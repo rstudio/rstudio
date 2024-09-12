@@ -74,26 +74,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.RMARKDOWN_BASIC_PREFS);
 
       basic.add(headerLabel(constants_.rMarkdownHeaderLabel()));
-
-      basic.add(checkboxPref(constants_.rMarkdownShowLabel(), prefs_.showDocOutlineRmd()));
       basic.add(checkboxPref(constants_.rMarkdownSoftWrapLabel(), prefs_.softWrapRmdFiles()));
 
-      docOutlineDisplay_ = new SelectWidget(
-            constants_.docOutlineDisplayLabel(),
-            new String[] {
-                  constants_.docOutlineSectionsOption(),
-                  constants_.docOutlineSectionsNamedChunksOption(),
-                  constants_.docOutlineSectionsAllChunksOption()
-            },
-            new String[] {
-                 UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_ONLY,
-                 UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS,
-                 UserPrefs.DOC_OUTLINE_SHOW_ALL
-            },
-            false,
-            true,
-            false);
-      basic.add(docOutlineDisplay_);
+      // show output inline for all Rmds
+      final CheckBox rmdInlineOutput = checkboxPref(
+            constants_.rmdInlineOutputLabel(),
+            prefs_.rmdChunkOutputInline());
+      basic.add(rmdInlineOutput);
 
       rmdViewerMode_ = new SelectWidget(
             constants_.rmdViewerModeLabel(),
@@ -112,13 +99,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       basic.add(rmdViewerMode_);
 
-
-      // show output inline for all Rmds
-      final CheckBox rmdInlineOutput = checkboxPref(
-            constants_.rmdInlineOutputLabel(),
-            prefs_.rmdChunkOutputInline());
-      basic.add(rmdInlineOutput);
-
+      
       // behavior for latex and image preview popups
       latexPreviewWidget_ = new SelectWidget(
             constants_.latexPreviewWidgetLabel(),
@@ -160,6 +141,28 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       {
          knitWorkingDir_ = null;
       }
+      
+      basic.add(spacedBefore(headerLabel(constants_.documentOutlineHeaderLabel())));
+      basic.add(checkboxPref(constants_.rMarkdownShowLabel(), prefs_.showDocOutlineRmd()));
+      
+      docOutlineDisplay_ = new SelectWidget(
+            constants_.docOutlineDisplayLabel(),
+            new String[] {
+                  constants_.docOutlineSectionsOption(),
+                  constants_.docOutlineSectionsNamedChunksOption(),
+                  constants_.docOutlineSectionsAllChunksOption()
+            },
+            new String[] {
+                 UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_ONLY,
+                 UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS,
+                 UserPrefs.DOC_OUTLINE_SHOW_ALL
+            },
+            false,
+            true,
+            false);
+      basic.add(docOutlineDisplay_);
+      basic.add(numericPref(prefs_.documentOutlineFontSize()));
+
 
       basic.add(spacedBefore(headerLabel(constants_.rNotebooksCaption())));
 

@@ -2864,6 +2864,9 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("rMarkdownHeaderLabel")
     String rMarkdownHeaderLabel();
 
+    @DefaultMessage("Document Outline")
+    @Key("documentOutlineHeaderLabel")
+    String documentOutlineHeaderLabel();
     /**
      * Translated "Show document outline by default".
      *

@@ -10,6 +10,7 @@
 - RStudio now supports syntax highlighting for Fortran source files (#10403)
 - Display label "Publish" next to the publish icon on editor toolbar (#13604)
 - RStudio supports `usethis.description` option values when creating projects via the RStudio New Project wizard (#15070)
+- The font size used for the document outline can now be customized [Accessibility] (#6887)
 - The RStudio diagnostics system now supports destructuring assignments as implemented and provided in the `dotty` package
 - The "Insert Chunk" button now acts as a menu in Quarto documents as well as R Markdown documents (#14785)
 
@@ -32,6 +33,7 @@
 - Remove focus-visible polyfill and instead use native browser :focus-visible pseudoclass (#14352)
 - Fixed an issue where completion types for objects with a `.DollarNames` method were not properly displayed (#15115)
 - Fixed an issue where the Console header label was not properly layed out when other tabs (e.g. Terminal) were closed (#15106)
+- Fixed an issue where pressing Tab would insert a literal tab instead of indenting a multi-line selection (#15046)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
