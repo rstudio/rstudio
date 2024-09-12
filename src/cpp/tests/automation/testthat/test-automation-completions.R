@@ -176,3 +176,31 @@ test_that("Tab keypresses indent multi-line selections", {
    
    remote$documentClose()
 })
+
+# https://github.com/rstudio/rstudio/issues/13065
+test_that("code_completion_include_already_used works as expected", {
+   
+   contents <- .rs.heredoc('
+      mtcars |> write()
+   ')
+   
+   remote$documentOpen(ext = ".R", contents = contents)
+   editor <- remote$editorGetInstance()
+   editor$gotoLine(1, 16)
+   completions <- remote$completionsRequest()
+   expect_equal(completions[1:4], c("file =", "ncolumns =", "append =", "sep ="))
+   
+   remote$consoleExecuteExpr({
+      .rs.writeUserPref("code_completion_include_already_used", TRUE)
+   })
+   
+   remote$commandExecute("activateSource")
+   editor$gotoLine(1, 16)
+   completions <- remote$completionsRequest()
+   expect_equal(completions[1:5], c("x =", "file =", "ncolumns =", "append =", "sep ="))
+   
+   remote$consoleExecuteExpr({
+      .rs.clearUserPref("code_completion_include_already_used")
+   })
+   
+})
