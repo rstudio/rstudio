@@ -14,7 +14,7 @@
 - The RStudio diagnostics system now supports destructuring assignments as implemented and provided in the `dotty` package
 - The "Insert Chunk" button now acts as a menu in Quarto documents as well as R Markdown documents (#14785)
 - Improved support for highlighting of nested chunks in R Markdown and Quarto documents (#10079)
-- The "Include all function arguments in completion list" user preference can be used to control whether RStudio includes function arguments which appear to have already been used in the current context (#15159)
+- The "Include all function arguments in completion list" user preference can be used to control whether RStudio includes function arguments which appear to have already been used in the current context (#13065)
 
 #### Posit Workbench
 -
