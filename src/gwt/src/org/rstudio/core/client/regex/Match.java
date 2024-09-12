@@ -35,6 +35,11 @@ public class Match extends JavaScriptObject
    public final native String getGroup(int number) /*-{
       return this.match[number];
    }-*/;
+   
+   public final native String getGroupOrDefault(int number, String defaultValue) /*-{
+      return this.match[number] || defaultValue;
+   }-*/;
+   
 
    public final native boolean hasGroup(int number) /*-{
       return typeof(this.match[number]) != 'undefined';

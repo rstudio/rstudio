@@ -46,18 +46,29 @@ public class AceBackgroundHighlighter
    {
       public HighlightPattern(String begin, String end)
       {
-         begin_ = Pattern.create(begin, "");
-         end_ = Pattern.create(end, "");
+         this(
+               Pattern.create(begin, ""),
+               Pattern.create(end, ""),
+               -1);
       }
       
-      public boolean applyBeginPattern(String line)
+      public HighlightPattern(Pattern begin,
+                              Pattern end,
+                              int matchLength)
+      {
+         begin_ = begin;
+         end_ = end;
+         matchLength_ = matchLength;
+      }
+      
+      public HighlightPattern applyBeginPattern(String line)
       {
          Match match = begin_.match(line, 0);
          if (match == null)
-            return false;
+            return null;
          
-         match_ = match;
-         return true;
+         int matchLength = match.getGroupOrDefault(1, "").length();
+         return new HighlightPattern(begin_, end_, matchLength);
       }
       
       public boolean applyEndPattern(String line)
@@ -66,19 +77,13 @@ public class AceBackgroundHighlighter
          if (match == null)
             return false;
          
-         if (match.hasGroup(1))
-         {
-            return match.getGroup(1).equals(match_.getGroup(1));
-         }
-         else
-         {
-            return true;
-         }
+         int matchLength = match.getGroupOrDefault(1, "").length();
+         return matchLength_ == matchLength;
       }
       
       private Pattern begin_;
       private Pattern end_;
-      private Match match_;
+      private int matchLength_;
    }
   
    private class Worker
@@ -292,8 +297,13 @@ public class AceBackgroundHighlighter
    HighlightPattern selectBeginPattern(String line)
    {
       for (HighlightPattern pattern : highlightPatterns_)
-         if (pattern.applyBeginPattern(line))
-            return pattern;
+      {
+         HighlightPattern matchedPattern = pattern.applyBeginPattern(line);
+         if (matchedPattern != null)
+         {
+            return matchedPattern;
+         }
+      }
       
       return null;
    }

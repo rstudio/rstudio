@@ -307,7 +307,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reScssChunkStartString       = engineRegex("scss");
    this.$reSassChunkStartString       = engineRegex("sass");
    this.$reLessChunkStartString       = engineRegex("less");
-   this.$reTextChunkStartString       = engineRegex("(?:asis|text)");
+   this.$reTextChunkStartString       = engineRegex("(?:asis|text|verbatim)");
    this.$reLatexChunkStartString      = engineRegex("(?:tikz|latex|tex)");
 
 }).call(RMarkdownHighlightRules.prototype);
