@@ -184,10 +184,10 @@ pipeline {
                     }
 
                     steps {
-                      bat 'curl -o smtools-windows-x64.msi "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"' 
-                      bat 'msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log'
-                      bat 'type smtools-windows-x64.log'
-                      bat 'C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user'
+                      // bat 'curl -o smtools-windows-x64.msi "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"' 
+                      // bat 'msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log'
+                      // bat 'type smtools-windows-x64.log'
+                      // bat 'C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user'
                       bat '"C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smksp_cert_sync"'
                       bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 package\\win32\\build\\' + LONG_PACKAGE_NAME + '.exe'
                       bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${LONG_PACKAGE_NAME}.exe"
