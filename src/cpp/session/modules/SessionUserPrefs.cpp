@@ -422,6 +422,7 @@ core::Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionUserPrefValues.R"))
       (bind(registerRpcMethod, "set_user_prefs", setPreferences))
       (bind(registerRpcMethod, "set_user_state", setState))
       (bind(registerRpcMethod, "edit_user_prefs", editPreferences))

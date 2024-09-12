@@ -23,10 +23,10 @@
 # 3. Run this script: ./generate-prefs.R
 # 4. Commit the .cpp, .hpp, and .java files the script changes
 
-require(jsonlite)
-require(stringi)
+library(jsonlite)
+library(stringi)
 
-cat("Generating preferences...")
+writeLines("Generating preferences...")
 
 # Helper to capitalize a string
 capitalize <- function(s) {
@@ -72,7 +72,8 @@ cppenum <- function(def, pref, type, indent) {
 }
 
 # Master function to generate code from JSON schema path
-generate <- function (schemaPath, className) {
+generate <- function(schemaPath, className) {
+   
    # Extract prefs from JSON schema
    schema <- jsonlite::read_json(schemaPath)
    prefs <- schema$properties
@@ -82,12 +83,34 @@ generate <- function (schemaPath, className) {
    javaProperties <- ""  # The contents of the Java properties (i18n) file we'll be creating
    cpp <- ""    # The contents of the C++ file we'll be creating
    hpp <- ""    # The contents of the C++ header file we'll be creating
+   r <- ""      # The contents of the R file we'll be creating
 
    # DEBUG: Text prepended to all i18n outputs (so we can spot which is being displayed, if any)
    prefixDefault <- ""
    prefixProperties <- ""
 
    # Components
+   
+   # R starts with copyright header
+   r <- .rs.heredoc('
+      #
+      # SessionUserPrefValues.R
+      #
+      # Copyright (C) 2024 by Posit Software, PBC
+      #
+      # Unless you have received this program directly from Posit Software pursuant
+      # to the terms of a commercial license agreement with Posit Software, then
+      # this program is licensed to you under the terms of version 3 of the
+      # GNU Affero General Public License. This program is distributed WITHOUT
+      # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+      # MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+      # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+      #
+      
+      #
+      # This file was automatically generated -- please do not modify it by hand.
+      #
+   ')
 
    # A list in C++ of all preference keys, as a function
    cpplist <- paste0("std::vector<std::string> ", className, "::allKeys()\n{\n",
@@ -104,6 +127,7 @@ generate <- function (schemaPath, className) {
    cppstrings <- ""
    
    for (pref in names(prefs)) {
+      
       # Convert the preference name from camel case to snake case
       camel <- gsub("_(.)", "\\U\\1\\E", pref, perl = TRUE)
       def <- prefs[[pref]]
@@ -353,6 +377,23 @@ generate <- function (schemaPath, className) {
       
       # Add enums if present
       java <- paste0(java, javaenum(def, pref, type, "   "))
+      
+      # generate code for R wrapper
+      fmt <- .rs.heredoc('
+         %s
+         %s
+         .rs.addFunction("uiPrefs.%s", function()
+         {
+            .rs.getUserPref("%s")
+         })
+         
+      ')
+      
+      rtitle <- paste("#", strwrap(def$title, width = 80))
+      rdesc <- paste("#", strwrap(def$description, width = 80))
+      camelpref <- gsub("_(.)", "\\U\\1", pref, perl = TRUE)
+      rcode <- sprintf(fmt, rtitle, rdesc, camelpref, pref)
+      r <- paste(r, rcode, sep = "\n")
    }
    
    # Close off blocks and lists
@@ -376,7 +417,9 @@ generate <- function (schemaPath, className) {
       javaConstants = javaConstants,
       javaProperties = javaProperties,
       cpp = cpp,
-      hpp = hpp)
+      hpp = hpp,
+      r = r
+   )
 }
 
 # Generate preferences
@@ -397,6 +440,7 @@ writeLines(gsub("%PREFS%", result$hpp, template),
 template <- readLines("prefs/UserPrefValues.cpp")
 writeLines(gsub("%PREFS%", result$cpp, template), 
            con = "../../cpp/session/prefs/UserPrefValues.cpp")
+writeLines(result$r, con = "../../cpp/session/modules/SessionUserPrefValues.R")
 
 # Generate state
 result <- generate("../../cpp/session/resources/schema/user-state-schema.json",
@@ -417,5 +461,5 @@ template <- readLines("prefs/UserStateValues.cpp")
 writeLines(gsub("%STATE%", result$cpp, template), 
            con = "../../cpp/session/prefs/UserStateValues.cpp")
 
-cat("Preference generation complete.\n")
+writeLines("Preference generation complete.")
 
