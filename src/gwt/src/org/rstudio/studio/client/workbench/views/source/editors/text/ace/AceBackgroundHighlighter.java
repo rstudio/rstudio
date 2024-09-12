@@ -23,6 +23,7 @@ import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorInteger;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -45,12 +46,44 @@ public class AceBackgroundHighlighter
    {
       public HighlightPattern(String begin, String end)
       {
-         this.begin = Pattern.create(begin, "");
-         this.end = Pattern.create(end, "");
+         this(
+               Pattern.create(begin, ""),
+               Pattern.create(end, ""),
+               -1);
       }
       
-      public Pattern begin;
-      public Pattern end;
+      public HighlightPattern(Pattern begin,
+                              Pattern end,
+                              int matchLength)
+      {
+         begin_ = begin;
+         end_ = end;
+         matchLength_ = matchLength;
+      }
+      
+      public HighlightPattern applyBeginPattern(String line)
+      {
+         Match match = begin_.match(line, 0);
+         if (match == null)
+            return null;
+         
+         int matchLength = match.getGroupOrDefault(1, "").length();
+         return new HighlightPattern(begin_, end_, matchLength);
+      }
+      
+      public boolean applyEndPattern(String line)
+      {
+         Match match = end_.match(line, 0);
+         if (match == null)
+            return false;
+         
+         int matchLength = match.getGroupOrDefault(1, "").length();
+         return matchLength_ == matchLength;
+      }
+      
+      private Pattern begin_;
+      private Pattern end_;
+      private int matchLength_;
    }
   
    private class Worker
@@ -264,8 +297,13 @@ public class AceBackgroundHighlighter
    HighlightPattern selectBeginPattern(String line)
    {
       for (HighlightPattern pattern : highlightPatterns_)
-         if (pattern.begin.test(line))
-            return pattern;
+      {
+         HighlightPattern matchedPattern = pattern.applyBeginPattern(line);
+         if (matchedPattern != null)
+         {
+            return matchedPattern;
+         }
+      }
       
       return null;
    }
@@ -325,7 +363,7 @@ public class AceBackgroundHighlighter
          assert activeHighlightPattern_ != null
                : "Unexpected null highlight pattern";
          
-         if (activeHighlightPattern_.end.test(line))
+         if (activeHighlightPattern_.applyEndPattern(line))
          {
             activeHighlightPattern_ = null;
             return STATE_CHUNK_END;
@@ -418,8 +456,8 @@ public class AceBackgroundHighlighter
             
             // code chunks
             new HighlightPattern(
-                  "^(?:[ ]{4})?`{3,}\\s*\\{.*\\}\\s*$",
-                  "^(?:[ ]{4})?`{3,}\\s*$"),
+                  "^(?:[ ]{4})?(`{3,})\\s*\\{.*\\}\\s*$",
+                  "^(?:[ ]{4})?(`{3,})\\s*$"),
             
             // latex blocks
             new HighlightPattern(

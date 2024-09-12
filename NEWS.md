@@ -13,6 +13,7 @@
 - The font size used for the document outline can now be customized [Accessibility] (#6887)
 - The RStudio diagnostics system now supports destructuring assignments as implemented and provided in the `dotty` package
 - The "Insert Chunk" button now acts as a menu in Quarto documents as well as R Markdown documents (#14785)
+- Improved support for highlighting of nested chunks in R Markdown and Quarto documents (#10079)
 
 #### Posit Workbench
 -
