@@ -51,7 +51,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             Session session,
                             PreferencesDialogResources res,
                             GeneralPreferencesPane general,
-                            EditingPreferencesPane source,
+                            CodePreferencesPane source,
                             ConsolePreferencesPane console,
                             RMarkdownPreferencesPane rmarkdown,
                             SweavePreferencesPane compilePdf,

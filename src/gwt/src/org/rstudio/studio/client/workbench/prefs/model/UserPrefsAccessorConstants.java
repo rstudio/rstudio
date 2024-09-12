@@ -428,6 +428,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeCompletionCharactersDescription();
 
    /**
+    * When set, RStudio will include all function arguments in the completion list, even if those arguments have already appear to be used in the current function invocation.
+    */
+   @DefaultStringValue("Include all function arguments in completion list")
+   String codeCompletionIncludeAlreadyUsedTitle();
+   @DefaultStringValue("When set, RStudio will include all function arguments in the completion list, even if those arguments have already appear to be used in the current function invocation.")
+   String codeCompletionIncludeAlreadyUsedDescription();
+
+   /**
     * Whether to show function signature tooltips during autocompletion.
     */
    @DefaultStringValue("Show function signature tooltips")

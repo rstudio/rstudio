@@ -800,6 +800,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When set, RStudio will include all function arguments in the completion list, even if those arguments have already appear to be used in the current function invocation.
+    */
+   public PrefValue<Boolean> codeCompletionIncludeAlreadyUsed()
+   {
+      return bool(
+         "code_completion_include_already_used",
+         _constants.codeCompletionIncludeAlreadyUsedTitle(), 
+         _constants.codeCompletionIncludeAlreadyUsedDescription(), 
+         false);
+   }
+
+   /**
     * Whether to show function signature tooltips during autocompletion.
     */
    public PrefValue<Boolean> showFunctionSignatureTooltips()
@@ -3826,6 +3838,8 @@ public class UserPrefsAccessor extends Prefs
          codeCompletionDelay().setValue(layer, source.getInteger("code_completion_delay"));
       if (source.hasKey("code_completion_characters"))
          codeCompletionCharacters().setValue(layer, source.getInteger("code_completion_characters"));
+      if (source.hasKey("code_completion_include_already_used"))
+         codeCompletionIncludeAlreadyUsed().setValue(layer, source.getBool("code_completion_include_already_used"));
       if (source.hasKey("show_function_signature_tooltips"))
          showFunctionSignatureTooltips().setValue(layer, source.getBool("show_function_signature_tooltips"));
       if (source.hasKey("show_data_preview"))
@@ -4304,6 +4318,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(consoleCodeCompletion());
       prefs.add(codeCompletionDelay());
       prefs.add(codeCompletionCharacters());
+      prefs.add(codeCompletionIncludeAlreadyUsed());
       prefs.add(showFunctionSignatureTooltips());
       prefs.add(showDataPreview());
       prefs.add(showDiagnosticsR());

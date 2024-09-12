@@ -124,6 +124,7 @@ namespace prefs {
 #define kConsoleCodeCompletion "console_code_completion"
 #define kCodeCompletionDelay "code_completion_delay"
 #define kCodeCompletionCharacters "code_completion_characters"
+#define kCodeCompletionIncludeAlreadyUsed "code_completion_include_already_used"
 #define kShowFunctionSignatureTooltips "show_function_signature_tooltips"
 #define kShowDataPreview "show_data_preview"
 #define kShowDiagnosticsR "show_diagnostics_r"
@@ -725,6 +726,12 @@ public:
     */
    int codeCompletionCharacters();
    core::Error setCodeCompletionCharacters(int val);
+
+   /**
+    * When set, RStudio will include all function arguments in the completion list, even if those arguments have already appear to be used in the current function invocation.
+    */
+   bool codeCompletionIncludeAlreadyUsed();
+   core::Error setCodeCompletionIncludeAlreadyUsed(bool val);
 
    /**
     * Whether to show function signature tooltips during autocompletion.

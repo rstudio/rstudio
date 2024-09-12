@@ -1025,8 +1025,16 @@ assign(x = ".rs.acCompletionTypes",
       ""
    
    # arguments that are already used by the matched call
-   used <- names(as.list(matchedCall)[-1]) 
-   keep <- !names(formals$formals) %in% used
+   includeAlreadyUsed <- .rs.readUserPref("code_completion_include_already_used", default = FALSE)
+   keep <- if (includeAlreadyUsed)
+   {
+      rep.int(TRUE, length(formals$formals))
+   }
+   else
+   {
+      used <- names(as.list(matchedCall)[-1]) 
+      keep <- !names(formals$formals) %in% used
+   }
    
    # TODO: Should we include aesthetics for 'geom_*()' functions?
    # for 'geom_' functions, try to get aesthetic names

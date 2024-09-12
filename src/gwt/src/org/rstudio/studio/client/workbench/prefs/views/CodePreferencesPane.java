@@ -61,15 +61,15 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-public class EditingPreferencesPane extends PreferencesPane
+public class CodePreferencesPane extends PreferencesPane
 {
    @Inject
-   public EditingPreferencesPane(GlobalDisplay display,
-                                 UserPrefs prefs,
-                                 SourceServerOperations server,
-                                 PreferencesDialogResources res,
-                                 Commands commands,
-                                 Session session)
+   public CodePreferencesPane(GlobalDisplay display,
+                              UserPrefs prefs,
+                              SourceServerOperations server,
+                              PreferencesDialogResources res,
+                              Commands commands,
+                              Session session)
    {
       prefs_ = prefs;
       server_ = server;
@@ -466,6 +466,8 @@ public class EditingPreferencesPane extends PreferencesPane
             prefs_.tabMultilineCompletion()));
       completionPanel.add(
             checkboxPref(prefs_.showDataPreview()));
+      completionPanel.add(
+            checkboxPref(prefs_.codeCompletionIncludeAlreadyUsed()));
       
       Label otherLabel = headerLabel(constants_.editingDiagOtherLabel());
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
