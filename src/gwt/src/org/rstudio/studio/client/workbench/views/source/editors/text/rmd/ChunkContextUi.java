@@ -57,42 +57,126 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    
    // Public static methods ---------------------------------------------------
 
-   public static String extractChunkLabel(String extractedChunkHeader)
+   /**
+    * Helper for returning results from extractChunkLabel
+    */
+   public static class ChunkLabelInfo
    {
-      // if there are no spaces within the chunk header,
-      // there cannot be a label
-      int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
-      if (firstSpaceIdx == -1)
-         return "";
-
-      // find the indices of the first '=' and ',' characters
-      int firstEqualsIdx = extractedChunkHeader.indexOf('=');
-      int firstCommaIdx  = extractedChunkHeader.indexOf(',');
-
-      // if we found neither an '=' nor a ',', then the label
-      // must be all the text following the first space
-      if (firstEqualsIdx == -1 && firstCommaIdx == -1)
+      public ChunkLabelInfo(String label, int nextSepIndex)
       {
-         extractedChunkHeader = StringUtil.substring(extractedChunkHeader, firstSpaceIdx + 1).trim();
-         if (extractedChunkHeader.endsWith("}"))
-            extractedChunkHeader = StringUtil.substring(extractedChunkHeader, 0, extractedChunkHeader.length() -1);
-         return extractedChunkHeader;
+         this.label = label;
+         this.nextSepIndex = nextSepIndex;
       }
 
-      // if we found an '=' before we found a ',' (or we didn't find
-      // a ',' at all), that implies a chunk header like:
-      //
-      //    ```{r message=TRUE, echo=FALSE}
-      //
-      // and so there is no label.
-      if (firstCommaIdx == -1)
-         return "";
+      public String label;
+      public int nextSepIndex;
+   }
 
-      if (firstEqualsIdx != -1 && firstEqualsIdx < firstCommaIdx)
-         return "";
+   /**
+    * Helper for extractChunkLabel to find the first separator, which can be
+    * a space, a comma, or a comma followed by a space
 
-      // otherwise, the text from the first space to that comma gives the label
-      return StringUtil.substring(extractedChunkHeader, firstSpaceIdx + 1, firstCommaIdx).trim();
+    * @param header
+    * @return index of last character of first separator or -1 if no separator
+    */
+   private static int findFirstSeparator(String header)
+   {
+      // find first space or comma
+      int firstSpaceIdx = header.indexOf(',');
+      int firstCommaIdx = header.indexOf(' ');
+
+      // no separators?
+      if (firstSpaceIdx == -1 && firstCommaIdx == -1)
+      {
+         return -1;
+      }
+
+      // start at the first one encountered
+      int result;
+      if (firstSpaceIdx == -1)
+      {
+         result = firstCommaIdx;
+      }
+      else if (firstCommaIdx == -1)
+      {
+         result = firstSpaceIdx;
+      }
+      else
+      {
+         result = Math.min(firstSpaceIdx, firstCommaIdx);
+      }
+      for (int i = result + 1; i < header.length(); i++)
+      {
+         char ch = header.charAt(i);
+         if (ch == ' ' || ch == ',')
+         {
+            result = i;
+         }
+         else
+         {
+            break;
+         }
+      }
+      return result;
+   }
+
+   /**
+    * Extract a label from a chunk header and return the position of the separator
+    * (space or comma) after the label (or the first separator if no label).
+    * 
+    * Note: Ignores "label=foo" form (i.e. treats it like any other property).
+    *
+    * @param extractedChunkHeader
+    * @return Label string and the index where to continue parsing
+    */
+   public static ChunkLabelInfo extractChunkLabel(String extractedChunkHeader)
+   {
+      int firstSeparatorIdx = findFirstSeparator(extractedChunkHeader);
+
+      // no separators implies no label
+      if (firstSeparatorIdx == -1)
+      {
+         // ```{r}
+         return new ChunkLabelInfo("", extractedChunkHeader.length());
+      }
+
+      // find index of first equals character
+      int firstEqualsIdx = extractedChunkHeader.indexOf('=');
+
+      // if no '=' then the label must be the text following the separator
+      if (firstEqualsIdx == -1)
+      {
+         // ```{r label}
+         // ```{r,label}
+         // ```{r, label}
+         int originalLength = extractedChunkHeader.length();
+         extractedChunkHeader = StringUtil.substring(extractedChunkHeader, firstSeparatorIdx + 1).trim();
+         if (extractedChunkHeader.endsWith("}"))
+         {
+            extractedChunkHeader = StringUtil.substring(
+                  extractedChunkHeader, 0, extractedChunkHeader.length() -1).trim();
+         }
+         return new ChunkLabelInfo(extractedChunkHeader, originalLength);
+      }
+
+      // find second separator (comma plus optional spaces) or end of string if none
+      int secondSeparatorIdx = extractedChunkHeader.indexOf(',', firstSeparatorIdx + 1);
+      if (secondSeparatorIdx == -1)
+      {
+         secondSeparatorIdx = extractedChunkHeader.length();
+      }
+
+      // determine if first token is a label (i.e. doesn't contain an equal sign)
+      if (firstEqualsIdx < secondSeparatorIdx)
+      {
+         // ```{r foo=bar}
+         return new ChunkLabelInfo("", firstSeparatorIdx);
+      }
+
+      // the text from the first separator to the next one is the label
+      return new ChunkLabelInfo(
+            StringUtil.substring(extractedChunkHeader, firstSeparatorIdx + 1, secondSeparatorIdx).trim(),
+            secondSeparatorIdx);
    }
 
    // Public methods ----------------------------------------------------------
@@ -275,7 +359,7 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    private String getLabel(int row)
    {
       String line = outerEditor_.getDocDisplay().getLine(row);
-      return extractChunkLabel(line);
+      return extractChunkLabel(line).label;
    }
 
    private ChunkOptionsPopupPanel createPopupPanel()

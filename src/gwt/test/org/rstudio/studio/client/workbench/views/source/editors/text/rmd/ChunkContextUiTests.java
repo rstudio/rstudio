@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import com.google.gwt.junit.client.GWTTestCase;
-import org.rstudio.core.client.Pair;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi.ChunkLabelInfo;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -27,18 +27,46 @@ public class ChunkContextUiTests extends GWTTestCase
    {
       return "org.rstudio.studio.RStudioTests";
    }
+   private static class TestCase
+   {
+      public TestCase(String input, String label, int nextTokenIdx)
+      {
+         this.input = input;
+         this.label = label;
+         this.nextTokenIdx = nextTokenIdx;
+      }
    
+      public String input;
+      public String label;
+      public int nextTokenIdx;
+   }
+
    public void testExtractChunkLabel()
    {
-      List<Pair<String, String>> testList = new ArrayList<>();
-      testList.add(new Pair<>("```{r echo=FALSE}",        ""));
-      testList.add(new Pair<>("```{r testingChunks}",        "testingChunks"));
-      testList.add(new Pair<>("```{r testingChunks, echo=FALSE}",        "testingChunks"));
+      // input string, expected results, expected position
+      List<TestCase> tests = new ArrayList<>();
+      tests.add(new TestCase("```{r}",                            "",                6));
+      tests.add(new TestCase("```{r,foo=BAR}",                    "",                5));
+      tests.add(new TestCase("```{r, foo=BAR}",                   "",                6));
+      tests.add(new TestCase("```{r testingChunks}",              "testingChunks",  20));
+      tests.add(new TestCase("```{r  testingChunks  }",           "testingChunks",  23));
+      tests.add(new TestCase("```{r   testing-Chunks}",           "testing-Chunks", 23));
+      tests.add(new TestCase("```{r, testingChunks}",             "testingChunks",  21));
+      tests.add(new TestCase("```{r,testingChunks}",              "testingChunks",  20));
+      tests.add(new TestCase("```{r echo=FALSE}",                 "",                5));
+      tests.add(new TestCase("```{r,echo=FALSE}",                 "",                5));
+      tests.add(new TestCase("```{r, echo=FALSE}",                "",                6));
+      tests.add(new TestCase("```{r testingChunks, echo=FALSE}",  "testingChunks",  19));
+      tests.add(new TestCase("```{r testingChunks,echo=FALSE}",   "testingChunks",  19));
+      tests.add(new TestCase("```{r, testingChunks, echo=FALSE}", "testingChunks",  20));
+      tests.add(new TestCase("```{r, label, echo=FALSE, ab=cd}",  "label",          12));
+      tests.add(new TestCase("```{r,label,echo=FALSE,ab=cd}",     "label",          11));
 
-      for (Pair<String, String> td  : testList)
+      for (TestCase test: tests)
       {
-         String result = ChunkContextUi.extractChunkLabel(td.first);
-         assertTrue(result.equals(td.second));
+         ChunkLabelInfo result = ChunkContextUi.extractChunkLabel(test.input);
+         assertEquals(test.input, test.label, result.label);
+         assertEquals(test.input, test.nextTokenIdx, result.nextSepIndex);
       }
    }
 }
