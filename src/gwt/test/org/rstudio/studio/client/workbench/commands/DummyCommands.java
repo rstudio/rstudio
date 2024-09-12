@@ -341,6 +341,16 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand insertChunkMermaid() {
+        return null;
+    }
+
+    @Override
+    public AppCommand insertChunkGraphViz() {
+        return null;
+    }
+
+    @Override
     public AppCommand switchToChunkR() {
         return null;
     }
