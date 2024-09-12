@@ -1218,6 +1218,18 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Insert a new D3 chunk") // $NON-NLS-1$
     String insertChunkD3Desc();
     
+    // insertChunkGraphViz
+    @DefaultStringValue("GraphViz") // $NON-NLS-1$
+    String insertChunkGraphVizMenuLabel();
+    @DefaultStringValue("Insert a new GraphViz chunk") // $NON-NLS-1$
+    String insertChunkGraphVizDesc();
+    
+    // insertChunkMermaid
+    @DefaultStringValue("Mermaid") // $NON-NLS-1$
+    String insertChunkMermaidMenuLabel();
+    @DefaultStringValue("Insert a new Mermaid chunk") // $NON-NLS-1$
+    String insertChunkMermaidDesc();
+    
     // insertChunkPython
     @DefaultStringValue("Python") // $NON-NLS-1$
     String insertChunkPythonMenuLabel();

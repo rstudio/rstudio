@@ -55,8 +55,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="newQuartoDoc"/>
             <cmd refid="newQuartoPres"/>
             <separator/>
-            <cmd refid="newRNotebook"/>
             <cmd refid="newRMarkdownDoc"/>
+            <cmd refid="newRNotebook"/>
             <separator/>
             <cmd refid="newRShinyApp"/>
             <cmd refid="newRPlumberDoc"/>
@@ -1936,6 +1936,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="insertChunkD3"
         menuLabel="D3"
         desc="Insert a new D3 chunk"
+        context="editor"/>
+
+   <cmd id="insertChunkGraphViz"
+        menuLabel="GraphViz"
+        desc="Insert a new GraphViz chunk"
+        context="editor"/>
+
+   <cmd id="insertChunkMermaid"
+        menuLabel="Mermaid"
+        desc="Insert a new Mermaid chunk"
         context="editor"/>
 
    <cmd id="insertChunkPython"
