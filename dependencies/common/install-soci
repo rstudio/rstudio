@@ -81,7 +81,6 @@ rm -f CMakeCache.txt
 if has-program ninja
 then 
    CMAKE_GENERATOR="Ninja"
-   MAKEFLAGS="-w dupbuild=warn ${MAKEFLAGS}"
 else
    CMAKE_GENERATOR="Unix Makefiles"
 fi
