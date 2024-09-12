@@ -54,15 +54,12 @@ RUN $env:path += ';C:\R\R-3.6.3\bin\i386\' ;`
   [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
 
 # install smtools 
+# TODO: remove the installation from the jenkinsfile once this is built into the base image
 RUN $ErrorActionPreference = 'Stop' ;`
-  [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48;`
+  [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48 ;`
   (New-Object System.Net.WebClient).DownloadFile('https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi', 'smtools-windows-x64.msi') ;`
-  Start-Process 'msiexec' -ArgumentList '/i smtools-windows-x64.msi /quiet /qn /norestart';`
+  Start-Process 'msiexec' -ArgumentList '/i smtools-windows-x64.msi /quiet /qn /norestart' ;`
   Remove-Item smtools-windows-x64.msi -Force
-
-# add smtools to path
-RUN $env:path += ';C:\Program Files\DigiCert\DigiCert One Signing Manager Tools\' ;`
-  [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 # Newer choco doesn't have this so don't fail if not found
