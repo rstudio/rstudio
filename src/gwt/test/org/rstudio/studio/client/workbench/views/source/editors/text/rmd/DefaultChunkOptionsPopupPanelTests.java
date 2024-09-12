@@ -43,6 +43,19 @@ public class DefaultChunkOptionsPopupPanelTests extends GWTTestCase
       assertEquals("TRUE", pieces.get("echo"));
    }
 
+   public void testCommaBeforeChunkLabel()
+   {
+      String header = "```{r, label, echo=TRUE}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("label", extraInfo.chunkLabel);
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+   }
+
    public void testNoCommaBeforeFirstItem()
    {
       String header = "```{r echo=TRUE}";
