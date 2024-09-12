@@ -110,6 +110,8 @@ generate <- function(schemaPath, className) {
       #
       # This file was automatically generated -- please do not modify it by hand.
       #
+      
+      .rs.setVar("uiPrefs", new.env(parent = emptyenv()))
    ')
 
    # A list in C++ of all preference keys, as a function
@@ -382,17 +384,15 @@ generate <- function(schemaPath, className) {
       fmt <- .rs.heredoc('
          %s
          %s
-         .rs.addFunction("uiPrefs.%s", function()
-         {
-            .rs.getUserPref("%s")
-         })
-         
+         .rs.uiPrefs$%s <- list(
+            get = function() { .rs.getUserPref("%s") },
+            set = function(value) { .rs.setUserPref("%s", value) }
+         )
       ')
       
       rtitle <- paste("#", strwrap(def$title, width = 80))
       rdesc <- paste("#", strwrap(def$description, width = 80))
-      camelpref <- gsub("_(.)", "\\U\\1", pref, perl = TRUE)
-      rcode <- sprintf(fmt, rtitle, rdesc, camelpref, pref)
+      rcode <- sprintf(fmt, rtitle, rdesc, camel, pref, pref)
       r <- paste(r, rcode, sep = "\n")
    }
    

@@ -16,2093 +16,1834 @@
 # This file was automatically generated -- please do not modify it by hand.
 #
 
+.rs.setVar("uiPrefs", new.env(parent = emptyenv()))
+
 # Run .Rprofile on resume
 # Whether to run .Rprofile again after resuming a suspended R session.
-.rs.addFunction("uiPrefs.runRprofileOnResume", function()
-{
-   .rs.getUserPref("run_rprofile_on_resume")
-})
-
+.rs.uiPrefs$runRprofileOnResume <- list(
+   get = function() { .rs.getUserPref("run_rprofile_on_resume") },
+   set = function(value) { .rs.setUserPref("run_rprofile_on_resume", value) }
+)
 
 # Save workspace on quit
 # Whether to save the workspace to an .Rdata file after the R session ends.
-.rs.addFunction("uiPrefs.saveWorkspace", function()
-{
-   .rs.getUserPref("save_workspace")
-})
-
+.rs.uiPrefs$saveWorkspace <- list(
+   get = function() { .rs.getUserPref("save_workspace") },
+   set = function(value) { .rs.setUserPref("save_workspace", value) }
+)
 
 # Load workspace on start
 # Whether to load the workspace when the R session begins.
-.rs.addFunction("uiPrefs.loadWorkspace", function()
-{
-   .rs.getUserPref("load_workspace")
-})
-
+.rs.uiPrefs$loadWorkspace <- list(
+   get = function() { .rs.getUserPref("load_workspace") },
+   set = function(value) { .rs.setUserPref("load_workspace", value) }
+)
 
 # Initial working directory
 # The initial working directory for new R sessions.
-.rs.addFunction("uiPrefs.initialWorkingDirectory", function()
-{
-   .rs.getUserPref("initial_working_directory")
-})
-
+.rs.uiPrefs$initialWorkingDirectory <- list(
+   get = function() { .rs.getUserPref("initial_working_directory") },
+   set = function(value) { .rs.setUserPref("initial_working_directory", value) }
+)
 
 # 
 # The CRAN mirror to use.
-.rs.addFunction("uiPrefs.cranMirror", function()
-{
-   .rs.getUserPref("cran_mirror")
-})
-
+.rs.uiPrefs$cranMirror <- list(
+   get = function() { .rs.getUserPref("cran_mirror") },
+   set = function(value) { .rs.setUserPref("cran_mirror", value) }
+)
 
 # 
 # The name of the default Bioconductor mirror.
-.rs.addFunction("uiPrefs.bioconductorMirrorName", function()
-{
-   .rs.getUserPref("bioconductor_mirror_name")
-})
-
+.rs.uiPrefs$bioconductorMirrorName <- list(
+   get = function() { .rs.getUserPref("bioconductor_mirror_name") },
+   set = function(value) { .rs.setUserPref("bioconductor_mirror_name", value) }
+)
 
 # 
 # The URL of the default Bioconductor mirror.
-.rs.addFunction("uiPrefs.bioconductorMirrorUrl", function()
-{
-   .rs.getUserPref("bioconductor_mirror_url")
-})
-
+.rs.uiPrefs$bioconductorMirrorUrl <- list(
+   get = function() { .rs.getUserPref("bioconductor_mirror_url") },
+   set = function(value) { .rs.setUserPref("bioconductor_mirror_url", value) }
+)
 
 # Save R console history
 # Whether to always save the R console history.
-.rs.addFunction("uiPrefs.alwaysSaveHistory", function()
-{
-   .rs.getUserPref("always_save_history")
-})
-
+.rs.uiPrefs$alwaysSaveHistory <- list(
+   get = function() { .rs.getUserPref("always_save_history") },
+   set = function(value) { .rs.setUserPref("always_save_history", value) }
+)
 
 # Remove duplicates from console history
 # Whether to remove duplicate entries from the R console history.
-.rs.addFunction("uiPrefs.removeHistoryDuplicates", function()
-{
-   .rs.getUserPref("remove_history_duplicates")
-})
-
+.rs.uiPrefs$removeHistoryDuplicates <- list(
+   get = function() { .rs.getUserPref("remove_history_duplicates") },
+   set = function(value) { .rs.setUserPref("remove_history_duplicates", value) }
+)
 
 # Show .Last.value in Environment pane
 # Show the result of the last expression (.Last.value) in the Environment pane.
-.rs.addFunction("uiPrefs.showLastDotValue", function()
-{
-   .rs.getUserPref("show_last_dot_value")
-})
-
+.rs.uiPrefs$showLastDotValue <- list(
+   get = function() { .rs.getUserPref("show_last_dot_value") },
+   set = function(value) { .rs.setUserPref("show_last_dot_value", value) }
+)
 
 # Line ending format
 # The line ending format to use when saving files.
-.rs.addFunction("uiPrefs.lineEndingConversion", function()
-{
-   .rs.getUserPref("line_ending_conversion")
-})
-
+.rs.uiPrefs$lineEndingConversion <- list(
+   get = function() { .rs.getUserPref("line_ending_conversion") },
+   set = function(value) { .rs.setUserPref("line_ending_conversion", value) }
+)
 
 # Use newlines in Makefiles
 # Whether to use newlines when saving Makefiles.
-.rs.addFunction("uiPrefs.useNewlinesInMakefiles", function()
-{
-   .rs.getUserPref("use_newlines_in_makefiles")
-})
-
+.rs.uiPrefs$useNewlinesInMakefiles <- list(
+   get = function() { .rs.getUserPref("use_newlines_in_makefiles") },
+   set = function(value) { .rs.setUserPref("use_newlines_in_makefiles", value) }
+)
 
 # 
 # The terminal shell to use on Windows.
-.rs.addFunction("uiPrefs.windowsTerminalShell", function()
-{
-   .rs.getUserPref("windows_terminal_shell")
-})
-
+.rs.uiPrefs$windowsTerminalShell <- list(
+   get = function() { .rs.getUserPref("windows_terminal_shell") },
+   set = function(value) { .rs.setUserPref("windows_terminal_shell", value) }
+)
 
 # 
 # The terminal shell to use on POSIX operating systems (MacOS and Linux).
-.rs.addFunction("uiPrefs.posixTerminalShell", function()
-{
-   .rs.getUserPref("posix_terminal_shell")
-})
-
+.rs.uiPrefs$posixTerminalShell <- list(
+   get = function() { .rs.getUserPref("posix_terminal_shell") },
+   set = function(value) { .rs.setUserPref("posix_terminal_shell", value) }
+)
 
 # 
 # The fully qualified path to the custom shell command to use in the Terminal
-.rs.addFunction("uiPrefs.customShellCommand", function()
-{
-   .rs.getUserPref("custom_shell_command")
-})
-
+.rs.uiPrefs$customShellCommand <- list(
+   get = function() { .rs.getUserPref("custom_shell_command") },
+   set = function(value) { .rs.setUserPref("custom_shell_command", value) }
+)
 
 # 
 # The command-line options to pass to the custom shell command.
-.rs.addFunction("uiPrefs.customShellOptions", function()
-{
-   .rs.getUserPref("custom_shell_options")
-})
-
+.rs.uiPrefs$customShellOptions <- list(
+   get = function() { .rs.getUserPref("custom_shell_options") },
+   set = function(value) { .rs.setUserPref("custom_shell_options", value) }
+)
 
 # Show line numbers in editor
 # Show line numbers in RStudio's code editor.
-.rs.addFunction("uiPrefs.showLineNumbers", function()
-{
-   .rs.getUserPref("show_line_numbers")
-})
-
+.rs.uiPrefs$showLineNumbers <- list(
+   get = function() { .rs.getUserPref("show_line_numbers") },
+   set = function(value) { .rs.setUserPref("show_line_numbers", value) }
+)
 
 # Use relative line numbers in editor
 # Show relative, rather than absolute, line numbers in RStudio's code editor.
-.rs.addFunction("uiPrefs.relativeLineNumbers", function()
-{
-   .rs.getUserPref("relative_line_numbers")
-})
-
+.rs.uiPrefs$relativeLineNumbers <- list(
+   get = function() { .rs.getUserPref("relative_line_numbers") },
+   set = function(value) { .rs.setUserPref("relative_line_numbers", value) }
+)
 
 # Highlight selected word in editor
 # Highlight the selected word in RStudio's code editor.
-.rs.addFunction("uiPrefs.highlightSelectedWord", function()
-{
-   .rs.getUserPref("highlight_selected_word")
-})
-
+.rs.uiPrefs$highlightSelectedWord <- list(
+   get = function() { .rs.getUserPref("highlight_selected_word") },
+   set = function(value) { .rs.setUserPref("highlight_selected_word", value) }
+)
 
 # Highlight selected line in editor
 # Highlight the selected line in RStudio's code editor.
-.rs.addFunction("uiPrefs.highlightSelectedLine", function()
-{
-   .rs.getUserPref("highlight_selected_line")
-})
-
+.rs.uiPrefs$highlightSelectedLine <- list(
+   get = function() { .rs.getUserPref("highlight_selected_line") },
+   set = function(value) { .rs.setUserPref("highlight_selected_line", value) }
+)
 
 # 
 # Layout of panes in the RStudio workbench.
-.rs.addFunction("uiPrefs.panes", function()
-{
-   .rs.getUserPref("panes")
-})
-
+.rs.uiPrefs$panes <- list(
+   get = function() { .rs.getUserPref("panes") },
+   set = function(value) { .rs.setUserPref("panes", value) }
+)
 
 # Allow source columns
 # Whether to enable the ability to add source columns to display.
-.rs.addFunction("uiPrefs.allowSourceColumns", function()
-{
-   .rs.getUserPref("allow_source_columns")
-})
-
+.rs.uiPrefs$allowSourceColumns <- list(
+   get = function() { .rs.getUserPref("allow_source_columns") },
+   set = function(value) { .rs.setUserPref("allow_source_columns", value) }
+)
 
 # Insert spaces for Tab
 # Whether to insert spaces when pressing the Tab key.
-.rs.addFunction("uiPrefs.useSpacesForTab", function()
-{
-   .rs.getUserPref("use_spaces_for_tab")
-})
-
+.rs.uiPrefs$useSpacesForTab <- list(
+   get = function() { .rs.getUserPref("use_spaces_for_tab") },
+   set = function(value) { .rs.setUserPref("use_spaces_for_tab", value) }
+)
 
 # Number of spaces for Tab
 # The number of spaces to insert when pressing the Tab key.
-.rs.addFunction("uiPrefs.numSpacesForTab", function()
-{
-   .rs.getUserPref("num_spaces_for_tab")
-})
-
+.rs.uiPrefs$numSpacesForTab <- list(
+   get = function() { .rs.getUserPref("num_spaces_for_tab") },
+   set = function(value) { .rs.setUserPref("num_spaces_for_tab", value) }
+)
 
 # Auto-detect indentation in files
 # Whether to automatically detect indentation settings from file contents.
-.rs.addFunction("uiPrefs.autoDetectIndentation", function()
-{
-   .rs.getUserPref("auto_detect_indentation")
-})
-
+.rs.uiPrefs$autoDetectIndentation <- list(
+   get = function() { .rs.getUserPref("auto_detect_indentation") },
+   set = function(value) { .rs.setUserPref("auto_detect_indentation", value) }
+)
 
 # Show margin in editor
 # Whether to show the margin guide in the RStudio code editor.
-.rs.addFunction("uiPrefs.showMargin", function()
-{
-   .rs.getUserPref("show_margin")
-})
-
+.rs.uiPrefs$showMargin <- list(
+   get = function() { .rs.getUserPref("show_margin") },
+   set = function(value) { .rs.setUserPref("show_margin", value) }
+)
 
 # Use a blinking cursor
 # Whether to flash the cursor off and on.
-.rs.addFunction("uiPrefs.blinkingCursor", function()
-{
-   .rs.getUserPref("blinking_cursor")
-})
-
+.rs.uiPrefs$blinkingCursor <- list(
+   get = function() { .rs.getUserPref("blinking_cursor") },
+   set = function(value) { .rs.setUserPref("blinking_cursor", value) }
+)
 
 # Margin column
 # The number of columns of text after which the margin is shown.
-.rs.addFunction("uiPrefs.marginColumn", function()
-{
-   .rs.getUserPref("margin_column")
-})
-
+.rs.uiPrefs$marginColumn <- list(
+   get = function() { .rs.getUserPref("margin_column") },
+   set = function(value) { .rs.setUserPref("margin_column", value) }
+)
 
 # Show invisible characters in editor
 # Whether to show invisible characters, such as spaces and tabs, in the RStudio
-.rs.addFunction("uiPrefs.showInvisibles", function()
-{
-   .rs.getUserPref("show_invisibles")
-})
-
+.rs.uiPrefs$showInvisibles <- list(
+   get = function() { .rs.getUserPref("show_invisibles") },
+   set = function(value) { .rs.setUserPref("show_invisibles", value) }
+)
 
 # Indentation guides
 # Style for indentation guides in the RStudio code editor.
-.rs.addFunction("uiPrefs.indentGuides", function()
-{
-   .rs.getUserPref("indent_guides")
-})
-
+.rs.uiPrefs$indentGuides <- list(
+   get = function() { .rs.getUserPref("indent_guides") },
+   set = function(value) { .rs.setUserPref("indent_guides", value) }
+)
 
 # Continue comments after adding new line
 # Whether to continue comments (by inserting the comment character) after adding
-.rs.addFunction("uiPrefs.continueCommentsOnNewline", function()
-{
-   .rs.getUserPref("continue_comments_on_newline")
-})
-
+.rs.uiPrefs$continueCommentsOnNewline <- list(
+   get = function() { .rs.getUserPref("continue_comments_on_newline") },
+   set = function(value) { .rs.setUserPref("continue_comments_on_newline", value) }
+)
 
 # Whether web links in comments are clickable
 # Whether web links in comments are clickable.
-.rs.addFunction("uiPrefs.highlightWebLink", function()
-{
-   .rs.getUserPref("highlight_web_link")
-})
-
+.rs.uiPrefs$highlightWebLink <- list(
+   get = function() { .rs.getUserPref("highlight_web_link") },
+   set = function(value) { .rs.setUserPref("highlight_web_link", value) }
+)
 
 # Keybinding set for editor
 # The keybindings to use in the RStudio code editor.
-.rs.addFunction("uiPrefs.editorKeybindings", function()
-{
-   .rs.getUserPref("editor_keybindings")
-})
-
+.rs.uiPrefs$editorKeybindings <- list(
+   get = function() { .rs.getUserPref("editor_keybindings") },
+   set = function(value) { .rs.setUserPref("editor_keybindings", value) }
+)
 
 # Auto-insert matching parentheses and brackets
 # Whether to insert matching pairs, such as () and [], when the first is typed.
-.rs.addFunction("uiPrefs.insertMatching", function()
-{
-   .rs.getUserPref("insert_matching")
-})
-
+.rs.uiPrefs$insertMatching <- list(
+   get = function() { .rs.getUserPref("insert_matching") },
+   set = function(value) { .rs.setUserPref("insert_matching", value) }
+)
 
 # Insert spaces around = in R code
 # Whether to insert spaces around the equals sign in R code.
-.rs.addFunction("uiPrefs.insertSpacesAroundEquals", function()
-{
-   .rs.getUserPref("insert_spaces_around_equals")
-})
-
+.rs.uiPrefs$insertSpacesAroundEquals <- list(
+   get = function() { .rs.getUserPref("insert_spaces_around_equals") },
+   set = function(value) { .rs.setUserPref("insert_spaces_around_equals", value) }
+)
 
 # Insert parentheses after functions
 # Whether to insert parentheses after function completions.
-.rs.addFunction("uiPrefs.insertParensAfterFunctionCompletion", function()
-{
-   .rs.getUserPref("insert_parens_after_function_completion")
-})
-
+.rs.uiPrefs$insertParensAfterFunctionCompletion <- list(
+   get = function() { .rs.getUserPref("insert_parens_after_function_completion") },
+   set = function(value) { .rs.setUserPref("insert_parens_after_function_completion", value) }
+)
 
 # Complete multi-line statements with Tab
 # Whether to attempt completion of multiple-line statements when pressing Tab.
-.rs.addFunction("uiPrefs.tabMultilineCompletion", function()
-{
-   .rs.getUserPref("tab_multiline_completion")
-})
-
+.rs.uiPrefs$tabMultilineCompletion <- list(
+   get = function() { .rs.getUserPref("tab_multiline_completion") },
+   set = function(value) { .rs.setUserPref("tab_multiline_completion", value) }
+)
 
 # Use Tab to trigger autocompletion
 # Whether to attempt completion of statements when pressing Tab.
-.rs.addFunction("uiPrefs.tabCompletion", function()
-{
-   .rs.getUserPref("tab_completion")
-})
-
+.rs.uiPrefs$tabCompletion <- list(
+   get = function() { .rs.getUserPref("tab_completion") },
+   set = function(value) { .rs.setUserPref("tab_completion", value) }
+)
 
 # Show function help tooltips on idle
 # Whether to show help tooltips for functions when the cursor has not been
-.rs.addFunction("uiPrefs.showHelpTooltipOnIdle", function()
-{
-   .rs.getUserPref("show_help_tooltip_on_idle")
-})
-
+.rs.uiPrefs$showHelpTooltipOnIdle <- list(
+   get = function() { .rs.getUserPref("show_help_tooltip_on_idle") },
+   set = function(value) { .rs.setUserPref("show_help_tooltip_on_idle", value) }
+)
 
 # Surround selections with
 # Which kinds of delimiters can be used to surround the current selection.
-.rs.addFunction("uiPrefs.surroundSelection", function()
-{
-   .rs.getUserPref("surround_selection")
-})
-
+.rs.uiPrefs$surroundSelection <- list(
+   get = function() { .rs.getUserPref("surround_selection") },
+   set = function(value) { .rs.setUserPref("surround_selection", value) }
+)
 
 # Enable code snippets
 # Whether to enable code snippets in the RStudio code editor.
-.rs.addFunction("uiPrefs.enableSnippets", function()
-{
-   .rs.getUserPref("enable_snippets")
-})
-
+.rs.uiPrefs$enableSnippets <- list(
+   get = function() { .rs.getUserPref("enable_snippets") },
+   set = function(value) { .rs.setUserPref("enable_snippets", value) }
+)
 
 # Use code completion for R
 # When to use auto-completion for R code in the RStudio code editor.
-.rs.addFunction("uiPrefs.codeCompletion", function()
-{
-   .rs.getUserPref("code_completion")
-})
-
+.rs.uiPrefs$codeCompletion <- list(
+   get = function() { .rs.getUserPref("code_completion") },
+   set = function(value) { .rs.setUserPref("code_completion", value) }
+)
 
 # Use code completion for other languages
 # When to use auto-completion for other languages (such as JavaScript and SQL) in
-.rs.addFunction("uiPrefs.codeCompletionOther", function()
-{
-   .rs.getUserPref("code_completion_other")
-})
-
+.rs.uiPrefs$codeCompletionOther <- list(
+   get = function() { .rs.getUserPref("code_completion_other") },
+   set = function(value) { .rs.setUserPref("code_completion_other", value) }
+)
 
 # Use code completion in the R console
 # Whether to always use code completion in the R console.
-.rs.addFunction("uiPrefs.consoleCodeCompletion", function()
-{
-   .rs.getUserPref("console_code_completion")
-})
-
+.rs.uiPrefs$consoleCodeCompletion <- list(
+   get = function() { .rs.getUserPref("console_code_completion") },
+   set = function(value) { .rs.setUserPref("console_code_completion", value) }
+)
 
 # Delay before completing code (ms)
 # The number of milliseconds to wait before offering code suggestions.
-.rs.addFunction("uiPrefs.codeCompletionDelay", function()
-{
-   .rs.getUserPref("code_completion_delay")
-})
-
+.rs.uiPrefs$codeCompletionDelay <- list(
+   get = function() { .rs.getUserPref("code_completion_delay") },
+   set = function(value) { .rs.setUserPref("code_completion_delay", value) }
+)
 
 # Number of characters for code completion
 # The number of characters in a symbol that can be entered before completions are
-.rs.addFunction("uiPrefs.codeCompletionCharacters", function()
-{
-   .rs.getUserPref("code_completion_characters")
-})
-
+.rs.uiPrefs$codeCompletionCharacters <- list(
+   get = function() { .rs.getUserPref("code_completion_characters") },
+   set = function(value) { .rs.setUserPref("code_completion_characters", value) }
+)
 
 # Include all function arguments in completion list
 # When set, RStudio will include all function arguments in the completion list,
-.rs.addFunction("uiPrefs.codeCompletionIncludeAlreadyUsed", function()
-{
-   .rs.getUserPref("code_completion_include_already_used")
-})
-
+.rs.uiPrefs$codeCompletionIncludeAlreadyUsed <- list(
+   get = function() { .rs.getUserPref("code_completion_include_already_used") },
+   set = function(value) { .rs.setUserPref("code_completion_include_already_used", value) }
+)
 
 # Show function signature tooltips
 # Whether to show function signature tooltips during autocompletion.
-.rs.addFunction("uiPrefs.showFunctionSignatureTooltips", function()
-{
-   .rs.getUserPref("show_function_signature_tooltips")
-})
-
+.rs.uiPrefs$showFunctionSignatureTooltips <- list(
+   get = function() { .rs.getUserPref("show_function_signature_tooltips") },
+   set = function(value) { .rs.setUserPref("show_function_signature_tooltips", value) }
+)
 
 # Show data preview in autocompletion help popup
 # Whether a data preview is shown in the autocompletion help popup for datasets
-.rs.addFunction("uiPrefs.showDataPreview", function()
-{
-   .rs.getUserPref("show_data_preview")
-})
-
+.rs.uiPrefs$showDataPreview <- list(
+   get = function() { .rs.getUserPref("show_data_preview") },
+   set = function(value) { .rs.setUserPref("show_data_preview", value) }
+)
 
 # Show diagnostics in R code
 # Whether to show diagnostic messages (such as syntax and usage errors) for R
-.rs.addFunction("uiPrefs.showDiagnosticsR", function()
-{
-   .rs.getUserPref("show_diagnostics_r")
-})
-
+.rs.uiPrefs$showDiagnosticsR <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_r") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_r", value) }
+)
 
 # Show diagnostics in C++ code
 # Whether to show diagnostic messages for C++ code as you type.
-.rs.addFunction("uiPrefs.showDiagnosticsCpp", function()
-{
-   .rs.getUserPref("show_diagnostics_cpp")
-})
-
+.rs.uiPrefs$showDiagnosticsCpp <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_cpp") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_cpp", value) }
+)
 
 # Show diagnostics in YAML code
 # Whether to show diagnostic messages for YAML code as you type.
-.rs.addFunction("uiPrefs.showDiagnosticsYaml", function()
-{
-   .rs.getUserPref("show_diagnostics_yaml")
-})
-
+.rs.uiPrefs$showDiagnosticsYaml <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_yaml") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_yaml", value) }
+)
 
 # Show diagnostics in other languages
 # Whether to show diagnostic messages for other types of code (not R, C++, or
-.rs.addFunction("uiPrefs.showDiagnosticsOther", function()
-{
-   .rs.getUserPref("show_diagnostics_other")
-})
-
+.rs.uiPrefs$showDiagnosticsOther <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_other") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_other", value) }
+)
 
 # Show style diagnostics for R code
 # Whether to show style diagnostics (suggestions for improving R code style)
-.rs.addFunction("uiPrefs.styleDiagnostics", function()
-{
-   .rs.getUserPref("style_diagnostics")
-})
-
+.rs.uiPrefs$styleDiagnostics <- list(
+   get = function() { .rs.getUserPref("style_diagnostics") },
+   set = function(value) { .rs.setUserPref("style_diagnostics", value) }
+)
 
 # Check code for problems when saving
 # Whether to check code for problems after saving it.
-.rs.addFunction("uiPrefs.diagnosticsOnSave", function()
-{
-   .rs.getUserPref("diagnostics_on_save")
-})
-
+.rs.uiPrefs$diagnosticsOnSave <- list(
+   get = function() { .rs.getUserPref("diagnostics_on_save") },
+   set = function(value) { .rs.setUserPref("diagnostics_on_save", value) }
+)
 
 # Run R code diagnostics in the background
 # Whether to run code diagnostics in the background, as you type.
-.rs.addFunction("uiPrefs.backgroundDiagnostics", function()
-{
-   .rs.getUserPref("background_diagnostics")
-})
-
+.rs.uiPrefs$backgroundDiagnostics <- list(
+   get = function() { .rs.getUserPref("background_diagnostics") },
+   set = function(value) { .rs.setUserPref("background_diagnostics", value) }
+)
 
 # Run R code diagnostics after (ms)
 # The number of milliseconds to delay before running code diagnostics in the
-.rs.addFunction("uiPrefs.backgroundDiagnosticsDelayMs", function()
-{
-   .rs.getUserPref("background_diagnostics_delay_ms")
-})
-
+.rs.uiPrefs$backgroundDiagnosticsDelayMs <- list(
+   get = function() { .rs.getUserPref("background_diagnostics_delay_ms") },
+   set = function(value) { .rs.setUserPref("background_diagnostics_delay_ms", value) }
+)
 
 # Run diagnostics on R function calls
 # Whether to run diagnostics in R function calls.
-.rs.addFunction("uiPrefs.diagnosticsInRFunctionCalls", function()
-{
-   .rs.getUserPref("diagnostics_in_r_function_calls")
-})
-
+.rs.uiPrefs$diagnosticsInRFunctionCalls <- list(
+   get = function() { .rs.getUserPref("diagnostics_in_r_function_calls") },
+   set = function(value) { .rs.setUserPref("diagnostics_in_r_function_calls", value) }
+)
 
 # Check arguments to R function calls
 # Whether to check arguments to R function calls.
-.rs.addFunction("uiPrefs.checkArgumentsToRFunctionCalls", function()
-{
-   .rs.getUserPref("check_arguments_to_r_function_calls")
-})
-
+.rs.uiPrefs$checkArgumentsToRFunctionCalls <- list(
+   get = function() { .rs.getUserPref("check_arguments_to_r_function_calls") },
+   set = function(value) { .rs.setUserPref("check_arguments_to_r_function_calls", value) }
+)
 
 # Check for unexpected assignments
 # Whether to check for unexpected variable assignments inside R function calls.
-.rs.addFunction("uiPrefs.checkUnexpectedAssignmentInFunctionCall", function()
-{
-   .rs.getUserPref("check_unexpected_assignment_in_function_call")
-})
-
+.rs.uiPrefs$checkUnexpectedAssignmentInFunctionCall <- list(
+   get = function() { .rs.getUserPref("check_unexpected_assignment_in_function_call") },
+   set = function(value) { .rs.setUserPref("check_unexpected_assignment_in_function_call", value) }
+)
 
 # Warn when R variable used but not defined
 # Whether to generate a warning if a variable is used without being defined in
-.rs.addFunction("uiPrefs.warnIfNoSuchVariableInScope", function()
-{
-   .rs.getUserPref("warn_if_no_such_variable_in_scope")
-})
-
+.rs.uiPrefs$warnIfNoSuchVariableInScope <- list(
+   get = function() { .rs.getUserPref("warn_if_no_such_variable_in_scope") },
+   set = function(value) { .rs.setUserPref("warn_if_no_such_variable_in_scope", value) }
+)
 
 # Warn when R variable defined but not used
 # Whether to generate a warning if a variable is defined without being used in
-.rs.addFunction("uiPrefs.warnVariableDefinedButNotUsed", function()
-{
-   .rs.getUserPref("warn_variable_defined_but_not_used")
-})
-
+.rs.uiPrefs$warnVariableDefinedButNotUsed <- list(
+   get = function() { .rs.getUserPref("warn_variable_defined_but_not_used") },
+   set = function(value) { .rs.setUserPref("warn_variable_defined_but_not_used", value) }
+)
 
 # Detect missing R packages in the editor
 # Whether to automatically discover and offer to install missing R package
-.rs.addFunction("uiPrefs.autoDiscoverPackageDependencies", function()
-{
-   .rs.getUserPref("auto_discover_package_dependencies")
-})
-
+.rs.uiPrefs$autoDiscoverPackageDependencies <- list(
+   get = function() { .rs.getUserPref("auto_discover_package_dependencies") },
+   set = function(value) { .rs.setUserPref("auto_discover_package_dependencies", value) }
+)
 
 # Ensure files end with a newline when saving
 # Whether to ensure that source files end with a newline character.
-.rs.addFunction("uiPrefs.autoAppendNewline", function()
-{
-   .rs.getUserPref("auto_append_newline")
-})
-
+.rs.uiPrefs$autoAppendNewline <- list(
+   get = function() { .rs.getUserPref("auto_append_newline") },
+   set = function(value) { .rs.setUserPref("auto_append_newline", value) }
+)
 
 # Strip trailing whitespace when saving
 # Whether to strip trailing whitespace from each line when saving.
-.rs.addFunction("uiPrefs.stripTrailingWhitespace", function()
-{
-   .rs.getUserPref("strip_trailing_whitespace")
-})
-
+.rs.uiPrefs$stripTrailingWhitespace <- list(
+   get = function() { .rs.getUserPref("strip_trailing_whitespace") },
+   set = function(value) { .rs.setUserPref("strip_trailing_whitespace", value) }
+)
 
 # Restore cursor position when reopening files
 # Whether to save the position of the cursor when a file is closed, restore it
-.rs.addFunction("uiPrefs.restoreSourceDocumentCursorPosition", function()
-{
-   .rs.getUserPref("restore_source_document_cursor_position")
-})
-
+.rs.uiPrefs$restoreSourceDocumentCursorPosition <- list(
+   get = function() { .rs.getUserPref("restore_source_document_cursor_position") },
+   set = function(value) { .rs.setUserPref("restore_source_document_cursor_position", value) }
+)
 
 # Re-indent code when pasting
 # Whether to automatically re-indent code when it's pasted into RStudio.
-.rs.addFunction("uiPrefs.reindentOnPaste", function()
-{
-   .rs.getUserPref("reindent_on_paste")
-})
-
+.rs.uiPrefs$reindentOnPaste <- list(
+   get = function() { .rs.getUserPref("reindent_on_paste") },
+   set = function(value) { .rs.setUserPref("reindent_on_paste", value) }
+)
 
 # Vertically align function arguments
 # Whether to vertically align arguments to R function calls during automatic
-.rs.addFunction("uiPrefs.verticallyAlignArgumentsIndent", function()
-{
-   .rs.getUserPref("vertically_align_arguments_indent")
-})
-
+.rs.uiPrefs$verticallyAlignArgumentsIndent <- list(
+   get = function() { .rs.getUserPref("vertically_align_arguments_indent") },
+   set = function(value) { .rs.setUserPref("vertically_align_arguments_indent", value) }
+)
 
 # Soft-wrap source files
 # Whether to soft-wrap source files, wrapping the text for display without
-.rs.addFunction("uiPrefs.softWrapRFiles", function()
-{
-   .rs.getUserPref("soft_wrap_r_files")
-})
-
+.rs.uiPrefs$softWrapRFiles <- list(
+   get = function() { .rs.getUserPref("soft_wrap_r_files") },
+   set = function(value) { .rs.setUserPref("soft_wrap_r_files", value) }
+)
 
 # Soft-wrap R Markdown files
 # Whether to soft-wrap R Markdown files (and similar types such as R HTML and R
-.rs.addFunction("uiPrefs.softWrapRmdFiles", function()
-{
-   .rs.getUserPref("soft_wrap_rmd_files")
-})
-
+.rs.uiPrefs$softWrapRmdFiles <- list(
+   get = function() { .rs.getUserPref("soft_wrap_rmd_files") },
+   set = function(value) { .rs.setUserPref("soft_wrap_rmd_files", value) }
+)
 
 # Focus console after executing R code
 # Whether to focus the R console after executing an R command from a script.
-.rs.addFunction("uiPrefs.focusConsoleAfterExec", function()
-{
-   .rs.getUserPref("focus_console_after_exec")
-})
-
+.rs.uiPrefs$focusConsoleAfterExec <- list(
+   get = function() { .rs.getUserPref("focus_console_after_exec") },
+   set = function(value) { .rs.setUserPref("focus_console_after_exec", value) }
+)
 
 # Fold style in editor
 # The style of folding to use.
-.rs.addFunction("uiPrefs.foldStyle", function()
-{
-   .rs.getUserPref("fold_style")
-})
-
+.rs.uiPrefs$foldStyle <- list(
+   get = function() { .rs.getUserPref("fold_style") },
+   set = function(value) { .rs.setUserPref("fold_style", value) }
+)
 
 # Save R scripts before sourcing
 # Whether to automatically save scripts before executing them.
-.rs.addFunction("uiPrefs.saveBeforeSourcing", function()
-{
-   .rs.getUserPref("save_before_sourcing")
-})
-
+.rs.uiPrefs$saveBeforeSourcing <- list(
+   get = function() { .rs.getUserPref("save_before_sourcing") },
+   set = function(value) { .rs.setUserPref("save_before_sourcing", value) }
+)
 
 # Syntax highlighting in R console
 # Whether to use syntax highlighting in the R console.
-.rs.addFunction("uiPrefs.syntaxColorConsole", function()
-{
-   .rs.getUserPref("syntax_color_console")
-})
-
+.rs.uiPrefs$syntaxColorConsole <- list(
+   get = function() { .rs.getUserPref("syntax_color_console") },
+   set = function(value) { .rs.setUserPref("syntax_color_console", value) }
+)
 
 # Different color for error output in R console
 # Whether to display error, warning, and message output in a different color.
-.rs.addFunction("uiPrefs.highlightConsoleErrors", function()
-{
-   .rs.getUserPref("highlight_console_errors")
-})
-
+.rs.uiPrefs$highlightConsoleErrors <- list(
+   get = function() { .rs.getUserPref("highlight_console_errors") },
+   set = function(value) { .rs.setUserPref("highlight_console_errors", value) }
+)
 
 # Scroll past end of file
 # Whether to allow scrolling past the end of a file.
-.rs.addFunction("uiPrefs.scrollPastEndOfDocument", function()
-{
-   .rs.getUserPref("scroll_past_end_of_document")
-})
-
+.rs.uiPrefs$scrollPastEndOfDocument <- list(
+   get = function() { .rs.getUserPref("scroll_past_end_of_document") },
+   set = function(value) { .rs.setUserPref("scroll_past_end_of_document", value) }
+)
 
 # Highlight R function calls
 # Whether to highlight R function calls in the code editor.
-.rs.addFunction("uiPrefs.highlightRFunctionCalls", function()
-{
-   .rs.getUserPref("highlight_r_function_calls")
-})
-
+.rs.uiPrefs$highlightRFunctionCalls <- list(
+   get = function() { .rs.getUserPref("highlight_r_function_calls") },
+   set = function(value) { .rs.setUserPref("highlight_r_function_calls", value) }
+)
 
 # Enable preview of named and hexadecimal colors
 # Whether to show preview for named and hexadecimal colors.
-.rs.addFunction("uiPrefs.colorPreview", function()
-{
-   .rs.getUserPref("color_preview")
-})
-
+.rs.uiPrefs$colorPreview <- list(
+   get = function() { .rs.getUserPref("color_preview") },
+   set = function(value) { .rs.setUserPref("color_preview", value) }
+)
 
 # Use rainbow parentheses
 # Whether to highlight parentheses in a variety of colors.
-.rs.addFunction("uiPrefs.rainbowParentheses", function()
-{
-   .rs.getUserPref("rainbow_parentheses")
-})
-
+.rs.uiPrefs$rainbowParentheses <- list(
+   get = function() { .rs.getUserPref("rainbow_parentheses") },
+   set = function(value) { .rs.setUserPref("rainbow_parentheses", value) }
+)
 
 # Use rainbow fenced divs
 # Whether to highlight fenced divs in a variety of colors.
-.rs.addFunction("uiPrefs.rainbowFencedDivs", function()
-{
-   .rs.getUserPref("rainbow_fenced_divs")
-})
-
+.rs.uiPrefs$rainbowFencedDivs <- list(
+   get = function() { .rs.getUserPref("rainbow_fenced_divs") },
+   set = function(value) { .rs.setUserPref("rainbow_fenced_divs", value) }
+)
 
 # Maximum characters per line in R console
 # The maximum number of characters to display in a single line in the R console.
-.rs.addFunction("uiPrefs.consoleLineLengthLimit", function()
-{
-   .rs.getUserPref("console_line_length_limit")
-})
-
+.rs.uiPrefs$consoleLineLengthLimit <- list(
+   get = function() { .rs.getUserPref("console_line_length_limit") },
+   set = function(value) { .rs.setUserPref("console_line_length_limit", value) }
+)
 
 # Maximum lines in R console
 # The maximum number of console actions to store and display in the console
-.rs.addFunction("uiPrefs.consoleMaxLines", function()
-{
-   .rs.getUserPref("console_max_lines")
-})
-
+.rs.uiPrefs$consoleMaxLines <- list(
+   get = function() { .rs.getUserPref("console_max_lines") },
+   set = function(value) { .rs.setUserPref("console_max_lines", value) }
+)
 
 # ANSI escape codes in R console
 # How to treat ANSI escape codes in the console.
-.rs.addFunction("uiPrefs.ansiConsoleMode", function()
-{
-   .rs.getUserPref("ansi_console_mode")
-})
-
+.rs.uiPrefs$ansiConsoleMode <- list(
+   get = function() { .rs.getUserPref("ansi_console_mode") },
+   set = function(value) { .rs.setUserPref("ansi_console_mode", value) }
+)
 
 # Limit visible console output
 # Whether to only show a limited window of the total console output
-.rs.addFunction("uiPrefs.limitVisibleConsole", function()
-{
-   .rs.getUserPref("limit_visible_console")
-})
-
+.rs.uiPrefs$limitVisibleConsole <- list(
+   get = function() { .rs.getUserPref("limit_visible_console") },
+   set = function(value) { .rs.setUserPref("limit_visible_console", value) }
+)
 
 # Show toolbar on R Markdown chunks
 # Whether to show a toolbar on code chunks in R Markdown documents.
-.rs.addFunction("uiPrefs.showInlineToolbarForRCodeChunks", function()
-{
-   .rs.getUserPref("show_inline_toolbar_for_r_code_chunks")
-})
-
+.rs.uiPrefs$showInlineToolbarForRCodeChunks <- list(
+   get = function() { .rs.getUserPref("show_inline_toolbar_for_r_code_chunks") },
+   set = function(value) { .rs.setUserPref("show_inline_toolbar_for_r_code_chunks", value) }
+)
 
 # Highlight code chunks in R Markdown files
 # Whether to highlight code chunks in R Markdown documents with a different
-.rs.addFunction("uiPrefs.highlightCodeChunks", function()
-{
-   .rs.getUserPref("highlight_code_chunks")
-})
-
+.rs.uiPrefs$highlightCodeChunks <- list(
+   get = function() { .rs.getUserPref("highlight_code_chunks") },
+   set = function(value) { .rs.setUserPref("highlight_code_chunks", value) }
+)
 
 # Save files before building
 # Whether to save all open, unsaved files before building the project.
-.rs.addFunction("uiPrefs.saveFilesBeforeBuild", function()
-{
-   .rs.getUserPref("save_files_before_build")
-})
-
+.rs.uiPrefs$saveFilesBeforeBuild <- list(
+   get = function() { .rs.getUserPref("save_files_before_build") },
+   set = function(value) { .rs.setUserPref("save_files_before_build", value) }
+)
 
 # Save and reload R workspace on build
 # Whether RStudio should save and reload the R workspace when building the
-.rs.addFunction("uiPrefs.saveAndReloadWorkspaceOnBuild", function()
-{
-   .rs.getUserPref("save_and_reload_workspace_on_build")
-})
-
+.rs.uiPrefs$saveAndReloadWorkspaceOnBuild <- list(
+   get = function() { .rs.getUserPref("save_and_reload_workspace_on_build") },
+   set = function(value) { .rs.setUserPref("save_and_reload_workspace_on_build", value) }
+)
 
 # Editor font size (points)
 # The default editor font size, in points.
-.rs.addFunction("uiPrefs.fontSizePoints", function()
-{
-   .rs.getUserPref("font_size_points")
-})
-
+.rs.uiPrefs$fontSizePoints <- list(
+   get = function() { .rs.getUserPref("font_size_points") },
+   set = function(value) { .rs.setUserPref("font_size_points", value) }
+)
 
 # Help panel font size (points)
 # The help panel font size, in points.
-.rs.addFunction("uiPrefs.helpFontSizePoints", function()
-{
-   .rs.getUserPref("help_font_size_points")
-})
-
+.rs.uiPrefs$helpFontSizePoints <- list(
+   get = function() { .rs.getUserPref("help_font_size_points") },
+   set = function(value) { .rs.setUserPref("help_font_size_points", value) }
+)
 
 # Theme
 # The name of the color theme to apply to the text editor in RStudio.
-.rs.addFunction("uiPrefs.editorTheme", function()
-{
-   .rs.getUserPref("editor_theme")
-})
-
+.rs.uiPrefs$editorTheme <- list(
+   get = function() { .rs.getUserPref("editor_theme") },
+   set = function(value) { .rs.setUserPref("editor_theme", value) }
+)
 
 # Enable editor fonts on RStudio Server
 # Whether to use a custom editor font in RStudio Server.
-.rs.addFunction("uiPrefs.serverEditorFontEnabled", function()
-{
-   .rs.getUserPref("server_editor_font_enabled")
-})
-
+.rs.uiPrefs$serverEditorFontEnabled <- list(
+   get = function() { .rs.getUserPref("server_editor_font_enabled") },
+   set = function(value) { .rs.setUserPref("server_editor_font_enabled", value) }
+)
 
 # Editor font
 # The name of the fixed-width editor font to use with RStudio Server.
-.rs.addFunction("uiPrefs.serverEditorFont", function()
-{
-   .rs.getUserPref("server_editor_font")
-})
-
+.rs.uiPrefs$serverEditorFont <- list(
+   get = function() { .rs.getUserPref("server_editor_font") },
+   set = function(value) { .rs.setUserPref("server_editor_font", value) }
+)
 
 # Default character encoding
 # The default character encoding to use when saving files.
-.rs.addFunction("uiPrefs.defaultEncoding", function()
-{
-   .rs.getUserPref("default_encoding")
-})
-
+.rs.uiPrefs$defaultEncoding <- list(
+   get = function() { .rs.getUserPref("default_encoding") },
+   set = function(value) { .rs.setUserPref("default_encoding", value) }
+)
 
 # Show top toolbar
 # Whether to show the toolbar at the top of the RStudio workbench.
-.rs.addFunction("uiPrefs.toolbarVisible", function()
-{
-   .rs.getUserPref("toolbar_visible")
-})
-
+.rs.uiPrefs$toolbarVisible <- list(
+   get = function() { .rs.getUserPref("toolbar_visible") },
+   set = function(value) { .rs.setUserPref("toolbar_visible", value) }
+)
 
 # Default new project location
 # The directory path under which to place new projects by default.
-.rs.addFunction("uiPrefs.defaultProjectLocation", function()
-{
-   .rs.getUserPref("default_project_location")
-})
-
+.rs.uiPrefs$defaultProjectLocation <- list(
+   get = function() { .rs.getUserPref("default_project_location") },
+   set = function(value) { .rs.setUserPref("default_project_location", value) }
+)
 
 # Default open project location
 # The default directory to use in file dialogs when opening a project.
-.rs.addFunction("uiPrefs.defaultOpenProjectLocation", function()
-{
-   .rs.getUserPref("default_open_project_location")
-})
-
+.rs.uiPrefs$defaultOpenProjectLocation <- list(
+   get = function() { .rs.getUserPref("default_open_project_location") },
+   set = function(value) { .rs.setUserPref("default_open_project_location", value) }
+)
 
 # Source with echo by default
 # Whether to echo R code when sourcing it.
-.rs.addFunction("uiPrefs.sourceWithEcho", function()
-{
-   .rs.getUserPref("source_with_echo")
-})
-
+.rs.uiPrefs$sourceWithEcho <- list(
+   get = function() { .rs.getUserPref("source_with_echo") },
+   set = function(value) { .rs.setUserPref("source_with_echo", value) }
+)
 
 # Default Sweave engine
 # The default engine to use when processing Sweave documents.
-.rs.addFunction("uiPrefs.defaultSweaveEngine", function()
-{
-   .rs.getUserPref("default_sweave_engine")
-})
-
+.rs.uiPrefs$defaultSweaveEngine <- list(
+   get = function() { .rs.getUserPref("default_sweave_engine") },
+   set = function(value) { .rs.setUserPref("default_sweave_engine", value) }
+)
 
 # Default LaTeX program
 # The default program to use when processing LaTeX documents.
-.rs.addFunction("uiPrefs.defaultLatexProgram", function()
-{
-   .rs.getUserPref("default_latex_program")
-})
-
+.rs.uiPrefs$defaultLatexProgram <- list(
+   get = function() { .rs.getUserPref("default_latex_program") },
+   set = function(value) { .rs.setUserPref("default_latex_program", value) }
+)
 
 # Use Roxygen for documentation
 # Whether to use Roxygen for documentation.
-.rs.addFunction("uiPrefs.useRoxygen", function()
-{
-   .rs.getUserPref("use_roxygen")
-})
-
+.rs.uiPrefs$useRoxygen <- list(
+   get = function() { .rs.getUserPref("use_roxygen") },
+   set = function(value) { .rs.setUserPref("use_roxygen", value) }
+)
 
 # Enable data import
 # Whether to use RStudio's data import feature.
-.rs.addFunction("uiPrefs.useDataimport", function()
-{
-   .rs.getUserPref("use_dataimport")
-})
-
+.rs.uiPrefs$useDataimport <- list(
+   get = function() { .rs.getUserPref("use_dataimport") },
+   set = function(value) { .rs.setUserPref("use_dataimport", value) }
+)
 
 # PDF previewer
 # The program to use to preview PDF files after generation.
-.rs.addFunction("uiPrefs.pdfPreviewer", function()
-{
-   .rs.getUserPref("pdf_previewer")
-})
-
+.rs.uiPrefs$pdfPreviewer <- list(
+   get = function() { .rs.getUserPref("pdf_previewer") },
+   set = function(value) { .rs.setUserPref("pdf_previewer", value) }
+)
 
 # Enable Rnw concordance
 # Whether to always enable the concordance for RNW files.
-.rs.addFunction("uiPrefs.alwaysEnableRnwConcordance", function()
-{
-   .rs.getUserPref("always_enable_rnw_concordance")
-})
-
+.rs.uiPrefs$alwaysEnableRnwConcordance <- list(
+   get = function() { .rs.getUserPref("always_enable_rnw_concordance") },
+   set = function(value) { .rs.setUserPref("always_enable_rnw_concordance", value) }
+)
 
 # Insert numbered LaTeX sections
 # Whether to insert numbered sections in LaTeX.
-.rs.addFunction("uiPrefs.insertNumberedLatexSections", function()
-{
-   .rs.getUserPref("insert_numbered_latex_sections")
-})
-
+.rs.uiPrefs$insertNumberedLatexSections <- list(
+   get = function() { .rs.getUserPref("insert_numbered_latex_sections") },
+   set = function(value) { .rs.setUserPref("insert_numbered_latex_sections", value) }
+)
 
 # Spelling dictionary language
 # The language of the spelling dictionary to use for spell checking.
-.rs.addFunction("uiPrefs.spellingDictionaryLanguage", function()
-{
-   .rs.getUserPref("spelling_dictionary_language")
-})
-
+.rs.uiPrefs$spellingDictionaryLanguage <- list(
+   get = function() { .rs.getUserPref("spelling_dictionary_language") },
+   set = function(value) { .rs.setUserPref("spelling_dictionary_language", value) }
+)
 
 # Custom spelling dictionaries
 # The list of custom dictionaries to use when spell checking.
-.rs.addFunction("uiPrefs.spellingCustomDictionaries", function()
-{
-   .rs.getUserPref("spelling_custom_dictionaries")
-})
-
+.rs.uiPrefs$spellingCustomDictionaries <- list(
+   get = function() { .rs.getUserPref("spelling_custom_dictionaries") },
+   set = function(value) { .rs.setUserPref("spelling_custom_dictionaries", value) }
+)
 
 # Lint document after load (ms)
 # The number of milliseconds to wait before linting a document after it is
-.rs.addFunction("uiPrefs.documentLoadLintDelay", function()
-{
-   .rs.getUserPref("document_load_lint_delay")
-})
-
+.rs.uiPrefs$documentLoadLintDelay <- list(
+   get = function() { .rs.getUserPref("document_load_lint_delay") },
+   set = function(value) { .rs.setUserPref("document_load_lint_delay", value) }
+)
 
 # Ignore uppercase words in spell check
 # Whether to ignore words in uppercase when spell checking.
-.rs.addFunction("uiPrefs.ignoreUppercaseWords", function()
-{
-   .rs.getUserPref("ignore_uppercase_words")
-})
-
+.rs.uiPrefs$ignoreUppercaseWords <- list(
+   get = function() { .rs.getUserPref("ignore_uppercase_words") },
+   set = function(value) { .rs.setUserPref("ignore_uppercase_words", value) }
+)
 
 # Ignore words with numbers in spell check
 # Whether to ignore words with numbers in them when spell checking.
-.rs.addFunction("uiPrefs.ignoreWordsWithNumbers", function()
-{
-   .rs.getUserPref("ignore_words_with_numbers")
-})
-
+.rs.uiPrefs$ignoreWordsWithNumbers <- list(
+   get = function() { .rs.getUserPref("ignore_words_with_numbers") },
+   set = function(value) { .rs.setUserPref("ignore_words_with_numbers", value) }
+)
 
 # Use real-time spellchecking
 # Whether to enable real-time spellchecking by default.
-.rs.addFunction("uiPrefs.realTimeSpellchecking", function()
-{
-   .rs.getUserPref("real_time_spellchecking")
-})
-
+.rs.uiPrefs$realTimeSpellchecking <- list(
+   get = function() { .rs.getUserPref("real_time_spellchecking") },
+   set = function(value) { .rs.setUserPref("real_time_spellchecking", value) }
+)
 
 # Navigate to build errors
 # Whether to navigate to build errors.
-.rs.addFunction("uiPrefs.navigateToBuildError", function()
-{
-   .rs.getUserPref("navigate_to_build_error")
-})
-
+.rs.uiPrefs$navigateToBuildError <- list(
+   get = function() { .rs.getUserPref("navigate_to_build_error") },
+   set = function(value) { .rs.setUserPref("navigate_to_build_error", value) }
+)
 
 # Enable the Packages pane
 # Whether to enable RStudio's Packages pane.
-.rs.addFunction("uiPrefs.packagesPaneEnabled", function()
-{
-   .rs.getUserPref("packages_pane_enabled")
-})
-
+.rs.uiPrefs$packagesPaneEnabled <- list(
+   get = function() { .rs.getUserPref("packages_pane_enabled") },
+   set = function(value) { .rs.setUserPref("packages_pane_enabled", value) }
+)
 
 # C++ template
 # C++ template.
-.rs.addFunction("uiPrefs.cppTemplate", function()
-{
-   .rs.getUserPref("cpp_template")
-})
-
+.rs.uiPrefs$cppTemplate <- list(
+   get = function() { .rs.getUserPref("cpp_template") },
+   set = function(value) { .rs.setUserPref("cpp_template", value) }
+)
 
 # Restore last opened documents on startup
 # Whether to restore the last opened source documents when RStudio starts up.
-.rs.addFunction("uiPrefs.restoreSourceDocuments", function()
-{
-   .rs.getUserPref("restore_source_documents")
-})
-
+.rs.uiPrefs$restoreSourceDocuments <- list(
+   get = function() { .rs.getUserPref("restore_source_documents") },
+   set = function(value) { .rs.setUserPref("restore_source_documents", value) }
+)
 
 # Handle errors only when user code present
 # Whether to handle errors only when user code is on the stack.
-.rs.addFunction("uiPrefs.handleErrorsInUserCodeOnly", function()
-{
-   .rs.getUserPref("handle_errors_in_user_code_only")
-})
-
+.rs.uiPrefs$handleErrorsInUserCodeOnly <- list(
+   get = function() { .rs.getUserPref("handle_errors_in_user_code_only") },
+   set = function(value) { .rs.setUserPref("handle_errors_in_user_code_only", value) }
+)
 
 # Auto-expand error tracebacks
 # Whether to automatically expand tracebacks when an error occurs.
-.rs.addFunction("uiPrefs.autoExpandErrorTracebacks", function()
-{
-   .rs.getUserPref("auto_expand_error_tracebacks")
-})
-
+.rs.uiPrefs$autoExpandErrorTracebacks <- list(
+   get = function() { .rs.getUserPref("auto_expand_error_tracebacks") },
+   set = function(value) { .rs.setUserPref("auto_expand_error_tracebacks", value) }
+)
 
 # Check for new version at startup
 # Whether to check for new versions of RStudio when RStudio starts.
-.rs.addFunction("uiPrefs.checkForUpdates", function()
-{
-   .rs.getUserPref("check_for_updates")
-})
-
+.rs.uiPrefs$checkForUpdates <- list(
+   get = function() { .rs.getUserPref("check_for_updates") },
+   set = function(value) { .rs.setUserPref("check_for_updates", value) }
+)
 
 # Show internal functions when debugging
 # Whether to show functions without source references in the Traceback pane while
-.rs.addFunction("uiPrefs.showInternalFunctions", function()
-{
-   .rs.getUserPref("show_internal_functions")
-})
-
+.rs.uiPrefs$showInternalFunctions <- list(
+   get = function() { .rs.getUserPref("show_internal_functions") },
+   set = function(value) { .rs.setUserPref("show_internal_functions", value) }
+)
 
 # Run Shiny applications in
 # Where to display Shiny applications when they are run.
-.rs.addFunction("uiPrefs.shinyViewerType", function()
-{
-   .rs.getUserPref("shiny_viewer_type")
-})
-
+.rs.uiPrefs$shinyViewerType <- list(
+   get = function() { .rs.getUserPref("shiny_viewer_type") },
+   set = function(value) { .rs.setUserPref("shiny_viewer_type", value) }
+)
 
 # Run Shiny applications in the background
 # Whether to run Shiny applications as background jobs.
-.rs.addFunction("uiPrefs.shinyBackgroundJobs", function()
-{
-   .rs.getUserPref("shiny_background_jobs")
-})
-
+.rs.uiPrefs$shinyBackgroundJobs <- list(
+   get = function() { .rs.getUserPref("shiny_background_jobs") },
+   set = function(value) { .rs.setUserPref("shiny_background_jobs", value) }
+)
 
 # Run Plumber APIs in
 # Where to display Shiny applications when they are run.
-.rs.addFunction("uiPrefs.plumberViewerType", function()
-{
-   .rs.getUserPref("plumber_viewer_type")
-})
-
+.rs.uiPrefs$plumberViewerType <- list(
+   get = function() { .rs.getUserPref("plumber_viewer_type") },
+   set = function(value) { .rs.setUserPref("plumber_viewer_type", value) }
+)
 
 # Document author
 # The default name to use as the document author when creating new documents.
-.rs.addFunction("uiPrefs.documentAuthor", function()
-{
-   .rs.getUserPref("document_author")
-})
-
+.rs.uiPrefs$documentAuthor <- list(
+   get = function() { .rs.getUserPref("document_author") },
+   set = function(value) { .rs.setUserPref("document_author", value) }
+)
 
 # Use current date when rendering document
 # Use current date when rendering document
-.rs.addFunction("uiPrefs.rmdAutoDate", function()
-{
-   .rs.getUserPref("rmd_auto_date")
-})
-
+.rs.uiPrefs$rmdAutoDate <- list(
+   get = function() { .rs.getUserPref("rmd_auto_date") },
+   set = function(value) { .rs.setUserPref("rmd_auto_date", value) }
+)
 
 # Path to preferred R Markdown template
 # The path to the preferred R Markdown template.
-.rs.addFunction("uiPrefs.rmdPreferredTemplatePath", function()
-{
-   .rs.getUserPref("rmd_preferred_template_path")
-})
-
+.rs.uiPrefs$rmdPreferredTemplatePath <- list(
+   get = function() { .rs.getUserPref("rmd_preferred_template_path") },
+   set = function(value) { .rs.setUserPref("rmd_preferred_template_path", value) }
+)
 
 # Display R Markdown documents in
 # Where to display R Markdown documents when they have completed rendering.
-.rs.addFunction("uiPrefs.rmdViewerType", function()
-{
-   .rs.getUserPref("rmd_viewer_type")
-})
-
+.rs.uiPrefs$rmdViewerType <- list(
+   get = function() { .rs.getUserPref("rmd_viewer_type") },
+   set = function(value) { .rs.setUserPref("rmd_viewer_type", value) }
+)
 
 # Show diagnostic info when publishing
 # Whether to show verbose diagnostic information when publishing content.
-.rs.addFunction("uiPrefs.showPublishDiagnostics", function()
-{
-   .rs.getUserPref("show_publish_diagnostics")
-})
-
+.rs.uiPrefs$showPublishDiagnostics <- list(
+   get = function() { .rs.getUserPref("show_publish_diagnostics") },
+   set = function(value) { .rs.setUserPref("show_publish_diagnostics", value) }
+)
 
 # 
 # Whether to show UI for publishing content to Posit Cloud.
-.rs.addFunction("uiPrefs.enableCloudPublishUi", function()
-{
-   .rs.getUserPref("enable_cloud_publish_ui")
-})
-
+.rs.uiPrefs$enableCloudPublishUi <- list(
+   get = function() { .rs.getUserPref("enable_cloud_publish_ui") },
+   set = function(value) { .rs.setUserPref("enable_cloud_publish_ui", value) }
+)
 
 # Check SSL certificates when publishing
 # Whether to check remote server SSL certificates when publishing content.
-.rs.addFunction("uiPrefs.publishCheckCertificates", function()
-{
-   .rs.getUserPref("publish_check_certificates")
-})
-
+.rs.uiPrefs$publishCheckCertificates <- list(
+   get = function() { .rs.getUserPref("publish_check_certificates") },
+   set = function(value) { .rs.setUserPref("publish_check_certificates", value) }
+)
 
 # Use custom CA bundle when publishing
 # Whether to use a custom certificate authority (CA) bundle when publishing
-.rs.addFunction("uiPrefs.usePublishCaBundle", function()
-{
-   .rs.getUserPref("use_publish_ca_bundle")
-})
-
+.rs.uiPrefs$usePublishCaBundle <- list(
+   get = function() { .rs.getUserPref("use_publish_ca_bundle") },
+   set = function(value) { .rs.setUserPref("use_publish_ca_bundle", value) }
+)
 
 # Path to custom CA bundle for publishing
 # The path to the custom certificate authority (CA) bundle to use when publishing
-.rs.addFunction("uiPrefs.publishCaBundle", function()
-{
-   .rs.getUserPref("publish_ca_bundle")
-})
-
+.rs.uiPrefs$publishCaBundle <- list(
+   get = function() { .rs.getUserPref("publish_ca_bundle") },
+   set = function(value) { .rs.setUserPref("publish_ca_bundle", value) }
+)
 
 # Show chunk output inline in all documents
 # Whether to show chunk output inline for ordinary R Markdown documents.
-.rs.addFunction("uiPrefs.rmdChunkOutputInline", function()
-{
-   .rs.getUserPref("rmd_chunk_output_inline")
-})
-
+.rs.uiPrefs$rmdChunkOutputInline <- list(
+   get = function() { .rs.getUserPref("rmd_chunk_output_inline") },
+   set = function(value) { .rs.setUserPref("rmd_chunk_output_inline", value) }
+)
 
 # Open document outline by default
 # Whether to show the document outline by default when opening R Markdown
-.rs.addFunction("uiPrefs.showDocOutlineRmd", function()
-{
-   .rs.getUserPref("show_doc_outline_rmd")
-})
-
+.rs.uiPrefs$showDocOutlineRmd <- list(
+   get = function() { .rs.getUserPref("show_doc_outline_rmd") },
+   set = function(value) { .rs.setUserPref("show_doc_outline_rmd", value) }
+)
 
 # Document outline font size
 # The font size to use for items in the document outline.
-.rs.addFunction("uiPrefs.documentOutlineFontSize", function()
-{
-   .rs.getUserPref("document_outline_font_size")
-})
-
+.rs.uiPrefs$documentOutlineFontSize <- list(
+   get = function() { .rs.getUserPref("document_outline_font_size") },
+   set = function(value) { .rs.setUserPref("document_outline_font_size", value) }
+)
 
 # Automatically run Setup chunk when needed
 # Whether to automatically run an R Markdown document's Setup chunk before
-.rs.addFunction("uiPrefs.autoRunSetupChunk", function()
-{
-   .rs.getUserPref("auto_run_setup_chunk")
-})
-
+.rs.uiPrefs$autoRunSetupChunk <- list(
+   get = function() { .rs.getUserPref("auto_run_setup_chunk") },
+   set = function(value) { .rs.setUserPref("auto_run_setup_chunk", value) }
+)
 
 # Hide console when running R Markdown chunks
 # Whether to hide the R console when executing inline R Markdown chunks.
-.rs.addFunction("uiPrefs.hideConsoleOnChunkExecute", function()
-{
-   .rs.getUserPref("hide_console_on_chunk_execute")
-})
-
+.rs.uiPrefs$hideConsoleOnChunkExecute <- list(
+   get = function() { .rs.getUserPref("hide_console_on_chunk_execute") },
+   set = function(value) { .rs.setUserPref("hide_console_on_chunk_execute", value) }
+)
 
 # Unit of R code execution
 # The unit of R code to execute when the Execute command is invoked.
-.rs.addFunction("uiPrefs.executionBehavior", function()
-{
-   .rs.getUserPref("execution_behavior")
-})
-
+.rs.uiPrefs$executionBehavior <- list(
+   get = function() { .rs.getUserPref("execution_behavior") },
+   set = function(value) { .rs.setUserPref("execution_behavior", value) }
+)
 
 # Show the Terminal tab
 # Whether to show the Terminal tab.
-.rs.addFunction("uiPrefs.showTerminalTab", function()
-{
-   .rs.getUserPref("show_terminal_tab")
-})
-
+.rs.uiPrefs$showTerminalTab <- list(
+   get = function() { .rs.getUserPref("show_terminal_tab") },
+   set = function(value) { .rs.setUserPref("show_terminal_tab", value) }
+)
 
 # Use local echo in the Terminal
 # Whether to use local echo in the Terminal.
-.rs.addFunction("uiPrefs.terminalLocalEcho", function()
-{
-   .rs.getUserPref("terminal_local_echo")
-})
-
+.rs.uiPrefs$terminalLocalEcho <- list(
+   get = function() { .rs.getUserPref("terminal_local_echo") },
+   set = function(value) { .rs.setUserPref("terminal_local_echo", value) }
+)
 
 # Use websockets in the Terminal
 # Whether to use websockets to communicate with the shell in the Terminal tab.
-.rs.addFunction("uiPrefs.terminalWebsockets", function()
-{
-   .rs.getUserPref("terminal_websockets")
-})
-
+.rs.uiPrefs$terminalWebsockets <- list(
+   get = function() { .rs.getUserPref("terminal_websockets") },
+   set = function(value) { .rs.setUserPref("terminal_websockets", value) }
+)
 
 # Close Terminal pane after shell exit
 # Whether to close the terminal pane after the shell exits.
-.rs.addFunction("uiPrefs.terminalCloseBehavior", function()
-{
-   .rs.getUserPref("terminal_close_behavior")
-})
-
+.rs.uiPrefs$terminalCloseBehavior <- list(
+   get = function() { .rs.getUserPref("terminal_close_behavior") },
+   set = function(value) { .rs.setUserPref("terminal_close_behavior", value) }
+)
 
 # Save and restore system environment in Terminal tab
 # Whether to track and save changes to system environment variables in the
-.rs.addFunction("uiPrefs.terminalTrackEnvironment", function()
-{
-   .rs.getUserPref("terminal_track_environment")
-})
-
+.rs.uiPrefs$terminalTrackEnvironment <- list(
+   get = function() { .rs.getUserPref("terminal_track_environment") },
+   set = function(value) { .rs.setUserPref("terminal_track_environment", value) }
+)
 
 # Ignored environment variables
 # Environment variables which should be ignored when tracking changed to
-.rs.addFunction("uiPrefs.terminalIgnoredEnvironmentVariables", function()
-{
-   .rs.getUserPref("terminal_ignored_environment_variables")
-})
-
+.rs.uiPrefs$terminalIgnoredEnvironmentVariables <- list(
+   get = function() { .rs.getUserPref("terminal_ignored_environment_variables") },
+   set = function(value) { .rs.setUserPref("terminal_ignored_environment_variables", value) }
+)
 
 # Enable Terminal hooks
 # Enabled Terminal hooks? Required for Python terminal integration, which places
-.rs.addFunction("uiPrefs.terminalHooks", function()
-{
-   .rs.getUserPref("terminal_hooks")
-})
-
+.rs.uiPrefs$terminalHooks <- list(
+   get = function() { .rs.getUserPref("terminal_hooks") },
+   set = function(value) { .rs.setUserPref("terminal_hooks", value) }
+)
 
 # Terminal bell style
 # Terminal bell style
-.rs.addFunction("uiPrefs.terminalBellStyle", function()
-{
-   .rs.getUserPref("terminal_bell_style")
-})
-
+.rs.uiPrefs$terminalBellStyle <- list(
+   get = function() { .rs.getUserPref("terminal_bell_style") },
+   set = function(value) { .rs.setUserPref("terminal_bell_style", value) }
+)
 
 # Terminal tab rendering engine
 # Terminal rendering engine: canvas is faster, dom may be needed for some
-.rs.addFunction("uiPrefs.terminalRenderer", function()
-{
-   .rs.getUserPref("terminal_renderer")
-})
-
+.rs.uiPrefs$terminalRenderer <- list(
+   get = function() { .rs.getUserPref("terminal_renderer") },
+   set = function(value) { .rs.setUserPref("terminal_renderer", value) }
+)
 
 # Make links in Terminal clickable
 # Whether web links displayed in the Terminal tab are made clickable.
-.rs.addFunction("uiPrefs.terminalWeblinks", function()
-{
-   .rs.getUserPref("terminal_weblinks")
-})
-
+.rs.uiPrefs$terminalWeblinks <- list(
+   get = function() { .rs.getUserPref("terminal_weblinks") },
+   set = function(value) { .rs.setUserPref("terminal_weblinks", value) }
+)
 
 # Show R Markdown render command
 # Whether to print the render command use to knit R Markdown documents in the R
-.rs.addFunction("uiPrefs.showRmdRenderCommand", function()
-{
-   .rs.getUserPref("show_rmd_render_command")
-})
-
+.rs.uiPrefs$showRmdRenderCommand <- list(
+   get = function() { .rs.getUserPref("show_rmd_render_command") },
+   set = function(value) { .rs.setUserPref("show_rmd_render_command", value) }
+)
 
 # Enable dragging text in code editor
 # Whether to enable moving text on the editing surface by clicking and dragging
-.rs.addFunction("uiPrefs.enableTextDrag", function()
-{
-   .rs.getUserPref("enable_text_drag")
-})
-
+.rs.uiPrefs$enableTextDrag <- list(
+   get = function() { .rs.getUserPref("enable_text_drag") },
+   set = function(value) { .rs.setUserPref("enable_text_drag", value) }
+)
 
 # Show hidden files in Files pane
 # Whether to show hidden files in the Files pane.
-.rs.addFunction("uiPrefs.showHiddenFiles", function()
-{
-   .rs.getUserPref("show_hidden_files")
-})
-
+.rs.uiPrefs$showHiddenFiles <- list(
+   get = function() { .rs.getUserPref("show_hidden_files") },
+   set = function(value) { .rs.setUserPref("show_hidden_files", value) }
+)
 
 # Files always shown in the Files Pane
 # List of file names (case sensitive) that are always shown in the Files Pane,
-.rs.addFunction("uiPrefs.alwaysShownFiles", function()
-{
-   .rs.getUserPref("always_shown_files")
-})
-
+.rs.uiPrefs$alwaysShownFiles <- list(
+   get = function() { .rs.getUserPref("always_shown_files") },
+   set = function(value) { .rs.setUserPref("always_shown_files", value) }
+)
 
 # Extensions always shown in the Files Pane
 # List of file extensions (beginning with ., not case sensitive) that are always
-.rs.addFunction("uiPrefs.alwaysShownExtensions", function()
-{
-   .rs.getUserPref("always_shown_extensions")
-})
-
+.rs.uiPrefs$alwaysShownExtensions <- list(
+   get = function() { .rs.getUserPref("always_shown_extensions") },
+   set = function(value) { .rs.setUserPref("always_shown_extensions", value) }
+)
 
 # Sort file names naturally in Files pane
 # Whether to sort file names naturally, so that e.g., file10.R comes after
-.rs.addFunction("uiPrefs.sortFileNamesNaturally", function()
-{
-   .rs.getUserPref("sort_file_names_naturally")
-})
-
+.rs.uiPrefs$sortFileNamesNaturally <- list(
+   get = function() { .rs.getUserPref("sort_file_names_naturally") },
+   set = function(value) { .rs.setUserPref("sort_file_names_naturally", value) }
+)
 
 # Synchronize the Files pane with the current working directory
 # Whether to change the directory in the Files pane automatically when the
-.rs.addFunction("uiPrefs.syncFilesPaneWorkingDir", function()
-{
-   .rs.getUserPref("sync_files_pane_working_dir")
-})
-
+.rs.uiPrefs$syncFilesPaneWorkingDir <- list(
+   get = function() { .rs.getUserPref("sync_files_pane_working_dir") },
+   set = function(value) { .rs.setUserPref("sync_files_pane_working_dir", value) }
+)
 
 # Jobs tab visibility
 # The visibility of the Jobs tab.
-.rs.addFunction("uiPrefs.jobsTabVisibility", function()
-{
-   .rs.getUserPref("jobs_tab_visibility")
-})
-
+.rs.uiPrefs$jobsTabVisibility <- list(
+   get = function() { .rs.getUserPref("jobs_tab_visibility") },
+   set = function(value) { .rs.setUserPref("jobs_tab_visibility", value) }
+)
 
 # 
 # Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
-.rs.addFunction("uiPrefs.showLauncherJobsTab", function()
-{
-   .rs.getUserPref("show_launcher_jobs_tab")
-})
-
+.rs.uiPrefs$showLauncherJobsTab <- list(
+   get = function() { .rs.getUserPref("show_launcher_jobs_tab") },
+   set = function(value) { .rs.setUserPref("show_launcher_jobs_tab", value) }
+)
 
 # 
 # How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio
-.rs.addFunction("uiPrefs.launcherJobsSort", function()
-{
-   .rs.getUserPref("launcher_jobs_sort")
-})
-
+.rs.uiPrefs$launcherJobsSort <- list(
+   get = function() { .rs.getUserPref("launcher_jobs_sort") },
+   set = function(value) { .rs.setUserPref("launcher_jobs_sort", value) }
+)
 
 # 
 # How to detect busy status in the Terminal.
-.rs.addFunction("uiPrefs.busyDetection", function()
-{
-   .rs.getUserPref("busy_detection")
-})
-
+.rs.uiPrefs$busyDetection <- list(
+   get = function() { .rs.getUserPref("busy_detection") },
+   set = function(value) { .rs.setUserPref("busy_detection", value) }
+)
 
 # 
 # A list of apps that should not be considered busy in the Terminal.
-.rs.addFunction("uiPrefs.busyExclusionList", function()
-{
-   .rs.getUserPref("busy_exclusion_list")
-})
-
+.rs.uiPrefs$busyExclusionList <- list(
+   get = function() { .rs.getUserPref("busy_exclusion_list") },
+   set = function(value) { .rs.setUserPref("busy_exclusion_list", value) }
+)
 
 # Working directory for knitting
 # The working directory to use when knitting R Markdown documents.
-.rs.addFunction("uiPrefs.knitWorkingDir", function()
-{
-   .rs.getUserPref("knit_working_dir")
-})
-
+.rs.uiPrefs$knitWorkingDir <- list(
+   get = function() { .rs.getUserPref("knit_working_dir") },
+   set = function(value) { .rs.setUserPref("knit_working_dir", value) }
+)
 
 # Show in Document Outline
 # Which objects to show in the document outline pane.
-.rs.addFunction("uiPrefs.docOutlineShow", function()
-{
-   .rs.getUserPref("doc_outline_show")
-})
-
+.rs.uiPrefs$docOutlineShow <- list(
+   get = function() { .rs.getUserPref("doc_outline_show") },
+   set = function(value) { .rs.setUserPref("doc_outline_show", value) }
+)
 
 # Preview LaTeX equations on idle
 # When to preview LaTeX mathematical equations when cursor has not moved
-.rs.addFunction("uiPrefs.latexPreviewOnCursorIdle", function()
-{
-   .rs.getUserPref("latex_preview_on_cursor_idle")
-})
-
+.rs.uiPrefs$latexPreviewOnCursorIdle <- list(
+   get = function() { .rs.getUserPref("latex_preview_on_cursor_idle") },
+   set = function(value) { .rs.setUserPref("latex_preview_on_cursor_idle", value) }
+)
 
 # Wrap around when going to previous/next tab
 # Whether to wrap around when going to the previous or next editor tab.
-.rs.addFunction("uiPrefs.wrapTabNavigation", function()
-{
-   .rs.getUserPref("wrap_tab_navigation")
-})
-
+.rs.uiPrefs$wrapTabNavigation <- list(
+   get = function() { .rs.getUserPref("wrap_tab_navigation") },
+   set = function(value) { .rs.setUserPref("wrap_tab_navigation", value) }
+)
 
 # Global theme
 # The theme to use for the main RStudio user interface.
-.rs.addFunction("uiPrefs.globalTheme", function()
-{
-   .rs.getUserPref("global_theme")
-})
-
+.rs.uiPrefs$globalTheme <- list(
+   get = function() { .rs.getUserPref("global_theme") },
+   set = function(value) { .rs.setUserPref("global_theme", value) }
+)
 
 # Ignore whitespace in VCS diffs
 # Whether to ignore whitespace when generating diffs of version controlled files.
-.rs.addFunction("uiPrefs.gitDiffIgnoreWhitespace", function()
-{
-   .rs.getUserPref("git_diff_ignore_whitespace")
-})
-
+.rs.uiPrefs$gitDiffIgnoreWhitespace <- list(
+   get = function() { .rs.getUserPref("git_diff_ignore_whitespace") },
+   set = function(value) { .rs.setUserPref("git_diff_ignore_whitespace", value) }
+)
 
 # Sign git commits
 # Whether to sign git commits.
-.rs.addFunction("uiPrefs.gitSignedCommits", function()
-{
-   .rs.getUserPref("git_signed_commits")
-})
-
+.rs.uiPrefs$gitSignedCommits <- list(
+   get = function() { .rs.getUserPref("git_signed_commits") },
+   set = function(value) { .rs.setUserPref("git_signed_commits", value) }
+)
 
 # Double click to select in the Console
 # Whether double-clicking should select a word in the Console pane.
-.rs.addFunction("uiPrefs.consoleDoubleClickSelect", function()
-{
-   .rs.getUserPref("console_double_click_select")
-})
-
+.rs.uiPrefs$consoleDoubleClickSelect <- list(
+   get = function() { .rs.getUserPref("console_double_click_select") },
+   set = function(value) { .rs.setUserPref("console_double_click_select", value) }
+)
 
 # Warn when automatic session suspension is paused
 # Whether the 'Auto Suspension Blocked' icon should appear in the R Console
-.rs.addFunction("uiPrefs.consoleSuspendBlockedNotice", function()
-{
-   .rs.getUserPref("console_suspend_blocked_notice")
-})
-
+.rs.uiPrefs$consoleSuspendBlockedNotice <- list(
+   get = function() { .rs.getUserPref("console_suspend_blocked_notice") },
+   set = function(value) { .rs.setUserPref("console_suspend_blocked_notice", value) }
+)
 
 # Number of seconds to delay warning
 # How long to wait before warning that automatic session suspension has been
-.rs.addFunction("uiPrefs.consoleSuspendBlockedNoticeDelay", function()
-{
-   .rs.getUserPref("console_suspend_blocked_notice_delay")
-})
-
+.rs.uiPrefs$consoleSuspendBlockedNoticeDelay <- list(
+   get = function() { .rs.getUserPref("console_suspend_blocked_notice_delay") },
+   set = function(value) { .rs.setUserPref("console_suspend_blocked_notice_delay", value) }
+)
 
 # Create a Git repo in new projects
 # Whether a git repo should be initialized inside new projects by default.
-.rs.addFunction("uiPrefs.newProjGitInit", function()
-{
-   .rs.getUserPref("new_proj_git_init")
-})
-
+.rs.uiPrefs$newProjGitInit <- list(
+   get = function() { .rs.getUserPref("new_proj_git_init") },
+   set = function(value) { .rs.setUserPref("new_proj_git_init", value) }
+)
 
 # Create an renv environment in new projects
 # Whether an renv environment should be created inside new projects by default.
-.rs.addFunction("uiPrefs.newProjUseRenv", function()
-{
-   .rs.getUserPref("new_proj_use_renv")
-})
-
+.rs.uiPrefs$newProjUseRenv <- list(
+   get = function() { .rs.getUserPref("new_proj_use_renv") },
+   set = function(value) { .rs.setUserPref("new_proj_use_renv", value) }
+)
 
 # Root document for PDF compilation
 # The root document to use when compiling PDF documents.
-.rs.addFunction("uiPrefs.rootDocument", function()
-{
-   .rs.getUserPref("root_document")
-})
-
+.rs.uiPrefs$rootDocument <- list(
+   get = function() { .rs.getUserPref("root_document") },
+   set = function(value) { .rs.setUserPref("root_document", value) }
+)
 
 # Show user home page in RStudio Workbench
 # When to show the server home page in RStudio Workbench.
-.rs.addFunction("uiPrefs.showUserHomePage", function()
-{
-   .rs.getUserPref("show_user_home_page")
-})
-
+.rs.uiPrefs$showUserHomePage <- list(
+   get = function() { .rs.getUserPref("show_user_home_page") },
+   set = function(value) { .rs.setUserPref("show_user_home_page", value) }
+)
 
 # 
 # Whether to reuse sessions when opening projects in RStudio Workbench.
-.rs.addFunction("uiPrefs.reuseSessionsForProjectLinks", function()
-{
-   .rs.getUserPref("reuse_sessions_for_project_links")
-})
-
+.rs.uiPrefs$reuseSessionsForProjectLinks <- list(
+   get = function() { .rs.getUserPref("reuse_sessions_for_project_links") },
+   set = function(value) { .rs.setUserPref("reuse_sessions_for_project_links", value) }
+)
 
 # Enable version control if available
 # Whether to enable RStudio's version control system interface.
-.rs.addFunction("uiPrefs.vcsEnabled", function()
-{
-   .rs.getUserPref("vcs_enabled")
-})
-
+.rs.uiPrefs$vcsEnabled <- list(
+   get = function() { .rs.getUserPref("vcs_enabled") },
+   set = function(value) { .rs.setUserPref("vcs_enabled", value) }
+)
 
 # Auto-refresh state from version control
 # Automatically refresh VCS status?
-.rs.addFunction("uiPrefs.vcsAutorefresh", function()
-{
-   .rs.getUserPref("vcs_autorefresh")
-})
-
+.rs.uiPrefs$vcsAutorefresh <- list(
+   get = function() { .rs.getUserPref("vcs_autorefresh") },
+   set = function(value) { .rs.setUserPref("vcs_autorefresh", value) }
+)
 
 # Path to Git executable
 # The path to the Git executable to use.
-.rs.addFunction("uiPrefs.gitExePath", function()
-{
-   .rs.getUserPref("git_exe_path")
-})
-
+.rs.uiPrefs$gitExePath <- list(
+   get = function() { .rs.getUserPref("git_exe_path") },
+   set = function(value) { .rs.setUserPref("git_exe_path", value) }
+)
 
 # Path to Subversion executable
 # The path to the Subversion executable to use.
-.rs.addFunction("uiPrefs.svnExePath", function()
-{
-   .rs.getUserPref("svn_exe_path")
-})
-
+.rs.uiPrefs$svnExePath <- list(
+   get = function() { .rs.getUserPref("svn_exe_path") },
+   set = function(value) { .rs.setUserPref("svn_exe_path", value) }
+)
 
 # 
 # The path to the terminal executable to use.
-.rs.addFunction("uiPrefs.terminalPath", function()
-{
-   .rs.getUserPref("terminal_path")
-})
-
+.rs.uiPrefs$terminalPath <- list(
+   get = function() { .rs.getUserPref("terminal_path") },
+   set = function(value) { .rs.setUserPref("terminal_path", value) }
+)
 
 # 
 # The path to the SSH key file to use.
-.rs.addFunction("uiPrefs.rsaKeyPath", function()
-{
-   .rs.getUserPref("rsa_key_path")
-})
-
+.rs.uiPrefs$rsaKeyPath <- list(
+   get = function() { .rs.getUserPref("rsa_key_path") },
+   set = function(value) { .rs.setUserPref("rsa_key_path", value) }
+)
 
 # 
 # The encryption type to use for the SSH key file.
-.rs.addFunction("uiPrefs.sshKeyType", function()
-{
-   .rs.getUserPref("ssh_key_type")
-})
-
+.rs.uiPrefs$sshKeyType <- list(
+   get = function() { .rs.getUserPref("ssh_key_type") },
+   set = function(value) { .rs.setUserPref("ssh_key_type", value) }
+)
 
 # Use the devtools R package if available
 # Whether to use the devtools R package.
-.rs.addFunction("uiPrefs.useDevtools", function()
-{
-   .rs.getUserPref("use_devtools")
-})
-
+.rs.uiPrefs$useDevtools <- list(
+   get = function() { .rs.getUserPref("use_devtools") },
+   set = function(value) { .rs.setUserPref("use_devtools", value) }
+)
 
 # Always use --preclean when installing package
 # Always use --preclean when installing package.
-.rs.addFunction("uiPrefs.cleanBeforeInstall", function()
-{
-   .rs.getUserPref("clean_before_install")
-})
-
+.rs.uiPrefs$cleanBeforeInstall <- list(
+   get = function() { .rs.getUserPref("clean_before_install") },
+   set = function(value) { .rs.setUserPref("clean_before_install", value) }
+)
 
 # Download R packages securely
 # Whether to use secure downloads when fetching R packages.
-.rs.addFunction("uiPrefs.useSecureDownload", function()
-{
-   .rs.getUserPref("use_secure_download")
-})
-
+.rs.uiPrefs$useSecureDownload <- list(
+   get = function() { .rs.getUserPref("use_secure_download") },
+   set = function(value) { .rs.setUserPref("use_secure_download", value) }
+)
 
 # Clean up temporary files after R CMD CHECK
 # Whether to clean up temporary files after running R CMD CHECK.
-.rs.addFunction("uiPrefs.cleanupAfterRCmdCheck", function()
-{
-   .rs.getUserPref("cleanup_after_r_cmd_check")
-})
-
+.rs.uiPrefs$cleanupAfterRCmdCheck <- list(
+   get = function() { .rs.getUserPref("cleanup_after_r_cmd_check") },
+   set = function(value) { .rs.setUserPref("cleanup_after_r_cmd_check", value) }
+)
 
 # View directory after R CMD CHECK
 # Whether to view the directory after running R CMD CHECK.
-.rs.addFunction("uiPrefs.viewDirAfterRCmdCheck", function()
-{
-   .rs.getUserPref("view_dir_after_r_cmd_check")
-})
-
+.rs.uiPrefs$viewDirAfterRCmdCheck <- list(
+   get = function() { .rs.getUserPref("view_dir_after_r_cmd_check") },
+   set = function(value) { .rs.setUserPref("view_dir_after_r_cmd_check", value) }
+)
 
 # Hide object files in the Files pane
 # Whether to hide object files in the Files pane.
-.rs.addFunction("uiPrefs.hideObjectFiles", function()
-{
-   .rs.getUserPref("hide_object_files")
-})
-
+.rs.uiPrefs$hideObjectFiles <- list(
+   get = function() { .rs.getUserPref("hide_object_files") },
+   set = function(value) { .rs.setUserPref("hide_object_files", value) }
+)
 
 # Restore last project when starting RStudio
 # Whether to restore the last project when starting RStudio.
-.rs.addFunction("uiPrefs.restoreLastProject", function()
-{
-   .rs.getUserPref("restore_last_project")
-})
-
+.rs.uiPrefs$restoreLastProject <- list(
+   get = function() { .rs.getUserPref("restore_last_project") },
+   set = function(value) { .rs.setUserPref("restore_last_project", value) }
+)
 
 # Number of seconds for safe project startup
 # The number of seconds after which a project is deemed to have successfully
-.rs.addFunction("uiPrefs.projectSafeStartupSeconds", function()
-{
-   .rs.getUserPref("project_safe_startup_seconds")
-})
-
+.rs.uiPrefs$projectSafeStartupSeconds <- list(
+   get = function() { .rs.getUserPref("project_safe_startup_seconds") },
+   set = function(value) { .rs.setUserPref("project_safe_startup_seconds", value) }
+)
 
 # Use tinytex to compile .tex files
 # Use tinytex to compile .tex files.
-.rs.addFunction("uiPrefs.useTinytex", function()
-{
-   .rs.getUserPref("use_tinytex")
-})
-
+.rs.uiPrefs$useTinytex <- list(
+   get = function() { .rs.getUserPref("use_tinytex") },
+   set = function(value) { .rs.setUserPref("use_tinytex", value) }
+)
 
 # Clean output after running Texi2Dvi
 # Whether to clean output after running Texi2Dvi.
-.rs.addFunction("uiPrefs.cleanTexi2dviOutput", function()
-{
-   .rs.getUserPref("clean_texi2dvi_output")
-})
-
+.rs.uiPrefs$cleanTexi2dviOutput <- list(
+   get = function() { .rs.getUserPref("clean_texi2dvi_output") },
+   set = function(value) { .rs.setUserPref("clean_texi2dvi_output", value) }
+)
 
 # Shell escape LaTeX documents
 # Whether to enable shell escaping with LaTeX documents.
-.rs.addFunction("uiPrefs.latexShellEscape", function()
-{
-   .rs.getUserPref("latex_shell_escape")
-})
-
+.rs.uiPrefs$latexShellEscape <- list(
+   get = function() { .rs.getUserPref("latex_shell_escape") },
+   set = function(value) { .rs.setUserPref("latex_shell_escape", value) }
+)
 
 # Restore project R version in RStudio Pro and RStudio Workbench
 # Whether to restore the last version of R used by the project in RStudio Pro and
-.rs.addFunction("uiPrefs.restoreProjectRVersion", function()
-{
-   .rs.getUserPref("restore_project_r_version")
-})
-
+.rs.uiPrefs$restoreProjectRVersion <- list(
+   get = function() { .rs.getUserPref("restore_project_r_version") },
+   set = function(value) { .rs.setUserPref("restore_project_r_version", value) }
+)
 
 # Clang verbosity level (0 - 2)
 # The verbosity level to use with Clang (0 - 2)
-.rs.addFunction("uiPrefs.clangVerbose", function()
-{
-   .rs.getUserPref("clang_verbose")
-})
-
+.rs.uiPrefs$clangVerbose <- list(
+   get = function() { .rs.getUserPref("clang_verbose") },
+   set = function(value) { .rs.setUserPref("clang_verbose", value) }
+)
 
 # Submit crash reports to RStudio
 # Whether to automatically submit crash reports to RStudio.
-.rs.addFunction("uiPrefs.submitCrashReports", function()
-{
-   .rs.getUserPref("submit_crash_reports")
-})
-
+.rs.uiPrefs$submitCrashReports <- list(
+   get = function() { .rs.getUserPref("submit_crash_reports") },
+   set = function(value) { .rs.setUserPref("submit_crash_reports", value) }
+)
 
 # 
 # The R version to use by default.
-.rs.addFunction("uiPrefs.defaultRVersion", function()
-{
-   .rs.getUserPref("default_r_version")
-})
-
+.rs.uiPrefs$defaultRVersion <- list(
+   get = function() { .rs.getUserPref("default_r_version") },
+   set = function(value) { .rs.setUserPref("default_r_version", value) }
+)
 
 # Maximum number of columns in data viewer
 # The maximum number of columns to show at once in the data viewer.
-.rs.addFunction("uiPrefs.dataViewerMaxColumns", function()
-{
-   .rs.getUserPref("data_viewer_max_columns")
-})
-
+.rs.uiPrefs$dataViewerMaxColumns <- list(
+   get = function() { .rs.getUserPref("data_viewer_max_columns") },
+   set = function(value) { .rs.setUserPref("data_viewer_max_columns", value) }
+)
 
 # Maximum number of character in data viewer cells
 # The maximum number of characters to show in a data viewer cell.
-.rs.addFunction("uiPrefs.dataViewerMaxCellSize", function()
-{
-   .rs.getUserPref("data_viewer_max_cell_size")
-})
-
+.rs.uiPrefs$dataViewerMaxCellSize <- list(
+   get = function() { .rs.getUserPref("data_viewer_max_cell_size") },
+   set = function(value) { .rs.setUserPref("data_viewer_max_cell_size", value) }
+)
 
 # Enable support for screen readers
 # Support accessibility aids such as screen readers.
-.rs.addFunction("uiPrefs.enableScreenReader", function()
-{
-   .rs.getUserPref("enable_screen_reader")
-})
-
+.rs.uiPrefs$enableScreenReader <- list(
+   get = function() { .rs.getUserPref("enable_screen_reader") },
+   set = function(value) { .rs.setUserPref("enable_screen_reader", value) }
+)
 
 # Seconds to wait before updating ARIA live region
 # Number of milliseconds to wait after last keystroke before updating live
-.rs.addFunction("uiPrefs.typingStatusDelayMs", function()
-{
-   .rs.getUserPref("typing_status_delay_ms")
-})
-
+.rs.uiPrefs$typingStatusDelayMs <- list(
+   get = function() { .rs.getUserPref("typing_status_delay_ms") },
+   set = function(value) { .rs.setUserPref("typing_status_delay_ms", value) }
+)
 
 # Reduced animation/motion mode
 # Reduce use of animations in the user interface.
-.rs.addFunction("uiPrefs.reducedMotion", function()
-{
-   .rs.getUserPref("reduced_motion")
-})
-
+.rs.uiPrefs$reducedMotion <- list(
+   get = function() { .rs.getUserPref("reduced_motion") },
+   set = function(value) { .rs.setUserPref("reduced_motion", value) }
+)
 
 # Tab key always moves focus
 # Tab key moves focus out of text editing controls instead of inserting tabs.
-.rs.addFunction("uiPrefs.tabKeyMoveFocus", function()
-{
-   .rs.getUserPref("tab_key_move_focus")
-})
-
+.rs.uiPrefs$tabKeyMoveFocus <- list(
+   get = function() { .rs.getUserPref("tab_key_move_focus") },
+   set = function(value) { .rs.setUserPref("tab_key_move_focus", value) }
+)
 
 # Tab key moves focus directly from find text to replace text in find panel
 # In source editor find panel, tab key moves focus directly from find text to
-.rs.addFunction("uiPrefs.findPanelLegacyTabSequence", function()
-{
-   .rs.getUserPref("find_panel_legacy_tab_sequence")
-})
-
+.rs.uiPrefs$findPanelLegacyTabSequence <- list(
+   get = function() { .rs.getUserPref("find_panel_legacy_tab_sequence") },
+   set = function(value) { .rs.setUserPref("find_panel_legacy_tab_sequence", value) }
+)
 
 # Show focus outline around focused panel
 # Show which panel contains keyboard focus.
-.rs.addFunction("uiPrefs.showPanelFocusRectangle", function()
-{
-   .rs.getUserPref("show_panel_focus_rectangle")
-})
-
+.rs.uiPrefs$showPanelFocusRectangle <- list(
+   get = function() { .rs.getUserPref("show_panel_focus_rectangle") },
+   set = function(value) { .rs.setUserPref("show_panel_focus_rectangle", value) }
+)
 
 # Autosave mode on idle
 # How to deal with changes to documents on idle.
-.rs.addFunction("uiPrefs.autoSaveOnIdle", function()
-{
-   .rs.getUserPref("auto_save_on_idle")
-})
-
+.rs.uiPrefs$autoSaveOnIdle <- list(
+   get = function() { .rs.getUserPref("auto_save_on_idle") },
+   set = function(value) { .rs.setUserPref("auto_save_on_idle", value) }
+)
 
 # Idle period for document autosave (ms)
 # The idle period, in milliseconds, after which documents should be auto-saved.
-.rs.addFunction("uiPrefs.autoSaveIdleMs", function()
-{
-   .rs.getUserPref("auto_save_idle_ms")
-})
-
+.rs.uiPrefs$autoSaveIdleMs <- list(
+   get = function() { .rs.getUserPref("auto_save_idle_ms") },
+   set = function(value) { .rs.setUserPref("auto_save_idle_ms", value) }
+)
 
 # Save documents when editor loses input focus
 # Whether to automatically save when the editor loses focus.
-.rs.addFunction("uiPrefs.autoSaveOnBlur", function()
-{
-   .rs.getUserPref("auto_save_on_blur")
-})
-
+.rs.uiPrefs$autoSaveOnBlur <- list(
+   get = function() { .rs.getUserPref("auto_save_on_blur") },
+   set = function(value) { .rs.setUserPref("auto_save_on_blur", value) }
+)
 
 # Initial working directory for new terminals
 # Initial directory for new terminals.
-.rs.addFunction("uiPrefs.terminalInitialDirectory", function()
-{
-   .rs.getUserPref("terminal_initial_directory")
-})
-
+.rs.uiPrefs$terminalInitialDirectory <- list(
+   get = function() { .rs.getUserPref("terminal_initial_directory") },
+   set = function(value) { .rs.setUserPref("terminal_initial_directory", value) }
+)
 
 # Show full path to project in RStudio Desktop windows
 # Whether to show the full path to project in desktop window title.
-.rs.addFunction("uiPrefs.fullProjectPathInWindowTitle", function()
-{
-   .rs.getUserPref("full_project_path_in_window_title")
-})
-
+.rs.uiPrefs$fullProjectPathInWindowTitle <- list(
+   get = function() { .rs.getUserPref("full_project_path_in_window_title") },
+   set = function(value) { .rs.setUserPref("full_project_path_in_window_title", value) }
+)
 
 # Use visual editing by default for new markdown documents
 # Whether to enable visual editing by default for new markdown documents
-.rs.addFunction("uiPrefs.visualMarkdownEditingIsDefault", function()
-{
-   .rs.getUserPref("visual_markdown_editing_is_default")
-})
-
+.rs.uiPrefs$visualMarkdownEditingIsDefault <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_is_default") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_is_default", value) }
+)
 
 # Default list spacing in visual markdown editing mode
 # Default spacing for lists created in the visual editor
-.rs.addFunction("uiPrefs.visualMarkdownEditingListSpacing", function()
-{
-   .rs.getUserPref("visual_markdown_editing_list_spacing")
-})
-
+.rs.uiPrefs$visualMarkdownEditingListSpacing <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_list_spacing") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_list_spacing", value) }
+)
 
 # Wrap text in visual markdown editing mode
 # Whether to automatically wrap text when writing markdown
-.rs.addFunction("uiPrefs.visualMarkdownEditingWrap", function()
-{
-   .rs.getUserPref("visual_markdown_editing_wrap")
-})
-
+.rs.uiPrefs$visualMarkdownEditingWrap <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_wrap") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_wrap", value) }
+)
 
 # Wrap column for visual markdown editing mode
 # The column to wrap text at when writing markdown
-.rs.addFunction("uiPrefs.visualMarkdownEditingWrapAtColumn", function()
-{
-   .rs.getUserPref("visual_markdown_editing_wrap_at_column")
-})
-
+.rs.uiPrefs$visualMarkdownEditingWrapAtColumn <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_wrap_at_column") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_wrap_at_column", value) }
+)
 
 # Place visual markdown footnotes in
 # Placement of footnotes within markdown output.
-.rs.addFunction("uiPrefs.visualMarkdownEditingReferencesLocation", function()
-{
-   .rs.getUserPref("visual_markdown_editing_references_location")
-})
-
+.rs.uiPrefs$visualMarkdownEditingReferencesLocation <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_references_location") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_references_location", value) }
+)
 
 # Write canonical visual mode markdown in source mode
 # Whether to write canonical visual mode markdown when saving from source mode.
-.rs.addFunction("uiPrefs.visualMarkdownEditingCanonical", function()
-{
-   .rs.getUserPref("visual_markdown_editing_canonical")
-})
-
+.rs.uiPrefs$visualMarkdownEditingCanonical <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_canonical") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_canonical", value) }
+)
 
 # Max content width for visual markdown editor (px)
 # Maximum content width for visual editing mode, in pixels
-.rs.addFunction("uiPrefs.visualMarkdownEditingMaxContentWidth", function()
-{
-   .rs.getUserPref("visual_markdown_editing_max_content_width")
-})
-
+.rs.uiPrefs$visualMarkdownEditingMaxContentWidth <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_max_content_width") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_max_content_width", value) }
+)
 
 # Show document outline in visual markdown editing mode
 # Whether to show the document outline by default when opening R Markdown
-.rs.addFunction("uiPrefs.visualMarkdownEditingShowDocOutline", function()
-{
-   .rs.getUserPref("visual_markdown_editing_show_doc_outline")
-})
-
+.rs.uiPrefs$visualMarkdownEditingShowDocOutline <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_show_doc_outline") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_show_doc_outline", value) }
+)
 
 # Show margin in visual mode code blocks
 # Whether to show the margin guide in the visual mode code blocks.
-.rs.addFunction("uiPrefs.visualMarkdownEditingShowMargin", function()
-{
-   .rs.getUserPref("visual_markdown_editing_show_margin")
-})
-
+.rs.uiPrefs$visualMarkdownEditingShowMargin <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_show_margin") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_show_margin", value) }
+)
 
 # Show line numbers in visual mode code blocks
 # Whether to show line numbers in the code editors used in visual mode
-.rs.addFunction("uiPrefs.visualMarkdownCodeEditorLineNumbers", function()
-{
-   .rs.getUserPref("visual_markdown_code_editor_line_numbers")
-})
-
+.rs.uiPrefs$visualMarkdownCodeEditorLineNumbers <- list(
+   get = function() { .rs.getUserPref("visual_markdown_code_editor_line_numbers") },
+   set = function(value) { .rs.setUserPref("visual_markdown_code_editor_line_numbers", value) }
+)
 
 # Font size for visual editing mode
 # The default visual editing mode font size, in points
-.rs.addFunction("uiPrefs.visualMarkdownEditingFontSizePoints", function()
-{
-   .rs.getUserPref("visual_markdown_editing_font_size_points")
-})
-
+.rs.uiPrefs$visualMarkdownEditingFontSizePoints <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_font_size_points") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_font_size_points", value) }
+)
 
 # Editor for code chunks in visual editing mode
 # The name of the editor to use to provide code editing in visual mode
-.rs.addFunction("uiPrefs.visualMarkdownCodeEditor", function()
-{
-   .rs.getUserPref("visual_markdown_code_editor")
-})
-
+.rs.uiPrefs$visualMarkdownCodeEditor <- list(
+   get = function() { .rs.getUserPref("visual_markdown_code_editor") },
+   set = function(value) { .rs.setUserPref("visual_markdown_code_editor", value) }
+)
 
 # Zotero libraries
 # Zotero libraries to insert citations from.
-.rs.addFunction("uiPrefs.zoteroLibraries", function()
-{
-   .rs.getUserPref("zotero_libraries")
-})
-
+.rs.uiPrefs$zoteroLibraries <- list(
+   get = function() { .rs.getUserPref("zotero_libraries") },
+   set = function(value) { .rs.setUserPref("zotero_libraries", value) }
+)
 
 # 
 # Preferred emoji skintone
-.rs.addFunction("uiPrefs.emojiSkintone", function()
-{
-   .rs.getUserPref("emoji_skintone")
-})
-
+.rs.uiPrefs$emojiSkintone <- list(
+   get = function() { .rs.getUserPref("emoji_skintone") },
+   set = function(value) { .rs.setUserPref("emoji_skintone", value) }
+)
 
 # Disabled aria-live announcements
 # List of aria-live announcements to disable.
-.rs.addFunction("uiPrefs.disabledAriaLiveAnnouncements", function()
-{
-   .rs.getUserPref("disabled_aria_live_announcements")
-})
-
+.rs.uiPrefs$disabledAriaLiveAnnouncements <- list(
+   get = function() { .rs.getUserPref("disabled_aria_live_announcements") },
+   set = function(value) { .rs.setUserPref("disabled_aria_live_announcements", value) }
+)
 
 # Maximum number of console lines to announce
 # Maximum number of lines of console output announced after a command.
-.rs.addFunction("uiPrefs.screenreaderConsoleAnnounceLimit", function()
-{
-   .rs.getUserPref("screenreader_console_announce_limit")
-})
-
+.rs.uiPrefs$screenreaderConsoleAnnounceLimit <- list(
+   get = function() { .rs.getUserPref("screenreader_console_announce_limit") },
+   set = function(value) { .rs.setUserPref("screenreader_console_announce_limit", value) }
+)
 
 # List of path components ignored by file monitor
 # List of path components; file monitor will ignore paths containing one or more
-.rs.addFunction("uiPrefs.fileMonitorIgnoredComponents", function()
-{
-   .rs.getUserPref("file_monitor_ignored_components")
-})
-
+.rs.uiPrefs$fileMonitorIgnoredComponents <- list(
+   get = function() { .rs.getUserPref("file_monitor_ignored_components") },
+   set = function(value) { .rs.setUserPref("file_monitor_ignored_components", value) }
+)
 
 # Install R package dependencies one at a time
 # Whether to install R package dependencies one at a time.
-.rs.addFunction("uiPrefs.installPkgDepsIndividually", function()
-{
-   .rs.getUserPref("install_pkg_deps_individually")
-})
-
+.rs.uiPrefs$installPkgDepsIndividually <- list(
+   get = function() { .rs.getUserPref("install_pkg_deps_individually") },
+   set = function(value) { .rs.setUserPref("install_pkg_deps_individually", value) }
+)
 
 # R graphics backend
 # R graphics backend.
-.rs.addFunction("uiPrefs.graphicsBackend", function()
-{
-   .rs.getUserPref("graphics_backend")
-})
-
+.rs.uiPrefs$graphicsBackend <- list(
+   get = function() { .rs.getUserPref("graphics_backend") },
+   set = function(value) { .rs.setUserPref("graphics_backend", value) }
+)
 
 # R graphics antialiasing method
 # Type of anti-aliasing to be used for generated R plots.
-.rs.addFunction("uiPrefs.graphicsAntialiasing", function()
-{
-   .rs.getUserPref("graphics_antialiasing")
-})
-
+.rs.uiPrefs$graphicsAntialiasing <- list(
+   get = function() { .rs.getUserPref("graphics_antialiasing") },
+   set = function(value) { .rs.setUserPref("graphics_antialiasing", value) }
+)
 
 # Fixed-width font list for RStudio Server
 # List of fixed-width fonts to check for browser support.
-.rs.addFunction("uiPrefs.browserFixedWidthFonts", function()
-{
-   .rs.getUserPref("browser_fixed_width_fonts")
-})
-
+.rs.uiPrefs$browserFixedWidthFonts <- list(
+   get = function() { .rs.getUserPref("browser_fixed_width_fonts") },
+   set = function(value) { .rs.setUserPref("browser_fixed_width_fonts", value) }
+)
 
 # 
 # The Python type.
-.rs.addFunction("uiPrefs.pythonType", function()
-{
-   .rs.getUserPref("python_type")
-})
-
+.rs.uiPrefs$pythonType <- list(
+   get = function() { .rs.getUserPref("python_type") },
+   set = function(value) { .rs.setUserPref("python_type", value) }
+)
 
 # 
 # The Python version.
-.rs.addFunction("uiPrefs.pythonVersion", function()
-{
-   .rs.getUserPref("python_version")
-})
-
+.rs.uiPrefs$pythonVersion <- list(
+   get = function() { .rs.getUserPref("python_version") },
+   set = function(value) { .rs.setUserPref("python_version", value) }
+)
 
 # 
 # The path to the default Python interpreter.
-.rs.addFunction("uiPrefs.pythonPath", function()
-{
-   .rs.getUserPref("python_path")
-})
-
+.rs.uiPrefs$pythonPath <- list(
+   get = function() { .rs.getUserPref("python_path") },
+   set = function(value) { .rs.setUserPref("python_path", value) }
+)
 
 # Save Retry Timeout
 # The maximum amount of seconds of retry for save operations.
-.rs.addFunction("uiPrefs.saveRetryTimeout", function()
-{
-   .rs.getUserPref("save_retry_timeout")
-})
-
+.rs.uiPrefs$saveRetryTimeout <- list(
+   get = function() { .rs.getUserPref("save_retry_timeout") },
+   set = function(value) { .rs.setUserPref("save_retry_timeout", value) }
+)
 
 # Use R's native pipe operator, |>
 # Whether the Insert Pipe Operator command should use the native R pipe operator,
-.rs.addFunction("uiPrefs.insertNativePipeOperator", function()
-{
-   .rs.getUserPref("insert_native_pipe_operator")
-})
-
+.rs.uiPrefs$insertNativePipeOperator <- list(
+   get = function() { .rs.getUserPref("insert_native_pipe_operator") },
+   set = function(value) { .rs.setUserPref("insert_native_pipe_operator", value) }
+)
 
 # Remember recently used items in Command Palette
 # Whether to keep track of recently used commands in the Command Palette
-.rs.addFunction("uiPrefs.commandPaletteMru", function()
-{
-   .rs.getUserPref("command_palette_mru")
-})
-
+.rs.uiPrefs$commandPaletteMru <- list(
+   get = function() { .rs.getUserPref("command_palette_mru") },
+   set = function(value) { .rs.setUserPref("command_palette_mru", value) }
+)
 
 # Show memory usage in Environment Pane
 # Whether to compute and show memory usage in the Environment Pane
-.rs.addFunction("uiPrefs.showMemoryUsage", function()
-{
-   .rs.getUserPref("show_memory_usage")
-})
-
+.rs.uiPrefs$showMemoryUsage <- list(
+   get = function() { .rs.getUserPref("show_memory_usage") },
+   set = function(value) { .rs.setUserPref("show_memory_usage", value) }
+)
 
 # Interval for requerying memory stats (seconds)
 # How many seconds to wait between automatic requeries of memory statistics (0 to
-.rs.addFunction("uiPrefs.memoryQueryIntervalSeconds", function()
-{
-   .rs.getUserPref("memory_query_interval_seconds")
-})
-
+.rs.uiPrefs$memoryQueryIntervalSeconds <- list(
+   get = function() { .rs.getUserPref("memory_query_interval_seconds") },
+   set = function(value) { .rs.setUserPref("memory_query_interval_seconds", value) }
+)
 
 # Enable terminal Python integration
 # Enable Python terminal hooks. When enabled, the RStudio-configured version of
-.rs.addFunction("uiPrefs.terminalPythonIntegration", function()
-{
-   .rs.getUserPref("terminal_python_integration")
-})
-
+.rs.uiPrefs$terminalPythonIntegration <- list(
+   get = function() { .rs.getUserPref("terminal_python_integration") },
+   set = function(value) { .rs.setUserPref("terminal_python_integration", value) }
+)
 
 # Session protocol debug logging
 # Enable session protocol debug logging showing all session requests and events
-.rs.addFunction("uiPrefs.sessionProtocolDebug", function()
-{
-   .rs.getUserPref("session_protocol_debug")
-})
-
+.rs.uiPrefs$sessionProtocolDebug <- list(
+   get = function() { .rs.getUserPref("session_protocol_debug") },
+   set = function(value) { .rs.setUserPref("session_protocol_debug", value) }
+)
 
 # Automatically activate project Python environments
 # When enabled, if the active project contains a Python virtual environment, then
-.rs.addFunction("uiPrefs.pythonProjectEnvironmentAutomaticActivate", function()
-{
-   .rs.getUserPref("python_project_environment_automatic_activate")
-})
-
+.rs.uiPrefs$pythonProjectEnvironmentAutomaticActivate <- list(
+   get = function() { .rs.getUserPref("python_project_environment_automatic_activate") },
+   set = function(value) { .rs.setUserPref("python_project_environment_automatic_activate", value) }
+)
 
 # Check values in the Environment pane for null external pointers
 # When enabled, RStudio will detect R objects containing null external pointers
-.rs.addFunction("uiPrefs.checkNullExternalPointers", function()
-{
-   .rs.getUserPref("check_null_external_pointers")
-})
-
+.rs.uiPrefs$checkNullExternalPointers <- list(
+   get = function() { .rs.getUserPref("check_null_external_pointers") },
+   set = function(value) { .rs.setUserPref("check_null_external_pointers", value) }
+)
 
 # User Interface Language:
 # The IDE's user-interface language.
-.rs.addFunction("uiPrefs.uiLanguage", function()
-{
-   .rs.getUserPref("ui_language")
-})
-
+.rs.uiPrefs$uiLanguage <- list(
+   get = function() { .rs.getUserPref("ui_language") },
+   set = function(value) { .rs.setUserPref("ui_language", value) }
+)
 
 # Auto hide menu bar
 # Hide desktop menu bar until Alt key is pressed.
-.rs.addFunction("uiPrefs.autohideMenubar", function()
-{
-   .rs.getUserPref("autohide_menubar")
-})
-
+.rs.uiPrefs$autohideMenubar <- list(
+   get = function() { .rs.getUserPref("autohide_menubar") },
+   set = function(value) { .rs.setUserPref("autohide_menubar", value) }
+)
 
 # Use native file and message dialog boxes
 # Whether RStudio Desktop will use the operating system's native File and Message
-.rs.addFunction("uiPrefs.nativeFileDialogs", function()
-{
-   .rs.getUserPref("native_file_dialogs")
-})
-
+.rs.uiPrefs$nativeFileDialogs <- list(
+   get = function() { .rs.getUserPref("native_file_dialogs") },
+   set = function(value) { .rs.setUserPref("native_file_dialogs", value) }
+)
 
 # Discard pending console input on error
 # When enabled, any pending console input will be discarded when an (uncaught) R
-.rs.addFunction("uiPrefs.discardPendingConsoleInputOnError", function()
-{
-   .rs.getUserPref("discard_pending_console_input_on_error")
-})
-
+.rs.uiPrefs$discardPendingConsoleInputOnError <- list(
+   get = function() { .rs.getUserPref("discard_pending_console_input_on_error") },
+   set = function(value) { .rs.setUserPref("discard_pending_console_input_on_error", value) }
+)
 
 # Editor scroll speed sensitivity
 # An integer value, 1-200, to set the editor scroll multiplier. The higher the
-.rs.addFunction("uiPrefs.editorScrollMultiplier", function()
-{
-   .rs.getUserPref("editor_scroll_multiplier")
-})
-
+.rs.uiPrefs$editorScrollMultiplier <- list(
+   get = function() { .rs.getUserPref("editor_scroll_multiplier") },
+   set = function(value) { .rs.setUserPref("editor_scroll_multiplier", value) }
+)
 
 # Text rendering
 # Control how text is rendered within the IDE surface.
-.rs.addFunction("uiPrefs.textRendering", function()
-{
-   .rs.getUserPref("text_rendering")
-})
-
+.rs.uiPrefs$textRendering <- list(
+   get = function() { .rs.getUserPref("text_rendering") },
+   set = function(value) { .rs.setUserPref("text_rendering", value) }
+)
 
 # Disable Electron accessibility support
 # Disable Electron accessibility support.
-.rs.addFunction("uiPrefs.disableRendererAccessibility", function()
-{
-   .rs.getUserPref("disable_renderer_accessibility")
-})
-
+.rs.uiPrefs$disableRendererAccessibility <- list(
+   get = function() { .rs.getUserPref("disable_renderer_accessibility") },
+   set = function(value) { .rs.setUserPref("disable_renderer_accessibility", value) }
+)
 
 # Enable GitHub Copilot
 # When enabled, RStudio will use GitHub Copilot to provide code suggestions.
-.rs.addFunction("uiPrefs.copilotEnabled", function()
-{
-   .rs.getUserPref("copilot_enabled")
-})
-
+.rs.uiPrefs$copilotEnabled <- list(
+   get = function() { .rs.getUserPref("copilot_enabled") },
+   set = function(value) { .rs.setUserPref("copilot_enabled", value) }
+)
 
 # Show Copilot code suggestions:
 # Control when Copilot code suggestions are displayed in the editor.
-.rs.addFunction("uiPrefs.copilotCompletionsTrigger", function()
-{
-   .rs.getUserPref("copilot_completions_trigger")
-})
-
+.rs.uiPrefs$copilotCompletionsTrigger <- list(
+   get = function() { .rs.getUserPref("copilot_completions_trigger") },
+   set = function(value) { .rs.setUserPref("copilot_completions_trigger", value) }
+)
 
 # GitHub Copilot completions delay
 # The delay (in milliseconds) before GitHub Copilot completions are requested
-.rs.addFunction("uiPrefs.copilotCompletionsDelay", function()
-{
-   .rs.getUserPref("copilot_completions_delay")
-})
-
+.rs.uiPrefs$copilotCompletionsDelay <- list(
+   get = function() { .rs.getUserPref("copilot_completions_delay") },
+   set = function(value) { .rs.setUserPref("copilot_completions_delay", value) }
+)
 
 # Pressing Tab key will prefer inserting:
 # Control the behavior of the Tab key when both Copilot code suggestions and
-.rs.addFunction("uiPrefs.copilotTabKeyBehavior", function()
-{
-   .rs.getUserPref("copilot_tab_key_behavior")
-})
-
+.rs.uiPrefs$copilotTabKeyBehavior <- list(
+   get = function() { .rs.getUserPref("copilot_tab_key_behavior") },
+   set = function(value) { .rs.setUserPref("copilot_tab_key_behavior", value) }
+)
 
 # Index project files with GitHub Copilot
 # When enabled, RStudio will index project files with GitHub Copilot.
-.rs.addFunction("uiPrefs.copilotIndexingEnabled", function()
-{
-   .rs.getUserPref("copilot_indexing_enabled")
-})
-
+.rs.uiPrefs$copilotIndexingEnabled <- list(
+   get = function() { .rs.getUserPref("copilot_indexing_enabled") },
+   set = function(value) { .rs.setUserPref("copilot_indexing_enabled", value) }
+)
 
 # 
 # User-provided name for the currently opened R project.
-.rs.addFunction("uiPrefs.projectName", function()
-{
-   .rs.getUserPref("project_name")
-})
-
+.rs.uiPrefs$projectName <- list(
+   get = function() { .rs.getUserPref("project_name") },
+   set = function(value) { .rs.setUserPref("project_name", value) }
+)
 
 # Default working directory for background jobs
 # Default working directory in background job dialog.
-.rs.addFunction("uiPrefs.runBackgroundJobDefaultWorkingDir", function()
-{
-   .rs.getUserPref("run_background_job_default_working_dir")
-})
-
+.rs.uiPrefs$runBackgroundJobDefaultWorkingDir <- list(
+   get = function() { .rs.getUserPref("run_background_job_default_working_dir") },
+   set = function(value) { .rs.setUserPref("run_background_job_default_working_dir", value) }
+)
 
 # Code formatter
 # The formatter to use when reformatting code.
-.rs.addFunction("uiPrefs.codeFormatter", function()
-{
-   .rs.getUserPref("code_formatter")
-})
-
+.rs.uiPrefs$codeFormatter <- list(
+   get = function() { .rs.getUserPref("code_formatter") },
+   set = function(value) { .rs.setUserPref("code_formatter", value) }
+)
 
 # Use strict transformers when formatting code
 # When set, strict transformers will be used when formatting code. See the
-.rs.addFunction("uiPrefs.codeFormatterStylerStrict", function()
-{
-   .rs.getUserPref("code_formatter_styler_strict")
-})
-
+.rs.uiPrefs$codeFormatterStylerStrict <- list(
+   get = function() { .rs.getUserPref("code_formatter_styler_strict") },
+   set = function(value) { .rs.setUserPref("code_formatter_styler_strict", value) }
+)
 
 # 
 # The external command to be used when reformatting code.
-.rs.addFunction("uiPrefs.codeFormatterExternalCommand", function()
-{
-   .rs.getUserPref("code_formatter_external_command")
-})
-
+.rs.uiPrefs$codeFormatterExternalCommand <- list(
+   get = function() { .rs.getUserPref("code_formatter_external_command") },
+   set = function(value) { .rs.setUserPref("code_formatter_external_command", value) }
+)
 
 # Reformat documents on save
 # When set, the selected formatter will be used to reformat documents on save.
-.rs.addFunction("uiPrefs.reformatOnSave", function()
-{
-   .rs.getUserPref("reformat_on_save")
-})
-
+.rs.uiPrefs$reformatOnSave <- list(
+   get = function() { .rs.getUserPref("reformat_on_save") },
+   set = function(value) { .rs.setUserPref("reformat_on_save", value) }
+)
 
 # Default project user data directory
 # The folder in which RStudio should store project .Rproj.user data.
-.rs.addFunction("uiPrefs.projectUserDataDirectory", function()
-{
-   .rs.getUserPref("project_user_data_directory")
-})
-
+.rs.uiPrefs$projectUserDataDirectory <- list(
+   get = function() { .rs.getUserPref("project_user_data_directory") },
+   set = function(value) { .rs.setUserPref("project_user_data_directory", value) }
+)
 
 #
 # SessionUserPrefValues.R
@@ -2122,2093 +1863,1834 @@
 # This file was automatically generated -- please do not modify it by hand.
 #
 
+.rs.setVar("uiPrefs", new.env(parent = emptyenv()))
+
 # Run .Rprofile on resume
 # Whether to run .Rprofile again after resuming a suspended R session.
-.rs.addFunction("uiPrefs.runRprofileOnResume", function()
-{
-   .rs.getUserPref("run_rprofile_on_resume")
-})
-
+.rs.uiPrefs$runRprofileOnResume <- list(
+   get = function() { .rs.getUserPref("run_rprofile_on_resume") },
+   set = function(value) { .rs.setUserPref("run_rprofile_on_resume", value) }
+)
 
 # Save workspace on quit
 # Whether to save the workspace to an .Rdata file after the R session ends.
-.rs.addFunction("uiPrefs.saveWorkspace", function()
-{
-   .rs.getUserPref("save_workspace")
-})
-
+.rs.uiPrefs$saveWorkspace <- list(
+   get = function() { .rs.getUserPref("save_workspace") },
+   set = function(value) { .rs.setUserPref("save_workspace", value) }
+)
 
 # Load workspace on start
 # Whether to load the workspace when the R session begins.
-.rs.addFunction("uiPrefs.loadWorkspace", function()
-{
-   .rs.getUserPref("load_workspace")
-})
-
+.rs.uiPrefs$loadWorkspace <- list(
+   get = function() { .rs.getUserPref("load_workspace") },
+   set = function(value) { .rs.setUserPref("load_workspace", value) }
+)
 
 # Initial working directory
 # The initial working directory for new R sessions.
-.rs.addFunction("uiPrefs.initialWorkingDirectory", function()
-{
-   .rs.getUserPref("initial_working_directory")
-})
-
+.rs.uiPrefs$initialWorkingDirectory <- list(
+   get = function() { .rs.getUserPref("initial_working_directory") },
+   set = function(value) { .rs.setUserPref("initial_working_directory", value) }
+)
 
 # 
 # The CRAN mirror to use.
-.rs.addFunction("uiPrefs.cranMirror", function()
-{
-   .rs.getUserPref("cran_mirror")
-})
-
+.rs.uiPrefs$cranMirror <- list(
+   get = function() { .rs.getUserPref("cran_mirror") },
+   set = function(value) { .rs.setUserPref("cran_mirror", value) }
+)
 
 # 
 # The name of the default Bioconductor mirror.
-.rs.addFunction("uiPrefs.bioconductorMirrorName", function()
-{
-   .rs.getUserPref("bioconductor_mirror_name")
-})
-
+.rs.uiPrefs$bioconductorMirrorName <- list(
+   get = function() { .rs.getUserPref("bioconductor_mirror_name") },
+   set = function(value) { .rs.setUserPref("bioconductor_mirror_name", value) }
+)
 
 # 
 # The URL of the default Bioconductor mirror.
-.rs.addFunction("uiPrefs.bioconductorMirrorUrl", function()
-{
-   .rs.getUserPref("bioconductor_mirror_url")
-})
-
+.rs.uiPrefs$bioconductorMirrorUrl <- list(
+   get = function() { .rs.getUserPref("bioconductor_mirror_url") },
+   set = function(value) { .rs.setUserPref("bioconductor_mirror_url", value) }
+)
 
 # Save R console history
 # Whether to always save the R console history.
-.rs.addFunction("uiPrefs.alwaysSaveHistory", function()
-{
-   .rs.getUserPref("always_save_history")
-})
-
+.rs.uiPrefs$alwaysSaveHistory <- list(
+   get = function() { .rs.getUserPref("always_save_history") },
+   set = function(value) { .rs.setUserPref("always_save_history", value) }
+)
 
 # Remove duplicates from console history
 # Whether to remove duplicate entries from the R console history.
-.rs.addFunction("uiPrefs.removeHistoryDuplicates", function()
-{
-   .rs.getUserPref("remove_history_duplicates")
-})
-
+.rs.uiPrefs$removeHistoryDuplicates <- list(
+   get = function() { .rs.getUserPref("remove_history_duplicates") },
+   set = function(value) { .rs.setUserPref("remove_history_duplicates", value) }
+)
 
 # Show .Last.value in Environment pane
 # Show the result of the last expression (.Last.value) in the Environment pane.
-.rs.addFunction("uiPrefs.showLastDotValue", function()
-{
-   .rs.getUserPref("show_last_dot_value")
-})
-
+.rs.uiPrefs$showLastDotValue <- list(
+   get = function() { .rs.getUserPref("show_last_dot_value") },
+   set = function(value) { .rs.setUserPref("show_last_dot_value", value) }
+)
 
 # Line ending format
 # The line ending format to use when saving files.
-.rs.addFunction("uiPrefs.lineEndingConversion", function()
-{
-   .rs.getUserPref("line_ending_conversion")
-})
-
+.rs.uiPrefs$lineEndingConversion <- list(
+   get = function() { .rs.getUserPref("line_ending_conversion") },
+   set = function(value) { .rs.setUserPref("line_ending_conversion", value) }
+)
 
 # Use newlines in Makefiles
 # Whether to use newlines when saving Makefiles.
-.rs.addFunction("uiPrefs.useNewlinesInMakefiles", function()
-{
-   .rs.getUserPref("use_newlines_in_makefiles")
-})
-
+.rs.uiPrefs$useNewlinesInMakefiles <- list(
+   get = function() { .rs.getUserPref("use_newlines_in_makefiles") },
+   set = function(value) { .rs.setUserPref("use_newlines_in_makefiles", value) }
+)
 
 # 
 # The terminal shell to use on Windows.
-.rs.addFunction("uiPrefs.windowsTerminalShell", function()
-{
-   .rs.getUserPref("windows_terminal_shell")
-})
-
+.rs.uiPrefs$windowsTerminalShell <- list(
+   get = function() { .rs.getUserPref("windows_terminal_shell") },
+   set = function(value) { .rs.setUserPref("windows_terminal_shell", value) }
+)
 
 # 
 # The terminal shell to use on POSIX operating systems (MacOS and Linux).
-.rs.addFunction("uiPrefs.posixTerminalShell", function()
-{
-   .rs.getUserPref("posix_terminal_shell")
-})
-
+.rs.uiPrefs$posixTerminalShell <- list(
+   get = function() { .rs.getUserPref("posix_terminal_shell") },
+   set = function(value) { .rs.setUserPref("posix_terminal_shell", value) }
+)
 
 # 
 # tab.
-.rs.addFunction("uiPrefs.customShellCommand", function()
-{
-   .rs.getUserPref("custom_shell_command")
-})
-
+.rs.uiPrefs$customShellCommand <- list(
+   get = function() { .rs.getUserPref("custom_shell_command") },
+   set = function(value) { .rs.setUserPref("custom_shell_command", value) }
+)
 
 # 
 # The command-line options to pass to the custom shell command.
-.rs.addFunction("uiPrefs.customShellOptions", function()
-{
-   .rs.getUserPref("custom_shell_options")
-})
-
+.rs.uiPrefs$customShellOptions <- list(
+   get = function() { .rs.getUserPref("custom_shell_options") },
+   set = function(value) { .rs.setUserPref("custom_shell_options", value) }
+)
 
 # Show line numbers in editor
 # Show line numbers in RStudio's code editor.
-.rs.addFunction("uiPrefs.showLineNumbers", function()
-{
-   .rs.getUserPref("show_line_numbers")
-})
-
+.rs.uiPrefs$showLineNumbers <- list(
+   get = function() { .rs.getUserPref("show_line_numbers") },
+   set = function(value) { .rs.setUserPref("show_line_numbers", value) }
+)
 
 # Use relative line numbers in editor
 # Show relative, rather than absolute, line numbers in RStudio's code editor.
-.rs.addFunction("uiPrefs.relativeLineNumbers", function()
-{
-   .rs.getUserPref("relative_line_numbers")
-})
-
+.rs.uiPrefs$relativeLineNumbers <- list(
+   get = function() { .rs.getUserPref("relative_line_numbers") },
+   set = function(value) { .rs.setUserPref("relative_line_numbers", value) }
+)
 
 # Highlight selected word in editor
 # Highlight the selected word in RStudio's code editor.
-.rs.addFunction("uiPrefs.highlightSelectedWord", function()
-{
-   .rs.getUserPref("highlight_selected_word")
-})
-
+.rs.uiPrefs$highlightSelectedWord <- list(
+   get = function() { .rs.getUserPref("highlight_selected_word") },
+   set = function(value) { .rs.setUserPref("highlight_selected_word", value) }
+)
 
 # Highlight selected line in editor
 # Highlight the selected line in RStudio's code editor.
-.rs.addFunction("uiPrefs.highlightSelectedLine", function()
-{
-   .rs.getUserPref("highlight_selected_line")
-})
-
+.rs.uiPrefs$highlightSelectedLine <- list(
+   get = function() { .rs.getUserPref("highlight_selected_line") },
+   set = function(value) { .rs.setUserPref("highlight_selected_line", value) }
+)
 
 # 
 # Layout of panes in the RStudio workbench.
-.rs.addFunction("uiPrefs.panes", function()
-{
-   .rs.getUserPref("panes")
-})
-
+.rs.uiPrefs$panes <- list(
+   get = function() { .rs.getUserPref("panes") },
+   set = function(value) { .rs.setUserPref("panes", value) }
+)
 
 # Allow source columns
 # Whether to enable the ability to add source columns to display.
-.rs.addFunction("uiPrefs.allowSourceColumns", function()
-{
-   .rs.getUserPref("allow_source_columns")
-})
-
+.rs.uiPrefs$allowSourceColumns <- list(
+   get = function() { .rs.getUserPref("allow_source_columns") },
+   set = function(value) { .rs.setUserPref("allow_source_columns", value) }
+)
 
 # Insert spaces for Tab
 # Whether to insert spaces when pressing the Tab key.
-.rs.addFunction("uiPrefs.useSpacesForTab", function()
-{
-   .rs.getUserPref("use_spaces_for_tab")
-})
-
+.rs.uiPrefs$useSpacesForTab <- list(
+   get = function() { .rs.getUserPref("use_spaces_for_tab") },
+   set = function(value) { .rs.setUserPref("use_spaces_for_tab", value) }
+)
 
 # Number of spaces for Tab
 # The number of spaces to insert when pressing the Tab key.
-.rs.addFunction("uiPrefs.numSpacesForTab", function()
-{
-   .rs.getUserPref("num_spaces_for_tab")
-})
-
+.rs.uiPrefs$numSpacesForTab <- list(
+   get = function() { .rs.getUserPref("num_spaces_for_tab") },
+   set = function(value) { .rs.setUserPref("num_spaces_for_tab", value) }
+)
 
 # Auto-detect indentation in files
 # Whether to automatically detect indentation settings from file contents.
-.rs.addFunction("uiPrefs.autoDetectIndentation", function()
-{
-   .rs.getUserPref("auto_detect_indentation")
-})
-
+.rs.uiPrefs$autoDetectIndentation <- list(
+   get = function() { .rs.getUserPref("auto_detect_indentation") },
+   set = function(value) { .rs.setUserPref("auto_detect_indentation", value) }
+)
 
 # Show margin in editor
 # Whether to show the margin guide in the RStudio code editor.
-.rs.addFunction("uiPrefs.showMargin", function()
-{
-   .rs.getUserPref("show_margin")
-})
-
+.rs.uiPrefs$showMargin <- list(
+   get = function() { .rs.getUserPref("show_margin") },
+   set = function(value) { .rs.setUserPref("show_margin", value) }
+)
 
 # Use a blinking cursor
 # Whether to flash the cursor off and on.
-.rs.addFunction("uiPrefs.blinkingCursor", function()
-{
-   .rs.getUserPref("blinking_cursor")
-})
-
+.rs.uiPrefs$blinkingCursor <- list(
+   get = function() { .rs.getUserPref("blinking_cursor") },
+   set = function(value) { .rs.setUserPref("blinking_cursor", value) }
+)
 
 # Margin column
 # The number of columns of text after which the margin is shown.
-.rs.addFunction("uiPrefs.marginColumn", function()
-{
-   .rs.getUserPref("margin_column")
-})
-
+.rs.uiPrefs$marginColumn <- list(
+   get = function() { .rs.getUserPref("margin_column") },
+   set = function(value) { .rs.setUserPref("margin_column", value) }
+)
 
 # Show invisible characters in editor
 # code editor.
-.rs.addFunction("uiPrefs.showInvisibles", function()
-{
-   .rs.getUserPref("show_invisibles")
-})
-
+.rs.uiPrefs$showInvisibles <- list(
+   get = function() { .rs.getUserPref("show_invisibles") },
+   set = function(value) { .rs.setUserPref("show_invisibles", value) }
+)
 
 # Indentation guides
 # Style for indentation guides in the RStudio code editor.
-.rs.addFunction("uiPrefs.indentGuides", function()
-{
-   .rs.getUserPref("indent_guides")
-})
-
+.rs.uiPrefs$indentGuides <- list(
+   get = function() { .rs.getUserPref("indent_guides") },
+   set = function(value) { .rs.setUserPref("indent_guides", value) }
+)
 
 # Continue comments after adding new line
 # a new line.
-.rs.addFunction("uiPrefs.continueCommentsOnNewline", function()
-{
-   .rs.getUserPref("continue_comments_on_newline")
-})
-
+.rs.uiPrefs$continueCommentsOnNewline <- list(
+   get = function() { .rs.getUserPref("continue_comments_on_newline") },
+   set = function(value) { .rs.setUserPref("continue_comments_on_newline", value) }
+)
 
 # Whether web links in comments are clickable
 # Whether web links in comments are clickable.
-.rs.addFunction("uiPrefs.highlightWebLink", function()
-{
-   .rs.getUserPref("highlight_web_link")
-})
-
+.rs.uiPrefs$highlightWebLink <- list(
+   get = function() { .rs.getUserPref("highlight_web_link") },
+   set = function(value) { .rs.setUserPref("highlight_web_link", value) }
+)
 
 # Keybinding set for editor
 # The keybindings to use in the RStudio code editor.
-.rs.addFunction("uiPrefs.editorKeybindings", function()
-{
-   .rs.getUserPref("editor_keybindings")
-})
-
+.rs.uiPrefs$editorKeybindings <- list(
+   get = function() { .rs.getUserPref("editor_keybindings") },
+   set = function(value) { .rs.setUserPref("editor_keybindings", value) }
+)
 
 # Auto-insert matching parentheses and brackets
 # Whether to insert matching pairs, such as () and [], when the first is typed.
-.rs.addFunction("uiPrefs.insertMatching", function()
-{
-   .rs.getUserPref("insert_matching")
-})
-
+.rs.uiPrefs$insertMatching <- list(
+   get = function() { .rs.getUserPref("insert_matching") },
+   set = function(value) { .rs.setUserPref("insert_matching", value) }
+)
 
 # Insert spaces around = in R code
 # Whether to insert spaces around the equals sign in R code.
-.rs.addFunction("uiPrefs.insertSpacesAroundEquals", function()
-{
-   .rs.getUserPref("insert_spaces_around_equals")
-})
-
+.rs.uiPrefs$insertSpacesAroundEquals <- list(
+   get = function() { .rs.getUserPref("insert_spaces_around_equals") },
+   set = function(value) { .rs.setUserPref("insert_spaces_around_equals", value) }
+)
 
 # Insert parentheses after functions
 # Whether to insert parentheses after function completions.
-.rs.addFunction("uiPrefs.insertParensAfterFunctionCompletion", function()
-{
-   .rs.getUserPref("insert_parens_after_function_completion")
-})
-
+.rs.uiPrefs$insertParensAfterFunctionCompletion <- list(
+   get = function() { .rs.getUserPref("insert_parens_after_function_completion") },
+   set = function(value) { .rs.setUserPref("insert_parens_after_function_completion", value) }
+)
 
 # Complete multi-line statements with Tab
 # Whether to attempt completion of multiple-line statements when pressing Tab.
-.rs.addFunction("uiPrefs.tabMultilineCompletion", function()
-{
-   .rs.getUserPref("tab_multiline_completion")
-})
-
+.rs.uiPrefs$tabMultilineCompletion <- list(
+   get = function() { .rs.getUserPref("tab_multiline_completion") },
+   set = function(value) { .rs.setUserPref("tab_multiline_completion", value) }
+)
 
 # Use Tab to trigger autocompletion
 # Whether to attempt completion of statements when pressing Tab.
-.rs.addFunction("uiPrefs.tabCompletion", function()
-{
-   .rs.getUserPref("tab_completion")
-})
-
+.rs.uiPrefs$tabCompletion <- list(
+   get = function() { .rs.getUserPref("tab_completion") },
+   set = function(value) { .rs.setUserPref("tab_completion", value) }
+)
 
 # Show function help tooltips on idle
 # recently moved.
-.rs.addFunction("uiPrefs.showHelpTooltipOnIdle", function()
-{
-   .rs.getUserPref("show_help_tooltip_on_idle")
-})
-
+.rs.uiPrefs$showHelpTooltipOnIdle <- list(
+   get = function() { .rs.getUserPref("show_help_tooltip_on_idle") },
+   set = function(value) { .rs.setUserPref("show_help_tooltip_on_idle", value) }
+)
 
 # Surround selections with
 # Which kinds of delimiters can be used to surround the current selection.
-.rs.addFunction("uiPrefs.surroundSelection", function()
-{
-   .rs.getUserPref("surround_selection")
-})
-
+.rs.uiPrefs$surroundSelection <- list(
+   get = function() { .rs.getUserPref("surround_selection") },
+   set = function(value) { .rs.setUserPref("surround_selection", value) }
+)
 
 # Enable code snippets
 # Whether to enable code snippets in the RStudio code editor.
-.rs.addFunction("uiPrefs.enableSnippets", function()
-{
-   .rs.getUserPref("enable_snippets")
-})
-
+.rs.uiPrefs$enableSnippets <- list(
+   get = function() { .rs.getUserPref("enable_snippets") },
+   set = function(value) { .rs.setUserPref("enable_snippets", value) }
+)
 
 # Use code completion for R
 # When to use auto-completion for R code in the RStudio code editor.
-.rs.addFunction("uiPrefs.codeCompletion", function()
-{
-   .rs.getUserPref("code_completion")
-})
-
+.rs.uiPrefs$codeCompletion <- list(
+   get = function() { .rs.getUserPref("code_completion") },
+   set = function(value) { .rs.setUserPref("code_completion", value) }
+)
 
 # Use code completion for other languages
 # the RStudio code editor.
-.rs.addFunction("uiPrefs.codeCompletionOther", function()
-{
-   .rs.getUserPref("code_completion_other")
-})
-
+.rs.uiPrefs$codeCompletionOther <- list(
+   get = function() { .rs.getUserPref("code_completion_other") },
+   set = function(value) { .rs.setUserPref("code_completion_other", value) }
+)
 
 # Use code completion in the R console
 # Whether to always use code completion in the R console.
-.rs.addFunction("uiPrefs.consoleCodeCompletion", function()
-{
-   .rs.getUserPref("console_code_completion")
-})
-
+.rs.uiPrefs$consoleCodeCompletion <- list(
+   get = function() { .rs.getUserPref("console_code_completion") },
+   set = function(value) { .rs.setUserPref("console_code_completion", value) }
+)
 
 # Delay before completing code (ms)
 # The number of milliseconds to wait before offering code suggestions.
-.rs.addFunction("uiPrefs.codeCompletionDelay", function()
-{
-   .rs.getUserPref("code_completion_delay")
-})
-
+.rs.uiPrefs$codeCompletionDelay <- list(
+   get = function() { .rs.getUserPref("code_completion_delay") },
+   set = function(value) { .rs.setUserPref("code_completion_delay", value) }
+)
 
 # Number of characters for code completion
 # offered.
-.rs.addFunction("uiPrefs.codeCompletionCharacters", function()
-{
-   .rs.getUserPref("code_completion_characters")
-})
-
+.rs.uiPrefs$codeCompletionCharacters <- list(
+   get = function() { .rs.getUserPref("code_completion_characters") },
+   set = function(value) { .rs.setUserPref("code_completion_characters", value) }
+)
 
 # Include all function arguments in completion list
 # even if those arguments have already appear to be used in the current function
-.rs.addFunction("uiPrefs.codeCompletionIncludeAlreadyUsed", function()
-{
-   .rs.getUserPref("code_completion_include_already_used")
-})
-
+.rs.uiPrefs$codeCompletionIncludeAlreadyUsed <- list(
+   get = function() { .rs.getUserPref("code_completion_include_already_used") },
+   set = function(value) { .rs.setUserPref("code_completion_include_already_used", value) }
+)
 
 # Show function signature tooltips
 # Whether to show function signature tooltips during autocompletion.
-.rs.addFunction("uiPrefs.showFunctionSignatureTooltips", function()
-{
-   .rs.getUserPref("show_function_signature_tooltips")
-})
-
+.rs.uiPrefs$showFunctionSignatureTooltips <- list(
+   get = function() { .rs.getUserPref("show_function_signature_tooltips") },
+   set = function(value) { .rs.setUserPref("show_function_signature_tooltips", value) }
+)
 
 # Show data preview in autocompletion help popup
 # and values.
-.rs.addFunction("uiPrefs.showDataPreview", function()
-{
-   .rs.getUserPref("show_data_preview")
-})
-
+.rs.uiPrefs$showDataPreview <- list(
+   get = function() { .rs.getUserPref("show_data_preview") },
+   set = function(value) { .rs.setUserPref("show_data_preview", value) }
+)
 
 # Show diagnostics in R code
 # code as you type.
-.rs.addFunction("uiPrefs.showDiagnosticsR", function()
-{
-   .rs.getUserPref("show_diagnostics_r")
-})
-
+.rs.uiPrefs$showDiagnosticsR <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_r") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_r", value) }
+)
 
 # Show diagnostics in C++ code
 # Whether to show diagnostic messages for C++ code as you type.
-.rs.addFunction("uiPrefs.showDiagnosticsCpp", function()
-{
-   .rs.getUserPref("show_diagnostics_cpp")
-})
-
+.rs.uiPrefs$showDiagnosticsCpp <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_cpp") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_cpp", value) }
+)
 
 # Show diagnostics in YAML code
 # Whether to show diagnostic messages for YAML code as you type.
-.rs.addFunction("uiPrefs.showDiagnosticsYaml", function()
-{
-   .rs.getUserPref("show_diagnostics_yaml")
-})
-
+.rs.uiPrefs$showDiagnosticsYaml <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_yaml") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_yaml", value) }
+)
 
 # Show diagnostics in other languages
 # YAML).
-.rs.addFunction("uiPrefs.showDiagnosticsOther", function()
-{
-   .rs.getUserPref("show_diagnostics_other")
-})
-
+.rs.uiPrefs$showDiagnosticsOther <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_other") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_other", value) }
+)
 
 # Show style diagnostics for R code
 # Whether to show style diagnostics (suggestions for improving R code style)
-.rs.addFunction("uiPrefs.styleDiagnostics", function()
-{
-   .rs.getUserPref("style_diagnostics")
-})
-
+.rs.uiPrefs$styleDiagnostics <- list(
+   get = function() { .rs.getUserPref("style_diagnostics") },
+   set = function(value) { .rs.setUserPref("style_diagnostics", value) }
+)
 
 # Check code for problems when saving
 # Whether to check code for problems after saving it.
-.rs.addFunction("uiPrefs.diagnosticsOnSave", function()
-{
-   .rs.getUserPref("diagnostics_on_save")
-})
-
+.rs.uiPrefs$diagnosticsOnSave <- list(
+   get = function() { .rs.getUserPref("diagnostics_on_save") },
+   set = function(value) { .rs.setUserPref("diagnostics_on_save", value) }
+)
 
 # Run R code diagnostics in the background
 # Whether to run code diagnostics in the background, as you type.
-.rs.addFunction("uiPrefs.backgroundDiagnostics", function()
-{
-   .rs.getUserPref("background_diagnostics")
-})
-
+.rs.uiPrefs$backgroundDiagnostics <- list(
+   get = function() { .rs.getUserPref("background_diagnostics") },
+   set = function(value) { .rs.setUserPref("background_diagnostics", value) }
+)
 
 # Run R code diagnostics after (ms)
 # background.
-.rs.addFunction("uiPrefs.backgroundDiagnosticsDelayMs", function()
-{
-   .rs.getUserPref("background_diagnostics_delay_ms")
-})
-
+.rs.uiPrefs$backgroundDiagnosticsDelayMs <- list(
+   get = function() { .rs.getUserPref("background_diagnostics_delay_ms") },
+   set = function(value) { .rs.setUserPref("background_diagnostics_delay_ms", value) }
+)
 
 # Run diagnostics on R function calls
 # Whether to run diagnostics in R function calls.
-.rs.addFunction("uiPrefs.diagnosticsInRFunctionCalls", function()
-{
-   .rs.getUserPref("diagnostics_in_r_function_calls")
-})
-
+.rs.uiPrefs$diagnosticsInRFunctionCalls <- list(
+   get = function() { .rs.getUserPref("diagnostics_in_r_function_calls") },
+   set = function(value) { .rs.setUserPref("diagnostics_in_r_function_calls", value) }
+)
 
 # Check arguments to R function calls
 # Whether to check arguments to R function calls.
-.rs.addFunction("uiPrefs.checkArgumentsToRFunctionCalls", function()
-{
-   .rs.getUserPref("check_arguments_to_r_function_calls")
-})
-
+.rs.uiPrefs$checkArgumentsToRFunctionCalls <- list(
+   get = function() { .rs.getUserPref("check_arguments_to_r_function_calls") },
+   set = function(value) { .rs.setUserPref("check_arguments_to_r_function_calls", value) }
+)
 
 # Check for unexpected assignments
 # Whether to check for unexpected variable assignments inside R function calls.
-.rs.addFunction("uiPrefs.checkUnexpectedAssignmentInFunctionCall", function()
-{
-   .rs.getUserPref("check_unexpected_assignment_in_function_call")
-})
-
+.rs.uiPrefs$checkUnexpectedAssignmentInFunctionCall <- list(
+   get = function() { .rs.getUserPref("check_unexpected_assignment_in_function_call") },
+   set = function(value) { .rs.setUserPref("check_unexpected_assignment_in_function_call", value) }
+)
 
 # Warn when R variable used but not defined
 # the current scope.
-.rs.addFunction("uiPrefs.warnIfNoSuchVariableInScope", function()
-{
-   .rs.getUserPref("warn_if_no_such_variable_in_scope")
-})
-
+.rs.uiPrefs$warnIfNoSuchVariableInScope <- list(
+   get = function() { .rs.getUserPref("warn_if_no_such_variable_in_scope") },
+   set = function(value) { .rs.setUserPref("warn_if_no_such_variable_in_scope", value) }
+)
 
 # Warn when R variable defined but not used
 # the current scope
-.rs.addFunction("uiPrefs.warnVariableDefinedButNotUsed", function()
-{
-   .rs.getUserPref("warn_variable_defined_but_not_used")
-})
-
+.rs.uiPrefs$warnVariableDefinedButNotUsed <- list(
+   get = function() { .rs.getUserPref("warn_variable_defined_but_not_used") },
+   set = function(value) { .rs.setUserPref("warn_variable_defined_but_not_used", value) }
+)
 
 # Detect missing R packages in the editor
 # dependencies.
-.rs.addFunction("uiPrefs.autoDiscoverPackageDependencies", function()
-{
-   .rs.getUserPref("auto_discover_package_dependencies")
-})
-
+.rs.uiPrefs$autoDiscoverPackageDependencies <- list(
+   get = function() { .rs.getUserPref("auto_discover_package_dependencies") },
+   set = function(value) { .rs.setUserPref("auto_discover_package_dependencies", value) }
+)
 
 # Ensure files end with a newline when saving
 # Whether to ensure that source files end with a newline character.
-.rs.addFunction("uiPrefs.autoAppendNewline", function()
-{
-   .rs.getUserPref("auto_append_newline")
-})
-
+.rs.uiPrefs$autoAppendNewline <- list(
+   get = function() { .rs.getUserPref("auto_append_newline") },
+   set = function(value) { .rs.setUserPref("auto_append_newline", value) }
+)
 
 # Strip trailing whitespace when saving
 # Whether to strip trailing whitespace from each line when saving.
-.rs.addFunction("uiPrefs.stripTrailingWhitespace", function()
-{
-   .rs.getUserPref("strip_trailing_whitespace")
-})
-
+.rs.uiPrefs$stripTrailingWhitespace <- list(
+   get = function() { .rs.getUserPref("strip_trailing_whitespace") },
+   set = function(value) { .rs.setUserPref("strip_trailing_whitespace", value) }
+)
 
 # Restore cursor position when reopening files
 # when the file is opened.
-.rs.addFunction("uiPrefs.restoreSourceDocumentCursorPosition", function()
-{
-   .rs.getUserPref("restore_source_document_cursor_position")
-})
-
+.rs.uiPrefs$restoreSourceDocumentCursorPosition <- list(
+   get = function() { .rs.getUserPref("restore_source_document_cursor_position") },
+   set = function(value) { .rs.setUserPref("restore_source_document_cursor_position", value) }
+)
 
 # Re-indent code when pasting
 # Whether to automatically re-indent code when it's pasted into RStudio.
-.rs.addFunction("uiPrefs.reindentOnPaste", function()
-{
-   .rs.getUserPref("reindent_on_paste")
-})
-
+.rs.uiPrefs$reindentOnPaste <- list(
+   get = function() { .rs.getUserPref("reindent_on_paste") },
+   set = function(value) { .rs.setUserPref("reindent_on_paste", value) }
+)
 
 # Vertically align function arguments
 # indentation.
-.rs.addFunction("uiPrefs.verticallyAlignArgumentsIndent", function()
-{
-   .rs.getUserPref("vertically_align_arguments_indent")
-})
-
+.rs.uiPrefs$verticallyAlignArgumentsIndent <- list(
+   get = function() { .rs.getUserPref("vertically_align_arguments_indent") },
+   set = function(value) { .rs.setUserPref("vertically_align_arguments_indent", value) }
+)
 
 # Soft-wrap source files
 # inserting newline characters.
-.rs.addFunction("uiPrefs.softWrapRFiles", function()
-{
-   .rs.getUserPref("soft_wrap_r_files")
-})
-
+.rs.uiPrefs$softWrapRFiles <- list(
+   get = function() { .rs.getUserPref("soft_wrap_r_files") },
+   set = function(value) { .rs.setUserPref("soft_wrap_r_files", value) }
+)
 
 # Soft-wrap R Markdown files
 # Notebooks)
-.rs.addFunction("uiPrefs.softWrapRmdFiles", function()
-{
-   .rs.getUserPref("soft_wrap_rmd_files")
-})
-
+.rs.uiPrefs$softWrapRmdFiles <- list(
+   get = function() { .rs.getUserPref("soft_wrap_rmd_files") },
+   set = function(value) { .rs.setUserPref("soft_wrap_rmd_files", value) }
+)
 
 # Focus console after executing R code
 # Whether to focus the R console after executing an R command from a script.
-.rs.addFunction("uiPrefs.focusConsoleAfterExec", function()
-{
-   .rs.getUserPref("focus_console_after_exec")
-})
-
+.rs.uiPrefs$focusConsoleAfterExec <- list(
+   get = function() { .rs.getUserPref("focus_console_after_exec") },
+   set = function(value) { .rs.setUserPref("focus_console_after_exec", value) }
+)
 
 # Fold style in editor
 # The style of folding to use.
-.rs.addFunction("uiPrefs.foldStyle", function()
-{
-   .rs.getUserPref("fold_style")
-})
-
+.rs.uiPrefs$foldStyle <- list(
+   get = function() { .rs.getUserPref("fold_style") },
+   set = function(value) { .rs.setUserPref("fold_style", value) }
+)
 
 # Save R scripts before sourcing
 # Whether to automatically save scripts before executing them.
-.rs.addFunction("uiPrefs.saveBeforeSourcing", function()
-{
-   .rs.getUserPref("save_before_sourcing")
-})
-
+.rs.uiPrefs$saveBeforeSourcing <- list(
+   get = function() { .rs.getUserPref("save_before_sourcing") },
+   set = function(value) { .rs.setUserPref("save_before_sourcing", value) }
+)
 
 # Syntax highlighting in R console
 # Whether to use syntax highlighting in the R console.
-.rs.addFunction("uiPrefs.syntaxColorConsole", function()
-{
-   .rs.getUserPref("syntax_color_console")
-})
-
+.rs.uiPrefs$syntaxColorConsole <- list(
+   get = function() { .rs.getUserPref("syntax_color_console") },
+   set = function(value) { .rs.setUserPref("syntax_color_console", value) }
+)
 
 # Different color for error output in R console
 # Whether to display error, warning, and message output in a different color.
-.rs.addFunction("uiPrefs.highlightConsoleErrors", function()
-{
-   .rs.getUserPref("highlight_console_errors")
-})
-
+.rs.uiPrefs$highlightConsoleErrors <- list(
+   get = function() { .rs.getUserPref("highlight_console_errors") },
+   set = function(value) { .rs.setUserPref("highlight_console_errors", value) }
+)
 
 # Scroll past end of file
 # Whether to allow scrolling past the end of a file.
-.rs.addFunction("uiPrefs.scrollPastEndOfDocument", function()
-{
-   .rs.getUserPref("scroll_past_end_of_document")
-})
-
+.rs.uiPrefs$scrollPastEndOfDocument <- list(
+   get = function() { .rs.getUserPref("scroll_past_end_of_document") },
+   set = function(value) { .rs.setUserPref("scroll_past_end_of_document", value) }
+)
 
 # Highlight R function calls
 # Whether to highlight R function calls in the code editor.
-.rs.addFunction("uiPrefs.highlightRFunctionCalls", function()
-{
-   .rs.getUserPref("highlight_r_function_calls")
-})
-
+.rs.uiPrefs$highlightRFunctionCalls <- list(
+   get = function() { .rs.getUserPref("highlight_r_function_calls") },
+   set = function(value) { .rs.setUserPref("highlight_r_function_calls", value) }
+)
 
 # Enable preview of named and hexadecimal colors
 # Whether to show preview for named and hexadecimal colors.
-.rs.addFunction("uiPrefs.colorPreview", function()
-{
-   .rs.getUserPref("color_preview")
-})
-
+.rs.uiPrefs$colorPreview <- list(
+   get = function() { .rs.getUserPref("color_preview") },
+   set = function(value) { .rs.setUserPref("color_preview", value) }
+)
 
 # Use rainbow parentheses
 # Whether to highlight parentheses in a variety of colors.
-.rs.addFunction("uiPrefs.rainbowParentheses", function()
-{
-   .rs.getUserPref("rainbow_parentheses")
-})
-
+.rs.uiPrefs$rainbowParentheses <- list(
+   get = function() { .rs.getUserPref("rainbow_parentheses") },
+   set = function(value) { .rs.setUserPref("rainbow_parentheses", value) }
+)
 
 # Use rainbow fenced divs
 # Whether to highlight fenced divs in a variety of colors.
-.rs.addFunction("uiPrefs.rainbowFencedDivs", function()
-{
-   .rs.getUserPref("rainbow_fenced_divs")
-})
-
+.rs.uiPrefs$rainbowFencedDivs <- list(
+   get = function() { .rs.getUserPref("rainbow_fenced_divs") },
+   set = function(value) { .rs.setUserPref("rainbow_fenced_divs", value) }
+)
 
 # Maximum characters per line in R console
 # The maximum number of characters to display in a single line in the R console.
-.rs.addFunction("uiPrefs.consoleLineLengthLimit", function()
-{
-   .rs.getUserPref("console_line_length_limit")
-})
-
+.rs.uiPrefs$consoleLineLengthLimit <- list(
+   get = function() { .rs.getUserPref("console_line_length_limit") },
+   set = function(value) { .rs.setUserPref("console_line_length_limit", value) }
+)
 
 # Maximum lines in R console
 # scrollback buffer.
-.rs.addFunction("uiPrefs.consoleMaxLines", function()
-{
-   .rs.getUserPref("console_max_lines")
-})
-
+.rs.uiPrefs$consoleMaxLines <- list(
+   get = function() { .rs.getUserPref("console_max_lines") },
+   set = function(value) { .rs.setUserPref("console_max_lines", value) }
+)
 
 # ANSI escape codes in R console
 # How to treat ANSI escape codes in the console.
-.rs.addFunction("uiPrefs.ansiConsoleMode", function()
-{
-   .rs.getUserPref("ansi_console_mode")
-})
-
+.rs.uiPrefs$ansiConsoleMode <- list(
+   get = function() { .rs.getUserPref("ansi_console_mode") },
+   set = function(value) { .rs.setUserPref("ansi_console_mode", value) }
+)
 
 # Limit visible console output
 # Whether to only show a limited window of the total console output
-.rs.addFunction("uiPrefs.limitVisibleConsole", function()
-{
-   .rs.getUserPref("limit_visible_console")
-})
-
+.rs.uiPrefs$limitVisibleConsole <- list(
+   get = function() { .rs.getUserPref("limit_visible_console") },
+   set = function(value) { .rs.setUserPref("limit_visible_console", value) }
+)
 
 # Show toolbar on R Markdown chunks
 # Whether to show a toolbar on code chunks in R Markdown documents.
-.rs.addFunction("uiPrefs.showInlineToolbarForRCodeChunks", function()
-{
-   .rs.getUserPref("show_inline_toolbar_for_r_code_chunks")
-})
-
+.rs.uiPrefs$showInlineToolbarForRCodeChunks <- list(
+   get = function() { .rs.getUserPref("show_inline_toolbar_for_r_code_chunks") },
+   set = function(value) { .rs.setUserPref("show_inline_toolbar_for_r_code_chunks", value) }
+)
 
 # Highlight code chunks in R Markdown files
 # background color.
-.rs.addFunction("uiPrefs.highlightCodeChunks", function()
-{
-   .rs.getUserPref("highlight_code_chunks")
-})
-
+.rs.uiPrefs$highlightCodeChunks <- list(
+   get = function() { .rs.getUserPref("highlight_code_chunks") },
+   set = function(value) { .rs.setUserPref("highlight_code_chunks", value) }
+)
 
 # Save files before building
 # Whether to save all open, unsaved files before building the project.
-.rs.addFunction("uiPrefs.saveFilesBeforeBuild", function()
-{
-   .rs.getUserPref("save_files_before_build")
-})
-
+.rs.uiPrefs$saveFilesBeforeBuild <- list(
+   get = function() { .rs.getUserPref("save_files_before_build") },
+   set = function(value) { .rs.setUserPref("save_files_before_build", value) }
+)
 
 # Save and reload R workspace on build
 # project.
-.rs.addFunction("uiPrefs.saveAndReloadWorkspaceOnBuild", function()
-{
-   .rs.getUserPref("save_and_reload_workspace_on_build")
-})
-
+.rs.uiPrefs$saveAndReloadWorkspaceOnBuild <- list(
+   get = function() { .rs.getUserPref("save_and_reload_workspace_on_build") },
+   set = function(value) { .rs.setUserPref("save_and_reload_workspace_on_build", value) }
+)
 
 # Editor font size (points)
 # The default editor font size, in points.
-.rs.addFunction("uiPrefs.fontSizePoints", function()
-{
-   .rs.getUserPref("font_size_points")
-})
-
+.rs.uiPrefs$fontSizePoints <- list(
+   get = function() { .rs.getUserPref("font_size_points") },
+   set = function(value) { .rs.setUserPref("font_size_points", value) }
+)
 
 # Help panel font size (points)
 # The help panel font size, in points.
-.rs.addFunction("uiPrefs.helpFontSizePoints", function()
-{
-   .rs.getUserPref("help_font_size_points")
-})
-
+.rs.uiPrefs$helpFontSizePoints <- list(
+   get = function() { .rs.getUserPref("help_font_size_points") },
+   set = function(value) { .rs.setUserPref("help_font_size_points", value) }
+)
 
 # Theme
 # The name of the color theme to apply to the text editor in RStudio.
-.rs.addFunction("uiPrefs.editorTheme", function()
-{
-   .rs.getUserPref("editor_theme")
-})
-
+.rs.uiPrefs$editorTheme <- list(
+   get = function() { .rs.getUserPref("editor_theme") },
+   set = function(value) { .rs.setUserPref("editor_theme", value) }
+)
 
 # Enable editor fonts on RStudio Server
 # Whether to use a custom editor font in RStudio Server.
-.rs.addFunction("uiPrefs.serverEditorFontEnabled", function()
-{
-   .rs.getUserPref("server_editor_font_enabled")
-})
-
+.rs.uiPrefs$serverEditorFontEnabled <- list(
+   get = function() { .rs.getUserPref("server_editor_font_enabled") },
+   set = function(value) { .rs.setUserPref("server_editor_font_enabled", value) }
+)
 
 # Editor font
 # The name of the fixed-width editor font to use with RStudio Server.
-.rs.addFunction("uiPrefs.serverEditorFont", function()
-{
-   .rs.getUserPref("server_editor_font")
-})
-
+.rs.uiPrefs$serverEditorFont <- list(
+   get = function() { .rs.getUserPref("server_editor_font") },
+   set = function(value) { .rs.setUserPref("server_editor_font", value) }
+)
 
 # Default character encoding
 # The default character encoding to use when saving files.
-.rs.addFunction("uiPrefs.defaultEncoding", function()
-{
-   .rs.getUserPref("default_encoding")
-})
-
+.rs.uiPrefs$defaultEncoding <- list(
+   get = function() { .rs.getUserPref("default_encoding") },
+   set = function(value) { .rs.setUserPref("default_encoding", value) }
+)
 
 # Show top toolbar
 # Whether to show the toolbar at the top of the RStudio workbench.
-.rs.addFunction("uiPrefs.toolbarVisible", function()
-{
-   .rs.getUserPref("toolbar_visible")
-})
-
+.rs.uiPrefs$toolbarVisible <- list(
+   get = function() { .rs.getUserPref("toolbar_visible") },
+   set = function(value) { .rs.setUserPref("toolbar_visible", value) }
+)
 
 # Default new project location
 # The directory path under which to place new projects by default.
-.rs.addFunction("uiPrefs.defaultProjectLocation", function()
-{
-   .rs.getUserPref("default_project_location")
-})
-
+.rs.uiPrefs$defaultProjectLocation <- list(
+   get = function() { .rs.getUserPref("default_project_location") },
+   set = function(value) { .rs.setUserPref("default_project_location", value) }
+)
 
 # Default open project location
 # The default directory to use in file dialogs when opening a project.
-.rs.addFunction("uiPrefs.defaultOpenProjectLocation", function()
-{
-   .rs.getUserPref("default_open_project_location")
-})
-
+.rs.uiPrefs$defaultOpenProjectLocation <- list(
+   get = function() { .rs.getUserPref("default_open_project_location") },
+   set = function(value) { .rs.setUserPref("default_open_project_location", value) }
+)
 
 # Source with echo by default
 # Whether to echo R code when sourcing it.
-.rs.addFunction("uiPrefs.sourceWithEcho", function()
-{
-   .rs.getUserPref("source_with_echo")
-})
-
+.rs.uiPrefs$sourceWithEcho <- list(
+   get = function() { .rs.getUserPref("source_with_echo") },
+   set = function(value) { .rs.setUserPref("source_with_echo", value) }
+)
 
 # Default Sweave engine
 # The default engine to use when processing Sweave documents.
-.rs.addFunction("uiPrefs.defaultSweaveEngine", function()
-{
-   .rs.getUserPref("default_sweave_engine")
-})
-
+.rs.uiPrefs$defaultSweaveEngine <- list(
+   get = function() { .rs.getUserPref("default_sweave_engine") },
+   set = function(value) { .rs.setUserPref("default_sweave_engine", value) }
+)
 
 # Default LaTeX program
 # The default program to use when processing LaTeX documents.
-.rs.addFunction("uiPrefs.defaultLatexProgram", function()
-{
-   .rs.getUserPref("default_latex_program")
-})
-
+.rs.uiPrefs$defaultLatexProgram <- list(
+   get = function() { .rs.getUserPref("default_latex_program") },
+   set = function(value) { .rs.setUserPref("default_latex_program", value) }
+)
 
 # Use Roxygen for documentation
 # Whether to use Roxygen for documentation.
-.rs.addFunction("uiPrefs.useRoxygen", function()
-{
-   .rs.getUserPref("use_roxygen")
-})
-
+.rs.uiPrefs$useRoxygen <- list(
+   get = function() { .rs.getUserPref("use_roxygen") },
+   set = function(value) { .rs.setUserPref("use_roxygen", value) }
+)
 
 # Enable data import
 # Whether to use RStudio's data import feature.
-.rs.addFunction("uiPrefs.useDataimport", function()
-{
-   .rs.getUserPref("use_dataimport")
-})
-
+.rs.uiPrefs$useDataimport <- list(
+   get = function() { .rs.getUserPref("use_dataimport") },
+   set = function(value) { .rs.setUserPref("use_dataimport", value) }
+)
 
 # PDF previewer
 # The program to use to preview PDF files after generation.
-.rs.addFunction("uiPrefs.pdfPreviewer", function()
-{
-   .rs.getUserPref("pdf_previewer")
-})
-
+.rs.uiPrefs$pdfPreviewer <- list(
+   get = function() { .rs.getUserPref("pdf_previewer") },
+   set = function(value) { .rs.setUserPref("pdf_previewer", value) }
+)
 
 # Enable Rnw concordance
 # Whether to always enable the concordance for RNW files.
-.rs.addFunction("uiPrefs.alwaysEnableRnwConcordance", function()
-{
-   .rs.getUserPref("always_enable_rnw_concordance")
-})
-
+.rs.uiPrefs$alwaysEnableRnwConcordance <- list(
+   get = function() { .rs.getUserPref("always_enable_rnw_concordance") },
+   set = function(value) { .rs.setUserPref("always_enable_rnw_concordance", value) }
+)
 
 # Insert numbered LaTeX sections
 # Whether to insert numbered sections in LaTeX.
-.rs.addFunction("uiPrefs.insertNumberedLatexSections", function()
-{
-   .rs.getUserPref("insert_numbered_latex_sections")
-})
-
+.rs.uiPrefs$insertNumberedLatexSections <- list(
+   get = function() { .rs.getUserPref("insert_numbered_latex_sections") },
+   set = function(value) { .rs.setUserPref("insert_numbered_latex_sections", value) }
+)
 
 # Spelling dictionary language
 # The language of the spelling dictionary to use for spell checking.
-.rs.addFunction("uiPrefs.spellingDictionaryLanguage", function()
-{
-   .rs.getUserPref("spelling_dictionary_language")
-})
-
+.rs.uiPrefs$spellingDictionaryLanguage <- list(
+   get = function() { .rs.getUserPref("spelling_dictionary_language") },
+   set = function(value) { .rs.setUserPref("spelling_dictionary_language", value) }
+)
 
 # Custom spelling dictionaries
 # The list of custom dictionaries to use when spell checking.
-.rs.addFunction("uiPrefs.spellingCustomDictionaries", function()
-{
-   .rs.getUserPref("spelling_custom_dictionaries")
-})
-
+.rs.uiPrefs$spellingCustomDictionaries <- list(
+   get = function() { .rs.getUserPref("spelling_custom_dictionaries") },
+   set = function(value) { .rs.setUserPref("spelling_custom_dictionaries", value) }
+)
 
 # Lint document after load (ms)
 # loaded.
-.rs.addFunction("uiPrefs.documentLoadLintDelay", function()
-{
-   .rs.getUserPref("document_load_lint_delay")
-})
-
+.rs.uiPrefs$documentLoadLintDelay <- list(
+   get = function() { .rs.getUserPref("document_load_lint_delay") },
+   set = function(value) { .rs.setUserPref("document_load_lint_delay", value) }
+)
 
 # Ignore uppercase words in spell check
 # Whether to ignore words in uppercase when spell checking.
-.rs.addFunction("uiPrefs.ignoreUppercaseWords", function()
-{
-   .rs.getUserPref("ignore_uppercase_words")
-})
-
+.rs.uiPrefs$ignoreUppercaseWords <- list(
+   get = function() { .rs.getUserPref("ignore_uppercase_words") },
+   set = function(value) { .rs.setUserPref("ignore_uppercase_words", value) }
+)
 
 # Ignore words with numbers in spell check
 # Whether to ignore words with numbers in them when spell checking.
-.rs.addFunction("uiPrefs.ignoreWordsWithNumbers", function()
-{
-   .rs.getUserPref("ignore_words_with_numbers")
-})
-
+.rs.uiPrefs$ignoreWordsWithNumbers <- list(
+   get = function() { .rs.getUserPref("ignore_words_with_numbers") },
+   set = function(value) { .rs.setUserPref("ignore_words_with_numbers", value) }
+)
 
 # Use real-time spellchecking
 # Whether to enable real-time spellchecking by default.
-.rs.addFunction("uiPrefs.realTimeSpellchecking", function()
-{
-   .rs.getUserPref("real_time_spellchecking")
-})
-
+.rs.uiPrefs$realTimeSpellchecking <- list(
+   get = function() { .rs.getUserPref("real_time_spellchecking") },
+   set = function(value) { .rs.setUserPref("real_time_spellchecking", value) }
+)
 
 # Navigate to build errors
 # Whether to navigate to build errors.
-.rs.addFunction("uiPrefs.navigateToBuildError", function()
-{
-   .rs.getUserPref("navigate_to_build_error")
-})
-
+.rs.uiPrefs$navigateToBuildError <- list(
+   get = function() { .rs.getUserPref("navigate_to_build_error") },
+   set = function(value) { .rs.setUserPref("navigate_to_build_error", value) }
+)
 
 # Enable the Packages pane
 # Whether to enable RStudio's Packages pane.
-.rs.addFunction("uiPrefs.packagesPaneEnabled", function()
-{
-   .rs.getUserPref("packages_pane_enabled")
-})
-
+.rs.uiPrefs$packagesPaneEnabled <- list(
+   get = function() { .rs.getUserPref("packages_pane_enabled") },
+   set = function(value) { .rs.setUserPref("packages_pane_enabled", value) }
+)
 
 # C++ template
 # C++ template.
-.rs.addFunction("uiPrefs.cppTemplate", function()
-{
-   .rs.getUserPref("cpp_template")
-})
-
+.rs.uiPrefs$cppTemplate <- list(
+   get = function() { .rs.getUserPref("cpp_template") },
+   set = function(value) { .rs.setUserPref("cpp_template", value) }
+)
 
 # Restore last opened documents on startup
 # Whether to restore the last opened source documents when RStudio starts up.
-.rs.addFunction("uiPrefs.restoreSourceDocuments", function()
-{
-   .rs.getUserPref("restore_source_documents")
-})
-
+.rs.uiPrefs$restoreSourceDocuments <- list(
+   get = function() { .rs.getUserPref("restore_source_documents") },
+   set = function(value) { .rs.setUserPref("restore_source_documents", value) }
+)
 
 # Handle errors only when user code present
 # Whether to handle errors only when user code is on the stack.
-.rs.addFunction("uiPrefs.handleErrorsInUserCodeOnly", function()
-{
-   .rs.getUserPref("handle_errors_in_user_code_only")
-})
-
+.rs.uiPrefs$handleErrorsInUserCodeOnly <- list(
+   get = function() { .rs.getUserPref("handle_errors_in_user_code_only") },
+   set = function(value) { .rs.setUserPref("handle_errors_in_user_code_only", value) }
+)
 
 # Auto-expand error tracebacks
 # Whether to automatically expand tracebacks when an error occurs.
-.rs.addFunction("uiPrefs.autoExpandErrorTracebacks", function()
-{
-   .rs.getUserPref("auto_expand_error_tracebacks")
-})
-
+.rs.uiPrefs$autoExpandErrorTracebacks <- list(
+   get = function() { .rs.getUserPref("auto_expand_error_tracebacks") },
+   set = function(value) { .rs.setUserPref("auto_expand_error_tracebacks", value) }
+)
 
 # Check for new version at startup
 # Whether to check for new versions of RStudio when RStudio starts.
-.rs.addFunction("uiPrefs.checkForUpdates", function()
-{
-   .rs.getUserPref("check_for_updates")
-})
-
+.rs.uiPrefs$checkForUpdates <- list(
+   get = function() { .rs.getUserPref("check_for_updates") },
+   set = function(value) { .rs.setUserPref("check_for_updates", value) }
+)
 
 # Show internal functions when debugging
 # debugging.
-.rs.addFunction("uiPrefs.showInternalFunctions", function()
-{
-   .rs.getUserPref("show_internal_functions")
-})
-
+.rs.uiPrefs$showInternalFunctions <- list(
+   get = function() { .rs.getUserPref("show_internal_functions") },
+   set = function(value) { .rs.setUserPref("show_internal_functions", value) }
+)
 
 # Run Shiny applications in
 # Where to display Shiny applications when they are run.
-.rs.addFunction("uiPrefs.shinyViewerType", function()
-{
-   .rs.getUserPref("shiny_viewer_type")
-})
-
+.rs.uiPrefs$shinyViewerType <- list(
+   get = function() { .rs.getUserPref("shiny_viewer_type") },
+   set = function(value) { .rs.setUserPref("shiny_viewer_type", value) }
+)
 
 # Run Shiny applications in the background
 # Whether to run Shiny applications as background jobs.
-.rs.addFunction("uiPrefs.shinyBackgroundJobs", function()
-{
-   .rs.getUserPref("shiny_background_jobs")
-})
-
+.rs.uiPrefs$shinyBackgroundJobs <- list(
+   get = function() { .rs.getUserPref("shiny_background_jobs") },
+   set = function(value) { .rs.setUserPref("shiny_background_jobs", value) }
+)
 
 # Run Plumber APIs in
 # Where to display Shiny applications when they are run.
-.rs.addFunction("uiPrefs.plumberViewerType", function()
-{
-   .rs.getUserPref("plumber_viewer_type")
-})
-
+.rs.uiPrefs$plumberViewerType <- list(
+   get = function() { .rs.getUserPref("plumber_viewer_type") },
+   set = function(value) { .rs.setUserPref("plumber_viewer_type", value) }
+)
 
 # Document author
 # The default name to use as the document author when creating new documents.
-.rs.addFunction("uiPrefs.documentAuthor", function()
-{
-   .rs.getUserPref("document_author")
-})
-
+.rs.uiPrefs$documentAuthor <- list(
+   get = function() { .rs.getUserPref("document_author") },
+   set = function(value) { .rs.setUserPref("document_author", value) }
+)
 
 # Use current date when rendering document
 # Use current date when rendering document
-.rs.addFunction("uiPrefs.rmdAutoDate", function()
-{
-   .rs.getUserPref("rmd_auto_date")
-})
-
+.rs.uiPrefs$rmdAutoDate <- list(
+   get = function() { .rs.getUserPref("rmd_auto_date") },
+   set = function(value) { .rs.setUserPref("rmd_auto_date", value) }
+)
 
 # Path to preferred R Markdown template
 # The path to the preferred R Markdown template.
-.rs.addFunction("uiPrefs.rmdPreferredTemplatePath", function()
-{
-   .rs.getUserPref("rmd_preferred_template_path")
-})
-
+.rs.uiPrefs$rmdPreferredTemplatePath <- list(
+   get = function() { .rs.getUserPref("rmd_preferred_template_path") },
+   set = function(value) { .rs.setUserPref("rmd_preferred_template_path", value) }
+)
 
 # Display R Markdown documents in
 # Where to display R Markdown documents when they have completed rendering.
-.rs.addFunction("uiPrefs.rmdViewerType", function()
-{
-   .rs.getUserPref("rmd_viewer_type")
-})
-
+.rs.uiPrefs$rmdViewerType <- list(
+   get = function() { .rs.getUserPref("rmd_viewer_type") },
+   set = function(value) { .rs.setUserPref("rmd_viewer_type", value) }
+)
 
 # Show diagnostic info when publishing
 # Whether to show verbose diagnostic information when publishing content.
-.rs.addFunction("uiPrefs.showPublishDiagnostics", function()
-{
-   .rs.getUserPref("show_publish_diagnostics")
-})
-
+.rs.uiPrefs$showPublishDiagnostics <- list(
+   get = function() { .rs.getUserPref("show_publish_diagnostics") },
+   set = function(value) { .rs.setUserPref("show_publish_diagnostics", value) }
+)
 
 # 
 # Whether to show UI for publishing content to Posit Cloud.
-.rs.addFunction("uiPrefs.enableCloudPublishUi", function()
-{
-   .rs.getUserPref("enable_cloud_publish_ui")
-})
-
+.rs.uiPrefs$enableCloudPublishUi <- list(
+   get = function() { .rs.getUserPref("enable_cloud_publish_ui") },
+   set = function(value) { .rs.setUserPref("enable_cloud_publish_ui", value) }
+)
 
 # Check SSL certificates when publishing
 # Whether to check remote server SSL certificates when publishing content.
-.rs.addFunction("uiPrefs.publishCheckCertificates", function()
-{
-   .rs.getUserPref("publish_check_certificates")
-})
-
+.rs.uiPrefs$publishCheckCertificates <- list(
+   get = function() { .rs.getUserPref("publish_check_certificates") },
+   set = function(value) { .rs.setUserPref("publish_check_certificates", value) }
+)
 
 # Use custom CA bundle when publishing
 # content.
-.rs.addFunction("uiPrefs.usePublishCaBundle", function()
-{
-   .rs.getUserPref("use_publish_ca_bundle")
-})
-
+.rs.uiPrefs$usePublishCaBundle <- list(
+   get = function() { .rs.getUserPref("use_publish_ca_bundle") },
+   set = function(value) { .rs.setUserPref("use_publish_ca_bundle", value) }
+)
 
 # Path to custom CA bundle for publishing
 # content.
-.rs.addFunction("uiPrefs.publishCaBundle", function()
-{
-   .rs.getUserPref("publish_ca_bundle")
-})
-
+.rs.uiPrefs$publishCaBundle <- list(
+   get = function() { .rs.getUserPref("publish_ca_bundle") },
+   set = function(value) { .rs.setUserPref("publish_ca_bundle", value) }
+)
 
 # Show chunk output inline in all documents
 # Whether to show chunk output inline for ordinary R Markdown documents.
-.rs.addFunction("uiPrefs.rmdChunkOutputInline", function()
-{
-   .rs.getUserPref("rmd_chunk_output_inline")
-})
-
+.rs.uiPrefs$rmdChunkOutputInline <- list(
+   get = function() { .rs.getUserPref("rmd_chunk_output_inline") },
+   set = function(value) { .rs.setUserPref("rmd_chunk_output_inline", value) }
+)
 
 # Open document outline by default
 # documents.
-.rs.addFunction("uiPrefs.showDocOutlineRmd", function()
-{
-   .rs.getUserPref("show_doc_outline_rmd")
-})
-
+.rs.uiPrefs$showDocOutlineRmd <- list(
+   get = function() { .rs.getUserPref("show_doc_outline_rmd") },
+   set = function(value) { .rs.setUserPref("show_doc_outline_rmd", value) }
+)
 
 # Document outline font size
 # The font size to use for items in the document outline.
-.rs.addFunction("uiPrefs.documentOutlineFontSize", function()
-{
-   .rs.getUserPref("document_outline_font_size")
-})
-
+.rs.uiPrefs$documentOutlineFontSize <- list(
+   get = function() { .rs.getUserPref("document_outline_font_size") },
+   set = function(value) { .rs.setUserPref("document_outline_font_size", value) }
+)
 
 # Automatically run Setup chunk when needed
 # running other chunks.
-.rs.addFunction("uiPrefs.autoRunSetupChunk", function()
-{
-   .rs.getUserPref("auto_run_setup_chunk")
-})
-
+.rs.uiPrefs$autoRunSetupChunk <- list(
+   get = function() { .rs.getUserPref("auto_run_setup_chunk") },
+   set = function(value) { .rs.setUserPref("auto_run_setup_chunk", value) }
+)
 
 # Hide console when running R Markdown chunks
 # Whether to hide the R console when executing inline R Markdown chunks.
-.rs.addFunction("uiPrefs.hideConsoleOnChunkExecute", function()
-{
-   .rs.getUserPref("hide_console_on_chunk_execute")
-})
-
+.rs.uiPrefs$hideConsoleOnChunkExecute <- list(
+   get = function() { .rs.getUserPref("hide_console_on_chunk_execute") },
+   set = function(value) { .rs.setUserPref("hide_console_on_chunk_execute", value) }
+)
 
 # Unit of R code execution
 # The unit of R code to execute when the Execute command is invoked.
-.rs.addFunction("uiPrefs.executionBehavior", function()
-{
-   .rs.getUserPref("execution_behavior")
-})
-
+.rs.uiPrefs$executionBehavior <- list(
+   get = function() { .rs.getUserPref("execution_behavior") },
+   set = function(value) { .rs.setUserPref("execution_behavior", value) }
+)
 
 # Show the Terminal tab
 # Whether to show the Terminal tab.
-.rs.addFunction("uiPrefs.showTerminalTab", function()
-{
-   .rs.getUserPref("show_terminal_tab")
-})
-
+.rs.uiPrefs$showTerminalTab <- list(
+   get = function() { .rs.getUserPref("show_terminal_tab") },
+   set = function(value) { .rs.setUserPref("show_terminal_tab", value) }
+)
 
 # Use local echo in the Terminal
 # Whether to use local echo in the Terminal.
-.rs.addFunction("uiPrefs.terminalLocalEcho", function()
-{
-   .rs.getUserPref("terminal_local_echo")
-})
-
+.rs.uiPrefs$terminalLocalEcho <- list(
+   get = function() { .rs.getUserPref("terminal_local_echo") },
+   set = function(value) { .rs.setUserPref("terminal_local_echo", value) }
+)
 
 # Use websockets in the Terminal
 # Whether to use websockets to communicate with the shell in the Terminal tab.
-.rs.addFunction("uiPrefs.terminalWebsockets", function()
-{
-   .rs.getUserPref("terminal_websockets")
-})
-
+.rs.uiPrefs$terminalWebsockets <- list(
+   get = function() { .rs.getUserPref("terminal_websockets") },
+   set = function(value) { .rs.setUserPref("terminal_websockets", value) }
+)
 
 # Close Terminal pane after shell exit
 # Whether to close the terminal pane after the shell exits.
-.rs.addFunction("uiPrefs.terminalCloseBehavior", function()
-{
-   .rs.getUserPref("terminal_close_behavior")
-})
-
+.rs.uiPrefs$terminalCloseBehavior <- list(
+   get = function() { .rs.getUserPref("terminal_close_behavior") },
+   set = function(value) { .rs.setUserPref("terminal_close_behavior", value) }
+)
 
 # Save and restore system environment in Terminal tab
 # Terminal.
-.rs.addFunction("uiPrefs.terminalTrackEnvironment", function()
-{
-   .rs.getUserPref("terminal_track_environment")
-})
-
+.rs.uiPrefs$terminalTrackEnvironment <- list(
+   get = function() { .rs.getUserPref("terminal_track_environment") },
+   set = function(value) { .rs.setUserPref("terminal_track_environment", value) }
+)
 
 # Ignored environment variables
 # environment variables within a Terminal. Environment variables in this list
-.rs.addFunction("uiPrefs.terminalIgnoredEnvironmentVariables", function()
-{
-   .rs.getUserPref("terminal_ignored_environment_variables")
-})
-
+.rs.uiPrefs$terminalIgnoredEnvironmentVariables <- list(
+   get = function() { .rs.getUserPref("terminal_ignored_environment_variables") },
+   set = function(value) { .rs.setUserPref("terminal_ignored_environment_variables", value) }
+)
 
 # Enable Terminal hooks
 # the active version of Python on the PATH in new Terminal sessions.
-.rs.addFunction("uiPrefs.terminalHooks", function()
-{
-   .rs.getUserPref("terminal_hooks")
-})
-
+.rs.uiPrefs$terminalHooks <- list(
+   get = function() { .rs.getUserPref("terminal_hooks") },
+   set = function(value) { .rs.setUserPref("terminal_hooks", value) }
+)
 
 # Terminal bell style
 # Terminal bell style
-.rs.addFunction("uiPrefs.terminalBellStyle", function()
-{
-   .rs.getUserPref("terminal_bell_style")
-})
-
+.rs.uiPrefs$terminalBellStyle <- list(
+   get = function() { .rs.getUserPref("terminal_bell_style") },
+   set = function(value) { .rs.setUserPref("terminal_bell_style", value) }
+)
 
 # Terminal tab rendering engine
 # browsers or graphics cards
-.rs.addFunction("uiPrefs.terminalRenderer", function()
-{
-   .rs.getUserPref("terminal_renderer")
-})
-
+.rs.uiPrefs$terminalRenderer <- list(
+   get = function() { .rs.getUserPref("terminal_renderer") },
+   set = function(value) { .rs.setUserPref("terminal_renderer", value) }
+)
 
 # Make links in Terminal clickable
 # Whether web links displayed in the Terminal tab are made clickable.
-.rs.addFunction("uiPrefs.terminalWeblinks", function()
-{
-   .rs.getUserPref("terminal_weblinks")
-})
-
+.rs.uiPrefs$terminalWeblinks <- list(
+   get = function() { .rs.getUserPref("terminal_weblinks") },
+   set = function(value) { .rs.setUserPref("terminal_weblinks", value) }
+)
 
 # Show R Markdown render command
 # Markdown tab.
-.rs.addFunction("uiPrefs.showRmdRenderCommand", function()
-{
-   .rs.getUserPref("show_rmd_render_command")
-})
-
+.rs.uiPrefs$showRmdRenderCommand <- list(
+   get = function() { .rs.getUserPref("show_rmd_render_command") },
+   set = function(value) { .rs.setUserPref("show_rmd_render_command", value) }
+)
 
 # Enable dragging text in code editor
 # it.
-.rs.addFunction("uiPrefs.enableTextDrag", function()
-{
-   .rs.getUserPref("enable_text_drag")
-})
-
+.rs.uiPrefs$enableTextDrag <- list(
+   get = function() { .rs.getUserPref("enable_text_drag") },
+   set = function(value) { .rs.setUserPref("enable_text_drag", value) }
+)
 
 # Show hidden files in Files pane
 # Whether to show hidden files in the Files pane.
-.rs.addFunction("uiPrefs.showHiddenFiles", function()
-{
-   .rs.getUserPref("show_hidden_files")
-})
-
+.rs.uiPrefs$showHiddenFiles <- list(
+   get = function() { .rs.getUserPref("show_hidden_files") },
+   set = function(value) { .rs.setUserPref("show_hidden_files", value) }
+)
 
 # Files always shown in the Files Pane
 # regardless of whether hidden files are shown
-.rs.addFunction("uiPrefs.alwaysShownFiles", function()
-{
-   .rs.getUserPref("always_shown_files")
-})
-
+.rs.uiPrefs$alwaysShownFiles <- list(
+   get = function() { .rs.getUserPref("always_shown_files") },
+   set = function(value) { .rs.setUserPref("always_shown_files", value) }
+)
 
 # Extensions always shown in the Files Pane
 # shown in the Files Pane, regardless of whether hidden files are shown
-.rs.addFunction("uiPrefs.alwaysShownExtensions", function()
-{
-   .rs.getUserPref("always_shown_extensions")
-})
-
+.rs.uiPrefs$alwaysShownExtensions <- list(
+   get = function() { .rs.getUserPref("always_shown_extensions") },
+   set = function(value) { .rs.setUserPref("always_shown_extensions", value) }
+)
 
 # Sort file names naturally in Files pane
 # file9.R
-.rs.addFunction("uiPrefs.sortFileNamesNaturally", function()
-{
-   .rs.getUserPref("sort_file_names_naturally")
-})
-
+.rs.uiPrefs$sortFileNamesNaturally <- list(
+   get = function() { .rs.getUserPref("sort_file_names_naturally") },
+   set = function(value) { .rs.setUserPref("sort_file_names_naturally", value) }
+)
 
 # Synchronize the Files pane with the current working directory
 # working directory in R changes.
-.rs.addFunction("uiPrefs.syncFilesPaneWorkingDir", function()
-{
-   .rs.getUserPref("sync_files_pane_working_dir")
-})
-
+.rs.uiPrefs$syncFilesPaneWorkingDir <- list(
+   get = function() { .rs.getUserPref("sync_files_pane_working_dir") },
+   set = function(value) { .rs.setUserPref("sync_files_pane_working_dir", value) }
+)
 
 # Jobs tab visibility
 # The visibility of the Jobs tab.
-.rs.addFunction("uiPrefs.jobsTabVisibility", function()
-{
-   .rs.getUserPref("jobs_tab_visibility")
-})
-
+.rs.uiPrefs$jobsTabVisibility <- list(
+   get = function() { .rs.getUserPref("jobs_tab_visibility") },
+   set = function(value) { .rs.setUserPref("jobs_tab_visibility", value) }
+)
 
 # 
 # Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
-.rs.addFunction("uiPrefs.showLauncherJobsTab", function()
-{
-   .rs.getUserPref("show_launcher_jobs_tab")
-})
-
+.rs.uiPrefs$showLauncherJobsTab <- list(
+   get = function() { .rs.getUserPref("show_launcher_jobs_tab") },
+   set = function(value) { .rs.setUserPref("show_launcher_jobs_tab", value) }
+)
 
 # 
 # Workbench.
-.rs.addFunction("uiPrefs.launcherJobsSort", function()
-{
-   .rs.getUserPref("launcher_jobs_sort")
-})
-
+.rs.uiPrefs$launcherJobsSort <- list(
+   get = function() { .rs.getUserPref("launcher_jobs_sort") },
+   set = function(value) { .rs.setUserPref("launcher_jobs_sort", value) }
+)
 
 # 
 # How to detect busy status in the Terminal.
-.rs.addFunction("uiPrefs.busyDetection", function()
-{
-   .rs.getUserPref("busy_detection")
-})
-
+.rs.uiPrefs$busyDetection <- list(
+   get = function() { .rs.getUserPref("busy_detection") },
+   set = function(value) { .rs.setUserPref("busy_detection", value) }
+)
 
 # 
 # A list of apps that should not be considered busy in the Terminal.
-.rs.addFunction("uiPrefs.busyExclusionList", function()
-{
-   .rs.getUserPref("busy_exclusion_list")
-})
-
+.rs.uiPrefs$busyExclusionList <- list(
+   get = function() { .rs.getUserPref("busy_exclusion_list") },
+   set = function(value) { .rs.setUserPref("busy_exclusion_list", value) }
+)
 
 # Working directory for knitting
 # The working directory to use when knitting R Markdown documents.
-.rs.addFunction("uiPrefs.knitWorkingDir", function()
-{
-   .rs.getUserPref("knit_working_dir")
-})
-
+.rs.uiPrefs$knitWorkingDir <- list(
+   get = function() { .rs.getUserPref("knit_working_dir") },
+   set = function(value) { .rs.setUserPref("knit_working_dir", value) }
+)
 
 # Show in Document Outline
 # Which objects to show in the document outline pane.
-.rs.addFunction("uiPrefs.docOutlineShow", function()
-{
-   .rs.getUserPref("doc_outline_show")
-})
-
+.rs.uiPrefs$docOutlineShow <- list(
+   get = function() { .rs.getUserPref("doc_outline_show") },
+   set = function(value) { .rs.setUserPref("doc_outline_show", value) }
+)
 
 # Preview LaTeX equations on idle
 # recently.
-.rs.addFunction("uiPrefs.latexPreviewOnCursorIdle", function()
-{
-   .rs.getUserPref("latex_preview_on_cursor_idle")
-})
-
+.rs.uiPrefs$latexPreviewOnCursorIdle <- list(
+   get = function() { .rs.getUserPref("latex_preview_on_cursor_idle") },
+   set = function(value) { .rs.setUserPref("latex_preview_on_cursor_idle", value) }
+)
 
 # Wrap around when going to previous/next tab
 # Whether to wrap around when going to the previous or next editor tab.
-.rs.addFunction("uiPrefs.wrapTabNavigation", function()
-{
-   .rs.getUserPref("wrap_tab_navigation")
-})
-
+.rs.uiPrefs$wrapTabNavigation <- list(
+   get = function() { .rs.getUserPref("wrap_tab_navigation") },
+   set = function(value) { .rs.setUserPref("wrap_tab_navigation", value) }
+)
 
 # Global theme
 # The theme to use for the main RStudio user interface.
-.rs.addFunction("uiPrefs.globalTheme", function()
-{
-   .rs.getUserPref("global_theme")
-})
-
+.rs.uiPrefs$globalTheme <- list(
+   get = function() { .rs.getUserPref("global_theme") },
+   set = function(value) { .rs.setUserPref("global_theme", value) }
+)
 
 # Ignore whitespace in VCS diffs
 # Whether to ignore whitespace when generating diffs of version controlled files.
-.rs.addFunction("uiPrefs.gitDiffIgnoreWhitespace", function()
-{
-   .rs.getUserPref("git_diff_ignore_whitespace")
-})
-
+.rs.uiPrefs$gitDiffIgnoreWhitespace <- list(
+   get = function() { .rs.getUserPref("git_diff_ignore_whitespace") },
+   set = function(value) { .rs.setUserPref("git_diff_ignore_whitespace", value) }
+)
 
 # Sign git commits
 # Whether to sign git commits.
-.rs.addFunction("uiPrefs.gitSignedCommits", function()
-{
-   .rs.getUserPref("git_signed_commits")
-})
-
+.rs.uiPrefs$gitSignedCommits <- list(
+   get = function() { .rs.getUserPref("git_signed_commits") },
+   set = function(value) { .rs.setUserPref("git_signed_commits", value) }
+)
 
 # Double click to select in the Console
 # Whether double-clicking should select a word in the Console pane.
-.rs.addFunction("uiPrefs.consoleDoubleClickSelect", function()
-{
-   .rs.getUserPref("console_double_click_select")
-})
-
+.rs.uiPrefs$consoleDoubleClickSelect <- list(
+   get = function() { .rs.getUserPref("console_double_click_select") },
+   set = function(value) { .rs.setUserPref("console_double_click_select", value) }
+)
 
 # Warn when automatic session suspension is paused
 # toolbar.
-.rs.addFunction("uiPrefs.consoleSuspendBlockedNotice", function()
-{
-   .rs.getUserPref("console_suspend_blocked_notice")
-})
-
+.rs.uiPrefs$consoleSuspendBlockedNotice <- list(
+   get = function() { .rs.getUserPref("console_suspend_blocked_notice") },
+   set = function(value) { .rs.setUserPref("console_suspend_blocked_notice", value) }
+)
 
 # Number of seconds to delay warning
 # paused. Higher values for less frequent notices.
-.rs.addFunction("uiPrefs.consoleSuspendBlockedNoticeDelay", function()
-{
-   .rs.getUserPref("console_suspend_blocked_notice_delay")
-})
-
+.rs.uiPrefs$consoleSuspendBlockedNoticeDelay <- list(
+   get = function() { .rs.getUserPref("console_suspend_blocked_notice_delay") },
+   set = function(value) { .rs.setUserPref("console_suspend_blocked_notice_delay", value) }
+)
 
 # Create a Git repo in new projects
 # Whether a git repo should be initialized inside new projects by default.
-.rs.addFunction("uiPrefs.newProjGitInit", function()
-{
-   .rs.getUserPref("new_proj_git_init")
-})
-
+.rs.uiPrefs$newProjGitInit <- list(
+   get = function() { .rs.getUserPref("new_proj_git_init") },
+   set = function(value) { .rs.setUserPref("new_proj_git_init", value) }
+)
 
 # Create an renv environment in new projects
 # Whether an renv environment should be created inside new projects by default.
-.rs.addFunction("uiPrefs.newProjUseRenv", function()
-{
-   .rs.getUserPref("new_proj_use_renv")
-})
-
+.rs.uiPrefs$newProjUseRenv <- list(
+   get = function() { .rs.getUserPref("new_proj_use_renv") },
+   set = function(value) { .rs.setUserPref("new_proj_use_renv", value) }
+)
 
 # Root document for PDF compilation
 # The root document to use when compiling PDF documents.
-.rs.addFunction("uiPrefs.rootDocument", function()
-{
-   .rs.getUserPref("root_document")
-})
-
+.rs.uiPrefs$rootDocument <- list(
+   get = function() { .rs.getUserPref("root_document") },
+   set = function(value) { .rs.setUserPref("root_document", value) }
+)
 
 # Show user home page in RStudio Workbench
 # When to show the server home page in RStudio Workbench.
-.rs.addFunction("uiPrefs.showUserHomePage", function()
-{
-   .rs.getUserPref("show_user_home_page")
-})
-
+.rs.uiPrefs$showUserHomePage <- list(
+   get = function() { .rs.getUserPref("show_user_home_page") },
+   set = function(value) { .rs.setUserPref("show_user_home_page", value) }
+)
 
 # 
 # Whether to reuse sessions when opening projects in RStudio Workbench.
-.rs.addFunction("uiPrefs.reuseSessionsForProjectLinks", function()
-{
-   .rs.getUserPref("reuse_sessions_for_project_links")
-})
-
+.rs.uiPrefs$reuseSessionsForProjectLinks <- list(
+   get = function() { .rs.getUserPref("reuse_sessions_for_project_links") },
+   set = function(value) { .rs.setUserPref("reuse_sessions_for_project_links", value) }
+)
 
 # Enable version control if available
 # Whether to enable RStudio's version control system interface.
-.rs.addFunction("uiPrefs.vcsEnabled", function()
-{
-   .rs.getUserPref("vcs_enabled")
-})
-
+.rs.uiPrefs$vcsEnabled <- list(
+   get = function() { .rs.getUserPref("vcs_enabled") },
+   set = function(value) { .rs.setUserPref("vcs_enabled", value) }
+)
 
 # Auto-refresh state from version control
 # Automatically refresh VCS status?
-.rs.addFunction("uiPrefs.vcsAutorefresh", function()
-{
-   .rs.getUserPref("vcs_autorefresh")
-})
-
+.rs.uiPrefs$vcsAutorefresh <- list(
+   get = function() { .rs.getUserPref("vcs_autorefresh") },
+   set = function(value) { .rs.setUserPref("vcs_autorefresh", value) }
+)
 
 # Path to Git executable
 # The path to the Git executable to use.
-.rs.addFunction("uiPrefs.gitExePath", function()
-{
-   .rs.getUserPref("git_exe_path")
-})
-
+.rs.uiPrefs$gitExePath <- list(
+   get = function() { .rs.getUserPref("git_exe_path") },
+   set = function(value) { .rs.setUserPref("git_exe_path", value) }
+)
 
 # Path to Subversion executable
 # The path to the Subversion executable to use.
-.rs.addFunction("uiPrefs.svnExePath", function()
-{
-   .rs.getUserPref("svn_exe_path")
-})
-
+.rs.uiPrefs$svnExePath <- list(
+   get = function() { .rs.getUserPref("svn_exe_path") },
+   set = function(value) { .rs.setUserPref("svn_exe_path", value) }
+)
 
 # 
 # The path to the terminal executable to use.
-.rs.addFunction("uiPrefs.terminalPath", function()
-{
-   .rs.getUserPref("terminal_path")
-})
-
+.rs.uiPrefs$terminalPath <- list(
+   get = function() { .rs.getUserPref("terminal_path") },
+   set = function(value) { .rs.setUserPref("terminal_path", value) }
+)
 
 # 
 # The path to the SSH key file to use.
-.rs.addFunction("uiPrefs.rsaKeyPath", function()
-{
-   .rs.getUserPref("rsa_key_path")
-})
-
+.rs.uiPrefs$rsaKeyPath <- list(
+   get = function() { .rs.getUserPref("rsa_key_path") },
+   set = function(value) { .rs.setUserPref("rsa_key_path", value) }
+)
 
 # 
 # The encryption type to use for the SSH key file.
-.rs.addFunction("uiPrefs.sshKeyType", function()
-{
-   .rs.getUserPref("ssh_key_type")
-})
-
+.rs.uiPrefs$sshKeyType <- list(
+   get = function() { .rs.getUserPref("ssh_key_type") },
+   set = function(value) { .rs.setUserPref("ssh_key_type", value) }
+)
 
 # Use the devtools R package if available
 # Whether to use the devtools R package.
-.rs.addFunction("uiPrefs.useDevtools", function()
-{
-   .rs.getUserPref("use_devtools")
-})
-
+.rs.uiPrefs$useDevtools <- list(
+   get = function() { .rs.getUserPref("use_devtools") },
+   set = function(value) { .rs.setUserPref("use_devtools", value) }
+)
 
 # Always use --preclean when installing package
 # Always use --preclean when installing package.
-.rs.addFunction("uiPrefs.cleanBeforeInstall", function()
-{
-   .rs.getUserPref("clean_before_install")
-})
-
+.rs.uiPrefs$cleanBeforeInstall <- list(
+   get = function() { .rs.getUserPref("clean_before_install") },
+   set = function(value) { .rs.setUserPref("clean_before_install", value) }
+)
 
 # Download R packages securely
 # Whether to use secure downloads when fetching R packages.
-.rs.addFunction("uiPrefs.useSecureDownload", function()
-{
-   .rs.getUserPref("use_secure_download")
-})
-
+.rs.uiPrefs$useSecureDownload <- list(
+   get = function() { .rs.getUserPref("use_secure_download") },
+   set = function(value) { .rs.setUserPref("use_secure_download", value) }
+)
 
 # Clean up temporary files after R CMD CHECK
 # Whether to clean up temporary files after running R CMD CHECK.
-.rs.addFunction("uiPrefs.cleanupAfterRCmdCheck", function()
-{
-   .rs.getUserPref("cleanup_after_r_cmd_check")
-})
-
+.rs.uiPrefs$cleanupAfterRCmdCheck <- list(
+   get = function() { .rs.getUserPref("cleanup_after_r_cmd_check") },
+   set = function(value) { .rs.setUserPref("cleanup_after_r_cmd_check", value) }
+)
 
 # View directory after R CMD CHECK
 # Whether to view the directory after running R CMD CHECK.
-.rs.addFunction("uiPrefs.viewDirAfterRCmdCheck", function()
-{
-   .rs.getUserPref("view_dir_after_r_cmd_check")
-})
-
+.rs.uiPrefs$viewDirAfterRCmdCheck <- list(
+   get = function() { .rs.getUserPref("view_dir_after_r_cmd_check") },
+   set = function(value) { .rs.setUserPref("view_dir_after_r_cmd_check", value) }
+)
 
 # Hide object files in the Files pane
 # Whether to hide object files in the Files pane.
-.rs.addFunction("uiPrefs.hideObjectFiles", function()
-{
-   .rs.getUserPref("hide_object_files")
-})
-
+.rs.uiPrefs$hideObjectFiles <- list(
+   get = function() { .rs.getUserPref("hide_object_files") },
+   set = function(value) { .rs.setUserPref("hide_object_files", value) }
+)
 
 # Restore last project when starting RStudio
 # Whether to restore the last project when starting RStudio.
-.rs.addFunction("uiPrefs.restoreLastProject", function()
-{
-   .rs.getUserPref("restore_last_project")
-})
-
+.rs.uiPrefs$restoreLastProject <- list(
+   get = function() { .rs.getUserPref("restore_last_project") },
+   set = function(value) { .rs.setUserPref("restore_last_project", value) }
+)
 
 # Number of seconds for safe project startup
 # started.
-.rs.addFunction("uiPrefs.projectSafeStartupSeconds", function()
-{
-   .rs.getUserPref("project_safe_startup_seconds")
-})
-
+.rs.uiPrefs$projectSafeStartupSeconds <- list(
+   get = function() { .rs.getUserPref("project_safe_startup_seconds") },
+   set = function(value) { .rs.setUserPref("project_safe_startup_seconds", value) }
+)
 
 # Use tinytex to compile .tex files
 # Use tinytex to compile .tex files.
-.rs.addFunction("uiPrefs.useTinytex", function()
-{
-   .rs.getUserPref("use_tinytex")
-})
-
+.rs.uiPrefs$useTinytex <- list(
+   get = function() { .rs.getUserPref("use_tinytex") },
+   set = function(value) { .rs.setUserPref("use_tinytex", value) }
+)
 
 # Clean output after running Texi2Dvi
 # Whether to clean output after running Texi2Dvi.
-.rs.addFunction("uiPrefs.cleanTexi2dviOutput", function()
-{
-   .rs.getUserPref("clean_texi2dvi_output")
-})
-
+.rs.uiPrefs$cleanTexi2dviOutput <- list(
+   get = function() { .rs.getUserPref("clean_texi2dvi_output") },
+   set = function(value) { .rs.setUserPref("clean_texi2dvi_output", value) }
+)
 
 # Shell escape LaTeX documents
 # Whether to enable shell escaping with LaTeX documents.
-.rs.addFunction("uiPrefs.latexShellEscape", function()
-{
-   .rs.getUserPref("latex_shell_escape")
-})
-
+.rs.uiPrefs$latexShellEscape <- list(
+   get = function() { .rs.getUserPref("latex_shell_escape") },
+   set = function(value) { .rs.setUserPref("latex_shell_escape", value) }
+)
 
 # Restore project R version in RStudio Pro and RStudio Workbench
 # RStudio Workbench.
-.rs.addFunction("uiPrefs.restoreProjectRVersion", function()
-{
-   .rs.getUserPref("restore_project_r_version")
-})
-
+.rs.uiPrefs$restoreProjectRVersion <- list(
+   get = function() { .rs.getUserPref("restore_project_r_version") },
+   set = function(value) { .rs.setUserPref("restore_project_r_version", value) }
+)
 
 # Clang verbosity level (0 - 2)
 # The verbosity level to use with Clang (0 - 2)
-.rs.addFunction("uiPrefs.clangVerbose", function()
-{
-   .rs.getUserPref("clang_verbose")
-})
-
+.rs.uiPrefs$clangVerbose <- list(
+   get = function() { .rs.getUserPref("clang_verbose") },
+   set = function(value) { .rs.setUserPref("clang_verbose", value) }
+)
 
 # Submit crash reports to RStudio
 # Whether to automatically submit crash reports to RStudio.
-.rs.addFunction("uiPrefs.submitCrashReports", function()
-{
-   .rs.getUserPref("submit_crash_reports")
-})
-
+.rs.uiPrefs$submitCrashReports <- list(
+   get = function() { .rs.getUserPref("submit_crash_reports") },
+   set = function(value) { .rs.setUserPref("submit_crash_reports", value) }
+)
 
 # 
 # The R version to use by default.
-.rs.addFunction("uiPrefs.defaultRVersion", function()
-{
-   .rs.getUserPref("default_r_version")
-})
-
+.rs.uiPrefs$defaultRVersion <- list(
+   get = function() { .rs.getUserPref("default_r_version") },
+   set = function(value) { .rs.setUserPref("default_r_version", value) }
+)
 
 # Maximum number of columns in data viewer
 # The maximum number of columns to show at once in the data viewer.
-.rs.addFunction("uiPrefs.dataViewerMaxColumns", function()
-{
-   .rs.getUserPref("data_viewer_max_columns")
-})
-
+.rs.uiPrefs$dataViewerMaxColumns <- list(
+   get = function() { .rs.getUserPref("data_viewer_max_columns") },
+   set = function(value) { .rs.setUserPref("data_viewer_max_columns", value) }
+)
 
 # Maximum number of character in data viewer cells
 # The maximum number of characters to show in a data viewer cell.
-.rs.addFunction("uiPrefs.dataViewerMaxCellSize", function()
-{
-   .rs.getUserPref("data_viewer_max_cell_size")
-})
-
+.rs.uiPrefs$dataViewerMaxCellSize <- list(
+   get = function() { .rs.getUserPref("data_viewer_max_cell_size") },
+   set = function(value) { .rs.setUserPref("data_viewer_max_cell_size", value) }
+)
 
 # Enable support for screen readers
 # Support accessibility aids such as screen readers.
-.rs.addFunction("uiPrefs.enableScreenReader", function()
-{
-   .rs.getUserPref("enable_screen_reader")
-})
-
+.rs.uiPrefs$enableScreenReader <- list(
+   get = function() { .rs.getUserPref("enable_screen_reader") },
+   set = function(value) { .rs.setUserPref("enable_screen_reader", value) }
+)
 
 # Seconds to wait before updating ARIA live region
 # region.
-.rs.addFunction("uiPrefs.typingStatusDelayMs", function()
-{
-   .rs.getUserPref("typing_status_delay_ms")
-})
-
+.rs.uiPrefs$typingStatusDelayMs <- list(
+   get = function() { .rs.getUserPref("typing_status_delay_ms") },
+   set = function(value) { .rs.setUserPref("typing_status_delay_ms", value) }
+)
 
 # Reduced animation/motion mode
 # Reduce use of animations in the user interface.
-.rs.addFunction("uiPrefs.reducedMotion", function()
-{
-   .rs.getUserPref("reduced_motion")
-})
-
+.rs.uiPrefs$reducedMotion <- list(
+   get = function() { .rs.getUserPref("reduced_motion") },
+   set = function(value) { .rs.setUserPref("reduced_motion", value) }
+)
 
 # Tab key always moves focus
 # Tab key moves focus out of text editing controls instead of inserting tabs.
-.rs.addFunction("uiPrefs.tabKeyMoveFocus", function()
-{
-   .rs.getUserPref("tab_key_move_focus")
-})
-
+.rs.uiPrefs$tabKeyMoveFocus <- list(
+   get = function() { .rs.getUserPref("tab_key_move_focus") },
+   set = function(value) { .rs.setUserPref("tab_key_move_focus", value) }
+)
 
 # Tab key moves focus directly from find text to replace text in find panel
 # replace text.
-.rs.addFunction("uiPrefs.findPanelLegacyTabSequence", function()
-{
-   .rs.getUserPref("find_panel_legacy_tab_sequence")
-})
-
+.rs.uiPrefs$findPanelLegacyTabSequence <- list(
+   get = function() { .rs.getUserPref("find_panel_legacy_tab_sequence") },
+   set = function(value) { .rs.setUserPref("find_panel_legacy_tab_sequence", value) }
+)
 
 # Show focus outline around focused panel
 # Show which panel contains keyboard focus.
-.rs.addFunction("uiPrefs.showPanelFocusRectangle", function()
-{
-   .rs.getUserPref("show_panel_focus_rectangle")
-})
-
+.rs.uiPrefs$showPanelFocusRectangle <- list(
+   get = function() { .rs.getUserPref("show_panel_focus_rectangle") },
+   set = function(value) { .rs.setUserPref("show_panel_focus_rectangle", value) }
+)
 
 # Autosave mode on idle
 # How to deal with changes to documents on idle.
-.rs.addFunction("uiPrefs.autoSaveOnIdle", function()
-{
-   .rs.getUserPref("auto_save_on_idle")
-})
-
+.rs.uiPrefs$autoSaveOnIdle <- list(
+   get = function() { .rs.getUserPref("auto_save_on_idle") },
+   set = function(value) { .rs.setUserPref("auto_save_on_idle", value) }
+)
 
 # Idle period for document autosave (ms)
 # The idle period, in milliseconds, after which documents should be auto-saved.
-.rs.addFunction("uiPrefs.autoSaveIdleMs", function()
-{
-   .rs.getUserPref("auto_save_idle_ms")
-})
-
+.rs.uiPrefs$autoSaveIdleMs <- list(
+   get = function() { .rs.getUserPref("auto_save_idle_ms") },
+   set = function(value) { .rs.setUserPref("auto_save_idle_ms", value) }
+)
 
 # Save documents when editor loses input focus
 # Whether to automatically save when the editor loses focus.
-.rs.addFunction("uiPrefs.autoSaveOnBlur", function()
-{
-   .rs.getUserPref("auto_save_on_blur")
-})
-
+.rs.uiPrefs$autoSaveOnBlur <- list(
+   get = function() { .rs.getUserPref("auto_save_on_blur") },
+   set = function(value) { .rs.setUserPref("auto_save_on_blur", value) }
+)
 
 # Initial working directory for new terminals
 # Initial directory for new terminals.
-.rs.addFunction("uiPrefs.terminalInitialDirectory", function()
-{
-   .rs.getUserPref("terminal_initial_directory")
-})
-
+.rs.uiPrefs$terminalInitialDirectory <- list(
+   get = function() { .rs.getUserPref("terminal_initial_directory") },
+   set = function(value) { .rs.setUserPref("terminal_initial_directory", value) }
+)
 
 # Show full path to project in RStudio Desktop windows
 # Whether to show the full path to project in desktop window title.
-.rs.addFunction("uiPrefs.fullProjectPathInWindowTitle", function()
-{
-   .rs.getUserPref("full_project_path_in_window_title")
-})
-
+.rs.uiPrefs$fullProjectPathInWindowTitle <- list(
+   get = function() { .rs.getUserPref("full_project_path_in_window_title") },
+   set = function(value) { .rs.setUserPref("full_project_path_in_window_title", value) }
+)
 
 # Use visual editing by default for new markdown documents
 # Whether to enable visual editing by default for new markdown documents
-.rs.addFunction("uiPrefs.visualMarkdownEditingIsDefault", function()
-{
-   .rs.getUserPref("visual_markdown_editing_is_default")
-})
-
+.rs.uiPrefs$visualMarkdownEditingIsDefault <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_is_default") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_is_default", value) }
+)
 
 # Default list spacing in visual markdown editing mode
 # Default spacing for lists created in the visual editor
-.rs.addFunction("uiPrefs.visualMarkdownEditingListSpacing", function()
-{
-   .rs.getUserPref("visual_markdown_editing_list_spacing")
-})
-
+.rs.uiPrefs$visualMarkdownEditingListSpacing <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_list_spacing") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_list_spacing", value) }
+)
 
 # Wrap text in visual markdown editing mode
 # Whether to automatically wrap text when writing markdown
-.rs.addFunction("uiPrefs.visualMarkdownEditingWrap", function()
-{
-   .rs.getUserPref("visual_markdown_editing_wrap")
-})
-
+.rs.uiPrefs$visualMarkdownEditingWrap <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_wrap") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_wrap", value) }
+)
 
 # Wrap column for visual markdown editing mode
 # The column to wrap text at when writing markdown
-.rs.addFunction("uiPrefs.visualMarkdownEditingWrapAtColumn", function()
-{
-   .rs.getUserPref("visual_markdown_editing_wrap_at_column")
-})
-
+.rs.uiPrefs$visualMarkdownEditingWrapAtColumn <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_wrap_at_column") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_wrap_at_column", value) }
+)
 
 # Place visual markdown footnotes in
 # Placement of footnotes within markdown output.
-.rs.addFunction("uiPrefs.visualMarkdownEditingReferencesLocation", function()
-{
-   .rs.getUserPref("visual_markdown_editing_references_location")
-})
-
+.rs.uiPrefs$visualMarkdownEditingReferencesLocation <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_references_location") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_references_location", value) }
+)
 
 # Write canonical visual mode markdown in source mode
 # Whether to write canonical visual mode markdown when saving from source mode.
-.rs.addFunction("uiPrefs.visualMarkdownEditingCanonical", function()
-{
-   .rs.getUserPref("visual_markdown_editing_canonical")
-})
-
+.rs.uiPrefs$visualMarkdownEditingCanonical <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_canonical") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_canonical", value) }
+)
 
 # Max content width for visual markdown editor (px)
 # Maximum content width for visual editing mode, in pixels
-.rs.addFunction("uiPrefs.visualMarkdownEditingMaxContentWidth", function()
-{
-   .rs.getUserPref("visual_markdown_editing_max_content_width")
-})
-
+.rs.uiPrefs$visualMarkdownEditingMaxContentWidth <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_max_content_width") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_max_content_width", value) }
+)
 
 # Show document outline in visual markdown editing mode
 # documents in visual mode.
-.rs.addFunction("uiPrefs.visualMarkdownEditingShowDocOutline", function()
-{
-   .rs.getUserPref("visual_markdown_editing_show_doc_outline")
-})
-
+.rs.uiPrefs$visualMarkdownEditingShowDocOutline <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_show_doc_outline") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_show_doc_outline", value) }
+)
 
 # Show margin in visual mode code blocks
 # Whether to show the margin guide in the visual mode code blocks.
-.rs.addFunction("uiPrefs.visualMarkdownEditingShowMargin", function()
-{
-   .rs.getUserPref("visual_markdown_editing_show_margin")
-})
-
+.rs.uiPrefs$visualMarkdownEditingShowMargin <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_show_margin") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_show_margin", value) }
+)
 
 # Show line numbers in visual mode code blocks
 # Whether to show line numbers in the code editors used in visual mode
-.rs.addFunction("uiPrefs.visualMarkdownCodeEditorLineNumbers", function()
-{
-   .rs.getUserPref("visual_markdown_code_editor_line_numbers")
-})
-
+.rs.uiPrefs$visualMarkdownCodeEditorLineNumbers <- list(
+   get = function() { .rs.getUserPref("visual_markdown_code_editor_line_numbers") },
+   set = function(value) { .rs.setUserPref("visual_markdown_code_editor_line_numbers", value) }
+)
 
 # Font size for visual editing mode
 # The default visual editing mode font size, in points
-.rs.addFunction("uiPrefs.visualMarkdownEditingFontSizePoints", function()
-{
-   .rs.getUserPref("visual_markdown_editing_font_size_points")
-})
-
+.rs.uiPrefs$visualMarkdownEditingFontSizePoints <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_font_size_points") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_font_size_points", value) }
+)
 
 # Editor for code chunks in visual editing mode
 # The name of the editor to use to provide code editing in visual mode
-.rs.addFunction("uiPrefs.visualMarkdownCodeEditor", function()
-{
-   .rs.getUserPref("visual_markdown_code_editor")
-})
-
+.rs.uiPrefs$visualMarkdownCodeEditor <- list(
+   get = function() { .rs.getUserPref("visual_markdown_code_editor") },
+   set = function(value) { .rs.setUserPref("visual_markdown_code_editor", value) }
+)
 
 # Zotero libraries
 # Zotero libraries to insert citations from.
-.rs.addFunction("uiPrefs.zoteroLibraries", function()
-{
-   .rs.getUserPref("zotero_libraries")
-})
-
+.rs.uiPrefs$zoteroLibraries <- list(
+   get = function() { .rs.getUserPref("zotero_libraries") },
+   set = function(value) { .rs.setUserPref("zotero_libraries", value) }
+)
 
 # 
 # Preferred emoji skintone
-.rs.addFunction("uiPrefs.emojiSkintone", function()
-{
-   .rs.getUserPref("emoji_skintone")
-})
-
+.rs.uiPrefs$emojiSkintone <- list(
+   get = function() { .rs.getUserPref("emoji_skintone") },
+   set = function(value) { .rs.setUserPref("emoji_skintone", value) }
+)
 
 # Disabled aria-live announcements
 # List of aria-live announcements to disable.
-.rs.addFunction("uiPrefs.disabledAriaLiveAnnouncements", function()
-{
-   .rs.getUserPref("disabled_aria_live_announcements")
-})
-
+.rs.uiPrefs$disabledAriaLiveAnnouncements <- list(
+   get = function() { .rs.getUserPref("disabled_aria_live_announcements") },
+   set = function(value) { .rs.setUserPref("disabled_aria_live_announcements", value) }
+)
 
 # Maximum number of console lines to announce
 # Maximum number of lines of console output announced after a command.
-.rs.addFunction("uiPrefs.screenreaderConsoleAnnounceLimit", function()
-{
-   .rs.getUserPref("screenreader_console_announce_limit")
-})
-
+.rs.uiPrefs$screenreaderConsoleAnnounceLimit <- list(
+   get = function() { .rs.getUserPref("screenreader_console_announce_limit") },
+   set = function(value) { .rs.setUserPref("screenreader_console_announce_limit", value) }
+)
 
 # List of path components ignored by file monitor
 # of these components.
-.rs.addFunction("uiPrefs.fileMonitorIgnoredComponents", function()
-{
-   .rs.getUserPref("file_monitor_ignored_components")
-})
-
+.rs.uiPrefs$fileMonitorIgnoredComponents <- list(
+   get = function() { .rs.getUserPref("file_monitor_ignored_components") },
+   set = function(value) { .rs.setUserPref("file_monitor_ignored_components", value) }
+)
 
 # Install R package dependencies one at a time
 # Whether to install R package dependencies one at a time.
-.rs.addFunction("uiPrefs.installPkgDepsIndividually", function()
-{
-   .rs.getUserPref("install_pkg_deps_individually")
-})
-
+.rs.uiPrefs$installPkgDepsIndividually <- list(
+   get = function() { .rs.getUserPref("install_pkg_deps_individually") },
+   set = function(value) { .rs.setUserPref("install_pkg_deps_individually", value) }
+)
 
 # R graphics backend
 # R graphics backend.
-.rs.addFunction("uiPrefs.graphicsBackend", function()
-{
-   .rs.getUserPref("graphics_backend")
-})
-
+.rs.uiPrefs$graphicsBackend <- list(
+   get = function() { .rs.getUserPref("graphics_backend") },
+   set = function(value) { .rs.setUserPref("graphics_backend", value) }
+)
 
 # R graphics antialiasing method
 # Type of anti-aliasing to be used for generated R plots.
-.rs.addFunction("uiPrefs.graphicsAntialiasing", function()
-{
-   .rs.getUserPref("graphics_antialiasing")
-})
-
+.rs.uiPrefs$graphicsAntialiasing <- list(
+   get = function() { .rs.getUserPref("graphics_antialiasing") },
+   set = function(value) { .rs.setUserPref("graphics_antialiasing", value) }
+)
 
 # Fixed-width font list for RStudio Server
 # List of fixed-width fonts to check for browser support.
-.rs.addFunction("uiPrefs.browserFixedWidthFonts", function()
-{
-   .rs.getUserPref("browser_fixed_width_fonts")
-})
-
+.rs.uiPrefs$browserFixedWidthFonts <- list(
+   get = function() { .rs.getUserPref("browser_fixed_width_fonts") },
+   set = function(value) { .rs.setUserPref("browser_fixed_width_fonts", value) }
+)
 
 # 
 # The Python type.
-.rs.addFunction("uiPrefs.pythonType", function()
-{
-   .rs.getUserPref("python_type")
-})
-
+.rs.uiPrefs$pythonType <- list(
+   get = function() { .rs.getUserPref("python_type") },
+   set = function(value) { .rs.setUserPref("python_type", value) }
+)
 
 # 
 # The Python version.
-.rs.addFunction("uiPrefs.pythonVersion", function()
-{
-   .rs.getUserPref("python_version")
-})
-
+.rs.uiPrefs$pythonVersion <- list(
+   get = function() { .rs.getUserPref("python_version") },
+   set = function(value) { .rs.setUserPref("python_version", value) }
+)
 
 # 
 # The path to the default Python interpreter.
-.rs.addFunction("uiPrefs.pythonPath", function()
-{
-   .rs.getUserPref("python_path")
-})
-
+.rs.uiPrefs$pythonPath <- list(
+   get = function() { .rs.getUserPref("python_path") },
+   set = function(value) { .rs.setUserPref("python_path", value) }
+)
 
 # Save Retry Timeout
 # The maximum amount of seconds of retry for save operations.
-.rs.addFunction("uiPrefs.saveRetryTimeout", function()
-{
-   .rs.getUserPref("save_retry_timeout")
-})
-
+.rs.uiPrefs$saveRetryTimeout <- list(
+   get = function() { .rs.getUserPref("save_retry_timeout") },
+   set = function(value) { .rs.setUserPref("save_retry_timeout", value) }
+)
 
 # Use R's native pipe operator, |>
 # |>
-.rs.addFunction("uiPrefs.insertNativePipeOperator", function()
-{
-   .rs.getUserPref("insert_native_pipe_operator")
-})
-
+.rs.uiPrefs$insertNativePipeOperator <- list(
+   get = function() { .rs.getUserPref("insert_native_pipe_operator") },
+   set = function(value) { .rs.setUserPref("insert_native_pipe_operator", value) }
+)
 
 # Remember recently used items in Command Palette
 # Whether to keep track of recently used commands in the Command Palette
-.rs.addFunction("uiPrefs.commandPaletteMru", function()
-{
-   .rs.getUserPref("command_palette_mru")
-})
-
+.rs.uiPrefs$commandPaletteMru <- list(
+   get = function() { .rs.getUserPref("command_palette_mru") },
+   set = function(value) { .rs.setUserPref("command_palette_mru", value) }
+)
 
 # Show memory usage in Environment Pane
 # Whether to compute and show memory usage in the Environment Pane
-.rs.addFunction("uiPrefs.showMemoryUsage", function()
-{
-   .rs.getUserPref("show_memory_usage")
-})
-
+.rs.uiPrefs$showMemoryUsage <- list(
+   get = function() { .rs.getUserPref("show_memory_usage") },
+   set = function(value) { .rs.setUserPref("show_memory_usage", value) }
+)
 
 # Interval for requerying memory stats (seconds)
 # disable)
-.rs.addFunction("uiPrefs.memoryQueryIntervalSeconds", function()
-{
-   .rs.getUserPref("memory_query_interval_seconds")
-})
-
+.rs.uiPrefs$memoryQueryIntervalSeconds <- list(
+   get = function() { .rs.getUserPref("memory_query_interval_seconds") },
+   set = function(value) { .rs.setUserPref("memory_query_interval_seconds", value) }
+)
 
 # Enable terminal Python integration
 # Python will be placed on the PATH.
-.rs.addFunction("uiPrefs.terminalPythonIntegration", function()
-{
-   .rs.getUserPref("terminal_python_integration")
-})
-
+.rs.uiPrefs$terminalPythonIntegration <- list(
+   get = function() { .rs.getUserPref("terminal_python_integration") },
+   set = function(value) { .rs.setUserPref("terminal_python_integration", value) }
+)
 
 # Session protocol debug logging
 # Enable session protocol debug logging showing all session requests and events
-.rs.addFunction("uiPrefs.sessionProtocolDebug", function()
-{
-   .rs.getUserPref("session_protocol_debug")
-})
-
+.rs.uiPrefs$sessionProtocolDebug <- list(
+   get = function() { .rs.getUserPref("session_protocol_debug") },
+   set = function(value) { .rs.setUserPref("session_protocol_debug", value) }
+)
 
 # Automatically activate project Python environments
 # RStudio will automatically activate this environment on startup.
-.rs.addFunction("uiPrefs.pythonProjectEnvironmentAutomaticActivate", function()
-{
-   .rs.getUserPref("python_project_environment_automatic_activate")
-})
-
+.rs.uiPrefs$pythonProjectEnvironmentAutomaticActivate <- list(
+   get = function() { .rs.getUserPref("python_project_environment_automatic_activate") },
+   set = function(value) { .rs.setUserPref("python_project_environment_automatic_activate", value) }
+)
 
 # Check values in the Environment pane for null external pointers
 # when building the Environment pane, and avoid introspecting their contents
-.rs.addFunction("uiPrefs.checkNullExternalPointers", function()
-{
-   .rs.getUserPref("check_null_external_pointers")
-})
-
+.rs.uiPrefs$checkNullExternalPointers <- list(
+   get = function() { .rs.getUserPref("check_null_external_pointers") },
+   set = function(value) { .rs.setUserPref("check_null_external_pointers", value) }
+)
 
 # User Interface Language:
 # The IDE's user-interface language.
-.rs.addFunction("uiPrefs.uiLanguage", function()
-{
-   .rs.getUserPref("ui_language")
-})
-
+.rs.uiPrefs$uiLanguage <- list(
+   get = function() { .rs.getUserPref("ui_language") },
+   set = function(value) { .rs.setUserPref("ui_language", value) }
+)
 
 # Auto hide menu bar
 # Hide desktop menu bar until Alt key is pressed.
-.rs.addFunction("uiPrefs.autohideMenubar", function()
-{
-   .rs.getUserPref("autohide_menubar")
-})
-
+.rs.uiPrefs$autohideMenubar <- list(
+   get = function() { .rs.getUserPref("autohide_menubar") },
+   set = function(value) { .rs.setUserPref("autohide_menubar", value) }
+)
 
 # Use native file and message dialog boxes
 # dialog boxes.
-.rs.addFunction("uiPrefs.nativeFileDialogs", function()
-{
-   .rs.getUserPref("native_file_dialogs")
-})
-
+.rs.uiPrefs$nativeFileDialogs <- list(
+   get = function() { .rs.getUserPref("native_file_dialogs") },
+   set = function(value) { .rs.setUserPref("native_file_dialogs", value) }
+)
 
 # Discard pending console input on error
 # error occurs.
-.rs.addFunction("uiPrefs.discardPendingConsoleInputOnError", function()
-{
-   .rs.getUserPref("discard_pending_console_input_on_error")
-})
-
+.rs.uiPrefs$discardPendingConsoleInputOnError <- list(
+   get = function() { .rs.getUserPref("discard_pending_console_input_on_error") },
+   set = function(value) { .rs.setUserPref("discard_pending_console_input_on_error", value) }
+)
 
 # Editor scroll speed sensitivity
 # value, the faster the scrolling.
-.rs.addFunction("uiPrefs.editorScrollMultiplier", function()
-{
-   .rs.getUserPref("editor_scroll_multiplier")
-})
-
+.rs.uiPrefs$editorScrollMultiplier <- list(
+   get = function() { .rs.getUserPref("editor_scroll_multiplier") },
+   set = function(value) { .rs.setUserPref("editor_scroll_multiplier", value) }
+)
 
 # Text rendering
 # Control how text is rendered within the IDE surface.
-.rs.addFunction("uiPrefs.textRendering", function()
-{
-   .rs.getUserPref("text_rendering")
-})
-
+.rs.uiPrefs$textRendering <- list(
+   get = function() { .rs.getUserPref("text_rendering") },
+   set = function(value) { .rs.setUserPref("text_rendering", value) }
+)
 
 # Disable Electron accessibility support
 # Disable Electron accessibility support.
-.rs.addFunction("uiPrefs.disableRendererAccessibility", function()
-{
-   .rs.getUserPref("disable_renderer_accessibility")
-})
-
+.rs.uiPrefs$disableRendererAccessibility <- list(
+   get = function() { .rs.getUserPref("disable_renderer_accessibility") },
+   set = function(value) { .rs.setUserPref("disable_renderer_accessibility", value) }
+)
 
 # Enable GitHub Copilot
 # When enabled, RStudio will use GitHub Copilot to provide code suggestions.
-.rs.addFunction("uiPrefs.copilotEnabled", function()
-{
-   .rs.getUserPref("copilot_enabled")
-})
-
+.rs.uiPrefs$copilotEnabled <- list(
+   get = function() { .rs.getUserPref("copilot_enabled") },
+   set = function(value) { .rs.setUserPref("copilot_enabled", value) }
+)
 
 # Show Copilot code suggestions:
 # Control when Copilot code suggestions are displayed in the editor.
-.rs.addFunction("uiPrefs.copilotCompletionsTrigger", function()
-{
-   .rs.getUserPref("copilot_completions_trigger")
-})
-
+.rs.uiPrefs$copilotCompletionsTrigger <- list(
+   get = function() { .rs.getUserPref("copilot_completions_trigger") },
+   set = function(value) { .rs.setUserPref("copilot_completions_trigger", value) }
+)
 
 # GitHub Copilot completions delay
 # after the cursor position has changed.
-.rs.addFunction("uiPrefs.copilotCompletionsDelay", function()
-{
-   .rs.getUserPref("copilot_completions_delay")
-})
-
+.rs.uiPrefs$copilotCompletionsDelay <- list(
+   get = function() { .rs.getUserPref("copilot_completions_delay") },
+   set = function(value) { .rs.setUserPref("copilot_completions_delay", value) }
+)
 
 # Pressing Tab key will prefer inserting:
 # RStudio code completions are visible.
-.rs.addFunction("uiPrefs.copilotTabKeyBehavior", function()
-{
-   .rs.getUserPref("copilot_tab_key_behavior")
-})
-
+.rs.uiPrefs$copilotTabKeyBehavior <- list(
+   get = function() { .rs.getUserPref("copilot_tab_key_behavior") },
+   set = function(value) { .rs.setUserPref("copilot_tab_key_behavior", value) }
+)
 
 # Index project files with GitHub Copilot
 # When enabled, RStudio will index project files with GitHub Copilot.
-.rs.addFunction("uiPrefs.copilotIndexingEnabled", function()
-{
-   .rs.getUserPref("copilot_indexing_enabled")
-})
-
+.rs.uiPrefs$copilotIndexingEnabled <- list(
+   get = function() { .rs.getUserPref("copilot_indexing_enabled") },
+   set = function(value) { .rs.setUserPref("copilot_indexing_enabled", value) }
+)
 
 # 
 # User-provided name for the currently opened R project.
-.rs.addFunction("uiPrefs.projectName", function()
-{
-   .rs.getUserPref("project_name")
-})
-
+.rs.uiPrefs$projectName <- list(
+   get = function() { .rs.getUserPref("project_name") },
+   set = function(value) { .rs.setUserPref("project_name", value) }
+)
 
 # Default working directory for background jobs
 # Default working directory in background job dialog.
-.rs.addFunction("uiPrefs.runBackgroundJobDefaultWorkingDir", function()
-{
-   .rs.getUserPref("run_background_job_default_working_dir")
-})
-
+.rs.uiPrefs$runBackgroundJobDefaultWorkingDir <- list(
+   get = function() { .rs.getUserPref("run_background_job_default_working_dir") },
+   set = function(value) { .rs.setUserPref("run_background_job_default_working_dir", value) }
+)
 
 # Code formatter
 # The formatter to use when reformatting code.
-.rs.addFunction("uiPrefs.codeFormatter", function()
-{
-   .rs.getUserPref("code_formatter")
-})
-
+.rs.uiPrefs$codeFormatter <- list(
+   get = function() { .rs.getUserPref("code_formatter") },
+   set = function(value) { .rs.setUserPref("code_formatter", value) }
+)
 
 # Use strict transformers when formatting code
 # `styler` package documentation for more details.
-.rs.addFunction("uiPrefs.codeFormatterStylerStrict", function()
-{
-   .rs.getUserPref("code_formatter_styler_strict")
-})
-
+.rs.uiPrefs$codeFormatterStylerStrict <- list(
+   get = function() { .rs.getUserPref("code_formatter_styler_strict") },
+   set = function(value) { .rs.setUserPref("code_formatter_styler_strict", value) }
+)
 
 # 
 # The external command to be used when reformatting code.
-.rs.addFunction("uiPrefs.codeFormatterExternalCommand", function()
-{
-   .rs.getUserPref("code_formatter_external_command")
-})
-
+.rs.uiPrefs$codeFormatterExternalCommand <- list(
+   get = function() { .rs.getUserPref("code_formatter_external_command") },
+   set = function(value) { .rs.setUserPref("code_formatter_external_command", value) }
+)
 
 # Reformat documents on save
 # When set, the selected formatter will be used to reformat documents on save.
-.rs.addFunction("uiPrefs.reformatOnSave", function()
-{
-   .rs.getUserPref("reformat_on_save")
-})
-
+.rs.uiPrefs$reformatOnSave <- list(
+   get = function() { .rs.getUserPref("reformat_on_save") },
+   set = function(value) { .rs.setUserPref("reformat_on_save", value) }
+)
 
 # Default project user data directory
 # The folder in which RStudio should store project .Rproj.user data.
-.rs.addFunction("uiPrefs.projectUserDataDirectory", function()
-{
-   .rs.getUserPref("project_user_data_directory")
-})
-
+.rs.uiPrefs$projectUserDataDirectory <- list(
+   get = function() { .rs.getUserPref("project_user_data_directory") },
+   set = function(value) { .rs.setUserPref("project_user_data_directory", value) }
+)
 
 #
 # SessionUserPrefValues.R
@@ -4228,2091 +3710,1832 @@
 # This file was automatically generated -- please do not modify it by hand.
 #
 
+.rs.setVar("uiPrefs", new.env(parent = emptyenv()))
+
 # Run .Rprofile on resume
 # Whether to run .Rprofile again after resuming a suspended R session.
-.rs.addFunction("uiPrefs.runRprofileOnResume", function()
-{
-   .rs.getUserPref("run_rprofile_on_resume")
-})
-
+.rs.uiPrefs$runRprofileOnResume <- list(
+   get = function() { .rs.getUserPref("run_rprofile_on_resume") },
+   set = function(value) { .rs.setUserPref("run_rprofile_on_resume", value) }
+)
 
 # Save workspace on quit
 # Whether to save the workspace to an .Rdata file after the R session ends.
-.rs.addFunction("uiPrefs.saveWorkspace", function()
-{
-   .rs.getUserPref("save_workspace")
-})
-
+.rs.uiPrefs$saveWorkspace <- list(
+   get = function() { .rs.getUserPref("save_workspace") },
+   set = function(value) { .rs.setUserPref("save_workspace", value) }
+)
 
 # Load workspace on start
 # Whether to load the workspace when the R session begins.
-.rs.addFunction("uiPrefs.loadWorkspace", function()
-{
-   .rs.getUserPref("load_workspace")
-})
-
+.rs.uiPrefs$loadWorkspace <- list(
+   get = function() { .rs.getUserPref("load_workspace") },
+   set = function(value) { .rs.setUserPref("load_workspace", value) }
+)
 
 # Initial working directory
 # The initial working directory for new R sessions.
-.rs.addFunction("uiPrefs.initialWorkingDirectory", function()
-{
-   .rs.getUserPref("initial_working_directory")
-})
-
+.rs.uiPrefs$initialWorkingDirectory <- list(
+   get = function() { .rs.getUserPref("initial_working_directory") },
+   set = function(value) { .rs.setUserPref("initial_working_directory", value) }
+)
 
 # 
 # The CRAN mirror to use.
-.rs.addFunction("uiPrefs.cranMirror", function()
-{
-   .rs.getUserPref("cran_mirror")
-})
-
+.rs.uiPrefs$cranMirror <- list(
+   get = function() { .rs.getUserPref("cran_mirror") },
+   set = function(value) { .rs.setUserPref("cran_mirror", value) }
+)
 
 # 
 # The name of the default Bioconductor mirror.
-.rs.addFunction("uiPrefs.bioconductorMirrorName", function()
-{
-   .rs.getUserPref("bioconductor_mirror_name")
-})
-
+.rs.uiPrefs$bioconductorMirrorName <- list(
+   get = function() { .rs.getUserPref("bioconductor_mirror_name") },
+   set = function(value) { .rs.setUserPref("bioconductor_mirror_name", value) }
+)
 
 # 
 # The URL of the default Bioconductor mirror.
-.rs.addFunction("uiPrefs.bioconductorMirrorUrl", function()
-{
-   .rs.getUserPref("bioconductor_mirror_url")
-})
-
+.rs.uiPrefs$bioconductorMirrorUrl <- list(
+   get = function() { .rs.getUserPref("bioconductor_mirror_url") },
+   set = function(value) { .rs.setUserPref("bioconductor_mirror_url", value) }
+)
 
 # Save R console history
 # Whether to always save the R console history.
-.rs.addFunction("uiPrefs.alwaysSaveHistory", function()
-{
-   .rs.getUserPref("always_save_history")
-})
-
+.rs.uiPrefs$alwaysSaveHistory <- list(
+   get = function() { .rs.getUserPref("always_save_history") },
+   set = function(value) { .rs.setUserPref("always_save_history", value) }
+)
 
 # Remove duplicates from console history
 # Whether to remove duplicate entries from the R console history.
-.rs.addFunction("uiPrefs.removeHistoryDuplicates", function()
-{
-   .rs.getUserPref("remove_history_duplicates")
-})
-
+.rs.uiPrefs$removeHistoryDuplicates <- list(
+   get = function() { .rs.getUserPref("remove_history_duplicates") },
+   set = function(value) { .rs.setUserPref("remove_history_duplicates", value) }
+)
 
 # Show .Last.value in Environment pane
 # Show the result of the last expression (.Last.value) in the Environment pane.
-.rs.addFunction("uiPrefs.showLastDotValue", function()
-{
-   .rs.getUserPref("show_last_dot_value")
-})
-
+.rs.uiPrefs$showLastDotValue <- list(
+   get = function() { .rs.getUserPref("show_last_dot_value") },
+   set = function(value) { .rs.setUserPref("show_last_dot_value", value) }
+)
 
 # Line ending format
 # The line ending format to use when saving files.
-.rs.addFunction("uiPrefs.lineEndingConversion", function()
-{
-   .rs.getUserPref("line_ending_conversion")
-})
-
+.rs.uiPrefs$lineEndingConversion <- list(
+   get = function() { .rs.getUserPref("line_ending_conversion") },
+   set = function(value) { .rs.setUserPref("line_ending_conversion", value) }
+)
 
 # Use newlines in Makefiles
 # Whether to use newlines when saving Makefiles.
-.rs.addFunction("uiPrefs.useNewlinesInMakefiles", function()
-{
-   .rs.getUserPref("use_newlines_in_makefiles")
-})
-
+.rs.uiPrefs$useNewlinesInMakefiles <- list(
+   get = function() { .rs.getUserPref("use_newlines_in_makefiles") },
+   set = function(value) { .rs.setUserPref("use_newlines_in_makefiles", value) }
+)
 
 # 
 # The terminal shell to use on Windows.
-.rs.addFunction("uiPrefs.windowsTerminalShell", function()
-{
-   .rs.getUserPref("windows_terminal_shell")
-})
-
+.rs.uiPrefs$windowsTerminalShell <- list(
+   get = function() { .rs.getUserPref("windows_terminal_shell") },
+   set = function(value) { .rs.setUserPref("windows_terminal_shell", value) }
+)
 
 # 
 # The terminal shell to use on POSIX operating systems (MacOS and Linux).
-.rs.addFunction("uiPrefs.posixTerminalShell", function()
-{
-   .rs.getUserPref("posix_terminal_shell")
-})
-
+.rs.uiPrefs$posixTerminalShell <- list(
+   get = function() { .rs.getUserPref("posix_terminal_shell") },
+   set = function(value) { .rs.setUserPref("posix_terminal_shell", value) }
+)
 
 # 
 # The fully qualified path to the custom shell command to use in the Terminal
-.rs.addFunction("uiPrefs.customShellCommand", function()
-{
-   .rs.getUserPref("custom_shell_command")
-})
-
+.rs.uiPrefs$customShellCommand <- list(
+   get = function() { .rs.getUserPref("custom_shell_command") },
+   set = function(value) { .rs.setUserPref("custom_shell_command", value) }
+)
 
 # 
 # The command-line options to pass to the custom shell command.
-.rs.addFunction("uiPrefs.customShellOptions", function()
-{
-   .rs.getUserPref("custom_shell_options")
-})
-
+.rs.uiPrefs$customShellOptions <- list(
+   get = function() { .rs.getUserPref("custom_shell_options") },
+   set = function(value) { .rs.setUserPref("custom_shell_options", value) }
+)
 
 # Show line numbers in editor
 # Show line numbers in RStudio's code editor.
-.rs.addFunction("uiPrefs.showLineNumbers", function()
-{
-   .rs.getUserPref("show_line_numbers")
-})
-
+.rs.uiPrefs$showLineNumbers <- list(
+   get = function() { .rs.getUserPref("show_line_numbers") },
+   set = function(value) { .rs.setUserPref("show_line_numbers", value) }
+)
 
 # Use relative line numbers in editor
 # Show relative, rather than absolute, line numbers in RStudio's code editor.
-.rs.addFunction("uiPrefs.relativeLineNumbers", function()
-{
-   .rs.getUserPref("relative_line_numbers")
-})
-
+.rs.uiPrefs$relativeLineNumbers <- list(
+   get = function() { .rs.getUserPref("relative_line_numbers") },
+   set = function(value) { .rs.setUserPref("relative_line_numbers", value) }
+)
 
 # Highlight selected word in editor
 # Highlight the selected word in RStudio's code editor.
-.rs.addFunction("uiPrefs.highlightSelectedWord", function()
-{
-   .rs.getUserPref("highlight_selected_word")
-})
-
+.rs.uiPrefs$highlightSelectedWord <- list(
+   get = function() { .rs.getUserPref("highlight_selected_word") },
+   set = function(value) { .rs.setUserPref("highlight_selected_word", value) }
+)
 
 # Highlight selected line in editor
 # Highlight the selected line in RStudio's code editor.
-.rs.addFunction("uiPrefs.highlightSelectedLine", function()
-{
-   .rs.getUserPref("highlight_selected_line")
-})
-
+.rs.uiPrefs$highlightSelectedLine <- list(
+   get = function() { .rs.getUserPref("highlight_selected_line") },
+   set = function(value) { .rs.setUserPref("highlight_selected_line", value) }
+)
 
 # 
 # Layout of panes in the RStudio workbench.
-.rs.addFunction("uiPrefs.panes", function()
-{
-   .rs.getUserPref("panes")
-})
-
+.rs.uiPrefs$panes <- list(
+   get = function() { .rs.getUserPref("panes") },
+   set = function(value) { .rs.setUserPref("panes", value) }
+)
 
 # Allow source columns
 # Whether to enable the ability to add source columns to display.
-.rs.addFunction("uiPrefs.allowSourceColumns", function()
-{
-   .rs.getUserPref("allow_source_columns")
-})
-
+.rs.uiPrefs$allowSourceColumns <- list(
+   get = function() { .rs.getUserPref("allow_source_columns") },
+   set = function(value) { .rs.setUserPref("allow_source_columns", value) }
+)
 
 # Insert spaces for Tab
 # Whether to insert spaces when pressing the Tab key.
-.rs.addFunction("uiPrefs.useSpacesForTab", function()
-{
-   .rs.getUserPref("use_spaces_for_tab")
-})
-
+.rs.uiPrefs$useSpacesForTab <- list(
+   get = function() { .rs.getUserPref("use_spaces_for_tab") },
+   set = function(value) { .rs.setUserPref("use_spaces_for_tab", value) }
+)
 
 # Number of spaces for Tab
 # The number of spaces to insert when pressing the Tab key.
-.rs.addFunction("uiPrefs.numSpacesForTab", function()
-{
-   .rs.getUserPref("num_spaces_for_tab")
-})
-
+.rs.uiPrefs$numSpacesForTab <- list(
+   get = function() { .rs.getUserPref("num_spaces_for_tab") },
+   set = function(value) { .rs.setUserPref("num_spaces_for_tab", value) }
+)
 
 # Auto-detect indentation in files
 # Whether to automatically detect indentation settings from file contents.
-.rs.addFunction("uiPrefs.autoDetectIndentation", function()
-{
-   .rs.getUserPref("auto_detect_indentation")
-})
-
+.rs.uiPrefs$autoDetectIndentation <- list(
+   get = function() { .rs.getUserPref("auto_detect_indentation") },
+   set = function(value) { .rs.setUserPref("auto_detect_indentation", value) }
+)
 
 # Show margin in editor
 # Whether to show the margin guide in the RStudio code editor.
-.rs.addFunction("uiPrefs.showMargin", function()
-{
-   .rs.getUserPref("show_margin")
-})
-
+.rs.uiPrefs$showMargin <- list(
+   get = function() { .rs.getUserPref("show_margin") },
+   set = function(value) { .rs.setUserPref("show_margin", value) }
+)
 
 # Use a blinking cursor
 # Whether to flash the cursor off and on.
-.rs.addFunction("uiPrefs.blinkingCursor", function()
-{
-   .rs.getUserPref("blinking_cursor")
-})
-
+.rs.uiPrefs$blinkingCursor <- list(
+   get = function() { .rs.getUserPref("blinking_cursor") },
+   set = function(value) { .rs.setUserPref("blinking_cursor", value) }
+)
 
 # Margin column
 # The number of columns of text after which the margin is shown.
-.rs.addFunction("uiPrefs.marginColumn", function()
-{
-   .rs.getUserPref("margin_column")
-})
-
+.rs.uiPrefs$marginColumn <- list(
+   get = function() { .rs.getUserPref("margin_column") },
+   set = function(value) { .rs.setUserPref("margin_column", value) }
+)
 
 # Show invisible characters in editor
 # Whether to show invisible characters, such as spaces and tabs, in the RStudio
-.rs.addFunction("uiPrefs.showInvisibles", function()
-{
-   .rs.getUserPref("show_invisibles")
-})
-
+.rs.uiPrefs$showInvisibles <- list(
+   get = function() { .rs.getUserPref("show_invisibles") },
+   set = function(value) { .rs.setUserPref("show_invisibles", value) }
+)
 
 # Indentation guides
 # Style for indentation guides in the RStudio code editor.
-.rs.addFunction("uiPrefs.indentGuides", function()
-{
-   .rs.getUserPref("indent_guides")
-})
-
+.rs.uiPrefs$indentGuides <- list(
+   get = function() { .rs.getUserPref("indent_guides") },
+   set = function(value) { .rs.setUserPref("indent_guides", value) }
+)
 
 # Continue comments after adding new line
 # Whether to continue comments (by inserting the comment character) after adding
-.rs.addFunction("uiPrefs.continueCommentsOnNewline", function()
-{
-   .rs.getUserPref("continue_comments_on_newline")
-})
-
+.rs.uiPrefs$continueCommentsOnNewline <- list(
+   get = function() { .rs.getUserPref("continue_comments_on_newline") },
+   set = function(value) { .rs.setUserPref("continue_comments_on_newline", value) }
+)
 
 # Whether web links in comments are clickable
 # Whether web links in comments are clickable.
-.rs.addFunction("uiPrefs.highlightWebLink", function()
-{
-   .rs.getUserPref("highlight_web_link")
-})
-
+.rs.uiPrefs$highlightWebLink <- list(
+   get = function() { .rs.getUserPref("highlight_web_link") },
+   set = function(value) { .rs.setUserPref("highlight_web_link", value) }
+)
 
 # Keybinding set for editor
 # The keybindings to use in the RStudio code editor.
-.rs.addFunction("uiPrefs.editorKeybindings", function()
-{
-   .rs.getUserPref("editor_keybindings")
-})
-
+.rs.uiPrefs$editorKeybindings <- list(
+   get = function() { .rs.getUserPref("editor_keybindings") },
+   set = function(value) { .rs.setUserPref("editor_keybindings", value) }
+)
 
 # Auto-insert matching parentheses and brackets
 # Whether to insert matching pairs, such as () and [], when the first is typed.
-.rs.addFunction("uiPrefs.insertMatching", function()
-{
-   .rs.getUserPref("insert_matching")
-})
-
+.rs.uiPrefs$insertMatching <- list(
+   get = function() { .rs.getUserPref("insert_matching") },
+   set = function(value) { .rs.setUserPref("insert_matching", value) }
+)
 
 # Insert spaces around = in R code
 # Whether to insert spaces around the equals sign in R code.
-.rs.addFunction("uiPrefs.insertSpacesAroundEquals", function()
-{
-   .rs.getUserPref("insert_spaces_around_equals")
-})
-
+.rs.uiPrefs$insertSpacesAroundEquals <- list(
+   get = function() { .rs.getUserPref("insert_spaces_around_equals") },
+   set = function(value) { .rs.setUserPref("insert_spaces_around_equals", value) }
+)
 
 # Insert parentheses after functions
 # Whether to insert parentheses after function completions.
-.rs.addFunction("uiPrefs.insertParensAfterFunctionCompletion", function()
-{
-   .rs.getUserPref("insert_parens_after_function_completion")
-})
-
+.rs.uiPrefs$insertParensAfterFunctionCompletion <- list(
+   get = function() { .rs.getUserPref("insert_parens_after_function_completion") },
+   set = function(value) { .rs.setUserPref("insert_parens_after_function_completion", value) }
+)
 
 # Complete multi-line statements with Tab
 # Whether to attempt completion of multiple-line statements when pressing Tab.
-.rs.addFunction("uiPrefs.tabMultilineCompletion", function()
-{
-   .rs.getUserPref("tab_multiline_completion")
-})
-
+.rs.uiPrefs$tabMultilineCompletion <- list(
+   get = function() { .rs.getUserPref("tab_multiline_completion") },
+   set = function(value) { .rs.setUserPref("tab_multiline_completion", value) }
+)
 
 # Use Tab to trigger autocompletion
 # Whether to attempt completion of statements when pressing Tab.
-.rs.addFunction("uiPrefs.tabCompletion", function()
-{
-   .rs.getUserPref("tab_completion")
-})
-
+.rs.uiPrefs$tabCompletion <- list(
+   get = function() { .rs.getUserPref("tab_completion") },
+   set = function(value) { .rs.setUserPref("tab_completion", value) }
+)
 
 # Show function help tooltips on idle
 # Whether to show help tooltips for functions when the cursor has not been
-.rs.addFunction("uiPrefs.showHelpTooltipOnIdle", function()
-{
-   .rs.getUserPref("show_help_tooltip_on_idle")
-})
-
+.rs.uiPrefs$showHelpTooltipOnIdle <- list(
+   get = function() { .rs.getUserPref("show_help_tooltip_on_idle") },
+   set = function(value) { .rs.setUserPref("show_help_tooltip_on_idle", value) }
+)
 
 # Surround selections with
 # Which kinds of delimiters can be used to surround the current selection.
-.rs.addFunction("uiPrefs.surroundSelection", function()
-{
-   .rs.getUserPref("surround_selection")
-})
-
+.rs.uiPrefs$surroundSelection <- list(
+   get = function() { .rs.getUserPref("surround_selection") },
+   set = function(value) { .rs.setUserPref("surround_selection", value) }
+)
 
 # Enable code snippets
 # Whether to enable code snippets in the RStudio code editor.
-.rs.addFunction("uiPrefs.enableSnippets", function()
-{
-   .rs.getUserPref("enable_snippets")
-})
-
+.rs.uiPrefs$enableSnippets <- list(
+   get = function() { .rs.getUserPref("enable_snippets") },
+   set = function(value) { .rs.setUserPref("enable_snippets", value) }
+)
 
 # Use code completion for R
 # When to use auto-completion for R code in the RStudio code editor.
-.rs.addFunction("uiPrefs.codeCompletion", function()
-{
-   .rs.getUserPref("code_completion")
-})
-
+.rs.uiPrefs$codeCompletion <- list(
+   get = function() { .rs.getUserPref("code_completion") },
+   set = function(value) { .rs.setUserPref("code_completion", value) }
+)
 
 # Use code completion for other languages
 # When to use auto-completion for other languages (such as JavaScript and SQL) in
-.rs.addFunction("uiPrefs.codeCompletionOther", function()
-{
-   .rs.getUserPref("code_completion_other")
-})
-
+.rs.uiPrefs$codeCompletionOther <- list(
+   get = function() { .rs.getUserPref("code_completion_other") },
+   set = function(value) { .rs.setUserPref("code_completion_other", value) }
+)
 
 # Use code completion in the R console
 # Whether to always use code completion in the R console.
-.rs.addFunction("uiPrefs.consoleCodeCompletion", function()
-{
-   .rs.getUserPref("console_code_completion")
-})
-
+.rs.uiPrefs$consoleCodeCompletion <- list(
+   get = function() { .rs.getUserPref("console_code_completion") },
+   set = function(value) { .rs.setUserPref("console_code_completion", value) }
+)
 
 # Delay before completing code (ms)
 # The number of milliseconds to wait before offering code suggestions.
-.rs.addFunction("uiPrefs.codeCompletionDelay", function()
-{
-   .rs.getUserPref("code_completion_delay")
-})
-
+.rs.uiPrefs$codeCompletionDelay <- list(
+   get = function() { .rs.getUserPref("code_completion_delay") },
+   set = function(value) { .rs.setUserPref("code_completion_delay", value) }
+)
 
 # Number of characters for code completion
 # The number of characters in a symbol that can be entered before completions are
-.rs.addFunction("uiPrefs.codeCompletionCharacters", function()
-{
-   .rs.getUserPref("code_completion_characters")
-})
-
+.rs.uiPrefs$codeCompletionCharacters <- list(
+   get = function() { .rs.getUserPref("code_completion_characters") },
+   set = function(value) { .rs.setUserPref("code_completion_characters", value) }
+)
 
 # Include all function arguments in completion list
 # invocation.
-.rs.addFunction("uiPrefs.codeCompletionIncludeAlreadyUsed", function()
-{
-   .rs.getUserPref("code_completion_include_already_used")
-})
-
+.rs.uiPrefs$codeCompletionIncludeAlreadyUsed <- list(
+   get = function() { .rs.getUserPref("code_completion_include_already_used") },
+   set = function(value) { .rs.setUserPref("code_completion_include_already_used", value) }
+)
 
 # Show function signature tooltips
 # Whether to show function signature tooltips during autocompletion.
-.rs.addFunction("uiPrefs.showFunctionSignatureTooltips", function()
-{
-   .rs.getUserPref("show_function_signature_tooltips")
-})
-
+.rs.uiPrefs$showFunctionSignatureTooltips <- list(
+   get = function() { .rs.getUserPref("show_function_signature_tooltips") },
+   set = function(value) { .rs.setUserPref("show_function_signature_tooltips", value) }
+)
 
 # Show data preview in autocompletion help popup
 # Whether a data preview is shown in the autocompletion help popup for datasets
-.rs.addFunction("uiPrefs.showDataPreview", function()
-{
-   .rs.getUserPref("show_data_preview")
-})
-
+.rs.uiPrefs$showDataPreview <- list(
+   get = function() { .rs.getUserPref("show_data_preview") },
+   set = function(value) { .rs.setUserPref("show_data_preview", value) }
+)
 
 # Show diagnostics in R code
 # Whether to show diagnostic messages (such as syntax and usage errors) for R
-.rs.addFunction("uiPrefs.showDiagnosticsR", function()
-{
-   .rs.getUserPref("show_diagnostics_r")
-})
-
+.rs.uiPrefs$showDiagnosticsR <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_r") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_r", value) }
+)
 
 # Show diagnostics in C++ code
 # Whether to show diagnostic messages for C++ code as you type.
-.rs.addFunction("uiPrefs.showDiagnosticsCpp", function()
-{
-   .rs.getUserPref("show_diagnostics_cpp")
-})
-
+.rs.uiPrefs$showDiagnosticsCpp <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_cpp") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_cpp", value) }
+)
 
 # Show diagnostics in YAML code
 # Whether to show diagnostic messages for YAML code as you type.
-.rs.addFunction("uiPrefs.showDiagnosticsYaml", function()
-{
-   .rs.getUserPref("show_diagnostics_yaml")
-})
-
+.rs.uiPrefs$showDiagnosticsYaml <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_yaml") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_yaml", value) }
+)
 
 # Show diagnostics in other languages
 # Whether to show diagnostic messages for other types of code (not R, C++, or
-.rs.addFunction("uiPrefs.showDiagnosticsOther", function()
-{
-   .rs.getUserPref("show_diagnostics_other")
-})
-
+.rs.uiPrefs$showDiagnosticsOther <- list(
+   get = function() { .rs.getUserPref("show_diagnostics_other") },
+   set = function(value) { .rs.setUserPref("show_diagnostics_other", value) }
+)
 
 # Show style diagnostics for R code
 # Whether to show style diagnostics (suggestions for improving R code style)
-.rs.addFunction("uiPrefs.styleDiagnostics", function()
-{
-   .rs.getUserPref("style_diagnostics")
-})
-
+.rs.uiPrefs$styleDiagnostics <- list(
+   get = function() { .rs.getUserPref("style_diagnostics") },
+   set = function(value) { .rs.setUserPref("style_diagnostics", value) }
+)
 
 # Check code for problems when saving
 # Whether to check code for problems after saving it.
-.rs.addFunction("uiPrefs.diagnosticsOnSave", function()
-{
-   .rs.getUserPref("diagnostics_on_save")
-})
-
+.rs.uiPrefs$diagnosticsOnSave <- list(
+   get = function() { .rs.getUserPref("diagnostics_on_save") },
+   set = function(value) { .rs.setUserPref("diagnostics_on_save", value) }
+)
 
 # Run R code diagnostics in the background
 # Whether to run code diagnostics in the background, as you type.
-.rs.addFunction("uiPrefs.backgroundDiagnostics", function()
-{
-   .rs.getUserPref("background_diagnostics")
-})
-
+.rs.uiPrefs$backgroundDiagnostics <- list(
+   get = function() { .rs.getUserPref("background_diagnostics") },
+   set = function(value) { .rs.setUserPref("background_diagnostics", value) }
+)
 
 # Run R code diagnostics after (ms)
 # The number of milliseconds to delay before running code diagnostics in the
-.rs.addFunction("uiPrefs.backgroundDiagnosticsDelayMs", function()
-{
-   .rs.getUserPref("background_diagnostics_delay_ms")
-})
-
+.rs.uiPrefs$backgroundDiagnosticsDelayMs <- list(
+   get = function() { .rs.getUserPref("background_diagnostics_delay_ms") },
+   set = function(value) { .rs.setUserPref("background_diagnostics_delay_ms", value) }
+)
 
 # Run diagnostics on R function calls
 # Whether to run diagnostics in R function calls.
-.rs.addFunction("uiPrefs.diagnosticsInRFunctionCalls", function()
-{
-   .rs.getUserPref("diagnostics_in_r_function_calls")
-})
-
+.rs.uiPrefs$diagnosticsInRFunctionCalls <- list(
+   get = function() { .rs.getUserPref("diagnostics_in_r_function_calls") },
+   set = function(value) { .rs.setUserPref("diagnostics_in_r_function_calls", value) }
+)
 
 # Check arguments to R function calls
 # Whether to check arguments to R function calls.
-.rs.addFunction("uiPrefs.checkArgumentsToRFunctionCalls", function()
-{
-   .rs.getUserPref("check_arguments_to_r_function_calls")
-})
-
+.rs.uiPrefs$checkArgumentsToRFunctionCalls <- list(
+   get = function() { .rs.getUserPref("check_arguments_to_r_function_calls") },
+   set = function(value) { .rs.setUserPref("check_arguments_to_r_function_calls", value) }
+)
 
 # Check for unexpected assignments
 # Whether to check for unexpected variable assignments inside R function calls.
-.rs.addFunction("uiPrefs.checkUnexpectedAssignmentInFunctionCall", function()
-{
-   .rs.getUserPref("check_unexpected_assignment_in_function_call")
-})
-
+.rs.uiPrefs$checkUnexpectedAssignmentInFunctionCall <- list(
+   get = function() { .rs.getUserPref("check_unexpected_assignment_in_function_call") },
+   set = function(value) { .rs.setUserPref("check_unexpected_assignment_in_function_call", value) }
+)
 
 # Warn when R variable used but not defined
 # Whether to generate a warning if a variable is used without being defined in
-.rs.addFunction("uiPrefs.warnIfNoSuchVariableInScope", function()
-{
-   .rs.getUserPref("warn_if_no_such_variable_in_scope")
-})
-
+.rs.uiPrefs$warnIfNoSuchVariableInScope <- list(
+   get = function() { .rs.getUserPref("warn_if_no_such_variable_in_scope") },
+   set = function(value) { .rs.setUserPref("warn_if_no_such_variable_in_scope", value) }
+)
 
 # Warn when R variable defined but not used
 # Whether to generate a warning if a variable is defined without being used in
-.rs.addFunction("uiPrefs.warnVariableDefinedButNotUsed", function()
-{
-   .rs.getUserPref("warn_variable_defined_but_not_used")
-})
-
+.rs.uiPrefs$warnVariableDefinedButNotUsed <- list(
+   get = function() { .rs.getUserPref("warn_variable_defined_but_not_used") },
+   set = function(value) { .rs.setUserPref("warn_variable_defined_but_not_used", value) }
+)
 
 # Detect missing R packages in the editor
 # Whether to automatically discover and offer to install missing R package
-.rs.addFunction("uiPrefs.autoDiscoverPackageDependencies", function()
-{
-   .rs.getUserPref("auto_discover_package_dependencies")
-})
-
+.rs.uiPrefs$autoDiscoverPackageDependencies <- list(
+   get = function() { .rs.getUserPref("auto_discover_package_dependencies") },
+   set = function(value) { .rs.setUserPref("auto_discover_package_dependencies", value) }
+)
 
 # Ensure files end with a newline when saving
 # Whether to ensure that source files end with a newline character.
-.rs.addFunction("uiPrefs.autoAppendNewline", function()
-{
-   .rs.getUserPref("auto_append_newline")
-})
-
+.rs.uiPrefs$autoAppendNewline <- list(
+   get = function() { .rs.getUserPref("auto_append_newline") },
+   set = function(value) { .rs.setUserPref("auto_append_newline", value) }
+)
 
 # Strip trailing whitespace when saving
 # Whether to strip trailing whitespace from each line when saving.
-.rs.addFunction("uiPrefs.stripTrailingWhitespace", function()
-{
-   .rs.getUserPref("strip_trailing_whitespace")
-})
-
+.rs.uiPrefs$stripTrailingWhitespace <- list(
+   get = function() { .rs.getUserPref("strip_trailing_whitespace") },
+   set = function(value) { .rs.setUserPref("strip_trailing_whitespace", value) }
+)
 
 # Restore cursor position when reopening files
 # Whether to save the position of the cursor when a file is closed, restore it
-.rs.addFunction("uiPrefs.restoreSourceDocumentCursorPosition", function()
-{
-   .rs.getUserPref("restore_source_document_cursor_position")
-})
-
+.rs.uiPrefs$restoreSourceDocumentCursorPosition <- list(
+   get = function() { .rs.getUserPref("restore_source_document_cursor_position") },
+   set = function(value) { .rs.setUserPref("restore_source_document_cursor_position", value) }
+)
 
 # Re-indent code when pasting
 # Whether to automatically re-indent code when it's pasted into RStudio.
-.rs.addFunction("uiPrefs.reindentOnPaste", function()
-{
-   .rs.getUserPref("reindent_on_paste")
-})
-
+.rs.uiPrefs$reindentOnPaste <- list(
+   get = function() { .rs.getUserPref("reindent_on_paste") },
+   set = function(value) { .rs.setUserPref("reindent_on_paste", value) }
+)
 
 # Vertically align function arguments
 # Whether to vertically align arguments to R function calls during automatic
-.rs.addFunction("uiPrefs.verticallyAlignArgumentsIndent", function()
-{
-   .rs.getUserPref("vertically_align_arguments_indent")
-})
-
+.rs.uiPrefs$verticallyAlignArgumentsIndent <- list(
+   get = function() { .rs.getUserPref("vertically_align_arguments_indent") },
+   set = function(value) { .rs.setUserPref("vertically_align_arguments_indent", value) }
+)
 
 # Soft-wrap source files
 # Whether to soft-wrap source files, wrapping the text for display without
-.rs.addFunction("uiPrefs.softWrapRFiles", function()
-{
-   .rs.getUserPref("soft_wrap_r_files")
-})
-
+.rs.uiPrefs$softWrapRFiles <- list(
+   get = function() { .rs.getUserPref("soft_wrap_r_files") },
+   set = function(value) { .rs.setUserPref("soft_wrap_r_files", value) }
+)
 
 # Soft-wrap R Markdown files
 # Whether to soft-wrap R Markdown files (and similar types such as R HTML and R
-.rs.addFunction("uiPrefs.softWrapRmdFiles", function()
-{
-   .rs.getUserPref("soft_wrap_rmd_files")
-})
-
+.rs.uiPrefs$softWrapRmdFiles <- list(
+   get = function() { .rs.getUserPref("soft_wrap_rmd_files") },
+   set = function(value) { .rs.setUserPref("soft_wrap_rmd_files", value) }
+)
 
 # Focus console after executing R code
 # Whether to focus the R console after executing an R command from a script.
-.rs.addFunction("uiPrefs.focusConsoleAfterExec", function()
-{
-   .rs.getUserPref("focus_console_after_exec")
-})
-
+.rs.uiPrefs$focusConsoleAfterExec <- list(
+   get = function() { .rs.getUserPref("focus_console_after_exec") },
+   set = function(value) { .rs.setUserPref("focus_console_after_exec", value) }
+)
 
 # Fold style in editor
 # The style of folding to use.
-.rs.addFunction("uiPrefs.foldStyle", function()
-{
-   .rs.getUserPref("fold_style")
-})
-
+.rs.uiPrefs$foldStyle <- list(
+   get = function() { .rs.getUserPref("fold_style") },
+   set = function(value) { .rs.setUserPref("fold_style", value) }
+)
 
 # Save R scripts before sourcing
 # Whether to automatically save scripts before executing them.
-.rs.addFunction("uiPrefs.saveBeforeSourcing", function()
-{
-   .rs.getUserPref("save_before_sourcing")
-})
-
+.rs.uiPrefs$saveBeforeSourcing <- list(
+   get = function() { .rs.getUserPref("save_before_sourcing") },
+   set = function(value) { .rs.setUserPref("save_before_sourcing", value) }
+)
 
 # Syntax highlighting in R console
 # Whether to use syntax highlighting in the R console.
-.rs.addFunction("uiPrefs.syntaxColorConsole", function()
-{
-   .rs.getUserPref("syntax_color_console")
-})
-
+.rs.uiPrefs$syntaxColorConsole <- list(
+   get = function() { .rs.getUserPref("syntax_color_console") },
+   set = function(value) { .rs.setUserPref("syntax_color_console", value) }
+)
 
 # Different color for error output in R console
 # Whether to display error, warning, and message output in a different color.
-.rs.addFunction("uiPrefs.highlightConsoleErrors", function()
-{
-   .rs.getUserPref("highlight_console_errors")
-})
-
+.rs.uiPrefs$highlightConsoleErrors <- list(
+   get = function() { .rs.getUserPref("highlight_console_errors") },
+   set = function(value) { .rs.setUserPref("highlight_console_errors", value) }
+)
 
 # Scroll past end of file
 # Whether to allow scrolling past the end of a file.
-.rs.addFunction("uiPrefs.scrollPastEndOfDocument", function()
-{
-   .rs.getUserPref("scroll_past_end_of_document")
-})
-
+.rs.uiPrefs$scrollPastEndOfDocument <- list(
+   get = function() { .rs.getUserPref("scroll_past_end_of_document") },
+   set = function(value) { .rs.setUserPref("scroll_past_end_of_document", value) }
+)
 
 # Highlight R function calls
 # Whether to highlight R function calls in the code editor.
-.rs.addFunction("uiPrefs.highlightRFunctionCalls", function()
-{
-   .rs.getUserPref("highlight_r_function_calls")
-})
-
+.rs.uiPrefs$highlightRFunctionCalls <- list(
+   get = function() { .rs.getUserPref("highlight_r_function_calls") },
+   set = function(value) { .rs.setUserPref("highlight_r_function_calls", value) }
+)
 
 # Enable preview of named and hexadecimal colors
 # Whether to show preview for named and hexadecimal colors.
-.rs.addFunction("uiPrefs.colorPreview", function()
-{
-   .rs.getUserPref("color_preview")
-})
-
+.rs.uiPrefs$colorPreview <- list(
+   get = function() { .rs.getUserPref("color_preview") },
+   set = function(value) { .rs.setUserPref("color_preview", value) }
+)
 
 # Use rainbow parentheses
 # Whether to highlight parentheses in a variety of colors.
-.rs.addFunction("uiPrefs.rainbowParentheses", function()
-{
-   .rs.getUserPref("rainbow_parentheses")
-})
-
+.rs.uiPrefs$rainbowParentheses <- list(
+   get = function() { .rs.getUserPref("rainbow_parentheses") },
+   set = function(value) { .rs.setUserPref("rainbow_parentheses", value) }
+)
 
 # Use rainbow fenced divs
 # Whether to highlight fenced divs in a variety of colors.
-.rs.addFunction("uiPrefs.rainbowFencedDivs", function()
-{
-   .rs.getUserPref("rainbow_fenced_divs")
-})
-
+.rs.uiPrefs$rainbowFencedDivs <- list(
+   get = function() { .rs.getUserPref("rainbow_fenced_divs") },
+   set = function(value) { .rs.setUserPref("rainbow_fenced_divs", value) }
+)
 
 # Maximum characters per line in R console
 # The maximum number of characters to display in a single line in the R console.
-.rs.addFunction("uiPrefs.consoleLineLengthLimit", function()
-{
-   .rs.getUserPref("console_line_length_limit")
-})
-
+.rs.uiPrefs$consoleLineLengthLimit <- list(
+   get = function() { .rs.getUserPref("console_line_length_limit") },
+   set = function(value) { .rs.setUserPref("console_line_length_limit", value) }
+)
 
 # Maximum lines in R console
 # The maximum number of console actions to store and display in the console
-.rs.addFunction("uiPrefs.consoleMaxLines", function()
-{
-   .rs.getUserPref("console_max_lines")
-})
-
+.rs.uiPrefs$consoleMaxLines <- list(
+   get = function() { .rs.getUserPref("console_max_lines") },
+   set = function(value) { .rs.setUserPref("console_max_lines", value) }
+)
 
 # ANSI escape codes in R console
 # How to treat ANSI escape codes in the console.
-.rs.addFunction("uiPrefs.ansiConsoleMode", function()
-{
-   .rs.getUserPref("ansi_console_mode")
-})
-
+.rs.uiPrefs$ansiConsoleMode <- list(
+   get = function() { .rs.getUserPref("ansi_console_mode") },
+   set = function(value) { .rs.setUserPref("ansi_console_mode", value) }
+)
 
 # Limit visible console output
 # Whether to only show a limited window of the total console output
-.rs.addFunction("uiPrefs.limitVisibleConsole", function()
-{
-   .rs.getUserPref("limit_visible_console")
-})
-
+.rs.uiPrefs$limitVisibleConsole <- list(
+   get = function() { .rs.getUserPref("limit_visible_console") },
+   set = function(value) { .rs.setUserPref("limit_visible_console", value) }
+)
 
 # Show toolbar on R Markdown chunks
 # Whether to show a toolbar on code chunks in R Markdown documents.
-.rs.addFunction("uiPrefs.showInlineToolbarForRCodeChunks", function()
-{
-   .rs.getUserPref("show_inline_toolbar_for_r_code_chunks")
-})
-
+.rs.uiPrefs$showInlineToolbarForRCodeChunks <- list(
+   get = function() { .rs.getUserPref("show_inline_toolbar_for_r_code_chunks") },
+   set = function(value) { .rs.setUserPref("show_inline_toolbar_for_r_code_chunks", value) }
+)
 
 # Highlight code chunks in R Markdown files
 # Whether to highlight code chunks in R Markdown documents with a different
-.rs.addFunction("uiPrefs.highlightCodeChunks", function()
-{
-   .rs.getUserPref("highlight_code_chunks")
-})
-
+.rs.uiPrefs$highlightCodeChunks <- list(
+   get = function() { .rs.getUserPref("highlight_code_chunks") },
+   set = function(value) { .rs.setUserPref("highlight_code_chunks", value) }
+)
 
 # Save files before building
 # Whether to save all open, unsaved files before building the project.
-.rs.addFunction("uiPrefs.saveFilesBeforeBuild", function()
-{
-   .rs.getUserPref("save_files_before_build")
-})
-
+.rs.uiPrefs$saveFilesBeforeBuild <- list(
+   get = function() { .rs.getUserPref("save_files_before_build") },
+   set = function(value) { .rs.setUserPref("save_files_before_build", value) }
+)
 
 # Save and reload R workspace on build
 # Whether RStudio should save and reload the R workspace when building the
-.rs.addFunction("uiPrefs.saveAndReloadWorkspaceOnBuild", function()
-{
-   .rs.getUserPref("save_and_reload_workspace_on_build")
-})
-
+.rs.uiPrefs$saveAndReloadWorkspaceOnBuild <- list(
+   get = function() { .rs.getUserPref("save_and_reload_workspace_on_build") },
+   set = function(value) { .rs.setUserPref("save_and_reload_workspace_on_build", value) }
+)
 
 # Editor font size (points)
 # The default editor font size, in points.
-.rs.addFunction("uiPrefs.fontSizePoints", function()
-{
-   .rs.getUserPref("font_size_points")
-})
-
+.rs.uiPrefs$fontSizePoints <- list(
+   get = function() { .rs.getUserPref("font_size_points") },
+   set = function(value) { .rs.setUserPref("font_size_points", value) }
+)
 
 # Help panel font size (points)
 # The help panel font size, in points.
-.rs.addFunction("uiPrefs.helpFontSizePoints", function()
-{
-   .rs.getUserPref("help_font_size_points")
-})
-
+.rs.uiPrefs$helpFontSizePoints <- list(
+   get = function() { .rs.getUserPref("help_font_size_points") },
+   set = function(value) { .rs.setUserPref("help_font_size_points", value) }
+)
 
 # Theme
 # The name of the color theme to apply to the text editor in RStudio.
-.rs.addFunction("uiPrefs.editorTheme", function()
-{
-   .rs.getUserPref("editor_theme")
-})
-
+.rs.uiPrefs$editorTheme <- list(
+   get = function() { .rs.getUserPref("editor_theme") },
+   set = function(value) { .rs.setUserPref("editor_theme", value) }
+)
 
 # Enable editor fonts on RStudio Server
 # Whether to use a custom editor font in RStudio Server.
-.rs.addFunction("uiPrefs.serverEditorFontEnabled", function()
-{
-   .rs.getUserPref("server_editor_font_enabled")
-})
-
+.rs.uiPrefs$serverEditorFontEnabled <- list(
+   get = function() { .rs.getUserPref("server_editor_font_enabled") },
+   set = function(value) { .rs.setUserPref("server_editor_font_enabled", value) }
+)
 
 # Editor font
 # The name of the fixed-width editor font to use with RStudio Server.
-.rs.addFunction("uiPrefs.serverEditorFont", function()
-{
-   .rs.getUserPref("server_editor_font")
-})
-
+.rs.uiPrefs$serverEditorFont <- list(
+   get = function() { .rs.getUserPref("server_editor_font") },
+   set = function(value) { .rs.setUserPref("server_editor_font", value) }
+)
 
 # Default character encoding
 # The default character encoding to use when saving files.
-.rs.addFunction("uiPrefs.defaultEncoding", function()
-{
-   .rs.getUserPref("default_encoding")
-})
-
+.rs.uiPrefs$defaultEncoding <- list(
+   get = function() { .rs.getUserPref("default_encoding") },
+   set = function(value) { .rs.setUserPref("default_encoding", value) }
+)
 
 # Show top toolbar
 # Whether to show the toolbar at the top of the RStudio workbench.
-.rs.addFunction("uiPrefs.toolbarVisible", function()
-{
-   .rs.getUserPref("toolbar_visible")
-})
-
+.rs.uiPrefs$toolbarVisible <- list(
+   get = function() { .rs.getUserPref("toolbar_visible") },
+   set = function(value) { .rs.setUserPref("toolbar_visible", value) }
+)
 
 # Default new project location
 # The directory path under which to place new projects by default.
-.rs.addFunction("uiPrefs.defaultProjectLocation", function()
-{
-   .rs.getUserPref("default_project_location")
-})
-
+.rs.uiPrefs$defaultProjectLocation <- list(
+   get = function() { .rs.getUserPref("default_project_location") },
+   set = function(value) { .rs.setUserPref("default_project_location", value) }
+)
 
 # Default open project location
 # The default directory to use in file dialogs when opening a project.
-.rs.addFunction("uiPrefs.defaultOpenProjectLocation", function()
-{
-   .rs.getUserPref("default_open_project_location")
-})
-
+.rs.uiPrefs$defaultOpenProjectLocation <- list(
+   get = function() { .rs.getUserPref("default_open_project_location") },
+   set = function(value) { .rs.setUserPref("default_open_project_location", value) }
+)
 
 # Source with echo by default
 # Whether to echo R code when sourcing it.
-.rs.addFunction("uiPrefs.sourceWithEcho", function()
-{
-   .rs.getUserPref("source_with_echo")
-})
-
+.rs.uiPrefs$sourceWithEcho <- list(
+   get = function() { .rs.getUserPref("source_with_echo") },
+   set = function(value) { .rs.setUserPref("source_with_echo", value) }
+)
 
 # Default Sweave engine
 # The default engine to use when processing Sweave documents.
-.rs.addFunction("uiPrefs.defaultSweaveEngine", function()
-{
-   .rs.getUserPref("default_sweave_engine")
-})
-
+.rs.uiPrefs$defaultSweaveEngine <- list(
+   get = function() { .rs.getUserPref("default_sweave_engine") },
+   set = function(value) { .rs.setUserPref("default_sweave_engine", value) }
+)
 
 # Default LaTeX program
 # The default program to use when processing LaTeX documents.
-.rs.addFunction("uiPrefs.defaultLatexProgram", function()
-{
-   .rs.getUserPref("default_latex_program")
-})
-
+.rs.uiPrefs$defaultLatexProgram <- list(
+   get = function() { .rs.getUserPref("default_latex_program") },
+   set = function(value) { .rs.setUserPref("default_latex_program", value) }
+)
 
 # Use Roxygen for documentation
 # Whether to use Roxygen for documentation.
-.rs.addFunction("uiPrefs.useRoxygen", function()
-{
-   .rs.getUserPref("use_roxygen")
-})
-
+.rs.uiPrefs$useRoxygen <- list(
+   get = function() { .rs.getUserPref("use_roxygen") },
+   set = function(value) { .rs.setUserPref("use_roxygen", value) }
+)
 
 # Enable data import
 # Whether to use RStudio's data import feature.
-.rs.addFunction("uiPrefs.useDataimport", function()
-{
-   .rs.getUserPref("use_dataimport")
-})
-
+.rs.uiPrefs$useDataimport <- list(
+   get = function() { .rs.getUserPref("use_dataimport") },
+   set = function(value) { .rs.setUserPref("use_dataimport", value) }
+)
 
 # PDF previewer
 # The program to use to preview PDF files after generation.
-.rs.addFunction("uiPrefs.pdfPreviewer", function()
-{
-   .rs.getUserPref("pdf_previewer")
-})
-
+.rs.uiPrefs$pdfPreviewer <- list(
+   get = function() { .rs.getUserPref("pdf_previewer") },
+   set = function(value) { .rs.setUserPref("pdf_previewer", value) }
+)
 
 # Enable Rnw concordance
 # Whether to always enable the concordance for RNW files.
-.rs.addFunction("uiPrefs.alwaysEnableRnwConcordance", function()
-{
-   .rs.getUserPref("always_enable_rnw_concordance")
-})
-
+.rs.uiPrefs$alwaysEnableRnwConcordance <- list(
+   get = function() { .rs.getUserPref("always_enable_rnw_concordance") },
+   set = function(value) { .rs.setUserPref("always_enable_rnw_concordance", value) }
+)
 
 # Insert numbered LaTeX sections
 # Whether to insert numbered sections in LaTeX.
-.rs.addFunction("uiPrefs.insertNumberedLatexSections", function()
-{
-   .rs.getUserPref("insert_numbered_latex_sections")
-})
-
+.rs.uiPrefs$insertNumberedLatexSections <- list(
+   get = function() { .rs.getUserPref("insert_numbered_latex_sections") },
+   set = function(value) { .rs.setUserPref("insert_numbered_latex_sections", value) }
+)
 
 # Spelling dictionary language
 # The language of the spelling dictionary to use for spell checking.
-.rs.addFunction("uiPrefs.spellingDictionaryLanguage", function()
-{
-   .rs.getUserPref("spelling_dictionary_language")
-})
-
+.rs.uiPrefs$spellingDictionaryLanguage <- list(
+   get = function() { .rs.getUserPref("spelling_dictionary_language") },
+   set = function(value) { .rs.setUserPref("spelling_dictionary_language", value) }
+)
 
 # Custom spelling dictionaries
 # The list of custom dictionaries to use when spell checking.
-.rs.addFunction("uiPrefs.spellingCustomDictionaries", function()
-{
-   .rs.getUserPref("spelling_custom_dictionaries")
-})
-
+.rs.uiPrefs$spellingCustomDictionaries <- list(
+   get = function() { .rs.getUserPref("spelling_custom_dictionaries") },
+   set = function(value) { .rs.setUserPref("spelling_custom_dictionaries", value) }
+)
 
 # Lint document after load (ms)
 # The number of milliseconds to wait before linting a document after it is
-.rs.addFunction("uiPrefs.documentLoadLintDelay", function()
-{
-   .rs.getUserPref("document_load_lint_delay")
-})
-
+.rs.uiPrefs$documentLoadLintDelay <- list(
+   get = function() { .rs.getUserPref("document_load_lint_delay") },
+   set = function(value) { .rs.setUserPref("document_load_lint_delay", value) }
+)
 
 # Ignore uppercase words in spell check
 # Whether to ignore words in uppercase when spell checking.
-.rs.addFunction("uiPrefs.ignoreUppercaseWords", function()
-{
-   .rs.getUserPref("ignore_uppercase_words")
-})
-
+.rs.uiPrefs$ignoreUppercaseWords <- list(
+   get = function() { .rs.getUserPref("ignore_uppercase_words") },
+   set = function(value) { .rs.setUserPref("ignore_uppercase_words", value) }
+)
 
 # Ignore words with numbers in spell check
 # Whether to ignore words with numbers in them when spell checking.
-.rs.addFunction("uiPrefs.ignoreWordsWithNumbers", function()
-{
-   .rs.getUserPref("ignore_words_with_numbers")
-})
-
+.rs.uiPrefs$ignoreWordsWithNumbers <- list(
+   get = function() { .rs.getUserPref("ignore_words_with_numbers") },
+   set = function(value) { .rs.setUserPref("ignore_words_with_numbers", value) }
+)
 
 # Use real-time spellchecking
 # Whether to enable real-time spellchecking by default.
-.rs.addFunction("uiPrefs.realTimeSpellchecking", function()
-{
-   .rs.getUserPref("real_time_spellchecking")
-})
-
+.rs.uiPrefs$realTimeSpellchecking <- list(
+   get = function() { .rs.getUserPref("real_time_spellchecking") },
+   set = function(value) { .rs.setUserPref("real_time_spellchecking", value) }
+)
 
 # Navigate to build errors
 # Whether to navigate to build errors.
-.rs.addFunction("uiPrefs.navigateToBuildError", function()
-{
-   .rs.getUserPref("navigate_to_build_error")
-})
-
+.rs.uiPrefs$navigateToBuildError <- list(
+   get = function() { .rs.getUserPref("navigate_to_build_error") },
+   set = function(value) { .rs.setUserPref("navigate_to_build_error", value) }
+)
 
 # Enable the Packages pane
 # Whether to enable RStudio's Packages pane.
-.rs.addFunction("uiPrefs.packagesPaneEnabled", function()
-{
-   .rs.getUserPref("packages_pane_enabled")
-})
-
+.rs.uiPrefs$packagesPaneEnabled <- list(
+   get = function() { .rs.getUserPref("packages_pane_enabled") },
+   set = function(value) { .rs.setUserPref("packages_pane_enabled", value) }
+)
 
 # C++ template
 # C++ template.
-.rs.addFunction("uiPrefs.cppTemplate", function()
-{
-   .rs.getUserPref("cpp_template")
-})
-
+.rs.uiPrefs$cppTemplate <- list(
+   get = function() { .rs.getUserPref("cpp_template") },
+   set = function(value) { .rs.setUserPref("cpp_template", value) }
+)
 
 # Restore last opened documents on startup
 # Whether to restore the last opened source documents when RStudio starts up.
-.rs.addFunction("uiPrefs.restoreSourceDocuments", function()
-{
-   .rs.getUserPref("restore_source_documents")
-})
-
+.rs.uiPrefs$restoreSourceDocuments <- list(
+   get = function() { .rs.getUserPref("restore_source_documents") },
+   set = function(value) { .rs.setUserPref("restore_source_documents", value) }
+)
 
 # Handle errors only when user code present
 # Whether to handle errors only when user code is on the stack.
-.rs.addFunction("uiPrefs.handleErrorsInUserCodeOnly", function()
-{
-   .rs.getUserPref("handle_errors_in_user_code_only")
-})
-
+.rs.uiPrefs$handleErrorsInUserCodeOnly <- list(
+   get = function() { .rs.getUserPref("handle_errors_in_user_code_only") },
+   set = function(value) { .rs.setUserPref("handle_errors_in_user_code_only", value) }
+)
 
 # Auto-expand error tracebacks
 # Whether to automatically expand tracebacks when an error occurs.
-.rs.addFunction("uiPrefs.autoExpandErrorTracebacks", function()
-{
-   .rs.getUserPref("auto_expand_error_tracebacks")
-})
-
+.rs.uiPrefs$autoExpandErrorTracebacks <- list(
+   get = function() { .rs.getUserPref("auto_expand_error_tracebacks") },
+   set = function(value) { .rs.setUserPref("auto_expand_error_tracebacks", value) }
+)
 
 # Check for new version at startup
 # Whether to check for new versions of RStudio when RStudio starts.
-.rs.addFunction("uiPrefs.checkForUpdates", function()
-{
-   .rs.getUserPref("check_for_updates")
-})
-
+.rs.uiPrefs$checkForUpdates <- list(
+   get = function() { .rs.getUserPref("check_for_updates") },
+   set = function(value) { .rs.setUserPref("check_for_updates", value) }
+)
 
 # Show internal functions when debugging
 # Whether to show functions without source references in the Traceback pane while
-.rs.addFunction("uiPrefs.showInternalFunctions", function()
-{
-   .rs.getUserPref("show_internal_functions")
-})
-
+.rs.uiPrefs$showInternalFunctions <- list(
+   get = function() { .rs.getUserPref("show_internal_functions") },
+   set = function(value) { .rs.setUserPref("show_internal_functions", value) }
+)
 
 # Run Shiny applications in
 # Where to display Shiny applications when they are run.
-.rs.addFunction("uiPrefs.shinyViewerType", function()
-{
-   .rs.getUserPref("shiny_viewer_type")
-})
-
+.rs.uiPrefs$shinyViewerType <- list(
+   get = function() { .rs.getUserPref("shiny_viewer_type") },
+   set = function(value) { .rs.setUserPref("shiny_viewer_type", value) }
+)
 
 # Run Shiny applications in the background
 # Whether to run Shiny applications as background jobs.
-.rs.addFunction("uiPrefs.shinyBackgroundJobs", function()
-{
-   .rs.getUserPref("shiny_background_jobs")
-})
-
+.rs.uiPrefs$shinyBackgroundJobs <- list(
+   get = function() { .rs.getUserPref("shiny_background_jobs") },
+   set = function(value) { .rs.setUserPref("shiny_background_jobs", value) }
+)
 
 # Run Plumber APIs in
 # Where to display Shiny applications when they are run.
-.rs.addFunction("uiPrefs.plumberViewerType", function()
-{
-   .rs.getUserPref("plumber_viewer_type")
-})
-
+.rs.uiPrefs$plumberViewerType <- list(
+   get = function() { .rs.getUserPref("plumber_viewer_type") },
+   set = function(value) { .rs.setUserPref("plumber_viewer_type", value) }
+)
 
 # Document author
 # The default name to use as the document author when creating new documents.
-.rs.addFunction("uiPrefs.documentAuthor", function()
-{
-   .rs.getUserPref("document_author")
-})
-
+.rs.uiPrefs$documentAuthor <- list(
+   get = function() { .rs.getUserPref("document_author") },
+   set = function(value) { .rs.setUserPref("document_author", value) }
+)
 
 # Use current date when rendering document
 # Use current date when rendering document
-.rs.addFunction("uiPrefs.rmdAutoDate", function()
-{
-   .rs.getUserPref("rmd_auto_date")
-})
-
+.rs.uiPrefs$rmdAutoDate <- list(
+   get = function() { .rs.getUserPref("rmd_auto_date") },
+   set = function(value) { .rs.setUserPref("rmd_auto_date", value) }
+)
 
 # Path to preferred R Markdown template
 # The path to the preferred R Markdown template.
-.rs.addFunction("uiPrefs.rmdPreferredTemplatePath", function()
-{
-   .rs.getUserPref("rmd_preferred_template_path")
-})
-
+.rs.uiPrefs$rmdPreferredTemplatePath <- list(
+   get = function() { .rs.getUserPref("rmd_preferred_template_path") },
+   set = function(value) { .rs.setUserPref("rmd_preferred_template_path", value) }
+)
 
 # Display R Markdown documents in
 # Where to display R Markdown documents when they have completed rendering.
-.rs.addFunction("uiPrefs.rmdViewerType", function()
-{
-   .rs.getUserPref("rmd_viewer_type")
-})
-
+.rs.uiPrefs$rmdViewerType <- list(
+   get = function() { .rs.getUserPref("rmd_viewer_type") },
+   set = function(value) { .rs.setUserPref("rmd_viewer_type", value) }
+)
 
 # Show diagnostic info when publishing
 # Whether to show verbose diagnostic information when publishing content.
-.rs.addFunction("uiPrefs.showPublishDiagnostics", function()
-{
-   .rs.getUserPref("show_publish_diagnostics")
-})
-
+.rs.uiPrefs$showPublishDiagnostics <- list(
+   get = function() { .rs.getUserPref("show_publish_diagnostics") },
+   set = function(value) { .rs.setUserPref("show_publish_diagnostics", value) }
+)
 
 # 
 # Whether to show UI for publishing content to Posit Cloud.
-.rs.addFunction("uiPrefs.enableCloudPublishUi", function()
-{
-   .rs.getUserPref("enable_cloud_publish_ui")
-})
-
+.rs.uiPrefs$enableCloudPublishUi <- list(
+   get = function() { .rs.getUserPref("enable_cloud_publish_ui") },
+   set = function(value) { .rs.setUserPref("enable_cloud_publish_ui", value) }
+)
 
 # Check SSL certificates when publishing
 # Whether to check remote server SSL certificates when publishing content.
-.rs.addFunction("uiPrefs.publishCheckCertificates", function()
-{
-   .rs.getUserPref("publish_check_certificates")
-})
-
+.rs.uiPrefs$publishCheckCertificates <- list(
+   get = function() { .rs.getUserPref("publish_check_certificates") },
+   set = function(value) { .rs.setUserPref("publish_check_certificates", value) }
+)
 
 # Use custom CA bundle when publishing
 # Whether to use a custom certificate authority (CA) bundle when publishing
-.rs.addFunction("uiPrefs.usePublishCaBundle", function()
-{
-   .rs.getUserPref("use_publish_ca_bundle")
-})
-
+.rs.uiPrefs$usePublishCaBundle <- list(
+   get = function() { .rs.getUserPref("use_publish_ca_bundle") },
+   set = function(value) { .rs.setUserPref("use_publish_ca_bundle", value) }
+)
 
 # Path to custom CA bundle for publishing
 # The path to the custom certificate authority (CA) bundle to use when publishing
-.rs.addFunction("uiPrefs.publishCaBundle", function()
-{
-   .rs.getUserPref("publish_ca_bundle")
-})
-
+.rs.uiPrefs$publishCaBundle <- list(
+   get = function() { .rs.getUserPref("publish_ca_bundle") },
+   set = function(value) { .rs.setUserPref("publish_ca_bundle", value) }
+)
 
 # Show chunk output inline in all documents
 # Whether to show chunk output inline for ordinary R Markdown documents.
-.rs.addFunction("uiPrefs.rmdChunkOutputInline", function()
-{
-   .rs.getUserPref("rmd_chunk_output_inline")
-})
-
+.rs.uiPrefs$rmdChunkOutputInline <- list(
+   get = function() { .rs.getUserPref("rmd_chunk_output_inline") },
+   set = function(value) { .rs.setUserPref("rmd_chunk_output_inline", value) }
+)
 
 # Open document outline by default
 # Whether to show the document outline by default when opening R Markdown
-.rs.addFunction("uiPrefs.showDocOutlineRmd", function()
-{
-   .rs.getUserPref("show_doc_outline_rmd")
-})
-
+.rs.uiPrefs$showDocOutlineRmd <- list(
+   get = function() { .rs.getUserPref("show_doc_outline_rmd") },
+   set = function(value) { .rs.setUserPref("show_doc_outline_rmd", value) }
+)
 
 # Document outline font size
 # The font size to use for items in the document outline.
-.rs.addFunction("uiPrefs.documentOutlineFontSize", function()
-{
-   .rs.getUserPref("document_outline_font_size")
-})
-
+.rs.uiPrefs$documentOutlineFontSize <- list(
+   get = function() { .rs.getUserPref("document_outline_font_size") },
+   set = function(value) { .rs.setUserPref("document_outline_font_size", value) }
+)
 
 # Automatically run Setup chunk when needed
 # Whether to automatically run an R Markdown document's Setup chunk before
-.rs.addFunction("uiPrefs.autoRunSetupChunk", function()
-{
-   .rs.getUserPref("auto_run_setup_chunk")
-})
-
+.rs.uiPrefs$autoRunSetupChunk <- list(
+   get = function() { .rs.getUserPref("auto_run_setup_chunk") },
+   set = function(value) { .rs.setUserPref("auto_run_setup_chunk", value) }
+)
 
 # Hide console when running R Markdown chunks
 # Whether to hide the R console when executing inline R Markdown chunks.
-.rs.addFunction("uiPrefs.hideConsoleOnChunkExecute", function()
-{
-   .rs.getUserPref("hide_console_on_chunk_execute")
-})
-
+.rs.uiPrefs$hideConsoleOnChunkExecute <- list(
+   get = function() { .rs.getUserPref("hide_console_on_chunk_execute") },
+   set = function(value) { .rs.setUserPref("hide_console_on_chunk_execute", value) }
+)
 
 # Unit of R code execution
 # The unit of R code to execute when the Execute command is invoked.
-.rs.addFunction("uiPrefs.executionBehavior", function()
-{
-   .rs.getUserPref("execution_behavior")
-})
-
+.rs.uiPrefs$executionBehavior <- list(
+   get = function() { .rs.getUserPref("execution_behavior") },
+   set = function(value) { .rs.setUserPref("execution_behavior", value) }
+)
 
 # Show the Terminal tab
 # Whether to show the Terminal tab.
-.rs.addFunction("uiPrefs.showTerminalTab", function()
-{
-   .rs.getUserPref("show_terminal_tab")
-})
-
+.rs.uiPrefs$showTerminalTab <- list(
+   get = function() { .rs.getUserPref("show_terminal_tab") },
+   set = function(value) { .rs.setUserPref("show_terminal_tab", value) }
+)
 
 # Use local echo in the Terminal
 # Whether to use local echo in the Terminal.
-.rs.addFunction("uiPrefs.terminalLocalEcho", function()
-{
-   .rs.getUserPref("terminal_local_echo")
-})
-
+.rs.uiPrefs$terminalLocalEcho <- list(
+   get = function() { .rs.getUserPref("terminal_local_echo") },
+   set = function(value) { .rs.setUserPref("terminal_local_echo", value) }
+)
 
 # Use websockets in the Terminal
 # Whether to use websockets to communicate with the shell in the Terminal tab.
-.rs.addFunction("uiPrefs.terminalWebsockets", function()
-{
-   .rs.getUserPref("terminal_websockets")
-})
-
+.rs.uiPrefs$terminalWebsockets <- list(
+   get = function() { .rs.getUserPref("terminal_websockets") },
+   set = function(value) { .rs.setUserPref("terminal_websockets", value) }
+)
 
 # Close Terminal pane after shell exit
 # Whether to close the terminal pane after the shell exits.
-.rs.addFunction("uiPrefs.terminalCloseBehavior", function()
-{
-   .rs.getUserPref("terminal_close_behavior")
-})
-
+.rs.uiPrefs$terminalCloseBehavior <- list(
+   get = function() { .rs.getUserPref("terminal_close_behavior") },
+   set = function(value) { .rs.setUserPref("terminal_close_behavior", value) }
+)
 
 # Save and restore system environment in Terminal tab
 # Whether to track and save changes to system environment variables in the
-.rs.addFunction("uiPrefs.terminalTrackEnvironment", function()
-{
-   .rs.getUserPref("terminal_track_environment")
-})
-
+.rs.uiPrefs$terminalTrackEnvironment <- list(
+   get = function() { .rs.getUserPref("terminal_track_environment") },
+   set = function(value) { .rs.setUserPref("terminal_track_environment", value) }
+)
 
 # Ignored environment variables
 # will not be saved when a Terminal instance is saved and restored.
-.rs.addFunction("uiPrefs.terminalIgnoredEnvironmentVariables", function()
-{
-   .rs.getUserPref("terminal_ignored_environment_variables")
-})
-
+.rs.uiPrefs$terminalIgnoredEnvironmentVariables <- list(
+   get = function() { .rs.getUserPref("terminal_ignored_environment_variables") },
+   set = function(value) { .rs.setUserPref("terminal_ignored_environment_variables", value) }
+)
 
 # Enable Terminal hooks
 # Enabled Terminal hooks? Required for Python terminal integration, which places
-.rs.addFunction("uiPrefs.terminalHooks", function()
-{
-   .rs.getUserPref("terminal_hooks")
-})
-
+.rs.uiPrefs$terminalHooks <- list(
+   get = function() { .rs.getUserPref("terminal_hooks") },
+   set = function(value) { .rs.setUserPref("terminal_hooks", value) }
+)
 
 # Terminal bell style
 # Terminal bell style
-.rs.addFunction("uiPrefs.terminalBellStyle", function()
-{
-   .rs.getUserPref("terminal_bell_style")
-})
-
+.rs.uiPrefs$terminalBellStyle <- list(
+   get = function() { .rs.getUserPref("terminal_bell_style") },
+   set = function(value) { .rs.setUserPref("terminal_bell_style", value) }
+)
 
 # Terminal tab rendering engine
 # Terminal rendering engine: canvas is faster, dom may be needed for some
-.rs.addFunction("uiPrefs.terminalRenderer", function()
-{
-   .rs.getUserPref("terminal_renderer")
-})
-
+.rs.uiPrefs$terminalRenderer <- list(
+   get = function() { .rs.getUserPref("terminal_renderer") },
+   set = function(value) { .rs.setUserPref("terminal_renderer", value) }
+)
 
 # Make links in Terminal clickable
 # Whether web links displayed in the Terminal tab are made clickable.
-.rs.addFunction("uiPrefs.terminalWeblinks", function()
-{
-   .rs.getUserPref("terminal_weblinks")
-})
-
+.rs.uiPrefs$terminalWeblinks <- list(
+   get = function() { .rs.getUserPref("terminal_weblinks") },
+   set = function(value) { .rs.setUserPref("terminal_weblinks", value) }
+)
 
 # Show R Markdown render command
 # Whether to print the render command use to knit R Markdown documents in the R
-.rs.addFunction("uiPrefs.showRmdRenderCommand", function()
-{
-   .rs.getUserPref("show_rmd_render_command")
-})
-
+.rs.uiPrefs$showRmdRenderCommand <- list(
+   get = function() { .rs.getUserPref("show_rmd_render_command") },
+   set = function(value) { .rs.setUserPref("show_rmd_render_command", value) }
+)
 
 # Enable dragging text in code editor
 # Whether to enable moving text on the editing surface by clicking and dragging
-.rs.addFunction("uiPrefs.enableTextDrag", function()
-{
-   .rs.getUserPref("enable_text_drag")
-})
-
+.rs.uiPrefs$enableTextDrag <- list(
+   get = function() { .rs.getUserPref("enable_text_drag") },
+   set = function(value) { .rs.setUserPref("enable_text_drag", value) }
+)
 
 # Show hidden files in Files pane
 # Whether to show hidden files in the Files pane.
-.rs.addFunction("uiPrefs.showHiddenFiles", function()
-{
-   .rs.getUserPref("show_hidden_files")
-})
-
+.rs.uiPrefs$showHiddenFiles <- list(
+   get = function() { .rs.getUserPref("show_hidden_files") },
+   set = function(value) { .rs.setUserPref("show_hidden_files", value) }
+)
 
 # Files always shown in the Files Pane
 # List of file names (case sensitive) that are always shown in the Files Pane,
-.rs.addFunction("uiPrefs.alwaysShownFiles", function()
-{
-   .rs.getUserPref("always_shown_files")
-})
-
+.rs.uiPrefs$alwaysShownFiles <- list(
+   get = function() { .rs.getUserPref("always_shown_files") },
+   set = function(value) { .rs.setUserPref("always_shown_files", value) }
+)
 
 # Extensions always shown in the Files Pane
 # List of file extensions (beginning with ., not case sensitive) that are always
-.rs.addFunction("uiPrefs.alwaysShownExtensions", function()
-{
-   .rs.getUserPref("always_shown_extensions")
-})
-
+.rs.uiPrefs$alwaysShownExtensions <- list(
+   get = function() { .rs.getUserPref("always_shown_extensions") },
+   set = function(value) { .rs.setUserPref("always_shown_extensions", value) }
+)
 
 # Sort file names naturally in Files pane
 # Whether to sort file names naturally, so that e.g., file10.R comes after
-.rs.addFunction("uiPrefs.sortFileNamesNaturally", function()
-{
-   .rs.getUserPref("sort_file_names_naturally")
-})
-
+.rs.uiPrefs$sortFileNamesNaturally <- list(
+   get = function() { .rs.getUserPref("sort_file_names_naturally") },
+   set = function(value) { .rs.setUserPref("sort_file_names_naturally", value) }
+)
 
 # Synchronize the Files pane with the current working directory
 # Whether to change the directory in the Files pane automatically when the
-.rs.addFunction("uiPrefs.syncFilesPaneWorkingDir", function()
-{
-   .rs.getUserPref("sync_files_pane_working_dir")
-})
-
+.rs.uiPrefs$syncFilesPaneWorkingDir <- list(
+   get = function() { .rs.getUserPref("sync_files_pane_working_dir") },
+   set = function(value) { .rs.setUserPref("sync_files_pane_working_dir", value) }
+)
 
 # Jobs tab visibility
 # The visibility of the Jobs tab.
-.rs.addFunction("uiPrefs.jobsTabVisibility", function()
-{
-   .rs.getUserPref("jobs_tab_visibility")
-})
-
+.rs.uiPrefs$jobsTabVisibility <- list(
+   get = function() { .rs.getUserPref("jobs_tab_visibility") },
+   set = function(value) { .rs.setUserPref("jobs_tab_visibility", value) }
+)
 
 # 
 # Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
-.rs.addFunction("uiPrefs.showLauncherJobsTab", function()
-{
-   .rs.getUserPref("show_launcher_jobs_tab")
-})
-
+.rs.uiPrefs$showLauncherJobsTab <- list(
+   get = function() { .rs.getUserPref("show_launcher_jobs_tab") },
+   set = function(value) { .rs.setUserPref("show_launcher_jobs_tab", value) }
+)
 
 # 
 # How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio
-.rs.addFunction("uiPrefs.launcherJobsSort", function()
-{
-   .rs.getUserPref("launcher_jobs_sort")
-})
-
+.rs.uiPrefs$launcherJobsSort <- list(
+   get = function() { .rs.getUserPref("launcher_jobs_sort") },
+   set = function(value) { .rs.setUserPref("launcher_jobs_sort", value) }
+)
 
 # 
 # How to detect busy status in the Terminal.
-.rs.addFunction("uiPrefs.busyDetection", function()
-{
-   .rs.getUserPref("busy_detection")
-})
-
+.rs.uiPrefs$busyDetection <- list(
+   get = function() { .rs.getUserPref("busy_detection") },
+   set = function(value) { .rs.setUserPref("busy_detection", value) }
+)
 
 # 
 # A list of apps that should not be considered busy in the Terminal.
-.rs.addFunction("uiPrefs.busyExclusionList", function()
-{
-   .rs.getUserPref("busy_exclusion_list")
-})
-
+.rs.uiPrefs$busyExclusionList <- list(
+   get = function() { .rs.getUserPref("busy_exclusion_list") },
+   set = function(value) { .rs.setUserPref("busy_exclusion_list", value) }
+)
 
 # Working directory for knitting
 # The working directory to use when knitting R Markdown documents.
-.rs.addFunction("uiPrefs.knitWorkingDir", function()
-{
-   .rs.getUserPref("knit_working_dir")
-})
-
+.rs.uiPrefs$knitWorkingDir <- list(
+   get = function() { .rs.getUserPref("knit_working_dir") },
+   set = function(value) { .rs.setUserPref("knit_working_dir", value) }
+)
 
 # Show in Document Outline
 # Which objects to show in the document outline pane.
-.rs.addFunction("uiPrefs.docOutlineShow", function()
-{
-   .rs.getUserPref("doc_outline_show")
-})
-
+.rs.uiPrefs$docOutlineShow <- list(
+   get = function() { .rs.getUserPref("doc_outline_show") },
+   set = function(value) { .rs.setUserPref("doc_outline_show", value) }
+)
 
 # Preview LaTeX equations on idle
 # When to preview LaTeX mathematical equations when cursor has not moved
-.rs.addFunction("uiPrefs.latexPreviewOnCursorIdle", function()
-{
-   .rs.getUserPref("latex_preview_on_cursor_idle")
-})
-
+.rs.uiPrefs$latexPreviewOnCursorIdle <- list(
+   get = function() { .rs.getUserPref("latex_preview_on_cursor_idle") },
+   set = function(value) { .rs.setUserPref("latex_preview_on_cursor_idle", value) }
+)
 
 # Wrap around when going to previous/next tab
 # Whether to wrap around when going to the previous or next editor tab.
-.rs.addFunction("uiPrefs.wrapTabNavigation", function()
-{
-   .rs.getUserPref("wrap_tab_navigation")
-})
-
+.rs.uiPrefs$wrapTabNavigation <- list(
+   get = function() { .rs.getUserPref("wrap_tab_navigation") },
+   set = function(value) { .rs.setUserPref("wrap_tab_navigation", value) }
+)
 
 # Global theme
 # The theme to use for the main RStudio user interface.
-.rs.addFunction("uiPrefs.globalTheme", function()
-{
-   .rs.getUserPref("global_theme")
-})
-
+.rs.uiPrefs$globalTheme <- list(
+   get = function() { .rs.getUserPref("global_theme") },
+   set = function(value) { .rs.setUserPref("global_theme", value) }
+)
 
 # Ignore whitespace in VCS diffs
 # Whether to ignore whitespace when generating diffs of version controlled files.
-.rs.addFunction("uiPrefs.gitDiffIgnoreWhitespace", function()
-{
-   .rs.getUserPref("git_diff_ignore_whitespace")
-})
-
+.rs.uiPrefs$gitDiffIgnoreWhitespace <- list(
+   get = function() { .rs.getUserPref("git_diff_ignore_whitespace") },
+   set = function(value) { .rs.setUserPref("git_diff_ignore_whitespace", value) }
+)
 
 # Sign git commits
 # Whether to sign git commits.
-.rs.addFunction("uiPrefs.gitSignedCommits", function()
-{
-   .rs.getUserPref("git_signed_commits")
-})
-
+.rs.uiPrefs$gitSignedCommits <- list(
+   get = function() { .rs.getUserPref("git_signed_commits") },
+   set = function(value) { .rs.setUserPref("git_signed_commits", value) }
+)
 
 # Double click to select in the Console
 # Whether double-clicking should select a word in the Console pane.
-.rs.addFunction("uiPrefs.consoleDoubleClickSelect", function()
-{
-   .rs.getUserPref("console_double_click_select")
-})
-
+.rs.uiPrefs$consoleDoubleClickSelect <- list(
+   get = function() { .rs.getUserPref("console_double_click_select") },
+   set = function(value) { .rs.setUserPref("console_double_click_select", value) }
+)
 
 # Warn when automatic session suspension is paused
 # Whether the 'Auto Suspension Blocked' icon should appear in the R Console
-.rs.addFunction("uiPrefs.consoleSuspendBlockedNotice", function()
-{
-   .rs.getUserPref("console_suspend_blocked_notice")
-})
-
+.rs.uiPrefs$consoleSuspendBlockedNotice <- list(
+   get = function() { .rs.getUserPref("console_suspend_blocked_notice") },
+   set = function(value) { .rs.setUserPref("console_suspend_blocked_notice", value) }
+)
 
 # Number of seconds to delay warning
 # How long to wait before warning that automatic session suspension has been
-.rs.addFunction("uiPrefs.consoleSuspendBlockedNoticeDelay", function()
-{
-   .rs.getUserPref("console_suspend_blocked_notice_delay")
-})
-
+.rs.uiPrefs$consoleSuspendBlockedNoticeDelay <- list(
+   get = function() { .rs.getUserPref("console_suspend_blocked_notice_delay") },
+   set = function(value) { .rs.setUserPref("console_suspend_blocked_notice_delay", value) }
+)
 
 # Create a Git repo in new projects
 # Whether a git repo should be initialized inside new projects by default.
-.rs.addFunction("uiPrefs.newProjGitInit", function()
-{
-   .rs.getUserPref("new_proj_git_init")
-})
-
+.rs.uiPrefs$newProjGitInit <- list(
+   get = function() { .rs.getUserPref("new_proj_git_init") },
+   set = function(value) { .rs.setUserPref("new_proj_git_init", value) }
+)
 
 # Create an renv environment in new projects
 # Whether an renv environment should be created inside new projects by default.
-.rs.addFunction("uiPrefs.newProjUseRenv", function()
-{
-   .rs.getUserPref("new_proj_use_renv")
-})
-
+.rs.uiPrefs$newProjUseRenv <- list(
+   get = function() { .rs.getUserPref("new_proj_use_renv") },
+   set = function(value) { .rs.setUserPref("new_proj_use_renv", value) }
+)
 
 # Root document for PDF compilation
 # The root document to use when compiling PDF documents.
-.rs.addFunction("uiPrefs.rootDocument", function()
-{
-   .rs.getUserPref("root_document")
-})
-
+.rs.uiPrefs$rootDocument <- list(
+   get = function() { .rs.getUserPref("root_document") },
+   set = function(value) { .rs.setUserPref("root_document", value) }
+)
 
 # Show user home page in RStudio Workbench
 # When to show the server home page in RStudio Workbench.
-.rs.addFunction("uiPrefs.showUserHomePage", function()
-{
-   .rs.getUserPref("show_user_home_page")
-})
-
+.rs.uiPrefs$showUserHomePage <- list(
+   get = function() { .rs.getUserPref("show_user_home_page") },
+   set = function(value) { .rs.setUserPref("show_user_home_page", value) }
+)
 
 # 
 # Whether to reuse sessions when opening projects in RStudio Workbench.
-.rs.addFunction("uiPrefs.reuseSessionsForProjectLinks", function()
-{
-   .rs.getUserPref("reuse_sessions_for_project_links")
-})
-
+.rs.uiPrefs$reuseSessionsForProjectLinks <- list(
+   get = function() { .rs.getUserPref("reuse_sessions_for_project_links") },
+   set = function(value) { .rs.setUserPref("reuse_sessions_for_project_links", value) }
+)
 
 # Enable version control if available
 # Whether to enable RStudio's version control system interface.
-.rs.addFunction("uiPrefs.vcsEnabled", function()
-{
-   .rs.getUserPref("vcs_enabled")
-})
-
+.rs.uiPrefs$vcsEnabled <- list(
+   get = function() { .rs.getUserPref("vcs_enabled") },
+   set = function(value) { .rs.setUserPref("vcs_enabled", value) }
+)
 
 # Auto-refresh state from version control
 # Automatically refresh VCS status?
-.rs.addFunction("uiPrefs.vcsAutorefresh", function()
-{
-   .rs.getUserPref("vcs_autorefresh")
-})
-
+.rs.uiPrefs$vcsAutorefresh <- list(
+   get = function() { .rs.getUserPref("vcs_autorefresh") },
+   set = function(value) { .rs.setUserPref("vcs_autorefresh", value) }
+)
 
 # Path to Git executable
 # The path to the Git executable to use.
-.rs.addFunction("uiPrefs.gitExePath", function()
-{
-   .rs.getUserPref("git_exe_path")
-})
-
+.rs.uiPrefs$gitExePath <- list(
+   get = function() { .rs.getUserPref("git_exe_path") },
+   set = function(value) { .rs.setUserPref("git_exe_path", value) }
+)
 
 # Path to Subversion executable
 # The path to the Subversion executable to use.
-.rs.addFunction("uiPrefs.svnExePath", function()
-{
-   .rs.getUserPref("svn_exe_path")
-})
-
+.rs.uiPrefs$svnExePath <- list(
+   get = function() { .rs.getUserPref("svn_exe_path") },
+   set = function(value) { .rs.setUserPref("svn_exe_path", value) }
+)
 
 # 
 # The path to the terminal executable to use.
-.rs.addFunction("uiPrefs.terminalPath", function()
-{
-   .rs.getUserPref("terminal_path")
-})
-
+.rs.uiPrefs$terminalPath <- list(
+   get = function() { .rs.getUserPref("terminal_path") },
+   set = function(value) { .rs.setUserPref("terminal_path", value) }
+)
 
 # 
 # The path to the SSH key file to use.
-.rs.addFunction("uiPrefs.rsaKeyPath", function()
-{
-   .rs.getUserPref("rsa_key_path")
-})
-
+.rs.uiPrefs$rsaKeyPath <- list(
+   get = function() { .rs.getUserPref("rsa_key_path") },
+   set = function(value) { .rs.setUserPref("rsa_key_path", value) }
+)
 
 # 
 # The encryption type to use for the SSH key file.
-.rs.addFunction("uiPrefs.sshKeyType", function()
-{
-   .rs.getUserPref("ssh_key_type")
-})
-
+.rs.uiPrefs$sshKeyType <- list(
+   get = function() { .rs.getUserPref("ssh_key_type") },
+   set = function(value) { .rs.setUserPref("ssh_key_type", value) }
+)
 
 # Use the devtools R package if available
 # Whether to use the devtools R package.
-.rs.addFunction("uiPrefs.useDevtools", function()
-{
-   .rs.getUserPref("use_devtools")
-})
-
+.rs.uiPrefs$useDevtools <- list(
+   get = function() { .rs.getUserPref("use_devtools") },
+   set = function(value) { .rs.setUserPref("use_devtools", value) }
+)
 
 # Always use --preclean when installing package
 # Always use --preclean when installing package.
-.rs.addFunction("uiPrefs.cleanBeforeInstall", function()
-{
-   .rs.getUserPref("clean_before_install")
-})
-
+.rs.uiPrefs$cleanBeforeInstall <- list(
+   get = function() { .rs.getUserPref("clean_before_install") },
+   set = function(value) { .rs.setUserPref("clean_before_install", value) }
+)
 
 # Download R packages securely
 # Whether to use secure downloads when fetching R packages.
-.rs.addFunction("uiPrefs.useSecureDownload", function()
-{
-   .rs.getUserPref("use_secure_download")
-})
-
+.rs.uiPrefs$useSecureDownload <- list(
+   get = function() { .rs.getUserPref("use_secure_download") },
+   set = function(value) { .rs.setUserPref("use_secure_download", value) }
+)
 
 # Clean up temporary files after R CMD CHECK
 # Whether to clean up temporary files after running R CMD CHECK.
-.rs.addFunction("uiPrefs.cleanupAfterRCmdCheck", function()
-{
-   .rs.getUserPref("cleanup_after_r_cmd_check")
-})
-
+.rs.uiPrefs$cleanupAfterRCmdCheck <- list(
+   get = function() { .rs.getUserPref("cleanup_after_r_cmd_check") },
+   set = function(value) { .rs.setUserPref("cleanup_after_r_cmd_check", value) }
+)
 
 # View directory after R CMD CHECK
 # Whether to view the directory after running R CMD CHECK.
-.rs.addFunction("uiPrefs.viewDirAfterRCmdCheck", function()
-{
-   .rs.getUserPref("view_dir_after_r_cmd_check")
-})
-
+.rs.uiPrefs$viewDirAfterRCmdCheck <- list(
+   get = function() { .rs.getUserPref("view_dir_after_r_cmd_check") },
+   set = function(value) { .rs.setUserPref("view_dir_after_r_cmd_check", value) }
+)
 
 # Hide object files in the Files pane
 # Whether to hide object files in the Files pane.
-.rs.addFunction("uiPrefs.hideObjectFiles", function()
-{
-   .rs.getUserPref("hide_object_files")
-})
-
+.rs.uiPrefs$hideObjectFiles <- list(
+   get = function() { .rs.getUserPref("hide_object_files") },
+   set = function(value) { .rs.setUserPref("hide_object_files", value) }
+)
 
 # Restore last project when starting RStudio
 # Whether to restore the last project when starting RStudio.
-.rs.addFunction("uiPrefs.restoreLastProject", function()
-{
-   .rs.getUserPref("restore_last_project")
-})
-
+.rs.uiPrefs$restoreLastProject <- list(
+   get = function() { .rs.getUserPref("restore_last_project") },
+   set = function(value) { .rs.setUserPref("restore_last_project", value) }
+)
 
 # Number of seconds for safe project startup
 # The number of seconds after which a project is deemed to have successfully
-.rs.addFunction("uiPrefs.projectSafeStartupSeconds", function()
-{
-   .rs.getUserPref("project_safe_startup_seconds")
-})
-
+.rs.uiPrefs$projectSafeStartupSeconds <- list(
+   get = function() { .rs.getUserPref("project_safe_startup_seconds") },
+   set = function(value) { .rs.setUserPref("project_safe_startup_seconds", value) }
+)
 
 # Use tinytex to compile .tex files
 # Use tinytex to compile .tex files.
-.rs.addFunction("uiPrefs.useTinytex", function()
-{
-   .rs.getUserPref("use_tinytex")
-})
-
+.rs.uiPrefs$useTinytex <- list(
+   get = function() { .rs.getUserPref("use_tinytex") },
+   set = function(value) { .rs.setUserPref("use_tinytex", value) }
+)
 
 # Clean output after running Texi2Dvi
 # Whether to clean output after running Texi2Dvi.
-.rs.addFunction("uiPrefs.cleanTexi2dviOutput", function()
-{
-   .rs.getUserPref("clean_texi2dvi_output")
-})
-
+.rs.uiPrefs$cleanTexi2dviOutput <- list(
+   get = function() { .rs.getUserPref("clean_texi2dvi_output") },
+   set = function(value) { .rs.setUserPref("clean_texi2dvi_output", value) }
+)
 
 # Shell escape LaTeX documents
 # Whether to enable shell escaping with LaTeX documents.
-.rs.addFunction("uiPrefs.latexShellEscape", function()
-{
-   .rs.getUserPref("latex_shell_escape")
-})
-
+.rs.uiPrefs$latexShellEscape <- list(
+   get = function() { .rs.getUserPref("latex_shell_escape") },
+   set = function(value) { .rs.setUserPref("latex_shell_escape", value) }
+)
 
 # Restore project R version in RStudio Pro and RStudio Workbench
 # Whether to restore the last version of R used by the project in RStudio Pro and
-.rs.addFunction("uiPrefs.restoreProjectRVersion", function()
-{
-   .rs.getUserPref("restore_project_r_version")
-})
-
+.rs.uiPrefs$restoreProjectRVersion <- list(
+   get = function() { .rs.getUserPref("restore_project_r_version") },
+   set = function(value) { .rs.setUserPref("restore_project_r_version", value) }
+)
 
 # Clang verbosity level (0 - 2)
 # The verbosity level to use with Clang (0 - 2)
-.rs.addFunction("uiPrefs.clangVerbose", function()
-{
-   .rs.getUserPref("clang_verbose")
-})
-
+.rs.uiPrefs$clangVerbose <- list(
+   get = function() { .rs.getUserPref("clang_verbose") },
+   set = function(value) { .rs.setUserPref("clang_verbose", value) }
+)
 
 # Submit crash reports to RStudio
 # Whether to automatically submit crash reports to RStudio.
-.rs.addFunction("uiPrefs.submitCrashReports", function()
-{
-   .rs.getUserPref("submit_crash_reports")
-})
-
+.rs.uiPrefs$submitCrashReports <- list(
+   get = function() { .rs.getUserPref("submit_crash_reports") },
+   set = function(value) { .rs.setUserPref("submit_crash_reports", value) }
+)
 
 # 
 # The R version to use by default.
-.rs.addFunction("uiPrefs.defaultRVersion", function()
-{
-   .rs.getUserPref("default_r_version")
-})
-
+.rs.uiPrefs$defaultRVersion <- list(
+   get = function() { .rs.getUserPref("default_r_version") },
+   set = function(value) { .rs.setUserPref("default_r_version", value) }
+)
 
 # Maximum number of columns in data viewer
 # The maximum number of columns to show at once in the data viewer.
-.rs.addFunction("uiPrefs.dataViewerMaxColumns", function()
-{
-   .rs.getUserPref("data_viewer_max_columns")
-})
-
+.rs.uiPrefs$dataViewerMaxColumns <- list(
+   get = function() { .rs.getUserPref("data_viewer_max_columns") },
+   set = function(value) { .rs.setUserPref("data_viewer_max_columns", value) }
+)
 
 # Maximum number of character in data viewer cells
 # The maximum number of characters to show in a data viewer cell.
-.rs.addFunction("uiPrefs.dataViewerMaxCellSize", function()
-{
-   .rs.getUserPref("data_viewer_max_cell_size")
-})
-
+.rs.uiPrefs$dataViewerMaxCellSize <- list(
+   get = function() { .rs.getUserPref("data_viewer_max_cell_size") },
+   set = function(value) { .rs.setUserPref("data_viewer_max_cell_size", value) }
+)
 
 # Enable support for screen readers
 # Support accessibility aids such as screen readers.
-.rs.addFunction("uiPrefs.enableScreenReader", function()
-{
-   .rs.getUserPref("enable_screen_reader")
-})
-
+.rs.uiPrefs$enableScreenReader <- list(
+   get = function() { .rs.getUserPref("enable_screen_reader") },
+   set = function(value) { .rs.setUserPref("enable_screen_reader", value) }
+)
 
 # Seconds to wait before updating ARIA live region
 # Number of milliseconds to wait after last keystroke before updating live
-.rs.addFunction("uiPrefs.typingStatusDelayMs", function()
-{
-   .rs.getUserPref("typing_status_delay_ms")
-})
-
+.rs.uiPrefs$typingStatusDelayMs <- list(
+   get = function() { .rs.getUserPref("typing_status_delay_ms") },
+   set = function(value) { .rs.setUserPref("typing_status_delay_ms", value) }
+)
 
 # Reduced animation/motion mode
 # Reduce use of animations in the user interface.
-.rs.addFunction("uiPrefs.reducedMotion", function()
-{
-   .rs.getUserPref("reduced_motion")
-})
-
+.rs.uiPrefs$reducedMotion <- list(
+   get = function() { .rs.getUserPref("reduced_motion") },
+   set = function(value) { .rs.setUserPref("reduced_motion", value) }
+)
 
 # Tab key always moves focus
 # Tab key moves focus out of text editing controls instead of inserting tabs.
-.rs.addFunction("uiPrefs.tabKeyMoveFocus", function()
-{
-   .rs.getUserPref("tab_key_move_focus")
-})
-
+.rs.uiPrefs$tabKeyMoveFocus <- list(
+   get = function() { .rs.getUserPref("tab_key_move_focus") },
+   set = function(value) { .rs.setUserPref("tab_key_move_focus", value) }
+)
 
 # Tab key moves focus directly from find text to replace text in find panel
 # In source editor find panel, tab key moves focus directly from find text to
-.rs.addFunction("uiPrefs.findPanelLegacyTabSequence", function()
-{
-   .rs.getUserPref("find_panel_legacy_tab_sequence")
-})
-
+.rs.uiPrefs$findPanelLegacyTabSequence <- list(
+   get = function() { .rs.getUserPref("find_panel_legacy_tab_sequence") },
+   set = function(value) { .rs.setUserPref("find_panel_legacy_tab_sequence", value) }
+)
 
 # Show focus outline around focused panel
 # Show which panel contains keyboard focus.
-.rs.addFunction("uiPrefs.showPanelFocusRectangle", function()
-{
-   .rs.getUserPref("show_panel_focus_rectangle")
-})
-
+.rs.uiPrefs$showPanelFocusRectangle <- list(
+   get = function() { .rs.getUserPref("show_panel_focus_rectangle") },
+   set = function(value) { .rs.setUserPref("show_panel_focus_rectangle", value) }
+)
 
 # Autosave mode on idle
 # How to deal with changes to documents on idle.
-.rs.addFunction("uiPrefs.autoSaveOnIdle", function()
-{
-   .rs.getUserPref("auto_save_on_idle")
-})
-
+.rs.uiPrefs$autoSaveOnIdle <- list(
+   get = function() { .rs.getUserPref("auto_save_on_idle") },
+   set = function(value) { .rs.setUserPref("auto_save_on_idle", value) }
+)
 
 # Idle period for document autosave (ms)
 # The idle period, in milliseconds, after which documents should be auto-saved.
-.rs.addFunction("uiPrefs.autoSaveIdleMs", function()
-{
-   .rs.getUserPref("auto_save_idle_ms")
-})
-
+.rs.uiPrefs$autoSaveIdleMs <- list(
+   get = function() { .rs.getUserPref("auto_save_idle_ms") },
+   set = function(value) { .rs.setUserPref("auto_save_idle_ms", value) }
+)
 
 # Save documents when editor loses input focus
 # Whether to automatically save when the editor loses focus.
-.rs.addFunction("uiPrefs.autoSaveOnBlur", function()
-{
-   .rs.getUserPref("auto_save_on_blur")
-})
-
+.rs.uiPrefs$autoSaveOnBlur <- list(
+   get = function() { .rs.getUserPref("auto_save_on_blur") },
+   set = function(value) { .rs.setUserPref("auto_save_on_blur", value) }
+)
 
 # Initial working directory for new terminals
 # Initial directory for new terminals.
-.rs.addFunction("uiPrefs.terminalInitialDirectory", function()
-{
-   .rs.getUserPref("terminal_initial_directory")
-})
-
+.rs.uiPrefs$terminalInitialDirectory <- list(
+   get = function() { .rs.getUserPref("terminal_initial_directory") },
+   set = function(value) { .rs.setUserPref("terminal_initial_directory", value) }
+)
 
 # Show full path to project in RStudio Desktop windows
 # Whether to show the full path to project in desktop window title.
-.rs.addFunction("uiPrefs.fullProjectPathInWindowTitle", function()
-{
-   .rs.getUserPref("full_project_path_in_window_title")
-})
-
+.rs.uiPrefs$fullProjectPathInWindowTitle <- list(
+   get = function() { .rs.getUserPref("full_project_path_in_window_title") },
+   set = function(value) { .rs.setUserPref("full_project_path_in_window_title", value) }
+)
 
 # Use visual editing by default for new markdown documents
 # Whether to enable visual editing by default for new markdown documents
-.rs.addFunction("uiPrefs.visualMarkdownEditingIsDefault", function()
-{
-   .rs.getUserPref("visual_markdown_editing_is_default")
-})
-
+.rs.uiPrefs$visualMarkdownEditingIsDefault <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_is_default") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_is_default", value) }
+)
 
 # Default list spacing in visual markdown editing mode
 # Default spacing for lists created in the visual editor
-.rs.addFunction("uiPrefs.visualMarkdownEditingListSpacing", function()
-{
-   .rs.getUserPref("visual_markdown_editing_list_spacing")
-})
-
+.rs.uiPrefs$visualMarkdownEditingListSpacing <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_list_spacing") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_list_spacing", value) }
+)
 
 # Wrap text in visual markdown editing mode
 # Whether to automatically wrap text when writing markdown
-.rs.addFunction("uiPrefs.visualMarkdownEditingWrap", function()
-{
-   .rs.getUserPref("visual_markdown_editing_wrap")
-})
-
+.rs.uiPrefs$visualMarkdownEditingWrap <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_wrap") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_wrap", value) }
+)
 
 # Wrap column for visual markdown editing mode
 # The column to wrap text at when writing markdown
-.rs.addFunction("uiPrefs.visualMarkdownEditingWrapAtColumn", function()
-{
-   .rs.getUserPref("visual_markdown_editing_wrap_at_column")
-})
-
+.rs.uiPrefs$visualMarkdownEditingWrapAtColumn <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_wrap_at_column") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_wrap_at_column", value) }
+)
 
 # Place visual markdown footnotes in
 # Placement of footnotes within markdown output.
-.rs.addFunction("uiPrefs.visualMarkdownEditingReferencesLocation", function()
-{
-   .rs.getUserPref("visual_markdown_editing_references_location")
-})
-
+.rs.uiPrefs$visualMarkdownEditingReferencesLocation <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_references_location") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_references_location", value) }
+)
 
 # Write canonical visual mode markdown in source mode
 # Whether to write canonical visual mode markdown when saving from source mode.
-.rs.addFunction("uiPrefs.visualMarkdownEditingCanonical", function()
-{
-   .rs.getUserPref("visual_markdown_editing_canonical")
-})
-
+.rs.uiPrefs$visualMarkdownEditingCanonical <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_canonical") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_canonical", value) }
+)
 
 # Max content width for visual markdown editor (px)
 # Maximum content width for visual editing mode, in pixels
-.rs.addFunction("uiPrefs.visualMarkdownEditingMaxContentWidth", function()
-{
-   .rs.getUserPref("visual_markdown_editing_max_content_width")
-})
-
+.rs.uiPrefs$visualMarkdownEditingMaxContentWidth <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_max_content_width") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_max_content_width", value) }
+)
 
 # Show document outline in visual markdown editing mode
 # Whether to show the document outline by default when opening R Markdown
-.rs.addFunction("uiPrefs.visualMarkdownEditingShowDocOutline", function()
-{
-   .rs.getUserPref("visual_markdown_editing_show_doc_outline")
-})
-
+.rs.uiPrefs$visualMarkdownEditingShowDocOutline <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_show_doc_outline") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_show_doc_outline", value) }
+)
 
 # Show margin in visual mode code blocks
 # Whether to show the margin guide in the visual mode code blocks.
-.rs.addFunction("uiPrefs.visualMarkdownEditingShowMargin", function()
-{
-   .rs.getUserPref("visual_markdown_editing_show_margin")
-})
-
+.rs.uiPrefs$visualMarkdownEditingShowMargin <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_show_margin") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_show_margin", value) }
+)
 
 # Show line numbers in visual mode code blocks
 # Whether to show line numbers in the code editors used in visual mode
-.rs.addFunction("uiPrefs.visualMarkdownCodeEditorLineNumbers", function()
-{
-   .rs.getUserPref("visual_markdown_code_editor_line_numbers")
-})
-
+.rs.uiPrefs$visualMarkdownCodeEditorLineNumbers <- list(
+   get = function() { .rs.getUserPref("visual_markdown_code_editor_line_numbers") },
+   set = function(value) { .rs.setUserPref("visual_markdown_code_editor_line_numbers", value) }
+)
 
 # Font size for visual editing mode
 # The default visual editing mode font size, in points
-.rs.addFunction("uiPrefs.visualMarkdownEditingFontSizePoints", function()
-{
-   .rs.getUserPref("visual_markdown_editing_font_size_points")
-})
-
+.rs.uiPrefs$visualMarkdownEditingFontSizePoints <- list(
+   get = function() { .rs.getUserPref("visual_markdown_editing_font_size_points") },
+   set = function(value) { .rs.setUserPref("visual_markdown_editing_font_size_points", value) }
+)
 
 # Editor for code chunks in visual editing mode
 # The name of the editor to use to provide code editing in visual mode
-.rs.addFunction("uiPrefs.visualMarkdownCodeEditor", function()
-{
-   .rs.getUserPref("visual_markdown_code_editor")
-})
-
+.rs.uiPrefs$visualMarkdownCodeEditor <- list(
+   get = function() { .rs.getUserPref("visual_markdown_code_editor") },
+   set = function(value) { .rs.setUserPref("visual_markdown_code_editor", value) }
+)
 
 # Zotero libraries
 # Zotero libraries to insert citations from.
-.rs.addFunction("uiPrefs.zoteroLibraries", function()
-{
-   .rs.getUserPref("zotero_libraries")
-})
-
+.rs.uiPrefs$zoteroLibraries <- list(
+   get = function() { .rs.getUserPref("zotero_libraries") },
+   set = function(value) { .rs.setUserPref("zotero_libraries", value) }
+)
 
 # 
 # Preferred emoji skintone
-.rs.addFunction("uiPrefs.emojiSkintone", function()
-{
-   .rs.getUserPref("emoji_skintone")
-})
-
+.rs.uiPrefs$emojiSkintone <- list(
+   get = function() { .rs.getUserPref("emoji_skintone") },
+   set = function(value) { .rs.setUserPref("emoji_skintone", value) }
+)
 
 # Disabled aria-live announcements
 # List of aria-live announcements to disable.
-.rs.addFunction("uiPrefs.disabledAriaLiveAnnouncements", function()
-{
-   .rs.getUserPref("disabled_aria_live_announcements")
-})
-
+.rs.uiPrefs$disabledAriaLiveAnnouncements <- list(
+   get = function() { .rs.getUserPref("disabled_aria_live_announcements") },
+   set = function(value) { .rs.setUserPref("disabled_aria_live_announcements", value) }
+)
 
 # Maximum number of console lines to announce
 # Maximum number of lines of console output announced after a command.
-.rs.addFunction("uiPrefs.screenreaderConsoleAnnounceLimit", function()
-{
-   .rs.getUserPref("screenreader_console_announce_limit")
-})
-
+.rs.uiPrefs$screenreaderConsoleAnnounceLimit <- list(
+   get = function() { .rs.getUserPref("screenreader_console_announce_limit") },
+   set = function(value) { .rs.setUserPref("screenreader_console_announce_limit", value) }
+)
 
 # List of path components ignored by file monitor
 # List of path components; file monitor will ignore paths containing one or more
-.rs.addFunction("uiPrefs.fileMonitorIgnoredComponents", function()
-{
-   .rs.getUserPref("file_monitor_ignored_components")
-})
-
+.rs.uiPrefs$fileMonitorIgnoredComponents <- list(
+   get = function() { .rs.getUserPref("file_monitor_ignored_components") },
+   set = function(value) { .rs.setUserPref("file_monitor_ignored_components", value) }
+)
 
 # Install R package dependencies one at a time
 # Whether to install R package dependencies one at a time.
-.rs.addFunction("uiPrefs.installPkgDepsIndividually", function()
-{
-   .rs.getUserPref("install_pkg_deps_individually")
-})
-
+.rs.uiPrefs$installPkgDepsIndividually <- list(
+   get = function() { .rs.getUserPref("install_pkg_deps_individually") },
+   set = function(value) { .rs.setUserPref("install_pkg_deps_individually", value) }
+)
 
 # R graphics backend
 # R graphics backend.
-.rs.addFunction("uiPrefs.graphicsBackend", function()
-{
-   .rs.getUserPref("graphics_backend")
-})
-
+.rs.uiPrefs$graphicsBackend <- list(
+   get = function() { .rs.getUserPref("graphics_backend") },
+   set = function(value) { .rs.setUserPref("graphics_backend", value) }
+)
 
 # R graphics antialiasing method
 # Type of anti-aliasing to be used for generated R plots.
-.rs.addFunction("uiPrefs.graphicsAntialiasing", function()
-{
-   .rs.getUserPref("graphics_antialiasing")
-})
-
+.rs.uiPrefs$graphicsAntialiasing <- list(
+   get = function() { .rs.getUserPref("graphics_antialiasing") },
+   set = function(value) { .rs.setUserPref("graphics_antialiasing", value) }
+)
 
 # Fixed-width font list for RStudio Server
 # List of fixed-width fonts to check for browser support.
-.rs.addFunction("uiPrefs.browserFixedWidthFonts", function()
-{
-   .rs.getUserPref("browser_fixed_width_fonts")
-})
-
+.rs.uiPrefs$browserFixedWidthFonts <- list(
+   get = function() { .rs.getUserPref("browser_fixed_width_fonts") },
+   set = function(value) { .rs.setUserPref("browser_fixed_width_fonts", value) }
+)
 
 # 
 # The Python type.
-.rs.addFunction("uiPrefs.pythonType", function()
-{
-   .rs.getUserPref("python_type")
-})
-
+.rs.uiPrefs$pythonType <- list(
+   get = function() { .rs.getUserPref("python_type") },
+   set = function(value) { .rs.setUserPref("python_type", value) }
+)
 
 # 
 # The Python version.
-.rs.addFunction("uiPrefs.pythonVersion", function()
-{
-   .rs.getUserPref("python_version")
-})
-
+.rs.uiPrefs$pythonVersion <- list(
+   get = function() { .rs.getUserPref("python_version") },
+   set = function(value) { .rs.setUserPref("python_version", value) }
+)
 
 # 
 # The path to the default Python interpreter.
-.rs.addFunction("uiPrefs.pythonPath", function()
-{
-   .rs.getUserPref("python_path")
-})
-
+.rs.uiPrefs$pythonPath <- list(
+   get = function() { .rs.getUserPref("python_path") },
+   set = function(value) { .rs.setUserPref("python_path", value) }
+)
 
 # Save Retry Timeout
 # The maximum amount of seconds of retry for save operations.
-.rs.addFunction("uiPrefs.saveRetryTimeout", function()
-{
-   .rs.getUserPref("save_retry_timeout")
-})
-
+.rs.uiPrefs$saveRetryTimeout <- list(
+   get = function() { .rs.getUserPref("save_retry_timeout") },
+   set = function(value) { .rs.setUserPref("save_retry_timeout", value) }
+)
 
 # Use R's native pipe operator, |>
 # Whether the Insert Pipe Operator command should use the native R pipe operator,
-.rs.addFunction("uiPrefs.insertNativePipeOperator", function()
-{
-   .rs.getUserPref("insert_native_pipe_operator")
-})
-
+.rs.uiPrefs$insertNativePipeOperator <- list(
+   get = function() { .rs.getUserPref("insert_native_pipe_operator") },
+   set = function(value) { .rs.setUserPref("insert_native_pipe_operator", value) }
+)
 
 # Remember recently used items in Command Palette
 # Whether to keep track of recently used commands in the Command Palette
-.rs.addFunction("uiPrefs.commandPaletteMru", function()
-{
-   .rs.getUserPref("command_palette_mru")
-})
-
+.rs.uiPrefs$commandPaletteMru <- list(
+   get = function() { .rs.getUserPref("command_palette_mru") },
+   set = function(value) { .rs.setUserPref("command_palette_mru", value) }
+)
 
 # Show memory usage in Environment Pane
 # Whether to compute and show memory usage in the Environment Pane
-.rs.addFunction("uiPrefs.showMemoryUsage", function()
-{
-   .rs.getUserPref("show_memory_usage")
-})
-
+.rs.uiPrefs$showMemoryUsage <- list(
+   get = function() { .rs.getUserPref("show_memory_usage") },
+   set = function(value) { .rs.setUserPref("show_memory_usage", value) }
+)
 
 # Interval for requerying memory stats (seconds)
 # How many seconds to wait between automatic requeries of memory statistics (0 to
-.rs.addFunction("uiPrefs.memoryQueryIntervalSeconds", function()
-{
-   .rs.getUserPref("memory_query_interval_seconds")
-})
-
+.rs.uiPrefs$memoryQueryIntervalSeconds <- list(
+   get = function() { .rs.getUserPref("memory_query_interval_seconds") },
+   set = function(value) { .rs.setUserPref("memory_query_interval_seconds", value) }
+)
 
 # Enable terminal Python integration
 # Enable Python terminal hooks. When enabled, the RStudio-configured version of
-.rs.addFunction("uiPrefs.terminalPythonIntegration", function()
-{
-   .rs.getUserPref("terminal_python_integration")
-})
-
+.rs.uiPrefs$terminalPythonIntegration <- list(
+   get = function() { .rs.getUserPref("terminal_python_integration") },
+   set = function(value) { .rs.setUserPref("terminal_python_integration", value) }
+)
 
 # Session protocol debug logging
 # Enable session protocol debug logging showing all session requests and events
-.rs.addFunction("uiPrefs.sessionProtocolDebug", function()
-{
-   .rs.getUserPref("session_protocol_debug")
-})
-
+.rs.uiPrefs$sessionProtocolDebug <- list(
+   get = function() { .rs.getUserPref("session_protocol_debug") },
+   set = function(value) { .rs.setUserPref("session_protocol_debug", value) }
+)
 
 # Automatically activate project Python environments
 # When enabled, if the active project contains a Python virtual environment, then
-.rs.addFunction("uiPrefs.pythonProjectEnvironmentAutomaticActivate", function()
-{
-   .rs.getUserPref("python_project_environment_automatic_activate")
-})
-
+.rs.uiPrefs$pythonProjectEnvironmentAutomaticActivate <- list(
+   get = function() { .rs.getUserPref("python_project_environment_automatic_activate") },
+   set = function(value) { .rs.setUserPref("python_project_environment_automatic_activate", value) }
+)
 
 # Check values in the Environment pane for null external pointers
 # further.
-.rs.addFunction("uiPrefs.checkNullExternalPointers", function()
-{
-   .rs.getUserPref("check_null_external_pointers")
-})
-
+.rs.uiPrefs$checkNullExternalPointers <- list(
+   get = function() { .rs.getUserPref("check_null_external_pointers") },
+   set = function(value) { .rs.setUserPref("check_null_external_pointers", value) }
+)
 
 # User Interface Language:
 # The IDE's user-interface language.
-.rs.addFunction("uiPrefs.uiLanguage", function()
-{
-   .rs.getUserPref("ui_language")
-})
-
+.rs.uiPrefs$uiLanguage <- list(
+   get = function() { .rs.getUserPref("ui_language") },
+   set = function(value) { .rs.setUserPref("ui_language", value) }
+)
 
 # Auto hide menu bar
 # Hide desktop menu bar until Alt key is pressed.
-.rs.addFunction("uiPrefs.autohideMenubar", function()
-{
-   .rs.getUserPref("autohide_menubar")
-})
-
+.rs.uiPrefs$autohideMenubar <- list(
+   get = function() { .rs.getUserPref("autohide_menubar") },
+   set = function(value) { .rs.setUserPref("autohide_menubar", value) }
+)
 
 # Use native file and message dialog boxes
 # Whether RStudio Desktop will use the operating system's native File and Message
-.rs.addFunction("uiPrefs.nativeFileDialogs", function()
-{
-   .rs.getUserPref("native_file_dialogs")
-})
-
+.rs.uiPrefs$nativeFileDialogs <- list(
+   get = function() { .rs.getUserPref("native_file_dialogs") },
+   set = function(value) { .rs.setUserPref("native_file_dialogs", value) }
+)
 
 # Discard pending console input on error
 # When enabled, any pending console input will be discarded when an (uncaught) R
-.rs.addFunction("uiPrefs.discardPendingConsoleInputOnError", function()
-{
-   .rs.getUserPref("discard_pending_console_input_on_error")
-})
-
+.rs.uiPrefs$discardPendingConsoleInputOnError <- list(
+   get = function() { .rs.getUserPref("discard_pending_console_input_on_error") },
+   set = function(value) { .rs.setUserPref("discard_pending_console_input_on_error", value) }
+)
 
 # Editor scroll speed sensitivity
 # An integer value, 1-200, to set the editor scroll multiplier. The higher the
-.rs.addFunction("uiPrefs.editorScrollMultiplier", function()
-{
-   .rs.getUserPref("editor_scroll_multiplier")
-})
-
+.rs.uiPrefs$editorScrollMultiplier <- list(
+   get = function() { .rs.getUserPref("editor_scroll_multiplier") },
+   set = function(value) { .rs.setUserPref("editor_scroll_multiplier", value) }
+)
 
 # Text rendering
 # Control how text is rendered within the IDE surface.
-.rs.addFunction("uiPrefs.textRendering", function()
-{
-   .rs.getUserPref("text_rendering")
-})
-
+.rs.uiPrefs$textRendering <- list(
+   get = function() { .rs.getUserPref("text_rendering") },
+   set = function(value) { .rs.setUserPref("text_rendering", value) }
+)
 
 # Disable Electron accessibility support
 # Disable Electron accessibility support.
-.rs.addFunction("uiPrefs.disableRendererAccessibility", function()
-{
-   .rs.getUserPref("disable_renderer_accessibility")
-})
-
+.rs.uiPrefs$disableRendererAccessibility <- list(
+   get = function() { .rs.getUserPref("disable_renderer_accessibility") },
+   set = function(value) { .rs.setUserPref("disable_renderer_accessibility", value) }
+)
 
 # Enable GitHub Copilot
 # When enabled, RStudio will use GitHub Copilot to provide code suggestions.
-.rs.addFunction("uiPrefs.copilotEnabled", function()
-{
-   .rs.getUserPref("copilot_enabled")
-})
-
+.rs.uiPrefs$copilotEnabled <- list(
+   get = function() { .rs.getUserPref("copilot_enabled") },
+   set = function(value) { .rs.setUserPref("copilot_enabled", value) }
+)
 
 # Show Copilot code suggestions:
 # Control when Copilot code suggestions are displayed in the editor.
-.rs.addFunction("uiPrefs.copilotCompletionsTrigger", function()
-{
-   .rs.getUserPref("copilot_completions_trigger")
-})
-
+.rs.uiPrefs$copilotCompletionsTrigger <- list(
+   get = function() { .rs.getUserPref("copilot_completions_trigger") },
+   set = function(value) { .rs.setUserPref("copilot_completions_trigger", value) }
+)
 
 # GitHub Copilot completions delay
 # The delay (in milliseconds) before GitHub Copilot completions are requested
-.rs.addFunction("uiPrefs.copilotCompletionsDelay", function()
-{
-   .rs.getUserPref("copilot_completions_delay")
-})
-
+.rs.uiPrefs$copilotCompletionsDelay <- list(
+   get = function() { .rs.getUserPref("copilot_completions_delay") },
+   set = function(value) { .rs.setUserPref("copilot_completions_delay", value) }
+)
 
 # Pressing Tab key will prefer inserting:
 # Control the behavior of the Tab key when both Copilot code suggestions and
-.rs.addFunction("uiPrefs.copilotTabKeyBehavior", function()
-{
-   .rs.getUserPref("copilot_tab_key_behavior")
-})
-
+.rs.uiPrefs$copilotTabKeyBehavior <- list(
+   get = function() { .rs.getUserPref("copilot_tab_key_behavior") },
+   set = function(value) { .rs.setUserPref("copilot_tab_key_behavior", value) }
+)
 
 # Index project files with GitHub Copilot
 # When enabled, RStudio will index project files with GitHub Copilot.
-.rs.addFunction("uiPrefs.copilotIndexingEnabled", function()
-{
-   .rs.getUserPref("copilot_indexing_enabled")
-})
-
+.rs.uiPrefs$copilotIndexingEnabled <- list(
+   get = function() { .rs.getUserPref("copilot_indexing_enabled") },
+   set = function(value) { .rs.setUserPref("copilot_indexing_enabled", value) }
+)
 
 # 
 # User-provided name for the currently opened R project.
-.rs.addFunction("uiPrefs.projectName", function()
-{
-   .rs.getUserPref("project_name")
-})
-
+.rs.uiPrefs$projectName <- list(
+   get = function() { .rs.getUserPref("project_name") },
+   set = function(value) { .rs.setUserPref("project_name", value) }
+)
 
 # Default working directory for background jobs
 # Default working directory in background job dialog.
-.rs.addFunction("uiPrefs.runBackgroundJobDefaultWorkingDir", function()
-{
-   .rs.getUserPref("run_background_job_default_working_dir")
-})
-
+.rs.uiPrefs$runBackgroundJobDefaultWorkingDir <- list(
+   get = function() { .rs.getUserPref("run_background_job_default_working_dir") },
+   set = function(value) { .rs.setUserPref("run_background_job_default_working_dir", value) }
+)
 
 # Code formatter
 # The formatter to use when reformatting code.
-.rs.addFunction("uiPrefs.codeFormatter", function()
-{
-   .rs.getUserPref("code_formatter")
-})
-
+.rs.uiPrefs$codeFormatter <- list(
+   get = function() { .rs.getUserPref("code_formatter") },
+   set = function(value) { .rs.setUserPref("code_formatter", value) }
+)
 
 # Use strict transformers when formatting code
 # When set, strict transformers will be used when formatting code. See the
-.rs.addFunction("uiPrefs.codeFormatterStylerStrict", function()
-{
-   .rs.getUserPref("code_formatter_styler_strict")
-})
-
+.rs.uiPrefs$codeFormatterStylerStrict <- list(
+   get = function() { .rs.getUserPref("code_formatter_styler_strict") },
+   set = function(value) { .rs.setUserPref("code_formatter_styler_strict", value) }
+)
 
 # 
 # The external command to be used when reformatting code.
-.rs.addFunction("uiPrefs.codeFormatterExternalCommand", function()
-{
-   .rs.getUserPref("code_formatter_external_command")
-})
-
+.rs.uiPrefs$codeFormatterExternalCommand <- list(
+   get = function() { .rs.getUserPref("code_formatter_external_command") },
+   set = function(value) { .rs.setUserPref("code_formatter_external_command", value) }
+)
 
 # Reformat documents on save
 # When set, the selected formatter will be used to reformat documents on save.
-.rs.addFunction("uiPrefs.reformatOnSave", function()
-{
-   .rs.getUserPref("reformat_on_save")
-})
-
+.rs.uiPrefs$reformatOnSave <- list(
+   get = function() { .rs.getUserPref("reformat_on_save") },
+   set = function(value) { .rs.setUserPref("reformat_on_save", value) }
+)
 
 # Default project user data directory
 # The folder in which RStudio should store project .Rproj.user data.
-.rs.addFunction("uiPrefs.projectUserDataDirectory", function()
-{
-   .rs.getUserPref("project_user_data_directory")
-})
-
+.rs.uiPrefs$projectUserDataDirectory <- list(
+   get = function() { .rs.getUserPref("project_user_data_directory") },
+   set = function(value) { .rs.setUserPref("project_user_data_directory", value) }
+)
 
