@@ -1025,7 +1025,7 @@ assign(x = ".rs.acCompletionTypes",
       ""
    
    # arguments that are already used by the matched call
-   includeAlreadyUsed <- .rs.readUserPref("code_completion_include_already_used", default = FALSE)
+   includeAlreadyUsed <- .rs.uiPrefs$codeCompletionIncludeAlreadyUsed$get()
    keep <- if (includeAlreadyUsed)
    {
       rep.int(TRUE, length(formals$formals))
