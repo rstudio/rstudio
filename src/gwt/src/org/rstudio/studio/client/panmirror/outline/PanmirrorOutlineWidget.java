@@ -20,6 +20,7 @@ package org.rstudio.studio.client.panmirror.outline;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
@@ -102,7 +103,23 @@ public class PanmirrorOutlineWidget extends Composite
                updateOutline(items_);
             }
          });
+         
+         int fontSize = prefs.get().documentOutlineFontSize().getValue();
+         updateFontSize(fontSize);
+         prefs.get().documentOutlineFontSize().bind(new CommandWithArg<Integer>()
+         {
+            @Override
+            public void execute(Integer fontSize)
+            {
+               updateFontSize(fontSize);
+            }
+         });
       });
+   }
+   
+   private void updateFontSize(int fontSize)
+   {
+      panel_.getElement().getStyle().setFontSize(fontSize, Unit.PT);
    }
   
    @Override

@@ -1900,6 +1900,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The font size to use for items in the document outline.
+    */
+   public PrefValue<Integer> documentOutlineFontSize()
+   {
+      return integer(
+         "document_outline_font_size",
+         _constants.documentOutlineFontSizeTitle(), 
+         _constants.documentOutlineFontSizeDescription(), 
+         9);
+   }
+
+   /**
     * Whether to automatically run an R Markdown document's Setup chunk before running other chunks.
     */
    public PrefValue<Boolean> autoRunSetupChunk()
@@ -3986,6 +3998,8 @@ public class UserPrefsAccessor extends Prefs
          rmdChunkOutputInline().setValue(layer, source.getBool("rmd_chunk_output_inline"));
       if (source.hasKey("show_doc_outline_rmd"))
          showDocOutlineRmd().setValue(layer, source.getBool("show_doc_outline_rmd"));
+      if (source.hasKey("document_outline_font_size"))
+         documentOutlineFontSize().setValue(layer, source.getInteger("document_outline_font_size"));
       if (source.hasKey("auto_run_setup_chunk"))
          autoRunSetupChunk().setValue(layer, source.getBool("auto_run_setup_chunk"));
       if (source.hasKey("hide_console_on_chunk_execute"))
@@ -4376,6 +4390,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(publishCaBundle());
       prefs.add(rmdChunkOutputInline());
       prefs.add(showDocOutlineRmd());
+      prefs.add(documentOutlineFontSize());
       prefs.add(autoRunSetupChunk());
       prefs.add(hideConsoleOnChunkExecute());
       prefs.add(executionBehavior());

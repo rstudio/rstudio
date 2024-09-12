@@ -1827,7 +1827,7 @@ public class RCompletionManager implements CompletionManager
             // Insert tab if tab auto completion was disabled or the line is all whitespace.
             if (lastInputWasTab && (lineIsWhitespace || !userPrefs_.tabCompletion().getValue()))
             {
-               docDisplay_.insertCode("\t");
+               docDisplay_.blockIndent();
                return;
             }
             

@@ -32,10 +32,10 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
-public class CompilePdfPreferencesPane extends PreferencesPane
+public class SweavePreferencesPane extends PreferencesPane
 {
    @Inject
-   public CompilePdfPreferencesPane(UserPrefs prefs,
+   public SweavePreferencesPane(UserPrefs prefs,
                                     PreferencesDialogResources res)
    {
       prefs_ = prefs;

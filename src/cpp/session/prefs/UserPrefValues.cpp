@@ -1740,6 +1740,19 @@ core::Error UserPrefValues::setShowDocOutlineRmd(bool val)
 }
 
 /**
+ * The font size to use for items in the document outline.
+ */
+int UserPrefValues::documentOutlineFontSize()
+{
+   return readPref<int>("document_outline_font_size");
+}
+
+core::Error UserPrefValues::setDocumentOutlineFontSize(int val)
+{
+   return writePref("document_outline_font_size", val);
+}
+
+/**
  * Whether to automatically run an R Markdown document's Setup chunk before running other chunks.
  */
 bool UserPrefValues::autoRunSetupChunk()
@@ -3525,6 +3538,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPublishCaBundle,
       kRmdChunkOutputInline,
       kShowDocOutlineRmd,
+      kDocumentOutlineFontSize,
       kAutoRunSetupChunk,
       kHideConsoleOnChunkExecute,
       kExecutionBehavior,

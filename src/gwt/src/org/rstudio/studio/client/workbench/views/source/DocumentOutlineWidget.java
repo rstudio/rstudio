@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.aria.client.OrientationValue;
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Counter;
@@ -38,6 +36,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Scop
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
+import com.google.gwt.aria.client.OrientationValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -244,6 +244,29 @@ public class DocumentOutlineWidget extends Composite
    private void initialize(UserPrefs uiPrefs)
    {
       userPrefs_ = uiPrefs;
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            int fontSize = userPrefs_.documentOutlineFontSize().getValue();
+            updateFontSize(fontSize);
+            userPrefs_.documentOutlineFontSize().bind(new CommandWithArg<Integer>()
+            {
+               @Override
+               public void execute(Integer fontSize)
+               {
+                  updateFontSize(fontSize);
+               }
+            });
+         }
+      });
+   }
+   
+   private void updateFontSize(int fontSize)
+   {
+      container_.getElement().getStyle().setFontSize(fontSize, Unit.PT);
    }
 
    public DocumentOutlineWidget(TextEditingTarget target)
