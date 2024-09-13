@@ -903,14 +903,9 @@ Scroller.prototype = /** @lends Scroller.prototype */{
 	_fnScrollForce: function ()
 	{
 		var heights = this.s.heights;
-		var max = 1000000;
 
 		heights.virtual = heights.row * this.s.dt.fnRecordsDisplay();
 		heights.scroll = heights.virtual;
-
-		if ( heights.scroll > max ) {
-			heights.scroll = max;
-		}
 
 		this.dom.force.style.height = heights.scroll+"px";
 	},
