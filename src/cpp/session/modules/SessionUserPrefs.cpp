@@ -225,6 +225,13 @@ SEXP rs_writeUserPref(SEXP prefName, SEXP value)
    return R_NilValue;
 }
 
+SEXP rs_clearUserPref(SEXP prefNameSEXP)
+{
+   std::string prefName = r::sexp::asString(prefNameSEXP);
+   Error error = userPrefs().clearValue(prefName);
+   return error ? R_FalseValue : R_TrueValue;
+}
+
 SEXP rs_readApiPref(SEXP prefName)
 {
    return rs_readPref(apiPrefs(), prefName);
@@ -398,6 +405,7 @@ core::Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_readUserPref);
    RS_REGISTER_CALL_METHOD(rs_writeUserPref);
+   RS_REGISTER_CALL_METHOD(rs_clearUserPref);
    RS_REGISTER_CALL_METHOD(rs_readApiPref);
    RS_REGISTER_CALL_METHOD(rs_writeApiPref);
    RS_REGISTER_CALL_METHOD(rs_readUserState);
@@ -414,6 +422,7 @@ core::Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionUserPrefValues.R"))
       (bind(registerRpcMethod, "set_user_prefs", setPreferences))
       (bind(registerRpcMethod, "set_user_state", setState))
       (bind(registerRpcMethod, "edit_user_prefs", editPreferences))

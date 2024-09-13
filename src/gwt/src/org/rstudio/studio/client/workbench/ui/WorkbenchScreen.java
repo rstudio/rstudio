@@ -57,7 +57,7 @@ import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesP
 import org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.SweavePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.ConsolePreferencesPane;
-import org.rstudio.studio.client.workbench.prefs.views.EditingPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.CodePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.PackagesPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPane;
@@ -409,7 +409,7 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onShowCodeOptions()
    {
-      optionsLoader_.showOptions(EditingPreferencesPane.class, true);
+      optionsLoader_.showOptions(CodePreferencesPane.class, true);
    }
 
    @Handler

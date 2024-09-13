@@ -622,6 +622,19 @@ core::Error UserPrefValues::setCodeCompletionCharacters(int val)
 }
 
 /**
+ * When set, RStudio will include all function arguments in the completion list, even if those arguments have already appear to be used in the current function invocation.
+ */
+bool UserPrefValues::codeCompletionIncludeAlreadyUsed()
+{
+   return readPref<bool>("code_completion_include_already_used");
+}
+
+core::Error UserPrefValues::setCodeCompletionIncludeAlreadyUsed(bool val)
+{
+   return writePref("code_completion_include_already_used", val);
+}
+
+/**
  * Whether to show function signature tooltips during autocompletion.
  */
 bool UserPrefValues::showFunctionSignatureTooltips()
@@ -3452,6 +3465,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kConsoleCodeCompletion,
       kCodeCompletionDelay,
       kCodeCompletionCharacters,
+      kCodeCompletionIncludeAlreadyUsed,
       kShowFunctionSignatureTooltips,
       kShowDataPreview,
       kShowDiagnosticsR,

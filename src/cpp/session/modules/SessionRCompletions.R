@@ -1025,8 +1025,16 @@ assign(x = ".rs.acCompletionTypes",
       ""
    
    # arguments that are already used by the matched call
-   used <- names(as.list(matchedCall)[-1]) 
-   keep <- !names(formals$formals) %in% used
+   includeAlreadyUsed <- .rs.uiPrefs$codeCompletionIncludeAlreadyUsed$get()
+   keep <- if (includeAlreadyUsed)
+   {
+      rep.int(TRUE, length(formals$formals))
+   }
+   else
+   {
+      used <- names(as.list(matchedCall)[-1]) 
+      keep <- !names(formals$formals) %in% used
+   }
    
    # TODO: Should we include aesthetics for 'geom_*()' functions?
    # for 'geom_' functions, try to get aesthetic names
@@ -2734,6 +2742,7 @@ assign(x = ".rs.acCompletionTypes",
    ## Other special cases (but we may still want completions from
    ## other contexts)
    triedGgplot2Completions <- FALSE
+   didGetFunctionCompletions <- FALSE
    
    # attr
    completions <- if (string[[1]] == "attr")
@@ -2763,9 +2772,13 @@ assign(x = ".rs.acCompletionTypes",
          if (lhs %in% c("aes") || grepl("^facet_", lhs))
          {
             triedGgplot2Completions <- TRUE
+            didGetFunctionCompletions <- TRUE
             completions <- tryCatch(
                .rs.getCompletionsGgplot2(line, token, contextData, statementBounds, documentId, envir),
-               error = function(e) .rs.emptyCompletions(token)
+               error = function(e) {
+                  didGetFunctionCompletions <<- FALSE
+                  .rs.emptyCompletions(token)
+               }
             )
          }
       }
@@ -2813,8 +2826,6 @@ assign(x = ".rs.acCompletionTypes",
    # otherwise, look through the contexts and pick up completions
    else
    {
-      didGetFunctionCompletions <- FALSE
-      
       for (i in seq_along(string))
       {
          # Don't provide function completions if we just provided

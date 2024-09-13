@@ -331,17 +331,24 @@
 })
 
 .rs.addFunction("readUserPref", .rs.readUiPref)
+.rs.addFunction("getUserPref", .rs.readUiPref)
 
 .rs.addFunction("writeUiPref", function(prefName, value) {
-  # some preferences can take values that are lists of scalars; ensure the deserializer treats lists
-  # accordingly                 
-  if (is.list(value)) {
-     value <- .rs.scalarListFromList(value)
-  }
-  .rs.writePrefInternal("rs_writeUserPref", prefName, value)
+   # some preferences can take values that are lists of scalars
+   # ensure the deserializer treats lists accordingly
+   if (is.list(value)) {
+      value <- .rs.scalarListFromList(value)
+   }
+   
+   .rs.writePrefInternal("rs_writeUserPref", prefName, value)
 })
 
 .rs.addFunction("writeUserPref", .rs.writeUiPref)
+.rs.addFunction("setUserPref", .rs.writeUiPref)
+
+.rs.addFunction("clearUserPref", function(prefName) {
+   .Call("rs_clearUserPref", as.character(prefName), PACKAGE = "(embedding)")
+})
 
 .rs.addFunction("readProjectPref", function(prefName) {
    .rs.readPrefInternal("rs_readProjectPref", prefName)
