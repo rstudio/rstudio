@@ -23,6 +23,7 @@
 #### RStudio
 - "Run All" now only executes R chunks when "Chunk Output in Console" is set (#11995)
 - Fixed an issue where the chunk options popup didn't recognize chunk labels preceded by a comma (#15156)
+- Fixed an issue where an R Markdown chunk label containing dashes was truncated in Visual Editor (#15162)
 - Fixed an issue in the data viewer where list-column cell navigation worked incorrectly when a search filter was active (#9960)
 - Fixed an issue where debugger breakpoints did not function correctly in some cases with R 4.4 (#15072)
 - Fixed an issue where autocompletion results within piped expressions were incorrect in some cases (#13611)

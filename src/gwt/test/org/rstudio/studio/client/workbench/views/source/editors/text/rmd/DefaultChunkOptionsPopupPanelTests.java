@@ -22,6 +22,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display
 
 import java.util.HashMap;
 
+// ------------------------------------------------------
+// Suggest keeping these tests in sync with those in 
+// RChunkHeaderParserTests.java, currently a
+// separate implemention of chunk header parsing.
+// ------------------------------------------------------
+
 public class DefaultChunkOptionsPopupPanelTests extends GWTTestCase
 {
    @Override
@@ -51,6 +57,19 @@ public class DefaultChunkOptionsPopupPanelTests extends GWTTestCase
       DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
 
       assertEquals("label", extraInfo.chunkLabel);
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+   }
+
+   public void testLabelWithDashes()
+   {
+      String header = "```{r, label-is-super, echo=TRUE}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("label-is-super", extraInfo.chunkLabel);
       assertEquals("r", extraInfo.chunkPreamble);
       assertTrue(pieces.containsKey("echo"));
       assertEquals("TRUE", pieces.get("echo"));
