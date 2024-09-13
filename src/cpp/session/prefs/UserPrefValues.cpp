@@ -622,7 +622,7 @@ core::Error UserPrefValues::setCodeCompletionCharacters(int val)
 }
 
 /**
- * When set, RStudio will include all function arguments in the completion list, even if those arguments have already appear to be used in the current function invocation.
+ * When set, RStudio will include all function arguments in the completion list, even if those arguments have already appeared to be used in the current function invocation.
  */
 bool UserPrefValues::codeCompletionIncludeAlreadyUsed()
 {

@@ -441,8 +441,8 @@
 # Include all function arguments in completion list
 #
 # When set, RStudio will include all function arguments in the completion list,
-# even if those arguments have already appear to be used in the current function
-# invocation.
+# even if those arguments have already appeared to be used in the current
+# function invocation.
 .rs.uiPrefs$codeCompletionIncludeAlreadyUsed <- list(
    get = function() { .rs.getUserPref("code_completion_include_already_used") },
    set = function(value) { .rs.setUserPref("code_completion_include_already_used", value) },
@@ -2427,4 +2427,3 @@
    set = function(value) { .rs.setUserPref("project_user_data_directory", value) },
    clear = function() { .rs.clearUserPref("project_user_data_directory") }
 )
-

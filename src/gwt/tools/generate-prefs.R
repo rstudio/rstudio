@@ -24,6 +24,7 @@
 # 4. Commit the .cpp, .hpp, and .java files the script changes
 
 library(jsonlite)
+library(renv)
 library(stringi)
 
 writeLines("Generating preferences...")
@@ -92,7 +93,7 @@ generate <- function(schemaPath, className) {
    # Components
    
    # R starts with copyright header
-   r <- .rs.heredoc('
+   r <- renv:::heredoc('
       #
       # SessionUserPrefValues.R
       #
@@ -381,7 +382,7 @@ generate <- function(schemaPath, className) {
       java <- paste0(java, javaenum(def, pref, type, "   "))
       
       # generate code for R wrapper
-      fmt <- .rs.heredoc('
+      fmt <- renv:::heredoc('
          %s
          #
          %s
@@ -395,7 +396,7 @@ generate <- function(schemaPath, className) {
       rtitle <- paste(paste("#", strwrap(def$title, width = 80)), collapse = "\n")
       rdesc <- paste(paste("#", strwrap(def$description, width = 80)), collapse = "\n")
       rcode <- sprintf(fmt, rtitle, rdesc, camel, pref, pref, pref)
-      r <- paste(r, rcode, sep = "\n")
+      r <- paste(r, rcode, sep = "\n\n")
    }
    
    # Close off blocks and lists
