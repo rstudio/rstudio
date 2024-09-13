@@ -204,3 +204,19 @@ test_that("code_completion_include_already_used works as expected", {
    })
    
 })
+
+# https://github.com/rstudio/rstudio/issues/15161
+test_that("dplyr piped variable names are properly quoted / unquoted", {
+   
+   contents <- .rs.heredoc('
+      library(dplyr)
+      mtcars |> rename(`zzz A` = 1, `zzz B` = 2) |> select()
+   ')
+   
+   remote$documentOpen(ext = ".R", contents = contents)
+   editor <- remote$editorGetInstance()
+   
+   editor$gotoLine(2, 53)
+   completions <- remote$completionsRequest("zzz")
+   expect_equal(completions, c("zzz A", "zzz B"))
+})
