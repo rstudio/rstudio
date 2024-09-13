@@ -18,6 +18,12 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Map;
 
+// ------------------------------------------------------
+// Suggest keeping these tests in sync with those in 
+// DefaultChunkOptionsPopupPanelTests.java, currently a
+// separate implemention of chunk header parsing.
+// ------------------------------------------------------
+
 public class RChunkHeaderParserTests extends GWTTestCase
 {
    @Override
@@ -35,7 +41,29 @@ public class RChunkHeaderParserTests extends GWTTestCase
       assertTrue(pieces.get("label").contentEquals("\"label\""));
       assertTrue(pieces.get("echo").contentEquals("TRUE"));
    }
-   
+
+   public void testCommaBeforeChunkLabel()
+   {
+      String header = "```{r, label, echo=TRUE}";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue(pieces.containsKey("label"));
+      assertEquals(header, "\"label\"", pieces.get("label"));
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+   }
+
+   public void testLabelWithDashes()
+   {
+      String header = "```{r, label-is-super, echo=TRUE}";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue(pieces.containsKey("label"));
+      assertEquals(header, "\"label-is-super\"", pieces.get("label"));
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+   }
+
    public void testNoCommaBeforeFirstItem()
    {
       String header = "```{r echo=TRUE}";
