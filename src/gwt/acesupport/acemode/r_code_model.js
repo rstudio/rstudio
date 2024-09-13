@@ -322,6 +322,15 @@ var RCodeModel = function(session, tokenizer,
       "outer_join", "full_join"
    ];
 
+   var unquote = function(value) {
+      var match = /^([`'"])(.*)\1$/.exec(value);
+      if (match != null) {
+         var replace = new RegExp("\\\\" + match[1]);
+         return match[2].replace(replace, match[1]);
+      }
+      return value;
+   }
+
    // Add arguments from a function call in a chain.
    //
    //     select(x, y = 1)
@@ -341,7 +350,10 @@ var RCodeModel = function(session, tokenizer,
          return false;
 
       if (cursor.hasType("identifier"))
-         data.additionalArgs.push(cursor.currentValue());
+      {
+         var value = unquote(cursor.currentValue());
+         data.additionalArgs.push(value);
+      }
 
       if (fnName === "rename")
       {
@@ -353,7 +365,8 @@ var RCodeModel = function(session, tokenizer,
             if (!cursor.moveToNextToken())
                return false;
 
-            data.excludeArgs.push(cursor.currentValue());
+            var value = unquote(cursor.currentValue());
+            data.excludeArgs.push(value);
          }
       }
 
@@ -382,7 +395,10 @@ var RCodeModel = function(session, tokenizer,
                return false;
 
             if (cursor.hasType("identifier"))
-               data.additionalArgs.push(cursor.currentValue());
+            {
+               var value = unquote(cursor.currentValue());
+               data.additionalArgs.push(value);
+            }
 
             if (!cursor.moveToNextToken())
                return false;
@@ -393,8 +409,12 @@ var RCodeModel = function(session, tokenizer,
                {
                   if (!cursor.moveToNextToken())
                      return false;
+
                   if (cursor.hasType("identifier"))
-                     data.excludeArgs.push(cursor.currentValue());
+                  {
+                     var value = unquote(cursor.currentValue());
+                     data.excludeArgs.push(value);
+                  }
                }
 
             }
