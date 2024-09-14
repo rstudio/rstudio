@@ -57,6 +57,7 @@ RUN apt-get update && \
     unzip \
     uuid-dev \
     valgrind \
+    vim \
     wget \
     whois \
     xvfb \
