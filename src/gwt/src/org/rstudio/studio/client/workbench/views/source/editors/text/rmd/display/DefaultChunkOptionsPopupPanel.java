@@ -136,12 +136,24 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          return "";
 
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
-      if (firstSpaceIdx == -1)
-         return extractedChunkHeader;
-
       int firstCommaIdx = extractedChunkHeader.indexOf(',');
+
+      if (firstSpaceIdx == -1 && firstCommaIdx == -1)
+      {
+         // entire string is the preamble, e.g. "{r}"
+         return extractedChunkHeader;
+      }
+
       if (firstCommaIdx == -1)
-         firstCommaIdx = extractedChunkHeader.length();
+      {
+         // {r foo}
+         firstCommaIdx = firstSpaceIdx;
+      }
+      else if (firstSpaceIdx == -1)
+      {
+         // {r,foo}
+         firstSpaceIdx = firstCommaIdx;
+      }
 
       String label = StringUtil.substring(extractedChunkHeader,
             0, Math.min(firstSpaceIdx, firstCommaIdx)).trim();
@@ -178,7 +190,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       if (pattern == null) return;
 
-      Match match = pattern.match(line,  0);
+      Match match = pattern.match(line, 0);
       if (match == null) return;
 
       String extracted = match.getGroup(1);

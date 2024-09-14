@@ -36,9 +36,11 @@ public class RChunkHeaderParserTests extends GWTTestCase
    {
       String header = "```{r label, echo=TRUE}";
       Map<String, String> pieces = RChunkHeaderParser.parse(header);
+      assertTrue(pieces.containsKey("engine"));
       assertTrue(pieces.containsKey("label"));
       assertTrue(pieces.containsKey("echo"));
-      assertTrue(pieces.get("label").contentEquals("\"label\""));
+      assertEquals("\"r\"", pieces.get("engine"));
+      assertEquals("\"label\"", pieces.get("label"));
       assertTrue(pieces.get("echo").contentEquals("TRUE"));
    }
 
@@ -46,16 +48,39 @@ public class RChunkHeaderParserTests extends GWTTestCase
    {
       String header = "```{r, label, echo=TRUE}";
       Map<String, String> pieces = RChunkHeaderParser.parse(header);
-
+      assertTrue(pieces.containsKey("engine"));
       assertTrue(pieces.containsKey("label"));
-      assertEquals(header, "\"label\"", pieces.get("label"));
       assertTrue(pieces.containsKey("echo"));
-      assertEquals("TRUE", pieces.get("echo"));
+      assertEquals("\"r\"", pieces.get("engine"));
+      assertEquals("\"label\"", pieces.get("label"));
+      assertTrue(pieces.get("echo").contentEquals("TRUE"));
    }
 
    public void testLabelWithDashes()
    {
       String header = "```{r, label-is-super, echo=TRUE}";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue(pieces.containsKey("label"));
+      assertEquals(header, "\"label-is-super\"", pieces.get("label"));
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+   }
+
+   public void testSingleQuotedLabel()
+   {
+      String header = "```{r, 'label-is-super', echo=TRUE}";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue(pieces.containsKey("label"));
+      assertEquals(header, "\'label-is-super\'", pieces.get("label"));
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+   }
+
+   public void testDoubleQuotedLabel()
+   {
+      String header = "```{r, \"label-is-super\", echo=TRUE}";
       Map<String, String> pieces = RChunkHeaderParser.parse(header);
 
       assertTrue(pieces.containsKey("label"));
@@ -90,4 +115,72 @@ public class RChunkHeaderParserTests extends GWTTestCase
       assertTrue(pieces.get("message").contentEquals("FALSE"));
    }
 
+   public void testSimpleQuotedValue()
+   {
+      String header = "```{r, fig.cap='hello', message=FALSE}";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue("contains \"fig.cap\"", pieces.containsKey("fig.cap"));
+      assertEquals("\'hello\'", pieces.get("fig.cap"));
+      assertTrue(pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+   }
+
+   public void testQuotedEqualsSign()
+   {
+      String header = "```{r, fig.cap='hello=world', message=FALSE}";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue("contains \"fig.cap\"", pieces.containsKey("fig.cap"));
+      assertEquals("\'hello=world\'", pieces.get("fig.cap"));
+      assertTrue(pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+   }
+
+   public void testTrailingComma()
+   {
+      String header = "```{r fred, echo=TRUE, message=FALSE,}";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue(pieces.containsKey("engine"));
+      assertEquals(header, "\"r\"", pieces.get("engine"));
+      assertTrue(pieces.containsKey("label"));
+      assertEquals(header, "\"fred\"", pieces.get("label"));
+      assertTrue("contains echo", pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+      assertTrue(pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+      assertEquals(4, pieces.size());
+   }
+
+   public void testTrailingCommaAndSpace()
+   {
+      String header = "```{r fred, echo=TRUE, message=FALSE, }";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue(pieces.containsKey("engine"));
+      assertEquals(header, "\"r\"", pieces.get("engine"));
+      assertTrue(pieces.containsKey("label"));
+      assertEquals(header, "\"fred\"", pieces.get("label"));
+      assertTrue("contains echo", pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+      assertTrue(pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+      assertEquals(4, pieces.size());
+   }
+
+   public void testNoSpacesAfterCommas()
+   {
+      String header = "```{r,zoom,echo=TRUE,message=FALSE}";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue(pieces.containsKey("engine"));
+      assertEquals(header, "\"r\"", pieces.get("engine"));
+      assertTrue(pieces.containsKey("label"));
+      assertEquals(header, "\"zoom\"", pieces.get("label"));
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+      assertTrue(pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+   }
 }
