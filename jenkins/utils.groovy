@@ -246,26 +246,12 @@ def updateDailyRedirects(String path) {
 }
 
 /**
-  * This method exists to quickly reenable our builds with 
-  * a bionic docker image, however our builds still need to
-  * be labeled focal. This is to support Debian 10 and
-  * should be retired once Debian 10 falls out of support
-  */
-def getDockerBuildOs(String osName) {
-  if(osName == "focal"){
-    return "bionic"
-  } else {
-    return osName
-  }
-}
-
-/**
   * Don't try to change RSTUDIO_VERSION_FLOWER to env.RSTUDIO_VERSION_FLOWER
   * in order for it to match, because for some reason that causes it to
   * resolve to "null". I don't know why.
   */
 def getDockerTag() {
-  return "${IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
+  return "${IS_PRO ? 'pro-' : ''}${env.OS}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
 }
 
 /**
