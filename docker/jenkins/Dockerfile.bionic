@@ -58,7 +58,6 @@ RUN apt-get update && \
     unzip \
     uuid-dev \
     valgrind \
-    vim \
     wget \
     xvfb \
     zlib1g-dev
