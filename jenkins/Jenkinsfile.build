@@ -134,7 +134,7 @@ pipeline {
             environment {
               GITHUB_LOGIN = credentials('posit-jenkins')
               DOCKER_TAG = utils.getDockerTag()
-              DOCKER_FILE = "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
+              DOCKER_FILE = "docker/jenkins/Dockerfile.${env.os}"
             }
 
             steps {
