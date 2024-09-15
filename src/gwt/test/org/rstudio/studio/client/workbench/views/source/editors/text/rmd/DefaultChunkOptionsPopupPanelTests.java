@@ -218,18 +218,18 @@ public class DefaultChunkOptionsPopupPanelTests extends GWTTestCase
       assertEquals("FALSE", pieces.get("message"));
    }
 
-   // public void testSpacesAroundEqualsSign()
-   // {
-   //    String header = "```{r, spaces, echo = {1 + 1}, message = FALSE}";
-   //    ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
-   //    HashMap<String, String> pieces = new HashMap<String, String>();
-   //    DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+   public void testSpacesAroundEqualsSign()
+   {
+      String header = "```{r, spaces, echo = {1 + 1}, message = FALSE}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
 
-   //    assertEquals("r", extraInfo.chunkPreamble);
-   //    assertEquals("spaces", extraInfo.chunkLabel);
-   //    assertTrue("contains key \"echo\"", pieces.containsKey("echo"));
-   //    assertEquals("{1 + 1}", pieces.get("echo"));
-   //    assertTrue("contains key \"message\"?", pieces.containsKey("message"));
-   //    assertEquals("check message value", "FALSE", pieces.get("message"));
-   // }
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertEquals("spaces", extraInfo.chunkLabel);
+      assertTrue("contains key \"echo\"", pieces.containsKey("echo"));
+      assertEquals("{1 + 1}", pieces.get("echo"));
+      assertTrue("contains key \"message\"?", pieces.containsKey("message"));
+      assertEquals("check message value", "FALSE", pieces.get("message"));
+   }
 }

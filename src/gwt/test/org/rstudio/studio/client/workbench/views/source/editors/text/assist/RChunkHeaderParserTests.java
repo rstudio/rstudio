@@ -183,4 +183,19 @@ public class RChunkHeaderParserTests extends GWTTestCase
       assertTrue(pieces.containsKey("message"));
       assertEquals("FALSE", pieces.get("message"));
    }
+
+   public void testSpacesAroundEqualsSign()
+   {
+      String header = "```{r, spaces, echo = {1 + 1}, message = FALSE}";
+      Map<String, String> pieces = RChunkHeaderParser.parse(header);
+
+      assertTrue(pieces.containsKey("engine"));
+      assertEquals(header, "\"r\"", pieces.get("engine"));
+      assertTrue(pieces.containsKey("label"));
+      assertEquals(header, "\"spaces\"", pieces.get("label"));
+       assertTrue("contains key \"echo\"", pieces.containsKey("echo"));
+      assertEquals("{1 + 1}", pieces.get("echo"));
+      assertTrue("contains key \"message\"?", pieces.containsKey("message"));
+      assertEquals("check message value", "FALSE", pieces.get("message"));
+   }
 }

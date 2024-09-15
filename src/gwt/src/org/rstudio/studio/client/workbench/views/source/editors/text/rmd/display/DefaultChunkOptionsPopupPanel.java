@@ -201,7 +201,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       // continue parsing after the label
       int argsStartIdx = labelDetails.nextSepIndex;
-      String arguments = StringUtil.substring(extracted, argsStartIdx + 1);
+      String arguments = StringUtil.substring(extracted, argsStartIdx + 1).trim();
       TextCursor cursor = new TextCursor(arguments);
 
       // consume commas and whitespace if needed
@@ -215,8 +215,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
          int equalsIndex = cursor.getIndex();
          int endIndex = arguments.length();
-         if (cursor.fwdToCharacter(',', true) ||
-             cursor.fwdToCharacter(' ', true))
+         if (cursor.fwdToCharacter(',', true))
          {
             endIndex = cursor.getIndex();
          }
