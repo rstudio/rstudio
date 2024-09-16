@@ -42,7 +42,7 @@ var TexHighlightRules = function(textClass) {
 	        }, {
 	            token : "keyword", // command
 	            regex : "\\\\(?:documentclass|usepackage|newcounter|setcounter|addtocounter|value|arabic|stepcounter|newenvironment|renewenvironment|ref|vref|eqref|pageref|label|cite[a-zA-Z]*|tag|begin|end|bibitem)\\b",
-               next : "nospell"
+               push : "nospell"
 	        }, {
 	            token : "keyword", // command
 	            regex : "\\\\(?:[a-zA-Z0-9]+|[^a-zA-Z0-9])"
@@ -70,7 +70,7 @@ var TexHighlightRules = function(textClass) {
            {
                token : "comment",
                regex : "%.*$",
-               next : "start"
+               next  : "pop"
            }, {
                token : "nospell." + textClass, // non-command
                regex : "\\\\[$&%#\\{\\}]"
@@ -80,7 +80,7 @@ var TexHighlightRules = function(textClass) {
            }, {
                token : "keyword", // command
                regex : "\\\\(?:[a-zA-Z0-9]+|[^a-zA-Z0-9])",
-               next : "start"
+               next  : "pop"
            }, {
                token : "paren.keyword.operator",
                regex : "[[({]"
@@ -90,7 +90,7 @@ var TexHighlightRules = function(textClass) {
            }, {
                token : "paren.keyword.operator",
                regex : "}",
-               next : "start"
+               next  : "pop"
            }, {
                token : "nospell." + textClass,
                regex : "\\s+"
@@ -100,9 +100,11 @@ var TexHighlightRules = function(textClass) {
            }
         ]
     };
+
+    this.normalizeRules();
 };
 
 oop.inherits(TexHighlightRules, TextHighlightRules);
 
-exports.TexHighlightRules = TexHighlightRules;
+exports.TexHighlightRules = exports.LatexHighlightRules = TexHighlightRules;
 });
