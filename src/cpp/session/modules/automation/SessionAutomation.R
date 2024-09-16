@@ -710,3 +710,9 @@
    message("- Automated tests have finished running.")
    message("- You can now close this instance of RStudio.")
 })
+
+.rs.addFunction("automation.isClientValid", function(client)
+{
+   object <- client$socket$.__enclos_env__$private$wsObj
+   !.rs.isNullExternalPointer(object)
+})

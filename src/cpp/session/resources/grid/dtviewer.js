@@ -77,7 +77,7 @@
         // we would have to remember to first set pauseScrollEvent = false, or
         // set both lastScrollPos and scrollTop
         if (!pauseScrollEvent) {
-          lastScrollPos = evt.target.scrollTop; 
+          lastScrollPos = evt.target.scrollTop;
         } else {
           evt.target.scrollTop = lastScrollPos
         }
@@ -333,7 +333,7 @@
     }
 
     var escaped = didHighlight ? data : escapeHtml(data);
-    
+
     // special additional rendering for cells which themselves contain data frames or lists:
     // these include an icon that can be clicked to view contents
     if (clazz === "dataCell" || clazz === "listCell") {
@@ -1047,7 +1047,7 @@
       } else if (queryVar[0] == "id") {
         parsedLocation.id = queryVar[1];
       } else if (queryVar[0] == "max_display_columns") {
-        parsedLocation.maxDisplayColumns = parseInt(queryVar[1], 10); 
+        parsedLocation.maxDisplayColumns = parseInt(queryVar[1], 10);
       } else if (queryVar[0] == "max_cols") {
         parsedLocation.maxCols = parseInt(queryVar[1], 10);
       } else if (queryVar[0] == "max_rows") {
@@ -1149,7 +1149,7 @@
     // to 0 so the existing jquery code continues to work and we can avoid refactoring
     // it for the time being.
     window.dataTableColumnOffset = 0;
-    
+
     // keep track of column types for later render
     var typeIndices = {
       numeric: [],
