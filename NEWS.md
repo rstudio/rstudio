@@ -40,6 +40,7 @@
 - Auto-saves will no longer trim trailing whitespace on the line containing the cursor (#14829)
 - Fixed an issue where pressing Tab would insert a literal tab instead of indenting a multi-line selection (#15046)
 - Fixed scroller behavior in Data Viewer when viewing very large datasets (#12834)
+- Fixed an issue where quoted variable names were not completed properly in dplyr pipes (#15161)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
