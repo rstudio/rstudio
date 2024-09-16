@@ -136,12 +136,24 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          return "";
 
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
-      if (firstSpaceIdx == -1)
-         return extractedChunkHeader;
-
       int firstCommaIdx = extractedChunkHeader.indexOf(',');
+
+      if (firstSpaceIdx == -1 && firstCommaIdx == -1)
+      {
+         // entire string is the preamble, e.g. "{r}"
+         return extractedChunkHeader;
+      }
+
       if (firstCommaIdx == -1)
-         firstCommaIdx = extractedChunkHeader.length();
+      {
+         // {r foo}
+         firstCommaIdx = firstSpaceIdx;
+      }
+      else if (firstSpaceIdx == -1)
+      {
+         // {r,foo}
+         firstSpaceIdx = firstCommaIdx;
+      }
 
       String label = StringUtil.substring(extractedChunkHeader,
             0, Math.min(firstSpaceIdx, firstCommaIdx)).trim();
@@ -178,7 +190,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       if (pattern == null) return;
 
-      Match match = pattern.match(line,  0);
+      Match match = pattern.match(line, 0);
       if (match == null) return;
 
       String extracted = match.getGroup(1);
@@ -189,7 +201,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       // continue parsing after the label
       int argsStartIdx = labelDetails.nextSepIndex;
-      String arguments = StringUtil.substring(extracted, argsStartIdx + 1);
+      String arguments = StringUtil.substring(extracted, argsStartIdx + 1).trim();
       TextCursor cursor = new TextCursor(arguments);
 
       // consume commas and whitespace if needed
@@ -198,13 +210,12 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       int startIndex = 0;
       do
       {
-         if (!cursor.fwdToCharacter('=', false))
+         if (!cursor.fwdToNonQuotedCharacter('='))
             break;
 
          int equalsIndex = cursor.getIndex();
          int endIndex = arguments.length();
-         if (cursor.fwdToCharacter(',', true) ||
-             cursor.fwdToCharacter(' ', true))
+         if (cursor.fwdToCharacter(',', true))
          {
             endIndex = cursor.getIndex();
          }

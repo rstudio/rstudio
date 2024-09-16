@@ -75,6 +75,32 @@ public class DefaultChunkOptionsPopupPanelTests extends GWTTestCase
       assertEquals("TRUE", pieces.get("echo"));
    }
 
+   public void testSingleQuotedLabel()
+   {
+      String header = "```{r, 'label-is-super', echo=TRUE}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("\'label-is-super\'", extraInfo.chunkLabel);
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+   }
+
+   public void testDoubleQuotedLabel()
+   {
+      String header = "```{r, \"label-is-super\", echo=TRUE}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("\"label-is-super\"", extraInfo.chunkLabel);
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+   }
+
    public void testNoCommaBeforeFirstItem()
    {
       String header = "```{r echo=TRUE}";
@@ -114,5 +140,102 @@ public class DefaultChunkOptionsPopupPanelTests extends GWTTestCase
       assertEquals("{1 + 1}", pieces.get("echo"));
       assertTrue(pieces.containsKey("message"));
       assertEquals("FALSE", pieces.get("message"));
+   }
+
+   public void testSimpleQuotedValue()
+   {
+      String header = "```{r, fig.cap='hello', message=FALSE}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertTrue(StringUtil.isNullOrEmpty(extraInfo.chunkLabel));
+      assertTrue("contains \"fig.cap\"", pieces.containsKey("fig.cap"));
+      assertEquals("\'hello\'", pieces.get("fig.cap"));
+      assertTrue(pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+   }
+
+   public void testQuotedEqualsSign()
+   {
+      String header = "```{python roger, fig.cap='hello=world', message=FALSE, echo=TRUE, foo='bar=wow'}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("python", extraInfo.chunkPreamble);
+      assertEquals("roger", extraInfo.chunkLabel);
+      assertTrue("contains \"fig.cap\"", pieces.containsKey("fig.cap"));
+      assertEquals("\'hello=world\'", pieces.get("fig.cap"));
+      assertTrue("contain message", pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+      assertTrue("contain echo", pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+      assertTrue("contains \"foo\"", pieces.containsKey("foo"));
+      assertEquals("\'bar=wow\'", pieces.get("foo"));
+      assertEquals(4, pieces.size());
+   }
+
+   public void testTrailingComma()
+   {
+      String header = "```{r fred, echo=TRUE, message=FALSE,}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertEquals("fred", extraInfo.chunkLabel);
+      assertTrue("contains echo", pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+      assertTrue(pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+      assertEquals(2, pieces.size());
+   }
+
+   public void testTrailingCommaAndSpace()
+   {
+      String header = "```{r fred, echo=TRUE, message=FALSE, }";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertEquals("fred", extraInfo.chunkLabel);
+      assertTrue("contains echo", pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+      assertTrue(pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+      assertEquals(2, pieces.size());
+   }
+
+   public void testNoSpacesAfterCommas()
+   {
+      String header = "```{r,zoom,echo=TRUE,message=FALSE}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertEquals("zoom", extraInfo.chunkLabel);
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+      assertTrue(pieces.containsKey("message"));
+      assertEquals("FALSE", pieces.get("message"));
+   }
+
+   public void testSpacesAroundEqualsSign()
+   {
+      String header = "```{r, spaces, echo = {1 + 1}, message = FALSE}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, String> pieces = new HashMap<String, String>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertEquals("spaces", extraInfo.chunkLabel);
+      assertTrue("contains key \"echo\"", pieces.containsKey("echo"));
+      assertEquals("{1 + 1}", pieces.get("echo"));
+      assertTrue("contains key \"message\"?", pieces.containsKey("message"));
+      assertEquals("check message value", "FALSE", pieces.get("message"));
    }
 }
