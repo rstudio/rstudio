@@ -112,8 +112,11 @@
 .rs.addFunction("automation.initRemoteMethods", function()
 {
    registerS3method("format", "jsObject", function(x, ...) {
+      self <- attr(x, "self", exact = TRUE)
       id <- attr(x, "id", exact = TRUE)
-      sprintf("%s <%s>", paste(class(x), collapse = "/"), id)
+      valid <- .rs.automation.isClientValid(self$client)
+      fmt <- if (valid) "%s <%s>" else "%s <%s> [detached]"
+      sprintf(fmt, paste(class(x), collapse = "/"), id)
    })
    
    registerS3method("str", "jsObject", function(object, ...) {
@@ -127,6 +130,8 @@
    registerS3method(".DollarNames", "jsObject", function(x, pattern) {
       
       self <- attr(x, "self", exact = TRUE)
+      if (!.rs.automation.isClientValid(self$client))
+         return(NULL)
       
       callback <- .rs.heredoc('
          function() {
@@ -158,8 +163,10 @@
    registerS3method("$", "jsObject", function(x, name) {
       
       self <- attr(x, "self", exact = TRUE)
-      objectId <- attr(x, "id", exact = TRUE)
+      if (!.rs.automation.isClientValid(self$client))
+         return(NULL)
       
+      objectId <- attr(x, "id", exact = TRUE)
       jsFunc <- sprintf("function() { return this[%s]; }", deparse(name))
       
       response <- self$client$Runtime.callFunctionOn(
@@ -174,8 +181,10 @@
    registerS3method("[[", "jsObject", function(x, i, j, ..., drop = FALSE) {
       
       self <- attr(x, "self", exact = TRUE)
-      objectId <- attr(x, "id", exact = TRUE)
+      if (!.rs.automation.isClientValid(self$client))
+         return(NULL)
       
+      objectId <- attr(x, "id", exact = TRUE)
       jsFunc <- sprintf("function() { return this[%s]; }", deparse(i))
       
       response <- self$client$Runtime.callFunctionOn(
@@ -190,8 +199,10 @@
    registerS3method("length", "jsObject", function(x) {
       
       self <- attr(x, "self", exact = TRUE)
-      objectId <- attr(x, "id", exact = TRUE)
+      if (!.rs.automation.isClientValid(self$client))
+         return(0L)
       
+      objectId <- attr(x, "id", exact = TRUE)
       response <- self$client$Runtime.callFunctionOn(
          functionDeclaration = "function() { return this.length; }",
          objectId = objectId
