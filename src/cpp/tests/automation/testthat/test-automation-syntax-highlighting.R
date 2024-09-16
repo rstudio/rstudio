@@ -115,3 +115,39 @@ test_that("The sequence '# |' is not tokenized as a Quarto comment prefix", {
    })
    
 })
+
+# https://github.com/rstudio/rstudio/issues/15019
+test_that("tikz chunks are properly highlighted", {
+   
+   documentContents <- .rs.heredoc('
+      ---
+      title: tikz chunks
+      ---
+      
+      ```{tikz}
+      % This is a tikz chunk.
+      ```
+      
+      ```{r}
+      # This is an R chunk.
+      "hello"
+      ```
+   ')
+   
+   remote$documentExecute(".Rmd", documentContents, function(editor) {
+      
+      token <- as.vector(editor$session$getTokenAt(5, 0))
+      expect_match(token$type, "comment")
+      expect_equal(token$value, "% This is a tikz chunk.")
+      
+      token <- as.vector(editor$session$getTokenAt(9, 0))
+      expect_match(token$type, "comment")
+      expect_equal(token$value, "# This is an R chunk.")
+      
+      token <- as.vector(editor$session$getTokenAt(10, 0))
+      expect_match(token$type, "string")
+      expect_equal(token$value, "\"hello\"")
+      
+   })
+   
+})
