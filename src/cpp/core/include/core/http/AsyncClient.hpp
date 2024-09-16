@@ -22,6 +22,8 @@
 
 #include <boost/asio/write.hpp>
 #include <boost/asio/io_service.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/bind_executor.hpp>
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/read.hpp>
@@ -99,7 +101,8 @@ public:
         connectionRetryContext_(ioService),
         logToStderr_(logToStderr),
         closed_(false),
-        requestWritten_(false)
+        requestWritten_(false),
+        strand_(ioService)
    {
       // Make sure we read at least 8192 bytes from the socket at a time. The default ends up as 512.
       responseBuffer_.prepare(8192);
@@ -164,21 +167,21 @@ public:
    virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffer,
                               Handler handler)
    {
-      socket().async_read_some(buffer, handler);
+      socket().async_read_some(buffer, boost::asio::bind_executor(strand_, handler));
    }
 
    virtual void asyncWrite(
                      const boost::asio::const_buffers_1& buffer,
                      Handler handler)
    {
-      boost::asio::async_write(socket(), buffer, handler);
+      boost::asio::async_write(socket(), buffer, boost::asio::bind_executor(strand_, handler));
    }
 
    virtual void asyncWrite(
                      const std::vector<boost::asio::const_buffer>& buffers,
                      Handler handler)
    {
-      boost::asio::async_write(socket(), buffers, handler);
+      boost::asio::async_write(socket(), buffers, boost::asio::bind_executor(strand_, handler));
    }
 
    virtual void close()
@@ -290,10 +293,10 @@ protected:
       boost::asio::async_write(
           socket(),
           request_.toBuffers(overrideHeader),
-          boost::bind(
+          boost::asio::bind_executor(strand_, boost::bind(
                &AsyncClient<SocketService>::handleWrite,
                AsyncClient<SocketService>::shared_from_this(),
-               boost::asio::placeholders::error)
+               boost::asio::placeholders::error))
       );
    }
 
@@ -422,10 +425,10 @@ private:
       // include error check to be paranoid/robust)
       if (!ec)
       {
-         connectionRetryContext_.retryTimer.async_wait(boost::bind(
+         connectionRetryContext_.retryTimer.async_wait(boost::asio::bind_executor(strand_, boost::bind(
                &AsyncClient<SocketService>::handleConnectionRetryTimer,
                AsyncClient<SocketService>::shared_from_this(),
-               boost::asio::placeholders::error));
+               boost::asio::placeholders::error)));
 
          return true;
       }
@@ -477,9 +480,10 @@ private:
               socket(),
               responseBuffer_,
               "\r\n",
-              boost::bind(&AsyncClient<SocketService>::handleReadStatusLine,
-                          AsyncClient<SocketService>::shared_from_this(),
-                          boost::asio::placeholders::error));
+              boost::asio::bind_executor(strand_, 
+                                         boost::bind(&AsyncClient<SocketService>::handleReadStatusLine,
+                                                     AsyncClient<SocketService>::shared_from_this(),
+                                                     boost::asio::placeholders::error)));
          }
          else
          {
@@ -509,9 +513,10 @@ private:
                  socket(),
                  responseBuffer_,
                  "\r\n\r\n",
-                 boost::bind(&AsyncClient<SocketService>::handleReadHeaders,
-                             AsyncClient<SocketService>::shared_from_this(),
-                             boost::asio::placeholders::error));
+                 boost::asio::bind_executor(strand_, 
+                        boost::bind(&AsyncClient<SocketService>::handleReadHeaders,
+                                    AsyncClient<SocketService>::shared_from_this(),
+                                    boost::asio::placeholders::error)));
             }
          }
          else
@@ -541,9 +546,10 @@ private:
          socket(),
          responseBuffer_,
          boost::asio::transfer_at_least(1),
-         boost::bind(&AsyncClient<SocketService>::handleReadContent,
-                     AsyncClient<SocketService>::shared_from_this(),
-                     boost::asio::placeholders::error));
+         boost::asio::bind_executor(strand_,
+              boost::bind(&AsyncClient<SocketService>::handleReadContent,
+                          AsyncClient<SocketService>::shared_from_this(),
+                          boost::asio::placeholders::error)));
    }
 
    virtual bool stopReadingAndRespond()
@@ -820,6 +826,10 @@ private:
 
    bool requestWritten_;
    ConnectHandler connectHandler_;
+
+protected:
+   boost::asio::io_context::strand strand_;
+
 };
    
 
