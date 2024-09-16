@@ -2,6 +2,10 @@
 
 pushd ..\..\..\src\gwt\lib
 
+
+:: IMPORTANT: When changing which branch this pulls from below, also update the Dockerfiles'
+::            "panmirror check for changes" command to use the equivalent.
+
 if not exist quarto (
   echo "Cloning quarto repo"
   git clone https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
