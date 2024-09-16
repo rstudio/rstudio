@@ -29,6 +29,9 @@ PANMIRROR_WWW_DIR="${GWT_ROOT_DIR}/www/js/panmirror"
 info "GWT_ROOT_DIR: ${GWT_ROOT_DIR}"
 info "QUARTO_DIR: ${QUARTO_DIR}"
 
+# IMPORTANT: When changing which branch this pulls from below, also update the Dockerfiles'
+#            "panmirror check for changes" command to use the equivalent.
+
 # clone quarto monorepo if not already cloned
 if ! test -e "$QUARTO_DIR"; then
   echo "Cloning quarto repo"
