@@ -210,7 +210,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       int startIndex = 0;
       do
       {
-         if (!cursor.fwdToCharacter('=', false))
+         if (!cursor.fwdToNonQuotedCharacter('='))
             break;
 
          int equalsIndex = cursor.getIndex();

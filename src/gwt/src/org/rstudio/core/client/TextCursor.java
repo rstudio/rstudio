@@ -140,12 +140,30 @@ public class TextCursor
 
    }
 
+   /**
+    * Forward to character, doesn't skip quoted instances
+    *
+    * @param ch character to match
+    * @param skipMatchingBraces when true ignores instances enclosed in [], {}, or ()
+    * @return whether a match was found
+    */
    public boolean fwdToCharacter(char ch, boolean skipMatchingBraces)
    {
       if (skipMatchingBraces)
          return fwdToCharacter__skip(ch);
       else
          return fwdToCharacter__noskip(ch);
+   }
+
+   /**
+    * Forward to character, skipping quoted instances. Ignores braces.
+    *
+    * @param ch character to match
+    * @return
+    */
+   public boolean fwdToNonQuotedCharacter(char ch)
+   {
+      return fwdToNonQuotedCharacter__noskip(ch);
    }
 
    private boolean fwdToCharacter__skip(char ch)
@@ -164,6 +182,25 @@ public class TextCursor
                continue;
 
       } while (cursor.moveToNextCharacter());
+      return false;
+   }
+
+   /**
+    * Move cursor index forward to first matching character that is not
+    * enclosed in quotes. Ignores braces.
+    * @param ch
+    * @return
+    */
+   private boolean fwdToNonQuotedCharacter__noskip(char ch)
+   {
+      TextCursor cursor = clone();
+
+      cursor.consumeUntilNotQuoted();
+      if (cursor.fwdToCharacter__noskip(ch))
+      {
+         index_ = cursor.getIndex();
+         return true;
+      }
       return false;
    }
 
@@ -246,6 +283,41 @@ public class TextCursor
       return true;
    }
 
+   /**
+    * Advance index to first position that isn't inside quotes. If current
+    * position is a quote with no subsequent closing quote, routine treats
+    * it as a regular character (does not advance and returns false).
+    * 
+    * @return true if initial position was quoted, false if it was not
+    */
+   public boolean consumeUntilNotQuoted()
+   {
+      TextCursor cursor = clone();
+      cursor.setIndex(0);
+      while (cursor.getIndex() < n_)
+      {
+         if (cursor.isQuote())
+         {
+            if (cursor.fwdToMatchingCharacter())
+            {
+               cursor.advance(1); // past the closing quote
+            }
+         }
+
+         if (cursor.getIndex() >= index_)
+         {
+            // at or past the initial character, we're done
+            break;
+         }
+
+         cursor.moveToNextCharacter();
+      }
+
+      boolean advanced = cursor.getIndex() > index_;
+      setIndex(cursor.getIndex());
+      return advanced;
+   }
+
    public String getData()
    {
       return data_;
@@ -282,6 +354,18 @@ public class TextCursor
       if (index_ == n_)
          return false;
       return data_.charAt(index_) == '"';
+   }
+
+   public boolean isBackTickQuote()
+   {
+      if (index_ == n_)
+         return false;
+      return data_.charAt(index_) == '`';
+   }
+
+   public boolean isQuote()
+   {
+      return isSingleQuote() || isDoubleQuote() || isBackTickQuote();
    }
 
    private char complement(char ch)

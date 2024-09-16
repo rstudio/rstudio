@@ -597,6 +597,19 @@ public class TextCursorTests extends GWTTestCase
       assertEquals(3, cursor.getIndex());
     }
 
+   public void testFwdToMatchingCharacterUnbalancedQuotes()
+   {
+      TextCursor cursor = new TextCursor("'");
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(0, cursor.getIndex());
+      cursor = new TextCursor("' \" `  ", 2);
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(2, cursor.getIndex());
+      cursor = new TextCursor("012\"", 3);
+      assertFalse(cursor.fwdToMatchingCharacter());
+      assertEquals(3, cursor.getIndex());
+    }
+
    public void testFwdToMatchingCharacterEscapedQuotes()
    {
       TextCursor cursor = new TextCursor("'\\''");
@@ -864,6 +877,50 @@ public class TextCursorTests extends GWTTestCase
       assertEquals(2, cursor.getIndex());
    }
 
+   public void testFwdToCharacterInQuotes()
+   {
+      TextCursor cursor = new TextCursor("```{python roger, fig.cap='hello=world', message=FALSE, echo=TRUE}");
+      assertTrue(cursor.fwdToCharacter('=', false));
+      assertEquals(25, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToCharacter('=', false));
+      assertEquals(32, cursor.getIndex()); // the 'hello=world' instance
+      cursor.advance(1);
+      assertTrue(cursor.fwdToCharacter('=', false));
+      assertEquals(48, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToCharacter('=', false));
+      assertEquals(60, cursor.getIndex());
+   }
+
+   public void testFwdToCharacterNotIgnoreBraces()
+   {
+      TextCursor cursor = new TextCursor(" a [a]{a}(a) a");
+      assertTrue(cursor.fwdToCharacter('a', false));
+      assertEquals(1, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToCharacter('a', false));
+      assertEquals(4, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToCharacter('a', false));
+      assertEquals(7, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToCharacter('a', false));
+      assertEquals(10, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToCharacter('a', false));
+      assertEquals(13, cursor.getIndex());
+      cursor = new TextCursor("abasjekd{axjdk}x");
+      assertTrue(cursor.fwdToCharacter('a', false));
+      assertEquals(0, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToCharacter('a', false));
+      assertEquals(2, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToCharacter('a', false));
+      assertEquals(9, cursor.getIndex());
+   }
+
    // #endregion
    // #region FwdToCharacterSkipBraces
    
@@ -1011,6 +1068,81 @@ public class TextCursorTests extends GWTTestCase
       cursor = new TextCursor("[a{a[xaza]a}aaa]a hello a world");
       assertTrue(cursor.fwdToCharacter('a', true));
       assertEquals(16, cursor.getIndex());
+   }
+
+   // #endregion
+   // #region FwdToNonQuotedCharacter
+
+   public void testFwdToNonQuotedCharacterEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertFalse(cursor.fwdToNonQuotedCharacter('a'));
+   }
+
+   public void testFwdToNonQuotedCharacterSingleNonMatchingChar()
+   {
+      TextCursor cursor = new TextCursor("a");
+      assertFalse(cursor.fwdToNonQuotedCharacter('b'));
+   }
+
+   public void testFwdToNonQuotedCharacterMultipleNonMatchingChar()
+   {
+      TextCursor cursor = new TextCursor("abcdefg012345#$@%#^$#%");
+      assertFalse(cursor.fwdToNonQuotedCharacter('9'));
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testFwdToNonQuotedCharacterSingleMatchingChar()
+   {
+      TextCursor cursor = new TextCursor("a");
+      assertTrue(cursor.fwdToNonQuotedCharacter('a'));
+   }
+
+   public void testFwdToNonQuotedCharacterMultipleMatching()
+   {
+      TextCursor cursor = new TextCursor("abaa", 1);
+      assertTrue(cursor.fwdToNonQuotedCharacter('a'));
+      assertEquals(2, cursor.getIndex());
+   }
+
+   public void testFwdToNonQuotedCharacterAtEnd()
+   {
+      TextCursor cursor = new TextCursor("0123", 4);
+      assertFalse(cursor.fwdToNonQuotedCharacter('0'));
+      assertEquals(4, cursor.getIndex());
+   }
+
+   public void testFwdToNonQuotedCharacterPastEnd()
+   {
+      TextCursor cursor = new TextCursor("0123", 5);
+      assertFalse(cursor.fwdToNonQuotedCharacter('0'));
+      assertEquals(5, cursor.getIndex());
+   }
+
+   public void testFwdToNonQuotedCharacterBeforeStart()
+   {
+      TextCursor cursor = new TextCursor("0123", -2);
+      assertTrue(cursor.fwdToNonQuotedCharacter('2'));
+      assertEquals(2, cursor.getIndex());
+   }
+
+   public void testFwdToNonQuotedCharacterInQuotes()
+   {
+      TextCursor cursor = new TextCursor("```{python roger, fig.cap='hello=world', message=FALSE, echo=TRUE, foo='1=2'}");
+      assertTrue(cursor.fwdToNonQuotedCharacter('='));
+      assertEquals(25, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToNonQuotedCharacter('='));
+      assertEquals(48, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToNonQuotedCharacter('='));
+      assertEquals(60, cursor.getIndex());
+      cursor.advance(1);
+      assertTrue(cursor.fwdToNonQuotedCharacter('='));
+      assertEquals(70, cursor.getIndex());
+      cursor.advance(1);
+      assertFalse(cursor.fwdToNonQuotedCharacter('='));
+      assertEquals(71, cursor.getIndex());
    }
 
    // #endregion
@@ -1372,6 +1504,110 @@ public class TextCursorTests extends GWTTestCase
       assertEquals(5, cursor.getIndex());
    }
 
+   // #endregion
+   // #region consumeUntilNotQuoted
+
+   public void testConsumeUntilNotQuotedEmpty()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertFalse(cursor.consumeUntilNotQuoted());
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testConsumeUntilNotQuotedBeginningNotQuoted()
+   {
+      TextCursor cursor = new TextCursor("a\"bcd\",'ef', `ijkl` the \"end\"");
+      assertFalse(cursor.consumeUntilNotQuoted());
+      assertEquals(0, cursor.getIndex());
+   }
+
+   public void testConsumeUntilNotQuotedCurrentEndNotQuoted()
+   {
+      TextCursor cursor = new TextCursor("012\"45\"7");
+      cursor.setIndex(cursor.getData().length() - 1);
+      assertEquals('7', cursor.peek());
+      assertFalse(cursor.consumeUntilNotQuoted());
+      assertEquals(7, cursor.getIndex());
+   }
+
+   public void testConsumeUntilNotQuotedCurrentMiddleNotQuoted()
+   {
+      TextCursor cursor = new TextCursor("012\"45\"7");
+      cursor.setIndex(2);
+      assertEquals('2', cursor.peek());
+      assertFalse(cursor.consumeUntilNotQuoted());
+      assertEquals(2, cursor.getIndex());
+   }
+
+   public void testConsumeUntilNotQuotedEntireStringQuoted()
+   {
+      TextCursor cursor = new TextCursor("\"1234\"");
+      assertTrue(cursor.consumeUntilNotQuoted());
+      assertEquals(cursor.getData().length(), cursor.getIndex());
+   }
+
+   public void testConsumeUntilNotQuotedStartingInQuotes()
+   {
+      TextCursor cursor = new TextCursor("01'345'78", 3);
+      assertTrue(cursor.consumeUntilNotQuoted());
+      assertEquals(7, cursor.getIndex());
+      cursor = new TextCursor("01\"345\"78", 4);
+      assertTrue(cursor.consumeUntilNotQuoted());
+      assertEquals(7, cursor.getIndex());
+      cursor = new TextCursor("01`345`78", 5);
+      assertTrue(cursor.consumeUntilNotQuoted());
+      assertEquals(7, cursor.getIndex());
+   }
+
+   public void testConsumeUntilNotQuotedStartingInQuotesMultiple()
+   {
+      TextCursor cursor = new TextCursor("01'345'78'ab'de", 4);
+      assertTrue(cursor.consumeUntilNotQuoted());
+      assertEquals(7, cursor.getIndex());
+      cursor.setIndex(8);
+      assertFalse(cursor.consumeUntilNotQuoted());
+      assertEquals(8, cursor.getIndex());
+      cursor.setIndex(10); // "a"
+      assertTrue(cursor.consumeUntilNotQuoted());
+      assertEquals(13, cursor.getIndex());
+   }
+
+   // #endregion
+   // #region IsQuote
+
+   public void testIsQuoteEmptyString()
+   {
+      TextCursor cursor = new TextCursor("");
+      assertFalse(cursor.isQuote());
+   }
+
+   public void testIsQuoteSingleChar()
+   {
+      TextCursor cursor = new TextCursor("\"'`");
+      assertTrue(cursor.isQuote());
+      cursor.advance(1);
+      assertTrue(cursor.isQuote());
+      cursor.advance(1);
+      assertTrue(cursor.isQuote());
+   }
+
+   public void testIsQuoteMiddle()
+   {
+      TextCursor cursor = new TextCursor("Hello \"World\", 'zoom', ` the end");
+      assertFalse(cursor.isQuote());
+      cursor.advance(6);
+      assertTrue(cursor.isQuote());
+      cursor.advance(6);
+      assertTrue(cursor.isQuote());
+      cursor.advance(3);
+      assertTrue(cursor.isQuote());
+      cursor.advance(5);
+      assertTrue(cursor.isQuote());
+      cursor.advance(3);
+      assertTrue(cursor.isQuote());
+      cursor.advance(1);
+      assertFalse(cursor.isQuote());
+   }
    // #endregion
 
 }

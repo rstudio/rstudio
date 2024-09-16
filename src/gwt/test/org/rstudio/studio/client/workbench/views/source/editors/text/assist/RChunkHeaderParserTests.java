@@ -128,13 +128,18 @@ public class RChunkHeaderParserTests extends GWTTestCase
 
    public void testQuotedEqualsSign()
    {
-      String header = "```{r, fig.cap='hello=world', message=FALSE}";
+      String header = "```{r, roger, fig.cap='hello=world', message=FALSE, echo=TRUE}";
       Map<String, String> pieces = RChunkHeaderParser.parse(header);
 
+      assertEquals(5, pieces.size());
+      assertTrue(pieces.containsKey("engine"));
+      assertEquals(header, "\"r\"", pieces.get("engine"));
       assertTrue("contains \"fig.cap\"", pieces.containsKey("fig.cap"));
       assertEquals("\'hello=world\'", pieces.get("fig.cap"));
       assertTrue(pieces.containsKey("message"));
       assertEquals("FALSE", pieces.get("message"));
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
    }
 
    public void testTrailingComma()

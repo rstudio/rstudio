@@ -159,16 +159,22 @@ public class DefaultChunkOptionsPopupPanelTests extends GWTTestCase
 
    public void testQuotedEqualsSign()
    {
-      String header = "```{python, fig.cap='hello=world', message=FALSE}";
+      String header = "```{python roger, fig.cap='hello=world', message=FALSE, echo=TRUE, foo='bar=wow'}";
       ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
       HashMap<String, String> pieces = new HashMap<String, String>();
       DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
 
       assertEquals("python", extraInfo.chunkPreamble);
+      assertEquals("roger", extraInfo.chunkLabel);
       assertTrue("contains \"fig.cap\"", pieces.containsKey("fig.cap"));
       assertEquals("\'hello=world\'", pieces.get("fig.cap"));
-      assertTrue(pieces.containsKey("message"));
+      assertTrue("contain message", pieces.containsKey("message"));
       assertEquals("FALSE", pieces.get("message"));
+      assertTrue("contain echo", pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo"));
+      assertTrue("contains \"foo\"", pieces.containsKey("foo"));
+      assertEquals("\'bar=wow\'", pieces.get("foo"));
+      assertEquals(4, pieces.size());
    }
 
    public void testTrailingComma()
