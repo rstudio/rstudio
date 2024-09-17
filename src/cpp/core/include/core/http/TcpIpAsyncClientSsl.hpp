@@ -80,11 +80,11 @@ protected:
       pAsyncConnector->connect(
             address_,
             port_,
-            boost::bind(&TcpIpAsyncClientSsl::performHandshake,
-                        TcpIpAsyncClientSsl::sharedFromThis()),
-            boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
-                        TcpIpAsyncClientSsl::sharedFromThis(),
-                        _1),
+            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::performHandshake,
+                                                            TcpIpAsyncClientSsl::sharedFromThis())),
+            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
+                                                            TcpIpAsyncClientSsl::sharedFromThis(),
+                                                            _1)),
             connectionTimeout_);
    }
 
@@ -113,9 +113,9 @@ private:
 
       ptrSslStream_->async_handshake(
             boost::asio::ssl::stream_base::client,
-            boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
-                        sharedFromThis(),
-                        boost::asio::placeholders::error));
+            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
+                                                            sharedFromThis(),
+                                                            boost::asio::placeholders::error)));
    }
 
    void handleHandshake(const boost::system::error_code& ec)
