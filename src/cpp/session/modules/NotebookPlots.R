@@ -15,25 +15,26 @@
 
 # creates the notebook graphics device 
 .rs.addFunction("createNotebookGraphicsDevice", function(filename,
-                                                         height,
                                                          width,
+                                                         height,
+                                                         dpi,
                                                          units,
                                                          pixelRatio,
                                                          extraArgs)
 {
    if (units == "px") # px = automatic size behavior 
    {
-    height <- height * pixelRatio
-    width <- width * pixelRatio
+      height <- height * pixelRatio
+      width <- width * pixelRatio
    }
 
    # form the arguments to the graphics device creator
    args <- list(
       filename = filename,
-      width    = width,
       height   = height, 
+      width    = width,
       units    = units,
-      res      = 96 * pixelRatio
+      res      = if (dpi == -1) 96 * pixelRatio else dpi
    )
 
    if (nchar(extraArgs) > 0)
@@ -43,12 +44,10 @@
          extraArgs <- substring(extraArgs, 2)
       
       # parse extra args and merge with existing args
-      extraList <- NULL
-      tryCatch({
-         extraList <- eval(parse(text = paste("list(", extraArgs, ")")))
-      }, error = function(e) {
-         # failure to parse implies we won't merge below
-      })
+      extraList <- tryCatch(
+         eval(parse(text = paste("list(", extraArgs, ")"))),
+         error = function(e) NULL
+      )
       
       if (is.list(extraList))
          args <- c(args, extraList)
@@ -71,7 +70,7 @@
          width    = width,
          height   = height,
          units    = units,
-         res      = 96 * pixelRatio
+         res      = if (dpi == -1) 96 * pixelRatio else dpi
       )
       
       return(device)
@@ -87,15 +86,16 @@
 # it likely originates in RClientMetrics.cpp where it is drawn from
 # "r.session.client_metrics.device-pixel-ratio"
 .rs.addFunction("setNotebookGraphicsOption", function(filename,
-                                                      height,
                                                       width,
+                                                      height,
+                                                      dpi,
                                                       units,
                                                       pixelRatio,
                                                       extraArgs)
 {
    options(device = function()
    {
-      .rs.createNotebookGraphicsDevice(filename, height, width, units,  pixelRatio, extraArgs)
+      .rs.createNotebookGraphicsDevice(filename, width, height, dpi, units, pixelRatio, extraArgs)
       dev.control(displaylist = "enable")
       # this introduces margins that makes the figure different from the actual output
       # as seen in the rendered document, so disable it
@@ -124,7 +124,7 @@
    sort(unique(names))
 })
 
-.rs.addFunction("replayNotebookPlots", function(width, height, pixelRatio, tempFile, extraArgs) {
+.rs.addFunction("replayNotebookPlots", function(width, height, dpi, pixelRatio, tempFile, extraArgs) {
    
    require(grDevices, quietly = TRUE)
    
@@ -159,8 +159,15 @@
       
       height <- if (height <= 0) width / 1.618 else height
       
-      .rs.createNotebookGraphicsDevice(output, height, width, 
-                                       "px", pixelRatio, extraArgs)
+      .rs.createNotebookGraphicsDevice(
+         output,
+         width,
+         height,
+         dpi,
+         "px",
+         pixelRatio,
+         extraArgs
+      )
       
       # actually replay the plot onto the device
       tryCatch(

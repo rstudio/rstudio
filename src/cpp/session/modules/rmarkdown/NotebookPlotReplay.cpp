@@ -55,6 +55,7 @@ public:
          const std::string& replayId,
          int width,
          int height,
+         double dpi,
          bool persistOutput,
          const std::vector<FilePath>& snapshotFiles)
    {
@@ -86,12 +87,10 @@ public:
       // form command to pass to R 
       std::string cmd(".rs.replayNotebookPlots(" + 
                       safe_convert::numberToString(width) + ", " + 
-                      safe_convert::numberToString(height) + ", " + 
-                      safe_convert::numberToString(
-                         r::session::graphics::device::devicePixelRatio()) +
-                      ", " +
-                      (persistOutput ? "FALSE" : "TRUE") +
-                      ", " +
+                      safe_convert::numberToString(height) + ", " +
+                      safe_convert::numberToString(dpi) + ", " +
+                      safe_convert::numberToString(r::session::graphics::device::devicePixelRatio()) + ", " +
+                      (persistOutput ? "FALSE" : "TRUE") + ", " +
                       "'" + extraParams + "')");
       
       // set up environment
@@ -214,8 +213,9 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
    std::string initialChunkId;
    int pixelWidth = 0;
    int pixelHeight = 0;
+   double dpi = -1;
    Error error = json::readParams(request.params, &docId, 
-         &initialChunkId, &pixelWidth, &pixelHeight);
+         &initialChunkId, &pixelWidth, &pixelHeight, &dpi);
    if (error)
       return error;
 
@@ -240,8 +240,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
    extractChunkIds(chunkIdVals, &chunkIds);
 
    // shuffle the chunk IDs so we re-render the visible ones first
-   std::vector<std::string>::iterator it = std::find(
-         chunkIds.begin(), chunkIds.end(), initialChunkId);
+   auto it = std::find(chunkIds.begin(), chunkIds.end(), initialChunkId);
    if (it != chunkIds.end())
    {
       std::vector<std::string> shuffledChunkIds;
@@ -255,8 +254,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
    for (const std::string& chunkId : chunkIds)
    {
       // find the storage location for this chunk output
-      FilePath path = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
-            ContextSaved);
+      FilePath path = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(), ContextSaved);
       if (!path.exists())
          continue;
 
@@ -276,7 +274,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
       }
    }
 
-   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, true, snapshotFiles);
+   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, dpi, true, snapshotFiles);
    pResponse->setResult(replayId);
 
    return Success();

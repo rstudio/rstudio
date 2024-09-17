@@ -278,10 +278,16 @@ void PlotCapture::onNewPlot()
 }
 
 // begins capturing plot output
-core::Error PlotCapture::connectPlots(const std::string& docId, 
-      const std::string& chunkId, const std::string& nbCtxId, 
-      double height, double width, PlotSizeBehavior sizeBehavior,
-      const FilePath& plotFolder, const std::string& chunkGraphicsBackend)
+core::Error PlotCapture::connectPlots(
+      const std::string& docId, 
+      const std::string& chunkId,
+      const std::string& nbCtxId, 
+      double width,
+      double height,
+      double dpi,
+      PlotSizeBehavior sizeBehavior,
+      const FilePath& plotFolder,
+      const std::string& chunkGraphicsBackend)
 {
    // save identifiers
    docId_ = docId;
@@ -290,6 +296,7 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
 
    // the graphics backend device set by the knitr chunk option 'dev'
    chunkGraphicsBackend_ = chunkGraphicsBackend;
+   
    // the graphics backend device set by the kGraphicsOptionBackend option
    defaultGraphicsBackend_.set(r::options::getOption(kGraphicsOptionBackend));
 
@@ -328,8 +335,10 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
       height = width / kGoldenRatio;
    else if (height > 0 && width == 0)
       width = height * kGoldenRatio;
+   
    width_ = width;
    height_ = height;
+   dpi_ = dpi;
    sizeBehavior_ = sizeBehavior;
 
    // save old device option
@@ -404,8 +413,9 @@ core::Error PlotCapture::setGraphicsOption()
             "/" kPlotPrefix "%03d.png");
 
    // device dimensions
-   setOption.addParam(height_);
    setOption.addParam(width_);
+   setOption.addParam(height_);
+   setOption.addParam(dpi_);
 
    // sizing behavior drives units -- user specified units are in inches but
    // we use pixels when scaling automatically
