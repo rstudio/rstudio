@@ -89,6 +89,7 @@ public abstract class
    public abstract AppCommand insertChunkBash();
    public abstract AppCommand insertChunkD3();
    public abstract AppCommand insertChunkGraphViz();
+   public abstract AppCommand insertChunkJulia();
    public abstract AppCommand insertChunkMermaid();
    public abstract AppCommand insertChunkPython();
    public abstract AppCommand insertChunkRCPP();
