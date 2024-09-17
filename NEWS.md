@@ -44,6 +44,7 @@
 - Fixed scroller behavior in Data Viewer when viewing very large datasets (#12834)
 - Fixed an issue where quoted variable names were not completed properly in dplyr pipes (#15161)
 - Fixed issue with highlight of `tikz` code chunks in R Markdown documents (#15019)
+- RStudio now uses current session repositories when installing package dependencies via background jobs (#10016)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
