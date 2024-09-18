@@ -445,7 +445,7 @@ var MarkdownHighlightRules = function () {
    this.$rules["start"].unshift(
       {
          token: "support.function",
-         regex: "^\\s*`{3,16}",
+         regex: "^\\s*`{3,16}(?!`)",
          onMatch: function (value, state, stack, line, context) {
             // Check whether we're already within a chunk. If so,
             // skip this chunk header -- assume that it's embedded
@@ -472,7 +472,7 @@ var MarkdownHighlightRules = function () {
    var githubBlockExitRules = [
       {
          token: "support.function",
-         regex: "^\\s*`{3,16}",
+         regex: "^\\s*`{3,16}(?!`)",
          onMatch: function (value, state, stack, line, context) {
             // Check whether the width of this chunk tail matches
             // the width of the chunk header that started this chunk.
