@@ -2241,6 +2241,7 @@ public class TextEditingTarget implements
          dirtyState_,
          docUpdateSentinel_,
          events_,
+         fileTypeRegistry_,
          releaseOnDismiss_
       );
 
@@ -8125,7 +8126,14 @@ public class TextEditingTarget implements
    @Handler
    void onToggleEditorTokenInfo()
    {
-      docDisplay_.toggleTokenInfo();
+      if (visualMode_.isActivated())
+      {
+         visualMode_.toggleEditorTokenInfo();
+      }
+      else
+      {
+         docDisplay_.toggleTokenInfo();
+      }
    }
 
    boolean useScopeTreeFolding()
