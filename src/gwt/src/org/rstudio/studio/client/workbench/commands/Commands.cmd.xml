@@ -1942,6 +1942,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="GraphViz"
         desc="Insert a new GraphViz chunk"
         context="editor"/>
+        
+   <cmd id="insertChunkJulia"
+        menuLabel="Julia"
+        desc="Insert a new Julia chunk"
+        context="editor"/>
 
    <cmd id="insertChunkMermaid"
         menuLabel="Mermaid"
