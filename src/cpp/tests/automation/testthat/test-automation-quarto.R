@@ -247,3 +247,49 @@ test_that("visual editor welcome dialog displays again if don't show again is un
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
+
+# https://github.com/rstudio/rstudio/issues/15191
+test_that("variable-width nested chunks can be folded", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Folding
+      ---
+ 
+      `````{verbatim}
+      
+      This is some text.
+      
+      ```{r nested}
+      print(1 + 1)
+      ```
+      
+      `````
+      
+      # Header
+   ')
+   
+   remote$documentExecute(".qmd", contents, function(editor) {
+      
+      # Check the fold widget strings.
+      session <- editor$session
+      expect_equal(session$getFoldWidget(4), "start")
+      expect_equal(session$getFoldWidget(8), "")
+      expect_equal(session$getFoldWidget(10), "")
+      expect_equal(session$getFoldWidget(12), "end")
+      
+      # Check the computed ranges for the folds.
+      expected <- list(
+         start = list(row = 4, column = 15),
+         end = list(row = 12, column = 0)
+      )
+      
+      range <- as.vector(session$getFoldWidgetRange(4))
+      expect_equal(range, expected)
+      
+      range <- as.vector(session$getFoldWidgetRange(12))
+      expect_equal(range, expected)
+      
+   })
+   
+})
