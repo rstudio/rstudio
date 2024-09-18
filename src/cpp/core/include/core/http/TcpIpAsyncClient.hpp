@@ -67,11 +67,12 @@ private:
       pAsyncConnector->connect(
             address_,
             port_,
-            boost::bind(&TcpIpAsyncClient::writeRequest,
-                        TcpIpAsyncClient::sharedFromThis()),
-            boost::bind(&TcpIpAsyncClient::handleConnectionError,
-                        TcpIpAsyncClient::sharedFromThis(),
-                        _1),
+            boost::asio::bind_executor(strand_,
+                 boost::bind(&TcpIpAsyncClient::writeRequest,
+                             TcpIpAsyncClient::sharedFromThis())),
+            boost::asio::bind_executor(strand_,
+                 boost::bind(&TcpIpAsyncClient::handleConnectionError,
+                             TcpIpAsyncClient::sharedFromThis(), _1)),
             connectionTimeout_);
 
    }

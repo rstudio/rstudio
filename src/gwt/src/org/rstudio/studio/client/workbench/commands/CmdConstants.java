@@ -1224,6 +1224,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Insert a new GraphViz chunk") // $NON-NLS-1$
     String insertChunkGraphVizDesc();
     
+    // insertChunkJulia
+    @DefaultStringValue("Julia") // $NON-NLS-1$
+    String insertChunkJuliaMenuLabel();
+    @DefaultStringValue("Insert a new Julia chunk") // $NON-NLS-1$
+    String insertChunkJuliaDesc();
+    
     // insertChunkMermaid
     @DefaultStringValue("Mermaid") // $NON-NLS-1$
     String insertChunkMermaidMenuLabel();

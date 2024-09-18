@@ -469,6 +469,7 @@ public class TextEditingTargetWidget
       insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkMermaid(), column_).createMenuItem());
       insertChunksMenu.addSeparator();
       insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkBash(), column_).createMenuItem());
+      insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkJulia(), column_).createMenuItem());
       insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkRCPP(), column_).createMenuItem());
       insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkSQL(), column_).createMenuItem());
       insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkStan(), column_).createMenuItem());

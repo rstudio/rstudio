@@ -319,6 +319,11 @@ public class DummyCommands extends Commands {
     public AppCommand insertChunkD3() {
         return null;
     }
+    
+    @Override
+    public AppCommand insertChunkJulia() {
+        return null;
+    }
 
     @Override
     public AppCommand insertChunkPython() {

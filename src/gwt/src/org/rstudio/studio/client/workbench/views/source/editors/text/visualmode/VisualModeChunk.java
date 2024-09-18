@@ -1131,7 +1131,7 @@ public class VisualModeChunk
                engine = "YAML";
                label = "Metadata";
             }
-            else
+            else if (line.startsWith("{") && line.endsWith("}"))
             {
                // This is the first line in the chunk (its header). Parse it, reintroducing
                // the backticks since they aren't present in the embedded editor.
@@ -1152,6 +1152,11 @@ public class VisualModeChunk
                {
                   label = StringUtil.stringValue(labelEngine);
                }
+            }
+            else
+            {
+               // if this is a chunk without a header, it's a 'raw' chunk
+               engine = "raw chunk";
             }
          }
          else

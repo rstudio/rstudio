@@ -6103,6 +6103,12 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onInsertChunkJulia()
+   {
+      onInsertChunk("```{julia}\n\n```\n", 1, 0);
+   }
+   
+   @Handler
    void onInsertChunkMermaid()
    {
       onInsertChunk("```{mermaid}\n\n```\n", 1, 0);
