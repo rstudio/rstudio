@@ -115,7 +115,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
 
             // Check whether the width of this chunk tail matches
             // the width of the chunk header that started this chunk.
-            var match = /^\s*((?:`|-)+)/.exec(value);
+            var match = /^\s*((?:`|-|\.)+)/.exec(value);
             var width = match[1].length;
             if (context.chunk.width !== width) {
                this.next = state;
@@ -145,7 +145,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
 
                // A chunk header was found; record the state we entered
                // from, and also the width of the chunk header.
-               var match = /^\s*((?:`|-)+)/.exec(value);
+               var match = /^\s*((?:`|-|\.)+)/.exec(value);
                context.chunk.width = match[1].length;
                context.chunk.state = state;
 
