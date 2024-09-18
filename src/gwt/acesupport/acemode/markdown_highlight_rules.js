@@ -450,7 +450,6 @@ var MarkdownHighlightRules = function () {
             // Check whether we're already within a chunk. If so,
             // skip this chunk header -- assume that it's embedded
             // within another active chunk.
-            debugger;
             context.chunk = context.chunk || {};
             if (context.chunk.state != null) {
                this.next = state;
@@ -478,7 +477,6 @@ var MarkdownHighlightRules = function () {
             onMatch: function (value, state, stack, line, context) {
                // Check whether the width of this chunk tail matches
                // the width of the chunk header that started this chunk.
-               debugger;
                var match = /^\s*((?:`|-)+)/.exec(value);
                var width = match[1].length;
                if (context.chunk.width !== width) {
