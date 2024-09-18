@@ -48,7 +48,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-define("mode/markdown_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
+define("mode/markdown_highlight_rules", ["require", "exports", "module"], function (require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var lang = require("ace/lib/lang");
@@ -71,530 +71,438 @@ var MermaidHighlightRules = require("mode/mermaid_highlight_rules").MermaidHighl
 var DotHighlightRules = require("ace/mode/dot_highlight_rules").DotHighlightRules;
 
 
-var escaped = function(ch) {
-    return "(?:[^" + lang.escapeRegExp(ch) + "\\\\]|\\\\.)*";
+var escaped = function (ch) {
+   return "(?:[^" + lang.escapeRegExp(ch) + "\\\\]|\\\\.)*";
 };
-
-function github_embed(tag, prefix) {
-    return { // Github style block
-        token : "support.function",
-        regex : "^\\s*```(?:" + "\\{" + tag + "[^\\}]*\\}" + "|" + tag + ")\\s*$",
-        push  : prefix + "start"
-    };
-}
 
 var $rainbowFencedDivs = true;
 var $numFencedDivsColors = 7;
 
-exports.setRainbowFencedDivs = function(value) {
-    $rainbowFencedDivs = value;
+exports.setRainbowFencedDivs = function (value) {
+   $rainbowFencedDivs = value;
 };
-exports.getRainbowFencedDivs = function() {
-    return $rainbowFencedDivs;
+exports.getRainbowFencedDivs = function () {
+   return $rainbowFencedDivs;
 };
-exports.setNumFencedDivsColors = function(value) {
-    $numFencedDivsColors = value;
+exports.setNumFencedDivsColors = function (value) {
+   $numFencedDivsColors = value;
 };
 
-var MarkdownHighlightRules = function() {
+var MarkdownHighlightRules = function () {
 
-    var slideFields = lang.arrayToMap(
-        ("title|author|date|rtl|depends|autosize|width|height|transition|transition-speed|font-family|css|class|navigation|incremental|left|right|id|audio|video|type|at|help-doc|help-topic|source|console|console-input|execute|pause")
-            .split("|")
-    );
-    
-    // regexp must not have capturing parentheses
-    // regexps are ordered -> the first match is used
+   var slideFields = lang.arrayToMap(
+      ("title|author|date|rtl|depends|autosize|width|height|transition|transition-speed|font-family|css|class|navigation|incremental|left|right|id|audio|video|type|at|help-doc|help-topic|source|console|console-input|execute|pause")
+         .split("|")
+   );
 
-    // handle highlighting for *abc*, _abc_ separately, as pandoc's
-    // parser is a bit more strict about where '_' can appear
-    var strongUnderscore = {
-        token: ["text", "constant.numeric.text", "constant.numeric.text", "constant.numeric.text"],
-        regex: "(^|\\s+)(_{2,3})(?![\\s_])(.*?)(?=_)(\\2)\\b"
-    };
+   // regexp must not have capturing parentheses
+   // regexps are ordered -> the first match is used
 
-    var emphasisUnderscore = {
-        token: ["text", "constant.language.boolean.text"],
-        regex: "(^|\\s+)(_(?=[^\\s_]).*?_)\\b"
-    };
+   // handle highlighting for *abc*, _abc_ separately, as pandoc's
+   // parser is a bit more strict about where '_' can appear
+   var strongUnderscore = {
+      token: ["text", "constant.numeric.text", "constant.numeric.text", "constant.numeric.text"],
+      regex: "(^|\\s+)(_{2,3})(?![\\s_])(.*?)(?=_)(\\2)\\b"
+   };
 
-    var strongStars = {
-        token: ["constant.numeric.text", "constant.numeric.text", "constant.numeric.text"],
-        regex: "([*]{2,3})(?![\\s*])(.*?)(?=[*])(\\1)"
-    };
+   var emphasisUnderscore = {
+      token: ["text", "constant.language.boolean.text"],
+      regex: "(^|\\s+)(_(?=[^\\s_]).*?_)\\b"
+   };
 
-    var emphasisStars = {
-        token: ["constant.language.boolean.text"],
-        regex: "([*](?=[^\\s*]).*?[*])"
-    };
+   var strongStars = {
+      token: ["constant.numeric.text", "constant.numeric.text", "constant.numeric.text"],
+      regex: "([*]{2,3})(?![\\s*])(.*?)(?=[*])(\\1)"
+   };
 
-    var inlineNote = {
-        token : "text",
-        regex : "\\^\\[" + escaped("]") + "\\]"
-    };
+   var emphasisStars = {
+      token: ["constant.language.boolean.text"],
+      regex: "([*](?=[^\\s*]).*?[*])"
+   };
 
-    var reference = {
-        token : ["text", "constant", "text", "url", "string", "text"],
-        regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
-    };
+   var inlineNote = {
+      token: "text",
+      regex: "\\^\\[" + escaped("]") + "\\]"
+   };
 
-    var linkByReference = {
-        token : ["text", "keyword", "text", "constant", "text"],
-        regex : "(\\s*\\[)(" + escaped("]") + ")(\\]\\[)("+ escaped("]") + ")(\\])"
-    };
+   var reference = {
+      token: ["text", "constant", "text", "url", "string", "text"],
+      regex: "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
+   };
 
-    var linkByUrl = {
-        token : ["text", "keyword", "text", "markup.href", "string", "text", "paren.keyword.operator", "nospell", "paren.keyword.operator"],
-        regex : "(\\s*\\[)(" +                            // [
-            escaped("]") +                                // link text
-            ")(\\]\\()" +                                 // ](
-            '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +    // href
-            '(\\s*"' +  escaped('"') + '"\\s*)?' +        // "title"
-            "(\\))" +                                     // )
-            "(?:(\\s*{)((?:[^\\}]+))(\\s*}))?"            // { block text }
-    };
+   var linkByReference = {
+      token: ["text", "keyword", "text", "constant", "text"],
+      regex: "(\\s*\\[)(" + escaped("]") + ")(\\]\\[)(" + escaped("]") + ")(\\])"
+   };
 
-    var urlLink = {
-        token : ["text", "keyword", "text"],
-        regex : "(<)((?:https?|ftp|dict):[^'\">\\s]+|(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+)(>)"
-    };
+   var linkByUrl = {
+      token: ["text", "keyword", "text", "markup.href", "string", "text", "paren.keyword.operator", "nospell", "paren.keyword.operator"],
+      regex: "(\\s*\\[)(" +                            // [
+         escaped("]") +                                // link text
+         ")(\\]\\()" +                                 // ](
+         '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +    // href
+         '(\\s*"' + escaped('"') + '"\\s*)?' +        // "title"
+         "(\\))" +                                     // )
+         "(?:(\\s*{)((?:[^\\}]+))(\\s*}))?"            // { block text }
+   };
 
-    this.$rules = {
+   var urlLink = {
+      token: ["text", "keyword", "text"],
+      regex: "(<)((?:https?|ftp|dict):[^'\">\\s]+|(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+)(>)"
+   };
 
-        "basic" : [{
-            token : "constant.language.escape",
-            regex : /\\[\\`*_{}[\]()#+\-.!]/
-        }, { // latex-style inverted question mark
-            token : "text",
-            regex : /[?]`/
-        }, { // inline r code
-            token : "support.function.inline_r_chunk",
-            regex : "`r (?:.*?[^`])`"
-        }, { // code span `
-            token : ["support.function", "support.function", "support.function"],
-            regex : "(`+)(.*?[^`])(\\1)"
-        },
-            inlineNote,
-            reference,
-            linkByReference,
-            linkByUrl,
-            urlLink,
-            strongStars,
-            strongUnderscore,
-            emphasisStars,
-            emphasisUnderscore
-        ],
-       
-        "start": [{
-           token : "empty_line",
-           regex : '^\\s*$',
-           next: "allowBlock"
-        }, { // latex-style inverted question mark
-            token : "text",
-            regex : /[?]`/
-        }, { // inline r code
-            token : "support.function.inline_r_chunk",
-            regex : "`r (?:.*?[^`])`"
-        }, { // code span `
-            token : ["support.function", "support.function", "support.function"],
-            regex : "(`+)([^\\r]*?[^`])(\\1)"
-        }, { // h1 with equals
-            token: "markup.heading.1",
-            regex: "^\\={3,}\\s*$",
-            next: "fieldblock"
-        }, { // h1
-            token: "markup.heading.1",
-            regex: "^={3,}(?=\\s*$)"
-        }, { // h2
-            token: "markup.heading.2",
-            regex: "^\\-{3,}(?=\\s*$)"
-        }, {
-            // opening fenced div
-            token: "fenced_open", 
-            regex: "^[:]{3,}\\s*.*$", 
-            onMatch: function(val, state, stack, line, context) {
+   this.$rules = {
 
-                if (!$rainbowFencedDivs) {
-                    return "keyword.operator";
-                }
+      "basic": [{
+         token: "constant.language.escape",
+         regex: /\\[\\`*_{}[\]()#+\-.!]/
+      }, { // latex-style inverted question mark
+         token: "text",
+         regex: /[?]`/
+      }, { // inline r code
+         token: "support.function.inline_r_chunk",
+         regex: "`r (?:.*?[^`])`"
+      }, { // code span `
+         token: ["support.function", "support.function", "support.function"],
+         regex: "(`+)(.*?[^`])(\\1)"
+      },
+         inlineNote,
+         reference,
+         linkByReference,
+         linkByUrl,
+         urlLink,
+         strongStars,
+         strongUnderscore,
+         emphasisStars,
+         emphasisUnderscore
+      ],
 
-                var color = (context.fences || 0) % $numFencedDivsColors;
-                var close = /^[:]{3,}\s*$/.test(val);
+      "start": [{
+         token: "empty_line",
+         regex: '^\\s*$',
+         next: "allowBlock"
+      }, { // latex-style inverted question mark
+         token: "text",
+         regex: /[?]`/
+      }, { // inline r code
+         token: "support.function.inline_r_chunk",
+         regex: "`r (?:.*?[^`])`"
+      }, { // code span `
+         token: ["support.function", "support.function", "support.function"],
+         regex: "(`+)([^\\r]*?[^`])(\\1)"
+      }, { // h1 with equals
+         token: "markup.heading.1",
+         regex: "^\\={3,}\\s*$",
+         next: "fieldblock"
+      }, { // h1
+         token: "markup.heading.1",
+         regex: "^={3,}(?=\\s*$)"
+      }, { // h2
+         token: "markup.heading.2",
+         regex: "^\\-{3,}(?=\\s*$)"
+      }, {
+         // opening fenced div
+         token: "fenced_open",
+         regex: "^[:]{3,}\\s*.*$",
+         onMatch: function (val, state, stack, line, context) {
 
-                if (close) 
-                {
-                    context.fences = color + 1;
-                    return "fenced_div_" + color;
-                }
-                else 
-                {
-                    // separating the fence (:::) from the follow up text
-                    // in case we want to style them differently
-                    var rx = /^([:]{3,})(.*)$/;
-                    return [
-                        { type: "fenced_div_"  + color, value: val.replace(rx, '$1')}, 
-                        { type: "fenced_div_text_" + color, value: val.replace(rx, '$2')}, 
-                    ];
-                }
-            },
-            next: "start"
-        }, {
-            token : function(value) {
-                return "markup.heading." + value.length;
-            },
-            regex : /^#{1,6}(?=\s*[^ #]|\s+#.)/,
-            next : "header"
-        },
-                         
-        github_embed("(?:javascript|js)", "jscode-"),
-        github_embed("xml", "xmlcode-"),
-        github_embed("html", "htmlcode-"),
-        github_embed("css", "csscode-"),
-        github_embed("scss", "scsscode-"),
-        github_embed("sass", "sasscode-"),
-        github_embed("less", "lesscode-"),
-        github_embed("mermaid", "mermaidcode-"),
-        github_embed("dot", "dotcode-"),
-        github_embed("perl", "perlcode-"),
-        github_embed("python", "pythoncode-"),
-        github_embed("ruby", "rubycode-"),
-        github_embed("scala", "scalacode-"),
-        github_embed("sh", "shcode-"),
-        github_embed("bash", "bashcode-"),
-        github_embed("stan", "stancode-"),
-        github_embed("sql", "sqlcode-"),
-        github_embed("d3", "jscode-"),
-        
-        { // Github style block
-            token : "support.function",
-            regex : "^\\s*```\\s*\\S*(?:{.*?\\})?\\s*$",
-            next  : "githubblock"
-        }, { // ioslides-style bullet
-            token : "string.blockquote",
-            regex : "^\\s*>\\s*(?=[-])"
-        }, { // block quote
-            token : "string.blockquote",
-            regex : "^\\s*>\\s*",
-            next  : "blockquote"
-        },
-            inlineNote,
-            reference,
-            linkByReference,
-           { // HR *
-            token : "constant.hr",
-            regex : "^\\s*[*](?:\\s*[*]){2,}\\s*$",
-            next  : "allowBlock",
-        }, { // HR -
-            token : "constant.hr",
-            regex : "^\\s*[-](?:\\s*[-]){2,}\\s*$",
-            next  : "allowBlock",
-        }, { // HR _
-            token : "constant.hr",
-            regex : "^\\s*[_](?:\\s*[_]){2,}\\s*$",
-            next  : "allowBlock"
-        }, { // $ escape
-            token : "text",
-            regex : "\\\\\\$"
-        }, { // MathJax $$
-            token : "latex.markup.list.string.begin",
-            regex : "\\${2}",
-            next  : "mathjaxdisplay"
-        }, { // MathJax $...$ (org-mode style)
-            token : ["latex.markup.list.string.begin","latex.support.function","latex.markup.list.string.end"],
-            regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
-        }, { // simple links <url>
-            token : ["text", "keyword", "text"],
-            regex : "(<)("+
-                "(?:https?|ftp|dict):[^'\">\\s]+"+
-                "|"+
-                "(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+"+
-                ")(>)"
-        }, {
-            // embedded latex command
-            token : "keyword",
-            regex : "\\\\(?:[a-zA-Z0-9]+|[^a-zA-Z0-9])"
-        }, {
-            // brackets
-            token : "paren.keyword.operator",
-            regex : "[{}]"
-        }, {
-            // pandoc citation
-            token : "markup.list",
-            regex : "-?\\@[\\w\\d-]+"
-        }, {
-            token : "text",
-            regex : "[^\\*_%$`\\[#<>{}\\\\@\\s!]+"
-        }, {
-            token : "text",
-            regex : "\\\\"
-        }, { // list
-            token : "text",
-            regex : "^\\s*(?:[*+-]|\\d+\\.)\\s+",
-            next  : "listblock"
-        },
-            strongStars,
-            strongUnderscore,
-            emphasisStars,
-            emphasisUnderscore,
-        { // html comment
-            token : "comment",
-            regex : "<\\!--",
-            next  : "html-comment"
-        }, {
-            include : "basic"
-        }],
+            if (!$rainbowFencedDivs) {
+               return "keyword.operator";
+            }
 
-        "html-comment" : [{
-           token: "comment",
-           regex: "-->",
-           next: "start"
-        }, {
-           defaultToken: "comment.text"
-        }],
-       
-        // code block
-        "allowBlock": [{
-           token : "support.function",
-           regex : "^ {4}.+",
-           next : "allowBlock"
-        }, {
-            token : "empty_line",
-            regex : "^\\s*$",
-            next  : "allowBlock"
-        }, {
-           token : "empty",
-           regex : "",
-           next : "start"
-        }],
+            var color = (context.fences || 0) % $numFencedDivsColors;
+            var close = /^[:]{3,}\s*$/.test(val);
 
-        "header" : [{
-            regex: "$",
-            next : "start"
-        }, {
-            include: "basic"
-        }, {
-            defaultToken : "heading"
-        }],
+            if (close) {
+               context.fences = color + 1;
+               return "fenced_div_" + color;
+            } else {
+               // separating the fence (:::) from the follow up text
+               // in case we want to style them differently
+               var rx = /^([:]{3,})(.*)$/;
+               return [
+                  { type: "fenced_div_" + color, value: val.replace(rx, '$1') },
+                  { type: "fenced_div_text_" + color, value: val.replace(rx, '$2') },
+               ];
+            }
+         },
+         next: "start"
+      }, {
+         token: function (value) {
+            return "markup.heading." + value.length;
+         },
+         regex: /^#{1,6}(?=\s*[^ #]|\s+#.)/,
+         next: "header"
+      }, { // ioslides-style bullet
+         token: "string.blockquote",
+         regex: "^\\s*>\\s*(?=[-])"
+      }, { // block quote
+         token: "string.blockquote",
+         regex: "^\\s*>\\s*",
+         next: "blockquote"
+      },
+         inlineNote,
+         reference,
+         linkByReference,
+      { // HR *
+         token: "constant.hr",
+         regex: "^\\s*[*](?:\\s*[*]){2,}\\s*$",
+         next: "allowBlock",
+      }, { // HR -
+         token: "constant.hr",
+         regex: "^\\s*[-](?:\\s*[-]){2,}\\s*$",
+         next: "allowBlock",
+      }, { // HR _
+         token: "constant.hr",
+         regex: "^\\s*[_](?:\\s*[_]){2,}\\s*$",
+         next: "allowBlock"
+      }, { // $ escape
+         token: "text",
+         regex: "\\\\\\$"
+      }, { // MathJax $$
+         token: "latex.markup.list.string.begin",
+         regex: "\\${2}",
+         next: "mathjaxdisplay"
+      }, { // MathJax $...$ (org-mode style)
+         token: ["latex.markup.list.string.begin", "latex.support.function", "latex.markup.list.string.end"],
+         regex: "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
+      }, { // simple links <url>
+         token: ["text", "keyword", "text"],
+         regex: "(<)(" +
+            "(?:https?|ftp|dict):[^'\">\\s]+" +
+            "|" +
+            "(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+" +
+            ")(>)"
+      }, {
+         // embedded latex command
+         token: "keyword",
+         regex: "\\\\(?:[a-zA-Z0-9]+|[^a-zA-Z0-9])"
+      }, {
+         // brackets
+         token: "paren.keyword.operator",
+         regex: "[{}]"
+      }, {
+         // pandoc citation
+         token: "markup.list",
+         regex: "-?\\@[\\w\\d-]+"
+      }, {
+         token: "text",
+         regex: "[^\\*_%$`\\[#<>{}\\\\@\\s!]+"
+      }, {
+         token: "text",
+         regex: "\\\\"
+      }, { // list
+         token: "text",
+         regex: "^\\s*(?:[*+-]|\\d+\\.)\\s+",
+         next: "listblock"
+      },
+         strongStars,
+         strongUnderscore,
+         emphasisStars,
+         emphasisUnderscore,
+      { // html comment
+         token: "comment",
+         regex: "<\\!--",
+         next: "html-comment"
+      }, {
+         include: "basic"
+      }],
 
-        "listblock" : [ { // Lists only escape on completely blank lines.
-            token : "empty_line",
-            regex : "^\\s*$",
-            next  : "start"
-        }, { // list
-            token : "text",
-            regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
-            next  : "listblock"
-        }, { // MathJax $...$ (org-mode style)
-            token : ["latex.markup.list.string.begin","latex.support.function","latex.markup.list.string.end"],
-            regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
-        }, {
-            include : "basic", noEscape: true
-        }, { // Github style block
-            token : "support.function",
-            regex : "^\\s*```\\s*[a-zA-Z]*(?:{.*?\\})?\\s*$",
-            next  : "githubblock"
-        }, {
-            defaultToken : "text" //do not use markup.list to allow stling leading `*` differently
-        }],
+      "html-comment": [{
+         token: "comment",
+         regex: "-->",
+         next: "start"
+      }, {
+         defaultToken: "comment.text"
+      }],
 
-        "blockquote" : [{ // Blockquotes only escape on blank lines.
-            token : "empty_line",
-            regex : "^\\s*$",
-            next  : "start"
-        }, {
-            token : "constant.language.escape",
-            regex : /\\[\\`*_{}[\]()#+\-.!]/
-        }, { // latex-style inverted question mark
-            token : "text",
-            regex : /[?]`/
-        }, { // inline r code
-            token : "support.function.inline_r_chunk",
-            regex : "`r (?:.*?[^`])`"
-        }, { // code span `
-            token : ["support.function", "support.function", "support.function"],
-            regex : "(`+)(.*?[^`])(\\1)"
-        },
-            inlineNote,
-            reference,
-            linkByReference,
-            linkByUrl,
-            urlLink,
-            strongStars,
-            strongUnderscore,
-            emphasisStars,
-            emphasisUnderscore,
-        {
-            defaultToken : "string.blockquote"
-        }],
+      // code block
+      "allowBlock": [{
+         token: "support.function",
+         regex: "^ {4}.+",
+         next: "allowBlock"
+      }, {
+         token: "empty_line",
+         regex: "^\\s*$",
+         next: "allowBlock"
+      }, {
+         token: "empty",
+         regex: "",
+         next: "start"
+      }],
 
-        "githubblock" : [ {
-            token : "support.function",
-            regex : "^\\s*```",
-            next  : "start"
-        }, {
-            token : "support.function",
-            regex : ".+"
-        }],
+      "header": [{
+         regex: "$",
+         next: "start"
+      }, {
+         include: "basic"
+      }, {
+         defaultToken: "heading"
+      }],
 
-         "fieldblock" : [{
-            token : function(value) {
-                var field = value.slice(0,-1);
-                if (slideFields[field])
-                    return "comment.doc.tag";
-                else
-                    return "text";
-            },
-            regex : "^" +"[\\w-]+\\:",
-            next  : "fieldblockvalue"
-        }, {
-            token : "text",
-            regex : "(?=.+)",
-            next  : "start"
-        }],
+      "listblock": [{ // Lists only escape on completely blank lines.
+         token: "empty_line",
+         regex: "^\\s*$",
+         next: "start"
+      }, { // list
+         token: "text",
+         regex: "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
+         next: "listblock"
+      }, { // MathJax $...$ (org-mode style)
+         token: ["latex.markup.list.string.begin", "latex.support.function", "latex.markup.list.string.end"],
+         regex: "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
+      }, {
+         include: "basic", noEscape: true
+      }, {
+         defaultToken: "text" //do not use markup.list to allow stling leading `*` differently
+      }],
 
-        "fieldblockvalue" : [{
-            token : "text",
-            regex : "$",
-            next  : "fieldblock"
-        }, {
-            token : "text",
-            regex : "[^{}]+"
-        }],
+      "blockquote": [{ // Blockquotes only escape on blank lines.
+         token: "empty_line",
+         regex: "^\\s*$",
+         next: "start"
+      }, {
+         token: "constant.language.escape",
+         regex: /\\[\\`*_{}[\]()#+\-.!]/
+      }, { // latex-style inverted question mark
+         token: "text",
+         regex: /[?]`/
+      }, { // inline r code
+         token: "support.function.inline_r_chunk",
+         regex: "`r (?:.*?[^`])`"
+      }, { // code span `
+         token: ["support.function", "support.function", "support.function"],
+         regex: "(`+)(.*?[^`])(\\1)"
+      },
+         inlineNote,
+         reference,
+         linkByReference,
+         linkByUrl,
+         urlLink,
+         strongStars,
+         strongUnderscore,
+         emphasisStars,
+         emphasisUnderscore,
+      {
+         defaultToken: "string.blockquote"
+      }],
 
-        "mathjaxdisplay" : [{
-            token : "latex.markup.list.string.end",
-            regex : "\\${2}",
-            next  : "start"
-        }, {
-            token : "latex.support.function",
-            regex : "[^\\$]+"
-        }],
-        
-        "mathjaxnativedisplay" : [{
-            token : "latex.markup.list.string.end",
-            regex : "\\\\\\]",
-            next  : "start"
-        }, {
-            token : "latex.support.function",
-            regex : "[\\s\\S]+?"
-        }],
-        
-        "mathjaxnativeinline" : [{
-            token : "latex.markup.list.string.end",
-            regex : "\\\\\\)",
-            next  : "start"
-        }, {
-            token : "latex.support.function",
-            regex : "[\\s\\S]+?"
-        }]
+      "fieldblock": [{
+         token: function (value) {
+            var field = value.slice(0, -1);
+            if (slideFields[field])
+               return "comment.doc.tag";
+            else
+               return "text";
+         },
+         regex: "^" + "[\\w-]+\\:",
+         next: "fieldblockvalue"
+      }, {
+         token: "text",
+         regex: "(?=.+)",
+         next: "start"
+      }],
 
-    };
+      "fieldblockvalue": [{
+         token: "text",
+         regex: "$",
+         next: "fieldblock"
+      }, {
+         token: "text",
+         regex: "[^{}]+"
+      }],
 
-    this.embedRules(JavaScriptHighlightRules, "jscode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+      "mathjaxdisplay": [{
+         token: "latex.markup.list.string.end",
+         regex: "\\${2}",
+         next: "start"
+      }, {
+         token: "latex.support.function",
+         regex: "[^\\$]+"
+      }],
 
-    this.embedRules(HtmlHighlightRules, "htmlcode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+      "mathjaxnativedisplay": [{
+         token: "latex.markup.list.string.end",
+         regex: "\\\\\\]",
+         next: "start"
+      }, {
+         token: "latex.support.function",
+         regex: "[\\s\\S]+?"
+      }],
 
-    this.embedRules(CssHighlightRules, "csscode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+      "mathjaxnativeinline": [{
+         token: "latex.markup.list.string.end",
+         regex: "\\\\\\)",
+         next: "start"
+      }, {
+         token: "latex.support.function",
+         regex: "[\\s\\S]+?"
+      }]
 
-    this.embedRules(ScssHighlightRules, "scsscode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+   };
 
-    this.embedRules(SassHighlightRules, "sasscode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+   // Support for GitHub blocks
+   this.$rules["start"].unshift(
+      {
+         token: "support.function",
+         regex: "^\\s*`{3,16}(?!`)",
+         onMatch: function (value, state, stack, line, context) {
+            // Check whether we're already within a chunk. If so,
+            // skip this chunk header -- assume that it's embedded
+            // within another active chunk.
+            context.chunk = context.chunk || {};
+            if (context.chunk.state != null) {
+               this.next = state;
+               return this.token;
+            }
 
-    this.embedRules(LessHighlightRules, "lesscode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+            // A chunk header was found; record the state we entered
+            // from, and also the width of the chunk header.
+            var match = /^\s*((?:`|-)+)/.exec(value);
+            context.chunk.width = match[1].length;
+            context.chunk.state = state;
 
-    this.embedRules(XmlHighlightRules, "xmlcode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
-    
-    this.embedRules(PerlHighlightRules, "perlcode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
-    
-    this.embedRules(PythonHighlightRules, "pythoncode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
-    
-    this.embedRules(RubyHighlightRules, "rubycode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
-    
-    this.embedRules(MermaidHighlightRules, "mermaidcode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
-    
-    this.embedRules(DotHighlightRules, "dotcode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
-    
-    this.embedRules(ScalaHighlightRules, "scalacode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+            // Update the next state and return the matched token.
+            this.next = `github-block-${context.chunk.width}`;
+            return this.token;
+         }
+      }
+   );
 
-    this.embedRules(ShHighlightRules, "shcode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+   var githubBlockExitRules = [
+      {
+         token: "support.function",
+         regex: "^\\s*`{3,16}(?!`)",
+         onMatch: function (value, state, stack, line, context) {
+            // Check whether the width of this chunk tail matches
+            // the width of the chunk header that started this chunk.
+            var match = /^\s*((?:`|-)+)/.exec(value);
+            var width = match[1].length;
+            if (context.chunk.width !== width) {
+               this.next = state;
+               return this.token;
+            }
 
-    this.embedRules(ShHighlightRules, "bashcode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+            // Update the next state and return the matched token.
+            this.next = context.chunk.state || "start";
+            delete context.chunk;
+            return this.token;
+         }
+      },
+      {
+         token: "support.function",
+         regex: ".+"
+      }
+   ];
 
-    this.embedRules(SqlHighlightRules, "sqlcode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
+   for (var i = 3; i <= 16; i++) {
+      this.$rules[`github-block-${i}`] = githubBlockExitRules;
+   }
 
-    this.embedRules(JavaScriptHighlightRules, "jscode-", [{
-        token : "support.function",
-        regex : "^\\s*```",
-        next  : "pop"
-    }]);
-
-    this.normalizeRules();
-};
+   this.normalizeRules();
+   };
+   
 oop.inherits(MarkdownHighlightRules, TextHighlightRules);
-
 exports.MarkdownHighlightRules = MarkdownHighlightRules;
+
 });
