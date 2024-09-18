@@ -233,33 +233,6 @@ var MarkdownHighlightRules = function () {
          },
          regex: /^#{1,6}(?=\s*[^ #]|\s+#.)/,
          next: "header"
-      },
-
-      // GitHub style block
-      {
-         token: "support.function.codebegin",
-         regex: "^\\s*`{3,}",
-         onMatch: function (value, state, stack, line, context) {
-            // Check whether we're already within a chunk. If so,
-            // skip this chunk header -- assume that it's embedded
-            // within another active chunk.
-            debugger;
-            context.chunk = context.chunk || {};
-            if (context.chunk.state != null) {
-               this.next = state;
-               return this.token;
-            }
-
-            // A chunk header was found; record the state we entered
-            // from, and also the width of the chunk header.
-            var match = /^\s*((?:`|-)+)/.exec(value);
-            context.chunk.width = match[1].length;
-            context.chunk.state = state;
-
-            // Update the next state and return the matched token.
-            this.next = `github-block-${context.chunk.width}`;
-            return this.token;
-         }
       }, { // ioslides-style bullet
          token: "string.blockquote",
          regex: "^\\s*>\\s*(?=[-])"
@@ -468,10 +441,39 @@ var MarkdownHighlightRules = function () {
 
    };
 
+   // Support for GitHub blocks
+   this.$rules["start"].unshift(
+      {
+         token: "support.function",
+         regex: "^\\s*`{3,}",
+         onMatch: function (value, state, stack, line, context) {
+            // Check whether we're already within a chunk. If so,
+            // skip this chunk header -- assume that it's embedded
+            // within another active chunk.
+            debugger;
+            context.chunk = context.chunk || {};
+            if (context.chunk.state != null) {
+               this.next = state;
+               return this.token;
+            }
+
+            // A chunk header was found; record the state we entered
+            // from, and also the width of the chunk header.
+            var match = /^\s*((?:`|-)+)/.exec(value);
+            context.chunk.width = match[1].length;
+            context.chunk.state = state;
+
+            // Update the next state and return the matched token.
+            this.next = `github-block-${context.chunk.width}`;
+            return this.token;
+         }
+      }
+   );
+
    for (var i = 0; i < 16; i++) {
       this.$rules[`github-block-${i}`] = [
          {
-            token: "support.function.codeend",
+            token: "support.function",
             regex: "^\\s*`{3,}",
             onMatch: function (value, state, stack, line, context) {
                // Check whether the width of this chunk tail matches
