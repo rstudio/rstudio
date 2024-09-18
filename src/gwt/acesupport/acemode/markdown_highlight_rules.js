@@ -469,32 +469,34 @@ var MarkdownHighlightRules = function () {
       }
    );
 
-   for (var i = 0; i < 16; i++) {
-      this.$rules[`github-block-${i}`] = [
-         {
-            token: "support.function",
-            regex: "^\\s*`{3,}",
-            onMatch: function (value, state, stack, line, context) {
-               // Check whether the width of this chunk tail matches
-               // the width of the chunk header that started this chunk.
-               var match = /^\s*((?:`|-)+)/.exec(value);
-               var width = match[1].length;
-               if (context.chunk.width !== width) {
-                  this.next = state;
-                  return this.token;
-               }
-
-               // Update the next state and return the matched token.
-               this.next = context.chunk.state || "start";
-               delete context.chunk;
+   var githubBlockExitRules = [
+      {
+         token: "support.function",
+         regex: "^\\s*`{3,}",
+         onMatch: function (value, state, stack, line, context) {
+            // Check whether the width of this chunk tail matches
+            // the width of the chunk header that started this chunk.
+            var match = /^\s*((?:`|-)+)/.exec(value);
+            var width = match[1].length;
+            if (context.chunk.width !== width) {
+               this.next = state;
                return this.token;
             }
-         },
-         {
-            token: "support.function",
-            regex: ".+"
+
+            // Update the next state and return the matched token.
+            this.next = context.chunk.state || "start";
+            delete context.chunk;
+            return this.token;
          }
-      ];
+      },
+      {
+         token: "support.function",
+         regex: ".+"
+      }
+   ];
+
+   for (var i = 0; i < 16; i++) {
+      this.$rules[`github-block-${i}`] = githubBlockExitRules;
    }
 
    this.normalizeRules();
