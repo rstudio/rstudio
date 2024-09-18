@@ -2227,6 +2227,11 @@
 
    # collect options of interest
    options <- options("repos", "download.file.method", "download.file.extra", "HTTPUserAgent")
+
+   # drop attributes on 'repos'
+   options[["repos"]] <- c(options[["repos"]])
+
+   # include extra arguments for 'curl' downloader
    if (identical(options[["download.file.method"]], "curl"))
       options[["download.file.extra"]] <- .rs.downloadFileExtraWithCurlArgs()
 
