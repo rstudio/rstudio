@@ -59,41 +59,40 @@ var RE_FOLD_END   = /(?:^|[.])(?:codeend)(?:$|[.])/;
    // looking forward or backwards. It's encoded this way both for
    // efficiency and to avoid duplicating this function for each
    // direction.
-   this.$getBracedWidgetRange = function(session, foldStyle, row, prefix, prefix2) {
+   this.$getBracedWidgetRange = function(session, foldStyle, row, pattern) {
 
+      // Get the fold widget for this row. A 'start' widget folds content forwards
+      // of this row in the document; otherwise, we fold backwards in the document.
       var widget = this.getFoldWidget(session, foldStyle, row);
-      var increment = (widget === "start") ? 1 : -1;
-      
-      var startPos = {row: row, column: 0};
-      if (increment === 1)
-         startPos.column = session.getLine(row).length;
-      
-      var idx = row + increment;
+      var increment = widget === "start" ? 1 : -1;
+      var startRow = row;
+
+      // Find the end of the current fold range. Iterate through lines and apply
+      // our fold pattern until we get a match.
+      var endRow = row + increment;
       var limit = increment > 0 ? session.getLength() : 0;
-      while (true)
-      {
-         if (idx === limit)
+      while (endRow !== limit) {
+
+         var line = session.getLine(endRow);
+         if (pattern.test(line))
             break;
 
-         var trimmed = session.getLine(idx).trim();
-         if (Utils.startsWith(trimmed, prefix))
-            break;
-
-         if (prefix2 && Utils.startsWith(trimmed, prefix2))
-            break;
-
-         idx += increment;
+         endRow += increment;
       }
       
-      var endPos = {row: idx, column: 0};
-      if (increment === -1)
-         endPos.column = session.getLine(idx).length;
-
-      var range = increment === 1 ?
-         Range.fromPoints(startPos, endPos) :
-         Range.fromPoints(endPos, startPos);
-
-      return range;
+      // Build the fold range. Note that if we were folding backwards, then the
+      // discovered 'endRow' would lie earlier in the document, on the row where
+      // the fold region starts -- hence, the sort of 'mirroring' in the code below.
+      if (widget === "start") {
+         var startPos = { row: startRow, column: session.getLine(startRow).length };
+         var endPos = { row: endRow, column: 0 };
+         return Range.fromPoints(startPos, endPos);
+      } else {
+         var startPos = { row: endRow, column: session.getLine(endRow).length };
+         var endPos = { row: startRow, column: 0 };
+         return Range.fromPoints(startPos, endPos);
+      }
+      
    };
 
 
@@ -123,17 +122,26 @@ var RE_FOLD_END   = /(?:^|[.])(?:codeend)(?:$|[.])/;
       var trimmed = line.trim();
 
       // Handle chunk folds.
-      if (Utils.startsWith(line, "```"))
-         return this.$getBracedWidgetRange(session, foldStyle, row, "```");
+      var match = /^\s*(`{3,})/.exec(line);
+      if (match !== null) {
+         var pattern = new RegExp("^\\s*(`{" + match[1].length + "})(?!`)");
+         return this.$getBracedWidgetRange(session, foldStyle, row, pattern);
+      }
 
       // Handle YAML header.
       var prevState = row > 0 ? session.getState(row - 1) : "start";
       var isYamlStart = row === 0 && trimmed === "---";
-      var isYamlEnd = Utils.startsWith(prevState, "yaml");
-      
-      if (isYamlStart || isYamlEnd)
-         return this.$getBracedWidgetRange(session, foldStyle, row, "---", isYamlStart ? "..." : undefined);
+      if (isYamlStart) {
+         var pattern = /^\s*---\s*$/;
+         return this.$getBracedWidgetRange(session, foldStyle, row, pattern);
+      }
 
+      var isYamlEnd = Utils.startsWith(prevState, "yaml");
+      if (isYamlEnd) {
+         var pattern = /^\s*(?:---|\.\.\.)\s*$/;
+         return this.$getBracedWidgetRange(session, foldStyle, row, pattern);
+      }
+      
       // Handle Markdown header folds. They fold up until the next
       // header of the same depth.
       var depth;

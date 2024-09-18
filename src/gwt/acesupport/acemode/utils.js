@@ -110,7 +110,6 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
       var rules = HighlightRules.$rules;
 
       HighlightRules.embedRules(EmbedRules, prefix + "-", [{
-         token: "support.function.codeend",
          regex: reEnd,
          onMatch: function(value, state, stack, line, context) {
 
@@ -120,19 +119,18 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
             var width = match[1].length;
             if (context.chunk.width !== width) {
                this.next = state;
-               return this.token;
+               return "text";
             }
 
             // Update the next state and return the matched token.
             this.next = context.chunk.state || "start";
             delete context.chunk;
-            return this.token;
+            return "support.function.codeend";
          }
       }]);
 
       for (var i = 0; i < startStates.length; i++) {
          rules[startStates[i]].unshift({
-            token: "support.function.codebegin",
             regex: reStart,
             onMatch: function(value, state, stack, line, context) {
 
@@ -142,7 +140,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
                context.chunk = context.chunk || {};
                if (context.chunk.state != null) {
                   this.next = state;
-                  return this.token;
+                  return "text";
                }
 
                // A chunk header was found; record the state we entered
@@ -153,7 +151,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
 
                // Update the next state and return the matched token.
                this.next = prefix + "-start";
-               return this.token;
+               return "support.function.codebegin";
             }
          });
       }
