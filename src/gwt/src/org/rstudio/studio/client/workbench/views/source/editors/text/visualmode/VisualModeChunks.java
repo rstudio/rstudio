@@ -19,12 +19,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -38,6 +37,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEdi
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 
 public class VisualModeChunks implements ChunkDefinition.Provider
 {
@@ -45,11 +46,13 @@ public class VisualModeChunks implements ChunkDefinition.Provider
                            DocDisplay display,
                            TextEditingTarget target,
                            EventBus events,
+                           FileTypeRegistry fileTypes,
                            final ArrayList<HandlerRegistration> releaseOnDismiss,
                            VisualModeEditorSync sync)
    {
       target_ = target;
       events_ = events;
+      fileTypes_ = fileTypes;
       sentinel_ = sentinel;
       parent_ = display;
       sync_ = sync;
@@ -91,7 +94,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          }
 
          VisualModeChunk chunk = new VisualModeChunk(
-               ele, index, expanded, classes, callbacks, sentinel_, target_, events_, sync_);
+               ele, index, expanded, classes, callbacks, sentinel_, target_, events_, fileTypes_, sync_);
 
          // Add the chunk to our index, and remove it when the underlying chunk
          // is removed in Prosemirror
@@ -318,6 +321,14 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       // No chunk found; execute without one
       command.execute(null);
    }
+   
+   public void forEachChunk(CommandWithArg<VisualModeChunk> command)
+   {
+      for (VisualModeChunk chunk : chunks_)
+      {
+         command.execute(chunk);
+      }
+   }
 
    /**
     * Nudges the timer that saves the expansion state of each code chunk.
@@ -451,6 +462,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
    private final DocDisplay parent_;
    private final TextEditingTarget target_;
    private final EventBus events_;
+   private final FileTypeRegistry fileTypes_;
    private final Timer saveCollapseTimer_;
    private ArrayList<Integer> collapsedChunkPos_;
    private String collapseState_;
