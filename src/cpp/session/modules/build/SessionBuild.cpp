@@ -656,7 +656,8 @@ private:
       if (type == kTestFile)
       {
          openErrorList_ = false;
-         if (module_context::isPackageInstalled("testthat")) {
+         if (module_context::isPackageInstalled("testthat"))
+         {
             parsers.add(testthatErrorParser(packagePath.getParent()));
          }
          
@@ -664,7 +665,8 @@ private:
       else if (type == kTestPackage)
       {
          openErrorList_ = false;
-         if (module_context::isPackageInstalled("testthat")) {
+         if (module_context::isPackageInstalled("testthat"))
+         {
             parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
          }
       }
@@ -1708,7 +1710,18 @@ private:
       // call the error parser if one has been specified
       if (errorParser_)
       {
-         std::vector<SourceMarker> errors = errorParser_(outputAsText());
+         std::string output = outputAsText();
+         
+         // remove the testthat summary, since that will cause us to duplicate markers
+         // https://github.com/rstudio/rstudio/issues/14564
+         boost::smatch match;
+         boost::regex reResults("(?:\u2550+|\u003d+)\\s+" kAnsiEscapeRegex "Results");
+         if (boost::regex_search(output, match, reResults))
+         {
+            output = output.substr(0, match.position());
+         }
+         
+         std::vector<SourceMarker> errors = errorParser_(output);
          if (!errors.empty())
          {
             errorsJson_ = sourceMarkersAsJson(errors);
