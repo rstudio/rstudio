@@ -14,7 +14,7 @@ test_that("Quarto Documents are highlighted as expected", {
 
       ```{r}
       #| echo: true
-      ````
+      ```
 
       1 + 1
    ')
