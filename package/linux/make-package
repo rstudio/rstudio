@@ -254,6 +254,8 @@ if [ -n "$SCCACHE_ENABLED" ]; then
     fi
 fi
 
+echo "INFO: ---- invoking build command ----"
+
 cmake -G"${CMAKE_GENERATOR}"                           \
       -DRSTUDIO_TARGET=$RSTUDIO_TARGET                 \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE             \
@@ -268,14 +270,20 @@ cmake -G"${CMAKE_GENERATOR}"                           \
 
 cmake --build . --target all -- ${MAKEFLAGS}
 
+echo "INFO: ---- build command completed ----"
+
 if [ -n "$SCCACHE_ENABLED" ]; then
+   echo "INFO: ---- showing sccache stats ----"
    sccache --show-stats
+   echo "INFO: ---- done showing sccache stats ----"
 fi
 
 if [ "$PACKAGE_TARGET" != "DEB" ]
 then
+   echo "INFO: ---- running cpack for non-DEB platform"
    fakeroot cpack --verbose --debug -G "$PACKAGE_TARGET"
 else
+   echo "INFO: ---- running cpack for DEB platform"
    cpack --verbose --debug -G $PACKAGE_TARGET
 
    # Fix permissions for non-development builds
@@ -287,4 +295,5 @@ else
 fi
 
 cd $PREV_WD
+echo "INFO: ---- completed make-package ----"
 
