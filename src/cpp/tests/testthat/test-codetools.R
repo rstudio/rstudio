@@ -88,3 +88,26 @@ test_that("HTML escaping escapes HTML entities", {
    expect_false(grepl(escaped, ">"))
 })
 
+test_that("heredoc trims trailing newlines + whitespace", {
+   
+   actual <- .rs.heredoc('
+      c(
+         person(
+            "Jane", "Doe",
+            email = "jane@example.com",
+            role = c("aut", "cre")
+         )
+      )
+   ')
+   
+   expected <- 'c(
+   person(
+      "Jane", "Doe",
+      email = "jane@example.com",
+      role = c("aut", "cre")
+   )
+)'
+   
+   expect_equal(actual, expected)
+   
+})
