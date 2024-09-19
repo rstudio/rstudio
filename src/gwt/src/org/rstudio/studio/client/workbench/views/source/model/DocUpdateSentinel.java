@@ -290,6 +290,11 @@ public class DocUpdateSentinel
    }
    private boolean maybeAutoSave()
    {
+      if (quit_.isQuitting() || quit_.isSuspendingAndRestarting())
+      {
+         return false;
+      }
+      
       if (changeTracker_.hasChanged())
       {
          return doSave(null, null, null, false, new ProgressIndicator()
