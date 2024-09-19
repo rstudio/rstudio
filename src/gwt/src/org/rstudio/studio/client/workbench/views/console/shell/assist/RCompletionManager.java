@@ -2125,8 +2125,9 @@ public class RCompletionManager implements CompletionManager
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";
          
-         if (!RCompletionType.isFileType(qualifiedName.type) &&
-             !shouldQuote)
+         if (!shouldQuote &&
+             !RCompletionType.isFileType(qualifiedName.type) &&
+             !StringUtil.equals(qualifiedName.language, "Python"))
          {
             value = quoteIfNotSyntacticNameCompletion(qualifiedName);
          }
