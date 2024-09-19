@@ -27,6 +27,7 @@ import org.rstudio.core.client.patch.SubstringDiff;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -60,6 +61,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
+import com.google.inject.Inject;
 
 public class DocUpdateSentinel
       implements ValueChangeHandler<Void>,
@@ -136,6 +138,8 @@ public class DocUpdateSentinel
       chunkDefProvider_ = chunkDefProvider;
       changeTracker_ = docDisplay.getChangeTracker();
       propertyChangeHandlers_ = new HashMap<>();
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
 
       prefs_.autoSaveOnIdle().bind((String behavior) ->
       {
@@ -154,6 +158,7 @@ public class DocUpdateSentinel
             autosaver_ = null;
          }
       });
+      
       prefs_.autoSaveIdleMs().bind((Integer ms) ->
       {
          // If we have an auto-saver, re-create it with the new idle timeout
@@ -167,7 +172,7 @@ public class DocUpdateSentinel
 
       docDisplay_.addValueChangeHandler(this);
       docDisplay_.addFoldChangeHandler(this);
-
+      
       // Web only
       if (!Desktop.isDesktop())
       {
@@ -231,6 +236,12 @@ public class DocUpdateSentinel
                   }
                });
       }
+   }
+   
+   @Inject
+   private void initialize(ApplicationQuit quit)
+   {
+      quit_ = quit;
    }
 
    public void withSavedDoc(final Command onSaved)
@@ -303,7 +314,12 @@ public class DocUpdateSentinel
             public void onError(String message)
             {
                // Inform the user only once if this was an autosave failure.
-               if (!loggedAutosaveError_)
+               boolean ignoreError =
+                     quit_.isQuitting() ||
+                     quit_.isSuspendingAndRestarting() ||
+                     loggedAutosaveError_;
+               
+               if (!ignoreError)
                {
                   // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
                   // when attempting to save files that are being backed up by external software
@@ -985,6 +1001,7 @@ public class DocUpdateSentinel
    private final EventBus eventBus_;
    private DebouncedCommand autosaver_;
    private final UserPrefs prefs_;
+   private ApplicationQuit quit_;
    private HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;
    private final HashMap<String, ValueChangeHandlerManager<String>>

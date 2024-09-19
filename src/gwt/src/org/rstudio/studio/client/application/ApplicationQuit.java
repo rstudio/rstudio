@@ -480,20 +480,20 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    @Handler
    public void onRestartR()
    {
-         // check for running jobs
-         pJobManager_.get().promptForTermination((confirmed) ->
+      // check for running jobs
+      pJobManager_.get().promptForTermination((confirmed) ->
+      {
+         if (confirmed)
          {
-            if (confirmed)
+            terminalHelper_.warnBusyTerminalBeforeCommand(() ->
             {
-               terminalHelper_.warnBusyTerminalBeforeCommand(() ->
-               {
-                  boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
-                  SuspendOptions options = SuspendOptions.createSaveMinimal(saveChanges);
-                  eventBus_.fireEvent(new SuspendAndRestartEvent(options));
-               }, constants_.restartRCaption(), constants_.terminalJobTerminatedQuestion(),
-                  pUserPrefs_.get().busyDetection().getValue());
-            }
-         });
+               boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
+               SuspendOptions options = SuspendOptions.createSaveMinimal(saveChanges);
+               eventBus_.fireEvent(new SuspendAndRestartEvent(options));
+            }, constants_.restartRCaption(), constants_.terminalJobTerminatedQuestion(),
+            pUserPrefs_.get().busyDetection().getValue());
+         }
+      });
    }
    
    @Handler
@@ -544,7 +544,9 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    @Handler
    public void onQuitSession()
    {
-      prepareForQuit(constants_.quitRSessionCaption(), (boolean saveChanges) -> performQuit(null, saveChanges));
+      prepareForQuit(
+            constants_.quitRSessionCaption(),
+            (boolean saveChanges) -> performQuit(null, saveChanges));
    }
 
    @Handler
@@ -659,6 +661,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   ? DesktopFrame.PENDING_QUIT_AND_EXIT
                   : DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD;
             
+            isQuitting_ = true;
             DesktopFrameHelper.setPendingQuit(quitType, () ->
             {
                server_.quitSession(
@@ -703,6 +706,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
 
                         private void onFailedToQuit(String message)
                         {
+                           isQuitting_ = false;
                            progress.dismiss();
 
                            if (callContext_ != null)
@@ -742,7 +746,18 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       private final Command onQuitAcknowledged_;
    }
    
+   public boolean isQuitting()
+   {
+      return isQuitting_;
+   }
+   
+   public boolean isSuspendingAndRestarting()
+   {
+      return suspendingAndRestarting_;
+   }
+   
    private SaveAction saveAction_ = SaveAction.saveAsk();
+   private boolean isQuitting_ = false;
    private boolean suspendingAndRestarting_ = false;
 
    // injected
