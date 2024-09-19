@@ -3080,11 +3080,7 @@ public class TextEditingTarget implements
       if (isSaving_)
          return;
 
-      save(new Command() {
-         @Override
-         public void execute()
-         {
-         }});
+      save(() -> {});
    }
 
    private void autoSave(Command onCompleted, Command onSilentFailure)
@@ -3570,7 +3566,8 @@ public class TextEditingTarget implements
 
    // When the editor loses focus, perform an autosave if enabled, the
    // buffer is dirty, and we have a file to save to
-   private void maybeAutoSaveOnBlur() {
+   private void maybeAutoSaveOnBlur()
+   {
       if (prefs_.autoSaveOnBlur().getValue() &&
           dirtyState_.getValue() &&
           getPath() != null &&
@@ -3623,8 +3620,11 @@ public class TextEditingTarget implements
       return fsi;
    }
 
+   @Override
    public void onDismiss(int dismissType)
    {
+      isClosing_ = true;
+
       docUpdateSentinel_.stop();
 
       if (spelling_ != null)
@@ -3645,6 +3645,12 @@ public class TextEditingTarget implements
 
       if (inlinePreviewer_ != null)
          inlinePreviewer_.onDismiss();
+      
+      if (autoSaveTimer_ != null)
+         autoSaveTimer_.cancel();
+      
+      if (bgIdleMonitor_ != null)
+         bgIdleMonitor_.endMonitoring();
    }
 
    public ReadOnlyValue<Boolean> dirtyState()
@@ -8320,8 +8326,8 @@ public class TextEditingTarget implements
    {
       if (!externalEditCheckInterval_.hasElapsed())
          return;
+      
       externalEditCheckInterval_.reset();
-
       externalEditCheckInvalidation_.invalidate();
 
       // If the doc has never been saved, don't even bother checking
@@ -8330,6 +8336,9 @@ public class TextEditingTarget implements
 
       // If we're already waiting for the user to respond to an edit event, bail
       if (isWaitingForUserResponseToExternalEdit_)
+         return;
+      
+      if (isClosing_)
          return;
 
       final Invalidation.Token token = externalEditCheckInvalidation_.getInvalidationToken();
@@ -8341,6 +8350,9 @@ public class TextEditingTarget implements
                @Override
                public void onResponseReceived(CheckForExternalEditResult response)
                {
+                  if (isClosing_)
+                     return;
+                  
                   if (token.isInvalid())
                      return;
 
@@ -8955,8 +8967,9 @@ public class TextEditingTarget implements
       // register idle monitor; automatically creates/refreshes previews
       // of images and LaTeX equations during idle
       if (bgIdleMonitor_ == null && enabled)
-         bgIdleMonitor_ = new TextEditingTargetIdleMonitor(this,
-               docUpdateSentinel_);
+      {
+         bgIdleMonitor_ = new TextEditingTargetIdleMonitor(this, docUpdateSentinel_);
+      }
       else if (bgIdleMonitor_ != null)
       {
          if (enabled)
@@ -9467,11 +9480,11 @@ public class TextEditingTarget implements
       {
          // It's unlikely, but if we attempt to autosave while running a
          // previous autosave, just nudge the timer so we try again.
-         if (autosaveTimer_ != 0)
+         if (autoSaveInitiatedTime_ != 0)
          {
             // If we've been trying to save for more than 5 seconds, we won't
             // nudge (just fall through and we'll attempt again below)
-            if (System.currentTimeMillis() - autosaveTimer_ < 5000)
+            if (System.currentTimeMillis() - autoSaveInitiatedTime_ < 5000)
             {
                nudgeAutosave();
                return;
@@ -9492,7 +9505,7 @@ public class TextEditingTarget implements
          }
 
          // Save (and keep track of when we initiated it)
-         autosaveTimer_ = System.currentTimeMillis();
+         autoSaveInitiatedTime_ = System.currentTimeMillis();
          try
          {
             autoSave(this::onCompleted, this::onSilentFailure);
@@ -9500,27 +9513,27 @@ public class TextEditingTarget implements
          catch (Exception e)
          {
             // Autosave exceptions are logged rather than displayed
-            autosaveTimer_ = 0;
+            autoSaveInitiatedTime_ = 0;
             Debug.logException(e);
          }
       }
       
       private void onCompleted()
       {
-         autosaveTimer_ = 0;
+         autoSaveInitiatedTime_ = 0;
       }
       
       private void onSilentFailure()
       {
          // if this autosave operation silently fails, we want to automatically restart it
-         autosaveTimer_ = 0;
+         autoSaveInitiatedTime_ = 0;
          nudgeAutosave();
       }
    };
    
    private boolean isAutoSaving()
    {
-      return autosaveTimer_ != 0;
+      return autoSaveInitiatedTime_ != 0;
    }
 
    private HandlerRegistration documentDirtyHandler_ = null;
@@ -9533,7 +9546,10 @@ public class TextEditingTarget implements
    // prevent multiple manual saves from queuing up
    private boolean documentChangedDuringDebugSession_ = false;
    private boolean isSaving_ = false;
-   private long autosaveTimer_ = 0;
+   private long autoSaveInitiatedTime_ = 0;
+   
+   // track whether we're now closing the document
+   private boolean isClosing_ = false;
 
    private abstract class RefactorServerRequestCallback
            extends ServerRequestCallback<JsArrayString>
