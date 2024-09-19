@@ -47,6 +47,7 @@
 - Fixed issue with highlight of `tikz` code chunks in R Markdown documents (#15019)
 - RStudio now uses current session repositories when installing package dependencies via background jobs (#10016)
 - Fixed issue where collapsed raw chunks were displayed with an incorrect label in the Visual Editor (#14594)
+- RStudio now includes Markdown headers without any label in the document outline (#14552)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)

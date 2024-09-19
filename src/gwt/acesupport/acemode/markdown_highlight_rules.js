@@ -231,7 +231,7 @@ var MarkdownHighlightRules = function () {
          token: function (value) {
             return "markup.heading." + value.length;
          },
-         regex: /^#{1,6}(?=\s*[^ #]|\s+#.)/,
+         regex: /^#{1,6}/,
          next: "header"
       }, { // ioslides-style bullet
          token: "string.blockquote",

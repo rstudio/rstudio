@@ -248,6 +248,55 @@ test_that("visual editor welcome dialog displays again if don't show again is un
    remote$keyboardExecute("<Ctrl + L>")
 })
 
+# https://github.com/rstudio/rstudio/issues/14552
+test_that("empty header labels are permitted in document outline", {
+   
+   contents <- .rs.heredoc('
+      ---
+      format: revealjs
+      ---
+      
+      # Section with title
+      
+      ## Slide with title
+      
+      Some content.
+      
+      ##
+      
+      Slide without title
+      
+      # Another section with title
+      
+      ## Another slide with title
+   ')
+   
+   remote$documentExecute(".qmd", contents, function(editor) {
+      
+      token <- as.vector(editor$session$getTokenAt(10))
+      expect_equal(token$type, "markup.heading.2")
+      
+      remote$commandExecute("toggleDocumentOutline")
+      docOutline <- remote$jsObjectViaSelector(".rstudio_doc_outline_container")
+      contents <- docOutline$innerText
+      
+      # Remove non-breaking spaces
+      contents <- gsub("\u00a0", "", contents)
+      
+      # Split on newlines
+      contents <- strsplit(contents, "\\n+", perl = TRUE)[[1]]
+      expect_equal(contents, c(
+         "Section with title",
+         "Slide with title",
+         "(Untitled)",
+         "Another section with title",
+         "Another slide with title"
+      ))
+
+   })
+
+})
+
 # https://github.com/rstudio/rstudio/issues/15191
 test_that("variable-width nested chunks can be folded", {
    
@@ -267,10 +316,11 @@ test_that("variable-width nested chunks can be folded", {
       `````
       
       # Header
+
    ')
-   
+
    remote$documentExecute(".qmd", contents, function(editor) {
-      
+
       # Check the fold widget strings.
       session <- editor$session
       expect_equal(session$getFoldWidget(4), "start")
@@ -293,3 +343,4 @@ test_that("variable-width nested chunks can be folded", {
    })
    
 })
+
