@@ -37,7 +37,7 @@
 - Prompt for personal access token instead of password when using github via https (#14103)
 - RStudio now forward the current 'repos' option for actions taken in the Build pane (#5793)
 - Executing `options(warn = ...)` in an R code chunk now persists beyond chunk execution (#15030)
-- Remove focus-visible polyfill and instead use native browser :focus-visible pseudoclass (#14352)
+- Remove focus-visible polyfill and instead use native browser :focus-visible pseudoclass [Accessibility] (#14352)
 - Fixed an issue where completion types for objects with a `.DollarNames` method were not properly displayed (#15115)
 - Fixed an issue where the Console header label was not properly layed out when other tabs (e.g. Terminal) were closed (#15106)
 - Auto-saves will no longer trim trailing whitespace on the line containing the cursor (#14829)
