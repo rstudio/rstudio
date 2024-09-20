@@ -280,6 +280,17 @@ fi
 
 if [ "$PACKAGE_TARGET" != "DEB" ]
 then
+   echo "INFO: ---- ulimit -n"
+   ulimit -n
+   echo "INFO: ---- ulimit -Hn"
+   ulimit -Hn
+   # watch for fakeroot hanging and shorten multi-hour build timeout
+   timeout 10s fakeroot echo "Testing fakeroot..."
+   if [ $? -eq 124 ]; then
+      echo "ERROR: fakeroot test timed out"
+      exit 1
+   fi
+   echo "...fakeroot test succeeded"
    echo "INFO: ---- running cpack for non-DEB platform"
    fakeroot cpack --verbose --debug -G "$PACKAGE_TARGET"
 else
