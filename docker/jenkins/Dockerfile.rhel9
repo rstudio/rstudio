@@ -61,6 +61,7 @@ RUN dnf install -y \
     sqlite-devel \
     sudo \
     valgrind \
+    vim \
     wget \
     whois \
     xml-commons-apis \

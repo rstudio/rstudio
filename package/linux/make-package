@@ -281,8 +281,6 @@ fi
 if [ "$PACKAGE_TARGET" != "DEB" ]
 then
    echo "INFO: ---- running cpack for non-DEB platform"
-   # workaround for fakeroot hangs in Docker: https://github.com/moby/moby/issues/27195
-   sleep 1
    fakeroot cpack --verbose --debug -G "$PACKAGE_TARGET"
 else
    echo "INFO: ---- running cpack for DEB platform"
