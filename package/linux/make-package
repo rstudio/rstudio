@@ -28,6 +28,9 @@ fi
 # remember cwd for later restoration
 PREV_WD=$(pwd)
 
+# report initial limit on number of open files (troubleshooting)
+echo "INFO: ---- ulimit -n  = $(ulimit -n)"
+
 # raise the limit on number of open files
 ulimit -n 8192
 
@@ -280,11 +283,6 @@ fi
 
 if [ "$PACKAGE_TARGET" != "DEB" ]
 then
-   echo "INFO: ---- ulimit -n"
-   ulimit -n
-   echo "INFO: ---- ulimit -Hn"
-   ulimit -Hn
-
    # watch for fakeroot hanging and bypass multi-hour build timeout
    set +e
    timeout 30s fakeroot echo "Testing fakeroot..."
