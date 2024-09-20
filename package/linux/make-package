@@ -28,11 +28,8 @@ fi
 # remember cwd for later restoration
 PREV_WD=$(pwd)
 
-# report initial limit on number of open files (troubleshooting)
-echo "INFO: ---- ulimit -n  = $(ulimit -n)"
-
 # raise the limit on number of open files
-ulimit -n 8192
+ulimit -n 2048
 
 function help() {
     cat <<EOF
