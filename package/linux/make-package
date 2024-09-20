@@ -29,7 +29,7 @@ fi
 PREV_WD=$(pwd)
 
 # raise the limit on number of open files
-ulimit -n 2048
+ulimit -n 8192
 
 function help() {
     cat <<EOF
