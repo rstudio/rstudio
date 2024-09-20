@@ -507,3 +507,14 @@
    # Return the resolved node id.
    nodeId
 })
+
+.rs.automation.addRemoteFunction("skipIfNotInstalled", function(package)
+{
+   self$consoleExecuteExpr(find.package(!!package, quiet = TRUE))
+   output <- self$consoleOutput()
+   isInstalled <- tail(output, n = 1L) != "character(0)"
+   testthat::skip_if_not(
+      condition = isInstalled,
+      message   = sprintf("package '%s' is not installed", package)
+   )
+})

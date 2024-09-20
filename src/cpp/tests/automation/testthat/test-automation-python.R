@@ -6,6 +6,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 # https://github.com/rstudio/rstudio/issues/14560
 test_that("attributes like __foo__ are not quoted when inserted via completions", {
+   remote$skipIfNotInstalled("reticulate")
    remote$consoleExecute("reticulate::repl_python()")
    remote$consoleExecute("import sys")
    remote$keyboardExecute("sys.__name")
