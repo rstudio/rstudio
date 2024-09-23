@@ -1455,17 +1455,17 @@ SEXP capabilities(SEXP cap)
 {
    pGEDevDesc pDev = GEcurrentDevice();
    if (pDev == nullptr)
-      return R_NilValue;
+      return cap;
    
    pGEDevDesc pShadowDev = GEgetDevice(GEdeviceNumber(pDev) + 1);
    if (pShadowDev == nullptr)
-      return R_NilValue;
+      return cap;
    
    auto callback = pShadowDev->dev->capabilities;
-   if (callback != nullptr)
-      return callback(cap);
+   if (callback == nullptr)
+      return cap;
    
-   return R_NilValue;
+   return callback(cap);
 }
 
 
