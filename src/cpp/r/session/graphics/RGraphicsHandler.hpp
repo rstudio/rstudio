@@ -19,7 +19,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
-#include "RGraphicsDevDesc.hpp"
+#include "RGraphicsDeviceContext.hpp"
 
 namespace rstudio {
 namespace core {
@@ -37,28 +37,6 @@ namespace handler {
 
 void installShadowHandler();
 void installCairoHandler();
-
-struct DeviceContext
-{
-   DeviceContext(pDevDesc ownerDev) :
-         pDeviceSpecific(nullptr),
-         width(0),
-         height(0),
-         devicePixelRatio(1.0),
-         dev(ownerDev) {}
-
-   // platform specific device info
-   void* pDeviceSpecific;
-
-   // file info
-   core::FilePath targetPath;
-   int width;
-   int height;
-   double devicePixelRatio;
-
-   // back pointer to owning device
-   pDevDesc dev;
-};
 
 extern DeviceContext* (*allocate)(pDevDesc dev);
 extern void (*destroy)(DeviceContext* pDC);
@@ -175,6 +153,8 @@ extern void (*releaseGroup)(SEXP ref, pDevDesc dd);
 extern void (*stroke)(SEXP path, const pGEcontext gc, pDevDesc dd);
 extern void (*fill)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
 extern void (*fillStroke)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
+
+extern SEXP (*capabilities)(SEXP cap);
 
 extern void (*glyph)(int n, int *glyphs, double *x, double *y, 
                      SEXP font, double size,

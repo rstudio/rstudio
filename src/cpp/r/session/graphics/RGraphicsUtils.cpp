@@ -25,15 +25,13 @@
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RUtil.hpp>
-
-#include <Rinternals.h>
-#define R_USE_PROTOTYPES 1
-#include <R_ext/GraphicsEngine.h>
-#include <R_ext/GraphicsDevice.h>
+#include <r/RErrorCategory.hpp>
 
 #include <r/session/RGraphicsConstants.h>
 
-#include <r/RErrorCategory.hpp>
+#define R_USE_PROTOTYPES 1
+#include <R_ext/GraphicsEngine.h>
+#include <R_ext/GraphicsDevice.h>
 
 using namespace rstudio::core;
 

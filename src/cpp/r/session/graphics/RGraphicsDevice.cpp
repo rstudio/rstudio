@@ -33,6 +33,7 @@
 
 #include <r/session/RSessionUtils.hpp>
 
+#include "RGraphicsDevDesc.hpp"
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsPlotManager.hpp"
 #include "RGraphicsHandler.hpp"
@@ -482,6 +483,13 @@ void GD_FillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
    handler::fillStroke(path, rule, gc, dd);
 }
 
+SEXP GD_Capabilities(SEXP cap)
+{
+   TRACE_GD_CALL;
+   return handler::capabilities(cap);
+}
+
+
 void GD_Glyph(int n, int *glyphs, double *x, double *y, 
               SEXP font, double size,
               int colour, double rot, pDevDesc dd)
@@ -623,6 +631,7 @@ SEXP rs_createGD()
       devDesc.stroke = GD_Stroke;
       devDesc.fill = GD_Fill;
       devDesc.fillStroke = GD_FillStroke;
+      devDesc.capabilities = GD_Capabilities;
       
       // added in version 16 (R 4.3.0)
       devDesc.glyph = GD_Glyph;

@@ -1436,7 +1436,6 @@ void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
 void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
 {
     int engineVersion = ::R_GE_getVersion();
-
     void (*callback)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd) = nullptr;
 
     switch (engineVersion)
@@ -1454,12 +1453,19 @@ void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
 
 SEXP capabilities(SEXP cap)
 {
-    SEXP (*callback)(SEXP cap) = nullptr;
-
-    if (callback != nullptr)
-        return callback(cap);
-
-    return R_NilValue;
+   pGEDevDesc pDev = GEcurrentDevice();
+   if (pDev == nullptr)
+      return R_NilValue;
+   
+   pGEDevDesc pShadowDev = GEgetDevice(GEdeviceNumber(pDev) + 1);
+   if (pShadowDev == nullptr)
+      return R_NilValue;
+   
+   auto callback = pShadowDev->dev->capabilities;
+   if (callback != nullptr)
+      return callback(cap);
+   
+   return R_NilValue;
 }
 
 

@@ -31,6 +31,7 @@
 #undef TRUE
 #undef FALSE
 
+#include "RGraphicsDevDesc.hpp"
 #include "RGraphicsHandler.hpp"
 #include "RGraphicsUtils.hpp"
 
@@ -228,7 +229,35 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
 
 void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
 {
-   pDev->deviceVersion = pShadowDev->deviceVersion;
+   // don't sync for older engine versions
+   int engineVersion = ::R_GE_getVersion();
+   if (engineVersion < 12)
+      return;
+   
+   if (engineVersion >= 12)
+   {
+      pDev->canClip = pShadowDev->canClip;
+      pDev->canChangeGamma = pShadowDev->canChangeGamma;
+      pDev->canGenMouseDown = pShadowDev->canGenMouseDown;
+      pDev->canGenMouseMove = pShadowDev->canGenMouseMove;
+      pDev->canGenMouseUp = pShadowDev->canGenMouseUp;
+      pDev->canGenKeybd = pShadowDev->canGenKeybd;
+      pDev->hasTextUTF8 = pShadowDev->hasTextUTF8;
+      pDev->wantSymbolUTF8 = pShadowDev->wantSymbolUTF8;
+      pDev->useRotatedTextInContour = pShadowDev->useRotatedTextInContour;
+      
+      pDev->haveTransparency = pShadowDev->haveTransparency;
+      pDev->haveTransparentBg = pShadowDev->haveTransparentBg;
+      pDev->haveRaster = pShadowDev->haveRaster;
+      pDev->haveCapture = pShadowDev->haveRaster;
+   }
+   
+   if (engineVersion >= 14)
+   {
+      pDev->deviceVersion = pShadowDev->deviceVersion;
+      pDev->deviceClip = pShadowDev->deviceClip;
+   }
+   
 }
 
 // this version of the function is called from R graphics primitives
@@ -737,6 +766,11 @@ void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
    dev_desc::fillStroke(path, rule, gc, pngDevDesc);
 }
 
+SEXP capabilities(SEXP cap)
+{
+   return dev_desc::capabilities(cap);
+}
+
 void glyph(int n, int *glyphs, double *x, double *y, 
            SEXP font, double size,
            int colour, double rot, pDevDesc dd)
@@ -787,6 +821,7 @@ void installShadowHandler()
    handler::stroke = shadow::stroke;
    handler::fill = shadow::fill;
    handler::fillStroke = shadow::fillStroke;
+   handler::capabilities = shadow::capabilities;
    handler::glyph = shadow::glyph;
 }
    

@@ -133,6 +133,8 @@ void (*stroke)(SEXP path, const pGEcontext gc, pDevDesc dd);
 void (*fill)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
 void (*fillStroke)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
 
+SEXP (*capabilities)(SEXP cap);
+
 // below added in version 16 (R 4.3.0)
 void (*glyph)(int n, int *glyphs, double *x, double *y, 
               SEXP font, double size,
