@@ -1453,14 +1453,19 @@ void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
 
 SEXP capabilities(SEXP cap)
 {
-   pGEDevDesc pDev = GEcurrentDevice();
-   if (pDev == nullptr)
+   // If this function is being invoked, it implies that the RStudio graphics
+   // device is active. We want to delegate the 'capabilities()' call to the
+   // actual device that RStudio is forwarding events to, which is always the
+   // next device in the list.
+   int devNum = Rf_nextDevice(Rf_curDevice());
+   if (devNum == 0)
       return cap;
    
-   pGEDevDesc pShadowDev = GEgetDevice(GEdeviceNumber(pDev) + 1);
-   if (pShadowDev == nullptr)
+   pGEDevDesc pShadowDev = GEgetDevice(devNum);
+   if (pShadowDev == nullptr || pShadowDev->dev == nullptr)
       return cap;
    
+   // Check for a capabilities callback, and invoke it if available.
    auto callback = pShadowDev->dev->capabilities;
    if (callback == nullptr)
       return cap;
