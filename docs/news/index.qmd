@@ -103,7 +103,7 @@ This page provides the release notes associated with each release of RStudio and
 - Workbench jobs now set resource profiles correctly (rstudio-pro#5217)
 - When launching a Workbench job from RStudio Pro, changing fields in the Options tab no longer resets the selected R version in the Environment tab (rstudio-pro#5218)
 - Fixed bug that prevented users from receiving the admin-configured default settings when launching VS Code sessions (rstudio-pro#6207)
-- RStudio Pro sessions run inside Singularity containers on Slurm now respect the `modules-bin-path` setting (rstudio-pro#6319)
+- RStudio Pro sessions running inside Singularity containers on Slurm now respect the `modules-bin-path` setting (rstudio-pro#6319)
 - When user provisioning is enabled, server logs no longer contain related debug messages unless debug logging is enabled (rstudio-pro#6480)
 - Trailing slashes in Databricks workspace URLs in the `databricks.conf` file no longer prevent users from signing in to Databricks from the home page (rstudio-pro#6435)
 - Resource profiles on Kubernetes and Slurm are now listed in the order in which they appear in the config file (rstudio-pro#6485)
