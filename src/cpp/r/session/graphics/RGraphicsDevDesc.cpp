@@ -225,44 +225,48 @@ pDevDesc allocate(const RSDevDesc& devDesc)
       pDD->releaseClipPath = devDesc.releaseClipPath;
       pDD->setMask = devDesc.setMask;
       pDD->releaseMask = devDesc.releaseMask;
-
+      pDD->deviceVersion = devDesc.deviceVersion;
+      pDD->deviceClip = devDesc.deviceClip;
+      
       return (pDevDesc) pDD;
    }
 
    case 15:
    {
-       DevDescVersion15* pDD =
-               allocAndInitCommonMembers<DevDescVersion15>(devDesc);
+      DevDescVersion15* pDD =
+            allocAndInitCommonMembers<DevDescVersion15>(devDesc);
 
-       pDD->path = devDesc.path;
-       pDD->raster = devDesc.raster;
-       pDD->cap = devDesc.cap;
-       pDD->eventEnv = devDesc.eventEnv;
-       pDD->eventHelper = devDesc.eventHelper;
+      pDD->path = devDesc.path;
+      pDD->raster = devDesc.raster;
+      pDD->cap = devDesc.cap;
+      pDD->eventEnv = devDesc.eventEnv;
+      pDD->eventHelper = devDesc.eventHelper;
 
-       pDD->holdflush = devDesc.holdflush;
-       pDD->haveTransparency = devDesc.haveTransparency;
-       pDD->haveTransparentBg = devDesc.haveTransparentBg;
-       pDD->haveRaster = devDesc.haveRaster;
-       pDD->haveCapture = devDesc.haveCapture;
-       pDD->haveLocator = devDesc.haveLocator;
+      pDD->holdflush = devDesc.holdflush;
+      pDD->haveTransparency = devDesc.haveTransparency;
+      pDD->haveTransparentBg = devDesc.haveTransparentBg;
+      pDD->haveRaster = devDesc.haveRaster;
+      pDD->haveCapture = devDesc.haveCapture;
+      pDD->haveLocator = devDesc.haveLocator;
 
-       pDD->setPattern = devDesc.setPattern;
-       pDD->releasePattern = devDesc.releasePattern;
-       pDD->setClipPath = devDesc.setClipPath;
-       pDD->releaseClipPath = devDesc.releaseClipPath;
-       pDD->setMask = devDesc.setMask;
-       pDD->releaseMask = devDesc.releaseMask;
+      pDD->setPattern = devDesc.setPattern;
+      pDD->releasePattern = devDesc.releasePattern;
+      pDD->setClipPath = devDesc.setClipPath;
+      pDD->releaseClipPath = devDesc.releaseClipPath;
+      pDD->setMask = devDesc.setMask;
+      pDD->releaseMask = devDesc.releaseMask;
+      pDD->deviceVersion = devDesc.deviceVersion;
+      pDD->deviceClip = devDesc.deviceClip;
 
-       pDD->defineGroup = devDesc.defineGroup;
-       pDD->useGroup = devDesc.useGroup;
-       pDD->releaseGroup = devDesc.releaseGroup;
-       pDD->stroke = devDesc.stroke;
-       pDD->fill = devDesc.fill;
-       pDD->fillStroke = devDesc.fillStroke;
-       pDD->capabilities = devDesc.capabilities;
+      pDD->defineGroup = devDesc.defineGroup;
+      pDD->useGroup = devDesc.useGroup;
+      pDD->releaseGroup = devDesc.releaseGroup;
+      pDD->stroke = devDesc.stroke;
+      pDD->fill = devDesc.fill;
+      pDD->fillStroke = devDesc.fillStroke;
+      pDD->capabilities = devDesc.capabilities;
 
-       return (pDevDesc) pDD;
+      return (pDevDesc) pDD;
    }
 
    case 16:
@@ -289,6 +293,8 @@ pDevDesc allocate(const RSDevDesc& devDesc)
       pDD->releaseClipPath = devDesc.releaseClipPath;
       pDD->setMask = devDesc.setMask;
       pDD->releaseMask = devDesc.releaseMask;
+      pDD->deviceVersion = devDesc.deviceVersion;
+      pDD->deviceClip = devDesc.deviceClip;
 
       pDD->defineGroup = devDesc.defineGroup;
       pDD->useGroup = devDesc.useGroup;
@@ -298,7 +304,8 @@ pDevDesc allocate(const RSDevDesc& devDesc)
       pDD->fillStroke = devDesc.fillStroke;
       pDD->capabilities = devDesc.capabilities;
 
-pDD->glyph = devDesc.glyph;
+      pDD->glyph = devDesc.glyph;
+      
       return (pDevDesc) pDD;
    }
       
@@ -1483,6 +1490,7 @@ void setSize(pDevDesc pDD)
       pSizeFn = ((DevDescVersion12*)pDD)->size;
       break;
    case 14:
+   case 15:
    case 16:
    default:
       pSizeFn = ((DevDescVersion16*)pDD)->size;

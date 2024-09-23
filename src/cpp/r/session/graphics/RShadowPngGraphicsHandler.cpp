@@ -15,7 +15,6 @@
 
 #define R_INTERNAL_FUNCTIONS  // Rf_warningcall
 
-#include <iostream>
 #include <gsl/gsl>
 
 #include <boost/format.hpp>
@@ -678,6 +677,71 @@ void releaseMask(SEXP ref, pDevDesc dd)
    dev_desc::releaseMask(ref, pngDevDesc);
 }
 
+SEXP defineGroup(SEXP source, int op, SEXP destination, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return R_NilValue;
+   
+   return dev_desc::defineGroup(source, op, destination, pngDevDesc);
+}
+
+void useGroup(SEXP ref, SEXP trans, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::useGroup(ref, trans, pngDevDesc);
+}
+
+void releaseGroup(SEXP ref, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::releaseGroup(ref, pngDevDesc);
+}
+
+void stroke(SEXP path, const pGEcontext gc, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::stroke(path, gc, pngDevDesc);
+}
+
+void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::fill(path, rule, gc, pngDevDesc);
+}
+
+void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::fillStroke(path, rule, gc, pngDevDesc);
+}
+
+void glyph(int n, int *glyphs, double *x, double *y, 
+           SEXP font, double size,
+           int colour, double rot, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::glyph(n, glyphs, x, y, font, size, colour, rot, pngDevDesc);
+}
+
 } // namespace shadow
 
 void installShadowHandler()
@@ -711,6 +775,13 @@ void installShadowHandler()
    handler::releaseClipPath = shadow::releaseClipPath;
    handler::setMask = shadow::setMask;
    handler::releaseMask = shadow::releaseMask;
+   handler::defineGroup = shadow::defineGroup;
+   handler::useGroup = shadow::useGroup;
+   handler::releaseGroup = shadow::releaseGroup;
+   handler::stroke = shadow::stroke;
+   handler::fill = shadow::fill;
+   handler::fillStroke = shadow::fillStroke;
+   handler::glyph = shadow::glyph;
 }
    
 } // namespace handler

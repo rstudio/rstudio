@@ -446,6 +446,51 @@ void GD_ReleaseMask(SEXP ref, pDevDesc dd)
    handler::releaseMask(ref, dd);
 }
 
+SEXP GD_DefineGroup(SEXP source, int op, SEXP destination, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   return handler::defineGroup(source, op, destination, dd);
+}
+
+void GD_UseGroup(SEXP ref, SEXP trans, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   handler::useGroup(ref, trans, dd);
+}
+
+void GD_ReleaseGroup(SEXP ref, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   handler::releaseGroup(ref, dd);
+}
+
+void GD_Stroke(SEXP path, const pGEcontext gc, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   handler::stroke(path, gc, dd);
+}
+
+void GD_Fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   handler::fill(path, rule, gc, dd);
+}
+
+void GD_FillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   handler::fillStroke(path, rule, gc, dd);
+}
+
+void GD_Glyph(int n, int *glyphs, double *x, double *y, 
+              SEXP font, double size,
+              int colour, double rot, pDevDesc dd)
+{
+   TRACE_GD_CALL;
+   handler::glyph(n, glyphs, x, y, font, size, colour, rot, dd);
+}
+
+
 void resyncDisplayList()
 {
    // get pointers to device desc and cairo data
@@ -562,10 +607,27 @@ SEXP rs_createGD()
       // added in version 14 (R 4.1.0)
       devDesc.setPattern = GD_SetPattern;
       devDesc.releasePattern = GD_ReleasePattern;
+      
       devDesc.setClipPath = GD_SetClipPath;
       devDesc.releaseClipPath = GD_ReleaseClipPath;
+      
       devDesc.setMask = GD_SetMask;
       devDesc.releaseMask = GD_ReleaseMask;
+      
+      devDesc.deviceVersion = 16;
+      devDesc.deviceClip = TRUE;
+      
+      // added in version 15 (R 4.2.0)
+      devDesc.defineGroup = GD_DefineGroup;
+      devDesc.useGroup = GD_UseGroup;
+      devDesc.releaseGroup = GD_ReleaseGroup;
+      
+      devDesc.stroke = GD_Stroke;
+      devDesc.fill = GD_Fill;
+      devDesc.fillStroke = GD_FillStroke;
+      
+      // added in version 16 (R 4.3.0)
+      devDesc.glyph = GD_Glyph;
 
       // capabilities flags
       devDesc.haveTransparency = 2;
@@ -827,7 +889,7 @@ void setSize(int width, int height, double devicePixelRatio)
 {
    // only set if the values have changed (prevents unnecessary plot 
    // invalidations from occurring)
-   if ( width != s_width || height != s_height || devicePixelRatio != s_devicePixelRatio)
+   if (width != s_width || height != s_height || devicePixelRatio != s_devicePixelRatio)
    {
       s_width = width;
       s_height = height;

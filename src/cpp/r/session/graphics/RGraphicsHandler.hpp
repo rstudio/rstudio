@@ -168,6 +168,18 @@ extern void (*releaseClipPath)(SEXP ref, pDevDesc dd);
 extern SEXP (*setMask)(SEXP path, SEXP ref, pDevDesc dd);
 extern void (*releaseMask)(SEXP ref, pDevDesc dd);
 
+extern SEXP (*defineGroup)(SEXP source, int op, SEXP destination, pDevDesc dd);
+extern void (*useGroup)(SEXP ref, SEXP trans, pDevDesc dd);
+extern void (*releaseGroup)(SEXP ref, pDevDesc dd);
+
+extern void (*stroke)(SEXP path, const pGEcontext gc, pDevDesc dd);
+extern void (*fill)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
+extern void (*fillStroke)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
+
+extern void (*glyph)(int n, int *glyphs, double *x, double *y, 
+                     SEXP font, double size,
+                     int colour, double rot, pDevDesc dd);
+
 } // namespace handler
 } // namespace graphics
 } // namespace session
