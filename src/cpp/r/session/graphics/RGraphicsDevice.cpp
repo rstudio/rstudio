@@ -572,6 +572,7 @@ SEXP rs_createGD()
    {
       // initialize device description
       RSDevDesc devDesc;
+      std::memset(&devDesc, 0, sizeof(devDesc));
 
       // device functions
       devDesc.activate = GD_Activate;
@@ -603,7 +604,7 @@ SEXP rs_createGD()
       devDesc.eventEnv = R_NilValue;
       devDesc.eventHelper = nullptr;
       devDesc.holdflush = GD_HoldFlush;
-
+      
       // added in version 14 (R 4.1.0)
       devDesc.setPattern = GD_SetPattern;
       devDesc.releasePattern = GD_ReleasePattern;
@@ -613,9 +614,6 @@ SEXP rs_createGD()
       
       devDesc.setMask = GD_SetMask;
       devDesc.releaseMask = GD_ReleaseMask;
-      
-      devDesc.deviceVersion = 16;
-      devDesc.deviceClip = TRUE;
       
       // added in version 15 (R 4.2.0)
       devDesc.defineGroup = GD_DefineGroup;

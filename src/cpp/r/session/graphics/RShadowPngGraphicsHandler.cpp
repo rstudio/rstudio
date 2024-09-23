@@ -226,23 +226,29 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
    return Success();
 }
 
+void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
+{
+   pDev->deviceVersion = pShadowDev->deviceVersion;
+}
+
 // this version of the function is called from R graphics primitives
 // so can (and should) throw errors in R longjmp style
-pDevDesc shadowDevDesc(pDevDesc dev)
+pDevDesc shadowDevDesc(pDevDesc pDev)
 {
    try
    {
-      DeviceContext* pDC = (DeviceContext*)dev->deviceSpecific;
+      DeviceContext* pDC = (DeviceContext*)pDev->deviceSpecific;
 
-      pDevDesc shadowDev = nullptr;
-      Error error = shadowDevDesc(pDC, &shadowDev);
+      pDevDesc pShadowDev = nullptr;
+      Error error = shadowDevDesc(pDC, &pShadowDev);
       if (error)
       {
          LOG_ERROR(error);
          throw r::exec::RErrorException(error.getSummary());
       }
 
-      return shadowDev;
+      syncDevDesc(pDev, pShadowDev);
+      return pShadowDev;
    }
    catch(const r::exec::RErrorException& e)
    {

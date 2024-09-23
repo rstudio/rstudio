@@ -1350,7 +1350,9 @@ SEXP defineGroup(SEXP source, int op, SEXP destination, pDevDesc dd)
     }
 
     if (callback != nullptr)
+    {
         return callback(source, op, destination, dd);
+    }
 
     return R_NilValue;
 }
