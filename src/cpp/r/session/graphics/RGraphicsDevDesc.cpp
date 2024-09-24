@@ -1461,12 +1461,28 @@ SEXP capabilities(SEXP cap)
    if (devNum == 0)
       return cap;
    
-   pGEDevDesc pShadowDev = GEgetDevice(devNum);
-   if (pShadowDev == nullptr || pShadowDev->dev == nullptr)
+   pGEDevDesc pGEDev = GEgetDevice(devNum);
+   if (pGEDev == nullptr)
       return cap;
    
-   // Check for a capabilities callback, and invoke it if available.
-   auto callback = pShadowDev->dev->capabilities;
+   pDevDesc pDev = pGEDev->dev;
+   if (pDev == nullptr)
+      return cap;
+   
+   SEXP (*callback)(SEXP cap) = nullptr;
+   
+   int engineVersion = ::R_GE_getVersion();
+   
+   switch (engineVersion)
+   {
+   case 14:
+   case 15:
+   case 16:
+   default:
+      callback = ((DevDescVersion16*)pDev)->capabilities;
+      break;
+   }
+
    if (callback == nullptr)
       return cap;
    
