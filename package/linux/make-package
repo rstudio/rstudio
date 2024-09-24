@@ -201,7 +201,7 @@ set-version ${RSTUDIO_VERSION_FULL} rstudio
 set +x
 
 if has-program ninja
-then 
+then
    CMAKE_GENERATOR="Ninja"
    MAKEFLAGS="-w dupbuild=warn ${MAKEFLAGS}"
 else
@@ -272,19 +272,6 @@ if [ -n "$SCCACHE_ENABLED" ]; then
    sccache --show-stats
 fi
 
-if [ "$PACKAGE_TARGET" != "DEB" ]
-then
-   fakeroot cpack --verbose --debug -G "$PACKAGE_TARGET"
-else
-   cpack --verbose --debug -G $PACKAGE_TARGET
-
-   # Fix permissions for non-development builds
-   if [ -z "${RSTUDIO_DEVELOPMENT_BUILD}" ]
-   then
-      $PKG_DIR/fix-debian-permissions `ls *.deb`
-   fi
-
-fi
-
-cd $PREV_WD
+cpack --verbose --debug -G "$PACKAGE_TARGET"
+cd "$PREV_WD"
 
