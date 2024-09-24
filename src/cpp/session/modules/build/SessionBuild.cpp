@@ -1715,7 +1715,7 @@ private:
          // remove the testthat summary, since that will cause us to duplicate markers
          // https://github.com/rstudio/rstudio/issues/14564
          boost::smatch match;
-         boost::regex reResults("(?:\u2550+|\u003d+)\\s+" kAnsiEscapeRegex "Results");
+         boost::regex reResults("(?:\\u2550+|\\u003d+)\\s+" kAnsiEscapeRegex "Results");
          if (boost::regex_search(output, match, reResults))
          {
             output = output.substr(0, match.position());
