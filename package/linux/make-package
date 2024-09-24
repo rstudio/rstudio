@@ -274,4 +274,4 @@ fi
 
 cpack --verbose --debug -G "$PACKAGE_TARGET"
 cd "$PREV_WD"
-echo "INFO: ---- completed make-package ----"
+
