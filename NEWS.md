@@ -18,9 +18,11 @@
 - Improved support for variable-width chunk headers and footers in R Markdown / Quarto documents (#15191)
 - The "Include all function arguments in completion list" user preference can be used to control whether RStudio includes function arguments which appear to have already been used in the current context (#13065)
 - Available environment variables are now provided as completion suggestions within `Sys.unsetenv()` (#15215)
+- RStudio IDE User Guide and RStudio & Posit Workbench Release Notes now includes release version in navigation bar reference URLs. (#15223)
 
 #### Posit Workbench
--
+
+- Posit Workbench Administration Guide & User Guide and Posit Workbench Licenses guide now includes release version in navigation bar reference URLs. (rstudio-pro#6826)
 
 ### Fixed
 #### RStudio
