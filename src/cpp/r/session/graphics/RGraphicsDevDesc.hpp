@@ -16,8 +16,7 @@
 #ifndef R_SESSION_GRAPHICS_DEV_DESC_HPP
 #define R_SESSION_GRAPHICS_DEV_DESC_HPP
 
-#include <Rinternals.h>
-
+#include <r/RInternal.hpp>
 #include <R_ext/Boolean.h>
 
 #define R_USE_PROTOTYPES 1

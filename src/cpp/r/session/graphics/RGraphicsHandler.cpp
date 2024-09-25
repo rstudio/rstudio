@@ -124,6 +124,23 @@ void (*releaseClipPath)(SEXP ref, pDevDesc dd);
 SEXP (*setMask)(SEXP path, SEXP ref, pDevDesc dd);
 void (*releaseMask)(SEXP ref, pDevDesc dd);
 
+// below added in version 15 (R 4.2.0)
+SEXP (*defineGroup)(SEXP source, int op, SEXP destination, pDevDesc dd);
+void (*useGroup)(SEXP ref, SEXP trans, pDevDesc dd);
+void (*releaseGroup)(SEXP ref, pDevDesc dd);
+
+void (*stroke)(SEXP path, const pGEcontext gc, pDevDesc dd);
+void (*fill)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
+void (*fillStroke)(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
+
+SEXP (*capabilities)(SEXP cap);
+
+// below added in version 16 (R 4.3.0)
+void (*glyph)(int n, int *glyphs, double *x, double *y, 
+              SEXP font, double size,
+              int colour, double rot, pDevDesc dd);
+
+
 } // namespace handler
 } // namespace graphics
 } // namespace session

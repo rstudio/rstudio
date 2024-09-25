@@ -15,7 +15,6 @@
 
 #define R_INTERNAL_FUNCTIONS  // Rf_warningcall
 
-#include <iostream>
 #include <gsl/gsl>
 
 #include <boost/format.hpp>
@@ -32,6 +31,7 @@
 #undef TRUE
 #undef FALSE
 
+#include "RGraphicsDevDesc.hpp"
 #include "RGraphicsHandler.hpp"
 #include "RGraphicsUtils.hpp"
 
@@ -227,23 +227,57 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
    return Success();
 }
 
+void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
+{
+   // don't sync for older engine versions
+   int engineVersion = ::R_GE_getVersion();
+   if (engineVersion < 12)
+      return;
+   
+   if (engineVersion >= 12)
+   {
+      pDev->canClip = pShadowDev->canClip;
+      pDev->canChangeGamma = pShadowDev->canChangeGamma;
+      pDev->canGenMouseDown = pShadowDev->canGenMouseDown;
+      pDev->canGenMouseMove = pShadowDev->canGenMouseMove;
+      pDev->canGenMouseUp = pShadowDev->canGenMouseUp;
+      pDev->canGenKeybd = pShadowDev->canGenKeybd;
+      pDev->hasTextUTF8 = pShadowDev->hasTextUTF8;
+      pDev->wantSymbolUTF8 = pShadowDev->wantSymbolUTF8;
+      pDev->useRotatedTextInContour = pShadowDev->useRotatedTextInContour;
+      
+      pDev->haveTransparency = pShadowDev->haveTransparency;
+      pDev->haveTransparentBg = pShadowDev->haveTransparentBg;
+      pDev->haveRaster = pShadowDev->haveRaster;
+      pDev->haveCapture = pShadowDev->haveRaster;
+   }
+   
+   if (engineVersion >= 14)
+   {
+      pDev->deviceVersion = pShadowDev->deviceVersion;
+      pDev->deviceClip = pShadowDev->deviceClip;
+   }
+   
+}
+
 // this version of the function is called from R graphics primitives
 // so can (and should) throw errors in R longjmp style
-pDevDesc shadowDevDesc(pDevDesc dev)
+pDevDesc shadowDevDesc(pDevDesc pDev)
 {
    try
    {
-      DeviceContext* pDC = (DeviceContext*)dev->deviceSpecific;
+      DeviceContext* pDC = (DeviceContext*)pDev->deviceSpecific;
 
-      pDevDesc shadowDev = nullptr;
-      Error error = shadowDevDesc(pDC, &shadowDev);
+      pDevDesc pShadowDev = nullptr;
+      Error error = shadowDevDesc(pDC, &pShadowDev);
       if (error)
       {
          LOG_ERROR(error);
          throw r::exec::RErrorException(error.getSummary());
       }
 
-      return shadowDev;
+      syncDevDesc(pDev, pShadowDev);
+      return pShadowDev;
    }
    catch(const r::exec::RErrorException& e)
    {
@@ -678,6 +712,76 @@ void releaseMask(SEXP ref, pDevDesc dd)
    dev_desc::releaseMask(ref, pngDevDesc);
 }
 
+SEXP defineGroup(SEXP source, int op, SEXP destination, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return R_NilValue;
+   
+   return dev_desc::defineGroup(source, op, destination, pngDevDesc);
+}
+
+void useGroup(SEXP ref, SEXP trans, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::useGroup(ref, trans, pngDevDesc);
+}
+
+void releaseGroup(SEXP ref, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::releaseGroup(ref, pngDevDesc);
+}
+
+void stroke(SEXP path, const pGEcontext gc, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::stroke(path, gc, pngDevDesc);
+}
+
+void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::fill(path, rule, gc, pngDevDesc);
+}
+
+void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::fillStroke(path, rule, gc, pngDevDesc);
+}
+
+SEXP capabilities(SEXP cap)
+{
+   return dev_desc::capabilities(cap);
+}
+
+void glyph(int n, int *glyphs, double *x, double *y, 
+           SEXP font, double size,
+           int colour, double rot, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::glyph(n, glyphs, x, y, font, size, colour, rot, pngDevDesc);
+}
+
 } // namespace shadow
 
 void installShadowHandler()
@@ -711,6 +815,14 @@ void installShadowHandler()
    handler::releaseClipPath = shadow::releaseClipPath;
    handler::setMask = shadow::setMask;
    handler::releaseMask = shadow::releaseMask;
+   handler::defineGroup = shadow::defineGroup;
+   handler::useGroup = shadow::useGroup;
+   handler::releaseGroup = shadow::releaseGroup;
+   handler::stroke = shadow::stroke;
+   handler::fill = shadow::fill;
+   handler::fillStroke = shadow::fillStroke;
+   handler::capabilities = shadow::capabilities;
+   handler::glyph = shadow::glyph;
 }
    
 } // namespace handler
