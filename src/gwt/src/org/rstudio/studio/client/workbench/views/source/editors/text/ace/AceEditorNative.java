@@ -184,6 +184,15 @@ public class AceEditorNative extends JavaScriptObject
            }));
    }-*/;
 
+   public native final <T> void setHandler(String eventName, CommandWithArg<T> handler)
+   /*-{
+      var defaultHandler = this._defaultHandlers[eventName] || function(evt) {};
+      this.setDefaultHandler(eventName, function(event) {
+         event.defaultHandler = defaultHandler;
+         handler.@org.rstudio.core.client.CommandWithArg::execute(*)(event);
+      });
+   }-*/;
+   
    public native final <T> void onGutterMouseDown(CommandWithArg<T> command) /*-{
       this.on("guttermousedown",
          $entry(function (arg) {
@@ -263,7 +272,7 @@ public class AceEditorNative extends JavaScriptObject
       var loader = require("rstudio/loader");
       return loader.loadEditor(container);
    }-*/;
-   
+  
    public final native void manageDefaultKeybindings() /*-{
       
       // We bind 'Ctrl + Shift + M' to insert a magrittr shortcut on Windows

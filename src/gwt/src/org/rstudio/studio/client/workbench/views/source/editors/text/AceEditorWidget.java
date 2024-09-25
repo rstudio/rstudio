@@ -212,6 +212,7 @@ public class AceEditorWidget extends Composite
          }
 
       });
+      
       editor_.onChangeFold(new Command()
       {
          @Override
@@ -220,31 +221,27 @@ public class AceEditorWidget extends Composite
             fireEvent(new FoldChangeEvent());
          }
       });
+      
       editor_.onChangeScrollTop(() -> {
          Position pos = Position.create(editor_.getFirstVisibleRow(), 0);
          fireEvent(new ScrollYEvent(pos));
       });
 
-      editor_.onGutterMouseDown(new CommandWithArg<AceMouseEventNative>()
+      editor_.setHandler("guttermousedown", new CommandWithArg<AceMouseEventNative>()
       {
         @Override
         public void execute(AceMouseEventNative arg)
         {
            // make sure the click is actually intended for the gutter
-           com.google.gwt.dom.client.Element targetElement =
-                 Element.as(arg.getNativeEvent().getEventTarget());
+           Element targetElement = Element.as(arg.getNativeEvent().getEventTarget());
            if (targetElement.getClassName().indexOf("ace_gutter-cell") < 0)
-           {
               return;
-           }
 
            NativeEvent evt = arg.getNativeEvent();
 
            // right-clicking shouldn't set a breakpoint
            if (evt.getButton() != NativeEvent.BUTTON_LEFT)
-           {
               return;
-           }
 
            // make sure that the click was in the left half of the element--
            // clicking on the line number itself (or the gutter near the
@@ -255,8 +252,13 @@ public class AceEditorWidget extends Composite
            {
               toggleBreakpointAtPosition(arg.getDocumentPosition());
            }
+           else
+           {
+              arg.invokeDefaultHandler(getEditor());
+           }
         }
       });
+      
       editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()
       {
          public void execute(Position arg)
