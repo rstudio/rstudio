@@ -25,7 +25,7 @@ website:
       - text: "Versions"
         url: 'https://docs.posit.co/previous-versions/rstudio/'
       - text: "Release Notes"
-        url: "https://docs.posit.co/ide/news/#rstudio-{{<var version >}}" 
+        url: "https://docs.posit.co/ide/news/#rstudio-{{< var version >}}" 
       - text: "Guides"
         menu:
           - text: "Workbench Admin Guide"
