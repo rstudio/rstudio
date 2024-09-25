@@ -229,35 +229,61 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
 
 void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
 {
-   // don't sync for older engine versions
    int engineVersion = ::R_GE_getVersion();
-   if (engineVersion < 12)
-      return;
-   
-   if (engineVersion >= 12)
+   switch (engineVersion)
    {
-      pDev->canClip = pShadowDev->canClip;
-      pDev->canChangeGamma = pShadowDev->canChangeGamma;
-      pDev->canGenMouseDown = pShadowDev->canGenMouseDown;
-      pDev->canGenMouseMove = pShadowDev->canGenMouseMove;
-      pDev->canGenMouseUp = pShadowDev->canGenMouseUp;
-      pDev->canGenKeybd = pShadowDev->canGenKeybd;
-      pDev->hasTextUTF8 = pShadowDev->hasTextUTF8;
-      pDev->wantSymbolUTF8 = pShadowDev->wantSymbolUTF8;
-      pDev->useRotatedTextInContour = pShadowDev->useRotatedTextInContour;
-      
-      pDev->haveTransparency = pShadowDev->haveTransparency;
-      pDev->haveTransparentBg = pShadowDev->haveTransparentBg;
-      pDev->haveRaster = pShadowDev->haveRaster;
-      pDev->haveCapture = pShadowDev->haveRaster;
-   }
-   
-   if (engineVersion >= 14)
+
+   case 12:
+   case 13:
    {
-      pDev->deviceVersion = pShadowDev->deviceVersion;
-      pDev->deviceClip = pShadowDev->deviceClip;
+      DevDescVersion12* pDev12       = (DevDescVersion12*) pDev;
+      DevDescVersion12* pShadowDev12 = (DevDescVersion12*) pShadowDev;
+
+      pDev12->canClip                 = pShadowDev12->canClip;
+      pDev12->canChangeGamma          = pShadowDev12->canChangeGamma;
+      pDev12->canGenMouseDown         = pShadowDev12->canGenMouseDown;
+      pDev12->canGenMouseMove         = pShadowDev12->canGenMouseMove;
+      pDev12->canGenMouseUp           = pShadowDev12->canGenMouseUp;
+      pDev12->canGenKeybd             = pShadowDev12->canGenKeybd;
+      pDev12->hasTextUTF8             = pShadowDev12->hasTextUTF8;
+      pDev12->wantSymbolUTF8          = pShadowDev12->wantSymbolUTF8;
+      pDev12->useRotatedTextInContour = pShadowDev12->useRotatedTextInContour;
+
+      pDev12->haveTransparency        = pShadowDev12->haveTransparency;
+      pDev12->haveTransparentBg       = pShadowDev12->haveTransparentBg;
+      pDev12->haveRaster              = pShadowDev12->haveRaster;
+      pDev12->haveCapture             = pShadowDev12->haveCapture;
+      break;
    }
-   
+
+   case 14:
+   default:
+   {
+      DevDescVersion14* pDev14       = (DevDescVersion14*) pDev;
+      DevDescVersion14* pShadowDev14 = (DevDescVersion14*) pShadowDev;
+
+      pDev14->canClip                 = pShadowDev14->canClip;
+      pDev14->canChangeGamma          = pShadowDev14->canChangeGamma;
+      pDev14->canGenMouseDown         = pShadowDev14->canGenMouseDown;
+      pDev14->canGenMouseMove         = pShadowDev14->canGenMouseMove;
+      pDev14->canGenMouseUp           = pShadowDev14->canGenMouseUp;
+      pDev14->canGenKeybd             = pShadowDev14->canGenKeybd;
+      pDev14->hasTextUTF8             = pShadowDev14->hasTextUTF8;
+      pDev14->wantSymbolUTF8          = pShadowDev14->wantSymbolUTF8;
+      pDev14->useRotatedTextInContour = pShadowDev14->useRotatedTextInContour;
+
+      pDev14->haveTransparency        = pShadowDev14->haveTransparency;
+      pDev14->haveTransparentBg       = pShadowDev14->haveTransparentBg;
+      pDev14->haveRaster              = pShadowDev14->haveRaster;
+      pDev14->haveCapture             = pShadowDev14->haveCapture;
+
+      pDev14->deviceVersion           = pShadowDev14->deviceVersion;
+      pDev14->deviceClip              = pShadowDev14->deviceClip;
+      break;
+   }
+
+   }
+
 }
 
 // this version of the function is called from R graphics primitives
