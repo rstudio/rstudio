@@ -20,7 +20,7 @@ website:
       - text: "Guides"
         menu:
           - text: "Workbench Admin Guide"
-            url: 'https://docs.posit.co/ide/server-pro/{{< var version>}}'
+            url: 'https://docs.posit.co/ide/server-pro/{{< var version >}}'
           - text: "Workbench User Guide"
             url: 'https://docs.posit.co/ide/server-pro/user/{{< var version>}}'
           - text: Workbench Licenses
