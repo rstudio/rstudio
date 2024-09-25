@@ -16,7 +16,7 @@
 - Improved support for highlighting of nested chunks in R Markdown and Quarto documents (#10079)
 - Improved support for variable-width chunk headers and footers in R Markdown / Quarto documents (#15191)
 - The "Include all function arguments in completion list" user preference can be used to control whether RStudio includes function arguments which appear to have already been used in the current context (#13065)
-- Improve autocompletion inside `Sys.unsetenv()` (#15215)
+- Available environment variables are now provided as completion suggestions within `Sys.unsetenv()` (#15215)
 
 #### Posit Workbench
 -
