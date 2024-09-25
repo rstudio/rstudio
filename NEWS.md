@@ -52,6 +52,7 @@
 - Fixed issue where test errors were duplicated when presented in Issues tab of Build pane (#14564)
 - Fixed issue where certain Python variable names were incorrectly quoted when inserted via autocompletion (#14560)
 - RStudio now includes Markdown headers without any label in the document outline (#14552)
+- RStudio no longer logs warning / error messages related to disabled R actions (e.g. ReadConsole) in forked sessions (#15221)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
