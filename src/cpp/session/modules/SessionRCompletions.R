@@ -2578,7 +2578,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # environment variables
    if (length(string) &&
-       string[[1]] %in% c("Sys.getenv", "Sys.setenv") &&
+       string[[1]] %in% c("Sys.getenv", "Sys.setenv", "Sys.unsetenv") &&
        numCommas[[1]] == 0)
       return(.rs.getCompletionsEnvironmentVariables(token))
    
