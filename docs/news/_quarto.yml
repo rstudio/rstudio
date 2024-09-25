@@ -26,7 +26,7 @@ website:
           - text: Workbench Licenses
             url: 'https://docs.posit.co/ide/licenses/{{< var version>}}'
           - text: "RStudio Open Source User Guide"
-            url: 'https://docs.posit.co/ide/user/{{< var version>}}'
+            url: 'https://docs.posit.co/ide/user/{{< var version >}}'
       - icon: "list"
         menu:
           - text: "docs.posit.co"
