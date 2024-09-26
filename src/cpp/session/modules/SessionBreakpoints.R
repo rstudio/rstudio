@@ -384,7 +384,10 @@
    srcref <- attr(funcDefn, "srcref")
    functionLines <- .rs.deparseSrcref(srcref, FALSE)
    
-   # Check if this matches the file contents.
+   # Check if this matches the file contents. Note that we intentionally
+   # use 'first_line' and 'last_line' below, as we're referencing against
+   # the "real" source file as opposed to an alias of copy (as might be
+   # used for e.g. package code).
    fileContents <- .rs.readLines(filePath)
    srcPos <- .rs.parseSrcref(srcref)
    srcLines <- seq(from = srcPos$first_line, to = srcPos$last_line)
