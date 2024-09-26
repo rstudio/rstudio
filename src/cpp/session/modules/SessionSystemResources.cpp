@@ -267,9 +267,7 @@ void emitMemoryChangedEvent()
 {
    // Ensure we don't emit memory stats from child processes
    if (main_process::wasForked())
-   {
       return;
-   }
 
    boost::shared_ptr<MemoryUsage> pUsage;
    Error error = getMemoryUsage(&pUsage);

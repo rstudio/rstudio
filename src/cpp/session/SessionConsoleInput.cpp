@@ -379,10 +379,7 @@ bool rConsoleRead(const std::string& prompt,
 {
    // this is an invalid state in a forked (multicore) process
    if (main_process::wasForked())
-   {
-      LOG_WARNING_MESSAGE("rConsoleRead called in forked process");
       return false;
-   }
 
    // r is not processing input
    setExecuting(false);
