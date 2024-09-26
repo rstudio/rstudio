@@ -51,6 +51,7 @@
 - Fixed issue where collapsed raw chunks were displayed with an incorrect label in the Visual Editor (#14594)
 - Fixed issue where test errors were duplicated when presented in Issues tab of Build pane (#14564)
 - Fixed issue where certain Python variable names were incorrectly quoted when inserted via autocompletion (#14560)
+- Fixed an issue where RStudio over-aggressively required packages to be rebuilt when setting breakpoints (#15201)
 - RStudio now includes Markdown headers without any label in the document outline (#14552)
 - RStudio no longer logs warning / error messages related to disabled R actions (e.g. ReadConsole) in forked sessions (#15221)
 
