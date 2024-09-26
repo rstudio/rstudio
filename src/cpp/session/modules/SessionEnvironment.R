@@ -347,8 +347,8 @@
   pos <- gregexpr(calltext, singleline, fixed = TRUE)[[1]]
   if (length(linepref) == 0L || linepref <= 0L)
   {
+     endpos <- pos[[1L]] + attr(pos, "match.length")[[1L]]
      pos <- pos[[1L]]
-     endpos <- pos + attr(pos, "match.length")
   }
   else if (length(pos) > 1)
   {
@@ -370,8 +370,8 @@
   }
   else
   {
+     endpos <- pos[[1L]] + attr(pos, "match.length")[[1L]]
      pos <- pos[[1L]]
-     endpos <- pos + attr(pos, "match.length")
   }
 
   # Return an empty source ref if we couldn't find a match

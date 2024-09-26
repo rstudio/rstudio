@@ -287,7 +287,7 @@
    code <- if (is.character(lines))
    {
       srcpos <- .rs.parseSrcref(srcref)
-      range <- seq(from = srcpos$first_line, to = srcpos$last_line)
+      range <- seq(from = srcpos$first_parsed, to = srcpos$last_parsed)
       lines[range]
    }
    else

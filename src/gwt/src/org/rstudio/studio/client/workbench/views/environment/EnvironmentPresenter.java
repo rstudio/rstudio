@@ -21,6 +21,7 @@ import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -874,18 +875,10 @@ public class EnvironmentPresenter extends BasePresenter
 
       return false;
    }
-
-   private boolean openBrowsePointUsingOpenTab(boolean debugging,
-                                               boolean sourceChanged)
+   
+   private TextEditingTarget findEditingTargetForBrowsePoint(Mutable<Integer> codeIndex)
    {
-      boolean tryOpenDoc =
-            useCurrentBrowseSource_ &&
-            currentBrowseSource_.length() > 0 &&
-            debugging;
-      
-      if (!tryOpenDoc)
-         return false;
-      
+      // First, look for an exact match.
       SourceColumnManager manager = RStudioGinjector.INSTANCE.getSourceColumnManager();
       for (SourceColumn column : manager.getColumnList())
       {
@@ -899,62 +892,91 @@ public class EnvironmentPresenter extends BasePresenter
                continue;
             
             String editorCode = target.getDocDisplay().getCode();
-            int codeIndex = editorCode.indexOf(currentBrowseSource_);
-            if (codeIndex == -1)
+            int index = editorCode.indexOf(currentBrowseSource_);
+            if (index != -1)
             {
-               // Try a fuzzier search, but note that this is now an approximate position.
-               int newlineIndex = currentBrowseSource_.indexOf('\n');
-               String firstLine = currentBrowseSource_.substring(0, newlineIndex);
-               
-               // Make sure that this looks like a function definition
-               if (firstLine.indexOf("function") != -1)
-               {
-                  codeIndex = editorCode.indexOf(firstLine);
-                  if (codeIndex != -1)
-                  {
-                     isApproximateBrowsePosition_ = true;
-                  }
-               }
-            }
-            else
-            {
+               codeIndex.set(index);
                isApproximateBrowsePosition_ = false;
+               return target;
             }
-            
-            if (codeIndex == -1)
-               continue;
-            
-            // We've found the start of the function being debugged in a
-            // currently-open tab. Try to set the browse position accordingly.
-            Position position = target.getDocDisplay().positionFromIndex(codeIndex);
-            
-            // Save function line number.
-            // Add one as this is a 1-based index into the document.
-            currentFunctionLineNumber_ = position.getRow() + 1;
-            currentBrowseFile_ = target.getPath();
-            
-            // Set the browser position.
-            currentBrowsePosition_ = DebugFilePosition.create(
-                  currentBrowsePosition_.getLine() + position.getRow(),
-                  currentBrowsePosition_.getEndLine() + position.getRow(),
-                  currentBrowsePosition_.getColumn(),
-                  currentBrowsePosition_.getEndColumn());
-            
-            FilePosition navPosition = isApproximateBrowsePosition_
-                  ? FilePosition.create(-1, -1)
-                  : currentBrowsePosition_.cast();
-            
-            OpenSourceFileEvent event = new OpenSourceFileEvent(
-                  FileSystemItem.createFile(target.getPath()),
-                  navPosition,
-                  FileTypeRegistry.R,
-                  NavigationMethods.DEBUG_STEP);
-            eventBus_.fireEvent(event);
-            return true;
          }
       }
       
-      return false;
+      // Next, look for a fuzzy match.
+      for (SourceColumn column : manager.getColumnList())
+      {
+         for (EditingTarget editingTarget : column.getEditors())
+         {
+            if (!(editingTarget instanceof TextEditingTarget))
+               continue;
+            
+            TextEditingTarget target = (TextEditingTarget) editingTarget;
+            if (StringUtil.isNullOrEmpty(target.getPath()))
+               continue;
+            
+            String editorCode = target.getDocDisplay().getCode();
+            int newlineIndex = currentBrowseSource_.indexOf('\n');
+            String firstLine = currentBrowseSource_.substring(0, newlineIndex);
+            if (firstLine.indexOf("function") != -1)
+            {
+               int index = editorCode.indexOf(firstLine);
+               if (index != -1)
+               {
+                  codeIndex.set(index);
+                  isApproximateBrowsePosition_ = true;
+                  return target;
+               }
+            }
+         }
+      }
+      
+      return null;
+      
+   }
+
+   private boolean openBrowsePointUsingOpenTab(boolean debugging,
+                                               boolean sourceChanged)
+   {
+      boolean tryOpenDoc =
+            useCurrentBrowseSource_ &&
+            currentBrowseSource_.length() > 0 &&
+            debugging;
+      
+      if (!tryOpenDoc)
+         return false;
+      
+      Mutable<Integer> codeIndex = new Mutable<Integer>(-1);
+      TextEditingTarget target = findEditingTargetForBrowsePoint(codeIndex);
+      if (target == null || codeIndex.get() == -1)
+         return false;
+      
+      // We've found the start of the function being debugged in a
+      // currently-open tab. Try to set the browse position accordingly.
+      Position position = target.getDocDisplay().positionFromIndex(codeIndex.get());
+
+      // Save function line number.
+      // Add one as this is a 1-based index into the document.
+      currentFunctionLineNumber_ = position.getRow() + 1;
+      currentBrowseFile_ = target.getPath();
+
+      // Set the browser position.
+      currentBrowsePosition_ = DebugFilePosition.create(
+            currentBrowsePosition_.getLine() + position.getRow(),
+            currentBrowsePosition_.getEndLine() + position.getRow(),
+            currentBrowsePosition_.getColumn(),
+            currentBrowsePosition_.getEndColumn());
+
+      FilePosition navPosition = isApproximateBrowsePosition_
+            ? FilePosition.create(-1, -1)
+               : currentBrowsePosition_.cast();
+
+      OpenSourceFileEvent event = new OpenSourceFileEvent(
+            FileSystemItem.createFile(target.getPath()),
+            navPosition,
+            FileTypeRegistry.R,
+            NavigationMethods.DEBUG_STEP);
+      eventBus_.fireEvent(event);
+      return true;
    }
    
    private void openOrUpdateFileBrowsePoint(boolean debugging,
