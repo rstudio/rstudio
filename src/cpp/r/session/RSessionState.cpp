@@ -738,11 +738,11 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
             else
             {
                REprintf(
-                        "RStudio was unable to move the installed package \"%s\" from %s to %s.\n"
-                        "%s has been added to the library paths for this session.",
+                        "\n"
+                        "- RStudio was unable to move \"%s\" into your package library.\n"
+                        "- %s has been added to the library paths for this session.\n"
+                        "\n",
                         srcPath.getFilename().c_str(),
-                        srcPath.getAbsolutePath().c_str(),
-                        tgtPath.getAbsolutePath().c_str(),
                         srcPath.getParent().getAbsolutePath().c_str());
             }
          }
