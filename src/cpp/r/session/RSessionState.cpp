@@ -15,13 +15,13 @@
 
 #include <r/session/RSessionState.hpp>
 
-#include <algorithm>
 #include <unordered_set>
 
 #include <boost/function.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+
 #include <core/Settings.hpp>
 #include <core/Version.hpp>
 #include <core/Log.hpp>
@@ -69,6 +69,7 @@ const char * const kPlotsDir = "plots_dir";
 const char * const kSearchPath = "search_path";
 const char * const kGlobalEnvironment = "global_environment";
 const char * const kAfterRestartCommand = "after_restart_command";
+const char * const kBuildLibraryPath = "build_library_path";
 
 // settings
 const char * const kWorkingDirectory = "working_directory";
@@ -253,6 +254,13 @@ Error getAfterRestartCommand(const FilePath& afterRestartFile,
    *pIsEager = eager;
    return Success();
 }
+
+Error getBuildLibraryPath(const FilePath& buildLibraryPathFile,
+                          std::string* pBuildLibraryPath)
+{
+   return core::readStringFromFile(buildLibraryPathFile, pBuildLibraryPath);
+}
+
 
 struct AfterRestartCommandData
 {
@@ -464,6 +472,13 @@ Error saveAfterRestartCommand(const FilePath& afterRestartCommandPath,
    return core::writeStringToFile(afterRestartCommandPath, afterRestartCommand);
 }
 
+Error saveBuildLibraryPath(const FilePath& buildLibraryPathPath,
+                           const std::string& buildLibraryPath)
+{
+   return core::writeStringToFile(buildLibraryPathPath, buildLibraryPath);
+}
+
+
 } // anonymous namespace
  
 void initialize(SessionStateCallbacks callbacks)
@@ -473,6 +488,7 @@ void initialize(SessionStateCallbacks callbacks)
 
 bool save(const FilePath& statePath,
           const std::string& afterRestartCommand,
+          const std::string& buildLibraryPath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
@@ -497,6 +513,13 @@ bool save(const FilePath& statePath,
    if (error)
    {
       reportError(kSaving, kAfterRestartCommand, error, ERROR_LOCATION);
+   }
+   
+   // save build library path
+   error = saveBuildLibraryPath(statePath.completePath(kBuildLibraryPath), buildLibraryPath);
+   if (error)
+   {
+      reportError(kSaving, kBuildLibraryPath, error, ERROR_LOCATION);
    }
    
    // save r version
@@ -677,6 +700,61 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    error = r::exec::RFunction("base:::search").call(&currentSearchPathList);
    if (error)
       return error;
+   
+   // if we installed a package into a custom library path,
+   // pull it out into the main library now
+   std::string buildLibraryPath;
+   error = getBuildLibraryPath(statePath.completePath(kBuildLibraryPath), &buildLibraryPath);
+   if (error && !isFileNotFoundError(error))
+      LOG_ERROR(error);
+   
+   if (!buildLibraryPath.empty())
+   {
+      Error error;
+      
+      FilePath srcPath(buildLibraryPath);
+      if (srcPath.exists())
+      {
+         // the target library path is the parent of the source library path;
+         // start preparing to move it now
+         FilePath tgtPath(srcPath.getParent().getParent().completeChildPath(srcPath.getFilename()));
+         error = tgtPath.remove();
+         if (error && !isFileNotFoundError(error))
+            LOG_ERROR(error);
+         
+         error = srcPath.move(tgtPath, core::FilePath::MoveDirect, true);
+         if (error)
+         {
+            // if we were unable to move the library path for some reason
+            // (on Windows, this might be because a different R process is using that package still)
+            // then just add the build library path to the libpaths for this session, and notify user
+            error = r::exec::RFunction(".rs.prependLibraryPath")
+                  .addUtf8Param(srcPath.getParent())
+                  .call();
+            if (error)
+            {
+               LOG_ERROR(error);
+            }
+            else
+            {
+               REprintf(
+                        "RStudio was unable to move the installed package \"%s\" from %s to %s.\n"
+                        "%s has been added to the library paths for this session.",
+                        srcPath.getFilename().c_str(),
+                        srcPath.getAbsolutePath().c_str(),
+                        tgtPath.getAbsolutePath().c_str(),
+                        srcPath.getParent().getAbsolutePath().c_str());
+            }
+         }
+         else
+         {
+            error = srcPath.getParent().remove();
+            if (error && !isFileNotFoundError(error))
+               LOG_ERROR(error);
+         }
+      }
+   }
+   
       
    // execute after restart command
    std::string command;

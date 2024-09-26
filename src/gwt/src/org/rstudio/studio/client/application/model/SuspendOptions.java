@@ -53,7 +53,7 @@ public class SuspendOptions extends JavaScriptObject
          save_minimal: saveMinimal,
          save_workspace: saveWorkspace,
          exclude_packages: excludePackages,
-         after_restart: afterRestart || ""
+         after_restart: afterRestart || "",
       };
    }-*/;
    
@@ -83,6 +83,14 @@ public class SuspendOptions extends JavaScriptObject
     */
    public native final boolean getExcludePackages() /*-{
       return this.exclude_packages;
+   }-*/;
+   
+   public native final void setBuildLibraryPath(String buildLibraryPath) /*-{
+      this.build_library_path = buildLibraryPath;
+   }-*/;
+   
+   public native final String getBuildLibraryPath() /*-{
+      return this.build_library_path;
    }-*/;
    
 }

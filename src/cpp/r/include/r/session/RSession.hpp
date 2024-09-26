@@ -253,6 +253,7 @@ struct RSuspendOptions
    bool excludePackages = false;
    std::string ephemeralEnvVars;
    std::string afterRestartCommand;
+   std::string buildLibraryPath;
 };
 
 void suspendForRestart(const RSuspendOptions& options);

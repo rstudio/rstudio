@@ -128,3 +128,21 @@ options(buildtools.with = function(code)
    
    scriptPath
 })
+
+.rs.addFunction("prependLibraryPath", function(libPath)
+{
+   .libPaths(c(libPath, .libPaths()))
+})
+
+.rs.addFunction("makeBuildLibraryPath", function()
+{
+   for (libPath in .libPaths())
+   {
+      if (.rs.isLibraryWriteable(libPath))
+      {
+         buildLibPath <- tempfile("build-", tmpdir = libPath)
+         if (dir.create(buildLibPath, recursive = TRUE, showWarnings = FALSE))
+            return(buildLibPath)
+      }
+   }
+})

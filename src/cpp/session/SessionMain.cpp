@@ -374,9 +374,9 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
    // when launcher sessions restart, they need to set a special exit code
    // to ensure that the rsession-run script restarts the rsession process
    // instead of having to submit an entirely new launcher session
-   int exitStatus = options().getBoolOverlayOption(kLauncherSessionOption) ?
-            EX_SUSPEND_RESTART_LAUNCHER_SESSION :
-            EX_CONTINUE;
+   int exitStatus = options().getBoolOverlayOption(kLauncherSessionOption)
+         ? EX_SUSPEND_RESTART_LAUNCHER_SESSION
+         : EX_CONTINUE;
 
    rstudio::r::session::RSuspendOptions options(exitStatus);
    Error error = json::readObjectParam(
@@ -387,6 +387,11 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
             "after_restart", &(options.afterRestartCommand));
    if (error)
       return error;
+   
+   // read optional build library path (ignore errors)
+   json::readObjectParam(
+            request.params, 0,
+            "build_library_path", &(options.buildLibraryPath));
 
    pResponse->setAfterResponse(boost::bind(doSuspendForRestart, options));
    return Success();
