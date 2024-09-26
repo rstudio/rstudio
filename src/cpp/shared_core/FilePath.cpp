@@ -1330,8 +1330,17 @@ bool FilePath::isWithin(const FilePath& in_scopePath) const
       return true;
 
    // Make the paths lexically normal so that e.g. foo/../bar isn't considered a child of foo.
-   FilePath child(getLexicallyNormalPath());
-   FilePath parent(in_scopePath.getLexicallyNormalPath());
+   std::string childPathString = getLexicallyNormalPath();
+   std::string parentPathString = in_scopePath.getLexicallyNormalPath();
+
+   // Normalize separators
+#ifdef _WIN32
+   std::replace(childPathString.begin(), childPathString.end(), '\\', '/');
+   std::replace(parentPathString.begin(), parentPathString.end(), '\\', '/');
+#endif
+
+   FilePath child(childPathString);
+   FilePath parent(parentPathString);
 
    // Easy test: We can't possibly be in this scope path if it has more components than we do
    if (parent.m_impl->Path.size() > child.m_impl->Path.size())
@@ -1339,8 +1348,7 @@ bool FilePath::isWithin(const FilePath& in_scopePath) const
 
    // Find the first path element that differs. Stop when we reach the end of the parent
    // path, or a "." path component, which signifies the end of a directory (/foo/bar/.)
-   for (boost::filesystem::path::iterator childIt = child.m_impl->Path.begin(),
-                                          parentIt = parent.m_impl->Path.begin();
+   for (auto childIt = child.m_impl->Path.begin(), parentIt = parent.m_impl->Path.begin();
         parentIt != parent.m_impl->Path.end() && *parentIt != ".";
         parentIt++, childIt++)
    {

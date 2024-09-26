@@ -689,10 +689,86 @@ bool packratModeEnabled(const core::FilePath& statePath)
    return getBoolSetting(statePath, kPackratModeOn, false);
 }
 
+namespace {
+
+void useBuildLibraryPath(const FilePath& srcPath)
+{
+   // if we were unable to move the library path for some reason
+   // (on Windows, this might be because a different R process is using that package still)
+   // then just add the build library path to the libpaths for this session, and notify user
+   //
+   // this way, they can still use the installed package in that session, even if
+   // it's not going to be available for other RStudio sessions
+   Error error = r::exec::RFunction(".rs.prependLibraryPath")
+         .addUtf8Param(srcPath.getParent())
+         .call();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   FilePath homePath = core::system::userHomePath("R_USER|HOME");
+   REprintf("[!] %s\n", homePath.getAbsolutePath().c_str());
+   std::string aliasedPath = FilePath::createAliasedPath(srcPath.getParent(), homePath);
+   REprintf(
+            "\n"
+            "- RStudio was unable to move '%s' into your package library.\n"
+            "- %s has been added to the library paths for this session.\n"
+            "\n",
+            srcPath.getFilename().c_str(),
+            aliasedPath.c_str());
+}
+
+Error finishPackageInstall(const std::string& buildLibraryPath)
+{
+   Error error;
+
+   // nothing to do if we have no library path
+   if (buildLibraryPath.empty())
+      return Success();
+
+   // check that the path exists; we just installed the package
+   // to this directory so it would be surprising if it's suddenly gone!
+   FilePath srcPath(buildLibraryPath);
+   if (!srcPath.exists())
+      return fileNotFoundError(srcPath, ERROR_LOCATION);
+
+   // the target library path is the parent of the source library path
+   FilePath tgtPath(srcPath.getParent().getParent().completeChildPath(srcPath.getFilename()));
+
+   // that path might already exist (e.g. because the package was previously installed)
+   // attempt to remove that old installation now
+   error = tgtPath.remove();
+   if (error && !isFileNotFoundError(error))
+   {
+      useBuildLibraryPath(srcPath);
+      return error;
+   }
+
+   // we can now move the installed package to its final location
+   error = srcPath.move(tgtPath, core::FilePath::MoveDirect, true);
+   if (error)
+   {
+      useBuildLibraryPath(srcPath);
+      return error;
+   }
+
+   // we successfully migrated the library
+   // remove the parent build directory that was hosting the package
+   error = srcPath.getParent().remove();
+   if (error && !isFileNotFoundError(error))
+      return error;
+
+   return Success();
+}
+
+} // end anonymous namespace
+
 Error deferredRestore(const FilePath& statePath, bool serverMode)
 {
    Error error;
-   
+
    // get current search path list -- need to do this before executing
    // the after restart command as that might load a package and modify
    // the search list
@@ -707,55 +783,11 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    error = getBuildLibraryPath(statePath.completePath(kBuildLibraryPath), &buildLibraryPath);
    if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
-   
-   if (!buildLibraryPath.empty())
-   {
-      Error error;
-      
-      FilePath srcPath(buildLibraryPath);
-      if (srcPath.exists())
-      {
-         // the target library path is the parent of the source library path;
-         // start preparing to move it now
-         FilePath tgtPath(srcPath.getParent().getParent().completeChildPath(srcPath.getFilename()));
-         error = tgtPath.remove();
-         if (error && !isFileNotFoundError(error))
-            LOG_ERROR(error);
-         
-         error = srcPath.move(tgtPath, core::FilePath::MoveDirect, true);
-         if (error)
-         {
-            // if we were unable to move the library path for some reason
-            // (on Windows, this might be because a different R process is using that package still)
-            // then just add the build library path to the libpaths for this session, and notify user
-            error = r::exec::RFunction(".rs.prependLibraryPath")
-                  .addUtf8Param(srcPath.getParent())
-                  .call();
-            if (error)
-            {
-               LOG_ERROR(error);
-            }
-            else
-            {
-               REprintf(
-                        "\n"
-                        "- RStudio was unable to move \"%s\" into your package library.\n"
-                        "- %s has been added to the library paths for this session.\n"
-                        "\n",
-                        srcPath.getFilename().c_str(),
-                        srcPath.getParent().getAbsolutePath().c_str());
-            }
-         }
-         else
-         {
-            error = srcPath.getParent().remove();
-            if (error && !isFileNotFoundError(error))
-               LOG_ERROR(error);
-         }
-      }
-   }
-   
-      
+
+   error = finishPackageInstall(buildLibraryPath);
+   if (error)
+      LOG_ERROR(error);
+
    // execute after restart command
    std::string command;
    bool isEagerCommand = false;
