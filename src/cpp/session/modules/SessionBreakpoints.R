@@ -376,12 +376,12 @@
    
    # Find the function definition.
    functionName <- .rs.unquote(functionName)
-   fun <- .rs.getUntracedFunction(functionName, filePath, packageName)
-   if (is.null(fun))
+   funcDefn <- .rs.getUntracedFunction(functionName, filePath, packageName)
+   if (is.null(funcDefn))
       return(FALSE)
    
    # Get the source definition of this function.
-   srcref <- attr(fun, "srcref")
+   srcref <- attr(funcDefn, "srcref")
    functionLines <- .rs.deparseSrcref(srcref, FALSE)
    
    # Check if this matches the file contents.

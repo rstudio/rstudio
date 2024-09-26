@@ -287,7 +287,15 @@
    code <- if (is.character(lines))
    {
       srcpos <- .rs.parseSrcref(srcref)
-      range <- seq(from = srcpos$first_parsed, to = srcpos$last_parsed)
+      range <- if (inherits(srcfile, c("srcfilecopy", "srcfilealias")))
+      {
+         seq(from = srcpos$first_parsed, to = srcpos$last_parsed)
+      }
+      else
+      {
+         seq(from = srcpos$first_line, to = srcpos$last_line)
+      }
+
       lines[range]
    }
    else
