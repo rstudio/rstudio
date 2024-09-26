@@ -207,6 +207,8 @@ writeLines(sep = "\x1F", c(
   logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
 
   // remove R-related environment variables before invoking R
+  // note that we intentionally preserve an already-set LD_LIBRARY_PATH
+  // see https://github.com/rstudio/rstudio/issues/15044 for motivation
   const envCopy = Object.assign({}, process.env);
   delete envCopy['R_HOME'];
   delete envCopy['R_ARCH'];
@@ -214,7 +216,6 @@ writeLines(sep = "\x1F", c(
   delete envCopy['R_INCLUDE_DIR'];
   delete envCopy['R_RUNTIME'];
   delete envCopy['R_SHARE_DIR'];
-  delete envCopy[kLdLibraryPathVariable];
   delete envCopy['R_PLATFORM'];
 
   const [result, error] = expect(() => {

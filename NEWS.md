@@ -57,6 +57,7 @@
 - RStudio now includes Markdown headers without any label in the document outline (#14552)
 - Clicking in the editor gutter to toggle a breakpoint no longer also selects the associated line (#15226)
 - RStudio no longer logs warning / error messages related to disabled R actions (e.g. ReadConsole) in forked sessions (#15221)
+- RStudio Desktop now forwards `LD_LIBRARY_PATH` when detecting available R installations (#15044)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
