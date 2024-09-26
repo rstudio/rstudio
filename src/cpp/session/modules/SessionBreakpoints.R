@@ -386,8 +386,9 @@
    
    # Check if this matches the file contents.
    fileContents <- .rs.readLines(filePath)
-   srcpos <- .rs.parseSrcref(srcref)
-   functionSrcLines <- fileContents[srcpos$first_parsed:srcpos$last_parsed]
+   srcPos <- .rs.parseSrcref(srcref)
+   srcLines <- seq(from = srcPos$first_line, to = srcPos$last_line)
+   functionSrcLines <- fileContents[srcLines]
    
    # Check if they match.
    identical(functionLines, functionSrcLines)
