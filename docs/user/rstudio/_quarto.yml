@@ -25,15 +25,15 @@ website:
       - text: "Versions"
         url: 'https://docs.posit.co/previous-versions/rstudio/'
       - text: "Release Notes"
-        url: "https://docs.posit.co/ide/news/"   
+        url: "https://docs.posit.co/ide/news/#rstudio-{{< var version >}}" 
       - text: "Guides"
         menu:
           - text: "Workbench Admin Guide"
-            url: 'https://docs.posit.co/ide/server-pro/'
+            url: 'https://docs.posit.co/ide/server-pro/{{< var version >}}'
           - text: "Posit Workbench User Guide"
-            url: 'https://docs.posit.co/ide/server-pro/user/'
+            url: 'https://docs.posit.co/ide/server-pro/user/{{< var version >}}'
           - text: Workbench Licenses
-            url: 'https://docs.posit.co/ide/licenses/'   
+            url: 'https://docs.posit.co/ide/licenses/{{< var version >}}'   
       - icon: "list"
         aria-label: 'Drop-down menu for additional Posit resources'
         menu:
