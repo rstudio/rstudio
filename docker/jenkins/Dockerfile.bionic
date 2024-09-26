@@ -104,7 +104,7 @@ RUN bash /tmp/install-crashpad bionic
 
 # panmirror check for changes
 # ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-mountain-hydrangea panmirror.version.json
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-cranberry-hibiscus panmirror.version.json
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
