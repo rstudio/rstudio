@@ -659,6 +659,9 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    # notice
    install(FILES "resources/NOTICE"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # panmirror scripts
+   install(DIRECTORY "resources/panmirror-scripts"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # citation
    configure_file("resources/CITATION.in"
