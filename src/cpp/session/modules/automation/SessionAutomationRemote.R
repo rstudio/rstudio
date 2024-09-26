@@ -228,7 +228,7 @@
    nodeIds
 })
 
-.rs.automation.addRemoteFunction("domClickElement", function(selector,
+.rs.automation.addRemoteFunction("domClickElement", function(selector = NULL,
                                                              objectId = NULL,
                                                              verticalOffset = 0L,
                                                              horizontalOffset = 0L,
