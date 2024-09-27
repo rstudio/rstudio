@@ -464,7 +464,7 @@ if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
    set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_TOOLS_ROOT}/src/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
 endif()
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua
+configure_file(${RSTUDIO_PANMIRROR_SCRIPT}
                ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts/ COPYONLY)
 
 # set include directories
