@@ -36,8 +36,8 @@ public class BuildCompletedEvent extends GwtEvent<BuildCompletedEvent.Handler>
          return this.after_restart_command;
       }-*/;
       
-      public native final String getBuildLibraryPath() /*-{
-         return this.build_library_path;
+      public native final String getBuiltPackagePath() /*-{
+         return this.built_package_path;
       }-*/;
    }
 
@@ -61,9 +61,9 @@ public class BuildCompletedEvent extends GwtEvent<BuildCompletedEvent.Handler>
       return data_.getAfterRestartCommand();
    }
    
-   public String getBuildLibraryPath()
+   public String getBuiltPackagePath()
    {
-      return data_.getBuildLibraryPath();
+      return data_.getBuiltPackagePath();
    }
 
    @Override

@@ -391,7 +391,7 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
    // read optional build library path (ignore errors)
    json::readObjectParam(
             request.params, 0,
-            "build_library_path", &(options.buildLibraryPath));
+            "built_package_path", &(options.builtPackagePath));
 
    pResponse->setAfterResponse(boost::bind(doSuspendForRestart, options));
    return Success();

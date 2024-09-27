@@ -89,7 +89,7 @@ bool saveSessionState(const RSuspendOptions& options,
       return r::session::state::save(
                suspendedSessionPath,
                options.afterRestartCommand,
-               options.buildLibraryPath,
+               options.builtPackagePath,
                utils::isServerMode(),
                options.excludePackages,
                disableSaveCompression,

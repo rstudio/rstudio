@@ -85,12 +85,12 @@ public class SuspendOptions extends JavaScriptObject
       return this.exclude_packages;
    }-*/;
    
-   public native final void setBuildLibraryPath(String buildLibraryPath) /*-{
-      this.build_library_path = buildLibraryPath;
+   public native final void setBuiltPackagePath(String path) /*-{
+      this.built_package_path = path;
    }-*/;
    
-   public native final String getBuildLibraryPath() /*-{
-      return this.build_library_path;
+   public native final String getBuiltPackagePath() /*-{
+      return this.built_package_path;
    }-*/;
    
 }

@@ -204,7 +204,7 @@ public class BuildPresenter extends BasePresenter
                SuspendOptions options = userPrefs_.saveAndReloadWorkspaceOnBuild().getValue()
                      ? SuspendOptions.createSaveAll(false, afterRestartCommand)
                      : SuspendOptions.createSaveMinimal(false, afterRestartCommand);
-               options.setBuildLibraryPath(event.getBuildLibraryPath());
+               options.setBuiltPackagePath(event.getBuiltPackagePath());
                eventBus_.fireEvent(new SuspendAndRestartEvent(options));
             }
          }

@@ -686,7 +686,7 @@ private:
       std::string libPaths = module_context::libPathsString();
       if (!buildLibPath.empty())
       {
-         buildLibPath_ = fmt::format("{}/{}", buildLibPath, pkgInfo_.name());
+         builtPackagePath_ = fmt::format("{}/{}", buildLibPath, pkgInfo_.name());
          libPaths = fmt::format("{}{}{}", buildLibPath, kPathSep, libPaths);
       }
       
@@ -1892,7 +1892,7 @@ private:
       json::Object dataJson;
       dataJson["restart_r"] = restartR_;
       dataJson["after_restart_command"] = afterRestartCommand;
-      dataJson["build_library_path"] = buildLibPath_;
+      dataJson["built_package_path"] = builtPackagePath_;
       ClientEvent event(client_events::kBuildCompleted, dataJson);
       module_context::enqueClientEvent(event);
    }
@@ -1937,7 +1937,7 @@ private:
    json::Array errorsJson_;
    r_util::RPackageInfo pkgInfo_;
    projects::RProjectBuildOptions options_;
-   std::string buildLibPath_;
+   std::string builtPackagePath_;
    std::vector<FilePath> libPaths_;
    std::string successMessage_;
    std::string buildToolsWarning_;
