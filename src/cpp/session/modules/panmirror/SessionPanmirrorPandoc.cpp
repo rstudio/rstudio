@@ -15,6 +15,7 @@
 
 #include "SessionPanmirrorPandoc.hpp"
 
+#include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
 
@@ -93,6 +94,17 @@ void pandocAstToMarkdown(const json::JsonRpcRequest& request,
       json::setErrorResponse(error, &response);
       cont(Success(), &response);
       return;
+   }
+
+   // substitute custom pandoc writer for "markdown"
+   // https://github.com/rstudio/rstudio/issues/15189
+   boost::regex pattern(R"(markdown(\+|-|$))");
+   if (boost::regex_search(format, pattern)) {
+      FilePath wdWriterLua = FilePath(session::options().rResourcesPath()).completePath("panmirror-scripts/md-writer.lua");
+      if (wdWriterLua.exists())
+         format = boost::regex_replace(format, boost::regex("markdown"), wdWriterLua.getAbsolutePathNative());
+      else
+         LOG_ERROR_MESSAGE("Custom markdown writer not found at: '" + wdWriterLua.getAbsolutePathNative() + "'");
    }
 
    // build args
