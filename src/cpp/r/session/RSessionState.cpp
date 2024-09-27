@@ -15,6 +15,10 @@
 
 #include <r/session/RSessionState.hpp>
 
+#ifdef _WIN32
+# include <fmt/xchar.h>
+#endif
+
 #include <unordered_set>
 
 #include <boost/function.hpp>
@@ -98,6 +102,84 @@ Error restoreLibPaths(const FilePath& libPathsFile)
 
    std::string file = string_utils::utf8ToSystem(libPathsFile.getAbsolutePath());
    return r::exec::RFunction(".rs.restoreLibPaths", file).call();
+}
+
+#ifdef _WIN32
+
+// TODO: This probably belongs somewhere else.
+bool isDirectoryLockedWin32(const std::wstring& filePath)
+{
+   WIN32_FIND_DATAW data;
+   std::wstring findQuery = fmt::format(L"{}/*", filePath);
+   HANDLE hFind = FindFirstFileW(findQuery.c_str(), &data);
+   if (hFind == INVALID_HANDLE_VALUE)
+      return false;
+
+   do
+   {
+      // skip '.' and '..'
+      bool isDotFolder =
+            (wcscmp(data.cFileName, L".") == 0) ||
+            (wcscmp(data.cFileName, L"..") == 0);
+
+      if (isDotFolder)
+         continue;
+
+      // get the child path
+      std::wstring childPath = fmt::format(L"{}/{}", filePath, data.cFileName);
+      // REprintf("[!] Checking file: '%s'\n", string_utils::wideToUtf8(childPath).c_str());
+
+      // check if we can open it with exclusive access
+      HANDLE hFile = CreateFileW(
+               childPath.c_str(),
+               GENERIC_READ | GENERIC_WRITE, // Check for both read + write access to files
+               0,                            // No sharing (FILE_SHARE_READ/FILE_SHARE_WRITE would allow shared access)
+               NULL,                         // Default security
+               OPEN_EXISTING,                // Open existing file only
+               FILE_ATTRIBUTE_NORMAL,        // Normal file
+               NULL);                        // No template file
+
+      if (hFile == INVALID_HANDLE_VALUE)
+      {
+         DWORD dwError = GetLastError();
+         if (dwError == ERROR_SHARING_VIOLATION)
+         {
+            // REprintf("[!] %s is locked.\n", string_utils::wideToUtf8(childPath).c_str());
+            return true;
+         }
+      }
+
+      // File is not locked, close the handle
+      CloseHandle(hFile);
+
+      // If this file is a directory, recurse through it
+      if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      {
+         if (isDirectoryLockedWin32(childPath))
+         {
+            // REprintf("[!] %s is locked.\n", string_utils::wideToUtf8(childPath).c_str());
+            return true;
+         }
+      }
+   }
+   while (FindNextFileW(hFind, &data) != 0);
+
+   FindClose(hFind);
+
+   // if we get here, then we iterated through all the files within
+   // the directory without finding a locked file
+   return false;
+}
+
+#endif
+
+bool isDirectoryLocked(const FilePath& filePath)
+{
+#ifndef _WIN32
+   return false;
+#else
+   return isDirectoryLockedWin32(filePath.getAbsolutePathW());
+#endif
 }
 
 bool isRLocationVariable(const std::string& name)
@@ -739,8 +821,8 @@ Error finishPackageInstall(const std::string& buildLibraryPath)
    FilePath tgtPath(srcPath.getParent().getParent().completeChildPath(srcPath.getFilename()));
 
    // that path might already exist (e.g. because the package was previously installed)
-   // attempt to remove that old installation now. instead of removing directly, we try
-   // to rename the folder and then remove, as this will be less destructive on failure
+   // move that directory out of the way. note that this can succeed on Windows even
+   // if those files are open / in use by another application
    std::string backupName = fmt::format("{}-{}", tgtPath.getFilename(), core::system::generateShortenedUuid());
    FilePath backupDir = tgtPath.getParent().completeChildPath("_backup");
    error = backupDir.ensureDirectory();
@@ -767,7 +849,21 @@ Error finishPackageInstall(const std::string& buildLibraryPath)
       return error;
    }
 
-   // TODO: Do we need to be smart about removing / cleanup the directories in _backup?
+   // Take this opportunity to try and remove any folders within the backup directory.
+   std::vector<FilePath> backupPaths;
+   error = backupDir.getChildren(backupPaths);
+   if (error)
+      LOG_ERROR(error);
+
+   for (const FilePath& backupPath : backupPaths)
+   {
+      if (!isDirectoryLocked(backupPath))
+      {
+         Error error = backupPath.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
 
    return Success();
 }
