@@ -676,7 +676,9 @@ private:
 
       // get library paths for build
       std::string buildLibPath;
-      Error libError = r::exec::RFunction(".rs.makeBuildLibraryPath").call(&buildLibPath);
+      Error libError = r::exec::RFunction(".rs.makeBuildLibraryPath")
+            .addUtf8Param(pkgInfo_.name())
+            .call(&buildLibPath);
       if (libError)
          LOG_ERROR(libError);
       

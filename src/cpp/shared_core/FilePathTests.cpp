@@ -310,12 +310,17 @@ TEST_CASE("Copy FilePath Tests")
    CHECK(f2.getAbsolutePath() == "/a/path");
 }
 
-TEST_CASE("within")
+#ifdef _WIN32
+
+TEST_CASE("Windows: FilePath.isWithin")
 {
-   FilePath f1("C:/tmp/example");
-   FilePath f2("C:\\tmp\\example\\subdir");
-   CHECK(f2.isWithin(f1));
+   CHECK(FilePath("C:/tmp/dir").isWithin(FilePath("C:/tmp")));
+   CHECK(FilePath("C:\\tmp\\dir").isWithin(FilePath("C:/tmp")));
+   CHECK(FilePath("C:/tmp/dir").isWithin(FilePath("C:\\tmp")));
+   CHECK(FilePath("C:\\tmp\\dir").isWithin(FilePath("C:\\tmp")));
 }
+
+#endif
 
 } // namespace core
 } // namespace rstudio

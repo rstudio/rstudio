@@ -134,15 +134,17 @@ options(buildtools.with = function(code)
    .libPaths(c(libPath, .libPaths()))
 })
 
-.rs.addFunction("makeBuildLibraryPath", function()
+.rs.addFunction("makeBuildLibraryPath", function(packageName)
 {
    for (libPath in .libPaths())
    {
-      if (.rs.isLibraryWriteable(libPath))
-      {
-         buildLibPath <- tempfile("build-", tmpdir = libPath)
-         if (dir.create(buildLibPath, recursive = TRUE, showWarnings = FALSE))
-            return(buildLibPath)
-      }
+      buildLibPath <- file.path(libPath, "_build")
+      if (dir.exists(buildLibPath) || dir.create(buildLibPath, showWarnings = FALSE))
+         return(buildLibPath)
    }
+})
+
+.rs.addFunction("removeBuildLibraryPath", function(buildLibraryPath)
+{
+   .libPaths(setdiff(.libPaths(), buildLibraryPath))
 })

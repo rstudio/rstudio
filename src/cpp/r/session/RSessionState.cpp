@@ -739,8 +739,16 @@ Error finishPackageInstall(const std::string& buildLibraryPath)
    FilePath tgtPath(srcPath.getParent().getParent().completeChildPath(srcPath.getFilename()));
 
    // that path might already exist (e.g. because the package was previously installed)
-   // attempt to remove that old installation now
-   error = tgtPath.remove();
+   // attempt to remove that old installation now. instead of removing directly, we try
+   // to rename the folder and then remove, as this will be less destructive on failure
+   std::string backupName = fmt::format("{}-{}", tgtPath.getFilename(), core::system::generateShortenedUuid());
+   FilePath backupDir = tgtPath.getParent().completeChildPath("_backup");
+   error = backupDir.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+
+   FilePath backupPath = backupDir.completeChildPath(backupName);
+   error = tgtPath.move(backupPath, core::FilePath::MoveDirect, true);
    if (error && !isFileNotFoundError(error))
    {
       useBuildLibraryPath(srcPath);
@@ -751,17 +759,30 @@ Error finishPackageInstall(const std::string& buildLibraryPath)
    error = srcPath.move(tgtPath, core::FilePath::MoveDirect, true);
    if (error)
    {
+      Error restoreError = backupPath.move(tgtPath, core::FilePath::MoveDirect, true);
+      if (restoreError)
+         LOG_ERROR(restoreError);
+
       useBuildLibraryPath(srcPath);
       return error;
    }
 
-   // we successfully migrated the library
-   // remove the parent build directory that was hosting the package
-   error = srcPath.getParent().remove();
-   if (error && !isFileNotFoundError(error))
-      return error;
+   // TODO: Do we need to be smart about removing / cleanup the directories in _backup?
 
    return Success();
+}
+
+void removeBuildLibraryPath(const std::string& buildLibraryPath)
+{
+   std::string buildLibraryDir = FilePath(buildLibraryPath)
+         .getParent()
+         .getAbsolutePath();
+
+   Error error = r::exec::RFunction(".rs.removeBuildLibraryPath")
+         .addUtf8Param(buildLibraryDir)
+         .call();
+   if (error)
+      LOG_ERROR(error);
 }
 
 } // end anonymous namespace
@@ -785,8 +806,8 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
 
-   error = finishPackageInstall(buildLibraryPath);
-   if (error)
+   Error installError = finishPackageInstall(buildLibraryPath);
+   if (installError)
       LOG_ERROR(error);
 
    // execute after restart command
@@ -805,6 +826,7 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
       Error error = executeAfterRestartCommand(command);
       if (error)
          LOG_ERROR(error);
+      removeBuildLibraryPath(buildLibraryPath);
    }
    
    {
@@ -821,6 +843,7 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
       Error error = executeAfterRestartCommand(command);
       if (error)
          LOG_ERROR(error);
+      removeBuildLibraryPath(buildLibraryPath);
    }
    
    
