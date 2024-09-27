@@ -1241,8 +1241,8 @@
         "use_build_subdirectory": {
             "type": "boolean",
             "default": true,
-            "title": "Build packages in sub-directory",
-            "description": "Whether to use a `_build` sub-directory in the current library paths when developing an R package."
+            "title": "Use alternate library path when building package",
+            "description": "When set, RStudio will build your package in a '_build' sub-directory of your current library paths."
         },
         "use_secure_download": {
             "type": "boolean",

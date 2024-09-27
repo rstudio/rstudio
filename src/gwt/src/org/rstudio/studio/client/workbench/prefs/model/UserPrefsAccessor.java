@@ -2628,7 +2628,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to use a `_build` sub-directory in the current library paths when developing an R package.
+    * When set, RStudio will build your package in a '_build' sub-directory of your current library paths.
     */
    public PrefValue<Boolean> useBuildSubdirectory()
    {
