@@ -709,13 +709,14 @@ void useBuildLibraryPath(const FilePath& srcPath)
    }
 
    FilePath homePath = core::system::userHomePath("R_USER|HOME");
-   REprintf("[!] %s\n", homePath.getAbsolutePath().c_str());
    std::string aliasedPath = FilePath::createAliasedPath(srcPath.getParent(), homePath);
    REprintf(
             "\n"
             "- RStudio was unable to move '%s' into your package library.\n"
-            "- %s has been added to the library paths for this session.\n"
+            "- '%s' will be loaded from the following library path for this session:\n"
+            "- \"%s\"\n"
             "\n",
+            srcPath.getFilename().c_str(),
             srcPath.getFilename().c_str(),
             aliasedPath.c_str());
 }
