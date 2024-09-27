@@ -98,9 +98,9 @@ void pandocAstToMarkdown(const json::JsonRpcRequest& request,
 
    // substitute custom pandoc writer for "markdown"
    // https://github.com/rstudio/rstudio/issues/15189
-    boost::regex pattern(R"(markdown(\+|-|$))");
+   boost::regex pattern(R"(markdown(\+|-|$))");
    if (boost::regex_search(format, pattern)) {
-     FilePath wdWriterLua = FilePath(session::options().rResourcesPath()).completePath("panmirror-scripts/md-writer.lua");
+      FilePath wdWriterLua = FilePath(session::options().rResourcesPath()).completePath("panmirror-scripts/md-writer.lua");
       if (wdWriterLua.exists())
          format = boost::regex_replace(format, boost::regex("markdown"), wdWriterLua.getAbsolutePathNative());
       else
