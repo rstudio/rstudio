@@ -456,6 +456,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
                ${CMAKE_CURRENT_SOURCE_DIR}/resources COPYONLY)
 
 # configure custom panmirror script into the resources directory
+#
+# On Linux and Windows builders, found in the tools directory, on Mac and dev
+# environments found in the source tree.
+set(RSTUDIO_PANMIRROR_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/../../gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
+if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
+   set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_TOOLS_ROOT}/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
+endif()
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua
                ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts/ COPYONLY)
