@@ -2403,6 +2403,19 @@ core::Error UserPrefValues::setCleanBeforeInstall(bool val)
 }
 
 /**
+ * When set, RStudio will build your package in a '_build' sub-directory of your current library paths.
+ */
+bool UserPrefValues::useBuildSubdirectory()
+{
+   return readPref<bool>("use_build_subdirectory");
+}
+
+core::Error UserPrefValues::setUseBuildSubdirectory(bool val)
+{
+   return writePref("use_build_subdirectory", val);
+}
+
+/**
  * Whether to use secure downloads when fetching R packages.
  */
 bool UserPrefValues::useSecureDownload()
@@ -3602,6 +3615,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSshKeyType,
       kUseDevtools,
       kCleanBeforeInstall,
+      kUseBuildSubdirectory,
       kUseSecureDownload,
       kCleanupAfterRCmdCheck,
       kViewDirAfterRCmdCheck,

@@ -59,6 +59,12 @@
 #include "SessionSourceCpp.hpp"
 #include "SessionInstallRtools.hpp"
 
+#ifdef _WIN32
+# define kPathSep ";"
+#else
+# define kPathSep ":"
+#endif
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -516,7 +522,7 @@ private:
 
       std::string documentCall = useDevtools()
             ? fmt::format("devtools::document(roclets = c({}))", roclets)
-            : fmt::format("roxygen2::roxygenize('.', roclets = c({})", roclets);
+            : fmt::format("roxygen2::roxygenize('.', roclets = c({}))", roclets);
       
       // show the user the call to document
       enqueCommandString(documentCall);
@@ -631,19 +637,6 @@ private:
                      const core::system::ProcessCallbacks& cb)
    {
 
-      // if this action is going to INSTALL the package then on
-      // windows we need to unload the library first
-#ifdef _WIN32
-      if (packagePath.completeChildPath("src").exists() &&
-         (type == kBuildAndReload || type == kBuildIncremental || type == kBuildFull || type == kBuildBinaryPackage))
-      {
-         std::string pkg = pkgInfo_.name();
-         Error error = r::exec::RFunction(".rs.forceUnloadPackage", pkg).call();
-         if (error)
-            LOG_ERROR(error);
-      }
-#endif
-
       // use both the R and gcc error parsers
       CompileErrorParsers parsers;
       parsers.add(rErrorParser(packagePath.completePath("R")));
@@ -681,10 +674,29 @@ private:
       else
          core::system::environment(&childEnv);
 
-      // allow child process to inherit our R_LIBS
+      // get library paths for build
       std::string libPaths = module_context::libPathsString();
-      if (!libPaths.empty())
-         core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      
+      // use a sub-directory for build if configured to do so
+      if (prefs::userPrefs().useBuildSubdirectory())
+      {
+         
+         std::string buildLibraryPath;
+         Error libError = r::exec::RFunction(".rs.makeBuildLibraryPath")
+               .call(&buildLibraryPath);
+         if (libError)
+            LOG_ERROR(libError);
+
+         // prepend build library path if its available
+         if (!buildLibraryPath.empty())
+         {
+            builtPackagePath_ = fmt::format("{}/{}", buildLibraryPath, pkgInfo_.name());
+            libPaths = fmt::format("{}{}{}", buildLibraryPath, kPathSep, libPaths);
+         }
+      }
+      
+      // set this for the child process
+      core::system::setenv(&childEnv, "R_LIBS", libPaths);
       
       // record the library paths used when this build was kicked off
       libPaths_ = module_context::getLibPaths();
@@ -1885,6 +1897,7 @@ private:
       json::Object dataJson;
       dataJson["restart_r"] = restartR_;
       dataJson["after_restart_command"] = afterRestartCommand;
+      dataJson["built_package_path"] = builtPackagePath_;
       ClientEvent event(client_events::kBuildCompleted, dataJson);
       module_context::enqueClientEvent(event);
    }
@@ -1929,6 +1942,7 @@ private:
    json::Array errorsJson_;
    r_util::RPackageInfo pkgInfo_;
    projects::RProjectBuildOptions options_;
+   std::string builtPackagePath_;
    std::vector<FilePath> libPaths_;
    std::string successMessage_;
    std::string buildToolsWarning_;

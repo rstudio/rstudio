@@ -1708,6 +1708,16 @@
    clear = function() { .rs.clearUserPref("clean_before_install") }
 )
 
+# Use alternate library path when building package
+#
+# When set, RStudio will build your package in a '_build' sub-directory of your
+# current library paths.
+.rs.uiPrefs$useBuildSubdirectory <- list(
+   get = function() { .rs.getUserPref("use_build_subdirectory") },
+   set = function(value) { .rs.setUserPref("use_build_subdirectory", value) },
+   clear = function() { .rs.clearUserPref("use_build_subdirectory") }
+)
+
 # Download R packages securely
 #
 # Whether to use secure downloads when fetching R packages.

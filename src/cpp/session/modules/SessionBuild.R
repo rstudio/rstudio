@@ -128,3 +128,23 @@ options(buildtools.with = function(code)
    
    scriptPath
 })
+
+.rs.addFunction("prependLibraryPath", function(libPath)
+{
+   .libPaths(c(libPath, .libPaths()))
+})
+
+.rs.addFunction("makeBuildLibraryPath", function()
+{
+   for (libPath in .libPaths())
+   {
+      buildLibPath <- file.path(libPath, "_build")
+      if (dir.exists(buildLibPath) || dir.create(buildLibPath, showWarnings = FALSE))
+         return(buildLibPath)
+   }
+})
+
+.rs.addFunction("removeBuildLibraryPath", function(buildLibraryPath)
+{
+   .libPaths(setdiff(.libPaths(), buildLibraryPath))
+})
