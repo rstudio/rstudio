@@ -2628,6 +2628,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to use a `_build` sub-directory in the current library paths when developing an R package.
+    */
+   public PrefValue<Boolean> useBuildSubdirectory()
+   {
+      return bool(
+         "use_build_subdirectory",
+         _constants.useBuildSubdirectoryTitle(), 
+         _constants.useBuildSubdirectoryDescription(), 
+         true);
+   }
+
+   /**
     * Whether to use secure downloads when fetching R packages.
     */
    public PrefValue<Boolean> useSecureDownload()
@@ -4112,6 +4124,8 @@ public class UserPrefsAccessor extends Prefs
          useDevtools().setValue(layer, source.getBool("use_devtools"));
       if (source.hasKey("clean_before_install"))
          cleanBeforeInstall().setValue(layer, source.getBool("clean_before_install"));
+      if (source.hasKey("use_build_subdirectory"))
+         useBuildSubdirectory().setValue(layer, source.getBool("use_build_subdirectory"));
       if (source.hasKey("use_secure_download"))
          useSecureDownload().setValue(layer, source.getBool("use_secure_download"));
       if (source.hasKey("cleanup_after_r_cmd_check"))
@@ -4455,6 +4469,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(sshKeyType());
       prefs.add(useDevtools());
       prefs.add(cleanBeforeInstall());
+      prefs.add(useBuildSubdirectory());
       prefs.add(useSecureDownload());
       prefs.add(cleanupAfterRCmdCheck());
       prefs.add(viewDirAfterRCmdCheck());
