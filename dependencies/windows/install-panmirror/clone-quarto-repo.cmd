@@ -24,10 +24,3 @@ if not exist quarto (
 )
 
 popd
-
-:: copy custom scripts into resources folder
-set PANMIRROR_SCRIPTS_DIR="..\..\..\src\cpp\session\resources\panmirror-scripts"
-if not exist %PANMIRROR_SCRIPTS_DIR% (
-  md %PANMIRROR_SCRIPTS_DIR%
-)
-copy ..\..\..\src\gwt\lib\quarto\packages\editor-server\src\resources\md-writer.lua %PANMIRROR_SCRIPTS_DIR%

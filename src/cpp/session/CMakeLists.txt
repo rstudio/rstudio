@@ -455,6 +455,10 @@ endforeach()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
                ${CMAKE_CURRENT_SOURCE_DIR}/resources COPYONLY)
 
+# configure custom panmirror script into the resources directory
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua
+               ${CMAKE_CURRENT_SOURCE_DIR}/resources COPYONLY)
+
 # set include directories
 include_directories(
    include
