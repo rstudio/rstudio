@@ -134,7 +134,7 @@ options(buildtools.with = function(code)
    .libPaths(c(libPath, .libPaths()))
 })
 
-.rs.addFunction("makeBuildLibraryPath", function(packageName)
+.rs.addFunction("makeBuildLibraryPath", function()
 {
    for (libPath in .libPaths())
    {

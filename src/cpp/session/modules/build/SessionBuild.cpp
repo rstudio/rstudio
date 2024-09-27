@@ -675,19 +675,18 @@ private:
          core::system::environment(&childEnv);
 
       // get library paths for build
-      std::string buildLibPath;
+      std::string buildLibraryPath;
       Error libError = r::exec::RFunction(".rs.makeBuildLibraryPath")
-            .addUtf8Param(pkgInfo_.name())
-            .call(&buildLibPath);
+            .call(&buildLibraryPath);
       if (libError)
          LOG_ERROR(libError);
       
       // prepend build library path if its available
       std::string libPaths = module_context::libPathsString();
-      if (!buildLibPath.empty())
+      if (!buildLibraryPath.empty())
       {
-         builtPackagePath_ = fmt::format("{}/{}", buildLibPath, pkgInfo_.name());
-         libPaths = fmt::format("{}{}{}", buildLibPath, kPathSep, libPaths);
+         builtPackagePath_ = fmt::format("{}/{}", buildLibraryPath, pkgInfo_.name());
+         libPaths = fmt::format("{}{}{}", buildLibraryPath, kPathSep, libPaths);
       }
       
       // set this for the child process

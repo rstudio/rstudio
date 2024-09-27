@@ -73,7 +73,7 @@ const char * const kPlotsDir = "plots_dir";
 const char * const kSearchPath = "search_path";
 const char * const kGlobalEnvironment = "global_environment";
 const char * const kAfterRestartCommand = "after_restart_command";
-const char * const kBuildLibraryPath = "build_library_path";
+const char * const kBuiltPackagePath = "built_package_path";
 
 // settings
 const char * const kWorkingDirectory = "working_directory";
@@ -337,10 +337,10 @@ Error getAfterRestartCommand(const FilePath& afterRestartFile,
    return Success();
 }
 
-Error getBuildLibraryPath(const FilePath& buildLibraryPathFile,
-                          std::string* pBuildLibraryPath)
+Error getBuiltPackagePath(const FilePath& builtPackagePathFile,
+                          std::string* pBuiltPackagePath)
 {
-   return core::readStringFromFile(buildLibraryPathFile, pBuildLibraryPath);
+   return core::readStringFromFile(builtPackagePathFile, pBuiltPackagePath);
 }
 
 
@@ -554,10 +554,10 @@ Error saveAfterRestartCommand(const FilePath& afterRestartCommandPath,
    return core::writeStringToFile(afterRestartCommandPath, afterRestartCommand);
 }
 
-Error saveBuildLibraryPath(const FilePath& buildLibraryPathPath,
-                           const std::string& buildLibraryPath)
+Error saveBuiltPackagePath(const FilePath& builtPackagePathPath,
+                           const std::string& builtPackagePath)
 {
-   return core::writeStringToFile(buildLibraryPathPath, buildLibraryPath);
+   return core::writeStringToFile(builtPackagePathPath, builtPackagePath);
 }
 
 
@@ -570,7 +570,7 @@ void initialize(SessionStateCallbacks callbacks)
 
 bool save(const FilePath& statePath,
           const std::string& afterRestartCommand,
-          const std::string& buildLibraryPath,
+          const std::string& builtPackagePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
@@ -598,10 +598,10 @@ bool save(const FilePath& statePath,
    }
    
    // save build library path
-   error = saveBuildLibraryPath(statePath.completePath(kBuildLibraryPath), buildLibraryPath);
+   error = saveBuiltPackagePath(statePath.completePath(kBuiltPackagePath), builtPackagePath);
    if (error)
    {
-      reportError(kSaving, kBuildLibraryPath, error, ERROR_LOCATION);
+      reportError(kSaving, kBuiltPackagePath, error, ERROR_LOCATION);
    }
    
    // save r version
@@ -773,7 +773,7 @@ bool packratModeEnabled(const core::FilePath& statePath)
 
 namespace {
 
-void useBuildLibraryPath(const FilePath& srcPath)
+void useBuiltPackagePath(const FilePath& srcPath)
 {
    // if we were unable to move the library path for some reason
    // (on Windows, this might be because a different R process is using that package still)
@@ -803,17 +803,17 @@ void useBuildLibraryPath(const FilePath& srcPath)
             aliasedPath.c_str());
 }
 
-Error finishPackageInstall(const std::string& buildLibraryPath)
+Error finishPackageInstall(const std::string& builtPackagePath)
 {
    Error error;
 
    // nothing to do if we have no library path
-   if (buildLibraryPath.empty())
+   if (builtPackagePath.empty())
       return Success();
 
    // check that the path exists; we just installed the package
    // to this directory so it would be surprising if it's suddenly gone!
-   FilePath srcPath(buildLibraryPath);
+   FilePath srcPath(builtPackagePath);
    if (!srcPath.exists())
       return fileNotFoundError(srcPath, ERROR_LOCATION);
 
@@ -833,7 +833,7 @@ Error finishPackageInstall(const std::string& buildLibraryPath)
    error = tgtPath.move(backupPath, core::FilePath::MoveDirect, true);
    if (error && !isFileNotFoundError(error))
    {
-      useBuildLibraryPath(srcPath);
+      useBuiltPackagePath(srcPath);
       return error;
    }
 
@@ -845,7 +845,7 @@ Error finishPackageInstall(const std::string& buildLibraryPath)
       if (restoreError)
          LOG_ERROR(restoreError);
 
-      useBuildLibraryPath(srcPath);
+      useBuiltPackagePath(srcPath);
       return error;
    }
 
@@ -870,12 +870,8 @@ Error finishPackageInstall(const std::string& buildLibraryPath)
 
 void removeBuildLibraryPath(const std::string& buildLibraryPath)
 {
-   std::string buildLibraryDir = FilePath(buildLibraryPath)
-         .getParent()
-         .getAbsolutePath();
-
    Error error = r::exec::RFunction(".rs.removeBuildLibraryPath")
-         .addUtf8Param(buildLibraryDir)
+         .addUtf8Param(buildLibraryPath)
          .call();
    if (error)
       LOG_ERROR(error);
@@ -897,12 +893,12 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    
    // if we installed a package into a custom library path,
    // pull it out into the main library now
-   std::string buildLibraryPath;
-   error = getBuildLibraryPath(statePath.completePath(kBuildLibraryPath), &buildLibraryPath);
+   std::string builtPackagePath;
+   error = getBuiltPackagePath(statePath.completePath(kBuiltPackagePath), &builtPackagePath);
    if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
 
-   Error installError = finishPackageInstall(buildLibraryPath);
+   Error installError = finishPackageInstall(builtPackagePath);
    if (installError)
       LOG_ERROR(error);
 
@@ -922,7 +918,9 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
       Error error = executeAfterRestartCommand(command);
       if (error)
          LOG_ERROR(error);
-      removeBuildLibraryPath(buildLibraryPath);
+
+      removeBuildLibraryPath(
+               FilePath(builtPackagePath).getParent().getAbsolutePath());
    }
    
    {
@@ -939,7 +937,9 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
       Error error = executeAfterRestartCommand(command);
       if (error)
          LOG_ERROR(error);
-      removeBuildLibraryPath(buildLibraryPath);
+
+      removeBuildLibraryPath(
+               FilePath(builtPackagePath).getParent().getAbsolutePath());
    }
    
    
