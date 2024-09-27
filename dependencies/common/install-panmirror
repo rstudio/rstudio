@@ -53,4 +53,5 @@ fi
 # copy custom scripts into resources folder
 PANMIRROR_SCRIPTS_DIR="../../src/cpp/session/resources/panmirror-scripts"
 mkdir -p "$PANMIRROR_SCRIPTS_DIR"
+echo "Copying md-writer.lua to '$PANMIRROR_SCRIPTS_DIR'"
 cp "$QUARTO_DIR"/packages/editor-server/src/resources/md-writer.lua $PANMIRROR_SCRIPTS_DIR
