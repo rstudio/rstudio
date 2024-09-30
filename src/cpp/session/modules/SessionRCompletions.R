@@ -2344,34 +2344,35 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("readlineCompletions", function(token) 
 {
+   rx <- "^.*(\\(|\\[)(.*)(\\)|\\]).*$"
+   
    nframes <- sys.nframe()
-   for (i in seq_len(nframes)) {
-      fun <- sys.function(i)
-      if (identical(fun, base::readline))
-      {
-         frame <- sys.frame(i)
-         rx <- "^.*(\\(|\\[)(.*)(\\)|\\]).*$"
-         prompt <- frame$prompt
-         
-         if (is.character(prompt) && grepl(rx, prompt)) 
-         {
-            results <- strsplit(sub(rx, "\\2", prompt), "/")[[1L]]
-            
-            # capitalized first as this is likely to be the default
-            cap <- grepl("^[A-Z]", results)
-            c(results[cap], results[!cap])
-            
-            return(.rs.makeCompletions(token = token,
-                                       results = results,
-                                       quote = FALSE,
-                                       type = .rs.acCompletionTypes$STRING))
-         }
-         else 
-         {
-            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
-         }
-      }  
+   for (i in seq_len(nframes))
+   {
+      if (!identical(sys.function(i), base::readline))
+         next
+      
+      frame <- sys.frame(i)
+      prompt <- frame$prompt
+      if (!is.character(prompt) || !grepl(rx, prompt))
+         return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+      
+      results <- strsplit(sub(rx, "\\2", prompt), "/")[[1L]]
+      if (length(results) == 1L)
+         return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+      
+      # capitalized first as this is likely to be the default
+      cap <- grepl("^[A-Z]", results)
+      results <- c(results[cap], results[!cap])
+      completions <- .rs.makeCompletions(
+         token = token,
+         results = results,
+         quote = FALSE,
+         type = .rs.acCompletionTypes$STRING
+      )
+      return(completions)
    }
+      
 })
 
 .rs.addJsonRpcHandler("get_completions", function(token,
