@@ -258,14 +258,13 @@
    parentPwd <- parentEnv[["PWD"]]
    automationScript <- file.path(parentPwd, "rserver-automation")
    if (!file.exists(automationScript))
-      stop("rserver does not appear to be running on port 8788")
+      stop(automationScript, " does not exist.")
    
    message("-- Starting rserver-automation ...")
    withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
    
    # Kill the process on exit
    reg.finalizer(globalenv(), .rs.automation.killAutomationServer, onexit = TRUE)
-   
    
 })
 
