@@ -22,25 +22,28 @@ export RS_DB_MIGRATIONS_PATH="@CMAKE_CURRENT_SOURCE_DIR@/server/db"
 
 
 # use temporary directory for RStudio state
-ROOT=$(mktemp -d -p /tmp rstudio-automation-XXXXXX)
+: "${RSTUDIO_CONFIG_ROOT=$(mktemp -d -p /tmp rstudio-automation-XXXXXX)}"
+: "${RSTUDIO_CONFIG_HOME="${RSTUDIO_CONFIG_ROOT}/rstudio-config-home"}"
+: "${RSTUDIO_CONFIG_DIR="${RSTUDIO_CONFIG_ROOT}/rstudio-config-dir"}"
+: "${RSTUDIO_DATA_HOME="${RSTUDIO_CONFIG_ROOT}/rstudio-data-home"}"
 
-export RSTUDIO_CONFIG_HOME="${ROOT}/rstudio-config-home"
-export RSTUDIO_CONFIG_DIR="${ROOT}/rstudio-config-dir"
-export RSTUDIO_DATA_HOME="${ROOT}/rstudio-data-home"
+export RSTUDIO_CONFIG_HOME
+export RSTUDIO_CONFIG_DIR
+export RSTUDIO_DATA_HOME
 
 
 # use local database file
-cat <<- EOF > "${ROOT}/rserver-database.conf"
+cat <<- EOF > "${RSTUDIO_CONFIG_ROOT}/rserver-database.conf"
 provider=sqlite
-directory=${ROOT}
+directory=${RSTUDIO_CONFIG_ROOT}
 EOF
 
 
 # use the development rsession configuration file,
 # but make sure sessions run in automation mode
 RSESSION_CONFIG_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
-cp "${RSESSION_CONFIG_FILE}" "${ROOT}/rsession.conf"
-cat <<- EOF >> "${ROOT}/rsession.conf"
+cp "${RSESSION_CONFIG_FILE}" "${RSTUDIO_CONFIG_ROOT}/rsession.conf"
+cat <<- EOF >> "${RSTUDIO_CONFIG_ROOT}/rsession.conf"
 # enable automation tools
 automation-agent=1
 EOF
@@ -52,8 +55,8 @@ server/rserver                                             \
 	--config-file="conf/rserver-dev.conf"                  \
 	--auth-none=1                                          \
 	--www-port=8788                                        \
-	--server-data-dir="${ROOT}"                            \
-	--database-config-file="${ROOT}/rserver-database.conf" \
-	--rsession-config-file="${ROOT}/rsession.conf"         \
+	--server-data-dir="${RSTUDIO_CONFIG_ROOT}"                            \
+	--database-config-file="${RSTUDIO_CONFIG_ROOT}/rserver-database.conf" \
+	--rsession-config-file="${RSTUDIO_CONFIG_ROOT}/rsession.conf"         \
 	"$@"
 

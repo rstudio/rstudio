@@ -4,6 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
+
 # https://github.com/rstudio/rstudio/issues/15072
 test_that("the debug position is correct in braced expressions", {
 
@@ -78,16 +79,19 @@ test_that("package functions can be debugged after build and reload", {
       .rs.api.openProject(!!projectPath)
    )
    
-   .rs.waitUntil("the new project is opened", function()
+   # Wait a minute for the new session to load.
+   Sys.sleep(1)
+
+   # Wait until the new project is ready.
+   .rs.waitFor("the new project is opened", function()
    {
       el <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
       grepl("rstudio.automation", el$innerText, fixed = TRUE)
    })
    
    # Add a source document.
-   remote$consoleExecuteExpr(
-      file.edit("R/example.R")
-   )
+   remote$consoleExecuteExpr(file.edit("R/example.R"))
+   remote$commandExecute("activateSource")
    
    code <- .rs.heredoc('
       example <- function() {
@@ -106,7 +110,7 @@ test_that("package functions can be debugged after build and reload", {
    remote$commandExecute("saveSourceDoc")
    remote$commandExecute("buildAll")
    
-   .rs.waitUntil("build has completed", function()
+   .rs.waitFor("build has completed", function()
    {
       output <- remote$consoleOutput()
       any(output == "> library(rstudio.automation)")
@@ -149,17 +153,5 @@ test_that("package functions can be debugged after build and reload", {
    
    # All done testing; close the project.
    remote$commandExecute("closeProject")
-   
-   # If we received a modal, click "Don't Save".
-   hasDialog <- tryCatch(
-      { remote$domGetNodeId("#rstudio_dlg_no"); TRUE },
-      error = function(cnd) FALSE
-   )
-   
-   if (hasDialog)
-   {
-      noEl <- remote$jsObjectViaSelector("#rstudio_dlg_no")
-      remote$domClickElement(objectId = noEl)
-   }
    
 })
