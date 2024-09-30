@@ -2361,9 +2361,14 @@ assign(x = ".rs.acCompletionTypes",
       if (length(results) == 1L)
          return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
       
+      # remove whitespace around options
+      results <- .rs.trimWhitespace(results)
+      
       # capitalized first as this is likely to be the default
       cap <- grepl("^[A-Z]", results)
       results <- c(results[cap], results[!cap])
+      
+      # return completions
       completions <- .rs.makeCompletions(
          token = token,
          results = results,
