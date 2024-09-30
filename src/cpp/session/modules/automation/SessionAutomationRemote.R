@@ -403,6 +403,16 @@
    }
 })
 
+.rs.automation.addRemoteFunction("modalClick", function(buttonName)
+{
+   .rs.tryCatch({
+      buttonSelector <- sprintf("#rstudio_dlg_%s", buttonName)
+      buttonId <- self$domGetNodeId(buttonSelector)
+      self$domClickElement(objectId = buttonId)
+      TRUE
+   })
+})
+
 .rs.automation.addRemoteFunction("quit", function()
 {
    # Close the websocket connection.
