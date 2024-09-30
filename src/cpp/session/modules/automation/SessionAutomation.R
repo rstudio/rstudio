@@ -342,16 +342,6 @@
    # Avoid crashing on arm64 Linux.
    envVars[["RSTUDIO_QUERY_FONTS"]] <- "0"
    
-   # Make sure we have a running rserver-automation instance.
-   # Ensure that we have a running rserver instance.
-   if (mode == "server")
-   {
-      withr::with_envvar(envVars, {
-         .rs.automation.ensureRunningServerInstance()
-      })
-   }
-   
-   
    # Build argument list.
    # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
    
@@ -376,7 +366,15 @@
       )
    )
    
-   # Start up RStudio.
+   # Make sure we have a running rserver-automation instance.
+   if (mode == "server")
+   {
+      withr::with_envvar(envVars, {
+         .rs.automation.ensureRunningServerInstance()
+      })
+   }
+   
+   # Start up RStudio (or Chrome in "server" mode).
    process <- withr::with_envvar(envVars, {
       processx::process$new(appPath, args)
    })
