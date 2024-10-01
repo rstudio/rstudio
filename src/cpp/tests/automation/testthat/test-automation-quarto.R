@@ -344,3 +344,52 @@ test_that("variable-width nested chunks can be folded", {
    
 })
 
+# https://github.com/rstudio/rstudio/issues/15189
+test_that("raw html blocks are preserved by visual editor", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Raw html blocks
+      ---
+      ```{=html}
+      Hello <i>World</i>, how are you?
+      ``` 
+   ')
+
+   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", TRUE)")
+   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+
+   remote$documentExecute(".qmd", contents, function(editor) {
+
+      sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
+      visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+      expect_equal(sourceModeToggle$ariaPressed, "true")
+
+      # verify starting state
+      editor <- remote$editorGetInstance()
+      expect_equal(editor$session$getLine(3), "```{=html}")
+      
+      # switch to visual mode
+      remote$domClickElement(".rstudio_visual_md_on")
+      .rs.waitUntil("Visual Editor appears", function() {
+         tryCatch({
+            visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+            visualEditor$contentEditable
+         }, error = function(e) FALSE)
+      })
+
+      # back to source mode
+      remote$domClickElement(".rstudio_visual_md_off")
+      .rs.waitUntil("Source editor appears", function() {
+         tryCatch({
+            sourceEditor <- remote$jsObjectViaSelector("#rstudio_source_text_editor")
+            sourceEditor$checkVisibility()
+         }, error = function(e) FALSE)
+      })
+      
+      # verify ending state
+      editor <- remote$editorGetInstance()
+      expect_equal(editor$session$getLine(4), "```{=html}")
+   })
+})
+   
