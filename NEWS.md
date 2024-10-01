@@ -60,6 +60,7 @@
 - RStudio no longer logs warning / error messages related to disabled R actions (e.g. ReadConsole) in forked sessions (#15221)
 - RStudio Desktop now forwards `LD_LIBRARY_PATH` when detecting available R installations (#15044)
 - Fixed an issue with incorrect completions provided in `readline()` context (#15238)
+- Fixed an issue where ghost text could not be inserted in non-chunk parts of an R Markdown / Quarto document (#14507)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
