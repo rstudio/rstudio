@@ -85,6 +85,7 @@ import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TexFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
+import org.rstudio.studio.client.common.filetypes.events.RenameFileInitiatedEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
@@ -845,6 +846,19 @@ public class TextEditingTarget implements
                autoSaveTimer_.cancel();
             }
          }));
+      
+      releaseOnDismiss_.add(
+            events_.addHandler(RenameFileInitiatedEvent.TYPE, new RenameFileInitiatedEvent.Handler()
+            {
+               @Override
+               public void onRenameFileInitiated(RenameFileInitiatedEvent event)
+               {
+                  if (StringUtil.equals(event.getPath(), docUpdateSentinel_.getPath()))
+                  {
+                     save();
+                  }
+               }
+            }));
    }
 
    static {
