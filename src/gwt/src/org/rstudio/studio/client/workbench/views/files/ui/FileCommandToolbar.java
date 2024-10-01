@@ -14,11 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.files.ui;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -35,6 +30,11 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.FilesConstants;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.inject.Inject;
+
 public class FileCommandToolbar extends Toolbar
 {
    @Inject
@@ -47,7 +47,7 @@ public class FileCommandToolbar extends Toolbar
       addLeftWidget(newFolderButton_);
       addLeftSeparator();
       
-      // New Blank File Menu
+      // New File Menu
       ToolbarPopupMenu newFileMenu = new ToolbarPopupMenu();
       newFileMenu.addItem(commands.touchSourceDoc().createMenuItem(false));
       newFileMenu.addSeparator();
@@ -73,8 +73,8 @@ public class FileCommandToolbar extends Toolbar
       newFileMenu.addItem(commands.touchRHTMLDoc().createMenuItem(false));
 
       newFileButton_ = new ToolbarMenuButton(
-            constants_.newBlankFileText(),
-            constants_.createNewBlankFileText(),
+            constants_.newFileText(),
+            constants_.createNewFileText(),
             new ImageResource2x(icons.stock_new2x()),
             newFileMenu);
       ElementIds.assignElementId(newFileButton_, ElementIds.MB_FILES_TOUCH_FILE);
@@ -154,7 +154,7 @@ public class FileCommandToolbar extends Toolbar
       else if (width < 540)
       {
          newFolderButton_.setText(constants_.folderText());
-         newFileButton_.setText(constants_.blankFileText());
+         newFileButton_.setText(constants_.fileText());
          uploadButton_.setText(constants_.uploadText());
          deleteButton_.setText(constants_.deleteText());
          renameButton_.setText(constants_.renameText());
@@ -163,7 +163,7 @@ public class FileCommandToolbar extends Toolbar
       else
       {
          newFolderButton_.setText(constants_.newFolderText());
-         newFileButton_.setText(constants_.newBlankFileText());
+         newFileButton_.setText(constants_.newFileText());
          uploadButton_.setText(constants_.uploadText());
          deleteButton_.setText(constants_.deleteText());
          renameButton_.setText(constants_.renameText());

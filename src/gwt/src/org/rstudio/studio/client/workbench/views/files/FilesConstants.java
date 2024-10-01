@@ -243,6 +243,15 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     String createNewFileTitle(String formmattedExt);
 
     /**
+     * Translated "Create a New File in Current Directory".
+     *
+     * @return translated "Create a New File in Current Directory"
+     */
+    @DefaultMessage("Create a New File in Current Directory")
+    @Key("createNewFileInCurrentDirectoryTitle")
+    String createNewFileInCurrentDirectoryTitle();
+    
+    /**
      * Translated "Please enter the new file name:".
      *
      * @return translated "Please enter the new file name:"
@@ -540,6 +549,15 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     String fileCommandsLabel();
 
     /**
+     * Translated "New File".
+     *
+     * @return translated "New File"
+     */
+    @DefaultMessage("New File")
+    @Key("newFileText")
+    String newFileText();
+    
+    /**
      * Translated "New Blank File".
      *
      * @return translated "New Blank File"
@@ -548,6 +566,15 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     @Key("newBlankFileText")
     String newBlankFileText();
 
+    /**
+     * Translated "Create a new file in the current directory".
+     *
+     * @return translated "Create a new file in the current directory"
+     */
+    @DefaultMessage("Create a new file in the current directory")
+    @Key("createNewFileText")
+    String createNewFileText();
+    
     /**
      * Translated "Create a new blank file in current directory".
      *
@@ -765,11 +792,11 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     String tipHTML();
 
     /**
-     * Translated "fileText".
+     * Translated "File".
      *
-     * @return translated "fileText"
+     * @return translated "File"
      */
-    @DefaultMessage("fileText")
+    @DefaultMessage("File")
     @Key("fileText")
     String fileText();
 

@@ -1983,13 +1983,13 @@ public interface CmdConstants extends Constants {
     String touchSweaveDocDesc();
     
     // touchRMarkdownDoc
-    @DefaultStringValue("R _Markdown...") // $NON-NLS-1$
+    @DefaultStringValue("R _Markdown") // $NON-NLS-1$
     String touchRMarkdownDocMenuLabel();
     @DefaultStringValue("Create a blank R Markdown document in current directory") // $NON-NLS-1$
     String touchRMarkdownDocDesc();
     
     // touchQuartoDoc
-    @DefaultStringValue("_Quarto Doc...") // $NON-NLS-1$
+    @DefaultStringValue("_Quarto Document") // $NON-NLS-1$
     String touchQuartoDocMenuLabel();
     @DefaultStringValue("Create a blank Quarto document in current directory") // $NON-NLS-1$
     String touchQuartoDocDesc();

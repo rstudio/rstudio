@@ -2513,12 +2513,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         rebindable="false"/>
 
    <cmd id="touchRMarkdownDoc"
-        menuLabel="R _Markdown..."
+        menuLabel="R _Markdown"
         desc="Create a blank R Markdown document in current directory"
         rebindable="false"/>
 
    <cmd id="touchQuartoDoc"
-        menuLabel="_Quarto Doc..."
+        menuLabel="_Quarto Document"
         desc="Create a blank Quarto document in current directory"
         rebindable="false"/>
 
