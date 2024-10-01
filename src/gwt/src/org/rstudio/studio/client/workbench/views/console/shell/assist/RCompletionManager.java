@@ -415,11 +415,7 @@ public class RCompletionManager implements CompletionManager
          if (keycode == KeyCodes.KEY_TAB && modifier == KeyboardShortcut.NONE)
          {
             invalidatePendingRequests();
-            AceGhostText ghostText = docDisplay_.getGhostText();
-            docDisplay_.replaceRange(
-                  Range.fromPoints(ghostText.position, ghostText.position),
-                  ghostText.text);
-            docDisplay_.removeGhostText();
+            docDisplay_.applyGhostText();
             docDisplay_.scrollCursorIntoViewIfNecessary();
             return true;
          }
