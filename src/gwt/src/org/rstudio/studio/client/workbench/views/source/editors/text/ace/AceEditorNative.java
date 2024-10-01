@@ -722,10 +722,14 @@ public class AceEditorNative extends JavaScriptObject
       this.setGhostText(text);
    }-*/;
    
-   public final native void applyGhostText() /*-{
-      var ghostText = this.renderer.$ghostText;
-      
-   }-*/;
+   public final void applyGhostText()
+   {
+      AceGhostText ghostText = getGhostText();
+      getSession().replace(
+            Range.fromPoints(ghostText.position, ghostText.position),
+            ghostText.text);
+      removeGhostText();
+   }
    
    public final native boolean hasGhostText() /*-{
       return this.renderer.$ghostText != null;
