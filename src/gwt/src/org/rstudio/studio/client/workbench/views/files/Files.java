@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ParallelCommandList;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.SerializedCommand;
@@ -75,6 +76,7 @@ import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -163,6 +165,7 @@ public class Files
    public Files(Display view,
                 EventBus eventBus,
                 FilesServerOperations server,
+                SourceServerOperations sourceServer,
                 RemoteFileSystemContext fileSystemContext,
                 GlobalDisplay globalDisplay,
                 Session session,
@@ -186,6 +189,7 @@ public class Files
 
       eventBus_ = eventBus;
       server_ = server;
+      sourceServer_ = sourceServer;
       fileSystemContext_ = fileSystemContext;
       globalDisplay_ = globalDisplay;
       session_ = session;
@@ -407,57 +411,68 @@ public class Files
    }
    
    @Handler
-   void onTouchSourceDoc() {
+   void onTouchSourceDoc()
+   {
       touchFile(FileTypeRegistry.R);
    }
 
    @Handler
-   void onTouchRMarkdownDoc() {
+   void onTouchRMarkdownDoc()
+   {
       touchFile(FileTypeRegistry.RMARKDOWN);
    }
 
    @Handler
-   void onTouchQuartoDoc() {
+   void onTouchQuartoDoc()
+   {
       touchFile(FileTypeRegistry.QUARTO);
    }
 
    @Handler
-   void onTouchTextDoc() {
+   void onTouchTextDoc()
+   {
       touchFile(FileTypeRegistry.TEXT);
    }
 
    @Handler
-   void onTouchCppDoc() {
+   void onTouchCppDoc()
+   {
       touchFile(FileTypeRegistry.CPP);
    }
 
    @Handler
-   void onTouchPythonDoc() {
+   void onTouchPythonDoc()
+   {
       touchFile(FileTypeRegistry.PYTHON);
    }
 
    @Handler
-   void onTouchSqlDoc() {
+   void onTouchSqlDoc()
+   {
       touchFile(FileTypeRegistry.SQL);
    }
 
    @Handler
-   void onTouchStanDoc() {
+   void onTouchStanDoc()
+   {
       touchFile(FileTypeRegistry.STAN);
    }
 
    @Handler
-   void onTouchD3Doc() {
+   void onTouchD3Doc()
+   {
       touchFile(FileTypeRegistry.JS);
    }
 
    @Handler
-   void onTouchSweaveDoc() {
+   void onTouchSweaveDoc()
+   {
       touchFile(FileTypeRegistry.SWEAVE);
    }
 
    @Handler
-   void onTouchRHTMLDoc() {
+   void onTouchRHTMLDoc()
+   {
       touchFile(FileTypeRegistry.RHTML);
    }
 
@@ -1074,7 +1089,7 @@ public class Files
       String defaultExt = fileType.getDefaultExtension();
 
       // extension has a '.' at the start, so remove that in the default name
-      String newFileDefaultName = "Untitled" + StringUtil.substring(defaultExt.toUpperCase(), 1) + defaultExt;
+      String newFileDefaultName = "Untitled" + defaultExt;
       String path = currentPath_.completePath(newFileDefaultName);
       FileSystemItem newTempFile = FileSystemItem.createFile(path);
       return newTempFile;
@@ -1082,18 +1097,17 @@ public class Files
    
    private void touchFile(final TextFileType fileType)
    {
-      // prepare default information about the new file
-      FileSystemItem newTempFile = getDefaultFileName(fileType);
-      String formattedExt = StringUtil.substring(fileType.getDefaultExtension().toUpperCase(), 1);
-      
       // guard for reentrancy
       if (inputPending_)
          return;
       
       inputPending_ = true;
 
+      // prepare default information about the new file
+      FileSystemItem newTempFile = getDefaultFileName(fileType);
+      
       // prompt for new file name then execute the operation
-      globalDisplay_.promptForText(constants_.createNewFileTitle(formattedExt),
+      globalDisplay_.promptForText(constants_.createNewFileInCurrentDirectoryTitle(),
                                    constants_.enterFileNameLabel(),
                                    newTempFile.getName(),
                                    0,
@@ -1110,27 +1124,47 @@ public class Files
 
             String path = currentPath_.completePath(input);
             final FileSystemItem newFile = FileSystemItem.createFile(path);
-
-            // execute on the server
-            server_.touchFile(newFile, new VoidServerRequestCallback(progress)
+            
+            String contents = "";
+            final FilePosition pos = FilePosition.create(0, 0);
+            
+            if (fileType == FileTypeRegistry.QUARTO || fileType == FileTypeRegistry.RMARKDOWN)
             {
-               @Override
-               protected void onSuccess()
+               List<String> preamble = new ArrayList<String>();
+               preamble.add("---");
+               preamble.add("title: \"" + newFile.getStem() + "\"");
+               preamble.add("output: html_document");
+               preamble.add("---");
+               preamble.add("");
+               preamble.add("");
+               
+               contents = StringUtil.join(preamble, "\n");
+               pos.setLine(6);
+            }
+            
+               // execute on the server
+               server_.createFile(newFile, contents, new VoidServerRequestCallback(progress)
                {
-                  // if we were successful, refresh list and open in source editor
-                  onRefreshFiles();
-                  fileTypeRegistry_.openFile(newFile);
-               }
+                  @Override
+                  protected void onSuccess()
+                  {
+                     // if we were successful, refresh list and open in source editor
+                     onRefreshFiles();
+                     fileTypeRegistry_.editFile(newFile, pos);
+                  }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  String errCaption = constants_.blankFileFailedCaption();
-                  String errMsg = constants_.blankFileFailedMessage(fileType.getDefaultExtension(), input, error.getUserMessage());
-                  globalDisplay_.showErrorMessage(errCaption, errMsg);
-                  progress.onCompleted();
-               }
-            });
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     String errCaption = constants_.blankFileFailedCaption();
+                     String errMsg = constants_.blankFileFailedMessage(fileType.getDefaultExtension(), input, error.getUserMessage());
+                     globalDisplay_.showErrorMessage(errCaption, errMsg);
+                     progress.onCompleted();
+                  }
+               });
+            
+            
+            
          }
       },
       () ->
@@ -1232,6 +1266,7 @@ public class Files
    private final ConsoleDispatcher consoleDispatcher_;
    private final WorkbenchContext workbenchContext_;
    private final FilesServerOperations server_;
+   private final SourceServerOperations sourceServer_;
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
    private final RemoteFileSystemContext fileSystemContext_;
