@@ -1,5 +1,5 @@
 /*
- * RenameSourceFileEvent.java
+ * RenameFileInitiatedEvent.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -20,19 +20,19 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class RenameSourceFileEvent extends CrossWindowEvent<RenameSourceFileEvent.Handler>
+public class RenameFileInitiatedEvent extends CrossWindowEvent<RenameFileInitiatedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onRenameSourceFile(RenameSourceFileEvent event);
+      void onRenameFileInitiated(RenameFileInitiatedEvent event);
    }
 
-   public RenameSourceFileEvent(String path)
+   public RenameFileInitiatedEvent(String path)
    {
       path_ = path;
    }
 
-   public RenameSourceFileEvent()
+   public RenameFileInitiatedEvent()
    {
    }
 
@@ -44,7 +44,7 @@ public class RenameSourceFileEvent extends CrossWindowEvent<RenameSourceFileEven
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onRenameSourceFile(this);
+      handler.onRenameFileInitiated(this);
    }
 
    @Override
