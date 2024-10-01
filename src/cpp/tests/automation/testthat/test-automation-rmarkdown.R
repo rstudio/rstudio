@@ -319,18 +319,19 @@ test_that("displaying chunk options popup and applying without making changes do
    editor <- remote$editorGetInstance()
    chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
    
-   checkChunkOption <- function(line, expected, widget)
+   checkChunkOption <- function(line, expectedBefore, expectedAfter, widget)
    {
       original <- editor$session$getLine(line)
-      expect_equal(original, expected)
+      expect_equal(original, expectedBefore)
       remote$domClickElementByNodeId(widget)
       remote$domClickElement("#rstudio_chunk_opt_apply")
       updated <- editor$session$getLine(line)
-      expect_equal(original, updated)
+      expect_equal(expectedAfter, updated)
    }
    
    checkChunkOption(
       8,
+      "```{r}",
       "```{r}",
       chunkOptionWidgetIds[[2]])
 
@@ -339,12 +340,14 @@ test_that("displaying chunk options popup and applying without making changes do
    checkChunkOption(
       4,
       "```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}",
+      "```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}",
       chunkOptionWidgetIds[[1]])
-   # chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
-   # checkChunkOption(
-   #    12,
-   #    "```{r fig.cap = \"a caption\"}", # https://github.com/rstudio/rstudio/issues/6829 TODO
-   #    chunkOptionWidgetIds[[3]])
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   checkChunkOption(
+      12,
+      "```{r fig.cap = \"a caption\"}",
+      "```{r fig.cap=\"a caption\"}", # https://github.com/rstudio/rstudio/issues/6829
+      chunkOptionWidgetIds[[3]])
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
@@ -406,32 +409,28 @@ test_that("reverting chunk option changes restores original options ", {
 })
 
 # https://github.com/rstudio/rstudio/issues/6829
-# TODO: uncomment when issue is resolved
-# test_that("modifying chunk options via UI doesn't mess up other options", {
+test_that("modifying chunk options via UI doesn't mess up other options", {
    
-#    contents <- .rs.heredoc('
-#       ---
-#       title: "Issue 6829"
-#       ---
+   contents <- .rs.heredoc('
+      ---
+      title: "Issue 6829"
+      ---
       
-#       ```{r fig.cap = "a caption"}
-#       print("Hello")
-#       ```
+      ```{r fig.cap = "a caption"}
+      print("Hello")
+      ```
    
-#       The end.
-#    ')
+      The end.
+   ')
    
-#    id <- remote$documentOpen(".Rmd", contents)
-#    editor <- remote$editorGetInstance()
+   id <- remote$documentOpen(".Rmd", contents)
+   editor <- remote$editorGetInstance()
    
-#    original <- editor$session$getLine(4)
-   
-#    remote$domClickElement(".rstudio_modify_chunk")
-#    remote$domClickElement("#rstudio_chunk_opt_warnings")
-#    remote$domClickElement("#rstudio_chunk_opt_messages")
-#    remote$keyboardExecute("<Escape>")
-#    expect_equal(original, editor$session$getLine(4))
-#    remote$documentClose()
-#    remote$keyboardExecute("<Ctrl + L>")
-# })
-
+   remote$domClickElement(".rstudio_modify_chunk")
+   remote$domClickElement("#rstudio_chunk_opt_warnings")
+   remote$domClickElement("#rstudio_chunk_opt_messages")
+   remote$keyboardExecute("<Escape>")
+   expect_equal('```{r fig.cap="a caption", message=TRUE, warning=TRUE}', editor$session$getLine(4))
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
