@@ -1257,6 +1257,12 @@ void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::str
             projectFilePath,
             &scratchPath,
             &sharedScratchPath);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
    for (auto&& doc : docs)
    {
