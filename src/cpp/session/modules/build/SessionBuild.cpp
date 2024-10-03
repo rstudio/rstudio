@@ -1725,9 +1725,11 @@ private:
          std::string output = outputAsText();
          
          // remove the testthat summary, since that will cause us to duplicate markers
+         // we don't compile Boost.Regex with unicode support, so we just use the raw
+         // hexadecimal escapes for the characters here
          // https://github.com/rstudio/rstudio/issues/14564
          boost::smatch match;
-         boost::regex reResults("(?:\\u2550+|\\u003d+)\\s+" kAnsiEscapeRegex "Results");
+         boost::regex reResults("(?:\\xe2\\x95\\x90|\\x3d)+\\s+" kAnsiEscapeRegex "Results");
          if (boost::regex_search(output, match, reResults))
          {
             output = output.substr(0, match.position());
