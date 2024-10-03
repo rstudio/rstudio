@@ -205,15 +205,15 @@ boost::shared_ptr<ReplayPlots> s_pPlotReplayer;
 typedef std::map<std::string, boost::shared_ptr<ReplayPlots> > ReplayPlotsMap;
 ReplayPlotsMap s_pPlotReplayerForChunkId;
 
-Error replayPlotOutput(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
+Error replayNotebookPlots(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
 {
    std::string replayId = core::system::generateUuid();
    std::string docId;
    std::string initialChunkId;
    int pixelWidth = 0;
    int pixelHeight = 0;
-   double dpi = -1;
+   int dpi = -1;
    Error error = json::readParams(request.params, &docId, 
          &initialChunkId, &pixelWidth, &pixelHeight, &dpi);
    if (error)
@@ -280,7 +280,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
+Error replayNotebookChunkPlots(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    std::string replayId = core::system::generateUuid();
@@ -288,8 +288,9 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
    std::string chunkId;
    int pixelWidth = 0;
    int pixelHeight = 0;
+   int dpi = -1;
    Error error = json::readParams(request.params, &docId, 
-         &chunkId, &pixelWidth, &pixelHeight);
+         &chunkId, &pixelWidth, &pixelHeight, &dpi);
    if (error)
       return error;
 
@@ -335,7 +336,7 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
          snapshotFiles.push_back(content);
    }
 
-   s_pPlotReplayerForChunkId[docId + chunkId] = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, false, snapshotFiles);
+   s_pPlotReplayerForChunkId[docId + chunkId] = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, dpi, false, snapshotFiles);
    pResponse->setResult(replayId);
 
    return Success();
@@ -375,8 +376,8 @@ core::Error initPlotReplay()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "replay_notebook_plots", replayPlotOutput))
-      (bind(registerRpcMethod, "replay_notebook_chunk_plots", replayChunkPlotOutput))
+      (bind(registerRpcMethod, "replay_notebook_plots", replayNotebookPlots))
+      (bind(registerRpcMethod, "replay_notebook_chunk_plots", replayNotebookChunkPlots))
       (bind(registerRpcMethod, "clean_replay_notebook_chunk_plots", cleanReplayChunkPlotOutput));
 
    return initBlock.execute();
