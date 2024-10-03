@@ -304,7 +304,7 @@ test_that("variable-width nested chunks can be folded", {
       ---
       title: Folding
       ---
- 
+      
       `````{verbatim}
       
       This is some text.
@@ -320,7 +320,7 @@ test_that("variable-width nested chunks can be folded", {
    ')
 
    remote$documentExecute(".qmd", contents, function(editor) {
-
+      
       # Check the fold widget strings.
       session <- editor$session
       expect_equal(session$getFoldWidget(4), "start")
@@ -353,18 +353,18 @@ test_that("raw html blocks are preserved by visual editor", {
       ---
       ```{=html}
       Hello <i>World</i>, how are you?
-      ``` 
+      ```
    ')
-
+   
    remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", TRUE)")
    remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
-
+   
    remote$documentExecute(".qmd", contents, function(editor) {
-
+      
       sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
       visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
       expect_equal(sourceModeToggle$ariaPressed, "true")
-
+      
       # verify starting state
       editor <- remote$editorGetInstance()
       expect_equal(editor$session$getLine(3), "```{=html}")
@@ -377,7 +377,7 @@ test_that("raw html blocks are preserved by visual editor", {
             visualEditor$contentEditable
          }, error = function(e) FALSE)
       })
-
+      
       # back to source mode
       remote$domClickElement(".rstudio_visual_md_off")
       .rs.waitUntil("Source editor appears", function() {
@@ -400,21 +400,21 @@ test_that("raw latex blocks are preserved by visual editor", {
       ---
       title: Raw LaTeX blocks
       ---
-
+      
       ```{=latex}
       \\LaTeX
-      ``` 
+      ```
    ')
-
+   
    remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", TRUE)")
    remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
-
+   
    remote$documentExecute(".qmd", contents, function(editor) {
-
+      
       sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
       visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
       expect_equal(sourceModeToggle$ariaPressed, "true")
-
+      
       # verify starting state
       editor <- remote$editorGetInstance()
       expect_equal(editor$session$getLine(4), "```{=latex}")
@@ -427,7 +427,7 @@ test_that("raw latex blocks are preserved by visual editor", {
             visualEditor$contentEditable
          }, error = function(e) FALSE)
       })
-
+      
       # back to source mode
       remote$domClickElement(".rstudio_visual_md_off")
       .rs.waitUntil("Source editor appears", function() {
@@ -442,4 +442,3 @@ test_that("raw latex blocks are preserved by visual editor", {
       expect_equal(editor$session$getLine(4), "```{=latex}")
    })
 })
- 
