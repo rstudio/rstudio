@@ -42,6 +42,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     pam-devel \
     pango-devel \
     postgresql-devel \
+    ps \
     python \
     python-xml \
     python3 \

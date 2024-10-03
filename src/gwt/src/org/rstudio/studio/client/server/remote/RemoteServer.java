@@ -1692,6 +1692,18 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
+   public void createFile(FileSystemItem file,
+                          String contents,
+                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(file.getPath())
+            .add(contents)
+            .get();
+            
+      sendRequest(RPC_SCOPE, CREATE_FILE, params, requestCallback);
+   }
+   
    public void createFolder(FileSystemItem folder,
                             ServerRequestCallback<Void> requestCallback)
    {
@@ -1753,7 +1765,7 @@ public class RemoteServer implements Server
 
       sendRequest(RPC_SCOPE, RENAME_FILE, paramArray, requestCallback);
    }
-   
+ 
    public void touchFile(FileSystemItem newFile, 
                           ServerRequestCallback<Void> requestCallback)
    {
@@ -6876,6 +6888,7 @@ public class RemoteServer implements Server
    private static final String IS_PACKAGE_DIRECTORY = "is_package_directory";
    private static final String LIST_FILES = "list_files";
    private static final String LIST_ALL_FILES = "list_all_files";
+   private static final String CREATE_FILE = "create_file";
    private static final String CREATE_FOLDER = "create_folder";
    private static final String DELETE_FILES = "delete_files";
    private static final String COPY_FILE = "copy_file";

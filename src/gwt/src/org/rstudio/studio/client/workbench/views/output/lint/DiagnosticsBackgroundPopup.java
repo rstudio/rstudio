@@ -32,6 +32,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -103,7 +104,11 @@ public class DiagnosticsBackgroundPopup
             {
                movedMouseMostRecently_ = true;
 
-               Element target = Element.as(event.getNativeEvent().getEventTarget());
+               EventTarget eventTarget = event.getNativeEvent().getEventTarget();
+               if (!Element.is(eventTarget))
+                  return;
+               
+               Element target = Element.as(eventTarget);
                if (target.hasClassName("ace_gutter-cell"))
                {
                   lastMouseCoords_ = null;

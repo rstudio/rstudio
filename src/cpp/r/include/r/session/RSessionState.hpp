@@ -49,6 +49,7 @@ void initialize(SessionStateCallbacks callbacks);
 
 bool save(const core::FilePath& statePath,
           const std::string& afterRestartCommand,
+          const std::string& builtPackagePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,

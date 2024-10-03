@@ -195,6 +195,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlEditorToolsProviderQuarto;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalInfoDialog;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalList;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalPopupMenu;
@@ -354,6 +355,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(QuartoConnection quartoMessageBus);
    void injectMembers(YamlEditorToolsProviderQuarto yamlCompletionSourceQuarto);
    void injectMembers(TextEditingTargetCopilotHelper copilotHelper);
+   void injectMembers(DocUpdateSentinel sentinel);
 
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

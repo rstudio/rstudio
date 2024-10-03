@@ -258,14 +258,13 @@
    parentPwd <- parentEnv[["PWD"]]
    automationScript <- file.path(parentPwd, "rserver-automation")
    if (!file.exists(automationScript))
-      stop("rserver does not appear to be running on port 8788")
+      stop(automationScript, " does not exist.")
    
    message("-- Starting rserver-automation ...")
    withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
    
    # Kill the process on exit
    reg.finalizer(globalenv(), .rs.automation.killAutomationServer, onexit = TRUE)
-   
    
 })
 
@@ -279,10 +278,6 @@
    # Resolve arguments.
    mode <- match.arg(mode)
    port <- .rs.nullCoalesce(port, if (mode == "server") 9999L else 9998L)
-   
-   # Ensure that we have a running rserver instance.
-   if (mode == "server")
-      .rs.automation.ensureRunningServerInstance()
    
    # Check for an existing session we can attach to.
    baseUrl <- sprintf("http://localhost:%i", port)
@@ -313,16 +308,17 @@
       file.path(R.home("bin"), "R")
    
    # Ensure that the new RStudio instance uses temporary storage.
-   stateDir <- tempfile("rstudio-automation-state-")
-   dir.create(stateDir, recursive = TRUE)
+   rootDir <- tempfile("rstudio-automation-state-")
+   dir.create(rootDir, recursive = TRUE)
    
-   configHome <- file.path(stateDir, "config-home")
-   configDir  <- file.path(stateDir, "config-dir")
-   dataHome   <- file.path(stateDir, "data-home")
+   configHome <- file.path(rootDir, "config-home")
+   configDir  <- file.path(rootDir, "config-dir")
+   dataHome   <- file.path(rootDir, "data-home")
    
-   envVars[["RSTUDIO_CONFIG_HOME"]] <- configHome
-   envVars[["RSTUDIO_CONFIG_DIR"]]  <- configDir
-   envVars[["RSTUDIO_DATA_HOME"]]   <- dataHome
+   envVars[["RSTUDIO_CONFIG_ROOT"]]     <- rootDir
+   envVars[["RSTUDIO_CONFIG_HOME"]]     <- configHome
+   envVars[["RSTUDIO_CONFIG_DIR"]]      <- configDir
+   envVars[["RSTUDIO_DATA_HOME"]]       <- dataHome
    
    # Create a default JSON configuration file.
    config <- list(
@@ -369,7 +365,15 @@
       )
    )
    
-   # Start up RStudio.
+   # Make sure we have a running rserver-automation instance.
+   if (mode == "server")
+   {
+      withr::with_envvar(envVars, {
+         .rs.automation.ensureRunningServerInstance()
+      })
+   }
+   
+   # Start up RStudio (or Chrome in "server" mode).
    process <- withr::with_envvar(envVars, {
       processx::process$new(appPath, args)
    })

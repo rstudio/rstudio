@@ -14,7 +14,7 @@ test_that("Quarto Documents are highlighted as expected", {
 
       ```{r}
       #| echo: true
-      ````
+      ```
 
       1 + 1
    ')
@@ -147,6 +147,44 @@ test_that("tikz chunks are properly highlighted", {
       token <- as.vector(editor$session$getTokenAt(10, 0))
       expect_match(token$type, "string")
       expect_equal(token$value, "\"hello\"")
+      
+   })
+   
+})
+
+# https://github.com/rstudio/rstudio/issues/12161
+test_that("nested GitHub chunks are highlighted appropriately", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: "Untitled"
+      format: html
+      ---
+      
+      ## Heading 1
+      
+      ````` markdown
+      ``` nested
+      This is a nested chunk.
+      ```
+      `````
+      
+      ## Heading 2
+   ')
+   
+   remote$documentExecute(".qmd", contents, function(editor) {
+      
+      # first header
+      token <- as.vector(editor$session$getTokenAt(5, 0))
+      expect_equal(token$type, "markup.heading.2")
+      
+      # line within the nested chunk
+      token <- as.vector(editor$session$getTokenAt(9, 0))
+      expect_equal(token$type, "support.function")
+      
+      # second header
+      token <- as.vector(editor$session$getTokenAt(13, 0))
+      expect_equal(token$type, "markup.heading.2")
       
    })
    

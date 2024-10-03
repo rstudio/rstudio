@@ -247,3 +247,198 @@ test_that("visual editor welcome dialog displays again if don't show again is un
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
+
+# https://github.com/rstudio/rstudio/issues/14552
+test_that("empty header labels are permitted in document outline", {
+   
+   contents <- .rs.heredoc('
+      ---
+      format: revealjs
+      ---
+      
+      # Section with title
+      
+      ## Slide with title
+      
+      Some content.
+      
+      ##
+      
+      Slide without title
+      
+      # Another section with title
+      
+      ## Another slide with title
+   ')
+   
+   remote$documentExecute(".qmd", contents, function(editor) {
+      
+      token <- as.vector(editor$session$getTokenAt(10))
+      expect_equal(token$type, "markup.heading.2")
+      
+      remote$commandExecute("toggleDocumentOutline")
+      docOutline <- remote$jsObjectViaSelector(".rstudio_doc_outline_container")
+      contents <- docOutline$innerText
+      
+      # Remove non-breaking spaces
+      contents <- gsub("\u00a0", "", contents)
+      
+      # Split on newlines
+      contents <- strsplit(contents, "\\n+", perl = TRUE)[[1]]
+      expect_equal(contents, c(
+         "Section with title",
+         "Slide with title",
+         "(Untitled)",
+         "Another section with title",
+         "Another slide with title"
+      ))
+
+   })
+
+})
+
+# https://github.com/rstudio/rstudio/issues/15191
+test_that("variable-width nested chunks can be folded", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Folding
+      ---
+      
+      `````{verbatim}
+      
+      This is some text.
+      
+      ```{r nested}
+      print(1 + 1)
+      ```
+      
+      `````
+      
+      # Header
+
+   ')
+
+   remote$documentExecute(".qmd", contents, function(editor) {
+      
+      # Check the fold widget strings.
+      session <- editor$session
+      expect_equal(session$getFoldWidget(4), "start")
+      expect_equal(session$getFoldWidget(8), "")
+      expect_equal(session$getFoldWidget(10), "")
+      expect_equal(session$getFoldWidget(12), "end")
+      
+      # Check the computed ranges for the folds.
+      expected <- list(
+         start = list(row = 4, column = 15),
+         end = list(row = 12, column = 0)
+      )
+      
+      range <- as.vector(session$getFoldWidgetRange(4))
+      expect_equal(range, expected)
+      
+      range <- as.vector(session$getFoldWidgetRange(12))
+      expect_equal(range, expected)
+      
+   })
+   
+})
+
+# https://github.com/rstudio/rstudio/issues/15189
+test_that("raw html blocks are preserved by visual editor", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Raw html blocks
+      ---
+      ```{=html}
+      Hello <i>World</i>, how are you?
+      ```
+   ')
+   
+   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", TRUE)")
+   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   
+   remote$documentExecute(".qmd", contents, function(editor) {
+      
+      sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
+      visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+      expect_equal(sourceModeToggle$ariaPressed, "true")
+      
+      # verify starting state
+      editor <- remote$editorGetInstance()
+      expect_equal(editor$session$getLine(3), "```{=html}")
+      
+      # switch to visual mode
+      remote$domClickElement(".rstudio_visual_md_on")
+      .rs.waitUntil("Visual Editor appears", function() {
+         tryCatch({
+            visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+            visualEditor$contentEditable
+         }, error = function(e) FALSE)
+      })
+      
+      # back to source mode
+      remote$domClickElement(".rstudio_visual_md_off")
+      .rs.waitUntil("Source editor appears", function() {
+         tryCatch({
+            sourceEditor <- remote$jsObjectViaSelector("#rstudio_source_text_editor")
+            sourceEditor$checkVisibility()
+         }, error = function(e) FALSE)
+      })
+      
+      # verify ending state
+      editor <- remote$editorGetInstance()
+      expect_equal(editor$session$getLine(4), "```{=html}")
+   })
+})
+
+# https://github.com/rstudio/rstudio/issues/15253
+test_that("raw latex blocks are preserved by visual editor", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Raw LaTeX blocks
+      ---
+      
+      ```{=latex}
+      \\LaTeX
+      ```
+   ')
+   
+   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", TRUE)")
+   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   
+   remote$documentExecute(".qmd", contents, function(editor) {
+      
+      sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
+      visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+      expect_equal(sourceModeToggle$ariaPressed, "true")
+      
+      # verify starting state
+      editor <- remote$editorGetInstance()
+      expect_equal(editor$session$getLine(4), "```{=latex}")
+      
+      # switch to visual mode
+      remote$domClickElement(".rstudio_visual_md_on")
+      .rs.waitUntil("Visual Editor appears", function() {
+         tryCatch({
+            visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+            visualEditor$contentEditable
+         }, error = function(e) FALSE)
+      })
+      
+      # back to source mode
+      remote$domClickElement(".rstudio_visual_md_off")
+      .rs.waitUntil("Source editor appears", function() {
+         tryCatch({
+            sourceEditor <- remote$jsObjectViaSelector("#rstudio_source_text_editor")
+            sourceEditor$checkVisibility()
+         }, error = function(e) FALSE)
+      })
+      
+      # verify ending state
+      editor <- remote$editorGetInstance()
+      expect_equal(editor$session$getLine(4), "```{=latex}")
+   })
+})

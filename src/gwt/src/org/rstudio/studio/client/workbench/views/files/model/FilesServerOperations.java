@@ -51,6 +51,11 @@ public interface FilesServerOperations
                      String pattern,
                      ServerRequestCallback<JsArrayString> requestCallback);
 
+   // create file with contents
+   void createFile(FileSystemItem file,
+                   String contents,
+                   ServerRequestCallback<Void> requestCallback);
+   
    // create a folder
    void createFolder(FileSystemItem folder,
                      ServerRequestCallback<Void> requestCallback);
@@ -75,6 +80,7 @@ public interface FilesServerOperations
                    FileSystemItem targetFile,
                    ServerRequestCallback<Void> serverRequestCallback);
    
+   // touch file (create empty file)
    void touchFile(FileSystemItem newFile,
                   ServerRequestCallback<Void> requestCallback);
 

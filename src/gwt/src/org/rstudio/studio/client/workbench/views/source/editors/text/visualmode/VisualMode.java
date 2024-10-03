@@ -37,6 +37,7 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
@@ -120,6 +121,7 @@ public class VisualMode implements VisualModeEditorSync,
                      DirtyState dirtyState,
                      DocUpdateSentinel docUpdateSentinel,
                      EventBus eventBus,
+                     FileTypeRegistry fileTypes,
                      final ArrayList<HandlerRegistration> releaseOnDismiss)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -130,11 +132,12 @@ public class VisualMode implements VisualModeEditorSync,
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
       events_ = eventBus;
+      fileTypes_ = fileTypes;
       progress_ = new ProgressPanel(ProgressImages.createSmall(), 200);
       
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
-      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, events_, releaseOnDismiss, this);
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, events_, fileTypes_, releaseOnDismiss, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, docDisplay_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -904,6 +907,14 @@ public class VisualMode implements VisualModeEditorSync,
    public void unfoldAll()
    {
       panmirror_.execCommand(PanmirrorCommands.ExpandAllChunks);
+   }
+   
+   public void toggleEditorTokenInfo()
+   {
+      visualModeChunks_.forEachChunk((VisualModeChunk chunk) ->
+      {
+         chunk.getAceInstance().toggleTokenInfo();
+      });
    }
 
    public HasFindReplace getFindReplace()
@@ -1933,6 +1944,7 @@ public class VisualMode implements VisualModeEditorSync,
    private final DirtyState dirtyState_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final EventBus events_;
+   private final FileTypeRegistry fileTypes_;
    
    private final VisualModePanmirrorFormat visualModeFormat_;
    private final VisualModeChunks visualModeChunks_;

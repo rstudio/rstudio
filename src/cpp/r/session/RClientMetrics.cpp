@@ -57,6 +57,7 @@ void set(const RClientMetrics& metrics)
    // then an error will be thrown)
    if (metrics.consoleWidth >= 10 && metrics.consoleWidth <= 10000)
       r::options::setOptionWidth(metrics.consoleWidth);
+   
    if (metrics.buildConsoleWidth >= 10 && metrics.buildConsoleWidth <= 10000)
       r::options::setBuildOptionWidth(metrics.buildConsoleWidth);
 

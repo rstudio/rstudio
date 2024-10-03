@@ -29,7 +29,9 @@ import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkCallbacks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
@@ -119,6 +121,7 @@ public class VisualModeChunk
                           DocUpdateSentinel sentinel,
                           TextEditingTarget target,
                           EventBus events,
+                          FileTypeRegistry fileTypes,
                           VisualModeEditorSync sync)
    {
       element_ = element;
@@ -128,6 +131,7 @@ public class VisualModeChunk
       parent_ = target.getDocDisplay();
       target_ = target;
       events_ = events;
+      fileTypes_ = fileTypes;
       active_ = false;
       markdownIndex_ = index;
       releaseOnDismiss_ = new ArrayList<>();
@@ -735,6 +739,13 @@ public class VisualModeChunk
    
    private void setMode(AceEditor editor, String mode)
    {
+      FileType fileType = fileTypes_.getTypeByTypeName(mode);
+      if (fileType != null && fileType instanceof TextFileType)
+      {
+         editor.setFileType((TextFileType) fileType);
+         return;
+      }
+      
       switch(mode.toLowerCase())
       {
       case "r":
@@ -1131,7 +1142,7 @@ public class VisualModeChunk
                engine = "YAML";
                label = "Metadata";
             }
-            else
+            else if (line.startsWith("{") && line.endsWith("}"))
             {
                // This is the first line in the chunk (its header). Parse it, reintroducing
                // the backticks since they aren't present in the embedded editor.
@@ -1152,6 +1163,11 @@ public class VisualModeChunk
                {
                   label = StringUtil.stringValue(labelEngine);
                }
+            }
+            else
+            {
+               // if this is a chunk without a header, it's a 'raw' chunk
+               engine = "raw chunk";
             }
          }
          else
@@ -1245,6 +1261,7 @@ public class VisualModeChunk
    private final Map<Integer,VisualModeChunkRowState> rowState_;
    private final TextEditingTarget target_;
    private final EventBus events_;
+   private final FileTypeRegistry fileTypes_;
    private final int markdownIndex_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

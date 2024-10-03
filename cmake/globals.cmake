@@ -19,8 +19,8 @@ endif()
 set(RSTUDIO_CMAKE_GLOBALS_INCLUDED YES)
 
 # helper for detecting Linux
-if(UNIX AND NOT APPLE)
-   set(LINUX TRUE)
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+   set(LINUX TRUE CACHE INTERNAL "")
 endif()
 
 # read /etc/os-release

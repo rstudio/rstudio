@@ -228,7 +228,7 @@
    nodeIds
 })
 
-.rs.automation.addRemoteFunction("domClickElement", function(selector,
+.rs.automation.addRemoteFunction("domClickElement", function(selector = NULL,
                                                              objectId = NULL,
                                                              verticalOffset = 0L,
                                                              horizontalOffset = 0L,
@@ -403,6 +403,16 @@
    }
 })
 
+.rs.automation.addRemoteFunction("modalClick", function(buttonName)
+{
+   .rs.tryCatch({
+      buttonSelector <- sprintf("#rstudio_dlg_%s", buttonName)
+      buttonId <- self$domGetNodeId(buttonSelector)
+      self$domClickElement(objectId = buttonId)
+      TRUE
+   })
+})
+
 .rs.automation.addRemoteFunction("quit", function()
 {
    # Close the websocket connection.
@@ -506,4 +516,15 @@
    
    # Return the resolved node id.
    nodeId
+})
+
+.rs.automation.addRemoteFunction("skipIfNotInstalled", function(package)
+{
+   self$consoleExecuteExpr(find.package(!!package, quiet = TRUE))
+   output <- self$consoleOutput()
+   isInstalled <- tail(output, n = 1L) != "character(0)"
+   testthat::skip_if_not(
+      condition = isInstalled,
+      message   = sprintf("package '%s' is not installed", package)
+   )
 })

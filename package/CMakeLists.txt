@@ -15,7 +15,7 @@ elseif(APPLE)
 
    add_subdirectory(osx)
 
-elseif(UNIX)
+elseif(LINUX)
 
    add_subdirectory(linux)
 

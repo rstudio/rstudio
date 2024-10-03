@@ -318,6 +318,7 @@ namespace prefs {
 #define kSshKeyTypeRsa "rsa"
 #define kUseDevtools "use_devtools"
 #define kCleanBeforeInstall "clean_before_install"
+#define kUseBuildSubdirectory "use_build_subdirectory"
 #define kUseSecureDownload "use_secure_download"
 #define kCleanupAfterRCmdCheck "cleanup_after_r_cmd_check"
 #define kViewDirAfterRCmdCheck "view_dir_after_r_cmd_check"
@@ -1548,6 +1549,12 @@ public:
     */
    bool cleanBeforeInstall();
    core::Error setCleanBeforeInstall(bool val);
+
+   /**
+    * When set, RStudio will build your package in a '_build' sub-directory of your current library paths.
+    */
+   bool useBuildSubdirectory();
+   core::Error setUseBuildSubdirectory(bool val);
 
    /**
     * Whether to use secure downloads when fetching R packages.

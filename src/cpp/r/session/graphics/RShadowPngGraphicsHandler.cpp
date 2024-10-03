@@ -15,7 +15,6 @@
 
 #define R_INTERNAL_FUNCTIONS  // Rf_warningcall
 
-#include <iostream>
 #include <gsl/gsl>
 
 #include <boost/format.hpp>
@@ -32,6 +31,7 @@
 #undef TRUE
 #undef FALSE
 
+#include "RGraphicsDevDesc.hpp"
 #include "RGraphicsHandler.hpp"
 #include "RGraphicsUtils.hpp"
 
@@ -227,23 +227,83 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
    return Success();
 }
 
+void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
+{
+   int engineVersion = ::R_GE_getVersion();
+   switch (engineVersion)
+   {
+
+   case 12:
+   case 13:
+   {
+      DevDescVersion12* pDev12       = (DevDescVersion12*) pDev;
+      DevDescVersion12* pShadowDev12 = (DevDescVersion12*) pShadowDev;
+
+      pDev12->canClip                 = pShadowDev12->canClip;
+      pDev12->canChangeGamma          = pShadowDev12->canChangeGamma;
+      pDev12->canGenMouseDown         = pShadowDev12->canGenMouseDown;
+      pDev12->canGenMouseMove         = pShadowDev12->canGenMouseMove;
+      pDev12->canGenMouseUp           = pShadowDev12->canGenMouseUp;
+      pDev12->canGenKeybd             = pShadowDev12->canGenKeybd;
+      pDev12->hasTextUTF8             = pShadowDev12->hasTextUTF8;
+      pDev12->wantSymbolUTF8          = pShadowDev12->wantSymbolUTF8;
+      pDev12->useRotatedTextInContour = pShadowDev12->useRotatedTextInContour;
+
+      pDev12->haveTransparency        = pShadowDev12->haveTransparency;
+      pDev12->haveTransparentBg       = pShadowDev12->haveTransparentBg;
+      pDev12->haveRaster              = pShadowDev12->haveRaster;
+      pDev12->haveCapture             = pShadowDev12->haveCapture;
+      break;
+   }
+
+   case 14:
+   default:
+   {
+      DevDescVersion14* pDev14       = (DevDescVersion14*) pDev;
+      DevDescVersion14* pShadowDev14 = (DevDescVersion14*) pShadowDev;
+
+      pDev14->canClip                 = pShadowDev14->canClip;
+      pDev14->canChangeGamma          = pShadowDev14->canChangeGamma;
+      pDev14->canGenMouseDown         = pShadowDev14->canGenMouseDown;
+      pDev14->canGenMouseMove         = pShadowDev14->canGenMouseMove;
+      pDev14->canGenMouseUp           = pShadowDev14->canGenMouseUp;
+      pDev14->canGenKeybd             = pShadowDev14->canGenKeybd;
+      pDev14->hasTextUTF8             = pShadowDev14->hasTextUTF8;
+      pDev14->wantSymbolUTF8          = pShadowDev14->wantSymbolUTF8;
+      pDev14->useRotatedTextInContour = pShadowDev14->useRotatedTextInContour;
+
+      pDev14->haveTransparency        = pShadowDev14->haveTransparency;
+      pDev14->haveTransparentBg       = pShadowDev14->haveTransparentBg;
+      pDev14->haveRaster              = pShadowDev14->haveRaster;
+      pDev14->haveCapture             = pShadowDev14->haveCapture;
+
+      pDev14->deviceVersion           = pShadowDev14->deviceVersion;
+      pDev14->deviceClip              = pShadowDev14->deviceClip;
+      break;
+   }
+
+   }
+
+}
+
 // this version of the function is called from R graphics primitives
 // so can (and should) throw errors in R longjmp style
-pDevDesc shadowDevDesc(pDevDesc dev)
+pDevDesc shadowDevDesc(pDevDesc pDev)
 {
    try
    {
-      DeviceContext* pDC = (DeviceContext*)dev->deviceSpecific;
+      DeviceContext* pDC = (DeviceContext*)pDev->deviceSpecific;
 
-      pDevDesc shadowDev = nullptr;
-      Error error = shadowDevDesc(pDC, &shadowDev);
+      pDevDesc pShadowDev = nullptr;
+      Error error = shadowDevDesc(pDC, &pShadowDev);
       if (error)
       {
          LOG_ERROR(error);
          throw r::exec::RErrorException(error.getSummary());
       }
 
-      return shadowDev;
+      syncDevDesc(pDev, pShadowDev);
+      return pShadowDev;
    }
    catch(const r::exec::RErrorException& e)
    {
@@ -678,6 +738,76 @@ void releaseMask(SEXP ref, pDevDesc dd)
    dev_desc::releaseMask(ref, pngDevDesc);
 }
 
+SEXP defineGroup(SEXP source, int op, SEXP destination, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return R_NilValue;
+   
+   return dev_desc::defineGroup(source, op, destination, pngDevDesc);
+}
+
+void useGroup(SEXP ref, SEXP trans, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::useGroup(ref, trans, pngDevDesc);
+}
+
+void releaseGroup(SEXP ref, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::releaseGroup(ref, pngDevDesc);
+}
+
+void stroke(SEXP path, const pGEcontext gc, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::stroke(path, gc, pngDevDesc);
+}
+
+void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::fill(path, rule, gc, pngDevDesc);
+}
+
+void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::fillStroke(path, rule, gc, pngDevDesc);
+}
+
+SEXP capabilities(SEXP cap)
+{
+   return dev_desc::capabilities(cap);
+}
+
+void glyph(int n, int *glyphs, double *x, double *y, 
+           SEXP font, double size,
+           int colour, double rot, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::glyph(n, glyphs, x, y, font, size, colour, rot, pngDevDesc);
+}
+
 } // namespace shadow
 
 void installShadowHandler()
@@ -711,6 +841,14 @@ void installShadowHandler()
    handler::releaseClipPath = shadow::releaseClipPath;
    handler::setMask = shadow::setMask;
    handler::releaseMask = shadow::releaseMask;
+   handler::defineGroup = shadow::defineGroup;
+   handler::useGroup = shadow::useGroup;
+   handler::releaseGroup = shadow::releaseGroup;
+   handler::stroke = shadow::stroke;
+   handler::fill = shadow::fill;
+   handler::fillStroke = shadow::fillStroke;
+   handler::capabilities = shadow::capabilities;
+   handler::glyph = shadow::glyph;
 }
    
 } // namespace handler

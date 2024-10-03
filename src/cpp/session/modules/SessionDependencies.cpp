@@ -490,8 +490,7 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
          else
          {
             // Build install command for CRAN. 
-            script += "utils::install.packages('" + dep.name + "', " +
-                  "repos = '"+ module_context::CRANReposURL() + "'";
+            script += "utils::install.packages('" + dep.name + "'";
 
             if (dep.source) 
             {

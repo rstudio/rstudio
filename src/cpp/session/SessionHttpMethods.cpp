@@ -456,10 +456,7 @@ bool waitForMethod(const std::string& method,
                    core::json::JsonRpcRequest* pRequest)
 {
    if (main_process::wasForked())
-   {
-      LOG_ERROR_MESSAGE("Waiting for method " + method + " after fork");
       return false;
-   }
    
    if (!ASSERT_MAIN_THREAD(method))
    {

@@ -1238,6 +1238,12 @@
             "title": "Always use --preclean when installing package",
             "description": "Always use --preclean when installing package."
         },
+        "use_build_subdirectory": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use alternate library path when building package",
+            "description": "When set, RStudio will build your package in a '_build' sub-directory of your current library paths."
+        },
         "use_secure_download": {
             "type": "boolean",
             "default": true,

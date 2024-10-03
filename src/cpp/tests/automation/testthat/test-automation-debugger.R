@@ -4,6 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
+
 # https://github.com/rstudio/rstudio/issues/15072
 test_that("the debug position is correct in braced expressions", {
 
@@ -55,5 +56,102 @@ test_that("the debug position is correct in braced expressions", {
    remote$keyboardExecute("<Ctrl + 2>", "c", "<Enter>")
    remote$consoleExecuteExpr(rm(list = "f"))
    remote$keyboardExecute("<Ctrl + L>")
+   
+})
+
+# https://github.com/rstudio/rstudio/issues/15201
+test_that("package functions can be debugged after build and reload", {
+   
+   # Create an R package project.
+   projectPath <- tempfile("rstudio.automation.", tmpdir = dirname(tempdir()))
+   
+   remote$consoleExecuteExpr({
+      .rs.rpc.package_skeleton(
+         packageName = "rstudio.automation",
+         packageDirectory = !!projectPath,
+         sourceFiles = character(),
+         usingRcpp = FALSE
+      )
+   })
+   
+   # Open that project.
+   remote$consoleExecuteExpr(
+      .rs.api.openProject(!!projectPath)
+   )
+   
+   # Wait a minute for the new session to load.
+   Sys.sleep(1)
+
+   # Wait until the new project is ready.
+   .rs.waitFor("the new project is opened", function()
+   {
+      el <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+      grepl("rstudio.automation", el$innerText, fixed = TRUE)
+   })
+   
+   # Add a source document.
+   remote$consoleExecuteExpr(file.edit("R/example.R"))
+   remote$commandExecute("activateSource")
+   
+   code <- .rs.heredoc('
+      example <- function() {
+         1 + 1
+         2 + 2
+         3 + 3
+         4 + 4
+         5 + 5
+      }
+   ')
+   
+   editor <- remote$editorGetInstance()
+   editor$insert(code)
+   
+   # Save it, and build the package.
+   remote$commandExecute("saveSourceDoc")
+   remote$commandExecute("buildAll")
+   
+   .rs.waitFor("build has completed", function()
+   {
+      output <- remote$consoleOutput()
+      any(output == "> library(rstudio.automation)")
+   })
+   
+   remote$consoleClear()
+   
+   # Try adding some breakpoints.
+   gutterEls <- remote$jsObjectsViaSelector(".ace_gutter-cell")
+   remote$domClickElement(objectId = gutterEls[[3]], horizontalOffset = -4L)
+   breakpointEls <- remote$jsObjectsViaSelector(".ace_breakpoint")
+   expect_equal(length(breakpointEls), 1L)
+   expect_equal(breakpointEls[[1]]$innerText, "3")
+   
+   remote$domClickElement(objectId = gutterEls[[4]], horizontalOffset = -4L)
+   breakpointEls <- remote$jsObjectsViaSelector(".ace_breakpoint")
+   expect_equal(length(breakpointEls), 2L)
+   expect_equal(breakpointEls[[2]]$innerText, "4")
+   
+   # Confirm that the object definition is in sync.
+   remote$consoleExecuteExpr({
+      .rs.isFunctionInSync("example", "R/example.R", "rstudio.automation")
+   })
+   
+   output <- remote$consoleOutput()
+   expect_contains(output, "[1] TRUE")
+   remote$consoleClear()
+   
+   # Try running the function, and checking the view.
+   remote$consoleExecuteExpr(example())
+   
+   activeLineEl <- remote$jsObjectViaSelector(".ace_executing-line")
+   expect_equal(activeLineEl$innerText, "3")
+   remote$commandExecute("activateConsole")
+   remote$keyboardExecute("c", "<Enter>")
+   
+   activeLineEl <- remote$jsObjectViaSelector(".ace_executing-line")
+   expect_equal(activeLineEl$innerText, "4")
+   remote$keyboardExecute("c", "<Enter>")
+   
+   # All done testing; close the project.
+   remote$commandExecute("closeProject")
    
 })

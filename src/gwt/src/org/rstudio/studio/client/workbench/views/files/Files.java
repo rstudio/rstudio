@@ -14,18 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.files;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ParallelCommandList;
 import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
@@ -34,7 +30,11 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
@@ -44,9 +44,13 @@ import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
+import org.rstudio.studio.client.common.filetypes.events.RenameFileInitiatedEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.ServerDataSource;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -62,7 +66,9 @@ import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
-import org.rstudio.studio.client.workbench.views.files.events.*;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
@@ -70,10 +76,16 @@ import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class Files
       extends BasePresenter
@@ -153,6 +165,7 @@ public class Files
    public Files(Display view,
                 EventBus eventBus,
                 FilesServerOperations server,
+                SourceServerOperations sourceServer,
                 RemoteFileSystemContext fileSystemContext,
                 GlobalDisplay globalDisplay,
                 Session session,
@@ -176,6 +189,7 @@ public class Files
 
       eventBus_ = eventBus;
       server_ = server;
+      sourceServer_ = sourceServer;
       fileSystemContext_ = fileSystemContext;
       globalDisplay_ = globalDisplay;
       session_ = session;
@@ -397,57 +411,68 @@ public class Files
    }
    
    @Handler
-   void onTouchSourceDoc() {
+   void onTouchSourceDoc()
+   {
       touchFile(FileTypeRegistry.R);
    }
 
    @Handler
-   void onTouchRMarkdownDoc() {
+   void onTouchRMarkdownDoc()
+   {
       touchFile(FileTypeRegistry.RMARKDOWN);
    }
 
    @Handler
-   void onTouchQuartoDoc() {
+   void onTouchQuartoDoc()
+   {
       touchFile(FileTypeRegistry.QUARTO);
    }
 
    @Handler
-   void onTouchTextDoc() {
+   void onTouchTextDoc()
+   {
       touchFile(FileTypeRegistry.TEXT);
    }
 
    @Handler
-   void onTouchCppDoc() {
+   void onTouchCppDoc()
+   {
       touchFile(FileTypeRegistry.CPP);
    }
 
    @Handler
-   void onTouchPythonDoc() {
+   void onTouchPythonDoc()
+   {
       touchFile(FileTypeRegistry.PYTHON);
    }
 
    @Handler
-   void onTouchSqlDoc() {
+   void onTouchSqlDoc()
+   {
       touchFile(FileTypeRegistry.SQL);
    }
 
    @Handler
-   void onTouchStanDoc() {
+   void onTouchStanDoc()
+   {
       touchFile(FileTypeRegistry.STAN);
    }
 
    @Handler
-   void onTouchD3Doc() {
+   void onTouchD3Doc()
+   {
       touchFile(FileTypeRegistry.JS);
    }
 
    @Handler
-   void onTouchSweaveDoc() {
+   void onTouchSweaveDoc()
+   {
       touchFile(FileTypeRegistry.SWEAVE);
    }
 
    @Handler
-   void onTouchRHTMLDoc() {
+   void onTouchRHTMLDoc()
+   {
       touchFile(FileTypeRegistry.RHTML);
    }
 
@@ -1064,7 +1089,7 @@ public class Files
       String defaultExt = fileType.getDefaultExtension();
 
       // extension has a '.' at the start, so remove that in the default name
-      String newFileDefaultName = "Untitled" + StringUtil.substring(defaultExt.toUpperCase(), 1) + defaultExt;
+      String newFileDefaultName = "Untitled" + defaultExt;
       String path = currentPath_.completePath(newFileDefaultName);
       FileSystemItem newTempFile = FileSystemItem.createFile(path);
       return newTempFile;
@@ -1072,18 +1097,17 @@ public class Files
    
    private void touchFile(final TextFileType fileType)
    {
-      // prepare default information about the new file
-      FileSystemItem newTempFile = getDefaultFileName(fileType);
-      String formattedExt = StringUtil.substring(fileType.getDefaultExtension().toUpperCase(), 1);
-      
       // guard for reentrancy
       if (inputPending_)
          return;
       
       inputPending_ = true;
 
+      // prepare default information about the new file
+      FileSystemItem newTempFile = getDefaultFileName(fileType);
+      
       // prompt for new file name then execute the operation
-      globalDisplay_.promptForText(constants_.createNewFileTitle(formattedExt),
+      globalDisplay_.promptForText(constants_.createNewFileInCurrentDirectoryTitle(),
                                    constants_.enterFileNameLabel(),
                                    newTempFile.getName(),
                                    0,
@@ -1100,27 +1124,47 @@ public class Files
 
             String path = currentPath_.completePath(input);
             final FileSystemItem newFile = FileSystemItem.createFile(path);
-
-            // execute on the server
-            server_.touchFile(newFile, new VoidServerRequestCallback(progress)
+            
+            String contents = "";
+            final FilePosition pos = FilePosition.create(0, 0);
+            
+            if (fileType == FileTypeRegistry.QUARTO || fileType == FileTypeRegistry.RMARKDOWN)
             {
-               @Override
-               protected void onSuccess()
+               List<String> preamble = new ArrayList<String>();
+               preamble.add("---");
+               preamble.add("title: \"" + newFile.getStem() + "\"");
+               preamble.add("output: html_document");
+               preamble.add("---");
+               preamble.add("");
+               preamble.add("");
+               
+               contents = StringUtil.join(preamble, "\n");
+               pos.setLine(6);
+            }
+            
+               // execute on the server
+               server_.createFile(newFile, contents, new VoidServerRequestCallback(progress)
                {
-                  // if we were successful, refresh list and open in source editor
-                  onRefreshFiles();
-                  fileTypeRegistry_.openFile(newFile);
-               }
+                  @Override
+                  protected void onSuccess()
+                  {
+                     // if we were successful, refresh list and open in source editor
+                     onRefreshFiles();
+                     fileTypeRegistry_.editFile(newFile, pos);
+                  }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  String errCaption = constants_.blankFileFailedCaption();
-                  String errMsg = constants_.blankFileFailedMessage(fileType.getDefaultExtension(), input, error.getUserMessage());
-                  globalDisplay_.showErrorMessage(errCaption, errMsg);
-                  progress.onCompleted();
-               }
-            });
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     String errCaption = constants_.blankFileFailedCaption();
+                     String errMsg = constants_.blankFileFailedMessage(fileType.getDefaultExtension(), input, error.getUserMessage());
+                     globalDisplay_.showErrorMessage(errCaption, errMsg);
+                     progress.onCompleted();
+                  }
+               });
+            
+            
+            
          }
       },
       () ->
@@ -1137,6 +1181,9 @@ public class Files
          return;
       
       inputPending_ = true;
+            
+      // notify listeners that this file is about to be renamed
+      eventBus_.fireEvent(new RenameFileInitiatedEvent(file.getPath()));
 
       // prompt for new file name then execute the rename
       globalDisplay_.promptForText(constants_.renameFileTitle(),
@@ -1145,7 +1192,8 @@ public class Files
                                    0,
                                    file.getStem().length(),
                                    null,
-                                   new ProgressOperationWithInput<String>() {
+                                   new ProgressOperationWithInput<String>()
+      {
         public void execute(String input,
                             final ProgressIndicator progress)
         {
@@ -1168,27 +1216,26 @@ public class Files
             view_.renameFile(file, target);
 
             // execute on the server
-            server_.renameFile(file,
-                               target,
-                               new VoidServerRequestCallback(progress) {
-                                 @Override
-                                 protected void onSuccess()
-                                 {
-                                    // if we were successful, let editor know
-                                    if (!file.isDirectory())
-                                    {
-                                       eventBus_.fireEvent(
-                                             new SourcePathChangedEvent(
-                                                   file.getPath(),
-                                                   target.getPath()));
-                                    }
-                                 }
-                                 @Override
-                                 protected void onFailure()
-                                 {
-                                    onRefreshFiles();
-                                 }
-                              });
+            server_.renameFile(file, target, new VoidServerRequestCallback(progress)
+            {
+               @Override
+               protected void onSuccess()
+               {
+                  // if we were successful, let editor know
+                  if (!file.isDirectory())
+                  {
+                     eventBus_.fireEvent(
+                           new SourcePathChangedEvent(
+                                 file.getPath(),
+                                 target.getPath()));
+                  }
+               }
+               @Override
+               protected void onFailure()
+               {
+                  onRefreshFiles();
+               }
+            });
          }
       },
       () ->
@@ -1219,6 +1266,7 @@ public class Files
    private final ConsoleDispatcher consoleDispatcher_;
    private final WorkbenchContext workbenchContext_;
    private final FilesServerOperations server_;
+   private final SourceServerOperations sourceServer_;
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
    private final RemoteFileSystemContext fileSystemContext_;

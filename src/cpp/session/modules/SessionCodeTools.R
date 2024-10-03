@@ -287,7 +287,15 @@
    code <- if (is.character(lines))
    {
       srcpos <- .rs.parseSrcref(srcref)
-      range <- seq(from = srcpos$first_parsed, to = srcpos$last_parsed)
+      range <- if (inherits(srcfile, c("srcfilecopy", "srcfilealias")))
+      {
+         seq(from = srcpos$first_parsed, to = srcpos$last_parsed)
+      }
+      else
+      {
+         seq(from = srcpos$first_line, to = srcpos$last_line)
+      }
+
       lines[range]
    }
    else
@@ -2227,6 +2235,11 @@
 
    # collect options of interest
    options <- options("repos", "download.file.method", "download.file.extra", "HTTPUserAgent")
+
+   # drop attributes on 'repos'
+   options[["repos"]] <- c(options[["repos"]])
+
+   # include extra arguments for 'curl' downloader
    if (identical(options[["download.file.method"]], "curl"))
       options[["download.file.extra"]] <- .rs.downloadFileExtraWithCurlArgs()
 

@@ -15,13 +15,17 @@
 
 #include <r/session/RSessionState.hpp>
 
-#include <algorithm>
+#ifdef _WIN32
+# include <fmt/xchar.h>
+#endif
+
 #include <unordered_set>
 
 #include <boost/function.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+
 #include <core/Settings.hpp>
 #include <core/Version.hpp>
 #include <core/Log.hpp>
@@ -69,6 +73,7 @@ const char * const kPlotsDir = "plots_dir";
 const char * const kSearchPath = "search_path";
 const char * const kGlobalEnvironment = "global_environment";
 const char * const kAfterRestartCommand = "after_restart_command";
+const char * const kBuiltPackagePath = "built_package_path";
 
 // settings
 const char * const kWorkingDirectory = "working_directory";
@@ -97,6 +102,84 @@ Error restoreLibPaths(const FilePath& libPathsFile)
 
    std::string file = string_utils::utf8ToSystem(libPathsFile.getAbsolutePath());
    return r::exec::RFunction(".rs.restoreLibPaths", file).call();
+}
+
+#ifdef _WIN32
+
+// TODO: This probably belongs somewhere else.
+bool isDirectoryLockedWin32(const std::wstring& filePath)
+{
+   WIN32_FIND_DATAW data;
+   std::wstring findQuery = fmt::format(L"{}/*", filePath);
+   HANDLE hFind = FindFirstFileW(findQuery.c_str(), &data);
+   if (hFind == INVALID_HANDLE_VALUE)
+      return false;
+
+   do
+   {
+      // skip '.' and '..'
+      bool isDotFolder =
+            (wcscmp(data.cFileName, L".") == 0) ||
+            (wcscmp(data.cFileName, L"..") == 0);
+
+      if (isDotFolder)
+         continue;
+
+      // get the child path
+      std::wstring childPath = fmt::format(L"{}/{}", filePath, data.cFileName);
+      // REprintf("[!] Checking file: '%s'\n", string_utils::wideToUtf8(childPath).c_str());
+
+      // check if we can open it with exclusive access
+      HANDLE hFile = CreateFileW(
+               childPath.c_str(),
+               GENERIC_READ | GENERIC_WRITE, // Check for both read + write access to files
+               0,                            // No sharing (FILE_SHARE_READ/FILE_SHARE_WRITE would allow shared access)
+               NULL,                         // Default security
+               OPEN_EXISTING,                // Open existing file only
+               FILE_ATTRIBUTE_NORMAL,        // Normal file
+               NULL);                        // No template file
+
+      if (hFile == INVALID_HANDLE_VALUE)
+      {
+         DWORD dwError = GetLastError();
+         if (dwError == ERROR_SHARING_VIOLATION)
+         {
+            // REprintf("[!] %s is locked.\n", string_utils::wideToUtf8(childPath).c_str());
+            return true;
+         }
+      }
+
+      // File is not locked, close the handle
+      CloseHandle(hFile);
+
+      // If this file is a directory, recurse through it
+      if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      {
+         if (isDirectoryLockedWin32(childPath))
+         {
+            // REprintf("[!] %s is locked.\n", string_utils::wideToUtf8(childPath).c_str());
+            return true;
+         }
+      }
+   }
+   while (FindNextFileW(hFind, &data) != 0);
+
+   FindClose(hFind);
+
+   // if we get here, then we iterated through all the files within
+   // the directory without finding a locked file
+   return false;
+}
+
+#endif
+
+bool isDirectoryLocked(const FilePath& filePath)
+{
+#ifndef _WIN32
+   return false;
+#else
+   return isDirectoryLockedWin32(filePath.getAbsolutePathW());
+#endif
 }
 
 bool isRLocationVariable(const std::string& name)
@@ -253,6 +336,13 @@ Error getAfterRestartCommand(const FilePath& afterRestartFile,
    *pIsEager = eager;
    return Success();
 }
+
+Error getBuiltPackagePath(const FilePath& builtPackagePathFile,
+                          std::string* pBuiltPackagePath)
+{
+   return core::readStringFromFile(builtPackagePathFile, pBuiltPackagePath);
+}
+
 
 struct AfterRestartCommandData
 {
@@ -464,6 +554,13 @@ Error saveAfterRestartCommand(const FilePath& afterRestartCommandPath,
    return core::writeStringToFile(afterRestartCommandPath, afterRestartCommand);
 }
 
+Error saveBuiltPackagePath(const FilePath& builtPackagePathPath,
+                           const std::string& builtPackagePath)
+{
+   return core::writeStringToFile(builtPackagePathPath, builtPackagePath);
+}
+
+
 } // anonymous namespace
  
 void initialize(SessionStateCallbacks callbacks)
@@ -473,6 +570,7 @@ void initialize(SessionStateCallbacks callbacks)
 
 bool save(const FilePath& statePath,
           const std::string& afterRestartCommand,
+          const std::string& builtPackagePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
@@ -497,6 +595,13 @@ bool save(const FilePath& statePath,
    if (error)
    {
       reportError(kSaving, kAfterRestartCommand, error, ERROR_LOCATION);
+   }
+   
+   // save build library path
+   error = saveBuiltPackagePath(statePath.completePath(kBuiltPackagePath), builtPackagePath);
+   if (error)
+   {
+      reportError(kSaving, kBuiltPackagePath, error, ERROR_LOCATION);
    }
    
    // save r version
@@ -666,10 +771,118 @@ bool packratModeEnabled(const core::FilePath& statePath)
    return getBoolSetting(statePath, kPackratModeOn, false);
 }
 
+namespace {
+
+void useBuiltPackagePath(const FilePath& srcPath)
+{
+   // if we were unable to move the library path for some reason
+   // (on Windows, this might be because a different R process is using that package still)
+   // then just add the build library path to the libpaths for this session, and notify user
+   //
+   // this way, they can still use the installed package in that session, even if
+   // it's not going to be available for other RStudio sessions
+   Error error = r::exec::RFunction(".rs.prependLibraryPath")
+         .addUtf8Param(srcPath.getParent())
+         .call();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   FilePath homePath = core::system::userHomePath("R_USER|HOME");
+   std::string aliasedPath = FilePath::createAliasedPath(srcPath.getParent(), homePath);
+   REprintf(
+            "\n"
+            "- RStudio was unable to move '%s' into your package library.\n"
+            "- '%s' will be loaded from the following library path for this session:\n"
+            "- \"%s\"\n"
+            "\n",
+            srcPath.getFilename().c_str(),
+            srcPath.getFilename().c_str(),
+            aliasedPath.c_str());
+}
+
+Error finishPackageInstall(const std::string& builtPackagePath)
+{
+   Error error;
+
+   // nothing to do if we have no library path
+   if (builtPackagePath.empty())
+      return Success();
+
+   // check that the path exists; we just installed the package
+   // to this directory so it would be surprising if it's suddenly gone!
+   FilePath srcPath(builtPackagePath);
+   if (!srcPath.exists())
+      return fileNotFoundError(srcPath, ERROR_LOCATION);
+
+   // the target library path is the parent of the source library path
+   FilePath tgtPath(srcPath.getParent().getParent().completeChildPath(srcPath.getFilename()));
+
+   // that path might already exist (e.g. because the package was previously installed)
+   // move that directory out of the way. note that this can succeed on Windows even
+   // if those files are open / in use by another application
+   std::string backupName = fmt::format("{}-{}", tgtPath.getFilename(), core::system::generateShortenedUuid());
+   FilePath backupDir = tgtPath.getParent().completeChildPath("_backup");
+   error = backupDir.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+
+   FilePath backupPath = backupDir.completeChildPath(backupName);
+   error = tgtPath.move(backupPath, core::FilePath::MoveDirect, true);
+   if (error && !isFileNotFoundError(error))
+   {
+      useBuiltPackagePath(srcPath);
+      return error;
+   }
+
+   // we can now move the installed package to its final location
+   error = srcPath.move(tgtPath, core::FilePath::MoveDirect, true);
+   if (error)
+   {
+      Error restoreError = backupPath.move(tgtPath, core::FilePath::MoveDirect, true);
+      if (restoreError)
+         LOG_ERROR(restoreError);
+
+      useBuiltPackagePath(srcPath);
+      return error;
+   }
+
+   // Take this opportunity to try and remove any folders within the backup directory.
+   std::vector<FilePath> backupPaths;
+   error = backupDir.getChildren(backupPaths);
+   if (error)
+      LOG_ERROR(error);
+
+   for (const FilePath& backupPath : backupPaths)
+   {
+      if (!isDirectoryLocked(backupPath))
+      {
+         Error error = backupPath.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   return Success();
+}
+
+void removeBuildLibraryPath(const std::string& buildLibraryPath)
+{
+   Error error = r::exec::RFunction(".rs.removeBuildLibraryPath")
+         .addUtf8Param(buildLibraryPath)
+         .call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+} // end anonymous namespace
+
 Error deferredRestore(const FilePath& statePath, bool serverMode)
 {
    Error error;
-   
+
    // get current search path list -- need to do this before executing
    // the after restart command as that might load a package and modify
    // the search list
@@ -677,7 +890,18 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    error = r::exec::RFunction("base:::search").call(&currentSearchPathList);
    if (error)
       return error;
-      
+   
+   // if we installed a package into a custom library path,
+   // pull it out into the main library now
+   std::string builtPackagePath;
+   error = getBuiltPackagePath(statePath.completePath(kBuiltPackagePath), &builtPackagePath);
+   if (error && !isFileNotFoundError(error))
+      LOG_ERROR(error);
+
+   Error installError = finishPackageInstall(builtPackagePath);
+   if (installError)
+      LOG_ERROR(error);
+
    // execute after restart command
    std::string command;
    bool isEagerCommand = false;
@@ -694,6 +918,9 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
       Error error = executeAfterRestartCommand(command);
       if (error)
          LOG_ERROR(error);
+
+      removeBuildLibraryPath(
+               FilePath(builtPackagePath).getParent().getAbsolutePath());
    }
    
    {
@@ -710,6 +937,9 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
       Error error = executeAfterRestartCommand(command);
       if (error)
          LOG_ERROR(error);
+
+      removeBuildLibraryPath(
+               FilePath(builtPackagePath).getParent().getAbsolutePath());
    }
    
    

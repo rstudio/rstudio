@@ -23,13 +23,21 @@ public class FilePosition extends JavaScriptObject
    public static native FilePosition create(int line, int column) /*-{
       return {line: line, column: column};
    }-*/;
-
+   
    public native final int getLine() /*-{
       return this.line;
+   }-*/;
+   
+   public native final void setLine(int line) /*-{
+      this.line = line;
    }-*/;
 
    public native final int getColumn() /*-{
       return this.column;
+   }-*/;
+   
+   public native final void setColumn(int column) /*-{
+      this.column = column;
    }-*/;
 
    public final int compareTo(FilePosition other)

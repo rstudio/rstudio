@@ -18,6 +18,9 @@
 
 #include <shared_core/json/Json.hpp>
 
+#define kAnsiEscapeRegex "(?:\033\\[\\d+m)*"
+#define kAnsiUrlRegex "(?:\u001B]8;.*?(?:\u0007|\033\\\\))*"
+
 namespace rstudio {
 namespace core {
    class Error;

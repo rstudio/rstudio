@@ -1538,6 +1538,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String cleanBeforeInstallDescription();
 
    /**
+    * When set, RStudio will build your package in a '_build' sub-directory of your current library paths.
+    */
+   @DefaultStringValue("Use alternate library path when building package")
+   String useBuildSubdirectoryTitle();
+   @DefaultStringValue("When set, RStudio will build your package in a '_build' sub-directory of your current library paths.")
+   String useBuildSubdirectoryDescription();
+
+   /**
     * Whether to use secure downloads when fetching R packages.
     */
    @DefaultStringValue("Download R packages securely")

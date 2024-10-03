@@ -1,17 +1,20 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.JsArrayString;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class TextEditingTargetRenameHelper
 {
@@ -124,6 +127,8 @@ public class TextEditingTargetRenameHelper
       
       while (!scope.isTopLevel())
       {
+         // If we're within a function definition, the variable should be scoped to that function.
+         // Rename only within the scope of that function.
          if (scope.isFunction())
          {
             ScopeFunction scopeFn = (ScopeFunction) scope;
@@ -138,8 +143,32 @@ public class TextEditingTargetRenameHelper
                   return renameVariablesInScope(scope, targetValue, targetType);
          }
          
+         // If we're renaming variables within a chunk,
+         // apply the refactor across all R chunks.
          if (scope.isChunk())
-            return renameVariablesInScope(scope, targetValue, targetType);
+         {
+            JsArray<Scope> scopeTree = editor_.getScopeTree();
+            for (int i = 0, n = scopeTree.length(); i < n; i++)
+            {
+               if (scopeTree.get(i).isChunk())
+               {
+                  String headerLine = editor_.getLine(scopeTree.get(i).getPreamble().getRow());
+                  Map<String, String> chunkOptions = RChunkHeaderParser.parse(headerLine);
+                  String engine = chunkOptions.getOrDefault("engine", "r");
+                  if (engine.toLowerCase() == "\"r\"")
+                  {
+                     renameVariablesInScope(
+                           scopeTree.get(i),
+                           scopeTree.get(i).getBodyStart(),
+                           targetValue,
+                           targetType,
+                           false);
+                  }
+               }
+            }
+            
+            return applyRanges();
+         }
          
          if (!cursor.moveToPosition(scope.getBodyStart(), true))
             continue;
@@ -214,7 +243,7 @@ public class TextEditingTargetRenameHelper
              cursor.valueEquals(argName) &&
              cursor.peekFwd(1).valueEquals("="))
          {
-            ranges_.add(getTokenRange(cursor));
+            addRange(getTokenRange(cursor));
          }
          
       } while (cursor.moveToNextToken());
@@ -222,21 +251,29 @@ public class TextEditingTargetRenameHelper
       return applyRanges();
       
    }
-   
+ 
    private int renameVariablesInScope(Scope scope,
                                       String targetValue,
                                       String targetType)
    {
-      return renameVariablesInScope(scope, scope.getPreamble(), targetValue, targetType);
+      return renameVariablesInScope(scope, scope.getPreamble(), targetValue, targetType, true);
    }
-   
+ 
    private int renameVariablesInScope(Scope scope,
                                       Position startPos,
                                       String targetValue,
                                       String targetType)
    {
+      return renameVariablesInScope(scope, startPos, targetValue, targetType, true);
+   }
+   
+   private int renameVariablesInScope(Scope scope,
+                                      Position startPos,
+                                      String targetValue,
+                                      String targetType,
+                                      boolean apply)
+   {
       Position endPos = scope.getEnd();
-      
       if (endPos == null)
          endPos = Position.create(editor_.getSession().getLength(), 0);
       
@@ -365,16 +402,16 @@ public class TextEditingTargetRenameHelper
             
             Range tokenRange = getTokenRange(cursor);
             if (!tokenRange.contains(cursorPos))
-               ranges_.add(tokenRange);
+               addRange(tokenRange);
          }
       } while (cursor.moveToNextToken());
       
       // Add the initial range last (ensuring that the cursor is placed here
       // after exiting 'multi-select' mode)
       if (cursor.moveToPosition(cursorPos, true))
-         ranges_.add(getTokenRange(cursor));
+         addRange(getTokenRange(cursor));
 
-      return applyRanges();
+      return apply ? applyRanges() : ranges_.size();
       
    }
    
@@ -458,6 +495,19 @@ public class TextEditingTargetRenameHelper
          return;
       
       protectedNamesList_.remove(protectedNamesList_.size() - 1);
+   }
+   
+   private void addRange(Range range)
+   {
+      for (int i = 0, n = ranges_.size(); i < n; i++)
+      {
+         if (range.isEqualTo(ranges_.get(i)))
+         {
+            return;
+         }
+      }
+      
+      ranges_.add(range);
    }
    
    private final AceEditor editor_;

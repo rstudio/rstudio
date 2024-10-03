@@ -789,6 +789,15 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
       return error;
    }
 
+   // create the project file
+   using namespace projects;
+   error = r_util::writeProjectFile(
+            projectFilePath,
+            ProjectContext::buildDefaults(),
+            ProjectContext::defaultConfig());
+   if (error)
+      LOG_ERROR(error);
+
    // add some first run files
    using namespace module_context;
    std::vector<std::string> projFiles;
@@ -804,15 +813,6 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
       projFiles.push_back(projDir.getFilename() + ".qmd");
    }
    projects::addFirstRunDocs(projectFilePath, projFiles);
-
-   // create the project file
-   using namespace projects;
-   error = r_util::writeProjectFile(projectFilePath,
-                                    ProjectContext::buildDefaults(),
-                                    ProjectContext::defaultConfig());
-   if (error)
-      LOG_ERROR(error);
-
 
    // create-project command
    std::vector<std::string> args({

@@ -21,7 +21,6 @@
 
 #include <vector>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <gsl/gsl>
@@ -301,6 +300,31 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    result["is_parent_browseable"] = browseable;
 
    pResponse->setResult(result);
+   return Success();
+}
+
+core::Error createFile(const core::json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   std::string path, contents;
+   Error error = json::readParams(request.params, &path, &contents);
+   if (error)
+      return error;
+   
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   if (contents.empty())
+   {
+      error = filePath.ensureFile();
+      if (error)
+         return error;
+   }
+   else
+   {
+      error = core::writeStringToFile(filePath, contents);
+      if (error)
+         return error;
+   }
+   
    return Success();
 }
 
@@ -1945,6 +1969,7 @@ Error initialize()
       (bind(registerRpcMethod, "is_package_directory", isPackageDirectory))
       (bind(registerRpcMethod, "get_file_contents", getFileContents))
       (bind(registerRpcMethod, "list_files", listFiles))
+      (bind(registerRpcMethod, "create_file", createFile))
       (bind(registerRpcMethod, "create_folder", createFolder))
       (bind(registerRpcMethod, "delete_files", deleteFiles))
       (bind(registerRpcMethod, "copy_file", copyFile))

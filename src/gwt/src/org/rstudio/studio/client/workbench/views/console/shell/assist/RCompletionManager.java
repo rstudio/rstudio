@@ -415,11 +415,7 @@ public class RCompletionManager implements CompletionManager
          if (keycode == KeyCodes.KEY_TAB && modifier == KeyboardShortcut.NONE)
          {
             invalidatePendingRequests();
-            AceGhostText ghostText = docDisplay_.getGhostText();
-            docDisplay_.replaceRange(
-                  Range.fromPoints(ghostText.position, ghostText.position),
-                  ghostText.text);
-            docDisplay_.removeGhostText();
+            docDisplay_.applyGhostText();
             docDisplay_.scrollCursorIntoViewIfNecessary();
             return true;
          }
@@ -2125,8 +2121,9 @@ public class RCompletionManager implements CompletionManager
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";
          
-         if (!RCompletionType.isFileType(qualifiedName.type) &&
-             !shouldQuote)
+         if (!shouldQuote &&
+             !RCompletionType.isFileType(qualifiedName.type) &&
+             !StringUtil.equals(qualifiedName.language, "Python"))
          {
             value = quoteIfNotSyntacticNameCompletion(qualifiedName);
          }

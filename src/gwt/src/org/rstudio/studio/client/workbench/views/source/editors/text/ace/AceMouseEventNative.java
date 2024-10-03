@@ -36,6 +36,11 @@ public class AceMouseEventNative extends JavaScriptObject
    public native final void preventDefault() /*-{
       this.preventDefault();
    }-*/;
+   
+   public native final void invokeDefaultHandler(AceEditorNative editor) /*-{
+      var handler = this.defaultHandler;
+      handler.call(editor, this);
+   }-*/;
 
    public native final Position getDocumentPosition() /*-{
       return this.getDocumentPosition();

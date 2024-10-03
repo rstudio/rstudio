@@ -20,16 +20,9 @@ function(echo MESSAGE)
    execute_process(COMMAND echo "-- ${MESSAGE}")
 endfunction()
 
-if(@RSTUDIO_ELECTRON@)
-   set(RSESSION_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/bin")
-   set(X64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/Frameworks")
-   set(ARM64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/Frameworks/arm64")
-else()
-   set(RSESSION_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS")
-   set(X64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks")
-   set(ARM64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64")
-endif()
-
+set(RSESSION_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/bin")
+set(X64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/Frameworks")
+set(ARM64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/Frameworks/arm64")
 set(FIX_LIBRARY_PATHS_SCRIPT_PATH "@CMAKE_CURRENT_SOURCE_DIR@/scripts/fix-library-paths.sh")
 
 # NOTE: This part of CMake will be run by the x86 branch of the build,
@@ -91,33 +84,30 @@ else()
 
 endif()
 
-if(@RSTUDIO_ELECTRON@)
-
-   # find out where x64 homebrew lives
-   if(EXISTS "$ENV{HOME}/homebrew/x86_64")
-      set(HOMEBREW_X64_PREFIX "$ENV{HOME}/homebrew/x86_64")
-   else()
-      set(HOMEBREW_X64_PREFIX "/usr/local")
-   endif()
-   
-   # copy required Homebrew libraries
-   list(APPEND HOMEBREW_LIBS gettext openssl sqlite3)
-   if(@RSTUDIO_PRO_BUILD@)
-      list(APPEND HOMEBREW_LIBS krb5 libpq)
-   endif()
-   
-   file(MAKE_DIRECTORY "${X64_FRAMEWORKS_DIRECTORY}")
-   foreach(LIB ${HOMEBREW_LIBS})
-      set(LIBPATH "${HOMEBREW_X64_PREFIX}/opt/${LIB}/lib")
-      file(GLOB LIBFILES "${LIBPATH}/*.dylib")
-      foreach(LIBFILE ${LIBFILES})
-         file(
-            COPY "${LIBFILE}"
-            DESTINATION "${X64_FRAMEWORKS_DIRECTORY}")
-      endforeach()
-   endforeach()
-
+# find out where x64 homebrew lives
+if(EXISTS "$ENV{HOME}/homebrew/x86_64")
+   set(HOMEBREW_X64_PREFIX "$ENV{HOME}/homebrew/x86_64")
+else()
+   set(HOMEBREW_X64_PREFIX "/usr/local")
 endif()
+
+# copy required Homebrew libraries
+list(APPEND HOMEBREW_LIBS gettext openssl sqlite3)
+if(@RSTUDIO_PRO_BUILD@)
+   list(APPEND HOMEBREW_LIBS krb5 libpq)
+endif()
+
+file(MAKE_DIRECTORY "${X64_FRAMEWORKS_DIRECTORY}")
+foreach(LIB ${HOMEBREW_LIBS})
+   set(LIBPATH "${HOMEBREW_X64_PREFIX}/opt/${LIB}/lib")
+   file(GLOB LIBFILES "${LIBPATH}/*.dylib")
+   foreach(LIBFILE ${LIBFILES})
+      file(
+         COPY "${LIBFILE}"
+         DESTINATION "${X64_FRAMEWORKS_DIRECTORY}")
+   endforeach()
+endforeach()
+
 
 # fix library paths on x86_64 components
 execute_process(
@@ -133,13 +123,3 @@ execute_process(
       "${RSESSION_BINARY_DIR}"
       "@executable_path/../Frameworks"
       "diagnostics rpostback rsession")
-
-if(NOT @RSTUDIO_ELECTRON@)
-   execute_process(
-      COMMAND
-      "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
-      "${RSESSION_BINARY_DIR}"
-      "@executable_path/../Frameworks"
-      "RStudio")
-endif()
-

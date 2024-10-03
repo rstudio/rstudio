@@ -316,25 +316,28 @@ Error createProject(const json::JsonRpcRequest& request,
       if (error)
          LOG_ERROR(error);
 
-      // add first run actions for the source files
-      addFirstRunDocs(projectFilePath, { "app.R" });
-
 
       std::string existingProjectFilePath;
       if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
       {
          // create the project file
-         return r_util::writeProjectFile(projectFilePath,
+         Error error = r_util::writeProjectFile(projectFilePath,
                                          ProjectContext::buildDefaults(),
                                          ProjectContext::defaultConfig());
+         if (error)
+            return error;
+         
       }
       else
       {
          pResponse->setResult(existingProjectFilePath);
-         return Success();
       }
-
-
+      
+      // add first run actions for the source files
+      addFirstRunDocs(projectFilePath, { "app.R" });
+      
+      // all done
+      return Success();
    }
 
 
@@ -1257,6 +1260,12 @@ void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::str
             projectFilePath,
             &scratchPath,
             &sharedScratchPath);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
    for (auto&& doc : docs)
    {
