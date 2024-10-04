@@ -213,8 +213,7 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    
    public void syncOptions()
    {
-      boolean showOptions = !outerEditor_.getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT);
-      toolbar_.setShowOptions(showOptions);
+      toolbar_.setShowOptions(true);
    }
 
    /**
@@ -332,7 +331,13 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
       toolbar_.setHeight("0px"); 
       toolbar_.setClassId(getLabel(row));
    }
-   
+
+   protected boolean preferYamlOptions()
+   {
+      // quarto docs prefer YAML chunk options, i.e. "#| foo: bar"
+      return outerEditor_.getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT);
+   }
+    
    protected abstract int getRow();
    
    protected abstract int getInnerRow();
@@ -366,14 +371,14 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    {
       int row = getRow();
       if (isSetupChunk(row))
-         return new SetupChunkOptionsPopupPanel();
+         return new SetupChunkOptionsPopupPanel(preferYamlOptions());
       
       String engine = getEngine(row);
       if (!engine.toLowerCase().equals("r") &&
           !engine.toLowerCase().equals("d3"))
-         return new CustomEngineChunkOptionsPopupPanel(engine_);
+         return new CustomEngineChunkOptionsPopupPanel(engine_, preferYamlOptions());
       
-      return new DefaultChunkOptionsPopupPanel(engine_);
+      return new DefaultChunkOptionsPopupPanel(engine_, preferYamlOptions());
    }
 
    protected ChunkContextToolbar toolbar_;

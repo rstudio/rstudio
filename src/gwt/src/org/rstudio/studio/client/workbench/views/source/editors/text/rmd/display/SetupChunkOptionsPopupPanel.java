@@ -35,9 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 {
@@ -47,9 +45,9 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       server_ = server;
    }
    
-   public SetupChunkOptionsPopupPanel()
+   public SetupChunkOptionsPopupPanel(boolean preferYamlOptions)
    {
-      super(false);
+      super(false, preferYamlOptions);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       figureDimensionsPanel_.setVisible(false);
@@ -86,7 +84,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    private void addParam(Map<String, String> options, String name)
    {
       if (has(name))
-         options.put(name, get(name));
+         options.put(name, get(name).getOptionValue());
    }
    
    private void addCheckboxParam(Map<String, String> options,
@@ -221,7 +219,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
                {
                   JsArrayString keys = object.keys();
                   for (String key : JsUtil.asIterable(keys))
-                     chunkOptions_.put(key, object.getAsString(key));
+                     chunkOptions_.put(key, new ChunkOptionValue(object.getAsString(key), false));
                   afterInit.execute();
                }
             });
@@ -231,11 +229,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    protected void synchronize()
    {
       syncSelection();
-      Map<String, String> options = new LinkedHashMap<>();
-      
-      Set<String> keys = chunkOptions_.keySet();
-      for (String key : keys)
-         options.put(key, chunkOptions_.get(key));
+      Map<String, String> options = firstLineOptions(chunkOptions_);
       
       addParam(options, "echo");
       addParam(options, "eval");
@@ -276,7 +270,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    protected void revert()
    {
    }
-   
+
    private CodeToolsServerOperations server_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

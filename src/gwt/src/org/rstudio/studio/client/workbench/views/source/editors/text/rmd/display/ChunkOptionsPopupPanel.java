@@ -92,13 +92,14 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       rfsContext_ = rfsContext;
    }
    
-   public ChunkOptionsPopupPanel(boolean includeChunkNameUI)
+   public ChunkOptionsPopupPanel(boolean includeChunkNameUI, boolean preferYamlOptions)
    {
       super(true);
       setVisible(false);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      preferYamlOptions_ = preferYamlOptions;
       chunkOptions_ = new HashMap<>();
       originalChunkOptions_ = new HashMap<>();
       
@@ -447,7 +448,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return chunkOptions_.containsKey(key);
    }
    
-   protected String get(String key)
+   protected ChunkOptionValue get(String key)
    {
       if (!has(key))
          return null;
@@ -460,12 +461,26 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       if (!has(key))
          return false;
       
-      return isTrue(chunkOptions_.get(key));
+      return isTrue(chunkOptions_.get(key).getOptionValue());
    }
-   
+
    protected void set(String key, String value)
    {
-      chunkOptions_.put(key,  value);
+      // write to first line or as a YAML option?
+      boolean writeYaml = preferYamlOptions_;
+
+      // existing option?
+      ChunkOptionValue existingOption = chunkOptions_.get(key);
+      if (existingOption != null)
+      {
+         writeYaml = existingOption.setIsYaml();
+      }
+      chunkOptions_.put(key, new ChunkOptionValue(value, writeYaml));
+   }
+
+    protected void set(String key, String value, boolean isYaml)
+   {
+      chunkOptions_.put(key, new ChunkOptionValue(value, isYaml));
    }
    
    protected void unset(String key)
@@ -533,12 +548,12 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             figureDimensionsPanel_.setVisible(hasRelevantFigureSettings);
 
             if (has("fig.width"))
-               figWidthBox_.setText(get("fig.width"));
+               figWidthBox_.setText(get("fig.width").getOptionValue());
             else
                figWidthBox_.setText("");
 
             if (has("fig.height"))
-               figHeightBox_.setText(get("fig.height"));
+               figHeightBox_.setText(get("fig.height").getOptionValue());
             else
                figHeightBox_.setText("");
 
@@ -556,14 +571,14 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             
             if (has("engine.path"))
             {
-               String enginePath = StringUtil.stringValue(get("engine.path"));
+               String enginePath = StringUtil.stringValue(get("engine.path").getOptionValue());
                enginePath = enginePath.replaceAll("\\\\\\\\", "\\\\");
                enginePathBox_.setValue(enginePath);
             }
             
             if (has("engine.opts"))
             {
-               String engineOpts = StringUtil.stringValue(get("engine.opts"));
+               String engineOpts = StringUtil.stringValue(get("engine.opts").getOptionValue());
                engineOpts = engineOpts.replaceAll("\\\\\\\\", "\\\\");
                engineOptsBox_.setValue(engineOpts);
             }
@@ -633,7 +648,52 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       }
       return sortedMap;
    }
-   
+
+   protected Map<String, String> sortedFirstLineOptions(Map<String, ChunkOptionValue> options)
+   {
+      return sortedChunkOptions(options, false /*notYaml*/);
+   }
+
+   protected Map<String, String> sortedYamlOptions(Map<String, ChunkOptionValue> options)
+   {
+      return sortedChunkOptions(options, true /*Yaml*/);
+   }
+
+   protected Map<String, String> firstLineOptions(Map<String, ChunkOptionValue> options)
+   {
+      return unsortedOptions(options, false /*notYaml*/);
+   }
+
+   protected Map<String, String> yamlOptions(Map<String, ChunkOptionValue> options)
+   {
+      return unsortedOptions(options, true /*Yaml*/);
+   }
+
+   private Map<String, String> sortedChunkOptions(Map<String, ChunkOptionValue> options, boolean yaml)
+   {
+      return sortedOptions(filterOptionsMap(options, yaml));
+   }
+
+   private Map<String, String> unsortedOptions(Map<String, ChunkOptionValue> options, boolean yaml)
+   {
+      return filterOptionsMap(options, yaml);
+   }
+
+   private Map<String, String> filterOptionsMap(Map<String,
+                                                ChunkOptionValue> options,
+                                                boolean yaml)
+   {
+      Map<String, String> filteredEntries = new LinkedHashMap<>();
+      for (Map.Entry<String, ChunkOptionValue> entry : options.entrySet()) {
+         if (entry.getValue().setIsYaml() == yaml)
+         {
+            // we keep just the name/value, dropping the isYaml flag
+            filteredEntries.put(entry.getKey(), entry.getValue().getOptionValue());
+         }
+      }
+      return filteredEntries;
+   }
+
    protected final VerticalPanel panel_;
    protected final Label header_;
    protected final FormLabel chunkLabel_;
@@ -653,11 +713,14 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected final Toggle printTableAsTextCb_;
    protected final Toggle cacheChunkCb_;
    
-   protected String originalLine_;
+   protected String originalFirstLine_; // opening chunk line, i.e. ```{r}
+   protected List<String> originalOptionLines_; // additional options using #| prefix
+
    protected String chunkPreamble_;
    
-   protected HashMap<String, String> chunkOptions_;
-   protected HashMap<String, String> originalChunkOptions_;
+   protected final boolean preferYamlOptions_;
+   protected HashMap<String, ChunkOptionValue> chunkOptions_;
+   protected HashMap<String, ChunkOptionValue> originalChunkOptions_;
    
    protected DocDisplay display_;
    protected Position position_;

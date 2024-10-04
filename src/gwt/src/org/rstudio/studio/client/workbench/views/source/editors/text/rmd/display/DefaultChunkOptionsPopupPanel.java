@@ -14,27 +14,32 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TextCursor;
+import org.rstudio.core.client.js.JsMapString;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.yaml.Yaml;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi.ChunkLabelInfo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 {
-   public DefaultChunkOptionsPopupPanel(String engine)
+   public DefaultChunkOptionsPopupPanel(String engine, boolean preferYamlOptions)
    {
-      super(true);
+      super(true, preferYamlOptions);
 
       engine_ = engine;
       enginePanel_.setVisible(false);
@@ -43,13 +48,21 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    @Override
    protected void initOptions(Command afterInit)
    {
-      originalLine_ = display_.getLine(position_.getRow());
+      // values used to restore via "Revert" button
+      originalFirstLine_ = display_.getLine(position_.getRow());
+      originalOptionLines_ = getRawYamlOptionLines(position_.getRow() + 1);
+
+      // extract chunk options from first line, e.g. {r, echo=TRUE}
       ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
-      parseChunkHeader(originalLine_, display_.getModeId(), originalChunkOptions_, extraInfo);
+      parseChunkHeader(originalFirstLine_, display_.getModeId(), originalChunkOptions_, extraInfo);
       chunkPreamble_ = extraInfo.chunkPreamble;
+
+      // extract chunk options from YAML lines, e.g. "#| echo: true"
+      parseYamlChunkOptions(originalOptionLines_, originalChunkOptions_);
+
       if (!StringUtil.isNullOrEmpty(extraInfo.chunkLabel))
          tbChunkLabel_.setText(extraInfo.chunkLabel);
-      for (Map.Entry<String, String> pair : originalChunkOptions_.entrySet())
+      for (Map.Entry<String, ChunkOptionValue> pair : originalChunkOptions_.entrySet())
          chunkOptions_.put(pair.getKey(), pair.getValue());
 
       if (engine_ == "r") printTableAsTextCb_.setVisible(true);
@@ -78,9 +91,10 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             newLine += " " + label;
       }
 
+      // write back first-line options
       if (!chunkOptions_.isEmpty())
       {
-         Map<String, String> sorted = sortedOptions(chunkOptions_);
+         Map<String, String> sorted = sortedFirstLineOptions(chunkOptions_);
          if (label.isEmpty())
             newLine += " ";
          else
@@ -110,7 +124,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       display_.replaceRange(
             replaceRange,
-            originalLine_ + "\n");
+            originalFirstLine_ + "\n");
    }
 
    private Pair<String, String> getChunkHeaderBounds(String modeId)
@@ -171,11 +185,13 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
 
    /**
+    * Parses chunk header (the first line of the chunk).
+    *
     * TODO: Consider consolidating parseChunkHeader() and the RChunkHeaderParser class.
     */
    public static void parseChunkHeader(String line,
                                        String modeId,
-                                       HashMap<String, String> chunkOptions,
+                                       HashMap<String, ChunkOptionValue> chunkOptions,
                                        ChunkHeaderInfo extraInfo)
    {
       Pattern pattern = null;
@@ -222,12 +238,94 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
          chunkOptions.put(
                StringUtil.substring(arguments, startIndex, equalsIndex).trim(),
-               StringUtil.substring(arguments, equalsIndex + 1, endIndex).trim());
+               new ChunkOptionValue(
+                  StringUtil.substring(arguments, equalsIndex + 1, endIndex).trim(),
+                  false /*notYaml*/));
 
          startIndex = cursor.getIndex() + 1;
       }
       while (cursor.moveToNextCharacter());
    }
+
+   /**
+    * Returns list of option lines; these follow the first line,
+    * must begin with "#| ", and must have at least one non-whitespace
+    * character after "#| ".
+    * 
+    * @param startLine first potential option line
+    * @return list of option lines without the leading #|
+    */
+   private List<String> getRawYamlOptionLines(int startLine)
+   {
+      List<String> optionLines = new ArrayList<>();
+      int currentLine = startLine;
+      String line;
+      while ((line = display_.getLine(currentLine)) != null)
+      {
+         // a line with no characters after the starting #| isn't valid and ends detection
+         if (line.startsWith("#| ") && line.trim().length() > 2)
+         {
+            optionLines.add(line.substring("#| ".length()));
+            currentLine++;
+         }
+         else
+         {
+            break;
+         }
+      }
+      return optionLines;
+   }
+
+    /**
+     * Parses YAML chunk options from the given lines and adds them to the collection.
+     *
+     * @param optionLines The lines containing raw YAML chunk options.
+     * @param chunkOptions The map to populate with parsed options.
+     */
+    private void parseYamlChunkOptions(List<String> optionLines, Map<String, ChunkOptionValue> chunkOptions)
+    {
+      String yaml = String.join("\n", optionLines);
+      Object parsedYaml = null;
+
+      try
+      {
+         parsedYaml = Yaml.load(yaml);
+      }
+      catch(Exception e)
+      {
+         // invalid yaml
+         return;
+      }
+
+      // flatten the yaml into "name": "value"
+      JsMapString opts = yamlToStringMap(parsedYaml);
+      
+      // add/update chunk options
+      JsArrayString keys = opts.keys();
+      for (int i = 0; i < keys.length(); i++)
+      {
+         String key = keys.get(i);
+         String value = opts.get(key);
+         chunkOptions.put(key, new ChunkOptionValue(value, true /*isYaml*/));
+      }
+   }
+
+   /**
+    * Helper for flattening parsed YAML into a flat map<string,string>.
+    *
+    * @param yamlObject
+    * @return
+    */
+   private static final native JsMapString yamlToStringMap(Object yamlObject)
+   /*-{
+      var result = {};
+      for (var key in yamlObject) {
+         if (yamlObject.hasOwnProperty(key)) {
+            result[key] = String(yamlObject[key]);
+         }
+      }
+      return result;
+   }-*/;
 
    private String engine_;
 }
