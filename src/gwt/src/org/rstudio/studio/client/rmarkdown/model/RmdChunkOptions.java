@@ -26,6 +26,10 @@ public class RmdChunkOptions extends JavaScriptObject
       return {};
    }-*/;
    
+   public final native Integer dpi() /*-{
+      return this.dpi;
+   }-*/;
+   
    public final native boolean eval() /*-{
       if (typeof(this.eval) !== "undefined")
         return !!this.eval;

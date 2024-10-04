@@ -115,6 +115,7 @@ void PlotCapture::processPlots(bool ignoreEmpty)
          json::Object metadata;
          metadata["height"] = height_;
          metadata["width"] = width_;
+         metadata["dpi"] = dpi_;
          metadata["size_behavior"] = static_cast<int>(sizeBehavior_);
 
          // use cached conditions if we have them; otherwise, check accumulator

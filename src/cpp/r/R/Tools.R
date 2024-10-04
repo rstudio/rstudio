@@ -1513,6 +1513,16 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    is.integer(info) && length(info) == 2L && is.na(info[[1L]])
 })
 
+.rs.addFunction("nullCoalesce", function(...)
+{
+   for (i in seq_len(...length()))
+   {
+      value <- ...elt(i)
+      if (!is.null(value))
+         return(value)
+   }
+})
+
 .rs.addFunction("initTools", function()
 {
    ostype <- .Platform$OS.type

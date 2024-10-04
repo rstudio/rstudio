@@ -1938,7 +1938,7 @@ public class TextEditingTargetNotebook
          Integer min = null;
          String chunkId = "";
          boolean hasPlots = false;
-         for (ChunkOutputUi output: outputs().values())
+         for (ChunkOutputUi output : outputs().values())
          {
             int delta = Math.abs(output.getCurrentRow() - row);
             if (min == null || delta < min)
@@ -1958,7 +1958,6 @@ public class TextEditingTargetNotebook
                chunkId,
                plotWidth,
                0,
-               -1,
                new ServerRequestCallback<String>()
                {
                   @Override

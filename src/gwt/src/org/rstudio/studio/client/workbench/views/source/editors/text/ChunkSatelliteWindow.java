@@ -301,7 +301,6 @@ public class ChunkSatelliteWindow extends SatelliteWindow
             chunkWindowParams_.getChunkId(),
             chunkOutputWidget_.getOffsetWidth(),
             chunkOutputWidget_.getOffsetHeight(),
-            -1,
             new ServerRequestCallback<String>()
             {
                @Override
