@@ -13,6 +13,8 @@
 #
 #
 
+.rs.setVar("notebooks.defaultPlotDpi", 96)
+
 # creates the notebook graphics device 
 .rs.addFunction("createNotebookGraphicsDevice", function(filename,
                                                          width,
@@ -22,10 +24,13 @@
                                                          pixelRatio,
                                                          extraArgs)
 {
+   dpi <- if (dpi <= 0) .rs.notebooks.defaultPlotDpi else dpi
+   
    if (units == "px") # px = automatic size behavior 
    {
       height <- height * pixelRatio
       width <- width * pixelRatio
+      dpi <- dpi * pixelRatio
    }
 
    # form the arguments to the graphics device creator
@@ -34,7 +39,7 @@
       height   = height, 
       width    = width,
       units    = units,
-      res      = if (dpi == -1) 96 * pixelRatio else dpi
+      res      = dpi
    )
 
    if (nchar(extraArgs) > 0)
@@ -70,7 +75,7 @@
          width    = width,
          height   = height,
          units    = units,
-         res      = if (dpi == -1) 96 * pixelRatio else dpi
+         res      = dpi
       )
       
       return(device)
@@ -176,23 +181,17 @@
             sep = "."
          )
          
-         dpi <- .rs.nullCoalesce(chunkDef$options$dpi, 96) * pixelRatio
+         dpi <- .rs.nullCoalesce(chunkDef$options$dpi, .rs.notebooks.defaultPlotDpi)
          height <- if (height <= 0) width / 1.618 else height
          
-         local({
-            sink(stderr())
-            on.exit(sink(NULL), add = TRUE)
-            print(utils:::ls.str())
-         })
-         
          .rs.createNotebookGraphicsDevice(
-            output,
-            width,
-            height,
-            dpi,
-            "px",
-            pixelRatio,
-            extraArgs
+            filename = output,
+            width = width,
+            height = height,
+            dpi = dpi,
+            units = "px",
+            pixelRatio = pixelRatio,
+            extraArgs = extraArgs
          )
          
          # actually replay the plot onto the device
