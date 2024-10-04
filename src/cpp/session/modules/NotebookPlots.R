@@ -165,77 +165,96 @@
       if (length(snapshots) == 0)
          next
       
-      for (snapshot in snapshots) {
-         
-         # ignore empty lines
-         if (nchar(tools::file_ext(snapshot)) < 1)
-            return(invisible(NULL))
-         
-         # create the PNG device on which we'll regenerate the plot -- it's somewhat
-         # wasteful to use a separate device per plot, but the alternative is
-         # doing a lot of state management and post-processing of the files
-         # output from the device
-         output <- paste(
-            tools::file_path_sans_ext(snapshot),
-            "resized.png",
-            sep = "."
-         )
-         
-         dpi <- .rs.nullCoalesce(chunkDef$options$dpi, .rs.notebooks.defaultPlotDpi)
-         height <- if (height <= 0) width / 1.618 else height
-         
-         .rs.createNotebookGraphicsDevice(
-            filename = output,
-            width = width,
-            height = height,
-            dpi = dpi,
-            units = "px",
-            pixelRatio = pixelRatio,
-            extraArgs = extraArgs
-         )
-         
-         # actually replay the plot onto the device
-         tryCatch(
-            .rs.restoreGraphics(snapshot),
-            error = function(err) {
-               writeLines(conditionMessage(err), con = stderr())
-            }
-         )
-         
-         # close the device; has the side effect of committing the plot to disk
-         dev.off()
-         
-         # if the plot file was written out, emit to standard out for caller
-         if (!file.exists(output))
-            return(invisible(NULL))
-         
-         # build output path
-         final <- paste(tools::file_path_sans_ext(snapshot), "png", sep = ".")
-         if (!persistOutput) {
-            
-            chunksPath <- dirname(snapshot)
-            chunksTempPath <- file.path(chunksPath, "temp")
-            
-            if (!dir.exists(chunksTempPath))
-               dir.create(chunksTempPath)
-            
-            chunkBaseName <- basename(tools::file_path_sans_ext(snapshot))
-            
-            final <- file.path(
-               chunksTempPath,
-               paste(chunkBaseName, "png", sep = ".")
-            )
-         }
-         
-         # remove the old copy of the plot if it existed
-         file.copy(output, final, overwrite = TRUE)
-         unlink(output)
-         
-         if (file.exists(final))
-            writeLines(final)
-         
-      }
+      dpi <- .rs.nullCoalesce(chunkDef$options$dpi, .rs.notebooks.defaultPlotDpi)
+      height <- if (height <= 0) width / 1.618 else height
+      
+      .rs.replayNotebookSnapshots(
+         snapshots = snapshots,
+         width = width,
+         height = height,
+         dpi = dpi,
+         pixelRatio = pixelRatio,
+         persistOutput = persistOutput,
+         extraArgs = extraArgs
+      )
       
    }
    
+})
+
+.rs.addFunction("replayNotebookSnapshots", function(snapshots,
+                                                    width,
+                                                    height,
+                                                    dpi,
+                                                    pixelRatio,
+                                                    persistOutput,
+                                                    extraArgs)
+{
+   lapply(snapshots, function(snapshot) {
+      
+      # ignore empty lines
+      if (nchar(tools::file_ext(snapshot)) < 1)
+         return(invisible(NULL))
+      
+      # create the PNG device on which we'll regenerate the plot -- it's somewhat
+      # wasteful to use a separate device per plot, but the alternative is
+      # doing a lot of state management and post-processing of the files
+      # output from the device
+      output <- paste(
+         tools::file_path_sans_ext(snapshot),
+         "resized.png",
+         sep = "."
+      )
+      
+      .rs.createNotebookGraphicsDevice(
+         filename = output,
+         width = width,
+         height = height,
+         dpi = dpi,
+         units = "px",
+         pixelRatio = pixelRatio,
+         extraArgs = extraArgs
+      )
+      
+      # actually replay the plot onto the device
+      tryCatch(
+         .rs.restoreGraphics(snapshot),
+         error = function(err) {
+            writeLines(conditionMessage(err), con = stderr())
+         }
+      )
+      
+      # close the device; has the side effect of committing the plot to disk
+      dev.off()
+      
+      # if the plot file was written out, emit to standard out for caller
+      if (!file.exists(output))
+         return(invisible(NULL))
+      
+      # build output path
+      final <- paste(tools::file_path_sans_ext(snapshot), "png", sep = ".")
+      if (!persistOutput) {
+         
+         chunksPath <- dirname(snapshot)
+         chunksTempPath <- file.path(chunksPath, "temp")
+         
+         if (!dir.exists(chunksTempPath))
+            dir.create(chunksTempPath)
+         
+         chunkBaseName <- basename(tools::file_path_sans_ext(snapshot))
+         
+         final <- file.path(
+            chunksTempPath,
+            paste(chunkBaseName, "png", sep = ".")
+         )
+      }
+      
+      # remove the old copy of the plot if it existed
+      file.copy(output, final, overwrite = TRUE)
+      unlink(output)
+      
+      if (file.exists(final))
+         writeLines(final)
+      
+   })
 })
