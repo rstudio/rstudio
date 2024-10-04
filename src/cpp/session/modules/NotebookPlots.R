@@ -165,8 +165,8 @@
       if (length(snapshots) == 0)
          next
       
-      dpi <- .rs.nullCoalesce(chunkDef$options$dpi, .rs.notebooks.defaultPlotDpi)
       height <- if (height <= 0) width / 1.618 else height
+      dpi <- .rs.nullCoalesce(chunkDef$options$dpi, .rs.notebooks.defaultPlotDpi)
       
       .rs.replayNotebookSnapshots(
          snapshots = snapshots,
