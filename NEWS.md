@@ -24,6 +24,7 @@
 #### Posit Workbench
 
 - Posit Workbench Administration Guide & User Guide and Posit Workbench Licenses guide now includes release version in navigation bar reference URLs. (rstudio-pro#6826)
+- Restrict Positron and VS Code sessions for insecure (non-SSL) contexts. These editors do not work properly otherwise. (rstudio-pro#3741)
 
 ### Fixed
 #### RStudio
