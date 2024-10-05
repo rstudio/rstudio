@@ -20,6 +20,8 @@
 - Available environment variables are now provided as completion suggestions within `Sys.unsetenv()` (#15215)
 - RStudio IDE User Guide and RStudio & Posit Workbench Release Notes now includes release version in navigation bar reference URLs (#15223)
 - Rename in Scope now operates across chunks within R Markdown and Quarto documents (#4961)
+- RStudio now respects the chunk 'dpi' option when generating plots in R Markdown / Quarto documents (#11649)
+- RStudio now supports the display of an HTML table of contents for R help files when `options(help.htmltoc = TRUE)` is set (#14523)
 
 #### Posit Workbench
 

@@ -76,7 +76,6 @@ import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -165,7 +164,6 @@ public class Files
    public Files(Display view,
                 EventBus eventBus,
                 FilesServerOperations server,
-                SourceServerOperations sourceServer,
                 RemoteFileSystemContext fileSystemContext,
                 GlobalDisplay globalDisplay,
                 Session session,
@@ -189,7 +187,6 @@ public class Files
 
       eventBus_ = eventBus;
       server_ = server;
-      sourceServer_ = sourceServer;
       fileSystemContext_ = fileSystemContext;
       globalDisplay_ = globalDisplay;
       session_ = session;
@@ -1266,7 +1263,6 @@ public class Files
    private final ConsoleDispatcher consoleDispatcher_;
    private final WorkbenchContext workbenchContext_;
    private final FilesServerOperations server_;
-   private final SourceServerOperations sourceServer_;
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
    private final RemoteFileSystemContext fileSystemContext_;

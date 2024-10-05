@@ -5691,8 +5691,11 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void replayNotebookPlots(String docId, String initialChunkId,
-         int pixelWidth, int pixelHeight, ServerRequestCallback<String> requestCallback)
+   public void replayNotebookPlots(String docId,
+                                   String initialChunkId,
+                                   int pixelWidth,
+                                   int pixelHeight,
+                                   ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
@@ -5703,8 +5706,11 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void replayNotebookChunkPlots(String docId, String chunkId,
-         int pixelWidth, int pixelHeight, ServerRequestCallback<String> requestCallback)
+   public void replayNotebookChunkPlots(String docId,
+                                        String chunkId,
+                                        int pixelWidth,
+                                        int pixelHeight,
+                                        ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
