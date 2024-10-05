@@ -205,6 +205,8 @@ void ChunkExecContext::connect()
    // extract knitr figure options if present
    double figWidth = options_.getOverlayOption("fig.width", 0.0);
    double figHeight = options_.getOverlayOption("fig.height", 0.0);
+   double figDpi = options_.getOverlayOption("dpi", -1.0);
+   
    // the knitr 'dev' option, if set, may override the default graphics device backend
    std::string chunkGraphicsBackend = options_.getOverlayOption("dev", std::string("png"));
 
@@ -231,14 +233,18 @@ void ChunkExecContext::connect()
    if (figWidth > 0 || figHeight > 0)
    {
       // user specified plot size, use it
-      error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_, 
-            figHeight, figWidth, PlotSizeManual, outputPath_, chunkGraphicsBackend);
+      error = pPlotCapture->connectPlots(
+               docId_, chunkId_, nbCtxId_,
+               figWidth, figHeight, figDpi,
+               PlotSizeManual, outputPath_, chunkGraphicsBackend);
    }
    else
    {
       // user didn't specify plot size, use the width of the editor surface
-      error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_,
-            0, pixelWidth_, PlotSizeAutomatic, outputPath_, chunkGraphicsBackend);
+      error = pPlotCapture->connectPlots(
+               docId_, chunkId_, nbCtxId_,
+               pixelWidth_, 0, figDpi,
+               PlotSizeAutomatic, outputPath_, chunkGraphicsBackend);
    }
    if (error)
       LOG_ERROR(error);

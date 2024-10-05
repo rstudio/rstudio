@@ -52,10 +52,16 @@ class PlotCapture : public NotebookCapture
 public:
    PlotCapture();
    ~PlotCapture();
-   core::Error connectPlots(const std::string& docId, 
-      const std::string& chunkId, const std::string& nbCtxId, 
-      double height, double width, PlotSizeBehavior sizeBehavior,
-      const core::FilePath& plotFolder, const std::string& chunkGraphicsBackend);
+   core::Error connectPlots(
+         const std::string& docId, 
+         const std::string& chunkId,
+         const std::string& nbCtxId, 
+         double width,
+         double height,
+         double dpi,
+         PlotSizeBehavior sizeBehavior,
+         const core::FilePath& plotFolder,
+         const std::string& chunkGraphicsBackend);
    void disconnect();
    void onExprComplete();
 private:
@@ -92,6 +98,7 @@ private:
 
    double width_;
    double height_;
+   double dpi_;
 
    std::list<core::json::Value> conditions_;
 };

@@ -61,7 +61,6 @@ public class PackagesPreferencesPane extends PreferencesPane
                                   MirrorsServerOperations server)
    {
       res_ = res;
-      prefs_ = uiPrefs;
       server_ = server;
 
       secondaryReposWidget_ = new SecondaryReposWidget();
@@ -401,7 +400,6 @@ public class PackagesPreferencesPane extends PreferencesPane
    }
 
    private final PreferencesDialogResources res_;
-   private final UserPrefs prefs_;
    private final MirrorsServerOperations server_;
    private final InfoBar infoBar_;
 

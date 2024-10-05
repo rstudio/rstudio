@@ -14,17 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Command;
+import java.util.ArrayList;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 
-import java.util.ArrayList;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Command;
 
 public abstract class WorkbenchPane extends ToolbarPane
                                  implements WorkbenchView,

@@ -227,6 +227,7 @@ void extractChunkIds(const json::Array& chunkOutputs,
    {
       if (chunkOutput.getType() != json::Type::OBJECT)
          continue;
+      
       std::string chunkId;
       if (!json::readObject(chunkOutput.getObject(), kChunkId, chunkId))
       {
