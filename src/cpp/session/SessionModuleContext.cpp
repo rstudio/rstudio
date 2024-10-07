@@ -130,7 +130,8 @@ public:
    
    ~ConsoleInputService()
    {
-      enqueue("!");
+      thread_.interrupt();
+      thread_.timed_join(1);
    }
    
    void enqueue(const std::string& input)
@@ -142,14 +143,24 @@ private:
    
    void run()
    {
+      try
+      {
+         runImpl();
+      }
+      catch (boost::thread_interrupted& e)
+      {
+      }
+   }
+   
+   void runImpl()
+   {
       while (true)
       {
+         boost::this_thread::interruption_point();
+         
          std::string input;
          while (requests_.deque(&input))
          {
-            if (input == "!")
-               return;
-            
             core::http::Response response;
             Error error = session::module_context::sendSessionRequest(
                      "/rpc/console_input",

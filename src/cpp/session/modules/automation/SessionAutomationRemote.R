@@ -415,6 +415,9 @@
 
 .rs.automation.addRemoteFunction("quit", function()
 {
+   # Try to gracefully shut down the browser.
+   self$client$Browser.close()
+   
    # Close the websocket connection.
    self$client$socket$close()
    

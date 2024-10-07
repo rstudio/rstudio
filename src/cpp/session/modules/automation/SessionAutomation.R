@@ -258,7 +258,7 @@
    parentPwd <- parentEnv[["PWD"]]
    
    # Use development configuration if available.
-   serverConfPath <- file.path(parentPwd, "conf/rserver-dev.conf")
+   serverConfigFile <- file.path(parentPwd, "conf/rserver-dev.conf")
    
    # Use isolated server data directory.
    serverDataDir <- tempfile("rstudio-automation-")
@@ -276,13 +276,36 @@
       directory=%s
    ', serverDataDir)
    
-   databaseConfFile <- file.path(serverDataDir, "rserver-database.conf")
-   writeLines(databaseConf, con = databaseConfFile)
+   databaseConfigFile <- file.path(serverDataDir, "rserver-database.conf")
+   writeLines(databaseConf, con = databaseConfigFile)
    
    # Make sure we can resolve the database migration scripts.
    dbMigrationsPath <- file.path(parentPwd, "server/db")
    if (file.exists(dbMigrationsPath))
       Sys.setenv(RS_DB_MIGRATIONS_PATH = dbMigrationsPath)
+   
+   # Generate our rsession configuration file. We do this by appending
+   # 'automation-agent=1' to the configuration file used by this instance.
+   #
+   # TODO: Support custom XDG specifications.
+   rsessionConfigFiles <- c(
+      file.path(parentPwd, "conf/rsession-dev.conf"),
+      "/etc/rstudio/rsession.conf"
+   )
+   
+   rsessionConfig <- NULL
+   for (configFile in rsessionConfigFiles)
+   {
+      if (file.exists(configFile))
+      {
+         rsessionConfig <- readLines(configFile)
+         break
+      }
+   }
+   
+   rsessionConfig <- c(rsessionConfig, "automation-agent=1")
+   rsessionConfigFile <- file.path(serverDataDir, "rsession.conf")
+   writeLines(rsessionConfig, con = rsessionConfigFile)
    
    # Run it in automation mode.
    args <- .rs.stack(mode = "character")
@@ -290,12 +313,13 @@
    args$push("--auth-none", "1")
    args$push("--www-port", "8788")
    args$push("--server-data-dir", shQuote(serverDataDir))
-   args$push("--database-config-file", shQuote(databaseConfFile))
-   if (file.exists(serverConfPath))
-      args$push("--config-file", serverConfPath)
+   args$push("--database-config-file", shQuote(databaseConfigFile))
+   args$push("--rsession-config-file", shQuote(rsessionConfigFile))
+   if (file.exists(serverConfigFile))
+      args$push("--config-file", serverConfigFile)
    
    message("-- Starting automation server ...")
-   message(paste(parentExe, paste(args$data(), collapse = " ")))
+   message("> ", paste(parentExe, paste(args$data(), collapse = " ")))
    withr::with_dir(parentPwd, system2(parentExe, args$data(), wait = FALSE))
    
    # Kill the process on exit
@@ -746,8 +770,10 @@
    if (!is.na(isJenkins))
       quit(status = 0L)
    
+   message("")
    message("- Automated tests have finished running.")
    message("- You can now close this instance of RStudio.")
+   message("")
 })
 
 .rs.addFunction("automation.isClientValid", function(client)
