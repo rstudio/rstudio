@@ -93,7 +93,10 @@ protected:
       "Path to the data directory where RStudio Server will write run-time state.")
       ("server-add-header",
       value<std::vector<std::string>>(&serverAddHeaders_)->default_value(std::vector<std::string>())->multitoken(),
-      "Adds a header to all responses from RStudio Server. This option can be specified multiple times to add multiple headers.");
+      "Adds a header to all responses from RStudio Server. This option can be specified multiple times to add multiple headers.")
+      ("server-run-automation",
+      value<bool>(&serverRunAutomation_)->default_value(false),
+      "Run RStudio's built-in automation tests. Requires a Google Chrome installation.");
 
    pWww->add_options()
       ("www-address",
@@ -253,6 +256,7 @@ public:
    core::FilePath secureCookieKeyFile() const { return core::FilePath(secureCookieKeyFile_); }
    core::FilePath serverDataDir() const { return core::FilePath(serverDataDir_); }
    std::vector<std::string> serverAddHeaders() const { return serverAddHeaders_; }
+   bool serverRunAutomation() const { return serverRunAutomation_; }
    std::string wwwAddress() const { return wwwAddress_; }
    std::string wwwRootPath() const { return wwwRootPath_; }
    std::string wwwLocalPath() const { return wwwLocalPath_; }
@@ -304,6 +308,7 @@ protected:
    std::string secureCookieKeyFile_;
    std::string serverDataDir_;
    std::vector<std::string> serverAddHeaders_;
+   bool serverRunAutomation_;
    std::string wwwAddress_;
    std::string wwwPort_;
    std::string wwwSocket_;

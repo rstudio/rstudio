@@ -126,7 +126,7 @@ core::system::ProcessConfig sessionProcessConfig(
    if (s_launcherToken.empty())
       s_launcherToken = core::system::generateShortenedUuid();
    args.push_back(std::make_pair("--launcher-token", s_launcherToken));
-
+   
    // allow session timeout to be overridden via environment variable
    std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
    if (!timeout.empty())
@@ -206,6 +206,28 @@ core::system::ProcessConfig sessionProcessConfig(
    // Set RPC socket path and secret
    environment.push_back({kServerRpcSocketPathEnvVar, serverRpcSocketPath().getAbsolutePath()});
    environment.push_back({kServerRpcSecretEnvVar, core::socket_rpc::secret()});
+   
+   // if we're running automation, forward the flag
+   if (server::options().serverRunAutomation())
+   {
+      args.push_back(std::make_pair("--automation-agent", "1"));
+      
+      FilePath rootPath;
+      Error error = core::FilePath::tempFilePath("rstudio-automation", rootPath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         rootPath = FilePath("/tmp/rstudio-automation");
+      }
+      
+      error = rootPath.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+      
+      environment.push_back({ "RSTUDIO_CONFIG_HOME", rootPath.completeChildPath("config-home").getAbsolutePath() });
+      environment.push_back({ "RSTUDIO_CONFIG_DIR",  rootPath.completeChildPath("config-dir").getAbsolutePath()  });
+      environment.push_back({ "RSTUDIO_DATA_HOME",   rootPath.completeChildPath("data-home").getAbsolutePath()   });
+   }
 
    // build the config object and return it
    core::system::ProcessConfig config;

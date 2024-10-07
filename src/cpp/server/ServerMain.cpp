@@ -926,7 +926,7 @@ int main(int argc, char * const argv[])
 
          return EXIT_SUCCESS;
       }
-
+      
       // catch unhandled exceptions
       error = core::crash_handler::initialize();
       if (error)
@@ -964,6 +964,20 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
+      // run automation if requested
+      if (options.serverRunAutomation())
+      {
+         core::system::ProcessOptions options;
+         core::system::ProcessCallbacks callbacks;
+         Error error = server::process_supervisor::runProgram(
+                  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                  { "http://localhost:8787" },
+                  options,
+                  callbacks);
+         if (error)
+            LOG_ERROR(error);
+      }
+      
       // wait for signals
       error = waitForSignals();
       if (error)
