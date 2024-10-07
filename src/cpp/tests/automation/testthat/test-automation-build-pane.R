@@ -9,7 +9,7 @@ test_that("we can test a file in the build pane", {
    
    # Create a package project.
    remote$consoleExecuteExpr({
-      projectPath <- tempfile("rstudio", tmpdir = dirname(tempdir()))
+      projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
       usethis::create_package(path = projectPath, open = FALSE)
       .rs.api.openProject(projectPath)
    })

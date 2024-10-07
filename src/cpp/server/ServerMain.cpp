@@ -80,6 +80,14 @@
 #include "ServerXdgVars.hpp"
 #include "ServerLogVars.hpp"
 
+#if defined(__linux__)
+# define kOpenProgram "/usr/bin/xdg-open"
+#elif defined(__APPLE__)
+# define kOpenProgram "/usr/bin/open"
+#elif defined(_WIN32)
+# define kOpenProgram "start"
+#endif
+
 using namespace rstudio;
 using namespace rstudio::core;
 using namespace rstudio::server;
@@ -970,7 +978,7 @@ int main(int argc, char * const argv[])
          core::system::ProcessOptions options;
          core::system::ProcessCallbacks callbacks;
          Error error = server::process_supervisor::runProgram(
-                  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                  kOpenProgram,
                   { "http://localhost:8787" },
                   options,
                   callbacks);

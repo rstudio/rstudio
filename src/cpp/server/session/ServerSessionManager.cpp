@@ -210,7 +210,9 @@ core::system::ProcessConfig sessionProcessConfig(
    // if we're running automation, forward the flag
    if (server::options().serverRunAutomation())
    {
-      args.push_back(std::make_pair("--automation-agent", "1"));
+      static bool s_runAutomation = true;
+      args.push_back(std::make_pair("--run-automation", s_runAutomation ? "1" : "0"));
+      s_runAutomation = false;
       
       FilePath rootPath;
       Error error = core::FilePath::tempFilePath("rstudio-automation", rootPath);
