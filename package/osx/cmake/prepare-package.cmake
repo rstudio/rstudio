@@ -46,6 +46,16 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
       "${RSESSION_BINARY_DIR}/rsession-arm64"
       COPYONLY)
 
+   if(EXISTS "@LICENSEMANAGER_ARM64_PATH@")
+      echo("Found arm64 license-manager binary: '@LICENSEMANAGER_ARM64_PATH@'")
+
+      # copy arm64 license-manager binary
+      configure_file(
+         "@LICENSEMANAGER_ARM64_PATH@"
+         "${RSESSION_BINARY_DIR}/license-manager-arm64"
+         COPYONLY)
+   endif()
+
    # copy required Homebrew libraries
    list(APPEND HOMEBREW_LIBS gettext openssl sqlite3)
    if(@RSTUDIO_PRO_BUILD@)
