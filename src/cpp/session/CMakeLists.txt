@@ -857,13 +857,3 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
 endif()
-
-if(APPLE)
-
-   if(RSESSION_ALTERNATE_BUILD)
-      set(RSESSION_DYLIB_PREFIX "@executable_path/../Frameworks/arm64")
-   else()
-      set(RSESSION_DYLIB_PREFIX "@executable_path/../Frameworks")
-   endif()
-
-endif()

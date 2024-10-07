@@ -65,6 +65,7 @@
 - RStudio Desktop now forwards `LD_LIBRARY_PATH` when detecting available R installations (#15044)
 - Fixed an issue with incorrect completions provided in `readline()` context (#15238)
 - Fixed an issue where ghost text could not be inserted in non-chunk parts of an R Markdown / Quarto document (#14507)
+- Fixed Mac Desktop Pro so it starts on an ARM (Mx) Mac that doesn't have Rosetta2 installed (rstudio-pro#3558)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
