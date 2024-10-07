@@ -339,10 +339,12 @@ public class FileTypeRegistry
       FileIconResources icons = ICONS;
 
       register("", TEXT, new ImageResource2x(icons.iconText2x()));
-      register(".env", SH, new ImageResource2x(icons.iconSh2x()));
       register(".Rbuildignore", TEXT, new ImageResource2x(icons.iconText2x()));
       register(".Renviron", SH, new ImageResource2x(icons.iconSh2x()));
       register(".Rprofile", R, new ImageResource2x(icons.iconRprofile2x()));
+      register(".emacs", LISP, new ImageResource2x(icons.iconLisp2x()));
+      register(".env", SH, new ImageResource2x(icons.iconSh2x()));
+      register(".gitignore", GITIGNORE, new ImageResource2x(icons.iconGitignore2x()));
       register(".gitignore", TEXT, new ImageResource2x(icons.iconText2x()));
       register(".lintr", TEXT, new ImageResource2x(icons.iconText2x()));
       register("BUGS", TEXT, new ImageResource2x(icons.iconText2x()));
@@ -479,9 +481,8 @@ public class FileTypeRegistry
       register("*.xml", XML, new ImageResource2x(icons.iconXml2x()));
       register("*.yaml", YAML, new ImageResource2x(icons.iconYaml2x()));
       register("*.yml", YAML, new ImageResource2x(icons.iconYaml2x()));
-      register(".emacs", LISP, new ImageResource2x(icons.iconLisp2x()));
-      register(".gitignore", GITIGNORE, new ImageResource2x(icons.iconGitignore2x()));
 
+      
       registerIcon(".jpg", new FileIcon(new ImageResource2x(icons.iconPng2x()), "JPG"));
       registerIcon(".jpeg", new FileIcon(new ImageResource2x(icons.iconPng2x()), "JPEG"));
       registerIcon(".gif", new FileIcon(new ImageResource2x(icons.iconPng2x()), "GIF"));
