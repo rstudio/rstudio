@@ -38,7 +38,6 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
 import org.rstudio.studio.client.application.events.ClipboardActionEvent;
-import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.FileUploadEvent;
 import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
@@ -244,20 +243,6 @@ public class Application implements ApplicationEventHandlers
                appHooks.initialize();
             }
             
-            // if we're running in server mode, take this opportunity to
-            // kick off the automation tests
-            if (sessionInfo.isFirstAutomationAgent() && !Desktop.isDesktop())
-            {
-               events_.addHandler(DeferredInitCompletedEvent.TYPE, new DeferredInitCompletedEvent.Handler()
-               {
-                  @Override
-                  public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
-                  {
-                     events_.fireEvent(new SendToConsoleEvent(".rs.automation.run()", true));
-                  }
-               });
-            }
-
             // load MathJax
             MathJaxLoader.ensureMathJaxLoaded();
 

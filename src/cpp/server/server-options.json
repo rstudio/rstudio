@@ -19,6 +19,15 @@
       ]
    },
    "options": {
+      "automation": [
+         {
+            "name": "run-automation",
+            "memberName": "runAutomation_",
+            "type": "bool",
+            "defaultValue": false,
+            "description": "Run RStudio's built-in automation tests. Requires a Google Chrome installation."
+         }
+      ],
       "verify": [
          {
             "name": "verify-installation",
@@ -95,13 +104,6 @@
             "isMultitoken": true,
             "defaultValue": null,
             "description": "Adds a header to all responses from RStudio Server. This option can be specified multiple times to add multiple headers."
-         },
-         {
-            "name": "server-run-automation",
-            "memberName": "serverRunAutomation_",
-            "type": "bool",
-            "defaultValue": false,
-            "description": "Run RStudio's built-in automation tests. Requires a Google Chrome installation."
          }
       ],
       "www": [

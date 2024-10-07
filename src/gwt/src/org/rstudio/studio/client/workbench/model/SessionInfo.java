@@ -697,10 +697,6 @@ public class SessionInfo extends JavaScriptObject
       return this.is_automation_agent;
    }-*/;
    
-   public final native boolean isFirstAutomationAgent() /*-{
-      return this.is_first_automation_agent;
-   }-*/;
-   
 
    private static final ModelConstants constants_ = GWT.create(ModelConstants.class);
 }

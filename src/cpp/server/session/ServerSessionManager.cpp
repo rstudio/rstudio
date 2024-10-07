@@ -208,7 +208,7 @@ core::system::ProcessConfig sessionProcessConfig(
    environment.push_back({kServerRpcSecretEnvVar, core::socket_rpc::secret()});
    
    // if we're running automation, forward the flag
-   if (server::options().serverRunAutomation())
+   if (server::options().runAutomation())
    {
       static bool s_runAutomation = true;
       args.push_back(std::make_pair("--run-automation", s_runAutomation ? "1" : "0"));

@@ -972,14 +972,26 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // run automation if requested
-      if (options.serverRunAutomation())
+      // if we're running automation, open a browser instance and
+      // navigate to the RStudio Server instance URL to initiate
+      // the automated tests
+      if (options.runAutomation())
       {
+         std::string address = options.wwwAddress();
+         std::string port = options.wwwPort();
+         if (port.empty())
+         {
+            Error error = systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+            LOG_ERROR(error);
+            return EXIT_FAILURE;
+         }
+         
+         std::string url = fmt::format("http://{}:{}", address, port);
          core::system::ProcessOptions options;
          core::system::ProcessCallbacks callbacks;
          Error error = server::process_supervisor::runProgram(
                   kOpenProgram,
-                  { "http://localhost:8787" },
+                  { url },
                   options,
                   callbacks);
          if (error)
