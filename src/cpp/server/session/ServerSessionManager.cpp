@@ -20,19 +20,21 @@
 #include <boost/format.hpp>
 
 #include <shared_core/SafeConvert.hpp>
+
 #include <core/SocketRpc.hpp>
+#include <core/system/System.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
 #include <core/json/JsonRpc.hpp>
 
-#include <monitor/MonitorClient.hpp>
 #include <session/SessionConstants.hpp>
+
+#include <monitor/MonitorClient.hpp>
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerPaths.hpp>
 #include <server/ServerErrorCategory.hpp>
-
 #include <server/auth/ServerValidateUser.hpp>
 
 #include "../ServerREnvironment.hpp"
@@ -210,25 +212,26 @@ core::system::ProcessConfig sessionProcessConfig(
    // if we're running automation, forward the flag
    if (server::options().runAutomation())
    {
+      // only trigger the automation run with the first rsession that's launched
       static bool s_runAutomation = true;
       args.push_back(std::make_pair("--run-automation", s_runAutomation ? "1" : "0"));
       s_runAutomation = false;
       
-      FilePath rootPath;
-      Error error = core::FilePath::tempFilePath("rstudio-automation", rootPath);
-      if (error)
-      {
-         LOG_ERROR(error);
-         rootPath = FilePath("/tmp/rstudio-automation");
-      }
-      
-      error = rootPath.ensureDirectory();
+      // make sure automation tests run with unique blank slate for prefs
+      std::string uniqueId = core::system::generateUuid();
+      FilePath rootPath = FilePath("/tmp/rstudio-automation").completePath(uniqueId);
+      Error error = rootPath.ensureDirectory();
       if (error)
          LOG_ERROR(error);
       
       environment.push_back({ "RSTUDIO_CONFIG_HOME", rootPath.completeChildPath("config-home").getAbsolutePath() });
       environment.push_back({ "RSTUDIO_CONFIG_DIR",  rootPath.completeChildPath("config-dir").getAbsolutePath()  });
       environment.push_back({ "RSTUDIO_DATA_HOME",   rootPath.completeChildPath("data-home").getAbsolutePath()   });
+      
+      // forward project root, so development automation tests can be discovered
+      std::string projectRoot = core::system::getenv("RSTUDIO_PROJECT_ROOT");
+      if (!projectRoot.empty())
+         environment.push_back({ "RSTUDIO_AUTOMATION_ROOT", projectRoot });
    }
 
    // build the config object and return it

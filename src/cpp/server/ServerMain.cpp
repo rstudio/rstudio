@@ -978,6 +978,11 @@ int main(int argc, char * const argv[])
       if (options.runAutomation())
       {
          std::string address = options.wwwAddress();
+         if (address == "0.0.0.0")
+         {
+            address = "localhost";
+         }
+         
          std::string port = options.wwwPort();
          if (port.empty())
          {

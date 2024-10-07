@@ -251,17 +251,52 @@
          return(TRUE)
    }
    
-   # See if we can figure out how the parent was launched, and use that
-   # to infer whether we can launch the automation helper.
+   # Get the path to the rserver executable.
    parentHandle <- ps::ps_parent()
    parentEnv <- ps::ps_environ(parentHandle)
+   parentExe <- ps::ps_exe(parentHandle)
    parentPwd <- parentEnv[["PWD"]]
-   automationScript <- file.path(parentPwd, "rserver-automation")
-   if (!file.exists(automationScript))
-      stop(automationScript, " does not exist.")
    
-   message("-- Starting rserver-automation ...")
-   withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
+   # Use development configuration if available.
+   serverConfPath <- file.path(parentPwd, "conf/rserver-dev.conf")
+   
+   # Use isolated server data directory.
+   serverDataDir <- tempfile("rstudio-automation-")
+   .rs.ensureDirectory(serverDataDir)
+   
+   withr::local_envvar(
+      RSTUDIO_CONFIG_HOME = file.path(serverDataDir, "config-home"),
+      RSTUDIO_CONFIG_DIR  = file.path(serverDataDir, "config-dir"),
+      RSTUDIO_DATA_HOME   = file.path(serverDataDir, "data-home")
+   )
+   
+   # Use a local database file.
+   databaseConf <- .rs.heredoc('
+      provider=sqlite
+      directory=%s
+   ', serverDataDir)
+   
+   databaseConfFile <- file.path(serverDataDir, "rserver-database.conf")
+   writeLines(databaseConf, con = databaseConfFile)
+   
+   # Make sure we can resolve the database migration scripts.
+   dbMigrationsPath <- file.path(parentPwd, "server/db")
+   if (file.exists(dbMigrationsPath))
+      Sys.setenv(RS_DB_MIGRATIONS_PATH = dbMigrationsPath)
+   
+   # Run it in automation mode.
+   args <- .rs.stack(mode = "character")
+   args$push("--server-user", Sys.info()[["user"]])
+   args$push("--auth-none", "1")
+   args$push("--www-port", "8788")
+   args$push("--server-data-dir", shQuote(serverDataDir))
+   args$push("--database-config-file", shQuote(databaseConfFile))
+   if (file.exists(serverConfPath))
+      args$push("--config-file", serverConfPath)
+   
+   message("-- Starting automation server ...")
+   message(paste(parentExe, paste(args$data(), collapse = " ")))
+   withr::with_dir(parentPwd, system2(parentExe, args$data(), wait = FALSE))
    
    # Kill the process on exit
    reg.finalizer(globalenv(), .rs.automation.killAutomationServer, onexit = TRUE)
