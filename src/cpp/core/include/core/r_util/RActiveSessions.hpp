@@ -46,7 +46,7 @@ constexpr const char * kSessionStorageRpc = "/storage/session_metadata";
 
 // Methods for the RPC
 constexpr const char * kSessionStorageReadOp = "read";
-constexpr const char * kSessionStroageReadAllOp = "read_all";
+constexpr const char * kSessionStorageReadAllOp = "read_all";
 constexpr const char * kSessionStorageWriteOp = "write";
 constexpr const char * kSessionStorageCountOp = "count";
 constexpr const char * kSessionStorageDeleteOp = "delete";
