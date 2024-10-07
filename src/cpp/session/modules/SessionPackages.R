@@ -694,7 +694,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    isPpm <-
       grepl("^\\Qhttp://rspm/\\E", cran, perl = TRUE) ||
       grepl("^\\Qhttps://packagemanager.posit.co/\\E", cran, perl = TRUE) ||
-      grepl("^\\Qhttps://packagemanager.rstudio.com/\\E", cran, perl = TRUE)
+      grepl("^\\Qhttps://packagemanager.rstudio.com/\\E", cran, perl = TRUE) ||
+      grepl("^\\Qhttps://p3m.dev/\\E", cran, perl = TRUE)
    
    if (isPpm)
       cran <- "https://cloud.R-project.org"

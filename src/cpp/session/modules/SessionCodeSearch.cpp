@@ -942,6 +942,7 @@ private:
       
       std::string filename = filePath.getFilename();
       bool hasKnownFilename =
+            filename == ".env" ||
             filename == "CITATION" ||
             filename == "DESCRIPTION" ||
             filename == "Dockerfile" ||
