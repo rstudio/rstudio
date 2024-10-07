@@ -1034,6 +1034,7 @@
             },
             "default": [
                 ".circleci",
+                ".env",
                 ".gitattributes",
                 ".github",
                 ".gitignore",

@@ -108,6 +108,7 @@ MimeType s_mimeTypes[] =
       { "py",           "text/x-python" },
       { "smk",          "text/x-python" },
       { "sh",           "text/x-shell" },
+      { "env",          "text/x-shell" },
       { "sql",          "text/x-sql" },
       { "stan",         "text/x-stan" },
       { "clj",          "text/x-clojure" },
