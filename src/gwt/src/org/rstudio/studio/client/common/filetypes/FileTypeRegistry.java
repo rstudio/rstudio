@@ -345,7 +345,6 @@ public class FileTypeRegistry
       register(".emacs", LISP, new ImageResource2x(icons.iconLisp2x()));
       register(".env", SH, new ImageResource2x(icons.iconSh2x()));
       register(".gitignore", GITIGNORE, new ImageResource2x(icons.iconGitignore2x()));
-      register(".gitignore", TEXT, new ImageResource2x(icons.iconText2x()));
       register(".lintr", TEXT, new ImageResource2x(icons.iconText2x()));
       register("BUGS", TEXT, new ImageResource2x(icons.iconText2x()));
       register("CHANGELOG", TEXT, new ImageResource2x(icons.iconText2x()));
