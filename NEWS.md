@@ -22,6 +22,7 @@
 - Rename in Scope now operates across chunks within R Markdown and Quarto documents (#4961)
 - RStudio now respects the chunk 'dpi' option when generating plots in R Markdown / Quarto documents (#11649)
 - RStudio now supports the display of an HTML table of contents for R help files when `options(help.htmltoc = TRUE)` is set (#14523)
+- RStudio now includes `.env` files in the fuzzy finder, and also displays these files in the Files pane
 
 #### Posit Workbench
 
