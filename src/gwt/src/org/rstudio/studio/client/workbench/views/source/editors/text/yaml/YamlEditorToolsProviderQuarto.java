@@ -19,6 +19,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.Version;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -86,6 +87,10 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
    
    private boolean isQuartoBrandYaml(String filename)
    {
+      // only supported with recent quarto releases
+      if (Version.compare(config_.version, "1.6.24") < 0)
+         return false;
+      
       return filename.equals("_brand.yml") ||
              filename.equals("_brand.yaml");
    }
