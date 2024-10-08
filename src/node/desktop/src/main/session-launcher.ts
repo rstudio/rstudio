@@ -152,6 +152,7 @@ export class SessionLauncher {
     private confPath: FilePath,
     private filename: FilePath,
     private appLaunch: ApplicationLaunch,
+    private windowAllClosedHandler: ((event: Event) => void) | null
   ) {
     const splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 500;
     if (process.env.RS_NO_SPLASH) {
@@ -249,6 +250,11 @@ export class SessionLauncher {
 
       // winston logging package emits warnings if we don't have any registered transport
       logger().ensureTransport();
+    }
+
+    if (this.windowAllClosedHandler) {
+      app.removeListener('window-all-closed', this.windowAllClosedHandler);
+      this.windowAllClosedHandler = null;
     }
 
     // show the window (but don't if we are doing a --run-diagnostics)
