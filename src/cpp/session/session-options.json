@@ -731,6 +731,15 @@
             "description": "Specifies the path to gnugrep utilities (Windows-only)."
          },
          {
+            "name": "external-msysssh-path",
+            "type": "core::FilePath",
+            "memberName": "msysSshPath_",
+            "defaultValue": "bin/msys-ssh-1000-18",
+            "description": "Specifies the path to msys_ssh utilities (Windows-only).",
+            "isDeprecated": true,
+            "isHidden": true
+         },
+         {
             "name": "external-sumatra-path",
             "type": "core::FilePath",
             "memberName": "sumatraPath_",
