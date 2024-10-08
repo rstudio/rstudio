@@ -78,4 +78,4 @@
 
 ### Deprecated / Removed
 - Removed user preference for turning off focus indicator rectangles (#14352)
-
+- Removed msys-ssh client from Windows Desktop install and stopped setting RSTUDIO_MSYS_SSH environment variable (rstudio-pro#6880)
