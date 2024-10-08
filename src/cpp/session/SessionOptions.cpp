@@ -309,7 +309,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePath(resourcePath_, &consoleIoPath_);
    resolvePath(resourcePath_, &gnudiffPath_);
    resolvePath(resourcePath_, &gnugrepPath_);
-   resolvePath(resourcePath_, &msysSshPath_);
    resolvePath(resourcePath_, &sumatraPath_);
    resolvePath(resourcePath_, &winutilsPath_);
    resolvePath(resourcePath_, &winptyPath_);
