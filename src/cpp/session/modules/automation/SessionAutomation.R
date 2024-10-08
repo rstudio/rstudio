@@ -334,19 +334,6 @@
    mode <- match.arg(mode)
    port <- .rs.nullCoalesce(port, if (mode == "server") 9999L else 9998L)
    
-   # Check for an existing session we can attach to.
-   baseUrl <- sprintf("http://localhost:%i", port)
-   jsonVersionUrl <- file.path(baseUrl, "json/version")
-   response <- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
-   if (!inherits(response, "error"))
-      return(.rs.automation.attach(baseUrl, mode))
-   
-   # No existing session; start a new one and attach to it.
-   appPath <- .rs.nullCoalesce(appPath, {
-      defaultAppPath <- .rs.automation.applicationPath(mode)
-      Sys.getenv("RSTUDIO_AUTOMATION_EXE", unset = defaultAppPath)
-   })
-   
    # Set up environment for newly-launched RStudio instance.
    envVars <- as.list(Sys.getenv())
    
@@ -396,6 +383,27 @@
    # Avoid crashing on arm64 Linux.
    envVars[["RSTUDIO_QUERY_FONTS"]] <- "0"
    
+   # Make sure we have a running rserver-automation instance.
+   if (mode == "server")
+   {
+      withr::with_envvar(envVars, {
+         .rs.automation.ensureRunningServerInstance(rootDir)
+      })
+   }
+   
+   # Check for an existing session we can attach to.
+   baseUrl <- sprintf("http://localhost:%i", port)
+   jsonVersionUrl <- file.path(baseUrl, "json/version")
+   response <- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
+   if (!inherits(response, "error"))
+      return(.rs.automation.attach(baseUrl, mode))
+   
+   # No existing session; start a new one and attach to it.
+   appPath <- .rs.nullCoalesce(appPath, {
+      defaultAppPath <- .rs.automation.applicationPath(mode)
+      Sys.getenv("RSTUDIO_AUTOMATION_EXE", unset = defaultAppPath)
+   })
+   
    # Build argument list.
    # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
    
@@ -419,14 +427,6 @@
          "http://localhost:8788"
       )
    )
-   
-   # Make sure we have a running rserver-automation instance.
-   if (mode == "server")
-   {
-      withr::with_envvar(envVars, {
-         .rs.automation.ensureRunningServerInstance(rootDir)
-      })
-   }
    
    # Start up RStudio (or Chrome in "server" mode).
    process <- withr::with_envvar(envVars, {
