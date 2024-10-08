@@ -2416,7 +2416,7 @@ Error runProcess(const std::string& path,
 
    // allocate ProcessArgs on heap so memory stays around after we exec
    // (some systems including OSX seem to require this)
-   core::system::ProcessArgs* pProcessArgs = new core::system::ProcessArgs(argVector);
+   ProcessArgs* pProcessArgs = new ProcessArgs(argVector);
 
    // execute child
    ::execve(path.c_str(), pProcessArgs->args(), pEnvironment->args());
