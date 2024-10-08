@@ -1855,7 +1855,12 @@ Error sendSignalToSpecifiedChildProcesses(const std::set<std::string>& procNames
    std::vector<pid_t> pidsToKill;
    for (const auto& proc : procs)
    {
-      if (procNames.count(proc.exe) != 0)
+      std::string exe = proc.exe;
+      auto lastSlashIndex = exe.find_last_of('/');
+      if (lastSlashIndex != std::string::npos)
+         exe = exe.substr(lastSlashIndex + 1);
+      
+      if (procNames.count(exe) != 0)
          pidsToKill.push_back(proc.pid);
    }
 

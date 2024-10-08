@@ -414,7 +414,7 @@ Error waitForSignals()
       return systemError(result, ERROR_LOCATION);
 
    // wait for child exits
-   for(;;)
+   for (;;)
    {
       // perform wait
       int sig = 0;
@@ -432,18 +432,19 @@ Error waitForSignals()
       else if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM)
       {
          LOG_DEBUG_MESSAGE("Received termination signal: " + std::to_string(sig));
-         //
+
          // Here is where we can perform server cleanup e.g.
          // closing pam sessions
-         //
 
          // send SIGTERM signal to specific Workbench child processes
          // this way user processes will not receive the signal until it traverses the tree
-         std::set<std::string> interruptProcs =  {"rsession",
-                                                   "rserver-launcher",
-                                                   "rstudio-launcher",
-                                                   "rworkspaces",
-                                                   "rserver-monitor"};
+         std::set<std::string> interruptProcs = {
+            "rserver-launcher",
+            "rserver-monitor"
+            "rsession",
+            "rstudio-launcher",
+            "rworkspaces",
+         };
 
          Error error = core::system::sendSignalToSpecifiedChildProcesses(interruptProcs, SIGTERM);
          if (error)
@@ -460,23 +461,58 @@ Error waitForSignals()
             LOG_INFO_MESSAGE(message);
          }
 
+         // wait for rsession processes to exit; they need to talk to rserver
+         // during suspend so give them a chance to do so
+         for (int i = 0; i < 10; i++)
+         {
+            // TODO: Make this work on macOS.
+            std::vector<system::ProcessInfo> procInfos;
+            error = core::system::getChildProcesses(&procInfos, false);
+            if (error)
+            {
+               LOG_ERROR(error);
+               break;
+            }
+
+            bool hasSession = false;
+            for (auto&& procInfo : procInfos)
+            {
+               std::string exe = procInfo.exe;
+               auto lastSlashIndex = exe.find_last_of('/');
+               if (lastSlashIndex != std::string::npos)
+                  exe = exe.substr(lastSlashIndex + 1);
+
+               if (exe == "rsession")
+               {
+                  hasSession = true;
+                  break;
+               }
+            }
+            
+            if (hasSession)
+            {
+               ::sleep(1);
+               continue;
+            }
+            
+            break;
+         }
+
          // call overlay shutdown
          overlay::shutdown();
 
          // clear the signal mask
          error = core::system::clearSignalMask();
-         if (error) {
+         if (error)
             LOG_ERROR(error);
-         }
 
          // reset the signal to its default
          struct sigaction sa;
          ::memset(&sa, 0, sizeof sa);
          sa.sa_handler = SIG_DFL;
          int result = ::sigaction(sig, &sa, nullptr);
-         if (result != 0) {
+         if (result != 0)
             LOG_ERROR(systemError(result, ERROR_LOCATION));
-         }
 
          // re-raise the signal
          ::kill(::getpid(), sig);
@@ -490,11 +526,13 @@ Error waitForSignals()
          // forward signal to specific child processes
          // this will allow them to also reload their configuration / logging if applicable
          // care is taken not to send errant SIGHUP signals to processes we don't control
-         std::set<std::string> reloadableProcs =  {"rsession",
-                                                   "rserver-launcher",
-                                                   "rstudio-launcher",
-                                                   "rworkspaces",
-                                                   "rserver-monitor"};
+         std::set<std::string> reloadableProcs = {
+            "rsession",
+            "rserver-launcher",
+            "rstudio-launcher",
+            "rworkspaces",
+            "rserver-monitor"
+         };
 
          Error error = core::system::sendSignalToSpecifiedChildProcesses(reloadableProcs, SIGHUP);
          if (error)
