@@ -376,7 +376,7 @@ protected:
       value<std::string>(&gnugrepPath_)->default_value("bin/gnugrep/3.0"),
       "Specifies the path to gnugrep utilities (Windows-only).")
       ("external-msysssh-path",
-      value<std::string>(&msysSshPath_)->default_value("bin/msys-ssh-1000-18"),
+      value<std::string>(&deprecatedMsysSshPath_)->default_value("bin/msys-ssh-1000-18"),
       "Specifies the path to msys_ssh utilities (Windows-only).")
       ("external-sumatra-path",
       value<std::string>(&sumatraPath_)->default_value("bin/sumatra"),
@@ -557,7 +557,7 @@ public:
    core::FilePath consoleIoPath() const { return core::FilePath(consoleIoPath_); }
    core::FilePath gnudiffPath() const { return core::FilePath(gnudiffPath_); }
    core::FilePath gnugrepPath() const { return core::FilePath(gnugrepPath_); }
-   core::FilePath msysSshPath() const { return core::FilePath(msysSshPath_); }
+   core::FilePath deprecatedMsysSshPath() const { return core::FilePath(deprecatedMsysSshPath_); }
    core::FilePath sumatraPath() const { return core::FilePath(sumatraPath_); }
    core::FilePath winutilsPath() const { return core::FilePath(winutilsPath_); }
    core::FilePath hunspellDictionariesPath() const { return core::FilePath(hunspellDictionariesPath_); }
@@ -676,7 +676,7 @@ protected:
    std::string consoleIoPath_;
    std::string gnudiffPath_;
    std::string gnugrepPath_;
-   std::string msysSshPath_;
+   std::string deprecatedMsysSshPath_;
    std::string sumatraPath_;
    std::string winutilsPath_;
    std::string hunspellDictionariesPath_;
