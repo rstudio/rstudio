@@ -336,10 +336,6 @@ Error createSshKey(const json::JsonRpcRequest& request,
    // set HOME to USERPROFILE
    core::system::setHomeToUserProfile(&childEnv);
 
-   // add msys_ssh to path
-   core::system::addToPath(&childEnv,
-                           session::options().msysSshPath().getAbsolutePath());
-
    options.environment = childEnv;
 #endif
 
