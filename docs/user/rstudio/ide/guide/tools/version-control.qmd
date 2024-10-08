@@ -163,9 +163,7 @@ In many cases the authentication for an SSH connection is done using public/priv
 
 To make working with SSH key pairs more straightforward the RStudio Version Control options panel can be used to both create new SSH public/private key pairs as well as view and copy the current SSH public key.
 
-While Linux and Mac OSX both include SSH as part of the base system, Windows does not. As a result the standard Windows distribution of Git (Git for Windows, referenced above) also includes an SSH client.
-
-Subversion for Windows however does not include an SSH client. To overcome this limitation, RStudio includes a version of the Msys SSH client within the `RStudio\bin\msys_ssh directory`. This directory is automatically added to the PATH (for RStudio only rather than system-wide) and is also available on the PATH for command prompt windows opened using the **Tools** \> **Shell** command. A Windows shortcut (SSH Command Prompt) is also provided within the `RStudio\bin\msys_ssh` directory to launch a console from the Desktop that supports the svn+ssh protocol.
+Linux and Mac OSX both include SSH as part of the base system. Windows-10 and newer also include an SSH client as an optional Windows component, as does the standard Windows distribution of Git (Git for Windows, referenced above).
 
 ### Git Commit Signing
 
