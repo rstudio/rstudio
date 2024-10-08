@@ -32,9 +32,9 @@ import com.google.inject.Inject;
 
 import elemental2.core.JsObject;
 import elemental2.promise.IThenable;
-import elemental2.promise.Promise;
 import elemental2.promise.IThenable.ThenOnFulfilledCallbackFn;
 import elemental2.promise.IThenable.ThenOnRejectedCallbackFn;
+import elemental2.promise.Promise;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
@@ -62,7 +62,9 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
       {
          String filename = FileSystemItem.getNameFromPath(StringUtil.notNull(path));
          return SourceDocument.XT_QUARTO_DOCUMENT.equals(extendedType) ||
-                isQuartoProjectYaml(filename) ||  isQuartoExtensionYaml(filename) ||
+                isQuartoProjectYaml(filename) || 
+                isQuartoExtensionYaml(filename) ||
+                isQuartoBrandYaml(filename) ||
                 isQuartoMetadataYaml(path);
       }
       else
@@ -80,6 +82,12 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
    {
       return filename.equals("_extension.yml") ||
              filename.equals("_extension.yaml");
+   }
+   
+   private boolean isQuartoBrandYaml(String filename)
+   {
+      return filename.equals("_brand.yml") ||
+             filename.equals("_brand.yaml");
    }
    
    private boolean isQuartoMetadataYaml(String path)
