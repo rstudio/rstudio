@@ -415,8 +415,10 @@
 
 .rs.automation.addRemoteFunction("quit", function()
 {
-   # Try to gracefully shut down the browser.
-   self$client$Browser.close()
+   # Try to gracefully shut down the browser. We use a timeout
+   # so we can close the socket cleanly while the browser window
+   # is still alive.
+   self$jsExec('setTimeout(function() { window.close(); }, 1000)')
    
    # Close the websocket connection.
    self$client$socket$close()
