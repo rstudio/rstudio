@@ -26,7 +26,7 @@ import { Application } from '../../../src/main/application';
 import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 
 function getNewLauncher(): SessionLauncher {
-  return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch());
+  return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch(), null);
 }
 
 describe('SessionLauncher', () => {
