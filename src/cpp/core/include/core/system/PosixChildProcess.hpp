@@ -93,8 +93,14 @@ Error forkAndRun(const boost::function<int(void)>& func,
 Error forkAndRunPrivileged(const boost::function<int(void)>& func);
 
 // sends a signal to all child processes with the specified process name
-Error sendSignalToSpecifiedChildProcesses(const std::set<std::string>& procNames,
-                                          int signal);
+Error sendSignalToSpecifiedChildProcesses(
+      const std::set<std::string>& procNames,
+      int signal);
+
+// sends a signal to all child process with the specified pids
+Error sendSignalToSpecifiedChildProcesses(
+      const std::vector<pid_t>& pids,
+      int signal);
 
 } // namespace system
 } // namespace core

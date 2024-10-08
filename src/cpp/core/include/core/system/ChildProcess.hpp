@@ -16,10 +16,10 @@
 #ifndef CORE_SYSTEM_CHILD_PROCESS_HPP
 #define CORE_SYSTEM_CHILD_PROCESS_HPP
 
-#include <core/system/Process.hpp>
-
 #include <shared_core/Error.hpp>
+
 #include <core/Log.hpp>
+#include <core/system/Process.hpp>
 
 namespace rstudio {
 namespace core {

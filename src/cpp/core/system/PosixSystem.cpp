@@ -1918,7 +1918,11 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
    return Success();
 }
 
-Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, bool suppressErrors, ProcessFilter filter, bool populateUsername)
+Error processInfo(const std::string& process,
+                  std::vector<ProcessInfo>* pInfo,
+                  bool suppressErrors,
+                  ProcessFilter filter,
+                  bool populateUsername)
 {
    // use ps to capture process info
    // output format
@@ -2412,8 +2416,7 @@ Error runProcess(const std::string& path,
 
    // allocate ProcessArgs on heap so memory stays around after we exec
    // (some systems including OSX seem to require this)
-   core::system::ProcessArgs* pProcessArgs = new core::system::ProcessArgs(
-                                                               argVector);
+   core::system::ProcessArgs* pProcessArgs = new core::system::ProcessArgs(argVector);
 
    // execute child
    ::execve(path.c_str(), pProcessArgs->args(), pEnvironment->args());
@@ -2426,10 +2429,63 @@ Error runProcess(const std::string& path,
    return error;
 }
 
-Error getChildProcesses(std::vector<ProcessInfo> *pOutProcesses, bool populateUsername)
+Error getChildProcesses(
+      std::vector<ProcessInfo>* pOutProcesses,
+      bool populateUsername)
 {
    return getChildProcesses(::getpid(), pOutProcesses, populateUsername);
 }
+
+#ifdef __APPLE__
+
+Error getChildProcesses(
+      pid_t pid,
+      std::vector<ProcessInfo>* pOutProcesses,
+      bool populateUsername)
+{
+   if (!pOutProcesses)
+      return systemError(EINVAL, ERROR_LOCATION);
+
+   // get child processes
+   const std::size_t N = 1024;
+   std::vector<pid_t> pids;
+   pids.resize(N);
+   int count = proc_listchildpids(pid, pids.data(), N * sizeof(pid_t));
+   if (count == -1)
+      return systemError(errno, ERROR_LOCATION);
+   
+   // build process info
+   std::vector<ProcessInfo> processes;
+   for (auto i = 0; i < count; i++)
+   {
+      // Get process info for each child
+      struct proc_bsdshortinfo procInfo;
+      int result = proc_pidinfo(pids[i], PROC_PIDT_SHORTBSDINFO, 0, &procInfo, sizeof(procInfo));
+      if (result == -1)
+         continue;
+      
+      ProcessInfo info;
+      info.pid = procInfo.pbsi_pid;
+      info.ppid = procInfo.pbsi_ppid;
+      info.pgrp = procInfo.pbsi_gid;
+      info.exe = procInfo.pbsi_comm;
+      info.uid_ = procInfo.pbsi_uid;
+      info.uidSet_ = true;
+      
+      if (populateUsername)
+      {
+         struct passwd* pwd = getpwuid(procInfo.pbsi_uid);
+         info.username = pwd->pw_name;
+      }
+      
+      processes.push_back(info);
+   }
+
+   *pOutProcesses = processes;
+   return Success();
+}
+
+#else
 
 Error getChildProcesses(pid_t pid,
                         std::vector<ProcessInfo> *pOutProcesses,
@@ -2458,6 +2514,8 @@ Error getChildProcesses(pid_t pid,
 
    return Success();
 }
+
+#endif
 
 Error terminateChildProcesses()
 {

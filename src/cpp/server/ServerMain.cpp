@@ -433,20 +433,50 @@ Error waitForSignals()
       {
          LOG_DEBUG_MESSAGE("Received termination signal: " + std::to_string(sig));
 
-         // Here is where we can perform server cleanup e.g.
-         // closing pam sessions
+         Error error;
 
          // send SIGTERM signal to specific Workbench child processes
          // this way user processes will not receive the signal until it traverses the tree
          std::set<std::string> interruptProcs = {
             "rserver-launcher",
-            "rserver-monitor"
+            "rserver-monitor",
             "rsession",
             "rstudio-launcher",
-            "rworkspaces",
+            "rworkspaces"
          };
-
-         Error error = core::system::sendSignalToSpecifiedChildProcesses(interruptProcs, SIGTERM);
+         
+         // get list of child processes
+         std::vector<system::ProcessInfo> procInfos;
+         error = core::system::getChildProcesses(&procInfos, false);
+         if (error)
+         {
+            LOG_ERROR(error);
+            break;
+         }
+         
+         // pull out pids matching our process names
+         std::vector<pid_t> pids;
+         for (auto&& procInfo : procInfos)
+            if (interruptProcs.count(procInfo.exe))
+               pids.push_back(procInfo.pid);
+         
+         // create a thread that will wait for these processes
+         boost::thread waitThread([=]()
+         {
+            int status = 0;
+            for (pid_t pid : pids)
+            {
+               while (true)
+               {
+                  ::waitpid(pid, &status, 0);
+                  if (WIFEXITED(status))
+                     break;
+               }
+            }
+         });
+         
+         // signal those processes
+         error = core::system::sendSignalToSpecifiedChildProcesses(pids, SIGTERM);
          if (error)
          {
             std::string message = "Error occurred while notifying child processes of ";
@@ -461,42 +491,9 @@ Error waitForSignals()
             LOG_INFO_MESSAGE(message);
          }
 
-         // wait for rsession processes to exit; they need to talk to rserver
-         // during suspend so give them a chance to do so
-         for (int i = 0; i < 10; i++)
-         {
-            // TODO: Make this work on macOS.
-            std::vector<system::ProcessInfo> procInfos;
-            error = core::system::getChildProcesses(&procInfos, false);
-            if (error)
-            {
-               LOG_ERROR(error);
-               break;
-            }
-
-            bool hasSession = false;
-            for (auto&& procInfo : procInfos)
-            {
-               std::string exe = procInfo.exe;
-               auto lastSlashIndex = exe.find_last_of('/');
-               if (lastSlashIndex != std::string::npos)
-                  exe = exe.substr(lastSlashIndex + 1);
-
-               if (exe == "rsession")
-               {
-                  hasSession = true;
-                  break;
-               }
-            }
-            
-            if (hasSession)
-            {
-               ::sleep(1);
-               continue;
-            }
-            
-            break;
-         }
+         // wait for the thread
+         if (!waitThread.timed_join(boost::posix_time::seconds(10)))
+            LOG_WARNING_MESSAGE("Terminating rserver despite remaining child proceses");
 
          // call overlay shutdown
          overlay::shutdown();
@@ -531,7 +528,7 @@ Error waitForSignals()
             "rserver-launcher",
             "rstudio-launcher",
             "rworkspaces",
-            "rserver-monitor"
+            "rserver-monitor",
          };
 
          Error error = core::system::sendSignalToSpecifiedChildProcesses(reloadableProcs, SIGHUP);
