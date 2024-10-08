@@ -103,7 +103,7 @@
 
 .rs.addFunction("automation.onError", function(event)
 {
-   print(event)
+   str(event)
 })
 
 .rs.addFunction("automation.onClose", function(event)
@@ -230,6 +230,9 @@
    for (i in seq_len(nrow(procs)))
    {
       proc <- procs[i, ]
+      if (identical(proc$status, "zombie"))
+         next
+      
       conns <- ps::ps_connections(proc$ps_handle[[1L]])
       if (8788L %in% conns$lport)
       {
@@ -239,13 +242,16 @@
    }
 })
 
-.rs.addFunction("automation.ensureRunningServerInstance", function()
+.rs.addFunction("automation.ensureRunningServerInstance", function(serverDataDir)
 {
    # Check and see if we already have an rserver instance listening.
    procs <- subset(ps::ps(), name == "rserver")
    for (i in seq_len(nrow(procs)))
    {
       proc <- procs[i, ]
+      if (identical(proc$status, "zombie"))
+         next
+      
       conns <- ps::ps_connections(proc$ps_handle[[1L]])
       if (8788L %in% conns$lport)
          return(TRUE)
@@ -259,16 +265,6 @@
    
    # Use development configuration if available.
    serverConfigFile <- file.path(parentPwd, "conf/rserver-dev.conf")
-   
-   # Use isolated server data directory.
-   serverDataDir <- tempfile("rstudio-automation-")
-   .rs.ensureDirectory(serverDataDir)
-   
-   withr::local_envvar(
-      RSTUDIO_CONFIG_HOME = file.path(serverDataDir, "config-home"),
-      RSTUDIO_CONFIG_DIR  = file.path(serverDataDir, "config-dir"),
-      RSTUDIO_DATA_HOME   = file.path(serverDataDir, "data-home")
-   )
    
    # Use a local database file.
    databaseConf <- .rs.heredoc('
@@ -428,7 +424,7 @@
    if (mode == "server")
    {
       withr::with_envvar(envVars, {
-         .rs.automation.ensureRunningServerInstance()
+         .rs.automation.ensureRunningServerInstance(rootDir)
       })
    }
    
