@@ -33,6 +33,12 @@ assign(".rs.symbolLookupEnv", function()
    new.env(parent = .rs.toolsEnv())
 }, envir = .rs.Env)
 
+# platform detection
+assign(".rs.platform.isUnix",    .Platform$OS.type == "unix",         envir = .rs.Env)
+assign(".rs.platform.isWindows", .Platform$OS.type == "windows",      envir = .rs.Env)
+assign(".rs.platform.isLinux",   Sys.info()[["sysname"]] == "Linux",  envir = .rs.Env)
+assign(".rs.platform.isMacos",   Sys.info()[["sysname"]] == "Darwin", envir = .rs.Env)
+
 #' Add a function to the 'tools:rstudio' environment.
 #' 
 #' This environment is placed on the search path, and so is accessible and
@@ -827,7 +833,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
   })
   
   # savehistory
-  .rs.registerReplaceHook("savehistory", "utils", function(original, 
+  .rs.registerReplaceHook("savehistory", "utils", function(original,
                                                            file = ".Rhistory")
   {
     invisible(.Call("rs_saveHistory", file))
@@ -1522,18 +1528,3 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          return(value)
    }
 })
-
-.rs.addFunction("initTools", function()
-{
-   ostype <- .Platform$OS.type
-   info <- Sys.info()
-   envir <- .rs.toolsEnv()
-   
-   assign(".rs.platform.isUnix",    ostype == "unix",              envir = envir)
-   assign(".rs.platform.isWindows", ostype == "windows",           envir = envir)
-   assign(".rs.platform.isLinux",   info[["sysname"]] == "Linux",  envir = envir)
-   assign(".rs.platform.isMacos",   info[["sysname"]] == "Darwin", envir = envir)
-   
-})
-
-.rs.initTools()
