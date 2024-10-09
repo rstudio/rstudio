@@ -353,9 +353,12 @@
    rootDir <- tempfile("rstudio-automation-state-")
    dir.create(rootDir, recursive = TRUE)
    
-   configHome <- file.path(rootDir, "config-home")
-   configDir  <- file.path(rootDir, "config-dir")
-   dataHome   <- file.path(rootDir, "data-home")
+   browserDataDir <- file.path(rootDir, "browser-data")
+   dir.create(browserDataDir, recursive = TRUE, showWarnings = FALSE)
+   
+   configHome  <- file.path(rootDir, "config-home")
+   configDir   <- file.path(rootDir, "config-dir")
+   dataHome    <- file.path(rootDir, "data-home")
    
    envVars[["RSTUDIO_CONFIG_ROOT"]]     <- rootDir
    envVars[["RSTUDIO_CONFIG_HOME"]]     <- configHome
@@ -417,7 +420,7 @@
    args <- c(
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
-      sprintf("--user-data-dir=%s", tempdir()),
+      sprintf("--user-data-dir=%s", shQuote(browserDataDir)),
       if (mode == "desktop") c("--automation-agent"),
       if (mode == "server") c(
          "--no-default-browser-check",
