@@ -153,6 +153,7 @@ test_that("package functions can be debugged after build and reload", {
    
    # All done testing; close the project.
    remote$documentClose()
+   Sy.sleep(1)
    remote$commandExecute("closeProject")
    
 })
