@@ -799,10 +799,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # list all rpc handlers in the tools:rstudio environment
 .rs.addFunction("listJsonRpcHandlers", function()
 {
-   rpcHandlers <- objects("tools:rstudio", 
-                          all.names=TRUE, 
-                          pattern=utils:::glob2rx(".rs.rpc.*"))
-   return (rpcHandlers)
+   objects(
+      name      = "tools:rstudio", 
+      pattern   = utils:::glob2rx(".rs.rpc.*"),
+      all.names = TRUE
+   )
 })
 
 
