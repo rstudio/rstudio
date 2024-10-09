@@ -733,9 +733,11 @@
          {
             "name": "external-msysssh-path",
             "type": "core::FilePath",
-            "memberName": "msysSshPath_",
+            "memberName": "deprecatedMsysSshPath_",
             "defaultValue": "bin/msys-ssh-1000-18",
-            "description": "Specifies the path to msys_ssh utilities (Windows-only)."
+            "description": "Specifies the path to msys_ssh utilities (Windows-only).",
+            "isDeprecated": true,
+            "isHidden": true
          },
          {
             "name": "external-sumatra-path",

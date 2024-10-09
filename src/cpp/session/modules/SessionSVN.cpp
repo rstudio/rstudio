@@ -127,15 +127,6 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
                            session::options().gnudiffPath().getAbsolutePath());
 #endif
 
-   // on windows add msys_ssh to the path if we need ssh
-#ifdef _WIN32
-   if (requiresSsh)
-   {
-      core::system::addToPath(&childEnv,
-                              session::options().msysSshPath().getAbsolutePath());
-   }
-#endif
-
    if (!s_workingDir.isEmpty())
       options.workingDir = s_workingDir;
    else
@@ -161,19 +152,6 @@ core::system::ProcessOptions procOptions()
 {
    return procOptions(s_isSvnSshRepository);
 }
-
-void initEnvironment()
-{
-#ifdef _WIN32
-   r::exec::RFunction sysSetenv("Sys.setenv");
-   sysSetenv.addParam("RSTUDIO_MSYS_SSH",
-                      session::options().msysSshPath().getAbsolutePath());
-   Error error = sysSetenv.call();
-   if (error)
-      LOG_ERROR(error);
-#endif
-}
-
 
 void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
 {
@@ -1838,8 +1816,6 @@ Error augmentSvnIgnore()
 
 Error initialize()
 {
-   initEnvironment();
-
    initSvnBin();
 
    // initialize password manager

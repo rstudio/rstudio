@@ -747,15 +747,6 @@ Section "-Core installation"
                  "/K $\"$INSTDIR\rstudio.exe$\" --run-diagnostics" \
                  "$WINDIR\system32\cmd.exe" 0 \
                  SW_SHOWNORMAL
-
-  ;
-  ; RSTUDIO CHANGE - add shortcut to SSH Command Prompt
-  ;
-  CreateShortCut "$INSTDIR\resources\app\bin\msys_ssh\SSH Command Prompt.lnk" \
-                 "$WINDIR\system32\cmd.exe" \
-                 "/K $\"$INSTDIR\resources\app\bin\msys_ssh\ssh-console.bat$\"" \
-                 "$WINDIR\system32\cmd.exe" 0 \
-                 SW_SHOWNORMAL
   
   ;Read a value from an InstallOptions INI file
   !insertmacro MUI_INSTALLOPTIONS_READ $DO_NOT_ADD_TO_PATH "NSIS.InstallOptions.ini" "Field 2" "State"
@@ -897,7 +888,6 @@ Section "Uninstall"
   ;
   Delete "$SMPROGRAMS\RStudio.lnk" 
   Delete "$INSTDIR\resources\app\bin\Run Diagnostics.lnk"
-  Delete "$INSTDIR\resources\app\bin\msys_ssh\SSH Command Prompt.lnk" 
   RMDir /r "$INSTDIR\resources"
   
   ;Remove the installation directory if it is empty.
