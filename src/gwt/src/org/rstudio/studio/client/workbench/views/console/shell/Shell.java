@@ -73,6 +73,8 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletio
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.events.SuppressNextShellFocusEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
+import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
@@ -109,7 +111,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                               RunCommandWithDebugEvent.Handler,
                               UnhandledErrorEvent.Handler,
                               SuppressNextShellFocusEvent.Handler,
-                              RestartStatusEvent.Handler
+                              RestartStatusEvent.Handler,
+                              HistoryEntriesAddedEvent.Handler
                               
 {
    static interface Binder extends CommandBinder<Commands, Shell>
@@ -199,6 +202,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       eventBus.addHandler(UnhandledErrorEvent.TYPE, this);
       eventBus.addHandler(SuppressNextShellFocusEvent.TYPE, this);
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
+      eventBus.addHandler(HistoryEntriesAddedEvent.TYPE, this);
 
       final CompletionManager completionManager = new RCompletionManager(
             view_.getInputEditorDisplay(),
@@ -784,6 +788,16 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          SessionInfo info = session_.getSessionInfo();
          String prompt = info.getPrompt();
          consolePrompt(prompt, true);
+      }
+   }
+   
+   @Override
+   public void onHistoryEntriesAdded(HistoryEntriesAddedEvent event)
+   {
+      RpcObjectList<HistoryEntry> entries = event.getEntries();
+      for (HistoryEntry entry : entries.toArrayList())
+      {
+         historyManager_.addToHistory(entry.getCommand());
       }
    }
 
