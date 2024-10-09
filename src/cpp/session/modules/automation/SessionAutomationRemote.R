@@ -26,6 +26,19 @@
 .rs.defineVar("automation.remote", new.env(parent = emptyenv()))
 .rs.defineVar("automation.remoteInstance", NULL)
 
+.rs.addFunction("automation.runTest", function(desc, code)
+{
+   on.exit(.rs.automation.remoteInstance$sessionReset(), add = TRUE)
+   
+   withCallingHandlers(
+      testthat::test_that(desc, code),
+      error = function(cnd) {
+         if (interactive())
+            browser()
+      }
+   )
+})
+
 .rs.addFunction("automation.newRemote", function(mode = NULL)
 {
    # Generate the remote instance.
@@ -39,11 +52,7 @@
    # Load testthat, and provide a 'test_that' override which automatically cleans
    # up various state when a test is run.
    library(testthat)
-   .rs.addGlobalFunction("test_that", function(desc, code)
-   {
-      on.exit(.rs.automation.remoteInstance$sessionReset(), add = TRUE)
-      testthat::test_that(desc, code)
-   })
+   assign("test_that", .rs.automation.runTest, envir = globalenv())
    
    # Return the remote instance.
    remote
@@ -410,6 +419,46 @@
       buttonId <- self$domGetNodeId(buttonSelector)
       self$domClickElement(objectId = buttonId)
       TRUE
+   })
+})
+
+.rs.automation.addRemoteFunction("projectCreate", function(type = "")
+{
+   # Create a package project.
+   if (type == "package")
+   {
+      self$consoleExecuteExpr({
+         projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
+         usethis::create_package(path = projectPath, open = FALSE)
+         .rs.api.openProject(projectPath)
+      })
+   }
+   else
+   {
+      stop("unimplemented or unknown project type '", type, "'")
+   }
+   
+   # Wait until the new project is open.
+   Sys.sleep(1)
+   .rs.waitUntil("The new project is opened", function()
+   {
+      tryCatch({
+         jsProjectMenuButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+         grepl("rstudio", jsProjectMenuButton$innerText)
+      }, error = function(e) FALSE)
+   })
+   
+   
+})
+.rs.automation.addRemoteFunction("projectClose", function()
+{
+   self$domClickElement("#rstudio_project_menubutton_toolbar")
+   self$domClickElement("#rstudio_label_close_project_command")
+   
+   .rs.waitUntil("The project has closed", function()
+   {
+      toolbarButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+      .rs.trimWhitespace(toolbarButton$innerText) == "Project: (None)"
    })
 })
 

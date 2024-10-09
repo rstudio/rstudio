@@ -62,13 +62,17 @@ public:
       {
          return wwwPort_;
       }
+      else if (runAutomation_)
+      {
+         return "8989";
+      }
       else if (secure)
       {
-         return std::string("443");
+         return "443";
       }
       else
       {
-         return std::string("8787");
+         return "8787";
       }
    }
 

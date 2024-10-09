@@ -26,7 +26,6 @@
 # Global variable for tracking the active automation agent.
 .rs.setVar("automation.agentProcess", NULL)
 
-
 .rs.addFunction("automation.httrGet", function(url)
 {
    httr::GET(url, config = httr::timeout(1))
@@ -417,10 +416,13 @@
       ps::ps_cwd(ps::ps_parent())
    }
    
+   # NOTE: shQuote is unnecessary below, as we're passing
+   # the constructed arguments to processx which launches
+   # the program directly rather than through a shell
    args <- c(
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
-      sprintf("--user-data-dir=%s", shQuote(browserDataDir)),
+      sprintf("--user-data-dir=%s", browserDataDir),
       if (mode == "desktop") c("--automation-agent"),
       if (mode == "server") c(
          "--no-default-browser-check",

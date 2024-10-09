@@ -4,25 +4,10 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
-
 test_that("we can test a file in the build pane", {
    
-   # Create a package project.
-   remote$consoleExecuteExpr({
-      projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
-      usethis::create_package(path = projectPath, open = FALSE)
-      .rs.api.openProject(projectPath)
-   })
-
-   # Wait until the new project is open.
-   Sys.sleep(1)
-   .rs.waitUntil("The new project is opened", function()
-   {
-      tryCatch({
-         jsProjectMenuButton <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
-         grepl("rstudio", jsProjectMenuButton$innerText)
-      }, error = function(e) FALSE)
-   })
+   # Create a project.
+   remote$projectCreate(type = "package")
    
    # Create and open the test file.
    remote$consoleExecuteExpr({
@@ -51,7 +36,6 @@ test_that("we can test a file in the build pane", {
    expect_match(html, "xtermColor")
    
    # Close the project
-   remote$domClickElement("#rstudio_project_menubutton_toolbar")
-   remote$domClickElement("#rstudio_label_close_project_command")
+   remote$projectClose()
    
 })
