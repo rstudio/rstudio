@@ -827,42 +827,45 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
     system(paste("nautilus", diagPath))
 })
 
-
-.rs.replacePackageBinding("history", "utils", function(...) {
+.rs.addFunction("history", function(max.show = 25, reverse = FALSE, pattern, ...)
+{
    invisible(.Call("rs_activatePane", "history", PACKAGE = "(embedding)"))
 })
 
-.rs.addFunction("registerHistoryFunctions", function() {
-  
-   # loadhistory
-   .rs.replacePackageBinding("loadhistory", "utils", function(file = ".Rhistory")
-   {
-      invisible(.Call("rs_loadHistory", file, PACKAGE = "(embedding)"))
-   }, namespace = TRUE)
+.rs.addFunction("savehistory", function(file = ".Rhistory")
+{
+   invisible(.Call("rs_saveHistory", file, PACKAGE = "(embedding)"))
+})
+
+.rs.addFunction("loadhistory", function(file = ".Rhistory")
+{
+   invisible(.Call("rs_loadHistory", file, PACKAGE = "(embedding)"))
+})
+
+.rs.addFunction("timestamp", function(stamp = date(),
+                                      prefix = "##------ ",
+                                      suffix = " ------##",
+                                      quiet = FALSE)
+{
+   stamps <- paste(prefix, stamp, suffix, sep = "")
    
-   # savehistory
-   .rs.replacePackageBinding("savehistory", "utils", function(file = ".Rhistory")
-   {
-      invisible(.Call("rs_saveHistory", file, PACKAGE = "(embedding)"))
-   }, namespace = TRUE)
+   lapply(stamps, function(stamp) {
+      invisible(.Call("rs_timestamp", stamp, PACKAGE = "(embedding)"))
+   })
    
-   # timestamp
-   .rs.replacePackageBinding("timestamp", "utils", function(stamp = date(),
-                                                            prefix = "##------ ",
-                                                            suffix = " ------##",
-                                                            quiet = FALSE)
-   {
-      stamps <- paste(prefix, stamp, suffix, sep = "")
-      
-      lapply(stamps, function(stamp) {
-         invisible(.Call("rs_timestamp", stamp, PACKAGE = "(embedding)"))
-      })
-      
-      if (!quiet)
-         cat(stamps, sep = "\n")
-      
-      invisible(stamps)
-   }, namespace = TRUE)
+   if (!quiet)
+      cat(stamps, sep = "\n")
+   
+   invisible(stamps)
+})
+
+.rs.replacePackageBinding("history", "utils", .rs.history)
+
+.rs.addFunction("registerHistoryFunctions", function()
+{
+   .rs.replacePackageBinding("savehistory", "utils", .rs.savehistory, namespace = TRUE)
+   .rs.replacePackageBinding("loadhistory", "utils", .rs.loadhistory, namespace = TRUE)
+   .rs.replacePackageBinding("timestamp", "utils", .rs.timestamp, namespace = TRUE)
 })
 
 
