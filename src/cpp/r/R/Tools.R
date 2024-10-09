@@ -611,13 +611,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    original
 })
 
-
-
-.rs.addFunction("registerHookImpl", function(name, package, hook)
-{
-   .rs.replaceBinding(name, package, hook)
-})
-
 # hook an internal R function
 .rs.addFunction("replacePackageBinding", function(name,
                                                   package,
@@ -658,6 +651,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
    # new function definition
    new <- hookFactory(original)
+   
+   # replace the bindings
    .rs.replacePackageBinding(name, package, new, namespace)
 })
 
