@@ -568,6 +568,51 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
 })
 
+.rs.addFunction("replaceBindingImpl", function(envir, binding, value)
+{
+   if (exists(binding, envir = envir, inherits = FALSE))
+   {
+      if (bindingIsLocked(binding, envir))
+      {
+         unlockBinding(binding, envir)
+         on.exit(lockBinding(binding, envir), add = TRUE)
+      }
+   
+      assign(binding, value, envir = envir)
+   }
+})
+
+.rs.addFunction("replaceBinding", function(binding, package, override)
+{
+   # override in namespace
+   if (!requireNamespace(package, quietly = TRUE))
+      stop(sprintf("Failed to load namespace for package '%s'", package))
+   
+   namespace <- asNamespace(package)
+   
+   # get reference to original binding
+   original <- get(binding, envir = namespace)
+   
+   # replace the binding
+   if (is.function(override))
+      environment(override) <- namespace
+   
+   .rs.replaceBindingImpl(namespace, binding, override)
+   
+   # if package is attached, override there as well
+   searchPathName <- paste("package", package, sep = ":")
+   if (searchPathName %in% search()) {
+      env <- as.environment(searchPathName)
+      if (exists(binding, envir = env))
+         .rs.replaceBindingImpl(env, binding, override)
+   }
+   
+   # return original
+   original
+})
+
+
+
 .rs.addFunction("registerHookImpl", function(name, package, hook)
 {
    .rs.replaceBinding(name, package, hook)
@@ -580,20 +625,14 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
                                                   namespace = FALSE)
 {
    # replace in environment on search path
-   .rs.replaceBindingImpl(
-      envir = as.environment(paste("package", package, sep = ":")),
-      name  = name,
-      value = hook
-   )
+   envir <- as.environment(paste("package", package, sep = ":"))
+   .rs.replaceBindingImpl(envir, name, hook)
    
    # remap in function namespace if requested as well
    if (namespace)
    {
-      .rs.replaceBindingImpl(
-         envir = asNamespace(package),
-         name  = name,
-         value = hook
-      )
+      envir <- asNamespace(package)
+      .rs.replaceBindingImpl(envir, name, hook)
    }
 })
 
@@ -1163,48 +1202,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    result <- do.call(mapply, c(c, data, USE.NAMES = FALSE, SIMPLIFY = FALSE))
    names(result) <- names(data[[1]])
    as.data.frame(result, stringsAsFactors = FALSE)
-})
-
-.rs.addFunction("replaceBindingImpl", function(envir, binding, value)
-{
-   if (exists(binding, envir = envir, inherits = FALSE))
-   {
-      if (bindingIsLocked(binding, envir)) {
-         unlockBinding(binding, envir)
-         on.exit(lockBinding(binding, envir), add = TRUE)
-      }
-   
-      assign(binding, value, envir = envir)
-   }
-})
-
-.rs.addFunction("replaceBinding", function(binding, package, override)
-{
-   # override in namespace
-   if (!requireNamespace(package, quietly = TRUE))
-      stop(sprintf("Failed to load namespace for package '%s'", package))
-   
-   namespace <- asNamespace(package)
-   
-   # get reference to original binding
-   original <- get(binding, envir = namespace)
-   
-   # replace the binding
-   if (is.function(override))
-      environment(override) <- namespace
-   
-   .rs.replaceBindingImpl(namespace, binding, override)
-   
-   # if package is attached, override there as well
-   searchPathName <- paste("package", package, sep = ":")
-   if (searchPathName %in% search()) {
-      env <- as.environment(searchPathName)
-      if (exists(binding, envir = env))
-         .rs.replaceBindingImpl(env, binding, override)
-   }
-   
-   # return original
-   original
 })
 
 .rs.addFunction("isDesktop", function() {
