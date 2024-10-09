@@ -52,12 +52,6 @@ void amendShellPaths(T* pTarget)
    std::string svnBinDir = svn::nonPathSvnBinDir();
    if (!svnBinDir.empty())
       core::system::addToPath(pTarget, svnBinDir);
-
-#ifdef _WIN32
-   // msys_ssh path
-   core::system::addToPath(pTarget,
-                           session::options().msysSshPath().getAbsolutePath());
-#endif
 }
 
 } // namespace workbench

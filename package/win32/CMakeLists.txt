@@ -9,12 +9,6 @@ endif()
 # append our module directory to path
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
-# install ssh-console batch file into msys_ssh directory (called by shortcut)
-if(NOT RSTUDIO_SESSION_WIN32)
-   install(PROGRAMS src/ssh-console.bat
-           DESTINATION "${RSTUDIO_INSTALL_BIN}/msys_ssh")
-endif()
-
 set(RSTUDIO_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
 
 set(CPACK_PACKAGE_FILE_NAME "${RSTUDIO_PACKAGE_FILE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}")

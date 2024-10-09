@@ -27,7 +27,6 @@ set GNUGREP_VERSION=3.0
 set GNUGREP_NAME=gnugrep-%GNUGREP_VERSION%
 set GNUGREP_FILE=%GNUGREP_NAME%.zip
 
-set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
@@ -78,14 +77,6 @@ if not exist gnugrep\%GNUGREP_VERSION% (
   echo Unzipping %GNUGREP_FILE%
   unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep\%GNUGREP_VERSION%
   del "%GNUGREP_FILE%"
-)
-
-if not exist msys-ssh-1000-18 (
-  wget %WGET_ARGS% "%BASEURL%%MSYS_SSH_FILE%"
-  mkdir msys-ssh-1000-18
-  echo Unzipping %MSYS_SSH_FILE%
-  unzip %UNZIP_ARGS% "%MSYS_SSH_FILE%" -d msys-ssh-1000-18
-  del "%MSYS_SSH_FILE%"
 )
 
 if not exist sumatra\3.1.2 (
