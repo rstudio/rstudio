@@ -470,7 +470,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       chunkOptions_.put(
          key,
          new ChunkOptionValue(value,
-                              chunkOptions_.get(key) != null ?  chunkOptions_.get(key).getLocation() : preferredOptionLocation_));
+                              chunkOptions_.get(key) != null ? chunkOptions_.get(key).getLocation() : preferredOptionLocation_));
    }
 
     protected void set(String key, String value, OptionLocation optionLocation)
@@ -655,11 +655,17 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return sortedOptions(filterOptionsMap(options, optionLocation));
    }
 
+   /**
+    * Get all options (unsorted) from a particular location.
+    */
    protected Map<String, String> unsortedOptions(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
    {
       return filterOptionsMap(options, optionLocation);
    }
 
+   /**
+    * Helper to get options from a particular location.
+    */
    private Map<String, String> filterOptionsMap(Map<String,
                                                 ChunkOptionValue> options,
                                                 OptionLocation optionLocation)
