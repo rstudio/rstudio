@@ -1125,7 +1125,7 @@ public class Files
             String contents = "";
             final FilePosition pos = FilePosition.create(0, 0);
             
-            if (fileType == FileTypeRegistry.QUARTO || fileType == FileTypeRegistry.RMARKDOWN)
+            if (fileType == FileTypeRegistry.RMARKDOWN)
             {
                List<String> preamble = new ArrayList<String>();
                preamble.add("---");
@@ -1136,32 +1136,44 @@ public class Files
                preamble.add("");
                
                contents = StringUtil.join(preamble, "\n");
-               pos.setLine(6);
+               pos.setLine(StringUtil.countMatches(contents, '\n') + 1);
+            }
+            else if (fileType == FileTypeRegistry.QUARTO)
+            {
+               List<String> preamble = new ArrayList<String>();
+               preamble.add("---");
+               preamble.add("title: \"" + newFile.getStem() + "\"");
+               preamble.add("format: html");
+               if (pPrefs_.get().visualMarkdownEditingIsDefault().getValue())
+                  preamble.add("editor: visual");
+               preamble.add("---");
+               preamble.add("");
+               preamble.add("");
+               
+               contents = StringUtil.join(preamble, "\n");
+               pos.setLine(StringUtil.countMatches(contents, '\n') + 1);
             }
             
-               // execute on the server
-               server_.createFile(newFile, contents, new VoidServerRequestCallback(progress)
+            // execute on the server
+            server_.createFile(newFile, contents, new VoidServerRequestCallback(progress)
+            {
+               @Override
+               protected void onSuccess()
                {
-                  @Override
-                  protected void onSuccess()
-                  {
-                     // if we were successful, refresh list and open in source editor
-                     onRefreshFiles();
-                     fileTypeRegistry_.editFile(newFile, pos);
-                  }
+                  // if we were successful, refresh list and open in source editor
+                  onRefreshFiles();
+                  fileTypeRegistry_.editFile(newFile, pos);
+               }
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     String errCaption = constants_.blankFileFailedCaption();
-                     String errMsg = constants_.blankFileFailedMessage(fileType.getDefaultExtension(), input, error.getUserMessage());
-                     globalDisplay_.showErrorMessage(errCaption, errMsg);
-                     progress.onCompleted();
-                  }
-               });
-            
-            
-            
+               @Override
+               public void onError(ServerError error)
+               {
+                  String errCaption = constants_.blankFileFailedCaption();
+                  String errMsg = constants_.blankFileFailedMessage(fileType.getDefaultExtension(), input, error.getUserMessage());
+                  globalDisplay_.showErrorMessage(errCaption, errMsg);
+                  progress.onCompleted();
+               }
+            });
          }
       },
       () ->
