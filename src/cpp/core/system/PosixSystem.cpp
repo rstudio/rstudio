@@ -2399,8 +2399,7 @@ Error runProcess(const std::string& path,
 
    // create environment args  (allocate on heap so memory stays around
    // after we exec (some systems including OSX seem to require this)
-   core::system::ProcessArgs* pEnvironment = new core::system::ProcessArgs(
-                                                                    envVars);
+   ProcessArgs* pEnvironment = new ProcessArgs(envVars);
 
    // build process args
    std::vector<std::string> argVector;
@@ -2426,6 +2425,11 @@ Error runProcess(const std::string& path,
    // here then there was an error
    error = systemError(errno, ERROR_LOCATION);
    error.addProperty("child-path", path);
+   
+   // clean up allocated memory
+   delete pProcessArgs;
+   delete pEnvironment;
+   
    return error;
 }
 
