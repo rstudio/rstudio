@@ -59,7 +59,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       chunkPreamble_ = extraInfo.chunkPreamble;
 
       // extract chunk options from YAML lines, e.g. "#| echo: true"
-      parseYamlChunkOptions(originalOptionLines_, originalChunkOptions_);
+      parseYamlChunkOptions(getYamlOptionLines(position_.getRow() + 1), originalChunkOptions_);
 
       if (!StringUtil.isNullOrEmpty(extraInfo.chunkLabel))
          tbChunkLabel_.setText(extraInfo.chunkLabel);
@@ -74,15 +74,29 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    @Override
    protected void synchronize()
    {
+      // TODO: write label to correct location (first line or YAML)
+      String label = tbChunkLabel_.getText();
+
+      if (!writeFirstLineOptions(label))
+         return;
+
+      writeYamlOptionLines(label);
+
+   }
+
+   /**
+    * Helper to write chunk options into the first line
+    * @param label
+    * @return true if successful, false if unable to proceed
+    */
+   private boolean writeFirstLineOptions(String label)
+   {
       String modeId = display_.getModeId();
       Pair<String, String> chunkHeaderBounds = getChunkHeaderBounds(modeId);
       if (chunkHeaderBounds == null)
-         return;
+         return false;
 
-      String label = tbChunkLabel_.getText();
-      String newLine =
-            chunkHeaderBounds.first +
-            chunkPreamble_;
+      String newLine = chunkHeaderBounds.first + chunkPreamble_;
 
       if (!label.isEmpty())
       {
@@ -92,7 +106,6 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             newLine += " " + label;
       }
 
-      // write back first-line options
       if (!chunkOptions_.isEmpty())
       {
          Map<String, String> sorted = sortedOptions(chunkOptions_, OptionLocation.FirstLine);
@@ -103,17 +116,36 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          newLine += StringUtil.collapse(sorted, "=", ", ");
       }
 
-      newLine +=
-            chunkHeaderBounds.second +
-            "\n";
+      newLine += chunkHeaderBounds.second + "\n";
 
       display_.replaceRange(
             Range.fromPoints(
                   Position.create(position_.getRow(), 0),
                   Position.create(position_.getRow() + 1, 0)), newLine);
 
-      // write back YAML options
-      // TODO - NYI
+      return true;
+   }
+
+   /**
+    * Write YAML line options
+    */
+   private void writeYamlOptionLines(String label)
+   {
+      // TODO: deal with label
+
+      String newLines = "";
+      if (!chunkOptions_.isEmpty())
+      {
+         Map<String, String> sorted = sortedOptions(chunkOptions_, OptionLocation.Yaml);
+         newLines = StringUtil.collapse(sorted, "#| ", ": ", "\n");
+      }
+      newLines += "\n";
+
+      int existingYamlLineCount = countYamlOptionLines(position_.getRow() + 1);
+      Range replaceRange = Range.fromPoints(
+            Position.create(position_.getRow() + 1, 0),
+            Position.create(position_.getRow() + 1 + existingYamlLineCount, 0));
+      display_.replaceRange(replaceRange, newLines);
    }
 
    @Override
@@ -126,9 +158,16 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             Position.create(position_.getRow(), 0),
             Position.create(position_.getRow() + 1, 0));
 
-      display_.replaceRange(
-            replaceRange,
-            originalFirstLine_ + "\n");
+      display_.replaceRange(replaceRange, originalFirstLine_ + "\n");
+
+      // find range of current YAML option lines so we can replace them with the originals
+      int yamlLineCount = countYamlOptionLines(position_.getRow() + 1);
+      replaceRange = Range.fromPoints(
+            Position.create(position_.getRow() + 1, 0),
+            Position.create(position_.getRow() + 1 + yamlLineCount, 0));
+
+      display_.replaceRange(replaceRange,
+                            originalOptionLines_ + (originalOptionLines_.isEmpty() ? "" : "\n"));
    }
 
    private Pair<String, String> getChunkHeaderBounds(String modeId)
@@ -254,12 +293,13 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    /**
     * Returns list of option lines; these follow the first line,
     * must begin with "#| ", and must have at least one non-whitespace
-    * character after "#| ".
+    * character after "#| ". The lines aren't checked to see if they contain
+    * valid YAML.
     * 
     * @param startLine first potential option line
     * @return list of option lines without the leading #|
     */
-   private List<String> getRawYamlOptionLines(int startLine)
+   private List<String> getYamlOptionLines(int startLine)
    {
       List<String> optionLines = new ArrayList<>();
       int currentLine = startLine;
@@ -270,6 +310,60 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          if (line.startsWith("#| ") && line.trim().length() > 2)
          {
             optionLines.add(line.substring("#| ".length()));
+            currentLine++;
+         }
+         else
+         {
+            break;
+         }
+      }
+      return optionLines;
+   }
+
+   /**
+    * Returns count of option lines; these follow the first line and must begin with "#|".
+    * No validation of line contents after the prefix is performed.
+    * 
+    * @param startLine first potential option line
+    * @return number of lines found
+    */
+   private int countYamlOptionLines(int startLine)
+   {
+      int currentLine = startLine;
+      String line;
+      while ((line = display_.getLine(currentLine)) != null)
+      {
+         if (line.startsWith("#|"))
+         {
+            currentLine++;
+         }
+         else
+         {
+            break;
+         }
+      }
+      return currentLine - startLine;
+   }
+
+   /**
+    * Returns option lines from the document in a single string, separated by "\n". No validation is
+    * performed beyond checking the prefix "#|".
+    * 
+    * @param startLine first potential option line
+    * @return "\n"-separated option lines
+    */
+   private String getRawYamlOptionLines(int startLine)
+   {
+      String optionLines = "";
+      int currentLine = startLine;
+      String line;
+      while ((line = display_.getLine(currentLine)) != null)
+      {
+         if (line.startsWith("#|"))
+         {
+            if (!optionLines.isEmpty())
+               optionLines = optionLines + "\n";
+            optionLines = optionLines + line;
             currentLine++;
          }
          else

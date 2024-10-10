@@ -701,7 +701,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected final Toggle cacheChunkCb_;
    
    protected String originalFirstLine_; // opening chunk line, i.e. ```{r}
-   protected List<String> originalOptionLines_; // additional options using #| prefix
+   protected String originalOptionLines_; // chunk option line(s) using #| prefix
 
    protected String chunkPreamble_;
    
