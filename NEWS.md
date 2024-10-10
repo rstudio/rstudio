@@ -68,6 +68,7 @@
 - Fixed an issue where ghost text could not be inserted in non-chunk parts of an R Markdown / Quarto document (#14507)
 - Fixed Mac Desktop Pro so it starts on an ARM (Mx) Mac that doesn't have Rosetta2 installed (rstudio-pro#3558)
 - Fixed Windows Desktop Pro so it starts up after using the Choose R dialog (rstudio-pro#6062)
+- Fixed an issue where updating the Copilot agent on Windows could fail if Copilot was already in use (#14850)
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
