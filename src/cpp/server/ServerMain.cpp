@@ -36,6 +36,7 @@
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
+#include <core/http/ProxyUtils.hpp>
 
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
@@ -757,6 +758,23 @@ int main(int argc, char * const argv[])
       core::system::setenv(kServerDataDirEnvVar, serverDataDir.getAbsolutePath());
       core::system::setenv(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath());
       core::system::setenv(kServerRpcSocketPathEnvVar, serverRpcSocketPath().getAbsolutePath());
+
+      // Log HTTP Proxy variables
+      const auto httpProxyVar = http::proxyUtils().httpProxyUrl();
+      if (httpProxyVar)
+         LOG_INFO_MESSAGE("Using HTTP Proxy: " + httpProxyVar.value().absoluteURL());
+      const auto httpsProxyVar = http::proxyUtils().httpsProxyUrl();
+      if (httpsProxyVar)
+         LOG_INFO_MESSAGE("Using HTTPS Proxy: " + httpsProxyVar.value().absoluteURL());
+      const auto& noProxyRules = http::proxyUtils().noProxyRules();
+      if (!noProxyRules.empty()) 
+      {
+         std::string noProxyStr;
+         for (const auto& rule : noProxyRules)
+            noProxyStr += rule->toString() + ",";
+         noProxyStr.pop_back();
+         LOG_INFO_MESSAGE("No Proxy Rules: " + noProxyStr);
+      }
 
       // initialize File Lock
       FileLock::initialize();
