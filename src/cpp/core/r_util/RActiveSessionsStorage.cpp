@@ -173,7 +173,7 @@ std::vector<std::string> RpcActiveSessionsStorage::listSessionIds() const
    body[kSessionStorageUserIdField] = user_.getUserId();
    // We only really want the ID here, but an empty list will get all fields. Just ask for a single field instead.
    body[kSessionStorageFieldsField] = fields;
-   body[kSessionStorageOperationField] = kSessionStroageReadAllOp;
+   body[kSessionStorageOperationField] = kSessionStorageReadAllOp;
 
    json::JsonRpcRequest request;
    request.method = kSessionStorageRpc;

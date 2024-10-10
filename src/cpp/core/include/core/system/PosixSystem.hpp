@@ -189,12 +189,16 @@ Error runProcess(const std::string& path,
                  ProcessConfigFilter configFilter);
 
 // get this processes' child processes
-Error getChildProcesses(std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses, bool populateUsername = true);
+Error getChildProcesses(
+      std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses,
+      bool populateUsername = true);
 
 
 // get the child processes of the specified process
-Error getChildProcesses(pid_t pid,
-                        std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses, bool populateUsername = true);
+Error getChildProcesses(
+      pid_t pid,
+      std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses,
+      bool populateUsername = true);
 
 // kill a process with a specific sign
 Error killProcess(pid_t pid, int signal);

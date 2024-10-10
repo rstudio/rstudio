@@ -1844,29 +1844,35 @@ Error forkAndRunPrivileged(const boost::function<int(void)>& func)
    return forkAndRunImpl(func, rootUser);
 }
 
-Error sendSignalToSpecifiedChildProcesses(const std::set<std::string>& procNames,
-                                          int signal)
+Error sendSignalToSpecifiedChildProcesses(
+      const std::set<std::string>& procNames,
+      int signal)
 {
    std::vector<ProcessInfo> procs;
    Error error = getChildProcesses(&procs);
    if (error)
       return error;
 
-   std::vector<pid_t> pidsToKill;
+   std::vector<pid_t> pids;
    for (const auto& proc : procs)
-   {
-      if (procNames.count(proc.exe) != 0)
-         pidsToKill.push_back(proc.pid);
-   }
+      if (procNames.count(proc.exe))
+         pids.push_back(proc.pid);
+   
+   return sendSignalToSpecifiedChildProcesses(pids, signal);
+}
 
-   auto sendSig = [=]()
+Error sendSignalToSpecifiedChildProcesses(
+      const std::vector<pid_t>& pids,
+      int signal)
+{
+   return forkAndRunPrivileged([&]()
    {
       // must only use async signal safe code in this function!
       int err = 0;
 
-      for (size_t i = 0; i < pidsToKill.size(); ++i)
+      for (size_t i = 0, n = pids.size(); i < n; ++i)
       {
-         if (::kill(pidsToKill.at(i), signal) == -1)
+         if (::kill(pids[i], signal) == -1)
          {
             if (errno != ESRCH)
                err = errno;
@@ -1874,13 +1880,7 @@ Error sendSignalToSpecifiedChildProcesses(const std::set<std::string>& procNames
       }
 
       return err;
-   };
-
-   error = forkAndRunPrivileged(sendSig);
-   if (error)
-      return error;
-
-   return Success();
+   });
 }
 
 } // namespace system

@@ -172,6 +172,7 @@ ProgramStatus Options::read(int argc,
    monitorSharedSecret_ = core::system::generateUuid();
 
    // build options
+   options_description automation("automation");
    options_description verify("verify");
    options_description server("server");
    options_description www("www");
@@ -189,14 +190,14 @@ ProgramStatus Options::read(int argc,
    std::string sameSite;
 
    program_options::OptionsDescription optionsDesc =
-         buildOptions(&verify, &server, &www, &rsession, &database, &auth, &monitor,
+         buildOptions(&automation, &verify, &server, &www, &rsession, &database, &auth, &monitor,
                       &sameSite, &wwwAllowedOrigins, &authLoginPageHtml, &authRdpLoginPageHtml,
                       &authMinimumUserId);
 
    // overlay hook
    addOverlayOptions(&verify, &server, &www, &rsession, &database, &auth, &monitor, &databricks, &userProvisioning, &snowflake);
 
-   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
+   optionsDesc.commandLine.add(automation).add(verify).add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(database).add(auth).add(monitor).add(databricks).add(userProvisioning).add(snowflake);
  
    // read options

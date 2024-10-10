@@ -326,11 +326,11 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    if (error)
       return json::setJsonRpcError(error, &pConnection->response(), true);
 
-   if ((operation != kSessionStroageReadAllOp) && !sessionOwner)
+   if ((operation != kSessionStorageReadAllOp) && !sessionOwner)
       return json::setJsonRpcError(
          missingFieldError(baseError, kSessionStorageUserIdField, body, ERROR_LOCATION), &pConnection->response(), true);
 
-   if ((operation != kSessionStroageReadAllOp) && (operation != kSessionStorageCountOp) && !rpcRequest.kwparams.hasMember(kSessionStorageIdField))
+   if ((operation != kSessionStorageReadAllOp) && (operation != kSessionStorageCountOp) && !rpcRequest.kwparams.hasMember(kSessionStorageIdField))
       return json::setJsonRpcError(
          missingFieldError(baseError, kSessionStorageIdField, body, ERROR_LOCATION), &pConnection->response(), true);
 
@@ -394,7 +394,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       else
          response.setResult(json::toJsonValue(result));
    }
-   else if (operation == kSessionStroageReadAllOp)
+   else if (operation == kSessionStorageReadAllOp)
    {
       std::set<std::string> fields;
       error = json::readObject(rpcRequest.kwparams, kSessionStorageFieldsField, fields);

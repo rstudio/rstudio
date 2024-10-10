@@ -95,6 +95,7 @@ test_that("the expected chunk widgets show for multiple chunks", {
 })
 
 test_that("can cancel switching to visual editor", {
+   
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode Denied"
@@ -131,11 +132,13 @@ test_that("can cancel switching to visual editor", {
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
    }
+   
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
 
 test_that("can switch to visual editor and back to source editor", {
+   
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -156,7 +159,8 @@ test_that("can switch to visual editor and back to source editor", {
    
    # do this twice to check that the "switching to visual mode" dialog doesn't appear
    # the second time
-   for (i in 1:2) {
+   for (i in 1:2)
+   {
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
@@ -348,6 +352,7 @@ test_that("displaying chunk options popup and applying without making changes do
       "```{r fig.cap = \"a caption\"}",
       "```{r fig.cap=\"a caption\"}", # https://github.com/rstudio/rstudio/issues/6829
       chunkOptionWidgetIds[[3]])
+   
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })

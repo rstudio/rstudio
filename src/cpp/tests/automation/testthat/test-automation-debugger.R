@@ -152,6 +152,8 @@ test_that("package functions can be debugged after build and reload", {
    remote$keyboardExecute("c", "<Enter>")
    
    # All done testing; close the project.
+   remote$documentClose()
+   Sys.sleep(1)
    remote$commandExecute("closeProject")
    
 })
