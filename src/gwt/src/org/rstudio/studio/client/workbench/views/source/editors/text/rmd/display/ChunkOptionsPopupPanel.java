@@ -467,10 +467,11 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 
    protected void set(String key, String value)
    {
-      chunkOptions_.put(
-         key,
-         new ChunkOptionValue(value,
-                              chunkOptions_.get(key) != null ? chunkOptions_.get(key).getLocation() : preferredOptionLocation_));
+      // honor an existing option's current location, new option uses preferred location
+      OptionLocation optionLocation =
+            chunkOptions_.get(key) != null ? chunkOptions_.get(key).getLocation() : preferredOptionLocation_;
+ 
+      chunkOptions_.put(key, new ChunkOptionValue(value, optionLocation));
    }
 
     protected void set(String key, String value, OptionLocation optionLocation)
@@ -619,7 +620,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    }
    
    /**
-    * Sort all options, irregardless of location
+    * Sort all options, regardless of location
     */
    protected Map<String, String> sortedOptions(Map<String, String> options)
    {
