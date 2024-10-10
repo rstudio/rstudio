@@ -74,9 +74,8 @@
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
 
 ### Dependencies
-
-- Updated GWT to version 2.10.1 (#15011)
 - Updated Electron to version 31.6.0 (#14982; Desktop)
+- Updated GWT to version 2.10.1 (#15011)
 
 ### Deprecated / Removed
 - Removed user preference for turning off focus indicator rectangles (#14352)
