@@ -160,11 +160,10 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       display_.replaceRange(replaceRange, originalFirstLine_ + "\n");
 
-      // find range of current YAML option lines so we can replace them with the originals
-      int yamlLineCount = countYamlOptionLines(position_.getRow() + 1);
+      int existingYamlLineCount = countYamlOptionLines(position_.getRow() + 1);
       replaceRange = Range.fromPoints(
             Position.create(position_.getRow() + 1, 0),
-            Position.create(position_.getRow() + 1 + yamlLineCount, 0));
+            Position.create(position_.getRow() + 1 + existingYamlLineCount, 0));
 
       display_.replaceRange(replaceRange,
                             originalOptionLines_ + (originalOptionLines_.isEmpty() ? "" : "\n"));
@@ -334,13 +333,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       while ((line = display_.getLine(currentLine)) != null)
       {
          if (line.startsWith("#|"))
-         {
             currentLine++;
-         }
          else
-         {
             break;
-         }
       }
       return currentLine - startLine;
    }
