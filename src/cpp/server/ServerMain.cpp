@@ -462,20 +462,21 @@ Error waitForSignals()
             if (interruptProcs.count(procInfo.exe))
                pids.push_back(procInfo.pid);
          
-         // create a thread that will wait for these processes
-         boost::thread waitThread([=]()
+         auto waitForChild = [=](int pid)
          {
-            int status = 0;
-            for (pid_t pid : pids)
+            while (true)
             {
-               while (true)
-               {
-                  ::waitpid(pid, &status, 0);
-                  if (WIFEXITED(status))
-                     break;
-               }
+               int status = 0;
+               ::waitpid(pid, &status, 0);
+               if (WIFEXITED(status))
+                  break;
             }
-         });
+         };
+         
+         // create threads that will wait for these processes
+         std::vector<boost::thread> waitThreads;
+         for (auto&& pid : pids)
+            waitThreads.emplace_back(waitForChild, pid);
          
          // signal those processes
          error = core::system::sendSignalToSpecifiedChildProcesses(pids, SIGTERM);
@@ -493,9 +494,20 @@ Error waitForSignals()
             LOG_INFO_MESSAGE(message);
          }
 
-         // wait for the thread
-         if (!waitThread.timed_join(boost::posix_time::seconds(10)))
-            LOG_WARNING_MESSAGE("Terminating rserver despite remaining child proceses");
+         // wait for threads
+         const int maxWaitSecs = 60;
+         std::time_t deadline = ::time(NULL) + maxWaitSecs;
+         for (auto&& thread : waitThreads)
+         {
+            std::time_t duration = deadline - ::time(NULL);
+            if (duration < 0)
+            {
+               LOG_WARNING_MESSAGE("Terminating rserver despite remaining child processes");
+               break;
+            }
+            
+            thread.timed_join(boost::chrono::seconds(deadline));
+         }
 
          // call overlay shutdown
          overlay::shutdown();
