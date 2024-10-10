@@ -16,8 +16,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display;
 
 /**
- * Stores the value of a chunk option and whether its stored in the YAML options (#| ...)
- * or inthe first line of the chunk. Example of both styles:
+ * Stores the value of a chunk option and whether it's stored in the YAML options (#| ...)
+ * or in the first line of the chunk. Example of both styles:
  * 
  *     ```{r, option=value}
  *     #| option: value
