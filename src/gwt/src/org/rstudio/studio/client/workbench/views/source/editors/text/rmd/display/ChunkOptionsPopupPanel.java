@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue.OptionLocation;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -92,14 +93,14 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       rfsContext_ = rfsContext;
    }
    
-   public ChunkOptionsPopupPanel(boolean includeChunkNameUI, boolean preferYamlOptions)
+   public ChunkOptionsPopupPanel(boolean includeChunkNameUI, OptionLocation preferredOptionLocation)
    {
       super(true);
       setVisible(false);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      preferYamlOptions_ = preferYamlOptions;
+      preferredOptionLocation_ = preferredOptionLocation;
       chunkOptions_ = new HashMap<>();
       originalChunkOptions_ = new HashMap<>();
       
@@ -466,21 +467,15 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 
    protected void set(String key, String value)
    {
-      // write to first line or as a YAML option?
-      boolean writeYaml = preferYamlOptions_;
-
-      // existing option?
-      ChunkOptionValue existingOption = chunkOptions_.get(key);
-      if (existingOption != null)
-      {
-         writeYaml = existingOption.setIsYaml();
-      }
-      chunkOptions_.put(key, new ChunkOptionValue(value, writeYaml));
+      chunkOptions_.put(
+         key,
+         new ChunkOptionValue(value,
+                              chunkOptions_.get(key) != null ?  chunkOptions_.get(key).getLocation() : preferredOptionLocation_));
    }
 
-    protected void set(String key, String value, boolean isYaml)
+    protected void set(String key, String value, OptionLocation optionLocation)
    {
-      chunkOptions_.put(key, new ChunkOptionValue(value, isYaml));
+      chunkOptions_.put(key, new ChunkOptionValue(value, optionLocation));
    }
    
    protected void unset(String key)
@@ -623,6 +618,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return 0;
    }
    
+   /**
+    * Sort all options, irregardless of location
+    */
    protected Map<String, String> sortedOptions(Map<String, String> options)
    {
       List<Map.Entry<String, String>> entries = new ArrayList<>(options.entrySet());
@@ -649,45 +647,28 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return sortedMap;
    }
 
-   protected Map<String, String> sortedFirstLineOptions(Map<String, ChunkOptionValue> options)
+   /**
+    * Sort all options from a particular location
+    */
+   protected Map<String, String> sortedOptions(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
    {
-      return sortedChunkOptions(options, false /*notYaml*/);
+      return sortedOptions(filterOptionsMap(options, optionLocation));
    }
 
-   protected Map<String, String> sortedYamlOptions(Map<String, ChunkOptionValue> options)
+   protected Map<String, String> unsortedOptions(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
    {
-      return sortedChunkOptions(options, true /*Yaml*/);
-   }
-
-   protected Map<String, String> firstLineOptions(Map<String, ChunkOptionValue> options)
-   {
-      return unsortedOptions(options, false /*notYaml*/);
-   }
-
-   protected Map<String, String> yamlOptions(Map<String, ChunkOptionValue> options)
-   {
-      return unsortedOptions(options, true /*Yaml*/);
-   }
-
-   private Map<String, String> sortedChunkOptions(Map<String, ChunkOptionValue> options, boolean yaml)
-   {
-      return sortedOptions(filterOptionsMap(options, yaml));
-   }
-
-   private Map<String, String> unsortedOptions(Map<String, ChunkOptionValue> options, boolean yaml)
-   {
-      return filterOptionsMap(options, yaml);
+      return filterOptionsMap(options, optionLocation);
    }
 
    private Map<String, String> filterOptionsMap(Map<String,
                                                 ChunkOptionValue> options,
-                                                boolean yaml)
+                                                OptionLocation optionLocation)
    {
       Map<String, String> filteredEntries = new LinkedHashMap<>();
       for (Map.Entry<String, ChunkOptionValue> entry : options.entrySet()) {
-         if (entry.getValue().setIsYaml() == yaml)
+         if (entry.getValue().getLocation() == optionLocation)
          {
-            // we keep just the name/value, dropping the isYaml flag
+            // just keep the name/value, dropping the Location
             filteredEntries.put(entry.getKey(), entry.getValue().getOptionValue());
          }
       }
@@ -718,7 +699,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 
    protected String chunkPreamble_;
    
-   protected final boolean preferYamlOptions_;
+   protected final OptionLocation preferredOptionLocation_;
    protected HashMap<String, ChunkOptionValue> chunkOptions_;
    protected HashMap<String, ChunkOptionValue> originalChunkOptions_;
    

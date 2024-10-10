@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue.OptionLocation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.CustomEngineChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.DefaultChunkOptionsPopupPanel;
@@ -332,10 +333,11 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
       toolbar_.setClassId(getLabel(row));
    }
 
-   protected boolean preferYamlOptions()
+   protected OptionLocation preferredOptionLocation()
    {
       // quarto docs prefer YAML chunk options, i.e. "#| foo: bar"
-      return outerEditor_.getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT);
+      return outerEditor_.getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT) ?
+         OptionLocation.Yaml : OptionLocation.FirstLine;
    }
     
    protected abstract int getRow();
@@ -371,14 +373,14 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    {
       int row = getRow();
       if (isSetupChunk(row))
-         return new SetupChunkOptionsPopupPanel(preferYamlOptions());
+         return new SetupChunkOptionsPopupPanel(preferredOptionLocation());
       
       String engine = getEngine(row);
       if (!engine.toLowerCase().equals("r") &&
           !engine.toLowerCase().equals("d3"))
-         return new CustomEngineChunkOptionsPopupPanel(engine_, preferYamlOptions());
+         return new CustomEngineChunkOptionsPopupPanel(engine_, preferredOptionLocation());
       
-      return new DefaultChunkOptionsPopupPanel(engine_, preferYamlOptions());
+      return new DefaultChunkOptionsPopupPanel(engine_, preferredOptionLocation());
    }
 
    protected ChunkContextToolbar toolbar_;

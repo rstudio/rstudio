@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi.ChunkLabelInfo;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue.OptionLocation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,9 +38,9 @@ import java.util.Map;
 
 public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 {
-   public DefaultChunkOptionsPopupPanel(String engine, boolean preferYamlOptions)
+   public DefaultChunkOptionsPopupPanel(String engine, OptionLocation optionLocation)
    {
-      super(true, preferYamlOptions);
+      super(true, optionLocation);
 
       engine_ = engine;
       enginePanel_.setVisible(false);
@@ -94,7 +95,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       // write back first-line options
       if (!chunkOptions_.isEmpty())
       {
-         Map<String, String> sorted = sortedFirstLineOptions(chunkOptions_);
+         Map<String, String> sorted = sortedOptions(chunkOptions_, OptionLocation.FirstLine);
          if (label.isEmpty())
             newLine += " ";
          else
@@ -110,6 +111,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             Range.fromPoints(
                   Position.create(position_.getRow(), 0),
                   Position.create(position_.getRow() + 1, 0)), newLine);
+
+      // write back YAML options
+      // TODO - NYI
    }
 
    @Override
@@ -240,7 +244,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
                StringUtil.substring(arguments, startIndex, equalsIndex).trim(),
                new ChunkOptionValue(
                   StringUtil.substring(arguments, equalsIndex + 1, endIndex).trim(),
-                  false /*notYaml*/));
+                  OptionLocation.FirstLine));
 
          startIndex = cursor.getIndex() + 1;
       }
@@ -306,7 +310,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       {
          String key = keys.get(i);
          String value = opts.get(key);
-         chunkOptions.put(key, new ChunkOptionValue(value, true /*isYaml*/));
+         chunkOptions.put(key, new ChunkOptionValue(value, OptionLocation.Yaml));
       }
    }
 

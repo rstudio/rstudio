@@ -19,39 +19,48 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.displa
  * Stores the value of a chunk option and whether it's stored in the YAML options (#| ...)
  * or in the first line of the chunk. Example of both styles:
  * 
- *     ```{r, option=value}
+ *     ```{r, option=value, another.option=value}
  *     #| option: value
  *     #| another-option: value
  *     ```
  */
 public class ChunkOptionValue {
 
-   public ChunkOptionValue(String value, boolean isYaml)
+   /**
+    * Where is the option stored in the document?
+    */
+   public enum OptionLocation
    {
-      value_ = value;
-      yaml_ = isYaml;
+      FirstLine,
+      Yaml
+   }
+
+   public ChunkOptionValue(String value, OptionLocation location)
+   {
+      optionValue_ = value;
+      optionLocation_ = location;
    }
 
    public void setOptionValue(String value)
    {
-      value_ = value;
+      optionValue_ = value;
    }
 
    public String getOptionValue()
    {
-      return value_;
+      return optionValue_;
    }
 
-   public void setIsYaml(boolean isYaml)
+   public void setLocation(OptionLocation location)
    {
-      yaml_ = isYaml;
+      optionLocation_ = location;
    }
 
-   public boolean setIsYaml()
+   public OptionLocation getLocation()
    {
-      return yaml_;
+      return optionLocation_;
    }
 
-   private String value_;
-   private boolean yaml_;
+   private String optionValue_;
+   private OptionLocation optionLocation_;
 }

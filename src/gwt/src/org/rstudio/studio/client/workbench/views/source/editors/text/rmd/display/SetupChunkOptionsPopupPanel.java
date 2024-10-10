@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue.OptionLocation;
 
 import java.util.Map;
 
@@ -45,9 +46,9 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       server_ = server;
    }
    
-   public SetupChunkOptionsPopupPanel(boolean preferYamlOptions)
+   public SetupChunkOptionsPopupPanel(OptionLocation optionsLocation)
    {
-      super(false, preferYamlOptions);
+      super(false, optionsLocation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       figureDimensionsPanel_.setVisible(false);
@@ -219,7 +220,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
                {
                   JsArrayString keys = object.keys();
                   for (String key : JsUtil.asIterable(keys))
-                     chunkOptions_.put(key, new ChunkOptionValue(object.getAsString(key), false));
+                     chunkOptions_.put(key, new ChunkOptionValue(object.getAsString(key), OptionLocation.FirstLine));
                   afterInit.execute();
                }
             });
@@ -229,7 +230,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    protected void synchronize()
    {
       syncSelection();
-      Map<String, String> options = firstLineOptions(chunkOptions_);
+      Map<String, String> options = unsortedOptions(chunkOptions_, OptionLocation.FirstLine);
       
       addParam(options, "echo");
       addParam(options, "eval");
