@@ -73,6 +73,12 @@
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
 
+### Upgrade Instructions
+
+#### Posit Workbench
+
+If running Workbench behind a proxy server, you may need to update your `NO_PROXY` configuration. HTTP Proxy variables are now supported in rserver and rsession, so it is important to include local addresses to Job Launcher sessions and other internal services in your `NO_PROXY` list. See the [Outgoing Proxies](https://docs.posit.co/ide/server-pro/access_and_security/outgoing_proxies.html) section of the Workbench Admin Guide for more information. (rstudio-pro#5893)
+
 ### Dependencies
 
 - Updated GWT to version 2.10.1 (#15011)
