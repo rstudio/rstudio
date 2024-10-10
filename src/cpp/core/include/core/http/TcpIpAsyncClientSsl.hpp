@@ -25,6 +25,7 @@
 #include <core/http/AsyncClient.hpp>
 #include <core/http/Ssl.hpp>
 #include <core/http/TcpIpAsyncConnector.hpp>
+#include <core/http/ProxyUtils.hpp>
 
 using namespace boost::placeholders;
 
@@ -77,11 +78,24 @@ protected:
                   new TcpIpAsyncConnector(ioService(),
                                           &(ptrSslStream_->next_layer())));
 
+      auto connectAddress = address_;
+      auto connectPort = port_;
+
+      const auto proxyUrl = proxyUtils().httpsProxyUrl(address_, port_);
+
+      if (proxyUrl.has_value())
+      {
+         connectAddress = proxyUrl->hostname();
+         connectPort = std::to_string(proxyUrl->port());
+         LOG_DEBUG_MESSAGE("Using proxy: " + connectAddress + ":" + connectPort);
+      }
+
       pAsyncConnector->connect(
-            address_,
-            port_,
-            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::performHandshake,
-                                                            TcpIpAsyncClientSsl::sharedFromThis())),
+            connectAddress,
+            connectPort,
+            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnect,
+                                                            TcpIpAsyncClientSsl::sharedFromThis(),
+                                                            proxyUrl)),
             boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
                                                             TcpIpAsyncClientSsl::sharedFromThis(),
                                                             _1)),
@@ -102,21 +116,106 @@ protected:
    }
 
 private:
+  void handleConnect(const boost::optional<URL>& proxyUrl)
+  {
+     if (proxyUrl)
+     {
+        http::Request connectRequest;
+        connectRequest.setMethod("CONNECT");
+        connectRequest.setUri(address_ + ":" + port_);
+        connectRequest.setHttpVersion(1, 1);
+        connectRequest.setHeader("Host", address_ + ":" + port_);
+        connectRequest.assign(connectRequest);
 
-   void performHandshake()
-   {
-      if (verify_)
-      {
-         ptrSslStream_->set_verify_callback(
-                            boost::asio::ssl::rfc2818_verification(verifyAddress_.empty() ? address_ : verifyAddress_));
-      }
+        boost::asio::async_write(
+            socket().next_layer(),
+            connectRequest.toBuffers(),
+            boost::asio::bind_executor(
+                strand_,
+                boost::bind(&TcpIpAsyncClientSsl::handleProxyConnectWrite,
+                            sharedFromThis(),
+                            boost::asio::placeholders::error)));
+     }
+     else
+     {
+        performHandshake();
+     }
+  }
 
-      ptrSslStream_->async_handshake(
-            boost::asio::ssl::stream_base::client,
-            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
-                                                            sharedFromThis(),
-                                                            boost::asio::placeholders::error)));
-   }
+  void handleProxyConnectWrite(const boost::system::error_code& ec)
+  {
+
+     if (!ec)
+     {
+        // Only read until the end of the response line, we just want to know if
+        // the connection was successful
+        boost::asio::async_read_until(
+            socket().next_layer(),
+            connectResponseBuffer_,
+            "\r\n",
+            boost::asio::bind_executor(
+                strand_,
+                boost::bind(&TcpIpAsyncClientSsl::handleProxyConnectRead,
+                            sharedFromThis(),
+                            boost::asio::placeholders::error)));
+     }
+     else
+     {
+        handleErrorCode(ec, ERROR_LOCATION);
+     }
+  }
+
+  void handleProxyConnectRead(const boost::system::error_code& ec)
+  {
+
+     if (!ec)
+     {
+        http::Response connectResponse;
+        Error error = ResponseParser::parseStatusLine(&connectResponseBuffer_,
+                                                      &connectResponse);
+        if (error)
+        {
+           handleError(error);
+        }
+        else
+        {
+           // If the response is not a 200, we should close the connection
+           if (connectResponse.statusCode() != 200)
+           {
+              Error error = systemError(boost::system::errc::connection_refused,
+                                        "Proxy connection failed",
+                                        ERROR_LOCATION);
+              handleError(error);
+           }
+           else
+           {
+              performHandshake();
+           }
+        }
+     }
+     else
+     {
+        handleErrorCode(ec, ERROR_LOCATION);
+     }
+  }
+
+  void performHandshake()
+  {
+     if (verify_)
+     {
+        ptrSslStream_->set_verify_callback(
+            boost::asio::ssl::rfc2818_verification(
+                verifyAddress_.empty() ? address_ : verifyAddress_));
+     }
+
+     ptrSslStream_->async_handshake(
+         boost::asio::ssl::stream_base::client,
+         boost::asio::bind_executor(
+             strand_,
+             boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
+                         sharedFromThis(),
+                         boost::asio::placeholders::error)));
+  }
 
    void handleHandshake(const boost::system::error_code& ec)
    {
@@ -157,8 +256,9 @@ private:
    std::string certificateAuthority_;
    boost::posix_time::time_duration connectionTimeout_;
    std::string verifyAddress_;
+   http::Request connectRequest_;
+   boost::asio::streambuf connectResponseBuffer_;
 };
-
 
 } // namespace http
 } // namespace core

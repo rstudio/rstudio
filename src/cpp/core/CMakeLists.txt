@@ -85,6 +85,8 @@ set(CORE_SOURCE_FILES
    http/ChunkProxy.cpp
    http/CSRFToken.cpp
    http/FormProxy.cpp
+   http/ProxyUtils.cpp
+   http/NoProxyRules.cpp
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp
