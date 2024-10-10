@@ -2448,8 +2448,7 @@ Error getChildProcesses(
 
    // get child processes
    const std::size_t N = 1024;
-   std::vector<pid_t> pids;
-   pids.resize(N);
+   std::vector<pid_t> pids(N);
    int count = proc_listchildpids(pid, pids.data(), N * sizeof(pid_t));
    if (count == -1)
       return systemError(errno, ERROR_LOCATION);
