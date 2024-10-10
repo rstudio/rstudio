@@ -793,7 +793,7 @@ public class TextEditingTargetWidget
          DocPropMenuItem reformatOnSaveMenuItem = new DocPropMenuItem(
                constants_.reformatDocumentOnSave(),
                docUpdateSentinel_,
-               false,
+               userPrefs_.reformatOnSave().getValue(),
                TextEditingTarget.REFORMAT_ON_SAVE,
                DocUpdateSentinel.PROPERTY_TRUE);
          
