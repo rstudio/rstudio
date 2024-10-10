@@ -1136,7 +1136,7 @@ public class Files
                preamble.add("");
                
                contents = StringUtil.join(preamble, "\n");
-               pos.setLine(StringUtil.countMatches(contents, '\n'));
+               pos.setLine(StringUtil.countMatches(contents, '\n') + 1);
             }
             else if (fileType == FileTypeRegistry.QUARTO)
             {
@@ -1151,7 +1151,7 @@ public class Files
                preamble.add("");
                
                contents = StringUtil.join(preamble, "\n");
-               pos.setLine(StringUtil.countMatches(contents, '\n'));
+               pos.setLine(StringUtil.countMatches(contents, '\n') + 1);
             }
             
             // execute on the server
