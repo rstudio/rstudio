@@ -51,6 +51,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -3182,6 +3183,7 @@ public class TextEditingTarget implements
                             String encodingOverride,
                             final Command executeOnSuccess)
    {
+      isSaving_ = true;
       withEncodingRequiredUnlessAscii(
             encodingOverride,
             new CommandWithArg<String>()
@@ -3286,6 +3288,7 @@ public class TextEditingTarget implements
                                         final String encoding,
                                         final Command executeOnSuccess)
    {
+      isSaving_ = true;
       view_.ensureVisible();
 
       FileSystemItem fsi;
@@ -3582,20 +3585,24 @@ public class TextEditingTarget implements
    // buffer is dirty, and we have a file to save to
    private void maybeAutoSaveOnBlur()
    {
-      if (prefs_.autoSaveOnBlur().getValue() &&
-          dirtyState_.getValue() &&
-          getPath() != null &&
-          !docDisplay_.hasActiveCollabSession())
+      boolean canAutosave =
+            !isSaving_ &&
+            ModalDialogTracker.numModalsShowing() == 0 &&
+            prefs_.autoSaveOnBlur().getValue() &&
+            getPath() != null &&
+            !docDisplay_.hasActiveCollabSession();
+            
+      if (!canAutosave)
+         return;
+      
+      try
       {
-         try
-         {
-            save();
-         }
-         catch(Exception e)
-         {
-            // Autosave exceptions are logged rather than displayed
-            Debug.logException(e);
-         }
+         save();
+      }
+      catch(Exception e)
+      {
+         // Autosave exceptions are logged rather than displayed
+         Debug.logException(e);
       }
    }
 
@@ -8228,6 +8235,11 @@ public class TextEditingTarget implements
       {
          public void execute()
          {
+            Command onFinished = () ->
+            {
+               isSaving_ = false;
+            };
+            
             // fire source document saved event
             FileSystemItem file = FileSystemItem.createFile(
                                              docUpdateSentinel_.getPath());
@@ -8280,14 +8292,20 @@ public class TextEditingTarget implements
                         public void onResponseReceived(SourceDocument response)
                         {
                            revertEdits();
+                           onFinished.execute();
                         }
 
                         @Override
                         public void onError(ServerError error)
                         {
                            Debug.logError(error);
+                           onFinished.execute();
                         }
                      });
+            }
+            else
+            {
+               onFinished.execute();
             }
          }
       };
