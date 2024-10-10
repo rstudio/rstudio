@@ -76,6 +76,11 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/system/User.hpp>
+
 #include <core/RegexUtils.hpp>
 #include <core/Algorithm.hpp>
 #include <core/DateTime.hpp>
@@ -85,7 +90,6 @@
 #include <core/Exec.hpp>
 #include <core/LogOptions.hpp>
 #include <core/StringUtils.hpp>
-#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Thread.hpp>
 
@@ -97,10 +101,6 @@
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/User.hpp>
-
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
-#include <shared_core/system/User.hpp>
 
 
 #include "config.h"
@@ -2473,8 +2473,12 @@ Error getChildProcesses(
       
       if (populateUsername)
       {
-         struct passwd* pwd = getpwuid(procInfo.pbsi_uid);
-         info.username = pwd->pw_name;
+         User user;
+         Error error = getUserFromUserId(procInfo.pbsi_uid, user);
+         if (error)
+            LOG_ERROR(error);
+         
+         info.username = user.getUsername();
       }
       
       processes.push_back(info);
