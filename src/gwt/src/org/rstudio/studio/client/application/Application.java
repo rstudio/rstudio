@@ -242,7 +242,7 @@ public class Application implements ApplicationEventHandlers
                ApplicationAutomationHooks appHooks = pApplicationHooks_.get();
                appHooks.initialize();
             }
-
+            
             // load MathJax
             MathJaxLoader.ensureMathJaxLoaded();
 

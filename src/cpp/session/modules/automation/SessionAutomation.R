@@ -26,7 +26,6 @@
 # Global variable for tracking the active automation agent.
 .rs.setVar("automation.agentProcess", NULL)
 
-
 .rs.addFunction("automation.httrGet", function(url)
 {
    httr::GET(url, config = httr::timeout(1))
@@ -103,7 +102,7 @@
 
 .rs.addFunction("automation.onError", function(event)
 {
-   print(event)
+   str(event)
 })
 
 .rs.addFunction("automation.onClose", function(event)
@@ -230,6 +229,9 @@
    for (i in seq_len(nrow(procs)))
    {
       proc <- procs[i, ]
+      if (identical(proc$status, "zombie"))
+         next
+      
       conns <- ps::ps_connections(proc$ps_handle[[1L]])
       if (8788L %in% conns$lport)
       {
@@ -239,29 +241,81 @@
    }
 })
 
-.rs.addFunction("automation.ensureRunningServerInstance", function()
+.rs.addFunction("automation.ensureRunningServerInstance", function(serverDataDir)
 {
    # Check and see if we already have an rserver instance listening.
    procs <- subset(ps::ps(), name == "rserver")
    for (i in seq_len(nrow(procs)))
    {
       proc <- procs[i, ]
+      if (identical(proc$status, "zombie"))
+         next
+      
       conns <- ps::ps_connections(proc$ps_handle[[1L]])
       if (8788L %in% conns$lport)
          return(TRUE)
    }
    
-   # See if we can figure out how the parent was launched, and use that
-   # to infer whether we can launch the automation helper.
+   # Get the path to the rserver executable.
    parentHandle <- ps::ps_parent()
    parentEnv <- ps::ps_environ(parentHandle)
+   parentExe <- ps::ps_exe(parentHandle)
    parentPwd <- parentEnv[["PWD"]]
-   automationScript <- file.path(parentPwd, "rserver-automation")
-   if (!file.exists(automationScript))
-      stop(automationScript, " does not exist.")
    
-   message("-- Starting rserver-automation ...")
-   withr::with_dir(parentPwd, system2(automationScript, wait = FALSE))
+   # Use development configuration if available.
+   serverConfigFile <- file.path(parentPwd, "conf/rserver-dev.conf")
+   
+   # Use a local database file.
+   databaseConf <- .rs.heredoc('
+      provider=sqlite
+      directory=%s
+   ', serverDataDir)
+   
+   databaseConfigFile <- file.path(serverDataDir, "rserver-database.conf")
+   writeLines(databaseConf, con = databaseConfigFile)
+   
+   # Make sure we can resolve the database migration scripts.
+   dbMigrationsPath <- file.path(parentPwd, "server/db")
+   if (file.exists(dbMigrationsPath))
+      Sys.setenv(RS_DB_MIGRATIONS_PATH = dbMigrationsPath)
+   
+   # Generate our rsession configuration file. We do this by appending
+   # 'automation-agent=1' to the configuration file used by this instance.
+   #
+   # TODO: Support custom XDG specifications.
+   rsessionConfigFiles <- c(
+      file.path(parentPwd, "conf/rsession-dev.conf"),
+      "/etc/rstudio/rsession.conf"
+   )
+   
+   rsessionConfig <- NULL
+   for (configFile in rsessionConfigFiles)
+   {
+      if (file.exists(configFile))
+      {
+         rsessionConfig <- readLines(configFile)
+         break
+      }
+   }
+   
+   rsessionConfig <- c(rsessionConfig, "automation-agent=1")
+   rsessionConfigFile <- file.path(serverDataDir, "rsession.conf")
+   writeLines(rsessionConfig, con = rsessionConfigFile)
+   
+   # Run it in automation mode.
+   args <- .rs.stack(mode = "character")
+   args$push("--server-user", Sys.info()[["user"]])
+   args$push("--auth-none", "1")
+   args$push("--www-port", "8788")
+   args$push("--server-data-dir", shQuote(serverDataDir))
+   args$push("--database-config-file", shQuote(databaseConfigFile))
+   args$push("--rsession-config-file", shQuote(rsessionConfigFile))
+   if (file.exists(serverConfigFile))
+      args$push("--config-file", serverConfigFile)
+   
+   message("-- Starting automation server ...")
+   message("> ", paste(parentExe, paste(args$data(), collapse = " ")))
+   withr::with_dir(parentPwd, system2(parentExe, args$data(), wait = FALSE))
    
    # Kill the process on exit
    reg.finalizer(globalenv(), .rs.automation.killAutomationServer, onexit = TRUE)
@@ -278,19 +332,6 @@
    # Resolve arguments.
    mode <- match.arg(mode)
    port <- .rs.nullCoalesce(port, if (mode == "server") 9999L else 9998L)
-   
-   # Check for an existing session we can attach to.
-   baseUrl <- sprintf("http://localhost:%i", port)
-   jsonVersionUrl <- file.path(baseUrl, "json/version")
-   response <- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
-   if (!inherits(response, "error"))
-      return(.rs.automation.attach(baseUrl, mode))
-   
-   # No existing session; start a new one and attach to it.
-   appPath <- .rs.nullCoalesce(appPath, {
-      defaultAppPath <- .rs.automation.applicationPath(mode)
-      Sys.getenv("RSTUDIO_AUTOMATION_EXE", unset = defaultAppPath)
-   })
    
    # Set up environment for newly-launched RStudio instance.
    envVars <- as.list(Sys.getenv())
@@ -311,9 +352,12 @@
    rootDir <- tempfile("rstudio-automation-state-")
    dir.create(rootDir, recursive = TRUE)
    
-   configHome <- file.path(rootDir, "config-home")
-   configDir  <- file.path(rootDir, "config-dir")
-   dataHome   <- file.path(rootDir, "data-home")
+   browserDataDir <- file.path(rootDir, "browser-data")
+   dir.create(browserDataDir, recursive = TRUE, showWarnings = FALSE)
+   
+   configHome  <- file.path(rootDir, "config-home")
+   configDir   <- file.path(rootDir, "config-dir")
+   dataHome    <- file.path(rootDir, "data-home")
    
    envVars[["RSTUDIO_CONFIG_ROOT"]]     <- rootDir
    envVars[["RSTUDIO_CONFIG_HOME"]]     <- configHome
@@ -341,6 +385,27 @@
    # Avoid crashing on arm64 Linux.
    envVars[["RSTUDIO_QUERY_FONTS"]] <- "0"
    
+   # Make sure we have a running rserver-automation instance.
+   if (mode == "server")
+   {
+      withr::with_envvar(envVars, {
+         .rs.automation.ensureRunningServerInstance(rootDir)
+      })
+   }
+   
+   # Check for an existing session we can attach to.
+   baseUrl <- sprintf("http://localhost:%i", port)
+   jsonVersionUrl <- file.path(baseUrl, "json/version")
+   response <- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
+   if (!inherits(response, "error"))
+      return(.rs.automation.attach(baseUrl, mode))
+   
+   # No existing session; start a new one and attach to it.
+   appPath <- .rs.nullCoalesce(appPath, {
+      defaultAppPath <- .rs.automation.applicationPath(mode)
+      Sys.getenv("RSTUDIO_AUTOMATION_EXE", unset = defaultAppPath)
+   })
+   
    # Build argument list.
    # https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
    
@@ -351,10 +416,13 @@
       ps::ps_cwd(ps::ps_parent())
    }
    
+   # NOTE: shQuote is unnecessary below, as we're passing
+   # the constructed arguments to processx which launches
+   # the program directly rather than through a shell
    args <- c(
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
-      sprintf("--user-data-dir=%s", tempdir()),
+      sprintf("--user-data-dir=%s", browserDataDir),
       if (mode == "desktop") c("--automation-agent"),
       if (mode == "server") c(
          "--no-default-browser-check",
@@ -364,14 +432,6 @@
          "http://localhost:8788"
       )
    )
-   
-   # Make sure we have a running rserver-automation instance.
-   if (mode == "server")
-   {
-      withr::with_envvar(envVars, {
-         .rs.automation.ensureRunningServerInstance()
-      })
-   }
    
    # Start up RStudio (or Chrome in "server" mode).
    process <- withr::with_envvar(envVars, {
@@ -711,8 +771,10 @@
    if (!is.na(isJenkins))
       quit(status = 0L)
    
+   message("")
    message("- Automated tests have finished running.")
    message("- You can now close this instance of RStudio.")
+   message("")
 })
 
 .rs.addFunction("automation.isClientValid", function(client)

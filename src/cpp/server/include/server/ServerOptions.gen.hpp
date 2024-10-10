@@ -45,7 +45,8 @@ public:
 
 protected:
    rstudio::core::program_options::OptionsDescription
-   buildOptions(boost::program_options::options_description* pVerify,
+   buildOptions(boost::program_options::options_description* pAutomation,
+                boost::program_options::options_description* pVerify,
                 boost::program_options::options_description* pServer,
                 boost::program_options::options_description* pWww,
                 boost::program_options::options_description* pRsession,
@@ -60,6 +61,11 @@ protected:
 {
    using namespace rstudio::core;
    using namespace boost::program_options;
+
+   pAutomation->add_options()
+      ("run-automation",
+      value<bool>(&runAutomation_)->default_value(false),
+      "Run RStudio's built-in automation tests. Requires a Google Chrome installation.");
 
    pVerify->add_options()
       ("verify-installation",
@@ -244,6 +250,7 @@ protected:
 }
 
 public:
+   bool runAutomation() const { return runAutomation_; }
    bool verifyInstallation() const { return verifyInstallation_; }
    std::string serverWorkingDir() const { return serverWorkingDir_; }
    std::string serverUser() const { return serverUser_; }
@@ -294,6 +301,7 @@ public:
 
 
 protected:
+   bool runAutomation_;
    bool verifyInstallation_;
    std::string serverWorkingDir_;
    std::string serverUser_;

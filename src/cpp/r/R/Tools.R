@@ -33,6 +33,12 @@ assign(".rs.symbolLookupEnv", function()
    new.env(parent = .rs.toolsEnv())
 }, envir = .rs.Env)
 
+# platform detection
+assign(".rs.platform.isUnix",    .Platform$OS.type == "unix",         envir = .rs.Env)
+assign(".rs.platform.isWindows", .Platform$OS.type == "windows",      envir = .rs.Env)
+assign(".rs.platform.isLinux",   Sys.info()[["sysname"]] == "Linux",  envir = .rs.Env)
+assign(".rs.platform.isMacos",   Sys.info()[["sysname"]] == "Darwin", envir = .rs.Env)
+
 #' Add a function to the 'tools:rstudio' environment.
 #' 
 #' This environment is placed on the search path, and so is accessible and
@@ -562,8 +568,67 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
 })
 
+.rs.addFunction("replaceBindingImpl", function(envir, binding, value)
+{
+   if (exists(binding, envir = envir, inherits = FALSE))
+   {
+      if (bindingIsLocked(binding, envir))
+      {
+         unlockBinding(binding, envir)
+         on.exit(lockBinding(binding, envir), add = TRUE)
+      }
+   
+      assign(binding, value, envir = envir)
+   }
+})
+
+.rs.addFunction("replaceBinding", function(binding, package, override)
+{
+   # override in namespace
+   if (!requireNamespace(package, quietly = TRUE))
+      stop(sprintf("Failed to load namespace for package '%s'", package))
+   
+   namespace <- asNamespace(package)
+   
+   # get reference to original binding
+   original <- get(binding, envir = namespace)
+   
+   # replace the binding
+   if (is.function(override))
+      environment(override) <- namespace
+   
+   .rs.replaceBindingImpl(namespace, binding, override)
+   
+   # if package is attached, override there as well
+   searchPathName <- paste("package", package, sep = ":")
+   if (searchPathName %in% search()) {
+      env <- as.environment(searchPathName)
+      if (exists(binding, envir = env))
+         .rs.replaceBindingImpl(env, binding, override)
+   }
+   
+   # return original
+   original
+})
 
 # hook an internal R function
+.rs.addFunction("replacePackageBinding", function(name,
+                                                  package,
+                                                  hook,
+                                                  namespace = FALSE)
+{
+   # replace in environment on search path
+   envir <- as.environment(paste("package", package, sep = ":"))
+   .rs.replaceBindingImpl(envir, name, hook)
+   
+   # remap in function namespace if requested as well
+   if (namespace)
+   {
+      envir <- asNamespace(package)
+      .rs.replaceBindingImpl(envir, name, hook)
+   }
+})
+
 .rs.addFunction("registerHook", function(name,
                                          package,
                                          hookFactory,
@@ -587,22 +652,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # new function definition
    new <- hookFactory(original)
    
-   # re-map function 
-   packageEnv <- as.environment(packageName)
-   unlockBinding(name, packageEnv)
-   assign(name, new, packageName)
-   lockBinding(name, packageEnv)
-   
-   # remap in function namespace if requested as well
-   if (namespace) {
-      ns <- asNamespace(package)
-      if (exists(name, envir = ns, mode = "function")) {
-         unlockBinding(name, ns)
-         assign(name, new, envir = ns)
-         lockBinding(name, ns)
-      }
-   }
-   
+   # replace the bindings
+   .rs.replacePackageBinding(name, package, new, namespace)
 })
 
 .rs.addFunction("callAs", function(name, f, ...)
@@ -632,11 +683,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # replacing an internal R function
 .rs.addFunction("registerReplaceHook", function(name, package, hook, namespace = FALSE)
 {
-   hookFactory <- function(original) function(...) .rs.callAs(name,
-                                                             hook, 
-                                                             original,
-                                                             ...);
-   .rs.registerHook(name, package, hookFactory, namespace);
+   hookFactory <- function(original) function(...) .rs.callAs(name, hook,  original, ...)
+   .rs.registerHook(name, package, hookFactory, namespace)
 })
 
 # notification that an internal R function was called
@@ -661,7 +709,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       msg <- "function not supported in RStudio"
       if (nzchar(alternative))
         msg <- paste(msg, "(try", alternative, "instead)")
-      msg <- paste(msg, "\n", sep="")
+      msg <- paste(msg, "\n", sep = "")
       stop(msg)
    }
                                               
@@ -793,10 +841,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # list all rpc handlers in the tools:rstudio environment
 .rs.addFunction("listJsonRpcHandlers", function()
 {
-   rpcHandlers <- objects("tools:rstudio", 
-                          all.names=TRUE, 
-                          pattern=utils:::glob2rx(".rs.rpc.*"))
-   return (rpcHandlers)
+   objects(
+      name      = "tools:rstudio", 
+      pattern   = utils:::glob2rx(".rs.rpc.*"),
+      all.names = TRUE
+   )
 })
 
 
@@ -812,62 +861,61 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
     system(paste("nautilus", diagPath))
 })
 
-
-.rs.registerReplaceHook("history", "utils", function(original, ...) {
-   invisible(.Call("rs_activatePane", "history"))
+.rs.addFunction("history", function(max.show = 25, reverse = FALSE, pattern, ...)
+{
+   invisible(.Call("rs_activatePane", "history", PACKAGE = "(embedding)"))
 })
 
-.rs.addFunction("registerHistoryFunctions", function() {
-  
-  # loadhistory
-  .rs.registerReplaceHook("loadhistory", "utils", function(original, 
-                                                           file = ".Rhistory")
-  {
-    invisible(.Call("rs_loadHistory", file))
-  })
-  
-  # savehistory
-  .rs.registerReplaceHook("savehistory", "utils", function(original, 
-                                                           file = ".Rhistory")
-  {
-    invisible(.Call("rs_saveHistory", file))
-  })
+.rs.addFunction("savehistory", function(file = ".Rhistory")
+{
+   invisible(.Call("rs_saveHistory", file, PACKAGE = "(embedding)"))
+})
 
-  # timestamp
-  .rs.registerReplaceHook("timestamp", "utils", function(
-    original,
-    stamp = date(),
-    prefix = "##------ ",
-    suffix = " ------##",
-    quiet = FALSE)
-  {
-    stamp <- paste(prefix, stamp, suffix, sep = "")
+.rs.addFunction("loadhistory", function(file = ".Rhistory")
+{
+   invisible(.Call("rs_loadHistory", file, PACKAGE = "(embedding)"))
+})
 
-    lapply(stamp, function(s) {
-      invisible(.Call("rs_timestamp", s))
-    })
+.rs.addFunction("timestamp", function(stamp = date(),
+                                      prefix = "##------ ",
+                                      suffix = " ------##",
+                                      quiet = FALSE)
+{
+   stamps <- paste(prefix, stamp, suffix, sep = "")
+   
+   lapply(stamps, function(stamp) {
+      invisible(.Call("rs_timestamp", stamp, PACKAGE = "(embedding)"))
+   })
+   
+   if (!quiet)
+      cat(stamps, sep = "\n")
+   
+   invisible(stamps)
+})
 
-    if (!quiet)
-        cat(stamp, sep = "\n")
+.rs.replacePackageBinding("history", "utils", .rs.history)
 
-    invisible(stamp)
-  }, namespace = TRUE)
+.rs.addFunction("registerHistoryFunctions", function()
+{
+   .rs.replacePackageBinding("savehistory", "utils", .rs.savehistory, namespace = TRUE)
+   .rs.replacePackageBinding("loadhistory", "utils", .rs.loadhistory, namespace = TRUE)
+   .rs.replacePackageBinding("timestamp", "utils", .rs.timestamp, namespace = TRUE)
 })
 
 
 .rs.addFunction("parseQuitArguments", function(command) {
   
-  # parse the command
-  expr <- parse(text=command)
-  if (length(expr) == 0)
-    stop("Not a fully formed command: ", command)
-  
-  # match args
-  call <- as.call(expr[[1]])
-  call <- match.call(quit, call)
-  
-  # return as list without the function name
-  as.list(call)[-1]
+   # parse the command
+   expr <- parse(text = command)
+   if (length(expr) == 0)
+      stop("Not a fully formed command: ", command)
+   
+   # match args
+   call <- as.call(expr[[1]])
+   call <- match.call(quit, call)
+   
+   # return as list without the function name
+   as.list(call)[-1]
 })
 
 .rs.addFunction("isTraced", function(fun) {
@@ -1120,7 +1168,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       base <- baseList[[name]]
       overlay <- overlayList[[name]]
       if (is.list(base) && is.list(overlay) && recursive)
-        mergedList[[name]] <- merge_lists(base, overlay)
+        mergedList[[name]] <- .rs.mergeLists(base, overlay)
       else {
         mergedList[[name]] <- NULL
         mergedList <- append(mergedList,
@@ -1149,40 +1197,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    result <- do.call(mapply, c(c, data, USE.NAMES = FALSE, SIMPLIFY = FALSE))
    names(result) <- names(data[[1]])
    as.data.frame(result, stringsAsFactors = FALSE)
-})
-
-.rs.addFunction("replaceBinding", function(binding, package, override)
-{
-   # override in namespace
-   if (!requireNamespace(package, quietly = TRUE))
-      stop(sprintf("Failed to load namespace for package '%s'", package))
-   
-   namespace <- asNamespace(package)
-   
-   # get reference to original binding
-   original <- get(binding, envir = namespace)
-   
-   # replace the binding
-   if (is.function(override))
-      environment(override) <- namespace
-   
-   do.call("unlockBinding", list(binding, namespace))
-   assign(binding, override, envir = namespace)
-   do.call("lockBinding", list(binding, namespace))
-   
-   # if package is attached, override there as well
-   searchPathName <- paste("package", package, sep = ":")
-   if (searchPathName %in% search()) {
-      env <- as.environment(searchPathName)
-      if (exists(binding, envir = env)) {
-         do.call("unlockBinding", list(binding, env))
-         assign(binding, override, envir = env)
-         do.call("lockBinding", list(binding, env))
-      }
-   }
-   
-   # return original
-   original
 })
 
 .rs.addFunction("isDesktop", function() {
@@ -1522,18 +1536,3 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          return(value)
    }
 })
-
-.rs.addFunction("initTools", function()
-{
-   ostype <- .Platform$OS.type
-   info <- Sys.info()
-   envir <- .rs.toolsEnv()
-   
-   assign(".rs.platform.isUnix",    ostype == "unix",              envir = envir)
-   assign(".rs.platform.isWindows", ostype == "windows",           envir = envir)
-   assign(".rs.platform.isLinux",   info[["sysname"]] == "Linux",  envir = envir)
-   assign(".rs.platform.isMacos",   info[["sysname"]] == "Darwin", envir = envir)
-   
-})
-
-.rs.initTools()

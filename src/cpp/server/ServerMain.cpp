@@ -16,6 +16,8 @@
 
 #include <pthread.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include <core/CrashHandler.hpp>
 #include <core/FileLock.hpp>
@@ -79,6 +81,14 @@
 #include "ServerREnvironment.hpp"
 #include "ServerXdgVars.hpp"
 #include "ServerLogVars.hpp"
+
+#if defined(__linux__)
+# define kOpenProgram "/usr/bin/xdg-open"
+#elif defined(__APPLE__)
+# define kOpenProgram "/usr/bin/open"
+#elif defined(_WIN32)
+# define kOpenProgram "start"
+#endif
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -406,7 +416,7 @@ Error waitForSignals()
       return systemError(result, ERROR_LOCATION);
 
    // wait for child exits
-   for(;;)
+   for (;;)
    {
       // perform wait
       int sig = 0;
@@ -424,20 +434,52 @@ Error waitForSignals()
       else if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM)
       {
          LOG_DEBUG_MESSAGE("Received termination signal: " + std::to_string(sig));
-         //
-         // Here is where we can perform server cleanup e.g.
-         // closing pam sessions
-         //
+
+         Error error;
 
          // send SIGTERM signal to specific Workbench child processes
          // this way user processes will not receive the signal until it traverses the tree
-         std::set<std::string> interruptProcs =  {"rsession",
-                                                   "rserver-launcher",
-                                                   "rstudio-launcher",
-                                                   "rworkspaces",
-                                                   "rserver-monitor"};
-
-         Error error = core::system::sendSignalToSpecifiedChildProcesses(interruptProcs, SIGTERM);
+         std::set<std::string> interruptProcs = {
+            "rserver-launcher",
+            "rserver-monitor",
+            "rsession",
+            "rstudio-launcher",
+            "rworkspaces"
+         };
+         
+         // get list of child processes
+         std::vector<system::ProcessInfo> procInfos;
+         error = core::system::getChildProcesses(&procInfos, false);
+         if (error)
+         {
+            LOG_ERROR(error);
+            break;
+         }
+         
+         // pull out pids matching our process names
+         std::vector<pid_t> pids;
+         for (auto&& procInfo : procInfos)
+            if (interruptProcs.count(procInfo.exe))
+               pids.push_back(procInfo.pid);
+         
+         auto waitForChild = [=](int pid)
+         {
+            while (true)
+            {
+               int status = 0;
+               ::waitpid(pid, &status, 0);
+               if (WIFEXITED(status))
+                  break;
+            }
+         };
+         
+         // create threads that will wait for these processes
+         std::vector<boost::thread> waitThreads;
+         for (auto&& pid : pids)
+            waitThreads.emplace_back(waitForChild, pid);
+         
+         // signal those processes
+         error = core::system::sendSignalToSpecifiedChildProcesses(pids, SIGTERM);
          if (error)
          {
             std::string message = "Error occurred while notifying child processes of ";
@@ -452,23 +494,36 @@ Error waitForSignals()
             LOG_INFO_MESSAGE(message);
          }
 
+         // wait for threads
+         const int maxWaitSecs = 60;
+         std::time_t deadline = ::time(NULL) + maxWaitSecs;
+         for (auto&& thread : waitThreads)
+         {
+            std::time_t duration = deadline - ::time(NULL);
+            if (duration < 0)
+            {
+               LOG_WARNING_MESSAGE("Terminating rserver despite remaining child processes");
+               break;
+            }
+            
+            thread.timed_join(boost::chrono::seconds(deadline));
+         }
+
          // call overlay shutdown
          overlay::shutdown();
 
          // clear the signal mask
          error = core::system::clearSignalMask();
-         if (error) {
+         if (error)
             LOG_ERROR(error);
-         }
 
          // reset the signal to its default
          struct sigaction sa;
          ::memset(&sa, 0, sizeof sa);
          sa.sa_handler = SIG_DFL;
          int result = ::sigaction(sig, &sa, nullptr);
-         if (result != 0) {
+         if (result != 0)
             LOG_ERROR(systemError(result, ERROR_LOCATION));
-         }
 
          // re-raise the signal
          ::kill(::getpid(), sig);
@@ -482,11 +537,13 @@ Error waitForSignals()
          // forward signal to specific child processes
          // this will allow them to also reload their configuration / logging if applicable
          // care is taken not to send errant SIGHUP signals to processes we don't control
-         std::set<std::string> reloadableProcs =  {"rsession",
-                                                   "rserver-launcher",
-                                                   "rstudio-launcher",
-                                                   "rworkspaces",
-                                                   "rserver-monitor"};
+         std::set<std::string> reloadableProcs = {
+            "rsession",
+            "rserver-launcher",
+            "rstudio-launcher",
+            "rworkspaces",
+            "rserver-monitor",
+         };
 
          Error error = core::system::sendSignalToSpecifiedChildProcesses(reloadableProcs, SIGHUP);
          if (error)
@@ -926,7 +983,7 @@ int main(int argc, char * const argv[])
 
          return EXIT_SUCCESS;
       }
-
+      
       // catch unhandled exceptions
       error = core::crash_handler::initialize();
       if (error)
@@ -964,6 +1021,37 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
+      // if we're running automation, open a browser instance and
+      // navigate to the RStudio Server instance URL to initiate
+      // the automated tests
+      if (options.runAutomation())
+      {
+         std::string address = options.wwwAddress();
+         if (address == "0.0.0.0")
+         {
+            address = "localhost";
+         }
+         
+         std::string port = options.wwwPort();
+         if (port.empty())
+         {
+            Error error = systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+            LOG_ERROR(error);
+            return EXIT_FAILURE;
+         }
+         
+         std::string url = fmt::format("http://{}:{}", address, port);
+         core::system::ProcessOptions options;
+         core::system::ProcessCallbacks callbacks;
+         Error error = server::process_supervisor::runProgram(
+                  kOpenProgram,
+                  { url },
+                  options,
+                  callbacks);
+         if (error)
+            LOG_ERROR(error);
+      }
+      
       // wait for signals
       error = waitForSignals();
       if (error)

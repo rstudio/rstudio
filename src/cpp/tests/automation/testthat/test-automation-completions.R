@@ -100,7 +100,7 @@ test_that("autocompletion in console shows local variables first.", {
    ')
 
    remote$consoleExecute(code)
-   
+   Sys.sleep(1)
    parts <- remote$completionsRequest("lef")
    expect_identical(parts, c("left_table", "left_join"))
    
@@ -185,6 +185,8 @@ test_that("code_completion_include_already_used works as expected", {
    ')
    
    remote$documentOpen(ext = ".R", contents = contents)
+   on.exit(remote$documentClose(), add = TRUE)
+   
    editor <- remote$editorGetInstance()
    editor$gotoLine(1, 16)
    completions <- remote$completionsRequest()
@@ -214,9 +216,11 @@ test_that("dplyr piped variable names are properly quoted / unquoted", {
    ')
    
    remote$documentOpen(ext = ".R", contents = contents)
-   editor <- remote$editorGetInstance()
+   on.exit(remote$documentClose(), add = TRUE)
    
+   editor <- remote$editorGetInstance()
    editor$gotoLine(2, 53)
    completions <- remote$completionsRequest("zzz")
    expect_equal(completions, c("zzz A", "zzz B"))
+   
 })

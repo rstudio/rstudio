@@ -249,7 +249,7 @@ protected:
       "Controls whether the session should store its metadata on the file system or send it to the server to be stored in the internal database.")
       ("session-project-user-data-dir",
       value<std::string>(&sessionProjectUserDataDir_)->default_value(""),
-      "The folder in which RStudio should store project (.Rproj.user) data.")
+      "The folder in which RStudio should store user-specific project (.Rproj.user) data.")
       ("session-allow-project-user-data-dir-override",
       value<bool>(&sessionAllowProjectUserDataDirOverride_)->default_value(true),
       "Whether or not users can override the default project (.Rproj.user) data directory via their own user preferences.");
