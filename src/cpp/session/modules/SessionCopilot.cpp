@@ -71,7 +71,7 @@
 # define kNodeExe "node.exe"
 #endif
 
-#define kCopilotAgentDefaultCommitHash ("1dcaf72099b436b5832d6117d9cd7a4a098a8d77") // pragma: allowlist secret
+#define kCopilotAgentDefaultCommitHash ("87038123804796ca7af20d1b71c3428d858a9124") // pragma: allowlist secret
 #define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 

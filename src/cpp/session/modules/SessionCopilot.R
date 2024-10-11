@@ -120,8 +120,20 @@
    # are loaded, we won't be able to remove them.
    .Call("rs_copilotStopAgent", PACKAGE = "(embedding)")
    
+   if (file.exists(targetDirectory))
+   {
+      # Rename the target directory, and then unlink it. We rename first as Windows
+      # will allow folders to be renamed, even if those folders contain locked files.
+      backupDirectory <- tempfile("copilot-agent-backup-", tmpdir = dirname(targetDirectory))
+      file.rename(targetDirectory, backupDirectory)
+      
+      # Register a finalizer that will clean up the backup directory on exit.
+      reg.finalizer(globalenv(), function(envir) {
+         unlink(backupDirectory, recursive = TRUE)
+      }, onexit = TRUE)
+   }
+   
    # Copy the directory recursively.
-   unlink(targetDirectory, recursive = TRUE)
    .rs.ensureDirectory(dirname(targetDirectory))
    file.copy(copilotAgentDirectory, dirname(targetDirectory), recursive = TRUE)
    
