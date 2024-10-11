@@ -226,7 +226,7 @@
 .xtermInvertColor { color: rgba(238, 238, 238, 0.92); }
 .xtermInvertBgColor { background-color: #000000; }
 .xtermBold { font-weight: bold; }
-.xtermBlur { filter: blur(1px); }
+.xtermBlur { filter: brightness(75%); }
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }

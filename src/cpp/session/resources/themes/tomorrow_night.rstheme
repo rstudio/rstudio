@@ -168,7 +168,7 @@
 .xtermInvertColor { color: #1d1f21; }
 .xtermInvertBgColor { background-color: #c5c8c6; }
 .xtermBold { font-weight: bold; }
-.xtermBlur { filter: blur(1px); }
+.xtermBlur { filter: brightness(75%); }
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }

@@ -71,6 +71,7 @@
 - Fixed Windows Desktop Pro so it starts up after using the Choose R dialog (rstudio-pro#6062)
 - Fixed an issue where updating the Copilot agent on Windows could fail if Copilot was already in use (#14850)
 - Fixed an issue where RStudio could autosave files on blur even while a Save As... modal was active (#15303)
+- Fixed an issue where some output from `uv` could be rendered blurry in the RStudio Console (#15282)
 
 
 #### Posit Workbench
