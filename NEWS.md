@@ -69,6 +69,7 @@
 - Fixed an issue where ghost text could not be inserted in non-chunk parts of an R Markdown / Quarto document (#14507)
 - Fixed Mac Desktop Pro so it starts on an ARM (Mx) Mac that doesn't have Rosetta2 installed (rstudio-pro#3558)
 - Fixed Windows Desktop Pro so it starts up after using the Choose R dialog (rstudio-pro#6062)
+- Fixed an issue where updating the Copilot agent on Windows could fail if Copilot was already in use (#14850)
 - Fixed an issue where RStudio could autosave files on blur even while a Save As... modal was active (#15303)
 
 
@@ -82,9 +83,8 @@
 If running Workbench behind a proxy server, you may need to update your `NO_PROXY` configuration. HTTP Proxy variables are now supported in rserver and rsession, so it is important to include local addresses to Job Launcher sessions and other internal services in your `NO_PROXY` list. See the [Outgoing Proxies](https://docs.posit.co/ide/server-pro/access_and_security/outgoing_proxies.html) section of the Workbench Admin Guide for more information. (rstudio-pro#5893)
 
 ### Dependencies
-
-- Updated GWT to version 2.10.1 (#15011)
 - Updated Electron to version 31.6.0 (#14982; Desktop)
+- Updated GWT to version 2.10.1 (#15011)
 
 ### Deprecated / Removed
 - Removed user preference for turning off focus indicator rectangles (#14352)
