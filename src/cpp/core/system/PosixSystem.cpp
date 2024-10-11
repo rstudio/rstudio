@@ -2484,7 +2484,18 @@ Error getChildProcesses(
          
          info.username = user.getUsername();
       }
+    
+      // get children of this process recursively as well
+      Error error = getChildProcesses(
+               procInfo.pbsi_pid,
+               pOutProcesses,
+               populateUsername);
       
+      // TODO: should errors be fatal here?
+      if (error)
+         LOG_ERROR(error);
+      
+      // now add this process itself
       processes.push_back(info);
    }
 
