@@ -332,7 +332,7 @@ public class TextEditingTargetCopilotHelper
    @Handler
    public void onCopilotRequestCompletions()
    {
-      if (display_.isFocused())
+      if (copilot_.isEnabled() && display_.isFocused())
          completionTimer_.schedule(0);
    }
    
