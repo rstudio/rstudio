@@ -94,7 +94,12 @@ Error readEnvConfigFile(bool emitInfoLog)
 // Forwards any HTTP proxy variables from the current process into the given environment.
 void forwardHttpProxyVars(core::system::Options *pEnvironment)
 {
-   for (auto&& proxyVar: {"HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"})
+   for (auto&& proxyVar : {"HTTP_PROXY",
+                           "HTTPS_PROXY",
+                           "NO_PROXY",
+                           "http_proxy",
+                           "https_proxy",
+                           "no_proxy"})
    {
       std::string val = core::system::getenv(proxyVar);
       if (!val.empty())
@@ -102,8 +107,9 @@ void forwardHttpProxyVars(core::system::Options *pEnvironment)
          std::string oldVal = core::system::getenv(*pEnvironment, proxyVar);
          if (!oldVal.empty() && oldVal != val)
          {
-             LOG_WARNING_MESSAGE("Overriding HTTP proxy setting " + std::string(proxyVar) +
-                                 ": '" + oldVal + "' => '" + val + "'");
+            LOG_WARNING_MESSAGE("Overriding HTTP proxy setting " +
+                                std::string(proxyVar) + ": '" + oldVal +
+                                "' => '" + val + "'");
          }
          core::system::setenv(pEnvironment, proxyVar, val);
       }
