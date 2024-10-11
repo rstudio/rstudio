@@ -706,9 +706,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    /**
     * Helper to get options from a particular location.
     */
-   private Map<String, String> filterOptionsMap(Map<String,
-                                                ChunkOptionValue> options,
-                                                OptionLocation optionLocation)
+   private Map<String, String> filterOptionsMap(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
    {
       Map<String, String> filteredEntries = new LinkedHashMap<>();
       for (Map.Entry<String, ChunkOptionValue> entry : options.entrySet()) {

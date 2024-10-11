@@ -291,10 +291,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
 
    /**
-    * Returns list of option lines; these follow the first line,
-    * must begin with "#| ", and must have at least one non-whitespace
-    * character after "#| ". The lines aren't checked to see if they contain
-    * valid YAML.
+    * Returns list of option lines from the editor; these follow the first line,
+    * must begin with "#| ", and must have at least one non-whitespace character
+    * after "#| ". The lines aren't checked to see if they contain valid YAML.
     * 
     * @param startLine first potential option line
     * @return list of option lines without the leading #|
@@ -321,8 +320,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
 
    /**
-    * Returns count of option lines; these follow the first line and must begin with "#|".
-    * No validation of line contents after the prefix is performed.
+    * Returns count of option lines in the editor; these follow the first line and
+    * must begin with "#|". No validation of line contents after the prefix is performed.
     * 
     * @param startLine first potential option line
     * @return number of lines found
@@ -342,7 +341,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
 
    /**
-    * Returns option lines from the document in a single string, separated by "\n". No validation is
+    * Returns option lines from the editor in a single string, separated by "\n". No validation is
     * performed beyond checking the prefix "#|".
     * 
     * @param startLine first potential option line
