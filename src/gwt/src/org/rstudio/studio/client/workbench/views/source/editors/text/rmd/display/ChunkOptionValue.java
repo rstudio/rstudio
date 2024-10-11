@@ -41,6 +41,12 @@ public class ChunkOptionValue {
       optionLocation_ = location;
    }
 
+   public ChunkOptionValue(boolean value, OptionLocation location)
+   {
+      optionValue_ = boolForLocation(value, location);
+      optionLocation_ = location;
+   }
+
    public void setOptionValue(String value)
    {
       optionValue_ = value;
@@ -59,6 +65,17 @@ public class ChunkOptionValue {
    public OptionLocation getLocation()
    {
       return optionLocation_;
+   }
+
+   /**
+    * Return a boolean string appropriate for the location (R vs. YAML)
+    */
+   public static String boolForLocation(boolean boolValue, OptionLocation location)
+   {
+      if (location == OptionLocation.FirstLine)
+         return boolValue ? "TRUE" : "FALSE";
+      else
+         return boolValue ? "true" : "false";
    }
 
    private String optionValue_;

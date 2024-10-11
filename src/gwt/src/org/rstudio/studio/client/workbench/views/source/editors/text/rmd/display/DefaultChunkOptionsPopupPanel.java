@@ -139,7 +139,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          Map<String, String> sorted = sortedOptions(chunkOptions_, OptionLocation.Yaml);
          newLines = StringUtil.collapse(sorted, "#| ", ": ", "\n");
       }
-      newLines += "\n";
+      if (!newLines.isEmpty())
+         newLines += "\n";
 
       int existingYamlLineCount = countYamlOptionLines(position_.getRow() + 1);
       Range replaceRange = Range.fromPoints(

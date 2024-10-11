@@ -181,13 +181,13 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
          }
          else if (value == OUTPUT_SHOW_CODE_AND_OUTPUT)
          {
-            set("echo", "TRUE");
+            setTrue("echo");
             unset("eval");
             unset("include");
          }
          else if (value == OUTPUT_SHOW_OUTPUT_ONLY)
          {
-            set("echo", "FALSE");
+            setFalse("echo");
             unset("eval");
             unset("include");
          }
@@ -195,12 +195,12 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
          {
             unset("echo");
             unset("eval");
-            set("include", "FALSE");
+            setFalse("include");
          }
          else if (value == OUTPUT_SKIP_THIS_CHUNK)
          {
-            set("eval", "FALSE");
-            set("include", "FALSE");
+            setFalse("eval");
+            setFalse("include");
             unset("echo");
          }
          synchronize();
@@ -433,10 +433,10 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             unset(option);
             break;
          case OFF:
-            set(option, "FALSE");
+            setFalse(option);
             break;
          case ON:
-            set(option, "TRUE");
+            setTrue(option);
             break;
          }
          synchronize();
@@ -462,23 +462,42 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       if (!has(key))
          return false;
       
-      return isTrue(chunkOptions_.get(key).getOptionValue());
+      return isTrue(chunkOptions_.get(key));
    }
 
+   /**
+    * Set an option. If the option already exists it will be set in the same location,
+    * otherwise it uses the default location for this document.
+    */
    protected void set(String key, String value)
    {
-      // honor an existing option's current location, new option uses preferred location
-      OptionLocation optionLocation =
-            chunkOptions_.get(key) != null ? chunkOptions_.get(key).getLocation() : preferredOptionLocation_;
- 
-      chunkOptions_.put(key, new ChunkOptionValue(value, optionLocation));
+      chunkOptions_.put(key, new ChunkOptionValue(value, locationForOption(key)));
    }
 
+   /**
+    * Set an option in a specific location.
+    */
     protected void set(String key, String value, OptionLocation optionLocation)
    {
       chunkOptions_.put(key, new ChunkOptionValue(value, optionLocation));
    }
-   
+
+   /**
+    * Set an option to the "TRUE" constant appropriate for its location (R vs. YAML)
+    */
+   protected void setTrue(String key)
+   {
+      chunkOptions_.put(key, new ChunkOptionValue(true, locationForOption(key)));
+   }
+
+   /**
+    * Set an option to the "FALSE" constant appropriate for its location (R vs. YAML)
+    */
+   protected void setFalse(String key)
+   {
+      chunkOptions_.put(key, new ChunkOptionValue(false, locationForOption(key)));
+   }
+
    protected void unset(String key)
    {
       chunkOptions_.remove(key);
@@ -498,6 +517,15 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return false;
    }
    
+   /**
+    * Where to write a given option (same location if it already exists, otherwise the document's
+    * preferred location).
+    */
+   protected OptionLocation locationForOption(String key)
+   {
+      return chunkOptions_.get(key) != null ? chunkOptions_.get(key).getLocation() : preferredOptionLocation_;
+   }
+
    private void updateOutputComboBox()
    {
       boolean hasEcho = has("echo");
@@ -587,9 +615,20 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
    }
    
-   private boolean isTrue(String string)
+   private boolean isTrue(ChunkOptionValue option)
    {
-      return string == "TRUE" || string == "T";
+      if (option.getLocation() == OptionLocation.FirstLine)
+      {
+         // R-style
+         return option.getOptionValue() == "TRUE" || option.getOptionValue() == "T";
+      }
+      else
+      {
+         // YAML-style: standard is "true" and "false" but also detect
+         // other forms used in the wild
+         String value = option.getOptionValue().toLowerCase();
+         return value == "true" || value == "yes" || value == "on";
+      }
    }
    
    @Override
