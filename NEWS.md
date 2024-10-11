@@ -28,6 +28,7 @@
 
 - Posit Workbench Administration Guide & User Guide and Posit Workbench Licenses guide now includes release version in navigation bar reference URLs. (rstudio-pro#6826)
 - Restrict Positron and VS Code sessions for insecure (non-SSL) contexts. These editors do not work properly otherwise. (rstudio-pro#3741)
+- Added support for HTTP Proxy variables in rserver and rsession to enable managed credentials features in Workbench environments behind a proxy server. (rstudio-pro#5893)
 
 ### Fixed
 #### RStudio
@@ -73,6 +74,12 @@
 
 #### Posit Workbench
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
+
+### Upgrade Instructions
+
+#### Posit Workbench
+
+If running Workbench behind a proxy server, you may need to update your `NO_PROXY` configuration. HTTP Proxy variables are now supported in rserver and rsession, so it is important to include local addresses to Job Launcher sessions and other internal services in your `NO_PROXY` list. See the [Outgoing Proxies](https://docs.posit.co/ide/server-pro/access_and_security/outgoing_proxies.html) section of the Workbench Admin Guide for more information. (rstudio-pro#5893)
 
 ### Dependencies
 

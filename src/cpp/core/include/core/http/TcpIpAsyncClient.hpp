@@ -26,6 +26,7 @@
 #include <core/http/AsyncClient.hpp>
 #include <core/http/TcpIpSocketUtils.hpp>
 #include <core/http/TcpIpAsyncConnector.hpp>
+#include <core/http/ProxyUtils.hpp>
 
 using namespace boost::placeholders;
 
@@ -63,10 +64,22 @@ private:
    {
       boost::shared_ptr<TcpIpAsyncConnector> pAsyncConnector(
                      new TcpIpAsyncConnector(ioService(), &(socket())));
+   
+      auto connectAddress = address_;
+      auto connectPort = port_;
+      
+      const auto proxyUrl = proxyUtils().httpProxyUrl(address_, port_);
+
+      if(proxyUrl.has_value())
+      {
+         connectAddress = proxyUrl->hostname();
+         connectPort = std::to_string(proxyUrl->port());
+         LOG_DEBUG_MESSAGE("Using proxy: " + connectAddress + ":" + connectPort);
+      }
 
       pAsyncConnector->connect(
-            address_,
-            port_,
+            connectAddress,
+            connectPort,
             boost::asio::bind_executor(strand_,
                  boost::bind(&TcpIpAsyncClient::writeRequest,
                              TcpIpAsyncClient::sharedFromThis())),
