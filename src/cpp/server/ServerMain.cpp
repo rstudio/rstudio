@@ -462,22 +462,6 @@ Error waitForSignals()
             if (interruptProcs.count(procInfo.exe))
                pids.push_back(procInfo.pid);
          
-         auto waitForChild = [=](int pid)
-         {
-            while (true)
-            {
-               int status = 0;
-               ::waitpid(pid, &status, 0);
-               if (WIFEXITED(status))
-                  break;
-            }
-         };
-         
-         // create threads that will wait for these processes
-         std::vector<boost::thread> waitThreads;
-         for (auto&& pid : pids)
-            waitThreads.emplace_back(waitForChild, pid);
-         
          // signal those processes
          error = core::system::sendSignalToSpecifiedChildProcesses(pids, SIGTERM);
          if (error)
@@ -494,21 +478,24 @@ Error waitForSignals()
             LOG_INFO_MESSAGE(message);
          }
 
-         // wait for threads
-         const int maxWaitSecs = 60;
-         std::time_t deadline = ::time(NULL) + maxWaitSecs;
-         for (auto&& thread : waitThreads)
+         // allow the child processes to try and shut down
+         boost::thread waitThread([=]()
          {
-            std::time_t duration = deadline - ::time(NULL);
-            if (duration < 0)
+            while (true)
             {
-               LOG_WARNING_MESSAGE("Terminating rserver despite remaining child processes");
-               break;
+               int status = 0;
+               if (::waitpid(-1, &status, 0) == -1)
+                  break;
             }
-            
-            thread.timed_join(boost::chrono::seconds(deadline));
-         }
-
+         });
+         
+         waitThread.timed_join(boost::chrono::seconds(60));
+         
+         // notify user if there seem to still be some processes around
+         int status = 0;
+         if (::waitpid(-1, &status, WNOHANG) == 0)
+            LOG_WARNING_MESSAGE("Continuing with shutdown despite remaining child processes");
+         
          // call overlay shutdown
          overlay::shutdown();
 
