@@ -188,19 +188,20 @@ Error runProcess(const std::string& path,
                  ProcessConfig& config,
                  ProcessConfigFilter configFilter);
 
-// get this processes' child processes
+// get _all descendants_ of this process (not just direct children!)
 Error getChildProcesses(
       std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses,
       bool populateUsername = true);
 
 
-// get the child processes of the specified process
+// get _all descendants_ of the specified process (not just direct children!)
 Error getChildProcesses(
       pid_t pid,
       std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses,
       bool populateUsername = true);
 
-// kill a process with a specific sign
+// kill a process with a specific signal
+// note that only this process will be signaled; its children will not!
 Error killProcess(pid_t pid, int signal);
 
 // no-signal version specified in System.hpp

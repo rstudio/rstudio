@@ -2458,7 +2458,6 @@ Error getChildProcesses(
       return systemError(errno, ERROR_LOCATION);
    
    // build process info
-   std::vector<ProcessInfo> processes;
    for (auto i = 0; i < count; i++)
    {
       // Get process info for each child
@@ -2485,6 +2484,9 @@ Error getChildProcesses(
          info.username = user.getUsername();
       }
     
+      // now add this process itself
+      pOutProcesses->push_back(info);
+      
       // get children of this process recursively as well
       Error error = getChildProcesses(
                procInfo.pbsi_pid,
@@ -2495,11 +2497,8 @@ Error getChildProcesses(
       if (error)
          LOG_ERROR(error);
       
-      // now add this process itself
-      processes.push_back(info);
    }
 
-   *pOutProcesses = processes;
    return Success();
 }
 
