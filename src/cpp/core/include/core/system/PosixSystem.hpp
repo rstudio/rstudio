@@ -209,7 +209,7 @@ Error killProcess(pid_t pid, int signal);
 // so we provide this function here
 Error terminateChildProcesses(int signal);
 
-// terminate child processes of the specified process
+// terminate _all descendants_ of the specified process
 Error terminateChildProcesses(pid_t pid,
                               int signal);
 
