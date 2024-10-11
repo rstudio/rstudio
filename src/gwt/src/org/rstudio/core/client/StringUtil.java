@@ -1096,7 +1096,8 @@ public class StringUtil
       int count = 0;
       for (Map.Entry<String, String> cursor : map.entrySet())
       {
-         if (count != 0) builder.append(fieldSeparator);
+         if (count != 0)
+            builder.append(fieldSeparator);
          builder.append(prefix);
          builder.append(cursor.getKey());
          builder.append(keyValueSeparator);
