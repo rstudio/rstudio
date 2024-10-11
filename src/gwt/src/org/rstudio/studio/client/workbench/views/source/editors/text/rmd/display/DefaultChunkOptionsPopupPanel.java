@@ -55,16 +55,14 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       // extract chunk options from first line, e.g. {r, echo=TRUE}
       ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
-      parseChunkHeader(originalFirstLine_, display_.getModeId(), originalChunkOptions_, extraInfo);
+      parseChunkHeader(originalFirstLine_, display_.getModeId(), chunkOptions_, extraInfo);
       chunkPreamble_ = extraInfo.chunkPreamble;
 
       // extract chunk options from YAML lines, e.g. "#| echo: true"
-      parseYamlChunkOptions(getYamlOptionLines(position_.getRow() + 1), originalChunkOptions_);
+      parseYamlChunkOptions(getYamlOptionLines(position_.getRow() + 1), chunkOptions_);
 
       if (!StringUtil.isNullOrEmpty(extraInfo.chunkLabel))
          tbChunkLabel_.setText(extraInfo.chunkLabel);
-      for (Map.Entry<String, ChunkOptionValue> pair : originalChunkOptions_.entrySet())
-         chunkOptions_.put(pair.getKey(), pair.getValue());
 
       if (engine_ == "r") printTableAsTextCb_.setVisible(true);
 

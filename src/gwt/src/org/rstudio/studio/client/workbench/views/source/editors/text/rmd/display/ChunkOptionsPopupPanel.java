@@ -102,7 +102,6 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       preferredOptionLocation_ = preferredOptionLocation;
       chunkOptions_ = new HashMap<>();
-      originalChunkOptions_ = new HashMap<>();
       
       panel_ = new VerticalPanel();
       add(panel_);
@@ -551,7 +550,6 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       display_ = display;
       position_ = position;
       chunkOptions_.clear();
-      originalChunkOptions_.clear();
       
       useCustomFigureCheckbox_.setValue(false);
       figureDimensionsPanel_.setVisible(false);
@@ -745,7 +743,6 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    protected final OptionLocation preferredOptionLocation_;
    protected HashMap<String, ChunkOptionValue> chunkOptions_;
-   protected HashMap<String, ChunkOptionValue> originalChunkOptions_;
    
    protected DocDisplay display_;
    protected Position position_;
