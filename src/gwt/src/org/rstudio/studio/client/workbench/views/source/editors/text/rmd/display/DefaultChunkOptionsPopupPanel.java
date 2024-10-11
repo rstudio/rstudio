@@ -64,7 +64,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (!StringUtil.isNullOrEmpty(extraInfo.chunkLabel))
          tbChunkLabel_.setText(extraInfo.chunkLabel);
 
-      if (engine_ == "r") printTableAsTextCb_.setVisible(true);
+      if (engine_ == "r")
+         printTableAsTextCb_.setVisible(true);
 
       afterInit.execute();
    }
@@ -104,9 +105,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             newLine += " " + label;
       }
 
-      if (!chunkOptions_.isEmpty())
+      Map<String, String> sorted = sortedOptionsDenormalized(chunkOptions_, OptionLocation.FirstLine);
+      if (!sorted.isEmpty())
       {
-         Map<String, String> sorted = sortedOptions(chunkOptions_, OptionLocation.FirstLine);
          if (label.isEmpty())
             newLine += " ";
          else
@@ -132,11 +133,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       // TODO: deal with label
 
       String newLines = "";
-      if (!chunkOptions_.isEmpty())
-      {
-         Map<String, String> sorted = sortedOptions(chunkOptions_, OptionLocation.Yaml);
+      Map<String, String> sorted = sortedOptionsDenormalized(chunkOptions_, OptionLocation.Yaml);
+      if (!sorted.isEmpty())
          newLines = StringUtil.collapse(sorted, "#| ", ": ", "\n");
-      }
       if (!newLines.isEmpty())
          newLines += "\n";
 
@@ -277,8 +276,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             endIndex = cursor.getIndex();
          }
 
+         String optionName = StringUtil.substring(arguments, startIndex, equalsIndex).trim();
          chunkOptions.put(
-               StringUtil.substring(arguments, startIndex, equalsIndex).trim(),
+               ChunkOptionValue.normalizeOptionName(optionName),
                new ChunkOptionValue(
                   StringUtil.substring(arguments, equalsIndex + 1, endIndex).trim(),
                   OptionLocation.FirstLine));
@@ -291,7 +291,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    /**
     * Returns list of option lines from the editor; these follow the first line,
     * must begin with "#| ", and must have at least one non-whitespace character
-    * after "#| ". The lines aren't checked to see if they contain valid YAML.
+    * after "#| ". The lines aren't checked to see if they contain valid YAML, and
+    * the option names are not normalized (e.g. fig.cap vs. fig-cap).
     * 
     * @param startLine first potential option line
     * @return list of option lines without the leading #|
@@ -397,6 +398,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       {
          String key = keys.get(i);
          String value = opts.get(key);
+         key = ChunkOptionValue.normalizeOptionName(key);
          chunkOptions.put(key, new ChunkOptionValue(value, OptionLocation.Yaml));
       }
    }

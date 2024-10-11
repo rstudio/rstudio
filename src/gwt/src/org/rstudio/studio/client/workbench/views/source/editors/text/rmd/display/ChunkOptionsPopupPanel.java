@@ -690,7 +690,15 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
     */
    protected Map<String, String> sortedOptions(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
    {
-      return sortedOptions(filterOptionsMap(options, optionLocation));
+      return sortedOptions(filterOptionsMap(options, optionLocation, false));
+   }
+
+   /**
+    * Sort and denormalize names (e.g. fig.cap vs. fig-cap) of all options from a particular location
+    */
+   protected Map<String, String> sortedOptionsDenormalized(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
+   {
+      return sortedOptions(filterOptionsMap(options, optionLocation, true));
    }
 
    /**
@@ -698,20 +706,31 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
     */
    protected Map<String, String> unsortedOptions(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
    {
-      return filterOptionsMap(options, optionLocation);
+      return filterOptionsMap(options, optionLocation, false);
    }
 
    /**
     * Helper to get options from a particular location.
+
+    * @param options full list of options
+    * @param optionLocation only return options from this location
+    * @param denormalize if true, adjust option names to match location's semantics (fig.cap for R,
+    *                    fig-cap for YAML)
+    * @return list of options
     */
-   private Map<String, String> filterOptionsMap(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
+   private Map<String, String> filterOptionsMap(Map<String, ChunkOptionValue> options,
+                                                OptionLocation optionLocation,
+                                                boolean denormalize)
    {
       Map<String, String> filteredEntries = new LinkedHashMap<>();
       for (Map.Entry<String, ChunkOptionValue> entry : options.entrySet()) {
          if (entry.getValue().getLocation() == optionLocation)
          {
-            // just keep the name/value, dropping the Location
-            filteredEntries.put(entry.getKey(), entry.getValue().getOptionValue());
+            String key = entry.getKey();
+            if (denormalize)
+               key = ChunkOptionValue.denormalizeOptionName(key, optionLocation);
+
+            filteredEntries.put(key, entry.getValue().getOptionValue());
          }
       }
       return filteredEntries;

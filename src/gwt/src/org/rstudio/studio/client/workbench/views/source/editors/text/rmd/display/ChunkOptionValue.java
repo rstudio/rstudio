@@ -78,6 +78,34 @@ public class ChunkOptionValue {
          return boolValue ? "true" : "false";
    }
 
+   /**
+    * Option names such as "fig.width" use a period separator when used in first-line
+    * options (R-style), but should use "fig-width" in YAML.
+    * 
+    * For ease of dup-removal and matching, we store them in R format, and adjust when
+    * we write back to document to match destination's conventions.
+    */
+   public static String normalizeOptionName(String optionName)
+   {
+      // replace all dashes with periods
+      return optionName.replace("-", ".");
+   }
+
+   /**
+    * Format an option name based on conventions of specified location.
+    *
+    * @param optionName name to reformat
+    * @param location whether to use R syntax or YAML syntax
+    * @return adjusted option name
+    */
+   public static String denormalizeOptionName(String optionName, OptionLocation location)
+   {
+      if (location == OptionLocation.FirstLine)
+         return optionName.replace("-", ".");
+      else
+         return optionName.replace(".", "-");
+   }
+
    private String optionValue_;
    private OptionLocation optionLocation_;
 }
