@@ -710,7 +710,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    }
 
    /**
-    * Helper to get options from a particular location.
+    * Get options from a particular location.
 
     * @param options full list of options
     * @param optionLocation only return options from this location

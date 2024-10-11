@@ -84,7 +84,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
 
    /**
-    * Helper to write chunk options into the first line
+    * Write chunk options into the first line
     * @param label
     * @return true if successful, false if unable to proceed
     */
@@ -404,7 +404,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
 
    /**
-    * Helper for flattening parsed YAML into a flat map<string,string>.
+    * Flatten parsed YAML into a flat map<string,string>. YAML supports nesting but
+    * that's not needed here (AFAIK).
     *
     * @param yamlObject
     * @return

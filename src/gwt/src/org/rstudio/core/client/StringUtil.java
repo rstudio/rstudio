@@ -1087,6 +1087,12 @@ public class StringUtil
       return builder.toString();
    }
 
+   /**
+    * Given map of name/value pairs, collapse into a single string using specified 
+    * separators:
+    * 
+    *    {prefix}key{keyValueSeparator}value{fieldSeparator}
+    */
    public static String collapse(Map<String, String> map,
                                  String prefix,
                                  String keyValueSeparator,
