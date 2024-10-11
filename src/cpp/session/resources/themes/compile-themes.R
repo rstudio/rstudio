@@ -719,7 +719,7 @@
          sprintf(".xtermInvertColor { color: %s; }", background),
          sprintf(".xtermInvertBgColor { background-color: %s; }", foreground),
          ".xtermBold { font-weight: bold; }",
-         ".xtermBlur { filter: blur(1px); }", 
+         ".xtermBlur { filter: brightness(75%); }", 
          ".xtermUnderline { text-decoration: underline; }",
          ".xtermBlink { text-decoration: blink; }",
          ".xtermHidden { visibility: hidden; }",

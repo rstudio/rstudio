@@ -249,7 +249,7 @@
 .xtermInvertColor { color: #2d2d2d; }
 .xtermInvertBgColor { background-color: #cccccc; }
 .xtermBold { font-weight: bold; }
-.xtermBlur { filter: blur(1px); }
+.xtermBlur { filter: brightness(75%); }
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
