@@ -38,63 +38,62 @@ test_that("the warn option is preserved when running chunks", {
 })
 
 # https://github.com/rstudio/rstudio/issues/11745
-# TODO: currently failing due to above issue
-# test_that("the expected chunk widgets show for multiple chunks", {
+test_that("the expected chunk widgets show for multiple chunks", {
 
-#    contents <- .rs.heredoc('
-#       ---
-#       title: "Chunk widgets"
-#       ---
+contents <- .rs.heredoc('
+      ---
+      title: "Chunk widgets"
+      ---
       
-#       ```{r setup, include=FALSE}
-#       knitr::opts_chunk$set(echo = TRUE)
-#       ```
+      ```{r setup, include=FALSE}
+      knitr::opts_chunk$set(echo = TRUE)
+      ```
       
-#       ## Quarto
+      ## Quarto
       
-#       This is a Quarto document.
+      This is a Quarto document.
       
-#       ```{r cars}
-#       summary(cars)
-#       ```
+      ```{r cars}
+      summary(cars)
+      ```
       
-#       ## Including Plots
+      ## Including Plots
       
-#       You can also embed plots, for example:
+      You can also embed plots, for example:
       
-#       ```{r pressure, echo=FALSE}
-#       plot(pressure)
-#       ```
+      ```{r pressure, echo=FALSE}
+      plot(pressure)
+      ```
       
-#       The end.
-#    ')
+      The end.
+   ')
    
-#    id <- remote$documentOpen(".qmd", contents)
+   id <- remote$documentOpen(".qmd", contents)
    
-#    jsChunkOptionWidgets <- remote$jsObjectsViaSelector(".rstudio_modify_chunk")
-#    jsChunkPreviewWidgets <- remote$jsObjectsViaSelector(".rstudio_preview_chunk")
-#    jsChunkRunWidgets <- remote$jsObjectsViaSelector(".rstudio_run_chunk")
+   jsChunkOptionWidgets <- remote$jsObjectsViaSelector(".rstudio_modify_chunk")
+   jsChunkPreviewWidgets <- remote$jsObjectsViaSelector(".rstudio_preview_chunk")
+   jsChunkRunWidgets <- remote$jsObjectsViaSelector(".rstudio_run_chunk")
    
-#    expect_equal(length(jsChunkOptionWidgets), 3)
-#    expect_equal(length(jsChunkPreviewWidgets), 3)
-#    expect_equal(length(jsChunkRunWidgets), 3)
+   expect_equal(length(jsChunkOptionWidgets), 3)
+   expect_equal(length(jsChunkPreviewWidgets), 3)
+   expect_equal(length(jsChunkRunWidgets), 3)
    
-#    # setup chunk's "preview" widget should be aria-hidden and display:none
-#    expect_true(.rs.automation.tools.isAriaHidden(jsChunkPreviewWidgets[[1]]))
-#    expect_equal(jsChunkPreviewWidgets[[1]]$style$display, "none")
+   # setup chunk's "preview" widget should be aria-hidden and display:none
+   expect_true(.rs.automation.tools.isAriaHidden(jsChunkPreviewWidgets[[1]]))
+   expect_equal(jsChunkPreviewWidgets[[1]]$style$display, "none")
    
-#    # all others should not be hidden
-#    checkWidgetVisible <- function(widget) {
-#       expect_false(.rs.automation.tools.isAriaHidden(widget))
-#       expect_false(widget$style$display == "none")
-#    }
-#    lapply(jsChunkPreviewWidgets[2:3], checkWidgetVisible)
-#    lapply(jsChunkOptionWidgets, checkWidgetVisible)
-#    lapply(jsChunkRunWidgets, checkWidgetVisible)
+   # all others should not be hidden
+   checkWidgetVisible <- function(widget) {
+      expect_false(.rs.automation.tools.isAriaHidden(widget))
+      expect_false(widget$style$display == "none")
+   }
+   lapply(jsChunkPreviewWidgets[2:3], checkWidgetVisible)
+   lapply(jsChunkOptionWidgets, checkWidgetVisible)
+   lapply(jsChunkRunWidgets, checkWidgetVisible)
    
-#    remote$documentClose()
-#    remote$keyboardExecute("<Ctrl + L>")
-# })
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
 
 test_that("can cancel switching to visual editor", {
    contents <- .rs.heredoc('
