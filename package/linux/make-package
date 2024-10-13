@@ -35,7 +35,7 @@ function help() {
     cat <<EOF
 usage: make-package target package [clean]
 
-Build RStudio (Qt Desktop, Electron, or Server) and redistributable package for Linux.
+Build RStudio (Electron or Server) and redistributable package for Linux.
 
 Specify version by setting environment variables. The default is 99.9.9.
 
@@ -44,7 +44,7 @@ Examples
 
 Positional Arguments
   target -- build target
-    One of "Desktop", "Electron", or "Server"
+    One of "Electron" or "Server"
 
   package
     One of "DEB" or "RPM"
