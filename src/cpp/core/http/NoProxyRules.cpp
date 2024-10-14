@@ -153,8 +153,14 @@ std::string NoProxyRuleCidrBlock::toString() const
    address += ".";
    address += std::to_string(cidrBlock_.range & 0xFF);
 
-   std::string mask;
-   mask += std::to_string(32 - __builtin_clz(cidrBlock_.mask));
+   int maskInt = 0;
+   uint32_t maskBits = cidrBlock_.mask;
+   while (maskBits & 0xF0000000)
+   {
+      maskBits <<= 1;
+      maskInt++;
+   }
+   const auto mask = std::to_string(maskInt);
 
    return address + "/" + mask;
 }
