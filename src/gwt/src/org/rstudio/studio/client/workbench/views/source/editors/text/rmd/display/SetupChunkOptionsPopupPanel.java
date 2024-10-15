@@ -46,9 +46,9 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       server_ = server;
    }
    
-   public SetupChunkOptionsPopupPanel(OptionLocation optionsLocation)
+   public SetupChunkOptionsPopupPanel(OptionLocation optionsLocation, boolean isVisualEditor)
    {
-      super(false, optionsLocation);
+      super(false, optionsLocation, isVisualEditor);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       figureDimensionsPanel_.setVisible(false);
@@ -71,6 +71,10 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       int row = position_.getRow();
       
       int max = display_.getRowCount();
+      
+      if (isVisualEditor_)
+         return max; // Visual Editor chunk has no closing "```" line and fills the Ace instance
+      
       for (int i = row; i < max; i++)
       {
          String line = display_.getLine(i);
@@ -163,6 +167,8 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          
          
          token = iterator.stepForward();
+         if (token == null)
+            break; // avoid exception if we reach the buffer's end
          Position endPos = iterator.getCurrentTokenPosition();
          
          return Range.fromPoints(startPos, endPos);
@@ -186,6 +192,13 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       }
       
       return display_.getSelectionRange();
+   }
+   
+   private void deleteLastLine()
+   {
+      display_.clearSelection();
+      display_.setCursorPosition(Position.create(display_.getRowCount() - 1, 0));
+      display_.removeLine();
    }
    
    private String joinOptions(Map<String, String> options)
@@ -229,6 +242,14 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    @Override
    protected void synchronize()
    {
+      if (isVisualEditor_)
+      {
+         // Visual Editor chunks don't have the ending "```" line, violating assumptions
+         // in the following code. Insert a line at the end of the chunk to work around
+         // this, and remove it when we're done.
+         display_.insertCode(display_.getEnd().getEnd(), "\n```");
+      }
+      
       syncSelection();
       Map<String, String> options = unsortedOptions(chunkOptions_, OptionLocation.FirstLine);
       
@@ -245,6 +266,8 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (options.isEmpty())
       {
          display_.insertCode("");
+         if (isVisualEditor_)
+            deleteLastLine();
          return;
       }
       
@@ -254,6 +277,8 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          String joined = StringUtil.collapse(options, " = ", ", ");
          String code = "knitr::opts_chunk$set(" + joined + ")\n";
          display_.insertCode(code);
+         if (isVisualEditor_)
+            deleteLastLine();
          return;
       }
       
@@ -265,6 +290,8 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             "\n)\n";
       
       display_.insertCode(code);
+      if (isVisualEditor_)
+         deleteLastLine();
    }
    
    @Override

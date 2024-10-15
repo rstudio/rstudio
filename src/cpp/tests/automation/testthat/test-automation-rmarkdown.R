@@ -427,3 +427,76 @@ test_that("modifying chunk options via UI doesn't mess up other options", {
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
+
+test_that("setup chunk starting with no options works with chunk options UI", {
+   contents <- .rs.heredoc('
+      ---
+      title: "Chunk widgets"
+      ---
+
+      ```{r setup, include=FALSE}
+      ```
+
+      This is an R Markdown document.
+   ')
+   id <- remote$documentOpen(".Rmd", contents)
+   editor <- remote$editorGetInstance()
+   
+   remote$domClickElement(".rstudio_modify_chunk")
+   Sys.sleep(1)
+   remote$domClickElement("#rstudio_chunk_opt_warnings")
+   remote$domClickElement("#rstudio_chunk_opt_messages")
+   remote$keyboardExecute("<Escape>")
+   expect_equal('```{r setup, include=FALSE}', editor$session$getLine(4))
+   expect_equal('knitr::opts_chunk$set(warning = TRUE, message = TRUE)', editor$session$getLine(5))
+   remote$domClickElement(".rstudio_modify_chunk")
+   Sys.sleep(1)
+   remote$domClickElement("#rstudio_chunk_opt_warnings")
+   remote$domClickElement("#rstudio_chunk_opt_messages")
+   remote$keyboardExecute("<Escape>")
+   expect_equal('```{r setup, include=FALSE}', editor$session$getLine(4))
+   expect_equal('knitr::opts_chunk$set(warning = FALSE, message = FALSE)', editor$session$getLine(5))
+   remote$domClickElement(".rstudio_modify_chunk")
+   Sys.sleep(1)
+   remote$domClickElement("#rstudio_chunk_opt_warnings")
+   remote$domClickElement("#rstudio_chunk_opt_messages")
+   remote$keyboardExecute("<Escape>")
+   expect_equal('```{r setup, include=FALSE}', editor$session$getLine(4))
+   expect_equal('```', editor$session$getLine(5))
+   
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
+
+test_that("setup chunk with three options displays on multiple lines", {
+   contents <- .rs.heredoc('
+      ---
+      title: "Chunk widgets"
+      ---
+   
+      ```{r setup, include=FALSE}
+      knitr::opts_chunk$set(eval = FALSE, include = FALSE)
+      ```
+
+      This is an R Markdown document.
+   ')
+   id <- remote$documentOpen(".Rmd", contents)
+   editor <- remote$editorGetInstance()
+   
+   remote$domClickElement(".rstudio_modify_chunk")
+   Sys.sleep(1)
+   remote$domClickElement("#rstudio_chunk_opt_warnings")
+   remote$domClickElement("#rstudio_chunk_opt_messages")
+   remote$keyboardExecute("<Escape>")
+   expect_equal('```{r setup, include=FALSE}', editor$session$getLine(4))
+   expect_equal('knitr::opts_chunk$set(', editor$session$getLine(5))
+   expect_equal('\teval = FALSE,', editor$session$getLine(6))
+   expect_equal('\tmessage = TRUE,', editor$session$getLine(7))
+   expect_equal('\twarning = TRUE,', editor$session$getLine(8))
+   expect_equal('\tinclude = FALSE', editor$session$getLine(9))
+   expect_equal(')', editor$session$getLine(10))
+   
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
+

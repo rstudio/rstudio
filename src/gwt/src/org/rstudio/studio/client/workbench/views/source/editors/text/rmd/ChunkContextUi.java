@@ -371,16 +371,17 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
 
    private ChunkOptionsPopupPanel createPopupPanel()
    {
+      boolean isVisualEditor = outerEditor_.isVisualEditorActive();
       int row = getRow();
       if (isSetupChunk(row))
-         return new SetupChunkOptionsPopupPanel(preferredOptionLocation());
+         return new SetupChunkOptionsPopupPanel(preferredOptionLocation(), isVisualEditor);
       
       String engine = getEngine(row);
       if (!engine.toLowerCase().equals("r") &&
           !engine.toLowerCase().equals("d3"))
-         return new CustomEngineChunkOptionsPopupPanel(engine_, preferredOptionLocation());
+         return new CustomEngineChunkOptionsPopupPanel(engine_, preferredOptionLocation(), isVisualEditor);
       
-      return new DefaultChunkOptionsPopupPanel(engine_, preferredOptionLocation());
+      return new DefaultChunkOptionsPopupPanel(engine_, preferredOptionLocation(), isVisualEditor);
    }
 
    protected ChunkContextToolbar toolbar_;

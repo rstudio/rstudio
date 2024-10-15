@@ -38,9 +38,9 @@ import java.util.Map;
 
 public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 {
-   public DefaultChunkOptionsPopupPanel(String engine, OptionLocation optionLocation)
+   public DefaultChunkOptionsPopupPanel(String engine, OptionLocation optionLocation, boolean isVisualEditor)
    {
-      super(true, optionLocation);
+      super(true, optionLocation, isVisualEditor);
 
       engine_ = engine;
       enginePanel_.setVisible(false);
@@ -55,7 +55,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       // extract chunk options from first line, e.g. {r, echo=TRUE}
       ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
-      parseChunkHeader(originalFirstLine_, display_.getModeId(), chunkOptions_, extraInfo);
+      parseChunkHeader(originalFirstLine_, isVisualEditor_ ? "mode/r" : display_.getModeId(),
+                       chunkOptions_, extraInfo);
       chunkPreamble_ = extraInfo.chunkPreamble;
 
       // extract chunk options from YAML lines, e.g. "#| echo: true"
@@ -169,7 +170,12 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
    private Pair<String, String> getChunkHeaderBounds(String modeId)
    {
-      if (modeId == "mode/rmarkdown")
+      // When using Visual Editor the mode is the chunk's mode, not the document's
+      // mode. Leverage fact the Visual Editor only supports markdown-like formats
+      // using a modified form of the rmarkdown-style boundaries.
+      if (isVisualEditor_)
+         return new Pair<>("{", "}");
+      else if (modeId == "mode/rmarkdown")
          return new Pair<>("```{", "}");
       else if (modeId == "mode/sweave")
          return new Pair<>("<<", ">>=");
@@ -177,8 +183,6 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          return new Pair<>("<!--", "");
       else if (modeId == "mode/c_cpp")
          return new Pair<>("/***", "");
-      else if (modeId == "mode/r")  // Used in visual mode for embedded chunk editor
-         return new Pair<>("{", "}");
 
       return null;
    }

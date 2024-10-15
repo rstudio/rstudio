@@ -93,7 +93,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       rfsContext_ = rfsContext;
    }
    
-   public ChunkOptionsPopupPanel(boolean includeChunkNameUI, OptionLocation preferredOptionLocation)
+   public ChunkOptionsPopupPanel(boolean includeChunkNameUI, OptionLocation preferredOptionLocation, boolean isVisualEditor)
    {
       super(true);
       setVisible(false);
@@ -101,6 +101,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       preferredOptionLocation_ = preferredOptionLocation;
+      isVisualEditor_ = isVisualEditor;
       chunkOptions_ = new HashMap<>();
       
       panel_ = new VerticalPanel();
@@ -759,6 +760,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected String originalOptionLines_; // chunk option line(s) using #| prefix
 
    protected String chunkPreamble_;
+   protected final boolean isVisualEditor_;
    
    protected final OptionLocation preferredOptionLocation_;
    protected HashMap<String, ChunkOptionValue> chunkOptions_;

@@ -18,9 +18,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display
 
 public class CustomEngineChunkOptionsPopupPanel extends DefaultChunkOptionsPopupPanel
 {
-   public CustomEngineChunkOptionsPopupPanel(String engine, OptionLocation optionLocation)
+   public CustomEngineChunkOptionsPopupPanel(String engine, OptionLocation optionLocation, boolean isVisualEditor)
    {
-      super(engine, optionLocation);
+      super(engine, optionLocation, isVisualEditor);
       
       showWarningsInOutputCb_.setVisible(false);
       showMessagesInOutputCb_.setVisible(false);
