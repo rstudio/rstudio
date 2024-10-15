@@ -86,6 +86,8 @@ If running Workbench behind a proxy server, you may need to update your `NO_PROX
 ### Dependencies
 - Updated Electron to version 31.6.0 (#14982; Desktop)
 - Updated GWT to version 2.10.1 (#15011)
+- Updated GWT to version 2.10.1 (#15011)
+- Updated Electron to version 31.5.0 (#14982; Desktop)
 
 ### Deprecated / Removed
 - Removed user preference for turning off focus indicator rectangles (#14352)
