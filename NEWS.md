@@ -72,6 +72,7 @@
 - Fixed an issue where updating the Copilot agent on Windows could fail if Copilot was already in use (#14850)
 - Fixed an issue where RStudio could autosave files on blur even while a Save As... modal was active (#15303)
 - Fixed an issue where some output from `uv` could be rendered blurry in the RStudio Console (#15282)
+- Fixed an issue where the IDE could hang when changing the file type of an R Markdown document (#15313)
 
 
 #### Posit Workbench
