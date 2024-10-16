@@ -1552,7 +1552,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       ),
       
       error = function(cnd) {
-         message <- paste("Error restoring search paths:", conditionMessage(cnd))
+         header <- "Error restoring search paths:"
+         message <- paste(c(header, conditionMessage(cnd)), collapse = "\n\t")
          writeLines(message, con = stderr())
       }
       
