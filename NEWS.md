@@ -72,6 +72,7 @@
 - Fixed an issue where updating the Copilot agent on Windows could fail if Copilot was already in use (#14850)
 - Fixed an issue where RStudio could autosave files on blur even while a Save As... modal was active (#15303)
 - Fixed an issue where some output from `uv` could be rendered blurry in the RStudio Console (#15282)
+- Fixed the chunk options popup to work in Visual Mode for non-R chunks (#15312)
 
 
 #### Posit Workbench

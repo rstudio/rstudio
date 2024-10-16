@@ -92,13 +92,14 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       rfsContext_ = rfsContext;
    }
    
-   public ChunkOptionsPopupPanel(boolean includeChunkNameUI)
+   public ChunkOptionsPopupPanel(boolean includeChunkNameUI, boolean isVisualEditor)
    {
       super(true);
       setVisible(false);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      isVisualEditor_ = isVisualEditor;
       chunkOptions_ = new HashMap<>();
       originalChunkOptions_ = new HashMap<>();
       
@@ -655,6 +656,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    protected String originalLine_;
    protected String chunkPreamble_;
+   protected final boolean isVisualEditor_;
    
    protected HashMap<String, String> chunkOptions_;
    protected HashMap<String, String> originalChunkOptions_;
