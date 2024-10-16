@@ -55,7 +55,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       // extract chunk options from first line, e.g. {r, echo=TRUE}
       ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
-      parseChunkHeader(originalFirstLine_, isVisualEditor_ ? "mode/r" : display_.getModeId(),
+      parseChunkHeader(originalFirstLine_, isVisualEditor_ ? "mode/r" : isVisualEditor_ ? "mode/r" : display_.getModeId(),
+                      
                        chunkOptions_, extraInfo);
       chunkPreamble_ = extraInfo.chunkPreamble;
 
