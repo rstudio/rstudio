@@ -1538,3 +1538,202 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          return(value)
    }
 })
+
+.rs.addFunction("restoreSearchPath", function(searchPathsFile,
+                                              packagePathsFile,
+                                              environmentDataDir)
+{
+   tryCatch(
+      
+      .rs.restoreSearchPathImpl(
+         searchPathsFile,
+         packagePathsFile,
+         environmentDataDir
+      ),
+      
+      error = function(cnd) {
+         message <- paste("Error restoring search paths:", conditionMessage(cnd))
+         writeLines(message, con = stderr())
+      }
+      
+   )
+})
+
+.rs.addFunction("restoreSearchPathImpl", function(searchPathsFile,
+                                                  packagePathsFile,
+                                                  environmentDataDir)
+{
+   # First, read the package paths file, and try to load those packages.
+   packagePaths <- .rs.readProperties(
+      path = packagePathsFile,
+      delimiter = "=",
+      dequote = TRUE,
+      trim = TRUE
+   )
+   
+   # Exclude 'base' if it was serialized, since that's always loaded.
+   packagePaths[["base"]] <- NULL
+   
+   # Restore the packages.
+   .rs.restorePackages(packagePaths)
+   
+   # Read the search paths file.
+   searchPaths <- readLines(searchPathsFile, warn = FALSE)
+   
+   # Build our iteration indices.
+   # - Iterate in reverse order, since 'library()' always attaches entries to the front of the search path.
+   # - Iterate by index, since we use those to map certain search path elements to data files.
+   indices <- seq.int(
+      from = length(searchPaths) - 1L,
+      to = 2L,
+      by = -1L
+   )
+   
+   for (index in indices)
+   {
+      searchPathEl <- searchPaths[[index]]
+      if (grepl("^package:", searchPathEl))
+      {
+         packageName <- substring(searchPathEl, 9L)
+         message <- paste("Attaching package:", packageName)
+         .rs.logErrorMessage(message)
+         library(packageName, character.only = TRUE)
+      }
+      else
+      {
+         dataFilePath <- file.path(environmentDataDir, index)
+         if (file.exists(dataFilePath))
+         {
+            .rs.attachDataFile(dataFilePath, searchPathEl)
+         }
+      }
+   }
+   
+})
+
+.rs.addFunction("restorePackages", function(packagePaths)
+{
+   # Use environment to track visited packages.
+   visitedPackages <- new.env(parent = emptyenv())
+   
+   # Treat 'R' as already visited, so that we skip it.
+   # (Some packages include R version requirements in their DESCRIPTION files.)
+   visitedPackages[["R"]] <- TRUE
+   
+   # Start loading.
+   for (package in names(packagePaths))
+      .rs.restorePackagesImpl(package, packagePaths, visitedPackages)
+})
+
+.rs.addFunction("restorePackagesImpl", function(package,
+                                                packagePaths,
+                                                visitedPackages)
+{
+   # Check if we've already visited this package.
+   if (exists(package, envir = visitedPackages))
+      return()
+   
+   # Mark this package as visited.
+   visitedPackages[[package]] <- TRUE
+   
+   # If we don't have a known namespace path for this package, skip it.
+   # This can occur for packages which import a package in their DESCRIPTION file,
+   # but don't explicitly import it in their NAMESPACE.
+   #
+   # In other words, such packages are loaded only on first use, which is somewhat
+   # awkward -- especially since whether or not that package can be loaded does
+   # depend on the library paths set at load time!
+   packagePath <- packagePaths[[package]]
+   if (is.null(packagePath))
+      return()
+   
+   libLoc <- dirname(packagePath)
+   packageDesc <- as.list(utils::packageDescription(package, lib.loc = libLoc))
+   
+   # Load any of its dependencies first.
+   fields <- c("Depends", "Imports", "LinkingTo")
+   for (field in fields)
+   {
+      splitDeps <- tools:::.split_dependencies(packageDesc[[field]])
+      for (packageDep in names(splitDeps))
+      {
+         .rs.restorePackagesImpl(packageDep, packagePaths, visitedPackages)
+      }
+   }
+
+   message <- paste("Loading namespace:", file.path(.rs.nullCoalesce(libLoc, "<?>"), package))
+   .rs.logErrorMessage(message)
+   
+   # Load the package.   
+   loadNamespace(package, lib.loc = libLoc)
+})
+
+.rs.addFunction("dequote", function(value)
+{
+   for (i in seq_along(value))
+   {
+      if (grepl("^[\x22\x27]", value[[i]], perl = TRUE))
+      {
+         value[[i]] <- tryCatch(
+            parse(text = value[[i]])[[1L]],
+            error = function(cnd) value[[i]]
+         )
+      }
+   }
+   
+   value
+})
+
+.rs.addFunction("readProperties", function(path = NULL,
+                                           text = NULL,
+                                           delimiter = ":",
+                                           dequote = TRUE,
+                                           trim = TRUE)
+{
+   # disable warnings in this scope
+   op <- options(warn = -1L)
+   on.exit(options(op), add = TRUE)
+   
+   # read file
+   text <- .rs.nullCoalesce(text, readLines(path, warn = FALSE))
+   contents <- paste(text, collapse = "\n")
+   
+   # split on newlines; allow spaces to continue a value
+   parts <- strsplit(contents, "\\n(?=\\S)", perl = TRUE)[[1L]]
+   
+   # remove comments and blank lines
+   parts <- grep("^\\s*(?:#|$)", parts, perl = TRUE, value = TRUE, invert = TRUE)
+   
+   # split into key / value pairs
+   index <- regexpr(delimiter, parts, fixed = TRUE)
+   keys <- substring(parts, 1L, index - 1L)
+   vals <- substring(parts, index + 1L)
+   
+   # trim whitespace when requested
+   if (trim)
+   {
+      keys <- .rs.trimWhitespace(keys)
+      vals <- gsub("\n\\s*", " ", .rs.trimWhitespace(vals), perl = TRUE)
+   }
+   
+   # strip quotes if requested
+   if (dequote)
+   {
+      keys <- .rs.dequote(keys)
+      vals <- .rs.dequote(vals)
+   }
+   
+   # return as named list
+   storage.mode(vals) <- "list"
+   names(vals) <- keys
+   
+   vals
+   
+})
+
+.rs.addFunction("packagePaths", function()
+{
+   packages <- setdiff(loadedNamespaces(), "base")
+   names(packages) <- packages
+   lapply(packages, getNamespaceInfo, "path")
+})
