@@ -39,6 +39,11 @@
    TYPE_ALL_WINDOWS   = 2L
 ))
 
+.rs.addApiFunction("isDesktop", function()
+{
+   .rs.isDesktop()
+})
+
 .rs.addApiFunction("restartSession", function(command = NULL,
                                               clean = FALSE,
                                               eager = FALSE)
@@ -141,7 +146,19 @@
    )
 })
 
-.rs.addApiFunction("versionInfo", function() {
+.rs.addApiFunction("getVersion", function()
+{
+   version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
+   package_version(version)
+})
+
+.rs.addApiFunction("getMode", function()
+{
+   .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
+})
+
+.rs.addApiFunction("versionInfo", function()
+{
   info <- list()
   info$citation <- .Call("rs_rstudioCitation", PACKAGE = "(embedding)")
   info$mode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
