@@ -372,7 +372,6 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    private ChunkOptionsPopupPanel createPopupPanel()
    {
       boolean isVisualEditor = outerEditor_.isVisualEditorActive();
-      boolean isVisualEditor = outerEditor_.isVisualEditorActive();
       int row = getRow();
       if (isSetupChunk(row))
          return new SetupChunkOptionsPopupPanel(preferredOptionLocation(), isVisualEditor);

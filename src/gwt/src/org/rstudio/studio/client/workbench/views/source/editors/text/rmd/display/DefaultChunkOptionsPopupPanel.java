@@ -55,8 +55,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       // extract chunk options from first line, e.g. {r, echo=TRUE}
       ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
-      parseChunkHeader(originalFirstLine_, isVisualEditor_ ? "mode/r" : isVisualEditor_ ? "mode/r" : display_.getModeId(),
-                      
+      parseChunkHeader(originalFirstLine_, isVisualEditor_ ? "mode/r" : display_.getModeId(),
                        chunkOptions_, extraInfo);
       chunkPreamble_ = extraInfo.chunkPreamble;
 
@@ -379,7 +378,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
      * @param optionLines The lines containing raw YAML chunk options.
      * @param chunkOptions The map to populate with parsed options.
      */
-    private void parseYamlChunkOptions(List<String> optionLines, Map<String, ChunkOptionValue> chunkOptions)
+    public static void parseYamlChunkOptions(List<String> optionLines, Map<String, ChunkOptionValue> chunkOptions)
     {
       String yaml = String.join("\n", optionLines);
       Object parsedYaml = null;
