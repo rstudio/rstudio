@@ -1580,6 +1580,20 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # Read the search paths file.
    searchPaths <- readLines(searchPathsFile, warn = FALSE)
    
+   # Detach anything that's on the search path right now, but not in the search path list.
+   currentSearchPaths <- setdiff(
+      search(),
+      c(".GlobalEnv", "tools:rstudio", "package:base", "package:tools", "package:utils")
+   )
+   
+   for (entry in currentSearchPaths)
+   {
+      if (!entry %in% searchPaths)
+      {
+         detach(entry, character.only = TRUE)
+      }
+   }
+   
    # Build our iteration indices.
    # - Iterate in reverse order, since 'library()' always attaches entries to the front of the search path.
    # - Iterate by index, since we use those to map certain search path elements to data files.
@@ -1659,7 +1673,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       }
    }
 
-   # Load the package.   
+   # Load the package.
    loadNamespace(package, lib.loc = libLoc)
 })
 
@@ -1723,7 +1737,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    names(vals) <- keys
    
    vals
-   
 })
 
 .rs.addFunction("packagePaths", function()
