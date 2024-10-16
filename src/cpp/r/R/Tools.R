@@ -1595,8 +1595,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       if (grepl("^package:", searchPathEl))
       {
          packageName <- substring(searchPathEl, 9L)
-         message <- paste("Attaching package:", packageName)
-         .rs.logErrorMessage(message)
          library(packageName, character.only = TRUE)
       }
       else
@@ -1661,9 +1659,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       }
    }
 
-   message <- paste("Loading namespace:", file.path(.rs.nullCoalesce(libLoc, "<?>"), package))
-   .rs.logErrorMessage(message)
-   
    # Load the package.   
    loadNamespace(package, lib.loc = libLoc)
 })
