@@ -18,6 +18,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue.OptionLocation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.DefaultChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.DefaultChunkOptionsPopupPanel.ChunkHeaderInfo;
 
@@ -238,5 +239,23 @@ public class DefaultChunkOptionsPopupPanelTests extends GWTTestCase
       assertEquals("{1 + 1}", pieces.get("echo").getOptionValue());
       assertTrue("contains key \"message\"?", pieces.containsKey("message"));
       assertEquals("check message value", "FALSE", pieces.get("message").getOptionValue());
+   }
+
+   public void testMultipleFirstLineLabels()
+   {
+      String header = "```{r my-label, label=my-other-label, echo=TRUE}";
+      ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
+      HashMap<String, ChunkOptionValue> pieces = new HashMap<String, ChunkOptionValue>();
+      DefaultChunkOptionsPopupPanel.parseChunkHeader(header, "mode/rmarkdown", pieces, extraInfo);
+
+      assertEquals("my-label", extraInfo.chunkLabel);
+      assertEquals("r", extraInfo.chunkPreamble);
+      assertTrue(pieces.containsKey("echo"));
+      assertEquals("TRUE", pieces.get("echo").getOptionValue());
+      assertEquals(OptionLocation.FirstLine, pieces.get("echo").getLocation());
+      assertTrue(pieces.containsKey("label"));
+      assertEquals("my-other-label", pieces.get("label").getOptionValue());
+      assertEquals(OptionLocation.FirstLine, pieces.get("label").getLocation());
+      assertTrue(pieces.containsKey("label"));
    }
 }

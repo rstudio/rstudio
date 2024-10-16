@@ -224,8 +224,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
     */
    public static class ChunkHeaderInfo
    {
-      public String chunkPreamble;
-      public String chunkLabel;
+      public String chunkPreamble; // "r", "python", etc.
+      public String chunkLabel; // label in header without label=, e.g. "foo" in {r foo}
    }
 
    /**
