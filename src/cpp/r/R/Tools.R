@@ -1614,7 +1614,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       }
       else
       {
-         # NOTE: Use '-1' to accommodate 0-based versus 1-based indexing.
+         # NOTE: Subtract by 1 to accommodate 0-based versus 1-based indexing.
          dataFilePath <- file.path(environmentDataDir, index - 1L)
          if (file.exists(dataFilePath))
             .rs.attachDataFile(dataFilePath, searchPathEl)
