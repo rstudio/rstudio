@@ -133,6 +133,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    {
       // TODO: deal with label
 
+      // Compose replacement string
       String newLines = "";
       Map<String, String> sorted = sortedOptionsDenormalized(chunkOptions_, OptionLocation.Yaml);
       if (!sorted.isEmpty())
@@ -140,11 +141,23 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (!newLines.isEmpty())
          newLines += "\n";
 
+      deleteYamlOptions();
+      display_.setCursorPosition(Position.create(position_.getRow() + 1, 0));
+      display_.insertCode(newLines);
+   }
+
+   private void deleteYamlOptions()
+   {
       int existingYamlLineCount = countYamlOptionLines(position_.getRow() + 1);
-      Range replaceRange = Range.fromPoints(
+      Range deleteRange = Range.fromPoints(
             Position.create(position_.getRow() + 1, 0),
             Position.create(position_.getRow() + 1 + existingYamlLineCount, 0));
-      display_.replaceRange(replaceRange, newLines);
+      display_.clearSelection();
+      for (int row = deleteRange.getEnd().getRow() - 1; row >= deleteRange.getStart().getRow(); row--)
+      {
+         display_.setCursorPosition(Position.create(row, 0));
+         display_.removeLine();
+      }
    }
 
    @Override
@@ -159,13 +172,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       display_.replaceRange(replaceRange, originalFirstLine_ + "\n");
 
-      int existingYamlLineCount = countYamlOptionLines(position_.getRow() + 1);
-      replaceRange = Range.fromPoints(
-            Position.create(position_.getRow() + 1, 0),
-            Position.create(position_.getRow() + 1 + existingYamlLineCount, 0));
-
-      display_.replaceRange(replaceRange,
-                            originalOptionLines_ + (originalOptionLines_.isEmpty() ? "" : "\n"));
+      deleteYamlOptions();
+      display_.setCursorPosition(Position.create(position_.getRow() + 1, 0));
+      display_.insertCode(originalOptionLines_ + (originalOptionLines_.isEmpty() ? "" : "\n"));
    }
 
    private Pair<String, String> getChunkHeaderBounds(String modeId)
@@ -401,7 +410,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       for (int i = 0; i < keys.length(); i++)
       {
          String key = keys.get(i);
-         String value = opts.get(key);
+         String value = opts.get(key).trim();
          key = ChunkOptionValue.normalizeOptionName(key);
          chunkOptions.put(key, new ChunkOptionValue(value, OptionLocation.Yaml));
       }

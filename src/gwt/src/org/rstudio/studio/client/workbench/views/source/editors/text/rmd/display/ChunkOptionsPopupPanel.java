@@ -646,7 +646,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    private int getPriority(String key)
    {
-      if (key == "eval")
+      if (key == "label")
+         return 11;
+      else if (key == "eval")
          return 10;
       else if (key == "echo")
          return 9;
