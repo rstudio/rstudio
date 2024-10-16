@@ -1604,6 +1604,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       by = -1L
    )
    
+   # Using our index from above, iterate and attach packages.
    for (index in indices)
    {
       searchPathEl <- searchPaths[[index]]
