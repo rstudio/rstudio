@@ -31,6 +31,12 @@ oop.inherits(FoldMode, BaseFoldMode);
 var RE_FOLD_BEGIN = /(?:^|[.])(?:codebegin|heading)(?:$|[.])/;
 var RE_FOLD_END   = /(?:^|[.])(?:codeend)(?:$|[.])/;
 
+var FOLD_STYLE_MARKBEGINEND = "markbeginend";
+
+var FOLD_WIDGET_NONE  = "";
+var FOLD_WIDGET_START = "start";
+var FOLD_WIDGET_END   = "end";
+
 (function() {
 
    var $findNextHeader = function(session, state, row, depth) {
@@ -61,16 +67,33 @@ var RE_FOLD_END   = /(?:^|[.])(?:codeend)(?:$|[.])/;
    // direction.
    this.$getBracedWidgetRange = function(session, foldStyle, row, pattern) {
 
-      // Get the fold widget for this row. A 'start' widget folds content forwards
-      // of this row in the document; otherwise, we fold backwards in the document.
+      // Get the fold widget for this row.
       var widget = this.getFoldWidget(session, foldStyle, row);
-      var increment = widget === "start" ? 1 : -1;
-      var startRow = row;
+      if (widget === FOLD_WIDGET_NONE) {
+         return null;
+      }
 
+      // Figure out if we're looking forward for an end widget, or backwards
+      // for a beginning widget.
+      var increment, limit;
+      if (widget === FOLD_WIDGET_START) {
+         increment = 1;
+         limit = session.getLength();
+         if (row >= limit) {
+            return null;
+         }
+      } else if (widget === FOLD_WIDGET_END) {
+         increment = -1;
+         limit = 0;
+         if (row <= limit) {
+            return null;
+         }
+      }
+      
       // Find the end of the current fold range. Iterate through lines and apply
       // our fold pattern until we get a match.
+      var startRow = row;
       var endRow = row + increment;
-      var limit = increment > 0 ? session.getLength() : 0;
       while (endRow !== limit) {
 
          var line = session.getLine(endRow);
@@ -83,7 +106,7 @@ var RE_FOLD_END   = /(?:^|[.])(?:codeend)(?:$|[.])/;
       // Build the fold range. Note that if we were folding backwards, then the
       // discovered 'endRow' would lie earlier in the document, on the row where
       // the fold region starts -- hence, the sort of 'mirroring' in the code below.
-      if (widget === "start") {
+      if (widget === FOLD_WIDGET_START) {
          var startPos = { row: startRow, column: session.getLine(startRow).length };
          var endPos = { row: endRow, column: 0 };
          return Range.fromPoints(startPos, endPos);
@@ -98,21 +121,17 @@ var RE_FOLD_END   = /(?:^|[.])(?:codeend)(?:$|[.])/;
 
    this.getFoldWidget = function(session, foldStyle, row) {
 
-      var FOLD_NONE  = "";
-      var FOLD_START = "start";
-      var FOLD_END   = foldStyle === "markbeginend" ? "end" : "";
-
       var tokens = session.getTokens(row);
       for (var token of tokens) {
          var type = token.type || "";
          if (RE_FOLD_BEGIN.test(type)) {
-            return FOLD_START;
+            return FOLD_WIDGET_START;
          } else if (RE_FOLD_END.test(type)) {
-            return FOLD_END;
+            return foldStyle === FOLD_STYLE_MARKBEGINEND ? FOLD_WIDGET_END : FOLD_WIDGET_NONE;
          }
       }
 
-      return FOLD_NONE;
+      return FOLD_WIDGET_NONE;
    };
 
    this.$getFoldWidgetRange = function(session, foldStyle, row) {
