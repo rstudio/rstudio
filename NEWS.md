@@ -73,6 +73,7 @@
 - Fixed an issue where RStudio could autosave files on blur even while a Save As... modal was active (#15303)
 - Fixed an issue where some output from `uv` could be rendered blurry in the RStudio Console (#15282)
 - Fixed an issue where the IDE could hang when changing the file type of an R Markdown document (#15313)
+- Fixed the chunk options popup to work in Visual Mode for non-R chunks (#15312)
 
 
 #### Posit Workbench

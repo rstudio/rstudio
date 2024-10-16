@@ -32,9 +32,9 @@ import java.util.Map;
 
 public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 {
-   public DefaultChunkOptionsPopupPanel(String engine)
+   public DefaultChunkOptionsPopupPanel(String engine, boolean isVisualEditor)
    {
-      super(true);
+      super(true, isVisualEditor);
 
       engine_ = engine;
       enginePanel_.setVisible(false);
@@ -45,7 +45,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    {
       originalLine_ = display_.getLine(position_.getRow());
       ChunkHeaderInfo extraInfo = new ChunkHeaderInfo();
-      parseChunkHeader(originalLine_, display_.getModeId(), originalChunkOptions_, extraInfo);
+      parseChunkHeader(originalLine_, isVisualEditor_ ? "mode/r" : display_.getModeId(),
+                       originalChunkOptions_, extraInfo);
       chunkPreamble_ = extraInfo.chunkPreamble;
       if (!StringUtil.isNullOrEmpty(extraInfo.chunkLabel))
          tbChunkLabel_.setText(extraInfo.chunkLabel);
@@ -115,7 +116,12 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
    private Pair<String, String> getChunkHeaderBounds(String modeId)
    {
-      if (modeId == "mode/rmarkdown")
+      // When using Visual Editor the mode is the chunk's mode, not the document's
+      // mode. Leverage fact the Visual Editor only supports markdown-like formats
+      // using a modified form of the rmarkdown-style boundaries.
+      if (isVisualEditor_)
+         return new Pair<>("{", "}");
+      else if (modeId == "mode/rmarkdown")
          return new Pair<>("```{", "}");
       else if (modeId == "mode/sweave")
          return new Pair<>("<<", ">>=");
@@ -123,8 +129,6 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          return new Pair<>("<!--", "");
       else if (modeId == "mode/c_cpp")
          return new Pair<>("/***", "");
-      else if (modeId == "mode/r")  // Used in visual mode for embedded chunk editor
-         return new Pair<>("{", "}");
 
       return null;
    }
