@@ -375,6 +375,7 @@ SEXP rs_rstudioEdition()
 }
 
 // get version
+// NOTE: Used by 'rstudioapi'; unofficially part of the API.
 SEXP rs_rstudioVersion()
 {
    std::string numericVersion(RSTUDIO_VERSION_MAJOR);
