@@ -804,7 +804,7 @@ json::Array callFramesAsJson(
                      simulatedSourceRefsOfContext(
                         *context, RCntxt(), pLineDebugState);
                
-               if (isValidSrcref(simulatedSrcref))
+               if (pLineDebugState && isValidSrcref(simulatedSrcref))
                {
                   int lastDebugLine = INTEGER(simulatedSrcref)[0] - 1;
                   pLineDebugState->lastDebugLine = lastDebugLine;

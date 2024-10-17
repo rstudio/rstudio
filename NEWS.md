@@ -33,6 +33,7 @@
 ### Fixed
 #### RStudio
 - "Run All" now only executes R chunks when "Chunk Output in Console" is set (#11995)
+- Fixed an issue where the R session could crash on connect while generating console output (#15330)
 - Fixed an issue where the Rename File command did not write unsaved changes before performing the rename (#15242)
 - Fixed an issue where the chunk options popup didn't recognize chunk labels preceded by a comma (#15156)
 - Fixed an issue where the chunk options popup was confused by quoted strings containing spaces (#6829)
