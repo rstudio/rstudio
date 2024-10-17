@@ -59,13 +59,19 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
                        chunkOptions_, extraInfo);
       chunkPreamble_ = extraInfo.chunkPreamble;
 
+      // found a label via {r LABEL} approach, store it to track where it came from
+      if (!StringUtil.isNullOrEmpty(extraInfo.chunkLabel))
+         set("label", extraInfo.chunkLabel, OptionLocation.FirstLine);
+
       // extract chunk options from YAML lines, e.g. "#| echo: true"
       parseYamlChunkOptions(getYamlOptionLines(position_.getRow() + 1), chunkOptions_);
 
-      if (!StringUtil.isNullOrEmpty(extraInfo.chunkLabel))
-         tbChunkLabel_.setText(extraInfo.chunkLabel);
+      // set the label in the UI
+      String label = getLabelValue();
+      if (!StringUtil.isNullOrEmpty(label))
+         tbChunkLabel_.setText(label);
 
-      if (engine_ == "r")
+      if (StringUtil.equals(engine_, "r"))
          printTableAsTextCb_.setVisible(true);
 
       afterInit.execute();
@@ -74,22 +80,28 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    @Override
    protected void synchronize()
    {
-      // TODO: write label to correct location (first line or YAML)
       String label = tbChunkLabel_.getText();
 
-      if (!writeFirstLineOptions(label))
+      // determine where to write the label based on where we originally found it
+      OptionLocation labelLocation = preferredOptionLocation_;
+      ChunkOptionValue labelInfo = get("label");
+      if (labelInfo != null)
+         labelLocation = labelInfo.getLocation();
+
+      // update label in the options map
+      set("label", label, labelLocation);
+
+      // persist
+      if (!writeFirstLineOptions())
          return;
-
-      writeYamlOptionLines(label);
-
+      writeYamlOptionLines();
    }
 
    /**
     * Write chunk options into the first line
-    * @param label
     * @return true if successful, false if unable to proceed
     */
-   private boolean writeFirstLineOptions(String label)
+   private boolean writeFirstLineOptions()
    {
       String modeId = display_.getModeId();
       Pair<String, String> chunkHeaderBounds = getChunkHeaderBounds(modeId);
@@ -98,6 +110,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       String newLine = chunkHeaderBounds.first + chunkPreamble_;
 
+      String label = getLabelForLocation(OptionLocation.FirstLine);
       if (!label.isEmpty())
       {
          if (StringUtil.isNullOrEmpty(chunkPreamble_))
@@ -129,15 +142,16 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    /**
     * Write YAML line options
     */
-   private void writeYamlOptionLines(String label)
+   private void writeYamlOptionLines()
    {
-      // TODO: deal with label
-
       // Compose replacement string
       String newLines = "";
       Map<String, String> sorted = sortedOptionsDenormalized(chunkOptions_, OptionLocation.Yaml);
       if (!sorted.isEmpty())
+      {
          newLines = StringUtil.collapse(sorted, "#| ", ": ", "\n");
+      }
+
       if (!newLines.isEmpty())
          newLines += "\n";
 
@@ -184,13 +198,13 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       // using a modified form of the rmarkdown-style boundaries.
       if (isVisualEditor_)
          return new Pair<>("{", "}");
-      else if (modeId == "mode/rmarkdown")
+      else if (StringUtil.equals(modeId, "mode/rmarkdown"))
          return new Pair<>("```{", "}");
-      else if (modeId == "mode/sweave")
+      else if (StringUtil.equals(modeId, "mode/sweave"))
          return new Pair<>("<<", ">>=");
-      else if (modeId == "mode/rhtml")
+      else if (StringUtil.equals(modeId, "mode/rhtml"))
          return new Pair<>("<!--", "");
-      else if (modeId == "mode/c_cpp")
+      else if (StringUtil.equals(modeId, "mode/c_cpp"))
          return new Pair<>("/***", "");
 
       return null;
@@ -199,7 +213,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    private static String extractChunkPreamble(String extractedChunkHeader,
                                               String modeId)
    {
-      if (modeId == "mode/sweave")
+      if (StringUtil.equals(modeId, "mode/sweave"))
          return "";
 
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
@@ -248,13 +262,13 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
                                        ChunkHeaderInfo extraInfo)
    {
       Pattern pattern = null;
-      if (modeId == "mode/rmarkdown")
+      if (StringUtil.equals(modeId, "mode/rmarkdown"))
          pattern = RegexUtil.RE_RMARKDOWN_CHUNK_BEGIN;
-      else if (modeId == "mode/sweave")
+      else if (StringUtil.equals(modeId, "mode/sweave"))
          pattern = RegexUtil.RE_SWEAVE_CHUNK_BEGIN;
-      else if (modeId == "mode/rhtml")
+      else if (StringUtil.equals(modeId, "mode/rhtml"))
          pattern = RegexUtil.RE_RHTML_CHUNK_BEGIN;
-      else if (modeId == "mode/r")
+      else if (StringUtil.equals(modeId, "mode/r"))
          pattern = RegexUtil.RE_EMBEDDED_R_CHUNK_BEGIN;
 
       if (pattern == null) return;

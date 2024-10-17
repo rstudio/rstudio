@@ -619,14 +619,17 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       if (option.getLocation() == OptionLocation.FirstLine)
       {
          // R-style
-         return option.getOptionValue() == "TRUE" || option.getOptionValue() == "T";
+         return StringUtil.equals(option.getOptionValue(), "TRUE") || 
+                StringUtil.equals(option.getOptionValue(), "T");
       }
       else
       {
          // YAML-style: standard is "true" and "false" but also detect
          // other forms used in the wild
          String value = option.getOptionValue().toLowerCase();
-         return value == "true" || value == "yes" || value == "on";
+         return StringUtil.equals(value, "true") || 
+                StringUtil.equals(value, "yes") || 
+                StringUtil.equals(value, "on");
       }
    }
    
@@ -646,13 +649,15 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    private int getPriority(String key)
    {
-      if (key == "label")
+      if (StringUtil.equals(key, "label"))
          return 11;
-      else if (key == "eval")
+      else if (StringUtil.equals(key, "eval"))
          return 10;
-      else if (key == "echo")
+      else if (StringUtil.equals(key, "echo"))
          return 9;
-      else if (key == "warning" || key == "error" || key == "message")
+      else if (StringUtil.equals(key, "warning") || 
+               StringUtil.equals(key, "error") || 
+               StringUtil.equals(key, "message"))
          return 8;
       else if (key.startsWith("fig."))
          return 8;
@@ -689,27 +694,21 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    }
 
    /**
-    * Sort all options from a particular location
-    */
-   protected Map<String, String> sortedOptions(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
-   {
-      return sortedOptions(filterOptionsMap(options, optionLocation, false));
-   }
-
-   /**
-    * Sort and denormalize names (e.g. fig.cap vs. fig-cap) of all options from a particular location
+    * Sort and denormalize names (e.g. fig.cap vs. fig-cap) of all options from a particular location.
+    *
+    * If there's a label= entry for the first-line, remove it (first line label has special handling)
     */
    protected Map<String, String> sortedOptionsDenormalized(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
    {
-      return sortedOptions(filterOptionsMap(options, optionLocation, true));
+      return sortedOptions(filterOptionsMap(options, optionLocation, true, true));
    }
 
    /**
-    * Get all options (unsorted) from a particular location.
+    * Get all options (unsorted and not denormalized) from a particular location.
     */
    protected Map<String, String> unsortedOptions(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
    {
-      return filterOptionsMap(options, optionLocation, false);
+      return filterOptionsMap(options, optionLocation, false, false);
    }
 
    /**
@@ -719,17 +718,30 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
     * @param optionLocation only return options from this location
     * @param denormalize if true, adjust option names to match location's semantics (fig.cap for R,
     *                    fig-cap for YAML)
+    * @param excludeLabel if true, don't return label=foo for this location
     * @return list of options
     */
    private Map<String, String> filterOptionsMap(Map<String, ChunkOptionValue> options,
                                                 OptionLocation optionLocation,
-                                                boolean denormalize)
+                                                boolean denormalize,
+                                                boolean excludeLabel)
    {
       Map<String, String> filteredEntries = new LinkedHashMap<>();
       for (Map.Entry<String, ChunkOptionValue> entry : options.entrySet()) {
          if (entry.getValue().getLocation() == optionLocation)
          {
             String key = entry.getKey();
+            String value = entry.getValue().getOptionValue();
+
+            if (StringUtil.equals("label", key))
+            {
+               if (excludeLabel && optionLocation == OptionLocation.FirstLine)
+                  continue;
+               
+               if (StringUtil.isNullOrEmpty(value))
+                  continue;
+            }
+
             if (denormalize)
                key = ChunkOptionValue.denormalizeOptionName(key, optionLocation);
 
@@ -738,6 +750,31 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       }
       return filteredEntries;
    }
+
+   /**
+    * Get the label string to use for given location.
+    * @param location
+    * @return Label string or empty string if no label for this location
+    */
+   protected String getLabelForLocation(OptionLocation location)
+   {
+      ChunkOptionValue labelInfo = get("label");
+      if (labelInfo == null || labelInfo.getLocation() != location)
+         return "";
+      return labelInfo.getOptionValue();
+   }
+
+    /**
+     * Get value of label=FOO entry, if any.
+     * @return value of label entry, or an empty string
+     */
+    protected String getLabelValue()
+    {
+      ChunkOptionValue labelInfo = get("label");
+      if (labelInfo == null)
+         return "";
+      return labelInfo.getOptionValue();
+    }
 
    protected final VerticalPanel panel_;
    protected final Label header_;
