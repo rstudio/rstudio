@@ -1282,3 +1282,4 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    .rs.api.sendRequest(request)
    invisible(text)
 })
+

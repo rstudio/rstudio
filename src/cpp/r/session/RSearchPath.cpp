@@ -65,25 +65,6 @@ const char * const kSearchPathElementsDir = "search_path_elements";
 const char * const kPackagePaths = "package_paths";
 const char * const kEnvDataDir = "environment_data";
 
-void reportRestoreError(const std::string& context, 
-                        const Error& error,
-                        const ErrorLocation& location)
-{
-   // build the message
-   std::string message = "Error restoring session data";
-   if (!context.empty())
-      message += std::string(" (" + context + ")");
-   
-   // add context to error and log it
-   Error restoreError = error;
-   restoreError.addProperty("context", message);
-   core::log::logError(restoreError, location);
-   
-   // notify end-user
-   std::string report = message + ": " + error.getMessage();
-   REprintf("%s\n", report.c_str());
-}   
-   
 Error saveGlobalEnvironmentToFile(const FilePath& environmentFile)
 {
    std::string envPath =
@@ -100,21 +81,6 @@ Error restoreGlobalEnvironment(const core::FilePath& environmentFile)
    return RFunction("base:::load", environmentFile.getAbsolutePath()).call();
 }
 
-bool isPackage(const std::string& elementName, std::string* pPackageName)
-{
-   std::string packagePrefix("package:");
-   if ( boost::algorithm::starts_with(elementName, packagePrefix) && 
-        (elementName.size() > packagePrefix.size()) )
-   {
-      *pPackageName = elementName.substr(packagePrefix.size());
-      return true;
-   }
-   else
-   {
-      return false;
-   }
-}
-   
 bool hasEnvironmentData(const std::string& elementName)
 {
    if (boost::algorithm::starts_with(elementName, "package:"))
@@ -130,104 +96,6 @@ bool hasEnvironmentData(const std::string& elementName)
    else 
       return true;
 }
-
-// detach any search path elements which are not contained in the passed list
-Error detachSearchPathElementsNotInList(
-                       const std::vector<std::string>& searchPathList,
-                       const std::vector<std::string>& currentSearchPathList)
-{
-   // make a copy of the list and sort it so we can use std::set_difference
-   std::vector<std::string> sortedSearchPathList = searchPathList;
-   std::sort(sortedSearchPathList.begin(), sortedSearchPathList.end());
-   
-   // make a copy of the current list and sort it as well
-   std::vector<std::string> sortedCurrentSearchPathList = currentSearchPathList;
-   std::sort(sortedCurrentSearchPathList.begin(), 
-             sortedCurrentSearchPathList.end());
-   
-   // find items in the current list which are NOT in the saved list 
-   std::vector<std::string> detachSearchPathList;
-   std::set_difference(sortedCurrentSearchPathList.begin(),
-                       sortedCurrentSearchPathList.end(),
-                       sortedSearchPathList.begin(),
-                       sortedSearchPathList.end(),
-                       std::back_inserter(detachSearchPathList));
-                   
-   // detach these items
-   for (std::vector<std::string>::const_iterator 
-            it = detachSearchPathList.begin();
-            it != detachSearchPathList.end();
-            ++it)
-   {
-      // get name of item to detach
-      std::string detachItem = *it;
-      
-      // don't allow detach of core packages
-      if (detachItem == "tools:rstudio" ||
-          detachItem == "package:utils" )
-      {
-         continue;
-      }
-      
-      // do the detach
-      boost::format fmt("detach(pos = match(\"%1%\", search()))");
-      std::string detach = boost::str(fmt % detachItem);
-      Error error = r::exec::executeString(detach);
-      if (error)
-         reportRestoreError("detaching " + detachItem, error, ERROR_LOCATION);
-   }
-   
-   return Success();
-}
-   
-bool packageIsLoaded(const std::string& packageElementName, 
-                     const std::vector<std::string>& searchPathList)
-{
-   return std::find(searchPathList.begin(),
-                    searchPathList.end(),
-                    packageElementName) != searchPathList.end();
-   
-}
-   
-void loadPackage(const std::string& packageName, const std::string& path)
-{
-   // calculate the lib
-   std::string lib;
-   if (!path.empty())
-      lib = string_utils::utf8ToSystem(FilePath(path).getParent().getAbsolutePath());
-
-   Error error = r::exec::RFunction(".rs.loadPackage", packageName, lib).call();
-   if (error)
-   {
-      reportRestoreError("loading package " + packageName,
-                         error,
-                         ERROR_LOCATION);
-   }
-}
-   
-void attachEnvironmentData(const FilePath& dataFilePath, 
-                           const std::string& name)
-{
-   if (dataFilePath.exists())
-   {
-      Error error = r::exec::RFunction(".rs.attachDataFile",
-                                       dataFilePath.getAbsolutePath(),
-                                       name).call();
-      
-      if (error)
-      {
-         reportRestoreError("attaching search path element "+ name,
-                            error,
-                            ERROR_LOCATION);
-      }
-   }
-   else
-   {
-      LOG_ERROR_MESSAGE("environment data file not found: " +
-                           dataFilePath.getAbsolutePath());
-   }
-}
-
 
 } // anonymous namespace
    
@@ -257,7 +125,7 @@ Error save(const FilePath& statePath)
    // is based on the implementation of do_search)
    std::vector<std::string> searchPathElements;
    searchPathElements.push_back(".GlobalEnv");
-   std::map<std::string,std::string> packagePaths;
+   
    for (SEXP envSEXP = ENCLOS(R_GlobalEnv);
         envSEXP != R_BaseEnv;
         envSEXP = ENCLOS(envSEXP))
@@ -281,35 +149,14 @@ Error save(const FilePath& statePath)
       if (elementName == ".conflicts")
          continue;
 
-      // if this is a package also save its path
-      if (boost::algorithm::starts_with(elementName, "package:"))
-      {
-         std::string name = elementName.substr(strlen("package:"));
-
-         // skip if this is a dev package, i.e. loaded with load_all()
-         bool isDev = false;
-         Error error = r::exec::RFunction(".rs.isDevPackage").addParam(name).call(&isDev);
-         if (error)
-            return error;
-         if (isDev)
-            continue;
-
-         SEXP pathSEXP = Rf_getAttrib(envSEXP, Rf_install("path"));
-         if (Rf_isString(pathSEXP) && Rf_length(pathSEXP) == 1)
-         {
-            std::string path = CHAR(STRING_ELT(pathSEXP, 0));
-            packagePaths[name] = core::string_utils::systemToUtf8(path);
-         }
-      }
-
       searchPathElements.push_back(elementName);
 
       // save the environment's data if necessary
       if (hasEnvironmentData(elementName))
       {
          // determine file path (index of item within list)
-         std::string itemIndex = safe_convert::numberToString(
-                                                searchPathElements.size()-1);
+         auto index = searchPathElements.size() - 1;
+         std::string itemIndex = safe_convert::numberToString(index);
          FilePath dataFilePath = environmentDataPath.completePath(itemIndex);
          
          // save the environment
@@ -329,6 +176,28 @@ Error save(const FilePath& statePath)
       return error;
 
    // save the package paths list
+   std::vector<std::string> packages;
+   error = r::exec::RFunction("base:::loadedNamespaces").call(&packages);
+   if (error)
+      return error;
+   
+   std::map<std::string, std::string> packagePaths;
+   for (auto&& package : packages)
+   {
+      if (package != "base")
+      {
+         std::string packagePath;
+         error = r::exec::RFunction("base:::getNamespaceInfo")
+               .addUtf8Param(package)
+               .addUtf8Param("path")
+               .call(&packagePath);
+
+         if (error)
+            LOG_ERROR(error);
+         packagePaths[package] = packagePath;
+      }
+   }
+   
    FilePath packagePathsFile = searchPathDir.completePath(kPackagePaths);
    return writeStringMapToFile(packagePathsFile, packagePaths);
 }
@@ -366,10 +235,9 @@ void repairSearchPath()
    SEXP toolsSEXP = R_NilValue;
    
    SEXP thisSEXP = R_GlobalEnv;
-   SEXP prevSEXP = R_NilValue;
    while (thisSEXP != R_BaseEnv)
    {
-      prevSEXP = thisSEXP;
+      SEXP prevSEXP = thisSEXP;
       thisSEXP = ENCLOS(thisSEXP);
       
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
@@ -385,10 +253,9 @@ void repairSearchPath()
    }
    
    thisSEXP = R_GlobalEnv;
-   prevSEXP = R_NilValue;
    while (thisSEXP != R_BaseEnv)
    {
-      prevSEXP = thisSEXP;
+      SEXP prevSEXP = thisSEXP;
       thisSEXP = ENCLOS(thisSEXP);
       
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
@@ -409,68 +276,24 @@ Error restoreSearchPath(
       const FilePath& statePath,
       const std::vector<std::string>& currentSearchPathList)
 {
-   Error error;
-   
    // attempt to restore the search path if one has been saved
    FilePath searchPathDir = statePath.completePath(kSearchPathDir);
    if (!searchPathDir.exists())
       return Success();
    
-   // read the saved list
-   std::vector<std::string> savedSearchPathList;
-   FilePath elementsPath = searchPathDir.completePath(kSearchPathElementsDir);
-   error = readStringVectorFromFile(elementsPath, &savedSearchPathList);
-   if (error)
-      return error;
-
-   // read the package paths list
-   std::map<std::string, std::string> packagePaths;
+   FilePath searchPathsFile = searchPathDir.completePath(kSearchPathElementsDir);
    FilePath packagePathsFile = searchPathDir.completePath(kPackagePaths);
-   if (packagePathsFile.exists())
-   {
-      error = readStringMapFromFile(packagePathsFile, &packagePaths);
-      if (error)
-         return error;
-   }
-
-   // detach any items in the current list which aren't in the saved list
-   error = detachSearchPathElementsNotInList(savedSearchPathList,
-                                             currentSearchPathList);
-   if (error)
-      return error;
-   
-   // iterate though the saved list in reverse, loading packages and 
-   // environments saved in external data files as necessary. note that 
-   // this excludes the first and last entries in the list (.GlobalEnv and
-   // package:base respectively)
    FilePath environmentDataPath = searchPathDir.completePath(kEnvDataDir);
-   for (int i = (gsl::narrow_cast<int>(savedSearchPathList.size()) - 2); i > 0; i--)
-   {
-      // get the path element
-      std::string pathElement = savedSearchPathList[i];
-      
-      // if it is a package then load it if it is not already loaded
-      std::string packageName;
-      if (isPackage(pathElement, &packageName))
-      {
-         if (!packageIsLoaded(packageName, currentSearchPathList))
-            loadPackage(packageName, packagePaths[packageName]);
-      }
-      
-      // else if it has external environment data then load it
-      else if (hasEnvironmentData(pathElement))
-      {
-         std::string itemIndex = safe_convert::numberToString(i);
-         FilePath dataFilePath = environmentDataPath.completePath(itemIndex);
-         attachEnvironmentData(dataFilePath, pathElement);
-      }
-      
-      else
-      {
-         // it must be "tools:rstudio" or "Autoloads", do nothing
-      }
-   }
-   
+
+   // load the required packages
+   Error error = r::exec::RFunction(".rs.restoreSearchPath")
+         .addUtf8Param(searchPathsFile.getAbsolutePath())
+         .addUtf8Param(packagePathsFile.getAbsolutePath())
+         .addUtf8Param(environmentDataPath.getAbsolutePath())
+         .call();
+   if (error)
+      LOG_ERROR(error);
+         
    // ensure 'tools:rstudio' is placed appropriately in the search list
    // we want to make sure all of the 'base' R packages are visible to
    // 'tools:rstudio', but we also need to make sure packages attached
