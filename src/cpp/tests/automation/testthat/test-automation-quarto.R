@@ -263,7 +263,7 @@ test_that("visual editor welcome dialog displays again if don't show again is un
    remote$keyboardExecute("<Ctrl + L>")
 })
 
-test_that("displaying and closing chunk options popup doesn't modify settings", {
+test_that("displaying and closing chunk options popup doesn't modify already-sorted settings", {
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -278,11 +278,11 @@ test_that("displaying and closing chunk options popup doesn't modify settings", 
       ```
 
       ```{r}
+      #| label: one
       #| message: false
       #| warning: true
       #| fig-height: 4
       #| fig-width: 3
-      #| label: one
       #| paged-print: true
       print("one")
       ```
@@ -326,6 +326,63 @@ test_that("displaying and closing chunk options popup doesn't modify settings", 
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
+
+test_that("displaying and closing chunk options popup sorts the settings", {
+   contents <- .rs.heredoc('
+      ---
+      title: "The Title"
+      ---
+
+      ```{r one, message=FALSE, fig.height=4, fig.width=3, warning=TRUE, paged.print=TRUE}
+      print("one")
+      ```
+
+      ```{r}
+      #| message: false
+      #| warning: true
+      #| fig-height: 4
+      #| label: one
+      #| fig-width: 3
+      #| paged-print: true
+      print("one")
+      ```
+
+      The end.
+   ')
+
+   id <- remote$documentOpen(".qmd", contents)
+   editor <- remote$editorGetInstance()
+
+   checkChunkOption <- function(firstLine, lastLine, expectedAfter, widget) {
+      remote$domClickElementByNodeId(widget)
+      Sys.sleep(2)
+      remote$keyboardExecute("<Escape>")
+
+      updated <- ""
+      for (line in (firstLine):lastLine)
+      {
+         lineContent <- editor$session$getLine(line)
+         updated <- paste(updated, lineContent, sep = ifelse(nzchar(updated), "\n", ""))
+      }
+      expect_equal(expectedAfter, updated)
+   }
+
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   checkChunkOption(
+      4, 4,
+      '```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}',
+      chunkOptionWidgetIds[[1]])
+
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   checkChunkOption(
+      9, 14,
+      '#| label: one\n#| message: false\n#| warning: true\n#| fig-height: 4\n#| fig-width: 3\n#| paged-print: true',
+      chunkOptionWidgetIds[[1]])
+
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
+
 
 # https://github.com/rstudio/rstudio/issues/14552
 test_that("empty header labels are permitted in document outline", {
