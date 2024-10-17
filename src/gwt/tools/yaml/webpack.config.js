@@ -5,6 +5,8 @@ module.exports = {
   output: {
     filename: 'yaml.min.js',
     path: path.resolve(__dirname, '../../www/js'),
+    library: 'YAML',
+    libraryTarget: 'umd',
   },
   mode: 'production', // Enables minification
 };

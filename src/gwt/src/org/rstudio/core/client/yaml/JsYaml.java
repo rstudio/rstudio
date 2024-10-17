@@ -1,7 +1,7 @@
 /*
  * Yaml.java
  *
- * Copyright (C) 2024 by Posit Software, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -17,11 +17,10 @@ package org.rstudio.core.client.yaml;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
-// https://github.com/eemeli/yaml
-// Currently using yaml 2.6.0
-// To update see README.md in src/gwt/tools/yaml
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "YAML")
-public class Yaml
+// https://github.com/nodeca/js-yaml
+// Currently using js-yaml 4.1.0; supports the YAML 1.2 spec.
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "jsyaml")
+public class JsYaml
 {
-   public static native Object parse(String yaml);
+   public static native Object load(String yaml);
 }
