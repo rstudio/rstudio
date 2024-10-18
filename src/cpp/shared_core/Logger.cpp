@@ -57,6 +57,8 @@ LogLevel logLevelFromStr(const std::string& in_str)
       return LogLevel::INFO;
    else if (in_str == "OFF")
       return LogLevel::OFF;
+   else if (in_str == "TRACE")
+      return LogLevel::TRACE;
    else
       return LogLevel::DEBUG;
 }
@@ -84,6 +86,10 @@ std::string logLevelName(log::LogLevel in_logLevel)
       case LogLevel::OFF:
       {
          return "OFF";
+      }
+      case LogLevel::TRACE:
+      {
+         return "TRACE";
       }
       default:
       {
@@ -119,6 +125,11 @@ std::ostream& operator<<(std::ostream& io_ostream, LogLevel in_logLevel)
       case LogLevel::INFO:
       {
          io_ostream << "INFO";
+         break;
+      }
+      case LogLevel::TRACE:
+      {
+         io_ostream << "TRACE";
          break;
       }
       case LogLevel::OFF:
@@ -670,6 +681,12 @@ void logErrorAsDebug(const Error& in_error)
       logger().writeMessageToDestinations(LogLevel::DEBUG, std::string(), "", boost::none, ErrorLocation(), in_error);
 }
 
+void logErrorAsTrace(const Error& in_error)
+{
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::TRACE, std::string(), "", boost::none, ErrorLocation(), in_error);
+}
+
 void logErrorMessage(const std::string& in_message, const std::string& in_section)
 {
    logErrorMessage(in_message, in_section, boost::none, ErrorLocation());
@@ -740,6 +757,38 @@ void logDebugAction(const boost::function<std::string(boost::optional<LogMessage
                      const std::string& in_section)
 {
    logger().writeMessageToDestinations(LogLevel::DEBUG, in_action, in_section, ErrorLocation());
+}
+
+// Exists for the LOG_TRACE_MESSAGE macro that needs a dummy value here so we can use a ? statement
+// to hide the evaluation of the arguments.
+bool logTraceMessageReturn(const std::string& in_message)
+{
+   logTraceMessage(in_message, std::string());
+   return true;
+}
+
+void logTraceMessage(const std::string& in_message, const std::string& in_section)
+{
+   logTraceMessage(in_message, in_section, boost::none, ErrorLocation());
+}
+
+void logTraceMessage(const std::string& in_message, const ErrorLocation& in_loggedFrom)
+{
+   logTraceMessage(in_message, "", boost::none, in_loggedFrom);
+}
+
+void logTraceMessage(const std::string& in_message,
+                     const std::string& in_section,
+                     const boost::optional<LogMessageProperties>& in_properties,
+                     const ErrorLocation& in_loggedFrom)
+{
+   logger().writeMessageToDestinations(LogLevel::TRACE, in_message, in_section, in_properties, in_loggedFrom);
+}
+
+void logTraceAction(const boost::function<std::string(boost::optional<LogMessageProperties>*)>& in_action,
+                    const std::string& in_section)
+{
+   logger().writeMessageToDestinations(LogLevel::TRACE, in_action, in_section, ErrorLocation());
 }
 
 void logInfoMessage(const std::string& in_message, const std::string& in_section)

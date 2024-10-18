@@ -88,12 +88,13 @@ constexpr char s_delim = ';';
  */
 enum class LogLevel
 {
-   OFF = 0,       // No messages will be logged.
-   ERR = 1,       // Error messages will be logged.
-   WARN = 2,      // Warning and error messages will be logged.
-   INFO = 3,      // Info, warning, and error messages will be logged.
-   DEBUG = 4,     // All messages will be logged.
-   DEBUG_LEVEL = 4// Same as DEBUG. Preferred to avoid name conflict with core/Macros.hpp's DEBUG(..) macro used in rsession
+   OFF = 0,        // No messages will be logged.
+   ERR = 1,        // Error messages will be logged.
+   WARN = 2,       // Warning and error messages will be logged.
+   INFO = 3,       // Info, warning, and error messages will be logged.
+   DEBUG = 4,      // All messages will be logged, except trace messages.
+   DEBUG_LEVEL = 4,// Same as DEBUG. Preferred to avoid name conflict with core/Macros.hpp's DEBUG(..) macro used in rsession
+   TRACE = 5       // All messages will be logged, including trace messages.
 };
 
 /**
@@ -274,6 +275,16 @@ void logErrorAsInfo(const Error& in_error);
 void logErrorAsDebug(const Error& in_error);
 
 /**
+ * @brief Logs an error as a trace message to all registered destinations.
+ *
+ * If no destinations are registered, no log will be written.
+ * If the configured log level is below LogLevel::TRACE, no log will be written.
+ *
+ * @param in_error      The error to log as a trace message.
+ */
+void logErrorAsTrace(const Error& in_error);
+
+/**
  * @brief Logs an error to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
@@ -400,6 +411,59 @@ void logDebugMessage(const std::string& in_message,
  * @param in_section      The section of the log that the message belongs in.
  */
 void logDebugAction(const boost::function<std::string(boost::optional<LogMessageProperties>*)>& in_action,
+                    const std::string& in_section = std::string());
+
+/**
+ * @brief Logs a trace message to all registered destinations.
+ *
+ * If no destinations are registered, no log will be written.
+ * If the configured log level is below LogLevel::TRACE, no log will be written.
+ *
+ * @param in_message      The message to log as a trace message.
+ * @param in_section      The section of the log that the message belongs in. Default: no section.
+ */
+void logTraceMessage(const std::string& in_message, const std::string& in_section = std::string());
+
+/* Like the above but used for macros that need a value return */
+bool logTraceMessageReturn(const std::string& in_message);
+
+/**
+ * @brief Logs a trace message to all registered destinations.
+ *
+ * If no destinations are registered, no log will be written.
+ * If the configured log level is below LogLevel::TRACE, no log will be written.
+ *
+ * @param in_message      The message to log as a trace message.
+ * @param in_location     The location from which the error message was logged.
+ */
+void logTraceMessage(const std::string& in_message, const ErrorLocation& in_loggedFrom);
+
+/**
+ * @brief Logs a trace message to all registered destinations.
+ *
+ * If no destinations are registered, no log will be written.
+ * If the configured log level is below LogLevel::TRACE, no log will be written.
+ *
+ * @param in_message      The message to log as a trace message.
+ * @param in_section      The section of the log that the message belongs in.
+ * @param in_properties   The log message properties to log.
+ * @param in_location     The location from which the message was logged.
+ */
+void logTraceMessage(const std::string& in_message,
+                     const std::string& in_section,
+                     const boost::optional<LogMessageProperties>& in_properties,
+                     const ErrorLocation& in_loggedFrom);
+
+/**
+ * @brief Logs a trace message to all registered destinations by invoking an action.
+ *
+ * If no destinations are registered, no log will be written.
+ * If the configured log level is below LogLevel::TRACE, no log will be written.
+ *
+ * @param in_action       The action that will construct the log message if a logger is configured with trace level.
+ * @param in_section      The section of the log that the message belongs in.
+ */
+void logTraceAction(const boost::function<std::string(boost::optional<LogMessageProperties>*)>& in_action,
                     const std::string& in_section = std::string());
 
 /**

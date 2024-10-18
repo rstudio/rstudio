@@ -97,7 +97,26 @@ std::string errorAsLogEntry(const Error& error);
 #define LOG_DEBUG_ACTION_NAMED(logSection, action) rstudio::core::log::logDebugAction(logSection, \
                                                                                       action)
 
+#define LOG_TRACE_MESSAGE(message) (rstudio::core::log::isLogLevel(rstudio::core::log::LogLevel::TRACE_LEVEL) ? rstudio::core::log::logTraceMessageReturn(message) : false)
+
+#define LOG_TRACE_MESSAGE_WITH_PROPS(message, props) rstudio::core::log::logTraceMessage(message, \
+                                                                                         std::string(), \
+                                                                                         props, \
+                                                                                         ErrorLocation())
+
+#define LOG_TRACE_MESSAGE_NAMED(logSection, message) rstudio::core::log::logTraceMessage(message, \
+                                                                                         logSection)
+
+#define LOG_TRACE_ACTION_NAMED(logSection, action) rstudio::core::log::logTraceAction(logSection, \
+                                                                                      action)
+
 #define LOG_PASSTHROUGH_MESSAGE(source, message) rstudio::core::log::logPassthroughMessage(source, message)
+
+#define TLOGF(__FMT__, ...)                                                                                            \
+   do {                                                                                                                \
+      std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);                                           \
+      ::rstudio::core::log::logTraceMessage(message);                                                                  \
+   } while (0)
 
 #define DLOGF(__FMT__, ...)                                                    \
   do {                                                                         \
