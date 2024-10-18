@@ -9522,19 +9522,19 @@ public class TextEditingTarget implements
                return;
             }
          }
+         
+         // If a save is already in progress via some other mechanism, skip this.
+         if (isSaving_)
+            return;
 
+         // If this is an untitled document, then there's nothing to save.
          if (getPath() == null)
-         {
-            // This editor isn't file-backed yet, so there's no save to do.
             return;
-         }
 
+         // Everyone's autosave gets turned off during a collab session --
+         // otherwise the autosaves all fire at once and fight
          if (docDisplay_.hasActiveCollabSession())
-         {
-            // Everyone's autosave gets turned off during a collab session --
-            // otherwise the autosaves all fire at once and fight
             return;
-         }
 
          // Save (and keep track of when we initiated it)
          autoSaveInitiatedTime_ = System.currentTimeMillis();

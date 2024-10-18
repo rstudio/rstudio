@@ -64,7 +64,7 @@ protected:
 
    pAutomation->add_options()
       ("run-automation",
-      value<bool>(&runAutomation_)->default_value(false),
+      value<bool>(&runAutomation_)->default_value(false)->implicit_value(true),
       "Run RStudio's built-in automation tests. Requires a Google Chrome installation.");
 
    pVerify->add_options()
