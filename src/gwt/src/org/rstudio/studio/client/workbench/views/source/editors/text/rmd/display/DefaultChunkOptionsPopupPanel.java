@@ -24,7 +24,7 @@ import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.js.JsMapString;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.yaml.JsYaml;
+import org.rstudio.core.client.yaml.Yaml;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
@@ -408,7 +408,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       try
       {
-         parsedYaml = JsYaml.load(yaml);
+         parsedYaml = Yaml.load(yaml);
       }
       catch(Exception e)
       {

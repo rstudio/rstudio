@@ -28,7 +28,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.yaml.JsYaml;
+import org.rstudio.core.client.yaml.Yaml;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
@@ -1146,7 +1146,7 @@ public class TextEditingTargetRMarkdownHelper
       if (outputs.isEmpty())
       {
          String rawValue = tree.getKeyValue(outputKey);
-         Object parsedValue = JsYaml.load(rawValue);
+         Object parsedValue = Yaml.load(rawValue);
          outputs.add((String) parsedValue);
       }
       

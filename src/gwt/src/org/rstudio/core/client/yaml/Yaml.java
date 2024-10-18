@@ -20,7 +20,7 @@ import jsinterop.annotations.JsType;
 // https://github.com/nodeca/js-yaml
 // Currently using js-yaml 4.1.0; supports the YAML 1.2 spec.
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "jsyaml")
-public class JsYaml
+public class Yaml
 {
    public static native Object load(String yaml);
 }
