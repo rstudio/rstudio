@@ -249,7 +249,9 @@ test_context("Logging")
             "[Bob]\n"
             "log-level=error\n\n"
             "[Jill]\n"
-            "log-level=info";
+            "log-level=info\n\n"
+            "[Emma]\n"
+            "log-level=trace\n\n";
 
       REQUIRE_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
 
@@ -260,20 +262,29 @@ test_context("Logging")
       REQUIRE_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
       REQUIRE_FALSE(core::system::reinitLog());
 
+      LOG_TRACE_MESSAGE_NAMED("Bob", "This is Bob trace");
       LOG_DEBUG_MESSAGE_NAMED("Bob", "This is Bob debug");
       LOG_INFO_MESSAGE_NAMED("Bob", "This is Bob info");
       LOG_WARNING_MESSAGE_NAMED("Bob", "This is Bob warning");
       LOG_ERROR_MESSAGE_NAMED("Bob", "This is Bob error");
 
+      LOG_TRACE_MESSAGE_NAMED("Jill", "This is Jill trace");
       LOG_DEBUG_MESSAGE_NAMED("Jill", "This is Jill debug");
       LOG_INFO_MESSAGE_NAMED("Jill", "This is Jill info");
       LOG_WARNING_MESSAGE_NAMED("Jill", "This is Jill warning");
       LOG_ERROR_MESSAGE_NAMED("Jill", "This is Jill error");
 
+      LOG_TRACE_MESSAGE_NAMED("Sampson", "This is Sampson trace");
       LOG_DEBUG_MESSAGE_NAMED("Sampson", "This is Sampson debug");
       LOG_INFO_MESSAGE_NAMED("Sampson", "This is Sampson info");
       LOG_WARNING_MESSAGE_NAMED("Sampson", "This is Sampson warning");
       LOG_ERROR_MESSAGE_NAMED("Sampson", "This is Sampson error");
+
+      LOG_TRACE_MESSAGE_NAMED("Emma", "This is Emma trace");
+      LOG_DEBUG_MESSAGE_NAMED("Emma", "This is Emma debug");
+      LOG_INFO_MESSAGE_NAMED("Emma", "This is Emma info");
+      LOG_WARNING_MESSAGE_NAMED("Emma", "This is Emma warning");
+      LOG_ERROR_MESSAGE_NAMED("Emma", "This is Emma error");
 
       FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
       REQUIRE(logFile.exists());
@@ -281,20 +292,29 @@ test_context("Logging")
       std::string logFileContents;
       REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
 
+      REQUIRE(logFileContents.find("This is Bob trace") == std::string::npos);
       REQUIRE(logFileContents.find("This is Bob debug") == std::string::npos);
       REQUIRE(logFileContents.find("This is Bob info") == std::string::npos);
       REQUIRE(logFileContents.find("This is Bob warning") == std::string::npos);
       REQUIRE(logFileContents.find("This is Bob error") != std::string::npos);
 
+      REQUIRE(logFileContents.find("This is Jill trace") == std::string::npos);
       REQUIRE(logFileContents.find("This is Jill debug") == std::string::npos);
       REQUIRE(logFileContents.find("This is Jill info") != std::string::npos);
       REQUIRE(logFileContents.find("This is Jill warning") != std::string::npos);
       REQUIRE(logFileContents.find("This is Jill error") != std::string::npos);
 
+      REQUIRE(logFileContents.find("This is Sampson trace") == std::string::npos);
       REQUIRE(logFileContents.find("This is Sampson debug") == std::string::npos);
       REQUIRE(logFileContents.find("This is Sampson info") == std::string::npos);
       REQUIRE(logFileContents.find("This is Sampson warning") != std::string::npos);
       REQUIRE(logFileContents.find("This is Sampson error") != std::string::npos);
+
+      REQUIRE(logFileContents.find("This is Emma trace") != std::string::npos);
+      REQUIRE(logFileContents.find("This is Emma debug") != std::string::npos);
+      REQUIRE(logFileContents.find("This is Emma info") != std::string::npos);
+      REQUIRE(logFileContents.find("This is Emma warning") != std::string::npos);
+      REQUIRE(logFileContents.find("This is Emma error") != std::string::npos);
    }
 
    test_that("File logs can rotate")
