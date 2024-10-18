@@ -58,6 +58,7 @@ namespace log {
 #define kLogMessageFormatPretty  "pretty"
 #define kLogMessageFormatJson    "json"
 
+#define kLoggingLevelTrace "trace"
 #define kLoggingLevelDebug "debug"
 #define kLoggingLevelInfo  "info"
 #define kLoggingLevelWarn  "warn"
@@ -107,6 +108,8 @@ std::string logLevelToString(LogLevel logLevel)
 {
    switch (logLevel)
    {
+      case LogLevel::TRACE:
+         return kLoggingLevelTrace;
       case LogLevel::DEBUG:
          return kLoggingLevelDebug;
       case LogLevel::INFO:
@@ -158,6 +161,8 @@ LogLevel strToLogLevel(const std::string& logLevelStr)
        return LogLevel::INFO;
    else if (boost::iequals(logLevelStr, kLoggingLevelDebug))
        return LogLevel::DEBUG;
+   else if (boost::iequals(logLevelStr, kLoggingLevelTrace))
+       return LogLevel::TRACE;
    else
        return LogLevel::WARN;
 }
