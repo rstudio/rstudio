@@ -25,6 +25,8 @@
             "memberName": "runAutomation_",
             "type": "bool",
             "defaultValue": false,
+            "implicitValue": true,
+            "isHidden": true,
             "description": "Run RStudio's built-in automation tests. Requires a Google Chrome installation."
          }
       ],
