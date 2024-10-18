@@ -16,10 +16,10 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.displa
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
@@ -215,7 +215,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
    
    @Override
-   protected void initOptions(final Command afterInit)
+   protected void initOptions(final CommandWithArg<Boolean> afterInit)
    {
       String chunkText = getChunkText();
       server_.extractChunkOptions(
@@ -234,7 +234,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
                   JsArrayString keys = object.keys();
                   for (String key : JsUtil.asIterable(keys))
                      chunkOptions_.put(key, new ChunkOptionValue(object.getAsString(key), OptionLocation.FirstLine));
-                  afterInit.execute();
+                  afterInit.execute(true);
                }
             });
    }

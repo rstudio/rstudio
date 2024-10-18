@@ -15,8 +15,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.user.client.Command;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
@@ -47,7 +47,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
 
    @Override
-   protected void initOptions(Command afterInit)
+   protected void initOptions(CommandWithArg<Boolean> afterInit)
    {
       // values used to restore via "Revert" button
       originalFirstLine_ = display_.getLine(position_.getRow());
@@ -64,7 +64,12 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          set("label", extraInfo.chunkLabel, OptionLocation.FirstLine);
 
       // extract chunk options from YAML lines, e.g. "#| echo: true"
-      parseYamlChunkOptions(getYamlOptionLines(position_.getRow() + 1), chunkOptions_);
+      if (!parseYamlChunkOptions(getYamlOptionLines(position_.getRow() + 1), chunkOptions_))
+      {
+         // if unable to parse YAML we block the editing UI and require user to edit manually
+         afterInit.execute(false);
+         return;
+      }
 
       // set the label in the UI
       String label = getLabelValue();
@@ -74,7 +79,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (StringUtil.equals(engine_, "r"))
          printTableAsTextCb_.setVisible(true);
 
-      afterInit.execute();
+      afterInit.execute(true);
    }
 
    @Override
@@ -400,8 +405,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
      *
      * @param optionLines The lines containing raw YAML chunk options.
      * @param chunkOptions The map to populate with parsed options.
+     * @return true if successfully parsed, false if not successfully parsed
      */
-    public static void parseYamlChunkOptions(List<String> optionLines, Map<String, ChunkOptionValue> chunkOptions)
+    public static boolean parseYamlChunkOptions(List<String> optionLines, Map<String, ChunkOptionValue> chunkOptions)
     {
       String yaml = String.join("\n", optionLines);
       Object parsedYaml = null;
@@ -412,8 +418,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       }
       catch(Exception e)
       {
-         // invalid yaml
-         return;
+         // unsupported YAML
+         return false;
       }
 
       // flatten the yaml into "name": "value"
@@ -428,6 +434,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          key = ChunkOptionValue.normalizeOptionName(key);
          chunkOptions.put(key, new ChunkOptionValue(value, OptionLocation.Yaml));
       }
+      return true;
    }
 
    /**

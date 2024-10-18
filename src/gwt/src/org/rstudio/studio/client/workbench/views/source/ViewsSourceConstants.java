@@ -2729,4 +2729,19 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     @Key("couldNotResolveIssue")
     String couldNotResolveIssue(String issue);
 
+    /**
+     * Translated "Unable to Edit".
+     * @return translated "Unable to Edit".
+     */
+    @DefaultMessage("Unable to Edit")
+    @Key("unableToEditTitle")
+    String unableToEditTitle();
+
+    /**
+     * Translated "The options use syntax that is not currently supported by the editing UI. Please edit manually.".
+     * @return translated "The options use syntax that is not currently supported by the editing UI. Please edit manually.".
+     */
+    @DefaultMessage("The options use syntax that is not currently supported by the editing UI. Please edit manually.")
+    @Key("unableToEditMessage")
+    String unableToEditMessage();
 }

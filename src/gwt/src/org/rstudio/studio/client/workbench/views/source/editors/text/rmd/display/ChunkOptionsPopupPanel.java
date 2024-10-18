@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -40,6 +42,7 @@ import org.rstudio.core.client.widget.Toggle.State;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
@@ -59,7 +62,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -81,16 +83,18 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    //
    // revert should return the document state to how it was before editing
    // was initiated.
-   protected abstract void initOptions(Command afterInit);
+   protected abstract void initOptions(CommandWithArg<Boolean> afterInit);
    protected abstract void synchronize();
    protected abstract void revert();
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
    @Inject
    private void initialize(FileDialogs fileDialogs,
-                           RemoteFileSystemContext rfsContext)
+                           RemoteFileSystemContext rfsContext,
+                           GlobalDisplay globalDisplay)
    {
       fileDialogs_ = fileDialogs;
       rfsContext_ = rfsContext;
+      globalDisplay_ = globalDisplay;
    }
    
    public ChunkOptionsPopupPanel(boolean includeChunkNameUI, OptionLocation preferredOptionLocation, boolean isVisualEditor)
@@ -554,12 +558,21 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       useCustomFigureCheckbox_.setValue(false);
       figureDimensionsPanel_.setVisible(false);
-            
-      Command afterInit = new Command()
+
+      CommandWithArg<Boolean> afterInit = new CommandWithArg<Boolean>()
       {
          @Override
-         public void execute()
+         public void execute(Boolean showUi)
          {
+            if (!showUi)
+            {
+               globalDisplay_.showMessage(
+                  MessageDialog.INFO,
+                  "Unable to Edit",
+                  "The chunk options use syntax that is not currently supported by the editing UI. Please edit manually.");
+              return;
+            }
+
             updateOutputComboBox();
             boolean hasRelevantFigureSettings =
                   has("fig.width") ||
@@ -851,4 +864,5 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    // Injected ----
    protected FileDialogs fileDialogs_;
    protected RemoteFileSystemContext rfsContext_;
+   protected GlobalDisplay globalDisplay_;
 }
