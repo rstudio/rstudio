@@ -322,8 +322,9 @@ test_that("displaying chunk options popup and applying without making changes do
    
    id <- remote$documentOpen(".Rmd", contents)
    editor <- remote$editorGetInstance()
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
    
-   checkChunkOption <- function(line, expectedBefore, expectedAfter, widget)
+   checkChunkOption <- function(line, expectedAfter, widget)
    {
       original <- editor$session$getLine(line)
       remote$domClickElementByNodeId(widget)
@@ -333,7 +334,6 @@ test_that("displaying chunk options popup and applying without making changes do
       expect_equal(expectedAfter, updated)
    }
 
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
    checkChunkOption(8, "```{r}", chunkOptionWidgetIds[[2]])
 
    chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
@@ -347,7 +347,7 @@ test_that("displaying chunk options popup and applying without making changes do
    # https://github.com/rstudio/rstudio/issues/6829
    chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
    checkChunkOption(12, "```{r fig.cap=\"a caption\"}", chunkOptionWidgetIds[[3]])
-
+   
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
@@ -373,10 +373,12 @@ test_that("reverting chunk option changes restores original options ", {
    
    id <- remote$documentOpen(".Rmd", contents)
    editor <- remote$editorGetInstance()
-
-   checkChunkOption <- function(line, widget) {
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   
+   checkChunkOption <- function(line, nodeId)
+   {
       original <- editor$session$getLine(line)
-      remote$domClickElementByNodeId(widget)
+      remote$domClickElementByNodeId(nodeId)
       Sys.sleep(1)
       remote$domClickElement("#rstudio_chunk_opt_warnings")
       remote$domClickElement("#rstudio_chunk_opt_messages")
@@ -390,13 +392,11 @@ test_that("reverting chunk option changes restores original options ", {
       updated <- editor$session$getLine(line)
       expect_equal(original, updated)
    }
-
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   
    checkChunkOption(8, chunkOptionWidgetIds[[2]])
-
    chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
    checkChunkOption(4, chunkOptionWidgetIds[[1]])
-
+   
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 
