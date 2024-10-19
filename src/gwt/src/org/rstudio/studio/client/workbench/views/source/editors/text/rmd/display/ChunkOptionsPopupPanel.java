@@ -568,8 +568,8 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             {
                globalDisplay_.showMessage(
                   MessageDialog.INFO,
-                  "Unable to Edit",
-                  "The chunk options use syntax that is not currently supported by the editing UI. Please edit manually.");
+                  constants_.unableToEditTitle(),
+                  constants_.unableToEditMessage()); 
               return;
             }
 
