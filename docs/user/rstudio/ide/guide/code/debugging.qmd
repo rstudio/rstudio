@@ -275,7 +275,7 @@ options(error = function() {
 })
 ```
 
-This generates a “no sink to remove” warning when knitr completes; you can safely ignore this warning.
+This generates a "no sink to remove" warning when knitr completes; you can safely ignore this warning.
 
 If you simply want a traceback, the easiest option is to use `rlang::trace_back()`, taking advantage of the `rlang_trace_top_env` option. This ensures that you only see the traceback from your code, instead of all the functions called by R Markdown and knitr.
 
