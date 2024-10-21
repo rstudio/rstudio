@@ -15,7 +15,9 @@
 package org.rstudio.core.client;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
 
 import com.google.gwt.core.client.JavaScriptException;
@@ -325,5 +327,33 @@ public class StringUtilTests extends GWTTestCase
       assertEquals(StringUtil.charAt(str, 1), 'b');
       assertEquals(StringUtil.charAt(str, 2), 'c');
       assertEquals(StringUtil.charAt(str, 3), 'd');
+   }
+
+   public void testCollapseWithoutPrefix()
+   {
+        Map<String, String> testData = new HashMap<>();
+        testData.put("key1", "value1");
+        testData.put("key2", "value2");
+        testData.put("key3", "value3");
+        testData.put("key4", "value4");
+        testData.put("key5", "value5");
+
+        String expected = "key1 :-: value1\nkey2 :-: value2\nkey3 :-: value3\nkey4 :-: value4\nkey5 :-: value5";
+        String result = StringUtil.collapse(testData, " :-: ", "\n");
+        assertEquals(expected, result);
+   }
+
+   public void testCollapseWithPrefix()
+   {
+        Map<String, String> testData = new HashMap<>();
+        testData.put("key1", "value1");
+        testData.put("key2", "value2");
+        testData.put("key3", "value3");
+        testData.put("key4", "value4");
+        testData.put("key5", "value5");
+
+        String expected = ">> key1 :-: value1\n>> key2 :-: value2\n>> key3 :-: value3\n>> key4 :-: value4\n>> key5 :-: value5";
+        String result = StringUtil.collapse(testData, ">> ", " :-: ", "\n");
+        assertEquals(expected, result);
    }
 }
