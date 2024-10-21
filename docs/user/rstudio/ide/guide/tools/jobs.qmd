@@ -25,7 +25,7 @@ Either method will give you some options for running your job.
 
 ![](images/background-job-option.png){fig-alt="Dialog showing options for starting R script job"}
 
-By default, the job will run in a clean R session, and its temporary workspace will be discarded when the job is complete. This is the fastest and safest configuration, good for reproducible scripts that have no side effects.
+By default, the job runs in a clean R session, and its temporary workspace is discarded when the job is complete. This is the fastest and safest configuration, suitable for reproducible scripts without side effects. Because the job runs as a child process of the current session, any environment variables set at the process-level or shell-level are passed to the background job from the main session.
 
 However, if you want to feed data from your current R session into the job, or have the job return data to your current R session, change the dialog options as follows:
 
@@ -112,4 +112,8 @@ On Posit Workbench, you also have the option of running your R script on your co
 
 ![](images/workbench-job.png){fig-alt="Source script as launcher job" width="350"}
 
-See more documentation specific to Workbench Jobs at <https://docs.posit.co/ide/server-pro/>
+See more documentation specific to Workbench Jobs:
+
+- [Workbench Jobs in RStudio Pro](https://docs.posit.co/ide/server-pro/user/rstudio-pro/guide/workbench-jobs.html)
+- [Workbench Jobs in VS Code](https://docs.posit.co/ide/server-pro/user/vs-code/guide/workbench-jobs.html)
+- [Comparison of Workbench Jobs and Background Jobs](https://docs.posit.co/ide/server-pro/user/rstudio-pro/guide/workbench-jobs.html#workbench-jobs-vs-background-jobs)

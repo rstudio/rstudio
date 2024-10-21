@@ -8,3 +8,10 @@ _freeze
 *.toc
 
 .Rproj.user
+Makefile
+CMake*
+!CMakeLists.txt
+build-site.sh
+cmake_install.cmake
+_variables.yml
+rstudio-*-user-guide.*
