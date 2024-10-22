@@ -399,6 +399,8 @@ public class ElementIds
    // JobLauncherDialogPro
    public final static String JOB_LAUNCHER_PRO_OPTIONS = "job_launcher_pro_options";
    public final static String JOB_LAUNCHER_PRO_ENVIRONMENT = "job_launcher_pro_environment";
+   public final static String SHARE_MANAGED_CREDENTIALS = "share_managed_credentials_checkbox";
+   public static String getShareManagedCredentials() { return getElementId(SHARE_MANAGED_CREDENTIALS); }
 
    // OpenSharedProjectDialog (Pro)
    public final static String SHARED_PROJ_MINE = "shared_proj_mine";
@@ -716,6 +718,10 @@ public class ElementIds
    // Jobs pane
    public final static String JOB_STOP = "job_stop";
    public final static String JOB_REPLAY = "job_replay";
+
+   // Databricks pane
+   public final static String DATABRICKS_FRAME = "databricks_frame";
+   public final static String DATABRICKS_DEPENDENCIES_WARNING_BAR = "databricks_dependencies_warning_bar";
 
    // OpenProjectDialog
    public final static String OP_NEW_SESSION = "op_new_session";
