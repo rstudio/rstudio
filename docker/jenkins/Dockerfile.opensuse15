@@ -45,7 +45,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     ps \
     python \
     python-xml \
-    python3 \
+    python311 \
     R \
     rpm-build \
     sqlite3-devel \
@@ -58,6 +58,10 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     xvfb-run \
     zlib-devel \
     && zypper clean -a
+
+# use python3.11; the default is python 3.6 which is too old for node-gyp
+RUN rm /usr/bin/python3
+RUN ln /usr/bin/python3.11 /usr/bin/python3
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools

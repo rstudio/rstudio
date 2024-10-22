@@ -309,8 +309,11 @@ export class Application implements AppState {
 
     // prevent app from terminating when last window closes during startup; this can cause
     // app to exit after Choose R dialog closes but before the license dialog shows
-    // https://github.com/rstudio/rstudio-pro/issues/6062 
-    const windowAllClosedHandler = (event: Event) => { event.preventDefault(); };
+    // https://github.com/rstudio/rstudio-pro/issues/6062
+
+    const windowAllClosedHandler = () => {
+      // intentionally empty
+    };
     if (process.platform === 'win32') {
       app.on('window-all-closed', windowAllClosedHandler);
     }
@@ -378,8 +381,12 @@ export class Application implements AppState {
 
     // launch a local session
     this.sessionLauncher = new SessionLauncher(
-      this.sessionPath, confPath, new FilePath(), this.appLaunch,
-      process.platform === 'win32' ? windowAllClosedHandler : null);
+      this.sessionPath,
+      confPath,
+      new FilePath(),
+      this.appLaunch,
+      process.platform === 'win32' ? windowAllClosedHandler : null,
+    );
     this.sessionLauncher.launchFirstSession(installPath, !app.isPackaged);
 
     this.gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {

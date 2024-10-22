@@ -152,7 +152,7 @@ export class SessionLauncher {
     private confPath: FilePath,
     private filename: FilePath,
     private appLaunch: ApplicationLaunch,
-    private windowAllClosedHandler: ((event: Event) => void) | null
+    private windowAllClosedHandler: (() => void) | null,
   ) {
     const splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 500;
     if (process.env.RS_NO_SPLASH) {
