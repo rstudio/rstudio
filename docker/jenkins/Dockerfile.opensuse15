@@ -45,7 +45,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     ps \
     python \
     python-xml \
-    python3 \
+    python311 \
     R \
     rpm-build \
     sqlite3-devel \
