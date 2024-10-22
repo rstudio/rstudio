@@ -399,6 +399,7 @@ public class ElementIds
    // JobLauncherDialogPro
    public final static String JOB_LAUNCHER_PRO_OPTIONS = "job_launcher_pro_options";
    public final static String JOB_LAUNCHER_PRO_ENVIRONMENT = "job_launcher_pro_environment";
+   public final static String SHARE_MANAGED_CREDENTIALS = "share_managed_credentials_checkbox";
 
    // OpenSharedProjectDialog (Pro)
    public final static String SHARED_PROJ_MINE = "shared_proj_mine";
