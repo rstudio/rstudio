@@ -717,6 +717,10 @@ public class ElementIds
    public final static String JOB_STOP = "job_stop";
    public final static String JOB_REPLAY = "job_replay";
 
+   // Databricks pane
+   public final static String DATABRICKS_FRAME = "databricks_frame";
+   public final static String DATABRICKS_DEPENDENCIES_WARNING_BAR = "databricks_dependencies_warning_bar";
+
    // OpenProjectDialog
    public final static String OP_NEW_SESSION = "op_new_session";
 
