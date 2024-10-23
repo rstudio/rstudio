@@ -17,22 +17,21 @@ package org.rstudio.studio.client.server.remote;
 
 import com.google.gwt.user.client.Timer;
 
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.AuthorizedEvent;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
-
 public class RemoteServerAuthWatcher
 {
-   public RemoteServerAuthWatcher(RemoteServer server, EventBus eventBus) 
+   public static interface CheckAuthStatus {
+      void checkAuthStatus();
+   }
+
+   public RemoteServerAuthWatcher(CheckAuthStatus authStatusChecker)
    {
-      eventBus_ = eventBus;
-      server_ = server;
+      authStatusChecker_ = authStatusChecker;
       isListening_ = false;
       pollTimer_ = new Timer(){
          @Override
          public void run()
          {
-            checkAuthStatus();
+            authStatusChecker_.checkAuthStatus();
          };
       };
    }
@@ -44,7 +43,7 @@ public class RemoteServerAuthWatcher
 
       isListening_ = true;
       
-      pollTimer_.schedule(1000);
+      pollTimer_.scheduleRepeating(1000);
    }
 
    public void stop()
@@ -53,36 +52,7 @@ public class RemoteServerAuthWatcher
       pollTimer_.cancel();
    }
 
-   private void checkAuthStatus()
-   {
-      server_.ping(new VoidServerRequestCallback() {
-         @Override
-         public void onSuccess()
-         {
-            stop();
-            // Send an AuthenticatedEvent to the bus
-            AuthorizedEvent event = new AuthorizedEvent();
-            eventBus_.fireEvent(event);
-         };
-
-         @Override
-         public void onFailure()
-         {
-            pollTimer_.schedule(1000);
-         };
-
-         @Override
-         public void onCompleted()
-         {
-            // Do nothing.
-         };
-         
-      });
-   }
-   
-
-   private RemoteServer server_;
-   private EventBus eventBus_;
+   private CheckAuthStatus authStatusChecker_;
    private boolean isListening_;
    private Timer pollTimer_;
 }
