@@ -3350,6 +3350,12 @@ public class RemoteServer implements Server
                          retryHandler);
    }
 
+   void handleUnauthorizedError(String scope, RpcRequest request, RpcResponseHandler handler, RetryHandler retryHandler)
+   {
+      pendingRequests_.add(new PendingRpcRequest(scope, request, handler, retryHandler));
+      handleUnauthorizedError();
+   }
+
    void handleUnauthorizedError()
    {
       UnauthorizedEvent event = new UnauthorizedEvent();
@@ -3713,11 +3719,11 @@ public class RemoteServer implements Server
 
                // if we have a retry handler then see if we can resolve the
                // error and then retry
-               if ( resolveRpcErrorAndRetry(rpcRequest, error, retryHandler) )
+               if ( resolveRpcErrorAndRetry(scope, rpcRequest, error, responseHandler, retryHandler) )
                   return;
 
                // first crack goes to globally registered rpc error handlers
-               if (!handleRpcErrorInternally(error, isAuthStatusRequest(rpcRequest)))
+               if (!handleRpcErrorInternally(scope, rpcRequest, error, responseHandler, retryHandler, isAuthStatusRequest(rpcRequest)))
                {
                   eventBus_.fireEvent(new ApplicationTutorialEvent(
                         ApplicationTutorialEvent.API_ERROR,
@@ -3745,11 +3751,11 @@ public class RemoteServer implements Server
 
                   // if we have a retry handler then see if we can resolve the
                   // error and then retry
-                  if ( resolveRpcErrorAndRetry(request, error, retryHandler) )
+                  if ( resolveRpcErrorAndRetry(scope, rpcRequest, error, responseHandler, retryHandler) )
                      return;
 
                   // give first crack to internal handlers, then forward to caller
-                  if (!handleRpcErrorInternally(error, isAuthStatusRequest(rpcRequest)))
+                  if (!handleRpcErrorInternally(scope, rpcRequest, error, responseHandler, retryHandler, isAuthStatusRequest(rpcRequest)))
                      responseHandler.onResponseReceived(response);
                }
                else if (response.getAsyncHandle() != null)
@@ -3814,8 +3820,10 @@ public class RemoteServer implements Server
          return Boolean.parseBoolean(eventsPending);
    }
 
-   private boolean resolveRpcErrorAndRetry(final RpcRequest request,
+   private boolean resolveRpcErrorAndRetry(final String scope,
+                                           final RpcRequest request,
                                            final RpcError error,
+                                           final RpcResponseHandler responseHandler,
                                            final RetryHandler retryHandler)
    {
       // won't even attempt resolve if we don't have a retryHandler
@@ -3844,7 +3852,7 @@ public class RemoteServer implements Server
                }
                else
                {
-                  handleUnauthorizedError();
+                  handleUnauthorizedError(scope, request, responseHandler, retryHandler);
                }
             }
 
@@ -3856,7 +3864,7 @@ public class RemoteServer implements Server
 
                // unable to resolve unauthorized error through a
                // credentials check -- treat as unauthorized
-               handleUnauthorizedError();
+               handleUnauthorizedError(scope, request, responseHandler, retryHandler);
             }
          });
 
@@ -3897,11 +3905,16 @@ public class RemoteServer implements Server
       }
    }
 
-   private boolean handleRpcErrorInternally(RpcError error, boolean ignoreUnauthorized)
+   private boolean handleRpcErrorInternally(String scope,
+                                          RpcRequest request,
+                                          RpcError error,
+                                          RpcResponseHandler responseHandler,
+                                          RetryHandler retryHandler,
+                                          boolean ignoreUnauthorized)
    {
       if ((error.getCode() == RpcError.UNAUTHORIZED) && !ignoreUnauthorized)
       {
-         handleUnauthorizedError();
+         handleUnauthorizedError(scope, request, responseHandler, retryHandler);
          return true;
       }
       else if (error.getCode() == RpcError.INVALID_CLIENT_ID)
