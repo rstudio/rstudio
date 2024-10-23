@@ -435,8 +435,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private void processCommandEntry(String commandText, boolean echo)
    {
-      if (addToHistory_ && (commandText.length() > 0))
-      eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
+      // add to console history
+      if (addToHistory_ && commandText.length() > 0)
+         eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
 
       // fire event
       eventBus_.fireEvent(new ConsoleInputEvent(commandText, "", echo ? 0 : ConsoleInputEvent.FLAG_NO_ECHO));
