@@ -75,6 +75,7 @@ void clearSignInCookies(const core::http::Request& request,
 void setSignInCookies(const core::http::Request& request,
                       const std::string& userIdentifier,
                       bool staySignedIn,
+                      boost::optional<boost::posix_time::ptime> loginExpiry,
                       core::http::Response* pResponse);
 
 void prepareHandler(handler::Handler& handler,

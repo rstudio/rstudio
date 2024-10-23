@@ -1244,7 +1244,32 @@ void refreshAuthCookies(const std::string& userIdentifier,
          LOG_DEBUG_MESSAGE("Refreshing auth: replacing old cookie: " + currentCookie);
       }
 
-      s_handler.refreshAuthCookies(request, userIdentifier, persist, pResponse);
+      std::string value;
+      boost::posix_time::ptime expiry;
+      boost::optional<boost::posix_time::ptime> loginExpiry;
+      http::secure_cookie::readSecureCookie(currentCookie, &value, &expiry, &loginExpiry);
+
+      if (loginExpiry && loginExpiry.get() >= now)
+      {
+         // The cookie has hit the active expiry, so we should not refresh it
+         LOG_DEBUG_MESSAGE("Not refreshing auth: cookie has expired: " + value);
+
+         // If the request is a JSON RPC request from an RStudio Pro session, we
+         // want to send a 401 so it can handle the logout gracefully. In other
+         // scenarios, a signInThenContinue is preferred.
+         if (request.containsHeader("x-rs-csrf-token") && (request.contentType() == "application/json"))
+         {
+            // Should this say session expired or something else?
+            common::clearSignInCookies(request, pResponse);
+            pResponse->setError(http::status::Unauthorized, "Unauthorized");
+            return;
+         }
+
+         signInThenContinue(request, pResponse);
+         return;
+      }
+
+      s_handler.refreshAuthCookies(request, userIdentifier, persist, loginExpiry, pResponse);
    }
 }
 

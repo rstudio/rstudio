@@ -449,13 +449,12 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onUnauthorized(UnauthorizedEvent event)
    {
-      // if the user is currently uploading a file (which potentially takes a long time)
-      // and we were to navigate them, they would be unable to complete the upload
-      if (!fileUploadInProgress_)
-      {
-         server_.disconnect();
-         navigateToSignIn();
-      }
+      globalDisplay_.showMessage(
+         GlobalDisplay.MSG_ERROR,
+            "Re-authentication required",
+            "You have been logged out. Click the link below to login in another tab.",
+            "Posit Workbench Login",
+            absoluteUrl("auth-sign-in", false));
    }
 
    @Override
