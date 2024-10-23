@@ -366,6 +366,11 @@ public class RemoteServer implements Server
       ensureListeningForEvents();
    }
 
+   public void setAuthorized()
+   {
+      authorized_ = true;
+   }
+
    public void setUnauthorized()
    {
       authorized_ = false;
