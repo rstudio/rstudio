@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -40,11 +42,13 @@ import org.rstudio.core.client.widget.Toggle.State;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue.OptionLocation;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -58,7 +62,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -80,28 +83,30 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    //
    // revert should return the document state to how it was before editing
    // was initiated.
-   protected abstract void initOptions(Command afterInit);
+   protected abstract void initOptions(CommandWithArg<Boolean> afterInit);
    protected abstract void synchronize();
    protected abstract void revert();
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
    @Inject
    private void initialize(FileDialogs fileDialogs,
-                           RemoteFileSystemContext rfsContext)
+                           RemoteFileSystemContext rfsContext,
+                           GlobalDisplay globalDisplay)
    {
       fileDialogs_ = fileDialogs;
       rfsContext_ = rfsContext;
+      globalDisplay_ = globalDisplay;
    }
    
-   public ChunkOptionsPopupPanel(boolean includeChunkNameUI, boolean isVisualEditor)
+   public ChunkOptionsPopupPanel(boolean includeChunkNameUI, OptionLocation preferredOptionLocation, boolean isVisualEditor)
    {
       super(true);
       setVisible(false);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      preferredOptionLocation_ = preferredOptionLocation;
       isVisualEditor_ = isVisualEditor;
       chunkOptions_ = new HashMap<>();
-      originalChunkOptions_ = new HashMap<>();
       
       panel_ = new VerticalPanel();
       add(panel_);
@@ -180,13 +185,13 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
          }
          else if (value == OUTPUT_SHOW_CODE_AND_OUTPUT)
          {
-            set("echo", "TRUE");
+            setTrue("echo");
             unset("eval");
             unset("include");
          }
          else if (value == OUTPUT_SHOW_OUTPUT_ONLY)
          {
-            set("echo", "FALSE");
+            setFalse("echo");
             unset("eval");
             unset("include");
          }
@@ -194,12 +199,12 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
          {
             unset("echo");
             unset("eval");
-            set("include", "FALSE");
+            setFalse("include");
          }
          else if (value == OUTPUT_SKIP_THIS_CHUNK)
          {
-            set("eval", "FALSE");
-            set("include", "FALSE");
+            setFalse("eval");
+            setFalse("include");
             unset("echo");
          }
          synchronize();
@@ -432,10 +437,10 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             unset(option);
             break;
          case OFF:
-            set(option, "FALSE");
+            setFalse(option);
             break;
          case ON:
-            set(option, "TRUE");
+            setTrue(option);
             break;
          }
          synchronize();
@@ -448,7 +453,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return chunkOptions_.containsKey(key);
    }
    
-   protected String get(String key)
+   protected ChunkOptionValue get(String key)
    {
       if (!has(key))
          return null;
@@ -463,12 +468,40 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       return isTrue(chunkOptions_.get(key));
    }
-   
+
+   /**
+    * Set an option. If the option already exists it will be set in the same location,
+    * otherwise it uses the default location for this document.
+    */
    protected void set(String key, String value)
    {
-      chunkOptions_.put(key,  value);
+      chunkOptions_.put(key, new ChunkOptionValue(value, locationForOption(key)));
    }
-   
+
+   /**
+    * Set an option in a specific location.
+    */
+    protected void set(String key, String value, OptionLocation optionLocation)
+   {
+      chunkOptions_.put(key, new ChunkOptionValue(value, optionLocation));
+   }
+
+   /**
+    * Set an option to the "TRUE" constant appropriate for its location (R vs. YAML)
+    */
+   protected void setTrue(String key)
+   {
+      chunkOptions_.put(key, new ChunkOptionValue(true, locationForOption(key)));
+   }
+
+   /**
+    * Set an option to the "FALSE" constant appropriate for its location (R vs. YAML)
+    */
+   protected void setFalse(String key)
+   {
+      chunkOptions_.put(key, new ChunkOptionValue(false, locationForOption(key)));
+   }
+
    protected void unset(String key)
    {
       chunkOptions_.remove(key);
@@ -488,6 +521,15 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       return false;
    }
    
+   /**
+    * Where to write a given option (same location if it already exists, otherwise the document's
+    * preferred location).
+    */
+   protected OptionLocation locationForOption(String key)
+   {
+      return chunkOptions_.get(key) != null ? chunkOptions_.get(key).getLocation() : preferredOptionLocation_;
+   }
+
    private void updateOutputComboBox()
    {
       boolean hasEcho = has("echo");
@@ -513,16 +555,24 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       display_ = display;
       position_ = position;
       chunkOptions_.clear();
-      originalChunkOptions_.clear();
       
       useCustomFigureCheckbox_.setValue(false);
       figureDimensionsPanel_.setVisible(false);
-            
-      Command afterInit = new Command()
+
+      CommandWithArg<Boolean> afterInit = new CommandWithArg<Boolean>()
       {
          @Override
-         public void execute()
+         public void execute(Boolean showUi)
          {
+            if (!showUi)
+            {
+               globalDisplay_.showMessage(
+                  MessageDialog.INFO,
+                  constants_.unableToEditTitle(),
+                  constants_.unableToEditMessage()); 
+              return;
+            }
+
             updateOutputComboBox();
             boolean hasRelevantFigureSettings =
                   has("fig.width") ||
@@ -534,12 +584,12 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             figureDimensionsPanel_.setVisible(hasRelevantFigureSettings);
 
             if (has("fig.width"))
-               figWidthBox_.setText(get("fig.width"));
+               figWidthBox_.setText(get("fig.width").getOptionValue());
             else
                figWidthBox_.setText("");
 
             if (has("fig.height"))
-               figHeightBox_.setText(get("fig.height"));
+               figHeightBox_.setText(get("fig.height").getOptionValue());
             else
                figHeightBox_.setText("");
 
@@ -557,14 +607,14 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             
             if (has("engine.path"))
             {
-               String enginePath = StringUtil.stringValue(get("engine.path"));
+               String enginePath = StringUtil.stringValue(get("engine.path").getOptionValue());
                enginePath = enginePath.replaceAll("\\\\\\\\", "\\\\");
                enginePathBox_.setValue(enginePath);
             }
             
             if (has("engine.opts"))
             {
-               String engineOpts = StringUtil.stringValue(get("engine.opts"));
+               String engineOpts = StringUtil.stringValue(get("engine.opts").getOptionValue());
                engineOpts = engineOpts.replaceAll("\\\\\\\\", "\\\\");
                engineOptsBox_.setValue(engineOpts);
             }
@@ -577,9 +627,23 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
    }
    
-   private boolean isTrue(String string)
+   private boolean isTrue(ChunkOptionValue option)
    {
-      return string == "TRUE" || string == "T";
+      if (option.getLocation() == OptionLocation.FirstLine)
+      {
+         // R-style
+         return StringUtil.equals(option.getOptionValue(), "TRUE") || 
+                StringUtil.equals(option.getOptionValue(), "T");
+      }
+      else
+      {
+         // YAML-style: standard is "true" and "false" but also detect
+         // other forms used in the wild
+         String value = option.getOptionValue().toLowerCase();
+         return StringUtil.equals(value, "true") || 
+                StringUtil.equals(value, "yes") || 
+                StringUtil.equals(value, "on");
+      }
    }
    
    @Override
@@ -598,17 +662,24 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    private int getPriority(String key)
    {
-      if (key == "eval")
+      if (StringUtil.equals(key, "label"))
+         return 11;
+      else if (StringUtil.equals(key, "eval"))
          return 10;
-      else if (key == "echo")
+      else if (StringUtil.equals(key, "echo"))
          return 9;
-      else if (key == "warning" || key == "error" || key == "message")
+      else if (StringUtil.equals(key, "warning") || 
+               StringUtil.equals(key, "error") || 
+               StringUtil.equals(key, "message"))
          return 8;
       else if (key.startsWith("fig."))
          return 8;
       return 0;
    }
    
+   /**
+    * Sort all options, regardless of location
+    */
    protected Map<String, String> sortedOptions(Map<String, String> options)
    {
       List<Map.Entry<String, String>> entries = new ArrayList<>(options.entrySet());
@@ -634,7 +705,90 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       }
       return sortedMap;
    }
-   
+
+   /**
+    * Sort and denormalize names (e.g. fig.cap vs. fig-cap) of all options from a particular location.
+    *
+    * If there's a label= entry for the first-line, remove it (first line label has special handling)
+    */
+   protected Map<String, String> sortedOptionsDenormalized(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
+   {
+      return sortedOptions(filterOptionsMap(options, optionLocation, true, true));
+   }
+
+   /**
+    * Get all options (unsorted and not denormalized) from a particular location.
+    */
+   protected Map<String, String> unsortedOptions(Map<String, ChunkOptionValue> options, OptionLocation optionLocation)
+   {
+      return filterOptionsMap(options, optionLocation, false, false);
+   }
+
+   /**
+    * Get options from a particular location.
+
+    * @param options full list of options
+    * @param optionLocation only return options from this location
+    * @param denormalize if true, adjust option names to match location's semantics (fig.cap for R,
+    *                    fig-cap for YAML)
+    * @param excludeLabel if true, don't return label=foo for this location
+    * @return list of options
+    */
+   private Map<String, String> filterOptionsMap(Map<String, ChunkOptionValue> options,
+                                                OptionLocation optionLocation,
+                                                boolean denormalize,
+                                                boolean excludeLabel)
+   {
+      Map<String, String> filteredEntries = new LinkedHashMap<>();
+      for (Map.Entry<String, ChunkOptionValue> entry : options.entrySet()) {
+         if (entry.getValue().getLocation() == optionLocation)
+         {
+            String key = entry.getKey();
+            String value = entry.getValue().getOptionValue();
+
+            if (StringUtil.equals("label", key))
+            {
+               if (excludeLabel && optionLocation == OptionLocation.FirstLine)
+                  continue;
+               
+               if (StringUtil.isNullOrEmpty(value))
+                  continue;
+            }
+
+            if (denormalize)
+               key = ChunkOptionValue.denormalizeOptionName(key, optionLocation);
+
+            filteredEntries.put(key, entry.getValue().getOptionValue());
+         }
+      }
+      return filteredEntries;
+   }
+
+   /**
+    * Get the label string to use for given location.
+    * @param location
+    * @return Label string or empty string if no label for this location
+    */
+   protected String getLabelForLocation(OptionLocation location)
+   {
+      ChunkOptionValue labelInfo = get("label");
+      if (labelInfo == null || labelInfo.getLocation() != location)
+         return "";
+      return labelInfo.getOptionValue();
+   }
+
+    /**
+     * Get value of label=FOO entry, if any.
+     * @return value of label entry, or an empty string
+     */
+    protected String getLabelValue()
+    {
+      ChunkOptionValue labelInfo = get("label");
+      if (labelInfo == null)
+         return "";
+      return labelInfo.getOptionValue();
+    }
+
    protected final VerticalPanel panel_;
    protected final Label header_;
    protected final FormLabel chunkLabel_;
@@ -654,12 +808,14 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected final Toggle printTableAsTextCb_;
    protected final Toggle cacheChunkCb_;
    
-   protected String originalLine_;
+   protected String originalFirstLine_; // opening chunk line, i.e. ```{r}
+   protected String originalOptionLines_; // chunk option line(s) using #| prefix
+
    protected String chunkPreamble_;
    protected final boolean isVisualEditor_;
    
-   protected HashMap<String, String> chunkOptions_;
-   protected HashMap<String, String> originalChunkOptions_;
+   protected final OptionLocation preferredOptionLocation_;
+   protected HashMap<String, ChunkOptionValue> chunkOptions_;
    
    protected DocDisplay display_;
    protected Position position_;
@@ -708,4 +864,5 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    // Injected ----
    protected FileDialogs fileDialogs_;
    protected RemoteFileSystemContext rfsContext_;
+   protected GlobalDisplay globalDisplay_;
 }

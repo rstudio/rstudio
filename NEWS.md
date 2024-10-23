@@ -23,6 +23,7 @@
 - RStudio now respects the chunk 'dpi' option when generating plots in R Markdown / Quarto documents (#11649)
 - RStudio now supports the display of an HTML table of contents for R help files when `options(help.htmltoc = TRUE)` is set (#14523)
 - RStudio now includes `.env` files in the fuzzy finder, and also displays these files in the Files pane
+- Quarto documents now have a gear icon for editing cell (chunk) options (#11745)
 
 #### Posit Workbench
 

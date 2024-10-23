@@ -38,63 +38,61 @@ test_that("the warn option is preserved when running chunks", {
 })
 
 # https://github.com/rstudio/rstudio/issues/11745
-# TODO: currently failing due to above issue
-# test_that("the expected chunk widgets show for multiple chunks", {
+test_that("the expected chunk widgets show for multiple chunks", {
+   contents <- .rs.heredoc('
+      ---
+      title: "Chunk widgets"
+      ---
 
-#    contents <- .rs.heredoc('
-#       ---
-#       title: "Chunk widgets"
-#       ---
-      
-#       ```{r setup, include=FALSE}
-#       knitr::opts_chunk$set(echo = TRUE)
-#       ```
-      
-#       ## Quarto
-      
-#       This is a Quarto document.
-      
-#       ```{r cars}
-#       summary(cars)
-#       ```
-      
-#       ## Including Plots
-      
-#       You can also embed plots, for example:
-      
-#       ```{r pressure, echo=FALSE}
-#       plot(pressure)
-#       ```
-      
-#       The end.
-#    ')
-   
-#    id <- remote$documentOpen(".qmd", contents)
-   
-#    jsChunkOptionWidgets <- remote$jsObjectsViaSelector(".rstudio_modify_chunk")
-#    jsChunkPreviewWidgets <- remote$jsObjectsViaSelector(".rstudio_preview_chunk")
-#    jsChunkRunWidgets <- remote$jsObjectsViaSelector(".rstudio_run_chunk")
-   
-#    expect_equal(length(jsChunkOptionWidgets), 3)
-#    expect_equal(length(jsChunkPreviewWidgets), 3)
-#    expect_equal(length(jsChunkRunWidgets), 3)
-   
-#    # setup chunk's "preview" widget should be aria-hidden and display:none
-#    expect_true(.rs.automation.tools.isAriaHidden(jsChunkPreviewWidgets[[1]]))
-#    expect_equal(jsChunkPreviewWidgets[[1]]$style$display, "none")
-   
-#    # all others should not be hidden
-#    checkWidgetVisible <- function(widget) {
-#       expect_false(.rs.automation.tools.isAriaHidden(widget))
-#       expect_false(widget$style$display == "none")
-#    }
-#    lapply(jsChunkPreviewWidgets[2:3], checkWidgetVisible)
-#    lapply(jsChunkOptionWidgets, checkWidgetVisible)
-#    lapply(jsChunkRunWidgets, checkWidgetVisible)
-   
-#    remote$documentClose()
-#    remote$keyboardExecute("<Ctrl + L>")
-# })
+      ```{r setup, include=FALSE}
+      knitr::opts_chunk$set(echo = TRUE)
+      ```
+
+      ## Quarto
+
+      This is a Quarto document.
+
+      ```{r cars}
+      summary(cars)
+      ```
+
+      ## Including Plots
+
+      You can also embed plots, for example:
+
+      ```{r pressure, echo=FALSE}
+      plot(pressure)
+      ```
+
+      The end.
+   ')
+
+   id <- remote$documentOpen(".qmd", contents)
+
+   jsChunkOptionWidgets <- remote$jsObjectsViaSelector(".rstudio_modify_chunk")
+   jsChunkPreviewWidgets <- remote$jsObjectsViaSelector(".rstudio_preview_chunk")
+   jsChunkRunWidgets <- remote$jsObjectsViaSelector(".rstudio_run_chunk")
+
+   expect_equal(length(jsChunkOptionWidgets), 3)
+   expect_equal(length(jsChunkPreviewWidgets), 3)
+   expect_equal(length(jsChunkRunWidgets), 3)
+
+   # setup chunk's "preview" widget should be aria-hidden and display:none
+   expect_true(.rs.automation.tools.isAriaHidden(jsChunkPreviewWidgets[[1]]))
+   expect_equal(jsChunkPreviewWidgets[[1]]$style$display, "none")
+
+   # all others should not be hidden
+   checkWidgetVisible <- function(widget) {
+      expect_false(.rs.automation.tools.isAriaHidden(widget))
+      expect_false(widget$style$display == "none")
+   }
+   lapply(jsChunkPreviewWidgets[2:3], checkWidgetVisible)
+   lapply(jsChunkOptionWidgets, checkWidgetVisible)
+   lapply(jsChunkRunWidgets, checkWidgetVisible)
+
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
 
 test_that("can cancel switching to visual editor", {
    contents <- .rs.heredoc('
@@ -247,6 +245,127 @@ test_that("visual editor welcome dialog displays again if don't show again is un
    remote$documentClose()
    remote$keyboardExecute("<Ctrl + L>")
 })
+
+test_that("displaying and closing chunk options popup doesn't modify already-sorted settings", {
+   contents <- .rs.heredoc('
+      ---
+      title: "The Title"
+      ---
+
+      ```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}
+      print("one")
+      ```
+
+      ```{r}
+      print("two")
+      ```
+
+      ```{r}
+      #| label: one
+      #| message: false
+      #| warning: true
+      #| fig-height: 4
+      #| fig-width: 3
+      #| paged-print: true
+      print("one")
+      ```
+
+      The end.
+   ')
+
+   id <- remote$documentOpen(".qmd", contents)
+   editor <- remote$editorGetInstance()
+
+   checkChunkOption <- function(firstLine, lastLine, widget) {
+      original <- ""
+      for (line in firstLine:lastLine)
+      {
+         lineContent <- editor$session$getLine(line)
+         original <- paste(original, lineContent, sep = "\n")
+      }
+
+      remote$domClickElementByNodeId(widget)
+      Sys.sleep(1)
+      remote$keyboardExecute("<Escape>")
+
+      updated <- ""
+      for (line in firstLine:lastLine)
+      {
+         lineContent <- editor$session$getLine(line)
+         updated <- paste(updated, lineContent, sep = "\n")
+      }
+      expect_equal(original, updated)
+   }
+
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   checkChunkOption(8, 8, chunkOptionWidgetIds[[2]])
+
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   checkChunkOption(4, 4, chunkOptionWidgetIds[[1]])
+
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   checkChunkOption(12, 18, chunkOptionWidgetIds[[3]])
+
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
+
+test_that("displaying and closing chunk options popup sorts the settings", {
+   contents <- .rs.heredoc('
+      ---
+      title: "The Title"
+      ---
+
+      ```{r one, message=FALSE, fig.height=4, fig.width=3, warning=TRUE, paged.print=TRUE}
+      print("one")
+      ```
+
+      ```{r}
+      #| message: false
+      #| warning: true
+      #| fig-height: 4
+      #| label: one
+      #| fig-width: 3
+      #| paged-print: true
+      print("one")
+      ```
+
+      The end.
+   ')
+
+   id <- remote$documentOpen(".qmd", contents)
+   editor <- remote$editorGetInstance()
+
+   checkChunkOption <- function(firstLine, lastLine, expectedAfter, widget) {
+      remote$domClickElementByNodeId(widget)
+      Sys.sleep(2)
+      remote$keyboardExecute("<Escape>")
+
+      updated <- ""
+      for (line in (firstLine):lastLine)
+      {
+         lineContent <- editor$session$getLine(line)
+         updated <- paste(updated, lineContent, sep = ifelse(nzchar(updated), "\n", ""))
+      }
+      expect_equal(expectedAfter, updated)
+   }
+
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   checkChunkOption(
+      4, 4,
+      '```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}',
+      chunkOptionWidgetIds[[1]])
+
+   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   checkChunkOption(
+      9, 14,
+      '#| label: one\n#| message: false\n#| warning: true\n#| fig-height: 4\n#| fig-width: 3\n#| paged-print: true',
+      chunkOptionWidgetIds[[1]])
+
+   remote$documentClose()
+   remote$keyboardExecute("<Ctrl + L>")
+})
+
 
 # https://github.com/rstudio/rstudio/issues/14552
 test_that("empty header labels are permitted in document outline", {
