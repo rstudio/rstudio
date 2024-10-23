@@ -7,7 +7,7 @@
         margin: 0;
         overflow: hidden;
       }
-      </style>
+    </style>
 </head>
 <body style="-webkit-app-region:drag">
   <?xml version="1.0" encoding="utf-8"?>
