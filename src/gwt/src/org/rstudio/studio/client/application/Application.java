@@ -174,6 +174,7 @@ public class Application implements ApplicationEventHandlers
       // subscribe to events
       events.addHandler(LogoutRequestedEvent.TYPE, this);
       events.addHandler(UnauthorizedEvent.TYPE, this);
+      events.addHandler(AuthorizedEvent.TYPE, this);
       events.addHandler(ReloadEvent.TYPE, this);
       events.addHandler(ReloadWithLastChanceSaveEvent.TYPE, this);
       events.addHandler(QuitEvent.TYPE, this);
