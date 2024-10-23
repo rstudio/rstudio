@@ -65,7 +65,7 @@ void ConsoleHistory::setRemoveDuplicates(bool removeDuplicates)
    removeDuplicates_ = removeDuplicates;
 }
 
-void ConsoleHistory::add(const std::string& command)
+void ConsoleHistory::add(const std::string& command, bool update)
 {
    if (!command.empty())
    {
@@ -92,7 +92,7 @@ void ConsoleHistory::add(const std::string& command)
             historyBuffer_.push_back(line);
          
             // notify listeners
-            onAdd_(line);
+            onAdd_(line, update);
          }
       }
    }
