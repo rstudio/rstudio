@@ -236,5 +236,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void signOut();
 
+   void showSplashScreen();
+
    void detectRosetta();
 }

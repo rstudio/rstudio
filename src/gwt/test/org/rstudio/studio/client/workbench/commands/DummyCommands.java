@@ -3215,4 +3215,9 @@ public class DummyCommands extends Commands {
     public AppCommand consoleActivateR() {
         return null;
     }
+
+    @Override
+    public AppCommand showSplashScreen() {
+        return null;
+    }
 }

@@ -4305,4 +4305,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Console: Activate Python"
         menuLabel="Python" />
         
+   <cmd id="showSplashScreen"
+        label="Show Splash Screen" />
+         
 </commands>

@@ -54,6 +54,7 @@ import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
 import { userHomePathString } from '../core/user';
 import { detectRosetta } from './detect-rosetta';
+import { showPersistentSplashScreen } from './splash-screen';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -88,6 +89,7 @@ export class GwtCallback extends EventEmitter {
   initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
+  private splash: BrowserWindow | undefined;
 
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
@@ -943,6 +945,10 @@ export class GwtCallback extends EventEmitter {
         this.addMacOSVersionError();
       }
       return resolveTemplateVar(varName, this.errorPageData);
+    });
+
+    ipcMain.on('desktop_show_splash_screen', () => {
+      showPersistentSplashScreen();
     });
 
     ipcMain.on('desktop_detect_rosetta', () => {
