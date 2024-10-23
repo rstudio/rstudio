@@ -427,6 +427,12 @@ public class Application implements ApplicationEventHandlers
    }
 
    @Handler
+   void onShowSplashScreen()
+   {
+      Desktop.getFrame().showSplashScreen();
+   }
+
+   @Handler
    void onShowLicenseDialog()
    {
       if (pEdition_.get() != null)
@@ -1163,6 +1169,7 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomActualSize().remove();
          commands_.zoomIn().remove();
          commands_.zoomOut().remove();
+         commands_.showSplashScreen().remove();
       }
 
       // remove main menu commands in desktop mode

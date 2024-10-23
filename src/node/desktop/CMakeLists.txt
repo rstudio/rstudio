@@ -106,6 +106,9 @@ endif()
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts.in
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts)
 
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/src/ui/splash/splash_unversioned.html.in
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/splash/splash.html)
+
 # defines NODEJS, NODEJS_PATH
 include("${CMAKE_CURRENT_LIST_DIR}/../CMakeNodeTools.txt")
 

@@ -54,6 +54,7 @@ import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
 import { userHomePathString } from '../core/user';
 import { detectRosetta } from './detect-rosetta';
+import { showPersistentSplashScreen } from './splash-screen';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -943,6 +944,10 @@ export class GwtCallback extends EventEmitter {
         this.addMacOSVersionError();
       }
       return resolveTemplateVar(varName, this.errorPageData);
+    });
+
+    ipcMain.on('desktop_show_splash_screen', () => {
+      showPersistentSplashScreen();
     });
 
     ipcMain.on('desktop_detect_rosetta', () => {

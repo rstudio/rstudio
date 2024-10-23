@@ -713,6 +713,10 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('getStartupErrorInfo', error));
     },
 
+    showSplashScreen: () => {
+      ipcRenderer.send('desktop_show_splash_screen');
+    },
+
     detectRosetta: () => {
       ipcRenderer.send('desktop_detect_rosetta');
     },
