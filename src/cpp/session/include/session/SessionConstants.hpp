@@ -179,6 +179,7 @@ const char * const kSuspendSession = "suspend_session";
 const char * const kInterrupt = "interrupt";
 const char * const kConsoleInput = "console_input";
 const char * const kSuspendForRestart = "suspend_for_restart";
+const char * const kAuthStatus = "auth_status";
 const char * const kRStudioAPIShowDialogMethod = "rstudio_api_show_dialog";
 const char * const kPing = "ping";
 
