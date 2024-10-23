@@ -89,7 +89,6 @@ export class GwtCallback extends EventEmitter {
   initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
-  private splash: BrowserWindow | undefined;
 
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
