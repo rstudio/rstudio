@@ -94,6 +94,7 @@ struct Handler
    boost::function<void(const core::http::Request&,
                         const std::string&,
                         bool,
+                        boost::optional<boost::posix_time::ptime>,
                         core::http::Response*)> refreshAuthCookies;
 };
 

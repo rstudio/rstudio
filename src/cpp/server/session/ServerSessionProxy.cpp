@@ -1037,6 +1037,14 @@ void proxyRpcRequest(
       auth::handler::refreshAuthCookies(userIdentifier,
                                         ptrConnection->request(),
                                         &ptrConnection->response());
+
+      if (ptrConnection->response().statusCode() == http::status::Unauthorized)
+      {
+         // if the user is not authorized, we should return a 401
+         // and not continue with the request
+         ptrConnection->writeResponse();
+         return;
+      }
    }
 
    // get session context
