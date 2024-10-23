@@ -272,8 +272,27 @@ public class RemoteServer implements Server
       session_ = session;
       eventBus_ = eventBus;
       serverAuth_ = new RemoteServerAuth(this);
-      authWatcher_ = new RemoteServerAuthWatcher(this, eventBus_);
+      authWatcher_ = new RemoteServerAuthWatcher(new RemoteServerAuthWatcher.CheckAuthStatus() {
+         @Override
+         public void checkAuthStatus()
+         {
+            getSessionStatus(new ServerRequestCallback<Boolean>() {
+               @Override
+               public void onResponseReceived(Boolean result)
+               {
+                  if (result)
+                  {
+                     setAuthorized();
+                  }
+               };
 
+               @Override
+               public void onError(ServerError error)
+               {
+                  // TODO: maybe re-fire unauthorized event?
+               };
+            });
+      }});
       // define external event listener if we are the main window
       // (so we can forward to the satellites)
       ClientEventHandler externalListener = null;
@@ -2754,6 +2773,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_HISTORY_ITEMS, params, requestCallback);
    }
 
+   public void getSessionStatus(ServerRequestCallback<Boolean> callback)
+   {
+      sendRequest(
+         RPC_SCOPE,
+         AUTH_STATUS,
+         callback);
+   }
 
    public void removeHistoryItems(JsArrayNumber itemIndexes,
                                   ServerRequestCallback<Void> requestCallback)
@@ -3668,7 +3694,9 @@ public class RemoteServer implements Server
             return rpcRequest;
 
          // Not currently authorized, queue the request and return
-         if (!authorized_)
+         // Only exception is the session status request, which will tell us
+         // once we get re-authenticated
+         if (!authorized_ && !isAuthStatusRequest(rpcRequest))
          {
             pendingRequests_.add(
                new PendingRpcRequest(scope, rpcRequest, responseHandler, retryHandler));
@@ -3689,7 +3717,7 @@ public class RemoteServer implements Server
                   return;
 
                // first crack goes to globally registered rpc error handlers
-               if (!handleRpcErrorInternally(error))
+               if (!handleRpcErrorInternally(error, isAuthStatusRequest(rpcRequest)))
                {
                   eventBus_.fireEvent(new ApplicationTutorialEvent(
                         ApplicationTutorialEvent.API_ERROR,
@@ -3721,7 +3749,7 @@ public class RemoteServer implements Server
                      return;
 
                   // give first crack to internal handlers, then forward to caller
-                  if (!handleRpcErrorInternally(error))
+                  if (!handleRpcErrorInternally(error, isAuthStatusRequest(rpcRequest)))
                      responseHandler.onResponseReceived(response);
                }
                else if (response.getAsyncHandle() != null)
@@ -3797,6 +3825,12 @@ public class RemoteServer implements Server
       // can attempt to resolve UNAUTHORIZED by updating credentials
       if (error.getCode() == RpcError.UNAUTHORIZED)
       {
+         if (isAuthStatusRequest(request))
+         {
+            // Don't retry
+            return false;
+         }
+
          // check credentials
          serverAuth_.updateCredentials(new ServerRequestCallback<Integer>() {
 
@@ -3863,9 +3897,9 @@ public class RemoteServer implements Server
       }
    }
 
-   private boolean handleRpcErrorInternally(RpcError error)
+   private boolean handleRpcErrorInternally(RpcError error, boolean ignoreUnauthorized)
    {
-      if (error.getCode() == RpcError.UNAUTHORIZED)
+      if ((error.getCode() == RpcError.UNAUTHORIZED) && !ignoreUnauthorized)
       {
          handleUnauthorizedError();
          return true;
@@ -6802,6 +6836,11 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "record_command_execution", params, callback);
    }
 
+   private boolean isAuthStatusRequest(RpcRequest request)
+   {
+      return request.getMethod().equals(AUTH_STATUS);
+   }
+
    protected String clientInitId_ = "";
    private String clientId_;
    private String clientVersion_ = "";
@@ -6845,6 +6884,7 @@ public class RemoteServer implements Server
    private static final String SUSPEND_FOR_RESTART = "suspend_for_restart";
    private static final String PING = "ping";
    private static final String RSTUDIOAPI_RESPONSE = "rstudioapi_response";
+   private static final String AUTH_STATUS = "auth_status";
 
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";
