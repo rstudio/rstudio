@@ -268,9 +268,11 @@ public class RemoteServer implements Server
       disconnected_ = false;
       listeningForEvents_ = false;
       sessionRelaunchPending_ = false;
+      pendingRequests_ = new ArrayList<PendingRpcRequest>();
       session_ = session;
       eventBus_ = eventBus;
       serverAuth_ = new RemoteServerAuth(this);
+      authWatcher_ = new RemoteServerAuthWatcher(this, eventBus_);
 
       // define external event listener if we are the main window
       // (so we can forward to the satellites)
@@ -369,11 +371,21 @@ public class RemoteServer implements Server
    public void setAuthorized()
    {
       authorized_ = true;
+      authWatcher_.stop();
+      for (PendingRpcRequest request : pendingRequests_)
+      {
+         sendRequest(
+            request.scope,
+            request.request,
+            request.responseHandler,
+            request.retryHandler);
+      }
    }
 
    public void setUnauthorized()
    {
       authorized_ = false;
+      authWatcher_.start();
    }
 
    public void disconnect()
@@ -3610,9 +3622,6 @@ public class RemoteServer implements Server
       return request;
    }
 
-   // lowest level sendRequest method -- called from the main workbench
-   // in two scenarios: direct internal call and servicing a proxied
-   // request from a satellite window
    protected RpcRequest sendRequest(String sourceWindow,
                                   String scope,
                                   String method,
@@ -3643,86 +3652,106 @@ public class RemoteServer implements Server
                                              clientVersion_,
                                              refreshCreds);
 
-      if (isDisconnected(scope))
-         return rpcRequest;
+      return sendRequest(scope, rpcRequest, responseHandler, retryHandler);
+   }
 
-      // send the request
-      rpcRequest.send(new RpcRequestCallback() {
-         public void onError(RpcRequest request, RpcError error)
+
+   // lowest level sendRequest method -- called from the main workbench
+   // in two scenarios: direct internal call and servicing a proxied
+   // request from a satellite window
+   protected RpcRequest sendRequest(String scope,
+                                    RpcRequest rpcRequest,
+                                    final RpcResponseHandler responseHandler,
+                                    final RetryHandler retryHandler) 
+      {
+         if (isDisconnected(scope))
+            return rpcRequest;
+
+         // Not currently authorized, queue the request and return
+         if (!authorized_)
          {
-            // ignore errors if we are disconnected
-            if (isDisconnected(scope))
-               return;
-
-            // if we have a retry handler then see if we can resolve the
-            // error and then retry
-            if ( resolveRpcErrorAndRetry(rpcRequest, error, retryHandler) )
-               return;
-
-            // first crack goes to globally registered rpc error handlers
-            if (!handleRpcErrorInternally(error))
-            {
-               eventBus_.fireEvent(new ApplicationTutorialEvent(
-                     ApplicationTutorialEvent.API_ERROR,
-                     error.getEndUserMessage(),
-                     new TutorialApiCallContext("rpc", null)));
-
-               // no global handlers processed it, send on to caller
-               responseHandler.onResponseReceived(RpcResponse.create(error));
-            }
+            pendingRequests_.add(
+               new PendingRpcRequest(scope, rpcRequest, responseHandler, retryHandler));
+            return rpcRequest;
          }
 
-         public void onResponseReceived(final RpcRequest request,
-                                        RpcResponse response)
-         {
-            // ignore response if we are disconnected
-            //   - handler was cancelled
-            if (isDisconnected(scope))
-                 return;
-
-            // check for error
-            if (response.getError() != null)
+         // send the request
+         rpcRequest.send(new RpcRequestCallback() {
+            public void onError(RpcRequest request, RpcError error)
             {
-               // ERROR: explicit error returned by server
-               RpcError error = response.getError();
+               // ignore errors if we are disconnected
+               if (isDisconnected(scope))
+                  return;
 
                // if we have a retry handler then see if we can resolve the
                // error and then retry
-               if ( resolveRpcErrorAndRetry(request, error, retryHandler) )
+               if ( resolveRpcErrorAndRetry(rpcRequest, error, retryHandler) )
                   return;
 
-               // give first crack to internal handlers, then forward to caller
+               // first crack goes to globally registered rpc error handlers
                if (!handleRpcErrorInternally(error))
+               {
+                  eventBus_.fireEvent(new ApplicationTutorialEvent(
+                        ApplicationTutorialEvent.API_ERROR,
+                        error.getEndUserMessage(),
+                        new TutorialApiCallContext("rpc", null)));
+
+                  // no global handlers processed it, send on to caller
+                  responseHandler.onResponseReceived(RpcResponse.create(error));
+               }
+            }
+
+            public void onResponseReceived(final RpcRequest request,
+                                          RpcResponse response)
+            {
+               // ignore response if we are disconnected
+               //   - handler was cancelled
+               if (isDisconnected(scope))
+                  return;
+
+               // check for error
+               if (response.getError() != null)
+               {
+                  // ERROR: explicit error returned by server
+                  RpcError error = response.getError();
+
+                  // if we have a retry handler then see if we can resolve the
+                  // error and then retry
+                  if ( resolveRpcErrorAndRetry(request, error, retryHandler) )
+                     return;
+
+                  // give first crack to internal handlers, then forward to caller
+                  if (!handleRpcErrorInternally(error))
+                     responseHandler.onResponseReceived(response);
+               }
+               else if (response.getAsyncHandle() != null)
+               {
+                  serverEventListener_.registerAsyncHandle(
+                        response.getAsyncHandle(),
+                        request,
+                        this);
+               }
+               // no error, process the result
+               else
+               {
+                  clearSessionRelaunchPending();
+
+                  // no error, forward to caller
                   responseHandler.onResponseReceived(response);
-            }
-            else if (response.getAsyncHandle() != null)
-            {
-               serverEventListener_.registerAsyncHandle(
-                     response.getAsyncHandle(),
-                     request,
-                     this);
-            }
-            // no error, process the result
-            else
-            {
-               clearSessionRelaunchPending();
 
-               // no error, forward to caller
-               responseHandler.onResponseReceived(response);
-
-               // always ensure that the event source receives events unless
-               // the server specifically flags us that no events are likely
-               // to be pending (e.g. an rpc call where no events were added
-               // to the queue by the call)
-               if (eventsPending(response))
-                  serverEventListener_.ensureEvents();
+                  // always ensure that the event source receives events unless
+                  // the server specifically flags us that no events are likely
+                  // to be pending (e.g. an rpc call where no events were added
+                  // to the queue by the call)
+                  if (eventsPending(response))
+                     serverEventListener_.ensureEvents();
+               }
             }
-         }
-      });
+         });
 
-      // return the request
-      return rpcRequest;
-   }
+         // return the request
+         return rpcRequest;         
+      }
 
    private void ensureListeningForEvents()
    {
@@ -6784,6 +6813,9 @@ public class RemoteServer implements Server
    private boolean disconnected_;
    private boolean sessionRelaunchPending_;
 
+   private RemoteServerAuthWatcher authWatcher_;
+   private List<PendingRpcRequest> pendingRequests_;
+
    private final RemoteServerAuth serverAuth_;
    private final RemoteServerEventListener serverEventListener_;
 
@@ -7322,6 +7354,21 @@ public class RemoteServer implements Server
    private static final String QUARTO_SERVE_RENDER = "quarto_serve_render";
    private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
 
-   
+   private static class PendingRpcRequest {
+      public PendingRpcRequest(String scope,
+                              RpcRequest request,
+                              RpcResponseHandler responseHandler,
+                              RetryHandler retryHandler) {
+         this.scope = scope;
+         this.request = request;
+         this.responseHandler = responseHandler;
+         this.retryHandler = retryHandler;
+      }
+
+      public String scope;
+      public RpcRequest request;
+      public RpcResponseHandler responseHandler;
+      public RetryHandler retryHandler;
+   };
 
 }
