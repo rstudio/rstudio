@@ -2,6 +2,12 @@
 
 <head>
     <meta charset="UTF-8">
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
 </head>
 <body style="-webkit-app-region:drag">
   <?xml version="1.0" encoding="utf-8"?>
