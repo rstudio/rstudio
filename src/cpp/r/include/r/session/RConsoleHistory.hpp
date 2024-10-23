@@ -44,7 +44,7 @@ class ConsoleHistory : boost::noncopyable
 public:
    typedef boost::circular_buffer<std::string>::value_type value_type;
    typedef boost::circular_buffer<std::string>::const_iterator const_iterator;
-   typedef RSTUDIO_BOOST_SIGNAL<void (const std::string&)> AddSignal;
+   typedef RSTUDIO_BOOST_SIGNAL<void (const std::string&, bool)> AddSignal;
 
 private:
    ConsoleHistory();
@@ -63,7 +63,7 @@ public:
 
    void setRemoveDuplicates(bool removeDuplicates);
    
-   void add(const std::string& command);
+   void add(const std::string& command, bool update);
    
    const_iterator begin() const { return historyBuffer_.begin(); }
    const_iterator end() const { return historyBuffer_.end(); }

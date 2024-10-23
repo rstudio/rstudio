@@ -23,7 +23,6 @@ import org.rstudio.core.client.events.HighlightEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.filedialog.events.OpenFileDialogEvent;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.ClipboardActionEvent;
 import org.rstudio.studio.client.application.events.ComputeThemeColorsEvent;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
@@ -189,7 +188,6 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
-import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
@@ -394,8 +392,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.HistoryEntriesAdded)
          {
-            RpcObjectList<HistoryEntry> entries = event.getData();
-            eventBus_.dispatchEvent(new HistoryEntriesAddedEvent(entries));
+            HistoryEntriesAddedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new HistoryEntriesAddedEvent(data));
          }
          else if (type == ClientEvent.QuotaStatus)
          {

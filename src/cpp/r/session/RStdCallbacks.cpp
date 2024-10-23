@@ -370,7 +370,7 @@ int RReadConsole(const char *pmt,
             // created as a result of a shell escape
             consoleActions().add(kConsoleActionInput, consoleInput.text);
             if (addToHistory && !isInjectedBrowserCommand(consoleInput.text))
-               consoleHistory().add(consoleInput.text);
+               consoleHistory().add(consoleInput.text, false);
 
             // call console input hook and interrupt if the hook tells us to
             if (!consoleInputHook(prompt, consoleInput.text))
@@ -636,9 +636,9 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env)
       ConsoleHistory& history = consoleHistory();
       std::for_each(commands.begin(), 
                     commands.end(),
-                    boost::bind(&ConsoleHistory::add, &history, _1));
+                    boost::bind(&ConsoleHistory::add, &history, _1, true));
    }
-   catch(r::exec::RErrorException& e)
+   catch (r::exec::RErrorException& e)
    {
       r::exec::errorCall(call, e.message());
    }

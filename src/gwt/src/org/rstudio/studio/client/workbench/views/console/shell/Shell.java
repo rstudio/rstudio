@@ -792,19 +792,21 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       }
    }
    
-   @Override
-   public void onHistoryEntriesAdded(HistoryEntriesAddedEvent event)
-   {
-      RpcObjectList<HistoryEntry> entries = event.getEntries();
-      for (HistoryEntry entry : entries.toArrayList())
-      {
-         historyManager_.addToHistory(entry.getCommand());
-      }
-   }
-
    private boolean isBrowsePrompt()
    {
       return lastPromptText_ != null && (lastPromptText_.startsWith("Browse"));
+   }
+   
+   public void onHistoryEntriesAdded(HistoryEntriesAddedEvent event)
+   {
+      if (event.update())
+      {
+         RpcObjectList<HistoryEntry> entries = event.getEntries();
+         for (HistoryEntry entry : entries.toArrayList())
+         {
+            historyManager_.addToHistory(entry.getCommand());
+         }
+      }
    }
 
    private void resetHistoryPosition()

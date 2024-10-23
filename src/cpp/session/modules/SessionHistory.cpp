@@ -262,7 +262,7 @@ Error searchHistory(const json::JsonRpcRequest& request,
 {
    // get the query
    std::string query;
-   int maxEntries;
+   int maxEntries = 0;
    Error error = json::readParams(request.params, &query, &maxEntries);
    if (error)
       return error;
@@ -389,7 +389,7 @@ Error searchHistoryArchiveByPrefix(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void onHistoryAdd(const std::string& command)
+void onHistoryAdd(const std::string& command, bool update)
 {   
    // add command to history archive
    Error error = historyArchive().add(command);
@@ -402,14 +402,18 @@ void onHistoryAdd(const std::string& command)
    entries.push_back(HistoryEntry(entryIndex, 0, command));
    json::Object entriesJson;
    historyEntriesAsJson(entries, &entriesJson);
-   ClientEvent event(client_events::kHistoryEntriesAdded, entriesJson);
+   
+   json::Object eventJson;
+   eventJson["entries"] = entriesJson;
+   eventJson["update"] = update;
+   ClientEvent event(client_events::kHistoryEntriesAdded, eventJson);
    module_context::enqueClientEvent(event);
 }
 
 SEXP rs_timestamp(SEXP stampSEXP)
 {
    std::string stamp = r::sexp::safeAsString(stampSEXP);
-   r::session::consoleHistory().add(stamp);
+   r::session::consoleHistory().add(stamp, true);
    return R_NilValue;
 }
 
