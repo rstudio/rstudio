@@ -435,8 +435,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private void processCommandEntry(String commandText, boolean echo)
    {
-      if (addToHistory_ && (commandText.length() > 0))
-      eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
+      // add to console history
+      if (addToHistory_ && commandText.length() > 0)
+         eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
 
       // fire event
       eventBus_.fireEvent(new ConsoleInputEvent(commandText, "", echo ? 0 : ConsoleInputEvent.FLAG_NO_ECHO));
@@ -791,19 +792,21 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       }
    }
    
-   @Override
-   public void onHistoryEntriesAdded(HistoryEntriesAddedEvent event)
-   {
-      RpcObjectList<HistoryEntry> entries = event.getEntries();
-      for (HistoryEntry entry : entries.toArrayList())
-      {
-         historyManager_.addToHistory(entry.getCommand());
-      }
-   }
-
    private boolean isBrowsePrompt()
    {
       return lastPromptText_ != null && (lastPromptText_.startsWith("Browse"));
+   }
+   
+   public void onHistoryEntriesAdded(HistoryEntriesAddedEvent event)
+   {
+      if (event.update())
+      {
+         RpcObjectList<HistoryEntry> entries = event.getEntries();
+         for (HistoryEntry entry : entries.toArrayList())
+         {
+            historyManager_.addToHistory(entry.getCommand());
+         }
+      }
    }
 
    private void resetHistoryPosition()

@@ -14,34 +14,47 @@
  */
 package org.rstudio.studio.client.workbench.views.history.events;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+
 public class HistoryEntriesAddedEvent extends GwtEvent<HistoryEntriesAddedEvent.Handler>
 {
-   public static final GwtEvent.Type<HistoryEntriesAddedEvent.Handler> TYPE = new GwtEvent.Type<>();
-
-   public interface Handler extends EventHandler
+   public static class Data extends JavaScriptObject
    {
-      void onHistoryEntriesAdded(HistoryEntriesAddedEvent event);
+      protected Data()
+      {
+      }
+      
+      public native final RpcObjectList<HistoryEntry> entries() /*-{ return this["entries"] }-*/;
+      public native final boolean update() /*-{ return this["update"]; }-*/;
    }
-
-   public HistoryEntriesAddedEvent(RpcObjectList<HistoryEntry> entries)
+   
+   public HistoryEntriesAddedEvent(Data data)
    {
-      entries_ = entries;
+      data_ = data;
    }
 
    public RpcObjectList<HistoryEntry> getEntries()
    {
-      return entries_;
+      return data_.entries();
    }
-
-   @Override
-   protected void dispatch(Handler handler)
+   
+   public boolean update()
    {
-      handler.onHistoryEntriesAdded(this);
+      return data_.update();
+   }
+   
+   private final Data data_;
+
+   // Boilerplate ----
+   
+   public interface Handler extends EventHandler
+   {
+      void onHistoryEntriesAdded(HistoryEntriesAddedEvent event);
    }
 
    @Override
@@ -50,5 +63,12 @@ public class HistoryEntriesAddedEvent extends GwtEvent<HistoryEntriesAddedEvent.
       return TYPE;
    }
 
-   private final RpcObjectList<HistoryEntry> entries_;
+   @Override
+   protected void dispatch(Handler handler)
+   {
+      handler.onHistoryEntriesAdded(this);
+   }
+
+   public static final GwtEvent.Type<HistoryEntriesAddedEvent.Handler> TYPE = new GwtEvent.Type<>();
+
 }
