@@ -264,6 +264,7 @@ public class RemoteServer implements Server
    {
       pConsoleProcessFactory_ = pConsoleProcessFactory;
       clientId_ = null;
+      authorized_ = true;
       disconnected_ = false;
       listeningForEvents_ = false;
       sessionRelaunchPending_ = false;
@@ -363,6 +364,11 @@ public class RemoteServer implements Server
    public void ensureEventListener()
    {
       ensureListeningForEvents();
+   }
+
+   public void setUnauthorized()
+   {
+      authorized_ = false;
    }
 
    public void disconnect()
@@ -6769,6 +6775,7 @@ public class RemoteServer implements Server
    private JsObject launchParameters_;
    private String userHomePath_;
    private boolean listeningForEvents_;
+   private boolean authorized_;
    private boolean disconnected_;
    private boolean sessionRelaunchPending_;
 
@@ -7309,5 +7316,7 @@ public class RemoteServer implements Server
    private static final String QUARTO_SERVE = "quarto_serve";
    private static final String QUARTO_SERVE_RENDER = "quarto_serve_render";
    private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
+
+   
 
 }

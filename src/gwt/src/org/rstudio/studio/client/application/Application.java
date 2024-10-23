@@ -449,6 +449,7 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onUnauthorized(UnauthorizedEvent event)
    {
+      server_.setUnauthorized();
       globalDisplay_.showMessage(
          GlobalDisplay.MSG_ERROR,
             "Re-authentication required",
