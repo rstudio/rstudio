@@ -119,6 +119,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    Presentation2ServerOperations
 {   
    void initializeForMainWorkbench();
+   void setUnauthorized();
    void disconnect();
    
    void setWorkbenchMetrics(WorkbenchMetrics clientMetrics,
