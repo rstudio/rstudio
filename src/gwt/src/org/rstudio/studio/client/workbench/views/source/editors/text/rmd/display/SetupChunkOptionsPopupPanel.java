@@ -16,10 +16,10 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.displa
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
@@ -34,10 +34,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue.OptionLocation;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 {
@@ -47,9 +46,9 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       server_ = server;
    }
    
-   public SetupChunkOptionsPopupPanel(boolean isVisualEditor)
+   public SetupChunkOptionsPopupPanel(OptionLocation optionsLocation, boolean isVisualEditor)
    {
-      super(false, isVisualEditor);
+      super(false, optionsLocation, isVisualEditor);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       figureDimensionsPanel_.setVisible(false);
@@ -90,7 +89,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    private void addParam(Map<String, String> options, String name)
    {
       if (has(name))
-         options.put(name, get(name));
+         options.put(name, get(name).getOptionValue());
    }
    
    private void addCheckboxParam(Map<String, String> options,
@@ -216,7 +215,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
    
    @Override
-   protected void initOptions(final Command afterInit)
+   protected void initOptions(final CommandWithArg<Boolean> afterInit)
    {
       String chunkText = getChunkText();
       server_.extractChunkOptions(
@@ -234,8 +233,8 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
                {
                   JsArrayString keys = object.keys();
                   for (String key : JsUtil.asIterable(keys))
-                     chunkOptions_.put(key, object.getAsString(key));
-                  afterInit.execute();
+                     chunkOptions_.put(key, new ChunkOptionValue(object.getAsString(key), OptionLocation.FirstLine));
+                  afterInit.execute(true);
                }
             });
    }
@@ -252,11 +251,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       }
       
       syncSelection();
-      Map<String, String> options = new LinkedHashMap<>();
-      
-      Set<String> keys = chunkOptions_.keySet();
-      for (String key : keys)
-         options.put(key, chunkOptions_.get(key));
+      Map<String, String> options = unsortedOptions(chunkOptions_, OptionLocation.FirstLine);
       
       addParam(options, "echo");
       addParam(options, "eval");
@@ -303,7 +298,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    protected void revert()
    {
    }
-   
+
    private CodeToolsServerOperations server_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
