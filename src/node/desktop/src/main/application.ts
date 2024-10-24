@@ -307,16 +307,16 @@ export class Application implements AppState {
     // provide logging capabiity to renderer and preload
     this.loggerCallback = new LoggerCallback();
 
-    // prevent app from terminating when last window closes during startup; this can cause
-    // app to exit after Choose R dialog closes but before the license dialog shows
+    // Prevent app from terminating when last window closes during startup; this can cause
+    // app to exit after Choose R dialog closes but before the license dialog shows. Also
+    // happens after the Manage License dialog (w/o Choose R being involved) if there is no
+    // splash screen to keep the app alive.
     // https://github.com/rstudio/rstudio-pro/issues/6062
 
     const windowAllClosedHandler = () => {
       // intentionally empty
     };
-    if (process.platform === 'win32') {
-      app.on('window-all-closed', windowAllClosedHandler);
-    }
+    app.on('window-all-closed', windowAllClosedHandler);
 
     // on Windows, ask the user what version of R they'd like to use
     let rPath;
@@ -385,7 +385,7 @@ export class Application implements AppState {
       confPath,
       new FilePath(),
       this.appLaunch,
-      process.platform === 'win32' ? windowAllClosedHandler : null,
+      windowAllClosedHandler,
     );
     this.sessionLauncher.launchFirstSession(installPath, !app.isPackaged);
 
