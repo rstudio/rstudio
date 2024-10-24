@@ -393,6 +393,7 @@ public class RemoteServer implements Server
       authWatcher_.stop();
       for (PendingRpcRequest request : pendingRequests_)
       {
+         pendingRequests_.remove(request);
          sendRequest(
             request.scope,
             request.request,
