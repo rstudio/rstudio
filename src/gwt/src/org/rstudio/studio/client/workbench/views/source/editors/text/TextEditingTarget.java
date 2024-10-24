@@ -3461,7 +3461,7 @@ public class TextEditingTarget implements
             }
             else
             {
-               Pattern pattern = Pattern.create("[ \t]+($|\n)");
+               Pattern pattern = Pattern.create("[ \t]+$", "gm");
                strippedCode = pattern.replaceAll(code, "$1");
             }
             
