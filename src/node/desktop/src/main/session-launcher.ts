@@ -146,6 +146,7 @@ export class SessionLauncher {
   private nextSessionUrl?: string;
   private splash: BrowserWindow | undefined;
   private showSplash = process.env.NODE_ENV !== 'TEST';
+  private splashDelay: number;
 
   constructor(
     private sessionPath: FilePath,
@@ -154,7 +155,7 @@ export class SessionLauncher {
     private appLaunch: ApplicationLaunch,
     private windowAllClosedHandler: (() => void) | null,
   ) {
-    const splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 150;
+    this.splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 150;
     if (process.env.RS_NO_SPLASH) {
       this.showSplash = false;
     }
@@ -162,20 +163,6 @@ export class SessionLauncher {
     // don't show splash screen if started using --run-diagnostics
     if (appState().runDiagnostics) {
       this.showSplash = false;
-    }
-
-    // must check showSplash before and after the timeout
-    // before to determine if the timeout is required
-    // after to determine if the main window is ready to show
-    if (splashDelay > 0 && this.showSplash) {
-      setTimeoutPromise(splashDelay)
-        .then(() => {
-          if (this.showSplash) {
-            this.splash = createSplashScreen();
-            this.splash.show();
-          }
-        })
-        .catch((err) => logger().logError(err));
     }
   }
 
@@ -513,6 +500,21 @@ export class SessionLauncher {
   }
 
   private onLaunchFirstSession(): void {
+
+    // must check showSplash before and after the timeout
+    // before to determine if the timeout is required
+    // after to determine if the main window is ready to show
+    if (this.splashDelay > 0 && this.showSplash) {
+      setTimeoutPromise(this.splashDelay)
+        .then(() => {
+          if (this.showSplash) {
+            this.splash = createSplashScreen();
+            this.splash.show();
+          }
+        })
+        .catch((err) => logger().logError(err));
+    }
+
     const error = this.launchFirst();
     if (error) {
       logger().logError(error);

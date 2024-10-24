@@ -76,6 +76,7 @@
 - Fixed an issue where some output from `uv` could be rendered blurry in the RStudio Console (#15282)
 - Fixed an issue where the IDE could hang when changing the file type of an R Markdown document (#15313)
 - Fixed the chunk options popup to work in Visual Mode for non-R chunks (#15312)
+- Fixed an issue with the splash screen appearing on top of the Desktop Pro Manage License dialog (rstudio-pro#6962)
 
 
 #### Posit Workbench
