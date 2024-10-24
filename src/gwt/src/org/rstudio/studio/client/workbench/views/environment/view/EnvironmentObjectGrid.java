@@ -207,7 +207,10 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   @Override
                   public String getValue(RObjectEntry object)
                   {
-                     return StringUtil.formatFileSize(object.rObject.getSize());
+                     int size = object.rObject.getSize();
+                     if (size < 0)
+                        return "<NA>";
+                     return StringUtil.formatFileSize(size);
                   }
               });
       columns_.add(new ObjectGridColumn(

@@ -1617,7 +1617,7 @@ def _rstudio_html_generator_():
    
    # get object size
    sys <- reticulate::import("sys")
-   size <- sys$getsizeof(object)
+   size <- tryCatch(sys$getsizeof(object), error = function(cnd) -1)
    
    # get object length (note: not all objects in Python have a length)
    length <- .rs.reticulate.describeObjectLength(object)
