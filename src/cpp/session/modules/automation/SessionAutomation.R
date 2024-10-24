@@ -438,9 +438,14 @@
       processx::process$new(appPath, args)
    })
    
-   # Wait until the process is running.
-   while (process$get_status() != "running")
+   while (TRUE)
    {
+      # Wait until the process is running.
+      status <- process$get_status()
+      if (status %in% c("running", "sleeping"))
+         break
+      
+      # Check for an unexpected exit.  
       status <- process$get_exit_status()
       if (!is.null(status))
       {
@@ -507,9 +512,9 @@
    .rs.automation.attachToSession(client, mode)
    
    # Wait until the Console is available.
-   document <- client$DOM.getDocument(depth = 0L)
    .rs.waitUntil("Console input available", function()
    {
+      document <- client$DOM.getDocument(depth = 0L)
       consoleNode <- client$DOM.querySelector(document$root$nodeId, "#rstudio_console_input")
       consoleNode$nodeId != 0L
    })
@@ -581,7 +586,10 @@
    }
    
    # Find a page.
-   currentTarget <- Find(function(target) target$type == "page", targets$targetInfos)
+   currentTarget <- Find(function(target) {
+      target$type == "page" && target$title == "RStudio Server"
+   }, targets$targetInfos)
+   
    if (is.null(currentTarget))
       return(NULL)
    

@@ -3437,7 +3437,6 @@ public class TextEditingTarget implements
 
          if (stripTrailingWhitespace)
          {
-            Pattern pattern = Pattern.create("[ \t]+$", "");
             String code = docDisplay_.getCode();
             String strippedCode = "";
             
@@ -3445,6 +3444,7 @@ public class TextEditingTarget implements
             // mutating lines containing the cursor.
             if (isAutoSaving())
             {
+               Pattern pattern = Pattern.create("[ \t]+$", "");
                int startRow = docDisplay_.getSelectionStart().getRow();
                int endRow = docDisplay_.getSelectionEnd().getRow();
                
@@ -3461,6 +3461,7 @@ public class TextEditingTarget implements
             }
             else
             {
+               Pattern pattern = Pattern.create("[ \t]+$", "gm");
                strippedCode = pattern.replaceAll(code, "");
             }
             
