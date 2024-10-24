@@ -15,8 +15,8 @@
     <defs>
       <style>
         .cls-1 {
-          font-family: OpenSans-Medium, 'Open Sans';
-          font-size: 18.7px;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 18px;
           font-weight: 500;
         }
 
@@ -34,8 +34,8 @@
         }
 
         .cls-5 {
-          font-family: OpenSans-Regular, 'Open Sans';
-          font-size: 20px;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 19px;
           font-variation-settings: 'wght' 400, 'wdth' 100;
         }
 
