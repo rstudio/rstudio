@@ -2465,6 +2465,10 @@ Error getChildProcesses(
       int result = proc_pidinfo(pids[i], PROC_PIDT_SHORTBSDINFO, 0, &procInfo, sizeof(procInfo));
       if (result == -1)
          continue;
+      if (result != sizeof(procInfo)) {
+         // Something went wrong, skip this process (proc_pidinfo should return the size of the struct; anything else is an error)
+         continue;
+      }
       
       ProcessInfo info;
       info.pid = procInfo.pbsi_pid;
