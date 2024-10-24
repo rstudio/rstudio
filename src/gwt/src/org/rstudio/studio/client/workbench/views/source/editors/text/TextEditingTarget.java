@@ -3462,7 +3462,7 @@ public class TextEditingTarget implements
             else
             {
                Pattern pattern = Pattern.create("[ \t]+$", "gm");
-               strippedCode = pattern.replaceAll(code, "$1");
+               strippedCode = pattern.replaceAll(code, "");
             }
             
             if (!strippedCode.equals(code))
