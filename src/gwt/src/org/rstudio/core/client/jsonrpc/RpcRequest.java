@@ -171,6 +171,8 @@ public class RpcRequest
                           getMethod());
 
                   int type = RpcError.TRANSMISSION_ERROR;
+                  if (status == 401)
+                     type = RpcError.UNAUTHORIZED;
                   
                   // override error message for status code 0
                   if (status == 0)
