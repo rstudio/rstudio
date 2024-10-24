@@ -631,6 +631,7 @@ Error getOpenFds(std::vector<uint32_t>* pFds)
 }
 
 #ifndef __APPLE__
+
 Error getOpenFds(pid_t pid, std::vector<uint32_t>* pFds)
 {
    std::string pidStr = safe_convert::numberToString(pid);
@@ -664,11 +665,12 @@ Error getOpenFds(pid_t pid, std::vector<uint32_t>* pFds)
 }
 
 #else
+
 Error getOpenFds(pid_t pid, std::vector<uint32_t> *pFds)
 {
    // get size of the buffer needed to hold the list of fds
-   int bufferSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, 0, 0);
-   if (bufferSize == -1)
+   int bufferSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+   if (bufferSize <= 0)
       return systemError(errno, ERROR_LOCATION);
 
    // get the list of open fds
@@ -677,8 +679,10 @@ Error getOpenFds(pid_t pid, std::vector<uint32_t> *pFds)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
    int filledSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, procFdInfo, bufferSize);
+   if (filledSize <= 0)
+      return systemError(errno, ERROR_LOCATION);
+   
    int numFds = filledSize / PROC_PIDLISTFD_SIZE;
-
    for (int i = 0; i < numFds; ++i)
    {
       pFds->push_back(procFdInfo[i].proc_fd);
@@ -687,6 +691,7 @@ Error getOpenFds(pid_t pid, std::vector<uint32_t> *pFds)
    free(procFdInfo);
    return Success();
 }
+
 #endif
 
 Error closeAllFileDescriptors()
@@ -1280,7 +1285,7 @@ FilePath currentWorkingDirMac(PidType pid)
 {
    struct proc_vnodepathinfo info;
 
-   int size = ::proc_pidinfo(
+   int size = proc_pidinfo(
             pid, PROC_PIDVNODEPATHINFO, 0,
             &info, PROC_PIDVNODEPATHINFO_SIZE);
 
@@ -2462,13 +2467,9 @@ Error getChildProcesses(
    {
       // Get process info for each child
       struct proc_bsdshortinfo procInfo;
-      int result = proc_pidinfo(pids[i], PROC_PIDT_SHORTBSDINFO, 0, &procInfo, sizeof(procInfo));
-      if (result == -1)
+      int result = proc_pidinfo(pids[i], PROC_PIDT_SHORTBSDINFO, 0, &procInfo, PROC_PIDT_SHORTBSDINFO_SIZE);
+      if (result != PROC_PIDT_SHORTBSDINFO_SIZE)
          continue;
-      if (result != sizeof(procInfo)) {
-         // Something went wrong, skip this process (proc_pidinfo should return the size of the struct; anything else is an error)
-         continue;
-      }
       
       ProcessInfo info;
       info.pid = procInfo.pbsi_pid;
