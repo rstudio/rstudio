@@ -4308,4 +4308,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="showSplashScreen"
         label="Show Splash Screen" />
          
+   <cmd id="copyRStudioVersion"
+        label="Copy RStudio Version" />
 </commands>

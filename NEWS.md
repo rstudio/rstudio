@@ -24,6 +24,7 @@
 - RStudio now supports the display of an HTML table of contents for R help files when `options(help.htmltoc = TRUE)` is set (#14523)
 - RStudio now includes `.env` files in the fuzzy finder, and also displays these files in the Files pane
 - Quarto documents now have a gear icon for editing cell (chunk) options (#11745)
+- Added "Copy RStudio Version" command to command palette for copying RStudio version, commit, and build date to the clipboard
 
 #### Posit Workbench
 
