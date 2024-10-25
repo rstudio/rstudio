@@ -46,6 +46,7 @@ import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
 import org.rstudio.studio.client.application.events.InvalidSessionEvent;
 import org.rstudio.studio.client.application.events.ServerOfflineEvent;
 import org.rstudio.studio.client.application.events.SessionRelaunchEvent;
+import org.rstudio.studio.client.application.events.AuthorizedEvent;
 import org.rstudio.studio.client.application.events.UnauthorizedEvent;
 import org.rstudio.studio.client.application.model.ActiveSession;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
@@ -283,13 +284,17 @@ public class RemoteServer implements Server
                   if (result)
                   {
                      setAuthorized();
+
+                     AuthorizedEvent event = new AuthorizedEvent();
+                     eventBus_.fireEvent(event);
                   }
                };
 
                @Override
                public void onError(ServerError error)
                {
-                  // TODO: maybe re-fire unauthorized event?
+                  UnauthorizedEvent event = new UnauthorizedEvent();
+                  eventBus_.fireEvent(event);
                };
             });
       }});
