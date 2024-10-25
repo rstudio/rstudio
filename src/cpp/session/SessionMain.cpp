@@ -121,6 +121,7 @@
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientInit.hpp"
 #include "SessionConsoleInput.hpp"
+#include "SessionCRANOverlay.hpp"
 #include "SessionDirs.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionInit.hpp"
@@ -2470,16 +2471,16 @@ int main(int argc, char * const argv[])
       }
       else if (val && layerName == kUserPrefsDefaultLayer)
       {
-         // If we found defaults in the prefs schema, use them.
-         rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
+         // If we found defaults in the prefs schema, let the overlay determine
+         // if further processing of the default URL is needed
+         rOptions.rCRANUrl = overlay::mapCRANMirrorUrl(prefs::userPrefs().getCRANMirror().url);
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
          source = "preference defaults";
       }
       else
       {
-         // Hard-coded repo of last resort so we don't wind up without a repo setting (users will
-         // not be able to install packages without one)
-         rOptions.rCRANUrl = "https://cran.rstudio.com/";
+         // If all else fails, use the default
+         rOptions.rCRANUrl = overlay::getDefaultCRANMirror();
          source = "hard-coded default";
       }
 

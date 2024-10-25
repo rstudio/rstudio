@@ -131,6 +131,7 @@ set(SESSION_SOURCE_FILES
    SessionConsoleProcessSocketPacket.cpp
    SessionConsoleProcessTable.cpp
    SessionContentUrls.cpp
+   SessionCRANOverlay.cpp
    SessionDirs.cpp
    SessionRpc.cpp
    SessionHttpMethods.cpp
