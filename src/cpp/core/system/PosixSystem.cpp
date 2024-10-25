@@ -669,7 +669,7 @@ Error getOpenFds(pid_t pid, std::vector<uint32_t>* pFds)
 Error getOpenFds(pid_t pid, std::vector<uint32_t> *pFds)
 {
    // get size of the buffer needed to hold the list of fds
-   int bufferSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+   int bufferSize = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, nullptr, 0);
    if (bufferSize <= 0)
       return systemError(errno, ERROR_LOCATION);
 
