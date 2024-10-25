@@ -19,12 +19,12 @@ public class LoggedOutDialog extends ModalDialogBase {
 
    private static final LoggedOutDialog INSTANCE = new LoggedOutDialog();
 
-   public static void setUnauthenticated() {
-      INSTANCE.doSetUnauthenticated();
+   public static void setUnauthorized() {
+      INSTANCE.doSetUnauthorized();
    }
 
-   public static void setAuthenticated() {
-      INSTANCE.doSetAuthenticated();
+   public static void setAuthorized() {
+      INSTANCE.doSetAuthorized();
    }
 
    protected LoggedOutDialog() {
@@ -67,14 +67,14 @@ public class LoggedOutDialog extends ModalDialogBase {
       return loginButton;
    }
 
-   private void doSetUnauthenticated() {
+   private void doSetUnauthorized() {
       if (!visible_) {
          visible_ = true;
          showModal();
       }
    }
 
-   private void doSetAuthenticated() {
+   private void doSetAuthorized() {
       if (visible_) {
          visible_ = false;
          hide();

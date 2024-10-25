@@ -477,14 +477,14 @@ public class Application implements ApplicationEventHandlers
    public void onAuthorized(AuthorizedEvent event)
    {
       server_.setAuthorized();
-      LoggedOutDialog.setAuthenticated();
+      LoggedOutDialog.setAuthorized();
    }
 
    @Override
    public void onUnauthorized(UnauthorizedEvent event)
    {
       server_.setUnauthorized();
-      LoggedOutDialog.setUnauthenticated();
+      LoggedOutDialog.setUnauthorized();
    }
 
    @Override
