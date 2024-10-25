@@ -433,6 +433,25 @@ public class Application implements ApplicationEventHandlers
    }
 
    @Handler
+   void onCopyRStudioVersion()
+   {
+      server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
+      {
+         @Override
+         public void onResponseReceived(ProductInfo info)
+         {
+            String truncatedCommit = info.commit.length() > 8 ? info.commit.substring(0, 8) : info.commit;
+            Clipboard.setText(info.version + " (" + truncatedCommit + ", " + info.date + ")");
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+
+   @Handler
    void onShowLicenseDialog()
    {
       if (pEdition_.get() != null)

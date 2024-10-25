@@ -528,6 +528,7 @@ public abstract class
    public abstract AppCommand layoutZoomHelp();
    public abstract AppCommand showAboutDialog();
    public abstract AppCommand showSplashScreen();
+   public abstract AppCommand copyRStudioVersion();
    public abstract AppCommand showLicenseDialog();
    public abstract AppCommand checkForUpdates();
    public abstract AppCommand helpUsingRStudio();

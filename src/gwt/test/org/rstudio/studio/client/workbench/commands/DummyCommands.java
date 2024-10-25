@@ -3220,4 +3220,9 @@ public class DummyCommands extends Commands {
     public AppCommand showSplashScreen() {
         return null;
     }
+
+    @Override
+    public AppCommand copyRStudioVersion() {
+        return null;
+    }
 }
