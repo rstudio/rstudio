@@ -477,18 +477,14 @@ public class Application implements ApplicationEventHandlers
    public void onAuthorized(AuthorizedEvent event)
    {
       server_.setAuthorized();
+      LoggedOutDialog.setAuthenticated();
    }
 
    @Override
    public void onUnauthorized(UnauthorizedEvent event)
    {
       server_.setUnauthorized();
-      globalDisplay_.showMessage(
-         GlobalDisplay.MSG_ERROR,
-            "Re-authentication required",
-            "You have been logged out. Click the link below to login in another tab.",
-            "Posit Workbench Login",
-            absoluteUrl("auth-sign-in", false));
+      LoggedOutDialog.setUnauthenticated();
    }
 
    @Override
