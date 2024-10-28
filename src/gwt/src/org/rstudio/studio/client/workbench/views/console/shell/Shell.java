@@ -610,10 +610,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    
    private void flush(boolean resetPosition)
    {
+      // extract all buffered code
       String code = StringUtil.join(buffer_, "\n");
       buffer_.clear();
-      historyManager_.addToHistory(code);
       
+      // add to history, and reset history position if requested
+      historyManager_.addToHistory(code);
       if (resetPosition)
          historyManager_.resetPosition();
    }
