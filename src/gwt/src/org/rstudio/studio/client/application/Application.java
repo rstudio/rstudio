@@ -92,7 +92,6 @@ import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FormElement;
@@ -596,27 +595,16 @@ public class Application implements ApplicationEventHandlers
    @Handler
    public void onShowRequestLog()
    {
-      GWT.runAsync(new RunAsyncCallback()
+      final RequestLogVisualization viz = new RequestLogVisualization();
+      final RootLayoutPanel root = RootLayoutPanel.get();
+      root.add(viz);
+      root.setWidgetTopBottom(viz, 10, Unit.PX, 10, Unit.PX);
+      root.setWidgetLeftRight(viz, 10, Unit.PX, 10, Unit.PX);
+      viz.addCloseHandler(new CloseHandler<RequestLogVisualization>()
       {
-         public void onFailure(Throwable reason)
+         public void onClose(CloseEvent<RequestLogVisualization> event)
          {
-            Window.alert(reason.toString());
-         }
-
-         public void onSuccess()
-         {
-            final RequestLogVisualization viz = new RequestLogVisualization();
-            final RootLayoutPanel root = RootLayoutPanel.get();
-            root.add(viz);
-            root.setWidgetTopBottom(viz, 10, Unit.PX, 10, Unit.PX);
-            root.setWidgetLeftRight(viz, 10, Unit.PX, 10, Unit.PX);
-            viz.addCloseHandler(new CloseHandler<RequestLogVisualization>()
-            {
-               public void onClose(CloseEvent<RequestLogVisualization> event)
-               {
-                  root.remove(viz);
-               }
-            });
+            root.remove(viz);
          }
       });
    }
