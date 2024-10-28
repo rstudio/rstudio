@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.console.shell;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
@@ -38,6 +39,8 @@ import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
+import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
+import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -106,6 +109,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                               ConsoleResetHistoryEvent.Handler,
                               ConsoleRestartRCompletedEvent.Handler,
                               ConsoleExecutePendingInputEvent.Handler,
+                              ChunkExecStateChangedEvent.Handler,
                               SendToConsoleEvent.Handler,
                               DebugModeChangedEvent.Handler,
                               RunCommandWithDebugEvent.Handler,
@@ -196,6 +200,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       eventBus.addHandler(ConsoleResetHistoryEvent.TYPE, this);
       eventBus.addHandler(ConsoleRestartRCompletedEvent.TYPE, this);
       eventBus.addHandler(ConsoleExecutePendingInputEvent.TYPE, this);
+      eventBus.addHandler(ChunkExecStateChangedEvent.TYPE, this);
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
       eventBus.addHandler(DebugModeChangedEvent.TYPE, this);
       eventBus.addHandler(RunCommandWithDebugEvent.TYPE, this);
@@ -591,9 +596,51 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    public void onConsoleHistoryAdded(ConsoleHistoryAddedEvent event)
    {
       if (isBrowsePrompt())
+      {
          browseHistoryManager_.addToHistory(event.getCode());
-      else
-         historyManager_.addToHistory(event.getCode());
+         return;
+      }
+      
+      buffer_.add(event.getCode());
+      if (bufferingInput_)
+         return;
+      
+      flush(false);
+   }
+   
+   private void flush(boolean resetPosition)
+   {
+      // extract all buffered code
+      String code = StringUtil.join(buffer_, "\n");
+      buffer_.clear();
+      
+      // add to history, and reset history position if requested
+      historyManager_.addToHistory(code);
+      if (resetPosition)
+         historyManager_.resetPosition();
+   }
+   
+   @Override
+   public void onChunkExecStateChanged(ChunkExecStateChangedEvent event)
+   {
+      switch (event.getExecState())
+      {
+      
+      case NotebookDocQueue.CHUNK_EXEC_STARTED:
+      {
+         bufferingInput_ = true;
+         break;
+      }
+      
+      case NotebookDocQueue.CHUNK_EXEC_FINISHED:
+      case NotebookDocQueue.CHUNK_EXEC_CANCELLED:
+      {
+         bufferingInput_ = false;
+         flush(true);
+         break;
+      }
+      
+      }
    }
 
    private final class InputKeyHandler implements KeyDownHandler,
@@ -908,6 +955,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private static final String GROUP_CONSOLE = "console";
    private static final String STATE_INPUT = "input";
 
+   private List<String> buffer_ = new ArrayList<String>();
+   private boolean bufferingInput_ = false;
    private boolean restoreFocus_ = true;
    private boolean debugging_ = false;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
