@@ -99,4 +99,4 @@ If running Workbench behind a proxy server, you may need to update your `NO_PROX
 
 ### Deprecated / Removed
 - Removed user preference for turning off focus indicator rectangles (#14352)
-
+- Removed support for `rsconnect-jupyter`; publish Jupyter Notebooks to Connect using `rsconnect-python`. (rstudio-pro#6989)
