@@ -59,6 +59,11 @@ public class RSConnectPublishSettings
       return ignoredFiles_;
    }
    
+   public List<String> getEnvVars()
+   {
+      return envVars_;
+   }
+   
    public boolean getAsMultiple()
    {
       return asMultiple_;
