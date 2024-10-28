@@ -6,7 +6,6 @@
 - RStudio now supports new features from the R graphics engine (groups, glyphs) when supported by the underlying device (#14613)
 - The .Rproj.user folder location can now be customized globally both by users and administrators (#15098)
 - RStudio now supports code formatting using the 'styler' R package, as well via other external applications (#2563)
-- Use native file and message dialogs by default on Linux desktop (#14683; Linux Desktop)
 - Added www-socket option to rserver.conf to enable server to listen on a Unix domain socket (#14938; Open-Source Server)
 - RStudio now supports syntax highlighting for Fortran source files (#10403)
 - Display label "Publish" next to the publish icon on editor toolbar (#13604)
