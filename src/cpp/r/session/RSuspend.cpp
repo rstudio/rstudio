@@ -74,8 +74,8 @@ bool saveSessionState(const RSuspendOptions& options,
       return r::session::state::saveMinimal(
                suspendedSessionPath,
                options.afterRestartCommand,
+               options.builtPackagePath,
                saveWorkspace);
-
    }
    else
    {

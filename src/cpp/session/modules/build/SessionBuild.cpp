@@ -680,7 +680,6 @@ private:
       // use a sub-directory for build if configured to do so
       if (prefs::userPrefs().useBuildSubdirectory())
       {
-         
          std::string buildLibraryPath;
          Error libError = r::exec::RFunction(".rs.makeBuildLibraryPath")
                .call(&buildLibraryPath);

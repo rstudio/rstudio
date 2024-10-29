@@ -147,7 +147,7 @@ private:
       {
          runImpl();
       }
-      catch (boost::thread_interrupted& e)
+      catch (boost::thread_interrupted& /* e */)
       {
       }
    }

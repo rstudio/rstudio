@@ -58,9 +58,9 @@ bool save(const core::FilePath& statePath,
 
 bool saveMinimal(const core::FilePath& statePath,
                  const std::string& afterRestartCommand,
+                 const std::string& builtPackagePath,
                  bool saveGlobalEnvironment);
    
-
 bool rProfileOnRestore(const core::FilePath& statePath);
 
 bool packratModeEnabled(const core::FilePath& statePath);

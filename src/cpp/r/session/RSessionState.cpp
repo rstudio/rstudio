@@ -698,8 +698,11 @@ bool save(const FilePath& statePath,
 
 bool saveMinimal(const core::FilePath& statePath,
                  const std::string& afterRestartCommand,
+                 const std::string& builtPackagePath,
                  bool saveGlobalEnvironment)
 {
+   Error error;
+
    // initialize context
    Settings settings;
    bool saved = true;
@@ -715,7 +718,12 @@ bool saveMinimal(const core::FilePath& statePath,
    saveDevMode(&settings);
    
    // save after restart command
-   Error error = saveAfterRestartCommand(statePath.completeChildPath(kAfterRestartCommand), afterRestartCommand);
+   error = saveAfterRestartCommand(statePath.completeChildPath(kAfterRestartCommand), afterRestartCommand);
+   if (error)
+      LOG_ERROR(error);
+
+   // save build library path
+   error = saveBuiltPackagePath(statePath.completePath(kBuiltPackagePath), builtPackagePath);
    if (error)
       LOG_ERROR(error);
 
