@@ -815,6 +815,7 @@ public class RSConnect implements SessionInitEvent.Handler,
          JsArrayString deployFiles,
          JsArrayString additionalFiles,
          JsArrayString ignoredFiles,
+         JsArrayString envVars,
          boolean isSelfContained,
          boolean isShiny,
          boolean asMultiple,
@@ -822,11 +823,12 @@ public class RSConnect implements SessionInitEvent.Handler,
          boolean isQuarto,
          boolean launch,
          JavaScriptObject record) /*-{
-      $wnd.opener.deployToRSConnect(sourceFile, deployDir, deployFile,
-                                    websiteDir, description, deployFiles,
-                                    additionalFiles, ignoredFiles, isSelfContained,
-                                    isShiny, asMultiple, asStatic, isQuarto, launch,
-                                    record);
+      $wnd.opener.deployToRSConnect(
+         sourceFile, deployDir, deployFile, websiteDir, description,
+         deployFiles, additionalFiles, ignoredFiles, envVars,
+         isSelfContained, isShiny, asMultiple, asStatic, isQuarto, launch,
+         record
+      );
    }-*/;
 
 
@@ -879,6 +881,8 @@ public class RSConnect implements SessionInitEvent.Handler,
                      result.getSettings().getAdditionalFiles()),
                JsArrayUtil.toJsArrayString(
                      result.getSettings().getIgnoredFiles()),
+               JsArrayUtil.toJsArrayString(
+                     result.getSettings().getEnvVars()),
                result.getSource().isSelfContained(),
                result.getSource().isShiny(),
                result.getSettings().getAsMultiple(),
