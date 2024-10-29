@@ -24,11 +24,13 @@
 - RStudio now includes `.env` files in the fuzzy finder, and also displays these files in the Files pane
 - Quarto documents now have a gear icon for editing cell (chunk) options (#11745)
 - Added "Copy RStudio Version" command to command palette for copying RStudio version, commit, and build date to the clipboard
+- RStudio User Guide and RStudio & Posit Workbench Release Notes now include versioned URLs in the Guides drop-down menu in the navigation bar(rstudio-pro#6151)
 - RStudio now provides executed chunk code as a single multi-line entry in the Console history (#3520)
 
 #### Posit Workbench
 
-- Posit Workbench Administration Guide & User Guide and Posit Workbench Licenses guide now includes release version in navigation bar reference URLs. (rstudio-pro#6826)
+- Posit Workbench Administration Guide, Posit Workbench User Guide, and Posit Workbench Licenses guide now include versioned URLs in the Guides drop-down menu in the navigation bar (rstudio-pro#6151)
+- Posit Workbench User Guide underwent a reorganization of how the individual IDE guides are presented. Each guide was migrated from the left-hand navigation to the upper (main) navigation bar. Now, when a guide is selected from the navigation bar, only that guide's contents display in the left-hand navigation. Additionally, the Posit Workbench guide was renamed to "Workbench Setup" in the navigation bar to prevent confusion between the title of the guide and to create more distinction between the home page of the guide and the Posit Workbench Overview. Lastly, the links for the four IDEs were updated to navigate to the corresponding guide within the Posit Workbench User Guide (instead of the IDE's external site) and are displayed as buttons (rstudio-pro#6069)
 - Restrict Positron and VS Code sessions for insecure (non-SSL) contexts. These editors do not work properly otherwise. (rstudio-pro#3741)
 - Added support for HTTP Proxy variables in rserver and rsession to enable managed credentials features in Workbench environments behind a proxy server. (rstudio-pro#5893)
 
@@ -79,9 +81,11 @@
 - Fixed the chunk options popup to work in Visual Mode for non-R chunks (#15312)
 - Fixed an issue with the splash screen appearing on top of the Desktop Pro Manage License dialog (rstudio-pro#6962)
 
-
 #### Posit Workbench
+
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
+- Fixed several cross-reference links in the Posit Workbench Administration Guide and Posit Workbench User Guide - VS Code sections (#rstudio-pro#6678)
+- Fixed heading anchor ID issue in Posit Administration Guide - VS Code PWB Code Server section (#rstudio-pro#6961)
 
 ### Upgrade Instructions
 
@@ -95,4 +99,4 @@ If running Workbench behind a proxy server, you may need to update your `NO_PROX
 
 ### Deprecated / Removed
 - Removed user preference for turning off focus indicator rectangles (#14352)
-
+- Removed support for `rsconnect-jupyter`; publish Jupyter Notebooks to Connect using `rsconnect-python`. See the [Publishing Jupyter Notebooks to Connect](https://docs.posit.co/ide/server-pro/integration/jupyter-multiple-python-versions.html#publishing-jupyter-notebooks-to-connect) section of the Posit Workbench Administration Guide for more information(rstudio-pro#6989)
