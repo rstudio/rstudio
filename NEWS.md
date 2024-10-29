@@ -80,6 +80,7 @@
 - Fixed an issue where the IDE could hang when changing the file type of an R Markdown document (#15313)
 - Fixed the chunk options popup to work in Visual Mode for non-R chunks (#15312)
 - Fixed an issue with the splash screen appearing on top of the Desktop Pro Manage License dialog (rstudio-pro#6962)
+- Fixed an issue where column names starting with numbers were not properly quoted when inserted as a completion (#13290)
 
 #### Posit Workbench
 
