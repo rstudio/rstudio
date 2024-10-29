@@ -224,3 +224,19 @@ test_that("dplyr piped variable names are properly quoted / unquoted", {
    expect_equal(completions, c("zzz A", "zzz B"))
    
 })
+
+# https://github.com/rstudio/rstudio/issues/13290
+test_that("column names are quoted appropriately", {
+   
+   remote$consoleExecuteExpr({
+      data <- list(apple = "apple", "2024" = "2024")
+   })
+   
+   remote$keyboardExecute("data$", "<Tab>")
+   Sys.sleep(1)
+   remote$keyboardExecute("<Down>", "<Enter>", "<Enter>")
+   
+   output <- remote$consoleOutput()
+   expect_equal(tail(output, n = 1L), "[1] \"2024\"")
+   
+})
