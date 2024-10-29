@@ -274,7 +274,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       initWidget(scrollPanel_);
       addDomHandler(secondaryInputHandler, ClickEvent.getType());
-      getElement().setAttribute("contenteditable", "true");
       
       addCopyHook(getElement());
       addPasteHook(getElement());
@@ -296,6 +295,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
    
       var self = this;
       
+      // when showing a context menu, make the content briefly editable so that
+      // paste is enabled as an option
+      el.addEventListener("contextmenu", function(event) {
+         el.setAttribute("contenteditable", "true");
+         setTimeout(function() { el.setAttribute("contenteditable", "false"); }, 0);
+      }, true);
+      
+      // implement a paste handler that routes pastes into the console input
       el.addEventListener("paste", function(event) {
          var text = event.clipboardData.getData("text/plain");
          self.@org.rstudio.studio.client.common.shell.ShellWidget::onPaste(*)(event, text);
