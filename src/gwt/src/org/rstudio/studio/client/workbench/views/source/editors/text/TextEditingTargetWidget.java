@@ -86,7 +86,9 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -136,6 +138,10 @@ public class TextEditingTargetWidget
       events_ = events;
       sourceOnSave_ = new CheckBox();
       srcOnSaveLabel_ = new CheckboxLabel(sourceOnSave_, constants_.sourceOnSave()).getLabel();
+      
+      isQuarto_ =
+            extendedType_ != null && 
+            extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT);
       
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
@@ -473,7 +479,19 @@ public class TextEditingTargetWidget
       insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkRCPP(), column_).createMenuItem());
       insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkSQL(), column_).createMenuItem());
       insertChunksMenu.addItem(mgr.getSourceCommand(commands_.insertChunkStan(), column_).createMenuItem());
-
+      
+      insertChunksMenu.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+            {
+               syncMenuLabels(insertChunksMenu.getElement(), isQuarto_);
+            }
+         }
+      });
+      
       insertChunkMenu_ = new ToolbarMenuButton(
                        "",
                        commands_.insertChunk().getTooltip(),
@@ -497,6 +515,7 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(goToNextButton_ = 
          mgr.getSourceCommand(commands_.goToNextSection(), column_).createUnsyncedToolbarButton());
       toolbar.addRightSeparator();
+      
       final String SOURCE_BUTTON_TITLE = constants_.sourceButtonTitle();
       sourceButton_ = new ToolbarButton(
             constants_.source(),
@@ -577,6 +596,19 @@ public class TextEditingTargetWidget
       chunksMenu.addSeparator();
       chunksMenu.addItem(
          mgr.getSourceCommand(commands_.executeAllCode(), column_).createMenuItem());
+      
+      chunksMenu.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+            {
+               syncMenuLabels(chunksMenu.getElement(), isQuarto_);
+            }
+         }
+      });
+      
       chunksButton_ = new ToolbarMenuButton(
                        constants_.run(),
                        ToolbarButton.NoTitle,
@@ -863,6 +895,7 @@ public class TextEditingTargetWidget
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
       boolean isQuarto = extendedType_ != null && 
             extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT);
+      isQuarto_ = isQuarto;
       boolean canSourceOnSave = fileType.canSourceOnSave() &&
             !userPrefs_.autoSaveEnabled();
       if (canSourceOnSave && fileType.isJS())
@@ -1024,6 +1057,7 @@ public class TextEditingTargetWidget
       syncWrapMode();
       syncRainbowParenMode();
       syncRainbowFencedDivs();
+      syncMenuLabels(toolbar_.getElement(), isQuarto_);
 
       toolbar_.invalidateSeparators();
    }
@@ -1324,6 +1358,7 @@ public class TextEditingTargetWidget
       syncWrapMode();
       syncRainbowParenMode();
       syncRainbowFencedDivs();
+      syncMenuLabels(toolbar_.getElement(), isQuarto_);
 
       Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
    }
@@ -2069,6 +2104,48 @@ public class TextEditingTargetWidget
       commands_.toggleRainbowFencedDivs().setChecked(rainbowMode);
    }
    
+   private static final native void syncMenuLabels(Element el, boolean isQuarto)
+   /*-{
+   
+      var Node = $wnd.Node;
+      
+      if (isQuarto) {
+         var pattern = /([Cc])hunk/g;
+         var replace = "$1ell";
+      } else {
+         var pattern = /([Cc])ell/g;
+         var replace = "$1hunk";
+      }
+         
+      var update = function(node) {
+         
+         if (node.nodeType === Node.ELEMENT_NODE) {
+            
+            if (node.title != null && node.title != "") {
+               node.title = node.title.replaceAll(pattern, replace);
+            }
+            
+            if (node.ariaLabel != null && node.ariaLabel != "") {
+               node.ariaLabel = node.ariaLabel.replaceAll(pattern, replace);
+            }
+            
+         } else if (node.nodeType === Node.TEXT_NODE) {
+            node.data = node.data.replaceAll(pattern, replace);
+         }
+            
+      };
+      
+      var recurse = function(el) {
+         for (var i = 0, n = el.childNodes.length; i < n; i++) {
+            update(el.childNodes[i]);
+            recurse(el.childNodes[i]);
+         }
+      };
+      
+      recurse(el);
+      
+   }-*/;
+   
    private void onUserSwitchingToVisualMode()
    {
       target_.onUserSwitchingToVisualMode();
@@ -2141,6 +2218,8 @@ public class TextEditingTargetWidget
    private ToolbarButton notebookToolbarButton_;
    private Label srcOnSaveLabel_;
 
+   private boolean isQuarto_;
+   
    private String shinyAppState_ = ShinyApplicationParams.STATE_STOPPED;
    private String plumberAPIState_ = PlumberAPIParams.STATE_STOPPED;
    private String sourceCommandText_ = constants_.source();
