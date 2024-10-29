@@ -81,6 +81,7 @@
 - Fixed the chunk options popup to work in Visual Mode for non-R chunks (#15312)
 - Fixed an issue with the splash screen appearing on top of the Desktop Pro Manage License dialog (rstudio-pro#6962)
 - Fixed an issue where column names starting with numbers were not properly quoted when inserted as a completion (#13290)
+- Fixed an issue where right-clicking on the console history did not present Paste as an option (#14538)
 
 #### Posit Workbench
 

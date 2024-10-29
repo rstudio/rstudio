@@ -53,6 +53,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -272,8 +273,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       };
 
       initWidget(scrollPanel_);
-
+      addDomHandler(secondaryInputHandler, ClickEvent.getType());
+      getElement().setAttribute("contenteditable", "true");
+      
       addCopyHook(getElement());
+      addPasteHook(getElement());
    }
 
    private native void addCopyHook(Element element) /*-{
@@ -287,6 +291,26 @@ public class ShellWidget extends Composite implements ShellDisplay,
          element.addEventListener("cut", clean, true);
       }
    }-*/;
+   
+   private native final void addPasteHook(Element el) /*-{
+   
+      var self = this;
+      
+      el.addEventListener("paste", function(event) {
+         var text = event.clipboardData.getData("text/plain");
+         self.@org.rstudio.studio.client.common.shell.ShellWidget::onPaste(*)(event, text);
+      }, true);
+   
+   }-*/;
+   
+   private void onPaste(NativeEvent event, String text)
+   {
+      event.stopPropagation();
+      event.preventDefault();
+      
+      input_.focus();
+      input_.insertCode(text);
+   }
 
 
    public void scrollToBottom()
