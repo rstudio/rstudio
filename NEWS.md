@@ -25,6 +25,7 @@
 - Quarto documents now have a gear icon for editing cell (chunk) options (#11745)
 - Added "Copy RStudio Version" command to command palette for copying RStudio version, commit, and build date to the clipboard
 - RStudio now provides executed chunk code as a single multi-line entry in the Console history (#3520)
+- RStudio now refers to code blocks as "cells" instead of "chunks" for Quarto documents (#14596)
 
 #### Posit Workbench
 
