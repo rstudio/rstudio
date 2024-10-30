@@ -53,6 +53,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -272,8 +273,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
       };
 
       initWidget(scrollPanel_);
-
+      addDomHandler(secondaryInputHandler, ClickEvent.getType());
+      
       addCopyHook(getElement());
+      addPasteHook(getElement());
    }
 
    private native void addCopyHook(Element element) /*-{
@@ -287,6 +290,34 @@ public class ShellWidget extends Composite implements ShellDisplay,
          element.addEventListener("cut", clean, true);
       }
    }-*/;
+   
+   private native final void addPasteHook(Element el) /*-{
+   
+      var self = this;
+      
+      // when showing a context menu, make the content briefly editable so that
+      // paste is enabled as an option
+      el.addEventListener("contextmenu", function(event) {
+         el.setAttribute("contenteditable", "true");
+         setTimeout(function() { el.setAttribute("contenteditable", "false"); }, 0);
+      }, true);
+      
+      // implement a paste handler that routes pastes into the console input
+      el.addEventListener("paste", function(event) {
+         var text = event.clipboardData.getData("text/plain");
+         self.@org.rstudio.studio.client.common.shell.ShellWidget::onPaste(*)(event, text);
+      }, true);
+   
+   }-*/;
+   
+   private void onPaste(NativeEvent event, String text)
+   {
+      event.stopPropagation();
+      event.preventDefault();
+      
+      input_.focus();
+      input_.insertCode(text);
+   }
 
 
    public void scrollToBottom()
