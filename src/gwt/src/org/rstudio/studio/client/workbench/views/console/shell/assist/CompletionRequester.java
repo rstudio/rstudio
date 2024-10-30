@@ -286,7 +286,7 @@ public class CompletionRequester
 
    }
 
-   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:\\[\\(=]", "");
+   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:]", "");
    private boolean isTopLevelCompletionRequest()
    {
       String line = docDisplay_.getCurrentLineUpToCursor();
@@ -408,9 +408,7 @@ public class CompletionRequester
                }
             }
          
-            // Get snippet completions. Bail if this isn't a top-level
-            // completion -- TODO is to add some more context that allows us
-            // to properly ascertain this.
+            // Get snippet completions. Bail if this isn't a top-level completion
             if (isTopLevelCompletionRequest())
             {
                // disable snippets if Python REPL is active for now
@@ -420,7 +418,12 @@ public class CompletionRequester
 
                if (!noSnippets)
                {
-                  addSnippetCompletions(token, newComp);
+                  // de-emphasize snippet completions in function calls
+                  String line = docDisplay_.getCurrentLineUpToCursor();
+                  Pattern pattern = Pattern.create("[\\(\\[]", "");
+                  boolean back = pattern.test(line);
+                     
+                  addSnippetCompletions(token, back, newComp);
                }
             }
 
@@ -622,6 +625,7 @@ public class CompletionRequester
 
    private void addSnippetCompletions(
          String token,
+         boolean back,
          ArrayList<QualifiedName> completions)
    {
       if (StringUtil.isNullOrEmpty(token))
@@ -632,8 +636,19 @@ public class CompletionRequester
          ArrayList<String> snippets = snippets_.getAvailableSnippets();
          String tokenLower = token.toLowerCase();
          for (String snippet : snippets)
+         {
             if (snippet.toLowerCase().startsWith(tokenLower))
-               completions.add(0, QualifiedName.createSnippet(snippet));
+            {
+               if (back)
+               {
+                  completions.add(QualifiedName.createSnippet(snippet));
+               }
+               else
+               {
+                  completions.add(0, QualifiedName.createSnippet(snippet));
+               }
+            }
+         }
       }
    }
 
