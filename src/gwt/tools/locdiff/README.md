@@ -38,3 +38,9 @@ The file will load directly into Apple Numbers if you have that handy.
 
 ### Arguments
 --only-changed - writes only strings that have changed or been added
+
+### Other Checks
+
+Do a check of all the French property files to ensure there are no
+unescaped single quote characters. Search for the regex (?<!')'(?!')
+in all *._fr.properties files.
