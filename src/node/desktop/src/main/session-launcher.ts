@@ -155,7 +155,7 @@ export class SessionLauncher {
     private appLaunch: ApplicationLaunch,
     private windowAllClosedHandler: (() => void) | null,
   ) {
-    this.splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 150;
+    this.splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 100;
     if (process.env.RS_NO_SPLASH) {
       this.showSplash = false;
     }
@@ -244,7 +244,7 @@ export class SessionLauncher {
         // if the splash screen displayed, keep it visible for another brief period to
         // reduce cases where it flashes and hides without being readable
         if (this.splash) {
-          setTimeoutPromise(500)
+          setTimeoutPromise(1300)
             .then(() => {
               this.splash?.close();
             })
@@ -500,7 +500,6 @@ export class SessionLauncher {
   }
 
   private onLaunchFirstSession(): void {
-
     // must check showSplash before and after the timeout
     // before to determine if the timeout is required
     // after to determine if the main window is ready to show
