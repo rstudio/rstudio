@@ -27,6 +27,7 @@
 - RStudio User Guide and RStudio & Posit Workbench Release Notes now include versioned URLs in the Guides drop-down menu in the navigation bar(rstudio-pro#6151)
 - RStudio now provides executed chunk code as a single multi-line entry in the Console history (#3520)
 - RStudio now provides snippet completions within function calls and subset calls (#13441)
+- RStudio now supports zooming the IDE via Meta + NumpadAdd and Meta + NumpadSubtract (#12242)
 
 #### Posit Workbench
 
