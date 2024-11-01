@@ -235,13 +235,22 @@
 
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
   
+  # retrieve application associated with these parameters
   app <- tryCatch(
     rsconnect:::getAppById(id, account, server, hostUrl),
     error = identity
   )
   
-  if (inherits(app, "error"))
-    return(list(error = app))
+  # check for and return errors
+  if (inherits(app, "error")) {
+    message <- paste(conditionMessage(app), collapse = "\n")
+    return(list(app = NULL, error = .rs.scalar(message)))
+  }
+  
+  # if no such application is available, just return an empty list
+  if (length(app) == 0L) {
+    return(list(app = NULL, error = NULL))
+  }
   
   # infer the configuration URL for this application
   app$config_url <- if (rsconnect:::isConnectServer(server)) {
