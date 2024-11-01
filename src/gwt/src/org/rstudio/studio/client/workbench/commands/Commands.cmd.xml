@@ -741,6 +741,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       <shortcutgroup name="View">
          <shortcut refid="zoomIn" value="Meta+=" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
          <shortcut refid="zoomOut" value="Meta+-" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
+         <shortcut refid="zoomIn" value="Cmd+NumpadAdd"/>
+         <shortcut refid="zoomOut" value="Cmd+NumpadSubtract"/>
          <shortcut refid="zoomActualSize" value="Meta+0" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
       </shortcutgroup>
       <shortcutgroup name="Panes">

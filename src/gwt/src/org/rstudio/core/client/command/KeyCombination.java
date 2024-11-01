@@ -14,15 +14,15 @@
  */
 package org.rstudio.core.client.command;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.EventProperty;
+import org.rstudio.studio.client.application.Desktop;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
-import org.rstudio.studio.client.application.Desktop;
 
 public class KeyCombination
 {

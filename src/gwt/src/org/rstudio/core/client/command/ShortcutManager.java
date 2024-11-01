@@ -24,9 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;

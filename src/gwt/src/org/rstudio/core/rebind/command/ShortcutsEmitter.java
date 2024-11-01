@@ -313,8 +313,12 @@ public class ShortcutsEmitter
          return "220";
       if (val.equals("]"))
          return "221";
+      if (val.equals("NumpadAdd"))
+         return "107";
+      if (val.equals("NumpadSubtract"))
+         return "109";
 
-      logger_.log(Type.WARN, "Returning null from toKeyCode for key " + val);
+      logger_.log(Type.ERROR, "Returning null from toKeyCode for key '" + val + "'");
       return null;
    }
 
