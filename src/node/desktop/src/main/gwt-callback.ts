@@ -111,13 +111,21 @@ export class GwtCallback extends EventEmitter {
 
       const result = execSync(command, { encoding: 'utf-8' });
       return result.trim().split('\n');
+
     } else {
+      
       const result = findFontsSync({ monospace: monospace }).map((fd) => {
-        return process.platform === 'darwin' ? fd.postscriptName : fd.family;
+        if (process.platform === 'darwin') {
+          return monospace ? fd.postscriptName : fd.family;
+        } else {
+          return fd.family;
+        }
       });
+      
       const fontList = [...new Set<string>(result)];
       fontList.sort((lhs, rhs) => { return lhs.localeCompare(rhs); });
       return fontList;
+      
     }
   
   }
