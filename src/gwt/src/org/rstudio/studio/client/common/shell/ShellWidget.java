@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.rstudio.core.client.ConsoleOutputWriter;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -294,18 +295,29 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private native final void addPasteHook(Element el) /*-{
    
       var self = this;
+      var eventTarget = null;
       
       // when showing a context menu, make the content briefly editable so that
       // paste is enabled as an option
-      el.addEventListener("contextmenu", function(event) {
-         el.setAttribute("contenteditable", "true");
-         setTimeout(function() { el.setAttribute("contenteditable", "false"); }, 0);
+      //
+      // also keep track of the event target, the paste event which might
+      // follow may lose focus on the element that is handling the paste
+      //
+      // https://github.com/rstudio/rstudio/issues/14538
+      $doc.body.addEventListener("contextmenu", function(event) {
+         eventTarget = event.target;
+         if (el.contains(eventTarget)) {
+            el.setAttribute("contenteditable", "true");
+            setTimeout(function() { el.setAttribute("contenteditable", "false"); }, 0);
+         }
       }, true);
       
       // implement a paste handler that routes pastes into the console input
-      el.addEventListener("paste", function(event) {
-         var text = event.clipboardData.getData("text/plain");
-         self.@org.rstudio.studio.client.common.shell.ShellWidget::onPaste(*)(event, text);
+      $doc.body.addEventListener("paste", function(event) {
+         if (el.contains(eventTarget)) {
+            var text = event.clipboardData.getData("text/plain");
+            self.@org.rstudio.studio.client.common.shell.ShellWidget::onPaste(*)(event, text);
+         }
       }, true);
    
    }-*/;
