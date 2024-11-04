@@ -318,6 +318,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
             var text = event.clipboardData.getData("text/plain");
             self.@org.rstudio.studio.client.common.shell.ShellWidget::onPaste(*)(event, text);
          }
+         eventTarget = null;
       }, true);
    
    }-*/;
