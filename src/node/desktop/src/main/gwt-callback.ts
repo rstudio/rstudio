@@ -101,9 +101,16 @@ export class GwtCallback extends EventEmitter {
   getFonts(monospace: boolean) {
 
     if (this.hasFontConfig) {
-      const spacing = monospace ? 'mono' : 'proportional';
-      const result = execSync(`fc-list :spacing=${spacing} family`, { encoding: 'utf-8' });
-      return result.split('\n');
+      
+      let command: string = '';
+      if (monospace) {
+        command = 'fc-list :spacing=mono family | sort';
+      } else {
+        command = 'fc-list :lang=en family | grep -i sans | grep -iv mono | sort';
+      }
+
+      const result = execSync(command, { encoding: 'utf-8' });
+      return result.trim().split('\n');
     } else {
       const result = findFontsSync({ monospace: monospace }).map((fd) => {
         return process.platform === 'darwin' ? fd.postscriptName : fd.family;
