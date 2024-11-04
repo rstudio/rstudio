@@ -28,6 +28,7 @@
 - RStudio now provides executed chunk code as a single multi-line entry in the Console history (#3520)
 - RStudio now provides snippet completions within function calls and subset calls (#13441)
 - RStudio now supports zooming the IDE via Meta + NumpadAdd and Meta + NumpadSubtract (#12242)
+- RStudio now uses `lobstr::obj_size()` when computing object sizes for display in the Environment pane (#15369)
 
 #### Posit Workbench
 
