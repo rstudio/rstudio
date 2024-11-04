@@ -234,38 +234,44 @@
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
-   # NOTE: We previously used `rsconnect:::getAppById()`, but this API did not
-   # provide the requisite 'config_url' entry, which we display in UI for redeployments.
-   
-   # collect application list
-   apps <- tryCatch(
-      rsconnect::applications(account = account, server = server),
-      error = identity
-   )
-   
-   if (inherits(apps, "error")) {
-      message <- conditionMessage(apps)
-      return(list(error = .rs.scalar(message), app = NULL))
-   }
-
-   # drop __api__ suffix from hostUrl if necessary
-   hostUrl <- sub("/__api__$", "/", hostUrl)
-   
-   # keep only application records which:
-   # - start with the provided host URL;
-   # - have a matching id
-   # TODO: What should we do if we have nrow(apps) != 1?
-   apps <- apps[.rs.startsWith(apps$url, hostUrl) & apps$id == id, ]
-   app <- .rs.scalarListFromList(apps)
-   
-   # try and get environment variables for this deployment (if available)
-   app$envVars <- .rs.rsconnect.getApplicationEnvVars(
-     server  = server,
-     account = account,
-     guid    = apps$guid
-   )
-   
-   list(error = NULL, app = app)
+  
+  # retrieve application associated with these parameters
+  app <- tryCatch(
+    rsconnect:::getAppById(id, account, server, hostUrl),
+    error = identity
+  )
+  
+  # check for and return errors
+  if (inherits(app, "error")) {
+    message <- paste(conditionMessage(app), collapse = "\n")
+    return(list(app = NULL, error = .rs.scalar(message)))
+  }
+  
+  # if no such application is available, just return an empty list
+  if (length(app) == 0L) {
+    return(list(app = NULL, error = NULL))
+  }
+  
+  # infer the configuration URL for this application
+  app$config_url <- if (rsconnect:::isConnectServer(server)) {
+    prefix <- sub("/__api__", "", hostUrl)
+    paste(prefix, "connect/#/apps", app$id, sep = "/")
+  } else {
+    prefix <- "https://www.shinyapps.io/admin/#/applications"
+    paste(prefix, app$id, sep = "/")
+  }
+  
+  # try and get environment variables for this deployment (if available)
+  app$envVars <- .rs.rsconnect.getApplicationEnvVars(
+    server  = server,
+    account = account,
+    guid    = app$guid
+  )
+  
+  list(
+    app = .rs.scalarListFromList(app),
+    error = NULL
+  )
 
 })
 
