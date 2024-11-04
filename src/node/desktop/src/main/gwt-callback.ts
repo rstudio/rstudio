@@ -88,6 +88,8 @@ export class GwtCallback extends EventEmitter {
 
   initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
+
+  private hasFontConfig = false;
   private owners = new Set<GwtWindow>();
 
   // Info used by the "session failed to load" error page (error.html)
@@ -96,9 +98,35 @@ export class GwtCallback extends EventEmitter {
   monospaceFonts: string[] = [];
   proportionalFonts: string[] = [];
 
+  getFonts(monospace: boolean) {
+
+    if (this.hasFontConfig) {
+      const spacing = monospace ? 'mono' : 'proportional';
+      const result = execSync(`fc-list :spacing=${spacing} family`, { encoding: 'utf-8' });
+      return result.split('\n');
+    } else {
+      const result = findFontsSync({ monospace: monospace }).map((fd) => {
+        return process.platform === 'darwin' ? fd.postscriptName : fd.family;
+      });
+      const fontList = [...new Set<string>(result)];
+      fontList.sort((lhs, rhs) => { return lhs.localeCompare(rhs); });
+      return fontList;
+    }
+  
+  }
+
   constructor(public mainWindow: MainWindow) {
     super();
     this.owners.add(mainWindow);
+
+    if (process.platform === 'linux') {
+      try {
+        const result = execSync('/usr/bin/which fc-list');
+        this.hasFontConfig = true;
+      } catch (error) {
+        logger().logError(error);
+      }
+    }
 
     // https://github.com/foliojs/font-manager/issues/15
     // the fork did not correct usage of Fontconfig
@@ -106,16 +134,8 @@ export class GwtCallback extends EventEmitter {
     try {
       const queryFonts = getenv('RSTUDIO_QUERY_FONTS');
       if (queryFonts !== '0' && queryFonts.toLowerCase() !== 'false') {
-        this.monospaceFonts = [
-          ...new Set<string>(
-            findFontsSync({ monospace: true }).map((fd) => {
-              return process.platform === 'darwin' ? fd.postscriptName : fd.family;
-            }),
-          ),
-        ].sort((a, b) => a.localeCompare(b));
-        this.proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort(
-          (a, b) => a.localeCompare(b),
-        );
+        this.monospaceFonts = this.getFonts(true);
+        this.proportionalFonts = this.getFonts(false);
       }
     } catch (err: unknown) {
       logger().logError(safeError(err));
