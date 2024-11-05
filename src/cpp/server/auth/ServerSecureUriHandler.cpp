@@ -65,8 +65,11 @@ public:
          return;
       }
 
-      if (refreshAuthCookies_)
-         handler::refreshAuthCookies(userIdentifier, request, pResponse);
+      if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier, request, pResponse))
+      {
+         unauthorizedResponseFunction_(request, pResponse);
+         return;
+      }
 
       // convert to local username
       std::string username = handler::userIdentifierToLocalUsername(
@@ -201,8 +204,11 @@ private:
 
       pConnection->setUsername(username_);
 
-      if (refreshAuthCookies_)
-         handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response());
+      if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response()))
+      {
+            unauthorizedResponseFunction_(pConnection);
+            return false;
+      }
 
       return true;
    }

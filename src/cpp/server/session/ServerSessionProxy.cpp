@@ -1034,14 +1034,15 @@ void proxyRpcRequest(
    {
       auth::handler::UserSession::updateSessionLastActiveTime(username);
 
-      auth::handler::refreshAuthCookies(userIdentifier,
-                                        ptrConnection->request(),
-                                        &ptrConnection->response());
+      
 
-      if (ptrConnection->response().statusCode() == http::status::Unauthorized)
+      if (!auth::handler::refreshAuthCookies(userIdentifier,
+                                        ptrConnection->request(),
+                                        &ptrConnection->response()))
       {
          // if the user is not authorized, we should return a 401
          // and not continue with the request
+         ptrConnection->response().setError(http::status::Unauthorized, "Unauthorized - Maximum active session time exceeded");
          ptrConnection->writeResponse();
          return;
       }
