@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.rstudio.core.client.ConsoleOutputWriter;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -297,28 +296,36 @@ public class ShellWidget extends Composite implements ShellDisplay,
       var self = this;
       var eventTarget = null;
       
-      // when showing a context menu, make the content briefly editable so that
-      // paste is enabled as an option
-      //
-      // also keep track of the event target, the paste event which might
-      // follow may lose focus on the element that is handling the paste
-      //
-      // https://github.com/rstudio/rstudio/issues/14538
-      $doc.body.addEventListener("contextmenu", function(event) {
-         eventTarget = event.target;
-         if (el.contains(eventTarget)) {
-            el.setAttribute("contenteditable", "true");
-            setTimeout(function() { el.setAttribute("contenteditable", "false"); }, 0);
-         }
-      }, true);
-      
-      // implement a paste handler that routes pastes into the console input
       $doc.body.addEventListener("paste", function(event) {
-         if (el.contains(eventTarget)) {
+         
+         // check whether we lost focus, and the paste event is now just targeting the body element
+         // this seems to happen on Windows for whatever reason
+         // https://github.com/rstudio/rstudio/issues/14538#issuecomment-2452526631
+         if (eventTarget != null && event.target === $doc.body) {
             var text = event.clipboardData.getData("text/plain");
             self.@org.rstudio.studio.client.common.shell.ShellWidget::onPaste(*)(event, text);
          }
+         
+         // reset event target, so that this handler only ever tries to fire once
          eventTarget = null;
+         
+      }, true);
+      
+      $doc.body.addEventListener("contextmenu", function(event) {
+         
+         if (el.contains(event.target)) {
+            
+            // save the 'contextmenu' event target, in case 'paste' is fired with
+            // focus lost and sent to the 'body' element
+            eventTarget = event.target;
+         
+            // make this element briefly editable, so the generated
+            // context menu will include 'Paste' as an option
+            el.setAttribute("contenteditable", "true");
+            setTimeout(function() { el.setAttribute("contenteditable", "false"); }, 0);
+            
+         }
+         
       }, true);
    
    }-*/;

@@ -76,7 +76,7 @@ public class JavaScriptEventHistory
       
       // define our handler (we can just use a single one)
       var handler = $entry(function(event) {
-         self.@org.rstudio.studio.client.JavaScriptEventHistory::onEvent(Lcom/google/gwt/dom/client/NativeEvent;)(event);
+         self.@org.rstudio.studio.client.JavaScriptEventHistory::onEvent(*)(event);
       });
       
       // define the events that we want to listen to
