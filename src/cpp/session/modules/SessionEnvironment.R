@@ -711,7 +711,7 @@
 
       # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
       # an attempt is made to compute their metrics exactly; avoid computing the size for these
-      size <- if (computeSize) object.size(obj) else 0
+      size <- if (computeSize) .rs.objectSize(obj) else 0
       len <- length(obj)
    }
 
@@ -1009,4 +1009,12 @@
 
    # Assume that other kinds of objects can be restored.
    TRUE
+})
+
+.rs.addFunction("objectSize", function(x)
+{
+   if ("lobstr" %in% loadedNamespaces())
+      lobstr::obj_size(x)
+   else
+      utils::object.size(x)
 })

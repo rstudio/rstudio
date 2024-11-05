@@ -1198,7 +1198,7 @@
 
 .rs.addFunction("explorer.objectSize", function(object)
 {
-   format(object.size(object), units = "auto")
+   format(.rs.objectSize(object), units = "auto")
 })
 
 .rs.addFunction("explorer.isPythonObjectExpandable", function(object)
