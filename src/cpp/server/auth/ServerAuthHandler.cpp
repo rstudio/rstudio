@@ -1212,7 +1212,7 @@ void UserSession::insertSessionCookie(const std::string& userIdentifier, const s
    END_LOCK_MUTEX
 }
 
-void refreshAuthCookies(const std::string& userIdentifier,
+bool refreshAuthCookies(const std::string& userIdentifier,
                         const http::Request& request,
                         http::Response* pResponse)
 {
@@ -1225,7 +1225,8 @@ void refreshAuthCookies(const std::string& userIdentifier,
       boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
       if (now < pUserSession->lastCookieRefreshTime() + boost::posix_time::seconds(30))
       {
-         return;
+         // No action, but the auth cookies are still valid
+         return true;
       }
 
       // clear any existing auth cookies first - this method can be invoked multiple
@@ -1258,19 +1259,18 @@ void refreshAuthCookies(const std::string& userIdentifier,
          // want to send a 401 so it can handle the logout gracefully. In other
          // scenarios, a signInThenContinue is preferred.
          if (request.containsHeader("x-rs-csrf-token") && (request.contentType() == "application/json"))
-         {
-            // Should this say session expired or something else?
             common::clearSignInCookies(request, pResponse);
-            pResponse->setError(http::status::Unauthorized, "Unauthorized - Max active session time exceeded");
-            return;
-         }
-
-         signInThenContinue(request, pResponse);
-         return;
+         else
+            signInThenContinue(request, pResponse);
+            
+         return false;
       }
 
       s_handler.refreshAuthCookies(request, userIdentifier, persist, loginExpiry, pResponse);
    }
+
+   // Cookies are valid
+   return true;
 }
 
 void applyRemoteRevokedCookie(const std::string& cookieValue)
