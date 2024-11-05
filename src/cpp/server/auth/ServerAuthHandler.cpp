@@ -1261,7 +1261,7 @@ void refreshAuthCookies(const std::string& userIdentifier,
          {
             // Should this say session expired or something else?
             common::clearSignInCookies(request, pResponse);
-            pResponse->setError(http::status::Unauthorized, "Unauthorized");
+            pResponse->setError(http::status::Unauthorized, "Unauthorized - Max active session time exceeded");
             return;
          }
 
