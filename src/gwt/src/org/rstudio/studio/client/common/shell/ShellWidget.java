@@ -294,18 +294,38 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private native final void addPasteHook(Element el) /*-{
    
       var self = this;
+      var eventTarget = null;
       
-      // when showing a context menu, make the content briefly editable so that
-      // paste is enabled as an option
-      el.addEventListener("contextmenu", function(event) {
-         el.setAttribute("contenteditable", "true");
-         setTimeout(function() { el.setAttribute("contenteditable", "false"); }, 0);
+      $doc.body.addEventListener("paste", function(event) {
+         
+         // check whether we lost focus, and the paste event is now just targeting the body element
+         // this seems to happen on Windows for whatever reason
+         // https://github.com/rstudio/rstudio/issues/14538#issuecomment-2452526631
+         if (eventTarget != null && event.target === $doc.body) {
+            var text = event.clipboardData.getData("text/plain");
+            self.@org.rstudio.studio.client.common.shell.ShellWidget::onPaste(*)(event, text);
+         }
+         
+         // reset event target, so that this handler only ever tries to fire once
+         eventTarget = null;
+         
       }, true);
       
-      // implement a paste handler that routes pastes into the console input
-      el.addEventListener("paste", function(event) {
-         var text = event.clipboardData.getData("text/plain");
-         self.@org.rstudio.studio.client.common.shell.ShellWidget::onPaste(*)(event, text);
+      $doc.body.addEventListener("contextmenu", function(event) {
+         
+         if (el.contains(event.target)) {
+            
+            // save the 'contextmenu' event target, in case 'paste' is fired with
+            // focus lost and sent to the 'body' element
+            eventTarget = event.target;
+         
+            // make this element briefly editable, so the generated
+            // context menu will include 'Paste' as an option
+            el.setAttribute("contenteditable", "true");
+            setTimeout(function() { el.setAttribute("contenteditable", "false"); }, 0);
+            
+         }
+         
       }, true);
    
    }-*/;
