@@ -19,7 +19,8 @@ import com.google.gwt.user.client.Timer;
 
 public class RemoteServerAuthWatcher
 {
-   public static interface CheckAuthStatus {
+   public static interface CheckAuthStatus 
+   {
       void checkAuthStatus();
    }
 
