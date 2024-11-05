@@ -15,19 +15,23 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-public class LoggedOutDialog extends ModalDialogBase {
+public class LoggedOutDialog extends ModalDialogBase 
+{
 
    private static final LoggedOutDialog INSTANCE = new LoggedOutDialog();
 
-   public static void setUnauthorized() {
+   public static void setUnauthorized() 
+   {
       INSTANCE.doSetUnauthorized();
    }
 
-   public static void setAuthorized() {
+   public static void setAuthorized() 
+   {
       INSTANCE.doSetAuthorized();
    }
 
-   protected LoggedOutDialog() {
+   protected LoggedOutDialog() 
+   {
       super(Roles.getAlertdialogRole());
 
       setText("Posit Workbench Login Required");
@@ -36,7 +40,8 @@ public class LoggedOutDialog extends ModalDialogBase {
    }
 
    @Override
-   protected Widget createMainWidget() {
+   protected Widget createMainWidget() 
+   {
       HorizontalPanel horizontalPanel = new HorizontalPanel();
       horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 
@@ -58,7 +63,8 @@ public class LoggedOutDialog extends ModalDialogBase {
       return horizontalPanel;
    }
 
-   private ThemedButton createLoginButton() {
+   private ThemedButton createLoginButton() 
+   {
       ThemedButton loginButton = new ThemedButton("Login", clickEvent -> 
       {
          String url = ApplicationUtils.getHostPageBaseURLWithoutContext(true) + "auth-sign-in";
@@ -67,14 +73,16 @@ public class LoggedOutDialog extends ModalDialogBase {
       return loginButton;
    }
 
-   private void doSetUnauthorized() {
+   private void doSetUnauthorized() 
+   {
       if (!visible_) {
          visible_ = true;
          showModal();
       }
    }
 
-   private void doSetAuthorized() {
+   private void doSetAuthorized() 
+   {
       if (visible_) {
          visible_ = false;
          hide();

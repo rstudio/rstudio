@@ -273,7 +273,8 @@ public class RemoteServer implements Server
       session_ = session;
       eventBus_ = eventBus;
       serverAuth_ = new RemoteServerAuth(this);
-      authWatcher_ = new RemoteServerAuthWatcher(new RemoteServerAuthWatcher.CheckAuthStatus() {
+      authWatcher_ = new RemoteServerAuthWatcher(new RemoteServerAuthWatcher.CheckAuthStatus()
+      {
          @Override
          public void checkAuthStatus()
          {
@@ -7413,11 +7414,13 @@ public class RemoteServer implements Server
    private static final String QUARTO_SERVE_RENDER = "quarto_serve_render";
    private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
 
-   private static class PendingRpcRequest {
+   private static class PendingRpcRequest 
+   {
       public PendingRpcRequest(String scope,
                               RpcRequest request,
                               RpcResponseHandler responseHandler,
-                              RetryHandler retryHandler) {
+                              RetryHandler retryHandler) 
+      {
          this.scope = scope;
          this.request = request;
          this.responseHandler = responseHandler;
