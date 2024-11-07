@@ -67,7 +67,7 @@ public:
 
       if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier, request, pResponse))
       {
-         unauthorizedResponseFunction_(request, pResponse);
+         handler::signInThenContinue(request, pResponse);
          return;
       }
 
@@ -206,7 +206,7 @@ private:
 
       if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response()))
       {
-            unauthorizedResponseFunction_(pConnection);
+            handler::signInThenContinue(pConnection->request(), &pConnection->response());
             return false;
       }
 
