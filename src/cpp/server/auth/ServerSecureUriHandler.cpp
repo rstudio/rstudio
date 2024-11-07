@@ -206,8 +206,8 @@ private:
 
       if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response()))
       {
-            handler::signInThenContinue(pConnection->request(), &pConnection->response());
-            return false;
+         handler::signInThenContinue(pConnection->request(), &pConnection->response());
+         return false;
       }
 
       return true;
