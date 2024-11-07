@@ -161,7 +161,8 @@ FilePath computeUserDir(const FilePath& projectFile,
    // if such a scratch path has been configured, use it if possible
    if (!userDataDir.empty())
    {
-      FilePath projectScratchPath = FilePath(userDataDir).completePath(projectConfig.projectId);
+      FilePath userDataPath = module_context::resolveAliasedPath(userDataDir);
+      FilePath projectScratchPath = userDataPath.completePath(projectConfig.projectId);
       error = validateScratchPath(projectScratchPath);
       if (error)
       {
