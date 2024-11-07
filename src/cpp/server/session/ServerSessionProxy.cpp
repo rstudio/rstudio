@@ -66,6 +66,7 @@
 
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
+#include <server/auth/ServerAuthCommon.hpp>
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerErrorCategory.hpp>
@@ -1034,14 +1035,13 @@ void proxyRpcRequest(
    {
       auth::handler::UserSession::updateSessionLastActiveTime(username);
 
-      
-
       if (!auth::handler::refreshAuthCookies(userIdentifier,
                                         ptrConnection->request(),
                                         &ptrConnection->response()))
       {
          // if the user is not authorized, we should return a 401
          // and not continue with the request
+         auth::common::clearSignInCookies(ptrConnection->request(), &ptrConnection->response());
          ptrConnection->response().setError(http::status::Unauthorized, "Unauthorized - Maximum active session time exceeded");
          ptrConnection->writeResponse();
          return;

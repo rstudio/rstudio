@@ -1253,16 +1253,7 @@ bool refreshAuthCookies(const std::string& userIdentifier,
       if (loginExpiry && loginExpiry.get() >= now)
       {
          // The cookie has hit the active expiry, so we should not refresh it
-         LOG_DEBUG_MESSAGE("Not refreshing auth: cookie has expired: " + value);
-
-         // If the request is a JSON RPC request from an RStudio Pro session, we
-         // want to send a 401 so it can handle the logout gracefully. In other
-         // scenarios, a signInThenContinue is preferred.
-         if (request.containsHeader("x-rs-csrf-token") && (request.contentType() == "application/json"))
-            common::clearSignInCookies(request, pResponse);
-         else
-            signInThenContinue(request, pResponse);
-            
+         LOG_DEBUG_MESSAGE("Not refreshing auth: cookie has expired: " + value);            
          return false;
       }
 
