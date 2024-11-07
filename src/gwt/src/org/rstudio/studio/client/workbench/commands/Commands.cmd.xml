@@ -743,7 +743,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="zoomOut" value="Meta+-" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
          <shortcut refid="zoomIn" value="Cmd+NumpadAdd"/>
          <shortcut refid="zoomOut" value="Cmd+NumpadSubtract"/>
-         <shortcut refid="zoomActualSize" value="Meta+0" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
+         <shortcut refid="zoomActualSize" value="Meta+0|Meta+Numpad0" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
       </shortcutgroup>
       <shortcutgroup name="Panes">
          <shortcut refid="switchFocusSourceConsole" value="Ctrl+X O|Ctrl+X Ctrl+O" disableModes="default,vim,sublime"/>
