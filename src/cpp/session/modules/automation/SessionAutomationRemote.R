@@ -518,9 +518,15 @@
    # Clear any text that might be set.
    self$keyboardExecute("<Command + A>", "<Backspace>")
    
+   # Close any open documents.
+   self$consoleExecuteExpr({
+      .rs.api.closeAllSourceBuffersWithoutSaving()
+   })
+   
    # Remove any existing R objects.
-   self$commandExecute("closeAllSourceDocs")
    self$consoleExecuteExpr(rm(list = ls()))
+   
+   # Clear the console.
    self$keyboardExecute("<Ctrl + L>")
 })
 
