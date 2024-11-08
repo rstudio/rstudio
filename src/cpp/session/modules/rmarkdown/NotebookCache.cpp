@@ -223,15 +223,17 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
    
    if (matches)
    {
-      FilePath target = chunkDefinitionsPath(
-               pDoc->path(), pDoc->id(), kSavedCtx);
+      FilePath target = chunkDefinitionsPath(pDoc->path(), pDoc->id(), kSavedCtx);
+      error = target.getParent().ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
 
       // only perform the copy if the saved branch is stale
       // (older than the uncommitted branch)
       if (target.getLastWriteTime() < chunkDefsFile.getLastWriteTime())
       {
          error = chunkDefsFile.copy(target, true);
-         if (error)
+         if (error && !isFileNotFoundError(error))
             LOG_ERROR(error);
       }
    }
