@@ -913,7 +913,7 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
 Error insertDocument(std::string path, int insertIndex) {
    FilePath documentPath = module_context::resolveAliasedPath(path);
    if (!module_context::isPathViewAllowed(documentPath))
-      return Error(json::errc::DirectoryViewListingProhibited, ERROR_LOCATION);
+      return systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION);
 
    // ensure the file exists
    if (!documentPath.exists())
