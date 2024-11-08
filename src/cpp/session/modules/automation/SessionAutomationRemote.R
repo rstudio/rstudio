@@ -509,7 +509,8 @@
    # Clear any popups that might be visible.
    self$keyboardExecute("<Escape>")
    
-   # Clear any text that might be set.
+   # Clear any text that might be set in the console.
+   self$commandExecute("activateConsole")
    self$keyboardExecute("<Command + A>", "<Backspace>")
    
    # Close any open documents.

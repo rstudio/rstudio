@@ -210,8 +210,7 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
       return;
 
    // check for a contextual (uncommitted) chunk definitions file
-   FilePath chunkDefsFile = chunkDefinitionsPath(pDoc->path(), pDoc->id(),
-         notebookCtxId());
+   FilePath chunkDefsFile = chunkDefinitionsPath(pDoc->path(), pDoc->id(), notebookCtxId());
    if (!chunkDefsFile.exists())
       return;
 
@@ -221,36 +220,19 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
    Error error = pDoc->contentsMatchDisk(&matches);
    if (error)
       LOG_ERROR(error);
+   
    if (matches)
    {
       FilePath target = chunkDefinitionsPath(
                pDoc->path(), pDoc->id(), kSavedCtx);
 
-      // only perform the copy if the saved branch is stale (older than the
-      // uncommitted branch)
+      // only perform the copy if the saved branch is stale
+      // (older than the uncommitted branch)
       if (target.getLastWriteTime() < chunkDefsFile.getLastWriteTime())
       {
-         // remove the old chunk definition file to make way for the new one 
-         error = target.remove();
+         error = chunkDefsFile.copy(target, true);
          if (error)
-         {
-            // can't remove the old definition file, so leave it alone
             LOG_ERROR(error);
-         }
-         else
-         {
-            error = chunkDefsFile.copy(target);
-            if (error)
-            {
-               // removed the old file, but could not copy the new one; this
-               // should never happen. ideally we'd back up the old file and
-               // restore it if we can't copy the new one, but since restoring
-               // the backup and copying the new file are effectively the same
-               // operation it's unlikely to offer any true improvements in
-               // robustness.
-               LOG_ERROR(error);
-            }
-         }
       }
    }
 }
