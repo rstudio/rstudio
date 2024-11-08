@@ -1024,16 +1024,6 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->projectName = it->second;
    }
-   
-   it = dcfFields.find("ProjectId");
-   if (it != dcfFields.end())
-   {
-      pConfig->projectId = it->second;
-   }
-   else
-   {
-      pConfig->projectId = defaultConfig.projectId;
-   }
 
    return Success();
 }

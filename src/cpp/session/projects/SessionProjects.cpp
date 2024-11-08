@@ -798,10 +798,7 @@ Error writeProjectConfig(const json::Object& configJson)
                             "project_name", config.projectName);
    if (error)
       return error;
-   
-   // project id
-   config.projectId = existingConfig.projectId;
-   
+  
    // write the config
    error = r_util::writeProjectFile(s_projectContext.file(),
                                     ProjectContext::buildDefaults(),
