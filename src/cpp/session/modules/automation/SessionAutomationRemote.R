@@ -28,13 +28,11 @@
 
 .rs.addFunction("automation.runTest", function(desc, code)
 {
-   # Clear any test markers that have been set on exit.
-   on.exit(.rs.setVar("automation.currentMarkers", NULL), add = TRUE)
-   
-   # If we're only running tests associated with certain markers,
-   # handle that now.
+   # Check test markers.
    currentMarkers <- .rs.getVar("automation.currentMarkers")
    requestedMarkers <- .rs.getVar("automation.requestedMarkers")
+   .rs.setVar("automation.currentMarkers", NULL)
+   
    if (length(requestedMarkers))
    {
       matches <- intersect(currentMarkers, requestedMarkers)
@@ -46,16 +44,12 @@
       }
    }
    
-   # Reset the session after running this test.
-   on.exit(.rs.automation.remoteInstance$sessionReset(), add = TRUE)
+   # Reset the session before running this test.
+   .rs.automation.remoteInstance$sessionReset()
    
-   withCallingHandlers(
-      testthat::test_that(desc, code),
-      error = function(cnd) {
-         if (interactive())
-            browser()
-      }
-   )
+   # Now, run the test.
+   testthat::test_that(desc, code)
+   
 })
 
 .rs.addFunction("automation.newRemote", function(mode = NULL)
