@@ -1,4 +1,4 @@
-## RStudio 2024.11.0 "Kousa Dogwood" Release Notes
+## RStudio 2024.12.0 "Kousa Dogwood" Release Notes
 
 ### New
 #### RStudio
