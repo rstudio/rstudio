@@ -192,8 +192,9 @@ Error launchSessionRecovery(
 
       bool launched;
 
+      core::system::Options environment;
       return sessionManager().launchSession(ptrConnection->ioService(), 
-            context, request, launched);
+            context, request, launched, environment);
    }
    else
       return Success();

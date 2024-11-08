@@ -80,6 +80,7 @@ void readRequestArgs(const core::http::Request& request, core::system::Options *
 core::system::ProcessConfig sessionProcessConfig(
          r_util::SessionContext context,
          const core::system::Options& extraArgs = core::system::Options(),
+         const core::system::Options& extraEnvironment = core::system::Options(),
          bool requestIsSecure = false)
 {
    // prepare command line arguments
@@ -136,6 +137,7 @@ core::system::ProcessConfig sessionProcessConfig(
 
    // pass our uid to instruct rsession to limit rpc clients to us and itself
    core::system::Options environment;
+   environment.insert(environment.end(), extraEnvironment.begin(), extraEnvironment.end());
    uid_t uid = core::system::user::currentUserIdentity().userId;
    environment.push_back(std::make_pair(
                            kRStudioLimitRpcClientUid,
@@ -265,6 +267,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
                                     const r_util::SessionContext& context,
                                     const http::Request& request,
                                     bool &launched,
+                                    const core::system::Options environment,
                                     const http::ResponseHandler& onLaunch,
                                     const http::ErrorHandler& onError)
 {
@@ -317,7 +320,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    r_util::SessionLaunchProfile profile;
    profile.context = context;
    profile.executablePath = server::options().rsessionPath();
-   profile.config = sessionProcessConfig(context, args, request.isSecure());
+   profile.config = sessionProcessConfig(context, args, environment, request.isSecure());
 
    // pass the profile to any filters we have
    for (SessionLaunchProfileFilter f : sessionLaunchProfileFilters_)

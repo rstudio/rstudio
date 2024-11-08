@@ -64,6 +64,7 @@ public:
                              const core::r_util::SessionContext& context,
                              const core::http::Request& request,
                              bool &launched,
+                             core::system::Options environment,
                              const core::http::ResponseHandler& onLaunch = core::http::ResponseHandler(),
                              const core::http::ErrorHandler& onError = core::http::ErrorHandler());
    void removePendingLaunch(const core::r_util::SessionContext& context, const bool success = true, const std::string& errorMsg = std::string());
