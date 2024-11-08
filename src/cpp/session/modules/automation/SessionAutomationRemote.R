@@ -36,15 +36,15 @@
    
    # If we're only running tests associated with certain markers,
    # handle that now.
-   if (length(.rs.automation.requestedMarkers))
+   currentMarkers <- .rs.getVar("automation.currentMarkers")
+   requestedMarkers <- .rs.getVar("automation.requestedMarkers")
+   if (length(requestedMarkers))
    {
-      matches <- intersect(
-         .rs.automation.currentMarkers,
-         .rs.automation.requestedMarkers
-      )
-      
+      matches <- intersect(currentMarkers, requestedMarkers)
       if (length(matches) == 0L)
+      {
          testthat::skip("not quite sure what to put here")
+      }
    }
    
    withCallingHandlers(

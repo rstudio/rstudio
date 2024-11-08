@@ -26,9 +26,14 @@
 # Global variable for tracking the active automation agent.
 .rs.setVar("automation.agentProcess", NULL)
 
-# Global variables indicating what test markers are currently active.
-.rs.setVar("automation.requestedMarkers", NULL)
+# Which markers are set for the currently-running test?
 .rs.setVar("automation.currentMarkers", NULL)
+
+# Which markers were requested for this test session?
+.rs.setVar("automation.requestedMarkers", {
+   markers <- Sys.getenv("RSTUDIO_AUTOMATION_MARKERS", unset = NA)
+   strsplit(markers, " ", fixed = TRUE)[[1L]]
+})
 
 .rs.addFunction("automation.httrGet", function(url)
 {
