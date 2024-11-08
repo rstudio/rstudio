@@ -4,6 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
+
 # https://github.com/rstudio/rstudio/issues/14784
 test_that("autocompletion doesn't trigger active bindings", {
    

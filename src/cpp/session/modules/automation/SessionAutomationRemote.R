@@ -29,10 +29,7 @@
 .rs.addFunction("automation.runTest", function(desc, code)
 {
    # Clear any test markers that have been set on exit.
-   on.exit({
-      .rs.clearVar("automation.currentMarkers")
-      .rs.automation.remoteInstance$sessionReset()
-   }, add = TRUE)
+   on.exit(.rs.setVar("automation.currentMarkers", NULL), add = TRUE)
    
    # If we're only running tests associated with certain markers,
    # handle that now.
@@ -43,9 +40,14 @@
       matches <- intersect(currentMarkers, requestedMarkers)
       if (length(matches) == 0L)
       {
-         testthat::skip("not quite sure what to put here")
+         if (interactive())
+            message("[i] Skipping test (does not have any matching markers).")
+         return(invisible(NULL))
       }
    }
+   
+   # Reset the session after running this test.
+   on.exit(.rs.automation.remoteInstance$sessionReset(), add = TRUE)
    
    withCallingHandlers(
       testthat::test_that(desc, code),
@@ -70,7 +72,6 @@
    # up various state when a test is run.
    library(testthat)
    assign("test_that", .rs.automation.runTest, envir = globalenv())
-   assign(".", .rs.automation.setTestMarkers, envir = globalenv())
    
    # Return the remote instance.
    remote

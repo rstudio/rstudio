@@ -31,7 +31,7 @@
 
 # Which markers were requested for this test session?
 .rs.setVar("automation.requestedMarkers", {
-   markers <- Sys.getenv("RSTUDIO_AUTOMATION_MARKERS", unset = NA)
+   markers <- Sys.getenv("RSTUDIO_AUTOMATION_MARKERS", unset = "")
    strsplit(markers, " ", fixed = TRUE)[[1L]]
 })
 
@@ -800,7 +800,7 @@
    !.rs.isNullExternalPointer(object)
 })
 
-.rs.addFunction("automation.setTestMarkers", function(...)
+.rs.addFunction("markers", function(...)
 {
    .rs.setVar("automation.currentMarkers", as.character(list(...)))
 })
