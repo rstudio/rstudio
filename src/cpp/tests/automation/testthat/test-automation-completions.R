@@ -174,8 +174,6 @@ test_that("Tab keypresses indent multi-line selections", {
    remote$keyboardExecute("<Tab>")
    expect_equal(editor$session$getLine(4), "  This is some prose.")
    expect_equal(editor$session$getLine(5), "  This is some more prose.")
-   
-   remote$documentClose()
 })
 
 # https://github.com/rstudio/rstudio/issues/13065
@@ -186,7 +184,6 @@ test_that("code_completion_include_already_used works as expected", {
    ')
    
    remote$documentOpen(ext = ".R", contents = contents)
-   on.exit(remote$documentClose(), add = TRUE)
    
    editor <- remote$editorGetInstance()
    editor$gotoLine(1, 16)
@@ -217,7 +214,6 @@ test_that("dplyr piped variable names are properly quoted / unquoted", {
    ')
    
    remote$documentOpen(ext = ".R", contents = contents)
-   on.exit(remote$documentClose(), add = TRUE)
    
    editor <- remote$editorGetInstance()
    editor$gotoLine(2, 53)

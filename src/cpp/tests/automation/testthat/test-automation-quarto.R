@@ -32,9 +32,6 @@ test_that("the warn option is preserved when running chunks", {
    output <- remote$consoleOutput()
    expect_equal(tail(output, n = 1L), "[1] 2")
    
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
-   
 })
 
 # https://github.com/rstudio/rstudio/issues/11745
@@ -90,8 +87,6 @@ test_that("the expected chunk widgets show for multiple chunks", {
    lapply(jsChunkOptionWidgets, checkWidgetVisible)
    lapply(jsChunkRunWidgets, checkWidgetVisible)
 
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 test_that("can cancel switching to visual editor", {
@@ -131,8 +126,7 @@ test_that("can cancel switching to visual editor", {
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
    }
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
+   
 })
 
 test_that("can switch to visual editor and back to source editor", {
@@ -187,8 +181,6 @@ test_that("can switch to visual editor and back to source editor", {
       remote$domClickElement(".rstudio_visual_md_off")
    }
    
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 test_that("visual editor welcome dialog displays again if don't show again is unchecked", {
@@ -242,8 +234,6 @@ test_that("visual editor welcome dialog displays again if don't show again is un
       remote$domClickElement(".rstudio_visual_md_off")
    }
    
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 test_that("displaying and closing chunk options popup doesn't modify already-sorted settings", {
@@ -306,8 +296,6 @@ test_that("displaying and closing chunk options popup doesn't modify already-sor
    chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
    checkChunkOption(12, 18, chunkOptionWidgetIds[[3]])
 
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 test_that("displaying and closing chunk options popup sorts the settings", {
@@ -362,8 +350,6 @@ test_that("displaying and closing chunk options popup sorts the settings", {
       '#| label: one\n#| message: false\n#| warning: true\n#| fig-height: 4\n#| fig-width: 3\n#| paged-print: true',
       chunkOptionWidgetIds[[1]])
 
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 
