@@ -66,7 +66,8 @@ public:
                              bool &launched,
                              core::system::Options environment,
                              const core::http::ResponseHandler& onLaunch = core::http::ResponseHandler(),
-                             const core::http::ErrorHandler& onError = core::http::ErrorHandler());
+                             const core::http::ErrorHandler& onError = core::http::ErrorHandler(),
+                             const std::string& openFile = "");
    void removePendingLaunch(const core::r_util::SessionContext& context, const bool success = true, const std::string& errorMsg = std::string());
 
    void removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success = true, const std::string& errorMsg = std::string());

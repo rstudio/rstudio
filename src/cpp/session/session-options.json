@@ -449,7 +449,14 @@
             "memberName": "sessionAllowProjectUserDataDirOverride_",
             "defaultValue": true,
             "description": "Whether or not users can override the default project (.Rproj.user) data directory via their own user preferences."
-         }
+         },
+         {
+          "name": "open-files",
+          "type": "string",
+          "memberName": "openFiles_",
+          "defaultValue": "",
+          "description": "Files to open on session load."
+        }
       ],
       "allow": [
          {

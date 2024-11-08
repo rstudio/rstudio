@@ -81,7 +81,8 @@ core::system::ProcessConfig sessionProcessConfig(
          r_util::SessionContext context,
          const core::system::Options& extraArgs = core::system::Options(),
          const core::system::Options& extraEnvironment = core::system::Options(),
-         bool requestIsSecure = false)
+         bool requestIsSecure = false,
+         std::string openFile = "")
 {
    // prepare command line arguments
    server::Options& options = server::options();
@@ -134,6 +135,11 @@ core::system::ProcessConfig sessionProcessConfig(
    std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
    if (!timeout.empty())
       args.push_back(std::make_pair("--" kTimeoutSessionOption, timeout));
+
+   if (!openFile.empty() && context.scope.workbench() == kWorkbenchRStudio) {
+      // currently only support for rstudio.
+      args.push_back(std::make_pair("--open-files", openFile));
+   }
 
    // pass our uid to instruct rsession to limit rpc clients to us and itself
    core::system::Options environment;
@@ -269,7 +275,8 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
                                     bool &launched,
                                     const core::system::Options environment,
                                     const http::ResponseHandler& onLaunch,
-                                    const http::ErrorHandler& onError)
+                                    const http::ErrorHandler& onError,
+                                    const std::string& openFile)
 {
    int numRemoved = 0;
    using namespace boost::posix_time;
@@ -320,7 +327,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    r_util::SessionLaunchProfile profile;
    profile.context = context;
    profile.executablePath = server::options().rsessionPath();
-   profile.config = sessionProcessConfig(context, args, environment, request.isSecure());
+   profile.config = sessionProcessConfig(context, args, environment, request.isSecure(), openFile);
 
    // pass the profile to any filters we have
    for (SessionLaunchProfileFilter f : sessionLaunchProfileFilters_)

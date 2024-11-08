@@ -910,6 +910,49 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
    return Success();
 }
 
+Error insertDocument(std::string path, int insertIndex) {
+   FilePath documentPath = module_context::resolveAliasedPath(path);
+   if (!module_context::isPathViewAllowed(documentPath))
+      return Error(json::errc::DirectoryViewListingProhibited, ERROR_LOCATION);
+
+   // ensure the file exists
+   if (!documentPath.exists())
+      return core::fileNotFoundError(documentPath, ERROR_LOCATION);
+   
+   // ensure the file is not binary
+   if (!module_context::isTextFile(documentPath)) 
+      return systemError(boost::system::errc::illegal_byte_sequence, ERROR_LOCATION);
+
+   // set the doc contents to the specified file
+   std::string type = inferDocumentType(documentPath, "text");
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type));
+   pDoc->setEncoding("UTF-8");
+   Error error = pDoc->setPathAndContents(path, false);
+   if (error)
+   {
+      error = pDoc->setPathAndContents(path, true);
+      if (error)
+         return error;
+   }
+
+   // recover durable properties if they are available
+   json::Object properties;
+   error = source_database::getDurableProperties(path, &properties);
+   if (!error)
+      pDoc->editProperties(properties);
+   else
+      LOG_ERROR(error);
+
+   // set relative order (client will receive docs in relative order on init)
+   pDoc->setRelativeOrder(insertIndex);
+
+   error = sourceDatabasePutWithUpdatedContents(pDoc);
+   if (error) 
+      return error;
+
+   return Success();
+}
+
 } // anonymous namespace
 
 Error revertDocument(const json::JsonRpcRequest& request,
@@ -1604,7 +1647,22 @@ SEXP rs_readSourceDocument(SEXP idSEXP)
 } // anonymous namespace
 
 Error clientInitDocuments(core::json::Array* pJsonDocs)
-{
+{   
+   if (!session::options().openFiles().empty()) {
+      // insert documents to open on session load
+      std::vector<std::string> filesToOpen;
+      boost::split(filesToOpen, session::options().openFiles(), boost::is_any_of(","));
+      int insertIndex = numSourceDocuments();
+      for(std::string fileToOpen : filesToOpen)
+      {
+         insertIndex = insertIndex + 1;
+         Error error = insertDocument(fileToOpen, insertIndex);
+         if (error) {
+            return error;
+         }
+      }
+   }
+
    source_database::events().onRemoveAll();
 
    // get the docs and sort them by relative order
