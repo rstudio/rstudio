@@ -26,6 +26,10 @@
 # Global variable for tracking the active automation agent.
 .rs.setVar("automation.agentProcess", NULL)
 
+# Global variables indicating what test markers are currently active.
+.rs.setVar("automation.requestedMarkers", NULL)
+.rs.setVar("automation.currentMarkers", NULL)
+
 .rs.addFunction("automation.httrGet", function(url)
 {
    httr::GET(url, config = httr::timeout(1))
@@ -789,4 +793,9 @@
 {
    object <- client$socket$.__enclos_env__$private$wsObj
    !.rs.isNullExternalPointer(object)
+})
+
+.rs.addFunction("automation.setTestMarkers", function(...)
+{
+   .rs.setVar("automation.currentMarkers", as.character(list(...)))
 })

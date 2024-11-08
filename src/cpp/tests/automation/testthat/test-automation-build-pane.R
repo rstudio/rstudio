@@ -4,6 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
+.("test")
 test_that("we can test a file in the build pane", {
    
    # Create a project.
