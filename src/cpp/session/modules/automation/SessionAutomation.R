@@ -660,8 +660,10 @@
    writeLines(c("", "==> Running RStudio automation tests...", ""))
    
    # Run tests.
+   filter <- Sys.getenv("RSTUDIO_AUTOMATION_FILTER", unset = NA)
    testthat::test_dir(
       path = "testthat",
+      filter = if (!is.na(filter)) filter,
       reporter = multiReporter,
       stop_on_failure = FALSE,
       stop_on_warning = FALSE
