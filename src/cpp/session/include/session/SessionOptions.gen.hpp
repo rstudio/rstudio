@@ -252,7 +252,10 @@ protected:
       "The folder in which RStudio should store user-specific project (.Rproj.user) data.")
       ("session-allow-project-user-data-dir-override",
       value<bool>(&sessionAllowProjectUserDataDirOverride_)->default_value(true),
-      "Whether or not users can override the default project (.Rproj.user) data directory via their own user preferences.");
+      "Whether or not users can override the default project (.Rproj.user) data directory via their own user preferences.")
+      ("open-files",
+      value<std::string>(&openFiles_)->default_value(""),
+      "Files to open on session load.");
 
    pAllow->add_options()
       ("allow-vcs-executable-edit",
@@ -519,6 +522,7 @@ public:
    bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
    std::string sessionProjectUserDataDir() const { return sessionProjectUserDataDir_; }
    bool sessionAllowProjectUserDataDirOverride() const { return sessionAllowProjectUserDataDirOverride_; }
+   std::string openFiles() const { return openFiles_; }
    bool allowVcsExecutableEdit() const { return allowVcsExecutableEdit_ || allowOverlay(); }
    bool allowCRANReposEdit() const { return allowCRANReposEdit_ || allowOverlay(); }
    bool allowVcs() const { return allowVcs_ || allowOverlay(); }
@@ -638,6 +642,7 @@ protected:
    bool sessionUseFileStorage_;
    std::string sessionProjectUserDataDir_;
    bool sessionAllowProjectUserDataDirOverride_;
+   std::string openFiles_;
    bool allowVcsExecutableEdit_;
    bool allowCRANReposEdit_;
    bool allowVcs_;
