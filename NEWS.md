@@ -36,6 +36,7 @@
 - Posit Workbench User Guide underwent a reorganization of how the individual IDE guides are presented. Each guide was migrated from the left-hand navigation to the upper (main) navigation bar. Now, when a guide is selected from the navigation bar, only that guide's contents display in the left-hand navigation. Additionally, the Posit Workbench guide was renamed to "Workbench Setup" in the navigation bar to prevent confusion between the title of the guide and to create more distinction between the home page of the guide and the Posit Workbench Overview. Lastly, the links for the four IDEs were updated to navigate to the corresponding guide within the Posit Workbench User Guide (instead of the IDE's external site) and are displayed as buttons (rstudio-pro#6069)
 - Restrict Positron and VS Code sessions for insecure (non-SSL) contexts. These editors do not work properly otherwise. (rstudio-pro#3741)
 - Added support for HTTP Proxy variables in rserver and rsession to enable managed credentials features in Workbench environments behind a proxy server. (rstudio-pro#5893)
+- Set Public Package Manager (P3M) as the default for R libraries in RStudio Pro sessions, if no other repository is specified. Package Manager will deliver pre-built binary packages when available, which are faster to install than source packages and don't require most additional build dependencies. (rstudio-pro#5066)
 
 ### Fixed
 #### RStudio
