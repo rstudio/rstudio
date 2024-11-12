@@ -330,6 +330,17 @@ test_context("RTokenizer")
       expect_true(rTokens.size() == 1);
    }
    
+   test_that("unicode letters are identified properly")
+   {
+      RTokens rTokens(L"区 <- 42");
+      expect_true(rTokens.size() == 5);
+      expect_true(rTokens.at(0).isType(RToken::ID));
+      expect_true(rTokens.at(1).isType(RToken::WHITESPACE));
+      expect_true(rTokens.at(2).isType(RToken::OPER));
+      expect_true(rTokens.at(3).isType(RToken::WHITESPACE));
+      expect_true(rTokens.at(4).isType(RToken::NUMBER));
+   }
+   
 }
 
 } // namespace r_util
