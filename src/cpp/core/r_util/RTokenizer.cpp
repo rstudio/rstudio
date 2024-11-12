@@ -115,7 +115,7 @@ bool isAlphanumeric(wchar_t ch)
 #ifdef __APPLE__
    
    // if this appears to be an ASCII value, then use the standard library;
-   // otherwise, use CF APIs
+   // otherwise, use core foundation
    if (ch < static_cast<wchar_t>(128))
    {
       return iswalnum(ch);
@@ -131,7 +131,9 @@ bool isAlphanumeric(wchar_t ch)
 
       CFCharacterSetRef set = CFCharacterSetGetPredefined(kCFCharacterSetAlphaNumeric);
       CFRange range = CFRangeMake(0, CFStringGetLength(string));
-      return CFStringFindCharacterFromSet(string, set, range, 0, NULL);
+      bool result = CFStringFindCharacterFromSet(string, set, range, 0, NULL);
+      CFRelease(string);
+      return result;
    }
    
 #else
