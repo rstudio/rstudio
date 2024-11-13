@@ -18,7 +18,6 @@ test_that("the debug position is correct in braced expressions", {
    ')
    
    remote$documentOpen(".R", contents)
-   on.exit(remote$documentClose(), add = TRUE)
    
    # Click to set a breakpoint.
    gutterLayer <- remote$jsObjectViaSelector(".ace_gutter-layer")
@@ -89,6 +88,11 @@ test_that("package functions can be debugged after build and reload", {
       grepl("rstudio.automation", el$innerText, fixed = TRUE)
    })
    
+   # Close any open documents
+   remote$consoleExecuteExpr(
+      .rs.api.closeAllSourceBuffersWithoutSaving()
+   )
+   
    # Add a source document.
    remote$consoleExecuteExpr(file.edit("R/example.R"))
    remote$commandExecute("activateSource")
@@ -156,4 +160,11 @@ test_that("package functions can be debugged after build and reload", {
    Sys.sleep(1)
    remote$commandExecute("closeProject")
    
+   # Wait until the project has closed
+   .rs.waitFor("the project is closed", function()
+   {
+      el <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+      grepl("Project: ", el$innerText, fixed = TRUE)
+   })
+    
 })
