@@ -87,6 +87,7 @@
 - Fixed an issue with the splash screen appearing on top of the Desktop Pro Manage License dialog (rstudio-pro#6962)
 - Fixed an issue where column names starting with numbers were not properly quoted when inserted as a completion (#13290)
 - Fixed an issue where right-clicking on the console history did not present Paste as an option (#14538)
+- Fixed a performance regression that occurred when requesting completions for very large R objects (#15422)
 
 #### Posit Workbench
 
