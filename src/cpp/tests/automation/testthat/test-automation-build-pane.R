@@ -37,5 +37,12 @@ test_that("we can test a file in the build pane", {
    
    # Close the project
    remote$projectClose()
-   
+
+   # Wait until the project has closed
+   .rs.waitFor("the project is closed", function()
+   {
+      el <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+      grepl("Project: ", el$innerText, fixed = TRUE)
+   })
+ 
 })
