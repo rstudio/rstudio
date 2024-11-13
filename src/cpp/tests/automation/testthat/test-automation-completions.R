@@ -185,7 +185,6 @@ test_that("code_completion_include_already_used works as expected", {
    ')
    
    remote$documentOpen(ext = ".R", contents = contents)
-   on.exit(remote$documentClose(), add = TRUE)
    
    editor <- remote$editorGetInstance()
    editor$gotoLine(1, 16)
@@ -205,6 +204,9 @@ test_that("code_completion_include_already_used works as expected", {
       .rs.uiPrefs$codeCompletionIncludeAlreadyUsed$clear()
    })
    
+   remote$consoleExecuteExpr(
+      .rs.api.closeAllSourceBuffersWithoutSaving()
+   )
 })
 
 # https://github.com/rstudio/rstudio/issues/15161
@@ -216,13 +218,15 @@ test_that("dplyr piped variable names are properly quoted / unquoted", {
    ')
    
    remote$documentOpen(ext = ".R", contents = contents)
-   on.exit(remote$documentClose(), add = TRUE)
    
    editor <- remote$editorGetInstance()
    editor$gotoLine(2, 53)
    completions <- remote$completionsRequest("zzz")
    expect_equal(completions, c("zzz A", "zzz B"))
-   
+
+   remote$consoleExecuteExpr(
+      .rs.api.closeAllSourceBuffersWithoutSaving()
+   )
 })
 
 # https://github.com/rstudio/rstudio/issues/13290
@@ -238,5 +242,8 @@ test_that("column names are quoted appropriately", {
    
    output <- remote$consoleOutput()
    expect_equal(tail(output, n = 1L), "[1] \"2024\"")
-   
+
+   remote$consoleExecuteExpr(
+      .rs.api.closeAllSourceBuffersWithoutSaving()
+   )
 })
