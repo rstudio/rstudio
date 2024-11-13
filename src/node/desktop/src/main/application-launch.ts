@@ -20,6 +20,8 @@ import { setenv, unsetenv } from '../core/environment';
 import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { MainWindow } from './main-window';
 import { app } from 'electron';
+import { chdir, cwd } from 'process';
+import { logger } from '../core/logger';
 
 export interface LaunchRStudioOptions {
   projectFilePath?: string;
@@ -73,6 +75,16 @@ export class ApplicationLaunch {
     const workingDir = options.workingDirectory ?? path.dirname(options.projectFilePath || '');
     setenv(kRStudioInitialWorkingDir, workingDir);
 
+    // try using the requested working directory
+    const currentWorkingDir = cwd();
+    if (workingDir.length !== 0) {
+      try {
+        chdir(workingDir);
+      } catch (err) {
+        logger().logError(err);
+      }
+    }
+
     // resolve project file, if any
     const projectFile = options.projectFilePath ?? resolveProjectFile(workingDir);
     if (existsSync(projectFile)) {
@@ -85,6 +97,13 @@ export class ApplicationLaunch {
       stdio: 'ignore', // don't reuse the stdio from parent
     });
     childProcess.unref();
+
+    // restore working directory
+    try {
+      chdir(currentWorkingDir);
+    } catch (err) {
+      logger().logError(err);
+    }
 
     // restore environment variables
     unsetenv(kRStudioInitialProject);
