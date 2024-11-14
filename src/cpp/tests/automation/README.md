@@ -2,16 +2,16 @@
 
 BRAT = "Built-in RStudio Automated Tests"
 
-## Overview
+The `testthat` folder contains RStudio integration tests written in R. This document describes how
+to run these tests both on an RStudio Developer machine (i.e. against RStudio you have built from
+source) and on any system using an official build of RStudio.
 
-The `testthat` folder contains RStudio integration tests written in R.
+## Running on an RStudio Developer Machine
 
-These tests can be executed in a development environment against either `rserver-dev`
-(not supported on Windows), or against the Electron Desktop application on all supported platforms.
+These tests can be executed in a development environment against either `rserver-dev` (not supported
+on Windows), or against the Electron Desktop application on all supported platforms.
 
 The following examples assume you have already successfully built RStudio.
-
-## Running the Tests in an RStudio Development Environment
 
 ### Server (rserver-dev)
 
@@ -45,7 +45,7 @@ To run only the tests in a given test file (using `test-automation-build-pane.R`
 npm run automation -- --automation-filter="build-pane"
 ```
 
-## Test Markers
+### Test Markers
 
 Invividual tests may be annotated with zero or more markers for use in selecting a subset of tests.
 
@@ -77,3 +77,27 @@ If multiple markers are specified, tests that have any of the markers will be ru
 
 - `./rserver-dev --run-automation --automation-markers="apple banana"`
 - `npm run automation -- --automation-markers="apple banana"`
+
+## Testing an Official Build
+
+You can run the BRAT tests against an installed copy of RStudio (i.e. an official build).
+In this scenario, the tests matching the commit of the RStudio build will be downloaded from
+GitHub automatically.
+
+### One Time Setup
+You must manually start RStudio and run this command once to ensure you have the requisite packages.
+This is supposed to happen automatically when running the tests, but isn't at the moment.
+
+```R
+.rs.automation.installRequiredPackages()
+```
+
+### Running the Tests
+
+To run all tests against RStudio.app on macOS:
+
+```bash
+/Applications/RStudio.app/Contents/MacOS/RStudio --run-automation
+```
+
+More to come...
