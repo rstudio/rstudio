@@ -4,7 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
-test_that("the warn option is preserved when running chunks", {
+.rs.test("the warn option is preserved when running chunks", {
    
    contents <- .rs.heredoc('
       ---
@@ -35,7 +35,7 @@ test_that("the warn option is preserved when running chunks", {
 })
 
 # https://github.com/rstudio/rstudio/issues/11745
-test_that("the expected chunk widgets show for multiple chunks", {
+.rs.test("the expected chunk widgets show for multiple chunks", {
    contents <- .rs.heredoc('
       ---
       title: "Chunk widgets"
@@ -89,7 +89,7 @@ test_that("the expected chunk widgets show for multiple chunks", {
 
 })
 
-test_that("can cancel switching to visual editor", {
+.rs.test("can cancel switching to visual editor", {
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode Denied"
@@ -129,7 +129,7 @@ test_that("can cancel switching to visual editor", {
    
 })
 
-test_that("can switch to visual editor and back to source editor", {
+.rs.test("can switch to visual editor and back to source editor", {
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -183,7 +183,7 @@ test_that("can switch to visual editor and back to source editor", {
    
 })
 
-test_that("visual editor welcome dialog displays again if don't show again is unchecked", {
+.rs.test("visual editor welcome dialog displays again if don't show again is unchecked", {
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -236,7 +236,7 @@ test_that("visual editor welcome dialog displays again if don't show again is un
    
 })
 
-test_that("displaying and closing chunk options popup doesn't modify already-sorted settings", {
+.rs.test("displaying and closing chunk options popup doesn't modify already-sorted settings", {
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -298,7 +298,7 @@ test_that("displaying and closing chunk options popup doesn't modify already-sor
 
 })
 
-test_that("displaying and closing chunk options popup sorts the settings", {
+.rs.test("displaying and closing chunk options popup sorts the settings", {
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -354,7 +354,7 @@ test_that("displaying and closing chunk options popup sorts the settings", {
 
 
 # https://github.com/rstudio/rstudio/issues/14552
-test_that("empty header labels are permitted in document outline", {
+.rs.test("empty header labels are permitted in document outline", {
    
    contents <- .rs.heredoc('
       ---
@@ -403,7 +403,7 @@ test_that("empty header labels are permitted in document outline", {
 })
 
 # https://github.com/rstudio/rstudio/issues/15191
-test_that("variable-width nested chunks can be folded", {
+.rs.test("variable-width nested chunks can be folded", {
    
    contents <- .rs.heredoc('
       ---
@@ -450,7 +450,7 @@ test_that("variable-width nested chunks can be folded", {
 })
 
 # https://github.com/rstudio/rstudio/issues/15189
-test_that("raw html blocks are preserved by visual editor", {
+.rs.test("raw html blocks are preserved by visual editor", {
    
    contents <- .rs.heredoc('
       ---
@@ -499,7 +499,7 @@ test_that("raw html blocks are preserved by visual editor", {
 })
 
 # https://github.com/rstudio/rstudio/issues/15253
-test_that("raw latex blocks are preserved by visual editor", {
+.rs.test("raw latex blocks are preserved by visual editor", {
    
    contents <- .rs.heredoc('
       ---

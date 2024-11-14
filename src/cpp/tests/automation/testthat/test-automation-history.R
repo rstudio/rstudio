@@ -4,7 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
-test_that("timestamp() adds to console history", {
+.rs.test("timestamp() adds to console history", {
    
    remote$consoleExecuteExpr(timestamp(quiet = TRUE))
    remote$keyboardExecute("<Up>")

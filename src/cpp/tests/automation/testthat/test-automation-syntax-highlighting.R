@@ -5,7 +5,7 @@ self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
 
-test_that("Quarto Documents are highlighted as expected", {
+.rs.test("Quarto Documents are highlighted as expected", {
    
    documentContents <- .rs.heredoc('
       ---
@@ -29,7 +29,7 @@ test_that("Quarto Documents are highlighted as expected", {
 })
 
 # https://github.com/rstudio/rstudio/issues/14652
-test_that("Quarto callout divs are tokenized correctly", {
+.rs.test("Quarto callout divs are tokenized correctly", {
    
    documentContents <- .rs.heredoc('
       ::: {.callout 0}
@@ -66,7 +66,7 @@ test_that("Quarto callout divs are tokenized correctly", {
 })
 
 # https://github.com/rstudio/rstudio/issues/14699
-test_that("Quarto chunks receive chunk begin / end markers as expected", {
+.rs.test("Quarto chunks receive chunk begin / end markers as expected", {
    
    documentContents <- .rs.heredoc('
       ---
@@ -89,7 +89,7 @@ test_that("Quarto chunks receive chunk begin / end markers as expected", {
 })
 
 # https://github.com/rstudio/rstudio/issues/14592
-test_that("The sequence '# |' is not tokenized as a Quarto comment prefix", {
+.rs.test("The sequence '# |' is not tokenized as a Quarto comment prefix", {
   
    documentContents <- .rs.heredoc('
       #|  yaml: true
@@ -117,7 +117,7 @@ test_that("The sequence '# |' is not tokenized as a Quarto comment prefix", {
 })
 
 # https://github.com/rstudio/rstudio/issues/15019
-test_that("tikz chunks are properly highlighted", {
+.rs.test("tikz chunks are properly highlighted", {
    
    documentContents <- .rs.heredoc('
       ---
@@ -153,7 +153,7 @@ test_that("tikz chunks are properly highlighted", {
 })
 
 # https://github.com/rstudio/rstudio/issues/12161
-test_that("nested GitHub chunks are highlighted appropriately", {
+.rs.test("nested GitHub chunks are highlighted appropriately", {
    
    contents <- .rs.heredoc('
       ---

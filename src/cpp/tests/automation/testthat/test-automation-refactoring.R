@@ -5,7 +5,7 @@ self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
 # https://github.com/rstudio/rstudio/issues/4961
-test_that("rename in scope operates across chunks", {
+.rs.test("rename in scope operates across chunks", {
    
    contents <- .rs.heredoc('
       ---

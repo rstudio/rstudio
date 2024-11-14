@@ -6,14 +6,14 @@ withr::defer(.rs.automation.deleteRemote())
 
 
 # https://github.com/rstudio/rstudio/pull/14657
-test_that("we can use the data viewer with temporary R expressions", {
+.rs.test("we can use the data viewer with temporary R expressions", {
    remote$consoleExecute("View(subset(mtcars, mpg >= 30))")
    viewerFrame <- remote$jsObjectViaSelector("#rstudio_data_viewer_frame")
    expect_true(grepl("gridviewer.html", viewerFrame$src))
    remote$commandExecute("closeSourceDoc")
 })
 
-test_that("viewer filters function as expected", {
+.rs.test("viewer filters function as expected", {
    
    # Start viewing a data.frame with a list column.
    remote$consoleExecuteExpr({

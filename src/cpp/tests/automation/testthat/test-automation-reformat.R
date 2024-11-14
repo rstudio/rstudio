@@ -5,7 +5,7 @@ self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
 
-test_that("Documents can be reformatted on save", {
+.rs.test("Documents can be reformatted on save", {
    
    remote$consoleExecute(".rs.writeUserPref(\"reformat_on_save\", TRUE)")
    remote$consoleExecute(".rs.writeUserPref(\"code_formatter\", \"styler\")")

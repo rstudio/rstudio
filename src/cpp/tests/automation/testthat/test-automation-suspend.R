@@ -4,7 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
-test_that("loaded packages are preserved on suspend + resume", {
+.rs.test("loaded packages are preserved on suspend + resume", {
    
    remote$commandExecute("consoleClear")
    remote$consoleExecuteExpr({
@@ -40,7 +40,7 @@ test_that("loaded packages are preserved on suspend + resume", {
    
 })
 
-test_that("attached datasets are preserved on suspend + resume", {
+.rs.test("attached datasets are preserved on suspend + resume", {
    
    remote$consoleExecuteExpr({
       data <- list(apple = 1, banana = 2, cherry = 3)

@@ -26,7 +26,7 @@
 .rs.defineVar("automation.remote", new.env(parent = emptyenv()))
 .rs.defineVar("automation.remoteInstance", NULL)
 
-.rs.addFunction("automation.runTest", function(desc, code)
+.rs.addFunction("test", function(desc, code)
 {
    # Check test markers.
    currentMarkers <- .rs.getVar("automation.currentMarkers")
@@ -60,11 +60,6 @@
    assign("self", .rs.automation.remote, envir = .rs.automation.remotePrivateEnv)
    .rs.setVar("automation.remoteInstance", .rs.automation.remote)
    remote <- .rs.automation.remoteInstance
-   
-   # Load testthat, and provide a 'test_that' override which automatically cleans
-   # up various state when a test is run.
-   library(testthat)
-   assign("test_that", .rs.automation.runTest, envir = globalenv())
    
    # Return the remote instance.
    remote

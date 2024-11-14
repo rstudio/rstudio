@@ -4,7 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
-test_that("the warn option is preserved when running chunks", {
+.rs.test("the warn option is preserved when running chunks", {
    
    contents <- .rs.heredoc('
       ---
@@ -35,7 +35,7 @@ test_that("the warn option is preserved when running chunks", {
    
 })
 
-test_that("the expected chunk widgets show for multiple chunks", {
+.rs.test("the expected chunk widgets show for multiple chunks", {
 
    contents <- .rs.heredoc('
       ---
@@ -90,7 +90,7 @@ test_that("the expected chunk widgets show for multiple chunks", {
    
 })
 
-test_that("can cancel switching to visual editor", {
+.rs.test("can cancel switching to visual editor", {
    
    contents <- .rs.heredoc('
       ---
@@ -131,7 +131,7 @@ test_that("can cancel switching to visual editor", {
    
 })
 
-test_that("can switch to visual editor and back to source editor", {
+.rs.test("can switch to visual editor and back to source editor", {
    
    contents <- .rs.heredoc('
       ---
@@ -187,7 +187,7 @@ test_that("can switch to visual editor and back to source editor", {
    
 })
 
-test_that("visual editor welcome dialog displays again if don't show again is unchecked", {
+.rs.test("visual editor welcome dialog displays again if don't show again is unchecked", {
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -240,7 +240,7 @@ test_that("visual editor welcome dialog displays again if don't show again is un
 
 })
 
-test_that("displaying and closing chunk options popup doesn't modify settings", {
+.rs.test("displaying and closing chunk options popup doesn't modify settings", {
    
    contents <- .rs.heredoc('
       ---
@@ -287,7 +287,7 @@ test_that("displaying and closing chunk options popup doesn't modify settings", 
    
 })
 
-test_that("displaying chunk options popup and applying without making changes doesn't modify settings", {
+.rs.test("displaying chunk options popup and applying without making changes doesn't modify settings", {
    
    contents <- .rs.heredoc('
       ---
@@ -339,7 +339,7 @@ test_that("displaying chunk options popup and applying without making changes do
 })
 
 
-test_that("reverting chunk option changes restores original options ", {
+.rs.test("reverting chunk option changes restores original options ", {
    
    contents <- .rs.heredoc('
       ---
@@ -386,7 +386,7 @@ test_that("reverting chunk option changes restores original options ", {
 })
 
 # https://github.com/rstudio/rstudio/issues/6829
-test_that("modifying chunk options via UI doesn't mess up other options", {
+.rs.test("modifying chunk options via UI doesn't mess up other options", {
    
    contents <- .rs.heredoc('
       ---
@@ -412,7 +412,7 @@ test_that("modifying chunk options via UI doesn't mess up other options", {
 
 })
 
-test_that("setup chunk starting with no options works with chunk options UI", {
+.rs.test("setup chunk starting with no options works with chunk options UI", {
    contents <- .rs.heredoc('
       ---
       title: "Chunk widgets"
@@ -450,7 +450,7 @@ test_that("setup chunk starting with no options works with chunk options UI", {
 
 })
 
-test_that("setup chunk with three options displays on multiple lines", {
+.rs.test("setup chunk with three options displays on multiple lines", {
    contents <- .rs.heredoc('
       ---
       title: "Chunk widgets"
