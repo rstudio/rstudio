@@ -507,7 +507,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
          prompt = consolify(prompt);
 
       prompt_.getElement().setInnerText(prompt);
-      prompt_.getElement().removeClassName("rstudio-console-busy");
       ensureInputVisible();
 
       // Deal gracefully with multi-line prompts
