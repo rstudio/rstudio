@@ -4,7 +4,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
-test_that("whitespace is trimmed on save appropriately", {
+.rs.test("whitespace is trimmed on save appropriately", {
    
    # strip trailing whitespace in this scope
    remote$consoleExecuteExpr({

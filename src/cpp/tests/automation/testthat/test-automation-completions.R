@@ -6,7 +6,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 
 # https://github.com/rstudio/rstudio/issues/14784
-test_that("autocompletion doesn't trigger active bindings", {
+.rs.test("autocompletion doesn't trigger active bindings", {
    
    code <- .rs.heredoc('
       Test <- R6::R6Class("Test",
@@ -29,7 +29,7 @@ test_that("autocompletion doesn't trigger active bindings", {
    
 })
 
-test_that("autocompletion in console produces the expected completion list for new variables", {
+.rs.test("autocompletion in console produces the expected completion list for new variables", {
    
    remote$consoleExecute('
       foobar <- 42
@@ -42,7 +42,7 @@ test_that("autocompletion in console produces the expected completion list for n
 })
 
 # https://github.com/rstudio/rstudio/issues/13196
-test_that("autocompletion in console produces the expected completion list in an existing base function", {
+.rs.test("autocompletion in console produces the expected completion list in an existing base function", {
    
    completions <- remote$completionsRequest("cat(")
    expect_equal(completions, c("... =", "file =", "sep =", "fill =", "labels =", "append ="))
@@ -50,7 +50,7 @@ test_that("autocompletion in console produces the expected completion list in an
 })
 
 # https://github.com/rstudio/rstudio/issues/13196
-test_that("autocompletion in console produces the expected completion list in an existing non-base function", {
+.rs.test("autocompletion in console produces the expected completion list in an existing non-base function", {
    
    completions <- remote$completionsRequest("stats::rnorm(")
    expect_equal(completions, c("n =", "mean =", "sd ="))
@@ -58,7 +58,7 @@ test_that("autocompletion in console produces the expected completion list in an
 })
 
 # https://github.com/rstudio/rstudio/issues/13196
-test_that("autocompletion in console produces the expected completion list when using a new function", {
+.rs.test("autocompletion in console produces the expected completion list when using a new function", {
    
    # Define a function accepting some parameters.
    remote$keyboardExecute("a <- function(x, y, z) { print(x + y) }", "<Enter>")
@@ -70,7 +70,7 @@ test_that("autocompletion in console produces the expected completion list when 
 })
 
 # https://github.com/rstudio/rstudio/issues/13291
-test_that("list names are provided as completions following '$'", {
+.rs.test("list names are provided as completions following '$'", {
    
    code <- .rs.heredoc('
       test_df <- data.frame(
@@ -93,7 +93,7 @@ test_that("list names are provided as completions following '$'", {
 })
 
 # https://github.com/rstudio/rstudio/issues/12678
-test_that("autocompletion in console shows local variables first.", {
+.rs.test("autocompletion in console shows local variables first.", {
    
    code <- .rs.heredoc('
       library(dplyr)
@@ -108,7 +108,7 @@ test_that("autocompletion in console shows local variables first.", {
 })
 
 # https://github.com/rstudio/rstudio/issues/13611
-test_that("autocompletions within piped expressions work at start of document", {
+.rs.test("autocompletions within piped expressions work at start of document", {
    
    code <- .rs.heredoc('
       
@@ -125,7 +125,7 @@ test_that("autocompletions within piped expressions work at start of document", 
 })
 
 # https://github.com/rstudio/rstudio/issues/15115
-test_that(".DollarNames completions still produce types", {
+.rs.test(".DollarNames completions still produce types", {
    
    remote$consoleExecuteExpr({
    
@@ -154,7 +154,7 @@ test_that(".DollarNames completions still produce types", {
 })
 
 # https://github.com/rstudio/rstudio/issues/15046
-test_that("Tab keypresses indent multi-line selections", {
+.rs.test("Tab keypresses indent multi-line selections", {
    
    contents <- .rs.heredoc('
       ---
@@ -177,7 +177,7 @@ test_that("Tab keypresses indent multi-line selections", {
 })
 
 # https://github.com/rstudio/rstudio/issues/13065
-test_that("code_completion_include_already_used works as expected", {
+.rs.test("code_completion_include_already_used works as expected", {
    
    contents <- .rs.heredoc('
       mtcars |> write()
@@ -206,7 +206,7 @@ test_that("code_completion_include_already_used works as expected", {
 })
 
 # https://github.com/rstudio/rstudio/issues/15161
-test_that("dplyr piped variable names are properly quoted / unquoted", {
+.rs.test("dplyr piped variable names are properly quoted / unquoted", {
    
    contents <- .rs.heredoc('
       library(dplyr)
@@ -223,7 +223,7 @@ test_that("dplyr piped variable names are properly quoted / unquoted", {
 })
 
 # https://github.com/rstudio/rstudio/issues/13290
-test_that("column names are quoted appropriately", {
+.rs.test("column names are quoted appropriately", {
    
    remote$consoleExecuteExpr({
       data <- list(apple = "apple", "2024" = "2024")

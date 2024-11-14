@@ -5,7 +5,7 @@ self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
 
-test_that("Braces are inserted and highlighted correctly in Sweave documents", {
+.rs.test("Braces are inserted and highlighted correctly in Sweave documents", {
    
    documentContents <- .rs.heredoc('
       This is a Sweave document.

@@ -6,7 +6,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 
 # https://github.com/rstudio/rstudio/issues/15072
-test_that("the debug position is correct in braced expressions", {
+.rs.test("the debug position is correct in braced expressions", {
 
    contents <- .rs.heredoc('
       f <- function() {
@@ -59,7 +59,7 @@ test_that("the debug position is correct in braced expressions", {
 })
 
 # https://github.com/rstudio/rstudio/issues/15201
-test_that("package functions can be debugged after build and reload", {
+.rs.test("package functions can be debugged after build and reload", {
    
    # Create an R package project.
    projectPath <- tempfile("rstudio.automation.", tmpdir = dirname(tempdir()))
