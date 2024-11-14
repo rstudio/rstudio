@@ -132,13 +132,13 @@
    self$keyboardExecute("<Ctrl + 2>", "<Escape>", "<Ctrl + A>", "<Backspace>", "<Ctrl + L>")
 })
 
-.rs.automation.addRemoteFunction("consoleExecuteExpr", function(expr)
+.rs.automation.addRemoteFunction("consoleExecuteExpr", function(expr, wait = TRUE)
 {
    code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
-   self$consoleExecute(code)
+   self$consoleExecute(code, wait)
 })
 
-.rs.automation.addRemoteFunction("consoleExecute", function(code)
+.rs.automation.addRemoteFunction("consoleExecute", function(code, wait = TRUE)
 {
    # Make sure the Console pane is focused.
    document <- self$client$DOM.getDocument()
@@ -154,13 +154,18 @@
    # Send an Enter key to force execution.
    self$client$Input.dispatchKeyEvent(type = "rawKeyDown", windowsVirtualKeyCode = 13L)
    
-   # Wait until the code has finished execution.
-   Sys.sleep(0.1)
-   editorEl <- self$jsObjectViaSelector("#rstudio_console_input")
-   .rs.waitUntil("console is no longer busy", function()
+   # If requested, wait until the code has finished execution.
+   if (wait)
    {
-      !grepl("rstudio-console-busy", editorEl$className)
-   })
+      Sys.sleep(0.1)
+      editorEl <- self$jsObjectViaSelector("#rstudio_console_input")
+      .rs.waitUntil("console is no longer busy", function()
+      {
+         !grepl("rstudio-console-busy", editorEl$className)
+      })
+   }
+   
+   invisible(TRUE)
    
 })
 
@@ -447,7 +452,7 @@
          projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
          usethis::create_package(path = projectPath, open = FALSE)
          .rs.api.openProject(projectPath)
-      })
+      }, wait = FALSE)
    }
    else
    {
@@ -519,10 +524,8 @@
    # Close any open documents.
    self$consoleExecuteExpr({
       .rs.api.closeAllSourceBuffersWithoutSaving()
-   })
-   
-   # Remove any existing R objects.
-   self$consoleExecuteExpr(rm(list = ls()))
+      rm(list = ls())
+   }, wait = FALSE)
    
    # Clear the console.
    self$keyboardExecute("<Ctrl + L>")
