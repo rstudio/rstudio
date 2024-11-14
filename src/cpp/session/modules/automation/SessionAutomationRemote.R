@@ -28,15 +28,27 @@
 
 .rs.addFunction("automation.runTest", function(desc, code)
 {
-   on.exit(.rs.automation.remoteInstance$sessionReset(), add = TRUE)
+   # Check test markers.
+   currentMarkers <- .rs.getVar("automation.currentMarkers")
+   requestedMarkers <- .rs.getVar("automation.requestedMarkers")
+   .rs.setVar("automation.currentMarkers", NULL)
    
-   withCallingHandlers(
-      testthat::test_that(desc, code),
-      error = function(cnd) {
+   if (length(requestedMarkers))
+   {
+      matches <- intersect(currentMarkers, requestedMarkers)
+      if (length(matches) == 0L)
+      {
          if (interactive())
-            browser()
+            message("[i] Skipping test (does not have any matching markers).")
+         return(invisible(NULL))
       }
-   )
+   }
+   
+   # Reset the session before running this test.
+   .rs.automation.remoteInstance$sessionReset()
+   
+   # Now, run the test.
+   testthat::test_that(desc, code)
 })
 
 .rs.addFunction("automation.newRemote", function(mode = NULL)
@@ -496,12 +508,19 @@
    # Clear any popups that might be visible.
    self$keyboardExecute("<Escape>")
    
-   # Clear any text that might be set.
+   # Clear any text that might be set in the console.
+   self$commandExecute("activateConsole")
    self$keyboardExecute("<Command + A>", "<Backspace>")
    
+   # Close any open documents.
+   self$consoleExecuteExpr({
+      .rs.api.closeAllSourceBuffersWithoutSaving()
+   })
+   
    # Remove any existing R objects.
-   self$commandExecute("closeAllSourceDocs")
    self$consoleExecuteExpr(rm(list = ls()))
+   
+   # Clear the console.
    self$keyboardExecute("<Ctrl + L>")
 })
 

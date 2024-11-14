@@ -26,6 +26,15 @@
 # Global variable for tracking the active automation agent.
 .rs.setVar("automation.agentProcess", NULL)
 
+# Which markers are set for the currently-running test?
+.rs.setVar("automation.currentMarkers", NULL)
+
+# Which markers were requested for this test session?
+.rs.setVar("automation.requestedMarkers", {
+   markers <- Sys.getenv("RSTUDIO_AUTOMATION_MARKERS", unset = "")
+   strsplit(markers, " ", fixed = TRUE)[[1L]]
+})
+
 .rs.addFunction("automation.httrGet", function(url)
 {
    httr::GET(url, config = httr::timeout(1))
@@ -651,8 +660,10 @@
    writeLines(c("", "==> Running RStudio automation tests...", ""))
    
    # Run tests.
+   filter <- Sys.getenv("RSTUDIO_AUTOMATION_FILTER", unset = NA)
    testthat::test_dir(
       path = "testthat",
+      filter = if (!is.na(filter)) filter,
       reporter = multiReporter,
       stop_on_failure = FALSE,
       stop_on_warning = FALSE
@@ -789,4 +800,9 @@
 {
    object <- client$socket$.__enclos_env__$private$wsObj
    !.rs.isNullExternalPointer(object)
+})
+
+.rs.addFunction("markers", function(...)
+{
+   .rs.setVar("automation.currentMarkers", as.character(list(...)))
 })

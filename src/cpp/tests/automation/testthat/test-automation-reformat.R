@@ -19,6 +19,5 @@ test_that("Documents can be reformatted on save", {
    Sys.sleep(1)
    contents <- editor$session$doc$getValue()
    expect_equal(contents, "1 + 1\n2 + 2\n")
-   remote$documentClose()
    
 })

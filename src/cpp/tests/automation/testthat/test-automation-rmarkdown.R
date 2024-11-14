@@ -32,8 +32,6 @@ test_that("the warn option is preserved when running chunks", {
    output <- remote$consoleOutput()
    expect_equal(tail(output, n = 1L), "[1] 2")
    
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
    
 })
 
@@ -90,8 +88,6 @@ test_that("the expected chunk widgets show for multiple chunks", {
    lapply(jsChunkOptionWidgets, checkWidgetVisible)
    lapply(jsChunkRunWidgets, checkWidgetVisible)
    
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 test_that("can cancel switching to visual editor", {
@@ -133,8 +129,6 @@ test_that("can cancel switching to visual editor", {
       expect_equal(visualModeToggle$ariaPressed, "false")
    }
    
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 test_that("can switch to visual editor and back to source editor", {
@@ -191,8 +185,6 @@ test_that("can switch to visual editor and back to source editor", {
       remote$domClickElement(".rstudio_visual_md_off")
    }
    
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 test_that("visual editor welcome dialog displays again if don't show again is unchecked", {
@@ -245,9 +237,7 @@ test_that("visual editor welcome dialog displays again if don't show again is un
       # back to source mode
       remote$domClickElement(".rstudio_visual_md_off")
    }
-   
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
+
 })
 
 test_that("displaying and closing chunk options popup doesn't modify settings", {
@@ -295,8 +285,6 @@ test_that("displaying and closing chunk options popup doesn't modify settings", 
       "```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}",
       chunkOptionWidgetIds[[1]])
    
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 test_that("displaying chunk options popup and applying without making changes doesn't modify settings", {
@@ -348,8 +336,6 @@ test_that("displaying chunk options popup and applying without making changes do
    chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
    checkChunkOption(12, "```{r fig.cap=\"a caption\"}", chunkOptionWidgetIds[[3]])
    
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 })
 
 
@@ -396,9 +382,6 @@ test_that("reverting chunk option changes restores original options ", {
    checkChunkOption(8, chunkOptionWidgetIds[[2]])
    chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
    checkChunkOption(4, chunkOptionWidgetIds[[1]])
-   
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
 
 })
 
@@ -426,8 +409,7 @@ test_that("modifying chunk options via UI doesn't mess up other options", {
    remote$domClickElement("#rstudio_chunk_opt_messages")
    remote$keyboardExecute("<Escape>")
    expect_equal('```{r fig.cap="a caption", message=TRUE, warning=TRUE}', editor$session$getLine(4))
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
+
 })
 
 test_that("setup chunk starting with no options works with chunk options UI", {
@@ -465,9 +447,7 @@ test_that("setup chunk starting with no options works with chunk options UI", {
    remote$keyboardExecute("<Escape>")
    expect_equal('```{r setup, include=FALSE}', editor$session$getLine(4))
    expect_equal('```', editor$session$getLine(5))
-   
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
+
 })
 
 test_that("setup chunk with three options displays on multiple lines", {
@@ -497,8 +477,6 @@ test_that("setup chunk with three options displays on multiple lines", {
    expect_equal('\twarning = TRUE,', editor$session$getLine(8))
    expect_equal('\tinclude = FALSE', editor$session$getLine(9))
    expect_equal(')', editor$session$getLine(10))
-   
-   remote$documentClose()
-   remote$keyboardExecute("<Ctrl + L>")
+
 })
 
