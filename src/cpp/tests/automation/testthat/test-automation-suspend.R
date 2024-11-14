@@ -6,37 +6,22 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("loaded packages are preserved on suspend + resume", {
    
-   remote$commandExecute("consoleClear")
+   # Load the 'tools' package.
    remote$consoleExecuteExpr({
       library(tools)
-      writeLines(search())
    })
    
-   .rs.waitUntil("the tools package is loaded", function()
-   {
-      remote$keyboardExecute("<Enter>")
-      ".GlobalEnv" %in% remote$consoleOutput()
-   })
-   
-   beforeSuspend <- setdiff(remote$consoleOutput(), "local:rprofile")
-   expect_contains(beforeSuspend, "package:tools")
-   
+   # Suspend the session.
    remote$commandExecute("suspendSession")
-   remote$commandExecute("consoleClear")
+   Sys.sleep(1)
    
+   # Check and see if 'tools' was loaded on resume.
    remote$consoleExecuteExpr({
-      library(tools)
-      writeLines(search())
+      "tools" %in% loadedNamespaces()
    })
    
-   .rs.waitUntil("the tools package is loaded", function()
-   {
-      remote$keyboardExecute("<Enter>")
-      ".GlobalEnv" %in% remote$consoleOutput()
-   })
-   
-   afterSuspend <- setdiff(remote$consoleOutput(), "local:rprofile")
-   expect_contains(afterSuspend, "package:tools")
+   output <- remote$consoleOutput()
+   expect_contains(output, "[1] TRUE")
    
 })
 
@@ -48,15 +33,10 @@ withr::defer(.rs.automation.deleteRemote())
    })
    
    remote$commandExecute("suspendSession")
+   Sys.sleep(1)
    
    remote$consoleExecuteExpr({
       writeLines(search())
-   })
-   
-   .rs.waitUntil("the session has been restored", function()
-   {
-      remote$keyboardExecute("<Enter>")
-      ".GlobalEnv" %in% remote$consoleOutput()
    })
    
    output <- remote$consoleOutput()
@@ -65,5 +45,9 @@ withr::defer(.rs.automation.deleteRemote())
    remote$consoleExecuteExpr(apple + banana + cherry)
    output <- remote$consoleOutput()
    expect_true("[1] 6" %in% output)
+   
+   remote$consoleExecuteExpr({
+      detach("my-attached-dataset")
+   })
    
 })
