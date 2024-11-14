@@ -604,7 +604,6 @@ export class SessionLauncher {
       }
 
       // set up environment variables to help find automation tests
-      setenv('RSTUDIO_AUTOMATION_EXE', process.argv0);
       if (!app.isPackaged) {
         const projectRoot = findRepoRoot();
         setenv('RSTUDIO_AUTOMATION_ROOT', projectRoot);
