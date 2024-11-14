@@ -28,6 +28,20 @@
             "implicitValue": true,
             "isHidden": true,
             "description": "Run RStudio's built-in automation tests. Requires a Google Chrome installation."
+         },
+         {
+            "name": "automation-filter",
+            "memberName": "automationFilter_",
+            "type": "string",
+            "description": "A regular expression (ERE), indicating which automation test file(s) should be run.",
+            "isHidden": true
+         },
+         {
+            "name": "automation-markers",
+            "memberName": "automationMarkers_",
+            "type": "string",
+            "description": "One or more test markers, indicating which tests should be run. Markers can be separated by spaces.",
+            "isHidden": true
          }
       ],
       "verify": [

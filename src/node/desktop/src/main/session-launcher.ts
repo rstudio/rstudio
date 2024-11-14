@@ -592,6 +592,17 @@ export class SessionLauncher {
       }
       argList.push(`--automation-report-file=${reportFile}`);
 
+      // forward filters, markers if specified
+      if (app.commandLine.hasSwitch('automation-filter')) {
+        const filter = app.commandLine.getSwitchValue('automation-filter');
+        setenv('RSTUDIO_AUTOMATION_FILTER', filter);
+      }
+
+      if (app.commandLine.hasSwitch('automation-markers')) {
+        const markers = app.commandLine.getSwitchValue('automation-markers');
+        setenv('RSTUDIO_AUTOMATION_MARKERS', markers);
+      }
+
       // set up environment variables to help find automation tests
       setenv('RSTUDIO_AUTOMATION_EXE', process.argv0);
       if (!app.isPackaged) {

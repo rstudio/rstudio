@@ -240,6 +240,15 @@ core::system::ProcessConfig sessionProcessConfig(
       std::string projectRoot = core::system::getenv("RSTUDIO_PROJECT_ROOT");
       if (!projectRoot.empty())
          environment.push_back({ "RSTUDIO_AUTOMATION_ROOT", projectRoot });
+      
+      // forward filter and markers if available
+      std::string filter = server::options().automationFilter();
+      if (!filter.empty())
+         environment.push_back({ "RSTUDIO_AUTOMATION_FILTER", filter });
+      
+      std::string markers = server::options().automationMarkers();
+      if (!markers.empty())
+         environment.push_back({ "RSTUDIO_AUTOMATION_MARKERS", markers });
    }
 
    // build the config object and return it

@@ -49,7 +49,6 @@
    
    # Now, run the test.
    testthat::test_that(desc, code)
-   
 })
 
 .rs.addFunction("automation.newRemote", function(mode = NULL)

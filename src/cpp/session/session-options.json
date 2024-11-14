@@ -40,10 +40,10 @@
          },
          {
             "name": "automation-report-file",
-            "isHidden": true,
             "memberName": "automationReportFile_",
             "type": "core::FilePath",
-            "description": "The file where automation test results should be written."
+            "description": "The file where automation test results should be written.",
+            "isHidden": true
          }
       ],
       "tests": [
