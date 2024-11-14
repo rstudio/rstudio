@@ -411,8 +411,7 @@
    
    # No existing session; start a new one and attach to it.
    appPath <- .rs.nullCoalesce(appPath, {
-      defaultAppPath <- .rs.automation.applicationPath(mode)
-      Sys.getenv("RSTUDIO_AUTOMATION_EXE", unset = defaultAppPath)
+      .rs.automation.applicationPath(mode)
    })
    
    # Build argument list.
