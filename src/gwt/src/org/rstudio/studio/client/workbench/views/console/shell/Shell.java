@@ -330,6 +330,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onConsoleInput(final ConsoleInputEvent event)
    {
+      view_.setBusy(true);
       view_.clearLiveRegion();
       server_.consoleInput(event.getInput(),
                            event.getConsole(),
@@ -398,6 +399,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    // so not explicitly entered by the user)
    private void consolePrompt(String prompt, boolean addToHistory)
    {
+      view_.setBusy(false);
       view_.consolePrompt(prompt, true);
 
       if (lastPromptText_ == null
@@ -489,7 +491,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       final String previousInput = StringUtil.notNull(display.getText());
 
       // define code block we execute at finish
-      Command finishSendToConsole = new Command() {
+      Command finishSendToConsole = new Command()
+      {
          @Override
          public void execute()
          {
@@ -497,7 +500,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
             {
                String commandText = event.shouldEcho() ? view_.processCommandEntry() : event.getCode();
                processCommandEntry(commandText, event.shouldEcho());
-
                display.setText(previousInput);
             }
 

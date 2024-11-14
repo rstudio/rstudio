@@ -43,6 +43,7 @@ public interface ShellDisplay extends ShellOutputWriter,
    boolean isPromptEmpty();
    String getPromptText();
    
+   void setBusy(boolean busy);
    void setReadOnly(boolean readOnly);
    void setSuppressPendingInput(boolean suppressPendingInput);
 
