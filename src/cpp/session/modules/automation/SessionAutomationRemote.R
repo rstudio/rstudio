@@ -153,6 +153,15 @@
    
    # Send an Enter key to force execution.
    self$client$Input.dispatchKeyEvent(type = "rawKeyDown", windowsVirtualKeyCode = 13L)
+   
+   # Wait until the code has finished execution.
+   Sys.sleep(0.1)
+   editorEl <- self$jsObjectViaSelector("#rstudio_console_input")
+   .rs.waitUntil("console is no longer busy", function()
+   {
+      !grepl("rstudio-console-busy", editorEl$className)
+   })
+   
 })
 
 .rs.automation.addRemoteFunction("consoleOutput", function()

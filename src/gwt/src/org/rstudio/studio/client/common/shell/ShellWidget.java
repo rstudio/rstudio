@@ -372,6 +372,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // moves to it scrolling ensues.
       input_.forceCursorChange();
    }
+   
+   @Override
+   public void setBusy(boolean busy)
+   {
+      Element el = input_.getWidget().getElement();
+      if (busy)
+      {
+         el.addClassName(RSTUDIO_CONSOLE_BUSY);
+      }
+      else
+      {
+         el.removeClassName(RSTUDIO_CONSOLE_BUSY);
+      }
+   }
 
    @Override
    public void setSuppressPendingInput(boolean suppressPendingInput)
@@ -493,6 +507,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          prompt = consolify(prompt);
 
       prompt_.getElement().setInnerText(prompt);
+      prompt_.getElement().removeClassName("rstudio-console-busy");
       ensureInputVisible();
 
       // Deal gracefully with multi-line prompts
@@ -1104,4 +1119,5 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
+   private static final String RSTUDIO_CONSOLE_BUSY = "rstudio-console-busy";
 }
