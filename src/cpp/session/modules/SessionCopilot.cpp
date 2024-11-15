@@ -246,6 +246,10 @@ bool s_isSessionShuttingDown = false;
 // Project-specific Copilot options.
 projects::RProjectCopilotOptions s_copilotProjectOptions;
 
+// A queue of pending files to be indexed.
+std::vector<FileInfo> s_indexQueue;
+std::size_t s_indexBatchSize = 200;
+
 bool isIndexableFile(const FilePath& documentPath)
 {
    // Don't index hidden files.
@@ -266,14 +270,12 @@ bool isIndexableFile(const FilePath& documentPath)
    std::string ext = documentPath.getExtensionLowerCase();
    if (ext == ".rproj")
       return false;
-   
-   // Don't index binary files.
-   // Perform this check last as it can be expensive; we use the 'file'
-   // utility to determine if a file is a text file as a fallback.
-   if (!module_context::isTextFile(documentPath))
-      return false;
-   
-   return true;
+ 
+   // TODO: Do we want to also allow indexing of 'data' file types?
+   // We previously used module_context::isTextFile(), but because this
+   // relies on invoking /usr/bin/file, this can be dreadfully slow if
+   // the project contains a large number of files without a known type.
+   return s_extToLanguageIdMap.count(ext);
 }
 
 bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
@@ -1152,6 +1154,67 @@ std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocume
    return contents;
 }
 
+namespace file_monitor {
+
+namespace {
+
+void indexFile(const core::FileInfo& info)
+{
+   // Don't index overly-large files
+   if (info.size() >= kMaxIndexingFileSize)
+      return;
+   
+   // Verify this file has an indexable type
+   FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
+   if (!isIndexableFile(documentPath))
+      return;
+   
+   std::string languageId;
+   std::string ext = documentPath.getExtensionLowerCase();
+   if (s_extToLanguageIdMap.count(ext))
+      languageId = s_extToLanguageIdMap[ext];
+      
+   std::string contents;
+   Error error = core::readStringFromFile(documentPath, &contents);
+   if (error)
+      return;
+   
+   DLOG("Indexing document: {}", info.absolutePath());
+   
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
+   textDocumentJson["text"] = contents;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didOpen", paramsJson);
+}
+
+} // end anonymous namespace
+
+void onMonitoringEnabled(const tree<core::FileInfo>& tree)
+{
+   if (s_copilotIndexingEnabled)
+      for (auto&& file : tree)
+         s_indexQueue.push_back(file);
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (s_copilotIndexingEnabled)
+      for (auto&& event : events)
+         s_indexQueue.push_back(event.fileInfo());
+}
+
+void onMonitoringDisabled()
+{
+}
+
+} // end namespace file_monitor
+
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
@@ -1261,68 +1324,33 @@ void onBackgroundProcessing(bool isIdle)
          WLOG("Received response with id '{}', but no continuation is registered for that response.", requestId);
       }
    }
-}
-
-namespace file_monitor {
-
-namespace {
-
-void indexFile(const core::FileInfo& info)
-{
-   // Don't index overly-large files
-   if (info.size() >= kMaxIndexingFileSize)
-      return;
    
-   // Verify this file has an indexable type
-   FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
-   if (!isIndexableFile(documentPath))
-      return;
+   // index files in the queue (maximum 1 second)
+   if (isIdle && !s_indexQueue.empty())
+   {
+      auto start = boost::chrono::steady_clock::now();
+      while (true)
+      {
+         // check for finished
+         auto now = boost::chrono::steady_clock::now();
+         auto elapsed = boost::chrono::duration_cast<boost::chrono::seconds>(now - start);
+         if (elapsed.count() > 0)
+            break;
+
+         // run on batch of files
+         auto n = std::min(s_indexQueue.size(), std::size_t(s_indexBatchSize));
+         for (std::size_t i = 0; i < n; i++)
+            file_monitor::indexFile(s_indexQueue[i]);
+
+         // remove those files
+         s_indexQueue.erase(s_indexQueue.begin(), s_indexQueue.begin() + n);
+         if (s_indexQueue.empty())
+            break;
+      }
+   }
    
-   std::string languageId;
-   std::string ext = documentPath.getExtensionLowerCase();
-   if (s_extToLanguageIdMap.count(ext))
-      languageId = s_extToLanguageIdMap[ext];
-      
-   std::string contents;
-   Error error = core::readStringFromFile(documentPath, &contents);
-   if (error)
-      return;
-   
-   DLOG("Indexing document: {}", info.absolutePath());
-   
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
-   textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
-   textDocumentJson["text"] = contents;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didOpen", paramsJson);
 }
 
-} // end anonymous namespace
-
-void onMonitoringEnabled(const tree<core::FileInfo>& tree)
-{
-   if (s_copilotIndexingEnabled)
-      for (auto&& file : tree)
-         indexFile(file);
-}
-
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
-{
-   if (s_copilotIndexingEnabled)
-      for (auto&& event : events)
-         indexFile(event.fileInfo());
-}
-
-void onMonitoringDisabled()
-{
-}
-
-} // end namespace file_monitor
 
 bool subscribeToFileMonitor()
 {
