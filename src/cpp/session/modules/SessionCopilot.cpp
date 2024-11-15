@@ -1325,18 +1325,12 @@ void onBackgroundProcessing(bool isIdle)
       }
    }
    
-   // index files in the queue (maximum 1 second)
+   // index files in the queue
    if (isIdle && !s_indexQueue.empty())
    {
       auto start = boost::chrono::steady_clock::now();
       while (true)
       {
-         // check for finished
-         auto now = boost::chrono::steady_clock::now();
-         auto elapsed = boost::chrono::duration_cast<boost::chrono::seconds>(now - start);
-         if (elapsed.count() > 0)
-            break;
-
          // run on batch of files
          auto n = std::min(s_indexQueue.size(), std::size_t(s_indexBatchSize));
          for (std::size_t i = 0; i < n; i++)
@@ -1345,6 +1339,12 @@ void onBackgroundProcessing(bool isIdle)
          // remove those files
          s_indexQueue.erase(s_indexQueue.begin(), s_indexQueue.begin() + n);
          if (s_indexQueue.empty())
+            break;
+         
+         // check for finished
+         auto now = boost::chrono::steady_clock::now();
+         auto elapsed = boost::chrono::duration_cast<boost::chrono::milliseconds>(now - start);
+         if (elapsed.count() >= 100)
             break;
       }
    }
