@@ -66,7 +66,7 @@ public:
       }
 
       if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier, request, pResponse))
-      {         
+      {
          pResponse->setError(http::status::Unauthorized, "Unauthorized - Maximum active session time exceeded");
          return;
       }
