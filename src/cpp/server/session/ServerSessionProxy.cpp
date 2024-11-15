@@ -1041,7 +1041,6 @@ void proxyRpcRequest(
       {
          // if the user is not authorized, we should return a 401
          // and not continue with the request
-         auth::common::clearSignInCookies(ptrConnection->request(), &ptrConnection->response());
          ptrConnection->response().setError(http::status::Unauthorized, "Unauthorized - Maximum active session time exceeded");
          ptrConnection->writeResponse();
          return;

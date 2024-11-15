@@ -66,8 +66,8 @@ public:
       }
 
       if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier, request, pResponse))
-      {
-         handler::signInThenContinue(request, pResponse);
+      {         
+         pResponse->setError(http::status::Unauthorized, "Unauthorized - Maximum active session time exceeded");
          return;
       }
 
@@ -206,7 +206,8 @@ private:
 
       if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response()))
       {
-         handler::signInThenContinue(pConnection->request(), &pConnection->response());
+         pConnection->response().setError(http::status::Unauthorized, "Unauthorized - Maximum active session time exceeded");
+         pConnection->writeResponse();
          return false;
       }
 
