@@ -39,6 +39,9 @@
 - Set Public Package Manager (P3M) as the default for R libraries in RStudio Pro sessions, if no other repository is specified. Package Manager will deliver pre-built binary packages when available, which are faster to install than source packages and don't require most additional build dependencies. (rstudio-pro#5066)
 - Added support for registering shell scripts as session hooks which can run when a session starts and stops. (rstudio-pro#6428)
 - Extended the workbench API adding support for launching jobs, resuming sessions, and retrieving user lists. Additionally support for passing in environment variables, session hooks, and a file to open on session load has been added to the launch session endpoint. (rstudio-pro#5066)
+- Added a `session-timeout-kill-hours` setting to VS Code and Positron sessions to be terminated after being idle for a set number of hours. (rstudio-pro#5746)
+- Added a countdown on the homepage for VS Code and Positron sessions to reflect the `session-timeout-kill-hours` setting and indicate when a session may be terminated if the user doesn't interact with it (rstudio-pro#6743)
+- The most recently opened folder is saved for Positron sessions (rstudio-pro#6874)
 
 
 ### Fixed
@@ -107,7 +110,7 @@ If running Workbench behind a proxy server, you may need to update your `NO_PROX
 
 ### Dependencies
 - Updated GWT to version 2.10.1 (#15011)
-- Updated Electron to version 31.7.4 (#14982; Desktop)
+- Updated Electron to version 31.7.5 (#14982; Desktop)
 
 ### Deprecated / Removed
 - Removed user preference for turning off focus indicator rectangles (#14352)
