@@ -94,6 +94,7 @@
 - Fixed an issue with Workbench login not respecting "Stay signed in when browser closes" when using Single Sign-On (rstudio-pro#5392)
 - Fixed several cross-reference links in the Posit Workbench Administration Guide and Posit Workbench User Guide - VS Code sections (#rstudio-pro#6678)
 - Fixed heading anchor ID issue in Posit Administration Guide - VS Code PWB Code Server section (#rstudio-pro#6961)
+- Fixed Slurm queue (partition) selection behavior in the launcher UI. **Slurm resource profiles that specify an invalid queue are now disabled in the UI!** (#rstudio-pro#7025)
 
 ### Upgrade Instructions
 
