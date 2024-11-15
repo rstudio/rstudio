@@ -378,7 +378,7 @@ void setSignInCookies(const core::http::Request& request,
    if (!loginExpiry)
    {
       int activeTimeout = safe_convert::stringTo<int>(
-         server::options().getOverlayOption("auth-timeout-minutes-active"),
+         server::options().getOverlayOption("auth-active-timeout-minutes"),
          0);
       if (activeTimeout > 0)
          loginExpiry = boost::posix_time::second_clock::universal_time() + boost::posix_time::minutes(activeTimeout);
