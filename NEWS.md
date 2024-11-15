@@ -29,6 +29,7 @@
 - Posit Workbench Administration Guide & User Guide and Posit Workbench Licenses guide now includes release version in navigation bar reference URLs. (rstudio-pro#6826)
 - Restrict Positron and VS Code sessions for insecure (non-SSL) contexts. These editors do not work properly otherwise. (rstudio-pro#3741)
 - Added support for HTTP Proxy variables in rserver and rsession to enable managed credentials features in Workbench environments behind a proxy server. (rstudio-pro#5893)
+- Added support for setting an active timeout, which logs out users after a period of time, regardless of activity. (rstudio-pro#5815)
 
 ### Fixed
 #### RStudio
