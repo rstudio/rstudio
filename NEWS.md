@@ -37,6 +37,10 @@
 - Restrict Positron and VS Code sessions for insecure (non-SSL) contexts. These editors do not work properly otherwise. (rstudio-pro#3741)
 - Added support for HTTP Proxy variables in rserver and rsession to enable managed credentials features in Workbench environments behind a proxy server. (rstudio-pro#5893)
 - Set Public Package Manager (P3M) as the default for R libraries in RStudio Pro sessions, if no other repository is specified. Package Manager will deliver pre-built binary packages when available, which are faster to install than source packages and don't require most additional build dependencies. (rstudio-pro#5066)
+- Added a `session-timeout-kill-hours` setting to VS Code and Positron sessions to be terminated after being idle for a set number of hours. (rstudio-pro#5746)
+- Added a countdown on the homepage for VS Code and Positron sessions to reflect the `session-timeout-kill-hours` setting and indicate when a session may be terminated if the user doesn't interact with it (rstudio-pro#6743)
+- The most recently opened folder is saved for Positron sessions (rstudio-pro#6874)
+
 
 ### Fixed
 #### RStudio
