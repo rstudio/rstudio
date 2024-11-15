@@ -1242,7 +1242,7 @@ bool refreshAuthCookies(const std::string& userIdentifier,
       std::string currentCookie = request.cookieValue(kUserIdCookie);
       if (!currentCookie.empty())
       {
-         LOG_DEBUG_MESSAGE("Refreshing auth: replacing old cookie: " + currentCookie);
+         LOG_DEBUG_MESSAGE("Refreshing auth uri: " + request.uri() + ": replacing old cookie: " + currentCookie);
       }
 
       std::string value;
@@ -1253,7 +1253,7 @@ bool refreshAuthCookies(const std::string& userIdentifier,
       if (loginExpiry && loginExpiry.get() >= now)
       {
          // The cookie has hit the active expiry, so we should not refresh it
-         LOG_DEBUG_MESSAGE("Not refreshing auth: cookie has expired: " + value);            
+         LOG_DEBUG_MESSAGE("Not refreshing auth: uri: " + request.uri() + ": cookie has expired: " + value);            
          return false;
       }
 
