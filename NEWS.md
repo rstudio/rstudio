@@ -38,8 +38,7 @@
 - Added support for HTTP Proxy variables in rserver and rsession to enable managed credentials features in Workbench environments behind a proxy server. (rstudio-pro#5893)
 - Set Public Package Manager (P3M) as the default for R libraries in RStudio Pro sessions, if no other repository is specified. Package Manager will deliver pre-built binary packages when available, which are faster to install than source packages and don't require most additional build dependencies. (rstudio-pro#5066)
 - Added support for registering shell scripts as session hooks which can run when a session starts and stops. (rstudio-pro#6428)
-- Extended the workbench API adding support for launching jobs, resuming sessions, and retrieving user lists. Additionally support for passing in environment variables, session hooks, and a file to open has been added to the 
-launch session endpoint. (rstudio-pro#5066)
+- Extended the workbench API adding support for launching jobs, resuming sessions, and retrieving user lists. Additionally support for passing in environment variables, session hooks, and a file to open on session load has been added to the launch session endpoint. (rstudio-pro#5066)
 
 
 ### Fixed
