@@ -19,3 +19,32 @@
    # no aria-hidden attribute is equivalent to FALSE
    ifelse(inherits(isAriaHidden, "error"), FALSE, as.logical(isAriaHidden))
 })
+
+.rs.addFunction("automation.tools.createTempFolder", function(remote)
+{
+   path <- tempfile("rstudio.automation.", tmpdir = dirname(tempdir()))
+   remote$consoleExecute(sprintf("dir.create('%s', recursive = TRUE, showWarnings = FALSE)", path))
+   path
+})
+
+.rs.addFunction("automation.tools.deleteFolder", function(remote, folder)
+{
+   remote$consoleExecute(sprintf("unlink('%s', recursive = TRUE)", folder))
+})
+
+.rs.addFunction("automation.tools.waitForProjectToOpen", function(remote, projectName)
+{
+   Sys.sleep(1)
+   .rs.waitUntil("The new project is opened", function()
+   {
+      tryCatch({
+         grepl(projectName, .rs.automation.tools.getProjectDropdownLabel(remote))
+      }, error = function(e) FALSE)
+   })
+})
+
+.rs.addFunction("automation.tools.getProjectDropdownLabel", function(remote)
+{
+   toolbarButton <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+   .rs.trimWhitespace(toolbarButton$innerText)
+})

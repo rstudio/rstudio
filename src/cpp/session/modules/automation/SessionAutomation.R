@@ -377,6 +377,7 @@
    config <- list(
       auto_save_on_idle = "none",
       continue_comments_on_newline = FALSE,
+      native_file_dialogs = FALSE,
       save_workspace = "never",
       windows_terminal_shell = "win-cmd"
    )

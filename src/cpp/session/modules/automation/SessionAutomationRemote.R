@@ -460,17 +460,9 @@
    }
    
    # Wait until the new project is open.
-   Sys.sleep(1)
-   .rs.waitUntil("The new project is opened", function()
-   {
-      tryCatch({
-         jsProjectMenuButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
-         grepl("rstudio", jsProjectMenuButton$innerText)
-      }, error = function(e) FALSE)
-   })
-   
-   
+   .rs.automation.tools.waitForProjectToOpen(self, "rstudio")
 })
+
 .rs.automation.addRemoteFunction("projectClose", function()
 {
    self$domClickElement("#rstudio_project_menubutton_toolbar")
@@ -607,4 +599,16 @@
       condition = isInstalled,
       message   = sprintf("package '%s' is not installed", package)
    )
+})
+
+.rs.automation.addRemoteFunction("clickElement", function(selector, predicate = NULL)
+{
+   self$domClickElementByNodeId(self$waitForElement(selector, predicate))
+})
+
+.rs.automation.addRemoteFunction("enterText", function(selector, ...)
+{
+   self$waitForElement(selector)
+   self$jsObjectViaSelector(selector)$focus()
+   self$keyboardExecute(...)
 })

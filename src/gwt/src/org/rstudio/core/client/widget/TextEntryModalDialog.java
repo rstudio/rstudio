@@ -60,6 +60,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
             textBox_ = new TextBox();
       }
       textBox_.setWidth("100%");
+      textBox_.getElement().setId(ElementIds.getElementId(ElementIds.TEXT_ENTRY));
       DomUtils.disableAutoBehavior(textBox_);
       captionLabel_ = new FormLabel(caption, textBox_);
 
