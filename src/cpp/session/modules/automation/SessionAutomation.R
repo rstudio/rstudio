@@ -431,7 +431,10 @@
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", browserDataDir),
-      if (mode == "desktop") c("--automation-agent"),
+      if (mode == "desktop") c(
+         "--automation-agent",
+         "--no-sandbox"
+      ),
       if (mode == "server") c(
          "--no-default-browser-check",
          "--no-first-run",
