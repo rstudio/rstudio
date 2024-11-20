@@ -190,7 +190,7 @@ pipeline {
                       dir ("src/node/desktop") {
                         script {
                           // attempt to run cpp unit tests
-                          utils.runCheckCmd("npm run automation", "Automated Tests", STAGE_NODE_URL, true)
+                          utils.runCheckCmd("./run-automation", "Automated Tests", STAGE_NODE_URL, true)
                         }
                       }
                     }
