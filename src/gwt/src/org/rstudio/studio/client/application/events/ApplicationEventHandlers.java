@@ -17,6 +17,7 @@ package org.rstudio.studio.client.application.events;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 
 public interface ApplicationEventHandlers extends LogoutRequestedEvent.Handler,
+                                                  AuthorizedEvent.Handler,
                                                   UnauthorizedEvent.Handler,
                                                   ReloadEvent.Handler,
                                                   ReloadWithLastChanceSaveEvent.Handler,

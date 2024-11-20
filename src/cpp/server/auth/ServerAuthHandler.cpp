@@ -365,6 +365,20 @@ void removeExpiredCookies()
 
 } // anonymous namespace
 
+bool isCookieExpired(const std::string& cookie, boost::optional<boost::posix_time::ptime>* pLoginExpiry = nullptr)
+{ 
+   boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
+   std::string value;
+   boost::posix_time::ptime expiry;
+   boost::optional<boost::posix_time::ptime> loginExpiry;
+   http::secure_cookie::readSecureCookie(cookie, &value, &expiry, &loginExpiry);
+
+   if (pLoginExpiry)
+      *pLoginExpiry = loginExpiry;
+
+   return (loginExpiry && loginExpiry.get() < now) || (expiry < now);
+}
+
 bool isCookieRevoked(const std::string& cookie)
 {
    if (cookie.empty())
@@ -1059,7 +1073,7 @@ std::string getUserIdentifier(const core::http::Request& request,
                               bool requireUserListCookie)
 {
    std::string cookieValue = request.cookieValue(kUserIdCookie);
-   if (isCookieRevoked(cookieValue))
+   if (isCookieRevoked(cookieValue) || isCookieExpired(cookieValue))
       return std::string();
 
    std::string userIdentifier = s_handler.getUserIdentifier(request);
@@ -1212,7 +1226,7 @@ void UserSession::insertSessionCookie(const std::string& userIdentifier, const s
    END_LOCK_MUTEX
 }
 
-void refreshAuthCookies(const std::string& userIdentifier,
+bool refreshAuthCookies(const std::string& userIdentifier,
                         const http::Request& request,
                         http::Response* pResponse)
 {
@@ -1225,7 +1239,8 @@ void refreshAuthCookies(const std::string& userIdentifier,
       boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
       if (now < pUserSession->lastCookieRefreshTime() + boost::posix_time::seconds(30))
       {
-         return;
+         // No action, but the auth cookies are still valid
+         return true;
       }
 
       // clear any existing auth cookies first - this method can be invoked multiple
@@ -1241,11 +1256,22 @@ void refreshAuthCookies(const std::string& userIdentifier,
       std::string currentCookie = request.cookieValue(kUserIdCookie);
       if (!currentCookie.empty())
       {
-         LOG_DEBUG_MESSAGE("Refreshing auth: replacing old cookie: " + currentCookie);
+         LOG_DEBUG_MESSAGE("Refreshing auth: uri: " + request.uri() + ": replacing old cookie: " + currentCookie);
       }
 
-      s_handler.refreshAuthCookies(request, userIdentifier, persist, pResponse);
+      boost::optional<boost::posix_time::ptime> loginExpiry;
+      if (isCookieExpired(currentCookie, &loginExpiry))
+      {
+         // The cookie has hit the active expiry, so we should not refresh it
+         LOG_DEBUG_MESSAGE("Not refreshing auth: uri: " + request.uri() + ": cookie has expired: " + currentCookie);
+         return false;
+      }
+
+      s_handler.refreshAuthCookies(request, userIdentifier, persist, loginExpiry, pResponse);
    }
+
+   // Cookies are valid
+   return true;
 }
 
 void applyRemoteRevokedCookie(const std::string& cookieValue)

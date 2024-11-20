@@ -38,10 +38,16 @@ namespace core {
 namespace http {
 namespace secure_cookie {
 
+// validDuration is the amount of time this cookie is valid from now
+// loginExpiry is the time at which the user's login expires
+// the difference between loginExpiry and validDuration is that the user's
+// auth can be refreshed when validDuration expires but not when loginExpiry
+// is hit
 http::Cookie createSecureCookie(const std::string& name,
                                 const std::string& value,
                                 const core::http::Request& request,
                                 const boost::posix_time::time_duration& validDuration,
+                                const boost::optional<boost::posix_time::ptime>& loginExpiry,
                                 const std::string& path = "/",
                                 bool secure = false,
                                 http::Cookie::SameSite sameSite = http::Cookie::SameSite::Undefined);
@@ -51,6 +57,15 @@ std::string readSecureCookie(const core::http::Request& request,
 
 std::string readSecureCookie(const std::string& signedCookieValue);
 
+// Reads the secure cookie. If reading fails or the cookie is invalid
+// pValue will be set to an empty string and pExpires and pLoginExpiry
+// will be undefined
+void readSecureCookie(
+   const std::string& signedCookieValue,
+   std::string* pValue,
+   boost::posix_time::ptime* pExpires,
+   boost::optional<boost::posix_time::ptime>* pLoginExpiry);
+
 core::Error hashWithSecureKey(const std::string& value, std::string* pHMAC);
 
 http::Cookie set(const std::string& name,
@@ -58,6 +73,7 @@ http::Cookie set(const std::string& name,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
          const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
+         const boost::optional<boost::posix_time::ptime>& loginExpiry,
          const std::string& path,
          http::Response* pResponse,
          bool secure,

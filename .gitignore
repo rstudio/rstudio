@@ -51,3 +51,6 @@ TODO-INTERNAL
 node_modules/
 src/node/desktop/src/types/user-state-schema.d.ts
 rstudio-automation-results.xml
+
+venv/
+.venv/

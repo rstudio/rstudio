@@ -237,7 +237,7 @@ bool doSignIn(const core::http::Request& request,
    {
       appUri = "/" + appUri;
    }
-   setSignInCookies(request, username, persist, pResponse);
+   setSignInCookies(request, username, persist, boost::none, pResponse);
 
    LOG_DEBUG_MESSAGE("Sign in for user: " + username + " redirecting to: " + appUri);
 
@@ -343,7 +343,6 @@ boost::optional<boost::posix_time::time_duration> getCookieExpiry(bool staySigne
          expiry = boost::posix_time::hours(24 * staySignedInDays);
       else
          expiry = boost::none;
-
       return expiry;
    }
    // new auth expiration - users are forced to sign in
@@ -360,6 +359,7 @@ boost::optional<boost::posix_time::time_duration> getCookieExpiry(bool staySigne
 void setSignInCookies(const core::http::Request& request,
                       const std::string& userIdentifier,
                       bool staySignedIn,
+                      boost::optional<boost::posix_time::ptime> loginExpiry,
                       core::http::Response* pResponse)
 {
    std::string csrfToken = core::http::getCSRFTokenCookie(request);
@@ -369,12 +369,28 @@ void setSignInCookies(const core::http::Request& request,
    std::string path = request.rootPath();
    core::http::Cookie::SameSite sameSite = server::options().wwwSameSite();
 
+   // This determines how long a user can stay signed in, even while active
+   // Parse the config setting and add to the current time to get the expiry
+   // On token refresh, the active expiry will be parsed. If currentTime < activeExpiryTime
+   // the new token will have the same activeExpiryTime as the old token.
+   // If currentTime >= activeExpiryTime, the user will be forced to go through
+   // the full sign-in process.
+   if (!loginExpiry)
+   {
+      int activeTimeout = safe_convert::stringTo<int>(
+         server::options().getOverlayOption("auth-active-timeout-minutes"),
+         0);
+      if (activeTimeout > 0)
+         loginExpiry = boost::posix_time::second_clock::universal_time() + boost::posix_time::minutes(activeTimeout);
+   }
+
    // set the secure user id cookie
    http::Cookie cookie = core::http::secure_cookie::set(kUserIdCookie,
                                   userIdentifier,
                                   request,
                                   validity,
                                   expiry,
+                                  loginExpiry,
                                   path,
                                   pResponse,
                                   secureCookie,
@@ -390,6 +406,7 @@ void setSignInCookies(const core::http::Request& request,
                                   request,
                                   validity,
                                   expiry,
+                                  loginExpiry,
                                   path,
                                   pResponse,
                                   secureCookie,
@@ -444,7 +461,7 @@ void prepareHandler(handler::Handler& handler,
    {
       handler.signOut = boost::bind(signOut, _1, _2, getUserIdentifierArg, signOutUrl);
    }
-   handler.refreshAuthCookies = boost::bind(setSignInCookies, _1, _2, _3, _4);
+   handler.refreshAuthCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, _5);
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
