@@ -249,7 +249,7 @@ Error initialize()
                                 getUserIdentifier);
    pamHandler.signOut = signOut;
    if (overlay::canSetSignInCookies())
-      pamHandler.setSignInCookies = boost::bind(auth::common::setSignInCookies, _1, _2, _3, _4);
+      pamHandler.setSignInCookies = boost::bind(auth::common::setSignInCookies, _1, _2, _3, boost::none, _4);
    auth::handler::registerHandler(pamHandler);
 
    // add pam-specific auth handlers

@@ -406,6 +406,16 @@ void consoleWriteInput(const std::string& input)
    consoleInput(prompt + input);
 }
 
+
+Error isAuthenticated(const core::json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // Automatic success. Auth failure would have prevented us from
+   // getting here.
+   pResponse->setResult(true);
+   return Success();
+}
+
 Error initializeSessionState()
 {
    using namespace rstudio::r::session;
@@ -555,6 +565,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
       (bind(registerRpcMethod, kSuspendForRestart, suspendForRestart))
+      (bind(registerRpcMethod, kAuthStatus, isAuthenticated))
 
       // signal handlers
       (registerSignalHandlers)

@@ -46,6 +46,7 @@ import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
 import org.rstudio.studio.client.application.events.InvalidSessionEvent;
 import org.rstudio.studio.client.application.events.ServerOfflineEvent;
 import org.rstudio.studio.client.application.events.SessionRelaunchEvent;
+import org.rstudio.studio.client.application.events.AuthorizedEvent;
 import org.rstudio.studio.client.application.events.UnauthorizedEvent;
 import org.rstudio.studio.client.application.model.ActiveSession;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
@@ -264,13 +265,40 @@ public class RemoteServer implements Server
    {
       pConsoleProcessFactory_ = pConsoleProcessFactory;
       clientId_ = null;
+      authorized_ = true;
       disconnected_ = false;
       listeningForEvents_ = false;
       sessionRelaunchPending_ = false;
+      pendingRequests_ = new ArrayList<PendingRpcRequest>();
       session_ = session;
       eventBus_ = eventBus;
       serverAuth_ = new RemoteServerAuth(this);
+      authWatcher_ = new RemoteServerAuthWatcher(new RemoteServerAuthWatcher.CheckAuthStatus()
+      {
+         @Override
+         public void checkAuthStatus()
+         {
+            getSessionStatus(new ServerRequestCallback<Boolean>() {
+               @Override
+               public void onResponseReceived(Boolean result)
+               {
+                  if (result)
+                  {
+                     setAuthorized();
 
+                     AuthorizedEvent event = new AuthorizedEvent();
+                     eventBus_.fireEvent(event);
+                  }
+               };
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  UnauthorizedEvent event = new UnauthorizedEvent();
+                  eventBus_.fireEvent(event);
+               };
+            });
+      }});
       // define external event listener if we are the main window
       // (so we can forward to the satellites)
       ClientEventHandler externalListener = null;
@@ -363,6 +391,27 @@ public class RemoteServer implements Server
    public void ensureEventListener()
    {
       ensureListeningForEvents();
+   }
+
+   public void setAuthorized()
+   {
+      authorized_ = true;
+      authWatcher_.stop();
+      for (PendingRpcRequest request : pendingRequests_)
+      {
+         pendingRequests_.remove(request);
+         sendRequest(
+            request.scope,
+            request.request,
+            request.responseHandler,
+            request.retryHandler);
+      }
+   }
+
+   public void setUnauthorized()
+   {
+      authorized_ = false;
+      authWatcher_.start();
    }
 
    public void disconnect()
@@ -2731,6 +2780,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_HISTORY_ITEMS, params, requestCallback);
    }
 
+   public void getSessionStatus(ServerRequestCallback<Boolean> callback)
+   {
+      sendRequest(
+         RPC_SCOPE,
+         AUTH_STATUS,
+         callback);
+   }
 
    public void removeHistoryItems(JsArrayNumber itemIndexes,
                                   ServerRequestCallback<Void> requestCallback)
@@ -3301,6 +3357,12 @@ public class RemoteServer implements Server
                          retryHandler);
    }
 
+   void handleUnauthorizedError(String scope, RpcRequest request, RpcResponseHandler handler, RetryHandler retryHandler)
+   {
+      pendingRequests_.add(new PendingRpcRequest(scope, request, handler, retryHandler));
+      handleUnauthorizedError();
+   }
+
    void handleUnauthorizedError()
    {
       UnauthorizedEvent event = new UnauthorizedEvent();
@@ -3599,9 +3661,6 @@ public class RemoteServer implements Server
       return request;
    }
 
-   // lowest level sendRequest method -- called from the main workbench
-   // in two scenarios: direct internal call and servicing a proxied
-   // request from a satellite window
    protected RpcRequest sendRequest(String sourceWindow,
                                   String scope,
                                   String method,
@@ -3632,86 +3691,108 @@ public class RemoteServer implements Server
                                              clientVersion_,
                                              refreshCreds);
 
-      if (isDisconnected(scope))
-         return rpcRequest;
+      return sendRequest(scope, rpcRequest, responseHandler, retryHandler);
+   }
 
-      // send the request
-      rpcRequest.send(new RpcRequestCallback() {
-         public void onError(RpcRequest request, RpcError error)
+
+   // lowest level sendRequest method -- called from the main workbench
+   // in two scenarios: direct internal call and servicing a proxied
+   // request from a satellite window
+   protected RpcRequest sendRequest(String scope,
+                                    RpcRequest rpcRequest,
+                                    final RpcResponseHandler responseHandler,
+                                    final RetryHandler retryHandler) 
+      {
+         if (isDisconnected(scope))
+            return rpcRequest;
+
+         // Not currently authorized, queue the request and return
+         // Only exception is the session status request, which will tell us
+         // once we get re-authenticated
+         if (!authorized_ && !isAuthStatusRequest(rpcRequest))
          {
-            // ignore errors if we are disconnected
-            if (isDisconnected(scope))
-               return;
-
-            // if we have a retry handler then see if we can resolve the
-            // error and then retry
-            if ( resolveRpcErrorAndRetry(rpcRequest, error, retryHandler) )
-               return;
-
-            // first crack goes to globally registered rpc error handlers
-            if (!handleRpcErrorInternally(error))
-            {
-               eventBus_.fireEvent(new ApplicationTutorialEvent(
-                     ApplicationTutorialEvent.API_ERROR,
-                     error.getEndUserMessage(),
-                     new TutorialApiCallContext("rpc", null)));
-
-               // no global handlers processed it, send on to caller
-               responseHandler.onResponseReceived(RpcResponse.create(error));
-            }
+            pendingRequests_.add(
+               new PendingRpcRequest(scope, rpcRequest, responseHandler, retryHandler));
+            return rpcRequest;
          }
 
-         public void onResponseReceived(final RpcRequest request,
-                                        RpcResponse response)
-         {
-            // ignore response if we are disconnected
-            //   - handler was cancelled
-            if (isDisconnected(scope))
-                 return;
-
-            // check for error
-            if (response.getError() != null)
+         // send the request
+         rpcRequest.send(new RpcRequestCallback() {
+            public void onError(RpcRequest request, RpcError error)
             {
-               // ERROR: explicit error returned by server
-               RpcError error = response.getError();
+               // ignore errors if we are disconnected
+               if (isDisconnected(scope))
+                  return;
 
                // if we have a retry handler then see if we can resolve the
                // error and then retry
-               if ( resolveRpcErrorAndRetry(request, error, retryHandler) )
+               if ( resolveRpcErrorAndRetry(scope, rpcRequest, error, responseHandler, retryHandler) )
                   return;
 
-               // give first crack to internal handlers, then forward to caller
-               if (!handleRpcErrorInternally(error))
+               // first crack goes to globally registered rpc error handlers
+               if (!handleRpcErrorInternally(scope, rpcRequest, error, responseHandler, retryHandler, isAuthStatusRequest(rpcRequest)))
+               {
+                  eventBus_.fireEvent(new ApplicationTutorialEvent(
+                        ApplicationTutorialEvent.API_ERROR,
+                        error.getEndUserMessage(),
+                        new TutorialApiCallContext("rpc", null)));
+
+                  // no global handlers processed it, send on to caller
+                  responseHandler.onResponseReceived(RpcResponse.create(error));
+               }
+            }
+
+            public void onResponseReceived(final RpcRequest request,
+                                          RpcResponse response)
+            {
+               // ignore response if we are disconnected
+               //   - handler was cancelled
+               if (isDisconnected(scope))
+                  return;
+
+               // check for error
+               if (response.getError() != null)
+               {
+                  // ERROR: explicit error returned by server
+                  RpcError error = response.getError();
+
+                  // if we have a retry handler then see if we can resolve the
+                  // error and then retry
+                  if ( resolveRpcErrorAndRetry(scope, rpcRequest, error, responseHandler, retryHandler) )
+                     return;
+
+                  // give first crack to internal handlers, then forward to caller
+                  if (!handleRpcErrorInternally(scope, rpcRequest, error, responseHandler, retryHandler, isAuthStatusRequest(rpcRequest)))
+                     responseHandler.onResponseReceived(response);
+               }
+               else if (response.getAsyncHandle() != null)
+               {
+                  serverEventListener_.registerAsyncHandle(
+                        response.getAsyncHandle(),
+                        request,
+                        this);
+               }
+               // no error, process the result
+               else
+               {
+                  clearSessionRelaunchPending();
+
+                  // no error, forward to caller
                   responseHandler.onResponseReceived(response);
-            }
-            else if (response.getAsyncHandle() != null)
-            {
-               serverEventListener_.registerAsyncHandle(
-                     response.getAsyncHandle(),
-                     request,
-                     this);
-            }
-            // no error, process the result
-            else
-            {
-               clearSessionRelaunchPending();
 
-               // no error, forward to caller
-               responseHandler.onResponseReceived(response);
-
-               // always ensure that the event source receives events unless
-               // the server specifically flags us that no events are likely
-               // to be pending (e.g. an rpc call where no events were added
-               // to the queue by the call)
-               if (eventsPending(response))
-                  serverEventListener_.ensureEvents();
+                  // always ensure that the event source receives events unless
+                  // the server specifically flags us that no events are likely
+                  // to be pending (e.g. an rpc call where no events were added
+                  // to the queue by the call)
+                  if (eventsPending(response))
+                     serverEventListener_.ensureEvents();
+               }
             }
-         }
-      });
+         });
 
-      // return the request
-      return rpcRequest;
-   }
+         // return the request
+         return rpcRequest;         
+      }
 
    private void ensureListeningForEvents()
    {
@@ -3746,8 +3827,10 @@ public class RemoteServer implements Server
          return Boolean.parseBoolean(eventsPending);
    }
 
-   private boolean resolveRpcErrorAndRetry(final RpcRequest request,
+   private boolean resolveRpcErrorAndRetry(final String scope,
+                                           final RpcRequest request,
                                            final RpcError error,
+                                           final RpcResponseHandler responseHandler,
                                            final RetryHandler retryHandler)
    {
       // won't even attempt resolve if we don't have a retryHandler
@@ -3757,6 +3840,12 @@ public class RemoteServer implements Server
       // can attempt to resolve UNAUTHORIZED by updating credentials
       if (error.getCode() == RpcError.UNAUTHORIZED)
       {
+         if (isAuthStatusRequest(request))
+         {
+            // Don't retry
+            return false;
+         }
+
          // check credentials
          serverAuth_.updateCredentials(new ServerRequestCallback<Integer>() {
 
@@ -3770,7 +3859,7 @@ public class RemoteServer implements Server
                }
                else
                {
-                  handleUnauthorizedError();
+                  handleUnauthorizedError(scope, request, responseHandler, retryHandler);
                }
             }
 
@@ -3782,7 +3871,7 @@ public class RemoteServer implements Server
 
                // unable to resolve unauthorized error through a
                // credentials check -- treat as unauthorized
-               handleUnauthorizedError();
+               handleUnauthorizedError(scope, request, responseHandler, retryHandler);
             }
          });
 
@@ -3823,11 +3912,16 @@ public class RemoteServer implements Server
       }
    }
 
-   private boolean handleRpcErrorInternally(RpcError error)
+   private boolean handleRpcErrorInternally(String scope,
+                                          RpcRequest request,
+                                          RpcError error,
+                                          RpcResponseHandler responseHandler,
+                                          RetryHandler retryHandler,
+                                          boolean ignoreUnauthorized)
    {
-      if (error.getCode() == RpcError.UNAUTHORIZED)
+      if ((error.getCode() == RpcError.UNAUTHORIZED) && !ignoreUnauthorized)
       {
-         handleUnauthorizedError();
+         handleUnauthorizedError(scope, request, responseHandler, retryHandler);
          return true;
       }
       else if (error.getCode() == RpcError.INVALID_CLIENT_ID)
@@ -6762,6 +6856,11 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "record_command_execution", params, callback);
    }
 
+   private boolean isAuthStatusRequest(RpcRequest request)
+   {
+      return request.getMethod().equals(AUTH_STATUS);
+   }
+
    protected String clientInitId_ = "";
    private String clientId_;
    private String clientVersion_ = "";
@@ -6769,8 +6868,12 @@ public class RemoteServer implements Server
    private JsObject launchParameters_;
    private String userHomePath_;
    private boolean listeningForEvents_;
+   private boolean authorized_;
    private boolean disconnected_;
    private boolean sessionRelaunchPending_;
+
+   private RemoteServerAuthWatcher authWatcher_;
+   private List<PendingRpcRequest> pendingRequests_;
 
    private final RemoteServerAuth serverAuth_;
    private final RemoteServerEventListener serverEventListener_;
@@ -6801,6 +6904,7 @@ public class RemoteServer implements Server
    private static final String SUSPEND_FOR_RESTART = "suspend_for_restart";
    private static final String PING = "ping";
    private static final String RSTUDIOAPI_RESPONSE = "rstudioapi_response";
+   private static final String AUTH_STATUS = "auth_status";
 
    private static final String SET_WORKBENCH_METRICS = "set_workbench_metrics";
    private static final String SET_PREFS = "set_prefs";
@@ -7309,5 +7413,24 @@ public class RemoteServer implements Server
    private static final String QUARTO_SERVE = "quarto_serve";
    private static final String QUARTO_SERVE_RENDER = "quarto_serve_render";
    private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
+
+   private static class PendingRpcRequest 
+   {
+      public PendingRpcRequest(String scope,
+                              RpcRequest request,
+                              RpcResponseHandler responseHandler,
+                              RetryHandler retryHandler) 
+      {
+         this.scope = scope;
+         this.request = request;
+         this.responseHandler = responseHandler;
+         this.retryHandler = retryHandler;
+      }
+
+      public String scope;
+      public RpcRequest request;
+      public RpcResponseHandler responseHandler;
+      public RetryHandler retryHandler;
+   };
 
 }

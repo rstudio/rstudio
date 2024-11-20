@@ -65,8 +65,11 @@ public:
          return;
       }
 
-      if (refreshAuthCookies_)
-         handler::refreshAuthCookies(userIdentifier, request, pResponse);
+      if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier, request, pResponse))
+      {
+         pResponse->setError(http::status::Unauthorized, "Unauthorized - Maximum active session time exceeded");
+         return;
+      }
 
       // convert to local username
       std::string username = handler::userIdentifierToLocalUsername(
@@ -201,8 +204,12 @@ private:
 
       pConnection->setUsername(username_);
 
-      if (refreshAuthCookies_)
-         handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response());
+      if (refreshAuthCookies_ && !handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response()))
+      {
+         pConnection->response().setError(http::status::Unauthorized, "Unauthorized - Maximum active session time exceeded");
+         pConnection->writeResponse();
+         return false;
+      }
 
       return true;
    }

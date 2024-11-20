@@ -94,6 +94,7 @@ struct Handler
    boost::function<void(const core::http::Request&,
                         const std::string&,
                         bool,
+                        boost::optional<boost::posix_time::ptime>,
                         core::http::Response*)> refreshAuthCookies;
 };
 
@@ -200,7 +201,9 @@ void applyRemoteRevokedCookie(const std::string& cookie);
 // refreshes the auth cookie silently (without user intervention)
 // invoked when the user performs an active action against the system
 // which "resets" his idle time, generating a new auth cookie
-void refreshAuthCookies(const std::string& userIdentifier,
+// returns true if the auth cookies could be refreshed or 
+// false if the maximum user session time has been exceeded
+bool refreshAuthCookies(const std::string& userIdentifier,
                         const core::http::Request& request,
                         core::http::Response* pResponse);
 

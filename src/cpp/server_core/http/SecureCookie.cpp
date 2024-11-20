@@ -55,6 +55,7 @@ namespace {
 
 // cookie field delimiter
 const char * const kDelim = "|";
+const char * const kExpiresDelim = ";";
 
 // secure cookie key
 std::string s_secureCookieKey;
@@ -106,13 +107,17 @@ http::Cookie createSecureCookie(const std::string& name,
                                 const std::string& value,
                                 const core::http::Request& request,
                                 const boost::posix_time::time_duration& validDuration,
+                                const boost::optional<boost::posix_time::ptime>& loginExpiry,
                                 const std::string& path /* = "/"*/,
                                 bool secure /*= false*/,
                                 http::Cookie::SameSite sameSite /*= SameSite::Undefined*/)
 {
    // generate expires string
-   std::string expires = http::util::httpDate(
-            boost::posix_time::second_clock::universal_time() + validDuration);
+   boost::posix_time::ptime startTime = boost::posix_time::second_clock::universal_time();
+   std::string expires = http::util::httpDate(startTime + validDuration);
+
+   if (loginExpiry)
+      expires += kExpiresDelim + http::util::httpDate(loginExpiry.get());
 
    // form signed cookie value (will simply be an empty string if an
    // error occurs during encoding. this will cause the application to
@@ -158,9 +163,30 @@ std::string readSecureCookie(const core::http::Request& request,
 
 std::string readSecureCookie(const std::string& signedCookieValue)
 {
+   std::string value;
+   boost::posix_time::ptime expires;
+   boost::optional<boost::posix_time::ptime> loginExpiry;
+   readSecureCookie(signedCookieValue, &value, &expires, &loginExpiry);
+
+   // ok to return the value
+   return value;
+}
+
+void readSecureCookie(
+   const std::string& signedCookieValue,
+   std::string* pValue,
+   boost::posix_time::ptime* pExpires,
+   boost::optional<boost::posix_time::ptime>* pLoginExpiry)
+{
+   *pValue = "";
+   *pLoginExpiry = boost::none;
+
    // split it into its parts (url decode them as well)
    std::string value, expires, hmac;
+
    using namespace boost;
+   posix_time::ptime loginExpiry;
+
    char_separator<char> separator(kDelim);
    tokenizer<char_separator<char> > cookieTokens(signedCookieValue, separator);
    tokenizer<char_separator<char> >::iterator cookieIter = cookieTokens.begin();
@@ -179,7 +205,7 @@ std::string readSecureCookie(const std::string& signedCookieValue)
    {
       LOG_WARNING_MESSAGE("Invalid secure cookie (wrong number of fields): " +
                           signedCookieValue);
-      return std::string();
+      return;
    }
 
    // compute the hmac of the value + expires
@@ -188,7 +214,7 @@ std::string readSecureCookie(const std::string& signedCookieValue)
    if (error)
    {
       LOG_ERROR(error);
-      return std::string();
+      return;
    }
 
    // compare hmac to the one in the cookie
@@ -197,19 +223,34 @@ std::string readSecureCookie(const std::string& signedCookieValue)
       // will occur in normal course of operations if the user upgrades
       // their browser (and the User-Agent changes). could also occur
       // in the case of an attempted forgery
-      return std::string();
+      return;
    }
 
    // check the expiration
    using namespace boost::posix_time;
+   if (expires.find(kExpiresDelim) != std::string::npos)
+   {
+      // expires contains a login expiry, so we need to parse it out
+      std::string loginExpiryStr = expires.substr(expires.find(kExpiresDelim) + 1);
+      expires = expires.substr(0, expires.find(kExpiresDelim));
+
+      loginExpiry = http::util::parseHttpDate(loginExpiryStr);
+      if (loginExpiry.is_not_a_date_time())
+         return;
+      else if (loginExpiry <= second_clock::universal_time())
+         return;
+
+      *pLoginExpiry = loginExpiry;
+   }
+
    ptime expiresTime = http::util::parseHttpDate(expires);
    if (expiresTime.is_not_a_date_time())
-      return std::string();
+      return;
    else if (expiresTime <= second_clock::universal_time())
-      return std::string();
+      return;
 
-   // ok to return the value
-   return value;
+   *pExpires = expiresTime;
+   *pValue = value;
 }
 
 http::Cookie set(const std::string& name,
@@ -217,6 +258,7 @@ http::Cookie set(const std::string& name,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
          const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
+         const boost::optional<boost::posix_time::ptime>& loginExpiry,
          const std::string& path,
          http::Response* pResponse,
          bool secure,
@@ -227,6 +269,7 @@ http::Cookie set(const std::string& name,
                                             value,
                                             request,
                                             validDuration,
+                                            loginExpiry,
                                             path,
                                             secure,
                                             sameSite);
