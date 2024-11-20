@@ -18,6 +18,11 @@ for NODE_PATH in "${NODE_PATHS[@]}"; do
 	fi
 done
 
+# Try to help Jenkins set a display.
+if [ -z "${DISPLAY}" ]; then
+	export DISPLAY=":0"
+fi
+
 rm -f rstudio-automation-results.xml
 npm run automation
 cat rstudio-automation-results.xml
