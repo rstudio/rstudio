@@ -14,6 +14,64 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
+# Shared Environment Variables ----
+
+# pick a default RSTUDIO_TOOLS_ROOT location
+#
+# prefer using home folder on Jenkins where we might not be able
+# to access files at /opt and will lack sudo
+if [ -z "${RSTUDIO_TOOLS_ROOT}" ]; then
+	if [ -n "${JENKINS_URL}" ] && [ "$(arch)" = "arm64" ]; then
+		RSTUDIO_TOOLS_ROOT="$HOME/opt/rstudio-tools/$(uname -m)"
+	else
+		RSTUDIO_TOOLS_ROOT="/opt/rstudio-tools/$(uname -m)"
+	fi
+fi
+
+export RSTUDIO_TOOLS_ROOT
+
+
+# version of node.js used for building
+#
+# When changing node version you must upload the corresponding archives to aws s3; use
+# rstudio/dependencies/tools/upload-node.sh
+#
+# In addition to updating the version here, search the entire repo for other instances of
+# RSTUDIO_NODE_VERSION and update to match.
+export RSTUDIO_NODE_VERSION="20.15.1"
+
+
+# actual directory name of the node installation used
+# mainly relevant for cases like macOS, where we have an -arm64 variant installed
+if [ "$(uname -sm)" = "Darwin arm64" ]; then
+	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}-arm64"
+else
+	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}"
+fi
+
+
+# version of node.js installed with the product
+#
+# In the dependencies folder this will have a `-patched` suffix on the folder name to indicate
+# that some files have been removed (via the patch process mentioned below).
+#
+# When changing node version you must upload the corresponding archives to aws s3; use
+# rstudio/dependencies/tools/upload-node.sh
+#
+# In addition to updating the version here, search the entire repo for other instances of
+# RSTUDIO_INSTALLED_NODE_VERSION and update to match. Also double-check that the steps in
+# patch-node and patch-node.cmd work with the newer node (e.g. in case the layout has changed).
+export RSTUDIO_INSTALLED_NODE_VERSION="20.15.1"
+
+
+# version of go used for building
+export WORKBENCH_GO_VERSION="1.22.3"
+
+
+# RStudio dependency cache
+export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
+
+
 # Generic Tools ----
 
 section () {
@@ -448,48 +506,6 @@ is-ubuntu () {
 is-jenkins () {
 	[ -n "${JENKINS_URL}" ]
 }
-
-# pick a default RSTUDIO_TOOLS_ROOT location
-#
-# prefer using home folder on Jenkins where we might not be able
-# to access files at /opt and will lack sudo
-if [ -z "${RSTUDIO_TOOLS_ROOT}" ]; then
-	if is-jenkins && [ "$(arch)" = "arm64" ]; then
-		RSTUDIO_TOOLS_ROOT="$HOME/opt/rstudio-tools/$(uname -m)"
-	else
-		RSTUDIO_TOOLS_ROOT="/opt/rstudio-tools/$(uname -m)"
-	fi
-fi
-
-export RSTUDIO_TOOLS_ROOT
-
-# version of node.js used for building
-#
-# When changing node version you must upload the corresponding archives to aws s3; use
-# rstudio/dependencies/tools/upload-node.sh
-
-# In addition to updating the version here, search the entire repo for other instances of
-# RSTUDIO_NODE_VERSION and update to match.
-export RSTUDIO_NODE_VERSION="20.15.1"
-
-# version of node.js installed with the product
-#
-# In the dependencies folder this will have a `-patched` suffix on the folder name to indicate
-# that some files have been removed (via the patch process mentioned below).
-#
-# When changing node version you must upload the corresponding archives to aws s3; use
-# rstudio/dependencies/tools/upload-node.sh
-#
-# In addition to updating the version here, search the entire repo for other instances of
-# RSTUDIO_INSTALLED_NODE_VERSION and update to match. Also double-check that the steps in
-# patch-node and patch-node.cmd work with the newer node (e.g. in case the layout has changed).
-export RSTUDIO_INSTALLED_NODE_VERSION="20.15.1"
-
-# version of go used for building
-export WORKBENCH_GO_VERSION="1.22.3"
-
-# RStudio dependency cache
-export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 
 # create a copy of a file in the same folder with .original extension
 save-original-file () {

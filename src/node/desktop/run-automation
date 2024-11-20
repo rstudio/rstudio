@@ -1,5 +1,24 @@
 #!/usr/bin/env bash
 
-source envvars.sh
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "../../../dependencies/tools/rstudio-tools.sh"
+
+# Try to find node, and place it on the PATH.
+NODE_PATHS=(
+   "${SCRIPT_DIR}/../../../dependencies/common/node/${RSTUDIO_NODE_DIR}/bin"
+   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_DIR}/bin"
+)
+
+for NODE_PATH in "${NODE_PATHS[@]}"; do
+	if [ -e "${NODE_PATH}" ]; then
+		NODE_PATH=$(readlink -f "${NODE_PATH}")
+		info "Using node: ${NODE_PATH}"
+		PATH="${NODE_PATH}:${PATH}"
+		break
+	fi
+done
+
+rm -f rstudio-automation-results.xml
 npm run automation
+cat rstudio-automation-results.xml
 
