@@ -26,6 +26,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FormCheckBox;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -141,10 +142,10 @@ public class NewDirectoryPage extends NewProjectWizardPage
       if (getOptionsSideBySide())
          optionsPanel = new HorizontalPanel();
       
-      chkGitInit_ = new CheckBox(constants_.createGitRepoLabel());
+      String gitCheckBoxId = ElementIds.getElementId(
+            ElementIds.idSafeString(getTitle()) + "_" + ElementIds.NEW_PROJECT_GIT_REPO);
+      chkGitInit_ = new FormCheckBox(constants_.createGitRepoLabel(), gitCheckBoxId);
       chkGitInit_.addStyleName(styles.wizardCheckbox());
-      ElementIds.assignElementId(chkGitInit_,
-         ElementIds.idSafeString(getTitle()) + "_" + ElementIds.NEW_PROJECT_GIT_REPO);
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
          chkGitInit_.setValue(userPrefs.newProjGitInit().getValue());

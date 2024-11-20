@@ -243,6 +243,18 @@
    nodeId
 })
 
+.rs.automation.addRemoteFunction("elementExists", function(selector)
+{
+   # Query for the requested node.
+   document <- self$client$DOM.getDocument(depth = 0L)
+   response <- self$client$DOM.querySelector(document$root$nodeId, selector)
+   
+   # Check for failure.
+   nodeId <- response$nodeId
+   !(nodeId == 0L)
+})
+
+
 .rs.automation.addRemoteFunction("domGetNodeIds", function(selector)
 {
    # Query for all nodes matching the selector.
@@ -470,8 +482,7 @@
    
    .rs.waitUntil("The project has closed", function()
    {
-      toolbarButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
-      .rs.trimWhitespace(toolbarButton$innerText) == "Project: (None)"
+      .rs.trimWhitespace(.rs.automation.tools.getProjectDropdownLabel(self)) == "Project: (None)"
    })
 })
 

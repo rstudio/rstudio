@@ -45,6 +45,33 @@
 
 .rs.addFunction("automation.tools.getProjectDropdownLabel", function(remote)
 {
+   remote$waitForElement("#rstudio_project_menubutton_toolbar")
    toolbarButton <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
    .rs.trimWhitespace(toolbarButton$innerText)
+})
+
+.rs.addFunction("automation.tools.getCheckboxStateByNodeId", function(remote, nodeId)
+{
+   response <- remote$client$DOM.getAttributes(nodeId)
+   attributes <- response$attributes
+   checkedIndex <- which(attributes == "checked")
+   isChecked <- length(checkedIndex) > 0
+})
+
+.rs.addFunction("automation.tools.ensureChecked", function(remote, selector)
+{
+   nodeId <- remote$waitForElement(selector)
+   if (!.rs.automation.tools.getCheckboxStateByNodeId(remote, nodeId))
+   {
+      remote$domClickElementByNodeId(nodeId)
+   }
+})
+
+.rs.addFunction("automation.tools.ensureUnchecked", function(remote, selector)
+{
+   nodeId <- remote$waitForElement(selector)
+   if (.rs.automation.tools.getCheckboxStateByNodeId(remote, nodeId))
+   {
+      remote$domClickElementByNodeId(nodeId)
+   }
 })
