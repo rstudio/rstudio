@@ -719,6 +719,13 @@ else()
          configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
       endif()
 
+      # help RStudio find build GWT components for devmode
+      if(RSTUDIO_PACKAGE_BUILD)
+         set(WWW_LOCAL_PATH "${CMAKE_CURRENT_BINARY_DIR}/../../gwt/www")
+      else()
+         set(WWW_LOCAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../gwt/www")
+      endif()
+
       # add server subprojects if we aren't building in desktop only mode
       if(RSTUDIO_SERVER)
          add_subdirectory(server)

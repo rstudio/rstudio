@@ -42,7 +42,7 @@
 
 .rs.addFunction("automation.installRequiredPackages", function()
 {
-   packages <- c("devtools", "here", "httr", "later", "processx", "ps", "styler", "testthat", "usethis", "websocket", "withr", "xml2")
+   packages <- c("devtools", "dplyr", "here", "httr", "later", "processx", "ps", "styler", "testthat", "usethis", "websocket", "withr", "xml2")
    pkgLocs <- find.package(packages, quiet = TRUE)
    if (length(packages) == length(pkgLocs))
       return()
@@ -260,7 +260,7 @@
       if (identical(proc$status, "zombie"))
          next
       
-      conns <- ps::ps_connections(proc$ps_handle[[1L]])
+      conns <- .rs.tryCatch(ps::ps_connections(proc$ps_handle[[1L]]))
       if (8788L %in% conns$lport)
          return(TRUE)
    }

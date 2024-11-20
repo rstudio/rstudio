@@ -72,7 +72,10 @@ if(GWT_BUILD)
 
    # copy GWT www directory to build tree
    if(RSTUDIO_PACKAGE_BUILD AND NOT GWT_WWW_DIR STREQUAL www)
-      file(COPY www DESTINATION "${GWT_WWW_DIR}/..")
+      file(
+         COPY www
+         DESTINATION "${GWT_WWW_DIR}/.."
+         PATTERN rstudio EXCLUDE)
    endif()
    
    # depend on Java source files
