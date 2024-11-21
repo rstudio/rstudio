@@ -18,7 +18,10 @@ for NODE_PATH in "${NODE_PATHS[@]}"; do
 	fi
 done
 
+# Port to use for Chromium debug server
+export RSTUDIO_AUTOMATION_PORT=59991
+
 rm -f rstudio-automation-results.xml
-timeout 1h xvfb-run -a -s "+iglx +xinerama -wr -screen 0 1024x768x24" npm run automation
+timeout 1h xvfb-run -a -s "-wr -screen 0 1024x768x24" npm run automation
 cat rstudio-automation-results.xml
 

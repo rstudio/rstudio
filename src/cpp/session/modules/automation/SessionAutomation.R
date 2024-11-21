@@ -345,7 +345,19 @@
    
    # Resolve arguments.
    mode <- match.arg(mode)
-   port <- .rs.nullCoalesce(port, if (mode == "server") 9999L else 9998L)
+   
+   # Resolve the port used for the Chromium debug server.
+   port <- .rs.nullCoalesce(port, {
+      
+      port <- Sys.getenv("RSTUDIO_AUTOMATION_PORT", unset = NA)
+      if (!is.na(port))
+         as.integer(port)
+      else if (mode == "server")
+         9999L
+      else
+         9998L
+      
+   })
    
    # Set up environment for newly-launched RStudio instance.
    envVars <- as.list(Sys.getenv())
