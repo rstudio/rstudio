@@ -22,8 +22,19 @@ done
 # running R sessions to see.
 cp ~/.Renviron /tmp/.Renviron
 
+# Get an open port.
+PORT=$(python3 - <<- EOF
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(('', 0))
+addr = s.getsockname()
+print(addr[1])
+s.close()
+EOF
+)
+
 cat <<- EOF >> /tmp/.Renviron
-RSTUDIO_AUTOMATION_PORT = 59991
+RSTUDIO_AUTOMATION_PORT = ${PORT}
 RSTUDIO_AUTOMATION_REUSE_REMOTE = TRUE
 RSTUDIO_AUTOMATION_CLOSE_ON_FINISH = TRUE
 EOF
@@ -31,9 +42,19 @@ EOF
 export R_ENVIRON_USER=/tmp/.Renviron
 
 rm -f rstudio-automation-results.xml
-trap "exit" INT TERM
-set -x
-timeout 1h xvfb-run -a -s "-wr -screen 0 1024x768x24" npm run automation
-set +x
+
+# NOTE: We'd like to use 'timeout' here, but for whatever reason
+# the process cannot be interrupted in that scenario.
+xvfb-run -a -s "-wr -screen 0 1024x768x24" npm run automation
+PID="$!"
+
+for i in `seq 1 100`; do
+	if kill -0 "${PID}"; then
+		sleep 60
+	else
+		break
+	fi
+done
+
 cat rstudio-automation-results.xml
 
