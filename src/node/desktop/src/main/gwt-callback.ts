@@ -99,9 +99,7 @@ export class GwtCallback extends EventEmitter {
   proportionalFonts: string[] = [];
 
   getFonts(monospace: boolean) {
-
     if (this.hasFontConfig) {
-      
       let command: string = '';
       if (monospace) {
         command = 'fc-list :spacing=mono family | sort';
@@ -111,9 +109,7 @@ export class GwtCallback extends EventEmitter {
 
       const result = execSync(command, { encoding: 'utf-8' });
       return result.trim().split('\n');
-
     } else {
-      
       const result = findFontsSync({ monospace: monospace }).map((fd) => {
         if (process.platform === 'darwin') {
           return monospace ? fd.postscriptName : fd.family;
@@ -121,13 +117,13 @@ export class GwtCallback extends EventEmitter {
           return fd.family;
         }
       });
-      
+
       const fontList = [...new Set<string>(result)];
-      fontList.sort((lhs, rhs) => { return lhs.localeCompare(rhs); });
+      fontList.sort((lhs, rhs) => {
+        return lhs.localeCompare(rhs);
+      });
       return fontList;
-      
     }
-  
   }
 
   constructor(public mainWindow: MainWindow) {
@@ -136,7 +132,7 @@ export class GwtCallback extends EventEmitter {
 
     if (process.platform === 'linux') {
       try {
-        const result = execSync('/usr/bin/which fc-list');
+        const _result = execSync('/usr/bin/which fc-list');
         this.hasFontConfig = true;
       } catch (error) {
         logger().logError(error);
