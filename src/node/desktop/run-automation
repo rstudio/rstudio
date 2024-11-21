@@ -19,7 +19,7 @@ for NODE_PATH in "${NODE_PATHS[@]}"; do
 done
 
 rm -f rstudio-automation-results.xml
-export DISPLAY=:0
+ls -la /tmp/.X11-unix
 npm run automation
 cat rstudio-automation-results.xml
 
