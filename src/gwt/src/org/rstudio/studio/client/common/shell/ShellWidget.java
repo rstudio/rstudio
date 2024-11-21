@@ -31,6 +31,7 @@ import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationAutomationHooks;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -73,6 +74,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
@@ -277,6 +279,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       addCopyHook(getElement());
       addPasteHook(getElement());
+   }
+   
+   @Inject
+   private void initialize(ApplicationAutomationHooks automation)
+   {
+      automation_ = automation;
    }
 
    private native void addCopyHook(Element element) /*-{
@@ -560,9 +568,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
                           boolean ignoreLineCount,
                           boolean ariaLiveAnnounce)
    {
-      boolean canContinue = output_.outputToConsole(text, className,
-                                                    isError, ignoreLineCount,
-                                                    ariaLiveAnnounce);
+      boolean canContinue = output_.outputToConsole(
+            text, className,
+            isError, ignoreLineCount,
+            ariaLiveAnnounce);
 
       // if we're currently scrolled to the bottom, nudge the timer so that we
       // will keep up with output
@@ -572,6 +581,19 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (liveRegion_ != null)
          liveRegion_.announce(output_.getNewText());
 
+      // if we're desktop, write output to console
+      // if (Desktop.isDesktop() && automation_.isEnabled())
+      {
+         if (isError)
+         {
+            Desktop.getFrame().writeStderr(text);
+         }
+         else
+         {
+            Desktop.getFrame().writeStdout(text);
+         }
+      }
+      
       return canContinue;
    }
 
@@ -1109,6 +1131,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final UserPrefs prefs_;
    private final AriaLiveService ariaLive_;
    private VerticalPanel verticalPanel_;
+   private ApplicationAutomationHooks automation_;
 
    private int editorWidth_ = -1;
    private boolean scrollIntoViewPending_ = false;

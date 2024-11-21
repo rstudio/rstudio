@@ -44,8 +44,15 @@ public class ApplicationAutomationHooks
       commands_ = commands;
    }
    
+   public final boolean isEnabled()
+   {
+      return isEnabled_;
+   }
+   
    public final void initialize()
    {
+      isEnabled_ = true;
+      
       initializeCallbacks();
       
       exportCallback("commandExecute", new UnaryCallback<Void, String>()
@@ -91,4 +98,5 @@ public class ApplicationAutomationHooks
    }-*/;
    
    private final Commands commands_;
+   private boolean isEnabled_ = false;
 }

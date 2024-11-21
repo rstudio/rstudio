@@ -152,6 +152,14 @@ export class GwtCallback extends EventEmitter {
       logger().logError(safeError(err));
     }
 
+    ipcMain.on('desktop_write_stdout', (event, output) => {
+      console.log(output);
+    });
+
+    ipcMain.on('desktop_write_stderr', (event, output) => {
+      console.log(output);
+    });
+
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // shell.openExternal() seems unreliable on Windows
       // https://github.com/electron/electron/issues/31347
@@ -990,6 +998,9 @@ export class GwtCallback extends EventEmitter {
 
   addMacOSVersionError(): void {
     if (platform() === 'darwin') {
+      ipcMain.on('desktop_console_log', async (event, output) => {
+        console.log(output);
+      });
       const release_major = parseInt(release().substring(0, release().indexOf('.')));
       // macOS 11.0 uses darwin 20.0.0
       if (release_major < 20) {
