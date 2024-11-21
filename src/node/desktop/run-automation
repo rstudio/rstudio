@@ -18,10 +18,20 @@ for NODE_PATH in "${NODE_PATHS[@]}"; do
 	fi
 done
 
-# Port to use for Chromium debug server
-export RSTUDIO_AUTOMATION_PORT=59991
+# Set up a .Rprofile with some variables we want the
+# running R sessions to see.
+cp ~/.Renviron /tmp/.Renviron
+
+cat <<- EOF >> /tmp/.Renviron
+RSTUDIO_AUTOMATION_PORT = 59991
+RSTUDIO_AUTOMATION_REUSE_REMOTE = TRUE
+RSTUDIO_AUTOMATION_CLOSE_ON_FINISH = TRUE
+EOF
+
+export R_ENVIRON_USER=/tmp/.Renviron
 
 rm -f rstudio-automation-results.xml
+trap "exit" INT TERM
 timeout 1h xvfb-run -a -s "-wr -screen 0 1024x768x24" npm run automation
 cat rstudio-automation-results.xml
 

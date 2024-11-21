@@ -1373,10 +1373,12 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    for (i in seq_len(retryCount))
    {
       pollForEvents()
-      if (callback())
-         return(TRUE)
-      else
-         Sys.sleep(waitTimeSecs)
+      
+      result <- callback()
+      if (!identical(result, FALSE))
+         return(result)
+      
+      Sys.sleep(waitTimeSecs)
    }
    
    stop(sprintf("timed out waiting until '%s'", reason))

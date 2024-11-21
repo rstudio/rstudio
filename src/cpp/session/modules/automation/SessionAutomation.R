@@ -345,19 +345,7 @@
    
    # Resolve arguments.
    mode <- match.arg(mode)
-   
-   # Resolve the port used for the Chromium debug server.
-   port <- .rs.nullCoalesce(port, {
-      
-      port <- Sys.getenv("RSTUDIO_AUTOMATION_PORT", unset = NA)
-      if (!is.na(port))
-         as.integer(port)
-      else if (mode == "server")
-         9999L
-      else
-         9998L
-      
-   })
+   port <- .rs.nullCoalesce(port, if (mode == "server") 9999L else 9998L)
    
    # Set up environment for newly-launched RStudio instance.
    envVars <- as.list(Sys.getenv())
@@ -809,6 +797,10 @@
 
 .rs.addFunction("automation.onFinishedRunningAutomation", function()
 {
+   close <- Sys.getenv("RSTUDIO_AUTOMATION_CLOSE_ON_FINISH", unset = NA)
+   if (close)
+      quit(status = 0L)
+
    isJenkins <- Sys.getenv("JENKINS_URL", unset = NA)
    if (!is.na(isJenkins))
       quit(status = 0L)
