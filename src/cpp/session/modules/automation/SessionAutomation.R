@@ -42,7 +42,12 @@
 
 .rs.addFunction("automation.installRequiredPackages", function()
 {
-   packages <- c("devtools", "dplyr", "here", "httr", "later", "processx", "ps", "styler", "testthat", "usethis", "websocket", "withr", "xml2")
+   packages <- c(
+      "devtools", "dplyr", "here", "httr", "later", "processx",
+      "ps", "reticulate", "styler", "testthat", "usethis",
+      "websocket", "withr", "xml2"
+   )
+   
    pkgLocs <- find.package(packages, quiet = TRUE)
    if (length(packages) == length(pkgLocs))
       return()
@@ -508,7 +513,7 @@
    socket$onClose(.rs.automation.onClose)
    
    # Wait until the socket is open.
-   .rs.waitUntil("websocket open", function()
+   .rs.waitUntil("Chromium websocket is ready", function()
    {
       socket$readyState() == 1L
    }, waitTimeSecs = 0.1)
@@ -521,9 +526,10 @@
    
    # Find and record the active session id.
    .rs.automation.attachToSession(client, mode)
-   
-   # Wait until the Console is available.
-   .rs.waitUntil("Console input available", function()
+
+   # Wait until RStudio is ready.
+   # Use the presence of the '#rstudio_console_input' element as evidence.
+   .rs.waitFor("RStudio to finish initialization", function()
    {
       document <- client$DOM.getDocument(depth = 0L)
       consoleNode <- client$DOM.querySelector(document$root$nodeId, "#rstudio_console_input")
@@ -636,7 +642,10 @@
    withr::local_dir("src/cpp/tests/automation")
    
    # Set up automation mode.
-   withr::local_envvar(RSTUDIO_AUTOMATION_MODE = automationMode)
+   withr::local_envvar(
+      RSTUDIO_AUTOMATION_MODE = automationMode,
+      RSTUDIO_AUTOMATION_REUSE_REMOTE = "TRUE"
+   )
    
    # Figure out where we're writing our test results.
    reportFile <- .rs.nullCoalesce(reportFile, {
