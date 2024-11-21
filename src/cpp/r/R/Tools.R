@@ -1351,6 +1351,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # Wait until some 'predicate()' expression returns TRUE
 .rs.addFunction("waitUntil", function(reason,
                                       predicate,
+                                      swallowErrors = FALSE,
                                       retryCount = 100L,
                                       waitTimeSecs = 1)
 {
@@ -1359,10 +1360,20 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    else
       function() {}
    
+   callback <- if (swallowErrors)
+   {
+      function()
+         tryCatch(predicate(), error = function(cnd) FALSE)
+   }
+   else
+   {
+      predicate
+   }
+   
    for (i in seq_len(retryCount))
    {
       pollForEvents()
-      if (predicate())
+      if (callback())
          return(TRUE)
       else
          Sys.sleep(waitTimeSecs)

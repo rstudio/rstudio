@@ -529,12 +529,12 @@
 
    # Wait until RStudio is ready.
    # Use the presence of the '#rstudio_console_input' element as evidence.
-   .rs.waitFor("RStudio to finish initialization", function()
+   .rs.waitUntil("RStudio has finished initialization", function()
    {
       document <- client$DOM.getDocument(depth = 0L)
       consoleNode <- client$DOM.querySelector(document$root$nodeId, "#rstudio_console_input")
       consoleNode$nodeId != 0L
-   })
+   }, swallowErrors = TRUE)
    
    # Return the client.
    client
