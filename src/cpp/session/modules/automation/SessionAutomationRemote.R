@@ -401,35 +401,36 @@
 
 .rs.automation.addRemoteFunction("jsObjectViaExpression", function(expression)
 {
-   response <- .rs.waitFor(expression, function()
+   response <- .rs.waitUntil(expression, function()
    {
       self$client$Runtime.evaluate(expression)
-   })
+   }, swallowErrors = TRUE)
    
    .rs.automation.wrapJsResponse(self, response)
 })
 
 .rs.automation.addRemoteFunction("jsObjectViaSelector", function(selector)
 {
-   response <- .rs.waitFor(selector, function()
+   response <- .rs.waitUntil(selector, function()
    {
       nodeId <- self$domGetNodeId(selector)
       self$client$DOM.resolveNode(nodeId)
-   })
+   }, swallowErrors = TRUE)
    
    .rs.automation.wrapJsResponse(self, response)
 })
 
 .rs.automation.addRemoteFunction("jsObjectsViaSelector", function(selector)
 {
-   response <- .rs.waitFor(selector, function()
+   response <- .rs.waitUntil(selector, function()
    {
       nodeIds <- self$domGetNodeIds(selector)
       resolvedNodes <- lapply(nodeIds, function(nodeId) {
          self$client$DOM.resolveNode(nodeId)
       })
       resolvedNodes
-   })
+   }, swallowErrors = TRUE)
+
    .rs.automation.wrapJsListResponse(self, response)
 })
 
@@ -477,17 +478,15 @@
    }
    
    # Wait until the new project is open.
-   Sys.sleep(1)
+   Sys.sleep(3)
    .rs.waitUntil("The new project is opened", function()
    {
-      tryCatch({
-         jsProjectMenuButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
-         grepl("rstudio", jsProjectMenuButton$innerText)
-      }, error = function(e) FALSE)
-   })
-   
+      jsProjectMenuButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+      grepl("rstudio", jsProjectMenuButton$innerText)
+   }, swallowErrors = TRUE)
    
 })
+
 .rs.automation.addRemoteFunction("projectClose", function()
 {
    self$domClickElement("#rstudio_project_menubutton_toolbar")
@@ -497,7 +496,7 @@
    {
       toolbarButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
       .rs.trimWhitespace(toolbarButton$innerText) == "Project: (None)"
-   })
+   }, swallowErrors = TRUE)
 })
 
 .rs.automation.addRemoteFunction("quit", function()

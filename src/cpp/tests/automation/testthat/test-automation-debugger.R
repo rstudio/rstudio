@@ -115,11 +115,11 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commandExecute("saveSourceDoc")
    remote$commandExecute("buildAll")
    
-   .rs.waitFor("build has completed", function()
+   .rs.waitUntil("build has completed", function()
    {
       output <- remote$consoleOutput()
       any(output == "> library(rstudio.automation)")
-   })
+   }, swallowErrors = TRUE)
    
    remote$consoleClear()
    
@@ -162,10 +162,10 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commandExecute("closeProject")
    
    # Wait until the project has closed
-   .rs.waitFor("the project is closed", function()
+   .rs.waitUntil("the project is closed", function()
    {
       el <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
       grepl("Project: ", el$innerText, fixed = TRUE)
-   })
+   }, swallowErrors = TRUE)
     
 })

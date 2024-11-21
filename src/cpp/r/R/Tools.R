@@ -1382,24 +1382,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    stop(sprintf("timed out waiting until '%s'", reason))
 })
 
-# Wait for a callback to return a non-error result,
-# and then produce that result after finishing
-.rs.addFunction("waitFor", function(reason,
-                                    callback,
-                                    retryCount = 100L,
-                                    waitTimeSecs = 1)
-{
-   result <- NULL
-   
-   .rs.waitUntil(reason, function()
-   {
-      result <<- tryCatch(callback(), error = identity)
-      !inherits(result, "error")
-   }, retryCount = retryCount, waitTimeSecs = waitTimeSecs)
-   
-   result
-})
-
 .rs.addFunction("bugReport", function(pro = NULL)
 {
    # collect information about the running version of R / RStudio
