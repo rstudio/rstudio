@@ -77,8 +77,8 @@ COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
 COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
 # panmirror check for changes
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-kousa-dogwood panmirror.version.json
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-mariposa-orchid panmirror.version.json
 
 WORKDIR C:/rstudio-tools/dependencies/windows
 RUN C:/rstudio-tools/dependencies/windows/install-dependencies.cmd
