@@ -32,6 +32,8 @@ export R_ENVIRON_USER=/tmp/.Renviron
 
 rm -f rstudio-automation-results.xml
 trap "exit" INT TERM
+set -x
 timeout 1h xvfb-run -a -s "-wr -screen 0 1024x768x24" npm run automation
+set +x
 cat rstudio-automation-results.xml
 
