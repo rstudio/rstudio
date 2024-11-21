@@ -75,18 +75,19 @@ withr::defer(.rs.automation.deleteRemote())
    
    # Open that project.
    remote$consoleExecuteExpr(
-      .rs.api.openProject(!!projectPath)
+      .rs.api.openProject(!!projectPath),
+      wait = FALSE
    )
    
-   # Wait a minute for the new session to load.
-   Sys.sleep(1)
+   # Wait a bit for the new session to load.
+   Sys.sleep(3)
 
    # Wait until the new project is ready.
-   .rs.waitFor("the new project is opened", function()
+   .rs.waitUntil("the new project is opened", function()
    {
       el <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
       grepl("rstudio.automation", el$innerText, fixed = TRUE)
-   })
+   }, swallowErrors = TRUE)
    
    # Close any open documents
    remote$consoleExecuteExpr(

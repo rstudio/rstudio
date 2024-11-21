@@ -19,6 +19,6 @@ for NODE_PATH in "${NODE_PATHS[@]}"; do
 done
 
 rm -f rstudio-automation-results.xml
-xvfb-run -a -s "+iglx +xinerama -wr -screen 0 1024x768x24" npm run automation
+timeout 1h xvfb-run -a -s "+iglx +xinerama -wr -screen 0 1024x768x24" npm run automation
 cat rstudio-automation-results.xml
 
