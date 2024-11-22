@@ -73,6 +73,7 @@ trap : USR1
 XVFBPID="$!"
 sleep 3
 
+FFMPEGOUT="rstudio-automation-$(date +%F.%s)"
 
 # Start capturing video.
 ffmpeg                    \
@@ -84,15 +85,34 @@ ffmpeg                    \
 	-f x11grab            \
 	-i "${XVFBDISPLAY}"   \
 	-c:v libx264          \
-	-y capture.mp4 &
+	-y "${FFMPEGOUT}.mkv" &
 FFMPEGPID="$!"
 
 
 # Make sure we tidy up on exit.
 cleanup () {
+
+	# Clean up child processes we might have launched
 	kill -SIGINT "${FFMPEGPID}" 2> /dev/null
+	wait "${FFMPEGPID}"
+
 	kill "${XVFBPID}" 2> /dev/null
+	wait "${XVFBPID}"
+
 	xauth remove "${XVFBDISPLAY}"
+
+	# Make the video 'fast start', so we can view it in a browser
+	sleep 1
+	ffmpeg                    \
+		-i "${FFMPEGOUT}.mkv" \
+		-c copy               \
+		-map 0                \
+		-movflags +faststart  \
+		"${FFMPEGOUT}.mp4"
+
+	# Clean up the old output file
+	rm -f "${FFMPEGOUT}.mkv"
+
 }
 
 trap cleanup EXIT
