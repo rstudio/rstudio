@@ -20,6 +20,7 @@ RUN apt-get update && \
     build-essential \
     clang \
     curl \
+    dbus-x11 \
     debsigs \
     dpkg-sig \
     expect \
