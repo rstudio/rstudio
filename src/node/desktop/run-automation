@@ -3,12 +3,6 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "../../../dependencies/tools/rstudio-tools.sh"
 
-# Build GWT sources, just in case?
-OWD=$(pwd)
-cd ../../gwt
-ant build
-cd ../node/desktop
-
 
 # Try to find node, and place it on the PATH.
 NODE_PATHS=(
@@ -65,22 +59,51 @@ rm -f rstudio-automation-results.xml
 # the process cannot be interrupted in that scenario.
 touch ~/.Xauthority
 export XAUTHORITY=~/.Xauthority
-xvfb-run -s "-wr -screen 0 1024x768x24" -f ~/.Xauthority npm run automation &
-PID="$!"
+export XVFBDISPLAY=:99
 
-mkdir -p screenshots
-for i in `seq 1 60`; do
-	if kill -0 "${PID}"; then
-		sleep 60
-		xwd -root -silent -display :99 | convert xwd:- png:"screenshots/screenshot-$(date +%s).png"
-	else
-		break
-	fi
-done
+# Generate a cookie to use for xauth.
+MCOOKIE=$(mcookie)
+xauth source - <<- EOF
+add ${XVFBDISPLAY} . ${MCOOKIE}
+EOF
+
+# Start the Xvfb server.
+trap : USR1
+(trap '' USR1; exec Xvfb "${XVFBDISPLAY}" -screen 0 1280x1024x24 -auth ~/.Xauthority) &
+XVFBPID="$!"
+sleep 3
 
 
+# Start capturing video.
+ffmpeg                    \
+	-hide_banner          \
+	-loglevel fatal       \
+	-nostats              \
+	-video_size 1280x1024 \
+	-framerate 30         \
+	-f x11grab            \
+	-i "${XVFBDISPLAY}"   \
+	-c:v libx264          \
+	-y capture.mp4 &
+FFMPEGPID="$!"
+
+
+# Make sure we tidy up on exit.
+cleanup () {
+	kill -SIGINT "${FFMPEGPID}"
+	kill "${XVFBPID}"
+	xauth remove "${XVFBDISPLAY}"
+}
+
+trap cleanup EXIT
+
+
+# Start running automation.
+DISPLAY="${XVFBDISPLAY}" npm run automation
+
+
+# Print results.
 cat rstudio-automation-results.xml
-
-kill "${PID}"
+pkill rsession
 exit 0
 

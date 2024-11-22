@@ -683,9 +683,7 @@
    writeLines(c("", "==> Finishing running RStudio automation", ""))
 
    # Quit when we're done.
-   ci <- Sys.getenv("CI", unset = NA)
-   if (!is.na(ci))
-      quit(save = "no", status = 0L)
+   quit(save = "no", status = 0L)
    
 })
 
