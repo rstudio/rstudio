@@ -54,10 +54,11 @@ rm -f rstudio-automation-results.xml
 
 # NOTE: We'd like to use 'timeout' here, but for whatever reason
 # the process cannot be interrupted in that scenario.
-xvfb-run -s "-wr -screen 0 1024x768x24" npm run automation
+xvfb-run -s "-wr -screen 0 1024x768x24" npm run automation &
 PID="$!"
 
 for i in `seq 1 30`; do
+	echo "Waiting [$i/30] ..."
 	if kill -0 "${PID}"; then
 		xwd -root -display :99 -out screenshot.xwd
 		convert screenshot.xwd "screenshot-$(date +%s).png"
