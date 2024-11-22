@@ -189,8 +189,12 @@ pipeline {
                     catchError(buildResult: null, stageResult: 'FAILURE') {
                       dir ("src/node/desktop") {
                         script {
-                          utils.runCheckCmd("./run-automation", "Automated Tests", STAGE_NODE_URL, true)
-                          junit allowEmptyResults: true, testResults: '*.xml'
+                          try {
+                            utils.runCheckCmd("./run-automation", "Automated Tests", STAGE_NODE_URL, true)
+                            junit(allowEmptyResults: true, testResults: '*.xml')
+                          } finally {
+                            archiveArtifacts(artifacts: "*.xwd", fingerprint: true)
+                          }
                         }
                       }
                     }

@@ -57,8 +57,9 @@ rm -f rstudio-automation-results.xml
 xvfb-run -a -s "-wr -screen 0 1024x768x24" npm run automation
 PID="$!"
 
-for i in `seq 1 60`; do
+for i in `seq 1 30`; do
 	if kill -0 "${PID}"; then
+		xwd -root -display :99 -out "screenshot-$(date +%s).xwd"
 		sleep 60
 	else
 		break
