@@ -189,7 +189,7 @@ pipeline {
                     catchError(buildResult: null, stageResult: 'FAILURE') {
                       dir ("src/node/desktop") {
                         script {
-                          sh "./run-automation"
+                          utils.runCheckCmd("./run-automation", "Automated Tests", STAGE_NODE_URL, true)
                           junit allowEmptyResults: true, testResults: '*.xml'
                         }
                       }
