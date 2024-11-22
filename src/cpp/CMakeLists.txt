@@ -709,6 +709,13 @@ else()
 
       add_subdirectory(session)
 
+      # help RStudio find build GWT components for devmode
+      if(RSTUDIO_PACKAGE_BUILD)
+         set(WWW_LOCAL_PATH "${CMAKE_CURRENT_BINARY_DIR}/../../gwt/www")
+      else()
+         set(WWW_LOCAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../gwt/www")
+      endif()
+
       # desktop conf file used for dev-mode for Electron desktop
       if(RSTUDIO_ELECTRON OR RSTUDIO_DEVELOPMENT)
          configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
@@ -717,13 +724,6 @@ else()
       # configure desktop files
       if(RSTUDIO_ELECTRON AND WIN32)
          configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
-      endif()
-
-      # help RStudio find build GWT components for devmode
-      if(RSTUDIO_PACKAGE_BUILD)
-         set(WWW_LOCAL_PATH "${CMAKE_CURRENT_BINARY_DIR}/../../gwt/www")
-      else()
-         set(WWW_LOCAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../gwt/www")
       endif()
 
       # add server subprojects if we aren't building in desktop only mode
