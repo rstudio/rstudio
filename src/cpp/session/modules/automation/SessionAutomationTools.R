@@ -45,8 +45,8 @@
 
 .rs.automation.addRemoteFunction("getProjectDropdownLabel", function()
 {
-   self$waitForElement("#rstudio_project_menubutton_toolbar")
-   toolbarButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+   self$waitForElement(.rs.automation.targets[["toolbar.projectMenuButton"]])
+   toolbarButton <- self$jsObjectViaSelector(.rs.automation.targets[["toolbar.projectMenuButton"]])
    .rs.trimWhitespace(toolbarButton$innerText)
 })
 

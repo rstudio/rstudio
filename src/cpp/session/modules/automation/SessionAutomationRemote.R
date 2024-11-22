@@ -477,7 +477,7 @@
 
 .rs.automation.addRemoteFunction("projectClose", function()
 {
-   self$domClickElement("#rstudio_project_menubutton_toolbar")
+   self$domClickElement(.rs.automation.targets[["toolbar.projectMenuButton"]])
    self$domClickElement("#rstudio_label_close_project_command")
    
    .rs.waitUntil("The project has closed", function()
