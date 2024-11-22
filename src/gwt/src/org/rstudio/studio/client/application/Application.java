@@ -139,7 +139,7 @@ public class Application implements ApplicationEventHandlers
                       Provider<ApplicationInterrupt> pApplicationInterrupt,
                       Provider<ApplicationThemes> pAppThemes,
                       Provider<ProductEditionInfo> pEdition,
-                      Provider<ApplicationAutomationHooks> pApplicationHooks)
+                      Provider<ApplicationAutomation> pApplicationHooks)
    {
       // save references
       view_ = view;
@@ -160,7 +160,7 @@ public class Application implements ApplicationEventHandlers
       pApplicationInterrupt_ = pApplicationInterrupt;
       pEdition_ = pEdition;
       pAppThemes_ = pAppThemes;
-      pApplicationHooks_ = pApplicationHooks;
+      pAutomation_ = pApplicationHooks;
 
       // bind to commands
       binder.bind(commands_, this);
@@ -235,11 +235,10 @@ public class Application implements ApplicationEventHandlers
             // set session info
             session_.setSessionInfo(sessionInfo);
             
-            // initialize application hooks
             if (sessionInfo.isAutomationAgent())
             {
-               ApplicationAutomationHooks appHooks = pApplicationHooks_.get();
-               appHooks.initialize();
+               ApplicationAutomation automation = pAutomation_.get();
+               automation.initializeAgent();
             }
             
             // load MathJax
@@ -1429,7 +1428,7 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<ProductEditionInfo> pEdition_;
    private final Provider<ApplicationThemes> pAppThemes_;
-   private final Provider<ApplicationAutomationHooks> pApplicationHooks_;
+   private final Provider<ApplicationAutomation> pAutomation_;
 
    private boolean fileUploadInProgress_ = false;
 

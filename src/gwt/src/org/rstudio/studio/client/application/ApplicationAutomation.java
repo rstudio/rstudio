@@ -26,7 +26,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ApplicationAutomationHooks
+public class ApplicationAutomation
 {
    static interface NullaryCallback<R>
    {
@@ -39,19 +39,23 @@ public class ApplicationAutomationHooks
    }
    
    @Inject
-   public ApplicationAutomationHooks(Commands commands)
+   public ApplicationAutomation(Commands commands)
    {
       commands_ = commands;
    }
    
-   public final boolean isEnabled()
+   public final boolean isAutomationHost()
    {
-      return isEnabled_;
+      return isAutomationHost_;
+   }
+   public final boolean isAutomationAgent()
+   {
+      return isAutomationAgent_;
    }
    
-   public final void initialize()
+   public final void initializeAgent()
    {
-      isEnabled_ = true;
+      isAutomationAgent_ = true;
       
       initializeCallbacks();
       
@@ -98,5 +102,6 @@ public class ApplicationAutomationHooks
    }-*/;
    
    private final Commands commands_;
-   private boolean isEnabled_ = false;
+   private boolean isAutomationHost_ = false;
+   private boolean isAutomationAgent_ = false;
 }

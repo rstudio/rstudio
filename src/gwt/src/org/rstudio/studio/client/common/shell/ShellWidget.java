@@ -31,7 +31,7 @@ import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ApplicationAutomationHooks;
+import org.rstudio.studio.client.application.ApplicationAutomation;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -282,7 +282,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
    
    @Inject
-   private void initialize(ApplicationAutomationHooks automation)
+   private void initialize(ApplicationAutomation automation)
    {
       automation_ = automation;
    }
@@ -581,8 +581,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (liveRegion_ != null)
          liveRegion_.announce(output_.getNewText());
 
-      // if we're desktop, write output to console
-      // if (Desktop.isDesktop() && automation_.isEnabled())
+      // if we're a desktop automation host, write output to console
+      if (Desktop.isDesktop() && automation_.isAutomationHost())
       {
          if (isError)
          {
@@ -1131,7 +1131,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final UserPrefs prefs_;
    private final AriaLiveService ariaLive_;
    private VerticalPanel verticalPanel_;
-   private ApplicationAutomationHooks automation_;
+   private ApplicationAutomation automation_;
 
    private int editorWidth_ = -1;
    private boolean scrollIntoViewPending_ = false;
