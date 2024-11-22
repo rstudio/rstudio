@@ -81,3 +81,6 @@ done
 
 cat rstudio-automation-results.xml
 
+kill "${PID}"
+exit 0
+
