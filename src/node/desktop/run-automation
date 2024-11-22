@@ -90,8 +90,8 @@ FFMPEGPID="$!"
 
 # Make sure we tidy up on exit.
 cleanup () {
-	kill -SIGINT "${FFMPEGPID}"
-	kill "${XVFBPID}"
+	kill -SIGINT "${FFMPEGPID}" 2> /dev/null
+	kill "${XVFBPID}" 2> /dev/null
 	xauth remove "${XVFBDISPLAY}"
 }
 
@@ -99,7 +99,23 @@ trap cleanup EXIT
 
 
 # Start running automation.
-DISPLAY="${XVFBDISPLAY}" npm run automation
+DISPLAY="${XVFBDISPLAY}" npm run automation &
+NPMPID="$!"
+
+
+# Wait for exit.
+for i in `seq 1 1800`; do
+	if kill -0 "${NPMPID}"; then
+		sleep 1
+	else
+		break
+	fi
+done
+
+if kill -0 "${NPMPID}"; then
+	echo "automation timed out; terminating process"
+	kill "${NPMPID}"
+fi
 
 
 # Print results.
