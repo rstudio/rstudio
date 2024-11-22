@@ -64,6 +64,7 @@ RUN apt-get update && \
     valgrind \
     wget \
     whois \
+    x11-apps \
     xvfb \
     zlib1g-dev
 
