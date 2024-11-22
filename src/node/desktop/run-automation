@@ -60,17 +60,19 @@ export RS_CRASH_HANDLER_PROMPT=false
 # Remove an old automation results file if it exists.
 rm -f rstudio-automation-results.xml
 
+
 # NOTE: We'd like to use 'timeout' here, but for whatever reason
 # the process cannot be interrupted in that scenario.
+touch ~/.Xauthority
 export XAUTHORITY=~/.Xauthority
 xvfb-run -s "-wr -screen 0 1024x768x24" -f ~/.Xauthority npm run automation &
 PID="$!"
 
+mkdir -p screenshots
 for i in `seq 1 60`; do
 	if kill -0 "${PID}"; then
-		xwd -root -display :99 -out screenshot.xwd
-		convert screenshot.xwd "screenshot-$(date +%s).png"
 		sleep 60
+		xwd -root -silent -display :99 | convert xwd:- png:"screenshots/screenshot-$(date +%s).png"
 	else
 		break
 	fi

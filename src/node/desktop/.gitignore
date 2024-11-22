@@ -147,6 +147,4 @@ Info.plist
 # End of https://www.toptal.com/developers/gitignore/api/node
 
 *.original
-
-screenshot.xwd
-screenshot-*.png
+screenshots
