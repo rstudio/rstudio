@@ -24,8 +24,10 @@ RUN apt-get update && \
     dpkg-sig \
     expect \
     fakeroot \
+    ffmpeg \
     git-core \
     glibc-tools \
+    imagemagick \
     jq \
     libacl1-dev \
     libattr1-dev \
