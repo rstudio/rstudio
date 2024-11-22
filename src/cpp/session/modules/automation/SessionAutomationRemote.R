@@ -472,7 +472,7 @@
    }
    
    # Wait until the new project is open.
-   self$waitForProjectToOpen("rstudio")
+   self$ide.waitForProjectToOpen("rstudio")
 })
 
 .rs.automation.addRemoteFunction("projectClose", function()

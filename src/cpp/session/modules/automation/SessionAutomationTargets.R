@@ -15,5 +15,5 @@
 
 # Aliases for common DOM element targets that we might want to use.
 .rs.setVar("automation.targets", list(
-   # NYI
+   ide.projectMenu = "#rstudio_project_menubutton_toolbar"
 ))

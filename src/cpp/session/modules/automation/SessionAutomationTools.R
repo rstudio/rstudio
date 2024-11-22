@@ -32,7 +32,7 @@
    self$consoleExecute(sprintf("unlink('%s', recursive = TRUE)", folder))
 })
 
-.rs.automation.addRemoteFunction("waitForProjectToOpen", function(projectName)
+.rs.automation.addRemoteFunction("ide.waitForProjectToOpen", function(projectName)
 {
    Sys.sleep(1)
    .rs.waitUntil("The new project is opened", function()
@@ -50,28 +50,28 @@
    .rs.trimWhitespace(toolbarButton$innerText)
 })
 
-.rs.addFunction("automation.tools.getCheckboxStateByNodeId", function(remote, nodeId)
+.rs.automation.addRemoteFunction("getCheckboxStateByNodeId", function(nodeId)
 {
-   response <- remote$client$DOM.getAttributes(nodeId)
+   response <- self$client$DOM.getAttributes(nodeId)
    attributes <- response$attributes
    checkedIndex <- which(attributes == "checked")
    isChecked <- length(checkedIndex) > 0
 })
 
-.rs.addFunction("automation.tools.ensureChecked", function(remote, selector)
+.rs.automation.addRemoteFunction("ensureChecked", function(selector)
 {
-   nodeId <- remote$waitForElement(selector)
-   if (!.rs.automation.tools.getCheckboxStateByNodeId(remote, nodeId))
+   nodeId <- self$waitForElement(selector)
+   if (!self$getCheckboxStateByNodeId(nodeId))
    {
-      remote$domClickElementByNodeId(nodeId)
+      self$domClickElementByNodeId(nodeId)
    }
 })
 
-.rs.addFunction("automation.tools.ensureUnchecked", function(remote, selector)
+.rs.automation.addRemoteFunction("ensureUnchecked", function(selector)
 {
-   nodeId <- remote$waitForElement(selector)
-   if (.rs.automation.tools.getCheckboxStateByNodeId(remote, nodeId))
+   nodeId <- self$waitForElement(selector)
+   if (self$getCheckboxStateByNodeId(nodeId))
    {
-      remote$domClickElementByNodeId(nodeId)
+      self$domClickElementByNodeId(nodeId)
    }
 })
