@@ -3,6 +3,13 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "../../../dependencies/tools/rstudio-tools.sh"
 
+# Build GWT sources, just in case?
+OWD=$(pwd)
+cd ../../gwt
+ant build
+cd ../node/desktop
+
+
 # Try to find node, and place it on the PATH.
 NODE_PATHS=(
    "${SCRIPT_DIR}/../../../dependencies/common/node/${RSTUDIO_NODE_DIR}/bin"
@@ -17,6 +24,7 @@ for NODE_PATH in "${NODE_PATHS[@]}"; do
 		break
 	fi
 done
+
 
 # Get an open port.
 PORT=$(python3 - <<- EOF
@@ -54,11 +62,11 @@ rm -f rstudio-automation-results.xml
 
 # NOTE: We'd like to use 'timeout' here, but for whatever reason
 # the process cannot be interrupted in that scenario.
-xvfb-run -s "-wr -screen 0 1024x768x24" npm run automation &
+export XAUTHORITY=~/.Xauthority
+xvfb-run -s "-wr -screen 0 1024x768x24" -f ~/.Xauthority npm run automation &
 PID="$!"
 
-for i in `seq 1 30`; do
-	echo "Waiting [$i/30] ..."
+for i in `seq 1 60`; do
 	if kill -0 "${PID}"; then
 		xwd -root -display :99 -out screenshot.xwd
 		convert screenshot.xwd "screenshot-$(date +%s).png"
@@ -67,6 +75,7 @@ for i in `seq 1 30`; do
 		break
 	fi
 done
+
 
 cat rstudio-automation-results.xml
 
