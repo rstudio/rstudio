@@ -235,7 +235,12 @@ public class Application implements ApplicationEventHandlers
             // set session info
             session_.setSessionInfo(sessionInfo);
             
-            if (sessionInfo.isAutomationAgent())
+            if (sessionInfo.isAutomationHost())
+            {
+               ApplicationAutomation automation = pAutomation_.get();
+               automation.initializeHost();
+            }
+            else if (sessionInfo.isAutomationAgent())
             {
                ApplicationAutomation automation = pAutomation_.get();
                automation.initializeAgent();

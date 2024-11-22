@@ -1,5 +1,5 @@
 /*
- * ApplicationAutomationHooks.java
+ * ApplicationAutomation.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -53,6 +53,11 @@ public class ApplicationAutomation
       return isAutomationAgent_;
    }
    
+   public final void initializeHost()
+   {
+      isAutomationHost_ = true;
+   }
+   
    public final void initializeAgent()
    {
       isAutomationAgent_ = true;
@@ -90,14 +95,14 @@ public class ApplicationAutomation
    private native final <R> void exportCallback(String name, NullaryCallback<R> callback)
    /*-{
       $wnd.rstudioCallbacks[name] = $entry(function() {
-         return callback.@org.rstudio.studio.client.application.ApplicationAutomationHooks.NullaryCallback::execute(*)();
+         return callback.@org.rstudio.studio.client.application.ApplicationAutomation.NullaryCallback::execute(*)();
       });
    }-*/;
    
    private native final <R, T> void exportCallback(String name, UnaryCallback<R, T> callback)
    /*-{
       $wnd.rstudioCallbacks[name] = $entry(function(value) {
-         return callback.@org.rstudio.studio.client.application.ApplicationAutomationHooks.UnaryCallback::execute(*)(value);
+         return callback.@org.rstudio.studio.client.application.ApplicationAutomation.UnaryCallback::execute(*)(value);
       });
    }-*/;
    
