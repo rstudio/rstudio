@@ -668,7 +668,7 @@
    
    # Clear the console, and show a header that indicates we're about to run automation tests.
    invisible(.rs.api.executeCommand("consoleClear"))
-   writeLines(c("", "==> Running RStudio automation tests...", ""))
+   writeLines(c("", "==> Running RStudio automation tests", ""))
    
    # Run tests.
    filter <- Sys.getenv("RSTUDIO_AUTOMATION_FILTER", unset = NA)
@@ -680,8 +680,12 @@
       stop_on_warning = FALSE
    )
 
+   writeLines(c("", "==> Finishing running RStudio automation", ""))
+
    # Quit when we're done.
-   quit(save = "no", status = 0L)
+   ci <- Sys.getenv("CI", unset = NA)
+   if (!is.na(ci))
+      quit(save = "no", status = 0L)
    
 })
 
