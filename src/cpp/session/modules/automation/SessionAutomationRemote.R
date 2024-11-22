@@ -482,7 +482,7 @@
    
    .rs.waitUntil("The project has closed", function()
    {
-      .rs.trimWhitespace(remote$getProjectDropdownLabel()) == "Project: (None)"
+      .rs.trimWhitespace(self$getProjectDropdownLabel()) == "Project: (None)"
    })
 })
 
