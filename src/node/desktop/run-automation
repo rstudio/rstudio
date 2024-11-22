@@ -104,7 +104,7 @@ NPMPID="$!"
 
 
 # Wait for exit.
-for i in `seq 1 1800`; do
+for _i in `seq 1 180`; do
 	if kill -0 "${NPMPID}"; then
 		sleep 1
 	else
