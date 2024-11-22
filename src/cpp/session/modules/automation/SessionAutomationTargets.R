@@ -15,5 +15,10 @@
 
 # Aliases for common DOM element targets that we might want to use.
 .rs.setVar("automation.targets", list(
-   toolbar.projectMenuButton = "#rstudio_project_menubutton_toolbar"
+   
+   # Top-level toolbar (outside any panes)
+   toolbar.projectMenuButton = "#rstudio_project_menubutton_toolbar",
+
+   # Code-related
+   code.completionsPopup = "#rstudio_popup_completions"
 ))
