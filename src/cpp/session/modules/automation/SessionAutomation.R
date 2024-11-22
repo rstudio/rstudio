@@ -679,6 +679,9 @@
       stop_on_failure = FALSE,
       stop_on_warning = FALSE
    )
+
+   # Quit when we're done.
+   quit(save = "no", status = 0L)
    
 })
 
