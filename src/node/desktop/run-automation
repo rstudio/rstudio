@@ -55,8 +55,6 @@ export RS_CRASH_HANDLER_PROMPT=false
 rm -f rstudio-automation-results.xml
 
 
-# NOTE: We'd like to use 'timeout' here, but for whatever reason
-# the process cannot be interrupted in that scenario.
 touch ~/.Xauthority
 export XAUTHORITY=~/.Xauthority
 export XVFBDISPLAY=:99
@@ -123,7 +121,11 @@ DISPLAY="${XVFBDISPLAY}" npm run automation &
 NPMPID="$!"
 
 
-# Wait for exit.
+# Wait for automation to finish running.
+#
+# NOTE: We'd like to use 'timeout' above, but for whatever reason,
+# the process cannot be interrupted in that scenario.
+# Instead, we loop and wait for poll for exit.
 for _i in `seq 1 180`; do
 	if kill -0 "${NPMPID}"; then
 		sleep 1
@@ -133,13 +135,11 @@ for _i in `seq 1 180`; do
 done
 
 if kill -0 "${NPMPID}"; then
-	echo "automation timed out; terminating process"
+	echo "ERROR: automation timed out; terminating process"
 	kill "${NPMPID}"
 fi
 
 
-# Print results.
-cat rstudio-automation-results.xml
 pkill rsession
-exit 0
+cat rstudio-automation-results.xml
 
