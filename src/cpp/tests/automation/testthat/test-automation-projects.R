@@ -6,7 +6,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("can create an empty project with git enabled using wizard UI", {
 
-   projectPath <- .rs.automation.tools.createTempFolder(remote)
+   projectPath <- remote$createTempFolder()
    projectName <- "MyTestGitProject"
 
    remote$commandExecute("newProject")
@@ -20,18 +20,18 @@ withr::defer(.rs.automation.deleteRemote())
    remote$clickElement("#rstudio_file_accept_choose")
    .rs.automation.tools.ensureChecked(self, "#rstudio_new_project_git_repo")
    remote$clickElement("#rstudio_label_create_project_wizard_confirm")
-   .rs.automation.tools.waitForProjectToOpen(remote, projectName)
+   remote$waitForProjectToOpen(projectName)
 
-   expect_equal(projectName, .rs.automation.tools.getProjectDropdownLabel(remote))
+   expect_equal(projectName, remote$getProjectDropdownLabel())
    expect_true(remote$elementExists("#rstudio_workbench_tab_git"))
 
    remote$projectClose()
-   .rs.automation.tools.deleteFolder(remote, projectPath)
+   remote$deleteFolder(projectPath)
 })
 
 .rs.test("can create an empty project without git enabled using wizard UI", {
 
-   projectPath <- .rs.automation.tools.createTempFolder(remote)
+   projectPath <- remote$createTempFolder()
    projectName <- "MyTestNoGitProject"
 
    remote$commandExecute("newProject")
@@ -45,11 +45,11 @@ withr::defer(.rs.automation.deleteRemote())
    remote$clickElement("#rstudio_file_accept_choose")
    .rs.automation.tools.ensureUnchecked(self, "#rstudio_new_project_git_repo")
    remote$clickElement("#rstudio_label_create_project_wizard_confirm")
-   .rs.automation.tools.waitForProjectToOpen(remote, projectName)
+   remote$waitForProjectToOpen(projectName)
 
-   expect_equal(projectName, .rs.automation.tools.getProjectDropdownLabel(remote))
+   expect_equal(projectName, remote$getProjectDropdownLabel())
    expect_false(remote$elementExists("#rstudio_workbench_tab_git"))
 
    remote$projectClose()
-   .rs.automation.tools.deleteFolder(remote, projectPath)
+   remote$deleteFolder(projectPath)
 })

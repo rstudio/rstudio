@@ -472,7 +472,7 @@
    }
    
    # Wait until the new project is open.
-   .rs.automation.tools.waitForProjectToOpen(self, "rstudio")
+   self$waitForProjectToOpen("rstudio")
 })
 
 .rs.automation.addRemoteFunction("projectClose", function()
@@ -482,7 +482,7 @@
    
    .rs.waitUntil("The project has closed", function()
    {
-      .rs.trimWhitespace(.rs.automation.tools.getProjectDropdownLabel(self)) == "Project: (None)"
+      .rs.trimWhitespace(remote$getProjectDropdownLabel()) == "Project: (None)"
    })
 })
 

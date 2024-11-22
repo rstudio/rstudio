@@ -20,33 +20,33 @@
    ifelse(inherits(isAriaHidden, "error"), FALSE, as.logical(isAriaHidden))
 })
 
-.rs.addFunction("automation.tools.createTempFolder", function(remote)
+.rs.automation.addRemoteFunction("createTempFolder", function()
 {
    path <- tempfile("rstudio.automation.", tmpdir = dirname(tempdir()))
-   remote$consoleExecute(sprintf("dir.create('%s', recursive = TRUE, showWarnings = FALSE)", path))
+   self$consoleExecute(sprintf("dir.create('%s', recursive = TRUE, showWarnings = FALSE)", path))
    path
 })
 
-.rs.addFunction("automation.tools.deleteFolder", function(remote, folder)
+.rs.automation.addRemoteFunction("deleteFolder", function(folder)
 {
-   remote$consoleExecute(sprintf("unlink('%s', recursive = TRUE)", folder))
+   self$consoleExecute(sprintf("unlink('%s', recursive = TRUE)", folder))
 })
 
-.rs.addFunction("automation.tools.waitForProjectToOpen", function(remote, projectName)
+.rs.automation.addRemoteFunction("waitForProjectToOpen", function(projectName)
 {
    Sys.sleep(1)
    .rs.waitUntil("The new project is opened", function()
    {
       tryCatch({
-         grepl(projectName, .rs.automation.tools.getProjectDropdownLabel(remote))
+         grepl(projectName, self$getProjectDropdownLabel())
       }, error = function(e) FALSE)
    })
 })
 
-.rs.addFunction("automation.tools.getProjectDropdownLabel", function(remote)
+.rs.automation.addRemoteFunction("getProjectDropdownLabel", function()
 {
-   remote$waitForElement("#rstudio_project_menubutton_toolbar")
-   toolbarButton <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+   self$waitForElement("#rstudio_project_menubutton_toolbar")
+   toolbarButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
    .rs.trimWhitespace(toolbarButton$innerText)
 })
 
