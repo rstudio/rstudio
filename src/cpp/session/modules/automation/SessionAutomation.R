@@ -381,6 +381,7 @@
    # Create a default JSON configuration file.
    config <- list(
       auto_save_on_idle = "none",
+      check_for_updates = FALSE,
       continue_comments_on_newline = FALSE,
       save_workspace = "never",
       windows_terminal_shell = "win-cmd"
