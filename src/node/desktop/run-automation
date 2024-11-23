@@ -3,6 +3,8 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "../../../dependencies/tools/rstudio-tools.sh"
 
+# For debugging...
+env | sort
 
 # Set up dbus.
 export $(dbus-launch)

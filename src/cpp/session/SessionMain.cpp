@@ -1411,6 +1411,7 @@ void rRunTests()
 
 void rRunAutomation()
 {
+	std::cerr << "Sending RunAutomation client event" << std::endl;
    ClientEvent event(client_events::kRunAutomation);
    module_context::enqueClientEvent(event);
 }
@@ -2545,6 +2546,7 @@ int main(int argc, char * const argv[])
       // set automation callback if enabled
       if (options.runAutomation())
       {
+			std::cerr << "setting runAutomation callback" << std::endl;
          rCallbacks.runAutomation = rRunAutomation;
       }
 

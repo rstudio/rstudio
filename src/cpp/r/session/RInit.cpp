@@ -387,13 +387,18 @@ void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
+      std::cerr << "Running deferred deserialization action" << std::endl;
+
       // do the deferred action
       s_deferredDeserializationAction();
       s_deferredDeserializationAction.clear();
       
       // run automation tests if configured to do so
       if (rCallbacks().runAutomation)
+      {
+         std::cerr << "Calling runAutomation hook" << std::endl;
          rCallbacks().runAutomation();
+      }
    }
 }
 
