@@ -84,6 +84,7 @@ ffmpeg                    \
 	-nostats              \
 	-video_size 1280x1024 \
 	-framerate 30         \
+	-deadline realtime    \
 	-f x11grab            \
 	-i "${XVFBDISPLAY}"   \
 	-y "${FFMPEGOUT}.webm" &
