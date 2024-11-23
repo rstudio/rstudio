@@ -54,7 +54,7 @@
 .rs.addFunction("automation.newRemote", function(mode = NULL)
 {
    # Re-use existing remote if requested.
-   reuse <- Sys.getenv("RSTUDIO_AUTOMATION_REUSE_REMOTE", unset = NA)
+   reuse <- Sys.getenv("RSTUDIO_AUTOMATION_REUSE_REMOTE", unset = "FALSE")
    if (identical(reuse, "TRUE"))
    {
       remote <- .rs.automation.remoteInstance
@@ -79,8 +79,8 @@
    # Avoid deleting remote if requested.
    if (!force)
    {
-      reuse <- Sys.getenv("RSTUDIO_AUTOMATION_REUSE_REMOTE", unset = NA)
-      if (identical(reuse, "TRUE"))
+      reuse <- Sys.getenv("RSTUDIO_AUTOMATION_REUSE_REMOTE", unset = "FALSE")
+      if (reuse)
          return(invisible(NULL))
    }
    

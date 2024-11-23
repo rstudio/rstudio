@@ -85,6 +85,7 @@ ffmpeg                    \
 	-f x11grab            \
 	-i "${XVFBDISPLAY}"   \
 	-c:v libx264          \
+	-pix_fmt yuv420p      \
 	-y "${FFMPEGOUT}.mkv" &
 FFMPEGPID="$!"
 
@@ -107,9 +108,11 @@ cleanup () {
 	# Make the video 'fast start', so we can view it in a browser
 	sleep 1
 	ffmpeg                    \
+		-hide_banner          \
+		-loglevel fatal       \
+		-nostats              \
 		-i "${FFMPEGOUT}.mkv" \
 		-c copy               \
-		-map 0                \
 		-movflags +faststart  \
 		"${FFMPEGOUT}.mp4"
 

@@ -838,7 +838,7 @@
 
 .rs.addFunction("automation.onFinishedRunningAutomation", function()
 {
-   close <- Sys.getenv("RSTUDIO_AUTOMATION_CLOSE_ON_FINISH", unset = NA)
+   close <- Sys.getenv("RSTUDIO_AUTOMATION_CLOSE_ON_FINISH", unset = "FALSE")
    if (close)
       quit(status = 0L)
 

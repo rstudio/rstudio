@@ -651,8 +651,6 @@ export class SessionLauncher {
       this.sessionPath = new FilePath(devSessionPath);
     }
 
-    console.log(this.sessionPath.getAbsolutePath());
-    console.log(argList.join(' '));
     const sessionProc = launchProcess(this.sessionPath, argList);
     sessionProc.on('error', (err) => {
       // Unable to start rsession (at all)
