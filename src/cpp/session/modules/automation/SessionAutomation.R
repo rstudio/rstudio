@@ -59,18 +59,10 @@
    if (!requireNamespace("renv", quietly = TRUE))
       install.packages("renv")
    
-   opts <- options(
-      renv.config.pak.enabled = TRUE,
-      renv.config.cache.enabled = FALSE
-   )
-   
+   opts <- options(renv.config.cache.enabled = FALSE)
    on.exit(options(opts), add = TRUE)
    
-   renv::install(
-      packages = packages,
-      prompt   = FALSE
-   )
-   
+   renv::install(packages, prompt = FALSE)
    for (package in packages)
       loadNamespace(package)
 })
