@@ -96,6 +96,9 @@ FFMPEGPID="$!"
 # Make sure we tidy up on exit.
 cleanup () {
 
+	# Dump log files.
+	tail -n+1 ~/.local/share/rstudio/log/*
+
 	# Clean up child processes we might have launched
 	kill -SIGINT "${FFMPEGPID}" 2> /dev/null
 	wait "${FFMPEGPID}"
