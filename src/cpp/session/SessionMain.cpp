@@ -21,9 +21,10 @@
 #include <boost/scope_exit.hpp>
 
 #ifndef _WIN32
+#include <netdb.h>
+#include <pwd.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <netdb.h>
 #endif
 
 #include <string>
@@ -2026,9 +2027,26 @@ int main(int argc, char * const argv[])
          return core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
       }
 
+      // make sure the USER environment variable is set
+      // (seemingly it isn't in Docker?)
+#ifndef _WIN32
+      std::string user = core::system::getenv("USER");
+      if (user.empty())
+      {
+         uid_t uid = geteuid();
+         struct passwd* pw = getpwuid(uid);
+         if (pw != nullptr)
+         {
+            std::string user = pw->pw_name;
+            core::system::setenv("USER", user);
+         }
+      }
+#endif
+      
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
+      
       std::string programId = "rsession-" + core::system::username();
       core::log::setProgramId(programId);
       core::system::initializeLog(programId,

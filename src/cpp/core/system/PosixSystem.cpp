@@ -515,25 +515,9 @@ void sendSignalToSelf(SignalType signal)
    ::kill(::getpid(), signalForType(signal));
 }
 
-namespace {
-
-std::string getUsername()
-{
-   uid_t uid = ::geteuid();
-   struct passwd* pw = ::getpwuid(uid);
-   return pw ? pw->pw_name : std::string();
-}
-
-} // end anonymous namespace
-
 std::string username()
 {
-   std::string user = system::getenv("USER");
-   if (!user.empty())
-      return user;
-   
-   static std::string instance = getUsername();
-   return instance;
+   return system::getenv("USER");
 }
 
 unsigned int effectiveUserId()

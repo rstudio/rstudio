@@ -78,7 +78,9 @@ void initTcpHttpConnectionListener(const std::string& wwwAddress,
          LOG_DEBUG_MESSAGE("Verify signatures enabled for tcp http listener");
    }
    else
+   {
       LOG_DEBUG_MESSAGE("Validating tcp http connections with a shared secret");
+   }
 }
 
 }  // anonymous namespace
