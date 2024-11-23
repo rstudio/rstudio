@@ -704,6 +704,10 @@
       )
    )
    
+   .rs.alog("Initializing automation agent.")
+   remote <- .rs.automation.newRemote()
+   on.exit(.rs.automation.deleteRemote(TRUE), add = TRUE)
+   
    # Clear the console, and show a header that indicates
    # we're about to run automation tests.
    invisible(.rs.api.executeCommand("consoleClear"))
