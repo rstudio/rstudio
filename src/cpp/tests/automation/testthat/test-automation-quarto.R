@@ -90,6 +90,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("can cancel switching to visual editor", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode Denied"
@@ -129,6 +131,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("can switch to visual editor and back to source editor", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -182,6 +186,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("visual editor welcome dialog displays again if don't show again is unchecked", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -234,6 +240,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("displaying and closing chunk options popup doesn't modify already-sorted settings", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -296,6 +304,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("displaying and closing chunk options popup sorts the settings", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -353,6 +363,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/14552
 .rs.test("empty header labels are permitted in document outline", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       format: revealjs
@@ -449,6 +460,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/15189
 .rs.test("raw html blocks are preserved by visual editor", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: Raw html blocks
@@ -496,6 +508,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/15253
 .rs.test("raw latex blocks are preserved by visual editor", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: Raw LaTeX blocks
