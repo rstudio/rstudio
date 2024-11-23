@@ -6,6 +6,8 @@ source "../../../dependencies/tools/rstudio-tools.sh"
 # For debugging...
 export RS_LOG_LEVEL=debug
 env | sort
+echo "whoami == $(whoami)"
+
 
 # Set up dbus.
 export $(dbus-launch)
