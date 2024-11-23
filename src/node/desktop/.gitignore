@@ -149,5 +149,6 @@ Info.plist
 *.original
 *.mp4
 *.mkv
+*.webm
 screenshots
 

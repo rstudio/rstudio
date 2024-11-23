@@ -84,9 +84,7 @@ ffmpeg                    \
 	-framerate 30         \
 	-f x11grab            \
 	-i "${XVFBDISPLAY}"   \
-	-c:v libx264          \
-	-pix_fmt yuv420p      \
-	-y "${FFMPEGOUT}.mkv" &
+	-y "${FFMPEGOUT}.webm" &
 FFMPEGPID="$!"
 
 
@@ -104,20 +102,6 @@ cleanup () {
 	wait "${XVFBPID}"
 
 	xauth remove "${XVFBDISPLAY}"
-
-	# Make the video 'fast start', so we can view it in a browser
-	sleep 1
-	ffmpeg                    \
-		-hide_banner          \
-		-loglevel fatal       \
-		-nostats              \
-		-i "${FFMPEGOUT}.mkv" \
-		-c copy               \
-		-movflags +faststart  \
-		"${FFMPEGOUT}.mp4"
-
-	# Clean up the old output file
-	rm -f "${FFMPEGOUT}.mkv"
 
 }
 
