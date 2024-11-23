@@ -2570,10 +2570,7 @@ int main(int argc, char * const argv[])
      
       // set automation callback if enabled
       if (options.runAutomation())
-      {
-			std::cerr << "setting runAutomation callback" << std::endl;
          rCallbacks.runAutomation = rRunAutomation;
-      }
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);
