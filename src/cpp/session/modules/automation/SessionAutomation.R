@@ -39,7 +39,8 @@
 # Used for logging within automation functions.
 .rs.addFunction("alog", function(fmt, ...)
 {
-   report <- .rs.heredoc(fmt, ...)
+   message <- .rs.heredoc(fmt, ...)
+   report <- gsub("(^|\n)", "\\1[automation] ", message)
    writeLines(report, con = stderr())
 })
 
