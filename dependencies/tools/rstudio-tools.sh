@@ -20,20 +20,14 @@
 #
 # prefer using home folder on Jenkins where we might not be able
 # to access files at /opt and will lack sudo
+#
+# TODO: Remove this indirection in the future.
 if [ -z "${RSTUDIO_TOOLS_ROOT}" ]; then
-	
-	_ROOTS=(
-		"$HOME/opt/rstudio-tools/$(uname -m)"
-		"/opt/rstudio-tools/$(uname -m)"
-	)
-
-	for _ROOT in "${_ROOTS[@]}"; do
-		if [ -e "${_ROOT}" ]; then
-			RSTUDIO_TOOLS_ROOT="${_ROOT}"
-			break
-		fi
-	done
-
+	if [ -n "${JENKINS_URL}" ] && [ "$(arch)" = "arm64" ]; then
+		RSTUDIO_TOOLS_ROOT="$HOME/opt/rstudio-tools/$(uname -m)"
+	else
+		RSTUDIO_TOOLS_ROOT="/opt/rstudio-tools/$(uname -m)"
+	fi
 fi
 
 export RSTUDIO_TOOLS_ROOT
