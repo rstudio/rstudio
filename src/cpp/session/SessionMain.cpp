@@ -1421,7 +1421,8 @@ void rRunAutomation()
 {
    module_context::scheduleDelayedWork(
             boost::posix_time::seconds(3),
-            rRunAutomationImpl);
+            rRunAutomationImpl,
+            false);
 }
 
 void ensureRProfile()
