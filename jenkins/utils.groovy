@@ -513,7 +513,7 @@ def runCmd(String cmd) {
 
   def file = "${UUID.randomUUID()}"
   def status = sh(
-    script: "${cmd} 2>&1 | tee ${file}",
+    script: "#!/usr/bin/env bash\n${cmd} 2>&1 | tee ${file}",
     returnStatus: true
   )
   def output = readFile(file: file)
