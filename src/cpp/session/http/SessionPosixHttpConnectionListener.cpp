@@ -68,8 +68,10 @@ void initTcpHttpConnectionListener(const std::string& wwwAddress,
                                          bindPort,
                                          options.sharedSecret());
    }
+   
    if (sharedSecret.empty())
    {
+      DLOGF("No shared secret available [wwwAddress={} bindPort={} debugName={}]", wwwAddress, bindPort, debugName);
       if (!options.standalone())
          LOG_WARNING_MESSAGE("The tcp http listener initialized without signature validation: --standalone option missing");
       if (!options.verifySignatures())

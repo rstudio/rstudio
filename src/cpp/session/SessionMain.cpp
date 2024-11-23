@@ -1410,11 +1410,18 @@ void rRunTests()
    exitEarly(status);
 }
 
-void rRunAutomation()
+void rRunAutomationImpl()
 {
-	std::cerr << "Sending RunAutomation client event" << std::endl;
+   LOG_DEBUG_MESSAGE("Sending RunAutomation client event");
    ClientEvent event(client_events::kRunAutomation);
    module_context::enqueClientEvent(event);
+}
+
+void rRunAutomation()
+{
+   module_context::scheduleDelayedWork(
+            boost::posix_time::seconds(3),
+            rRunAutomationImpl);
 }
 
 void ensureRProfile()
