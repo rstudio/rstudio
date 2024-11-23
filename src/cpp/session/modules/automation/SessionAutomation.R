@@ -30,9 +30,17 @@
 .rs.setVar("automation.currentMarkers", NULL)
 
 # Which markers were requested for this test session?
-.rs.setVar("automation.requestedMarkers", {
+.rs.setVar("automation.requestedMarkers",
+{
    markers <- Sys.getenv("RSTUDIO_AUTOMATION_MARKERS", unset = "")
    strsplit(markers, " ", fixed = TRUE)[[1L]]
+})
+
+# Used for logging within automation functions.
+.rs.addFunction("alog", function(fmt, ...)
+{
+   report <- .rs.heredoc(fmt, ...)
+   writeLines(report, con = stderr())
 })
 
 .rs.addFunction("automation.httrGet", function(url)
@@ -417,7 +425,10 @@
    jsonVersionUrl <- file.path(baseUrl, "json/version")
    response <- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
    if (!inherits(response, "error"))
+   {
+      .rs.alog("Attaching to existing session at %s.", baseUrl)
       return(.rs.automation.attach(baseUrl, mode))
+   }
    
    # No existing session; start a new one and attach to it.
    appPath <- .rs.nullCoalesce(appPath, {
@@ -456,9 +467,15 @@
    
    # Start up RStudio (or Chrome in "server" mode).
    process <- withr::with_envvar(envVars, {
+      .rs.alog('
+         Launching new automation host.
+         - appPath: %s
+         - args:    %s
+      ', appPath, paste(args, collapse = " "))
       processx::process$new(appPath, args)
    })
    
+   .rs.alog("Waiting for application to start.")
    while (TRUE)
    {
       # Wait until the process is running.
@@ -479,7 +496,8 @@
    
    # Start pinging the Chromium HTTP server.
    response <- NULL
-   .rs.waitUntil("Chromium HTTP server available", function()
+   .rs.alog("Waiting for Chromium debug server to start.")
+   .rs.waitUntil("Chromium debug server available", function()
    {
       response <<- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
       !inherits(response, "error")
@@ -489,6 +507,7 @@
    .rs.setVar("automation.agentProcess", process)
    
    # The session is ready; attach now.
+   .rs.alog("Debug server is ready; attaching now.")
    jsonResponse <- .rs.fromJSON(rawToChar(response$content))
    .rs.automation.attach(baseUrl, mode, jsonResponse$webSocketDebuggerUrl)
    
@@ -518,6 +537,7 @@
    socket$onClose(.rs.automation.onClose)
    
    # Wait until the socket is open.
+   .rs.alog("Waiting for Chromium websocket.")
    .rs.waitUntil("Chromium websocket is ready", function()
    {
       socket$readyState() == 1L
@@ -530,14 +550,20 @@
    client$socket <- socket
    
    # Find and record the active session id.
+   .rs.alog("Attaching to session.")
    .rs.automation.attachToSession(client, mode)
 
    # Wait until RStudio is ready.
    # Use the presence of the '#rstudio_console_input' element as evidence.
+   .rs.alog("Waiting for RStudio to finish initialization.")
    .rs.waitUntil("RStudio has finished initialization", function()
    {
       document <- client$DOM.getDocument(depth = 0L)
-      consoleNode <- client$DOM.querySelector(document$root$nodeId, "#rstudio_console_input")
+      consoleNode <- client$DOM.querySelector(
+         document$root$nodeId,
+         "#rstudio_console_input"
+      )
+      
       consoleNode$nodeId != 0L
    }, swallowErrors = TRUE)
    
@@ -636,6 +662,13 @@
                                                reportFile = NULL,
                                                automationMode = NULL)
 {
+   .rs.alog('
+      Preparing to run automation.
+      - projectRoot:    %s
+      - reportFile:     %s
+      - automationMode: %s
+   ', projectRoot, reportFile, automationMode)
+   
    # Resolve the automation mode.
    automationMode <- .rs.automation.resolveMode(automationMode)
    
@@ -671,7 +704,8 @@
       )
    )
    
-   # Clear the console, and show a header that indicates we're about to run automation tests.
+   # Clear the console, and show a header that indicates
+   # we're about to run automation tests.
    invisible(.rs.api.executeCommand("consoleClear"))
    writeLines(c("", "==> Running RStudio automation tests", ""))
    
