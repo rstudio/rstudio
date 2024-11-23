@@ -48,19 +48,23 @@
       "websocket", "withr", "xml2"
    )
    
-   pkgLocs <- find.package(packages, quiet = TRUE)
-   if (length(packages) == length(pkgLocs))
-      return()
+   if (!requireNamespace("renv", quietly = TRUE))
+      install.packages("renv")
    
-   writeLines("==> Installing Packages")
+   opts <- options(
+      renv.config.pak.enabled = TRUE,
+      renv.config.cache.enabled = FALSE
+   )
+   
+   on.exit(options(opts), add = TRUE)
+   
+   renv::install(
+      packages = packages,
+      prompt   = FALSE
+   )
+   
    for (package in packages)
-   {
-      if (!requireNamespace(package, quietly = TRUE))
-      {
-         install.packages(package)
-         loadNamespace(package)
-      }
-   }
+      loadNamespace(package)
 })
 
 .rs.addFunction("automation.onMessage", function(event)
