@@ -60,8 +60,9 @@
    if (!requireNamespace("renv", quietly = TRUE))
       install.packages("renv")
    
-   opts <- options(renv.config.cache.enabled = FALSE)
-   on.exit(options(opts), add = TRUE)
+   # Use PPM for binaries on Linux.
+   if (.rs.platform.isLinux)
+      options(repos = c(PPM = "https://packagemanager.posit.co/cran/latest"))
    
    renv::install(packages, prompt = FALSE)
    for (package in packages)
