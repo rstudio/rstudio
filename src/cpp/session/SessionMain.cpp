@@ -1412,13 +1412,16 @@ void rRunTests()
 
 void rRunAutomationImpl()
 {
-   LOG_DEBUG_MESSAGE("Sending RunAutomation client event");
    ClientEvent event(client_events::kRunAutomation);
    module_context::enqueClientEvent(event);
 }
 
 void rRunAutomation()
 {
+   // it seems like automation runs can fail to start if the
+   // RunAutomation client event is received too soon after
+   // startup, so we use a 3 second delay just to give the
+   // client more time to fully finish initialization
    module_context::scheduleDelayedWork(
             boost::posix_time::seconds(3),
             rRunAutomationImpl,
