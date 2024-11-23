@@ -135,7 +135,7 @@ NPMPID="$!"
 # NOTE: We'd like to use 'timeout' above, but for whatever reason,
 # the process cannot be interrupted in that scenario.
 # Instead, we loop and wait for poll for exit.
-for _i in `seq 1 180`; do
+for _i in `seq 1 3600`; do
 	if kill -0 "${NPMPID}"; then
 		sleep 1
 	else
