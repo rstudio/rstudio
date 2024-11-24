@@ -44,7 +44,7 @@ cp ~/.Renviron /tmp/.Renviron 2> /dev/null
 
 cat <<- EOF >> /tmp/.Renviron
 CI = TRUE
-LANG = en_US.UTF-8
+LANG = C.utf8
 RSTUDIO_AUTOMATION_PORT = ${PORT}
 RSTUDIO_AUTOMATION_REUSE_REMOTE = TRUE
 RSTUDIO_AUTOMATION_CLOSE_ON_FINISH = TRUE
@@ -78,11 +78,9 @@ trap : USR1
 XVFBPID="$!"
 sleep 3
 
-FFMPEGOUT="rstudio-automation-$(date +%F.%s)"
 
 # Start capturing video.
-# TODO: Figure out what format we can use that is more
-# browser friendly.
+FFMPEGOUT="rstudio-automation-$(date +%F.%s)"
 ffmpeg                    \
 	-hide_banner          \
 	-loglevel fatal       \
