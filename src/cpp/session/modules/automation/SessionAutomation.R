@@ -669,7 +669,7 @@
    # Move to the project root directory.
    owd <- setwd(projectRoot)
    on.exit(setwd(owd), add = TRUE)
-   
+
    # Move to the automation directory.
    withr::local_dir("src/cpp/tests/automation")
    
@@ -893,6 +893,15 @@
 
 .rs.addFunction("automation.takeScreenshot", function(label)
 {
+   # Work in screenshots directory if available
+   screenshotsDir <- Sys.getenv("RSTUDIO_AUTOMATION_SCREENSHOTS_DIR", unset = NA)
+   if (!is.na(screenshotsDir))
+   {
+      dir.create(screenshotsDir, recursive = TRUE, showWarnings = FALSE)
+      owd <- setwd(screenshotsDir)
+      on.exit(setwd(owd), add = TRUE)
+   }
+
    if (.rs.platform.isLinux)
    {
       # Sanitize label name.
@@ -905,6 +914,10 @@
       
       # Use 'convert' to create a png
       command <- sprintf("convert \"%1$s.xwd\" \"%1$s.png\"", name)
+      system(command)
+
+      # Remove the old png
+      command <- sprintf("rm -f \"%s.xwd\"", name)
       system(command)
    }
 })
