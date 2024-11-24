@@ -84,7 +84,6 @@ ffmpeg                    \
 	-nostats              \
 	-video_size 1280x1024 \
 	-framerate 30         \
-	-deadline realtime    \
 	-f x11grab            \
 	-i "${XVFBDISPLAY}"   \
 	-y "${FFMPEGOUT}.webm" &
@@ -139,5 +138,11 @@ fi
 
 pkill rsession
 cat rstudio-automation-results.xml
-exit $?
+
+# Jenkins doesn't like UTF-8 in junit output.
+iconv                                 \
+	-f UTF-8                          \
+	-t ASCII//TRANSLIT                \
+	-c rstudio-automation-results.xml \
+	-o rstudio-automation-results.xml
 
