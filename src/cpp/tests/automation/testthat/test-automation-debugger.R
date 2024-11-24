@@ -82,7 +82,7 @@ withr::defer(.rs.automation.deleteRemote())
    Sys.sleep(1)
 
    # Wait until the new project is ready.
-   remote$ide.waitForProjectToOpen("rstudio.automation")
+   remote$waitForProjectToOpen("rstudio.automation")
    
    # Close any open documents
    remote$consoleExecuteExpr(

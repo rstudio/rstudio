@@ -455,37 +455,6 @@
    })
 })
 
-.rs.automation.addRemoteFunction("projectCreate", function(type = "")
-{
-   # Create a package project.
-   if (type == "package")
-   {
-      self$consoleExecuteExpr({
-         projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
-         usethis::create_package(path = projectPath, open = FALSE)
-         .rs.api.openProject(projectPath)
-      }, wait = FALSE)
-   }
-   else
-   {
-      stop("unimplemented or unknown project type '", type, "'")
-   }
-   
-   # Wait until the new project is open.
-   self$ide.waitForProjectToOpen("rstudio")
-})
-
-.rs.automation.addRemoteFunction("projectClose", function()
-{
-   self$domClickElement(.rs.automation.targets[["toolbar.projectMenuButton"]])
-   self$domClickElement("#rstudio_label_close_project_command")
-   
-   .rs.waitUntil("The project has closed", function()
-   {
-      .rs.trimWhitespace(self$getProjectDropdownLabel()) == "Project: (None)"
-   })
-})
-
 .rs.automation.addRemoteFunction("quit", function()
 {
    # Try to gracefully shut down the browser. We use a timeout

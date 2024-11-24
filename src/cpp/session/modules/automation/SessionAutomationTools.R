@@ -32,24 +32,6 @@
    self$consoleExecute(sprintf("unlink('%s', recursive = TRUE)", folder))
 })
 
-.rs.automation.addRemoteFunction("ide.waitForProjectToOpen", function(projectName)
-{
-   Sys.sleep(1)
-   .rs.waitUntil("The new project is opened", function()
-   {
-      tryCatch({
-         grepl(projectName, self$getProjectDropdownLabel())
-      }, error = function(e) FALSE)
-   })
-})
-
-.rs.automation.addRemoteFunction("getProjectDropdownLabel", function()
-{
-   self$waitForElement(.rs.automation.targets[["toolbar.projectMenuButton"]])
-   toolbarButton <- self$jsObjectViaSelector(.rs.automation.targets[["toolbar.projectMenuButton"]])
-   .rs.trimWhitespace(toolbarButton$innerText)
-})
-
 .rs.automation.addRemoteFunction("getCheckboxStateByNodeId", function(nodeId)
 {
    response <- self$client$DOM.getAttributes(nodeId)
