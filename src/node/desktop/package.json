@@ -21,7 +21,7 @@
     "postinstall": "npx electron-rebuild && ts-node scripts/generate.ts",
     "generate": "ts-node scripts/generate.ts",
     "install-fuses": "node scripts/install-fuses.mjs",
-    "automation": "electron-forge start -- --disable-gpu --no-sandbox --run-automation"
+    "automation": "electron-forge start -- --no-sandbox --run-automation"
   },
   "config": {
     "forge": "./forge.config.js"
