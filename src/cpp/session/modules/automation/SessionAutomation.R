@@ -916,7 +916,7 @@
       command <- sprintf("convert \"%1$s.xwd\" \"%1$s.png\"", name)
       system(command)
 
-      # Remove the old png
+      # Remove the old .xwnd capture file
       command <- sprintf("rm -f \"%s.xwd\"", name)
       system(command)
    }
