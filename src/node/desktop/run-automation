@@ -143,11 +143,5 @@ fi
 
 pkill rsession
 cat rstudio-automation-results.xml
-
-# Jenkins doesn't like UTF-8 in junit output.
-iconv                                 \
-	-f UTF-8                          \
-	-t ASCII//TRANSLIT                \
-	-c rstudio-automation-results.xml \
-	-o rstudio-automation-results.xml
+exit 0
 

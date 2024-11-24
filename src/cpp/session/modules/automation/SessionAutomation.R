@@ -719,6 +719,8 @@
    
    # Remove any ANSI escapes that might've been included
    # in the generated XML, since that makes Jenkins sad.
+   #
+   # https://github.com/r-lib/testthat/issues/2032
    if (file.exists(reportFile))
    {
       contents <- readLines(reportFile, warn = FALSE)
