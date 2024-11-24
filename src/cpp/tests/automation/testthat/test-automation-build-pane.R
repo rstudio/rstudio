@@ -7,6 +7,9 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("we can test a file in the build pane", {
 
+   # TODO: Hangs on CI.
+   skip_on_ci()
+
    # Create a project.
    remote$projectCreate(type = "package")
 
