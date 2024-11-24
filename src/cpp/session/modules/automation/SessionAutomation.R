@@ -690,11 +690,26 @@
    # Create a regular progress reporter.
    progressReporter <- testthat::ProgressReporter$new()
    
+   # Use a custom reporter for screenshot handling.
+   ScreenshotReporter <- R6::R6Class(
+      classname = "RStudioScreenshotReporter",
+      inherit = testthat::Reporter,
+      public = list(
+         add_result = function(context, test, result) {
+            if (inherits(result, "error"))
+               .rs.automation.takeScreenshot(test)
+         }
+      )
+   )
+   
+   screenshotReporter <- ScreenshotReporter$new()
+   
    # Combine with the default reporter.
    multiReporter <- testthat::MultiReporter$new(
       reporters = list(
          progressReporter,
-         junitReporter
+         junitReporter,
+         screenshotReporter
       )
    )
    
@@ -873,4 +888,23 @@
 .rs.addFunction("markers", function(...)
 {
    .rs.setVar("automation.currentMarkers", as.character(list(...)))
+})
+
+
+.rs.addFunction("automation.takeScreenshot", function(label)
+{
+   if (.rs.platform.isLinux)
+   {
+      # Sanitize label name.
+      label <- gsub("[^[:alnum:]]", "_", label)
+      
+      # Use 'xwd' to capture a screenshot from the display.
+      name <- sprintf("rstudio-automation-%s.%s", label, format(Sys.time(), "%F.%s"))
+      command <- sprintf("xwd -root -out \"%s.xwd\"", name)
+      system(command)
+      
+      # Use 'convert' to create a png
+      command <- sprintf("convert \"%1$s.xwd\" \"%1$s.png\"", name)
+      system(command)
+   }
 })

@@ -193,7 +193,7 @@ pipeline {
                             utils.runCheckCmd("./run-automation", "Automated Tests", STAGE_NODE_URL, true)
                           } finally {
                             junit(allowEmptyResults: true, testResults: '*.xml')
-                            archiveArtifacts(artifacts: '*.webm,*.xml', fingerprint: true)
+                            archiveArtifacts(artifacts: '*.png,*.webm,*.xml', fingerprint: true)
                           }
                         }
                       }
