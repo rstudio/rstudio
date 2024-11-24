@@ -30,6 +30,7 @@ withr::defer(.rs.automation.deleteRemote())
    
    # Source the file.
    remote$commandExecute("sourceActiveDocument")
+   Sys.sleep(1)
    
    # Execute the function.
    remote$consoleExecute("f()")

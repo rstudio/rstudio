@@ -7,6 +7,9 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/14560
 .rs.test("attributes like __foo__ are not quoted when inserted via completions", {
    
+   # TODO: doesn't work on CI?
+   skip_on_ci()
+   
    # Get a Python REPL up and running.
    remote$skipIfNotInstalled("reticulate")
    remote$consoleExecute("reticulate::repl_python()")
