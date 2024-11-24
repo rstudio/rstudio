@@ -35,9 +35,8 @@ EOF
 
 
 # Make sure we have a UTF-8 locale available
-locale -a
-sudo locale-gen en_US.UTF-8
-export LANG=en_US.UTF-8
+# TODO: Generate an en_US.UTF-8 locale?
+export LANG=C.utf8
 
 # Set up a .Rprofile with some variables we want the
 # running R sessions to see.
