@@ -55,7 +55,7 @@
 {
    # Re-use existing remote if requested.
    reuse <- Sys.getenv("RSTUDIO_AUTOMATION_REUSE_REMOTE", unset = "FALSE")
-   if (identical(reuse, "TRUE"))
+   if (reuse)
    {
       remote <- .rs.automation.remoteInstance
       if (!is.null(remote))
