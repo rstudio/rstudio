@@ -716,6 +716,15 @@
       stop_on_failure = FALSE,
       stop_on_warning = FALSE
    )
+   
+   # Remove any ANSI escapes that might've been included
+   # in the generated XML, since that makes Jenkins sad.
+   if (file.exists(reportFile))
+   {
+      contents <- readLines(reportFile, warn = FALSE)
+      stripped <- cli::ansi_strip(contents)
+      writeLines(stripped, con = reportFile)
+   }
 
    writeLines(c("", "==> Finishing running RStudio automation", ""))
 
