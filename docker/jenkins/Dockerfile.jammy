@@ -50,6 +50,7 @@ RUN apt-get update && \
     libtiff5-dev\
     libxml2-dev \
     libxslt1-dev \
+    locales \
     lsof \
     ninja-build \
     openjdk-11-jdk \
@@ -90,6 +91,12 @@ RUN apt-get update && \
     libxtst-dev \
     libxss1 \
     libnss3-dev
+
+# Prefer UTF-8 locale
+RUN locale-gen en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
 
 # ensure we use the java 11 compiler
 RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-$(dpkg --print-architecture)/bin/java
