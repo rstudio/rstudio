@@ -23,10 +23,11 @@ pipeline {
     stage('Load Utils') {
       steps {
         script {
-          sh 'printenv'
+
           sh "echo 'Loading utils from ${env.WORKSPACE}/jenkins/utils.groovy'"
           utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
           utils.addRemoteRef("${env.CHANGE_TARGET}")
+
           RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
           IS_PRO = JOB_URL.contains('Pro')
           BASE_IMAGE = "jenkins/ide:pro-jammy-x86_64-${RSTUDIO_VERSION_FLOWER}"
@@ -42,6 +43,10 @@ pipeline {
               FLAVOR = 'Electron'
             }
           }
+
+          // Log environment variables
+          sh 'printenv | sort'
+
         }
       }
     }
