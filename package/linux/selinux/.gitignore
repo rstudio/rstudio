@@ -1,0 +1,14 @@
+rstudio.pp
+rstudio.fc
+tmp
+CMakeCache.txt
+CMakeFiles
+CPack*Config.cmake
+Makefile
+_CPack_Packages
+install_manifest.txt
+debian-control
+postinst
+postrm
+*.deb
+*.rpm

@@ -1,0 +1,59 @@
+policy_module(rstudio, 1.0.0)
+
+########################################
+#
+# Declarations
+#
+
+require {
+	type unreserved_port_t;
+	class tcp_socket name_connect;
+	class passwd rootok;
+}
+
+type rstudio_t;
+type rstudio_exec_t;
+type rstudio_server_t;
+type rstudio_server_exec_t;
+init_daemon_domain(rstudio_t, rstudio_exec_t)
+init_daemon_domain(rstudio_server_t, rstudio_server_exec_t)
+
+permissive rstudio_t;
+permissive rstudio_server_t;
+
+########################################
+#
+# local policies
+#
+
+allow rstudio_t self:capability { chown setgid setuid };
+allow rstudio_t self:process { fork getpgid setpgid setrlimit signal_perms };
+allow rstudio_t self:fifo_file rw_fifo_file_perms;
+allow rstudio_t self:unix_stream_socket { create_stream_socket_perms connectto };
+allow rstudio_t self:passwd rootok;
+
+allow rstudio_server_t self:fifo_file rw_fifo_file_perms;
+allow rstudio_server_t self:unix_stream_socket { create_stream_socket_perms connectto };
+allow rstudio_server_t self:passwd rootok;
+allow rstudio_server_t self:process setpgid;
+allow rstudio_server_t unreserved_port_t:tcp_socket name_connect;
+
+# TODO: This doesn't seem right -- is it necessary?
+# allow init_t self:process setpgid;
+
+domain_use_interactive_fds(rstudio_t)
+domain_use_interactive_fds(rstudio_server_t)
+
+auth_use_nsswitch(rstudio_t)
+
+logging_send_syslog_msg(rstudio_t)
+logging_send_syslog_msg(rstudio_server_t)
+logging_send_audit_msgs(rstudio_server_t)
+
+files_read_etc_files(rstudio_t)
+files_read_etc_files(rstudio_server_t)
+
+miscfiles_read_localization(rstudio_t)
+miscfiles_read_localization(rstudio_server_t)
+
+sysnet_dns_name_resolve(rstudio_t)

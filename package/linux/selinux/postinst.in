@@ -1,0 +1,8 @@
+#!/bin/sh
+semodule -n -i ${SELINUX_PACKAGE_PATH}/rstudio.pp
+
+if /usr/sbin/selinuxenabled; then
+    /usr/sbin/load_policy
+    restorecon -R ${CMAKE_INSTALL_PREFIX}/bin/*
+fi
+

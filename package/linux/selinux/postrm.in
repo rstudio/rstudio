@@ -1,0 +1,9 @@
+#!/bin/sh
+if ${CHECK_UNINSTALL_CONDITION}; then
+   semodule -n -r rstudio
+
+   if /usr/sbin/selinuxenabled; then
+     /usr/sbin/load_policy
+     restorecon -R ${CMAKE_INSTALL_PREFIX}/bin/*
+   fi
+fi

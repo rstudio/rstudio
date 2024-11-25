@@ -67,6 +67,7 @@ sudo apt-get -y install \
   python3-venv \
   r-base-dev \
   rrdtool \
+  selinux-policy-devel \
   software-properties-common \
   unzip \
   uuid-dev \
@@ -100,4 +101,4 @@ if [ -x "$(command -v python3)" ]; then
   python3 -m venv VENV
   ./VENV/bin/pip install --disable-pip-version-check -r commands.cmd.xml/requirements.txt
   popd
-fi 
+fi
