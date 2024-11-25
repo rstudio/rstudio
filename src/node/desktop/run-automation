@@ -34,17 +34,12 @@ EOF
 )
 
 
-# Make sure we have a UTF-8 locale available
-# TODO: Generate an en_US.UTF-8 locale?
-export LANG=C.utf8
-
 # Set up a .Rprofile with some variables we want the
 # running R sessions to see.
 cp ~/.Renviron /tmp/.Renviron 2> /dev/null
 
 cat <<- EOF >> /tmp/.Renviron
 CI = TRUE
-LANG = C.utf8
 RSTUDIO_AUTOMATION_CLOSE_ON_FINISH = TRUE
 RSTUDIO_AUTOMATION_PORT = ${PORT}
 RSTUDIO_AUTOMATION_REUSE_REMOTE = TRUE
