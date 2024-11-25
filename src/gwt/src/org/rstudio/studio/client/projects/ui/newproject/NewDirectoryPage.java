@@ -142,10 +142,10 @@ public class NewDirectoryPage extends NewProjectWizardPage
       if (getOptionsSideBySide())
          optionsPanel = new HorizontalPanel();
       
-      String gitCheckBoxId = ElementIds.getElementId(
-            ElementIds.idSafeString(getTitle()) + "_" + ElementIds.NEW_PROJECT_GIT_REPO);
-      chkGitInit_ = new FormCheckBox(constants_.createGitRepoLabel(), gitCheckBoxId);
+      chkGitInit_ = new CheckBox(constants_.createGitRepoLabel());
       chkGitInit_.addStyleName(styles.wizardCheckbox());
+      ElementIds.assignElementId(chkGitInit_,
+         ElementIds.idSafeString(getTitle()) + "_" + ElementIds.NEW_PROJECT_GIT_REPO);
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
          chkGitInit_.setValue(userPrefs.newProjGitInit().getValue());
