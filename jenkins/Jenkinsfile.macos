@@ -2,7 +2,7 @@ def utils
 
 pipeline {
 
-  agent { label 'macos-v1.4-arm64' }
+  agent { label 'macos && arm64' }
 
   options {
     // Timeout after no activity in the logs
@@ -17,7 +17,8 @@ pipeline {
       booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
       booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
       booleanParam(name: 'FORCE_BUILD_BINARIES', defaultValue: false, description: 'Force build binaries even if there are no changes, and even if they have already been built previously')
-      string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
+      // TODO: restore this to use #ide-builds
+      string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds-dev', description: 'Slack channel to publish build message.')
   }
 
   environment {
@@ -162,7 +163,8 @@ pipeline {
                     returnStdout: true
                   ).trim().toLowerCase()}"""
                   PRODUCT = "${utils.getProductName()}"
-                  AWS_PATH = "${FLAVOR.toLowerCase()}/macos"
+                  // TODO: restore to "/macos"
+                  AWS_PATH = "${FLAVOR.toLowerCase()}/macos-ami"
                 }
                 
                 stages {
@@ -191,7 +193,11 @@ pipeline {
                   }
                   
                   stage("Sentry Upload") {
-                    when { expression { return params.DAILY } }
+                    // TODO: restore sentry upload for daily builds
+                    when {
+                      expression { return false }
+                    }
+                    // when { expression { return params.DAILY } }
 
                     environment {
                       SENTRY_API_KEY = credentials('ide-sentry-api-key')
@@ -223,7 +229,12 @@ pipeline {
                   }
                   
                   stage("Publish") {
-                    environment {
+                    // TODO: remove this to restore publishing
+                    when {
+                      expression { return false }
+                    }
+
+                     environment {
                       GITHUB_LOGIN = credentials('posit-jenkins')
                       DAILIES_PATH = "${PRODUCT}/macos"
                     }
@@ -243,12 +254,16 @@ pipeline {
                       RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
                     }
 
-                    when { 
-                      anyOf {
-                        expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
-                        expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
-                      }
+										// TODO: restore publishing
+                    when {
+                      expression { return false }
                     }
+                    // when { 
+                    //   anyOf {
+                    //     expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
+                    //     expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
+                    //   }
+                    // }
 
                     steps {
                       script {
