@@ -53,6 +53,15 @@
 
 .rs.addFunction("automation.newRemote", function(mode = NULL)
 {
+   # Re-use existing remote if requested.
+   reuse <- Sys.getenv("RSTUDIO_AUTOMATION_REUSE_REMOTE", unset = "FALSE")
+   if (reuse)
+   {
+      remote <- .rs.automation.remoteInstance
+      if (!is.null(remote))
+         return(remote)
+   }
+      
    # Generate the remote instance.
    mode <- .rs.automation.resolveMode(mode)
    client <- .rs.automation.initialize(mode = mode)
@@ -65,8 +74,16 @@
    remote
 })
 
-.rs.addFunction("automation.deleteRemote", function()
+.rs.addFunction("automation.deleteRemote", function(force = FALSE)
 {
+   # Avoid deleting remote if requested.
+   if (!force)
+   {
+      reuse <- Sys.getenv("RSTUDIO_AUTOMATION_REUSE_REMOTE", unset = "FALSE")
+      if (reuse)
+         return(invisible(NULL))
+   }
+   
    remote <- .rs.getVar("automation.remoteInstance")
    if (is.null(remote))
       return(remote)
@@ -396,35 +413,36 @@
 
 .rs.automation.addRemoteFunction("jsObjectViaExpression", function(expression)
 {
-   response <- .rs.waitFor(expression, function()
+   response <- .rs.waitUntil(expression, function()
    {
       self$client$Runtime.evaluate(expression)
-   })
+   }, swallowErrors = TRUE)
    
    .rs.automation.wrapJsResponse(self, response)
 })
 
 .rs.automation.addRemoteFunction("jsObjectViaSelector", function(selector)
 {
-   response <- .rs.waitFor(selector, function()
+   response <- .rs.waitUntil(selector, function()
    {
       nodeId <- self$domGetNodeId(selector)
       self$client$DOM.resolveNode(nodeId)
-   })
+   }, swallowErrors = TRUE)
    
    .rs.automation.wrapJsResponse(self, response)
 })
 
 .rs.automation.addRemoteFunction("jsObjectsViaSelector", function(selector)
 {
-   response <- .rs.waitFor(selector, function()
+   response <- .rs.waitUntil(selector, function()
    {
       nodeIds <- self$domGetNodeIds(selector)
       resolvedNodes <- lapply(nodeIds, function(nodeId) {
          self$client$DOM.resolveNode(nodeId)
       })
       resolvedNodes
-   })
+   }, swallowErrors = TRUE)
+
    .rs.automation.wrapJsListResponse(self, response)
 })
 

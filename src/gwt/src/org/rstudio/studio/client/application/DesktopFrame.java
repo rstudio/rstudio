@@ -31,6 +31,9 @@ import com.google.gwt.user.client.Command;
 @BaseExpression("$wnd.desktop")
 public interface DesktopFrame extends JavaScriptPassthrough
 {
+   void writeStdout(String text);
+   void writeStderr(String text);
+   
    void browseUrl(String url);
    
    void getOpenFileName(String caption,

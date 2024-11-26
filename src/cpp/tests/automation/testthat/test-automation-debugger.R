@@ -30,6 +30,7 @@ withr::defer(.rs.automation.deleteRemote())
    
    # Source the file.
    remote$commandExecute("sourceActiveDocument")
+   Sys.sleep(1)
    
    # Execute the function.
    remote$consoleExecute("f()")
@@ -75,11 +76,12 @@ withr::defer(.rs.automation.deleteRemote())
    
    # Open that project.
    remote$consoleExecuteExpr(
-      .rs.api.openProject(!!projectPath)
+      .rs.api.openProject(!!projectPath),
+      wait = FALSE
    )
    
-   # Wait a minute for the new session to load.
-   Sys.sleep(1)
+   # Wait a bit for the new session to load.
+   Sys.sleep(3)
 
    # Wait until the new project is ready.
    remote$waitForProjectToOpen("rstudio.automation")
@@ -110,11 +112,11 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commandExecute("saveSourceDoc")
    remote$commandExecute("buildAll")
    
-   .rs.waitFor("build has completed", function()
+   .rs.waitUntil("build has completed", function()
    {
       output <- remote$consoleOutput()
       any(output == "> library(rstudio.automation)")
-   })
+   }, swallowErrors = TRUE)
    
    remote$consoleClear()
    

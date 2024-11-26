@@ -30,9 +30,18 @@
 .rs.setVar("automation.currentMarkers", NULL)
 
 # Which markers were requested for this test session?
-.rs.setVar("automation.requestedMarkers", {
+.rs.setVar("automation.requestedMarkers",
+{
    markers <- Sys.getenv("RSTUDIO_AUTOMATION_MARKERS", unset = "")
    strsplit(markers, " ", fixed = TRUE)[[1L]]
+})
+
+# Used for logging within automation functions.
+.rs.addFunction("alog", function(fmt, ...)
+{
+   message <- .rs.heredoc(fmt, ...)
+   report <- gsub("(^|\n)", "\\1[automation] ", message)
+   writeLines(report, con = stderr())
 })
 
 .rs.addFunction("automation.httrGet", function(url)
@@ -42,20 +51,22 @@
 
 .rs.addFunction("automation.installRequiredPackages", function()
 {
-   packages <- c("devtools", "here", "httr", "later", "processx", "ps", "styler", "testthat", "usethis", "websocket", "withr", "xml2")
-   pkgLocs <- find.package(packages, quiet = TRUE)
-   if (length(packages) == length(pkgLocs))
-      return()
+   packages <- c(
+      "devtools", "dplyr", "here", "httr", "later", "processx",
+      "ps", "reticulate", "styler", "testthat", "usethis",
+      "websocket", "withr", "xml2"
+   )
    
-   writeLines("==> Installing Packages")
+   if (!requireNamespace("renv", quietly = TRUE))
+      install.packages("renv")
+   
+   # Use PPM for binaries on Linux.
+   if (.rs.platform.isLinux)
+      options(repos = c(PPM = "https://packagemanager.posit.co/cran/latest"))
+   
+   renv::install(packages, prompt = FALSE)
    for (package in packages)
-   {
-      if (!requireNamespace(package, quietly = TRUE))
-      {
-         install.packages(package)
-         loadNamespace(package)
-      }
-   }
+      loadNamespace(package)
 })
 
 .rs.addFunction("automation.onMessage", function(event)
@@ -260,7 +271,7 @@
       if (identical(proc$status, "zombie"))
          next
       
-      conns <- ps::ps_connections(proc$ps_handle[[1L]])
+      conns <- .rs.tryCatch(ps::ps_connections(proc$ps_handle[[1L]]))
       if (8788L %in% conns$lport)
          return(TRUE)
    }
@@ -376,6 +387,7 @@
    # Create a default JSON configuration file.
    config <- list(
       auto_save_on_idle = "none",
+      check_for_updates = FALSE,
       continue_comments_on_newline = FALSE,
       native_file_dialogs = FALSE,
       save_workspace = "never",
@@ -408,7 +420,10 @@
    jsonVersionUrl <- file.path(baseUrl, "json/version")
    response <- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
    if (!inherits(response, "error"))
+   {
+      .rs.alog("Attaching to existing session at %s.", baseUrl)
       return(.rs.automation.attach(baseUrl, mode))
+   }
    
    # No existing session; start a new one and attach to it.
    appPath <- .rs.nullCoalesce(appPath, {
@@ -432,7 +447,10 @@
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", browserDataDir),
-      if (mode == "desktop") c("--automation-agent"),
+      if (mode == "desktop") c(
+         "--automation-agent",
+         "--no-sandbox"
+      ),
       if (mode == "server") c(
          "--no-default-browser-check",
          "--no-first-run",
@@ -444,9 +462,15 @@
    
    # Start up RStudio (or Chrome in "server" mode).
    process <- withr::with_envvar(envVars, {
+      .rs.alog('
+         Launching new automation host.
+         - appPath: %s
+         - args:    %s
+      ', appPath, paste(args, collapse = " "))
       processx::process$new(appPath, args)
    })
    
+   .rs.alog("Waiting for application to start.")
    while (TRUE)
    {
       # Wait until the process is running.
@@ -467,7 +491,8 @@
    
    # Start pinging the Chromium HTTP server.
    response <- NULL
-   .rs.waitUntil("Chromium HTTP server available", function()
+   .rs.alog("Waiting for Chromium debug server to start.")
+   .rs.waitUntil("Chromium debug server available", function()
    {
       response <<- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
       !inherits(response, "error")
@@ -477,6 +502,7 @@
    .rs.setVar("automation.agentProcess", process)
    
    # The session is ready; attach now.
+   .rs.alog("Debug server is ready; attaching now.")
    jsonResponse <- .rs.fromJSON(rawToChar(response$content))
    .rs.automation.attach(baseUrl, mode, jsonResponse$webSocketDebuggerUrl)
    
@@ -506,7 +532,8 @@
    socket$onClose(.rs.automation.onClose)
    
    # Wait until the socket is open.
-   .rs.waitUntil("websocket open", function()
+   .rs.alog("Waiting for Chromium websocket.")
+   .rs.waitUntil("Chromium websocket is ready", function()
    {
       socket$readyState() == 1L
    }, waitTimeSecs = 0.1)
@@ -518,15 +545,22 @@
    client$socket <- socket
    
    # Find and record the active session id.
+   .rs.alog("Attaching to session.")
    .rs.automation.attachToSession(client, mode)
-   
-   # Wait until the Console is available.
-   .rs.waitUntil("Console input available", function()
+
+   # Wait until RStudio is ready.
+   # Use the presence of the '#rstudio_console_input' element as evidence.
+   .rs.alog("Waiting for RStudio to finish initialization.")
+   .rs.waitUntil("RStudio has finished initialization", function()
    {
       document <- client$DOM.getDocument(depth = 0L)
-      consoleNode <- client$DOM.querySelector(document$root$nodeId, "#rstudio_console_input")
+      consoleNode <- client$DOM.querySelector(
+         document$root$nodeId,
+         "#rstudio_console_input"
+      )
+      
       consoleNode$nodeId != 0L
-   })
+   }, swallowErrors = TRUE)
    
    # Return the client.
    client
@@ -623,18 +657,28 @@
                                                reportFile = NULL,
                                                automationMode = NULL)
 {
+   .rs.alog('
+      Preparing to run automation.
+      - projectRoot:    %s
+      - reportFile:     %s
+      - automationMode: %s
+   ', projectRoot, reportFile, automationMode)
+   
    # Resolve the automation mode.
    automationMode <- .rs.automation.resolveMode(automationMode)
    
    # Move to the project root directory.
    owd <- setwd(projectRoot)
    on.exit(setwd(owd), add = TRUE)
-   
+
    # Move to the automation directory.
    withr::local_dir("src/cpp/tests/automation")
    
    # Set up automation mode.
-   withr::local_envvar(RSTUDIO_AUTOMATION_MODE = automationMode)
+   withr::local_envvar(
+      RSTUDIO_AUTOMATION_MODE = automationMode,
+      RSTUDIO_AUTOMATION_REUSE_REMOTE = "TRUE"
+   )
    
    # Figure out where we're writing our test results.
    reportFile <- .rs.nullCoalesce(reportFile, {
@@ -647,17 +691,37 @@
    # Create a regular progress reporter.
    progressReporter <- testthat::ProgressReporter$new()
    
+   # Use a custom reporter for screenshot handling.
+   ScreenshotReporter <- R6::R6Class(
+      classname = "RStudioScreenshotReporter",
+      inherit = testthat::Reporter,
+      public = list(
+         add_result = function(context, test, result) {
+            if (inherits(result, "error"))
+               .rs.automation.takeScreenshot(test)
+         }
+      )
+   )
+   
+   screenshotReporter <- ScreenshotReporter$new()
+   
    # Combine with the default reporter.
    multiReporter <- testthat::MultiReporter$new(
       reporters = list(
          progressReporter,
-         junitReporter
+         junitReporter,
+         screenshotReporter
       )
    )
    
-   # Clear the console, and show a header that indicates we're about to run automation tests.
+   .rs.alog("Initializing automation agent.")
+   remote <- .rs.automation.newRemote()
+   on.exit(.rs.automation.deleteRemote(TRUE), add = TRUE)
+   
+   # Clear the console, and show a header that indicates
+   # we're about to run automation tests.
    invisible(.rs.api.executeCommand("consoleClear"))
-   writeLines(c("", "==> Running RStudio automation tests...", ""))
+   writeLines(c("", "==> Running RStudio automation tests", ""))
    
    # Run tests.
    filter <- Sys.getenv("RSTUDIO_AUTOMATION_FILTER", unset = NA)
@@ -668,6 +732,22 @@
       stop_on_failure = FALSE,
       stop_on_warning = FALSE
    )
+   
+   # Remove any ANSI escapes that might've been included
+   # in the generated XML, since that makes Jenkins sad.
+   #
+   # https://github.com/r-lib/testthat/issues/2032
+   if (file.exists(reportFile))
+   {
+      contents <- readLines(reportFile, warn = FALSE)
+      stripped <- cli::ansi_strip(contents)
+      writeLines(stripped, con = reportFile)
+   }
+
+   writeLines(c("", "==> Finishing running RStudio automation", ""))
+
+   # Quit when we're done.
+   quit(save = "no", status = 0L)
    
 })
 
@@ -786,6 +866,10 @@
 
 .rs.addFunction("automation.onFinishedRunningAutomation", function()
 {
+   close <- Sys.getenv("RSTUDIO_AUTOMATION_CLOSE_ON_FINISH", unset = "FALSE")
+   if (close)
+      quit(status = 0L)
+
    isJenkins <- Sys.getenv("JENKINS_URL", unset = NA)
    if (!is.na(isJenkins))
       quit(status = 0L)
@@ -805,4 +889,36 @@
 .rs.addFunction("markers", function(...)
 {
    .rs.setVar("automation.currentMarkers", as.character(list(...)))
+})
+
+
+.rs.addFunction("automation.takeScreenshot", function(label)
+{
+   # Work in screenshots directory if available
+   screenshotsDir <- Sys.getenv("RSTUDIO_AUTOMATION_SCREENSHOTS_DIR", unset = NA)
+   if (!is.na(screenshotsDir))
+   {
+      dir.create(screenshotsDir, recursive = TRUE, showWarnings = FALSE)
+      owd <- setwd(screenshotsDir)
+      on.exit(setwd(owd), add = TRUE)
+   }
+
+   if (.rs.platform.isLinux)
+   {
+      # Sanitize label name.
+      label <- gsub("[^[:alnum:]]", "_", label)
+      
+      # Use 'xwd' to capture a screenshot from the display.
+      name <- sprintf("rstudio-automation-%s.%s", label, format(Sys.time(), "%F.%s"))
+      command <- sprintf("xwd -root -out \"%s.xwd\"", name)
+      system(command)
+      
+      # Use 'convert' to create a png
+      command <- sprintf("convert \"%1$s.xwd\" \"%1$s.png\"", name)
+      system(command)
+
+      # Remove the old .xwnd capture file
+      command <- sprintf("rm -f \"%s.xwd\"", name)
+      system(command)
+   }
 })

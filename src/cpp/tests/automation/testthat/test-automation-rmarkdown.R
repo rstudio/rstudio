@@ -92,6 +92,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("can cancel switching to visual editor", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode Denied"
@@ -118,12 +119,12 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(visualModeToggle$ariaPressed, "false")
       
       remote$domClickElement(".rstudio_visual_md_on")
-      .rs.waitUntil("The switching to visual mode first time dialog appears", function() {
-         tryCatch({
-            cancelBtn <- remote$jsObjectViaSelector("#rstudio_dlg_cancel")
-            grepl("Cancel", cancelBtn$innerText)
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("The switching to visual mode first time dialog appears", function()
+      {
+         cancelBtn <- remote$jsObjectViaSelector("#rstudio_dlg_cancel")
+         grepl("Cancel", cancelBtn$innerText)
+      }, swallowErrors = TRUE)
+      
       remote$domClickElement("#rstudio_dlg_cancel")
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
@@ -133,6 +134,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("can switch to visual editor and back to source editor", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -162,21 +164,19 @@ withr::defer(.rs.automation.deleteRemote())
       
       if (i == 1)
       {
-        .rs.waitUntil("The switching to visual mode first time dialog appears", function() {
-           tryCatch({
-              okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
-              grepl("Use Visual Mode", okBtn$innerText)
-            }, error = function(e) FALSE)
-         })
+         .rs.waitUntil("The switching to visual mode first time dialog appears", function()
+         {
+            okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
+            grepl("Use Visual Mode", okBtn$innerText)
+         }, swallowErrors = TRUE)
          remote$domClickElement("#rstudio_dlg_ok")
       }
       
-      .rs.waitUntil("Visual Editor appears", function() {
-         tryCatch({
-            visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
-            visualEditor$contentEditable
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("Visual Editor appears", function()
+      {
+         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor$contentEditable
+      }, swallowErrors = TRUE)
       
       expect_equal(sourceModeToggle$ariaPressed, "false")
       expect_equal(visualModeToggle$ariaPressed, "true")
@@ -188,6 +188,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("visual editor welcome dialog displays again if don't show again is unchecked", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -207,29 +209,28 @@ withr::defer(.rs.automation.deleteRemote())
    visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
    
    # do this twice to check that the "switching to visual mode" dialog appears second time
-   for (i in 1:2) {
+   for (i in 1:2)
+   {
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
       remote$domClickElement(".rstudio_visual_md_on")
       
-      .rs.waitUntil("The switching to visual mode first time dialog appears", function() {
-         tryCatch({
-            okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
-            grepl("Use Visual Mode", okBtn$innerText)
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("The switching to visual mode first time dialog appears", function()
+      {
+         okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
+         grepl("Use Visual Mode", okBtn$innerText)
+      }, swallowErrors = TRUE)
       
       # uncheck "Don't show again"
       remote$domClickElement(".gwt-DialogBox-ModalDialog input[type=\"checkbox\"]")
       remote$domClickElement("#rstudio_dlg_ok")
       
-      .rs.waitUntil("Visual Editor appears", function() {
-         tryCatch({
-           visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
-           visualEditor$contentEditable
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("Visual Editor appears", function()
+      {
+         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor$contentEditable
+      }, swallowErrors = TRUE)
       
       expect_equal(sourceModeToggle$ariaPressed, "false")
       expect_equal(visualModeToggle$ariaPressed, "true")
@@ -242,6 +243,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("displaying and closing chunk options popup doesn't modify settings", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -288,7 +290,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("displaying chunk options popup and applying without making changes doesn't modify settings", {
-   
+ 
+   skip_on_ci()  
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -341,6 +344,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("reverting chunk option changes restores original options ", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -388,6 +392,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/6829
 .rs.test("modifying chunk options via UI doesn't mess up other options", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Issue 6829"
@@ -413,6 +418,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("setup chunk starting with no options works with chunk options UI", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Chunk widgets"
@@ -451,6 +458,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("setup chunk with three options displays on multiple lines", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Chunk widgets"

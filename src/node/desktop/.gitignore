@@ -147,3 +147,8 @@ Info.plist
 # End of https://www.toptal.com/developers/gitignore/api/node
 
 *.original
+*.mp4
+*.mkv
+*.webm
+screenshots
+
