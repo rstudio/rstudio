@@ -105,7 +105,7 @@ pipeline {
         stages {
           stage('Sequential Matrix') {
             options {
-              lock('synchronous-matrix')
+              lock('synchronous-matrix-ami')
             }
             stages{
               stage('Build and Sign') {
