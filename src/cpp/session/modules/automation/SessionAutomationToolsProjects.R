@@ -35,13 +35,11 @@
 
 .rs.automation.addRemoteFunction("waitForProjectToOpen", function(projectName)
 {
-   Sys.sleep(1)
+   Sys.sleep(3)
    .rs.waitUntil("The new project is opened", function()
    {
-      tryCatch({
-         grepl(projectName, self$getProjectDropdownLabel())
-      }, error = function(e) FALSE)
-   })
+      grepl(projectName, self$getProjectDropdownLabel())
+   }, swallowErrors = TRUE)
 })
 
 .rs.automation.addRemoteFunction("projectClose", function()
@@ -52,7 +50,7 @@
    .rs.waitUntil("The project has closed", function()
    {
       .rs.trimWhitespace(self$getProjectDropdownLabel()) == "Project: (None)"
-   })
+   }, swallowErrors = TRUE)
 })
 
 .rs.automation.addRemoteFunction("getProjectDropdownLabel", function()
