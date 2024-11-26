@@ -120,7 +120,8 @@ pipeline {
                     ENV = utils.getBuildEnv(!params.DAILY)
                   }
                   // unlock keychain to ensure build gets signed.
-                  sh 'security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} && security set-keychain-settings' // turn off timeout
+                  // TODO: do we need the following? Commented out for debugging purposes
+                  // sh 'security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} && security set-keychain-settings' // turn off timeout
                   // build rstudio
                   dir ("package/osx") {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
