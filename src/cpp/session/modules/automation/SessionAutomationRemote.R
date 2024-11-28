@@ -573,6 +573,7 @@
    {
       response <- self$client$DOM.querySelector(document$root$nodeId, selector)
       nodeId <<- response$nodeId
+      return(nodeId != 0)
    })
    
    # Wait until the predicate is true.
@@ -583,6 +584,21 @@
          predicate(nodeId)
       })
    }
+   
+   # Return the resolved node id.
+   nodeId
+})
+
+.rs.automation.addRemoteFunction("waitForVisibleElement", function(selector)
+{
+   nodeId <- self$waitForElement(selector)
+
+   # Wait until it is visible
+   .rs.waitUntil(sprintf("Waiting for nodeId %d to be visible", nodeId), function()
+   {
+      boxModel <- self$client$DOM.getBoxModel(nodeId = nodeId)
+      !is.null(boxModel)
+   })
    
    # Return the resolved node id.
    nodeId
@@ -599,9 +615,10 @@
    )
 })
 
-.rs.automation.addRemoteFunction("clickElement", function(selector, predicate = NULL)
+.rs.automation.addRemoteFunction("clickElement", function(selector)
 {
-   self$domClickElementByNodeId(self$waitForElement(selector, predicate))
+   self$waitForVisibleElement(selector)
+   self$domClickElement(selector)
 })
 
 .rs.automation.addRemoteFunction("enterText", function(selector, ...)
