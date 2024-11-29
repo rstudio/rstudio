@@ -108,16 +108,6 @@
    assign(name, callback, envir = .rs.automation.remote)
 })
 
-.rs.automation.addRemoteFunction("commandExecute", function(command)
-{
-   jsCode <- deparse(substitute(
-      window.rstudioCallbacks.commandExecute(command),
-      list(command = command)
-   ))
-   
-   self$jsExec(jsCode)
-})
-
 .rs.automation.addRemoteFunction("completionsRequest", function(text = "")
 {
    # Generate the autocomplete pop-up.
@@ -142,54 +132,6 @@
    
    # Return those parts
    parts
-})
-
-.rs.automation.addRemoteFunction("consoleClear", function()
-{
-   self$keyboardExecute("<Ctrl + 2>", "<Escape>", "<Ctrl + A>", "<Backspace>", "<Ctrl + L>")
-})
-
-.rs.automation.addRemoteFunction("consoleExecuteExpr", function(expr, wait = TRUE)
-{
-   code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
-   self$consoleExecute(code, wait)
-})
-
-.rs.automation.addRemoteFunction("consoleExecute", function(code, wait = TRUE)
-{
-   # Make sure the Console pane is focused.
-   document <- self$client$DOM.getDocument()
-   response <- self$client$DOM.querySelector(
-      nodeId = document$root$nodeId,
-      selector = "#rstudio_console_input .ace_text-input"
-   )
-   self$client$DOM.focus(nodeId = response$nodeId)
-   
-   # Send the code to be executed.
-   self$client$Input.insertText(text = code)
-   
-   # Send an Enter key to force execution.
-   self$client$Input.dispatchKeyEvent(type = "rawKeyDown", windowsVirtualKeyCode = 13L)
-   
-   # If requested, wait until the code has finished execution.
-   if (wait)
-   {
-      Sys.sleep(0.1)
-      editorEl <- self$jsObjectViaSelector("#rstudio_console_input")
-      .rs.waitUntil("console is no longer busy", function()
-      {
-         !grepl("rstudio-console-busy", editorEl$className)
-      })
-   }
-   
-   invisible(TRUE)
-   
-})
-
-.rs.automation.addRemoteFunction("consoleOutput", function()
-{
-   consoleOutput <- self$jsObjectViaSelector("#rstudio_console_output")
-   strsplit(consoleOutput$innerText, split = "\n", fixed = TRUE)[[1L]]
 })
 
 .rs.automation.addRemoteFunction("documentOpen", function(ext, contents)

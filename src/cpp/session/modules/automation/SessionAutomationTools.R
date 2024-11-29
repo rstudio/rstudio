@@ -13,6 +13,16 @@
 #
 #
 
+.rs.automation.addRemoteFunction("commandExecute", function(command)
+{
+   jsCode <- deparse(substitute(
+      window.rstudioCallbacks.commandExecute(command),
+      list(command = command)
+   ))
+   
+   self$jsExec(jsCode)
+})
+
 .rs.addFunction("automation.tools.isAriaHidden", function(jsObject)
 {
    isAriaHidden <- .rs.tryCatch(jsObject$ariaHidden)
