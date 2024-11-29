@@ -10,7 +10,7 @@ withr::defer(.rs.automation.deleteRemote())
    skip_on_ci()
 
    # Create a project.
-   projectPath <- remote$projectCreate(type = "package")
+   remote$projectCreate(type = "package")
 
    # Create and open the test file.
    remote$consoleExecuteExpr({
@@ -40,6 +40,5 @@ withr::defer(.rs.automation.deleteRemote())
 
    # Close the project
    remote$projectClose()
-   remote$deleteFolder(projectPath)
 })
 

@@ -19,19 +19,18 @@
 #' to issue commands so must be available.
 #' 
 #' @param type The type of project to create, currently only "package" is supported.
-#' @return The path to the created project.
+#' @return None
 #'
 .rs.automation.addRemoteFunction("projectCreate", function(type = "")
 {
-   projectPath <- ""
-
    # Create a package project.
    if (type == "package")
    {
-      projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
-      expr <- sprintf('usethis::create_package(path = "%s", open = FALSE); .rs.api.openProject("%s")',
-                      projectPath, projectPath)
-      self$consoleExecute(expr, wait = FALSE)
+      self$consoleExecuteExpr({
+         projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
+         usethis::create_package(path = projectPath, open = FALSE)
+         .rs.api.openProject(projectPath)
+      }, wait = FALSE)
    }
    else
    {
@@ -40,7 +39,6 @@
    
    # Wait until the new project is open.
    self$waitForProjectToOpen("rstudio")
-   projectPath
 })
 
 #' Wait for the project to open
