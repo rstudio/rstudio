@@ -13,16 +13,25 @@
 #
 #
 
+#' Create a new project
+#' 
+#' Creates a new project of a specified type. The console is used
+#' to issue commands so must be available.
+#' 
+#' @param type The type of project to create, currently only "package" is supported.
+#' @return The path to the created project.
+#'
 .rs.automation.addRemoteFunction("projectCreate", function(type = "")
 {
+   projectPath <- ""
+
    # Create a package project.
    if (type == "package")
    {
-      self$consoleExecuteExpr({
-         projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
-         usethis::create_package(path = projectPath, open = FALSE)
-         .rs.api.openProject(projectPath)
-      }, wait = FALSE)
+      projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
+      expr <- sprintf('usethis::create_package(path = "%s", open = FALSE); .rs.api.openProject("%s")',
+                      projectPath, projectPath)
+      self$consoleExecute(expr, wait = FALSE)
    }
    else
    {
@@ -31,17 +40,30 @@
    
    # Wait until the new project is open.
    self$waitForProjectToOpen("rstudio")
+   projectPath
 })
 
+#' Wait for the project to open
+#' 
+#' Waits until the specified project is opened.
+#' 
+#' @param projectName The name of the project to wait for.
+#' @return TRUE if the project is opened, FALSE otherwise.
+#'
 .rs.automation.addRemoteFunction("waitForProjectToOpen", function(projectName)
 {
-   Sys.sleep(3)
    .rs.waitUntil("The new project is opened", function()
    {
       grepl(projectName, self$getProjectDropdownLabel())
    }, swallowErrors = TRUE)
 })
 
+#' Close the current project
+#' 
+#' Closes the currently opened project.
+#' 
+#' @return None
+#'
 .rs.automation.addRemoteFunction("projectClose", function()
 {
    self$domClickElement(.rs.automation.targets[["toolbar.projectMenuButton"]])
@@ -53,6 +75,12 @@
    }, swallowErrors = TRUE)
 })
 
+#' Get the project dropdown button's label
+#' 
+#' Get the label from the project dropdown button on the toolbar.
+#' 
+#' @return The button's label.
+#' 
 .rs.automation.addRemoteFunction("getProjectDropdownLabel", function()
 {
    self$waitForElement(.rs.automation.targets[["toolbar.projectMenuButton"]])
