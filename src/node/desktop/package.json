@@ -11,7 +11,7 @@
     "clean": "ts-node scripts/clean.ts",
     "lint": "eslint ./src ./test",
     "package": "npm ci && electron-forge package",
-    "start": "electron-forge start",
+    "start": "electron-forge start -- --no-sandbox",
     "debug": "electron-forge start --inspect-electron",
     "fullstart": "npm install && electron-forge start",
     "test": "electron-mocha --no-sandbox --full-trace --config ./test/unit/mocharc.json",
@@ -21,7 +21,7 @@
     "postinstall": "node scripts/postinstall.js && npx electron-rebuild && ts-node scripts/generate.ts",
     "generate": "ts-node scripts/generate.ts",
     "install-fuses": "node scripts/install-fuses.mjs",
-    "automation": "npm start -- -- --run-automation"
+    "automation": "electron-forge start -- --no-sandbox --run-automation"
   },
   "config": {
     "forge": "./forge.config.js"

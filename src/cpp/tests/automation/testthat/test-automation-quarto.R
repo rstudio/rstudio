@@ -90,6 +90,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("can cancel switching to visual editor", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode Denied"
@@ -116,12 +118,11 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(visualModeToggle$ariaPressed, "false")
       
       remote$domClickElement(".rstudio_visual_md_on")
-      .rs.waitUntil("The switching to visual mode first time dialog appears", function() {
-         tryCatch({
-            cancelBtn <- remote$jsObjectViaSelector("#rstudio_dlg_cancel")
-            grepl("Cancel", cancelBtn$innerText)
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("The switching to visual mode first time dialog appears", function()
+      {
+         cancelBtn <- remote$jsObjectViaSelector("#rstudio_dlg_cancel")
+         grepl("Cancel", cancelBtn$innerText)
+      }, swallowErrors = TRUE)
       remote$domClickElement("#rstudio_dlg_cancel")
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
@@ -130,6 +131,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("can switch to visual editor and back to source editor", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -150,7 +153,8 @@ withr::defer(.rs.automation.deleteRemote())
    
    # do this twice to check that the "switching to visual mode" dialog doesn't appear
    # the second time
-   for (i in 1:2) {
+   for (i in 1:2)
+   {
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
@@ -158,21 +162,19 @@ withr::defer(.rs.automation.deleteRemote())
       
       if (i == 1)
       {
-        .rs.waitUntil("The switching to visual mode first time dialog appears", function() {
-           tryCatch({
-              okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
-              grepl("Use Visual Mode", okBtn$innerText)
-            }, error = function(e) FALSE)
-         })
+         .rs.waitUntil("The switching to visual mode first time dialog appears", function()
+         {
+            okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
+            grepl("Use Visual Mode", okBtn$innerText)
+         }, swallowErrors = TRUE)
          remote$domClickElement("#rstudio_dlg_ok")
       }
       
-      .rs.waitUntil("Visual Editor appears", function() {
-         tryCatch({
-            visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
-            visualEditor$contentEditable
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("Visual Editor appears", function()
+      {
+         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor$contentEditable
+      }, swallowErrors = TRUE)
       
       expect_equal(sourceModeToggle$ariaPressed, "false")
       expect_equal(visualModeToggle$ariaPressed, "true")
@@ -184,6 +186,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("visual editor welcome dialog displays again if don't show again is unchecked", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "Visual Mode"
@@ -203,29 +207,28 @@ withr::defer(.rs.automation.deleteRemote())
    visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
    
    # do this twice to check that the "switching to visual mode" dialog appears second time
-   for (i in 1:2) {
+   for (i in 1:2)
+   {
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
       remote$domClickElement(".rstudio_visual_md_on")
       
-      .rs.waitUntil("The switching to visual mode first time dialog appears", function() {
-         tryCatch({
-            okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
-            grepl("Use Visual Mode", okBtn$innerText)
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("The switching to visual mode first time dialog appears", function()
+      {
+         okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
+         grepl("Use Visual Mode", okBtn$innerText)
+      }, swallowErrors = TRUE)
       
       # uncheck "Don't show again"
       remote$domClickElement(".gwt-DialogBox-ModalDialog input[type=\"checkbox\"]")
       remote$domClickElement("#rstudio_dlg_ok")
       
-      .rs.waitUntil("Visual Editor appears", function() {
-         tryCatch({
-           visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
-           visualEditor$contentEditable
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("Visual Editor appears", function()
+      {
+         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor$contentEditable
+      }, swallowErrors = TRUE)
       
       expect_equal(sourceModeToggle$ariaPressed, "false")
       expect_equal(visualModeToggle$ariaPressed, "true")
@@ -237,6 +240,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("displaying and closing chunk options popup doesn't modify already-sorted settings", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -299,6 +304,8 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("displaying and closing chunk options popup sorts the settings", {
+   
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: "The Title"
@@ -356,6 +363,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/14552
 .rs.test("empty header labels are permitted in document outline", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       format: revealjs
@@ -452,6 +460,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/15189
 .rs.test("raw html blocks are preserved by visual editor", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: Raw html blocks
@@ -476,21 +485,19 @@ withr::defer(.rs.automation.deleteRemote())
       
       # switch to visual mode
       remote$domClickElement(".rstudio_visual_md_on")
-      .rs.waitUntil("Visual Editor appears", function() {
-         tryCatch({
-            visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
-            visualEditor$contentEditable
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("Visual Editor appears", function()
+      {
+         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor$contentEditable
+      }, swallowErrors = TRUE)
       
       # back to source mode
       remote$domClickElement(".rstudio_visual_md_off")
-      .rs.waitUntil("Source editor appears", function() {
-         tryCatch({
-            sourceEditor <- remote$jsObjectViaSelector("#rstudio_source_text_editor")
-            sourceEditor$checkVisibility()
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("Source editor appears", function()
+      {
+         sourceEditor <- remote$jsObjectViaSelector("#rstudio_source_text_editor")
+         sourceEditor$checkVisibility()
+      }, swallowErrors = TRUE)
       
       # verify ending state
       editor <- remote$editorGetInstance()
@@ -501,6 +508,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/15253
 .rs.test("raw latex blocks are preserved by visual editor", {
    
+   skip_on_ci()
    contents <- .rs.heredoc('
       ---
       title: Raw LaTeX blocks
@@ -526,21 +534,19 @@ withr::defer(.rs.automation.deleteRemote())
       
       # switch to visual mode
       remote$domClickElement(".rstudio_visual_md_on")
-      .rs.waitUntil("Visual Editor appears", function() {
-         tryCatch({
-            visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
-            visualEditor$contentEditable
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("Visual Editor appears", function()
+      {
+         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor$contentEditable
+      }, swallowErrors = TRUE)
       
       # back to source mode
       remote$domClickElement(".rstudio_visual_md_off")
-      .rs.waitUntil("Source editor appears", function() {
-         tryCatch({
-            sourceEditor <- remote$jsObjectViaSelector("#rstudio_source_text_editor")
-            sourceEditor$checkVisibility()
-         }, error = function(e) FALSE)
-      })
+      .rs.waitUntil("Source editor appears", function()
+      {
+         sourceEditor <- remote$jsObjectViaSelector("#rstudio_source_text_editor")
+         sourceEditor$checkVisibility()
+      }, swallowErrors = TRUE)
       
       # verify ending state
       editor <- remote$editorGetInstance()

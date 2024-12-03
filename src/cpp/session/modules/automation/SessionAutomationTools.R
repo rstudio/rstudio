@@ -13,9 +13,57 @@
 #
 #
 
+.rs.automation.addRemoteFunction("commandExecute", function(command)
+{
+   jsCode <- deparse(substitute(
+      window.rstudioCallbacks.commandExecute(command),
+      list(command = command)
+   ))
+   
+   self$jsExec(jsCode)
+})
+
 .rs.addFunction("automation.tools.isAriaHidden", function(jsObject)
 {
    isAriaHidden <- .rs.tryCatch(jsObject$ariaHidden)
    # no aria-hidden attribute is equivalent to FALSE
    ifelse(inherits(isAriaHidden, "error"), FALSE, as.logical(isAriaHidden))
+})
+
+.rs.automation.addRemoteFunction("createTempFolder", function()
+{
+   path <- tempfile("rstudio.automation.", tmpdir = dirname(tempdir()))
+   self$consoleExecute(sprintf("dir.create('%s', recursive = TRUE, showWarnings = FALSE)", path))
+   path
+})
+
+.rs.automation.addRemoteFunction("deleteFolder", function(folder)
+{
+   self$consoleExecute(sprintf("unlink('%s', recursive = TRUE)", folder))
+})
+
+.rs.automation.addRemoteFunction("getCheckboxStateByNodeId", function(nodeId)
+{
+   response <- self$client$DOM.getAttributes(nodeId)
+   attributes <- response$attributes
+   checkedIndex <- which(attributes == "checked")
+   isChecked <- length(checkedIndex) > 0
+})
+
+.rs.automation.addRemoteFunction("ensureChecked", function(selector)
+{
+   nodeId <- self$waitForElement(selector)
+   if (!self$getCheckboxStateByNodeId(nodeId))
+   {
+      self$domClickElementByNodeId(nodeId)
+   }
+})
+
+.rs.automation.addRemoteFunction("ensureUnchecked", function(selector)
+{
+   nodeId <- self$waitForElement(selector)
+   if (self$getCheckboxStateByNodeId(nodeId))
+   {
+      self$domClickElementByNodeId(nodeId)
+   }
 })

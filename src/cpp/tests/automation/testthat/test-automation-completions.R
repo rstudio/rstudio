@@ -7,7 +7,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 # https://github.com/rstudio/rstudio/issues/14784
 .rs.test("autocompletion doesn't trigger active bindings", {
-   
+ 
    code <- .rs.heredoc('
       Test <- R6::R6Class("Test",
         active  = list(active_test  = function(value) print("active")),
