@@ -14,6 +14,7 @@
  */
 
 #include <shared_core/Error.hpp>
+#include <set>
 
 using namespace rstudio::core;
 
@@ -34,6 +35,15 @@ Error startup()
 Error reloadConfiguration()
 {
    return Success();
+}
+
+void startShutdown()
+{
+}
+
+std::set<std::string> interruptProcs()
+{
+   return std::set<std::string>();
 }
 
 void shutdown()
