@@ -6,6 +6,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "../../../dependencies/tools/rstudio-tools.sh"
 
 
+# Make sure 'convert' and 'x11-apps' are installed.
+sudo -n apt install imagemagick x11-apps
+
 # Try to find node, and place it on the PATH.
 NODE_PATHS=(
    "${SCRIPT_DIR}/../../../dependencies/common/node/${RSTUDIO_NODE_DIR}/bin"
@@ -47,6 +50,7 @@ RSTUDIO_AUTOMATION_SCREENSHOTS_DIR = "$(pwd)/screenshots"
 EOF
 
 export R_ENVIRON_USER=/tmp/.Renviron
+cat "${R_ENVIRON_USER}"
 
 
 # Set up environment variables to ease running of automation.
@@ -120,8 +124,8 @@ NPMPID="$!"
 # the process cannot be interrupted in that scenario.
 # Instead, we loop and wait for poll for exit.
 set +x
-for _i in `seq 1 3600`; do
-	if kill -0 "${NPMPID}"; then
+for _i in `seq 1 1800`; do
+	if kill -0 "${NPMPID}" 2> /dev/null; then
 		sleep 1
 	else
 		break
@@ -129,13 +133,13 @@ for _i in `seq 1 3600`; do
 done
 set -x
 
-if kill -0 "${NPMPID}"; then
+if kill -0 "${NPMPID}" 2> /dev/null; then
 	echo "ERROR: automation timed out; terminating process"
 	kill "${NPMPID}"
 fi
 
 
-pkill rsession
+pkill rsession 2> /dev/null
 cat rstudio-automation-results.xml
 exit 0
 
