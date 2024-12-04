@@ -1352,7 +1352,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("waitUntil", function(reason,
                                       predicate,
                                       swallowErrors = FALSE,
-                                      retryCount = 100L,
+                                      retryCount = 30L,
                                       waitTimeSecs = 1)
 {
    pollForEvents <- if (isNamespaceLoaded("later"))

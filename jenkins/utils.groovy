@@ -351,6 +351,43 @@ def prApiUrl() {
   return "https://api.github.com/repos/${ownerAndRepo}/check-runs"
 }
 
+def checkRunsRequest(String method, String payload = "", String url = prApiUrl()) {
+  if (method == "GET") {
+    return httpRequest(
+      url: url,
+      httpMode: method,
+      customHeaders: [
+        [name: "Authorization", value: 'token ' + GITHUB_LOGIN_PSW, maskValue: true],
+        [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
+        [name: 'Accept', value: 'application/vnd.github+json'],
+      ],
+      validResponseCodes: "100:599" // Don't make the job fail if the request fails
+    )
+  } else {
+    return httpRequest(
+      url: url,
+      httpMode: method,
+      requestBody: payload,
+      customHeaders: [
+        [name: "Authorization", value: 'token ' + GITHUB_LOGIN_PSW, maskValue: true],
+        [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
+        [name: 'Accept', value: 'application/vnd.github+json'],
+      ],
+      validResponseCodes: "100:599" // Don't make the job fail if the request fails
+    )
+  }
+}
+
+def checkRunsRequestWithRetry(String method, String payload = "", String url = prApiUrl()) {
+  def response = checkRunsRequest(method, payload, url)
+  if (response.status == 401) {
+    echo "Received 401 response. Retrying with new token."
+    GITHUB_LOGIN = credentials('posit-jenkins')
+    response = checkRunsRequest(method, payload, url)
+  }
+  return response
+}
+
 checks = [:]
 
 /**
@@ -443,16 +480,7 @@ synchronized boolean postReviewCheck(Map args) {
 
   // archive the file
   sh "echo Sending check for ${check.title} with payload ${payload}"
-  def response = httpRequest(
-    url: prApiUrl(),
-    httpMode: 'POST',
-    requestBody: payload,
-    customHeaders: [
-      [name: "Authorization", value: 'token ' + GITHUB_LOGIN_PSW, maskValue: true],
-      [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
-      [name: 'Accept', value: 'application/vnd.github+json'],
-    ]
-  )
+  def response = checkRunsRequestWithRetry('POST', payload)
 
   if (response.status == 201) {
     checks[title] = check
@@ -475,15 +503,7 @@ def finishReviewChecks(String buildResult) {
       ])
     }
     else {
-      response = httpRequest(
-        url: "${prApiUrl()}/${check.id}",
-        httpMode: 'GET',
-        customHeaders: [
-          [name: "Authorization", value: 'token ' + GITHUB_LOGIN_PSW, maskValue: true],
-          [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
-          [name: 'Accept', value: 'application/vnd.github+json'],
-        ]
-      )
+      response = checkRunsRequestWithRetry('GET', "", "${prApiUrl()}/${check.id}")
 
       if (response.status != 200) {
         echo "Failed to get check status: ${response.status} ${response.content}"
@@ -516,7 +536,7 @@ def runCmd(String cmd) {
     script: "#!/usr/bin/env bash\n${cmd} 2>&1 | tee ${file}",
     returnStatus: true
   )
-  def output = readFile(file: file)
+  def output = fileExists(file) ? readFile(file: file) : '<no output available>'
   return [status, output]
 
 }
@@ -526,6 +546,7 @@ def getResultsMarkdownLink(String name, String url) {
 }
 
 def runCheckCmd(String cmd, String checkName, String stageUrl, boolean hideDetails = false) {
+
   postReviewCheck([
     title: checkName,
     status: 'in_progress',
@@ -536,15 +557,18 @@ def runCheckCmd(String cmd, String checkName, String stageUrl, boolean hideDetai
   success = exitCode == 0
 
   status = success ? "success" : "failure"
-  text = hideDetails ? '' : out
+  text = hideDetails ? '<details hidden>' : out
+  
   postReviewCheck([
     title: checkName,
     status: status,
     details: text,
   ])
+
   if (!success) {
     sh "exit 1"
   }
+
 }
 
 
