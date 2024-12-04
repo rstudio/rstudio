@@ -30,6 +30,7 @@ withr::defer(.rs.automation.deleteRemote())
    
    # Source the file.
    remote$commandExecute("sourceActiveDocument")
+   Sys.sleep(1)
    
    # Execute the function.
    remote$consoleExecute("f()")
@@ -75,18 +76,15 @@ withr::defer(.rs.automation.deleteRemote())
    
    # Open that project.
    remote$consoleExecuteExpr(
-      .rs.api.openProject(!!projectPath)
+      .rs.api.openProject(!!projectPath),
+      wait = FALSE
    )
    
-   # Wait a minute for the new session to load.
-   Sys.sleep(1)
+   # Wait a bit for the new session to load.
+   Sys.sleep(3)
 
    # Wait until the new project is ready.
-   .rs.waitFor("the new project is opened", function()
-   {
-      el <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
-      grepl("rstudio.automation", el$innerText, fixed = TRUE)
-   })
+   remote$waitForProjectToOpen("rstudio.automation")
    
    # Close any open documents
    remote$consoleExecuteExpr(
@@ -114,11 +112,11 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commandExecute("saveSourceDoc")
    remote$commandExecute("buildAll")
    
-   .rs.waitFor("build has completed", function()
+   .rs.waitUntil("build has completed", function()
    {
       output <- remote$consoleOutput()
       any(output == "> library(rstudio.automation)")
-   })
+   }, swallowErrors = TRUE)
    
    remote$consoleClear()
    
@@ -158,13 +156,5 @@ withr::defer(.rs.automation.deleteRemote())
    # All done testing; close the project.
    remote$documentClose()
    Sys.sleep(1)
-   remote$commandExecute("closeProject")
-   
-   # Wait until the project has closed
-   .rs.waitFor("the project is closed", function()
-   {
-      el <- remote$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
-      grepl("Project: ", el$innerText, fixed = TRUE)
-   })
-    
+   remote$projectClose()
 })

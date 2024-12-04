@@ -27,6 +27,10 @@
 // correctly in the presence of the assertion (with the annoying side effect
 // of logging an assertion every time the product starts up)
 
+#ifdef __APPLE__
+# include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #include <core/r_util/RTokenizer.hpp>
 
 #include <boost/regex.hpp>
@@ -35,9 +39,9 @@
 #include <sstream>
 
 #include <shared_core/Error.hpp>
+
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
-
 
 namespace rstudio {
 namespace core {
@@ -100,6 +104,41 @@ Error tokenizeError(const std::string& reason, const ErrorLocation& location)
    Error error(boost::system::errc::invalid_argument, location);
    error.addProperty("reason", reason);
    return error;
+}
+
+// on macOS, std::iswalnum() and other variants don't seem to handle certain
+// unicode character categories?
+//
+// https://github.com/rstudio/rstudio/issues/15316
+bool isAlphanumeric(wchar_t ch)
+{
+#ifdef __APPLE__
+   
+   // if this appears to be an ASCII value, then use the standard library;
+   // otherwise, use core foundation
+   if (ch < static_cast<wchar_t>(128))
+   {
+      return iswalnum(ch);
+   }
+   else
+   {
+      CFStringRef string = CFStringCreateWithBytes(
+               kCFAllocatorDefault,
+               (const UInt8*) &ch,
+               sizeof (wchar_t),
+               kCFStringEncodingUTF32LE,
+               false);
+
+      CFCharacterSetRef set = CFCharacterSetGetPredefined(kCFCharacterSetAlphaNumeric);
+      CFRange range = CFRangeMake(0, CFStringGetLength(string));
+      bool result = CFStringFindCharacterFromSet(string, set, range, 0, NULL);
+      CFRelease(string);
+      return result;
+   }
+   
+#else
+   return iswalnum(ch);
+#endif
 }
 
 } // anonymous namespace
@@ -213,7 +252,7 @@ RToken RTokenizer::nextToken()
         return numberToken;
   }
 
-  if (iswalnum(c) || c == L'.')
+  if (isAlphanumeric(c) || c == L'.')
   {
      // From Section 10.3.2, identifiers must not start with
      // a digit, nor may they start with a period followed by
@@ -418,7 +457,7 @@ RToken RTokenizer::matchIdentifier()
       eat();
     
       wchar_t ch = peek();
-      match = iswalnum(ch) || ch == L'.' || ch == L'_';
+      match = isAlphanumeric(ch) || ch == L'.' || ch == L'_';
    }
    
    std::size_t row = row_;

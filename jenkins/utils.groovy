@@ -510,23 +510,15 @@ def finishReviewChecks(String buildResult) {
 }
 
 def runCmd(String cmd) {
-  def out
-  def returnCode = 0
-  def tempOutfile = "${UUID.randomUUID()}"
-  returnCode = sh(
-    returnStatus: true,
-    script: """
-      set +x
-      exitCode=0
-      res=\$(${cmd} 2>&1) || exitCode=\$? || true
-      echo "\$res"
-      echo "\$res" > ${tempOutfile}
-      exit \$exitCode
-      set -x
-      """
+
+  def file = "${UUID.randomUUID()}"
+  def status = sh(
+    script: "#!/usr/bin/env bash\n${cmd} 2>&1 | tee ${file}",
+    returnStatus: true
   )
-  out = readFile(file: tempOutfile)
-  return [returnCode, out]
+  def output = readFile(file: file)
+  return [status, output]
+
 }
 
 def getResultsMarkdownLink(String name, String url) {

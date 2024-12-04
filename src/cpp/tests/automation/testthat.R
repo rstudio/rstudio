@@ -26,7 +26,10 @@ status <- local({
    
    # Create an automation remote.
    remote <- .rs.automation.newRemote()
-   on.exit(remote$quit(), add = TRUE)
+   on.exit(.rs.automation.deleteRemote(force = TRUE))
+   
+   # Use this remote for all upcoming tests.
+   Sys.setenv(RSTUDIO_AUTOMATION_REUSE_REMOTE = "TRUE")
    
    # Run tests with this active remote.
    testthat::test_dir(
