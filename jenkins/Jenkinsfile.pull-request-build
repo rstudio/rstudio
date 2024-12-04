@@ -66,13 +66,24 @@ pipeline {
     stage('Initialize Pending Checks') {
       steps {
         script {
+
+          // Tests common to both Workbench and open source
           utils.postReviewCheck(title: "Build Package")
           utils.postReviewCheck(title: "GWT Unit Tests")
           utils.postReviewCheck(title: "C++ Unit Tests")
-          utils.postReviewCheck(title: "Automated Tests")
-          utils.postReviewCheck(title: "Rust Unit Tests")
-          utils.postReviewCheck(title: "Go Unit Tests")
-          utils.postReviewCheck(title: "Homepage Tests")
+
+          // Workbench tests
+          if (FLAVOR == 'Server' && IS_PRO) {
+            utils.postReviewCheck(title: "Rust Unit Tests")
+            utils.postReviewCheck(title: "Go Unit Tests")
+            utils.postReviewCheck(title: "Homepage Tests")
+          }
+
+          // Automation currently only open source desktop
+          if (FLAVOR == 'Electron' && !IS_PRO) {
+            utils.postReviewCheck(title: "Automated Tests")
+          }
+
         }
       }
     }

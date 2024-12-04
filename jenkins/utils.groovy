@@ -516,7 +516,7 @@ def runCmd(String cmd) {
     script: "#!/usr/bin/env bash\n${cmd} 2>&1 | tee ${file}",
     returnStatus: true
   )
-  def output = readFile(file: file)
+  def output = fileExists(file) ? readFile(file: file) : '<no output available>'
   return [status, output]
 
 }
@@ -526,6 +526,7 @@ def getResultsMarkdownLink(String name, String url) {
 }
 
 def runCheckCmd(String cmd, String checkName, String stageUrl, boolean hideDetails = false) {
+
   postReviewCheck([
     title: checkName,
     status: 'in_progress',
@@ -536,15 +537,18 @@ def runCheckCmd(String cmd, String checkName, String stageUrl, boolean hideDetai
   success = exitCode == 0
 
   status = success ? "success" : "failure"
-  text = hideDetails ? '' : out
+  text = hideDetails ? '<details hidden>' : out
+  
   postReviewCheck([
     title: checkName,
     status: status,
     details: text,
   ])
+
   if (!success) {
     sh "exit 1"
   }
+
 }
 
 
