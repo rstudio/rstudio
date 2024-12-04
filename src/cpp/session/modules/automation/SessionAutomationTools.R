@@ -284,7 +284,7 @@
    self$keyboardExecute(text, "<Tab>")
    
    # Get the completion list from the pop-up
-   completionListEl <- self$jsObjectViaSelector(.rs.automation.targets[["code.completionsPopup"]])
+   completionListEl <- self$jsObjectViaSelector("#rstudio_popup_completions")
    completionText <- completionListEl$innerText
    
    # Dismiss the popup.

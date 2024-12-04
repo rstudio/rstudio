@@ -64,7 +64,7 @@
 #'
 .rs.automation.addRemoteFunction("projectClose", function()
 {
-   self$domClickElement(.rs.automation.targets[["toolbar.projectMenuButton"]])
+   self$domClickElement("#rstudio_project_menubutton_toolbar")
    self$domClickElement("#rstudio_label_close_project_command")
    
    .rs.waitUntil("The project has closed", function()
@@ -81,7 +81,7 @@
 #' 
 .rs.automation.addRemoteFunction("getProjectDropdownLabel", function()
 {
-   self$waitForElement(.rs.automation.targets[["toolbar.projectMenuButton"]])
-   toolbarButton <- self$jsObjectViaSelector(.rs.automation.targets[["toolbar.projectMenuButton"]])
+   self$waitForElement("#rstudio_project_menubutton_toolbar")
+   toolbarButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
    .rs.trimWhitespace(toolbarButton$innerText)
 })
