@@ -12,6 +12,11 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
+#
+# This file was automatically generated -- please do not modify it by hand.
+# Generator: src/cpp/generate-commands-accessor.R
+#
+
 .rs.setVar("appCommands", list(
    setWorkingDir = "setWorkingDir",
    switchFocusSourceConsole = "switchFocusSourceConsole",
