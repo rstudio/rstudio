@@ -280,13 +280,10 @@
    response <- .rs.waitUntil(selector, function()
    {
       nodeIds <- self$dom.querySelectorAll(selector)
-      resolvedNodes <- lapply(nodeIds, function(nodeId) {
-         self$client$DOM.resolveNode(nodeId)
-      })
-      resolvedNodes
+      lapply(nodeIds, self$client$DOM.resolveNode)
    }, swallowErrors = TRUE)
 
-   .rs.automation.wrapJsListResponse(self, response)
+   .rs.automation.wrapJsResponse(self, response)
 })
 
 .rs.automation.addRemoteFunction("keyboard.insertText", function(...)
