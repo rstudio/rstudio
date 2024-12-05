@@ -17,32 +17,32 @@ withr::defer(.rs.automation.deleteRemote())
       }
    ')
    
-   remote$documentOpen(".R", contents)
+   remote$editor.openWithContents(".R", contents)
    
    # Click to set a breakpoint.
-   gutterLayer <- remote$jsObjectViaSelector(".ace_gutter-layer")
+   gutterLayer <- remote$js.querySelector(".ace_gutter-layer")
    gutterCell <- gutterLayer$children[[3]]
-   remote$domClickElement(objectId = gutterCell, horizontalOffset = -6L)
+   remote$dom.clickElement(objectId = gutterCell, horizontalOffset = -6L)
    
    # Clear the current selection if we have one.
-   editor <- remote$editorGetInstance()
+   editor <- remote$editor.getInstance()
    editor$clearSelection()
    
    # Source the file.
-   remote$commandExecute("sourceActiveDocument")
+   remote$commands.execute("sourceActiveDocument")
    Sys.sleep(1)
    
    # Execute the function.
-   remote$consoleExecute("f()")
+   remote$console.execute("f()")
    
    # Check that debug highlighting was set on the fourth row.
-   gutterCell <- remote$jsObjectViaSelector(".ace_executing-line")
+   gutterCell <- remote$js.querySelector(".ace_executing-line")
    gutterParent <- gutterCell$parentElement
    gutterChild <- gutterParent$children[[3]]
    expect_equal(gutterCell$innerText, gutterChild$innerText)
    
    # Get the screen position of the debug rectangle.
-   debugLine <- remote$jsObjectViaSelector(".ace_active_debug_line")
+   debugLine <- remote$js.querySelector(".ace_active_debug_line")
    debugRect <- debugLine$getBoundingClientRect()
    
    # Figure out what row that maps to in the editor.
@@ -53,9 +53,9 @@ withr::defer(.rs.automation.deleteRemote())
    expect_equal(screenCoords$row, 3)
    
    # Exit the debugger.
-   remote$keyboardExecute("<Ctrl + 2>", "c", "<Enter>")
-   remote$consoleExecuteExpr(rm(list = "f"))
-   remote$keyboardExecute("<Ctrl + L>")
+   remote$keyboard.insertText("<Ctrl + 2>", "c", "<Enter>")
+   remote$console.executeExpr(rm(list = "f"))
+   remote$keyboard.insertText("<Ctrl + L>")
    
 })
 
@@ -63,37 +63,16 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("package functions can be debugged after build and reload", {
    
    # Create an R package project.
-   projectPath <- tempfile("rstudio.automation.", tmpdir = dirname(tempdir()))
-   
-   remote$consoleExecuteExpr({
-      .rs.rpc.package_skeleton(
-         packageName = "rstudio.automation",
-         packageDirectory = !!projectPath,
-         sourceFiles = character(),
-         usingRcpp = FALSE
-      )
-   })
-   
-   # Open that project.
-   remote$consoleExecuteExpr(
-      .rs.api.openProject(!!projectPath),
-      wait = FALSE
-   )
-   
-   # Wait a bit for the new session to load.
-   Sys.sleep(3)
-
-   # Wait until the new project is ready.
-   remote$waitForProjectToOpen("rstudio.automation")
+   remote$project.create(projectName = "rstudio.automation", type = "package")
    
    # Close any open documents
-   remote$consoleExecuteExpr(
+   remote$console.executeExpr(
       .rs.api.closeAllSourceBuffersWithoutSaving()
    )
    
    # Add a source document.
-   remote$consoleExecuteExpr(file.edit("R/example.R"))
-   remote$commandExecute("activateSource")
+   remote$console.executeExpr(file.edit("R/example.R"))
+   remote$commands.execute("activateSource")
    
    code <- .rs.heredoc('
       example <- function() {
@@ -105,56 +84,56 @@ withr::defer(.rs.automation.deleteRemote())
       }
    ')
    
-   editor <- remote$editorGetInstance()
+   editor <- remote$editor.getInstance()
    editor$insert(code)
    
    # Save it, and build the package.
-   remote$commandExecute("saveSourceDoc")
-   remote$commandExecute("buildAll")
+   remote$commands.execute("saveSourceDoc")
+   remote$commands.execute("buildAll")
    
    .rs.waitUntil("build has completed", function()
    {
-      output <- remote$consoleOutput()
+      output <- remote$console.getOutput()
       any(output == "> library(rstudio.automation)")
    }, swallowErrors = TRUE)
    
-   remote$consoleClear()
+   remote$console.clear()
    
    # Try adding some breakpoints.
-   gutterEls <- remote$jsObjectsViaSelector(".ace_gutter-cell")
-   remote$domClickElement(objectId = gutterEls[[3]], horizontalOffset = -4L)
-   breakpointEls <- remote$jsObjectsViaSelector(".ace_breakpoint")
+   gutterEls <- remote$js.querySelectorAll(".ace_gutter-cell")
+   remote$dom.clickElement(objectId = gutterEls[[3]], horizontalOffset = -4L)
+   breakpointEls <- remote$js.querySelectorAll(".ace_breakpoint")
    expect_equal(length(breakpointEls), 1L)
    expect_equal(breakpointEls[[1]]$innerText, "3")
    
-   remote$domClickElement(objectId = gutterEls[[4]], horizontalOffset = -4L)
-   breakpointEls <- remote$jsObjectsViaSelector(".ace_breakpoint")
+   remote$dom.clickElement(objectId = gutterEls[[4]], horizontalOffset = -4L)
+   breakpointEls <- remote$js.querySelectorAll(".ace_breakpoint")
    expect_equal(length(breakpointEls), 2L)
    expect_equal(breakpointEls[[2]]$innerText, "4")
    
    # Confirm that the object definition is in sync.
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       .rs.isFunctionInSync("example", "R/example.R", "rstudio.automation")
    })
    
-   output <- remote$consoleOutput()
+   output <- remote$console.getOutput()
    expect_contains(output, "[1] TRUE")
-   remote$consoleClear()
+   remote$console.clear()
    
    # Try running the function, and checking the view.
-   remote$consoleExecuteExpr(example())
+   remote$console.executeExpr(example())
    
-   activeLineEl <- remote$jsObjectViaSelector(".ace_executing-line")
+   activeLineEl <- remote$js.querySelector(".ace_executing-line")
    expect_equal(activeLineEl$innerText, "3")
-   remote$commandExecute("activateConsole")
-   remote$keyboardExecute("c", "<Enter>")
+   remote$commands.execute("activateConsole")
+   remote$keyboard.insertText("c", "<Enter>")
    
-   activeLineEl <- remote$jsObjectViaSelector(".ace_executing-line")
+   activeLineEl <- remote$js.querySelector(".ace_executing-line")
    expect_equal(activeLineEl$innerText, "4")
-   remote$keyboardExecute("c", "<Enter>")
+   remote$keyboard.insertText("c", "<Enter>")
    
    # All done testing; close the project.
-   remote$documentClose()
+   remote$editor.closeDocument()
    Sys.sleep(1)
-   remote$projectClose()
+   remote$project.close()
 })

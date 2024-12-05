@@ -11,12 +11,12 @@ withr::defer(.rs.automation.deleteRemote())
    # TODO: Crashes on CI (due to missing UTF-8 locale?)
    skip_on_ci()
 
-   remote$consoleExecute("x <- 1; y <- 2")
-   remote$consoleExecute(".rs.api.restartSession('print(x + y)')")
+   remote$console.execute("x <- 1; y <- 2")
+   remote$console.execute(".rs.api.restartSession('print(x + y)')")
    
    output <- NULL
    .rs.waitUntil("console output is available", function() {
-      output <<- remote$consoleOutput()
+      output <<- remote$console.getOutput()
       output[[length(output)]] == "[1] 3"
    })
    

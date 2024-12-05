@@ -15,44 +15,57 @@
 
 #' Create a new project
 #' 
-#' Creates a new project of a specified type. The console is used
-#' to issue commands so must be available.
+#' Creates a new project of a specified type, and opens it.
 #' 
-#' @param type The type of project to create, currently only "package" is supported.
+#' @param type The type of project to create.
 #' @return None
 #'
-.rs.automation.addRemoteFunction("projectCreate", function(type = "")
+.rs.automation.addRemoteFunction("project.create", function(projectName = NULL,
+                                                            type = c("default", "package"))
 {
-   # Create a package project.
+   # Resolve the project name and path.
+   projectName <- .rs.nullCoalesce(projectName, {
+      id <- substring(.rs.createUUID(), 1L, 8L)
+      paste("rstudio.automation", id, sep = ".")
+   })
+   
+   projectPath <- file.path(tempdir(), projectName)
+   
+   # Resolve the project type.
+   type <- match.arg(type)
+   
+   # Initialize the project.
    if (type == "package")
    {
-      self$consoleExecuteExpr({
-         projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
-         usethis::create_package(path = projectPath, open = FALSE)
-         .rs.api.openProject(projectPath)
-      }, wait = FALSE)
+      self$console.executeExpr({
+         .rs.rpc.package_skeleton(
+            packageName = !!projectName,
+            packageDirectory = !!projectPath,
+            sourceFiles = character(),
+            usingRcpp = FALSE
+         )
+      })
+   }
+   else if (type == "default")
+   {
+      self$console.executeExpr({
+         .rs.api.initializeProject(!!projectPath)
+      })
    }
    else
    {
       stop("unimplemented or unknown project type '", type, "'")
    }
    
-   # Wait until the new project is open.
-   self$waitForProjectToOpen("rstudio")
-})
-
-#' Wait for the project to open
-#' 
-#' Waits until the specified project is opened.
-#' 
-#' @param projectName The name of the project to wait for.
-#' @return TRUE if the project is opened, FALSE otherwise.
-#'
-.rs.automation.addRemoteFunction("waitForProjectToOpen", function(projectName)
-{
+   # Now open the newly-initialized project
+   self$console.executeExpr({
+      .rs.api.openProject(!!projectPath)
+   })
+   
+   # Wait until the project has been successfully opened
    .rs.waitUntil("The new project is opened", function()
    {
-      grepl(projectName, self$getProjectDropdownLabel())
+      grepl(projectName, self$project.getLabel(), fixed = TRUE)
    }, swallowErrors = TRUE)
 })
 
@@ -62,14 +75,14 @@
 #' 
 #' @return None
 #'
-.rs.automation.addRemoteFunction("projectClose", function()
+.rs.automation.addRemoteFunction("project.close", function()
 {
-   self$domClickElement("#rstudio_project_menubutton_toolbar")
-   self$domClickElement("#rstudio_label_close_project_command")
+   self$dom.clickElement("#rstudio_project_menubutton_toolbar")
+   self$dom.clickElement("#rstudio_label_close_project_command")
    
    .rs.waitUntil("The project has closed", function()
    {
-      .rs.trimWhitespace(self$getProjectDropdownLabel()) == "Project: (None)"
+      .rs.trimWhitespace(self$project.getLabel()) == "Project: (None)"
    }, swallowErrors = TRUE)
 })
 
@@ -79,9 +92,9 @@
 #' 
 #' @return The button's label.
 #' 
-.rs.automation.addRemoteFunction("getProjectDropdownLabel", function()
+.rs.automation.addRemoteFunction("project.getLabel", function()
 {
-   self$waitForElement("#rstudio_project_menubutton_toolbar")
-   toolbarButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+   self$dom.waitForElement("#rstudio_project_menubutton_toolbar")
+   toolbarButton <- self$js.querySelector("#rstudio_project_menubutton_toolbar")
    .rs.trimWhitespace(toolbarButton$innerText)
 })

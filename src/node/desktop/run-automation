@@ -7,7 +7,8 @@ source "../../../dependencies/tools/rstudio-tools.sh"
 
 
 # Make sure 'convert' and 'x11-apps' are installed.
-sudo -n apt install imagemagick x11-apps
+sudo -n apt update
+sudo -n apt install -y imagemagick x11-apps
 
 # Try to find node, and place it on the PATH.
 NODE_PATHS=(
