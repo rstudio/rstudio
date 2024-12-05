@@ -457,8 +457,6 @@ Error generateRsaCertAndKeyPair(const std::string& in_certCommonName,
 
 namespace {
 EVP_PKEY* s_pRSA;
-std::string s_modulo;
-std::string s_exponent;
 }
 
 core::Error rsaInit()
@@ -494,14 +492,6 @@ core::Error rsaInit()
    if (EVP_PKEY_get_bn_param(s_pRSA, "e", &be) != 1)
       return getLastCryptoError(ERROR_LOCATION);
 #endif
-
-   char* n = BN_bn2hex(bn);
-   s_modulo = n;
-   OPENSSL_free(n);
-
-   char* e = BN_bn2hex(be);
-   s_exponent = e;
-   OPENSSL_free(e);
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
    RSA_free(pRsaKeyPair);
