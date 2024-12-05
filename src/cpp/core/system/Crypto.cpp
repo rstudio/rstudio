@@ -481,7 +481,7 @@ Error rsaPublicKey(std::string* pPublicKey)
    char* keyData;
    auto pBio = make_unique_ptr(BIO_new(BIO_s_mem()), BIO_free);
    if (!pBio)
-      return systemError(not_enough_memory, "RSA cert buffer", ERROR_LOCATION);
+      return systemError(not_enough_memory, "BIO_new()", ERROR_LOCATION);
    
    int status = PEM_write_bio_PUBKEY(pBio.get(), s_pRSA);
    if (status == 0)
