@@ -62,7 +62,7 @@ if(GWT_BUILD)
 
    find_program(ANT
       NAMES ant
-      PATHS "$ENV{HOME}/opt/bin" "$ENV{HOME}/homebrew/${UNAME_M}/bin")
+      PATHS "/opt/homebrew/bin" "/usr/local/bin")
 
    if(ANT)
       message(STATUS "Using ant: ${ANT}")
