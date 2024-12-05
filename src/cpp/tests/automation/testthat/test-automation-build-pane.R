@@ -21,7 +21,7 @@ withr::defer(.rs.automation.deleteRemote())
          })
       ')
       writeLines(testContents, con = "tests/testthat/test-example.R")
-      .rs.api.editor.openWithContents("tests/testthat/test-example.R")
+      .rs.api.documentOpen("tests/testthat/test-example.R")
    })
 
    # Run tests.

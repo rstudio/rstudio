@@ -15,44 +15,57 @@
 
 #' Create a new project
 #' 
-#' Creates a new project of a specified type. The console is used
-#' to issue commands so must be available.
+#' Creates a new project of a specified type, and opens it.
 #' 
-#' @param type The type of project to create, currently only "package" is supported.
+#' @param type The type of project to create.
 #' @return None
 #'
-.rs.automation.addRemoteFunction("project.create", function(type = "")
+.rs.automation.addRemoteFunction("project.create", function(projectName = NULL,
+                                                            type = c("default", "package"))
 {
-   # Create a package project.
+   # Resolve the project name and path.
+   projectName <- .rs.nullCoalesce(projectName, {
+      id <- substring(.rs.createUUID(), 1L, 8L)
+      paste("rstudio.automation", id, sep = ".")
+   })
+   
+   projectPath <- file.path(tempdir(), projectName)
+   
+   # Resolve the project type.
+   type <- match.arg(type)
+   
+   # Initialize the project.
    if (type == "package")
    {
       self$console.executeExpr({
-         projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
-         usethis::create_package(path = projectPath, open = FALSE)
-         .rs.api.openProject(projectPath)
-      }, wait = FALSE)
+         .rs.rpc.package_skeleton(
+            packageName = !!projectName,
+            packageDirectory = !!projectPath,
+            sourceFiles = character(),
+            usingRcpp = FALSE
+         )
+      })
+   }
+   else if (type == "default")
+   {
+      self$console.executeExpr({
+         .rs.api.initializeProject(!!projectPath)
+      })
    }
    else
    {
       stop("unimplemented or unknown project type '", type, "'")
    }
    
-   # Wait until the new project is open.
-   self$project.waitFor("rstudio")
-})
-
-#' Wait for the project to open
-#' 
-#' Waits until the specified project is opened.
-#' 
-#' @param projectName The name of the project to wait for.
-#' @return TRUE if the project is opened, FALSE otherwise.
-#'
-.rs.automation.addRemoteFunction("project.waitFor", function(projectName)
-{
+   # Now open the newly-initialized project
+   self$console.executeExpr({
+      .rs.api.openProject(!!projectPath)
+   })
+   
+   # Wait until the project has been successfully opened
    .rs.waitUntil("The new project is opened", function()
    {
-      grepl(projectName, self$project.getLabel())
+      grepl(projectName, self$project.getLabel(), fixed = TRUE)
    }, swallowErrors = TRUE)
 })
 

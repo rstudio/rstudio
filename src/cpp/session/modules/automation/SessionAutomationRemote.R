@@ -158,17 +158,21 @@
                                                               horizontalOffset = 0L,
                                                               button = "left")
 {
-   
+   # Resolve jsObject from provided parameters.
    objectId <- .rs.nullCoalesce(objectId, {
       
       # Query for the requested node.
       nodeId <- .rs.nullCoalesce(nodeId, {
-         self$dom.querySelector(selector)
+         .rs.waitUntil(selector, function()
+         {
+            self$dom.querySelector(selector)
+         }, swallowErrors = TRUE)
       })
       
       # Get a JavaScript object ID associated with this node.
       response <- self$client$DOM.resolveNode(nodeId)
       response$object$objectId
+      
    })
    
    

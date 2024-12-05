@@ -63,28 +63,7 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("package functions can be debugged after build and reload", {
    
    # Create an R package project.
-   projectPath <- tempfile("rstudio.automation.", tmpdir = dirname(tempdir()))
-   
-   remote$console.executeExpr({
-      .rs.rpc.package_skeleton(
-         packageName = "rstudio.automation",
-         packageDirectory = !!projectPath,
-         sourceFiles = character(),
-         usingRcpp = FALSE
-      )
-   })
-   
-   # Open that project.
-   remote$console.executeExpr(
-      .rs.api.openProject(!!projectPath),
-      wait = FALSE
-   )
-   
-   # Wait a bit for the new session to load.
-   Sys.sleep(3)
-
-   # Wait until the new project is ready.
-   remote$project.waitFor("rstudio.automation")
+   remote$project.create(projectName = "rstudio.automation", type = "package")
    
    # Close any open documents
    remote$console.executeExpr(

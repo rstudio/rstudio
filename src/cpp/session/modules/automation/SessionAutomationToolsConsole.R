@@ -20,7 +20,21 @@
 
 .rs.automation.addRemoteFunction("console.executeExpr", function(expr, wait = TRUE)
 {
-   code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
+   # Use 'enexpr()' to replace quoted variables.
+   expr <- rlang::enexpr(expr)
+   
+   # If this is a call to `{` with a single element body, simplify
+   # and just send that piece of the expression.
+   canSimplify <-
+      is.call(expr) &&
+      length(expr) == 2L &&
+      identical(expr[[1L]], as.symbol("{"))
+   
+   if (canSimplify)
+      expr <- expr[[2L]]
+   
+   # Convert from R expression to code
+   code <- paste(deparse(expr), collapse = "\n")
    self$console.execute(code, wait)
 })
 

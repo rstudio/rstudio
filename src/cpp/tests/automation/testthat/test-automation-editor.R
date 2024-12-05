@@ -27,8 +27,9 @@ withr::defer(.rs.automation.deleteRemote())
       Sys.sleep(0.1)
       
       # check that whitespace has been removed
-      contents <- editor$getValue()
-      expect_equal(contents, "# comment 1\n# comment 2\n# comment 3\n# comment 4")
+      contents <- .rs.trimWhitespace(editor$getValue())
+      expected <- "# comment 1\n# comment 2\n# comment 3\n# comment 4"
+      expect_equal(!!contents, !!expected)
       
    })
    

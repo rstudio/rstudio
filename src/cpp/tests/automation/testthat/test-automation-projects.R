@@ -20,13 +20,19 @@ withr::defer(.rs.automation.deleteRemote())
    remote$dom.clickElement("#rstudio_file_accept_choose")
    remote$dom.setChecked("#rstudio_new_project_git_repo input")
    remote$dom.clickElement("#rstudio_label_create_project_wizard_confirm")
-   remote$project.waitFor(projectName)
+   
+   # Wait until the project has been successfully opened
+   .rs.waitUntil("The new project is opened", function()
+   {
+      grepl(projectName, self$project.getLabel(), fixed = TRUE)
+   }, swallowErrors = TRUE)
 
    expect_equal(projectName, remote$project.getLabel())
    expect_true(remote$dom.elementExists("#rstudio_workbench_tab_git"))
 
    remote$project.close()
-   remote$files.remove(projectPath)
+   remote$files.remove(projectPath, recursive = TRUE)
+   
 })
 
 .rs.test("can create an empty project without git enabled using wizard UI", {
@@ -45,7 +51,12 @@ withr::defer(.rs.automation.deleteRemote())
    remote$dom.clickElement("#rstudio_file_accept_choose")
    remote$ensureUnchecked("#rstudio_new_project_git_repo input")
    remote$dom.clickElement("#rstudio_label_create_project_wizard_confirm")
-   remote$project.waitFor(projectName)
+   
+   # Wait until the project has been successfully opened
+   .rs.waitUntil("The new project is opened", function()
+   {
+      grepl(projectName, self$project.getLabel(), fixed = TRUE)
+   }, swallowErrors = TRUE)
 
    expect_equal(projectName, remote$project.getLabel())
    expect_false(remote$dom.elementExists("#rstudio_workbench_tab_git"))

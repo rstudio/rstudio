@@ -283,8 +283,9 @@
    writeLines(contents, con = documentPath)
    
    # Open that document in the attached editor.
-   code <- sprintf(".rs.api.editor.openWithContents(\"%s\")", documentPath)
-   self$console.execute(code)
+   self$console.executeExpr({
+      .rs.api.documentOpen(!!documentPath)
+   })
    
    self$dom.waitForElement("#rstudio_source_text_editor")
 })
