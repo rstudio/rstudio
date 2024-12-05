@@ -178,7 +178,7 @@ function prepare() {
       }
 
       xhr.open("GET", url, true);
-      xhr.onreadystatechange = async function() {
+      xhr.onreadystatechange = function() {
          try {
             if (xhr.readyState == 4) {
                if (xhr.status != 200) {
@@ -188,14 +188,15 @@ function prepare() {
                   else
                      errorMessage = "Error: " + xhr.statusText;
                   showError(errorMessage);
-               }
-               else {
+               } else {
                   var key = xhr.responseText;
-                  var encrypted = await encrypt(payload, key);
-                  document.getElementById('persist').value = document.getElementById('staySignedIn').checked ? "1" : "0";
-                  document.getElementById('package').value = encrypted;
-                  document.getElementById('clientPath').value = window.location.pathname;
-                  document.realform.submit();
+                  var encrypted = encrypt(payload, key);
+                  encrypted.then(function(encrypted) {
+                     document.getElementById('persist').value = document.getElementById('staySignedIn').checked ? "1" : "0";
+                     document.getElementById('package').value = encrypted;
+                     document.getElementById('clientPath').value = window.location.pathname;
+                     document.realform.submit();
+                  });
                }
             }
          } catch (exception) {
