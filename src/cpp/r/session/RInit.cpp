@@ -247,6 +247,12 @@ Error initialize()
    error = r::sourceManager().sourceTools(apiFilePath);
    if (error)
       return error;
+   
+   // install app commands
+   FilePath appCommandsFilePath = utils::rSourcePath().completePath("AppCommands.R");
+   error = r::sourceManager().sourceTools(appCommandsFilePath);
+   if (error)
+      return error;
 
    // initialize graphics device -- use a stable directory for server mode
    // and temp directory for desktop mode (so that we can support multiple
