@@ -720,7 +720,7 @@
    
    # Clear the console, and show a header that indicates
    # we're about to run automation tests.
-   invisible(.rs.api.executeCommand("console.clear"))
+   invisible(.rs.api.executeCommand("consoleClear"))
    writeLines(c("", "==> Running RStudio automation tests", ""))
    
    # Run tests.
