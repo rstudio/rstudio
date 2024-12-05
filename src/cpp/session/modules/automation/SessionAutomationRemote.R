@@ -45,7 +45,7 @@
    }
    
    # Reset the session before running this test.
-   .rs.automation.remoteInstance$sessionReset()
+   .rs.automation.remoteInstance$session.reset()
    
    # Now, run the test.
    testthat::test_that(desc, code)
@@ -88,7 +88,7 @@
    if (is.null(remote))
       return(remote)
    
-   remote$quit()
+   remote$session.quit()
    .rs.setVar("automation.remoteInstance", NULL)
 })
 
@@ -109,7 +109,18 @@
 })
 
 
-.rs.automation.addRemoteFunction("domGetNodeId", function(selector)
+.rs.automation.addRemoteFunction("dom.elementExists", function(selector)
+{
+   # Query for the requested node.
+   document <- self$client$DOM.getDocument(depth = 0L)
+   response <- self$client$DOM.querySelector(document$root$nodeId, selector)
+   
+   # Check for failure.
+   nodeId <- response$nodeId
+   nodeId != 0L
+})
+
+.rs.automation.addRemoteFunction("dom.querySelector", function(selector)
 {
    # Query for the requested node.
    document <- self$client$DOM.getDocument(depth = 0L)
@@ -124,19 +135,8 @@
    nodeId
 })
 
-.rs.automation.addRemoteFunction("elementExists", function(selector)
-{
-   # Query for the requested node.
-   document <- self$client$DOM.getDocument(depth = 0L)
-   response <- self$client$DOM.querySelector(document$root$nodeId, selector)
-   
-   # Check for failure.
-   nodeId <- response$nodeId
-   !(nodeId == 0L)
-})
 
-
-.rs.automation.addRemoteFunction("domGetNodeIds", function(selector)
+.rs.automation.addRemoteFunction("dom.querySelectorAll", function(selector)
 {
    # Query for all nodes matching the selector.
    document <- self$client$DOM.getDocument(depth = 0L)
@@ -151,16 +151,20 @@
    nodeIds
 })
 
-.rs.automation.addRemoteFunction("domClickElement", function(selector = NULL,
-                                                             objectId = NULL,
-                                                             verticalOffset = 0L,
-                                                             horizontalOffset = 0L,
-                                                             button = "left")
+.rs.automation.addRemoteFunction("dom.clickElement", function(selector = NULL,
+                                                              objectId = NULL,
+                                                              nodeId = NULL,
+                                                              verticalOffset = 0L,
+                                                              horizontalOffset = 0L,
+                                                              button = "left")
 {
+   
    objectId <- .rs.nullCoalesce(objectId, {
       
-      # Query for the requested node.   
-      nodeId <- self$domGetNodeId(selector)
+      # Query for the requested node.
+      nodeId <- .rs.nullCoalesce(nodeId, {
+         self$dom.querySelector(selector)
+      })
       
       # Get a JavaScript object ID associated with this node.
       response <- self$client$DOM.resolveNode(nodeId)
@@ -202,22 +206,7 @@
    )
 })
 
-.rs.automation.addRemoteFunction("domClickElementByNodeId", function(nodeId,
-                                                                     objectId = NULL,
-                                                                     verticalOffset = 0L,
-                                                                     horizontalOffset = 0L,
-                                                                     button = "left")
-{
-   objectId <- .rs.nullCoalesce(objectId, {
-      
-      # Get a JavaScript object ID associated with this node.
-      response <- self$client$DOM.resolveNode(nodeId)
-      response$object$objectId
-   })
-   self$domClickElement(NULL, objectId = objectId)
-})
-
-.rs.automation.addRemoteFunction("editorGetInstance", function()
+.rs.automation.addRemoteFunction("editor.getInstance", function()
 {
    jsCode <- .rs.heredoc('
       var id = $RStudio.last_focused_editor_id;
@@ -230,7 +219,7 @@
 })
 
 
-.rs.automation.addRemoteFunction("jsExec", function(jsExpr)
+.rs.automation.addRemoteFunction("js.eval", function(jsExpr)
 {
    # Implicit return for single-line expressions.
    jsExpr <- strsplit(jsExpr, "\n", fixed = TRUE)[[1L]]
@@ -254,7 +243,7 @@
    .rs.fromJSON(jsResponse$result$value)
 })
 
-.rs.automation.addRemoteFunction("jsCall", function(objectId, jsFunc)
+.rs.automation.addRemoteFunction("js.call", function(objectId, jsFunc)
 {
    # Wrap provided code into a function if necessary.
    if (!grepl("^function\\b", jsFunc))
@@ -275,32 +264,22 @@
    )
 })
 
-.rs.automation.addRemoteFunction("jsObjectViaExpression", function(expression)
-{
-   response <- .rs.waitUntil(expression, function()
-   {
-      self$client$Runtime.evaluate(expression)
-   }, swallowErrors = TRUE)
-   
-   .rs.automation.wrapJsResponse(self, response)
-})
-
-.rs.automation.addRemoteFunction("jsObjectViaSelector", function(selector)
+.rs.automation.addRemoteFunction("js.querySelector", function(selector)
 {
    response <- .rs.waitUntil(selector, function()
    {
-      nodeId <- self$domGetNodeId(selector)
+      nodeId <- self$dom.querySelector(selector)
       self$client$DOM.resolveNode(nodeId)
    }, swallowErrors = TRUE)
    
    .rs.automation.wrapJsResponse(self, response)
 })
 
-.rs.automation.addRemoteFunction("jsObjectsViaSelector", function(selector)
+.rs.automation.addRemoteFunction("js.querySelectorAll", function(selector)
 {
    response <- .rs.waitUntil(selector, function()
    {
-      nodeIds <- self$domGetNodeIds(selector)
+      nodeIds <- self$dom.querySelectorAll(selector)
       resolvedNodes <- lapply(nodeIds, function(nodeId) {
          self$client$DOM.resolveNode(nodeId)
       })
@@ -310,7 +289,7 @@
    .rs.automation.wrapJsListResponse(self, response)
 })
 
-.rs.automation.addRemoteFunction("keyboardExecute", function(...)
+.rs.automation.addRemoteFunction("keyboard.insertText", function(...)
 {
    reShortcut <- "^\\<(.*)\\>$"
    for (input in list(...))
@@ -318,7 +297,7 @@
       if (grepl(reShortcut, input, perl = TRUE))
       {
          shortcut <- sub(reShortcut, "\\1", input, perl = TRUE)
-         self$shortcutExecute(shortcut)
+         self$keyboard.executeShortcut(shortcut)
       }
       else if (nzchar(input))
       {
@@ -327,22 +306,22 @@
    }
 })
 
-.rs.automation.addRemoteFunction("modalClick", function(buttonName)
+.rs.automation.addRemoteFunction("modals.click", function(buttonName)
 {
    .rs.tryCatch({
       buttonSelector <- sprintf("#rstudio_dlg_%s", buttonName)
-      buttonId <- self$domGetNodeId(buttonSelector)
-      self$domClickElement(objectId = buttonId)
+      buttonId <- self$dom.querySelector(buttonSelector)
+      self$dom.clickElement(objectId = buttonId)
       TRUE
    })
 })
 
-.rs.automation.addRemoteFunction("quit", function()
+.rs.automation.addRemoteFunction("session.quit", function()
 {
    # Try to gracefully shut down the browser. We use a timeout
    # so we can close the socket cleanly while the browser window
    # is still alive.
-   self$jsExec('setTimeout(function() { window.close(); }, 1000)')
+   self$js.eval('setTimeout(function() { window.close(); }, 1000)')
    
    # Close the websocket connection.
    self$client$socket$close()
@@ -366,22 +345,22 @@
    invisible(alive)
 })
 
-.rs.automation.addRemoteFunction("sessionReset", function()
+.rs.automation.addRemoteFunction("session.reset", function()
 {
    # Clear any popups that might be visible.
-   self$keyboardExecute("<Escape>")
+   self$keyboard.insertText("<Escape>")
    
    # Clear any text that might be set in the console.
-   self$commandExecute("activateConsole")
-   self$keyboardExecute("<Command + A>", "<Backspace>")
+   self$commands.execute("activateConsole")
+   self$keyboard.insertText("<Command + A>", "<Backspace>")
    
    # Close any open documents.
-   self$consoleExecuteExpr({
+   self$console.executeExpr({
       .rs.api.closeAllSourceBuffersWithoutSaving()
       rm(list = ls())
    }, wait = FALSE)
    
    # Clear the console.
-   self$keyboardExecute("<Ctrl + L>")
+   self$keyboard.insertText("<Ctrl + L>")
 })
 

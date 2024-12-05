@@ -144,7 +144,7 @@
       ')
       
       objectId <- attr(x, "id", exact = TRUE)
-      response <- self$jsCall(objectId, callback)
+      response <- self$js.call(objectId, callback)
       value <- .rs.fromJSON(response$result$value)
       value <- value[sort(names(value))]
       

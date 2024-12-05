@@ -19,24 +19,24 @@ withr::defer(.rs.automation.deleteRemote())
       nms <- .rs.getNames(n)
    ')
    
-   remote$consoleExecute(code)
-   output <- remote$consoleOutput()
+   remote$console.execute(code)
+   output <- remote$console.getOutput()
    expect_false(tail(output, 1) == "[1] \"active\"")
    
-   remote$keyboardExecute("n", "<Tab>", "<Escape>", "<Backspace>")
-   output <- remote$consoleOutput()
+   remote$keyboard.insertText("n", "<Tab>", "<Escape>", "<Backspace>")
+   output <- remote$console.getOutput()
    expect_false(tail(output, 1) == "[1] \"active\"")
    
 })
 
 .rs.test("autocompletion in console produces the expected completion list for new variables", {
    
-   remote$consoleExecute('
+   remote$console.execute('
       foobar <- 42
       foobaz <- 42
    ')
    
-   completions <- remote$completionsRequest("foo")
+   completions <- remote$completions.request("foo")
    expect_equal(completions, c("foobar", "foobaz"))
    
 })
@@ -44,7 +44,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/13196
 .rs.test("autocompletion in console produces the expected completion list in an existing base function", {
    
-   completions <- remote$completionsRequest("cat(")
+   completions <- remote$completions.request("cat(")
    expect_equal(completions, c("... =", "file =", "sep =", "fill =", "labels =", "append ="))
    
 })
@@ -52,7 +52,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/13196
 .rs.test("autocompletion in console produces the expected completion list in an existing non-base function", {
    
-   completions <- remote$completionsRequest("stats::rnorm(")
+   completions <- remote$completions.request("stats::rnorm(")
    expect_equal(completions, c("n =", "mean =", "sd ="))
    
 })
@@ -61,10 +61,10 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("autocompletion in console produces the expected completion list when using a new function", {
    
    # Define a function accepting some parameters.
-   remote$keyboardExecute("a <- function(x, y, z) { print(x + y) }", "<Enter>")
+   remote$keyboard.insertText("a <- function(x, y, z) { print(x + y) }", "<Enter>")
    
    # Request completions for that function.
-   completions <- remote$completionsRequest("a(")
+   completions <- remote$completions.request("a(")
    expect_equal(completions, c("x =", "y =", "z ="))
    
 })
@@ -85,9 +85,9 @@ withr::defer(.rs.automation.deleteRemote())
       )
    ')
    
-   remote$consoleExecute(code)
+   remote$console.execute(code)
    
-   completions <- remote$completionsRequest("test_ls$")
+   completions <- remote$completions.request("test_ls$")
    expect_equal(completions, c("a", "b"))
    
 })
@@ -100,9 +100,9 @@ withr::defer(.rs.automation.deleteRemote())
       left_table <- tibble(x = 1)
    ')
 
-   remote$consoleExecute(code)
+   remote$console.execute(code)
    Sys.sleep(1)
-   parts <- remote$completionsRequest("lef")
+   parts <- remote$completions.request("lef")
    expect_identical(parts, c("left_table", "left_join"))
    
 })
@@ -115,10 +115,10 @@ withr::defer(.rs.automation.deleteRemote())
       mtcars |> mutate(x = mean())
    ')
    
-   remote$documentExecute(".R", code, function(editor)
+   remote$editor.executeWithContents(".R", code, function(editor)
    {
       editor$gotoLine(2L, 26L)
-      completions <- remote$completionsRequest("")
+      completions <- remote$completions.request("")
       expect_equal(completions[1:2], c("x =", "... ="))
    })
 
@@ -127,7 +127,7 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/15115
 .rs.test(".DollarNames completions still produce types", {
    
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
    
       className <- basename(tempfile(pattern = "class-"))
       registerS3method(".DollarNames", className, function(x, pattern) names(x))
@@ -139,16 +139,16 @@ withr::defer(.rs.automation.deleteRemote())
       
    })
    
-   completions <- remote$completionsRequest(".$")
+   completions <- remote$completions.request(".$")
    expect_equal(completions, c("apple", "banana"))
    
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       className <- basename(tempfile(pattern = "class-"))
       registerS3method(".DollarNames", className, function(x, pattern) c("example1()", "example2()"))
       . <- structure(list(), class = className)
    })
    
-   completions <- remote$completionsRequest(".$")
+   completions <- remote$completions.request(".$")
    expect_equal(completions, c("example1", "example2"))
    
 })
@@ -165,13 +165,13 @@ withr::defer(.rs.automation.deleteRemote())
       This is some more prose.
    ')
    
-   remote$documentOpen(ext = ".Rmd", contents = contents)
+   remote$editor.openWithContents(ext = ".Rmd", contents = contents)
    
-   editor <- remote$editorGetInstance()
+   editor <- remote$editor.getInstance()
    editor$gotoLine(5)
    editor$selectPageDown()
    
-   remote$keyboardExecute("<Tab>")
+   remote$keyboard.insertText("<Tab>")
    expect_equal(editor$session$getLine(4), "  This is some prose.")
    expect_equal(editor$session$getLine(5), "  This is some more prose.")
 })
@@ -183,23 +183,23 @@ withr::defer(.rs.automation.deleteRemote())
       mtcars |> write()
    ')
    
-   remote$documentOpen(ext = ".R", contents = contents)
+   remote$editor.openWithContents(ext = ".R", contents = contents)
    
-   editor <- remote$editorGetInstance()
+   editor <- remote$editor.getInstance()
    editor$gotoLine(1, 16)
-   completions <- remote$completionsRequest()
+   completions <- remote$completions.request()
    expect_equal(completions[1:4], c("file =", "ncolumns =", "append =", "sep ="))
    
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       .rs.uiPrefs$codeCompletionIncludeAlreadyUsed$set(TRUE)
    })
    
-   remote$commandExecute("activateSource")
+   remote$commands.execute("activateSource")
    editor$gotoLine(1, 16)
-   completions <- remote$completionsRequest()
+   completions <- remote$completions.request()
    expect_equal(completions[1:5], c("x =", "file =", "ncolumns =", "append =", "sep ="))
    
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       .rs.uiPrefs$codeCompletionIncludeAlreadyUsed$clear()
    })
    
@@ -213,11 +213,11 @@ withr::defer(.rs.automation.deleteRemote())
       mtcars |> rename(`zzz A` = 1, `zzz B` = 2) |> select()
    ')
    
-   remote$documentOpen(ext = ".R", contents = contents)
+   remote$editor.openWithContents(ext = ".R", contents = contents)
    
-   editor <- remote$editorGetInstance()
+   editor <- remote$editor.getInstance()
    editor$gotoLine(2, 53)
-   completions <- remote$completionsRequest("zzz")
+   completions <- remote$completions.request("zzz")
    expect_equal(completions, c("zzz A", "zzz B"))
    
 })
@@ -225,15 +225,15 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/13290
 .rs.test("column names are quoted appropriately", {
    
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       data <- list(apple = "apple", "2024" = "2024")
    })
    
-   remote$keyboardExecute("data$", "<Tab>")
+   remote$keyboard.insertText("data$", "<Tab>")
    Sys.sleep(1)
-   remote$keyboardExecute("<Down>", "<Enter>", "<Enter>")
+   remote$keyboard.insertText("<Down>", "<Enter>", "<Enter>")
    
-   output <- remote$consoleOutput()
+   output <- remote$console.getOutput()
    expect_equal(tail(output, n = 1L), "[1] \"2024\"")
    
 })

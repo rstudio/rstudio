@@ -19,17 +19,17 @@ withr::defer(.rs.automation.deleteRemote())
       ```
    ')
    
-   remote$consoleExecuteExpr({ options(warn = 0) })
-   remote$consoleExecuteExpr({ getOption("warn") })
-   output <- remote$consoleOutput()
+   remote$console.executeExpr({ options(warn = 0) })
+   remote$console.executeExpr({ getOption("warn") })
+   output <- remote$console.getOutput()
    expect_equal(tail(output, n = 1L), "[1] 0")
    
-   id <- remote$documentOpen(".Rmd", contents)
-   editor <- remote$editorGetInstance()
+   id <- remote$editor.openWithContents(".Rmd", contents)
+   editor <- remote$editor.getInstance()
    editor$gotoLine(6)
-   remote$keyboardExecute("<Ctrl + Shift + Enter>")
-   remote$consoleExecuteExpr({ getOption("warn") })
-   output <- remote$consoleOutput()
+   remote$keyboard.insertText("<Ctrl + Shift + Enter>")
+   remote$console.executeExpr({ getOption("warn") })
+   output <- remote$console.getOutput()
    expect_equal(tail(output, n = 1L), "[1] 2")
    
    
@@ -65,11 +65,11 @@ withr::defer(.rs.automation.deleteRemote())
       The end.
    ')
    
-   id <- remote$documentOpen(".Rmd", contents)
+   id <- remote$editor.openWithContents(".Rmd", contents)
    
-   jsChunkOptionWidgets <- remote$jsObjectsViaSelector(".rstudio_modify_chunk")
-   jsChunkPreviewWidgets <- remote$jsObjectsViaSelector(".rstudio_preview_chunk")
-   jsChunkRunWidgets <- remote$jsObjectsViaSelector(".rstudio_run_chunk")
+   jsChunkOptionWidgets <- remote$js.querySelectorAll(".rstudio_modify_chunk")
+   jsChunkPreviewWidgets <- remote$js.querySelectorAll(".rstudio_preview_chunk")
+   jsChunkRunWidgets <- remote$js.querySelectorAll(".rstudio_run_chunk")
    
    expect_equal(length(jsChunkOptionWidgets), 3)
    expect_equal(length(jsChunkPreviewWidgets), 3)
@@ -103,13 +103,13 @@ withr::defer(.rs.automation.deleteRemote())
       This is an R Markdown document.
    ')
    
-   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
-   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   remote$console.execute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
+   remote$console.execute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
    
-   id <- remote$documentOpen(".Rmd", contents)
+   id <- remote$editor.openWithContents(".Rmd", contents)
    
-   sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
-   visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+   sourceModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_off")[[1]]
+   visualModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_on")[[1]]
    
    # do this twice to also check that the "switching to visual mode" dialog appears
    # the second time (i.e. that it doesn't set the state to prevent its display when
@@ -118,14 +118,14 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
-      remote$domClickElement(".rstudio_visual_md_on")
+      remote$dom.clickElement(".rstudio_visual_md_on")
       .rs.waitUntil("The switching to visual mode first time dialog appears", function()
       {
-         cancelBtn <- remote$jsObjectViaSelector("#rstudio_dlg_cancel")
+         cancelBtn <- remote$js.querySelector("#rstudio_dlg_cancel")
          grepl("Cancel", cancelBtn$innerText)
       }, swallowErrors = TRUE)
       
-      remote$domClickElement("#rstudio_dlg_cancel")
+      remote$dom.clickElement("#rstudio_dlg_cancel")
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
    }
@@ -145,13 +145,13 @@ withr::defer(.rs.automation.deleteRemote())
       This is an R Markdown document.
    ')
    
-   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
-   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   remote$console.execute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
+   remote$console.execute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
    
-   id <- remote$documentOpen(".Rmd", contents)
+   id <- remote$editor.openWithContents(".Rmd", contents)
    
-   sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
-   visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+   sourceModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_off")[[1]]
+   visualModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_on")[[1]]
    
    # do this twice to check that the "switching to visual mode" dialog doesn't appear
    # the second time
@@ -160,21 +160,21 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
-      remote$domClickElement(".rstudio_visual_md_on")
+      remote$dom.clickElement(".rstudio_visual_md_on")
       
       if (i == 1)
       {
          .rs.waitUntil("The switching to visual mode first time dialog appears", function()
          {
-            okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
+            okBtn <- remote$js.querySelector("#rstudio_dlg_ok")
             grepl("Use Visual Mode", okBtn$innerText)
          }, swallowErrors = TRUE)
-         remote$domClickElement("#rstudio_dlg_ok")
+         remote$dom.clickElement("#rstudio_dlg_ok")
       }
       
       .rs.waitUntil("Visual Editor appears", function()
       {
-         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor <- remote$js.querySelector(".ProseMirror")
          visualEditor$contentEditable
       }, swallowErrors = TRUE)
       
@@ -182,7 +182,7 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(visualModeToggle$ariaPressed, "true")
       
       # back to source mode
-      remote$domClickElement(".rstudio_visual_md_off")
+      remote$dom.clickElement(".rstudio_visual_md_off")
    }
    
 })
@@ -200,13 +200,13 @@ withr::defer(.rs.automation.deleteRemote())
       This is an R Markdown document.
    ')
    
-   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
-   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   remote$console.execute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
+   remote$console.execute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
    
-   id <- remote$documentOpen(".Rmd", contents)
+   id <- remote$editor.openWithContents(".Rmd", contents)
    
-   sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
-   visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+   sourceModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_off")[[1]]
+   visualModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_on")[[1]]
    
    # do this twice to check that the "switching to visual mode" dialog appears second time
    for (i in 1:2)
@@ -214,21 +214,21 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
-      remote$domClickElement(".rstudio_visual_md_on")
+      remote$dom.clickElement(".rstudio_visual_md_on")
       
       .rs.waitUntil("The switching to visual mode first time dialog appears", function()
       {
-         okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
+         okBtn <- remote$js.querySelector("#rstudio_dlg_ok")
          grepl("Use Visual Mode", okBtn$innerText)
       }, swallowErrors = TRUE)
       
       # uncheck "Don't show again"
-      remote$domClickElement(".gwt-DialogBox-ModalDialog input[type=\"checkbox\"]")
-      remote$domClickElement("#rstudio_dlg_ok")
+      remote$dom.clickElement(".gwt-DialogBox-ModalDialog input[type=\"checkbox\"]")
+      remote$dom.clickElement("#rstudio_dlg_ok")
       
       .rs.waitUntil("Visual Editor appears", function()
       {
-         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor <- remote$js.querySelector(".ProseMirror")
          visualEditor$contentEditable
       }, swallowErrors = TRUE)
       
@@ -236,7 +236,7 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(visualModeToggle$ariaPressed, "true")
       
       # back to source mode
-      remote$domClickElement(".rstudio_visual_md_off")
+      remote$dom.clickElement(".rstudio_visual_md_off")
    }
 
 })
@@ -260,17 +260,17 @@ withr::defer(.rs.automation.deleteRemote())
       The end.
    ')
    
-   id <- remote$documentOpen(".Rmd", contents)
-   editor <- remote$editorGetInstance()
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   id <- remote$editor.openWithContents(".Rmd", contents)
+   editor <- remote$editor.getInstance()
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    
    checkChunkOption <- function(line, expected, widget)
    {
       original <- editor$session$getLine(line)
       expect_equal(original, expected)
-      remote$domClickElementByNodeId(widget)
+      remote$dom.clickElement(nodeId = widget)
       Sys.sleep(1)
-      remote$keyboardExecute("<Escape>")
+      remote$keyboard.insertText("<Escape>")
       updated <- editor$session$getLine(line)
       expect_equal(original, updated)
    }
@@ -280,7 +280,7 @@ withr::defer(.rs.automation.deleteRemote())
       "```{r}",
       chunkOptionWidgetIds[[2]])
 
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
 
    checkChunkOption(
       4,
@@ -311,23 +311,23 @@ withr::defer(.rs.automation.deleteRemote())
       The end.
    ')
    
-   id <- remote$documentOpen(".Rmd", contents)
-   editor <- remote$editorGetInstance()
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   id <- remote$editor.openWithContents(".Rmd", contents)
+   editor <- remote$editor.getInstance()
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    
    checkChunkOption <- function(line, expectedAfter, widget)
    {
       original <- editor$session$getLine(line)
-      remote$domClickElementByNodeId(widget)
+      remote$dom.clickElement(nodeId = widget)
       Sys.sleep(1)
-      remote$domClickElement("#rstudio_chunk_opt_apply")
+      remote$dom.clickElement("#rstudio_chunk_opt_apply")
       updated <- editor$session$getLine(line)
       expect_equal(expectedAfter, updated)
    }
 
    checkChunkOption(8, "```{r}", chunkOptionWidgetIds[[2]])
 
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
 
    checkChunkOption(
       4,
@@ -336,7 +336,7 @@ withr::defer(.rs.automation.deleteRemote())
    )
 
    # https://github.com/rstudio/rstudio/issues/6829
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    checkChunkOption(12, "```{r fig.cap=\"a caption\"}", chunkOptionWidgetIds[[3]])
    
 })
@@ -361,30 +361,31 @@ withr::defer(.rs.automation.deleteRemote())
       The end.
    ')
    
-   id <- remote$documentOpen(".Rmd", contents)
-   editor <- remote$editorGetInstance()
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   id <- remote$editor.openWithContents(".Rmd", contents)
+   editor <- remote$editor.getInstance()
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    
    checkChunkOption <- function(line, nodeId)
    {
       original <- editor$session$getLine(line)
-      remote$domClickElementByNodeId(nodeId)
+      remote$dom.clickElement(nodeId = nodeId)
       Sys.sleep(1)
-      remote$domClickElement("#rstudio_chunk_opt_warnings")
-      remote$domClickElement("#rstudio_chunk_opt_messages")
-      remote$domClickElement("#rstudio_chunk_opt_warnings")
-      remote$domClickElement("#rstudio_chunk_opt_messages")
-      remote$jsObjectViaSelector("#rstudio_chunk_opt_name")$focus()
-      remote$keyboardExecute("abcdefg hijklmnop 12345")
-      remote$domClickElement("#rstudio_chunk_opt_tables")
-      remote$domClickElement("#rstudio_chunk_opt_figuresize")
-      remote$domClickElement("#rstudio_chunk_opt_revert")
+      
+      remote$dom.clickElement("#rstudio_chunk_opt_warnings")
+      remote$dom.clickElement("#rstudio_chunk_opt_messages")
+      remote$dom.clickElement("#rstudio_chunk_opt_warnings")
+      remote$dom.clickElement("#rstudio_chunk_opt_messages")
+      remote$js.querySelector("#rstudio_chunk_opt_name")$focus()
+      remote$keyboard.insertText("abcdefg hijklmnop 12345")
+      remote$dom.clickElement("#rstudio_chunk_opt_tables")
+      remote$dom.clickElement("#rstudio_chunk_opt_figuresize")
+      remote$dom.clickElement("#rstudio_chunk_opt_revert")
       updated <- editor$session$getLine(line)
       expect_equal(original, updated)
    }
    
    checkChunkOption(8, chunkOptionWidgetIds[[2]])
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    checkChunkOption(4, chunkOptionWidgetIds[[1]])
 
 })
@@ -405,14 +406,14 @@ withr::defer(.rs.automation.deleteRemote())
       The end.
    ')
    
-   id <- remote$documentOpen(".Rmd", contents)
-   editor <- remote$editorGetInstance()
+   id <- remote$editor.openWithContents(".Rmd", contents)
+   editor <- remote$editor.getInstance()
    
-   remote$domClickElement(".rstudio_modify_chunk")
+   remote$dom.clickElement(".rstudio_modify_chunk")
    Sys.sleep(1)
-   remote$domClickElement("#rstudio_chunk_opt_warnings")
-   remote$domClickElement("#rstudio_chunk_opt_messages")
-   remote$keyboardExecute("<Escape>")
+   remote$dom.clickElement("#rstudio_chunk_opt_warnings")
+   remote$dom.clickElement("#rstudio_chunk_opt_messages")
+   remote$keyboard.insertText("<Escape>")
    expect_equal('```{r fig.cap="a caption", message=TRUE, warning=TRUE}', editor$session$getLine(4))
 
 })
@@ -430,28 +431,28 @@ withr::defer(.rs.automation.deleteRemote())
 
       This is an R Markdown document.
    ')
-   id <- remote$documentOpen(".Rmd", contents)
-   editor <- remote$editorGetInstance()
+   id <- remote$editor.openWithContents(".Rmd", contents)
+   editor <- remote$editor.getInstance()
    
-   remote$domClickElement(".rstudio_modify_chunk")
+   remote$dom.clickElement(".rstudio_modify_chunk")
    Sys.sleep(1)
-   remote$domClickElement("#rstudio_chunk_opt_warnings")
-   remote$domClickElement("#rstudio_chunk_opt_messages")
-   remote$keyboardExecute("<Escape>")
+   remote$dom.clickElement("#rstudio_chunk_opt_warnings")
+   remote$dom.clickElement("#rstudio_chunk_opt_messages")
+   remote$keyboard.insertText("<Escape>")
    expect_equal('```{r setup, include=FALSE}', editor$session$getLine(4))
    expect_equal('knitr::opts_chunk$set(warning = TRUE, message = TRUE)', editor$session$getLine(5))
-   remote$domClickElement(".rstudio_modify_chunk")
+   remote$dom.clickElement(".rstudio_modify_chunk")
    Sys.sleep(1)
-   remote$domClickElement("#rstudio_chunk_opt_warnings")
-   remote$domClickElement("#rstudio_chunk_opt_messages")
-   remote$keyboardExecute("<Escape>")
+   remote$dom.clickElement("#rstudio_chunk_opt_warnings")
+   remote$dom.clickElement("#rstudio_chunk_opt_messages")
+   remote$keyboard.insertText("<Escape>")
    expect_equal('```{r setup, include=FALSE}', editor$session$getLine(4))
    expect_equal('knitr::opts_chunk$set(warning = FALSE, message = FALSE)', editor$session$getLine(5))
-   remote$domClickElement(".rstudio_modify_chunk")
+   remote$dom.clickElement(".rstudio_modify_chunk")
    Sys.sleep(1)
-   remote$domClickElement("#rstudio_chunk_opt_warnings")
-   remote$domClickElement("#rstudio_chunk_opt_messages")
-   remote$keyboardExecute("<Escape>")
+   remote$dom.clickElement("#rstudio_chunk_opt_warnings")
+   remote$dom.clickElement("#rstudio_chunk_opt_messages")
+   remote$keyboard.insertText("<Escape>")
    expect_equal('```{r setup, include=FALSE}', editor$session$getLine(4))
    expect_equal('```', editor$session$getLine(5))
 
@@ -471,14 +472,14 @@ withr::defer(.rs.automation.deleteRemote())
 
       This is an R Markdown document.
    ')
-   id <- remote$documentOpen(".Rmd", contents)
-   editor <- remote$editorGetInstance()
+   id <- remote$editor.openWithContents(".Rmd", contents)
+   editor <- remote$editor.getInstance()
    
-   remote$domClickElement(".rstudio_modify_chunk")
+   remote$dom.clickElement(".rstudio_modify_chunk")
    Sys.sleep(1)
-   remote$domClickElement("#rstudio_chunk_opt_warnings")
-   remote$domClickElement("#rstudio_chunk_opt_messages")
-   remote$keyboardExecute("<Escape>")
+   remote$dom.clickElement("#rstudio_chunk_opt_warnings")
+   remote$dom.clickElement("#rstudio_chunk_opt_messages")
+   remote$keyboard.insertText("<Escape>")
    expect_equal('```{r setup, include=FALSE}', editor$session$getLine(4))
    expect_equal('knitr::opts_chunk$set(', editor$session$getLine(5))
    expect_equal('\teval = FALSE,', editor$session$getLine(6))

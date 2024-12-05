@@ -13,18 +13,18 @@
 #
 #
 
-.rs.automation.addRemoteFunction("consoleClear", function()
+.rs.automation.addRemoteFunction("console.clear", function()
 {
-   self$keyboardExecute("<Ctrl + 2>", "<Escape>", "<Ctrl + A>", "<Backspace>", "<Ctrl + L>")
+   self$keyboard.insertText("<Ctrl + 2>", "<Escape>", "<Ctrl + A>", "<Backspace>", "<Ctrl + L>")
 })
 
-.rs.automation.addRemoteFunction("consoleExecuteExpr", function(expr, wait = TRUE)
+.rs.automation.addRemoteFunction("console.executeExpr", function(expr, wait = TRUE)
 {
    code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
-   self$consoleExecute(code, wait)
+   self$console.execute(code, wait)
 })
 
-.rs.automation.addRemoteFunction("consoleExecute", function(code, wait = TRUE)
+.rs.automation.addRemoteFunction("console.execute", function(code, wait = TRUE)
 {
    # Make sure the Console pane is focused.
    document <- self$client$DOM.getDocument()
@@ -44,7 +44,7 @@
    if (wait)
    {
       Sys.sleep(0.1)
-      editorEl <- self$jsObjectViaSelector("#rstudio_console_input")
+      editorEl <- self$js.querySelector("#rstudio_console_input")
       .rs.waitUntil("console is no longer busy", function()
       {
          !grepl("rstudio-console-busy", editorEl$className)
@@ -55,8 +55,8 @@
    
 })
 
-.rs.automation.addRemoteFunction("consoleOutput", function()
+.rs.automation.addRemoteFunction("console.getOutput", function()
 {
-   consoleOutput <- self$jsObjectViaSelector("#rstudio_console_output")
-   strsplit(consoleOutput$innerText, split = "\n", fixed = TRUE)[[1L]]
+   output <- self$js.querySelector("#rstudio_console_output")
+   strsplit(output$innerText, split = "\n", fixed = TRUE)[[1L]]
 })

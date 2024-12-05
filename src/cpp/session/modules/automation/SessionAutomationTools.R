@@ -21,14 +21,14 @@
 #' 
 #' @param command The command to execute
 #' @return None
-.rs.automation.addRemoteFunction("commandExecute", function(command)
+.rs.automation.addRemoteFunction("commands.execute", function(command)
 {
    jsCode <- deparse(substitute(
       window.rstudioCallbacks.commandExecute(command),
       list(command = command)
    ))
    
-   self$jsExec(jsCode)
+   self$js.eval(jsCode)
 })
 
 #' Is an element marked with aria-hidden="true"
@@ -45,30 +45,41 @@
    ifelse(inherits(isAriaHidden, "error"), FALSE, as.logical(isAriaHidden))
 })
 
-#' Create a temporary folder
+#' Create a directory
 #' 
-#' Creates a temporary folder with the prefix "rstudio.automation" using the
-#' RStudio console.
+#' Creates a new directory. Roughly equivalent to calling `mkdir -p`.
+#' When `path` is `NULL`, a temporary directory is created and used.
 #' 
 #' @return The path to the created folder.
 #'
-.rs.automation.addRemoteFunction("createTempFolder", function()
+.rs.automation.addRemoteFunction("files.createDirectory", function(path = NULL)
 {
-   path <- tempfile("rstudio.automation.", tmpdir = dirname(tempdir()))
-   self$consoleExecute(sprintf("dir.create('%s', recursive = TRUE, showWarnings = FALSE)", path))
+   path <- .rs.nullCoalesce(
+      path,
+      tempfile("rstudio.automation.", tmpdir = dirname(tempdir()))
+   )
+   
+   self$console.executeExpr({
+      dir.create(!!path, recursive = TRUE, showWarnings = FALSE)
+   })
+   
    path
+   
 })
 
-#' Delete a folder
+#' Remove a file or folder
 #' 
-#' Recursively deletes the specified folder using the RStudio console.
+#' Remove a file or folder. Use `recursive = TRUE` to delete directories
+#' which might not already be empty.
 #' 
-#' @param folder Folder to delete
+#' @param path The path to a file to be removed.
 #' @return None
 #'
-.rs.automation.addRemoteFunction("deleteFolder", function(folder)
+.rs.automation.addRemoteFunction("files.remove", function(path, recursive = TRUE)
 {
-   self$consoleExecute(sprintf("unlink('%s', recursive = TRUE)", folder))
+   self$console.executeExpr({
+      unlink(!!path, recursive = !!recursive)
+   })
 })
 
 #' Get checked state of an element
@@ -78,12 +89,12 @@
 #' @param nodeId The nodeId of the element to check
 #' @return TRUE if element is checked, FALSE if not checked
 #'
-.rs.automation.addRemoteFunction("getCheckboxStateByNodeId", function(nodeId)
+.rs.automation.addRemoteFunction("dom.isChecked", function(nodeId)
 {
    response <- self$client$DOM.getAttributes(nodeId)
    attributes <- response$attributes
    checkedIndex <- which(attributes == "checked")
-   isChecked <- length(checkedIndex) > 0
+   length(checkedIndex) > 0
 })
 
 #' Set a checkbox to "checked" state by clicking it
@@ -93,42 +104,11 @@
 #' @param selector The css selector of the checkbox element
 #' @return None
 #' 
-.rs.automation.addRemoteFunction("ensureChecked", function(selector)
+.rs.automation.addRemoteFunction("dom.setChecked", function(selector, checked = TRUE)
 {
-   nodeId <- self$waitForElement(selector)
-   if (!self$getCheckboxStateByNodeId(nodeId))
-   {
-      self$domClickElementByNodeId(nodeId)
-   }
-})
-
-#' Set a checkbox to "unchecked" state by clicking it
-#' 
-#' Sets a checkbox to the unchecked state no matter which state it is currently in.
-#' 
-#' @param selector The css selector of the checkbox element
-#' @return None
-#' 
-.rs.automation.addRemoteFunction("ensureUnchecked", function(selector)
-{
-   nodeId <- self$waitForElement(selector)
-   if (self$getCheckboxStateByNodeId(nodeId))
-   {
-      self$domClickElementByNodeId(nodeId)
-   }
-})
-
-#' Click an element
-#' 
-#' Clicks an element once it exists and is visible
-#' 
-#' @param selector The css selector of the element to click
-#' @return None
-#' 
-.rs.automation.addRemoteFunction("clickElement", function(selector)
-{
-   self$waitForVisibleElement(selector)
-   self$domClickElement(selector)
+   nodeId <- self$dom.waitForElement(selector)
+   if (checked != self$dom.isChecked(nodeId))
+      self$dom.clickElement(nodeId = nodeId)
 })
 
 #' Focus an element and enter text
@@ -139,11 +119,11 @@
 #' @param ... The text to enter
 #' @return None
 #' 
-.rs.automation.addRemoteFunction("enterText", function(selector, ...)
+.rs.automation.addRemoteFunction("dom.insertText", function(selector, ...)
 {
-   self$waitForElement(selector)
-   self$jsObjectViaSelector(selector)$focus()
-   self$keyboardExecute(...)
+   self$dom.waitForElement(selector)
+   self$js.querySelector(selector)$focus()
+   self$keyboard.insertText(...)
 })
 
 #' Wait for an element to exist in the DOM
@@ -152,10 +132,12 @@
 #' 
 #' @param selector The css selector for the element
 #' @param predicate The optional predicate function to apply
+#' @param waitUntilVisible Boolean; should we also wait until the requested element is visible?
 #' @return The nodeId of the element
 #' 
-.rs.automation.addRemoteFunction("waitForElement", function(selector,
-                                                            predicate = NULL)
+.rs.automation.addRemoteFunction("dom.waitForElement", function(selector,
+                                                                predicate = NULL,
+                                                                waitUntilVisible = TRUE)
 {
    # Query for the requested node.
    document <- self$client$DOM.getDocument(depth = 0L)
@@ -178,49 +160,30 @@
       })
    }
    
-   # Return the resolved node id.
-   nodeId
-})
-
-#' Wait for an element to be visible
-#' 
-#' Wait for an element to be visible. Visibility is determined via the box model.
-#' 
-#' @param selector The css selector for the element
-#' @return The nodeId of the element
-#' 
-.rs.automation.addRemoteFunction("waitForVisibleElement", function(selector)
-{
-   nodeId <- self$waitForElement(selector)
-
-   # Wait until it is visible
-   .rs.waitUntil(sprintf("Waiting for nodeId %d to be visible", nodeId), function()
+   # Wait until the elemnt is visible if requested.
+   if (waitUntilVisible)
    {
-      boxModel <- self$client$DOM.getBoxModel(nodeId = nodeId)
-      !is.null(boxModel)
-   })
+      message <- sprintf("Waiting for node %d to be visible", nodeId)
+      .rs.waitUntil(message, function()
+      {
+         boxModel <- self$client$DOM.getBoxModel(nodeId = nodeId)
+         !is.null(boxModel)
+      })
+   }
    
    # Return the resolved node id.
    nodeId
 })
 
-#' Skip test if R package not installed
+#' Check if a package is installed
 #' 
-#' Skip the current test if the indicated R package is not installed. Uses the RStudio
-#' console.
-#' 
-#' @param package The name of the required R package
-#' @return None
-#' 
-.rs.automation.addRemoteFunction("skipIfNotInstalled", function(package)
+#' @param package The name of an \R package.
+#' @returns `TRUE` if the package is installed; `FALSE` otherwise.
+.rs.automation.addRemoteFunction("package.isInstalled", function(package)
 {
-   self$consoleExecuteExpr(find.package(!!package, quiet = TRUE))
-   output <- self$consoleOutput()
-   isInstalled <- tail(output, n = 1L) != "character(0)"
-   testthat::skip_if_not(
-      condition = isInstalled,
-      message   = sprintf("package '%s' is not installed", package)
-   )
+   self$console.executeExpr(find.package(!!package, quiet = TRUE))
+   output <- self$console.getOutput()
+   tail(output, n = 1L) != "character(0)"
 })
 
 #' Trigger a keyboard shortcut
@@ -231,7 +194,7 @@
 #' @param shortcut Keyboard shortcut to execute
 #' @return None
 #' 
-.rs.automation.addRemoteFunction("shortcutExecute", function(shortcut)
+.rs.automation.addRemoteFunction("keyboard.executeShortcut", function(shortcut)
 {
    parts <- tolower(strsplit(shortcut, "\\s*\\+\\s*", perl = TRUE)[[1L]])
    
@@ -278,22 +241,22 @@
 #' @param text The text to type before triggering the completions
 #' @returns The completions
 #' 
-.rs.automation.addRemoteFunction("completionsRequest", function(text = "")
+.rs.automation.addRemoteFunction("completions.request", function(text = "")
 {
    # Generate the autocomplete pop-up.
-   self$keyboardExecute(text, "<Tab>")
+   self$keyboard.insertText(text, "<Tab>")
    
    # Get the completion list from the pop-up
-   completionListEl <- self$jsObjectViaSelector("#rstudio_popup_completions")
+   completionListEl <- self$js.querySelector("#rstudio_popup_completions")
    completionText <- completionListEl$innerText
    
    # Dismiss the popup.
-   self$keyboardExecute("<Escape>")
+   self$keyboard.insertText("<Escape>")
    
    # Remove any inserted code.
    for (i in seq_len(nchar(text)))
    {
-      self$keyboardExecute("<Backspace>")
+      self$keyboard.insertText("<Backspace>")
    }
    
    # Extract just the completion items (remove package annotations)
@@ -312,7 +275,7 @@
 #' @param ext File extension
 #' @param contents Text to write to the document
 #' @returns None
-.rs.automation.addRemoteFunction("documentOpen", function(ext, contents)
+.rs.automation.addRemoteFunction("editor.openWithContents", function(ext, contents)
 {
    # Write document contents to file.
    documentPath <- tempfile("document-", fileext = ext)
@@ -320,10 +283,10 @@
    writeLines(contents, con = documentPath)
    
    # Open that document in the attached editor.
-   code <- sprintf(".rs.api.documentOpen(\"%s\")", documentPath)
-   self$consoleExecute(code)
+   code <- sprintf(".rs.api.editor.openWithContents(\"%s\")", documentPath)
+   self$console.execute(code)
    
-   self$waitForElement("#rstudio_source_text_editor")
+   self$dom.waitForElement("#rstudio_source_text_editor")
 })
 
 #' Create and open a document
@@ -336,7 +299,7 @@
 #' @param callback Callback to invoke with the editor instance containing the document
 #' @returns None
 #' 
-.rs.automation.addRemoteFunction("documentExecute", function(ext, contents, callback)
+.rs.automation.addRemoteFunction("editor.executeWithContents", function(ext, contents, callback)
 {
    # Write document contents to file.
    documentPath <- tempfile("document-", fileext = ext)
@@ -345,23 +308,23 @@
    
    # Open that document in the attached editor.
    code <- sprintf(".rs.api.documentOpen(\"%s\")", documentPath)
-   self$consoleExecute(code)
+   self$console.execute(code)
    
    # Set an exit handler so we close and clean up the console history after.
    on.exit({
-      self$documentClose()
-      self$shortcutExecute("Ctrl + L")
+      self$editor.closeDocument()
+      self$keyboard.executeShortcut("Ctrl + L")
    }, add = TRUE)
    
    # Wait until the element is focused.
    .rs.waitUntil("source editor is focused", function()
    {
-      className <- self$jsExec("document.activeElement.className")
+      className <- self$js.eval("document.activeElement.className")
       length(className) && grepl("ace_text-input", className)
    })
    
    # Get a reference to the editor in that instance.
-   editor <- self$editorGetInstance()
+   editor <- self$editor.getInstance()
    
    # Wait a small bit, so Ace can tokenize the document.
    Sys.sleep(0.2)
@@ -376,7 +339,7 @@
 #' 
 #' @returns None
 #' 
-.rs.automation.addRemoteFunction("documentClose", function()
+.rs.automation.addRemoteFunction("editor.closeDocument", function()
 {
-   self$consoleExecute("invisible(.rs.api.documentClose())")
+   self$console.execute("invisible(.rs.api.documentClose())")
 })

@@ -21,12 +21,12 @@
 #' @param type The type of project to create, currently only "package" is supported.
 #' @return None
 #'
-.rs.automation.addRemoteFunction("projectCreate", function(type = "")
+.rs.automation.addRemoteFunction("project.create", function(type = "")
 {
    # Create a package project.
    if (type == "package")
    {
-      self$consoleExecuteExpr({
+      self$console.executeExpr({
          projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
          usethis::create_package(path = projectPath, open = FALSE)
          .rs.api.openProject(projectPath)
@@ -38,7 +38,7 @@
    }
    
    # Wait until the new project is open.
-   self$waitForProjectToOpen("rstudio")
+   self$project.waitFor("rstudio")
 })
 
 #' Wait for the project to open
@@ -48,11 +48,11 @@
 #' @param projectName The name of the project to wait for.
 #' @return TRUE if the project is opened, FALSE otherwise.
 #'
-.rs.automation.addRemoteFunction("waitForProjectToOpen", function(projectName)
+.rs.automation.addRemoteFunction("project.waitFor", function(projectName)
 {
    .rs.waitUntil("The new project is opened", function()
    {
-      grepl(projectName, self$getProjectDropdownLabel())
+      grepl(projectName, self$project.getLabel())
    }, swallowErrors = TRUE)
 })
 
@@ -62,14 +62,14 @@
 #' 
 #' @return None
 #'
-.rs.automation.addRemoteFunction("projectClose", function()
+.rs.automation.addRemoteFunction("project.close", function()
 {
-   self$domClickElement("#rstudio_project_menubutton_toolbar")
-   self$domClickElement("#rstudio_label_close_project_command")
+   self$dom.clickElement("#rstudio_project_menubutton_toolbar")
+   self$dom.clickElement("#rstudio_label_close_project_command")
    
    .rs.waitUntil("The project has closed", function()
    {
-      .rs.trimWhitespace(self$getProjectDropdownLabel()) == "Project: (None)"
+      .rs.trimWhitespace(self$project.getLabel()) == "Project: (None)"
    }, swallowErrors = TRUE)
 })
 
@@ -79,9 +79,9 @@
 #' 
 #' @return The button's label.
 #' 
-.rs.automation.addRemoteFunction("getProjectDropdownLabel", function()
+.rs.automation.addRemoteFunction("project.getLabel", function()
 {
-   self$waitForElement("#rstudio_project_menubutton_toolbar")
-   toolbarButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
+   self$dom.waitForElement("#rstudio_project_menubutton_toolbar")
+   toolbarButton <- self$js.querySelector("#rstudio_project_menubutton_toolbar")
    .rs.trimWhitespace(toolbarButton$innerText)
 })
