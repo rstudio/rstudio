@@ -510,10 +510,22 @@ core::Error rsaInit()
    return Success();
 }
 
-void rsaPublicKey(std::string* pExponent, std::string* pModulo)
+Error rsaPublicKey(std::string* pPublicKey)
 {
-   pModulo->assign(s_modulo.begin(), s_modulo.end());
-   pExponent->assign(s_exponent.begin(), s_exponent.end());
+   using namespace boost::system::errc;
+   
+   char* keyData;
+   auto pBio = make_unique_ptr(BIO_new(BIO_s_mem()), BIO_free);
+   if (!pBio)
+      return systemError(not_enough_memory, "RSA cert buffer", ERROR_LOCATION);
+   
+   int status = PEM_write_bio_PUBKEY(pBio.get(), s_pRSA);
+   if (status == 0)
+      return getLastCryptoError(ERROR_LOCATION);
+   
+   long n = BIO_get_mem_data(pBio.get(), &keyData);
+   pPublicKey->assign(keyData, keyData + n);
+   return Success();
 }
 
 core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlainText)
