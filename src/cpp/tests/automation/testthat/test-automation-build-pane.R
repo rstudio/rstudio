@@ -10,10 +10,10 @@ withr::defer(.rs.automation.deleteRemote())
    skip_on_ci()
 
    # Create a project.
-   remote$projectCreate(type = "package")
+   remote$project.create(type = "package")
 
    # Create and open the test file.
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       dir.create("tests/testthat", recursive = TRUE)
       testContents <- .rs.heredoc('
          test_that("we can run a test", {
@@ -25,10 +25,10 @@ withr::defer(.rs.automation.deleteRemote())
    })
 
    # Run tests.
-   remote$commandExecute("testTestthatFile")
+   remote$commands.execute("testTestthatFile")
 
    # Wait until we get "Test complete" in the Build pane.
-   jsBuildOutput <- remote$jsObjectViaSelector("#rstudio_workbench_panel_build .ace_editor")
+   jsBuildOutput <- remote$js.querySelector("#rstudio_workbench_panel_build .ace_editor")
    .rs.waitUntil("Tests have finished running", function()
    {
       grepl("\nTest complete\n", jsBuildOutput$innerText, fixed = TRUE)
@@ -39,6 +39,6 @@ withr::defer(.rs.automation.deleteRemote())
    expect_match(html, "xtermColor")
 
    # Close the project
-   remote$projectClose()
+   remote$project.close()
 })
 

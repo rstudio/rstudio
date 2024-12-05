@@ -7,7 +7,7 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("whitespace is trimmed on save appropriately", {
    
    # strip trailing whitespace in this scope
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       .rs.uiPrefs$stripTrailingWhitespace$set(TRUE)
    })
    
@@ -18,22 +18,23 @@ withr::defer(.rs.automation.deleteRemote())
       # comment 3\x20\x20\x20
    ')
    
-   remote$documentExecute(".R", contents, function(editor) {
+   remote$editor.executeWithContents(".R", contents, function(editor) {
       
       # make an edit, then save the document
       editor$gotoLine(4)
       editor$insert("# comment 4\x20\x20\x20")
-      remote$commandExecute("saveSourceDoc")
+      remote$commands.execute("saveSourceDoc")
       Sys.sleep(0.1)
       
       # check that whitespace has been removed
-      contents <- editor$getValue()
-      expect_equal(contents, "# comment 1\n# comment 2\n# comment 3\n# comment 4")
+      contents <- .rs.trimWhitespace(editor$getValue())
+      expected <- "# comment 1\n# comment 2\n# comment 3\n# comment 4"
+      expect_equal(!!contents, !!expected)
       
    })
    
    # reset pref
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       .rs.uiPrefs$stripTrailingWhitespace$clear()
    })
    

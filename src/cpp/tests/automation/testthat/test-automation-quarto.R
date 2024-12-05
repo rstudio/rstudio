@@ -19,17 +19,17 @@ withr::defer(.rs.automation.deleteRemote())
       ```
    ')
    
-   remote$consoleExecuteExpr({ options(warn = 0) })
-   remote$consoleExecuteExpr({ getOption("warn") })
-   output <- remote$consoleOutput()
+   remote$console.executeExpr({ options(warn = 0) })
+   remote$console.executeExpr({ getOption("warn") })
+   output <- remote$console.getOutput()
    expect_equal(tail(output, n = 1L), "[1] 0")
    
-   id <- remote$documentOpen(".qmd", contents)
-   editor <- remote$editorGetInstance()
+   id <- remote$editor.openWithContents(".qmd", contents)
+   editor <- remote$editor.getInstance()
    editor$gotoLine(6)
-   remote$keyboardExecute("<Ctrl + Shift + Enter>")
-   remote$consoleExecuteExpr({ getOption("warn") })
-   output <- remote$consoleOutput()
+   remote$keyboard.insertText("<Ctrl + Shift + Enter>")
+   remote$console.executeExpr({ getOption("warn") })
+   output <- remote$console.getOutput()
    expect_equal(tail(output, n = 1L), "[1] 2")
    
 })
@@ -64,11 +64,11 @@ withr::defer(.rs.automation.deleteRemote())
       The end.
    ')
 
-   id <- remote$documentOpen(".qmd", contents)
+   id <- remote$editor.openWithContents(".qmd", contents)
 
-   jsChunkOptionWidgets <- remote$jsObjectsViaSelector(".rstudio_modify_chunk")
-   jsChunkPreviewWidgets <- remote$jsObjectsViaSelector(".rstudio_preview_chunk")
-   jsChunkRunWidgets <- remote$jsObjectsViaSelector(".rstudio_run_chunk")
+   jsChunkOptionWidgets <- remote$js.querySelectorAll(".rstudio_modify_chunk")
+   jsChunkPreviewWidgets <- remote$js.querySelectorAll(".rstudio_preview_chunk")
+   jsChunkRunWidgets <- remote$js.querySelectorAll(".rstudio_run_chunk")
 
    expect_equal(length(jsChunkOptionWidgets), 3)
    expect_equal(length(jsChunkPreviewWidgets), 3)
@@ -102,13 +102,13 @@ withr::defer(.rs.automation.deleteRemote())
       This is a Quarto document.
    ')
    
-   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
-   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   remote$console.execute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
+   remote$console.execute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
    
-   id <- remote$documentOpen(".qmd", contents)
+   id <- remote$editor.openWithContents(".qmd", contents)
    
-   sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
-   visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+   sourceModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_off")[[1]]
+   visualModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_on")[[1]]
    
    # do this twice to also check that the "switching to visual mode" dialog appears
    # the second time (i.e. that it doesn't set the state to prevent its display when
@@ -117,13 +117,13 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
-      remote$domClickElement(".rstudio_visual_md_on")
+      remote$dom.clickElement(".rstudio_visual_md_on")
       .rs.waitUntil("The switching to visual mode first time dialog appears", function()
       {
-         cancelBtn <- remote$jsObjectViaSelector("#rstudio_dlg_cancel")
+         cancelBtn <- remote$js.querySelector("#rstudio_dlg_cancel")
          grepl("Cancel", cancelBtn$innerText)
       }, swallowErrors = TRUE)
-      remote$domClickElement("#rstudio_dlg_cancel")
+      remote$dom.clickElement("#rstudio_dlg_cancel")
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
    }
@@ -143,13 +143,13 @@ withr::defer(.rs.automation.deleteRemote())
       This is a Quarto document.
    ')
    
-   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
-   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   remote$console.execute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
+   remote$console.execute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
    
-   id <- remote$documentOpen(".qmd", contents)
+   id <- remote$editor.openWithContents(".qmd", contents)
    
-   sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
-   visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+   sourceModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_off")[[1]]
+   visualModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_on")[[1]]
    
    # do this twice to check that the "switching to visual mode" dialog doesn't appear
    # the second time
@@ -158,21 +158,21 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
-      remote$domClickElement(".rstudio_visual_md_on")
+      remote$dom.clickElement(".rstudio_visual_md_on")
       
       if (i == 1)
       {
          .rs.waitUntil("The switching to visual mode first time dialog appears", function()
          {
-            okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
+            okBtn <- remote$js.querySelector("#rstudio_dlg_ok")
             grepl("Use Visual Mode", okBtn$innerText)
          }, swallowErrors = TRUE)
-         remote$domClickElement("#rstudio_dlg_ok")
+         remote$dom.clickElement("#rstudio_dlg_ok")
       }
       
       .rs.waitUntil("Visual Editor appears", function()
       {
-         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor <- remote$js.querySelector(".ProseMirror")
          visualEditor$contentEditable
       }, swallowErrors = TRUE)
       
@@ -180,7 +180,7 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(visualModeToggle$ariaPressed, "true")
       
       # back to source mode
-      remote$domClickElement(".rstudio_visual_md_off")
+      remote$dom.clickElement(".rstudio_visual_md_off")
    }
    
 })
@@ -198,13 +198,13 @@ withr::defer(.rs.automation.deleteRemote())
       This is a Quarto document.
    ')
    
-   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
-   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   remote$console.execute(".rs.writeUserState(\"visual_mode_confirmed\", FALSE)")
+   remote$console.execute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
    
-   id <- remote$documentOpen(".qmd", contents)
+   id <- remote$editor.openWithContents(".qmd", contents)
    
-   sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
-   visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+   sourceModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_off")[[1]]
+   visualModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_on")[[1]]
    
    # do this twice to check that the "switching to visual mode" dialog appears second time
    for (i in 1:2)
@@ -212,21 +212,21 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(sourceModeToggle$ariaPressed, "true")
       expect_equal(visualModeToggle$ariaPressed, "false")
       
-      remote$domClickElement(".rstudio_visual_md_on")
+      remote$dom.clickElement(".rstudio_visual_md_on")
       
       .rs.waitUntil("The switching to visual mode first time dialog appears", function()
       {
-         okBtn <- remote$jsObjectViaSelector("#rstudio_dlg_ok")
+         okBtn <- remote$js.querySelector("#rstudio_dlg_ok")
          grepl("Use Visual Mode", okBtn$innerText)
       }, swallowErrors = TRUE)
       
       # uncheck "Don't show again"
-      remote$domClickElement(".gwt-DialogBox-ModalDialog input[type=\"checkbox\"]")
-      remote$domClickElement("#rstudio_dlg_ok")
+      remote$dom.clickElement(".gwt-DialogBox-ModalDialog input[type=\"checkbox\"]")
+      remote$dom.clickElement("#rstudio_dlg_ok")
       
       .rs.waitUntil("Visual Editor appears", function()
       {
-         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor <- remote$js.querySelector(".ProseMirror")
          visualEditor$contentEditable
       }, swallowErrors = TRUE)
       
@@ -234,7 +234,7 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(visualModeToggle$ariaPressed, "true")
       
       # back to source mode
-      remote$domClickElement(".rstudio_visual_md_off")
+      remote$dom.clickElement(".rstudio_visual_md_off")
    }
    
 })
@@ -268,8 +268,8 @@ withr::defer(.rs.automation.deleteRemote())
       The end.
    ')
 
-   id <- remote$documentOpen(".qmd", contents)
-   editor <- remote$editorGetInstance()
+   id <- remote$editor.openWithContents(".qmd", contents)
+   editor <- remote$editor.getInstance()
 
    checkChunkOption <- function(firstLine, lastLine, widget) {
       original <- ""
@@ -279,9 +279,9 @@ withr::defer(.rs.automation.deleteRemote())
          original <- paste(original, lineContent, sep = "\n")
       }
 
-      remote$domClickElementByNodeId(widget)
+      remote$dom.clickElement(nodeId = widget)
       Sys.sleep(1)
-      remote$keyboardExecute("<Escape>")
+      remote$keyboard.insertText("<Escape>")
 
       updated <- ""
       for (line in firstLine:lastLine)
@@ -292,13 +292,13 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(original, updated)
    }
 
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    checkChunkOption(8, 8, chunkOptionWidgetIds[[2]])
 
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    checkChunkOption(4, 4, chunkOptionWidgetIds[[1]])
 
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    checkChunkOption(12, 18, chunkOptionWidgetIds[[3]])
 
 })
@@ -328,13 +328,14 @@ withr::defer(.rs.automation.deleteRemote())
       The end.
    ')
 
-   id <- remote$documentOpen(".qmd", contents)
-   editor <- remote$editorGetInstance()
+   id <- remote$editor.openWithContents(".qmd", contents)
+   editor <- remote$editor.getInstance()
 
-   checkChunkOption <- function(firstLine, lastLine, expectedAfter, widget) {
-      remote$domClickElementByNodeId(widget)
+   checkChunkOption <- function(firstLine, lastLine, expectedAfter, widget)
+   {
+      remote$dom.clickElement(nodeId = widget)
       Sys.sleep(2)
-      remote$keyboardExecute("<Escape>")
+      remote$keyboard.insertText("<Escape>")
 
       updated <- ""
       for (line in (firstLine):lastLine)
@@ -345,13 +346,13 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(expectedAfter, updated)
    }
 
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    checkChunkOption(
       4, 4,
       '```{r one, fig.height=4, fig.width=3, message=FALSE, warning=TRUE, paged.print=TRUE}',
       chunkOptionWidgetIds[[1]])
 
-   chunkOptionWidgetIds <- remote$domGetNodeIds(".rstudio_modify_chunk")
+   chunkOptionWidgetIds <- remote$dom.querySelectorAll(".rstudio_modify_chunk")
    checkChunkOption(
       9, 14,
       '#| label: one\n#| message: false\n#| warning: true\n#| fig-height: 4\n#| fig-width: 3\n#| paged-print: true',
@@ -384,13 +385,13 @@ withr::defer(.rs.automation.deleteRemote())
       ## Another slide with title
    ')
    
-   remote$documentExecute(".qmd", contents, function(editor) {
+   remote$editor.executeWithContents(".qmd", contents, function(editor) {
       
       token <- as.vector(editor$session$getTokenAt(10))
       expect_equal(token$type, "markup.heading.2")
       
-      remote$commandExecute("toggleDocumentOutline")
-      docOutline <- remote$jsObjectViaSelector(".rstudio_doc_outline_container")
+      remote$commands.execute("toggleDocumentOutline")
+      docOutline <- remote$js.querySelector(".rstudio_doc_outline_container")
       contents <- docOutline$innerText
       
       # Remove non-breaking spaces
@@ -432,7 +433,7 @@ withr::defer(.rs.automation.deleteRemote())
 
    ')
 
-   remote$documentExecute(".qmd", contents, function(editor) {
+   remote$editor.executeWithContents(".qmd", contents, function(editor) {
       
       # Check the fold widget strings.
       session <- editor$session
@@ -470,37 +471,37 @@ withr::defer(.rs.automation.deleteRemote())
       ```
    ')
    
-   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", TRUE)")
-   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   remote$console.execute(".rs.writeUserState(\"visual_mode_confirmed\", TRUE)")
+   remote$console.execute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
    
-   remote$documentExecute(".qmd", contents, function(editor) {
+   remote$editor.executeWithContents(".qmd", contents, function(editor) {
       
-      sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
-      visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+      sourceModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_off")[[1]]
+      visualModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_on")[[1]]
       expect_equal(sourceModeToggle$ariaPressed, "true")
       
       # verify starting state
-      editor <- remote$editorGetInstance()
+      editor <- remote$editor.getInstance()
       expect_equal(editor$session$getLine(3), "```{=html}")
       
       # switch to visual mode
-      remote$domClickElement(".rstudio_visual_md_on")
+      remote$dom.clickElement(".rstudio_visual_md_on")
       .rs.waitUntil("Visual Editor appears", function()
       {
-         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor <- remote$js.querySelector(".ProseMirror")
          visualEditor$contentEditable
       }, swallowErrors = TRUE)
       
       # back to source mode
-      remote$domClickElement(".rstudio_visual_md_off")
+      remote$dom.clickElement(".rstudio_visual_md_off")
       .rs.waitUntil("Source editor appears", function()
       {
-         sourceEditor <- remote$jsObjectViaSelector("#rstudio_source_text_editor")
+         sourceEditor <- remote$js.querySelector("#rstudio_source_text_editor")
          sourceEditor$checkVisibility()
       }, swallowErrors = TRUE)
       
       # verify ending state
-      editor <- remote$editorGetInstance()
+      editor <- remote$editor.getInstance()
       expect_equal(editor$session$getLine(4), "```{=html}")
    })
 })
@@ -519,37 +520,37 @@ withr::defer(.rs.automation.deleteRemote())
       ```
    ')
    
-   remote$consoleExecute(".rs.writeUserState(\"visual_mode_confirmed\", TRUE)")
-   remote$consoleExecute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
+   remote$console.execute(".rs.writeUserState(\"visual_mode_confirmed\", TRUE)")
+   remote$console.execute(".rs.writeUserPref(\"visual_markdown_editing_is_default\", FALSE)")
    
-   remote$documentExecute(".qmd", contents, function(editor) {
+   remote$editor.executeWithContents(".qmd", contents, function(editor) {
       
-      sourceModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_off")[[1]]
-      visualModeToggle <- remote$jsObjectsViaSelector(".rstudio_visual_md_on")[[1]]
+      sourceModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_off")[[1]]
+      visualModeToggle <- remote$js.querySelectorAll(".rstudio_visual_md_on")[[1]]
       expect_equal(sourceModeToggle$ariaPressed, "true")
       
       # verify starting state
-      editor <- remote$editorGetInstance()
+      editor <- remote$editor.getInstance()
       expect_equal(editor$session$getLine(4), "```{=latex}")
       
       # switch to visual mode
-      remote$domClickElement(".rstudio_visual_md_on")
+      remote$dom.clickElement(".rstudio_visual_md_on")
       .rs.waitUntil("Visual Editor appears", function()
       {
-         visualEditor <- remote$jsObjectViaSelector(".ProseMirror")
+         visualEditor <- remote$js.querySelector(".ProseMirror")
          visualEditor$contentEditable
       }, swallowErrors = TRUE)
       
       # back to source mode
-      remote$domClickElement(".rstudio_visual_md_off")
+      remote$dom.clickElement(".rstudio_visual_md_off")
       .rs.waitUntil("Source editor appears", function()
       {
-         sourceEditor <- remote$jsObjectViaSelector("#rstudio_source_text_editor")
+         sourceEditor <- remote$js.querySelector("#rstudio_source_text_editor")
          sourceEditor$checkVisibility()
       }, swallowErrors = TRUE)
       
       # verify ending state
-      editor <- remote$editorGetInstance()
+      editor <- remote$editor.getInstance()
       expect_equal(editor$session$getLine(4), "```{=latex}")
    })
 })

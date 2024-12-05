@@ -10,22 +10,25 @@ withr::defer(.rs.automation.deleteRemote())
    # TODO: doesn't work on CI?
    skip_on_ci()
    
+   # Skip if we don't have reticulate.
+   installed <- remote$package.isInstalled("reticulate")
+   testthat::skip_if_not(installed, "reticulate is not installed")
+   
    # Get a Python REPL up and running.
-   remote$skipIfNotInstalled("reticulate")
-   remote$consoleExecute("reticulate::repl_python()")
-   remote$consoleExecute("import sys")
-   remote$keyboardExecute("sys.__name")
+   remote$console.execute("reticulate::repl_python()")
+   remote$console.execute("import sys")
+   remote$keyboard.insertText("sys.__name")
    
    # Wait for code to finish execution, and then request completions.
    Sys.sleep(3)
-   remote$keyboardExecute("<Tab>", "<Enter>")
+   remote$keyboard.insertText("<Tab>", "<Enter>")
    
    # Check for expected output.
-   output <- remote$consoleOutput()
+   output <- remote$console.getOutput()
    expect_equal(tail(output, n = 2L), c(">>> sys.__name__", "'sys'"))
    
    # Exit the Python REPL and clean up.
-   remote$consoleExecute("exit")
-   remote$consoleClear()
+   remote$console.execute("exit")
+   remote$console.clear()
    
 })
