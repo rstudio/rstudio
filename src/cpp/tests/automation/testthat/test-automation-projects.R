@@ -49,7 +49,7 @@ withr::defer(.rs.automation.deleteRemote())
    remote$dom.insertText(".gwt-DialogBox input#rstudio_text_entry", projectPath)
    remote$keyboard.insertText("<Enter>")
    remote$dom.clickElement("#rstudio_file_accept_choose")
-   remote$ensureUnchecked("#rstudio_new_project_git_repo input")
+   remote$dom.setChecked("#rstudio_new_project_git_repo input", checked = FALSE)
    remote$dom.clickElement("#rstudio_label_create_project_wizard_confirm")
    
    # Wait until the project has been successfully opened
