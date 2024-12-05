@@ -83,28 +83,30 @@ public class RSAEncrypt
    }
    
   
-   private static native void encrypt(String value,
-                                      String publicKey,
+   private static native void encrypt(String input,
+                                      String key,
                                       CommandWithArg<String> callback)
    /*-{
       
       var subtle = $wnd.crypto.subtle;
       
-      // The provided key is in PEM format; we need to extract the inner
-      // key contents and provide it as an array buffer.
-      var pemHeader = "-----BEGIN PRIVATE KEY-----";  // pragma: allowlist secret
-      var pemFooter = "-----END PRIVATE KEY-----";    // pragma: allowlist secret
-      var keyContents = publicKey
+      // The provided key is in PEM format.
+      // We need to extract the inner key contents.
+      var pemHeader = "-----BEGIN PUBLIC KEY-----";  // pragma: allowlist secret
+      var pemFooter = "-----END PUBLIC KEY-----";    // pragma: allowlist secret
+      var keyContents = key
          .replace(pemHeader, "")
          .replace(pemFooter, "")
          .replace(/\s+/g, "");
       
+      // Convert that into a Uint8Array.
       var array = Uint8Array.from(
-         atob(pemContents),
+         atob(keyContents),
          function(ch) { return ch.charCodeAt(0); }
       );
       
-      // Finally, import the key.
+      // Import the key.
+      // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey#subjectpublickeyinfo
       var key = subtle.importKey(
          "spki",
          array.buffer,
@@ -115,25 +117,29 @@ public class RSAEncrypt
       
       key.then(function(key) {
          
-         var encoder = new TextEncoder();
+         // Encrypt our message, then invoke the provided callback.
+         var encoder = new TextEncoder('utf-8');
          var message = subtle.encrypt(
             { name: "RSA-OAEP" },
             key,
-            encoder.encode(value)
+            encoder.encode(input)
          );
          
          message.then(function(message) {
             
-            var binaryString = "";
-            var byteArray = new Uint8Array(message);
-            for (var i = 0; i < byteArray.length; i++) {
-                binaryString += String.fromCharCode(byteArray[i]);
+            // Convert from array buffer to byte string.
+            var bytes = new Uint8Array(message);
+            var data = '';
+            for (var i = 0, n = bytes.length; i < n; i++) {
+               data += String.fromCharCode(bytes[i]);
             }
             
-            var encryptedBase64 = btoa(binaryString);
-            console.log(encryptedBase64);
-            callback.@org.rstudio.core.client.CommandWithArg::execute(*)(message);
+            // Invoke callback with that byte-string encoded as base64.
+            var b64data = btoa(data);
+            callback.@org.rstudio.core.client.CommandWithArg::execute(*)(b64data);
+            
          });
+         
       });
       
    }-*/;
