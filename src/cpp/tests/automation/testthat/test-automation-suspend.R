@@ -7,46 +7,46 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("loaded packages are preserved on suspend + resume", {
    
    # Load the 'tools' package.
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       library(tools)
    })
    
    # Suspend the session.
-   remote$commandExecute("suspendSession")
+   remote$commands.execute("suspendSession")
    Sys.sleep(1)
    
    # Check and see if 'tools' was loaded on resume.
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       "tools" %in% loadedNamespaces()
    })
    
-   output <- remote$consoleOutput()
+   output <- remote$console.getOutput()
    expect_contains(output, "[1] TRUE")
    
 })
 
 .rs.test("attached datasets are preserved on suspend + resume", {
    
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       data <- list(apple = 1, banana = 2, cherry = 3)
       attach(data, name = "my-attached-dataset")
    })
    
-   remote$commandExecute("suspendSession")
+   remote$commands.execute("suspendSession")
    Sys.sleep(1)
    
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       writeLines(search())
    })
    
-   output <- remote$consoleOutput()
+   output <- remote$console.getOutput()
    expect_contains(output, "my-attached-dataset")
    
-   remote$consoleExecuteExpr(apple + banana + cherry)
-   output <- remote$consoleOutput()
+   remote$console.executeExpr(apple + banana + cherry)
+   output <- remote$console.getOutput()
    expect_true("[1] 6" %in% output)
    
-   remote$consoleExecuteExpr({
+   remote$console.executeExpr({
       detach("my-attached-dataset")
    })
    

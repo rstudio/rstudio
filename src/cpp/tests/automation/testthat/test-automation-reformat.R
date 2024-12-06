@@ -7,15 +7,15 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("Documents can be reformatted on save", {
    
-   remote$consoleExecute(".rs.writeUserPref(\"reformat_on_save\", TRUE)")
-   remote$consoleExecute(".rs.writeUserPref(\"code_formatter\", \"styler\")")
+   remote$console.execute(".rs.writeUserPref(\"reformat_on_save\", TRUE)")
+   remote$console.execute(".rs.writeUserPref(\"code_formatter\", \"styler\")")
 
    documentContents <- .rs.heredoc("2+2")
    
-   remote$documentOpen(".R", documentContents)
-   editor <- remote$editorGetInstance()
+   remote$editor.openWithContents(".R", documentContents)
+   editor <- remote$editor.getInstance()
    editor$insert("1+1; ")
-   remote$keyboardExecute("<Ctrl + S>")
+   remote$keyboard.insertText("<Ctrl + S>")
    Sys.sleep(1)
    contents <- editor$session$doc$getValue()
    expect_equal(contents, "1 + 1\n2 + 2\n")

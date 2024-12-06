@@ -34,6 +34,14 @@ function reportIpcError(name: string, error: Error) {
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function getDesktopBridge() {
   return {
+    writeStdout: (output: string) => {
+      ipcRenderer.send('desktop_write_stdout', output);
+    },
+
+    writeStderr: (output: string) => {
+      ipcRenderer.send('desktop_write_stderr', output);
+    },
+
     browseUrl: (url: string) => {
       ipcRenderer.send('desktop_browse_url', url);
     },
@@ -719,6 +727,10 @@ export function getDesktopBridge() {
 
     detectRosetta: () => {
       ipcRenderer.send('desktop_detect_rosetta');
+    },
+
+    consoleLog: (output: string) => {
+      ipcRenderer.send('desktop_console_log', output);
     },
 
     // pro-only start

@@ -15,7 +15,7 @@ withr::defer(.rs.automation.deleteRemote())
       @
    ')
       
-   remote$documentExecute(".Rnw", documentContents, function(editor) {
+   remote$editor.executeWithContents(".Rnw", documentContents, function(editor) {
       editor$gotoLine(4L, 0L)
       remote$client$Input.insertText(text = "{ 1 + 1 }")
       Sys.sleep(1)  # wait for Ace to tokenize

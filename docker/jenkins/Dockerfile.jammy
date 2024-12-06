@@ -20,12 +20,15 @@ RUN apt-get update && \
     build-essential \
     clang \
     curl \
+    dbus-x11 \
     debsigs \
     dpkg-sig \
     expect \
     fakeroot \
+    ffmpeg \
     git-core \
     glibc-tools \
+    imagemagick \
     jq \
     libacl1-dev \
     libattr1-dev \
@@ -47,6 +50,7 @@ RUN apt-get update && \
     libtiff5-dev\
     libxml2-dev \
     libxslt1-dev \
+    locales \
     lsof \
     ninja-build \
     openjdk-11-jdk \
@@ -62,6 +66,7 @@ RUN apt-get update && \
     valgrind \
     wget \
     whois \
+    x11-apps \
     xvfb \
     zlib1g-dev
 
@@ -72,6 +77,26 @@ RUN if [ "$ARCH" = "amd64" ]; then \
     apt-get install -y \
     gcc-multilib \
     ; fi
+
+# Electron dependencies
+RUN apt-get update && \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get install -y \
+    libdbus-1-dev \
+    libgtk-3-dev \
+    libnotify-dev \
+    libasound2-dev \
+    libcap-dev \
+    libcups2-dev \
+    libxtst-dev \
+    libxss1 \
+    libnss3-dev
+
+# Prefer UTF-8 locale
+RUN locale-gen en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
 
 # ensure we use the java 11 compiler
 RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-$(dpkg --print-architecture)/bin/java

@@ -10,7 +10,7 @@ pipeline {
     JENKINS_CREDENTIALS = credentials('jenkins-api-creds')
     OS = 'jammy'
     ARCH = 'x86_64'
-    FLAVOR = 'Server'
+    FLAVOR = 'default'
     TYPE = 'DEB'
     AWS_ACCOUNT_ID = '749683154838'
     RSTUDIO_VERSION_FLOWER = ''
@@ -23,15 +23,30 @@ pipeline {
     stage('Load Utils') {
       steps {
         script {
-          sh 'printenv'
+
           sh "echo 'Loading utils from ${env.WORKSPACE}/jenkins/utils.groovy'"
           utils = load "${env.WORKSPACE}/jenkins/utils.groovy"
           utils.addRemoteRef("${env.CHANGE_TARGET}")
+
           RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
           IS_PRO = JOB_URL.contains('Pro')
           BASE_IMAGE = "jenkins/ide:pro-jammy-x86_64-${RSTUDIO_VERSION_FLOWER}"
+          
           // Passing true makes this return true if there are any changes outside of 'docs'
           BUILD = utils.hasChangesIn('docs/', true)
+
+          // Set appropriate build flavor if unset
+          if (FLAVOR == 'default') {
+            if (IS_PRO) {
+              FLAVOR = 'Server'
+            } else {
+              FLAVOR = 'Electron'
+            }
+          }
+
+          // Log environment variables
+          sh 'printenv | sort'
+
         }
       }
     }
@@ -51,12 +66,24 @@ pipeline {
     stage('Initialize Pending Checks') {
       steps {
         script {
+
+          // Tests common to both Workbench and open source
           utils.postReviewCheck(title: "Build Package")
           utils.postReviewCheck(title: "GWT Unit Tests")
           utils.postReviewCheck(title: "C++ Unit Tests")
-          utils.postReviewCheck(title: "Rust Unit Tests")
-          utils.postReviewCheck(title: "Go Unit Tests")
-          utils.postReviewCheck(title: "Homepage Tests")
+
+          // Workbench tests
+          if (FLAVOR == 'Server' && IS_PRO) {
+            utils.postReviewCheck(title: "Rust Unit Tests")
+            utils.postReviewCheck(title: "Go Unit Tests")
+            utils.postReviewCheck(title: "Homepage Tests")
+          }
+
+          // Automation currently only open source desktop
+          if (FLAVOR == 'Electron' && !IS_PRO) {
+            utils.postReviewCheck(title: "Automated Tests")
+          }
+
         }
       }
     }
@@ -117,7 +144,7 @@ pipeline {
                         summary: utils.getResultsMarkdownLink('Build Package', STAGE_NODE_URL),
                       )
                       // perform the compilation
-                      sh "SCCACHE_ENABLED=1 PACKAGE_OS=${OS} ./make-${FLAVOR.toLowerCase()}-package ${type} clean"
+                      sh "SCCACHE_ENABLED=1 PACKAGE_OS=${OS} ./make-${FLAVOR.toLowerCase()}-package ${TYPE} clean"
                     }
                   }
                 }
@@ -170,7 +197,7 @@ pipeline {
                   }
                   steps {
                     catchError(buildResult: null, stageResult: 'FAILURE') {
-                      dir ("package/linux/build-${FLAVOR}-${type}/src/cpp") {
+                      dir ("package/linux/build-${FLAVOR}-${TYPE}/src/cpp") {
                         script {
                           // attempt to run cpp unit tests
                           utils.runCheckCmd("./rstudio-tests", "C++ Unit Tests", STAGE_NODE_URL, true)
@@ -179,6 +206,8 @@ pipeline {
                     }
                   }
                 }
+
+
 
                 stage('Run Rust Unit Tests') {
                   environment {
@@ -205,7 +234,7 @@ pipeline {
                   when { expression { return FLAVOR == 'Server' && IS_PRO } }
                   steps {
                     catchError(buildResult: null, stageResult: 'FAILURE') {
-                      dir ("package/linux/build-${FLAVOR}-${type}") {
+                      dir ("package/linux/build-${FLAVOR}-${TYPE}") {
                         script {
                           utils.runCheckCmd("ninja workbench-user-service-test", "Go Unit Tests", STAGE_NODE_URL)
                         }
@@ -230,6 +259,31 @@ pipeline {
                   }
                 }
               }
+            }
+
+            stage('Run Automated Tests') {
+
+              when { expression { return FLAVOR == 'Electron' && !IS_PRO } }
+
+              environment {
+                STAGE_NODE_URL = utils.getStageUrl(STAGE_NAME)
+              }
+
+              steps {
+                catchError(buildResult: null, stageResult: 'UNSTABLE') {
+                  dir ("src/node/desktop") {
+                    script {
+                      try {
+                        utils.runCheckCmd("./run-automation", "Automated Tests", STAGE_NODE_URL, true)
+                      } finally {
+                        junit(allowEmptyResults: true, testResults: '*.xml')
+                        archiveArtifacts(artifacts: 'screenshots/*.png,*.webm,*.xml', fingerprint: true)
+                      }
+                    }
+                  }
+                }
+              }
+
             }
           }
         }
