@@ -104,10 +104,13 @@ void signIn(const http::Request& request,
 void publicKey(const http::Request&,
                http::Response* pResponse)
 {
-   std::string exp, mod;
-   core::system::crypto::rsaPublicKey(&exp, &mod);
+   std::string publicKey;
+   Error error = core::system::crypto::rsaPublicKey(&publicKey);
+   if (error)
+      LOG_ERROR(error);
+   
    pResponse->setNoCacheHeaders();
-   pResponse->setBody(exp + ":" + mod);
+   pResponse->setBody(publicKey);
    pResponse->setContentType("text/plain");
 }
 
