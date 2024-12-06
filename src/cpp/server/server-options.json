@@ -97,7 +97,7 @@
             "memberName": "serverSetUmask_",
             "type": "bool",
             "defaultValue": true,
-            "description": "If enabled, sets the rserver process umask to 022 on startup, which causes new files to have rw-r-r permissions."
+            "description": "If enabled, sets the rserver process umask to `022` on startup, which causes new files to have `rw-r--r--` permissions."
          },
          {
             "name": "secure-cookie-key-file",
