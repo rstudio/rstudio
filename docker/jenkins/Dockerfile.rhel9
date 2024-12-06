@@ -8,7 +8,7 @@ ARG AWS_REGION=us-east-1
 
 RUN set -x \
       && yum install epel-release -y \
-      && yum install dnf-plugins-core -y \ 
+      && yum install dnf-plugins-core -y \
       && yum config-manager --set-enabled crb \
       && yum update -y
 
@@ -35,7 +35,7 @@ RUN dnf install -y \
     libXcursor-devel \
     libXrandr-devel \
     libacl-devel \
-    libcap-devel \ 
+    libcap-devel \
     libcurl-devel \
     libffi \
     libjpeg-turbo-devel \
@@ -58,6 +58,7 @@ RUN dnf install -y \
     python3 \
     rpm-sign \
     rpmdevtools \
+    selinux-policy-devel \
     sqlite-devel \
     sudo \
     valgrind \
@@ -68,7 +69,7 @@ RUN dnf install -y \
     zlib-devel
 
 # The latest redhat build of java-11-openjdk (11.0.20.0.8-2.el9) is missing a dependency on tzdata-java
-# https://bugzilla.redhat.com/show_bug.cgi?id=2225018 
+# https://bugzilla.redhat.com/show_bug.cgi?id=2225018
 # use the workaround until they resolve the issue
 RUN dnf install -y tzdata-java
 

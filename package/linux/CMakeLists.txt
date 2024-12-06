@@ -164,6 +164,30 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debian-control/${DEBIAN_POSTINST}
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debian-control/${DEBIAN_POSTRM}
                ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/postrm)
 
+# Generate SELinux policy
+# Note: Generating the manpages requires installing the policy, so
+# they are stored as source files and should be regenerated using:
+#    ./build_selinux_policy.sh --man
+if(NOT DEFINED SELINUX_REFPOLICY_PATH)
+   set(SELINUX_REFPOLICY_PATH /usr/share/selinux/devel)
+endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio.fc.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio.fc)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/rstudio.pp
+                   COMMAND make ARGS -C ${CMAKE_CURRENT_SOURCE_DIR}/selinux -f ${SELINUX_REFPOLICY_PATH}/include/Makefile NAME=devel rstudio.pp
+                   COMMAND mv ARGS ${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio.pp ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/rstudio.pp
+                   MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio.te
+                   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio.fc
+                           ${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio.te)
+add_custom_target(selinux ALL
+                  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/rstudio.pp
+                          ${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio_selinux.8
+                          ${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio_server_selinux.8)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/rstudio.pp
+              ${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio_selinux.8
+              ${CMAKE_CURRENT_SOURCE_DIR}/selinux/rstudio_server_selinux.8
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/selinux/packages/)
+
 # Lintian insists on 0755 permissions on postinst and postrm files, but by
 # default CMake just copies the permissions set on the original (*.in) files,
 # which can change when those files are created/altered by source control. We
@@ -279,8 +303,3 @@ set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
 
 # build package
 include(CPack)
-
-
-
-
-

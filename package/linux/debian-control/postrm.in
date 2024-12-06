@@ -1,9 +1,9 @@
 #!/bin/sh
 
 # errors shouldn't cause script to exit
-set +e 
+set +e
 
-# remove softlink to admin script 
+# remove softlink to admin script
 rm -f /usr/sbin/rstudio-server
 
 # remove temporary streams
@@ -32,6 +32,15 @@ then
    rm -rf /lib/systemd/system/rstudio-server.service
    rm -rf /usr/lib/systemd/system/rstudio-server.service
    systemctl daemon-reload
+fi
+
+# remove SELinux policy if the `semodule` tool is available
+if command -v semodule > /dev/null; then
+    semodule -n -r rstudio
+    if /usr/sbin/selinuxenabled; then
+       /usr/sbin/load_policy
+       restorecon -R ${CMAKE_INSTALL_PREFIX}/bin/rstudio* ${CMAKE_INSTALL_PREFIX}/bin/rworkspace* ${CMAKE_INSTALL_PREFIX}/bin/rserver*
+    fi
 fi
 
 # clear error termination state

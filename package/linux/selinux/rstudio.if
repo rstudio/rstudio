@@ -1,0 +1,77 @@
+## <summary>policy for rstudio</summary>
+
+########################################
+## <summary>
+##	Execute rstudio_exec_t in the rstudio domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`rstudio_domtrans',`
+	gen_require(`
+		type rstudio_t, rstudio_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, rstudio_exec_t, rstudio_t)
+')
+
+########################################
+## <summary>
+##	Execute rstudio_server_exec_t in the rstudio_server domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`rstudio_server_domtrans',`
+	gen_require(`
+		type rstudio_server_t, rstudio_server_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, rstudio_server_exec_t, rstudio_server_t)
+')
+
+######################################
+## <summary>
+##	Execute rstudio in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`rstudio_exec',`
+	gen_require(`
+		type rstudio_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, rstudio_exec_t)
+')
+
+######################################
+## <summary>
+##	Execute rstudio_server in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`rstudio_server_exec',`
+	gen_require(`
+		type rstudio_server_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, rstudio_server_exec_t)
+')

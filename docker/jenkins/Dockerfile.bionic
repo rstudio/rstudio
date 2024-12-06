@@ -10,7 +10,7 @@ ARG AWS_REGION=us-east-1
 RUN set -x \
     && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get update 
+    && apt-get update
 
 RUN apt-get update && \
     export DEBIAN_FRONTEND=noninteractive && \
@@ -54,6 +54,7 @@ RUN apt-get update && \
     pkg-config \
     python \
     r-base \
+    selinux-policy-dev \
     sudo \
     unzip \
     uuid-dev \

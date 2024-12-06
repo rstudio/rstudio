@@ -1,0 +1,221 @@
+.TH  "rstudio_selinux"  "8"  "24-11-25" "rstudio" "SELinux Policy rstudio"
+.SH "NAME"
+rstudio_selinux \- Security Enhanced Linux Policy for the rstudio processes
+.SH "DESCRIPTION"
+
+Security-Enhanced Linux secures the rstudio processes via flexible mandatory access control.
+
+The rstudio processes execute with the rstudio_t SELinux type. You can check if you have these processes running by executing the \fBps\fP command with the \fB\-Z\fP qualifier.
+
+For example:
+
+.B ps -eZ | grep rstudio_t
+
+
+.SH "ENTRYPOINTS"
+
+The rstudio_t SELinux type can be entered via the \fBrstudio_exec_t\fP file type.
+
+The default entrypoint paths for the rstudio_t domain are the following:
+
+/usr/lib/rstudio-server/bin/rworkspaces, /usr/lib/rstudio-server/bin/rstudio-launcher, /usr/lib/rstudio-server/bin/rstudio-local-launcher
+.SH PROCESS TYPES
+SELinux defines process types (domains) for each process running on the system
+.PP
+You can see the context of a process using the \fB\-Z\fP option to \fBps\bP
+.PP
+Policy governs the access confined processes have to files.
+SELinux rstudio policy is very flexible allowing users to setup their rstudio processes in as secure a method as possible.
+.PP
+The following process types are defined for rstudio:
+
+.EX
+.B rstudio_t, rstudio_server_t
+.EE
+.PP
+Note:
+.B semanage permissive -a rstudio_t
+can be used to make the process type rstudio_t permissive. SELinux does not deny access to permissive process types, but the AVC (SELinux denials) messages are still generated.
+
+.SH BOOLEANS
+SELinux policy is customizable based on least access required.  rstudio policy is extremely flexible and has several booleans that allow you to manipulate the policy and run rstudio with the tightest access possible.
+
+
+.PP
+If you want to allow all domains to execute in fips_mode, you must turn on the fips_mode boolean. Enabled by default.
+
+.EX
+.B setsebool -P fips_mode 1
+
+.EE
+
+.PP
+If you want to allow system to run with NIS, you must turn on the nis_enabled boolean. Disabled by default.
+
+.EX
+.B setsebool -P nis_enabled 1
+
+.EE
+
+.SH "MANAGED FILES"
+
+The SELinux process type rstudio_t can manage files labeled with the following file types.  The paths listed are the default paths for these file types.  Note the processes UID still need to have DAC permissions.
+
+.br
+.B cluster_conf_t
+
+	/etc/cluster(/.*)?
+.br
+
+.br
+.B cluster_var_lib_t
+
+	/var/lib/pcsd(/.*)?
+.br
+	/var/lib/cluster(/.*)?
+.br
+	/var/lib/openais(/.*)?
+.br
+	/var/lib/pengine(/.*)?
+.br
+	/var/lib/corosync(/.*)?
+.br
+	/usr/lib/heartbeat(/.*)?
+.br
+	/var/lib/heartbeat(/.*)?
+.br
+	/var/lib/pacemaker(/.*)?
+.br
+
+.br
+.B cluster_var_run_t
+
+	/var/run/crm(/.*)?
+.br
+	/var/run/cman_.*
+.br
+	/var/run/rsctmp(/.*)?
+.br
+	/var/run/aisexec.*
+.br
+	/var/run/heartbeat(/.*)?
+.br
+	/var/run/pcsd-ruby.socket
+.br
+	/var/run/corosync-qnetd(/.*)?
+.br
+	/var/run/corosync-qdevice(/.*)?
+.br
+	/var/run/pcsd\.socket
+.br
+	/var/run/corosync\.pid
+.br
+	/var/run/cpglockd\.pid
+.br
+	/var/run/rgmanager\.pid
+.br
+	/var/run/cluster/rgmanager\.sk
+.br
+
+.br
+.B krb5_host_rcache_t
+
+	/var/tmp/krb5_0.rcache2
+.br
+	/var/cache/krb5rcache(/.*)?
+.br
+	/var/tmp/nfs_0
+.br
+	/var/tmp/DNS_25
+.br
+	/var/tmp/host_0
+.br
+	/var/tmp/imap_0
+.br
+	/var/tmp/HTTP_23
+.br
+	/var/tmp/HTTP_48
+.br
+	/var/tmp/ldap_55
+.br
+	/var/tmp/ldap_487
+.br
+	/var/tmp/ldapmap1_0
+.br
+
+.br
+.B root_t
+
+	/sysroot/ostree/deploy/.*-atomic/deploy(/.*)?
+.br
+	/
+.br
+	/initrd
+.br
+
+.SH FILE CONTEXTS
+SELinux requires files to have an extended attribute to define the file type.
+.PP
+You can see the context of a file using the \fB\-Z\fP option to \fBls\bP
+.PP
+Policy governs the access confined processes have to these files.
+SELinux rstudio policy is very flexible allowing users to setup their rstudio processes in as secure a method as possible.
+.PP
+
+.I The following file types are defined for rstudio:
+
+
+.EX
+.PP
+.B rstudio_exec_t
+.EE
+
+- Set files with the rstudio_exec_t type, if you want to transition an executable to the rstudio_t domain.
+
+.br
+.TP 5
+Paths:
+/usr/lib/rstudio-server/bin/rworkspaces, /usr/lib/rstudio-server/bin/rstudio-launcher, /usr/lib/rstudio-server/bin/rstudio-local-launcher
+
+.EX
+.PP
+.B rstudio_server_exec_t
+.EE
+
+- Set files with the rstudio_server_exec_t type, if you want to transition an executable to the rstudio_server_t domain.
+
+.br
+.TP 5
+Paths:
+/usr/lib/rstudio-server/bin/rserver, /usr/lib/rstudio-server/bin/rstudio-server, /usr/lib/rstudio-server/bin/rserver-launcher
+
+.PP
+Note: File context can be temporarily modified with the chcon command.  If you want to permanently change the file context you need to use the
+.B semanage fcontext
+command.  This will modify the SELinux labeling database.  You will need to use
+.B restorecon
+to apply the labels.
+
+.SH "COMMANDS"
+.B semanage fcontext
+can also be used to manipulate default file context mappings.
+.PP
+.B semanage permissive
+can also be used to manipulate whether or not a process type is permissive.
+.PP
+.B semanage module
+can also be used to enable/disable/install/remove policy modules.
+
+.B semanage boolean
+can also be used to manipulate the booleans
+
+.PP
+.B system-config-selinux
+is a GUI tool available to customize SELinux policy settings.
+
+.SH AUTHOR
+This manual page was auto-generated using
+.B "sepolicy manpage".
+
+.SH "SEE ALSO"
+selinux(8), rstudio(8), semanage(8), restorecon(8), chcon(1), sepolicy(8), setsebool(8), rstudio_server_selinux(8), rstudio_server_selinux(8)
