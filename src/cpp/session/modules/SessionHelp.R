@@ -738,19 +738,19 @@ options(help_type = "html")
                                     subset = TRUE,
                                     getSignature = FALSE)
 {
-   # Ensure topic and package are not zero-length
+   # ensure topic and package are not zero-length
    if (!length(package))
       package <- ""
    
    if (!length(topic))
       topic <- ""
    
-   # Completions from the search path might have the 'package:' prefix.
-   # Let's strip that out.
+   # completions from the search path might have the 'package:' prefix;
+   # let's strip that out
    package <- sub("package:", "", package, fixed = TRUE)
    
-   # If the package is not provided, but we're getting help on e.g.
-   # 'stats::rnorm', then split up the topic into the appropriate pieces.
+   # if the package is not provided, but we're getting help on e.g.
+   # 'stats::rnorm', then split up the topic into the appropriate pieces
    if (package == "" && any(grepl(":{2,3}", topic, perl = TRUE)))
    {
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
@@ -758,7 +758,7 @@ options(help_type = "html")
       package <- splat[[1]]
    }
    
-   # Don't provide help for objects in the global environment.
+   # don't provide help for objects in the global environment
    if (identical(package, ".GlobalEnv"))
       return()
    
