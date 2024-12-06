@@ -745,8 +745,8 @@ options(help_type = "html")
    if (!length(topic))
       topic <- ""
    
-   # Completions from the search path might have the 'package:' prefix, so
-   # lets strip that out.
+   # Completions from the search path might have the 'package:' prefix.
+   # Let's strip that out.
    package <- sub("package:", "", package, fixed = TRUE)
    
    # If the package is not provided, but we're getting help on e.g.
@@ -757,6 +757,10 @@ options(help_type = "html")
       topic <- splat[[2]]
       package <- splat[[1]]
    }
+   
+   # Don't provide help for objects in the global environment.
+   if (identical(package, ".GlobalEnv"))
+      return()
    
    helpfiles <- .rs.tryCatch({
       call <- .rs.makeHelpCall(topic, if (nzchar(package)) package)
@@ -817,6 +821,12 @@ options(help_type = "html")
             Encoding(html) <- "UTF-8"
       }
    }
+   
+   # older releases of R may return HTML (notably, error pages) as
+   # a character vector with one line for each bit of output
+   #
+   # https://github.com/wch/r-source/commit/e22517c9036a2a06d8778b2a782d393224e355af
+   html <- paste(html, collapse = "\n")
    
    # try to extract HTML body
    match <- suppressWarnings(regexpr('<body>.*</body>', html))
