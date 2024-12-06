@@ -61,8 +61,8 @@ Select one of the three following options:
 
 Select or deselect one of the following options:
 
-- **Preview Images and Equations**
-- **Show Previews Inline**
+- **Preview Images and Equations**, will show markdown images and formatted equations in the editor
+- **Show Previews Inline**, when selected, outputs will be shown underneath the corresponding markdown, otherwise pop-ups will be shown when hovering over the markdown
 
 #### Control output of code chunks
 
