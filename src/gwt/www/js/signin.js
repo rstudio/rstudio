@@ -13,6 +13,9 @@
  *
  */
 
+// Crypto APIs.
+var subtle = window.crypto.subtle;
+
 // Global variable; tracks URL for sign-in response
 var responseURL = "";
 
@@ -25,6 +28,57 @@ var activeSignIn = false;
 function speakError() {
    document.getElementById("live-error").innerText = document.getElementById("errortext").innerText;
 }
+
+/**
+ * Encrypt a message, using the public RSA key 'key'.
+ */
+async function encrypt(input, key) {
+
+   // The provided key is in PEM format.
+   // We need to extract the inner key contents.
+   var pemHeader = "-----BEGIN PUBLIC KEY-----";  // pragma: allowlist secret
+   var pemFooter = "-----END PUBLIC KEY-----";    // pragma: allowlist secret
+   var keyContents = key
+      .replace(pemHeader, "")
+      .replace(pemFooter, "")
+      .replace(/\s+/g, "");
+
+   // Convert that into a Uint8Array.
+   var array = Uint8Array.from(
+      atob(keyContents),
+      function(ch) { return ch.charCodeAt(0); }
+   );
+
+   // Import the key.
+   // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey#subjectpublickeyinfo
+   var key = await subtle.importKey(
+      "spki",
+      array.buffer,
+      { name: "RSA-OAEP", hash: "SHA-256" },
+      true,
+      ["encrypt"]
+   );
+
+   // Encrypt our message, then invoke the provided callback.
+   var encoder = new TextEncoder('utf-8');
+   var message = await subtle.encrypt(
+      { name: "RSA-OAEP" },
+      key,
+      encoder.encode(input)
+   );
+
+   // Convert from array buffer to byte string.
+   var bytes = new Uint8Array(message);
+   var data = '';
+   for (var i = 0, n = bytes.length; i < n; i++) {
+      data += String.fromCharCode(bytes[i]);
+   }
+
+   // Return base64-encoded data.
+   return btoa(data);
+
+}
+
 
 /**
  * Verifies the sign-in form, returning true if sign in should proceed and false
@@ -134,17 +188,15 @@ function prepare() {
                   else
                      errorMessage = "Error: " + xhr.statusText;
                   showError(errorMessage);
-               }
-               else {
-                  var response = xhr.responseText;
-                  var chunks = response.split(':', 2);
-                  var exp = chunks[0];
-                  var mod = chunks[1];
-                  var encrypted = encrypt(payload, exp, mod);
-                  document.getElementById('persist').value = document.getElementById('staySignedIn').checked ? "1" : "0";
-                  document.getElementById('package').value = encrypted;
-                  document.getElementById('clientPath').value = window.location.pathname;
-                  document.realform.submit();
+               } else {
+                  var key = xhr.responseText;
+                  var encrypted = encrypt(payload, key);
+                  encrypted.then(function(encrypted) {
+                     document.getElementById('persist').value = document.getElementById('staySignedIn').checked ? "1" : "0";
+                     document.getElementById('package').value = encrypted;
+                     document.getElementById('clientPath').value = window.location.pathname;
+                     document.realform.submit();
+                  });
                }
             }
          } catch (exception) {

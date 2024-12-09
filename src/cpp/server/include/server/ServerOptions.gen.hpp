@@ -96,7 +96,7 @@ protected:
       "Indicates whether or not to enable AppArmor profiles for the rserver process.")
       ("server-set-umask",
       value<bool>(&serverSetUmask_)->default_value(true),
-      "If enabled, sets the rserver process umask to 022 on startup, which causes new files to have rw-r-r permissions.")
+      "If enabled, sets the rserver process umask to `022` on startup, which causes new files to have `rw-r--r--` permissions.")
       ("secure-cookie-key-file",
       value<std::string>(&secureCookieKeyFile_)->default_value(""),
       "If set, overrides the default path of the secure-cookie-key file used for encrypting cookies.")
