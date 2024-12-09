@@ -139,10 +139,10 @@ info <- as.list(Sys.info())
 str(info)
 writeLines("")
 
-# for root / jenkins, use site library
-#if (info[["user"]] %in% c("root", "jenkins") && length(.Library.site)) {
-#   .libPaths(.Library.site)
-#}
+# for root / jenkins on Linux, use site library
+if (info[["sysname"]] == "Linux" && info[["user"]] %in% c("root", "jenkins") && length(.Library.site)) {
+   .libPaths(.Library.site)
+}
 
 # notify user
 writeLines("# Library paths ----")
