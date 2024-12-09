@@ -140,9 +140,9 @@ str(info)
 writeLines("")
 
 # for root / jenkins, use site library
-if (info[["user"]] %in% c("root", "jenkins") && length(.Library.site)) {
-   .libPaths(.Library.site)
-}
+#if (info[["user"]] %in% c("root", "jenkins") && length(.Library.site)) {
+#   .libPaths(.Library.site)
+#}
 
 # notify user
 writeLines("# Library paths ----")
