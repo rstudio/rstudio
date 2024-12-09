@@ -2,7 +2,7 @@ def utils
 
 pipeline {
 
-  agent { label 'macos && arm64' }
+  agent { label 'macos && arm64 && temp' }
 
   options {
     // Timeout after no activity in the logs
