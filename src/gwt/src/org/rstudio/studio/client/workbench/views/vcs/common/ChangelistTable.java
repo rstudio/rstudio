@@ -151,13 +151,11 @@ public abstract class ChangelistTable extends Composite
       layout_.setWidgetTopBottom(scrollPanel_, 0, Unit.PX, 0, Unit.PX);
       layout_.setWidgetLeftRight(scrollPanel_, 0, Unit.PX, 0, Unit.PX);
       progressPanel_ = new ProgressPanel();
-      progressPanel_.getElement().getStyle().setBackgroundColor("white");
+      progressPanel_.getElement().getStyle().setBackgroundColor("transparent");
+      progressPanel_.setVisible(false);
       layout_.add(progressPanel_);
       layout_.setWidgetTopBottom(progressPanel_, 0, Unit.PX, 0, Unit.PX);
       layout_.setWidgetLeftRight(progressPanel_, 0, Unit.PX, 0, Unit.PX);
-
-      setProgress(true);
-
       initWidget(layout_);
    }
 
