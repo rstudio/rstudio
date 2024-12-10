@@ -152,8 +152,7 @@ public class TextEditingTargetCopilotHelper
                            Any result = response.result;
                            if (result == null)
                            {
-                              events_.fireEvent(
-                                    new CopilotEvent(CopilotEventType.COMPLETION_CANCELLED));
+                              events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_CANCELLED));
                               return;
                            }
                            

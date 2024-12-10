@@ -128,6 +128,20 @@ std::map<std::string, std::string> s_extToLanguageIdMap = {
    { ".yml",   "yaml" },
 };
 
+std::map<std::string, std::string> makeLanguageIdToExtMap()
+{
+   std::map<std::string, std::string> map;
+   for (auto&& entry : s_extToLanguageIdMap)
+      map[entry.second] = entry.first;
+   return map;
+}
+
+std::map<std::string, std::string>& languageIdToExtMap()
+{
+   static auto instance = makeLanguageIdToExtMap();
+   return instance;
+}
+
 struct CopilotRequest
 {
    std::string method;
@@ -288,7 +302,7 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    if (pDoc->isUntitled())
    {
       std::string type = pDoc->type();
-      return !type.empty();
+      return languageIdToExtMap().count(type);
    }
    
    FilePath docPath(pDoc->path());
