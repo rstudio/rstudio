@@ -425,6 +425,11 @@ public class TextEditingTargetCopilotHelper
       return text;
    }
    
+   public void onFileTypeChanged()
+   {
+      copilotDisabledInThisDocument_ = false;
+   }
+   
    @Inject
    private void initialize(Copilot copilot,
                            EventBus events,
