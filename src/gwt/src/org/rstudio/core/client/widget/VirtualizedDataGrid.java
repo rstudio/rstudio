@@ -179,7 +179,7 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       
       if (changed)
       {
-         redraw();
+         super.redraw();
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             @Override
