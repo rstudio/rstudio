@@ -84,7 +84,7 @@ public class GitState extends VcsState
 
    public void refresh(final boolean showError, final Command onCompleted)
    {
-      server_.gitAllStatus(new ServerRequestCallback<AllStatus>()
+      server_.gitAllStatus(false, new ServerRequestCallback<AllStatus>()
       {
          @Override
          public void onResponseReceived(AllStatus response)
@@ -104,6 +104,26 @@ public class GitState extends VcsState
             if (showError)
                globalDisplay_.showErrorMessage(constants_.errorCapitalized(),
                                                error.getUserMessage());
+         }
+      });
+   }
+   
+   public void refreshMinimal()
+   {
+      server_.gitAllStatus(true, new ServerRequestCallback<AllStatus>()
+      {
+         @Override
+         public void onResponseReceived(AllStatus response)
+         {
+            branches_ = response.getBranches();
+            remoteBranchInfo_ = response.getRemoteBranchInfo();
+            handlers_.fireEvent(new VcsRefreshEvent(Reason.VcsOperation));
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
          }
       });
    }
