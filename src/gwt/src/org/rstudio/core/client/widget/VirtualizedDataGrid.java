@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 
 import com.google.gwt.core.client.GWT;
@@ -21,6 +22,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -152,17 +154,34 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
    @Override
    protected boolean resetFocusOnCell()
    {
-      // normally, when a DataGrid is re-drawn, it
-      // will also attempt to restore focus such that
-      // the previously selected cell is placed into view;
-      // we override this method to avoid that behavior
+      // Normally, when a DataGrid is re-drawn, it will also attempt to restore
+      // focus to any previously-focused cell.
+      //
+      // However, this also causes the currently selected cell to scroll into
+      // view, which we don't necessarily want -- especially if the user is
+      // currently scrolling the view away from an element with focus.
+      //
+      // To avoid this issue, we handle the focus reset ourselves,
+      // explicitly preventing the scroll on focus.
+      Element el = getKeyboardSelectedElement();
+      if (el != null)
+         DomUtils.setFocus(el, true);
+      
+      // Return 'true' to indicate our override handled the focus reset.
       return true;
    }
    
    @Override
    public void redraw()
    {
-      updateActiveRows();
+      redraw(true);
+   }
+   
+   private void redraw(boolean update)
+   {
+      if (update)
+         updateActiveRows();
+      
       super.redraw();
    }
    
@@ -170,7 +189,6 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
    {
       int oldFirstActiveRow = firstActiveRow_;
       int oldLastActiveRow = lastActiveRow_;
-      
       updateActiveRows();
       
       boolean changed =
@@ -179,7 +197,7 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       
       if (changed)
       {
-         super.redraw();
+         redraw(false);
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             @Override

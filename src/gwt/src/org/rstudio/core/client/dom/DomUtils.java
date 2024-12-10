@@ -77,6 +77,13 @@ public class DomUtils
    public static native Element getActiveElement() /*-{
       return $doc.activeElement;
    }-*/;
+   
+   public static native void setFocus(Element el, boolean preventScroll)
+   /*-{
+      el.focus({
+         preventScroll: preventScroll
+      });
+   }-*/;
 
    /**
     * In IE8, focusing the history table (which is larger than the scroll
