@@ -580,6 +580,7 @@ public class TextEditingTargetReformatHelper
       // encountered.
       boolean rootState = parenNestLevel == 0 && opener.isEmpty();
       
+      boolean sawComment = false;
       boolean newlineAfterComma = false;
       boolean newlineAfterBrace = false;
       
@@ -611,11 +612,13 @@ public class TextEditingTargetReformatHelper
       // Accumulate the length of the (non-whitespace)
       // tokens within this scope.
       int accumulatedLength = 0;
-      
       while (clone.moveToNextToken())
       {
          if (clone.isComment())
+         {
+            sawComment = true;
             continue;
+         }
          
          accumulatedLength += clone.getValue().replaceAll("\\s", "").length();
          
@@ -770,7 +773,31 @@ public class TextEditingTargetReformatHelper
              commaScore +
              equalsScore +
              braceNestLevel * docDisplay_.getTabSize() >= 60)
+         {
             newlineAfterComma = true;
+         }
+         
+         // If we saw a comment, we want to ensure newlines after '('
+         // and before ')' -- otherwise, we could end up collapsing
+         // or joining code that makes a token become part of a line
+         // comment, e.g. in
+         //
+         //    c(1 #2
+         //    )
+         //
+         // In this scenario, we choose to reformat as
+         //
+         //    c(
+         //      1 #2
+         //    )
+         //
+         // See also: https://github.com/rstudio/rstudio/issues/5425
+         if (sawComment)
+         {
+            newlineAfterComma = true;
+            newlineAfterBrace = true;
+            parenNestLevel = 0;
+         }
       }
       
       // If the previous token is a control-flow keyword, override the
