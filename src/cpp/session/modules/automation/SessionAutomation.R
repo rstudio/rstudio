@@ -213,18 +213,30 @@
 
 .rs.addFunction("automation.applicationPathServer", function()
 {
+   # Hard-coded path for macOS.
    if (.rs.platform.isMacos)
+      return("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+   
+   # Hard-coded path for Windows.
+   if (.rs.platform.isWindows)
+      return("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe")
+   
+   # Otherwise, look for compatible browsers on the PATH.
+   browsers <- c("chromium", "google-chrome")
+   for (browser in browsers)
    {
-      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+      exe <- Sys.which(browser)
+      if (nzchar(exe))
+         return(exe)
    }
-   else if (.rs.platform.isWindows)
-   {
-      "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"
-   }
-   else
-   {
-      Sys.which("chromium")
-   }
+   
+   msg <- paste(
+      "No compatible browser application was found.",
+      "Please install Google Chrome or Chromium as appropriate."
+   )
+   
+   stop(msg)
+   
 })
 
 .rs.addFunction("automation.applicationPathDesktop", function()
@@ -460,6 +472,17 @@
       )
    )
    
+   # On Linux, try to make sure we're using an existing display.
+   if (.rs.platform.isLinux)
+   {
+      displays <- list.files("/tmp/.X11-unix")
+      if (length(displays))
+      {
+         display <- chartr("X", ":", displays[[1L]])
+         envVars[["DISPLAY"]] <- display
+      }
+   }
+   
    # Start up RStudio (or Chrome in "server" mode).
    process <- withr::with_envvar(envVars, {
       .rs.alog('
@@ -467,7 +490,7 @@
          - appPath: %s
          - args:    %s
       ', appPath, paste(args, collapse = " "))
-      processx::process$new(appPath, args)
+      processx::process$new(appPath, args, stdout = "|", stderr = "|")
    })
    
    .rs.alog("Waiting for application to start.")

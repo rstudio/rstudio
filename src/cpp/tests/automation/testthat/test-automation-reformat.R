@@ -21,3 +21,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_equal(contents, "1 + 1\n2 + 2\n")
    
 })
+
+.rs.test("https://github.com/rstudio/rstudio/issues/5425", {
+   
+})
