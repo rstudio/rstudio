@@ -135,7 +135,8 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
          @Override
          public void onScroll(ScrollEvent event)
          {
-            redrawTimer_.schedule(300);
+            if (!redrawTimer_.isRunning())
+               redrawTimer_.schedule(200);
          }
       });
       
