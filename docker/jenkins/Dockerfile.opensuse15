@@ -49,6 +49,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     R \
     rpm-build \
     sqlite3-devel \
+    selinux-policy-devel \
     sudo \
     tar \
     unzip \

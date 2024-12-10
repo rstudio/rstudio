@@ -33,6 +33,7 @@ sudo yum install -y bzip2-devel
 sudo yum install -y zlib-devel
 sudo yum install -y pam-devel
 sudo yum install -y libuser-devel
+sudo yum install -y selinux-policy-devel
 
 # pandoc dependencies
 sudo yum install -y libffi

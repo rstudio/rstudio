@@ -37,7 +37,7 @@ RUN apt-get update && \
     libfuse2 \
     libgl1-mesa-dev \
     libgtk-3-0 \
-    libjpeg-dev \ 
+    libjpeg-dev \
     libpam-dev \
     libpango1.0-dev \
     libpng-dev\
@@ -56,6 +56,7 @@ RUN apt-get update && \
     python3-dev \
     python-is-python3 \
     r-base \
+    selinux-policy-dev \
     sudo \
     unzip \
     uuid-dev \

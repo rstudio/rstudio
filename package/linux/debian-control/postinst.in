@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # errors shouldn't cause script to exit
-set +e 
+set +e
 
 # add rserver user account
 useradd -r -U rstudio-server
@@ -71,6 +71,16 @@ then
    fi
 fi
 
+# install SELinux policy if the `semodule` tool is available
+if command -v semodule > /dev/null; then
+  semodule -n -i /usr/share/selinux/packages/rstudio.pp
+
+  if /usr/sbin/selinuxenabled; then
+    /usr/sbin/load_policy
+    restorecon -R ${CMAKE_INSTALL_PREFIX}/bin/rstudio* ${CMAKE_INSTALL_PREFIX}/bin/rworkspace* ${CMAKE_INSTALL_PREFIX}/bin/rserver*
+  fi
+fi
+
 # determine which init system is in use
 # a variation on:
 # https://wiki.ubuntu.com/SystemdForUpstartUsers#How_to_identify_which_init_system_you_are_currently_booting_with
@@ -90,7 +100,7 @@ if test "$INIT_SYSTEM" = "systemd"
 then
    systemctl stop rstudio-server.service 2>/dev/null
    systemctl disable rstudio-server.service 2>/dev/null
-  
+
    if test -e /lib/systemd
    then
       SYSTEMD_PREFIX="/lib/systemd"
@@ -99,7 +109,7 @@ then
    fi
 
    cp ${CMAKE_INSTALL_PREFIX}/extras/systemd/rstudio-server.service $${EMPTY}{SYSTEMD_PREFIX}/system/rstudio-server.service
-  
+
    systemctl daemon-reload
    systemctl enable rstudio-server.service
    $RSERVER_ADMIN_SCRIPT start

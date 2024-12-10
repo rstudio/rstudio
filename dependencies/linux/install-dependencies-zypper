@@ -33,6 +33,7 @@ sudo zypper --non-interactive in libopenssl-devel
 sudo zypper --non-interactive in libpq-devel
 sudo zypper --non-interactive in libsqlite-devel
 sudo zypper --non-interactive in pam-devel
+sudo zypper --non-interactive in selinux-policy-devel
 
 # boost
 sudo zypper --non-interactive in boost-devel

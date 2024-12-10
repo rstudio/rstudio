@@ -54,3 +54,8 @@ rstudio-automation-results.xml
 
 venv/
 .venv/
+
+rstudio.pp
+rstudio.fc
+package/linux/selinux/tmp
+

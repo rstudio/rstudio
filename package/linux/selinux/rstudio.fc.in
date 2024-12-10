@@ -1,0 +1,7 @@
+@CMAKE_INSTALL_PREFIX@/bin/rstudio-launcher        -- gen_context(system_u:object_r:rstudio_exec_t,s0)
+@CMAKE_INSTALL_PREFIX@/bin/rstudio-local-launcher  -- gen_context(system_u:object_r:rstudio_exec_t,s0)
+@CMAKE_INSTALL_PREFIX@/bin/rworkspaces             -- gen_context(system_u:object_r:rstudio_exec_t,s0)
+@CMAKE_INSTALL_PREFIX@/bin/rserver                 -- gen_context(system_u:object_r:rstudio_server_exec_t,s0)
+@CMAKE_INSTALL_PREFIX@/bin/rserver-launcher        -- gen_context(system_u:object_r:rstudio_server_exec_t,s0)
+@CMAKE_INSTALL_PREFIX@/bin/rstudio-server          -- gen_context(system_u:object_r:rstudio_server_exec_t,s0)
+
