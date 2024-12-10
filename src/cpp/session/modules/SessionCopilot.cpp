@@ -284,6 +284,13 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    if (pDoc->contents().find('\0') != std::string::npos)
       return false;
    
+   // Allow indexing of Untitled documents if they have a known type.
+   if (pDoc->isUntitled())
+   {
+      std::string type = pDoc->type();
+      return !type.empty();
+   }
+   
    FilePath docPath(pDoc->path());
    return isIndexableFile(docPath);
 }
@@ -1547,7 +1554,14 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    bool isUntitled;
    int cursorRow, cursorColumn;
 
-   Error error = core::json::readParams(request.params, &documentId, &documentPath, &isUntitled, &cursorRow, &cursorColumn);
+   Error error = core::json::readParams(
+            request.params,
+            &documentId,
+            &documentPath,
+            &isUntitled,
+            &cursorRow,
+            &cursorColumn);
+   
    if (error)
    {
       LOG_ERROR(error);
@@ -1557,7 +1571,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    // Disallow completion request in hidden files, since this might trigger
    // the copilot agent to attempt to read the contents of that file
    FilePath docPath = module_context::resolveAliasedPath(documentPath);
-   if (!isIndexableFile(docPath))
+   if (!isUntitled && !isIndexableFile(docPath))
    {
       json::Object resultJson;
       resultJson["enabled"] = false;
