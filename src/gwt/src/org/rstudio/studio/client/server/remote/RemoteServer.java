@@ -2911,9 +2911,12 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void gitAllStatus(ServerRequestCallback<AllStatus> requestCallback)
+   public void gitAllStatus(boolean minimal,
+                            ServerRequestCallback<AllStatus> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GIT_ALL_STATUS, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(minimal));
+      sendRequest(RPC_SCOPE, GIT_ALL_STATUS, params, requestCallback);
    }
 
    @Override

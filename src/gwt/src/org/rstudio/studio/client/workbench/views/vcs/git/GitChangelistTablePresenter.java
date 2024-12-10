@@ -97,6 +97,18 @@ public class GitChangelistTablePresenter
    {
       return view_;
    }
+   
+   public void refresh(boolean minimal)
+   {
+      if (minimal)
+      {
+         gitState_.refreshMinimal();
+      }
+      else
+      {
+         gitState_.refresh(false);
+      }
+   }
 
    private final GitServerOperations server_;
    private final GitChangelistTable view_;

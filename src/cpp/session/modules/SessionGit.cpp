@@ -1847,13 +1847,21 @@ Error vcsFullStatus(const json::JsonRpcRequest&,
 Error vcsAllStatus(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
+   bool minimal = false;
+   Error error = json::readParams(request.params, &minimal);
+   if (error)
+      LOG_ERROR(error);
+
    json::Object result;
    json::JsonRpcResponse tmp;
 
-   Error error = vcsFullStatus(request, &tmp);
-   if (error)
-      return error;
-   result["status"] = tmp.result();
+   if (!minimal)
+   {
+      error = vcsFullStatus(request, &tmp);
+      if (error)
+         return error;
+      result["status"] = tmp.result();
+   }
 
    error = vcsListBranches(request, &tmp);
    if (error)
