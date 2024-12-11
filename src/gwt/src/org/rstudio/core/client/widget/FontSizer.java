@@ -86,11 +86,7 @@ public class FontSizer
    {
       if (height == null || height == 0)
       {
-         return getNormalLineHeight();
-      }
-      else if (height < 8)
-      {
-         return height * 100;
+         return getNormalLineHeight() * 100.0;
       }
       else
       {

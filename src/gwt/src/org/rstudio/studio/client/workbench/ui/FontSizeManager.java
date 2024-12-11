@@ -55,6 +55,7 @@ public class FontSizeManager
          public void execute(Double value)
          {
             lineHeight_ = normalizeHeight(value);
+            events_.fireEvent(new ChangeFontSizeEvent(fontSize_, lineHeight_));
          }
       });
    }
@@ -64,11 +65,12 @@ public class FontSizeManager
       return value == null ? FONT_SIZE_DEFAULT : value;
    }
    
+   // NOTE: returns line height as a percentage, not a ratio!
    private double normalizeHeight(Double value)
    {
       if (value == null || value == 0.0)
       {
-         return FontSizer.getNormalLineHeight();
+         return FontSizer.getNormalLineHeight() * 100.0;
       }
       else
       {
