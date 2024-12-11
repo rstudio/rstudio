@@ -151,15 +151,19 @@ public class AppearancePreferencesPane extends PreferencesPane
                  zoomLabels,
                  ZOOM_VALUES,
                  false);
+         zoomLevel_.getListBox().setWidth("95%");
          zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
 
-         if (BrowseCap.isElectron()) {
+         if (BrowseCap.isElectron())
+         {
             Desktop.getFrame().getZoomLevel(zoomLevel ->
             {
                int initialIndex = getInitialZoomIndex(zoomLevel);
                zoomLevel_.getListBox().setSelectedIndex(initialIndex);
             });
-         } else {
+         }
+         else
+         {
             int initialIndex = getInitialZoomIndex(currentZoomLevel);
             zoomLevel_.getListBox().setSelectedIndex(initialIndex);
             initialZoomLevel_ = ZOOM_VALUES[initialIndex];
@@ -271,6 +275,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       helpFontSize_.setValue(String.valueOf(helpFontSize));
       
       LayoutGrid editorGrid = new LayoutGrid(3, 2);
+      editorGrid.setWidth("100%");
       editorGrid.setWidget(0, 0, new Label(constants_.appearanceEditorFontSizeLabel()));
       editorGrid.setWidget(0, 1, editorFontSize_);
       editorGrid.setWidget(1, 0, new Label(constants_.appearanceEditorLineHeightLabel()));
@@ -290,6 +295,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             },
             false);
       
+      textRendering_.getListBox().setWidth("95%");
       textRendering_.setValue(userPrefs_.textRendering().getGlobalValue());
       textRendering_.getListBox().addChangeHandler(new ChangeHandler()
       {
