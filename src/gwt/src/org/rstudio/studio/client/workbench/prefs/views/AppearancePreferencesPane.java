@@ -82,9 +82,9 @@ public class AppearancePreferencesPane extends PreferencesPane
    
    private static class NumericInput extends NumericTextBox
    {
-      public NumericInput(int min, int max)
+      public NumericInput(Integer min, Integer max, Integer step)
       {
-         super(min, max);
+         super(min, max, step);
          setWidth("40px");
          getElement().addClassName(ModalDialogBase.ALLOW_ENTER_KEY_CLASS);
       }
@@ -230,7 +230,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       if (fontSize == 0.0)
          fontSize = 10.0;
       
-      editorFontSize_ = new NumericInput(6, 72);
+      editorFontSize_ = new NumericInput(6, 72, null);
       editorFontSize_.setValue(String.valueOf(fontSize));
       editorFontSize_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
@@ -245,7 +245,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       if (lineHeight == 0.0)
          lineHeight = 140.0;
       
-      editorLineHeight_ = new NumericInput(25, 400);
+      editorLineHeight_ = new NumericInput(20, 400, 10);
       editorLineHeight_.setValue(String.valueOf(lineHeight));
       editorLineHeight_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
@@ -260,7 +260,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       if (helpFontSize == 0.0)
          helpFontSize = 10.0;
       
-      helpFontSize_ = new NumericInput(6, 72);
+      helpFontSize_ = new NumericInput(6, 72, null);
       helpFontSize_.setValue(String.valueOf(helpFontSize));
       
       LayoutGrid editorGrid = new LayoutGrid(3, 2);
