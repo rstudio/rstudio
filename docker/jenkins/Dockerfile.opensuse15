@@ -1,11 +1,12 @@
 ARG ARCH=amd64
-FROM --platform=linux/$ARCH opensuse/leap:15.5
+FROM --platform=linux/$ARCH opensuse/leap:15.6
 ARG ARCH
 
 ENV OPERATING_SYSTEM=opensuse_leap15
 
 # refresh repos and install required packages
-RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
+RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/devel:gcc/15.6/devel:gcc.repo && \
+    zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
     clang \
@@ -15,6 +16,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     freetype-devel  \
     gcc \
     gcc-c++ \
+    gcc10 \
+    gcc10-c++ \
     gdb \
     git \
     java-11-openjdk-devel \
@@ -32,6 +35,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libjpeg-devel \
     libopenssl-devel \
     libpng-devel  \
+    libstdc++6-devel \
     libtiff-devel  \
     libuuid-devel \
     libxml2-devel \
@@ -62,6 +66,10 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
 # use python3.11; the default is python 3.6 which is too old for node-gyp
 RUN rm /usr/bin/python3
 RUN ln /usr/bin/python3.11 /usr/bin/python3
+
+# use gcc10
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools
