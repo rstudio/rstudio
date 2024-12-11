@@ -711,10 +711,6 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       RestartRequirement restartRequirement = super.onApply(rPrefs);
 
-      double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
-      if (helpFontSize != initialHelpFontSize_)
-         userPrefs_.helpFontSizePoints().setGlobalValue(helpFontSize);
-
       if (relaunchRequired_)
          restartRequirement.setUiReloadRequired(true);
       
@@ -731,12 +727,25 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       double fontSize = Double.parseDouble(editorFontSize_.getValue());
       if (fontSize != initialEditorFontSize_)
+      {
          userPrefs_.fontSizePoints().setGlobalValue(fontSize);
+         initialEditorFontSize_ = fontSize;
+      }
       
       double lineHeight = Double.parseDouble(editorLineHeight_.getValue());
       if (lineHeight != initialEditorLineHeight_)
+      {
          userPrefs_.editorLineHeight().setGlobalValue(lineHeight);
+         initialEditorLineHeight_ = lineHeight;
+      }
       
+      double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
+      if (helpFontSize != initialHelpFontSize_)
+      {
+         userPrefs_.helpFontSizePoints().setGlobalValue(helpFontSize);
+         initialEditorFontSize_ = helpFontSize;
+      }
+
       if (!StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
       {
          userState_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
