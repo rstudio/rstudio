@@ -78,6 +78,8 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
 
       table_ = changelistTablePresenter.getView();
       table_.addStyleName("ace_editor_theme");
+      
+      presenter_ = changelistTablePresenter;
 
       if (Desktop.isDesktop())
       {
@@ -192,12 +194,19 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
 
       return toolbar;
    }
+   
+   @Override
+   public void onBeforeSelected()
+   {
+      boolean minimal = !prefs_.vcsAutorefresh().getValue();
+      presenter_.refresh(minimal);
+   }
 
    @Override
    public void onSelected()
    {
-      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
          @Override
          public void execute()
          {
@@ -309,15 +318,16 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
    private ToolbarButton pushButton_;
    private ToolbarButton refreshButton_;
 
-   @SuppressWarnings("unused")
    private final GitServerOperations server_;
    private final Commands commands_;
    @SuppressWarnings("unused")
    private final GlobalDisplay display_;
    private final UserPrefs prefs_;
 
+   private final GitChangelistTable table_;
+   private final GitChangelistTablePresenter presenter_;
    private final CheckoutBranchToolbarButton switchBranchToolbarButton_;
    private final CreateBranchToolbarButton createBranchToolbarButton_;
-   private final GitChangelistTable table_;
+   
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }
