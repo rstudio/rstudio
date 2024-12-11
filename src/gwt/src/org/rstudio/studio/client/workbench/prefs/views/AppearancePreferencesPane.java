@@ -27,9 +27,13 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.FontDetector;
+import org.rstudio.core.client.widget.LayoutGrid;
+import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
@@ -57,11 +61,14 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
@@ -72,6 +79,16 @@ public class AppearancePreferencesPane extends PreferencesPane
            "1.00", "1.10", "1.25", "1.50", "1.75",
            "2.00", "2.50", "3.00", "4.00", "5.00"
    };
+   
+   private static class NumericInput extends NumericTextBox
+   {
+      public NumericInput(int min, int max)
+      {
+         super(min, max);
+         setWidth("40px");
+         getElement().addClassName(ModalDialogBase.ALLOW_ENTER_KEY_CLASS);
+      }
+   }
 
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
@@ -103,13 +120,14 @@ public class AppearancePreferencesPane extends PreferencesPane
       @SuppressWarnings("unused")
       final String originalTheme = userPrefs_.globalTheme().getValue();
 
-      flatTheme_ = new SelectWidget(constants_.appearanceRStudioThemeLabel(),
-                                new String[]{constants_.modernThemeLabel(), constants_.skyThemeLabel()},
-                                new String[]{
-                                      UserPrefs.GLOBAL_THEME_DEFAULT,
-                                      UserPrefs.GLOBAL_THEME_ALTERNATE
-                                    },
-                                false);
+      flatTheme_ = new SelectWidget(
+            constants_.appearanceRStudioThemeLabel(),
+            new String[]{constants_.modernThemeLabel(), constants_.skyThemeLabel()},
+            new String[]{
+                  UserPrefs.GLOBAL_THEME_DEFAULT,
+                  UserPrefs.GLOBAL_THEME_ALTERNATE
+            },
+            false);
       flatTheme_.addStyleName(res.styles().themeChooser());
       flatTheme_.getListBox().setWidth("95%");
 
@@ -191,7 +209,6 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       initialFontFace_ = StringUtil.notNull(fontFace_.getValue());
 
-      leftPanel.add(fontFace_);
       fontFace_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -209,34 +226,51 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
 
-      String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
-      String[] values = new String[labels.length];
-      for (int i = 0; i < labels.length; i++)
-         values[i] = Double.parseDouble(labels[i]) + "";
-
-      fontSize_ = new SelectWidget(constants_.appearanceEditorFontSizeLabel(),
-                                   labels,
-                                   values,
-                                   false);
-      fontSize_.getListBox().setWidth("95%");
-      if (!fontSize_.setValue(userPrefs.fontSizePoints().getGlobalValue() + ""))
-         fontSize_.getListBox().setSelectedIndex(3);
-      fontSize_.getListBox().addChangeHandler(new ChangeHandler()
+      Double fontSize = userPrefs.fontSizePoints().getValue();
+      if (fontSize == 0.0)
+         fontSize = 10.0;
+      
+      editorFontSize_ = new NumericInput(6, 72);
+      editorFontSize_.setValue(String.valueOf(fontSize));
+      editorFontSize_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
-         public void onChange(ChangeEvent event)
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
          {
-            preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
+            preview_.setFontSize(Double.parseDouble(editorFontSize_.getValue()));
          }
       });
       
-      helpFontSize_ = new SelectWidget(constants_.helpFontSizeLabel(),
-                                       labels,
-                                       values,
-                                       false); /* Multi select */
-      helpFontSize_.getListBox().setWidth("95%");
-      if (!helpFontSize_.setValue(userPrefs.helpFontSizePoints().getValue() + ""))
-         helpFontSize_.getListBox().setSelectedIndex(3);
-
+      Double lineHeight = userPrefs.editorLineHeight().getValue();
+      if (lineHeight == 0.0)
+         lineHeight = 140.0;
+      
+      editorLineHeight_ = new NumericInput(25, 400);
+      editorLineHeight_.setValue(String.valueOf(lineHeight));
+      editorLineHeight_.addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            preview_.setLineHeight(Double.parseDouble(editorLineHeight_.getValue()));
+         }
+      });
+      
+      Double helpFontSize = userPrefs.helpFontSizePoints().getValue();
+      if (helpFontSize == 0.0)
+         helpFontSize = 10.0;
+      
+      helpFontSize_ = new NumericInput(6, 72);
+      helpFontSize_.setValue(String.valueOf(helpFontSize));
+      
+      LayoutGrid editorGrid = new LayoutGrid(3, 2);
+      editorGrid.setWidget(0, 0, new Label(constants_.appearanceEditorFontSizeLabel()));
+      editorGrid.setWidget(0, 1, editorFontSize_);
+      editorGrid.setWidget(1, 0, new Label(constants_.appearanceEditorLineHeightLabel()));
+      editorGrid.setWidget(1, 1, editorLineHeight_);
+      editorGrid.setWidget(2, 0, new Label(constants_.helpFontSizeLabel()));
+      editorGrid.setWidget(2, 1, helpFontSize_);
+      
       textRendering_ = new SelectWidget(
             constants_.textRenderingLabel(),
             new String[] {
@@ -261,10 +295,11 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
 
-      theme_ = new SelectWidget(constants_.appearanceEditorThemeLabel(),
-                                new String[0],
-                                new String[0],
-                                false);
+      theme_ = new SelectWidget(
+            constants_.appearanceEditorThemeLabel(),
+            new String[0],
+            new String[0],
+            false);
       
       theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
       theme_.getListBox().getElement().getStyle().setHeight(themeSelectorHeight(), Unit.PX);
@@ -327,8 +362,9 @@ public class AppearancePreferencesPane extends PreferencesPane
       buttonPanel.add(removeThemeButton_);
 
       leftPanel.add(textRendering_);
-      leftPanel.add(fontSize_);
-      leftPanel.add(helpFontSize_);
+      leftPanel.add(fontFace_);
+      leftPanel.add(editorGrid);
+      leftPanel.add(new VerticalSpacer("12px"));
       leftPanel.add(theme_);
       leftPanel.add(buttonPanel);
 
@@ -340,7 +376,8 @@ public class AppearancePreferencesPane extends PreferencesPane
       preview_ = new AceEditorPreview(RES.codeSample().getText());
       preview_.setWidth(previewWidth + "px");
       preview_.setHeight(previewHeight + "px");
-      preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
+      preview_.setFontSize(Double.parseDouble(editorFontSize_.getValue()));
+      preview_.setLineHeight(Double.parseDouble(editorLineHeight_.getValue()));
       preview_.setTheme(currentTheme.getUrl());
       updatePreviewZoomLevel();
       previewPanel.add(preview_);
@@ -368,11 +405,11 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       if (Desktop.isDesktop())
       {
-         return 200;
+         return 160;
       }
       else
       {
-         return 250;
+         return 200;
       }
    }
 
@@ -687,8 +724,12 @@ public class AppearancePreferencesPane extends PreferencesPane
          userPrefs_.globalTheme().setGlobalValue(themeName, false);
       }
 
-      double fontSize = Double.parseDouble(fontSize_.getValue());
+      double fontSize = Double.parseDouble(editorFontSize_.getValue());
       userPrefs_.fontSizePoints().setGlobalValue(fontSize);
+      
+      double lineHeight = Double.parseDouble(editorLineHeight_.getValue());
+      userPrefs_.editorLineHeight().setGlobalValue(lineHeight);
+      
       if (!StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
       {
          userState_.theme().setGlobalValue(themeList_.get(theme_.getValue()));
@@ -846,9 +887,10 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    private final UserPrefs userPrefs_;
    private final UserState userState_;
-   private SelectWidget helpFontSize_;
-   private SelectWidget fontSize_;
    private SelectWidget textRendering_;
+   private NumericTextBox editorFontSize_;
+   private NumericTextBox editorLineHeight_;
+   private NumericTextBox helpFontSize_;
    private SelectWidget theme_;
    private ThemedButton addThemeButton_;
    private ThemedButton removeThemeButton_;

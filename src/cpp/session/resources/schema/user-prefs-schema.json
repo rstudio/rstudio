@@ -637,6 +637,12 @@
             "title": "Editor font size (points)",
             "description": "The default editor font size, in points."
         },
+        "editor_line_height": {
+            "type": "number",
+            "default": 1.0,
+            "title": "Editor line height",
+            "description": "The editor line height, as a ratio of the font size."
+        },
         "help_font_size_points": {
             "type": "number",
             "default": 10.0,

@@ -80,6 +80,7 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -700,6 +701,11 @@ public class AceEditorWidget extends Composite
          editor_.getRenderer().updateFontSize();
          editor_.getRenderer().forceImmediateRender();
       }
+   }
+   
+   public void setLineHeight(double lineHeightPct)
+   {
+      getElement().getStyle().setLineHeight(lineHeightPct, Unit.PCT);
    }
 
    public void setCode(String code)

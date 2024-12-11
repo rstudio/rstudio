@@ -14,6 +14,9 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.TextBox;
 
 public class NumericTextBox extends TextBox
@@ -22,17 +25,39 @@ public class NumericTextBox extends TextBox
    public NumericTextBox()
    {
       super();
+      
       getElement().setAttribute("type", "number");
+      
+      addDomHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(KeyDownEvent event)
+         {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+            {
+               event.stopPropagation();
+               event.preventDefault();
+               setFocus(false);
+            }
+         }
+      }, KeyDownEvent.getType());
+   }
+   
+   public NumericTextBox(int min, int max)
+   {
+      this();
+      setMin(min);
+      setMax(max);
+   }
+   
+   public void setMin(int min)
+   {
+      getElement().setAttribute("min", String.valueOf(min));
    }
 
    public void setMax(int max)
    {
       getElement().setAttribute("max", String.valueOf(max));
-   }
-
-   public void setMin(int min)
-   {
-      getElement().setAttribute("min", String.valueOf(min));
    }
 
    @Override
