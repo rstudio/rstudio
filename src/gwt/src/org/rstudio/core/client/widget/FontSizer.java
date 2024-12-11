@@ -15,7 +15,6 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -24,38 +23,18 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.UIObject;
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 
 public class FontSizer
 {
-   public static void initialize(UserPrefs prefs)
-   {
-      double lineHeight = prefs.editorLineHeight().getGlobalValue();
-      if (lineHeight != 0.0)
-         updateLineHeight(Document.get(), lineHeight);
-      
-      prefs.editorLineHeight().bind((Double height) ->
-      {
-         updateLineHeight(Document.get(), height);
-      });
-   }
-   
    public static void ensureStylesInjected()
    {
       Element style = Document.get().getElementById(RSTUDIO_NORMAL_SIZE_ID);
       if (style == null)
-      {
-         style = Document.get().createStyleElement();
-         style.setId(RSTUDIO_NORMAL_SIZE_ID);
-         style.setAttribute("type", "text/css");
-         style.setInnerText(styles.getText());
-         Document.get().getBody().appendChild(style);
-      }
+         injectStylesIntoDocument(Document.get());
    }
 
    public static void injectStylesIntoDocument(Document doc)
