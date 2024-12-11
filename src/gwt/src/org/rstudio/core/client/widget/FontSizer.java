@@ -61,9 +61,10 @@ public class FontSizer
       return styles.normalSize();
    }
    
+   // NOTE: Returns requested line height as a percentage value.
    private static final double normalizeHeight(Double height)
    {
-      if (height == null || height == 0)
+      if (height == null || height == 0.0)
       {
          return getNormalLineHeight() * 100.0;
       }

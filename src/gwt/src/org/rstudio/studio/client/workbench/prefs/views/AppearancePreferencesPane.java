@@ -27,6 +27,7 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.FontDetector;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.NumericTextBox;
@@ -122,8 +123,11 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       flatTheme_ = new SelectWidget(
             constants_.appearanceRStudioThemeLabel(),
-            new String[]{constants_.modernThemeLabel(), constants_.skyThemeLabel()},
-            new String[]{
+            new String[] {
+                  constants_.modernThemeLabel(),
+                  constants_.skyThemeLabel()
+            },
+            new String[] {
                   UserPrefs.GLOBAL_THEME_DEFAULT,
                   UserPrefs.GLOBAL_THEME_ALTERNATE
             },
@@ -230,6 +234,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       if (fontSize == 0.0)
          fontSize = 10.0;
       
+      initialEditorFontSize_ = fontSize;
       editorFontSize_ = new NumericInput(6, 72, null);
       editorFontSize_.setValue(String.valueOf(fontSize));
       editorFontSize_.addValueChangeHandler(new ValueChangeHandler<String>()
@@ -242,9 +247,10 @@ public class AppearancePreferencesPane extends PreferencesPane
       });
       
       Double lineHeight = userPrefs.editorLineHeight().getValue();
-      if (lineHeight == 0.0)
-         lineHeight = 140.0;
+      if (lineHeight == null || lineHeight == 0.0)
+         lineHeight = (double) Math.round(FontSizer.getNormalLineHeight() * 100.0);
       
+      initialEditorLineHeight_ = lineHeight;
       editorLineHeight_ = new NumericInput(20, 400, 10);
       editorLineHeight_.setValue(String.valueOf(lineHeight));
       editorLineHeight_.addValueChangeHandler(new ValueChangeHandler<String>()
@@ -257,9 +263,10 @@ public class AppearancePreferencesPane extends PreferencesPane
       });
       
       Double helpFontSize = userPrefs.helpFontSizePoints().getValue();
-      if (helpFontSize == 0.0)
+      if (helpFontSize == null || helpFontSize == 0.0)
          helpFontSize = 10.0;
       
+      initialHelpFontSize_ = helpFontSize;
       helpFontSize_ = new NumericInput(6, 72, null);
       helpFontSize_.setValue(String.valueOf(helpFontSize));
       
@@ -413,7 +420,8 @@ public class AppearancePreferencesPane extends PreferencesPane
       }
    }
 
-   private int getInitialZoomIndex(double currentZoomLevel) {
+   private int getInitialZoomIndex(double currentZoomLevel)
+   {
       int initialIndex = -1;
       int normalIndex = -1;
 
@@ -703,10 +711,9 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       RestartRequirement restartRequirement = super.onApply(rPrefs);
 
-      {
-         double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
+      double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
+      if (helpFontSize != initialHelpFontSize_)
          userPrefs_.helpFontSizePoints().setGlobalValue(helpFontSize);
-      }
 
       if (relaunchRequired_)
          restartRequirement.setUiReloadRequired(true);
@@ -720,15 +727,15 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       String themeName = flatTheme_.getValue();
       if (!StringUtil.equals(themeName, userPrefs_.globalTheme().getGlobalValue()))
-      {
          userPrefs_.globalTheme().setGlobalValue(themeName, false);
-      }
 
       double fontSize = Double.parseDouble(editorFontSize_.getValue());
-      userPrefs_.fontSizePoints().setGlobalValue(fontSize);
+      if (fontSize != initialEditorFontSize_)
+         userPrefs_.fontSizePoints().setGlobalValue(fontSize);
       
       double lineHeight = Double.parseDouble(editorLineHeight_.getValue());
-      userPrefs_.editorLineHeight().setGlobalValue(lineHeight);
+      if (lineHeight != initialEditorLineHeight_)
+         userPrefs_.editorLineHeight().setGlobalValue(lineHeight);
       
       if (!StringUtil.equals(theme_.getValue(), userPrefs_.editorTheme().getGlobalValue()))
       {
@@ -889,8 +896,11 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final UserState userState_;
    private SelectWidget textRendering_;
    private NumericTextBox editorFontSize_;
+   private Double initialEditorFontSize_;
    private NumericTextBox editorLineHeight_;
+   private Double initialEditorLineHeight_;
    private NumericTextBox helpFontSize_;
+   private Double initialHelpFontSize_;
    private SelectWidget theme_;
    private ThemedButton addThemeButton_;
    private ThemedButton removeThemeButton_;
