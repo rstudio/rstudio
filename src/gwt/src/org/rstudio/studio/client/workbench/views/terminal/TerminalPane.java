@@ -1143,7 +1143,7 @@ public class TerminalPane extends WorkbenchPane
             BrowseCap.isWindowsDesktop(),
             XTermTheme.terminalThemeFromEditorTheme(),
             XTermTheme.getFontFamily(),
-            XTermTheme.adjustFontSize(pFontSizeManager_.get().getSize()),
+            XTermTheme.adjustFontSize(pFontSizeManager_.get().getFontSize()),
             XTermTheme.computeLineHeight());
    }
 

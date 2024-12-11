@@ -8805,7 +8805,7 @@ public class TextEditingTarget implements
       {
          view.setFontSize(changeFontSizeEvent.getFontSize());
       }));
-      view.setFontSize(fontSizeManager.getSize());
+      view.setFontSize(fontSizeManager.getFontSize());
 
    }
 

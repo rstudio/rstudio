@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
@@ -105,6 +106,7 @@ public class AceEditorPreview extends DynamicIFrame
                         style.setInnerText(
                               ".ace_editor {\n" +
                                     "border: none !important;\n" +
+                                    "line-height: " + lineHeight_ + "%;\n" +
                               "}");
                         if (Desktop.isDesktop())
                            setFont(ThemeFonts.getFixedWidthFont(), false);
@@ -123,6 +125,24 @@ public class AceEditorPreview extends DynamicIFrame
                         FontSizer.applyNormalFontSize(div);
                         
                         body.appendChild(doc.createScriptElement(RES.loader().getText()));
+                        
+                        // Give Ace some time to load, then set line height.
+                        if (lineHeight_ != null)
+                        {
+                           Scheduler.get().scheduleFixedDelay(() ->
+                           {
+                              if (div.hasClassName("ace_editor"))
+                              {
+                                 setLineHeight(lineHeight_);
+                                 return false;
+                              }
+                              else
+                              {
+                                 return true;
+                              }
+                              
+                           }, 100);
+                        }
                      }
                   });
          }
@@ -145,7 +165,7 @@ public class AceEditorPreview extends DynamicIFrame
       currentStyleLink_.setHref(themeUrl);
       doc.getBody().appendChild(currentStyleLink_);
    }
-
+   
    public void setFontSize(double fontSize)
    {
       fontSize_ = fontSize;
@@ -153,9 +173,22 @@ public class AceEditorPreview extends DynamicIFrame
          return;
 
       if (zoomLevel_ == null)
-         FontSizer.setNormalFontSize(getDocument(), fontSize_);
+         FontSizer.setNormalFontSize(getDocument(), fontSize_, lineHeight_);
       else
-         FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_);
+         FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_, lineHeight_);
+   }
+   
+   public void setLineHeight(double lineHeight)
+   {
+      lineHeight_ = lineHeight;
+      if (!isFrameLoaded_)
+         return;
+      
+      Element editorEl = getDocument().getElementById("editor");
+      if (editorEl == null)
+         return;
+      
+      editorEl.getStyle().setLineHeight(lineHeight, Unit.PCT);
    }
 
    public void setFont(String font, boolean webFont)
@@ -209,6 +242,7 @@ public class AceEditorPreview extends DynamicIFrame
    private String themeUrl_;
    private String webFont_;
    private Double fontSize_;
+   private Double lineHeight_;
    private Double zoomLevel_;
    private final String code_;
    

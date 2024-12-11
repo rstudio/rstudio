@@ -120,12 +120,12 @@ public abstract class SatelliteWindow extends Composite
    {
       // react to font size changes
       EventBus eventBus = pEventBus_.get();
-      eventBus.addHandler(ChangeFontSizeEvent.TYPE, changeFontSizeEvent ->
+      eventBus.addHandler(ChangeFontSizeEvent.TYPE, (event) ->
       {
-            FontSizer.setNormalFontSize(Document.get(), changeFontSizeEvent.getFontSize());
+         FontSizer.setNormalFontSize(Document.get(), event);
       });
-      FontSizeManager fontSizeManager = pFontSizeManager_.get();
-      FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
+      
+      FontSizer.setNormalFontSize(Document.get(), pFontSizeManager_.get());
 
       // disable no handler assertions
       AppCommand.disableNoHandlerAssertions();
