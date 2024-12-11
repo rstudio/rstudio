@@ -22,11 +22,15 @@ import com.google.gwt.user.client.ui.TextBox;
 public class NumericTextBox extends TextBox
                                     implements CanSetControlId
 {
-   public NumericTextBox()
+   public NumericTextBox(Integer min, Integer max, Integer step)
    {
       super();
       
       getElement().setAttribute("type", "number");
+      
+      setMin(min);
+      setMax(max);
+      setStep(step);
       
       addDomHandler(new KeyDownHandler()
       {
@@ -43,21 +47,32 @@ public class NumericTextBox extends TextBox
       }, KeyDownEvent.getType());
    }
    
-   public NumericTextBox(int min, int max)
+   public NumericTextBox()
    {
-      this();
-      setMin(min);
-      setMax(max);
+      this(null, null, null);
+   }
+ 
+   public NumericTextBox(Integer min, Integer max)
+   {
+      this(min, max, null);
    }
    
-   public void setMin(int min)
+   public void setMin(Integer min)
    {
-      getElement().setAttribute("min", String.valueOf(min));
+      if (min != null)
+         getElement().setAttribute("min", String.valueOf(min));
    }
 
-   public void setMax(int max)
+   public void setMax(Integer max)
    {
-      getElement().setAttribute("max", String.valueOf(max));
+      if (max != null)
+         getElement().setAttribute("max", String.valueOf(max));
+   }
+   
+   public void setStep(Integer step)
+   {
+      if (step != null)
+         getElement().setAttribute("step", String.valueOf(step));
    }
 
    @Override
