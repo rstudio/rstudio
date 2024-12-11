@@ -68,7 +68,8 @@ public class TextEditingTargetPrefsHelper
       releaseOnDismiss.add(prefs.editorLineHeight().bind(
             (arg) ->
             {
-               docDisplay.setLineHeight(arg);
+               if (arg != null && arg != 0.0)
+                  docDisplay.setLineHeight(arg);
             }));
       releaseOnDismiss.add(prefs.highlightSelectedWord().bind(
             (arg) ->

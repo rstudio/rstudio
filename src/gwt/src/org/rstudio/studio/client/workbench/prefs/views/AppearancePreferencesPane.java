@@ -251,7 +251,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          lineHeight = (double) Math.round(FontSizer.getNormalLineHeight() * 100.0);
       
       initialEditorLineHeight_ = lineHeight;
-      editorLineHeight_ = new NumericInput(20, 400, 10);
+      editorLineHeight_ = new NumericInput(20, 400, 5);
       editorLineHeight_.setValue(String.valueOf(lineHeight));
       editorLineHeight_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
