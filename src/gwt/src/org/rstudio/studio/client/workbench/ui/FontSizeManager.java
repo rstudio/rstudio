@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.CommandWithArg;
@@ -40,12 +41,24 @@ public class FontSizeManager
       fontSize_ = normalizeSize(prefs_.fontSizePoints().getValue());
       lineHeight_ = normalizeHeight(prefs_.editorLineHeight().getValue());
       
+      // Use a timer to handle event firing, in case font size and line height
+      // happen to be updated at the same time (so we only fire a single event
+      // in response, not one for each)
+      timer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            events_.fireEvent(new ChangeFontSizeEvent(fontSize_, lineHeight_));
+         }
+      };
+      
       prefs_.fontSizePoints().bind(new CommandWithArg<Double>()
       {
          public void execute(Double value)
          {
             fontSize_ = normalizeSize(value);
-            events_.fireEvent(new ChangeFontSizeEvent(fontSize_, lineHeight_));
+            timer_.schedule(0);
          }
       });
       
@@ -55,7 +68,7 @@ public class FontSizeManager
          public void execute(Double value)
          {
             lineHeight_ = normalizeHeight(value);
-            events_.fireEvent(new ChangeFontSizeEvent(fontSize_, lineHeight_));
+            timer_.schedule(0);
          }
       });
    }
@@ -91,6 +104,7 @@ public class FontSizeManager
    
    private double fontSize_;
    private double lineHeight_;
+   private Timer timer_;
    
    private final EventBus events_;
    private final UserPrefs prefs_;
