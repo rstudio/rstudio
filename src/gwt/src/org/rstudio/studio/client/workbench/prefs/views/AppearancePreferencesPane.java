@@ -405,11 +405,11 @@ public class AppearancePreferencesPane extends PreferencesPane
    {
       if (Desktop.isDesktop())
       {
-         return 160;
+         return 200;
       }
       else
       {
-         return 200;
+         return 250;
       }
    }
 
