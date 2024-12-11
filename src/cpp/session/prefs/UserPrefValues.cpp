@@ -1181,6 +1181,19 @@ core::Error UserPrefValues::setFontSizePoints(double val)
 }
 
 /**
+ * The editor line height, as a percentage of the font size.
+ */
+double UserPrefValues::editorLineHeight()
+{
+   return readPref<double>("editor_line_height");
+}
+
+core::Error UserPrefValues::setEditorLineHeight(double val)
+{
+   return writePref("editor_line_height", val);
+}
+
+/**
  * The help panel font size, in points.
  */
 double UserPrefValues::helpFontSizePoints()
@@ -3521,6 +3534,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSaveFilesBeforeBuild,
       kSaveAndReloadWorkspaceOnBuild,
       kFontSizePoints,
+      kEditorLineHeight,
       kHelpFontSizePoints,
       kEditorTheme,
       kServerEditorFontEnabled,

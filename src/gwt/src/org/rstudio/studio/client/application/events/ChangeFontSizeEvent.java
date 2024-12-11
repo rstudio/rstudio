@@ -21,17 +21,25 @@ public class ChangeFontSizeEvent extends GwtEvent<ChangeFontSizeEvent.Handler>
 {
    public static final Type<Handler> TYPE = new Type<>();
 
-   public ChangeFontSizeEvent(double fontSize)
+   public ChangeFontSizeEvent(double fontSize,
+                              double lineHeight)
    {
       fontSize_ = fontSize;
+      lineHeight_ = lineHeight;
    }
 
    public double getFontSize()
    {
       return fontSize_;
    }
+   
+   public double getLineHeight()
+   {
+      return lineHeight_;
+   }
 
    private final double fontSize_;
+   private final double lineHeight_;
 
    @Override
    public Type<Handler> getAssociatedType()
