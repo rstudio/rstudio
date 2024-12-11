@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.ui;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -28,31 +29,70 @@ public class FontSizeManager
    public FontSizeManager(final EventBus events,
                           UserPrefs prefs)
    {
-      prefs.fontSizePoints().bind(new CommandWithArg<Double>()
+      events_ = events;
+      prefs_ = prefs;
+      
+      commonInit();
+   }
+   
+   private void commonInit()
+   {
+      fontSize_ = normalizeSize(prefs_.fontSizePoints().getValue());
+      lineHeight_ = normalizeHeight(prefs_.editorLineHeight().getValue());
+      
+      prefs_.fontSizePoints().bind(new CommandWithArg<Double>()
       {
          public void execute(Double value)
          {
-            final int DEFAULT_SIZE = 9;
-            try
-            {
-               if (value != null)
-                  size_ = value;
-               else
-                  size_ = DEFAULT_SIZE;
-            }
-            catch (Exception e)
-            {
-               size_ = DEFAULT_SIZE;
-            }
-            events.fireEvent(new ChangeFontSizeEvent(size_));
+            fontSize_ = normalizeSize(value);
+            events_.fireEvent(new ChangeFontSizeEvent(fontSize_, lineHeight_));
+         }
+      });
+      
+      prefs_.editorLineHeight().bind(new CommandWithArg<Double>()
+      {
+         @Override
+         public void execute(Double value)
+         {
+            lineHeight_ = normalizeHeight(value);
          }
       });
    }
-
-   public double getSize()
+   
+   private double normalizeSize(Double value)
    {
-      return size_;
+      return value == null ? FONT_SIZE_DEFAULT : value;
+   }
+   
+   private double normalizeHeight(Double value)
+   {
+      if (value == null || value == 0.0)
+      {
+         return FontSizer.getNormalLineHeight();
+      }
+      else
+      {
+         return value;
+      }
    }
 
-   private double size_;
+   public double getFontSize()
+   {
+      return fontSize_;
+   }
+   
+   public double getLineHeight()
+   {
+      return lineHeight_;
+   }
+   
+   
+   private double fontSize_;
+   private double lineHeight_;
+   
+   private final EventBus events_;
+   private final UserPrefs prefs_;
+   
+   private static final double FONT_SIZE_DEFAULT = 9.0;
+   
 }

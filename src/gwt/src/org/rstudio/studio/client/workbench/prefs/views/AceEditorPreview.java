@@ -175,9 +175,9 @@ public class AceEditorPreview extends DynamicIFrame
          return;
 
       if (zoomLevel_ == null)
-         FontSizer.setNormalFontSize(getDocument(), fontSize_);
+         FontSizer.setNormalFontSize(getDocument(), fontSize_, lineHeight_);
       else
-         FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_);
+         FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_, lineHeight_);
    }
    
    public void setLineHeight(double lineHeight)
