@@ -1181,7 +1181,7 @@ core::Error UserPrefValues::setFontSizePoints(double val)
 }
 
 /**
- * The editor line height, as a ratio of the font size.
+ * The editor line height, as a percentage of the font size.
  */
 double UserPrefValues::editorLineHeight()
 {

@@ -1336,7 +1336,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The editor line height, as a ratio of the font size.
+    * The editor line height, as a percentage of the font size.
     */
    public PrefValue<Double> editorLineHeight()
    {
@@ -1344,7 +1344,7 @@ public class UserPrefsAccessor extends Prefs
          "editor_line_height",
          _constants.editorLineHeightTitle(), 
          _constants.editorLineHeightDescription(), 
-         1.0);
+         0.0);
    }
 
    /**

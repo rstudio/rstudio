@@ -641,7 +641,7 @@
             "type": "number",
             "default": 0.0,
             "title": "Editor line height",
-            "description": "The editor line height, as a ratio of the font size."
+            "description": "The editor line height, as a percentage of the font size."
         },
         "help_font_size_points": {
             "type": "number",

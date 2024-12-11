@@ -843,7 +843,7 @@
 
 # Editor line height
 #
-# The editor line height, as a ratio of the font size.
+# The editor line height, as a percentage of the font size.
 .rs.uiPrefs$editorLineHeight <- list(
    get = function() { .rs.getUserPref("editor_line_height") },
    set = function(value) { .rs.setUserPref("editor_line_height", value) },
