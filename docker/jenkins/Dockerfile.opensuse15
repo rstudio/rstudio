@@ -5,8 +5,7 @@ ARG ARCH
 ENV OPERATING_SYSTEM=opensuse_leap15
 
 # refresh repos and install required packages
-RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/devel:gcc/15.6/devel:gcc.repo && \
-    zypper --non-interactive --gpg-auto-import-keys refresh && \
+RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
     clang \
@@ -16,8 +15,6 @@ RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/
     freetype-devel  \
     gcc \
     gcc-c++ \
-    gcc10 \
-    gcc10-c++ \
     gdb \
     git \
     java-11-openjdk-devel \
@@ -35,7 +32,6 @@ RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/
     libjpeg-devel \
     libopenssl-devel \
     libpng-devel  \
-    libstdc++6-devel \
     libtiff-devel  \
     libuuid-devel \
     libxml2-devel \
