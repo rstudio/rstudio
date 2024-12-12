@@ -21,3 +21,15 @@ withr::defer(.rs.automation.deleteRemote())
    expect_equal(contents, "1 + 1\n2 + 2\n")
    
 })
+
+.rs.test("https://github.com/rstudio/rstudio/issues/5425", {
+   
+   remote$editor.executeWithContents(".R", "c(1 #2\n)", function(editor) {
+      editor$selectAll()
+      Sys.sleep(0.1)
+      remote$commands.execute(.rs.appCommands$reformatCode)
+      contents <- editor$getValue()
+      expect_equal(contents, "c(\n  1 #2\n)\n")
+   })
+   
+})
