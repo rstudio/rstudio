@@ -423,7 +423,10 @@ public class TextEditingTarget implements
             {
                fileTypeChanged = !StringUtil.equals(newFileType_.getTypeId(), fileType_.getTypeId());
             }
+            
             fileType_ = newFileType_;
+            if (fileTypeChanged)
+               copilotHelper_.onFileTypeChanged();
          }
 
          if (file_ != null)
@@ -8802,7 +8805,7 @@ public class TextEditingTarget implements
       {
          view.setFontSize(changeFontSizeEvent.getFontSize());
       }));
-      view.setFontSize(fontSizeManager.getSize());
+      view.setFontSize(fontSizeManager.getFontSize());
 
    }
 
