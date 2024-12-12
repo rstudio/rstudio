@@ -18,11 +18,14 @@ RUN apt-get update && \
     ant \
     build-essential \
     clang \
+    cpp-10 \
     curl \
     debsigs \
     dpkg-sig \
     expect \
     fakeroot \
+    g++-10 \
+    gcc-10 \
     git-core \
     gnupg1 \
     jq \
@@ -74,6 +77,10 @@ RUN if [ "$ARCH" = "amd64" ]; then \
 
 # ensure we use the java 11 compiler
 RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-$(dpkg --print-architecture)/bin/java
+
+# use gcc 10
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ \
+                                  /usr/bin/g++-10 --slave /usr/bin/gcov gcov /usr/bin/gcov-10
 
 ## build patchelf
 RUN cd /tmp \
