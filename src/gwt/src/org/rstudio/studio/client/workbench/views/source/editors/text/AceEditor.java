@@ -2429,6 +2429,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.onResize();
    }
+   
+   public void setLineHeight(double heightPct)
+   {
+      widget_.setLineHeight(heightPct);
+   }
 
    public void setHighlightSelectedLine(boolean on)
    {
