@@ -65,6 +65,12 @@ public class TextEditingTargetPrefsHelper
                      final PrefsContext context,
                      PrefsSet prefsSet)
    {
+      releaseOnDismiss.add(prefs.editorLineHeight().bind(
+            (arg) ->
+            {
+               if (arg != null && arg != 0.0)
+                  docDisplay.setLineHeight(arg);
+            }));
       releaseOnDismiss.add(prefs.highlightSelectedWord().bind(
             (arg) ->
             {

@@ -776,6 +776,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String fontSizePointsDescription();
 
    /**
+    * The editor line height, as a percentage of the font size.
+    */
+   @DefaultStringValue("Editor line height")
+   String editorLineHeightTitle();
+   @DefaultStringValue("The editor line height, as a percentage of the font size.")
+   String editorLineHeightDescription();
+
+   /**
     * The help panel font size, in points.
     */
    @DefaultStringValue("Help panel font size (points)")

@@ -301,6 +301,11 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    // Allow indexing of Untitled documents if they have a known type.
    if (pDoc->isUntitled())
    {
+      // Our source database uses non-standard names for certain R file types,
+      // so explicitly check for those and allow them to be indexed.
+      if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
+         return true;
+
       std::string type = pDoc->type();
       return languageIdToExtMap().count(type);
    }
@@ -1257,13 +1262,13 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    sendNotification("textDocument/didOpen", paramsJson);
 }
 
-void onDocRemoved(const std::string& id, const std::string& path)
+void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
       return;
 
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentImpl(id, path, path.empty());
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
@@ -1437,7 +1442,7 @@ void onDeferredInit(bool newSession)
 {
    source_database::events().onDocAdded.connect(onDocAdded);
    source_database::events().onDocUpdated.connect(onDocUpdated);
-   source_database::events().onDocRemoved.connect(onDocRemoved);
+   source_database::events().onDocPendingRemove.connect(onDocRemoved);
 }
 
 void onShutdown(bool)
@@ -1581,11 +1586,20 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
       return error;
    }
+
+   // Resolve source document from id
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+
+   error = source_database::get(documentId, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
    
    // Disallow completion request in hidden files, since this might trigger
    // the copilot agent to attempt to read the contents of that file
-   FilePath docPath = module_context::resolveAliasedPath(documentPath);
-   if (!isUntitled && !isIndexableFile(docPath))
+   if (!isIndexableDocument(pDoc))
    {
       json::Object resultJson;
       resultJson["enabled"] = false;
@@ -1604,7 +1618,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 
    json::Object docJson;
    docJson["position"] = positionJson;
-   docJson["uri"] = uriFromDocumentImpl(documentId, documentPath, isUntitled);
+   docJson["uri"] = uriFromDocument(pDoc);
    docJson["version"] = kCopilotDefaultDocumentVersion;
 
    json::Object paramsJson;
