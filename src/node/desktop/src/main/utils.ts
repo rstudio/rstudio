@@ -120,7 +120,7 @@ export function augmentCommandLineArguments(): void {
  * an error only when a stale lockfile exists, but
  * we could not successfully remove it
  */
-export function removeStaleOptionsLockfile(): void {
+function removeStaleOptionsLockfileImpl(): void {
   if (process.platform !== 'win32') {
     return;
   }
@@ -141,6 +141,14 @@ export function removeStaleOptionsLockfile(): void {
   }
 
   fs.unlinkSync(lockFilePath);
+}
+
+export function removeStaleOptionsLockfile(): void {
+  try {
+    removeStaleOptionsLockfileImpl();
+  } catch (err: unknown) {
+    logger().logError(err);
+  }
 }
 
 export function rsessionExeName(): string {

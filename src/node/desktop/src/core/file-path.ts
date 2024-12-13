@@ -672,11 +672,12 @@ export class FilePath {
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    const stat = fs.lstatSync(this.path, {
-      throwIfNoEntry: false,
-    });
-
-    return stat != null && stat.isDirectory();
+    try {
+      const stats = fs.statSync(this.path);
+      return stats.isDirectory();
+    } catch {
+      return false;
+    }
   }
 
   /**
