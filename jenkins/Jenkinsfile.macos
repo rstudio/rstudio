@@ -154,7 +154,8 @@ pipeline {
                     // attempt to run cpp unit tests
                     // problems with rsession finding openssl, so those tests
                     // are disabled until we solve it (#6890)
-                    sh "arch -x86_64 ./rstudio-tests"
+                    // sh "arch -x86_64 ./rstudio-tests"
+                    echo "TODO: reenable tests"
                     
                     // electron tests not working in CI environment, under investigation
                     // if(FLAVOR == 'Electron') {
@@ -299,8 +300,8 @@ pipeline {
   post {
     always {
       sh '''
-        security lock-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain
-        security delete-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain
+        security lock-keychain ${BUILD_AGENT_TEMP}/buildagent.keychain
+        security delete-keychain pwd ${BUILD_AGENT_TEMP}/buildagent.keychain
       '''
       deleteDir()
       sendNotifications slack_channel: SLACK_CHANNEL
