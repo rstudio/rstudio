@@ -122,13 +122,18 @@ pipeline {
                   script {
                     ENV = utils.getBuildEnv(!params.DAILY)
                   }
-                  // Create a temporary keychain to hold the Developer ID certificate for signing
-                  sh 'security create-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain'
+                  try {
+                    // Create a temporary keychain to hold the Developer ID certificate for signing
+                    sh 'security create-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain'
+                  } catch (Exception e) {
+                    // We remove the keychain at the end of this script, but ignore the error
+                    // if it already exists just in case machine gets in a funky state.
+                    echo "Warning: create-keychain failed (ignoring): ${e.getMessage()}"
+                  }
                   sh 'security default-keychain -s ${BUILD_AGENT_TEMP}/buildagent.keychain'
                   sh 'security unlock-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain && security set-keychain-settings' // turn off timeout
                   // Import the Developer ID certificate from Jenkins Secrets.
                   sh 'security import \"${MACOS_DEVELOPER_CERTIFICATE}\" -k ${BUILD_AGENT_TEMP}/buildagent.keychain -P \"${MACOS_DEVELOPER_CERTIFICATE_KEY}\" -T /usr/bin/codesign'
-                  // Clean up after building, signing? Is it deleteDir enough??
                   // build rstudio
                   dir ("package/osx") {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
@@ -291,6 +296,10 @@ pipeline {
 
   post {
     always {
+      sh '''
+        security lock-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain
+        security delete-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain
+      '''
       deleteDir()
       sendNotifications slack_channel: SLACK_CHANNEL
     }
