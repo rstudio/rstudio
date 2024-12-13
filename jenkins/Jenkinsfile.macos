@@ -112,6 +112,7 @@ pipeline {
 
                 environment {
                   AWS_ACCOUNT_ID = '749683154838'
+                  KEYCHAIN_PASSPHRASE = credentials('ide-keychain-passphrase')
                 }
 
                 steps {
