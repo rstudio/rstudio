@@ -183,7 +183,7 @@ Error computeScratchPaths(const FilePath& projectFile,
                           FilePath* pScratchPath,
                           FilePath* pSharedScratchPath)
 {
-   // compute project directory
+   // compute project user dir
    FilePath projectUserDir = computeUserDir(projectFile, projectConfig);
    
    // make sure it exists
