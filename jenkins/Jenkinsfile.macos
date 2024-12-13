@@ -122,13 +122,15 @@ pipeline {
                   script {
                     ENV = utils.getBuildEnv(!params.DAILY)
                   }
-                  try {
-                    // Create a temporary keychain to hold the Developer ID certificate for signing
-                    sh 'security create-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain'
-                  } catch (Exception e) {
-                    // We remove the keychain at the end of this script, but ignore the error
-                    // if it already exists just in case machine gets in a funky state.
-                    echo "Warning: create-keychain failed (ignoring): ${e.getMessage()}"
+                  script {
+                    try {
+                      // Create a temporary keychain to hold the Developer ID certificate for signing
+                      sh 'security create-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain'
+                    } catch (Exception e) {
+                      // We remove the keychain at the end of this script, but ignore the error
+                      // if it already exists just in case machine gets in a funky state.
+                      echo "Warning: create-keychain failed (ignoring): ${e.getMessage()}"
+                    }
                   }
                   sh 'security default-keychain -s ${BUILD_AGENT_TEMP}/buildagent.keychain'
                   sh 'security unlock-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain && security set-keychain-settings' // turn off timeout
