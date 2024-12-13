@@ -113,6 +113,9 @@ pipeline {
                 environment {
                   AWS_ACCOUNT_ID = '749683154838'
                   KEYCHAIN_PASSPHRASE = credentials('ide-keychain-passphrase')
+                  BUILD_AGENT_TEMP = '${env.HOME}/tmp'
+                  MACOS_DEVELOPER_CERTIFICATE = credentials('MACOS_DEVELOPER_CERTIFICATE')
+                  MACOS_DEVELOPER_CERTIFICATE_KEY = credentials('MACOS_DEVELOPER_CERTIFICATE_KEY')
                 }
 
                 steps {
