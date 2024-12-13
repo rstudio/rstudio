@@ -23,7 +23,7 @@ pipeline {
 
   environment {
     PATH = "$HOME/opt/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-    BUILD_AGENT_TEMP = '${env.HOME}/tmp'
+    BUILD_AGENT_TEMP = "${env.HOME}/tmp"
     OS = 'macos'
     PACKAGE_OS = 'macOS'
     RSTUDIO_VERSION = ""
