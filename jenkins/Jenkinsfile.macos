@@ -302,7 +302,7 @@ pipeline {
       // attempt to remove the temporary keychain
       sh '''
         security lock-keychain ${BUILD_AGENT_TEMP}/buildagent.keychain || true
-        security delete-keychain pwd ${BUILD_AGENT_TEMP}/buildagent.keychain || true
+        security delete-keychain ${BUILD_AGENT_TEMP}/buildagent.keychain || true
       '''
       deleteDir()
       sendNotifications slack_channel: SLACK_CHANNEL
