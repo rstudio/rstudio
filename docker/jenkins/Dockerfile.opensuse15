@@ -1,11 +1,11 @@
 ARG ARCH=amd64
-FROM --platform=linux/$ARCH opensuse/leap:15.6
+FROM --platform=linux/$ARCH opensuse/leap:15.5
 ARG ARCH
 
 ENV OPERATING_SYSTEM=opensuse_leap15
 
 # refresh repos and install required packages
-RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/devel:gcc/openSUSE_Leap_15.6/devel:gcc.repo && \
+RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/devel:gcc/openSUSE_Leap_15.5/devel:gcc.repo && \
     zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
@@ -66,6 +66,17 @@ RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/
 RUN rm /usr/bin/python3
 RUN ln /usr/bin/python3.11 /usr/bin/python3
 
+# install GnuPG 1.4 from source (needed for release signing)
+# (must build with system compiler, gcc10+ won't work)
+RUN cd /tmp && \
+    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
+    bzip2 -d gnupg-1.4.23.tar.bz2 && \
+    tar xvf gnupg-1.4.23.tar && \
+    cd gnupg-1.4.23 && \
+    ./configure && \
+    make && \
+    make install
+
 # use gcc10
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
 RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
@@ -105,16 +116,6 @@ ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudi
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse15
 # panmirror needs to be able to build in this location
 RUN chmod -R 777 /opt/rstudio-tools/src
-
-# install GnuPG 1.4 from source (needed for release signing)
-RUN cd /tmp && \
-    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
-    bzip2 -d gnupg-1.4.23.tar.bz2 && \
-    tar xvf gnupg-1.4.23.tar && \
-    cd gnupg-1.4.23 && \
-    ./configure && \
-    make && \
-    make install
 
 # cachebust for Quarto release
 ADD https://quarto.org/docs/download/_download.json quarto_releases
