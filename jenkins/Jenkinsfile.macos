@@ -23,7 +23,6 @@ pipeline {
 
   environment {
     PATH = "$HOME/opt/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-    BUILD_AGENT_TEMP = '${env.HOME}/tmp'
     OS = 'macos'
     PACKAGE_OS = 'macOS'
     RSTUDIO_VERSION = ""
@@ -114,6 +113,7 @@ pipeline {
                 environment {
                   AWS_ACCOUNT_ID = '749683154838'
                   KEYCHAIN_PASSPHRASE = credentials('ide-keychain-passphrase')
+                  BUILD_AGENT_TEMP = '${env.HOME}/tmp'
                   MACOS_DEVELOPER_CERTIFICATE = credentials('MACOS_DEVELOPER_CERTIFICATE')
                   MACOS_DEVELOPER_CERTIFICATE_KEY = credentials('MACOS_DEVELOPER_CERTIFICATE_KEY')
                 }
@@ -299,11 +299,6 @@ pipeline {
 
   post {
     always {
-      // attempt to remove the temporary keychain
-      sh '''
-        security lock-keychain ${BUILD_AGENT_TEMP}/buildagent.keychain || true
-        security delete-keychain ${BUILD_AGENT_TEMP}/buildagent.keychain || true
-      '''
       deleteDir()
       sendNotifications slack_channel: SLACK_CHANNEL
     }
