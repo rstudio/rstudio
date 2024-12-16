@@ -322,5 +322,32 @@ TEST_CASE("Windows: FilePath.isWithin")
 
 #endif
 
+#ifndef _WIN32
+
+TEST_CASE("Symlinks")
+{
+   SECTION("Directories")
+   {
+      FilePath src("/tmp/rstudio-symlinks-a");
+      FilePath dst("/tmp/rstudio-symlinks-b");
+
+      src.ensureDirectory();
+      CHECK(src.isDirectory());
+
+      int status = ::symlink(src.getAbsolutePath().c_str(), dst.getAbsolutePath().c_str());
+      CHECK(status == 0);
+      CHECK(dst.isSymlink());
+      CHECK(dst.isDirectory());
+
+      dst.remove();
+      CHECK(!dst.exists());
+
+      src.remove();
+      CHECK(!src.exists());
+   }
+}
+
+#endif
+
 } // namespace core
 } // namespace rstudio
