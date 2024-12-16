@@ -46,23 +46,28 @@ This page provides the release notes associated with each release of RStudio and
 
 
 #### Posit Workbench
-- Added preview support for Positron Pro sessions to RHEL9 and Ubuntu 22/24 packages. Positron Pro sessions must be manually configured by an admin. (rstudio-pro#6861)
-- Added new database tables to support saving Positron Pro state across user logout. (rstudio-pro#6820)
-- Restricted Positron Pro and VS Code sessions for insecure (non-SSL) contexts. These editors do not work properly otherwise. (rstudio-pro#3741)
-- Added a countdown on the homepage for VS Code and Positron Pro sessions to reflect the `session-timeout-kill-hours` setting and indicate when a session may be terminated if the user doesn't interact with it. (rstudio-pro#6743)
-- The most recently opened folder is saved for Positron Pro sessions. (rstudio-pro#6874).
-- Added a `session-timeout-kill-hours` setting to VS Code and Positron Pro sessions, which terminates sessions after being idle for a set number of hours. (rstudio-pro#5746)
+- Added preview support for Positron Pro sessions on RHEL9 and Ubuntu 22/24. Positron Pro sessions must be manually configured by an admin. (rstudio-pro#6861)
+- Added support for saving Positron Pro state across user logout. (rstudio-pro#6820)
+- Added a feature that prevents Positron Pro and VS Code sessions from starting for insecure (non-SSL/TLS) contexts because they require SSL/TLS for full functionality. (rstudio-pro#3741)
+- Added a `session-timeout-kill-hours` setting to VS Code and Positron Pro sessions, which terminates sessions after being idle for a set number of hours. There is a known issue that prevents this feature from working correctly with a custom www-root-path. (rstudio-pro#5746)
 - Added the Quarto, Posit Shiny, and Posit Publisher extensions to the default `vscode.extensions.conf` file for fresh installs. These extensions will be installed automatically for users upon VS Code session launch. (rstudio-pro#6388)
 - Added preview support for setting an active timeout, which logs out users after a period of time, regardless of activity. (rstudio-pro#5815)
-- Introduced a new session init container that copies session components to the session container, allowing updates to components independent of the session image. The session init container can be enabled in Kubernetes sessions by setting `launcher-sessions-auto-update=1` in `rserver.conf`. Additionally, the init container uses a new multi-platform Linux session components package to support session images across different Linux distributions. (rstudio-pro#6821)
+- Added a new session init container that copies session components to the session container, allowing updates to components independent of the session image. The session init container can be enabled in Kubernetes sessions by setting `launcher-sessions-auto-update=1` in `rserver.conf`. Additionally, the init container uses a new multi-platform Linux session components package to support session images across different Linux distributions. (rstudio-pro#6821)
 - Added the `auth-user-rewrite-rule` setting to `rserver.conf`. When this option is set in environments with Google OAuth, OpenID, SAML, or Proxied Authentication configured, Workbench will rewrite the username from the authentication provider using the provided regex. (rstudio-pro#2502)
 - Added support for HTTP Proxy variables in rserver and rsession to enable managed credentials features in Workbench environments behind a proxy server. (rstudio-pro#5893)
-- Set Public Package Manager (P3M) as the default for R libraries in RStudio Pro sessions, if no other repository is specified. Package Manager will deliver pre-built binary packages when available, which are faster to install than source packages and don't require most additional build dependencies. (rstudio-pro#5066)
-- Added support for registering shell scripts as session hooks that can run when a session starts and stops. (rstudio-pro#6428)
+- Set Posit Public Package Manager (P3M) as the default for R libraries in RStudio Pro sessions, if no other repository is specified. Package Manager will deliver pre-built binary packages when available, which are faster to install than source packages and don't require most additional build dependencies. (rstudio-pro#5066)
+- Added support to the Workbench API for registering shell scripts as session hooks that can run when a session starts and stops. (rstudio-pro#6428)
 - Extended the Workbench API, adding support for launching jobs, resuming sessions, and retrieving user lists. Additionally, support for passing in environment variables, session hooks, and a file to open on session load has been added to the launch session endpoint. (rstudio-pro#5066)
 - The Posit Workbench Administration Guide, the Posit Workbench User Guide, and the Posit Workbench Licenses Guide have versioned URLs in the Guides drop-down menu in the navigation bar. (rstudio-pro#6151)
 - The Posit Workbench User Guide underwent a reorganization of how the individual IDE guides are presented. Each guide was migrated from the left-hand navigation to the upper (main) navigation bar. Now, when a guide is selected from the navigation bar, only that guide's contents display in the left-hand navigation. Additionally, the Posit Workbench guide was renamed to "Workbench Setup" in the navigation bar to prevent confusion between the title of the guide and to create more distinction between the home page of the guide and the Posit Workbench Overview. Lastly, the links for the five IDEs were updated to navigate to the corresponding guide within the Posit Workbench User Guide (instead of the IDE's external site) and are displayed as buttons. (rstudio-pro#6069)
 - Added an FAQ page to the Reference Architectures section of the Posit Workbench Administration Guide. (rstudio-pro#6645)
+- Re-designed the user experience for configuring managed credentials (rstudio-pro#6748)
+- Added support for using Azure delegated credentials to access DevOps repositories (rstudio-pro#6734)
+- Improved the database migration experience with additional feedback to the admin, logging, and potential error handling (rstudio-pro#6674)
+- Increased default values for `rsession-proxy-max-wait-secs` and `www-thread-pool-size` (rstudio-pro#6149)
+- Improved diagnostics for the license manager (rstudio-pro#5932)
+- Added support for reloading the Launcher through systemd (rstudio-pro#3749)
+- Added support for a configurable auth (SAML/OpenID) username re-write rule (rstudio-pro#6987)
 
 ### Fixed
 #### RStudio
@@ -119,6 +124,11 @@ This page provides the release notes associated with each release of RStudio and
 - Fixed several cross-reference links in the Posit Workbench Administration Guide and Posit Workbench User Guide - VS Code sections. (rstudio-pro#6678)
 - Fixed heading anchor ID issue in Posit Administration Guide - VS Code PWB Code Server section. (rstudio-pro#6961)
 - Fixed inconsistencies in naming throughout Reference Architecture sections. (rstudio-pro#6832)
+- Fixed an issue where Workbench does not properly set the queue when starting a session (rstudio-pro#7025)
+- Fixed an issue where the displayed contianer image does not match the used image when starting a Kubernetes session (rstudio-pro#6910)
+- Fixed an issue where a user mismatch would return a 500 instead of a 401 (rstudio-pro#6579)
+- Fixed an issue where Workbench Jobs in VS Code show NaN when there is no maximum memory value configured (rstudio-pro#6510)
+- Fixed an issue when resuming RStudio Pro sessions where the version of unattached R packages is not prsevered (rstudio-pro#3074)
 
 ### Upgrade Instructions
 
