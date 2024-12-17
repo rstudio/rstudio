@@ -16,7 +16,7 @@
 
 import { BrowserWindow } from 'electron';
 import Store from 'electron-store';
-import { existsSync, lstatSync } from 'fs';
+import { statSync } from 'fs';
 import { basename, dirname, join } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { normalizeSeparatorsNative } from '../../ui/utils';
@@ -366,8 +366,19 @@ if (process.platform === 'darwin') {
  * @returns Full path to Rterm.exe including arch folder
  */
 export function fixWindowsRExecutablePath(rExePath: string): string {
-  if (process.platform !== 'win32' || !existsSync(rExePath) || lstatSync(rExePath).isDirectory()) {
-    // unexpected situation: just leave it as-is
+  // skip on other platforms
+  if (process.platform !== 'win32') {
+    return rExePath;
+  }
+
+  // if we were given the path to a directory, or a non-existent file,
+  // then just return the path as-is (unexpected)
+  try {
+    const info = statSync(rExePath);
+    if (info.isDirectory()) {
+      return rExePath;
+    }
+  } catch {
     return rExePath;
   }
 
