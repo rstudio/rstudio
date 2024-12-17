@@ -1,4 +1,4 @@
-@external windows, macintosh, linux, ubuntu_mono, ubuntu_mono_firefox;
+@external windows, macintosh, linux;
 
 /* keep computed value in sync with FontSizer.getNormalLineHeight() */
 
@@ -6,32 +6,8 @@
    line-height: 1.45;
 }
 
-@if rstudio.desktop true {
-
-   .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
-      line-height: 1.2;
-   }
-
-} @elif user.agent gecko1_8 {
-
-   .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
-      line-height: 1.2;
-   }
-
-} @else {
-
-   .windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
-      line-height: 1.1;
-   }
-
-}
-
-.ubuntu_mono .normalSize, .ubuntu_mono .normalSize td, .ubuntu_mono .normalSize pre {
+.windows .normalSize, .windows .normalSize td, .windows .normalSize pre {
    line-height: 1.2;
-}
-
-.ubuntu_mono_firefox .normalSize, .ubuntu_mono_firefox .normalSize td, .ubuntu_mono_firefox .normalSize pre {
-   line-height: 1.1;
 }
 
 .normalSize, .normalSize td, .normalSize pre {

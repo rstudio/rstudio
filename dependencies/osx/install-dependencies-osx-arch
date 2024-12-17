@@ -47,7 +47,7 @@ FORMULAS=(
    openssl
    ninja
    pidof
-   postgresql
+   postgresql@14
    r
 )
 

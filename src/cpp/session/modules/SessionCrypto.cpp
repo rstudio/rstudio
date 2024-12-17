@@ -15,16 +15,13 @@
 
 #include "SessionCrypto.hpp"
 
-#include <string>
-
 #include <boost/bind/bind.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
+
+#include <core/Log.hpp>
 #include <core/Exec.hpp>
-
 #include <core/json/JsonRpc.hpp>
-
 #include <core/system/Crypto.hpp>
 
 #include <r/RSexp.hpp>
@@ -45,25 +42,19 @@ namespace {
 Error getPublicKey(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(publicKeyInfoJson());
-
+   std::string publicKey;
+   Error error = core::system::crypto::rsaPublicKey(&publicKey);
+   if (error)
+      return error;
+   
+   json::Object resultJson;
+   resultJson["key"] = publicKey;
+   pResponse->setResult(resultJson);
+   
    return Success();
 }
 
 } // anonymous namespace
-
-
-json::Object publicKeyInfoJson()
-{
-   std::string exponent;
-   std::string modulo;
-   core::system::crypto::rsaPublicKey(&exponent, &modulo);
-
-   json::Object result;
-   result["exponent"] = exponent;
-   result["modulo"] = modulo;
-   return result;
-}
 
 Error initialize()
 {

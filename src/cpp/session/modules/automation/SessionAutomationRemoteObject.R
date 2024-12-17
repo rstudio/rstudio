@@ -29,6 +29,18 @@
 
 .rs.addFunction("automation.wrapJsResponse", function(self, response, parentObjectId = NULL)
 {
+   if (is.list(response) && is.null(names(response)))
+   {
+      result <- lapply(
+         response,
+         .rs.automation.wrapJsResponse,
+         self = self,
+         parentObjectId = parentObjectId
+      )
+      
+      return(result)
+   }
+   
    result <- .rs.nullCoalesce(response$result, response$object)
    if (identical(result$type, "function"))
       return(.rs.automation.wrapJsFunction(self, result$objectId, parentObjectId))
@@ -36,17 +48,6 @@
       return(.rs.automation.wrapJsObject(self, result$objectId, parentObjectId))
    else if (!is.null(result$value))
       return(result$value)
-})
-
-.rs.addFunction("automation.wrapJsListResponse", function(self, response, parentObjectId = NULL)
-{
-   if (is.list(response))
-   {
-      resultList <- lapply(response, function(element) {
-         .rs.automation.wrapJsResponse(self, element, parentObjectId)
-      })
-      return(resultList)
-   }
 })
 
 .rs.addFunction("automation.wrapJsFunction", function(self, objectId, parentObjectId)
@@ -144,7 +145,7 @@
       ')
       
       objectId <- attr(x, "id", exact = TRUE)
-      response <- self$jsCall(objectId, callback)
+      response <- self$js.call(objectId, callback)
       value <- .rs.fromJSON(response$result$value)
       value <- value[sort(names(value))]
       

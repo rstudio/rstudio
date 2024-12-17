@@ -1,7 +1,7 @@
 /*
- * PublicKeyInfo.java
+ * postinstall.js
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2024 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -12,13 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.crypto;
 
-import com.google.gwt.core.client.JavaScriptObject;
 
-public class PublicKeyInfo extends JavaScriptObject
-{
-   protected PublicKeyInfo() {}
+// https://github.com/nodejs/nan/issues/978 
+const fs = require('fs');
+const path = require('path');
 
-   public native final String getKey() /*-{ return this.key; }-*/;
-}
+const filePath = path.join(__dirname, '../node_modules/nan/nan.h');
+const fileContent = fs.readFileSync(filePath, 'utf8');
+const updatedContent = fileContent.replace(/#include "nan_scriptorigin.h"/, '// #include "nan_scriptorigin.h"');
+
+fs.writeFileSync(filePath, updatedContent, 'utf8');

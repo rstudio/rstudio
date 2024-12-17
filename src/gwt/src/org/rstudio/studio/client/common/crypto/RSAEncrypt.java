@@ -15,8 +15,6 @@
 package org.rstudio.studio.client.common.crypto;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -48,28 +46,18 @@ public class RSAEncrypt
          callback.onSuccess("");
       }
 
-      loader_.addCallback(new Callback()
+      server.getPublicKey(new ServerRequestCallback<PublicKeyInfo>()
       {
          @Override
-         public void onLoaded()
-         { 
-            server.getPublicKey(new ServerRequestCallback<PublicKeyInfo>()
-            {
-               @Override
-               public void onResponseReceived(PublicKeyInfo response)
-               {
-   
-                  callback.onSuccess(encrypt(input,
-                                             response.getExponent(),
-                                             response.getModulo()));
-               }
-   
-               @Override
-               public void onError(ServerError error)
-               {
-                  callback.onFailure(error);
-               }
-            });
+         public void onResponseReceived(PublicKeyInfo response)
+         {
+            encrypt(input, response.getKey(), callback::onSuccess);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            callback.onFailure(error);
          }
       });
    }
@@ -90,27 +78,70 @@ public class RSAEncrypt
          // fallback case for null input (see case 4375)
          callback.execute("");
       }
-
-      loader_.addCallback(new Callback()
-      {
-         @Override
-         public void onLoaded()
-         { 
-            callback.execute(encrypt(input, 
-                                     publicKeyInfo.getExponent(),
-                                     publicKeyInfo.getModulo()));
-           
-         }
-      });
+      
+      encrypt(input, publicKeyInfo.getKey(), callback::execute);
    }
    
   
-   private static native String encrypt(String value,
-                                        String exponent,
-                                        String modulo) /*-{
-      return $wnd.encrypt(value, exponent, modulo);
+   private static native void encrypt(String input,
+                                      String key,
+                                      CommandWithArg<String> callback)
+   /*-{
+      
+      var subtle = $wnd.crypto.subtle;
+      
+      // The provided key is in PEM format.
+      // We need to extract the inner key contents.
+      var pemHeader = "-----BEGIN PUBLIC KEY-----";  // pragma: allowlist secret
+      var pemFooter = "-----END PUBLIC KEY-----";    // pragma: allowlist secret
+      var keyContents = key
+         .replace(pemHeader, "")
+         .replace(pemFooter, "")
+         .replace(/\s+/g, "");
+      
+      // Convert that into a Uint8Array.
+      var array = Uint8Array.from(
+         atob(keyContents),
+         function(ch) { return ch.charCodeAt(0); }
+      );
+      
+      // Import the key.
+      // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey#subjectpublickeyinfo
+      var key = subtle.importKey(
+         "spki",
+         array.buffer,
+         { name: "RSA-OAEP", hash: "SHA-256" },
+         true,
+         ["encrypt"]
+      );
+      
+      key.then(function(key) {
+         
+         // Encrypt our message, then invoke the provided callback.
+         var encoder = new TextEncoder('utf-8');
+         var message = subtle.encrypt(
+            { name: "RSA-OAEP" },
+            key,
+            encoder.encode(input)
+         );
+         
+         message.then(function(message) {
+            
+            // Convert from array buffer to byte string.
+            var bytes = new Uint8Array(message);
+            var data = '';
+            for (var i = 0, n = bytes.length; i < n; i++) {
+               data += String.fromCharCode(bytes[i]);
+            }
+            
+            // Invoke callback with that byte-string encoded as base64.
+            var b64data = btoa(data);
+            callback.@org.rstudio.core.client.CommandWithArg::execute(*)(b64data);
+            
+         });
+         
+      });
+      
    }-*/;
 
-   private static final ExternalJavaScriptLoader loader_ =
-         new ExternalJavaScriptLoader("js/encrypt.min.js");
 }

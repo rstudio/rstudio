@@ -33,10 +33,6 @@ QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/download/v${Q
 
 QUARTO_SUBDIR="quarto"
 
-# move to tools root
-sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
-cd "${RSTUDIO_TOOLS_ROOT}"
-
 # check installed version
 QUARTO_BIN="${RSTUDIO_TOOLS_ROOT}/${QUARTO_SUBDIR}/bin/quarto"
 if test -f "${QUARTO_BIN}"; then
@@ -46,6 +42,10 @@ if test -f "${QUARTO_BIN}"; then
       exit 0
    fi
 fi
+
+# move to tools root
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+cd "${RSTUDIO_TOOLS_ROOT}"
 
 # reset quarto subdirectory
 rm -rf "${QUARTO_SUBDIR}"

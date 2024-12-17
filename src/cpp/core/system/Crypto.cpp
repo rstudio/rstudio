@@ -457,8 +457,6 @@ Error generateRsaCertAndKeyPair(const std::string& in_certCommonName,
 
 namespace {
 EVP_PKEY* s_pRSA;
-std::string s_modulo;
-std::string s_exponent;
 }
 
 core::Error rsaInit()
@@ -473,47 +471,25 @@ core::Error rsaInit()
    // generate an RSA key pair
    s_pRSA = EVP_RSA_gen(kRsaKeySizeBits);
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-   // extract exponent + modulus for future use
-   const BIGNUM *bn, *be;
-   RSA* pRsaKeyPair = EVP_PKEY_get1_RSA(s_pRSA);
-   bn = pRsaKeyPair->n;
-   be = pRsaKeyPair->e;
-#elif OPENSSL_VERSION_NUMBER < 0x30000000L
-   // extract exponent + modulus for future use
-   const BIGNUM *bn, *be;
-   RSA* pRsaKeyPair = EVP_PKEY_get0_RSA(s_pRSA);
-   RSA_get0_key(pRsaKeyPair, &bn, &be, nullptr);
-#else
-   // extract exponent + modulus for future use
-   BIGNUM* bn = nullptr;
-   if (EVP_PKEY_get_bn_param(s_pRSA, "n", &bn) != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-   
-   BIGNUM* be = nullptr;
-   if (EVP_PKEY_get_bn_param(s_pRSA, "e", &be) != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-#endif
-
-   char* n = BN_bn2hex(bn);
-   s_modulo = n;
-   OPENSSL_free(n);
-
-   char* e = BN_bn2hex(be);
-   s_exponent = e;
-   OPENSSL_free(e);
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-   RSA_free(pRsaKeyPair);
-#endif
-   
    return Success();
 }
 
-void rsaPublicKey(std::string* pExponent, std::string* pModulo)
+Error rsaPublicKey(std::string* pPublicKey)
 {
-   pModulo->assign(s_modulo.begin(), s_modulo.end());
-   pExponent->assign(s_exponent.begin(), s_exponent.end());
+   using namespace boost::system::errc;
+   
+   char* keyData;
+   auto pBio = make_unique_ptr(BIO_new(BIO_s_mem()), BIO_free);
+   if (!pBio)
+      return systemError(not_enough_memory, "BIO_new()", ERROR_LOCATION);
+   
+   int status = PEM_write_bio_PUBKEY(pBio.get(), s_pRSA);
+   if (status == 0)
+      return getLastCryptoError(ERROR_LOCATION);
+   
+   long n = BIO_get_mem_data(pBio.get(), &keyData);
+   pPublicKey->assign(keyData, keyData + n);
+   return Success();
 }
 
 core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlainText)
@@ -535,9 +511,21 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
    status = EVP_PKEY_decrypt_init(ctx.get());
    if (status <= 0)
       return getLastCryptoError(ERROR_LOCATION);
+
+   status = EVP_PKEY_CTX_set_rsa_oaep_md(ctx.get(), EVP_sha256());
+   if (status <= 0)
+      return getLastCryptoError(ERROR_LOCATION);
+   
+   status = EVP_PKEY_CTX_set_rsa_padding(ctx.get(), RSA_PKCS1_OAEP_PADDING);
+   if (status <= 0)
+      return getLastCryptoError(ERROR_LOCATION);
    
    std::size_t size = 0;
-   status = EVP_PKEY_decrypt(ctx.get(), nullptr, &size, cipherTextBytes.data(), cipherTextBytes.size());
+   status = EVP_PKEY_decrypt(
+            ctx.get(),
+            nullptr, &size,
+            cipherTextBytes.data(), cipherTextBytes.size());
+   
    if (status <= 0)
       return getLastCryptoError(ERROR_LOCATION);
    

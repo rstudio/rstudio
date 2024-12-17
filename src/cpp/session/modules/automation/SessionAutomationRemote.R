@@ -45,7 +45,7 @@
    }
    
    # Reset the session before running this test.
-   .rs.automation.remoteInstance$sessionReset()
+   .rs.automation.remoteInstance$session.reset()
    
    # Now, run the test.
    testthat::test_that(desc, code)
@@ -53,6 +53,15 @@
 
 .rs.addFunction("automation.newRemote", function(mode = NULL)
 {
+   # Re-use existing remote if requested.
+   reuse <- Sys.getenv("RSTUDIO_AUTOMATION_REUSE_REMOTE", unset = "FALSE")
+   if (reuse)
+   {
+      remote <- .rs.automation.remoteInstance
+      if (!is.null(remote))
+         return(remote)
+   }
+      
    # Generate the remote instance.
    mode <- .rs.automation.resolveMode(mode)
    client <- .rs.automation.initialize(mode = mode)
@@ -65,13 +74,21 @@
    remote
 })
 
-.rs.addFunction("automation.deleteRemote", function()
+.rs.addFunction("automation.deleteRemote", function(force = FALSE)
 {
+   # Avoid deleting remote if requested.
+   if (!force)
+   {
+      reuse <- Sys.getenv("RSTUDIO_AUTOMATION_REUSE_REMOTE", unset = "FALSE")
+      if (reuse)
+         return(invisible(NULL))
+   }
+   
    remote <- .rs.getVar("automation.remoteInstance")
    if (is.null(remote))
       return(remote)
    
-   remote$quit()
+   remote$session.quit()
    .rs.setVar("automation.remoteInstance", NULL)
 })
 
@@ -91,144 +108,19 @@
    assign(name, callback, envir = .rs.automation.remote)
 })
 
-.rs.automation.addRemoteFunction("commandExecute", function(command)
+
+.rs.automation.addRemoteFunction("dom.elementExists", function(selector)
 {
-   jsCode <- deparse(substitute(
-      window.rstudioCallbacks.commandExecute(command),
-      list(command = command)
-   ))
+   # Query for the requested node.
+   document <- self$client$DOM.getDocument(depth = 0L)
+   response <- self$client$DOM.querySelector(document$root$nodeId, selector)
    
-   self$jsExec(jsCode)
+   # Check for failure.
+   nodeId <- response$nodeId
+   nodeId != 0L
 })
 
-.rs.automation.addRemoteFunction("completionsRequest", function(text = "")
-{
-   # Generate the autocomplete pop-up.
-   self$keyboardExecute(text, "<Tab>")
-   
-   # Get the completion list from the pop-up
-   completionListEl <- self$jsObjectViaSelector("#rstudio_popup_completions")
-   completionText <- completionListEl$innerText
-   
-   # Dismiss the popup.
-   self$keyboardExecute("<Escape>")
-   
-   # Remove any inserted code.
-   for (i in seq_len(nchar(text)))
-   {
-      self$keyboardExecute("<Backspace>")
-   }
-   
-   # Extract just the completion items (remove package annotations)
-   parts <- strsplit(completionText, "\n{2,}")[[1]]
-   parts <- gsub("\\n.*", "", parts)
-   
-   # Return those parts
-   parts
-})
-
-.rs.automation.addRemoteFunction("consoleClear", function()
-{
-   self$keyboardExecute("<Ctrl + 2>", "<Escape>", "<Ctrl + A>", "<Backspace>", "<Ctrl + L>")
-})
-
-.rs.automation.addRemoteFunction("consoleExecuteExpr", function(expr, wait = TRUE)
-{
-   code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
-   self$consoleExecute(code, wait)
-})
-
-.rs.automation.addRemoteFunction("consoleExecute", function(code, wait = TRUE)
-{
-   # Make sure the Console pane is focused.
-   document <- self$client$DOM.getDocument()
-   response <- self$client$DOM.querySelector(
-      nodeId = document$root$nodeId,
-      selector = "#rstudio_console_input .ace_text-input"
-   )
-   self$client$DOM.focus(nodeId = response$nodeId)
-   
-   # Send the code to be executed.
-   self$client$Input.insertText(text = code)
-   
-   # Send an Enter key to force execution.
-   self$client$Input.dispatchKeyEvent(type = "rawKeyDown", windowsVirtualKeyCode = 13L)
-   
-   # If requested, wait until the code has finished execution.
-   if (wait)
-   {
-      Sys.sleep(0.1)
-      editorEl <- self$jsObjectViaSelector("#rstudio_console_input")
-      .rs.waitUntil("console is no longer busy", function()
-      {
-         !grepl("rstudio-console-busy", editorEl$className)
-      })
-   }
-   
-   invisible(TRUE)
-   
-})
-
-.rs.automation.addRemoteFunction("consoleOutput", function()
-{
-   consoleOutput <- self$jsObjectViaSelector("#rstudio_console_output")
-   strsplit(consoleOutput$innerText, split = "\n", fixed = TRUE)[[1L]]
-})
-
-.rs.automation.addRemoteFunction("documentOpen", function(ext, contents)
-{
-   # Write document contents to file.
-   documentPath <- tempfile("document-", fileext = ext)
-   documentPath <- chartr("\\", "/", documentPath)
-   writeLines(contents, con = documentPath)
-   
-   # Open that document in the attached editor.
-   code <- sprintf(".rs.api.documentOpen(\"%s\")", documentPath)
-   self$consoleExecute(code)
-   
-   self$waitForElement("#rstudio_source_text_editor")
-})
-
-.rs.automation.addRemoteFunction("documentExecute", function(ext, contents, callback)
-{
-   # Write document contents to file.
-   documentPath <- tempfile("document-", fileext = ext)
-   documentPath <- chartr("\\", "/", documentPath)
-   writeLines(contents, con = documentPath)
-   
-   # Open that document in the attached editor.
-   code <- sprintf(".rs.api.documentOpen(\"%s\")", documentPath)
-   self$consoleExecute(code)
-   
-   # Set an exit handler so we close and clean up the console history after.
-   on.exit({
-      self$documentClose()
-      self$shortcutExecute("Ctrl + L")
-   }, add = TRUE)
-   
-   # Wait until the element is focused.
-   .rs.waitUntil("source editor is focused", function()
-   {
-      className <- self$jsExec("document.activeElement.className")
-      length(className) && grepl("ace_text-input", className)
-   })
-   
-   # Get a reference to the editor in that instance.
-   editor <- self$editorGetInstance()
-   
-   # Wait a small bit, so Ace can tokenize the document.
-   Sys.sleep(0.2)
-   
-   # Invoke callback with the editor instance.
-   callback(editor)
-})
-
-.rs.automation.addRemoteFunction("documentClose", function()
-{
-   self$consoleExecute("invisible(.rs.api.documentClose())")
-})
-
-.rs.automation.addRemoteFunction("domGetNodeId", function(selector)
+.rs.automation.addRemoteFunction("dom.querySelector", function(selector)
 {
    # Query for the requested node.
    document <- self$client$DOM.getDocument(depth = 0L)
@@ -243,7 +135,8 @@
    nodeId
 })
 
-.rs.automation.addRemoteFunction("domGetNodeIds", function(selector)
+
+.rs.automation.addRemoteFunction("dom.querySelectorAll", function(selector)
 {
    # Query for all nodes matching the selector.
    document <- self$client$DOM.getDocument(depth = 0L)
@@ -258,20 +151,28 @@
    nodeIds
 })
 
-.rs.automation.addRemoteFunction("domClickElement", function(selector = NULL,
-                                                             objectId = NULL,
-                                                             verticalOffset = 0L,
-                                                             horizontalOffset = 0L,
-                                                             button = "left")
+.rs.automation.addRemoteFunction("dom.clickElement", function(selector = NULL,
+                                                              objectId = NULL,
+                                                              nodeId = NULL,
+                                                              verticalOffset = 0L,
+                                                              horizontalOffset = 0L,
+                                                              button = "left")
 {
+   # Resolve jsObject from provided parameters.
    objectId <- .rs.nullCoalesce(objectId, {
       
-      # Query for the requested node.   
-      nodeId <- self$domGetNodeId(selector)
+      # Query for the requested node.
+      nodeId <- .rs.nullCoalesce(nodeId, {
+         .rs.waitUntil(selector, function()
+         {
+            self$dom.querySelector(selector)
+         }, swallowErrors = TRUE)
+      })
       
       # Get a JavaScript object ID associated with this node.
       response <- self$client$DOM.resolveNode(nodeId)
       response$object$objectId
+      
    })
    
    
@@ -309,22 +210,7 @@
    )
 })
 
-.rs.automation.addRemoteFunction("domClickElementByNodeId", function(nodeId,
-                                                                     objectId = NULL,
-                                                                     verticalOffset = 0L,
-                                                                     horizontalOffset = 0L,
-                                                                     button = "left")
-{
-   objectId <- .rs.nullCoalesce(objectId, {
-      
-      # Get a JavaScript object ID associated with this node.
-      response <- self$client$DOM.resolveNode(nodeId)
-      response$object$objectId
-   })
-   self$domClickElement(NULL, objectId = objectId)
-})
-
-.rs.automation.addRemoteFunction("editorGetInstance", function()
+.rs.automation.addRemoteFunction("editor.getInstance", function()
 {
    jsCode <- .rs.heredoc('
       var id = $RStudio.last_focused_editor_id;
@@ -337,7 +223,7 @@
 })
 
 
-.rs.automation.addRemoteFunction("jsExec", function(jsExpr)
+.rs.automation.addRemoteFunction("js.eval", function(jsExpr)
 {
    # Implicit return for single-line expressions.
    jsExpr <- strsplit(jsExpr, "\n", fixed = TRUE)[[1L]]
@@ -361,7 +247,7 @@
    .rs.fromJSON(jsResponse$result$value)
 })
 
-.rs.automation.addRemoteFunction("jsCall", function(objectId, jsFunc)
+.rs.automation.addRemoteFunction("js.call", function(objectId, jsFunc)
 {
    # Wrap provided code into a function if necessary.
    if (!grepl("^function\\b", jsFunc))
@@ -382,41 +268,29 @@
    )
 })
 
-.rs.automation.addRemoteFunction("jsObjectViaExpression", function(expression)
+.rs.automation.addRemoteFunction("js.querySelector", function(selector)
 {
-   response <- .rs.waitFor(expression, function()
+   response <- .rs.waitUntil(selector, function()
    {
-      self$client$Runtime.evaluate(expression)
-   })
-   
-   .rs.automation.wrapJsResponse(self, response)
-})
-
-.rs.automation.addRemoteFunction("jsObjectViaSelector", function(selector)
-{
-   response <- .rs.waitFor(selector, function()
-   {
-      nodeId <- self$domGetNodeId(selector)
+      nodeId <- self$dom.querySelector(selector)
       self$client$DOM.resolveNode(nodeId)
-   })
+   }, swallowErrors = TRUE)
    
    .rs.automation.wrapJsResponse(self, response)
 })
 
-.rs.automation.addRemoteFunction("jsObjectsViaSelector", function(selector)
+.rs.automation.addRemoteFunction("js.querySelectorAll", function(selector)
 {
-   response <- .rs.waitFor(selector, function()
+   response <- .rs.waitUntil(selector, function()
    {
-      nodeIds <- self$domGetNodeIds(selector)
-      resolvedNodes <- lapply(nodeIds, function(nodeId) {
-         self$client$DOM.resolveNode(nodeId)
-      })
-      resolvedNodes
-   })
-   .rs.automation.wrapJsListResponse(self, response)
+      nodeIds <- self$dom.querySelectorAll(selector)
+      lapply(nodeIds, self$client$DOM.resolveNode)
+   }, swallowErrors = TRUE)
+
+   .rs.automation.wrapJsResponse(self, response)
 })
 
-.rs.automation.addRemoteFunction("keyboardExecute", function(...)
+.rs.automation.addRemoteFunction("keyboard.insertText", function(...)
 {
    reShortcut <- "^\\<(.*)\\>$"
    for (input in list(...))
@@ -424,7 +298,7 @@
       if (grepl(reShortcut, input, perl = TRUE))
       {
          shortcut <- sub(reShortcut, "\\1", input, perl = TRUE)
-         self$shortcutExecute(shortcut)
+         self$keyboard.executeShortcut(shortcut)
       }
       else if (nzchar(input))
       {
@@ -433,62 +307,22 @@
    }
 })
 
-.rs.automation.addRemoteFunction("modalClick", function(buttonName)
+.rs.automation.addRemoteFunction("modals.click", function(buttonName)
 {
    .rs.tryCatch({
       buttonSelector <- sprintf("#rstudio_dlg_%s", buttonName)
-      buttonId <- self$domGetNodeId(buttonSelector)
-      self$domClickElement(objectId = buttonId)
+      buttonId <- self$dom.querySelector(buttonSelector)
+      self$dom.clickElement(objectId = buttonId)
       TRUE
    })
 })
 
-.rs.automation.addRemoteFunction("projectCreate", function(type = "")
-{
-   # Create a package project.
-   if (type == "package")
-   {
-      self$consoleExecuteExpr({
-         projectPath <- tempfile("rstudio", tmpdir = normalizePath(dirname(tempdir())))
-         usethis::create_package(path = projectPath, open = FALSE)
-         .rs.api.openProject(projectPath)
-      }, wait = FALSE)
-   }
-   else
-   {
-      stop("unimplemented or unknown project type '", type, "'")
-   }
-   
-   # Wait until the new project is open.
-   Sys.sleep(1)
-   .rs.waitUntil("The new project is opened", function()
-   {
-      tryCatch({
-         jsProjectMenuButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
-         grepl("rstudio", jsProjectMenuButton$innerText)
-      }, error = function(e) FALSE)
-   })
-   
-   
-})
-.rs.automation.addRemoteFunction("projectClose", function()
-{
-   self$domClickElement("#rstudio_project_menubutton_toolbar")
-   self$domClickElement("#rstudio_label_close_project_command")
-   
-   .rs.waitUntil("The project has closed", function()
-   {
-      toolbarButton <- self$jsObjectViaSelector("#rstudio_project_menubutton_toolbar")
-      .rs.trimWhitespace(toolbarButton$innerText) == "Project: (None)"
-   })
-})
-
-.rs.automation.addRemoteFunction("quit", function()
+.rs.automation.addRemoteFunction("session.quit", function()
 {
    # Try to gracefully shut down the browser. We use a timeout
    # so we can close the socket cleanly while the browser window
    # is still alive.
-   self$jsExec('setTimeout(function() { window.close(); }, 1000)')
+   self$js.eval('setTimeout(function() { window.close(); }, 1000)')
    
    # Close the websocket connection.
    self$client$socket$close()
@@ -512,99 +346,22 @@
    invisible(alive)
 })
 
-.rs.automation.addRemoteFunction("sessionReset", function()
+.rs.automation.addRemoteFunction("session.reset", function()
 {
    # Clear any popups that might be visible.
-   self$keyboardExecute("<Escape>")
+   self$keyboard.insertText("<Escape>")
    
    # Clear any text that might be set in the console.
-   self$commandExecute("activateConsole")
-   self$keyboardExecute("<Command + A>", "<Backspace>")
+   self$commands.execute("activateConsole")
+   self$keyboard.insertText("<Command + A>", "<Backspace>")
    
    # Close any open documents.
-   self$consoleExecuteExpr({
+   self$console.executeExpr({
       .rs.api.closeAllSourceBuffersWithoutSaving()
       rm(list = ls())
    }, wait = FALSE)
    
    # Clear the console.
-   self$keyboardExecute("<Ctrl + L>")
+   self$keyboard.insertText("<Ctrl + L>")
 })
 
-.rs.automation.addRemoteFunction("shortcutExecute", function(shortcut)
-{
-   parts <- tolower(strsplit(shortcut, "\\s*\\+\\s*", perl = TRUE)[[1L]])
-   
-   modifiers <- 0L
-   if ("alt" %in% parts)
-      modifiers <- bitwOr(modifiers, 1L)
-   if ("ctrl" %in% parts)
-      modifiers <- bitwOr(modifiers, 2L)
-   if ("meta" %in% parts)
-      modifiers <- bitwOr(modifiers, 4L)
-   if ("shift" %in% parts)
-      modifiers <- bitwOr(modifiers, 8L)
-   
-   # 'cmd' means 'meta' on macOS, 'ctrl' otherwise
-   if ("cmd" %in% parts || "command" %in% parts)
-   {
-      modifier <- ifelse(.rs.platform.isMacos, 4L, 2L)
-      modifiers <- bitwOr(modifiers, modifier)
-   }
-   
-   key <- tail(parts, n = 1L)
-   code <- .rs.automationConstants.keyToKeyCodeMap[[key]]
-   if (is.null(code))
-      stop(sprintf("couldn't convert key '%s' to key code", key))
-   
-   self$client$Input.dispatchKeyEvent(
-      type                  = "keyDown",
-      modifiers             = modifiers,
-      windowsVirtualKeyCode = code
-   )
-   
-   self$client$Input.dispatchKeyEvent(
-      type                  = "keyUp",
-      modifiers             = modifiers,
-      windowsVirtualKeyCode = code
-   )
-   
-})
-
-.rs.automation.addRemoteFunction("waitForElement", function(selector,
-                                                            predicate = NULL)
-{
-   # Query for the requested node.
-   document <- self$client$DOM.getDocument(depth = 0L)
-   
-   # Wait until we have a node ID.
-   nodeId <- 0L
-   .rs.waitUntil(selector, function()
-   {
-      response <- self$client$DOM.querySelector(document$root$nodeId, selector)
-      nodeId <<- response$nodeId
-   })
-   
-   # Wait until the predicate is true.
-   if (!is.null(predicate))
-   {
-      .rs.waitUntil(selector, function()
-      {
-         predicate(nodeId)
-      })
-   }
-   
-   # Return the resolved node id.
-   nodeId
-})
-
-.rs.automation.addRemoteFunction("skipIfNotInstalled", function(package)
-{
-   self$consoleExecuteExpr(find.package(!!package, quiet = TRUE))
-   output <- self$consoleOutput()
-   isInstalled <- tail(output, n = 1L) != "character(0)"
-   testthat::skip_if_not(
-      condition = isInstalled,
-      message   = sprintf("package '%s' is not installed", package)
-   )
-})

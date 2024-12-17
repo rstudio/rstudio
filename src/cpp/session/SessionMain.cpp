@@ -21,9 +21,10 @@
 #include <boost/scope_exit.hpp>
 
 #ifndef _WIN32
+#include <netdb.h>
+#include <pwd.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <netdb.h>
 #endif
 
 #include <string>
@@ -1420,10 +1421,22 @@ void rRunTests()
    exitEarly(status);
 }
 
-void rRunAutomation()
+void rRunAutomationImpl()
 {
    ClientEvent event(client_events::kRunAutomation);
    module_context::enqueClientEvent(event);
+}
+
+void rRunAutomation()
+{
+   // it seems like automation runs can fail to start if the
+   // RunAutomation client event is received too soon after
+   // startup, so we use a 3 second delay just to give the
+   // client more time to fully finish initialization
+   module_context::scheduleDelayedWork(
+            boost::posix_time::seconds(3),
+            rRunAutomationImpl,
+            false);
 }
 
 void ensureRProfile()
@@ -2036,9 +2049,26 @@ int main(int argc, char * const argv[])
          return core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
       }
 
+      // make sure the USER environment variable is set
+      // (seemingly it isn't in Docker?)
+#ifndef _WIN32
+      std::string user = core::system::getenv("USER");
+      if (user.empty())
+      {
+         uid_t uid = geteuid();
+         struct passwd* pw = getpwuid(uid);
+         if (pw != nullptr)
+         {
+            std::string user = pw->pw_name;
+            core::system::setenv("USER", user);
+         }
+      }
+#endif
+      
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
+      
       std::string programId = "rsession-" + core::system::username();
       core::log::setProgramId(programId);
       core::system::initializeLog(programId,
@@ -2555,9 +2585,7 @@ int main(int argc, char * const argv[])
      
       // set automation callback if enabled
       if (options.runAutomation())
-      {
          rCallbacks.runAutomation = rRunAutomation;
-      }
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);

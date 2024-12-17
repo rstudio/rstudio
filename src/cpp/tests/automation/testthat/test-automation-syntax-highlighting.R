@@ -19,7 +19,7 @@ withr::defer(.rs.automation.deleteRemote())
       1 + 1
    ')
    
-   remote$documentExecute(".Rmd", documentContents, function(editor) {
+   remote$editor.executeWithContents(".Rmd", documentContents, function(editor) {
       tokens <- as.vector(editor$session$getTokens(8L))
       expect_length(tokens, 1L)
       expect_equal(tokens[[1]]$type,  "text")
@@ -41,8 +41,8 @@ withr::defer(.rs.automation.deleteRemote())
       :::
    ')
    
-   remote$consoleExecute(".rs.writeUserPref(\"rainbow_fenced_divs\", TRUE)")
-   remote$documentExecute(".Rmd", documentContents, function(editor) {
+   remote$console.execute(".rs.writeUserPref(\"rainbow_fenced_divs\", TRUE)")
+   remote$editor.executeWithContents(".Rmd", documentContents, function(editor) {
       
       tokens <- as.vector(editor$session$getTokens(0L))
       expect_length(tokens, 2L)
@@ -61,7 +61,7 @@ withr::defer(.rs.automation.deleteRemote())
       state <- editor$session$getState(5L)
       expect_equal(state, "start")
    })
-   remote$consoleExecute(".rs.writeUserPref(\"rainbow_fenced_divs\", FALSE)")
+   remote$console.execute(".rs.writeUserPref(\"rainbow_fenced_divs\", FALSE)")
    
 })
 
@@ -78,7 +78,7 @@ withr::defer(.rs.automation.deleteRemote())
       ```
    ')
    
-   remote$documentExecute(".qmd", documentContents, function(editor) {
+   remote$editor.executeWithContents(".qmd", documentContents, function(editor) {
       startWidget <- editor$session$getFoldWidget(4L)
       expect_equal(startWidget, "start")
       
@@ -96,7 +96,7 @@ withr::defer(.rs.automation.deleteRemote())
       # | yaml: false
    ')
    
-   remote$documentExecute(".R", documentContents, function(editor) {
+   remote$editor.executeWithContents(".R", documentContents, function(editor) {
       
       tokens <- as.vector(editor$session$getTokens(0L))
       firstToken <- tokens[[1L]]
@@ -134,7 +134,7 @@ withr::defer(.rs.automation.deleteRemote())
       ```
    ')
    
-   remote$documentExecute(".Rmd", documentContents, function(editor) {
+   remote$editor.executeWithContents(".Rmd", documentContents, function(editor) {
       
       token <- as.vector(editor$session$getTokenAt(5, 0))
       expect_match(token$type, "comment")
@@ -172,7 +172,7 @@ withr::defer(.rs.automation.deleteRemote())
       ## Heading 2
    ')
    
-   remote$documentExecute(".qmd", contents, function(editor) {
+   remote$editor.executeWithContents(".qmd", contents, function(editor) {
       
       # first header
       token <- as.vector(editor$session$getTokenAt(5, 0))

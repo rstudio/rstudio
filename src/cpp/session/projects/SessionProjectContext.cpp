@@ -183,23 +183,21 @@ Error computeScratchPaths(const FilePath& projectFile,
                           FilePath* pScratchPath,
                           FilePath* pSharedScratchPath)
 {
-   // ensure project user dir
+   // compute project user dir
    FilePath projectUserDir = computeUserDir(projectFile, projectConfig);
-   if (!projectUserDir.exists())
-   {
-      // create
-      Error error = projectUserDir.ensureDirectory();
-      if (error)
-         return error;
+   
+   // make sure it exists
+   Error error = projectUserDir.ensureDirectory();
+   if (error)
+      return error;
 
-      // mark hidden if we are on win32
+   // mark hidden if we are on win32
 #ifdef _WIN32
-      error = core::system::makeFileHidden(projectUserDir);
-      if (error)
-         return error;
+   error = core::system::makeFileHidden(projectUserDir);
+   if (error)
+      LOG_ERROR(error);
 #endif
-   }
-
+   
    // now add context id to form scratch path
    if (pScratchPath)
    {
