@@ -20,5 +20,11 @@ public class PublicKeyInfo extends JavaScriptObject
 {
    protected PublicKeyInfo() {}
 
-   public native final String getKey() /*-{ return this.key; }-*/;
+   public native final String getExponent() /*-{
+      return this.exponent;
+   }-*/;
+
+   public native final String getModulo() /*-{
+      return this.modulo;
+   }-*/;
 }
