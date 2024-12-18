@@ -108,7 +108,7 @@ std::map<std::string, std::string> s_extToLanguageIdMap = {
    { ".mjs",   "javascript" },
    { ".ps",    "powershell" },
    { ".py",    "python" },
-   { ".tex",   "latex" },
+   { ".qmd",   "quarto" },
    { ".r",     "r" },
    { ".rb",    "ruby" },
    { ".rmd",   "r" },
