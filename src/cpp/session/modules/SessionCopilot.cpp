@@ -108,7 +108,7 @@ std::map<std::string, std::string> s_extToLanguageIdMap = {
    { ".mjs",   "javascript" },
    { ".ps",    "powershell" },
    { ".py",    "python" },
-   { ".tex",   "latex" },
+   { ".qmd",   "quarto" },
    { ".r",     "r" },
    { ".rb",    "ruby" },
    { ".rmd",   "r" },
@@ -298,18 +298,19 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    if (pDoc->contents().find('\0') != std::string::npos)
       return false;
    
+   // Our source database uses non-standard names for certain R file types,
+   // so explicitly check for those and allow them to be indexed.
+   if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
+      return true;
+   
    // Allow indexing of Untitled documents if they have a known type.
    if (pDoc->isUntitled())
    {
-      // Our source database uses non-standard names for certain R file types,
-      // so explicitly check for those and allow them to be indexed.
-      if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
-         return true;
-
       std::string type = pDoc->type();
       return languageIdToExtMap().count(type);
    }
    
+   // Otherwise, check for known files / extensions.
    FilePath docPath(pDoc->path());
    return isIndexableFile(docPath);
 }
