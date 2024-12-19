@@ -44,11 +44,6 @@ export const kSessionExit = 'session-exit';
 export const kHelp = '--help';
 export const kStartupDelay = 'startup-delay';
 
-// RStudio Pro Only
-// export const kSessionServerOption = '--session-server';
-// export const kSessionServerUrlOption = '--session-url';
-// export const kTempCookiesOption = '--use-temp-cookies';
-
 const defaultStartupDelaySeconds = 5;
 
 export interface Option {
