@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# install-common
+# install-hosts
 #
 # Copyright (C) 2022 by Posit Software, PBC
 #
@@ -17,21 +17,17 @@
 
 set -e
 
-./install-packages "$1"
-./install-dictionaries
-./install-mathjax
-./install-boost
-./install-pandoc
-./install-quarto
-./install-sentry-cli
-./install-npm-dependencies
-./install-soci
-./install-crashpad
-./install-panmirror
-./install-sccache
-./install-hosts
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Updating /etc/hosts"
 
-if [ -e install-overlay ]
-then
-   ./install-overlay "$1"
+ENTRY="127.0.0.1  rstudio-localhost"
+if grep -q "${ENTRY}" /etc/hosts; then
+   info "/etc/hosts is already up-to-date."
+   exit 0
 fi
+
+# re-run as root if necessary
+sudo-if-necessary-for /etc/hosts "$@"
+info "Adding ${ENTRY} to /etc/hosts."
+echo "${ENTRY}" >> /etc/hosts
+
