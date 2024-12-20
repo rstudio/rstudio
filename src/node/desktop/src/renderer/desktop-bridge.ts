@@ -408,7 +408,7 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('setPendingQuit', error));
     },
 
-    openFile: (path: string) => {
+    openFile: async (path: string) => {
       if (!path) {
         return;
       }
@@ -416,9 +416,19 @@ export function getDesktopBridge() {
 
       if (webcontents.length) {
         path = path.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
-        webcontents[0]
-          .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
-          .catch((error: unknown) => logString('err', safeError(error).message));
+
+        // use first window that has the desktop hooks (the splash screen, for example, does NOT have them)
+        for (const webcontent of webcontents) {
+          const hasHooks: boolean = await webcontent.executeJavaScript('!!window.desktopHooks');
+          if (hasHooks) {
+            try {
+              await webcontent.executeJavaScript(`window.desktopHooks.openFile("${path}")`);
+            } catch (error: unknown) {
+              logString('err', safeError(error).message);
+            }
+            break;
+          }
+        }
       }
     },
 
