@@ -796,10 +796,10 @@
 
    # use devtools shim for help if available
    if ("devtools_shims" %in% search() &&
-       "devtools" %in% loadedNamespaces() &&
-       exists("shim_help", envir = asNamespace("devtools")))
+       "pkgload" %in% loadedNamespaces() &&
+       exists("shim_help", envir = asNamespace("pkgload")))
    {
-      help <- devtools:::shim_help
+      help <- pkgload:::shim_help
    }
    else
    {
