@@ -147,6 +147,7 @@ export class SessionLauncher {
   private splash: BrowserWindow | undefined;
   private showSplash = process.env.NODE_ENV !== 'TEST';
   private splashDelay: number;
+  private splashLinger: number;
 
   constructor(
     private sessionPath: FilePath,
@@ -156,6 +157,7 @@ export class SessionLauncher {
     private windowAllClosedHandler: (() => void) | null,
   ) {
     this.splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 100;
+    this.splashLinger = process.env.RS_SPLASH_LINGER ? parseInt(process.env.RS_SPLASH_LINGER) : 1300;
     if (process.env.RS_NO_SPLASH) {
       this.showSplash = false;
     }
@@ -244,7 +246,7 @@ export class SessionLauncher {
         // if the splash screen displayed, keep it visible for another brief period to
         // reduce cases where it flashes and hides without being readable
         if (this.splash) {
-          setTimeoutPromise(1300)
+          setTimeoutPromise(this.splashLinger)
             .then(() => {
               this.splash?.close();
             })
