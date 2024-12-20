@@ -29,7 +29,7 @@ public class ThemeFonts
 
    public static String getProportionalFont()
    {
-      return fontLoader.getProportionalFont() + ", serif";
+      return fontLoader.getProportionalFont() + ", sans-serif";
    }
 
    public static String getFixedWidthFont()
@@ -85,7 +85,7 @@ public class ThemeFonts
       public String getProportionalFont()
       {
          String font = BrowseCap.hasUbuntuFonts() ? "Ubuntu, " : "";
-         return font + "\"Lucida Sans\", \"DejaVu Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif";
+         return font + "\"Lucida Sans\", \"DejaVu Sans\", \"Noto Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif";
       }
 
       public String getFixedWidthFont()
@@ -116,7 +116,7 @@ public class ThemeFonts
          if (BrowseCap.isMacintosh())
             font += "Monaco, monospace";
          else if (BrowseCap.isLinux())
-            font += "\"Ubuntu Mono\", \"Droid Sans Mono\", \"DejaVu Sans Mono\", monospace";
+            font += "\"Ubuntu Mono\", \"Droid Sans Mono\", \"DejaVu Sans Mono\", \"Noto Sans Mono\", monospace";
          else
             font += "Consolas, \"Lucida Console\", monospace";
 

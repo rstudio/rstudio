@@ -708,7 +708,7 @@ export class GwtCallback extends EventEmitter {
       } else if (process.platform === 'win32') {
         defaultFonts = ['Segoe UI', 'Verdana', 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Helvetica'];
       } else {
-        defaultFonts = ['Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', 'Verdana', 'Helvetica'];
+        defaultFonts = ['Lucida Sans', 'DejaVu Sans', 'Noto Sans', 'Lucida Grande', 'Segoe UI', 'Verdana', 'Helvetica'];
       }
 
       let proportionalFont = defaultFonts[0];
