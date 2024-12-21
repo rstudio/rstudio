@@ -29,7 +29,7 @@ set -e
 ./install-crashpad
 ./install-panmirror
 ./install-sccache
-./install-hosts
+# ./install-hosts
 
 if [ -e install-overlay ]
 then
