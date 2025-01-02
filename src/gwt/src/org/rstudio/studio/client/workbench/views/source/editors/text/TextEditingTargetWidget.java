@@ -1134,7 +1134,8 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setText(width >= 560, previewCommandText_);
       knitDocumentButton_.setText(width >= 560, knitCommandText_);
       quartoRenderButton_.setText(width >= 560, quartoCommandText_);
-      publishButton_.setShowCaption(width >= 530);
+      if (publishButton_ != null)
+         publishButton_.setShowCaption(width >= 530);
 
       String action = getSourceOnSaveAction();
       srcOnSaveLabel_.setText(width < 490 ? action : constants_.actionOnSave(action));
