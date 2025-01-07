@@ -794,13 +794,20 @@
 
    pieces <- strsplit(token, ':{2,3}')[[1]]
 
-   # use devtools shim for help if available
+   # use devtools shim for help if available (old devtools version)
    if ("devtools_shims" %in% search() &&
-       "pkgload" %in% loadedNamespaces() &&
-       exists("shim_help", envir = asNamespace("pkgload")))
+       "devtools" %in% loadedNamespaces() &&
+       exists("shim_help", envir = asNamespace("devtools")))
+   {
+      help <- devtools:::shim_help
+   }
+   # use devtools shim for help if available (from pkgload)
+   else if ("devtools_shims" %in% search() &&
+            "pkgload" %in% loadedNamespaces() &&
+            exists("shim_help", envir = asNamespace("pkgload")))
    {
       help <- pkgload:::shim_help
-   }
+   } 
    else
    {
       help <- utils::help
