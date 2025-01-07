@@ -125,7 +125,6 @@ pipeline {
                   script {
                     try {
                       // Create a temporary keychain to hold the Developer ID certificate for signing
-                      echo "Info: create-keychain at: \'${BUILD_AGENT_TEMP}/buildagent.keychain\'"
                       sh 'security create-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain'
                     } catch (Exception e) {
                       // We remove the keychain at the end of this script, but ignore the error
