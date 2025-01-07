@@ -154,8 +154,7 @@ pipeline {
                     // attempt to run cpp unit tests
                     // problems with rsession finding openssl, so those tests
                     // are disabled until we solve it (#6890)
-                    // sh "arch -x86_64 ./rstudio-tests"
-                    echo "TODO: reenable cpp unit tests"
+                    sh "arch -x86_64 ./rstudio-tests"
                     
                     // electron tests not working in CI environment, under investigation
                     // if(FLAVOR == 'Electron') {
