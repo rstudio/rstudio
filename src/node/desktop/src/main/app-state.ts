@@ -26,6 +26,7 @@ import { WindowTracker } from './window-tracker';
 import { ModalDialogTracker } from './modal-dialog-tracker';
 import { EventBusTypes } from './event-bus-types';
 import { TypedEventEmitter } from './typed-event-emitter';
+import { ArgsManager } from './args-manager';
 
 /**
  * Global application state
@@ -54,6 +55,7 @@ export interface AppState {
   server?: Server;
   client?: Client;
   eventBus?: TypedEventEmitter<EventBusTypes>;
+  argsManager: ArgsManager;
 }
 
 let rstudio: AppState | null = null;

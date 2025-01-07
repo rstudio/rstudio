@@ -105,6 +105,9 @@ export class MainWindow extends GwtWindow {
     appState().gwtCallback?.on(GwtCallback.WORKBENCH_INITIALIZED, () => {
       this.onWorkbenchInitialized();
     });
+    appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
+      appState().argsManager.handleAfterSessionLaunchCommands();
+    });
     appState().gwtCallback?.on(GwtCallback.SESSION_QUIT, () => {
       this.onSessionQuit();
     });
