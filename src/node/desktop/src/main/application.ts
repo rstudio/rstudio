@@ -389,10 +389,6 @@ export class Application implements AppState {
     );
     this.sessionLauncher.launchFirstSession(installPath, !app.isPackaged);
 
-    this.gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
-      this.argsManager.handleAfterSessionLaunchCommands();
-    });
-
     this.setDockMenu();
 
     return run();
