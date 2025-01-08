@@ -49,7 +49,6 @@ FORMULAS=(
    pidof
    postgresql@14
    r
-   vim
 )
 
 # Python only needed for developer builds
