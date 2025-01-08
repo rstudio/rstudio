@@ -1379,7 +1379,16 @@ bool navigateToRenderPreviewError(const FilePath& previewFile,
    FilePath errFile = previewFile;
 
    // look for knitr error
-   const boost::regex knitrErr("Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)");
+   const boost::regex knitrErr(
+      "Quitting from lines"    // prefix
+      "\\s*"                   // whitespace
+      "(\\d+)-(\\d+)"          // line numbers
+      "\\s*"                   // whitespace
+      "(?:\\[[^]]+\\])?"       // chunk name, in brackets
+      "\\s*"                   // whitespace
+      "\\(([^)]+)\\)"          // file name, in parens
+   );
+
    boost::smatch matches;
    if (regex_utils::search(output, matches, knitrErr))
    {
