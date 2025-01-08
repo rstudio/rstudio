@@ -463,7 +463,6 @@ if(APPLE)
       find_path(HOMEBREW_PREFIX
          NAMES bin/brew
          HINTS
-            "$ENV{HOME}/homebrew/${UNAME_M}"
             "${HOMEBREW_PREFIX_FALLBACK}")
 
       message(STATUS "Using Homebrew: ${HOMEBREW_PREFIX}")
