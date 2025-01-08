@@ -1029,7 +1029,7 @@
    if (is.character(x))
    {
       n <- length(x)
-      if (n < 1E5)
+      if (!is.na(n) && n >= 1E5)
       {
          result <- n * .Machine$sizeof.pointer
          class(result) <- "object_size"
