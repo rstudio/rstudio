@@ -126,8 +126,7 @@ pipeline {
                       // Create a keychain to hold the Developer ID certificate for signing
                       sh 'security create-keychain -p pwd ${BUILD_AGENT_TEMP}/buildagent.keychain'
                     } catch (Exception e) {
-                      // Ignore the error if keychain already exists
-                      echo "Warning: create-keychain failed (ignoring): ${e.getMessage()}"
+                      echo "Warning: create-keychain failed (expected if it already existed): ${e.getMessage()}"
                     }
                   }
                   sh 'security default-keychain -s ${BUILD_AGENT_TEMP}/buildagent.keychain'
