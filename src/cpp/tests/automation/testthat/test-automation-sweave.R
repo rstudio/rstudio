@@ -26,3 +26,36 @@ withr::defer(.rs.automation.deleteRemote())
    })
    
 })
+
+# https://github.com/rstudio/rstudio/issues/15574
+.rs.test("Background chunk highlight in Sweave documents is correct", {
+   
+   contents <- .rs.heredoc('
+      \\begin{document}
+      
+      This is some text.
+      
+      <<chunk>>=
+      print(1 + 1)
+      @
+      
+      This is some more text.
+      
+      \\end{document}
+   ')
+   
+   remote$editor.executeWithContents(".Rnw", contents, function(editor) {
+      
+      markers <- as.vector(editor$session$getMarkers(0L))
+      highlightMarkers <- Filter(function(marker) {
+         grepl("background_highlight", marker$clazz)
+      }, markers)
+      
+      expect_equal(length(highlightMarkers), 3L)
+      expect_equal(highlightMarkers[[1L]]$range$start$row, 4L)
+      expect_equal(highlightMarkers[[2L]]$range$start$row, 5L)
+      expect_equal(highlightMarkers[[3L]]$range$start$row, 6L)
+      
+   })
+   
+})

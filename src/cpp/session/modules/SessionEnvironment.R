@@ -1026,21 +1026,16 @@
 
 .rs.addFunction("estimatedObjectSize", function(x)
 {
-   n <- length(x)
-   if (n < 1E5)
-   {
-      .rs.objectSize(x)
-   }
-   else if (is.character(x))
+   # avoid invoking object.size() on large character vectors,
+   # as this can be slow
+   if (is.character(x) && length(unclass(x)) >= 1E5)
    {
       result <- n * .Machine$sizeof.pointer
       class(result) <- "object_size"
       attr(result, "estimate") <- TRUE
       return(result)
    }
-   else
-   {
-      .rs.objectSize(x)
-   }
+   
+   .rs.objectSize(x)
 })
 

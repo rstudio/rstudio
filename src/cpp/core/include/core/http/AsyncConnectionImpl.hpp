@@ -63,7 +63,10 @@ template <typename StreamType>
 class SocketOperations : public ISocketOperations
 {
 public:
-   SocketOperations(const boost::shared_ptr<StreamType>& stream) : stream_(stream)
+   SocketOperations(const boost::shared_ptr<StreamType>& stream,
+                    boost::asio::io_context::strand& strand) :
+                          stream_(stream),
+                          strand_(strand)
    {
    }
 
@@ -73,26 +76,27 @@ public:
 
    virtual void asyncReadSome(const boost::asio::mutable_buffers_1& buffers, ReadHandler handler)
    {
-      stream_->async_read_some(buffers, handler);
+      stream_->async_read_some(buffers, boost::asio::bind_executor(strand_, handler));
    }
 
    virtual void asyncWrite(const boost::asio::mutable_buffers_1& buffers, Socket::Handler handler)
    {
-      boost::asio::async_write(*stream_, buffers, handler);
+      boost::asio::async_write(*stream_, buffers, boost::asio::bind_executor(strand_, handler));
    }
 
    virtual void asyncWrite(const boost::asio::const_buffers_1& buffer, Socket::Handler handler)
    {
-      boost::asio::async_write(*stream_, buffer, handler);
+      boost::asio::async_write(*stream_, buffer, boost::asio::bind_executor(strand_, handler));
    }
 
    virtual void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers, Socket::Handler handler)
    {
-      boost::asio::async_write(*stream_, buffers, handler);
+      boost::asio::async_write(*stream_, buffers, boost::asio::bind_executor(strand_, handler));
    }
 
 private:
    boost::shared_ptr<StreamType> stream_;
+   boost::asio::io_context::strand& strand_;
 };
 
 template <typename SocketType>
@@ -130,7 +134,8 @@ public:
         responseFilter_(responseFilter),
         closed_(false),
         requestSequence_(requestSequence),
-        bytesTransferred_(0)
+        bytesTransferred_(0),
+        strand_(ioService)
         
    {
       if (sslContext)
@@ -141,12 +146,12 @@ public:
          // the owner is the SSL stream pointer - this ensures we don't double delete
          socket_.reset(sslStream_, &sslStream_->next_layer());
 
-         socketOperations_.reset(new SocketOperations<boost::asio::ssl::stream<SocketType> >(sslStream_));
+         socketOperations_.reset(new SocketOperations<boost::asio::ssl::stream<SocketType> >(sslStream_, strand_));
       }
       else
       {
          socket_.reset(new SocketType(ioService));
-         socketOperations_.reset(new SocketOperations<SocketType>(socket_));
+         socketOperations_.reset(new SocketOperations<SocketType>(socket_, strand_));
       }
       request_.setRequestSequence(requestSequence);
    }
@@ -337,7 +342,7 @@ public:
          {
             Error error = closeSocket(*socket_);
             if (error && !core::http::isConnectionTerminatedError(error))
-               LOG_ERROR(error);
+               logConnectionError(error);
 
             closed_ = true;
             closedHandler = onClosed_;
@@ -352,6 +357,11 @@ public:
       // we do this after giving up the mutex to prevent potential deadlock
       if (closedHandler)
          closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this(), fromDestructor, requestParsed_);
+   }
+
+   virtual boost::asio::io_context::strand& getStrand()
+   {
+      return strand_;
    }
 
    void setUploadHandler(const AsyncUriUploadHandlerFunction& handler)
@@ -442,6 +452,12 @@ public:
    
 private:
 
+   void logConnectionError(Error error)
+   {
+      error.addProperty("request", request().debugInfo());
+      LOG_ERROR(error);
+   }
+
    void handleRead(const boost::system::error_code& e,
                    std::size_t bytesTransferred)
    {
@@ -463,7 +479,7 @@ private:
                                              buffer_.data() + bytesTransferred);
             }
             END_LOCK_MUTEX
-            
+
             // error - return bad request
             if (status == RequestParser::error)
             {
@@ -541,7 +557,7 @@ private:
             // log the error if it wasn't connection terminated
             Error error(e, ERROR_LOCATION);
             if (!isConnectionTerminatedError(error))
-               LOG_ERROR(error);
+               logConnectionError(error);
             
             // close the socket
             close();
@@ -603,7 +619,7 @@ private:
             if (!http::isConnectionTerminatedError(error) &&
                 !http::isWrongProtocolTypeError((error)))
             {
-               LOG_ERROR(error);
+               logConnectionError(error);
             }
          }
          
@@ -636,7 +652,7 @@ private:
       {
          Error error(ec, ERROR_LOCATION);
          if (!core::http::isConnectionTerminatedError(error))
-            LOG_ERROR(error);
+            logConnectionError(error);
 
          return;
       }
@@ -657,7 +673,7 @@ private:
    void handleStreamError(bool close, Socket::Handler handler, const Error& error)
    {
       if (!core::http::isConnectionTerminatedError(error))
-         LOG_ERROR(error);
+         logConnectionError(error);
       if (close)
          this->close();
       // jcheng: boost::system::generic_category() isn't correct, but I don't
@@ -703,6 +719,9 @@ private:
    size_t bytesTransferred_;
 
    boost::any connectionData_;
+
+protected:
+   boost::asio::io_context::strand strand_;
 };
 
 } // namespace http
