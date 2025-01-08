@@ -1474,11 +1474,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String otherNotifyMeLabel();
 
     /**
-     * Translated "Send automated crash reports to RStudio".
+     * Translated "Send automated crash reports to Posit".
      *
-     * @return translated "Send automated crash reports to RStudio"
+     * @return translated "Send automated crash reports to Posit"
      */
-    @DefaultMessage("Send automated crash reports to RStudio")
+    @DefaultMessage("Send automated crash reports to Posit")
     @Key("otherSendReportsLabel")
     String otherSendReportsLabel();
 
