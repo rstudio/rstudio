@@ -236,7 +236,7 @@ pipeline {
                   }
                   
                   stage("Publish") {
-                     environment {
+                    environment {
                       GITHUB_LOGIN = credentials('posit-jenkins')
                       DAILIES_PATH = "${PRODUCT}/macos"
                     }
