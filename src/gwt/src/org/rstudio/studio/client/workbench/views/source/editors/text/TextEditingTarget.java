@@ -3883,7 +3883,7 @@ public class TextEditingTarget implements
          {
             withReformatDependencies(() ->
             {
-               withSavedDoc(() ->
+               save(() ->
                {
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),
