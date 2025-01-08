@@ -17,11 +17,9 @@
 
 #include <boost/utility.hpp>
 #include <boost/format.hpp>
-
 #include <boost/algorithm/string/split.hpp>
 
 #include <core/FileSerializer.hpp>
-
 #include <core/tex/TexLogParser.hpp>
 #include <core/tex/TexMagicComment.hpp>
 
@@ -32,9 +30,9 @@
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
-
 #include <session/prefs/UserPrefs.hpp>
 
+#include "../rmarkdown/SessionRMarkdown.hpp"
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
@@ -292,9 +290,7 @@ public:
                           "([^\n]+)$");
 
       // new error style
-      boost::regex newErrRe("^\\s*Quitting from lines ([0-9]+)-([0-9]+) "
-                            "\\((.*?)\\)\\s*\\n(.*?)\\n");
-
+      boost::regex newErrRe("^\\s*" kKnitrErrorRegex "\\s*\\n(.*?)\\n");
       boost::smatch match;
       if (regex_utils::search(output, match, errRe))
       {

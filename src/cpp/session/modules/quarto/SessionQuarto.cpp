@@ -23,32 +23,27 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
-#include <r/RExec.hpp>
-#include <r/RRoutines.hpp>
-
 #include <core/Exec.hpp>
 #include <core/Version.hpp>
 #include <core/YamlUtil.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/text/AnsiCodeParser.hpp>
-
 #include <core/json/JsonRpc.hpp>
-
 #include <core/system/Process.hpp>
+#include <core/text/AnsiCodeParser.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RUtil.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjects.hpp>
-
 #include <session/prefs/UserPrefs.hpp>
-#include <session/SessionQuarto.hpp>
 
+#include "../rmarkdown/SessionRMarkdown.hpp"
 #include "SessionQuartoPreview.hpp"
 #include "SessionQuartoXRefs.hpp"
 #include "SessionQuartoResources.hpp"
@@ -1379,16 +1374,7 @@ bool navigateToRenderPreviewError(const FilePath& previewFile,
    FilePath errFile = previewFile;
 
    // look for knitr error
-   const boost::regex knitrErr(
-      "Quitting from lines"    // prefix
-      "\\s*"                   // whitespace
-      "(\\d+)-(\\d+)"          // line numbers
-      "\\s*"                   // whitespace
-      "(?:\\[[^]]+\\])?"       // chunk name, in brackets
-      "\\s*"                   // whitespace
-      "\\(([^)]+)\\)"          // file name, in parens
-   );
-
+   boost::regex knitrErr(kKnitrErrorRegex);
    boost::smatch matches;
    if (regex_utils::search(output, matches, knitrErr))
    {

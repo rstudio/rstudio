@@ -18,6 +18,13 @@
 
 #include <string>
 
+#define kKnitrErrorRegex                \
+    "Quitting from lines (\\d+)-(\\d+)" \
+    "\\s*"                              \
+    "(?:\\[.*?\\])?"                    \
+    "\\s*"                              \
+    "\\((.*?)\\)"
+
 #define kRenderTypeStatic   0
 #define kRenderTypeShiny    1
 #define kRenderTypeNotebook 2
