@@ -32,12 +32,7 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
    echo("Found arm64 rsession binary: '@RSESSION_ARM64_PATH@'")
 
    # find out where arm64 homebrew lives
-   if(EXISTS "$ENV{HOME}/homebrew/arm64")
-      set(HOMEBREW_ARM64_PREFIX "$ENV{HOME}/homebrew/arm64")
-   else()
-      set(HOMEBREW_ARM64_PREFIX "/opt/homebrew")
-   endif()
-
+   set(HOMEBREW_ARM64_PREFIX "/opt/homebrew")
    echo("Homebrew prefix: '${HOMEBREW_ARM64_PREFIX}'")
 
    # copy arm64 rsession binary
@@ -95,11 +90,7 @@ else()
 endif()
 
 # find out where x64 homebrew lives
-if(EXISTS "$ENV{HOME}/homebrew/x86_64")
-   set(HOMEBREW_X64_PREFIX "$ENV{HOME}/homebrew/x86_64")
-else()
-   set(HOMEBREW_X64_PREFIX "/usr/local")
-endif()
+set(HOMEBREW_X64_PREFIX "/usr/local")
 
 # copy required Homebrew libraries
 list(APPEND HOMEBREW_LIBS gettext openssl sqlite3)

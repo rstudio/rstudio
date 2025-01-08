@@ -8,7 +8,7 @@ DIR="$(dirname "${SCRIPT}")"
 # Ensure that an x86_64 version of R is placed on the PATH first so
 # that the correct R is used for tests.
 if [ "$(uname)" = "Darwin" ] && [ -n "${JENKINS_URL}" ]; then
-   PATH="${HOME}/homebrew/x86_64/bin:${PATH}"
+   PATH="/usr/local/bin:${PATH}"
 fi
 
 read -r -d '' USAGE <<- EOF
