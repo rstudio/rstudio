@@ -445,7 +445,7 @@ public class AceBackgroundHighlighter
    {
       return ListUtil.create(
             new HighlightPattern(
-                  "<<(.*?)>>",
+                  "^\\s*<<.*>>=\\s*$",
                   "^\\s*@\\s*$")
       );
    }

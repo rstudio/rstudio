@@ -93,10 +93,10 @@ protected:
       pAsyncConnector->connect(
             connectAddress,
             connectPort,
-            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnect,
+            boost::asio::bind_executor(*pStrand_, boost::bind(&TcpIpAsyncClientSsl::handleConnect,
                                                             TcpIpAsyncClientSsl::sharedFromThis(),
                                                             proxyUrl)),
-            boost::asio::bind_executor(strand_, boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
+            boost::asio::bind_executor(*pStrand_, boost::bind(&TcpIpAsyncClientSsl::handleConnectionError,
                                                             TcpIpAsyncClientSsl::sharedFromThis(),
                                                             _1)),
             connectionTimeout_);
@@ -131,7 +131,7 @@ private:
             socket().next_layer(),
             connectRequest.toBuffers(),
             boost::asio::bind_executor(
-                strand_,
+                *pStrand_,
                 boost::bind(&TcpIpAsyncClientSsl::handleProxyConnectWrite,
                             sharedFromThis(),
                             boost::asio::placeholders::error)));
@@ -154,7 +154,7 @@ private:
             connectResponseBuffer_,
             "\r\n",
             boost::asio::bind_executor(
-                strand_,
+                *pStrand_,
                 boost::bind(&TcpIpAsyncClientSsl::handleProxyConnectRead,
                             sharedFromThis(),
                             boost::asio::placeholders::error)));
@@ -211,7 +211,7 @@ private:
      ptrSslStream_->async_handshake(
          boost::asio::ssl::stream_base::client,
          boost::asio::bind_executor(
-             strand_,
+             *pStrand_,
              boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
                          sharedFromThis(),
                          boost::asio::placeholders::error)));

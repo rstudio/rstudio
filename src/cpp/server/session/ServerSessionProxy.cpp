@@ -1219,6 +1219,8 @@ void proxyLocalhostRequest(
    // create async tcp/ip client and assign request
    boost::shared_ptr<http::IAsyncClient> pClient(
       new server_core::http::LocalhostAsyncClient(ptrConnection->ioService(), address, port));
+   // Ensure async operations on both the browser->rserver and rserver->backend run on the same thread. 
+   pClient->setStrand(&ptrConnection->getStrand());
    pClient->request().assign(request);
 
    // execute request

@@ -90,6 +90,8 @@ public:
    virtual const std::string& handlerPrefix() const = 0;
 
    virtual void setHandlerPrefix(const std::string& prefix) = 0;
+
+   virtual boost::asio::io_context::strand& getStrand() = 0;
 };
 
 } // namespace http
