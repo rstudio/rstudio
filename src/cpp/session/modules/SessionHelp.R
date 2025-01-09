@@ -894,8 +894,6 @@ options(help_type = "html")
    if ("devtools_shims" %in% search() && requireNamespace("pkgload", quietly = TRUE))
    {
      # Find packages loaded via load_all()
-     dev_packages <- .rs.tryCatch(pkgload:::dev_packages())
-
      packages <- .rs.tryCatch(pkgload:::dev_packages())
      if (is.character(packages) && from %in% packages)
      {
