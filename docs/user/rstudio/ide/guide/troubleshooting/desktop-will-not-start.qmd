@@ -1,0 +1,63 @@
+---
+pagetitle: "Desktop will not start"
+date-meta: 2025-01-07
+---
+
+# RStudio will not start
+
+Below is a list of common start-up problems. If one of the following does not describe your problem, see the information at the bottom to start a new support discussion.
+
+## Check the version of R
+
+RStudio requires R version 3.6.0 or higher to run. Make sure your current installation meets this requirement, if not, please download and install R from [https://cran.r-project.org](https://cran.r-project.org).
+
+::: {.callout-note}
+On Windows, if you have multiple versions of R installed, you can press and hold Ctrl when starting RStudio to select your version of R.
+:::
+
+## Check for Startup files
+
+Try removing all startup files such as `.Rprofile`, `.Renviron`, and `.RData` from your initial working directory. The R code within these files may be causing an error. If RStudio successfully starts after removing these files, try to pinpoint which file resulted in the error. If you are able to determine the source of the problem, please notify us with the details. Be sure to include the steps to reproduce this error (including necessary code) and we'll investigate.
+
+## RStudio cannot find R
+
+If you installed R to a non-default location, it is possible RStudio cannot find R on your machine. Open a standard console session (RGui, R.app, Terminal, etc) and type the following command at the console:
+
+```R
+> Sys.which("R")
+```
+
+The displayed location must be in your search path for RStudio to successfully bind to your R installation.
+
+::: {.callout-note}
+On Windows, you can force RStudio to bind to a specific version of R by pressing and holding Ctrl when starting RStudio.
+:::
+
+## Check firewall, proxy settings, and antimalware
+
+Although RStudio does not require internet access, it does use a localhost connection to link your R session with the RStudio IDE. As a result, it is possible a (software-based) firewall, network setting, or antimalware program is blocking access to RStudio. If you have a firewall, HTTP or HTTPS proxy configured, add `localhost` and `127.0.0.1` to the list of approved Hosts and Domains. After this, try restarting RStudio. If you have antimalware software configured that may be blocking RStudio, please check its settings and allow-list RStudio if necessary.
+
+## Check the permissions on the ~/.rstudio-desktop directory
+
+RStudio saves some session files in the `~/.rstudio-desktop` directory - if this directory has its permissions changed, RStudio may not be able to read and write to that folder and may fail to start. Check the permissions and make sure that you have read, write, and execute permissions to this folder - if not, change the permissions or reset RStudio's state as described below.
+
+## Reset RStudio's state
+
+In some cases, it is necessary to reset RStudio's state analogous to a fresh installation. To do this, see the section [Resetting RStudio's State](resetting-state.qmd).
+
+# Other Start-Up Problems
+
+If you are still unable to start RStudio and you are using the open-source version, please open a new topic in [https://forum.posit.co](https://forum.posit.co) and provide any relevant details as noted below.
+
+## System information
+
+Upload a [diagnostic report](diagnostic-report.qmd) and the output from the associated terminal session to a service like Gist and include the link.
+
+## Error information
+
+- General description
+- The version of RStudio you are trying to launch
+- Error messages
+- [Log files](logs.qmd)
+- Attempted steps taken to fix
+- Have you successfully launched RStudio in the past?
