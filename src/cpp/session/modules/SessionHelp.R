@@ -886,34 +886,34 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("show_help_topic", function(what, from, type)
 {
-  # strip off a 'package:' prefix if necessary
-  if (is.character(from) && nzchar(from))
-    from <- sub("^package:", "", from)
+   # strip off a 'package:' prefix if necessary
+   if (is.character(from) && nzchar(from))
+     from <- sub("^package:", "", from)
 
-  # handle dev topics and objects imported in NAMESPACE if F1 is pressed
-  if ("devtools_shims" %in% search() && requireNamespace("pkgload", quietly = TRUE))
-  {
-    # Find packages loaded via load_all()
-    dev_packages <- .rs.tryCatch(pkgload:::dev_packages())
+   # handle dev topics and objects imported in NAMESPACE if F1 is pressed
+   if ("devtools_shims" %in% search() && requireNamespace("pkgload", quietly = TRUE))
+   {
+     # Find packages loaded via load_all()
+     dev_packages <- .rs.tryCatch(pkgload:::dev_packages())
 
-    packages <- .rs.tryCatch(pkgload:::dev_packages())
-    if (is.character(packages) && from %in% packages)
-    {
-      from <- NULL
-      dev_help <- tryCatch(pkgload::dev_help(what), error = function(e) NULL)
-      if (length(dev_help) > 0)
-        return(print(dev_help))
-    }
-  }
+     packages <- .rs.tryCatch(pkgload:::dev_packages())
+     if (is.character(packages) && from %in% packages)
+     {
+       from <- NULL
+       dev_help <- tryCatch(pkgload::dev_help(what), error = function(e) NULL)
+       if (length(dev_help) > 0)
+         return(print(dev_help))
+     }
+   }
 
-  if (type == .rs.acCompletionTypes$FUNCTION)
-    .rs.showHelpTopicFunction(what, from)
-  else if (type == .rs.acCompletionTypes$ARGUMENT)
-    .rs.showHelpTopicArgument(from)
-  else if (type == .rs.acCompletionTypes$PACKAGE)
-    .rs.showHelpTopicPackage(what)
-  else
-    .rs.showHelpTopic(what, from)
+   if (type == .rs.acCompletionTypes$FUNCTION)
+     .rs.showHelpTopicFunction(what, from)
+   else if (type == .rs.acCompletionTypes$ARGUMENT)
+     .rs.showHelpTopicArgument(from)
+   else if (type == .rs.acCompletionTypes$PACKAGE)
+     .rs.showHelpTopicPackage(what)
+   else
+     .rs.showHelpTopic(what, from)
 })
 
 .rs.addFunction("showHelpTopicFunction", function(topic, package)
