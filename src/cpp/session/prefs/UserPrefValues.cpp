@@ -2572,7 +2572,7 @@ core::Error UserPrefValues::setClangVerbose(int val)
 }
 
 /**
- * Whether to automatically submit crash reports to RStudio.
+ * Whether to automatically submit crash reports to Posit.
  */
 bool UserPrefValues::submitCrashReports()
 {
