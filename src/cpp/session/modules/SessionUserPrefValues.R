@@ -1828,9 +1828,9 @@
    clear = function() { .rs.clearUserPref("clang_verbose") }
 )
 
-# Submit crash reports to RStudio
+# Submit crash reports to Posit
 #
-# Whether to automatically submit crash reports to RStudio.
+# Whether to automatically submit crash reports to Posit.
 .rs.uiPrefs$submitCrashReports <- list(
    get = function() { .rs.getUserPref("submit_crash_reports") },
    set = function(value) { .rs.setUserPref("submit_crash_reports", value) },

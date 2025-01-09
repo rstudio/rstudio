@@ -2784,7 +2784,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically submit crash reports to RStudio.
+    * Whether to automatically submit crash reports to Posit.
     */
    public PrefValue<Boolean> submitCrashReports()
    {

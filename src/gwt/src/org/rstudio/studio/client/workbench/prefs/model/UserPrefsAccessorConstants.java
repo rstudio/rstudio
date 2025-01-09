@@ -1642,11 +1642,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String clangVerboseDescription();
 
    /**
-    * Whether to automatically submit crash reports to RStudio.
+    * Whether to automatically submit crash reports to Posit.
     */
-   @DefaultStringValue("Submit crash reports to RStudio")
+   @DefaultStringValue("Submit crash reports to Posit")
    String submitCrashReportsTitle();
-   @DefaultStringValue("Whether to automatically submit crash reports to RStudio.")
+   @DefaultStringValue("Whether to automatically submit crash reports to Posit.")
    String submitCrashReportsDescription();
 
    /**
