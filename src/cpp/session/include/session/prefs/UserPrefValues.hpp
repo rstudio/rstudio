@@ -1630,7 +1630,7 @@ public:
    core::Error setClangVerbose(int val);
 
    /**
-    * Whether to automatically submit crash reports to RStudio.
+    * Whether to automatically submit crash reports to Posit.
     */
    bool submitCrashReports();
    core::Error setSubmitCrashReports(bool val);

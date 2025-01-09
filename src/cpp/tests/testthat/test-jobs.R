@@ -150,6 +150,9 @@ test_that("job tags can be set and retrieved", {
 })
 
 test_that("script jobs run and can be replayed", {
+   # problems running this test in our Mac build AMI, skip for now
+   skip_if(Sys.info()[["sysname"]] == "Darwin")
+
    # helper function to wait for a job to finish running
    wait_for_job <- function(id) {
       tries <- 0

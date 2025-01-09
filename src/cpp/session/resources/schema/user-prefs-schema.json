@@ -1320,8 +1320,8 @@
         "submit_crash_reports": {
             "type": "boolean",
             "default": true,
-            "title": "Submit crash reports to RStudio",
-            "description": "Whether to automatically submit crash reports to RStudio."
+            "title": "Submit crash reports to Posit",
+            "description": "Whether to automatically submit crash reports to Posit."
         },
         "default_r_version": {
             "type": "object",
