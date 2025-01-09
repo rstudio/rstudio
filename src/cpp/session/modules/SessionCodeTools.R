@@ -791,7 +791,8 @@
    token <- .rs.guessToken(line, cursorPos)
    if (token == '')
       return()
-
+   # strip leading `?`
+   token <- sub("^\\?", "", token)
    pieces <- strsplit(token, ':{2,3}')[[1]]
 
    # use devtools shim for help if available (old devtools version)
