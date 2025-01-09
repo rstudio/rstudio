@@ -916,16 +916,6 @@ options(help_type = "html")
     .rs.showHelpTopic(what, from)
 })
 
-   if (type == .rs.acCompletionTypes$FUNCTION)
-      .rs.showHelpTopicFunction(what, from)
-   else if (type == .rs.acCompletionTypes$ARGUMENT)
-      .rs.showHelpTopicArgument(from)
-   else if (type == .rs.acCompletionTypes$PACKAGE)
-      .rs.showHelpTopicPackage(what)
-   else
-      .rs.showHelpTopic(what, from)
-})
-
 .rs.addFunction("showHelpTopicFunction", function(topic, package)
 {
    if (is.null(package) && grepl(":{2,3}", topic, perl = TRUE))
