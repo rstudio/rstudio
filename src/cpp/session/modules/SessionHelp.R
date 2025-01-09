@@ -888,7 +888,7 @@ options(help_type = "html")
 {
    # strip off a 'package:' prefix if necessary
    if (is.character(from) && nzchar(from))
-     from <- sub("^package:", "", from)
+      from <- sub("^package:", "", from)
 
    # handle dev topics and objects imported in NAMESPACE if F1 is pressed
    if ("devtools_shims" %in% search() && requireNamespace("pkgload", quietly = TRUE))
@@ -907,13 +907,13 @@ options(help_type = "html")
    }
 
    if (type == .rs.acCompletionTypes$FUNCTION)
-     .rs.showHelpTopicFunction(what, from)
+      .rs.showHelpTopicFunction(what, from)
    else if (type == .rs.acCompletionTypes$ARGUMENT)
-     .rs.showHelpTopicArgument(from)
+      .rs.showHelpTopicArgument(from)
    else if (type == .rs.acCompletionTypes$PACKAGE)
-     .rs.showHelpTopicPackage(what)
+      .rs.showHelpTopicPackage(what)
    else
-     .rs.showHelpTopic(what, from)
+      .rs.showHelpTopic(what, from)
 })
 
 .rs.addFunction("showHelpTopicFunction", function(topic, package)
