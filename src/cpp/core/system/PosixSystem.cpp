@@ -2298,6 +2298,18 @@ Error runProcess(const std::string& path,
       // set limits
       setProcessLimits(config.limits);
 
+      // if the launch requires a pam session, do that with privs but in the child process
+      // Note: this is risky for multi-threaded processes because another thread might have
+      // been also using the password database and holding a lock at the time of the fork.
+      // Hopefully ok for rserver-launcher that uses a single-threaded http server but we might
+      // need to run rsandbox with privs, have it do the PAM and then execve the session.
+      if (config.pamSessionFilter)
+      {
+         error = config.pamSessionFilter(config);
+         if (error)
+            return error;
+      }
+
       // switch user
       error = permanentlyDropPriv(runAsUser);
       if (error)

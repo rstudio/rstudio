@@ -166,6 +166,9 @@ struct ProcessConfig
    StdStreamBehavior stdStreamBehavior;
    ProcessLimits limits;
    User user;
+
+   // Filter function to login pam session - called after fork, before exec with privs
+   boost::function<core::Error(ProcessConfig& config)> pamSessionFilter;
 };
 
 core::Error waitForProcessExit(PidType processId);
