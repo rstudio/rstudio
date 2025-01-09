@@ -889,7 +889,26 @@ options(help_type = "html")
    # strip off a 'package:' prefix if necessary
    if (is.character(from) && nzchar(from))
       from <- sub("^package:", "", from)
-   
+
+   # handle dev topics and objects imported in NAMESPACE if F1 is pressed
+  if ("devtools_shims" %in% search() && requireNamespace("pkgload", quiety = TRUE)) {
+    dev_package <- tryCatch(pkgload:::dev_packages(), error = function(e) NULL)
+
+    # Enter this loop if in devtools
+    for (i in seq_along(dev_package)) {
+      if (from == dev_package[i]) {
+        # Strip dev package name and search everywhere
+        # Will enable searching in all packages if topic is not found. or if imported
+        from <- NULL
+        # If topic in package, attempt to find dev help
+        dev_topics <- tryCatch(names(pkgload::dev_topic_index()), error = function(e) NULL)
+        if (what %in% dev_topics) {
+          return(print(pkgload::dev_help(what)))
+        }
+      }
+    }
+  }
+
    if (type == .rs.acCompletionTypes$FUNCTION)
       .rs.showHelpTopicFunction(what, from)
    else if (type == .rs.acCompletionTypes$ARGUMENT)
