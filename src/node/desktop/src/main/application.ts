@@ -23,7 +23,7 @@ import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-use
 import { generateRandomPort } from '../core/system';
 import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { DesktopActivation } from './activation-overlay';
-import { appState, AppState } from './app-state';
+import { appState, AppState, getEventBus } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { ArgsManager } from './args-manager';
 import { prepareEnvironment, promptUserForR, scanForR, showRNotFoundError } from './detect-r';
@@ -239,13 +239,13 @@ export class Application implements AppState {
       app
         .whenReady()
         .then(() => {
-          // app may be ready but GWT may not be ready
-          if (this.gwtCallback?.initialized) {
-            getDesktopBridge().openFile(resolvedPath);
-          } else {
-            this.gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
-              getDesktopBridge().openFile(resolvedPath);
+          if (this.gwtCallback == null || !this.gwtCallback.initialized) {
+            // wait for main window to load
+            getEventBus().once('main-window-loaded', () => {
+              void getDesktopBridge().openFile(resolvedPath);
             });
+          } else {
+            void getDesktopBridge().openFile(resolvedPath);
           }
         })
         .catch((error: unknown) => logger().logError(error));
