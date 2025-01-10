@@ -127,7 +127,7 @@ pipeline {
                       if [ ! -f "${BUILD_AGENT_TEMP}/buildagent.keychain" ]; then
                         security create-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain
                       else
-                        echo "Keychain already exists: ${BUILD_AGENT_TEMP}/buildagent.keychain"
+                        echo "Using keychain: ${BUILD_AGENT_TEMP}/buildagent.keychain"
                       fi
                     """
                   }
