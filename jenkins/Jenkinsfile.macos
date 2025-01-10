@@ -122,12 +122,14 @@ pipeline {
                     ENV = utils.getBuildEnv(!params.DAILY)
                   }
                   script {
-                    try {
-                      // Create a keychain to hold the Developer ID certificate for signing
-                      sh 'security create-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain'
-                    } catch (Exception e) {
-                      echo "Warning: create-keychain failed (expected if it already existed): ${e.getMessage()}"
-                    }
+                    // Create a keychain to hold the Developer ID certificate for signing
+                    sh """
+                      if [ ! -f "${BUILD_AGENT_TEMP}/buildagent.keychain" ]; then
+                        security create-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain
+                      else
+                        echo "Keychain already exists: ${BUILD_AGENT_TEMP}/buildagent.keychain"
+                      fi
+                    """
                   }
                   sh 'security default-keychain -s ${BUILD_AGENT_TEMP}/buildagent.keychain'
                   sh 'security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain && security set-keychain-settings' // turn off timeout
