@@ -16,6 +16,10 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
+
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintSource;
@@ -89,25 +93,32 @@ public class VisualModeLintSource implements LintSource
    @Override
    public void showLint(JsArray<LintItem> lint)
    {
-      // Adjust offsets to account for chunk header row
-      for (int i = 0; i < lint.length(); i++)
-      {
-         LintItem item = lint.get(i);
-         item.setStartRow(item.getStartRow() + 1);
-         item.setEndRow(item.getEndRow() + 1);
-      }
-
       chunk_.showLint(lint, false);
    }
 
    @Override
    public String getCode()
    {
-      // The code to be linted is the contents of the chunk after the first
-      // line (which is, of course, the chunk header)
-      return chunk_.getAceInstance().getCode(
-         Position.create(1, 0),
-         chunk_.getAceInstance().getDocumentEnd());
+      // Get the code for this chunk.
+      // Append a newline to make pattern matching easier below.
+      String code = chunk_.getAceInstance().getCode() + "\n";
+
+      // Remove a leading chunk header, if any. Note that we apply
+      // code diagnostics to both evaluated an un-evaluated R code
+      // chunks, and un-evaluated code chunks do not include a header.
+      //
+      // https://github.com/rstudio/rstudio/issues/15592
+      Pattern pattern = Pattern.create("^{\\s*[rR]\\b[^\\n]*}\\n", "");
+      Match match = pattern.match(code, 0);
+      if (match != null)
+      {
+         // Remove the chunk header, but retain the newline so lint positions
+         // can match correctly.
+         int index = match.getGroup(0).length() - 1;
+         code = code.substring(index);
+      }
+
+      return code;
    }
 
    @Override
