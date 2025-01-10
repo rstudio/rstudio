@@ -117,7 +117,7 @@ website:
           
   page-footer:
     left: |
-      Copyright © 2009-2024 Posit Software, PBC. All Rights Reserved.
+      Copyright © 2009-2025 Posit Software, PBC. All Rights Reserved.
     center: |
       RStudio {{< var buildType >}} {{< var version >}}
     right:
