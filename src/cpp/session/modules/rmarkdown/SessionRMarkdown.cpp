@@ -39,6 +39,7 @@
 #include <core/StringUtils.hpp>
 #include <core/Algorithm.hpp>
 #include <core/YamlUtil.hpp>
+#include <core/r_util/RProjectFile.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -47,7 +48,6 @@
 #include <r/RRoutines.hpp>
 #include <r/RCntxtUtils.hpp>
 
-#include <core/r_util/RProjectFile.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -919,8 +919,7 @@ private:
             // check whether an error occurred while rendering the document and
             // if knitr is about to exit. look for a specific quit marker and
             // parse to to gather information for a source marker
-            const char* renderErrorPattern =
-                  "(?:.*?)Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)";
+            const char* renderErrorPattern = "(?:.*?)" kKnitrErrorRegex "(.*)";
             
             boost::regex reRenderError(renderErrorPattern);
             boost::smatch matches;
@@ -931,7 +930,7 @@ private:
                int line = core::safe_convert::stringTo<int>(matches[1].str(), -1);
                FilePath file = targetFile_.getParent().completePath(matches[3].str());
                renderErrorMarker_ = SourceMarker(SourceMarker::Error, file, line, 1, {}, true);
-               renderErrorMessage_ << matches[4].str();
+               renderErrorMessage_ << core::string_utils::trimWhitespace(matches[4].str());
             }
          }
       }
