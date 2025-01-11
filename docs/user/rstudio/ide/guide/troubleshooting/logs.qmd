@@ -1,0 +1,42 @@
+---
+title: "Log files and crash reports"
+date-meta: 2025-01-07
+---
+
+# Log Files
+
+If you are experiencing difficulties with the RStudio Desktop IDE, then finding your RStudio application logs may help you get to the bottom of your problem. To browse the directory containing the logs from within RStudio Desktop IDE by opening **Help Menu > Diagnostics > Show Log Files**.
+
+## If RStudio Desktop IDE is not starting
+
+### Windows
+
+You can open an Explorer window to the log file directory by typing the following command into **Start > Run**:
+
+```powershell
+%LOCALAPPDATA%\RStudio\log
+```
+
+### macOS
+
+You can open a Finder window to the log file directory by typing the following command at a terminal:
+
+```zsh
+open ~/.local/share/rstudio/log
+```
+
+### Linux
+
+The log file can be found in this directory: 
+
+```bash
+~/.local/share/rstudio/log
+```
+
+You can open the log files directly from the file browser or with the text editor of your choice.
+
+# Crash Reports
+
+Crash Reports can be enabled by your administrator. See [Automated Crash Reporting](https://docs.posit.co/ide/server-pro/server_management/automated_crash_reporting.html) in the Admin Guide for more information.
+
+

@@ -1,0 +1,48 @@
+---
+pagetitle: "Creating a Diagnostic Report"
+date-meta: 2025-01-07
+---
+
+# Creating a diagnostic report
+
+Diagnostic reports can be created within a working session, or from outside a session on a terminal.
+
+## In an RStudio session
+
+Select from the menu **Help > Diagnostics > Write Diagnostics Report**
+
+## Outside of an RStudio session
+
+If RStudio is not starting, you can use the following method to run a diagnostics report. Note that you need to also show us the contents of the terminal session that is started.
+
+### Windows
+
+You can run a diagnostics report by typing the following command into **Start > Run**:
+
+```powershell
+"C:\Program Files\RStudio\rstudio.exe" --run-diagnostics
+```
+
+The diagnostics report will be placed in your user's Documents folder in a folder called `rstudio-diagnostics`, for example `C:\Users\Username\Documents\rstudio-diagnostics\diagnostics-report.txt`
+
+Note If you installed RStudio to a different location than `C:\Program Files` make sure to specify this location in the command.
+
+### Mac OS X
+
+You can run a diagnostics report by typing the following command at the Terminal:
+
+```zsh
+/Applications/RStudio.app/Contents/MacOS/RStudio --run-diagnostics
+```
+
+The diagnostics report will be placed in your user home directory, for example `~/rstudio-diagnostics/diagnostics-report.txt`.
+
+### Linux
+
+You can run a diagnostics report by typing the following command at the Terminal:
+
+```bash
+rstudio --run-diagnostics
+```
+
+The diagnostics report will be placed in your user home directory, for example `~/rstudio-diagnostics/diagnostics-report.txt`.

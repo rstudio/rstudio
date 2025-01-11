@@ -1,0 +1,98 @@
+---
+title: "Resetting RStudio's State"
+date-meta: 2025-01-08
+---
+
+# Overview
+
+RStudio Desktop stores its internal state in a hidden directory. If this directory does not exist, RStudio will create it on start up. This directory includes information about open documents, log files, and other state information. Removing (or renaming) this directory will reset RStudio's state. 
+
+We recommend renaming this directory to create a backup version instead of completely deleting it. If you experience a crash or RStudio fails to start, this directory may contain vital information for determining the source of the error. In this case, we recommend renaming this directory and sending it along if asked by Posit's support team.
+
+User preferences are stored in a separate folder from internal state. This lets you perform a state reset without losing your settings, and also allows for preferences to be sync'ed between machines - for example in `%AppData%` on Windows - while internal state is machine specific. 
+
+Some versions of RStudio Desktop store additional preferences (such as the size and location of the window and the rendering mode) in a separate location. To fully reset state, this must also be deleted or renamed, as described below in "Resetting Other Preferences".
+
+If you are using RStudio Projects, we'd also recommend resetting the project-specific state if you're having issues - you can do this by navigating to the Project's folder in your file browser, and renaming the `.Rproj.user` directory there.
+
+# Accessing the RStudio-Desktop Directory (Internal State)
+
+## Windows
+
+You can open an Explorer window into the RStudio-Desktop directory by typing the following command into **Start > Run**:
+
+```powershell
+%localappdata%\RStudio
+```
+
+You can then rename this directory and send it with your support request.
+
+## macOS
+
+You can easily create a backup by running the following command from the terminal. Then you can send this backup with your support request:
+
+```zsh
+mv ~/.local/share/rstudio ~/.local/share/rstudio-backup
+```
+
+Alternatively, you can open a Finder window into the RStudio directory by typing the following command at the Terminal:
+
+```zsh
+open ~/.local/share/rstudio
+```
+
+## Linux
+
+You can easily create a backup by running the following command from the terminal. Then you can send this backup with your support request:
+
+```bash
+mv ~/.local/share/rstudio ~/.local/share/rstudio-backup
+```
+
+Alternatively, you can open a File Browser into the RStudio directory by typing the following command at the Terminal:
+
+```bash
+xdg-open ~/.local/share/rstudio
+```
+
+# The RStudio Configuration Directory
+
+Most problems do not require clearing preferences to resolve, but you will need to rename or remove this folder if you wish to perform a full factory reset. 
+
+## Windows
+
+You can open an Explorer window into the RStudio preferences directory by typing the following command into **Start > Run**:
+
+```powershell
+%appdata%\RStudio
+```
+
+You can then rename this directory to backup-rstudio and send it with your support request.
+
+## macOS
+
+To create a backup, run the following command from the terminal. You can then include the file `~/backup-rstudio-prefs` with your support request:
+
+```zsh
+defaults read com.rstudio.desktop > ~/backup-rstudio-prefs
+```
+
+To delete these settings, run the following command from the terminal. Use caution; this cannot be undone unless you have created the backup file, and deleting anything other than `com.rstudio.desktop` could create serious problems with your system.
+
+```zsh
+defaults delete com.rstudio.desktop
+```
+
+## Linux
+
+You can easily create a backup by running the following command from the terminal. Then you can send this backup with your support request:
+
+```bash
+mv ~/.config/rstudio ~/backup-rstudio
+```
+
+Alternatively, you can open a File Browser into the RStudio preferences directory by typing the following command at the Terminal:
+
+```bash
+xdg-open ~/.config/rstudio
+```

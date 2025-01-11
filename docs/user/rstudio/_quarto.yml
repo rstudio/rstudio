@@ -109,6 +109,12 @@ website:
               - ide/guide/environments/r/packages.qmd
               - ide/guide/environments/r/renv.qmd
               - ide/guide/environments/py/python.qmd
+          - section: "Troubleshooting"
+            contents: 
+              - ide/guide/troubleshooting/desktop-will-not-start.qmd
+              - ide/guide/troubleshooting/resetting-state.qmd
+              - ide/guide/troubleshooting/logs.qmd
+              - ide/guide/troubleshooting/diagnostic-report.qmd
       - section: "Reference"
         collapse-level: 1
         contents:
