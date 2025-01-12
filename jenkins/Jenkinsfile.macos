@@ -48,10 +48,13 @@ pipeline {
 
       steps {
         echo "Commit_hash value: ${params.COMMIT_HASH}"
-        checkout([$class: 'GitSCM',
-                  branches: [[name: "${params.COMMIT_HASH}"]],
-                  extensions: [],
-                  userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: "${GIT_URL}"]]])
+        retry(5) {
+          sleep(time: 5, unit: 'SECONDS')
+          checkout([$class: 'GitSCM',
+                    branches: [[name: "${params.COMMIT_HASH}"]],
+                    extensions: [],
+                    userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: "${GIT_URL}"]]])
+        }
       }
     }
 
