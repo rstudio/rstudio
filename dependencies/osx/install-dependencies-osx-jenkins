@@ -19,7 +19,7 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
 # if we're called with no arguments, then re-invoke the script
-# with the architecture(s) we're installing Homebrew for
+# with the architecture(s) we're installing for
 if [ "$#" = "0" ]; then
 
    if [ "$(arch)" = "arm64" ]; then
@@ -35,22 +35,9 @@ if [ "$#" = "0" ]; then
 
 fi
 
-require-program git
-
 ARCH="$1"
-info "Installing Homebrew for ${ARCH}"
 
-HOMEBREW_PREFIX="${HOME}/homebrew/${ARCH}"
-if [ -d "${HOMEBREW_PREFIX}" ]; then
-   echo "Homebrew for ${ARCH} already installed at ${HOMEBREW_PREFIX}"
-   exit 0
-fi
-
-mkdir -p "${HOMEBREW_PREFIX}"
-cd "${HOMEBREW_PREFIX}"
-
-git init
-git remote add origin https://github.com/homebrew/brew
-git fetch origin
-git checkout master
-
+# This script used to install homebrew into a location under $HOME, but we now have
+# homebrew pre-installed in the standard locations (for x86 and arm) in the base AMI.
+#
+# Leaving this script in place in case we discover another use for it.
