@@ -29,11 +29,9 @@ if [ "$(arch)" = "arm64" ]; then
 
    # set Homebrew paths
    find-program BREW_X86 brew       \
-      "${HOME}/homebrew/x86_64/bin" \
       "/usr/local/bin"
 
    find-program BREW_ARM brew      \
-      "${HOME}/homebrew/arm64/bin" \
       "/opt/homebrew/bin"
 
    # save the PATH -- note that we munge this so that the correct
@@ -65,7 +63,6 @@ else
 
    # set Homebrew paths
    find-program BREW_X86 brew       \
-      "${HOME}/homebrew/x86_64/bin" \
       "/usr/local/bin"
 
    # assume x86_64
@@ -93,7 +90,7 @@ fi
 if is-jenkins; then
    mkdir -p "${HOME}/opt/bin"
    for PROGRAM in aws gtimeout jq ninja R; do
-      ln -nfs "${HOME}/homebrew/arm64/bin/${PROGRAM}" "${HOME}/opt/bin/${PROGRAM}"
+      ln -nfs "/opt/homebrew/arm64/bin/${PROGRAM}" "${HOME}/opt/bin/${PROGRAM}"
    done
 fi
 
