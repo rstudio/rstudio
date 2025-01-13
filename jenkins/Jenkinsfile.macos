@@ -57,7 +57,6 @@ pipeline {
 
       steps {
         echo "Commit_hash value: ${params.COMMIT_HASH}"
-        sh 'git credential-osxkeychain erase host=github.com protocol=https'
         retry(5) {
           sleep(time: 5, unit: 'SECONDS')
           checkout([$class: 'GitSCM',
