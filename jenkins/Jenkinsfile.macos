@@ -2,7 +2,7 @@ def utils
 
 pipeline {
 
-  agent { label 'macos-v1.4-arm64' }
+  agent { label 'macos && arm64' }
 
   options {
     // Timeout after no activity in the logs
@@ -43,15 +43,27 @@ pipeline {
       }
     }
 
+    stage('Clean Credentials') {
+      // https://issues.jenkins.io/browse/JENKINS-62249?focusedId=408066&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-408066
+      steps {
+        sh '''
+          printf "\\n" | git credential-osxkeychain erase host=github.com protocol=https
+        '''
+      }
+    }
+
     stage ("Checkout") {
       when { expression { params.COMMIT_HASH != '' } }
 
       steps {
         echo "Commit_hash value: ${params.COMMIT_HASH}"
-        checkout([$class: 'GitSCM',
-                  branches: [[name: "${params.COMMIT_HASH}"]],
-                  extensions: [],
-                  userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: "${GIT_URL}"]]])
+        retry(5) {
+          sleep(time: 5, unit: 'SECONDS')
+          checkout([$class: 'GitSCM',
+                    branches: [[name: "${params.COMMIT_HASH}"]],
+                    extensions: [],
+                    userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: "${GIT_URL}"]]])
+        }
       }
     }
 
@@ -112,7 +124,7 @@ pipeline {
         stages {
           stage('Sequential Matrix') {
             options {
-              lock('synchronous-matrix')
+              lock('synchronous-matrix-ami')
             }
             stages{
               stage('Build and Sign') {
@@ -120,14 +132,29 @@ pipeline {
                 environment {
                   AWS_ACCOUNT_ID = '749683154838'
                   KEYCHAIN_PASSPHRASE = credentials('ide-keychain-passphrase')
+                  BUILD_AGENT_TEMP = "${env.HOME}/tmp"
+                  MACOS_DEVELOPER_CERTIFICATE = credentials('MACOS_DEVELOPER_CERTIFICATE')
+                  MACOS_DEVELOPER_CERTIFICATE_KEY = credentials('MACOS_DEVELOPER_CERTIFICATE_KEY')
                 }
 
                 steps {
                   script {
                     ENV = utils.getBuildEnv(!params.DAILY)
                   }
-                  // unlock keychain to ensure build gets signed.
-                  sh 'security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} && security set-keychain-settings' // turn off timeout
+                  script {
+                    // Create a keychain to hold the Developer ID certificate for signing
+                    sh """
+                      if [ ! -f "${BUILD_AGENT_TEMP}/buildagent.keychain" ]; then
+                        security create-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain
+                      else
+                        echo "Using keychain: ${BUILD_AGENT_TEMP}/buildagent.keychain"
+                      fi
+                    """
+                  }
+                  sh 'security default-keychain -s ${BUILD_AGENT_TEMP}/buildagent.keychain'
+                  sh 'security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain && security set-keychain-settings' // turn off timeout
+                  // Import the Developer ID certificate from Jenkins Secrets.
+                  sh 'security import \"${MACOS_DEVELOPER_CERTIFICATE}\" -k ${BUILD_AGENT_TEMP}/buildagent.keychain -P \"${MACOS_DEVELOPER_CERTIFICATE_KEY}\" -T /usr/bin/codesign'
                   // build rstudio
                   dir ("package/osx") {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
