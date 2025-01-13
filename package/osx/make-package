@@ -87,18 +87,12 @@ find-java-home () {
       if [ -e "/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home" ]; then
          # native M1 JDK11; see https://www.azul.com/downloads
          set-java-home "/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home"
-      elif [ -e "${HOME}/homebrew/arm64/opt/openjdk@11" ]; then
-         # see install-dependencies-osx-jenkins
-         set-java-home "${HOME}/homebrew/arm64/opt/openjdk@11"
       elif [ -e "/opt/homebrew/opt/openjdk@11" ]; then
          # default location for M1 homebrew
          set-java-home "/opt/homebrew/opt/openjdk@11"
       fi
    else # Intel Mac
-      if [ -e "${HOME}/homebrew/x86_64/opt/openjdk@11" ]; then
-         # see install-dependencies-osx-jenkins
-         set-java-home "${HOME}/homebrew/x86_64/opt/openjdk@11"
-      elif [ -e "/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home" ]; then
+      if [ -e "/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home" ]; then
          set-java-home "/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home"
       fi
    fi
@@ -197,8 +191,8 @@ fi
 
 # find ant
 find-program ANT ant            \
-   "${HOME}/homebrew/arm64/bin" \
-   "${HOME}/opt/bin"
+   "/opt/homebrew/bin" \
+   "/usr/local/bin"
 
 # find node
 find-program NODE node \
@@ -317,7 +311,6 @@ if [ -n "${build_x86_64}" ]; then
 
    # find x86_64 cmake
    find-program CMAKE_X86_64 cmake  \
-      "${HOME}/homebrew/x86_64/bin" \
       "/usr/local/bin"
 
    # prefer using x86_64 build of cmake
@@ -370,7 +363,6 @@ if [ -n "${build_arm64}" ]; then
 
    # set CMake paths
    find-program CMAKE_ARM64 cmake  \
-      "${HOME}/homebrew/arm64/bin" \
       "/opt/homebrew/bin"
 
    # prefer using arm64 build of cmake
@@ -421,8 +413,6 @@ if [ "${build_package}" = "1" ]; then
 
    # find appropriate copy of CMake
    find-program CMAKE cmake        \
-      "${HOME}/opt/bin"            \
-      "${HOME}/homebrew/arm64/bin" \
       "${HOMEBREW_PREFIX}/bin"
 
    # remove an existing install directory
