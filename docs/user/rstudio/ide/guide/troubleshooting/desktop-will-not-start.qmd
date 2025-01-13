@@ -1,5 +1,5 @@
 ---
-pagetitle: "Desktop will not start"
+title: "RStudio Desktop will not start"
 date-meta: 2025-01-07
 ---
 
