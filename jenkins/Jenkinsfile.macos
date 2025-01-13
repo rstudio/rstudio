@@ -40,6 +40,15 @@ pipeline {
       }
     }
 
+    stage('Clean Credentials') {
+      // https://issues.jenkins.io/browse/JENKINS-62249?focusedId=408066&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-408066
+      steps {
+        sh '''
+          printf "\\n" | git credential-osxkeychain erase host=github.com protocol=https
+        '''
+      }
+    }
+
     stage ("Checkout") {
       when { expression { params.COMMIT_HASH != '' } }
 
