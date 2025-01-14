@@ -710,11 +710,20 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String rPubsSubtitle();
 
     /**
-     * Translated "Posit Cloud lets you create and share data projects, applications, and data-driven documents online.".
+     * Translated "Posit Cloud (deprecated)".
      *
-     * @return translated "Posit Cloud lets you create and share data projects, applications, and data-driven documents online."
+     * @return translated "Posit Cloud (deprecated)"
      */
-    @DefaultMessage("Posit Cloud lets you create and share data projects, applications, and data-driven documents online.")
+    @DefaultMessage("Posit Cloud (deprecated)")
+    @Key("cloudTitle")
+    String cloudTitle();
+
+   /**
+     * Translated "Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information.".
+     *
+     * @return translated "Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information."
+     */
+    @DefaultMessage("Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information.")
     @Key("cloudSubtitle")
     String cloudSubtitle();
 
@@ -1484,11 +1493,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String newPositCloudPageCaption();
 
     /**
-     * Translated "Our online service that lets you do, share, teach and learn data science in your web browser.".
+     * Translated "Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information.".
      *
-     * @return translated "Our online service that lets you do, share, teach and learn data science in your web browser."
+     * @return translated "Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information."
      */
-    @DefaultMessage("Our online service that lets you do, share, teach and learn data science in your web browser.")
+    @DefaultMessage("Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information.")
     @Key("newPositCloudPageSubTitle")
     String newPositCloudPageSubTitle();
     

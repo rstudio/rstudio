@@ -72,7 +72,7 @@ public class PublishDocServicePage
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
             new PublishRPubsPage("RPubs", constants_.rPubsSubtitle());
 
-      String cloudTitle = "Posit Cloud";
+      String cloudTitle = constants_.cloudTitle();
       String cloudSubtitle = constants_.cloudSubtitle();
 
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage = null;
