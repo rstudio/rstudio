@@ -719,11 +719,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String cloudTitle();
 
    /**
-     * Translated "Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information.".
+     * Translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.".
      *
-     * @return translated "Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information."
+     * @return translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information."
      */
-    @DefaultMessage("Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information.")
+    @DefaultMessage("Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.")
     @Key("cloudSubtitle")
     String cloudSubtitle();
 
@@ -1493,11 +1493,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String newPositCloudPageCaption();
 
     /**
-     * Translated "Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information.".
+     * Translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.".
      *
-     * @return translated "Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information."
+     * @return translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information."
      */
-    @DefaultMessage("Publishing to Posit Cloud is deprecated as of January 2025. Visit https://pos.it/pc-publishing for more information.")
+    @DefaultMessage("Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.")
     @Key("newPositCloudPageSubTitle")
     String newPositCloudPageSubTitle();
     
