@@ -104,6 +104,8 @@ namespace overlay {
 Error initialize();
 Error startup();
 bool reloadConfiguration();
+void startShutdown();
+std::set<std::string> interruptProcs();
 void shutdown();
 bool requireLocalR();
 
@@ -438,15 +440,21 @@ Error waitForSignals()
 
          Error error;
 
+         // Stop serving requests first so we aren't trying to do that during shutdown
+         s_pHttpServer->stop();
+
+         overlay::startShutdown();
+
          // send SIGTERM signal to specific Workbench child processes
          // this way user processes will not receive the signal until it traverses the tree
          std::set<std::string> interruptProcs = {
             "rserver-launcher",
             "rserver-monitor",
             "rsession",
-            "rstudio-launcher",
-            "rworkspaces"
+            "rstudio-launcher"
          };
+         std::set<std::string> overlayProcs = overlay::interruptProcs();
+         interruptProcs.insert(overlayProcs.begin(), overlayProcs.end());
          
          // get list of child processes
          std::vector<system::ProcessInfo> procInfos;
@@ -461,7 +469,10 @@ Error waitForSignals()
          std::vector<pid_t> pids;
          for (auto&& procInfo : procInfos)
             if (interruptProcs.count(procInfo.exe))
+            {
+               LOG_DEBUG_MESSAGE("Sending SIGTERM to child: " + procInfo.exe + " (" + std::to_string(procInfo.pid) + ")");
                pids.push_back(procInfo.pid);
+            }
          
          // signal those processes
          error = core::system::sendSignalToSpecifiedChildProcesses(pids, SIGTERM);
@@ -495,7 +506,21 @@ Error waitForSignals()
          // notify user if there seem to still be some processes around
          int status = 0;
          if (::waitpid(-1, &status, WNOHANG) == 0)
-            LOG_WARNING_MESSAGE("Continuing with shutdown despite remaining child processes");
+         {
+            std::vector<system::ProcessInfo> stuckProcs;
+            std::string stuckProcInfo;
+            error = core::system::getChildProcesses(&stuckProcs, false);
+            if (!error)
+            {
+               for (auto&& stuckProc : stuckProcs)
+               {
+                  if (!stuckProcInfo.empty())
+                     stuckProcInfo = stuckProcInfo + ", ";
+                  stuckProcInfo = stuckProcInfo + stuckProc.exe + " (" + std::to_string(stuckProc.pid) + ") - " + stuckProc.state;
+               }
+            }
+            LOG_WARNING_MESSAGE("Continuing with shutdown despite remaining child processes: " + stuckProcInfo);
+         }
          
          // call overlay shutdown
          overlay::shutdown();

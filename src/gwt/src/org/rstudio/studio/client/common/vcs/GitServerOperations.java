@@ -58,8 +58,8 @@ public interface GitServerOperations extends VCSServerOperations
    void gitUnstage(ArrayList<String> paths,
                    ServerRequestCallback<Void> requestCallback);
 
-   void gitAllStatus(
-         ServerRequestCallback<AllStatus> requestCallback);
+   void gitAllStatus(boolean minimal,
+                     ServerRequestCallback<AllStatus> requestCallback);
 
    void gitFullStatus(
          ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback);

@@ -716,14 +716,23 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String appearanceEditorFontLabel();
 
     /**
-     * Translated "Editor font size:".
+     * Translated "Font size:".
      *
-     * @return translated "Editor font size:"
+     * @return translated "Font size:"
      */
-    @DefaultMessage("Editor font size:")
+    @DefaultMessage("Font size:")
     @Key("appearanceEditorFontSizeLabel")
     String appearanceEditorFontSizeLabel();
 
+    /**
+     * Translated "Line height (%):".
+     *
+     * @return translated "Line height (%):"
+     */
+    @DefaultMessage("Line height (%):")
+    @Key("appearanceEditorLineHeightLabel")
+    String appearanceEditorLineHeightLabel();
+    
     /**
      * Translated "Editor theme:".
      *
@@ -1465,11 +1474,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String otherNotifyMeLabel();
 
     /**
-     * Translated "Send automated crash reports to RStudio".
+     * Translated "Send automated crash reports to Posit".
      *
-     * @return translated "Send automated crash reports to RStudio"
+     * @return translated "Send automated crash reports to Posit"
      */
-    @DefaultMessage("Send automated crash reports to RStudio")
+    @DefaultMessage("Send automated crash reports to Posit")
     @Key("otherSendReportsLabel")
     String otherSendReportsLabel();
 
@@ -1726,11 +1735,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String otherShowLastDotValueLabel();
 
     /**
-     * Translated "Help panel font size:".
+     * Translated "Help font size:".
      *
-     * @return translated "Help panel font size:"
+     * @return translated "Help font size:"
      */
-    @DefaultMessage("Help panel font size:")
+    @DefaultMessage("Help font size:")
     @Key("helpFontSizeLabel")
     String helpFontSizeLabel();
 

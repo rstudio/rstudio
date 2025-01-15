@@ -28,7 +28,7 @@ public class NewPositCloudPage
 {
    public NewPositCloudPage()
    {
-      super("Posit Cloud",
+      super(constants_.cloudTitle(),
             constants_.newPositCloudPageSubTitle(),
             constants_.newPositCloudPageCaption(),
             new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()),

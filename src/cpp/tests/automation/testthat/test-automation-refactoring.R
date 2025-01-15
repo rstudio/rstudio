@@ -31,10 +31,10 @@ withr::defer(.rs.automation.deleteRemote())
       ```
    ')
    
-   remote$documentExecute(".Rmd", contents, function(editor) {
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
       
       editor$gotoLine(7, 0)
-      remote$commandExecute("renameInScope")
+      remote$commands.execute("renameInScope")
       
       allRanges <- as.vector(editor$selection$rangeList$ranges)
       expect_length(allRanges, 5L)
@@ -69,7 +69,7 @@ withr::defer(.rs.automation.deleteRemote())
          expect_equal(!!actual, !!expected)
       }
       
-      remote$keyboardExecute("<Enter>")
+      remote$keyboard.insertText("<Enter>")
       
    })
 })

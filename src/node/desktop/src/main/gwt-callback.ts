@@ -99,9 +99,7 @@ export class GwtCallback extends EventEmitter {
   proportionalFonts: string[] = [];
 
   getFonts(monospace: boolean) {
-
     if (this.hasFontConfig) {
-      
       let command: string = '';
       if (monospace) {
         command = 'fc-list :spacing=mono family | sort';
@@ -111,9 +109,7 @@ export class GwtCallback extends EventEmitter {
 
       const result = execSync(command, { encoding: 'utf-8' });
       return result.trim().split('\n');
-
     } else {
-      
       const result = findFontsSync({ monospace: monospace }).map((fd) => {
         if (process.platform === 'darwin') {
           return monospace ? fd.postscriptName : fd.family;
@@ -121,13 +117,13 @@ export class GwtCallback extends EventEmitter {
           return fd.family;
         }
       });
-      
+
       const fontList = [...new Set<string>(result)];
-      fontList.sort((lhs, rhs) => { return lhs.localeCompare(rhs); });
+      fontList.sort((lhs, rhs) => {
+        return lhs.localeCompare(rhs);
+      });
       return fontList;
-      
     }
-  
   }
 
   constructor(public mainWindow: MainWindow) {
@@ -136,7 +132,7 @@ export class GwtCallback extends EventEmitter {
 
     if (process.platform === 'linux') {
       try {
-        const result = execSync('/usr/bin/which fc-list');
+        const _result = execSync('/usr/bin/which fc-list');
         this.hasFontConfig = true;
       } catch (error) {
         logger().logError(error);
@@ -155,6 +151,14 @@ export class GwtCallback extends EventEmitter {
     } catch (err: unknown) {
       logger().logError(safeError(err));
     }
+
+    ipcMain.on('desktop_write_stdout', (event, output) => {
+      console.log(output);
+    });
+
+    ipcMain.on('desktop_write_stderr', (event, output) => {
+      console.log(output);
+    });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // shell.openExternal() seems unreliable on Windows
@@ -704,7 +708,7 @@ export class GwtCallback extends EventEmitter {
       } else if (process.platform === 'win32') {
         defaultFonts = ['Segoe UI', 'Verdana', 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Helvetica'];
       } else {
-        defaultFonts = ['Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', 'Verdana', 'Helvetica'];
+        defaultFonts = ['Lucida Sans', 'DejaVu Sans', 'Noto Sans', 'Lucida Grande', 'Segoe UI', 'Verdana', 'Helvetica'];
       }
 
       let proportionalFont = defaultFonts[0];
@@ -994,6 +998,9 @@ export class GwtCallback extends EventEmitter {
 
   addMacOSVersionError(): void {
     if (platform() === 'darwin') {
+      ipcMain.on('desktop_console_log', async (event, output) => {
+        console.log(output);
+      });
       const release_major = parseInt(release().substring(0, release().indexOf('.')));
       // macOS 11.0 uses darwin 20.0.0
       if (release_major < 20) {

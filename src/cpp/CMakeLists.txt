@@ -709,6 +709,13 @@ else()
 
       add_subdirectory(session)
 
+      # help RStudio find build GWT components for devmode
+      if(RSTUDIO_PACKAGE_BUILD)
+         set(WWW_LOCAL_PATH "${CMAKE_CURRENT_BINARY_DIR}/../../gwt/www")
+      else()
+         set(WWW_LOCAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../gwt/www")
+      endif()
+
       # desktop conf file used for dev-mode for Electron desktop
       if(RSTUDIO_ELECTRON OR RSTUDIO_DEVELOPMENT)
          configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)

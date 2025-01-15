@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+
+set -x
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "../../../dependencies/tools/rstudio-tools.sh"
+
+
+# Make sure 'convert' and 'x11-apps' are installed.
+sudo -n apt update
+sudo -n apt install -y imagemagick x11-apps
+
+# Try to find node, and place it on the PATH.
+NODE_PATHS=(
+   "${SCRIPT_DIR}/../../../dependencies/common/node/${RSTUDIO_NODE_DIR}/bin"
+   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_DIR}/bin"
+)
+
+for NODE_PATH in "${NODE_PATHS[@]}"; do
+	if [ -e "${NODE_PATH}" ]; then
+		NODE_PATH=$(readlink -f "${NODE_PATH}")
+		info "Using node: ${NODE_PATH}"
+		PATH="${NODE_PATH}:${PATH}"
+		break
+	fi
+done
+
+
+# Get an open port.
+PORT=$(python3 - <<- EOF
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(('', 0))
+addr = s.getsockname()
+print(addr[1])
+s.close()
+EOF
+)
+
+
+# Set up a .Rprofile with some variables we want the
+# running R sessions to see.
+cp ~/.Renviron /tmp/.Renviron 2> /dev/null
+
+cat <<- EOF >> /tmp/.Renviron
+CI = TRUE
+RSTUDIO_AUTOMATION_CLOSE_ON_FINISH = TRUE
+RSTUDIO_AUTOMATION_PORT = ${PORT}
+RSTUDIO_AUTOMATION_REUSE_REMOTE = TRUE
+RSTUDIO_AUTOMATION_SCREENSHOTS_DIR = "$(pwd)/screenshots"
+EOF
+
+export R_ENVIRON_USER=/tmp/.Renviron
+cat "${R_ENVIRON_USER}"
+
+
+# Set up environment variables to ease running of automation.
+export RS_NO_SPLASH=1
+export RS_CRASH_HANDLER_PROMPT=false
+
+
+# Remove an old automation results file if it exists.
+rm -f rstudio-automation-results.xml
+
+
+touch ~/.Xauthority
+export XAUTHORITY=~/.Xauthority
+export XVFBDISPLAY=:99
+
+# Generate a cookie to use for xauth.
+MCOOKIE=$(mcookie)
+xauth source - <<- EOF
+add ${XVFBDISPLAY} . ${MCOOKIE}
+EOF
+
+# Start the Xvfb server.
+trap : USR1
+(trap '' USR1; exec Xvfb "${XVFBDISPLAY}" -screen 0 1280x1024x24 -auth ~/.Xauthority) &
+XVFBPID="$!"
+sleep 3
+
+
+# Start capturing video.
+FFMPEGOUT="rstudio-automation-$(date +%F.%s)"
+ffmpeg                    \
+	-hide_banner          \
+	-loglevel fatal       \
+	-nostats              \
+	-video_size 1280x1024 \
+	-framerate 30         \
+	-f x11grab            \
+	-i "${XVFBDISPLAY}"   \
+	-y "${FFMPEGOUT}.webm" &
+FFMPEGPID="$!"
+
+
+# Make sure we tidy up on exit.
+cleanup () {
+
+	# Dump log files.
+	tail -n+1 ~/.local/share/rstudio/log/*
+
+	# Clean up child processes we might have launched
+	kill -SIGINT "${FFMPEGPID}" 2> /dev/null
+	wait "${FFMPEGPID}"
+
+	kill "${XVFBPID}" 2> /dev/null
+	wait "${XVFBPID}"
+
+	xauth remove "${XVFBDISPLAY}"
+
+}
+
+trap cleanup EXIT
+
+
+# Start running automation.
+DISPLAY="${XVFBDISPLAY}" npm run automation &
+NPMPID="$!"
+
+
+# Wait for automation to finish running.
+#
+# NOTE: We'd like to use 'timeout' above, but for whatever reason,
+# the process cannot be interrupted in that scenario.
+# Instead, we loop and wait for poll for exit.
+set +x
+for _i in `seq 1 1800`; do
+	if kill -0 "${NPMPID}" 2> /dev/null; then
+		sleep 1
+	else
+		break
+	fi
+done
+set -x
+
+if kill -0 "${NPMPID}" 2> /dev/null; then
+	echo "ERROR: automation timed out; terminating process"
+	kill "${NPMPID}"
+fi
+
+
+pkill rsession 2> /dev/null
+cat rstudio-automation-results.xml
+exit 0
+

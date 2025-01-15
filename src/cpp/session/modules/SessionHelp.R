@@ -278,6 +278,64 @@ options(help_type = "html")
    NULL
 })
 
+.rs.addFunction("getHelpRpcImpl", function(what, from, type, envir)
+{
+   # If we've encoded the package and function in 'what', pull it out
+   if (grepl("::.", what))
+   {
+      splat <- strsplit(what, "::", fixed = TRUE)[[1]]
+      from <- splat[[1]]
+      what <- splat[[2]]
+   }
+   
+   # Avoid install.packages hook
+   if (what == "install.packages" &&
+       type == .rs.acCompletionTypes$ARGUMENT &&
+       is.null(from))
+   {
+      return(.rs.getHelp("install.packages", "utils"))
+   }
+   
+   # Help for options
+   if (type == .rs.acCompletionTypes$OPTION)
+      return(.rs.getHelp("options", "base", subset = FALSE))
+   
+   if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
+                   .rs.acCompletionTypes$S4_METHOD))
+   {
+      # Try getting methods for the method from the associated package
+      if (!is.null(help <- .rs.getHelp(paste(what, "methods", sep = "-"), from)))
+         return(help)
+      
+      # Try getting help from anywhere
+      if (!is.null(help <- .rs.getHelp(what, from)))
+         return(help)
+      
+      # Give up
+      return()
+   }
+   
+   if (type %in% c(.rs.acCompletionTypes$FUNCTION,
+                   .rs.acCompletionTypes$S4_GENERIC,
+                   .rs.acCompletionTypes$S4_METHOD,
+                   .rs.acCompletionTypes$R5_METHOD))
+      return(.rs.getHelpFunction(what, from))
+   else if (type %in% c(.rs.acCompletionTypes$ARGUMENT, .rs.acCompletionTypes$SECUNDARY_ARGUMENT))
+      return(.rs.getHelpArgument(what, from, parent.frame()))
+   else if (type == .rs.acCompletionTypes$PACKAGE)
+      return(.rs.getHelpPackage(what))
+   else if (type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL)
+      return(.rs.getHelpDataTableSpecialSymbol(what))
+   else if (type == .rs.acCompletionTypes$COLUMN)
+      return(.rs.getHelpColumn(what, from, envir))
+   else if (type == .rs.acCompletionTypes$DATAFRAME)
+      return(.rs.getHelpDataFrame(what, from, envir))
+   else if (length(from) && length(what))
+      return(.rs.getHelp(what, from))
+   else
+      return()
+})
+
 .rs.addJsonRpcHandler("get_help", function(what, from, type)
 {
    # Protect against missing type
@@ -285,64 +343,7 @@ options(help_type = "html")
       return()
    
    envir <- .rs.getActiveFrame()
-
-   impl <- function()
-   {
-      # If we've encoded the package and function in 'what', pull it out
-      if (grepl("::.", what))
-      {
-         splat <- strsplit(what, "::", fixed = TRUE)[[1]]
-         from <- splat[[1]]
-         what <- splat[[2]]
-      }
-      
-      # Avoid install.packages hook
-      if (what == "install.packages" &&
-         type == .rs.acCompletionTypes$ARGUMENT &&
-         is.null(from))
-         return(.rs.getHelp("install.packages", "utils"))
-      
-      # Help for options
-      if (type == .rs.acCompletionTypes$OPTION)
-         return(.rs.getHelp("options", "base", subset = FALSE))
-      
-      if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
-                     .rs.acCompletionTypes$S4_METHOD))
-      {
-         # Try getting methods for the method from the associated package
-         if (!is.null(help <- .rs.getHelp(paste(what, "methods", sep = "-"), from)))
-            return(help)
-         
-         # Try getting help from anywhere
-         if (!is.null(help <- .rs.getHelp(what, from)))
-            return(help)
-         
-         # Give up
-         return()
-      }
-      
-      if (type %in% c(.rs.acCompletionTypes$FUNCTION,
-                     .rs.acCompletionTypes$S4_GENERIC,
-                     .rs.acCompletionTypes$S4_METHOD,
-                     .rs.acCompletionTypes$R5_METHOD))
-         return(.rs.getHelpFunction(what, from))
-      else if (type %in% c(.rs.acCompletionTypes$ARGUMENT, .rs.acCompletionTypes$SECUNDARY_ARGUMENT))
-         return(.rs.getHelpArgument(what, from, parent.frame()))
-      else if (type == .rs.acCompletionTypes$PACKAGE)
-         return(.rs.getHelpPackage(what))
-      else if (type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL)
-         return(.rs.getHelpDataTableSpecialSymbol(what))
-      else if (type == .rs.acCompletionTypes$COLUMN)
-         return(.rs.getHelpColumn(what, from, envir))
-      else if (type == .rs.acCompletionTypes$DATAFRAME)
-         return(.rs.getHelpDataFrame(what, from, envir))
-      else if (length(from) && length(what))
-         return(.rs.getHelp(what, from))
-      else
-         return()
-   }
-   
-   out <- impl()
+   out <- .rs.getHelpRpcImpl(what, from, type, envir)
    if (is.null(out))
       return()
    
@@ -738,25 +739,29 @@ options(help_type = "html")
                                     subset = TRUE,
                                     getSignature = FALSE)
 {
-   # Ensure topic and package are not zero-length
+   # ensure topic and package are not zero-length
    if (!length(package))
       package <- ""
    
    if (!length(topic))
       topic <- ""
    
-   # Completions from the search path might have the 'package:' prefix, so
-   # lets strip that out.
+   # completions from the search path might have the 'package:' prefix;
+   # let's strip that out
    package <- sub("package:", "", package, fixed = TRUE)
    
-   # If the package is not provided, but we're getting help on e.g.
-   # 'stats::rnorm', then split up the topic into the appropriate pieces.
+   # if the package is not provided, but we're getting help on e.g.
+   # 'stats::rnorm', then split up the topic into the appropriate pieces
    if (package == "" && any(grepl(":{2,3}", topic, perl = TRUE)))
    {
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
       topic <- splat[[2]]
       package <- splat[[1]]
    }
+   
+   # don't provide help for objects in the global environment
+   if (identical(package, ".GlobalEnv"))
+      return()
    
    helpfiles <- .rs.tryCatch({
       call <- .rs.makeHelpCall(topic, if (nzchar(package)) package)
@@ -817,6 +822,12 @@ options(help_type = "html")
             Encoding(html) <- "UTF-8"
       }
    }
+   
+   # older releases of R may return HTML (notably, error pages) as
+   # a character vector with one line for each bit of output
+   #
+   # https://github.com/wch/r-source/commit/e22517c9036a2a06d8778b2a782d393224e355af
+   html <- paste(html, collapse = "\n")
    
    # try to extract HTML body
    match <- suppressWarnings(regexpr('<body>.*</body>', html))

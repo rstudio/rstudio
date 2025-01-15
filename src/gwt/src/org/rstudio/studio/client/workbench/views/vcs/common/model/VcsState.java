@@ -80,6 +80,7 @@ public abstract class VcsState
             }
          }
       }));
+      
       registrations.add(eventBus_.addHandler(FileChangeEvent.TYPE, new FileChangeEvent.Handler()
       {
          @Override
@@ -124,15 +125,6 @@ public abstract class VcsState
             }
          }
       }));
-
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            refresh(false);
-         }
-      });
    }
 
    public void bindRefreshHandler(Widget owner,

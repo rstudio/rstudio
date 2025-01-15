@@ -18,5 +18,6 @@
  */
 export type EventBusTypes = {
   'appmenu-set': [];
+  'main-window-loaded': [];
   'placeholder': [arg1: number, arg2: string]; // replace this with new events(s)
 }

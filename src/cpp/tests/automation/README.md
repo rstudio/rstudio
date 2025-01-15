@@ -84,15 +84,7 @@ You can run the BRAT tests against an installed copy of RStudio (i.e. an officia
 In this scenario, the tests matching the commit of the RStudio build will be downloaded from
 GitHub automatically.
 
-### Required Packages
-Running the BRAT tests should install the necessary R packages, but if it doesn't seem to
-have worked you can manually run this command once inside RStudio.
-
-```R
-.rs.automation.installRequiredPackages()
-```
-
-### Running the Tests
+### Testing Desktop
 
 To run all tests against RStudio.app on macOS:
 

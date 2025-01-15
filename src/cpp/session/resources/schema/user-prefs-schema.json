@@ -637,6 +637,12 @@
             "title": "Editor font size (points)",
             "description": "The default editor font size, in points."
         },
+        "editor_line_height": {
+            "type": "number",
+            "default": 0.0,
+            "title": "Editor line height",
+            "description": "The editor line height, as a percentage of the font size."
+        },
         "help_font_size_points": {
             "type": "number",
             "default": 10.0,
@@ -1314,8 +1320,8 @@
         "submit_crash_reports": {
             "type": "boolean",
             "default": true,
-            "title": "Submit crash reports to RStudio",
-            "description": "Whether to automatically submit crash reports to RStudio."
+            "title": "Submit crash reports to Posit",
+            "description": "Whether to automatically submit crash reports to Posit."
         },
         "default_r_version": {
             "type": "object",

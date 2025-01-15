@@ -34,6 +34,14 @@ function reportIpcError(name: string, error: Error) {
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function getDesktopBridge() {
   return {
+    writeStdout: (output: string) => {
+      ipcRenderer.send('desktop_write_stdout', output);
+    },
+
+    writeStderr: (output: string) => {
+      ipcRenderer.send('desktop_write_stderr', output);
+    },
+
     browseUrl: (url: string) => {
       ipcRenderer.send('desktop_browse_url', url);
     },
@@ -400,7 +408,7 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('setPendingQuit', error));
     },
 
-    openFile: (path: string) => {
+    openFile: async (path: string) => {
       if (!path) {
         return;
       }
@@ -408,9 +416,19 @@ export function getDesktopBridge() {
 
       if (webcontents.length) {
         path = path.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
-        webcontents[0]
-          .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
-          .catch((error: unknown) => logString('err', safeError(error).message));
+
+        // use first window that has the desktop hooks (the splash screen, for example, does NOT have them)
+        for (const webcontent of webcontents) {
+          const hasHooks: boolean = await webcontent.executeJavaScript('!!window.desktopHooks');
+          if (hasHooks) {
+            try {
+              await webcontent.executeJavaScript(`window.desktopHooks.openFile("${path}")`);
+            } catch (error: unknown) {
+              logString('err', safeError(error).message);
+            }
+            break;
+          }
+        }
       }
     },
 
@@ -719,6 +737,10 @@ export function getDesktopBridge() {
 
     detectRosetta: () => {
       ipcRenderer.send('desktop_detect_rosetta');
+    },
+
+    consoleLog: (output: string) => {
+      ipcRenderer.send('desktop_console_log', output);
     },
 
     // pro-only start

@@ -60,6 +60,10 @@ public class AceEditorNative extends JavaScriptObject
    public native final String getSelectedText() /*-{
       return this.getSelectedText();
    }-*/;
+   
+   public native final void setUseResizeObserver(boolean use) /*-{
+      this.setOption("useResizeObserver", use);
+   }-*/;
 
    public native final void setShowPrintMargin(boolean show) /*-{
       this.setShowPrintMargin(show);

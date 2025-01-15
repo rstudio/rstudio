@@ -62,7 +62,7 @@ if(GWT_BUILD)
 
    find_program(ANT
       NAMES ant
-      PATHS "$ENV{HOME}/opt/bin" "$ENV{HOME}/homebrew/${UNAME_M}/bin")
+      PATHS "/opt/homebrew/bin" "/usr/local/bin")
 
    if(ANT)
       message(STATUS "Using ant: ${ANT}")
@@ -70,6 +70,14 @@ if(GWT_BUILD)
       message(FATAL_ERROR "ant not found (required to build GWT)")
    endif()
 
+   # copy GWT www directory to build tree
+   if(RSTUDIO_PACKAGE_BUILD AND NOT GWT_WWW_DIR STREQUAL www)
+      file(
+         COPY www
+         DESTINATION "${GWT_WWW_DIR}/.."
+         PATTERN rstudio EXCLUDE)
+   endif()
+   
    # depend on Java source files
    file(GLOB_RECURSE GWT_SOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.java")
 
@@ -132,25 +140,21 @@ if(GWT_COPY)
              DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
              FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
              GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-   
+
    # install local web resources
    # we exclude WEB-INF here just in case a prior GWT build updated this
    install(
       DIRECTORY www
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
-      PATTERN "WEB-INF"
-      EXCLUDE
-      PATTERN ".gitignore"
-      EXCLUDE)
+      PATTERN "WEB-INF" EXCLUDE
+      PATTERN ".gitignore" EXCLUDE)
 
    # install compiled GWT artefacts
    install(
       DIRECTORY "${GWT_WWW_DIR}"
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
-      PATTERN "WEB-INF"
-      EXCLUDE
-      PATTERN ".gitignore"
-      EXCLUDE)
+      PATTERN "WEB-INF" EXCLUDE
+      PATTERN ".gitignore" EXCLUDE)
 
    # copy symbol maps
    install(

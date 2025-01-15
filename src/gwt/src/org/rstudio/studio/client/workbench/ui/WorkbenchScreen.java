@@ -113,16 +113,17 @@ public class WorkbenchScreen extends Composite
 
       eventBus_.addHandler(ActivatePaneEvent.TYPE, this);
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
-      eventBus_.addHandler(ChangeFontSizeEvent.TYPE, changeFontSizeEvent ->
+      eventBus_.addHandler(ChangeFontSizeEvent.TYPE, (event) ->
       {
-         FontSizer.setNormalFontSize(Document.get(), changeFontSizeEvent.getFontSize());
+         FontSizer.setNormalFontSize(Document.get(), event);
          Scheduler.get().scheduleDeferred(() ->
          {
             // Causes the console width to be remeasured
             doOnPaneSizesChanged();
          });
       });
-      FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
+      
+      FontSizer.setNormalFontSize(Document.get(), fontSizeManager);
 
       paneManager_ = pPaneManager.get();
       tabsPanel_ = paneManager_.getPanel();

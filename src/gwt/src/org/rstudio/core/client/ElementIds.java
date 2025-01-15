@@ -771,4 +771,6 @@ public class ElementIds
    public final static String CHUNK_OPTIONS_APPLY = "chunk_opt_apply";
    public final static String CHUNK_OPTIONS_REVERT = "chunk_opt_revert";
    
+   // TextEntryModalDialog
+   public final static String TEXT_ENTRY = "text_entry";
 }

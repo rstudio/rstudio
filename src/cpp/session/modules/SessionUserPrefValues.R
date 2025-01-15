@@ -841,6 +841,15 @@
    clear = function() { .rs.clearUserPref("font_size_points") }
 )
 
+# Editor line height
+#
+# The editor line height, as a percentage of the font size.
+.rs.uiPrefs$editorLineHeight <- list(
+   get = function() { .rs.getUserPref("editor_line_height") },
+   set = function(value) { .rs.setUserPref("editor_line_height", value) },
+   clear = function() { .rs.clearUserPref("editor_line_height") }
+)
+
 # Help panel font size (points)
 #
 # The help panel font size, in points.
@@ -1819,9 +1828,9 @@
    clear = function() { .rs.clearUserPref("clang_verbose") }
 )
 
-# Submit crash reports to RStudio
+# Submit crash reports to Posit
 #
-# Whether to automatically submit crash reports to RStudio.
+# Whether to automatically submit crash reports to Posit.
 .rs.uiPrefs$submitCrashReports <- list(
    get = function() { .rs.getUserPref("submit_crash_reports") },
    set = function(value) { .rs.setUserPref("submit_crash_reports", value) },

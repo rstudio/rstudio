@@ -172,6 +172,7 @@ namespace prefs {
 #define kSaveFilesBeforeBuild "save_files_before_build"
 #define kSaveAndReloadWorkspaceOnBuild "save_and_reload_workspace_on_build"
 #define kFontSizePoints "font_size_points"
+#define kEditorLineHeight "editor_line_height"
 #define kHelpFontSizePoints "help_font_size_points"
 #define kEditorTheme "editor_theme"
 #define kServerEditorFontEnabled "server_editor_font_enabled"
@@ -987,6 +988,12 @@ public:
    core::Error setFontSizePoints(double val);
 
    /**
+    * The editor line height, as a percentage of the font size.
+    */
+   double editorLineHeight();
+   core::Error setEditorLineHeight(double val);
+
+   /**
     * The help panel font size, in points.
     */
    double helpFontSizePoints();
@@ -1623,7 +1630,7 @@ public:
    core::Error setClangVerbose(int val);
 
    /**
-    * Whether to automatically submit crash reports to RStudio.
+    * Whether to automatically submit crash reports to Posit.
     */
    bool submitCrashReports();
    core::Error setSubmitCrashReports(bool val);

@@ -108,7 +108,7 @@ std::map<std::string, std::string> s_extToLanguageIdMap = {
    { ".mjs",   "javascript" },
    { ".ps",    "powershell" },
    { ".py",    "python" },
-   { ".tex",   "latex" },
+   { ".qmd",   "quarto" },
    { ".r",     "r" },
    { ".rb",    "ruby" },
    { ".rmd",   "r" },
@@ -127,6 +127,20 @@ std::map<std::string, std::string> s_extToLanguageIdMap = {
    { ".tsx",   "typescriptreact" },
    { ".yml",   "yaml" },
 };
+
+std::map<std::string, std::string> makeLanguageIdToExtMap()
+{
+   std::map<std::string, std::string> map;
+   for (auto&& entry : s_extToLanguageIdMap)
+      map[entry.second] = entry.first;
+   return map;
+}
+
+std::map<std::string, std::string>& languageIdToExtMap()
+{
+   static auto instance = makeLanguageIdToExtMap();
+   return instance;
+}
 
 struct CopilotRequest
 {
@@ -284,6 +298,19 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    if (pDoc->contents().find('\0') != std::string::npos)
       return false;
    
+   // Our source database uses non-standard names for certain R file types,
+   // so explicitly check for those and allow them to be indexed.
+   if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
+      return true;
+   
+   // Allow indexing of Untitled documents if they have a known type.
+   if (pDoc->isUntitled())
+   {
+      std::string type = pDoc->type();
+      return languageIdToExtMap().count(type);
+   }
+   
+   // Otherwise, check for known files / extensions.
    FilePath docPath(pDoc->path());
    return isIndexableFile(docPath);
 }
@@ -1236,13 +1263,13 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    sendNotification("textDocument/didOpen", paramsJson);
 }
 
-void onDocRemoved(const std::string& id, const std::string& path)
+void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
       return;
 
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentImpl(id, path, path.empty());
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
@@ -1416,7 +1443,7 @@ void onDeferredInit(bool newSession)
 {
    source_database::events().onDocAdded.connect(onDocAdded);
    source_database::events().onDocUpdated.connect(onDocUpdated);
-   source_database::events().onDocRemoved.connect(onDocRemoved);
+   source_database::events().onDocPendingRemove.connect(onDocRemoved);
 }
 
 void onShutdown(bool)
@@ -1547,7 +1574,24 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    bool isUntitled;
    int cursorRow, cursorColumn;
 
-   Error error = core::json::readParams(request.params, &documentId, &documentPath, &isUntitled, &cursorRow, &cursorColumn);
+   Error error = core::json::readParams(
+            request.params,
+            &documentId,
+            &documentPath,
+            &isUntitled,
+            &cursorRow,
+            &cursorColumn);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // Resolve source document from id
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+
+   error = source_database::get(documentId, pDoc);
    if (error)
    {
       LOG_ERROR(error);
@@ -1556,8 +1600,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    
    // Disallow completion request in hidden files, since this might trigger
    // the copilot agent to attempt to read the contents of that file
-   FilePath docPath = module_context::resolveAliasedPath(documentPath);
-   if (!isIndexableFile(docPath))
+   if (!isIndexableDocument(pDoc))
    {
       json::Object resultJson;
       resultJson["enabled"] = false;
@@ -1576,7 +1619,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 
    json::Object docJson;
    docJson["position"] = positionJson;
-   docJson["uri"] = uriFromDocumentImpl(documentId, documentPath, isUntitled);
+   docJson["uri"] = uriFromDocument(pDoc);
    docJson["version"] = kCopilotDefaultDocumentVersion;
 
    json::Object paramsJson;

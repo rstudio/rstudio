@@ -776,6 +776,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String fontSizePointsDescription();
 
    /**
+    * The editor line height, as a percentage of the font size.
+    */
+   @DefaultStringValue("Editor line height")
+   String editorLineHeightTitle();
+   @DefaultStringValue("The editor line height, as a percentage of the font size.")
+   String editorLineHeightDescription();
+
+   /**
     * The help panel font size, in points.
     */
    @DefaultStringValue("Help panel font size (points)")
@@ -1634,11 +1642,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String clangVerboseDescription();
 
    /**
-    * Whether to automatically submit crash reports to RStudio.
+    * Whether to automatically submit crash reports to Posit.
     */
-   @DefaultStringValue("Submit crash reports to RStudio")
+   @DefaultStringValue("Submit crash reports to Posit")
    String submitCrashReportsTitle();
-   @DefaultStringValue("Whether to automatically submit crash reports to RStudio.")
+   @DefaultStringValue("Whether to automatically submit crash reports to Posit.")
    String submitCrashReportsDescription();
 
    /**

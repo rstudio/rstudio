@@ -1336,6 +1336,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The editor line height, as a percentage of the font size.
+    */
+   public PrefValue<Double> editorLineHeight()
+   {
+      return dbl(
+         "editor_line_height",
+         _constants.editorLineHeightTitle(), 
+         _constants.editorLineHeightDescription(), 
+         0.0);
+   }
+
+   /**
     * The help panel font size, in points.
     */
    public PrefValue<Double> helpFontSizePoints()
@@ -2772,7 +2784,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically submit crash reports to RStudio.
+    * Whether to automatically submit crash reports to Posit.
     */
    public PrefValue<Boolean> submitCrashReports()
    {
@@ -3936,6 +3948,8 @@ public class UserPrefsAccessor extends Prefs
          saveAndReloadWorkspaceOnBuild().setValue(layer, source.getBool("save_and_reload_workspace_on_build"));
       if (source.hasKey("font_size_points"))
          fontSizePoints().setValue(layer, source.getDbl("font_size_points"));
+      if (source.hasKey("editor_line_height"))
+         editorLineHeight().setValue(layer, source.getDbl("editor_line_height"));
       if (source.hasKey("help_font_size_points"))
          helpFontSizePoints().setValue(layer, source.getDbl("help_font_size_points"));
       if (source.hasKey("editor_theme"))
@@ -4375,6 +4389,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(saveFilesBeforeBuild());
       prefs.add(saveAndReloadWorkspaceOnBuild());
       prefs.add(fontSizePoints());
+      prefs.add(editorLineHeight());
       prefs.add(helpFontSizePoints());
       prefs.add(editorTheme());
       prefs.add(serverEditorFontEnabled());

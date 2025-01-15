@@ -711,7 +711,7 @@
 
       # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
       # an attempt is made to compute their metrics exactly; avoid computing the size for these
-      size <- if (computeSize) .rs.objectSize(obj) else 0
+      size <- if (computeSize) .rs.estimatedObjectSize(obj) else 0
       len <- length(obj)
    }
 
@@ -737,7 +737,7 @@
       {
          len_desc <- if (len > 1)
          {
-            paste(len, " elements, ", sep = "")
+            paste(len, " elements,", sep = "")
          }
          else
          {
@@ -752,8 +752,13 @@
          }
          else
          {
+            is_size_estimated <- identical(attr(size, "estimate"), TRUE)
+            size <- format(size, units = "auto", standard = "SI")
+            if (is_size_estimated)
+               size <- paste(">", size)
+            
             fmt <- "Large %s (%s %s)"
-            val <- sprintf(fmt, class, len_desc, format(size, units = "auto", standard = "SI"))
+            val <- sprintf(fmt, class, len_desc, size)
          }
          contents_deferred <- TRUE
       }
@@ -1018,3 +1023,19 @@
    else
       utils::object.size(x)
 })
+
+.rs.addFunction("estimatedObjectSize", function(x)
+{
+   # avoid invoking object.size() on large character vectors,
+   # as this can be slow
+   if (is.character(x) && length(unclass(x)) >= 1E5)
+   {
+      result <- n * .Machine$sizeof.pointer
+      class(result) <- "object_size"
+      attr(result, "estimate") <- TRUE
+      return(result)
+   }
+   
+   .rs.objectSize(x)
+})
+

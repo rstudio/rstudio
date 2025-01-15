@@ -21,7 +21,7 @@ import { logger } from '../core/logger';
 
 import i18next from 'i18next';
 import { setDockLabel } from '../native/dock.node';
-import { appState } from './app-state';
+import { appState, getEventBus } from './app-state';
 import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 import { GwtCallback, PendingQuit } from './gwt-callback';
@@ -104,6 +104,9 @@ export class MainWindow extends GwtWindow {
     });
     appState().gwtCallback?.on(GwtCallback.WORKBENCH_INITIALIZED, () => {
       this.onWorkbenchInitialized();
+    });
+    appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
+      appState().argsManager.handleAfterSessionLaunchCommands();
     });
     appState().gwtCallback?.on(GwtCallback.SESSION_QUIT, () => {
       this.onSessionQuit();
@@ -193,6 +196,7 @@ export class MainWindow extends GwtWindow {
     this.quitConfirmed = false;
     this.geometrySaved = false;
     this.workbenchInitialized = true;
+    getEventBus().emit('main-window-loaded');
 
     this.executeJavaScript('window.desktopHooks.getActiveProjectName()')
       .then((projectName) => {
