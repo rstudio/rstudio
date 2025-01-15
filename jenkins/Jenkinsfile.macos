@@ -127,7 +127,7 @@ pipeline {
         // build rstudio
         dir ("package/osx") {
           withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-            sh "${ENV} ./make-package clean --rstudio-target=${FLAVOR}"
+            sh "${ENV} ./make-package clean --rstudio-target=Electron"
           }
         }
       }
@@ -145,9 +145,7 @@ pipeline {
           sh "arch -x86_64 ./rstudio-tests"
           
           // electron tests not working in CI environment, under investigation
-          // if(FLAVOR == 'Electron') {
-          //   sh "cd ../../../../../src/node/desktop/ && $HOME/.yarn/bin/yarn && $HOME/.yarn/bin/yarn test"
-          // }
+          // sh "cd ../../../../../src/node/desktop/ && $HOME/.yarn/bin/yarn && $HOME/.yarn/bin/yarn test"
           }
         }
       }
@@ -166,7 +164,7 @@ pipeline {
           returnStdout: true
         ).trim().toLowerCase()}"""
         PRODUCT = "${utils.getProductName()}"
-        AWS_PATH = "${FLAVOR.toLowerCase()}/macos"
+        AWS_PATH = "electron/macos"
       }
       
       stages {
@@ -209,9 +207,7 @@ pipeline {
                 // upload Javascript source maps, but only once
                 dir ('package/osx/build/gwt') {
                   script {
-                    if (FLAVOR == 'Electron') {
-                      utils.sentryUploadSourceMaps()
-                    }
+                    utils.sentryUploadSourceMaps()
                   }
                 }
 
@@ -249,8 +245,7 @@ pipeline {
 
           when { 
             anyOf {
-              expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
-              expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
+              expression { return params.PUBLISH && params.DAILY }
             }
           }
 
