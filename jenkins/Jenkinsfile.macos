@@ -32,6 +32,7 @@ pipeline {
     RSTUDIO_VERSION_FLOWER = ""
     RSTUDIO_VERSION_FILENAME = ""
     IS_PRO = false
+    FLAVOR = 'Electron'
   }
   stages {
 
@@ -164,7 +165,7 @@ pipeline {
           returnStdout: true
         ).trim().toLowerCase()}"""
         PRODUCT = "${utils.getProductName()}"
-        AWS_PATH = "electron/macos"
+        AWS_PATH = "${FLAVOR.toLowerCase()}/macos"
       }
       
       stages {
