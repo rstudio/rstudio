@@ -408,6 +408,10 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('setPendingQuit', error));
     },
 
+    setProjectDirectory: (projectDirectory: string) => {
+      ipcRenderer.send('desktop_set_project_directory', projectDirectory);
+    },
+
     openFile: async (path: string) => {
       if (!path) {
         return;

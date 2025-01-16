@@ -152,6 +152,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void setPendingQuit(int pendingQuit, CommandWithArg<Void> callback);
    void setPendingProject(String projectFilePath);
+   void setProjectDirectory(String projectDirectory);
    void launchSession(boolean reload);
    
    void openProjectInNewWindow(String projectFilePath);

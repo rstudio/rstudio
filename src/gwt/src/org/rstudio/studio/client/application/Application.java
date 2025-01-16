@@ -29,6 +29,7 @@ import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -237,6 +238,14 @@ public class Application implements ApplicationEventHandlers
 
             // set session info
             session_.setSessionInfo(sessionInfo);
+            
+            // set project path for desktop
+            if (Desktop.isDesktop())
+            {
+               FileSystemItem projectDir = sessionInfo.getActiveProjectDir();
+               if (projectDir != null)
+                  Desktop.getFrame().setProjectDirectory(projectDir.getPath());
+            }
             
             if (sessionInfo.isAutomationHost())
             {
