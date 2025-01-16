@@ -416,7 +416,11 @@ var RCodeModel = function(session, tokenizer,
                      data.excludeArgs.push(value);
                   }
                }
-
+            }
+            else
+            {
+               if (!cursor.moveToPreviousToken())
+                  return false;
             }
          }
 
