@@ -2,7 +2,7 @@
 
 ### New
 #### RStudio
-- RStudio now uses the project directory / home directory for new RStudio sessions opened via the Dock menu's "Open in New Window" command. (#15409)
+- On macOS, RStudio now uses the project directory / home directory for new RStudio sessions opened via the Dock menu's "Open in New Window" command. (#15409)
 
 #### Posit Workbench
 -
