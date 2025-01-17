@@ -668,6 +668,10 @@ export class GwtCallback extends EventEmitter {
       this.pendingQuit = pendingQuit;
     });
 
+    ipcMain.on('desktop_set_project_directory', (event, projectDirectory) => {
+      appState().projectDirectory = resolveAliasedPath(projectDirectory);
+    });
+
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
       this.mainWindow.launchRStudio({
         projectFilePath: resolveAliasedPath(projectFilePath),

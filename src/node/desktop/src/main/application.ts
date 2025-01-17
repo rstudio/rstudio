@@ -486,7 +486,7 @@ export class Application implements AppState {
         {
           label: i18next.t('applicationTs.newRstudioWindow'),
           click: () => {
-            this.appLaunch?.launchRStudio({});
+            this.appLaunch?.launchRStudio({ workingDirectory: appState().projectDirectory });
           },
         },
       ]);

@@ -70,7 +70,12 @@ export class ApplicationLaunch {
     const argv = app.isPackaged ? [] : [process.argv[1]];
 
     // resolve working directory
-    const workingDir = options.workingDirectory ?? path.dirname(options.projectFilePath || '');
+    let workingDir = app.getPath('home');
+    if (options.workingDirectory != null) {
+      workingDir = options.workingDirectory;
+    } else if (options.projectFilePath != null) {
+      workingDir = path.dirname(options.projectFilePath);
+    }
     setenv(kRStudioInitialWorkingDir, workingDir);
 
     // resolve project file, if any
