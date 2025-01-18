@@ -193,7 +193,7 @@ void JsonRpcResponse::setAfterResponse(
    
 bool JsonRpcResponse::hasAfterResponse() const
 {
-   return afterResponse_;
+   return static_cast<bool>(afterResponse_);
 }
    
    
