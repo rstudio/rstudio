@@ -164,6 +164,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR 'RStudio.rnw\\\\DefaultIcon' '' '$INSTDIR\\\\rstudio.exe,-14'
    WriteRegStr HKCR 'RStudio.rnw\\\\\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\rstudio.exe \\\"%1\\\"'
 
+   WriteRegStr HKCR '.Rtex' '' 'RStudio.rtex'
    WriteRegStr HKCR '.Rtex\\\\OpenWithProgids' 'RStudio.rtex' ''
    WriteRegStr HKCR '.Rtex\\\\OpenWithProgids' 'RStudio.rtex' ''
    WriteRegStr HKCR 'RStudio.rtex' '' 'Sweave File'
