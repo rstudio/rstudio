@@ -46,6 +46,9 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rpres' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rproj' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.tex' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rtex' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.py' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rprofvis' ''
 
    WriteRegStr HKCR '.R\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.RData\\\\OpenWithList\\\\rstudio.exe' '' ''
@@ -59,6 +62,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR '.Rpres\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rproj\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.tex\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.Rtex\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.md\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.mdtxt\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.markdown\\\\OpenWithList\\\\rstudio.exe' '' ''
@@ -70,6 +74,8 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR '.cpp\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.h\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.hpp\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.py\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.Rprofvis\\\\OpenWithList\\\\rstudio.exe' '' ''
 
    WriteRegStr HKCR '.Rproj' '' 'RStudio.Rproj'
    WriteRegStr HKCR '.Rproj\\\\OpenWithProgids' 'RStudio.Rproj' ''
@@ -82,6 +88,12 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR 'RStudio.r' '' 'R File'
    WriteRegStr HKCR 'RStudio.r\\\\DefaultIcon' '' '$INSTDIR\\\\rstudio.exe,-3'
    WriteRegStr HKCR 'RStudio.r\\\\\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\rstudio.exe \\\"%1\\\"'
+
+   WriteRegStr HKCR '.Rprofvis' '' 'RStudio.rprofvis'
+   WriteRegStr HKCR '.Rprofvis\\\\OpenWithProgids' 'RStudio.rprofvis' ''
+   WriteRegStr HKCR 'RStudio.rprofvis' '' 'R Profile File'
+   WriteRegStr HKCR 'RStudio.rprofvis\\\\DefaultIcon' '' '$INSTDIR\\\\rstudio.exe,-3'
+   WriteRegStr HKCR 'RStudio.rprofvis\\\\\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\rstudio.exe \\\"%1\\\"'
 
    WriteRegStr HKCR '.css\\\\OpenWithProgids' 'RStudio.css' ''
    WriteRegStr HKCR 'RStudio.css' '' 'CSS File'
@@ -152,6 +164,12 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR 'RStudio.rnw\\\\DefaultIcon' '' '$INSTDIR\\\\rstudio.exe,-14'
    WriteRegStr HKCR 'RStudio.rnw\\\\\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\rstudio.exe \\\"%1\\\"'
 
+   WriteRegStr HKCR '.Rtex\\\\OpenWithProgids' 'RStudio.rtex' ''
+   WriteRegStr HKCR '.Rtex\\\\OpenWithProgids' 'RStudio.rtex' ''
+   WriteRegStr HKCR 'RStudio.rtex' '' 'Sweave File'
+   WriteRegStr HKCR 'RStudio.rtex\\\\DefaultIcon' '' '$INSTDIR\\\\rstudio.exe,-14'
+   WriteRegStr HKCR 'RStudio.rtex\\\\\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\rstudio.exe \\\"%1\\\"'
+
    WriteRegStr HKCR '.tex\\\\OpenWithProgids' 'RStudio.tex' ''
    WriteRegStr HKCR 'RStudio.tex' '' 'TeX File'
    WriteRegStr HKCR 'RStudio.tex\\\\DefaultIcon' '' '$INSTDIR\\\\rstudio.exe,-15'
@@ -188,6 +206,9 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegKey HKCR '.cpp\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.h\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.hpp\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.Rtex\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.py\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.Rprofvis\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR 'RStudio.Rproj'
    DeleteRegKey HKCR 'RStudio.r'
    DeleteRegKey HKCR 'RStudio.css'
@@ -202,6 +223,8 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegKey HKCR 'RStudio.rpres'
    DeleteRegKey HKCR 'RStudio.rnw'
    DeleteRegKey HKCR 'RStudio.tex'
+   DeleteRegKey HKCR 'RStudio.rtex'
+   DeleteRegKey HKCR 'RStudio.rprofvis'
    DeleteRegValue HKCR '.Rproj\\\\OpenWithProgids' 'RStudio.Rproj'
    DeleteRegValue HKCR '.R\\\\OpenWithProgids' 'RStudio.r'
    DeleteRegValue HKCR '.css\\\\OpenWithProgids' 'RStudio.css'
@@ -221,6 +244,8 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegValue HKCR '.Rpres\\\\OpenWithProgids' 'RStudio.rpres'
    DeleteRegValue HKCR '.Rnw\\\\OpenWithProgids' 'RStudio.rnw'
    DeleteRegValue HKCR '.tex\\\\OpenWithProgids' 'RStudio.tex'
+   DeleteRegValue HKCR '.Rprofvis\\\\OpenWithProgids' 'RStudio.rprofvis' ''
+   DeleteRegValue HKCR '.Rtex\\\\OpenWithProgids' 'RStudio.rprofvis' ''
 #")
 
 # build installer
