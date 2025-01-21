@@ -244,8 +244,8 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegValue HKCR '.Rpres\\\\OpenWithProgids' 'RStudio.rpres'
    DeleteRegValue HKCR '.Rnw\\\\OpenWithProgids' 'RStudio.rnw'
    DeleteRegValue HKCR '.tex\\\\OpenWithProgids' 'RStudio.tex'
-   DeleteRegValue HKCR '.Rprofvis\\\\OpenWithProgids' 'RStudio.rprofvis' ''
-   DeleteRegValue HKCR '.Rtex\\\\OpenWithProgids' 'RStudio.rprofvis' ''
+   DeleteRegValue HKCR '.Rprofvis\\\\OpenWithProgids' 'RStudio.rprofvis'
+   DeleteRegValue HKCR '.Rtex\\\\OpenWithProgids' 'RStudio.rprofvis'
 #")
 
 # build installer
