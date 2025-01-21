@@ -40,7 +40,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rd' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rnw' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rmd' ''
-   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rmarkdown' '' 
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rmarkdown' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.qmd' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rhtml' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rpres' ''
