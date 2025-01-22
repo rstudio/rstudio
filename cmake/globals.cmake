@@ -225,7 +225,7 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
 endif()
 
 # pandoc version
-set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
+set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
 
 # node version used for building product components
 set(RSTUDIO_NODE_VERSION "20.15.1" CACHE INTERNAL "Node version for building")

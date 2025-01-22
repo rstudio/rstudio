@@ -21,7 +21,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Pandoc"
 
 # variables that control download + installation process
-PANDOC_VERSION="2.18"
+PANDOC_VERSION="3.2"
 PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"
 PANDOC_URL_BASE="${RSTUDIO_BUILDTOOLS}/pandoc/${PANDOC_VERSION}"
 
