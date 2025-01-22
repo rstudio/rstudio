@@ -46,7 +46,7 @@
     "chai": "4.5.0",
     "copy-webpack-plugin": "12.0.2",
     "css-loader": "7.1.2",
-    "electron": "31.7.6",
+    "electron": "31.7.7",
     "electron-mocha": "13.0.1",
     "eslint": "8.57",
     "fork-ts-checker-webpack-plugin": "9.0.2",
