@@ -225,7 +225,7 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
 endif()
 
 # pandoc version
-set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
+set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
 
 # node version used for building product components
 set(RSTUDIO_NODE_VERSION "20.15.1" CACHE INTERNAL "Node version for building")
@@ -247,6 +247,8 @@ endif()
 if(QUARTO_ENABLED)
    add_definitions(-DQUARTO_ENABLED)
 endif()
+
+message(STATUS "Quarto enabled: ${QUARTO_ENABLED}")
 
 # install freedesktop integration files if we are installing into /usr
 if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)

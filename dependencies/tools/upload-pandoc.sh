@@ -8,7 +8,7 @@
 # filenames, so tweaking for new releases is expected.
 
 # Modify to set the Pandoc version to upload
-PANDOC_VERSION=2.18
+PANDOC_VERSION=3.2
 
 BASEURL="https://github.com/jgm/pandoc/releases/download/"
 AWS_BUCKET="s3://rstudio-buildtools"
@@ -16,7 +16,8 @@ AWS_BUCKET="s3://rstudio-buildtools"
 PLATFORMS=(
     linux-amd64.tar.gz
     linux-arm64.tar.gz
-    macOS.zip
+    x86_64-macOS.zip
+    arm64-macOS.zip
     windows-x86_64.zip
 )
 
