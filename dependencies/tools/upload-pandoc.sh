@@ -16,7 +16,8 @@ AWS_BUCKET="s3://rstudio-buildtools"
 PLATFORMS=(
     linux-amd64.tar.gz
     linux-arm64.tar.gz
-    macOS.zip
+    x86_64-macOS.zip
+    arm64-macOS.zip
     windows-x86_64.zip
 )
 

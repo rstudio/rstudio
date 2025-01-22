@@ -43,22 +43,32 @@ pushd "${PANDOC_SUBDIR}"
 PLATFORM="$(uname -s)-$(uname -m)"
 case "${PLATFORM}" in
 
-"Darwin-x86_64" | "Darwin-arm64")
+"Darwin-x86_64")
   FILES=(
-    "pandoc-${PANDOC_VERSION}-macOS.zip"
+    "pandoc-${PANDOC_VERSION}-x86_64-macOS.zip"
   )
+  BIN_SUFFIX="-x86_64"
+  ;;
+
+"Darwin-arm64")
+  FILES=(
+    "pandoc-${PANDOC_VERSION}-arm64-macOS.zip"
+  )
+  BIN_SUFFIX="-arm64"
   ;;
 
 "Linux-x86_64")
   FILES=(
     "pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz"
   )
+  BIN_SUFFIX=""
   ;;
 
 "Linux-aarch64")
   FILES=(
     "pandoc-${PANDOC_VERSION}-linux-arm64.tar.gz"
   )
+  BIN_SUFFIX=""
   ;;
 
 *)
@@ -77,7 +87,7 @@ for FILE in "${FILES[@]}"; do
 done
 
 # enter binaries dir
-pushd "pandoc-${PANDOC_VERSION}/bin"
+pushd "pandoc-${PANDOC_VERSION}${BIN_SUFFIX}/bin"
 
 # copy pandoc binaries to parent folder
 cp pandoc* ../..
