@@ -248,6 +248,8 @@ if(QUARTO_ENABLED)
    add_definitions(-DQUARTO_ENABLED)
 endif()
 
+message(STATUS "Quarto enabled: ${QUARTO_ENABLED}")
+
 # install freedesktop integration files if we are installing into /usr
 if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)
    if(${CMAKE_INSTALL_PREFIX} MATCHES "/usr/.*")
