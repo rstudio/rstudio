@@ -217,13 +217,24 @@ cmake -G "Ninja" ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 
-REM add icon for .rproj file extension
+REM add icons for supported file types
 if "%RSTUDIO_TARGET%" == "Electron" (
       pushd %ELECTRON_SOURCE_DIR%
       cd out\RStudio-win32-x64
-      %REZH% -open rstudio.exe -save rstudio.exe.new -action add -resource ..\..\resources\icons\RProject.ico -mask ICONGROUP,2,1033
-      del rstudio.exe
-      rename rstudio.exe.new rstudio.exe
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RProject.ico -mask ICONGROUP,2,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RSource.ico -mask ICONGROUP,3,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\CSS.ico -mask ICONGROUP,4,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\HTML.ico -mask ICONGROUP,5,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\JS.ico -mask ICONGROUP,6,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\Markdown.ico -mask ICONGROUP,7,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\QuartoMarkdown.ico -mask ICONGROUP,8,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RData.ico -mask ICONGROUP,9,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RDoc.ico -mask ICONGROUP,10,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RHTML.ico -mask ICONGROUP,11,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RMarkdown.ico -mask ICONGROUP,12,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RPresentation.ico -mask ICONGROUP,13,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RSweave.ico -mask ICONGROUP,14,1033
+      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RTex.ico -mask ICONGROUP,15,1033
       popd
 )
 cd ..
