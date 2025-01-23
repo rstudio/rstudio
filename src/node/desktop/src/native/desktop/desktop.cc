@@ -771,6 +771,7 @@ std::vector<std::string> win32ListMonospaceFontsImpl()
     logFont.lfCharSet = DEFAULT_CHARSET;
     EnumFontFamiliesEx(hdc, &logFont, (FONTENUMPROC) win32ListMonospaceFontsProc, (LPARAM) &fontSet, 0);
     ReleaseDC(NULL, hdc);
+    fontSet.erase("8514oem");
     fontList = std::vector<std::string>(fontSet.begin(), fontSet.end());
 #endif
 
