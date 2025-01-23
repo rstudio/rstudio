@@ -129,7 +129,7 @@ pipeline {
             # Turn off timeout
             security set-keychain-settings
 
-            # Import the developer ID from JEnkins secrets
+            # Import the developer ID from Jenkins secrets
             security import "${MACOS_DEVELOPER_CERTIFICATE}" -k ${BUILD_AGENT_TEMP}/buildagent.keychain -P "${MACOS_DEVELOPER_CERTIFICATE_KEY}" -T /usr/bin/codesign
           '''
         }
