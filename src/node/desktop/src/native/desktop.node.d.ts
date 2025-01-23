@@ -61,3 +61,12 @@ export declare function searchRegistryForDefaultInstallationOfR(registryVersionK
  * @param path The path to an existing file.
  */
 export declare function openExternal(path: string): void;
+
+/**
+ * (Windows only)
+ *
+ * List monospace fonts available on the system.
+ *
+ */
+export declare function win32ListMonospaceFonts(): string[];
+

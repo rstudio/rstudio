@@ -109,6 +109,8 @@ export class GwtCallback extends EventEmitter {
 
       const result = execSync(command, { encoding: 'utf-8' });
       return result.trim().split('\n');
+    } else if (platform() === 'win32') {
+      return desktop.win32ListMonospaceFonts();
     } else {
       const result = findFontsSync({ monospace: monospace }).map((fd) => {
         if (process.platform === 'darwin') {

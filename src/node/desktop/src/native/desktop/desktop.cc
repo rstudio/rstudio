@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <iostream>
 #include <locale>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -726,6 +727,72 @@ Napi::Value openExternal(const Napi::CallbackInfo& info)
 
 }
 
+namespace {
+
+#ifdef _WIN32
+
+int CALLBACK win32ListMonospaceFontsProc(
+    ENUMLOGFONTEX* lpelfe,
+    NEWTEXTMETRICEX* lpntme,
+    DWORD FontType,
+    LPARAM lParam)
+{
+    if (lpelfe != nullptr)
+    {
+      // The pitch and family of the font. The two low-order bits specify the
+      // pitch of the font and can be one of the following values.
+      if (lpelfe->elfLogFont.lfPitchAndFamily & FIXED_PITCH)
+      {
+         std::set<std::string>* pFontSet = (std::set<std::string>*) lParam;
+         WCHAR* faceName = lpelfe->elfLogFont.lfFaceName;
+
+         // Skip vertically-oriented fonts.
+         // https://devblogs.microsoft.com/oldnewthing/20120719-00/?p=7093
+         if (faceName[0] == L'@')
+            return 1;
+
+         pFontSet->insert(faceName);
+      }
+    }
+
+    return 1; // Continue enumeration
+}
+
+#endif
+
+std::vector<std::string> win32ListMonospaceFontsImpl()
+{
+    std::vector<std::string> fontList;
+
+#ifdef _WIN32
+    std::set<std::string> fontSet;
+    HDC hdc = GetDC(NULL);
+    LOGFONT logFont = { 0 };
+    logFont.lfCharSet = DEFAULT_CHARSET;
+    EnumFontFamiliesEx(hdc, &logFont, (FONTENUMPROC) win32ListMonospaceFontsProc, (LPARAM) &fontSet, 0);
+    ReleaseDC(NULL, hdc);
+    fontList = std::vector<std::string>(fontSet.begin(), fontSet.end());
+#endif
+
+    return fontList;
+}
+
+} // end anonymous namespace
+
+Napi::Value win32ListMonospaceFonts(const Napi::CallbackInfo& info)
+{
+   std::vector<std::string> fontList;
+
+#ifdef _WIN32
+   fontList = win32ListMonospaceFontsImpl();
+#endif
+
+   auto result = Napi::Array::New(info.Env(), fontList.size());
+   for (int i = 0, n = fontList.size(); i < n; i++)
+      result[i] = Napi::String::From(info.Env(), fontList[i]);
+   return result;
+}
+
 } // end namespace desktop
 } // end namespace rstudio
 
@@ -748,6 +815,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    RS_EXPORT_FUNCTION("searchRegistryForInstallationsOfR", rstudio::desktop::searchRegistryForInstallationsOfR);
    RS_EXPORT_FUNCTION("searchRegistryForDefaultInstallationOfR", rstudio::desktop::searchRegistryForDefaultInstallationOfR);
    RS_EXPORT_FUNCTION("openExternal", rstudio::desktop::openExternal);
+   RS_EXPORT_FUNCTION("win32ListMonospaceFonts", rstudio::desktop::win32ListMonospaceFonts);
 
    return exports;
 
