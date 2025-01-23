@@ -13,6 +13,7 @@
 
 - Fixed an issue where the F1 shortcut would fail to retrieve documentation in packages (#10869)
 - Fixed an issue where some column names were not displayed following select() in pipe completions (#12501)
+- Fixed an issue where building with a newer version of Boost (e.g. Boost 1.86.0) would fail (no. 15625)
 
 #### Posit Workbench
 -
