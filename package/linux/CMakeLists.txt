@@ -23,10 +23,15 @@ find_program(DPKG_EXECUTABLE dpkg)
 find_program(RPM_EXECUTABLE rpm)
 if (NOT PACKAGE_ARCHITECTURE)
    if(DPKG_EXECUTABLE)
-      exec_program(dpkg ARGS --print-architecture
-                   OUTPUT_VARIABLE PACKAGE_ARCHITECTURE)
+      execute_process(
+        COMMAND dpkg --print-architecture
+        OUTPUT_VARIABLE PACKAGE_ARCHITECTURE
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
    elseif(RPM_EXECUTABLE)
-      exec_program(arch OUTPUT_VARIABLE PACKAGE_ARCHITECTURE)
+      execute_process(
+        COMMAND arch
+        OUTPUT_VARIABLE PACKAGE_ARCHITECTURE
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
    endif()
 endif()
 
