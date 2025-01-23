@@ -53,10 +53,10 @@ esac
 # Will be set if we need to use Node 16.
 needs-node-16 () {
 
-	# Use Node 16 on Ubuntu Bionic (which is used to make Focal builds).
+	# Use Node 16 on Amazon Linux
 	if [ -e /etc/os-release ]; then
 		. /etc/os-release
-		if [ "${ID}" = "ubuntu" ] && [ "${VERSION_ID}" = "18.04" ]; then
+		if [ "${ID}" = "amzn" ] && [ "${VERSION_ID}" = "2" ]; then
 			return 0
 		fi
 	fi
