@@ -50,5 +50,13 @@ else
   # git checkout release/rstudio-mariposa-orchid
   git pull
   git rev-parse HEAD
+
   popd
+fi
+
+# al2 needs extra config to build panmirror. This is a temporary, hackey, gross workaround
+PACKAGE_JSON="/opt/rstudio-tools/src/gwt/lib/quarto/package.json"
+if is-amazon; then
+  echo "Applying al2-specific panmirror build config"
+  jq '.resolutions = {"p-queue": "6.6.2"}' "$PACKAGE_JSON" > tmp.$$.json && mv tmp.$$.json "$PACKAGE_JSON"
 fi
