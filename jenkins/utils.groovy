@@ -208,6 +208,11 @@ def getBuildEnv(boolean isHourly) {
   if (isHourly) {
     env = "${env} SCCACHE_ENABLED=1"
   }
+  if (binding.hasVariable('OS') && OS == "al2")
+  {
+    // disable software that can't be built on AL2
+    env = "${env} RSTUDIO_CRASHPAD_ENABLED=0 QUARTO_ENABLED=0"
+  }
 
   return env
 }
@@ -597,6 +602,15 @@ def getStageUrl(String stageDisplayName) {
       return buildUrl
     }
     return "${buildUrl}pipeline-console/?selected-node=${nodeId}"
+}
+
+// ninja is named ninja-build on AL2, so account for that
+def ninjaCmd() {
+  if (env.OS == "al2") {
+    return "ninja-build"
+  }
+
+  return "ninja"
 }
 
 return this

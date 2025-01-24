@@ -33,25 +33,6 @@ fi
 export RSTUDIO_TOOLS_ROOT
 
 
-# version of node.js used for building
-#
-# When changing node version you must upload the corresponding archives to aws s3; use
-# rstudio/dependencies/tools/upload-node.sh
-#
-# In addition to updating the version here, search the entire repo for other instances of
-# RSTUDIO_NODE_VERSION and update to match.
-export RSTUDIO_NODE_VERSION="20.15.1"
-
-
-# actual directory name of the node installation used
-# mainly relevant for cases like macOS, where we have an -arm64 variant installed
-if [ "$(uname -sm)" = "Darwin arm64" ]; then
-	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}-arm64"
-else
-	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}"
-fi
-
-
 # version of node.js installed with the product
 #
 # In the dependencies folder this will have a `-patched` suffix on the folder name to indicate
@@ -505,6 +486,10 @@ is-ubuntu () {
 	[ "$(platform)" = "ubuntu" ]
 }
 
+is-amazon () {
+	[ "$(platform)" = "amzn" ]
+}
+
 is-jenkins () {
 	[ -n "${JENKINS_URL}" ]
 }
@@ -541,3 +526,21 @@ check_env_vars() {
 	done
 	return $all_set
 }
+
+# version of node.js used for building
+#
+# When changing node version you must upload the corresponding archives to aws s3; use
+# rstudio/dependencies/tools/upload-node.sh
+#
+# In addition to updating the version here, search the entire repo for other instances of
+# RSTUDIO_NODE_VERSION and update to match.
+export RSTUDIO_NODE_VERSION="20.15.1"
+
+
+# actual directory name of the node installation used
+# mainly relevant for cases like macOS, where we have an -arm64 variant installed
+if [ "$(uname -sm)" = "Darwin arm64" ]; then
+	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}-arm64"
+else
+	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}"
+fi
