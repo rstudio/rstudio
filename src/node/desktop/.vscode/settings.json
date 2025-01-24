@@ -69,7 +69,11 @@
     "xstring": "cpp",
     "xtr1common": "cpp",
     "xtree": "cpp",
-    "xutility": "cpp"
+    "xutility": "cpp",
+    "cstdarg": "cpp",
+    "deque": "cpp",
+    "queue": "cpp",
+    "unordered_set": "cpp"
   },
 
   // Help Windows find node, npm
