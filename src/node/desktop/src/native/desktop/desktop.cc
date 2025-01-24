@@ -744,7 +744,7 @@ int CALLBACK win32ListMonospaceFontsProc(
       if (lpelfe->elfLogFont.lfPitchAndFamily & FIXED_PITCH)
       {
          std::set<std::string>* pFontSet = (std::set<std::string>*) lParam;
-         WCHAR* faceName = lpelfe->elfLogFont.lfFaceName;
+         CHAR* faceName = lpelfe->elfLogFont.lfFaceName;
 
          // Skip vertically-oriented fonts.
          // https://devblogs.microsoft.com/oldnewthing/20120719-00/?p=7093
