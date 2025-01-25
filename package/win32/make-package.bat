@@ -5,9 +5,9 @@ set PACKAGE_DIR="%CD%"
 set ELECTRON_SOURCE_DIR=%PACKAGE_DIR%\..\..\src\node\desktop
 
 if not exist c:\rstudio-tools\dependencies (
-      set RSTUDIO_DEPENDENCIES=%PACKAGE_DIR%\..\..\dependencies
+    set RSTUDIO_DEPENDENCIES=%PACKAGE_DIR%\..\..\dependencies
 ) else (
-      set RSTUDIO_DEPENDENCIES=c:\rstudio-tools\dependencies
+    set RSTUDIO_DEPENDENCIES=c:\rstudio-tools\dependencies
 )
 
 call %RSTUDIO_DEPENDENCIES%\tools\rstudio-tools.cmd
@@ -22,9 +22,9 @@ set DEBUG_BUILD=
 
 REM Produce multiarch builds by default on Jenkins.
 if defined JENKINS_URL (
-	set MULTIARCH=1
+    set MULTIARCH=1
 ) else (
-	set MULTIARCH=0
+    set MULTIARCH=0
 )
 
 if "%1" == "--help" goto :showhelp
@@ -36,84 +36,84 @@ echo DEBUG: Parsing arguments
 
 SETLOCAL ENABLEDELAYEDEXPANSION
 for %%A in (%*) do (
-      set KNOWN_ARG=0
-      if /I "%%A" == "clean" (
-            set CLEANBUILD=1
-            set KNOWN_ARG=1
-      )
-      if /I "%%A" == "debug" (
-            set DEBUG_BUILD=1
-            set KNOWN_ARG=1
-      )
-      if /I "%%A" == "electron" (
-            set RSTUDIO_TARGET=Electron
-            set KNOWN_ARG=1
-      )
-      if /I "%%A" == "multiarch" (
-            set MULTIARCH=1
-            set KNOWN_ARG=1
-      )
-      if /I "%%A" == "nogwt" (
-            set BUILD_GWT=0
-            set KNOWN_ARG=1
-      )
-      if /I "%%A" == "nozip" (
-            set NOZIP=1
-            set KNOWN_ARG=1
-      )
-      if /I "%%A" == "quick" (
-            set QUICK=1
-            set KNOWN_ARG=1
-      )
-      if "!KNOWN_ARG!" == "0" goto :showhelp
+    set KNOWN_ARG=0
+    if /I "%%A" == "clean" (
+        set CLEANBUILD=1
+        set KNOWN_ARG=1
+    )
+    if /I "%%A" == "debug" (
+        set DEBUG_BUILD=1
+        set KNOWN_ARG=1
+    )
+    if /I "%%A" == "electron" (
+        set RSTUDIO_TARGET=Electron
+        set KNOWN_ARG=1
+    )
+    if /I "%%A" == "multiarch" (
+        set MULTIARCH=1
+        set KNOWN_ARG=1
+    )
+    if /I "%%A" == "nogwt" (
+        set BUILD_GWT=0
+        set KNOWN_ARG=1
+    )
+    if /I "%%A" == "nozip" (
+        set NOZIP=1
+        set KNOWN_ARG=1
+    )
+    if /I "%%A" == "quick" (
+        set QUICK=1
+        set KNOWN_ARG=1
+    )
+    if "!KNOWN_ARG!" == "0" goto :showhelp
 )
 
 REM check for debug build
 if defined DEBUG_BUILD (
-      set CMAKE_BUILD_TYPE=Debug
+    set CMAKE_BUILD_TYPE=Debug
 )
 
 REM clean if requested
 if defined CLEANBUILD (
-      call clean-build.bat
-      if exist CMakeCache.txt del CMakeCache.txt
+    call clean-build.bat
+    if exist CMakeCache.txt del CMakeCache.txt
 )
 
 REM check for required programs on PATH
 for %%F in (ant cmake) do (
-      where /q %%F
-      if ERRORLEVEL 1 (
-            echo '%%F' not found on PATH; exiting
-            endlocal
-            exit /b 1
-      )
+    where /q %%F
+    if ERRORLEVEL 1 (
+        echo '%%F' not found on PATH; exiting
+        endlocal
+        exit /b 1
+    )
 )
 
 REM find node
 set NODE_DIR=%RSTUDIO_DEPENDENCIES%\common\node\%RSTUDIO_NODE_VERSION%
 set NODE=%NODE_DIR%\node.exe
 if not exist %NODE% (
-      echo node.exe not found at %NODE_DIR%; exiting
-      endlocal
-      exit /b 1
+    echo node.exe not found at %NODE_DIR%; exiting
+    endlocal
+    exit /b 1
 )
 echo Using node: %NODE%
 
 REM find npm
 set NPM=%NODE_DIR%\npm
 if not exist %NPM% (
-      echo npm not found at %NODE_DIR%; exiting
-      endlocal
-      exit /b 1
+    echo npm not found at %NODE_DIR%; exiting
+    endlocal
+    exit /b 1
 )
 echo Using npm: %NPM%
 
 REM find npx
 set NPX=%NODE_DIR%\npx
 if not exist %NPX% (
-      echo npx not found at %NODE_DIR%; exiting
-      endlocal
-      exit /b 1
+    echo npx not found at %NODE_DIR%; exiting
+    endlocal
+    exit /b 1
 )
 echo Using npx: %NPX%
 
@@ -122,9 +122,9 @@ set PATH=%NODE_DIR%;%PATH%
 
 set REZH=%RSTUDIO_DEPENDENCIES%\windows\resource-hacker\ResourceHacker.exe
 if not exist %REZH% (
-      echo ResourceHacker.exe not found; re-run install-dependencies.cmd and try again; exiting
-      endlocal
-      exit /b 1
+    echo ResourceHacker.exe not found; re-run install-dependencies.cmd and try again; exiting
+    endlocal
+    exit /b 1
 )
 
 REM Build for desktop
@@ -161,17 +161,17 @@ set newLen=!len!
 REM check for .pro# suffix
 set "last5=!RSTUDIO_VERSION_FULL:~-5!"
 if "!last5:~0,4!"==".pro" (
-      set /a newLen=!len!-5
+    set /a newLen=!len!-5
 ) else ( REM check for .pro## suffix
-      set "last6=!RSTUDIO_VERSION_FULL:~-6!"
-      if "!last6:~0,4!"==".pro" (
-            set /a newLen=!len!-6
-      ) else ( REM check for .pro### suffix; very unlikely but just in case)
-            set "last7=!RSTUDIO_VERSION_FULL:~-7!"
-            if "!last7:~0,4!"==".pro" (
-                  set /a newLen=!len!-7
-            )
-      )
+    set "last6=!RSTUDIO_VERSION_FULL:~-6!"
+    if "!last6:~0,4!"==".pro" (
+        set /a newLen=!len!-6
+    ) else ( REM check for .pro### suffix; very unlikely but just in case)
+        set "last7=!RSTUDIO_VERSION_FULL:~-7!"
+        if "!last7:~0,4!"==".pro" (
+            set /a newLen=!len!-7
+        )
+    )
 )
 
 set "RSTUDIO_VERSION_FULL=!RSTUDIO_VERSION_FULL:~0,%newLen%!"
@@ -219,47 +219,47 @@ cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 
 REM add icons for supported file types
 if "%RSTUDIO_TARGET%" == "Electron" (
-      pushd %ELECTRON_SOURCE_DIR%
-      cd out\RStudio-win32-x64
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RProject.ico -mask ICONGROUP,2,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RSource.ico -mask ICONGROUP,3,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\CSS.ico -mask ICONGROUP,4,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\HTML.ico -mask ICONGROUP,5,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\JS.ico -mask ICONGROUP,6,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\Markdown.ico -mask ICONGROUP,7,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\QuartoMarkdown.ico -mask ICONGROUP,8,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RData.ico -mask ICONGROUP,9,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RDoc.ico -mask ICONGROUP,10,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RHTML.ico -mask ICONGROUP,11,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RMarkdown.ico -mask ICONGROUP,12,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RPresentation.ico -mask ICONGROUP,13,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RSweave.ico -mask ICONGROUP,14,1033
-      %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RTex.ico -mask ICONGROUP,15,1033
-      popd
+    pushd %ELECTRON_SOURCE_DIR%
+    cd out\RStudio-win32-x64
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RProject.ico -mask ICONGROUP,2,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RSource.ico -mask ICONGROUP,3,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\CSS.ico -mask ICONGROUP,4,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\HTML.ico -mask ICONGROUP,5,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\JS.ico -mask ICONGROUP,6,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\Markdown.ico -mask ICONGROUP,7,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\QuartoMarkdown.ico -mask ICONGROUP,8,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RData.ico -mask ICONGROUP,9,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RDoc.ico -mask ICONGROUP,10,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RHTML.ico -mask ICONGROUP,11,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RMarkdown.ico -mask ICONGROUP,12,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RPresentation.ico -mask ICONGROUP,13,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RSweave.ico -mask ICONGROUP,14,1033
+    %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RTex.ico -mask ICONGROUP,15,1033
+    popd
 )
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
 if "%MULTIARCH%" == "1" (
-	call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
+    call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
 )
 
 REM create packages
 cd "%BUILD_DIR%"
 if not defined QUICK (
-      echo Creating NSIS setup package...
-      cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
-      REM emit NSIS error output if present
-      if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
-      move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
+    echo Creating NSIS setup package...
+    cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
+    REM emit NSIS error output if present
+    if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
+    move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
 )
 
 if not defined NOZIP (
-      if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" (
-            echo Creating ZIP package...
-            cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
-            move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
-      )
+    if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" (
+        echo Creating ZIP package...
+        cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
+        move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
+    )
 )
 cd ..
 
@@ -303,30 +303,30 @@ REM put these back to their original state at the end of the package build.
 :set-version
 echo DEBUG: In set-version function, RSTUDIO_TARGET=(%RSTUDIO_TARGET%)
 if "%RSTUDIO_TARGET%" == "Electron" (
-      pushd %ELECTRON_SOURCE_DIR%
+    pushd %ELECTRON_SOURCE_DIR%
 
-      call %NPM% ci
+    call %NPM% ci
 
-      REM Set package.json info
-      call :save-original-file package.json
-      call %NPX% json -I -f package.json -e "this.version=\"%~1\""
-      call %NPX% json -I -f package.json -e "this.productName=\"%~2\""
+    REM Set package.json info
+    call :save-original-file package.json
+    call %NPX% json -I -f package.json -e "this.version=\"%~1\""
+    call %NPX% json -I -f package.json -e "this.productName=\"%~2\""
 
-      REM Keep a backup of build-info.ts so we can restore it
-      call :save-original-file src\main\build-info.ts
+    REM Keep a backup of build-info.ts so we can restore it
+    call :save-original-file src\main\build-info.ts
 
-      set PACKAGE_VERSION_SET=1
-      popd
+    set PACKAGE_VERSION_SET=1
+    popd
 )
 exit /b 0
 
 :restore-package-version
 if defined PACKAGE_VERSION_SET (
-      pushd %ELECTRON_SOURCE_DIR%
-      call :restore-original-file package.json
-      call :restore-original-file src\main\build-info.ts
-      set PACKAGE_VERSION_SET=
-      popd
+    pushd %ELECTRON_SOURCE_DIR%
+    call :restore-original-file package.json
+    call :restore-original-file src\main\build-info.ts
+    set PACKAGE_VERSION_SET=
+    popd
 )
 exit /b 0
 

@@ -9,11 +9,11 @@ set INSTALL_PATH=%1
 if "%INSTALL_PATH%" == "" set INSTALL_PATH=..\..\..\src\qtcreator-build\session
 
 for %%A in (%*) do (
-      if /I "%%A" == "clean" set CLEANBUILD=1
+    if /I "%%A" == "clean" set CLEANBUILD=1
 )
 
 if defined CLEANBUILD (
-      if exist %WIN32_BUILD_PATH% rmdir /s /q %WIN32_BUILD_PATH%
+    if exist %WIN32_BUILD_PATH% rmdir /s /q %WIN32_BUILD_PATH%
 )
 
 REM perform 32-bit build
