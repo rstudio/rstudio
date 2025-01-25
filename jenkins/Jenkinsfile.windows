@@ -146,6 +146,9 @@ pipeline {
             EXECUTABLES = """package\\win32\\build\\src\\cpp\\session\\rsession-utf8.exe ^
               package\\win32\\build\\src\\cpp\\session\\rsession.exe ^
               package\\win32\\build\\src\\cpp\\session\\x86\\rsession.exe ^
+              package\\win32\\build\\src\\cpp\\session\\consoleio\\consoleio.exe ^
+              package\\win32\\build\\src\\cpp\\session\\postback\\rpostback.exe ^
+              package\\win32\\build\\src\\cpp\\diagnostics\\diagnostics.exe ^
               src\\node\\desktop\\out\\RStudio-win32-x64\\rstudio.exe"""
           }
           bat 'curl -o smtools-windows-x64.msi "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"' 
