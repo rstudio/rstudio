@@ -1,3 +1,16 @@
+::
+:: make-packages.bat
+::
+:: Copyright (C) 2022 by Posit Software, PBC
+::
+:: Unless you have received this program directly from Posit Software pursuant
+:: to the terms of a commercial license agreement with Posit Software, then
+:: this program is licensed to you under the terms of version 3 of the
+:: GNU Affero General Public License. This program is distributed WITHOUT
+:: ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+:: MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+:: AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+::
 @echo off
 
 setlocal
@@ -244,24 +257,10 @@ if "%MULTIARCH%" == "1" (
     call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
 )
 
-REM create packages
-cd "%BUILD_DIR%"
-if not defined QUICK (
-    echo Creating NSIS setup package...
-    cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
-    REM emit NSIS error output if present
-    if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
-    move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
+REM create packages for dev build (official build invokes this from Jenkinsfile after signing binaries)
+if not defined JENKINS_URL (
+    call make-dist-packages.bat || goto :error
 )
-
-if not defined NOZIP (
-    if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" (
-        echo Creating ZIP package...
-        cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
-        move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
-    )
-)
-cd ..
 
 REM reset modified environment variables (PATH)
 call :restore-package-version
