@@ -39,7 +39,6 @@ import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
 import {
   createStandaloneErrorDialog,
-  finalPlatformInitialize,
   findRepoRoot,
   getCurrentlyUniqueFolderName,
   userLogPath,
@@ -235,7 +234,6 @@ export class SessionLauncher {
 
     // show the window (but don't if we are doing a --run-diagnostics)
     if (!appState().runDiagnostics) {
-      finalPlatformInitialize(this.mainWindow);
       this.mainWindow.window.once('ready-to-show', async () => {
         if (appState().startupDelayMs > 0) {
           await setTimeoutPromise(appState().startupDelayMs);

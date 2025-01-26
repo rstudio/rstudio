@@ -25,7 +25,6 @@ import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { userHomePath } from '../core/user';
 
-import { MainWindow } from './main-window';
 import i18next from 'i18next';
 import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
@@ -296,11 +295,6 @@ export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
 
   // we found a build root, but not rsession -- throw an error
   throw rsessionNotFoundError();
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function finalPlatformInitialize(mainWindow: MainWindow): void {
-  // TODO - reimplement for each platform
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
