@@ -151,7 +151,7 @@ pipeline {
               package\\win32\\build\\src\\cpp\\diagnostics\\diagnostics.exe ^
               src\\node\\desktop\\out\\RStudio-win32-x64\\rstudio.exe"""
           }
-          bat 'curl -o smtools-windows-x64.msi "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"' 
+          bat 'curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"' 
           bat 'msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log'
           bat 'type smtools-windows-x64.log'
           bat 'C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user'
