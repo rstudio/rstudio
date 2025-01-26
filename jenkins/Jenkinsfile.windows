@@ -151,13 +151,15 @@ pipeline {
               package\\win32\\build\\src\\cpp\\diagnostics\\diagnostics.exe ^
               src\\node\\desktop\\out\\RStudio-win32-x64\\rstudio.exe"""
           }
-          bat 'curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"' 
-          bat 'msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log'
-          bat 'type smtools-windows-x64.log'
-          bat 'C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user'
-          bat '"C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smksp_cert_sync"'
-          bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool" sign /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 ' + EXECUTABLES
-          bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool\" verify /v /pa ' + EXECUTABLES
+          steps {
+            bat 'curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"' 
+            bat 'msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log'
+            bat 'type smtools-windows-x64.log'
+            bat 'C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user'
+            bat '"C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smksp_cert_sync"'
+            bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool" sign /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 ' + EXECUTABLES
+            bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool\" verify /v /pa ' + EXECUTABLES
+          }
         }
 
         stage('Tests') {
