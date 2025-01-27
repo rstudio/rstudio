@@ -186,8 +186,10 @@ void ChunkExecContext::connect()
 
    // leave an execution lock in this folder so it won't be moved if the notebook
    // is saved while executing
-   locks_.push_back(boost::make_shared<ScopedFileLock>(FileLock::createDefault(),
-            outputPath_.completePath(kExecutionLock)));
+   auto lock = make_unique<ScopedFileLock>(
+       FileLock::createDefault(),
+       outputPath_.completePath(kExecutionLock));
+   locks_.push_back(std::move(lock));
 
    // if executing the whole chunk, initialize output right away (otherwise we
    // wait until we actually have output)
@@ -195,10 +197,9 @@ void ChunkExecContext::connect()
       initializeOutput();
 
    // capture conditions
-   boost::shared_ptr<ConditionCapture> pConditionCapture = 
-      boost::make_shared<ConditionCapture>();
+   auto pConditionCapture = make_unique<ConditionCapture>();
    pConditionCapture->connect();
-   captures_.push_back(pConditionCapture);
+   captures_.push_back(std::move(pConditionCapture));
    connections_.push_back(events().onCondition.connect(
          boost::bind(&ChunkExecContext::onCondition, this, _1, _2)));
 
@@ -226,9 +227,8 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
                      _3, ChunkOutputPlot, _4)));
 
-   boost::shared_ptr<PlotCapture> pPlotCapture = 
-      boost::make_shared<PlotCapture>();
-   captures_.push_back(pPlotCapture);
+   auto pPlotCapture = make_unique<PlotCapture>();
+   captures_.push_back(std::move(pPlotCapture));
 
    if (figWidth > 0 || figHeight > 0)
    {
@@ -254,9 +254,8 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
                      ChunkOutputHtml, 0)));
 
-   boost::shared_ptr<HtmlCapture> pHtmlCapture = 
-      boost::make_shared<HtmlCapture>();
-   captures_.push_back(pHtmlCapture);
+   auto pHtmlCapture = make_unique<HtmlCapture>();
+   captures_.push_back(std::move(pHtmlCapture));
 
    error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
@@ -311,18 +310,17 @@ void ChunkExecContext::connect()
    prevCharWidth_ = r::options::getOptionWidth();
    r::options::setOptionWidth(charWidth_);
 
-   boost::shared_ptr<DirCapture> pDirCapture = boost::make_shared<DirCapture>();
+   auto pDirCapture = make_unique<DirCapture>();
    error = pDirCapture->connectDir(docId_, workingDir_);
    if (error)
       LOG_ERROR(error);
    else
-      captures_.push_back(pDirCapture);
+      captures_.push_back(std::move(pDirCapture));
 
    // begin capturing errors
-   boost::shared_ptr<ErrorCapture> pErrorCapture = 
-      boost::make_shared<ErrorCapture>();
+   auto pErrorCapture = make_unique<ErrorCapture>();
    pErrorCapture->connect();
-   captures_.push_back(pErrorCapture);
+   captures_.push_back(std::move(pErrorCapture));
 
    connections_.push_back(events().onErrorOutput.connect(
          boost::bind(&ChunkExecContext::onError, this, _1)));
@@ -338,9 +336,8 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
                      ChunkOutputData, 0)));
 
-   boost::shared_ptr<DataCapture> pDataCapture = 
-      boost::make_shared<DataCapture>();
-   captures_.push_back(pDataCapture);
+   auto pDataCapture = make_unique<DataCapture>();
+   captures_.push_back(std::move(pDataCapture));
 
    error = pDataCapture->connectDataCapture(
             outputPath_,
@@ -360,6 +357,7 @@ bool ChunkExecContext::onCondition(Condition condition,
    {
       return false;
    }
+
    if (condition == ConditionWarning && 
        !options_.getOverlayOption("warning", true))
    {
@@ -367,7 +365,7 @@ bool ChunkExecContext::onCondition(Condition condition,
    }
 
    // give each capturing module a chance to handle the condition
-   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
+   for (auto&& pCapture : captures_)
    {
       if (pCapture->onCondition(condition, message))
          return true;
@@ -537,7 +535,7 @@ void ChunkExecContext::disconnect()
    flushPendingChunkConsoleOutputs(true);
    
    // clean up capturing modules (includes plots, errors, and HTML widgets)
-   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
+   for (auto&& pCapture : captures_)
    {
       pCapture->disconnect();
    }
@@ -657,8 +655,10 @@ void ChunkExecContext::initializeOutput()
 
    // leave an execution lock in this folder so it won't be moved if the notebook
    // is saved while executing
-   locks_.push_back(boost::make_shared<ScopedFileLock>(FileLock::createDefault(),
-            outputPath.completePath(kExecutionLock)));
+   auto lock = make_unique<ScopedFileLock>(
+       FileLock::createDefault(),
+       outputPath.completePath(kExecutionLock));
+   locks_.push_back(std::move(lock));
 
    hasOutput_ = true;
 }
@@ -676,7 +676,7 @@ ExecScope ChunkExecContext::execScope()
 void ChunkExecContext::onExprComplete()
 {
    // notify capturing submodules
-   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
+   for (auto&& pCapture : captures_)
    {
       pCapture->onExprComplete();
    }
