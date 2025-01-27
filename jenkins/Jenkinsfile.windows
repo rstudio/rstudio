@@ -29,6 +29,7 @@ pipeline {
 
   environment {
     OS = "windows"
+    FLAVOR = "Electron"
     ARCH = "x86_64"
     PACKAGE_OS = 'Windows'
     AWS_ACCOUNT_ID = '749683154838'
@@ -95,7 +96,6 @@ pipeline {
     // Build on windows agent
     stage('Build Windows') {
       environment {
-        FLAVOR = "Electron"
         SM_HOST = credentials('SM_HOST')
         SM_API_KEY = credentials('SM_API_KEY')
         SM_CLIENT_CERT_FILE = credentials('SM_CLIENT_CERT_FILE')
