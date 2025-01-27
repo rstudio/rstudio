@@ -120,8 +120,8 @@ private:
    bool hasOutput_;
    bool hasErrors_;
 
-   std::vector<boost::shared_ptr<NotebookCapture> > captures_;
-   std::vector<boost::shared_ptr<core::ScopedFileLock> > locks_;
+   std::vector<std::unique_ptr<NotebookCapture>> captures_;
+   std::vector<std::unique_ptr<core::ScopedFileLock>> locks_;
    std::vector<RSTUDIO_BOOST_CONNECTION> connections_;
 };
 
