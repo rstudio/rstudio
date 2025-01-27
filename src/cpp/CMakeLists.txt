@@ -356,6 +356,11 @@ if(NOT DEFINED RSTUDIO_CRASHPAD_ENABLED)
       set(RSTUDIO_CRASHPAD_ENABLED FALSE)
    endif()
 
+   if (LINUX AND IS_AL2)
+      message(STATUS "Crashpad not enabled on Amazon Linux 2; disabling Crashpad")
+      set(RSTUDIO_CRASHPAD_ENABLED FALSE)
+   endif()
+
 endif()
 
 # Crashpad
