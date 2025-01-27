@@ -2,10 +2,6 @@ ARG ARCH=amd64
 FROM --platform=linux/$ARCH amazonlinux:2
 ARG ARCH
 
-# Disable Quarto and Crashpad builds for AL2
-ARG QUARTO_ENABLED=0
-ARG RSTUDIO_CRASHPAD_ENABLED=0
-
 ENV OPERATING_SYSTEM=centos_7
 
 RUN set -x \
