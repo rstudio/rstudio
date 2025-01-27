@@ -228,8 +228,6 @@ void ChunkExecContext::connect()
                      _3, ChunkOutputPlot, _4)));
 
    auto pPlotCapture = make_unique<PlotCapture>();
-   captures_.push_back(std::move(pPlotCapture));
-
    if (figWidth > 0 || figHeight > 0)
    {
       // user specified plot size, use it
@@ -248,6 +246,8 @@ void ChunkExecContext::connect()
    }
    if (error)
       LOG_ERROR(error);
+
+   captures_.push_back(std::move(pPlotCapture));
 
    // begin capturing HTML input
    connections_.push_back(events().onHtmlOutput.connect(
