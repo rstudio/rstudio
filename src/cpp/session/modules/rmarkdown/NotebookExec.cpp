@@ -255,14 +255,13 @@ void ChunkExecContext::connect()
                      ChunkOutputHtml, 0)));
 
    auto pHtmlCapture = make_unique<HtmlCapture>();
-   captures_.push_back(std::move(pHtmlCapture));
-
    error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
             outputPath_.getParent().completePath(kChunkLibDir),
             options_.chunkOptions());
    if (error)
       LOG_ERROR(error);
+   captures_.push_back(std::move(pHtmlCapture));
 
    // log warnings immediately
    // (unless user's changed the default warning level)
@@ -314,8 +313,7 @@ void ChunkExecContext::connect()
    error = pDirCapture->connectDir(docId_, workingDir_);
    if (error)
       LOG_ERROR(error);
-   else
-      captures_.push_back(std::move(pDirCapture));
+   captures_.push_back(std::move(pDirCapture));
 
    // begin capturing errors
    auto pErrorCapture = make_unique<ErrorCapture>();
@@ -337,13 +335,12 @@ void ChunkExecContext::connect()
                      ChunkOutputData, 0)));
 
    auto pDataCapture = make_unique<DataCapture>();
-   captures_.push_back(std::move(pDataCapture));
-
    error = pDataCapture->connectDataCapture(
             outputPath_,
             options_.mergedOptions());
    if (error)
       LOG_ERROR(error);
+   captures_.push_back(std::move(pDataCapture));
 
    NotebookCapture::connect();
 }
