@@ -140,10 +140,12 @@ export class Application implements AppState {
     }
 
     app.on('second-instance', (_event, argv) => {
-      logger().logDebug(`second-instance event: ARGS ${argv}`);
+      logger().logErrorMessage(`second-instance event: ARGS ${argv}`);
 
       // for files, open in the existing instance
+      logger().logErrorMessage(`second-instance: existing unswitchedArgs: ${this.argsManager.unswitchedArgs}`);
       this.argsManager.setUnswitchedArgs(argv);
+      logger().logErrorMessage(`second-instance: updated unswitchedArgs: ${this.argsManager.unswitchedArgs}`);
       if (this.argsManager.getProjectFileArg() === undefined) this.argsManager.handleAfterSessionLaunchCommands();
     });
   }
@@ -214,6 +216,7 @@ export class Application implements AppState {
     });
 
     app.on('open-file', (event: Event, filepath: string) => {
+      logger().logErrorMessage(`open-file('${filepath}'`);
       const resolvedPath = resolveAliasedPath(filepath);
       event.preventDefault();
 

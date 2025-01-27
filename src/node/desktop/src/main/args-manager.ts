@@ -118,6 +118,7 @@ export class ArgsManager {
 
   setUnswitchedArgs(args: string[]) {
     // filter out the process path and . (occurs in dev mode)
+    logger().logErrorMessage(`setUnswitchedArgs(${args}) : process.execPath='${process.execPath}'`);
     this.unswitchedArgs = args.filter(
       (value) => !value.startsWith('--') && value !== process.execPath && value !== '.',
     );
