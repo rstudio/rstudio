@@ -101,6 +101,27 @@ Error validateScratchPath(const FilePath& scratchPath)
    
 }
 
+std::string getCustomUserDataDir()
+{
+   std::string userDataDir;
+
+   // check whether the user has configured a folder to host their project scratch path
+   // (and that the admin hasn't disallowed this)
+   if (session::options().sessionAllowProjectUserDataDirOverride())
+   {
+      userDataDir = prefs::userPrefs().projectUserDataDirectory();
+   }
+
+   // check whether the administrator has configured a default project scratch path
+   if (userDataDir.empty())
+   {
+      userDataDir = session::options().sessionProjectUserDataDir();
+   }
+
+   return userDataDir;
+
+}
+
 FilePath computeUserDir(const FilePath& projectFile,
                         const r_util::RProjectConfig& projectConfig)
 {
@@ -143,22 +164,9 @@ FilePath computeUserDir(const FilePath& projectFile,
       }
    }
 
-   std::string userDataDir;
-   
-   // check whether the user has configured a folder to host their project scratch path
-   // (and that the admin hasn't disallowed this)
-   if (session::options().sessionAllowProjectUserDataDirOverride())
-   {
-      userDataDir = prefs::userPrefs().projectUserDataDirectory();
-   }
-   
-   // check whether the administrator has configured a default project scratch path
-   if (userDataDir.empty())
-   {
-      userDataDir = session::options().sessionProjectUserDataDir();
-   }
    
    // if such a scratch path has been configured, use it if possible
+   std::string userDataDir = getCustomUserDataDir();
    if (!userDataDir.empty())
    {
       FilePath userDataPath = module_context::resolveAliasedPath(userDataDir);
@@ -1011,7 +1019,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
 
    // generate a project id if needed; currently this is only used for
    // customizing the location of .Rproj.user directories
-   std::string userDir = prefs::userPrefs().projectUserDataDirectory();
+   std::string userDir = getCustomUserDataDir();
    if (!userDir.empty() && userDir != ".Rproj.user")
       defaultConfig.projectId = core::system::generateUuid();
 
