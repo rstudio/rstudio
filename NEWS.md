@@ -5,6 +5,7 @@
 - On macOS, RStudio now uses the project directory / home directory for new RStudio sessions opened via the Dock menu's "Open in New Window" command. (#15409)
 - RStudio installation on Windows now registers icons for many supported file types. (#12730)
 - RStudio for Windows binaries now have digital signatures. (rstudio-pro#5772)
+- RStudio now only writes the ProjectId field within a project's `.Rproj` file when required. Currently, this is for users who have configured a custom `.Rproj.user` location.
 
 #### Posit Workbench
 -
