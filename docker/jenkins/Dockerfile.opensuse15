@@ -1,5 +1,5 @@
 ARG ARCH=amd64
-FROM --platform=linux/$ARCH opensuse/leap:15.5
+FROM --platform=linux/$ARCH opensuse/leap:15.6
 ARG ARCH
 
 ENV OPERATING_SYSTEM=opensuse_leap15
