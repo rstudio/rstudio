@@ -1008,6 +1008,13 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.tutorialPath = std::string();
    defaultConfig.packageUseDevtools = prefs::userPrefs().useDevtools();
    defaultConfig.packageCleanBeforeInstall = prefs::userPrefs().cleanBeforeInstall();
+
+   // generate a project id if needed; currently this is only used for
+   // customizing the location of .Rproj.user directories
+   std::string userDir = prefs::userPrefs().projectUserDataDirectory();
+   if (!userDir.empty() && userDir != ".Rproj.user")
+      defaultConfig.projectId = core::system::generateUuid();
+
    return defaultConfig;
 }
 
