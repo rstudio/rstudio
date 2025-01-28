@@ -143,7 +143,11 @@ export class Application implements AppState {
       logger().logDebug(`second-instance event: ARGS ${argv}`);
 
       // for files, open in the existing instance
-      this.argsManager.setUnswitchedArgs(argv);
+      //
+      // The slice(1) removes the RStudio executable argument; the attempt to detect
+      // and remove it inside setUnswitchedArgs() won't work if second instance of RStudio is in a
+      // different location than the first. https://github.com/rstudio/rstudio/issues/15554
+      this.argsManager.setUnswitchedArgs(argv.slice(1));
       if (this.argsManager.getProjectFileArg() === undefined) this.argsManager.handleAfterSessionLaunchCommands();
     });
   }
