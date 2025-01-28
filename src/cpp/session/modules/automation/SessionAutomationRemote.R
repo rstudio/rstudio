@@ -346,6 +346,22 @@
    invisible(alive)
 })
 
+.rs.automation.addRemoteFunction("session.restart", function()
+{
+   # Invoke the restart command.
+   self$commands.execute("restartR")
+   
+   # Send a command to the console, and wait for it to be executed.
+   msg <- sprintf("Waiting for restart [token %s]", .rs.createUUID())
+   self$console.executeExpr({ writeLines(!!msg) })
+   
+   # Wait until we have console output.
+   .rs.waitUntil("session is ready", function()
+   {
+      any(self$console.getOutput() == msg)
+   })
+})
+
 .rs.automation.addRemoteFunction("session.reset", function()
 {
    # Clear any popups that might be visible.

@@ -64,3 +64,66 @@ withr::defer(.rs.automation.deleteRemote())
    remote$project.close()
    remote$files.remove(projectPath)
 })
+
+.rs.test("ProjectId is generated only when needed", {
+   
+   # Create a new, empty project.
+   remote$project.create("ProjectId")
+   
+   # Check the contents of the .Rproj file.
+   remote$console.executeExpr({
+      contents <- readLines("ProjectId.Rproj")
+      any(grepl("^ProjectId", contents))
+   })
+   
+   # We shouldn't have a ProjectId yet.
+   output <- remote$console.getOutput()
+   expect_equal(tail(output, 1L), "[1] FALSE")
+   
+   # Try setting a custom user directory, and then restart.
+   remote$console.executeExpr({
+      dir.create("Data")
+      .rs.uiPrefs$projectUserDataDirectory$set(normalizePath("Data"))
+   })
+   
+   # Restart the session.
+   remote$session.restart()
+   
+   # Check the contents of the .Rproj file.
+   remote$console.executeExpr({
+      contents <- readLines("ProjectId.Rproj")
+      any(grepl("^ProjectId", contents))
+   })
+   
+   # We should now have a ProjectId.
+   output <- remote$console.getOutput()
+   expect_equal(tail(output, 1L), "[1] TRUE")
+   
+   # Read the project id.
+   remote$console.executeExpr({
+      contents <- readLines("ProjectId.Rproj")
+      writeLines(grep("^ProjectId", contents, value = TRUE))
+   })
+   projectId <- tail(remote$console.getOutput(), n = 1L)
+   
+   # Try clearing the project user data directory, and restarting.
+   remote$console.executeExpr({
+      .rs.uiPrefs$projectUserDataDirectory$clear()
+   })
+   
+   # Restart once more.
+   remote$session.restart()
+   
+   # The old project ID should be preserved.
+   remote$console.executeExpr({
+      contents <- readLines("ProjectId.Rproj")
+      writeLines(grep("^ProjectId", contents, value = TRUE))
+   })
+   
+   newProjectId <- tail(remote$console.getOutput(), n = 1L)
+   expect_equal(projectId, newProjectId)
+   
+   # Clean up.
+   remote$project.close()
+   
+})

@@ -525,7 +525,7 @@ Error readProjectFile(const FilePath& projectFilePath,
                           ERROR_LOCATION);
    }
    
-   // extract or generate project ID
+   // extract project ID
    it = dcfFields.find("ProjectId");
    if (it != dcfFields.end())
    {
@@ -534,7 +534,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
    else
    {
-      pConfig->projectId = core::system::generateUuid(true);
+      pConfig->projectId = defaultConfig.projectId;
    }
 
    // extract R version
@@ -1039,36 +1039,53 @@ Error writeProjectFile(const FilePath& projectFilePath,
       rVersion = "RVersion: " + rVersionAsString(config.rVersion) + "\n\n";
 
    // generate project file contents
-   boost::format fmt(
-      "Version: %1%\n"
-      "ProjectId: %2%\n"
-      "\n"
-      "%3%"
-      "RestoreWorkspace: %4%\n"
-      "SaveWorkspace: %5%\n"
-      "AlwaysSaveHistory: %6%\n"
-      "\n"
-      "EnableCodeIndexing: %7%\n"
-      "UseSpacesForTab: %8%\n"
-      "NumSpacesForTab: %9%\n"
-      "Encoding: %10%\n"
-      "\n"
-      "RnwWeave: %11%\n"
-      "LaTeX: %12%\n");
+   std::string contents;
 
-   std::string contents = boost::str(fmt %
-        boost::io::group(std::fixed, std::setprecision(1), config.version) %
-        config.projectId %
-        rVersion %
-        yesNoAskValueToString(config.restoreWorkspace) %
-        yesNoAskValueToString(config.saveWorkspace) %
-        yesNoAskValueToString(config.alwaysSaveHistory) %
-        boolValueToString(config.enableCodeIndexing) %
-        boolValueToString(config.useSpacesForTab) %
-        config.numSpacesForTab %
-        config.encoding %
-        config.defaultSweaveEngine %
-        config.defaultLatexProgram);
+   // add version number
+   boost::format versionFmt("Version: %1%\n");
+   auto version =
+       boost::format("Version: %1%\n") %
+       boost::io::group(std::fixed, std::setprecision(1), config.version);
+   contents.append(version.str());
+
+   // add project id if set
+   if (!config.projectId.empty())
+   {
+      auto projectId =
+          boost::format("ProjectId: %1%\n") %
+          config.projectId;
+      contents.append(projectId.str());
+   }
+
+   // generate rest of header
+   boost::format headerFmt(
+      "\n"
+      "%1%"
+      "RestoreWorkspace: %2%\n"
+      "SaveWorkspace: %3%\n"
+      "AlwaysSaveHistory: %4%\n"
+      "\n"
+      "EnableCodeIndexing: %5%\n"
+      "UseSpacesForTab: %6%\n"
+      "NumSpacesForTab: %7%\n"
+      "Encoding: %8%\n"
+      "\n"
+      "RnwWeave: %9%\n"
+      "LaTeX: %10%\n");
+
+   auto header =
+       headerFmt %
+       rVersion %
+       yesNoAskValueToString(config.restoreWorkspace) %
+       yesNoAskValueToString(config.saveWorkspace) %
+       yesNoAskValueToString(config.alwaysSaveHistory) %
+       boolValueToString(config.enableCodeIndexing) %
+       boolValueToString(config.useSpacesForTab) %
+       config.numSpacesForTab %
+       config.encoding %
+       config.defaultSweaveEngine %
+       config.defaultLatexProgram;
+   contents.append(header.str());
 
    // add root-document if provided
    if (!config.rootDocument.empty())
