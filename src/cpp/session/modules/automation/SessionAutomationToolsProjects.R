@@ -31,6 +31,9 @@
    
    projectPath <- file.path(tempdir(), projectName)
    
+   # If that path already exists, remove it.
+   unlink(projectPath, recursive = TRUE)
+   
    # Resolve the project type.
    type <- match.arg(type)
    
