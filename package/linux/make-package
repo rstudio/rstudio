@@ -200,7 +200,7 @@ set-version ${RSTUDIO_VERSION_FULL} rstudio
 
 set +x
 
-if has-program ninja
+if has-program ninja || has-program ninja-build
 then
    CMAKE_GENERATOR="Ninja"
    MAKEFLAGS="-w dupbuild=warn ${MAKEFLAGS}"

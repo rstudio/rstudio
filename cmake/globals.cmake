@@ -225,7 +225,7 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
 endif()
 
 # pandoc version
-set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
+set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
 
 # node version used for building product components
 set(RSTUDIO_NODE_VERSION "20.15.1" CACHE INTERNAL "Node version for building")
@@ -233,13 +233,26 @@ set(RSTUDIO_NODE_VERSION "20.15.1" CACHE INTERNAL "Node version for building")
 # node version installed with the product
 set(RSTUDIO_INSTALLED_NODE_VERSION "20.15.1" CACHE INTERNAL "Node version installed with product")
 
+# Check if we're running on Amazon Linux 2
+set(IS_AL2 FALSE)
+if(LINUX AND OS_RELEASE_PRETTY_NAME STREQUAL "Amazon Linux 2")
+   set(IS_AL2 TRUE)
+   message(STATUS "Running on Amazon Linux 2: ${IS_AL2}")
+endif()
+
 # quarto support
 
-# Note that Quarto support is now always enabled.
+# Note that Quarto support is now always enabled, except on Amazon Linux 2.
 #
 #   Set QUARTO_ENABLED = TRUE to have RStudio bundle an embedded copy of Quarto (default).
 #   Set QUARTO_ENABLED = FALSE to force the use of an external Quarto installation.
 #
+
+if (IS_AL2)
+   set(QUARTO_ENABLED FALSE CACHE INTERNAL "Internal Quarto enabled")
+   message(STATUS "Quarto disabled on Amazon Linux 2")
+endif()
+
 if(NOT DEFINED QUARTO_ENABLED)
    set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
 endif()
@@ -247,6 +260,8 @@ endif()
 if(QUARTO_ENABLED)
    add_definitions(-DQUARTO_ENABLED)
 endif()
+
+message(STATUS "Quarto enabled: ${QUARTO_ENABLED}")
 
 # install freedesktop integration files if we are installing into /usr
 if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)

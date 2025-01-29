@@ -599,4 +599,13 @@ def getStageUrl(String stageDisplayName) {
     return "${buildUrl}pipeline-console/?selected-node=${nodeId}"
 }
 
+// ninja is named ninja-build on AL2, so account for that
+def ninjaCmd() {
+  if (env.OS == "al2") {
+    return "ninja-build"
+  }
+
+  return "ninja"
+}
+
 return this

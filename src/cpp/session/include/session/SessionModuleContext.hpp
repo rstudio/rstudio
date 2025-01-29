@@ -49,6 +49,20 @@ using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {
+
+// make_unique is not available in C++11, so we provide
+// a definition here just in case
+template <class T, class... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+} // end namespace core
+} // end namespace rstudio
+
+namespace rstudio {
+namespace core {
    class DistributedEvent;
    class Error;
    class Success;
