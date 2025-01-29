@@ -62,11 +62,15 @@ namespace device {
 // be referenced and changed without explicit header export
 bool s_gdTracingEnabled = false;
 
+// the number of times a graphics device API has been invoked
+// when rendering the current plot; used to help pump the event
+// loop when rendering very large / expensive plots
+int s_renderCount = 0;
+
 void GD_Trace(const std::string& func)
 {
-   static int s_renderCount = 0;
 
-   if (s_renderCount++ == 10000)
+   if (s_renderCount++ == 1000)
    {
       s_renderCount = 0;
       event_loop::processEvents();
@@ -103,6 +107,9 @@ using namespace handler;
 void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 {
    TRACE_GD_CALL;
+
+   // reset render count
+   s_renderCount = 0;
 
    // delegate
    handler::newPage(gc, dev);
