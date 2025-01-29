@@ -21,7 +21,9 @@ must be installed manually:
 Note that after installing XCode you should also be sure to install the XCode
 Command Line Tools, which can be done by running the following:
 
+```bash
 xcode-select --install
+```
 
 Installing Homebrew
 =============================================================================
@@ -31,19 +33,25 @@ the Homebrew package manager.
 First, install Homebrew using the command given on the website at
 https://brew.sh/, currently:
 
+```bash
 `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+```
 
 Next, if you are on an Apple Silicon Mac (as opposed to an older Intel-based Mac), re-run
 that command, preceding it with `arch -x86_64`, for example:
 
+```bash
 `arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+```
 
 Satisfy Additional Dependencies
 =============================================================================
 
 Additional dependencies can be satisfied by running the following script:
 
+```bash
 ./install-dependencies-osx
+```
 
 Note that this script includes download, extraction, and compilation of
 boost so can take some time to complete.
