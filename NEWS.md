@@ -12,7 +12,7 @@
 
 ### Fixed
 #### RStudio
-
+- Fixed an issue where RStudio could become unresponsive when rendering very large graphics. (#15276)
 - Fixed an issue where the F1 shortcut would fail to retrieve documentation in packages. (#10869)
 - Fixed an issue where some column names were not displayed following select() in pipe completions. (#12501)
 - Fixed an issue where building with a newer version of Boost (e.g. Boost 1.86.0) would fail. (#15625)
