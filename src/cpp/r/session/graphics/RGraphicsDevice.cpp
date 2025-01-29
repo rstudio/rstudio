@@ -31,6 +31,7 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RUtil.hpp>
 
+#include <r/session/REventLoop.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include "RGraphicsDevDesc.hpp"
@@ -63,6 +64,14 @@ bool s_gdTracingEnabled = false;
 
 void GD_Trace(const std::string& func)
 {
+   static int s_renderCount = 0;
+
+   if (s_renderCount++ == 10000)
+   {
+      s_renderCount = 0;
+      event_loop::processEvents();
+   }
+
    if (s_gdTracingEnabled)
    {
       std::cerr << func.substr(func.find_last_of("::") + 1) << std::endl;
