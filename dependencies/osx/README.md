@@ -34,14 +34,14 @@ First, install Homebrew using the command given on the website at
 https://brew.sh/, currently:
 
 ```bash
-`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 Next, if you are on an Apple Silicon Mac (as opposed to an older Intel-based Mac), re-run
 that command, preceding it with `arch -x86_64`, for example:
 
 ```bash
-`arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 Satisfy Additional Dependencies
