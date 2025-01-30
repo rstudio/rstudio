@@ -12,7 +12,7 @@ identify what work is needed.
 ## Usage
 
 The tool requires `node.js` on the path and works on Mac, Windows, or Linux. Recommend
-node.js 20.15.1 or newer but any recent node.js should work.
+node.js 22.13.1 or newer but any recent node.js should work.
 
 ```bash
 cd rstudio/src/gwt/tools/locdiff
@@ -37,6 +37,7 @@ may be garbled.
 The file will load directly into Apple Numbers if you have that handy.
 
 ### Arguments
+
 --only-changed - writes only strings that have changed or been added
 
 ### Other Checks
