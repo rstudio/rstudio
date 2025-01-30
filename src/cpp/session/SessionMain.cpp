@@ -1366,6 +1366,9 @@ void rCleanup(bool terminatedNormally)
       // stop the monitor thread
       stopMonitorWorkerThread();
 
+      // stop offline service thread
+      offlineService().stop();
+
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
       // very brief interval first to allow the quit or other termination
