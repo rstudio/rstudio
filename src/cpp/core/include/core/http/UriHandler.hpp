@@ -16,6 +16,7 @@
 #ifndef CORE_HTTP_URI_HANDLER_HPP
 #define CORE_HTTP_URI_HANDLER_HPP
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -91,6 +92,7 @@ public:
    boost::optional<UriAsyncHandlerFunctionVariant> handlerFor(const std::string& uri) const;
    
 private:
+   mutable std::mutex mutex_;
    std::vector<UriHandler> uriHandlers_;
 };
 

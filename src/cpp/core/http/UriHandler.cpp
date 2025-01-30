@@ -20,6 +20,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
 
+#include <core/Thread.hpp>
 #include <core/http/Request.hpp>
 
 using namespace boost::placeholders;
@@ -131,11 +132,13 @@ void UriHandler::operator()(const Request& request,
    
 void UriHandlers::add(const UriHandler& handler) 
 {
+   std::lock_guard<std::mutex> guard(mutex_);
    uriHandlers_.push_back(handler);
 }
 
 boost::optional<UriAsyncHandlerFunctionVariant> UriHandlers::handlerFor(const std::string& uri) const
 {
+   std::lock_guard<std::mutex> guard(mutex_);
    std::vector<UriHandler>::const_iterator handler = std::find_if(
                               uriHandlers_.begin(), 
                               uriHandlers_.end(), 
