@@ -398,13 +398,14 @@ void ensureDeserialized()
       s_deferredDeserializationAction();
       s_deferredDeserializationAction.clear();
 
-      // mark session as deserialized
-      s_isSessionDeserialized = true;
-
       // run automation tests if configured to do so
       if (rCallbacks().runAutomation)
          rCallbacks().runAutomation();
    }
+
+   // mark session as deserialized
+   s_isSessionDeserialized = true;
+
 }
 
 bool isSessionRestored()
