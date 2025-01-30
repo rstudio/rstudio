@@ -57,6 +57,7 @@ boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
 // the initialization process that are potentially highly latent. this allows
 // clients to bring their UI up and then receive an event indicating that the
 // latent deserialization actions are taking place
+std::atomic<bool> s_isSessionDeserialized(false);
 boost::function<void()> s_deferredDeserializationAction;
    
 void reportDeferredDeserializationError(const Error& error)
@@ -396,16 +397,20 @@ void ensureDeserialized()
       // do the deferred action
       s_deferredDeserializationAction();
       s_deferredDeserializationAction.clear();
-      
+
       // run automation tests if configured to do so
       if (rCallbacks().runAutomation)
          rCallbacks().runAutomation();
    }
+
+   // mark session as deserialized
+   s_isSessionDeserialized = true;
+
 }
 
 bool isSessionRestored()
 {
-   return s_deferredDeserializationAction.empty();
+   return s_isSessionDeserialized;
 }
    
 FilePath rHistoryFilePath()

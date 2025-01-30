@@ -55,12 +55,12 @@ namespace exec {
 namespace {
 
 // was the R session interrupted?
-bool s_wasInterrupted;
+std::atomic<bool> s_wasInterrupted(false);
 
 // are we currently executing R code? note that only one thread can ever
 // be executing code at a time, but we allow for an integer count so that
 // execution scope helpers can be nested
-int s_executionCount;
+std::atomic<int> s_executionCount(0);
 
 class CodeExecutingScope : boost::noncopyable
 {
