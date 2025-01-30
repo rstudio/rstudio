@@ -17,6 +17,7 @@
 - Fixed an issue where some column names were not displayed following select() in pipe completions. (#12501)
 - Fixed an issue where building with a newer version of Boost (e.g. Boost 1.86.0) would fail. (#15625)
 - Fixed an issue where opening multiple copies of RStudio Desktop installed in different locations would cause RStudio to try to open itself as a script. (#15554)
+- Fixed an issue where printing 0-row data.frames containing an 'hms' column from an R Markdown chunk could cause an unexpected error. (#15459)
 
 #### Posit Workbench
 -
