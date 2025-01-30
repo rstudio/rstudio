@@ -315,6 +315,14 @@
       data,
       function (y) {
         
+        # some objects, e.g. 'hms', might produce an unexpected
+        # value when an empty vector of that class is formatted,
+        # so only format non-empty vectors
+        #
+        # https://github.com/rstudio/rstudio/issues/15459
+        if (length(y) == 0)
+          return(character())
+         
         # escape NAs from character columns
         if (typeof(y) == "character") {
           y[y == "NA"] <- "__NA__"
