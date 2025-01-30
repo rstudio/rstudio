@@ -14,6 +14,7 @@
  */
 
 #include "SessionRmdNotebook.hpp"
+
 #include "NotebookExec.hpp"
 #include "NotebookOutput.hpp"
 #include "NotebookPlots.hpp"
@@ -25,6 +26,7 @@
 #include "NotebookConditions.hpp"
 
 #include <shared_core/Error.hpp>
+
 #include <core/text/CsvParser.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -47,6 +49,8 @@ namespace rmarkdown {
 namespace notebook {
 
 namespace {
+
+std::recursive_mutex s_consoleMutex;
 
 struct PendingChunkConsoleOutput
 {
@@ -93,8 +97,11 @@ FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
 
 void flushPendingChunkConsoleOutputs(bool clear)
 {
+   std::lock_guard<std::recursive_mutex> guard(s_consoleMutex);
+
    for (auto&& entry : s_pendingChunkOutput)
       flushPendingChunkConsoleOutput(entry.first);
+
    if (clear)
       s_pendingChunkOutput.clear();
 }
@@ -463,6 +470,8 @@ void ChunkExecContext::onError(const core::json::Object& err)
 void ChunkExecContext::onConsoleText(int type, const std::string& output, 
       bool truncate, bool pending)
 {
+   std::lock_guard<std::recursive_mutex> guard(s_consoleMutex);
+
    // if we haven't received any actual output yet, don't push input into the
    // file yet
    if (type == kChunkConsoleInput && !hasOutput_) 

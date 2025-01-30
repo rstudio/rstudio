@@ -355,6 +355,7 @@ struct firstNonEmpty
 // session events
 struct Events : boost::noncopyable
 {
+   // NOTE: The onConsoleOutput signal is potentially not fired from the main thread!!
    RSTUDIO_BOOST_SIGNAL<void()>                                       onBeforeClientInit;
    RSTUDIO_BOOST_SIGNAL<void(core::json::Object*)>                    onSessionInfo;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onClientInit;

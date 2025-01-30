@@ -412,9 +412,10 @@ private:
    boost::thread listenerThread_;
 
    // flag indicating we've started
-   bool started_;
+   std::atomic<bool> started_;
+
    // Set when the first get_events request is received - ensure async rpc not used until client is ready to listen
-   bool eventsActive_;
+   std::atomic<bool> eventsActive_;
 
    boost::shared_ptr<boost::asio::ssl::context> sslContext_;
 };

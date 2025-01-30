@@ -99,6 +99,9 @@ SerializationCache s_serializationCache;
 // if provided by this version of R
 int* (*INTEGER_OR_NULL)(SEXP) = INTEGER;
 
+// avoid potential contention between console handlers
+std::recursive_mutex s_consoleMutex;
+
 // Keeps track of the data related to the most recent debugging event
 class LineDebugState
 {
@@ -1372,7 +1375,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 {
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
-
+   std::lock_guard<std::recursive_mutex> guard(s_consoleMutex);
    
    int depth = 0;
    SEXP environmentTop = nullptr;
@@ -1680,6 +1683,8 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
                      module_context::ConsoleOutputType type,
                      const std::string& output)
 {
+   std::lock_guard<std::recursive_mutex> guard(s_consoleMutex);
+
    if (*pCapturingDebugOutput)
    {
       // stop capturing output if non-normal output occurs

@@ -404,6 +404,26 @@ Error SessionManager::launchAndTrackSession(
             rLibPath.getAbsolutePath());
 #endif
 
+#if defined(__has_feature)
+# if __has_feature(thread_sanitizer)
+
+   // the thread sanitizer will cause the session to hang if output
+   // if written to stdout or stderr, so redirect to a file instead
+   std::string tsanOptions = core::system::getenv("TSAN_OPTIONS");
+   if (tsanOptions.empty())
+   {
+      LOG_INFO_MESSAGE("Thread sanitizer is enabled. Reports will be logged to /tmp/rsession.tsan.log.");
+      tsanOptions = "log_path=/tmp/rsession.tsan.log";
+   }
+
+   core::system::setenv(
+       &config.environment,
+       "TSAN_OPTIONS",
+       tsanOptions);
+
+# endif
+#endif
+
    // launch the session
    PidType pid = 0;
    Error error = launchChildProcess(profile.executablePath,

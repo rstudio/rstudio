@@ -517,6 +517,7 @@ Error ensureLibRSoValid();
 void exitEarly(int status)
 {
    stopMonitorWorkerThread();
+   offlineService().stop();
    FileLock::cleanUp();
    FilePath(s_fallbackLibraryPath).removeIfExists();
    ::exit(status);
@@ -1365,6 +1366,9 @@ void rCleanup(bool terminatedNormally)
 
       // stop the monitor thread
       stopMonitorWorkerThread();
+
+      // stop offline service thread
+      offlineService().stop();
 
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
