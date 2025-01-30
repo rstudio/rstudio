@@ -50,10 +50,10 @@ using ConsoleInputQueue = std::deque<rstudio::r::session::RConsoleInput>;
 ConsoleInputQueue s_consoleInputBuffer;
 
 // manage global state indicating whether R is processing input
-volatile sig_atomic_t s_rProcessingInput = 0;
+std::atomic<int> s_rProcessingInput(0);
 
 // the saved version of s_rProcessInput - the 'executing' property in the session metadata
-volatile sig_atomic_t s_sessionExecuting = 0;
+std::atomic<int> s_sessionExecuting(0);
 
 // Controls access to s_sessionExecuting and the file system
 boost::mutex s_sessionExecutingMutex;

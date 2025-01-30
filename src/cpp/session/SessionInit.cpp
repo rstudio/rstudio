@@ -29,7 +29,7 @@ namespace {
 
 // have we fully initialized? used by rConsoleRead and clientInit to
 // tweak their behavior when the process is first starting
-bool s_sessionInitialized = false;
+std::atomic<bool> s_sessionInitialized(false);
 
 } // anonymous namespace
 
