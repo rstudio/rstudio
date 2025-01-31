@@ -23,6 +23,16 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -280,6 +290,31 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       // set our active rows -- use padding to allow smoother scrolling
       firstActiveRow_ = Math.max(0, numRowsScrolled - ROW_PADDING);
       lastActiveRow_ = Math.min(n, numRowsScrolled + rowsActive + ROW_PADDING);
+   }
+   
+   public HandlerRegistration addFocusHandler(FocusHandler handler)
+   {
+      return addDomHandler(handler, FocusEvent.getType());
+   }
+   
+   public HandlerRegistration addBlurHandler(BlurHandler handler)
+   {
+      return addDomHandler(handler, BlurEvent.getType());
+   }
+   
+   public HandlerRegistration addClickHandler(ClickHandler handler)
+   {
+      return addDomHandler(handler, ClickEvent.getType());
+   }
+   
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return addDomHandler(handler, MouseDownEvent.getType());
+   }
+   
+   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
+   {
+      return addDomHandler(handler, KeyDownEvent.getType());
    }
    
    private int firstActiveRow_;

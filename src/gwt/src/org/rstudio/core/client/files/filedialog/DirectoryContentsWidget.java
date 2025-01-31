@@ -26,11 +26,17 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTMLTable;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
+import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SelectionModel;
+import com.google.gwt.view.client.SingleSelectionModel;
 
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
@@ -45,7 +51,12 @@ import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
+import org.rstudio.core.client.widget.VirtualizedDataGrid;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.workbench.views.files.ui.FilesListDataGridResources;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -57,38 +68,100 @@ public class DirectoryContentsWidget
               HasFocusHandlers, HasBlurHandlers,
               CanFocus
 {
-
-   private static class FlexTableEx extends FlexTable
-   {
-      public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
-      {
-         return addDomHandler(handler, MouseDownEvent.getType());
-      }
-
-      public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
-      {
-         return addDomHandler(handler, KeyDownEvent.getType());
-      }
-
-      public HandlerRegistration addFocusHandler(FocusHandler handler)
-      {
-         return addDomHandler(handler, FocusEvent.getType());
-      }
-
-      public HandlerRegistration addBlurHandler(BlurHandler handler)
-      {
-         return addDomHandler(handler, BlurEvent.getType());
-      }
-   }
-
+   private static final ProvidesKey<FileSystemItem> KEY_PROVIDER =
+      new ProvidesKey<FileSystemItem>() {
+         @Override
+         public Object getKey(FileSystemItem item)
+         {
+            return item.getPath();
+         }
+    };
+   
    public DirectoryContentsWidget(FileSystemContext context)
    {
       context_ = context;
-      table_ = new FlexTableEx();
+      
+      dataProvider_ = new ListDataProvider<>();
+      table_ = new VirtualizedDataGrid<FileSystemItem>(FilesListDataGridResources.INSTANCE, KEY_PROVIDER)
+      {
+
+         @Override
+         public double getRowHeight()
+         {
+            return 22.5;
+         }
+
+         @Override
+         public int getTotalNumberOfRows()
+         {
+            return dataProvider_.getList().size();
+         }
+
+         @Override
+         public String getBorderColor()
+         {
+            return "transparent";
+         }
+      };
+            
       table_.getElement().setTabIndex(0);
-      table_.setCellSpacing(0);
-      table_.setCellPadding(2);
       table_.setSize("100%", "100%");
+      
+      selectionModel_ = new SingleSelectionModel<>(KEY_PROVIDER);
+      table_.setSelectionModel(selectionModel_);
+      dataProvider_.addDataDisplay(table_);
+      
+      table_.addColumn(new Column<FileSystemItem, FileIcon>(new FileIconResourceCell())
+      {
+         @Override
+         public FileIcon getValue(FileSystemItem item)
+         {
+            return registry_.getIconForFile(item);
+         }
+         
+         private final FileTypeRegistry registry_ = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      });
+         
+      table_.addColumn(new TextColumn<FileSystemItem>()
+      {
+         @Override
+         public String getValue(FileSystemItem item)
+         {
+            return item.getName();
+         }
+      });
+      
+      table_.addColumn(new TextColumn<FileSystemItem>()
+      {
+         @Override
+         public String getValue(FileSystemItem item)
+         {
+            if (item.isDirectory())
+            {
+               return "";
+            }
+            else
+            {
+               return StringUtil.formatFileSize(item.getLength());
+            }
+         }
+      });
+      
+      table_.addColumn(new TextColumn<FileSystemItem>()
+      {
+         @Override
+         public String getValue(FileSystemItem item)
+         {
+            if (item.isDirectory())
+            {
+               return "";
+            }
+            else
+            {
+               return StringUtil.formatDate(item.getLastModified());
+            }
+         }
+      });
 
       // presented to screen readers as a single-select listbox
       Roles.getListboxRole().set(table_.getElement());
@@ -138,20 +211,27 @@ public class DirectoryContentsWidget
                scrollPanel_.setVerticalScrollPosition(v);
             }
 
-            HTMLTable.Cell cell = table_.getCellForEvent(event);
-            if (cell != null)
-            {
-               setSelectedRow(cell.getRowIndex());
+            
+            // TODO: Set selected row on click.
+            // Handle double click.
+            //
+            // HTMLTable.Cell cell = table_.getCellForEvent(event);
+            // if (cell != null)
+            // {
+            //    setSelectedRow(cell.getRowIndex());
 
-               if (doubleClick_.checkForDoubleClick(event.getNativeEvent()))
-               {
-                  commitSelection(getSelectedItem());
-               }
-            }
-            else
-               setSelectedRow(null);
+            //    if (doubleClick_.checkForDoubleClick(event.getNativeEvent()))
+            //    {
+            //       commitSelection(getSelectedItem());
+            //    }
+            // }
+            // else
+            // {
+            //    setSelectedRow(null);
+            // }
          }
       });
+      
       table_.addMouseDownHandler(new MouseDownHandler()
       {
          public void onMouseDown(MouseDownEvent event)
@@ -159,6 +239,7 @@ public class DirectoryContentsWidget
             event.preventDefault();
          }
       });
+      
       table_.addKeyDownHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
@@ -323,36 +404,8 @@ public class DirectoryContentsWidget
 
    public void setSelectedRow(Integer row)
    {
-      if (selectedRow_ != null)
-      {
-         table_.getRowFormatter().removeStyleName(selectedRow_, "gwt-MenuItem-selected");
-         Roles.getOptionRole().removeAriaSelectedState(
-               table_.getRowFormatter().getElement(selectedRow_));
-         Roles.getListboxRole().removeAriaActivedescendantProperty(table_.getElement());
-         selectedRow_ = null;
-         selectedValue_ = null;
-      }
-
-      if (row != null && row >= 0 && row < table_.getRowCount())
-      {
-         selectedRow_ = row;
-         table_.getRowFormatter().addStyleName(selectedRow_, "gwt-MenuItem-selected");
-         Roles.getOptionRole().setAriaSelectedState(
-               table_.getRowFormatter().getElement(selectedRow_), SelectedValue.TRUE);
-         Roles.getListboxRole().setAriaActivedescendantProperty(
-               table_.getElement(),
-               Id.of(table_.getRowFormatter().getElement(selectedRow_)));
-         selectedValue_ = table_.getText(row, COL_NAME);
-
-         TableRowElement rowEl = ((TableElement)table_.getElement().cast())
-               .getRows().getItem(selectedRow_);
-         int horizScroll = scrollPanel_.getHorizontalScrollPosition();
-         rowEl.scrollIntoView();
-         scrollPanel_.setHorizontalScrollPosition(horizScroll);
-      }
-
-      SelectionEvent.fire(DirectoryContentsWidget.this,
-                          getSelectedItem());
+      table_.setKeyboardSelectedRow(row);
+      SelectionEvent.fire(DirectoryContentsWidget.this, getSelectedItem());
    }
 
    public String getSelectedValue()
@@ -376,7 +429,7 @@ public class DirectoryContentsWidget
    public void clearContents()
    {
       Roles.getListboxRole().removeAriaActivedescendantProperty(table_.getElement());
-      table_.removeAllRows();
+      dataProvider_.getList().clear();
       uniqueIdIndex_ = 0;
       items_.clear();
       selectedRow_ = null;
@@ -407,51 +460,13 @@ public class DirectoryContentsWidget
    {
       if (customName == null)
          customName = item.getName();
+      
       if (customIcon == null)
          customIcon = context_.getIcon(item);
 
       items_.put(customName, item);
-
-      int newRow = table_.insertRow(table_.getRowCount());
-      Element tr = table_.getRowFormatter().getElement(newRow);
-      Roles.getOptionRole().set(tr);
-      tr.setId(ElementIds.ID_PREFIX + "dirContents_" + uniqueIdIndex_++);
-      table_.setWidget(
-            newRow,
-            COL_ICON,
-            customIcon.getImage());
-      table_.setText(newRow, COL_NAME, customName);
-
-      table_.getCellFormatter().setStylePrimaryName(newRow,
-                                                    COL_ICON,
-                                                    styles_.columnIcon());
-      table_.getCellFormatter().setStylePrimaryName(newRow,
-                                                    COL_NAME,
-                                                    styles_.columnName());
-
-      if (!item.isDirectory())
-      {
-         table_.setText(newRow,
-                        COL_SIZE,
-                        StringUtil.formatFileSize(item.getLength()));
-
-         table_.setText(newRow,
-                        COL_TIMESTAMP,
-                        StringUtil.formatDate(item.getLastModified()));
-
-         table_.getCellFormatter().setStylePrimaryName(newRow,
-                                                       COL_SIZE,
-                                                       styles_.columnSize());
-         table_.getCellFormatter().setStylePrimaryName(newRow,
-                                                       COL_TIMESTAMP,
-                                                       styles_.columnDate());
-      }
-      else
-      {
-         ((FlexTable.FlexCellFormatter)table_.getCellFormatter()).setColSpan(
-               newRow, COL_NAME, 3);
-      }
-      return newRow;
+      dataProvider_.getList().add(item);
+      return dataProvider_.getList().size() - 1;
    }
 
    public Point getScrollPosition()
@@ -513,12 +528,14 @@ public class DirectoryContentsWidget
       setFocus(true);
    }
 
+   private final ListDataProvider<FileSystemItem> dataProvider_;
+   private final SelectionModel<FileSystemItem> selectionModel_;
+   private final VirtualizedDataGrid<FileSystemItem> table_;
    private Map<String, FileSystemItem> items_ = new LinkedHashMap<>();
    private final DoubleClickState doubleClick_ = new DoubleClickState();
    private Integer selectedRow_;
    private String selectedValue_;
    private int uniqueIdIndex_;
-   private final FlexTableEx table_;
    private final ScrollPanelWithClick scrollPanel_;
    private final SimplePanelWithProgress progressPanel_;
    private static final int COL_ICON = 0;
