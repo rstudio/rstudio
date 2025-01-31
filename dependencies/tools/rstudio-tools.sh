@@ -534,7 +534,7 @@ check_env_vars() {
 #
 # In addition to updating the version here, search the entire repo for other instances of
 # RSTUDIO_NODE_VERSION and update to match.
-export RSTUDIO_NODE_VERSION="20.15.1"
+export RSTUDIO_NODE_VERSION="22.13.1"
 
 
 # actual directory name of the node installation used
