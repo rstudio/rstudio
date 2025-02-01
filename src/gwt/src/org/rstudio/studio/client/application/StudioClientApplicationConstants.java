@@ -1492,4 +1492,49 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     @DefaultMessage("This will cause RStudio to immediately crash. You may lose work. Trigger crash?")
     @Key("reallyCrashMessage")
     String reallyCrashMessage();
+
+    /**
+     * Translated "Session memory limit exceeded. Restart required."
+     *
+     * @return translated "Session memory limit exceeded. Restart required."
+     */
+    @DefaultMessage("Session memory limit exceeded. Restart required.")
+    @Key("memoryLimitExceededCaption")
+    String memoryLimitExceededCaption();
+
+    /**
+     * Translated "Save files and restart session.\n\nSession will be stopped if there is less than 100 MiB or 5% free system memory."
+     *
+     * @return translated "Save files and restart session.\n\nSession will be stopped if there is less than 100 MiB or 5% free system memory."
+     */
+    @DefaultMessage("Save files and restart session.\n\nSession will be stopped if there is less than 100 MiB or 5% free system memory.")
+    @Key("memoryLimitExceededMessage")
+    String memoryLimitExceededMessage();
+
+    /**
+     * Translated "Memory limit has been exceeded. The IDE session has been terminated."
+     *
+     * @return translated "Memory limit has been exceeded. The IDE session has been terminated."
+     */
+    @DefaultMessage("Memory limit has been exceeded. The IDE session has been terminated.")
+    @Key("memoryLimitAbortedMessage")
+    String memoryLimitAbortedMessage();
+
+    /**
+     * Translated "Approaching session memory limit."
+     *
+     * @return translated "Approaching session memory limit."
+     */
+    @DefaultMessage("Approaching session memory limit.")
+    @Key("approachingMemoryLimit")
+    String approachingMemoryLimit();
+
+    /**
+     * Translated "Over session memory limit."
+     *
+     * @return translated "Over session memory limit."
+     */
+    @DefaultMessage("Over session memory limit.")
+    @Key("overMemoryLimit")
+    String overMemoryLimit();
 }

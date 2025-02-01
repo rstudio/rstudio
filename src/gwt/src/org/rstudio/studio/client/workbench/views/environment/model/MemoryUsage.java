@@ -14,7 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.model;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
+import org.rstudio.core.client.StringUtil;
 
 public class MemoryUsage extends JavaScriptObject
 {
@@ -32,6 +35,26 @@ public class MemoryUsage extends JavaScriptObject
       return this.process;
    }-*/;
 
+   public final native MemoryStat getLimit() /*-{
+      return this.limit;
+   }-*/;
+
+   public final native boolean overLimit() /*-{
+      return this.overLimit;
+   }-*/;
+
+   public final native boolean abort() /*-{
+      return this.abort;
+   }-*/;
+
+   public final native boolean limitWarning() /*-{
+      return this.limitWarning;
+   }-*/;
+
+   private int computePercent(int kb, int totalKb)
+   {
+      return (int)Math.round(((kb * 1.0) / (totalKb * 1.0)) * 100);
+   }
    /**
     * Compute the percentage of memory used.
     *
@@ -39,6 +62,8 @@ public class MemoryUsage extends JavaScriptObject
     */
    public final int getPercentUsed()
    {
+      if (useProcessLimit())
+         return computePercent(getProcess().getKb(), getLimit().getKb());
       return (int)Math.round(((getUsed().getKb() * 1.0) / (getTotal().getKb() * 1.0)) * 100);
    }
 
@@ -49,6 +74,47 @@ public class MemoryUsage extends JavaScriptObject
     */
    public final int getProcessPercentUsed()
    {
+      if (useProcessLimit())
+         return getPercentUsed();
       return (int)Math.round(((getProcess().getKb() * 1.0) / (getTotal().getKb() * 1.0)) * 100);
    }
+
+   /**
+    * If the session process has a specific limit, that's different than
+    * the total, use it for the percentage.
+    */
+   public final boolean useProcessLimit()
+   {
+      long limit = getLimit().getKb();
+      return limit != 0; // && limit != getTotal().getKb();
+   }
+
+   private final String limitMessage()
+   {
+      return useProcessLimit() ? constants_.limit() + ": " + StringUtil.prettyFormatNumber(getLimit().getKb()/1024) + " " + constants_.megabytes() : constants_.unlimited();
+   }
+
+   private final int getPercentFree()
+   {
+      return ((int) (100 * (getTotal().getKb() - getUsed().getKb()) / getTotal().getKb()));
+   }
+
+   public final String multiLineStatusMessage()
+   {
+      return constants_.sessionMemoryUsed() + ": " + StringUtil.prettyFormatNumber(getProcess().getKb()/1024) +
+	     " " + constants_.megabytes() + ", " + limitMessage() + "\n" +
+             constants_.freeSystemMemory() + ": " + StringUtil.prettyFormatNumber((getTotal().getKb() - getUsed().getKb())/1024) +
+	     " " + constants_.megabytes() + " (" + getPercentFree() + "%)";
+   }
+
+   public final String statusMessage()
+   {
+      return constants_.sessionMemoryUsed() + ": " + StringUtil.prettyFormatNumber(getProcess().getKb()/1024) +
+	     " " + constants_.megabytes() + ", " + limitMessage() + ". " +
+             constants_.systemMemoryUsed() + ": " + StringUtil.prettyFormatNumber(getUsed().getKb()/1024) + " " + constants_.outOf() + " " +
+             StringUtil.prettyFormatNumber(getTotal().getKb()/1024) + " " + constants_.megabytes() +
+	     " (" + getPercentFree() + "% " + constants_.freeMemory() + ")";
+   }
+
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

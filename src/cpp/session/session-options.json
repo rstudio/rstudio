@@ -563,6 +563,20 @@
             "memberName": "allowLauncherJobs_",
             "defaultValue": true,
             "description": "Indicates whether or not to allow running jobs via the Launcher."
+         },
+         {
+            "name": "allow-over-limit-sessions",
+            "type": "bool",
+            "memberName": "allowOverLimitSessions_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to abort sessions that exceed their specified memory limit. Users will still see warnings and an error."
+         },
+         {
+            "name": "abort-free-mem-percent",
+            "type": "int",
+            "memberName": "abortFreeMemPercent_",
+            "defaultValue": 5,
+            "description": "Sessions will be aborted if there is less than 100 MiB of free RAM or this configured percentage. Disable abort entirely by enabling allow-over-limit-sessions. Increase this value for easily reproducing this scenario in a test environment or to more strictly enforce memory limits on the system."
          }
       ],
       "r": [
