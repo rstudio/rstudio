@@ -71,6 +71,11 @@ public class SimplePanelWithProgress extends SimplePanel
       if (getWidget() instanceof RequiresResize)
          ((RequiresResize)getWidget()).onResize();
    }
+   
+   public void setInheritEditorTheme(boolean inherit)
+   {
+      loadProgressPanel_.setInheritEditorTheme(inherit);
+   }
 
    private ProgressPanel loadProgressPanel_ = new ProgressPanel();
 }

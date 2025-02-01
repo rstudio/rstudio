@@ -74,17 +74,16 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       panel.setCellHorizontalAlignment(spinner, DockPanel.ALIGN_CENTER);
       panel.add(progressLabel_);
 
-      HorizontalCenterPanel progressPanel = new HorizontalCenterPanel(panel, verticalOffset);
-      
       progressImage_.setVisible(false);
       progressSpinner_.setVisible(false);
       progressLabel_.setVisible(false);
 
-      progressPanel.setSize("100%", "100%");
-      progressPanel.addStyleName(ThemeStyles.INSTANCE.progressPanel());
-      progressPanel.addStyleName("ace_editor_theme");
-
-      initWidget(progressPanel);
+      progressPanel_ = new HorizontalCenterPanel(panel, verticalOffset);
+      progressPanel_.setSize("100%", "100%");
+      progressPanel_.addStyleName(ThemeStyles.INSTANCE.progressPanel());
+      setInheritEditorTheme(true);
+      
+      initWidget(progressPanel_);
    }
 
    public void beginProgressOperation(int delayMs)
@@ -114,6 +113,18 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       progressLabel_.setVisible(false);
    }
    
+   public void setInheritEditorTheme(boolean inherit)
+   {
+      if (inherit)
+      {
+         progressPanel_.addStyleName("ace_editor_theme");
+      }
+      else
+      {
+         progressPanel_.removeStyleName("ace_editor_theme");
+      }
+   }
+   
    @Override
    public void focus()
    {
@@ -127,6 +138,7 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       return isDark ? ProgressSpinner.COLOR_WHITE : ProgressSpinner.COLOR_BLACK;
    }
 
+   private final HorizontalCenterPanel progressPanel_;
    private final Widget progressImage_;
    private final ProgressSpinner progressSpinner_;
    private final Label progressLabel_;
