@@ -79,6 +79,12 @@ RUN tar xvf gnupg-1.4.23.tar.bz2
 RUN cd gnupg-1.4.23 && ./configure --prefix=/gnupg1 && make && make install
 RUN ln -s /gnupg1/bin/gpg /usr/local/bin/gpg1 
 
+# Move existing gcc/g++ binaries
+RUN mv /usr/bin/gcc /usr/bin/gcc-old || true && \
+    mv /usr/bin/g++ /usr/bin/g++-old || true && \
+    mv /usr/bin/cc /usr/bin/cc-old || true && \
+    mv /usr/bin/c++ /usr/bin/c++-old || true
+
 # Set gcc10 as default C++ toolchain
 RUN alternatives --install /usr/bin/gcc gcc /opt/rh/gcc-toolset-10/root/usr/bin/gcc 10 && \
     alternatives --install /usr/bin/g++ g++ /opt/rh/gcc-toolset-10/root/usr/bin/g++ 10 && \
