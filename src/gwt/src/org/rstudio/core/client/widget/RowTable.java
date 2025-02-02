@@ -162,6 +162,14 @@ public abstract class RowTable<T> extends ScrollPanel
                {
                   selectOffset(event, 12);
                }
+               else if (code == KeyCodes.KEY_HOME)
+               {
+                  selectRow(event, 0);
+               }
+               else if (code == KeyCodes.KEY_END)
+               {
+                  selectRow(event, data_.size() - 1);
+               }
                else if (code == KeyCodes.KEY_ENTER)
                {
                   if (selectedRow_ != -1)
@@ -340,6 +348,13 @@ public abstract class RowTable<T> extends ScrollPanel
       selectedItem_ = null;
       
       offset_ = 0;
+   }
+   
+   private void selectRow(NativeEvent event, int row)
+   {
+      event.stopPropagation();
+      event.preventDefault();
+      selectRow(row);
    }
    
    public void selectRow(int row)

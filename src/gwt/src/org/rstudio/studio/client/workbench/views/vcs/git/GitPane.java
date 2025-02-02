@@ -318,6 +318,7 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
    private ToolbarButton pushButton_;
    private ToolbarButton refreshButton_;
 
+   @SuppressWarnings("unused")
    private final GitServerOperations server_;
    private final Commands commands_;
    @SuppressWarnings("unused")

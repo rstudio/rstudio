@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.images.ProgressImages;
 
@@ -115,14 +116,10 @@ public class ProgressPanel extends Composite implements IsHideableWidget
    
    public void setInheritEditorTheme(boolean inherit)
    {
-      if (inherit)
-      {
-         progressPanel_.addStyleName("ace_editor_theme");
-      }
-      else
-      {
-         progressPanel_.removeStyleName("ace_editor_theme");
-      }
+      DomUtils.toggleClass(
+            progressPanel_.getElement(),
+            "ace_editor_theme",
+            inherit);
    }
    
    @Override
