@@ -23,6 +23,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.dom.EventProperty;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -52,9 +53,22 @@ import com.google.gwt.user.client.ui.Widget;
 public abstract class RowTable<T> extends ScrollPanel
    implements HasSelectionHandlers<T>
 {
+   // Classes should implement this by adding the requisite number
+   // of table ceels to the provided table row element.
    public abstract void drawRowImpl(T object, TableRowElement rowEl);
+   
+   // The height of each row in the table. This needs to be set to
+   // enable virtualization, so that the full height of the table
+   // can be computed without rendering the whole table.
    public abstract double getRowHeight();
+   
+   // The column widths to assign to each column in the table.
+   // Note the implicit requirement that this array has the same length
+   // as the number of cells added in 'drawRowImpl'.
    public abstract int[] getColumnWidths();
+   
+   // The key associated with a particular row. This is primarily used
+   // for prefix-matching selection when typing.
    public abstract String getKey(T object);
    
    private static enum ScrollType
@@ -70,10 +84,13 @@ public abstract class RowTable<T> extends ScrollPanel
       }
    }
    
-   public RowTable()
+   public RowTable(String ariaLabel)
    {
       table_ = Document.get().createTableElement();
+      Roles.getListboxRole().set(table_);
+      Roles.getListboxRole().setAriaLabelProperty(table_, ariaLabel);
       table_.addClassName(RES.styles().table());
+      
       
       scrollTimer_ = new Timer()
       {

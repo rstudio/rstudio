@@ -54,7 +54,7 @@ public class DirectoryContentsWidget extends Composite
    public DirectoryContentsWidget(FileSystemContext context)
    {
       data_ = new ArrayList<>();
-      table_ = new RowTable<FileSystemItem>()
+      table_ = new RowTable<FileSystemItem>(constants_.directoryContentsLabel())
       {
          private final FileTypeRegistry registry_ = RStudioGinjector.INSTANCE.getFileTypeRegistry();
          
