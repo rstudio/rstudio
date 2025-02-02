@@ -14,7 +14,7 @@
    
 }
 
-.row td {
+.row td > * {
 	overflow: hidden;
 	padding: 1px 2px;
 	text-overflow: ellipsis;

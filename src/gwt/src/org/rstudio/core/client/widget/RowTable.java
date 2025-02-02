@@ -87,10 +87,10 @@ public abstract class RowTable<T> extends ScrollPanel
    public RowTable(String ariaLabel)
    {
       table_ = Document.get().createTableElement();
+      table_.setWidth("100%");
       Roles.getListboxRole().set(table_);
       Roles.getListboxRole().setAriaLabelProperty(table_, ariaLabel);
       table_.addClassName(RES.styles().table());
-      
       
       scrollTimer_ = new Timer()
       {
@@ -203,7 +203,8 @@ public abstract class RowTable<T> extends ScrollPanel
          @Override
          public void onScroll(ScrollEvent event)
          {
-            scrollTimer_.schedule(100);
+            if (!scrollTimer_.isRunning())
+               scrollTimer_.schedule(100);
          }
       });
       
@@ -279,8 +280,10 @@ public abstract class RowTable<T> extends ScrollPanel
    
    private void drawRow(int index, TableRowElement rowEl)
    {
+      T object = data_.get(index);
       rowEl.setAttribute("__row", String.valueOf(index));
-      drawRowImpl(data_.get(index), rowEl);
+      rowEl.setAttribute("title", getKey(object));
+      drawRowImpl(object, rowEl);
    }
    
    private void drawColumnGroups()

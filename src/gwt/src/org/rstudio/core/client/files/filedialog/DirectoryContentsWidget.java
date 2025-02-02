@@ -67,7 +67,7 @@ public class DirectoryContentsWidget extends Composite
          @Override
          public int[] getColumnWidths()
          {
-            return new int[] { 22, 278, 100, 100, 20 };
+            return new int[] { 22, 222, 70, 150, 20 };
          }
          
          @Override
