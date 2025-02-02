@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 
@@ -24,20 +22,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
-import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -46,7 +31,6 @@ import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HeaderPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ProvidesKey;
 
 // This class acts as a DOM-virtualized version of a DataGrid, effectively
@@ -124,13 +108,6 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
    // This can return 'null' if no special styling is required.
    public abstract String getBorderColor();
    
-   // The number of padding rows. This can be increased if you'd like to allow
-   // more rows to be shown in the DOM around the current view.
-   protected int getRowPadding()
-   {
-      return 200;
-   }
-   
    public VirtualizedDataGrid()
    {
       super(Integer.MAX_VALUE, RES);
@@ -150,79 +127,6 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       commonInit();
    }
    
-   public boolean defaultCellPreviewHandler(CellPreviewEvent<T> preview)
-   {
-      boolean result = defaultCellPreviewHnadlerImpl(preview);
-      
-      if (result)
-      {
-         preview.getNativeEvent().stopPropagation();
-         preview.getNativeEvent().preventDefault();
-         preview.setCanceled(true);
-      }
-      
-      return result;
-   }
-   
-   private boolean defaultCellPreviewHnadlerImpl(CellPreviewEvent<T> preview)
-   {
-      NativeEvent event = preview.getNativeEvent();
-      
-      if (StringUtil.equals(event.getType(), BrowserEvents.KEYDOWN))
-      {
-         switch (event.getKeyCode())
-         {
-
-         case KeyCodes.KEY_UP:
-         case KeyCodes.KEY_LEFT:
-         {
-            return moveSelection(-1);
-         }
-
-         case KeyCodes.KEY_RIGHT:
-         case KeyCodes.KEY_DOWN:
-         {
-            return moveSelection(1);
-         }
-
-         case KeyCodes.KEY_PAGEUP:
-         {
-            return moveSelection(-12);
-         }
-
-         case KeyCodes.KEY_PAGEDOWN:
-         {
-            return moveSelection(12);
-         }
-         
-         }
-      }
-      
-      if (StringUtil.equals(event.getType(), BrowserEvents.KEYUP))
-      {
-         switch (event.getKeyCode())
-         {
-         case KeyCodes.KEY_UP:
-         case KeyCodes.KEY_LEFT:
-         case KeyCodes.KEY_RIGHT:
-         case KeyCodes.KEY_DOWN:
-         {
-            return true;
-         }
-         }
-      }
-      
-
-      return false;
-      
-   }
-   
-   private boolean moveSelection(int offset)
-   {
-      int row = getKeyboardSelectedRow();
-      setKeyboardSelectedRow(row + offset);
-      return true;
-   }
    
    private void commonInit()
    {
@@ -293,21 +197,13 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       
       if (changed)
       {
-         // TODO: Figure out why we lose the current keyboard row selection on redraw.
          redraw(false);
-         
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             @Override
             public void execute()
             {
                VirtualizedDataGrid.this.onResize();
-               
-               if (pendingRowSelection_ != -1)
-               {
-                  setKeyboardSelectedRow(pendingRowSelection_);
-                  pendingRowSelection_ = -1;
-               }
             }
          });
       }
@@ -382,63 +278,15 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
       int rowsActive = (int) (getOffsetHeight() / rowHeight);
       
       // set our active rows -- use padding to allow smoother scrolling
-      firstActiveRow_ = Math.max(0, numRowsScrolled - getRowPadding());
-      lastActiveRow_ = Math.min(n, numRowsScrolled + rowsActive + getRowPadding());
-   }
-   
-   @Override
-   public void setKeyboardSelectedRow(int row, boolean stealFocus)
-   {
-      setKeyboardSelectedRow(row, 0, stealFocus);
-   }
-   
-   @Override
-   public void setKeyboardSelectedRow(int row, int subrow, boolean stealFocus)
-   {
-      // If this row is outside of the current visible range,
-      // we'll have to scroll into view, and then select it.
-      if (row < firstActiveRow_ || row > lastActiveRow_)
-      {
-         pendingRowSelection_ = row;
-         setVerticalScrollPosition((int)(row * getRowHeight()));
-      }
-      else
-      {
-         pendingRowSelection_ = row;
-         super.setKeyboardSelectedRow(row, subrow, stealFocus);
-      }
-   }
-   
-   public HandlerRegistration addFocusHandler(FocusHandler handler)
-   {
-      return addDomHandler(handler, FocusEvent.getType());
-   }
-   
-   public HandlerRegistration addBlurHandler(BlurHandler handler)
-   {
-      return addDomHandler(handler, BlurEvent.getType());
-   }
-   
-   public HandlerRegistration addClickHandler(ClickHandler handler)
-   {
-      return addDomHandler(handler, ClickEvent.getType());
-   }
-   
-   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
-   {
-      return addDomHandler(handler, MouseDownEvent.getType());
-   }
-   
-   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
-   {
-      return addDomHandler(handler, KeyDownEvent.getType());
+      firstActiveRow_ = Math.max(0, numRowsScrolled - ROW_PADDING);
+      lastActiveRow_ = Math.min(n, numRowsScrolled + rowsActive + ROW_PADDING);
    }
    
    private int firstActiveRow_;
    private int lastActiveRow_;
-   private int pendingRowSelection_ = -1;
    private Timer redrawTimer_;
    
    // Static Members ----
+   private static final int ROW_PADDING = 200;
    private static final Resources RES = GWT.create(RStudioDataGridResources.class);
 }
