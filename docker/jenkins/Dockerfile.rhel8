@@ -23,6 +23,7 @@ RUN yum install -y \
     gcc-c++ \
     gcc-toolset-10-gcc \
     gcc-toolset-10-gcc-c++ \
+    gcc-toolset-10-annobin \
     gdb \
     git \
     gtk3 \
