@@ -62,7 +62,7 @@ public class DirectoryContentsWidget extends Composite
          @Override
          public double getRowHeight()
          {
-            return 22.5;
+            return 24;
          }
          
          @Override

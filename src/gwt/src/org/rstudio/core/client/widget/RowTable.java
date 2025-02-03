@@ -243,17 +243,14 @@ public abstract class RowTable<T> extends ScrollPanel
       // subtract 3 for colgroup, top padding, bottom padding
       for (int i = 0; i < table_.getChildCount() - 3; i++)
       {
+         // add 2 for colgroup, top padding
          TableRowElement rowEl = table_.getChild(i + 2).cast();
          rowEl.removeAllChildren();
          drawRow(i + offset_, rowEl);
       }
       
       setScrollTop(scrollPos);
-      
-      int row = selectedRow_;
-      selectedRow_ = -1;
-      selectRow(row, ScrollType.NONE);
-      
+      selectRowImpl(selectedRow_, ScrollType.NONE);
    }
    
    public void draw(List<T> data)
@@ -391,6 +388,11 @@ public abstract class RowTable<T> extends ScrollPanel
       if (selectedRow_ == row)
          return;
       
+      selectRowImpl(row, scrollType);
+   }
+   
+   private void selectRowImpl(int row, ScrollType scrollType)
+   {
       if (selectedRowElement_ != null)
       {
          selectedRowElement_.removeClassName(RES.styles().selected());
