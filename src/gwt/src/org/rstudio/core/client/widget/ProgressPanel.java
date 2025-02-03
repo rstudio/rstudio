@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.images.ProgressImages;
 
@@ -62,7 +61,7 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       
       progressImage_ = progressImage;
 
-      progressSpinner_ = new ProgressSpinner(getSpinnerColor());
+      progressSpinner_ = new ProgressSpinner(getSpinnerColor(isDark()));
       progressSpinner_.getElement().getStyle().setWidth(32, Unit.PX);
       progressSpinner_.getElement().getStyle().setHeight(32, Unit.PX);
       
@@ -82,7 +81,9 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       progressPanel_ = new HorizontalCenterPanel(panel, verticalOffset);
       progressPanel_.setSize("100%", "100%");
       progressPanel_.addStyleName(ThemeStyles.INSTANCE.progressPanel());
-      setInheritEditorTheme(true);
+      
+      if (isDark())
+         progressPanel_.addStyleName("ace_editor_theme");
       
       initWidget(progressPanel_);
    }
@@ -96,7 +97,7 @@ public class ProgressPanel extends Composite implements IsHideableWidget
    {
       timer_.cancel();
 
-      progressSpinner_.setColorType(getSpinnerColor());
+      progressSpinner_.setColorType(getSpinnerColor(isDark()));
       progressSpinner_.setVisible(false);
       progressImage_.setVisible(false);
       progressLabel_.setVisible(false);
@@ -114,24 +115,19 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       progressLabel_.setVisible(false);
    }
    
-   public void setInheritEditorTheme(boolean inherit)
-   {
-      DomUtils.toggleClass(
-            progressPanel_.getElement(),
-            "ace_editor_theme",
-            inherit);
-   }
-   
    @Override
    public void focus()
    {
       // implement to satisfy IsHideableWidget, don't actually take focus when called
    }
-
-   private int getSpinnerColor()
+   
+   public boolean isDark()
    {
-      boolean isDark = Document.get().getBody().hasClassName("editor_dark");
+      return Document.get().getBody().hasClassName("editor_dark");
+   }
 
+   private int getSpinnerColor(boolean isDark)
+   {
       return isDark ? ProgressSpinner.COLOR_WHITE : ProgressSpinner.COLOR_BLACK;
    }
 

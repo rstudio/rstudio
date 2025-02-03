@@ -16,8 +16,10 @@ package org.rstudio.core.client.files.filedialog;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
@@ -29,6 +31,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Point;
@@ -38,9 +41,11 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.RowTable;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 
@@ -159,10 +164,31 @@ public class DirectoryContentsWidget extends Composite
       Roles.getListboxRole().set(table_.getElement());
       Roles.getListboxRole().setAriaLabelProperty(table_.getElement(), constants_.directoryContentsLabel());
 
-      progressPanel_ = new SimplePanelWithProgress();
-      progressPanel_.setInheritEditorTheme(false);
-      progressPanel_.setWidget(null);
+      progressPanel_ = new SimplePanelWithProgress()
+      {
+         @Override
+         public ProgressPanel createProgressPanel(Widget image, int offset)
+         {
+            ProgressPanel panel = new ProgressPanel(image, offset)
+            {
+               @Override
+               public boolean isDark()
+               {
+                  return false;
+               }
+            };
+            
+            panel.getElement().getStyle().setBackgroundColor("white");
+            panel.getElement().getStyle().setBorderWidth(1, Unit.PX);
+            panel.getElement().getStyle().setProperty("border", "1px solid rgb(208, 210, 212)");
+            return panel;
+         }
+      };
+            
+      progressPanel_.getElement().getStyle().setBorderWidth(1, Unit.PX);
+      progressPanel_.getElement().getStyle().setBorderColor("rgb(208, 210, 212)");
       progressPanel_.setHeight("300px");
+      progressPanel_.setWidget(null);
       initWidget(progressPanel_);
    }
 

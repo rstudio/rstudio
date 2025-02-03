@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.widget.images.ProgressImages;
+
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -23,19 +25,24 @@ public class SimplePanelWithProgress extends SimplePanel
                                   implements ProvidesResize,
                                              RequiresResize
 {
+   public ProgressPanel createProgressPanel(Widget image, int offset)
+   {
+      return new ProgressPanel(image, offset);
+   }
+   
    public SimplePanelWithProgress()
    { 
-      loadProgressPanel_ = new ProgressPanel();
+      this(ProgressImages.createLarge(), 100);
    }
    
    public SimplePanelWithProgress(Widget progressImage)
    { 
-      loadProgressPanel_ = new ProgressPanel(progressImage);
+      this(progressImage, 100);
    }
    
    public SimplePanelWithProgress(Widget progressImage, int verticalOffset)
    {
-      loadProgressPanel_ = new ProgressPanel(progressImage, verticalOffset);
+      loadProgressPanel_ = createProgressPanel(progressImage, verticalOffset);
    }
    
    @Override
@@ -72,10 +79,5 @@ public class SimplePanelWithProgress extends SimplePanel
          ((RequiresResize)getWidget()).onResize();
    }
    
-   public void setInheritEditorTheme(boolean inherit)
-   {
-      loadProgressPanel_.setInheritEditorTheme(inherit);
-   }
-
    private ProgressPanel loadProgressPanel_ = new ProgressPanel();
 }
