@@ -411,7 +411,7 @@ public abstract class RowTable<T> extends ScrollPanel
       {
          selectedRowElement_ = table_.getChild(index + 2).cast();
          selectedRowElement_.addClassName(RES.styles().selected());
-         selectedRowElement_.focus();
+         DomUtils.setFocus(selectedRowElement_, true);
       }
       
       if (scrollType != ScrollType.NONE)
