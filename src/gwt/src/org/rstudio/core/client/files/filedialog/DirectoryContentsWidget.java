@@ -193,6 +193,9 @@ public class DirectoryContentsWidget extends Composite
       return table_.getSelectedItem();
    }
 
+   // This API is a bit oddly named. It's called with 'true' to indicate
+   // that we're almost ready to show content, and later with 'false'
+   // after the content is ready to be shown.
    public void showProgress(boolean show)
    {
       if (show)
