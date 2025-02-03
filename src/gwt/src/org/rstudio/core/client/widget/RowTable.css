@@ -10,15 +10,15 @@
    table-layout: fixed;
 }
 
-.row {
-   
+.row:focus {
+   outline: none !important;;
 }
 
 .row td > * {
-	overflow: hidden;
-	padding: 1px 2px;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+   overflow: hidden;
+   padding: 1px 2px;
+   text-overflow: ellipsis;
+   white-space: nowrap;
 }
 
 .selected {
