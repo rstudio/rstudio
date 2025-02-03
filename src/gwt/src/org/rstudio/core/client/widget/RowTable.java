@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DOMRect;
@@ -91,6 +92,7 @@ public abstract class RowTable<T> extends ScrollPanel
    
    public RowTable(String ariaLabel)
    {
+      id_ = ElementIds.getUniqueElementId(ElementIds.idSafeString(ariaLabel));
       data_ = new ArrayList<>();
       
       table_ = Document.get().createTableElement();
@@ -98,6 +100,7 @@ public abstract class RowTable<T> extends ScrollPanel
       Roles.getListboxRole().set(table_);
       Roles.getListboxRole().setAriaLabelProperty(table_, ariaLabel);
       table_.addClassName(RES.styles().table());
+      table_.setId(id_);
       
       scrollTimer_ = new Timer()
       {
@@ -290,7 +293,6 @@ public abstract class RowTable<T> extends ScrollPanel
       {
          TableRowElement rowEl = Document.get().createTRElement();
          rowEl.addClassName(RES.styles().row());
-         rowEl.setAttribute("__row", String.valueOf(i));
          rowEl.setAttribute("height", getRowHeight() + "px");
          drawRow(i + offset_, rowEl);
          table_.appendChild(rowEl);
@@ -304,6 +306,7 @@ public abstract class RowTable<T> extends ScrollPanel
       T object = data_.get(index);
       rowEl.setAttribute("__row", String.valueOf(index));
       rowEl.setAttribute("title", getKey(object));
+      rowEl.setId(id_ + "_row_" + index);
       drawRowImpl(object, rowEl);
    }
    
@@ -417,7 +420,7 @@ public abstract class RowTable<T> extends ScrollPanel
       if (selectedRowElement_ != null)
       {
          selectedRowElement_.removeClassName(RES.styles().selected());
-         selectedRowElement_.setPropertyString("ariaSelected", null);
+         selectedRowElement_.removeAttribute("aria-selected");
          selectedRowElement_ = null;
       }
       
@@ -432,7 +435,8 @@ public abstract class RowTable<T> extends ScrollPanel
       {
          selectedRowElement_ = table_.getChild(index + 2).cast();
          selectedRowElement_.addClassName(RES.styles().selected());
-         selectedRowElement_.setPropertyString("ariaSelected", "true");
+         selectedRowElement_.setAttribute("aria-selected", "true");
+         table_.setAttribute("aria-activedescendant", selectedRowElement_.getId());
          DomUtils.setFocus(selectedRowElement_, true);
       }
       
@@ -554,7 +558,7 @@ public abstract class RowTable<T> extends ScrollPanel
       });
    }-*/;
    
-   
+   private final String id_;
    private final TableElement table_;
    private final TableWidget widget_;
    

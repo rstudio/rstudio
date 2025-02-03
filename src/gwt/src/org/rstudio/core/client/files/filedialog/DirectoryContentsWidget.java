@@ -16,7 +16,6 @@ package org.rstudio.core.client.files.filedialog;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
@@ -45,7 +44,6 @@ import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.RowTable;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 
