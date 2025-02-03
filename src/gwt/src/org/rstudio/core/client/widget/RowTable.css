@@ -2,16 +2,11 @@
 
 .panel {
    border: 1px solid rgb(208, 210, 212);
-   outline: none;
 }
 
 .table {
    border-collapse: collapse;
    table-layout: fixed;
-}
-
-.row:focus {
-   outline: none !important;;
 }
 
 .row td > * {
@@ -22,5 +17,9 @@
 }
 
 .selected {
+   background-color: rgb(208, 210, 212);
+}
+
+.active .selected {
    background-color: rgb(214, 233, 247);
 }

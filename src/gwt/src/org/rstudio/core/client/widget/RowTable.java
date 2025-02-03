@@ -32,10 +32,14 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -211,8 +215,25 @@ public abstract class RowTable<T> extends ScrollPanel
          }
       });
       
-      addStyleName(RES.styles().panel());
+      addDomHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            addStyleName(RES.styles().active());
+         }
+      }, FocusEvent.getType());
       
+      addDomHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            removeStyleName(RES.styles().active());
+         }
+      }, BlurEvent.getType());
+      
+      addStyleName(RES.styles().panel());
    }
    
    public T getSelectedItem()
@@ -566,6 +587,7 @@ public abstract class RowTable<T> extends ScrollPanel
       String table();
       String row();
       
+      String active();
       String selected();
    }
    
