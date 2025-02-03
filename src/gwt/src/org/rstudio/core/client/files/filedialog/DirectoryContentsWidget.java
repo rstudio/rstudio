@@ -212,7 +212,6 @@ public class DirectoryContentsWidget extends Composite
    public void setSelectedRow(Integer row)
    {
       table_.selectRow(row);
-      SelectionEvent.fire(DirectoryContentsWidget.this, getSelectedItem());
    }
 
    public String getSelectedValue()
