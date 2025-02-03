@@ -25,7 +25,7 @@ public class SimplePanelWithProgress extends SimplePanel
                                   implements ProvidesResize,
                                              RequiresResize
 {
-   public static ProgressPanel createProgressPanel(Widget image, int offset)
+   public ProgressPanel createProgressPanel(Widget image, int offset)
    {
       return new ProgressPanel(image, offset);
    }
