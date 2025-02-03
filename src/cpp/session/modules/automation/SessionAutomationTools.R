@@ -13,6 +13,7 @@
 #
 #
 
+# !diagnostics suppress=client,self
 
 #' Execute an RStudio command
 #' 
@@ -220,18 +221,57 @@
    if (is.null(code))
       stop(sprintf("couldn't convert key '%s' to key code", key))
    
+   # TODO: These effectively fill out the same values on the associated
+   # JavaScript KeyEvent, so ideally we'd populate all the parameters here.
+   # Right now, we're just doing the minimal necessary bits.
    self$client$Input.dispatchKeyEvent(
       type                  = "keyDown",
+      key                   = key,
       modifiers             = modifiers,
       windowsVirtualKeyCode = code
    )
    
    self$client$Input.dispatchKeyEvent(
       type                  = "keyUp",
+      key                   = key,
       modifiers             = modifiers,
       windowsVirtualKeyCode = code
    )
    
+})
+
+.rs.automation.addRemoteFunction("keyboard.insertText", function(...)
+{
+   reShortcut <- "^\\<(.*)\\>$"
+   for (input in list(...))
+   {
+      if (grepl(reShortcut, input, perl = TRUE))
+      {
+         shortcut <- sub(reShortcut, "\\1", input, perl = TRUE)
+         self$keyboard.executeShortcut(shortcut)
+      }
+      else if (nzchar(input))
+      {
+         self$client$Input.insertText(input)
+      }
+   }
+})
+
+.rs.automation.addRemoteFunction("keyboard.sendKeys", function(...)
+{
+   reShortcut <- "^\\<(.*)\\>$"
+   for (input in list(...))
+   {
+      if (grepl(reShortcut, input, perl = TRUE))
+      {
+         shortcut <- sub(reShortcut, "\\1", input, perl = TRUE)
+         self$keyboard.executeShortcut(shortcut)
+      }
+      else if (nzchar(input))
+      {
+         self$keyboard.executeShortcut(input)
+      }
+   }
 })
 
 #' Return the completions shown for given text
