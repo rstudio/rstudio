@@ -48,5 +48,6 @@
 .dataGridHoveredRow,
 .dataGridSelectedRow,
 .dataGridKeyboardSelectedRow {
+  background: inherit;
 }
 
