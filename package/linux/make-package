@@ -59,7 +59,7 @@ exit 1
 is_rhel8() {
    if [ -f /etc/os-release ]; then
       . /etc/os-release
-      [[ "$ID" == "rhel" && "${VERSION_ID%%.*}" == "8" ]] && return 0
+      [[ "$ID" == "rhel" || "$ID" == "rocky" ]] && [[ "${VERSION_ID%%.*}" == "8" ]] && return 0
    fi
    return 1
 }
