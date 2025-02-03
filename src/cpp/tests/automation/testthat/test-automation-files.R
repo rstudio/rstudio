@@ -38,5 +38,6 @@ withr::defer(.rs.automation.deleteRemote())
    # restart R to clean the session
    remote$editor.closeDocument()
    remote$session.restart()
+   remote$console.clear()
    
 })
