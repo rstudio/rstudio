@@ -10,7 +10,7 @@
   "scripts": {
     "clean": "ts-node scripts/clean.ts",
     "lint": "eslint ./src ./test",
-    "package": "electron-forge package",
+    "package": "node scripts/packaging.mjs",
     "start": "electron-forge start -- --no-sandbox",
     "debug": "electron-forge start --inspect-electron",
     "fullstart": "npm install && electron-forge start",
