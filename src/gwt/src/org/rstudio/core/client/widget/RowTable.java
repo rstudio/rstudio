@@ -271,7 +271,6 @@ public abstract class RowTable<T> extends ScrollPanel
          rowEl.addClassName(RES.styles().row());
          rowEl.setAttribute("__row", String.valueOf(i));
          rowEl.setAttribute("height", getRowHeight() + "px");
-         rowEl.setAttribute("tabindex", "0");
          drawRow(i + offset_, rowEl);
          table_.appendChild(rowEl);
       }
@@ -397,6 +396,7 @@ public abstract class RowTable<T> extends ScrollPanel
       if (selectedRowElement_ != null)
       {
          selectedRowElement_.removeClassName(RES.styles().selected());
+         selectedRowElement_.setPropertyString("ariaSelected", null);
          selectedRowElement_ = null;
       }
       
@@ -411,6 +411,7 @@ public abstract class RowTable<T> extends ScrollPanel
       {
          selectedRowElement_ = table_.getChild(index + 2).cast();
          selectedRowElement_.addClassName(RES.styles().selected());
+         selectedRowElement_.setPropertyString("ariaSelected", "true");
          DomUtils.setFocus(selectedRowElement_, true);
       }
       
