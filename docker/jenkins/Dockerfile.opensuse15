@@ -5,8 +5,7 @@ ARG ARCH
 ENV OPERATING_SYSTEM=opensuse_leap15
 
 # refresh repos and install required packages
-RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/devel:gcc/openSUSE_Leap_15.5/devel:gcc.repo && \
-    zypper --non-interactive --gpg-auto-import-keys refresh && \
+RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
     clang \
@@ -15,9 +14,7 @@ RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/
     fakeroot \
     freetype-devel  \
     gcc \
-    gcc10 \
     gcc-c++ \
-    gcc10-c++ \
     gdb \
     git \
     java-11-openjdk-devel \
@@ -66,23 +63,6 @@ RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/
 RUN rm /usr/bin/python3
 RUN ln /usr/bin/python3.11 /usr/bin/python3
 
-# install GnuPG 1.4 from source (needed for release signing); doesn't compile with
-# gcc10 so do this before we switch to it
-RUN cd /tmp && \
-    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
-    bzip2 -d gnupg-1.4.23.tar.bz2 && \
-    tar xvf gnupg-1.4.23.tar && \
-    cd gnupg-1.4.23 && \
-    ./configure && \
-    make && \
-    make install
-
-
-# use gcc10; needed by node-gyp for building electron native node modules
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
-    --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
-    --slave /usr/bin/gcov gcov /usr/bin/gcov-10
-
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools
 COPY dependencies/tools/rstudio-tools.sh /tools/rstudio-tools.sh
@@ -118,6 +98,16 @@ ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse15
 # panmirror needs to be able to build in this location
 RUN chmod -R 777 /opt/rstudio-tools/src
+
+# install GnuPG 1.4 from source (needed for release signing)
+RUN cd /tmp && \
+    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
+    bzip2 -d gnupg-1.4.23.tar.bz2 && \
+    tar xvf gnupg-1.4.23.tar && \
+    cd gnupg-1.4.23 && \
+    ./configure && \
+    make && \
+    make install
 
 # cachebust for Quarto release
 ADD https://quarto.org/docs/download/_download.json quarto_releases
