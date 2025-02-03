@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.MathUtil;
@@ -86,6 +87,8 @@ public abstract class RowTable<T> extends ScrollPanel
    
    public RowTable(String ariaLabel)
    {
+      data_ = new ArrayList<>();
+      
       table_ = Document.get().createTableElement();
       table_.setWidth("100%");
       Roles.getListboxRole().set(table_);

@@ -39,6 +39,7 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.RowTable;
+import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -158,7 +159,11 @@ public class DirectoryContentsWidget extends Composite
       Roles.getListboxRole().set(table_.getElement());
       Roles.getListboxRole().setAriaLabelProperty(table_.getElement(), constants_.directoryContentsLabel());
 
-      initWidget(table_);
+      progressPanel_ = new SimplePanelWithProgress();
+      progressPanel_.setInheritEditorTheme(false);
+      progressPanel_.setWidget(null);
+      progressPanel_.setHeight("300px");
+      initWidget(progressPanel_);
    }
 
    private void commitSelection(FileSystemItem item)
@@ -190,7 +195,15 @@ public class DirectoryContentsWidget extends Composite
 
    public void showProgress(boolean show)
    {
-      table_.draw(data_);
+      if (show)
+      {
+         progressPanel_.showProgress(300);
+      }
+      else
+      {
+         table_.draw(data_);
+         progressPanel_.setWidget(table_);
+      }
    }
 
    public void clearContents()
@@ -265,6 +278,7 @@ public class DirectoryContentsWidget extends Composite
    
    private final List<FileSystemItem> data_;
    private final RowTable<FileSystemItem> table_;
+   private final SimplePanelWithProgress progressPanel_;
    
    private FileSystemItem parentDirectory_;
    
