@@ -154,6 +154,15 @@ public class DirectoryContentsWidget extends Composite
          @Override
          public void onSelection(SelectionEvent<FileSystemItem> event)
          {
+            SelectionEvent.fire(DirectoryContentsWidget.this, event.getSelectedItem());
+         }
+      });
+      
+      table_.addSelectionCommitHandler(new SelectionCommitEvent.Handler<FileSystemItem>()
+      {
+         @Override
+         public void onSelectionCommit(SelectionCommitEvent<FileSystemItem> event)
+         {
             commitSelection(event.getSelectedItem());
          }
       });

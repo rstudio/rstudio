@@ -24,6 +24,9 @@ import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.dom.EventProperty;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.events.SelectionCommitEvent.Handler;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -57,7 +60,8 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public abstract class RowTable<T> extends ScrollPanel
-   implements HasSelectionHandlers<T>
+   implements HasSelectionHandlers<T>,
+              HasSelectionCommitHandlers<T>
 {
    // Classes should implement this by adding the requisite number
    // of table cells to the provided table row element.
@@ -129,7 +133,7 @@ public abstract class RowTable<T> extends ScrollPanel
          @Override
          public void onDoubleClick(DoubleClickEvent event)
          {
-            SelectionEvent.fire(RowTable.this, data_.get(selectedRow_));
+            SelectionCommitEvent.fire(RowTable.this, data_.get(selectedRow_));
          }
       }, DoubleClickEvent.getType());
       
@@ -201,7 +205,7 @@ public abstract class RowTable<T> extends ScrollPanel
                {
                   if (selectedRow_ != -1)
                   {
-                     SelectionEvent.fire(RowTable.this, data_.get(selectedRow_));
+                     SelectionCommitEvent.fire(RowTable.this, data_.get(selectedRow_));
                   }
                }
             }
@@ -242,12 +246,6 @@ public abstract class RowTable<T> extends ScrollPanel
    public T getSelectedItem()
    {
       return selectedItem_;
-   }
-   
-   @Override
-   public HandlerRegistration addSelectionHandler(SelectionHandler<T> handler)
-   {
-      return addHandler(handler, SelectionEvent.getType());
    }
    
    public void redraw()
@@ -426,6 +424,7 @@ public abstract class RowTable<T> extends ScrollPanel
       
       selectedRow_ = row;
       selectedItem_ = data_.get(selectedRow_);
+      SelectionEvent.fire(this, getSelectedItem());
       
       // check if the requested row is part of the current view;
       // if so, apply selection styling to it. note that we need
@@ -557,6 +556,19 @@ public abstract class RowTable<T> extends ScrollPanel
          block: behavior
       });
    }-*/;
+   
+   @Override
+   public HandlerRegistration addSelectionHandler(SelectionHandler<T> handler)
+   {
+      return addHandler(handler, SelectionEvent.getType());
+   }
+   
+   @Override
+   public HandlerRegistration addSelectionCommitHandler(Handler<T> handler)
+   {
+      return addHandler(handler, SelectionCommitEvent.getType());
+   }
+   
    
    private final String id_;
    private final TableElement table_;
