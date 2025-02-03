@@ -55,7 +55,7 @@ public abstract class RowTable<T> extends ScrollPanel
    implements HasSelectionHandlers<T>
 {
    // Classes should implement this by adding the requisite number
-   // of table ceels to the provided table row element.
+   // of table cells to the provided table row element.
    public abstract void drawRowImpl(T object, TableRowElement rowEl);
    
    // The height of each row in the table. This needs to be set to
