@@ -55,11 +55,23 @@ Options
 EOF
 exit 1
 }
+# Add detection function near top of file
+is_rhel8() {
+   if [ -f /etc/os-release ]; then
+      . /etc/os-release
+      [[ "$ID" == "rhel" && "${VERSION_ID%%.*}" == "8" ]] && return 0
+   fi
+   return 1
+}
 
 NPM_INSTALLED=0
 install-npm-packages() {
    if [ "${NPM_INSTALLED}" = "0" ]; then
-      MAKEFLAGS="" ${NPM} ci
+      if is_rhel8; then
+         MAKEFLAGS="" scl enable gcc-toolset-13 "${NPM} ci"
+      else
+         MAKEFLAGS="" ${NPM} ci
+      fi
       NPM_INSTALLED=1
    fi
 }
