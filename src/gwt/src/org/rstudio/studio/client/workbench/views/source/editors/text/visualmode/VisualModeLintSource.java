@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -27,7 +26,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionC
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSpelling;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 
 public class VisualModeLintSource implements LintSource

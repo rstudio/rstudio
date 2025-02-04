@@ -290,23 +290,6 @@
    .rs.automation.wrapJsResponse(self, response)
 })
 
-.rs.automation.addRemoteFunction("keyboard.insertText", function(...)
-{
-   reShortcut <- "^\\<(.*)\\>$"
-   for (input in list(...))
-   {
-      if (grepl(reShortcut, input, perl = TRUE))
-      {
-         shortcut <- sub(reShortcut, "\\1", input, perl = TRUE)
-         self$keyboard.executeShortcut(shortcut)
-      }
-      else if (nzchar(input))
-      {
-         self$client$Input.insertText(input)
-      }
-   }
-})
-
 .rs.automation.addRemoteFunction("modals.click", function(buttonName)
 {
    .rs.tryCatch({
