@@ -406,11 +406,10 @@ public abstract class RowTable<T> extends ScrollPanel
    
    public void selectRow(int row, ScrollType scrollType)
    {
-      row = MathUtil.clamp(row, 0, data_.size() - 1);
-      if (selectedRow_ == row)
-         return;
-      
-      selectRowImpl(row, scrollType);
+      if (selectedRow_ != row)
+      {
+         selectRowImpl(row, scrollType);
+      }
    }
    
    private void selectRowImpl(int row, ScrollType scrollType)
@@ -422,7 +421,7 @@ public abstract class RowTable<T> extends ScrollPanel
          selectedRowElement_ = null;
       }
       
-      selectedRow_ = row;
+      selectedRow_ = MathUtil.clamp(row, 0, data_.size() - 1);
       selectedItem_ = data_.get(selectedRow_);
       SelectionEvent.fire(this, getSelectedItem());
       
