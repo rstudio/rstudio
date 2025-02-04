@@ -19,5 +19,6 @@ import com.google.gwt.user.cellview.client.DataGrid;
 public interface RStudioDataGridResources extends DataGrid.Resources
 {
    @Source(RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS)
+   @Override
    RStudioDataGridStyle dataGridStyle();
 }

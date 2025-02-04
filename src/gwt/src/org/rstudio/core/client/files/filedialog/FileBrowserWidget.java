@@ -143,7 +143,7 @@ public class FileBrowserWidget extends Composite
 
    public void setDirectoryFocus(boolean focus)
    {
-      directory_.focus();
+      directory_.setFocus(focus);
    }
 
    @Override

@@ -330,7 +330,7 @@ public class DomUtils
    {
       impl.focus(element, alwaysDriveSelection);
    }
-   
+
    public static boolean isFocusable(Element element)
    {
       // If it has a non-negative tab index, it can be focused
