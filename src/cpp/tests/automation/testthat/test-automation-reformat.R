@@ -26,8 +26,8 @@ withr::defer(.rs.automation.deleteRemote())
    
    remote$editor.executeWithContents(".R", "c(1 #2\n)", function(editor) {
       editor$selectAll()
-      Sys.sleep(0.1)
       remote$commands.execute(.rs.appCommands$reformatCode)
+      Sys.sleep(1)
       contents <- editor$getValue()
       expect_equal(contents, "c(\n  1 #2\n)\n")
    })
