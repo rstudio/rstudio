@@ -229,6 +229,8 @@ SEXP rs_clearUserPref(SEXP prefNameSEXP)
 {
    std::string prefName = r::sexp::asString(prefNameSEXP);
    Error error = userPrefs().clearValue(prefName);
+   userPrefs().notifyClient(kUserPrefsUserLayer, prefName);
+   module_context::events().onPreferencesSaved();
    return error ? R_FalseValue : R_TrueValue;
 }
 
