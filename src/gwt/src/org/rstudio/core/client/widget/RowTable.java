@@ -81,7 +81,7 @@ public abstract class RowTable<T> extends ScrollPanel
    // for prefix-matching selection when typing.
    public abstract String getKey(T object);
    
-   private static enum ScrollType
+   public static enum ScrollType
    {
       NONE, DEFAULT, TOP, CENTER, END
    }
@@ -274,7 +274,13 @@ public abstract class RowTable<T> extends ScrollPanel
       }
       
       setScrollTop(scrollPos);
-      selectRowImpl(selectedRow_, ScrollType.NONE);
+      
+      int row = selectedRow_;
+      if (row != -1)
+      {
+         selectedRow_ = -1;
+         selectRow(row, ScrollType.NONE);
+      }
    }
    
    public void draw(List<T> data)
@@ -408,14 +414,10 @@ public abstract class RowTable<T> extends ScrollPanel
    
    public void selectRow(int row, ScrollType scrollType)
    {
-      if (selectedRow_ != row)
-      {
-         selectRowImpl(row, scrollType);
-      }
-   }
-   
-   private void selectRowImpl(int row, ScrollType scrollType)
-   {
+      row = MathUtil.clamp(row, 0, data_.size() - 1);
+      if (row == selectedRow_)
+         return;
+      
       if (selectedRowElement_ != null)
       {
          selectedRowElement_.removeClassName(RES.styles().selected());
