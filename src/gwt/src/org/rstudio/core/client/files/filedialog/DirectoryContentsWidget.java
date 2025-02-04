@@ -304,10 +304,22 @@ public class DirectoryContentsWidget extends Composite
       table_.setHorizontalScrollPosition(0);
       setSelectedRow(rowNum);
    }
-
+   
    public void focus()
    {
       table_.getElement().focus();
+   }
+
+   public void setFocus(boolean focus)
+   {
+      if (focus)
+      {
+         table_.getElement().focus();
+      }
+      else
+      {
+         table_.getElement().blur();
+      }
    }
    
    
