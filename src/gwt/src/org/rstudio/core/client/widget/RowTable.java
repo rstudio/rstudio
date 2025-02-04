@@ -205,6 +205,8 @@ public abstract class RowTable<T> extends ScrollPanel
                {
                   if (selectedRow_ != -1)
                   {
+                     event.stopPropagation();
+                     event.preventDefault();
                      SelectionCommitEvent.fire(RowTable.this, data_.get(selectedRow_));
                   }
                }
