@@ -8,7 +8,7 @@
 - RStudio now only writes the ProjectId field within a project's `.Rproj` file when required. Currently, this is for users who have configured a custom `.Rproj.user` location.
 
 #### Posit Workbench
--
+- An SELinux policy module is now available, allowing Workbench to run when enforcement is enabled. (#4937, rstudio-pro/#4749)
 
 ### Fixed
 #### RStudio
