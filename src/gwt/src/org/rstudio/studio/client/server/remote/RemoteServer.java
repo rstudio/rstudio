@@ -3823,11 +3823,16 @@ public class RemoteServer implements Server
 
    private boolean eventsPending(RpcResponse response)
    {
+      // NOTE: We previously treated the absence of the 'ep' field
+      // as an implicit sign that events were pending, but we have
+      // a number of custom methods and responses which fail to set
+      // this. We now require 'ep' to be explicitly set as "true"
+      // to signal if events are pending.
       String eventsPending = response.getField("ep");
       if (eventsPending == null)
-         return true; // default to true for json-rpc compactness
-      else
-         return Boolean.parseBoolean(eventsPending);
+         return false;
+      
+      return Boolean.parseBoolean(eventsPending);
    }
 
    private boolean resolveRpcErrorAndRetry(final String scope,
