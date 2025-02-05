@@ -465,7 +465,7 @@ class RemoteServerEventListener
    // note: kSecondListenDelayMs must be less than kWatchdogIntervalMs
    // (by a reasonable margin) to void the watchdog getting involved 
    // unnecessarily during a listen delay
-   private final int kWatchdogIntervalMs = 1000;
+   private final int kWatchdogIntervalMs = 2000;
    private final int kSecondListenBounceMs = 250;
    private Timer listenTimer_;
        
