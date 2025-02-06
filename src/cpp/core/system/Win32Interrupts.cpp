@@ -21,9 +21,9 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-void interrupt()
+void interrupt(int pid)
 {
-   ::GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+   ::GenerateConsoleCtrlEvent(CTRL_C_EVENT, pid);
 }
 
 } // end namespace system

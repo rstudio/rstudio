@@ -777,12 +777,13 @@ private:
          outputFile_ = outputFile;
       }
 
-
       // the process may be terminated normally by the IDE (e.g. to stop the
       // Shiny server); alternately, a termination is considered normal if
       // the process succeeded and produced output.
-      terminate(terminateType_ == renderTerminateNormal ||
-                (exitStatus == 0 && outputFile_.exists()));
+      terminate(
+          terminateType_ == renderTerminateNormal ||
+          exitStatus == 130 ||
+          (exitStatus == 0 && outputFile_.exists()));
    }
 
    void terminateWithError(const Error& error)

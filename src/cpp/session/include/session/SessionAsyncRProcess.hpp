@@ -94,6 +94,7 @@ private:
    void onProcessCompleted(int exitStatus);
    bool isRunning_;
    bool terminationRequested_;
+   std::chrono::steady_clock::time_point terminationRequestedTime_;
    PidType pid_;
    std::string input_;
    core::FilePath ipcRequests_;
