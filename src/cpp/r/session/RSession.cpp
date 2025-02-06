@@ -633,15 +633,21 @@ FilePath tempFile(const std::string& prefix, const std::string& extension)
    return filePath;
 }
 
+namespace {
+
+FilePath tempDirImpl()
+{
+   return FilePath(
+       string_utils::systemToUtf8(
+           r::util::fixPath(R_TempDir)));
+}
+
+} // end anonymous namespace
+
 FilePath tempDir()
 {
-   std::string tempDir;
-   Error error = r::exec::RFunction("tempdir").call(&tempDir);
-   if (error)
-      LOG_ERROR(error);
-
-   FilePath filePath(string_utils::systemToUtf8(r::util::fixPath(tempDir)));
-   return filePath;
+   static FilePath instance = tempDirImpl();
+   return instance;
 }
 
 } // namespace utils
