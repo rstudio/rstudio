@@ -27,6 +27,7 @@
 #include <r/ROptions.hpp>
 #include <r/session/RSessionUtils.hpp>
 #include <r/session/RGraphics.hpp>
+#include <r/session/REventLoop.hpp>
 
 #undef TRUE
 #undef FALSE
@@ -430,6 +431,10 @@ void onAfterAddDevice(DeviceContext* pDC)
 
 Error writeToPNG(const FilePath& targetPath, DeviceContext* pDC)
 {
+   // disable polled events -- we don't want to manipulate
+   // the graphics device (or destroy it!) while we're using it
+   r::session::event_loop::DisablePolledEventHandlerScope scope;
+
    // sync the shadow device to ensure we have the full playlist,
    shadowDevSync(pDC);
 

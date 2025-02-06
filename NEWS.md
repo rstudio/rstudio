@@ -13,6 +13,7 @@
 ### Fixed
 #### RStudio
 
+- Fixed an issue where RStudio could crash when attempting to clear plots while a new plot was being drawn. (#11856)
 - Fixed an issue where RStudio Server could hang when navigating the Open File dialog to a directory with many (> 100,000) files. (#15441)
 - Fixed an issue where the F1 shortcut would fail to retrieve documentation in packages. (#10869)
 - Fixed an issue where some column names were not displayed following select() in pipe completions. (#12501)

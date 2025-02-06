@@ -13,23 +13,22 @@
  *
  */
 
+#include <r/session/REventLoop.hpp>
+
+#include <Rembedded.h>
 #include <Rversion.h>
-
-#include <r/RExec.hpp>
-
-#include <shared_core/FilePath.hpp>
+#include <R_ext/eventloop.h>
 
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
-// after boost stuff to prevent length (Rf_length) symbol conflict issues
-#include "REmbedded.hpp"
+#include <shared_core/FilePath.hpp>
+
+#include <r/RExec.hpp>
 #include <r/RInterface.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RUtil.hpp>
 
-#include <R_ext/eventloop.h>
-
-#include <Rembedded.h>
+#include "REmbedded.hpp"
 
 #ifdef __APPLE__
 #include <dlfcn.h>
@@ -167,6 +166,9 @@ namespace event_loop {
 
 namespace {
 
+// is the polled event handler currently disabled?
+int s_disablePolledEventHandler = 0;
+
 // currently installed polled event handler
 void (*s_polledEventHandler)(void) = nullptr;
 
@@ -176,6 +178,9 @@ void (*s_oldPolledEventHandler)(void) = nullptr;
 // function we register with R to implement polled event handler
 void polledEventHandler()
 {
+   if (s_disablePolledEventHandler != 0)
+      return;
+
    if (s_polledEventHandler != nullptr)
       s_polledEventHandler();
 
@@ -244,6 +249,16 @@ void processEvents()
    // is no input currently available)
    R_runHandlers(R_InputHandlers, what);
 #endif
+}
+
+DisablePolledEventHandlerScope::DisablePolledEventHandlerScope()
+{
+   s_disablePolledEventHandler += 1;
+}
+
+DisablePolledEventHandlerScope::~DisablePolledEventHandlerScope()
+{
+   s_disablePolledEventHandler -= 1;
 }
 
 } // namespace event_loop
