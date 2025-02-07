@@ -516,7 +516,16 @@ Error ChildProcess::run()
    }
    else if (options_.detachProcess || options_.terminateChildren)
    {
-      dwFlags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
+      if (options_.detachProcess)
+      {
+         dwFlags |= DETACHED_PROCESS;
+      }
+
+      if (options_.terminateChildren)
+      {
+         dwFlags |= CREATE_NEW_PROCESS_GROUP;
+      }
+
       si.dwFlags |= STARTF_USESHOWWINDOW;
       si.wShowWindow = SW_HIDE;
    }
