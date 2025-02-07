@@ -21,9 +21,16 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-void interrupt(int pid)
+// NOTE: On Windows, the process group associated with a process is not
+// made available via any publicly-available Windows APIs. However, for
+// any process created with the CREATE_NEW_PROCESS_GROUP flag, the
+// process group id is the same as the process id of that new process.
+//
+// To wit, this API should only be used to terminate processes that are
+// known to be process group leaders.
+void interrupt(int processGroupId)
 {
-   ::GenerateConsoleCtrlEvent(CTRL_C_EVENT, pid);
+   ::GenerateConsoleCtrlEvent(CTRL_C_EVENT, processGroupId);
 }
 
 } // end namespace system
