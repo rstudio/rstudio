@@ -82,6 +82,13 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       asyncShow(OFFLINE, description, null);
    }
 
+   public static void showMemoryLimitExceeded(String status)
+   {
+      String description = constants_.memoryLimitAbortedMessage() + "\n\n" + status;
+
+      asyncShow(MEMORY_LIMIT, description, null);
+   }
+
    public static void prefetch(Command continuation)
    {
       asyncShow(PREFETCH, null, continuation);
@@ -119,6 +126,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    private static final int DISCONNECTED = 3;
    private static final int OFFLINE = 4;
    private static final int QUIT_MULTI = 5;
+   private static final int MEMORY_LIMIT = 6;
 
    private ApplicationEndedPopupPanel(int mode, String description)
    {
@@ -170,6 +178,12 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       case QUIT_MULTI:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationQuit2x()));
          captionLabel.setText(constants_.rSessionEndedCaption());
+         button.setText(constants_.reconnectButtonText());
+         break;
+
+      case MEMORY_LIMIT:
+         image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationSuicide2x()));
+         captionLabel.setText(constants_.rSessionAbortedCaption());
          button.setText(constants_.reconnectButtonText());
          break;
 

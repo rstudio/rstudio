@@ -64,6 +64,11 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
    return Success();
 }
 
+Error getProcessMemoryLimit(long *pUsedKb, MemoryProvider *pProvider)
+{
+   return 0;
+}
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

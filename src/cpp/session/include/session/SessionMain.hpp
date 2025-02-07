@@ -21,6 +21,8 @@ namespace session {
 
 void terminateAllChildProcesses();
 
+void controlledExit(int statusCode);
+
 }
 }
 

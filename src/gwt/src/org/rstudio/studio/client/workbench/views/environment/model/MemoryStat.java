@@ -44,7 +44,7 @@ public class MemoryStat extends JavaScriptObject
          case MEMORY_PROVIDER_LINUX_CGROUPS:
             return "cgroup";
          case MEMORY_PROVIDER_LINUX_ULIMIT:
-            return "ulimit";
+            return constants_.workbenchLimit();
          case MEMORY_PROVIDER_LINUX_PROCFS:
             return "/proc filesystem";
          case MEMORY_PROVIDER_LINUX_PROCMEMINFO:

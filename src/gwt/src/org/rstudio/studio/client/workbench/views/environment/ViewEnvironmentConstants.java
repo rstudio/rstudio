@@ -1231,7 +1231,85 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
     @Key("preparingDataImportText")
     String preparingDataImportText();
 
+    /**
+     * Translated "Session memory used"
+     * 
+     * @return translated "Session memory used"
+     */
+    @DefaultMessage("Session memory used")
+    @Key("sessionMemoryUsed")
+    String sessionMemoryUsed();
 
+    /**
+     * Translated "Session memory limit"
+     * 
+     * @return translated "Session memory limit"
+     */
+    @DefaultMessage("Session memory limit")
+    @Key("sessionMemoryLimit")
+    String sessionMemoryLimit();
 
+    /**
+     * Translated "System memory used"
+     *
+     * @return translated "System memory used"
+     */
+    @DefaultMessage("System memory used")
+    @Key("systemMemoryUsed")
+    String systemMemoryUsed();
+
+    /**
+     * Translated "unlimited"
+     *
+     * @return translated "unlimited"
+     */
+    @DefaultMessage("unlimited")
+    @Key("unlimited")
+    String unlimited();
+
+    /**
+     * Translated "limit"
+     *
+     * @return translated "limit"
+     */
+    @DefaultMessage("limit")
+    @Key("limit")
+    String limit();
+
+    /**
+     * Translated "free"
+     *
+     * @return translated "free"
+     */
+    @DefaultMessage("free")
+    @Key("freeMemory")
+    String freeMemory();
+
+    /**
+     * Translated "out of"
+     *
+     * @return translated "out of"
+     */
+    @DefaultMessage("out of")
+    @Key("outOf")
+    String outOf();
+
+    /**
+     * Translated "MiB"
+     *
+     * @return translated "MiB"
+     */
+    @DefaultMessage("MiB")
+    @Key("megabytes")
+    String megabytes();
+
+    /**
+     * Translated "Workbench limit"
+     *
+     * @return translated "Workbench limit"
+     */
+    @DefaultMessage("Workbench limit")
+    @Key("workbenchLimit")
+    String workbenchLimit();
 }
 

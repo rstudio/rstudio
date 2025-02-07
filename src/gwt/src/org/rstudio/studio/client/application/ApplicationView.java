@@ -36,9 +36,11 @@ public interface ApplicationView extends AriaLiveStatusReporter
    void showApplicationDisconnected();
    void showApplicationOffline();
    void showApplicationUpdateRequired();
+   void showMemoryLimitExceeded(String status, boolean abort);
    
    // error messages
    void showSessionAbendWarning();
+   void showMemoryLimitWarning(String status, boolean updateOnly, boolean overLimit);
    
    // status or alert message for screen reader users,
    @Override
