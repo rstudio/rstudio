@@ -768,21 +768,18 @@ private:
 
    void onCompleted(int exitStatus)
    {
+      using namespace module_context;
+
       // see if we can determine the output file
-      FilePath outputFile = module_context::extractOutputFileCreated
-                                                   (targetFile_.getParent(), allOutput_);
+      FilePath outputFile = extractOutputFileCreated(targetFile_.getParent(), allOutput_);
       if (!outputFile.isEmpty())
-      {
-         // record output file
          outputFile_ = outputFile;
-      }
 
       // the process may be terminated normally by the IDE (e.g. to stop the
       // Shiny server); alternately, a termination is considered normal if
       // the process succeeded and produced output.
       terminate(
           terminateType_ == renderTerminateNormal ||
-          exitStatus == 130 ||
           (exitStatus == 0 && outputFile_.exists()));
    }
 
@@ -826,7 +823,7 @@ private:
       resultJson["output_file"] = outputFile;
       
       std::vector<SourceMarker> knitrErrors;
-      if (renderErrorMarker_)
+      if (!terminationRequested() && renderErrorMarker_)
       {
          renderErrorMarker_.message = core::html_utils::HTML(renderErrorMessage_.str());
          knitrErrors.push_back(renderErrorMarker_);

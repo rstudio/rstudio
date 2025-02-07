@@ -293,10 +293,10 @@ void AsyncRProcess::onProcessCompleted(int exitStatus)
    ipcRequests_.removeIfExists();
    ipcResponse_.removeIfExists();
 
+   onCompleted(exitStatus);
+
    terminationRequested_ = false;
    terminationRequestedTime_ = {};
-
-   onCompleted(exitStatus);
 }
 
 bool AsyncRProcess::isRunning()
