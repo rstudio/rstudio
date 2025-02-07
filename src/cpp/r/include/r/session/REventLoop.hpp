@@ -16,6 +16,7 @@
 #ifndef R_EVENT_LOOP_HPP
 #define R_EVENT_LOOP_HPP
 
+#include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 namespace rstudio {
@@ -57,7 +58,12 @@ bool polledEventHandlerInitialized();
 // device to remain responsive)
 void processEvents();
 
-
+class DisablePolledEventHandlerScope : boost::noncopyable
+{
+public:
+   DisablePolledEventHandlerScope();
+   ~DisablePolledEventHandlerScope();
+};
 
 } // namespace event_loop
 } // namespace session

@@ -140,9 +140,14 @@ namespace session {
 
 namespace {
 
+int s_disablePolledEventHandler = 0;
+
 void (*s_polledEventHandler)(void) = nullptr;
 void rPolledEventCallback()
 {
+   if (s_disablePolledEventHandler != 0)
+       return;
+
    if (s_polledEventHandler != nullptr)
       s_polledEventHandler();
 }
@@ -370,6 +375,17 @@ void processEvents()
 {
    R_ProcessEvents();
 }
+
+DisablePolledEventHandlerScope::DisablePolledEventHandlerScope()
+{
+   s_disablePolledEventHandler += 1;
+}
+
+DisablePolledEventHandlerScope::~DisablePolledEventHandlerScope()
+{
+   s_disablePolledEventHandler -= 1;
+}
+
 
 } // namespace event_loop
 } // namespace session
