@@ -545,8 +545,11 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
           result.getViewerType() == UserPrefs.RMD_VIEWER_TYPE_NONE)
          return;
 
-      String extension = FileSystemItem.getExtensionFromPath(
-                                                result.getOutputFile());
+      String outputFile = result.getOutputFile();
+      if (StringUtil.isNullOrEmpty(outputFile))
+         return;
+      
+      String extension = FileSystemItem.getExtensionFromPath(outputFile);
       if (".pdf".equals(extension))
       {
          String previewer = prefs_.pdfPreviewer().getValue();
