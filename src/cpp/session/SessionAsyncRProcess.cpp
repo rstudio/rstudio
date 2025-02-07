@@ -33,43 +33,9 @@ namespace rstudio {
 namespace session {
 namespace async_r {
 
-namespace {
-
-void forceTerminateIf(bool terminate, int pid)
-{
-#ifdef _WIN32
-   // on windows we need to be a bit more aggressive (as we've seen cases where
-   // the 'stop' doesn't actually work. In this case, stopping a quarto doc containing
-   // an interactive shiny app doesn't seem to work on windows without terminating
-   // aggressively.
-   using namespace core::shell_utils;
-   if (terminate && pid > 0)
-   {
-      LOG_INFO_MESSAGE("terminate quarto pid: >" + std::to_string(pid));
-      ShellCommand cmd("taskkill");
-      cmd << "/F" << "/T" << "/PID" << core::safe_convert::numberToString(pid);
-      core::system::ProcessOptions options;
-      core::system::ProcessResult result;
-      core::Error error = core::system::runCommand(cmd, options, &result);
-      if (error)
-      {
-         LOG_ERROR(error);
-      }
-      else if (result.exitStatus != EXIT_SUCCESS)
-      {
-         LOG_ERROR_MESSAGE("Error killing quarto job (terminate R process): " + result.stdErr);
-      }
-   }
-#endif
-}
-
-} // end anonymous namespace
-
 AsyncRProcess::AsyncRProcess()
     : isRunning_(false),
-      isQuarto_(false),
-      terminationRequested_(false),
-      terminationRequestedTime_(),
+      terminationRequestedCount_(0),
       pid_(0)
 {
 }
@@ -280,15 +246,10 @@ void AsyncRProcess::onStderr(const std::string& output)
 bool AsyncRProcess::onContinue()
 {
    // if this process has been interrupted, but appears to still be alive,
-   // then forcefully terminate the process after 3 seconds
-   if (terminationRequested_)
+   // then forcefully terminate the process
+   if (terminationRequestedCount_ >= 3)
    {
-      auto elapsed = std::chrono::steady_clock::now() - terminationRequestedTime_;
-      if (elapsed >= std::chrono::seconds(3))
-      {
-         forceTerminateIf(isQuarto_, pid_);
-         return false;
-      }
+      return false;
    }
    
    // check for request requiring a response
@@ -318,7 +279,7 @@ bool AsyncRProcess::onContinue()
 
 bool AsyncRProcess::terminationRequested()
 {
-   return terminationRequested_;
+   return terminationRequestedCount_ != 0;
 }
 
 void AsyncRProcess::onProcessCompleted(int exitStatus)
@@ -329,8 +290,7 @@ void AsyncRProcess::onProcessCompleted(int exitStatus)
 
    onCompleted(exitStatus);
 
-   terminationRequested_ = false;
-   terminationRequestedTime_ = {};
+   terminationRequestedCount_ = 0;
 }
 
 bool AsyncRProcess::isRunning()
@@ -340,17 +300,11 @@ bool AsyncRProcess::isRunning()
 
 void AsyncRProcess::terminate(bool isQuarto)
 {
-   // first, send an interrupt to give the session a chance to close gracefully
-   isQuarto_ = isQuarto;
+   // update our counter
+   terminationRequestedCount_ += 1;
+
+   // interrup the process
    core::system::interrupt(pid_);
-
-   // save the time that we attempted to interrupt the process
-   if (terminationRequested_ == false)
-   {
-      terminationRequested_ = true;
-      terminationRequestedTime_ = std::chrono::steady_clock::now();
-   }
-
 }
 
 void AsyncRProcess::markCompleted() 

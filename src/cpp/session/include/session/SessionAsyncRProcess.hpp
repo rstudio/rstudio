@@ -93,9 +93,7 @@ protected:
 private:
    void onProcessCompleted(int exitStatus);
    bool isRunning_;
-   bool isQuarto_;
-   bool terminationRequested_;
-   std::chrono::steady_clock::time_point terminationRequestedTime_;
+   int terminationRequestedCount_;
    PidType pid_;
    std::string input_;
    core::FilePath ipcRequests_;
