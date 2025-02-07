@@ -93,7 +93,7 @@ protected:
 private:
    void onProcessCompleted(int exitStatus);
    bool isRunning_;
-   bool terminationRequested_;
+   int terminationRequestedCount_;
    PidType pid_;
    std::string input_;
    core::FilePath ipcRequests_;

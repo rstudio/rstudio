@@ -20,7 +20,7 @@ namespace system {
 #ifndef CORE_SYSTEM_INTERRUPTS_HPP
 #define CORE_SYSTEM_INTERRUPTS_HPP
 
-void interrupt();
+void interrupt(int pid = 0);
 
 #endif /* CORE_SYSTEM_INTERRUPTS_HPP */
 
