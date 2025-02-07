@@ -258,15 +258,19 @@ void validateSelfSignedCertificate(const FilePath& certPath)
    }
 
    // Check if the certificate is self-signed.
-   if (isSelfSigned(cert) && !isCertTrustedLocally(cert))
+   if (isSelfSigned(cert))
    {
-      LOG_WARNING_MESSAGE("Self-signed certificate is not in the system CA store: " + certPath.getAbsolutePath());
-      X509_free(cert);
-      return;
+      if (!isCertTrustedLocally(cert))
+      {
+         LOG_WARNING_MESSAGE("Self-signed certificate is not in the system CA store: " + certPath.getAbsolutePath());
+         X509_free(cert);
+         return;
+      }
+
+      LOG_DEBUG_MESSAGE("Successfully validated self signed certificate: " + certPath.getAbsolutePath());
    }
 
    X509_free(cert);
-   LOG_DEBUG_MESSAGE("Successfully validated self signed certificate: " + certPath.getAbsolutePath());
 #endif
 }
 
