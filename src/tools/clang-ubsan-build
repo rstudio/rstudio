@@ -16,6 +16,8 @@ cd "${BUILD_DIR}"
 cmake ../cpp                         \
     -DLIBR_HOME="${R_HOME}"          \
     -DCMAKE_BUILD_TYPE="Debug"       \
+    -DCMAKE_C_COMPILER=clang         \
+    -DCMAKE_CXX_COMPILER=clang++     \
     -DCMAKE_C_FLAGS="${ASANFLAGS}"   \
     -DCMAKE_CXX_FLAGS="${ASANFLAGS}" \
     "$@"
