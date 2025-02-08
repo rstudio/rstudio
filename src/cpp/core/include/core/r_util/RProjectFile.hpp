@@ -72,6 +72,14 @@ struct RProjectBuildDefaults
    bool cleanBeforeInstall;
 };
 
+struct ProjectConfigEntry
+{
+   std::string name;
+   std::string value;
+
+   ProjectConfigEntry(const std::string& name, const std::string& value) : name(name), value(value) {}
+};
+
 struct RProjectConfig
 {
    RProjectConfig()
@@ -120,7 +128,8 @@ struct RProjectConfig
         spellingDictionary(),
         copilotEnabled(DefaultValue),
         copilotIndexingEnabled(DefaultValue),
-        projectName()
+        projectName(),
+        unknownFields()
    {
    }
 
@@ -170,6 +179,20 @@ struct RProjectConfig
    int copilotEnabled;
    int copilotIndexingEnabled;
    std::string projectName;
+
+   // Unknown items, presumably written by a newer version of RStudio.
+   //
+   // On save, these are written after the known fields, in ascending alphabetical order.
+   // 
+   // IMPORTANT! To avoid unnecessary changes to project files created by newer versions of RStudio
+   //            (when being rewritten by older versions of RStudio) always add new fields to the final
+   //            section of the file, in alphabetical order and add them to the "knownFields" set
+   //            in RProjectFile.cpp.
+   //
+   //            This mechanism was introduced in the 2025.04 release of RStudio; earlier versions 
+   //            did not preserve unknown fields.
+   //
+   std::vector<ProjectConfigEntry> unknownFields;
 };
 
 Error findProjectFile(FilePath filePath,

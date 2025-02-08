@@ -370,6 +370,61 @@ bool interpretRVersionValue(const std::string& value,
    }
 }
 
+std::set<std::string> knownFields =
+{
+   "Version",
+   "ProjectId",
+   "RVersion",
+   "RestoreWorkspace",
+   "SaveWorkspace",
+   "AlwaysSaveHistory",
+   "EnableCodeIndexing",
+   "UseSpacesForTab",
+   "NumSpacesForTab",
+   "Encoding",
+   "RnwWeave",
+   "LaTeX",
+   "RootDocument",
+   "AutoAppendNewline",
+   "StripTrailingWhitespace",
+   "LineEndingConversion",
+   "BuildType",
+   "PackageUseDevtools",
+   "PackageCleanBeforeInstall",
+   "PackagePath",
+   "PackageInstallArgs",
+   "PackageBuildArgs",
+   "PackageBuildBinaryArgs",
+   "PackageCheckArgs",
+   "PackageRoxygenize",
+   "MakefilePath",
+   "WebsitePath",
+   "CustomScriptPath",
+   "Tutorial",
+   "UseNativePipeOperator",
+   "QuitChildProcessesOnExit",
+   "DisableExecuteRprofile",
+   "DefaultOpenDocs",
+   "DefaultTutorial",
+   "MarkdownWrap",
+   "MarkdownWrapAtColumn",
+   "MarkdownReferences",
+   "MarkdownCanonical",
+   "ZoteroLibraries",
+   "PythonType",
+   "PythonVersion",
+   "PythonPath",
+   "SpellingDictionary",
+   "ProjectName",
+
+   // IMPORTANT: new fields MUST be added below this comment, in ascending, case-sensitive,
+   // alphabetical order, and written to the file in that order (after the above fields).
+   //
+   // "AnotherNewField",
+   // "NewField",
+   // ...
+};
+
 } // anonymous namespace
 
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
@@ -495,6 +550,15 @@ Error readProjectFile(const FilePath& projectFilePath,
                                     pUserErrMsg);
    if (error)
       return error;
+
+   // Store unknown fields so we can write them back
+   for (const auto& field : dcfFields)
+   {
+      if (knownFields.find(field.first) == knownFields.end())
+      {
+         pConfig->unknownFields.emplace_back(field.first, field.second);
+      }
+   }
 
    // extract version
    Fields::const_iterator it = dcfFields.find("Version");
@@ -1339,6 +1403,23 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(boost::str(fmt % config.projectName));
    }
 
+   // sort and write unknown fields
+   if (!config.unknownFields.empty())
+   {
+      std::vector<ProjectConfigEntry> sortedFields = config.unknownFields;
+      std::sort(sortedFields.begin(), sortedFields.end(),
+                [](const ProjectConfigEntry& a, const ProjectConfigEntry& b) {
+                   return a.name < b.name;
+                });
+
+      contents.append("\n");
+      for (const ProjectConfigEntry& entry : sortedFields)
+      {
+         boost::format fmt("%1%: %2%\n");
+         contents.append(boost::str(fmt % entry.name % entry.value));
+      }
+   }
+   
    // write it
    return writeStringToFile(projectFilePath,
                             contents,
