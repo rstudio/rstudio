@@ -420,8 +420,8 @@ Error SessionManager::launchAndTrackSession(
    std::string tsanOptions = core::system::getenv("TSAN_OPTIONS");
    if (tsanOptions.empty())
    {
-      LOG_INFO_MESSAGE("Thread sanitizer is enabled. Reports will be logged to /tmp/rstudio-server/rsession.tsan.log.");
-      tsanOptions = "log_path=/tmp/rstudio-server/rsession.tsan.log";
+      LOG_INFO_MESSAGE("Thread sanitizer is enabled. Reports will be logged to /tmp/rsession.tsan.log.");
+      tsanOptions = "log_path=/tmp/rsession.tsan.log";
    }
 
    core::system::setenv(
