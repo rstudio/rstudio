@@ -9,7 +9,6 @@ EOF
 ASANFLAGS="$(echo "${ASANFLAGS}" | tr '\n' ' ')"
 
 : ${BUILD_DIR="clang-ubsan-build"}
-: ${MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"}
 : ${R_HOME="$(R RHOME)"}
 
 mkdir -p "${BUILD_DIR}"
