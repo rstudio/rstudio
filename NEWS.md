@@ -6,6 +6,7 @@
 - RStudio installation on Windows now registers icons for many supported file types. (#12730)
 - RStudio for Windows binaries now have digital signatures. (rstudio-pro#5772)
 - RStudio now only writes the ProjectId field within a project's `.Rproj` file when required. Currently, this is for users who have configured a custom `.Rproj.user` location.
+- RStudio will now preserve unknown fields in `.Rproj` files that are added by future versions of RStudio. (#15524)
 
 #### Posit Workbench
 -
