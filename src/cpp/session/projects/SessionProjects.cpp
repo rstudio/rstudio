@@ -706,6 +706,7 @@ Error writeProjectConfig(const json::Object& configJson)
    }
    else
    {
+      config.unknownFields = existingConfig.unknownFields;
       if (!existingConfig.defaultOpenDocs.empty())
       {
          config.defaultOpenDocs = existingConfig.defaultOpenDocs;
