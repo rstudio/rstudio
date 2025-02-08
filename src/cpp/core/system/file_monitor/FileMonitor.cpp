@@ -437,7 +437,9 @@ public:
    }
 
    explicit RegistrationCommand(Handle handle)
-      : type_(Unregister), handle_(handle)
+      : type_(Unregister),
+        recursive_(false),
+        handle_(handle)
    {
    }
 
