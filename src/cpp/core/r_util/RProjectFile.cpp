@@ -370,7 +370,8 @@ bool interpretRVersionValue(const std::string& value,
    }
 }
 
-std::set<std::string> knownFields =
+// Known fields in RStudio Kousa Dogwood (2024.12) and earlier. Do not add to this list.
+std::set<std::string> legacyFields =
 {
    "Version",
    "ProjectId",
@@ -416,13 +417,7 @@ std::set<std::string> knownFields =
    "PythonPath",
    "SpellingDictionary",
    "ProjectName",
-
-   // IMPORTANT: new fields MUST be added below this comment, in ascending, case-sensitive,
-   // alphabetical order, and written to the file in that order (after the above fields).
-   //
-   // "AnotherNewField",
-   // "NewField",
-   // ...
+   // IMPORTANT: do not add to or modify this list.
 };
 
 } // anonymous namespace
@@ -551,12 +546,12 @@ Error readProjectFile(const FilePath& projectFilePath,
    if (error)
       return error;
 
-   // Store unknown fields so we can write them back
+   // Store fields from the sorted section
    for (const auto& field : dcfFields)
    {
-      if (knownFields.find(field.first) == knownFields.end())
+      if (legacyFields.find(field.first) == legacyFields.end())
       {
-         pConfig->sortedFields.emplace_back(field.first, field.second);
+         pConfig->sortedFields[field.first] = field.second;
       }
    }
 
@@ -1403,23 +1398,17 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(boost::str(fmt % config.projectName));
    }
 
-   // sort and write unknown fields
+   // write the sorted fields to end of file
    if (!config.sortedFields.empty())
    {
-      std::vector<ProjectConfigEntry> sortedFields = config.sortedFields;
-      std::sort(sortedFields.begin(), sortedFields.end(),
-                [](const ProjectConfigEntry& a, const ProjectConfigEntry& b) {
-                   return a.name < b.name;
-                });
-
       contents.append("\n");
-      for (const ProjectConfigEntry& entry : sortedFields)
+      for (const auto& field : config.sortedFields)
       {
          boost::format fmt("%1%: %2%\n");
-         contents.append(boost::str(fmt % entry.name % entry.value));
+         contents.append(boost::str(fmt % field.first % field.second));
       }
    }
-   
+
    // write it
    return writeStringToFile(projectFilePath,
                             contents,

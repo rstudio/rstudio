@@ -18,6 +18,7 @@
 
 #include <string>
 #include <iosfwd>
+#include <map>
 
 #include <core/r_util/RVersionInfo.hpp>
 
@@ -70,14 +71,6 @@ struct RProjectBuildDefaults
    }
    bool useDevtools;
    bool cleanBeforeInstall;
-};
-
-struct ProjectConfigEntry
-{
-   std::string name;
-   std::string value;
-
-   ProjectConfigEntry(const std::string& name, const std::string& value) : name(name), value(value) {}
 };
 
 struct RProjectConfig
@@ -180,19 +173,11 @@ struct RProjectConfig
    int copilotIndexingEnabled;
    std::string projectName;
 
-   // Unknown items, presumably written by a newer version of RStudio.
+   // Sorted fields, which can be a mixture of known fields and unknown fields written
+   // by a newer version of RStudio.
    //
-   // On save, these are written after the known fields, in ascending alphabetical order.
-   // 
-   // IMPORTANT! To avoid unnecessary changes to project files created by newer versions of RStudio
-   //            (when being rewritten by older versions of RStudio) always add new fields to the final
-   //            section of the file, in alphabetical order and add them to the "knownFields" set
-   //            in RProjectFile.cpp.
-   //
-   //            This mechanism was introduced in the 2025.04 release of RStudio; earlier versions 
-   //            did not preserve unknown fields.
-   //
-   std::vector<ProjectConfigEntry> sortedFields;
+   // On save, these are written in the final section of the file, in alphabetical order by name.
+   std::map<std::string, std::string> sortedFields;
 };
 
 Error findProjectFile(FilePath filePath,
