@@ -122,6 +122,13 @@ struct RProjectConfig
         copilotEnabled(DefaultValue),
         copilotIndexingEnabled(DefaultValue),
         projectName(),
+
+        // new fields following the convention of being stored in the final section of the file in 
+        // sorted order start here
+
+        // firstSortedExample(), // EXAMPLE: remove once a new field has actually been added
+
+        // internal storage for sorted fields
         sortedFields()
    {
    }
@@ -173,10 +180,12 @@ struct RProjectConfig
    int copilotIndexingEnabled;
    std::string projectName;
 
-   // Sorted fields, which can be a mixture of known fields and unknown fields written
-   // by a newer version of RStudio.
-   //
-   // On save, these are written in the final section of the file, in alphabetical order by name.
+   // fields living in the sorted section at end of file start here
+
+   // EXAMPLE: (search for firstSortedExample in RProjectFile.cpp to see usage)
+   // Remove this when adding an actual new field.
+   // std::string firstSortedExample;
+
    std::map<std::string, std::string> sortedFields;
 };
 

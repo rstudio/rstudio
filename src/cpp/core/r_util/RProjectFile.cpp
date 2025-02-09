@@ -1084,6 +1084,13 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->projectName = it->second;
    }
 
+   // EXAMPLE: adding a new field; this can be removed once we've actually added new fields
+   // it = dcfFields.find("FirstSortedExample");
+   // if (it != dcfFields.end())
+   // {
+   //    pConfig->firstSortedExample = it->second;
+   // }
+
    return Success();
 }
 
@@ -1398,11 +1405,23 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(boost::str(fmt % config.projectName));
    }
 
-   // write the sorted fields to end of file
-   if (!config.sortedFields.empty())
+   auto sortedFields = config.sortedFields; // create writable copy
+
+   // Newer field scheme (sorted fields in final section) processing starts here.
+   // Unlike the "legacy" fields above, do not add these directly to "contents"; instead
+   // add (or remove) from sortedFields.
+
+   // EXAMPLE: adding/updating a new field; remove example after actually adding a new field
+   // if (!config.firstSortedExample.empty())
+   //    sortedFields["FirstSortedExample"] = config.firstSortedExample;
+   // else
+   //    sortedFields.erase("FirstSortedExample");
+
+   // add the sorted fields
+   if (!sortedFields.empty())
    {
       contents.append("\n");
-      for (const auto& field : config.sortedFields)
+      for (const auto& field : sortedFields)
       {
          boost::format fmt("%1%: %2%\n");
          contents.append(boost::str(fmt % field.first % field.second));
