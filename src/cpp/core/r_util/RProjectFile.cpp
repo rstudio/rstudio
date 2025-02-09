@@ -556,7 +556,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       if (knownFields.find(field.first) == knownFields.end())
       {
-         pConfig->unknownFields.emplace_back(field.first, field.second);
+         pConfig->sortedFields.emplace_back(field.first, field.second);
       }
    }
 
@@ -1404,9 +1404,9 @@ Error writeProjectFile(const FilePath& projectFilePath,
    }
 
    // sort and write unknown fields
-   if (!config.unknownFields.empty())
+   if (!config.sortedFields.empty())
    {
-      std::vector<ProjectConfigEntry> sortedFields = config.unknownFields;
+      std::vector<ProjectConfigEntry> sortedFields = config.sortedFields;
       std::sort(sortedFields.begin(), sortedFields.end(),
                 [](const ProjectConfigEntry& a, const ProjectConfigEntry& b) {
                    return a.name < b.name;

@@ -129,7 +129,7 @@ struct RProjectConfig
         copilotEnabled(DefaultValue),
         copilotIndexingEnabled(DefaultValue),
         projectName(),
-        unknownFields()
+        sortedFields()
    {
    }
 
@@ -192,7 +192,7 @@ struct RProjectConfig
    //            This mechanism was introduced in the 2025.04 release of RStudio; earlier versions 
    //            did not preserve unknown fields.
    //
-   std::vector<ProjectConfigEntry> unknownFields;
+   std::vector<ProjectConfigEntry> sortedFields;
 };
 
 Error findProjectFile(FilePath filePath,
