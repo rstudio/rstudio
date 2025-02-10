@@ -192,3 +192,13 @@ To add an exception for this directory, call:
 ```
 
 You can mark the offending directory as safe by following the suggested action above and then closing and re-opening the project in RStudio.
+
+Additionally, the Git pane will not appear if Git is not activated for the current project in the project options. To enable Git for the project:
+
+1.  Open the Tools menu and select Project Options.
+
+2.  Navigate to the Git/SVN tab.
+
+3.  In the dropdown field labeled Version control system, change the selection from (None) to Git.
+
+4.  Restart RStudio and check if the Git pane appears.
