@@ -59,6 +59,7 @@
 #include <core/ProgramStatus.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/URL.hpp>
+#include <core/http/ProxyUtils.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/UriHandler.hpp>
@@ -2263,6 +2264,7 @@ int main(int argc, char * const argv[])
       // set the standalone port if we are running in standalone mode
       if (options.standalone())
       {
+         core::http::addNoProxyUrl("127.0.0.1", options.wwwPort());
          core::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
       }
 

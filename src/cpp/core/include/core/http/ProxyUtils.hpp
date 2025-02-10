@@ -38,7 +38,7 @@ public:
    httpsProxyUrl(const std::string& address = std::string(),
                  const std::string& port = std::string()) const;
 
-   const NoProxyRules& noProxyRules() const { return noProxyRules_; }      
+   const NoProxyRules& noProxyRules() const { return noProxyRules_; }
 private:
    bool shouldProxy(const std::string& address, const std::string& port) const;
    std::string httpProxyVar_;
@@ -46,6 +46,7 @@ private:
    NoProxyRules noProxyRules_;
 };
 
+void addNoProxyUrl(const std::string& address, const std::string& port);
 const ProxyUtils& proxyUtils();
 
 } // namespace http

@@ -30,20 +30,17 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <core/Thread.hpp>
-
-#include <core/gwt/GwtLogHandler.hpp>
-#include <core/gwt/GwtFileHandler.hpp>
-
 #include <shared_core/json/Json.hpp>
 #include <shared_core/Logger.hpp>
-#include <core/json/JsonRpc.hpp>
 
-#include <core/system/Crypto.hpp>
-
-#include <core/text/TemplateFilter.hpp>
-
+#include <core/Thread.hpp>
+#include <core/gwt/GwtFileHandler.hpp>
+#include <core/gwt/GwtLogHandler.hpp>
 #include <core/http/CSRFToken.hpp>
+#include <core/http/ProxyUtils.hpp>
+#include <core/json/JsonRpc.hpp>
+#include <core/system/Crypto.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <r/RExec.hpp>
 #include <r/session/RSession.hpp>
@@ -221,6 +218,7 @@ Error startHttpConnectionListener()
       // set the standalone port so rpostback and others know how to
       // connect back into the session process
       std::string port = safe_convert::numberToString(endpoint.port());
+      core::http::addNoProxyUrl("127.0.0.1", port);
       core::system::setenv(kRSessionStandalonePortNumber, port);
 
       // save the standalone port for possible session relaunches - launcher sessions
@@ -967,8 +965,7 @@ void onUserPrefsChanged(const std::string& layer, const std::string& pref)
    }
 }
 
-
-}
+} // end anonymous namespace
 
 core::Error initialize()
 {
