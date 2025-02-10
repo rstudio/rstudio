@@ -18,6 +18,7 @@
 
 #include <string>
 #include <iosfwd>
+#include <map>
 
 #include <core/r_util/RVersionInfo.hpp>
 
@@ -120,7 +121,15 @@ struct RProjectConfig
         spellingDictionary(),
         copilotEnabled(DefaultValue),
         copilotIndexingEnabled(DefaultValue),
-        projectName()
+        projectName(),
+
+        // new fields following the convention of being stored in the final section of the file in 
+        // sorted order start here
+
+        // firstSortedExample(), // EXAMPLE: remove once a new field has actually been added
+
+        // internal storage for sorted fields
+        sortedFields()
    {
    }
 
@@ -170,6 +179,14 @@ struct RProjectConfig
    int copilotEnabled;
    int copilotIndexingEnabled;
    std::string projectName;
+
+   // fields living in the sorted section at end of file start here
+
+   // EXAMPLE: (search for firstSortedExample in RProjectFile.cpp to see usage)
+   // Remove this when adding an actual new field.
+   // std::string firstSortedExample;
+
+   std::map<std::string, std::string> sortedFields;
 };
 
 Error findProjectFile(FilePath filePath,

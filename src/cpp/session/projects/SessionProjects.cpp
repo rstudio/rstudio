@@ -706,6 +706,7 @@ Error writeProjectConfig(const json::Object& configJson)
    }
    else
    {
+      config.sortedFields = existingConfig.sortedFields;
       if (!existingConfig.defaultOpenDocs.empty())
       {
          config.defaultOpenDocs = existingConfig.defaultOpenDocs;

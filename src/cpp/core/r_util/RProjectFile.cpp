@@ -370,6 +370,56 @@ bool interpretRVersionValue(const std::string& value,
    }
 }
 
+// Known fields in RStudio Kousa Dogwood (2024.12) and earlier. Do not add to this list.
+std::set<std::string> legacyFields =
+{
+   "Version",
+   "ProjectId",
+   "RVersion",
+   "RestoreWorkspace",
+   "SaveWorkspace",
+   "AlwaysSaveHistory",
+   "EnableCodeIndexing",
+   "UseSpacesForTab",
+   "NumSpacesForTab",
+   "Encoding",
+   "RnwWeave",
+   "LaTeX",
+   "RootDocument",
+   "AutoAppendNewline",
+   "StripTrailingWhitespace",
+   "LineEndingConversion",
+   "BuildType",
+   "PackageUseDevtools",
+   "PackageCleanBeforeInstall",
+   "PackagePath",
+   "PackageInstallArgs",
+   "PackageBuildArgs",
+   "PackageBuildBinaryArgs",
+   "PackageCheckArgs",
+   "PackageRoxygenize",
+   "MakefilePath",
+   "WebsitePath",
+   "CustomScriptPath",
+   "Tutorial",
+   "UseNativePipeOperator",
+   "QuitChildProcessesOnExit",
+   "DisableExecuteRprofile",
+   "DefaultOpenDocs",
+   "DefaultTutorial",
+   "MarkdownWrap",
+   "MarkdownWrapAtColumn",
+   "MarkdownReferences",
+   "MarkdownCanonical",
+   "ZoteroLibraries",
+   "PythonType",
+   "PythonVersion",
+   "PythonPath",
+   "SpellingDictionary",
+   "ProjectName",
+   // IMPORTANT: do not add to or modify this list.
+};
+
 } // anonymous namespace
 
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
@@ -495,6 +545,15 @@ Error readProjectFile(const FilePath& projectFilePath,
                                     pUserErrMsg);
    if (error)
       return error;
+
+   // Store fields from the sorted section
+   for (const auto& field : dcfFields)
+   {
+      if (legacyFields.find(field.first) == legacyFields.end())
+      {
+         pConfig->sortedFields[field.first] = field.second;
+      }
+   }
 
    // extract version
    Fields::const_iterator it = dcfFields.find("Version");
@@ -1025,6 +1084,13 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->projectName = it->second;
    }
 
+   // EXAMPLE: adding a new field; this can be removed once we've actually added new fields
+   // it = dcfFields.find("FirstSortedExample");
+   // if (it != dcfFields.end())
+   // {
+   //    pConfig->firstSortedExample = it->second;
+   // }
+
    return Success();
 }
 
@@ -1337,6 +1403,29 @@ Error writeProjectFile(const FilePath& projectFilePath,
    {
       boost::format fmt("\nProjectName: %1%\n");
       contents.append(boost::str(fmt % config.projectName));
+   }
+
+   auto sortedFields = config.sortedFields; // create writable copy
+
+   // Newer field scheme (sorted fields in final section) processing starts here.
+   // Unlike the "legacy" fields above, do not add these directly to "contents"; instead
+   // add (or remove) from sortedFields.
+
+   // EXAMPLE: adding/updating a new field; remove example after actually adding a new field
+   // if (!config.firstSortedExample.empty())
+   //    sortedFields["FirstSortedExample"] = config.firstSortedExample;
+   // else
+   //    sortedFields.erase("FirstSortedExample");
+
+   // add the sorted fields
+   if (!sortedFields.empty())
+   {
+      contents.append("\n");
+      for (const auto& field : sortedFields)
+      {
+         boost::format fmt("%1%: %2%\n");
+         contents.append(boost::str(fmt % field.first % field.second));
+      }
    }
 
    // write it
