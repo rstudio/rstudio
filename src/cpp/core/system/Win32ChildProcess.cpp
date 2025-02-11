@@ -145,10 +145,17 @@ Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
          {
             break;
          }
+
+         // If a named pipe is being read in message mode and the next message
+         // is longer than the nNumberOfBytesToRead parameter specifies,
+         // ReadFile returns FALSE and GetLastError returns ERROR_MORE_DATA.
+         // The remainder of the message can be read by a subsequent call to
+         // the ReadFile or PeekNamedPipe function.
          else if (error == ERROR_MORE_DATA)
          {
             continue;
          }
+
          else
          {
             return systemError(error, ERROR_LOCATION);
