@@ -19,6 +19,7 @@
 #include <shared_core/Error.hpp>
 
 #include <core/Log.hpp>
+#include <core/Thread.hpp>
 #include <core/system/Process.hpp>
 
 namespace rstudio {
@@ -161,13 +162,20 @@ public:
       if (pResult == nullptr)
          return Success();
 
-      // read standard out if we didn't have a previous problem
-      if (!error)
-         error = readStdOut(&(pResult->stdOut));
+      // read stdout, stderr
+      auto readStdoutThread = core::thread::run([&]()
+      {
+         Error error = readStdOut(&(pResult->stdOut));
+         if (error)
+            LOG_ERROR(error);
+      });
 
-      // read standard error if we didn't have a previous problem
-      if (!error)
-         error = readStdErr(&(pResult->stdErr));
+      auto readStderrThread = core::thread::run([&]()
+      {
+         Error error = readStdErr(&(pResult->stdErr));
+         if (error)
+            LOG_ERROR(error);
+      });
 
       // wait on exit and get exit status. note we always need to do this
       // even if we called terminate due to an earlier error (so we always
@@ -180,6 +188,12 @@ public:
          else
             LOG_ERROR(waitError);
       }
+
+      if (readStdoutThread.joinable())
+         readStdoutThread.timed_join(boost::posix_time::seconds(1));
+
+      if (readStderrThread.joinable())
+         readStderrThread.timed_join(boost::posix_time::seconds(1));
 
       // return error status
       return error;

@@ -15,6 +15,7 @@
 #### RStudio
 
 - Fixed an issue where execution of notebook chunks could fail if the `http_proxy` environment variable was set. (#15530)
+- Fixed an issue where RStudio could hang when attempting to stage large folders from the Git pane on Windows. (#13222)
 - Fixed an issue where RStudio could crash when attempting to clear plots while a new plot was being drawn. (#11856)
 - Fixed an issue where the R startup banner was printed twice in rare cases. (#6907)
 - Fixed an issue where RStudio Server could hang when navigating the Open File dialog to a directory with many (> 100,000) files. (#15441)
@@ -25,5 +26,5 @@
 - Fixed an issue where printing 0-row data.frames containing an 'hms' column from an R Markdown chunk could cause an unexpected error. (#15459)
 
 #### Posit Workbench
--
+- Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
 

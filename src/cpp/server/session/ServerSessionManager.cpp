@@ -45,6 +45,16 @@
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
+#if defined(__SANITIZE_THREAD__)
+# define HAS_THREAD_SANITIZER
+#endif
+
+#if defined(__has_feature)
+# if __has_feature(thread_sanitizer)
+#  define HAS_THREAD_SANITIZER
+# endif
+#endif
+
 namespace rstudio {
 namespace server {
 
@@ -404,9 +414,7 @@ Error SessionManager::launchAndTrackSession(
             rLibPath.getAbsolutePath());
 #endif
 
-#if defined(__has_feature)
-# if __has_feature(thread_sanitizer)
-
+#ifdef HAS_THREAD_SANITIZER
    // the thread sanitizer will cause the session to hang if output
    // if written to stdout or stderr, so redirect to a file instead
    std::string tsanOptions = core::system::getenv("TSAN_OPTIONS");
@@ -420,9 +428,8 @@ Error SessionManager::launchAndTrackSession(
        &config.environment,
        "TSAN_OPTIONS",
        tsanOptions);
-
-# endif
 #endif
+
 
    // launch the session
    PidType pid = 0;
