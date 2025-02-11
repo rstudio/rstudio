@@ -161,13 +161,20 @@ public:
       if (pResult == nullptr)
          return Success();
 
-      // read standard out if we didn't have a previous problem
-      if (!error)
-         error = readStdOut(&(pResult->stdOut));
+      // read stdout, stderr
+      std::thread readStdoutThread([&]()
+      {
+         Error error = readStdOut(&(pResult->stdOut));
+         if (error)
+            LOG_ERROR(error);
+      });
 
-      // read standard error if we didn't have a previous problem
-      if (!error)
-         error = readStdErr(&(pResult->stdErr));
+      std::thread readStderrThread([&]()
+      {
+         Error error = readStdErr(&(pResult->stdErr));
+         if (error)
+            LOG_ERROR(error);
+      });
 
       // wait on exit and get exit status. note we always need to do this
       // even if we called terminate due to an earlier error (so we always
@@ -180,6 +187,12 @@ public:
          else
             LOG_ERROR(waitError);
       }
+
+      if (readStdoutThread.joinable())
+         readStdoutThread.detach();
+
+      if (readStderrThread.joinable())
+         readStderrThread.detach();
 
       // return error status
       return error;

@@ -117,7 +117,7 @@ void resolveCommand(std::string* pExecutable, std::vector<std::string>* pArgs)
 
 Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
 {
-   CHAR buff[1024];
+   CHAR buff[4096];
    DWORD nBytesRead;
 
    while(TRUE)
@@ -793,31 +793,45 @@ void AsyncChildProcess::poll()
          LOG_ERROR(error);
       }
 
-      // read all remaining stdout
-      if (pImpl_->hStdOutRead)
-      {
-         std::string stdOut;
-         Error error = readPipeUntilDone(pImpl_->hStdOutRead, &stdOut);
-         if (error)
-            reportError(error);
+      // read all remaining stdout, stderr -- use threads as reading
+      // from stdout and stderr can block
+      std::string stdOut, stdErr;
 
-         if (!stdOut.empty() && callbacks_.onStdout)
-            callbacks_.onStdout(*this, stdOut);
+      std::thread readStdOutThread([&]()
+      {
+         if (pImpl_->hStdOutRead)
+         {
+            std::string stdOut;
+            Error error = readPipeUntilDone(pImpl_->hStdOutRead, &stdOut);
+            if (error)
+               reportError(error);
+         }
+      });
+
+      std::thread readStdErrThread([&]()
+      {
+         // read all remaining stderr
+         if (pImpl_->hStdErrRead)
+         {
+            Error error = readPipeUntilDone(pImpl_->hStdErrRead, &stdErr);
+            if (error)
+               reportError(error);
+         }
+      });
+
+      readStdOutThread.join();
+      readStdErrThread.join();
+
+      if (!stdOut.empty() && callbacks_.onStdout)
+      {
+         hasRecentOutput = true;
+         callbacks_.onStdout(*this, stdOut);
       }
 
-      // read all remaining stderr
-      if (pImpl_->hStdErrRead)
+      if (!stdErr.empty() && callbacks_.onStderr)
       {
-         std::string stdErr;
-         Error error = readPipeUntilDone(pImpl_->hStdErrRead, &stdErr);
-         if (error)
-            reportError(error);
-
-         if (!stdErr.empty() && callbacks_.onStderr)
-         {
-            hasRecentOutput = true;
-            callbacks_.onStderr(*this, stdErr);
-         }
+         hasRecentOutput = true;
+         callbacks_.onStderr(*this, stdErr);
       }
 
       // close the process handle
