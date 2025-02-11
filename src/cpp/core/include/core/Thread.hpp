@@ -368,7 +368,7 @@ private:
 };
 
 template <typename F>
-std::thread run(F&& f)
+boost::thread run(F&& f)
 {
    try
    {
@@ -377,7 +377,7 @@ std::thread run(F&& f)
       if (error)
          LOG_ERROR(error);
 
-      return std::thread(std::forward<F>(f));
+      return boost::thread(std::forward<F>(f));
    }
    CATCH_UNEXPECTED_EXCEPTION;
 

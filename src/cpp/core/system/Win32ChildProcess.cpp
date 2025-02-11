@@ -806,8 +806,8 @@ void AsyncChildProcess::poll()
          LOG_ERROR(error);
       }
 
-      // read all remaining stdout, stderr -- use threads as reading
-      // from stdout and stderr can block
+      // read all remaining stdout, stderr -- use threads to avoid unexpected
+      // cases where reading from a handle on Windows can block
       std::string stdOut, stdErr;
 
       auto readStdOutThread = core::thread::run([&]()
@@ -832,8 +832,11 @@ void AsyncChildProcess::poll()
          }
       });
 
-      readStdOutThread.join();
-      readStdErrThread.join();
+      if (readStdOutThread.joinable())
+         readStdOutThread.timed_join(boost::posix_time::seconds(1));
+
+      if (readStdErrThread.joinable())
+         readStdErrThread.timed_join(boost::posix_time::seconds(1));
 
       if (!stdOut.empty() && callbacks_.onStdout)
       {

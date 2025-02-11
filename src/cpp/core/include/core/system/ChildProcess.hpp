@@ -190,10 +190,10 @@ public:
       }
 
       if (readStdoutThread.joinable())
-         readStdoutThread.join();
+         readStdoutThread.timed_join(boost::posix_time::seconds(1));
 
       if (readStderrThread.joinable())
-         readStderrThread.join();
+         readStderrThread.timed_join(boost::posix_time::seconds(1));
 
       // return error status
       return error;
