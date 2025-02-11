@@ -114,11 +114,20 @@ test_context("ProxyUtilsTests")
       auto rule = core::http::createNoProxyRule("127.0.0.1", "8787");
       utils.addNoProxyRule(std::move(rule));
 
-      auto proxyUrl = utils.httpProxyUrl("http://www.example.com");
-      REQUIRE(proxyUrl.has_value());
+      // proxy other URLs
+      REQUIRE(utils.httpProxyUrl("other.example.com", "443").has_value());
+      REQUIRE(utils.httpProxyUrl("other.example.com").has_value());
 
-      auto localUrl = utils.httpProxyUrl("127.0.0.1", "8787");
-      REQUIRE_FALSE(localUrl.has_value());
+      // proxy requests to localhost targeted at other ports
+      REQUIRE(utils.httpProxyUrl("127.0.0.1", "8788").has_value());
+      REQUIRE(utils.httpProxyUrl("127.0.0.1").has_value());
+
+      // don't proxy for example.com directly
+      REQUIRE_FALSE(utils.httpProxyUrl("example.com", "443").has_value());
+
+      // don't proxy localhost on this port
+      REQUIRE_FALSE(utils.httpProxyUrl("127.0.0.1", "8787").has_value());
+
    }
 }
 
