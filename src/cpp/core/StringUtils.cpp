@@ -503,11 +503,12 @@ std::string jsonLiteralEscape(const std::string& str)
 // the JSON could be misconstrued by the browser as HTML.
 std::string jsonHtmlEscape(const std::string& str)
 {
-   std::string escapes = "<>";
+   std::string escapes = "<>&";
    std::map<char, std::string> subs;
 
    subs['<'] = "\\u003c"; // JSON unicode character encoding
    subs['>'] = "\\u003e"; // JSON unicode character encoding
+   subs['&'] = "\\u0026"; // JSON unicode character encoding
 
    return escape(escapes, subs, str);
 }

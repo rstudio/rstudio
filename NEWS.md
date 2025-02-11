@@ -24,5 +24,5 @@
 - Fixed an issue where printing 0-row data.frames containing an 'hms' column from an R Markdown chunk could cause an unexpected error. (#15459)
 
 #### Posit Workbench
--
+- Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
 
