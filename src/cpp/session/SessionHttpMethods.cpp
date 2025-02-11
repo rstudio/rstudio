@@ -30,20 +30,17 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <core/Thread.hpp>
-
-#include <core/gwt/GwtLogHandler.hpp>
-#include <core/gwt/GwtFileHandler.hpp>
-
 #include <shared_core/json/Json.hpp>
 #include <shared_core/Logger.hpp>
-#include <core/json/JsonRpc.hpp>
 
-#include <core/system/Crypto.hpp>
-
-#include <core/text/TemplateFilter.hpp>
-
+#include <core/Thread.hpp>
+#include <core/gwt/GwtFileHandler.hpp>
+#include <core/gwt/GwtLogHandler.hpp>
 #include <core/http/CSRFToken.hpp>
+#include <core/http/ProxyUtils.hpp>
+#include <core/json/JsonRpc.hpp>
+#include <core/system/Crypto.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <r/RExec.hpp>
 #include <r/session/RSession.hpp>
@@ -967,8 +964,7 @@ void onUserPrefsChanged(const std::string& layer, const std::string& pref)
    }
 }
 
-
-}
+} // end anonymous namespace
 
 core::Error initialize()
 {
