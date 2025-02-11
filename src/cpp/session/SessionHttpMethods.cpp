@@ -218,7 +218,7 @@ Error startHttpConnectionListener()
       // set the standalone port so rpostback and others know how to
       // connect back into the session process
       std::string port = safe_convert::numberToString(endpoint.port());
-      core::http::addNoProxyUrl("127.0.0.1", port);
+      core::http::proxyUtils().addNoProxyRule("127.0.0.1", port);
       core::system::setenv(kRSessionStandalonePortNumber, port);
 
       // save the standalone port for possible session relaunches - launcher sessions

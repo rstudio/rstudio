@@ -28,13 +28,6 @@ namespace rstudio {
 namespace core {
 namespace http {
 
-namespace {
-
-// URLs which we can contact directly, without using proxy
-std::vector<std::pair<std::string, std::string>> s_noProxyUrls;
-
-} // end anonymous namespace
-
 ProxyUtils::ProxyUtils()
 {
    auto http_proxy = system::getenv("http_proxy");
@@ -96,14 +89,6 @@ bool ProxyUtils::shouldProxy(const std::string& address,
    if (address.empty() && port.empty())
       return true;
 
-   for (auto&& url : s_noProxyUrls)
-   {
-      if (address == url.first && port == url.second)
-      {
-         return false;
-      }
-   }
-
    for (const auto& rule : noProxyRules_)
    {
       if (rule->match(address, port))
@@ -115,12 +100,14 @@ bool ProxyUtils::shouldProxy(const std::string& address,
    return true;
 }
 
-void addNoProxyUrl(const std::string& address, const std::string& port)
+void ProxyUtils::addNoProxyRule(const std::string& address,
+                                const std::string& port)
 {
-   s_noProxyUrls.push_back({address, port});
+   auto rule = createNoProxyRule(address + ":" + port);
+   noProxyRules_.emplace_back(std::move(rule));
 }
 
-const ProxyUtils& proxyUtils()
+ProxyUtils& proxyUtils()
 {
    static ProxyUtils proxyUtils;
    return proxyUtils;
