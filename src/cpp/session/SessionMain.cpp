@@ -2264,8 +2264,6 @@ int main(int argc, char * const argv[])
       // set the standalone port if we are running in standalone mode
       if (options.standalone())
       {
-         auto rule = core::http::createNoProxyRule("127.0.0.1", options.wwwPort());
-         core::http::proxyUtils().addNoProxyRule(std::move(rule));
          core::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
       }
 

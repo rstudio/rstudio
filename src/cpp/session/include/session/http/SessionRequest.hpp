@@ -19,8 +19,6 @@
 #include <shared_core/Error.hpp>
 #include <core/system/Environment.hpp>
 
-#include <session/http/SessionRequest.hpp>
-
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/http/TcpIpBlockingClientSsl.hpp>
 #include <core/http/ConnectionRetryProfile.hpp>
@@ -101,6 +99,15 @@ inline core::Error sendSessionRequest(const std::string& uri,
 
       }
 #endif
+
+      // Ensure a no-proxy rule is set up, to allow the loopback request
+      static std::once_flag s_noProxyOnce;
+      std::call_once(s_noProxyOnce, [=]()
+      {
+         auto rule = core::http::createNoProxyRule("127.0.0.1", tcpipPort);
+         core::http::proxyUtils().addNoProxyRule(std::move(rule));
+      });
+
       // Need to turn verify off here because we don't know the address used in the cert. Because we are listening on 127.0.0.1, 
       // and the tcp stack forces that to be a local connection, there's no ambiguity about who we are connecting to so I don't
       // think verification adds anything here.
