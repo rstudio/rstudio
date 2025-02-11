@@ -19,6 +19,7 @@
 #include <shared_core/Error.hpp>
 
 #include <core/Log.hpp>
+#include <core/Thread.hpp>
 #include <core/system/Process.hpp>
 
 namespace rstudio {
@@ -162,14 +163,14 @@ public:
          return Success();
 
       // read stdout, stderr
-      std::thread readStdoutThread([&]()
+      auto readStdoutThread = core::thread::run([&]()
       {
          Error error = readStdOut(&(pResult->stdOut));
          if (error)
             LOG_ERROR(error);
       });
 
-      std::thread readStderrThread([&]()
+      auto readStderrThread = core::thread::run([&]()
       {
          Error error = readStdErr(&(pResult->stdErr));
          if (error)
@@ -189,10 +190,10 @@ public:
       }
 
       if (readStdoutThread.joinable())
-         readStdoutThread.detach();
+         readStdoutThread.join();
 
       if (readStderrThread.joinable())
-         readStderrThread.detach();
+         readStderrThread.join();
 
       // return error status
       return error;

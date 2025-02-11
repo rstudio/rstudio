@@ -19,6 +19,7 @@
 #include <map>
 #include <queue>
 #include <set>
+#include <thread>
 
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
@@ -27,7 +28,7 @@
 
 #include <core/BoostErrors.hpp>
 #include <core/BoostThread.hpp>
-#include <core/Log.hpp>
+#include <core/system/System.hpp>
 
 #define LOCK_MUTEX(m)                                                          \
    try                                                                         \
@@ -365,6 +366,23 @@ private:
    std::set<T, std::less<T>, std::allocator<T> > set_;
    mutable boost::mutex mutex_;
 };
+
+template <typename F>
+std::thread run(F&& f)
+{
+   try
+   {
+      system::SignalBlocker blocker;
+      Error error = blocker.blockAll();
+      if (error)
+         LOG_ERROR(error);
+
+      return std::thread(std::forward<F>(f));
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
+
+   return {};
+}
 
 void safeLaunchThread(boost::function<void()> threadMain,
                       boost::thread* pThread = nullptr);

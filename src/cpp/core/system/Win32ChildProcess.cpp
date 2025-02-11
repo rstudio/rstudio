@@ -810,7 +810,7 @@ void AsyncChildProcess::poll()
       // from stdout and stderr can block
       std::string stdOut, stdErr;
 
-      std::thread readStdOutThread([&]()
+      auto readStdOutThread = core::thread::run([&]()
       {
          if (pImpl_->hStdOutRead)
          {
@@ -821,7 +821,7 @@ void AsyncChildProcess::poll()
          }
       });
 
-      std::thread readStdErrThread([&]()
+      auto readStdErrThread = core::thread::run([&]()
       {
          // read all remaining stderr
          if (pImpl_->hStdErrRead)
