@@ -131,16 +131,18 @@ void UriHandler::operator()(const Request& request,
    
 void UriHandlers::add(const UriHandler& handler) 
 {
+   std::lock_guard<std::recursive_mutex> guard(mutex_);
    uriHandlers_.push_back(handler);
 }
 
 boost::optional<UriAsyncHandlerFunctionVariant> UriHandlers::handlerFor(const std::string& uri) const
 {
+   std::lock_guard<std::recursive_mutex> guard(mutex_);
    std::vector<UriHandler>::const_iterator handler = std::find_if(
                               uriHandlers_.begin(), 
                               uriHandlers_.end(), 
                               boost::bind(&UriHandler::matches, _1, uri));
-   if ( handler != uriHandlers_.end() )
+   if (handler != uriHandlers_.end())
    {
       return handler->function();
    }

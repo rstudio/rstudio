@@ -5,15 +5,13 @@ read -r -d '' ASANFLAGS <<- EOF
 EOF
 ASANFLAGS="$(echo "${ASANFLAGS}" | tr '\n' ' ')"
 
-: ${BUILD_DIR="clang-tsan-build"}
+: ${BUILD_DIR="gcc-tsan-build"}
 : ${R_HOME="$(R RHOME)"}
 
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 cmake ../cpp                                                \
     -DLIBR_HOME="${R_HOME}"                                 \
-    -DCMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang     \
-    -DCMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++ \
     -DCMAKE_BUILD_TYPE="Debug"                              \
     -DCMAKE_C_FLAGS="${ASANFLAGS}"                          \
     -DCMAKE_CXX_FLAGS="${ASANFLAGS}"                        \

@@ -66,7 +66,8 @@ public:
                          bool warnIfNoSuchVariableInScope = false,
                          bool warnIfVariableIsDefinedButNotUsed = false,
                          bool recordStyleLint = false)
-      : lintRFunctions_(lintRFunctions),
+      : isExplicit_(false),
+        lintRFunctions_(lintRFunctions),
         checkArgumentsToRFunctionCalls_(checkArgumentsToRFunctionCalls),
         checkUnexpectedAssignmentInFunctionCall_(checkUnexpectedAssignmentInFunctionCall),
         warnIfNoSuchVariableInScope_(warnIfNoSuchVariableInScope),

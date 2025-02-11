@@ -13,6 +13,9 @@
  *
  */
 
+#include <r/RCntxt.hpp>
+#include <r/RCntxtUtils.hpp>
+
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 
@@ -23,12 +26,22 @@ namespace rstudio {
 namespace r {
 namespace session {
 
+namespace {
+struct RContext {
+   struct RContext* nextcontext;
+   int callflag;
+};
+} // end anonymous namespace
+
+// NOTE: Invoked in handleUSR2, so this needs to be async-signal safe.
 bool isBusy()
 {
-   // conclude that R is busy if there are R frames on the stack
-   int numFrames = 0;
-   Error error = r::exec::RFunction("base:::sys.nframe").call(&numFrames);
-   return numFrames != 0;
+   RContext* context = (RContext*) R_GlobalContext;
+   for (; context != NULL; context = context->nextcontext)
+      if (context->callflag & CTXT_FUNCTION)
+         return true;
+
+   return false;
 }
 
 } // namespace session
