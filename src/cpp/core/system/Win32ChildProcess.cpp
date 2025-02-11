@@ -120,27 +120,40 @@ Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
    CHAR buff[4096];
    DWORD nBytesRead;
 
-   while(TRUE)
+   while (true)
    {
       // read from pipe
-      BOOL result = ::ReadFile(hPipe, buff, sizeof(buff), &nBytesRead, nullptr);
-      auto lastErr = ::GetLastError();
-
-      // end of file
-      if (nBytesRead == 0)
-         break;
-
-      // pipe broken
-      else if (!result && (lastErr == ERROR_BROKEN_PIPE))
-         break;
-
-      // unexpected error
-      else if (!result)
-         return systemError(lastErr, ERROR_LOCATION);
-
-      // got input, append it
+      if (::ReadFile(hPipe, buff, sizeof(buff), &nBytesRead, nullptr))
+      {
+         if (nBytesRead == 0)
+         {
+            break;
+         }
+         else
+         {
+            pOutput->append(buff, nBytesRead);
+         }
+      }
       else
-         pOutput->append(buff, nBytesRead);
+      {
+         DWORD error = ::GetLastError();
+
+         // If an anonymous pipe is being used and the write handle has been closed,
+         // when ReadFile attempts to read using the pipe's corresponding read handle,
+         // the function returns FALSE and GetLastError returns ERROR_BROKEN_PIPE.
+         if (error == ERROR_BROKEN_PIPE)
+         {
+            break;
+         }
+         else if (error == ERROR_MORE_DATA)
+         {
+            continue;
+         }
+         else
+         {
+            return systemError(error, ERROR_LOCATION);
+         }
+      }
    }
 
    return Success();
@@ -406,7 +419,7 @@ Error ChildProcess::run()
    CloseHandleOnExitScope closeStdOut(&hStdOutWrite, ERROR_LOCATION);
    if (!::SetHandleInformation(hStdOutWrite,
                                HANDLE_FLAG_INHERIT,
-                               HANDLE_FLAG_INHERIT) )
+                               HANDLE_FLAG_INHERIT))
    {
       return LAST_SYSTEM_ERROR();
    }
@@ -420,7 +433,7 @@ Error ChildProcess::run()
    CloseHandleOnExitScope closeStdErr(&hStdErrWrite, ERROR_LOCATION);
    if (!::SetHandleInformation(hStdErrWrite,
                                HANDLE_FLAG_INHERIT,
-                               HANDLE_FLAG_INHERIT) )
+                               HANDLE_FLAG_INHERIT))
    {
       return LAST_SYSTEM_ERROR();
    }
