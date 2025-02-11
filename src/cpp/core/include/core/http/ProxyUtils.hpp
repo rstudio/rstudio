@@ -39,9 +39,10 @@ public:
          const std::string& address = std::string(),
          const std::string& port = std::string()) const;
 
-   void addNoProxyRule(
-         const std::string& address,
-         const std::string& port = std::string());
+   void addNoProxyRule(std::unique_ptr<NoProxyRule> rule)
+   {
+      noProxyRules_.emplace_back(std::move(rule));
+   }
 
    const NoProxyRules& noProxyRules() const { return noProxyRules_; }
 

@@ -100,13 +100,6 @@ bool ProxyUtils::shouldProxy(const std::string& address,
    return true;
 }
 
-void ProxyUtils::addNoProxyRule(const std::string& address,
-                                const std::string& port)
-{
-   auto rule = createNoProxyRule(address + ":" + port);
-   noProxyRules_.emplace_back(std::move(rule));
-}
-
 ProxyUtils& proxyUtils()
 {
    static ProxyUtils proxyUtils;

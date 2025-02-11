@@ -100,8 +100,25 @@ test_context("ProxyUtilsTests")
       system::setenv("no_proxy", "example.com");
 
       ProxyUtils utils;
-      auto url =  utils.httpProxyUrl("example.com", "443");
+      auto url = utils.httpProxyUrl("example.com", "443");
       REQUIRE_FALSE(url.has_value());
+   }
+
+   test_that("noProxyRules can be added")
+   {
+      ProxyUtils utils;
+
+      system::setenv("http_proxy", "http://proxy.example.com:8080");
+      system::setenv("no_proxy", "example.com");
+
+      auto rule = core::http::createNoProxyRule("127.0.0.1", "8787");
+      utils.addNoProxyRule(std::move(rule));
+
+      auto proxyUrl = utils.httpProxyUrl("http://www.example.com");
+      REQUIRE(proxyUrl.has_value());
+
+      auto localUrl = utils.httpProxyUrl("127.0.0.1", "8787");
+      REQUIRE_FALSE(localUrl.has_value());
    }
 }
 
