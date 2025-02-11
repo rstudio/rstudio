@@ -2250,7 +2250,10 @@ int main(int argc, char * const argv[])
       if (desktopMode)
       {
          // do the same for port number, for rpostback in rdesktop configs
-         core::system::setenv(kRSessionPortNumber, options.wwwPort());
+         std::string port = options.wwwPort();
+         auto rule = core::http::createNoProxyRule("127.0.0.1", port);
+         core::http::proxyUtils().addNoProxyRule(std::move(rule));
+         core::system::setenv(kRSessionPortNumber, port);
       }
 
       // provide session stream for postback in server mode
@@ -2264,7 +2267,10 @@ int main(int argc, char * const argv[])
       // set the standalone port if we are running in standalone mode
       if (options.standalone())
       {
-         core::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
+         std::string port = options.wwwPort();
+         auto rule = core::http::createNoProxyRule("127.0.0.1", port);
+         core::http::proxyUtils().addNoProxyRule(std::move(rule));
+         core::system::setenv(kRSessionStandalonePortNumber, port);
       }
 
       // ensure we aren't being started as a low (privileged) account
