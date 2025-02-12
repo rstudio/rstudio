@@ -105,7 +105,7 @@ p + div[style="text-align: center;"]
 }
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme blockquote {
-   background-color: CODE_BACKGROUND_COLOR_DARK !important;
+   background-color: transparent !important;
    border-radius: 3px;
 }
 
@@ -202,5 +202,9 @@ p + div[style="text-align: center;"]
 
 .rstudio-themes-dark.ace_editor_theme div.sourceCode {
    background-color: CODE_BACKGROUND_COLOR_DARK;
+}
+
+.rstudio-themes-dark a {
+	background: transparent;
 }
 
