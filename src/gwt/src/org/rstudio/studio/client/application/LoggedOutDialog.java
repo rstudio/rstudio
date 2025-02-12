@@ -20,14 +20,20 @@ import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.MultiLineLabel;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.model.ProductEditionInfo;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+
 
 public class LoggedOutDialog extends ModalDialogBase 
 {
@@ -48,9 +54,22 @@ public class LoggedOutDialog extends ModalDialogBase
    {
       super(Roles.getAlertdialogRole());
 
-      setText("Posit Workbench Login Required");
+      RStudioGinjector.INSTANCE.injectMembers(this);
+
+      setText(isWorkbench() ? constants_.workbenchLoginRequired() : constants_.serverLoginRequired());
       addActionButton(createLoginButton());
       setGlassEnabled(true);
+   }
+
+   @Inject
+   private void initialize(Provider<ProductEditionInfo> pEdition)
+   {
+      pEdition_ = pEdition;
+   }
+
+   private boolean isWorkbench()
+   {
+      return pEdition_.get() != null && pEdition_.get().proLicense();
    }
 
    @Override
@@ -70,7 +89,7 @@ public class LoggedOutDialog extends ModalDialogBase
          image.setAltText(imageText);
 
 
-      Label label = new MultiLineLabel("Login expired or signed out from another window.\nSelect 'Login' for a new login tab. Return here to resume session.");
+      Label label = new MultiLineLabel(constants_.serverLoginRequiredMessage());
       label.setStylePrimaryName(ThemeResources.INSTANCE.themeStyles().dialogMessage());
       horizontalPanel.add(label);
 
@@ -79,7 +98,7 @@ public class LoggedOutDialog extends ModalDialogBase
 
    private ThemedButton createLoginButton() 
    {
-      ThemedButton loginButton = new ThemedButton("Login", clickEvent -> 
+      ThemedButton loginButton = new ThemedButton(constants_.loginButton(), clickEvent -> 
       {
          String url = ApplicationUtils.getHostPageBaseURLWithoutContext(true) + "auth-sign-in";
          Window.open(url, "_blank", "");
@@ -104,4 +123,6 @@ public class LoggedOutDialog extends ModalDialogBase
    }
 
    private boolean visible_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
+   private Provider<ProductEditionInfo> pEdition_;
 }
