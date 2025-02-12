@@ -13,14 +13,15 @@
 
 ### QA Notes
 
-> Add additional information for QA on how to validate the change, paying special attention to the level of risk, adjacent areas that could be affected by the change, and any important contextual information not present in the linked issues. 
+> Ensure you have updated the QA Notes in the original issue.
 
 ### Documentation
-> Specify which documentation has been added or modified and why (User Guide? Admin Guide?). If no documentation was added for a new feature, indicate why. 
+
+> Specify which documentation has been added or modified and why (User Guide? Admin Guide?). If no documentation was added for a new feature, indicate why. If documentation was added in a separate PR, link the PR here.
 
 ### Checklist
 
-- [ ] If this PR adds a new feature, or fixes a bug in a previously released version, it includes an entry in `NEWS.md` 
+- [ ] If this PR adds a new feature, or fixes a bug in a previously released version, it includes an entry in `NEWS.md`
 - [ ] If this PR adds or changes UI, the updated UI meets [accessibility standards](https://github.com/rstudio/rstudio/wiki/Accessibility)
 - [ ] A reviewer is assigned to this PR (if unsure who to assign, check Area Owners list)
 - [ ] This PR passes all local unit tests

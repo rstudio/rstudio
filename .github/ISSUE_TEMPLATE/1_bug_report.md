@@ -27,6 +27,10 @@ This issue tracker is for bugs and feature requests in the RStudio IDE. If you'r
 
 ### Describe the behavior you expected
 
+### QA Notes
+
+> Once you have opened a PR, add additional information for QA on how to validate the change, paying special attention to the level of risk, adjacent areas that could be affected by the change, and any important contextual information not present in the original description.
+
 <!-- 
 Please keep the below portion in your issue, and check `[x]` the applicable boxes.
 -->
