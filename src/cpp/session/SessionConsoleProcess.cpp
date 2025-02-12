@@ -15,19 +15,20 @@
 
 #include <sstream>
 
+#include <core/system/Interrupts.hpp>
+
 #include <r/RExec.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
+#include <session/SessionModuleContext.hpp>
+#include <session/SessionConsoleProcessSocket.hpp>
+#include <session/prefs/UserPrefs.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include <session/SessionModuleContext.hpp>
-#include <session/prefs/UserPrefs.hpp>
-#include <session/SessionConsoleProcessSocket.hpp>
-
 #include "modules/SessionWorkbench.hpp"
-#include "SessionConsoleProcessTable.hpp"
-
 #include "modules/SessionReticulate.hpp"
+
+#include "SessionConsoleProcessTable.hpp"
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -481,7 +482,8 @@ void ConsoleProcess::enquePrompt(const std::string& prompt)
 
 void ConsoleProcess::interrupt()
 {
-   interrupt_ = true;
+   core::system::interrupt(pid_);
+   interruptCount_ += 1;
 }
 
 void ConsoleProcess::interruptChild()
@@ -497,9 +499,12 @@ void ConsoleProcess::resize(int cols, int rows)
 
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
-   // full stop interrupt if requested
-   if (interrupt_)
+   // if we've attempted to interrupt this process multiple times,
+   // but this process still appears to be running, then exit
+   if (interruptCount_ >= 3)
+   {
       return false;
+   }
 
    // send SIGINT to children of the shell
    if (interruptChild_)
