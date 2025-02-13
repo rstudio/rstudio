@@ -343,7 +343,8 @@ inline bool isLocalLeftAssign(const RToken& token)
 
 inline bool isLocalRightAssign(const RToken& token)
 {
-   return token.isType(RToken::OPER) && token.contentEquals(L"->");
+   return token.isType(RToken::OPER) &&
+          token.contentEquals(L"->");
 }
 
 inline bool isParentLeftAssign(const RToken& token)

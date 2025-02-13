@@ -27,8 +27,6 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <iostream>
-#include <iomanip>
 #include <gsl/gsl>
 
 #include <core/Algorithm.hpp>
