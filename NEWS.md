@@ -26,6 +26,7 @@
 - Fixed an issue where opening multiple copies of RStudio Desktop installed in different locations would cause RStudio to try to open itself as a script. (#15554)
 - Fixed an issue where printing 0-row data.frames containing an 'hms' column from an R Markdown chunk could cause an unexpected error. (#15459)
 - Fixed an issue where the Resources page in the Help pane was not legible with dark themes. (#10855)
+- Fixed an issue where "Posit Workbench" was used instead of "RStudio Server" in a message shown when the user was signed out during a session. (#15698)
 - Fixed an issue where the RStudio diagnostics system incorrectly inferred the scope for functions defined and passed as named arguments. (#15629)
 
 #### Posit Workbench

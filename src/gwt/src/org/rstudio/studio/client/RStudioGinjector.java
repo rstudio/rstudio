@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.LoggedOutDialog;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.AboutDialog;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
@@ -356,7 +357,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(YamlEditorToolsProviderQuarto yamlCompletionSourceQuarto);
    void injectMembers(TextEditingTargetCopilotHelper copilotHelper);
    void injectMembers(DocUpdateSentinel sentinel);
-
+   void injectMembers(LoggedOutDialog loggedOutDialog);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
