@@ -9,6 +9,62 @@ format:
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
+## RStudio 2024.12.1
+
+**"Kousa Dogwood"**
+
+>Date: 2025-02-13
+
+### New
+
+#### RStudio
+- The editor line height can now be customized (via Tools -> Global Options... -> Appearance) [Accessibility]. (#3372)
+- Noto Sans is now used as a fallback proportional font (for RStudio UI elements) on Linux systems. (#15547)
+
+#### Posit Workbench
+- The secret key used to sign browser cookies can now be set via the `WORKBENCH_ENCRYPTION_KEY` environment variable. (rstudio-pro#7169)
+- Added a warning when the server certificate is self-signed but the certificate authority root is not in the system's CA store. (rstudio-pro#6813)
+- Added an error when the Launcher port or SSL configuration does not match Workbench's corresponding configuration. (rstudio-pro#6811)
+
+### Fixed
+
+#### RStudio
+- Fixed an issue where executing Python code from an R Markdown chunk could cause a crash in rare cases. (#rstudio-pro/7322)
+- Fixed an issue where reformatting a document with unsaved changes when using `styler` for formatting could lose unsaved changes. (#15568)
+- Fixed an issue where double-clicking a source file to start RStudio didn't always open the file after starting. (#15536, rstudio-pro#7259)
+- Fixed an issue where double-clicking a file to open it in running RStudio didn't work with zoomed plot windows. (#15457)
+- Fixed an issue where the RStudio UI stopped working if publishing was disabled in Global Options. (#15561)
+- Reverted support for `help.htmltoc` with R (>= 4.4); support will be re-evaluated in a future release. (#15531)
+- Fixed an issue where Copilot completions were not provided in Quarto documents. (#15539)
+- Fixed an issue where very large character vectors in the R global environment could make RStudio initialize more slowly. (rstudio-pro#7226)
+- Fixed an issue where the `.Rproj.user` folder was not marked as hidden for new projects on Windows. (#15514)
+- Fixed an issue where the Files pane could inadverently scroll back to top in some cases. (#15502)
+- Fixed an issue with non-ASCII characters in qmd files showing as "unexpected token." (#15316)
+- Fixed an issue where chunk highlighting in Sweave documents was incorrect. (#15574)
+- Fixed an issue where code diagnostics were incorrectly applied to un-evaluated R code chunks in visual mode. (#15592)
+- Fixed an issue where RStudio could emit a warning when attempting to retrieve help for R objects without a help page. (rstudio-pro#7063)
+
+#### Posit Workbench
+- Fixed images list in the launcher UI not updating immediately on cluster change for multi-cluster configurations with different image lists. (rstudio-pro#7169)
+- Fixed a regression where editors configured with both a default cluster of "Local" and a default image cause a misconfiguration on session launch. (rstudio-pro#7172, rstudio-pro#7178)
+- Fixed resource profile from a non-Local cluster remaining set for Local cluster when launcher is configured without cgroups support, leading to invalid session launch. (rstudio-pro#7253)
+- Fixed issue with proxying websockets over ssl that could lead to intermittent VS Code session errors. (rstudio-pro#7264)
+- Fixed problems using `rstudio-server reload` to reload configuration with load balancing enabled. (rstudio-pro#7166, rstudio-pro#5600)
+- Fixed Workbench API support for launching Jupyter sessions. (rstudio-pro#7159)
+- Fixed Workbench API get_session call with a session-id filter. (rstudio-pro#7207)
+- Fixed a regression in the behavior of the `auth-proxy-user-header-rewrite` setting which allowed conditional rewrites of usernames (rstudio-pro#7324)
+- Fixed issue with using encrypted postgresql password when user provisioning is enabled. (rstudio-pro#7305, rstudio-pro#7248)
+
+### Upgrade Instructions
+
+#### Posit Workbench
+
+### Dependencies
+- Updated Electron to version 31.7.7 (#15634)
+
+### Deprecated / Removed
+- Added a warning about the deprecation of publishing to Posit Cloud. More information: https://pos.it/pc-publishing (rstudio-pro#7008)
+
 ## RStudio 2024.12.0
 
 **"Kousa Dogwood"**
