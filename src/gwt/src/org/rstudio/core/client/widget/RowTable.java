@@ -300,6 +300,7 @@ public abstract class RowTable<T> extends ScrollPanel
          TableRowElement rowEl = Document.get().createTRElement();
          rowEl.addClassName(RES.styles().row());
          rowEl.setAttribute("height", getRowHeight() + "px");
+         rowEl.setAttribute("role", "option");
          drawRow(i + offset_, rowEl);
          table_.appendChild(rowEl);
       }
