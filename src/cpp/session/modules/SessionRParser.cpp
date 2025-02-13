@@ -276,7 +276,7 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       }
       else
       {
-         DEBUG("Not resolving: '" << ns << ":::" << symbol << "' (not available)");
+         DEBUG("Not resolving: '" << package << ":::" << symbol << "' (not available)");
          
          // Only display these warnings in 'explicit' requests (avoid being too noisy).
          if (status.parseOptions().isExplicit())
@@ -2520,15 +2520,22 @@ void enterFunctionScope(RTokenCursor cursor,
 {
    std::string symbol = "(unknown function)";
    Position position = cursor.currentPosition();
-   
+
    if (cursor.moveToPreviousSignificantToken() &&
        isFunctionKeyword(cursor) &&
        cursor.moveToPreviousSignificantToken() &&
-       isLeftAssign(cursor) &&
-       cursor.moveToPreviousSignificantToken())
+       isLeftAssign(cursor))
    {
-      symbol = string_utils::wideToUtf8(cursor.getEvaluationAssociatedWithCall());
-      position = cursor.currentPosition();
+      if (status.isInArgumentList() && cursor.contentEquals(L"="))
+      {
+         // skip; it looks like this '=' is binding a value to a
+         // named function argument rather than defining a symbol
+      }
+      else if (cursor.moveToPreviousSignificantToken())
+      {
+         symbol = string_utils::wideToUtf8(cursor.getEvaluationAssociatedWithCall());
+         position = cursor.currentPosition();
+      }
    }
    
    status.enterFunctionScope(symbol, position);
