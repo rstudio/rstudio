@@ -1517,6 +1517,15 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      * @return translated "Login expired or signed out from another window.\nSelect 'Login' for a new login tab. Return here to resume session."
      */
     @DefaultMessage("Login expired or signed out from another window.\nSelect ''Login'' for a new login tab. Return here to resume session.")
+    @Key("workbenchLoginRequiredMessage")
+    String workbenchLoginRequiredMessage();
+
+    /**
+     * Translated "Login expired or signed out from another window.\nSelect 'Login' for a new login tab.".
+     *
+     * @return translated "Login expired or signed out from another window.\nSelect 'Login' for a new login tab."
+     */
+    @DefaultMessage("Login expired or signed out from another window.\nSelect ''Login'' for a new login tab.")
     @Key("serverLoginRequiredMessage")
     String serverLoginRequiredMessage();
 

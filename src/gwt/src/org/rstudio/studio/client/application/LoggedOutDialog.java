@@ -56,8 +56,6 @@ public class LoggedOutDialog extends ModalDialogBase
 
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setText(isWorkbench() ? constants_.workbenchLoginRequired() : constants_.serverLoginRequired());
-      addActionButton(createLoginButton());
       setGlassEnabled(true);
    }
 
@@ -75,6 +73,9 @@ public class LoggedOutDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget() 
    {
+      setText(isWorkbench() ? constants_.workbenchLoginRequired() : constants_.serverLoginRequired());
+      addActionButton(createLoginButton());
+
       HorizontalPanel horizontalPanel = new HorizontalPanel();
       horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 
@@ -89,7 +90,8 @@ public class LoggedOutDialog extends ModalDialogBase
          image.setAltText(imageText);
 
 
-      Label label = new MultiLineLabel(constants_.serverLoginRequiredMessage());
+      Label label = new MultiLineLabel(
+         isWorkbench() ? constants_.workbenchLoginRequiredMessage() : constants_.serverLoginRequiredMessage());
       label.setStylePrimaryName(ThemeResources.INSTANCE.themeStyles().dialogMessage());
       horizontalPanel.add(label);
 
