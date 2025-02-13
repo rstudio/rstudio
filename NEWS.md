@@ -10,7 +10,7 @@
 - RStudio now sends an interrupt git processes when stopped via "Stop" during a git commit, rather than just terminating the processes. (#6471)
 
 #### Posit Workbench
--
+- An SELinux policy module is now available, allowing Workbench to run when enforcement is enabled. (#4937, rstudio-pro/#4749)
 
 ### Fixed
 #### RStudio
