@@ -240,6 +240,16 @@ void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
       DevDescVersion12* pDev12       = (DevDescVersion12*) pDev;
       DevDescVersion12* pShadowDev12 = (DevDescVersion12*) pShadowDev;
 
+      pDev12->left   = pShadowDev12->left;
+      pDev12->right  = pShadowDev12->right;
+      pDev12->top    = pShadowDev12->top;
+      pDev12->bottom = pShadowDev12->bottom;
+
+      pDev12->clipLeft   = pShadowDev12->clipLeft;
+      pDev12->clipRight  = pShadowDev12->clipRight;
+      pDev12->clipTop    = pShadowDev12->clipTop;
+      pDev12->clipBottom = pShadowDev12->clipBottom;
+
       pDev12->canClip                 = pShadowDev12->canClip;
       pDev12->canChangeGamma          = pShadowDev12->canChangeGamma;
       pDev12->canGenMouseDown         = pShadowDev12->canGenMouseDown;
@@ -254,6 +264,7 @@ void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
       pDev12->haveTransparentBg       = pShadowDev12->haveTransparentBg;
       pDev12->haveRaster              = pShadowDev12->haveRaster;
       pDev12->haveCapture             = pShadowDev12->haveCapture;
+
       break;
    }
 
@@ -262,6 +273,16 @@ void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
    {
       DevDescVersion14* pDev14       = (DevDescVersion14*) pDev;
       DevDescVersion14* pShadowDev14 = (DevDescVersion14*) pShadowDev;
+
+      pDev14->left   = pShadowDev14->left;
+      pDev14->right  = pShadowDev14->right;
+      pDev14->top    = pShadowDev14->top;
+      pDev14->bottom = pShadowDev14->bottom;
+
+      pDev14->clipLeft   = pShadowDev14->clipLeft;
+      pDev14->clipRight  = pShadowDev14->clipRight;
+      pDev14->clipTop    = pShadowDev14->clipTop;
+      pDev14->clipBottom = pShadowDev14->clipBottom;
 
       pDev14->canClip                 = pShadowDev14->canClip;
       pDev14->canChangeGamma          = pShadowDev14->canChangeGamma;
@@ -280,6 +301,7 @@ void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
 
       pDev14->deviceVersion           = pShadowDev14->deviceVersion;
       pDev14->deviceClip              = pShadowDev14->deviceClip;
+
       break;
    }
 
