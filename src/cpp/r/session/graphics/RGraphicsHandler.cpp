@@ -88,8 +88,8 @@ SEXP (*cap)(pDevDesc dd);
 
 void (*size)(double* left,
              double* right,
-             double* top,
              double* bottom,
+             double* top,
              pDevDesc dd);
 
 void (*metricInfo)(int c,

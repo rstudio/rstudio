@@ -110,8 +110,8 @@ extern SEXP (*cap)(pDevDesc dd);
 
 extern void (*size)(double* left,
                     double* right,
-                    double* top,
                     double* bottom,
+                    double* top,
                     pDevDesc dev);
 
 extern void (*metricInfo)(int c,
