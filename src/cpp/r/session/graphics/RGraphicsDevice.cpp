@@ -19,6 +19,7 @@
 
 #include <boost/thread.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/utility/string_view.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -931,7 +932,7 @@ DeviceType activeDeviceType()
          break;
 
       SEXP charSEXP = STRING_ELT(elSEXP, 0);
-      std::string_view device(CHAR(charSEXP), LENGTH(charSEXP));
+      boost::string_view device(CHAR(charSEXP), LENGTH(charSEXP));
       if (device.find("agg_") == 0)
       {
          return DeviceTypeAGG;
