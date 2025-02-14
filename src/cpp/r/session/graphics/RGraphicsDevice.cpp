@@ -136,12 +136,7 @@ void GD_Size(double *left,
 {
    TRACE_GD_CALL;
 
-   auto ratio = s_deviceType == DeviceTypeQuartz ? (72.0 / 96.0) : s_devicePixelRatio;
-
-   *left = 0.0;
-   *right = s_width * ratio;
-   *bottom = s_height * ratio;
-   *top = 0.0;
+   handler::size(left, right, bottom, top, dev);
 }
 
 void GD_Clip(double x0, double x1, double y0, double y1, pDevDesc dev)
@@ -525,9 +520,6 @@ void resyncDisplayList()
       return;
    }
 
-   // now update the device structure
-   handler::setSize(pDev);
-
    // replay the display list onto the resized surface
    {
       SuppressDeviceEventsScope scope(plotManager());
@@ -667,7 +659,6 @@ SEXP rs_createGD()
       pDev->deviceSpecific = pDC;
 
       // device attributes
-      handler::setSize(pDev);
       handler::setDeviceAttributes(pDev);
 
       // notify handler we are about to add (enables shadow device
@@ -933,10 +924,9 @@ DeviceType activeDeviceType()
    if (TYPEOF(devicesSEXP) != LISTSXP)
       return DeviceTypeUnknown;
 
-   for (SEXP elSEXP = CAR(devicesSEXP);
-        devicesSEXP != R_NilValue;
-        devicesSEXP = CDR(devicesSEXP))
+   for (; devicesSEXP != R_NilValue; devicesSEXP = CDR(devicesSEXP))
    {
+      SEXP elSEXP = CAR(devicesSEXP);
       if (TYPEOF(elSEXP) != STRSXP)
          break;
 

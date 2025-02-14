@@ -393,13 +393,6 @@ void destroy(DeviceContext* pDC)
    delete pDC;
 }
 
-void setSize(pDevDesc pDev)
-{
-   dev_desc::setSize(pDev);
-   dev_desc::setSize(shadowDevDesc(pDev));
-   setDeviceAttributes(pDev);
-}
-
 void setDeviceAttributes(pDevDesc pDev)
 {
    pDevDesc shadowDev = shadowDevDesc(pDev);
@@ -473,9 +466,6 @@ Error writeToPNG(const FilePath& targetPath, DeviceContext* pDC)
    // re-create with the correct size
    if (!handler::initialize(width, height, devicePixelRatio, pDC))
       return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
-
-   // now update the device structure
-   handler::setSize(dev);
 
    // replay the rstudio graphics device context onto the png
    shadowDevSync(pDC);
@@ -603,6 +593,19 @@ SEXP cap(pDevDesc dd)
       return R_NilValue;
 
    return dev_desc::cap(pngDevDesc);
+}
+
+void size(double* left,
+          double* right,
+          double* bottom,
+          double* top,
+          pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+
+   dev_desc::size(left, right, bottom, top, pngDevDesc);
 }
 
 void metricInfo(int c,
@@ -820,7 +823,6 @@ void installShadowHandler()
    handler::allocate = shadow::allocate;
    handler::initialize = shadow::initialize;
    handler::destroy = shadow::destroy;
-   handler::setSize = shadow::setSize;
    handler::setDeviceAttributes = shadow::setDeviceAttributes;
    handler::onBeforeAddDevice = shadow::onBeforeAddDevice;
    handler::onAfterAddDevice = shadow::onAfterAddDevice;
@@ -833,6 +835,7 @@ void installShadowHandler()
    handler::path = shadow::path;
    handler::raster = shadow::raster;
    handler::cap = shadow::cap;
+   handler::size = shadow::size;
    handler::metricInfo = shadow::metricInfo;
    handler::strWidth = shadow::strWidth;
    handler::text = shadow::text;

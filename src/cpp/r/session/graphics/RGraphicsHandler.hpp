@@ -46,9 +46,6 @@ extern bool (*initialize)(int width,
                           double devicePixelRatio,
                           DeviceContext* pDC);
 
-
-
-extern void (*setSize)(pDevDesc pDev);
 extern void (*setDeviceAttributes)(pDevDesc pDev);
 
 extern void (*onBeforeAddDevice)(DeviceContext* pDC);
@@ -110,6 +107,12 @@ extern void (*raster)(unsigned int *raster,
                       pDevDesc dd);
 
 extern SEXP (*cap)(pDevDesc dd);
+
+extern void (*size)(double* left,
+                    double* right,
+                    double* top,
+                    double* bottom,
+                    pDevDesc dev);
 
 extern void (*metricInfo)(int c,
                           const pGEcontext gc,

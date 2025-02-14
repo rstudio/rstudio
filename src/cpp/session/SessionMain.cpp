@@ -1081,32 +1081,21 @@ bool rLocator(double* x, double* y)
       return false;
    }
 
-   // the coordinates we receive from the client are in pixel coordinates
-   // and are scaled according to the device pixel ratio, and we need to
-   // re-scale those coordinates depending on the device being used.
    using namespace rstudio::r::session::graphics::device;
    DeviceType device = activeDeviceType();
 
-   switch (device)
-   {
-
-   case DeviceTypeQuartz:
+   if (device == DeviceTypeQuartz)
    {
       auto ratio = (72.0 / 96.0);
       *x *= ratio;
       *y *= ratio;
-      break;
    }
-
-   default:
+   else
    {
       auto ratio = devicePixelRatio();
       *x *= ratio;
       *y *= ratio;
-      break;
    }
-
-   } // switch (device)
 
    return true;
 
