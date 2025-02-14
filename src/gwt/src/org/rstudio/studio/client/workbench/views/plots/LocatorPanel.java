@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -73,6 +74,10 @@ public class LocatorPanel extends LayoutPanel
 
             showFeedbackAt(p);
 
+            int dpi = (int) WindowEx.get().getDevicePixelRatio();
+            p.x = p.x * dpi;
+            p.y = p.y * dpi;
+            
             SelectionEvent.fire(LocatorPanel.this, p);
          }
       });
