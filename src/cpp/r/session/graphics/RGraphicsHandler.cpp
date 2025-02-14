@@ -86,7 +86,11 @@ void (*raster)(unsigned int *raster,
 
 SEXP (*cap)(pDevDesc dd);
 
-void (*size)(double* left, double* right, double* top, double* bottom, pDevDesc dd);
+void (*size)(double* left,
+             double* right,
+             double* top,
+             double* bottom,
+             pDevDesc dd);
 
 void (*metricInfo)(int c,
                    const pGEcontext gc,

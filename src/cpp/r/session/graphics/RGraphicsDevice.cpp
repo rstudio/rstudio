@@ -521,6 +521,9 @@ void resyncDisplayList()
       return;
    }
 
+   // now set device attributes
+   handler::setDeviceAttributes(pDev);
+
    // replay the display list onto the resized surface
    {
       SuppressDeviceEventsScope scope(plotManager());
@@ -867,7 +870,7 @@ Error initialize(
    if (error)
       return error;
    
-   // sync device
+   // set up default size, pixel ratio
    setSize(kDefaultWidth, kDefaultHeight, kDefaultDevicePixelRatio);
 
    // check for an incompatible graphics version before fully initializing.

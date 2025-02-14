@@ -487,7 +487,12 @@ Error writeToPNG(const FilePath& targetPath, DeviceContext* pDC)
 
    // re-create with the correct size
    if (!handler::initialize(width, height, devicePixelRatio, pDC))
+   {
       return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
+   }
+
+   // update device attributes
+   handler::setDeviceAttributes(dev);
 
    // replay the rstudio graphics device context onto the png
    shadowDevSync(pDC);
