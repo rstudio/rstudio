@@ -333,7 +333,7 @@ void setCommonDeviceAttributes(T pDev, T pShadow)
    pDev->clipTop = pShadow->clipTop;
    pDev->clipRight = pShadow->clipRight;
    pDev->clipBottom = pShadow->clipBottom;
-   
+
    pDev->cra[0] = pShadow->cra[0];
    pDev->cra[1] = pShadow->cra[1];
    pDev->startps = pShadow->startps;
@@ -420,7 +420,7 @@ void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow)
       
       break;
    }
-      
+
    }
 }
 

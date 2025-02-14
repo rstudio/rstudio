@@ -35,7 +35,6 @@ namespace handler {
 namespace dev_desc {
 
 pDevDesc allocate(const RSDevDesc& devDesc);
-void setSize(pDevDesc pDD);
 void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow);
 
 /* Wrapper methods for graphics engine */

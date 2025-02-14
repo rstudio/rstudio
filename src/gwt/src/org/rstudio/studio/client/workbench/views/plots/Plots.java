@@ -122,15 +122,6 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
                      e.getSelectedItem().getX(),
                      e.getSelectedItem().getY()
                );
-
-               // re-scale points for OS X Quartz
-               if (BrowseCap.isMacintoshDesktop())
-               {
-                  p = org.rstudio.studio.client.workbench.views.plots.model.Point.create(
-                        p.getX() * (72.0 / 96.0),
-                        p.getY() * (72.0 / 96.0));
-               }
-
             }
 
             server.locatorCompleted(p, new SimpleRequestCallback<>());
@@ -159,14 +150,6 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
             {
                int x = Double.valueOf(event.getX()).intValue();
                int y = Double.valueOf(event.getY()).intValue();
-
-               // Re-scale for OSX Quartz
-               if (BrowseCap.isMacintoshDesktop())
-               {
-                  x *= (72.0 / 96.0);
-                  y *= (72.0 / 96.0);
-               }
-
                server_.manipulatorPlotClicked(x, y, new ManipulatorRequestCallback());
             }
          }

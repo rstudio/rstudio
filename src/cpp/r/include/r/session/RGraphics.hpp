@@ -57,13 +57,13 @@ struct is_error_code_enum<rstudio::r::session::graphics::errc::errc_t>
 
 
 #include <string>
-#include <vector>
 
 #include <boost/function.hpp>
 
-#include <core/BoostSignals.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
+
+#include <core/BoostSignals.hpp>
 
 namespace rstudio {
 namespace core {
@@ -81,8 +81,17 @@ std::string getDefaultAntialiasing();
 
 namespace device {
 
-double devicePixelRatio();
+enum DeviceType
+{
+   DeviceTypeAGG,
+   DeviceTypeCairo,
+   DeviceTypeQuartz,
+   DeviceTypeWindows,
+   DeviceTypeUnknown,
+};
 
+DeviceType activeDeviceType();
+double devicePixelRatio();
 }
    
 struct DisplayState
