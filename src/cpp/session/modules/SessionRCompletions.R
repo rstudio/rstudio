@@ -1619,7 +1619,7 @@ assign(x = ".rs.acCompletionTypes",
          # to invoke the underlying method directly, so in this scenario
          # we still just allow the default S3 dispatch to take place.
          expr <- substitute(
-            .DollarNames(object, ""),
+            utils::.DollarNames(object, pattern = ""),
             list(object = object)
          )
          allNames <- eval(expr, envir = envir)
