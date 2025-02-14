@@ -1615,7 +1615,14 @@ assign(x = ".rs.acCompletionTypes",
       dollarNamesMethod <- .rs.getDollarNamesMethod(object, TRUE, envir = envir)
       if (is.function(dollarNamesMethod))
       {
-         allNames <- dollarNamesMethod(object, "")
+         # An invocation of something like NextMethod() can fail if we try
+         # to invoke the underlying method directly, so in this scenario
+         # we still just allow the default S3 dispatch to take place.
+         expr <- substitute(
+            .DollarNames(object, ""),
+            list(object = object)
+         )
+         allNames <- eval(expr, envir = envir)
          
          # check for custom helpHandler
          helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
