@@ -29,12 +29,8 @@
 
 #include <string>
 #include <vector>
-#include <queue>
-#include <map>
-#include <algorithm>
 #include <cstdlib>
 #include <csignal>
-#include <limits>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
@@ -89,6 +85,7 @@
 #include <r/ROptions.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RGraphics.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
 #include <r/session/RClientState.hpp>
@@ -1065,25 +1062,54 @@ bool rLocator(double* x, double* y)
       return false;
 
    // see if we got a point
-   if ((request.params.getSize() > 0) && !request.params[0].isNull())
-   {
-      // read the x and y
-      Error error = json::readObjectParam(request.params, 0,
-                                          "x", x,
-                                          "y", y);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return false;
-      }
+   bool isEmpty =
+         request.params.getSize() == 0 ||
+         request.params[0].isNull();
 
-      // return true
-      return true;
-   }
-   else
+   if (isEmpty)
+      return false;
+
+   // read the x and y
+   Error error = json::readObjectParam(
+            request.params, 0,
+            "x", x,
+            "y", y);
+
+   if (error)
    {
+      LOG_ERROR(error);
       return false;
    }
+
+   // the coordinates we receive from the client are in pixel coordinates
+   // and are scaled according to the device pixel ratio, and we need to
+   // re-scale those coordinates depending on the device being used.
+   using namespace rstudio::r::session::graphics::device;
+   DeviceType device = activeDeviceType();
+
+   switch (device)
+   {
+
+   case DeviceTypeQuartz:
+   {
+      auto ratio = (72.0 / 96.0);
+      *x *= ratio;
+      *y *= ratio;
+      break;
+   }
+
+   default:
+   {
+      auto ratio = devicePixelRatio();
+      *x *= ratio;
+      *y *= ratio;
+      break;
+   }
+
+   } // switch (device)
+
+   return true;
+
 }
 
 void rShowFile(const std::string& title, const FilePath& filePath, bool del)

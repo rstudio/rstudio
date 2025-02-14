@@ -16,6 +16,7 @@
 #ifndef R_SESSION_GRAPHICS_DEVICE_HPP
 #define R_SESSION_GRAPHICS_DEVICE_HPP
 
+#include "r/session/RGraphics.hpp"
 #include <boost/function.hpp>
 
 namespace rstudio {
@@ -40,7 +41,7 @@ core::Error initialize(
           const core::FilePath& graphicsPath,
           const boost::function<bool(double*,double*)>& locatorFunction);
    
-// device size
+// device attributes
 void setSize(int width, int height, double devicePixelRatio);
 int getWidth();
 int getHeight();

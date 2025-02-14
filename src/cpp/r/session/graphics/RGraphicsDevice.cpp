@@ -81,6 +81,7 @@ pGEDevDesc s_pGEDevDesc = nullptr;
 boost::function<bool(double*, double*)> s_locatorFunction;
 
 // global size attributes (used to initialize new devices)
+DeviceType s_deviceType = DeviceTypeUnknown;
 int s_width = 0;
 int s_height = 0;
 double s_devicePixelRatio = 1.0;
@@ -135,9 +136,11 @@ void GD_Size(double *left,
 {
    TRACE_GD_CALL;
 
+   auto ratio = s_deviceType == DeviceTypeQuartz ? (72.0 / 96.0) : s_devicePixelRatio;
+
    *left = 0.0;
-   *right = s_width;
-   *bottom = s_height;
+   *right = s_width * ratio;
+   *bottom = s_height * ratio;
    *top = 0.0;
 }
 
@@ -346,6 +349,8 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
 void GD_Activate(pDevDesc dev) 
 {
    TRACE_GD_CALL;
+
+   s_deviceType = activeDeviceType();
 }
 
 void GD_Deactivate(pDevDesc dev) 
@@ -680,6 +685,9 @@ SEXP rs_createGD()
       // make us active
       int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
       Rf_selectDevice(deviceNumber);
+
+      // save the graphics device type
+      s_deviceType = activeDeviceType();
    } 
    END_SUSPEND_INTERRUPTS;
 
@@ -707,7 +715,8 @@ Error makeActive()
    // select us
    int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
    Rf_selectDevice(deviceNumber);
-   
+   s_deviceType = activeDeviceType();
+
    return Success();
 }
 
@@ -866,7 +875,7 @@ Error initialize(
    if (error)
       return error;
    
-   // set size
+   // sync device
    setSize(kDefaultWidth, kDefaultHeight, kDefaultDevicePixelRatio);
 
    // check for an incompatible graphics version before fully initializing.
@@ -918,11 +927,47 @@ int getHeight()
    return s_height;
 }
 
+DeviceType activeDeviceType()
+{
+   SEXP devicesSEXP = Rf_findVar(Rf_install(".Devices"), R_BaseEnv);
+   if (TYPEOF(devicesSEXP) != LISTSXP)
+      return DeviceTypeUnknown;
+
+   for (SEXP elSEXP = CAR(devicesSEXP);
+        devicesSEXP != R_NilValue;
+        devicesSEXP = CDR(devicesSEXP))
+   {
+      if (TYPEOF(elSEXP) != STRSXP)
+         break;
+
+      SEXP charSEXP = STRING_ELT(elSEXP, 0);
+      std::string_view device(CHAR(charSEXP), LENGTH(charSEXP));
+      if (device.find("agg_") == 0)
+      {
+         return DeviceTypeAGG;
+      }
+      else if (device == "png" || device == "X11cairo")
+      {
+         return DeviceTypeCairo;
+      }
+      else if (device == "quartz" || device == "quartz_off_screen")
+      {
+         return DeviceTypeQuartz;
+      }
+      else if (device == "windows")
+      {
+         return DeviceTypeWindows;
+      }
+   }
+
+   return DeviceTypeUnknown;
+}
+
 double devicePixelRatio()
 {
    return s_devicePixelRatio;
 }
-   
+
 void close()
 {     
    if (s_pGEDevDesc != nullptr)
