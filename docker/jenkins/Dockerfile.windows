@@ -52,7 +52,6 @@ RUN `
     `
     # Install Build Tools
     && (call C:rstudio-tools\dependencies\windows\msvc-install.cmd vs_buildtools.exe --quiet --wait --norestart --nocache install `
-        --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools" `
         --add Microsoft.VisualStudio.Workload.VCTools `
         --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
         --add Microsoft.VisualStudio.Component.Windows11SDK.22621 `

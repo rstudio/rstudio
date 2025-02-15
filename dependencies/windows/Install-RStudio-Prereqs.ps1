@@ -107,13 +107,12 @@ Write-Host "Downloading vs_buildtools.exe"
 Invoke-DownloadFile `
     https://download.visualstudio.microsoft.com/download/pr/45212da0-ea11-4612-bbff-cf4b802a1640/7f34abca950bd22d49403ebf14f6e01b0cf9658e1150f7d0644d943df3dcce27/vs_BuildTools.exe `
     vs_buildtools.exe
-Write-Host "Installing Visual Studio Build Tools..."
+Write-Host "Installing Visual Studio Build Tools (be patient)..."
 $buildToolsArgs = @(
-    '--quiet',
+    '--passive',
     '--wait',
     '--norestart',
     '--nocache',
-    '--installPath', '%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools',
     '--add', 'Microsoft.VisualStudio.Workload.VCTools',
     '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
     '--add', 'Microsoft.VisualStudio.Component.Windows11SDK.22621',
