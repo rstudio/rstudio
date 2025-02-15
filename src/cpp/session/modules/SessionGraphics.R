@@ -46,7 +46,7 @@
       points(p1[[1L]], p1[[2L]])
    
    x <- numeric(n); y <- numeric(n)
-   x[[1L]] <- p1[[1L]]; x[[2L]] <- p1[[2L]]
+   x[[1L]] <- p1[[1L]]; y[[1L]] <- p1[[2L]]
    
    range <- seq_len(n - 1L) + 1L
    for (i in range)
