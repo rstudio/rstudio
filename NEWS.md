@@ -28,6 +28,7 @@
 - Fixed an issue where the Resources page in the Help pane was not legible with dark themes. (#10855)
 - Fixed an issue where "Posit Workbench" was used instead of "RStudio Server" in a message shown when the user was signed out during a session. (#15698)
 - Fixed an issue where the RStudio diagnostics system incorrectly inferred the scope for functions defined and passed as named arguments. (#15629)
+- Fixed an issue where autocompletion of R6 object names could fail with R6 2.6.0. (#15706)
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
