@@ -320,11 +320,10 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
    {
       s_graphicsDeviceEvents.onDrawing();
 
-      if(s_locatorFunction(x,y))
+      if (s_locatorFunction(x, y))
       {
          // if our graphics device went away while we were waiting 
          // for locator input then we need to return false
-         
          if (s_pGEDevDesc != nullptr)
             return TRUE;
          else
