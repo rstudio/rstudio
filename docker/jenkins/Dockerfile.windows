@@ -40,7 +40,7 @@ COPY dependencies/tools/rstudio-tools.cmd 'C:\rstudio-tools\dependencies\tools\r
 COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
 COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
-# Download vscollect.exe in case of an install failure.
+# vscollect.exe helps when diagnosing msvc install problems, used by msvc-install.cmd
 ADD https://aka.ms/vscollect.exe 'C:\rstudio-tools\dependencies\windows\vscollect.exe'
 
 SHELL ["cmd", "/S", "/C"]

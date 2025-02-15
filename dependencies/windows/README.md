@@ -1,8 +1,7 @@
 # Configure Windows for RStudio Development
 
-These instructions are intended for a clean Windows-10 or Windows-11
-x64 (not ARM) machine and may not produce a successful build environment if
-different versions of any dependencies are already installed.
+These instructions are intended for a clean Windows-11 x64 (not ARM) machine and may not produce
+a successful build environment if different versions of any dependencies are already installed.
 
 ## Bootstrap
 
@@ -12,8 +11,8 @@ different versions of any dependencies are already installed.
 
 ## Clone the Repo and Run Batch File
 
-- Open Command Prompt (non-administrator); do this **after** running the
-PowerShell bootstrapping script above to pick up environment changes
+- Open Command Prompt (non-administrator); do this **after** running the PowerShell bootstrapping 
+  script above to pick up environment changes
 - optional: if you will be making commits, configure git (your email address, name, ssh keys, etc.)
   make pull requests from that
 - `cd` to the location you want the repo
@@ -35,7 +34,7 @@ PowerShell bootstrapping script above to pick up environment changes
 - `mkdir build`
 - `cd build`
 - `..\cpp\tools\windows-dev.cmd`
-- `cmake ..\cpp -GNinja` -DRSTUDIO_TARGET=Electron
+- `cmake ..\cpp -GNinja`
 - `ninja`
 
 ## Build and run Electron
@@ -55,6 +54,6 @@ test your installation. This builds RStudio and bundles it up in a setup package
 In a non-administrator command prompt:
 
 - `cd rstudio\package\win32`
-- `make-package.bat electron`
+- `make-package.bat`
 
 When done, the setup is `rstudio\package\build\RStudio-99.9.9.exe`.

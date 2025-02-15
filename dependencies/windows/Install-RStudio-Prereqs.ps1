@@ -1,5 +1,5 @@
 ﻿# ----------------------------------------------------------------------------
-# Bootstrap a clean Windows-10 system for RStudio development.
+# Bootstrap a clean Windows-11 system for RStudio development.
 #
 # Run this from an Administrator PowerShell prompt after enabling scripts
 # via 'Set-ExecutionPolicy Unrestricted -force'.
@@ -10,14 +10,46 @@
 # Set to $false to keep downloads after installing; helpful for debugging script
 $DeleteDownloads = $true
 
-function Test-Administrator
-{
+function Test-Administrator {
+    [CmdletBinding()]
     $user = [Security.Principal.WindowsIdentity]::GetCurrent();
     (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 
-function Invoke-DownloadFile ($url, $output) {
-    (New-Object System.Net.WebClient).DownloadFile($url, $output)
+function Invoke-DownloadFile {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$url,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$output
+    )
+    Write-Verbose "Downloading from $url to $output"
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $output -ErrorAction Stop
+        Write-Verbose "Download completed successfully"
+    }
+    catch {
+        Write-Error "Download failed: $_"
+    }
+}
+function Install-ChocoPackageIfMissing {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$PackageName,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$TestCommand
+    )
+    
+    if (!(Get-Command $TestCommand -ErrorAction SilentlyContinue)) {
+        Write-Host "$TestCommand not found, installing $PackageName via chocolatey..."
+        choco install -y $PackageName
+    } else {
+        Write-Host "$TestCommand already installed, skipping $PackageName installation"
+    }
 }
 
 ##############################################################################
@@ -27,25 +59,15 @@ If (-Not (Test-Administrator)) {
     Write-Host "Error: Must run this script as Administrator"
     exit
 }
-
-# PowerShell uses TLS 1.0 by default, which many sites will reject.
-# Set TLS 1.2 (3072), then TLS 1.1 (768), then TLS 1.0 (192), finally SSL 3.0 (48) 
-# Use integers because the enumeration values for TLS 1.2 and TLS 1.1 won't 
-# exist in .NET 4.0, even though they are addressable if .NET 4.5+ is 
-# installed (.NET 4.5 is an in-place upgrade).
-try { 
-    $securityProtocolSettingsOriginal = [System.Net.ServicePointManager]::SecurityProtocol
-    [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48
-} catch {
-    Write-Warning 'Unable to set PowerShell to use TLS 1.2 and TLS 1.1 due to old .NET Framework installed.' 
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Write-Host "Error: Requires PowerShell 5.0 or newer"
 }
 
 # install R
 if (-Not (Test-Path -Path "C:\R")) {
     $RSetupPackage = "C:\R-3.6.3-win.exe"
     if (-Not (Test-Path -Path $RSetupPackage)) {
-        Write-Host "Downloading R 3.6.3..."
-        Invoke-DownloadFile https://rstudio-buildtools.s3.amazonaws.com/R/R-3.6.3-win.exe $RSetupPackage
+        Invoke-DownloadFile https://rstudio-buildtools.s3.amazonaws.com/R/R-3.6.3-win.exe $RSetupPackage -Verbose
     } else {
         Write-Host "Using previously downloaded R installer"
     }
@@ -69,21 +91,46 @@ refreshenv
 choco install -y openjdk11
 choco install -y -i ant
 choco install -y 7zip
-choco install -y git
 choco install -y ninja
-choco install -y windows-sdk-10.1 --version 10.1.19041.0
-choco install -y visualstudio2019buildtools --version 16.11.10.0
-choco install -y visualstudio2019-workload-vctools --version 1.0.1
 choco install -y nsis
 choco install -y python311
 choco install -y jq
+Install-ChocoPackageIfMissing -PackageName "git" -TestCommand "git"
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 # Newer choco doesn't have this so don't fail if not found
 $ChocoCPack = 'C:\ProgramData\chocolatey\bin\cpack.exe'
 if (Test-Path $ChocoCPack) { Remove-Item -Force $ChocoCPack }
 
-[System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
+#### install msvc 2022 and Windows SDK
+Write-Host "Downloading vs_buildtools.exe"
+Invoke-DownloadFile `
+    https://download.visualstudio.microsoft.com/download/pr/45212da0-ea11-4612-bbff-cf4b802a1640/7f34abca950bd22d49403ebf14f6e01b0cf9658e1150f7d0644d943df3dcce27/vs_BuildTools.exe `
+    vs_buildtools.exe
+Write-Host "Installing Visual Studio Build Tools..."
+$buildToolsArgs = @(
+    '--quiet',
+    '--wait',
+    '--norestart',
+    '--nocache',
+    '--installPath', '%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools',
+    '--add', 'Microsoft.VisualStudio.Workload.VCTools',
+    '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+    '--add', 'Microsoft.VisualStudio.Component.Windows11SDK.22621',
+    '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10240',
+    '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10586',
+    '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.14393',
+    '--remove', 'Microsoft.VisualStudio.Component.Windows81SDK'
+)
+$process = Start-Process -FilePath "vs_buildtools.exe" -ArgumentList $buildToolsArgs -Wait -PassThru
+if ($process.ExitCode -ne 0 -and $process.ExitCode -ne 3010) {
+    Write-Host "Visual Studio Build Tools installation failed with exit code $($process.ExitCode)"
+    exit $process.ExitCode
+}
+Write-Host "Build Tools installation completed."
+if ($DeleteDownloads -and (Test-Path "vs_buildtools.exe")) {
+    Remove-Item "vs_buildtools.exe" -Force
+}
 
 Write-Host "-----------------------------------------------------------"
 Write-Host "Core dependencies successfully installed. Next steps:"
