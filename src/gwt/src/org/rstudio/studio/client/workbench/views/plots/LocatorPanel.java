@@ -72,7 +72,6 @@ public class LocatorPanel extends LayoutPanel
                   y - el.getAbsoluteTop());
 
             showFeedbackAt(p);
-
             SelectionEvent.fire(LocatorPanel.this, p);
          }
       });

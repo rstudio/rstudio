@@ -25,10 +25,7 @@ DeviceContext* (*allocate)(pDevDesc dev);
 void (*destroy)(DeviceContext* pDC);
 
 bool (*initialize)(int width, int height, double devicePixelRatio, DeviceContext* pDC);
-
-void (*setSize)(pDevDesc pDev);
 void (*setDeviceAttributes)(pDevDesc pDev);
-
 void (*onBeforeAddDevice)(DeviceContext* pDC);
 void (*onAfterAddDevice)(DeviceContext* pDC);
 
@@ -88,6 +85,12 @@ void (*raster)(unsigned int *raster,
                       pDevDesc dd);
 
 SEXP (*cap)(pDevDesc dd);
+
+void (*size)(double* left,
+             double* right,
+             double* bottom,
+             double* top,
+             pDevDesc dd);
 
 void (*metricInfo)(int c,
                    const pGEcontext gc,
