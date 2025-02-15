@@ -145,11 +145,13 @@ public class MemoryUsageSummary extends Composite
          usage.getUsed().getKb() - usage.getProcess().getKb(),
          usage.getUsed().getProviderName()));
 
+      int freeMem = usage.getTotal().getKb() - usage.getUsed().getKb();
+
       // The memory left on the system (the total less the used)
       statsBody.appendChild(buildStatsRow(
          useProcessLimit ? null : MemUsageWidget.MEMORY_PIE_UNUSED_COLOR,
-         constants_.freeSystemMemory(),
-         usage.getTotal().getKb() - usage.getUsed().getKb(),
+         freeMem < 0 ? constants_.swapSpaceUsed() : constants_.freeSystemMemory(),
+         Math.abs(freeMem),
          usage.getUsed().getProviderName()));
 
       // Total system memory

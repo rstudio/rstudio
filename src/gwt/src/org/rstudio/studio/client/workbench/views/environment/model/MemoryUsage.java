@@ -91,7 +91,8 @@ public class MemoryUsage extends JavaScriptObject
 
    private final String limitMessage()
    {
-      return useProcessLimit() ? constants_.limit() + ": " + StringUtil.prettyFormatNumber(getLimit().getKb()/1024) + " " + constants_.megabytes() : constants_.unlimited();
+      return useProcessLimit() ? constants_.memoryUsageLimit(StringUtil.prettyFormatNumber(getLimit().getKb()/1024)) : 
+                                 constants_.unlimited();
    }
 
    private final int getPercentFree()
@@ -101,19 +102,19 @@ public class MemoryUsage extends JavaScriptObject
 
    public final String multiLineStatusMessage()
    {
-      return constants_.sessionMemoryUsed() + ": " + StringUtil.prettyFormatNumber(getProcess().getKb()/1024) +
-	     " " + constants_.megabytes() + ", " + limitMessage() + "\n" +
-             constants_.freeSystemMemory() + ": " + StringUtil.prettyFormatNumber((getTotal().getKb() - getUsed().getKb())/1024) +
-	     " " + constants_.megabytes() + " (" + getPercentFree() + "%)";
+      return constants_.multiLineMemoryStatus(StringUtil.prettyFormatNumber(getProcess().getKb()/1024),
+                                              limitMessage(),
+                                              StringUtil.prettyFormatNumber((getTotal().getKb() - getUsed().getKb())/1024),
+                                              String.valueOf(getPercentFree()));
    }
 
    public final String statusMessage()
    {
-      return constants_.sessionMemoryUsed() + ": " + StringUtil.prettyFormatNumber(getProcess().getKb()/1024) +
-	     " " + constants_.megabytes() + ", " + limitMessage() + ". " +
-             constants_.systemMemoryUsed() + ": " + StringUtil.prettyFormatNumber(getUsed().getKb()/1024) + " " + constants_.outOf() + " " +
-             StringUtil.prettyFormatNumber(getTotal().getKb()/1024) + " " + constants_.megabytes() +
-	     " (" + getPercentFree() + "% " + constants_.freeMemory() + ")";
+      return constants_.memoryUsageStatus(StringUtil.prettyFormatNumber(getProcess().getKb()/1024), 
+                                          limitMessage(),
+                                          StringUtil.prettyFormatNumber(getUsed().getKb()/1024),
+                                          StringUtil.prettyFormatNumber(getTotal().getKb()/1024),
+                                          String.valueOf(getPercentFree()));
    }
 
    private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);

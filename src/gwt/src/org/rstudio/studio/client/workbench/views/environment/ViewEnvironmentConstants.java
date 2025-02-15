@@ -1160,6 +1160,15 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
     String freeSystemMemory();
 
     /**
+     * Translated "Swap space used".
+     *
+     * @return translated "Swap space used"
+     */
+    @DefaultMessage("Swap space used")
+    @Key("swapSpaceUsed")
+    String swapSpaceUsed();
+
+    /**
      * Translated "Total system memory".
      *
      * @return translated "Total system memory"
@@ -1232,15 +1241,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
     String preparingDataImportText();
 
     /**
-     * Translated "Session memory used"
-     * 
-     * @return translated "Session memory used"
-     */
-    @DefaultMessage("Session memory used")
-    @Key("sessionMemoryUsed")
-    String sessionMemoryUsed();
-
-    /**
      * Translated "Session memory limit"
      * 
      * @return translated "Session memory limit"
@@ -1254,9 +1254,29 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "System memory used"
      */
-    @DefaultMessage("System memory used")
-    @Key("systemMemoryUsed")
-    String systemMemoryUsed();
+    @DefaultMessage("Limit: {0} MiB")
+    @Key("memoryUsageLimit")
+    String memoryUsageLimit(String limitMB);
+
+    /**
+     * Translated "Session memory used: {0} MiB, {1}. System memory used: {2} out of {3} MiB ({4}% free)."
+     * 
+     * @return translated "Session memory used: {0} MiB, {1}. System memory used: {2} out of {3} MiB ({4} free%)."
+     */
+    @DefaultMessage("Session memory used: {0} MiB, {1}. System memory used: {2} out of {3} MiB ({4}% free).")
+    @Key("memoryUsageStatus")
+    String memoryUsageStatus(String sessionMem, String limitMessage,
+                             String systemMem, String totalMem, String percentFree);
+
+
+    /*
+     * Translated "Session memory used: {0} MiB, {1}.\nFree system memory: {2} MiB ({3}%)."
+     *
+     * @return "Session memory used: {0} MiB, {1}.\nFree system memory: {2} MiB ({3}%)."
+     */
+    @DefaultMessage("Session memory used: {0} MiB.\n{1}.\nFree system memory: {2} MiB ({3}%).")
+    @Key("multiLineMemoryStatus")
+    String multiLineMemoryStatus(String sessionMem, String limitMesage, String freeMemory, String percentFree);
 
     /**
      * Translated "unlimited"
@@ -1266,33 +1286,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
     @DefaultMessage("unlimited")
     @Key("unlimited")
     String unlimited();
-
-    /**
-     * Translated "limit"
-     *
-     * @return translated "limit"
-     */
-    @DefaultMessage("limit")
-    @Key("limit")
-    String limit();
-
-    /**
-     * Translated "free"
-     *
-     * @return translated "free"
-     */
-    @DefaultMessage("free")
-    @Key("freeMemory")
-    String freeMemory();
-
-    /**
-     * Translated "out of"
-     *
-     * @return translated "out of"
-     */
-    @DefaultMessage("out of")
-    @Key("outOf")
-    String outOf();
 
     /**
      * Translated "MiB"

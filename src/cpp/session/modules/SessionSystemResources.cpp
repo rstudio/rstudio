@@ -19,6 +19,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionMain.hpp>
 #include "../SessionConsoleInput.hpp"
+#include <session/SessionConstants.hpp>
 
 #include <chrono>
 
@@ -44,6 +45,8 @@ namespace {
 // affected by system wall clock adjustments.
 std::chrono::steady_clock::time_point s_activeQuery;
 boost::mutex s_queryMutex;
+bool s_memoryLimitErrorSeen = false;
+bool s_memoryLimitWarningSeen = false;
 
 // The interval, in seconds, at which we will query for memory statistics
 std::atomic<int> s_queryInterval;
@@ -271,15 +274,22 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
 
          if (pStats->abort)
             LOG_ERROR_MESSAGE(statusMessage + " Stopping session due to low system memory (< 100mb or 5%): " + freeMessage);
-         else
+         else if (!s_memoryLimitErrorSeen)
+         {
             LOG_ERROR_MESSAGE(statusMessage + " Showing user an error but not stopping session with sufficient free system memory (> 100mb and 5%): " + freeMessage);
+            s_memoryLimitErrorSeen = true;
+         }
       }
       // The client will produce a warning the first time but this will be nice to see how fast memory is increasing
       else if (process + process * 0.15 > limit)
       {
          pStats->limitWarning = true;
-         LOG_WARNING_MESSAGE("Warning user: system memory usage: " + std::to_string(process) + " within 15% of the limit: " +
-                              std::to_string(limit) + " before session will be stopped");
+         if (!s_memoryLimitWarningSeen)
+         {
+            LOG_WARNING_MESSAGE("Warning user: system memory usage: " + std::to_string(process) + " within 15% of the limit: " +
+                                 std::to_string(limit) + " before session will be stopped");
+            s_memoryLimitWarningSeen = true;
+         }
       }
       else
          LOG_DEBUG_MESSAGE("System memory limit check: " + std::to_string(process) + " / " + std::to_string(limit));
@@ -312,7 +322,7 @@ Error initialize()
 
 void exitForMemoryLimit()
 {
-   controlledExit(37);
+   controlledExit(SESSION_EXIT_EXCEEDED_MEMORY_LIMIT);
 }
 
 void startShutdownForMemoryLimit()

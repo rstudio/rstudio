@@ -64,9 +64,11 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
    return Success();
 }
 
-Error getProcessMemoryLimit(long *pUsedKb, MemoryProvider *pProvider)
+Error getProcessMemoryLimit(long *pLimitKb, MemoryProvider *pProvider)
 {
-   return 0;
+   *pLimitKb = 0;
+   *pProvider = MemoryProviderUnknown;
+   return Success();
 }
 
 } // namespace system

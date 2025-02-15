@@ -1503,11 +1503,11 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String memoryLimitExceededCaption();
 
     /**
-     * Translated "Save files and restart session.\n\nSession will be stopped if there is less than 100 MiB or 5% free system memory."
+     * Translated "Memory Limit Exceeded. Save files and restart session.\n\nSession may be aborted if system runs low on memory."
      *
-     * @return translated "Save files and restart session.\n\nSession will be stopped if there is less than 100 MiB or 5% free system memory."
+     * @return translated "Memory Limit Exceeded. Save files and restart session.\n\nSession may be aborted if system runs low on memory."
      */
-    @DefaultMessage("Save files and restart session.\n\nSession will be stopped if there is less than 100 MiB or 5% free system memory.")
+    @DefaultMessage("Memory Limit Exceeded. Save files and restart session.\n\nSession may be aborted if system runs low on memory.")
     @Key("memoryLimitExceededMessage")
     String memoryLimitExceededMessage();
 

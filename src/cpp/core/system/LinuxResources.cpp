@@ -39,28 +39,105 @@ namespace core {
 namespace system {
 namespace {
 
-// Function to read the RSS size from /proc/[pid]/statm
-long getResidentSize(PidType pid) {
-   std::string statmPath = "/proc/" + std::to_string(pid) + "/statm";
-   long resident;
-   try
+// Parses /proc/meminfo to look up specific memory stats.
+Error readProcFileKeys(const std::string& procPath, const std::vector<std::string>& keys, std::vector<long>* pValues)
+{
+   // /proc/meminfo and /proc/<pid>/status contains lines that look like this:
+   //
+   // MemTotal: 8124360 kB
+
+   // Open the file and prepare to read it
+   FilePath memInfoFile(procPath);
+   std::shared_ptr<std::istream> pMemStream;
+   Error error = memInfoFile.openForRead(pMemStream);
+   if (error)
    {
-      std::ifstream statmFile(statmPath);
-      if (!statmFile.is_open()) {
-         return 0;
+      return error;
+   }
+   std::size_t numFound = 0;
+
+   // Read one line at a time, looking for each key
+   while (!pMemStream->eof())
+   {
+      std::string memLine;
+      try
+      {
+         std::getline(*pMemStream, memLine);
+      }
+      catch(const std::exception& e)
+      {
+         Error error = systemError(boost::system::errc::io_error,
+                                   ERROR_LOCATION);
+         error.addProperty("what", e.what());
+         error.addProperty("path", procPath);
+         return error;
       }
 
-      long size, shared, text, lib, data, dirty;
-      statmFile >> size >> resident >> shared >> text >> lib >> data >> dirty;
-      statmFile.close();
+      for (std::size_t i = 0; i < keys.size(); i++)
+      {
+         const std::string& key = keys[i];
+         if (string_utils::isPrefixOf(memLine, keys[i] + ":"))
+         {
+            // This is the key we're looking for; read the value from the remainder of the line.
+            try
+            {
+               std::stringstream lineStream(string_utils::substring(
+                        memLine, key.size() + 1));
+               long nextValue;
+               lineStream >> nextValue;
+               (*pValues)[i] = nextValue;
+               numFound++;
+            }
+            catch (...)
+            {
+               error = systemError(boost::system::errc::protocol_error,
+                     "Could not read proc path value "
+                     "'" + key + "'"
+                     " from" + procPath + " line "
+                     "'" + memLine + "'",
+                     ERROR_LOCATION);
+            }
+
+            // We found the key
+            break;
+         }
+      }
+      if (error || numFound == keys.size())
+         break;
    }
-   catch (...)
+   if (error)
+      return error;
+
+   if (numFound != keys.size())
    {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Proc stat file: " + procPath + " missing value - found only: " + std::to_string(numFound) + " of: " +
+                         std::to_string(keys.size()) + " keys",
+                         ERROR_LOCATION);
+   }
+   return Success();
+}
+
+// Returns the RSS + swap for the specified process.
+// The goal here is to choose values that are specific to a given process,
+// that are using real resources on the system. Including swap so that processes
+// that overflow main memory continue are measured based on their complete size.
+long getProcessSize(PidType pid)
+{
+   std::string statmPath = "/proc/" + std::to_string(pid) + "/statm";
+
+   std::vector<std::string> keys = {"VmRSS", "VmSwap"};
+   std::vector<long> values = {0, 0};
+
+   Error error = readProcFileKeys("/proc/" + std::to_string(pid) + "/status", keys, &values);
+   if (error)
+   {
+      LOG_ERROR(error);
       return 0;
    }
 
-   static long pageSizeKb = sysconf(_SC_PAGESIZE) / 1024;
-   return resident * pageSizeKb;
+   // Return the sum of rss and swap in kb
+   return values[0] + values[1];
 }
 
 bool isChildOfParent(const std::map<PidType, PidType>& childToParentMap, PidType parentPid, PidType childPid)
@@ -79,7 +156,7 @@ bool isChildOfParent(const std::map<PidType, PidType>& childToParentMap, PidType
    } while (true);
 }
 
-long getResidentSizeOfChildren(PidType parentPid, UidType userId)
+long getProcessSizeOfChildren(PidType parentPid, UidType userId)
 {
    DIR *pDir = nullptr;
    long childRssSize = 0;
@@ -143,7 +220,7 @@ long getResidentSizeOfChildren(PidType parentPid, UidType userId)
       PidType childParent = entry.second;
       if (childParent == parentPid || isChildOfParent(childToParentMap, parentPid, childParent))
       {
-         childRssSize += getResidentSize(pid);
+         childRssSize += getProcessSize(pid);
          numChildren++;
       }
    }
@@ -181,7 +258,7 @@ public:
       }
       else if (hardMemLimit != RLIM_INFINITY)
       {
-         *pLimitKb = softMemLimit/1024;
+         *pLimitKb = hardMemLimit/1024;
          *pProvider = MemoryProviderLinuxUlimit;
       }
       else
@@ -194,32 +271,15 @@ public:
 
    virtual Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
-      long size = 0;
-      long resident = 0;
+      PidType pid = ::getpid();
+      long resident = getProcessSize(pid);
 
-      try 
-      {
-         std::ifstream statm("/proc/self/statm");
-         statm >> size >> resident;
-         statm.close();
-      }
-      catch (...)
-      {
-         Error error = systemError(boost::system::errc::no_such_file_or_directory, 
-               "Could not read process memory stats from /proc/self/statm", 
-               ERROR_LOCATION);
-         return error;
-      }
+      long childSizeKb = getProcessSizeOfChildren(pid, ::geteuid());
 
-      long pageKib = ::sysconf(_SC_PAGE_SIZE) / 1024;
-
-      long childSizeKb = getResidentSizeOfChildren(::getpid(), ::geteuid());
-
-      *pUsedKb = Truncating<long>(resident) * pageKib + childSizeKb;
+      *pUsedKb = resident + childSizeKb;
       *pProvider = MemoryProviderLinuxProcFs;
 
       return Success();
-
    }
 };
 
@@ -242,14 +302,22 @@ public:
 
    Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
-      long availableKb = 0;
-      Error error = readMemInfoKey("MemAvailable", &availableKb);
+      std::vector<std::string> keys = {"MemAvailable", "SwapTotal", "SwapFree"};
+      std::vector<long> values = {0, 0, 0};
+      Error error = readProcFileKeys("/proc/meminfo", keys, &values);
       if (error)
       {
          return error;
       }
-      *pUsedKb = memTotal_ - availableKb;
+      long availableKb = values[0];
+      long swapTotalKb = values[1];
+      long swapFreeKb = values[2];
+      // Want to compute the total memory used by processes. So this is
+      // how much swap space is used plus the total memory minus the mem
+      // available.
+      *pUsedKb = memTotal_ + (swapTotalKb - swapFreeKb) - availableKb;
       *pProvider = MemoryProviderLinuxProcMeminfo;
+
       return Success();
    }
 
@@ -261,64 +329,14 @@ public:
    }
 
 private:
-
-   // Parses /proc/meminfo to look up specific memory stats.
    Error readMemInfoKey(const std::string& key, long* pValue)
    {
-      // /proc/meminfo contains lines that look like this:
-      //
-      // MemTotal: 8124360 kB
-      
-      // Open the file and prepare to read it
-      FilePath memInfoFile("/proc/meminfo");
-      std::shared_ptr<std::istream> pMemStream;
-      Error error = memInfoFile.openForRead(pMemStream);
-      if (error)
-      {
-         return error;
-      }
-
-      // Read one line at a time, looking for the key
-      while (!pMemStream->eof())
-      {
-         std::string memLine;
-         try
-         {
-            std::getline(*pMemStream, memLine);
-         }
-         catch(const std::exception& e)
-         {
-            Error error = systemError(boost::system::errc::io_error, 
-                                      ERROR_LOCATION);
-            error.addProperty("what", e.what());
-            error.addProperty("path", "/proc/meminfo");
-            return error;
-         }
-
-         if (string_utils::isPrefixOf(memLine, key + ":"))
-         {
-            // This is the key we're looking for; read the value from the remainder of the line.
-            try
-            {
-               std::stringstream lineStream(string_utils::substring(
-                        memLine, key.size() + 1));
-               lineStream >> *pValue;
-            }
-            catch (...)
-            {
-               error = systemError(boost::system::errc::protocol_error, 
-                     "Could not read memory stat " 
-                     "'" + key + "'"
-                     " from /proc/meminfo line " 
-                     "'" + memLine + "'",
-                     ERROR_LOCATION);
-            }
-
-            // We found the key
-            break;
-         }
-      }
-
+      std::vector<std::string> keys(1);
+      keys[0] = key;
+      std::vector<long> values(1);
+      Error error = readProcFileKeys("/proc/meminfo", keys, &values);
+      if (!error)
+         *pValue = values[0];
       return error;
    }
 
