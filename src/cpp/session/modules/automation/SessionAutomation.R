@@ -597,7 +597,7 @@
                       server  = .rs.automation.attachToSessionServer
    )
    
-   for (i in 1:10)
+   for (i in 1:30)
    {
       sessionId <- tryCatch(callback(client), error = identity)
       if (is.character(sessionId))

@@ -27,8 +27,6 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <iostream>
-#include <iomanip>
 #include <gsl/gsl>
 
 #include <core/Algorithm.hpp>
@@ -66,7 +64,8 @@ public:
                          bool warnIfNoSuchVariableInScope = false,
                          bool warnIfVariableIsDefinedButNotUsed = false,
                          bool recordStyleLint = false)
-      : lintRFunctions_(lintRFunctions),
+      : isExplicit_(false),
+        lintRFunctions_(lintRFunctions),
         checkArgumentsToRFunctionCalls_(checkArgumentsToRFunctionCalls),
         checkUnexpectedAssignmentInFunctionCall_(checkUnexpectedAssignmentInFunctionCall),
         warnIfNoSuchVariableInScope_(warnIfNoSuchVariableInScope),

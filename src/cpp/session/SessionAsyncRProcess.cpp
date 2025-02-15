@@ -17,6 +17,7 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <core/system/Interrupts.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
@@ -32,10 +33,10 @@ namespace rstudio {
 namespace session {
 namespace async_r {
 
-AsyncRProcess::AsyncRProcess():
-   isRunning_(false),
-   terminationRequested_(false),
-   pid_(0)
+AsyncRProcess::AsyncRProcess()
+    : isRunning_(false),
+      terminationRequestedCount_(0),
+      pid_(0)
 {
 }
 
@@ -244,8 +245,12 @@ void AsyncRProcess::onStderr(const std::string& output)
 
 bool AsyncRProcess::onContinue()
 {
-   if (terminationRequested_)
+   // if this process has been interrupted, but appears to still be alive,
+   // then forcefully terminate the process
+   if (terminationRequestedCount_ >= 3)
+   {
       return false;
+   }
    
    // check for request requiring a response
    if (ipcRequests_.exists())
@@ -274,7 +279,7 @@ bool AsyncRProcess::onContinue()
 
 bool AsyncRProcess::terminationRequested()
 {
-   return terminationRequested_;
+   return terminationRequestedCount_ != 0;
 }
 
 void AsyncRProcess::onProcessCompleted(int exitStatus)
@@ -283,11 +288,9 @@ void AsyncRProcess::onProcessCompleted(int exitStatus)
    ipcRequests_.removeIfExists();
    ipcResponse_.removeIfExists();
 
-   // we've terminated, so clear termination flag (this instance can be re-used if the process is
-   // started again)
-   terminationRequested_ = false;
-
    onCompleted(exitStatus);
+
+   terminationRequestedCount_ = 0;
 }
 
 bool AsyncRProcess::isRunning()
@@ -297,34 +300,11 @@ bool AsyncRProcess::isRunning()
 
 void AsyncRProcess::terminate(bool isQuarto)
 {
-   terminationRequested_ = true;
+   // update our counter
+   terminationRequestedCount_ += 1;
 
-   // on windows we need to be a bit more aggressive (as we've seen cases where
-   // the 'stop' doesn't actually work. In this case, stopping a quarto doc containing
-   // an interactive shiny app doesn't seem to work on windows without terminating
-   // aggressively.
-#ifdef _WIN32
-   if (isQuarto) {
-      LOG_INFO_MESSAGE("terminate quarto pid: >" + std::to_string(pid_));
-      using namespace core::shell_utils;
-      if (pid_ > 0)
-      {
-         ShellCommand cmd("taskkill");
-         cmd << "/F" << "/T" << "/PID" << core::safe_convert::numberToString(pid_);
-         core::system::ProcessOptions options;
-         core::system::ProcessResult result;
-         core::Error error = core::system::runCommand(cmd, options, &result);
-         if (error)
-         {
-            LOG_ERROR(error);
-         }
-         else if (result.exitStatus != EXIT_SUCCESS)
-         {
-            LOG_ERROR_MESSAGE("Error killing quarto job (terminate R process): " + result.stdErr);
-         }
-      }
-   }
-#endif
+   // interrup the process
+   core::system::interrupt(pid_);
 }
 
 void AsyncRProcess::markCompleted() 

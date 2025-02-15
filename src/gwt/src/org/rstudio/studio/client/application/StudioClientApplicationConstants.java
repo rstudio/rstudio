@@ -1537,4 +1537,49 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     @DefaultMessage("Over session memory limit.")
     @Key("overMemoryLimit")
     String overMemoryLimit();
+
+    /*
+     * Translated "Posit Workbench Login Required".
+     *
+     * @return translated "Posit Workbench Login Required"
+     */
+    @DefaultMessage("Posit Workbench Login Required")
+    @Key("workbenchLoginRequired")
+    String workbenchLoginRequired();
+
+    /**
+     * Translated "RStudio Server Login Required".
+     *
+     * @return translated "RStudio Server Login Required"
+     */
+    @DefaultMessage("RStudio Server Login Required")
+    @Key("serverLoginRequired")
+    String serverLoginRequired();
+
+    /**
+     * Translated "Login expired or signed out from another window.\nSelect 'Login' for a new login tab. Return here to resume session.".
+     *
+     * @return translated "Login expired or signed out from another window.\nSelect 'Login' for a new login tab. Return here to resume session."
+     */
+    @DefaultMessage("Login expired or signed out from another window.\nSelect ''Login'' for a new login tab. Return here to resume session.")
+    @Key("workbenchLoginRequiredMessage")
+    String workbenchLoginRequiredMessage();
+
+    /**
+     * Translated "Login expired or signed out from another window.\nSelect 'Login' for a new login tab.".
+     *
+     * @return translated "Login expired or signed out from another window.\nSelect 'Login' for a new login tab."
+     */
+    @DefaultMessage("Login expired or signed out from another window.\nSelect ''Login'' for a new login tab.")
+    @Key("serverLoginRequiredMessage")
+    String serverLoginRequiredMessage();
+
+    /**
+     * Translated "Login".
+     *
+     * @return translated "Login"
+     */
+    @DefaultMessage("Login")
+    @Key("loginButton")
+    String loginButton();
 }

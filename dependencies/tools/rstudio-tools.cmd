@@ -15,7 +15,7 @@
 
 
 :: Node version used when building the product
-set RSTUDIO_NODE_VERSION=20.15.1
+set RSTUDIO_NODE_VERSION=22.13.1
 
 :: Node version installed with the product
 set RSTUDIO_INSTALLED_NODE_VERSION=20.15.1

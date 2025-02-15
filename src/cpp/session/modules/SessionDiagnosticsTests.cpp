@@ -305,6 +305,8 @@ test_context("Diagnostics")
       
       EXPECT_NO_LINT("{ apple <- banana <- 42; apple + banana }");
       EXPECT_NO_LINT("{ .[apple, banana] <- c(1, 2); apple + banana }");
+
+      EXPECT_NO_ERRORS("c(warning = function() {}); warning(42)");
    }
    
    test_that("RStudio files can be successfully linted")

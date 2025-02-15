@@ -23,9 +23,9 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-void interrupt()
+void interrupt(int pid)
 {
-   ::killpg(0, SIGINT);
+   ::killpg(pid, SIGINT);
 }
 
 } // end namespace system

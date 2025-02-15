@@ -117,30 +117,50 @@ void resolveCommand(std::string* pExecutable, std::vector<std::string>* pArgs)
 
 Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
 {
-   CHAR buff[1024];
+   CHAR buff[4096];
    DWORD nBytesRead;
 
-   while(TRUE)
+   while (true)
    {
       // read from pipe
-      BOOL result = ::ReadFile(hPipe, buff, sizeof(buff), &nBytesRead, nullptr);
-      auto lastErr = ::GetLastError();
-
-      // end of file
-      if (nBytesRead == 0)
-         break;
-
-      // pipe broken
-      else if (!result && (lastErr == ERROR_BROKEN_PIPE))
-         break;
-
-      // unexpected error
-      else if (!result)
-         return systemError(lastErr, ERROR_LOCATION);
-
-      // got input, append it
+      if (::ReadFile(hPipe, buff, sizeof(buff), &nBytesRead, nullptr))
+      {
+         if (nBytesRead == 0)
+         {
+            break;
+         }
+         else
+         {
+            pOutput->append(buff, nBytesRead);
+         }
+      }
       else
-         pOutput->append(buff, nBytesRead);
+      {
+         DWORD error = ::GetLastError();
+
+         // If an anonymous pipe is being used and the write handle has been closed,
+         // when ReadFile attempts to read using the pipe's corresponding read handle,
+         // the function returns FALSE and GetLastError returns ERROR_BROKEN_PIPE.
+         if (error == ERROR_BROKEN_PIPE)
+         {
+            break;
+         }
+
+         // If a named pipe is being read in message mode and the next message
+         // is longer than the nNumberOfBytesToRead parameter specifies,
+         // ReadFile returns FALSE and GetLastError returns ERROR_MORE_DATA.
+         // The remainder of the message can be read by a subsequent call to
+         // the ReadFile or PeekNamedPipe function.
+         else if (error == ERROR_MORE_DATA)
+         {
+            continue;
+         }
+
+         else
+         {
+            return systemError(error, ERROR_LOCATION);
+         }
+      }
    }
 
    return Success();
@@ -406,7 +426,7 @@ Error ChildProcess::run()
    CloseHandleOnExitScope closeStdOut(&hStdOutWrite, ERROR_LOCATION);
    if (!::SetHandleInformation(hStdOutWrite,
                                HANDLE_FLAG_INHERIT,
-                               HANDLE_FLAG_INHERIT) )
+                               HANDLE_FLAG_INHERIT))
    {
       return LAST_SYSTEM_ERROR();
    }
@@ -420,7 +440,7 @@ Error ChildProcess::run()
    CloseHandleOnExitScope closeStdErr(&hStdErrWrite, ERROR_LOCATION);
    if (!::SetHandleInformation(hStdErrWrite,
                                HANDLE_FLAG_INHERIT,
-                               HANDLE_FLAG_INHERIT) )
+                               HANDLE_FLAG_INHERIT))
    {
       return LAST_SYSTEM_ERROR();
    }
@@ -514,9 +534,15 @@ Error ChildProcess::run()
       si.dwFlags |= STARTF_USESHOWWINDOW;
       si.wShowWindow = SW_HIDE;
    }
-   else if (options_.detachProcess || options_.terminateChildren)
+   else if (options_.detachProcess)
    {
       dwFlags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
+      si.dwFlags |= STARTF_USESHOWWINDOW;
+      si.wShowWindow = SW_HIDE;
+   }
+   else if (options_.terminateChildren)
+   {
+      dwFlags |= CREATE_NEW_PROCESS_GROUP;
       si.dwFlags |= STARTF_USESHOWWINDOW;
       si.wShowWindow = SW_HIDE;
    }
@@ -787,31 +813,48 @@ void AsyncChildProcess::poll()
          LOG_ERROR(error);
       }
 
-      // read all remaining stdout
-      if (pImpl_->hStdOutRead)
-      {
-         std::string stdOut;
-         Error error = readPipeUntilDone(pImpl_->hStdOutRead, &stdOut);
-         if (error)
-            reportError(error);
+      // read all remaining stdout, stderr -- use threads to avoid unexpected
+      // cases where reading from a handle on Windows can block
+      std::string stdOut, stdErr;
 
-         if (!stdOut.empty() && callbacks_.onStdout)
-            callbacks_.onStdout(*this, stdOut);
+      auto readStdOutThread = core::thread::run([&]()
+      {
+         if (pImpl_->hStdOutRead)
+         {
+            std::string stdOut;
+            Error error = readPipeUntilDone(pImpl_->hStdOutRead, &stdOut);
+            if (error)
+               reportError(error);
+         }
+      });
+
+      auto readStdErrThread = core::thread::run([&]()
+      {
+         // read all remaining stderr
+         if (pImpl_->hStdErrRead)
+         {
+            Error error = readPipeUntilDone(pImpl_->hStdErrRead, &stdErr);
+            if (error)
+               reportError(error);
+         }
+      });
+
+      if (readStdOutThread.joinable())
+         readStdOutThread.timed_join(boost::posix_time::seconds(1));
+
+      if (readStdErrThread.joinable())
+         readStdErrThread.timed_join(boost::posix_time::seconds(1));
+
+      if (!stdOut.empty() && callbacks_.onStdout)
+      {
+         hasRecentOutput = true;
+         callbacks_.onStdout(*this, stdOut);
       }
 
-      // read all remaining stderr
-      if (pImpl_->hStdErrRead)
+      if (!stdErr.empty() && callbacks_.onStderr)
       {
-         std::string stdErr;
-         Error error = readPipeUntilDone(pImpl_->hStdErrRead, &stdErr);
-         if (error)
-            reportError(error);
-
-         if (!stdErr.empty() && callbacks_.onStderr)
-         {
-            hasRecentOutput = true;
-            callbacks_.onStderr(*this, stdErr);
-         }
+         hasRecentOutput = true;
+         callbacks_.onStderr(*this, stdErr);
       }
 
       // close the process handle

@@ -67,11 +67,10 @@ void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
 
       // are there (or will there likely be) events pending?
       // (if not then notify the client)
-      if ( !clientEventQueue().eventAddedSince(executeStartTime) &&
-           !pJsonRpcResponse->hasAfterResponse() )
-      {
-         pJsonRpcResponse->setField(kEventsPending, "false");
-      }
+      bool eventsPending =
+          pJsonRpcResponse->hasAfterResponse() ||
+          clientEventQueue().eventAddedSince(executeStartTime);
+      pJsonRpcResponse->setField(kEventsPending, eventsPending ? "true" : "false");
 
       // send the response
       ptrConnection->sendJsonRpcResponse(*pJsonRpcResponse);

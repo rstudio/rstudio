@@ -89,7 +89,7 @@ bool ProxyUtils::shouldProxy(const std::string& address,
    if (address.empty() && port.empty())
       return true;
 
-   for(const auto& rule : noProxyRules_)
+   for (const auto& rule : noProxyRules_)
    {
       if (rule->match(address, port))
       {
@@ -100,7 +100,7 @@ bool ProxyUtils::shouldProxy(const std::string& address,
    return true;
 }
 
-const ProxyUtils& proxyUtils()
+ProxyUtils& proxyUtils()
 {
    static ProxyUtils proxyUtils;
    return proxyUtils;

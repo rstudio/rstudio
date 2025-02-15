@@ -1,0 +1,25 @@
+@charset "UTF-8";
+
+.panel {
+   border: 1px solid rgb(208, 210, 212);
+}
+
+.table {
+   border-collapse: collapse;
+   table-layout: fixed;
+}
+
+.row td > * {
+   overflow: hidden;
+   padding: 1px 2px;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.selected {
+   background-color: rgb(208, 210, 212);
+}
+
+.active .selected {
+   background-color: rgb(214, 233, 247);
+}

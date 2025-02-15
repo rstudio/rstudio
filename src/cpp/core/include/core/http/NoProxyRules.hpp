@@ -152,6 +152,13 @@ class NoProxyRuleCidrBlock : public NoProxyRule
 
 std::unique_ptr<NoProxyRule> createNoProxyRule(const std::string& rule);
 
+inline std::unique_ptr<NoProxyRule> createNoProxyRule(
+    const std::string& address,
+    const std::string& port)
+{
+   return createNoProxyRule(address + ":" + port);
+}
+
 } // namespace http
 } // namespace core
 } // namespace rstudio

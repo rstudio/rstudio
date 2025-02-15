@@ -1028,7 +1028,8 @@
 {
    # avoid invoking object.size() on large character vectors,
    # as this can be slow
-   if (is.character(x) && length(unclass(x)) >= 1E5)
+   n <- 1E5
+   if (is.character(x) && length(unclass(x)) >= n)
    {
       result <- n * .Machine$sizeof.pointer
       class(result) <- "object_size"

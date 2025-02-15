@@ -61,7 +61,7 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       
       progressImage_ = progressImage;
 
-      progressSpinner_ = new ProgressSpinner(getSpinnerColor());
+      progressSpinner_ = new ProgressSpinner(getSpinnerColor(isDark()));
       progressSpinner_.getElement().getStyle().setWidth(32, Unit.PX);
       progressSpinner_.getElement().getStyle().setHeight(32, Unit.PX);
       
@@ -74,17 +74,18 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       panel.setCellHorizontalAlignment(spinner, DockPanel.ALIGN_CENTER);
       panel.add(progressLabel_);
 
-      HorizontalCenterPanel progressPanel = new HorizontalCenterPanel(panel, verticalOffset);
-      
       progressImage_.setVisible(false);
       progressSpinner_.setVisible(false);
       progressLabel_.setVisible(false);
 
-      progressPanel.setSize("100%", "100%");
-      progressPanel.addStyleName(ThemeStyles.INSTANCE.progressPanel());
-      progressPanel.addStyleName("ace_editor_theme");
-
-      initWidget(progressPanel);
+      progressPanel_ = new HorizontalCenterPanel(panel, verticalOffset);
+      progressPanel_.setSize("100%", "100%");
+      progressPanel_.addStyleName(ThemeStyles.INSTANCE.progressPanel());
+      
+      if (isDark())
+         progressPanel_.addStyleName("ace_editor_theme");
+      
+      initWidget(progressPanel_);
    }
 
    public void beginProgressOperation(int delayMs)
@@ -96,7 +97,7 @@ public class ProgressPanel extends Composite implements IsHideableWidget
    {
       timer_.cancel();
 
-      progressSpinner_.setColorType(getSpinnerColor());
+      progressSpinner_.setColorType(getSpinnerColor(isDark()));
       progressSpinner_.setVisible(false);
       progressImage_.setVisible(false);
       progressLabel_.setVisible(false);
@@ -119,14 +120,18 @@ public class ProgressPanel extends Composite implements IsHideableWidget
    {
       // implement to satisfy IsHideableWidget, don't actually take focus when called
    }
-
-   private int getSpinnerColor()
+   
+   public boolean isDark()
    {
-      boolean isDark = Document.get().getBody().hasClassName("editor_dark");
+      return Document.get().getBody().hasClassName("editor_dark");
+   }
 
+   private int getSpinnerColor(boolean isDark)
+   {
       return isDark ? ProgressSpinner.COLOR_WHITE : ProgressSpinner.COLOR_BLACK;
    }
 
+   private final HorizontalCenterPanel progressPanel_;
    private final Widget progressImage_;
    private final ProgressSpinner progressSpinner_;
    private final Label progressLabel_;

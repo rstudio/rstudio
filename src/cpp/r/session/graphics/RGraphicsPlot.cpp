@@ -15,18 +15,17 @@
 
 #include "RGraphicsPlot.hpp"
 
-#include <iostream>
-
 #include <boost/format.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/Log.hpp>
 
+#include <core/Log.hpp>
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
 #include <r/session/RGraphics.hpp>
+#include <r/session/REventLoop.hpp>
 
 using namespace rstudio::core;
 
@@ -128,7 +127,10 @@ Error Plot::renderFromDisplay()
    {
       return Success();
    }
-   
+
+   // disable polled events in this scope
+   r::session::event_loop::DisablePolledEventHandlerScope scope;
+
    // generate a new storage uuid
    std::string storageUuid = core::system::generateUuid();
    

@@ -245,16 +245,15 @@ public class ConsoleProgressDialog extends ProgressDialog
       if (isShowing())
       {
          display_.setReadOnly(true);
-         stopButton().setFocus(true);
       
          // when a shell exits we close the dialog
          if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
-            stopButton().click();
+            closeDialog();
          
          // when we were showOnOutput and the process succeeded then
          // we also auto-close
          else if (showOnOutput_ && (event.getExitCode() == 0))
-            stopButton().click();
+            closeDialog();
       }
       
       // the dialog was showOnOutput_ but was never shown so just tear
@@ -287,26 +286,22 @@ public class ConsoleProgressDialog extends ProgressDialog
             @Override
             public void onResponseReceived(Void response)
             {
-               closeDialog();
+               // Don't immediately close; wait for the process itself
+               // to exit before closing since the interrupt might not
+               // immediately stop the underlying process.
             }
 
             @Override
             public void onError(ServerError error)
             {
-               stopButton().setEnabled(true);
                super.onError(error);
             }
          });
-         
-         stopButton().setEnabled(false);
       }
       else
       {
          closeDialog();
       }
-
-      // Whether success or failure, we don't want to interrupt again
-      running_ = false;
    }
    
    private CommandWithArg<ShellInput> inputHandler_ = 

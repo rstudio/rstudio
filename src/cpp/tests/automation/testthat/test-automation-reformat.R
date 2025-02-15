@@ -4,11 +4,24 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
+.rs.test("https://github.com/rstudio/rstudio/issues/5425", {
+   
+   remote$editor.executeWithContents(".R", "c(1 #2\n)", function(editor) {
+      editor$selectAll()
+      remote$commands.execute(.rs.appCommands$reformatCode)
+      Sys.sleep(1)
+      contents <- editor$getValue()
+      expect_equal(contents, "c(\n  1 #2\n)\n")
+   })
+   
+})
 
 .rs.test("Documents can be reformatted on save", {
    
-   remote$console.execute(".rs.writeUserPref(\"reformat_on_save\", TRUE)")
-   remote$console.execute(".rs.writeUserPref(\"code_formatter\", \"styler\")")
+   remote$console.executeExpr({
+      .rs.uiPrefs$reformatOnSave$set(TRUE)
+      .rs.uiPrefs$codeFormatter$set("styler")
+   })
 
    documentContents <- .rs.heredoc("2+2")
    
@@ -20,16 +33,9 @@ withr::defer(.rs.automation.deleteRemote())
    contents <- editor$session$doc$getValue()
    expect_equal(contents, "1 + 1\n2 + 2\n")
    
-})
-
-.rs.test("https://github.com/rstudio/rstudio/issues/5425", {
-   
-   remote$editor.executeWithContents(".R", "c(1 #2\n)", function(editor) {
-      editor$selectAll()
-      Sys.sleep(0.1)
-      remote$commands.execute(.rs.appCommands$reformatCode)
-      contents <- editor$getValue()
-      expect_equal(contents, "c(\n  1 #2\n)\n")
+   remote$console.executeExpr({
+      .rs.uiPrefs$reformatOnSave$clear()
+      .rs.uiPrefs$codeFormatter$clear()
    })
    
 })

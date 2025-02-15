@@ -16,6 +16,7 @@
 #ifndef CORE_HTTP_URI_HANDLER_HPP
 #define CORE_HTTP_URI_HANDLER_HPP
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -92,6 +93,7 @@ public:
    
 private:
    std::vector<UriHandler> uriHandlers_;
+   mutable std::recursive_mutex mutex_;
 };
 
 inline void notFoundHandler(const Request& request, Response* pResponse)

@@ -207,8 +207,7 @@ class RemoteServerEventListener
         //   2) the user navigates Back within a Frame 
         //
         // can only imagine that it could happen in other scenarios!
-        if (!watchdog_.isRunning())
-           watchdog_.schedule(kWatchdogIntervalMs);
+        watchdog_.schedule(kWatchdogIntervalMs);
      }
    }
    
@@ -466,7 +465,7 @@ class RemoteServerEventListener
    // note: kSecondListenDelayMs must be less than kWatchdogIntervalMs
    // (by a reasonable margin) to void the watchdog getting involved 
    // unnecessarily during a listen delay
-   private final int kWatchdogIntervalMs = 1000;
+   private final int kWatchdogIntervalMs = 2000;
    private final int kSecondListenBounceMs = 250;
    private Timer listenTimer_;
        

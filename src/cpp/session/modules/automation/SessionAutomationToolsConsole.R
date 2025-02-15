@@ -62,7 +62,7 @@
       .rs.waitUntil("console is no longer busy", function()
       {
          !grepl("rstudio-console-busy", editorEl$className)
-      })
+      }, swallowErrors = TRUE)
    }
    
    invisible(TRUE)

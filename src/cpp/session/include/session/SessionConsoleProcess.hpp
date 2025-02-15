@@ -243,8 +243,8 @@ private:
    core::system::ProcessOptions options_;
    boost::shared_ptr<ConsoleProcessInfo> procInfo_;
 
-   // Whether the process should be stopped
-   bool interrupt_ = false;
+   // The number of times we've tried to interrupt / stop this process
+   int interruptCount_ = 0;
 
    // Whether to send pty interrupt
    bool interruptChild_ = false;
