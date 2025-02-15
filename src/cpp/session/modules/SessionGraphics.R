@@ -38,7 +38,7 @@
    }
    
    n <- as.integer(n)
-   if (n <= 0 || is.na(n))
+   if (is.na(n) || n <= 0)
       stop(gettextf("invalid number of points in %s", "locator()"))
    
    p1 <- .External2(C_locator, 1L, type = type)
