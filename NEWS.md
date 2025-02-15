@@ -10,7 +10,7 @@
 - RStudio now sends an interrupt git processes when stopped via "Stop" during a git commit, rather than just terminating the processes. (#6471)
 
 #### Posit Workbench
--
+- An SELinux policy module is now available, allowing Workbench to run when enforcement is enabled. (#4937, rstudio-pro/#4749)
 
 ### Fixed
 #### RStudio
@@ -26,10 +26,12 @@
 - Fixed an issue where opening multiple copies of RStudio Desktop installed in different locations would cause RStudio to try to open itself as a script. (#15554)
 - Fixed an issue where printing 0-row data.frames containing an 'hms' column from an R Markdown chunk could cause an unexpected error. (#15459)
 - Fixed an issue where the Resources page in the Help pane was not legible with dark themes. (#10855)
+- Fixed an issue where "Posit Workbench" was used instead of "RStudio Server" in a message shown when the user was signed out during a session. (#15698)
 - Fixed an issue where the RStudio diagnostics system incorrectly inferred the scope for functions defined and passed as named arguments. (#15629)
 - Fixed an issue where `locator()` and `grid.locator()` would produce incorrect coordinates with high DPI displays. (#10587)
 - Fixed an issue where grid coordinates were not converted between different units correctly with high DPI displays. (#1908, #8559)
 - Fixed an issue where locator points were not drawn on click. (#10025, #11103)
+- Fixed an issue where autocompletion of R6 object names could fail with R6 2.6.0. (#15706)
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
