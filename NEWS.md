@@ -27,6 +27,9 @@
 - Fixed an issue where printing 0-row data.frames containing an 'hms' column from an R Markdown chunk could cause an unexpected error. (#15459)
 - Fixed an issue where the Resources page in the Help pane was not legible with dark themes. (#10855)
 - Fixed an issue where the RStudio diagnostics system incorrectly inferred the scope for functions defined and passed as named arguments. (#15629)
+- Fixed an issue where `locator()` and `grid.locator()` would produce incorrect coordinates with high DPI displays. (#10587)
+- Fixed an issue where grid coordinates were not converted between different units correctly with high DPI displays. (#1908, #8559)
+- Fixed an issue where locator points were not drawn on click. (#10025, #11103)
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
