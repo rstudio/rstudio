@@ -29,3 +29,44 @@
    )
    
 })
+
+.rs.addFunction("graphics.locator", function(n = 512, type = "n", ...)
+{
+   if (length(extras <- list(...))) {
+      opar <- par(extras)
+      on.exit(par(opar))
+   }
+   
+   n <- as.integer(n)
+   if (n <= 0 || is.na(n))
+      stop(gettextf("invalid number of points in %s", "locator()"))
+   
+   p1 <- .External2(C_locator, 1L, type = type)
+   if (type %in% c("p", "o"))
+      points(p1[[1L]], p1[[2L]])
+   
+   x <- numeric(n); y <- numeric(n)
+   x[[1L]] <- p1[[1L]]; x[[2L]] <- p1[[2L]]
+   
+   range <- seq_len(n - 1L) + 1L
+   for (i in range)
+   {
+      p2 <- .External2(C_locator, 1L, type = type)
+      x[[i]] <- p2[[1L]]; y[[i]] <- p2[[2L]]
+      
+      if (type %in% c("p", "o"))
+         points(p2[[1L]], p2[[2L]])
+      if (type %in% c("l", "o"))
+         segments(p1[[1L]], p1[[2L]], p2[[1L]], p2[[2L]])
+      
+      p1 <- p2
+   }
+   
+   list(x = x, y = y)
+})
+
+.rs.replaceBinding(
+   binding  = "locator",
+   package  = "graphics",
+   override = .rs.graphics.locator
+)
