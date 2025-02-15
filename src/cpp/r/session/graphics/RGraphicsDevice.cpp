@@ -351,6 +351,8 @@ void GD_Activate(pDevDesc dev)
 void GD_Deactivate(pDevDesc dev) 
 {
    TRACE_GD_CALL;
+
+   s_deviceType = activeDeviceType();
 }   
    
 void GD_Close(pDevDesc dev) 
@@ -679,8 +681,6 @@ SEXP rs_createGD()
       // make us active
       int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
       Rf_selectDevice(deviceNumber);
-
-      // save the graphics device type
       s_deviceType = activeDeviceType();
    } 
    END_SUSPEND_INTERRUPTS;
