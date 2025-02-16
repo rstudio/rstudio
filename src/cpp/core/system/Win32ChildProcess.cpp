@@ -600,10 +600,29 @@ Error SyncChildProcess::readStdErr(std::string* pOutput)
   return readPipeUntilDone(pImpl_->hStdErrRead, pOutput);
 }
 
-Error SyncChildProcess::waitForExit(int* pExitStatus)
+Error SyncChildProcess::waitForExit(ProcessResult* pResult)
 {
+   // create threads to read stdout, stderr
+   auto readStdOutThread = core::thread::run([&]()
+   {
+      Error error = readStdOut(&(pResult->stdOut));
+      if (error)
+         LOG_ERROR(error);
+   });
+
+   auto readStdErrThread = core::thread::run([&]()
+   {
+      Error error = readStdErr(&(pResult->stdErr));
+      if (error)
+         LOG_ERROR(error);
+   });
+
    // wait
    DWORD result = ::WaitForSingleObject(pImpl_->hProcess, INFINITE);
+
+   // join threads
+   readStdOutThread.join();
+   readStdErrThread.join();
 
    // check for error
    if (result != WAIT_OBJECT_0)
@@ -629,7 +648,7 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
          return LAST_SYSTEM_ERROR();
       }
 
-      *pExitStatus = dwStatus;
+      pResult->exitStatus = dwStatus;
       return Success();
    }
 }
