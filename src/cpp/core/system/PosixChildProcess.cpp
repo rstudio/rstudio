@@ -919,7 +919,6 @@ Error SyncChildProcess::waitForExit(ProcessResult* pResult)
          LOG_ERROR(error);
    });
 
-   // create threads to consume stdout, stderr
    auto readStdErrThread = core::thread::run([&]()
    {
       Error error = readStdErr(&(pResult->stdErr));
