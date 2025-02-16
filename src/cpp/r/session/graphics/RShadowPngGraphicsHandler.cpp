@@ -69,7 +69,7 @@ namespace {
 class PreserveCurrentDeviceScope
 {
 public:
-   
+
    PreserveCurrentDeviceScope()
       : previousDevice_(nullptr)
    {
@@ -78,7 +78,7 @@ public:
          previousDevice_ = GEcurrentDevice();
       }
    }
-   
+
    ~PreserveCurrentDeviceScope()
    {
       try
@@ -112,18 +112,18 @@ void shadowDevOff(DeviceContext* pDC)
       LOG_WARNING_MESSAGE("unexpected null device context");
       return;
    }
-   
+
    if (pDC->pDeviceSpecific == nullptr)
    {
       LOG_WARNING_MESSAGE("unexpected null device data");
       return;
    }
-   
+
    // check and see if the device has already been turned off
    ShadowDeviceData* pDevData = (ShadowDeviceData*) pDC->pDeviceSpecific;
    if (pDevData->pShadowPngDevice == nullptr)
       return;
-   
+
    // kill the device if it's still alive
    pGEDevDesc geDev = desc2GEDesc(pDevData->pShadowPngDevice);
    if (Rf_ndevNumber(pDevData->pShadowPngDevice) > 0)
@@ -134,7 +134,7 @@ void shadowDevOff(DeviceContext* pDC)
       if (error && !r::isCodeExecutionError(error))
          LOG_ERROR(error);
    }
-   
+
    // set to null
    pDevData->pShadowPngDevice = nullptr;
 }
@@ -155,10 +155,10 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       int width = gsl::narrow_cast<int>(pDC->width * pDC->devicePixelRatio);
       int height = gsl::narrow_cast<int>(pDC->height * pDC->devicePixelRatio);
       int res = gsl::narrow_cast<int>(96.0 * pDC->devicePixelRatio);
-      
+
       // determine the appropriate device
       std::string backend = getDefaultBackend();
-      
+
       // validate that the ragg package is available.
       // this is mostly a sanity-check against users who might set
       // the RStudioGD.backend option without explicitly installing the
@@ -170,19 +170,19 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
          Error error = r::exec::RFunction(".rs.isPackageInstalled")
                .addParam("ragg")
                .call(&installed);
-         
+
          if (error || !installed)
          {
             if (error)
                LOG_ERROR(error);
-            
+
             const char* msg = "package 'ragg' is not available; using default graphics backend instead";
             Rf_warningcall(R_NilValue, "%s", msg);
             r::options::setOption(kGraphicsOptionBackend, "default");
             backend = "default";
          }
       }
-      
+
       // ensure the directory hosting the plot is available
       // (plots are often created within the R session's temporary directory,
       // which seems to be opportunisitically deleted in some environments)
@@ -192,7 +192,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       Error error = targetPath.getParent().ensureDirectory();
       if (error)
          return error;
-      
+
       if (backend == "ragg")
       {
          Error error = r::exec::RFunction("ragg:::agg_png")
@@ -218,7 +218,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
          if (err)
             return err;
       }
-      
+
       // save reference to shadow device
       pDevData->pShadowPngDevice = GEcurrentDevice()->dev;
    }
@@ -240,6 +240,16 @@ void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
       DevDescVersion12* pDev12       = (DevDescVersion12*) pDev;
       DevDescVersion12* pShadowDev12 = (DevDescVersion12*) pShadowDev;
 
+      pDev12->left   = pShadowDev12->left;
+      pDev12->right  = pShadowDev12->right;
+      pDev12->bottom = pShadowDev12->bottom;
+      pDev12->top    = pShadowDev12->top;
+
+      pDev12->clipLeft   = pShadowDev12->clipLeft;
+      pDev12->clipRight  = pShadowDev12->clipRight;
+      pDev12->clipBottom = pShadowDev12->clipBottom;
+      pDev12->clipTop    = pShadowDev12->clipTop;
+
       pDev12->canClip                 = pShadowDev12->canClip;
       pDev12->canChangeGamma          = pShadowDev12->canChangeGamma;
       pDev12->canGenMouseDown         = pShadowDev12->canGenMouseDown;
@@ -254,6 +264,7 @@ void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
       pDev12->haveTransparentBg       = pShadowDev12->haveTransparentBg;
       pDev12->haveRaster              = pShadowDev12->haveRaster;
       pDev12->haveCapture             = pShadowDev12->haveCapture;
+
       break;
    }
 
@@ -262,6 +273,16 @@ void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
    {
       DevDescVersion14* pDev14       = (DevDescVersion14*) pDev;
       DevDescVersion14* pShadowDev14 = (DevDescVersion14*) pShadowDev;
+
+      pDev14->left   = pShadowDev14->left;
+      pDev14->right  = pShadowDev14->right;
+      pDev14->bottom = pShadowDev14->bottom;
+      pDev14->top    = pShadowDev14->top;
+
+      pDev14->clipLeft   = pShadowDev14->clipLeft;
+      pDev14->clipRight  = pShadowDev14->clipRight;
+      pDev14->clipBottom = pShadowDev14->clipBottom;
+      pDev14->clipTop    = pShadowDev14->clipTop;
 
       pDev14->canClip                 = pShadowDev14->canClip;
       pDev14->canChangeGamma          = pShadowDev14->canChangeGamma;
@@ -280,6 +301,7 @@ void syncDevDesc(pDevDesc pDev, pDevDesc pShadowDev)
 
       pDev14->deviceVersion           = pShadowDev14->deviceVersion;
       pDev14->deviceClip              = pShadowDev14->deviceClip;
+
       break;
    }
 
@@ -342,7 +364,7 @@ void shadowDevSync(DeviceContext* pDC)
       LOG_ERROR(error);
       return;
    }
-   
+
    // select the device
    int deviceNumber = Rf_ndevNumber(dev);
    Rf_selectDevice(deviceNumber);
@@ -393,19 +415,12 @@ void destroy(DeviceContext* pDC)
    delete pDC;
 }
 
-void setSize(pDevDesc pDev)
-{
-   dev_desc::setSize(pDev);
-   dev_desc::setSize(shadowDevDesc(pDev));
-   setDeviceAttributes(pDev);
-}
-
 void setDeviceAttributes(pDevDesc pDev)
 {
    pDevDesc shadowDev = shadowDevDesc(pDev);
    if (shadowDev == nullptr)
       return;
-   
+
    dev_desc::setDeviceAttributes(pDev, shadowDev);
 }
 
@@ -472,10 +487,12 @@ Error writeToPNG(const FilePath& targetPath, DeviceContext* pDC)
 
    // re-create with the correct size
    if (!handler::initialize(width, height, devicePixelRatio, pDC))
+   {
       return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
+   }
 
-   // now update the device structure
-   handler::setSize(dev);
+   // update device attributes
+   handler::setDeviceAttributes(dev);
 
    // replay the rstudio graphics device context onto the png
    shadowDevSync(pDC);
@@ -494,7 +511,7 @@ void circle(double x,
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::circle(x, y, r, gc, pngDevDesc);
 }
 
@@ -508,7 +525,7 @@ void line(double x1,
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
- 
+
    dev_desc::line(x1, y1, x2, y2, gc, pngDevDesc);
 }
 
@@ -521,7 +538,7 @@ void polygon(int n,
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::polygon(n, x, y, gc, pngDevDesc);
 }
 
@@ -534,7 +551,7 @@ void polyline(int n,
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::polyline(n, x, y, gc, pngDevDesc);
 }
 
@@ -548,7 +565,7 @@ void rect(double x0,
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::rect(x0, y0, x1, y1, gc, pngDevDesc);
 }
 
@@ -563,7 +580,7 @@ void path(double *x,
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::path(x, y, npoly, nper, winding, gc, pngDevDesc);
 }
 
@@ -582,7 +599,7 @@ void raster(unsigned int *raster,
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::raster(raster,
                     w,
                     h,
@@ -601,8 +618,21 @@ SEXP cap(pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return R_NilValue;
-   
+
    return dev_desc::cap(pngDevDesc);
+}
+
+void size(double* left,
+          double* right,
+          double* bottom,
+          double* top,
+          pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+
+   dev_desc::size(left, right, bottom, top, pngDevDesc);
 }
 
 void metricInfo(int c,
@@ -615,7 +645,7 @@ void metricInfo(int c,
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::metricInfo(c, gc, ascent, descent, width, pngDevDesc);
 }
 
@@ -624,10 +654,10 @@ double strWidth(const char *str, const pGEcontext gc, pDevDesc dev)
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return gsl::narrow_cast<double>(::strlen(str));
-   
+
    return dev_desc::strWidth(str, gc, pngDevDesc);
 }
-   
+
 void text(double x,
           double y,
           const char *str,
@@ -635,29 +665,29 @@ void text(double x,
           double hadj,
           const pGEcontext gc,
           pDevDesc dev)
-{   
+{
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::text(x, y, str, rot, hadj, gc, pngDevDesc);
 }
-   
+
 void clip(double x0, double x1, double y0, double y1, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::clip(x0, x1, y0, y1, pngDevDesc);
 }
-   
+
 void newPage(const pGEcontext gc, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::newPage(gc, pngDevDesc);
 }
 
@@ -666,7 +696,7 @@ void mode(int mode, pDevDesc dev)
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::mode(mode, pngDevDesc);
 }
 
@@ -694,7 +724,7 @@ SEXP setPattern(SEXP pattern, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return R_NilValue;
-   
+
    return dev_desc::setPattern(pattern, pngDevDesc);
 }
 
@@ -703,7 +733,7 @@ void releasePattern(SEXP ref, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::releasePattern(ref, pngDevDesc);
 }
 
@@ -712,7 +742,7 @@ SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return R_NilValue;
-   
+
    return dev_desc::setClipPath(path, ref, pngDevDesc);
 }
 
@@ -721,7 +751,7 @@ void releaseClipPath(SEXP ref, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::releaseClipPath(ref, pngDevDesc);
 }
 
@@ -730,7 +760,7 @@ SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return R_NilValue;
-   
+
    return dev_desc::setMask(path, ref, pngDevDesc);
 }
 
@@ -739,7 +769,7 @@ void releaseMask(SEXP ref, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::releaseMask(ref, pngDevDesc);
 }
 
@@ -748,7 +778,7 @@ SEXP defineGroup(SEXP source, int op, SEXP destination, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return R_NilValue;
-   
+
    return dev_desc::defineGroup(source, op, destination, pngDevDesc);
 }
 
@@ -757,7 +787,7 @@ void useGroup(SEXP ref, SEXP trans, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::useGroup(ref, trans, pngDevDesc);
 }
 
@@ -766,7 +796,7 @@ void releaseGroup(SEXP ref, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::releaseGroup(ref, pngDevDesc);
 }
 
@@ -775,7 +805,7 @@ void stroke(SEXP path, const pGEcontext gc, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::stroke(path, gc, pngDevDesc);
 }
 
@@ -784,7 +814,7 @@ void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::fill(path, rule, gc, pngDevDesc);
 }
 
@@ -793,7 +823,7 @@ void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::fillStroke(path, rule, gc, pngDevDesc);
 }
 
@@ -802,14 +832,14 @@ SEXP capabilities(SEXP cap)
    return dev_desc::capabilities(cap);
 }
 
-void glyph(int n, int *glyphs, double *x, double *y, 
+void glyph(int n, int *glyphs, double *x, double *y,
            SEXP font, double size,
            int colour, double rot, pDevDesc dd)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dd);
    if (pngDevDesc == nullptr)
       return;
-   
+
    dev_desc::glyph(n, glyphs, x, y, font, size, colour, rot, pngDevDesc);
 }
 
@@ -820,7 +850,6 @@ void installShadowHandler()
    handler::allocate = shadow::allocate;
    handler::initialize = shadow::initialize;
    handler::destroy = shadow::destroy;
-   handler::setSize = shadow::setSize;
    handler::setDeviceAttributes = shadow::setDeviceAttributes;
    handler::onBeforeAddDevice = shadow::onBeforeAddDevice;
    handler::onAfterAddDevice = shadow::onAfterAddDevice;
@@ -833,6 +862,7 @@ void installShadowHandler()
    handler::path = shadow::path;
    handler::raster = shadow::raster;
    handler::cap = shadow::cap;
+   handler::size = shadow::size;
    handler::metricInfo = shadow::metricInfo;
    handler::strWidth = shadow::strWidth;
    handler::text = shadow::text;
@@ -855,7 +885,7 @@ void installShadowHandler()
    handler::capabilities = shadow::capabilities;
    handler::glyph = shadow::glyph;
 }
-   
+
 } // namespace handler
 } // namespace graphics
 } // namespace session

@@ -326,14 +326,14 @@ template <typename T>
 void setCommonDeviceAttributes(T pDev, T pShadow)
 {
    pDev->left = pShadow->left;
-   pDev->top = pShadow->top;
    pDev->right = pShadow->right;
    pDev->bottom = pShadow->bottom;
+   pDev->top = pShadow->top;
    pDev->clipLeft = pShadow->clipLeft;
-   pDev->clipTop = pShadow->clipTop;
    pDev->clipRight = pShadow->clipRight;
    pDev->clipBottom = pShadow->clipBottom;
-   
+   pDev->clipTop = pShadow->clipTop;
+
    pDev->cra[0] = pShadow->cra[0];
    pDev->cra[1] = pShadow->cra[1];
    pDev->startps = pShadow->startps;
@@ -420,7 +420,7 @@ void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow)
       
       break;
    }
-      
+
    }
 }
 

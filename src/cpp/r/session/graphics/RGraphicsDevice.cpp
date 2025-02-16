@@ -19,6 +19,7 @@
 
 #include <boost/thread.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/utility/string_view.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -81,6 +82,7 @@ pGEDevDesc s_pGEDevDesc = nullptr;
 boost::function<bool(double*, double*)> s_locatorFunction;
 
 // global size attributes (used to initialize new devices)
+DeviceType s_deviceType = DeviceTypeUnknown;
 int s_width = 0;
 int s_height = 0;
 double s_devicePixelRatio = 1.0;
@@ -135,10 +137,7 @@ void GD_Size(double *left,
 {
    TRACE_GD_CALL;
 
-   *left = 0.0;
-   *right = s_width;
-   *bottom = s_height;
-   *top = 0.0;
+   handler::size(left, right, bottom, top, dev);
 }
 
 void GD_Clip(double x0, double x1, double y0, double y1, pDevDesc dev)
@@ -321,11 +320,10 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
    {
       s_graphicsDeviceEvents.onDrawing();
 
-      if(s_locatorFunction(x,y))
+      if (s_locatorFunction(x, y))
       {
          // if our graphics device went away while we were waiting 
          // for locator input then we need to return false
-         
          if (s_pGEDevDesc != nullptr)
             return TRUE;
          else
@@ -346,11 +344,15 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
 void GD_Activate(pDevDesc dev) 
 {
    TRACE_GD_CALL;
+
+   s_deviceType = activeDeviceType();
 }
 
 void GD_Deactivate(pDevDesc dev) 
 {
    TRACE_GD_CALL;
+
+   s_deviceType = activeDeviceType();
 }   
    
 void GD_Close(pDevDesc dev) 
@@ -520,8 +522,8 @@ void resyncDisplayList()
       return;
    }
 
-   // now update the device structure
-   handler::setSize(pDev);
+   // now set device attributes
+   handler::setDeviceAttributes(pDev);
 
    // replay the display list onto the resized surface
    {
@@ -662,7 +664,6 @@ SEXP rs_createGD()
       pDev->deviceSpecific = pDC;
 
       // device attributes
-      handler::setSize(pDev);
       handler::setDeviceAttributes(pDev);
 
       // notify handler we are about to add (enables shadow device
@@ -680,6 +681,7 @@ SEXP rs_createGD()
       // make us active
       int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
       Rf_selectDevice(deviceNumber);
+      s_deviceType = activeDeviceType();
    } 
    END_SUSPEND_INTERRUPTS;
 
@@ -707,7 +709,8 @@ Error makeActive()
    // select us
    int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
    Rf_selectDevice(deviceNumber);
-   
+   s_deviceType = activeDeviceType();
+
    return Success();
 }
 
@@ -866,7 +869,7 @@ Error initialize(
    if (error)
       return error;
    
-   // set size
+   // set up default size, pixel ratio
    setSize(kDefaultWidth, kDefaultHeight, kDefaultDevicePixelRatio);
 
    // check for an incompatible graphics version before fully initializing.
@@ -918,11 +921,46 @@ int getHeight()
    return s_height;
 }
 
+DeviceType activeDeviceType()
+{
+   SEXP devicesSEXP = Rf_findVar(Rf_install(".Devices"), R_BaseEnv);
+   if (TYPEOF(devicesSEXP) != LISTSXP)
+      return DeviceTypeUnknown;
+
+   for (; devicesSEXP != R_NilValue; devicesSEXP = CDR(devicesSEXP))
+   {
+      SEXP elSEXP = CAR(devicesSEXP);
+      if (TYPEOF(elSEXP) != STRSXP)
+         break;
+
+      SEXP charSEXP = STRING_ELT(elSEXP, 0);
+      boost::string_view device(CHAR(charSEXP), LENGTH(charSEXP));
+      if (device.find("agg_") == 0)
+      {
+         return DeviceTypeAGG;
+      }
+      else if (device == "png" || device == "X11cairo")
+      {
+         return DeviceTypeCairo;
+      }
+      else if (device == "quartz" || device == "quartz_off_screen")
+      {
+         return DeviceTypeQuartz;
+      }
+      else if (device == "windows")
+      {
+         return DeviceTypeWindows;
+      }
+   }
+
+   return DeviceTypeUnknown;
+}
+
 double devicePixelRatio()
 {
    return s_devicePixelRatio;
 }
-   
+
 void close()
 {     
    if (s_pGEDevDesc != nullptr)
