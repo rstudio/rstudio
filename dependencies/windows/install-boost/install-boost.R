@@ -80,6 +80,18 @@ if (!file.exists(boost_dirname))
 # enter boost folder
 enter(boost_dirname)
 
+# apply patch for building with newer MSVC (should be able to remove this when we update to a 
+# more current version of Boost)
+msvc_jam_path <- "tools/build/src/tools/msvc.jam"
+if (file.exists(msvc_jam_path)) {
+    msvc_content <- readLines(msvc_jam_path)
+    msvc_content <- gsub("14\\.3", "14.[34]", msvc_content)
+    writeLines(msvc_content, msvc_jam_path)
+    progress("Updated MSVC version in msvc.jam")
+} else {
+    warning("Could not find msvc.jam file at expected location")
+}
+
 # remove any documentation folders (these cause
 # bcp to barf while trying to copy files)
 unlink("doc", recursive = TRUE)
