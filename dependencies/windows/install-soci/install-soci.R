@@ -15,7 +15,7 @@ options(log.dir = normalizePath("logs"))
 # put RStudio tools on PATH
 PATH$prepend("../tools")
 
-# try to find MSVC 2019
+# try to find MSVC 2022
 msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build",
                                    "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build")), n = 1)
 if (length(msvc) == 0)
