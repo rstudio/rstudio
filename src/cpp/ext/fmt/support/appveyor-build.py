@@ -24,6 +24,10 @@ else:
     # http://help.appveyor.com/discussions/problems/2229-v140-not-found-on-vs2105rc.
     os.environ['PATH'] = r'C:\Program Files (x86)\MSBuild\15.0\Bin;' + path
     if image == 'Visual Studio 2019':
+        generator = 'Visual Studio 17 2022'
+        if platform == 'x64':
+            cmake_command.extend(['-A', 'x64'])
+    elif image == 'Visual Studio 2019':
         generator = 'Visual Studio 16 2019'
         if platform == 'x64':
             cmake_command.extend(['-A', 'x64'])

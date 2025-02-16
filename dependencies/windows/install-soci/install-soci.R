@@ -16,10 +16,10 @@ options(log.dir = normalizePath("logs"))
 PATH$prepend("../tools")
 
 # try to find MSVC 2019
-msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build",
-                                   "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build")), n = 1)
+msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build",
+                                   "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build")), n = 1)
 if (length(msvc) == 0)
-   fatal("No MSVC 2019 installation detected (please install Visual Studio 2019 using 'Install-RStudio-Prereqs.ps1')")
+   fatal("No MSVC 2022 installation detected (please install Visual Studio 2022 using 'Install-RStudio-Prereqs.ps1')")
 PATH$prepend(msvc)
 
 # initialize variables
@@ -28,7 +28,7 @@ soci_base_name <- paste0("soci-", soci_version)
 soci_tar <- paste0(soci_base_name, ".tar")
 soci_archive <- paste0(soci_tar, ".gz")
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
-boost_dir <- normalizePath(file.path(output_dir, "boost-1.83.0-win-msvc142-release-static\\boost64"), winslash = "\\")
+boost_dir <- normalizePath(file.path(output_dir, "boost-1.83.0-win-msvc143-release-static\\boost64"), winslash = "\\")
 soci_url <- paste0("https://rstudio-buildtools.s3.amazonaws.com/soci-", soci_version, ".tar.gz")
 soci_dir <- file.path(owd, soci_base_name)
 soci_build_dir <- file.path(soci_dir, "build")
@@ -85,7 +85,7 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
 
    # run CMAKE for each platform (x86, x64) and each configuration (Debug, Release)
    setwd("x86")
-   cmake_args <- paste0("-G \"Visual Studio 16 2019\" ",
+   cmake_args <- paste0("-G \"Visual Studio 17 2022\" ",
                         "-A Win32 ",
                         "-DCMAKE_VERBOSE_MAKEFILE=ON ",
                         "-DCMAKE_INCLUDE_PATH=\"", file.path(boost_dir, "include"), "\" ",
