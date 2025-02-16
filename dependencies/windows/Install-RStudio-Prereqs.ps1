@@ -88,7 +88,7 @@ refreshenv
 # pin python to 3.11 while this issue is pending: https://github.com/nodejs/node-gyp/issues/2869
 choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
-choco install -y openjdk11
+choco install -y temurin11
 choco install -y -i ant
 choco install -y 7zip
 choco install -y ninja
