@@ -444,7 +444,7 @@ bool ChildProcess::hasRecentOutput() const
 }
 
 Error ChildProcess::run()
-{  
+{
    // verify that the executable pointed at via 'exe_' is executable
    int status = ::access(exe_.c_str(), X_OK);
    if (status == -1)
@@ -909,12 +909,32 @@ Error SyncChildProcess::readStdErr(std::string* pOutput)
    return readPipe(pImpl_->fdStderr, pOutput);
 }
 
-Error SyncChildProcess::waitForExit(int* pExitStatus)
+Error SyncChildProcess::waitForExit(ProcessResult* pResult)
 {
+   // create threads to consume stdout, stderr
+   auto readStdOutThread = core::thread::run([&]()
+   {
+      Error error = readStdOut(&(pResult->stdOut));
+      if (error)
+         LOG_ERROR(error);
+   });
+
+   // create threads to consume stdout, stderr
+   auto readStdErrThread = core::thread::run([&]()
+   {
+      Error error = readStdErr(&(pResult->stdErr));
+      if (error)
+         LOG_ERROR(error);
+   });
+
    // blocking wait for exit
    int status;
    PidType result = posix::posixCall<PidType>(
       boost::bind(::waitpid, pImpl_->pid, &status, 0));
+
+   // join stdout, stderr threads
+   readStdOutThread.join();
+   readStdErrThread.join();
 
    // always close all of the pipes
    pImpl_->closeAll(ERROR_LOCATION);
@@ -922,7 +942,7 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
    // check result
    if (result == -1)
    {
-      *pExitStatus = -1;
+      pResult->exitStatus = -1;
 
       if (errno == ECHILD) // carve out for child already reaped
          return Success();
@@ -931,7 +951,7 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
    }
    else
    {
-      *pExitStatus = resolveExitStatus(status);
+      pResult->exitStatus = resolveExitStatus(status);
       return Success();
    }
 }

@@ -162,25 +162,10 @@ public:
       if (pResult == nullptr)
          return Success();
 
-      // read stdout, stderr
-      auto readStdoutThread = core::thread::run([&]()
-      {
-         Error error = readStdOut(&(pResult->stdOut));
-         if (error)
-            LOG_ERROR(error);
-      });
-
-      auto readStderrThread = core::thread::run([&]()
-      {
-         Error error = readStdErr(&(pResult->stdErr));
-         if (error)
-            LOG_ERROR(error);
-      });
-
       // wait on exit and get exit status. note we always need to do this
       // even if we called terminate due to an earlier error (so we always
       // reap the child)
-      Error waitError = waitForExit(&(pResult->exitStatus));
+      Error waitError = waitForExit(pResult);
       if (waitError)
       {
          if (!error)
@@ -189,12 +174,6 @@ public:
             LOG_ERROR(waitError);
       }
 
-      if (readStdoutThread.joinable())
-         readStdoutThread.timed_join(boost::posix_time::seconds(1));
-
-      if (readStderrThread.joinable())
-         readStderrThread.timed_join(boost::posix_time::seconds(1));
-
       // return error status
       return error;
    }
@@ -202,7 +181,7 @@ public:
 private:
    Error readStdOut(std::string* pOutput);
    Error readStdErr(std::string* pOutput);
-   Error waitForExit(int* pExitStatus);
+   Error waitForExit(ProcessResult* pResult);
 };
 
 
