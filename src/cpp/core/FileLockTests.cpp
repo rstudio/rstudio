@@ -69,7 +69,7 @@ void forkAndCheckLock()
       CHECK(childLock.isLocked(s_lockFilePath));
 
       // exit successfully
-      ::exit(EXIT_SUCCESS);
+      ::_exit(EXIT_SUCCESS);
    }
    
    // parent waits for child process to exit
@@ -149,7 +149,7 @@ TEST_CASE("File Locking", "[!hide]")
       if (child == 0)
       {
          // tell the child process to exit (running any destructors and so on)
-         ::exit(0);
+         ::_exit(0);
       }
       else
       {
