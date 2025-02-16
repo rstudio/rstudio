@@ -101,8 +101,8 @@ RUN git config --global core.longpaths true
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
 # ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-mariposa-orchid panmirror.version.json
 
-# WORKDIR C:/rstudio-tools/dependencies/windows
-# RUN C:/rstudio-tools/dependencies/windows/install-dependencies.cmd
+WORKDIR C:/rstudio-tools/dependencies/windows
+RUN C:/rstudio-tools/dependencies/windows/install-dependencies.cmd
 
 #### this docker container will currently be used as a jenkins swarm slave, rather than instantiated on a swarm ####
 ##### the items below this are dependencies relevant to jenkins-swarm. #####
