@@ -37,4 +37,4 @@
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
 
 ### Dependencies
-- Updated Windows build to use Microsoft Visual C++ 2022 edition and Windows SDK 10.0.22621. (#15690)
+- Updated Windows Desktop to build using Microsoft Visual C++ 2022 and Windows SDK 10.0.22621. (#15690)

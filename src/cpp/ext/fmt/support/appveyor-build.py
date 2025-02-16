@@ -23,7 +23,7 @@ else:
     # Add MSBuild 14.0 to PATH as described in
     # http://help.appveyor.com/discussions/problems/2229-v140-not-found-on-vs2105rc.
     os.environ['PATH'] = r'C:\Program Files (x86)\MSBuild\15.0\Bin;' + path
-    if image == 'Visual Studio 2019':
+    if image == 'Visual Studio 2022':
         generator = 'Visual Studio 17 2022'
         if platform == 'x64':
             cmake_command.extend(['-A', 'x64'])
