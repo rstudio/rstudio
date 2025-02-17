@@ -62,7 +62,7 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
 
    # build SQLite static library
-   exec("build-sqlite.cmd")
+   execBatch("build-sqlite.cmd")
 
    # download and install postgresql includes/libraries - we prebuild these because the postgresql build process is non-trivial
    downloadAndUnzip(postgresql_zip, owd, postgresql_zip_url)
