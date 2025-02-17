@@ -32,9 +32,11 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y nsis --version "3.09"; `
   choco install -y jq
 
-RUN mkdir -p 'C:\rstudio-tools\dependencies\tools' `
-    mkdir -p 'C:\rstudio-tools\dependencies\common' `
-    mkdir -p 'C:\rstudio-tools\dependencies\windows'
+RUN New-Item -Path @( `
+    'C:\rstudio-tools\dependencies\tools', `
+    'C:\rstudio-tools\dependencies\common', `
+    'C:\rstudio-tools\dependencies\windows' `
+) -ItemType Directory -Force
 
 COPY dependencies/tools/rstudio-tools.cmd 'C:\rstudio-tools\dependencies\tools\rstudio-tools.cmd'
 COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
