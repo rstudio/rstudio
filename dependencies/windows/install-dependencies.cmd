@@ -15,7 +15,7 @@ for %%X in (R.exe 7z.exe cmake.exe wget.exe) do (
   )
 )
 
-set WGET_ARGS=-c --no-check-certificate --no-hsts
+set WGET_ARGS=-c --no-check-certificate --no-hsts --quiet
 set UNZIP_ARGS=-q
 
 set BASEURL=%RSTUDIO_BUILDTOOLS%/
@@ -187,7 +187,9 @@ if not exist pandoc\%PANDOC_VERSION% (
 REM wget %WGET_ARGS% %BASEURL%quarto/%QUARTO_VERSION%/%QUARTO_FILE%
 wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
-rmdir /s /q quarto
+if exist quarto (
+  rmdir /s /q quarto
+)
 mkdir quarto
 pushd quarto
 unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
@@ -213,15 +215,11 @@ if not defined JENKINS_URL (
   )
 )
 
-cd
 echo "Installing panmirror (visual editor)"
 pushd ..\windows\install-panmirror
 call clone-quarto-repo.cmd
 popd
-cd
-
 call install-packages.cmd
-
 popd
 
 regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\DIA SDK\bin\msdia140.dll"
