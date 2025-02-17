@@ -6,6 +6,9 @@ FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 
 ENV OPERATING_SYSTEM=windows_10
 
+# If building the docker image locally uncomment this line
+# ENV JENKINS_URL=something
+
 # set RUN commands to use powershell
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; "]
 
