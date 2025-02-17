@@ -7,7 +7,7 @@ FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 ENV OPERATING_SYSTEM=windows_10
 
 # set RUN commands to use powershell
-SHELL ["powershell"]
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; "]
 
 # Note: keep installed dependencies in-sync with Install-RStudio-Prereqs.ps1 for consistency
 # between dev machines and the build machine.
@@ -22,49 +22,47 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
     iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # install some deps via chocolatey
-# pin python to 3.11 while this issue is pending: https://github.com/nodejs/node-gyp/issues/2869
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
   choco install -y temurin11; `
   choco install -y -i ant; `
   choco install -y 7zip; `
   choco install -y ninja --version "1.10.0"; `
-  choco install -y python311; `
+  choco install -y python313; `
   choco install -y nsis --version "3.09"; `
   choco install -y jq
 
-RUN New-Item -Path @( `
-    'C:\rstudio-tools\dependencies\tools', `
-    'C:\rstudio-tools\dependencies\common', `
-    'C:\rstudio-tools\dependencies\windows' `
-) -ItemType Directory -Force
-
-COPY dependencies/tools/rstudio-tools.cmd 'C:\rstudio-tools\dependencies\tools\rstudio-tools.cmd'
-COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
-COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
-
-# vscollect.exe helps when diagnosing msvc install problems, used by msvc-install.cmd
-ADD https://aka.ms/vscollect.exe 'C:\rstudio-tools\dependencies\windows\vscollect.exe'
-
-SHELL ["cmd", "/S", "/C"]
-
+# install Visual C++ build tools and Windows SDK
 RUN `
     # Download the Build Tools bootstrapper for version 17.13.35806.99
     # https://learn.microsoft.com/en-us/visualstudio/releases/2022/release-history#fixed-version-bootstrappers
-    curl -SL --output vs_buildtools.exe https://download.visualstudio.microsoft.com/download/pr/45212da0-ea11-4612-bbff-cf4b802a1640/7f34abca950bd22d49403ebf14f6e01b0cf9658e1150f7d0644d943df3dcce27/vs_BuildTools.exe `
+    Invoke-WebRequest `
+        -Uri 'https://download.visualstudio.microsoft.com/download/pr/45212da0-ea11-4612-bbff-cf4b802a1640/7f34abca950bd22d49403ebf14f6e01b0cf9658e1150f7d0644d943df3dcce27/vs_BuildTools.exe' `
+        -OutFile 'vs_buildtools.exe'; `
     `
     # Install Build Tools
-    && (call C:rstudio-tools\dependencies\windows\msvc-install.cmd vs_buildtools.exe --quiet --wait --norestart --nocache install `
-        --add Microsoft.VisualStudio.Workload.VCTools `
-        --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-        --add Microsoft.VisualStudio.Component.Windows11SDK.22621 `
-        --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
-        --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
-        --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
-        --remove Microsoft.VisualStudio.Component.Windows81SDK) `
+    $process = Start-Process -FilePath .\vs_buildtools.exe -ArgumentList @( `
+        '--quiet', `
+        '--wait', `
+        '--norestart', `
+        '--nocache', `
+        '--add', 'Microsoft.VisualStudio.Workload.VCTools', `
+        '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', `
+        '--add', 'Microsoft.VisualStudio.Component.Windows11SDK.22621', `
+        '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10240', `
+        '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10586', `
+        '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.14393', `
+        '--remove', 'Microsoft.VisualStudio.Component.Windows81SDK' `
+    ) -Wait -PassThru; `
     `
-    && del /q vs_buildtools.exe
-
-SHELL ["powershell"]
+    if ($process.ExitCode -eq 3010) { `
+        Write-Host "Restart required but skipping..."; `
+        $process.ExitCode = 0; `
+    } elseif ($process.ExitCode -ne 0) { `
+        Write-Host "Installation failed with exit code $($process.ExitCode)"; `
+        exit $process.ExitCode; `
+    } `
+    `
+    Remove-Item -Force vs_buildtools.exe
 
 # install aws cli
 RUN choco install -y awscli
@@ -73,7 +71,7 @@ RUN choco install -y awscli
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
 
 # install R to c:\R, a common c:\Program issue appears to only happen when installing in docker
-RUN $ErrorActionPreference = 'Stop' ;`
+RUN `
   [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
   (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/R/R-3.6.3-win.exe', 'c:\R-3.6.3-win.exe') ;`
   Start-Process c:\R-3.6.3-win.exe -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.6.3\"' ;`
@@ -85,7 +83,7 @@ RUN $env:path += ';C:\R\R-3.6.3\bin\i386\' ;`
 
 # install smtools 
 # TODO: remove the installation from the jenkinsfile once this is built into the base image
-RUN $ErrorActionPreference = 'Stop' ;`
+RUN `
   [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48 ;`
   (New-Object System.Net.WebClient).DownloadFile('https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi', 'smtools-windows-x64.msi') ;`
   Start-Process 'msiexec' -ArgumentList '/i smtools-windows-x64.msi /quiet /qn /norestart' ;`
@@ -97,6 +95,16 @@ RUN if (Test-Path 'C:\ProgramData\chocolatey\bin\cpack.exe') { Remove-Item -Forc
 
 RUN choco install -y git
 RUN git config --global core.longpaths true
+
+RUN New-Item -Path @( `
+    'C:\rstudio-tools\dependencies\tools', `
+    'C:\rstudio-tools\dependencies\common', `
+    'C:\rstudio-tools\dependencies\windows' `
+) -ItemType Directory -Force
+
+COPY dependencies/tools/rstudio-tools.cmd 'C:\rstudio-tools\dependencies\tools\rstudio-tools.cmd'
+COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
+COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
 # panmirror check for changes
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
