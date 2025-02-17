@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <stdint.h>
 
 #include <boost/bind/bind.hpp>
 #include <boost/utility.hpp>
