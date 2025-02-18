@@ -37,6 +37,6 @@ if defined DOCKER_GITHUB_LOGIN (
 )
 
 REM rebuild the image if necessary
-docker build --tag %REPO%:%IMAGE% --file docker\jenkins\Dockerfile.%IMAGE% %BUILD_ARGS% -m 4GB .\docker\jenkins
+docker build --tag %REPO%:%IMAGE% --file docker\jenkins\Dockerfile.%IMAGE% %BUILD_ARGS% -m 16GB .\
 
 echo Created image %REPO%:%IMAGE%

@@ -1,5 +1,10 @@
 @REM @echo off
 
+:: This folder won't exist when building the docker image
+if not exist ..\..\..\src\gwt\lib (
+    echo Creating directory ..\..\..\src\gwt\lib
+    mkdir ..\..\..\src\gwt\lib
+)
 pushd ..\..\..\src\gwt\lib
 
 

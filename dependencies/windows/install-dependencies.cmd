@@ -15,7 +15,7 @@ for %%X in (R.exe 7z.exe cmake.exe wget.exe) do (
   )
 )
 
-set WGET_ARGS=-c --no-check-certificate --no-hsts
+set WGET_ARGS=-c --no-check-certificate --no-hsts --quiet
 set UNZIP_ARGS=-q
 
 set BASEURL=%RSTUDIO_BUILDTOOLS%/
@@ -31,7 +31,7 @@ set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-3.1.4.zip
-set BOOST_FILES=boost-1.83.0-win-msvc142.zip
+set BOOST_FILES=boost-1.83.0-win-msvc143.zip
 set RESOURCE_HACKER=resource_hacker.zip
 
 set NSIS_NSPROCESS_VERSION=1.6
@@ -187,7 +187,9 @@ if not exist pandoc\%PANDOC_VERSION% (
 REM wget %WGET_ARGS% %BASEURL%quarto/%QUARTO_VERSION%/%QUARTO_FILE%
 wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
-rmdir /s /q quarto
+if exist quarto (
+  rmdir /s /q quarto
+)
 mkdir quarto
 pushd quarto
 unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
@@ -213,18 +215,14 @@ if not defined JENKINS_URL (
   )
 )
 
-cd
 echo "Installing panmirror (visual editor)"
 pushd ..\windows\install-panmirror
 call clone-quarto-repo.cmd
 popd
-cd
-
 call install-packages.cmd
-
 popd
 
-regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\DIA SDK\bin\msdia140.dll"
+regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\DIA SDK\bin\msdia140.dll"
 
 call install-crashpad.cmd
 call install-soci.cmd

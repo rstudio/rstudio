@@ -77,6 +77,26 @@ PATH <- (function() {
    
 })()
 
+execBatch <- function(batchfile) {
+  if (!file.exists(batchfile)) {
+    fatal("Batch file does not exist: %s", batchfile)
+  }
+  
+  # Execute the batch file and wait for completion
+  status <- system2("cmd", args = c("/c", batchfile), 
+                    stdout = TRUE, stderr = TRUE)
+  
+  # Check return status
+  if (!is.null(attr(status, "status")) && attr(status, "status") != 0) {
+    # Combine output into single message
+    output <- paste(status, collapse = "\n")
+    fatal("Batch file failed with status %d:\n%s", 
+          attr(status, "status"), output)
+  }
+  
+  invisible(TRUE)
+}
+
 exec <- function(command,
                  ...,
                  output = NULL,
