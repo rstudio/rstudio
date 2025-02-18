@@ -43,7 +43,7 @@ public class FileBrowserWidget extends Composite
    }
 
    public FileBrowserWidget(FileSystemContext context,
-         Host host)
+                            Host host)
    {
       context_ = context;
       host_ = host;

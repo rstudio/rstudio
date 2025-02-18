@@ -3,6 +3,9 @@
 # Use the latest Windows Server Core (LTSC - Long Term Service Channel) image with .NET Framework 4.8.
 # https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019 
 FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
+# Use the latest Windows Server Core (LTSC - Long Term Service Channel) image with .NET Framework 4.8.
+# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019 
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 
 ENV OPERATING_SYSTEM=windows_10
 

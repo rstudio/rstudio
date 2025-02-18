@@ -167,10 +167,6 @@ public class DirectoryContentsWidget extends Composite
          }
       });
       
-      // presented to screen readers as a single-select listbox
-      Roles.getListboxRole().set(table_.getElement());
-      Roles.getListboxRole().setAriaLabelProperty(table_.getElement(), constants_.directoryContentsLabel());
-
       progressPanel_ = new SimplePanelWithProgress()
       {
          @Override
