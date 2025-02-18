@@ -924,8 +924,6 @@ private:
             auto lines = core::algorithm::split(output, "\n");
             for (int i = 0, n = lines.size(); i < n; i++)
             {
-               std::cerr << lines[i] << std::endl;
-
                if (lines[i] == "Error:" || boost::algorithm::starts_with(lines[i], "Error in "))
                {
                   errorLine = i;
