@@ -68,8 +68,7 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 if (-Not (Test-Path -Path "C:\R")) {
     $RSetupPackage = "C:\R-3.6.3-win.exe"
     if (-Not (Test-Path -Path $RSetupPackage)) {
-        Write-Host "Downloading R 3.6.3..."
-        Invoke-DownloadFile https://rstudio-buildtools.s3.amazonaws.com/R/R-3.6.3-win.exe $RSetupPackage
+        Invoke-DownloadFile https://rstudio-buildtools.s3.amazonaws.com/R/R-3.6.3-win.exe $RSetupPackage -Verbose
     } else {
         Write-Host "Using previously downloaded R installer"
     }
