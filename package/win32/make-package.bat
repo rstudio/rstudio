@@ -211,9 +211,9 @@ if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Pac
 
 REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
-set VS_TOOLS="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools"
-if not exist %VS_TOOLS% set VS_TOOLS="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community\Common7\Tools"
-if not exist %VS_TOOLS% echo "Could not find VsDevCmd.bat. Please ensure Microsoft Visual Studio 2022 Build tools are installed." && exit /b 1
+set VS_TOOLS="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools\Common7\Tools"
+if not exist %VS_TOOLS% set VS_TOOLS="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\Common7\Tools"
+if not exist %VS_TOOLS% echo "Could not find VsDevCmd.bat. Please ensure Microsoft Visual Studio 2019 Build tools are installed." && exit /b 1
 
 pushd %VS_TOOLS%
 call VsDevCmd.bat -clean_env -no_logo || goto :error
