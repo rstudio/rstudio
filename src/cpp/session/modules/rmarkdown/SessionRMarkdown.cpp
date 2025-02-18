@@ -73,6 +73,12 @@
 
 #define kAnsiEscapeRegex "(?:\033\\[\\d+m)*"
 
+#ifdef _WIN32
+# define kLineSep "\r\n"
+#else
+# define kLineSep "\n"
+#endif
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -921,7 +927,7 @@ private:
             boost::regex reRenderError(kKnitrErrorRegex);
             boost::smatch match;
 
-            auto lines = core::algorithm::split(output, "\n");
+            auto lines = core::algorithm::split(output, kLineSep);
             for (int i = 0, n = lines.size(); i < n; i++)
             {
                if (lines[i] == "Error:" || boost::algorithm::starts_with(lines[i], "Error in "))
