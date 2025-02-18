@@ -105,8 +105,6 @@ Install-ChocoPackageIfMissing -PackageName "git" -TestCommand "git"
 $ChocoCPack = 'C:\ProgramData\chocolatey\bin\cpack.exe'
 if (Test-Path $ChocoCPack) { Remove-Item -Force $ChocoCPack }
 
-[System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
-
 Write-Host "-----------------------------------------------------------"
 Write-Host "Core dependencies successfully installed. Next steps:"
 Write-Host "(1) Start a non-administrator Command Prompt"
