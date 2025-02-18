@@ -31,7 +31,7 @@ set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-3.1.4.zip
-set BOOST_FILES=boost-1.83.0-win-msvc143.zip
+set BOOST_FILES=boost-1.83.0-win-msvc142.zip
 set RESOURCE_HACKER=resource_hacker.zip
 
 set NSIS_NSPROCESS_VERSION=1.6
@@ -222,7 +222,7 @@ popd
 call install-packages.cmd
 popd
 
-regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\DIA SDK\bin\msdia140.dll"
+regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\DIA SDK\bin\msdia140.dll"
 
 call install-crashpad.cmd
 call install-soci.cmd

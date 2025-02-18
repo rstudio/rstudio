@@ -34,6 +34,7 @@ function Invoke-DownloadFile {
         Write-Error "Download failed: $_"
     }
 }
+
 function Install-ChocoPackageIfMissing {
     [CmdletBinding()]
     param(
@@ -91,6 +92,9 @@ choco install -y temurin11
 choco install -y -i ant
 choco install -y 7zip
 choco install -y ninja
+choco install -y windows-sdk-11-version-22h2-all
+choco install -y visualstudio2019buildtools --version 16.11.10.0
+choco install -y visualstudio2019-workload-vctools --version 1.0.1
 choco install -y nsis
 choco install -y python313
 choco install -y jq
@@ -101,34 +105,7 @@ Install-ChocoPackageIfMissing -PackageName "git" -TestCommand "git"
 $ChocoCPack = 'C:\ProgramData\chocolatey\bin\cpack.exe'
 if (Test-Path $ChocoCPack) { Remove-Item -Force $ChocoCPack }
 
-#### install msvc 2022 and Windows SDK
-Write-Host "Downloading vs_buildtools.exe"
-Invoke-DownloadFile `
-    https://download.visualstudio.microsoft.com/download/pr/45212da0-ea11-4612-bbff-cf4b802a1640/7f34abca950bd22d49403ebf14f6e01b0cf9658e1150f7d0644d943df3dcce27/vs_BuildTools.exe `
-    vs_buildtools.exe
-Write-Host "Installing Visual Studio Build Tools (be patient)..."
-$buildToolsArgs = @(
-    '--passive',
-    '--wait',
-    '--norestart',
-    '--nocache',
-    '--add', 'Microsoft.VisualStudio.Workload.VCTools',
-    '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-    '--add', 'Microsoft.VisualStudio.Component.Windows11SDK.22621',
-    '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10240',
-    '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10586',
-    '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.14393',
-    '--remove', 'Microsoft.VisualStudio.Component.Windows81SDK'
-)
-$process = Start-Process -FilePath "vs_buildtools.exe" -ArgumentList $buildToolsArgs -Wait -PassThru
-if ($process.ExitCode -ne 0 -and $process.ExitCode -ne 3010) {
-    Write-Host "Visual Studio Build Tools installation failed with exit code $($process.ExitCode)"
-    exit $process.ExitCode
-}
-Write-Host "Build Tools installation completed."
-if ($DeleteDownloads -and (Test-Path "vs_buildtools.exe")) {
-    Remove-Item "vs_buildtools.exe" -Force
-}
+[System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
 
 Write-Host "-----------------------------------------------------------"
 Write-Host "Core dependencies successfully installed. Next steps:"

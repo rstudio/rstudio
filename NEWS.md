@@ -31,10 +31,11 @@
 - Fixed an issue where `locator()` and `grid.locator()` would produce incorrect coordinates with high DPI displays. (#10587)
 - Fixed an issue where grid coordinates were not converted between different units correctly with high DPI displays. (#1908, #8559)
 - Fixed an issue where locator points were not drawn on click. (#10025, #11103)
+- Fixed an issue where RStudio would crash when using the MySQL ODBC Connector on Microsoft Windows. (#15674)
 - Fixed an issue where autocompletion of R6 object names could fail with R6 2.6.0. (#15706)
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
 
 ### Dependencies
-- Updated Windows Desktop to build using Microsoft Visual C++ 2022 and Windows SDK 10.0.22621. (#15690)
+- Updated Windows Desktop build to use Windows SDK 10.0.22621. (#15690)

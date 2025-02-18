@@ -30,7 +30,7 @@ PATH$prepend("../tools")
 
 # initialize variables
 boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_83_0.7z"
-output_name <- sprintf("boost-1.83.0-win-msvc143-%s-%s.zip", variant, link)
+output_name <- sprintf("boost-1.83.0-win-msvc142-%s-%s.zip", variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
@@ -80,17 +80,17 @@ if (!file.exists(boost_dirname))
 # enter boost folder
 enter(boost_dirname)
 
-# apply patch for building with newer MSVC (should be able to remove this when we update to a 
+# apply patch for building with newer MSVC 2022 (should be able to remove this when we update to a 
 # more current version of Boost)
-msvc_jam_path <- "tools/build/src/tools/msvc.jam"
-if (file.exists(msvc_jam_path)) {
-    msvc_content <- readLines(msvc_jam_path)
-    msvc_content <- gsub("14\\.3", "14.[34]", msvc_content)
-    writeLines(msvc_content, msvc_jam_path)
-    progress("Updated MSVC version in msvc.jam")
-} else {
-    warning("Could not find msvc.jam file at expected location")
-}
+# msvc_jam_path <- "tools/build/src/tools/msvc.jam"
+# if (file.exists(msvc_jam_path)) {
+#     msvc_content <- readLines(msvc_jam_path)
+#     msvc_content <- gsub("14\\.3", "14.[34]", msvc_content)
+#     writeLines(msvc_content, msvc_jam_path)
+#     progress("Updated MSVC version in msvc.jam")
+# } else {
+#     warning("Could not find msvc.jam file at expected location")
+# }
 
 # remove any documentation folders (these cause
 # bcp to barf while trying to copy files)
@@ -110,8 +110,9 @@ section("Bootstrapping boost...")
 if (is.na(Sys.getenv("B2_TOOLSET_ROOT", unset = NA))) {
    
    candidates <- c(
-      "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/",
-      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/"
+      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/"
    )
    
    for (candidate in candidates) {
@@ -124,7 +125,7 @@ if (is.na(Sys.getenv("B2_TOOLSET_ROOT", unset = NA))) {
    
 }
 
-exec("cmd.exe", "/C call bootstrap.bat vc143")
+exec("cmd.exe", "/C call bootstrap.bat vc142")
 
 # create bcp executable
 # (so we can create Boost using a private namespace)
@@ -140,7 +141,7 @@ exec("bcp", args)
 
 # enter the 'rstudio' directory and re-bootstrap
 enter("rstudio")
-exec("cmd.exe", "/C call bootstrap.bat vc143")
+exec("cmd.exe", "/C call bootstrap.bat vc142")
 
 # construct common arguments for 32bit, 64bit boost builds
 b2_build_args <- function(bitness) {
@@ -150,7 +151,7 @@ b2_build_args <- function(bitness) {
    
    paste(
       sprintf("address-model=%s", bitness),
-      "toolset=msvc-14.3",
+      "toolset=msvc-14.2",
       sprintf("--prefix=\"%s\"", prefix),
       "--abbreviate-paths",
       sprintf("variant=%s", variant),
