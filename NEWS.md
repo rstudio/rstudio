@@ -1,7 +1,7 @@
 ## RStudio 2025.04.0 "Mariposa Orchid" Release Notes
 
 ### New
-#### RStudiouu
+#### RStudio
 - On macOS, RStudio now uses the project directory / home directory for new RStudio sessions opened via the Dock menu's "Open in New Window" command. (#15409)
 - RStudio installation on Windows now registers icons for many supported file types. (#12730)
 - RStudio for Windows binaries now have digital signatures. (rstudio-pro#5772)
