@@ -39,10 +39,11 @@ RUN `
     # Download the Build Tools bootstrapper for version 17.13.35806.99
     # https://learn.microsoft.com/en-us/visualstudio/releases/2022/release-history#fixed-version-bootstrappers
     Invoke-WebRequest `
+        -UseBasicParsing `
         -Uri 'https://download.visualstudio.microsoft.com/download/pr/45212da0-ea11-4612-bbff-cf4b802a1640/7f34abca950bd22d49403ebf14f6e01b0cf9658e1150f7d0644d943df3dcce27/vs_BuildTools.exe' `
-        -OutFile 'vs_buildtools.exe'; `
-    `
-    # Install Build Tools
+        -OutFile 'vs_buildtools.exe'
+
+RUN `
     $process = Start-Process -FilePath .\vs_buildtools.exe -ArgumentList @( `
         '--quiet', `
         '--wait', `
