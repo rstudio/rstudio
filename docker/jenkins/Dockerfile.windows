@@ -35,7 +35,7 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y jq
 
 # tools to help with diagnosing msvc installation failures
-COPY docker/win-msvc-helper.cmd '.\win-msvc-helper.cmd'
+COPY 'dependencies/tools/win-msvc-helper.cmd' '.\win-msvc-helper.cmd'
 ADD https://aka.ms/vscollect.exe '.\vscollect.exe'
 
 SHELL ["cmd", "/S", "/C"]
@@ -47,7 +47,7 @@ RUN `
 
 RUN `
     # Install Build Tools
-    call .\win-msvc-helper.cmd vs_buildtools.exe --quiet --wait --norestart --nocache install `
+    call win-msvc-helper.cmd vs_buildtools.exe --quiet --wait --norestart --nocache install `
         --add Microsoft.VisualStudio.Workload.VCTools `
         --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
         --add Microsoft.VisualStudio.Component.Windows11SDK.22621 `
@@ -59,6 +59,7 @@ RUN `
     && del /q vs_buildtools.exe win-msvc-helper.cmd vscollect.exe
 
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; "]
+
 # install aws cli
 RUN choco install -y awscli
 
