@@ -39,6 +39,7 @@
 
 ### Dependencies
 - Update Electron to version 34.2.0. (#15450)
+- Update Quarto to version 1.6.40. (#15460)
 
 ### Deprecated / Removed
 - No longer building RStudio Desktop or Desktop Pro for OpenSUSE 15, Ubuntu Focal, or RedHat 8. (rstudio-pro/#7445)
