@@ -38,6 +38,7 @@
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
 
 ### Dependencies
+- Update Electron to version 34.2.0. (#15450)
 - Updated Windows Desktop build to use Windows SDK 10.0.22621. (#15690)
 
 ### Deprecated / Removed
