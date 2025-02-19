@@ -1,13 +1,13 @@
 # escape=`
 
-# Use the latest Windows Server Core 2022 image.
-# https://learn.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2022
-FROM mcr.microsoft.com/windows/servercore:ltsc2022
+# Use the latest Windows Server Core (LTSC - Long Term Service Channel) image with .NET Framework 4.8.
+# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019 
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 
 ENV OPERATING_SYSTEM=windows_10
 
 # If building the docker image locally uncomment this line
-# ENV JENKINS_URL=something
+ENV JENKINS_URL=something
 
 # set RUN commands to use powershell
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; "]
@@ -34,40 +34,31 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y nsis --version "3.09"; `
   choco install -y jq
 
-# install Visual C++ build tools and Windows SDK
+# tools to help with diagnosing msvc installation failures
+COPY docker/win-msvc-helper.cmd '.\win-msvc-helper.cmd'
+ADD https://aka.ms/vscollect.exe '.\vscollect.exe'
+
+SHELL ["cmd", "/S", "/C"]
+
 RUN `
     # Download the Build Tools bootstrapper for version 17.13.35806.99
     # https://learn.microsoft.com/en-us/visualstudio/releases/2022/release-history#fixed-version-bootstrappers
-    Invoke-WebRequest `
-        -UseBasicParsing `
-        -Uri 'https://download.visualstudio.microsoft.com/download/pr/45212da0-ea11-4612-bbff-cf4b802a1640/7f34abca950bd22d49403ebf14f6e01b0cf9658e1150f7d0644d943df3dcce27/vs_BuildTools.exe' `
-        -OutFile 'vs_buildtools.exe'
+    curl -SL --output vs_buildtools.exe https://download.visualstudio.microsoft.com/download/pr/45212da0-ea11-4612-bbff-cf4b802a1640/7f34abca950bd22d49403ebf14f6e01b0cf9658e1150f7d0644d943df3dcce27/vs_BuildTools.exe
 
 RUN `
-    $process = Start-Process -FilePath .\vs_buildtools.exe -ArgumentList @( `
-        '--quiet', `
-        '--wait', `
-        '--norestart', `
-        '--nocache', `
-        '--add', 'Microsoft.VisualStudio.Workload.VCTools', `
-        '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', `
-        '--add', 'Microsoft.VisualStudio.Component.Windows11SDK.22621', `
-        '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10240', `
-        '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10586', `
-        '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.14393', `
-        '--remove', 'Microsoft.VisualStudio.Component.Windows81SDK' `
-    ) -Wait -PassThru; `
+    # Install Build Tools
+    call .\win-msvc-helper.cmd vs_buildtools.exe --quiet --wait --norestart --nocache install `
+        --add Microsoft.VisualStudio.Workload.VCTools `
+        --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+        --add Microsoft.VisualStudio.Component.Windows11SDK.22621 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
+        --remove Microsoft.VisualStudio.Component.Windows81SDK `
     `
-    if ($process.ExitCode -eq 3010) { `
-        Write-Host "Restart required but skipping..."; `
-        $process.ExitCode = 0; `
-    } elseif ($process.ExitCode -ne 0) { `
-        Write-Host "Installation failed with exit code $($process.ExitCode)"; `
-        exit $process.ExitCode; `
-    } `
-    `
-    Remove-Item -Force vs_buildtools.exe
+    && del /q vs_buildtools.exe win-msvc-helper.cmd vscollect.exe
 
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; "]
 # install aws cli
 RUN choco install -y awscli
 
