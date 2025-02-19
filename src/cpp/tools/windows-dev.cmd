@@ -7,7 +7,7 @@ if not exist %VS_TOOLS% echo "Could not find VsDevCmd.bat. Please ensure Microso
 
 pushd %VS_TOOLS%
 call VsDevCmd.bat -clean_env -no_logo || goto :error
-call VsDevCmd.bat -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.22621.0 -no_logo || goto :error
+call VsDevCmd.bat -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.19041.0 -no_logo || goto :error
 popd
 
 echo Microsoft toolchain configured, can now use cmake. For example:

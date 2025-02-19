@@ -92,7 +92,7 @@ choco install -y temurin11
 choco install -y -i ant
 choco install -y 7zip
 choco install -y ninja
-choco install -y windows-sdk-11-version-22h2-all
+choco install -y windows-sdk-10.1 --version 10.1.19041.0
 choco install -y visualstudio2019buildtools --version 16.11.10.0
 choco install -y visualstudio2019-workload-vctools --version 1.0.1
 choco install -y nsis

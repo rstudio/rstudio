@@ -28,6 +28,7 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
   choco install -y temurin11; `
   choco install -y -i ant; `
+  choco install -y windows-sdk-10.1 --version 10.1.19041.0; `
   choco install -y 7zip; `
   choco install -y ninja --version "1.10.0"; `
   choco install -y python313; `
@@ -35,9 +36,7 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y jq; `
   choco install -y awscli
 
-RUN ` 
-  choco install -y windows-sdk-11-version-22h2-all; `
-  choco install -y visualstudio2019buildtools --version 16.11.10.0; `
+RUN choco install -y visualstudio2019buildtools --version 16.11.10.0; `
   choco install -y visualstudio2019-workload-vctools --version 1.0.1
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias

@@ -39,7 +39,6 @@
 
 ### Dependencies
 - Update Electron to version 34.2.0. (#15450)
-- Updated Windows Desktop build to use Windows SDK 10.0.22621. (#15690)
 
 ### Deprecated / Removed
 - No longer building RStudio Desktop or Desktop Pro for OpenSUSE 15, Ubuntu Focal, or RedHat 8. (rstudio-pro/#7445)
