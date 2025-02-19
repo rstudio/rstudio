@@ -92,9 +92,6 @@ choco install -y temurin11
 choco install -y -i ant
 choco install -y 7zip
 choco install -y ninja
-choco install -y windows-sdk-11-version-22h2-all
-choco install -y visualstudio2019buildtools --version 16.11.10.0
-choco install -y visualstudio2019-workload-vctools --version 1.0.1
 choco install -y nsis
 choco install -y python313
 choco install -y jq
@@ -104,6 +101,34 @@ Install-ChocoPackageIfMissing -PackageName "git" -TestCommand "git"
 # Newer choco doesn't have this so don't fail if not found
 $ChocoCPack = 'C:\ProgramData\chocolatey\bin\cpack.exe'
 if (Test-Path $ChocoCPack) { Remove-Item -Force $ChocoCPack }
+
+#### install msvc 2019 and Windows SDK
+Write-Host "Downloading vs_buildtools.exe"
+Invoke-DownloadFile `
+    https://aka.ms/vs/16/release/vs_buildtools.exe `
+    vs_buildtools.exe
+Write-Host "Installing Visual C++ Build Tools and Windows SDK (be patient)..."
+$buildToolsArgs = @(
+    '--includeRecommended',
+    '--passive',
+    '--wait',
+    '--norestart',
+    '--nocache',
+    '--add', 'Microsoft.VisualStudio.Workload.VCTools',
+    '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10240',
+    '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10586',
+    '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.14393',
+    '--remove', 'Microsoft.VisualStudio.Component.Windows81SDK'
+)
+$process = Start-Process -FilePath "vs_buildtools.exe" -ArgumentList $buildToolsArgs -Wait -PassThru
+if ($process.ExitCode -ne 0 -and $process.ExitCode -ne 3010) {
+    Write-Host "Visual Studio Build Tools installation failed with exit code $($process.ExitCode)"
+    exit $process.ExitCode
+}
+Write-Host "Build Tools installation completed."
+if ($DeleteDownloads -and (Test-Path "vs_buildtools.exe")) {
+    Remove-Item "vs_buildtools.exe" -Force
+}
 
 Write-Host "-----------------------------------------------------------"
 Write-Host "Core dependencies successfully installed. Next steps:"

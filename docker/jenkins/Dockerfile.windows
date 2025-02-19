@@ -35,10 +35,38 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y jq; `
   choco install -y awscli
 
-RUN ` 
-  choco install -y windows-sdk-11-version-22h2-all; `
-  choco install -y visualstudio2019buildtools --version 16.11.10.0; `
-  choco install -y visualstudio2019-workload-vctools --version 1.0.1
+# install Visual C++ build tools and Windows SDK
+RUN `
+    # Download the Build Tools bootstrapper for version 17.13.35806.99
+    # https://learn.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019
+    Invoke-WebRequest `
+        -Uri 'https://aka.ms/vs/16/release/vs_buildtools.exe' `
+        -OutFile 'vs_buildtools.exe'; `
+    `
+    # Install Build Tools
+    $process = Start-Process -FilePath .\vs_buildtools.exe -ArgumentList @( `
+        '--quiet', `
+        '--wait', `
+        '--norestart', `
+        '--nocache', `
+        '--add', 'Microsoft.VisualStudio.Workload.VCTools', `
+        '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', `
+        '--add', 'Microsoft.VisualStudio.Component.Windows10SDK.19041', `
+        '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10240', `
+        '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.10586', `
+        '--remove', 'Microsoft.VisualStudio.Component.Windows10SDK.14393', `
+        '--remove', 'Microsoft.VisualStudio.Component.Windows81SDK' `
+    ) -Wait -PassThru; `
+    `
+    if ($process.ExitCode -eq 3010) { `
+        Write-Host "Restart required but skipping..."; `
+        $process.ExitCode = 0; `
+    } elseif ($process.ExitCode -ne 0) { `
+        Write-Host "Installation failed with exit code $($process.ExitCode)"; `
+        exit $process.ExitCode; `
+    } `
+    `
+    Remove-Item -Force vs_buildtools.exeA
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"

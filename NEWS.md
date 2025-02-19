@@ -38,4 +38,4 @@
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
 
 ### Dependencies
-- Updated Windows Desktop build to use Windows SDK 10.0.22621. (#15690)
+- Updated Windows Desktop build to the latest Visual C++ 2019 build tools. (#15690)
