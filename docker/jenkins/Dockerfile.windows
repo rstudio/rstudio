@@ -35,7 +35,7 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y jq
 
 # tools to help with diagnosing msvc installation failures
-COPY 'dependencies/tools/win-msvc-helper.cmd' '.\win-msvc-helper.cmd'
+COPY 'dependencies/windows/win-msvc-helper.cmd' '.\win-msvc-helper.cmd'
 ADD https://aka.ms/vscollect.exe '.\vscollect.exe'
 
 SHELL ["cmd", "/S", "/C"]
