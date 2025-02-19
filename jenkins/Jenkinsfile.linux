@@ -134,6 +134,17 @@ pipeline {
               values 'arm64'
             }
           }
+
+          exclude {
+            axis {
+              name 'OS'
+              values 'rhel8', 'opensuse15', 'focal'
+            }
+            axis {
+              name 'FLAVOR'
+              values 'Electron'
+            }
+          }
         }
 
         stages {
