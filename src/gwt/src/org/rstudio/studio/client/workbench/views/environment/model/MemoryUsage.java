@@ -64,7 +64,7 @@ public class MemoryUsage extends JavaScriptObject
    {
       if (useProcessLimit())
          return computePercent(getProcess().getKb(), getLimit().getKb());
-      return (int)Math.round(((getUsed().getKb() * 1.0) / (getTotal().getKb() * 1.0)) * 100);
+      return computePercent(getUsed().getKb(), getTotal().getKb());
    }
 
    /**
@@ -76,7 +76,7 @@ public class MemoryUsage extends JavaScriptObject
    {
       if (useProcessLimit())
          return getPercentUsed();
-      return (int)Math.round(((getProcess().getKb() * 1.0) / (getTotal().getKb() * 1.0)) * 100);
+      return computePercent(getProcess().getKb(), getTotal().getKb());
    }
 
    /**
@@ -86,7 +86,7 @@ public class MemoryUsage extends JavaScriptObject
    public final boolean useProcessLimit()
    {
       long limit = getLimit().getKb();
-      return limit != 0; // && limit != getTotal().getKb();
+      return limit != 0;
    }
 
    private final String limitMessage()

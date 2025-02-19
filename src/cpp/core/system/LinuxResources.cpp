@@ -93,7 +93,7 @@ Error readProcFileKeys(const std::string& procPath, const std::vector<std::strin
                error = systemError(boost::system::errc::protocol_error,
                      "Could not read proc path value "
                      "'" + key + "'"
-                     " from" + procPath + " line "
+                     " from " + procPath + " line "
                      "'" + memLine + "'",
                      ERROR_LOCATION);
             }
