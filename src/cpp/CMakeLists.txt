@@ -66,14 +66,14 @@ endif()
 # test directory
 set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
 
-# enable c++11
+# enable c++17
 if(NOT MSVC)
    include(CheckCXXCompilerFlag)
-   CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-   if(NOT COMPILER_SUPPORTS_CXX11)
-      message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+   CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+   if(NOT COMPILER_SUPPORTS_CXX17)
+      message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
    else()
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
    endif()
 endif()
 
@@ -160,6 +160,7 @@ if(UNIX)
          add_definitions(-Wduplicated-branches)
          add_definitions(-Wrestrict)
          add_definitions(-Wnull-dereference)
+         add_definitions(-Wabi=11)
       endif()
    endif()
 
