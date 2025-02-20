@@ -41,7 +41,7 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 
   # keep some deprecated tools around
-  add_definitions(-D_HAS_AUTO_PTR_ETC=1)
+  add_definitions(-D_HAS_AUTO_PTR_ETC=1 -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS=1)
 
   # disable C4800 warning; this is very noisy, rarely useful, and was completely removed
   # in Visual Studio 2017 (we're currently using VS 2015).
@@ -121,7 +121,7 @@ else()
       message(STATUS "Using PTHREAD_STACK_MIN: ${PTHREAD_STACK_MIN}")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPTHREAD_STACK_MIN=${PTHREAD_STACK_MIN}")
     endif()
-  endif() 
+  endif()
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
   # Use --as-needed when RSTUDIO_CONFIG_MONITOR_ONLY
