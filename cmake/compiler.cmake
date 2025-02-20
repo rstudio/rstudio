@@ -35,11 +35,13 @@ if(APPLE)
 
 endif()
 
-# require C++11 (or C++14 for MSVC)
 if(MSVC)
 
-  # use C++14 (MSVC doesn't support C++11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
+  # use C++17
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+
+  # keep some deprecated tools around
+  add_definitions(-D_HAS_AUTO_PTR_ETC=1)
 
   # disable C4800 warning; this is very noisy, rarely useful, and was completely removed
   # in Visual Studio 2017 (we're currently using VS 2015).
