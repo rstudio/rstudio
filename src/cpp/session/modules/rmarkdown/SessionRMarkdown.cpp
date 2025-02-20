@@ -73,6 +73,12 @@
 
 #define kAnsiEscapeRegex "(?:\033\\[\\d+m)*"
 
+#ifdef _WIN32
+# define kLineSep "\r\n"
+#else
+# define kLineSep "\n"
+#endif
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -914,21 +920,59 @@ private:
          }
          else
          {
-            // check whether an error occurred while rendering the document and
-            // if knitr is about to exit. look for a specific quit marker and
-            // parse to to gather information for a source marker
-            const char* renderErrorPattern = "(?:.*?)" kKnitrErrorRegex "(.*)";
-            
-            boost::regex reRenderError(renderErrorPattern);
-            boost::smatch matches;
-            if (regex_utils::match(output, matches, reRenderError))
+            int errorLine        = -1;
+            int backtraceLine    = -1;
+            int quittingFromLine = -1;
+
+            boost::regex reRenderError(kKnitrErrorRegex);
+            boost::smatch match;
+
+            auto lines = core::algorithm::split(output, kLineSep);
+            for (int i = 0, n = lines.size(); i < n; i++)
             {
-               // looks like a knitr error; compose a compile error object and
-               // emit it to the client when the render is complete
-               int line = core::safe_convert::stringTo<int>(matches[1].str(), -1);
-               FilePath file = targetFile_.getParent().completePath(matches[3].str());
-               renderErrorMarker_ = SourceMarker(SourceMarker::Error, file, line, 1, {}, true);
-               renderErrorMessage_ << core::string_utils::trimWhitespace(matches[4].str());
+               if (lines[i] == "Error:" || boost::algorithm::starts_with(lines[i], "Error in "))
+               {
+                  errorLine = i;
+               }
+               else if (lines[i] == "Backtrace:")
+               {
+                  backtraceLine = i;
+               }
+               else if (regex_utils::match(lines[i], match, reRenderError))
+               {
+                  // looks like a knitr error; compose a compile error object and
+                  // emit it to the client when the render is complete
+                  quittingFromLine = i;
+                  int line = core::safe_convert::stringTo<int>(match[1].str(), -1);
+                  FilePath file = targetFile_.getParent().completePath(match[3].str());
+                  renderErrorMarker_ = SourceMarker(SourceMarker::Error, file, line, 1, {}, true);
+                  break;
+               }
+            }
+
+            if (quittingFromLine == -1)
+            {
+               // nothing to do; didn't see the expected knitr error line?
+            }
+            else if (errorLine == -1)
+            {
+               // didn't find an error line; assume error output
+               // follows the 'Quitting from:' line
+               std::string errorMessage = core::algorithm::join(
+                        lines.begin() + quittingFromLine,
+                        lines.end(),
+                        "\n");
+               renderErrorMessage_ << errorMessage;
+            }
+            else
+            {
+               // found an 'Error:' line; collect error from then
+               // to the 'Quitting from:' line
+               std::string errorMessage = core::algorithm::join(
+                        lines.begin() + errorLine,
+                        lines.begin() + (backtraceLine == -1 ? quittingFromLine : backtraceLine),
+                        "\n");
+               renderErrorMessage_ << errorMessage;
             }
          }
       }
