@@ -39,7 +39,7 @@ endif()
 if(MSVC)
 
   # use C++14 (MSVC doesn't support C++11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
 
   # disable C4800 warning; this is very noisy, rarely useful, and was completely removed
   # in Visual Studio 2017 (we're currently using VS 2015).
