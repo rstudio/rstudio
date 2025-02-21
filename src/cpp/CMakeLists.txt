@@ -250,7 +250,7 @@ endif()
 
 # default Boost versions
 if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
-   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.83.0)
+   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.87.0)
 endif()
 
 # disable system boost if we're not using it.
@@ -277,7 +277,7 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
-   set(RSTUDIO_TOOLS_BOOST "${RSTUDIO_TOOLS_ROOT}/boost/boost_1_83_0")
+   set(RSTUDIO_TOOLS_BOOST "${RSTUDIO_TOOLS_ROOT}/boost/boost_1_87_0")
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
 
