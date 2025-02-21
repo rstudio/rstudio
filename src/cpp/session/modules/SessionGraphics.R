@@ -42,6 +42,9 @@
       stop(gettextf("invalid number of points in %s", "locator()"))
    
    p1 <- .External2(C_locator, 1L, type = type)
+   if (p1[[3L]] == 0L)
+      return(invisible(NULL))
+   
    if (type %in% c("p", "o"))
       points(p1[[1L]], p1[[2L]])
    
@@ -52,6 +55,11 @@
    for (i in range)
    {
       p2 <- .External2(C_locator, 1L, type = type)
+      if (p2[[3L]] == 0L) {
+         length(x) <- length(y) <- i - 1L
+         break
+      }
+      
       x[[i]] <- p2[[1L]]; y[[i]] <- p2[[2L]]
       
       if (type %in% c("p", "o"))
