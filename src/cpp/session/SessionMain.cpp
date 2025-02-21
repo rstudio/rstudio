@@ -17,7 +17,7 @@
 
 // required to avoid Win64 winsock order of include
 // compilation problem
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/scope_exit.hpp>
 
 #ifndef _WIN32
@@ -1897,12 +1897,12 @@ Error ensureLibRSoValid()
    return Success();
 }
 
-// io_service for performing monitor work on the thread
-boost::asio::io_service s_monitorIoService;
+// io_context for performing monitor work on the thread
+boost::asio::io_context s_monitorIoService;
 
 void monitorWorkerThreadFunc()
 {
-   boost::asio::io_service::work work(s_monitorIoService);
+   auto guard = boost::asio::make_work_guard(s_monitorIoService);
    s_monitorIoService.run();
 }
 

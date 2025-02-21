@@ -87,7 +87,7 @@ private:
                return;
 
              // next, write the chunk body
-             boost::asio::mutable_buffers_1 buff(buffer->data, buffer->size);
+             boost::asio::mutable_buffer buff(buffer->data, buffer->size);
              boost::asio::async_write(socket_, buff,
               [=](const boost::system::error_code& ec, size_t written) mutable
               {
@@ -124,7 +124,7 @@ private:
       sstr << std::hex << chunkSize << "\r\n";
 
       boost::shared_ptr<std::string> headerBuff(new std::string(sstr.str()));
-      boost::asio::const_buffers_1 buffer(static_cast<const void*>(headerBuff->c_str()), headerBuff->size());
+      boost::asio::const_buffer buffer(static_cast<const void*>(headerBuff->c_str()), headerBuff->size());
       boost::asio::async_write(socket_, buffer,
        [=](const boost::system::error_code& ec, size_t written) mutable
        {
@@ -138,14 +138,14 @@ private:
    {
       const char* footer = "\r\n";
 
-      boost::asio::const_buffers_1 buffer(static_cast<const void*>(footer), 2);
+      boost::asio::const_buffer buffer(static_cast<const void*>(footer), 2);
       boost::asio::async_write(socket_, buffer, handler);
    }
 
    void writeFinalChunk()
    {
       const char* finalChunk = "0\r\n\r\n";
-      boost::asio::const_buffers_1 buffer(static_cast<const void*>(finalChunk), 5);
+      boost::asio::const_buffer buffer(static_cast<const void*>(finalChunk), 5);
 
       // capture this instance so we stay alive while the writes are executing
       boost::shared_ptr<StreamWriter> sharedThis = StreamWriter<SocketType>::shared_from_this();

@@ -38,7 +38,7 @@ namespace {
 
 void blockingwait(int ms)
 {
-   boost::asio::io_service io;
+   boost::asio::io_context io;
    boost::asio::deadline_timer timer(io, boost::posix_time::milliseconds(ms));
    timer.wait();
 }
@@ -262,7 +262,7 @@ public:
          // the thread.
          client_.connect(con);
 
-         // Start the ASIO io_service run loop in a separate thread; allows
+         // Start the ASIO io_context run loop in a separate thread; allows
          // us to perform multiple operations as part of the test.
          core::thread::safeLaunchThread(
                   boost::bind(&SocketClient::watchSocket, this),

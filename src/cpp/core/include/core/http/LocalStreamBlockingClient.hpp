@@ -30,7 +30,7 @@ inline Error sendRequest(const FilePath& localStreamPath,
                          http::Response* pResponse)
 {
    // create client
-   boost::asio::io_service ioService;
+   boost::asio::io_context ioService;
    boost::shared_ptr<LocalStreamAsyncClient> pClient(
          new LocalStreamAsyncClient(ioService, localStreamPath, true));
 

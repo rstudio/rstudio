@@ -20,7 +20,7 @@
 #include <boost/array.hpp>
 
 #include <boost/utility.hpp>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/write.hpp>
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/ssl.hpp>
@@ -61,7 +61,7 @@ public:
 
 
 public:
-   HttpConnectionImpl(boost::asio::io_service& ioService,
+   HttpConnectionImpl(boost::asio::io_context& ioService,
                       boost::shared_ptr<boost::asio::ssl::context> sslContext,
                       const HeadersParsedHandler& headersParsed,
                       const Handler& handler)

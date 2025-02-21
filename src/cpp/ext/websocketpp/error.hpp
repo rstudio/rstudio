@@ -140,7 +140,13 @@ enum value {
     unsupported_version,
 
     /// HTTP parse error
-    http_parse_error
+    http_parse_error,
+    
+    /// Extension negotiation failed
+    extension_neg_failed,
+
+    /// General transport error, consult more specific transport error code
+    transport_error
 }; // enum value
 
 
@@ -216,6 +222,10 @@ public:
                 return "Unsupported version";
             case error::http_parse_error:
                 return "HTTP parse error";
+            case error::extension_neg_failed:
+                return "Extension negotiation failed";
+            case error::transport_error:
+                return "An error occurred in the underlying transport. Consult transport error code for more details.";
             default:
                 return "Unknown";
         }
@@ -250,7 +260,7 @@ public:
     {}
 
     explicit exception(lib::error_code ec)
-      : m_code(ec)
+      : m_msg(ec.message()), m_code(ec)
     {}
 
     ~exception() throw() {}
@@ -263,7 +273,7 @@ public:
         return m_code;
     }
 
-    std::string m_msg;
+    const std::string m_msg;
     lib::error_code m_code;
 };
 

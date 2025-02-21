@@ -17,7 +17,7 @@
 #define CORE_TIMER_HPP
 
 #include <functional>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/deadline_timer.hpp>
 
 namespace rstudio {
@@ -38,7 +38,7 @@ public:
 class Timer : public ITimer
 {
 public:
-   Timer(boost::asio::io_service& ioService);
+   Timer(boost::asio::io_context& ioService);
    virtual ~Timer() {}
 
    virtual void cancel() override;

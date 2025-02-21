@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2015, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -25,36 +25,41 @@
  *
  */
 
-#ifndef WEBSOCKETPP_RANDOM_NONE_HPP
-#define WEBSOCKETPP_RANDOM_NONE_HPP
+#ifndef WEBSOCKETPP_COMMON_TYPE_TRAITS_HPP
+#define WEBSOCKETPP_COMMON_TYPE_TRAITS_HPP
+
+#include <websocketpp/common/cpp11.hpp>
+
+// If we've determined that we're in full C++11 mode and the user hasn't
+// explicitly disabled the use of C++11 functional header, then prefer it to
+// boost.
+#if defined _WEBSOCKETPP_CPP11_INTERNAL_ && !defined _WEBSOCKETPP_NO_CPP11_TYPE_TRAITS_
+    #ifndef _WEBSOCKETPP_CPP11_TYPE_TRAITS_
+        #define _WEBSOCKETPP_CPP11_TYPE_TRAITS_
+    #endif
+#endif
+
+
+#ifdef _WEBSOCKETPP_CPP11_TYPE_TRAITS_
+    #include <type_traits>
+#else
+    #include <boost/aligned_storage.hpp>
+#endif
+
+
 
 namespace websocketpp {
-/// Random number generation policies
-namespace random {
-/// Stub RNG policy that always returns 0
-namespace none {
+namespace lib {
 
-/// Thread safe stub "random" integer generator.
-/**
- * This template class provides a random integer stub. The interface mimics the
- * WebSocket++ RNG generator classes but the generater function always returns
- * zero. This can be used to stub out the RNG for unit and performance testing.
- *
- * Call operator() to generate the next number
- */
-template <typename int_type>
-class int_generator {
-    public:
-        int_generator() {}
+#ifdef _WEBSOCKETPP_CPP11_TYPE_TRAITS_
+    using std::aligned_storage;
+    using std::is_same;
+#else
+    using boost::aligned_storage;
+    using boost::is_same;
+#endif
 
-        /// advances the engine's state and returns the generated value
-        int_type operator()() {
-            return 0;
-        }
-};
-
-} // namespace none
-} // namespace random
+} // namespace lib
 } // namespace websocketpp
 
-#endif //WEBSOCKETPP_RANDOM_NONE_HPP
+#endif // WEBSOCKETPP_COMMON_TYPE_TRAITS_HPP

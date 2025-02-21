@@ -512,7 +512,7 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    return Success();
 }
 
-Error addUser(boost::asio::io_service& ioService,
+Error addUser(boost::asio::io_context& ioService,
               const std::string& username,
               bool isAdmin)
 {

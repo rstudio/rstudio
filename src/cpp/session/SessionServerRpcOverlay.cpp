@@ -18,7 +18,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 using namespace rstudio::core;
 
@@ -42,7 +42,7 @@ Error invokeServerRpc(
 }
 
 void invokeServerRpcAsync(
-   boost::asio::io_service& ioService,
+   boost::asio::io_context& ioService,
    const std::string& endpoint,
    const json::Object& request,
    const socket_rpc::RpcResultHandler& onResult,

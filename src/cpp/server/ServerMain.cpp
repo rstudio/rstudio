@@ -240,7 +240,7 @@ void pageNotFoundHandler(const http::Request& request,
 }
 
 void rootPathRequestFilter(
-            boost::asio::io_service& ioService,
+            boost::asio::io_context& ioService,
             http::Request* pRequest,
             http::RequestFilterContinuation continuation)
 {

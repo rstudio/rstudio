@@ -18,7 +18,7 @@
 
 #include <boost/function.hpp>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/windows/stream_handle.hpp>
 
 #include <shared_core/Error.hpp>
@@ -42,7 +42,7 @@ public:
    // to ConnectNamedPipe). rather than create yet another timer-based
    // retry mechanism for CreateFile on the named pipe client handle we
    // require that clients use a connection retry profile
-   NamedPipeAsyncClient(boost::asio::io_service& ioService,
+   NamedPipeAsyncClient(boost::asio::io_context& ioService,
                         const std::string& pipeName,
                         const http::ConnectionRetryProfile& retryProfile)
      : AsyncClient<boost::asio::windows::stream_handle>(ioService),

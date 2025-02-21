@@ -43,7 +43,19 @@
     #endif
 #endif
 
-#ifdef _WEBSOCKETPP_CPP11_THREAD_
+// If we're on Visual Studio 2013 or higher and haven't explicitly disabled
+// the use of C++11 thread header then prefer it to boost.
+#if defined(_MSC_VER) && _MSC_VER >= 1800 && !defined _WEBSOCKETPP_NO_CPP11_THREAD_
+    #ifndef _WEBSOCKETPP_CPP11_THREAD_
+        #define _WEBSOCKETPP_CPP11_THREAD_
+    #endif
+#endif
+
+#if defined(_WEBSOCKETPP_MINGW_THREAD_)
+    #include <mingw-threads/mingw.thread.h>
+    #include <mingw-threads/mingw.mutex.h>
+    #include <mingw-threads/mingw.condition_variable.h>
+#elif defined(_WEBSOCKETPP_CPP11_THREAD_)
     #include <thread>
     #include <mutex>
     #include <condition_variable>
@@ -56,7 +68,7 @@
 namespace websocketpp {
 namespace lib {
 
-#ifdef _WEBSOCKETPP_CPP11_THREAD_
+#if defined(_WEBSOCKETPP_CPP11_THREAD_) || defined(_WEBSOCKETPP_MINGW_THREAD_)
     using std::mutex;
     using std::lock_guard;
     using std::thread;

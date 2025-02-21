@@ -59,8 +59,7 @@ void appendOutput(const std::string& output, std::string* pOutput)
 
 struct IoServiceFixture
 {
-   boost::asio::io_service ioService;
-   boost::asio::io_service::work work;
+   boost::asio::io_context ioService;
    std::vector<boost::shared_ptr<boost::thread> > threads;
 
    void runServiceThread()
@@ -68,8 +67,8 @@ struct IoServiceFixture
       ioService.run();
    }
 
-   IoServiceFixture() :
-      ioService(), work(ioService)
+   IoServiceFixture()
+      : ioService()
    {
       for (int i = 0; i < 4; ++i)
       {

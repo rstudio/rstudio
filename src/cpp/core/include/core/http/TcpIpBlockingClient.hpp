@@ -32,7 +32,7 @@ inline Error sendRequest(const std::string& address,
                          http::Response* pResponse)
 {
    // create client
-   boost::asio::io_service ioService;
+   boost::asio::io_context ioService;
    boost::shared_ptr<TcpIpAsyncClient> pClient(new TcpIpAsyncClient(ioService,
                                                                     address,
                                                                     port,

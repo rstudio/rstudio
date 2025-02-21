@@ -823,7 +823,9 @@ void proxyRequest(
    {
       // invoke the client handler on the threadpool - we cannot do this
       // from this thread because that will cause ordering issues for the caller
-      ptrConnection->ioService().post(boost::bind(clientHandler, pClient));
+      boost::asio::post(
+               ptrConnection->ioService(),
+               boost::bind(clientHandler, pClient));
    }
 }
 

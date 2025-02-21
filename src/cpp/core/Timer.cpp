@@ -18,7 +18,7 @@
 namespace rstudio {
 namespace core {
 
-Timer::Timer(boost::asio::io_service& ioService) :
+Timer::Timer(boost::asio::io_context& ioService) :
    timer_(ioService)
 {
 }

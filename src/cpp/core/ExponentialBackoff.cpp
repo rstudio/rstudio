@@ -20,7 +20,7 @@
 namespace rstudio {
 namespace core {
 
-ExponentialBackoff::ExponentialBackoff(boost::asio::io_service& ioService,
+ExponentialBackoff::ExponentialBackoff(boost::asio::io_context& ioService,
                                        const boost::posix_time::time_duration& initialWait,
                                        const boost::posix_time::time_duration& maxWait,
                                        const boost::function<void(ExponentialBackoffPtr)>& action) :
@@ -34,7 +34,7 @@ ExponentialBackoff::ExponentialBackoff(boost::asio::io_service& ioService,
 {
 }
 
-ExponentialBackoff::ExponentialBackoff(boost::asio::io_service& ioService,
+ExponentialBackoff::ExponentialBackoff(boost::asio::io_context& ioService,
                                        const boost::posix_time::time_duration& initialWait,
                                        const boost::posix_time::time_duration& maxWait,
                                        unsigned int maxNumRetries,

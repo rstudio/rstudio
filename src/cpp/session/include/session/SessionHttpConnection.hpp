@@ -32,7 +32,7 @@
 
    2) It provides an interface for HttpConnection::Handler to respond to
       requests. Responses are sent synchronously and are threfore disconnected
-      from the HttpConnectionListener io_service and (most importantly) can
+      from the HttpConnectionListener io_context and (most importantly) can
       therefore be sent on background threads.
 */
 

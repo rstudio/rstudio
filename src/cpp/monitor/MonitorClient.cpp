@@ -13,7 +13,7 @@
  *
  */
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <monitor/MonitorClient.hpp>
 
@@ -77,7 +77,7 @@ void initializeMonitorClient(const std::string& metricsSocket,
 
 void initializeMonitorClient(const std::string& metricsSocket,
                              const std::string& auth,
-                             boost::asio::io_service& ioService,
+                             boost::asio::io_context& ioService,
                              bool useSharedSecret)
 {
    BOOST_ASSERT(s_pClient == NULL);
@@ -102,7 +102,7 @@ void initializeMonitorClient(const std::string& tcpAddress,
                              bool verifySslCerts,
                              const std::string& prefixUri,
                              const std::string& auth,
-                             boost::asio::io_service& ioService,
+                             boost::asio::io_context& ioService,
                              bool useSharedSecret)
 {
    BOOST_ASSERT(s_pClient == NULL);

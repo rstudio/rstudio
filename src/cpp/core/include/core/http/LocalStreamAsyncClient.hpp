@@ -39,7 +39,7 @@ class LocalStreamAsyncClient
    : public AsyncClient<boost::asio::local::stream_protocol::socket>
 {
 public:
-   LocalStreamAsyncClient(boost::asio::io_service& ioService,
+   LocalStreamAsyncClient(boost::asio::io_context& ioService,
                           const FilePath localStreamPath,
                           bool logToStderr = false,
                           boost::optional<UidType> validateUid = boost::none,

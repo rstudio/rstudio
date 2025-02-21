@@ -16,7 +16,7 @@
 #ifndef CORE_SOCKET_RPC_HPP
 #define CORE_SOCKET_RPC_HPP
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/function.hpp>
 #include <shared_core/json/Json.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -47,7 +47,7 @@ core::Error invokeRpc(const core::FilePath& socketPath,
                       const core::json::Object& request,
                       core::json::Value* pResult);
 
-void invokeRpcAsync(boost::asio::io_service& ioService,
+void invokeRpcAsync(boost::asio::io_context& ioService,
                     const core::FilePath& socketPath,
                     const std::string& endpoint,
                     const core::json::Object& request,
@@ -64,7 +64,7 @@ core::Error invokeRpc(const std::string& address,
                       const core::json::Object& request,
                       core::json::Value* pResult);
 
-void invokeRpcAsync(boost::asio::io_service& ioService,
+void invokeRpcAsync(boost::asio::io_context& ioService,
                     const std::string& address,
                     const std::string& port,
                     bool useSsl,

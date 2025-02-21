@@ -163,7 +163,7 @@ void onRpcResponse(const std::string& endpoint,
 }
 
 #ifndef _WIN32
-void sendRequestAsync(boost::asio::io_service& ioService,
+void sendRequestAsync(boost::asio::io_context& ioService,
                       const FilePath& socketPath,
                       const std::string& endpoint,
                       const http::Request& request,
@@ -178,7 +178,7 @@ void sendRequestAsync(boost::asio::io_service& ioService,
 }
 #endif
 
-void sendRequestAsync(boost::asio::io_service& ioService,
+void sendRequestAsync(boost::asio::io_context& ioService,
                       const std::string& address,
                       const std::string& port,
                       bool useSsl,
@@ -254,7 +254,7 @@ Error invokeRpc(const FilePath& socketPath,
    return sendRequest(socketPath, endpoint, req, pResult);
 }
 
-void invokeRpcAsync(boost::asio::io_service& ioService,
+void invokeRpcAsync(boost::asio::io_context& ioService,
                     const FilePath& socketPath,
                     const std::string& endpoint,
                     const json::Object& request,
@@ -281,7 +281,7 @@ Error invokeRpc(const std::string& address,
    return sendRequest(address, port, useSsl, verifySslCerts, connectionTimeout, endpoint, req, pResult);
 }
 
-void invokeRpcAsync(boost::asio::io_service& ioService,
+void invokeRpcAsync(boost::asio::io_context& ioService,
                     const std::string& address,
                     const std::string& port,
                     bool useSsl,

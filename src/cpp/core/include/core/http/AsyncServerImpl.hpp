@@ -24,7 +24,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/variant/static_visitor.hpp>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/deadline_timer.hpp>
 
@@ -104,7 +104,7 @@ public:
    {
    }
 
-   virtual boost::asio::io_service& ioService()
+   virtual boost::asio::io_context& ioService()
    {
       return acceptorService_.ioService();
    }
@@ -457,10 +457,11 @@ private:
    {
       try
       {
-         boost::system::error_code ec;
-         acceptorService_.ioService().run(ec);
-         if (ec)
-            LOG_ERROR(Error(ec, ERROR_LOCATION));
+         acceptorService_.ioService().run();
+      }
+      catch (boost::system::system_error& error)
+      {
+         LOG_ERROR(Error(error.code(), ERROR_LOCATION));
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
@@ -552,7 +553,7 @@ private:
       ptrNextConnection_.reset(
                new AsyncConnectionImpl<typename ProtocolType::socket> (
 
-         // controlling io_service
+         // controlling io_context
          acceptorService_.ioService(),
 
          // optional ssl context - only used for SSL connections
@@ -800,7 +801,7 @@ private:
    }
 
    void connectionRequestFilter(
-            boost::asio::io_service& ioService,
+            boost::asio::io_context& ioService,
             http::Request* pRequest,
             http::RequestFilterContinuation continuation)
    {

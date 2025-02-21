@@ -215,7 +215,7 @@ core::Error initialize();
 bool isCookieRevoked(const std::string& cookie);
 
 // User functions
-core::Error addUser(boost::asio::io_service& ioService, const std::string& username, bool isAdmin = false);
+core::Error addUser(boost::asio::io_context& ioService, const std::string& username, bool isAdmin = false);
 core::json::Array getAllUsers();
 core::Error getUserFromDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
                                 const core::system::User& user,

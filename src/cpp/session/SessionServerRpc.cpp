@@ -39,7 +39,7 @@ namespace overlay {
       json::Value* pResult);
 
    void invokeServerRpcAsync(
-      boost::asio::io_service& ioService,
+      boost::asio::io_context& ioService,
       const std::string& endpoint,
       const json::Object& request,
       const socket_rpc::RpcResultHandler& onResult,
@@ -96,12 +96,11 @@ SEXP rs_invokeServerRpc(SEXP name, SEXP args)
 // once flag for lazy initializing async RPC thread
 boost::once_flag s_threadOnce = BOOST_ONCE_INIT;
 
-// io_service for performing RPC work on the thread
-boost::asio::io_service s_ioService;
+// io_context for performing RPC work on the thread
+boost::asio::io_context s_ioService;
 
 void rpcWorkerThreadFunc()
 {
-   boost::asio::io_service::work work(s_ioService);
    s_ioService.run();
 }
 

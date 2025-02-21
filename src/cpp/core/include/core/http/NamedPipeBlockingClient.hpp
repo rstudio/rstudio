@@ -31,7 +31,7 @@ inline Error sendRequest(const std::string& pipeName,
                          http::Response* pResponse)
 {
    // create client
-   boost::asio::io_service ioService;
+   boost::asio::io_context ioService;
    boost::shared_ptr<NamedPipeAsyncClient> pClient(
          new NamedPipeAsyncClient(ioService, pipeName, retryProfile));
 

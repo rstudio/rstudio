@@ -32,12 +32,12 @@ typedef boost::shared_ptr<ExponentialBackoff> ExponentialBackoffPtr;
 class ExponentialBackoff : public boost::enable_shared_from_this<ExponentialBackoff>
 {
 public:
-   ExponentialBackoff(boost::asio::io_service& ioService,
+   ExponentialBackoff(boost::asio::io_context& ioService,
                       const boost::posix_time::time_duration& initialWait,
                       const boost::posix_time::time_duration& maxWait,
                       const boost::function<void(ExponentialBackoffPtr)>& action);
 
-   ExponentialBackoff(boost::asio::io_service& ioService,
+   ExponentialBackoff(boost::asio::io_context& ioService,
                       const boost::posix_time::time_duration& initialWait,
                       const boost::posix_time::time_duration& maxWait,
                       unsigned int maxNumRetries,
@@ -55,7 +55,7 @@ public:
    void reset();
 
 private:
-   boost::asio::io_service& ioService_;
+   boost::asio::io_context& ioService_;
    boost::posix_time::time_duration initialWait_;
    boost::posix_time::time_duration maxWait_;
    unsigned int maxNumRetries_;

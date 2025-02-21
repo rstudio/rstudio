@@ -120,7 +120,7 @@ public:
       try
       {
          using boost::bind;
-         boost::thread listenerThread(bind(&boost::asio::io_service::run,
+         boost::thread listenerThread(bind(&boost::asio::io_context::run,
                                            &(acceptorService_.ioService())));
          listenerThread_ = MOVE_THREAD(listenerThread);
 
@@ -210,7 +210,7 @@ private:
    virtual core::Error cleanup() = 0;
 
 private:
-   boost::asio::io_service& ioService() { return acceptorService_.ioService(); }
+   boost::asio::io_context& ioService() { return acceptorService_.ioService(); }
 
    void acceptNextConnection()
    {

@@ -20,7 +20,7 @@
 #include <vector>
 #include <map>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/http/AsyncClient.hpp>
@@ -60,7 +60,7 @@ private:
 
 public:
    // launching
-   core::Error launchSession(boost::asio::io_service& ioService,
+   core::Error launchSession(boost::asio::io_context& ioService,
                              const core::r_util::SessionContext& context,
                              const core::http::Request& request,
                              bool &launched,
@@ -74,7 +74,7 @@ public:
 
    // set a custom session launcher
    typedef boost::function<core::Error(
-                           boost::asio::io_service&,
+                           boost::asio::io_context&,
                            const core::r_util::SessionLaunchProfile&,
                            const core::http::Request&,
                            const core::http::ResponseHandler& onLaunch,
@@ -98,7 +98,7 @@ private:
    // default session launcher -- runs the process then uses the
    // ChildProcessTracker to track it's pid for later reaping
    core::Error launchAndTrackSession(
-                        boost::asio::io_service&,
+                        boost::asio::io_context&,
                         const core::r_util::SessionLaunchProfile& profile);
 
    int cleanStalePendingLaunches();

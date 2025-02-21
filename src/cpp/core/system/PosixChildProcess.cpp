@@ -1261,7 +1261,7 @@ bool AsyncChildProcess::exited()
 struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioAsyncChildProcess::Impl>
 {
    Impl(AsioAsyncChildProcess* parent,
-        boost::asio::io_service& ioService) :
+        boost::asio::io_context& ioService) :
       parent_(parent), ioService_(ioService), stdOutDescriptor_(ioService_),
       stdErrDescriptor_(ioService_), stdInDescriptor_(ioService_), exited_(false),
       stdoutFailure_(false), stderrFailure_(false), exitCode_(0), writing_(false),
@@ -1587,10 +1587,10 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
       {
          // copy the function before posting the error to the thread pool
          // we do this because this instance could be destroyed while in the
-         // io_service queue, and so we want to copy these variables
+         // io_context queue, and so we want to copy these variables
          // to ensure we don't try to access any members
          boost::function<void(void)> handler = boost::bind(callbacks_.onExit, exitCode_);
-         ioService_.post(handler);
+         boost::asio::post(ioService_, handler);
       }
       else if (errorCode)
       {
@@ -1600,15 +1600,17 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
          {
             // copy members before posting the error to the thread pool
             // we do this because this instance could be destroyed while in the
-            // io_service queue, and so we want to copy these variables
+            // io_context queue, and so we want to copy these variables
             // to ensure we don't try to access any members
             boost::function<void(void)> handler = boost::bind(&Impl::invokeErrorHandler,
                                                               boost::weak_ptr<Impl>(shared_from_this()),
                                                               error);
-            ioService_.post(handler);
+            boost::asio::post(ioService_, handler);
          }
          else
+         {
             LOG_ERROR(error);
+         }
 
          // if we had an unexpected closure of the stream but no exit, terminate
          error = parent_->terminate();
@@ -1646,7 +1648,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    }
 
    AsioAsyncChildProcess* parent_;
-   boost::asio::io_service& ioService_;
+   boost::asio::io_context& ioService_;
    boost::asio::posix::stream_descriptor stdOutDescriptor_;
    boost::asio::posix::stream_descriptor stdErrDescriptor_;
    boost::asio::posix::stream_descriptor stdInDescriptor_;
@@ -1669,7 +1671,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    bool cleanedUp_;
 };
 
-AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
+AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_context& ioService,
                                              const std::string& exe,
                                              const std::vector<std::string>& args,
                                              const ProcessOptions& options) :
@@ -1678,7 +1680,7 @@ AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
 {
 }
 
-AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
+AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_context& ioService,
                                              const std::string& command,
                                              const ProcessOptions& options) :
    AsyncChildProcess(command, options),

@@ -26,6 +26,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
@@ -58,7 +59,7 @@ public:
    
    // refreshes all FileLock implementations
    static void refresh();
-   static void refreshPeriodically(boost::asio::io_service& service,
+   static void refreshPeriodically(boost::asio::io_context& service,
                                    boost::posix_time::seconds interval = s_refreshRate);
    
    // sub-classes implement locking semantics

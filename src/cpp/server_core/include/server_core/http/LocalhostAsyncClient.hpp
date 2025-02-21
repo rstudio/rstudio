@@ -57,7 +57,7 @@ bool keepConnectionAliveImpl(const core::http::Response& response)
 class LocalhostAsyncClient : public core::http::TcpIpAsyncClient
 {
 public:
-   LocalhostAsyncClient(boost::asio::io_service& ioService,
+   LocalhostAsyncClient(boost::asio::io_context& ioService,
                         const std::string& address,
                         const std::string& port,
                         const boost::posix_time::time_duration& connectionTimeout =
@@ -81,7 +81,7 @@ private:
 class LocalhostAsyncClientSsl : public core::http::TcpIpAsyncClientSsl
 {
 public:
-   LocalhostAsyncClientSsl(boost::asio::io_service& ioService,
+   LocalhostAsyncClientSsl(boost::asio::io_context& ioService,
                            const std::string& address,
                            const std::string& port,
                            bool verifySslCerts,

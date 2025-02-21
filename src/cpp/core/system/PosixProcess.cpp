@@ -32,9 +32,9 @@ namespace system {
 // AsioProcessSupervisor currently on available on posix systems
 struct AsioProcessSupervisor::Impl
 {
-   Impl(boost::asio::io_service& ioService) : ioService_(ioService) {}
+   Impl(boost::asio::io_context& ioService) : ioService_(ioService) {}
 
-   boost::asio::io_service& ioService_;
+   boost::asio::io_context& ioService_;
    std::set<boost::shared_ptr<AsioAsyncChildProcess> > children_;
 
    boost::mutex mutex_;
@@ -147,7 +147,7 @@ struct AsioProcessSupervisor::Impl
    {
       // remove exited children
       // we lock here because this method can potentially be invoked by multiple threads
-      // this is due to the fact that AsioAsyncChildProcess objects run on an io_service
+      // this is due to the fact that AsioAsyncChildProcess objects run on an io_context
       LOCK_MUTEX(mutex_)
       {
          // upgrade this weak pointer to a shared pointer
@@ -174,7 +174,7 @@ struct AsioProcessSupervisor::Impl
    }
 };
 
-AsioProcessSupervisor::AsioProcessSupervisor(boost::asio::io_service& ioService) :
+AsioProcessSupervisor::AsioProcessSupervisor(boost::asio::io_context& ioService) :
    pImpl_(new Impl(ioService))
 {
 }

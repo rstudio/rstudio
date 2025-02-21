@@ -38,7 +38,7 @@ class TcpIpAsyncClient :
       public AsyncClient<boost::asio::ip::tcp::socket>
 {
 public:
-   TcpIpAsyncClient(boost::asio::io_service& ioService,
+   TcpIpAsyncClient(boost::asio::io_context& ioService,
                     const std::string& address,
                     const std::string& port,
                     const boost::posix_time::time_duration& connectionTimeout =

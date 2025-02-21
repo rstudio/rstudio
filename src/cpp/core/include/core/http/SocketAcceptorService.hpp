@@ -22,7 +22,7 @@
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
@@ -40,13 +40,13 @@ class SocketAcceptorService : boost::noncopyable
 {
 public:
    SocketAcceptorService()
-      : pInternalIOService_(new boost::asio::io_service()),
+      : pInternalIOService_(new boost::asio::io_context()),
         ioService_(*pInternalIOService_),
         acceptor_(ioService_)
    {
    }
    
-   explicit SocketAcceptorService(boost::asio::io_service& ioService)
+   explicit SocketAcceptorService(boost::asio::io_context& ioService)
       : ioService_(ioService),
         acceptor_(ioService_)
    {
@@ -73,7 +73,7 @@ public:
 
 public:
 
-   boost::asio::io_service& ioService()
+   boost::asio::io_context& ioService()
    {
       return ioService_;
    }
@@ -95,8 +95,8 @@ public:
    }
    
 private:
-   boost::scoped_ptr<boost::asio::io_service> pInternalIOService_;
-   boost::asio::io_service& ioService_;
+   boost::scoped_ptr<boost::asio::io_context> pInternalIOService_;
+   boost::asio::io_context& ioService_;
    typename ProtocolType::acceptor acceptor_;
 };
 

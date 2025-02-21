@@ -24,7 +24,7 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 
 #include <boost/asio/write.hpp>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -53,9 +53,9 @@ typedef boost::function<void(const boost::system::error_code&, bool)> WriteHandl
 class ISocketOperations
 {
 public:
-   virtual void asyncReadSome(const boost::asio::mutable_buffers_1& buffers, ReadHandler handler) = 0;
-   virtual void asyncWrite(const boost::asio::mutable_buffers_1& buffers, Socket::Handler handler) = 0;
-   virtual void asyncWrite(const boost::asio::const_buffers_1& buffers, Socket::Handler handler) = 0;
+   virtual void asyncReadSome(const boost::asio::mutable_buffer& buffers, ReadHandler handler) = 0;
+   virtual void asyncWrite(const boost::asio::mutable_buffer& buffers, Socket::Handler handler) = 0;
+   virtual void asyncWrite(const boost::asio::const_buffer& buffers, Socket::Handler handler) = 0;
    virtual void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers, Socket::Handler handler) = 0;
 };
 
@@ -74,17 +74,17 @@ public:
    {
    }
 
-   virtual void asyncReadSome(const boost::asio::mutable_buffers_1& buffers, ReadHandler handler)
+   virtual void asyncReadSome(const boost::asio::mutable_buffer& buffers, ReadHandler handler)
    {
       stream_->async_read_some(buffers, boost::asio::bind_executor(strand_, handler));
    }
 
-   virtual void asyncWrite(const boost::asio::mutable_buffers_1& buffers, Socket::Handler handler)
+   virtual void asyncWrite(const boost::asio::mutable_buffer& buffers, Socket::Handler handler)
    {
       boost::asio::async_write(*stream_, buffers, boost::asio::bind_executor(strand_, handler));
    }
 
-   virtual void asyncWrite(const boost::asio::const_buffers_1& buffer, Socket::Handler handler)
+   virtual void asyncWrite(const boost::asio::const_buffer& buffer, Socket::Handler handler)
    {
       boost::asio::async_write(*stream_, buffer, boost::asio::bind_executor(strand_, handler));
    }
@@ -118,7 +118,7 @@ public:
          http::Request*)> HeadersParsedHandler;
 
 public:
-   AsyncConnectionImpl(boost::asio::io_service& ioService,
+   AsyncConnectionImpl(boost::asio::io_context& ioService,
                        boost::shared_ptr<boost::asio::ssl::context> sslContext,
                        long requestSequence,
                        const HeadersParsedHandler& onHeadersParsed,
@@ -191,7 +191,7 @@ public:
       }
    }
 
-   virtual boost::asio::io_service& ioService()
+   virtual boost::asio::io_context& ioService()
    {
       return ioService_;
    }
@@ -301,7 +301,7 @@ public:
    // request/response protocol used by the class in the ordinary course
    // of business)
 
-   virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffer,
+   virtual void asyncReadSome(boost::asio::mutable_buffer buffer,
                               Socket::Handler handler)
    {
       socketOperations_->asyncReadSome(buffer, handler);
@@ -315,7 +315,7 @@ public:
    }
 
    virtual void asyncWrite(
-                     const boost::asio::const_buffers_1& buffer,
+                     const boost::asio::const_buffer& buffer,
                      Socket::Handler handler)
    {
       socketOperations_->asyncWrite(buffer, handler);
@@ -378,11 +378,15 @@ public:
    {
       // continue parsing by reinvoking the read handler
       // with the amount of bytes that were read last time it was called
-      // this is posted to the io_service to be invoked asynchronously
+      // this is posted to the io_context to be invoked asynchronously
       // so callers are not reentrantly locked
-      ioService_.post(boost::bind(&AsyncConnectionImpl<SocketType>::handleRead,
-                                  AsyncConnectionImpl<SocketType>::shared_from_this(),
-                                  boost::system::error_code(), bytesTransferred_));
+      boost::asio::post(
+               ioService_,
+               boost::bind(
+                  &AsyncConnectionImpl<SocketType>::handleRead,
+                  AsyncConnectionImpl<SocketType>::shared_from_this(),
+                  boost::system::error_code(),
+                  bytesTransferred_));
    }
 
    virtual void setData(const boost::any& data)
@@ -684,7 +688,7 @@ private:
    }
 
 private:
-   boost::asio::io_service& ioService_;
+   boost::asio::io_context& ioService_;
 
    // optional ssl stream
    // not used if the connection is not ssl enabled

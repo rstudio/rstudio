@@ -37,7 +37,7 @@ class TcpIpAsyncClientSsl
    : public AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >
 {
 public:
-   TcpIpAsyncClientSsl(boost::asio::io_service& ioService,
+   TcpIpAsyncClientSsl(boost::asio::io_context& ioService,
                        const std::string& address,
                        const std::string& port,
                        bool verify,
@@ -204,7 +204,7 @@ private:
      if (verify_)
      {
         ptrSslStream_->set_verify_callback(
-            boost::asio::ssl::rfc2818_verification(
+            boost::asio::ssl::host_name_verification(
                 verifyAddress_.empty() ? address_ : verifyAddress_));
      }
 

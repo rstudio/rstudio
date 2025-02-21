@@ -30,7 +30,7 @@ namespace core {
 namespace http {  
      
 template <typename SocketType>
-Error connect(boost::asio::io_service& ioService,
+Error connect(boost::asio::io_context& ioService,
               const std::string& address,
               const std::string& port,
               SocketType* pSocket)
@@ -39,16 +39,14 @@ Error connect(boost::asio::io_service& ioService,
    
    // resolve the address
    tcp::resolver resolver(ioService);
-   tcp::resolver::query query(address, port);
    
    boost::system::error_code ec;
-   tcp::resolver::iterator endpointIterator = resolver.resolve(query, ec);
+   auto endpoints = resolver.resolve(address, port, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
    
-   tcp::resolver::iterator end;
    ec = boost::asio::error::host_not_found;
-   while (ec && endpointIterator != end)
+   for (auto&& endpoint : endpoints)
    {
       // cleanup existing socket connection (if any). don't allow
       // an error shutting down to prevent us from trying a
@@ -58,8 +56,9 @@ Error connect(boost::asio::io_service& ioService,
          LOG_ERROR(closeError);
       
       // attempt to connect
-      pSocket->connect(*endpointIterator++, ec);
+      pSocket->connect(endpoint, ec);
    }
+
    if (ec)
       return Error(ec, ERROR_LOCATION);
    
@@ -79,16 +78,18 @@ inline Error initTcpIpAcceptor(
 {
    using boost::asio::ip::tcp;
    
+   auto& acceptor = acceptorService.acceptor();
    tcp::resolver resolver(acceptorService.ioService());
-   tcp::resolver::query query(address, port);
-   
+
    boost::system::error_code ec;
-   tcp::resolver::iterator entries = resolver.resolve(query, ec);
+   auto entries = resolver.resolve(address, port, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
-   
-   tcp::acceptor& acceptor = acceptorService.acceptor();
-   const tcp::endpoint& endpoint = *entries;
+   else if (entries.empty())
+      return Error(boost::system::errc::protocol_error, ERROR_LOCATION);
+
+   auto entry = entries.begin();
+   auto endpoint = entry->endpoint();
    acceptor.open(endpoint.protocol(), ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
@@ -145,7 +146,7 @@ inline Error initTcpIpAcceptor(
    if (ec)
       return Error(ec, ERROR_LOCATION);
    
-   acceptor.listen(boost::asio::socket_base::max_connections, ec);
+   acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
    

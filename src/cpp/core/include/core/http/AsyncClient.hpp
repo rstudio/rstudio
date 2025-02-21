@@ -21,7 +21,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <boost/asio/write.hpp>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/placeholders.hpp>
@@ -95,7 +95,7 @@ class AsyncClient :
    boost::noncopyable
 {
 public:
-   AsyncClient(boost::asio::io_service& ioService,
+   AsyncClient(boost::asio::io_context& ioService,
                bool logToStderr = false)
       : chunkedEncoding_(false),
         ioService_(ioService),
@@ -165,14 +165,14 @@ public:
    // the request/response protocol used by the class in the ordinary
    // course of business)
 
-   virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffer,
+   virtual void asyncReadSome(boost::asio::mutable_buffer buffer,
                               Handler handler)
    {
       socket().async_read_some(buffer, boost::asio::bind_executor(*pStrand_, handler));
    }
 
    virtual void asyncWrite(
-                     const boost::asio::const_buffers_1& buffer,
+                     const boost::asio::const_buffer& buffer,
                      Handler handler)
    {
       boost::asio::async_write(socket(), buffer, boost::asio::bind_executor(*pStrand_, handler));
@@ -218,21 +218,17 @@ public:
 
       // deliver the chunks on the thread pool instead of directly from this method
       // so that it is not a re-entrant method (beneficial for clients if they are holding locks, etc)
-      boost::shared_ptr<AsyncClient<SocketService> > sharedThis =
-            AsyncClient<SocketService>::shared_from_this();
-
-      ioService_.post([=]()
+      boost::asio::post(ioService_, [this]()
       {
-         bool complete = chunkState_->complete;
-
          // capture shared_ptr of this to keep instance alive while posting callback
          // to io service
-         bool handled = sharedThis->deliverChunks(chunkState_->chunks, complete);
+         bool complete = chunkState_->complete;
+         bool handled = deliverChunks(chunkState_->chunks, complete);
 
          if (handled)
          {
             if (!complete)
-               sharedThis->readSomeContent();
+               readSomeContent();
             else
                closeAndRespond();
          }
@@ -264,7 +260,7 @@ public:
 
 protected:
 
-   boost::asio::io_service& ioService() { return ioService_; }
+   boost::asio::io_context& ioService() { return ioService_; }
 
    virtual SocketService& socket() = 0;
 
@@ -679,11 +675,11 @@ private:
       }
 
       // get the underlying bytes from the response buffer
-      const char* bufferPtr = boost::asio::buffer_cast<const char*>(responseBuffer_.data());
+      auto buffer = responseBuffer_.data();
 
       // parse the bytes into chunks
-      std::deque<boost::shared_ptr<std::string> > chunks;
-      bool complete = chunkParser_->parse(bufferPtr, responseBuffer_.size(), &chunks);
+      std::deque<boost::shared_ptr<std::string>> chunks;
+      bool complete = chunkParser_->parse(static_cast<const char*>(buffer.data()), buffer.size(), &chunks);
 
       // break up any enormous chunks into more manageable pieces ensure we
       // do not hit any buffering limits preventing us from forwarding the chunk
@@ -784,7 +780,7 @@ private:
 private:
    struct ConnectionRetryContext
    {
-      ConnectionRetryContext(boost::asio::io_service& ioService)
+      ConnectionRetryContext(boost::asio::io_context& ioService)
          : stopTryingTime(boost::posix_time::not_a_date_time),
            retryTimer(ioService)
       {
@@ -815,7 +811,7 @@ protected:
 private:
    static constexpr double maxChunkSize = 1024.0*1024.0; // 1MB
 
-   boost::asio::io_service& ioService_;
+   boost::asio::io_context& ioService_;
    ConnectionRetryContext connectionRetryContext_;
    bool logToStderr_;
    ResponseHandler responseHandler_;
