@@ -1044,6 +1044,19 @@ Error FilePath::getFileMode(FileMode& out_fileMode) const
    return Success();
 }
 
+Error FilePath::getFileOwner(uid_t& out_fileOwner) const
+{
+   struct stat st;
+   if (::stat(getAbsolutePath().c_str(), &st) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", getAbsolutePath());
+      return error;
+   }
+   out_fileOwner = st.st_uid;
+   return Success();
+}
+
 #endif
 
 std::string FilePath::getFilename() const

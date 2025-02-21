@@ -1160,6 +1160,15 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
     String freeSystemMemory();
 
     /**
+     * Translated "Swap space used".
+     *
+     * @return translated "Swap space used"
+     */
+    @DefaultMessage("Swap space used")
+    @Key("swapSpaceUsed")
+    String swapSpaceUsed();
+
+    /**
      * Translated "Total system memory".
      *
      * @return translated "Total system memory"
@@ -1231,7 +1240,69 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
     @Key("preparingDataImportText")
     String preparingDataImportText();
 
+    /**
+     * Translated "Session memory limit"
+     * 
+     * @return translated "Session memory limit"
+     */
+    @DefaultMessage("Session memory limit")
+    @Key("sessionMemoryLimit")
+    String sessionMemoryLimit();
+
+    /**
+     * Translated "System memory used"
+     *
+     * @return translated "System memory used"
+     */
+    @DefaultMessage("Limit: {0} MiB")
+    @Key("memoryUsageLimit")
+    String memoryUsageLimit(String limitMB);
+
+    /**
+     * Translated "Session memory used: {0} MiB, {1}. System memory used: {2} out of {3} MiB ({4}% free)."
+     * 
+     * @return translated "Session memory used: {0} MiB, {1}. System memory used: {2} out of {3} MiB ({4} free%)."
+     */
+    @DefaultMessage("Session memory used: {0} MiB, {1}. System memory used: {2} out of {3} MiB ({4}% free).")
+    @Key("memoryUsageStatus")
+    String memoryUsageStatus(String sessionMem, String limitMessage,
+                             String systemMem, String totalMem, String percentFree);
 
 
+    /*
+     * Translated "Session memory used: {0} MiB, {1}.\nFree system memory: {2} MiB ({3}%)."
+     *
+     * @return "Session memory used: {0} MiB, {1}.\nFree system memory: {2} MiB ({3}%)."
+     */
+    @DefaultMessage("Session memory used: {0} MiB.\n{1}.\nFree system memory: {2} MiB ({3}%).")
+    @Key("multiLineMemoryStatus")
+    String multiLineMemoryStatus(String sessionMem, String limitMesage, String freeMemory, String percentFree);
+
+    /**
+     * Translated "unlimited"
+     *
+     * @return translated "unlimited"
+     */
+    @DefaultMessage("unlimited")
+    @Key("unlimited")
+    String unlimited();
+
+    /**
+     * Translated "MiB"
+     *
+     * @return translated "MiB"
+     */
+    @DefaultMessage("MiB")
+    @Key("megabytes")
+    String megabytes();
+
+    /**
+     * Translated "Workbench limit"
+     *
+     * @return translated "Workbench limit"
+     */
+    @DefaultMessage("Workbench limit")
+    @Key("workbenchLimit")
+    String workbenchLimit();
 }
 

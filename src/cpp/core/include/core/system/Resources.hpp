@@ -67,6 +67,9 @@ Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider);
 // RAM) or a virtual one (e.g., a cgroup-imposed limit)
 Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider);
 
+// Returns 0 if there's no limit. cgroups memory limits if enabled, or ulimit -m
+Error getProcessMemoryLimit(long *pTotalKb, MemoryProvider *pProvider);
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

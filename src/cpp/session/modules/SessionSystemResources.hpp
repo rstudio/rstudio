@@ -63,6 +63,11 @@ public:
    MemoryStat total;    // Total system memory
    MemoryStat used;     // System memory currently in use
    MemoryStat process;  // Memory used by the current process
+   MemoryStat limit;    // Memory limit for the current process
+
+   bool abort = false;        // True if over the limit and session will shutdown
+   bool overLimit = false;    // True if over the limit but enough free mem
+   bool limitWarning = false; // True if needs the limit warning
 };
 
 // Get information on current memory usage

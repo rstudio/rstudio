@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.events;
 
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.MemoryUsageChangedEvent;
 
 public interface ApplicationEventHandlers extends LogoutRequestedEvent.Handler,
                                                   AuthorizedEvent.Handler,
@@ -37,6 +38,7 @@ public interface ApplicationEventHandlers extends LogoutRequestedEvent.Handler,
                                                   FileUploadEvent.Handler,
                                                   AriaLiveStatusEvent.Handler,
                                                   ClipboardActionEvent.Handler,
-                                                  RunAutomationEvent.Handler
+                                                  RunAutomationEvent.Handler,
+                                                  MemoryUsageChangedEvent.Handler
 {
 }

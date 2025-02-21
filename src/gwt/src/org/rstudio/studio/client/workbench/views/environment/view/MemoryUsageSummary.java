@@ -126,26 +126,39 @@ public class MemoryUsageSummary extends Composite
          constants_.usedBySession(),
          report.getSystemUsage().getProcess()));
 
+      boolean useProcessLimit = usage.useProcessLimit();
+      if (useProcessLimit)
+      {
+         // Show the process limit if there is one and it's not already being used for total memory
+         statsBody.appendChild(buildStatsRow(
+            MemUsageWidget.MEMORY_PIE_UNUSED_COLOR,
+            constants_.sessionMemoryLimit(),
+            usage.getLimit().getKb(),
+            usage.getLimit().getProviderName()));
+      }
+
       // The memory used by the system that isn't already accounted for in the process
       statsBody.appendChild(buildStatsRow(
-         MemoryUsagePieChart.getSystemColorCode(
-            report.getSystemUsage().getPercentUsed()),
+         useProcessLimit ?  null :
+            MemoryUsagePieChart.getSystemColorCode(usage.getPercentUsed()),
          constants_.usedBySystem(),
-         report.getSystemUsage().getUsed().getKb() - report.getSystemUsage().getProcess().getKb(),
-         report.getSystemUsage().getUsed().getProviderName()));
+         usage.getUsed().getKb() - usage.getProcess().getKb(),
+         usage.getUsed().getProviderName()));
+
+      int freeMem = usage.getTotal().getKb() - usage.getUsed().getKb();
 
       // The memory left on the system (the total less the used)
       statsBody.appendChild(buildStatsRow(
-         MemUsageWidget.MEMORY_PIE_UNUSED_COLOR,
-         constants_.freeSystemMemory(),
-         report.getSystemUsage().getTotal().getKb() - report.getSystemUsage().getUsed().getKb(),
-         report.getSystemUsage().getUsed().getProviderName()));
+         useProcessLimit ? null : MemUsageWidget.MEMORY_PIE_UNUSED_COLOR,
+         freeMem < 0 ? constants_.swapSpaceUsed() : constants_.freeSystemMemory(),
+         Math.abs(freeMem),
+         usage.getUsed().getProviderName()));
 
       // Total system memory
       statsBody.appendChild(buildStatsRow(
          null,
          constants_.totalSystemMemory(),
-         report.getSystemUsage().getTotal()));
+         usage.getTotal()));
 
       stats_.getElement().appendChild(statsTable);
       Roles.getDialogRole().setAriaLabelledbyProperty(statsTable, Id.of(header));

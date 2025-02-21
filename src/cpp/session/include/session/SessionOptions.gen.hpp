@@ -302,7 +302,13 @@ protected:
       "Indicates whether or not to allow full standalone UI mode.")
       ("allow-launcher-jobs",
       value<bool>(&allowLauncherJobs_)->default_value(true),
-      "Indicates whether or not to allow running jobs via the Launcher.");
+      "Indicates whether or not to allow running jobs via the Launcher.")
+      ("allow-over-limit-sessions",
+      value<bool>(&allowOverLimitSessions_)->default_value(false),
+      "Indicates whether or not to abort sessions that exceed their specified memory limit. Users will still see warnings and an error.")
+      ("abort-free-mem-percent",
+      value<int>(&abortFreeMemPercent_)->default_value(5),
+      "Sessions will be aborted if there is less than 100 MiB of free RAM or this configured percentage. Disable abort entirely by enabling allow-over-limit-sessions. Increase this value for easily reproducing this scenario in a test environment or to more strictly enforce memory limits on the system.");
 
    pR->add_options()
       ("r-core-source",
@@ -538,6 +544,8 @@ public:
    bool allowPresentationCommands() const { return allowPresentationCommands_ || allowOverlay(); }
    bool allowFullUI() const { return allowFullUI_ || allowOverlay(); }
    bool allowLauncherJobs() const { return allowLauncherJobs_ || allowOverlay(); }
+   bool allowOverLimitSessions() const { return allowOverLimitSessions_ || allowOverlay(); }
+   int abortFreeMemPercent() const { return abortFreeMemPercent_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
    core::FilePath modulesRSourcePath() const { return core::FilePath(modulesRSourcePath_); }
    core::FilePath sessionLibraryPath() const { return core::FilePath(sessionLibraryPath_); }
@@ -658,6 +666,8 @@ protected:
    bool allowPresentationCommands_;
    bool allowFullUI_;
    bool allowLauncherJobs_;
+   bool allowOverLimitSessions_;
+   int abortFreeMemPercent_;
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
    std::string sessionLibraryPath_;
