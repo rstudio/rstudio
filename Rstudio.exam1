@@ -1,0 +1,28 @@
+Code:
+
+x <- c(6,5,8,8,7,6,10,4,9,7)
+
+y <- c(8,7,7,10,5,10,8,6,8,6)
+
+# A) Y on X
+
+# linear regression
+
+line_reg1 <- lm(y ~ x)
+
+line_reg1
+
+print(paste("weight = ",line_reg1$coefficients[1],"+",
+
+ line_reg1$coefficients[2],"* Height"))
+
+# B) x on Y
+
+line_reg2 <- lm(x ~ y)
+
+line_reg2
+
+print(paste("Height = ",line_reg2$coefficients[1],"+",
+
+ line_reg2$coefficients[2],"* Weight"))
+
