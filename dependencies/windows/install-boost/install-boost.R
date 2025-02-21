@@ -1,4 +1,6 @@
 
+BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
+
 argument <- function(index, default) {
    args <- commandArgs(TRUE)
    if (length(args) < index)
@@ -29,8 +31,9 @@ options(log.dir = normalizePath("logs"))
 PATH$prepend("../tools")
 
 # initialize variables
-boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_83_0.7z"
-output_name <- sprintf("boost-1.83.0-win-msvc142-%s-%s.zip", variant, link)
+boost_name <- sprintf("boost_%s.7z", chartr(".", "_", BOOST_VERSION))
+boost_url <- sprintf("https://s3.amazonaws.com/rstudio-buildtools/Boost/%s", boost_name)
+output_name <- sprintf("boost-%s-win-msvc142-%s-%s.zip", BOOST_VERSION, variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
