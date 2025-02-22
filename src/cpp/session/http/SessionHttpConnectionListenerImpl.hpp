@@ -107,7 +107,7 @@ public:
       acceptNextConnection();
       
       // refresh locks
-      core::FileLock::refreshPeriodically(acceptorService_.ioService());
+      core::FileLock::refreshPeriodically(acceptorService_.ioContext());
 
       // block all signals for launch of listener thread (will cause it
       // to never receive signals)
@@ -120,8 +120,8 @@ public:
       try
       {
          using boost::bind;
-         boost::thread listenerThread(bind(&boost::asio::io_service::run,
-                                           &(acceptorService_.ioService())));
+         boost::thread listenerThread(bind(&boost::asio::io_context::run,
+                                           &(acceptorService_.ioContext())));
          listenerThread_ = MOVE_THREAD(listenerThread);
 
          // set started flag
@@ -153,7 +153,7 @@ public:
          LOG_ERROR(core::Error(ec, ERROR_LOCATION));
 
       // stop the server
-      ioService().stop();
+      ioContext().stop();
 
       // join the thread and wait for it complete
       if (listenerThread_.joinable())
@@ -210,13 +210,13 @@ private:
    virtual core::Error cleanup() = 0;
 
 private:
-   boost::asio::io_service& ioService() { return acceptorService_.ioService(); }
+   boost::asio::io_context& ioContext() { return acceptorService_.ioContext(); }
 
    void acceptNextConnection()
    {
       // create the connection
       ptrNextConnection_.reset( new HttpConnectionImpl<ProtocolType>(
-            ioService(),
+            ioContext(),
             sslContext_,
             boost::bind(
                  &HttpConnectionListenerImpl<ProtocolType>::onHeadersParsed,

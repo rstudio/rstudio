@@ -124,7 +124,7 @@ void ChunkProxy::writeChunk()
 
    const std::string& chunk = writeBuffer_.front();
 
-   boost::asio::const_buffers_1 buffer(chunk.c_str(), chunk.size());
+   boost::asio::const_buffer buffer(chunk.c_str(), chunk.size());
    pClientConnection_->asyncWrite(buffer,
                                   boost::bind(&ChunkProxy::onChunkWrote,
                                               shared_from_this(),

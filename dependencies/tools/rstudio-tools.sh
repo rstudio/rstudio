@@ -61,6 +61,10 @@ section () {
 	echo -e "\033[1m\033[36m==>\033[39m $*\033[0m"
 }
 
+subsection () {
+	echo -e "\033[1m\033[36m---\033[39m $*\033[0m"
+}
+
 info () {
 	echo -e "\033[1m[I]\033[0m $*"
 }
@@ -79,6 +83,10 @@ error () {
 		exit 1
 	fi
 
+}
+
+yay ()  { 
+   echo -e "\033[1;48:5:22m ✔ \033[0m \033[1m$@\033[0m"
 }
 
 set-default () {
@@ -319,6 +327,10 @@ extract () {
 		;;
 
 	esac
+}
+
+is-interactive () {
+   [ -t 0 ]
 }
 
 # Platform Detection ----

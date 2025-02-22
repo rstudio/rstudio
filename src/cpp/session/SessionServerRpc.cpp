@@ -39,7 +39,7 @@ namespace overlay {
       json::Value* pResult);
 
    void invokeServerRpcAsync(
-      boost::asio::io_service& ioService,
+      boost::asio::io_context& ioContext,
       const std::string& endpoint,
       const json::Object& request,
       const socket_rpc::RpcResultHandler& onResult,
@@ -96,13 +96,12 @@ SEXP rs_invokeServerRpc(SEXP name, SEXP args)
 // once flag for lazy initializing async RPC thread
 boost::once_flag s_threadOnce = BOOST_ONCE_INIT;
 
-// io_service for performing RPC work on the thread
-boost::asio::io_service s_ioService;
+// io_context for performing RPC work on the thread
+boost::asio::io_context s_ioContext;
 
 void rpcWorkerThreadFunc()
 {
-   boost::asio::io_service::work work(s_ioService);
-   s_ioService.run();
+   s_ioContext.run();
 }
 
 } // anonymous namespace
@@ -160,7 +159,7 @@ void invokeServerRpcAsync(const std::string& endpoint,
                                 rpcWorkerThreadFunc,
                                 nullptr));
    if (overlay::useHttp())
-      overlay::invokeServerRpcAsync(s_ioService, endpoint, request, onResult, onError);
+      overlay::invokeServerRpcAsync(s_ioContext, endpoint, request, onResult, onError);
    else
    {
 #ifdef _WIN32
@@ -170,7 +169,7 @@ void invokeServerRpcAsync(const std::string& endpoint,
       FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
       LOG_DEBUG_MESSAGE("Invoking rserver async RPC '" + endpoint + "' on socket " + 
             rpcSocket.getAbsolutePath());
-      socket_rpc::invokeRpcAsync(s_ioService,
+      socket_rpc::invokeRpcAsync(s_ioContext,
                                  rpcSocket,
                                  endpoint,
                                  request,

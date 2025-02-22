@@ -47,11 +47,11 @@ public:
    }
 
 public:
-   virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffers,
+   virtual void asyncReadSome(boost::asio::mutable_buffer buffers,
                               Handler handler) = 0;
 
    virtual void asyncWrite(
-                     const boost::asio::const_buffers_1& buffer,
+                     const boost::asio::const_buffer& buffer,
                      Handler handler) = 0;
 
    virtual void asyncWrite(

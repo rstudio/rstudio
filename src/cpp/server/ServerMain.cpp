@@ -240,7 +240,7 @@ void pageNotFoundHandler(const http::Request& request,
 }
 
 void rootPathRequestFilter(
-            boost::asio::io_service& ioService,
+            boost::asio::io_context& ioContext,
             http::Request* pRequest,
             http::RequestFilterContinuation continuation)
 {
@@ -893,7 +893,7 @@ int main(int argc, char * const argv[])
       // to the server's io service)
       monitor::initializeMonitorClient(monitorSocketPath().getAbsolutePath(),
                                        server::options().monitorSharedSecret(),
-                                       s_pHttpServer->ioService());
+                                       s_pHttpServer->ioContext());
 
       if (!options.verifyInstallation())
       {

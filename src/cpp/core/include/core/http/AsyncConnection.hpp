@@ -18,7 +18,7 @@
 
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <core/http/Response.hpp>
 #include <core/http/Socket.hpp>
@@ -37,7 +37,7 @@ class AsyncConnection;
 
 typedef boost::function<void(boost::shared_ptr<Response>)> RequestFilterContinuation;
 
-typedef boost::function<void(boost::asio::io_service&,
+typedef boost::function<void(boost::asio::io_context&,
                              Request*,
                              RequestFilterContinuation)> RequestFilter;
 
@@ -50,7 +50,7 @@ public:
    virtual ~AsyncConnection() {}
 
    // io service for initiating dependent async network operations
-   virtual boost::asio::io_service& ioService() = 0;
+   virtual boost::asio::io_context& ioContext() = 0;
 
    // request
    virtual const http::Request& request() const = 0;

@@ -81,7 +81,7 @@ inline Error initLocalStreamAcceptor(
       return error;
    
    // listen
-   acceptor.listen(boost::asio::socket_base::max_connections, ec);
+   acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
    

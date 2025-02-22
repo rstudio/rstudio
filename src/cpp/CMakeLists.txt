@@ -39,15 +39,6 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/globals.cmake")
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
-# explicitly do not use new c++ 11 features for websocketpp
-# they currently do not work with our source
-add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
-
-# the non-strict masking option was identified as a potentially crashing
-# issue due to reliance on undefined C++ behavior, and was removed entirely in
-# websocketpp 0.7 (RStudio is using 0.5.1 at this time)
-add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
-
 # make websockets build with MSVC
 if(WIN32 AND MSVC)
    add_definitions(
@@ -94,7 +85,7 @@ if(UNIX)
 
    if(APPLE)
       add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs -fvisibility=hidden)
-      
+
       find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
       find_library(COCOA_LIBRARY NAMES Cocoa)
       find_library(SECURITY_LIBRARY NAMES Security)
@@ -211,7 +202,7 @@ elseif(CMAKE_VERSION VERSION_GREATER "3.14")
    if(WIN32)
       add_definitions(-DYAML_CPP_STATIC_DEFINE)
    endif()
-      
+
    include(FetchContent)
    FetchContent_Declare(yaml-cpp
      GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
@@ -250,8 +241,16 @@ endif()
 
 # default Boost versions
 if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
-   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.83.0)
+   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.87.0)
 endif()
+
+# set up rstudio boost version components
+set(RSTUDIO_BOOST_VERSION "${RSTUDIO_BOOST_REQUESTED_VERSION}")
+string(REPLACE "." "_" RSTUDIO_BOOST_VERSION_UNDERSCORE "${RSTUDIO_BOOST_VERSION}")
+string(REPLACE "." ";" RSTUDIO_BOOST_VERSION_LIST "${RSTUDIO_BOOST_VERSION}")
+list(GET RSTUDIO_BOOST_VERSION_LIST 0 RSTUDIO_BOOST_VERSION_MAJOR)
+list(GET RSTUDIO_BOOST_VERSION_LIST 1 RSTUDIO_BOOST_VERSION_MINOR)
+list(GET RSTUDIO_BOOST_VERSION_LIST 2 RSTUDIO_BOOST_VERSION_PATCH)
 
 # disable system boost if we're not using it.
 if(NOT RSTUDIO_USE_SYSTEM_BOOST)
@@ -277,7 +276,7 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
-   set(RSTUDIO_TOOLS_BOOST "${RSTUDIO_TOOLS_ROOT}/boost/boost_1_83_0")
+   set(RSTUDIO_TOOLS_BOOST "${RSTUDIO_TOOLS_ROOT}/boost/boost_${RSTUDIO_BOOST_VERSION_UNDERSCORE}")
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
 
@@ -314,17 +313,17 @@ else()
       set(BOOST_ARCH "64")
    endif()
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(BOOST_SUFFIX "vc142-mt-x${BOOST_ARCH}-1_83.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.83.0-win-msvc142-release-static/boost${BOOST_ARCH}")
+      set(BOOST_SUFFIX "vc142-mt-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc142-release-static/boost${BOOST_ARCH}")
    else()
-      set(BOOST_SUFFIX "vc142-mt-gd-x${BOOST_ARCH}-1_83.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.83.0-win-msvc142-debug-static/boost${BOOST_ARCH}")
+      set(BOOST_SUFFIX "vc142-mt-gd-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc142-debug-static/boost${BOOST_ARCH}")
    endif()
-   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_83")
+   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}")
    find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
-      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/librstudio_boost_${BOOST_LIB}-${BOOST_SUFFIX}")
+      list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}-${BOOST_SUFFIX}")
    endforeach()
    message(STATUS "Using RStudio-provided Boost ${RSTUDIO_BOOST_REQUESTED_VERSION}: ${BOOST_ROOT}")
 endif()
@@ -529,7 +528,7 @@ else()
       endif()
    else()
        file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/Release/*.lib")
-       list(LENGTH SOCI_LIBRARIES SOCI_LIB_COUNT) 
+       list(LENGTH SOCI_LIBRARIES SOCI_LIB_COUNT)
        if (NOT SOCI_LIB_COUNT EQUAL 0)
          list(APPEND SOCI_LIBRARIES "Wldap32")
          list(APPEND SOCI_LIBRARIES "Secur32")

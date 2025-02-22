@@ -398,8 +398,8 @@ Error aesDecrypt(
 
    // Index maths. v2 buffer structure is: [ version byte ][ v2 encrypted data ][ mac ]
    // Use std::max to prevent index math going negative.
-   int dataLength = std::max(in_v2_data.size() - ENCRYPTION_VERSION_SIZE_BYTES - MAC_SIZE_BYTES, (size_t)0);
-   int macIndex = ENCRYPTION_VERSION_SIZE_BYTES + dataLength;
+   auto dataLength = std::max(in_v2_data.size() - ENCRYPTION_VERSION_SIZE_BYTES - MAC_SIZE_BYTES, (size_t)0);
+   auto macIndex = ENCRYPTION_VERSION_SIZE_BYTES + dataLength;
 
    out_decrypted.resize(dataLength);
 

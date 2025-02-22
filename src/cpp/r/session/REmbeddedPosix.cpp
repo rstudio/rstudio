@@ -70,8 +70,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    // boost passes MSG_NOSIGNAL to sendmsg and on OSX sets the SO_NOSIGPIPE
    // option on all sockets created. note that on other platforms including
    // solaris, hpux, etc. boost uses detail/signal_init to ignore SIGPIPE
-
-   // globally (this is done in io_service.hpp).
+   // globally (this is done in io_context.hpp).
    R_SignalHandlers = 0;
 
    // set message callback early so we can see initialization error messages

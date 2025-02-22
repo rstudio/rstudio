@@ -60,10 +60,10 @@ class AsyncClient : public Client
 public:
    AsyncClient(const std::string& metricsSocket,
                const std::string& auth,
-               boost::asio::io_service& ioService,
+               boost::asio::io_context& ioContext,
                bool useSharedSecret = true)
       : Client(metricsSocket, auth, useSharedSecret),
-        ioService_(ioService)
+        ioContext_(ioContext)
    {
    }
 
@@ -73,10 +73,10 @@ public:
                bool verifySslCerts,
                const std::string& prefixUri,
                const std::string& auth,
-               boost::asio::io_service& ioService,
+               boost::asio::io_context& ioContext,
                bool useSharedSecret = false)
       : Client(tcpAddress, tcpPort, useSsl, verifySslCerts, prefixUri, auth, useSharedSecret),
-        ioService_(ioService)
+        ioContext_(ioContext)
    {
    }
 
@@ -92,10 +92,10 @@ public:
 
    void logConsoleAction(const audit::ConsoleAction& action);
 
-   boost::asio::io_service& ioService() const { return ioService_; }
+   boost::asio::io_context& ioContext() const { return ioContext_; }
 
 private:
-   boost::asio::io_service& ioService_;
+   boost::asio::io_context& ioContext_;
 };
 
 } // namespace monitor

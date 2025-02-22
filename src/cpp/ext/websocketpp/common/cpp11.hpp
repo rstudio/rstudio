@@ -80,11 +80,19 @@
     #ifndef _WEBSOCKETPP_NULLPTR_TOKEN_
         #define _WEBSOCKETPP_NULLPTR_TOKEN_ nullptr
     #endif
+    #ifndef _WEBSOCKETPP_MOVE_SEMANTICS_
+        #define _WEBSOCKETPP_MOVE_SEMANTICS_
+    #endif
+    #ifndef _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+        #define _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+    #endif
     
     #ifndef __GNUC__
-        // GCC as of version 4.9 (latest) does not support std::put_time yet.
+        // GCC as of version 4.9 does not support std::put_time yet.
         // so ignore it
         #define _WEBSOCKETPP_PUTTIME_
+
+        // todo: std::put_time may be present in version 5+
     #endif
 #else
     // In the absence of a blanket define, try to use compiler versions or
@@ -98,6 +106,9 @@
         #else
             #if __has_feature(cxx_noexcept)
                 // clang feature detect says we have noexcept
+                #define _WEBSOCKETPP_NOEXCEPT_TOKEN_ noexcept
+            #elif defined(_MSC_VER) && _MSC_VER >= 1900
+            	// Visual Studio 2015+ has noexcept
                 #define _WEBSOCKETPP_NOEXCEPT_TOKEN_ noexcept
             #else
                 // assume we don't have noexcept
@@ -114,6 +125,9 @@
         #else
             #if __has_feature(cxx_constexpr)
                 // clang feature detect says we have constexpr
+                #define _WEBSOCKETPP_CONSTEXPR_TOKEN_ constexpr
+            #elif defined(_MSC_VER) && _MSC_VER >= 1900
+            	// Visual Studio 2015+ has constexpr
                 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_ constexpr
             #else
                 // assume we don't have constexpr
@@ -136,7 +150,7 @@
             #if __has_feature(cxx_nullptr)
                 // clang feature detect says we have nullptr
                 #define _WEBSOCKETPP_NULLPTR_TOKEN_ nullptr
-            #elif _MSC_VER >= 1600
+            #elif defined(_MSC_VER) &&_MSC_VER >= 1600
                 // Visual Studio version that has nullptr
                 #define _WEBSOCKETPP_NULLPTR_TOKEN_ nullptr
             #else

@@ -67,19 +67,19 @@ unsigned int getNamedUserLimit();
 
 core::json::Array getLicensedUsers();
 
-core::Error lockUser(boost::asio::io_service& ioService,
+core::Error lockUser(boost::asio::io_context& ioContext,
                      const std::string& username,
                      bool force = false);
 
-core::Error unlockUser(boost::asio::io_service& ioService,
+core::Error unlockUser(boost::asio::io_context& ioContext,
                        const std::string& username,
                      bool force = false);
 
-core::Error setAdmin(boost::asio::io_service& ioService,
+core::Error setAdmin(boost::asio::io_context& ioContext,
                      const std::string& username,
                      bool isAdmin);
 
-OverlayResult addUser(boost::asio::io_service& ioService,
+OverlayResult addUser(boost::asio::io_context& ioContext,
                       const std::string& username,
                       bool isAdmin = false);
 
