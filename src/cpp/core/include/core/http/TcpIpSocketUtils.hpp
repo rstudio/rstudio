@@ -30,7 +30,7 @@ namespace core {
 namespace http {  
      
 template <typename SocketType>
-Error connect(boost::asio::io_service& ioService,
+Error connect(boost::asio::io_context& ioContext,
               const std::string& address,
               const std::string& port,
               SocketType* pSocket)
@@ -38,17 +38,14 @@ Error connect(boost::asio::io_service& ioService,
    using boost::asio::ip::tcp;
    
    // resolve the address
-   tcp::resolver resolver(ioService);
-   tcp::resolver::query query(address, port);
+   tcp::resolver resolver(ioContext);
    
    boost::system::error_code ec;
-   tcp::resolver::iterator endpointIterator = resolver.resolve(query, ec);
+   auto endpoints = resolver.resolve(address, port, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
    
-   tcp::resolver::iterator end;
-   ec = boost::asio::error::host_not_found;
-   while (ec && endpointIterator != end)
+   for (auto&& endpoint : endpoints)
    {
       // cleanup existing socket connection (if any). don't allow
       // an error shutting down to prevent us from trying a
@@ -57,18 +54,26 @@ Error connect(boost::asio::io_service& ioService,
       if (closeError)
          LOG_ERROR(closeError);
       
-      // attempt to connect
-      pSocket->connect(*endpointIterator++, ec);
+      // attempt to connect; try next endpoint on failure
+      pSocket->connect(endpoint, ec);
+      if (ec)
+         continue;
+
+      // if we get here, we got a connection -- use it
+      break;
    }
+
+   // if we don't have a connection still, just return
+   // the last error we got
    if (ec)
       return Error(ec, ERROR_LOCATION);
-   
+
    // set tcp nodelay (propagate any errors)
    pSocket->set_option(tcp::no_delay(true), ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
-   else
-      return Success();
+
+   return Success();
 }
                      
 
@@ -79,16 +84,18 @@ inline Error initTcpIpAcceptor(
 {
    using boost::asio::ip::tcp;
    
-   tcp::resolver resolver(acceptorService.ioService());
-   tcp::resolver::query query(address, port);
-   
+   auto& acceptor = acceptorService.acceptor();
+   tcp::resolver resolver(acceptorService.ioContext());
+
    boost::system::error_code ec;
-   tcp::resolver::iterator entries = resolver.resolve(query, ec);
+   auto entries = resolver.resolve(address, port, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
-   
-   tcp::acceptor& acceptor = acceptorService.acceptor();
-   const tcp::endpoint& endpoint = *entries;
+   else if (entries.empty())
+      return Error(boost::system::errc::protocol_error, ERROR_LOCATION);
+
+   auto entry = entries.begin();
+   auto endpoint = entry->endpoint();
    acceptor.open(endpoint.protocol(), ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
@@ -145,7 +152,7 @@ inline Error initTcpIpAcceptor(
    if (ec)
       return Error(ec, ERROR_LOCATION);
    
-   acceptor.listen(boost::asio::socket_base::max_connections, ec);
+   acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
    

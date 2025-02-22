@@ -541,21 +541,23 @@ std::string formatMessageAsHttpChunk(const std::string& message)
 bool isIpAddress(const std::string& str)
 {
    boost::system::error_code err;
-   boost::asio::ip::address::from_string(str, err);
+   boost::asio::ip::make_address(str, err);
    return !err;
 }
 
 bool isNetworkAddress(const std::string& str)
 {
-   boost::asio::io_service io_service;
+   // initialize resolver
+   boost::asio::io_context ioContext;
+   boost::asio::ip::tcp::resolver resolver(ioContext);
 
    // query DNS for this address
-   boost::asio::ip::tcp::resolver resolver(io_service);
-   boost::asio::ip::tcp::resolver::query query(str, "");
-
    boost::system::error_code ec;
-   boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query, ec);
-   return (!ec && iter != boost::asio::ip::tcp::resolver::iterator());
+   auto endpoint = resolver.resolve(str, "", ec);
+   if (ec)
+      return false;
+
+   return endpoint.size();
 }
 
 namespace {

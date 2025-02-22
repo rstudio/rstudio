@@ -300,7 +300,7 @@ BiblioCache s_biblioCache;
 // global logging helper
 void logBiblioStatus(const std::string& str)
 {
-   str.length(); // silience compiler on unused var
+   (void) str; // silience compiler on unused var
    // std::cerr << str << std::endl;
 }
 

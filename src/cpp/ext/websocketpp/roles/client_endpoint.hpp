@@ -29,6 +29,7 @@
 #define WEBSOCKETPP_CLIENT_ENDPOINT_HPP
 
 #include <websocketpp/endpoint.hpp>
+#include <websocketpp/uri.hpp>
 
 #include <websocketpp/logger/levels.hpp>
 
@@ -66,9 +67,11 @@ public:
     /// Type of the endpoint component of this server
     typedef endpoint<connection_type,config> endpoint_type;
 
+    friend class connection<config>;
+
     explicit client() : endpoint_type(false)
     {
-        endpoint_type::m_alog.write(log::alevel::devel, "client constructor");
+        endpoint_type::m_alog->write(log::alevel::devel, "client constructor");
     }
 
     /// Get a new connection
@@ -89,10 +92,14 @@ public:
             return connection_ptr();
         }
 
-        connection_ptr con = endpoint_type::create_connection();
+        connection_ptr con = endpoint_type::create_connection(ec);
 
         if (!con) {
-            ec = error::make_error_code(error::con_creation_failed);
+            // if the transport doesn't have a more specific error, set
+            // a generic one.
+            if (!ec) {
+                ec = error::make_error_code(error::con_creation_failed);
+            }
             return con;
         }
 
@@ -154,10 +161,10 @@ private:
         if (ec) {
             con->terminate(ec);
 
-            endpoint_type::m_elog.write(log::elevel::rerror,
+            endpoint_type::m_elog->write(log::elevel::rerror,
                     "handle_connect error: "+ec.message());
         } else {
-            endpoint_type::m_alog.write(log::alevel::connect,
+            endpoint_type::m_alog->write(log::alevel::connect,
                 "Successful connection");
 
             con->start();

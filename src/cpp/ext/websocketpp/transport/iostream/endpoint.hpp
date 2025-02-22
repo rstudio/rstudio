@@ -64,7 +64,7 @@ public:
     /// associated connection transport component
     typedef typename transport_con_type::ptr transport_con_ptr;
 
-    // generate and manage our own io_service
+    // generate and manage our own io_context
     explicit endpoint() : m_output_stream(NULL), m_is_secure(false)
     {
         //std::cout << "transport::iostream::endpoint constructor" << std::endl;
@@ -168,7 +168,7 @@ protected:
      * @param a A pointer to the access logger to use.
      * @param e A pointer to the error logger to use.
      */
-    void init_logging(alog_type * a, elog_type * e) {
+    void init_logging(lib::shared_ptr<alog_type> a, lib::shared_ptr<elog_type> e) {
         m_elog = e;
         m_alog = a;
     }
@@ -209,8 +209,8 @@ private:
     shutdown_handler m_shutdown_handler;
     write_handler   m_write_handler;
     
-    elog_type *     m_elog;
-    alog_type *     m_alog;
+    lib::shared_ptr<elog_type>     m_elog;
+    lib::shared_ptr<alog_type>     m_alog;
     bool            m_is_secure;
 };
 

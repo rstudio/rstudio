@@ -53,11 +53,11 @@ public:
    typedef boost::function<void(const core::Error&)> ErrorHandler;
 
 public:
-   TcpIpAsyncConnector(boost::asio::io_service& ioService,
+   TcpIpAsyncConnector(boost::asio::io_context& ioContext,
                        boost::asio::ip::tcp::socket* pSocket)
-     : service_(ioService),
+     : service_(ioContext),
        pSocket_(pSocket),
-       resolver_(ioService),
+       resolver_(ioContext),
        isConnected_(false),
        hasFailed_(false)
    {
@@ -88,14 +88,14 @@ public:
                                                    boost::asio::placeholders::error));
       }
 
-      // start an async resolve
-      boost::asio::ip::tcp::resolver::query query(address, port);
-      resolver_.async_resolve(
-            query,
-            boost::bind(&TcpIpAsyncConnector::handleResolve,
-                        TcpIpAsyncConnector::shared_from_this(),
-                        boost::asio::placeholders::error,
-                        boost::asio::placeholders::iterator));
+      auto callback = [this](
+            const boost::system::error_code& ec,
+            boost::asio::ip::tcp::resolver::results_type results)
+      {
+         handleResolve(ec, results.begin());
+      };
+
+      resolver_.async_resolve(address, port, std::move(callback));
    }
 
 private:
@@ -133,7 +133,7 @@ private:
 
    void handleResolve(
          const boost::system::error_code& ec,
-         boost::asio::ip::tcp::resolver::iterator endpoint_iterator)
+         boost::asio::ip::tcp::resolver::results_type::iterator endpoint_iterator)
    {
       if (ec == boost::asio::error::operation_aborted)
          return;
@@ -150,7 +150,7 @@ private:
                // work-around - in some rare instances, we've seen that Boost will still
                // return us an empty endpoint_iterator, even when successful, which is
                // contrary to the documentation
-               if (endpoint_iterator == boost::asio::ip::tcp::resolver::iterator())
+               if (endpoint_iterator == boost::asio::ip::tcp::resolver::results_type::iterator())
                {
                   handleErrorCode(boost::system::error_code(boost::system::errc::io_error,
                                                             boost::system::system_category()),
@@ -179,7 +179,7 @@ private:
 
    void handleConnect(
          const boost::system::error_code& ec,
-         boost::asio::ip::tcp::resolver::iterator endpoint_iterator)
+         boost::asio::ip::tcp::resolver::results_type::iterator endpoint_iterator)
    {
       if (ec == boost::asio::error::operation_aborted)
          return;
@@ -202,7 +202,7 @@ private:
                   connectedHandler_();
             }
             else if (endpoint_iterator !=
-                     boost::asio::ip::tcp::resolver::iterator())
+                     boost::asio::ip::tcp::resolver::results_type::iterator())
             {
                // try next endpoint
                pSocket_->close();
@@ -254,7 +254,7 @@ private:
    }
 
 private:
-   boost::asio::io_service& service_;
+   boost::asio::io_context& service_;
    boost::asio::ip::tcp::socket* pSocket_;
    boost::asio::ip::tcp::resolver resolver_;
    ConnectedHandler connectedHandler_;

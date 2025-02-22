@@ -68,11 +68,13 @@ namespace lib {
     using std::enable_shared_from_this;
     using std::static_pointer_cast;
     using std::make_shared;
+    using std::unique_ptr;
 
     typedef std::unique_ptr<unsigned char[]> unique_ptr_uchar_array;
 #else
     using boost::shared_ptr;
     using boost::weak_ptr;
+    using std::auto_ptr;
     using boost::enable_shared_from_this;
     using boost::static_pointer_cast;
     using boost::make_shared;

@@ -32,14 +32,14 @@ inline Error sendRequest(const std::string& address,
                          http::Response* pResponse)
 {
    // create client
-   boost::asio::io_service ioService;
-   boost::shared_ptr<TcpIpAsyncClient> pClient(new TcpIpAsyncClient(ioService,
+   boost::asio::io_context ioContext;
+   boost::shared_ptr<TcpIpAsyncClient> pClient(new TcpIpAsyncClient(ioContext,
                                                                     address,
                                                                     port,
                                                                     connectionTimeout));
 
    // execute blocking request
-   return sendRequest<boost::asio::ip::tcp::socket>(ioService,
+   return sendRequest<boost::asio::ip::tcp::socket>(ioContext,
                                                     pClient,
                                                     request,
                                                     pResponse);

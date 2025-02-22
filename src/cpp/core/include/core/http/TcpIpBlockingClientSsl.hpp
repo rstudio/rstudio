@@ -32,13 +32,13 @@ inline Error sendSslRequest(const std::string& address,
                             Response* pResponse)
 {
    // create client
-   boost::asio::io_service ioService;
+   boost::asio::io_context ioContext;
    boost::shared_ptr<TcpIpAsyncClientSsl> pClient(
-         new TcpIpAsyncClientSsl(ioService, address, port, verify, std::string(), connectionTimeout));
+         new TcpIpAsyncClientSsl(ioContext, address, port, verify, std::string(), connectionTimeout));
 
    // execute blocking request
    return sendRequest<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >
-                                                         (ioService,
+                                                         (ioContext,
                                                           pClient,
                                                           request,
                                                           pResponse);

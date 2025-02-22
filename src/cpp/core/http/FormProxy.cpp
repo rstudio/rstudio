@@ -95,7 +95,7 @@ void FormProxy::writeData()
 
    const std::string& data = writeBuffer_.front();
 
-   boost::asio::const_buffers_1 buffer(data.c_str(), data.size());
+   boost::asio::const_buffer buffer(data.c_str(), data.size());
    pDownstreamConnection_->asyncWrite(buffer,
                                       boost::bind(&FormProxy::onDataWrote,
                                                   shared_from_this(),

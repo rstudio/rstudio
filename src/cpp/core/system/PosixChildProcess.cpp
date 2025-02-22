@@ -1261,9 +1261,9 @@ bool AsyncChildProcess::exited()
 struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioAsyncChildProcess::Impl>
 {
    Impl(AsioAsyncChildProcess* parent,
-        boost::asio::io_service& ioService) :
-      parent_(parent), ioService_(ioService), stdOutDescriptor_(ioService_),
-      stdErrDescriptor_(ioService_), stdInDescriptor_(ioService_), exited_(false),
+        boost::asio::io_context& ioContext) :
+      parent_(parent), ioContext_(ioContext), stdOutDescriptor_(ioContext_),
+      stdErrDescriptor_(ioContext_), stdInDescriptor_(ioContext_), exited_(false),
       stdoutFailure_(false), stderrFailure_(false), exitCode_(0), writing_(false),
       cleanedUp_(false)
    {
@@ -1555,7 +1555,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
                // check again in 20 milliseconds - this is a short amount of time, but long enough
                // to play nice with the rest of the system. in terms of process cleanup time,
                // in most cases this should be a significant amount of time
-               exitTimer_.reset(new deadline_timer(ioService_, milliseconds(20)));
+               exitTimer_.reset(new deadline_timer(ioContext_, milliseconds(20)));
                exitTimer_->async_wait(boost::bind(&Impl::checkExitedTimer,
                                                   boost::weak_ptr<Impl>(shared_from_this()),
                                                   boost::asio::placeholders::error,
@@ -1587,10 +1587,10 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
       {
          // copy the function before posting the error to the thread pool
          // we do this because this instance could be destroyed while in the
-         // io_service queue, and so we want to copy these variables
+         // io_context queue, and so we want to copy these variables
          // to ensure we don't try to access any members
          boost::function<void(void)> handler = boost::bind(callbacks_.onExit, exitCode_);
-         ioService_.post(handler);
+         boost::asio::post(ioContext_, handler);
       }
       else if (errorCode)
       {
@@ -1600,15 +1600,17 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
          {
             // copy members before posting the error to the thread pool
             // we do this because this instance could be destroyed while in the
-            // io_service queue, and so we want to copy these variables
+            // io_context queue, and so we want to copy these variables
             // to ensure we don't try to access any members
             boost::function<void(void)> handler = boost::bind(&Impl::invokeErrorHandler,
                                                               boost::weak_ptr<Impl>(shared_from_this()),
                                                               error);
-            ioService_.post(handler);
+            boost::asio::post(ioContext_, handler);
          }
          else
+         {
             LOG_ERROR(error);
+         }
 
          // if we had an unexpected closure of the stream but no exit, terminate
          error = parent_->terminate();
@@ -1646,7 +1648,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    }
 
    AsioAsyncChildProcess* parent_;
-   boost::asio::io_service& ioService_;
+   boost::asio::io_context& ioContext_;
    boost::asio::posix::stream_descriptor stdOutDescriptor_;
    boost::asio::posix::stream_descriptor stdErrDescriptor_;
    boost::asio::posix::stream_descriptor stdInDescriptor_;
@@ -1669,20 +1671,20 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    bool cleanedUp_;
 };
 
-AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
+AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_context& ioContext,
                                              const std::string& exe,
                                              const std::vector<std::string>& args,
                                              const ProcessOptions& options) :
    AsyncChildProcess(exe, args, options),
-   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioService))
+   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioContext))
 {
 }
 
-AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_service& ioService,
+AsioAsyncChildProcess::AsioAsyncChildProcess(boost::asio::io_context& ioContext,
                                              const std::string& command,
                                              const ProcessOptions& options) :
    AsyncChildProcess(command, options),
-   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioService))
+   pAsioImpl_(new Impl(const_cast<AsioAsyncChildProcess*>(this), ioContext))
 {
 }
 

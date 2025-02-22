@@ -477,8 +477,10 @@ void Error::setExpected()
 
 void Error::copyOnWrite()
 {
-   if ((m_impl != nullptr) && !m_impl.unique())
-      m_impl.reset(new Impl(impl()));
+   if (m_impl == nullptr || m_impl.use_count() == 1)
+      return;
+
+   m_impl.reset(new Impl(impl()));
 }
 
 bool Error::isError() const

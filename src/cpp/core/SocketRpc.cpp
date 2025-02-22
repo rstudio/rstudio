@@ -163,7 +163,7 @@ void onRpcResponse(const std::string& endpoint,
 }
 
 #ifndef _WIN32
-void sendRequestAsync(boost::asio::io_service& ioService,
+void sendRequestAsync(boost::asio::io_context& ioContext,
                       const FilePath& socketPath,
                       const std::string& endpoint,
                       const http::Request& request,
@@ -171,14 +171,14 @@ void sendRequestAsync(boost::asio::io_service& ioService,
                       const RpcErrorHandler& onError)
 {
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
-            new http::LocalStreamAsyncClient(ioService, socketPath));
+            new http::LocalStreamAsyncClient(ioContext, socketPath));
 
    pClient->request().assign(request);
    pClient->execute(boost::bind(onRpcResponse, endpoint, _1, onResult, onError), onError);
 }
 #endif
 
-void sendRequestAsync(boost::asio::io_service& ioService,
+void sendRequestAsync(boost::asio::io_context& ioContext,
                       const std::string& address,
                       const std::string& port,
                       bool useSsl,
@@ -193,7 +193,7 @@ void sendRequestAsync(boost::asio::io_service& ioService,
 
    if (useSsl)
    {
-      pClient.reset(new http::TcpIpAsyncClientSsl(ioService,
+      pClient.reset(new http::TcpIpAsyncClientSsl(ioContext,
                                                   address,
                                                   port,
                                                   verifySslCerts, 
@@ -202,7 +202,7 @@ void sendRequestAsync(boost::asio::io_service& ioService,
    }
    else
    {
-      pClient.reset(new http::TcpIpAsyncClient(ioService,
+      pClient.reset(new http::TcpIpAsyncClient(ioContext,
                                                address,
                                                port,
                                                connectionTimeout));
@@ -254,7 +254,7 @@ Error invokeRpc(const FilePath& socketPath,
    return sendRequest(socketPath, endpoint, req, pResult);
 }
 
-void invokeRpcAsync(boost::asio::io_service& ioService,
+void invokeRpcAsync(boost::asio::io_context& ioContext,
                     const FilePath& socketPath,
                     const std::string& endpoint,
                     const json::Object& request,
@@ -263,7 +263,7 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
 {
    http::Request req;
    constructUnixRequest(endpoint, request, &req);
-   sendRequestAsync(ioService, socketPath, endpoint, req, onResult, onError);
+   sendRequestAsync(ioContext, socketPath, endpoint, req, onResult, onError);
 }
 #endif
 
@@ -281,7 +281,7 @@ Error invokeRpc(const std::string& address,
    return sendRequest(address, port, useSsl, verifySslCerts, connectionTimeout, endpoint, req, pResult);
 }
 
-void invokeRpcAsync(boost::asio::io_service& ioService,
+void invokeRpcAsync(boost::asio::io_context& ioContext,
                     const std::string& address,
                     const std::string& port,
                     bool useSsl,
@@ -294,7 +294,7 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
 {
    http::Request req;
    constructTcpRequest(address, endpoint, request, &req);
-   sendRequestAsync(ioService, address, port, useSsl, verifySslCerts, connectionTimeout, endpoint, req, onResult, onError);
+   sendRequestAsync(ioContext, address, port, useSsl, verifySslCerts, connectionTimeout, endpoint, req, onResult, onError);
 }
 
 Error initialize()

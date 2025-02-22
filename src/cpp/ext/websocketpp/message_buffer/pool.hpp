@@ -182,7 +182,7 @@ public:
      *
      * @param msg The message to be recycled.
      *
-     * @return true if the message was successfully recycled, false otherwise.
+     * @return true if the message was successfully recycled, false otherwse.
      */
     bool recycle(message * msg) {
         return false;

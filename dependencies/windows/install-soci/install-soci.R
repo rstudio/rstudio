@@ -28,7 +28,7 @@ soci_base_name <- paste0("soci-", soci_version)
 soci_tar <- paste0(soci_base_name, ".tar")
 soci_archive <- paste0(soci_tar, ".gz")
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
-boost_dir <- normalizePath(file.path(output_dir, "boost-1.83.0-win-msvc142-release-static\\boost64"), winslash = "\\")
+boost_dir <- normalizePath(file.path(output_dir, "boost-1.87.0-win-msvc142-release-static\\boost64"), winslash = "\\")
 soci_url <- paste0("https://rstudio-buildtools.s3.amazonaws.com/soci-", soci_version, ".tar.gz")
 soci_dir <- file.path(owd, soci_base_name)
 soci_build_dir <- file.path(soci_dir, "build")
@@ -41,7 +41,7 @@ postgresql_zip <- file.path(owd, "win-postgresql.zip")
 postgresql_zip_url <- "https://rstudio-buildtools.s3.amazonaws.com/win-postgresql.zip"
 
 downloadAndUnzip <- function(outputFile, extractDir, url) {
-   
+
    # download zip if we don't already have it
    if (!file.exists(outputFile)) {
       section("Downloading '%s' from '%s'", outputFile, url)
@@ -56,7 +56,7 @@ downloadAndUnzip <- function(outputFile, extractDir, url) {
 }
 
 if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\libsoci_core_4_0.lib"), winslash = "\\", mustWork = FALSE))) {
-   
+
    # download and install sqlite source
    dir.create(sqlite_dir, recursive = TRUE, showWarnings = FALSE)
    downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
@@ -100,13 +100,13 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
                         "-DPOSTGRESQL_INCLUDE_DIR=\"", file.path(postgresql_dir, "include"), "\" ",
                         "-DPOSTGRESQL_LIBRARY=\"", file.path(postgresql_dir, "lib/x86/Debug/libpq.lib"), "\" ",
                         "..\\..")
-   
+
    # remove rtools from path, as otherwise CMake may find and try to use the
    # standard library headers from the Rtools installation and barf
    path <- strsplit(Sys.getenv("PATH"), ";")[[1]]
    path <- grep("rtools", path, invert = TRUE, value = TRUE)
    Sys.setenv(PATH = paste(path, collapse = ";"))
-   
+
    # x86 debug build
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Debug")
@@ -130,7 +130,7 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    cmake_args <- gsub("lib/x64/Debug/libpq.lib", "lib/x64/Release/libpq.lib", cmake_args)
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Release")
-   
+
 }
 
 progress("SOCI installed successfully!")

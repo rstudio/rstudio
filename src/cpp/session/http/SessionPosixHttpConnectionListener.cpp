@@ -134,8 +134,7 @@ void initializeHttpConnectionListener()
 
                for (const core::system::posix::IpAddress& ip : addrs)
                {
-                  boost::asio::ip::address addr = boost::asio::ip::address::from_string(ip.Address);
-
+                  auto addr = boost::asio::ip::make_address(ip.Address);
                   if (addr.is_v4())
                   {
                      hasIpv4 = true;

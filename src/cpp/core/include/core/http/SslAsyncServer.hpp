@@ -16,7 +16,7 @@
 #ifndef CORE_HTTP_SSL_ASYNC_SERVER_HPP
 #define CORE_HTTP_SSL_ASYNC_SERVER_HPP
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ssl.hpp>
 
 #include <shared_core/FilePath.hpp>

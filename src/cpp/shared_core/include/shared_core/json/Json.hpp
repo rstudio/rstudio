@@ -34,6 +34,7 @@
 #include <boost/optional.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/IteratorTraits.hpp>
 #include <shared_core/Logger.hpp>
 #include <shared_core/PImpl.hpp>
 
@@ -731,7 +732,7 @@ public:
    /**
     * @brief Class which allows iterating over the members of a JSON object.
     */
-   class Iterator: public std::iterator<
+   class Iterator: public IteratorTraits<
       std::bidirectional_iterator_tag,   // iterator_category
       Member,                            // value_type
       std::ptrdiff_t,                    // difference_type
@@ -1219,7 +1220,8 @@ public:
    /**
     * @brief Class which allows iterating over the elements of a JSON array.
     */
-   class Iterator: public std::iterator<std::bidirectional_iterator_tag,   // iterator_category
+   class Iterator: public IteratorTraits<
+      std::bidirectional_iterator_tag,   // iterator_category
       Value,                             // value_type
       std::ptrdiff_t,                    // difference_type
       const Value*,                      // pointer

@@ -32,6 +32,7 @@
 
 #include <websocketpp/transport/base/connection.hpp>
 
+#include <websocketpp/uri.hpp>
 #include <websocketpp/logger/levels.hpp>
 
 #include <websocketpp/common/connection_hdl.hpp>
@@ -72,10 +73,10 @@ public:
 
     typedef lib::shared_ptr<timer> timer_ptr;
 
-    explicit connection(bool is_server, alog_type & alog, elog_type & elog)
+    explicit connection(bool is_server, const lib::shared_ptr<alog_type> & alog, const lib::shared_ptr<elog_type> & elog)
       : m_reading(false), m_is_server(is_server), m_alog(alog), m_elog(elog)
     {
-        m_alog.write(log::alevel::devel,"debug con transport constructor");
+        m_alog->write(log::alevel::devel,"debug con transport constructor");
     }
 
     /// Get a shared pointer to this component
@@ -102,6 +103,20 @@ public:
     bool is_secure() const {
         return false;
     }
+
+    /// Set uri hook
+    /**
+     * Called by the endpoint as a connection is being established to provide
+     * the uri being connected to to the transport layer.
+     *
+     * Implementation is optional and can be ignored if the transport has no
+     * need for this information.
+     *
+     * @since 0.6.0
+     *
+     * @param u The uri to set
+     */
+    void set_uri(uri_ptr) {}
 
     /// Set human readable remote endpoint address
     /**
@@ -151,7 +166,7 @@ public:
      * needed.
      */
     timer_ptr set_timer(long, timer_handler handler) {
-        m_alog.write(log::alevel::devel,"debug connection set timer");
+        m_alog->write(log::alevel::devel,"debug connection set timer");
         m_timer_handler = handler;
         return timer_ptr();
     }
@@ -200,7 +215,7 @@ protected:
      * @param handler The `init_handler` to call when initialization is done
      */
     void init(init_handler handler) {
-        m_alog.write(log::alevel::devel,"debug connection init");
+        m_alog->write(log::alevel::devel,"debug connection init");
         handler(lib::error_code());
     }
 
@@ -233,7 +248,7 @@ protected:
     {
         std::stringstream s;
         s << "debug_con async_read_at_least: " << num_bytes;
-        m_alog.write(log::alevel::devel,s.str());
+        m_alog->write(log::alevel::devel,s.str());
 
         if (num_bytes > len) {
             handler(make_error_code(error::invalid_num_bytes),size_t(0));
@@ -258,7 +273,7 @@ protected:
         m_reading = true;
     }
 
-    /// Asynchronous Transport Write
+    /// Asyncronous Transport Write
     /**
      * Write len bytes in buf to the output stream. Call handler to report
      * success or failure. handler may or may not be called during async_write,
@@ -271,11 +286,11 @@ protected:
      * @param handler Callback to invoke with operation status.
      */
     void async_write(char const *, size_t, write_handler handler) {
-        m_alog.write(log::alevel::devel,"debug_con async_write");
+        m_alog->write(log::alevel::devel,"debug_con async_write");
         m_write_handler = handler;
     }
 
-    /// Asynchronous Transport Write (scatter-gather)
+    /// Asyncronous Transport Write (scatter-gather)
     /**
      * Write a sequence of buffers to the output stream. Call handler to report
      * success or failure. handler may or may not be called during async_write,
@@ -287,7 +302,7 @@ protected:
      * @param handler Callback to invoke with operation status.
      */
     void async_write(std::vector<buffer> const &, write_handler handler) {
-        m_alog.write(log::alevel::devel,"debug_con async_write buffer list");
+        m_alog->write(log::alevel::devel,"debug_con async_write buffer list");
         m_write_handler = handler;
     }
 
@@ -322,10 +337,10 @@ protected:
     }
     
     size_t read_some_impl(char const * buf, size_t len) {
-        m_alog.write(log::alevel::devel,"debug_con read_some");
+        m_alog->write(log::alevel::devel,"debug_con read_some");
 
         if (!m_reading) {
-            m_elog.write(log::elevel::devel,"write while not reading");
+            m_elog->write(log::elevel::devel,"write while not reading");
             return 0;
         }
 
@@ -384,8 +399,8 @@ private:
     bool            m_reading;
     bool const      m_is_server;
     bool            m_is_secure;
-    alog_type &     m_alog;
-    elog_type &     m_elog;
+    lib::shared_ptr<alog_type>     m_alog;
+    lib::shared_ptr<elog_type>     m_elog;
     std::string     m_remote_endpoint;
 };
 

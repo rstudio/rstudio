@@ -32,9 +32,9 @@ namespace system {
 // AsioProcessSupervisor currently on available on posix systems
 struct AsioProcessSupervisor::Impl
 {
-   Impl(boost::asio::io_service& ioService) : ioService_(ioService) {}
+   Impl(boost::asio::io_context& ioContext) : ioContext_(ioContext) {}
 
-   boost::asio::io_service& ioService_;
+   boost::asio::io_context& ioContext_;
    std::set<boost::shared_ptr<AsioAsyncChildProcess> > children_;
 
    boost::mutex mutex_;
@@ -147,7 +147,7 @@ struct AsioProcessSupervisor::Impl
    {
       // remove exited children
       // we lock here because this method can potentially be invoked by multiple threads
-      // this is due to the fact that AsioAsyncChildProcess objects run on an io_service
+      // this is due to the fact that AsioAsyncChildProcess objects run on an io_context
       LOCK_MUTEX(mutex_)
       {
          // upgrade this weak pointer to a shared pointer
@@ -174,8 +174,8 @@ struct AsioProcessSupervisor::Impl
    }
 };
 
-AsioProcessSupervisor::AsioProcessSupervisor(boost::asio::io_service& ioService) :
-   pImpl_(new Impl(ioService))
+AsioProcessSupervisor::AsioProcessSupervisor(boost::asio::io_context& ioContext) :
+   pImpl_(new Impl(ioContext))
 {
 }
 
@@ -191,7 +191,7 @@ Error AsioProcessSupervisor::runProgram(const std::string& executable,
 {
    // create the child
    boost::shared_ptr<AsioAsyncChildProcess> pChild(
-            new AsioAsyncChildProcess(pImpl_->ioService_, executable, args, options));
+            new AsioAsyncChildProcess(pImpl_->ioContext_, executable, args, options));
 
    // wrap exit callback with our own so we reap dead child objects whenever they exit
    // note the use of the weak_ptr to ensure that the child's copy of the process callbacks
@@ -214,7 +214,7 @@ Error AsioProcessSupervisor::runCommand(const std::string& command,
 {
    // create the child
    boost::shared_ptr<AsioAsyncChildProcess> pChild(
-            new AsioAsyncChildProcess(pImpl_->ioService_, command, options));
+            new AsioAsyncChildProcess(pImpl_->ioContext_, command, options));
 
    // wrap exit callback with our own so we reap dead child objects whenever they exit
    // note the use of the weak_ptr to ensure that the child's copy of the process callbacks

@@ -24,7 +24,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/variant/static_visitor.hpp>
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/deadline_timer.hpp>
 
@@ -89,7 +89,7 @@ public:
         allowedOrigins_(allowedOrigins),
         additionalResponseHeaders_(additionalResponseHeaders),
         scheduledCommandInterval_(boost::posix_time::seconds(3)),
-        scheduledCommandTimer_(acceptorService_.ioService()),
+        scheduledCommandTimer_(acceptorService_.ioContext()),
         running_(false),
         totalTime_(boost::posix_time::seconds(0)),
         minTime_(boost::posix_time::seconds(0)),
@@ -104,9 +104,9 @@ public:
    {
    }
 
-   virtual boost::asio::io_service& ioService()
+   virtual boost::asio::io_context& ioContext()
    {
-      return acceptorService_.ioService();
+      return acceptorService_.ioContext();
    }
    
    virtual void setAbortOnResourceError(bool abortOnResourceError)
@@ -376,7 +376,7 @@ public:
          LOG_ERROR(Error(closeEc, ERROR_LOCATION));
       
       // stop the server 
-      acceptorService_.ioService().stop();
+      acceptorService_.ioContext().stop();
 
       std::set<boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections;
       boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> pendingConnection;
@@ -457,10 +457,11 @@ private:
    {
       try
       {
-         boost::system::error_code ec;
-         acceptorService_.ioService().run(ec);
-         if (ec)
-            LOG_ERROR(Error(ec, ERROR_LOCATION));
+         acceptorService_.ioContext().run();
+      }
+      catch (boost::system::system_error& error)
+      {
+         LOG_ERROR(Error(error.code(), ERROR_LOCATION));
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
@@ -552,8 +553,8 @@ private:
       ptrNextConnection_.reset(
                new AsyncConnectionImpl<typename ProtocolType::socket> (
 
-         // controlling io_service
-         acceptorService_.ioService(),
+         // controlling io_context
+         acceptorService_.ioContext(),
 
          // optional ssl context - only used for SSL connections
          sslContext_,
@@ -800,12 +801,12 @@ private:
    }
 
    void connectionRequestFilter(
-            boost::asio::io_service& ioService,
+            boost::asio::io_context& ioContext,
             http::Request* pRequest,
             http::RequestFilterContinuation continuation)
    {
       if (requestFilter_)
-         requestFilter_(ioService, pRequest, continuation);
+         requestFilter_(ioContext, pRequest, continuation);
       else
          continuation(boost::shared_ptr<http::Response>());
    }

@@ -319,7 +319,7 @@ void schedulePeriodicExecution(
 
 } // end anonymous namespace
 
-void FileLock::refreshPeriodically(boost::asio::io_service& service,
+void FileLock::refreshPeriodically(boost::asio::io_context& service,
                                    boost::posix_time::seconds interval)
 {
    // protect against re-entrancy

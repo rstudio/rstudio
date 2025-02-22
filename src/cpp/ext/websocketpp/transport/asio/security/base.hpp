@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2015, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,13 +28,12 @@
 #ifndef WEBSOCKETPP_TRANSPORT_ASIO_SOCKET_BASE_HPP
 #define WEBSOCKETPP_TRANSPORT_ASIO_SOCKET_BASE_HPP
 
+#include <websocketpp/common/asio.hpp>
 #include <websocketpp/common/memory.hpp>
 #include <websocketpp/common/functional.hpp>
 #include <websocketpp/common/system_error.hpp>
 #include <websocketpp/common/cpp11.hpp>
 #include <websocketpp/common/connection_hdl.hpp>
-
-#include <boost/asio.hpp>
 
 #include <string>
 
@@ -56,6 +55,7 @@
 
 // Connection
 // TODO
+// set_hostname(std::string hostname)
 // pre_init(init_handler);
 // post_init(init_handler);
 
@@ -63,6 +63,8 @@ namespace websocketpp {
 namespace transport {
 namespace asio {
 namespace socket {
+
+typedef lib::function<void(lib::asio::error_code const &)> shutdown_handler;
 
 /**
  * The transport::asio::socket::* classes are a set of security/socket related
@@ -97,7 +99,10 @@ namespace error {
         missing_tls_init_handler,
 
         /// TLS Handshake Failed
-        tls_handshake_failed
+        tls_handshake_failed,
+        
+        /// Failed to set TLS SNI hostname
+        tls_failed_sni_hostname
     };
 } // namespace error
 
@@ -126,6 +131,8 @@ public:
                 return "Required tls_init handler not present.";
             case error::tls_handshake_failed:
                 return "TLS handshake failed";
+            case error::tls_failed_sni_hostname:
+                return "Failed to set TLS SNI hostname";
             default:
                 return "Unknown";
         }

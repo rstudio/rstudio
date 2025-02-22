@@ -20,7 +20,7 @@
 #include <boost/array.hpp>
 
 #include <boost/utility.hpp>
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/write.hpp>
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/ssl.hpp>
@@ -61,7 +61,7 @@ public:
 
 
 public:
-   HttpConnectionImpl(boost::asio::io_service& ioService,
+   HttpConnectionImpl(boost::asio::io_context& ioContext,
                       boost::shared_ptr<boost::asio::ssl::context> sslContext,
                       const HeadersParsedHandler& headersParsed,
                       const Handler& handler)
@@ -70,7 +70,7 @@ public:
    {
       if (sslContext)
       {
-         sslStream_.reset(new boost::asio::ssl::stream<typename ProtocolType::socket>(ioService, *sslContext));
+         sslStream_.reset(new boost::asio::ssl::stream<typename ProtocolType::socket>(ioContext, *sslContext));
 
          // get socket and store it in a separate shared pointer
          // the owner is the SSL stream pointer - this ensures we don't double delete
@@ -78,7 +78,7 @@ public:
       }
       else
       {
-         socket_.reset(new typename ProtocolType::socket(ioService));
+         socket_.reset(new typename ProtocolType::socket(ioContext));
       }
    }
 

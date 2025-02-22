@@ -91,28 +91,28 @@ json::Array getLicensedUsers()
    return getAllUsers();
 }
 
-Error lockUser(boost::asio::io_service& ioService,
+Error lockUser(boost::asio::io_context& ioContext,
                const std::string& username,
                bool force)
 {
    return Success();
 }
 
-Error unlockUser(boost::asio::io_service& ioService,
+Error unlockUser(boost::asio::io_context& ioContext,
                  const std::string& username,
                  bool force)
 {
    return Success();
 }
 
-Error setAdmin(boost::asio::io_service& ioService,
+Error setAdmin(boost::asio::io_context& ioContext,
                const std::string& username,
                bool isAdmin)
 {
    return Success();
 }
 
-OverlayResult addUser(boost::asio::io_service& ioService,
+OverlayResult addUser(boost::asio::io_context& ioContext,
                       const std::string& username,
                       bool isAdmin)
 {

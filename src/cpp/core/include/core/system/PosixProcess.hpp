@@ -16,7 +16,7 @@
 #ifndef CORE_SYSTEM_POSIX_PROCESS_HPP
 #define CORE_SYSTEM_POSIX_PROCESS_HPP
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <core/system/Process.hpp>
 #include <core/system/PosixChildProcess.hpp>
@@ -32,7 +32,7 @@ namespace system {
 class AsioProcessSupervisor : boost::noncopyable
 {
 public:
-   AsioProcessSupervisor(boost::asio::io_service& ioService);
+   AsioProcessSupervisor(boost::asio::io_context& ioContext);
    virtual ~AsioProcessSupervisor();
 
    core::Error runProgram(const std::string& executable,

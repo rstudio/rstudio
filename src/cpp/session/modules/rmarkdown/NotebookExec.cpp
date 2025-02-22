@@ -25,6 +25,9 @@
 #include "NotebookWorkingDir.hpp"
 #include "NotebookConditions.hpp"
 
+#include <memory>
+#include <iostream>
+
 #include <shared_core/Error.hpp>
 
 #include <core/text/CsvParser.hpp>
@@ -34,8 +37,6 @@
 #include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
-
-#include <iostream>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -193,7 +194,7 @@ void ChunkExecContext::connect()
 
    // leave an execution lock in this folder so it won't be moved if the notebook
    // is saved while executing
-   auto lock = make_unique<ScopedFileLock>(
+   auto lock = boost::make_unique<ScopedFileLock>(
        FileLock::createDefault(),
        outputPath_.completePath(kExecutionLock));
    locks_.push_back(std::move(lock));
@@ -204,7 +205,7 @@ void ChunkExecContext::connect()
       initializeOutput();
 
    // capture conditions
-   auto pConditionCapture = make_unique<ConditionCapture>();
+   auto pConditionCapture = boost::make_unique<ConditionCapture>();
    pConditionCapture->connect();
    captures_.push_back(std::move(pConditionCapture));
    connections_.push_back(events().onCondition.connect(
@@ -234,7 +235,7 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
                      _3, ChunkOutputPlot, _4)));
 
-   auto pPlotCapture = make_unique<PlotCapture>();
+   auto pPlotCapture = boost::make_unique<PlotCapture>();
 
    if (figWidth > 0 || figHeight > 0)
    {
@@ -262,7 +263,7 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
                      ChunkOutputHtml, 0)));
 
-   auto pHtmlCapture = make_unique<HtmlCapture>();
+   auto pHtmlCapture = boost::make_unique<HtmlCapture>();
    error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
             outputPath_.getParent().completePath(kChunkLibDir),
@@ -317,14 +318,14 @@ void ChunkExecContext::connect()
    prevCharWidth_ = r::options::getOptionWidth();
    r::options::setOptionWidth(charWidth_);
 
-   auto pDirCapture = make_unique<DirCapture>();
+   auto pDirCapture = boost::make_unique<DirCapture>();
    error = pDirCapture->connectDir(docId_, workingDir_);
    if (error)
       LOG_ERROR(error);
    captures_.push_back(std::move(pDirCapture));
 
    // begin capturing errors
-   auto pErrorCapture = make_unique<ErrorCapture>();
+   auto pErrorCapture = boost::make_unique<ErrorCapture>();
    pErrorCapture->connect();
    captures_.push_back(std::move(pErrorCapture));
 
@@ -342,7 +343,7 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
                      ChunkOutputData, 0)));
 
-   auto pDataCapture = make_unique<DataCapture>();
+   auto pDataCapture = boost::make_unique<DataCapture>();
    error = pDataCapture->connectDataCapture(
             outputPath_,
             options_.mergedOptions());
@@ -662,7 +663,7 @@ void ChunkExecContext::initializeOutput()
 
    // leave an execution lock in this folder so it won't be moved if the notebook
    // is saved while executing
-   auto lock = make_unique<ScopedFileLock>(
+   auto lock = boost::make_unique<ScopedFileLock>(
        FileLock::createDefault(),
        outputPath.completePath(kExecutionLock));
    locks_.push_back(std::move(lock));
