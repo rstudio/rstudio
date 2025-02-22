@@ -845,12 +845,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
 endif()
 
-# install 32-bit MSVC runtime for session win32
-if(RSTUDIO_SESSION_WIN32)
-   include(InstallRequiredSystemLibraries)
-   install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION ${RSTUDIO_INSTALL_BIN})
-endif()
-
 # add overlay if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
