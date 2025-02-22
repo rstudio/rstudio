@@ -39,15 +39,6 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/globals.cmake")
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
-# explicitly do not use new c++ 11 features for websocketpp
-# they currently do not work with our source
-add_definitions(-D_WEBSOCKETPP_NO_CPP11_MEMORY_=1)
-
-# the non-strict masking option was identified as a potentially crashing
-# issue due to reliance on undefined C++ behavior, and was removed entirely in
-# websocketpp 0.7 (RStudio is using 0.5.1 at this time)
-add_definitions(-DWEBSOCKETPP_STRICT_MASKING)
-
 # make websockets build with MSVC
 if(WIN32 AND MSVC)
    add_definitions(
