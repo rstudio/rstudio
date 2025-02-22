@@ -1,7 +1,7 @@
 
 # figure out which files to explore
 exts <- c("cpp", "h", "hpp", "inc", "inl", "ipp")
-pattern <- sprintf("\\.(%s)$", paste(exts, collapse = "|"))
+pattern <- sprintf("[.](%s)$", paste(exts, collapse = "|"))
 
 # find all the files we might need to modify
 files <- list.files(
@@ -11,18 +11,19 @@ files <- list.files(
    recursive  = TRUE
 )
 
-# skip examples and tests
+# skip examples
 files <- grep("/(examples?)/", files, value = TRUE, invert = TRUE)
 
 for (file in files) {
    
    # read the file as a string
-   original <- paste(readLines(file, warn = FALSE), collapse = "\n")
+   contents <- readLines(file, warn = FALSE, encoding = "latin1")
+   original <- paste(contents, collapse = "\n")
    replacement <- original
    
    # make replacements
    replacement <- gsub(
-      pattern     = "namespace\\s+boost\\s*{",
+      pattern     = "namespace[[:space:]]+boost[[:space:]\\\\\\\\]*{",
       replacement = "namespace rstudio_boost {} namespace boost = rstudio_boost; namespace rstudio_boost {",
       x           = replacement,
       perl        = TRUE
@@ -36,9 +37,17 @@ for (file in files) {
       fixed       = TRUE
    )
    
+   # for nested namespaces
+   replacement <- gsub(
+      pattern     = "namespace boost::",
+      replacement = "namespace rstudio_boost::",
+      x           = replacement,
+      fixed       = TRUE
+   )
+   
    if (!identical(original, replacement)) {
       writeLines(replacement, con = file, useBytes = TRUE)
       writeLines(sprintf("-- Updated \"%s\"", file))
    }
-
+   
 }

@@ -43,17 +43,6 @@ unlink(install_dir, recursive = TRUE)
 ensure_dir(install_dir)
 install_dir <- normalizePath(install_dir)
 
-# boost modules we need to alias
-boost_modules <- c(
-   "algorithm", "asio", "array", "bind", "build", "chrono", "circular_buffer",
-   "config", "context", "crc", "date_time", "filesystem", "foreach", "format",
-   "function", "interprocess", "iostreams", "lambda", "lexical_cast",
-   "optional", "predef", "program_options", "property_tree", "random", "range",
-   "ref", "regex", "scope_exit", "signals2", "smart_ptr", "spirit",
-   "string_algo", "system", "test", "thread", "tokenizer", "type_traits",
-   "typeof", "unordered", "utility", "variant"
-)
-
 # construct paths of interest
 boost_filename <- basename(boost_url)
 boost_dirname <- tools::file_path_sans_ext(boost_filename)
@@ -83,28 +72,6 @@ if (!file.exists(boost_dirname))
 # enter boost folder
 enter(boost_dirname)
 
-# apply patch for building with newer MSVC 2022 (should be able to remove this when we update to a 
-# more current version of Boost)
-# msvc_jam_path <- "tools/build/src/tools/msvc.jam"
-# if (file.exists(msvc_jam_path)) {
-#     msvc_content <- readLines(msvc_jam_path)
-#     msvc_content <- gsub("14\\.3", "14.[34]", msvc_content)
-#     writeLines(msvc_content, msvc_jam_path)
-#     progress("Updated MSVC version in msvc.jam")
-# } else {
-#     warning("Could not find msvc.jam file at expected location")
-# }
-
-# remove any documentation folders (these cause
-# bcp to barf while trying to copy files)
-unlink("doc", recursive = TRUE)
-docs <- file.path("libs", list.files("libs"), "doc")
-invisible(lapply(docs, function(doc) {
-   if (file.exists(doc))
-      unlink(doc, recursive = TRUE)
-}))
-
-
 # bootstrap the boost build directory
 section("Bootstrapping boost...")
 
@@ -128,23 +95,16 @@ if (is.na(Sys.getenv("B2_TOOLSET_ROOT", unset = NA))) {
    
 }
 
-exec("cmd.exe", "/C call bootstrap.bat vc142")
+# use rstudio_boost for namespaces
+progress("Patching Boost namespaces")
+source("../../../tools/use-rstudio-boost-namespace.R")
 
-# create bcp executable
-# (so we can create Boost using a private namespace)
-exec("b2", "-j 4 tools\\bcp")
-invisible(file.copy("dist/bin/bcp.exe", "bcp.exe"))
-
-# use bcp to copy boost into 'rstudio' sub-directory
-unlink("rstudio", recursive = TRUE)
-dir.create("rstudio")
-fmt <- "--namespace=rstudio_boost --namespace-alias %s config build rstudio"
-args <- sprintf(fmt, paste(boost_modules, collapse = " "))
-exec("bcp", args)
-
-# enter the 'rstudio' directory and re-bootstrap
-enter("rstudio")
-exec("cmd.exe", "/C call bootstrap.bat vc142")
+# bootstrap the project
+# TODO: system2() seems to hang and never exits, so we use processx
+args <- c("/c", "call", "bootstrap.bat", "vc142")
+result <- processx::run("cmd.exe", args, stdout = "", stderr = "")
+if (result$status != 0L)
+   stop("Error bootstrapping Boost. Sorry.")
 
 # construct common arguments for 32bit, 64bit boost builds
 b2_build_args <- function(bitness) {
@@ -153,15 +113,20 @@ b2_build_args <- function(bitness) {
    unlink(prefix, recursive = TRUE)
    
    paste(
+      "-q",
+      "--without-graph_parallel",
+      "--without-mpi",
+      "--without-python",
+      "--abbreviate-paths",
+      sprintf("--prefix=\"%s\"", prefix),
       sprintf("address-model=%s", bitness),
       "toolset=msvc-14.2",
-      sprintf("--prefix=\"%s\"", prefix),
-      "--abbreviate-paths",
       sprintf("variant=%s", variant),
       sprintf("link=%s", link),
       "runtime-link=shared",
       "threading=multi",
       "define=BOOST_USE_WINDOWS_H",
+      "define=NOMINMAX",
       "install"
    )
 }
