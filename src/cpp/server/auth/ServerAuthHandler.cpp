@@ -512,11 +512,11 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    return Success();
 }
 
-Error addUser(boost::asio::io_context& ioService,
+Error addUser(boost::asio::io_context& ioContext,
               const std::string& username,
               bool isAdmin)
 {
-   const auto result = overlay::addUser(ioService, username, isAdmin);
+   const auto result = overlay::addUser(ioContext, username, isAdmin);
    Error overlayError;
    bool wasHandled;
    std::tie(overlayError, wasHandled) = result;

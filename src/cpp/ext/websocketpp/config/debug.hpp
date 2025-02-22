@@ -92,7 +92,7 @@ struct debug_core {
     /// RNG policies
     typedef websocketpp::random::none::int_generator<uint32_t> rng_type;
 
-    /// Controls compile time enabling/disabling of thread syncronization
+    /// Controls compile time enabling/disabling of thread synchronization
     /// code Disabling can provide a minor performance improvement to single
     /// threaded applications
     static bool const enable_multithreading = true;
@@ -104,7 +104,7 @@ struct debug_core {
         typedef type::request_type request_type;
         typedef type::response_type response_type;
 
-        /// Controls compile time enabling/disabling of thread syncronization
+        /// Controls compile time enabling/disabling of thread synchronization
         /// code Disabling can provide a minor performance improvement to single
         /// threaded applications
         static bool const enable_multithreading = true;

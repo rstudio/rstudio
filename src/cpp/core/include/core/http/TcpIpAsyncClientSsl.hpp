@@ -37,7 +37,7 @@ class TcpIpAsyncClientSsl
    : public AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >
 {
 public:
-   TcpIpAsyncClientSsl(boost::asio::io_context& ioService,
+   TcpIpAsyncClientSsl(boost::asio::io_context& ioContext,
                        const std::string& address,
                        const std::string& port,
                        bool verify,
@@ -46,7 +46,7 @@ public:
                           boost::posix_time::time_duration(boost::posix_time::pos_infin),
                        const std::string& hostname = std::string(),
                        const std::string& verifyAddress = std::string())
-     : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
+     : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioContext),
        sslContext_(boost::asio::ssl::context::sslv23_client),
        address_(address),
        port_(port),
@@ -59,7 +59,7 @@ public:
 
       // use scoped ptr so we can call the constructor after we've configured
       // the ssl::context (immediately above)
-      ptrSslStream_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(ioService, sslContext_));
+      ptrSslStream_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(ioContext, sslContext_));
 
       ssl::initializeSslStream(ptrSslStream_.get(), (hostname.empty() ? address_.c_str() : hostname.c_str()));
    }
@@ -75,7 +75,7 @@ protected:
    virtual void connectAndWriteRequest()
    {
       boost::shared_ptr<TcpIpAsyncConnector> pAsyncConnector(
-                  new TcpIpAsyncConnector(ioService(),
+                  new TcpIpAsyncConnector(ioContext(),
                                           &(ptrSslStream_->next_layer())));
 
       auto connectAddress = address_;

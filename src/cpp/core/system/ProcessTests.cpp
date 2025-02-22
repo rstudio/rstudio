@@ -57,30 +57,32 @@ void appendOutput(const std::string& output, std::string* pOutput)
    pOutput->append(output);
 }
 
-struct IoServiceFixture
+struct IoContextFixture
 {
-   boost::asio::io_context ioService;
-   std::vector<boost::shared_ptr<boost::thread> > threads;
+   boost::asio::io_context ioContext;
+   boost::asio::executor_work_guard<decltype(ioContext.get_executor())> guard;
+   std::vector<boost::shared_ptr<boost::thread>> threads;
 
-   void runServiceThread()
-   {
-      ioService.run();
-   }
-
-   IoServiceFixture()
-      : ioService()
+   IoContextFixture()
+      : ioContext(),
+        guard(ioContext.get_executor())
    {
       for (int i = 0; i < 4; ++i)
       {
          boost::shared_ptr<boost::thread> pThread(
-                  new boost::thread(boost::bind(&IoServiceFixture::runServiceThread, this)));
+                  new boost::thread(boost::bind(&IoContextFixture::runServiceThread, this)));
          threads.push_back(pThread);
       }
    }
 
-   ~IoServiceFixture()
+   void runServiceThread()
    {
-      ioService.stop();
+      ioContext.run();
+   }
+
+   ~IoContextFixture()
+   {
+      ioContext.stop();
       for (const boost::shared_ptr<boost::thread>& thread : threads)
          thread->join();
    }
@@ -90,10 +92,10 @@ test_context("ProcessTests")
 {
    test_that("AsioProcessSupervisor can run program")
    {
-      IoServiceFixture fixture;
+      IoContextFixture fixture;
 
       // create new supervisor
-      AsioProcessSupervisor supervisor(fixture.ioService);
+      AsioProcessSupervisor supervisor(fixture.ioContext);
 
       // create process options and callbacks
       ProcessOptions options;
@@ -120,10 +122,10 @@ test_context("ProcessTests")
 
    test_that("AsioProcessSupervisor returns correct output from stdout")
    {
-      IoServiceFixture fixture;
+      IoContextFixture fixture;
 
       // create new supervisor
-      AsioProcessSupervisor supervisor(fixture.ioService);
+      AsioProcessSupervisor supervisor(fixture.ioContext);
 
       // create process options and callbacks
       ProcessOptions options;
@@ -155,10 +157,10 @@ test_context("ProcessTests")
     * commented out due to users being different on every machine
    test_that("AsioProcessSupervisor can run process as another user")
    {
-      IoServiceFixture fixture;
+      IoContextFixture fixture;
 
       // create new supervisor
-      AsioProcessSupervisor supervisor(fixture.ioService);
+      AsioProcessSupervisor supervisor(fixture.ioContext);
 
       // create process options and callbacks
       ProcessOptions options;
@@ -188,10 +190,10 @@ test_context("ProcessTests")
 
    test_that("AsioProcessSupervisor returns correct error code for failure exit")
    {
-      IoServiceFixture fixture;
+      IoContextFixture fixture;
 
       // create new supervisor
-      AsioProcessSupervisor supervisor(fixture.ioService);
+      AsioProcessSupervisor supervisor(fixture.ioContext);
 
       // create process options and callbacks
       ProcessOptions options;
@@ -217,7 +219,7 @@ test_context("ProcessTests")
 
    test_that("AsioAsyncChildProcess can write to std in")
    {
-      IoServiceFixture fixture;
+      IoContextFixture fixture;
 
       ProcessOptions options;
       options.threadSafe = true;
@@ -234,7 +236,7 @@ test_context("ProcessTests")
       callbacks.onExit = boost::bind(&signalExit, _1, &exitCode, &mutex, &signal);
       callbacks.onStdout = boost::bind(&appendOutput, _2, &output);
 
-      AsioAsyncChildProcess proc(fixture.ioService, "cat", options);
+      AsioAsyncChildProcess proc(fixture.ioContext, "cat", options);
       proc.run(callbacks);
 
       proc.asyncWriteToStdin("Hello\n", false);
@@ -291,7 +293,7 @@ test_context("ProcessTests")
 
    test_that("Can spawn multiple async processes and they all return correct results")
    {
-      IoServiceFixture fixture;
+      IoContextFixture fixture;
 
       std::string asioType;
       #if defined(BOOST_ASIO_HAS_IOCP)
@@ -321,7 +323,7 @@ test_context("ProcessTests")
       std::cout << "Spawning " << numProcs << " child procs" << std::endl;
 
       // create new supervisor
-      AsioProcessSupervisor supervisor(fixture.ioService);
+      AsioProcessSupervisor supervisor(fixture.ioContext);
 
       int exitCodes[1000];
       std::string outputs[1000];
@@ -383,10 +385,10 @@ test_context("ProcessTests")
 
    test_that("Can kill child processes")
    {
-      IoServiceFixture fixture;
+      IoContextFixture fixture;
 
       // create new supervisor
-      AsioProcessSupervisor supervisor(fixture.ioService);
+      AsioProcessSupervisor supervisor(fixture.ioContext);
 
       std::atomic<int> numStarted(0);
       std::atomic<int> numExited(0);
@@ -447,10 +449,10 @@ test_context("ProcessTests")
 
    test_that("Error code for signal is reported bash-style")
    {
-      IoServiceFixture fixture;
+      IoContextFixture fixture;
 
       // create new supervisor
-      AsioProcessSupervisor supervisor(fixture.ioService);
+      AsioProcessSupervisor supervisor(fixture.ioContext);
 
       boost::mutex mutex;
       boost::condition_variable cond;
@@ -520,10 +522,10 @@ test_context("ProcessTests")
 
    test_that("Normal exit code is reported properly")
    {
-      IoServiceFixture fixture;
+      IoContextFixture fixture;
 
       // create new supervisor
-      AsioProcessSupervisor supervisor(fixture.ioService);
+      AsioProcessSupervisor supervisor(fixture.ioContext);
 
       boost::mutex mutex;
       boost::condition_variable cond;

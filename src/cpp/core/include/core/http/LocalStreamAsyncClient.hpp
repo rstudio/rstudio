@@ -39,15 +39,15 @@ class LocalStreamAsyncClient
    : public AsyncClient<boost::asio::local::stream_protocol::socket>
 {
 public:
-   LocalStreamAsyncClient(boost::asio::io_context& ioService,
+   LocalStreamAsyncClient(boost::asio::io_context& ioContext,
                           const FilePath localStreamPath,
                           bool logToStderr = false,
                           boost::optional<UidType> validateUid = boost::none,
                           const http::ConnectionRetryProfile& retryProfile =
                                                 http::ConnectionRetryProfile())
-     : AsyncClient<boost::asio::local::stream_protocol::socket>(ioService,
+     : AsyncClient<boost::asio::local::stream_protocol::socket>(ioContext,
                                                                 logToStderr),
-       socket_(ioService),
+       socket_(ioContext),
        localStreamPath_(localStreamPath),
        validateUid_(validateUid),
        retriedPermDenied_(false)

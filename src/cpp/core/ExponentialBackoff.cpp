@@ -20,11 +20,11 @@
 namespace rstudio {
 namespace core {
 
-ExponentialBackoff::ExponentialBackoff(boost::asio::io_context& ioService,
+ExponentialBackoff::ExponentialBackoff(boost::asio::io_context& ioContext,
                                        const boost::posix_time::time_duration& initialWait,
                                        const boost::posix_time::time_duration& maxWait,
                                        const boost::function<void(ExponentialBackoffPtr)>& action) :
-   ioService_(ioService),
+   ioContext_(ioContext),
    initialWait_(initialWait),
    maxWait_(maxWait),
    maxNumRetries_(0),
@@ -34,12 +34,12 @@ ExponentialBackoff::ExponentialBackoff(boost::asio::io_context& ioService,
 {
 }
 
-ExponentialBackoff::ExponentialBackoff(boost::asio::io_context& ioService,
+ExponentialBackoff::ExponentialBackoff(boost::asio::io_context& ioContext,
                                        const boost::posix_time::time_duration& initialWait,
                                        const boost::posix_time::time_duration& maxWait,
                                        unsigned int maxNumRetries,
                                        const boost::function<void(ExponentialBackoffPtr)>& action) :
-   ioService_(ioService),
+   ioContext_(ioContext),
    initialWait_(initialWait),
    maxWait_(maxWait),
    maxNumRetries_(maxNumRetries),
@@ -102,7 +102,7 @@ bool ExponentialBackoff::next()
       }
 
       boost::shared_ptr<boost::asio::deadline_timer> timer =
-            boost::make_shared<boost::asio::deadline_timer>(ioService_, timeout);
+            boost::make_shared<boost::asio::deadline_timer>(ioContext_, timeout);
 
       timer->async_wait([=](const boost::system::error_code& error) mutable
       {

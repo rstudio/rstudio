@@ -288,7 +288,7 @@ SessionManager::SessionManager()
                                            this, _1, _2);
 }
 
-Error SessionManager::launchSession(boost::asio::io_context& ioService,
+Error SessionManager::launchSession(boost::asio::io_context& ioContext,
                                     const r_util::SessionContext& context,
                                     const http::Request& request,
                                     bool &launched,
@@ -355,7 +355,7 @@ Error SessionManager::launchSession(boost::asio::io_context& ioService,
    }
 
    // launch the session
-   Error error = sessionLaunchFunction_(ioService, profile, request, onLaunch, onError);
+   Error error = sessionLaunchFunction_(ioContext, profile, request, onLaunch, onError);
    if (error)
    {
       removePendingLaunch(context, false, "error during launch: " + error.asString());

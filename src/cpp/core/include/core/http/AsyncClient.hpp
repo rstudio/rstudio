@@ -95,15 +95,15 @@ class AsyncClient :
    boost::noncopyable
 {
 public:
-   AsyncClient(boost::asio::io_context& ioService,
+   AsyncClient(boost::asio::io_context& ioContext,
                bool logToStderr = false)
       : chunkedEncoding_(false),
-        ioService_(ioService),
-        connectionRetryContext_(ioService),
+        ioContext_(ioContext),
+        connectionRetryContext_(ioContext),
         logToStderr_(logToStderr),
         closed_(false),
         requestWritten_(false),
-        defaultStrand_(ioService)
+        defaultStrand_(ioContext)
    {
       // Make sure we read at least 8192 bytes from the socket at a time. The default ends up as 512.
       responseBuffer_.prepare(8192);
@@ -218,7 +218,7 @@ public:
 
       // deliver the chunks on the thread pool instead of directly from this method
       // so that it is not a re-entrant method (beneficial for clients if they are holding locks, etc)
-      boost::asio::post(ioService_, [this]()
+      boost::asio::post(ioContext_, [this]()
       {
          // capture shared_ptr of this to keep instance alive while posting callback
          // to io service
@@ -260,7 +260,7 @@ public:
 
 protected:
 
-   boost::asio::io_context& ioService() { return ioService_; }
+   boost::asio::io_context& ioContext() { return ioContext_; }
 
    virtual SocketService& socket() = 0;
 
@@ -780,9 +780,9 @@ private:
 private:
    struct ConnectionRetryContext
    {
-      ConnectionRetryContext(boost::asio::io_context& ioService)
+      ConnectionRetryContext(boost::asio::io_context& ioContext)
          : stopTryingTime(boost::posix_time::not_a_date_time),
-           retryTimer(ioService)
+           retryTimer(ioContext)
       {
       }
 
@@ -811,7 +811,7 @@ protected:
 private:
    static constexpr double maxChunkSize = 1024.0*1024.0; // 1MB
 
-   boost::asio::io_context& ioService_;
+   boost::asio::io_context& ioContext_;
    ConnectionRetryContext connectionRetryContext_;
    bool logToStderr_;
    ResponseHandler responseHandler_;

@@ -194,7 +194,7 @@ Error launchSessionRecovery(
       bool launched;
 
       core::system::Options environment;
-      return sessionManager().launchSession(ptrConnection->ioService(), 
+      return sessionManager().launchSession(ptrConnection->ioContext(), 
             context, request, launched, environment);
    }
    else
@@ -801,7 +801,7 @@ void proxyRequest(
    // if the user is available on the system pass in the uid for validation to ensure
    // that we only connect to the socket if it was created by the user
    boost::shared_ptr<http::IAsyncClient> pClient(new http::LocalStreamAsyncClient(
-                                                    ptrConnection->ioService(),
+                                                    ptrConnection->ioContext(),
                                                     streamPath, false, validateUid));
 
    // setup retry context
@@ -824,7 +824,7 @@ void proxyRequest(
       // invoke the client handler on the threadpool - we cannot do this
       // from this thread because that will cause ordering issues for the caller
       boost::asio::post(
-               ptrConnection->ioService(),
+               ptrConnection->ioContext(),
                boost::bind(clientHandler, pClient));
    }
 }
@@ -1220,7 +1220,7 @@ void proxyLocalhostRequest(
 
    // create async tcp/ip client and assign request
    boost::shared_ptr<http::IAsyncClient> pClient(
-      new server_core::http::LocalhostAsyncClient(ptrConnection->ioService(), address, port));
+      new server_core::http::LocalhostAsyncClient(ptrConnection->ioContext(), address, port));
    // Ensure async operations on both the browser->rserver and rserver->backend run on the same thread. 
    pClient->setStrand(&ptrConnection->getStrand());
    pClient->request().assign(request);

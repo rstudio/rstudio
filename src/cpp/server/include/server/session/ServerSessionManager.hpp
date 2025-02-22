@@ -60,7 +60,7 @@ private:
 
 public:
    // launching
-   core::Error launchSession(boost::asio::io_context& ioService,
+   core::Error launchSession(boost::asio::io_context& ioContext,
                              const core::r_util::SessionContext& context,
                              const core::http::Request& request,
                              bool &launched,

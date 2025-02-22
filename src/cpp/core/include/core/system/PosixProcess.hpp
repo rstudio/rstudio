@@ -32,7 +32,7 @@ namespace system {
 class AsioProcessSupervisor : boost::noncopyable
 {
 public:
-   AsioProcessSupervisor(boost::asio::io_context& ioService);
+   AsioProcessSupervisor(boost::asio::io_context& ioContext);
    virtual ~AsioProcessSupervisor();
 
    core::Error runProgram(const std::string& executable,

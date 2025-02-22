@@ -31,12 +31,12 @@ inline Error sendRequest(const std::string& pipeName,
                          http::Response* pResponse)
 {
    // create client
-   boost::asio::io_context ioService;
+   boost::asio::io_context ioContext;
    boost::shared_ptr<NamedPipeAsyncClient> pClient(
-         new NamedPipeAsyncClient(ioService, pipeName, retryProfile));
+         new NamedPipeAsyncClient(ioContext, pipeName, retryProfile));
 
    // execute blocking request
-   return sendRequest<boost::asio::windows::stream_handle>(ioService,
+   return sendRequest<boost::asio::windows::stream_handle>(ioContext,
                                                            pClient,
                                                            request,
                                                            pResponse);

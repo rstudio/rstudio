@@ -38,13 +38,13 @@ class TcpIpAsyncClient :
       public AsyncClient<boost::asio::ip::tcp::socket>
 {
 public:
-   TcpIpAsyncClient(boost::asio::io_context& ioService,
+   TcpIpAsyncClient(boost::asio::io_context& ioContext,
                     const std::string& address,
                     const std::string& port,
                     const boost::posix_time::time_duration& connectionTimeout =
                        boost::posix_time::time_duration(boost::posix_time::pos_infin))
-     : AsyncClient<boost::asio::ip::tcp::socket>(ioService),
-       socket_(ioService),
+     : AsyncClient<boost::asio::ip::tcp::socket>(ioContext),
+       socket_(ioContext),
        address_(address),
        port_(port),
        connectionTimeout_(connectionTimeout)
@@ -63,7 +63,7 @@ private:
    virtual void connectAndWriteRequest()
    {
       boost::shared_ptr<TcpIpAsyncConnector> pAsyncConnector(
-                     new TcpIpAsyncConnector(ioService(), &(socket())));
+                     new TcpIpAsyncConnector(ioContext(), &(socket())));
    
       auto connectAddress = address_;
       auto connectPort = port_;

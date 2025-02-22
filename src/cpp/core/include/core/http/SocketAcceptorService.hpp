@@ -41,14 +41,14 @@ class SocketAcceptorService : boost::noncopyable
 public:
    SocketAcceptorService()
       : pInternalIOService_(new boost::asio::io_context()),
-        ioService_(*pInternalIOService_),
-        acceptor_(ioService_)
+        ioContext_(*pInternalIOService_),
+        acceptor_(ioContext_)
    {
    }
    
-   explicit SocketAcceptorService(boost::asio::io_context& ioService)
-      : ioService_(ioService),
-        acceptor_(ioService_)
+   explicit SocketAcceptorService(boost::asio::io_context& ioContext)
+      : ioContext_(ioContext),
+        acceptor_(ioContext_)
    {
    }
 
@@ -73,9 +73,9 @@ public:
 
 public:
 
-   boost::asio::io_context& ioService()
+   boost::asio::io_context& ioContext()
    {
-      return ioService_;
+      return ioContext_;
    }
    
    typename ProtocolType::acceptor& acceptor()
@@ -96,7 +96,7 @@ public:
    
 private:
    boost::scoped_ptr<boost::asio::io_context> pInternalIOService_;
-   boost::asio::io_context& ioService_;
+   boost::asio::io_context& ioContext_;
    typename ProtocolType::acceptor acceptor_;
 };
 

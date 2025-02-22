@@ -57,12 +57,12 @@ bool keepConnectionAliveImpl(const core::http::Response& response)
 class LocalhostAsyncClient : public core::http::TcpIpAsyncClient
 {
 public:
-   LocalhostAsyncClient(boost::asio::io_context& ioService,
+   LocalhostAsyncClient(boost::asio::io_context& ioContext,
                         const std::string& address,
                         const std::string& port,
                         const boost::posix_time::time_duration& connectionTimeout =
                                                boost::posix_time::time_duration(boost::posix_time::pos_infin))
-      : core::http::TcpIpAsyncClient(ioService, address, port, connectionTimeout)
+      : core::http::TcpIpAsyncClient(ioContext, address, port, connectionTimeout)
    {
    }
 
@@ -81,7 +81,7 @@ private:
 class LocalhostAsyncClientSsl : public core::http::TcpIpAsyncClientSsl
 {
 public:
-   LocalhostAsyncClientSsl(boost::asio::io_context& ioService,
+   LocalhostAsyncClientSsl(boost::asio::io_context& ioContext,
                            const std::string& address,
                            const std::string& port,
                            bool verifySslCerts,
@@ -90,7 +90,7 @@ public:
                                       boost::posix_time::time_duration(boost::posix_time::pos_infin),
                            const std::string& hostname = std::string(),
                            const std::string& verifyAddress = std::string())
-      : core::http::TcpIpAsyncClientSsl(ioService, address, port, verifySslCerts, certificateAuthority, connectionTimeout, hostname, verifyAddress)
+      : core::http::TcpIpAsyncClientSsl(ioContext, address, port, verifySslCerts, certificateAuthority, connectionTimeout, hostname, verifyAddress)
    {
    }
 

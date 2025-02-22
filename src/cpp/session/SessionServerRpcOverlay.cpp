@@ -42,7 +42,7 @@ Error invokeServerRpc(
 }
 
 void invokeServerRpcAsync(
-   boost::asio::io_context& ioService,
+   boost::asio::io_context& ioContext,
    const std::string& endpoint,
    const json::Object& request,
    const socket_rpc::RpcResultHandler& onResult,

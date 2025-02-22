@@ -50,7 +50,7 @@ public:
    virtual ~AsyncConnection() {}
 
    // io service for initiating dependent async network operations
-   virtual boost::asio::io_context& ioService() = 0;
+   virtual boost::asio::io_context& ioContext() = 0;
 
    // request
    virtual const http::Request& request() const = 0;

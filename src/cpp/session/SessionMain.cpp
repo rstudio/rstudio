@@ -1898,17 +1898,17 @@ Error ensureLibRSoValid()
 }
 
 // io_context for performing monitor work on the thread
-boost::asio::io_context s_monitorIoService;
+boost::asio::io_context s_monitorIoContext;
 
 void monitorWorkerThreadFunc()
 {
-   auto guard = boost::asio::make_work_guard(s_monitorIoService);
-   s_monitorIoService.run();
+   auto guard = boost::asio::make_work_guard(s_monitorIoContext);
+   s_monitorIoContext.run();
 }
 
 void stopMonitorWorkerThread()
 {
-   s_monitorIoService.stop();
+   s_monitorIoContext.stop();
 }
 
 void initMonitorClient()
@@ -1917,11 +1917,11 @@ void initMonitorClient()
    {
       monitor::initializeMonitorClient(core::system::getenv(kMonitorSocketPathEnvVar),
                                        options().monitorSharedSecret(),
-                                       s_monitorIoService);
+                                       s_monitorIoContext);
    }
    else
    {
-      modules::overlay::initMonitorClient(s_monitorIoService);
+      modules::overlay::initMonitorClient(s_monitorIoContext);
    }
 
    // start the monitor work thread

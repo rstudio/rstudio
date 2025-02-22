@@ -57,7 +57,7 @@ public:
    {
    }
 
-   virtual boost::asio::io_context& ioService() = 0;
+   virtual boost::asio::io_context& ioContext() = 0;
    
    virtual void setAbortOnResourceError(bool abortOnResourceError) = 0;
    

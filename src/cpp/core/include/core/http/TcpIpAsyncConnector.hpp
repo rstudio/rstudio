@@ -53,11 +53,11 @@ public:
    typedef boost::function<void(const core::Error&)> ErrorHandler;
 
 public:
-   TcpIpAsyncConnector(boost::asio::io_context& ioService,
+   TcpIpAsyncConnector(boost::asio::io_context& ioContext,
                        boost::asio::ip::tcp::socket* pSocket)
-     : service_(ioService),
+     : service_(ioContext),
        pSocket_(pSocket),
-       resolver_(ioService),
+       resolver_(ioContext),
        isConnected_(false),
        hasFailed_(false)
    {
@@ -88,12 +88,14 @@ public:
                                                    boost::asio::placeholders::error));
       }
 
-      resolver_.async_resolve(
-               address, port,
-               [this](const boost::system::error_code& ec, boost::asio::ip::tcp::resolver::results_type results)
+      auto callback = [this](
+            const boost::system::error_code& ec,
+            boost::asio::ip::tcp::resolver::results_type results)
       {
          handleResolve(ec, results.begin());
-      });
+      };
+
+      resolver_.async_resolve(address, port, std::move(callback));
    }
 
 private:

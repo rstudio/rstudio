@@ -118,7 +118,7 @@ public:
          http::Request*)> HeadersParsedHandler;
 
 public:
-   AsyncConnectionImpl(boost::asio::io_context& ioService,
+   AsyncConnectionImpl(boost::asio::io_context& ioContext,
                        boost::shared_ptr<boost::asio::ssl::context> sslContext,
                        long requestSequence,
                        const HeadersParsedHandler& onHeadersParsed,
@@ -126,7 +126,7 @@ public:
                        const ClosedHandler& onClosed,
                        const RequestFilter& requestFilter = RequestFilter(),
                        const ResponseFilter& responseFilter = ResponseFilter())
-      : ioService_(ioService),
+      : ioContext_(ioContext),
         onHeadersParsed_(onHeadersParsed),
         onRequestParsed_(onRequestParsed),
         onClosed_(onClosed),
@@ -135,12 +135,12 @@ public:
         closed_(false),
         requestSequence_(requestSequence),
         bytesTransferred_(0),
-        strand_(ioService)
+        strand_(ioContext)
         
    {
       if (sslContext)
       {
-         sslStream_.reset(new boost::asio::ssl::stream<SocketType>(ioService, *sslContext));
+         sslStream_.reset(new boost::asio::ssl::stream<SocketType>(ioContext, *sslContext));
 
          // get socket and store it in a separate shared pointer
          // the owner is the SSL stream pointer - this ensures we don't double delete
@@ -150,7 +150,7 @@ public:
       }
       else
       {
-         socket_.reset(new SocketType(ioService));
+         socket_.reset(new SocketType(ioContext));
          socketOperations_.reset(new SocketOperations<SocketType>(socket_, strand_));
       }
       request_.setRequestSequence(requestSequence);
@@ -191,9 +191,9 @@ public:
       }
    }
 
-   virtual boost::asio::io_context& ioService()
+   virtual boost::asio::io_context& ioContext()
    {
-      return ioService_;
+      return ioContext_;
    }
 
    virtual const http::Request& request() const
@@ -381,7 +381,7 @@ public:
       // this is posted to the io_context to be invoked asynchronously
       // so callers are not reentrantly locked
       boost::asio::post(
-               ioService_,
+               ioContext_,
                boost::bind(
                   &AsyncConnectionImpl<SocketType>::handleRead,
                   AsyncConnectionImpl<SocketType>::shared_from_this(),
@@ -509,7 +509,7 @@ private:
                   // call the filter (passing a continuation to be invoked
                   // once the filter is completed)
                   requestFilter_(
-                     ioService(),
+                     ioContext(),
                      &request_,
                      boost::bind(
                         &AsyncConnectionImpl<SocketType>::requestFilterContinuation,
@@ -688,7 +688,7 @@ private:
    }
 
 private:
-   boost::asio::io_context& ioService_;
+   boost::asio::io_context& ioContext_;
 
    // optional ssl stream
    // not used if the connection is not ssl enabled

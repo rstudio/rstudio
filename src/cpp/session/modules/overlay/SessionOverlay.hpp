@@ -39,7 +39,7 @@ void streamLauncherOutput(const std::string& jobId,
 
 int verifyInstallation();
 
-void initMonitorClient(boost::asio::io_context& ioService);
+void initMonitorClient(boost::asio::io_context& ioContext);
 
 core::Error initialize();
 

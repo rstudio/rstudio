@@ -45,7 +45,7 @@ void errorHandler(const Error& error, Error* pTargetError)
 }
 
 template <typename SocketService>
-Error sendRequest(boost::asio::io_context& ioService,
+Error sendRequest(boost::asio::io_context& ioContext,
                   boost::shared_ptr<AsyncClient<SocketService> > pClient,
                   const http::Request& request,
                   http::Response* pResponse)
@@ -61,7 +61,7 @@ Error sendRequest(boost::asio::io_context& ioService,
    // run the io service
    try
    {
-      ioService.run();
+      ioContext.run();
    }
    catch (boost::system::system_error& error)
    {

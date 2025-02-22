@@ -38,7 +38,7 @@ public:
 class Timer : public ITimer
 {
 public:
-   Timer(boost::asio::io_context& ioService);
+   Timer(boost::asio::io_context& ioContext);
    virtual ~Timer() {}
 
    virtual void cancel() override;

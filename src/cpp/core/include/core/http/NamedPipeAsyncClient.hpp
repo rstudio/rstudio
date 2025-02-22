@@ -42,11 +42,11 @@ public:
    // to ConnectNamedPipe). rather than create yet another timer-based
    // retry mechanism for CreateFile on the named pipe client handle we
    // require that clients use a connection retry profile
-   NamedPipeAsyncClient(boost::asio::io_context& ioService,
+   NamedPipeAsyncClient(boost::asio::io_context& ioContext,
                         const std::string& pipeName,
                         const http::ConnectionRetryProfile& retryProfile)
-     : AsyncClient<boost::asio::windows::stream_handle>(ioService),
-       handle_(ioService),
+     : AsyncClient<boost::asio::windows::stream_handle>(ioContext),
+       handle_(ioContext),
        pipeName_(pipeName)
    {  
       setConnectionRetryProfile(retryProfile);

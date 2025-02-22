@@ -30,7 +30,7 @@ namespace core {
 namespace http {  
      
 template <typename SocketType>
-Error connect(boost::asio::io_context& ioService,
+Error connect(boost::asio::io_context& ioContext,
               const std::string& address,
               const std::string& port,
               SocketType* pSocket)
@@ -38,14 +38,13 @@ Error connect(boost::asio::io_context& ioService,
    using boost::asio::ip::tcp;
    
    // resolve the address
-   tcp::resolver resolver(ioService);
+   tcp::resolver resolver(ioContext);
    
    boost::system::error_code ec;
    auto endpoints = resolver.resolve(address, port, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
    
-   ec = boost::asio::error::host_not_found;
    for (auto&& endpoint : endpoints)
    {
       // cleanup existing socket connection (if any). don't allow
@@ -55,19 +54,26 @@ Error connect(boost::asio::io_context& ioService,
       if (closeError)
          LOG_ERROR(closeError);
       
-      // attempt to connect
+      // attempt to connect; try next endpoint on failure
       pSocket->connect(endpoint, ec);
+      if (ec)
+         continue;
+
+      // if we get here, we got a connection -- use it
+      break;
    }
 
+   // if we don't have a connection still, just return
+   // the last error we got
    if (ec)
       return Error(ec, ERROR_LOCATION);
-   
+
    // set tcp nodelay (propagate any errors)
    pSocket->set_option(tcp::no_delay(true), ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
-   else
-      return Success();
+
+   return Success();
 }
                      
 
@@ -79,7 +85,7 @@ inline Error initTcpIpAcceptor(
    using boost::asio::ip::tcp;
    
    auto& acceptor = acceptorService.acceptor();
-   tcp::resolver resolver(acceptorService.ioService());
+   tcp::resolver resolver(acceptorService.ioContext());
 
    boost::system::error_code ec;
    auto entries = resolver.resolve(address, port, ec);

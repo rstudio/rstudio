@@ -47,7 +47,7 @@ core::Error invokeRpc(const core::FilePath& socketPath,
                       const core::json::Object& request,
                       core::json::Value* pResult);
 
-void invokeRpcAsync(boost::asio::io_context& ioService,
+void invokeRpcAsync(boost::asio::io_context& ioContext,
                     const core::FilePath& socketPath,
                     const std::string& endpoint,
                     const core::json::Object& request,
@@ -64,7 +64,7 @@ core::Error invokeRpc(const std::string& address,
                       const core::json::Object& request,
                       core::json::Value* pResult);
 
-void invokeRpcAsync(boost::asio::io_context& ioService,
+void invokeRpcAsync(boost::asio::io_context& ioContext,
                     const std::string& address,
                     const std::string& port,
                     bool useSsl,

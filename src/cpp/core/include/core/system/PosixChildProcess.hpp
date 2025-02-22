@@ -52,11 +52,11 @@ public:
 class AsioAsyncChildProcess : public IAsioAsyncChildProcess, public AsyncChildProcess
 {
 public:
-   AsioAsyncChildProcess(boost::asio::io_context& ioService,
+   AsioAsyncChildProcess(boost::asio::io_context& ioContext,
                          const std::string& exe,
                          const std::vector<std::string>& args,
                          const core::system::ProcessOptions& options);
-   AsioAsyncChildProcess(boost::asio::io_context& ioService,
+   AsioAsyncChildProcess(boost::asio::io_context& ioContext,
                          const std::string& command,
                          const core::system::ProcessOptions& options);
 
