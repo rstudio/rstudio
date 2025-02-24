@@ -88,7 +88,8 @@ public:
                                                    boost::asio::placeholders::error));
       }
 
-      auto callback = [this](
+      auto self = TcpIpAsyncConnector::shared_from_this();
+      auto callback = [this, self](
             const boost::system::error_code& ec,
             boost::asio::ip::tcp::resolver::results_type results)
       {

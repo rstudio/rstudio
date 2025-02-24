@@ -218,7 +218,8 @@ public:
 
       // deliver the chunks on the thread pool instead of directly from this method
       // so that it is not a re-entrant method (beneficial for clients if they are holding locks, etc)
-      boost::asio::post(ioContext_, [this]()
+      auto self = AsyncClient<SocketService>::shared_from_this();
+      boost::asio::post(ioContext_, [this, self]()
       {
          // capture shared_ptr of this to keep instance alive while posting callback
          // to io service

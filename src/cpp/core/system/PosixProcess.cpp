@@ -123,7 +123,7 @@ struct AsioProcessSupervisor::Impl
          return children_.empty();
       }
       else
-         return noChildrenSignal_.timed_wait(lock, maxWait, [this]{ return children_.empty(); });
+         return noChildrenSignal_.timed_wait(lock, maxWait, [this] { return children_.empty(); });
    }
 
    static void wrapExitCallback(boost::weak_ptr<Impl> weak,
