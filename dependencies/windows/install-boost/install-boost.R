@@ -42,7 +42,7 @@ install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
 
 # clear out the directory we'll create boost in
 unlink(install_dir, recursive = TRUE)
-ensure_dir(install_dir)
+dir.create(install_dir, recursive = TRUE, showWarnings = FALSE)
 install_dir <- normalizePath(install_dir)
 
 # construct paths of interest
@@ -80,21 +80,11 @@ section("Bootstrapping boost...")
 # TODO: Boost has trouble finding the vcvarsall.bat script for some reason?
 # We set this environment variable here to help it find the tools.
 if (is.na(Sys.getenv("B2_TOOLSET_ROOT", unset = NA))) {
-   
-   candidates <- c(
-      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/",
-      "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/",
-      "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/"
-   )
-   
-   for (candidate in candidates) {
-      if (file.exists(candidate)) {
-         Sys.setenv(B2_TOOLSET_ROOT = candidate)
-         progress("Using B2_TOOLSET_ROOT = %s", candidate)
-         break
-      }
+   vcVarsAll <- normalizePath(Sys.which("vcvarsall.bat"), winslash = "/")
+   if (nzchar(vcVarsAll)) {
+      toolsetRoot <- gsub("VC/.*", "VC/", vcVarsAll)
+      Sys.setenv(B2_TOOLSET_ROOT = toolsetRoot)
    }
-   
 }
 
 # use rstudio_boost for namespaces

@@ -153,36 +153,44 @@ replace_one_line = function(filepath, orig_line, new_line) {
       writeLines(replaced, filepath)
 }
 
-# Make sure MSVC tools are available
-msvcCandidates <- c(
-   "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build",
-   "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build"
-)
-
-msvc <- Filter(file.exists, msvcCandidates)
-if (length(msvc) == 0L) {
-   message <- paste(
-      "No MSVC 2019 installation detected.",
-      "Install build tools using 'Install-RStudio-Prereqs.ps1'.
-   ")
-   fatal(message)
-}
-PATH$prepend(msvc[[1L]])
-
-# Make sure perl is available
-# try to find a perl installation directory
-perlCandidates <- c(
-   "C:/Perl64/bin",
-   "C:/Perl/bin",
-   "C:/Strawberry/perl/bin"
-)
-
-perl <- Filter(file.exists, perlCandidates)
-if (length(perl) == 0L) {
-   message <- paste(
-      "No perl installation detected.",
-      "Please install ActiveState Perl via 'choco install activeperl'."
+win32_setup <- function() {
+   
+   # Make sure MSVC tools are available
+   msvcCandidates <- c(
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build"
    )
-   fatal(message)
+   
+   msvc <- Filter(file.exists, msvcCandidates)
+   if (length(msvc) == 0L) {
+      message <- paste(
+         "No MSVC 2019 installation detected.",
+         "Install build tools using 'Install-RStudio-Prereqs.ps1'.
+   ")
+      fatal(message)
+   }
+   PATH$prepend(msvc[[1L]])
+   
+   # Make sure perl is available
+   # try to find a perl installation directory
+   perlCandidates <- c(
+      "C:/Perl64/bin",
+      "C:/Perl/bin",
+      "C:/Strawberry/perl/bin"
+   )
+   
+   perl <- Filter(file.exists, perlCandidates)
+   if (length(perl) == 0L) {
+      message <- paste(
+         "No perl installation detected.",
+         "Please install ActiveState Perl via 'choco install activeperl'."
+      )
+      fatal(message)
+   }
+   PATH$prepend(perl[[1L]])
+   
 }
-PATH$prepend(perl[[1L]])
+
+if (.Platform$OS.type == "windows") {
+   win32_setup()
+}
