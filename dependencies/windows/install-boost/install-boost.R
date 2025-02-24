@@ -1,7 +1,7 @@
 
-BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
-MSVC_VERSION         <- Sys.getenv("MSVC_VERSION", unset = "msvc142")
-MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "msvc-14.2")
+BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
+BOOST_TOOLSET <- Sys.getenv("BOOST_TOOLSET", unset = "msvc-14.2")
+MSVC_VERSION  <- Sys.getenv("MSVC_VERSION", unset = "msvc142")
 
 argument <- function(index, default) {
    args <- commandArgs(TRUE)
@@ -112,7 +112,7 @@ b2_build_args <- function(bitness) {
       "--abbreviate-paths",
       sprintf("--prefix=\"%s\"", prefix),
       sprintf("address-model=%s", bitness),
-      sprintf("toolset=%s", MSVC_TOOLSET_VERSION),
+      sprintf("toolset=%s", BOOST_TOOLSET),
       sprintf("variant=%s", variant),
       sprintf("link=%s", link),
       "runtime-link=shared",
