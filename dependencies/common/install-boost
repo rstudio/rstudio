@@ -130,7 +130,13 @@ subsection "Bootstrapping Boost"
 
 # build it
 subsection "Building Boost"
-./b2 -q ${BOOST_EXTRA} variant=release link=static install
+./b2 -q ${BOOST_EXTRA} \
+   cflags="-fPIC"      \
+   cxxflags="-fPIC"    \
+   variant=release     \
+   link=static         \
+   threading=multi     \
+   install
 
 # clean up
 cd "${OWD}"
