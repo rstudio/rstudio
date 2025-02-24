@@ -91,7 +91,7 @@ source("../../../tools/use-rstudio-boost-namespace.R")
 # bootstrap the project
 # TODO: system2() seems to hang and never exits, so we use processx
 section("Bootstrapping boost")
-args <- c("/c", "call", "bootstrap.bat", "vc142")
+args <- c("/c", "call", "bootstrap.bat", MSVC_VERSION)
 result <- processx::run("cmd.exe", args, stdout = "", stderr = "")
 if (result$status != 0L)
    stop("Error bootstrapping Boost. Sorry.")
