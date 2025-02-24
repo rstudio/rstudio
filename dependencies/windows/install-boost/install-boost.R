@@ -1,5 +1,7 @@
 
 BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
+BOOST_TOOLSET <- Sys.getenv("BOOST_TOOLSET", unset = "msvc-14.2")
+MSVC_VERSION  <- Sys.getenv("MSVC_VERSION", unset = "vc142")
 
 argument <- function(index, default) {
    args <- commandArgs(TRUE)
@@ -33,14 +35,14 @@ PATH$prepend("../tools")
 # initialize variables
 boost_name <- sprintf("boost_%s.7z", chartr(".", "_", BOOST_VERSION))
 boost_url <- sprintf("https://s3.amazonaws.com/rstudio-buildtools/Boost/%s", boost_name)
-output_name <- sprintf("boost-%s-win-msvc142-%s-%s.zip", BOOST_VERSION, variant, link)
+output_name <- sprintf("boost-%s-win-ms%s-%s-%s.zip", BOOST_VERSION, MSVC_VERSION, variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
 
 # clear out the directory we'll create boost in
 unlink(install_dir, recursive = TRUE)
-ensure_dir(install_dir)
+dir.create(install_dir, recursive = TRUE, showWarnings = FALSE)
 install_dir <- normalizePath(install_dir)
 
 # construct paths of interest
@@ -72,36 +74,24 @@ if (!file.exists(boost_dirname))
 # enter boost folder
 enter(boost_dirname)
 
-# bootstrap the boost build directory
-section("Bootstrapping boost...")
-
 # TODO: Boost has trouble finding the vcvarsall.bat script for some reason?
 # We set this environment variable here to help it find the tools.
 if (is.na(Sys.getenv("B2_TOOLSET_ROOT", unset = NA))) {
-   
-   candidates <- c(
-      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/",
-      "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/",
-      "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/"
-   )
-   
-   for (candidate in candidates) {
-      if (file.exists(candidate)) {
-         Sys.setenv(B2_TOOLSET_ROOT = candidate)
-         progress("Using B2_TOOLSET_ROOT = %s", candidate)
-         break
-      }
+   vcVarsAll <- normalizePath(Sys.which("vcvarsall.bat"), winslash = "/")
+   if (nzchar(vcVarsAll)) {
+      toolsetRoot <- gsub("VC/.*", "VC/", vcVarsAll)
+      Sys.setenv(B2_TOOLSET_ROOT = toolsetRoot)
    }
-   
 }
 
 # use rstudio_boost for namespaces
-progress("Patching Boost namespaces")
+section("Patching Boost namespaces")
 source("../../../tools/use-rstudio-boost-namespace.R")
 
 # bootstrap the project
 # TODO: system2() seems to hang and never exits, so we use processx
-args <- c("/c", "call", "bootstrap.bat", "vc142")
+section("Bootstrapping boost")
+args <- c("/c", "call", "bootstrap.bat", MSVC_VERSION)
 result <- processx::run("cmd.exe", args, stdout = "", stderr = "")
 if (result$status != 0L)
    stop("Error bootstrapping Boost. Sorry.")
@@ -120,7 +110,7 @@ b2_build_args <- function(bitness) {
       "--abbreviate-paths",
       sprintf("--prefix=\"%s\"", prefix),
       sprintf("address-model=%s", bitness),
-      "toolset=msvc-14.2",
+      sprintf("toolset=%s", BOOST_TOOLSET),
       sprintf("variant=%s", variant),
       sprintf("link=%s", link),
       "runtime-link=shared",

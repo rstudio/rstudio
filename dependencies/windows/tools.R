@@ -1,3 +1,4 @@
+
 print_progress <- function(fmt, ..., prefix) {
    tryCatch({
      cat(sprintf(paste(prefix, fmt, "\n", sep = ""), ...))
@@ -141,16 +142,8 @@ exec <- function(command,
 
 enter <- function(dir) {
    progress("Entering directory '%s'", dir)
-   ensure_dir(dir)
+   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
    setwd(dir)
-}
-
-ensure_dir <- function(...) {
-   invisible(lapply(list(...), function(dir) {
-      if (!file.exists(dir))
-         if (!dir.create(dir, recursive = TRUE))
-            fatal("Failed to create directory '%s'\n", dir)
-   }))
 }
 
 replace_one_line = function(filepath, orig_line, new_line) {
@@ -158,4 +151,46 @@ replace_one_line = function(filepath, orig_line, new_line) {
    replaced <- gsub(orig_line, new_line, contents, fixed = TRUE)
    if (!identical(contents, replaced))
       writeLines(replaced, filepath)
+}
+
+win32_setup <- function() {
+   
+   # Make sure MSVC tools are available
+   msvcCandidates <- c(
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build"
+   )
+   
+   msvc <- Filter(file.exists, msvcCandidates)
+   if (length(msvc) == 0L) {
+      message <- paste(
+         "No MSVC 2019 installation detected.",
+         "Install build tools using 'Install-RStudio-Prereqs.ps1'.
+   ")
+      fatal(message)
+   }
+   PATH$prepend(msvc[[1L]])
+   
+   # Make sure perl is available
+   # try to find a perl installation directory
+   perlCandidates <- c(
+      "C:/Perl64/bin",
+      "C:/Perl/bin",
+      "C:/Strawberry/perl/bin"
+   )
+   
+   perl <- Filter(file.exists, perlCandidates)
+   if (length(perl) == 0L) {
+      message <- paste(
+         "No perl installation detected.",
+         "Please install ActiveState Perl via 'choco install activeperl'."
+      )
+      fatal(message)
+   }
+   PATH$prepend(perl[[1L]])
+   
+}
+
+if (.Platform$OS.type == "windows") {
+   win32_setup()
 }

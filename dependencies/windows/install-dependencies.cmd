@@ -2,6 +2,9 @@
 
 setlocal
 
+set BOOST_VERSION=1.87.0
+set MSVC_VERSION=vc142
+
 call ..\tools\rstudio-tools.cmd
 
 set PATH=%CD%\tools;%PATH%
@@ -31,7 +34,7 @@ set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-3.1.4.zip
-set BOOST_FILES=boost-1.87.0-win-msvc142.zip
+set BOOST_FILES=boost-%BOOST_VERSION%-win-ms%MSVC_VERSION%.zip
 set RESOURCE_HACKER=resource_hacker.zip
 
 set NSIS_NSPROCESS_VERSION=1.6

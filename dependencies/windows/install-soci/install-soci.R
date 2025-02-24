@@ -2,6 +2,11 @@
 if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-soci")
 
+SOCI_VERSION    <- Sys.getenv("SOCI_VERSION", unset = "4.0.3")
+BOOST_VERSION   <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
+MSVC_VERSION    <- Sys.getenv("MSVC_VERSION", unset = "vc142")
+CMAKE_GENERATOR <- Sys.getenv("CMAKE_GENERATOR", unset = "Visual Studio 16 2019")
+
 source("../tools.R")
 section("The working directory is: '%s'", getwd())
 progress("Producing SOCI build")
@@ -15,21 +20,14 @@ options(log.dir = normalizePath("logs"))
 # put RStudio tools on PATH
 PATH$prepend("../tools")
 
-# try to find MSVC 2019
-msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build",
-                                   "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build")), n = 1)
-if (length(msvc) == 0)
-   fatal("No MSVC 2019 installation detected (please install Visual Studio 2019 using 'Install-RStudio-Prereqs.ps1')")
-PATH$prepend(msvc)
-
 # initialize variables
-soci_version="4.0.3"
-soci_base_name <- paste0("soci-", soci_version)
+soci_base_name <- paste0("soci-", SOCI_VERSION)
 soci_tar <- paste0(soci_base_name, ".tar")
 soci_archive <- paste0(soci_tar, ".gz")
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
-boost_dir <- normalizePath(file.path(output_dir, "boost-1.87.0-win-msvc142-release-static\\boost64"), winslash = "\\")
-soci_url <- paste0("https://rstudio-buildtools.s3.amazonaws.com/soci-", soci_version, ".tar.gz")
+boost_name <- sprintf("boost-%s-win-ms%s-release-static/boost64", BOOST_VERSION, MSVC_VERSION)
+boost_dir <- normalizePath(file.path(output_dir, boost_name), winslash = "\\")
+soci_url <- paste0("https://rstudio-buildtools.s3.amazonaws.com/soci-", SOCI_VERSION, ".tar.gz")
 soci_dir <- file.path(owd, soci_base_name)
 soci_build_dir <- file.path(soci_dir, "build")
 sqlite_dir <- file.path(owd, "sqlite")
@@ -55,7 +53,8 @@ downloadAndUnzip <- function(outputFile, extractDir, url) {
    unzip(outputFile, exdir = extractDir)
 }
 
-if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\libsoci_core_4_0.lib"), winslash = "\\", mustWork = FALSE))) {
+soci_core_lib <- file.path(soci_build_dir, "x64/lib/Release/libsoci_core_4_0.lib")
+if (!file.exists(soci_core_lib)) {
 
    # download and install sqlite source
    dir.create(sqlite_dir, recursive = TRUE, showWarnings = FALSE)
@@ -83,23 +82,23 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    dir.create("x86", showWarnings = FALSE)
    dir.create("x64", showWarnings = FALSE)
 
-   # run CMAKE for each platform (x86, x64) and each configuration (Debug, Release)
-   setwd("x86")
-   cmake_args <- paste0("-G \"Visual Studio 16 2019\" ",
-                        "-A Win32 ",
-                        "-DCMAKE_VERBOSE_MAKEFILE=ON ",
-                        "-DCMAKE_INCLUDE_PATH=\"", file.path(boost_dir, "include"), "\" ",
-                        "-DBoost_USE_STATIC_LIBS=ON ",
-                        "-DCMAKE_LIBRARY_PATH=\"", file.path(boost_dir, "lib"), "\" ",
-                        "-DSOCI_TESTS=OFF ",
-                        "-DSOCI_SHARED=OFF ",
-                        "-DWITH_POSTGRESQL=ON ",
-                        "-DWITH_SQLITE3=ON ",
-                        "-DSQLITE3_INCLUDE_DIR=\"", sqlite_header_dir, "\" ",
-                        "-DSQLITE3_LIBRARY=\"", file.path(sqlite_dir, "sqlite3-debug-x86.lib"), "\" ",
-                        "-DPOSTGRESQL_INCLUDE_DIR=\"", file.path(postgresql_dir, "include"), "\" ",
-                        "-DPOSTGRESQL_LIBRARY=\"", file.path(postgresql_dir, "lib/x86/Debug/libpq.lib"), "\" ",
-                        "..\\..")
+   cmake_args <- paste(
+      sprintf("-G \"%s\"", CMAKE_GENERATOR),
+      "-A Win32",
+      "-DCMAKE_VERBOSE_MAKEFILE=ON",
+      "-DCMAKE_INCLUDE_PATH=\"", file.path(boost_dir, "include"), "\"",
+      "-DBoost_USE_STATIC_LIBS=ON",
+      "-DCMAKE_LIBRARY_PATH=\"", file.path(boost_dir, "lib"), "\"",
+      "-DSOCI_TESTS=OFF",
+      "-DSOCI_SHARED=OFF",
+      "-DWITH_POSTGRESQL=ON",
+      "-DWITH_SQLITE3=ON",
+      "-DSQLITE3_INCLUDE_DIR=\"", sqlite_header_dir, "\"",
+      "-DSQLITE3_LIBRARY=\"", file.path(sqlite_dir, "sqlite3-debug-x86.lib"), "\"",
+      "-DPOSTGRESQL_INCLUDE_DIR=\"", file.path(postgresql_dir, "include"), "\"",
+      "-DPOSTGRESQL_LIBRARY=\"", file.path(postgresql_dir, "lib/x86/Debug/libpq.lib"), "\"",
+      "..\\.."
+   )
 
    # remove rtools from path, as otherwise CMake may find and try to use the
    # standard library headers from the Rtools installation and barf
@@ -108,6 +107,7 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    Sys.setenv(PATH = paste(path, collapse = ";"))
 
    # x86 debug build
+   setwd("x86")
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Debug")
 
@@ -116,10 +116,13 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    cmake_args <- gsub("lib/x86/Debug/libpq.lib", "lib/x86/Release/libpq.lib", cmake_args)
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Release")
+   setwd("..")
 
-   # x64 debug build
-   setwd(normalizePath("..\\x64", winslash = "\\"))
+   # munge flags for 64-bit builds
    cmake_args <- gsub("-A Win32", "-A x64", cmake_args)
+   
+   # x64 debug build
+   setwd("x64")
    cmake_args <- gsub("sqlite3-release-x86.lib", "sqlite3-debug-x64.lib", cmake_args)
    cmake_args <- gsub("lib/x86/Release/libpq.lib", "lib/x64/Debug/libpq.lib", cmake_args)
    exec("cmake", cmake_args)
@@ -130,6 +133,7 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    cmake_args <- gsub("lib/x64/Debug/libpq.lib", "lib/x64/Release/libpq.lib", cmake_args)
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Release")
+   setwd("..")
 
 }
 
