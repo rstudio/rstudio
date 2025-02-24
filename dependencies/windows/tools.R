@@ -185,4 +185,4 @@ if (length(perl) == 0L) {
    )
    fatal(message)
 }
-PATH$prepend(perl)
+PATH$prepend(perl[[1L]])

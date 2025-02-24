@@ -12,7 +12,6 @@ dir.create("logs", showWarnings = FALSE)
 options(log.dir = normalizePath("logs", winslash = "/"))
 
 PATH$prepend("../tools")
-PATH$prepend(perl)
 
 # download and extract
 if (!file.exists(basename(URL))) {
