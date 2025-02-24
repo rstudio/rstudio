@@ -1,5 +1,7 @@
 
-BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
+BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
+MSVC_VERSION         <- Sys.getenv("MSVC_VERSION", unset = "msvc142")
+MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "msvc-14.2")
 
 argument <- function(index, default) {
    args <- commandArgs(TRUE)
@@ -33,7 +35,7 @@ PATH$prepend("../tools")
 # initialize variables
 boost_name <- sprintf("boost_%s.7z", chartr(".", "_", BOOST_VERSION))
 boost_url <- sprintf("https://s3.amazonaws.com/rstudio-buildtools/Boost/%s", boost_name)
-output_name <- sprintf("boost-%s-win-msvc142-%s-%s.zip", BOOST_VERSION, variant, link)
+output_name <- sprintf("boost-%s-win-%s-%s-%s.zip", MSVC_VERSION, BOOST_VERSION, variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
@@ -120,7 +122,7 @@ b2_build_args <- function(bitness) {
       "--abbreviate-paths",
       sprintf("--prefix=\"%s\"", prefix),
       sprintf("address-model=%s", bitness),
-      "toolset=msvc-14.2",
+      sprintf("toolset=%s", MSVC_TOOLSET_VERSION),
       sprintf("variant=%s", variant),
       sprintf("link=%s", link),
       "runtime-link=shared",

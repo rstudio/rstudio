@@ -11,29 +11,7 @@ source("../tools.R")
 dir.create("logs", showWarnings = FALSE)
 options(log.dir = normalizePath("logs", winslash = "/"))
 
-# try to find a perl installation directory
-perlCandidates <- c(
-   "C:/Perl64/bin",
-   "C:/Perl/bin",
-   "C:/Strawberry/perl/bin"
-)
-
-perl <- head(Filter(file.exists, perlCandidates), n = 1)
-if (length(perl) == 0)
-   fatal("No perl installation detected (please install ActiveState Perl via 'choco install activeperl')")
-
-# try to find MSVC 2019
-msvcCandidates <- c(
-  "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build",
-  "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build"
-)
-
-msvc <- head(Filter(file.exists, msvcCandidates), n = 1)
-if (length(msvc) == 0)
-   fatal("No MSVC 2019 installation detected (please install Visual Studio 2019 using 'Install-RStudio-Prereqs.ps1')")
-
 PATH$prepend("../tools")
-PATH$prepend(msvc)
 PATH$prepend(perl)
 
 # download and extract
