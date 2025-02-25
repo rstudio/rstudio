@@ -297,6 +297,37 @@ TEST_CASE("Empty File Path tests")
 
 }
 
+#ifndef _WIN32
+
+TEST_CASE("Get File Owner Test")
+{
+   // create temporary file
+   FilePath tempFile;
+   Error error = FilePath::tempFilePath(tempFile);
+   CHECK(!error);
+
+   // ensure it exists
+   error = tempFile.ensureFile();
+   CHECK(!error);
+
+   // get the current user
+   system::User currentUser;
+   error = system::User::getCurrentUser(currentUser);
+   CHECK(!error);
+
+   // ensure we can get the owner
+   std::string username;
+   error = tempFile.getFileOwner(&username);
+   CHECK(!error);
+   //CHECK(username == currentUser.getUsername());
+   CHECK(username == currentUser.getUsername());
+
+   // clean up
+   tempFile.remove();
+}
+
+#endif
+
 TEST_CASE("Copy FilePath Tests")
 {
    FilePath f1("/a/path");
