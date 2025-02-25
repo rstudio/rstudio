@@ -151,7 +151,6 @@ if(UNIX)
          add_definitions(-Wduplicated-branches)
          add_definitions(-Wrestrict)
          add_definitions(-Wnull-dereference)
-         add_definitions(-Wabi=11)
       endif()
    endif()
 
