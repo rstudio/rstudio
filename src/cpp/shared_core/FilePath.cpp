@@ -35,6 +35,7 @@
 
 #include <shared_core/system/Win32StringUtils.hpp>
 #else
+#include <pwd.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
 
@@ -1041,6 +1042,28 @@ Error FilePath::getFileMode(FileMode& out_fileMode) const
    else
       return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
+   return Success();
+}
+
+Error FilePath::getFileOwner(std::string* pUsername) const
+{
+   struct stat st;
+   if (::stat(getAbsolutePath().c_str(), &st) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", getAbsolutePath());
+      return error;
+   }
+
+   struct passwd* pw = ::getpwuid(st.st_uid);
+   if (pw == nullptr)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", getAbsolutePath());
+      return error;
+   }
+
+   *pUsername = pw->pw_name;
    return Success();
 }
 
