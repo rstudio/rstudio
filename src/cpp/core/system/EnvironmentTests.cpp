@@ -100,8 +100,8 @@ test_context("Resources")
       long used, process, total;
       MemoryProvider provider;
       getTotalMemoryUsed(&used, &provider);
-      getProcessMemoryUsed(&process, &provider);
       getTotalMemory(&total, &provider);
+      getProcessMemoryUsed(&process, &provider);
 
       // It'd be weird if there was more used memory than we had memory in the
       // first place
