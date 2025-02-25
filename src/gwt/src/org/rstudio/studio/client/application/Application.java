@@ -93,6 +93,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.MemoryUsageChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -192,6 +194,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(AriaLiveStatusEvent.TYPE, this);
       events.addHandler(ClipboardActionEvent.TYPE, this);
       events.addHandler(RunAutomationEvent.TYPE, this);
+      events.addHandler(MemoryUsageChangedEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -733,6 +736,36 @@ public class Application implements ApplicationEventHandlers
    public void onServerUnavailable(ServerUnavailableEvent event)
    {
       view_.hideSerializationProgress();
+   }
+
+   @Override
+   public void onMemoryUsageChanged(MemoryUsageChangedEvent event)
+   {
+      MemoryUsage usage = event.getMemoryUsage();
+
+      if (usage.overLimit())
+      {
+         if (usage.abort())
+         {
+            Debug.log("Aborted session due to memory limit: " + usage.statusMessage());
+            cleanupWorkbench();
+         }
+         else
+            Debug.log("Displaying error due to memory limit: " + usage.statusMessage());
+
+         if (usage.abort() || !memoryUsageErrorShown_)
+         {
+            memoryUsageErrorShown_ = true;
+            view_.showMemoryLimitExceeded(usage.multiLineStatusMessage(), usage.abort());
+         }
+         // Display or update the warning message as well
+         view_.showMemoryLimitWarning(usage.statusMessage(), memoryUsageWarned_, true);
+      }
+      else if (usage.limitWarning())
+      {
+         view_.showMemoryLimitWarning(usage.statusMessage(), memoryUsageWarned_, false);
+         memoryUsageWarned_ = true;
+      }
    }
 
    @Override
@@ -1335,6 +1368,8 @@ public class Application implements ApplicationEventHandlers
          clientStateUpdaterInstance_.suspend();
          clientStateUpdaterInstance_ = null;
       }
+      memoryUsageWarned_ = false;
+      memoryUsageErrorShown_ = false;
    }
 
    private void navigateToSignIn()
@@ -1457,4 +1492,6 @@ public class Application implements ApplicationEventHandlers
    private ClientStateUpdater clientStateUpdaterInstance_;
    private RootLayoutPanel rootPanel_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
+   private boolean memoryUsageWarned_ = false;
+   private boolean memoryUsageErrorShown_ = false;
 }

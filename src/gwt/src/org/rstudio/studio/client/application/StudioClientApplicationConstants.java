@@ -1494,6 +1494,51 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String reallyCrashMessage();
 
     /**
+     * Translated "Session memory limit exceeded. Restart required."
+     *
+     * @return translated "Session memory limit exceeded. Restart required."
+     */
+    @DefaultMessage("Session memory limit exceeded. Restart required.")
+    @Key("memoryLimitExceededCaption")
+    String memoryLimitExceededCaption();
+
+    /**
+     * Translated "Memory Limit Exceeded. Save files and restart session.\n\nSession may be aborted if system runs low on memory."
+     *
+     * @return translated "Memory Limit Exceeded. Save files and restart session.\n\nSession may be aborted if system runs low on memory."
+     */
+    @DefaultMessage("Memory Limit Exceeded. Save files and restart session.\n\nSession may be aborted if system runs low on memory.")
+    @Key("memoryLimitExceededMessage")
+    String memoryLimitExceededMessage();
+
+    /**
+     * Translated "Memory limit has been exceeded. The IDE session has been terminated."
+     *
+     * @return translated "Memory limit has been exceeded. The IDE session has been terminated."
+     */
+    @DefaultMessage("Memory limit has been exceeded. The IDE session has been terminated.")
+    @Key("memoryLimitAbortedMessage")
+    String memoryLimitAbortedMessage();
+
+    /**
+     * Translated "Approaching session memory limit."
+     *
+     * @return translated "Approaching session memory limit."
+     */
+    @DefaultMessage("Approaching session memory limit.")
+    @Key("approachingMemoryLimit")
+    String approachingMemoryLimit();
+
+    /**
+     * Translated "Over session memory limit."
+     *
+     * @return translated "Over session memory limit."
+     */
+    @DefaultMessage("Over session memory limit.")
+    @Key("overMemoryLimit")
+    String overMemoryLimit();
+
+    /*
      * Translated "Posit Workbench Login Required".
      *
      * @return translated "Posit Workbench Login Required"

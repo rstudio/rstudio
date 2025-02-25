@@ -93,6 +93,13 @@ Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
     return systemError(ret, "Failed to get memory resource usage from task_info", ERROR_LOCATION);
 }
 
+Error getProcessMemoryLimit(long *pLimitKb, MemoryProvider *pProvider)
+{
+   *pLimitKb = 0;
+   *pProvider = MemoryProviderUnknown;
+   return Success();
+}
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

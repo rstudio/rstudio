@@ -1500,7 +1500,10 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
    switch(limit)
    {
       case MemoryLimit:
-         *pLimit = RLIMIT_AS;
+         // This used to be RLIMIT_AS but virtual memory is very inaccurate for limiting
+         // memory. Even though RLIMIT_RSS is not enforced by the kernel, we can query the value
+         // and manually enforce it by polling. Kernel enforcement now requires cgroups.
+         *pLimit = RLIMIT_RSS;
          break;
       case FilesLimit:
          *pLimit = RLIMIT_NOFILE;
@@ -2080,14 +2083,24 @@ void printCoreDumpable(const std::string& context)
    std::cerr << ostr.str();
 }
 
+
 void setProcessLimits(ProcessLimits limits)
 {
    // memory limit
    if (limits.memoryLimitBytes != 0)
    {
+      // Since MemoryLimit/ulimit -m is not enforced by the system, ideally update the cgroup
+      // memory.high/max settings here when running with privs (e.g. legacy sessions).
+      // Need logic to detect and manage the case when the cgroup is rstudio-server.service
+      // - i.e. create a new group for this process. When PAM sessions are enabled, they will
+      // create a cgroup for the user scoped to the PAM session so in that case, updating
+      // the cgroup limit works (as long as the PAM session's lifetime is the same as this process or close enough)
+
       Error error = setResourceLimit(MemoryLimit, limits.memoryLimitBytes);
       if (error)
+      {
          LOG_ERROR(error);
+      }
    }
 
    // stack limit
@@ -2295,9 +2308,6 @@ Error runProcess(const std::string& path,
       if (error)
          return error;
 
-      // set limits
-      setProcessLimits(config.limits);
-
       // if the launch requires a pam session, do that with privs but in the child process
       // Note: this is risky for multi-threaded processes because another thread might have
       // been also using the password database and holding a lock at the time of the fork.
@@ -2309,6 +2319,9 @@ Error runProcess(const std::string& path,
          if (error)
             return error;
       }
+
+      // set limits - after the pamSessionFilter since it will define cgroups and set ulimit itself
+      setProcessLimits(config.limits);
 
       // switch user
       error = permanentlyDropPriv(runAsUser);

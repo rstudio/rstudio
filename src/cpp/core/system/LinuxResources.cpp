@@ -24,9 +24,11 @@
 #include <core/Thread.hpp>
 #include <core/Truncating.hpp>
 #include <core/system/Resources.hpp>
+#include <core/system/PosixSystem.hpp>
 
 #include <iostream>
 #include <fstream>
+#include <dirent.h>
 
 #include <sys/sysinfo.h>
 
@@ -36,6 +38,194 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace {
+
+// Parses /proc/meminfo to look up specific memory stats.
+Error readProcFileKeys(const std::string& procPath, const std::vector<std::string>& keys, std::vector<long>* pValues)
+{
+   // /proc/meminfo and /proc/<pid>/status contains lines that look like this:
+   //
+   // MemTotal: 8124360 kB
+
+   // Open the file and prepare to read it
+   FilePath memInfoFile(procPath);
+   std::shared_ptr<std::istream> pMemStream;
+   Error error = memInfoFile.openForRead(pMemStream);
+   if (error)
+   {
+      return error;
+   }
+   std::size_t numFound = 0;
+
+   // Read one line at a time, looking for each key
+   while (!pMemStream->eof())
+   {
+      std::string memLine;
+      try
+      {
+         std::getline(*pMemStream, memLine);
+      }
+      catch(const std::exception& e)
+      {
+         Error error = systemError(boost::system::errc::io_error,
+                                   ERROR_LOCATION);
+         error.addProperty("what", e.what());
+         error.addProperty("path", procPath);
+         return error;
+      }
+
+      for (std::size_t i = 0; i < keys.size(); i++)
+      {
+         const std::string& key = keys[i];
+         if (string_utils::isPrefixOf(memLine, keys[i] + ":"))
+         {
+            // This is the key we're looking for; read the value from the remainder of the line.
+            try
+            {
+               std::stringstream lineStream(string_utils::substring(
+                        memLine, key.size() + 1));
+               long nextValue;
+               lineStream >> nextValue;
+               (*pValues)[i] = nextValue;
+               numFound++;
+            }
+            catch (...)
+            {
+               error = systemError(boost::system::errc::protocol_error,
+                     "Could not read proc path value "
+                     "'" + key + "'"
+                     " from " + procPath + " line "
+                     "'" + memLine + "'",
+                     ERROR_LOCATION);
+            }
+
+            // We found the key
+            break;
+         }
+      }
+      if (error || numFound == keys.size())
+         break;
+   }
+   if (error)
+      return error;
+
+   if (numFound != keys.size())
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Proc stat file: " + procPath + " missing value - found only: " + std::to_string(numFound) + " of: " +
+                         std::to_string(keys.size()) + " keys",
+                         ERROR_LOCATION);
+   }
+   return Success();
+}
+
+// Returns the RSS + swap for the specified process.
+// The goal here is to choose values that are specific to a given process,
+// that are using real resources on the system. Including swap so that processes
+// that overflow main memory continue are measured based on their complete size.
+long getProcessSize(PidType pid)
+{
+   std::string statmPath = "/proc/" + std::to_string(pid) + "/statm";
+
+   std::vector<std::string> keys = {"VmRSS", "VmSwap"};
+   std::vector<long> values = {0, 0};
+
+   Error error = readProcFileKeys("/proc/" + std::to_string(pid) + "/status", keys, &values);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return 0;
+   }
+
+   // Return the sum of rss and swap in kb
+   return values[0] + values[1];
+}
+
+bool isChildOfParent(const std::map<PidType, PidType>& childToParentMap, PidType parentPid, PidType childPid)
+{
+   if (childPid == parentPid)
+      return true;
+   do
+   {
+      auto it = childToParentMap.find(childPid);
+      if (it == childToParentMap.end())
+         return false;
+      PidType nextParent = it->second;
+      if (nextParent == parentPid)
+         return true;
+      childPid = nextParent;
+   } while (true);
+}
+
+long getProcessSizeOfChildren(PidType parentPid, UidType userId)
+{
+   DIR *pDir = nullptr;
+   long childRssSize = 0;
+   std::map<PidType, PidType> childToParentMap;
+
+   try
+   {
+      // open the /proc directory
+      pDir = ::opendir("/proc");
+      if (pDir == nullptr)
+         return 0;
+
+      struct dirent *pDirEnt;
+      while ( (pDirEnt = ::readdir(pDir)) )
+      {
+         if (pDirEnt->d_type != DT_DIR)
+            continue;
+
+         // If the name is not an int, it's not a process
+         PidType pid = safe_convert::stringTo<PidType>(pDirEnt->d_name, -1);
+         if (pid <= 0)
+            continue;
+
+         FilePath procDir = FilePath("/proc").completeChildPath(pDirEnt->d_name);
+
+         // Check that the process is owned by the same user
+         uid_t fileUid;
+         Error error = procDir.getFileOwner(fileUid);
+         if (error || fileUid != userId)
+            continue;
+
+         std::string statusPath = "/proc/" + std::string(pDirEnt->d_name) + "/status";
+         std::ifstream statusFile(statusPath);
+         if (statusFile.is_open())
+         {
+            std::string line;
+            while (std::getline(statusFile, line)) {
+               if (line.find("PPid:") == 0) {
+                  std::istringstream iss(line.substr(5));
+                  PidType ppid;
+                  iss >> ppid;
+                  // Sanity check that the child is not already a parent of this new parent
+                  // to avoid cycles in the childToParentMap
+                  if (!isChildOfParent(childToParentMap, pid, ppid))
+                     childToParentMap[pid] = ppid;
+                  break;
+                }
+            }
+            statusFile.close();
+         }
+      }
+   }
+   catch (...)
+   {
+      return 0;
+   }
+   int numChildren = 0;
+   for (const auto& entry : childToParentMap)
+   {
+      PidType pid = entry.first;
+      PidType childParent = entry.second;
+      if (childParent == parentPid || isChildOfParent(childToParentMap, parentPid, childParent))
+      {
+         childRssSize += getProcessSize(pid);
+         numChildren++;
+      }
+   }
+   return childRssSize;
+}
 
 /**
  * LinuxMemoryProvider is an abstract class that provides memory usage stats on
@@ -55,29 +245,40 @@ public:
 
    virtual Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider) = 0;
 
-   Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+   virtual Error getProcessMemoryLimit(long *pLimitKb, MemoryProvider *pProvider)
    {
-      long size = 0;
-      long resident = 0;
-
-      try 
-      {
-         std::ifstream statm("/proc/self/statm");
-         statm >> size >> resident;
-         statm.close();
-      }
-      catch (...)
-      {
-         Error error = systemError(boost::system::errc::no_such_file_or_directory, 
-               "Could not read process memory stats from /proc/self/statm", 
-               ERROR_LOCATION);
+      RLimitType softMemLimit, hardMemLimit;
+      Error error = getResourceLimit(MemoryLimit, &softMemLimit, &hardMemLimit);
+      if (error)
          return error;
+      if (softMemLimit != RLIM_INFINITY)
+      {
+         *pLimitKb = softMemLimit/1024;
+         *pProvider = MemoryProviderLinuxUlimit;
       }
+      else if (hardMemLimit != RLIM_INFINITY)
+      {
+         *pLimitKb = hardMemLimit/1024;
+         *pProvider = MemoryProviderLinuxUlimit;
+      }
+      else
+      {
+         *pLimitKb = 0;
+         *pProvider = MemoryProviderUnknown;
+      }
+      return Success();
+   }
 
-      long pageKib = ::sysconf(_SC_PAGE_SIZE) / 1024;
+   virtual Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+   {
+      PidType pid = ::getpid();
+      long resident = getProcessSize(pid);
 
-      *pUsedKb = Truncating<long>(resident) * pageKib;
+      long childSizeKb = getProcessSizeOfChildren(pid, ::geteuid());
+
+      *pUsedKb = resident + childSizeKb;
       *pProvider = MemoryProviderLinuxProcFs;
+
       return Success();
    }
 };
@@ -101,14 +302,22 @@ public:
 
    Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
-      long availableKb = 0;
-      Error error = readMemInfoKey("MemAvailable", &availableKb);
+      std::vector<std::string> keys = {"MemAvailable", "SwapTotal", "SwapFree"};
+      std::vector<long> values = {0, 0, 0};
+      Error error = readProcFileKeys("/proc/meminfo", keys, &values);
       if (error)
       {
          return error;
       }
-      *pUsedKb = memTotal_ - availableKb;
+      long availableKb = values[0];
+      long swapTotalKb = values[1];
+      long swapFreeKb = values[2];
+      // Want to compute the total memory used by processes. So this is
+      // how much swap space is used plus the total memory minus the mem
+      // available.
+      *pUsedKb = memTotal_ + (swapTotalKb - swapFreeKb) - availableKb;
       *pProvider = MemoryProviderLinuxProcMeminfo;
+
       return Success();
    }
 
@@ -120,64 +329,14 @@ public:
    }
 
 private:
-
-   // Parses /proc/meminfo to look up specific memory stats.
    Error readMemInfoKey(const std::string& key, long* pValue)
    {
-      // /proc/meminfo contains lines that look like this:
-      //
-      // MemTotal: 8124360 kB
-      
-      // Open the file and prepare to read it
-      FilePath memInfoFile("/proc/meminfo");
-      std::shared_ptr<std::istream> pMemStream;
-      Error error = memInfoFile.openForRead(pMemStream);
-      if (error)
-      {
-         return error;
-      }
-
-      // Read one line at a time, looking for the key
-      while (!pMemStream->eof())
-      {
-         std::string memLine;
-         try
-         {
-            std::getline(*pMemStream, memLine);
-         }
-         catch(const std::exception& e)
-         {
-            Error error = systemError(boost::system::errc::io_error, 
-                                      ERROR_LOCATION);
-            error.addProperty("what", e.what());
-            error.addProperty("path", "/proc/meminfo");
-            return error;
-         }
-
-         if (string_utils::isPrefixOf(memLine, key + ":"))
-         {
-            // This is the key we're looking for; read the value from the remainder of the line.
-            try
-            {
-               std::stringstream lineStream(string_utils::substring(
-                        memLine, key.size() + 1));
-               lineStream >> *pValue;
-            }
-            catch (...)
-            {
-               error = systemError(boost::system::errc::protocol_error, 
-                     "Could not read memory stat " 
-                     "'" + key + "'"
-                     " from /proc/meminfo line " 
-                     "'" + memLine + "'",
-                     ERROR_LOCATION);
-            }
-
-            // We found the key
-            break;
-         }
-      }
-
+      std::vector<std::string> keys(1);
+      keys[0] = key;
+      std::vector<long> values(1);
+      Error error = readProcFileKeys("/proc/meminfo", keys, &values);
+      if (!error)
+         *pValue = values[0];
       return error;
    }
 
@@ -188,7 +347,7 @@ private:
  * CGroupsMemoryProvider is a class supplying Linux memory statistics using the
  * contents of the virtual cgroups filesystem at /sys/fs/cgroup.
  */
-class CGroupsMemoryProvider : public LinuxMemoryProvider
+class CGroupsMemoryProvider : public MemInfoMemoryProvider
 {
 public:
    CGroupsMemoryProvider(const std::string& path) : isV2_(false)
@@ -230,7 +389,12 @@ public:
       }
    }
 
-   Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+   // Overriding the base classes's process memory method that accumulates RSS size of all children since this is way more efficient.
+   // Should be roughly the same, as long as this cgroup is scoped to the session process (as is true in all cases now)
+   //
+   // If we do add user and group based cgroups, we'll need to identify which mode is used and return the cgroup
+   // values in the appropriate category.
+   virtual Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
       Error error;
       if (!isV2_)
@@ -248,9 +412,49 @@ public:
       return error;
    }
 
-   Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
+   // Returns a value of 0 if there's no limit
+   virtual Error getProcessMemoryLimit(long *pTotalKb, MemoryProvider *pProvider)
+   {
+      long linuxLimitKb;
+      MemoryProvider linuxMemProvider;
+      bool hasLinuxLimit = false;
+
+      // Do we have a ulimit based limit?
+      Error error = LinuxMemoryProvider::getProcessMemoryLimit(&linuxLimitKb, &linuxMemProvider);
+      if (!error && linuxLimitKb != 0)
+      {
+         hasLinuxLimit = true;
+      }
+
+      error = getCgroupsMemoryLimit(pTotalKb, pProvider);
+
+      if (!error)
+      {
+	 // pick the smaller of the two limits
+         if (hasLinuxLimit && (*pTotalKb == LONG_MAX || *pTotalKb > linuxLimitKb))
+         {
+            *pProvider = linuxMemProvider;
+            *pTotalKb = linuxLimitKb;
+         }
+         else
+         {
+            if (*pTotalKb == LONG_MAX)
+               *pTotalKb = 0;
+         }
+      }
+      else if (hasLinuxLimit)
+      {
+         *pProvider = linuxMemProvider;
+         *pTotalKb = linuxLimitKb;
+      }
+      return error;
+   }
+
+   // Returns LONG_MAX if there is no limit set
+   Error getCgroupsMemoryLimit(long *pTotalKb, MemoryProvider *pProvider)
    {
       Error error;
+
       if (!isV2_)
       {
          error = getCgroupMemoryStat("memory.limit_in_bytes", pTotalKb);
@@ -477,6 +681,19 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
    if (provider)
    {
       return provider->getTotalMemory(pTotalKb, pProvider);
+   }
+
+   *pTotalKb = 0;
+   *pProvider = MemoryProviderUnknown;
+   return Success();
+}
+
+Error getProcessMemoryLimit(long *pTotalKb, MemoryProvider *pProvider)
+{
+   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider();
+   if (provider)
+   {
+      return provider->getProcessMemoryLimit(pTotalKb, pProvider);
    }
 
    *pTotalKb = 0;

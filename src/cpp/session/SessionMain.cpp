@@ -1671,6 +1671,13 @@ void loadCranRepos(const std::string& repos,
 // provide definition methods for rsession::module_context
 namespace rstudio {
 namespace session {
+
+void controlledExit(int status)
+{
+   rCleanup(status == 0);
+   exitEarly(status);
+}
+
 namespace module_context {
 
 Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler)
@@ -1933,8 +1940,7 @@ void initMonitorClient()
 
 void beforeResume()
 {
-   LOG_DEBUG_MESSAGE("Setting activityState to resuming from: " + module_context::activeSession().activityState());
-   module_context::activeSession().setActivityState(r_util::kActivityStateResuming, true);
+   LOG_DEBUG_MESSAGE("Resuming session");
 }
 
 void afterResume()
@@ -2297,7 +2303,7 @@ int main(int argc, char * const argv[])
                                    ERROR_LOCATION);
          boost::format fmt("User '%1%' has id %2%, which is lower than the "
                            "minimum user id of %3% (this is controlled by "
-                           "the the auth-minimum-user-id rserver option)");
+                           "the auth-minimum-user-id rserver option)");
          std::string msg = boost::str(fmt % core::system::username()
                                           % core::system::effectiveUserId()
                                           % options.authMinimumUserId());

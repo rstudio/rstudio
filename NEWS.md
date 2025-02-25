@@ -6,6 +6,10 @@
 - RStudio installation on Windows now registers icons for many supported file types. (#12730)
 - RStudio for Windows binaries now have digital signatures. (rstudio-pro#5772)
 - RStudio now only writes the ProjectId field within a project's `.Rproj` file when required. Currently, this is for users who have configured a custom `.Rproj.user` location.
+- Added memory limit monitoring to RStudio (Linux only for now). If `ulimit -m` is set, this limit is displayed in the Memory Usage Report. As the limit is approached, a warning is displayed, then an error when the limit is reached. When the system is low on memory, the session can abort itself by shutting down in a controlled way with a dialog to the user. See the new `"allow-over-limit-sessions` option in rsession.conf. (rstudio-pro#5019).
+
+#### Posit Workbench
+- Changed memory limit enforcement of `/etc/rstudio/profiles` `max-memory-mb` setting from limiting virtual memory (`ulimit -v`) to resident memory (`ulimit -m`) for more accuracy. This allows a session to run quarto 1.6, which uses a lot of virtual memory due to its underlying virtual machine. Unfortunately, resident memory is only enforceable at the kernel level in Linux versions that support cgroups. To make up for the loss of kernel enforcement, RStudio warns the user and stops over limit sessions. For more robust kernel enforcement, configure memory limits in the Job Launcher using cgroups (rstudio-pro#5019).
 - RStudio will now preserve unknown fields in `.Rproj` files that are added by future versions of RStudio. (#15524)
 - RStudio now sends an interrupt git processes when stopped via "Stop" during a git commit, rather than just terminating the processes. (#6471)
 - RStudio now properly displays R Markdown render errors with newer versions of the `rmarkdown` and `rlang` packages. (#15579)

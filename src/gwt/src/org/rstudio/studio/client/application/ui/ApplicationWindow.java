@@ -155,6 +155,23 @@ public class ApplicationWindow extends Composite
    }
 
    @Override
+   public void showMemoryLimitExceeded(String status, boolean abort)
+   {
+      if (abort)
+         ApplicationEndedPopupPanel.showMemoryLimitExceeded(status);
+      else
+         globalDisplay_.showErrorMessage(constants_.memoryLimitExceededCaption(),
+                                         constants_.memoryLimitExceededMessage() + "\n\n" + status);
+   }
+
+   @Override
+   public void showMemoryLimitWarning(String status, boolean updateOnly, boolean overLimit)
+   {
+      if (!updateOnly || warningBar_ != null)
+        showWarning(true, (overLimit ? constants_.overMemoryLimit() : constants_.approachingMemoryLimit()) + " " + status);
+   }
+
+   @Override
    public void showApplicationUpdateRequired()
    {
       globalDisplay_.showMessage(

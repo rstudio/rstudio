@@ -17,10 +17,14 @@
 #include "../SessionMainProcess.hpp"
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionMain.hpp>
+#include "../SessionConsoleInput.hpp"
+#include <session/SessionConstants.hpp>
 
 #include <chrono>
 
 #include <core/Exec.hpp>
+#include <core/system/Interrupts.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
@@ -41,6 +45,8 @@ namespace {
 // affected by system wall clock adjustments.
 std::chrono::steady_clock::time_point s_activeQuery;
 boost::mutex s_queryMutex;
+bool s_memoryLimitErrorSeen = false;
+bool s_memoryLimitWarningSeen = false;
 
 // The interval, in seconds, at which we will query for memory statistics
 std::atomic<int> s_queryInterval;
@@ -208,6 +214,10 @@ json::Object MemoryUsage::toJson()
    usage["total"] = total.toJson();
    usage["used"] = used.toJson();
    usage["process"] = process.toJson();
+   usage["limit"] = limit.toJson();
+   usage["abort"] = abort;
+   usage["limitWarning"] = limitWarning;
+   usage["overLimit"] = overLimit;
    return usage;
 }
 
@@ -234,6 +244,57 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
       return error;
    pStats->process = MemoryStat(kb, provider);
 
+   error = core::system::getProcessMemoryLimit(&kb, &provider);
+   if (error)
+      return error;
+   pStats->limit = MemoryStat(kb, provider);
+
+   if (pStats->limit.kb != 0)
+   {
+      uint64_t limit = pStats->limit.kb;
+      uint64_t process = pStats->process.kb;
+      long freeMem = pStats->total.kb - pStats->used.kb;
+      if (freeMem < 0)
+         freeMem = 0;
+      int freeMemPercent = freeMem * 100 / pStats->total.kb;
+
+      if (process > limit)
+      {
+	 int overBy = process - limit;
+	 int abortFreeMemPercent = options().abortFreeMemPercent();
+         pStats->overLimit = true;
+         // Treat memory limit as only an error unless instructed to abort the session:
+	 //  1. Let sys-admin's override abort
+	 //  2. Give a small grace limit, especially since RSS is fuzzy and memory gets reclaimed
+	 //  as you near the limit in cgroups.
+	 //  3. Don't kill sessions until the system needs memory: less than 100mb or 5% free (where 5 is configurable, useful especially for testing)
+         pStats->abort = !options().allowOverLimitSessions() && overBy > 50*1024 && (freeMem < 100*1024 || freeMemPercent < abortFreeMemPercent);
+         std::string statusMessage = "Session process using: " + std::to_string(process) + "kb over the limit of: " + std::to_string(limit) + "kb.";
+         std::string freeMessage = std::to_string(freeMem) + "kb free (" + std::to_string(freeMemPercent) + "%)";
+
+         if (pStats->abort)
+            LOG_ERROR_MESSAGE(statusMessage + " Stopping session due to low system memory (< 100mb or 5%): " + freeMessage);
+         else if (!s_memoryLimitErrorSeen)
+         {
+            LOG_ERROR_MESSAGE(statusMessage + " Showing user an error but not stopping session with sufficient free system memory (> 100mb and 5%): " + freeMessage);
+            s_memoryLimitErrorSeen = true;
+         }
+      }
+      // The client will produce a warning the first time but this will be nice to see how fast memory is increasing
+      else if (process + process * 0.15 > limit)
+      {
+         pStats->limitWarning = true;
+         if (!s_memoryLimitWarningSeen)
+         {
+            LOG_WARNING_MESSAGE("Warning user: system memory usage: " + std::to_string(process) + " within 15% of the limit: " +
+                                 std::to_string(limit) + " before session will be stopped");
+            s_memoryLimitWarningSeen = true;
+         }
+      }
+      else
+         LOG_DEBUG_MESSAGE("System memory limit check: " + std::to_string(process) + " / " + std::to_string(limit));
+   }
+
    *pMemUsage = pStats;
    return core::Success();
 }
@@ -259,6 +320,23 @@ Error initialize()
    return initBlock.execute();
 }
 
+void exitForMemoryLimit()
+{
+   controlledExit(SESSION_EXIT_EXCEEDED_MEMORY_LIMIT);
+}
+
+void startShutdownForMemoryLimit()
+{
+   bool busy = session::console_input::executing();
+   if (busy)
+   {
+      LOG_DEBUG_MESSAGE("Interrupting session for memory limit shutdown");
+      r::exec::setInterruptsPending(true);
+      core::system::interrupt();
+   }
+   // Give the interrupt a chance to finish, the event to get to the client and then exit cleanly with a failure status
+   module_context::scheduleDelayedWork(boost::posix_time::milliseconds(100), boost::bind(exitForMemoryLimit), false);
+}
 
 /**
  * Computes memory usage and emits it to the client as a client event.
@@ -277,8 +355,17 @@ void emitMemoryChangedEvent()
    }
    else
    {
-      ClientEvent event(client_events::kMemoryUsageChanged, pUsage->toJson());
+      json::Object usageJson = pUsage->toJson();
+      ClientEvent event(client_events::kMemoryUsageChanged, usageJson);
       module_context::enqueClientEvent(event);
+   }
+
+   if (pUsage && pUsage->overLimit && pUsage->abort)
+   {
+      // We've sent the event that the client will detect as memory limit exceeded so this will
+      // just exit after a pause to let the event get through, interrupt R cleanly, then exit as
+      // cleanly as possible but with an error status.
+      startShutdownForMemoryLimit();
    }
 }
 
