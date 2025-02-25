@@ -459,6 +459,16 @@ public:
     * @return Success if the file mode could be retrieved; Error otherwise.
     */
    Error getFileMode(FileMode& out_fileMode) const;
+   
+   /**
+   * @brief Retrieves the owner of the file.
+   *
+   * This function fetches the username of the owner of the file and stores it in the provided string pointer.
+   *
+   * @param pUsername A pointer to a string where the username of the file owner will be stored.
+   * @return Success if the username could be retrieved; Error otherwise.
+   */
+  Error getFileOwner(std::string* pUsername) const;
 
    /**
     * @brief Gets the posix file owner of this file or directory.
