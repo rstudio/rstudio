@@ -30,9 +30,9 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y -i ant; `
   choco install -y windows-sdk-10.1 --version 10.1.19041.0; `
   choco install -y 7zip; `
-  choco install -y ninja --version "1.10.0"; `
+  choco install -y ninja --version "1.12.1"; `
   choco install -y python313; `
-  choco install -y nsis --version "3.09"; `
+  choco install -y nsis --version "3.10"; `
   choco install -y jq; `
   choco install -y awscli
 
