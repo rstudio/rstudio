@@ -191,6 +191,27 @@ win32_setup <- function() {
    
 }
 
+interpolate <- function(string) {
+ 
+   result <- string
+   
+   # get variable names used within the string
+   starts <- gregexpr("{", string, perl = TRUE)[[1L]]
+   ends <- gregexpr("}", string, perl = TRUE)[[1L]]
+   vars <- substring(string, starts + 1L, ends - 1L)
+   
+   # replace with their formatted values
+   for (var in vars) {
+      pattern <- sprintf("{%s}", var)
+      replace <- get(var, envir = parent.frame(), inherits = TRUE)
+      result <- gsub(pattern, replace, result, perl = TRUE)
+   }
+   
+   result
+
+}
+
 if (.Platform$OS.type == "windows") {
    win32_setup()
 }
+
