@@ -22,14 +22,8 @@ options(log.dir = normalizePath("logs"))
 PATH$prepend("../tools")
 
 # initialize variables
-output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
+output_dir <- normalizePath("..", winslash = "/")
 
-boost_name <- sprintf("boost-%s-win-ms%s-release-static/boost64", BOOST_VERSION, MSVC_VERSION)
-boost_dir <- file.path(output_dir, boost_name)
-boost_dir <- normalizePath(boost_dir, winslash = "/")
-boost_include_dir <- file.path(boost_dir, "include")
-boost_library_dir <- file.path(boost_dir, "lib")
-      
 soci_base_name <- paste0("soci-", SOCI_VERSION)
 soci_tar <- paste0(soci_base_name, ".tar")
 soci_archive <- paste0(soci_tar, ".gz")
@@ -81,7 +75,8 @@ downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
 # build SQLite static library
 system("cmd.exe /c build-sqlite.cmd")
 
-# download and install postgresql includes/libraries - we prebuild these because the postgresql build process is non-trivial
+# download and install postgresql includes/libraries
+# we prebuild these because the postgresql build process is non-trivial
 downloadAndUnzip(postgresql_zip, owd, postgresql_zip_url)
 
 # clone repository if we dont already have it
@@ -105,6 +100,16 @@ build <- function(arch, config) {
    winarch <- if (arch == "x86") "Win32" else "x64"
    
    # build cmake arguments
+   boost_arch <- if (arch == "x86") "boost32" else "boost64"
+   boost_name <- sprintf("boost-%s-win-ms%s-%s-static", BOOST_VERSION, MSVC_VERSION, tolower(config))
+   boost_root <- file.path(output_dir, boost_name, boost_arch)
+   boost_include_dir <- list.files(file.path(boost_root, "include"), full.names = TRUE)
+   boost_library_dir <- file.path(boost_root, "lib")
+   
+   boost_version_major <- format(numeric_version(BOOST_VERSION)[1, 1])
+   boost_version_minor <- format(numeric_version(BOOST_VERSION)[1, 2])
+   boost_version_patch <- format(numeric_version(BOOST_VERSION)[1, 3])
+   
    sqlite_library_name <- sprintf("sqlite3-%s-%s.lib", tolower(config), arch)
    sqlite_library_path <- file.path(sqlite_dir, sqlite_library_name)
    
@@ -117,19 +122,22 @@ build <- function(arch, config) {
       -G "{CMAKE_GENERATOR}"
       -A {winarch}
       -DCMAKE_VERBOSE_MAKEFILE=ON
-      -DCMAKE_INCLUDE_PATH="{boost_include_dir}"
-      -DCMAKE_LIBRARY_PATH="{boost_library_dir}"
       -DCMAKE_CXX_FLAGS="/FS /EHsc"
+      -DBOOST_INCLUDEDIR="{boost_include_dir}"
+      -DBOOST_LIBRARYDIR="{boost_library_dir}"
+      -DBoost_MAJOR_VERSION="{boost_version_major}"
+      -DBoost_MINOR_VERSION="{boost_version_minor}"
+      -DBoost_SUBMINOR_VERSION="{boost_version_patch}"
+      -DBoost_USE_STATIC_LIBS=ON
       -DSOCI_TESTS=OFF
       -DSOCI_SHARED=OFF
       -DWITH_POSTGRESQL=ON
       -DWITH_SQLITE3=ON
-      -DBoost_USE_STATIC_LIBS=ON
       -DSQLITE3_INCLUDE_DIR="{sqlite_header_dir}"
       -DSQLITE3_LIBRARY="{sqlite_library_path}"
       -DPOSTGRESQL_INCLUDE_DIR="{postgresql_include_dir}"
       -DPOSTGRESQL_LIBRARY="{postgresql_library_path}"
-      ..\\..
+      ../..
    ')
    
    args <- gsub("\\s+", " ", args, perl = TRUE)
@@ -143,6 +151,7 @@ build <- function(arch, config) {
    # reason, 'system()' seemed to stall after trying to run cmake.
    progress(sprintf("Configuring SOCI [%s-%s]", arch, config))
    command <- paste("cmake", args, "2>&1")
+   writeLines(paste(">", command))
    conn <- pipe(command, open = "rb")
    
    output <- ""
@@ -150,6 +159,8 @@ build <- function(arch, config) {
       output <- readLines(conn, n = 1L)
       writeLines(output)
    }
+   
+   try(close(conn))
    
    progress(sprintf("Building SOCI [%s-%s]", arch, config))
    command <- paste("cmake --build . --config", config, "2>&1")
@@ -160,6 +171,8 @@ build <- function(arch, config) {
       output <- readLines(conn, n = 1L)
       writeLines(output)
    }
+   
+   try(close(conn))
    
 }
 

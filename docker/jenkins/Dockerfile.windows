@@ -25,18 +25,21 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
     iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # install some deps via chocolatey
-RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
-  choco install -y temurin11; `
+RUN `
   choco install -y -i ant; `
-  choco install -y windows-sdk-10.1 --version 10.1.19041.0; `
   choco install -y 7zip; `
-  choco install -y ninja --version "1.12.1"; `
-  choco install -y python313; `
-  choco install -y nsis --version "3.10"; `
+  choco install -y awscli; `
+  choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
   choco install -y jq; `
-  choco install -y awscli
+  choco install -y ninja --version "1.12.1"; `
+  choco install -y nsis --version "3.10"; `
+  choco install -y python313; `
+  choco install -y strawberryperl; `
+  choco install -y temurin11; `
+  choco install -y windows-sdk-10.1 --version 10.1.19041.0
 
-RUN choco install -y visualstudio2019buildtools --version 16.11.10.0; `
+RUN `
+  choco install -y visualstudio2019buildtools --version 16.11.10.0; `
   choco install -y visualstudio2019-workload-vctools --version 1.0.1
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
@@ -50,7 +53,7 @@ RUN `
   Remove-Item c:\R-3.6.3-win.exe -Force
 
 # add R to path
-RUN $env:path += ';C:\R\R-3.6.3\bin\i386\' ;`
+RUN $env:path += ';C:\R\R-3.6.3\bin\x64\' ;`
   [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
 
 # install smtools 
