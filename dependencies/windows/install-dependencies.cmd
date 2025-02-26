@@ -183,8 +183,10 @@ popd
 if not defined JENKINS_URL (
   if exist C:\Windows\py.exe (
     pushd ..\..\src\gwt\tools\i18n-helpers\
-    py -3 -m venv VENV
-    VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\requirements.txt
+    if exist commands.cmd.xml\requirements.txt (
+      py -3 -m venv VENV
+      VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\requirements.txt
+    )
     popd
   )
 )

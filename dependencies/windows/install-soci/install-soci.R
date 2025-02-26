@@ -3,8 +3,6 @@
 if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-soci")
 
-options(warn = 2)
-
 SOCI_VERSION    <- Sys.getenv("SOCI_VERSION", unset = "4.0.3")
 BOOST_VERSION   <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
 MSVC_VERSION    <- Sys.getenv("MSVC_VERSION", unset = "vc142")
@@ -156,10 +154,11 @@ build <- function(arch, config) {
    writeLines(paste(">", command))
    conn <- pipe(command, open = "rb")
    
-   output <- ""
-   while (length(output)) {
-      output <- readLines(conn, n = 1L)
+   while (TRUE) {
+      output <- readLines(conn, n = 1L, skipNul = TRUE)
       writeLines(output)
+      if (length(output) == 0)
+         break
    }
    
    try(close(conn))
@@ -168,10 +167,11 @@ build <- function(arch, config) {
    command <- paste("cmake --build . --config", config, "2>&1")
    conn <- pipe(command, open = "rb")
    
-   output <- ""
-   while (length(output)) {
-      output <- readLines(conn, n = 1L)
+   while (TRUE) {
+      output <- readLines(conn, n = 1L, skipNul = TRUE)
       writeLines(output)
+      if (length(output) == 0)
+         break
    }
    
    try(close(conn))
