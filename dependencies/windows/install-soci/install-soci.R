@@ -3,6 +3,8 @@
 if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-soci")
 
+options(warn = 2)
+
 SOCI_VERSION    <- Sys.getenv("SOCI_VERSION", unset = "4.0.3")
 BOOST_VERSION   <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
 MSVC_VERSION    <- Sys.getenv("MSVC_VERSION", unset = "vc142")
@@ -58,7 +60,7 @@ downloadAndUnzip <- function(outputFile, extractDir, url) {
 soci_core_lib <- file.path(soci_build_dir, "x64/lib/Release/libsoci_core_4_0.lib")
 if (file.exists(soci_core_lib)) {
    progress("SOCI is already installed; nothing to do.")
-   quit()
+   if (!interactive()) quit()
 }
 
 # remove Rtools from the path, as it can confuse cmake and cause it
