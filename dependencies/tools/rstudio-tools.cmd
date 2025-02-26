@@ -34,7 +34,7 @@
 ::
 set "RUN=call %0"
 
-if ":%*" == ":" goto initialize
+if "%1" == "" goto initialize
 call :%*
 exit /b %ERRORLEVEL%
 
@@ -236,26 +236,6 @@ set "_STRING=%_STRING:Y=y%"
 set "_STRING=%_STRING:Z=z%"
 
 endlocal && set "%_OUTPUT%=%_STRING%"
-
-goto :eof
-
-
-::
-:: Run a system command / process, and collect its standard output
-:: into a variable.
-::
-:command
-
-setlocal EnableDelayedExpansion
-
-set _COMMAND=%~1
-set _OUTPUT=%~2
-
-for /F "delims=" %%G in ("%~1") do (
-  set "_RESULT=%%G"
-)
-
-endlocal & set "%_OUTPUT%=%_RESULT%"
 
 goto :eof
 

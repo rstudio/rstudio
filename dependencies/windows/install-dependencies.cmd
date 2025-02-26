@@ -6,9 +6,6 @@ for %%F in ("%CD%\..\tools\rstudio-tools.cmd") do (
   set "RSTUDIO_TOOLS=%%~fF"
 )
 
-set X=1
-echo %X%
-
 call %RSTUDIO_TOOLS%
 set PATH=%CD%\tools;%PATH%
 
@@ -38,7 +35,6 @@ for %%A in (%*) do (
   )
 
 )
-
 
 REM Check for required tools on the PATH.
 for %%X in (R.exe 7z.exe cmake.exe curl.exe) do (
@@ -153,12 +149,10 @@ echo -- Installing SOCI
 call install-soci.cmd
 
 if not exist sentry-cli.exe (
-  REM specify a version to install
   set SENTRY_CLI_VERSION=2.9.0
   echo Installing sentry-cli
   powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/2.9.0/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
-  %RUN% command "sentry-cli.exe --version" SENTRY_CLI_INSTALLED_VERSION
-  echo Installed Sentry CLI version: %SENTRY_CLI_INSTALLED_VERSION%
+  sentry-cli --version
 )
 
 pushd ..\common
