@@ -209,7 +209,7 @@ if not exist libclang\%LIBCLANG_VERSION% (
 
 call install-npm-dependencies.cmd
 
-if not defined JENKINS_URL (
+if not defined JENKINS_URL and not defined COMPLUS_RUNNING_IN_CONTAINER (
   if exist C:\Windows\py.exe (
     pushd ..\..\src\gwt\tools\i18n-helpers\
     py -3 -m venv VENV
