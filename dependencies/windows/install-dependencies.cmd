@@ -144,7 +144,7 @@ set BREAKPAD_OUTPUT=breakpad-tools-windows
 %RUN% install BOOST
 %RUN% install RESHACKER
 %RUN% install NSPROCESS
-%RUN% install breakpad
+%RUN% install BREAKPAD
 
 echo -- Installing crashpad
 call install-crashpad.cmd

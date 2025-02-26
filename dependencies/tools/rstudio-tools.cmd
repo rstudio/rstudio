@@ -191,9 +191,9 @@ if exist %_FOLDER% (
 mkdir %_FOLDER%
 call :download "%_URL%"
 call :basename "%_URL%" _FILE
-call :extract "!_FILE!" _RESULT
+call :extract "!_FILE!" "!_OUTPUT!"
 
-endlocal & set "%_OUTPUT%=!_RESULT!"
+endlocal
 
 goto :eof
 
