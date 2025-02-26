@@ -6,6 +6,9 @@ for %%F in ("%CD%\..\tools\rstudio-tools.cmd") do (
   set "RSTUDIO_TOOLS=%%~fF"
 )
 
+set X=1
+echo %X%
+
 call %RSTUDIO_TOOLS%
 set PATH=%CD%\tools;%PATH%
 
@@ -127,6 +130,11 @@ set LIBCLANG_FOLDER=libclang\%LIBCLANG_VERSION%
 set LIBCLANG_OUTPUT=
 
 
+set BREAKPAD_URL = https://s3.amazonaws.com/getsentry-builds/getsentry/breakpad-tools/windows/breakpad-tools-windows.zip
+set BREAKPAD_FOLDER=breakpad-tools-windows
+set BREAKPAD_OUTPUT=breakpad-tools-windows
+
+
 %RUN% install GNUDIFF
 %RUN% install GNUGREP
 %RUN% install SUMATRA
@@ -136,6 +144,7 @@ set LIBCLANG_OUTPUT=
 %RUN% install BOOST
 %RUN% install RESHACKER
 %RUN% install NSPROCESS
+%RUN% install breakpad
 
 echo -- Installing crashpad
 call install-crashpad.cmd
@@ -150,14 +159,6 @@ if not exist sentry-cli.exe (
   powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/2.9.0/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
   %RUN% command "sentry-cli.exe --version" SENTRY_CLI_INSTALLED_VERSION
   echo Installed Sentry CLI version: %SENTRY_CLI_INSTALLED_VERSION%
-)
-
-if not exist breakpad-tools-windows (
-  echo Installing breakpad tools for Windows
-  wget %WGET_ARGS% "https://s3.amazonaws.com/getsentry-builds/getsentry/breakpad-tools/windows/breakpad-tools-windows.zip"
-  echo Unzipping breakpad tools
-  unzip %UNZIP_ARGS% breakpad-tools-windows.zip -d breakpad-tools-windows
-  del breakpad-tools-windows.zip
 )
 
 pushd ..\common
@@ -181,6 +182,7 @@ call install-packages.cmd
 echo -- Installing panmirror (Visual Editor)
 pushd ..\windows\install-panmirror
 call clone-quarto-repo.cmd
+
 popd
 
 
@@ -194,4 +196,5 @@ if not defined JENKINS_URL (
 )
 
 popd
+
 endlocal

@@ -27,25 +27,31 @@
 :: When called without arguments, the 'initialize' subroutine is invoked,
 :: which defines commonly-used variables.
 ::
+:: When using subroutines that have output variables, make sure those usages
+:: are expanded with !FOO! instead of %FOO%. %FOO% is expanded at parse time,
+:: not use time, and so it's possible that usages of %FOO% in a script could
+:: be expanded before the command populating FOO is called.
+::
 set "RUN=call %0"
 
-@echo off
 if ":%*" == ":" goto initialize
 call :%*
 exit /b %ERRORLEVEL%
 
+
 :initialize
 
-    :: Node version used when building the product
-    set RSTUDIO_NODE_VERSION=22.13.1
+:: Node version used when building the product
+set RSTUDIO_NODE_VERSION=22.13.1
 
-    :: Node version installed with the product
-    set RSTUDIO_INSTALLED_NODE_VERSION=20.15.1
+:: Node version installed with the product
+set RSTUDIO_INSTALLED_NODE_VERSION=20.15.1
 
-    :: The base URL where RStudio build tools are available for download.
-    set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com
+:: The base URL where RStudio build tools are available for download.
+set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com
 
-    goto :eof
+goto :eof
+
 
 ::
 :: Get the basename from a path.
@@ -54,12 +60,17 @@ exit /b %ERRORLEVEL%
 ::
 :basename
 
-    set _BASENAME=%~nx1
-    set _OUTPUT=%~2
+setlocal EnableDelayedExpansion
 
-    set "%_OUTPUT%=%_BASENAME%"
+set "_BASENAME=%~nx1"
+set "_OUTPUT=%~2"
 
-    goto :eof
+set "_RESULT=%_BASENAME%"
+
+endlocal & set "%_OUTPUT%=%_RESULT%"
+
+goto :eof
+
 
 ::
 :: Get the dirname from a path.
@@ -68,13 +79,17 @@ exit /b %ERRORLEVEL%
 ::
 :dirname
 
-    set _PATH=%~1
-    set _OUTPUT=%~2
+setlocal EnableDelayedExpansion
 
-    for %%F in ("%_PATH%") do set _RESULT=%%~dpF
-    set "%_OUTPUT%=%_RESULT:~0,-1%"
+set "_PATH=%~1"
+set "_OUTPUT=%~2"
 
-    goto :eof
+for %%F in ("%_PATH%") do set _RESULT=%%~dpF
+
+endlocal & set "%_OUTPUT%=%_RESULT:~0,-1%"
+
+goto :eof
+
 
 ::
 :: Download a file.
@@ -84,22 +99,26 @@ exit /b %ERRORLEVEL%
 ::
 :download
 
-  set _URLARG=%~1
-  if "%_URLARG:~0,4%" == "http" (
-    set _URL=%_URLARG%
-  ) else (
-    echo RSTUDIO_BUILDTOOLS = %RSTUDIO_BUILDTOOLS%
-    set _URL=%RSTUDIO_BUILDTOOLS%/%_URLARG%
-  )
+setlocal EnableDelayedExpansion
 
-  echo -- Downloading %_URL%
-  curl -L -f -C - -O "%_URL%"
-  if %ERRORLEVEL% neq 0 (
-    echo Error downloading %_URL% [exit code %ERRORLEVEL%]
-    goto :error
-  )
+set _URLARG=%~1
+if "%_URLARG:~0,4%" == "http" (
+  set _URL=%_URLARG%
+) else (
+  set _URL=%RSTUDIO_BUILDTOOLS%/%_URLARG%
+)
 
-  goto :eof
+echo -- Downloading %_URL%
+curl -L -f -C - -O "%_URL%"
+if %ERRORLEVEL% neq 0 (
+  echo Error downloading %_URL% [exit code %ERRORLEVEL%]
+  goto :error
+)
+
+endlocal
+
+goto :eof
+
 
 ::
 :: Extract an archive.
@@ -110,23 +129,32 @@ exit /b %ERRORLEVEL%
 ::
 :extract
 
-  set _ARCHIVE=%~1
-  set _OUTPUT=%~2
+setlocal EnableDelayedExpansion
 
-  if defined _OUTPUT (
-    echo -- Extracting %_ARCHIVE% to %_OUTPUT%
-    7z x -y %_ARCHIVE% -o%_OUTPUT%
-  ) else (
-    echo -- Extracting %_ARCHIVE%
-    7z x -y %_ARCHIVE%
-  )
+set _ARCHIVE=%~1
+set _OUTPUT=%~2
 
-  if %ERRORLEVEL% neq 0 (
-    echo Error extracting %_ARCHIVE% [exit code %ERRORLEVEL%]
-    goto :error
-  )
+if "%QUIET%" == "1" (
+  set _QUIET=-bb0
+)
 
-  goto :eof
+if defined _OUTPUT (
+  echo -- Extracting %_ARCHIVE% to %_OUTPUT%
+  7z x -y %_QUIET% %_ARCHIVE% -o%_OUTPUT%
+) else (
+  echo -- Extracting %_ARCHIVE%
+  7z x -y %_QUIET% %_ARCHIVE%
+)
+
+if %ERRORLEVEL% neq 0 (
+  echo Error extracting %_ARCHIVE% [exit code %ERRORLEVEL%]
+  goto :error
+)
+
+endlocal
+
+goto :eof
+
 
 ::
 :: Install a dependency.
@@ -143,67 +171,74 @@ exit /b %ERRORLEVEL%
 ::
 :install
 
-  set _NAME=%~1
+setlocal EnableDelayedExpansion
 
-  set _URL=!%_NAME%_URL!
-  set _FOLDER=!%_NAME%_FOLDER!
-  set _OUTPUT=!%_NAME%_OUTPUT!
+set _NAME=%~1
+set _URL=!%_NAME%_URL!
+set _FOLDER=!%_NAME%_FOLDER!
+set _OUTPUT=!%_NAME%_OUTPUT!
 
-  if "%CLEAN%" == "1" (
-    rmdir /s /q %_FOLDER%
-  )
+if "%CLEAN%" == "1" (
+  rmdir /s /q %_FOLDER%
+)
 
-  if exist %_FOLDER% (
-    call :tolower "%_NAME%" _NAME_LOWER
-    echo -- %_NAME_LOWER% is already installed.
-    goto :eof
-  )
-
-  mkdir %_FOLDER%
-  call :basename "%_URL%" _FILE
-  call :download "%_URL%"
-  call :extract "%_FILE%" "%_OUTPUT%"
-
+if exist %_FOLDER% (
+  call :tolower "%_NAME%" _NAME_LOWER
+  echo -- !_NAME_LOWER! is already installed.
   goto :eof
+)
+
+mkdir %_FOLDER%
+call :download "%_URL%"
+call :basename "%_URL%" _FILE
+call :extract "!_FILE!" _RESULT
+
+endlocal & set "%_OUTPUT%=!_RESULT!"
+
+goto :eof
+
 
 ::
 :: Convert a string to lowercase.
 ::
 :tolower
 
-    set _STRING=%~1
-    set _OUTPUT=%~2
+setlocal EnableDelayedExpansion
 
-    set "_STRING=%_STRING:A=a%"
-    set "_STRING=%_STRING:B=b%"
-    set "_STRING=%_STRING:C=c%"
-    set "_STRING=%_STRING:D=d%"
-    set "_STRING=%_STRING:E=e%"
-    set "_STRING=%_STRING:F=f%"
-    set "_STRING=%_STRING:G=g%"
-    set "_STRING=%_STRING:H=h%"
-    set "_STRING=%_STRING:I=i%"
-    set "_STRING=%_STRING:J=j%"
-    set "_STRING=%_STRING:K=k%"
-    set "_STRING=%_STRING:L=l%"
-    set "_STRING=%_STRING:M=m%"
-    set "_STRING=%_STRING:N=n%"
-    set "_STRING=%_STRING:O=o%"
-    set "_STRING=%_STRING:P=p%"
-    set "_STRING=%_STRING:Q=q%"
-    set "_STRING=%_STRING:R=r%"
-    set "_STRING=%_STRING:S=s%"
-    set "_STRING=%_STRING:T=t%"
-    set "_STRING=%_STRING:U=u%"
-    set "_STRING=%_STRING:V=v%"
-    set "_STRING=%_STRING:W=w%"
-    set "_STRING=%_STRING:X=x%"
-    set "_STRING=%_STRING:Y=y%"
-    set "_STRING=%_STRING:Z=z%"
+set _STRING=%~1
+set _OUTPUT=%~2
 
-    set "%_OUTPUT%=%_STRING%"
+set "_STRING=%_STRING:A=a%"
+set "_STRING=%_STRING:B=b%"
+set "_STRING=%_STRING:C=c%"
+set "_STRING=%_STRING:D=d%"
+set "_STRING=%_STRING:E=e%"
+set "_STRING=%_STRING:F=f%"
+set "_STRING=%_STRING:G=g%"
+set "_STRING=%_STRING:H=h%"
+set "_STRING=%_STRING:I=i%"
+set "_STRING=%_STRING:J=j%"
+set "_STRING=%_STRING:K=k%"
+set "_STRING=%_STRING:L=l%"
+set "_STRING=%_STRING:M=m%"
+set "_STRING=%_STRING:N=n%"
+set "_STRING=%_STRING:O=o%"
+set "_STRING=%_STRING:P=p%"
+set "_STRING=%_STRING:Q=q%"
+set "_STRING=%_STRING:R=r%"
+set "_STRING=%_STRING:S=s%"
+set "_STRING=%_STRING:T=t%"
+set "_STRING=%_STRING:U=u%"
+set "_STRING=%_STRING:V=v%"
+set "_STRING=%_STRING:W=w%"
+set "_STRING=%_STRING:X=x%"
+set "_STRING=%_STRING:Y=y%"
+set "_STRING=%_STRING:Z=z%"
 
-    goto :eof
+endlocal && set "%_OUTPUT%=%_STRING%"
+
+goto :eof
+
 
 ::
 :: Run a system command / process, and collect its standard output
@@ -211,14 +246,20 @@ exit /b %ERRORLEVEL%
 ::
 :command
 
-    set _COMMAND=%~1
-    set _OUTPUT=%~2
+setlocal EnableDelayedExpansion
 
-    for /F "delims=" %%G in ("%~1") do (
-        set "!_OUTPUT!=%%G"
-    )
+set _COMMAND=%~1
+set _OUTPUT=%~2
 
-    goto :eof
+for /F "delims=" %%G in ("%~1") do (
+  set "_RESULT=%%G"
+)
+
+endlocal & set "%_OUTPUT%=%_RESULT%"
+
+goto :eof
+
 
 :error
-    exit /b %ERRORLEVEL%
+endlocal
+exit /b %ERRORLEVEL%
