@@ -200,13 +200,14 @@ interpolate <- function(string) {
    # get variable names used within the string
    starts <- gregexpr("{", string, perl = TRUE)[[1L]]
    ends <- gregexpr("}", string, perl = TRUE)[[1L]]
-   vars <- substring(string, starts + 1L, ends - 1L)
+   exprs <- substring(string, starts + 1L, ends - 1L)
    
    # replace with their formatted values
-   for (var in vars) {
-      pattern <- sprintf("{%s}", var)
-      replace <- get(var, envir = parent.frame(), inherits = TRUE)
-      result <- gsub(pattern, replace, result, perl = TRUE)
+   for (expr in exprs) {
+      value <- eval(parse(text = expr), envir = parent.frame())
+      pattern <- sprintf("{%s}", expr)
+      replace <- paste(as.character(value), collapse = " ")
+      result <- gsub(pattern, replace, result, fixed = TRUE)
    }
    
    result
