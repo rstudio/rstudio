@@ -130,7 +130,7 @@ set LIBCLANG_FOLDER=libclang\%LIBCLANG_VERSION%
 set LIBCLANG_OUTPUT=
 
 
-set BREAKPAD_URL = https://s3.amazonaws.com/getsentry-builds/getsentry/breakpad-tools/windows/breakpad-tools-windows.zip
+set BREAKPAD_URL=https://s3.amazonaws.com/getsentry-builds/getsentry/breakpad-tools/windows/breakpad-tools-windows.zip
 set BREAKPAD_FOLDER=breakpad-tools-windows
 set BREAKPAD_OUTPUT=breakpad-tools-windows
 
