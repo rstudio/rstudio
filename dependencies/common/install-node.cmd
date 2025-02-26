@@ -16,11 +16,11 @@ if exist "%NODE_SUBDIR%" (
 	)
 )
 
-wget %WGET_ARGS% %NODE_BASE_URL%%NODE_ARCHIVE_FILE%
+curl -L -f -C - -O %NODE_BASE_URL%%NODE_ARCHIVE_FILE%
 echo Unzipping node %NODE_VERSION%
 if not exist "%NODE_ROOT%" mkdir "%NODE_ROOT%"
 unzip %UNZIP_ARGS% %NODE_ARCHIVE_FILE%
 move %NODE_ARCHIVE_DIR% %NODE_SUBDIR%
-del %NODE_ARCHIVE_FILE%
+
 
 exit /b 0
