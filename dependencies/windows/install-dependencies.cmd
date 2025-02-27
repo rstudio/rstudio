@@ -131,6 +131,63 @@ set BREAKPAD_FOLDER=breakpad-tools-windows
 set BREAKPAD_OUTPUT=breakpad-tools-windows
 
 
+set NODEBUILD_VERSION=%RSTUDIO_NODE_VERSION%
+set NODEBUILD_LABEL=node (%NODEBUILD_VERSION%; build)
+set NODEBUILD_FILE=node-v%NODEBUILD_VERSION%-win-x64
+set NODEBUILD_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUILD_VERSION%/%NODEBUILD_FILE%.zip
+set NODEBUILD_FOLDER=node\%NODEBUILD_VERSION%
+set NODEBUILD_OUTPUT=node
+
+
+set NODEBUNDLE_VERSION=%RSTUDIO_INSTALLED_NODE_VERSION%
+set NODEBUNDLE_LABEL=node (%NODEBUNDLE_VERSION%; bundled)
+set NODEBUNDLE_FILE=node-v%NODEBUNDLE_VERSION%-win-x64
+set NODEBUNDLE_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUNDLE_VERSION%/%NODEBUNDLE_FILE%.zip
+set NODEBUNDLE_FOLDER=node\%NODEBUNDLE_VERSION%-patched
+set NODEBUNDLE_OUTPUT=node
+
+
+:: Install dependencies within 'common' first.
+cd ..\common
+
+%RUN% install DICTIONARIES
+%RUN% install MATHJAX
+%RUN% install LIBCLANG
+%RUN% install QUARTO
+
+%RUN% install PANDOC
+if exist pandoc\pandoc-%PANDOC_VERSION% (
+  move pandoc\pandoc-%PANDOC_VERSION% pandoc\%PANDOC_VERSION%
+)
+
+%RUN% install NODEBUILD
+if exist node\%NODEBUILD_FILE% (
+  rmdir /s /q node\%NODEBUILD_VERSION%
+  move node\%NODEBUILD_FILE% node\%NODEBUILD_VERSION%
+)
+
+%RUN% install NODEBUNDLE
+if exist node\%NODEBUNDLE_FILE% (
+  rmdir /s /q node\%NODEBUNDLE_VERSION%-patched
+  mkdir node\%NODEBUNDLE_VERSION%-patched
+  move node\%NODEBUNDLE_FILE%\node.exe node\%NODEBUNDLE_VERSION%-patched
+  move node\%NODEBUNDLE_FILE%\LICENSE node\%NODEBUNDLE_VERSION%-patched
+  rmdir /s /q node\%NODEBUNDLE_FILE%
+)
+
+pushd node\%NODEBUILD_VERSION%
+if not exist yarn.cmd (
+  echo -- Installing yarn
+  call npm install --global yarn
+)
+popd
+
+echo -- Installing packages
+call install-packages.cmd
+
+:: Install the rest of our dependencies in the 'windows' folder.
+cd ..\windows
+
 %RUN% install GNUDIFF
 %RUN% install GNUGREP
 %RUN% install SUMATRA
@@ -142,6 +199,12 @@ set BREAKPAD_OUTPUT=breakpad-tools-windows
 %RUN% install NSPROCESS
 %RUN% install BREAKPAD
 
+
+echo -- Installing panmirror (Visual Editor)
+pushd install-panmirror
+call clone-quarto-repo.cmd
+popd
+
 echo -- Installing crashpad
 call install-crashpad.cmd
 
@@ -150,34 +213,10 @@ call install-soci.cmd
 
 if not exist sentry-cli.exe (
   set SENTRY_CLI_VERSION=2.9.0
-  echo Installing sentry-cli
+  echo -- Installing sentry-cli
   powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/2.9.0/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
   sentry-cli --version
 )
-
-pushd ..\common
-
-%RUN% install DICTIONARIES
-%RUN% install MATHJAX
-%RUN% install LIBCLANG
-%RUN% install QUARTO
-%RUN% install PANDOC
-
-if exist pandoc\pandoc-%PANDOC_VERSION% (
-  move pandoc\pandoc-%PANDOC_VERSION% pandoc\%PANDOC_VERSION%
-)
-
-echo -- Installing NPM dependencies
-call install-npm-dependencies.cmd
-
-echo -- Installing packages
-call install-packages.cmd
-
-echo -- Installing panmirror (Visual Editor)
-pushd ..\windows\install-panmirror
-call clone-quarto-repo.cmd
-
-popd
 
 
 if not defined JENKINS_URL (
@@ -190,7 +229,3 @@ if not defined JENKINS_URL (
     popd
   )
 )
-
-popd
-
-endlocal

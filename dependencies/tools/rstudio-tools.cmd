@@ -174,6 +174,8 @@ goto :eof
 setlocal EnableDelayedExpansion
 
 set _NAME=%~1
+set _LABEL=!%_NAME%_LABEL!
+set _VERSION=!%_NAME%_VERSION!
 set _URL=!%_NAME%_URL!
 set _FOLDER=!%_NAME%_FOLDER!
 set _OUTPUT=!%_NAME%_OUTPUT!
@@ -182,9 +184,17 @@ if "%CLEAN%" == "1" (
   rmdir /s /q %_FOLDER%
 )
 
-if exist %_FOLDER% (
+if not defined _LABEL (
   call :tolower "%_NAME%" _NAME_LOWER
-  echo -- !_NAME_LOWER! is already installed.
+  if defined _VERSION (
+    set _LABEL=!_NAME_LOWER! !_VERSION!
+  ) else (
+    set _LABEL=!_NAME_LOWER!
+  )
+)
+
+if exist %_FOLDER% (
+  echo -- !_LABEL! is already installed.
   goto :eof
 )
 

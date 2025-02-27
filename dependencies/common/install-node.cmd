@@ -1,10 +1,20 @@
-@echo off
-setlocal
 
-call ..\tools\rstudio-tools.cmd
+@echo off
+setlocal EnableDelayedExpansion
+
+for %%F in ("%CD%\..\tools\rstudio-tools.cmd") do (
+  set "RSTUDIO_TOOLS=%%~fF"
+)
+
+call %RSTUDIO_TOOLS%
 set PATH=%CD%\tools;%PATH%
 
 set ACTION=%~1
+
+if not defined NODE_BASE_URL (
+	echo ERROR: NODE_BASE_URL is not defined.
+	exit /b 1
+)
 
 if exist "%NODE_SUBDIR%" (
 	if "%ACTION%"=="reinstall" (
@@ -16,6 +26,8 @@ if exist "%NODE_SUBDIR%" (
 	)
 )
 
+set _URL=%NODE_BASE_URL%
+%RUN% download
 curl -L -f -C - -O %NODE_BASE_URL%%NODE_ARCHIVE_FILE%
 echo Unzipping node %NODE_VERSION%
 if not exist "%NODE_ROOT%" mkdir "%NODE_ROOT%"
