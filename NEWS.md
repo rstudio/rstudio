@@ -44,7 +44,7 @@
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
 
 ### Dependencies
-- Update Electron to version 34.2.0. (#15450)
+- Update Electron to version 34.3.0. (#15450)
 - Update Quarto to version 1.6.42. (#15460)
 
 ### Deprecated / Removed
