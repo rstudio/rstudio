@@ -260,6 +260,38 @@ endlocal && set "%_OUTPUT%=%_STRING%"
 goto :eof
 
 
+:install-i18n-dependencies
+
+if defined JENKINS_URL (
+  echo -- Skipping i18n installation [on CI]
+  exit /b 0
+)
+
+if not exist C:\Windows\py.exe (
+  echo -- Skipping i18n installation [Python is not installed]
+  exit /b 0
+)
+
+set I18N=..\..\src\gwt\tools\i18n-helpers
+if not exist %I18N% (
+  echo -- Skipping i18n installation [i18n-helpers does not exist]
+  exit /b 0
+)
+
+pushd %I18N%
+if not exist commands.cmd.xml\requirements.txt (
+  echo -- Skipping i18n installation [requirements.txt does not exist]
+  exit /b 0
+)
+
+echo -- Installing i18n dependencies
+py -3 -m venv VENV
+VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\requirements.txt
+popd
+
+exit /b 0
+
+
 :error
 endlocal
 exit /b %ERRORLEVEL%
