@@ -38,6 +38,7 @@
 - Fixed an issue where locator points were not drawn on click. (#10025, #11103)
 - Fixed an issue where RStudio would crash when using the MySQL ODBC Connector on Microsoft Windows. (#15674)
 - Fixed an issue where autocompletion of R6 object names could fail with R6 2.6.0. (#15706)
+- Fixed an issue where .bib files with extra commas could be treated as binary files on RHEL9. (rstudio-pro/7521)
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
