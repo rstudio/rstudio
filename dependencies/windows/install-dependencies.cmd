@@ -214,8 +214,8 @@ call install-soci.cmd
 if not exist sentry-cli.exe (
   set SENTRY_CLI_VERSION=2.9.0
   echo -- Installing sentry-cli
-  powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/2.9.0/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
-  sentry-cli --version
+  %RUN% download "https://github.com/getsentry/sentry-cli/releases/download/2.9.0/sentry-cli-Windows-x86_64.exe" sentry-cli.exe
+  sentry-cli.exe --version
 )
 
 

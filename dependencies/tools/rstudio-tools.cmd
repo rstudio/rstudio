@@ -102,14 +102,23 @@ goto :eof
 setlocal EnableDelayedExpansion
 
 set _URLARG=%~1
+set _OUTARG=%~2
+
 if "%_URLARG:~0,4%" == "http" (
   set _URL=%_URLARG%
 ) else (
   set _URL=%RSTUDIO_BUILDTOOLS%/%_URLARG%
 )
 
-echo -- Downloading %_URL%
-curl -L -f -C - -O "%_URL%"
+if defined _OUTARG (
+  set "_OUTPUT=%_OUTARG%"
+) else (
+  call :basename "%_URL%" _OUTPUT
+)
+
+echo -- Downloading %_URL% =^> !_OUTPUT!
+curl -L -f -C - "%_URL%" -o "!_OUTPUT!"
+
 if %ERRORLEVEL% neq 0 (
   echo Error downloading %_URL% [exit code %ERRORLEVEL%]
   goto :error
@@ -198,6 +207,7 @@ if exist %_FOLDER% (
   goto :eof
 )
 
+echo -- Installing !_LABEL!
 mkdir %_FOLDER%
 call :download "%_URL%"
 call :basename "%_URL%" _FILE

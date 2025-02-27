@@ -155,7 +155,7 @@ build <- function(arch, config) {
    conn <- pipe(command, open = "rb")
    
    while (TRUE) {
-      output <- readLines(conn, n = 1L, skipNul = TRUE)
+      output <- readLines(conn, n = 1L, skipNul = TRUE, warn = FALSE)
       writeLines(output)
       if (length(output) == 0)
          break
@@ -168,7 +168,7 @@ build <- function(arch, config) {
    conn <- pipe(command, open = "rb")
    
    while (TRUE) {
-      output <- readLines(conn, n = 1L, skipNul = TRUE)
+      output <- readLines(conn, n = 1L, skipNul = TRUE, warn = FALSE)
       writeLines(output)
       if (length(output) == 0)
          break
