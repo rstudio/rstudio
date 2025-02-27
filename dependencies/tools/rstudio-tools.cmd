@@ -41,6 +41,9 @@ exit /b %ERRORLEVEL%
 
 :initialize
 
+:: Set the project root directory
+call :find-project-root
+
 :: Node version used when building the product
 set RSTUDIO_NODE_VERSION=22.13.1
 
@@ -51,6 +54,24 @@ set RSTUDIO_INSTALLED_NODE_VERSION=20.15.1
 set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com
 
 goto :eof
+
+::
+:: Find the project root directory.
+::
+:find-project-root
+
+setlocal EnableDelayedExpansion
+set OWD=%CD%
+
+:find-project-root-impl
+
+if exist rstudio.Rproj (
+  endlocal & set "RSTUDIO_PROJECT_ROOT=%CD%"
+  goto :eof
+)
+
+cd ..
+goto find-project-root-impl
 
 
 ::
@@ -260,6 +281,46 @@ endlocal && set "%_OUTPUT%=%_STRING%"
 goto :eof
 
 
+::
+:: Run a sub-process, and store its output into a variable.
+::
+:: The first argument should be the (double-quoted) command to run.
+:: The second argument should be an output variable.
+::
+:subprocess
+
+setlocal EnableDelayedExpansion
+
+set "_COMMAND=%~1"
+set "_OUTPUT=%~2"
+
+for /f "tokens=* delims=" %%A in ('%_COMMAND%') do (
+  set "_RESULT=%%A"
+)
+
+endlocal & set "%_OUTPUT%=%_RESULT%"
+
+goto :eof
+
+
+::
+:: Iterate through a set of directories, and add the first match to the PATH.
+::
+:add-first-to-path
+
+setlocal EnableDelayedExpansion
+
+for %%F in (%*) do (
+  if exist %%F (
+    endlocal & set "PATH=%%~fF;%PATH%"
+    exit /b 0
+  )
+)
+
+
+::
+:: Install internationalization dependencies.
+::
 :install-i18n-dependencies
 
 if defined JENKINS_URL (
@@ -292,6 +353,8 @@ popd
 exit /b 0
 
 
+::
+:: Called when an error occurs.
+::
 :error
-endlocal
 exit /b %ERRORLEVEL%
