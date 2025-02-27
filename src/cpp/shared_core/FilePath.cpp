@@ -166,6 +166,7 @@ MimeType s_mimeTypes[] =
       { "Renviron",     "text/x-shell" },
       { "rprofvis",     "text/x-r-profile" },
       { "vcxproj",      "text/xml" },
+      { "bib",          "text/plain" },
 
       { "tif",          "image/tiff" },
       { "tiff",         "image/tiff" },
