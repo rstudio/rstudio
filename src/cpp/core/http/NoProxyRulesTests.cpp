@@ -35,7 +35,7 @@
  
     test_that("NoProxyRuleDomain matches domains and subdomains")
     {
-      NoProxyRuleDomain rule(".example.com");
+       NoProxyRuleDomain rule(".example.com");
        REQUIRE(rule.match("example.com", "443"));
        REQUIRE(rule.match("sub.example.com", "443"));
        REQUIRE(rule.match("example.com", "80"));
@@ -43,6 +43,34 @@
        REQUIRE(rule.match("sub.sub.example.com", "443"));
        REQUIRE_FALSE(rule.match("example.org", "443"));
        REQUIRE_FALSE(rule.match("subexample.com", "443"));
+    }
+ 
+    test_that("NoProxyRuleDomain supports subdomains")
+    {
+       auto rule = createNoProxyRule(".sub.example.com");
+       REQUIRE(dynamic_cast<NoProxyRuleDomain*>(rule.get()) != nullptr);
+       REQUIRE(rule->match("sub.example.com", "443"));
+       REQUIRE(rule->match("sub.sub.example.com", "443"));
+       REQUIRE_FALSE(rule->match("example.com", "443"));
+       REQUIRE_FALSE(rule->match("subexample.com", "443"));
+ 
+       rule = createNoProxyRule(".sub.sub.example.com");
+       REQUIRE(dynamic_cast<NoProxyRuleDomain*>(rule.get()) != nullptr);
+       REQUIRE(rule->match("sub.sub.example.com", "443"));
+       REQUIRE(rule->match("sub.sub.sub.example.com", "443"));
+       REQUIRE_FALSE(rule->match("sub.example.com", "443"));
+       REQUIRE_FALSE(rule->match("example.com", "443"));
+       REQUIRE_FALSE(rule->match("subexample.com", "443"));
+    }
+ 
+    test_that("NoProxyRuleDomain supports top-level domains")
+    {
+       auto rule = createNoProxyRule(".com");
+       REQUIRE(dynamic_cast<NoProxyRuleDomain*>(rule.get()) != nullptr);
+       REQUIRE(rule->match("example.com", "443"));
+       REQUIRE(rule->match("sub.example.com", "443"));
+       REQUIRE(rule->match("subexample.com", "443"));
+       REQUIRE_FALSE(rule->match("example.org", "443"));
     }
  
     test_that("NoProxyRuleAddress matches addresses and ports")
@@ -114,23 +142,23 @@
     {
        auto rule = createNoProxyRule("*");
        REQUIRE(dynamic_cast<NoProxyRuleWildcard*>(rule.get()) != nullptr);
-      REQUIRE(rule->match("anything", "anyport"));
+       REQUIRE(rule->match("anything", "anyport"));
  
        rule = createNoProxyRule(".example.com");
        REQUIRE(dynamic_cast<NoProxyRuleDomain*>(rule.get()) != nullptr);
-      REQUIRE(rule->match("sub.example.com", "443"));
+       REQUIRE(rule->match("sub.example.com", "443"));
  
        rule = createNoProxyRule("example.com");
        REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
-      REQUIRE(rule->match("example.com", "80"));
+       REQUIRE(rule->match("example.com", "80"));
  
        rule = createNoProxyRule("example.com:443");
        REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
-      REQUIRE(rule->match("example.com", "443"));
+       REQUIRE(rule->match("example.com", "443"));
  
        rule = createNoProxyRule("192.0.2.0/24");
        REQUIRE(dynamic_cast<NoProxyRuleCidrBlock*>(rule.get()) != nullptr);
-      REQUIRE(rule->match("192.0.2.23", "443"));
+       REQUIRE(rule->match("192.0.2.23", "443"));
  
        // junk will always return an address rule
        rule = createNoProxyRule("junk");

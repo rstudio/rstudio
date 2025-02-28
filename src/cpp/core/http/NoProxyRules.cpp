@@ -201,8 +201,8 @@
     {
        return std::unique_ptr<NoProxyRule>(new NoProxyRuleWildcard());
     }
- 
-    boost::regex domainRegex("^\\.[a-zA-Z0-9\\-]+\\.[a-zA-Z0-9\\-]+$");
+    // Matches a top-level domain, domain, or subdomain that starts with a "."
+    boost::regex domainRegex("^(?:\\.[a-zA-Z0-9\\-]+)+");
     if (boost::regex_match(rule, domainRegex))
     {
        return std::unique_ptr<NoProxyRuleDomain>(new NoProxyRuleDomain(rule));
