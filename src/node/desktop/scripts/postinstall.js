@@ -13,13 +13,6 @@
  *
  */
 
+// this script will run after `npm i` completes
 
-// https://github.com/nodejs/nan/issues/978 
-const fs = require('fs');
-const path = require('path');
-
-const filePath = path.join(__dirname, '../node_modules/nan/nan.h');
-const fileContent = fs.readFileSync(filePath, 'utf8');
-const updatedContent = fileContent.replace(/#include "nan_scriptorigin.h"/, '// #include "nan_scriptorigin.h"');
-
-fs.writeFileSync(filePath, updatedContent, 'utf8');
+// currently not used for anything
