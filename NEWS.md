@@ -39,6 +39,7 @@
 - Fixed an issue where RStudio would crash when using the MySQL ODBC Connector on Microsoft Windows. (#15674)
 - Fixed an issue where autocompletion of R6 object names could fail with R6 2.6.0. (#15706)
 - Fixed a WCAG 1.1.1 violation (unlabeled image in the Console toolbar) by marking it as cosmetic. [Accessibility] (#15757)
+- Fixed Material theme's colors for selected word or text highlighting so they are more visible. [Accessibility] (#15753)
 - Fixed an issue where .bib files with extra commas could be treated as binary files on RHEL9. (rstudio-pro/7521)
 
 #### Posit Workbench
