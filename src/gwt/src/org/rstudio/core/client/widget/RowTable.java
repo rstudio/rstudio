@@ -17,8 +17,10 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MathUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
@@ -55,6 +57,8 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -101,6 +105,7 @@ public abstract class RowTable<T> extends ScrollPanel
       
       table_ = Document.get().createTableElement();
       table_.setWidth("100%");
+      table_.setTabIndex(0);
       Roles.getListboxRole().set(table_);
       Roles.getListboxRole().setAriaLabelProperty(table_, ariaLabel);
       table_.addClassName(RES.styles().table());
@@ -224,25 +229,37 @@ public abstract class RowTable<T> extends ScrollPanel
          }
       });
       
-      addDomHandler(new FocusHandler()
-      {
-         @Override
-         public void onFocus(FocusEvent event)
-         {
-            addStyleName(RES.styles().active());
-         }
-      }, FocusEvent.getType());
-      
-      addDomHandler(new BlurHandler()
-      {
-         @Override
-         public void onBlur(BlurEvent event)
-         {
-            removeStyleName(RES.styles().active());
-         }
-      }, BlurEvent.getType());
-      
+      setFocusEventListener(table_);
       addStyleName(RES.styles().panel());
+   }
+   
+   private final native void setFocusEventListener(Element table)
+   /*-{
+      
+      var self = this;
+      var handler = $entry(function(event) {
+         self.@org.rstudio.core.client.widget.RowTable::onFocusBlur(*)(event);
+      });
+      
+      table.addEventListener("focus", handler);
+      table.addEventListener("blur",  handler);
+      
+   }-*/;
+   
+   private void onFocusBlur(NativeEvent event)
+   {
+      if (StringUtil.equals(event.getType(), "focus"))
+      {
+         addStyleName(RES.styles().active());
+      }
+      else if (StringUtil.equals(event.getType(), "blur"))
+      {
+         removeStyleName(RES.styles().active());
+      }
+      else
+      {
+         Debug.logWarning("Unexpected event type '" + event.getType() + "'");
+      }
    }
    
    public T getSelectedItem()
@@ -294,6 +311,7 @@ public abstract class RowTable<T> extends ScrollPanel
       drawColumnGroups();
       
       topPaddingRowEl_ = drawPaddingRow(getTopPaddingHeight());
+      topPaddingRowEl_.setAttribute("aria-hidden", "true");
       
       for (int i = 0; i < n; i++)
       {
@@ -306,6 +324,7 @@ public abstract class RowTable<T> extends ScrollPanel
       }
       
       bottomPaddingRowEl_ = drawPaddingRow(getBottomPaddingHeight());
+      bottomPaddingRowEl_.setAttribute("aria-hidden", "true");
    }
    
    private void drawRow(int index, TableRowElement rowEl)
@@ -560,6 +579,18 @@ public abstract class RowTable<T> extends ScrollPanel
          block: behavior
       });
    }-*/;
+   
+   public void setFocus(boolean focus)
+   {
+      if (focus)
+      {
+         table_.focus();
+      }
+      else
+      {
+         table_.blur();
+      }
+   }
    
    @Override
    public HandlerRegistration addSelectionHandler(SelectionHandler<T> handler)
