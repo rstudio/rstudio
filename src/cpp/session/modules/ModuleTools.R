@@ -172,10 +172,12 @@
    dbEntry <- dbEntries[1, ]
    version <- dbEntry$Version
    
-   # check if the dependency is satisfied
+   # NOTE: here, 'satisfied' means that the package dependency is satisfiable
+   # by the version of the package available on CRAN, not that the dependency
+   # is already installed + satisfies the version constraint
    list(
       version   = version,
-      satisfied = .rs.isPackageVersionInstalled(name, version)
+      satisfied = package_version(version) >= package_version(version)
    )
 })
 
