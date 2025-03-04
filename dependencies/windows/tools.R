@@ -30,54 +30,6 @@ path_program <- function(name) {
    prog
 }
 
-download <- function(url, destfile, ...) {
-   progress("Downloading file:\n- '%s' => '%s'", url, destfile)
-   exec("wget.exe", "--no-check-certificate", "-c", shQuote(url), "-O", shQuote(destfile))
-}
-
-
-printf <- function(fmt, ...) {
-   tryCatch({
-     cat(sprintf(fmt, ...))
-   }, error = function(e) {
-     cat(fmt, ...)
-   })
-}
-
-PATH <- (function() {
-   
-   read <- function() {
-      unlist(strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed = TRUE))
-   }
-   
-   write <- function(path) {
-      pasted <- paste(path, collapse = .Platform$path.sep)
-      Sys.setenv(PATH = pasted)
-      invisible(pasted)
-   }
-   
-   prepend <- function(dir) {
-      dir <- normalizePath(dir, mustWork = TRUE)
-      path <- unique(c(dir, read()))
-      write(path)
-   }
-   
-   append <- function(dir) {
-      dir <- normalizePath(dir, mustWork = TRUE)
-      path <- unique(c(read(), dir))
-      write(path)
-   }
-   
-   remove <- function(dir) {
-      dir <- normalizePath(dir, mustWork = TRUE)
-      path <- setdiff(read(), dir)
-      write(path)
-   }
-   
-   list(read = read, prepend = prepend, append = append, remove = remove)
-   
-})()
-
 execBatch <- function(batchfile) {
   if (!file.exists(batchfile)) {
     fatal("Batch file does not exist: %s", batchfile)
@@ -140,13 +92,63 @@ exec <- function(command,
    invisible(TRUE)
 }
 
+
+
+download <- function(url, destfile, ...) {
+   progress("Downloading file:\n- '%s' => '%s'", url, destfile)
+   exec("wget.exe", "--no-check-certificate", "-c", shQuote(url), "-O", shQuote(destfile))
+}
+
+
+printf <- function(fmt, ...) {
+   tryCatch({
+     cat(sprintf(fmt, ...))
+   }, error = function(e) {
+     cat(fmt, ...)
+   })
+}
+
+PATH <- (function() {
+   
+   read <- function() {
+      unlist(strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed = TRUE))
+   }
+   
+   write <- function(path) {
+      pasted <- paste(path, collapse = .Platform$path.sep)
+      Sys.setenv(PATH = pasted)
+      invisible(pasted)
+   }
+   
+   prepend <- function(dir) {
+      dir <- normalizePath(dir, mustWork = TRUE)
+      path <- unique(c(dir, read()))
+      write(path)
+   }
+   
+   append <- function(dir) {
+      dir <- normalizePath(dir, mustWork = TRUE)
+      path <- unique(c(read(), dir))
+      write(path)
+   }
+   
+   remove <- function(dir) {
+      dir <- normalizePath(dir, mustWork = TRUE)
+      path <- setdiff(read(), dir)
+      write(path)
+   }
+   
+   list(read = read, prepend = prepend, append = append, remove = remove)
+   
+})()
+
 enter <- function(dir) {
    progress("Entering directory '%s'", dir)
    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
    setwd(dir)
 }
 
-replace_one_line = function(filepath, orig_line, new_line) {
+replace_one_line <- function(filepath, orig_line, new_line) {
    contents <- readLines(filepath)
    replaced <- gsub(orig_line, new_line, contents, fixed = TRUE)
    if (!identical(contents, replaced))
@@ -166,7 +168,7 @@ win32_setup <- function() {
       message <- paste(
          "No MSVC 2019 installation detected.",
          "Install build tools using 'Install-RStudio-Prereqs.ps1'.
-   ")
+      ")
       fatal(message)
    }
    PATH$prepend(msvc[[1L]])
@@ -174,16 +176,16 @@ win32_setup <- function() {
    # Make sure perl is available
    # try to find a perl installation directory
    perlCandidates <- c(
+      "C:/Strawberry/perl/bin",
       "C:/Perl64/bin",
-      "C:/Perl/bin",
-      "C:/Strawberry/perl/bin"
+      "C:/Perl/bin"
    )
    
    perl <- Filter(file.exists, perlCandidates)
    if (length(perl) == 0L) {
       message <- paste(
          "No perl installation detected.",
-         "Please install ActiveState Perl via 'choco install activeperl'."
+         "Please install Strawberry Perl via 'choco install strawberryperl'."
       )
       fatal(message)
    }
@@ -198,13 +200,14 @@ interpolate <- function(string) {
    # get variable names used within the string
    starts <- gregexpr("{", string, perl = TRUE)[[1L]]
    ends <- gregexpr("}", string, perl = TRUE)[[1L]]
-   vars <- substring(string, starts + 1L, ends - 1L)
+   exprs <- substring(string, starts + 1L, ends - 1L)
    
    # replace with their formatted values
-   for (var in vars) {
-      pattern <- sprintf("{%s}", var)
-      replace <- get(var, envir = parent.frame(), inherits = TRUE)
-      result <- gsub(pattern, replace, result, perl = TRUE)
+   for (expr in exprs) {
+      value <- eval(parse(text = expr), envir = parent.frame())
+      pattern <- sprintf("{%s}", expr)
+      replace <- paste(as.character(value), collapse = " ")
+      result <- gsub(pattern, replace, result, fixed = TRUE)
    }
    
    result

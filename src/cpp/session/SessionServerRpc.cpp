@@ -101,6 +101,7 @@ boost::asio::io_context s_ioContext;
 
 void rpcWorkerThreadFunc()
 {
+   auto work = boost::asio::make_work_guard(s_ioContext);
    s_ioContext.run();
 }
 

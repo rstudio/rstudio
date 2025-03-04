@@ -1,6 +1,8 @@
 *.tar.bz
 *.tar.bz2
 *.tar.gz
+*.zip
+*.zip.1
 index.html
 CEF/
 dictionaries/

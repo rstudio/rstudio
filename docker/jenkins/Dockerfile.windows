@@ -1,7 +1,7 @@
 # escape=`
 
 # Use the latest Windows Server Core (LTSC - Long Term Service Channel) image with .NET Framework 4.8.
-# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019 
+# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019
 FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 
 ENV OPERATING_SYSTEM=windows_10
@@ -25,19 +25,22 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
     iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # install some deps via chocolatey
-RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
-  choco install -y temurin11; `
+RUN `
   choco install -y -i ant; `
-  choco install -y windows-sdk-10.1 --version 10.1.19041.0; `
   choco install -y 7zip; `
-  choco install -y ninja --version "1.12.1"; `
-  choco install -y python313; `
-  choco install -y nsis --version "3.10"; `
+  choco install -y awscli; `
+  choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
   choco install -y jq; `
-  choco install -y awscli
+  choco install -y ninja --version "1.12.1"; `
+  choco install -y nsis --version "3.10"; `
+  choco install -y python313; `
+  choco install -y strawberryperl; `
+  choco install -y temurin11
 
-RUN choco install -y visualstudio2019buildtools --version 16.11.10.0; `
-  choco install -y visualstudio2019-workload-vctools --version 1.0.1
+# install build tools
+RUN choco install -y windows-sdk-10.1 --version 10.1.18362.1
+RUN choco install -y visualstudio2019buildtools --version 16.11.10.0
+RUN choco install -y visualstudio2019-workload-vctools --version 1.0.1
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
@@ -50,10 +53,10 @@ RUN `
   Remove-Item c:\R-3.6.3-win.exe -Force
 
 # add R to path
-RUN $env:path += ';C:\R\R-3.6.3\bin\i386\' ;`
+RUN $env:path += ';C:\R\R-3.6.3\bin\x64\' ;`
   [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
 
-# install smtools 
+# install smtools
 # TODO: remove the installation from the jenkinsfile once this is built into the base image
 RUN `
   [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48 ;`

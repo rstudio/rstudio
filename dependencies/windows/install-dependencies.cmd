@@ -1,16 +1,43 @@
+
 @echo off
+setlocal EnableDelayedExpansion
 
-setlocal
+for %%F in ("%CD%\..\tools\rstudio-tools.cmd") do (
+  set "RSTUDIO_TOOLS=%%~fF"
+)
 
-set BOOST_VERSION=1.87.0
-set MSVC_VERSION=vc142
-
-call ..\tools\rstudio-tools.cmd
-
+call %RSTUDIO_TOOLS%
 set PATH=%CD%\tools;%PATH%
 
+set BOOST_VERSION=1.87.0
+set GNUGREP_VERSION=3.0
+set LIBCLANG_VERSION=13.0.1
+set MATHJAX_VERSION=2.7.9
+set MSVC_VERSION=vc142
+set NSPROCESS_VERSION=1.6
+set OPENSSL_VERSION=3.1.4
+set PANDOC_VERSION=3.2
+set QUARTO_VERSION=1.6.42
+set SUMATRA_VERSION=3.1.2
+set WINPTY_VERSION=0.4.3-msys2-2.7.0
+set WINUTILS_VERSION=1.0
+
+set CLEAN=0
+set QUIET=0
+for %%A in (%*) do (
+
+  if /I "%%A" == "clean" (
+    set CLEAN=1
+  )
+
+  if /I "%%A" == "quiet" (
+    set QUIET=1
+  )
+
+)
+
 REM Check for required tools on the PATH.
-for %%X in (R.exe 7z.exe cmake.exe wget.exe) do (
+for %%X in (R.exe 7z.exe cmake.exe curl.exe) do (
   where /q %%X
   if ERRORLEVEL 1 (
     echo ERROR: %%X is not available on the PATH; cannot proceed.
@@ -18,34 +45,6 @@ for %%X in (R.exe 7z.exe cmake.exe wget.exe) do (
   )
 )
 
-set WGET_ARGS=-c --no-check-certificate --no-hsts --quiet
-set UNZIP_ARGS=-q
-
-set BASEURL=%RSTUDIO_BUILDTOOLS%/
-set GIN_FILE=gin-2.1.2.zip
-set JUNIT_FILE=junit-4.9b3.jar
-set GNUDIFF_FILE=gnudiff.zip
-
-set GNUGREP_VERSION=3.0
-set GNUGREP_NAME=gnugrep-%GNUGREP_VERSION%
-set GNUGREP_FILE=%GNUGREP_NAME%.zip
-
-set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
-set WINUTILS_FILE=winutils-1.0.zip
-set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
-set OPENSSL_FILES=openssl-3.1.4.zip
-set BOOST_FILES=boost-%BOOST_VERSION%-win-ms%MSVC_VERSION%.zip
-set RESOURCE_HACKER=resource_hacker.zip
-
-set NSIS_NSPROCESS_VERSION=1.6
-set NSIS_NSPROCESS_FILE=NsProcess.zip
-
-set PANDOC_VERSION=3.2
-set PANDOC_NAME=pandoc-%PANDOC_VERSION%
-set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
-
-REM Pin to specific Quarto version for releases
-set QUARTO_VERSION=1.6.42
 
 REM Get latest Quarto release version
 REM cd install-quarto
@@ -60,174 +59,163 @@ if not "%QUARTO_VERSION%" == "%QUARTO_VERSION:ERROR=%" (
 	exit /b
 )
 
-set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
+set QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/quarto-%QUARTO_VERSION%-win.zip
+set QUARTO_FOLDER=quarto
+set QUARTO_OUTPUT=quarto
 
-set LIBCLANG_VERSION=13.0.1
-set LIBCLANG_NAME=libclang-windows-%LIBCLANG_VERSION%
-set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
+set GNUDIFF_URL=gnudiff.zip
+set GNUDIFF_FOLDER=gnudiff
+set GNUDIFF_OUTPUT=gnudiff
 
-if not exist gnudiff (
-  wget %WGET_ARGS% "%BASEURL%%GNUDIFF_FILE%"
-  mkdir gnudiff
-  echo Unzipping %GNUDIFF_FILE%
-  unzip %UNZIP_ARGS% "%GNUDIFF_FILE%" -d gnudiff
-  del "%GNUDIFF_FILE%"
+set GNUGREP_URL=gnugrep-%GNUGREP_VERSION%.zip
+set GNUGREP_FOLDER=gnugrep\%GNUGREP_VERSION%
+set GNUGREP_OUTPUT=gnugrep\%GNUGREP_VERSION%
+
+set SUMATRA_URL=sumatrapdf/SumatraPDF-%SUMATRA_VERSION%-64.zip
+set SUMATRA_FOLDER=sumatra\%SUMATRA_VERSION%
+set SUMATRA_OUTPUT=sumatra\%SUMATRA_VERSION%
+
+
+set WINUTILS_URL=winutils-%WINUTILS_VERSION%.zip
+set WINUTILS_FOLDER=winutils\%WINUTILS_VERSION%
+set WINUTILS_OUTPUT=winutils\%WINUTILS_VERSION%
+
+
+set WINPTY_URL=winpty-%WINPTY_VERSION%.zip
+set WINPTY_FOLDER=winpty-%WINPTY_VERSION%
+set WINPTY_OUTPUT=
+
+
+set OPENSSL_URL=openssl-%OPENSSL_VERSION%.zip
+set OPENSSL_FOLDER=openssl-%OPENSSL_VERSION%
+set OPENSSL_OUTPUT=
+
+
+set BOOST_URL=Boost/boost-%BOOST_VERSION%-win-ms%MSVC_VERSION%.zip
+set BOOST_FOLDER=boost-%BOOST_VERSION%-win-ms%MSVC_VERSION%
+set BOOST_OUTPUT=
+
+
+set RESHACKER_URL=resource-hacker/resource_hacker.zip
+set RESHACKER_FOLDER=resource-hacker
+set RESHACKER_OUTPUT=resource-hacker
+
+
+set NSPROCESS_URL=nsprocess/NsProcess.zip
+set NSPROCESS_FOLDER=nsprocess\%NSPROCESS_VERSION%
+set NSPROCESS_OUTPUT=nsprocess\%NSPROCESS_VERSION%
+
+
+set DICTIONARIES_URL=dictionaries/core-dictionaries.zip
+set DICTIONARIES_FOLDER=dictionaries
+set DICTIONARIES_OUTPUT=dictionaries
+
+
+set MATHJAX_URL=mathjax-%MATHJAX_VERSION%.zip
+set MATHJAX_FOLDER=mathjax-27
+set MATHJAX_OUTPUT=
+
+
+set PANDOC_URL=pandoc/%PANDOC_VERSION%/pandoc-%PANDOC_VERSION%-windows-x86_64.zip
+set PANDOC_FOLDER=pandoc
+set PANDOC_OUTPUT=pandoc
+
+
+set LIBCLANG_URL=libclang-windows-%LIBCLANG_VERSION%.zip
+set LIBCLANG_FOLDER=libclang\%LIBCLANG_VERSION%
+set LIBCLANG_OUTPUT=
+
+
+set BREAKPAD_URL=https://s3.amazonaws.com/getsentry-builds/getsentry/breakpad-tools/windows/breakpad-tools-windows.zip
+set BREAKPAD_FOLDER=breakpad-tools-windows
+set BREAKPAD_OUTPUT=breakpad-tools-windows
+
+
+set NODEBUILD_VERSION=%RSTUDIO_NODE_VERSION%
+set NODEBUILD_LABEL=node (%NODEBUILD_VERSION%; build)
+set NODEBUILD_FILE=node-v%NODEBUILD_VERSION%-win-x64
+set NODEBUILD_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUILD_VERSION%/%NODEBUILD_FILE%.zip
+set NODEBUILD_FOLDER=node\%NODEBUILD_VERSION%
+set NODEBUILD_OUTPUT=node
+
+
+set NODEBUNDLE_VERSION=%RSTUDIO_INSTALLED_NODE_VERSION%
+set NODEBUNDLE_LABEL=node (%NODEBUNDLE_VERSION%; bundled)
+set NODEBUNDLE_FILE=node-v%NODEBUNDLE_VERSION%-win-x64
+set NODEBUNDLE_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUNDLE_VERSION%/%NODEBUNDLE_FILE%.zip
+set NODEBUNDLE_FOLDER=node\%NODEBUNDLE_VERSION%-patched
+set NODEBUNDLE_OUTPUT=node
+
+
+:: Install dependencies within 'common' first.
+cd ..\common
+
+%RUN% install DICTIONARIES
+%RUN% install MATHJAX
+%RUN% install LIBCLANG
+%RUN% install QUARTO
+
+%RUN% install PANDOC
+if exist pandoc\pandoc-%PANDOC_VERSION% (
+  move pandoc\pandoc-%PANDOC_VERSION% pandoc\%PANDOC_VERSION%
 )
 
-if not exist gnugrep\%GNUGREP_VERSION% (
-  wget %WGET_ARGS% "%BASEURL%%GNUGREP_FILE%"
-  mkdir gnugrep\%GNUGREP_VERSION%
-  echo Unzipping %GNUGREP_FILE%
-  unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep\%GNUGREP_VERSION%
-  del "%GNUGREP_FILE%"
+%RUN% install NODEBUILD
+if exist node\%NODEBUILD_FILE% (
+  rmdir /s /q node\%NODEBUILD_VERSION%
+  move node\%NODEBUILD_FILE% node\%NODEBUILD_VERSION%
 )
 
-if not exist sumatra\3.1.2 (
-  wget %WGET_ARGS% "%BASEURL%sumatrapdf/%SUMATRA_PDF_FILE%"
-  mkdir sumatra\3.1.2
-  echo Unzipping %SUMATRA_PDF_FILE%
-  unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra\3.1.2
-  del "%SUMATRA_PDF_FILE%"
+%RUN% install NODEBUNDLE
+if exist node\%NODEBUNDLE_FILE% (
+  rmdir /s /q node\%NODEBUNDLE_VERSION%-patched
+  mkdir node\%NODEBUNDLE_VERSION%-patched
+  move node\%NODEBUNDLE_FILE%\node.exe node\%NODEBUNDLE_VERSION%-patched
+  move node\%NODEBUNDLE_FILE%\LICENSE node\%NODEBUNDLE_VERSION%-patched
+  rmdir /s /q node\%NODEBUNDLE_FILE%
 )
 
-if not exist winutils\1.0 (
-  wget %WGET_ARGS% "%BASEURL%%WINUTILS_FILE%"
-  mkdir winutils\1.0
-  echo Unzipping %WINUTILS_FILE%
-  unzip %UNZIP_ARGS% "%WINUTILS_FILE%" -d winutils\1.0
-  del "%WINUTILS_FILE%"
+pushd node\%NODEBUILD_VERSION%
+if not exist yarn.cmd (
+  echo -- Installing yarn
+  call npm install --global yarn
 )
-
-if not exist winpty-0.4.3-msys2-2.7.0 (
-  wget %WGET_ARGS% "%BASEURL%%WINPTY_FILES%"
-  echo Unzipping %WINPTY_FILES%
-  unzip %UNZIP_ARGS% "%WINPTY_FILES%"
-  del %WINPTY_FILES%
-)
-
-if not exist %OPENSSL_FILES:~0,-4% (
-  wget %WGET_ARGS% "%BASEURL%%OPENSSL_FILES%"
-  echo Unzipping %OPENSSL_FILES%
-  unzip %UNZIP_ARGS% "%OPENSSL_FILES%"
-  del %OPENSSL_FILES%
-)
-
-if not exist %BOOST_FILES:~0,-4%* (
-  wget %WGET_ARGS% "%BASEURL%Boost/%BOOST_FILES%"
-  echo Unzipping %BOOST_FILES%
-  unzip %UNZIP_ARGS% "%BOOST_FILES%"
-  del %BOOST_FILES%
-)
-
-if not exist resource-hacker (
-  mkdir resource-hacker
-  wget %WGET_ARGS% "%BASEURL%resource-hacker/%RESOURCE_HACKER%
-  unzip %UNZIP_ARGS% "%RESOURCE_HACKER%" -d resource-hacker
-  del %RESOURCE_HACKER%
-)
-
-if not exist sentry-cli.exe (
-  REM specify a version to install
-  set SENTRY_CLI_VERSION=2.9.0
-  echo Installing sentry-cli
-  powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/2.9.0/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
-  for /F "delims=" %%G in ('sentry-cli.exe --version') do (set "SENTRY_CLI_INSTALLED_VERSION=%%G")
-  echo Installed Sentry CLI version: %SENTRY_CLI_INSTALLED_VERSION%
-)
-
-if not exist breakpad-tools-windows (
-  echo Installing breakpad tools for Windows
-  wget %WGET_ARGS% "https://s3.amazonaws.com/getsentry-builds/getsentry/breakpad-tools/windows/breakpad-tools-windows.zip"
-  echo Unzipping breakpad tools
-  unzip %UNZIP_ARGS% breakpad-tools-windows.zip -d breakpad-tools-windows
-  del breakpad-tools-windows.zip
-)
-
-if not exist "nsprocess/%NSIS_NSPROCESS_VERSION%" (
-  wget %WGET_ARGS% "%BASEURL%nsprocess/%NSIS_NSPROCESS_FILE%"
-  echo Unzipping NSIS NsProcess plugin
-  mkdir nsprocess\%NSIS_NSPROCESS_VERSION%
-  unzip %UNZIP_ARGS% "%NSIS_NSPROCESS_FILE%" -d nsprocess\1.6
-  del %NSIS_NSPROCESS_FILE%
-)
-
-pushd ..\common
-set CORE_DICTIONARIES=core-dictionaries.zip
-if not exist "dictionaries\en_US.dic" (
-  wget %WGET_ARGS% "%BASEURL%dictionaries/%CORE_DICTIONARIES%"
-  if exist "%CORE_DICTIONARIES%" (
-     mkdir dictionaries
-     echo Unzipping %CORE_DICTIONARIES%
-     unzip %UNZIP_ARGS% "%CORE_DICTIONARIES%" -d dictionaries
-     del "%CORE_DICTIONARIES%"
-  )
-)
-
-REM NOTE: Unpacks to 'mathjax-27' directory
-set MATHJAX=mathjax-2.7.9.zip
-if not exist "mathjax-27" (
-  wget %WGET_ARGS% "%BASEURL%%MATHJAX%"
-  if exist "%MATHJAX%" (
-     mkdir mathjax-27
-     echo Unzipping %MATHJAX%
-     unzip %UNZIP_ARGS% "%MATHJAX%"
-     del "%MATHJAX%"
-  )
-)
-
-if not exist pandoc\%PANDOC_VERSION% (
-  wget %WGET_ARGS% "%BASEURL%pandoc/%PANDOC_VERSION%/%PANDOC_FILE%"
-  echo Unzipping %PANDOC_FILE%
-  unzip %UNZIP_ARGS% "%PANDOC_FILE%"
-  mkdir pandoc\%PANDOC_VERSION%
-  copy "%PANDOC_NAME%\pandoc*" "pandoc\%PANDOC_VERSION%""
-  del %PANDOC_FILE%
-  rmdir /s /q %PANDOC_NAME%
-)
-
-
-
-REM wget %WGET_ARGS% %BASEURL%quarto/%QUARTO_VERSION%/%QUARTO_FILE%
-wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
-echo Unzipping Quarto %QUARTO_FILE%
-if exist quarto (
-  rmdir /s /q quarto
-)
-mkdir quarto
-pushd quarto
-unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
 popd
-del %QUARTO_FILE%
+
+echo -- Installing packages
+call install-packages.cmd
+
+:: Install the rest of our dependencies in the 'windows' folder.
+cd ..\windows
+
+%RUN% install GNUDIFF
+%RUN% install GNUGREP
+%RUN% install SUMATRA
+%RUN% install WINUTILS
+%RUN% install WINPTY
+%RUN% install OPENSSL
+%RUN% install BOOST
+%RUN% install RESHACKER
+%RUN% install NSPROCESS
+%RUN% install BREAKPAD
 
 
-if not exist libclang\%LIBCLANG_VERSION% (
-  wget %WGET_ARGS% "%BASEURL%%LIBCLANG_FILE%"
-  echo Unzipping %LIBCLANG_FILE%
-  unzip %UNZIP_ARGS% "%LIBCLANG_FILE%"
-  del %LIBCLANG_FILE%
-)
-
-call install-npm-dependencies.cmd
-
-if not defined JENKINS_URL (
-  if exist C:\Windows\py.exe (
-    pushd ..\..\src\gwt\tools\i18n-helpers\
-    py -3 -m venv VENV
-    VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\requirements.txt
-    popd
-  )
-)
-
-echo "Installing panmirror (visual editor)"
-pushd ..\windows\install-panmirror
+echo -- Installing panmirror (Visual Editor)
+pushd install-panmirror
 call clone-quarto-repo.cmd
 popd
-call install-packages.cmd
-popd
 
-regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\DIA SDK\bin\msdia140.dll"
-
+echo -- Installing crashpad
 call install-crashpad.cmd
+
+echo -- Installing SOCI
 call install-soci.cmd
 
-endlocal
+if not exist sentry-cli.exe (
+  set SENTRY_CLI_VERSION=2.9.0
+  echo -- Installing sentry-cli
+  %RUN% download "https://github.com/getsentry/sentry-cli/releases/download/2.9.0/sentry-cli-Windows-x86_64.exe" sentry-cli.exe
+  sentry-cli.exe --version
+)
+
+%RUN% install-i18n-dependencies

@@ -19,7 +19,7 @@ cd ..
 
 REM Build the Boost archive for upload to S3.
 echo --^> Packaging Boost %BOOST_VERSION% ...
-zip -r -q -9 ^
+7z a -mmt8 -mx9 ^
    %BOOST_PREFIX%.zip ^
    %BOOST_PREFIX%-debug-static ^
    %BOOST_PREFIX%-release-static
