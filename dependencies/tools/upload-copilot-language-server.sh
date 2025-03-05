@@ -16,12 +16,17 @@ BASEURL="https://github.com/github/copilot-language-server-release/releases/down
 AWS_BUCKET="s3://rstudio-buildtools"
 
 PLATFORMS=(
+    darwin-arm64
+    darwin-x64
+    linux-arm64
+    linux-x64
+    win32-x64
     js
-    native
 )
 
 for PLATFORM in "${PLATFORMS[@]}"; do
     FILENAME="copilot-language-server-${PLATFORM}-${COPILOT_VERSION}".zip
     wget -c "${BASEURL}/${COPILOT_VERSION}/${FILENAME}"
     aws s3 cp "${FILENAME}" "${AWS_BUCKET}/copilot-language-server/${COPILOT_VERSION}/" --acl public-read
+    rm "$FILENAME"
 done

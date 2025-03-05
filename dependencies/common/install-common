@@ -23,6 +23,7 @@ set -e
 ./install-boost
 ./install-pandoc
 ./install-quarto
+./install-copilot-language-server
 ./install-sentry-cli
 ./install-npm-dependencies
 ./install-soci
