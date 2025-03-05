@@ -85,6 +85,7 @@ COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
 # ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-mariposa-orchid panmirror.version.json
 
+ENV DOCKER_IMAGE_BUILD=1
 WORKDIR C:/rstudio-tools/dependencies/windows
 RUN C:/rstudio-tools/dependencies/windows/install-dependencies.cmd
 
