@@ -6,7 +6,9 @@ for %%F in ("%CD%\..\tools\rstudio-tools.cmd") do (
   set "RSTUDIO_TOOLS=%%~fF"
 )
 
+echo -- Using RStudio tools: %RSTUDIO_TOOLS%
 call %RSTUDIO_TOOLS%
+
 set PATH=%CD%\tools;%PATH%
 
 set BOOST_VERSION=1.87.0
