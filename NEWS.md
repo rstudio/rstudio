@@ -43,6 +43,7 @@
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
+- Fixed an issue where unopened VSCode and Positron sessions wouldn't timeout when `session-timeout-kill-hours` was set and SSL was enabled. (rstudio-pro#7195)
 
 ### Dependencies
 - Update Electron to version 34.3.0. (#15450)
