@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# upload-copilot.sh
+# upload-copilot-language-server.sh
 #
 # This script copies the "Copilot Language Server" packages into the RStudio Build Tools
 # (rstudio-buildtools) S3 bucket. Presumes you've already got AWS command line
