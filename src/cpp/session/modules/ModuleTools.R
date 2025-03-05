@@ -149,45 +149,40 @@
    nzchar(paths)
 })
 
-.rs.addFunction("isPackageVersionInstalled", function(name, version) {  
+.rs.addFunction("isPackageVersionInstalled", function(name, version)
+{  
   .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
 })
 
-.rs.addFunction("packageCRANVersionAvailable", function(name, version, source) {
-  # get the specified CRAN repo
-  repo <- NA
-  repos <- getOption("repos")
-  # the repos option is canonically a named character vector, but could also
-  # be a named list
-  if (is.character(repos) || is.list(repos)) {
-    # check for a repo named "CRAN"
-    repo <- as.character(repos["CRAN"])
-
-    # if no repo named "CRAN", blindly guess that the first repo is a CRAN mirror 
-    if (length(repo) < 1 || is.na(repo)) {
-      repo <- as.character(repos[[1]])
-    }
-  }
-
-  # if no default repo and no repo marked CRAN, give up
-  if (length(repo) < 1 || is.na(repo)) {
-    return(list(version = "", satisfied = FALSE))
-  }
-
-  # get the available packages and extract the version information
-  type <- ifelse(source, "source", getOption("pkgType"))
-  pkgs <- available.packages(
-            contriburl = contrib.url(repo, type = type))
-  if (!(name %in% row.names(pkgs))) {
-    return(list(version = "", satisfied = FALSE))
-  }
-  pkgVersion <- pkgs[name, "Version"]
-  return(list(
-    version = pkgVersion, 
-    satisfied = package_version(pkgVersion) >= package_version(version)))
+.rs.addFunction("packageCRANVersionAvailable", function(name, version, source)
+{
+   # list available packages
+   type <- if (source) "source" else getOption("pkgType")
+   db <- as.data.frame(available.packages(type = type), stringsAsFactors = FALSE)
+   
+   # check for matching package -- if we can't find any available package,
+   # assume dependency is satisfied if a package of the same name is installed
+   dbEntries <- subset(db, Package == name)
+   if (nrow(dbEntries) == 0L) {
+      installed <- .rs.isPackageInstalled(name)
+      return(list(version = "", satisfied = installed))
+   }
+   
+   # take the first row in case we had duplicates
+   dbEntry <- dbEntries[1, ]
+   version <- dbEntry$Version
+   
+   # NOTE: here, 'satisfied' means that the package dependency is satisfiable
+   # by the version of the package available on CRAN, not that the dependency
+   # is already installed + satisfies the version constraint
+   list(
+      version   = version,
+      satisfied = package_version(version) >= package_version(version)
+   )
 })
 
-.rs.addFunction("packageVersionString", function(pkg) {
+.rs.addFunction("packageVersionString", function(pkg)
+{
    as.character(packageVersion(pkg))
 })
 

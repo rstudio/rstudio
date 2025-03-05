@@ -1652,20 +1652,20 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String withRagg();
 
     /**
-     * Translated " is not available\n".
+     * Translated "is not available".
      *
-     * @return translated " is not available\n"
+     * @return translated "is not available"
      */
-    @DefaultMessage(" is not available\n")
+    @DefaultMessage("is not available")
     @Key("unsatisfiedVersions")
     String unsatisfiedVersions();
 
     /**
-     * Translated " is required but is available\n".
+     * Translated "is required but is available".
      *
-     * @return translated " is required but is available\n"
+     * @return translated "is required but is available"
      */
-    @DefaultMessage(" is required but {0} is available\n")
+    @DefaultMessage("is required but {0} is available")
     @Key("requiredVersion")
     String requiredVersion(String version);
 

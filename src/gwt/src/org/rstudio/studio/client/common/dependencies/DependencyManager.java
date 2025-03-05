@@ -929,13 +929,17 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             {
                if (!unsatisfiedDeps.get(i).getVersionSatisfied())
                {
-                  unsatisfiedVersions += unsatisfiedDeps.get(i).getName() +
-                       " " + unsatisfiedDeps.get(i).getVersion();
+                  unsatisfiedVersions +=
+                        "- " +
+                        unsatisfiedDeps.get(i).getName() +
+                        " " +
+                        unsatisfiedDeps.get(i).getVersion();
+                  
                   String version = unsatisfiedDeps.get(i).getAvailableVersion();
                   if (version.isEmpty())
-                     unsatisfiedVersions += constants_.unsatisfiedVersions();
+                     unsatisfiedVersions += " " + constants_.unsatisfiedVersions() + "\n";
                   else
-                     unsatisfiedVersions += " " + constants_.requiredVersion(version);
+                     unsatisfiedVersions += " " + constants_.requiredVersion(version) + "\n";
                }
             }
 
