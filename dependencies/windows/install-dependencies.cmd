@@ -20,6 +20,7 @@ set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
 set QUARTO_VERSION=1.6.42
+set COPILOT_VERSION=1.277.0
 set SUMATRA_VERSION=3.1.2
 set WINPTY_VERSION=0.4.3-msys2-2.7.0
 set WINUTILS_VERSION=1.0
@@ -64,6 +65,10 @@ if not "%QUARTO_VERSION%" == "%QUARTO_VERSION:ERROR=%" (
 set QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/quarto-%QUARTO_VERSION%-win.zip
 set QUARTO_FOLDER=quarto
 set QUARTO_OUTPUT=quarto
+
+set COPILOT_URL=copilot-language-server/%COPILOT_VERSION%/copilot-language-server-win32-x64-%COPILOT_VERSION%.zip
+set COPILOT_FOLDER=copilot-language-server
+set COPILOT_OUTPUT=copilot-language-server
 
 set GNUDIFF_URL=gnudiff.zip
 set GNUDIFF_FOLDER=gnudiff
@@ -156,6 +161,7 @@ cd ..\common
 %RUN% install MATHJAX
 %RUN% install LIBCLANG
 %RUN% install QUARTO
+%RUN% install COPILOT
 
 %RUN% install PANDOC
 if exist pandoc\pandoc-%PANDOC_VERSION% (

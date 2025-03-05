@@ -13,6 +13,7 @@ overlay/
 packrat/
 pandoc*/
 quarto/
+copilot-language-server/
 node/
 plumber/
 profvis/
