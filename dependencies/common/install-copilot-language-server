@@ -45,7 +45,7 @@ pushd "${COPILOT_SUBDIR}"
 
 # determine archive based on platform and archictecture
 PLATFORM="$(uname)-$(getconf LONG_BIT)"
-if [ "$(arch)" == "arm64" ]; then
+if [ "$(arch)" == "arm64" ] || [ "$(arch)" == "aarch64" ]; then
   ARCH="arm64"
 else
   ARCH="x64"
