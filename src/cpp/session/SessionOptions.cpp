@@ -722,6 +722,11 @@ void Options::resolveQuartoPath(const FilePath& resourcePath,
    resolvePath(resourcePath, pPath);
 }
 
+void Options::resolveCopilotPath(const FilePath& resourcePath, std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
+
 void Options::resolveNodePath(const FilePath& resourcePath,
                               std::string* pPath)
 {
