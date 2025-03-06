@@ -57,15 +57,15 @@ if test -f "${COPILOT_BIN}"; then
     if [ "${OS}" != "darwin" ]; then
       echo "Copilot language server ${COPILOT_VERSION} already installed"
       exit 0
-    fi
-
-    # on macOS, make sure we also have the x64 binary
-    COPILOT_BIN_X64="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server-x64"
-    if test -f "${COPILOT_BIN_X64}"; then
-      INSTALLED_COPILOT_VERSION_X64=$(${COPILOT_BIN_X64} --version)
-      if [ "$INSTALLED_COPILOT_VERSION_X64" == $COPILOT_VERSION ]; then
-        echo "Copilot language server ${COPILOT_VERSION} already installed"
-        exit 0
+    else
+      # on macOS, make sure we also have the x64 binary
+      COPILOT_BIN_X64="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server-x64"
+      if test -f "${COPILOT_BIN_X64}"; then
+        INSTALLED_COPILOT_VERSION_X64=$(${COPILOT_BIN_X64} --version)
+        if [ "$INSTALLED_COPILOT_VERSION_X64" == $COPILOT_VERSION ]; then
+          echo "Copilot language server ${COPILOT_VERSION} already installed"
+          exit 0
+        fi
       fi
     fi
   fi
