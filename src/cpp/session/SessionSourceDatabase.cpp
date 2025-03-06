@@ -23,18 +23,17 @@
 #include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <core/Log.hpp>
-#include <core/Exec.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Hash.hpp>
+
+#include <core/Log.hpp>
+#include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/DateTime.hpp>
-
 #include <core/system/System.hpp>
-
 #include <core/http/Util.hpp>
 
 #include <r/RUtil.hpp>
@@ -870,14 +869,15 @@ Error list(std::vector<boost::shared_ptr<SourceDocument>>* pDocs)
          // get the source doc
          boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
          Error error = source_database::get(filePath.getFilename(), pDoc);
-         if (!error)
+         if (error)
          {
-            // safety filter
-            if (isSafeSourceDocument(filePath, pDoc))
-               pDocs->push_back(pDoc);
-         }
-         else
             LOG_ERROR(error);
+            continue;
+         }
+
+         // safety filter
+         if (isSafeSourceDocument(filePath, pDoc))
+            pDocs->push_back(pDoc);
       }
    }
    

@@ -215,9 +215,11 @@ void detectExtendedType(boost::shared_ptr<SourceDocument> pDoc)
 
 int numSourceDocuments()
 {
-   std::vector<boost::shared_ptr<SourceDocument> > docs;
-   source_database::list(&docs);
-   return gsl::narrow_cast<int>(docs.size());
+   std::vector<FilePath> docPaths;
+   Error error = source_database::list(&docPaths);
+   if (error)
+      LOG_ERROR(error);
+   return gsl::narrow_cast<int>(docPaths.size());
 }
 
 // wrap source_database::put for situations where there are new contents
@@ -1623,7 +1625,8 @@ SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP saveSXP) {
    return r::sexp::create(waitForSuccess(event, s_waitForRequestDocumentClose), &protect);
 }
 
-SEXP rs_documentCloseAllNoSave() {
+SEXP rs_documentCloseAllNoSave()
+{
    ClientEvent event(client_events::kDocumentCloseAllNoSave);
    module_context::enqueClientEvent(event);
    return R_NilValue;
@@ -1633,12 +1636,12 @@ SEXP rs_readSourceDocument(SEXP idSEXP)
 {
    std::string id = r::sexp::asString(idSEXP);
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+
+   // don't log errors here, as it's possible for the file to be
+   // removed from the source database as we're preparing to read it
    Error error = source_database::get(id, pDoc);
    if (error)
-   {
-      LOG_ERROR(error);
       return R_NilValue;
-   }
    
    r::sexp::Protect protect;
    return r::sexp::create(pDoc->contents(), &protect);
