@@ -21,29 +21,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Copilot Language Server"
 
 # version to download
-COPILOT_VERSION="1.277.0"
+COPILOT_VERSION="1.278.0"
 
-# test if we already have it installed
-COPILOT_SUBDIR="copilot-language-server"
-COPILOT_BIN="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server"
-if test -f "${COPILOT_BIN}"; then
-   INSTALLED_COPILOT_VERSION=$(${COPILOT_BIN} --version)
-   if [ "$INSTALLED_COPILOT_VERSION" == $COPILOT_VERSION ]; then
-      echo "Copilot language server ${COPILOT_VERSION} already installed"
-      exit 0
-   fi
-fi
-
-# move to tools root
-sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
-cd "${RSTUDIO_TOOLS_ROOT}"
-
-# reset Copilot subdirectory
-rm -rf "${COPILOT_SUBDIR}"
-mkdir -p "${COPILOT_SUBDIR}"
-pushd "${COPILOT_SUBDIR}"
-
-# determine archive based on platform and archictecture
+# determine platform and architecture
 PLATFORM="$(uname)-$(getconf LONG_BIT)"
 if [ "$(arch)" == "arm64" ] || [ "$(arch)" == "aarch64" ]; then
   ARCH="arm64"
@@ -68,11 +48,61 @@ case "${PLATFORM}" in
 
 esac
 
-FILE="copilot-language-server-${OS}-${ARCH}-${COPILOT_VERSION}.zip"
+# test if we already have it installed
+COPILOT_SUBDIR="copilot-language-server"
+COPILOT_BIN="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server"
+if test -f "${COPILOT_BIN}"; then
+  INSTALLED_COPILOT_VERSION=$(${COPILOT_BIN} --version)
+  if [ "$INSTALLED_COPILOT_VERSION" == $COPILOT_VERSION ]; then
+    if [ "${OS}" != "darwin" ]; then
+      echo "Copilot language server ${COPILOT_VERSION} already installed"
+      exit 0
+    fi
 
-# download and extract file
+    # on macOS, make sure we also have the x64 binary
+    COPILOT_BIN_X64="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server-x64"
+    if test -f "${COPILOT_BIN_X64}"; then
+      INSTALLED_COPILOT_VERSION_X64=$(${COPILOT_BIN_X64} --version)
+      if [ "$INSTALLED_COPILOT_VERSION_X64" == $COPILOT_VERSION ]; then
+        echo "Copilot language server ${COPILOT_VERSION} already installed"
+        exit 0
+      fi
+    fi
+  fi
+fi
+
+# move to tools root
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+cd "${RSTUDIO_TOOLS_ROOT}"
+
+# reset Copilot subdirectory
+rm -rf "${COPILOT_SUBDIR}"
+mkdir -p "${COPILOT_SUBDIR}"
+pushd "${COPILOT_SUBDIR}"
+
+# download and extract copilot-language-server binary
 COPILOT_URL_BASE="${RSTUDIO_BUILDTOOLS}/copilot-language-server/${COPILOT_VERSION}"
-echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
-download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
-extract "${FILE}"
-rm -f "${FILE}"
+
+if [ "${OS}" == "darwin" ]; then
+  # macOS: download and extract x64 and arm64 binaries (adding -x64 suffix to x64 binary)
+  FILE="copilot-language-server-${OS}-x64-${COPILOT_VERSION}.zip"
+  echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
+  download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
+  extract "${FILE}"
+  rm -f "${FILE}"
+  mv ./copilot-language-server ./copilot-language-server-x64
+
+  FILE="copilot-language-server-${OS}-arm64-${COPILOT_VERSION}.zip"
+  echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
+  download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
+  extract "${FILE}"
+  rm -f "${FILE}"
+  
+else
+  # Linux: download and extract binary matching current architecture
+  FILE="copilot-language-server-${OS}-${ARCH}-${COPILOT_VERSION}.zip"
+  echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
+  download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
+  extract "${FILE}"
+  rm -f "${FILE}"
+fi
