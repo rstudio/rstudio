@@ -53,7 +53,7 @@ COPILOT_SUBDIR="copilot-language-server"
 COPILOT_BIN="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server"
 if test -f "${COPILOT_BIN}"; then
   INSTALLED_COPILOT_VERSION=$(${COPILOT_BIN} --version)
-  if [ "$INSTALLED_COPILOT_VERSION" == $COPILOT_VERSION ]; then
+  if [ "$INSTALLED_COPILOT_VERSION" == "$COPILOT_VERSION" ]; then
     if [ "${OS}" != "darwin" ]; then
       echo "Copilot language server ${COPILOT_VERSION} already installed"
       exit 0
