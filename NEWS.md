@@ -40,6 +40,7 @@
 - Fixed a WCAG 1.1.1 violation (unlabeled image in the Console toolbar) by marking it as cosmetic. [Accessibility] (#15757)
 - Fixed Material theme's colors for selected word or text highlighting so they are more visible. [Accessibility] (#15753)
 - Fixed an issue where .bib files with extra commas could be treated as binary files on RHEL9. (rstudio-pro/7521)
+- Fixed an issue where documents could open very slowly when many tabs were already open. (#15767)
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
