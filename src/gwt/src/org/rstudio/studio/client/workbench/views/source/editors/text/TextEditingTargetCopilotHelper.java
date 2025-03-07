@@ -39,12 +39,14 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEve
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotRange;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeChunk;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
@@ -207,6 +209,17 @@ public class TextEditingTargetCopilotHelper
                      {
                         CopilotCompletion completion = completions.getAt(i);
 
+                        // fix up the copilot range; it's computed using the source document
+                        // cursor position, but we want to convert this to the position
+                        // used within the embedded Ace editor for visual mode
+                        if (target_.isVisualModeActivated())
+                        {
+                           int row = getActiveChunkRow();
+                           CopilotRange range = completion.range;
+                           range.start.line -= row;
+                           range.end.line -= row;
+                        }
+                        
                         // Copilot includes trailing '```' for some reason in some cases,
                         // remove those if we're inserting in an R document.
                         completion.text = postProcessCompletion(completion.text);
@@ -379,6 +392,18 @@ public class TextEditingTargetCopilotHelper
       else
       {
          command.invoke(srcEditor_);
+      }
+   }
+   
+   private int getActiveChunkRow()
+   {
+      try
+      {
+         return target_.getVisualMode().getActiveEditorChunk().getScope().getPreamble().getRow();
+      }
+      catch (Exception e)
+      {
+         return -1;
       }
    }
    
