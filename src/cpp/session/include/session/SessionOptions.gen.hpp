@@ -405,6 +405,9 @@ protected:
       ("external-quarto-path",
       value<std::string>(&quartoPath_)->default_value(kDefaultQuartoPath),
       "Specifies the path to quarto binaries.")
+      ("external-copilot-path",
+      value<std::string>(&copilotPath_)->default_value(kDefaultCopilotPath),
+      "Specifies the path to Copilot Language Server binaries.")
       ("external-node-path",
       value<std::string>(&nodePath_)->default_value(kDefaultNodePath),
       "Specifies the path to node binaries.")
@@ -576,6 +579,7 @@ public:
    core::FilePath mathjaxPath() const { return core::FilePath(mathjaxPath_); }
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
    core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
+   core::FilePath copilotPath() const { return core::FilePath(copilotPath_); }
    core::FilePath nodePath() const { return core::FilePath(nodePath_); }
    core::FilePath copilotAgentPath() const { return core::FilePath(copilotAgentPath_); }
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
@@ -698,6 +702,7 @@ protected:
    std::string mathjaxPath_;
    std::string pandocPath_;
    std::string quartoPath_;
+   std::string copilotPath_;
    std::string nodePath_;
    std::string copilotAgentPath_;
    std::string libclangPath_;

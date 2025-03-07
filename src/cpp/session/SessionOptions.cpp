@@ -339,6 +339,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePath(resourcePath_, &mathjaxPath_);
    resolvePandocPath(resourcePath_, &pandocPath_);
    resolveQuartoPath(resourcePath_, &quartoPath_);
+   resolveCopilotPath(resourcePath_, &copilotPath_);
    resolveNodePath(resourcePath_, &nodePath_);
 
    // rsclang
@@ -654,6 +655,20 @@ void Options::resolveQuartoPath(const FilePath& resourcePath,
    }
 }
 
+void Options::resolveCopilotPath(const FilePath& resourcePath,
+                                 std::string* pPath)
+{
+   if (*pPath == kDefaultCopilotPath && programMode() == kSessionProgramModeDesktop)
+   {
+      FilePath path = macBinaryPath(resourcePath, "copilot-language-server");
+      *pPath = path.getAbsolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
 void Options::resolveNodePath(const FilePath& resourcePath,
                               std::string* pPath)
 {
@@ -703,6 +718,11 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 
 void Options::resolveQuartoPath(const FilePath& resourcePath,
                                 std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
+
+void Options::resolveCopilotPath(const FilePath& resourcePath, std::string* pPath)
 {
    resolvePath(resourcePath, pPath);
 }
