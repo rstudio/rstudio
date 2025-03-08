@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.JSON;
@@ -238,35 +237,9 @@ public class CopilotPreferencesPane extends PreferencesPane
             
             if (enabled)
             {
-               copilot_.ensureAgentInstalled(new CommandWithArg<Boolean>()
-               {
-                  @Override
-                  public void execute(Boolean isInstalled)
-                  {
-                     if (isInstalled)
-                     {
-                        // Eagerly change the preference here, so that we can
-                        // respond to changes in the agent status.
-                        prefs_.copilotEnabled().setGlobalValue(true);
-                        prefs_.writeUserPrefs((completed) ->
-                        {
-                           refresh();
-                        });
-                     }
-                     else
-                     {
-                        // Installation of the Copilot agent failed;
-                        // revert the checkbox state.
-                        cbCopilotEnabled_.setValue(false);
-                     }
-                  }
-               });
-            }
-            else
-            {
                // Eagerly change the preference here, so that we can
                // respond to changes in the agent status.
-               prefs_.copilotEnabled().setGlobalValue(false);
+               prefs_.copilotEnabled().setGlobalValue(true);
                prefs_.writeUserPrefs((completed) ->
                {
                   refresh();

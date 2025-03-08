@@ -88,19 +88,6 @@ public class CopilotResponseTypes
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotVerifyInstalledResponse
-   {
-      public boolean installed;
-      public boolean current;
-   }
-   
-   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotInstallAgentResponse
-   {
-      public String error;
-   }
-   
-   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotSignInResponseResult
    {
       public int expiresIn;

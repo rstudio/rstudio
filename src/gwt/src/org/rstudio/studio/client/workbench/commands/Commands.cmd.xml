@@ -2052,11 +2052,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Show code completions at the current cursor location"
         context="editor"/>
 
-   <cmd id="copilotInstallAgent"
-        label="Copilot: Install Agent"
-        menuLabel="Install Copilot Agent"
-        desc="Install the GitHub Copilot agent."/>
-        
    <cmd id="copilotDiagnostics"
         label="Copilot: Show Diagnostics"
         menuLabel="Show Copilot Diagnostics"

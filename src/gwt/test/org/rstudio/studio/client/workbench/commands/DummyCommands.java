@@ -3166,11 +3166,6 @@ public class DummyCommands extends Commands {
     }
 
     @Override
-    public AppCommand copilotInstallAgent() {
-        return null;
-    }
-
-    @Override
     public AppCommand copilotSignIn() {
         return null;
     }

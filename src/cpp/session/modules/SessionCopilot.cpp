@@ -71,7 +71,6 @@
 # define kNodeExe "node.exe"
 #endif
 
-#define kCopilotAgentDefaultCommitHash ("87038123804796ca7af20d1b71c3428d858a9124") // pragma: allowlist secret
 #define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
@@ -370,50 +369,6 @@ bool isCopilotAgentInstalled()
    return copilotAgentPath().exists();
 }
 
-std::string copilotAgentCommitHash()
-{
-   return r::options::getOption(
-            "rstudio.copilot.repositoryRef",
-            std::string(kCopilotAgentDefaultCommitHash),
-            false);
-}
-
-bool isCopilotAgentCurrent()
-{
-   Error error;
-   
-   // Compute path to the copilot 'root' directory.
-   FilePath versionPath = copilotAgentPath().getParent().getParent().completeChildPath("version.json");
-   if (!versionPath.exists())
-      return false;
-   
-   std::string versionContent;
-   error = core::readStringFromFile(versionPath, &versionContent);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   
-   json::Object versionJson;
-   error = versionJson.parse(versionContent);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   
-   std::string commitHash;
-   error = core::json::readObject(versionJson, "commit_hash", commitHash);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   
-   return commitHash == copilotAgentCommitHash();
-}
-
 bool isCopilotEnabled()
 {
    // Check administrator option
@@ -581,13 +536,6 @@ Error findNode(FilePath* pNodePath,
 int copilotLogLevel()
 {
    return s_copilotLogLevel;
-}
-
-Error installCopilotAgent()
-{
-   return r::exec::RFunction(".rs.copilot.installCopilotAgent")
-         .addParam(copilotAgentPath().getParent().getAbsolutePath())
-         .call();
 }
 
 void sendNotification(const std::string& method,
@@ -1522,12 +1470,6 @@ SEXP rs_copilotVersion()
    return r::sexp::create(version, &protect);
 }
 
-SEXP rs_copilotAgentCommitHash()
-{
-   r::sexp::Protect protect;
-   return r::sexp::create(copilotAgentCommitHash(), &protect);
-}
-
 SEXP rs_copilotStopAgent()
 {
    // stop the copilot agent
@@ -1702,30 +1644,6 @@ Error copilotStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse* pResponse)
-{
-   json::Object responseJson;
-   responseJson["installed"] = isCopilotAgentInstalled();
-   responseJson["current"] = isCopilotAgentCurrent();
-   pResponse->setResult(responseJson);
-   return Success();
-}
-
-Error copilotInstallAgent(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
-{
-   Error installError = installCopilotAgent();
-
-   json::Object responseJson;
-   if (installError)
-      responseJson["error"] = installError.asString();
-   pResponse->setResult(responseJson);
-   
-   synchronize();
-   return Success();
-}
-
 } // end anonymous namespace
 
 
@@ -1764,7 +1682,6 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_copilotSendRequest);
    RS_REGISTER_CALL_METHOD(rs_copilotSetLogLevel);
    RS_REGISTER_CALL_METHOD(rs_copilotVersion);
-   RS_REGISTER_CALL_METHOD(rs_copilotAgentCommitHash);
    RS_REGISTER_CALL_METHOD(rs_copilotStopAgent);
 
    ExecBlock initBlock;
@@ -1774,8 +1691,6 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
-         (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
-         (bind(registerRpcMethod, "copilot_install_agent", copilotInstallAgent))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();
