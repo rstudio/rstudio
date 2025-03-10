@@ -649,6 +649,14 @@ public class Application implements ApplicationEventHandlers
       switch (event.getAction().getType())
       {
       
+      case SessionSerializationAction.SAVE_DEFAULT_WORKSPACE:
+         view_.showSerializationProgress(
+                          constants_.savingWorkspaceImageMessage() + getSuffix(event),
+                          true, // modal, inputs will fall dead anyway
+                          0,    // show immediately
+                          0);   // no timeout
+         break;
+         
       case SessionSerializationAction.LOAD_DEFAULT_WORKSPACE:
          view_.showSerializationProgress(
                          constants_.loadingWorkspaceMessage() + getSuffix(event),
@@ -658,20 +666,12 @@ public class Application implements ApplicationEventHandlers
                          0);    // no timeout
          break;
          
-      case SessionSerializationAction.SAVE_DEFAULT_WORKSPACE:
-         view_.showSerializationProgress(
-                          constants_.savingWorkspaceImageMessage() + getSuffix(event),
-                          true, // modal, inputs will fall dead anyway
-                          0,    // show immediately
-                          0);   // no timeout
-         break;
-         
       case SessionSerializationAction.SUSPEND_SESSION:
          events_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.SESSION_SUSPEND));
          view_.showSerializationProgress(
                           constants_.backingUpRSessionMessage(),
                           true,    // modal, inputs will fall dead anyway
-                          2000,    // delay a bit
+                          2000,    // don't show for quick suspends
                           60000);  // timeout after 60 seconds. this is done
                                    // in case the user suspends or loses
                                    // connectivity during the backup (in which
