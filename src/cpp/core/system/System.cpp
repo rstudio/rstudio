@@ -30,6 +30,10 @@
 #include <shared_core/system/SyslogDestination.hpp>
 #endif
 
+#if defined(__APPLE__)
+#include <sys/sysctl.h>
+#endif
+
 #include <core/Algorithm.hpp>
 #include <core/Log.hpp>
 #include <core/LogOptions.hpp>
@@ -500,6 +504,20 @@ void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
       }
    }
 }
+
+#if defined(__APPLE__)
+
+bool isAppleSilicon()
+{
+   char buffer[128];
+   size_t size = sizeof(buffer);
+   if (sysctlbyname("machdep.cpu.brand_string", &buffer, &size, nullptr, 0) == 0)
+       return strstr(buffer, "Apple") != nullptr;
+
+   return false;
+}
+
+#endif
 
 } // namespace system
 } // namespace core

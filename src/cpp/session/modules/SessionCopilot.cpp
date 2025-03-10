@@ -65,12 +65,6 @@
 # define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
 #endif
 
-#ifndef _WIN32
-# define kNodeExe "node"
-#else
-# define kNodeExe "node.exe"
-#endif
-
 #define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
@@ -314,26 +308,29 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    return isIndexableFile(docPath);
 }
 
-FilePath copilotAgentPath()
+FilePath copilotLanguageServerPath()
 {
    // Check for admin-configured copilot path.
-   FilePath copilotPath = session::options().copilotAgentPath();
+   FilePath copilotPath = session::options().copilotPath();
    if (copilotPath.exists())
    {
       if (copilotPath.isDirectory())
       {
-         for (auto&& suffix : { "dist/language-server.js", "language-server.js", "dist/agent.js", "agent.js" })
+#if defined(_WIN32)
+         auto suffix = "copilot-language-server.exe";
+#elif defined(__APPLE__)
+         auto suffix = "copilot-language-server";
+         if (!isAppleSilicon())
+            suffix = "copilot-language-server-x64";
+#else // Linux
+         auto suffix = "copilot-language-server";
+#endif
+         FilePath candidatePath = copilotPath.completePath(suffix);
+         if (candidatePath.exists())
          {
-            FilePath candidatePath = copilotPath.completePath(suffix);
-            if (candidatePath.exists())
-            {
-               copilotPath = candidatePath;
-               break;
-            }
+            return candidatePath;
          }
       }
-      
-      return copilotPath;
    }
 
    using namespace core::system::xdg;
@@ -364,24 +361,14 @@ FilePath copilotAgentPath()
    return userCacheDir().completeChildPath("copilot/dist/language-server.js");
 }
 
-bool isCopilotAgentInstalled()
-{
-   return copilotAgentPath().exists();
-}
-
 bool isCopilotEnabled()
 {
+#ifdef COPILOT_ENABLED
+
    // Check administrator option
    if (!session::options().copilotEnabled())
    {
       s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
-      return false;
-   }
-   
-   // Check whether the agent is installed
-   if (!isCopilotAgentInstalled())
-   {
-      s_agentNotRunningReason = CopilotAgentNotRunningReason::NotInstalled;
       return false;
    }
    
@@ -412,6 +399,11 @@ bool isCopilotEnabled()
    }
    
    return true;
+
+#else // RStudio built without Copilot support
+   s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
+   return false;
+#endif
 }
 
 bool isCopilotIndexingEnabled()
@@ -482,55 +474,6 @@ bool waitFor(F&& callback)
    }
 
    return false;
-}
-
-Error findNode(FilePath* pNodePath,
-               core::system::Options* pOptions)
-{
-   // Allow user override, just in case.
-   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
-   if (userNodePath.exists())
-   {
-      *pNodePath = userNodePath;
-      return Success();
-   }
-
-   // Check for an admin-configured node path.
-   FilePath nodePath = session::options().nodePath();
-   if (!nodePath.isEmpty())
-   {
-      // Allow both directories containing a 'node' binary, and the path
-      // to a 'node' binary directly.
-      if (nodePath.isDirectory())
-      {
-         for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
-         {
-            FilePath nodeExePath = nodePath.completeChildPath(suffix);
-            if (nodeExePath.exists())
-            {
-               *pNodePath = nodeExePath;
-               return Success();
-            }
-         }
-
-         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-      else if (nodePath.isRegularFile())
-      {
-         *pNodePath = nodePath;
-         return Success();
-      }
-      else
-      {
-         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-   }
-
-   // Otherwise, use node from the PATH
-   // TODO: We'll need to bundle a version of node with RStudio Server.
-   // Quarto 1.4 will ship with 'deno', which will be able to run regular 'node' applications,
-   // so maybe we can use that?
-   return core::system::findProgramOnPath(kNodeExe, pNodePath);
 }
 
 int copilotLogLevel()
@@ -925,15 +868,6 @@ Error startAgent()
    if (!certificatesFile.empty())
       environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
-   // For Desktop builds of RStudio, use the version of node embedded in Electron.
-   FilePath nodePath;
-   error = findNode(&nodePath, &environment);
-   if (error)
-      return error;
-   
-   if (!nodePath.exists())
-      return fileNotFoundError("node", ERROR_LOCATION);
-
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = &agent::onStarted;
@@ -956,37 +890,39 @@ Error startAgent()
    options.detachProcess = true;
 #endif
 
-   // Run the Copilot agent. If RStudio has been configured with a custom
-   // Copilot agent script, use that; otherwise, just run the agent directly.
-   FilePath copilotAgentHelper = session::options().copilotAgentHelper();
-   if (!copilotAgentHelper.isEmpty())
+   // Run the Copilot Language Server. If RStudio has been configured with a custom
+   // Copilot script, use that; otherwise, just run the Copilot Language Server directly.
+   FilePath copilotHelper = session::options().copilotHelper();
+   if (!copilotHelper.isEmpty())
    {
-      if (!copilotAgentHelper.exists())
-         return fileNotFoundError(copilotAgentHelper, ERROR_LOCATION);
+      if (!copilotHelper.exists())
+         return fileNotFoundError(copilotHelper, ERROR_LOCATION);
       
-      FilePath agentPath = copilotAgentPath();
-      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_COPILOT_AGENT_PATH", agentPath.getAbsolutePath()));
+      FilePath copilotPath = copilotLanguageServerPath();
+      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
       options.environment = environment;
 
       error = module_context::processSupervisor().runProgram(
-               copilotAgentHelper.getAbsolutePath(),
+               copilotHelper.getAbsolutePath(),
                {},
                options,
                callbacks);
    }
    else
    {
-      FilePath agentPath = copilotAgentPath();
-      if (!agentPath.exists())
-         return fileNotFoundError(agentPath, ERROR_LOCATION);
+      FilePath copilotPath = copilotLanguageServerPath();
+      if (!copilotPath.exists())
+         return fileNotFoundError(copilotPath, ERROR_LOCATION);
 
-      options.workingDir = agentPath.getParent();
+      options.workingDir = copilotPath.getParent();
       options.environment = environment;
 
+      std::vector<std::string> args;
+      args.push_back("--stdio");
+
       error = module_context::processSupervisor().runProgram(
-               nodePath.getAbsolutePath(),
-               { agentPath.getAbsolutePath() },
+               copilotPath.getAbsolutePath(),
+               args,
                options,
                callbacks);
    }

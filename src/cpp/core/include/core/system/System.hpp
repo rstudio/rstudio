@@ -153,6 +153,14 @@ FilePath systemSettingsPath(const std::string& appName, bool create);
 
 #endif // WIN32
 
+#if defined(__APPLE__)
+
+// Is code running on a system with Apple Silicon?
+// NOTE: Returns true even if running under Rosetta2.
+bool isAppleSilicon();
+
+#endif
+
 void initHook();
 
 // initialization

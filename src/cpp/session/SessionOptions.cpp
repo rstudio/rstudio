@@ -340,7 +340,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePandocPath(resourcePath_, &pandocPath_);
    resolveQuartoPath(resourcePath_, &quartoPath_);
    resolveCopilotPath(resourcePath_, &copilotPath_);
-   resolveNodePath(resourcePath_, &nodePath_);
 
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
