@@ -735,7 +735,7 @@ public class AnsiCode
    
    // RegEx to match incomplete CSI codes (only a small subset)
    public static final String CSI_PREFIX_REGEX =
-         "[\u001b\u009b]\\[";
+         "[\u001b\u009b]\\[(?:\\d|$)";
    
    // Match ANSI SGR escape sequences
    public static final Pattern CSI_PREFIX_PATTERN = Pattern.create(CSI_PREFIX_REGEX);

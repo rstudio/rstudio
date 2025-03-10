@@ -695,7 +695,6 @@ public class VirtualConsole
                Match csiMatch = AnsiCode.CSI_PATTERN.match(data, pos);
                if (csiMatch != null)
                {
-                  Debug.breakpoint();
                   int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                   String command = csiMatch.getGroup(2);
                   
