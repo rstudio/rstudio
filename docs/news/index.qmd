@@ -237,8 +237,6 @@ If running Workbench behind a proxy server, you may need to update your `NO_PROX
 
 - Removed msys-ssh client from Windows Desktop install and stopped setting RSTUDIO_MSYS_SSH environment variable. (rstudio-pro#6880)
 
-### Dependencies
-
 ## RStudio 2024.09.0
 
 **"Cranberry Hibiscus"**
@@ -425,15 +423,6 @@ Electron | 30.4.0 | (#14582; Desktop)
 #### RStudio
 
 - Fixed an issue where RStudio could crash when requesting completions within a ggplot2 aes() call, for datasets containing multi-byte variable names. (#14625)
-
-
-#### Posit Workbench
-
-
-### Dependencies
-
-
-### Deprecated / Removed
 
 ## RStudio 2024.04.0
 
