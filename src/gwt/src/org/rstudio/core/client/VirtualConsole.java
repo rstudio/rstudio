@@ -738,6 +738,8 @@ public class VirtualConsole
                   break;
                }
                
+               // if we get here, we didn't know what to do with the escape character
+               // just discard it and perform regular parsing from here on
                tail++;
                break;
                
