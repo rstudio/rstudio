@@ -697,7 +697,18 @@ public class VirtualConsole
                {
                   int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                   String command = csiMatch.getGroup(2);
+ 
+                  // handle SGR codes up-front
+                  if (command == "m")
+                  {
+                     // process the SGR code
+                     ansiCodeStyles_ = ansi_.processCode(csiMatch.getValue());
+                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
+                     tail = pos + csiMatch.getValue().length();
+                     break;
+                  }
                   
+                  // handle other supported commands
                   if (command == "C")
                   {
                      cursor_ = Math.min(output_.length(), cursor_ + n);
@@ -708,17 +719,6 @@ public class VirtualConsole
                   }
                   
                   tail = pos + csiMatch.getValue().length();
-                  break;
-               }
-               
-               // match complete SGR codes
-               Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
-               if (sgrMatch != null)
-               {
-                  // process the SGR code
-                  ansiCodeStyles_ = ansi_.processCode(sgrMatch.getValue());
-                  currentClazz = setCurrentClazz(ansiColorMode, clazz);
-                  tail = pos + sgrMatch.getValue().length();
                   break;
                }
                

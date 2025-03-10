@@ -728,7 +728,7 @@ public class AnsiCode
 
    // RegEx to match complete CSI codes (only a small subset)
    public static final String CSI_REGEX =
-         "[\u001b\u009b]\\[([0-9]*)([A-Z])";
+         "[\u001b\u009b]\\[([0-9]{1,4}(?:;[0-9]{0,4})*)?([a-zA-Z])";
    
    // Match ANSI SGR escape sequences
    public static final Pattern CSI_PATTERN = Pattern.create(CSI_REGEX);
@@ -740,13 +740,6 @@ public class AnsiCode
    // Match ANSI SGR escape sequences
    public static final Pattern CSI_PREFIX_PATTERN = Pattern.create(CSI_PREFIX_REGEX);
    
-   // RegEx to match complete SGR codes (colors, fonts, appearance)
-   public static final String SGR_REGEX =
-         "[\u001b\u009b]\\[(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[m]";
-
-   // Match ANSI SGR escape sequences
-   public static final Pattern SGR_ESCAPE_PATTERN = Pattern.create(SGR_REGEX);
-
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();
    private boolean inverted_ = false;
