@@ -646,8 +646,9 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onSessionSerialization(SessionSerializationEvent event)
    {
-      switch(event.getAction().getType())
+      switch (event.getAction().getType())
       {
+      
       case SessionSerializationAction.LOAD_DEFAULT_WORKSPACE:
          view_.showSerializationProgress(
                          constants_.loadingWorkspaceMessage() + getSuffix(event),
@@ -656,6 +657,7 @@ public class Application implements ApplicationEventHandlers
                                 // this will always be at workbench startup
                          0);    // no timeout
          break;
+         
       case SessionSerializationAction.SAVE_DEFAULT_WORKSPACE:
          view_.showSerializationProgress(
                           constants_.savingWorkspaceImageMessage() + getSuffix(event),
@@ -663,30 +665,34 @@ public class Application implements ApplicationEventHandlers
                           0,    // show immediately
                           0);   // no timeout
          break;
+         
       case SessionSerializationAction.SUSPEND_SESSION:
          events_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.SESSION_SUSPEND));
          view_.showSerializationProgress(
                           constants_.backingUpRSessionMessage(),
                           true,    // modal, inputs will fall dead anyway
-                          0,       // show immediately
+                          2000,    // delay a bit
                           60000);  // timeout after 60 seconds. this is done
                                    // in case the user suspends or loses
                                    // connectivity during the backup (in which
                                    // case the 'completed' event dies with
                                    // server and is never received by the client
          break;
+         
       case SessionSerializationAction.RESUME_SESSION:
          view_.showSerializationProgress(
-                          constants_.backingUpRSessionMessage(),
+                          constants_.restoringRSessionMessage(),
                           false, // non-modal, appears to user as std latency
                           2000,  // don't show this for reasonable restore time
                                  // (happens inline while using a running
                                  // workbench so be more conservative)
                           0);    // no timeout
          break;
+         
       case SessionSerializationAction.COMPLETED:
          view_.hideSerializationProgress();
          break;
+         
       }
    }
 
