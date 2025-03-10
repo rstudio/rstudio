@@ -621,6 +621,7 @@ public class VirtualConsole
       while (match != null)
       {
          int pos = match.getIndex();
+         
          // If we passed over any plain text on the way to this control
          // character, add it.
          if (tail != pos)
@@ -639,15 +640,19 @@ public class VirtualConsole
             case '\r':
                carriageReturn();
                break;
+               
             case '\b':
                backspace();
                break;
+               
             case '\n':
                newline(clazz);
                break;
+               
             case '\f':
                formfeed();
                break;
+               
             case '\033': // \x1b
             case '\233': // \x9b
 
@@ -655,10 +660,14 @@ public class VirtualConsole
                // We want to identify and act on these codes, while discarding the codes
                // we don't support. Tricky part is we might get codes split across
                // submit calls.
-
-               if (ansi_ == null)
-                  ansi_ = new AnsiCode();
                
+               // If the only character we've seen so far is the escape code,
+               // just buffer it and try again with next input.
+               if (pos == data.length() - 1)
+               {
+                  partialAnsiCode_ = StringUtil.substring(data, pos);
+                  return;
+               }
                
                // match hyperlink, either start or end (if [url] is empty
                // <ESC> ] 8 ; [params] ; [url] \7
@@ -686,6 +695,7 @@ public class VirtualConsole
                Match csiMatch = AnsiCode.CSI_PATTERN.match(data, pos);
                if (csiMatch != null)
                {
+                  Debug.breakpoint();
                   int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                   String command = csiMatch.getGroup(2);
                   
@@ -704,49 +714,34 @@ public class VirtualConsole
                
                // match complete SGR codes
                Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
-               if (sgrMatch == null)
-               {
-                  if (StringUtil.equals(StringUtil.substring(data, tail), "["))
-                  {
-                     // only have "[" at end, could be any ANSI code, so save remainder
-                     // of string to see if we can recognize it when more arrives
-                     partialAnsiCode_ = StringUtil.substring(data, pos);
-                     return;
-                  }
-
-                  // potentially an incomplete SGR code
-                  Match partialMatch = AnsiCode.SGR_PARTIAL_ESCAPE_PATTERN.match(data, pos);
-                  if (partialMatch != null)
-                  {
-                     // Might have an SGR ANSI code that was split across submit calls;
-                     // save remainder of string to see if we can recognize it
-                     // when more arrives
-                     partialAnsiCode_ = StringUtil.substring(data, pos);
-                     return;
-                  }
-
-                  // how about an unsupported ANSI code?
-                  Match ansiMatch = AnsiCode.ANSI_ESCAPE_PATTERN.match(data, pos);
-                  if (ansiMatch != null)
-                  {
-                     // discard it
-                     tail = pos + ansiMatch.getValue().length();
-                  }
-                  else
-                  {
-                     // nothing useful we can do, just throw away the ESC
-                     tail++;
-                  }
-               }
-               else
+               if (sgrMatch != null)
                {
                   // process the SGR code
                   ansiCodeStyles_ = ansi_.processCode(sgrMatch.getValue());
                   currentClazz = setCurrentClazz(ansiColorMode, clazz);
-                  
                   tail = pos + sgrMatch.getValue().length();
+                  break;
                }
+               
+               // check for incomplete CSI escapes, and continue parsing those
+               Match csiPrefixMatch = AnsiCode.CSI_PREFIX_PATTERN.match(data, pos);
+               if (csiPrefixMatch != null)
+               {
+                  partialAnsiCode_ = StringUtil.substring(data, pos);
+                  return;
+               }
+               
+               // handle all other kinds of unsupported ANSI escapes and discard them
+               Match ansiMatch = AnsiCode.ANSI_ESCAPE_PATTERN.match(data, pos);
+               if (ansiMatch != null)
+               {
+                  tail = pos + ansiMatch.getValue().length();
+                  break;
+               }
+               
+               tail++;
                break;
+               
             default:
                assert false : "Unknown control char, please check regex";
                text(data.charAt(pos) + "", currentClazz, false/*forceNewRange*/);
@@ -948,9 +943,9 @@ public class VirtualConsole
    private final Element parent_;
 
    private int cursor_ = 0;
-   private AnsiCode ansi_;
-   private String partialAnsiCode_;
+   private AnsiCode ansi_ = new AnsiCode();
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
+   private String partialAnsiCode_;
    private HyperlinkInfo hyperlink_;
 
    // Elements added by last submit call (only if forceNewRange was true)
