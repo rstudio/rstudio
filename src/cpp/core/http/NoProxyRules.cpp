@@ -35,8 +35,7 @@ bool NoProxyRuleDomain::match(const std::string& address,
                               const std::string& port) const
 {
    // Check if the address is within the domain
-   return boost::algorithm::ends_with(address, domain_) ||
-          address == domain_.substr(1);
+   return boost::algorithm::ends_with("." + address, domain_);
 }
 
 std::string NoProxyRuleDomain::toString() const { return domain_; }
