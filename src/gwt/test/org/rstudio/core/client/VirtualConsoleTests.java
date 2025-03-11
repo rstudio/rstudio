@@ -1257,4 +1257,15 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("Hello world!\033[10DLL\033[4CRL");
       Assert.assertEquals(ele.getInnerText(), "HeLLo woRLd!");
    }
+   
+   public void testIncompleteAnsiCodes()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String text = "\u001b[34mhello\u001b[0m";
+      for (int i = 0, n = text.length(); i < n; i++)
+         vc.submit(text.substring(i, i + 1));
+      
+      Assert.assertEquals(ele.getInnerText(), "hello");
+   }
 }

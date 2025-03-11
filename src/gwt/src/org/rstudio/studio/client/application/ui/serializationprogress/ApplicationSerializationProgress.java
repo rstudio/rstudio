@@ -49,33 +49,11 @@ public class ApplicationSerializationProgress extends PopupPanel
 
       // set widget
       setWidget(label);
-      
-      // show (after specified delay so long as we were not already hidden)
-      if (delayMs > 0)
-      {
-         new Timer() { public void run()
-         {
-            if (!wasHidden_)
-               showProgress();
-            
-         }}.schedule(delayMs);
-      }
-      else
-      {
-         showProgress();
-      }
    } 
    
-   @Override
-   public void hide()
+   public void showProgress()
    {
-      super.hide();
-      wasHidden_ = true;
-   }
-   
-   private void showProgress()
-   {
-      setPopupPositionAndShow( new PopupPanel.PositionCallback() 
+      setPopupPositionAndShow(new PopupPanel.PositionCallback() 
       {
          public void setPosition(int width, int height) 
          {
@@ -84,7 +62,7 @@ public class ApplicationSerializationProgress extends PopupPanel
       });
    }
    
-   private boolean wasHidden_ = false;
+   // Boilerplate ----
    
    public interface Styles extends CssResource
    {

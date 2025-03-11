@@ -162,6 +162,15 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String backingUpRSessionMessage();
 
     /**
+     * Translated "Restoring R session...".
+     *
+     * @return translated "Restoring R session..."
+     */
+    @DefaultMessage("Restoring R session...")
+    @Key("restoringRSessionMessage")
+    String restoringRSessionMessage();
+    
+    /**
      * Translated "Switch R Version".
      *
      * @return translated "Switch R Version"

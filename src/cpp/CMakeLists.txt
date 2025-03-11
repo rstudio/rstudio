@@ -125,6 +125,9 @@ if(UNIX)
          message(STATUS "Mac OS X deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
       endif()
 
+      # Suppress warnings about C++17 extensions
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++17-extensions")
+
       # notify the user of our selection
       message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
 
