@@ -318,7 +318,10 @@ public class ApplicationWindow extends Composite
          @Override
          public void run()
          {
-            activeSerializationProgress_.showProgress();
+            if (activeSerializationProgress_ != null)
+            {
+               activeSerializationProgress_.showProgress();
+            }
          }
       };
       
@@ -327,7 +330,10 @@ public class ApplicationWindow extends Composite
          @Override
          public void run()
          {
-            activeSerializationProgress_.hide();
+            if (activeSerializationProgress_ != null)
+            {
+               activeSerializationProgress_.hide();
+            }
          }
       };
 
