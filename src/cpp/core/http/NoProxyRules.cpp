@@ -35,14 +35,10 @@ bool NoProxyRuleDomain::match(const std::string& address,
                               const std::string& port) const
 {
    // Check if the address is within the domain
-   return boost::algorithm::ends_with(address, "." + domain_) ||
-          address == domain_;
+   return boost::algorithm::ends_with("." + address, domain_);
 }
 
-std::string NoProxyRuleDomain::toString() const
-{
-   return "." + domain_;
-}
+std::string NoProxyRuleDomain::toString() const { return domain_; }
 
 bool NoProxyRuleWildcard::match(const std::string& address,
                                 const std::string& port) const
@@ -51,10 +47,7 @@ bool NoProxyRuleWildcard::match(const std::string& address,
    return true;
 }
 
-std::string NoProxyRuleWildcard::toString() const
-{
-   return "*";
-}
+std::string NoProxyRuleWildcard::toString() const { return "*"; }
 
 NoProxyRuleAddress::NoProxyRuleAddress(const std::string& address,
                                        const std::string& port)
@@ -201,8 +194,8 @@ std::unique_ptr<NoProxyRule> createNoProxyRule(const std::string& rule)
    {
       return std::unique_ptr<NoProxyRule>(new NoProxyRuleWildcard());
    }
-
-   boost::regex domainRegex("^\\.[a-zA-Z0-9\\-]+\\.[a-zA-Z0-9\\-]+$");
+   // Matches a top-level domain, domain, or subdomain that starts with a "."
+   boost::regex domainRegex(R"(^\.[-a-zA-Z0-9.]+$)");
    if (boost::regex_match(rule, domainRegex))
    {
       return std::unique_ptr<NoProxyRuleDomain>(new NoProxyRuleDomain(rule));
@@ -217,8 +210,10 @@ std::unique_ptr<NoProxyRule> createNoProxyRule(const std::string& rule)
 
    std::vector<std::string> parts;
    boost::split(parts, rule, boost::is_any_of(":"));
-   if(parts.size() == 2) {
-      return std::unique_ptr<NoProxyRuleAddress>(new NoProxyRuleAddress(parts[0], parts[1]));
+   if (parts.size() == 2)
+   {
+      return std::unique_ptr<NoProxyRuleAddress>(
+          new NoProxyRuleAddress(parts[0], parts[1]));
    }
 
    return std::unique_ptr<NoProxyRuleAddress>(new NoProxyRuleAddress(rule));
