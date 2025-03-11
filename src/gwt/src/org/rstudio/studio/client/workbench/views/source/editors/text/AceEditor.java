@@ -33,6 +33,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
@@ -488,7 +489,7 @@ public class AceEditor implements DocDisplay,
             setColorPreview(event.getValue());
          }
       });
-
+      
       events_.addHandler(
             AceEditorCommandEvent.TYPE,
             event ->
