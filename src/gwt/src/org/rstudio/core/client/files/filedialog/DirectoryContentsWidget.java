@@ -129,7 +129,6 @@ public class DirectoryContentsWidget extends Composite
       };
       
       table_.getElement().getStyle().setBackgroundColor("white");
-      table_.getElement().setTabIndex(0);
       table_.setSize("500px", "300px");
       
       table_.addDomHandler(new KeyDownHandler()
@@ -303,19 +302,12 @@ public class DirectoryContentsWidget extends Composite
    
    public void focus()
    {
-      table_.getElement().focus();
+      table_.setFocus(true);
    }
 
    public void setFocus(boolean focus)
    {
-      if (focus)
-      {
-         table_.getElement().focus();
-      }
-      else
-      {
-         table_.getElement().blur();
-      }
+      table_.setFocus(focus);
    }
    
    

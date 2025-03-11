@@ -183,6 +183,10 @@ public class ConsoleInterpreterVersion
       Image downArrow = new Image(new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
       downArrow.getElement().addClassName("rstudio-themes-inverts");
       downArrow.addStyleName(RES.styles().iconDownArrow());
+      
+      // this control is not operable via keyboard or screen reader, so for now we'll just hide it
+      // from screen readers altogether instead of having an unlabeled image
+      downArrow.setAltText("");
       panel.add(downArrow);
       
       return panel;

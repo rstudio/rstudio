@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+#
+# install-copilot-language-server
+#
+# Copyright (C) 2025 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing Copilot Language Server"
+
+# version to download
+COPILOT_VERSION="1.280.0"
+
+# determine platform and architecture
+PLATFORM="$(uname)-$(getconf LONG_BIT)"
+if [ "$(arch)" == "arm64" ] || [ "$(arch)" == "aarch64" ]; then
+  ARCH="arm64"
+else
+  ARCH="x64"
+fi
+
+case "${PLATFORM}" in
+
+"Darwin-64")
+  OS="darwin"
+  ;;
+
+"Linux-64")
+  OS="linux"
+  ;;
+
+*)
+  echo "Copilot binaries not available for platform '${PLATFORM}'."
+  exit 0
+  ;;
+
+esac
+
+# test if we already have it installed
+COPILOT_SUBDIR="copilot-language-server"
+COPILOT_BIN="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server"
+if test -f "${COPILOT_BIN}"; then
+  INSTALLED_COPILOT_VERSION=$(${COPILOT_BIN} --version)
+  if [ "$INSTALLED_COPILOT_VERSION" == "$COPILOT_VERSION" ]; then
+    if [ "${OS}" != "darwin" ]; then
+      echo "Copilot language server ${COPILOT_VERSION} already installed"
+      exit 0
+    else
+      # on macOS, make sure we also have the x64 binary
+      COPILOT_BIN_X64="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server-x64"
+      if test -f "${COPILOT_BIN_X64}"; then
+        INSTALLED_COPILOT_VERSION_X64=$(${COPILOT_BIN_X64} --version)
+        if [ "$INSTALLED_COPILOT_VERSION_X64" == "$COPILOT_VERSION" ]; then
+          echo "Copilot language server ${COPILOT_VERSION} already installed"
+          exit 0
+        fi
+      fi
+    fi
+  fi
+fi
+
+# move to tools root
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+cd "${RSTUDIO_TOOLS_ROOT}"
+
+# reset Copilot subdirectory
+rm -rf "${COPILOT_SUBDIR}"
+mkdir -p "${COPILOT_SUBDIR}"
+pushd "${COPILOT_SUBDIR}"
+
+# download and extract copilot-language-server binary
+COPILOT_URL_BASE="${RSTUDIO_BUILDTOOLS}/copilot-language-server/${COPILOT_VERSION}"
+
+if [ "${OS}" == "darwin" ]; then
+  # macOS: download and extract x64 and arm64 binaries (adding -x64 suffix to x64 binary)
+  FILE="copilot-language-server-${OS}-x64-${COPILOT_VERSION}.zip"
+  echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
+  download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
+  extract "${FILE}"
+  rm -f "${FILE}"
+  mv ./copilot-language-server ./copilot-language-server-x64
+
+  FILE="copilot-language-server-${OS}-arm64-${COPILOT_VERSION}.zip"
+  echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
+  download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
+  extract "${FILE}"
+  rm -f "${FILE}"
+  
+else
+  # Linux: download and extract binary matching current architecture
+  FILE="copilot-language-server-${OS}-${ARCH}-${COPILOT_VERSION}.zip"
+  echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
+  download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
+  extract "${FILE}"
+  rm -f "${FILE}"
+fi

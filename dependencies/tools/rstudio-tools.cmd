@@ -60,18 +60,32 @@ goto :eof
 ::
 :find-project-root
 
+if "!DOCKER_IMAGE_BUILD!" == "1" (
+  echo -- Building Docker image
+  goto :eof
+)
+
 setlocal EnableDelayedExpansion
 set OWD=%CD%
 
 :find-project-root-impl
 
-if exist rstudio.Rproj (
-  endlocal & set "RSTUDIO_PROJECT_ROOT=%CD%"
-  goto :eof
+if "!CWD!" == "%CD%" (
+  echo -- ERROR: Could not find project root directory.
+  exit /b 1
 )
 
+if exist rstudio.Rproj goto find-project-root-done
+
+set "CWD=%CD%"
 cd ..
 goto find-project-root-impl
+
+:find-project-root-done:
+
+echo -- Using project root: %CD%
+endlocal & set "RSTUDIO_PROJECT_ROOT=%CD%"
+goto :eof
 
 
 ::

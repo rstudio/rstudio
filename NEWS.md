@@ -13,9 +13,8 @@
 - RStudio will now preserve unknown fields in `.Rproj` files that are added by future versions of RStudio. (#15524)
 - RStudio now sends an interrupt git processes when stopped via "Stop" during a git commit, rather than just terminating the processes. (#6471)
 - RStudio now properly displays R Markdown render errors with newer versions of the `rmarkdown` and `rlang` packages. (#15579)
-
-#### Posit Workbench
 - An SELinux policy module is now available, allowing Workbench to run when enforcement is enabled. (#4937, rstudio-pro/#4749)
+- Migrated the Posit Workbench Admin Guide Hardening: Set Up SSL content into the Access and Security: Secure Sockets (SSL) topic to promote content discovery and single source of truth. (rstudio-pro#6098)
 
 ### Fixed
 #### RStudio
@@ -38,14 +37,18 @@
 - Fixed an issue where locator points were not drawn on click. (#10025, #11103)
 - Fixed an issue where RStudio would crash when using the MySQL ODBC Connector on Microsoft Windows. (#15674)
 - Fixed an issue where autocompletion of R6 object names could fail with R6 2.6.0. (#15706)
+- Fixed a WCAG 1.1.1 violation (unlabeled image in the Console toolbar) by marking it as cosmetic. [Accessibility] (#15757)
+- Fixed Material theme's colors for selected word or text highlighting so they are more visible. [Accessibility] (#15753)
 - Fixed an issue where .bib files with extra commas could be treated as binary files on RHEL9. (rstudio-pro/7521)
 - Update NO_PROXY domain filter to be less restrictive and allow for expressions like `.local` and `.sub.example.local` (#15607)
+- Fixed an issue where documents could open very slowly when many tabs were already open. (#15767)
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
+- Fixed an issue where unopened VSCode and Positron sessions wouldn't timeout when `session-timeout-kill-hours` was set and SSL was enabled. (rstudio-pro#7195)
 
 ### Dependencies
-- Update Electron to version 34.3.0. (#15450)
+- Update Electron to version 34.3.1. (#15450)
 - Update Quarto to version 1.6.42. (#15460)
 
 ### Deprecated / Removed

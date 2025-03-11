@@ -45,11 +45,11 @@
 }
 
 .ace_gutter-active-line {
-  background-color: #263238
+  background-color: #353637
 }
 
 .ace_marker-layer .ace_selected-word {
-  border: 1px solid #263238
+  border: 1px solid rgba(90, 100, 126, 0.88)
 }
 
 .ace_invisible {

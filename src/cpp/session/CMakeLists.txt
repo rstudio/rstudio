@@ -34,6 +34,7 @@ if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
    set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-27")
    set(RSTUDIO_DEPENDENCIES_QUARTO_DIR       "${RSTUDIO_DEPENDENCIES_DIR}/common/quarto")
+   set(RSTUDIO_DEPENDENCIES_COPILOT_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/copilot-language-server")
 else()
 
    # indirection to help build machine find these libraries?
@@ -55,6 +56,11 @@ else()
       set(RSTUDIO_DEPENDENCIES_QUARTO_DIR "${RSTUDIO_DEPENDENCIES_DIR}/quarto")
    endif()
 
+   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/copilot-language-server")
+      set(RSTUDIO_DEPENDENCIES_COPILOT_DIR "${RSTUDIO_TOOLS_ROOT}/copilot-language-server")
+   else()
+      set(RSTUDIO_DEPENDENCIES_COPILOT_DIR "${RSTUDIO_DEPENDENCIES_DIR}/copilot-language-server")
+   endif()
 endif()
 
 
@@ -74,11 +80,17 @@ endif()
 foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
             RSTUDIO_DEPENDENCIES_MATHJAX_DIR
             RSTUDIO_DEPENDENCIES_PANDOC_DIR
-            RSTUDIO_DEPENDENCIES_QUARTO_DIR)
+            RSTUDIO_DEPENDENCIES_QUARTO_DIR
+            RSTUDIO_DEPENDENCIES_COPILOT_DIR)
 
  
    # skip quarto if not enabled
    if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_QUARTO_DIR" AND NOT QUARTO_ENABLED)
+      continue()
+   endif()
+
+   # skip Copilot if not enabled
+   if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_COPILOT_DIR" AND NOT COPILOT_ENABLED)
       continue()
    endif()
 
@@ -725,26 +737,11 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    if(QUARTO_ENABLED)
       # install some quarto folders into Resources, as needed
       if(APPLE)
-         if (RSTUDIO_ELECTRON)
-            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}" 
-                  DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
-                  USE_SOURCE_PERMISSIONS
-                  PATTERN ".gitignore"
-                  EXCLUDE)
-         else()
-            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
-                  DESTINATION "${RSTUDIO_INSTALL_BIN}"
-                  USE_SOURCE_PERMISSIONS
-                  PATTERN "*/share"
-                  EXCLUDE
-                  PATTERN ".gitignore"
-                  EXCLUDE)
-            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
-                  DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/quarto"
-                  USE_SOURCE_PERMISSIONS
-                  PATTERN ".gitignore"
-                  EXCLUDE)
-         endif()
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}" 
+               DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
+               USE_SOURCE_PERMISSIONS
+               PATTERN ".gitignore"
+               EXCLUDE)
       else()
          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
                DESTINATION "${RSTUDIO_INSTALL_BIN}"
@@ -756,6 +753,19 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"
               DESTINATION "${RSTUDIO_INSTALL_BIN}/pandoc"
               USE_SOURCE_PERMISSIONS)
+   endif()
+
+   # install Copilot Language Server
+   if(COPILOT_ENABLED)
+      if(APPLE)
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
+                 DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
+                 USE_SOURCE_PERMISSIONS)
+      else()
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
+               DESTINATION "${RSTUDIO_INSTALL_BIN}"
+               USE_SOURCE_PERMISSIONS)
+      endif()
    endif()
 
    # install embedded packages
