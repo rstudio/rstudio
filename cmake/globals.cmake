@@ -230,9 +230,6 @@ set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
 # node version used for building product components
 set(RSTUDIO_NODE_VERSION "22.13.1" CACHE INTERNAL "Node version for building")
 
-# node version installed with the product
-set(RSTUDIO_INSTALLED_NODE_VERSION "20.15.1" CACHE INTERNAL "Node version installed with product")
-
 # Check if we're running on Amazon Linux 2
 set(IS_AL2 FALSE)
 if(LINUX AND OS_RELEASE_PRETTY_NAME STREQUAL "Amazon Linux 2")
@@ -317,15 +314,6 @@ if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
 endif()
 
 message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
-
-# path to node (so we can find it in debug builds)
-if(WIN32)
-   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-patched/node.exe")
-else()
-   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-patched/bin/node")
-endif()
-
-set(RSTUDIO_NODE_PATH "${RSTUDIO_NODE_PATH}" CACHE INTERNAL "Path to bundled node binary")
 
 # special install directories for apple desktop
 if (APPLE)

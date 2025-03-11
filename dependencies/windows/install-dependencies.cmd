@@ -132,14 +132,6 @@ set NODEBUILD_FOLDER=node\%NODEBUILD_VERSION%
 set NODEBUILD_OUTPUT=node
 
 
-set NODEBUNDLE_VERSION=%RSTUDIO_INSTALLED_NODE_VERSION%
-set NODEBUNDLE_LABEL=node (%NODEBUNDLE_VERSION%; bundled)
-set NODEBUNDLE_FILE=node-v%NODEBUNDLE_VERSION%-win-x64
-set NODEBUNDLE_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUNDLE_VERSION%/%NODEBUNDLE_FILE%.zip
-set NODEBUNDLE_FOLDER=node\%NODEBUNDLE_VERSION%-patched
-set NODEBUNDLE_OUTPUT=node
-
-
 :: Install dependencies within 'common' first.
 cd ..\common
 
@@ -179,15 +171,6 @@ if exist pandoc\pandoc-%PANDOC_VERSION% (
 if exist node\%NODEBUILD_FILE% (
   rmdir /s /q node\%NODEBUILD_VERSION%
   move node\%NODEBUILD_FILE% node\%NODEBUILD_VERSION%
-)
-
-%RUN% install NODEBUNDLE
-if exist node\%NODEBUNDLE_FILE% (
-  rmdir /s /q node\%NODEBUNDLE_VERSION%-patched
-  mkdir node\%NODEBUNDLE_VERSION%-patched
-  move node\%NODEBUNDLE_FILE%\node.exe node\%NODEBUNDLE_VERSION%-patched
-  move node\%NODEBUNDLE_FILE%\LICENSE node\%NODEBUNDLE_VERSION%-patched
-  rmdir /s /q node\%NODEBUNDLE_FILE%
 )
 
 pushd node\%NODEBUILD_VERSION%

@@ -6,8 +6,7 @@
 # (rstudio-buildtools) S3 bucket. Presumes you've already got AWS command line
 # tools (awscli) installed, and configured with a valid AWS account.
 
-# FYI: The node.js version used for building is set by RSTUDIO_NODE_VERSION and the version
-# installed with the RStudio IDE by RSTUDIO_INSTALLED_NODE_VERSION.
+# The node.js version used for building is set by RSTUDIO_NODE_VERSION.
 
 # Modify to set the node.js version to upload
 NODE_VERSION="v22.13.1"
