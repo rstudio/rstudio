@@ -13,60 +13,58 @@
  *
  */
 
+#include <core/system/Container.hpp>
 
- #include <core/system/Container.hpp>
+#include <core/Log.hpp>
+#include <core/system/Environment.hpp>
 
- #include <core/Log.hpp>
- #include <core/system/Environment.hpp>
- 
- #include <shared_core/FilePath.hpp>
- 
- using namespace rstudio::core;
- 
- namespace rstudio::core::system::container {
- namespace {
- 
- // Files that indicate the presence of a container environment
- // /.dockerenv is used by Docker
- // /run/.containerenv is used by Podman
- // /.singularity.d is used by Singularity/Apptainer
- static constexpr std::array kFileIndicators{
-     "/.dockerenv", "/run/.containerenv", "/.singularity.d"};
- 
- // Environment variables that indicate the presence of a container environment
- // KUBERNETES_SERVICE_HOST is used by Kubernetes
- // APPTAINER_CONTAINER is used by Apptainer
- static constexpr std::array kEnvIndicators{
-     "KUBERNETES_SERVICE_HOST", "APPTAINER_CONTAINER"};
- 
- } // anonymous namespace
- 
- bool isRunningInContainer()
- {
-    bool isContainer = false;
-    for (const auto& file : kFileIndicators)
-    {
-       if (const auto path = FilePath(file); path.exists())
-       {
-          LOG_DEBUG_MESSAGE("Detected container environment using file: " +
-                            path.getAbsolutePath());
-          isContainer = true;
-       }
-    }
- 
-    for (const auto& env : kEnvIndicators)
-    {
-       if (!system::getenv(env).empty())
-       {
-          LOG_DEBUG_MESSAGE(
-              "Detected container environment using environment variable: " +
-              std::string(env));
-          isContainer = true;
-       }
-    }
- 
-    return isContainer;
- }
- 
- } // namespace rstudio::core::system::container
- 
+#include <shared_core/FilePath.hpp>
+
+using namespace rstudio::core;
+
+namespace rstudio::core::system::container {
+namespace {
+
+// Files that indicate the presence of a container environment
+// /.dockerenv is used by Docker
+// /run/.containerenv is used by Podman
+// /.singularity.d is used by Singularity/Apptainer
+static constexpr std::array kFileIndicators{
+    "/.dockerenv", "/run/.containerenv", "/.singularity.d"};
+
+// Environment variables that indicate the presence of a container environment
+// KUBERNETES_SERVICE_HOST is used by Kubernetes
+// APPTAINER_CONTAINER is used by Apptainer
+static constexpr std::array kEnvIndicators{"KUBERNETES_SERVICE_HOST",
+                                           "APPTAINER_CONTAINER"};
+
+} // anonymous namespace
+
+bool isRunningInContainer()
+{
+   bool isContainer = false;
+   for (const auto& file : kFileIndicators)
+   {
+      if (const auto path = FilePath(file); path.exists())
+      {
+         LOG_DEBUG_MESSAGE("Detected container environment using file: " +
+                           path.getAbsolutePath());
+         isContainer = true;
+      }
+   }
+
+   for (const auto& env : kEnvIndicators)
+   {
+      if (!system::getenv(env).empty())
+      {
+         LOG_DEBUG_MESSAGE(
+             "Detected container environment using environment variable: " +
+             std::string(env));
+         isContainer = true;
+      }
+   }
+
+   return isContainer;
+}
+
+} // namespace rstudio::core::system::container
