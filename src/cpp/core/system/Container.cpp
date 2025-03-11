@@ -29,14 +29,14 @@ namespace {
 // /.dockerenv is used by Docker
 // /run/.containerenv is used by Podman
 // /.singularity.d is used by Singularity/Apptainer
-static constexpr std::array kFileIndicators{
-    "/.dockerenv", "/run/.containerenv", "/.singularity.d"};
+static constexpr const char* kFileIndicators[] = {
+   "/.dockerenv", "/run/.containerenv", "/.singularity.d"};
 
 // Environment variables that indicate the presence of a container environment
 // KUBERNETES_SERVICE_HOST is used by Kubernetes
 // APPTAINER_CONTAINER is used by Apptainer
-static constexpr std::array kEnvIndicators{"KUBERNETES_SERVICE_HOST",
-                                           "APPTAINER_CONTAINER"};
+static constexpr const char* kEnvIndicators[] = {
+   "KUBERNETES_SERVICE_HOST", "APPTAINER_CONTAINER"};
 
 } // anonymous namespace
 
