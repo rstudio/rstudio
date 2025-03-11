@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.DragDropReceiver;
 import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
@@ -119,6 +120,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 
 import elemental2.dom.ClipboardEvent;
+import elemental2.dom.DataTransfer;
 import elemental2.dom.FileList;
 import jsinterop.base.Js;
 
@@ -150,6 +152,84 @@ public class AceEditorWidget extends Composite
       addEventListener(getElement(), "keypress", capturingHandlers_);
 
       addStyleName("loading");
+      
+      dragDropReceiver_ = new DragDropReceiver(this)
+      {
+         @Override
+         public void onDragOver(NativeEvent event)
+         {
+         }
+
+         @Override
+         public void onDragLeave(NativeEvent event)
+         {
+         }
+
+         @Override
+         public void onDrop(NativeEvent event)
+         {
+            DataTransfer dataTransfer = Js.cast(event.getDataTransfer());
+            elemental2.core.JsArray<String> types = dataTransfer.types;
+            if (types.length == 1 && types.getAt(0) == "Files")
+            {
+               FileList fileList = dataTransfer.files;
+               if (fileList.length == 0)
+                  return;
+
+               event.stopPropagation();
+               event.preventDefault();
+
+               JsVectorString allFiles = JsVectorString.createVector();
+               for (int i = 0; i < fileList.length; i++)
+               {
+                  File file = Js.cast(fileList.getAt(i));
+                  String path = StringUtil.nullCoalesce(file.path, file.name);
+                  allFiles.push(normalizeSlashes(path));
+               }
+
+               String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());
+               if (!StringUtil.equals(mode, "R"))
+               {
+                  String code = allFiles.join("\n");
+                  editor_.insert(code);
+                  return;
+               }
+
+               filesServer_.makeProjectRelative(allFiles.cast(), new ServerRequestCallback<JsArrayString>()
+               {
+                  @Override
+                  public void onResponseReceived(JsArrayString response)
+                  {
+                     JsVectorString allFiles = response.cast();
+
+                     if (allFiles.size() == 1)
+                     {
+                        String code = formatDesktopPath(allFiles.get(0));
+                        editor_.insert(code);
+                        return;
+                     }
+
+                     String currentLine =
+                           editor_.getSession().getLine(editor_.getCursorPosition().getRow());
+
+                     String indent = StringUtil.getIndent(currentLine);
+                     String tab = editor_.getSession().getTabString();
+                     for (int i = 0; i < allFiles.size(); i++)
+                        allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
+
+                     String code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
+                     editor_.insert(code);
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
+            }
+         }
+      };
 
       editor_ = AceEditorNative.createEditor(getElement());
       editor_.manageDefaultKeybindings();
@@ -1465,6 +1545,7 @@ public class AceEditorWidget extends Composite
    }
 
    private final AceEditorNative editor_;
+   private final DragDropReceiver dragDropReceiver_;
    private final HandlerManager capturingHandlers_;
    private final List<HandlerRegistration> aceEventHandlers_;
    private boolean initToEmptyString_ = true;
