@@ -304,40 +304,68 @@ public class ApplicationWindow extends Composite
                                          int delayMs,
                                          int timeoutMs)
    {
-      // hide any existing progress
-      hideSerializationProgress();
+      // reset / cancel a previous serialization operation
+      resetState();
 
       // create and show progress
       activeSerializationProgress_ =
                     new ApplicationSerializationProgress(msg, modal, delayMs,
                           !ariaLive_.isDisabled(AriaLiveService.SESSION_STATE));
-
-      // implement timeout for *this* serialization progress instance if
-      // requested (check to ensure the same instance because another
-      // serialization progress could occur in the meantime and we don't
-      // want to hide it)
-      if (timeoutMs > 0)
+      
+      // create timers for showing, hiding output
+      showTimer_ = new Timer()
       {
-         final ApplicationSerializationProgress timeoutSerializationProgress =
-                                                   activeSerializationProgress_;
-         new Timer() {
-            @Override
-            public void run()
+         @Override
+         public void run()
+         {
+            if (activeSerializationProgress_ != null)
             {
-               if (timeoutSerializationProgress == activeSerializationProgress_)
-                  hideSerializationProgress();
+               activeSerializationProgress_.showProgress();
             }
-         }.schedule(timeoutMs);
-      }
+         }
+      };
+      
+      hideTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (activeSerializationProgress_ != null)
+            {
+               activeSerializationProgress_.hide();
+            }
+         }
+      };
+
+      // start the timers
+      showTimer_.schedule(delayMs);
+      hideTimer_.schedule(timeoutMs);
    }
 
    @Override
    public void hideSerializationProgress()
    {
+      resetState();
+   }
+   
+   private void resetState()
+   {
       if (activeSerializationProgress_ != null)
       {
          activeSerializationProgress_.hide();
          activeSerializationProgress_ = null;
+      }
+      
+      if (showTimer_ != null)
+      {
+         showTimer_.cancel();
+         showTimer_ = null;
+      }
+      
+      if (hideTimer_ != null)
+      {
+         hideTimer_.cancel();
+         hideTimer_ = null;
       }
    }
 
@@ -353,6 +381,8 @@ public class ApplicationWindow extends Composite
 
    // active serialization progress message
    private ApplicationSerializationProgress activeSerializationProgress_;
+   private Timer showTimer_;
+   private Timer hideTimer_;
 
    private static final int COMPONENT_SPACING = 6;
    private Widget workbenchScreen_;
