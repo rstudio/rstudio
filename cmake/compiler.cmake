@@ -22,6 +22,9 @@ set(RSTUDIO_CMAKE_COMPILER_INCLUDED YES)
 # require position independent code for CMake targets
 set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 
+# use C++17
+set(CMAKE_CXX_STANDARD 17)
+
 # use clang on osx
 if(APPLE)
 
@@ -36,9 +39,6 @@ if(APPLE)
 endif()
 
 if(MSVC)
-
-  # use C++17
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 
   # keep some deprecated tools around
   add_definitions(-D_HAS_AUTO_PTR_ETC=1 -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS=1)
@@ -107,29 +107,14 @@ if(MSVC)
    add_definitions(-DR_LEGACY_RCOMPLEX)
 
 else()
-  # work around issue with boost 1_69 on Ubuntu 22.04 (Jammy)
-  # Note: does not need to be ported to main branch, as the newer boost
-  # used there doesn't need this workaround
-  if(EXISTS "/etc/os-release")
-    file(READ "/etc/os-release" OS_RELEASE)
-    string(FIND "${OS_RELEASE}" "UBUNTU_CODENAME=jammy" OS_RELEASE_JAMMY_POS)
-    if(OS_RELEASE_JAMMY_POS GREATER 0)
-      execute_process(
-        COMMAND getconf PTHREAD_STACK_MIN
-        OUTPUT_VARIABLE PTHREAD_STACK_MIN
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-      message(STATUS "Using PTHREAD_STACK_MIN: ${PTHREAD_STACK_MIN}")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPTHREAD_STACK_MIN=${PTHREAD_STACK_MIN}")
-    endif()
-  endif()
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
   # Use --as-needed when RSTUDIO_CONFIG_MONITOR_ONLY
   if(RSTUDIO_CONFIG_MONITOR_ONLY)
       foreach(TYPE EXE MODULE SHARED)
         set(CMAKE_${TYPE}_LINKER_FLAGS "${CMAKE_${TYPE}_LINKER_FLAGS} -Wl,--as-needed -Wl,--no-undefined -Wl,--no-allow-shlib-undefined")
       endforeach()
   endif()
+
 endif()
 
 if(NOT DEFINED WINDRES)
