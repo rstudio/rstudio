@@ -48,20 +48,6 @@ for %%X in (R.exe 7z.exe cmake.exe curl.exe) do (
   )
 )
 
-
-REM Get latest Quarto release version
-REM cd install-quarto
-REM for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
-REM cd ..
-
-REM Check for errors.
-if not "%QUARTO_VERSION%" == "%QUARTO_VERSION:ERROR=%" (
-	echo ERROR: Failed to determine Quarto version; cannot proceed.
-	echo Did you set the Powershell execution policy?
-	echo Try running 'Set-ExecutionPolicy Unrestricted'.
-	exit /b
-)
-
 set QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/quarto-%QUARTO_VERSION%-win.zip
 set QUARTO_FOLDER=quarto
 set QUARTO_OUTPUT=quarto
@@ -160,7 +146,28 @@ cd ..\common
 %RUN% install DICTIONARIES
 %RUN% install MATHJAX
 %RUN% install LIBCLANG
+
+
+REM Determine if we have the correct version of quarto.exe already installed
+if exist quarto\bin\quarto.exe (
+  for /f "usebackq" %%v in (`quarto\bin\quarto.exe --version`) do (
+    if not "%%v" == "%QUARTO_VERSION%" (
+      echo -- Quarto version mismatch: found %%v, expected %QUARTO_VERSION%
+      rmdir /s /q quarto
+    )
+  )
+)
 %RUN% install QUARTO
+
+REM Determine if we have the correct version of copilot-language-server.exe already installed
+if exist copilot-language-server\copilot-language-server.exe (
+  for /f "usebackq" %%v in (`copilot-language-server\copilot-language-server.exe --version`) do (
+    if not "%%v" == "%COPILOT_VERSION%" (
+      echo -- Copilot version mismatch: found %%v, expected %COPILOT_VERSION%
+      rmdir /s /q copilot-language-server
+    )
+  )
+)
 %RUN% install COPILOT
 
 %RUN% install PANDOC
