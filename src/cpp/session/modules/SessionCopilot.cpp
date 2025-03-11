@@ -257,6 +257,11 @@ projects::RProjectCopilotOptions s_copilotProjectOptions;
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
 
+int copilotLogLevel()
+{
+   return s_copilotLogLevel;
+}
+
 bool isIndexableFile(const FilePath& documentPath)
 {
    // Don't index hidden files.
@@ -310,55 +315,30 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
 
 FilePath copilotLanguageServerPath()
 {
-   // Check for admin-configured copilot path.
    FilePath copilotPath = session::options().copilotPath();
-   if (copilotPath.exists())
+   if (!copilotPath.exists() || !copilotPath.isDirectory())
    {
-      if (copilotPath.isDirectory())
-      {
+      ELOG("Copilot Language Server path '{}' does not exist or is not a directory.", copilotPath.getAbsolutePath());
+      return FilePath();
+   }
+
 #if defined(_WIN32)
-         auto suffix = "copilot-language-server.exe";
+   auto suffix = "copilot-language-server.exe";
 #elif defined(__APPLE__)
-         auto suffix = "copilot-language-server";
-         if (!isAppleSilicon())
-            suffix = "copilot-language-server-x64";
+   auto suffix = "copilot-language-server";
+   if (!isAppleSilicon())
+      suffix = "copilot-language-server-x64";
 #else // Linux
-         auto suffix = "copilot-language-server";
+   auto suffix = "copilot-language-server";
 #endif
-         FilePath candidatePath = copilotPath.completePath(suffix);
-         if (candidatePath.exists())
-         {
-            return candidatePath;
-         }
-      }
-   }
-
-   using namespace core::system::xdg;
-
-#ifdef _WIN32
-   // on Windows, the copilot agent was previously downloaded to a different location.
-   // Delete and remove the old location after sufficient time has passed, in a future
-   // RStudio release.
-   FilePath oldAgentLocation = oldUserCacheDir().completeChildPath("copilot");
-   FilePath newAgentLocation = userCacheDir().completeChildPath("copilot");
-   if (oldAgentLocation.exists() && !newAgentLocation.exists())
+   FilePath candidatePath = copilotPath.completePath(suffix);
+   if (candidatePath.exists())
    {
-      Error error = oldAgentLocation.copyDirectoryRecursive(newAgentLocation);
-      if (error)
-         LOG_ERROR(error);
+      return candidatePath;
    }
-#endif
 
-   // Otherwise, use a default user location.
-   for (auto&& suffix : { "copilot/dist/language-server.js", "copilot/dist/agent.js" })
-   {
-      FilePath agentPath = userCacheDir().completePath(suffix);
-      if (agentPath.exists())
-         return agentPath;
-   }
-   
-   // Fall back to default location.
-   return userCacheDir().completeChildPath("copilot/dist/language-server.js");
+   ELOG("Copilot Language Server executable not found at '{}'.", candidatePath.getAbsolutePath());
+   return FilePath();
 }
 
 bool isCopilotEnabled()
@@ -474,11 +454,6 @@ bool waitFor(F&& callback)
    }
 
    return false;
-}
-
-int copilotLogLevel()
-{
-   return s_copilotLogLevel;
 }
 
 void sendNotification(const std::string& method,
@@ -901,7 +876,7 @@ Error startAgent()
       FilePath copilotPath = copilotLanguageServerPath();
       environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
       options.environment = environment;
-
+      DLOG("Starting Copilot Language Server with helper script '{}'.", copilotHelper.getAbsolutePath());
       error = module_context::processSupervisor().runProgram(
                copilotHelper.getAbsolutePath(),
                {},
@@ -919,7 +894,7 @@ Error startAgent()
 
       std::vector<std::string> args;
       args.push_back("--stdio");
-
+      DLOG("Starting Copilot Language Server '{}'.", copilotHelper.getAbsolutePath());
       error = module_context::processSupervisor().runProgram(
                copilotPath.getAbsolutePath(),
                args,
