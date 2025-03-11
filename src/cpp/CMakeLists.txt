@@ -126,7 +126,7 @@ if(UNIX)
       endif()
 
       # Suppress warnings about C++17 extensions
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wc++17-extensions")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++17-extensions")
 
       # notify the user of our selection
       message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
