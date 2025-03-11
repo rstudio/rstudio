@@ -263,22 +263,6 @@ endif()
 
 message(STATUS "Quarto enabled: ${QUARTO_ENABLED}")
 
-# copilot language server support
-#
-#   Set COPILOT_ENABLED = TRUE to have RStudio bundle and use the Copilot language server (default)
-#   Set COPILOT_ENABLED = FALSE to not bundle the Copilot language server (and disable the feature)
-#
-if(NOT DEFINED COPILOT_ENABLED)
-   set(COPILOT_ENABLED TRUE CACHE INTERNAL "")
-endif()
-
-if(COPILOT_ENABLED)
-   add_definitions(-DCOPILOT_ENABLED)
-endif()
-
-message(STATUS "Copilot enabled: ${COPILOT_ENABLED}")
-
-
 # install freedesktop integration files if we are installing into /usr
 if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)
    if(${CMAKE_INSTALL_PREFIX} MATCHES "/usr/.*")

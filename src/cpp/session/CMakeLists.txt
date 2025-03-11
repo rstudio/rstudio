@@ -756,16 +756,14 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    endif()
 
    # install Copilot Language Server
-   if(COPILOT_ENABLED)
-      if(APPLE)
-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
-                 DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
-                 USE_SOURCE_PERMISSIONS)
-      else()
-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
-               DESTINATION "${RSTUDIO_INSTALL_BIN}"
-               USE_SOURCE_PERMISSIONS)
-      endif()
+   if(APPLE)
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
+              DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
+              USE_SOURCE_PERMISSIONS)
+   else()
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
+            DESTINATION "${RSTUDIO_INSTALL_BIN}"
+            USE_SOURCE_PERMISSIONS)
    endif()
 
    # install embedded packages

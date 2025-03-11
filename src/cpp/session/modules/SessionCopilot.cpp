@@ -315,11 +315,28 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
 
 FilePath copilotLanguageServerPath()
 {
-   FilePath copilotPath = session::options().copilotPath();
-   if (!copilotPath.exists() || !copilotPath.isDirectory())
+   FilePath copilotPath;
+   
+   // first check RSTUDIO_COPILOT_FOLDER environment variable; if used, must point at
+   // the folder containing the copilot-language-server executable, but not include the
+   // executable itself
+   std::string rstudioCopilot = core::system::getenv("RSTUDIO_COPILOT_FOLDER");
+   if (!rstudioCopilot.empty())
    {
-      ELOG("Copilot Language Server path '{}' does not exist or is not a directory.", copilotPath.getAbsolutePath());
-      return FilePath();
+      if (FilePath::exists(rstudioCopilot) && FilePath(rstudioCopilot).isDirectory())
+      {
+         copilotPath = FilePath(rstudioCopilot);
+      }
+   }
+   
+   if (copilotPath.isEmpty())
+   {
+      copilotPath = session::options().copilotPath();
+      if (!copilotPath.exists() || !copilotPath.isDirectory())
+      {
+         ELOG("Copilot Language Server path '{}' does not exist or is not a directory.", copilotPath.getAbsolutePath());
+         return FilePath();
+      }
    }
 
 #if defined(_WIN32)
@@ -343,8 +360,6 @@ FilePath copilotLanguageServerPath()
 
 bool isCopilotEnabled()
 {
-#ifdef COPILOT_ENABLED
-
    // Check administrator option
    if (!session::options().copilotEnabled())
    {
@@ -379,11 +394,6 @@ bool isCopilotEnabled()
    }
    
    return true;
-
-#else // RStudio built without Copilot support
-   s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
-   return false;
-#endif
 }
 
 bool isCopilotIndexingEnabled()
@@ -876,7 +886,6 @@ Error startAgent()
       FilePath copilotPath = copilotLanguageServerPath();
       environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
       options.environment = environment;
-      DLOG("Starting Copilot Language Server with helper script '{}'.", copilotHelper.getAbsolutePath());
       error = module_context::processSupervisor().runProgram(
                copilotHelper.getAbsolutePath(),
                {},
@@ -894,7 +903,6 @@ Error startAgent()
 
       std::vector<std::string> args;
       args.push_back("--stdio");
-      DLOG("Starting Copilot Language Server '{}'.", copilotHelper.getAbsolutePath());
       error = module_context::processSupervisor().runProgram(
                copilotPath.getAbsolutePath(),
                args,
