@@ -858,14 +858,16 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       // ensure that save command state is synchronized with desktop.
       boolean saveEnabled = getNextActiveEditor() != null &&
             getNextActiveEditor().isSaveCommandActive();
+      
       getSourceCommand(commands_.saveSourceDoc()).setEnabled(
             active,
             active && saveEnabled,
             saveEnabled,
             Desktop.isDesktop());
 
-      boolean saveAsEnabled =  getNextActiveEditor() != null &&
+      boolean saveAsEnabled = getNextActiveEditor() != null &&
             getNextActiveEditor().getSupportedCommands().contains(commands_.saveSourceDocAs());
+      
       getSourceCommand(commands_.saveSourceDocAs()).setEnabled(
             active,
             active && saveAsEnabled,
