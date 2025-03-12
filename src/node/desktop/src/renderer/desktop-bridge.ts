@@ -13,7 +13,7 @@
  *
  */
 
-import { ipcRenderer, OpenDialogReturnValue, SaveDialogReturnValue, webContents } from 'electron';
+import { ipcRenderer, OpenDialogReturnValue, SaveDialogReturnValue, webContents, webUtils } from 'electron';
 import { logString } from './logger-bridge';
 import { createAliasedPath, normalizeSeparators } from '../ui/utils';
 import { safeError } from '../core/err';
@@ -746,6 +746,10 @@ export function getDesktopBridge() {
     consoleLog: (output: string) => {
       ipcRenderer.send('desktop_console_log', output);
     },
+
+    getPathForFile: (file: any) => {
+      return webUtils.getPathForFile(file);
+    }
 
     // pro-only start
 

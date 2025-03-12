@@ -27,14 +27,18 @@ import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.elemental2.overlay.File;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -121,6 +125,7 @@ import com.google.inject.Inject;
 
 import elemental2.dom.ClipboardEvent;
 import elemental2.dom.DataTransfer;
+import elemental2.dom.File;
 import elemental2.dom.FileList;
 import jsinterop.base.Js;
 
@@ -133,6 +138,11 @@ public class AceEditorWidget extends Composite
                  EditEvent.Handler,
                  CanSetControlId
 {
+   private static enum DataTransferType
+   {
+      DROP, PASTE
+   }
+   
    public AceEditorWidget()
    {
       this(true);
@@ -168,67 +178,10 @@ public class AceEditorWidget extends Composite
          @Override
          public void onDrop(NativeEvent event)
          {
-            DataTransfer dataTransfer = Js.cast(event.getDataTransfer());
-            elemental2.core.JsArray<String> types = dataTransfer.types;
-            if (types.length == 1 && types.getAt(0) == "Files")
-            {
-               FileList fileList = dataTransfer.files;
-               if (fileList.length == 0)
-                  return;
-
-               event.stopPropagation();
-               event.preventDefault();
-
-               JsVectorString allFiles = JsVectorString.createVector();
-               for (int i = 0; i < fileList.length; i++)
-               {
-                  File file = Js.cast(fileList.getAt(i));
-                  String path = StringUtil.nullCoalesce(file.path, file.name);
-                  allFiles.push(normalizeSlashes(path));
-               }
-
-               String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());
-               if (!StringUtil.equals(mode, "R"))
-               {
-                  String code = allFiles.join("\n");
-                  editor_.insert(code);
-                  return;
-               }
-
-               filesServer_.makeProjectRelative(allFiles.cast(), new ServerRequestCallback<JsArrayString>()
-               {
-                  @Override
-                  public void onResponseReceived(JsArrayString response)
-                  {
-                     JsVectorString allFiles = response.cast();
-
-                     if (allFiles.size() == 1)
-                     {
-                        String code = formatDesktopPath(allFiles.get(0));
-                        editor_.insert(code);
-                        return;
-                     }
-
-                     String currentLine =
-                           editor_.getSession().getLine(editor_.getCursorPosition().getRow());
-
-                     String indent = StringUtil.getIndent(currentLine);
-                     String tab = editor_.getSession().getTabString();
-                     for (int i = 0; i < allFiles.size(); i++)
-                        allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
-
-                     String code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
-                     editor_.insert(code);
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
-            }
+            DataTransfer data = Js.cast(event.getDataTransfer());
+            onDataTransfer(event, data, DataTransferType.DROP);
          }
+            
       };
 
       editor_ = AceEditorNative.createEditor(getElement());
@@ -507,65 +460,115 @@ public class AceEditorWidget extends Composite
    private void onDesktopPaste(NativeEvent event)
    {
       ClipboardEvent clipboardEvent = Js.cast(event);
-      elemental2.core.JsArray<String> types = clipboardEvent.clipboardData.types;
-      if (types.length == 1 && types.getAt(0) == "Files")
+      DataTransfer data = clipboardEvent.clipboardData;
+      onDataTransfer(event, data, DataTransferType.PASTE);
+   }
+   
+   private void onDataTransfer(NativeEvent event,
+                               DataTransfer data,
+                               DataTransferType type)
+   {
+      // Only handle single-file pastes
+      elemental2.core.JsArray<String> types = data.types;
+      if (types.length != 1)
+         return;
+      
+      if (!StringUtil.equals(types.getAt(0), "Files"))
+         return;
+      
+      event.stopPropagation();
+      event.preventDefault();
+      
+      FileList fileList = data.files;
+      if (fileList.length == 0)
+         return;
+      
+      JsVectorString allFiles = JsVectorString.createVector();
+      for (int i = 0; i < fileList.length; i++)
       {
-         FileList fileList = clipboardEvent.clipboardData.files;
-         if (fileList.length == 0)
-            return;
+         File file = Js.cast(fileList.getAt(i));
          
-         event.stopPropagation();
-         event.preventDefault();
-         
-         JsVectorString allFiles = JsVectorString.createVector();
-         for (int i = 0; i < fileList.length; i++)
+         String path;
+         if (Desktop.isDesktop())
          {
-            File file = Js.cast(fileList.getAt(i));
-            allFiles.push(normalizeSlashes(file.path));
+            path = normalizeSlashes(Desktop.getFrame().getPathForFile(file));
+         }
+         else
+         {
+            path = file.name;
          }
          
-         String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());
-         if (!StringUtil.equals(mode, "R"))
-         {
-            String code = allFiles.join("\n");
-            editor_.insert(code);
-            return;
-         }
-         
-         filesServer_.makeProjectRelative(allFiles.cast(), new ServerRequestCallback<JsArrayString>()
+         allFiles.push(path);
+      }
+      
+      // If we're performing a drop, then we'll try to open any text files
+      // that have been provided on drop. Non-text files (e.g. images) will
+      // get the "regular" paste behavior, where we just write the path of
+      // that file into the editor as a string.
+      if (type == DataTransferType.DROP)
+      {
+         allFiles = allFiles.filter(new Predicate<String>()
          {
             @Override
-            public void onResponseReceived(JsArrayString response)
+            public boolean test(String file)
             {
-               JsVectorString allFiles = response.cast();
-               
-               if (allFiles.size() == 1)
+               FileSystemItem item = FileSystemItem.createFile(file);
+               FileType fileType = fileRegistry_.getTypeForFile(item);
+               if (fileType != null && fileType instanceof TextFileType)
                {
-                  String code = formatDesktopPath(allFiles.get(0));
-                  editor_.insert(code);
-                  return;
+                  fileRegistry_.editFile(item);
+                  return false;
                }
-               
-               String currentLine =
-                     editor_.getSession().getLine(editor_.getCursorPosition().getRow());
 
-               String indent = StringUtil.getIndent(currentLine);
-               String tab = editor_.getSession().getTabString();
-               for (int i = 0; i < allFiles.size(); i++)
-                  allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
-
-               String code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
-               editor_.insert(code);
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
+               return true;
             }
          });
-         
       }
+      
+      if (allFiles.isEmpty())
+         return;
+
+      String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());
+      if (!StringUtil.equals(mode, "R"))
+      {
+         String code = allFiles.join("\n");
+         editor_.insert(code);
+         return;
+      }
+
+      filesServer_.makeProjectRelative(allFiles.cast(), new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString response)
+         {
+            JsVectorString allFiles = response.cast();
+
+            if (allFiles.size() == 1)
+            {
+               String code = formatDesktopPath(allFiles.get(0));
+               editor_.insert(code);
+               return;
+            }
+
+            String currentLine =
+                  editor_.getSession().getLine(editor_.getCursorPosition().getRow());
+
+            String indent = StringUtil.getIndent(currentLine);
+            String tab = editor_.getSession().getTabString();
+            for (int i = 0; i < allFiles.size(); i++)
+               allFiles.set(i, indent + tab + formatDesktopPath(allFiles.get(i)));
+
+            String code = "c(\n" + allFiles.join(",\n") + "\n" + indent + ")";
+            editor_.insert(code);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+
    }
 
    // When the 'keyBinding' field is initialized (the field holding all keyboard
@@ -658,11 +661,13 @@ public class AceEditorWidget extends Composite
    private void initialize(EventBus events,
                            UserPrefs uiPrefs,
                            AceThemes themes,
+                           FileTypeRegistry fileRegistry,
                            FilesServerOperations filesServer)
    {
       events_ = events;
       uiPrefs_ = uiPrefs;
       themes_ = themes;
+      fileRegistry_ = fileRegistry;
       filesServer_ = filesServer;
    }
 
@@ -1563,5 +1568,7 @@ public class AceEditorWidget extends Composite
    private EventBus events_;
    private UserPrefs uiPrefs_;
    private AceThemes themes_;
+   private FileTypeRegistry fileRegistry_;
    private FilesServerOperations filesServer_;
+   
 }
