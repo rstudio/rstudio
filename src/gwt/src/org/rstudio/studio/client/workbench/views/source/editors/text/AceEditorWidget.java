@@ -166,22 +166,11 @@ public class AceEditorWidget extends Composite
       dragDropReceiver_ = new DragDropReceiver(this)
       {
          @Override
-         public void onDragOver(NativeEvent event)
-         {
-         }
-
-         @Override
-         public void onDragLeave(NativeEvent event)
-         {
-         }
-
-         @Override
          public void onDrop(NativeEvent event)
          {
             DataTransfer data = Js.cast(event.getDataTransfer());
             onDataTransfer(event, data, DataTransferType.DROP);
          }
-            
       };
 
       editor_ = AceEditorNative.createEditor(getElement());
