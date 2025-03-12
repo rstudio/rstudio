@@ -163,16 +163,6 @@ public class AceEditorWidget extends Composite
 
       addStyleName("loading");
       
-      dragDropReceiver_ = new DragDropReceiver(this)
-      {
-         @Override
-         public void onDrop(NativeEvent event)
-         {
-            DataTransfer data = Js.cast(event.getDataTransfer());
-            onDataTransfer(event, data, DataTransferType.DROP);
-         }
-      };
-
       editor_ = AceEditorNative.createEditor(getElement());
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);
@@ -450,14 +440,7 @@ public class AceEditorWidget extends Composite
    {
       ClipboardEvent clipboardEvent = Js.cast(event);
       DataTransfer data = clipboardEvent.clipboardData;
-      onDataTransfer(event, data, DataTransferType.PASTE);
-   }
-   
-   private void onDataTransfer(NativeEvent event,
-                               DataTransfer data,
-                               DataTransferType type)
-   {
-      // Only handle single-file pastes
+      
       elemental2.core.JsArray<String> types = data.types;
       if (types.length != 1)
          return;
@@ -490,33 +473,6 @@ public class AceEditorWidget extends Composite
          allFiles.push(path);
       }
       
-      // If we're performing a drop, then we'll try to open any text files
-      // that have been provided on drop. Non-text files (e.g. images) will
-      // get the "regular" paste behavior, where we just write the path of
-      // that file into the editor as a string.
-      if (type == DataTransferType.DROP)
-      {
-         allFiles = allFiles.filter(new Predicate<String>()
-         {
-            @Override
-            public boolean test(String file)
-            {
-               FileSystemItem item = FileSystemItem.createFile(file);
-               FileType fileType = fileRegistry_.getTypeForFile(item);
-               if (fileType != null && fileType instanceof TextFileType)
-               {
-                  fileRegistry_.editFile(item);
-                  return false;
-               }
-
-               return true;
-            }
-         });
-      }
-      
-      if (allFiles.isEmpty())
-         return;
-
       String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());
       if (!StringUtil.equals(mode, "R"))
       {
@@ -557,7 +513,6 @@ public class AceEditorWidget extends Composite
             Debug.logError(error);
          }
       });
-
    }
 
    // When the 'keyBinding' field is initialized (the field holding all keyboard
@@ -1539,7 +1494,6 @@ public class AceEditorWidget extends Composite
    }
 
    private final AceEditorNative editor_;
-   private final DragDropReceiver dragDropReceiver_;
    private final HandlerManager capturingHandlers_;
    private final List<HandlerRegistration> aceEventHandlers_;
    private boolean initToEmptyString_ = true;
