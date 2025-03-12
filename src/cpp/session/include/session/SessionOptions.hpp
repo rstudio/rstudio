@@ -289,7 +289,6 @@ private:
    void resolvePandocPath(const core::FilePath& resourcePath, std::string* pPath);
    void resolveQuartoPath(const core::FilePath& resourcePath, std::string* pPath);
    void resolveCopilotPath(const core::FilePath& resourcePath, std::string* pPath);
-   void resolveNodePath(const core::FilePath& resourcePath, std::string* pPath);
    void resolveRsclangPath(const core::FilePath& resourcePath, std::string* pPath);
 
    void resolveOverlayOptions();

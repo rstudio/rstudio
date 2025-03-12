@@ -41,6 +41,7 @@
 - Fixed Material theme's colors for selected word or text highlighting so they are more visible. [Accessibility] (#15753)
 - Fixed an issue where .bib files with extra commas could be treated as binary files on RHEL9. (rstudio-pro/7521)
 - Update NO_PROXY domain filter to be less restrictive and allow for expressions like `.local` and `.sub.example.local` (#15607)
+- Fixed an issue where Copilot support on Apple Silicon Macs was running via Rosetta2 instead of natively. (#14156)
 - Fixed an issue where documents could open very slowly when many tabs were already open. (#15767)
 
 #### Posit Workbench
@@ -50,6 +51,8 @@
 ### Dependencies
 - Update Electron to version 34.3.1. (#15450)
 - Update Quarto to version 1.6.42. (#15460)
+- Copilot Language Server 1.283.0. (rstudio-pro#7450)
 
 ### Deprecated / Removed
 - No longer building RStudio Desktop or Desktop Pro for OpenSUSE 15, Ubuntu Focal, or RedHat 8. (rstudio-pro/#7445)
+- No longer bundling node.js with RStudio Desktop, Desktop Pro, or RStudio Server. (rstudio-pro#7450)

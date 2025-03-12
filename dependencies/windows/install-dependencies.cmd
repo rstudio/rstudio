@@ -20,7 +20,7 @@ set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
 set QUARTO_VERSION=1.6.42
-set COPILOT_VERSION=1.280.0
+set COPILOT_VERSION=1.283.0
 set SUMATRA_VERSION=3.1.2
 set WINPTY_VERSION=0.4.3-msys2-2.7.0
 set WINUTILS_VERSION=1.0
@@ -46,20 +46,6 @@ for %%X in (R.exe 7z.exe cmake.exe curl.exe) do (
     echo ERROR: %%X is not available on the PATH; cannot proceed.
     exit /b
   )
-)
-
-
-REM Get latest Quarto release version
-REM cd install-quarto
-REM for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
-REM cd ..
-
-REM Check for errors.
-if not "%QUARTO_VERSION%" == "%QUARTO_VERSION:ERROR=%" (
-	echo ERROR: Failed to determine Quarto version; cannot proceed.
-	echo Did you set the Powershell execution policy?
-	echo Try running 'Set-ExecutionPolicy Unrestricted'.
-	exit /b
 )
 
 set QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/quarto-%QUARTO_VERSION%-win.zip
@@ -146,21 +132,34 @@ set NODEBUILD_FOLDER=node\%NODEBUILD_VERSION%
 set NODEBUILD_OUTPUT=node
 
 
-set NODEBUNDLE_VERSION=%RSTUDIO_INSTALLED_NODE_VERSION%
-set NODEBUNDLE_LABEL=node (%NODEBUNDLE_VERSION%; bundled)
-set NODEBUNDLE_FILE=node-v%NODEBUNDLE_VERSION%-win-x64
-set NODEBUNDLE_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUNDLE_VERSION%/%NODEBUNDLE_FILE%.zip
-set NODEBUNDLE_FOLDER=node\%NODEBUNDLE_VERSION%-patched
-set NODEBUNDLE_OUTPUT=node
-
-
 :: Install dependencies within 'common' first.
 cd ..\common
 
 %RUN% install DICTIONARIES
 %RUN% install MATHJAX
 %RUN% install LIBCLANG
+
+
+REM Determine if we have the correct version of quarto.exe already installed
+if exist quarto\bin\quarto.exe (
+  for /f "usebackq" %%v in (`quarto\bin\quarto.exe --version`) do (
+    if not "%%v" == "%QUARTO_VERSION%" (
+      echo -- Quarto version mismatch: found %%v, expected %QUARTO_VERSION%
+      rmdir /s /q quarto
+    )
+  )
+)
 %RUN% install QUARTO
+
+REM Determine if we have the correct version of copilot-language-server.exe already installed
+if exist copilot-language-server\copilot-language-server.exe (
+  for /f "usebackq" %%v in (`copilot-language-server\copilot-language-server.exe --version`) do (
+    if not "%%v" == "%COPILOT_VERSION%" (
+      echo -- Copilot version mismatch: found %%v, expected %COPILOT_VERSION%
+      rmdir /s /q copilot-language-server
+    )
+  )
+)
 %RUN% install COPILOT
 
 %RUN% install PANDOC
@@ -172,15 +171,6 @@ if exist pandoc\pandoc-%PANDOC_VERSION% (
 if exist node\%NODEBUILD_FILE% (
   rmdir /s /q node\%NODEBUILD_VERSION%
   move node\%NODEBUILD_FILE% node\%NODEBUILD_VERSION%
-)
-
-%RUN% install NODEBUNDLE
-if exist node\%NODEBUNDLE_FILE% (
-  rmdir /s /q node\%NODEBUNDLE_VERSION%-patched
-  mkdir node\%NODEBUNDLE_VERSION%-patched
-  move node\%NODEBUNDLE_FILE%\node.exe node\%NODEBUNDLE_VERSION%-patched
-  move node\%NODEBUNDLE_FILE%\LICENSE node\%NODEBUNDLE_VERSION%-patched
-  rmdir /s /q node\%NODEBUNDLE_FILE%
 )
 
 pushd node\%NODEBUILD_VERSION%

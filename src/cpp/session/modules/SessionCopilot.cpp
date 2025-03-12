@@ -65,13 +65,6 @@
 # define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
 #endif
 
-#ifndef _WIN32
-# define kNodeExe "node"
-#else
-# define kNodeExe "node.exe"
-#endif
-
-#define kCopilotAgentDefaultCommitHash ("87038123804796ca7af20d1b71c3428d858a9124") // pragma: allowlist secret
 #define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
@@ -264,6 +257,11 @@ projects::RProjectCopilotOptions s_copilotProjectOptions;
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
 
+int copilotLogLevel()
+{
+   return s_copilotLogLevel;
+}
+
 bool isIndexableFile(const FilePath& documentPath)
 {
    // Don't index hidden files.
@@ -315,103 +313,49 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    return isIndexableFile(docPath);
 }
 
-FilePath copilotAgentPath()
+FilePath copilotLanguageServerPath()
 {
-   // Check for admin-configured copilot path.
-   FilePath copilotPath = session::options().copilotAgentPath();
-   if (copilotPath.exists())
+   FilePath copilotPath;
+   
+   // first check RSTUDIO_COPILOT_FOLDER environment variable; if used, must point at
+   // the folder containing the copilot-language-server executable, but not include the
+   // executable itself
+   std::string rstudioCopilot = core::system::getenv("RSTUDIO_COPILOT_FOLDER");
+   if (!rstudioCopilot.empty())
    {
-      if (copilotPath.isDirectory())
+      if (FilePath::exists(rstudioCopilot) && FilePath(rstudioCopilot).isDirectory())
       {
-         for (auto&& suffix : { "dist/language-server.js", "language-server.js", "dist/agent.js", "agent.js" })
-         {
-            FilePath candidatePath = copilotPath.completePath(suffix);
-            if (candidatePath.exists())
-            {
-               copilotPath = candidatePath;
-               break;
-            }
-         }
+         copilotPath = FilePath(rstudioCopilot);
       }
-      
-      return copilotPath;
    }
-
-   using namespace core::system::xdg;
-
-#ifdef _WIN32
-   // on Windows, the copilot agent was previously downloaded to a different location.
-   // Delete and remove the old location after sufficient time has passed, in a future
-   // RStudio release.
-   FilePath oldAgentLocation = oldUserCacheDir().completeChildPath("copilot");
-   FilePath newAgentLocation = userCacheDir().completeChildPath("copilot");
-   if (oldAgentLocation.exists() && !newAgentLocation.exists())
+   
+   if (copilotPath.isEmpty())
    {
-      Error error = oldAgentLocation.copyDirectoryRecursive(newAgentLocation);
-      if (error)
-         LOG_ERROR(error);
+      copilotPath = session::options().copilotPath();
+      if (!copilotPath.exists() || !copilotPath.isDirectory())
+      {
+         ELOG("Copilot Language Server path '{}' does not exist or is not a directory.", copilotPath.getAbsolutePath());
+         return FilePath();
+      }
    }
+
+#if defined(_WIN32)
+   auto suffix = "copilot-language-server.exe";
+#elif defined(__APPLE__)
+   auto suffix = "copilot-language-server";
+   if (!isAppleSilicon())
+      suffix = "copilot-language-server-x64";
+#else // Linux
+   auto suffix = "copilot-language-server";
 #endif
-
-   // Otherwise, use a default user location.
-   for (auto&& suffix : { "copilot/dist/language-server.js", "copilot/dist/agent.js" })
+   FilePath candidatePath = copilotPath.completePath(suffix);
+   if (candidatePath.exists())
    {
-      FilePath agentPath = userCacheDir().completePath(suffix);
-      if (agentPath.exists())
-         return agentPath;
+      return candidatePath;
    }
-   
-   // Fall back to default location.
-   return userCacheDir().completeChildPath("copilot/dist/language-server.js");
-}
 
-bool isCopilotAgentInstalled()
-{
-   return copilotAgentPath().exists();
-}
-
-std::string copilotAgentCommitHash()
-{
-   return r::options::getOption(
-            "rstudio.copilot.repositoryRef",
-            std::string(kCopilotAgentDefaultCommitHash),
-            false);
-}
-
-bool isCopilotAgentCurrent()
-{
-   Error error;
-   
-   // Compute path to the copilot 'root' directory.
-   FilePath versionPath = copilotAgentPath().getParent().getParent().completeChildPath("version.json");
-   if (!versionPath.exists())
-      return false;
-   
-   std::string versionContent;
-   error = core::readStringFromFile(versionPath, &versionContent);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   
-   json::Object versionJson;
-   error = versionJson.parse(versionContent);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   
-   std::string commitHash;
-   error = core::json::readObject(versionJson, "commit_hash", commitHash);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   
-   return commitHash == copilotAgentCommitHash();
+   ELOG("Copilot Language Server executable not found at '{}'.", candidatePath.getAbsolutePath());
+   return FilePath();
 }
 
 bool isCopilotEnabled()
@@ -420,13 +364,6 @@ bool isCopilotEnabled()
    if (!session::options().copilotEnabled())
    {
       s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
-      return false;
-   }
-   
-   // Check whether the agent is installed
-   if (!isCopilotAgentInstalled())
-   {
-      s_agentNotRunningReason = CopilotAgentNotRunningReason::NotInstalled;
       return false;
    }
    
@@ -527,67 +464,6 @@ bool waitFor(F&& callback)
    }
 
    return false;
-}
-
-Error findNode(FilePath* pNodePath,
-               core::system::Options* pOptions)
-{
-   // Allow user override, just in case.
-   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
-   if (userNodePath.exists())
-   {
-      *pNodePath = userNodePath;
-      return Success();
-   }
-
-   // Check for an admin-configured node path.
-   FilePath nodePath = session::options().nodePath();
-   if (!nodePath.isEmpty())
-   {
-      // Allow both directories containing a 'node' binary, and the path
-      // to a 'node' binary directly.
-      if (nodePath.isDirectory())
-      {
-         for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
-         {
-            FilePath nodeExePath = nodePath.completeChildPath(suffix);
-            if (nodeExePath.exists())
-            {
-               *pNodePath = nodeExePath;
-               return Success();
-            }
-         }
-
-         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-      else if (nodePath.isRegularFile())
-      {
-         *pNodePath = nodePath;
-         return Success();
-      }
-      else
-      {
-         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-   }
-
-   // Otherwise, use node from the PATH
-   // TODO: We'll need to bundle a version of node with RStudio Server.
-   // Quarto 1.4 will ship with 'deno', which will be able to run regular 'node' applications,
-   // so maybe we can use that?
-   return core::system::findProgramOnPath(kNodeExe, pNodePath);
-}
-
-int copilotLogLevel()
-{
-   return s_copilotLogLevel;
-}
-
-Error installCopilotAgent()
-{
-   return r::exec::RFunction(".rs.copilot.installCopilotAgent")
-         .addParam(copilotAgentPath().getParent().getAbsolutePath())
-         .call();
 }
 
 void sendNotification(const std::string& method,
@@ -977,15 +853,6 @@ Error startAgent()
    if (!certificatesFile.empty())
       environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
-   // For Desktop builds of RStudio, use the version of node embedded in Electron.
-   FilePath nodePath;
-   error = findNode(&nodePath, &environment);
-   if (error)
-      return error;
-   
-   if (!nodePath.exists())
-      return fileNotFoundError("node", ERROR_LOCATION);
-
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = &agent::onStarted;
@@ -1008,37 +875,37 @@ Error startAgent()
    options.detachProcess = true;
 #endif
 
-   // Run the Copilot agent. If RStudio has been configured with a custom
-   // Copilot agent script, use that; otherwise, just run the agent directly.
-   FilePath copilotAgentHelper = session::options().copilotAgentHelper();
-   if (!copilotAgentHelper.isEmpty())
+   // Run the Copilot Language Server. If RStudio has been configured with a custom
+   // Copilot script, use that; otherwise, just run the Copilot Language Server directly.
+   FilePath copilotHelper = session::options().copilotHelper();
+   if (!copilotHelper.isEmpty())
    {
-      if (!copilotAgentHelper.exists())
-         return fileNotFoundError(copilotAgentHelper, ERROR_LOCATION);
+      if (!copilotHelper.exists())
+         return fileNotFoundError(copilotHelper, ERROR_LOCATION);
       
-      FilePath agentPath = copilotAgentPath();
-      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_COPILOT_AGENT_PATH", agentPath.getAbsolutePath()));
+      FilePath copilotPath = copilotLanguageServerPath();
+      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
       options.environment = environment;
-
       error = module_context::processSupervisor().runProgram(
-               copilotAgentHelper.getAbsolutePath(),
+               copilotHelper.getAbsolutePath(),
                {},
                options,
                callbacks);
    }
    else
    {
-      FilePath agentPath = copilotAgentPath();
-      if (!agentPath.exists())
-         return fileNotFoundError(agentPath, ERROR_LOCATION);
+      FilePath copilotPath = copilotLanguageServerPath();
+      if (!copilotPath.exists())
+         return fileNotFoundError(copilotPath, ERROR_LOCATION);
 
-      options.workingDir = agentPath.getParent();
+      options.workingDir = copilotPath.getParent();
       options.environment = environment;
 
+      std::vector<std::string> args;
+      args.push_back("--stdio");
       error = module_context::processSupervisor().runProgram(
-               nodePath.getAbsolutePath(),
-               { agentPath.getAbsolutePath() },
+               copilotPath.getAbsolutePath(),
+               args,
                options,
                callbacks);
    }
@@ -1522,12 +1389,6 @@ SEXP rs_copilotVersion()
    return r::sexp::create(version, &protect);
 }
 
-SEXP rs_copilotAgentCommitHash()
-{
-   r::sexp::Protect protect;
-   return r::sexp::create(copilotAgentCommitHash(), &protect);
-}
-
 SEXP rs_copilotStopAgent()
 {
    // stop the copilot agent
@@ -1702,30 +1563,6 @@ Error copilotStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse* pResponse)
-{
-   json::Object responseJson;
-   responseJson["installed"] = isCopilotAgentInstalled();
-   responseJson["current"] = isCopilotAgentCurrent();
-   pResponse->setResult(responseJson);
-   return Success();
-}
-
-Error copilotInstallAgent(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
-{
-   Error installError = installCopilotAgent();
-
-   json::Object responseJson;
-   if (installError)
-      responseJson["error"] = installError.asString();
-   pResponse->setResult(responseJson);
-   
-   synchronize();
-   return Success();
-}
-
 } // end anonymous namespace
 
 
@@ -1764,7 +1601,6 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_copilotSendRequest);
    RS_REGISTER_CALL_METHOD(rs_copilotSetLogLevel);
    RS_REGISTER_CALL_METHOD(rs_copilotVersion);
-   RS_REGISTER_CALL_METHOD(rs_copilotAgentCommitHash);
    RS_REGISTER_CALL_METHOD(rs_copilotStopAgent);
 
    ExecBlock initBlock;
@@ -1774,8 +1610,6 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
-         (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
-         (bind(registerRpcMethod, "copilot_install_agent", copilotInstallAgent))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();

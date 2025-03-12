@@ -19,24 +19,15 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
 # ensure required environment variables
-if ! check_env_vars RSTUDIO_BUILDTOOLS RSTUDIO_NODE_VERSION RSTUDIO_INSTALLED_NODE_VERSION; then
+if ! check_env_vars RSTUDIO_BUILDTOOLS RSTUDIO_NODE_VERSION; then
 	exit 1
 fi
 
 function install-node() {
 
-  # We do some cleanup ("patching") of the node.js that we install with the IDE. For example, we
-	# delete some unused files to reduce the size and security footprint. To keep this separate
-	# from the node.js we use at build time, the "patched" version has "-patched" suffix on its
-	# folder.
-
 	# set up node variables common to scripts
 	export NODE_VERSION="${1}"
-	if [ "${2}" == "apply-patches" ]; then
-		export NODE_FOLDER="${NODE_VERSION}-patched"
-	else
-		export NODE_FOLDER="${NODE_VERSION}"
-	fi
+	export NODE_FOLDER="${NODE_VERSION}"
 	export NODE_ROOT="node"
 	export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
 	export NODE_BASE_URL="${RSTUDIO_BUILDTOOLS}/node/v${NODE_VERSION}/"
@@ -45,24 +36,12 @@ function install-node() {
 	# default location (so GWT build can easily find it), but also a
 	# separate M1 node install (for the Electron build to use)
 	if is-m1-mac; then
-		if [ "${2}" == "apply-patches" ]; then
-			export NODE_FOLDER="${NODE_VERSION}-arm64-patched"
-		else
-			export NODE_FOLDER="${NODE_VERSION}-arm64"
-		fi
+		export NODE_FOLDER="${NODE_VERSION}-arm64"
 		export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
 	fi
 
-	if [ "${2}" == "apply-patches" ]; then
-		./install-node reinstall
-		./patch-node
-	else
-		./install-node
-	fi
+	./install-node
 }
-
-# the version of node.js that gets installed with the product
-install-node ${RSTUDIO_INSTALLED_NODE_VERSION} apply-patches
 
 # the version we use for building product components
 install-node ${RSTUDIO_NODE_VERSION}

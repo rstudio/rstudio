@@ -649,7 +649,6 @@
    focusNextPane = "focusNextPane",
    focusPreviousPane = "focusPreviousPane",
    showAccessibilityHelp = "showAccessibilityHelp",
-   copilotInstallAgent = "copilotInstallAgent",
    copilotDiagnostics = "copilotDiagnostics",
    copilotSignIn = "copilotSignIn",
    copilotSignOut = "copilotSignOut",

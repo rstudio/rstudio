@@ -62,42 +62,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
     String copilotVerifyingInstallation();
 
     /**
-     * Translated "Installing..."
-     *
-     * @return translated "Installing..."
-     */
-    @DefaultMessage("Installing...")
-    @Key("copilotInstalling")
-    String copilotInstalling();
-
-    /**
-     * Translated "An error occurred while installing GitHub Copilot.\n\n{0}"
-     *
-     * @return translated "An error occurred while installing GitHub Copilot.\n\n{0}"
-     */
-    @DefaultMessage("An error occurred while installing GitHub Copilot.\n\n{0}")
-    @Key("copilotErrorInstalling")
-    String copilotErrorInstalling(String errorMessage);
-
-    /**
-     * Translated "GitHub Copilot: Install Agent"
-     *
-     * @return translated "GitHub Copilot: Install Agent"
-     */
-    @DefaultMessage("GitHub Copilot: Install Agent")
-    @Key("copilotInstallAgentDialogTitle")
-    String copilotInstallAgentDialogTitle();
-
-    /**
-     * Translated "GitHub Copilot agent successfully installed."
-     *
-     * @return translated "GitHub Copilot agent successfully installed."
-     */
-    @DefaultMessage("GitHub Copilot agent successfully installed.")
-    @Key("copilotInstallAgentSuccess")
-    String copilotInstallAgentSuccess();
-
-    /**
      * Translated "You are now signed in as ''{0}''."
      *
      * @return translated "You are now signed in as ''{0}''."
@@ -295,66 +259,4 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
     @Key("copilotUnknownErrorShort")
     String copilotUnknownErrorShort();
 
-    /**
-     * Translated "The GitHub Copilot agent is already installed. Would you like to re-install it?"
-     *
-     * @return translated "The GitHub Copilot agent is already installed. Would you like to re-install it?"
-     */
-    @DefaultMessage("The GitHub Copilot agent is already installed. Would you like to re-install it?")
-    @Key("copilotAlreadyInstalled")
-    String copilotAlreadyInstalled();
-
-    /**
-     * Translated "An updated version of the GitHub Copilot agent is available. Would you like to install it?"
-     *
-     * @return translated "An updated version of the GitHub Copilot agent is available. Would you like to install it?"
-     */
-    @DefaultMessage("An updated version of the GitHub Copilot agent is available. Would you like to install it?")
-    @Key("copilotOutOfDate")
-    String copilotOutOfDate();
-    
-    /**
-     * Translated "The GitHub Copilot agent is not currently installed. Would you like to install it?"
-     *
-     * @return translated "The GitHub Copilot agent is not currently installed. Would you like to install it?"
-     */
-    @DefaultMessage("The GitHub Copilot agent is not currently installed. Would you like to install it?")
-    @Key("copilotNotInstalled")
-    String copilotNotInstalled();
-
-    /**
-     * Translated "GitHub Copilot: Install Agent"
-     *
-     * @return translated "GitHub Copilot: Install Agent"
-     */
-    @DefaultMessage("GitHub Copilot: Install Agent")
-    @Key("copilotInstallAgent")
-    String copilotInstallAgent();
-
-    /**
-     * Translated "Install"
-     *
-     * @return translated "Install"
-     */
-    @DefaultMessage("Install")
-    @Key("copilotInstallButton")
-    String copilotInstallButton();
-
-    /**
-     * Translated "Cancel"
-     *
-     * @return translated "Cancel"
-     */
-    @DefaultMessage("Cancel")
-    @Key("copilotCancelButton")
-    String copilotCancelButton();
-
-    /**
-     * Translated "Terms of Service"
-     *
-     * @return translated "Terms of Service"
-     */
-    @DefaultMessage("Terms of Service")
-    @Key("copilotTermsOfService")
-    String copilotTermsOfService();
 }

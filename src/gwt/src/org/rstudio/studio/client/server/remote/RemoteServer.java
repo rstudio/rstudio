@@ -160,11 +160,9 @@ import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotVerifyInstalledResponse;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -690,21 +688,9 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyInstalledResponse> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
-   }
-   
-   @Override
    public void copilotDiagnostics(ServerRequestCallback<CopilotDiagnosticsResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "copilot_diagnostics", requestCallback);
-   }
-
-   @Override
-   public void copilotInstallAgent(ServerRequestCallback<CopilotInstallAgentResponse> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, "copilot_install_agent", requestCallback);
    }
    
    @Override

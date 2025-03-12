@@ -14,19 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.copilot;
 
-import java.util.List;
-
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.ModalDialogBase;
-import org.rstudio.core.client.widget.ModalDialogTracker;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -41,31 +36,22 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponseResult;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotVerifyInstalledResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotDiagnostics;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotDiagnosticsDialog;
-import org.rstudio.studio.client.workbench.copilot.ui.CopilotInstallDialog;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotSignInDialog;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -92,56 +78,6 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
       
       binder.bind(commands_, this);
       
-      // Detect attempts to modify the Copilot enabled preference through the
-      // command palette, and ensure that Copilot is installed when doing so.
-      prefs_.copilotEnabled().addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         boolean ignoreNextChange_ = false;
-         
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            if (ignoreNextChange_)
-            {
-               ignoreNextChange_ = false;
-               return;
-            }
-            
-            // Don't do anything if a Global Options or Project Options entry
-            // is being shown.
-            List<PopupPanel> modalDialogs = ModalDialogTracker.getModalDialogs();
-            for (PopupPanel modalDialog : modalDialogs)
-            {
-               Element el = modalDialog.getElement();
-               String id = el.getId();
-               if (id == ElementIds.getDialogGlobalPrefs())
-                  return;
-            }
-            
-            boolean enabled = prefs_.copilotEnabled().getValue();
-            if (enabled)
-            {
-               ensureAgentInstalled(new CommandWithArg<Boolean>()
-               {
-                  @Override
-                  public void execute(Boolean isInstalled)
-                  {
-                     if (!isInstalled)
-                     {
-                        // Avoid recursion.
-                        ignoreNextChange_ = true;
-                        
-                        // Eagerly change the preference here, so that we can
-                        // respond to changes in the agent status.
-                        prefs_.copilotEnabled().setGlobalValue(false);
-                        prefs_.writeUserPrefs((completed) -> {});
-                     }
-                  }
-               });
-            }
-         }
-      });
-    
       events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
       {
          @Override
@@ -181,126 +117,6 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
       return prefs_.copilotEnabled().getGlobalValue();
    }
    
-   public void ensureAgentInstalled(CommandWithArg<Boolean> callback)
-   {
-      String progressLabel = constants_.copilotVerifyingInstallation();
-      server_.copilotVerifyInstalled(
-            new DelayedProgressRequestCallback<CopilotVerifyInstalledResponse>(progressLabel)
-      {
-         @Override
-         protected void onSuccess(CopilotVerifyInstalledResponse response)
-         {
-            if (response.installed && response.current)
-            {
-               callback.execute(true);
-            }
-            else
-            {
-               installAgentWithPromptImpl(response.installed, response.current, callback);
-            }
-         }
-      });
-   }
-   
-   private void installAgentWithPrompt(CommandWithArg<Boolean> callback)
-   {
-      server_.copilotVerifyInstalled(new ServerRequestCallback<CopilotVerifyInstalledResponse>()
-      {
-         @Override
-         public void onResponseReceived(CopilotVerifyInstalledResponse response)
-         {
-            installAgentWithPromptImpl(response.installed, response.current, callback);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-            installAgentWithPromptImpl(false, false, callback);
-         }
-      });
-   }
-   
-   private void installAgentWithPromptImpl(boolean isAlreadyInstalled,
-                                           boolean isInstallationCurrent,
-                                           CommandWithArg<Boolean> callback)
-   {
-      CopilotInstallDialog dialog = new CopilotInstallDialog(isAlreadyInstalled, isInstallationCurrent);
-      
-      dialog.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            CommandWithArg<Boolean> wrappedCallback = (result) ->
-            {
-               dialog.closeDialog();
-               callback.execute(result);
-            };
-            
-            installAgent(
-                  dialog.getProgressIndicator(),
-                  wrappedCallback);
-         }
-      });
-      
-      dialog.addCancelHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            dialog.closeDialog();
-            callback.execute(false);
-         }
-      });
-      
-      dialog.showModal();
-   }
-   
-   private void installAgent(ProgressIndicator indicator,
-                             CommandWithArg<Boolean> callback)
-   {
-      indicator.onProgress(constants_.copilotInstalling());
-      server_.copilotInstallAgent(
-            new ServerRequestCallback<CopilotInstallAgentResponse>()
-            {
-               @Override
-               public void onResponseReceived(CopilotInstallAgentResponse response)
-               {
-                  indicator.onCompleted();
-                  
-                  String error = response.error;
-                  if (error != null)
-                  {
-                     display_.showErrorMessage(constants_.copilotErrorInstalling(error));
-                     callback.execute(false);
-                  }
-                  else
-                  {
-                     display_.showMessage(
-                           MessageDisplay.MSG_INFO,
-                           constants_.copilotInstallAgentDialogTitle(),
-                           constants_.copilotInstallAgentSuccess());
-                     callback.execute(true);
-                  }
-                  
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  indicator.onError(error.getUserMessage());
-                  Debug.logError(error);
-               }
-            });
-   }
-   
-   @Handler
-   public void onCopilotInstallAgent()
-   {
-      installAgentWithPrompt(installed -> {});
-   }
-   
    @Handler
    public void onCopilotDiagnostics()
    {
@@ -309,41 +125,31 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    
    public void onCopilotDiagnostics(Command onCompleted)
    {
-      ensureAgentInstalled((installed) ->
+      server_.copilotDiagnostics(new ServerRequestCallback<CopilotDiagnosticsResponse>()
       {
-         if (installed)
-         {
-            server_.copilotDiagnostics(new ServerRequestCallback<CopilotDiagnosticsResponse>()
-            {
-               
-               @Override
-               public void onResponseReceived(CopilotDiagnosticsResponse response)
-               {
-                  onCompleted.execute();
-                  
-                  if (response.error != null)
-                  {
-                     globalDisplay_.showErrorMessage(response.error.message);
-                  }
-                  else
-                  {
-                     CopilotDiagnostics diagnostics = response.result.cast();
-                     CopilotDiagnosticsDialog dialog = new CopilotDiagnosticsDialog(diagnostics.report);
-                     dialog.showModal();
-                  }
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  onCompleted.execute();
-                  Debug.logError(error);
-               }
-            });
-         }
-         else
+         
+         @Override
+         public void onResponseReceived(CopilotDiagnosticsResponse response)
          {
             onCompleted.execute();
+            
+            if (response.error != null)
+            {
+               globalDisplay_.showErrorMessage(response.error.message);
+            }
+            else
+            {
+               CopilotDiagnostics diagnostics = response.result.cast();
+               CopilotDiagnosticsDialog dialog = new CopilotDiagnosticsDialog(diagnostics.report);
+               dialog.showModal();
+            }
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            onCompleted.execute();
+            Debug.logError(error);
          }
       });
    }
@@ -351,24 +157,18 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    @Handler
    public void onCopilotSignIn()
    {
-      ensureAgentInstalled((installed) ->
+      onCopilotSignIn((response) ->
       {
-         if (installed)
+         if (response.error != null)
          {
-            onCopilotSignIn((response) ->
-            {
-               if (response.error != null)
-               {
-                  globalDisplay_.showErrorMessage(response.error.getEndUserMessage());
-               }
-               else
-               {
-                  globalDisplay_.showMessage(
-                        MessageDisplay.MSG_INFO,
-                        constants_.copilotSignInDialogTitle(),
-                        constants_.copilotSignedIn(response.result.user));
-               }
-            });
+            globalDisplay_.showErrorMessage(response.error.getEndUserMessage());
+         }
+         else
+         {
+            globalDisplay_.showMessage(
+                  MessageDisplay.MSG_INFO,
+                  constants_.copilotSignInDialogTitle(),
+                  constants_.copilotSignedIn(response.result.user));
          }
       });
    }
@@ -493,10 +293,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    @Handler
    public void onCopilotStatus()
    {
-      ensureAgentInstalled((installed) ->
-      {
-         onCopilotStatusImpl();
-      });
+      onCopilotStatusImpl();
    }
    
    private void onCopilotStatusImpl()

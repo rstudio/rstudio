@@ -743,7 +743,6 @@ public abstract class
    public abstract AppCommand showAccessibilityHelp();
    
    // Copilot
-   public abstract AppCommand copilotInstallAgent();
    public abstract AppCommand copilotDiagnostics();
    public abstract AppCommand copilotSignIn();
    public abstract AppCommand copilotSignOut();

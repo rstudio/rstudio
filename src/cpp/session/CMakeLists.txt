@@ -727,12 +727,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
-   # install node
-   install(
-      DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-patched/"
-      DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
-      USE_SOURCE_PERMISSIONS)
-
    # install quarto (or pandoc if quarto disabled)
    if(QUARTO_ENABLED)
       # install some quarto folders into Resources, as needed
@@ -756,16 +750,14 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    endif()
 
    # install Copilot Language Server
-   if(COPILOT_ENABLED)
-      if(APPLE)
-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
-                 DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
-                 USE_SOURCE_PERMISSIONS)
-      else()
-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
-               DESTINATION "${RSTUDIO_INSTALL_BIN}"
-               USE_SOURCE_PERMISSIONS)
-      endif()
+   if(APPLE)
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
+              DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
+              USE_SOURCE_PERMISSIONS)
+   else()
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
+            DESTINATION "${RSTUDIO_INSTALL_BIN}"
+            USE_SOURCE_PERMISSIONS)
    endif()
 
    # install embedded packages

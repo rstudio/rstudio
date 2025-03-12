@@ -179,7 +179,6 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
    
    private void initModel()
    {
-      final int initialCopilotEnabled = copilotEnabled_.getValue();
       copilotEnabled_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -188,35 +187,21 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
             int copilotEnabled = copilotEnabled_.getValue();
             if (copilotEnabled == YesNoAskDefault.YES_VALUE)
             {
-               copilot_.ensureAgentInstalled(new CommandWithArg<Boolean>()
+               options_.getCopilotOptions().copilot_enabled = copilotEnabled;
+               projectServer_.writeProjectOptions(options_, new ServerRequestCallback<Void>()
                {
                   @Override
-                  public void execute(Boolean isInstalled)
+                  public void onResponseReceived(Void response)
                   {
-                     if (isInstalled)
-                     {
-                        options_.getCopilotOptions().copilot_enabled = copilotEnabled;
-                        projectServer_.writeProjectOptions(options_, new ServerRequestCallback<Void>()
-                        {
-                           @Override
-                           public void onResponseReceived(Void response)
-                           {
-                              events_.fireEvent(new CopilotEnabledEvent(true, true));
-                              refresh();
-                           }
-                           
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              Debug.logError(error);
-                              
-                           }
-                        });
-                     }
-                     else
-                     {
-                        copilotEnabled_.setValue(initialCopilotEnabled);
-                     }
+                     events_.fireEvent(new CopilotEnabledEvent(true, true));
+                     refresh();
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                     
                   }
                });
             }

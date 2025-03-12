@@ -1354,14 +1354,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show code completions at the current cursor location") // $NON-NLS-1$
     String codeCompletionDesc();
     
-    // copilotInstallAgent
-    @DefaultStringValue("Copilot: Install Agent") // $NON-NLS-1$
-    String copilotInstallAgentLabel();
-    @DefaultStringValue("Install Copilot Agent") // $NON-NLS-1$
-    String copilotInstallAgentMenuLabel();
-    @DefaultStringValue("Install the GitHub Copilot agent.") // $NON-NLS-1$
-    String copilotInstallAgentDesc();
-    
     // copilotDiagnostics
     @DefaultStringValue("Copilot: Show Diagnostics") // $NON-NLS-1$
     String copilotDiagnosticsLabel();

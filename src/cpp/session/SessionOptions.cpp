@@ -340,7 +340,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePandocPath(resourcePath_, &pandocPath_);
    resolveQuartoPath(resourcePath_, &quartoPath_);
    resolveCopilotPath(resourcePath_, &copilotPath_);
-   resolveNodePath(resourcePath_, &nodePath_);
 
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
@@ -590,11 +589,6 @@ namespace {
 FilePath macBinaryPath(const FilePath& resourcePath,
                        const std::string& stem)
 {
-   // otherwise, look in default Qt location
-   FilePath qtPath = resourcePath.getParent().completePath("MacOS").completePath(stem);
-   if (qtPath.exists())
-      return qtPath;
-
    FilePath electronPath =
          resourcePath.completePath("bin").completePath(stem);
    if (electronPath.exists())
@@ -669,20 +663,6 @@ void Options::resolveCopilotPath(const FilePath& resourcePath,
    }
 }
 
-void Options::resolveNodePath(const FilePath& resourcePath,
-                              std::string* pPath)
-{
-   if (*pPath == kDefaultNodePath && programMode() == kSessionProgramModeDesktop)
-   {
-      FilePath path = macBinaryPath(resourcePath, "node");
-      *pPath = path.getAbsolutePath();
-   }
-   else
-   {
-      resolvePath(resourcePath, pPath);
-   }
-}
-
 void Options::resolveRsclangPath(const FilePath& resourcePath,
                                  std::string* pPath)
 {
@@ -725,18 +705,6 @@ void Options::resolveQuartoPath(const FilePath& resourcePath,
 void Options::resolveCopilotPath(const FilePath& resourcePath, std::string* pPath)
 {
    resolvePath(resourcePath, pPath);
-}
-
-void Options::resolveNodePath(const FilePath& resourcePath,
-                              std::string* pPath)
-{
-#if defined(__linux__) && !defined(RSTUDIO_PACKAGE_BUILD)
-   // node version should match RSTUDIO_INSTALLED_NODE_VERSION
-   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/20.15.1-patched");
-   resolvePath(dependenciesPath, pPath);
-#else
-   resolvePath(resourcePath, pPath);
-#endif
 }
 
 void Options::resolveRsclangPath(const FilePath& resourcePath,

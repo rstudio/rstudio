@@ -8,7 +8,6 @@
         "ms-vscode-remote.remote-containers",
         "ms-vscode.cmake-tools",
         "ms-vscode.cpptools",
-        "twxs.cmake",
         "vscjava.vscode-java-pack",
 	]
 }
