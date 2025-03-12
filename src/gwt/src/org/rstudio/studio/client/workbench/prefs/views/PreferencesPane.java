@@ -160,6 +160,9 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
          }
       });
       
+      // Keep a list of all checkboxes with the same label, so that
+      // changing one checkbox can signal a change and synchronize
+      // any other checkboxes associated with the same state.
       if (!cbMap_.containsKey(label))
       {
          cbMap_.put(label, new ArrayList<>());
