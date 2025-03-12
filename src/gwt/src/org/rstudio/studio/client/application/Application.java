@@ -21,7 +21,9 @@ import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.DragDropReceiver;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -68,6 +70,9 @@ import org.rstudio.studio.client.application.ui.RTimeoutOptions;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -101,6 +106,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
@@ -115,6 +121,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
+import elemental2.core.JsArray;
+import elemental2.dom.DataTransfer;
+import elemental2.dom.File;
+import elemental2.dom.FileList;
+import jsinterop.base.Js;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -263,6 +275,32 @@ public class Application implements ApplicationEventHandlers
             
             // load MathJax
             MathJaxLoader.ensureMathJaxLoaded();
+            
+            // set up drag-drop handlers
+            if (Desktop.isDesktop())
+            {
+               dragDropReceiver_ = new DragDropReceiver(view_.getWidget())
+               {
+
+                  @Override
+                  public void onDrop(NativeEvent event)
+                  {
+                     handleDrop(event);
+                  }
+                     
+                  
+
+                  @Override
+                  public void onDragOver(NativeEvent event)
+                  {
+                  }
+
+                  @Override
+                  public void onDragLeave(NativeEvent event)
+                  {
+                  }
+               };
+            }
 
             // initialize workbench
             // refresh prefs incase they were loaded without sessionInfo (this happens exclusively
@@ -1469,6 +1507,34 @@ public class Application implements ApplicationEventHandlers
       if (!Desktop.isDesktop() && clientStateUpdaterInstance_ != null)
          clientStateUpdaterInstance_.resumeSendingUpdates();
    }
+   
+   private void handleDrop(NativeEvent event)
+   {
+      DataTransfer data = Js.cast(event.getDataTransfer());
+      JsArray<String> types = data.types;
+      if (types.length != 1)
+         return;
+      
+      String type = types.getAt(0);
+      if (!StringUtil.equals(type, "Files"))
+         return;
+      
+      event.stopPropagation();
+      event.preventDefault();
+      
+      FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      
+      FileList fileList = data.files;
+      for (int i = 0; i < fileList.length; i++)
+      {
+         File file = Js.cast(fileList.getAt(i));
+         String path = Desktop.getFrame().getPathForFile(file);
+         FileSystemItem item = FileSystemItem.createFile(path);
+         FileType fileType = registry.getTypeForFile(item);
+         if (fileType != null && fileType instanceof TextFileType)
+            registry.editFile(item);
+      }
+   }
 
    private RemoteServerAuthWatcher authWatcher_;
    private final ApplicationView view_;
@@ -1491,6 +1557,7 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationThemes> pAppThemes_;
    private final Provider<ApplicationAutomation> pAutomation_;
 
+   private DragDropReceiver dragDropReceiver_;
    private boolean fileUploadInProgress_ = false;
 
    private final String CSRF_TOKEN_FIELD = "rs-csrf-token";
