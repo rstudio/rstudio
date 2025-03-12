@@ -45,7 +45,6 @@ public abstract class DragDropReceiver
       
       el.addEventListener("drop", function(event) {
          event.preventDefault();
-         console.log(event.dataTransfer);
          self.@org.rstudio.core.client.DragDropReceiver::onDrop(*)(event);
       });
    
