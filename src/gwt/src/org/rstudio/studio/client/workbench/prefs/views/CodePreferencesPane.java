@@ -256,6 +256,7 @@ public class CodePreferencesPane extends PreferencesPane
       stylerPanel.add(headerLabel("Format with styler"));
       stylerPanel.add(new Label("Use the styler R package to reformat code."));
       stylerPanel.add(extraSpacedBefore(checkboxPref(prefs_.codeFormatterStylerStrict())));
+      stylerPanel.add(checkboxPref(prefs_.reformatOnSave()));
       
       reformatOnSaveCommand_ = new FileChooserTextBox(
             "Reformat command:",
@@ -277,6 +278,7 @@ public class CodePreferencesPane extends PreferencesPane
       externalPanel.add(headerLabel("Format with an External Tool"));
       externalPanel.add(new Label("Use an external application to reformat code."));
       externalPanel.add(extraSpacedBefore(reformatOnSaveCommand_));
+      externalPanel.add(checkboxPref(prefs_.reformatOnSave()));
       
       SimplePanel formattingDetailsPanel = new SimplePanel();
       

@@ -16,6 +16,9 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -23,6 +26,8 @@ import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 
@@ -142,9 +147,11 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
       final CheckBox checkBox = new CheckBox(label, asHtml);
       if (defaultSpaced)
          lessSpaced(checkBox);
+      
       checkBox.setValue(prefValue.getGlobalValue());
       if (title != null)
          checkBox.setTitle(title);
+      
       onApplyCommands_.add(new Command()
       {
          public void execute()
@@ -152,6 +159,27 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
             prefValue.setGlobalValue(checkBox.getValue());
          }
       });
+      
+      if (!cbMap_.containsKey(label))
+      {
+         cbMap_.put(label, new ArrayList<>());
+      }
+      
+      List<CheckBox> cbList = cbMap_.get(label);
+      cbList.add(checkBox);
+      
+      checkBox.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            for (CheckBox cb : cbMap_.get(label))
+            {
+               cb.setValue(checkBox.getValue(), false);
+            }
+         }
+      });
+      
       return checkBox;
    }
 
@@ -259,4 +287,5 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    }
 
    protected final ArrayList<Command> onApplyCommands_ = new ArrayList<>();
+   protected final Map<String, List<CheckBox>> cbMap_ = new HashMap<>();
 }
