@@ -20,9 +20,10 @@ import com.google.gwt.user.client.ui.Widget;
 
 public abstract class DragDropReceiver
 {
-   public abstract void onDragOver(NativeEvent event);
-   public abstract void onDragLeave(NativeEvent event);
    public abstract void onDrop(NativeEvent event);
+   
+   public void onDragOver(NativeEvent event) {}
+   public void onDragLeave(NativeEvent event) {}
    
    public DragDropReceiver(Widget host)
    {

@@ -281,23 +281,10 @@ public class Application implements ApplicationEventHandlers
             {
                dragDropReceiver_ = new DragDropReceiver(view_.getWidget())
                {
-
                   @Override
                   public void onDrop(NativeEvent event)
                   {
                      handleDrop(event);
-                  }
-                     
-                  
-
-                  @Override
-                  public void onDragOver(NativeEvent event)
-                  {
-                  }
-
-                  @Override
-                  public void onDragLeave(NativeEvent event)
-                  {
                   }
                };
             }
