@@ -3687,6 +3687,7 @@ public class TextEditingTarget implements
    public boolean isSaveCommandActive()
    {
       return
+            
          // force active?
          forceSaveCommandActive_ ||
 
@@ -3697,10 +3698,12 @@ public class TextEditingTarget implements
          ((getPath() == null) && docDisplay_.getCode().isEmpty()) ||
 
          // source on save is active
-         (isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave());
+         (isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave()) ||
+         
+         // format on save is active
+         (isFormatOnSaveEnabled());
    }
-
-
+   
    @Override
    public void forceSaveCommandActive()
    {
@@ -8285,7 +8288,7 @@ public class TextEditingTarget implements
             }
             
             // check for format on save
-            if (formatOnSave && formatOnSaveEnabled())
+            if (formatOnSave && isFormatOnSaveEnabled())
             {
                server_.formatDocument(
                      docUpdateSentinel_.getId(),
@@ -8315,7 +8318,7 @@ public class TextEditingTarget implements
       };
    }
    
-   private boolean formatOnSaveEnabled()
+   private boolean isFormatOnSaveEnabled()
    {
       // TODO: What should we do if a user tries to enable 'Reformat on Save' for a document
       // without actually setting the code formatter? Should we just opt them into using
