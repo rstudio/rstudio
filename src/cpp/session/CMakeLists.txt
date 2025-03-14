@@ -531,9 +531,14 @@ if(WIN32)
 
 endif()
 
+# set link dependencies
+
 if(WIN32)
    set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
    set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} AdvAPI32)
+elseif(APPLE)
+   find_library(MAC_APPKIT_LIBRARY NAMES AppKit)
+   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} ${MAC_APPKIT_LIBRARY})
 endif()
 
 set(SESSION_LIBRARIES
@@ -583,15 +588,6 @@ endif()
 # skip libR RPATH at development time
 if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
    set_target_properties(rsession PROPERTIES SKIP_BUILD_RPATH TRUE)
-endif()
-
-# set link dependencies
-
-if(APPLE)
-   find_library(MAC_APPKIT_LIBRARY NAMES AppKit)
-   set(SESSION_SYSTEM_LIBRARIES
-      ${SESSION_SYSTEM_LIBRARIES}
-      ${MAC_APPKIT_LIBRARY})
 endif()
 
 target_link_libraries(rsession ${SESSION_LIBRARIES})
