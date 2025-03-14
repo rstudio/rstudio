@@ -195,12 +195,8 @@ public:
 
    Error wordChars(std::wstring *pWordChars)
    {
-      int len;
-      unsigned short *pChars = pHunspell_->get_wordchars_utf16(&len);
-
-      for (int i = 0; i < len; i++)
-         pWordChars->push_back(pChars[i]);
-
+      auto chars = pHunspell_->get_wordchars_utf16();
+      pWordChars->append(chars.begin(), chars.end());
       return Success();
    }
 

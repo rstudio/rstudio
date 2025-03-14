@@ -39,14 +39,6 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/globals.cmake")
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER -DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
-# make websockets build with MSVC
-if(WIN32 AND MSVC)
-   add_definitions(
-      -D_WEBSOCKETPP_NOEXCEPT_
-      -D_WEBSOCKETPP_CPP11_CHRONO
-   )
-endif()
-
 # the core libs can be built without libpam (for Launcher, originally), but we
 # use it by default
 if (NOT DEFINED RSTUDIO_USE_PAM)
@@ -186,49 +178,6 @@ endif()
 
 if(RSTUDIO_PACKAGE_BUILD)
    add_definitions(-DRSTUDIO_PACKAGE_BUILD)
-endif()
-
-# yaml-cpp
-set(YAML_CPP_VERSION "0.8.0")
-set(YAML_CPP_REVISION "f7320141120f720aecc4c32be25586e7da9eb978") # pragma: allowlist secret
-if(RSTUDIO_USE_SYSTEM_YAML_CPP)
-   # NOTE: defines the following CMake variables:
-   # - YAML_CPP_INCLUDE_DIR
-   # - YAML_CPP_LIBRARIES
-   find_package(yaml-cpp REQUIRED)
-elseif(CMAKE_VERSION VERSION_GREATER "3.14")
-
-   if(WIN32)
-      add_definitions(-DYAML_CPP_STATIC_DEFINE)
-   endif()
-
-   include(FetchContent)
-   FetchContent_Declare(yaml-cpp
-     GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-     GIT_TAG "${YAML_CPP_REVISION}")
-
-   FetchContent_MakeAvailable(yaml-cpp)
-
-   set(YAML_CPP_INCLUDE_DIR "${yaml-cpp_SOURCE_DIR}/include")
-   set(YAML_CPP_LIBRARIES   yaml-cpp::yaml-cpp)
-
-else()
-   set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/include")
-   set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}/build/libyaml-cpp.a")
-endif()
-
-if(yaml-cpp_FOUND AND NOT YAML_CPP_LIBRARIES)
-   if(TARGET yaml-cpp::yaml-cpp)
-      set(YAML_CPP_LIBRARIES yaml-cpp::yaml-cpp)
-   elseif(TARGET yaml-cpp)
-      set(YAML_CPP_LIBRARIES yaml-cpp)
-   else()
-      message(FATAL_ERROR "yaml-cpp was found but couldn't find a known target name")
-   endif()
-endif()
-
-if(YAML_CPP_INCLUDE_DIR)
-   include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
 endif()
 
 # determine whether we should statically link boost. we always do this

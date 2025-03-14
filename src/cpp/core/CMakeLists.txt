@@ -15,7 +15,6 @@
 
 project (CORE)
 
-add_subdirectory(spelling/hunspell)
 add_subdirectory(tex/synctex)
 
 # include files
@@ -331,16 +330,21 @@ include_directories(
 add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 define_source_file_names(rstudio-core)
 
+# make sure hunspell is built first
+add_dependencies(rstudio-core hunspell)
+
 # link dependencies
 target_link_libraries(rstudio-core
    rstudio-shared-core
-   rstudio-core-hunspell
+   rstudio-hunspell
    ${Boost_LIBRARIES}
    ${CRASHPAD_LIBRARIES}
    ${SOCI_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
-   ${YAML_CPP_LIBRARIES}
+   yaml-cpp::yaml-cpp
+   expected
    fmt::fmt
+   gsl::gsl-lite-v1
 )
 
 # define executable (for running unit tests)
@@ -361,7 +365,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-shared-core
       rstudio-core
       rstudio-core-synctex
-      rstudio-core-hunspell
+      rstudio-hunspell
       ${Boost_LIBRARIES}
       ${SOCI_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}

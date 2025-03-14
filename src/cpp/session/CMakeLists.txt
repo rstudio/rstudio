@@ -581,7 +581,6 @@ endif()
 
 set(SESSION_LIBRARIES
    rstudio-core
-   rstudio-core-hunspell
    rstudio-core-synctex
    ${RSTUDIO_CORE_ZLIB}
    rstudio-monitor
@@ -589,7 +588,9 @@ set(SESSION_LIBRARIES
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS}
-   ${CRASHPAD_LIBRARIES})
+   ${CRASHPAD_LIBRARIES}
+   rstudio-websocketpp
+   rstudio-hunspell)
 
 target_link_libraries(rsession ${SESSION_LIBRARIES})
 if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
