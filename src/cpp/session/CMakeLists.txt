@@ -826,6 +826,7 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
    # install gnudiff, gnugrep, mysys_ssh, and sumatra-pdf on windows
    if(WIN32)
+
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnudiff"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
@@ -840,8 +841,14 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
       install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winutils/1.0/winutils.exe"
               DESTINATION ${RSTUDIO_INSTALL_BIN}/winutils)
+
       install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winutils/1.0/x64/winutils.exe"
               DESTINATION ${RSTUDIO_INSTALL_BIN}/winutils/x64)
+
+      install(
+         PROGRAMS "${HUNSPELL_ROOT}/bin/hunspell-${HUNSPELL_VERSION_MAJMIN}-0.dll"
+         DESTINATION "${RSTUDIO_INSTALL_BIN}")
+
    endif()
 
 endif()
