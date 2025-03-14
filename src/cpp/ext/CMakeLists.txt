@@ -19,7 +19,7 @@ include(FetchContent)
 function(dependency)
 
    set(_NAME "${ARGV0}")
-   cmake_parse_arguments(PARSE_ARGV 1 "" "" "VERSION;REPOSITORY;REVISION" "")
+   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;VERSION;REPOSITORY;REVISION" "")
 
    set(${_NAME}_VERSION    "${_VERSION}"    PARENT_SCOPE)
    set(${_NAME}_REPOSITORY "${_REPOSITORY}" PARENT_SCOPE)
@@ -40,6 +40,7 @@ endfunction()
 
 # expected
 dependency(EXPECTED
+   COMMENT    "Single header implementation of std::expected with functional-style extensions."
    VERSION    "1.1.0"
    REPOSITORY "https://github.com/TartanLlama/expected"
    REVISION   "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362") # pragma: allowlist secret
@@ -48,18 +49,23 @@ set(EXPECTED_BUILD_TESTS OFF)
 
 # fmt
 dependency(FMT
-   VERSION "11.1.4"
+   COMMENT    "{fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams."
+   VERSION    "11.1.4"
    REPOSITORY "https://github.com/fmtlib/fmt"
    REVISION   "123913715afeb8a437e6388b4473fcc4753e1c9a") # pragma: allowlist secret
 
+
 # gsl-lite
 dependency(GSL_LITE
+   COMMENT    "gsl-lite is an implementation of the C++ Core Guidelines Support Library originally based on Microsoft GSL."
    VERSION    "0.42.0"
    REPOSITORY "https://github.com/gsl-lite/gsl-lite"
    REVISION   "21751fb0473473e27ffb1f280543885ed65447a8") # pragma: allowlist secret
 
+
 # hunspell
 dependency(HUNSPELL
+   COMMENT    "Hunspell is a free spell checker and morphological analyzer library and command-line tool, licensed under LGPL/GPL/MPL tri-license."
    VERSION    "1.7.2"
    REPOSITORY "https://github.com/hunspell/hunspell"
    REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
@@ -70,8 +76,10 @@ set(HUNSPELL_LIBRARY_DIR  "${CMAKE_CURRENT_BINARY_DIR}/hunspell-prefix/lib")
 set(HUNSPELL_LIBRARY_NAME "libhunspell-${HUNSPELL_VERSION_MAJMIN}.a")
 set(HUNSPELL_LIBRARY_PATH "${HUNSPELL_LIBRARY_DIR}/${HUNSPELL_LIBRARY_NAME}")
 
+
 # websocketpp
 dependency(WEBSOCKETPP
+   COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
    VERSION    "0.8.3"
    REPOSITORY "https://github.com/amini-allight/websocketpp"
    REVISION   "a11fa6fe4937ca251753e90b1836a68bf57768a9") # pragma: allowlist secret
@@ -79,6 +87,7 @@ dependency(WEBSOCKETPP
 
 # yaml-cpp
 dependency(YAML_CPP
+   COMMENT    "yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec."
    VERSION    "0.8.0"
    REPOSITORY "https://github.com/jbeder/yaml-cpp"
    REVISION   "f7320141120f720aecc4c32be25586e7da9eb978") # pragma: allowlist secret
@@ -130,14 +139,16 @@ fetch(
    expected     EXPECTED
    fmt          FMT
    gsl-lite     GSL_LITE
-   hunspell     HUNSPELL
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP)
 
 
+# Create websocketpp target.
 add_library(rstudio-websocketpp INTERFACE)
 target_include_directories(rstudio-websocketpp INTERFACE "${websocketpp_SOURCE_DIR}")
 
+
+# Set up hunspell.
 ExternalProject_Add(hunspell
    GIT_REPOSITORY "${HUNSPELL_REPOSITORY}"
    GIT_TAG "${HUNSPELL_REVISION}"
