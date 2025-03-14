@@ -25,6 +25,8 @@ import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 
+import elemental2.dom.File;
+
 /**
  * This is an interface to callbacks registered by the desktop frame.
  */
@@ -243,4 +245,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showSplashScreen();
 
    void detectRosetta();
+   
+   String getPathForFile(File file);
 }
