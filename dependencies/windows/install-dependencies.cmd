@@ -124,6 +124,11 @@ set BREAKPAD_FOLDER=breakpad-tools-windows
 set BREAKPAD_OUTPUT=breakpad-tools-windows
 
 
+set HUNSPELL_URL=hunspell/hunspell-v1.7.2.7z
+set HUNSPELL_FOLDER=hunspell-v1.7.2
+set HUNSPELL_OUTPUT=
+
+
 set NODEBUILD_VERSION=%RSTUDIO_NODE_VERSION%
 set NODEBUILD_LABEL=node (%NODEBUILD_VERSION%; build)
 set NODEBUILD_FILE=node-v%NODEBUILD_VERSION%-win-x64
@@ -138,7 +143,6 @@ cd ..\common
 %RUN% install DICTIONARIES
 %RUN% install MATHJAX
 %RUN% install LIBCLANG
-
 
 REM Determine if we have the correct version of quarto.exe already installed
 if exist quarto\bin\quarto.exe (
@@ -186,6 +190,7 @@ call install-packages.cmd
 :: Install the rest of our dependencies in the 'windows' folder.
 cd ..\windows
 
+%RUN% install HUNSPELL
 %RUN% install GNUDIFF
 %RUN% install GNUGREP
 %RUN% install SUMATRA

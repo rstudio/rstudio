@@ -531,6 +531,22 @@ if(WIN32)
 
 endif()
 
+if(WIN32)
+   set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
+   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} AdvAPI32)
+endif()
+
+set(SESSION_LIBRARIES
+   rstudio-core
+   rstudio-core-synctex
+   ${RSTUDIO_CORE_ZLIB}
+   rstudio-monitor
+   rstudio-r
+   rstudio-session-workers
+   ${SESSION_SYSTEM_LIBRARIES}
+   ${CMAKE_DL_LIBS}
+   ${CRASHPAD_LIBRARIES})
+
 # define executable
 if(WIN32)
 
@@ -538,6 +554,8 @@ if(WIN32)
    add_library(rsession-objects OBJECT
        ${SESSION_SOURCE_FILES}
        ${SESSION_HEADER_FILES})
+
+    target_link_libraries(rsession-objects ${SESSION_LIBRARIES})
 
    # main executable
    add_stripped_executable(
@@ -568,29 +586,13 @@ if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
 endif()
 
 # set link dependencies
-if(WIN32)
-   set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
-   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} AdvAPI32)
-endif()
+
 if(APPLE)
    find_library(MAC_APPKIT_LIBRARY NAMES AppKit)
    set(SESSION_SYSTEM_LIBRARIES
       ${SESSION_SYSTEM_LIBRARIES}
       ${MAC_APPKIT_LIBRARY})
 endif()
-
-set(SESSION_LIBRARIES
-   rstudio-core
-   rstudio-core-synctex
-   ${RSTUDIO_CORE_ZLIB}
-   rstudio-monitor
-   rstudio-r
-   rstudio-session-workers
-   ${SESSION_SYSTEM_LIBRARIES}
-   ${CMAKE_DL_LIBS}
-   ${CRASHPAD_LIBRARIES}
-   rstudio-websocketpp
-   rstudio-hunspell)
 
 target_link_libraries(rsession ${SESSION_LIBRARIES})
 if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
