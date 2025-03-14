@@ -25,7 +25,7 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <shared_core/SafeConvert.hpp>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;

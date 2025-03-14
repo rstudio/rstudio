@@ -15,7 +15,7 @@
 
 #include "SessionRCompletions.hpp"
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <core/Exec.hpp>
 

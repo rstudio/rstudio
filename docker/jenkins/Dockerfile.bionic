@@ -16,6 +16,8 @@ RUN apt-get update && \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y \
     ant \
+    autoconf \
+    automake \
     build-essential \
     clang \
     curl \
@@ -23,6 +25,7 @@ RUN apt-get update && \
     dpkg-sig \
     expect \
     fakeroot \
+    gettext \
     git-core \
     gnupg1 \
     jq \
@@ -45,6 +48,7 @@ RUN apt-get update && \
     libssl-dev \
     libssh2-1-dev \
     libtiff5-dev\
+    libtool \
     libxml2-dev \
     libxslt1-dev \
     lsof \

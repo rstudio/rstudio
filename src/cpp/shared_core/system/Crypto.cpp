@@ -31,7 +31,7 @@
 #include <shared_core/system/encryption/EncryptionConfiguration.hpp>
 #include <shared_core/system/encryption/EncryptionVersion.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/noncopyable.hpp>
 

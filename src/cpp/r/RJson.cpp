@@ -47,7 +47,7 @@
 */
 
 #include <iostream>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #define R_INTERNAL_FUNCTIONS
 #include <r/RJson.hpp>

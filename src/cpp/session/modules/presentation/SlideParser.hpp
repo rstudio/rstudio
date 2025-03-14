@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>

@@ -15,7 +15,7 @@
 
 #include "SessionConsoleProcessApi.hpp"
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/replace.hpp>
 

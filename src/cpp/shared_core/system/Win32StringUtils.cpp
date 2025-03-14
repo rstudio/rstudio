@@ -15,7 +15,7 @@
 
 #include <shared_core/system/Win32StringUtils.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <windows.h>
 

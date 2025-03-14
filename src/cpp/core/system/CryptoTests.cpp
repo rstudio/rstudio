@@ -15,7 +15,7 @@
 
 #include <iterator>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <core/system/Crypto.hpp>
 

@@ -16,7 +16,7 @@
 #define R_INTERNAL_FUNCTIONS
 
 #include <boost/bind/bind.hpp>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>

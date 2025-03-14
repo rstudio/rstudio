@@ -43,6 +43,9 @@ if(MSVC)
   # keep some deprecated tools around
   add_definitions(-D_HAS_AUTO_PTR_ETC=1 -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS=1)
 
+  # assume sources are utf-8
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
+
   # disable C4800 warning; this is very noisy, rarely useful, and was completely removed
   # in Visual Studio 2017 (we're currently using VS 2015).
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4800")

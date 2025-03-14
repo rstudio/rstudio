@@ -21,7 +21,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>

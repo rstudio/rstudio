@@ -15,7 +15,7 @@
 
 #include "SessionPdfLatex.hpp"
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>

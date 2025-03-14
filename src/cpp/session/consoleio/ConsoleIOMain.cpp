@@ -15,7 +15,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <stdio.h>
 #include <windows.h>

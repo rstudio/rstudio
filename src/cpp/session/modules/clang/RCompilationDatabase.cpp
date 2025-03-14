@@ -16,7 +16,7 @@
 #include "RCompilationDatabase.hpp"
 
 #include <algorithm>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/format.hpp>
 #include <boost/regex.hpp>

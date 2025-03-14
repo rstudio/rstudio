@@ -8,6 +8,8 @@ ENV OPERATING_SYSTEM=opensuse_leap15
 RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
+    autoconf \
+    automake \
     clang \
     curl \
     expect \
@@ -16,6 +18,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     gcc \
     gcc-c++ \
     gdb \
+    gettext \
     git \
     java-11-openjdk-devel \
     jq \
@@ -33,6 +36,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libopenssl-devel \
     libpng-devel  \
     libtiff-devel  \
+    libtool \
     libuuid-devel \
     libxml2-devel \
     lsof \

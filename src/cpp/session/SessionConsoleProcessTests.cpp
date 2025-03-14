@@ -15,7 +15,7 @@
 
 #include <session/SessionConsoleProcess.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/lexical_cast.hpp>
 #include <tests/TestThat.hpp>

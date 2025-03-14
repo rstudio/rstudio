@@ -29,7 +29,7 @@
 
 #include <shared_core/system/encryption/EncryptionVersion.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <openssl/err.h>
 #include <openssl/evp.h>

@@ -19,7 +19,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/utility.hpp>
 #include <boost/function.hpp>

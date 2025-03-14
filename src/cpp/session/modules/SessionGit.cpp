@@ -14,7 +14,7 @@
  */
 #include "SessionGit.hpp"
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <signal.h>
 #include <sys/stat.h>

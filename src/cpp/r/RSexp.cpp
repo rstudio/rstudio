@@ -19,7 +19,7 @@
 
 #include <cctype>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <r/RInternal.hpp>
 #include <r/RJson.hpp>

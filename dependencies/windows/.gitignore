@@ -1,8 +1,12 @@
+*.zip
+*.7z
+
 mingw64*/
 boost*win*/
 boost-*
 gnudiff/
 gnugrep/
+hunspell-*/
 nsprocess/
 msys_ssh/
 msys-ssh*/
@@ -15,7 +19,6 @@ openssl*/
 crashpad*/
 yaml-cpp-*/
 resource-hacker/
-*.zip
 breakpad-tools-windows/
 
 install-crashpad/logs/

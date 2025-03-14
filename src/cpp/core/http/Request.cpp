@@ -16,7 +16,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/URL.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/regex.hpp>
 #include <boost/tokenizer.hpp>
