@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>

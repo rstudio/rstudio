@@ -20,7 +20,7 @@
 #include <map>
 #include <fstream>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/utility.hpp>
 #include <boost/bind/bind.hpp>

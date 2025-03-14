@@ -16,7 +16,7 @@
 
 #include <r/RUtil.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/regex.hpp>

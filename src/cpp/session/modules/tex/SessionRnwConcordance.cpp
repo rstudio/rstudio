@@ -16,7 +16,7 @@
 #include "SessionRnwConcordance.hpp"
 
 #include <iostream>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/regex.hpp>
 

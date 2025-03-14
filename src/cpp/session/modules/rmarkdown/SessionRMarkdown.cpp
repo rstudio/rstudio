@@ -17,7 +17,7 @@
 
 #include "SessionRMarkdown.hpp"
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include "SessionRmdNotebook.hpp"
 #include "../SessionHTMLPreview.hpp"

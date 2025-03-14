@@ -120,7 +120,8 @@ function(fetch)
          FetchContent_Declare("${_NAME}"
             GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
             GIT_TAG        "${${_PREFIX}_REVISION}"
-            GIT_SHALLOW    ON)
+            GIT_SHALLOW    ON
+            EXCLUDE_FROM_ALL)
       endif()
 
    endwhile()

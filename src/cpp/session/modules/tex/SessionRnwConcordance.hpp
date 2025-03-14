@@ -18,7 +18,7 @@
 
 #include <string>
 #include <vector>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/utility.hpp>
 

@@ -15,7 +15,7 @@
 
 #include <session/SessionConsoleProcessPersist.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <core/FileSerializer.hpp>
 

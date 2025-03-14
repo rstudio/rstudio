@@ -19,7 +19,7 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>

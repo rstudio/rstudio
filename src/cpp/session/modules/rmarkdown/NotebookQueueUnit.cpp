@@ -15,7 +15,7 @@
 
 #include "NotebookQueueUnit.hpp"
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <session/SessionModuleContext.hpp>
 

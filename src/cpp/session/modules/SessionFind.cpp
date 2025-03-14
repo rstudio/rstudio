@@ -16,7 +16,7 @@
 #include "SessionFind.hpp"
 
 #include <algorithm>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/filesystem.hpp>

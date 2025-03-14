@@ -15,7 +15,7 @@
 
 #include "NotebookDocQueue.hpp"
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include "NotebookChunkDefs.hpp"
 

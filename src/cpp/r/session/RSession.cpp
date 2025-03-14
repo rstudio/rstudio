@@ -67,7 +67,7 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/RStartup.h>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #define CTXT_BROWSER 16
 

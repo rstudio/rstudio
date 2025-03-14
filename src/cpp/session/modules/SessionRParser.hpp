@@ -27,7 +27,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/r_util/RTokenizer.hpp>

@@ -22,7 +22,7 @@
 #include <map>
 #include <ostream>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/case_conv.hpp>

@@ -16,7 +16,7 @@
 #include "RGraphicsPlotManager.hpp"
 
 #include <algorithm>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/function.hpp>
 #include <boost/format.hpp>

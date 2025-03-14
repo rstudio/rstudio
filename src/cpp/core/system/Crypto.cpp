@@ -15,7 +15,7 @@
 
 #include <core/system/Crypto.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #ifdef _MSC_VER
 # include <io.h>
