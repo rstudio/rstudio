@@ -922,9 +922,6 @@ Error startAgent()
    // We include this because all requests will fail if we haven't yet called
    // initialized, so maybe the right approach is to have some sort of 'ensureInitialized'
    // method?
-   //
-   // This also has the downside of failing less gracefully if 'node' is able to start
-   // successfully, but it later dies after trying to run the Copilot node script.
    s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
    s_agentStartupError = std::string();
    waitFor([]() { return s_agentPid != -1; });
@@ -934,10 +931,11 @@ Error startAgent()
    // Send an initialize request to the agent.
    json::Object clientInfoJson;
    clientInfoJson["name"] = "RStudio";
-   clientInfoJson["version"] = "1.0.0";
+   clientInfoJson["version"] = RSTUDIO_VERSION;
 
    json::Object paramsJson;
    paramsJson["processId"] = ::getpid();
+   paramsJson["locale"] = prefs::userPrefs().uiLanguage();
    paramsJson["clientInfo"] = clientInfoJson;
    paramsJson["capabilities"] = json::Object();
    
