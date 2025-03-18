@@ -41,6 +41,7 @@ function(dependency)
 
 endfunction()
 
+
 # expected
 dependency(EXPECTED
    COMMENT    "Single header implementation of std::expected with functional-style extensions."
@@ -74,20 +75,6 @@ dependency(HUNSPELL
    REPOSITORY "https://github.com/hunspell/hunspell"
    REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
 )
-
-if(WIN32)
-   set(HUNSPELL_PREFIX_DIR   "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/hunspell-v1.7.2" CACHE INTERNAL "")
-   set(HUNSPELL_INCLUDE_DIR  "${HUNSPELL_PREFIX_DIR}/include" CACHE INTERNAL "")
-   set(HUNSPELL_LIBRARY_DIR  "${HUNSPELL_PREFIX_DIR}/lib" CACHE INTERNAL "")
-   set(HUNSPELL_LIBRARY_NAME "hunspell-${HUNSPELL_VERSION_MAJMIN}.lib" CACHE INTERNAL "")
-   set(HUNSPELL_LIBRARY_PATH "${HUNSPELL_LIBRARY_DIR}/${HUNSPELL_LIBRARY_NAME}" CACHE INTERNAL "")
-else()
-   set(HUNSPELL_PREFIX_DIR   "${CMAKE_CURRENT_BINARY_DIR}/hunspell-prefix" CACHE INTERNAL "")
-   set(HUNSPELL_INCLUDE_DIR  "${HUNSPELL_PREFIX_DIR}/include" CACHE INTERNAL "")
-   set(HUNSPELL_LIBRARY_DIR  "${HUNSPELL_PREFIX_DIR}/lib" CACHE INTERNAL "")
-   set(HUNSPELL_LIBRARY_NAME "libhunspell-${HUNSPELL_VERSION_MAJMIN}.a" CACHE INTERNAL "")
-   set(HUNSPELL_LIBRARY_PATH "${HUNSPELL_LIBRARY_DIR}/${HUNSPELL_LIBRARY_NAME}" CACHE INTERNAL "")
-endif()
 
 
 # websocketpp
@@ -142,6 +129,8 @@ function(fetch)
 
       if(NOT RSTUDIO_USE_SYSTEM_${_PREFIX})
          FetchContent_MakeAvailable("${_NAME}")
+         set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
+         set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
       endif()
 
    endwhile()
@@ -153,6 +142,7 @@ fetch(
    expected     EXPECTED
    fmt          FMT
    gsl-lite     GSL_LITE
+   hunspell     HUNSPELL
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP)
 
@@ -162,33 +152,16 @@ add_library(rstudio-websocketpp INTERFACE)
 target_include_directories(rstudio-websocketpp INTERFACE "${websocketpp_SOURCE_DIR}")
 
 
-# Set up hunspell.
+# Create hunspell target.
+file(GLOB HUNSPELL_HEADER_FILES "${HUNSPELL_SOURCE_DIR}/src/hunspell/*.h*")
+file(GLOB HUNSPELL_SOURCE_FILES "${HUNSPELL_SOURCE_DIR}/src/hunspell/*.c*")
+add_library(rstudio-hunspell STATIC ${HUNSPELL_SOURCE_FILES} ${HUNSPELL_HEADER_FILES})
+set_target_properties(rstudio-hunspell PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(rstudio-hunspell SYSTEM AFTER INTERFACE "${HUNSPELL_SOURCE_DIR}/src")
+target_compile_definitions(rstudio-hunspell PUBLIC HUNSPELL_STATIC=1)
+
 if(WIN32)
-
-   # On Windows, we use a pre-built copy of hunspell.
-   add_library(rstudio-hunspell STATIC IMPORTED GLOBAL)
-   set_target_properties(rstudio-hunspell PROPERTIES IMPORTED_LOCATION "${HUNSPELL_LIBRARY_PATH}")
-   target_include_directories(rstudio-hunspell INTERFACE "${HUNSPELL_INCLUDE_DIR}")
-   target_link_libraries(rstudio-hunspell INTERFACE "${HUNSPELL_LIBRARY_PATH}")
-
-else()
-
-   ExternalProject_Add(hunspell
-      GIT_REPOSITORY "${HUNSPELL_REPOSITORY}"
-      GIT_TAG "${HUNSPELL_REVISION}"
-      GIT_SHALLOW ON
-      UPDATE_DISCONNECTED ON
-      CONFIGURE_COMMAND autoreconf -vfi <SOURCE_DIR> && <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
-      BUILD_COMMAND make
-      BUILD_BYPRODUCTS <BINARY_DIR>/src/hunspell/.libs/${HUNSPELL_LIBRARY_NAME}
-      INSTALL_BYPRODUCTS <INSTALL_DIR>/lib/${HUNSPELL_LIBRARY_NAME})
-
-   add_library(rstudio-hunspell STATIC IMPORTED GLOBAL)
-   add_dependencies(rstudio-hunspell hunspell)
-
-   file(MAKE_DIRECTORY "${HUNSPELL_INCLUDE_DIR}")
-   set_target_properties(rstudio-hunspell PROPERTIES IMPORTED_LOCATION "${HUNSPELL_LIBRARY_PATH}")
-   target_include_directories(rstudio-hunspell INTERFACE "${HUNSPELL_INCLUDE_DIR}")
-   target_link_libraries(rstudio-hunspell INTERFACE "${HUNSPELL_LIBRARY_PATH}")
-
+   target_include_directories(rstudio-hunspell SYSTEM AFTER PRIVATE "${HUNSPELL_PREFIX_DIR}/msvc")
+   target_compile_options(rstudio-hunspell PRIVATE /wd4244 /wd4267)
+   target_compile_options(rstudio-hunspell INTERFACE /wd4996)
 endif()
