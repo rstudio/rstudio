@@ -18,7 +18,6 @@ RUN apt-get update && \
     apt-get install -y \
     ant \
     autoconf \
-    autotool \
     build-essential \
     clang \
     curl \
