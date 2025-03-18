@@ -1572,7 +1572,7 @@ Error initialize()
    // Read default log level
    std::string copilotLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
    if (!copilotLogLevel.empty())
-      s_copilotLogLevel = 3; // safe_convert::stringTo<int>(copilotLogLevel, 0);
+      s_copilotLogLevel = safe_convert::stringTo<int>(copilotLogLevel, 0);
    
    // Read project options
    if (projects::projectContext().hasProject())
