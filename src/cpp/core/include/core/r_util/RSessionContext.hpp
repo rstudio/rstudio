@@ -34,6 +34,8 @@
 #define kJupyterNotebookId         "2cb256d2"
 #define kWorkspacesId              "3c286bd3"
 #define kVSCodeId                  "3c9ab5a7"
+#define kPositronId                "6ae9dc1b"
+#define kProjectScript             "f468a750"
 
 #define kWorkbenchRStudio          "RStudio"
 #define kWorkbenchJupyterLab       "JupyterLab"
@@ -42,6 +44,8 @@
 #define kJupyterPathEnvVar         "WORKBENCH_JUPYTER_PATH"
 #define kVSCodePathDefault         "/usr/lib/rstudio-server/bin/code-server/bin/code-server"
 #define kVSCodePathEnvVar          "WORKBENCH_VSCODE_PATH"
+#define kPositronPathDefault       "/usr/lib/rstudio-server/bin/positron-server/bin/positron-server"
+#define kPositronPathEnvVar        "WORKBENCH_POSITRON_PATH"
 
 #ifdef _WIN32
 typedef unsigned int uid_t;
