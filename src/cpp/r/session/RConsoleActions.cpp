@@ -17,7 +17,7 @@
 
 #include <algorithm>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/split.hpp>
 

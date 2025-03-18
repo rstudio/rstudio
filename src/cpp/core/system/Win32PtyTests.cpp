@@ -17,7 +17,7 @@
 
 #include "Win32Pty.hpp"
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>

@@ -16,7 +16,8 @@
 #ifndef CORE_RESULT_HPP
 #define CORE_RESULT_HPP
 
-#include <expected/expected.hpp>
+#include <tl/expected.hpp>
+
 #include <shared_core/Error.hpp>
 
 namespace rstudio {

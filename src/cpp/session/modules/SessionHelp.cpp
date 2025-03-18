@@ -16,7 +16,7 @@
 #include "SessionHelp.hpp"
 
 #include <algorithm>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/regex.hpp>
 #include <boost/function.hpp>

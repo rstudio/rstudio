@@ -17,7 +17,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <core/Debug.hpp>
 #include <core/Log.hpp>

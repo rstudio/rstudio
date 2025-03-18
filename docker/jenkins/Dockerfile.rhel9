@@ -15,6 +15,8 @@ RUN set -x \
 RUN dnf install -y \
     R \
     ant \
+    autoconf \
+    automake \
     boost-devel \
     bzip2-devel \
     clang-devel \
@@ -25,6 +27,7 @@ RUN dnf install -y \
     fuse-libs \
     gcc \
     gcc-c++ \
+    gettext \
     git \
     gpg1 \
     gtk3 \
@@ -41,6 +44,7 @@ RUN dnf install -y \
     libjpeg-turbo-devel \
     libpng-devel \
     libtiff-devel \
+    libtool \
     libuuid-devel \
     llvm-devel \
     lsof \

@@ -15,7 +15,7 @@
 
 #include <iterator>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <shared_core/system/Crypto.hpp>
 #include <shared_core/system/encryption/EncryptionConfiguration.hpp>

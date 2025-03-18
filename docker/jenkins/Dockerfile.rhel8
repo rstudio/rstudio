@@ -12,6 +12,8 @@ RUN set -x \
 
 RUN yum install -y \
     ant \
+    autoconf \
+    automake \
     boost-devel \
     bzip2-devel \
     clang-devel \
@@ -22,6 +24,7 @@ RUN yum install -y \
     gcc \
     gcc-c++ \
     gdb \
+    gettext \
     git \
     gtk3 \
     java-11-openjdk \
@@ -34,6 +37,7 @@ RUN yum install -y \
     libcap-devel \ 
     libcurl-devel \
     libpq-devel \
+    libtool \
     libuuid-devel \
     libxml2-devel \
     llvm-devel \

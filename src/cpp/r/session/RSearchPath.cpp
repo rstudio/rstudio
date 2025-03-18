@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/function.hpp>
 #include <boost/format.hpp>

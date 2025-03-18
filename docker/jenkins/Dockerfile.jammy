@@ -17,6 +17,8 @@ RUN apt-get update && \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y \
     ant \
+    autoconf \
+    automake \
     build-essential \
     clang \
     curl \
@@ -26,6 +28,7 @@ RUN apt-get update && \
     expect \
     fakeroot \
     ffmpeg \
+    gettext \
     git-core \
     glibc-tools \
     imagemagick \
@@ -48,6 +51,7 @@ RUN apt-get update && \
     libsqlite3-dev \
     libssl-dev \
     libtiff5-dev\
+    libtool \
     libxml2-dev \
     libxslt1-dev \
     locales \

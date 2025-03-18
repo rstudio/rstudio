@@ -15,7 +15,7 @@
 
 #define R_INTERNAL_FUNCTIONS  // Rf_warningcall
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>

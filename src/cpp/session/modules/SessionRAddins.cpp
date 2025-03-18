@@ -15,7 +15,7 @@
 
 #include "SessionRAddins.hpp"
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <core/Macros.hpp>
 #include <core/Algorithm.hpp>

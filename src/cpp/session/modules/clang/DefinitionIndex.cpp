@@ -16,7 +16,7 @@
 #include "DefinitionIndex.hpp"
 
 #include <deque>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <core/DateTime.hpp>

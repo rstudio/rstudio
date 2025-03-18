@@ -23,7 +23,7 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>

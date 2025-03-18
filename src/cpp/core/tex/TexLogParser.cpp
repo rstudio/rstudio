@@ -15,7 +15,7 @@
 
 #include <core/tex/TexLogParser.hpp>
 
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>

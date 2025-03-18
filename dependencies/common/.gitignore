@@ -3,9 +3,11 @@
 *.tar.gz
 *.zip
 *.zip.1
+*.7z
 index.html
 CEF/
 dictionaries/
+hunspell-*/
 libclang/
 mathjax*/
 node-webkit/

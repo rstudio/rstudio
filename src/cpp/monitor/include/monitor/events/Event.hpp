@@ -17,7 +17,7 @@
 #define MONITOR_EVENTS_EVENT_HPP
 
 #include <iosfwd>
-#include <gsl/gsl>
+#include <gsl/gsl-lite.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <core/DateTime.hpp>
