@@ -203,18 +203,6 @@ public:
 
 private:
 
-   // helpers
-   void copyAndFreeHunspellVector(std::vector<std::string>* pVec,
-                                    char **wlst,
-                                    int len)
-   {
-      for (int i=0; i < len; i++)
-      {
-         pVec->push_back(wlst[i]);
-      }
-      pHunspell_->free_list(&wlst, len);
-   }
-
    Error mergeDicDeltaFile(const FilePath& dicDeltaPath)
    {
       // determine whether we are going to support affixes -- we do this for
@@ -269,24 +257,22 @@ public:
    Error checkSpelling(const std::string& word, bool *pCorrect)
    {
       std::string encoded;
-      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      Error error = iconvstrFunc_(word,"UTF-8", encoding_, false, &encoded);
       if (error)
          return error;
 
-      *pCorrect = pHunspell_->spell(encoded.c_str());
+      *pCorrect = pHunspell_->spell(encoded);
       return Success();
    }
 
    Error suggestionList(const std::string& word, std::vector<std::string>* pSug)
    {
       std::string encoded;
-      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      Error error = iconvstrFunc_(word, "UTF-8", encoding_, false, &encoded);
       if (error)
          return error;
 
-      char ** wlst;
-      int ns = pHunspell_->suggest(&wlst,encoded.c_str());
-      copyAndFreeHunspellVector(pSug,wlst,ns);
+      *pSug = pHunspell_->suggest(encoded);
 
       for (std::string& sug : *pSug)
       {
@@ -301,14 +287,14 @@ public:
    Error addWord(const std::string& word, bool *pAdded)
    {
       std::string encoded;
-      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      Error error = iconvstrFunc_(word, "UTF-8", encoding_, false, &encoded);
       if (error)
          return error;
 
       // Following the Hunspell::add method through it's various code paths
       // it seems the return value is always 0, meaning there's really no
       // error ever thrown if the method fails.
-      *pAdded = (pHunspell_->add(encoded.c_str()) == 0);
+      *pAdded = (pHunspell_->add(encoded) == 0);
       return Success();
    }
 
@@ -334,8 +320,7 @@ public:
       if (error)
          return error;
 
-      *pAdded = (pHunspell_->add_with_affix(wordEncoded.c_str(),
-                                            exampleEncoded.c_str()) == 0);
+      *pAdded = (pHunspell_->add_with_affix(wordEncoded, exampleEncoded) == 0);
       return Success();
    }
 
@@ -358,7 +343,7 @@ public:
 
       // Convert path to system encoding before sending to external api
       std::string systemDicPath = string_utils::utf8ToSystem(dicPath.getAbsolutePath());
-      *pAdded = (pHunspell_->add_dic(systemDicPath.c_str(),key.c_str()) == 0);
+      *pAdded = (pHunspell_->add_dic(systemDicPath.c_str(), key.c_str()) == 0);
       return Success();
    }
 
