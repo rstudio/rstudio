@@ -206,7 +206,7 @@ cd "%BUILD_DIR%"
 
 REM Package these files into a shorter path to workaround windows max path of 260
 REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.txt
-set PKG_TEMP_DIR=c:\temp\ide-build
+set PKG_TEMP_DIR=C:\rsbuild
 if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
 
 REM Configure and build the project. (Note that Windows / MSVC builds require

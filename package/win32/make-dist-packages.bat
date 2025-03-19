@@ -23,7 +23,7 @@ if "%PACKAGE_DIR%" == "" set PACKAGE_DIR=%~dp0
 if "%BUILD_DIR%" == "" set BUILD_DIR=build
 if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=RelWithDebInfo
 if "%CMAKE_BUILD_TYPE%" == "Debug" set BUILD_DIR=build-debug
-if "%PKG_TEMP_DIR%" == "" set PKG_TEMP_DIR=c:\temp\ide-build
+if "%PKG_TEMP_DIR%" == "" set PKG_TEMP_DIR=C:/rsbuild
 
 echo DEBUG: make-dist-packages.bat using following values:
 echo DEBUG:     PACKAGE_DIR=%PACKAGE_DIR%
