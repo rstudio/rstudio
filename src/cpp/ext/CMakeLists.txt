@@ -16,14 +16,31 @@
 include(ExternalProject)
 include(FetchContent)
 
+#
+# Declare an external dependency.
+#
+# This function accepts the following single-value arguments:
+#
+# COMMENT:     A one-line description of the dependency, usually from the dependency itself.
+# VERSION:     The version of the dependency to be used.
+# REPOSITORY:  The (git) repository to be used when retrieving the dependency.
+# REVISION:    The (git) revision / commit hash to be used when retrieving the dependency.
+# CUSTOM:      Boolean; when set, the project is retrieved but not automatically added to the build.
+#
+# Use the CUSTOM argument when you want to fetch an external dependency, but need to manually
+# set up a build target based on that package's sources. This is mainly useful for projects which
+# don't provide the requisite CMake infrastructure, or for projects which define a CMakeLists.txt
+# which we want or need to ignore.
+#
 function(dependency)
 
    set(_NAME "${ARGV0}")
-   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;VERSION;REPOSITORY;REVISION" "")
+   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION" "")
 
    set(${_NAME}_VERSION    "${_VERSION}"    CACHE INTERNAL "")
    set(${_NAME}_REPOSITORY "${_REPOSITORY}" CACHE INTERNAL "")
    set(${_NAME}_REVISION   "${_REVISION}"   CACHE INTERNAL "")
+   set(${_NAME}_CUSTOM     "${_CUSTOM}"     CACHE INTERNAL "")
 
    string(REPLACE "." ";" _VERSION_LIST "${_VERSION}")
    list(GET _VERSION_LIST 0 _VERSION_MAJOR)
@@ -47,7 +64,8 @@ dependency(EXPECTED
    COMMENT    "Single header implementation of std::expected with functional-style extensions."
    VERSION    "1.1.0"
    REPOSITORY "https://github.com/TartanLlama/expected"
-   REVISION   "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362") # pragma: allowlist secret
+   REVISION   "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362" # pragma: allowlist secret
+)
 
 set(EXPECTED_BUILD_TESTS OFF)
 
@@ -57,7 +75,8 @@ dependency(FMT
    COMMENT    "{fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams."
    VERSION    "11.1.4"
    REPOSITORY "https://github.com/fmtlib/fmt"
-   REVISION   "123913715afeb8a437e6388b4473fcc4753e1c9a") # pragma: allowlist secret
+   REVISION   "123913715afeb8a437e6388b4473fcc4753e1c9a" # pragma: allowlist secret
+)
 
 
 # gsl-lite
@@ -65,7 +84,8 @@ dependency(GSL_LITE
    COMMENT    "gsl-lite is an implementation of the C++ Core Guidelines Support Library originally based on Microsoft GSL."
    VERSION    "0.42.0"
    REPOSITORY "https://github.com/gsl-lite/gsl-lite"
-   REVISION   "21751fb0473473e27ffb1f280543885ed65447a8") # pragma: allowlist secret
+   REVISION   "21751fb0473473e27ffb1f280543885ed65447a8" # pragma: allowlist secret
+)
 
 
 # hunspell
@@ -74,6 +94,7 @@ dependency(HUNSPELL
    VERSION    "1.7.2"
    REPOSITORY "https://github.com/hunspell/hunspell"
    REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
+   CUSTOM     TRUE
 )
 
 
@@ -82,7 +103,9 @@ dependency(WEBSOCKETPP
    COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
    VERSION    "0.8.3"
    REPOSITORY "https://github.com/amini-allight/websocketpp"
-   REVISION   "a11fa6fe4937ca251753e90b1836a68bf57768a9") # pragma: allowlist secret
+   REVISION   "a11fa6fe4937ca251753e90b1836a68bf57768a9" # pragma: allowlist secret
+   CUSTOM     TRUE
+)
 
 
 # yaml-cpp
@@ -90,7 +113,8 @@ dependency(YAML_CPP
    COMMENT    "yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec."
    VERSION    "0.8.0"
    REPOSITORY "https://github.com/jbeder/yaml-cpp"
-   REVISION   "f7320141120f720aecc4c32be25586e7da9eb978") # pragma: allowlist secret
+   REVISION   "f7320141120f720aecc4c32be25586e7da9eb978" # pragma: allowlist secret
+)
 
 
 function(fetch)
@@ -105,6 +129,13 @@ function(fetch)
       list(GET ARGV ${_INDEX0} _NAME)
       list(GET ARGV ${_INDEX1} _PREFIX)
 
+      set(_ASIS "${${_PREFIX}_ASIS}")
+      if(_ASIS)
+         set(_SOURCE_SUBDIR "_ignored")
+      else()
+         set(_SOURCE_SUBDIR ".")
+      endif()
+
       if(RSTUDIO_USE_SYSTEM_${_PREFIX})
          find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
       else()
@@ -112,6 +143,7 @@ function(fetch)
             GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
             GIT_TAG        "${${_PREFIX}_REVISION}"
             GIT_SHALLOW    ON
+            SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
             EXCLUDE_FROM_ALL)
       endif()
 
@@ -148,8 +180,8 @@ fetch(
 
 
 # Create websocketpp target.
-add_library(rstudio-websocketpp INTERFACE)
-target_include_directories(rstudio-websocketpp INTERFACE "${websocketpp_SOURCE_DIR}")
+add_library(rstudio-websocketpp INTERFACE EXCLUDE_FROM_ALL)
+target_include_directories(rstudio-websocketpp INTERFACE "${WEBSOCKETPP_SOURCE_DIR}")
 
 
 # Create hunspell target.
