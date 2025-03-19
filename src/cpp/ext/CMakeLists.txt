@@ -25,7 +25,8 @@ include(FetchContent)
 # VERSION:     The version of the dependency to be used.
 # REPOSITORY:  The (git) repository to be used when retrieving the dependency.
 # REVISION:    The (git) revision / commit hash to be used when retrieving the dependency.
-# CUSTOM:      Boolean; when set, the project is retrieved but not automatically added to the build.
+# CUSTOM:      Optional; when TRUE, the project is retrieved but not automatically added to the build.
+# PLATFORMS:   Optional; a list of platforms for which this dependency should be retrieved and built.
 #
 # Use the CUSTOM argument when you want to fetch an external dependency, but need to manually
 # set up a build target based on that package's sources. This is mainly useful for projects which
@@ -35,12 +36,26 @@ include(FetchContent)
 function(dependency)
 
    set(_NAME "${ARGV0}")
-   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION" "")
+   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION" "PLATFORMS")
 
    set(${_NAME}_VERSION    "${_VERSION}"    CACHE INTERNAL "")
    set(${_NAME}_REPOSITORY "${_REPOSITORY}" CACHE INTERNAL "")
    set(${_NAME}_REVISION   "${_REVISION}"   CACHE INTERNAL "")
    set(${_NAME}_CUSTOM     "${_CUSTOM}"     CACHE INTERNAL "")
+   set(${_NAME}_PLATFORMS  "${_PLATFORMS}"  CACHE INTERNAL "")
+
+   if(_PLATFORMS)
+      foreach(_PLATFORM IN LISTS _PLATFORMS)
+         if(_PLATFORM)
+            set(${_NAME}_ENABLED TRUE)
+            break()
+         endif()
+      endforeach()
+   else()
+      set(${_NAME}_ENABLED TRUE)
+   endif()
+
+   set(${_NAME}_ENABLED ${${_NAME}_ENABLED} CACHE INTERNAL "")
 
    string(REPLACE "." ";" _VERSION_LIST "${_VERSION}")
    list(GET _VERSION_LIST 0 _VERSION_MAJOR)
@@ -117,6 +132,15 @@ dependency(YAML_CPP
 )
 
 
+# zlib
+dependency(ZLIB
+   COMMENT    ""
+   VERSION    "1.3.1"
+   REPOSITORY "https://github.com/madler/zlib"
+   REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf"
+   PLATFORMS  WIN32
+)
+
 function(fetch)
 
    set(_INDEX 0)
@@ -135,15 +159,17 @@ function(fetch)
          set(_SOURCE_SUBDIR ".")
       endif()
 
-      if(RSTUDIO_USE_SYSTEM_${_PREFIX})
-         find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
-      else()
-         FetchContent_Declare("${_NAME}"
-            GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
-            GIT_TAG        "${${_PREFIX}_REVISION}"
-            GIT_SHALLOW    ON
-            SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
-            EXCLUDE_FROM_ALL)
+      if(${_PREFIX}_ENABLED)
+         if(RSTUDIO_USE_SYSTEM_${_PREFIX})
+            find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
+         else()
+            FetchContent_Declare("${_NAME}"
+               GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
+               GIT_TAG        "${${_PREFIX}_REVISION}"
+               GIT_SHALLOW    ON
+               SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
+               EXCLUDE_FROM_ALL)
+         endif()
       endif()
 
    endwhile()
@@ -158,7 +184,7 @@ function(fetch)
       list(GET ARGV ${_INDEX0} _NAME)
       list(GET ARGV ${_INDEX1} _PREFIX)
 
-      if(NOT RSTUDIO_USE_SYSTEM_${_PREFIX})
+      if(${_PREFIX}_ENABLED AND NOT RSTUDIO_USE_SYSTEM_${_PREFIX})
          FetchContent_MakeAvailable("${_NAME}")
          set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
          set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
@@ -175,7 +201,8 @@ fetch(
    gsl-lite     GSL_LITE
    hunspell     HUNSPELL
    websocketpp  WEBSOCKETPP
-   yaml-cpp     YAML_CPP)
+   yaml-cpp     YAML_CPP
+   zlib         ZLIB)
 
 
 # Create websocketpp target.
