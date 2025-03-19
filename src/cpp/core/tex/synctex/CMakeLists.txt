@@ -39,10 +39,6 @@ set(SYNCTEX_SOURCE_FILES
 
 # include directories
 set(SYNCTEX_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
-if(WIN32)
-    set(SYNCTEX_INCLUDE_DIRS ${SYNCTEX_INCLUDE_DIRS}
-                             "${CMAKE_CURRENT_SOURCE_DIR}/../../zlib")
-endif()
 include_directories(${SYNCTEX_INCLUDE_DIRS})
 
 # define library
@@ -51,8 +47,6 @@ add_library(rstudio-core-synctex STATIC
    ${SYNCTEX_HEADER_FILES})
 define_source_file_names(rstudio-core-synctex)
 
-# link dependencies
-target_link_libraries(rstudio-core-synctex
-
-)
-
+if(WIN32)
+   target_link_libraries(rstudio-core-synctex zlib)
+endif()
