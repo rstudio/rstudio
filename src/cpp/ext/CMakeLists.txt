@@ -134,12 +134,13 @@ dependency(YAML_CPP
 
 # zlib
 dependency(ZLIB
-   COMMENT    ""
+   COMMENT    "zlib is a general purpose data compression library."
    VERSION    "1.3.1"
    REPOSITORY "https://github.com/madler/zlib"
-   REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf"
+   REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf" # pragma: allowlist secret
    PLATFORMS  WIN32
 )
+
 
 function(fetch)
 
