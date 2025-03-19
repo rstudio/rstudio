@@ -845,10 +845,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winutils/1.0/x64/winutils.exe"
               DESTINATION ${RSTUDIO_INSTALL_BIN}/winutils/x64)
 
-      install(
-         PROGRAMS    "${HUNSPELL_PREFIX_DIR}/bin/hunspell-${HUNSPELL_VERSION_MAJMIN}-0.dll"
-         DESTINATION "${RSTUDIO_INSTALL_BIN}")
-
    endif()
 
 endif()
