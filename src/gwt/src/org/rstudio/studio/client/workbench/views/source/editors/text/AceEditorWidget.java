@@ -26,11 +26,12 @@ import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.elemental2.overlay.File;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.DesktopFrame;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -119,6 +120,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 
 import elemental2.dom.ClipboardEvent;
+import elemental2.dom.File;
 import elemental2.dom.FileList;
 import jsinterop.base.Js;
 
@@ -441,7 +443,7 @@ public class AceEditorWidget extends Composite
          for (int i = 0; i < fileList.length; i++)
          {
             File file = Js.cast(fileList.getAt(i));
-            allFiles.push(normalizeSlashes(file.path));
+            allFiles.push(normalizeSlashes(Desktop.getFrame().getPathForFile(file)));
          }
          
          String mode = editor_.getSession().getMode().getLanguageMode(editor_.getCursorPosition());

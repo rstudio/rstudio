@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -25,8 +26,10 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.DragDropReceiver;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
@@ -63,6 +66,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
    {
       pSource_.get().load();
       pSource_.get().loadDisplay();
+      
       // read the params and set up window ordinal / title
       SourceWindowParams windowParams = params.cast();
       String title = null;
@@ -100,6 +104,20 @@ public class SourceSatelliteWindow extends SatelliteWindow
          pEventBus_.get().fireEvent(new WorkingDirChangedEvent(
                windowParams.getWorkingDir()));
       }
+      
+      // set up drag-drop handlers
+      if (Desktop.isDesktop())
+      {
+         dragDropReceiver_ = new DragDropReceiver(mainPanel.asWidget())
+         {
+            @Override
+            public void onDrop(NativeEvent event)
+            {
+               dragDropReceiver_.handleDroppedFiles(event);
+            }
+         };
+      }
+      
 
       // make it fill the containing layout panel
       Widget presWidget = appPresenter.asWidget();
@@ -140,5 +158,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
    private final Provider<SourceWindowManager> pWindowManager_;
    private final Provider<SourceWindow> pSourceWindow_;
    private final Provider<Source> pSource_;
+   
+   private DragDropReceiver dragDropReceiver_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
