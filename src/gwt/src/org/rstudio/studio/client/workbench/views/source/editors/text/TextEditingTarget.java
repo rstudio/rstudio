@@ -8320,6 +8320,10 @@ public class TextEditingTarget implements
    
    private boolean isFormatOnSaveEnabled()
    {
+      // Only enabled for R documents.
+      if (fileType_ == null || !fileType_.isR())
+         return false;
+      
       // TODO: What should we do if a user tries to enable 'Reformat on Save' for a document
       // without actually setting the code formatter? Should we just opt them into using
       // the 'styler' formatter?
