@@ -21,38 +21,37 @@
 #include <string>
 #include <vector>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/range/as_array.hpp>
-#include <boost/bind/bind.hpp>
-#include <boost/scope_exit.hpp>
-
-#include <signal.h>
 #include <fcntl.h>
-#include <syslog.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <pwd.h>
 #include <grp.h>
-#include <sys/types.h>
+#include <pwd.h>
+#include <signal.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
-
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <syslog.h>
+#include <unistd.h>
 #include <uuid/uuid.h>
 
 #include <shared_core/system/PosixSystem.hpp>
 
 #ifdef __APPLE__
+#include <gsl/gsl-lite.hpp>
+#include <libproc.h>
 #include <mach-o/dyld.h>
 #include <sys/proc_info.h>
-#include <libproc.h>
-#include <gsl/gsl>
 #endif
 
 #ifdef __linux__
-#include <sys/prctl.h>
-#include <sys/sysinfo.h>
+
+#include <dirent.h>
 #include <linux/kernel.h>
+#include <stdarg.h>
+#include <sys/prctl.h>
+#include <sys/syscall.h>
+#include <sys/sysinfo.h>
+
 // Some data structures here don't compile on rhel8 due to 'private' being used as a symbol???
 // so defining them again here
 //#include <linux/keyctl.h>
@@ -63,18 +62,18 @@
 #define KEY_SPEC_SESSION_KEYRING        -3      /* - key ID for session-specific keyring */
 #define KEY_SPEC_USER_KEYRING           -4      /* - key ID for UID-specific keyring */
 
-#include <dirent.h>
-#include <stdarg.h>
-#include <sys/syscall.h>
-
 #endif
 
-#include <boost/thread.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range.hpp>
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string/split.hpp>
+#include <boost/range/as_array.hpp>
+#include <boost/scope_exit.hpp>
+#include <boost/thread.hpp>
 
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/Error.hpp>
