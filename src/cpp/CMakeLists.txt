@@ -102,6 +102,7 @@ if(UNIX)
 
       # notify the user of our selection
       message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
+      message(STATUS "Mac OS X deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 
    endif()
 
