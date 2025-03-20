@@ -16,15 +16,28 @@
 .rs.addFunction("findRtoolsInstaller", function(version, url)
 {
    tryCatch(
-      .rs.findRtoolsInstallerImpl(url),
+      .rs.findRtoolsInstallerImpl(url, version),
       error = function(cnd) {
          .rs.findRtoolsInstallerFallback(version)
       }
    )
 })
 
-.rs.addFunction("findRtoolsInstallerImpl", function(url)
+.rs.addFunction("findRtoolsInstallerImpl", function(url, version)
 {
+   # check whether the URL selected is associated with a CRAN mirror;
+   # if not, select a "real" CRAN mirror instead
+   mirrors <- utils::getCRANmirrors(local.only = TRUE)$URL
+   matches <- vapply(mirrors, function(mirror) {
+      .rs.startsWith(url, mirror)
+   }, FUN.VALUE = logical(1))
+   
+   if (!any(matches)) {
+      fmt <- "https://cloud.r-project.org/bin/windows/Rtools/rtools%s/rtools.html"
+      shortVersion <- gsub(".", "", version, fixed = TRUE)
+      url <- sprintf(fmt, shortVersion)
+   }
+   
    # download contents of home page
    destfile <- tempfile("rtools-home-", fileext = ".html")
    download.file(url, destfile, mode = "wb", quiet = TRUE)
@@ -49,7 +62,11 @@
 
 .rs.addFunction("findRtoolsInstallerFallback", function(version)
 {
-   if (version == "4.4")
+   if (version == "4.5")
+   {
+      "https://rstudio.org/links/rtools45"
+   }
+   else if (version == "4.4")
    {
       "https://rstudio.org/links/rtools44"
    }

@@ -8,6 +8,7 @@
 - RStudio for Windows binaries now have digital signatures. (rstudio-pro#5772)
 - RStudio now only writes the ProjectId field within a project's `.Rproj` file when required. Currently, this is for users who have configured a custom `.Rproj.user` location.
 - Added memory limit monitoring to RStudio (Linux only for now). If `ulimit -m` is set, this limit is displayed in the Memory Usage Report. As the limit is approached, a warning is displayed, then an error when the limit is reached. When the system is low on memory, the session can abort itself by shutting down in a controlled way with a dialog to the user. See the new `"allow-over-limit-sessions` option in rsession.conf. (rstudio-pro#5019).
+- RStudio now supports installation of Rtools45 for the upcoming R 4.5.0 release on Windows.
 
 #### Posit Workbench
 - Changed memory limit enforcement of `/etc/rstudio/profiles` `max-memory-mb` setting from limiting virtual memory (`ulimit -v`) to resident memory (`ulimit -m`) for more accuracy. This allows a session to run quarto 1.6, which uses a lot of virtual memory due to its underlying virtual machine. Unfortunately, resident memory is only enforceable at the kernel level in Linux versions that support cgroups. To make up for the loss of kernel enforcement, RStudio warns the user and stops over limit sessions. For more robust kernel enforcement, configure memory limits in the Job Launcher using cgroups (rstudio-pro#5019).
@@ -44,6 +45,7 @@
 - Update NO_PROXY domain filter to be less restrictive and allow for expressions like `.local` and `.sub.example.local` (#15607)
 - Fixed an issue where Copilot support on Apple Silicon Macs was running via Rosetta2 instead of natively. (#14156)
 - Fixed an issue where documents could open very slowly when many tabs were already open. (#15767)
+- Fixed an issue where the download of Rtools44 could fail when using Posit Package Manager as the default R package repository. (#15803)
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
