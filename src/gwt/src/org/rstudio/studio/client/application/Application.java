@@ -23,7 +23,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DragDropReceiver;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -284,7 +283,7 @@ public class Application implements ApplicationEventHandlers
                   @Override
                   public void onDrop(NativeEvent event)
                   {
-                     handleDrop(event);
+                     dragDropReceiver_.handleDroppedFiles(event);
                   }
                };
             }
@@ -1495,34 +1494,6 @@ public class Application implements ApplicationEventHandlers
          clientStateUpdaterInstance_.resumeSendingUpdates();
    }
    
-   private void handleDrop(NativeEvent event)
-   {
-      DataTransfer data = Js.cast(event.getDataTransfer());
-      JsArray<String> types = data.types;
-      if (types.length != 1)
-         return;
-      
-      String type = types.getAt(0);
-      if (!StringUtil.equals(type, "Files"))
-         return;
-      
-      event.stopPropagation();
-      event.preventDefault();
-      
-      FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
-      
-      FileList fileList = data.files;
-      for (int i = 0; i < fileList.length; i++)
-      {
-         File file = Js.cast(fileList.getAt(i));
-         String path = Desktop.getFrame().getPathForFile(file);
-         FileSystemItem item = FileSystemItem.createFile(path);
-         FileType fileType = registry.getTypeForFile(item);
-         if (fileType != null && fileType instanceof TextFileType)
-            registry.editFile(item);
-      }
-   }
-
    private RemoteServerAuthWatcher authWatcher_;
    private final ApplicationView view_;
    private final GlobalDisplay globalDisplay_;
