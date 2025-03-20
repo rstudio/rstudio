@@ -18,10 +18,10 @@
 
 ### Fixed
 #### RStudio
-
 - Fixed an issue where execution of notebook chunks could fail if the `http_proxy` environment variable was set. (#15530)
 - Fixed an issue where RStudio could hang when attempting to stage large folders from the Git pane on Windows. (#13222)
 - Fixed an issue where RStudio could crash when attempting to clear plots while a new plot was being drawn. (#11856)
+- Fixed an issuew here RStudio could crash if a project contained `.R` files with binary data. (#15801)
 - Fixed an issue where the R startup banner was printed twice in rare cases. (#6907)
 - Fixed an issue where RStudio Server could hang when navigating the Open File dialog to a directory with many (> 100,000) files. (#15441)
 - Fixed an issue where the F1 shortcut would fail to retrieve documentation in packages. (#10869)

@@ -122,18 +122,8 @@ bool isAlphanumeric(wchar_t ch)
    }
    else
    {
-      CFStringRef string = CFStringCreateWithBytes(
-               kCFAllocatorDefault,
-               (const UInt8*) &ch,
-               sizeof (wchar_t),
-               kCFStringEncodingUTF32LE,
-               false);
-
-      CFCharacterSetRef set = CFCharacterSetGetPredefined(kCFCharacterSetAlphaNumeric);
-      CFRange range = CFRangeMake(0, CFStringGetLength(string));
-      bool result = CFStringFindCharacterFromSet(string, set, range, 0, NULL);
-      CFRelease(string);
-      return result;
+      static CFCharacterSetRef set = CFCharacterSetGetPredefined(kCFCharacterSetAlphaNumeric);
+      return CFCharacterSetIsLongCharacterMember(set, ch);
    }
    
 #else
