@@ -256,11 +256,8 @@ if (UNIX)
 # Win32 specific
 else()
 
-   # embedded version of zlib
-   add_subdirectory(zlib)
-
    # system libraries
-   set (CORE_SYSTEM_LIBRARIES
+   set(CORE_SYSTEM_LIBRARIES
       WS2_32
       MsWSock
       RpcRT4
@@ -293,8 +290,9 @@ else()
 
 endif()
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-      ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(
+   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+   ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # define include dirs
 list(APPEND CORE_INCLUDE_DIRS include)
@@ -341,6 +339,10 @@ target_link_libraries(rstudio-core
    yaml-cpp::yaml-cpp
 )
 
+if(WIN32)
+   target_link_libraries(rstudio-core zlib)
+endif()
+
 # define executable (for running unit tests)
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
@@ -366,6 +368,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    )
 
    if(WIN32)
-      target_link_libraries(rstudio-core-tests rstudio-core-zlib)
+      target_link_libraries(rstudio-core-tests zlib)
    endif()
+
 endif()
