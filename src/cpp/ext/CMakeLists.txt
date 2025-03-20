@@ -16,6 +16,10 @@
 include(ExternalProject)
 include(FetchContent)
 
+cmake_policy(SET CMP0048 NEW)
+set(FETCHCONTENT_QUIET TRUE)
+set(CMAKE_WARN_DEPRECATED FALSE)
+
 #
 # Declare an external dependency.
 #
@@ -92,6 +96,8 @@ dependency(FMT
    REPOSITORY "https://github.com/fmtlib/fmt"
    REVISION   "123913715afeb8a437e6388b4473fcc4753e1c9a" # pragma: allowlist secret
 )
+
+set(FMT_INSTALL OFF)
 
 
 # gsl-lite
@@ -186,7 +192,9 @@ function(fetch)
       list(GET ARGV ${_INDEX1} _PREFIX)
 
       if(${_PREFIX}_ENABLED AND NOT RSTUDIO_USE_SYSTEM_${_PREFIX})
+         message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION}")
          FetchContent_MakeAvailable("${_NAME}")
+         message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
          set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
          set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
       endif()

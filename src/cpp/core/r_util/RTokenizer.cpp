@@ -113,19 +113,8 @@ Error tokenizeError(const std::string& reason, const ErrorLocation& location)
 bool isAlphanumeric(wchar_t ch)
 {
 #ifdef __APPLE__
-   
-   // if this appears to be an ASCII value, then use the standard library;
-   // otherwise, use core foundation
-   if (ch < static_cast<wchar_t>(128))
-   {
-      return iswalnum(ch);
-   }
-   else
-   {
-      static CFCharacterSetRef set = CFCharacterSetGetPredefined(kCFCharacterSetAlphaNumeric);
-      return CFCharacterSetIsLongCharacterMember(set, ch);
-   }
-   
+   static CFCharacterSetRef set = CFCharacterSetGetPredefined(kCFCharacterSetAlphaNumeric);
+   return CFCharacterSetIsLongCharacterMember(set, ch);
 #else
    return iswalnum(ch);
 #endif
