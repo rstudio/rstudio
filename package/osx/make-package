@@ -328,7 +328,6 @@ if [ -n "${build_x86_64}" ]; then
    info "Configuring for x86_64 ..."
    arch -x86_64 "${CMAKE}"                                   \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                      \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                  \
       -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"                \
       -DRSTUDIO_TARGET=${rstudio_target}                     \
       -DRSTUDIO_PACKAGE_BUILD=1                              \
@@ -380,7 +379,6 @@ if [ -n "${build_arm64}" ]; then
    info "Configuring for arm64 ..."
    arch -arm64 "${CMAKE}"                                   \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                     \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                 \
       -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"               \
       -DRSESSION_ALTERNATE_BUILD=1                          \
       -DRSTUDIO_TARGET=${rstudio_target}                    \

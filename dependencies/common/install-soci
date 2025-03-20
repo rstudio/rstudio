@@ -97,7 +97,6 @@ fi
    -DCMAKE_POLICY_DEFAULT_CMP0074="NEW"                \
    -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true         \
    -DCMAKE_CXX_VISIBILITY_PRESET="$COMPILE_VISIBILITY" \
-   -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"               \
    -DSOCI_TESTS=OFF                                    \
    -DSOCI_CXX11=ON                                     \
    -DSOCI_EMPTY=OFF                                    \

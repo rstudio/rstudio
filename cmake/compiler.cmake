@@ -36,6 +36,16 @@ if(APPLE)
     set(CMAKE_CXX_COMPILER /usr/bin/c++)
   endif()
 
+  if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(RSTUDIO_TOOLS_SCRIPT "${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rstudio-tools.sh")
+    execute_process(
+      COMMAND bash -c "source ${RSTUDIO_TOOLS_SCRIPT} && echo $MACOSX_DEPLOYMENT_TARGET"
+      OUTPUT_VARIABLE MACOSX_DEPLOYMENT_TARGET
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      COMMAND_ERROR_IS_FATAL ANY)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "${MACOSX_DEPLOYMENT_TARGET}")
+  endif()
+
 endif()
 
 if(MSVC)

@@ -41,6 +41,10 @@ export WORKBENCH_GO_VERSION="1.22.3"
 export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 
 
+# macOS deployment target
+export MACOSX_DEPLOYMENT_TARGET="12.0"
+
+
 # Generic Tools ----
 
 section () {
