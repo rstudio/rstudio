@@ -13,21 +13,29 @@
 #
 #
 
-.rs.addFunction("notebookConditions.onWarning", function(condition)
+.rs.addFunction("notebookConditions.onWarning", function(cnd)
 {
    prefix <- gettext("Warning:", domain = "R")
-   message <- paste(condition$message, collapse = "\n")
-   full <- paste(prefix, message)
-   .Call("rs_signalNotebookCondition", 1L, full, PACKAGE = "(embedding)")
+   msg <- paste(prefix, paste(conditionMessage(cnd), collapse = "\n"))
+   .Call("rs_signalNotebookCondition", 1L, msg, PACKAGE = "(embedding)")
    invokeRestart("muffleWarning")
 })
 
-.rs.addFunction("notebookConditions.onMessage", function(condition)
+.rs.addFunction("notebookConditions.onMessage", function(cnd)
 {
-   full <- paste(condition$message, collapse = "\n")
-   .Call("rs_signalNotebookCondition", 0L, full, PACKAGE = "(embedding)")
+   # By default, `base::message()` will append a newline to the signalled
+   # message condition, but `rlang::inform()` will not. Because our downstream
+   # message handler expects a newline to be appended, we add one here for
+   # rlang messages.
+   msg <- if (inherits(cnd, "rlang_message"))
+      paste(c(conditionMessage(cnd), ""), collapse = "\n")
+   else
+      paste(conditionMessage(cnd), collapse = "\n")
+   
+   .Call("rs_signalNotebookCondition", 0L, msg, PACKAGE = "(embedding)")
    invokeRestart("muffleMessage")
 })
+
 
 # NOTE: we need to add condition handlers to the top level, but cannot
 # actually do so if there is an R function context on the stack.
