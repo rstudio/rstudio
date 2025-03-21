@@ -92,13 +92,16 @@ choco install -y temurin11
 choco install -y -i ant
 choco install -y 7zip
 choco install -y ninja
-choco install -y windows-sdk-10.1 --version 10.1.19041.0
-choco install -y visualstudio2019buildtools --version 16.11.10.0
-choco install -y visualstudio2019-workload-vctools --version 1.0.1
 choco install -y nsis
 choco install -y python313
+choco install -y strawberryperl
 choco install -y jq
 Install-ChocoPackageIfMissing -PackageName "git" -TestCommand "git"
+
+# install build tools
+choco install -y windows-sdk-10.1 --version 10.1.18362.1 --force
+choco install -y visualstudio2019buildtools --version 16.11.10.0 --force
+choco install -y visualstudio2019-workload-vctools --version 1.0.1 --force
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 # Newer choco doesn't have this so don't fail if not found
