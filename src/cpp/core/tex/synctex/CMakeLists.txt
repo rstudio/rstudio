@@ -48,5 +48,5 @@ add_library(rstudio-core-synctex STATIC
 define_source_file_names(rstudio-core-synctex)
 
 if(WIN32)
-   target_link_libraries(rstudio-core-synctex zlib)
+   target_link_libraries(rstudio-core-synctex zlibstatic)
 endif()
