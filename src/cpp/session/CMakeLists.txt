@@ -89,11 +89,6 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
       continue()
    endif()
 
-   # skip Copilot if not enabled
-   if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_COPILOT_DIR" AND NOT COPILOT_ENABLED)
-      continue()
-   endif()
-
    # validate existence
    if(NOT EXISTS "${${VAR}}")
       message(FATAL_ERROR "${${VAR}} not found (re-run install-dependencies script to install")
