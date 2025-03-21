@@ -41,6 +41,17 @@ export WORKBENCH_GO_VERSION="1.22.3"
 export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 
 
+#
+# macOS deployment target
+#
+# Note that CMake reads this environment variable when choosing a default
+# deployment target for builds.
+#
+# https://cmake.org/cmake/help/latest/envvar/MACOSX_DEPLOYMENT_TARGET.html
+#
+export MACOSX_DEPLOYMENT_TARGET="12.0"
+
+
 # Generic Tools ----
 
 section () {

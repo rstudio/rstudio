@@ -95,30 +95,14 @@ if(UNIX)
 
    if(APPLE)
 
-      # if present, set osx deployment target variables from environment vars
-      if(NOT $ENV{CMAKE_OSX_SYSROOT} STREQUAL "")
-         set(CMAKE_OSX_SYSROOT $ENV{CMAKE_OSX_SYSROOT})
-         message(STATUS "Set CMAKE_OSX_SYSROOT to ${CMAKE_OSX_SYSROOT}")
-      endif()
-
-      if(NOT $ENV{CMAKE_OSX_DEPLOYMENT_TARGET} STREQUAL "")
-         set(CMAKE_OSX_DEPLOYMENT_TARGET $ENV{CMAKE_OSX_DEPLOYMENT_TARGET})
-         message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
-      endif()
-
       # Figure out what version of Mac OS X this is. Unfortunately
       # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
       # version number another way.
       execute_process(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-      # When compiling on macOS Mojave (or greater), set a deployment target.
-      if(NOT MACOSX_VERSION VERSION_LESS 10.14 AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
-         set(CMAKE_OSX_DEPLOYMENT_TARGET 10.12)
-         message(STATUS "Mac OS X deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
-      endif()
-
       # notify the user of our selection
       message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
+      message(STATUS "Mac OS X deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 
    endif()
 

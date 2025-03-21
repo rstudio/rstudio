@@ -38,6 +38,15 @@ if command -v brew &> /dev/null ; then
    BOOST_EXTRA="include=${BREW_PREFIX}/include library-path=${BREW_PREFIX}/lib"
 fi
 
+# set up compiler flags
+if is-darwin; then
+   CFLAGS="-fPIC -mmacos-version-min=${MACOSX_DEPLOYMENT_TARGET}"
+   CXXFLAGS="-fPIC -mmacos-version-min=${MACOSX_DEPLOYMENT_TARGET}"
+else
+   CFLAGS="-fPIC"
+   CXXFLAGS="-fPIC"
+fi
+
 # install if we aren't already installed
 if [ -e "${BOOST_PREFIX}" ]; then
    info "Boost ${BOOST_VERSION} already installed at '${BOOST_PREFIX}'"
@@ -130,12 +139,12 @@ subsection "Bootstrapping Boost"
 
 # build it
 subsection "Building Boost"
-./b2 -q ${BOOST_EXTRA} \
-   cflags="-fPIC"      \
-   cxxflags="-fPIC"    \
-   variant=release     \
-   link=static         \
-   threading=multi     \
+./b2 -q ${BOOST_EXTRA}    \
+   cflags="${CFLAGS}"     \
+   cxxflags="${CXXFLAGS}" \
+   variant=release        \
+   link=static            \
+   threading=multi        \
    install
 
 # clean up
