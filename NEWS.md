@@ -46,6 +46,7 @@
 - Fixed an issue where Copilot support on Apple Silicon Macs was running via Rosetta2 instead of natively. (#14156)
 - Fixed an issue where documents could open very slowly when many tabs were already open. (#15767)
 - Fixed an issue where the download of Rtools44 could fail when using Posit Package Manager as the default R package repository. (#15803)
+- Fixed an issue where messages produced by `rlang::inform()` were not separated by newlines.
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)
