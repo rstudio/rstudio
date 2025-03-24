@@ -749,8 +749,10 @@ export function getDesktopBridge() {
 
     getPathForFile: (file: any) => {
       return webUtils.getPathForFile(file);
-    }
+    },
 
+    // Important: be sure last item above has a trailing commma since the pro
+    // branch will add additional items below.
     // pro-only start
 
     // pro-only end
