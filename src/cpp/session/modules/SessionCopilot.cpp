@@ -47,12 +47,12 @@
 #define COPILOT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
    do                                                                          \
    {                                                                           \
-      std::string message = fmt::format(__FMT__, ##__VA_ARGS__);               \
-      std::string formatted =                                                  \
-          fmt::format("[{}]: {}", __func__, message);                          \
-      __LOGGER__("copilot", formatted);                                        \
+      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);               \
+      std::string __formatted__ =                                                  \
+          fmt::format("[{}]: {}", __func__, __message__);                          \
+      __LOGGER__("copilot", __formatted__);                                        \
       if (copilotLogLevel() >= 1)                                              \
-         std::cerr << formatted << std::endl;                                  \
+         std::cerr << __formatted__ << std::endl;                                  \
    } while (0)
 
 #define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
@@ -1184,13 +1184,25 @@ void onBackgroundProcessing(bool isIdle)
          continue;
       }
 
-      // Check if this is a 'LogMessage' response. Should we log these in verbose mode?
+      // Check if this is a 'LogMessage' response.
       json::Value methodJson = responseJson["method"];
       if (methodJson.isString())
       {
          std::string method = methodJson.getString();
          if (method == "LogMessage" || method == "window/logMessage")
+         {
+            json::Value paramsJson = responseJson["params"];
+            if (paramsJson.isObject())
+            {
+               json::Object params = paramsJson.getObject();
+               json::Value messageJson = params["message"];
+               if (messageJson.isString())
+               {
+                  DLOG("logMessage: {}", messageJson.getString());
+               }
+            }
             continue;
+         }
       }
 
       // Check the response id. This will be missing for notifications; we may receive
