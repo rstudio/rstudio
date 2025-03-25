@@ -696,14 +696,15 @@ public class VirtualConsole
                
                // match error output, using custom escapes
                Pattern pattern = Pattern.create(
-                     "\u001b\\[Y" +
-                     "([^\u001b]*)" +
-                     "\u001b\\[Z");
+                     "\033\\[Y" +
+                     "([^\033]*)" +
+                     "\033\\[Z");
+               
                Match errorMatch = pattern.match(data, pos);
-               if (errorMatch != null)
+               if (errorMatch != null && errorMatch.getIndex() == pos)
                {
                   String code = errorMatch.getGroup(1);
-                  text(code, RES.styles().error(), false);
+                  text(code, RES.styles().error(), true);
                   tail = pos + errorMatch.getValue().length();
                   break;
                }

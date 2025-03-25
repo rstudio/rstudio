@@ -90,15 +90,14 @@
 
 .rs.addFunction("globalCallingHandlers.shouldHandleWarning", function(cnd)
 {
-   # don't handle errors with custom classes
-   custom <-
-      !identical(class(cnd), c("simpleWarning", "warning", "condition")) &&
-      !identical(class(cnd), c("warning", "condition"))
-   
-   if (custom)
+   # If the user is opting into bundling warnings, just let the default
+   # R warning handler take over.
+   warn <- getOption("warn", default = 0L)
+   if (warn == 0L)
       return(FALSE)
    
-   # okay, we can handle it
+   # rlang doesn't apply any custom styles to emitted warnings,
+   # so handle warnings even if they have custom classes
    TRUE
 })
 
@@ -110,7 +109,13 @@
    
    if (is.null(conditionCall(cnd)))
    {
-      prefix <- highlight(gettext(sprintf("%s: ", label), domain = "R"))
+      # Hacky way to respect R's available translations while only colouring
+      # the first word in the prefix
+      prefix <- gettext(sprintf("%s: ", label), domain = "R")
+      colonIndex <- regexpr(":", prefix, fixed = TRUE)
+      lhs <- substr(prefix, 1L, colonIndex - 1L)
+      rhs <- substr(prefix, colonIndex, .Machine$integer.max)
+      prefix <- paste0(highlight(lhs), rhs)
       sprintf("%s%s", prefix, conditionMessage(cnd))
    }
    else
@@ -124,7 +129,7 @@
       
       cll <- format(conditionCall(cnd))
       msg <- conditionMessage(cnd)
-      sprintf("%s `%s`: %s", prefix, cll, msg)
+      sprintf("%s %s: %s", prefix, cll, msg)
    }
    
 })
