@@ -22,6 +22,7 @@ import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.Version;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
@@ -38,8 +39,12 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDebugEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -47,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
@@ -81,12 +87,19 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
+   public static interface ErrorClass
+   {
+      public String get();
+   }
+   
    public ShellWidget(AceEditor editor,
                       UserPrefs prefs,
                       EventBus events,
                       AriaLiveService ariaLive,
                       String outputLabel)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
       prefs_ = prefs;
@@ -274,7 +287,34 @@ public class ShellWidget extends Composite implements ShellDisplay,
                scrollPanel_.scrollToBottom();
          }
       };
-
+      
+      errorClass_ = new ErrorClass()
+      {
+         @Override
+         public String get()
+         {
+            return styles_.error();
+         }
+      };
+      
+      events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
+      {
+         @Override
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            setErrorClass();
+         }
+      });
+      
+      events_.addHandler(EditorThemeChangedEvent.TYPE, new EditorThemeChangedEvent.Handler()
+      {
+         @Override
+         public void onEditorThemeChanged(EditorThemeChangedEvent event)
+         {
+            setErrorClass();
+         }
+      });
+      
       initWidget(scrollPanel_);
       addDomHandler(secondaryInputHandler, ClickEvent.getType());
       
@@ -283,9 +323,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
    
    @Inject
-   private void initialize(ApplicationAutomation automation)
+   private void initialize(ApplicationAutomation automation,
+                           Session session,
+                           UserState userState)
    {
       automation_ = automation;
+      session_ = session;
+      userState_ = userState;
    }
 
    private native void addCopyHook(Element element) /*-{
@@ -565,10 +609,41 @@ public class ShellWidget extends Composite implements ShellDisplay,
          Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
       }
    }
+   
+   private void setErrorClass()
+   {
+      String rVersion = session_.getSessionInfo().getRVersionsInfo().getRVersion();
+      AceTheme theme = userState_.theme().getValue().cast();
+      aceThemeErrorClass_ = AceTheme.getThemeErrorClass(theme);
+      
+      if (Version.compare(rVersion, "4.0.0") < 0)
+      {
+         errorClass_ = new ErrorClass()
+         {
+            @Override
+            public String get()
+            {
+               return styles_.error() + " " + aceThemeErrorClass_;
+            }
+         };
+      }
+      else
+      {
+         errorClass_ = new ErrorClass()
+         {
+            @Override
+            public String get()
+            {
+               return styles_.error();
+            }
+         };
+      }
+      
+   }
 
    private String getErrorClass()
    {
-      return styles_.error();
+      return errorClass_.get();
    }
 
    /**
@@ -1149,7 +1224,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final UserPrefs prefs_;
    private final AriaLiveService ariaLive_;
    private VerticalPanel verticalPanel_;
-   private ApplicationAutomation automation_;
+   private ErrorClass errorClass_;
+   private String aceThemeErrorClass_;
 
    private int editorWidth_ = -1;
    private boolean scrollIntoViewPending_ = false;
@@ -1159,6 +1235,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final Map<String, String> errorKeys_ = new TreeMap<>();
    private boolean clearErrors_ = false;
 
+   // Injected
+   private ApplicationAutomation automation_;
+   private Session session_;
+   private UserState userState_;
+   
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
    private static final String RSTUDIO_CONSOLE_BUSY = "rstudio-console-busy";
 }

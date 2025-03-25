@@ -20,6 +20,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSourceManager.hpp>
+#include <r/RVersionInfo.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RSession.hpp>
@@ -44,12 +45,6 @@ namespace r {
 namespace session {
 
 namespace {
-
-// is this R 3.0 or greater
-bool s_isR3 = false;
-
-// is this R 3.3 or greater
-bool s_isR3_3 = false;
 
 boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
 
@@ -216,23 +211,6 @@ Error initialize()
    Error libError = r::exec::RFunction("library", "utils").call();
    if (libError)
       LOG_ERROR(libError);
-
-   // check whether this is R 3.3 or greater
-   Error r33Error = r::exec::evaluateString("getRversion() >= '3.3.0'", &s_isR3_3);
-   if (r33Error)
-      LOG_ERROR(r33Error);
-
-   if (s_isR3_3)
-   {
-      s_isR3 = true;
-   }
-   else
-   {
-      // check whether this is R 3.0 or greater
-      Error r3Error = r::exec::evaluateString("getRversion() >= '3.0.0'", &s_isR3);
-      if (r3Error)
-         LOG_ERROR(r3Error);
-   }
 
    // initialize console history capacity
    r::session::consoleHistory().setCapacityFromRHistsize();
