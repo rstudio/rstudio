@@ -35,6 +35,7 @@
 #include <uuid/uuid.h>
 
 #include <shared_core/system/PosixSystem.hpp>
+#include <shared_core/system/SyslogDestination.hpp>
 
 #ifdef __APPLE__
 #include <gsl/gsl-lite.hpp>
@@ -2274,14 +2275,16 @@ Error launchChildProcess(std::string path,
       if (::setpgid(0,0) == -1)
       {
          Error error = systemError(errno, ERROR_LOCATION);
-         LOG_ERROR(error);
+         // Use safe logger in 'after fork before exec'
+         safeLogToSyslog(path, log::LogLevel::ERR, error.asString());
          ::exit(EXIT_FAILURE);
       }
 
       Error error = runProcess(path, runAsUser, config, configFilter);
       if (error)
       {
-         LOG_ERROR(error);
+         // Use safe logger in 'after fork before exec'
+         safeLogToSyslog(path, log::LogLevel::ERR, error.asString());
          ::exit(EXIT_FAILURE);
       }
    }

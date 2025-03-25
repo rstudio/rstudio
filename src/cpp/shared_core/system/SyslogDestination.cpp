@@ -127,6 +127,21 @@ void SyslogDestination::writeLog(
       std::cerr << in_message;
 }
 
+/*
+ * Safer logging that goes directly to syslog on unix. Use this api to log errors after fork,
+ * before exec when the main logging system is not reliable, or before logging has been
+ * initialized.
+ */
+void safeLogToSyslog(
+   const std::string& in_programId,
+   log::LogLevel in_logLevel,
+   const std::string& in_message)
+{
+   ::openlog(in_programId.c_str(), LOG_CONS | LOG_PID, LOG_USER);
+   ::syslog(logLevelToLogPriority(in_logLevel), "%s", in_message.c_str());
+   ::closelog();
+}
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

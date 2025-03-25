@@ -457,7 +457,7 @@ std::string JsonRpcErrorCategory::message( int ev ) const
          return "The maximum amount of concurrent users for this license has been reached";
 
       case errc::LaunchParametersMissing:
-         return "Launch parameters for launcher session missing and should be resent";
+         return "Launch parameters for launcher session are missing";
 
       case errc::LimitSessionsReached:
          return "The maximum amount of concurrent session allowed for the user profile has been reached";
