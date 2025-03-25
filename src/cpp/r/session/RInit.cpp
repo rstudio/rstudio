@@ -377,6 +377,12 @@ Error initialize()
          return error;
    }
 #endif
+
+   // global calling handlers
+   FilePath handlersFilePath = utils::rSourcePath().completePath("GlobalCallingHandlers.R");
+   error = r::sourceManager().sourceLocal(handlersFilePath);
+   if (error)
+      return error;
    
    // now run hooks for those waiting for session to be fully initialized
    if (rCallbacks().initComplete)
@@ -394,6 +400,16 @@ void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
+      // install global calling handlers
+      SEXP initializeSEXP = R_NilValue;
+      r::sexp::Protect protect;
+      Error error = r::exec::RFunction(".rs.globalCallingHandlers.initializeCall")
+            .call(&initializeSEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+
+      Rf_eval(initializeSEXP, R_GlobalEnv);
+
       // do the deferred action
       s_deferredDeserializationAction();
       s_deferredDeserializationAction.clear();

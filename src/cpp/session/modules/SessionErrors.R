@@ -37,26 +37,30 @@
    # Drop calls associated with the emission of the error. Note that the
    # calls on the stack will differ depending on whether the error was
    # emitted via an R-level call to `stop()`, versus a call to `Rf_error`
-   # or `Rf_errorcall` at the C level.
-   recordTracebackSym <- as.symbol(".rs.recordTraceback")
-   n <- length(calls)
-   if (identical(calls[[n]][[1L]], recordTracebackSym))
+   # or `Rf_errorcall` at the C level. The stack will also differ if the
+   # error is caught (and handled) via a global calling handler.
+   stopSyms <- list(
+      as.symbol("stop"),
+      as.symbol(".handleSimpleError"),
+      as.symbol(".rs.recordTraceback")
+   )
+   
+   stopIndex <- handleSimpleErrorIndex <- recordTracebackIndex <- length(calls)
+   for (i in seq_along(calls))
    {
-      n <- n - 1L
-      call <- calls[[n]]
-      if (is.call(call) && length(call) == 1L)
-      {
-         call <- call[[1L]]
-         if (is.call(call) && identical(call[[1L]], recordTracebackSym))
-         {
-            n <- n - 1L
-         }
-      }
+      call <- calls[[i]]
+      if (identical(call[[1L]], as.symbol("stop")))
+         stopIndex <- i - 1L
+      else if (identical(call[[1L]], as.symbol(".handleSimpleError")))
+         handleSimpleErrorIndex <- i - 1L
+      else if (identical(call[[1L]], as.symbol(".rs.recordTraceback")))
+         recordTracebackIndex <- i - 1L
    }
    
    # If there's only one call on the stack, this appears to be an error
    # in a top-level code execution -- just drop it.
-   if (n == 1L)
+   n <- min(stopIndex, handleSimpleErrorIndex, recordTracebackIndex, length(calls))
+   if (n <= 1L)
       return(NULL)
    
    # create the traceback for the client
