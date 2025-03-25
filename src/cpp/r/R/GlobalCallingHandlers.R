@@ -21,7 +21,8 @@
    # Install our handlers.
    globalCallingHandlers(
       error   = .rs.globalCallingHandlers.onError,
-      warning = .rs.globalCallingHandlers.onWarning
+      warning = .rs.globalCallingHandlers.onWarning,
+      message = .rs.globalCallingHandlers.onMessage
    )
    
 })
@@ -64,6 +65,22 @@
    invokeRestart("muffleWarning")
 })
 
+.rs.addFunction("globalCallingHandlers.onMessage", function(cnd)
+{
+   .rs.globalCallingHandlers.onMessageImpl(cnd)
+})
+
+.rs.addFunction("globalCallingHandlers.onMessageImpl", function(cnd)
+{
+   if (inherits(cnd, "packageStartupMessage"))
+   {
+      msg <- conditionMessage(cnd)
+      txt <- .rs.globalCallingHandlers.highlight(msg, type = "message")
+      cat(txt, file = stderr())
+      invokeRestart("muffleMessage")
+   }
+})
+
 .rs.addFunction("globalCallingHandlers.shouldHandleError", function(cnd)
 {
    # don't handle errors with custom classes
@@ -91,9 +108,10 @@
 .rs.addFunction("globalCallingHandlers.shouldHandleWarning", function(cnd)
 {
    # If the user is opting into bundling warnings, just let the default
-   # R warning handler take over.
+   # R warning handler take over. We also need to ignore if warnings are
+   # disabled entirely (via a negative value for the option).
    warn <- getOption("warn", default = 0L)
-   if (warn == 0L)
+   if (warn <= 0L)
       return(FALSE)
    
    # rlang doesn't apply any custom styles to emitted warnings,
@@ -103,10 +121,6 @@
 
 .rs.addFunction("globalCallingHandlers.formatCondition", function(cnd, label)
 {
-   highlight <- function(text) {
-      paste0("\033[Y", text, "\033[Z")
-   }
-   
    if (is.null(conditionCall(cnd)))
    {
       # Hacky way to respect R's available translations while only colouring
@@ -115,7 +129,7 @@
       colonIndex <- regexpr(":", prefix, fixed = TRUE)
       lhs <- substr(prefix, 1L, colonIndex - 1L)
       rhs <- substr(prefix, colonIndex, .Machine$integer.max)
-      prefix <- paste0(highlight(lhs), rhs)
+      prefix <- paste0(.rs.globalCallingHandlers.highlight(lhs), rhs)
       sprintf("%s%s", prefix, conditionMessage(cnd))
    }
    else
@@ -124,7 +138,7 @@
       # the first word in the prefix
       prefix <- gettext(sprintf("%s in ", label), domain = "R")
       parts <- strsplit(prefix, " ", fixed = TRUE)[[1L]]
-      parts[[1L]] <- highlight(parts[[1L]])
+      parts[[1L]] <- .rs.globalCallingHandlers.highlight(parts[[1L]])
       prefix <- paste(parts, collapse = " ")
       
       cll <- format(conditionCall(cnd))
@@ -132,4 +146,17 @@
       sprintf("%s %s: %s", prefix, cll, msg)
    }
    
+})
+
+.rs.addFunction("globalCallingHandlers.highlight", function(text, type = "error")
+{
+   # We use a custom CSI escape sequence of the form:
+   #
+   #    CSI n Z <text> ST
+   #
+   # where 'n' is an integer and is used to map to different styles for output.
+   itype <- switch(tolower(type), error = "1", warning = "2", message = "3")
+   prefix <- paste0("\033\133", itype, "Z")
+   suffix <- "\033\134"
+   paste0(prefix, text, suffix)
 })

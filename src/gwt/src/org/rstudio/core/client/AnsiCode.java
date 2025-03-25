@@ -26,7 +26,11 @@ import org.rstudio.core.client.regex.Pattern;
 public class AnsiCode
 {
    // ANSI command constants
-   public static final String CSI = "\33[";
+   public static final String CSI = "\033\133";   // Control Sequence Introducer
+   public static final String ST  = "\033\134";   // String Terminator
+   public static final String OSC = "\033\135";   // Operating System Command
+   
+   // the terminator for SGR codes
    public static final String SGR = "m";
 
    // Move Cursor Horizontal Absolute
@@ -103,8 +107,7 @@ public class AnsiCode
    // Font-nine is used by RStudio to reduce spacing between lines
    public static final int FONT_NINE = 19;
    public static final String FONT_NINE_STYLE = "xtermFont9";
-
-   public static final String DEFAULTCOLORS = CSI + RESET + ";" + RESET + SGR;
+   public static final String DEFAULTCOLORS = CSI + RESET + ";" + RESET + "m";
 
    public static class AnsiClazzes
    {
@@ -141,28 +144,28 @@ public class AnsiCode
 
    public static class ForeColor
    {
-      public static final String BLACK        = CSI + RESET + ";30" + SGR;
-      public static final String RED          = CSI + RESET + ";31" + SGR;
-      public static final String GREEN        = CSI + RESET + ";32" + SGR;
-      public static final String YELLOW       = CSI + RESET + ";33" + SGR;
-      public static final String BLUE         = CSI + RESET + ";34" + SGR;
-      public static final String MAGENTA      = CSI + RESET + ";35" + SGR;
-      public static final String CYAN         = CSI + RESET + ";36" + SGR;
-      public static final String GRAY         = CSI + RESET + ";37" + SGR;
-      public static final String DEFAULT_FORE = CSI + "39" + SGR;
+      public static final String BLACK        = CSI + RESET + ";30m";
+      public static final String RED          = CSI + RESET + ";31m";
+      public static final String GREEN        = CSI + RESET + ";32m";
+      public static final String YELLOW       = CSI + RESET + ";33m";
+      public static final String BLUE         = CSI + RESET + ";34m";
+      public static final String MAGENTA      = CSI + RESET + ";35m";
+      public static final String CYAN         = CSI + RESET + ";36m";
+      public static final String GRAY         = CSI + RESET + ";37m";
+      public static final String DEFAULT_FORE = CSI + "39m";
    }
 
    public static class BackColor
    {
-      public static final String BLACK        = CSI + RESET + ";40" + SGR;
-      public static final String RED          = CSI + RESET + ";41" + SGR;
-      public static final String GREEN        = CSI + RESET + ";42" + SGR;
-      public static final String BROWN        = CSI + RESET + ";43" + SGR;
-      public static final String BLUE         = CSI + RESET + ";44" + SGR;
-      public static final String MAGENTA      = CSI + RESET + ";45" + SGR;
-      public static final String CYAN         = CSI + RESET + ";46" + SGR;
-      public static final String GRAY         = CSI + RESET + ";47" + SGR;
-      public static final String DEFAULT_BACK = CSI + RESET + ";49" + SGR;
+      public static final String BLACK        = CSI + RESET + ";40m";
+      public static final String RED          = CSI + RESET + ";41m";
+      public static final String GREEN        = CSI + RESET + ";42m";
+      public static final String BROWN        = CSI + RESET + ";43m";
+      public static final String BLUE         = CSI + RESET + ";44m";
+      public static final String MAGENTA      = CSI + RESET + ";45m";
+      public static final String CYAN         = CSI + RESET + ";46m";
+      public static final String GRAY         = CSI + RESET + ";47m";
+      public static final String DEFAULT_BACK = CSI + RESET + ";49m";
    }
 
    private static class Color

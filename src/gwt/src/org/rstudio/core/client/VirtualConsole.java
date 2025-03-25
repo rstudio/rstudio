@@ -35,6 +35,8 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.inject.Inject;
@@ -143,7 +145,21 @@ public class VirtualConsole
    {
       prefs_ = prefs;
       parent_ = parent;
+      ansiColorMode_ = prefs.consoleAnsiMode();
       VirtualScrollerManager.init();
+   }
+   
+   @Inject
+   private void initialize(UserPrefs userPrefs)
+   {
+      userPrefs.ansiConsoleMode().addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            ansiColorMode_ = event.getValue();
+         }
+      });
    }
 
    public void clear()
@@ -154,7 +170,10 @@ public class VirtualConsole
          formfeed();
    }
 
-   public boolean isLimitConsoleVisible() { return prefs_.limitConsoleVisible(); }
+   public boolean isLimitConsoleVisible()
+   {
+      return prefs_.limitConsoleVisible();
+   }
 
    public void setVirtualizedDisableOverride(boolean override)
    {
@@ -195,6 +214,7 @@ public class VirtualConsole
       clearPartialAnsiCode();
       if (cursor_ == 0)
          return;
+      
       while (cursor_ > 0 && output_.charAt(cursor_ - 1) != '\n')
          cursor_--;
    }
@@ -557,6 +577,13 @@ public class VirtualConsole
    {
       submit(data, clazz, false/*forceNewRange*/, false/*ariaLiveAnnounce*/);
    }
+   
+   private Match nextMatch(String data, int offset)
+   {
+      return (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
+         ? CONTROL.match(data, offset)
+         : AnsiCode.CONTROL_PATTERN.match(data, offset);
+   }
 
    /**
     * Submit text to console
@@ -592,13 +619,11 @@ public class VirtualConsole
 
       String currentClazz = clazz;
 
-      String ansiColorMode = prefs_.consoleAnsiMode();
-
       // If previously determined classes from ANSI codes are available,
       // combine them with input class so they are ready to use if
       // there is text to output before any other ANSI codes in the
       // data (or there are no more ANSI codes).
-      if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_ON && ansiCodeStyles_.inlineClazzes != null)
+      if (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_ON && ansiCodeStyles_.inlineClazzes != null)
       {
          if (clazz != null)
          {
@@ -609,36 +634,41 @@ public class VirtualConsole
             currentClazz = ansiCodeStyles_.inlineClazzes;
          }
       }
+      
+      // Look for a control character in the input.
+      Match match = nextMatch(data, 0);
 
-      Match match = (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_OFF) ?
-            CONTROL.match(data, 0) :
-            AnsiCode.CONTROL_PATTERN.match(data, 0);
+      // If nothing is found, we're in the "easy" case -- just submit all the text.
       if (match == null)
       {
          text(data, currentClazz, forceNewRange);
          return;
       }
-
-      int tail = 0;
       
-      while (match != null)
+      // Start processing control characters and escapes.
+      int head = 0;
+      int tail = 0;
+      for (; match != null; match = nextMatch(data, tail))
       {
-         int pos = match.getIndex();
+         // Update the match position.
+         head = match.getIndex();
          
          // If we passed over any plain text on the way to this control
-         // character, add it.
-         if (tail != pos)
+         // character, add it. Note that we're in an intermediate state
+         // where tail is now 'behind' the just-updated head.
+         if (head != tail)
          {
-            text(StringUtil.substring(data, tail, pos), currentClazz, forceNewRange);
+            text(StringUtil.substring(data, tail, head), currentClazz, forceNewRange);
 
             // once we've started a new range, rest of output for this submit
             // call should share that range (e.g. a multi-line error message)
             forceNewRange = false;
          }
 
-         tail = pos + 1;
+         // Now, update the tail.
+         tail = head + 1;
 
-         switch (data.charAt(pos))
+         switch (data.charAt(head))
          {
             case '\r':
                carriageReturn();
@@ -666,15 +696,15 @@ public class VirtualConsole
                
                // If the only character we've seen so far is the escape code,
                // just buffer it and try again with next input.
-               if (pos == data.length() - 1)
+               if (head == data.length() - 1)
                {
-                  partialAnsiCode_ = StringUtil.substring(data, pos);
+                  partialAnsiCode_ = StringUtil.substring(data, head);
                   return;
                }
                
                // match hyperlink, either start or end (if [url] is empty
                // <ESC> ] 8 ; [params] ; [url] \7
-               HyperlinkMatch hyperlinkMatch = HyperlinkMatch.create(data, pos);
+               HyperlinkMatch hyperlinkMatch = HyperlinkMatch.create(data, head);
                if (hyperlinkMatch != null)
                {
                   String params = hyperlinkMatch.params_;
@@ -694,23 +724,45 @@ public class VirtualConsole
                   break;
                }
                
-               // match error output, using custom escapes
-               Pattern pattern = Pattern.create(
-                     "\033\\[Y" +
-                     "([^\033]*)" +
-                     "\033\\[Z");
-               
-               Match errorMatch = pattern.match(data, pos);
-               if (errorMatch != null && errorMatch.getIndex() == pos)
+               // skip string end escapes
+               if (data.substring(head, head + 2) == AnsiCode.ST)
                {
-                  String code = errorMatch.getGroup(1);
-                  text(code, RES.styles().error(), true);
-                  tail = pos + errorMatch.getValue().length();
+                  tail += 1;
+                  break;
+               }
+               
+               // match error output, using custom escapes
+               Pattern customPattern = Pattern.create(
+                     "\\033\\133(\\d+)Z" +
+                     "([^\\033]*)" +
+                     "\\033\\134", "my");
+               
+               Match customMatch = customPattern.match(data, head);
+               if (customMatch != null)
+               {
+                  String type = customMatch.getGroup(1);
+                  String code = customMatch.getGroup(2);
+                  
+                  if (type == "1")
+                  {
+                     text(code, RES.styles().error(), true);
+                  }
+                  else if (type == "2")
+                  {
+                     text(code, RES.styles().warning(), true);
+                  }
+                  else if (type == "3")
+                  {
+                     text(code, RES.styles().message(), true);
+                  }
+                  
+                  tail = head + customMatch.getValue().length();
                   break;
                }
                
                // match complete CSI codes
-               Match csiMatch = AnsiCode.CSI_PATTERN.match(data, pos);
+               Pattern csiPattern = Pattern.create(AnsiCode.CSI_REGEX, "my");
+               Match csiMatch = csiPattern.match(data, head);
                if (csiMatch != null)
                {
                   int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
@@ -721,8 +773,8 @@ public class VirtualConsole
                   {
                      // process the SGR code
                      ansiCodeStyles_ = ansi_.processCode(csiMatch.getValue());
-                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
-                     tail = pos + csiMatch.getValue().length();
+                     currentClazz = setCurrentClazz(clazz);
+                     tail = head + csiMatch.getValue().length();
                      break;
                   }
                   
@@ -736,23 +788,25 @@ public class VirtualConsole
                      cursor_ = Math.max(0, cursor_ - n);
                   }
                   
-                  tail = pos + csiMatch.getValue().length();
+                  tail = head + csiMatch.getValue().length();
                   break;
                }
                
                // check for incomplete CSI escapes, and continue parsing those
-               Match csiPrefixMatch = AnsiCode.CSI_PREFIX_PATTERN.match(data, pos);
+               Pattern csiPrefixPattern = Pattern.create(AnsiCode.CSI_PREFIX_REGEX, "my");
+               Match csiPrefixMatch = csiPrefixPattern.match(data, head);
                if (csiPrefixMatch != null)
                {
-                  partialAnsiCode_ = StringUtil.substring(data, pos);
+                  partialAnsiCode_ = StringUtil.substring(data, head);
                   return;
                }
                
                // handle all other kinds of unsupported ANSI escapes and discard them
-               Match ansiMatch = AnsiCode.ANSI_ESCAPE_PATTERN.match(data, pos);
+               Pattern ansiPattern = Pattern.create(AnsiCode.ANSI_REGEX, "my");
+               Match ansiMatch = ansiPattern.match(data, head);
                if (ansiMatch != null)
                {
-                  tail = pos + ansiMatch.getValue().length();
+                  tail = head + ansiMatch.getValue().length();
                   break;
                }
                
@@ -763,11 +817,9 @@ public class VirtualConsole
                
             default:
                assert false : "Unknown control char, please check regex";
-               text(data.charAt(pos) + "", currentClazz, false/*forceNewRange*/);
+               text(data.charAt(head) + "", currentClazz, false/*forceNewRange*/);
                break;
          }
-
-         match = match.nextMatch();
       }
 
       Entry<Integer, ClassRange> last = class_.lastEntry();
@@ -813,10 +865,10 @@ public class VirtualConsole
       }
    }
 
-   private String setCurrentClazz(String ansiColorMode, String clazz)
+   private String setCurrentClazz(String clazz)
    {
       String currentClazz;
-      if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_STRIP)
+      if (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_STRIP)
       {
          currentClazz = clazz;
       }
@@ -961,6 +1013,7 @@ public class VirtualConsole
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();
    private final Element parent_;
+   private String ansiColorMode_;
 
    private int cursor_ = 0;
    private AnsiCode ansi_ = new AnsiCode();
@@ -979,6 +1032,8 @@ public class VirtualConsole
    static interface Styles extends CssResource
    {
       String error();
+      String warning();
+      String message();
    }
    
    static interface Resources extends ClientBundle

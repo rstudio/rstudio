@@ -14,3 +14,26 @@
 	color: orange;
 }
 
+.rstudio-themes-light-menus .warning {
+	font-weight: bold;
+	color: red;
+}
+
+.rstudio-themes-dark-menus .warning {
+	font-weight: bold;
+	color: orange;
+}
+
+.rstudio-themes-light-menus .message {
+}
+
+.rstudio-themes-dark-menus .message {
+	/*
+	display: block;
+	border-left: 2px solid rgb(122, 168, 215);
+	margin-left: -6px;
+	padding-left: 8px;
+	background: rgb(32, 32, 32);
+	*/
+}
+
