@@ -449,8 +449,23 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private String asErrorKey(String error)
    {
       return error
-            .replaceAll("\\u001b\\u005b[^m]+m", "")
+            
+            // ANSI colors (SGR)
+            .replaceAll("\\u001b\\u005b[\\d;]+m", "")
+            
+            // Other potential CSI escapes
+            .replaceAll("\\u001b\\u005b\\d*[a-zA-Z]", "")
+            
+            // Commands which are terminated by ST (ESC \)
+            .replaceAll("\\u001b[\\u005d\\u0058\\u005E\\u005F][^\\u001b]*\\u001b\\u005c", "")
+            
+            // Other escapes
+            .replaceAll("\\u001b[a-zA-Z]", "")
+            
+            // Remove a potential prefix, since that won't be included in the error message
+            // later retrieved as part of the R traceback
             .replaceFirst("[^:]+: ", "")
+            
             .trim();
    }
 
