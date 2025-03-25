@@ -620,10 +620,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
       {
          errorClass_ = new ErrorClass()
          {
+            final String class_ = styles_.error() + " " + aceThemeErrorClass_;
+            
             @Override
             public String get()
             {
-               return styles_.error() + " " + aceThemeErrorClass_;
+               return class_;
             }
          };
       }
