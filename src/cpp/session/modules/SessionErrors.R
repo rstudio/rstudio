@@ -28,21 +28,61 @@
    FALSE
 })
 
-.rs.addFunction("recordTraceback", function(userOnly, minDepth, errorReporter)
+.rs.addFunction("recordTraceback", function(userOnly, errorReporter)
 {
    calls <- sys.calls()
    foundUserCode <- FALSE
    inSource <- FALSE
-
-   if (length(calls) < minDepth)
-      return()
-
-   # create the traceback for the client
-   stack <- lapply(calls[1:(length(calls) - 2)], function(call)
+   
+   # Drop calls associated with the emission of the error. Note that the
+   # calls on the stack will differ depending on whether the error was
+   # emitted via an R-level call to `stop()`, versus a call to `Rf_error`
+   # or `Rf_errorcall` at the C level.
+   recordTracebackSym <- as.symbol(".rs.recordTraceback")
+   n <- length(calls)
+   if (identical(calls[[n]][[1L]], recordTracebackSym))
    {
+      n <- n - 1L
+      call <- calls[[n]]
+      if (is.call(call) && length(call) == 1L)
+      {
+         call <- call[[1L]]
+         if (is.call(call) && identical(call[[1L]], recordTracebackSym))
+         {
+            n <- n - 1L
+         }
+      }
+   }
+   
+   # If there's only one call on the stack, this appears to be an error
+   # in a top-level code execution -- just drop it.
+   if (n == 1L)
+      return(NULL)
+   
+   # create the traceback for the client
+   stack <- lapply(seq_len(n), function(i)
+   {
+      call <- calls[[i]]
+      
       # don't show debugger-hidden functions
-      if (isTRUE(attr(call[[1]], "hideFromDebugger")))
-         return(NULL)
+      if (isTRUE(attr(call[[1L]], "hideFromDebugger")))
+      {
+         # RStudio injects source-refs on the top call, which might be
+         # its own error handler in some cases -- basically simulating
+         # source references so we can see where the error occurred.
+         # Detect this scenario and update the 'foundUserCode' flag.
+         if (i == n && !foundUserCode)
+         {
+            srcref <- attr(call[[1L]], "srcref", exact = TRUE)
+            srcfile <- attr(srcref, "srcfile", exact = TRUE)
+            if (is.null(srcfile))
+               return(NULL)
+         }
+         else
+         {
+            return(NULL)
+         }
+      }
 
       # we want to ignore the first user code entry after a call to source(),
       # since that call happens at the top level
@@ -52,6 +92,7 @@
          isSourceCall <- TRUE
          inSource <<- TRUE
       }
+      
       srcref <- attr(call, "srcref")
       srcfile <- ""
       if (!is.null(srcref))
@@ -67,35 +108,46 @@
          }
       }
       else
+      {
          srcref <- rep(0L, 8)
+      }
      
       # don't display more than 4 lines of a long expression
-      lines <- deparse(call)
+      lines <- .rs.deparseCall(call)
+      
       if (length(lines) > 4) 
       {
          lines <- lines[1:4]
          lines[4] <- paste(lines[4], "...")
       }
 
-      c (list(func = .rs.scalar(paste(lines, collapse="\n")),
-              file = .rs.scalar(srcfile)),
-         .rs.lineDataList(srcref))
+      c(
+         list(
+            func = .rs.scalar(paste(lines, collapse = "\n")),
+            file = .rs.scalar(srcfile)
+         ),
+         .rs.lineDataList(srcref)
+      )
+         
    })
 
    # remove hidden entries from the stack
-   stack <- stack[!sapply(stack, is.null)]
+   stack <- Filter(Negate(is.null), stack)
 
-   
    # look for python entry point and fill in the stack from reticulate if we can
    amended_stack <- list()
-   lapply(stack, function(x) {
+   lapply(stack, function(x)
+   {
       func <- x$func
-      if (.rs.hasPythonStackTrace(func)) {
+      if (.rs.hasPythonStackTrace(func))
+      {
          foundUserCode <<- TRUE # python code always includes src references
          python_stack_trace <- .rs.getActivePythonStackTrace()
          for (item in python_stack_trace)
             amended_stack[[length(amended_stack) + 1]] <<- item
-      } else {
+      }
+      else
+      {
          amended_stack[[length(amended_stack) + 1]] <<- x
       }
    })
@@ -103,10 +155,11 @@
    # if we found user code (or weren't looking for it), tell the client
    if (foundUserCode || !userOnly)
    {
-      err <- list(
+      error <- list(
          frames = amended_stack,
-         message = .rs.scalar(geterrmessage()))
-      errorReporter(err)
+         message = .rs.scalar(geterrmessage())
+      )
+      errorReporter(error)
    }
 })
 
@@ -210,22 +263,14 @@ attrs = list(hideFromDebugger = TRUE))
 
 .rs.addFunction("recordAnyTraceback", function()
 {
-   # When this handler is invoked for an unhandled error happening at
-   # the top level, there are four calls on the stack:
-   # 1. The traceback recorder
-   # 2. The anonymous error handler (set via options below)
-   # 3. The error invoker (e.g. stop)
-   # 4. The function from which the error was raised
-   # So we want there to be at least 5 calls on the stack--otherwise the error
-   # is likely to be top-level.
-   .rs.recordTraceback(FALSE, 5, .rs.enqueueError)
+   .rs.recordTraceback(FALSE, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = "traceback"))
 
 .rs.addFunction("recordUserTraceback", function()
 {
-   .rs.recordTraceback(TRUE, 5, .rs.enqueueError)
+   .rs.recordTraceback(TRUE, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = "traceback"))

@@ -14,7 +14,7 @@
 #
 
 .rs.addFunction("handleNotebookError", function() {
-  .rs.recordTraceback(FALSE, 2, function(err) {
+  .rs.recordTraceback(FALSE, function(err) {
     .Call("rs_recordNotebookError", err)
   })
 },
