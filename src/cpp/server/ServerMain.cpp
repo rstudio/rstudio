@@ -468,11 +468,15 @@ Error waitForSignals()
          // pull out pids matching our process names
          std::vector<pid_t> pids;
          for (auto&& procInfo : procInfos)
+         {
             if (interruptProcs.count(procInfo.exe))
             {
                LOG_DEBUG_MESSAGE("Sending SIGTERM to child: " + procInfo.exe + " (" + std::to_string(procInfo.pid) + ")");
                pids.push_back(procInfo.pid);
             }
+            else
+               LOG_DEBUG_MESSAGE("Not terminating rserver child process: " + procInfo.exe);
+         }
          
          // signal those processes
          error = core::system::sendSignalToSpecifiedChildProcesses(pids, SIGTERM);
@@ -690,11 +694,11 @@ int main(int argc, char * const argv[])
       Options& options = server::options();
       ProgramStatus status = options.read(argc, argv, osWarnings);
       std::string optionsWarnings = osWarnings.str();
+      if (!optionsWarnings.empty())
+         program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
+
       if ( status.exit() )
       {
-         if (!optionsWarnings.empty())
-            program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
-
          return status.exitCode();
       }
       
