@@ -20,7 +20,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSourceManager.hpp>
-#include <r/RVersionInfo.hpp>
+#include <r/RVersion.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RSession.hpp>
@@ -45,6 +45,15 @@ namespace r {
 namespace session {
 
 namespace {
+
+// is this R 3.0 or greater
+bool s_isR3 = false;
+
+// is this R 3.3 or greater
+bool s_isR3_3 = false;
+
+// is this R 4.0 or greater
+bool s_isR4 = false;
 
 boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
 
@@ -212,6 +221,12 @@ Error initialize()
    if (libError)
       LOG_ERROR(libError);
 
+   // check whether this is R 3.3 or greater
+   Version rVersion = r::version();
+   s_isR3   = rVersion >= Version("3.0.0");
+   s_isR3_3 = rVersion >= Version("3.3.0");
+   s_isR4   = rVersion >= Version("4.0.0");
+
    // initialize console history capacity
    r::session::consoleHistory().setCapacityFromRHistsize();
 
@@ -357,10 +372,13 @@ Error initialize()
 #endif
 
    // global calling handlers
-   FilePath handlersFilePath = utils::rSourcePath().completePath("GlobalCallingHandlers.R");
-   error = r::sourceManager().sourceLocal(handlersFilePath);
-   if (error)
-      return error;
+   if (s_isR4)
+   {
+      FilePath handlersFilePath = utils::rSourcePath().completePath("GlobalCallingHandlers.R");
+      error = r::sourceManager().sourceLocal(handlersFilePath);
+      if (error)
+         return error;
+   }
    
    // now run hooks for those waiting for session to be fully initialized
    if (rCallbacks().initComplete)
@@ -378,15 +396,18 @@ void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
-      // install global calling handlers
-      SEXP initializeSEXP = R_NilValue;
-      r::sexp::Protect protect;
-      Error error = r::exec::RFunction(".rs.globalCallingHandlers.initializeCall")
-            .call(&initializeSEXP, &protect);
-      if (error)
-         LOG_ERROR(error);
+      if (s_isR4)
+      {
+         // install global calling handlers
+         SEXP initializeSEXP = R_NilValue;
+         r::sexp::Protect protect;
+         Error error = r::exec::RFunction(".rs.globalCallingHandlers.initializeCall")
+               .call(&initializeSEXP, &protect);
+         if (error)
+            LOG_ERROR(error);
 
-      Rf_eval(initializeSEXP, R_GlobalEnv);
+         Rf_eval(initializeSEXP, R_GlobalEnv);
+      }
 
       // do the deferred action
       s_deferredDeserializationAction();
@@ -459,6 +480,11 @@ bool isR3()
 bool isR3_3()
 {
    return s_isR3_3;
+}
+
+bool isR4()
+{
+   return s_isR4;
 }
 
 }

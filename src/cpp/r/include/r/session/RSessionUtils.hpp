@@ -36,6 +36,9 @@ bool isR3();
 // check for R 3.3
 bool isR3_3();
 
+// check for R 4.0
+bool isR4();
+
 bool isPackratModeOn();
 
 bool isDevtoolsDevModeOn();
