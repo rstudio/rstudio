@@ -30,10 +30,13 @@ import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
@@ -691,6 +694,20 @@ public class VirtualConsole
                   break;
                }
                
+               // match error output, using custom escapes
+               Pattern pattern = Pattern.create(
+                     "\u001b\\[Y" +
+                     "([^\u001b]*)" +
+                     "\u001b\\[Z");
+               Match errorMatch = pattern.match(data, pos);
+               if (errorMatch != null)
+               {
+                  String code = errorMatch.getGroup(1);
+                  text(code, RES.styles().error(), false);
+                  tail = pos + errorMatch.getValue().length();
+                  break;
+               }
+               
                // match complete CSI codes
                Match csiMatch = AnsiCode.CSI_PATTERN.match(data, pos);
                if (csiMatch != null)
@@ -931,6 +948,7 @@ public class VirtualConsole
       public String url_;
       public String params_;
    }
+   
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
 
    // only a select few panes should be virtualized. default it to off everywhere.
@@ -954,6 +972,26 @@ public class VirtualConsole
    private final List<Element> newElements_ = new ArrayList<>();
 
    private StringBuilder newText_;
+   
+   // Styles ----
+   
+   static interface Styles extends CssResource
+   {
+      String error();
+   }
+   
+   static interface Resources extends ClientBundle
+   {
+      @Source("VirtualConsole.css")
+      Styles styles();
+   }
+   
+   private static final Resources RES = GWT.create(Resources.class);
+   
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 
    // Injected ----
    private final Preferences prefs_;

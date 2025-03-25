@@ -1,0 +1,16 @@
+
+@charset "UTF-8";
+
+@external rstudio-themes-light-menus;
+@external rstudio-themes-dark-menus;
+
+.rstudio-themes-light-menus .error {
+	font-weight: bold;
+	color: red;
+}
+
+.rstudio-themes-dark-menus .error {
+	font-weight: bold;
+	color: orange;
+}
+

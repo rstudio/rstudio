@@ -27,6 +27,7 @@ import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
@@ -400,6 +401,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       suppressPendingInput_ = suppressPendingInput;
    }
+   
+   private String asErrorKey(String error)
+   {
+      return error
+            .replaceAll("\\u001b\\u005b[^m]+m", "")
+            .replaceFirst("[^:]+: ", "")
+            .trim();
+   }
 
    public void consoleWriteError(final String error)
    {
@@ -416,47 +425,60 @@ public class ShellWidget extends Composite implements ShellDisplay,
          if (clearErrors_)
          {
             errorNodes_.clear();
+            errorKeys_.clear();
             clearErrors_ = false;
          }
-         errorNodes_.put(error, newElements);
+         
+         String key = asErrorKey(error);
+         errorNodes_.put(key, newElements);
+         errorKeys_.put(key, error);
       }
    }
 
-   public void consoleWriteExtendedError(
-         final String error, UnhandledError traceInfo,
-         boolean expand, String command)
+   public void consoleWriteExtendedError(String error,
+                                         UnhandledError traceInfo,
+                                         boolean expand,
+                                         String command)
    {
-      if (errorNodes_.containsKey(error))
+      String key = asErrorKey(error);
+      if (!errorNodes_.containsKey(key))
+         return;
+      
+      List<Element> errorNodes = errorNodes_.get(error);
+      if (errorNodes.isEmpty())
+         return;
+
+      if (errorKeys_.containsKey(error))
       {
-         List<Element> errorNodes = errorNodes_.get(error);
-         if (errorNodes.isEmpty())
-            return;
-
-         clearPendingInput();
-         ConsoleError errorWidget = new ConsoleError(
-               traceInfo, getErrorClass(), this, command);
-
-         if (expand)
-            errorWidget.setTracebackVisible(true);
-
-         boolean replacedFirst = false;
-         for (Element element: errorNodes)
-         {
-            if (!replacedFirst)
-            {
-               // swap widget for first element
-               element.getParentNode().replaceChild(errorWidget.getElement(), element);
-               replacedFirst = true;
-            }
-            else
-            {
-               // and delete the rest of the elements
-               element.removeFromParent();
-            }
-         }
-         scrollPanel_.onContentSizeChanged();
-         errorNodes_.remove(error);
+         String originalError = errorKeys_.get(error);
+         traceInfo.setErrorMessage(originalError);
       }
+      
+      clearPendingInput();
+      ConsoleError errorWidget = new ConsoleError(traceInfo, getErrorClass(), this, command);
+
+      if (expand)
+         errorWidget.setTracebackVisible(true);
+
+      boolean replacedFirst = false;
+      for (Element element : errorNodes)
+      {
+         if (!replacedFirst)
+         {
+            // swap widget for first element
+            element.getParentNode().replaceChild(errorWidget.getElement(), element);
+            replacedFirst = true;
+         }
+         else
+         {
+            // and delete the rest of the elements
+            element.removeFromParent();
+         }
+      }
+      
+      scrollPanel_.onContentSizeChanged();
+      errorNodes_.remove(error);
+      errorKeys_.remove(error);
    }
 
    @Override
@@ -1134,6 +1156,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    // A list of errors that have occurred between console prompts.
    private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();
+   private final Map<String, String> errorKeys_ = new TreeMap<>();
    private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;

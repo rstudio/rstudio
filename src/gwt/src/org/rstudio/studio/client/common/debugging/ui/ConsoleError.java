@@ -19,12 +19,16 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
+import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -53,7 +57,7 @@ public class ConsoleError extends Composite
 
    // Because we are adding interactive elements to the VirtualScroller the GWT bindings are lost.
    // We need to programmatically find the elements and manipulate them through regular JS functions.
-   public ConsoleError(UnhandledError err, 
+   public ConsoleError(UnhandledError error,
                        String errorClass, 
                        Observer observer, 
                        String command)
@@ -63,8 +67,9 @@ public class ConsoleError extends Composite
       
       initWidget(uiBinder.createAndBindUi(this));
       
-      VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
-      vc.submit(err.getErrorMessage().trim());
+      VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
+      String message = error.getErrorMessage();
+      console.submit(message);
       errorMessage.addStyleName(errorClass);
 
       EventListener onConsoleErrorClick = event ->
@@ -94,10 +99,10 @@ public class ConsoleError extends Composite
       DOM.sinkEvents(this.getElement(), Event.ONCLICK);
       DOM.setEventListener(this.getElement(), onConsoleErrorClick);
 
-      for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
+      JsArray<ErrorFrame> frames = error.getErrorFrames();
+      for (int i = frames.length() - 1; i >= 0; i--)
       {
-         ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1,
-               err.getErrorFrames().get(i));
+         ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1, frames.get(i));
          framePanel.add(frame);
       }
    }

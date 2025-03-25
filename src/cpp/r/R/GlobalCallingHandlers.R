@@ -41,36 +41,8 @@
    if (!.rs.globalCallingHandlers.shouldHandleError(cnd))
       return()
    
-   highlight <- function(text) {
-      .rs.ansiYellow(.rs.ansiBold(text))
-   }
-   
-   msg <- if (is.null(conditionCall(cnd)))
-   {
-      sprintf(
-         "%s%s",
-         .rs.ansiYellow(.rs.ansiBold(gettext("Error: ", domain = "R"))),
-         conditionMessage(cnd)
-      )
-   }
-   else
-   {
-      # Hacky way to respect R's available translations while only colouring
-      # the first word in the prefix
-      prefix <- gettext("Error in ", domain = "R")
-      parts <- strsplit(prefix, " ", fixed = TRUE)[[1L]]
-      parts[[1L]] <- highlight(parts[[1L]])
-      prefix <- paste(parts, collapse = " ")
-      
-      sprintf(
-         "%s %s: %s",
-         prefix,
-         format(conditionCall(cnd)),
-         conditionMessage(cnd)
-      )
-   }
-   
-   cat(msg, file = stderr())
+   msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Error")
+   writeLines(msg, con = stderr())
    .rs.recordTraceback(TRUE, .rs.enqueueError)
    
    invokeRestart("abort")
@@ -83,10 +55,13 @@
 
 .rs.addFunction("globalCallingHandlers.onWarningImpl", function(cnd)
 {
-   if (inherits(cnd, "rlang_warning"))
+   if (!.rs.globalCallingHandlers.shouldHandleWarning(cnd))
       return()
    
-   str(cnd)
+   msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Warning")
+   writeLines(msg, con = stderr())
+   
+   invokeRestart("muffleWarning")
 })
 
 .rs.addFunction("globalCallingHandlers.shouldHandleError", function(cnd)
@@ -113,17 +88,43 @@
    TRUE
 })
 
-.rs.addFunction("ansiRed", function(text)
+.rs.addFunction("globalCallingHandlers.shouldHandleWarning", function(cnd)
 {
-   paste0("\033[31m", text, "\033[39m")
+   # don't handle errors with custom classes
+   custom <-
+      !identical(class(cnd), c("simpleWarning", "warning", "condition")) &&
+      !identical(class(cnd), c("warning", "condition"))
+   
+   if (custom)
+      return(FALSE)
+   
+   # okay, we can handle it
+   TRUE
 })
 
-.rs.addFunction("ansiYellow", function(text)
+.rs.addFunction("globalCallingHandlers.formatCondition", function(cnd, label)
 {
-   paste0("\033[33m", text, "\033[39m")
-})
-
-.rs.addFunction("ansiBold", function(text)
-{
-   paste0("\033[1m", text, "\033[22m")
+   highlight <- function(text) {
+      paste0("\033[Y", text, "\033[Z")
+   }
+   
+   if (is.null(conditionCall(cnd)))
+   {
+      prefix <- highlight(gettext(sprintf("%s: ", label), domain = "R"))
+      sprintf("%s%s", prefix, conditionMessage(cnd))
+   }
+   else
+   {
+      # Hacky way to respect R's available translations while only colouring
+      # the first word in the prefix
+      prefix <- gettext(sprintf("%s in ", label), domain = "R")
+      parts <- strsplit(prefix, " ", fixed = TRUE)[[1L]]
+      parts[[1L]] <- highlight(parts[[1L]])
+      prefix <- paste(parts, collapse = " ")
+      
+      cll <- format(conditionCall(cnd))
+      msg <- conditionMessage(cnd)
+      sprintf("%s `%s`: %s", prefix, cll, msg)
+   }
+   
 })
