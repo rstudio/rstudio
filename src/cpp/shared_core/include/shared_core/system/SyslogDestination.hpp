@@ -32,6 +32,11 @@ namespace rstudio {
 namespace core {
 namespace system {
 
+void safeLogToSyslog(
+   const std::string& in_programId,
+   log::LogLevel in_logLevel,
+   const std::string& in_message);
+
 /**
  * @brief A class which logs messages to syslog.
  *
