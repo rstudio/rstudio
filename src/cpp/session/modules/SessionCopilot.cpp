@@ -567,7 +567,6 @@ void setConfiguration()
    // if we now have a network proxy definition, log it
    if (!proxyUrl.empty())
    {
-      json::Value networkProxy;
       SEXP networkProxySEXP = R_NilValue;
 
       // parse the URL into its associated components for logging
@@ -578,6 +577,27 @@ void setConfiguration()
       {
          proxyUrl.clear();
          LOG_ERROR(error);
+      }
+      if (networkProxySEXP != R_NilValue)
+      {
+         json::Value networkProxy;
+         Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxy);
+         if (error)
+            LOG_ERROR(error);
+         if (networkProxy.isObject())
+         {
+            json::Object networkProxyJson = networkProxy.getObject();
+
+            if (s_copilotLogLevel > 0)
+            {
+               json::Object networkProxyClone = networkProxyJson.clone().getObject();
+               if (networkProxyClone.hasMember("user"))
+                  networkProxyClone["user"] = "<user>";
+               if (networkProxyClone.hasMember("pass"))
+                  networkProxyClone["pass"] = "<pass>";
+               DLOG("Using network proxy: {}", networkProxyClone.writeFormatted());
+            }
+         }
       }
    }
    
