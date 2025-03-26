@@ -142,7 +142,7 @@
       
       cll <- format(conditionCall(cnd))
       msg <- conditionMessage(cnd)
-      sprintf("%s %s: %s", prefix, cll, msg)
+      sprintf("%s %s :\n  %s", prefix, cll, msg)
    }
    
 })
