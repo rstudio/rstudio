@@ -35,6 +35,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -758,31 +759,62 @@ public class VirtualConsole
                   break;
                }
                
-               // match error output, using custom escapes
+               // check for an escape forcing a new span
+               if (parent_ != null)
+               {
+                  Pattern groupStartPattern = Pattern.create("\\033\\135(\\d+)G", "my");
+                  Match groupStartMatch = groupStartPattern.match(data, head);
+                  if (groupStartMatch != null)
+                  {
+                     String type = groupStartMatch.getGroup(1);
+                     String groupClazz = groupTypeToClazz(type);
+                     
+                     // re-use the previous group if we're closing and re-opening
+                     // a group of the same type
+                     Node lastNode = parent_.getLastChild();
+                     if (Element.is(lastNode))
+                     {
+                        Element lastEl = Element.as(lastNode);
+                        if (lastEl.hasClassName(groupClazz))
+                        {
+                           parent_ = lastEl;
+                           tail += groupStartMatch.getValue().length() - 1;
+                           break;
+                        }
+                     }
+                     
+                     // otherwise, create a new group span and use it
+                     SpanElement spanEl = Document.get().createSpanElement();
+                     spanEl.addClassName(RES.styles().group());
+                     spanEl.addClassName(groupClazz);
+                     parent_.appendChild(spanEl);
+                     parent_ = spanEl;
+                     tail += groupStartMatch.getValue().length() - 1;
+                     break;
+                  }
+                  
+                  Pattern groupEndPattern = Pattern.create("\\033\\135g", "my");
+                  Match groupEndMatch = groupEndPattern.match(data, head);
+                  if (groupEndMatch != null)
+                  {
+                     parent_ = parent_.getParentElement();
+                     tail += 2;
+                     break;
+                  }
+               }
+               
+               // check for embedded custom highlight rules
                Pattern customPattern = Pattern.create(
-                     "\\033\\135(\\d+)Z" +
-                     "([^\\033]*)" +
-                     "\\033\\134", "my");
+                     "\\033\\135(\\d+)H" +
+                     "([^]*?)" +
+                     "\\033\\135h", "msy");
                
                Match customMatch = customPattern.match(data, head);
                if (customMatch != null)
                {
                   String type = customMatch.getGroup(1);
                   String code = customMatch.getGroup(2);
-                  
-                  if (type == "1")
-                  {
-                     text(code, RES.styles().error(), true);
-                  }
-                  else if (type == "2")
-                  {
-                     text(code, RES.styles().warning(), true);
-                  }
-                  else if (type == "3")
-                  {
-                     text(code, RES.styles().message(), false);
-                  }
-                  
+                  text(code, typeToClazz(type), type != "3");
                   tail = head + customMatch.getValue().length();
                   break;
                }
@@ -929,6 +961,46 @@ public class VirtualConsole
       }
       return currentClazz;
    }
+   
+   private String typeToClazz(String type)
+   {
+      if (type == "1")
+      {
+         return RES.styles().error();
+      }
+      else if (type == "2")
+      {
+         return RES.styles().warning();
+      }
+      else if (type == "3")
+      {
+         return RES.styles().message();
+      }
+      else
+      {
+         return "";
+      }
+   }
+   
+   private String groupTypeToClazz(String type)
+   {
+      if (type == "1")
+      {
+         return RES.styles().groupError();
+      }
+      else if (type == "2")
+      {
+         return RES.styles().groupWarning();
+      }
+      else if (type == "3")
+      {
+         return RES.styles().groupMessage();
+      }
+      else
+      {
+         return "";
+      }
+   }
 
    private class ClassRange
    {
@@ -1052,7 +1124,7 @@ public class VirtualConsole
 
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();
-   private final Element parent_;
+   private Element parent_;
    private String ansiColorMode_;
 
    private int cursor_ = 0;
@@ -1072,6 +1144,11 @@ public class VirtualConsole
    
    static interface Styles extends CssResource
    {
+      String group();
+      String groupError();
+      String groupWarning();
+      String groupMessage();
+      
       String error();
       String warning();
       String message();

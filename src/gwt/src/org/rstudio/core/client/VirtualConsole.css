@@ -4,43 +4,78 @@
 @external rstudio-themes-default;
 @external rstudio-themes-dark;
 
-.rstudio-themes-default .error {
-	font-weight: bold;
-	color: red;
-}
+/* Light themes */
 
-.rstudio-themes-dark .error {
-	font-weight: bold;
-	color: orange;
-}
-
-.rstudio-themes-default .warning {
-	font-weight: bold;
-	color: red;
-}
-
-.rstudio-themes-dark .warning {
-	font-weight: bold;
-	color: orange;
-}
-
-.rstudio-themes-default .message {
+.rstudio-themes-default .group {
 	display: block;
-	border-top: 2px solid rgb(224, 224, 244);
-	border-left: 2px solid rgb(122, 168, 215);
-	border-bottom: 2px solid rgb(224, 224, 244);
-	padding: 6px 0 6px 10px;
-	margin: 6px 0 6px -6px;
-	background: rgb(240, 240, 240);
-}
-
-.rstudio-themes-dark .message {
-	display: block;
+	font-weight: bold;
 	border-top: 2px solid rgb(64, 64, 64);
-	border-left: 2px solid rgb(122, 168, 215);
 	border-bottom: 2px solid rgb(64, 64, 64);
 	padding: 6px 0 6px 10px;
 	margin: 6px 0 6px -6px;
 	background: rgb(32, 32, 32);
+}
+
+.rstudio-themes-default .groupError {
+	border-left: 2px solid DARK_ERROR;
+}
+
+.rstudio-themes-default .groupWarning {
+	border-left: 2px solid DARK_WARNING;
+}
+
+.rstudio-themes-default .groupMessage {
+	border-left: 2px solid rgb(122, 168, 215);
+}
+
+.rstudio-themes-default .error {
+	color: DARK_ERROR;
+}
+
+.rstudio-themes-default .warning {
+	color: DARK_WARNING;
+}
+
+.rstudio-themes-default .message {
+}
+
+
+/* Dark themes */
+
+@def DARK_ERROR   #FF6000;
+@def DARK_WARNING #FFDD22;
+
+
+.rstudio-themes-dark .group {
+	display: block;
+	font-weight: bold;
+	border-top: 2px solid rgb(64, 64, 64);
+	border-bottom: 2px solid rgb(64, 64, 64);
+	padding: 6px 0 6px 10px;
+	margin: 6px 0 6px -6px;
+	background: rgb(32, 32, 32);
+}
+
+.rstudio-themes-dark .groupError {
+	border-left: 2px solid DARK_ERROR;
+}
+
+.rstudio-themes-dark .groupWarning {
+	border-left: 2px solid DARK_WARNING;
+}
+
+.rstudio-themes-dark .groupMessage {
+	border-left: 2px solid rgb(122, 168, 215);
+}
+
+.rstudio-themes-dark .error {
+	color: DARK_ERROR;
+}
+
+.rstudio-themes-dark .warning {
+	color: DARK_WARNING;
+}
+
+.rstudio-themes-dark .message {
 }
 

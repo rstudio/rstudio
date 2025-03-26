@@ -41,7 +41,7 @@
 {
    if (.rs.globalCallingHandlers.shouldHandleError(cnd))
    {
-      msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Error")
+      msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Error", "error")
       writeLines(msg, con = stderr())
       .rs.recordTraceback(TRUE, .rs.enqueueError)
       invokeRestart("abort")
@@ -57,7 +57,7 @@
 {
    if (.rs.globalCallingHandlers.shouldHandleWarning(cnd))
    {
-      msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Warning")
+      msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Warning", "warning")
       writeLines(msg, con = stderr())
       invokeRestart("muffleWarning")
    }
@@ -72,9 +72,8 @@
 {
    if (.rs.globalCallingHandlers.shouldHandleMessage(cnd))
    {
-      msg <- conditionMessage(cnd)
-      txt <- .rs.globalCallingHandlers.highlight(msg, type = "message")
-      cat(txt, file = stderr())
+      msg <- .rs.globalCallingHandlers.formatCondition(cnd, NULL, "message")
+      cat(msg, file = stderr())
       invokeRestart("muffleMessage")
    }
 })
@@ -118,9 +117,14 @@
    TRUE
 })
 
-.rs.addFunction("globalCallingHandlers.formatCondition", function(cnd, label)
+.rs.addFunction("globalCallingHandlers.formatCondition", function(cnd, label, type)
 {
-   if (is.null(conditionCall(cnd)))
+   msg <- conditionMessage(cnd)
+   text <- if (is.null(label))
+   {
+      .rs.globalCallingHandlers.highlight(msg, type)
+   }
+   else if (is.null(conditionCall(cnd)))
    {
       # Hacky way to respect R's available translations while only colouring
       # the first word in the prefix
@@ -128,8 +132,8 @@
       colonIndex <- regexpr(":", prefix, fixed = TRUE)
       lhs <- substr(prefix, 1L, colonIndex - 1L)
       rhs <- substr(prefix, colonIndex, .Machine$integer.max)
-      prefix <- paste0(.rs.globalCallingHandlers.highlight(lhs), rhs)
-      sprintf("%s%s", prefix, conditionMessage(cnd))
+      prefix <- paste0(.rs.globalCallingHandlers.highlight(lhs, type), rhs)
+      sprintf("%s%s", prefix, msg)
    }
    else
    {
@@ -137,25 +141,41 @@
       # the first word in the prefix
       prefix <- gettext(sprintf("%s in ", label), domain = "R")
       parts <- strsplit(prefix, " ", fixed = TRUE)[[1L]]
-      parts[[1L]] <- .rs.globalCallingHandlers.highlight(parts[[1L]])
+      parts[[1L]] <- .rs.globalCallingHandlers.highlight(parts[[1L]], type)
       prefix <- paste(parts, collapse = " ")
       
       cll <- format(conditionCall(cnd))
-      msg <- conditionMessage(cnd)
       sprintf("%s %s :\n  %s", prefix, cll, msg)
    }
    
+   # Enclose whole message in escapes so we can process it as a unit.
+   .rs.globalCallingHandlers.group(text, type)
+})
+
+.rs.addFunction("globalCallingHandlers.group", function(text, type)
+{
+   itype <- switch(tolower(type), error = "1", warning = "2", message = "3")
+   if (is.null(itype))
+      return(text)
+   
+   # We use a custom OSC escape sequence of the form:
+   #
+   #    OSC n G <text> OSC g
+   #
+   # where 'n' is an integer and is used to map to different styles for output.
+   paste0("\033\135", itype, "G", text, "\033\135g")
 })
 
 .rs.addFunction("globalCallingHandlers.highlight", function(text, type = "error")
 {
+   itype <- switch(tolower(type), error = "1", warning = "2", message = "3")
+   if (is.null(itype))
+      return(text)
+   
    # We use a custom OSC escape sequence of the form:
    #
-   #    OSC n Z <text> ST
+   #    OSC n H <text> OSC h
    #
    # where 'n' is an integer and is used to map to different styles for output.
-   itype <- switch(tolower(type), error = "1", warning = "2", message = "3")
-   prefix <- paste0("\033\135", itype, "Z")
-   suffix <- "\033\134"
-   paste0(prefix, text, suffix)
+   paste0("\033\135", itype, "H", text, "\033\135h")
 })
