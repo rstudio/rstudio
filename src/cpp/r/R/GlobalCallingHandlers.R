@@ -72,7 +72,7 @@
 
 .rs.addFunction("globalCallingHandlers.onMessageImpl", function(cnd)
 {
-   if (inherits(cnd, "packageStartupMessage"))
+   if (identical(class(cnd), c("packageStartupMessage", "simpleMessage", "message", "condition")))
    {
       msg <- conditionMessage(cnd)
       txt <- .rs.globalCallingHandlers.highlight(msg, type = "message")

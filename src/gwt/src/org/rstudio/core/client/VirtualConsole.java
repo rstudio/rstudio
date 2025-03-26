@@ -753,7 +753,7 @@ public class VirtualConsole
                   }
                   else if (type == "3")
                   {
-                     text(code, RES.styles().message(), true);
+                     text(code, RES.styles().message(), false);
                   }
                   
                   tail = head + customMatch.getValue().length();
@@ -854,7 +854,9 @@ public class VirtualConsole
    public void ensureStartingOnNewLine()
    {
       if (isVirtualized())
+      {
          VirtualScrollerManager.ensureStartingOnNewLine(parent_.getParentElement());
+      }
       else
       {
          Node child = getParent().getLastChild();

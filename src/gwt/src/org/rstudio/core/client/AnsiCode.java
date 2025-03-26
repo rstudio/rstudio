@@ -692,6 +692,17 @@ public class AnsiCode
       }
       clazzes_.remove(INVERSE_BG_STYLE);
    }
+   
+   public static String strip(String input)
+   {
+      return input
+            
+            // Operating System Command (OSC)
+            .replaceAll("\\033\\135[^\\033]*\\033\\134", "")
+            
+            // Control Sequence Introducer (CSI)
+            .replaceAll("\\033\\133[^a-zA-Z]*[a-zA-Z]", "");
+   }
 
    public static String prettyPrint(String input)
    {

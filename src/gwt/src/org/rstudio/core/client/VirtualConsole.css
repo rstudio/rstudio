@@ -1,39 +1,50 @@
 
 @charset "UTF-8";
 
-@external rstudio-themes-light-menus;
-@external rstudio-themes-dark-menus;
+@external rstudio-themes-default;
+@external rstudio-themes-dark;
 
-.rstudio-themes-light-menus .error {
+.rstudio-themes-default .error {
 	font-weight: bold;
 	color: red;
 }
 
-.rstudio-themes-dark-menus .error {
+.rstudio-themes-dark .error {
 	font-weight: bold;
 	color: orange;
 }
 
-.rstudio-themes-light-menus .warning {
+.rstudio-themes-default .warning {
 	font-weight: bold;
 	color: red;
 }
 
-.rstudio-themes-dark-menus .warning {
+.rstudio-themes-dark .warning {
 	font-weight: bold;
 	color: orange;
 }
 
-.rstudio-themes-light-menus .message {
-}
-
-.rstudio-themes-dark-menus .message {
-	/*
+.rstudio-themes-default .message {
 	display: block;
+	border-top: 2px solid rgb(224, 224, 244);
 	border-left: 2px solid rgb(122, 168, 215);
+	border-bottom: 2px solid rgb(224, 224, 244);
+	margin-top: 4px;
 	margin-left: -6px;
-	padding-left: 8px;
+	margin-bottom: 4px;
+	padding-left: 10px;
+	background: rgb(240, 240, 240);
+}
+
+.rstudio-themes-dark .message {
+	display: block;
+	border-top: 2px solid rgb(64, 64, 64);
+	border-left: 2px solid rgb(122, 168, 215);
+	border-bottom: 2px solid rgb(64, 64, 64);
+	margin-top: 4px;
+	margin-left: -6px;
+	margin-bottom: 4px;
+	padding-left: 10px;
 	background: rgb(32, 32, 32);
-	*/
 }
 
