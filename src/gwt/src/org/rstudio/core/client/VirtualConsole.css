@@ -29,10 +29,8 @@
 	border-top: 2px solid rgb(224, 224, 244);
 	border-left: 2px solid rgb(122, 168, 215);
 	border-bottom: 2px solid rgb(224, 224, 244);
-	margin-top: 4px;
-	margin-left: -6px;
-	margin-bottom: 4px;
-	padding-left: 10px;
+	padding: 4px 0 4px 10px;
+	margin: 4px 0 4px -6px;
 	background: rgb(240, 240, 240);
 }
 
@@ -41,10 +39,8 @@
 	border-top: 2px solid rgb(64, 64, 64);
 	border-left: 2px solid rgb(122, 168, 215);
 	border-bottom: 2px solid rgb(64, 64, 64);
-	margin-top: 4px;
-	margin-left: -6px;
-	margin-bottom: 4px;
-	padding-left: 10px;
+	padding: 4px 0 4px 10px;
+	margin: 4px 0 4px -6px;
 	background: rgb(32, 32, 32);
 }
 

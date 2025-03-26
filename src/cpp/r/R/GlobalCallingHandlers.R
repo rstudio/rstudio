@@ -70,13 +70,18 @@
 
 .rs.addFunction("globalCallingHandlers.onMessageImpl", function(cnd)
 {
-   if (identical(class(cnd), c("packageStartupMessage", "simpleMessage", "message", "condition")))
+   if (.rs.globalCallingHandlers.shouldHandleMessage(cnd))
    {
       msg <- conditionMessage(cnd)
       txt <- .rs.globalCallingHandlers.highlight(msg, type = "message")
       cat(txt, file = stderr())
       invokeRestart("muffleMessage")
    }
+})
+
+.rs.addFunction("globalCallingHandlers.shouldHandleMessage", function(cnd)
+{
+   !inherits(cnd, "rlang_message")
 })
 
 .rs.addFunction("globalCallingHandlers.shouldHandleError", function(cnd)
