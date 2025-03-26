@@ -450,7 +450,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private String asErrorKey(String error)
    {
       String stripped = AnsiCode.strip(error);
-      return stripped.replaceFirst("[^:]+: ", "").trim();
+      return stripped.replaceFirst("[^:]*: ", "").trim();
    }
 
    public void consoleWriteError(final String error)
