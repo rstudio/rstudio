@@ -456,6 +456,9 @@ protected:
       ("copilot-auth-provider",
       value<std::string>(&copilotAuthProvider_)->default_value(""),
       "The URL to the authentication provider to be used by GitHub Copilot.")
+      ("copilot-proxy-kerberos-service-principal",
+      value<std::string>(&copilotProxyKerberosPrincipal_)->default_value(""),
+      "The Kerberos service principal to use for authenticating GitHub Copilot with the proxy.")
       ("copilot-ssl-certificates-file",
       value<std::string>(&copilotSslCertificatesFile_)->default_value(""),
       "The path to a file containing one or more trusted certificates in PEM format.")
@@ -595,6 +598,7 @@ public:
    bool copilotEnabled() const { return copilotEnabled_; }
    std::string copilotProxyUrl() const { return copilotProxyUrl_; }
    std::string copilotAuthProvider() const { return copilotAuthProvider_; }
+   std::string copilotProxyKerberosPrincipal() const { return copilotProxyKerberosPrincipal_; }
    std::string copilotSslCertificatesFile() const { return copilotSslCertificatesFile_; }
    bool copilotProxyStrictSsl() const { return copilotProxyStrictSsl_; }
    core::FilePath deprecatedCopilotAgentHelper() const { return core::FilePath(deprecatedCopilotAgentHelper_); }
@@ -721,6 +725,7 @@ protected:
    bool copilotEnabled_;
    std::string copilotProxyUrl_;
    std::string copilotAuthProvider_;
+   std::string copilotProxyKerberosPrincipal_;
    std::string copilotSslCertificatesFile_;
    bool copilotProxyStrictSsl_;
    std::string deprecatedCopilotAgentHelper_;

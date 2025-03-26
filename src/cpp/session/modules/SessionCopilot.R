@@ -30,8 +30,31 @@
    if (is.null(proxy))
       return(NULL)
  
-   # return as scalar list  
+   # return as scalar list
    .rs.scalarListFromList(proxy)
+})
+
+.rs.addFunction("copilot.authProvider", function()
+{
+   # check for auth provider from option
+   authProvider <- getOption("rstudio.copilot.authProvider")
+   if (is.null(authProvider))
+      return(NULL)
+ 
+   # return as scalar list
+   .rs.scalarListFromList(authProvider)
+})
+
+
+.rs.addFunction("copilot.proxyKerberosServicePrincipal", function()
+{
+   # check for principal from option
+   principal <- getOption("rstudio.copilot.proxyKerberosServicePrincipal")
+   if (is.null(principal))
+      return(NULL)
+ 
+   # return as scalar list
+   .rs.scalarListFromList(principal)
 })
 
 .rs.addFunction("copilot.parseNetworkProxyUrl", function(url)

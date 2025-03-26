@@ -930,6 +930,13 @@
             "description": "The URL to the authentication provider to be used by GitHub Copilot."
          },
          {
+            "name": "copilot-proxy-kerberos-service-principal",
+            "type": "string",
+            "memberName": "copilotProxyKerberosPrincipal_",
+            "defaultValue": "",
+            "description": "The Kerberos service principal to use for authenticating GitHub Copilot with the proxy."
+         },
+         {
             "name": "copilot-ssl-certificates-file",
             "type": "string",
             "memberName": "copilotSslCertificatesFile_",
