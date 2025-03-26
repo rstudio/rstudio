@@ -1138,7 +1138,7 @@ public class VirtualConsole
    
    // Styles ----
    
-   static interface Styles extends CssResource
+   public static interface Styles extends CssResource
    {
       String group();
       String groupError();
@@ -1150,13 +1150,13 @@ public class VirtualConsole
       String message();
    }
    
-   static interface Resources extends ClientBundle
+   public static interface Resources extends ClientBundle
    {
       @Source("VirtualConsole.css")
       Styles styles();
    }
    
-   private static final Resources RES = GWT.create(Resources.class);
+   public static final Resources RES = GWT.create(Resources.class);
    
    static {
       RES.styles().ensureInjected();

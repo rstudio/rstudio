@@ -63,6 +63,7 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -450,7 +451,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private String asErrorKey(String error)
    {
       String stripped = AnsiCode.strip(error);
-      return stripped.replaceFirst("[^:]*: ", "").trim();
+      return stripped.replaceFirst("[^:]*:\\s*", "").trim();
    }
 
    public void consoleWriteError(final String error)
@@ -503,21 +504,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (expand)
          errorWidget.setTracebackVisible(true);
 
-      boolean replacedFirst = false;
-      for (Element element : errorNodes)
-      {
-         if (!replacedFirst)
-         {
-            // swap widget for first element
-            element.getParentNode().replaceChild(errorWidget.getElement(), element);
-            replacedFirst = true;
-         }
-         else
-         {
-            // and delete the rest of the elements
-            element.removeFromParent();
-         }
-      }
+      Element parentEl = errorNodes.get(0).getParentElement();
+      while (parentEl.hasClassName(VirtualConsole.RES.styles().group()))
+         parentEl = parentEl.getParentElement();
+      
+      parentEl.removeAllChildren();
+      parentEl.appendChild(errorWidget.getElement());
       
       scrollPanel_.onContentSizeChanged();
       errorNodes_.remove(error);

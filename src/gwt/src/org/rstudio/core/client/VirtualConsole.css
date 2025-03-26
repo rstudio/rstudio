@@ -1,6 +1,7 @@
 
 @charset "UTF-8";
 
+@external ace_console_error;
 @external rstudio-themes-default;
 @external rstudio-themes-dark;
 
@@ -55,6 +56,10 @@
 @def DARK_ERROR_COLOR      #FF8000;
 @def DARK_WARNING_COLOR    #FFDD22;
 @def DARK_MESSAGE_COLOR    #7AA8D7;
+
+.rstudio-themes-dark .ace_console_error .group {
+	all: unset;
+}
 
 .rstudio-themes-dark .group {
 	display: block;

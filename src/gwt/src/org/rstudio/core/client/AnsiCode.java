@@ -697,6 +697,12 @@ public class AnsiCode
    {
       return input
             
+            // Custom RStudio escape (group)
+            .replaceAll("\\033G\\d*;([^]*?)\\033g", "$1")
+            
+            // Custom RStudio escape (highlight)
+            .replaceAll("\\033H\\d*;([^]*?)\\033h", "$1")
+            
             // Operating System Command (OSC)
             .replaceAll("\\033\\135[^\\033]*\\033\\134", "")
             
