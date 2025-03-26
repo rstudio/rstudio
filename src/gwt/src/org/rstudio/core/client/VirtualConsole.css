@@ -13,6 +13,10 @@
 @def LIGHT_WARNING_COLOR    #E04F00;
 @def LIGHT_MESSAGE_COLOR    #7AA8D7;
 
+.rstudio-themes-default .ace_console_error .group {
+	all: unset;
+}
+
 .rstudio-themes-default .group {
 	display: block;
 	border-top: 2px solid LIGHT_BORDER_COLOR;

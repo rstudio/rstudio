@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.VirtualConsole;
@@ -26,6 +27,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -40,6 +42,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class ConsoleError extends Composite
 {
@@ -62,10 +65,21 @@ public class ConsoleError extends Composite
                        Observer observer, 
                        String command)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       observer_ = observer;
       command_ = command;
       
       initWidget(uiBinder.createAndBindUi(this));
+      
+      // If we're using extended condition highlighting for console errors,
+      // we need to add those classes back here
+      if (prefs_.consoleHighlightConditions().getValue())
+      {
+         getElement().addClassName(VirtualConsole.RES.styles().group());
+         getElement().addClassName(VirtualConsole.RES.styles().groupError());
+         errorMessage.getElement().getStyle().setPaddingLeft(6, Unit.PX);
+      }
       
       VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
       String message = error.getErrorMessage();
@@ -107,6 +121,12 @@ public class ConsoleError extends Composite
       }
    }
    
+   @Inject
+   private void initialize(UserPrefs prefs)
+   {
+      prefs_ = prefs;
+   }
+   
    public void setTracebackVisible(boolean visible)
    {
       showingTraceback_ = visible;
@@ -146,4 +166,8 @@ public class ConsoleError extends Composite
    private boolean showingTraceback_ = false;
    private String command_;
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
+   
+   // Injected
+   private UserPrefs prefs_;
+   
 }

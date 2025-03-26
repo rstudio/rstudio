@@ -44,6 +44,7 @@ import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeaderOverlay;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -360,6 +361,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DocUpdateSentinel sentinel);
    void injectMembers(LoggedOutDialog loggedOutDialog);
    void injectMembers(ShellWidget shellWidget);
+   void injectMembers(ConsoleError consoleError);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
