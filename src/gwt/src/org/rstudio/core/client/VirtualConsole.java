@@ -762,7 +762,7 @@ public class VirtualConsole
                // check for an escape forcing a new span
                if (parent_ != null)
                {
-                  Pattern groupStartPattern = Pattern.create("\\033\\135(\\d+)G", "my");
+                  Pattern groupStartPattern = Pattern.create("\\033G(\\d+);", "my");
                   Match groupStartMatch = groupStartPattern.match(data, head);
                   if (groupStartMatch != null)
                   {
@@ -793,22 +793,18 @@ public class VirtualConsole
                      break;
                   }
                   
-                  Pattern groupEndPattern = Pattern.create("\\033\\135g", "my");
+                  Pattern groupEndPattern = Pattern.create("\\033g", "my");
                   Match groupEndMatch = groupEndPattern.match(data, head);
                   if (groupEndMatch != null)
                   {
                      parent_ = parent_.getParentElement();
-                     tail += 2;
+                     tail += groupEndMatch.getValue().length() - 1;
                      break;
                   }
                }
                
                // check for embedded custom highlight rules
-               Pattern customPattern = Pattern.create(
-                     "\\033\\135(\\d+)H" +
-                     "([^]*?)" +
-                     "\\033\\135h", "msy");
-               
+               Pattern customPattern = Pattern.create("\\033H(\\d+);([^]*?)\\033h", "my");
                Match customMatch = customPattern.match(data, head);
                if (customMatch != null)
                {

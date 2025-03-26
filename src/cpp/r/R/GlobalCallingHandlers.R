@@ -158,12 +158,7 @@
    if (is.null(itype))
       return(text)
    
-   # We use a custom OSC escape sequence of the form:
-   #
-   #    OSC n G <text> OSC g
-   #
-   # where 'n' is an integer and is used to map to different styles for output.
-   paste0("\033\135", itype, "G", text, "\033\135g")
+   paste0("\033G", itype, ";", text, "\033g")
 })
 
 .rs.addFunction("globalCallingHandlers.highlight", function(text, type = "error")
@@ -172,10 +167,5 @@
    if (is.null(itype))
       return(text)
    
-   # We use a custom OSC escape sequence of the form:
-   #
-   #    OSC n H <text> OSC h
-   #
-   # where 'n' is an integer and is used to map to different styles for output.
-   paste0("\033\135", itype, "H", text, "\033\135h")
+   paste0("\033H", itype, ";", text, "\033h")
 })
