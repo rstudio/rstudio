@@ -45,11 +45,6 @@ export function resolveProjectFile(projectDir: string): string {
   return '';
 }
 
-/**
- * Not clear yet if we'll need this class from the Qt implementation, but keeping
- * it for now. If it ends up being useful, probably need to create an interface
- * describing behavior (for easier unit testing).
- */
 export class ApplicationLaunch {
   mainWindow?: MainWindow;
   static init(): ApplicationLaunch {

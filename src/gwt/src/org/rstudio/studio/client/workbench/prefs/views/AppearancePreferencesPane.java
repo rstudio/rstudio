@@ -176,7 +176,7 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       if (Desktop.isDesktop())
       {
-         // In desktop mode, get the list of installed fonts from Qt
+         // In desktop mode, get the list of installed fonts from Electron
          String fontList = DesktopInfo.getFixedWidthFontList();
 
          if (fontList.isEmpty())
