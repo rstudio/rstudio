@@ -733,7 +733,7 @@ public class VirtualConsole
                
                // match error output, using custom escapes
                Pattern customPattern = Pattern.create(
-                     "\\033\\133(\\d+)Z" +
+                     "\\033\\135(\\d+)Z" +
                      "([^\\033]*)" +
                      "\\033\\134", "my");
                

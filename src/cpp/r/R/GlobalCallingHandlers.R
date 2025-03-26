@@ -39,14 +39,13 @@
 
 .rs.addFunction("globalCallingHandlers.onErrorImpl", function(cnd)
 {
-   if (!.rs.globalCallingHandlers.shouldHandleError(cnd))
-      return()
-   
-   msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Error")
-   writeLines(msg, con = stderr())
-   .rs.recordTraceback(TRUE, .rs.enqueueError)
-   
-   invokeRestart("abort")
+   if (.rs.globalCallingHandlers.shouldHandleError(cnd))
+   {
+      msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Error")
+      writeLines(msg, con = stderr())
+      .rs.recordTraceback(TRUE, .rs.enqueueError)
+      invokeRestart("abort")
+   }
 })
 
 .rs.addFunction("globalCallingHandlers.onWarning", function(cnd)
@@ -56,13 +55,12 @@
 
 .rs.addFunction("globalCallingHandlers.onWarningImpl", function(cnd)
 {
-   if (!.rs.globalCallingHandlers.shouldHandleWarning(cnd))
-      return()
-   
-   msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Warning")
-   writeLines(msg, con = stderr())
-   
-   invokeRestart("muffleWarning")
+   if (.rs.globalCallingHandlers.shouldHandleWarning(cnd))
+   {
+      msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Warning")
+      writeLines(msg, con = stderr())
+      invokeRestart("muffleWarning")
+   }
 })
 
 .rs.addFunction("globalCallingHandlers.onMessage", function(cnd)
@@ -83,12 +81,8 @@
 
 .rs.addFunction("globalCallingHandlers.shouldHandleError", function(cnd)
 {
-   # don't handle errors with custom classes
-   custom <-
-      !identical(class(cnd), c("simpleError", "error", "condition")) &&
-      !identical(class(cnd), c("error", "condition"))
-   
-   if (custom)
+   # don't handle rlang errors
+   if (inherits(cnd, "rlang_error"))
       return(FALSE)
    
    # don't handle errors if the error handler has changed
@@ -150,13 +144,13 @@
 
 .rs.addFunction("globalCallingHandlers.highlight", function(text, type = "error")
 {
-   # We use a custom CSI escape sequence of the form:
+   # We use a custom OSC escape sequence of the form:
    #
-   #    CSI n Z <text> ST
+   #    OSC n Z <text> ST
    #
    # where 'n' is an integer and is used to map to different styles for output.
    itype <- switch(tolower(type), error = "1", warning = "2", message = "3")
-   prefix <- paste0("\033\133", itype, "Z")
+   prefix <- paste0("\033\135", itype, "Z")
    suffix <- "\033\134"
    paste0(prefix, text, suffix)
 })
