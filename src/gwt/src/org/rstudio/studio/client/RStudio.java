@@ -236,46 +236,8 @@ public class RStudio implements EntryPoint
 
    private static final native void maybeDelayLoadApplication(RStudio rstudio)
    /*-{
-      if ($wnd.qt)
-      {
-         // on the desktop main window, we may need to wait for Qt to finish
-         // initialization before loading GWT
-         if ($wnd.qt.webChannelReady)
-         {
-            // Qt is ready; load the application now
-            rstudio.@org.rstudio.studio.client.RStudio::delayLoadApplication()();
-         }
-         else
-         {
-            // Qt not yet ready; set a hook and let the Qt WebChannel
-            // initialization script call it to finish initialization
-            $wnd.rstudioDelayLoadApplication = $entry(function() {
-               rstudio.@org.rstudio.studio.client.RStudio::delayLoadApplication()();
-            });
-
-            // set a timeout and attempt load just in case something goes wrong with
-            // Qt initialization (we don't want to just leave the user with a blank
-            // window)
-            setTimeout(function() {
-               if (typeof $wnd.rstudioDelayLoadApplication == "function") {
-
-                  // let the user know things might go wrong
-                  var msg = "WARNING: RStudio launched before desktop initialization known to be complete!";
-                  @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(msg);
-
-                  // begin load
-                  $wnd.rstudioDelayLoadApplication();
-                  $wnd.rstudioDelayLoadApplication = null;
-               }
-            }, 60000);
-         }
-      }
-      else
-      {
-         // server and satellites can load as usual
-         rstudio.@org.rstudio.studio.client.RStudio::delayLoadApplication()();
-      }
-
+      // server and satellites can load as usual
+      rstudio.@org.rstudio.studio.client.RStudio::delayLoadApplication()();
    }-*/;
 
    private void delayLoadApplication()

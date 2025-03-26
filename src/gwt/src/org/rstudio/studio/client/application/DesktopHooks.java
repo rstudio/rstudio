@@ -51,7 +51,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 
 /**
  * Any methods on this class are automatically made available to the
- * Qt frame code.
+ * Electron frame code.
  */
 public class DesktopHooks
 {

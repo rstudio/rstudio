@@ -86,15 +86,7 @@ export function configureSecondaryWindow(
   );
   window.mainWindow = pendingSecondary.mainWindow;
 
-  // TODO
-  // allow for Ctrl + W to close window (NOTE: Ctrl means Meta on macOS)
-  // QAction* action = new QAction(pWindow);
-  // action->setShortcut(Qt::CTRL + Qt::Key_W);
-  // pWindow->addAction(action);
-  // QObject::connect(action, &QAction::triggered,
-  //              pWindow, &BrowserWindow::close);
   // if we have a name set, start tracking this window
-
   if (pendingSecondary.name) {
     appState().windowTracker.addWindow(pendingSecondary.name, window);
   }
