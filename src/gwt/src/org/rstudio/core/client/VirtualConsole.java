@@ -324,11 +324,36 @@ public class VirtualConsole
          // force if this needs to display an hyperlink
          // or if the previous range was an hyperlink
          // or the classes differ (change of colour)
+         messageNewlines_ = "";
          forceNewRange = true;
+      }
+      
+      // If this is a message, then we don't render trailing newlines by default,
+      // but we save them in case we need to add them to a later invocation.
+      if (StringUtil.equals(clazz, RES.styles().message()))
+      {
+         // Prepend any previously-saved newlines.
+         text = messageNewlines_ + text;
+         
+         // Now, extract any trailing newlines, and remove them.
+         Pattern pattern = Pattern.create("\\n+$", "");
+         Match match = pattern.match(text, 0);
+         if (match != null)
+         {
+            messageNewlines_ = match.getValue();
+            text = text.substring(0, match.getIndex());
+         }
       }
       
       if (forceNewRange)
       {
+         // If we're starting a new message, then trim any
+         // newlines that start this message.
+         if (StringUtil.equals(clazz, RES.styles().message()))
+         {
+            text = text.replaceFirst("^\\n", "");
+         }
+         
          // create a new output range with this class
          final ClassRange newRange = new ClassRange(cursor_, clazz, text, preserveHTML_, hyperlink_);
          appendChild(newRange.element);
@@ -336,6 +361,8 @@ public class VirtualConsole
       }
       else
       {
+         // if we're emitting messages, and we have trailing newlines, save those
+         
          // just append to the existing output stream
          range.appendRight(text, 0);
       }
@@ -860,10 +887,21 @@ public class VirtualConsole
       else
       {
          Node child = getParent().getLastChild();
-         if (child != null &&
-                 child.getNodeType() == Node.ELEMENT_NODE &&
-                 !Element.as(child).getInnerText().endsWith("\n"))
-            submit("\n");
+         if (child == null)
+            return;
+         
+         if (child.getNodeType() != Node.ELEMENT_NODE)
+            return;
+         
+         Element nodeEl = Element.as(child);
+         if (nodeEl.hasClassName(RES.styles().message()))
+            return;
+         
+         String text = nodeEl.getInnerText();
+         if (text.endsWith("\n"))
+            return;
+         
+         submit("\n");
       }
    }
 
@@ -1022,6 +1060,7 @@ public class VirtualConsole
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
    private String partialAnsiCode_;
    private HyperlinkInfo hyperlink_;
+   private String messageNewlines_;
 
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean captureNewElements_ = false;
