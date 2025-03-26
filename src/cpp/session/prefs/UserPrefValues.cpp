@@ -3442,6 +3442,19 @@ core::Error UserPrefValues::setProjectUserDataDirectory(std::string val)
    return writePref("project_user_data_directory", val);
 }
 
+/**
+ * When set, R errors, warnings, and messages will receive special styling within the RStudio console.
+ */
+bool UserPrefValues::consoleHighlightConditions()
+{
+   return readPref<bool>("console_highlight_conditions");
+}
+
+core::Error UserPrefValues::setConsoleHighlightConditions(bool val)
+{
+   return writePref("console_highlight_conditions", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3708,6 +3721,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCodeFormatterExternalCommand,
       kReformatOnSave,
       kProjectUserDataDirectory,
+      kConsoleHighlightConditions,
    });
 }
    

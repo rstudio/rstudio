@@ -396,19 +396,6 @@ void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
-      if (s_isR4)
-      {
-         // install global calling handlers
-         SEXP initializeSEXP = R_NilValue;
-         r::sexp::Protect protect;
-         Error error = r::exec::RFunction(".rs.globalCallingHandlers.initializeCall")
-               .call(&initializeSEXP, &protect);
-         if (error)
-            LOG_ERROR(error);
-
-         Rf_eval(initializeSEXP, R_GlobalEnv);
-      }
-
       // do the deferred action
       s_deferredDeserializationAction();
       s_deferredDeserializationAction.clear();

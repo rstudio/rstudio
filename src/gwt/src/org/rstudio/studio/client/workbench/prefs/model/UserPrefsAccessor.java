@@ -3768,6 +3768,18 @@ public class UserPrefsAccessor extends Prefs
          "");
    }
 
+   /**
+    * When set, R errors, warnings, and messages will receive special styling within the RStudio console.
+    */
+   public PrefValue<Boolean> consoleHighlightConditions()
+   {
+      return bool(
+         "console_highlight_conditions",
+         _constants.consoleHighlightConditionsTitle(), 
+         _constants.consoleHighlightConditionsDescription(), 
+         true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -4296,6 +4308,8 @@ public class UserPrefsAccessor extends Prefs
          reformatOnSave().setValue(layer, source.getBool("reformat_on_save"));
       if (source.hasKey("project_user_data_directory"))
          projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
+      if (source.hasKey("console_highlight_conditions"))
+         consoleHighlightConditions().setValue(layer, source.getBool("console_highlight_conditions"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4563,6 +4577,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeFormatterExternalCommand());
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
+      prefs.add(consoleHighlightConditions());
       return prefs;
    }
    

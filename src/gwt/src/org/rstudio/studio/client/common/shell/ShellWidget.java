@@ -615,8 +615,23 @@ public class ShellWidget extends Composite implements ShellDisplay,
       AceTheme theme = userState_.theme().getValue().cast();
       aceThemeErrorClass_ = AceTheme.getThemeErrorClass(theme);
       
-      if (Version.compare(rVersion, "4.0.0") < 0)
+      if (Version.compare(rVersion, "4.0.0") >= 0 && prefs_.consoleHighlightConditions().getValue())
       {
+         // We have custom highlighting for R conditions enabled; just use
+         // the default error style class when emitting stderr.
+         errorClass_ = new ErrorClass()
+         {
+            @Override
+            public String get()
+            {
+               return styles_.error();
+            }
+         };
+      }
+      else
+      {
+         // Legacy behavior; ensure that all stderr output is colored according
+         // to the editor theme's error text class.
          errorClass_ = new ErrorClass()
          {
             final String class_ = styles_.error() + " " + aceThemeErrorClass_;
@@ -625,17 +640,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
             public String get()
             {
                return class_;
-            }
-         };
-      }
-      else
-      {
-         errorClass_ = new ErrorClass()
-         {
-            @Override
-            public String get()
-            {
-               return styles_.error();
             }
          };
       }

@@ -6,74 +6,85 @@
 
 /* Light themes */
 
+@def LIGHT_BACKGROUND_COLOR #F0F0F0;
+@def LIGHT_BORDER_COLOR     #E0E0E0;
+@def LIGHT_ERROR_COLOR      #FF0000;
+@def LIGHT_WARNING_COLOR    #E04F00;
+@def LIGHT_MESSAGE_COLOR    #7AA8D7;
+
 .rstudio-themes-default .group {
 	display: block;
-	font-weight: bold;
-	border-top: 2px solid rgb(64, 64, 64);
-	border-bottom: 2px solid rgb(64, 64, 64);
+	border-top: 2px solid LIGHT_BORDER_COLOR;
+	border-bottom: 2px solid LIGHT_BORDER_COLOR;
 	padding: 6px 0 6px 10px;
 	margin: 6px 0 6px -6px;
-	background: rgb(32, 32, 32);
+	background: LIGHT_BACKGROUND_COLOR;
 }
 
 .rstudio-themes-default .groupError {
-	border-left: 2px solid DARK_ERROR;
+	border-left: 2px solid LIGHT_ERROR_COLOR;
 }
 
 .rstudio-themes-default .groupWarning {
-	border-left: 2px solid DARK_WARNING;
+	border-left: 2px solid LIGHT_WARNING_COLOR;
 }
 
 .rstudio-themes-default .groupMessage {
-	border-left: 2px solid rgb(122, 168, 215);
+	border-left: 2px solid LIGHT_MESSAGE_COLOR;
 }
 
 .rstudio-themes-default .error {
-	color: DARK_ERROR;
+	font-weight: bold;
+	color: LIGHT_ERROR_COLOR;
 }
 
 .rstudio-themes-default .warning {
-	color: DARK_WARNING;
+	font-weight: bold;
+	color: LIGHT_WARNING_COLOR;
 }
 
 .rstudio-themes-default .message {
 }
 
 
+
 /* Dark themes */
 
-@def DARK_ERROR   #FF6000;
-@def DARK_WARNING #FFDD22;
-
+@def DARK_BACKGROUND_COLOR #202020;
+@def DARK_BORDER_COLOR     #404040;
+@def DARK_ERROR_COLOR      #FF8000;
+@def DARK_WARNING_COLOR    #FFDD22;
+@def DARK_MESSAGE_COLOR    #7AA8D7;
 
 .rstudio-themes-dark .group {
 	display: block;
-	font-weight: bold;
-	border-top: 2px solid rgb(64, 64, 64);
-	border-bottom: 2px solid rgb(64, 64, 64);
+	border-top: 2px solid DARK_BORDER_COLOR;
+	border-bottom: 2px solid DARK_BORDER_COLOR;
 	padding: 6px 0 6px 10px;
 	margin: 6px 0 6px -6px;
-	background: rgb(32, 32, 32);
+	background: DARK_BACKGROUND_COLOR;
 }
 
 .rstudio-themes-dark .groupError {
-	border-left: 2px solid DARK_ERROR;
+	border-left: 2px solid DARK_ERROR_COLOR;
 }
 
 .rstudio-themes-dark .groupWarning {
-	border-left: 2px solid DARK_WARNING;
+	border-left: 2px solid DARK_WARNING_COLOR;
 }
 
 .rstudio-themes-dark .groupMessage {
-	border-left: 2px solid rgb(122, 168, 215);
+	border-left: 2px solid DARK_MESSAGE_COLOR;
 }
 
 .rstudio-themes-dark .error {
-	color: DARK_ERROR;
+	font-weight: bold;
+	color: DARK_ERROR_COLOR;
 }
 
 .rstudio-themes-dark .warning {
-	color: DARK_WARNING;
+	font-weight: bold;
+	color: DARK_WARNING_COLOR;
 }
 
 .rstudio-themes-dark .message {

@@ -448,6 +448,7 @@ namespace prefs {
 #define kCodeFormatterExternalCommand "code_formatter_external_command"
 #define kReformatOnSave "reformat_on_save"
 #define kProjectUserDataDirectory "project_user_data_directory"
+#define kConsoleHighlightConditions "console_highlight_conditions"
 
 class UserPrefValues: public Preferences
 {
@@ -2030,6 +2031,12 @@ public:
     */
    std::string projectUserDataDirectory();
    core::Error setProjectUserDataDirectory(std::string val);
+
+   /**
+    * When set, R errors, warnings, and messages will receive special styling within the RStudio console.
+    */
+   bool consoleHighlightConditions();
+   core::Error setConsoleHighlightConditions(bool val);
 
 };
 

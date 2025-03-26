@@ -2201,6 +2201,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("The folder in which RStudio should store project .Rproj.user data.")
    String projectUserDataDirectoryDescription();
 
+   /**
+    * When set, R errors, warnings, and messages will receive special styling within the RStudio console.
+    */
+   @DefaultStringValue("Highlight errors, warnings, and messages in the RStudio console")
+   String consoleHighlightConditionsTitle();
+   @DefaultStringValue("When set, R errors, warnings, and messages will receive special styling within the RStudio console.")
+   String consoleHighlightConditionsDescription();
+
 
 
 }
