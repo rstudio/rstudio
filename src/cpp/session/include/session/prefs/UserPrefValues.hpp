@@ -2033,7 +2033,7 @@ public:
    core::Error setProjectUserDataDirectory(std::string val);
 
    /**
-    * When set, R errors, warnings, and messages will receive special styling within the RStudio console.
+    * When set, R errors, warnings, and messages will receive special styling within the RStudio console history.
     */
    bool consoleHighlightConditions();
    core::Error setConsoleHighlightConditions(bool val);

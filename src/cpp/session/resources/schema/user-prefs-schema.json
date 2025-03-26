@@ -1787,8 +1787,8 @@
         "console_highlight_conditions": {
             "type": "boolean",
             "default": true,
-            "title": "Highlight errors, warnings, and messages in the RStudio console",
-            "description": "When set, R errors, warnings, and messages will receive special styling within the RStudio console."
+            "title": "Highlight errors, warnings, and messages in the console",
+            "description": "When set, R errors, warnings, and messages will receive special styling within the RStudio console history."
         }
       }
 }

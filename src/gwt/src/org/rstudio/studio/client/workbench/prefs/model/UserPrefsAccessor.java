@@ -3769,7 +3769,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When set, R errors, warnings, and messages will receive special styling within the RStudio console.
+    * When set, R errors, warnings, and messages will receive special styling within the RStudio console history.
     */
    public PrefValue<Boolean> consoleHighlightConditions()
    {

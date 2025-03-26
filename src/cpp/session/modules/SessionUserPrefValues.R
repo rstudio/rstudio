@@ -2447,10 +2447,10 @@
    clear = function() { .rs.clearUserPref("project_user_data_directory") }
 )
 
-# Highlight errors, warnings, and messages in the RStudio console
+# Highlight errors, warnings, and messages in the console
 #
 # When set, R errors, warnings, and messages will receive special styling within
-# the RStudio console.
+# the RStudio console history.
 .rs.uiPrefs$consoleHighlightConditions <- list(
    get = function() { .rs.getUserPref("console_highlight_conditions") },
    set = function(value) { .rs.setUserPref("console_highlight_conditions", value) },

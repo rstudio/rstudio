@@ -40,6 +40,7 @@ public class ConsolePreferencesPane extends PreferencesPane
       Label displayLabel = headerLabel(constants_.consoleDisplayLabel());
       add(displayLabel);
       add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
+      add(checkboxPref(prefs_.consoleHighlightConditions()));
       add(checkboxPref(constants_.consoleLimitVariableLabel(), prefs_.limitVisibleConsole()));
       NumericValueWidget limitLengthPref =
          numericPref(constants_.consoleLimitOutputLengthLabel(), prefs_.consoleLineLengthLimit());
