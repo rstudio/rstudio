@@ -488,13 +488,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (!errorNodes_.containsKey(key))
          return;
       
-      List<Element> errorNodes = errorNodes_.get(error);
-      if (errorNodes.isEmpty())
+      List<Element> errorNodes = errorNodes_.get(key);
+      if (errorNodes == null || errorNodes.isEmpty())
          return;
 
-      if (errorKeys_.containsKey(error))
+      if (errorKeys_.containsKey(key))
       {
-         String originalError = errorKeys_.get(error);
+         String originalError = errorKeys_.get(key);
          traceInfo.setErrorMessage(originalError);
       }
       
@@ -505,15 +505,21 @@ public class ShellWidget extends Composite implements ShellDisplay,
          errorWidget.setTracebackVisible(true);
 
       Element parentEl = errorNodes.get(0).getParentElement();
-      while (parentEl.hasClassName(VirtualConsole.RES.styles().group()))
+      if (parentEl.hasClassName(VirtualConsole.RES.styles().group()))
+      {
+         Element replaceEl = parentEl;
          parentEl = parentEl.getParentElement();
-      
-      parentEl.removeAllChildren();
-      parentEl.appendChild(errorWidget.getElement());
+         parentEl.replaceChild(errorWidget.getElement(), replaceEl);
+      }
+      else
+      {
+         parentEl.removeAllChildren();
+         parentEl.appendChild(errorWidget.getElement());
+      }
       
       scrollPanel_.onContentSizeChanged();
-      errorNodes_.remove(error);
-      errorKeys_.remove(error);
+      errorNodes_.remove(key);
+      errorKeys_.remove(key);
    }
 
    @Override
