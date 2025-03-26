@@ -74,11 +74,6 @@ else
 
    ./install-dependencies-osx-arch
 
-   # desktop dependencies (qt; currently x86_64 only)
-   if [ "$1" != "--exclude-qt-sdk" ]; then
-      ./install-qt-macos
-   fi
-
    # restore path
    PATH="${OLDPATH}"
    RSTUDIO_TOOLS_ROOT="${OLDROOT}"
