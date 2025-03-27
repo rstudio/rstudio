@@ -626,8 +626,7 @@ public class VirtualConsole
          wasAtBottom = VirtualScrollerManager.scrolledToBottom(parent_.getParentElement());
 
       // If we're submitting new console output, but the previous submit request
-      // asked us to force a new range, respect that. This is necessary to support
-      // our custom 'group' ANSI escapes.
+      // asked us to force a new range, respect that.
       forceNewRange = forceNewRange || forceNewRange_;
       forceNewRange_ = false;
       
@@ -801,7 +800,7 @@ public class VirtualConsole
                   Match groupEndMatch = groupEndPattern.match(data.substring(head), 0);
                   if (groupEndMatch != null)
                   {
-                     forceNewRange_ = true;
+                     forceNewRange = forceNewRange_ = true;
                      parent_ = parent_.getParentElement();
                      tail += groupEndMatch.getValue().length() - 1;
                      break;
@@ -815,7 +814,7 @@ public class VirtualConsole
                {
                   String type = customMatch.getGroup(1);
                   String code = customMatch.getGroup(2);
-                  text(code, typeToClazz(type), type != "3");
+                  text(code, typeToClazz(type), false);
                   tail = head + customMatch.getValue().length();
                   break;
                }
