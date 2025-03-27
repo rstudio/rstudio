@@ -19,19 +19,26 @@
    globalCallingHandlers(NULL)
    
    # Install our handlers.
-   if (.rs.uiPrefs$consoleHighlightConditions$get() %in% c("errors_warnings_messages", "errors_warnings", "errors"))
+   if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors_warnings_messages")
    {
-      globalCallingHandlers(error = .rs.globalCallingHandlers.onError)
+      globalCallingHandlers(
+         error   = .rs.globalCallingHandlers.onError,
+         warning = .rs.globalCallingHandlers.onWarning,
+         message = .rs.globalCallingHandlers.onMessage
+      )
    }
-   
-   if (.rs.uiPrefs$consoleHighlightConditions$get() %in% c("errors_warnings_messages", "errors_warnings"))
+   else if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors_warnings")
    {
-      globalCallingHandlers(warning = .rs.globalCallingHandlers.onWarning)
+      globalCallingHandlers(
+         error   = .rs.globalCallingHandlers.onError,
+         warning = .rs.globalCallingHandlers.onWarning
+      )
    }
-   
-   if (.rs.uiPrefs$consoleHighlightConditions$get() %in% c("errors_warnings_messages"))
+   else if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors")
    {
-      globalCallingHandlers(message = .rs.globalCallingHandlers.onMessage)
+      globalCallingHandlers(
+         error   = .rs.globalCallingHandlers.onError
+      )
    }
 })
 
