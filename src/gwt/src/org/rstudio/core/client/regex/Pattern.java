@@ -38,10 +38,12 @@ public class Pattern extends JavaScriptObject
    }-*/;
 
    public final native Match match(String input, int index) /*-{
+      
       this.lastIndex = index;
       var result = this.exec(input);
       if (result == null)
          return null;
+         
       return {
          value: result[0],
          index: result.index,
@@ -50,6 +52,7 @@ public class Pattern extends JavaScriptObject
          pattern: this,
          match: result
       };
+      
    }-*/;
    
    public final native boolean test(String input) /*-{
