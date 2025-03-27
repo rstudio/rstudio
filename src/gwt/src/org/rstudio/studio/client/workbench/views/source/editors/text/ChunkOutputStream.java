@@ -746,7 +746,9 @@ public class ChunkOutputStream extends FlowPanel
          vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(console_.getElement());
       }
       else
+      {
          vconsole_.clear();
+      }
 
       // attach the console
       addWithOrdinal(console_, maxOrdinal_ + 1);

@@ -765,7 +765,7 @@ public class VirtualConsole
                // check for an escape forcing a new span
                if (parent_ != null)
                {
-                  Pattern groupStartPattern = Pattern.create("^\\033G(\\d+);", "m");
+                  Pattern groupStartPattern = Pattern.create("^\\033G(\\d+);", "");
                   Match groupStartMatch = groupStartPattern.match(data.substring(head), 0);
                   if (groupStartMatch != null)
                   {
@@ -796,7 +796,7 @@ public class VirtualConsole
                      break;
                   }
                   
-                  Pattern groupEndPattern = Pattern.create("^\\033g", "m");
+                  Pattern groupEndPattern = Pattern.create("^\\033g", "");
                   Match groupEndMatch = groupEndPattern.match(data.substring(head), 0);
                   if (groupEndMatch != null)
                   {
@@ -808,7 +808,7 @@ public class VirtualConsole
                }
                
                // check for embedded custom highlight rules
-               Pattern customPattern = Pattern.create("^\\033H(\\d+);([^]*?)\\033h", "m");
+               Pattern customPattern = Pattern.create("^\\033H(\\d+);([^]*?)\\033h", "");
                Match customMatch = customPattern.match(data.substring(head), 0);
                if (customMatch != null)
                {
@@ -820,7 +820,7 @@ public class VirtualConsole
                }
                
                // match complete CSI codes
-               Pattern csiPattern = Pattern.create("^" + AnsiCode.CSI_REGEX, "m");
+               Pattern csiPattern = Pattern.create("^" + AnsiCode.CSI_REGEX, "");
                Match csiMatch = csiPattern.match(data.substring(head), 0);
                if (csiMatch != null)
                {
@@ -852,7 +852,7 @@ public class VirtualConsole
                }
                
                // check for incomplete CSI escapes, and continue parsing those
-               Pattern csiPrefixPattern = Pattern.create("^" + AnsiCode.CSI_PREFIX_REGEX, "m");
+               Pattern csiPrefixPattern = Pattern.create("^" + AnsiCode.CSI_PREFIX_REGEX, "");
                Match csiPrefixMatch = csiPrefixPattern.match(data.substring(head), 0);
                if (csiPrefixMatch != null)
                {
@@ -861,7 +861,7 @@ public class VirtualConsole
                }
                
                // handle all other kinds of unsupported ANSI escapes and discard them
-               Pattern ansiPattern = Pattern.create("^" + AnsiCode.ANSI_REGEX, "m");
+               Pattern ansiPattern = Pattern.create("^" + AnsiCode.ANSI_REGEX, "");
                Match ansiMatch = ansiPattern.match(data.substring(head), 0);
                if (ansiMatch != null)
                {
