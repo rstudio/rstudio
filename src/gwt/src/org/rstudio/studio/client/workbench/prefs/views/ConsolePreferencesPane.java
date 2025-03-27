@@ -26,6 +26,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
+import org.rstudio.core.client.widget.LayoutGrid.TwoColumnLayoutGridBuilder;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -46,20 +47,14 @@ public class ConsolePreferencesPane extends PreferencesPane
       String version = session.getSessionInfo().getRVersionsInfo().getRVersion();
 
       consoleHighlightConditions_ = new SelectWidget(
-            prefs_.consoleHighlightConditions(),
+            SelectWidget.ExternalLabel,
             false,
-            true,
-            false);
-      consoleHighlightConditions_.removeStyleName(ThemeStyles.INSTANCE.selectWidget());
-      consoleHighlightConditions_.setLabel("");
+            prefs_.consoleHighlightConditions());
       
       consoleColorMode_ = new SelectWidget(
-            prefs_.ansiConsoleMode(),
+            SelectWidget.ExternalLabel,
             false,
-            true,
-            false);
-      consoleColorMode_.removeStyleName(ThemeStyles.INSTANCE.selectWidget());
-      consoleColorMode_.setLabel("");
+            prefs_.ansiConsoleMode());
       
       Label displayLabel = headerLabel(constants_.consoleDisplayLabel());
       add(displayLabel);
@@ -73,11 +68,11 @@ public class ConsolePreferencesPane extends PreferencesPane
          add(checkboxPref(constants_.consoleDifferentColorLabel(), prefs_.highlightConsoleErrors()));
       }
       
-      LayoutGrid grid = new LayoutGrid(2, 2);
-      grid.setWidget(0, 0, new FormLabel(prefs_.consoleHighlightConditions().getTitle() + ":", consoleHighlightConditions_));
-      grid.setWidget(0, 1, consoleHighlightConditions_);
-      grid.setWidget(1, 0, new FormLabel(prefs_.ansiConsoleMode().getTitle() + ":", consoleColorMode_));
-      grid.setWidget(1, 1, consoleColorMode_);
+      TwoColumnLayoutGridBuilder gridBuilder = new TwoColumnLayoutGridBuilder();
+      gridBuilder.add(prefs_.consoleHighlightConditions().getTitle(), consoleHighlightConditions_);
+      gridBuilder.add(constants_.consoleANSIEscapeCodesLabel(), consoleColorMode_);
+      LayoutGrid grid = gridBuilder.get();
+      grid.getElement().getStyle().setMarginLeft(2, Unit.PX);
       add(grid);
       
       Label truncationLabel = headerLabel("Truncation");

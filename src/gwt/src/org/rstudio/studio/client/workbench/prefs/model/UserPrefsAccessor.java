@@ -1256,7 +1256,12 @@ public class UserPrefsAccessor extends Prefs
             ANSI_CONSOLE_MODE_STRIP,
             ANSI_CONSOLE_MODE_OFF
          },
-         "on");
+         "on",
+         new String[] {
+            _constants.ansiConsoleModeEnum_on(),
+            _constants.ansiConsoleModeEnum_strip(),
+            _constants.ansiConsoleModeEnum_off()
+         });
    }
 
    public final static String ANSI_CONSOLE_MODE_ON = "on";

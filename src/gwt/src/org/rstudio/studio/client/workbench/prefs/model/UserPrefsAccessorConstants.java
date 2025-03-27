@@ -726,6 +726,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String ansiConsoleModeTitle();
    @DefaultStringValue("How to treat ANSI escape codes in the console.")
    String ansiConsoleModeDescription();
+   @DefaultStringValue("Render ANSI escapes")
+   String ansiConsoleModeEnum_on();
+   @DefaultStringValue("Remove ANSI escapes")
+   String ansiConsoleModeEnum_strip();
+   @DefaultStringValue("Ignore ANSI escapes")
+   String ansiConsoleModeEnum_off();
 
    /**
     * Whether to only show a limited window of the total console output

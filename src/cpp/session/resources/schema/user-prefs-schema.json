@@ -597,6 +597,7 @@
         "ansi_console_mode": {
             "type": "string",
             "enum": ["on", "strip", "off"],
+            "enumReadable": ["Render ANSI escapes", "Remove ANSI escapes", "Ignore ANSI escapes"],
             "default": "on",
             "title": "ANSI escape codes in R console",
             "description": "How to treat ANSI escape codes in the console."
