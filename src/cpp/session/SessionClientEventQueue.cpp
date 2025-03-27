@@ -15,16 +15,19 @@
 
 #include "SessionClientEventQueue.hpp"
 
-#include "modules/SessionConsole.hpp"
+#include <shared_core/json/Json.hpp>
 
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
-#include <shared_core/json/Json.hpp>
 #include <core/StringUtils.hpp>
+
+#include <r/RExec.hpp>
 
 #include <r/session/RConsoleActions.hpp>
 
 #include "SessionHttpMethods.hpp"
+#include "modules/SessionConsole.hpp"
+
 
 using namespace rstudio::core;
 
@@ -35,12 +38,44 @@ namespace {
 
 ClientEventQueue* s_pClientEventQueue = nullptr;
 
+boost::regex s_reWarningPrefix;
+
+void annotateOutput(int event, std::string* pOutput)
+{
+   if (!s_reWarningPrefix.empty())
+   {
+      // R will write warning output on stdout in response to warnings(),
+      // but on stderr if just emitted on its own. ¯\_(._.)_/¯
+      if (boost::regex_search(*pOutput, s_reWarningPrefix))
+      {
+         *pOutput = "\033G2;" + *pOutput + "\033g";
+
+         // Include a code execution hyperlink as well
+         boost::algorithm::replace_all(
+                  *pOutput,
+                  "warnings()",
+                  "\033[38;5;252m\033]8;;ide:run:warnings()\awarnings()\033]8;;\a\033[39m");
+      }
+   }
+}
+
 } // end anonymous namespace
 
 void initializeClientEventQueue()
 {
    BOOST_ASSERT(s_pClientEventQueue == nullptr);
    s_pClientEventQueue = new ClientEventQueue();
+}
+
+void finishInitializeClientEventQueue()
+{
+   std::string reWarningPrefix;
+   Error error = r::exec::RFunction(".rs.reWarningPrefix")
+         .call(&reWarningPrefix);
+   if (error)
+      LOG_ERROR(error);
+
+   s_reWarningPrefix = boost::regex(reWarningPrefix);
 }
 
 ClientEventQueue& clientEventQueue()
@@ -255,6 +290,10 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
       int limit = r::session::consoleActions().capacity() + 1;
       string_utils::trimLeadingLines(limit, &output);
    }
+
+   // To support highlight of warnings when `options(warn = 0)` is set,
+   // we look for output formatted like a typical R warning.
+   annotateOutput(event, &output);
    
    if (event == client_events::kConsoleWriteOutput ||
        event == client_events::kConsoleWriteError)

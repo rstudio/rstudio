@@ -32,6 +32,7 @@ namespace session {
    
 // initialization
 void initializeClientEventQueue();
+void finishInitializeClientEventQueue();
 
 // singleton
 class ClientEventQueue;
