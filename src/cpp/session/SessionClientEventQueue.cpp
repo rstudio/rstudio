@@ -25,6 +25,8 @@
 
 #include <r/session/RConsoleActions.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include "SessionHttpMethods.hpp"
 #include "modules/SessionConsole.hpp"
 
@@ -38,17 +40,29 @@ namespace {
 
 ClientEventQueue* s_pClientEventQueue = nullptr;
 
+std::string s_highlightConditionsPref;
+
 boost::regex s_reWarningPrefix;
+
+bool annotateWarnings()
+{
+   return
+         s_highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings ||
+         s_highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages;
+}
 
 void annotateOutput(int event, std::string* pOutput)
 {
-   if (!s_reWarningPrefix.empty())
+   if (!s_reWarningPrefix.empty() && annotateWarnings())
    {
       // R will write warning output on stdout in response to warnings(),
       // but on stderr if just emitted on its own. ¯\_(._.)_/¯
-      if (boost::regex_search(*pOutput, s_reWarningPrefix))
+      boost::smatch match;
+      if (boost::regex_search(*pOutput, match, s_reWarningPrefix))
       {
-         *pOutput = "\033G2;" + *pOutput + "\033g";
+         std::string prefix = "\033G2;";
+         pOutput->insert(match[0].first, prefix.begin(), prefix.end());
+         pOutput->append("\033g");
 
          // Include a code execution hyperlink as well
          boost::algorithm::replace_all(
@@ -76,6 +90,7 @@ void finishInitializeClientEventQueue()
       LOG_ERROR(error);
 
    s_reWarningPrefix = boost::regex(reWarningPrefix);
+   s_highlightConditionsPref = prefs::userPrefs().consoleHighlightConditions();
 }
 
 ClientEventQueue& clientEventQueue()
