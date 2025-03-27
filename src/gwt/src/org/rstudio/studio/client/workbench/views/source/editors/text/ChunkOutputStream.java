@@ -91,7 +91,7 @@ public class ChunkOutputStream extends FlowPanel
       // flush any queued errors 
       flushQueuedErrors();
 
-      renderConsoleOutput(text, classOfOutput(ChunkConsolePage.CONSOLE_OUTPUT));
+      renderConsoleOutput(text, ChunkConsolePage.CONSOLE_OUTPUT);
    }
    
    @Override
@@ -134,12 +134,11 @@ public class ChunkOutputStream extends FlowPanel
             // release any queued errors
             if (!queuedError_.isEmpty())
             {
-               vconsole_.submit(queuedError_, classOfOutput(
-                     ChunkConsolePage.CONSOLE_ERROR));
+               vconsole_.submit(queuedError_, VirtualConsole.Type.STDERR);
                queuedError_ = "";
             }
-
-            vconsole_.submit(outputText, classOfOutput(outputType));
+            
+            submit(outputText, outputType);
          }
          
          // avoid hanging the IDE by displaying too much output
@@ -147,9 +146,7 @@ public class ChunkOutputStream extends FlowPanel
          newlineCount += StringUtil.countMatches(outputText, '\n');
          if (newlineCount >= maxCount)
          {
-            vconsole_.submit(
-                  "\n[Output truncated]",
-                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
+            vconsole_.submit("\n[Output truncated]", VirtualConsole.Type.STDERR);
             break;
          }
       }
@@ -324,8 +321,9 @@ public class ChunkOutputStream extends FlowPanel
          // emit any messages queued prior to the error
          if (idx > 0)
          {
-            renderConsoleOutput(StringUtil.substring(queuedError_, 0, idx), 
-                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
+            renderConsoleOutput(
+                  StringUtil.substring(queuedError_, 0, idx), 
+                  ChunkConsolePage.CONSOLE_ERROR);
             initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
          }
          // leave messages following the error in the queue
@@ -677,23 +675,12 @@ public class ChunkOutputStream extends FlowPanel
    
    // Private methods ---------------------------------------------------------
    
-   private String classOfOutput(int type)
-   {
-      if (type == ChunkConsolePage.CONSOLE_ERROR)
-         return AceTheme.getThemeErrorClass(
-               RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast());
-      else if (type == ChunkConsolePage.CONSOLE_INPUT)
-        return "ace_keyword";
-      return null;
-   }
-   
    private void flushQueuedErrors()
    {
       if (!queuedError_.isEmpty())
       {
          initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-         renderConsoleOutput(queuedError_, classOfOutput(
-               ChunkConsolePage.CONSOLE_ERROR));
+         renderConsoleOutput(queuedError_, ChunkConsolePage.CONSOLE_ERROR);
          queuedError_ = "";
       }
    }
@@ -713,6 +700,7 @@ public class ChunkOutputStream extends FlowPanel
    {
       if (lastOutputType_ == outputType)
          return;
+      
       if (outputType == RmdChunkOutputUnit.TYPE_TEXT)
       {
          // if switching to textual output, allocate a new virtual console
@@ -725,6 +713,7 @@ public class ChunkOutputStream extends FlowPanel
             vconsole_.clear();
          console_ = null;
       }
+      
       lastOutputType_ = outputType;
    }
 
@@ -754,10 +743,30 @@ public class ChunkOutputStream extends FlowPanel
       addWithOrdinal(console_, maxOrdinal_ + 1);
    }
    
-   private void renderConsoleOutput(String text, String clazz)
+   private void submit(String text, int type)
+   {
+      switch (type)
+      {
+
+      case ChunkConsolePage.CONSOLE_INPUT:
+         vconsole_.submit(text, VirtualConsole.Type.STDIN);
+         break;
+
+      case ChunkConsolePage.CONSOLE_OUTPUT:
+         vconsole_.submit(text, VirtualConsole.Type.STDOUT);
+         break;
+
+      case ChunkConsolePage.CONSOLE_ERROR:
+         vconsole_.submit(text, VirtualConsole.Type.STDERR);
+         break;
+
+      }
+   }
+   
+   private void renderConsoleOutput(String text, int type)
    {
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-      vconsole_.submit(text, clazz);
+      submit(text, type);
       onHeightChanged();
    }
    

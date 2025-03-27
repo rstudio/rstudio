@@ -300,24 +300,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       };
       
-      events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
-      {
-         @Override
-         public void onSessionInit(SessionInitEvent sie)
-         {
-            setErrorClass();
-         }
-      });
-      
-      events_.addHandler(EditorThemeChangedEvent.TYPE, new EditorThemeChangedEvent.Handler()
-      {
-         @Override
-         public void onEditorThemeChanged(EditorThemeChangedEvent event)
-         {
-            setErrorClass();
-         }
-      });
-      
       initWidget(scrollPanel_);
       addDomHandler(secondaryInputHandler, ClickEvent.getType());
       
@@ -608,52 +590,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
    }
    
-   private void setErrorClass()
-   {
-      String rVersion = session_.getSessionInfo().getRVersionsInfo().getRVersion();
-      AceTheme theme = userState_.theme().getValue().cast();
-      aceThemeErrorClass_ = AceTheme.getThemeErrorClass(theme);
-      
-      boolean isCustom =
-            Version.compare(rVersion, "4.0.0") >= 0 &&
-            prefs_.consoleHighlightConditions().getGlobalValue() != UserPrefsAccessor.CONSOLE_HIGHLIGHT_CONDITIONS_NONE;
-            
-      if (isCustom)
-      {
-         // We have custom highlighting for R conditions enabled; just use
-         // the default error style class when emitting errors.
-         errorClass_ = new ErrorClass()
-         {
-            @Override
-            public String get()
-            {
-               return styles_.error();
-            }
-         };
-      }
-      else
-      {
-         // Legacy behavior; ensure that all stderr output is colored according
-         // to the editor theme's error text class.
-         errorClass_ = new ErrorClass()
-         {
-            final String class_ = styles_.error() + " " + aceThemeErrorClass_;
-            
-            @Override
-            public String get()
-            {
-               return class_;
-            }
-         };
-      }
-      
-   }
-
-   private String getErrorClass()
-   {
-      return errorClass_.get();
-   }
-
    /**
     * Send text to the console
     * @param text Text to output
@@ -1213,6 +1149,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
          scrollIntoViewPending_ = false;
          scrollIntoView();
       }
+   }
+   
+   private String getErrorClass()
+   {
+      return ConsoleOutputWriter.OUTPUT_ERROR_CLASS;
    }
 
    private boolean cleared_ = false;

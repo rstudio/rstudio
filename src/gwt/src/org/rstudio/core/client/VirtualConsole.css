@@ -5,6 +5,10 @@
 @external rstudio-themes-default;
 @external rstudio-themes-dark;
 
+.stdin {}
+.stdout {}
+.stderr {}
+
 /* Light themes */
 
 @def LIGHT_BACKGROUND_COLOR #F0F0F0;

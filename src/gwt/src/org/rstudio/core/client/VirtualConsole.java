@@ -27,8 +27,17 @@ import org.rstudio.core.client.hyperlink.Hyperlink;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.shell.ShellWidget.ErrorClass;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -50,6 +59,8 @@ import com.google.inject.assistedinject.Assisted;
  */
 public class VirtualConsole
 {
+   public static enum Type { STDIN, STDOUT, STDERR };
+   
    public interface Preferences
    {
       int truncateLongLinesInConsoleHistory();
@@ -151,8 +162,16 @@ public class VirtualConsole
    }
    
    @Inject
-   private void initialize(UserPrefs userPrefs)
+   private void initialize(Session session,
+                           EventBus events,
+                           UserState userState,
+                           UserPrefs userPrefs)
    {
+      session_ = session;
+      events_ = events;
+      userState_ = userState;
+      userPrefs_ = userPrefs;
+      
       userPrefs.ansiConsoleMode().addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
@@ -161,6 +180,65 @@ public class VirtualConsole
             ansiColorMode_ = event.getValue();
          }
       });
+      
+      events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
+      {
+         @Override
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            setErrorClass();
+         }
+      });
+      
+      events_.addHandler(EditorThemeChangedEvent.TYPE, new EditorThemeChangedEvent.Handler()
+      {
+         @Override
+         public void onEditorThemeChanged(EditorThemeChangedEvent event)
+         {
+            setErrorClass();
+         }
+      });
+      
+      setErrorClass();
+   }
+   
+   private void setErrorClass()
+   {
+      String rVersion = session_.getSessionInfo().getRVersionsInfo().getRVersion();
+      AceTheme theme = userState_.theme().getValue().cast();
+      aceThemeErrorClass_ = AceTheme.getThemeErrorClass(theme);
+      
+      boolean isCustom =
+            Version.compare(rVersion, "4.0.0") >= 0 &&
+            userPrefs_.consoleHighlightConditions().getGlobalValue() != UserPrefsAccessor.CONSOLE_HIGHLIGHT_CONDITIONS_NONE;
+            
+      if (isCustom)
+      {
+         // We have custom highlighting for R conditions enabled; just use
+         // the default error style class when emitting errors.
+         errorClass_ = new ErrorClass()
+         {
+            @Override
+            public String get()
+            {
+               return "";
+            }
+         };
+      }
+      else
+      {
+         // Legacy behavior; ensure that all stderr output is colored according
+         // to the editor theme's error text class.
+         errorClass_ = new ErrorClass()
+         {
+            @Override
+            public String get()
+            {
+               return aceThemeErrorClass_;
+            }
+         };
+      }
+      
    }
 
    public void clear()
@@ -593,10 +671,31 @@ public class VirtualConsole
       output_.replace(start, end, text);
       cursor_ += text.length();
    }
+   
+   public void submit(String data, Type type)
+   {
+      submit(data, type, false, false);
+   }
+   
+   public void submit(String data, Type type, boolean forceNewRange, boolean ariaLiveAnnounce)
+   {
+      if (type == Type.STDIN)
+      {
+         submit(data, RES.styles().stdin() + ConsoleResources.KEYWORD_CLASS_NAME, forceNewRange, ariaLiveAnnounce);
+      }
+      else if (type == Type.STDOUT)
+      {
+         submit(data, RES.styles().stdout(), forceNewRange, ariaLiveAnnounce);
+      }
+      else if (type == Type.STDERR)
+      {
+         submit(data, RES.styles().stderr() + " " + errorClass_.get(), forceNewRange, ariaLiveAnnounce);
+      }
+   }
 
    public void submit(String data)
    {
-      submit(data, null);
+      submit(data, (String) null, false, false);
    }
 
    public void submit(String data, String clazz)
@@ -604,13 +703,7 @@ public class VirtualConsole
       submit(data, clazz, false/*forceNewRange*/, false/*ariaLiveAnnounce*/);
    }
    
-   private Match nextMatch(String data, int offset)
-   {
-      return (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
-         ? CONTROL.match(data, offset)
-         : AnsiCode.CONTROL_PATTERN.match(data, offset);
-   }
-
+   
    /**
     * Submit text to console
     * @param data text to output
@@ -895,6 +988,13 @@ public class VirtualConsole
       if (wasAtBottom && isVirtualized())
          VirtualScrollerManager.scrollToBottom(parent_.getParentElement());
    }
+   
+   private Match nextMatch(String data, int offset)
+   {
+      return (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
+         ? CONTROL.match(data, offset)
+         : AnsiCode.CONTROL_PATTERN.match(data, offset);
+   }
 
    // Elements added by last submit call; only captured if forceNewRange was true
    public List<Element> getNewElements()
@@ -1134,6 +1234,9 @@ public class VirtualConsole
    private HyperlinkInfo hyperlink_;
    private String messageNewlines_;
 
+   private ErrorClass errorClass_;
+   private String aceThemeErrorClass_;
+   
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean forceNewRange_ = false;
    private boolean captureNewElements_ = false;
@@ -1145,6 +1248,10 @@ public class VirtualConsole
    
    public static interface Styles extends CssResource
    {
+      String stdin();
+      String stdout();
+      String stderr();
+      
       String group();
       String groupError();
       String groupWarning();
@@ -1170,4 +1277,9 @@ public class VirtualConsole
 
    // Injected ----
    private final Preferences prefs_;
+   private Session session_;
+   private EventBus events_;
+   private UserState userState_;
+   private UserPrefs userPrefs_;
+   
 }
