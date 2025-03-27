@@ -8,6 +8,7 @@
 - RStudio for Windows binaries now have digital signatures. (rstudio-pro#5772)
 - RStudio now only writes the ProjectId field within a project's `.Rproj` file when required. Currently, this is for users who have configured a custom `.Rproj.user` location.
 - Added memory limit monitoring to RStudio (Linux only for now). If `ulimit -m` is set, this limit is displayed in the Memory Usage Report. As the limit is approached, a warning is displayed, then an error when the limit is reached. When the system is low on memory, the session can abort itself by shutting down in a controlled way with a dialog to the user. See the new `"allow-over-limit-sessions` option in rsession.conf. (rstudio-pro#5019).
+- RStudio now supports configuring a Kerberos Service Principal for the GitHub Copilot Language Server proxy settings. (#15823)
 - RStudio now supports installation of Rtools45 for the upcoming R 4.5.0 release on Windows.
 
 #### Posit Workbench

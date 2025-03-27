@@ -47,12 +47,12 @@
 #define COPILOT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
    do                                                                          \
    {                                                                           \
-      std::string message = fmt::format(__FMT__, ##__VA_ARGS__);               \
-      std::string formatted =                                                  \
-          fmt::format("[{}]: {}", __func__, message);                          \
-      __LOGGER__("copilot", formatted);                                        \
+      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);               \
+      std::string __formatted__ =                                                  \
+          fmt::format("[{}]: {}", __func__, __message__);                          \
+      __LOGGER__("copilot", __formatted__);                                        \
       if (copilotLogLevel() >= 1)                                              \
-         std::cerr << formatted << std::endl;                                  \
+         std::cerr << __formatted__ << std::endl;                                  \
    } while (0)
 
 #define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
@@ -530,20 +530,14 @@ json::Object sendSynchronousRequest(const std::string& method,
    return result;
 }
 
-void setEditorInfo()
+void setConfiguration()
 {
    json::Object paramsJson;
-   
-   json::Object editorInfoJson;
-   editorInfoJson["name"] = "RStudio";
-   editorInfoJson["version"] = RSTUDIO_VERSION;
-   paramsJson["editorInfo"] = editorInfoJson;
-   paramsJson["editorPluginInfo"] = editorInfoJson;
+   json::Object settingsJson;
    
    // network proxy settings 
    r::sexp::Protect protect;
-   SEXP networkProxySEXP = R_NilValue;
-      
+   
    // check strict ssl flag
    bool proxyStrictSsl = session::options().copilotProxyStrictSsl();
    
@@ -560,86 +554,112 @@ void setEditorInfo()
    if (!proxyUrlOverride.empty())
       proxyUrl = proxyUrlOverride;
    
-   // if we have one now, try to parse it
+   // if the network proxy isn't set, try reading a fallback from R
+   if (proxyUrl.empty())
+   {
+      SEXP networkProxySEXP = R_NilValue;
+      Error error = r::exec::RFunction(".rs.copilot.networkProxy").call(&networkProxySEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+      proxyUrl = networkProxySEXP == R_NilValue ? "" : r::sexp::asString(networkProxySEXP);
+   }
+
+   // if we now have a network proxy definition, log it
    if (!proxyUrl.empty())
    {
-      // parse the URL into its associated components
+      SEXP networkProxySEXP = R_NilValue;
+
+      // parse the URL into its associated components for logging
       Error error = r::exec::RFunction(".rs.copilot.parseNetworkProxyUrl")
             .addUtf8Param(proxyUrl)
             .call(&networkProxySEXP, &protect);
       if (error)
+      {
+         proxyUrl.clear();
          LOG_ERROR(error);
+      }
+      if (networkProxySEXP != R_NilValue)
+      {
+         json::Value networkProxy;
+         Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxy);
+         if (error)
+            LOG_ERROR(error);
+         if (networkProxy.isObject())
+         {
+            json::Object networkProxyJson = networkProxy.getObject();
+
+            if (s_copilotLogLevel > 0)
+            {
+               json::Object networkProxyClone = networkProxyJson.clone().getObject();
+               if (networkProxyClone.hasMember("user"))
+                  networkProxyClone["user"] = "<user>";
+               if (networkProxyClone.hasMember("pass"))
+                  networkProxyClone["pass"] = "<pass>";
+               DLOG("Using network proxy: {}", networkProxyClone.writeFormatted());
+            }
+         }
+      }
    }
    
-   // if the network proxy isn't set, try reading a fallback from R
-   if (networkProxySEXP == R_NilValue)
+   // if we have a network proxy, add it to the configuration
+   if (!proxyUrl.empty())
    {
-      Error error = r::exec::RFunction(".rs.copilot.networkProxy").call(&networkProxySEXP, &protect);
-      if (error)
-         LOG_ERROR(error);
-   }
+      // check for proxy Kerberos service principal setting
+      std::string kerberosPrincipal = session::options().copilotProxyKerberosPrincipal();
 
-   // if we now have a network proxy definition, use it
-   if (networkProxySEXP != R_NilValue)
-   {
-      json::Value networkProxy;
-      Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxy);
-      if (error)
-         LOG_ERROR(error);
+      // allow override from envvar
+      std::string kerberosPrincipalOverride = core::system::getenv("COPILOT_PROXY_KERBEROS_SERVICE_PRINCIPAL");
+      if (!kerberosPrincipalOverride.empty())
+         kerberosPrincipal = kerberosPrincipalOverride;
 
-      if (networkProxy.isObject())
+      // if the principal isn't set, try reading a fallback from R
+      if (kerberosPrincipal.empty())
       {
-         json::Object networkProxyJson = networkProxy.getObject();
-         
-         if (s_copilotLogLevel > 0)
-         {
-            json::Object networkProxyClone = networkProxyJson.clone().getObject();
-            if (networkProxyClone.hasMember("user"))
-               networkProxyClone["user"] = "<user>";
-            if (networkProxyClone.hasMember("pass"))
-               networkProxyClone["pass"] = "<pass>";
-            DLOG("Using network proxy: {}", networkProxyClone.writeFormatted());
-         }
-         
-         networkProxyJson["rejectUnauthorized"] = proxyStrictSsl;
-         paramsJson["networkProxy"] = networkProxyJson.getObject();
+         SEXP kerberosPrincipalSEXP = R_NilValue;
+         Error error = r::exec::RFunction(".rs.copilot.proxyKerberosServicePrincipal").call(&kerberosPrincipalSEXP, &protect);
+         if (error)
+            LOG_ERROR(error);
+         kerberosPrincipal = kerberosPrincipalSEXP == R_NilValue ? "" : r::sexp::asString(kerberosPrincipalSEXP);
       }
+      
+      json::Object httpParamsJson;
+      httpParamsJson["proxy"] = proxyUrl;
+      httpParamsJson["proxyStrictSSL"] = proxyStrictSsl;
+      if (!kerberosPrincipal.empty())
+         httpParamsJson["proxyKerberosServicePrincipal"] = kerberosPrincipal;
+      settingsJson["http"] = httpParamsJson;
    }
    
    // check for authentication provider
    std::string authProviderUrl = session::options().copilotAuthProvider();
+   
+   // allow override from envvar
+   std::string authProviderUrlOverride = core::system::getenv("COPILOT_AUTH_PROVIDER");
+   if (!authProviderUrlOverride.empty())
+      authProviderUrl = authProviderUrlOverride;
+   
    if (authProviderUrl.empty())
-      authProviderUrl = core::system::getenv("COPILOT_AUTH_PROVIDER");
+   {
+      // check for authentication provider configuration from R
+      SEXP authProviderSEXP = R_NilValue;
+      Error error = r::exec::RFunction(".rs.copilot.authProvider").call(&authProviderSEXP, &protect); 
+      if (error)
+         LOG_ERROR(error);
+      authProviderUrl = authProviderSEXP == R_NilValue ? "" : r::sexp::asString(authProviderSEXP);
+   }
    
    if (!authProviderUrl.empty())
    {
-      json::Object authProviderJson;
-      authProviderJson["url"] = authProviderUrl;
+      json::Object githubEnterpriseJson;
+      githubEnterpriseJson["uri"] = authProviderUrl;
       
-      DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
-      paramsJson["authProvider"] = authProviderJson;
+      DLOG("Using github-enterprise authentication provider: {}", githubEnterpriseJson.writeFormatted());
+      settingsJson["github-enterprise"] = githubEnterpriseJson;
    }
-   else
-   {
-      // check for authentication provider configuration from R
-      SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
-      if (authProviderSEXP != R_NilValue)
-      {
-         json::Value authProviderJson;
-         Error error = r::json::jsonValueFromObject(authProviderSEXP, &authProviderJson);
-         if (error)
-            LOG_ERROR(error);
-
-         if (authProviderJson.isObject())
-         {
-            DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
-            paramsJson["authProvider"] = authProviderJson.getObject();
-         }
-      }
-   }
-   
+  
+   paramsJson["settings"] = settingsJson;
    std::string requestId = core::system::generateUuid();
-   sendRequest("setEditorInfo", requestId, paramsJson, CopilotContinuation());
+   sendNotification("workspace/didChangeConfiguration", paramsJson);
 }
 
 namespace agent {
@@ -685,7 +705,7 @@ bool onContinue(ProcessOperations& operations)
          bool isInitMethod =
                request.method == "initialize" ||
                request.method == "initialized" ||
-               request.method == "setEditorInfo";
+               request.method == "workspace/didChangeConfiguration";
          
          if (!isInitMethod)
             return false;
@@ -932,11 +952,15 @@ Error startAgent()
    json::Object clientInfoJson;
    clientInfoJson["name"] = "RStudio";
    clientInfoJson["version"] = RSTUDIO_VERSION;
-
+   
+   json::Object initializationOptionsJson;
+   initializationOptionsJson["editorInfo"] = clientInfoJson;
+   initializationOptionsJson["editorPluginInfo"] = clientInfoJson;
+   
    json::Object paramsJson;
    paramsJson["processId"] = ::getpid();
    paramsJson["locale"] = prefs::userPrefs().uiLanguage();
-   paramsJson["clientInfo"] = clientInfoJson;
+   paramsJson["initializationOptions"] = initializationOptionsJson;
    paramsJson["capabilities"] = json::Object();
    
    // set up continuation after we've finished initializing
@@ -951,7 +975,7 @@ Error startAgent()
       // newer versions of Copilot require an 'initialized' notification, which is
       // then used as a signal that they should start the agent process
       sendNotification("initialized", json::Object());
-      setEditorInfo();
+      setConfiguration();
    };
    
    std::string requestId = core::system::generateUuid();
@@ -1184,13 +1208,25 @@ void onBackgroundProcessing(bool isIdle)
          continue;
       }
 
-      // Check if this is a 'LogMessage' response. Should we log these in verbose mode?
+      // Check if this is a 'LogMessage' response.
       json::Value methodJson = responseJson["method"];
       if (methodJson.isString())
       {
          std::string method = methodJson.getString();
          if (method == "LogMessage" || method == "window/logMessage")
+         {
+            json::Value paramsJson = responseJson["params"];
+            if (paramsJson.isObject())
+            {
+               json::Object params = paramsJson.getObject();
+               json::Value messageJson = params["message"];
+               if (messageJson.isString())
+               {
+                  DLOG("logMessage: {}", messageJson.getString());
+               }
+            }
             continue;
+         }
       }
 
       // Check the response id. This will be missing for notifications; we may receive
