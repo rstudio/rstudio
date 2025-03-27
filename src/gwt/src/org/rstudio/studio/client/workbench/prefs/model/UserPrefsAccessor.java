@@ -1252,16 +1252,16 @@ public class UserPrefsAccessor extends Prefs
          _constants.ansiConsoleModeTitle(), 
          _constants.ansiConsoleModeDescription(), 
          new String[] {
-            ANSI_CONSOLE_MODE_OFF,
             ANSI_CONSOLE_MODE_ON,
-            ANSI_CONSOLE_MODE_STRIP
+            ANSI_CONSOLE_MODE_STRIP,
+            ANSI_CONSOLE_MODE_OFF
          },
          "on");
    }
 
-   public final static String ANSI_CONSOLE_MODE_OFF = "off";
    public final static String ANSI_CONSOLE_MODE_ON = "on";
    public final static String ANSI_CONSOLE_MODE_STRIP = "strip";
+   public final static String ANSI_CONSOLE_MODE_OFF = "off";
 
    /**
     * Whether to only show a limited window of the total console output
@@ -3769,7 +3769,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Control highlighting of R errors, warnings, and messages.
+    * When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied.
     */
    public PrefValue<String> consoleHighlightConditions()
    {

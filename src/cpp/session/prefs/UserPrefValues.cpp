@@ -3443,7 +3443,7 @@ core::Error UserPrefValues::setProjectUserDataDirectory(std::string val)
 }
 
 /**
- * Control highlighting of R errors, warnings, and messages.
+ * When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied.
  */
 std::string UserPrefValues::consoleHighlightConditions()
 {

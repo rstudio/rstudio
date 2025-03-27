@@ -596,7 +596,7 @@
         },
         "ansi_console_mode": {
             "type": "string",
-            "enum": ["off", "on", "strip"],
+            "enum": ["on", "strip", "off"],
             "default": "on",
             "title": "ANSI escape codes in R console",
             "description": "How to treat ANSI escape codes in the console."
@@ -1789,8 +1789,8 @@
             "enum": ["errors_warnings_messages", "errors_warnings", "errors", "none"],
             "enumReadable": ["Errors, Warnings, and Messages", "Errors and Warnings only", "Errors only", "(None)"],
             "default": "errors_warnings_messages",
-            "title": "Enable highlight for",
-            "description": "Control highlighting of R errors, warnings, and messages."
+            "title": "Use extended display for",
+            "description": "When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied."
         }
       }
 }

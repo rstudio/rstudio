@@ -15,11 +15,17 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.Version;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -36,42 +42,50 @@ public class ConsolePreferencesPane extends PreferencesPane
    {
       prefs_ = prefs;
       res_ = res;
-
-      Label displayLabel = headerLabel(constants_.consoleDisplayLabel());
-      add(displayLabel);
-      add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
-      add(checkboxPref(constants_.consoleLimitVariableLabel(), prefs_.limitVisibleConsole()));
-      NumericValueWidget limitLengthPref =
-         numericPref(constants_.consoleLimitOutputLengthLabel(), prefs_.consoleLineLengthLimit());
-      add(nudgeRightPlus(limitLengthPref));
-
-      consoleColorMode_ = new SelectWidget(
-         constants_.consoleANSIEscapeCodesLabel(),
-         new String[] {
-            constants_.consoleColorModeANSIOption(),
-            constants_.consoleColorModeRemoveANSIOption(),
-            constants_.consoleColorModeIgnoreANSIOption()
-         },
-         new String[] {
-            UserPrefs.ANSI_CONSOLE_MODE_ON,
-            UserPrefs.ANSI_CONSOLE_MODE_STRIP,
-            UserPrefs.ANSI_CONSOLE_MODE_OFF
-         },
-         false,
-         true,
-         false);
-      add(consoleColorMode_);
       
-      Label styleLabel = headerLabel(constants_.consoleStyleLabel());
-      add(spacedBefore(styleLabel));
-      
+      String version = session.getSessionInfo().getRVersionsInfo().getRVersion();
+
       consoleHighlightConditions_ = new SelectWidget(
             prefs_.consoleHighlightConditions(),
             false,
             true,
             false);
-      add(consoleHighlightConditions_);
-
+      consoleHighlightConditions_.removeStyleName(ThemeStyles.INSTANCE.selectWidget());
+      consoleHighlightConditions_.setLabel("");
+      
+      consoleColorMode_ = new SelectWidget(
+            prefs_.ansiConsoleMode(),
+            false,
+            true,
+            false);
+      consoleColorMode_.removeStyleName(ThemeStyles.INSTANCE.selectWidget());
+      consoleColorMode_.setLabel("");
+      
+      Label displayLabel = headerLabel(constants_.consoleDisplayLabel());
+      add(displayLabel);
+      add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
+      if (Version.compare(version, "4.0.0") >= 0)
+      {
+         add(consoleHighlightConditions_);
+      }
+      else
+      {
+         add(checkboxPref(constants_.consoleDifferentColorLabel(), prefs_.highlightConsoleErrors()));
+      }
+      
+      LayoutGrid grid = new LayoutGrid(2, 2);
+      grid.setWidget(0, 0, new FormLabel(prefs_.consoleHighlightConditions().getTitle() + ":", consoleHighlightConditions_));
+      grid.setWidget(0, 1, consoleHighlightConditions_);
+      grid.setWidget(1, 0, new FormLabel(prefs_.ansiConsoleMode().getTitle() + ":", consoleColorMode_));
+      grid.setWidget(1, 1, consoleColorMode_);
+      add(grid);
+      
+      Label truncationLabel = headerLabel("Truncation");
+      add(spacedBefore(truncationLabel));
+      add(checkboxPref(constants_.consoleLimitVariableLabel(), prefs_.limitVisibleConsole()));
+      add(nudgeRightPlus(
+         numericPref(constants_.consoleLimitOutputLengthLabel(), prefs_.consoleLineLengthLimit())));
+      
       Label executionLabel = headerLabel(constants_.consoleExecutionLabel());
       add(spacedBefore(executionLabel));
       add(checkboxPref(constants_.consoleDiscardPendingConsoleInputOnErrorLabel(), prefs_.discardPendingConsoleInputOnError()));

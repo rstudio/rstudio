@@ -2447,9 +2447,10 @@
    clear = function() { .rs.clearUserPref("project_user_data_directory") }
 )
 
-# Enable highlight for
+# Use extended display for
 #
-# Control highlighting of R errors, warnings, and messages.
+# When enabled, R errors, warnings, and messages will receive an extended display
+# with custom styles applied.
 .rs.uiPrefs$consoleHighlightConditions <- list(
    get = function() { .rs.getUserPref("console_highlight_conditions") },
    set = function(value) { .rs.setUserPref("console_highlight_conditions", value) },

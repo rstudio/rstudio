@@ -2202,11 +2202,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String projectUserDataDirectoryDescription();
 
    /**
-    * Control highlighting of R errors, warnings, and messages.
+    * When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied.
     */
-   @DefaultStringValue("Enable highlight for")
+   @DefaultStringValue("Use extended display for")
    String consoleHighlightConditionsTitle();
-   @DefaultStringValue("Control highlighting of R errors, warnings, and messages.")
+   @DefaultStringValue("When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied.")
    String consoleHighlightConditionsDescription();
    @DefaultStringValue("Errors, Warnings, and Messages")
    String consoleHighlightConditionsEnum_errors_warnings_messages();
