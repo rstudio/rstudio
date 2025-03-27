@@ -94,23 +94,37 @@ core::Error parseString(const std::string& code,
 
 core::Error executeString(const std::string& str);
 
+
 core::Error evaluateString(const std::string& str,
                            SEXP* pSEXP,
                            sexp::Protect* pProtect,
                            EvalFlags flags = EvalFlagsNone);
 
+core::Error evaluateString(const std::string& str,
+                           SEXP envirSEXP,
+                           SEXP* pSEXP,
+                           sexp::Protect* pProtect,
+                           EvalFlags flags = EvalFlagsNone);
+
 template <typename T>
-core::Error evaluateString(const std::string& str, T* pValue)
+core::Error evaluateString(const std::string& str,
+                           SEXP envirSEXP,
+                           T* pValue)
 {
    sexp::Protect rProtect;
    SEXP valueSEXP;
-   core::Error error = evaluateString(str, &valueSEXP, &rProtect);
+   core::Error error = evaluateString(str, envirSEXP, &valueSEXP, &rProtect);
    if (error)
       return error;
 
    return sexp::extract(valueSEXP, pValue);
 }
- 
+
+template <typename T>
+core::Error evaluateString(const std::string& str, T* pValue)
+{
+   return evaluateString(str, R_GlobalEnv, pValue);
+}
 
 // use sparingly -- this evaluates an expression without any defense
 // against an R longjmp, so any usages of this must be carefully audited

@@ -25,7 +25,7 @@ namespace r {
 static core::Version versionImpl()
 {
    std::string version;
-   Error error = r::exec::evaluateString("format(getRversion())", &version);
+   Error error = r::exec::evaluateString("format(getRversion())", R_BaseEnv, &version);
    if (error)
       LOG_ERROR(error);
 
