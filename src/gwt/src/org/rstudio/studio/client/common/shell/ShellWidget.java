@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDebugEvent;
@@ -613,10 +614,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
       AceTheme theme = userState_.theme().getValue().cast();
       aceThemeErrorClass_ = AceTheme.getThemeErrorClass(theme);
       
-      if (Version.compare(rVersion, "4.0.0") >= 0 && prefs_.consoleHighlightConditions().getValue())
+      boolean isCustom =
+            Version.compare(rVersion, "4.0.0") >= 0 &&
+            prefs_.consoleHighlightConditions().getGlobalValue() != UserPrefsAccessor.CONSOLE_HIGHLIGHT_CONDITIONS_NONE;
+            
+      if (isCustom)
       {
          // We have custom highlighting for R conditions enabled; just use
-         // the default error style class when emitting stderr.
+         // the default error style class when emitting errors.
          errorClass_ = new ErrorClass()
          {
             @Override

@@ -1785,10 +1785,12 @@
             "description": "The folder in which RStudio should store project .Rproj.user data."
         },
         "console_highlight_conditions": {
-            "type": "boolean",
-            "default": true,
-            "title": "Highlight errors, warnings, and messages in the console",
-            "description": "When set, R errors, warnings, and messages will receive special styling within the RStudio console history."
+            "type": "string",
+            "enum": ["errors_warnings_messages", "errors_warnings", "errors", "none"],
+            "enumReadable": ["Errors, Warnings, and Messages", "Errors and Warnings only", "Errors only", "(None)"],
+            "default": "errors_warnings_messages",
+            "title": "Enable highlight for",
+            "description": "Control highlighting of R errors, warnings, and messages."
         }
       }
 }

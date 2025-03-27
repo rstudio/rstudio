@@ -40,7 +40,6 @@ public class ConsolePreferencesPane extends PreferencesPane
       Label displayLabel = headerLabel(constants_.consoleDisplayLabel());
       add(displayLabel);
       add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
-      add(checkboxPref(prefs_.consoleHighlightConditions()));
       add(checkboxPref(constants_.consoleLimitVariableLabel(), prefs_.limitVisibleConsole()));
       NumericValueWidget limitLengthPref =
          numericPref(constants_.consoleLimitOutputLengthLabel(), prefs_.consoleLineLengthLimit());
@@ -62,6 +61,16 @@ public class ConsolePreferencesPane extends PreferencesPane
          true,
          false);
       add(consoleColorMode_);
+      
+      Label styleLabel = headerLabel(constants_.consoleStyleLabel());
+      add(spacedBefore(styleLabel));
+      
+      consoleHighlightConditions_ = new SelectWidget(
+            prefs_.consoleHighlightConditions(),
+            false,
+            true,
+            false);
+      add(consoleHighlightConditions_);
 
       Label executionLabel = headerLabel(constants_.consoleExecutionLabel());
       add(spacedBefore(executionLabel));
@@ -98,6 +107,7 @@ public class ConsolePreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       consoleColorMode_.setValue(prefs_.ansiConsoleMode().getValue());
+      consoleHighlightConditions_.setValue(prefs_.consoleHighlightConditions().getValue());
       initialHighlightConsoleErrors_ = prefs.highlightConsoleErrors().getValue();
       initialLimitVisibleConsole_ = prefs.limitVisibleConsole().getValue();
    }
@@ -108,11 +118,20 @@ public class ConsolePreferencesPane extends PreferencesPane
       RestartRequirement restartRequirement = super.onApply(prefs);
 
       prefs_.ansiConsoleMode().setGlobalValue(consoleColorMode_.getValue());
+      
       if (prefs_.highlightConsoleErrors().getValue() != initialHighlightConsoleErrors_)
       {
          initialHighlightConsoleErrors_ = prefs_.highlightConsoleErrors().getValue();
+         restartRequirement.setSessionRestartRequired(true);
+      }
+      
+      String highlight = consoleHighlightConditions_.getValue();
+      if (prefs_.consoleHighlightConditions().getGlobalValue() != highlight)
+      {
+         prefs_.consoleHighlightConditions().setGlobalValue(highlight);
          restartRequirement.setRestartRequired();
       }
+         
       if (!restartRequirement.getDesktopRestartRequired() && !restartRequirement.getUiReloadRequired())
       {
          if (prefs_.limitVisibleConsole().getValue() != initialLimitVisibleConsole_)
@@ -121,6 +140,7 @@ public class ConsolePreferencesPane extends PreferencesPane
             restartRequirement.setRestartRequired();
          }
       }
+      
       return restartRequirement;
    }
 
@@ -133,6 +153,7 @@ public class ConsolePreferencesPane extends PreferencesPane
    private boolean initialHighlightConsoleErrors_;
    private boolean initialLimitVisibleConsole_;
    private final SelectWidget consoleColorMode_;
+   private final SelectWidget consoleHighlightConditions_;
 
    // Injected
    private final UserPrefs prefs_;

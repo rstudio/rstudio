@@ -2202,12 +2202,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String projectUserDataDirectoryDescription();
 
    /**
-    * When set, R errors, warnings, and messages will receive special styling within the RStudio console history.
+    * Control highlighting of R errors, warnings, and messages.
     */
-   @DefaultStringValue("Highlight errors, warnings, and messages in the console")
+   @DefaultStringValue("Enable highlight for")
    String consoleHighlightConditionsTitle();
-   @DefaultStringValue("When set, R errors, warnings, and messages will receive special styling within the RStudio console history.")
+   @DefaultStringValue("Control highlighting of R errors, warnings, and messages.")
    String consoleHighlightConditionsDescription();
+   @DefaultStringValue("Errors, Warnings, and Messages")
+   String consoleHighlightConditionsEnum_errors_warnings_messages();
+   @DefaultStringValue("Errors and Warnings only")
+   String consoleHighlightConditionsEnum_errors_warnings();
+   @DefaultStringValue("Errors only")
+   String consoleHighlightConditionsEnum_errors();
+   @DefaultStringValue("(None)")
+   String consoleHighlightConditionsEnum_none();
 
 
 

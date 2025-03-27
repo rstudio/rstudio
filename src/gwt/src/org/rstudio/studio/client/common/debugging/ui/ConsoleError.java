@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -74,7 +75,8 @@ public class ConsoleError extends Composite
       
       // If we're using extended condition highlighting for console errors,
       // we need to add those classes back here
-      if (prefs_.consoleHighlightConditions().getValue())
+      String highlightConditions = prefs_.consoleHighlightConditions().getValue();
+      if (highlightConditions != UserPrefsAccessor.CONSOLE_HIGHLIGHT_CONDITIONS_NONE)
       {
          getElement().addClassName(VirtualConsole.RES.styles().group());
          getElement().addClassName(VirtualConsole.RES.styles().groupError());

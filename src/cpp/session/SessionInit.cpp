@@ -40,7 +40,7 @@ std::atomic<bool> s_sessionInitialized(false);
 bool ensureSessionInitializedImpl()
 {
    // install condition handlers if requested
-   if (r::session::utils::isR4() && prefs::userPrefs().consoleHighlightConditions())
+   if (r::session::utils::isR4())
    {
       // install global calling handlers
       SEXP initializeSEXP = R_NilValue;

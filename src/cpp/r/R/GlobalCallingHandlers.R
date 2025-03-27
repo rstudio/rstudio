@@ -19,11 +19,20 @@
    globalCallingHandlers(NULL)
    
    # Install our handlers.
-   globalCallingHandlers(
-      error   = .rs.globalCallingHandlers.onError,
-      warning = .rs.globalCallingHandlers.onWarning,
-      message = .rs.globalCallingHandlers.onMessage
-   )
+   if (.rs.uiPrefs$consoleHighlightConditions$get() %in% c("all", "errors_warnings", "errors"))
+   {
+      globalCallingHandlers(error = .rs.globalCallingHandlers.onError)
+   }
+   
+   if (.rs.uiPrefs$consoleHighlightConditions$get() %in% c("all", "errors_warnings"))
+   {
+      globalCallingHandlers(warning = .rs.globalCallingHandlers.onWarning)
+   }
+   
+   if (.rs.uiPrefs$consoleHighlightConditions$get() %in% c("all"))
+   {
+      globalCallingHandlers(message = .rs.globalCallingHandlers.onMessage)
+   }
    
 })
 

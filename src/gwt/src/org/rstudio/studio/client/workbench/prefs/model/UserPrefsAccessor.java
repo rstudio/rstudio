@@ -3769,16 +3769,33 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When set, R errors, warnings, and messages will receive special styling within the RStudio console history.
+    * Control highlighting of R errors, warnings, and messages.
     */
-   public PrefValue<Boolean> consoleHighlightConditions()
+   public PrefValue<String> consoleHighlightConditions()
    {
-      return bool(
+      return enumeration(
          "console_highlight_conditions",
          _constants.consoleHighlightConditionsTitle(), 
          _constants.consoleHighlightConditionsDescription(), 
-         true);
+         new String[] {
+            CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS_WARNINGS_MESSAGES,
+            CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS_WARNINGS,
+            CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS,
+            CONSOLE_HIGHLIGHT_CONDITIONS_NONE
+         },
+         "errors_warnings_messages",
+         new String[] {
+            _constants.consoleHighlightConditionsEnum_errors_warnings_messages(),
+            _constants.consoleHighlightConditionsEnum_errors_warnings(),
+            _constants.consoleHighlightConditionsEnum_errors(),
+            _constants.consoleHighlightConditionsEnum_none()
+         });
    }
+
+   public final static String CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS_WARNINGS_MESSAGES = "errors_warnings_messages";
+   public final static String CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS_WARNINGS = "errors_warnings";
+   public final static String CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS = "errors";
+   public final static String CONSOLE_HIGHLIGHT_CONDITIONS_NONE = "none";
 
    public void syncPrefs(String layer, JsObject source)
    {
@@ -4309,7 +4326,7 @@ public class UserPrefsAccessor extends Prefs
       if (source.hasKey("project_user_data_directory"))
          projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
       if (source.hasKey("console_highlight_conditions"))
-         consoleHighlightConditions().setValue(layer, source.getBool("console_highlight_conditions"));
+         consoleHighlightConditions().setValue(layer, source.getString("console_highlight_conditions"));
    }
    public List<PrefValue<?>> allPrefs()
    {

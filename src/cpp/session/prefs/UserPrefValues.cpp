@@ -3443,14 +3443,14 @@ core::Error UserPrefValues::setProjectUserDataDirectory(std::string val)
 }
 
 /**
- * When set, R errors, warnings, and messages will receive special styling within the RStudio console history.
+ * Control highlighting of R errors, warnings, and messages.
  */
-bool UserPrefValues::consoleHighlightConditions()
+std::string UserPrefValues::consoleHighlightConditions()
 {
-   return readPref<bool>("console_highlight_conditions");
+   return readPref<std::string>("console_highlight_conditions");
 }
 
-core::Error UserPrefValues::setConsoleHighlightConditions(bool val)
+core::Error UserPrefValues::setConsoleHighlightConditions(std::string val)
 {
    return writePref("console_highlight_conditions", val);
 }
