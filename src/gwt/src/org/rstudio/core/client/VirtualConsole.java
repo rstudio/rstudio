@@ -362,8 +362,6 @@ public class VirtualConsole
       }
       else
       {
-         // if we're emitting messages, and we have trailing newlines, save those
-         
          // just append to the existing output stream
          range.appendRight(text, 0);
       }

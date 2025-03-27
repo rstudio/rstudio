@@ -19,8 +19,6 @@
 
 .rstudio-themes-default .group {
 	display: block;
-	border-top: 2px solid LIGHT_BORDER_COLOR;
-	border-bottom: 2px solid LIGHT_BORDER_COLOR;
 	padding: 6px 0 6px 10px;
 	margin: 6px 0 6px -6px;
 	background: LIGHT_BACKGROUND_COLOR;
@@ -67,8 +65,6 @@
 
 .rstudio-themes-dark .group {
 	display: block;
-	border-top: 2px solid DARK_BORDER_COLOR;
-	border-bottom: 2px solid DARK_BORDER_COLOR;
 	padding: 6px 0 6px 10px;
 	margin: 6px 0 6px -6px;
 	background: DARK_BACKGROUND_COLOR;
