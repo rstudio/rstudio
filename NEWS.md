@@ -57,6 +57,7 @@
 - Update Electron to version 34.3.4. (#15450)
 - Update Quarto to version 1.6.42. (#15460)
 - Copilot Language Server 1.291.0. (rstudio-pro#7450)
+- Updated Node in VS Code and Positron Pro sessions to 20.18.2 (rstudio-pro#7612)
 
 ### Deprecated / Removed
 - No longer building RStudio Desktop or Desktop Pro for OpenSUSE 15, Ubuntu Focal, or RedHat 8. (rstudio-pro/#7445)
