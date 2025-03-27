@@ -69,7 +69,8 @@ public class ChunkOutputStream extends FlowPanel
       chunkOutputSize_ = chunkOutputSize;
       metadata_ = new HashMap<>();
 
-      if (chunkOutputSize_ == ChunkOutputSize.Full) {
+      if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
          getElement().getStyle().setWidth(100, Unit.PCT);
 
          getElement().getStyle().setProperty("display", "-ms-flexbox");

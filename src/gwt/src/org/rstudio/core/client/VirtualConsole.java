@@ -625,6 +625,12 @@ public class VirtualConsole
       if (isVirtualized())
          wasAtBottom = VirtualScrollerManager.scrolledToBottom(parent_.getParentElement());
 
+      // If we're submitting new console output, but the previous submit request
+      // asked us to force a new range, respect that. This is necessary to support
+      // our custom 'group' ANSI escapes.
+      forceNewRange = forceNewRange || forceNewRange_;
+      forceNewRange_ = false;
+      
       // Only capture new elements when dealing with error output, which
       // is the only place that sets forceNewRange to true. This is just an
       // optimization to avoid unnecessary overhead for large (non-error)
@@ -795,6 +801,7 @@ public class VirtualConsole
                   Match groupEndMatch = groupEndPattern.match(data.substring(head), 0);
                   if (groupEndMatch != null)
                   {
+                     forceNewRange_ = true;
                      parent_ = parent_.getParentElement();
                      tail += groupEndMatch.getValue().length() - 1;
                      break;
@@ -1129,6 +1136,7 @@ public class VirtualConsole
    private String messageNewlines_;
 
    // Elements added by last submit call (only if forceNewRange was true)
+   private boolean forceNewRange_ = false;
    private boolean captureNewElements_ = false;
    private final List<Element> newElements_ = new ArrayList<>();
 
