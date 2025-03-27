@@ -162,8 +162,8 @@ public class MathJax
                         // if the boundaries have been mutated
                         int row = plw.getRow();
                         String line = docDisplay_.getLine(row);
-                        Pattern reDoubleDollarStart = Pattern.create("^\\s*\\$\\$");
-                        Pattern reDoubleDollarEnd   = Pattern.create("\\$\\$\\s*$");
+                        Pattern reDoubleDollarStart = Pattern.create("^\\s*\\$\\$", "");
+                        Pattern reDoubleDollarEnd   = Pattern.create("\\$\\$\\s*$", "");
 
                         boolean isMathJax =
                               reDoubleDollarStart.test(line) &&
@@ -177,7 +177,7 @@ public class MathJax
 
                         // for mathjax 'chunks', detect whether the start of the
                         // chunk has been mutated / destroyed
-                        Pattern reDoubleDollar = Pattern.create("^\\s*\\$\\$\\s*$");
+                        Pattern reDoubleDollar = Pattern.create("^\\s*\\$\\$\\s*$", "");
                         if (reDoubleDollar.test(line))
                         {
                            TokenIterator it = docDisplay_.createTokenIterator();
