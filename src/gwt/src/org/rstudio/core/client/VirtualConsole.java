@@ -886,6 +886,7 @@ public class VirtualConsole
                      parent_.appendChild(spanEl);
                      parent_ = spanEl;
                      tail += groupStartMatch.getValue().length() - 1;
+                     forceNewRange_ = forceNewRange = true;
                      break;
                   }
                   
