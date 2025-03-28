@@ -52,10 +52,6 @@
 #define kAnsiEscapeColorRegex "(?:" __RE_CSI__ "([\\d;]*)" "m" ")*"
 
 
-// For parsing encoded ANSI URLs / hyperlinks.
-#define kAnsiUrlRegex "(?:" __RE_OSC__ "8;" "(.*?)" "(?:" __RE_BEL__ "|" __RE_ST__ ")" ")*"
-
-
 // For constructing ANSI hyperlinks.
 #define ANSI_HYPERLINK(__TYPE__, __LINK__, __TEXT__) \
    "\033]8;;" __TYPE__ ":" __LINK__ __BEL__ __TEXT__ "\033]8;;" __BEL__
