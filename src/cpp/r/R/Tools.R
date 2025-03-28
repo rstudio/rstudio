@@ -1741,3 +1741,47 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    names(packages) <- packages
    lapply(packages, getNamespaceInfo, "path")
 })
+
+.rs.addFunction("makePrefixRegex", function(prefixes)
+{
+   # translate into the user's current language
+   prefixes <- vapply(prefixes, function(prefix) {
+      gettext(prefix, domain = "R")
+   }, FUN.VALUE = character(1), USE.NAMES = FALSE)
+   
+   # convert this into a boost regular expression
+   prefixes <- gsub("%d", "\\\\E\\\\d+\\\\Q", prefixes)
+   prefixes <- paste0("\\Q", prefixes, "\\E")
+   
+   # put it together into a single regex
+   sprintf("^(?:%s)", paste(prefixes, collapse = "|"))
+})
+
+.rs.addFunction("reErrorPrefix", function()
+{
+   prefixes <- c(
+      "Error: ",
+      "Error in ",
+      "Error during wrapup: "
+   )
+   
+   .rs.makePrefixRegex(prefixes)
+})
+
+.rs.addFunction("reWarningPrefix", function()
+{
+   prefixes <- c(
+      "Warning message:",
+      "Warning messages:",
+      "There was %d warning (use warnings() to see it)",
+      "There were %d warnings (use warnings() to see them)",
+      "There were %d or more warnings (use warnings() to see the first %d)"
+   )
+   
+   .rs.makePrefixRegex(prefixes)
+})
+
+.rs.addFunction("reInAdditionPrefix", function()
+{
+   .rs.makePrefixRegex("In addition: ")
+})

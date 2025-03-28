@@ -18,15 +18,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.Version;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
@@ -37,8 +40,13 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDebugEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -46,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
@@ -55,6 +64,7 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -80,12 +90,19 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
+   public static interface ErrorClass
+   {
+      public String get();
+   }
+   
    public ShellWidget(AceEditor editor,
                       UserPrefs prefs,
                       EventBus events,
                       AriaLiveService ariaLive,
                       String outputLabel)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
       prefs_ = prefs;
@@ -273,7 +290,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
                scrollPanel_.scrollToBottom();
          }
       };
-
+      
+      errorClass_ = new ErrorClass()
+      {
+         @Override
+         public String get()
+         {
+            return styles_.error();
+         }
+      };
+      
       initWidget(scrollPanel_);
       addDomHandler(secondaryInputHandler, ClickEvent.getType());
       
@@ -282,9 +308,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
    
    @Inject
-   private void initialize(ApplicationAutomation automation)
+   private void initialize(ApplicationAutomation automation,
+                           Session session,
+                           UserState userState)
    {
       automation_ = automation;
+      session_ = session;
+      userState_ = userState;
    }
 
    private native void addCopyHook(Element element) /*-{
@@ -400,6 +430,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       suppressPendingInput_ = suppressPendingInput;
    }
+   
+   private String asErrorKey(String error)
+   {
+      String stripped = AnsiCode.strip(error);
+      return stripped.replaceFirst("[^:]*:\\s*", "").trim();
+   }
 
    public void consoleWriteError(final String error)
    {
@@ -416,47 +452,57 @@ public class ShellWidget extends Composite implements ShellDisplay,
          if (clearErrors_)
          {
             errorNodes_.clear();
+            errorKeys_.clear();
             clearErrors_ = false;
          }
-         errorNodes_.put(error, newElements);
+         
+         String key = asErrorKey(error);
+         errorNodes_.put(key, newElements);
+         errorKeys_.put(key, error);
       }
    }
 
-   public void consoleWriteExtendedError(
-         final String error, UnhandledError traceInfo,
-         boolean expand, String command)
+   public void consoleWriteExtendedError(String error,
+                                         UnhandledError traceInfo,
+                                         boolean expand,
+                                         String command)
    {
-      if (errorNodes_.containsKey(error))
+      String key = asErrorKey(error);
+      if (!errorNodes_.containsKey(key))
+         return;
+      
+      List<Element> errorNodes = errorNodes_.get(key);
+      if (errorNodes == null || errorNodes.isEmpty())
+         return;
+
+      if (errorKeys_.containsKey(key))
       {
-         List<Element> errorNodes = errorNodes_.get(error);
-         if (errorNodes.isEmpty())
-            return;
-
-         clearPendingInput();
-         ConsoleError errorWidget = new ConsoleError(
-               traceInfo, getErrorClass(), this, command);
-
-         if (expand)
-            errorWidget.setTracebackVisible(true);
-
-         boolean replacedFirst = false;
-         for (Element element: errorNodes)
-         {
-            if (!replacedFirst)
-            {
-               // swap widget for first element
-               element.getParentNode().replaceChild(errorWidget.getElement(), element);
-               replacedFirst = true;
-            }
-            else
-            {
-               // and delete the rest of the elements
-               element.removeFromParent();
-            }
-         }
-         scrollPanel_.onContentSizeChanged();
-         errorNodes_.remove(error);
+         String originalError = errorKeys_.get(key);
+         traceInfo.setErrorMessage(originalError);
       }
+      
+      clearPendingInput();
+      ConsoleError errorWidget = new ConsoleError(traceInfo, getErrorClass(), command, this, null);
+
+      if (expand)
+         errorWidget.setTracebackVisible(true);
+
+      Element parentEl = errorNodes.get(0).getParentElement();
+      if (parentEl.hasClassName(VirtualConsole.RES.styles().group()))
+      {
+         Element replaceEl = parentEl;
+         parentEl = parentEl.getParentElement();
+         parentEl.replaceChild(errorWidget.getElement(), replaceEl);
+      }
+      else
+      {
+         parentEl.removeAllChildren();
+         parentEl.appendChild(errorWidget.getElement());
+      }
+      
+      scrollPanel_.onContentSizeChanged();
+      errorNodes_.remove(key);
+      errorKeys_.remove(key);
    }
 
    @Override
@@ -543,16 +589,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
       }
    }
-
-   private String getErrorClass()
-   {
-      return styles_.error() +
-         (prefs_.highlightConsoleErrors().getValue() ?
-            " " + AceTheme.getThemeErrorClass(
-                RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast()) :
-            "");
-   }
-
+   
    /**
     * Send text to the console
     * @param text Text to output
@@ -1113,6 +1150,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
          scrollIntoView();
       }
    }
+   
+   private String getErrorClass()
+   {
+      return ConsoleOutputWriter.OUTPUT_ERROR_CLASS;
+   }
 
    private boolean cleared_ = false;
    private boolean ignoreNextFocus_ = false;
@@ -1131,15 +1173,22 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final UserPrefs prefs_;
    private final AriaLiveService ariaLive_;
    private VerticalPanel verticalPanel_;
-   private ApplicationAutomation automation_;
+   private ErrorClass errorClass_;
+   private String aceThemeErrorClass_;
 
    private int editorWidth_ = -1;
    private boolean scrollIntoViewPending_ = false;
 
    // A list of errors that have occurred between console prompts.
    private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();
+   private final Map<String, String> errorKeys_ = new TreeMap<>();
    private boolean clearErrors_ = false;
 
+   // Injected
+   private ApplicationAutomation automation_;
+   private Session session_;
+   private UserState userState_;
+   
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
    private static final String RSTUDIO_CONSOLE_BUSY = "rstudio-console-busy";
 }

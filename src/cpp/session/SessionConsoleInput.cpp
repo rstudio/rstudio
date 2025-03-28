@@ -65,7 +65,7 @@ void setSessionExecuting(bool executing)
 {
    LOCK_MUTEX(s_sessionExecutingMutex)
    {
-      if (s_sessionExecuting != executing)
+      if (s_sessionExecuting != static_cast<int>(executing))
       {
          s_sessionExecuting = executing;
          // Not ideal to be saving the file while holding the lock but
@@ -81,7 +81,7 @@ void setSessionExecuting(bool executing)
 
 void setExecuting(bool executing)
 {
-   if (executing == s_rProcessingInput)
+   if (s_rProcessingInput == static_cast<int>(executing))
       return;
 
    // Executing also prevents suspension
@@ -98,7 +98,7 @@ void setExecuting(bool executing)
 
    // Instead, updateSessionExecuting is called periodically to resync the file system state to the in memory
    // state, it should always be clearing the state as we always update the 0 to 1 transitions immediately.
-   if (executing && s_sessionExecuting != executing)
+   if (executing && s_sessionExecuting != static_cast<int>(executing))
    {
       setSessionExecuting(executing);
    }

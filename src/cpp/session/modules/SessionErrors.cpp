@@ -13,21 +13,23 @@
  *
  */
 
-#include <algorithm>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
+
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
+#include <r/RRoutines.hpp>
 
-#include <boost/bind/bind.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 #include "SessionErrors.hpp"
 #include "SessionBreakpoints.hpp"
+#include "../SessionClientEventQueue.hpp"
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -178,6 +180,12 @@ void onUserSettingsChanged(const std::string& pref,
    *pHandleUserErrorsOnly = handleUserErrorsOnly;
 }
 
+SEXP rs_errorOutputPending()
+{
+   clientEventQueue().setErrorOutputPending();
+   return Rf_ScalarLogical(1);
+}
+
 } // anonymous namespace
 
 json::Value errorStateAsJson()
@@ -191,11 +199,14 @@ Error initialize()
 {
    boost::shared_ptr<SEXP> pErrorHandler =
          boost::make_shared<SEXP>(R_NilValue);
+
    boost::shared_ptr<bool> pHandleUserErrorsOnly =
          boost::make_shared<bool>(true);
 
    using boost::bind;
    using namespace module_context;
+
+   RS_REGISTER_CALL_METHOD(rs_errorOutputPending);
 
    // Check to see whether the error handler has changed immediately after init
    // (to find changes from e.g. .Rprofile) and after every console prompt.

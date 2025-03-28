@@ -20,6 +20,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSourceManager.hpp>
+#include <r/RVersion.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RSession.hpp>
@@ -50,6 +51,9 @@ bool s_isR3 = false;
 
 // is this R 3.3 or greater
 bool s_isR3_3 = false;
+
+// is this R 4.0 or greater
+bool s_isR4 = false;
 
 boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
 
@@ -218,21 +222,10 @@ Error initialize()
       LOG_ERROR(libError);
 
    // check whether this is R 3.3 or greater
-   Error r33Error = r::exec::evaluateString("getRversion() >= '3.3.0'", &s_isR3_3);
-   if (r33Error)
-      LOG_ERROR(r33Error);
-
-   if (s_isR3_3)
-   {
-      s_isR3 = true;
-   }
-   else
-   {
-      // check whether this is R 3.0 or greater
-      Error r3Error = r::exec::evaluateString("getRversion() >= '3.0.0'", &s_isR3);
-      if (r3Error)
-         LOG_ERROR(r3Error);
-   }
+   Version rVersion = r::version();
+   s_isR3   = rVersion >= Version("3.0.0");
+   s_isR3_3 = rVersion >= Version("3.3.0");
+   s_isR4   = rVersion >= Version("4.0.0");
 
    // initialize console history capacity
    r::session::consoleHistory().setCapacityFromRHistsize();
@@ -377,6 +370,15 @@ Error initialize()
          return error;
    }
 #endif
+
+   // global calling handlers
+   if (s_isR4)
+   {
+      FilePath handlersFilePath = utils::rSourcePath().completePath("GlobalCallingHandlers.R");
+      error = r::sourceManager().sourceLocal(handlersFilePath);
+      if (error)
+         return error;
+   }
    
    // now run hooks for those waiting for session to be fully initialized
    if (rCallbacks().initComplete)
@@ -465,6 +467,11 @@ bool isR3()
 bool isR3_3()
 {
    return s_isR3_3;
+}
+
+bool isR4()
+{
+   return s_isR4;
 }
 
 }

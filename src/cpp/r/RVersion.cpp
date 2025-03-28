@@ -1,7 +1,7 @@
 /*
- * SessionBuild.hpp
+ * RVersion.cpp
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2025 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -13,31 +13,31 @@
  *
  */
 
-#ifndef SESSION_BUILD_HPP
-#define SESSION_BUILD_HPP
+#include <r/RVersion.hpp>
 
-#include <shared_core/json/Json.hpp>
+#include <r/RExec.hpp>
+
+using namespace rstudio::core;
 
 namespace rstudio {
-namespace core {
-   class Error;
+namespace r {
+
+static core::Version versionImpl()
+{
+   std::string version;
+   Error error = r::exec::evaluateString("format(getRversion())", R_BaseEnv, &version);
+   if (error)
+      LOG_ERROR(error);
+
+   return Version(version);
 }
+
+core::Version version()
+{
+   static Version instance = versionImpl();
+   return instance;
 }
- 
-namespace rstudio {
-namespace session {
-namespace modules { 
-namespace build {
 
-core::json::Value buildStateAsJson();
-
-core::Error initialize();
-
-bool buildEnabled();
-                       
-} // namespace build
-} // namespace modules
-} // namespace session
+} // namespace r
 } // namespace rstudio
 
-#endif // SESSION_BUILD_HPP

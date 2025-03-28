@@ -108,7 +108,7 @@ std::wstring finishExpression(const std::wstring& expression)
    bool sawOperator = false;
    bool sawIdentifier = false;
 
-   for (int i = 0, n = expression.size(); i < n; i++)
+   for (std::size_t i = 0, n = expression.size(); i < n; i++)
    {
       wchar_t ch = expression[i];
       

@@ -270,11 +270,6 @@ Error evaluateExpressions(SEXP expr,
    return evaluateExpressionsUnsafe(expr, env, pSEXP, pProtect, EvalTry);
 }
 
-Error evaluateExpressions(SEXP expr, SEXP* pSEXP, sexp::Protect* pProtect)
-{
-   return evaluateExpressions(expr, R_GlobalEnv, pSEXP, pProtect);
-}
-       
 void topLevelExec(void *data)
 {
    boost::function<void()>* pFunction = (boost::function<void()>*)data;
@@ -334,9 +329,18 @@ Error executeString(const std::string& str)
    SEXP ignoredSEXP;
    return evaluateString(str, &ignoredSEXP, &rProtect);
 }
-   
+
 Error evaluateString(const std::string& str, 
                      SEXP* pSEXP, 
+                     sexp::Protect* pProtect,
+                     EvalFlags flags)
+{
+   return evaluateString(str, R_GlobalEnv, pSEXP, pProtect, flags);
+}
+
+Error evaluateString(const std::string& str,
+                     SEXP envirSEXP,
+                     SEXP* pSEXP,
                      sexp::Protect* pProtect,
                      EvalFlags flags)
 {
@@ -367,7 +371,7 @@ Error evaluateString(const std::string& str,
       return parseError;
 
    // evaluate the expression
-   Error evalError = evaluateExpressions(parsedSEXP, pSEXP, pProtect);
+   Error evalError = evaluateExpressions(parsedSEXP, envirSEXP, pSEXP, pProtect);
    if (evalError)
    {
       evalError.addProperty("code", str);

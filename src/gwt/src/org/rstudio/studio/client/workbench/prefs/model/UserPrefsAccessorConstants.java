@@ -726,6 +726,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String ansiConsoleModeTitle();
    @DefaultStringValue("How to treat ANSI escape codes in the console.")
    String ansiConsoleModeDescription();
+   @DefaultStringValue("Render ANSI escapes")
+   String ansiConsoleModeEnum_on();
+   @DefaultStringValue("Remove ANSI escapes")
+   String ansiConsoleModeEnum_strip();
+   @DefaultStringValue("Ignore ANSI escapes")
+   String ansiConsoleModeEnum_off();
 
    /**
     * Whether to only show a limited window of the total console output
@@ -2200,6 +2206,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String projectUserDataDirectoryTitle();
    @DefaultStringValue("The folder in which RStudio should store project .Rproj.user data.")
    String projectUserDataDirectoryDescription();
+
+   /**
+    * When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied.
+    */
+   @DefaultStringValue("Use extended display for")
+   String consoleHighlightConditionsTitle();
+   @DefaultStringValue("When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied.")
+   String consoleHighlightConditionsDescription();
+   @DefaultStringValue("Errors, Warnings, and Messages")
+   String consoleHighlightConditionsEnum_errors_warnings_messages();
+   @DefaultStringValue("Errors and Warnings only")
+   String consoleHighlightConditionsEnum_errors_warnings();
+   @DefaultStringValue("Errors only")
+   String consoleHighlightConditionsEnum_errors();
+   @DefaultStringValue("(None)")
+   String consoleHighlightConditionsEnum_none();
 
 
 

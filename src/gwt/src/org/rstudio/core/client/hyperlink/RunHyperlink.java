@@ -32,68 +32,82 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 
 public class RunHyperlink extends Hyperlink
 {
-    public RunHyperlink(String url, Map<String, String> params, String text, String clazz)
-    {
-        super(url, params, text, clazz);
-        
-        Match match = HYPERLINK_RUN_PATTERN.match(url, 0);
-        package_ = match.getGroup(2);
-        fun_ = match.getGroup(3);
-        code_ = url.replaceFirst("^(x-r-|ide:|rstudio:)run:", "");
-        
-        server_ = RStudioGinjector.INSTANCE.getServer();
-    }
+   public RunHyperlink(String url, Map<String, String> params, String text, String clazz)
+   {
+      super(url, params, text, clazz);
 
-    @Override 
-    public void onClick()
-    {
-        server_.isPackageHyperlinkSafe(package_, new SimpleRequestCallback<Boolean>(){
+      Match match = HYPERLINK_RUN_PATTERN.match(url, 0);
+      package_ = match.getGroup(2);
+      fun_ = match.getGroup(3);
+      code_ = url.replaceFirst("^(x-r-|ide:|rstudio:)run:", "");
 
+      server_ = RStudioGinjector.INSTANCE.getServer();
+   }
+
+   @Override 
+   public void onClick()
+   {
+      if (package_ != null)
+      {
+         server_.isPackageHyperlinkSafe(package_, new SimpleRequestCallback<Boolean>()
+         {
             @Override
             public void onResponseReceived(Boolean response)
             {
-                events_.fireEvent(new SendToConsoleEvent(code_, response));
+               events_.fireEvent(new SendToConsoleEvent(code_, response));
             }
-            
-        });
-    }
+         });
+      }
+      else
+      {
+         events_.fireEvent(new SendToConsoleEvent(code_, true));
+      }
+   }
 
-    @Override
-    public void getPopupContent(CommandWithArg<Widget> onReady)
-    {
-        final VerticalPanel panel = new VerticalPanel();
+   @Override
+   public void getPopupContent(CommandWithArg<Widget> onReady)
+   {
+      final VerticalPanel panel = new VerticalPanel();
 
-        panel.add(new RunHyperlinkPopupHeader(code_));
-        panel.add(new HelpPreview(fun_, package_, () -> 
-        {
-            onReady.execute(panel);
-        }));
-    }
+      panel.add(new RunHyperlinkPopupHeader(code_));
+      panel.add(new HelpPreview(fun_, package_, () -> 
+      {
+         onReady.execute(panel);
+      }));
+   }
 
-    public static boolean handles(String url)
-    {
-        Match match = HYPERLINK_RUN_PATTERN.match(url, 0);
-        if (match == null) 
-            return false;
+   public static boolean handles(String url)
+   {
+      Match match = HYPERLINK_RUN_PATTERN.match(url, 0);
+      if (match == null) 
+         return false;
 
-        String pkg = match.getGroup(2);
-        if (StringUtil.isOneOf(pkg, "base", "utils", "stats"))
-            return false;
-        
-        return true;
-    }
+      String pkg = match.getGroup(2);
+      if (pkg == null)
+      {
+         String fun = match.getGroup(3);
+         return StringUtil.isOneOf(fun, "warnings");
+      }
+      else if (StringUtil.isOneOf(pkg, "base", "utils", "tools", "stats"))
+      {
+         return false;
+      }
 
-    public void showHelp()
-    {
-        server_.showHelpTopic(fun_, package_, RCompletionType.FUNCTION);
-    }
+      return true;
+   }
 
-    private String code_;    
-    private String package_;
-    private String fun_;
-    private static final EventBus events_ = RStudioGinjector.INSTANCE.getEventBus();
-    private Server server_;
+   public void showHelp()
+   {
+      server_.showHelpTopic(fun_, package_, RCompletionType.FUNCTION);
+   }
 
-    // allow code of the form pkg::fn(<args>) where args does not have ;()
-    private static final Pattern HYPERLINK_RUN_PATTERN = Pattern.create("^(x-r-|rstudio:|ide:)run:(\\w+)::(\\w+)[(][^();]*[)]$", "");
+   private String code_;    
+   private String package_;
+   private String fun_;
+   private static final EventBus events_ = RStudioGinjector.INSTANCE.getEventBus();
+   private Server server_;
+
+   // allow code of the form pkg::fn(<args>) where args does not have ;()
+   private static final Pattern HYPERLINK_RUN_PATTERN =
+         Pattern.create("^(x-r-|rstudio:|ide:)run:(?:(\\w+)::)?(\\w+)[(][^();]*[)]$", "");
 }

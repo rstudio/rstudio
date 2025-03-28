@@ -187,7 +187,7 @@ public class ConsoleDispatcher
          }
    
          if (echo)
-            code.append(", echo=TRUE");
+            code.append(", echo = TRUE");
          code.append(")");
       
          eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));

@@ -19,12 +19,19 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
+import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -36,6 +43,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class ConsoleError extends Composite
 {
@@ -53,19 +61,45 @@ public class ConsoleError extends Composite
 
    // Because we are adding interactive elements to the VirtualScroller the GWT bindings are lost.
    // We need to programmatically find the elements and manipulate them through regular JS functions.
-   public ConsoleError(UnhandledError err, 
+   public ConsoleError(UnhandledError error,
                        String errorClass, 
-                       Observer observer, 
-                       String command)
+                       String command,
+                       Observer observer,
+                       Element errorEl)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       observer_ = observer;
       command_ = command;
       
       initWidget(uiBinder.createAndBindUi(this));
       
-      VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
-      vc.submit(err.getErrorMessage().trim());
-      errorMessage.addStyleName(errorClass);
+      // If we're using extended condition highlighting for console errors,
+      // we need to add those classes back here
+      String highlightConditions = prefs_.consoleHighlightConditions().getValue();
+      if (highlightConditions != UserPrefsAccessor.CONSOLE_HIGHLIGHT_CONDITIONS_NONE)
+      {
+         getElement().addClassName(VirtualConsole.RES.styles().group());
+         getElement().addClassName(VirtualConsole.RES.styles().groupError());
+         errorMessage.getElement().getStyle().setPaddingLeft(6, Unit.PX);
+      }
+      
+      // If errorEl is provided, then take ownership of it -- replace this widget's
+      // 'errorMessage' element with the provided 'errorEl'. If it's not provided,
+      // then generate it using a virtual console attached to this widget's 'errorMessage'.
+      if (errorEl != null)
+      {
+         errorMessage.getElement().getParentElement().replaceChild(errorEl, errorMessage.getElement());
+      }
+      else
+      {
+         VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
+         String message = error.getErrorMessage();
+         console.submit(message);
+      }
+      
+      if (errorClass != null)
+         errorMessage.addStyleName(errorClass);
 
       EventListener onConsoleErrorClick = event ->
       {
@@ -94,12 +128,18 @@ public class ConsoleError extends Composite
       DOM.sinkEvents(this.getElement(), Event.ONCLICK);
       DOM.setEventListener(this.getElement(), onConsoleErrorClick);
 
-      for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
+      JsArray<ErrorFrame> frames = error.getErrorFrames();
+      for (int i = frames.length() - 1; i >= 0; i--)
       {
-         ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1,
-               err.getErrorFrames().get(i));
+         ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1, frames.get(i));
          framePanel.add(frame);
       }
+   }
+   
+   @Inject
+   private void initialize(UserPrefs prefs)
+   {
+      prefs_ = prefs;
    }
    
    public void setTracebackVisible(boolean visible)
@@ -141,4 +181,8 @@ public class ConsoleError extends Composite
    private boolean showingTraceback_ = false;
    private String command_;
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
+   
+   // Injected
+   private UserPrefs prefs_;
+   
 }

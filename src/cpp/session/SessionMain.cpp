@@ -839,6 +839,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // setup fork handlers
    main_process::setupForkHandlers();
 
+   // setup extra handlers for client event queue
+   rsession::finishInitializeClientEventQueue();
+
    // success!
    return Success();
 }

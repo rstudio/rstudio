@@ -15,8 +15,12 @@
 
 #include "SessionInit.hpp"
 
-#include <r/session/RSession.hpp>
+#include <r/RExec.hpp>
 
+#include <r/session/RSession.hpp>
+#include <r/session/RSessionUtils.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -33,10 +37,22 @@ std::atomic<bool> s_sessionInitialized(false);
 
 } // anonymous namespace
 
-// certain things are deferred until after we have sent our first response
-// take care of these things here
-void ensureSessionInitialized()
+bool ensureSessionInitializedImpl()
 {
+   // install condition handlers if requested
+   if (r::session::utils::isR4())
+   {
+      // install global calling handlers
+      SEXP initializeSEXP = R_NilValue;
+      r::sexp::Protect protect;
+      Error error = r::exec::RFunction(".rs.globalCallingHandlers.initializeCall")
+            .call(&initializeSEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+
+      Rf_eval(initializeSEXP, R_GlobalEnv);
+   }
+
    // note that we are now fully initialized. we defer setting this
    // flag so that consoleRead and handleClientInit know that we have just
    // started up and can act accordingly
@@ -46,6 +62,17 @@ void ensureSessionInitialized()
    // is supported so that the workbench UI can load without having to wait
    // for the potentially very lengthy deserialization of the environment)
    rstudio::r::session::ensureDeserialized();
+
+   return true;
+
+}
+
+// certain things are deferred until after we have sent our first response
+// take care of these things here
+void ensureSessionInitialized()
+{
+   static bool once = ensureSessionInitializedImpl();
+   (void) once;
 }
 
 bool isSessionInitialized()

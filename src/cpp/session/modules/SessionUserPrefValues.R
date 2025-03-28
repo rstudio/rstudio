@@ -1,7 +1,7 @@
 #
 # SessionUserPrefValues.R
 #
-# Copyright (C) 2024 by Posit Software, PBC
+# Copyright (C) 2025 by Posit Software, PBC
 #
 # Unless you have received this program directly from Posit Software pursuant
 # to the terms of a commercial license agreement with Posit Software, then
@@ -2445,4 +2445,14 @@
    get = function() { .rs.getUserPref("project_user_data_directory") },
    set = function(value) { .rs.setUserPref("project_user_data_directory", value) },
    clear = function() { .rs.clearUserPref("project_user_data_directory") }
+)
+
+# Use extended display for
+#
+# When enabled, R errors, warnings, and messages will receive an extended display
+# with custom styles applied.
+.rs.uiPrefs$consoleHighlightConditions <- list(
+   get = function() { .rs.getUserPref("console_highlight_conditions") },
+   set = function(value) { .rs.setUserPref("console_highlight_conditions", value) },
+   clear = function() { .rs.clearUserPref("console_highlight_conditions") }
 )

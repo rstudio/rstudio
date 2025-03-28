@@ -1252,16 +1252,21 @@ public class UserPrefsAccessor extends Prefs
          _constants.ansiConsoleModeTitle(), 
          _constants.ansiConsoleModeDescription(), 
          new String[] {
-            ANSI_CONSOLE_MODE_OFF,
             ANSI_CONSOLE_MODE_ON,
-            ANSI_CONSOLE_MODE_STRIP
+            ANSI_CONSOLE_MODE_STRIP,
+            ANSI_CONSOLE_MODE_OFF
          },
-         "on");
+         "on",
+         new String[] {
+            _constants.ansiConsoleModeEnum_on(),
+            _constants.ansiConsoleModeEnum_strip(),
+            _constants.ansiConsoleModeEnum_off()
+         });
    }
 
-   public final static String ANSI_CONSOLE_MODE_OFF = "off";
    public final static String ANSI_CONSOLE_MODE_ON = "on";
    public final static String ANSI_CONSOLE_MODE_STRIP = "strip";
+   public final static String ANSI_CONSOLE_MODE_OFF = "off";
 
    /**
     * Whether to only show a limited window of the total console output
@@ -3768,6 +3773,35 @@ public class UserPrefsAccessor extends Prefs
          "");
    }
 
+   /**
+    * When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied.
+    */
+   public PrefValue<String> consoleHighlightConditions()
+   {
+      return enumeration(
+         "console_highlight_conditions",
+         _constants.consoleHighlightConditionsTitle(), 
+         _constants.consoleHighlightConditionsDescription(), 
+         new String[] {
+            CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS_WARNINGS_MESSAGES,
+            CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS_WARNINGS,
+            CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS,
+            CONSOLE_HIGHLIGHT_CONDITIONS_NONE
+         },
+         "errors_warnings_messages",
+         new String[] {
+            _constants.consoleHighlightConditionsEnum_errors_warnings_messages(),
+            _constants.consoleHighlightConditionsEnum_errors_warnings(),
+            _constants.consoleHighlightConditionsEnum_errors(),
+            _constants.consoleHighlightConditionsEnum_none()
+         });
+   }
+
+   public final static String CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS_WARNINGS_MESSAGES = "errors_warnings_messages";
+   public final static String CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS_WARNINGS = "errors_warnings";
+   public final static String CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS = "errors";
+   public final static String CONSOLE_HIGHLIGHT_CONDITIONS_NONE = "none";
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -4296,6 +4330,8 @@ public class UserPrefsAccessor extends Prefs
          reformatOnSave().setValue(layer, source.getBool("reformat_on_save"));
       if (source.hasKey("project_user_data_directory"))
          projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
+      if (source.hasKey("console_highlight_conditions"))
+         consoleHighlightConditions().setValue(layer, source.getString("console_highlight_conditions"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4563,6 +4599,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeFormatterExternalCommand());
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
+      prefs.add(consoleHighlightConditions());
       return prefs;
    }
    

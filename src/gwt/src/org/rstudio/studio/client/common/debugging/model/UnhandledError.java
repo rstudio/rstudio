@@ -22,6 +22,10 @@ public class UnhandledError extends JavaScriptObject
 {
    protected UnhandledError() {}
    
+   public final native void setErrorMessage(String message) /*-{
+      this.message = message;
+   }-*/;
+   
    public final native String getErrorMessage() /*-{
       return this.message;
    }-*/;

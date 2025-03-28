@@ -35,6 +35,11 @@
 
 #include "SessionBuild.hpp"
 
+
+#define kAnsiEscapeRegex "(?:\033\\[\\d+m)*"
+#define kAnsiUrlRegex "(?:\u001B]8;.*?(?:\u0007|\033\\\\))*"
+
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
