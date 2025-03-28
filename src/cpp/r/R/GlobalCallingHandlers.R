@@ -13,6 +13,21 @@
 #
 #
 
+
+# Make sure these are in sync with AnsiEscapes.hpp.
+.rs.setVar("ansiEscapeGroup", list(
+   error   = "\033G1;",
+   warning = "\033G2;",
+   message = "\033G3;",
+   end     = "\033g"
+))
+
+.rs.setVar("ansiEscapeHighlight", list(
+   error   = "\033H1;",
+   end     = "\033h"
+))
+
+
 .rs.addFunction("globalCallingHandlers.initialize", function()
 {
    # Remove any previously-registered handlers.
@@ -150,18 +165,10 @@
 
 .rs.addFunction("globalCallingHandlers.group", function(text, type)
 {
-   itype <- switch(tolower(type), error = "1", warning = "2", message = "3")
-   if (is.null(itype))
-      return(text)
-   
-   paste0("\033G", itype, ";", text, "\033g")
+   paste0(.rs.ansiEscapeGroup[[type]], text, .rs.ansiEscapeGroup[["end"]])
 })
 
 .rs.addFunction("globalCallingHandlers.highlight", function(text, type = "error")
 {
-   itype <- switch(tolower(type), error = "1", warning = "2", message = "3")
-   if (is.null(itype))
-      return(text)
-   
-   paste0("\033H", itype, ";", text, "\033h")
+   paste0(.rs.ansiEscapeHighlight[[type]], text, .rs.ansiEscapeHighlight[["end"]])
 })
