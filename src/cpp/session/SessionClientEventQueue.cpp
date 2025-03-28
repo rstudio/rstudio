@@ -128,50 +128,53 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
    return changed;
 }
 
+namespace {
+
+void annotateError(std::string* pOutput, bool allowGroupAll)
+{
+   boost::smatch match;
+   if (boost::regex_search(*pOutput, match, s_reErrorPrefix))
+   {
+      // Insert highlight markers around 'Error'.
+      // Note that, because the word may have been translated, we just look
+      // for the first colon or space following the location where the error
+      // prefix was matched.
+      auto highlightStart = match[0].first - pOutput->begin();
+      auto highlightEnd = pOutput->find_first_of(": ", highlightStart);
+      if (highlightEnd != std::string::npos)
+      {
+         pOutput->insert(highlightEnd, kAnsiEscapeHighlightEnd);
+         pOutput->insert(highlightStart, kAnsiEscapeGroupStartError kAnsiEscapeHighlightStartError);
+      }
+      else
+      {
+         pOutput->insert(highlightStart,  kAnsiEscapeGroupStartError);
+      }
+
+      pOutput->append(kAnsiEscapeGroupEnd);
+   }
+   else if (allowGroupAll)
+   {
+      pOutput->insert(0, kAnsiEscapeGroupStartError);
+      pOutput->append(kAnsiEscapeGroupEnd);
+   }
+}
+
+} // end anonymous namespace
+
 void ClientEventQueue::annotateOutput(int event,
                                       std::string* pOutput)
 {
    if (errorOutputPending_)
    {
       errorOutputPending_ = false;
-
-      boost::smatch match;
-      if (boost::regex_search(*pOutput, match, s_reErrorPrefix))
-      {
-         pOutput->insert(
-                  match[0].second - pOutput->begin(),
-                  kAnsiEscapeHighlightEnd);
-
-         pOutput->insert(
-                  match[0].first - pOutput->begin(),
-                  kAnsiEscapeGroupStartError kAnsiEscapeHighlightStartError);
-
-         pOutput->append(kAnsiEscapeGroupEnd);
-      }
-      else
-      {
-         pOutput->insert(0, kAnsiEscapeGroupStartError);
-         pOutput->append(kAnsiEscapeGroupEnd);
-      }
-
+      annotateError(pOutput, true);
       return;
    }
 
    if (!s_reErrorPrefix.empty() && annotateErrors())
    {
-      boost::smatch match;
-      if (boost::regex_search(*pOutput, match, s_reErrorPrefix))
-      {
-         pOutput->insert(
-                  match[0].second - pOutput->begin(),
-                  kAnsiEscapeHighlightEnd);
-
-         pOutput->insert(
-                  match[0].first - pOutput->begin(),
-                  kAnsiEscapeGroupStartError kAnsiEscapeHighlightStartError);
-
-         pOutput->append(kAnsiEscapeGroupEnd);
-      }
+      annotateError(pOutput, false);
    }
 
    if (!s_reWarningPrefix.empty() && annotateWarnings())

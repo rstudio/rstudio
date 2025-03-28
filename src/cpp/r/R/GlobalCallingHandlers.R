@@ -122,7 +122,10 @@
       lhs <- substr(prefix, 1L, colonIndex - 1L)
       rhs <- substr(prefix, colonIndex, .Machine$integer.max)
       prefix <- paste0(.rs.globalCallingHandlers.highlight(lhs, type), rhs)
-      sprintf("%s%s", prefix, msg)
+      if (nchar(prefix) + nchar(msg) >= 80L)
+         sprintf("%s\n  %s", prefix, msg)
+      else
+         sprintf("%s%s", prefix, msg)
    }
    else
    {
@@ -134,7 +137,11 @@
       prefix <- paste(parts, collapse = " ")
       
       cll <- format(conditionCall(cnd))
-      sprintf("%s %s :\n  %s", prefix, cll, msg)
+      header <- sprintf("%s %s :", prefix, cll)
+      if (nchar(header) + nchar(msg) >= 80L)
+         sprintf("%s\n  %s", header, msg)
+      else
+         sprintf("%s %s", header, msg)
    }
    
    # Enclose whole message in escapes so we can process it as a unit.

@@ -35,6 +35,16 @@
    for (n in seq_along(status$sys.calls))
    {
       fn <- sys.function(n)
+      
+      # Check for a registered RStudio error handler.
+      type <- attr(fn, "errorHandlerType", exact = TRUE)
+      if (!is.null(type))
+      {
+         n <- n - 1L
+         break
+      }
+      
+      # Check for other potential error handlers on the stack.
       if (identical(fn, .rs.globalCallingHandlers.onError))
       {
          n <- n - 1L
