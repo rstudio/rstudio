@@ -57,7 +57,7 @@ private:
       const std::string& output() const { return output_; }
       int event() const { return event_; }
       bool useConsoleActionLimit() const { return useConsoleActionLimit_; }
-      
+
       void append(const std::string& data) { output_ += data; }
       void clear() { output_.clear(); }
       bool empty() const { return output_.empty(); }
@@ -92,6 +92,13 @@ public:
    // set the active console to be attached to console events; returns true if
    // the active console changed
    bool setActiveConsole(const std::string& console);
+
+   // annotate output
+   void annotateOutput(int event, std::string* pOutput);
+
+   // inform the event queue that error output is pending
+   void setErrorOutputPending();
+
       
 private:
    
@@ -120,6 +127,7 @@ private:
    // keep vector of pointers to buffered outputs, just to make
    // iteration easier in places where we need to flush all buffers
    std::vector<BufferedOutput*> bufferedOutputs_;
+   bool errorOutputPending_ = false;
 
 };
 

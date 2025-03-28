@@ -17,6 +17,7 @@
 
 #include <shared_core/json/Json.hpp>
 
+#include <core/AnsiEscapes.hpp>
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
 #include <core/StringUtils.hpp>
@@ -42,35 +43,19 @@ ClientEventQueue* s_pClientEventQueue = nullptr;
 
 std::string s_highlightConditionsPref;
 
+boost::regex s_reErrorPrefix;
 boost::regex s_reWarningPrefix;
+
+bool annotateErrors()
+{
+   return s_highlightConditionsPref != kConsoleHighlightConditionsNone;
+}
 
 bool annotateWarnings()
 {
    return
          s_highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings ||
          s_highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages;
-}
-
-void annotateOutput(int event, std::string* pOutput)
-{
-   if (!s_reWarningPrefix.empty() && annotateWarnings())
-   {
-      // R will write warning output on stdout in response to warnings(),
-      // but on stderr if just emitted on its own. ¯\_(._.)_/¯
-      boost::smatch match;
-      if (boost::regex_search(*pOutput, match, s_reWarningPrefix))
-      {
-         std::string prefix = "\033G2;";
-         pOutput->insert(match[0].first, prefix.begin(), prefix.end());
-         pOutput->append("\033g");
-
-         // Include a code execution hyperlink as well
-         boost::algorithm::replace_all(
-                  *pOutput,
-                  "warnings()",
-                  "\033[38;5;252m\033]8;;ide:run:warnings()\awarnings()\033]8;;\a\033[39m");
-      }
-   }
 }
 
 } // end anonymous namespace
@@ -83,14 +68,26 @@ void initializeClientEventQueue()
 
 void finishInitializeClientEventQueue()
 {
-   std::string reWarningPrefix;
-   Error error = r::exec::RFunction(".rs.reWarningPrefix")
-         .call(&reWarningPrefix);
-   if (error)
-      LOG_ERROR(error);
-
-   s_reWarningPrefix = boost::regex(reWarningPrefix);
    s_highlightConditionsPref = prefs::userPrefs().consoleHighlightConditions();
+   if (s_highlightConditionsPref != kConsoleHighlightConditionsNone)
+   {
+      Error error;
+
+      std::string reWarningPrefix;
+      error = r::exec::RFunction(".rs.reWarningPrefix")
+            .call(&reWarningPrefix);
+      if (error)
+         LOG_ERROR(error);
+
+      std::string reErrorPrefix;
+      error = r::exec::RFunction(".rs.reErrorPrefix")
+            .call(&reErrorPrefix);
+      if (error)
+         LOG_ERROR(error);
+
+      s_reWarningPrefix = boost::regex(reWarningPrefix);
+      s_reErrorPrefix = boost::regex(reErrorPrefix);
+   }
 }
 
 ClientEventQueue& clientEventQueue()
@@ -129,6 +126,77 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
    }
    END_LOCK_MUTEX
    return changed;
+}
+
+void ClientEventQueue::annotateOutput(int event,
+                                      std::string* pOutput)
+{
+   if (errorOutputPending_)
+   {
+      errorOutputPending_ = false;
+
+      boost::smatch match;
+      if (boost::regex_search(*pOutput, match, s_reErrorPrefix))
+      {
+         pOutput->insert(
+                  match[0].second - pOutput->begin(),
+                  kAnsiEscapeHighlightEnd);
+
+         pOutput->insert(
+                  match[0].first - pOutput->begin(),
+                  kAnsiEscapeGroupStartError kAnsiEscapeHighlightStartError);
+
+         pOutput->append(kAnsiEscapeGroupEnd);
+      }
+      else
+      {
+         pOutput->insert(0, kAnsiEscapeGroupStartError);
+         pOutput->append(kAnsiEscapeGroupEnd);
+      }
+
+      return;
+   }
+
+   if (!s_reErrorPrefix.empty() && annotateErrors())
+   {
+      boost::smatch match;
+      if (boost::regex_search(*pOutput, match, s_reErrorPrefix))
+      {
+         pOutput->insert(
+                  match[0].second - pOutput->begin(),
+                  kAnsiEscapeHighlightEnd);
+
+         pOutput->insert(
+                  match[0].first - pOutput->begin(),
+                  kAnsiEscapeGroupStartError kAnsiEscapeHighlightStartError);
+
+         pOutput->append(kAnsiEscapeGroupEnd);
+      }
+   }
+
+   if (!s_reWarningPrefix.empty() && annotateWarnings())
+   {
+      // R will write warning output on stdout in response to warnings(),
+      // but on stderr if just emitted on its own. ¯\_(._.)_/¯
+      boost::smatch match;
+      if (boost::regex_search(*pOutput, match, s_reWarningPrefix))
+      {
+         pOutput->insert(match[0].first - pOutput->begin(), kAnsiEscapeGroupStartWarning);
+         pOutput->append(kAnsiEscapeGroupEnd);
+
+         // Include a code execution hyperlink as well
+         boost::algorithm::replace_all(
+                  *pOutput,
+                  "warnings()",
+                  ANSI_HYPERLINK("ide:run", "warnings()", "warnings()"));
+      }
+   }
+}
+
+void ClientEventQueue::setErrorOutputPending()
+{
+   flushAllBufferedOutput();
+   errorOutputPending_ = true;
 }
 
 void ClientEventQueue::add(const ClientEvent& event)

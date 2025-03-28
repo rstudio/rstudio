@@ -54,13 +54,7 @@
 
 .rs.addFunction("globalCallingHandlers.onErrorImpl", function(cnd)
 {
-   if (.rs.globalCallingHandlers.shouldHandleError(cnd))
-   {
-      msg <- .rs.globalCallingHandlers.formatCondition(cnd, "Error", "error")
-      writeLines(msg, con = stderr())
-      .rs.recordTraceback(TRUE, .rs.enqueueError)
-      invokeRestart("abort")
-   }
+   .Call("rs_errorOutputPending", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("globalCallingHandlers.onWarning", function(cnd)
@@ -96,26 +90,6 @@
 .rs.addFunction("globalCallingHandlers.shouldHandleMessage", function(cnd)
 {
    !inherits(cnd, "rlang_message")
-})
-
-.rs.addFunction("globalCallingHandlers.shouldHandleError", function(cnd)
-{
-   # don't handle rlang errors
-   if (inherits(cnd, "rlang_error"))
-      return(FALSE)
-   
-   # don't handle errors if the error handler has changed
-   error <- getOption("error")
-   if (is.call(error) && length(error) == 1L)
-   {
-      error <- error[[1L]]
-      type <- attr(error, "errorHandlerType", exact = TRUE)
-      if (is.null(type))
-         return(FALSE)
-   }
-   
-   # okay, we can handle it
-   TRUE
 })
 
 .rs.addFunction("globalCallingHandlers.shouldHandleWarning", function(cnd)

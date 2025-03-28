@@ -1742,16 +1742,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    lapply(packages, getNamespaceInfo, "path")
 })
 
-.rs.addFunction("reWarningPrefix", function()
+.rs.addFunction("makePrefixRegex", function(prefixes)
 {
-   prefixes <- c(
-      "Warning message:",
-      "Warning messages:",
-      "There was %d warning (use warnings() to see it)",
-      "There were %d warnings (use warnings() to see them)",
-      "There were %d or more warnings (use warnings() to see the first %d)"
-   )
-   
    # translate into the user's current language
    prefixes <- vapply(prefixes, function(prefix) {
       gettext(prefix, domain = "R")
@@ -1763,5 +1755,28 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
    # put it together into a single regex
    sprintf("^(?:%s)", paste(prefixes, collapse = "|"))
+})
+
+.rs.addFunction("reErrorPrefix", function()
+{
+   prefixes <- c(
+      "Error: ",
+      "Error in ",
+      "Error during wrapup: "
+   )
    
+   .rs.makePrefixRegex(prefixes)
+})
+
+.rs.addFunction("reWarningPrefix", function()
+{
+   prefixes <- c(
+      "Warning message:",
+      "Warning messages:",
+      "There was %d warning (use warnings() to see it)",
+      "There were %d warnings (use warnings() to see them)",
+      "There were %d or more warnings (use warnings() to see the first %d)"
+   )
+   
+   .rs.makePrefixRegex(prefixes)
 })
