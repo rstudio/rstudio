@@ -1780,3 +1780,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
    .rs.makePrefixRegex(prefixes)
 })
+
+.rs.addFunction("reInAdditionPrefix", function()
+{
+   .rs.makePrefixRegex("In addition: ")
+})

@@ -32,6 +32,8 @@
 #include "modules/SessionConsole.hpp"
 
 
+#define kNeverMatch "^(?!)$"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -43,8 +45,9 @@ ClientEventQueue* s_pClientEventQueue = nullptr;
 
 std::string s_highlightConditionsPref;
 
-boost::regex s_reErrorPrefix;
-boost::regex s_reWarningPrefix;
+boost::regex s_reErrorPrefix(kNeverMatch);
+boost::regex s_reWarningPrefix(kNeverMatch);
+boost::regex s_reInAdditionPrefix(kNeverMatch);
 
 bool annotateErrors()
 {
@@ -73,20 +76,27 @@ void finishInitializeClientEventQueue()
    {
       Error error;
 
-      std::string reWarningPrefix;
-      error = r::exec::RFunction(".rs.reWarningPrefix")
-            .call(&reWarningPrefix);
-      if (error)
-         LOG_ERROR(error);
-
       std::string reErrorPrefix;
       error = r::exec::RFunction(".rs.reErrorPrefix")
             .call(&reErrorPrefix);
       if (error)
          LOG_ERROR(error);
 
-      s_reWarningPrefix = boost::regex(reWarningPrefix);
-      s_reErrorPrefix = boost::regex(reErrorPrefix);
+      std::string reWarningPrefix;
+      error = r::exec::RFunction(".rs.reWarningPrefix")
+            .call(&reWarningPrefix);
+      if (error)
+         LOG_ERROR(error);
+
+      std::string reInAdditionPrefix;
+      error = r::exec::RFunction(".rs.reInAdditionPrefix")
+            .call(&reInAdditionPrefix);
+      if (error)
+         LOG_ERROR(error);
+
+      s_reErrorPrefix      = boost::regex(reErrorPrefix);
+      s_reWarningPrefix    = boost::regex(reWarningPrefix);
+      s_reInAdditionPrefix = boost::regex(reInAdditionPrefix);
    }
 }
 
@@ -139,6 +149,7 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
       // Note that, because the word may have been translated, we just look
       // for the first colon or space following the location where the error
       // prefix was matched.
+      auto matchEnd = match[0].second - pOutput->begin();
       auto highlightStart = match[0].first - pOutput->begin();
       auto highlightEnd = pOutput->find_first_of(": ", highlightStart);
       if (highlightEnd != std::string::npos)
@@ -148,10 +159,22 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
       }
       else
       {
-         pOutput->insert(highlightStart,  kAnsiEscapeGroupStartError);
+         pOutput->insert(highlightStart, kAnsiEscapeGroupStartError);
+      }
+
+      // If options(warn = 0) is set, it's possible that errors will
+      // be printed as part of processing the error.
+      // Try to detect this case, and split the outputs.
+      auto searchBegin = pOutput->cbegin() + matchEnd;
+      auto searchEnd = pOutput->cend();
+      if (boost::regex_search(searchBegin, searchEnd, match, s_reInAdditionPrefix))
+      {
+         auto index = match[0].begin() - pOutput->begin();
+         pOutput->insert(index, kAnsiEscapeGroupEnd kAnsiEscapeGroupStartWarning);
       }
 
       pOutput->append(kAnsiEscapeGroupEnd);
+
    }
    else if (allowGroupAll)
    {
@@ -172,12 +195,12 @@ void ClientEventQueue::annotateOutput(int event,
       return;
    }
 
-   if (!s_reErrorPrefix.empty() && annotateErrors())
+   if (annotateErrors())
    {
       annotateError(pOutput, false);
    }
 
-   if (!s_reWarningPrefix.empty() && annotateWarnings())
+   if (annotateWarnings())
    {
       // R will write warning output on stdout in response to warnings(),
       // but on stderr if just emitted on its own. ¯\_(._.)_/¯
