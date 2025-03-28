@@ -80,44 +80,72 @@ namespace {
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
 std::map<std::string, std::string> s_extToLanguageIdMap = {
+   { ".abap",  "abap" },
    { ".bash",  "shellscript" },
    { ".bat",   "bat" },
+   { ".bib",   "bibtex" },
    { ".c",     "c" },
    { ".cc",    "cpp" },
+   { ".clj",   "clojure"},
+   { ".coffee","coffeescript" },
    { ".cpp",   "cpp" },
    { ".cs",    "csharp" },
    { ".css",   "css" },
+   { ".dart",  "dart" },
+   { ".diff",  "diff" },
+// { "",       "dockerfile" }, (special handling due to lack of extension)
    { ".erl",   "erlang" },
+   { ".etx",   "tex" },
+   { ".ex",    "elixir" },
+   { ".fs",    "fsharp" },
    { ".go",    "go" },
+   { ".groovy","groovy" },
    { ".h",     "c" },
+   { ".hbs",   "handlebars" },
    { ".hpp",   "cpp" },
    { ".html",  "html" },
    { ".ini",   "ini" },
+   { ".jade",  "jade" },
    { ".java",  "java" },
    { ".js",    "javascript" },
    { ".jsx",   "javascriptreact" },
    { ".json",  "json" },
+   { ".less",  "less" },
+   { ".lua",   "lua" },
+   { ".m",     "objective-c" },
    { ".md",    "markdown" },
    { ".mjs",   "javascript" },
    { ".ps",    "powershell" },
+   { ".mk",    "makefile" }, // (special handling for extensionless "makefile" / "Makefile")
+   { ".mm",    "objective-cpp" },
+   { ".php",   "php" },
+   { ".pl",    "perl" },
+   { ".pl6",   "perl6" },
+   { ".pug",   "jade" },
    { ".py",    "python" },
    { ".qmd",   "quarto" },
    { ".r",     "r" },
+   { ".razor", "razor" },
    { ".rb",    "ruby" },
    { ".rmd",   "r" },
    { ".rnb",   "r" },
    { ".rnw",   "r" },
    { ".rs",    "rust" },
+   { ".sass",  "sass" },
    { ".sc",    "scala" },
    { ".scala", "scala" },
    { ".scss",  "scss" },
    { ".sh",    "shellscript" },
+   { ".shader","shaderlab" },
    { ".sql",   "sql" },
    { ".swift", "swift" },
    { ".tex",   "latex" },
    { ".toml",  "toml" },
    { ".ts",    "typescript" },
    { ".tsx",   "typescriptreact" },
+   { ".vb",    "vb" },
+   { ".xml",   "xml" },
+   { ".xsl",   "xsl" },
    { ".yml",   "yaml" },
 };
 
@@ -282,7 +310,16 @@ bool isIndexableFile(const FilePath& documentPath)
    std::string ext = documentPath.getExtensionLowerCase();
    if (ext == ".rproj")
       return false;
- 
+
+   // Handle Dockerfile with any extension (including none, the most common)
+   std::string stem = documentPath.getStem();
+   if (stem == "Dockerfile")
+      return true;
+
+   // Handle extensionless Makefile / makefile
+   if (name == "Makefile" || name == "makefile")
+      return true;
+
    // TODO: Do we want to also allow indexing of 'data' file types?
    // We previously used module_context::isTextFile(), but because this
    // relies on invoking /usr/bin/file, this can be dreadfully slow if
@@ -441,7 +478,7 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
 
    FilePath docPath(pDoc->path());
    std::string name = docPath.getFilename();
-   if (name == "Makefile")
+   if (name == "Makefile" || name == "makefile")
       return "makefile";
    else if (name == "Dockerfile")
       return "dockerfile";
