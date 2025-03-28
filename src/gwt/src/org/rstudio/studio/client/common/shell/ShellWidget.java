@@ -482,7 +482,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
       
       clearPendingInput();
-      ConsoleError errorWidget = new ConsoleError(traceInfo, getErrorClass(), this, command);
+      ConsoleError errorWidget = new ConsoleError(traceInfo, getErrorClass(), command, this, null);
 
       if (expand)
          errorWidget.setTracebackVisible(true);

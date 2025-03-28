@@ -63,8 +63,9 @@ public class ConsoleError extends Composite
    // We need to programmatically find the elements and manipulate them through regular JS functions.
    public ConsoleError(UnhandledError error,
                        String errorClass, 
-                       Observer observer, 
-                       String command)
+                       String command,
+                       Observer observer,
+                       Element errorEl)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -83,10 +84,22 @@ public class ConsoleError extends Composite
          errorMessage.getElement().getStyle().setPaddingLeft(6, Unit.PX);
       }
       
-      VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
-      String message = error.getErrorMessage();
-      console.submit(message);
-      errorMessage.addStyleName(errorClass);
+      // If errorEl is provided, then take ownership of it -- replace this widget's
+      // 'errorMessage' element with the provided 'errorEl'. If it's not provided,
+      // then generate it using a virtual console attached to this widget's 'errorMessage'.
+      if (errorEl != null)
+      {
+         errorMessage.getElement().getParentElement().replaceChild(errorEl, errorMessage.getElement());
+      }
+      else
+      {
+         VirtualConsole console = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
+         String message = error.getErrorMessage();
+         console.submit(message);
+      }
+      
+      if (errorClass != null)
+         errorMessage.addStyleName(errorClass);
 
       EventListener onConsoleErrorClick = event ->
       {

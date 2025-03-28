@@ -21,6 +21,8 @@ import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
+
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -326,8 +328,10 @@ public class ChunkOutputStream extends FlowPanel
                   ChunkConsolePage.CONSOLE_ERROR);
             initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
          }
+         
          // leave messages following the error in the queue
-         queuedError_ = StringUtil.substring(queuedError_, 
+         queuedError_ = StringUtil.substring(
+               queuedError_, 
                idx + err.getErrorMessage().length());
       }
       else
@@ -336,15 +340,13 @@ public class ChunkOutputStream extends FlowPanel
          flushQueuedErrors();
       }
       
-      UserState state =  RStudioGinjector.INSTANCE.getUserState();
-      ConsoleError error = new ConsoleError(err, 
-            AceTheme.getThemeErrorClass(state.theme().getValue().cast()),
-            this, null);
-
+      // TODO: Use Ace theme when appropriate.
+      Element errorEl = DomUtils.querySelector(getElement(), "." + VirtualConsole.RES.styles().groupError());
+      ConsoleError error = new ConsoleError(err, null, null, this, errorEl);
       UserPrefs prefs =  RStudioGinjector.INSTANCE.getUserPrefs();
       error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
-
       add(error);
+      
       flushQueuedErrors();
       onHeightChanged();
    }
