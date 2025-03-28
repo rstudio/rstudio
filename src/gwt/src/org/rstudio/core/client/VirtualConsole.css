@@ -1,6 +1,4 @@
 
-@charset "UTF-8";
-
 @external ace_console_error;
 @external rstudio-themes-default;
 @external rstudio-themes-dark;
@@ -40,12 +38,10 @@
 }
 
 .rstudio-themes-default .error {
-	font-weight: bold;
 	color: LIGHT_ERROR_COLOR;
 }
 
 .rstudio-themes-default .warning {
-	font-weight: bold;
 	color: LIGHT_WARNING_COLOR;
 }
 
@@ -85,12 +81,10 @@
 }
 
 .rstudio-themes-dark .error {
-	font-weight: bold;
 	color: DARK_ERROR_COLOR;
 }
 
 .rstudio-themes-dark .warning {
-	font-weight: bold;
 	color: DARK_WARNING_COLOR;
 }
 
