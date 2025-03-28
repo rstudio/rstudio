@@ -121,7 +121,6 @@ This page provides the release notes associated with each release of RStudio and
 - Re-designed the user experience for configuring managed credentials (rstudio-pro#6748)
 - Added support for using Azure delegated credentials to access DevOps repositories (rstudio-pro#6734)
 - Improved the database migration experience with additional feedback to the admin, logging, and potential error handling (rstudio-pro#6674)
-- Increased default values for `rsession-proxy-max-wait-secs` and `www-thread-pool-size` (rstudio-pro#6149)
 - Improved diagnostics for the license manager (rstudio-pro#5932)
 - Added support for reloading the Launcher through systemd (rstudio-pro#3749)
 - Added support for a configurable auth (SAML/OpenID) username re-write rule (rstudio-pro#6987)
@@ -195,6 +194,13 @@ If running Workbench behind a proxy server, you may need to update your `NO_PROX
 
 - HTTP Proxy variables are now supported in rserver and rsession, so it's important to include local addresses to Job Launcher sessions and other internal services in your `NO_PROXY` list.
 - See the [Outgoing Proxies](https://docs.posit.co/ide/server-pro/access_and_security/outgoing_proxies.html) section of the Posit Workbench Administration Guide for more information. (rstudio-pro#5893)
+
+You may also want to update the following configuration entries, as the default values have changed: <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
+
+   | Configuration entry | Previous default value | New default value | Reference |
+   |-------------------- | ---------------------- | ------------------ | -----------|
+   | `rsession-proxy-max-wait-secs` | 10 | 30| (rstudio-pro#6149) |
+   | `www-thread-pool-size` | 2 | 6 | (rstudio-pro#6149) |
 
 ### Dependencies
 - Updated GWT to version 2.10.1. (#15011)
