@@ -19,11 +19,19 @@
 // Helper definitions. Unfortunately, because C / C++ expand macro definitions
 // at time of use, rather than time of definition, we need these names to
 // persist, while avoiding potential collisions with other symbols.
-#define __BEL__ "\\x{07}"
-#define __ESC__ "\\x{1b}"
-#define __CSI__ "\\x{1b}\\x{5b}"
-#define __ST__  "\\x{1b}\\x{5c}"
-#define __OSC__ "\\x{1b}\\x{5d}"
+#define __BEL__ "\x07"
+#define __ESC__ "\x1b"
+#define __CSI__ "\x1b\x5b"
+#define __ST__  "\x1b\x5c"
+#define __OSC__ "\x1b\x5c"
+
+// We provide these alternatives to be used for regular expressions,
+// mainly to avoid the need to escape certain characters in some contexts.
+#define __RE_BEL__ "\\x{07}"
+#define __RE_ESC__ "\\x{1b}"
+#define __RE_CSI__ "\\x{1b}\\x{5b}"
+#define __RE_ST__  "\\x{1b}\\x{5c}"
+#define __RE_OSC__ "\\x{1b}\\x{5d}"
 
 
 // Custom escapes, used by RStudio for grouping output.
@@ -41,16 +49,16 @@
 
 
 // A catch-all for ANSI colors.
-#define kAnsiEscapeColorRegex "(?:" __CSI__ "([\\d;]*)" "m" ")*"
+#define kAnsiEscapeColorRegex "(?:" __RE_CSI__ "([\\d;]*)" "m" ")*"
 
 
 // For parsing encoded ANSI URLs / hyperlinks.
-#define kAnsiUrlRegex "(?:" __OSC__ "8;" "(.*?)" "(?:" __BEL__ "|" __ST__ ")" ")*"
+#define kAnsiUrlRegex "(?:" __RE_OSC__ "8;" "(.*?)" "(?:" __RE_BEL__ "|" __RE_ST__ ")" ")*"
 
 
 // For constructing ANSI hyperlinks.
 #define ANSI_HYPERLINK(__TYPE__, __LINK__, __TEXT__) \
-   "\033[38;5;252m" "\033]8;;" __TYPE__ ":" __LINK__ __BEL__ __TEXT__ "\033]8;;" __BEL__ "\033[39m"
+   "\033]8;;" __TYPE__ ":" __LINK__ __BEL__ __TEXT__ "\033]8;;" __BEL__
 
 
 

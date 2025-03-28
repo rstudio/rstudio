@@ -377,13 +377,22 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
       string_utils::trimLeadingLines(limit, &output);
    }
 
-   // To support highlight of warnings when `options(warn = 0)` is set,
-   // we look for output formatted like a typical R warning.
    annotateOutput(event, &output);
    
    if (event == client_events::kConsoleWriteOutput ||
        event == client_events::kConsoleWriteError)
    {
+      // add to console actions
+      if (event == client_events::kConsoleWriteOutput)
+      {
+         r::session::consoleActions().add(kConsoleActionOutput, output);
+      }
+      else if (event == client_events::kConsoleWriteError)
+      {
+         r::session::consoleActions().add(kConsoleActionOutputError, output);
+      }
+
+      // send client event
       json::Object payload;
       payload[kConsoleText] = output;
       payload[kConsoleId]   = activeConsole_;

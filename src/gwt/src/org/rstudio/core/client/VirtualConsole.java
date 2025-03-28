@@ -918,7 +918,6 @@ public class VirtualConsole
                Match csiMatch = csiPattern.match(data.substring(head), 0);
                if (csiMatch != null)
                {
-                  int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                   String command = csiMatch.getGroup(2);
  
                   // handle SGR codes up-front
@@ -934,10 +933,12 @@ public class VirtualConsole
                   // handle other supported commands
                   if (command == "C")
                   {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                      cursor_ = Math.min(output_.length(), cursor_ + n);
                   }
                   else if (command == "D")
                   {
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                      cursor_ = Math.max(0, cursor_ - n);
                   }
                   
