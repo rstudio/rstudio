@@ -102,13 +102,12 @@
    }
 })
 
-.rs.addFunction("globalCallingHandlers.shouldHandleMessage", function(cnd)
-{
-   !inherits(cnd, "rlang_message")
-})
-
 .rs.addFunction("globalCallingHandlers.shouldHandleWarning", function(cnd)
 {
+   pref <- .rs.uiPrefs$consoleHighlightConditions$get()
+   if (!grepl("warnings", pref, fixed = TRUE))
+      return(FALSE)
+   
    # If the user is opting into bundling warnings, just let the default
    # R warning handler take over. We also need to ignore if warnings are
    # disabled entirely (via a negative value for the option).
@@ -119,6 +118,15 @@
    # rlang doesn't apply any custom styles to emitted warnings,
    # so handle warnings even if they have custom classes
    TRUE
+})
+
+.rs.addFunction("globalCallingHandlers.shouldHandleMessage", function(cnd)
+{
+   pref <- .rs.uiPrefs$consoleHighlightConditions$get()
+   if (!grepl("messages", pref, fixed = TRUE))
+      return(FALSE)
+   
+   !inherits(cnd, "rlang_message")
 })
 
 .rs.addFunction("globalCallingHandlers.formatCondition", function(cnd, label, type)
