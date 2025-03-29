@@ -894,8 +894,12 @@ public class VirtualConsole
                   Match groupEndMatch = groupEndPattern.match(data.substring(head), 0);
                   if (groupEndMatch != null)
                   {
-                     forceNewRange = forceNewRange_ = true;
-                     parent_ = parent_.getParentElement();
+                     if (parent_.hasClassName(RES.styles().group()))
+                     {
+                        forceNewRange = forceNewRange_ = true;
+                        parent_ = parent_.getParentElement();
+                     }
+                     
                      tail += groupEndMatch.getValue().length() - 1;
                      break;
                   }
