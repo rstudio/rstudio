@@ -629,7 +629,8 @@ void ChunkExecContext::disconnect()
    events().onChunkExecCompleted(docId_, chunkId_, chunkCode_, chunkLabel_, nbCtxId_);
 }
 
-void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type, 
+void ChunkExecContext::onConsoleOutput(
+      module_context::ConsoleOutputType type,
       const std::string& output)
 {
    if (type == module_context::ConsoleOutputNormal)

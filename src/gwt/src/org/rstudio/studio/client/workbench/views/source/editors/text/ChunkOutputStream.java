@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -346,7 +347,7 @@ public class ChunkOutputStream extends FlowPanel
       UserPrefs prefs =  RStudioGinjector.INSTANCE.getUserPrefs();
       error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
       add(error);
-      
+
       flushQueuedErrors();
       onHeightChanged();
    }

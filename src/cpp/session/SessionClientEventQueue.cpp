@@ -405,6 +405,13 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
    if (event == client_events::kConsoleWriteOutput ||
        event == client_events::kConsoleWriteError)
    {
+      // fire events
+      auto type = (event == client_events::kConsoleWriteOutput)
+            ? module_context::ConsoleOutputNormal
+            : module_context::ConsoleOutputError;
+
+      module_context::events().onConsoleOutput(type, output);
+
       // add to console actions
       if (event == client_events::kConsoleWriteOutput)
       {
