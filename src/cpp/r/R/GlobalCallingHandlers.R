@@ -24,6 +24,8 @@
 
 .rs.setVar("ansiEscapeHighlight", list(
    error   = "\033H1;",
+   warning = "\033H2;",
+   message = "\033H3;",
    end     = "\033h"
 ))
 

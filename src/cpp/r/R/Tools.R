@@ -1771,6 +1771,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("reWarningPrefix", function()
 {
    prefixes <- c(
+      "Warning:",
       "Warning message:",
       "Warning messages:",
       "There was %d warning (use warnings() to see it)",
