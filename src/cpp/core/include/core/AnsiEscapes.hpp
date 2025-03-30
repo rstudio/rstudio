@@ -1,5 +1,5 @@
 /*
- * ANSIEscapes.hpp
+ * AnsiEscapes.hpp
  *
  * Copyright (C) 2025 by Posit Software, PBC
  *

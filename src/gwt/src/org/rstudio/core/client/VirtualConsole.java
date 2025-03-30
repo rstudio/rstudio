@@ -1238,7 +1238,7 @@ public class VirtualConsole
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
    private String partialAnsiCode_;
    private HyperlinkInfo hyperlink_;
-   private String messageNewlines_;
+   private String messageNewlines_ = "";
 
    private ErrorClass errorClass_;
    private String aceThemeErrorClass_;
