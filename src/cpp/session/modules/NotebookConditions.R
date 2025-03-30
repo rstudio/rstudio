@@ -25,7 +25,7 @@
       paste0(prefix, paste(conditionMessage(cnd), collapse = "\n"))
    }
    
-   .Call("rs_signalNotebookCondition", 1L, msg, PACKAGE = "(embedding)")
+   .Call("rs_signalNotebookCondition", 1L, paste0(msg, "\n"), PACKAGE = "(embedding)")
    invokeRestart("muffleWarning")
 })
 
@@ -100,11 +100,10 @@
    #
    # https://github.com/rstudio/rstudio/issues/8834
    .Internal(.resetCondHands(
-     base::get(
-       x = ".rs.notebookConditions.handlerStack",
-       envir = .rs.toolsEnv()
-     )
-     
+      base::get(
+         x = ".rs.notebookConditions.handlerStack",
+         envir = .rs.toolsEnv()
+      )
    ))
-  base::rm(.rs.notebookConditions.handlerStack, envir = .rs.toolsEnv())
+   base::rm(.rs.notebookConditions.handlerStack, envir = .rs.toolsEnv())
 })
