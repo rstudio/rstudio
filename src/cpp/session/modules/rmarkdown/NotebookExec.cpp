@@ -355,7 +355,7 @@ void ChunkExecContext::connect()
 }
 
 bool ChunkExecContext::onCondition(Condition condition,
-      const std::string& message)
+                                   const std::string& message)
 {
    // skip if the user has asked us to suppress this kind of condition
    if (condition == ConditionMessage && 
@@ -377,8 +377,8 @@ bool ChunkExecContext::onCondition(Condition condition,
          return true;
    }
 
-   onConsoleOutput(module_context::ConsoleOutputError, message);
-   module_context::enqueClientEvent(
+   // add to event queue
+   session::clientEventQueue().add(
       ClientEvent(client_events::kConsoleWriteError, message));
 
    return true;

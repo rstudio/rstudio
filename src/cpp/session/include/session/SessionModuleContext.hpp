@@ -45,6 +45,8 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
+#include "../SessionClientEventQueue.hpp"
+
 using namespace boost::placeholders;
 
 namespace rstudio {
@@ -70,7 +72,9 @@ namespace session {
 }
 
 namespace rstudio {
-namespace session {   
+namespace session {
+
+ClientEventQueue& clientEventQueue();
 
 namespace module_context {
 
