@@ -43,22 +43,21 @@ namespace {
 
 ClientEventQueue* s_pClientEventQueue = nullptr;
 
-std::string s_highlightConditionsPref;
+bool s_annotateErrors = false;
+bool s_annotateWarnings = false;
 
 boost::regex s_reErrorPrefix(kNeverMatch);
 boost::regex s_reWarningPrefix(kNeverMatch);
 boost::regex s_reInAdditionPrefix(kNeverMatch);
 
-bool annotateErrors()
+bool isErrorAnnotationEnabled()
 {
-   return s_highlightConditionsPref != kConsoleHighlightConditionsNone;
+   return s_annotateErrors;
 }
 
-bool annotateWarnings()
+bool isWarningAnnotationEnabled()
 {
-   return
-         s_highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings ||
-         s_highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages;
+   return s_annotateWarnings;
 }
 
 } // end anonymous namespace
@@ -69,10 +68,10 @@ void initializeClientEventQueue()
    s_pClientEventQueue = new ClientEventQueue();
 }
 
-void finishInitializeClientEventQueue()
+void synchronize()
 {
-   s_highlightConditionsPref = prefs::userPrefs().consoleHighlightConditions();
-   if (s_highlightConditionsPref != kConsoleHighlightConditionsNone)
+   std::string highlightConditionsPref = prefs::userPrefs().consoleHighlightConditions();
+   if (highlightConditionsPref != kConsoleHighlightConditionsNone)
    {
       Error error;
 
@@ -94,10 +93,29 @@ void finishInitializeClientEventQueue()
       if (error)
          LOG_ERROR(error);
 
-      s_reErrorPrefix      = boost::regex(reErrorPrefix);
-      s_reWarningPrefix    = boost::regex(reWarningPrefix);
-      s_reInAdditionPrefix = boost::regex(reInAdditionPrefix);
+      s_annotateErrors =
+            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages ||
+            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings ||
+            highlightConditionsPref == kConsoleHighlightConditionsErrors;
+
+      s_annotateWarnings =
+            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages ||
+            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings;
+
+      s_reErrorPrefix      = boost::regex(reErrorPrefix, boost::regex::icase);
+      s_reWarningPrefix    = boost::regex(reWarningPrefix, boost::regex::icase);
+      s_reInAdditionPrefix = boost::regex(reInAdditionPrefix, boost::regex::icase);
    }
+}
+
+void onPreferencesSaved()
+{
+   synchronize();
+}
+
+void finishInitializeClientEventQueue()
+{
+   synchronize();
 }
 
 ClientEventQueue& clientEventQueue()
@@ -106,13 +124,15 @@ ClientEventQueue& clientEventQueue()
 }
    
 ClientEventQueue::ClientEventQueue()
-   :  pMutex_(new boost::mutex()),
-      pWaitForEventCondition_(new boost::condition()),
-      lastEventAddTime_(boost::posix_time::not_a_date_time),
-      consoleOutput_(client_events::kConsoleWriteOutput, true),
-      consoleErrors_(client_events::kConsoleWriteError, true),
-      buildOutput_(client_events::kBuildOutput, false)
+   : pMutex_(new boost::mutex()),
+     pWaitForEventCondition_(new boost::condition()),
+     lastEventAddTime_(boost::posix_time::not_a_date_time),
+     consoleOutput_(client_events::kConsoleWriteOutput, true),
+     consoleErrors_(client_events::kConsoleWriteError, true),
+     buildOutput_(client_events::kBuildOutput, false)
 {
+   module_context::events().onPreferencesSaved.connect(onPreferencesSaved);
+
    // buffered outputs (required for parts that might overflow)
    bufferedOutputs_.push_back(&consoleOutput_);
    bufferedOutputs_.push_back(&consoleErrors_);
@@ -188,19 +208,20 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
 void ClientEventQueue::annotateOutput(int event,
                                       std::string* pOutput)
 {
-   if (errorOutputPending_)
+   if (isErrorAnnotationEnabled())
    {
-      errorOutputPending_ = false;
-      annotateError(pOutput, true);
-      return;
+      if (errorOutputPending_)
+      {
+         errorOutputPending_ = false;
+         annotateError(pOutput, true);
+      }
+      else
+      {
+         annotateError(pOutput, false);
+      }
    }
 
-   if (annotateErrors())
-   {
-      annotateError(pOutput, false);
-   }
-
-   if (annotateWarnings())
+   if (isWarningAnnotationEnabled())
    {
       // R will write warning output on stdout in response to warnings(),
       // but on stderr if just emitted on its own. ¯\_(._.)_/¯
@@ -373,6 +394,15 @@ bool ClientEventQueue::eventAddedSince(const boost::posix_time::ptime& time)
    
    // keep compiler happy
    return false;
+}
+
+void ClientEventQueue::flush()
+{
+   LOCK_MUTEX(*pMutex_)
+   {
+      flushAllBufferedOutput();
+   }
+   END_LOCK_MUTEX
 }
 
 void ClientEventQueue::flushAllBufferedOutput()

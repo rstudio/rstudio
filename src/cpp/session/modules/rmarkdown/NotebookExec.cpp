@@ -381,6 +381,9 @@ bool ChunkExecContext::onCondition(Condition condition,
    session::clientEventQueue().add(
       ClientEvent(client_events::kConsoleWriteError, message));
 
+   // force events to be flushed, so output is displayed
+   session::clientEventQueue().flush();
+
    return true;
 }
 

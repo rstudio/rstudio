@@ -99,11 +99,13 @@ public:
    // inform the event queue that error output is pending
    void setErrorOutputPending();
 
-      
+   // flush any buffered output
+   void flush();
+
 private:
-   
-   void flushBufferedOutput(BufferedOutput* pOutput);
+
    void flushAllBufferedOutput();
+   void flushBufferedOutput(BufferedOutput* pOutput);
  
 private:
    // synchronization objects. heap based so they are never destructed

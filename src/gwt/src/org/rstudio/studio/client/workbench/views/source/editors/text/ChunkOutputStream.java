@@ -788,7 +788,7 @@ public class ChunkOutputStream extends FlowPanel
             int ordAttr = Integer.parseInt(ord);
             return ordAttr;
          }
-         catch(Exception e)
+         catch (Exception e)
          {
             return 0;
          }
