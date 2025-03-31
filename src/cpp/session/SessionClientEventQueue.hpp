@@ -120,7 +120,8 @@ private:
    std::string activeConsole_;
    std::vector<ClientEvent> pendingEvents_;
    boost::posix_time::ptime lastEventAddTime_;
-   
+   bool errorOutputPending_ = false;
+
    // buffered outputs (required for parts that might overflow)
    BufferedOutput consoleOutput_;
    BufferedOutput consoleErrors_;
@@ -129,7 +130,6 @@ private:
    // keep vector of pointers to buffered outputs, just to make
    // iteration easier in places where we need to flush all buffers
    std::vector<BufferedOutput*> bufferedOutputs_;
-   bool errorOutputPending_ = false;
 
 };
 

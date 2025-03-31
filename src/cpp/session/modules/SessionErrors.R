@@ -37,8 +37,8 @@
       fn <- sys.function(n)
       
       # Check for a registered RStudio error handler.
-      type <- attr(fn, "errorHandlerType", exact = TRUE)
-      if (!is.null(type))
+      type <- attr(fn, "rstudioErrorHandler", exact = TRUE)
+      if (identical(type, TRUE))
       {
          n <- n - 1L
          break
@@ -245,28 +245,32 @@ attrs = list(hideFromDebugger = TRUE))
 {
    .rs.recordTraceback(FALSE, .rs.enqueueError)
 },
-attrs = list(hideFromDebugger = TRUE,
+attrs = list(rstudioErrorHandler = TRUE,
+             hideFromDebugger = TRUE,
              errorHandlerType = "traceback"))
 
 .rs.addFunction("recordUserTraceback", function()
 {
    .rs.recordTraceback(TRUE, .rs.enqueueError)
 },
-attrs = list(hideFromDebugger = TRUE,
+attrs = list(rstudioErrorHandler = TRUE,
+             hideFromDebugger = TRUE,
              errorHandlerType = "traceback"))
 
 .rs.addFunction("breakOnAnyError", function()
 {
    .rs.breakOnError(FALSE)
 },
-attrs = list(hideFromDebugger = TRUE, 
+attrs = list(rstudioErrorHandler = TRUE,
+             hideFromDebugger = TRUE, 
              errorHandlerType = "break"))
 
 .rs.addFunction("breakOnUserError", function()
 {
    .rs.breakOnError(TRUE)
 },
-attrs = list(hideFromDebugger = TRUE,
+attrs = list(rstudioErrorHandler = TRUE,
+             hideFromDebugger = TRUE,
              errorHandlerType = "break"))
 
 .rs.addFunction("setErrorManagementType", function(type, userOnly)
