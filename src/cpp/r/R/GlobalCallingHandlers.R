@@ -136,7 +136,7 @@
    msg <- conditionMessage(cnd)
    text <- if (is.null(label))
    {
-      .rs.globalCallingHandlers.highlight(msg, type)
+      msg
    }
    else if (is.null(conditionCall(cnd)))
    {
