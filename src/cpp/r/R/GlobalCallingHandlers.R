@@ -169,7 +169,6 @@
          sprintf("%s %s", header, msg)
    }
    
-   # Enclose whole message in escapes so we can process it as a unit.
    .rs.globalCallingHandlers.group(text, type)
 })
 
