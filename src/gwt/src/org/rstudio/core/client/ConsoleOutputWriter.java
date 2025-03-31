@@ -164,11 +164,19 @@ public class ConsoleOutputWriter
          return virtualConsole_.getNewElements();
    }
 
+   public void normalizePreviousOutput()
+   {
+      if (virtualConsole_ != null)
+      {
+         virtualConsole_.normalizePreviousOutput();
+      }
+   }
+   
    public void ensureStartingOnNewLine()
    {
       if (virtualConsole_ != null)
       {
-          virtualConsole_.ensureStartingOnNewLine();
+         virtualConsole_.ensureStartingOnNewLine();
 
          // clear the virtual console so we start with a fresh slate
          virtualConsole_ = null;
