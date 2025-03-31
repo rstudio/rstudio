@@ -408,7 +408,7 @@ public class VirtualConsole
       
       if (forceNewRange)
       {
-         // normalize previous bit of output if it was a chunk
+         // normalize previous bit of output if it was a section
          if (parent_ != null)
          {
             Node lastChildNode = parent_.getLastChild();
