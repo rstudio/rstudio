@@ -908,14 +908,26 @@ public class VirtualConsole
                }
                
                // check for embedded custom highlight rules
-               Pattern customPattern = Pattern.create("^\\033H(\\d+);([^]*?)\\033h", "");
-               Match customMatch = customPattern.match(data.substring(head), 0);
-               if (customMatch != null)
+               Pattern highlightStartPattern = Pattern.create("^\\033H(\\d+);", "");
+               Match highlightStartMatch = highlightStartPattern.match(data.substring(head), 0);
+               if (highlightStartMatch != null)
                {
-                  String type = customMatch.getGroup(1);
-                  String code = customMatch.getGroup(2);
-                  text(code, typeToClazz(type), false);
-                  tail = head + customMatch.getValue().length();
+                  String type = highlightStartMatch.getGroup(1);
+                  savedClazz_ = currentClazz;
+                  activeHighlightType_ = type;
+                  currentClazz = typeToClazz(type);
+                  tail += highlightStartMatch.getValue().length() - 1;
+                  break;
+               }
+               
+               Pattern highlightEndPattern = Pattern.create("^\\033h", "");
+               Match highlightEndMatch = highlightEndPattern.match(data.substring(head), 0);
+               if (highlightEndMatch != null)
+               {
+                  currentClazz = savedClazz_;
+                  activeHighlightType_ = "";
+                  savedClazz_ = "";
+                  tail += highlightEndMatch.getValue().length() - 1;
                   break;
                }
                
@@ -1072,15 +1084,15 @@ public class VirtualConsole
    
    private String typeToClazz(String type)
    {
-      if (type == "1")
+      if (type == HIGHLIGHT_TYPE_ERROR)
       {
          return RES.styles().error();
       }
-      else if (type == "2")
+      else if (type == HIGHLIGHT_TYPE_WARNING)
       {
          return RES.styles().warning();
       }
-      else if (type == "3")
+      else if (type == HIGHLIGHT_TYPE_MESSAGE)
       {
          return RES.styles().message();
       }
@@ -1092,15 +1104,15 @@ public class VirtualConsole
    
    private String groupTypeToClazz(String type)
    {
-      if (type == "1")
+      if (type == GROUP_TYPE_ERROR)
       {
          return RES.styles().groupError();
       }
-      else if (type == "2")
+      else if (type == GROUP_TYPE_WARNING)
       {
          return RES.styles().groupWarning();
       }
-      else if (type == "3")
+      else if (type == GROUP_TYPE_MESSAGE)
       {
          return RES.styles().groupMessage();
       }
@@ -1282,6 +1294,14 @@ public class VirtualConsole
    static {
       RES.styles().ensureInjected();
    }
+   
+   private static final String HIGHLIGHT_TYPE_ERROR   = "1";
+   private static final String HIGHLIGHT_TYPE_WARNING = "2";
+   private static final String HIGHLIGHT_TYPE_MESSAGE = "3";
+   
+   private static final String GROUP_TYPE_ERROR   = "1";
+   private static final String GROUP_TYPE_WARNING = "2";
+   private static final String GROUP_TYPE_MESSAGE = "3";
    
 
    // Injected ----
