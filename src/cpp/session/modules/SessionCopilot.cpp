@@ -1245,11 +1245,12 @@ void onBackgroundProcessing(bool isIdle)
          continue;
       }
 
-      // Check if this is a 'LogMessage' response.
+      // Handle various notifications
       json::Value methodJson = responseJson["method"];
+      std::string method;
       if (methodJson.isString())
       {
-         std::string method = methodJson.getString();
+         method = methodJson.getString();
          if (method == "LogMessage" || method == "window/logMessage")
          {
             json::Value paramsJson = responseJson["params"];
@@ -1272,7 +1273,15 @@ void onBackgroundProcessing(bool isIdle)
       json::Value requestIdJson = responseJson["id"];
       if (!requestIdJson.isString())
       {
-         DLOG("Ignoring response with missing id.");
+         if (method.empty())
+         {
+            DLOG("Ignoring response with missing id.");
+            continue;
+         }
+         else
+         {
+            DLOG("Ignoring notification, method='{}'.", method);
+         }
          continue;
       }
 
