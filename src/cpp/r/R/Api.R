@@ -403,6 +403,11 @@
    invisible(data)
 })
 
+.rs.addApiFunction("modifyRange", function(location, text, id = "")
+{
+   .rs.api.insertText(location, text, id)
+})
+
 .rs.addApiFunction("setSelectionRanges", function(ranges, id = "")
 {
    ranges <- .rs.validateAndTransformLocation(ranges)
