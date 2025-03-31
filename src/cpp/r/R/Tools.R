@@ -1750,8 +1750,16 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }, FUN.VALUE = character(1), USE.NAMES = FALSE)
    
    # convert this into a boost regular expression
+
+   # replace '%d' -- easy since this should just be a sequence
+   # of digits
    prefixes <- gsub("%d", "\\E\\d+\\Q", prefixes, fixed = TRUE)
+
+   # replace '%s' -- %s' is usually intended to be a placeholder for
+   # a deparsed call, so in theory can be just about anything...
    prefixes <- gsub("%s", "\\E\\S+\\Q", prefixes, fixed = TRUE)
+
+   # put it all together
    prefixes <- paste0("\\Q", prefixes, "\\E")
    
    # put it together into a single regex
