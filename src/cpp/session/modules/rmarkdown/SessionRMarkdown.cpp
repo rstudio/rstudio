@@ -928,7 +928,7 @@ private:
             boost::smatch match;
 
             auto lines = core::algorithm::split(output, kLineSep);
-            for (int i = 0, n = lines.size(); i < n; i++)
+            for (std::size_t i = 0, n = lines.size(); i < n; i++)
             {
                if (lines[i] == "Error:" || boost::algorithm::starts_with(lines[i], "Error in "))
                {

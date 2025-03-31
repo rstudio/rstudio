@@ -21,6 +21,7 @@ import java.util.List;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -286,8 +287,39 @@ public class ChunkOutputWidget extends Composite
       presenter_.showCallbackHtml(htmlOutput, parentElement);
    }
 
-   public void showChunkOutput(RmdChunkOutput output, int mode, int scope,
-         boolean complete, boolean ensureVisible)
+   private void showChunkOutputUnits(JsArray<RmdChunkOutputUnit> units,
+                                     int mode,
+                                     boolean isReplay,
+                                     boolean ensureVisible)
+   {
+      // loop over the output units and emit the appropriate contents
+      // defer if this looks like a stack trace
+      JsVector<RmdChunkOutputUnit> errorUnits = JsVector.createVector();
+      for (int i = 0; i < units.length(); i++)
+      {
+         if (units.get(i).getType() == RmdChunkOutputUnit.TYPE_ERROR)
+         {
+            errorUnits.push(units.get(i));
+         }
+         else
+         {
+            showChunkOutputUnit(units.get(i), mode, isReplay, ensureVisible);
+         }
+      }
+
+      // now emit any error units at the end (there should only be one)
+      for (int i = 0; i < errorUnits.length(); i++)
+      {
+         showChunkOutputUnit(errorUnits.get(i), mode, isReplay, ensureVisible);
+      }
+      
+   }
+   
+   public void showChunkOutput(RmdChunkOutput output,
+                               int mode,
+                               int scope,
+                               boolean complete,
+                               boolean ensureVisible)
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
@@ -297,13 +329,8 @@ public class ChunkOutputWidget extends Composite
          if (output.isReplay() && state_ == CHUNK_EMPTY && units.length() > 0)
             state_ = CHUNK_PRE_OUTPUT;
 
-         // loop over the output units and emit the appropriate contents for
-         // each
-         for (int i = 0; i < units.length(); i++)
-         {
-            showChunkOutputUnit(units.get(i), mode, output.isReplay(), 
-                  ensureVisible);
-         }
+         // show output units
+         showChunkOutputUnits(units, mode, output.isReplay(), ensureVisible);
 
          // if complete, wrap everything up; if not (could happen for partial
          // replay) just sync up the height
@@ -314,8 +341,7 @@ public class ChunkOutputWidget extends Composite
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
-         showChunkOutputUnit(output.getUnit(), mode, output.isReplay(), 
-               ensureVisible);
+         showChunkOutputUnit(output.getUnit(), mode, output.isReplay(), ensureVisible);
       }
    }
 

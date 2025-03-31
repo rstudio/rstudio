@@ -126,7 +126,12 @@ public class ErrorManager
          final ServerRequestCallback<Void> callback)
    {
       if (StringUtil.equals(type, errorManagerState_.getErrorHandlerType()))
+      {
+         previousHandlerType_ = errorManagerState_.getErrorHandlerType();
+         debugHandlerState_ = DebugHandlerState.Pending;
+         callback.onResponseReceived(null);
          return;
+      }
 
       setErrorManagementType(type, new ServerRequestCallback<Void>()
       {

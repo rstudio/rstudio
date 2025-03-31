@@ -44,6 +44,7 @@ import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeaderOverlay;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -59,6 +60,7 @@ import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.common.spelling.RealtimeSpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
@@ -358,6 +360,8 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetCopilotHelper copilotHelper);
    void injectMembers(DocUpdateSentinel sentinel);
    void injectMembers(LoggedOutDialog loggedOutDialog);
+   void injectMembers(ShellWidget shellWidget);
+   void injectMembers(ConsoleError consoleError);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

@@ -28,85 +28,118 @@
    FALSE
 })
 
-.rs.addFunction("recordTraceback", function(userOnly, minDepth, errorReporter)
+.rs.addFunction("tracebackCalls", function()
 {
-   calls <- sys.calls()
-   foundUserCode <- FALSE
-   inSource <- FALSE
-
-   if (length(calls) < minDepth)
-      return()
-
-   # create the traceback for the client
-   stack <- lapply(calls[1:(length(calls) - 2)], function(call)
+   status <- sys.status()
+   
+   for (n in seq_along(status$sys.calls))
    {
-      # don't show debugger-hidden functions
-      if (isTRUE(attr(call[[1]], "hideFromDebugger")))
-         return(NULL)
-
-      # we want to ignore the first user code entry after a call to source(),
-      # since that call happens at the top level
-      isSourceCall <- FALSE
-      if (.rs.isSourceCall(call))
+      fn <- sys.function(n)
+      
+      # Check for a registered RStudio error handler.
+      type <- attr(fn, "rstudioErrorHandler", exact = TRUE)
+      if (identical(type, TRUE))
       {
-         isSourceCall <- TRUE
-         inSource <<- TRUE
+         n <- n - 1L
+         break
       }
-      srcref <- attr(call, "srcref")
-      srcfile <- ""
-      if (!is.null(srcref))
+      
+      # Check for other potential error handlers on the stack.
+      if (identical(fn, .rs.globalCallingHandlers.onError))
       {
-         fileattr <- attr(srcref, "srcfile")
-         srcfile <- fileattr$filename
-         if (!is.null(srcfile))
+         n <- n - 1L
+         break
+      }
+      else if (identical(fn, .handleSimpleError))
+      {
+         call <- status$sys.calls[[n]]
+         if (is.null(attr(call, "srcref", exact = TRUE)))
          {
-            if (inSource && !isSourceCall)
-               inSource <<- FALSE
-            else
-               foundUserCode <<- TRUE
+            n <- n - 1L
+            break
          }
       }
-      else
-         srcref <- rep(0L, 8)
-     
+      else if (identical(fn, stop))
+      {
+         break
+      }
+   }
+   
+   head(status$sys.calls, n)
+})
+
+.rs.addFunction("recordTraceback", function(userOnly, errorReporter)
+{
+   calls <- .rs.tracebackCalls()
+   n <- length(calls)
+   if (n <= 1L)
+      return(NULL)
+   
+   # create the traceback for the client
+   stack <- lapply(seq_len(n), function(i)
+   {
+      call <- calls[[i]]
+      
+      # don't show debugger-hidden functions
+      if (isTRUE(attr(call[[1L]], "hideFromDebugger")))
+         return(NULL)
+
+      # retrieve call
+      lines <- .rs.deparseCall(call)
+      
       # don't display more than 4 lines of a long expression
-      lines <- deparse(call)
       if (length(lines) > 4) 
       {
          lines <- lines[1:4]
          lines[4] <- paste(lines[4], "...")
       }
 
-      c (list(func = .rs.scalar(paste(lines, collapse="\n")),
-              file = .rs.scalar(srcfile)),
-         .rs.lineDataList(srcref))
+      srcref <- .rs.nullCoalesce(
+         attr(call, "srcref", exact = TRUE),
+         rep.int(0L, 8L)
+      )
+      
+      srcfile <- attr(srcref, "srcfile", exact = TRUE)
+      filename <- .rs.nullCoalesce(srcfile$filename, "")
+      
+      c(
+         list(
+            func = .rs.scalar(paste(lines, collapse = "\n")),
+            file = .rs.scalar(filename)
+         ),
+         .rs.lineDataList(srcref)
+      )
+         
    })
 
    # remove hidden entries from the stack
-   stack <- stack[!sapply(stack, is.null)]
+   stack <- Filter(Negate(is.null), stack)
 
-   
    # look for python entry point and fill in the stack from reticulate if we can
    amended_stack <- list()
-   lapply(stack, function(x) {
+   lapply(stack, function(x)
+   {
       func <- x$func
-      if (.rs.hasPythonStackTrace(func)) {
-         foundUserCode <<- TRUE # python code always includes src references
+      if (.rs.hasPythonStackTrace(func))
+      {
          python_stack_trace <- .rs.getActivePythonStackTrace()
          for (item in python_stack_trace)
             amended_stack[[length(amended_stack) + 1]] <<- item
-      } else {
+      }
+      else
+      {
          amended_stack[[length(amended_stack) + 1]] <<- x
       }
    })
    
    # if we found user code (or weren't looking for it), tell the client
-   if (foundUserCode || !userOnly)
+   if (n >= 2 || !userOnly)
    {
-      err <- list(
+      error <- list(
          frames = amended_stack,
-         message = .rs.scalar(geterrmessage()))
-      errorReporter(err)
+         message = .rs.scalar(geterrmessage())
+      )
+      errorReporter(error)
    }
 })
 
@@ -210,38 +243,34 @@ attrs = list(hideFromDebugger = TRUE))
 
 .rs.addFunction("recordAnyTraceback", function()
 {
-   # When this handler is invoked for an unhandled error happening at
-   # the top level, there are four calls on the stack:
-   # 1. The traceback recorder
-   # 2. The anonymous error handler (set via options below)
-   # 3. The error invoker (e.g. stop)
-   # 4. The function from which the error was raised
-   # So we want there to be at least 5 calls on the stack--otherwise the error
-   # is likely to be top-level.
-   .rs.recordTraceback(FALSE, 5, .rs.enqueueError)
+   .rs.recordTraceback(FALSE, .rs.enqueueError)
 },
-attrs = list(hideFromDebugger = TRUE,
+attrs = list(rstudioErrorHandler = TRUE,
+             hideFromDebugger = TRUE,
              errorHandlerType = "traceback"))
 
 .rs.addFunction("recordUserTraceback", function()
 {
-   .rs.recordTraceback(TRUE, 5, .rs.enqueueError)
+   .rs.recordTraceback(TRUE, .rs.enqueueError)
 },
-attrs = list(hideFromDebugger = TRUE,
+attrs = list(rstudioErrorHandler = TRUE,
+             hideFromDebugger = TRUE,
              errorHandlerType = "traceback"))
 
 .rs.addFunction("breakOnAnyError", function()
 {
    .rs.breakOnError(FALSE)
 },
-attrs = list(hideFromDebugger = TRUE, 
+attrs = list(rstudioErrorHandler = TRUE,
+             hideFromDebugger = TRUE, 
              errorHandlerType = "break"))
 
 .rs.addFunction("breakOnUserError", function()
 {
    .rs.breakOnError(TRUE)
 },
-attrs = list(hideFromDebugger = TRUE,
+attrs = list(rstudioErrorHandler = TRUE,
+             hideFromDebugger = TRUE,
              errorHandlerType = "break"))
 
 .rs.addFunction("setErrorManagementType", function(type, userOnly)

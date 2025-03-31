@@ -50,13 +50,35 @@ public class SelectWidget extends Composite
       this(ExternalLabel);
    }
 
+   public SelectWidget(String label,
+                       boolean useStyles,
+                       PrefValue<String> prefValue)
+   {
+      this(
+            label,
+            prefValue,
+            false,
+            true,
+            false);
+      
+      if (!useStyles)
+      {
+         removeStyleName(ThemeResources.INSTANCE.themeStyles().selectWidget());
+      }
+   }
+   
    public SelectWidget(EnumValue enumValue,
                        boolean isMultipleSelect,
                        boolean horizontalLayout,
                        boolean listOnLeft)
    {
-      this(enumValue.getTitle(), enumValue.getReadableValues(), enumValue.getAllowedValues(),
-         isMultipleSelect, horizontalLayout, listOnLeft);
+      this(
+            enumValue.getTitle(),
+            enumValue.getReadableValues(),
+            enumValue.getAllowedValues(),
+            isMultipleSelect,
+            horizontalLayout,
+            listOnLeft);
    }
    
    public SelectWidget(PrefValue<String> prefValue,
@@ -64,7 +86,11 @@ public class SelectWidget extends Composite
                        boolean horizontalLayout,
                        boolean listOnLeft)
    {
-      this((EnumValue) prefValue, isMultipleSelect, horizontalLayout, listOnLeft);
+      this(
+            (EnumValue) prefValue, 
+            isMultipleSelect,
+            horizontalLayout,
+            listOnLeft);
    }
    
 
@@ -74,8 +100,13 @@ public class SelectWidget extends Composite
                        boolean horizontalLayout,
                        boolean listOnLeft)
    {
-      this(title, enumValue.getReadableValues(), enumValue.getAllowedValues(),
-         isMultipleSelect, horizontalLayout, listOnLeft);
+      this(
+            title,
+            enumValue.getReadableValues(),
+            enumValue.getAllowedValues(),
+            isMultipleSelect,
+            horizontalLayout,
+            listOnLeft);
    }
    
    public SelectWidget(String title,
@@ -84,7 +115,12 @@ public class SelectWidget extends Composite
                        boolean horizontalLayout,
                        boolean listOnLeft)
    {
-      this(title, (EnumValue) prefValue, isMultipleSelect, horizontalLayout, listOnLeft);
+      this(
+            title,
+            (EnumValue) prefValue,
+            isMultipleSelect,
+            horizontalLayout,
+            listOnLeft);
    }
    
 
@@ -125,8 +161,15 @@ public class SelectWidget extends Composite
                        boolean horizontalLayout,
                        boolean listOnLeft)
    {
-      this(label, ElementIds.SelectWidgetId.DEFAULT, options, values, isMultipleSelect,
-           horizontalLayout, listOnLeft, false);
+      this(
+            label,
+            ElementIds.SelectWidgetId.DEFAULT,
+            options,
+            values,
+            isMultipleSelect,
+            horizontalLayout,
+            listOnLeft,
+            false);
    }
 
    /**

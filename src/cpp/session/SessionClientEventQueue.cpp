@@ -15,16 +15,24 @@
 
 #include "SessionClientEventQueue.hpp"
 
-#include "modules/SessionConsole.hpp"
+#include <shared_core/json/Json.hpp>
 
+#include <core/AnsiEscapes.hpp>
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
-#include <shared_core/json/Json.hpp>
 #include <core/StringUtils.hpp>
+
+#include <r/RExec.hpp>
 
 #include <r/session/RConsoleActions.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include "SessionHttpMethods.hpp"
+#include "modules/SessionConsole.hpp"
+
+
+#define kNeverMatch "^(?!)$"
 
 using namespace rstudio::core;
 
@@ -35,6 +43,23 @@ namespace {
 
 ClientEventQueue* s_pClientEventQueue = nullptr;
 
+bool s_annotateErrors = false;
+bool s_annotateWarnings = false;
+
+boost::regex s_reErrorPrefix(kNeverMatch);
+boost::regex s_reWarningPrefix(kNeverMatch);
+boost::regex s_reInAdditionPrefix(kNeverMatch);
+
+bool isErrorAnnotationEnabled()
+{
+   return s_annotateErrors;
+}
+
+bool isWarningAnnotationEnabled()
+{
+   return s_annotateWarnings;
+}
+
 } // end anonymous namespace
 
 void initializeClientEventQueue()
@@ -43,19 +68,71 @@ void initializeClientEventQueue()
    s_pClientEventQueue = new ClientEventQueue();
 }
 
+void synchronize()
+{
+   std::string highlightConditionsPref = prefs::userPrefs().consoleHighlightConditions();
+   if (highlightConditionsPref != kConsoleHighlightConditionsNone)
+   {
+      Error error;
+
+      std::string reErrorPrefix;
+      error = r::exec::RFunction(".rs.reErrorPrefix")
+            .call(&reErrorPrefix);
+      if (error)
+         LOG_ERROR(error);
+
+      std::string reWarningPrefix;
+      error = r::exec::RFunction(".rs.reWarningPrefix")
+            .call(&reWarningPrefix);
+      if (error)
+         LOG_ERROR(error);
+
+      std::string reInAdditionPrefix;
+      error = r::exec::RFunction(".rs.reInAdditionPrefix")
+            .call(&reInAdditionPrefix);
+      if (error)
+         LOG_ERROR(error);
+
+      s_annotateErrors =
+            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages ||
+            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings ||
+            highlightConditionsPref == kConsoleHighlightConditionsErrors;
+
+      s_annotateWarnings =
+            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages ||
+            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings;
+
+      s_reErrorPrefix      = boost::regex(reErrorPrefix, boost::regex::icase);
+      s_reWarningPrefix    = boost::regex(reWarningPrefix, boost::regex::icase);
+      s_reInAdditionPrefix = boost::regex(reInAdditionPrefix, boost::regex::icase);
+   }
+}
+
+void onPreferencesSaved()
+{
+   synchronize();
+}
+
+void finishInitializeClientEventQueue()
+{
+   synchronize();
+}
+
 ClientEventQueue& clientEventQueue()
 {
    return *s_pClientEventQueue;
 }
    
 ClientEventQueue::ClientEventQueue()
-   :  pMutex_(new boost::mutex()),
-      pWaitForEventCondition_(new boost::condition()),
-      lastEventAddTime_(boost::posix_time::not_a_date_time),
-      consoleOutput_(client_events::kConsoleWriteOutput, true),
-      consoleErrors_(client_events::kConsoleWriteError, true),
-      buildOutput_(client_events::kBuildOutput, false)
+   : pMutex_(new boost::mutex()),
+     pWaitForEventCondition_(new boost::condition()),
+     lastEventAddTime_(boost::posix_time::not_a_date_time),
+     consoleOutput_(client_events::kConsoleWriteOutput, true),
+     consoleErrors_(client_events::kConsoleWriteError, true),
+     buildOutput_(client_events::kBuildOutput, false)
 {
+   module_context::events().onPreferencesSaved.connect(onPreferencesSaved);
+
    // buffered outputs (required for parts that might overflow)
    bufferedOutputs_.push_back(&consoleOutput_);
    bufferedOutputs_.push_back(&consoleErrors_);
@@ -79,6 +156,94 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
    }
    END_LOCK_MUTEX
    return changed;
+}
+
+namespace {
+
+void annotateError(std::string* pOutput, bool allowGroupAll)
+{
+   boost::smatch match;
+   if (boost::regex_search(*pOutput, match, s_reErrorPrefix))
+   {
+      // Insert highlight markers around 'Error'.
+      // Note that, because the word may have been translated, we just look
+      // for the first colon or space following the location where the error
+      // prefix was matched.
+      auto matchEnd = match[0].second - pOutput->begin();
+      auto highlightStart = match[0].first - pOutput->begin();
+      auto highlightEnd = pOutput->find_first_of(": ", highlightStart);
+      if (highlightEnd != std::string::npos)
+      {
+         pOutput->insert(highlightEnd, kAnsiEscapeHighlightEnd);
+         pOutput->insert(highlightStart, kAnsiEscapeGroupStartError kAnsiEscapeHighlightStartError);
+      }
+      else
+      {
+         pOutput->insert(highlightStart, kAnsiEscapeGroupStartError);
+      }
+
+      // If options(warn = 0) is set, it's possible that errors will
+      // be printed as part of processing the error.
+      // Try to detect this case, and split the outputs.
+      auto searchBegin = pOutput->cbegin() + matchEnd;
+      auto searchEnd = pOutput->cend();
+      if (boost::regex_search(searchBegin, searchEnd, match, s_reInAdditionPrefix))
+      {
+         auto index = match[0].begin() - pOutput->begin();
+         pOutput->insert(index, kAnsiEscapeGroupEnd kAnsiEscapeGroupStartWarning);
+      }
+
+      pOutput->append(kAnsiEscapeGroupEnd);
+
+   }
+   else if (allowGroupAll)
+   {
+      pOutput->insert(0, kAnsiEscapeGroupStartError);
+      pOutput->append(kAnsiEscapeGroupEnd);
+   }
+}
+
+} // end anonymous namespace
+
+void ClientEventQueue::annotateOutput(int event,
+                                      std::string* pOutput)
+{
+   if (isErrorAnnotationEnabled())
+   {
+      if (errorOutputPending_)
+      {
+         errorOutputPending_ = false;
+         annotateError(pOutput, true);
+      }
+      else
+      {
+         annotateError(pOutput, false);
+      }
+   }
+
+   if (isWarningAnnotationEnabled())
+   {
+      // R will write warning output on stdout in response to warnings(),
+      // but on stderr if just emitted on its own. ¯\_(._.)_/¯
+      boost::smatch match;
+      if (boost::regex_search(*pOutput, match, s_reWarningPrefix))
+      {
+         pOutput->insert(match[0].first - pOutput->begin(), kAnsiEscapeGroupStartWarning);
+         pOutput->append(kAnsiEscapeGroupEnd);
+
+         // Include a code execution hyperlink as well
+         boost::algorithm::replace_all(
+                  *pOutput,
+                  "warnings()",
+                  ANSI_HYPERLINK("ide:run", "warnings()", "warnings()"));
+      }
+   }
+}
+
+void ClientEventQueue::setErrorOutputPending()
+{
+   flushAllBufferedOutput();
+   errorOutputPending_ = true;
 }
 
 void ClientEventQueue::add(const ClientEvent& event)
@@ -231,6 +396,15 @@ bool ClientEventQueue::eventAddedSince(const boost::posix_time::ptime& time)
    return false;
 }
 
+void ClientEventQueue::flush()
+{
+   LOCK_MUTEX(*pMutex_)
+   {
+      flushAllBufferedOutput();
+   }
+   END_LOCK_MUTEX
+}
+
 void ClientEventQueue::flushAllBufferedOutput()
 {
    // NOTE: Private helper so no lock required (mutex is not recursive)
@@ -255,10 +429,30 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
       int limit = r::session::consoleActions().capacity() + 1;
       string_utils::trimLeadingLines(limit, &output);
    }
+
+   annotateOutput(event, &output);
    
    if (event == client_events::kConsoleWriteOutput ||
        event == client_events::kConsoleWriteError)
    {
+      // fire events
+      auto type = (event == client_events::kConsoleWriteOutput)
+            ? module_context::ConsoleOutputNormal
+            : module_context::ConsoleOutputError;
+
+      module_context::events().onConsoleOutput(type, output);
+
+      // add to console actions
+      if (event == client_events::kConsoleWriteOutput)
+      {
+         r::session::consoleActions().add(kConsoleActionOutput, output);
+      }
+      else if (event == client_events::kConsoleWriteError)
+      {
+         r::session::consoleActions().add(kConsoleActionOutputError, output);
+      }
+
+      // send client event
       json::Object payload;
       payload[kConsoleText] = output;
       payload[kConsoleId]   = activeConsole_;

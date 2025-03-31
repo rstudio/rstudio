@@ -163,9 +163,9 @@ namespace prefs {
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
 #define kAnsiConsoleMode "ansi_console_mode"
-#define kAnsiConsoleModeOff "off"
 #define kAnsiConsoleModeOn "on"
 #define kAnsiConsoleModeStrip "strip"
+#define kAnsiConsoleModeOff "off"
 #define kLimitVisibleConsole "limit_visible_console"
 #define kShowInlineToolbarForRCodeChunks "show_inline_toolbar_for_r_code_chunks"
 #define kHighlightCodeChunks "highlight_code_chunks"
@@ -448,6 +448,11 @@ namespace prefs {
 #define kCodeFormatterExternalCommand "code_formatter_external_command"
 #define kReformatOnSave "reformat_on_save"
 #define kProjectUserDataDirectory "project_user_data_directory"
+#define kConsoleHighlightConditions "console_highlight_conditions"
+#define kConsoleHighlightConditionsErrorsWarningsMessages "errors_warnings_messages"
+#define kConsoleHighlightConditionsErrorsWarnings "errors_warnings"
+#define kConsoleHighlightConditionsErrors "errors"
+#define kConsoleHighlightConditionsNone "none"
 
 class UserPrefValues: public Preferences
 {
@@ -2030,6 +2035,12 @@ public:
     */
    std::string projectUserDataDirectory();
    core::Error setProjectUserDataDirectory(std::string val);
+
+   /**
+    * When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied.
+    */
+   std::string consoleHighlightConditions();
+   core::Error setConsoleHighlightConditions(std::string val);
 
 };
 

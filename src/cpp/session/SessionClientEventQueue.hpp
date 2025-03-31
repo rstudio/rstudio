@@ -32,6 +32,7 @@ namespace session {
    
 // initialization
 void initializeClientEventQueue();
+void finishInitializeClientEventQueue();
 
 // singleton
 class ClientEventQueue;
@@ -56,7 +57,7 @@ private:
       const std::string& output() const { return output_; }
       int event() const { return event_; }
       bool useConsoleActionLimit() const { return useConsoleActionLimit_; }
-      
+
       void append(const std::string& data) { output_ += data; }
       void clear() { output_.clear(); }
       bool empty() const { return output_.empty(); }
@@ -91,11 +92,20 @@ public:
    // set the active console to be attached to console events; returns true if
    // the active console changed
    bool setActiveConsole(const std::string& console);
-      
+
+   // annotate output
+   void annotateOutput(int event, std::string* pOutput);
+
+   // inform the event queue that error output is pending
+   void setErrorOutputPending();
+
+   // flush any buffered output
+   void flush();
+
 private:
-   
-   void flushBufferedOutput(BufferedOutput* pOutput);
+
    void flushAllBufferedOutput();
+   void flushBufferedOutput(BufferedOutput* pOutput);
  
 private:
    // synchronization objects. heap based so they are never destructed
@@ -110,7 +120,8 @@ private:
    std::string activeConsole_;
    std::vector<ClientEvent> pendingEvents_;
    boost::posix_time::ptime lastEventAddTime_;
-   
+   bool errorOutputPending_ = false;
+
    // buffered outputs (required for parts that might overflow)
    BufferedOutput consoleOutput_;
    BufferedOutput consoleErrors_;

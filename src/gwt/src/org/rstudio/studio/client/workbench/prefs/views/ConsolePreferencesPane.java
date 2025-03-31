@@ -15,11 +15,18 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.Version;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
+import org.rstudio.core.client.widget.LayoutGrid.TwoColumnLayoutGridBuilder;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -36,33 +43,44 @@ public class ConsolePreferencesPane extends PreferencesPane
    {
       prefs_ = prefs;
       res_ = res;
+      
+      String version = session.getSessionInfo().getRVersionsInfo().getRVersion();
 
+      consoleHighlightConditions_ = new SelectWidget(
+            SelectWidget.ExternalLabel,
+            false,
+            prefs_.consoleHighlightConditions());
+      
+      consoleColorMode_ = new SelectWidget(
+            SelectWidget.ExternalLabel,
+            false,
+            prefs_.ansiConsoleMode());
+      
       Label displayLabel = headerLabel(constants_.consoleDisplayLabel());
       add(displayLabel);
       add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
-      add(checkboxPref(constants_.consoleDifferentColorLabel(), prefs_.highlightConsoleErrors()));
+      if (Version.compare(version, "4.0.0") >= 0)
+      {
+         add(consoleHighlightConditions_);
+      }
+      else
+      {
+         add(checkboxPref(constants_.consoleDifferentColorLabel(), prefs_.highlightConsoleErrors()));
+      }
+      
+      TwoColumnLayoutGridBuilder gridBuilder = new TwoColumnLayoutGridBuilder();
+      gridBuilder.add(prefs_.consoleHighlightConditions().getTitle(), consoleHighlightConditions_);
+      gridBuilder.add(constants_.consoleANSIEscapeCodesLabel(), consoleColorMode_);
+      LayoutGrid grid = gridBuilder.get();
+      grid.getElement().getStyle().setMarginLeft(2, Unit.PX);
+      add(grid);
+      
+      Label truncationLabel = headerLabel("Truncation");
+      add(spacedBefore(truncationLabel));
       add(checkboxPref(constants_.consoleLimitVariableLabel(), prefs_.limitVisibleConsole()));
-      NumericValueWidget limitLengthPref =
-         numericPref(constants_.consoleLimitOutputLengthLabel(), prefs_.consoleLineLengthLimit());
-      add(nudgeRightPlus(limitLengthPref));
-
-      consoleColorMode_ = new SelectWidget(
-         constants_.consoleANSIEscapeCodesLabel(),
-         new String[] {
-            constants_.consoleColorModeANSIOption(),
-            constants_.consoleColorModeRemoveANSIOption(),
-            constants_.consoleColorModeIgnoreANSIOption()
-         },
-         new String[] {
-            UserPrefs.ANSI_CONSOLE_MODE_ON,
-            UserPrefs.ANSI_CONSOLE_MODE_STRIP,
-            UserPrefs.ANSI_CONSOLE_MODE_OFF
-         },
-         false,
-         true,
-         false);
-      add(consoleColorMode_);
-
+      add(nudgeRightPlus(
+         numericPref(constants_.consoleLimitOutputLengthLabel(), prefs_.consoleLineLengthLimit())));
+      
       Label executionLabel = headerLabel(constants_.consoleExecutionLabel());
       add(spacedBefore(executionLabel));
       add(checkboxPref(constants_.consoleDiscardPendingConsoleInputOnErrorLabel(), prefs_.discardPendingConsoleInputOnError()));
@@ -98,6 +116,7 @@ public class ConsolePreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       consoleColorMode_.setValue(prefs_.ansiConsoleMode().getValue());
+      consoleHighlightConditions_.setValue(prefs_.consoleHighlightConditions().getValue());
       initialHighlightConsoleErrors_ = prefs.highlightConsoleErrors().getValue();
       initialLimitVisibleConsole_ = prefs.limitVisibleConsole().getValue();
    }
@@ -108,11 +127,20 @@ public class ConsolePreferencesPane extends PreferencesPane
       RestartRequirement restartRequirement = super.onApply(prefs);
 
       prefs_.ansiConsoleMode().setGlobalValue(consoleColorMode_.getValue());
+      
       if (prefs_.highlightConsoleErrors().getValue() != initialHighlightConsoleErrors_)
       {
          initialHighlightConsoleErrors_ = prefs_.highlightConsoleErrors().getValue();
+         restartRequirement.setSessionRestartRequired(true);
+      }
+      
+      String highlight = consoleHighlightConditions_.getValue();
+      if (prefs_.consoleHighlightConditions().getGlobalValue() != highlight)
+      {
+         prefs_.consoleHighlightConditions().setGlobalValue(highlight);
          restartRequirement.setRestartRequired();
       }
+         
       if (!restartRequirement.getDesktopRestartRequired() && !restartRequirement.getUiReloadRequired())
       {
          if (prefs_.limitVisibleConsole().getValue() != initialLimitVisibleConsole_)
@@ -121,6 +149,7 @@ public class ConsolePreferencesPane extends PreferencesPane
             restartRequirement.setRestartRequired();
          }
       }
+      
       return restartRequirement;
    }
 
@@ -133,6 +162,7 @@ public class ConsolePreferencesPane extends PreferencesPane
    private boolean initialHighlightConsoleErrors_;
    private boolean initialLimitVisibleConsole_;
    private final SelectWidget consoleColorMode_;
+   private final SelectWidget consoleHighlightConditions_;
 
    // Injected
    private final UserPrefs prefs_;
