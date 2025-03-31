@@ -384,8 +384,10 @@ public class ChunkOutputStream extends FlowPanel
    public void clearOutput()
    {
       clear();
+      
       if (vconsole_ != null)
          vconsole_.clear();
+      
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    }
 
@@ -394,6 +396,11 @@ public class ChunkOutputStream extends FlowPanel
    {
       // flush any remaining queued errors
       flushQueuedErrors();
+      
+      // normalize outputs
+      vconsole_.normalizePreviousOutput();
+      
+      // reset last output types
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    }
    
@@ -794,6 +801,11 @@ public class ChunkOutputStream extends FlowPanel
          }
       }
       return 0;
+   }
+   
+   private void normalizeOutput()
+   {
+      vconsole_.normalizePreviousOutput();
    }
    
    private final ChunkOutputPresenter.Host host_;
