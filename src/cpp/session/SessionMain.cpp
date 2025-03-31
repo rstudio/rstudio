@@ -41,6 +41,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
 
+#include <core/AnsiEscapes.hpp>
 #include <core/CrashHandler.hpp>
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
@@ -360,7 +361,17 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
 
 void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 {
-   module_context::consoleWriteOutput("\nRestarting R session...\n\n");
+   std::string message;
+   if (prefs::userPrefs().consoleHighlightConditions() == kConsoleHighlightConditionsErrorsWarningsMessages)
+   {
+      message = kAnsiEscapeGroupStartMessage "Restarting R session..." kAnsiEscapeGroupEnd;
+   }
+   else
+   {
+      message = "\nRestarting R session...\n\n";
+   }
+
+   module_context::consoleWriteOutput(message);
    rstudio::r::session::suspendForRestart(options);
 }
 
