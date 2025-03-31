@@ -15,22 +15,37 @@
 
 .rs.addFunction("notebookConditions.onWarning", function(cnd)
 {
-   prefix <- gettext("Warning:", domain = "R")
-   msg <- paste(prefix, paste(conditionMessage(cnd), collapse = "\n"))
+   msg <- if (.rs.globalCallingHandlers.shouldHandleWarning(cnd))
+   {
+      .rs.globalCallingHandlers.formatCondition(cnd, "Warning", "warning")
+   }
+   else
+   {
+      prefix <- gettext("Warning :", domain = "R")
+      paste0(prefix, paste(conditionMessage(cnd), collapse = "\n"))
+   }
+   
    .Call("rs_signalNotebookCondition", 1L, msg, PACKAGE = "(embedding)")
    invokeRestart("muffleWarning")
 })
 
 .rs.addFunction("notebookConditions.onMessage", function(cnd)
 {
-   # By default, `base::message()` will append a newline to the signalled
-   # message condition, but `rlang::inform()` will not. Because our downstream
-   # message handler expects a newline to be appended, we add one here for
-   # rlang messages.
-   msg <- if (inherits(cnd, "rlang_message"))
-      paste(c(conditionMessage(cnd), ""), collapse = "\n")
+   msg <- if (.rs.globalCallingHandlers.shouldHandleMessage(cnd))
+   {
+      .rs.globalCallingHandlers.formatCondition(cnd, NULL, "message")
+   }
    else
-      paste(conditionMessage(cnd), collapse = "\n")
+   {
+      # By default, `base::message()` will append a newline to the signalled
+      # message condition, but `rlang::inform()` will not. Because our downstream
+      # message handler expects a newline to be appended, we add one here for
+      # rlang messages.
+      if (inherits(cnd, "rlang_message"))
+         paste(c(conditionMessage(cnd), ""), collapse = "\n")
+      else
+         paste(conditionMessage(cnd), collapse = "\n")
+   }
    
    .Call("rs_signalNotebookCondition", 0L, msg, PACKAGE = "(embedding)")
    invokeRestart("muffleMessage")
@@ -85,11 +100,10 @@
    #
    # https://github.com/rstudio/rstudio/issues/8834
    .Internal(.resetCondHands(
-     base::get(
-       x = ".rs.notebookConditions.handlerStack",
-       envir = .rs.toolsEnv()
-     )
-     
+      base::get(
+         x = ".rs.notebookConditions.handlerStack",
+         envir = .rs.toolsEnv()
+      )
    ))
-  base::rm(.rs.notebookConditions.handlerStack, envir = .rs.toolsEnv())
+   base::rm(.rs.notebookConditions.handlerStack, envir = .rs.toolsEnv())
 })

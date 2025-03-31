@@ -265,6 +265,15 @@
       lines
 })
 
+.rs.addFunction("deparseCall", function(call)
+{
+   srcref <- attr(call, "srcref", exact = TRUE)
+   if (!is.null(srcref))
+      return(as.character.srcref(srcref))
+   
+   deparse(call)
+})
+
 .rs.addFunction("deparseSrcref", function(srcref, asString)
 {
    # Try to retrieve source references from srcfile if available

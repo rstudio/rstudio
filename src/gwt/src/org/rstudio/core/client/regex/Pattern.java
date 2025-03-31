@@ -38,10 +38,12 @@ public class Pattern extends JavaScriptObject
    }-*/;
 
    public final native Match match(String input, int index) /*-{
+      
       this.lastIndex = index;
       var result = this.exec(input);
       if (result == null)
          return null;
+         
       return {
          value: result[0],
          index: result.index,
@@ -50,9 +52,19 @@ public class Pattern extends JavaScriptObject
          pattern: this,
          match: result
       };
+      
    }-*/;
    
+   // NOTE: for a 'global' JavaScript RegExp, the .test() method will respect
+   // and update the 'lastIndex' property. We almost never want this behavior.
+   // Indeed, there are a number of places where we create a Pattern object,
+   // and then re-use that to .test() multiple different input strings.
+   //
+   // For that reason, we always reset 'lastIndex' before invoking test here; we
+   // expect clients which want to iterate through multiple matches in a string
+   // will use the .match() method instead.
    public final native boolean test(String input) /*-{
+      this.lastIndex = 0;
       return this.test(input);
    }-*/;
 

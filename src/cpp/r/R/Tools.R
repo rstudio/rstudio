@@ -1741,3 +1741,60 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    names(packages) <- packages
    lapply(packages, getNamespaceInfo, "path")
 })
+
+.rs.addFunction("makePrefixRegex", function(prefixes)
+{
+   # translate into the user's current language
+   prefixes <- vapply(prefixes, function(prefix) {
+      gettext(prefix, domain = "R")
+   }, FUN.VALUE = character(1), USE.NAMES = FALSE)
+   
+   # convert this into a boost regular expression
+
+   # replace '%d' -- easy since this should just be a sequence
+   # of digits
+   prefixes <- gsub("%d", "\\E\\d+\\Q", prefixes, fixed = TRUE)
+
+   # replace '%s' -- %s' is usually intended to be a placeholder for
+   # a deparsed call, so in theory can be just about anything...
+   prefixes <- gsub("%s", "\\E\\S+\\Q", prefixes, fixed = TRUE)
+
+   # put it all together
+   prefixes <- paste0("\\Q", prefixes, "\\E")
+   
+   # put it together into a single regex
+   sprintf("^(?:%s)", paste(prefixes, collapse = "|"))
+})
+
+.rs.addFunction("reErrorPrefix", function()
+{
+   prefixes <- c(
+      "Error: ",
+      "Error in ",
+      "Error in %s : ",
+      "Error in %s (from %s) : ",
+      "Error during wrapup: "
+   )
+   
+   .rs.makePrefixRegex(prefixes)
+})
+
+.rs.addFunction("reWarningPrefix", function()
+{
+   prefixes <- c(
+      "Warning:",
+      "Warning message:",
+      "Warning messages:",
+      "Warning in %s :",
+      "There was %d warning (use warnings() to see it)",
+      "There were %d warnings (use warnings() to see them)",
+      "There were %d or more warnings (use warnings() to see the first %d)"
+   )
+   
+   .rs.makePrefixRegex(prefixes)
+})
+
+.rs.addFunction("reInAdditionPrefix", function()
+{
+   .rs.makePrefixRegex("In addition: ")
+})

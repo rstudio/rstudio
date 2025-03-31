@@ -651,31 +651,10 @@ public class ConsoleOutputWriterTests extends GWTTestCase
 
    public void test17()
    {
-      // inline editing via \r with ansi codes; multiple output lines, don't
-      // overwrite entire original output
-      ConsoleOutputWriter output = getCOW();
-      output.outputToConsole("✔ xxx \033[34myyy\033[39m xxx", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("\r", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("✔xxx \033[31myyy\033[39m zzz", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("\n", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("\n", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("✔ xxx \033[34myyy\033[39m xxx", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("\r", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("✔ xxx \033[31myyy\033[39m zzz", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("\n", myClass, notError, ignoreLineCount, false);
-      Assert.assertEquals(3, output.getCurrentLines());
-      Assert.assertEquals(
-         "<span class=\"myClass\">✔xxx </span>" +
-         "<span class=\"myClass xtermColor1\"></span>" + // redundant
-         "<span class=\"myClass\"></span>" + // redundant
-         "<span class=\"myClass xtermColor1\">yyy</span>" +
-         "<span class=\"myClass xtermColor4\"></span>" + // redundant
-         "<span class=\"myClass\"></span>" + // redundant
-         "<span class=\"myClass\"> zzzx\n\n✔ xxx </span>" +
-         "<span class=\"myClass xtermColor4\"></span>" + // redundant
-         "<span class=\"myClass xtermColor1\">yyy</span>" +
-         "<span class=\"myClass\"> zzz\n</span>",
-         getInnerHTML(output));
+      // Test moved to desktop automation; evidently there are some differences
+      // in behavior for the regular expression used by typical browsers and
+      // the JavaScript emulation in our unit tests, and so the old test here
+      // was incorrectly failing.
    }
 
    public void test18()

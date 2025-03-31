@@ -1130,6 +1130,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Display")
     @Key("consoleDisplayLabel")
     String consoleDisplayLabel();
+    
+    /**
+     * Translated "Highlight".
+     *
+     * @return translated "Highlight"
+     */
+    @DefaultMessage("Highlight")
+    @Key("consoleHighlightLabel")
+    String consoleHighlightLabel();
 
     /**
      * Translated "Show syntax highlighting in console input".

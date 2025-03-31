@@ -206,8 +206,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     ]);
 
     var specialFunctions = lang.arrayToMap([
-      "return", "switch", "try", "tryCatch", "stop",
-      "warning", "require", "library", "attach", "detach",
+      "return", "switch", "try", "tryCatch",
+      "stop", "warning", "message",
+      "require", "library", "attach", "detach",
       "source", "setMethod", "setGeneric", "setGroupGeneric",
       "setClass", "setRefClass", "R6Class", "UseMethod", "NextMethod"
     ]);

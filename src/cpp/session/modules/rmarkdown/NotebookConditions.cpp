@@ -35,18 +35,24 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
-SEXP rs_signalNotebookCondition(SEXP condition, SEXP message)
+SEXP rs_signalNotebookCondition(SEXP typeSEXP,
+                                SEXP messageSEXP)
 {
    // extract message (make sure we got one)
-   std::string msg = r::sexp::asUtf8String(message);
-   if (msg.empty())
-      return R_NilValue;
+   std::string message = r::sexp::asUtf8String(messageSEXP);
+   if (message.empty())
+      return R_FalseValue;
+
+   // extract condition type
+   Condition conditionType = static_cast<Condition>(r::sexp::asInteger(typeSEXP));
+
+   // ensure warning types get a trailing newline
+   if (conditionType == ConditionWarning)
+      message.append("\n");
 
    // broadcast signaled condition to notebook exec context
-   events().onCondition(
-      static_cast<Condition>(r::sexp::asInteger(condition)), msg);
-
-   return R_NilValue;
+   events().onCondition(conditionType, message);
+   return R_TrueValue;
 }
 
 } // anonymous namespace

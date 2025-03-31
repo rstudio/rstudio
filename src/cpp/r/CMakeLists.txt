@@ -32,6 +32,7 @@ set (R_SOURCE_FILES
    RSexp.cpp
    RSourceManager.cpp
    RUtil.cpp
+   RVersion.cpp
    RVersionInfo.cpp
    session/RBusy.cpp
    session/RClientMetrics.cpp

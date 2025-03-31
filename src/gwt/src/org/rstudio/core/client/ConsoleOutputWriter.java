@@ -25,6 +25,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
+
+import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 /**
@@ -125,7 +127,10 @@ public class ConsoleOutputWriter
       }
 
       int oldLineCount = DomUtils.countLines(appendTarget, true);
-      virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
+      if (StringUtil.equals(className, OUTPUT_ERROR_CLASS))
+         virtualConsole_.submit(text, VirtualConsole.Type.STDERR, isError, ariaLiveAnnounce);
+      else
+         virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
       int newLineCount = DomUtils.countLines(appendTarget, true);
 
       if (!virtualConsole_.isLimitConsoleVisible())
@@ -188,9 +193,12 @@ public class ConsoleOutputWriter
       Node lastChild = output_.getElement().getLastChild();
       if (lastChild == null)
          return;
+      
       Element last = lastChild.cast();
       last.focus();
    }
+   
+   public static final String OUTPUT_ERROR_CLASS = "__error";
 
    private int maxLines_ = -1;
    private int lines_ = 0;

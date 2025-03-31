@@ -21,6 +21,8 @@ import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
+
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -43,6 +45,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -69,7 +72,8 @@ public class ChunkOutputStream extends FlowPanel
       chunkOutputSize_ = chunkOutputSize;
       metadata_ = new HashMap<>();
 
-      if (chunkOutputSize_ == ChunkOutputSize.Full) {
+      if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
          getElement().getStyle().setWidth(100, Unit.PCT);
 
          getElement().getStyle().setProperty("display", "-ms-flexbox");
@@ -90,7 +94,7 @@ public class ChunkOutputStream extends FlowPanel
       // flush any queued errors 
       flushQueuedErrors();
 
-      renderConsoleOutput(text, classOfOutput(ChunkConsolePage.CONSOLE_OUTPUT));
+      renderConsoleOutput(text, ChunkConsolePage.CONSOLE_OUTPUT);
    }
    
    @Override
@@ -133,12 +137,11 @@ public class ChunkOutputStream extends FlowPanel
             // release any queued errors
             if (!queuedError_.isEmpty())
             {
-               vconsole_.submit(queuedError_, classOfOutput(
-                     ChunkConsolePage.CONSOLE_ERROR));
+               vconsole_.submit(queuedError_, VirtualConsole.Type.STDERR);
                queuedError_ = "";
             }
-
-            vconsole_.submit(outputText, classOfOutput(outputType));
+            
+            submit(outputText, outputType);
          }
          
          // avoid hanging the IDE by displaying too much output
@@ -146,9 +149,7 @@ public class ChunkOutputStream extends FlowPanel
          newlineCount += StringUtil.countMatches(outputText, '\n');
          if (newlineCount >= maxCount)
          {
-            vconsole_.submit(
-                  "\n[Output truncated]",
-                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
+            vconsole_.submit("\n[Output truncated]", VirtualConsole.Type.STDERR);
             break;
          }
       }
@@ -323,12 +324,15 @@ public class ChunkOutputStream extends FlowPanel
          // emit any messages queued prior to the error
          if (idx > 0)
          {
-            renderConsoleOutput(StringUtil.substring(queuedError_, 0, idx), 
-                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
+            renderConsoleOutput(
+                  StringUtil.substring(queuedError_, 0, idx), 
+                  ChunkConsolePage.CONSOLE_ERROR);
             initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
          }
+         
          // leave messages following the error in the queue
-         queuedError_ = StringUtil.substring(queuedError_, 
+         queuedError_ = StringUtil.substring(
+               queuedError_, 
                idx + err.getErrorMessage().length());
       }
       else
@@ -337,15 +341,13 @@ public class ChunkOutputStream extends FlowPanel
          flushQueuedErrors();
       }
       
-      UserState state =  RStudioGinjector.INSTANCE.getUserState();
-      ConsoleError error = new ConsoleError(err, 
-            AceTheme.getThemeErrorClass(state.theme().getValue().cast()),
-            this, null);
-
+      // TODO: Use Ace theme when appropriate.
+      Element errorEl = DomUtils.querySelector(getElement(), "." + VirtualConsole.RES.styles().groupError());
+      ConsoleError error = new ConsoleError(err, null, null, this, errorEl);
       UserPrefs prefs =  RStudioGinjector.INSTANCE.getUserPrefs();
       error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
-
       add(error);
+
       flushQueuedErrors();
       onHeightChanged();
    }
@@ -676,23 +678,12 @@ public class ChunkOutputStream extends FlowPanel
    
    // Private methods ---------------------------------------------------------
    
-   private String classOfOutput(int type)
-   {
-      if (type == ChunkConsolePage.CONSOLE_ERROR)
-         return AceTheme.getThemeErrorClass(
-               RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast());
-      else if (type == ChunkConsolePage.CONSOLE_INPUT)
-        return "ace_keyword";
-      return null;
-   }
-   
    private void flushQueuedErrors()
    {
       if (!queuedError_.isEmpty())
       {
          initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-         renderConsoleOutput(queuedError_, classOfOutput(
-               ChunkConsolePage.CONSOLE_ERROR));
+         renderConsoleOutput(queuedError_, ChunkConsolePage.CONSOLE_ERROR);
          queuedError_ = "";
       }
    }
@@ -712,6 +703,7 @@ public class ChunkOutputStream extends FlowPanel
    {
       if (lastOutputType_ == outputType)
          return;
+      
       if (outputType == RmdChunkOutputUnit.TYPE_TEXT)
       {
          // if switching to textual output, allocate a new virtual console
@@ -724,6 +716,7 @@ public class ChunkOutputStream extends FlowPanel
             vconsole_.clear();
          console_ = null;
       }
+      
       lastOutputType_ = outputType;
    }
 
@@ -745,16 +738,38 @@ public class ChunkOutputStream extends FlowPanel
          vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(console_.getElement());
       }
       else
+      {
          vconsole_.clear();
+      }
 
       // attach the console
       addWithOrdinal(console_, maxOrdinal_ + 1);
    }
    
-   private void renderConsoleOutput(String text, String clazz)
+   private void submit(String text, int type)
+   {
+      switch (type)
+      {
+
+      case ChunkConsolePage.CONSOLE_INPUT:
+         vconsole_.submit(text, VirtualConsole.Type.STDIN);
+         break;
+
+      case ChunkConsolePage.CONSOLE_OUTPUT:
+         vconsole_.submit(text, VirtualConsole.Type.STDOUT);
+         break;
+
+      case ChunkConsolePage.CONSOLE_ERROR:
+         vconsole_.submit(text, VirtualConsole.Type.STDERR);
+         break;
+
+      }
+   }
+   
+   private void renderConsoleOutput(String text, int type)
    {
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-      vconsole_.submit(text, clazz);
+      submit(text, type);
       onHeightChanged();
    }
    
@@ -773,7 +788,7 @@ public class ChunkOutputStream extends FlowPanel
             int ordAttr = Integer.parseInt(ord);
             return ordAttr;
          }
-         catch(Exception e)
+         catch (Exception e)
          {
             return 0;
          }

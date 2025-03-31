@@ -839,6 +839,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // setup fork handlers
    main_process::setupForkHandlers();
 
+   // setup extra handlers for client event queue
+   rsession::finishInitializeClientEventQueue();
+
    // success!
    return Success();
 }
@@ -1014,13 +1017,6 @@ void rConsoleWrite(const std::string& output, int otype)
    int event = otype == 1 ? kConsoleWriteError : kConsoleWriteOutput;
    ClientEvent writeEvent(event, output);
    rsession::clientEventQueue().add(writeEvent);
-
-   // fire event
-   module_context::events().onConsoleOutput(
-                  otype == 1 ? module_context::ConsoleOutputError :
-                               module_context::ConsoleOutputNormal,
-                  output);
-
 }
 
 void rConsoleHistoryReset()
