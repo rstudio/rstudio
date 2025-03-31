@@ -1032,7 +1032,7 @@ public class VirtualConsole
             return;
          
          Element nodeEl = Element.as(child);
-         if (nodeEl.hasClassName(RES.styles().message()))
+         if (nodeEl.hasClassName(RES.styles().groupMessage()))
             return;
          
          String text = nodeEl.getInnerText();
