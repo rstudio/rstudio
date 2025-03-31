@@ -883,6 +883,8 @@ public class VirtualConsole
                      SpanElement spanEl = Document.get().createSpanElement();
                      spanEl.addClassName(RES.styles().group());
                      spanEl.addClassName(groupClazz);
+                     if (!parent_.hasClassName(RES.styles().group()))
+                        spanEl.addClassName(RES.styles().groupTop());
                      parent_.appendChild(spanEl);
                      parent_ = spanEl;
                      tail += groupStartMatch.getValue().length() - 1;
@@ -1259,6 +1261,7 @@ public class VirtualConsole
       String stderr();
       
       String group();
+      String groupTop();
       String groupError();
       String groupWarning();
       String groupMessage();
