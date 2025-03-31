@@ -1750,7 +1750,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }, FUN.VALUE = character(1), USE.NAMES = FALSE)
    
    # convert this into a boost regular expression
-   prefixes <- gsub("%d", "\\\\E\\\\d+\\\\Q", prefixes)
+   prefixes <- gsub("%d", "\\E\\d+\\Q", prefixes, fixed = TRUE)
+   prefixes <- gsub("%s", "\\E\\S+\\Q", prefixes, fixed = TRUE)
    prefixes <- paste0("\\Q", prefixes, "\\E")
    
    # put it together into a single regex
@@ -1762,6 +1763,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    prefixes <- c(
       "Error: ",
       "Error in ",
+      "Error in %s : ",
+      "Error in %s (from %s) : ",
       "Error during wrapup: "
    )
    
@@ -1774,6 +1777,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       "Warning:",
       "Warning message:",
       "Warning messages:",
+      "Warning in %s :",
       "There was %d warning (use warnings() to see it)",
       "There were %d warnings (use warnings() to see them)",
       "There were %d or more warnings (use warnings() to see the first %d)"
