@@ -19,8 +19,10 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.console.ConsolePromptEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -37,6 +39,7 @@ public class ShellPane extends ShellWidget implements Shell.Display
       editor.setDisableOverwrite(true);
 
       editor.setFileType(FileTypeRegistry.R, true);
+      
       // Setting file type to R changes the wrap mode to false. We want it to
       // be true so that the console input can wrap.
       editor.setUseWrapMode(true);

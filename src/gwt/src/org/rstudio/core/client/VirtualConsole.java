@@ -408,6 +408,21 @@ public class VirtualConsole
       
       if (forceNewRange)
       {
+         // normalize previous bit of output if it was a chunk
+         if (parent_ != null)
+         {
+            Node lastChildNode = parent_.getLastChild();
+            if (Element.is(lastChildNode))
+            {
+               Element lastChildEl = Element.as(lastChildNode);
+               if (lastChildEl.hasClassName(RES.styles().group()))
+               {
+                  trimLeadingNewlines(lastChildEl);
+                  trimTrailingNewlines(lastChildEl);
+               }
+            }
+         }
+         
          // create a new output range with this class
          final ClassRange newRange = new ClassRange(cursor_, clazz, text, preserveHTML_, hyperlink_);
          appendChild(newRange.element);
@@ -987,6 +1002,55 @@ public class VirtualConsole
       return (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
          ? CONTROL.match(data, offset)
          : AnsiCode.CONTROL_PATTERN.match(data, offset);
+   }
+   
+   public void normalizePreviousOutput()
+   {
+      if (parent_ == null)
+         return;
+      
+      Node childNode = parent_.getLastChild();
+      if (!Element.is(childNode))
+         return;
+      
+      Element childEl = Element.as(childNode);
+      if (!childEl.hasClassName(RES.styles().group()))
+         return;
+      
+      trimLeadingNewlines(childEl);
+      trimTrailingNewlines(childEl);
+   }
+   
+   private void trimLeadingNewlines(Element childEl)
+   {
+      Node firstChildNode = childEl.getFirstChild();
+      while (firstChildNode.getNodeType() != Node.TEXT_NODE)
+      {
+         firstChildNode = firstChildNode.getFirstChild();
+         if (firstChildNode == null)
+         {
+            return;
+         }
+      }
+ 
+      firstChildNode.setNodeValue(
+            firstChildNode.getNodeValue().replaceFirst("^\\n+", ""));
+   }
+   
+   private void trimTrailingNewlines(Element childEl)
+   {
+      Node lastChildNode = childEl.getLastChild();
+      while (lastChildNode.getNodeType() != Node.TEXT_NODE)
+      {
+         lastChildNode = lastChildNode.getLastChild();
+         if (lastChildNode == null)
+         {
+            return;
+         }
+      }
+ 
+      lastChildNode.setNodeValue(
+            lastChildNode.getNodeValue().replaceFirst("\\n+$", ""));
    }
 
    // Elements added by last submit call; only captured if forceNewRange was true
