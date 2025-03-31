@@ -2215,34 +2215,18 @@ void consoleWriteOutput(const std::string& output)
 {
    // NOTE: all actions herein must be threadsafe! (see comment above)
 
-   // add console action
-   r::session::consoleActions().add(kConsoleActionOutput, output);
-
    // enque write output (same as session::rConsoleWrite)
    ClientEvent event(client_events::kConsoleWriteOutput, output);
    enqueClientEvent(event);
-
-   // fire event
-   module_context::events().onConsoleOutput(
-                                    module_context::ConsoleOutputNormal,
-                                    output);
 }
 
 void consoleWriteError(const std::string& message)
 {
    // NOTE: all actions herein must be threadsafe! (see comment above)
 
-   // add console action
-   r::session::consoleActions().add(kConsoleActionOutputError, message);
-
    // enque write error (same as session::rConsoleWrite)
    ClientEvent event(client_events::kConsoleWriteError, message);
    enqueClientEvent(event);
-
-   // fire event
-   module_context::events().onConsoleOutput(
-                                    module_context::ConsoleOutputError,
-                                    message);
 }
 
 void showErrorMessage(const std::string& title, const std::string& message)
