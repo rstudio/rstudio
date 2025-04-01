@@ -192,8 +192,19 @@ function(fetch)
       list(GET ARGV ${_INDEX1} _PREFIX)
 
       if(${_PREFIX}_ENABLED AND NOT RSTUDIO_USE_SYSTEM_${_PREFIX})
+         # Set yaml-cpp specific options before making it available
+         if("${_NAME}" STREQUAL "yaml-cpp")
+            set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "" FORCE)
+         endif()
+         
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION}")
          FetchContent_MakeAvailable("${_NAME}")
+         
+         # Reset the policy version after yaml-cpp is configured
+         if("${_NAME}" STREQUAL "yaml-cpp")
+            unset(CMAKE_POLICY_VERSION_MINIMUM CACHE)
+         endif()
+         
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
          set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
          set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
