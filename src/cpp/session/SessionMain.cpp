@@ -1029,8 +1029,10 @@ void rConsoleWrite(const std::string& output, int otype)
 
    using namespace console_output;
 
-   // DEBUG: simulate latency
-   boost::this_thread::sleep_for(boost::chrono::milliseconds(200));
+   // simulate latency for development builds
+#ifndef RSTUDIO_PACKAGE_BUILD
+   console_output::simulateLatency();
+#endif
 
    // notify listeners
    auto type = (otype == 1)

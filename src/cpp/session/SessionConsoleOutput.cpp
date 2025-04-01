@@ -35,6 +35,10 @@ namespace console_output {
 
 namespace {
 
+#ifndef RSTUDIO_PACKAGE_BUILD
+bool s_simulateLatency;
+#endif
+
 PendingOutputType s_pendingOutputType;
 
 std::atomic<bool> s_isErrorAnnotationEnabled;
@@ -141,6 +145,15 @@ SEXP rs_errorOutputPending()
 
 } // end anonymous namespace
 
+void simulateLatency()
+{
+#ifndef RSTUDIO_PACKAGE_BUILD
+   if (s_simulateLatency)
+   {
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(200));
+   }
+#endif
+}
 
 PendingOutputType getPendingOutputType()
 {
@@ -182,6 +195,11 @@ bool isWarningAnnotationEnabled()
 Error initialize()
 {
    using namespace module_context;
+
+#ifndef RSTUDIO_PACKAGE_BUILD
+   std::string simulateLatency = core::system::getenv("RS_SIMULATE_CONSOLE_LATENCY");
+   s_simulateLatency = core::string_utils::isTruthy(simulateLatency);
+#endif
 
    events().onBusy.connect(onBusy);
    events().onConsoleOutputReceived.connect(onConsoleOutputReceived);

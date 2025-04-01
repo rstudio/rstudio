@@ -25,6 +25,8 @@ namespace rstudio {
 namespace session {
 namespace console_output {
 
+void simulateLatency();
+
 enum PendingOutputType {
    PendingOutputTypeUnknown,
    PendingOutputTypeError,
