@@ -49,6 +49,7 @@
 - Fixed an issue where documents could open very slowly when many tabs were already open. (#15767)
 - Fixed an issue where the download of Rtools44 could fail when using Posit Package Manager as the default R package repository. (#15803)
 - Fixed an issue where messages produced by `rlang::inform()` were not separated by newlines.
+- Fixed an issue where the `modifyRange` API function was not available, even though such a function was provided by `rstudioapi`.
 
 #### Posit Workbench
 - Fixed an issue where uploading a file to a directory containing an '&' character could fail. (#6830)

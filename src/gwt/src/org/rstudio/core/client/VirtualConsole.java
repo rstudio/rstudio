@@ -403,34 +403,24 @@ public class VirtualConsole
          // force if this needs to display an hyperlink
          // or if the previous range was an hyperlink
          // or the classes differ (change of colour)
-         messageNewlines_ = "";
          forceNewRange = true;
-      }
-      
-      // If this is a message, then we don't render trailing newlines by default,
-      // but we save them in case we need to add them to a later invocation.
-      if (StringUtil.equals(clazz, RES.styles().message()))
-      {
-         // Prepend any previously-saved newlines.
-         text = messageNewlines_ + text;
-         
-         // Now, extract any trailing newlines, and remove them.
-         Pattern pattern = Pattern.create("\\n+$", "");
-         Match match = pattern.match(text, 0);
-         if (match != null)
-         {
-            messageNewlines_ = match.getValue();
-            text = text.substring(0, match.getIndex());
-         }
       }
       
       if (forceNewRange)
       {
-         // If we're starting a new message, then trim any
-         // newlines that start this message.
-         if (StringUtil.equals(clazz, RES.styles().message()))
+         // normalize previous bit of output if it was a section
+         if (parent_ != null)
          {
-            text = text.replaceFirst("^\\n", "");
+            Node lastChildNode = parent_.getLastChild();
+            if (Element.is(lastChildNode))
+            {
+               Element lastChildEl = Element.as(lastChildNode);
+               if (lastChildEl.hasClassName(RES.styles().group()))
+               {
+                  trimLeadingNewlines(lastChildEl);
+                  trimTrailingNewlines(lastChildEl);
+               }
+            }
          }
          
          // create a new output range with this class
@@ -908,14 +898,24 @@ public class VirtualConsole
                }
                
                // check for embedded custom highlight rules
-               Pattern customPattern = Pattern.create("^\\033H(\\d+);([^]*?)\\033h", "");
-               Match customMatch = customPattern.match(data.substring(head), 0);
-               if (customMatch != null)
+               Pattern highlightStartPattern = Pattern.create("^\\033H(\\d+);", "");
+               Match highlightStartMatch = highlightStartPattern.match(data.substring(head), 0);
+               if (highlightStartMatch != null)
                {
-                  String type = customMatch.getGroup(1);
-                  String code = customMatch.getGroup(2);
-                  text(code, typeToClazz(type), false);
-                  tail = head + customMatch.getValue().length();
+                  String type = highlightStartMatch.getGroup(1);
+                  savedClazz_ = currentClazz;
+                  currentClazz = typeToClazz(type);
+                  tail += highlightStartMatch.getValue().length() - 1;
+                  break;
+               }
+               
+               Pattern highlightEndPattern = Pattern.create("^\\033h", "");
+               Match highlightEndMatch = highlightEndPattern.match(data.substring(head), 0);
+               if (highlightEndMatch != null)
+               {
+                  currentClazz = savedClazz_;
+                  savedClazz_ = "";
+                  tail += highlightEndMatch.getValue().length() - 1;
                   break;
                }
                
@@ -1003,6 +1003,55 @@ public class VirtualConsole
          ? CONTROL.match(data, offset)
          : AnsiCode.CONTROL_PATTERN.match(data, offset);
    }
+   
+   public void normalizePreviousOutput()
+   {
+      if (parent_ == null)
+         return;
+      
+      Node childNode = parent_.getLastChild();
+      if (!Element.is(childNode))
+         return;
+      
+      Element childEl = Element.as(childNode);
+      if (!childEl.hasClassName(RES.styles().group()))
+         return;
+      
+      trimLeadingNewlines(childEl);
+      trimTrailingNewlines(childEl);
+   }
+   
+   private void trimLeadingNewlines(Element childEl)
+   {
+      Node firstChildNode = childEl.getFirstChild();
+      while (firstChildNode.getNodeType() != Node.TEXT_NODE)
+      {
+         firstChildNode = firstChildNode.getFirstChild();
+         if (firstChildNode == null)
+         {
+            return;
+         }
+      }
+ 
+      firstChildNode.setNodeValue(
+            firstChildNode.getNodeValue().replaceFirst("^\\n+", ""));
+   }
+   
+   private void trimTrailingNewlines(Element childEl)
+   {
+      Node lastChildNode = childEl.getLastChild();
+      while (lastChildNode.getNodeType() != Node.TEXT_NODE)
+      {
+         lastChildNode = lastChildNode.getLastChild();
+         if (lastChildNode == null)
+         {
+            return;
+         }
+      }
+ 
+      lastChildNode.setNodeValue(
+            lastChildNode.getNodeValue().replaceFirst("\\n+$", ""));
+   }
 
    // Elements added by last submit call; only captured if forceNewRange was true
    public List<Element> getNewElements()
@@ -1072,15 +1121,15 @@ public class VirtualConsole
    
    private String typeToClazz(String type)
    {
-      if (type == "1")
+      if (type == HIGHLIGHT_TYPE_ERROR)
       {
          return RES.styles().error();
       }
-      else if (type == "2")
+      else if (type == HIGHLIGHT_TYPE_WARNING)
       {
          return RES.styles().warning();
       }
-      else if (type == "3")
+      else if (type == HIGHLIGHT_TYPE_MESSAGE)
       {
          return RES.styles().message();
       }
@@ -1092,15 +1141,15 @@ public class VirtualConsole
    
    private String groupTypeToClazz(String type)
    {
-      if (type == "1")
+      if (type == GROUP_TYPE_ERROR)
       {
          return RES.styles().groupError();
       }
-      else if (type == "2")
+      else if (type == GROUP_TYPE_WARNING)
       {
          return RES.styles().groupWarning();
       }
-      else if (type == "3")
+      else if (type == GROUP_TYPE_MESSAGE)
       {
          return RES.styles().groupMessage();
       }
@@ -1240,7 +1289,7 @@ public class VirtualConsole
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
    private String partialAnsiCode_;
    private HyperlinkInfo hyperlink_;
-   private String messageNewlines_ = "";
+   private String savedClazz_ = "";
 
    private ErrorClass errorClass_;
    private String aceThemeErrorClass_;
@@ -1282,6 +1331,14 @@ public class VirtualConsole
    static {
       RES.styles().ensureInjected();
    }
+   
+   private static final String HIGHLIGHT_TYPE_ERROR   = "1";
+   private static final String HIGHLIGHT_TYPE_WARNING = "2";
+   private static final String HIGHLIGHT_TYPE_MESSAGE = "3";
+   
+   private static final String GROUP_TYPE_ERROR   = "1";
+   private static final String GROUP_TYPE_WARNING = "2";
+   private static final String GROUP_TYPE_MESSAGE = "3";
    
 
    // Injected ----
