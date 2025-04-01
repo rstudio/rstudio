@@ -480,16 +480,24 @@ public class ShellWidget extends Composite implements ShellDisplay,
          errorWidget.setTracebackVisible(true);
 
       Element parentEl = errorNodes.get(0).getParentElement();
-      if (parentEl.hasClassName(VirtualConsole.RES.styles().group()))
+      while (true)
       {
-         Element replaceEl = parentEl;
-         parentEl = parentEl.getParentElement();
-         parentEl.replaceChild(errorWidget.getElement(), replaceEl);
-      }
-      else
-      {
-         parentEl.removeAllChildren();
-         parentEl.appendChild(errorWidget.getElement());
+         if (parentEl.hasClassName(VirtualConsole.RES.styles().groupError()))
+         {
+            Element replaceEl = parentEl;
+            parentEl = parentEl.getParentElement();
+            parentEl.replaceChild(errorWidget.getElement(), replaceEl);
+            break;
+         }
+         
+         parentEl = parentEl.getPreviousSiblingElement();
+         if (parentEl == null)
+         {
+            parentEl = errorNodes.get(0).getParentElement();
+            parentEl.removeAllChildren();
+            parentEl.appendChild(errorWidget.getElement());
+            break;
+         }
       }
       
       scrollPanel_.onContentSizeChanged();
