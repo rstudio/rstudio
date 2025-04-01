@@ -180,12 +180,6 @@ void onUserSettingsChanged(const std::string& pref,
    *pHandleUserErrorsOnly = handleUserErrorsOnly;
 }
 
-SEXP rs_errorOutputPending()
-{
-   clientEventQueue().setErrorOutputPending();
-   return Rf_ScalarLogical(1);
-}
-
 } // anonymous namespace
 
 json::Value errorStateAsJson()
@@ -205,8 +199,6 @@ Error initialize()
 
    using boost::bind;
    using namespace module_context;
-
-   RS_REGISTER_CALL_METHOD(rs_errorOutputPending);
 
    // Check to see whether the error handler has changed immediately after init
    // (to find changes from e.g. .Rprofile) and after every console prompt.

@@ -130,6 +130,7 @@ set(SESSION_SOURCE_FILES
    SessionClientEventService.cpp
    SessionClientInit.cpp
    SessionConsoleInput.cpp
+   SessionConsoleOutput.cpp
    SessionConsoleProcess.cpp
    SessionConsoleProcessApi.cpp
    SessionConsoleProcessInfo.cpp

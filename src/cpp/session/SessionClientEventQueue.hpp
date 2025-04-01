@@ -32,7 +32,6 @@ namespace session {
    
 // initialization
 void initializeClientEventQueue();
-void finishInitializeClientEventQueue();
 
 // singleton
 class ClientEventQueue;
@@ -96,9 +95,6 @@ public:
    // annotate output
    void annotateOutput(int event, std::string* pOutput);
 
-   // inform the event queue that error output is pending
-   void setErrorOutputPending();
-
    // flush any buffered output
    void flush();
 
@@ -120,11 +116,12 @@ private:
    std::string activeConsole_;
    std::vector<ClientEvent> pendingEvents_;
    boost::posix_time::ptime lastEventAddTime_;
-   bool errorOutputPending_ = false;
 
    // buffered outputs (required for parts that might overflow)
-   BufferedOutput consoleOutput_;
-   BufferedOutput consoleErrors_;
+   BufferedOutput consoleStdout_;
+   BufferedOutput consoleStderr_;
+   BufferedOutput consolePendingErrors_;
+   BufferedOutput consolePendingWarnings_;
    BufferedOutput buildOutput_;
    
    // keep vector of pointers to buffered outputs, just to make

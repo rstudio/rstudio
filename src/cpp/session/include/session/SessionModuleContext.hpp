@@ -41,8 +41,9 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/system/System.hpp>
 
-#include <session/SessionOptions.hpp>
 #include <session/SessionClientEvent.hpp>
+#include <session/SessionConsoleOutput.hpp>
+#include <session/SessionOptions.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
 #include "../SessionClientEventQueue.hpp"
@@ -355,7 +356,9 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void()>                                       onBeforeExecute;
    RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onConsolePrompt;
    RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onConsoleInput;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onBusy;
    RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onActiveConsoleChanged;
+   RSTUDIO_BOOST_SIGNAL<void(ConsoleOutputType, const std::string&)>  onConsoleOutputReceived;
    RSTUDIO_BOOST_SIGNAL<void(ConsoleOutputType, const std::string&)>  onConsoleOutput;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onUserInterrupt;
    RSTUDIO_BOOST_SIGNAL<void(ChangeSource)>                           onDetectChanges;

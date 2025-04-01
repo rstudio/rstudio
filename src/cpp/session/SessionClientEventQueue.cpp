@@ -26,6 +26,7 @@
 
 #include <r/session/RConsoleActions.hpp>
 
+#include <session/SessionConsoleOutput.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #include "SessionHttpMethods.hpp"
@@ -43,79 +44,12 @@ namespace {
 
 ClientEventQueue* s_pClientEventQueue = nullptr;
 
-bool s_annotateErrors = false;
-bool s_annotateWarnings = false;
-
-boost::regex s_reErrorPrefix(kNeverMatch);
-boost::regex s_reWarningPrefix(kNeverMatch);
-boost::regex s_reInAdditionPrefix(kNeverMatch);
-
-bool isErrorAnnotationEnabled()
-{
-   return s_annotateErrors;
-}
-
-bool isWarningAnnotationEnabled()
-{
-   return s_annotateWarnings;
-}
-
 } // end anonymous namespace
 
 void initializeClientEventQueue()
 {
    BOOST_ASSERT(s_pClientEventQueue == nullptr);
    s_pClientEventQueue = new ClientEventQueue();
-}
-
-void synchronize()
-{
-   std::string highlightConditionsPref = prefs::userPrefs().consoleHighlightConditions();
-   if (highlightConditionsPref != kConsoleHighlightConditionsNone)
-   {
-      Error error;
-
-      std::string reErrorPrefix;
-      error = r::exec::RFunction(".rs.reErrorPrefix")
-            .call(&reErrorPrefix);
-      if (error)
-         LOG_ERROR(error);
-
-      std::string reWarningPrefix;
-      error = r::exec::RFunction(".rs.reWarningPrefix")
-            .call(&reWarningPrefix);
-      if (error)
-         LOG_ERROR(error);
-
-      std::string reInAdditionPrefix;
-      error = r::exec::RFunction(".rs.reInAdditionPrefix")
-            .call(&reInAdditionPrefix);
-      if (error)
-         LOG_ERROR(error);
-
-      s_annotateErrors =
-            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages ||
-            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings ||
-            highlightConditionsPref == kConsoleHighlightConditionsErrors;
-
-      s_annotateWarnings =
-            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages ||
-            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings;
-
-      s_reErrorPrefix      = boost::regex(reErrorPrefix, boost::regex::icase);
-      s_reWarningPrefix    = boost::regex(reWarningPrefix, boost::regex::icase);
-      s_reInAdditionPrefix = boost::regex(reInAdditionPrefix, boost::regex::icase);
-   }
-}
-
-void onPreferencesSaved()
-{
-   synchronize();
-}
-
-void finishInitializeClientEventQueue()
-{
-   synchronize();
 }
 
 ClientEventQueue& clientEventQueue()
@@ -127,15 +61,17 @@ ClientEventQueue::ClientEventQueue()
    : pMutex_(new boost::mutex()),
      pWaitForEventCondition_(new boost::condition()),
      lastEventAddTime_(boost::posix_time::not_a_date_time),
-     consoleOutput_(client_events::kConsoleWriteOutput, true),
-     consoleErrors_(client_events::kConsoleWriteError, true),
+     consoleStdout_(client_events::kConsoleWriteOutput, true),
+     consoleStderr_(client_events::kConsoleWriteError, true),
+     consolePendingErrors_(client_events::kConsoleWritePendingError, true),
+     consolePendingWarnings_(client_events::kConsoleWritePendingWarning, true),
      buildOutput_(client_events::kBuildOutput, false)
 {
-   module_context::events().onPreferencesSaved.connect(onPreferencesSaved);
-
    // buffered outputs (required for parts that might overflow)
-   bufferedOutputs_.push_back(&consoleOutput_);
-   bufferedOutputs_.push_back(&consoleErrors_);
+   bufferedOutputs_.push_back(&consoleStdout_);
+   bufferedOutputs_.push_back(&consoleStderr_);
+   bufferedOutputs_.push_back(&consolePendingErrors_);
+   bufferedOutputs_.push_back(&consolePendingWarnings_);
    bufferedOutputs_.push_back(&buildOutput_);
 }
 
@@ -162,8 +98,10 @@ namespace {
 
 void annotateError(std::string* pOutput, bool allowGroupAll)
 {
+   using namespace console_output;
+
    boost::smatch match;
-   if (boost::regex_search(*pOutput, match, s_reErrorPrefix))
+   if (boost::regex_search(*pOutput, match, reErrorPrefix()))
    {
       // Insert highlight markers around 'Error'.
       // Note that, because the word may have been translated, we just look
@@ -187,7 +125,7 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
       // Try to detect this case, and split the outputs.
       auto searchBegin = pOutput->cbegin() + matchEnd;
       auto searchEnd = pOutput->cend();
-      if (boost::regex_search(searchBegin, searchEnd, match, s_reInAdditionPrefix))
+      if (boost::regex_search(searchBegin, searchEnd, match, reInAdditionPrefix()))
       {
          auto index = match[0].begin() - pOutput->begin();
          pOutput->insert(index, kAnsiEscapeGroupEnd kAnsiEscapeGroupStartWarning);
@@ -203,16 +141,42 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
    }
 }
 
+void annotateWarning(std::string* pOutput, bool allowGroupAll)
+{
+   using namespace console_output;
+
+   boost::smatch match;
+   if (boost::regex_search(*pOutput, match, reWarningPrefix()))
+   {
+      pOutput->insert(match[0].first - pOutput->begin(), kAnsiEscapeGroupStartWarning);
+      pOutput->append(kAnsiEscapeGroupEnd);
+   }
+   else if (allowGroupAll)
+   {
+      pOutput->insert(0, kAnsiEscapeGroupStartWarning);
+      pOutput->append(kAnsiEscapeGroupEnd);
+   }
+
+   // Include a code execution hyperlink as well
+   boost::algorithm::replace_all(
+            *pOutput,
+            "warnings()",
+            ANSI_HYPERLINK("ide:run", "warnings()", "warnings()"));
+}
+
 } // end anonymous namespace
 
 void ClientEventQueue::annotateOutput(int event,
                                       std::string* pOutput)
 {
+   using namespace console_output;
+
    if (isErrorAnnotationEnabled())
    {
-      if (errorOutputPending_)
+      // TODO: This should be information attached to the output
+      // being processed, rather than accessed via a global.
+      if (event == client_events::kConsoleWritePendingError)
       {
-         errorOutputPending_ = false;
          annotateError(pOutput, true);
       }
       else
@@ -223,27 +187,15 @@ void ClientEventQueue::annotateOutput(int event,
 
    if (isWarningAnnotationEnabled())
    {
-      // R will write warning output on stdout in response to warnings(),
-      // but on stderr if just emitted on its own. ¯\_(._.)_/¯
-      boost::smatch match;
-      if (boost::regex_search(*pOutput, match, s_reWarningPrefix))
+      if (event == client_events::kConsoleWritePendingWarning)
       {
-         pOutput->insert(match[0].first - pOutput->begin(), kAnsiEscapeGroupStartWarning);
-         pOutput->append(kAnsiEscapeGroupEnd);
-
-         // Include a code execution hyperlink as well
-         boost::algorithm::replace_all(
-                  *pOutput,
-                  "warnings()",
-                  ANSI_HYPERLINK("ide:run", "warnings()", "warnings()"));
+         annotateWarning(pOutput, true);
+      }
+      else
+      {
+         annotateWarning(pOutput, false);
       }
    }
-}
-
-void ClientEventQueue::setErrorOutputPending()
-{
-   flushAllBufferedOutput();
-   errorOutputPending_ = true;
 }
 
 void ClientEventQueue::add(const ClientEvent& event)
@@ -275,14 +227,26 @@ void ClientEventQueue::add(const ClientEvent& event)
       if (event.type() == client_events::kConsoleWriteOutput &&
           event.data().getType() == json::Type::STRING)
       {
-         flushBufferedOutput(&consoleErrors_);
-         consoleOutput_.append(event.data().getString());
+         flushBufferedOutput(&consoleStderr_);
+         consoleStdout_.append(event.data().getString());
       }
       else if (event.type() == client_events::kConsoleWriteError &&
                event.data().getType() == json::Type::STRING)
       {
-         flushBufferedOutput(&consoleOutput_);
-         consoleErrors_.append(event.data().getString());
+         flushBufferedOutput(&consoleStdout_);
+         consoleStderr_.append(event.data().getString());
+      }
+      else if (event.type() == client_events::kConsoleWritePendingError &&
+               event.data().getType() == json::Type::STRING)
+      {
+         flushAllBufferedOutput();
+         consolePendingErrors_.append(event.data().getString());
+      }
+      else if (event.type() == client_events::kConsoleWritePendingWarning &&
+               event.data().getType() == json::Type::STRING)
+      {
+         flushAllBufferedOutput();
+         consolePendingWarnings_.append(event.data().getString());
       }
       else if (event.type() == client_events::kBuildOutput &&
                event.data().getType() == json::Type::OBJECT)
@@ -431,24 +395,22 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
    }
 
    annotateOutput(event, &output);
-   
+
    if (event == client_events::kConsoleWriteOutput ||
-       event == client_events::kConsoleWriteError)
+       event == client_events::kConsoleWriteError ||
+       event == client_events::kConsoleWritePendingError ||
+       event == client_events::kConsoleWritePendingWarning)
    {
-      // fire events
-      auto type = (event == client_events::kConsoleWriteOutput)
-            ? module_context::ConsoleOutputNormal
-            : module_context::ConsoleOutputError;
-
-      module_context::events().onConsoleOutput(type, output);
-
-      // add to console actions
       if (event == client_events::kConsoleWriteOutput)
       {
+         auto type = module_context::ConsoleOutputNormal;
+         module_context::events().onConsoleOutput(type, output);
          r::session::consoleActions().add(kConsoleActionOutput, output);
       }
-      else if (event == client_events::kConsoleWriteError)
+      else
       {
+         auto type = module_context::ConsoleOutputError;
+         module_context::events().onConsoleOutput(type, output);
          r::session::consoleActions().add(kConsoleActionOutputError, output);
       }
 
@@ -456,7 +418,10 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
       json::Object payload;
       payload[kConsoleText] = output;
       payload[kConsoleId]   = activeConsole_;
-      pendingEvents_.push_back(ClientEvent(event, payload));
+      int normalizedEvent = (event == client_events::kConsoleWriteOutput)
+            ? client_events::kConsoleWriteOutput
+            : client_events::kConsoleWriteError;
+      pendingEvents_.push_back(ClientEvent(normalizedEvent, payload));
    }
    else if (event == client_events::kBuildOutput)
    {
