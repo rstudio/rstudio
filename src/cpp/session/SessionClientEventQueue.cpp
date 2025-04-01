@@ -171,8 +171,6 @@ void ClientEventQueue::annotateOutput(int event,
 
    if (isErrorAnnotationEnabled())
    {
-      // TODO: This should be information attached to the output
-      // being processed, rather than accessed via a global.
       if (event == client_events::kConsoleWritePendingError)
       {
          annotateError(pOutput, true);
