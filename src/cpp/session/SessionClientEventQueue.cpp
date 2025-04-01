@@ -261,9 +261,13 @@ bool ClientEventQueue::hasEvents()
       if (pendingEvents_.size() > 0)
          return true;
       
-      for (auto&& [event, buffer] : bufferedOutputs_)
-         if (!buffer.empty())
+      for (auto&& entry : bufferedOutputs_)
+      {
+         if (!entry.second.empty())
+         {
             return true;
+         }
+      }
       
       return false;
    }
@@ -295,9 +299,9 @@ void ClientEventQueue::clear()
 {
    LOCK_MUTEX(*pMutex_)
    {
-      for (auto&& [event, buffer] : bufferedOutputs_)
+      for (auto&& entry : bufferedOutputs_)
       {
-         buffer.clear();
+         entry.second.clear();
       }
       
       pendingEvents_.clear();
@@ -359,7 +363,7 @@ void ClientEventQueue::flushAllBufferedOutput()
    // This happens as events are received so we should be safe.
    for (auto&& entry : bufferedOutputs_)
    {
-      flushBufferedOutput(&entry.second);
+      flushBufferedOutput(entry.first, &entry.second);
    }
 }
 
@@ -374,45 +378,43 @@ void ClientEventQueue::flushAllBufferedOutputExcept(int event)
    {
       if (entry.first != event)
       {
-         flushBufferedOutput(&entry.second);
+         flushBufferedOutput(entry.first, &entry.second);
       }
    }
 }
 
-void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
+void ClientEventQueue::flushBufferedOutput(int event, std::string* pOutput)
 {
    // NOTE: Private helper so no lock required (mutex is not recursive)
-   if (pBuffer->empty())
+   if (pOutput->empty())
       return;
    
-   int event = pBuffer->event();
-   std::string output = pBuffer->output();
    if (isConsoleOutputEvent(event))
    {
       int limit = r::session::consoleActions().capacity() + 1;
-      string_utils::trimLeadingLines(limit, &output);
+      string_utils::trimLeadingLines(limit, pOutput);
    }
 
-   annotateOutput(event, &output);
+   annotateOutput(event, pOutput);
 
    if (isConsoleOutputEvent(event))
    {
       if (event == client_events::kConsoleWriteOutput)
       {
          auto type = module_context::ConsoleOutputNormal;
-         module_context::events().onConsoleOutput(type, output);
-         r::session::consoleActions().add(kConsoleActionOutput, output);
+         module_context::events().onConsoleOutput(type, *pOutput);
+         r::session::consoleActions().add(kConsoleActionOutput, *pOutput);
       }
       else
       {
          auto type = module_context::ConsoleOutputError;
-         module_context::events().onConsoleOutput(type, output);
-         r::session::consoleActions().add(kConsoleActionOutputError, output);
+         module_context::events().onConsoleOutput(type, *pOutput);
+         r::session::consoleActions().add(kConsoleActionOutputError, *pOutput);
       }
 
       // send client event
       json::Object payload;
-      payload[kConsoleText] = output;
+      payload[kConsoleText] = *pOutput;
       payload[kConsoleId]   = activeConsole_;
       int normalizedEvent = (event == client_events::kConsoleWriteOutput)
             ? client_events::kConsoleWriteOutput
@@ -422,7 +424,7 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
    else if (event == client_events::kBuildOutput)
    {
       using namespace module_context;
-      CompileOutput compileOutput(kCompileOutputNormal, output);
+      CompileOutput compileOutput(kCompileOutputNormal, *pOutput);
       json::Object payload = compileOutputAsJson(compileOutput);
       pendingEvents_.push_back(ClientEvent(event, payload));
    }
@@ -431,7 +433,7 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
       ELOGF("internal error: don't know how to flush buffer for event '{}'", event);
    }
    
-   pBuffer->clear();
+   pOutput->clear();
 }
 
 } // namespace session

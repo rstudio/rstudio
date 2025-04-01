@@ -43,26 +43,6 @@ private:
    ClientEventQueue();
    friend void initializeClientEventQueue();
    
-   class BufferedOutput : boost::noncopyable
-   {
-      
-   public:
-      BufferedOutput()
-      {
-      }
-      
-      int event() const { return event_; }
-      const std::string& output() const { return output_; }
-
-      void append(const std::string& data) { output_ += data; }
-      void clear() { output_.clear(); }
-      bool empty() const { return output_.empty(); }
-      
-   private:
-      int event_;
-      std::string output_;
-   };
-   
 public:
    // COPYING: boost::noncopyable
      
@@ -98,7 +78,7 @@ private:
 
    void flushAllBufferedOutput();
    void flushAllBufferedOutputExcept(int event);
-   void flushBufferedOutput(BufferedOutput* pOutput);
+   void flushBufferedOutput(int type, std::string* pOutput);
  
 private:
    // synchronization objects. heap based so they are never destructed
@@ -116,7 +96,7 @@ private:
 
    // buffered outputs (required for parts that might overflow)
    // maps event types to their collected outputs
-   std::map<int, BufferedOutput> bufferedOutputs_;
+   std::map<int, std::string> bufferedOutputs_;
 };
 
 } // namespace session
