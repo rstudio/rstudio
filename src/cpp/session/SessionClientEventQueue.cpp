@@ -60,19 +60,8 @@ ClientEventQueue& clientEventQueue()
 ClientEventQueue::ClientEventQueue()
    : pMutex_(new boost::mutex()),
      pWaitForEventCondition_(new boost::condition()),
-     lastEventAddTime_(boost::posix_time::not_a_date_time),
-     consoleStdout_(client_events::kConsoleWriteOutput, true),
-     consoleStderr_(client_events::kConsoleWriteError, true),
-     consolePendingErrors_(client_events::kConsoleWritePendingError, true),
-     consolePendingWarnings_(client_events::kConsoleWritePendingWarning, true),
-     buildOutput_(client_events::kBuildOutput, false)
+     lastEventAddTime_(boost::posix_time::not_a_date_time)
 {
-   // buffered outputs (required for parts that might overflow)
-   bufferedOutputs_.push_back(&consoleStdout_);
-   bufferedOutputs_.push_back(&consoleStderr_);
-   bufferedOutputs_.push_back(&consolePendingErrors_);
-   bufferedOutputs_.push_back(&consolePendingWarnings_);
-   bufferedOutputs_.push_back(&buildOutput_);
 }
 
 bool ClientEventQueue::setActiveConsole(const std::string& console)
@@ -95,6 +84,15 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
 }
 
 namespace {
+
+bool isConsoleOutputEvent(int event)
+{
+   return
+         event == client_events::kConsoleWriteOutput ||
+         event == client_events::kConsoleWriteError ||
+         event == client_events::kConsoleWritePendingError ||
+         event == client_events::kConsoleWritePendingWarning;
+}
 
 void annotateError(std::string* pOutput, bool allowGroupAll)
 {
@@ -219,34 +217,13 @@ void ClientEventQueue::add(const ClientEvent& event)
    
    LOCK_MUTEX(*pMutex_)
    {
-      // console output and errors are batched up for compactness / efficiency
-      //
-      // note that 'errors' are really just anything written to stderr, and this
-      // includes things like output from 'message()' and so it's feasible that
-      // stderr could become overwhelmed in the same way stdout might.
-      if (event.type() == client_events::kConsoleWriteOutput &&
-          event.data().getType() == json::Type::STRING)
+      if (isConsoleOutputEvent(event.type()))
       {
-         flushBufferedOutput(&consoleStderr_);
-         consoleStdout_.append(event.data().getString());
-      }
-      else if (event.type() == client_events::kConsoleWriteError &&
-               event.data().getType() == json::Type::STRING)
-      {
-         flushBufferedOutput(&consoleStdout_);
-         consoleStderr_.append(event.data().getString());
-      }
-      else if (event.type() == client_events::kConsoleWritePendingError &&
-               event.data().getType() == json::Type::STRING)
-      {
-         flushAllBufferedOutput();
-         consolePendingErrors_.append(event.data().getString());
-      }
-      else if (event.type() == client_events::kConsoleWritePendingWarning &&
-               event.data().getType() == json::Type::STRING)
-      {
-         flushAllBufferedOutput();
-         consolePendingWarnings_.append(event.data().getString());
+         if (event.data().getType() == json::Type::STRING)
+         {
+            flushAllBufferedOutputExcept(event.type());
+            bufferedOutputs_[event.type()].append(event.data().getString());
+         }
       }
       else if (event.type() == client_events::kBuildOutput &&
                event.data().getType() == json::Type::OBJECT)
@@ -256,7 +233,9 @@ void ClientEventQueue::add(const ClientEvent& event)
          auto jsonData = event.data().getObject();
          std::string output;
          json::readObject(jsonData, "output", output);
-         buildOutput_.append(output);
+
+         flushAllBufferedOutputExcept(event.type());
+         bufferedOutputs_[event.type()].append(output);
       }
       else
       {
@@ -282,13 +261,13 @@ bool ClientEventQueue::hasEvents()
       if (pendingEvents_.size() > 0)
          return true;
       
-      for (BufferedOutput* pOutput : bufferedOutputs_)
-         if (!pOutput->empty())
+      for (auto&& [event, buffer] : bufferedOutputs_)
+         if (!buffer.empty())
             return true;
       
       return false;
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
    
    // keep compiler happy
    return false;
@@ -316,8 +295,10 @@ void ClientEventQueue::clear()
 {
    LOCK_MUTEX(*pMutex_)
    {
-      for (BufferedOutput* pOutput : bufferedOutputs_)
-         pOutput->clear();
+      for (auto&& [event, buffer] : bufferedOutputs_)
+      {
+         buffer.clear();
+      }
       
       pendingEvents_.clear();
    }
@@ -376,8 +357,26 @@ void ClientEventQueue::flushAllBufferedOutput()
    // NOTE: Order shouldn't matter here as long as we ensure that
    // stdout is flushed whenever stderr is received, and vice versa.
    // This happens as events are received so we should be safe.
-   for (BufferedOutput* pOutput : bufferedOutputs_)
-      flushBufferedOutput(pOutput);
+   for (auto&& entry : bufferedOutputs_)
+   {
+      flushBufferedOutput(&entry.second);
+   }
+}
+
+void ClientEventQueue::flushAllBufferedOutputExcept(int event)
+{
+   // NOTE: Private helper so no lock required (mutex is not recursive)
+   //
+   // NOTE: Order shouldn't matter here as long as we ensure that
+   // stdout is flushed whenever stderr is received, and vice versa.
+   // This happens as events are received so we should be safe.
+   for (auto&& entry : bufferedOutputs_)
+   {
+      if (entry.first != event)
+      {
+         flushBufferedOutput(&entry.second);
+      }
+   }
 }
 
 void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
@@ -388,7 +387,7 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
    
    int event = pBuffer->event();
    std::string output = pBuffer->output();
-   if (pBuffer->useConsoleActionLimit())
+   if (isConsoleOutputEvent(event))
    {
       int limit = r::session::consoleActions().capacity() + 1;
       string_utils::trimLeadingLines(limit, &output);
@@ -396,10 +395,7 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
 
    annotateOutput(event, &output);
 
-   if (event == client_events::kConsoleWriteOutput ||
-       event == client_events::kConsoleWriteError ||
-       event == client_events::kConsoleWritePendingError ||
-       event == client_events::kConsoleWritePendingWarning)
+   if (isConsoleOutputEvent(event))
    {
       if (event == client_events::kConsoleWriteOutput)
       {

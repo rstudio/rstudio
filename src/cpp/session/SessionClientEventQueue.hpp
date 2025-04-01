@@ -47,15 +47,12 @@ private:
    {
       
    public:
-      BufferedOutput(int event, bool useConsoleActionLimit)
-         : event_(event),
-           useConsoleActionLimit_(useConsoleActionLimit)
+      BufferedOutput()
       {
       }
       
-      const std::string& output() const { return output_; }
       int event() const { return event_; }
-      bool useConsoleActionLimit() const { return useConsoleActionLimit_; }
+      const std::string& output() const { return output_; }
 
       void append(const std::string& data) { output_ += data; }
       void clear() { output_.clear(); }
@@ -64,7 +61,6 @@ private:
    private:
       int event_;
       std::string output_;
-      bool useConsoleActionLimit_;
    };
    
 public:
@@ -101,6 +97,7 @@ public:
 private:
 
    void flushAllBufferedOutput();
+   void flushAllBufferedOutputExcept(int event);
    void flushBufferedOutput(BufferedOutput* pOutput);
  
 private:
@@ -118,16 +115,8 @@ private:
    boost::posix_time::ptime lastEventAddTime_;
 
    // buffered outputs (required for parts that might overflow)
-   BufferedOutput consoleStdout_;
-   BufferedOutput consoleStderr_;
-   BufferedOutput consolePendingErrors_;
-   BufferedOutput consolePendingWarnings_;
-   BufferedOutput buildOutput_;
-   
-   // keep vector of pointers to buffered outputs, just to make
-   // iteration easier in places where we need to flush all buffers
-   std::vector<BufferedOutput*> bufferedOutputs_;
-
+   // maps event types to their collected outputs
+   std::map<int, BufferedOutput> bufferedOutputs_;
 };
 
 } // namespace session
