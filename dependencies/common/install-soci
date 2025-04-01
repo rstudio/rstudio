@@ -95,6 +95,7 @@ fi
 "${CMAKE}" -G"${CMAKE_GENERATOR}"                      \
    -DCMAKE_POLICY_DEFAULT_CMP0063="NEW"                \
    -DCMAKE_POLICY_DEFAULT_CMP0074="NEW"                \
+   -DCMAKE_POLICY_VERSION_MINIMUM=3.5                  \
    -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true         \
    -DCMAKE_CXX_VISIBILITY_PRESET="$COMPILE_VISIBILITY" \
    -DSOCI_TESTS=OFF                                    \
