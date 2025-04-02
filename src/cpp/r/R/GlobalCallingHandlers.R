@@ -117,6 +117,11 @@
    if (warn <= 0L)
       return(FALSE)
    
+   # I can't imagine anyone is actually using this in the wild, but...
+   expr <- getOption("warning.expression", default = NULL)
+   if (!is.null(expr))
+      return(FALSE)
+   
    # rlang doesn't apply any custom styles to emitted warnings,
    # so handle warnings even if they have custom classes
    TRUE
@@ -147,10 +152,7 @@
       lhs <- substr(prefix, 1L, colonIndex - 1L)
       rhs <- substr(prefix, colonIndex, .Machine$integer.max)
       prefix <- paste0(.rs.globalCallingHandlers.highlight(lhs, type), rhs)
-      if (nchar(prefix) + nchar(msg) >= 80L)
-         sprintf("%s\n  %s", prefix, msg)
-      else
-         sprintf("%s%s", prefix, msg)
+      sprintf("%s%s", prefix, msg)
    }
    else
    {
@@ -164,7 +166,7 @@
       # R seems to just use the first line of the deparsed call?
       cll <- .rs.deparseCall(conditionCall(cnd))[[1L]]
       header <- sprintf("%s %s :", prefix, cll)
-      if (nchar(header) + nchar(msg) >= 80L)
+      if (nchar(header) + nchar(msg) >= 77L)
          sprintf("%s\n  %s", header, msg)
       else
          sprintf("%s %s", header, msg)
