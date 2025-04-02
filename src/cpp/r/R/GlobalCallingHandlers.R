@@ -161,7 +161,8 @@
       parts[[1L]] <- .rs.globalCallingHandlers.highlight(parts[[1L]], type)
       prefix <- paste(parts, collapse = " ")
       
-      cll <- format(conditionCall(cnd))
+      # R seems to just use the first line of the deparsed call?
+      cll <- .rs.deparseCall(conditionCall(cnd))[[1L]]
       header <- sprintf("%s %s :", prefix, cll)
       if (nchar(header) + nchar(msg) >= 80L)
          sprintf("%s\n  %s", header, msg)
