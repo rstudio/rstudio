@@ -21,18 +21,18 @@
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
 #include <core/StringUtils.hpp>
+#include <core/regex/RegexDebug.hpp>
 
 #include <r/RExec.hpp>
 
 #include <r/session/RConsoleActions.hpp>
 
+#include <session/SessionConsoleOutput.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #include "SessionHttpMethods.hpp"
 #include "modules/SessionConsole.hpp"
 
-
-#define kNeverMatch "^(?!)$"
 
 using namespace rstudio::core;
 
@@ -43,79 +43,12 @@ namespace {
 
 ClientEventQueue* s_pClientEventQueue = nullptr;
 
-bool s_annotateErrors = false;
-bool s_annotateWarnings = false;
-
-boost::regex s_reErrorPrefix(kNeverMatch);
-boost::regex s_reWarningPrefix(kNeverMatch);
-boost::regex s_reInAdditionPrefix(kNeverMatch);
-
-bool isErrorAnnotationEnabled()
-{
-   return s_annotateErrors;
-}
-
-bool isWarningAnnotationEnabled()
-{
-   return s_annotateWarnings;
-}
-
 } // end anonymous namespace
 
 void initializeClientEventQueue()
 {
    BOOST_ASSERT(s_pClientEventQueue == nullptr);
    s_pClientEventQueue = new ClientEventQueue();
-}
-
-void synchronize()
-{
-   std::string highlightConditionsPref = prefs::userPrefs().consoleHighlightConditions();
-   if (highlightConditionsPref != kConsoleHighlightConditionsNone)
-   {
-      Error error;
-
-      std::string reErrorPrefix;
-      error = r::exec::RFunction(".rs.reErrorPrefix")
-            .call(&reErrorPrefix);
-      if (error)
-         LOG_ERROR(error);
-
-      std::string reWarningPrefix;
-      error = r::exec::RFunction(".rs.reWarningPrefix")
-            .call(&reWarningPrefix);
-      if (error)
-         LOG_ERROR(error);
-
-      std::string reInAdditionPrefix;
-      error = r::exec::RFunction(".rs.reInAdditionPrefix")
-            .call(&reInAdditionPrefix);
-      if (error)
-         LOG_ERROR(error);
-
-      s_annotateErrors =
-            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages ||
-            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings ||
-            highlightConditionsPref == kConsoleHighlightConditionsErrors;
-
-      s_annotateWarnings =
-            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages ||
-            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings;
-
-      s_reErrorPrefix      = boost::regex(reErrorPrefix, boost::regex::icase);
-      s_reWarningPrefix    = boost::regex(reWarningPrefix, boost::regex::icase);
-      s_reInAdditionPrefix = boost::regex(reInAdditionPrefix, boost::regex::icase);
-   }
-}
-
-void onPreferencesSaved()
-{
-   synchronize();
-}
-
-void finishInitializeClientEventQueue()
-{
-   synchronize();
 }
 
 ClientEventQueue& clientEventQueue()
@@ -126,22 +59,14 @@ ClientEventQueue& clientEventQueue()
 ClientEventQueue::ClientEventQueue()
    : pMutex_(new boost::mutex()),
      pWaitForEventCondition_(new boost::condition()),
-     lastEventAddTime_(boost::posix_time::not_a_date_time),
-     consoleOutput_(client_events::kConsoleWriteOutput, true),
-     consoleErrors_(client_events::kConsoleWriteError, true),
-     buildOutput_(client_events::kBuildOutput, false)
+     lastEventAddTime_(boost::posix_time::not_a_date_time)
 {
-   module_context::events().onPreferencesSaved.connect(onPreferencesSaved);
-
-   // buffered outputs (required for parts that might overflow)
-   bufferedOutputs_.push_back(&consoleOutput_);
-   bufferedOutputs_.push_back(&consoleErrors_);
-   bufferedOutputs_.push_back(&buildOutput_);
 }
 
 bool ClientEventQueue::setActiveConsole(const std::string& console)
 {
    bool changed = false;
+
    LOCK_MUTEX(*pMutex_)
    {
       if (activeConsole_ != console)
@@ -154,16 +79,28 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
          changed = true;
       }
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
+
    return changed;
 }
 
 namespace {
 
+bool isConsoleOutputEvent(int event)
+{
+   return
+         event == client_events::kConsoleWriteOutput ||
+         event == client_events::kConsoleWriteError ||
+         event == client_events::kConsoleWritePendingError ||
+         event == client_events::kConsoleWritePendingWarning;
+}
+
 void annotateError(std::string* pOutput, bool allowGroupAll)
 {
+   using namespace console_output;
+
    boost::smatch match;
-   if (boost::regex_search(*pOutput, match, s_reErrorPrefix))
+   if (regex_utils::search(*pOutput, match, reErrorPrefix()))
    {
       // Insert highlight markers around 'Error'.
       // Note that, because the word may have been translated, we just look
@@ -187,7 +124,7 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
       // Try to detect this case, and split the outputs.
       auto searchBegin = pOutput->cbegin() + matchEnd;
       auto searchEnd = pOutput->cend();
-      if (boost::regex_search(searchBegin, searchEnd, match, s_reInAdditionPrefix))
+      if (regex_utils::search(searchBegin, searchEnd, match, reInAdditionPrefix()))
       {
          auto index = match[0].begin() - pOutput->begin();
          pOutput->insert(index, kAnsiEscapeGroupEnd kAnsiEscapeGroupStartWarning);
@@ -203,16 +140,40 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
    }
 }
 
+void annotateWarning(std::string* pOutput, bool allowGroupAll)
+{
+   using namespace console_output;
+
+   boost::smatch match;
+   if (regex_utils::search(*pOutput, match, reWarningPrefix()))
+   {
+      pOutput->insert(match[0].first - pOutput->begin(), kAnsiEscapeGroupStartWarning);
+      pOutput->append(kAnsiEscapeGroupEnd);
+   }
+   else if (allowGroupAll)
+   {
+      pOutput->insert(0, kAnsiEscapeGroupStartWarning);
+      pOutput->append(kAnsiEscapeGroupEnd);
+   }
+
+   // Include a code execution hyperlink as well
+   boost::algorithm::replace_all(
+            *pOutput,
+            "warnings()",
+            ANSI_HYPERLINK("ide:run", "warnings()", "warnings()"));
+}
+
 } // end anonymous namespace
 
 void ClientEventQueue::annotateOutput(int event,
                                       std::string* pOutput)
 {
+   using namespace console_output;
+
    if (isErrorAnnotationEnabled())
    {
-      if (errorOutputPending_)
+      if (event == client_events::kConsoleWritePendingError)
       {
-         errorOutputPending_ = false;
          annotateError(pOutput, true);
       }
       else
@@ -223,27 +184,15 @@ void ClientEventQueue::annotateOutput(int event,
 
    if (isWarningAnnotationEnabled())
    {
-      // R will write warning output on stdout in response to warnings(),
-      // but on stderr if just emitted on its own. ¯\_(._.)_/¯
-      boost::smatch match;
-      if (boost::regex_search(*pOutput, match, s_reWarningPrefix))
+      if (event == client_events::kConsoleWritePendingWarning)
       {
-         pOutput->insert(match[0].first - pOutput->begin(), kAnsiEscapeGroupStartWarning);
-         pOutput->append(kAnsiEscapeGroupEnd);
-
-         // Include a code execution hyperlink as well
-         boost::algorithm::replace_all(
-                  *pOutput,
-                  "warnings()",
-                  ANSI_HYPERLINK("ide:run", "warnings()", "warnings()"));
+         annotateWarning(pOutput, true);
+      }
+      else
+      {
+         annotateWarning(pOutput, false);
       }
    }
-}
-
-void ClientEventQueue::setErrorOutputPending()
-{
-   flushAllBufferedOutput();
-   errorOutputPending_ = true;
 }
 
 void ClientEventQueue::add(const ClientEvent& event)
@@ -267,22 +216,13 @@ void ClientEventQueue::add(const ClientEvent& event)
    
    LOCK_MUTEX(*pMutex_)
    {
-      // console output and errors are batched up for compactness / efficiency
-      //
-      // note that 'errors' are really just anything written to stderr, and this
-      // includes things like output from 'message()' and so it's feasible that
-      // stderr could become overwhelmed in the same way stdout might.
-      if (event.type() == client_events::kConsoleWriteOutput &&
-          event.data().getType() == json::Type::STRING)
+      if (isConsoleOutputEvent(event.type()))
       {
-         flushBufferedOutput(&consoleErrors_);
-         consoleOutput_.append(event.data().getString());
-      }
-      else if (event.type() == client_events::kConsoleWriteError &&
-               event.data().getType() == json::Type::STRING)
-      {
-         flushBufferedOutput(&consoleOutput_);
-         consoleErrors_.append(event.data().getString());
+         if (event.data().getType() == json::Type::STRING)
+         {
+            flushAllBufferedOutputExcept(event.type());
+            bufferedOutputs_[event.type()].append(event.data().getString());
+         }
       }
       else if (event.type() == client_events::kBuildOutput &&
                event.data().getType() == json::Type::OBJECT)
@@ -292,7 +232,9 @@ void ClientEventQueue::add(const ClientEvent& event)
          auto jsonData = event.data().getObject();
          std::string output;
          json::readObject(jsonData, "output", output);
-         buildOutput_.append(output);
+
+         flushAllBufferedOutputExcept(event.type());
+         bufferedOutputs_[event.type()].append(output);
       }
       else
       {
@@ -305,7 +247,7 @@ void ClientEventQueue::add(const ClientEvent& event)
       
       lastEventAddTime_ = boost::posix_time::microsec_clock::universal_time();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
    
    // notify listeners that an event has been added
    pWaitForEventCondition_->notify_all();
@@ -318,13 +260,17 @@ bool ClientEventQueue::hasEvents()
       if (pendingEvents_.size() > 0)
          return true;
       
-      for (BufferedOutput* pOutput : bufferedOutputs_)
-         if (!pOutput->empty())
+      for (auto&& entry : bufferedOutputs_)
+      {
+         if (!entry.second.empty())
+         {
             return true;
+         }
+      }
       
       return false;
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
    
    // keep compiler happy
    return false;
@@ -345,19 +291,21 @@ void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
       // clear pending events
       pendingEvents_.clear();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
 }
 
 void ClientEventQueue::clear()
 {
    LOCK_MUTEX(*pMutex_)
    {
-      for (BufferedOutput* pOutput : bufferedOutputs_)
-         pOutput->clear();
+      for (auto&& entry : bufferedOutputs_)
+      {
+         entry.second.clear();
+      }
       
       pendingEvents_.clear();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
 }
   
    
@@ -390,7 +338,7 @@ bool ClientEventQueue::eventAddedSince(const boost::posix_time::ptime& time)
       else
          return lastEventAddTime_ >= time;
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
    
    // keep compiler happy
    return false;
@@ -402,7 +350,7 @@ void ClientEventQueue::flush()
    {
       flushAllBufferedOutput();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
 }
 
 void ClientEventQueue::flushAllBufferedOutput()
@@ -412,56 +360,70 @@ void ClientEventQueue::flushAllBufferedOutput()
    // NOTE: Order shouldn't matter here as long as we ensure that
    // stdout is flushed whenever stderr is received, and vice versa.
    // This happens as events are received so we should be safe.
-   for (BufferedOutput* pOutput : bufferedOutputs_)
-      flushBufferedOutput(pOutput);
+   for (auto&& entry : bufferedOutputs_)
+   {
+      flushBufferedOutput(entry.first, &entry.second);
+   }
 }
 
-void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
+void ClientEventQueue::flushAllBufferedOutputExcept(int event)
 {
    // NOTE: Private helper so no lock required (mutex is not recursive)
-   if (pBuffer->empty())
+   //
+   // NOTE: Order shouldn't matter here as long as we ensure that
+   // stdout is flushed whenever stderr is received, and vice versa.
+   // This happens as events are received so we should be safe.
+   for (auto&& entry : bufferedOutputs_)
+   {
+      if (entry.first != event)
+      {
+         flushBufferedOutput(entry.first, &entry.second);
+      }
+   }
+}
+
+void ClientEventQueue::flushBufferedOutput(int event, std::string* pOutput)
+{
+   // NOTE: Private helper so no lock required (mutex is not recursive)
+   if (pOutput->empty())
       return;
    
-   int event = pBuffer->event();
-   std::string output = pBuffer->output();
-   if (pBuffer->useConsoleActionLimit())
+   if (isConsoleOutputEvent(event))
    {
       int limit = r::session::consoleActions().capacity() + 1;
-      string_utils::trimLeadingLines(limit, &output);
+      string_utils::trimLeadingLines(limit, pOutput);
    }
 
-   annotateOutput(event, &output);
-   
-   if (event == client_events::kConsoleWriteOutput ||
-       event == client_events::kConsoleWriteError)
+   annotateOutput(event, pOutput);
+
+   if (isConsoleOutputEvent(event))
    {
-      // fire events
-      auto type = (event == client_events::kConsoleWriteOutput)
-            ? module_context::ConsoleOutputNormal
-            : module_context::ConsoleOutputError;
-
-      module_context::events().onConsoleOutput(type, output);
-
-      // add to console actions
       if (event == client_events::kConsoleWriteOutput)
       {
-         r::session::consoleActions().add(kConsoleActionOutput, output);
+         auto type = module_context::ConsoleOutputNormal;
+         module_context::events().onConsoleOutput(type, *pOutput);
+         r::session::consoleActions().add(kConsoleActionOutput, *pOutput);
       }
-      else if (event == client_events::kConsoleWriteError)
+      else
       {
-         r::session::consoleActions().add(kConsoleActionOutputError, output);
+         auto type = module_context::ConsoleOutputError;
+         module_context::events().onConsoleOutput(type, *pOutput);
+         r::session::consoleActions().add(kConsoleActionOutputError, *pOutput);
       }
 
       // send client event
       json::Object payload;
-      payload[kConsoleText] = output;
+      payload[kConsoleText] = *pOutput;
       payload[kConsoleId]   = activeConsole_;
-      pendingEvents_.push_back(ClientEvent(event, payload));
+      int normalizedEvent = (event == client_events::kConsoleWriteOutput)
+            ? client_events::kConsoleWriteOutput
+            : client_events::kConsoleWriteError;
+      pendingEvents_.push_back(ClientEvent(normalizedEvent, payload));
    }
    else if (event == client_events::kBuildOutput)
    {
       using namespace module_context;
-      CompileOutput compileOutput(kCompileOutputNormal, output);
+      CompileOutput compileOutput(kCompileOutputNormal, *pOutput);
       json::Object payload = compileOutputAsJson(compileOutput);
       pendingEvents_.push_back(ClientEvent(event, payload));
    }
@@ -470,7 +432,7 @@ void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
       ELOGF("internal error: don't know how to flush buffer for event '{}'", event);
    }
    
-   pBuffer->clear();
+   pOutput->clear();
 }
 
 } // namespace session

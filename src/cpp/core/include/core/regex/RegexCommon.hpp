@@ -17,10 +17,12 @@
 #define CORE_REGEX_REGEX_COMMON_HPP
 
 #include <string>
+#include <iostream>
 
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 
+#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
 

@@ -215,6 +215,8 @@ extern const int kSuspendBlocked;
 extern const int kClipboardAction;
 extern const int kDeploymentRecordsUpdated;
 extern const int kRunAutomation;
+extern const int kConsoleWritePendingError;
+extern const int kConsoleWritePendingWarning;
 
 }
    

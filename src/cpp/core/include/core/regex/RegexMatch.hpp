@@ -17,7 +17,6 @@
 #define CORE_REGEX_REGEX_MATCH_HPP
 
 #include <string>
-#include <iostream>
 
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
@@ -31,7 +30,6 @@
 namespace rstudio {
 namespace core {
 namespace regex_utils {
-
 
 template <class IteratorType, class MatchType, class PatternType>
 bool match(IteratorType begin,

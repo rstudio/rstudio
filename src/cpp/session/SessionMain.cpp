@@ -619,6 +619,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // r utils
       (r_utils::initialize)
 
+      // console output
+      (console_output::initialize)
+
       // suspend timeout
       (suspend::initialize)
 
@@ -850,9 +853,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // setup fork handlers
    main_process::setupForkHandlers();
 
-   // setup extra handlers for client event queue
-   rsession::finishInitializeClientEventQueue();
-
    // success!
    return Success();
 }
@@ -1016,6 +1016,8 @@ void rBusy(bool busy)
    if (busy && !console_input::executing())
       return;
 
+   module_context::events().onBusy(busy);
+
    ClientEvent busyEvent(kBusy, busy);
    rsession::clientEventQueue().add(busyEvent);
 }
@@ -1025,7 +1027,39 @@ void rConsoleWrite(const std::string& output, int otype)
    if (main_process::wasForked())
       return;
 
-   int event = otype == 1 ? kConsoleWriteError : kConsoleWriteOutput;
+   using namespace console_output;
+
+   // simulate latency for development builds
+#ifndef RSTUDIO_PACKAGE_BUILD
+   console_output::simulateLatency();
+#endif
+
+   // notify listeners
+   auto type = (otype == 1)
+         ? module_context::ConsoleOutputNormal
+         : module_context::ConsoleOutputError;
+   module_context::events().onConsoleOutputReceived(type, output);
+
+   // add to event queue
+   int event;
+
+   switch (getPendingOutputType())
+   {
+
+   case rstudio::session::console_output::PendingOutputTypeError:
+      event = kConsoleWritePendingError;
+      break;
+
+   case rstudio::session::console_output::PendingOutputTypeWarning:
+      event = kConsoleWritePendingWarning;
+      break;
+
+   default:
+      event = (otype == 1) ? kConsoleWriteError : kConsoleWriteOutput;
+      break;
+
+   }
+
    ClientEvent writeEvent(event, output);
    rsession::clientEventQueue().add(writeEvent);
 }

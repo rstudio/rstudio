@@ -32,7 +32,6 @@ namespace session {
    
 // initialization
 void initializeClientEventQueue();
-void finishInitializeClientEventQueue();
 
 // singleton
 class ClientEventQueue;
@@ -43,30 +42,6 @@ class ClientEventQueue : boost::noncopyable
 private:
    ClientEventQueue();
    friend void initializeClientEventQueue();
-   
-   class BufferedOutput : boost::noncopyable
-   {
-      
-   public:
-      BufferedOutput(int event, bool useConsoleActionLimit)
-         : event_(event),
-           useConsoleActionLimit_(useConsoleActionLimit)
-      {
-      }
-      
-      const std::string& output() const { return output_; }
-      int event() const { return event_; }
-      bool useConsoleActionLimit() const { return useConsoleActionLimit_; }
-
-      void append(const std::string& data) { output_ += data; }
-      void clear() { output_.clear(); }
-      bool empty() const { return output_.empty(); }
-      
-   private:
-      int event_;
-      std::string output_;
-      bool useConsoleActionLimit_;
-   };
    
 public:
    // COPYING: boost::noncopyable
@@ -96,16 +71,14 @@ public:
    // annotate output
    void annotateOutput(int event, std::string* pOutput);
 
-   // inform the event queue that error output is pending
-   void setErrorOutputPending();
-
    // flush any buffered output
    void flush();
 
 private:
 
    void flushAllBufferedOutput();
-   void flushBufferedOutput(BufferedOutput* pOutput);
+   void flushAllBufferedOutputExcept(int event);
+   void flushBufferedOutput(int type, std::string* pOutput);
  
 private:
    // synchronization objects. heap based so they are never destructed
@@ -120,17 +93,10 @@ private:
    std::string activeConsole_;
    std::vector<ClientEvent> pendingEvents_;
    boost::posix_time::ptime lastEventAddTime_;
-   bool errorOutputPending_ = false;
 
    // buffered outputs (required for parts that might overflow)
-   BufferedOutput consoleOutput_;
-   BufferedOutput consoleErrors_;
-   BufferedOutput buildOutput_;
-   
-   // keep vector of pointers to buffered outputs, just to make
-   // iteration easier in places where we need to flush all buffers
-   std::vector<BufferedOutput*> bufferedOutputs_;
-
+   // maps event types to their collected outputs
+   std::map<int, std::string> bufferedOutputs_;
 };
 
 } // namespace session

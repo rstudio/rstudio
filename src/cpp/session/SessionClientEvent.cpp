@@ -214,6 +214,8 @@ const int kSuspendBlocked = 196;
 const int kClipboardAction = 197;
 const int kDeploymentRecordsUpdated = 198;
 const int kRunAutomation = 199;
+const int kConsoleWritePendingError = 200;
+const int kConsoleWritePendingWarning = 201;
 
 }
 
@@ -598,6 +600,10 @@ std::string ClientEvent::typeName() const
          return "deployment_records_updated";
       case client_events::kRunAutomation:
          return "run_automation";
+      case client_events::kConsoleWritePendingError:
+         return "console_write_pending_error";
+      case client_events::kConsoleWritePendingWarning:
+         return "console_write_pending_warning";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
