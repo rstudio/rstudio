@@ -80,44 +80,72 @@ namespace {
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
 std::map<std::string, std::string> s_extToLanguageIdMap = {
+   { ".abap",  "abap" },
    { ".bash",  "shellscript" },
    { ".bat",   "bat" },
+   { ".bib",   "bibtex" },
    { ".c",     "c" },
    { ".cc",    "cpp" },
+   { ".clj",   "clojure"},
+   { ".coffee","coffeescript" },
    { ".cpp",   "cpp" },
    { ".cs",    "csharp" },
    { ".css",   "css" },
+   { ".dart",  "dart" },
+   { ".diff",  "diff" },
+// { "",       "dockerfile" }, (special handling due to lack of extension)
    { ".erl",   "erlang" },
+   { ".etx",   "tex" },
+   { ".ex",    "elixir" },
+   { ".fs",    "fsharp" },
    { ".go",    "go" },
+   { ".groovy","groovy" },
    { ".h",     "c" },
+   { ".hbs",   "handlebars" },
    { ".hpp",   "cpp" },
    { ".html",  "html" },
    { ".ini",   "ini" },
+   { ".jade",  "jade" },
    { ".java",  "java" },
    { ".js",    "javascript" },
    { ".jsx",   "javascriptreact" },
    { ".json",  "json" },
+   { ".less",  "less" },
+   { ".lua",   "lua" },
+   { ".m",     "objective-c" },
    { ".md",    "markdown" },
    { ".mjs",   "javascript" },
    { ".ps",    "powershell" },
+   { ".mk",    "makefile" }, // (special handling for extensionless "makefile" / "Makefile")
+   { ".mm",    "objective-cpp" },
+   { ".php",   "php" },
+   { ".pl",    "perl" },
+   { ".pl6",   "perl6" },
+   { ".pug",   "jade" },
    { ".py",    "python" },
    { ".qmd",   "quarto" },
    { ".r",     "r" },
+   { ".razor", "razor" },
    { ".rb",    "ruby" },
    { ".rmd",   "r" },
    { ".rnb",   "r" },
    { ".rnw",   "r" },
    { ".rs",    "rust" },
+   { ".sass",  "sass" },
    { ".sc",    "scala" },
    { ".scala", "scala" },
    { ".scss",  "scss" },
    { ".sh",    "shellscript" },
+   { ".shader","shaderlab" },
    { ".sql",   "sql" },
    { ".swift", "swift" },
    { ".tex",   "latex" },
    { ".toml",  "toml" },
    { ".ts",    "typescript" },
    { ".tsx",   "typescriptreact" },
+   { ".vb",    "vb" },
+   { ".xml",   "xml" },
+   { ".xsl",   "xsl" },
    { ".yml",   "yaml" },
 };
 
@@ -282,7 +310,16 @@ bool isIndexableFile(const FilePath& documentPath)
    std::string ext = documentPath.getExtensionLowerCase();
    if (ext == ".rproj")
       return false;
- 
+
+   // Handle Dockerfile with any extension (including none, the most common)
+   std::string stem = documentPath.getStem();
+   if (stem == "Dockerfile")
+      return true;
+
+   // Handle extensionless Makefile / makefile
+   if (name == "Makefile" || name == "makefile")
+      return true;
+
    // TODO: Do we want to also allow indexing of 'data' file types?
    // We previously used module_context::isTextFile(), but because this
    // relies on invoking /usr/bin/file, this can be dreadfully slow if
@@ -441,9 +478,10 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
 
    FilePath docPath(pDoc->path());
    std::string name = docPath.getFilename();
-   if (name == "Makefile")
+   std::string stem = docPath.getStem();
+   if (name == "Makefile" || name == "makefile")
       return "makefile";
-   else if (name == "Dockerfile")
+   else if (stem == "Dockerfile")
       return "dockerfile";
    
    return boost::algorithm::to_lower_copy(pDoc->type());
@@ -1208,11 +1246,12 @@ void onBackgroundProcessing(bool isIdle)
          continue;
       }
 
-      // Check if this is a 'LogMessage' response.
+      // Handle various notifications
       json::Value methodJson = responseJson["method"];
+      std::string method;
       if (methodJson.isString())
       {
-         std::string method = methodJson.getString();
+         method = methodJson.getString();
          if (method == "LogMessage" || method == "window/logMessage")
          {
             json::Value paramsJson = responseJson["params"];
@@ -1227,6 +1266,75 @@ void onBackgroundProcessing(bool isIdle)
             }
             continue;
          }
+         else if (method == "window/showMessageRequest")
+         {
+            std::string message = "undetermined";
+            std::string type = "Error"; // assume the worst
+
+            json::Value paramsJson = responseJson["params"];
+            if (paramsJson.isObject())
+            {
+               json::Object params = paramsJson.getObject();
+               json::Value messageJson = params["message"];
+               json::Value typeJson = params["type"];
+
+               if (messageJson.isString())
+               {
+                  message = messageJson.getString();
+               }
+               if (typeJson.isInt())
+               {
+                  int typeInt = typeJson.getInt();
+                  if (typeInt == 1)
+                     type = "Error";
+                  else if (typeInt == 2)
+                     type = "Warning";
+                  else if (typeInt == 3)
+                     type = "Info";
+                  else if (typeInt == 4)
+                     type = "Log";
+                  else if (typeInt == 5)
+                     type = "Debug";
+               }
+            }
+
+            if (boost::iequals(type, "Error") ||
+                boost::iequals(type, "Warning") ||
+                boost::iequals(type, "Info"))
+            {
+               std::string title = "GitHub Copilot";
+               module_context::showErrorMessage(title, message);
+            }
+            else // Log, Debug, or unknown
+            {
+               DLOG("showMessageRequest ({}): '{}'", type, message);
+            }
+            continue;
+         }
+         else if (method == "didChangeStatus")
+         {
+            json::Value paramsJson = responseJson["params"];
+            if (paramsJson.isObject())
+            {
+               std::string message;
+               std::string kind;
+
+               json::Object params = paramsJson.getObject();
+               json::Value messageJson = params["message"];
+               if (messageJson.isString())
+                  message = messageJson.getString();
+
+               json::Value kindJson = params["kind"];
+               if (kindJson.isString())
+                  kind = kindJson.getString();
+
+                if (boost::iequals(kind, "Error"))
+                  ELOG("didChangeStatus: '{}'", message);
+                else if (boost::iequals(kind, "Warning") || boost::iequals(kind, "Inactive"))
+                  WLOG("didChangeStatus: '{}'", message);
+            }
+            continue;
+         }
       }
 
       // Check the response id. This will be missing for notifications; we may receive
@@ -1235,7 +1343,15 @@ void onBackgroundProcessing(bool isIdle)
       json::Value requestIdJson = responseJson["id"];
       if (!requestIdJson.isString())
       {
-         DLOG("Ignoring response with missing id.");
+         if (method.empty())
+         {
+            DLOG("Ignoring response with missing id.");
+            continue;
+         }
+         else
+         {
+            DLOG("Ignoring notification, method='{}'.", method);
+         }
          continue;
       }
 
