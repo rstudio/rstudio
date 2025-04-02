@@ -165,17 +165,17 @@ void setPendingOutputType(PendingOutputType type)
    s_pendingOutputType = type;
 }
 
-const boost::regex& reErrorPrefix()
+boost::regex reErrorPrefix()
 {
    return s_reErrorPrefix;
 }
 
-const boost::regex& reWarningPrefix()
+boost::regex reWarningPrefix()
 {
    return s_reWarningPrefix;
 }
 
-const boost::regex& reInAdditionPrefix()
+boost::regex reInAdditionPrefix()
 {
    return s_reInAdditionPrefix;
 }

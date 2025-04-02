@@ -20,4 +20,4 @@ cmake ../cpp                                                \
     "$@"
 cd ..
 
-cmake --build "${BUILD_DIR}" -- "${MAKEFLAGS}"
+cmake --build "${BUILD_DIR}"

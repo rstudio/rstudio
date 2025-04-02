@@ -36,9 +36,9 @@ enum PendingOutputType {
 PendingOutputType getPendingOutputType();
 void setPendingOutputType(PendingOutputType type);
 
-const boost::regex& reErrorPrefix();
-const boost::regex& reWarningPrefix();
-const boost::regex& reInAdditionPrefix();
+boost::regex reErrorPrefix();
+boost::regex reWarningPrefix();
+boost::regex reInAdditionPrefix();
 
 bool isErrorAnnotationEnabled();
 bool isWarningAnnotationEnabled();
