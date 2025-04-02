@@ -49,6 +49,7 @@
 }
 
 .rstudio-themes-default .message {
+	font-weight: bold;
 }
 
 
@@ -95,5 +96,6 @@
 }
 
 .rstudio-themes-dark .message {
+	font-weight: bold;
 }
 
