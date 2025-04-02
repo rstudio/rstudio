@@ -436,6 +436,7 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorSuggestion "suggestion"
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
+#define kCopilotShowMessages "copilot_show_messages"
 #define kProjectName "project_name"
 #define kRunBackgroundJobDefaultWorkingDir "run_background_job_default_working_dir"
 #define kRunBackgroundJobDefaultWorkingDirProject "project"
@@ -1993,6 +1994,12 @@ public:
     */
    bool copilotIndexingEnabled();
    core::Error setCopilotIndexingEnabled(bool val);
+
+   /**
+    * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
+    */
+   bool copilotShowMessages();
+   core::Error setCopilotShowMessages(bool val);
 
    /**
     * User-provided name for the currently opened R project.

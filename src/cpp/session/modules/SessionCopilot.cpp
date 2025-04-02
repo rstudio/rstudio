@@ -1302,8 +1302,10 @@ void onBackgroundProcessing(bool isIdle)
                 boost::iequals(type, "Warning") ||
                 boost::iequals(type, "Info"))
             {
-               std::string title = "GitHub Copilot";
-               module_context::showErrorMessage(title, message);
+               if (prefs::userPrefs().copilotShowMessages())
+                  module_context::showErrorMessage("GitHub Copilot", message);
+               else
+                  ELOG("showMessageRequest ({}): '{}'", type, message);
             }
             else // Log, Debug, or unknown
             {
