@@ -845,6 +845,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       rsession::persistentState().setAbend(true);
    }
 
+   // set spark user agent if unset
+   std::string sparkUserAgent = core::system::getenv("SPARK_CONNECT_USER_AGENT");
+   if (sparkUserAgent.empty())
+      core::system::setenv("SPARK_CONNECT_USER_AGENT", "posit-rstudio");
+
    // begin session
    using namespace module_context;
    activeSession().beginSession(rVersion(), rHomeDir(), rVersionLabel());
