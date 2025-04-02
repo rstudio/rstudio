@@ -478,9 +478,10 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
 
    FilePath docPath(pDoc->path());
    std::string name = docPath.getFilename();
+   std::string stem = docPath.getStem();
    if (name == "Makefile" || name == "makefile")
       return "makefile";
-   else if (name == "Dockerfile")
+   else if (stem == "Dockerfile")
       return "dockerfile";
    
    return boost::algorithm::to_lower_copy(pDoc->type());
