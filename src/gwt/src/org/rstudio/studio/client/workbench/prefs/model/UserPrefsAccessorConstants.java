@@ -2142,6 +2142,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotIndexingEnabledDescription();
 
    /**
+    * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
+    */
+   @DefaultStringValue("Display account and billing messages from GitHub Copilot")
+   String copilotShowMessagesTitle();
+   @DefaultStringValue("When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.")
+   String copilotShowMessagesDescription();
+
+   /**
     * User-provided name for the currently opened R project.
     */
    @DefaultStringValue("")

@@ -3352,6 +3352,19 @@ core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
 }
 
 /**
+ * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
+ */
+bool UserPrefValues::copilotShowMessages()
+{
+   return readPref<bool>("copilot_show_messages");
+}
+
+core::Error UserPrefValues::setCopilotShowMessages(bool val)
+{
+   return writePref("copilot_show_messages", val);
+}
+
+/**
  * User-provided name for the currently opened R project.
  */
 std::string UserPrefValues::projectName()
@@ -3714,6 +3727,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotCompletionsDelay,
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,
+      kCopilotShowMessages,
       kProjectName,
       kRunBackgroundJobDefaultWorkingDir,
       kCodeFormatter,

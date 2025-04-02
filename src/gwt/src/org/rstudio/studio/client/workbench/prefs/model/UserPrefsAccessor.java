@@ -3665,6 +3665,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
+    */
+   public PrefValue<Boolean> copilotShowMessages()
+   {
+      return bool(
+         "copilot_show_messages",
+         _constants.copilotShowMessagesTitle(), 
+         _constants.copilotShowMessagesDescription(), 
+         true);
+   }
+
+   /**
     * User-provided name for the currently opened R project.
     */
    public PrefValue<String> projectName()
@@ -4316,6 +4328,8 @@ public class UserPrefsAccessor extends Prefs
          copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
       if (source.hasKey("copilot_indexing_enabled"))
          copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
+      if (source.hasKey("copilot_show_messages"))
+         copilotShowMessages().setValue(layer, source.getBool("copilot_show_messages"));
       if (source.hasKey("project_name"))
          projectName().setValue(layer, source.getString("project_name"));
       if (source.hasKey("run_background_job_default_working_dir"))
@@ -4592,6 +4606,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotCompletionsDelay());
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
+      prefs.add(copilotShowMessages());
       prefs.add(projectName());
       prefs.add(runBackgroundJobDefaultWorkingDir());
       prefs.add(codeFormatter());

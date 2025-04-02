@@ -2383,6 +2383,16 @@
    clear = function() { .rs.clearUserPref("copilot_indexing_enabled") }
 )
 
+# Display account and billing messages from GitHub Copilot
+#
+# When enabled, RStudio will show account and billing messages from GitHub
+# Copilot in a message box.
+.rs.uiPrefs$copilotShowMessages <- list(
+   get = function() { .rs.getUserPref("copilot_show_messages") },
+   set = function(value) { .rs.setUserPref("copilot_show_messages", value) },
+   clear = function() { .rs.clearUserPref("copilot_show_messages") }
+)
+
 # 
 #
 # User-provided name for the currently opened R project.

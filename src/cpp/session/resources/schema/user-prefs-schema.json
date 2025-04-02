@@ -1741,6 +1741,12 @@
             "title": "Index project files with GitHub Copilot",
             "description": "When enabled, RStudio will index project files with GitHub Copilot."
         },
+        "copilot_show_messages": {
+            "type": "boolean",
+            "default": true,
+            "title": "Display account and billing messages from GitHub Copilot",
+            "description": "When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box."
+        },
         "project_name": {
             "description": "User-provided name for the currently opened R project.",
             "type": "string",
