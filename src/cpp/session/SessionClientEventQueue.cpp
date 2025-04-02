@@ -21,6 +21,7 @@
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
 #include <core/StringUtils.hpp>
+#include <core/regex/RegexDebug.hpp>
 
 #include <r/RExec.hpp>
 
@@ -32,8 +33,6 @@
 #include "SessionHttpMethods.hpp"
 #include "modules/SessionConsole.hpp"
 
-
-#define kNeverMatch "^(?!)$"
 
 using namespace rstudio::core;
 
@@ -67,6 +66,7 @@ ClientEventQueue::ClientEventQueue()
 bool ClientEventQueue::setActiveConsole(const std::string& console)
 {
    bool changed = false;
+
    LOCK_MUTEX(*pMutex_)
    {
       if (activeConsole_ != console)
@@ -79,7 +79,8 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
          changed = true;
       }
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
+
    return changed;
 }
 
@@ -99,7 +100,7 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
    using namespace console_output;
 
    boost::smatch match;
-   if (boost::regex_search(*pOutput, match, reErrorPrefix()))
+   if (regex_utils::search(*pOutput, match, reErrorPrefix()))
    {
       // Insert highlight markers around 'Error'.
       // Note that, because the word may have been translated, we just look
@@ -123,7 +124,7 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
       // Try to detect this case, and split the outputs.
       auto searchBegin = pOutput->cbegin() + matchEnd;
       auto searchEnd = pOutput->cend();
-      if (boost::regex_search(searchBegin, searchEnd, match, reInAdditionPrefix()))
+      if (regex_utils::search(searchBegin, searchEnd, match, reInAdditionPrefix()))
       {
          auto index = match[0].begin() - pOutput->begin();
          pOutput->insert(index, kAnsiEscapeGroupEnd kAnsiEscapeGroupStartWarning);
@@ -144,7 +145,7 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
    using namespace console_output;
 
    boost::smatch match;
-   if (boost::regex_search(*pOutput, match, reWarningPrefix()))
+   if (regex_utils::search(*pOutput, match, reWarningPrefix()))
    {
       pOutput->insert(match[0].first - pOutput->begin(), kAnsiEscapeGroupStartWarning);
       pOutput->append(kAnsiEscapeGroupEnd);
@@ -246,7 +247,7 @@ void ClientEventQueue::add(const ClientEvent& event)
       
       lastEventAddTime_ = boost::posix_time::microsec_clock::universal_time();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
    
    // notify listeners that an event has been added
    pWaitForEventCondition_->notify_all();
@@ -290,7 +291,7 @@ void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
       // clear pending events
       pendingEvents_.clear();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
 }
 
 void ClientEventQueue::clear()
@@ -304,7 +305,7 @@ void ClientEventQueue::clear()
       
       pendingEvents_.clear();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
 }
   
    
@@ -337,7 +338,7 @@ bool ClientEventQueue::eventAddedSince(const boost::posix_time::ptime& time)
       else
          return lastEventAddTime_ >= time;
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
    
    // keep compiler happy
    return false;
@@ -349,7 +350,7 @@ void ClientEventQueue::flush()
    {
       flushAllBufferedOutput();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX;
 }
 
 void ClientEventQueue::flushAllBufferedOutput()

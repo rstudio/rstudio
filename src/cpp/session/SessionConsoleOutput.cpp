@@ -16,6 +16,8 @@
 
 #include <boost/regex.hpp>
 
+#include <core/regex/RegexDebug.hpp>
+
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
