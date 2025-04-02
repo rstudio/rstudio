@@ -1265,6 +1265,75 @@ void onBackgroundProcessing(bool isIdle)
             }
             continue;
          }
+         else if (method == "window/showMessageRequest")
+         {
+            std::string message = "undetermined";
+            std::string type = "Error"; // assume the worst
+
+            json::Value paramsJson = responseJson["params"];
+            if (paramsJson.isObject())
+            {
+               json::Object params = paramsJson.getObject();
+               json::Value messageJson = params["message"];
+               json::Value typeJson = params["type"];
+
+               if (messageJson.isString())
+               {
+                  message = messageJson.getString();
+               }
+               if (typeJson.isInt())
+               {
+                  int typeInt = typeJson.getInt();
+                  if (typeInt == 1)
+                     type = "Error";
+                  else if (typeInt == 2)
+                     type = "Warning";
+                  else if (typeInt == 3)
+                     type = "Info";
+                  else if (typeInt == 4)
+                     type = "Log";
+                  else if (typeInt == 5)
+                     type = "Debug";
+               }
+            }
+
+            if (boost::iequals(type, "Error") ||
+                boost::iequals(type, "Warning") ||
+                boost::iequals(type, "Info"))
+            {
+               std::string title = "GitHub Copilot";
+               module_context::showErrorMessage(title, message);
+            }
+            else // Log, Debug, or unknown
+            {
+               DLOG("showMessageRequest ({}): '{}'", type, message);
+            }
+            continue;
+         }
+         else if (method == "didChangeStatus")
+         {
+            json::Value paramsJson = responseJson["params"];
+            if (paramsJson.isObject())
+            {
+               std::string message;
+               std::string kind;
+
+               json::Object params = paramsJson.getObject();
+               json::Value messageJson = params["message"];
+               if (messageJson.isString())
+                  message = messageJson.getString();
+
+               json::Value kindJson = params["kind"];
+               if (kindJson.isString())
+                  kind = kindJson.getString();
+
+                if (boost::iequals(kind, "Error"))
+                  ELOG("didChangeStatus: '{}'", message);
+                else if (boost::iequals(kind, "Warning") || boost::iequals(kind, "Inactive"))
+                  WLOG("didChangeStatus: '{}'", message);
+            }
+            continue;
+         }
       }
 
       // Check the response id. This will be missing for notifications; we may receive
