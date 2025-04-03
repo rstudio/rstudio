@@ -21,7 +21,7 @@ boolean hasChangesIn(String module, boolean invertMatch = false, boolean useRege
   * Adds a remote reference to the specified branch.
   */
 void addRemoteRef(String branchName) {
-  withCredentials([gitUsernamePassword(credentialsId: 'posit-jenkins', gitToolName: 'Default')]) {
+  withCredentials([gitUsernamePassword(credentialsId: 'posit-jenkins-rstudio', gitToolName: 'Default')]) {
     sh "git config --add remote.origin.fetch +refs/heads/${branchName}:refs/remotes/origin/${branchName}"
     sh "git fetch --no-tags --force --progress ${GIT_URL} refs/heads/${branchName}:refs/remotes/origin/${branchName}"
   }
@@ -382,7 +382,7 @@ def checkRunsRequestWithRetry(String method, String payload = "", String url = p
   def response = checkRunsRequest(method, payload, url)
   if (response.status == 401) {
     echo "Received 401 response. Retrying with new token."
-    GITHUB_LOGIN = credentials('posit-jenkins')
+    GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
     response = checkRunsRequest(method, payload, url)
   }
   return response

@@ -132,7 +132,7 @@ pipeline {
             }
 
             environment {
-              GITHUB_LOGIN = credentials('posit-jenkins')
+              GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
               DOCKER_TAG = utils.getDockerTag()
               DOCKER_FILE = "docker/jenkins/Dockerfile.${env.os}"
             }

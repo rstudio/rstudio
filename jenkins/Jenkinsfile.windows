@@ -51,7 +51,7 @@ pipeline {
             checkout([$class: 'GitSCM',
               branches: [[name: params.COMMIT_HASH]],
               extensions: [],
-              userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: GIT_URL]]])
+              userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
           }
         }
 
@@ -123,7 +123,7 @@ pipeline {
             checkout([$class: 'GitSCM',
               branches: [[name: params.COMMIT_HASH]],
               extensions: [],
-              userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: GIT_URL]]])
+              userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
           }
         }
 
@@ -224,7 +224,7 @@ pipeline {
 
             stage ('Publish') {
               environment {
-                GITHUB_LOGIN = credentials('posit-jenkins')
+                GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
                 PRODUCT = "${utils.getProductName()}"
                 // This is being done to make the variables visible to the powershell call
                 VERSION = "${RSTUDIO_VERSION}"
