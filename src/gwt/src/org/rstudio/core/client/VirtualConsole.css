@@ -10,8 +10,8 @@
 /* Light themes */
 
 @def LIGHT_BACKGROUND_COLOR rgba(0, 0, 0, 0.08);
-@def LIGHT_ERROR_COLOR      #FF0000;
-@def LIGHT_WARNING_COLOR    #E04F00;
+@def LIGHT_ERROR_COLOR      #BB0000;
+@def LIGHT_WARNING_COLOR    #8B4513;
 @def LIGHT_MESSAGE_COLOR    #7AA8D7;
 
 .rstudio-themes-default .ace_console_error .group {
@@ -58,7 +58,7 @@
 
 @def DARK_BACKGROUND_COLOR rgba(255, 255, 255, 0.1);
 @def DARK_ERROR_COLOR      #FF8000;
-@def DARK_WARNING_COLOR    #FFDD22;
+@def DARK_WARNING_COLOR    #E5C515;
 @def DARK_MESSAGE_COLOR    #7AA8D7;
 
 .rstudio-themes-dark .ace_console_error .group {
