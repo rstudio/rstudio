@@ -48,6 +48,7 @@
 - Fixed an issue where .bib files with extra commas could be treated as binary files on RHEL9. (rstudio-pro/7521)
 - Update NO_PROXY domain filter to be less restrictive and allow for expressions like `.local` and `.sub.example.local` (#15607)
 - Fixed an issue where Copilot support on Apple Silicon Macs was running via Rosetta2 instead of natively. (#14156)
+- Fixed an issue where the Copilot process was being started twice per RStudio session. (#15858))
 - Fixed an issue where documents could open very slowly when many tabs were already open. (#15767)
 - Fixed an issue where the download of Rtools44 could fail when using Posit Package Manager as the default R package repository. (#15803)
 - Fixed an issue where messages produced by `rlang::inform()` were not separated by newlines.
