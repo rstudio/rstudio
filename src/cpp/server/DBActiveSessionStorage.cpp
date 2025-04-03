@@ -96,10 +96,14 @@ std::string getValueString(const std::map<std::string, std::string>& sourceMap)
 std::string getUpdateStringAndValues(const std::map<std::string, std::string>& sourceMap,
                                      std::vector<std::string>* pNames, std::vector<std::string>* pValues)
 {
+   std::string firstPropName(sourceMap.begin()->first);
+   (*pNames).push_back(firstPropName);
+   (*pValues).push_back(std::string(sourceMap.begin()->second));
+
    std::string setValuesString = std::accumulate(
       ++sourceMap.begin(),
       sourceMap.end(),
-      columnName(sourceMap.begin()->first) + " = '" + sourceMap.begin()->second + "'",
+      columnName(firstPropName) + " = :" + columnName(firstPropName) + " ",
       [pNames, pValues](std::string a, std::pair<std::string, std::string> iter)
       {         
          (*pNames).push_back(std::string(iter.first));
