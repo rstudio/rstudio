@@ -230,6 +230,7 @@ enum class CopilotAgentNotRunningReason {
 
 enum class CopilotAgentRuntimeStatus {
    Unknown,
+   Preparing,
    Starting,
    Running,
    Stopping,
@@ -900,6 +901,14 @@ void stopAgent()
 
 Error startAgent()
 {
+   if (s_agentRuntimeStatus != CopilotAgentRuntimeStatus::Unknown &&
+       s_agentRuntimeStatus != CopilotAgentRuntimeStatus::Stopped)
+   {
+      return Success();
+   }
+
+   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Preparing;
+
    Error error;
 
    // Create environment for agent process
@@ -974,13 +983,9 @@ Error startAgent()
 
    // Wait for the process to start.
    //
-   // TODO: This is kind of a hack. We should probably instead use something like a
-   // status flag that tracks if the agent is stopped, starting, or already running.
-   //
    // We include this because all requests will fail if we haven't yet called
    // initialized, so maybe the right approach is to have some sort of 'ensureInitialized'
    // method?
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
    s_agentStartupError = std::string();
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
