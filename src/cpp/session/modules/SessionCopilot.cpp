@@ -891,6 +891,7 @@ void stopAgent()
    if (s_agentPid == -1)
    {
       //DLOG("No agent running; nothing to do.");
+      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
       return;
    }
 
