@@ -978,7 +978,10 @@ Error startAgent()
    }
    
    if (error)
+   {
+      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
       return error;
+   }
    
 
    // Wait for the process to start.
@@ -989,7 +992,10 @@ Error startAgent()
    s_agentStartupError = std::string();
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
+   {
+      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
+   }
    
    // Send an initialize request to the agent.
    json::Object clientInfoJson;
@@ -1011,6 +1017,7 @@ Error startAgent()
    {
       if (error)
       {
+         s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
          LOG_ERROR(error);
          return;
       }
