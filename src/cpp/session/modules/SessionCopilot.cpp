@@ -1105,26 +1105,6 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    return error == Success();
 }
 
-void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (!ensureAgentRunning())
-      return;
-   
-   if (!isIndexableDocument(pDoc))
-      return;
-   
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocument(pDoc);
-   textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
-   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
-   textDocumentJson["text"] = "";
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didOpen", paramsJson);
-}
-
 std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    std::string contents = pDoc->contents();
@@ -1139,6 +1119,26 @@ std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocume
    }
    
    return contents;
+}
+
+void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (!ensureAgentRunning())
+      return;
+   
+   if (!isIndexableDocument(pDoc))
+      return;
+   
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
+   textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
+   textDocumentJson["text"] = contentsFromDocument(pDoc);
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didOpen", paramsJson);
 }
 
 namespace file_monitor {
