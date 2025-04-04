@@ -19,6 +19,7 @@
 - RStudio now properly displays R Markdown render errors with newer versions of the `rmarkdown` and `rlang` packages. (#15579)
 - An SELinux policy module is now available, allowing Workbench to run when enforcement is enabled. (#4937, rstudio-pro/#4749)
 - Migrated the Posit Workbench Admin Guide Hardening: Set Up SSL content into the Access and Security: Secure Sockets (SSL) topic to promote content discovery and single source of truth. (rstudio-pro#6098)
+- Adds secure browser storage to VS Code and Positron Pro sessions (vscode-server#174)
 - Implemented User and Group profiles for VS Code and Positron Pro sessions (rstudio-pro#7468)
 
 ### Fixed
