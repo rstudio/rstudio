@@ -13,6 +13,7 @@
 - RStudio now supports configuring a Kerberos Service Principal for the GitHub Copilot Language Server proxy settings. (#15823)
 - RStudio now supports installation of Rtools45 for the upcoming R 4.5.0 release on Windows.
 - RStudio now sets the environment variable `SPARK_CONNECT_USER_AGENT = posit-rstudio` in R sessions. (rstudio-pro#7732)
+- RStudio now sets the environment variable `SF_PARTNER = posit_rstudio` in R sessions. (rstudio-pro#7577)
 
 #### Posit Workbench
 - Changed memory limit enforcement of `/etc/rstudio/profiles` `max-memory-mb` setting from limiting virtual memory (`ulimit -v`) to resident memory (`ulimit -m`) for more accuracy. This allows a session to run quarto 1.6, which uses a lot of virtual memory due to its underlying virtual machine. Unfortunately, resident memory is only enforceable at the kernel level in Linux versions that support cgroups. To make up for the loss of kernel enforcement, RStudio warns the user and stops over limit sessions. For more robust kernel enforcement, configure memory limits in the Job Launcher using cgroups (rstudio-pro#5019).

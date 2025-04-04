@@ -850,6 +850,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    if (sparkUserAgent.empty())
       core::system::setenv("SPARK_CONNECT_USER_AGENT", "posit-rstudio");
 
+	// set SF_PARTNER if unset
+	std::string sfPartner = core::system::getenv("SF_PARTNER");
+	if (sfPartner.empty())
+		core::system::setenv("SF_PARTNER", "posit_rstudio");
+
    // begin session
    using namespace module_context;
    activeSession().beginSession(rVersion(), rHomeDir(), rVersionLabel());
