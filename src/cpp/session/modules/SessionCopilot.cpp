@@ -1011,7 +1011,27 @@ Error startAgent()
    paramsJson["processId"] = ::getpid();
    paramsJson["locale"] = prefs::userPrefs().uiLanguage();
    paramsJson["initializationOptions"] = initializationOptionsJson;
-   paramsJson["capabilities"] = json::Object();
+
+   std::string workspaceFolderURI;
+   if (prefs::userPrefs().copilotProjectWorkspace() && projects::projectContext().hasProject())
+   {
+      workspaceFolderURI = uriFromDocumentPath(projects::projectContext().directory().getAbsolutePath());
+   }
+
+   json::Object workspaceJson;
+   workspaceJson["workspaceFolders"] = !workspaceFolderURI.empty();
+   json::Object capabilitiesJson;
+   capabilitiesJson["workspace"] = workspaceJson;
+   paramsJson["capabilities"] = capabilitiesJson;
+
+   if (!workspaceFolderURI.empty())
+   {
+      json::Object workspaceFolderJson;
+      workspaceFolderJson["uri"] = workspaceFolderURI;
+      json::Array workspaceFoldersJsonArray;
+      workspaceFoldersJsonArray.push_back(workspaceFolderJson);
+      paramsJson["workspaceFolders"] = workspaceFoldersJsonArray;
+   }
    
    // set up continuation after we've finished initializing
    auto initializedCallback = [=](const Error& error, json::JsonRpcResponse* pResponse)

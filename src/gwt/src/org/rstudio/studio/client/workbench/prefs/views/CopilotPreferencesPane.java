@@ -82,7 +82,8 @@ public class CopilotPreferencesPane extends PreferencesPane
       RestartRequirement requirement = super.onApply(prefs);
       if (initialCopilotIndexingEnabled_ != prefs.copilotIndexingEnabled().getGlobalValue())
          requirement.setSessionRestartRequired(true);
-      
+      if (initialCopilotWorkspaceEnabled_ != prefs.copilotProjectWorkspace().getGlobalValue())
+         requirement.setSessionRestartRequired(true); 
       return requirement;
    }
    
@@ -142,7 +143,7 @@ public class CopilotPreferencesPane extends PreferencesPane
       cbCopilotEnabled_ = checkboxPref(prefs_.copilotEnabled(), true);
       cbCopilotIndexingEnabled_ = checkboxPref(prefs_.copilotIndexingEnabled(), true);
       cbCopilotShowMessages_ = checkboxPref(prefs_.copilotShowMessages(), true);
-
+      cbCopilotProjectWorkspace_ = checkboxPref(prefs_.copilotProjectWorkspace(), true);
       selCopilotTabKeyBehavior_ = new SelectWidget(
             prefsConstants_.copilotTabKeyBehaviorTitle(),
             new String[] {
@@ -213,6 +214,7 @@ public class CopilotPreferencesPane extends PreferencesPane
 
          add(spacedBefore(headerLabel(constants_.otherCaption())));
          add(cbCopilotShowMessages_);
+         add(cbCopilotProjectWorkspace_);
 
          // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
          // add(selCopilotTabKeyBehavior_);
@@ -453,7 +455,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       initialCopilotIndexingEnabled_ = prefs.copilotIndexingEnabled().getGlobalValue();
-      
+      initialCopilotWorkspaceEnabled_ = prefs.copilotProjectWorkspace().getGlobalValue();
       projectServer_.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
       {
          @Override
@@ -526,6 +528,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    // State
    private String copilotStartupError_;
    private boolean initialCopilotIndexingEnabled_;
+   private boolean initialCopilotWorkspaceEnabled_;
    private RProjectOptions projectOptions_;
  
    // UI
@@ -533,6 +536,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final CheckBox cbCopilotEnabled_;
    private final CheckBox cbCopilotIndexingEnabled_;
    private final CheckBox cbCopilotShowMessages_;
+   private final CheckBox cbCopilotProjectWorkspace_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnShowError_;
    private final SmallButton btnSignIn_;

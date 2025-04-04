@@ -437,6 +437,7 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
 #define kCopilotShowMessages "copilot_show_messages"
+#define kCopilotProjectWorkspace "copilot_project_workspace"
 #define kProjectName "project_name"
 #define kRunBackgroundJobDefaultWorkingDir "run_background_job_default_working_dir"
 #define kRunBackgroundJobDefaultWorkingDirProject "project"
@@ -2000,6 +2001,12 @@ public:
     */
    bool copilotShowMessages();
    core::Error setCopilotShowMessages(bool val);
+
+   /**
+    * When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.
+    */
+   bool copilotProjectWorkspace();
+   core::Error setCopilotProjectWorkspace(bool val);
 
    /**
     * User-provided name for the currently opened R project.
