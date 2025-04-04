@@ -19,6 +19,8 @@
 
 #include <gsl/gsl-lite.hpp>
 
+#include <optional>
+
 #include "SessionRmdNotebook.hpp"
 #include "../SessionHTMLPreview.hpp"
 #include "../build/SessionBuildErrors.hpp"
@@ -920,9 +922,9 @@ private:
          }
          else
          {
-            std::size_t errorLine        = -1;
-            std::size_t backtraceLine    = -1;
-            std::size_t quittingFromLine = -1;
+            std::optional<std::size_t> errorLine;
+            std::optional<std::size_t> backtraceLine;
+            std::optional<std::size_t> quittingFromLine;
 
             boost::regex reRenderError(kKnitrErrorRegex);
             boost::smatch match;
@@ -950,16 +952,16 @@ private:
                }
             }
 
-            if (quittingFromLine == -1)
+            if (!quittingFromLine.has_value())
             {
                // nothing to do; didn't see the expected knitr error line?
             }
-            else if (errorLine == -1)
+            else if (!errorLine.has_value())
             {
                // didn't find an error line; assume error output
                // follows the 'Quitting from:' line
                std::string errorMessage = core::algorithm::join(
-                        lines.begin() + quittingFromLine,
+                        lines.begin() + quittingFromLine.value(),
                         lines.end(),
                         "\n");
                renderErrorMessage_ << errorMessage;
@@ -968,9 +970,11 @@ private:
             {
                // found an 'Error:' line; collect error from then
                // to the 'Quitting from:' line
+               auto beginOffset = errorLine.value();
+               auto endOffset = backtraceLine.value_or(quittingFromLine.value());
                std::string errorMessage = core::algorithm::join(
-                        lines.begin() + errorLine,
-                        lines.begin() + (backtraceLine == -1 ? quittingFromLine : backtraceLine),
+                        lines.begin() + beginOffset,
+                        lines.begin() + endOffset,
                         "\n");
                renderErrorMessage_ << errorMessage;
             }

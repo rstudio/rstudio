@@ -173,7 +173,7 @@ Error launchSessionRecovery(
                          (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()));
 
        Error error(server::errc::InvalidSessionScopeError, ERROR_LOCATION);
-       error.addProperty("state", state);
+       error.addProperty("state", static_cast<int>(state));
        return error;
    }
 
