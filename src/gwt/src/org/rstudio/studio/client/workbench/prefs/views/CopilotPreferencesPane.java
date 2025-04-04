@@ -82,7 +82,8 @@ public class CopilotPreferencesPane extends PreferencesPane
       RestartRequirement requirement = super.onApply(prefs);
       if (initialCopilotIndexingEnabled_ != prefs.copilotIndexingEnabled().getGlobalValue())
          requirement.setSessionRestartRequired(true);
-      
+      if (initialCopilotWorkspaceEnabled_ != prefs.copilotProjectWorkspace().getGlobalValue())
+         requirement.setSessionRestartRequired(true); 
       return requirement;
    }
    
@@ -454,7 +455,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       initialCopilotIndexingEnabled_ = prefs.copilotIndexingEnabled().getGlobalValue();
-      
+      initialCopilotWorkspaceEnabled_ = prefs.copilotProjectWorkspace().getGlobalValue();
       projectServer_.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
       {
          @Override
@@ -527,6 +528,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    // State
    private String copilotStartupError_;
    private boolean initialCopilotIndexingEnabled_;
+   private boolean initialCopilotWorkspaceEnabled_;
    private RProjectOptions projectOptions_;
  
    // UI
