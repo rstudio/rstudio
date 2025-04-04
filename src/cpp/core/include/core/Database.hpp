@@ -107,7 +107,7 @@ public:
       return *this;
    }
 
-   int getAffectedRows()
+   long long getAffectedRows()
    {
       return statement_.get_affected_rows();
    }
@@ -327,7 +327,7 @@ private:
    // returns whether or not a schema version is present in the database
    Error isSchemaVersionPresent(bool* pIsPresent);
 
-   Error getSchemaTableColumnCount(int* pColumnCount);
+   Error getSchemaTableColumnCount(std::size_t* pColumnCount);
 
    // returns the highest version that can be migrated to with the migrations
    // specified when constructing this SchemaUpdater

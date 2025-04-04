@@ -224,7 +224,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
       if (typeArray.getSize() != dataArray.getSize())
          return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
       
-      for (int i = 0, n = typeArray.getSize(); i < n; i++)
+      for (std::size_t i = 0, n = typeArray.getSize(); i < n; i++)
       {
          ConsoleAction action;
          action.type = typeArray[i].getInt();

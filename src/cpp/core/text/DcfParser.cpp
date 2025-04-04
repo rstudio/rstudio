@@ -208,7 +208,7 @@ Error parseDcfFile(const std::string& dcfFileContents,
 
 Error parseMultiDcfFile(const std::string& dcfFileContents,
                         bool preserveKeyCase,
-                        const boost::function<Error (int, const std::map<std::string, std::string> &)>& handleEntry)
+                        const boost::function<Error(std::size_t, const std::map<std::string, std::string> &)>& handleEntry)
 {
    // split out multiple DCF entries one at a time
    // entries are separated by a blank line
@@ -263,7 +263,7 @@ Error parseMultiDcfFile(const std::string& dcfFileContents,
 
 Error parseMultiDcfFile(const FilePath& dcfFilePath,
                         bool preserveKeyCase,
-                        const boost::function<Error(int, const std::map<std::string, std::string>&)>& handleEntry)
+                        const boost::function<Error(std::size_t, const std::map<std::string, std::string>&)>& handleEntry)
 {
    std::string contents;
    Error error = readStringFromFile(dcfFilePath,

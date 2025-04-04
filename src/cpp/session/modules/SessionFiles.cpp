@@ -1479,10 +1479,8 @@ public:
    {
       // fill in placeholder
       auto pathString = path.string();
-      SEXP charSEXP = Rf_mkCharLenCE(
-               pathString.data(),
-               pathString.size(),
-               CE_UTF8);
+      auto size = static_cast<int>(pathString.size());
+      SEXP charSEXP = Rf_mkCharLenCE(pathString.data(), size, CE_UTF8);
       SET_STRING_ELT(xSEXP_, 0, charSEXP);
 
       // evaluate our call

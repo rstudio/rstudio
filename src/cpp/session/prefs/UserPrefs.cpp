@@ -16,8 +16,6 @@
 #include <core/system/Xdg.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <shared_core/json/rapidjson/schema.h>
-
 #include <core/Exec.hpp>
 
 #include <session/SessionOptions.hpp>

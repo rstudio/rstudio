@@ -342,11 +342,6 @@ void Error::addProperty(const std::string& in_name, const FilePath& in_value)
    addProperty(in_name, in_value.getAbsolutePath());
 }
 
-void Error::addProperty(const std::string& in_name, int in_value)
-{
-   addProperty(in_name, safe_convert::numberToString(in_value));
-}
-
 std::string Error::asString() const
 {
    std::ostringstream ostr;

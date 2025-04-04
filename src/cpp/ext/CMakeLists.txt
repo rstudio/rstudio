@@ -119,6 +119,15 @@ dependency(HUNSPELL
 )
 
 
+# rapidjson
+dependency(RAPIDJSON
+   COMMENT    "A fast JSON parser/generator for C++ with both SAX/DOM style API"
+   VERSION    "1.1.0"
+   REPOSITORY "https://github.com/Tencent/rapidjson"
+   REVISION   "24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
+   CUSTOM     TRUE
+)
+
 # websocketpp
 dependency(WEBSOCKETPP
    COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
@@ -220,14 +229,23 @@ fetch(
    fmt          FMT
    gsl-lite     GSL_LITE
    hunspell     HUNSPELL
+   rapidjson    RAPIDJSON
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP
    zlib         ZLIB)
+
+# Create rapidjson target.
+add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
+target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
+target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
 
 
 # Create websocketpp target.
 add_library(rstudio-websocketpp INTERFACE EXCLUDE_FROM_ALL)
 target_include_directories(rstudio-websocketpp INTERFACE "${WEBSOCKETPP_SOURCE_DIR}")
+if(WIN32)
+   target_compile_definitions(rstudio-websocketpp INTERFACE "/wC4267")
+endif()
 
 
 # Create hunspell target.

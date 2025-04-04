@@ -843,8 +843,8 @@ bool SchemaVersion::operator<(const SchemaVersion& other) const
       return false;
 
    const auto& versions = versionMap();
-   int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : versions.size();
-   int otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? versions.at(other.Flower) : versions.size();
+   auto thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : versions.size();
+   auto otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? versions.at(other.Flower) : versions.size();
 
    if (thisFlowerIndex < otherFlowerIndex)
       return true;
@@ -992,9 +992,9 @@ Error SchemaUpdater::isSchemaVersionPresent(bool* pIsPresent)
    return Success();
 }
 
-Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
+Error SchemaUpdater::getSchemaTableColumnCount(std::size_t* pColumnCount)
 {
-   int columnCount = 0;
+   std::size_t columnCount = 0;
    Error error;
    if (connection_->driverName() == SQLITE_DRIVER)
    {
@@ -1049,7 +1049,7 @@ bool SchemaUpdater::parseVersionOfFile(const FilePath& file, SchemaVersion* pVer
 Error SchemaUpdater::databaseSchemaVersion(SchemaVersion* pVersion)
 {
    SchemaVersion version;
-   int schemaColumnCount = 0;
+   std::size_t schemaColumnCount = 0;
    Error error = getSchemaTableColumnCount(&schemaColumnCount);
    if (error)
       return error;

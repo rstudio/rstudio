@@ -82,7 +82,7 @@ public:
       
       // convert chunk definitions into object
       json::Object chunkDefsObject;
-      for (int i = 0, n = chunkDefs.getSize(); i < n; i++)
+      for (std::size_t i = 0, n = chunkDefs.getSize(); i < n; i++)
       {
          json::Value chunkDef = chunkDefs.getValueAt(i);
          if (chunkDef.isObject() &&
@@ -274,7 +274,7 @@ Error replayNotebookPlots(const json::JsonRpcRequest& request,
 
    // look through out chunk definitions, and add in information
    // on the available snapshot files
-   for (int i = 0, n = chunkDefs.getSize(); i < n; i++)
+   for (std::size_t i = 0, n = chunkDefs.getSize(); i < n; i++)
    {
       json::Value chunkDefValue = chunkDefs.getValueAt(i);
       if (!chunkDefValue.isObject())
@@ -359,7 +359,7 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
    
    // keep only the chunk we're looking at
    json::Object chunkDef;
-   for (int i = 0, n = allChunkDefs.getSize(); i < n; i++)
+   for (std::size_t i = 0, n = allChunkDefs.getSize(); i < n; i++)
    {
       json::Value chunkDefValue = allChunkDefs.getValueAt(i);
       if (chunkDefValue.isObject())

@@ -31,12 +31,16 @@
 
 #include <shared_core/Error.hpp>
 
-#include "shared_core/json/rapidjson/document.h"
-#include "shared_core/json/rapidjson/stringbuffer.h"
-#include "shared_core/json/rapidjson/prettywriter.h"
-#include "shared_core/json/rapidjson/writer.h"
-#include "shared_core/json/rapidjson/error/en.h"
-#include "shared_core/json/rapidjson/schema.h"
+
+#include <cstddef>
+namespace rapidjson { typedef ::std::size_t SizeType; }
+
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/error/en.h>
+#include <rapidjson/schema.h>
 
 // JSON Boost Error ====================================================================================================
 // Declare rapidjson errors as boost errors.
