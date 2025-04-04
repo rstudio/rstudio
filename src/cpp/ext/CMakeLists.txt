@@ -243,9 +243,6 @@ target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/
 # Create websocketpp target.
 add_library(rstudio-websocketpp INTERFACE EXCLUDE_FROM_ALL)
 target_include_directories(rstudio-websocketpp INTERFACE "${WEBSOCKETPP_SOURCE_DIR}")
-if(WIN32)
-   target_compile_definitions(rstudio-websocketpp INTERFACE "/wC4267")
-endif()
 
 
 # Create hunspell target.

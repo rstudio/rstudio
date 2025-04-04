@@ -21,6 +21,10 @@
  *
  */
 
+#ifdef _WIN32
+# pragma warning(disable : 4267)
+#endif
+
 #include <shared_core/json/Json.hpp>
 
 #include <sstream>
