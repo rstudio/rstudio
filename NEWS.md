@@ -4,6 +4,7 @@
 #### RStudio
 - RStudio now uses an alternate display for R errors, warnings, and messages. In addition, output on stderr (e.g. R messages) are colored the same as regular output on stdout. (#2574)
 - RStudio now displays a message when the GitHub Copilot completion limit has been reached (typically on a free Copilot account). (#15848)
+- RStudio now uses the RStudio project folder as the GitHub Copilot workspace root, providing more relevant completions. (#15816)
 - On macOS, RStudio now uses the project directory / home directory for new RStudio sessions opened via the Dock menu's "Open in New Window" command. (#15409)
 - RStudio Desktop now supports opening files via drag and drop. (#4037)
 - RStudio installation on Windows now registers icons for many supported file types. (#12730)
