@@ -1747,6 +1747,12 @@
             "title": "Display account and billing messages from GitHub Copilot",
             "description": "When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box."
         },
+        "copilot_project_workspace": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use RStudio project folder as a Copilot workspace",
+            "description": "When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace."
+        },
         "project_name": {
             "description": "User-provided name for the currently opened R project.",
             "type": "string",

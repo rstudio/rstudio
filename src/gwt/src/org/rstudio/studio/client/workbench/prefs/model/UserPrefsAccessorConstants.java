@@ -2150,6 +2150,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotShowMessagesDescription();
 
    /**
+    * When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.
+    */
+   @DefaultStringValue("Use RStudio project folder as a Copilot workspace")
+   String copilotProjectWorkspaceTitle();
+   @DefaultStringValue("When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.")
+   String copilotProjectWorkspaceDescription();
+
+   /**
     * User-provided name for the currently opened R project.
     */
    @DefaultStringValue("")

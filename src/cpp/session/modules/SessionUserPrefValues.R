@@ -2393,6 +2393,16 @@
    clear = function() { .rs.clearUserPref("copilot_show_messages") }
 )
 
+# Use RStudio project folder as a Copilot workspace
+#
+# When enabled, RStudio will tell Copilot to use the current RStudio project's
+# folder as a workspace.
+.rs.uiPrefs$copilotProjectWorkspace <- list(
+   get = function() { .rs.getUserPref("copilot_project_workspace") },
+   set = function(value) { .rs.setUserPref("copilot_project_workspace", value) },
+   clear = function() { .rs.clearUserPref("copilot_project_workspace") }
+)
+
 # 
 #
 # User-provided name for the currently opened R project.

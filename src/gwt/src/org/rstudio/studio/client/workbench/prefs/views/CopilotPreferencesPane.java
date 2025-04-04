@@ -142,7 +142,7 @@ public class CopilotPreferencesPane extends PreferencesPane
       cbCopilotEnabled_ = checkboxPref(prefs_.copilotEnabled(), true);
       cbCopilotIndexingEnabled_ = checkboxPref(prefs_.copilotIndexingEnabled(), true);
       cbCopilotShowMessages_ = checkboxPref(prefs_.copilotShowMessages(), true);
-
+      cbCopilotProjectWorkspace_ = checkboxPref(prefs_.copilotProjectWorkspace(), true);
       selCopilotTabKeyBehavior_ = new SelectWidget(
             prefsConstants_.copilotTabKeyBehaviorTitle(),
             new String[] {
@@ -213,6 +213,7 @@ public class CopilotPreferencesPane extends PreferencesPane
 
          add(spacedBefore(headerLabel(constants_.otherCaption())));
          add(cbCopilotShowMessages_);
+         add(cbCopilotProjectWorkspace_);
 
          // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
          // add(selCopilotTabKeyBehavior_);
@@ -533,6 +534,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final CheckBox cbCopilotEnabled_;
    private final CheckBox cbCopilotIndexingEnabled_;
    private final CheckBox cbCopilotShowMessages_;
+   private final CheckBox cbCopilotProjectWorkspace_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnShowError_;
    private final SmallButton btnSignIn_;

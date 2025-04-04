@@ -3677,6 +3677,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.
+    */
+   public PrefValue<Boolean> copilotProjectWorkspace()
+   {
+      return bool(
+         "copilot_project_workspace",
+         _constants.copilotProjectWorkspaceTitle(), 
+         _constants.copilotProjectWorkspaceDescription(), 
+         true);
+   }
+
+   /**
     * User-provided name for the currently opened R project.
     */
    public PrefValue<String> projectName()
@@ -4330,6 +4342,8 @@ public class UserPrefsAccessor extends Prefs
          copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
       if (source.hasKey("copilot_show_messages"))
          copilotShowMessages().setValue(layer, source.getBool("copilot_show_messages"));
+      if (source.hasKey("copilot_project_workspace"))
+         copilotProjectWorkspace().setValue(layer, source.getBool("copilot_project_workspace"));
       if (source.hasKey("project_name"))
          projectName().setValue(layer, source.getString("project_name"));
       if (source.hasKey("run_background_job_default_working_dir"))
@@ -4607,6 +4621,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
       prefs.add(copilotShowMessages());
+      prefs.add(copilotProjectWorkspace());
       prefs.add(projectName());
       prefs.add(runBackgroundJobDefaultWorkingDir());
       prefs.add(codeFormatter());

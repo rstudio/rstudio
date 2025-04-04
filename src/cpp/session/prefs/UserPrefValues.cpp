@@ -3365,6 +3365,19 @@ core::Error UserPrefValues::setCopilotShowMessages(bool val)
 }
 
 /**
+ * When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.
+ */
+bool UserPrefValues::copilotProjectWorkspace()
+{
+   return readPref<bool>("copilot_project_workspace");
+}
+
+core::Error UserPrefValues::setCopilotProjectWorkspace(bool val)
+{
+   return writePref("copilot_project_workspace", val);
+}
+
+/**
  * User-provided name for the currently opened R project.
  */
 std::string UserPrefValues::projectName()
@@ -3728,6 +3741,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,
       kCopilotShowMessages,
+      kCopilotProjectWorkspace,
       kProjectName,
       kRunBackgroundJobDefaultWorkingDir,
       kCodeFormatter,
