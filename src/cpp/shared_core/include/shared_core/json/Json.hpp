@@ -822,7 +822,7 @@ public:
       /**
        * @brief The current position of the iterator.
        */
-      std::ptrdiff_t m_pos;
+      std::size_t m_pos;
 
       // Let the parent class manipulate its iterators.
       friend class Object;
@@ -1310,7 +1310,7 @@ public:
       /**
        * @brief The current position of the iterator.
        */
-      std::ptrdiff_t m_pos;
+      std::size_t m_pos;
 
       // Allow the array class to manipulate its own iterators.
       friend class Array;

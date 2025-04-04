@@ -716,7 +716,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
 
    // if the config references an '-include' that no longer exists,
    // then force the database to be rebuilt
-   for (int i = 0, n = args.size(); i < n - 1; i++)
+   for (std::size_t i = 0, n = args.size(); i < n - 1; i++)
    {
       if (args[i] == "-include")
       {

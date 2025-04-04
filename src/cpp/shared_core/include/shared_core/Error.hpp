@@ -420,10 +420,17 @@ public:
    /**
     * @brief Adds a property of this error. If a property with the same name already exists, a duplicate will be added.
     *
+    * @tparam T             An arithmetic type (e.g. int, std::size_t)
+    *
     * @param in_name        The name of the property to add or update.
     * @param in_value       The new value of the property.
     */
-   void addProperty(const std::string& in_name, int in_value);
+   template <typename T>
+   typename std::enable_if<std::is_arithmetic<T>::value, void>::type
+   addProperty(const std::string& in_name, T in_value)
+   {
+      addProperty(in_name, std::to_string(in_value));
+   }
 
    /**
     * @brief Formats the error as a string.

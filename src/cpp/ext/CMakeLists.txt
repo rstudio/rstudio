@@ -16,9 +16,14 @@
 include(ExternalProject)
 include(FetchContent)
 
+if(NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
+   set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "" FORCE)
+endif()
+
 cmake_policy(SET CMP0048 NEW)
 set(FETCHCONTENT_QUIET TRUE)
 set(CMAKE_WARN_DEPRECATED FALSE)
+
 
 #
 # Declare an external dependency.
@@ -119,6 +124,15 @@ dependency(HUNSPELL
 )
 
 
+# rapidjson
+dependency(RAPIDJSON
+   COMMENT    "A fast JSON parser/generator for C++ with both SAX/DOM style API"
+   VERSION    "1.1.0"
+   REPOSITORY "https://github.com/Tencent/rapidjson"
+   REVISION   "24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
+   CUSTOM     TRUE
+)
+
 # websocketpp
 dependency(WEBSOCKETPP
    COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
@@ -167,9 +181,10 @@ function(fetch)
       endif()
 
       if(${_PREFIX}_ENABLED)
-         if(RSTUDIO_USE_SYSTEM_${_PREFIX})
+         if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
             find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
          else()
+            set(${_PREFIX}_FETCHED TRUE)
             FetchContent_Declare("${_NAME}"
                GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
                GIT_TAG        "${${_PREFIX}_REVISION}"
@@ -191,20 +206,9 @@ function(fetch)
       list(GET ARGV ${_INDEX0} _NAME)
       list(GET ARGV ${_INDEX1} _PREFIX)
 
-      if(${_PREFIX}_ENABLED AND NOT RSTUDIO_USE_SYSTEM_${_PREFIX})
-         # Set yaml-cpp specific options before making it available
-         if("${_NAME}" STREQUAL "yaml-cpp")
-            set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "" FORCE)
-         endif()
-         
+      if(${_PREFIX}_FETCHED)
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION}")
          FetchContent_MakeAvailable("${_NAME}")
-         
-         # Reset the policy version after yaml-cpp is configured
-         if("${_NAME}" STREQUAL "yaml-cpp")
-            unset(CMAKE_POLICY_VERSION_MINIMUM CACHE)
-         endif()
-         
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
          set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
          set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
@@ -220,9 +224,15 @@ fetch(
    fmt          FMT
    gsl-lite     GSL_LITE
    hunspell     HUNSPELL
+   rapidjson    RAPIDJSON
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP
    zlib         ZLIB)
+
+# Create rapidjson target.
+add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
+target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
+target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
 
 
 # Create websocketpp target.

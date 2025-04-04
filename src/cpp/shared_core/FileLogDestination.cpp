@@ -26,8 +26,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
 
-#include <vector>
-
 #include <shared_core/DateTime.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/Logger.hpp>
@@ -515,7 +513,7 @@ struct FileLogDestination::Impl
    bool rotateLogFile()
    {
       // Calculate the maximum size in bytes.
-      const uintmax_t maxSize = 1048576.0 * LogOptions.getMaxSizeMb();
+      auto maxSize = 1048576.0 * LogOptions.getMaxSizeMb();
 
       // Only rotate if we're configured to rotate.
       if (LogOptions.doRotation())

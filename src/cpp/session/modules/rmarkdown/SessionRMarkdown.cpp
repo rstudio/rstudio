@@ -920,9 +920,9 @@ private:
          }
          else
          {
-            int errorLine        = -1;
-            int backtraceLine    = -1;
-            int quittingFromLine = -1;
+            std::size_t errorLine        = -1;
+            std::size_t backtraceLine    = -1;
+            std::size_t quittingFromLine = -1;
 
             boost::regex reRenderError(kKnitrErrorRegex);
             boost::smatch match;

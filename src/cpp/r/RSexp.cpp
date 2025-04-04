@@ -1297,7 +1297,9 @@ SEXP create(const char* value, Protect* pProtect)
 SEXP create(const std::string& value, Protect* pProtect)
 {
    SEXP charSEXP;
-   pProtect->add(charSEXP = Rf_mkCharLenCE(value.c_str(), value.size(), CE_NATIVE));
+
+   int size = static_cast<int>(value.size());
+   pProtect->add(charSEXP = Rf_mkCharLenCE(value.c_str(), size, CE_NATIVE));
    
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(STRSXP, 1));
@@ -1594,7 +1596,8 @@ SEXP createUtf8(const std::string& data, Protect* pProtect)
    pProtect->add(strSEXP = Rf_allocVector(STRSXP, 1));
 
    // protection not required as long as we immediately assign into protected STRSXP
-   SEXP charSEXP = Rf_mkCharLenCE(data.c_str(), data.size(), CE_UTF8);
+   int size = static_cast<int>(data.size());
+   SEXP charSEXP = Rf_mkCharLenCE(data.c_str(), size, CE_UTF8);
    SET_STRING_ELT(strSEXP, 0, charSEXP);
    return strSEXP;
 }
@@ -1612,7 +1615,8 @@ SEXP createUtf8(const std::vector<std::string>& data, Protect* pProtect)
    for (std::size_t i = 0, n = data.size(); i < n; i++)
    {
       // protection not required as long as we immediately assign into protected STRSXP
-      SEXP charSEXP = Rf_mkCharLenCE(data[i].c_str(), data[i].size(), CE_UTF8);
+      int size = static_cast<int>(data[i].size());
+      SEXP charSEXP = Rf_mkCharLenCE(data[i].c_str(), size, CE_UTF8);
       SET_STRING_ELT(strSEXP, i, charSEXP);
    }
    
