@@ -93,15 +93,22 @@ std::string getValueString(const std::map<std::string, std::string>& sourceMap)
 
 }
 
-std::string getUpdateString(const std::map<std::string, std::string>& sourceMap)
+std::string getUpdateStringAndValues(const std::map<std::string, std::string>& sourceMap,
+                                     std::vector<std::string>* pNames, std::vector<std::string>* pValues)
 {
+   std::string firstPropName(sourceMap.begin()->first);
+   (*pNames).push_back(firstPropName);
+   (*pValues).push_back(std::string(sourceMap.begin()->second));
+
    std::string setValuesString = std::accumulate(
       ++sourceMap.begin(),
       sourceMap.end(),
-      columnName(sourceMap.begin()->first) + " = '" + sourceMap.begin()->second + "'",
-      [](std::string a, std::pair<std::string, std::string> iter)
+      columnName(firstPropName) + " = :" + columnName(firstPropName) + " ",
+      [pNames, pValues](std::string a, std::pair<std::string, std::string> iter)
       {         
-         return a + ", " + columnName(iter.first) + " = '" + iter.second + "'";
+         (*pNames).push_back(std::string(iter.first));
+         (*pValues).push_back(std::string(iter.second));
+         return a + ", " + columnName(iter.first) + " = " + ":" + columnName(iter.first) + " ";
       });
    return setValuesString;
 }
@@ -336,8 +343,14 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
          return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
       }
 
-      database::Query updateQuery = connection->query("UPDATE " + kTableName + " SET " + getUpdateString(properties) + " WHERE session_id = :id")
-         .withInput(sessionId_);
+      std::vector<std::string> propNames, propValues;
+
+      std::string queryStr = "UPDATE " + kTableName + " SET " + getUpdateStringAndValues(properties, &propNames, &propValues) + " WHERE session_id = :session_id";
+
+      database::Query updateQuery = connection->query(queryStr);
+      for (unsigned int i = 0; i < propValues.size(); i++)
+         updateQuery.withInput(propValues[i], propNames[i]);
+      updateQuery.withInput(sessionId_, "session_id");
       
       error = connection->execute(updateQuery);
 
