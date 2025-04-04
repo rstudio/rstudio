@@ -37,7 +37,27 @@
 
 
 #include <cstddef>
-namespace rapidjson { typedef ::std::size_t SizeType; }
+
+//
+// Ask rapidjson to use 'std::size_t' internally.
+// On macOS, `std::size_t` is a typedef for `unsigned long` as opposed
+// to `unsigned long long`, even though those types are the same size.
+// However, this causes issues during compilation using rapidjson,
+// so we just explicitly request `uint64_t` here.
+//
+#ifdef __APPLE__
+
+namespace rapidjson {
+typedef uint64_t SizeType;
+} // end namespace rapidjson
+
+#else
+
+namespace rapidjson {
+typedef std::size_t SizeType;
+} // end namespace rapidjson
+
+#endif
 
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
