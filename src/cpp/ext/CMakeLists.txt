@@ -16,9 +16,14 @@
 include(ExternalProject)
 include(FetchContent)
 
+if(NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
+   set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "" FORCE)
+endif()
+
 cmake_policy(SET CMP0048 NEW)
 set(FETCHCONTENT_QUIET TRUE)
 set(CMAKE_WARN_DEPRECATED FALSE)
+
 
 #
 # Declare an external dependency.
@@ -176,9 +181,10 @@ function(fetch)
       endif()
 
       if(${_PREFIX}_ENABLED)
-         if(RSTUDIO_USE_SYSTEM_${_PREFIX})
+         if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
             find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
          else()
+            set(${_PREFIX}_FETCHED TRUE)
             FetchContent_Declare("${_NAME}"
                GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
                GIT_TAG        "${${_PREFIX}_REVISION}"
@@ -200,20 +206,9 @@ function(fetch)
       list(GET ARGV ${_INDEX0} _NAME)
       list(GET ARGV ${_INDEX1} _PREFIX)
 
-      if(${_PREFIX}_ENABLED AND NOT RSTUDIO_USE_SYSTEM_${_PREFIX})
-         # Set yaml-cpp specific options before making it available
-         if("${_NAME}" STREQUAL "yaml-cpp")
-            set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "" FORCE)
-         endif()
-         
+      if(${_PREFIX}_FETCHED)
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION}")
          FetchContent_MakeAvailable("${_NAME}")
-         
-         # Reset the policy version after yaml-cpp is configured
-         if("${_NAME}" STREQUAL "yaml-cpp")
-            unset(CMAKE_POLICY_VERSION_MINIMUM CACHE)
-         endif()
-         
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
          set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
          set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
