@@ -65,7 +65,7 @@
 ### Dependencies
 - Update Electron to version 34.5.0. (#15450)
 - Update Quarto to version 1.6.42. (#15460)
-- Copilot Language Server 1.296.0. (rstudio-pro#7450)
+- Copilot Language Server 1.297.0. (rstudio-pro#7450)
 - Updated Node in VS Code and Positron Pro sessions to 20.18.2 (rstudio-pro#7612)
 
 ### Deprecated / Removed
