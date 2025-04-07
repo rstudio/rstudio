@@ -10,9 +10,9 @@
 /* Light themes */
 
 @def LIGHT_BACKGROUND_COLOR rgba(0, 0, 0, 0.08);
-@def LIGHT_ERROR_COLOR      #BB0000;
-@def LIGHT_WARNING_COLOR    #8B4513;
-@def LIGHT_MESSAGE_COLOR    #7AA8D7;
+@def LIGHT_ERROR_COLOR      #991717;
+@def LIGHT_WARNING_COLOR    #64480D;
+@def LIGHT_MESSAGE_COLOR    #1D6EC0;
 
 .rstudio-themes-default .ace_console_error .group {
 	all: unset;
