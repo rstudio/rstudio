@@ -712,6 +712,17 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void copilotDocFocused(String documentId,
+                                 ServerRequestCallback<Void> requestCallback) 
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(documentId)
+            .get();
+      
+      sendRequest(RPC_SCOPE, "copilot_doc_focused", params, requestCallback);
+   };
+
+   @Override
    public void copilotGenerateCompletions(String documentId,
                                           String documentPath,
                                           boolean isUntitled,

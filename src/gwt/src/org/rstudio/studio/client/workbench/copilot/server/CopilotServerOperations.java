@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.copilot.server;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
@@ -31,6 +32,9 @@ public interface CopilotServerOperations
    
    public void copilotStatus(ServerRequestCallback<CopilotStatusResponse> requestCallback);
    
+   public void copilotDocFocused(String documentId,
+                                 ServerRequestCallback<Void> requestCallback);
+
    public void copilotGenerateCompletions(String documentId,
                                           String documentPath,
                                           boolean isUntitled,

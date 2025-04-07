@@ -1748,6 +1748,49 @@ Error copilotStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error copilotDocFocused(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      // nothing to do if we can't connect to the agent
+      return Success();
+   }
+
+   // Read params
+   std::string documentId;
+   Error error = core::json::readParams(request.params, &documentId);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // Resolve source document from id
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   error = source_database::get(documentId, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   // If document is NOT indexable we tell Copilot that no file has focus via an empty request.
+   // This is to prevent Copilot from attempting to read the contents of the file.
+   json::Object textDocumentJson;
+   if (isIndexableDocument(pDoc))
+   {
+      textDocumentJson["uri"] = uriFromDocument(pDoc);
+   }
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didFocus", paramsJson);
+   return Success();
+}
+
 } // end anonymous namespace
 
 
@@ -1795,6 +1838,7 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
+         (bind(registerRpcMethod, "copilot_doc_focused", copilotDocFocused))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();
