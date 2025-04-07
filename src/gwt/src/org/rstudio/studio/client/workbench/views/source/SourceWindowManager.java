@@ -864,6 +864,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          @Override
          public void execute()
          {
+            // notify Copilot of the focused document
+            if (event.getId() != null)
+            {
+               server_.copilotDocFocused(event.getId(), new VoidServerRequestCallback());
+            }
+
             // ignore this event if it's from main window but the main window
             // doesn't have focus
             if (!mainWindowFocused_ && event.isFromMainWindow())
