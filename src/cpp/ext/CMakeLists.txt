@@ -129,7 +129,7 @@ dependency(RAPIDJSON
    COMMENT    "A fast JSON parser/generator for C++ with both SAX/DOM style API"
    VERSION    "1.1.0"
    REPOSITORY "https://github.com/Tencent/rapidjson"
-   REVISION   "24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
+   REVISION   "24b5e7a8b27f42fa16b96fc70aade9106cf7102f" # pragma: allowlist secret
    CUSTOM     TRUE
 )
 
