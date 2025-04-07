@@ -720,7 +720,6 @@ public class RemoteServer implements Server
             .get();
       
       sendRequest(RPC_SCOPE, "copilot_doc_focused", params, requestCallback);
-
    };
 
    @Override
@@ -7437,6 +7436,6 @@ public class RemoteServer implements Server
       public RpcRequest request;
       public RpcResponseHandler responseHandler;
       public RetryHandler retryHandler;
-   }
+   };
 
 }
