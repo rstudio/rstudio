@@ -68,6 +68,12 @@
 #define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
+// completion was triggered explicitly by a user gesture
+#define kCopilotCompletionTriggerUserInvoked (1)
+
+// completion was triggered automatically while editing
+#define kCopilotCompletionTriggerAutomatic (2)
+
 using namespace rstudio::core;
 using namespace rstudio::core::system;
 
@@ -1618,6 +1624,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    std::string documentId;
    std::string documentPath;
    bool isUntitled;
+   bool autoInvoked;
    int cursorRow, cursorColumn;
 
    Error error = core::json::readParams(
@@ -1625,6 +1632,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
             &documentId,
             &documentPath,
             &isUntitled,
+            &autoInvoked,
             &cursorRow,
             &cursorColumn);
    
@@ -1664,16 +1672,21 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    positionJson["character"] = cursorColumn;
 
    json::Object docJson;
-   docJson["position"] = positionJson;
    docJson["uri"] = uriFromDocument(pDoc);
    docJson["version"] = kCopilotDefaultDocumentVersion;
 
+   json::Object contextJson;
+   contextJson["triggerKind"] = autoInvoked ? 
+         kCopilotCompletionTriggerAutomatic : kCopilotCompletionTriggerUserInvoked;
+
    json::Object paramsJson;
-   paramsJson["doc"] = docJson;
+   paramsJson["textDocument"] = docJson;
+   paramsJson["position"] = positionJson;
+   paramsJson["context"] = contextJson;
 
    // Send the request
    std::string requestId = core::system::generateUuid();
-   sendRequest("getCompletions", requestId, paramsJson, CopilotContinuation(continuation));
+   sendRequest("textDocument/inlineCompletion", requestId, paramsJson, CopilotContinuation(continuation));
 
    return Success();
 }

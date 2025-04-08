@@ -43,14 +43,18 @@ public class CopilotTypes
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotCompletionCommand
+   {
+      public String command;
+      public String[] arguments;
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotCompletion
    {
-      public String uuid;
-      public String text;
-      public String displayText;
-      public CopilotPosition position;
+      public String insertText;
       public CopilotRange range;
-      public int docVersion;
+      public CopilotCompletionCommand command;
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

@@ -38,6 +38,7 @@ public interface CopilotServerOperations
    public void copilotGenerateCompletions(String documentId,
                                           String documentPath,
                                           boolean isUntitled,
+                                          boolean autoInvoked,
                                           int cursorRow,
                                           int cursorColumn,
                                           ServerRequestCallback<CopilotGenerateCompletionsResponse> requestCallback);
