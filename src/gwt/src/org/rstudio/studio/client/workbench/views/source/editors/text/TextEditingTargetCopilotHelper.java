@@ -88,7 +88,8 @@ public class TextEditingTargetCopilotHelper
             
             withActiveEditor((editor) ->
             {
-               requestCompletions(editor);
+               requestCompletions(editor, completionTriggeredByCommand_);
+               completionTriggeredByCommand_ = false;
             });
          }
       };
@@ -110,7 +111,7 @@ public class TextEditingTargetCopilotHelper
       
    }
    
-   private void requestCompletions(DocDisplay editor)
+   private void requestCompletions(DocDisplay editor, boolean triggeredByCommand)
    {
       target_.withSavedDoc(() ->
       {
@@ -123,6 +124,11 @@ public class TextEditingTargetCopilotHelper
 
          String trigger = prefs_.copilotCompletionsTrigger().getGlobalValue();
          boolean autoInvoked = trigger.equals(UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO);
+         if (triggeredByCommand)
+         {
+            // users can trigger completions manually via command, even if set to auto
+            autoInvoked = false;
+         }
 
          server_.copilotGenerateCompletions(
                target_.getId(),
@@ -250,6 +256,7 @@ public class TextEditingTargetCopilotHelper
          registrations_.removeHandler();
          requestId_ = 0;
          completionTimer_.cancel();
+         completionTriggeredByCommand_ = false;
          events_.fireEvent(new CopilotEvent(CopilotEventType.COPILOT_DISABLED));
       }
       else
@@ -275,7 +282,10 @@ public class TextEditingTargetCopilotHelper
    public void onCopilotRequestCompletions()
    {
       if (copilot_.isEnabled())
+      {
+         completionTriggeredByCommand_ = true;
          completionTimer_.schedule(0);
+      }
    }
    
    @Handler
@@ -454,6 +464,7 @@ public class TextEditingTargetCopilotHelper
       if (editor.hasSelection())
       {
          completionTimer_.cancel();
+         completionTriggeredByCommand_ = false;
          return;
       }
 
@@ -542,6 +553,7 @@ public class TextEditingTargetCopilotHelper
    private final TextEditingTarget target_;
    private final DocDisplay srcEditor_;
    private final Timer completionTimer_;
+   private boolean completionTriggeredByCommand_ = false;
    private final HandlerRegistrations registrations_;
    
    private int requestId_;
