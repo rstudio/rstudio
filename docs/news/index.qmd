@@ -5,6 +5,31 @@ format:
     toc-depth: 3
 ---
 
+```{=html}
+
+<style>
+.issue-ref {
+  color: #2b7bb9;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const issuePattern = /(?:^|\s|[\(\[,;])((?:[a-zA-Z0-9\-]+)?#\d+)(?=[\]\),;:\s]|$)/g;
+
+  document.querySelectorAll("p, li").forEach(el => {
+    el.innerHTML = el.innerHTML.replace(issuePattern, (match, group) => {
+      return match.replace(group, `<span class="issue-ref">${group}</span>`);
+    });
+  });
+});
+</script>
+
+```
+
+
 ## Introduction
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
