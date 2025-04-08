@@ -292,11 +292,11 @@ public abstract class ChangelistTable extends Composite
    public void setItems(ArrayList<StatusAndPath> items)
    {
       setProgress(false);
+      items = (items == null) ? new ArrayList<>() : items;
       table_.setPageSize(items.size());
       dataProvider_.getList().clear();
       dataProvider_.getList().addAll(items);
-      ColumnSortEvent.fire(table_,
-                           table_.getColumnSortList());
+      ColumnSortEvent.fire(table_, table_.getColumnSortList());
 
       if (selectFirstItemByDefault_)
       {

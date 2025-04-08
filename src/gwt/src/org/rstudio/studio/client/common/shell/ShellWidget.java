@@ -463,8 +463,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (!errorNodes_.containsKey(key))
          return;
       
-      List<Element> errorNodes = errorNodes_.get(key);
-      if (errorNodes == null || errorNodes.isEmpty())
+      List<Element> errorEls = errorNodes_.get(key);
+      if (errorEls == null || errorEls.isEmpty())
          return;
 
       if (errorKeys_.containsKey(key))
@@ -479,30 +479,38 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (expand)
          errorWidget.setTracebackVisible(true);
 
-      Element parentEl = errorNodes.get(0).getParentElement();
-      while (true)
-      {
-         if (parentEl.hasClassName(VirtualConsole.RES.styles().groupError()))
-         {
-            Element replaceEl = parentEl;
-            parentEl = parentEl.getParentElement();
-            parentEl.replaceChild(errorWidget.getElement(), replaceEl);
-            break;
-         }
-         
-         parentEl = parentEl.getPreviousSiblingElement();
-         if (parentEl == null)
-         {
-            parentEl = errorNodes.get(0).getParentElement();
-            parentEl.removeAllChildren();
-            parentEl.appendChild(errorWidget.getElement());
-            break;
-         }
-      }
+      insertErrorWidgetElement(
+            errorEls,
+            errorWidget.getElement());
       
       scrollPanel_.onContentSizeChanged();
       errorNodes_.remove(key);
       errorKeys_.remove(key);
+   }
+   
+   private void insertErrorWidgetElement(List<Element> errorEls,
+                                         Element widgetEl)
+   {
+      Element firstErrorEl = errorEls.get(0);
+      Element parentEl = firstErrorEl.getParentElement();
+      
+      if (parentEl.hasClassName(VirtualConsole.RES.styles().groupError()))
+      {
+         // If console groups are enabled, the error output might have been collected
+         // into a single 'groupError' span element. In this scenario, just replace 
+         // that parent element with the error widget.
+         parentEl.getParentElement().replaceChild(widgetEl, parentEl);
+      }
+      else
+      {
+         // Otherwise, error output should be a sequence of DOM elements within
+         // some collection. Replace the first one with our error widget, and then
+         // remove all the other error elements.
+         parentEl.replaceChild(widgetEl, firstErrorEl);
+         for (int i = 1; i < errorEls.size(); i++)
+            parentEl.removeChild(errorEls.get(i));
+      }
+      
    }
 
    @Override

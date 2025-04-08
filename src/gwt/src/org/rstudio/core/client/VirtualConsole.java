@@ -852,6 +852,13 @@ public class VirtualConsole
                   Match groupStartMatch = groupStartPattern.match(data.substring(head), 0);
                   if (groupStartMatch != null)
                   {
+                     // skip escapes if we're virtualized
+                     if (isVirtualized())
+                     {
+                        tail += groupStartMatch.getValue().length() - 1;
+                        break;
+                     }
+                     
                      String type = groupStartMatch.getGroup(1);
                      String groupClazz = groupTypeToClazz(type);
                      
@@ -886,6 +893,13 @@ public class VirtualConsole
                   Match groupEndMatch = groupEndPattern.match(data.substring(head), 0);
                   if (groupEndMatch != null)
                   {
+                     // skip escapes if we're virtualized
+                     if (isVirtualized())
+                     {
+                        tail += groupEndMatch.getValue().length() - 1;
+                        break;
+                     }
+                     
                      if (parent_.hasClassName(RES.styles().group()))
                      {
                         forceNewRange = forceNewRange_ = true;
