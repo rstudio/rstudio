@@ -25,6 +25,7 @@
 - Migrated the Posit Workbench Admin Guide Hardening: Set Up SSL content into the Access and Security: Secure Sockets (SSL) topic to promote content discovery and single source of truth. (rstudio-pro#6098)
 - Adds secure browser storage to VS Code and Positron Pro sessions (vscode-server#174)
 - Implemented User and Group profiles for VS Code and Positron Pro sessions (rstudio-pro#7468)
+- Introduced custom bootstrap extensions to Positron Pro session to improve the Admin pre-configured extensions experience (rstudio-pro#7423)
 
 ### Fixed
 #### RStudio
