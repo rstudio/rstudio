@@ -9,11 +9,13 @@ format:
 
 <style>
 .issue-ref {
-  color: #2b7bb9;
+  color: #3276b5;
   padding: 0 4px;
   border-radius: 4px;
+  font-weight: 400;
 }
 </style>
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {

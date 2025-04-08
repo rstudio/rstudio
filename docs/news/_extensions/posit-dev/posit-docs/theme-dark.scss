@@ -406,3 +406,10 @@ ol.groovyAlpha li > p:before {
   content: counter(list-counter, lower-alpha);
   font-weight: 600;
 }
+
+
+//Issue
+
+.issue-ref {
+  color: #9ec5ea !important;
+}
