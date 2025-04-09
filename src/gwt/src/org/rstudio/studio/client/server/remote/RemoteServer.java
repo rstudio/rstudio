@@ -726,6 +726,7 @@ public class RemoteServer implements Server
    public void copilotGenerateCompletions(String documentId,
                                           String documentPath,
                                           boolean isUntitled,
+                                          boolean autoInvoked,
                                           int cursorRow,
                                           int cursorColumn,
                                           ServerRequestCallback<CopilotGenerateCompletionsResponse> requestCallback)
@@ -734,6 +735,7 @@ public class RemoteServer implements Server
             .add(documentId)
             .add(documentPath)
             .add(isUntitled)
+            .add(autoInvoked)
             .add(cursorRow)
             .add(cursorColumn)
             .get();

@@ -46,7 +46,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeChunk;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
@@ -89,7 +88,8 @@ public class TextEditingTargetCopilotHelper
             
             withActiveEditor((editor) ->
             {
-               requestCompletions(editor);
+               requestCompletions(editor, completionTriggeredByCommand_);
+               completionTriggeredByCommand_ = false;
             });
          }
       };
@@ -111,7 +111,7 @@ public class TextEditingTargetCopilotHelper
       
    }
    
-   private void requestCompletions(DocDisplay editor)
+   private void requestCompletions(DocDisplay editor, boolean triggeredByCommand)
    {
       target_.withSavedDoc(() ->
       {
@@ -122,10 +122,19 @@ public class TextEditingTargetCopilotHelper
          events_.fireEvent(
                new CopilotEvent(CopilotEventType.COMPLETION_REQUESTED));
 
+         String trigger = prefs_.copilotCompletionsTrigger().getGlobalValue();
+         boolean autoInvoked = trigger.equals(UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO);
+         if (triggeredByCommand)
+         {
+            // users can trigger completions manually via command, even if set to auto
+            autoInvoked = false;
+         }
+
          server_.copilotGenerateCompletions(
                target_.getId(),
                StringUtil.notNull(target_.getPath()),
                StringUtil.isNullOrEmpty(target_.getPath()),
+               autoInvoked, 
                cursorPosition.getRow(),
                cursorPosition.getColumn(),
                new ServerRequestCallback<CopilotGenerateCompletionsResponse>()
@@ -197,7 +206,7 @@ public class TextEditingTargetCopilotHelper
 
                      // Otherwise, handle the response.
                      JsArrayLike<CopilotCompletion> completions =
-                           Js.cast(result.asPropertyMap().get("completions"));
+                           Js.cast(result.asPropertyMap().get("items"));
 
 
                      events_.fireEvent(new CopilotEvent(
@@ -222,11 +231,10 @@ public class TextEditingTargetCopilotHelper
                         
                         // Copilot includes trailing '```' for some reason in some cases,
                         // remove those if we're inserting in an R document.
-                        completion.text = postProcessCompletion(completion.text);
-                        completion.displayText = postProcessCompletion(completion.displayText);
+                        completion.insertText = postProcessCompletion(completion.insertText);
 
                         activeCompletion_ = completion;
-                        editor.setGhostText(activeCompletion_.displayText);
+                        editor.setGhostText(activeCompletion_.insertText);
                      }
                   }
 
@@ -248,6 +256,7 @@ public class TextEditingTargetCopilotHelper
          registrations_.removeHandler();
          requestId_ = 0;
          completionTimer_.cancel();
+         completionTriggeredByCommand_ = false;
          events_.fireEvent(new CopilotEvent(CopilotEventType.COPILOT_DISABLED));
       }
       else
@@ -273,7 +282,10 @@ public class TextEditingTargetCopilotHelper
    public void onCopilotRequestCompletions()
    {
       if (copilot_.isEnabled())
+      {
+         completionTriggeredByCommand_ = true;
          completionTimer_.schedule(0);
+      }
    }
    
    @Handler
@@ -294,7 +306,7 @@ public class TextEditingTargetCopilotHelper
       if (!hasActiveSuggestion)
          return;
       
-      String text = activeCompletion_.displayText;
+      String text = activeCompletion_.insertText;
       Pattern pattern = Pattern.create("(?:\\b|$)");
       Match match = pattern.match(text, 1);
       if (match == null)
@@ -304,9 +316,7 @@ public class TextEditingTargetCopilotHelper
       String leftoverText = StringUtil.substring(text, match.getIndex());
       
       int n = insertedWord.length();
-      activeCompletion_.displayText = leftoverText;
-      activeCompletion_.text = leftoverText;
-      activeCompletion_.position.character += n;
+      activeCompletion_.insertText = leftoverText;
       activeCompletion_.range.start.character += n;
       activeCompletion_.range.end.character += n;
       
@@ -314,7 +324,7 @@ public class TextEditingTargetCopilotHelper
       {
          suppressCursorChangeHandler_ = true;
          editor.insertCode(insertedWord, InsertionBehavior.EditorBehaviorsDisabled);
-         editor.setGhostText(activeCompletion_.displayText);
+         editor.setGhostText(activeCompletion_.insertText);
          
          // Work around issue with ghost text not appearing after inserting
          // a code suggestion containing a new line
@@ -322,7 +332,7 @@ public class TextEditingTargetCopilotHelper
          {
             Timers.singleShot(20, () ->
             {
-               editor.setGhostText(activeCompletion_.displayText);
+               editor.setGhostText(activeCompletion_.insertText);
             });
          }
       });
@@ -349,9 +359,7 @@ public class TextEditingTargetCopilotHelper
    private void updateCompletion(DocDisplay editor, String key)
    {
       int n = key.length();
-      activeCompletion_.displayText = StringUtil.substring(activeCompletion_.displayText, n);
-      activeCompletion_.text = StringUtil.substring(activeCompletion_.text, n);
-      activeCompletion_.position.character += n;
+      activeCompletion_.insertText = StringUtil.substring(activeCompletion_.insertText, n);
       activeCompletion_.range.start.character += n;
       activeCompletion_.range.end.character += n;
       
@@ -360,7 +368,7 @@ public class TextEditingTargetCopilotHelper
       // dodge this effect, we reset the ghost text at the end of the event loop.
       Timers.singleShot(() ->
       {
-         editor.setGhostText(activeCompletion_.displayText);
+         editor.setGhostText(activeCompletion_.insertText);
       });
    }
    
@@ -456,6 +464,7 @@ public class TextEditingTargetCopilotHelper
       if (editor.hasSelection())
       {
          completionTimer_.cancel();
+         completionTriggeredByCommand_ = false;
          return;
       }
 
@@ -488,7 +497,7 @@ public class TextEditingTargetCopilotHelper
       // ghost text. If so, we'll suppress the next cursor change handler,
       // so we can continue presenting the current ghost text.
       String key = EventProperty.key(keyEvent.getNativeEvent());
-      if (activeCompletion_.displayText.startsWith(key))
+      if (activeCompletion_.insertText.startsWith(key))
       {
          updateCompletion(editor, key);
          suppressCursorChangeHandler_ = true;
@@ -506,7 +515,7 @@ public class TextEditingTargetCopilotHelper
                activeCompletion_.range.start.character,
                activeCompletion_.range.end.line,
                activeCompletion_.range.end.character);
-         editor.replaceRange(aceRange, activeCompletion_.text);
+         editor.replaceRange(aceRange, activeCompletion_.insertText);
 
          activeCompletion_ = null;
       }
@@ -544,6 +553,7 @@ public class TextEditingTargetCopilotHelper
    private final TextEditingTarget target_;
    private final DocDisplay srcEditor_;
    private final Timer completionTimer_;
+   private boolean completionTriggeredByCommand_ = false;
    private final HandlerRegistrations registrations_;
    
    private int requestId_;
