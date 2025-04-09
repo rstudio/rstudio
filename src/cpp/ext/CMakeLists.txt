@@ -138,7 +138,7 @@ dependency(WEBSOCKETPP
    COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
    VERSION    "0.8.3"
    REPOSITORY "https://github.com/amini-allight/websocketpp"
-   REVISION   "a11fa6fe4937ca251753e90b1836a68bf57768a9" # pragma: allowlist secret
+   REVISION   "ee8cf4257e001d939839cff5b1766a835b749cd6" # pragma: allowlist secret
    CUSTOM     TRUE
 )
 
