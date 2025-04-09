@@ -54,7 +54,7 @@ You can publish Shiny apps to Posit Connect, Posit Cloud, or shinyapps.io.
 
 ## Including secrets
 
-Posit Connect supports including secrets and other sensitive information as ["Vars" (Environment Variables)](https://docs.posit.co/connect/user/content-settings/index.html#content-vars). When developing content for Connect, you should never place secrets (keys, tokens, passwords, etc.) in the code itself.
+Posit Connect supports including secrets and other sensitive information as [Vars (Environment Variables)](https://docs.posit.co/connect/user/content-settings/index.html#content-vars). When developing content for Connect, you should never place secrets (keys, tokens, passwords, etc.) in the code itself.
 
 RStudio also supports the inclusion of environment variables defined in the user/project `.Renviron` file when publishing content to Posit Connect. 
 
