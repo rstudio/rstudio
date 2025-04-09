@@ -15,20 +15,7 @@
 
 .rs.addJsonRpcHandler("get_deployment_env_vars", function()
 {
-   # Find active .Renviron file
-   environFile <- .rs.findEnvironFile()
-   if (!nzchar(environFile) || !file.exists(environFile))
-      return(character())
-   
-   # Read environment variable names from the file
-   contents <- readLines(environFile, warn = FALSE)
-   pattern <- "^\\s*([\\w_]+)\\s*="
-   matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
-   envVars <- gsub("\\s*=.*", "", matchedLines)
-   
-   # Keep only those tokens which would likely have secrets of interest
-   pattern <- "(?:^|[\\b_])(?:api|key|pass|pat|secret|token)(?:$|[\\b_])"
-   grep(pattern, envVars, perl = TRUE, value = TRUE, ignore.case = TRUE)
+   as.character(names(Sys.getenv()))
 })
 
 .rs.addJsonRpcHandler("forget_rsconnect_deployments", function(sourcePath, outputPath)
