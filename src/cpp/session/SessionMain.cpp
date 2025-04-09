@@ -532,6 +532,28 @@ void exitEarly(int status)
    ::exit(status);
 }
 
+namespace {
+
+void setPartnerEnvironmentVariables()
+{
+   // make sure we use the appropriate getenv / setenv tools,
+   // so that the set environment variables are visible to R
+   using rstudio::r::util::getenv;
+   using rstudio::r::util::setenv;
+
+   // set spark user agent if unset
+   std::string sparkUserAgent = getenv("SPARK_CONNECT_USER_AGENT");
+   if (sparkUserAgent.empty())
+      setenv("SPARK_CONNECT_USER_AGENT", "posit-rstudio");
+
+   // set SF_PARTNER if unset
+   std::string sfPartner = getenv("SF_PARTNER");
+   if (sfPartner.empty())
+      setenv("SF_PARTNER", "posit_rstudio");
+}
+
+} // end anonymous namespace
+
 Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 {
    // save state we need to reference later
@@ -845,15 +867,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       rsession::persistentState().setAbend(true);
    }
 
-   // set spark user agent if unset
-   std::string sparkUserAgent = core::system::getenv("SPARK_CONNECT_USER_AGENT");
-   if (sparkUserAgent.empty())
-      core::system::setenv("SPARK_CONNECT_USER_AGENT", "posit-rstudio");
-
-	// set SF_PARTNER if unset
-	std::string sfPartner = core::system::getenv("SF_PARTNER");
-	if (sfPartner.empty())
-		core::system::setenv("SF_PARTNER", "posit_rstudio");
+   setPartnerEnvironmentVariables();
 
    // begin session
    using namespace module_context;
@@ -1716,7 +1730,7 @@ void loadCranRepos(const std::string& repos,
    pROptions->rCRANSecondary = algorithm::join(secondary, "|");
 }
 
-} // anonymous namespace
+} // end anonymous namespace
 
 
 // provide definition methods for rsession::module_context
