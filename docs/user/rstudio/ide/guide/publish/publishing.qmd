@@ -60,7 +60,7 @@ RStudio also supports the inclusion of environment variables defined in the user
 
 ![](images/publish-env-vars.png){fig-alt="Screenshot of including environment variables when publishing from RStudio."}
 
-One or more environment variables can be selected for inclusion on Posit Connect. On publish, environment variables are sent over an encrypted connection and are not stored in the bundle. Environment variables are set prior to deployment so that your code can use them and the first deployment can still succeed. Note that this means that if the deployment fails, the values will still be updated.
+One or more environment variables can be selected for inclusion on Posit Connect. On publish, environment variables are sent over an encrypted connection and are not stored in the bundle. Environment variables are set prior to deployment so that your code can use them and the first deployment can still succeed. This means that if the deployment fails, the values will still be updated.
 
 Reference the [Posit Connect User Guide](https://docs.posit.co/connect/user/content-settings/index.html#content-vars) for more information. The [`rsconnect` R package](https://rstudio.github.io/rsconnect/reference/deployApp.html#arg-envvars) can also include environment variables when publishing programatically.
 
