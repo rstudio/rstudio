@@ -27,6 +27,7 @@
 #include <core/Thread.hpp>
 #include <core/StringUtils.hpp>
 #include <core/regex/RegexDebug.hpp>
+#include <core/regex/RegexSearch.hpp>
 
 #include <r/RExec.hpp>
 #include <r/session/RConsoleActions.hpp>
@@ -125,21 +126,8 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
          }
       }
 
-      // Insert our group start marker.
+      // Insert our group markers.
       pOutput->insert(match.position(), kAnsiEscapeGroupStartError);
-
-      // If options(warn = 0) is set, it's possible that errors will
-      // be printed as part of processing the error.
-      // Try to detect this case, and split the outputs.
-      auto searchBegin = pOutput->cbegin() + match.position() + match.length();
-      auto searchEnd = pOutput->cend();
-      if (regex_utils::search(searchBegin, searchEnd, match, reInAdditionPrefix()))
-      {
-         pOutput->insert(
-            match.position(),
-            kAnsiEscapeGroupEnd kAnsiEscapeGroupStartWarning);
-      }
-
       pOutput->append(kAnsiEscapeGroupEnd);
    }
    else if (allowGroupAll)
@@ -154,7 +142,18 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
    using namespace console_output;
 
    boost::smatch match;
-   if (regex_utils::search(*pOutput, match, reWarningPrefix()))
+   
+   auto offset = 0;
+   auto lhs = pOutput->cbegin();
+   auto rhs = pOutput->cend();
+
+   // Skip over an 'In addition: ' prefix, if there is one.
+   if (regex_utils::search(lhs, rhs, match, reInAdditionPrefix()))
+   {
+      offset = match.position() + match.length();
+   }
+
+   if (regex_utils::search(lhs + offset, rhs, match, reWarningPrefix()))
    {
       // Check for a match in one of our capturing groups.
       for (std::size_t i = 1; i < match.size(); i++)
@@ -162,7 +161,7 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
          if (match[i].matched)
          {
             // If we found a match, we'll insert highlight markers around the match.
-            auto lhs = match.position(i);
+            auto lhs = match.position(i) + offset;
             auto rhs = lhs + match.length(i);
             pOutput->insert(rhs, kAnsiEscapeHighlightEnd);
             pOutput->insert(lhs, kAnsiEscapeHighlightStartWarning);
@@ -171,7 +170,7 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
       }
 
       // Insert our group start marker.
-      pOutput->insert(match.position(), kAnsiEscapeGroupStartWarning);
+      pOutput->insert(0, kAnsiEscapeGroupStartWarning);
    }
    else if (allowGroupAll)
    {

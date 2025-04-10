@@ -186,7 +186,8 @@
          return(NULL)
       
       objectId <- attr(x, "id", exact = TRUE)
-      jsFunc <- sprintf("function() { return this[%s]; }", deparse(i))
+      subsetIndex <- .rs.toJSON(i, unbox = TRUE)
+      jsFunc <- sprintf("function() { return this[%s]; }", subsetIndex)
       
       response <- self$client$Runtime.callFunctionOn(
          functionDeclaration = jsFunc,
