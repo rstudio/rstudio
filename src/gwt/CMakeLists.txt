@@ -39,6 +39,10 @@ if(DEFINED ENV{GWT_BUILD})
    set(GWT_BUILD $ENV{GWT_BUILD})
 endif()
 
+if(DEFINED ENV{GWT_COPY})
+   set(GWT_COPY $ENV{GWT_COPY})
+endif()
+
 # set main module (allow override from envvar)
 set(GWT_MAIN_MODULE "RStudio")
 if(DEFINED ENV{GWT_MAIN_MODULE})
