@@ -248,6 +248,13 @@ Error initialize()
    if (error)
       return error;
 
+   // install global calling handlers
+   FilePath globalCallingHandlersFilePath = utils::rSourcePath().completePath("GlobalCallingHandlers.R");
+   error = r::sourceManager().sourceTools(globalCallingHandlersFilePath);
+   if (error)
+      return error;
+
+
    // initialize graphics device -- use a stable directory for server mode
    // and temp directory for desktop mode (so that we can support multiple
    // concurrent processes using the same project)
@@ -371,15 +378,6 @@ Error initialize()
    }
 #endif
 
-   // global calling handlers
-   if (s_isR4)
-   {
-      FilePath handlersFilePath = utils::rSourcePath().completePath("GlobalCallingHandlers.R");
-      error = r::sourceManager().sourceLocal(handlersFilePath);
-      if (error)
-         return error;
-   }
-   
    // now run hooks for those waiting for session to be fully initialized
    if (rCallbacks().initComplete)
       rCallbacks().initComplete();

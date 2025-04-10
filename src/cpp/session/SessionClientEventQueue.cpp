@@ -15,6 +15,11 @@
 
 #include "SessionClientEventQueue.hpp"
 
+#include <string>
+#include <utility>
+
+#include <boost/regex/v5/regex.hpp>
+
 #include <shared_core/json/Json.hpp>
 
 #include <core/AnsiEscapes.hpp>
@@ -24,7 +29,6 @@
 #include <core/regex/RegexDebug.hpp>
 
 #include <r/RExec.hpp>
-
 #include <r/session/RConsoleActions.hpp>
 
 #include <session/SessionConsoleOutput.hpp>
@@ -102,36 +106,41 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
    boost::smatch match;
    if (regex_utils::search(*pOutput, match, reErrorPrefix()))
    {
-      // Insert highlight markers around 'Error'.
-      // Note that, because the word may have been translated, we just look
-      // for the first colon or space following the location where the error
-      // prefix was matched.
-      auto matchEnd = match[0].second - pOutput->begin();
-      auto highlightStart = match[0].first - pOutput->begin();
-      auto highlightEnd = pOutput->find_first_of(": ", highlightStart);
-      if (highlightEnd != std::string::npos)
+      // we want to mutate the input string, but the match object uses
+      // iterators into the original string, so we need to instead
+      // compute offsets from the match
+
+      // Check for a match in one of our capturing groups.
+      for (std::size_t i = 1; i < match.size(); i++)
       {
-         pOutput->insert(highlightEnd, kAnsiEscapeHighlightEnd);
-         pOutput->insert(highlightStart, kAnsiEscapeGroupStartError kAnsiEscapeHighlightStartError);
+         if (match[i].matched)
+         {
+            // If we found a match, we'll insert highlight markers around the match.
+            auto lhs = match.position(i);
+            auto rhs = lhs + match.length(i);
+
+            pOutput->insert(rhs, kAnsiEscapeHighlightEnd);
+            pOutput->insert(lhs, kAnsiEscapeHighlightStartError);
+            break;
+         }
       }
-      else
-      {
-         pOutput->insert(highlightStart, kAnsiEscapeGroupStartError);
-      }
+
+      // Insert our group start marker.
+      pOutput->insert(match.position(), kAnsiEscapeGroupStartError);
 
       // If options(warn = 0) is set, it's possible that errors will
       // be printed as part of processing the error.
       // Try to detect this case, and split the outputs.
-      auto searchBegin = pOutput->cbegin() + matchEnd;
+      auto searchBegin = pOutput->cbegin() + match.position() + match.length();
       auto searchEnd = pOutput->cend();
       if (regex_utils::search(searchBegin, searchEnd, match, reInAdditionPrefix()))
       {
-         auto index = match[0].begin() - pOutput->begin();
-         pOutput->insert(index, kAnsiEscapeGroupEnd kAnsiEscapeGroupStartWarning);
+         pOutput->insert(
+            match.position(),
+            kAnsiEscapeGroupEnd kAnsiEscapeGroupStartWarning);
       }
 
       pOutput->append(kAnsiEscapeGroupEnd);
-
    }
    else if (allowGroupAll)
    {
@@ -147,8 +156,22 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
    boost::smatch match;
    if (regex_utils::search(*pOutput, match, reWarningPrefix()))
    {
-      pOutput->insert(match[0].first - pOutput->begin(), kAnsiEscapeGroupStartWarning);
-      pOutput->append(kAnsiEscapeGroupEnd);
+      // Check for a match in one of our capturing groups.
+      for (std::size_t i = 1; i < match.size(); i++)
+      {
+         if (match[i].matched)
+         {
+            // If we found a match, we'll insert highlight markers around the match.
+            auto lhs = match.position(i);
+            auto rhs = lhs + match.length(i);
+            pOutput->insert(rhs, kAnsiEscapeHighlightEnd);
+            pOutput->insert(lhs, kAnsiEscapeHighlightStartWarning);
+            break;
+         }
+      }
+
+      // Insert our group start marker.
+      pOutput->insert(match.position(), kAnsiEscapeGroupStartWarning);
    }
    else if (allowGroupAll)
    {

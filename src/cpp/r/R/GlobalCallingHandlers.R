@@ -184,3 +184,147 @@
 {
    paste0(.rs.ansiEscapeHighlight[[type]], text, .rs.ansiEscapeHighlight[["end"]])
 })
+
+
+.rs.addFunction("globalCallingHandlers.makePrefixRegex", function(prefixes, type)
+{
+   # We construct a regular expression by taking the input prefix, translating
+   # it into the user's current language, and then formatting / escaping that
+   # as a Boost regular expression (intended as a PCRE regex). Note that we use
+   # \Q and \E escapes to support quoting of the translated text, just to avoid
+   # potential issues if the translation were to also have characters that had
+   # a special interpretation in a regular expression.
+   
+   patterns <- vapply(prefixes, function(prefix)
+   {
+      # translate into the user's current language
+      translated <- gettext(prefix$sourceText, domain = "R")
+      
+      # check for a highlight rule; if we have one, apply it
+      if (!is.null(prefix$highlightUntil))
+      {
+         index <- regexpr(prefix$highlightUntil, translated, fixed = TRUE)
+         if (index > 0)
+         {
+            translated <- sprintf(
+               "\\E(\\Q%s\\E)\\Q%s",
+               substr(translated, 1L, index - 1L),
+               substr(translated, index, nchar(translated))
+            )
+         }
+      }
+      
+      # return translated text, with potential highlights inserted
+      translated
+      
+   }, FUN.VALUE = character(1), USE.NAMES = FALSE)
+   
+   # replace '%d' -- a sequence of digits
+   patterns <- gsub("%d", "\\E\\d+\\Q", patterns, fixed = TRUE)
+
+   # replace '%s' -- %s' is usually intended to be a placeholder for
+   # a deparsed call, so in theory can be just about anything...
+   patterns <- gsub("%s", "\\E\\S+\\Q", patterns, fixed = TRUE)
+
+   # put it all together
+   patterns <- paste0("\\Q", patterns, "\\E")
+   
+   # put it together into a single regex
+   sprintf("^(?:%s)", paste(patterns, collapse = "|"))
+})
+
+.rs.addFunction("globalCallingHandlers.reErrorPrefix", function()
+{
+   # NOTE: 'sourceText' below is chosen to match the source text used for
+   # translations used by base R
+   prefixes <- list(
+      
+      list(
+         sourceText     = "Error: ",
+         highlightUntil = ":"
+      ),
+      
+      list(
+         sourceText     = "Error in ",
+         highlightUntil = " "
+      ),
+      
+      list(
+         sourceText     = "Error in %s : ",
+         highlightUntil = " "
+      ),
+      
+      list(
+         sourceText     = "Error in %s (from %s) : ",
+         highlightUntil = " "
+      ),
+      
+      list(
+         sourceText     = "Error during wrapup: ",
+         highlightUntil = ":"
+      )
+      
+   )
+   
+   .rs.globalCallingHandlers.makePrefixRegex(prefixes, type = "error")
+})
+
+.rs.addFunction("globalCallingHandlers.reWarningPrefix", function()
+{
+   # NOTE: 'sourceText' below is chosen to match the source text used for
+   # translations used by base R
+   prefixes <- list(
+      
+      list(
+         sourceText     = "Warning:",
+         highlightUntil = ":"
+      ),
+      
+      list(
+         sourceText     = "Warning message:",
+         highlightUntil = ":"
+      ),
+      
+      list(
+         sourceText = "Warning messages:",
+         highlightUntil = ":"
+      ),
+      
+      list(
+         sourceText = "Warning in %s :",
+         highlightUntil = " "
+      ),
+      
+      list(
+         sourceText = "There was %d warning (use warnings() to see it)",
+         highlightUntil = NULL
+      ),
+      
+      list(
+         sourceText = "There were %d warnings (use warnings() to see them)",
+         highlightUntil = NULL
+      ),
+      
+      list(
+         sourceText = "There were %d or more warnings (use warnings() to see the first %d)",
+         highlightUntil = NULL
+      )
+
+   )
+   
+   .rs.globalCallingHandlers.makePrefixRegex(prefixes, type = "warning")
+})
+
+.rs.addFunction("globalCallingHandlers.reInAdditionPrefix", function()
+{
+   prefixes <- list(
+      
+      list(
+         sourceText     = "In addition: ",
+         highlightUntil = NULL
+      )
+      
+   )
+   
+   .rs.globalCallingHandlers.makePrefixRegex(prefixes, type = "warning")
+})
