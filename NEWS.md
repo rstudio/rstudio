@@ -65,11 +65,11 @@
 - Fixed an issue where unopened VSCode and Positron sessions wouldn't timeout when `session-timeout-kill-hours` was set and SSL was enabled. (rstudio-pro#7195)
 
 ### Dependencies
-- Update Electron to version 34.5.0. (#15450)
+- Update Electron to version 34.5.1. (#15450)
 - Update Quarto to version 1.6.42. (#15460)
-- Copilot Language Server 1.298.0. (rstudio-pro#7450)
 - Updated Positron Pro sessions to 2025.04 with Code OSS 1.98
 - Updated Code OSS to 1.99 for VS Code sessions (rstudio-pro#7882)
+- Copilot Language Server 1.300.0. (rstudio-pro#7450)
 - Updated Node in VS Code and Positron Pro sessions to 20.18.2 (rstudio-pro#7612)
 
 ### Deprecated / Removed
