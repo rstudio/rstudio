@@ -492,25 +492,28 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                          Element widgetEl)
    {
       Element firstErrorEl = errorEls.get(0);
+      
+      // If console groups are enabled, the error output might have been collected
+      // into a single 'groupError' span element. Search the parent element, plus
+      // all of that element's siblings.
       Element parentEl = firstErrorEl.getParentElement();
-      
-      if (parentEl.hasClassName(VirtualConsole.RES.styles().groupError()))
+      for (Element el = parentEl.getParentElement().getFirstChildElement();
+           el != null;
+           el = el.getNextSiblingElement())
       {
-         // If console groups are enabled, the error output might have been collected
-         // into a single 'groupError' span element. In this scenario, just replace 
-         // that parent element with the error widget.
-         parentEl.getParentElement().replaceChild(widgetEl, parentEl);
-      }
-      else
-      {
-         // Otherwise, error output should be a sequence of DOM elements within
-         // some collection. Replace the first one with our error widget, and then
-         // remove all the other error elements.
-         parentEl.replaceChild(widgetEl, firstErrorEl);
-         for (int i = 1; i < errorEls.size(); i++)
-            parentEl.removeChild(errorEls.get(i));
+         if (el.hasClassName(VirtualConsole.RES.styles().groupError()))
+         {
+            el.getParentElement().replaceChild(widgetEl, el);
+            return;
+         }
       }
       
+      // Otherwise, error output should be a sequence of DOM elements within
+      // some collection. Replace the first one with our error widget, and then
+      // remove all the other error elements.
+      parentEl.replaceChild(widgetEl, firstErrorEl);
+      for (int i = 1; i < errorEls.size(); i++)
+         parentEl.removeChild(errorEls.get(i));
    }
 
    @Override

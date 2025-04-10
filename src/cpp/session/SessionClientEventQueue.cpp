@@ -15,6 +15,11 @@
 
 #include "SessionClientEventQueue.hpp"
 
+#include <string>
+#include <utility>
+
+#include <boost/regex/v5/regex.hpp>
+
 #include <shared_core/json/Json.hpp>
 
 #include <core/AnsiEscapes.hpp>
@@ -22,9 +27,9 @@
 #include <core/Thread.hpp>
 #include <core/StringUtils.hpp>
 #include <core/regex/RegexDebug.hpp>
+#include <core/regex/RegexSearch.hpp>
 
 #include <r/RExec.hpp>
-
 #include <r/session/RConsoleActions.hpp>
 
 #include <session/SessionConsoleOutput.hpp>
@@ -102,36 +107,28 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
    boost::smatch match;
    if (regex_utils::search(*pOutput, match, reErrorPrefix()))
    {
-      // Insert highlight markers around 'Error'.
-      // Note that, because the word may have been translated, we just look
-      // for the first colon or space following the location where the error
-      // prefix was matched.
-      auto matchEnd = match[0].second - pOutput->begin();
-      auto highlightStart = match[0].first - pOutput->begin();
-      auto highlightEnd = pOutput->find_first_of(": ", highlightStart);
-      if (highlightEnd != std::string::npos)
+      // we want to mutate the input string, but the match object uses
+      // iterators into the original string, so we need to instead
+      // compute offsets from the match
+
+      // Check for a match in one of our capturing groups.
+      for (std::size_t i = 1; i < match.size(); i++)
       {
-         pOutput->insert(highlightEnd, kAnsiEscapeHighlightEnd);
-         pOutput->insert(highlightStart, kAnsiEscapeGroupStartError kAnsiEscapeHighlightStartError);
-      }
-      else
-      {
-         pOutput->insert(highlightStart, kAnsiEscapeGroupStartError);
+         if (match[i].matched)
+         {
+            // If we found a match, we'll insert highlight markers around the match.
+            auto lhs = match.position(i);
+            auto rhs = lhs + match.length(i);
+
+            pOutput->insert(rhs, kAnsiEscapeHighlightEnd);
+            pOutput->insert(lhs, kAnsiEscapeHighlightStartError);
+            break;
+         }
       }
 
-      // If options(warn = 0) is set, it's possible that errors will
-      // be printed as part of processing the error.
-      // Try to detect this case, and split the outputs.
-      auto searchBegin = pOutput->cbegin() + matchEnd;
-      auto searchEnd = pOutput->cend();
-      if (regex_utils::search(searchBegin, searchEnd, match, reInAdditionPrefix()))
-      {
-         auto index = match[0].begin() - pOutput->begin();
-         pOutput->insert(index, kAnsiEscapeGroupEnd kAnsiEscapeGroupStartWarning);
-      }
-
+      // Insert our group markers.
+      pOutput->insert(0, kAnsiEscapeGroupStartError);
       pOutput->append(kAnsiEscapeGroupEnd);
-
    }
    else if (allowGroupAll)
    {
@@ -145,9 +142,35 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
    using namespace console_output;
 
    boost::smatch match;
-   if (regex_utils::search(*pOutput, match, reWarningPrefix()))
+   
+   auto offset = 0;
+   auto lhs = pOutput->cbegin();
+   auto rhs = pOutput->cend();
+
+   // Skip over an 'In addition: ' prefix, if there is one.
+   if (regex_utils::search(lhs, rhs, match, reInAdditionPrefix()))
    {
-      pOutput->insert(match[0].first - pOutput->begin(), kAnsiEscapeGroupStartWarning);
+      offset = match.position() + match.length();
+   }
+
+   if (regex_utils::search(lhs + offset, rhs, match, reWarningPrefix()))
+   {
+      // Check for a match in one of our capturing groups.
+      for (std::size_t i = 1; i < match.size(); i++)
+      {
+         if (match[i].matched)
+         {
+            // If we found a match, we'll insert highlight markers around the match.
+            auto lhs = match.position(i) + offset;
+            auto rhs = lhs + match.length(i);
+            pOutput->insert(rhs, kAnsiEscapeHighlightEnd);
+            pOutput->insert(lhs, kAnsiEscapeHighlightStartWarning);
+            break;
+         }
+      }
+
+      // Insert our group markers.
+      pOutput->insert(0, kAnsiEscapeGroupStartWarning);
       pOutput->append(kAnsiEscapeGroupEnd);
    }
    else if (allowGroupAll)

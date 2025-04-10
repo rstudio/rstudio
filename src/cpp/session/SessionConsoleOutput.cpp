@@ -58,19 +58,19 @@ void synchronize()
       Error error;
 
       std::string reErrorPrefix;
-      error = r::exec::RFunction(".rs.reErrorPrefix")
+      error = r::exec::RFunction(".rs.globalCallingHandlers.reErrorPrefix")
             .call(&reErrorPrefix);
       if (error)
          LOG_ERROR(error);
 
       std::string reWarningPrefix;
-      error = r::exec::RFunction(".rs.reWarningPrefix")
+      error = r::exec::RFunction(".rs.globalCallingHandlers.reWarningPrefix")
             .call(&reWarningPrefix);
       if (error)
          LOG_ERROR(error);
 
       std::string reInAdditionPrefix;
-      error = r::exec::RFunction(".rs.reInAdditionPrefix")
+      error = r::exec::RFunction(".rs.globalCallingHandlers.reInAdditionPrefix")
             .call(&reInAdditionPrefix);
       if (error)
          LOG_ERROR(error);
