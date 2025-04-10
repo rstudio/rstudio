@@ -1804,6 +1804,31 @@ Error copilotDocFocused(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error copilotDidShowCompletion(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      // nothing to do if we can't connect to the agent
+      return Success();
+   }
+
+   // Read params
+   json::Object completionJson;
+   Error error = core::json::readParams(request.params, &completionJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   json::Object paramsJson;
+   paramsJson["item"] = completionJson;
+   sendNotification("textDocument/didShowCompletion", paramsJson);
+   return Success();
+}
+
 } // end anonymous namespace
 
 
@@ -1852,6 +1877,7 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
          (bind(registerRpcMethod, "copilot_doc_focused", copilotDocFocused))
+         (bind(registerRpcMethod, "copilot_did_show_completion", copilotDidShowCompletion))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();

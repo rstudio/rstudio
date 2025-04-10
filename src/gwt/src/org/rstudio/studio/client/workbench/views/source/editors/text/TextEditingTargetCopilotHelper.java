@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
@@ -217,6 +218,9 @@ public class TextEditingTargetCopilotHelper
                      for (int i = 0, n = completions.getLength(); i < n; i++)
                      {
                         CopilotCompletion completion = completions.getAt(i);
+
+                        server_.copilotDidShowCompletion(completion,
+                                                         new VoidServerRequestCallback());
 
                         // fix up the copilot range; it's computed using the source document
                         // cursor position, but we want to convert this to the position
