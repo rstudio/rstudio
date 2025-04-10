@@ -398,7 +398,8 @@ public class ChunkOutputStream extends FlowPanel
       flushQueuedErrors();
       
       // normalize outputs
-      vconsole_.normalizePreviousOutput();
+      if (vconsole_ != null)
+         vconsole_.normalizePreviousOutput();
       
       // reset last output types
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
@@ -740,6 +741,7 @@ public class ChunkOutputStream extends FlowPanel
       {
          console_.getElement().setInnerHTML("");
       }
+
       if (vconsole_ == null)
       {
          vconsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(console_.getElement());
@@ -801,11 +803,6 @@ public class ChunkOutputStream extends FlowPanel
          }
       }
       return 0;
-   }
-   
-   private void normalizeOutput()
-   {
-      vconsole_.normalizePreviousOutput();
    }
    
    private final ChunkOutputPresenter.Host host_;
