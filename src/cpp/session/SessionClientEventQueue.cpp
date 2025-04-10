@@ -127,7 +127,7 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
       }
 
       // Insert our group markers.
-      pOutput->insert(match.position(), kAnsiEscapeGroupStartError);
+      pOutput->insert(0, kAnsiEscapeGroupStartError);
       pOutput->append(kAnsiEscapeGroupEnd);
    }
    else if (allowGroupAll)
@@ -169,8 +169,9 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
          }
       }
 
-      // Insert our group start marker.
+      // Insert our group markers.
       pOutput->insert(0, kAnsiEscapeGroupStartWarning);
+      pOutput->append(kAnsiEscapeGroupEnd);
    }
    else if (allowGroupAll)
    {
