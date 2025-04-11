@@ -89,6 +89,11 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
       continue()
    endif()
 
+   # skip Copilot if not enabled
+   if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_COPILOT_DIR" AND NOT COPILOT_ENABLED)
+      continue()
+   endif()
+
    # validate existence
    if(NOT EXISTS "${${VAR}}")
       message(FATAL_ERROR "${${VAR}} not found (re-run install-dependencies script to install")
@@ -743,14 +748,16 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    endif()
 
    # install Copilot Language Server
-   if(APPLE)
-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
-              DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
-              USE_SOURCE_PERMISSIONS)
-   else()
-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
-            DESTINATION "${RSTUDIO_INSTALL_BIN}"
-            USE_SOURCE_PERMISSIONS)
+   if(COPILOT_ENABLED)
+      if(APPLE)
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
+               DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
+               USE_SOURCE_PERMISSIONS)
+      else()
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
+               DESTINATION "${RSTUDIO_INSTALL_BIN}"
+               USE_SOURCE_PERMISSIONS)
+      endif()
    endif()
 
    # install embedded packages

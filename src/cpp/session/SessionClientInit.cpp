@@ -652,7 +652,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["session_node"] = session::modules::overlay::sessionNode();
    
    // copilot
+#ifdef COPILOT_ENABLED
    sessionInfo["copilot_enabled"] = options.copilotEnabled();
+#else
+   sessionInfo["copilot_enabled"] = false;
+#endif
    
    // automation
    sessionInfo["is_automation_host"] = options.runAutomation();
@@ -669,7 +673,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
       else
       {
          json::Object copilotOptionsJson;
+#ifdef COPILOT_ENABLED
          copilotOptionsJson["copilot_enabled"] = options.copilotEnabled;
+#else
+         copilotOptionsJson["copilot_enabled"] = false;
+#endif
          copilotOptionsJson["copilot_indexing_enabled"] = options.copilotIndexingEnabled;
          sessionInfo["copilot_project_options"] = copilotOptionsJson;
       }

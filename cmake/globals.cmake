@@ -260,6 +260,14 @@ endif()
 
 message(STATUS "Quarto enabled: ${QUARTO_ENABLED}")
 
+option(RSTUDIO_ENABLE_COPILOT "Enable the GitHub Copilot Feature" ON)
+if(RSTUDIO_ENABLE_COPILOT)
+   message(STATUS "GitHub Copilot support enabled")
+   add_definitions(-DCOPILOT_ENABLED)
+else()
+   message(STATUS "GitHub Copilot support disabled")
+endif()
+
 # install freedesktop integration files if we are installing into /usr
 if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)
    if(${CMAKE_INSTALL_PREFIX} MATCHES "/usr/.*")
