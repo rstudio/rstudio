@@ -404,6 +404,8 @@ FilePath copilotLanguageServerPath()
 
 bool isCopilotEnabled()
 {
+#ifdef COPILOT_ENABLED
+
    // Check administrator option
    if (!session::options().copilotEnabled())
    {
@@ -438,6 +440,11 @@ bool isCopilotEnabled()
    }
    
    return true;
+
+#else // RStudio built without Copilot support
+   s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
+   return false;
+#endif
 }
 
 bool isCopilotIndexingEnabled()
