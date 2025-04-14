@@ -1376,10 +1376,10 @@ void onBackgroundProcessing(bool isIdle)
                if (kindJson.isString())
                   kind = kindJson.getString();
 
-                if (boost::iequals(kind, "Error"))
-                  ELOG("didChangeStatus: '{}'", message);
-                else if (boost::iequals(kind, "Warning") || boost::iequals(kind, "Inactive"))
-                  WLOG("didChangeStatus: '{}'", message);
+                // Log at debug level to avoid spamming the logs with things such as
+                // "You are not signed into GitHub."
+                // https://github.com/rstudio/rstudio/issues/15910
+                DLOG("didChangeStatus: '{}: {}'", kind, message);
             }
             continue;
          }
