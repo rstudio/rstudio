@@ -122,6 +122,7 @@ build <- function(arch, config) {
       -G "{CMAKE_GENERATOR}"
       -A {winarch}
       -DCMAKE_VERBOSE_MAKEFILE=ON
+      -DCMAKE_POLICY_VERSION_MINIMUM=3.5
       -DCMAKE_CXX_FLAGS="/FS /EHsc"
       -DBOOST_INCLUDEDIR="{boost_include_dir}"
       -DBOOST_LIBRARYDIR="{boost_library_dir}"
