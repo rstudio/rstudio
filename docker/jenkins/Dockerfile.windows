@@ -26,6 +26,7 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
 
 # install some deps via chocolatey
 RUN `
+  choco install -y vim; `
   choco install -y -i ant; `
   choco install -y 7zip; `
   choco install -y awscli; `
