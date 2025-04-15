@@ -189,12 +189,15 @@ public class TextEditingTargetCopilotHelper
                            {
                               CopilotCompletion completion = completions.getAt(i);
                               
+                              completion.displayText = completion.insertText.substring(
+                                    completion.range.end.character - completion.range.start.character);
+                              
                               // Copilot includes trailing '```' for some reason in some cases,
                               // remove those if we're inserting in an R document.
                               completion.insertText = postProcessCompletion(completion.insertText);
 
                               activeCompletion_ = completion;
-                              display_.setGhostText(activeCompletion_.insertText);
+                              display_.setGhostText(activeCompletion_.displayText);
                            }
                         }
 
@@ -295,7 +298,7 @@ public class TextEditingTargetCopilotHelper
                      // ghost text. If so, we'll suppress the next cursor change handler,
                      // so we can continue presenting the current ghost text.
                      String key = EventProperty.key(keyEvent.getNativeEvent());
-                     if (activeCompletion_.insertText.startsWith(key))
+                     if (activeCompletion_.displayText.startsWith(key))
                      {
                         updateCompletion(key);
                         suppressCursorChangeHandler_ = true;
@@ -359,7 +362,7 @@ public class TextEditingTargetCopilotHelper
       if (!hasActiveSuggestion)
          return;
       
-      String text = activeCompletion_.insertText;
+      String text = activeCompletion_.displayText;
       Pattern pattern = Pattern.create("(?:\\b|$)");
       Match match = pattern.match(text, 1);
       if (match == null)
@@ -369,6 +372,7 @@ public class TextEditingTargetCopilotHelper
       String leftoverText = StringUtil.substring(text, match.getIndex());
       
       int n = insertedWord.length();
+      activeCompletion_.displayText = leftoverText;
       activeCompletion_.insertText = leftoverText;
       activeCompletion_.range.start.character += n;
       activeCompletion_.range.end.character += n;
@@ -377,7 +381,7 @@ public class TextEditingTargetCopilotHelper
       {
          suppressCursorChangeHandler_ = true;
          display_.insertCode(insertedWord, InsertionBehavior.EditorBehaviorsDisabled);
-         display_.setGhostText(activeCompletion_.insertText);
+         display_.setGhostText(activeCompletion_.displayText);
          
          // Work around issue with ghost text not appearing after inserting
          // a code suggestion containing a new line
@@ -385,7 +389,7 @@ public class TextEditingTargetCopilotHelper
          {
             Timers.singleShot(20, () ->
             {
-               display_.setGhostText(activeCompletion_.insertText);
+               display_.setGhostText(activeCompletion_.displayText);
             });
          }
       });
@@ -412,6 +416,7 @@ public class TextEditingTargetCopilotHelper
    private void updateCompletion(String key)
    {
       int n = key.length();
+      activeCompletion_.displayText = StringUtil.substring(activeCompletion_.displayText, n);
       activeCompletion_.insertText = StringUtil.substring(activeCompletion_.insertText, n);
       activeCompletion_.range.start.character += n;
       activeCompletion_.range.end.character += n;
@@ -421,7 +426,7 @@ public class TextEditingTargetCopilotHelper
       // dodge this effect, we reset the ghost text at the end of the event loop.
       Timers.singleShot(() ->
       {
-         display_.setGhostText(activeCompletion_.insertText);
+         display_.setGhostText(activeCompletion_.displayText);
       });
    }
    
