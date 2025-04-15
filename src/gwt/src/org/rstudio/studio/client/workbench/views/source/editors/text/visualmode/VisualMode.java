@@ -797,6 +797,7 @@ public class VisualMode implements VisualModeEditorSync,
               panmirror_.getEditingOutlineLocation());
    }
 
+   
    public DocDisplay getActiveEditor()
    {
       return activeEditor_;
@@ -817,16 +818,6 @@ public class VisualMode implements VisualModeEditorSync,
          // A code chunk has focus; enable code commands
          setCodeCommandsEnabled(true);
       }
-   }
-   
-   public VisualModeChunk getActiveEditorChunk()
-   {
-      return activeEditorChunk_;
-   }
-   
-   public void setActiveEditorChunk(VisualModeChunk activeEditorChunk)
-   {
-      activeEditorChunk_ = activeEditorChunk;
    }
    
    /**
@@ -1946,7 +1937,6 @@ public class VisualMode implements VisualModeEditorSync,
    private UserPrefs prefs_;
    private SourceServerOperations source_;
    private DocDisplay activeEditor_;  // the current embedded editor
-   private VisualModeChunk activeEditorChunk_;
    
    private final TextEditingTarget target_;
    private final TextEditingTarget.Display view_;

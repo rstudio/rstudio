@@ -9450,11 +9450,6 @@ public class TextEditingTarget implements
    {
       return view_.isAttached();
    }
-   
-   public TextEditingTargetCopilotHelper getCopilotHelper()
-   {
-      return copilotHelper_;
-   }
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;

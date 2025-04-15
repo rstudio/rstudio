@@ -56,7 +56,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextPanmirrorUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
@@ -191,24 +190,6 @@ public class VisualModeChunk
       // editors)
       editor_.setUseWrapMode(true);
       
-      releaseOnDismiss_.add(editor_.addCapturingKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            target_.getCopilotHelper().onKeyDown(editor_, event);
-         }
-      }));
-      
-      releaseOnDismiss_.add(editor_.addCursorChangedHandler(new CursorChangedEvent.Handler()
-      {
-         @Override
-         public void onCursorChanged(CursorChangedEvent event)
-         {
-            target_.getCopilotHelper().onCursorChanged(editor_);
-         }
-      }));
-      
       // Special comment continuation
       releaseOnDismiss_.add(editor_.addKeyDownHandler(new KeyDownHandler()
       {
@@ -217,14 +198,14 @@ public class VisualModeChunk
             NativeEvent ne = event.getNativeEvent();
             TextEditingTargetQuartoHelper.continueSpecialCommentOnNewline(editor_, ne);
          }
-      }));
+      }
+      ));
       
       // Track activation state and notify visual mode
       releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
       { 
          active_ = true; 
          target_.getVisualMode().setActiveEditor(editor_);
-         target_.getVisualMode().setActiveEditorChunk(VisualModeChunk.this);
 
          // Ensure keyboard shortcut commands (e.g. Save File) route here when using multiple source columns
          events_.fireEvent(new EditingTargetSelectedEvent(target_));
@@ -232,12 +213,10 @@ public class VisualModeChunk
          // Route commands properly when editor is in a secondary window
          events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
       }));
-      
       releaseOnDismiss_.add(editor_.addBlurHandler((evt) ->
       {
          active_ = false;
          target_.getVisualMode().setActiveEditor(null);
-         target_.getVisualMode().setActiveEditorChunk(null);
       }));
 
       // Track UI pref for tab behavior. Note that this can't be a lambda because Ace has trouble with lambda bindings.
