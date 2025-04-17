@@ -411,9 +411,9 @@ public:
       }
       else
       {
-	 // Even if cgroups is enabled, the memory controller for cgroups may not be installed.
-	 // Fall back on looking at process memmory from ps
-	 return LinuxMemoryProvider::getProcessMemoryUsed(pUsedKb, pProvider);
+         // Even if cgroups is enabled, the memory controller for cgroups may not be installed.
+         // Fall back on looking at process memmory from ps
+         return LinuxMemoryProvider::getProcessMemoryUsed(pUsedKb, pProvider);
       }
 
       return error;
@@ -456,8 +456,8 @@ public:
       }
       else // no limit
       {
-	 *pProvider = MemoryProviderUnknown;
-	 *pTotalKb = 0;
+         *pProvider = MemoryProviderUnknown;
+         *pTotalKb = 0;
       }
 
       return Success();
