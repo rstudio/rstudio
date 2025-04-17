@@ -24,9 +24,7 @@
     contents <- readLines(environFile, warn = FALSE)
     pattern <- "^\\s*([\\w_]+)\\s*="
     matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
-    envVars <- gsub("\\s*=.*", "", matchedLines)
-    
-    as.character(names(envVars))
+    gsub("\\s*=.*", "", matchedLines)
 })
 
 .rs.addJsonRpcHandler("forget_rsconnect_deployments", function(sourcePath, outputPath)
