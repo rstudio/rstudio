@@ -409,6 +409,13 @@ public:
       {
          *pProvider = MemoryProviderLinuxCgroups;
       }
+      else
+      {
+	 // Even if cgroups is enabled, the memory controller for cgroups may not be installed.
+	 // Fall back on looking at process memmory from ps
+	 return LinuxMemoryProvider::getProcessMemoryUsed(pUsedKb, pProvider);
+      }
+
       return error;
    }
 
@@ -447,7 +454,13 @@ public:
          *pProvider = linuxMemProvider;
          *pTotalKb = linuxLimitKb;
       }
-      return error;
+      else // no limit
+      {
+	 *pProvider = MemoryProviderUnknown;
+	 *pTotalKb = 0;
+      }
+
+      return Success();
    }
 
    // Returns LONG_MAX if there is no limit set
