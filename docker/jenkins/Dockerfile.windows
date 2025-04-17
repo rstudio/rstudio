@@ -82,8 +82,8 @@ COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
 COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
 # panmirror check for changes
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-mariposa-orchid panmirror.version.json
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-sandyland-bluebonnet panmirror.version.json
 
 ENV DOCKER_IMAGE_BUILD=1
 WORKDIR C:/rstudio-tools/dependencies/windows
