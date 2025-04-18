@@ -83,7 +83,7 @@ function(dependency)
 endfunction()
 
 
-# expected
+# tl-expected
 dependency(EXPECTED
    COMMENT    "Single header implementation of std::expected with functional-style extensions."
    VERSION    "1.1.0"
@@ -220,7 +220,7 @@ endfunction()
 
 
 fetch(
-   expected     EXPECTED
+   tl-expected  EXPECTED
    fmt          FMT
    gsl-lite     GSL_LITE
    hunspell     HUNSPELL
