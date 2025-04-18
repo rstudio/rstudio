@@ -22,8 +22,13 @@
 
 namespace rstudio {
 namespace core {
+
+class FilePath;
+
 namespace http {
 namespace ssl {
+
+void validateSelfSignedCertificate(const FilePath& certPath);
 
 void initializeSslContext(boost::asio::ssl::context* pContext,
                           bool verify,
