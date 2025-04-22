@@ -503,7 +503,7 @@ export class SessionLauncher {
     // must check showSplash before and after the timeout
     // before to determine if the timeout is required
     // after to determine if the main window is ready to show
-    if (this.splashDelay > 0 && this.showSplash) {
+    if (this.splashDelay > 0 && this.showSplash && ElectronDesktopOptions().enableSplashScreen()) {
       setTimeoutPromise(this.splashDelay)
         .then(() => {
           if (this.showSplash) {

@@ -63,13 +63,18 @@
                 "disableRendererAccessibility": {
                     "type": "boolean",
                     "description": "Disable Electron accessibility support"
+                },
+                "enableSplashScreen": {
+                    "type": "boolean",
+                    "description": "Whether to show the splash screen on startup"
                 }
              },
             "default": {
                 "zoomLevel": 1.0,
                 "windowBounds": { "width": 1200, "height": 900, "x": 0, "y": 0, "maximized": false },
                 "accessibility": false,
-                "disableRendererAccessibility": false
+                "disableRendererAccessibility": false,
+                "enableSplashScreen": true
             }
         },
         "remote_session": {

@@ -34,6 +34,7 @@ const kFixedWidthFont = 'font.fixedWidthFont';
 const kZoomLevel = 'view.zoomLevel';
 const kWindowBounds = 'view.windowBounds';
 const kAccessibility = 'view.accessibility';
+const kEnableSplashScreen = 'view.enableSplashScreen';
 const kDisableRendererAccessibility = 'view.disableRendererAccessibility';
 
 const kLastRemoteSessionUrl = 'session.lastRemoteSessionUrl';
@@ -187,6 +188,14 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
   public accessibility(): boolean {
     return this.config.get(kAccessibility, properties.view.default.accessibility);
+  }
+
+  public setEnableSplashScreen(enabled: boolean): void {
+    this.config.set(kEnableSplashScreen, enabled);
+  }
+
+  public enableSplashScreen(): boolean {
+    return this.config.get(kEnableSplashScreen, properties.view.default.enableSplashScreen);
   }
 
   public setDisableRendererAccessibility(accessibility: boolean): void {

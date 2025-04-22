@@ -1324,6 +1324,12 @@
             "title": "Submit crash reports to Posit",
             "description": "Whether to automatically submit crash reports to Posit."
         },
+        "enable_splash_screen": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show splash screen when RStudio is starting",
+            "description": "Whether to show the splash screen when RStudio is starting."
+        },
         "default_r_version": {
             "type": "object",
             "properties": {

@@ -1837,6 +1837,15 @@
    clear = function() { .rs.clearUserPref("submit_crash_reports") }
 )
 
+# Show splash screen when RStudio is starting
+#
+# Whether to show the splash screen when RStudio is starting.
+.rs.uiPrefs$enableSplashScreen <- list(
+   get = function() { .rs.getUserPref("enable_splash_screen") },
+   set = function(value) { .rs.setUserPref("enable_splash_screen", value) },
+   clear = function() { .rs.clearUserPref("enable_splash_screen") }
+)
+
 # 
 #
 # The R version to use by default.
