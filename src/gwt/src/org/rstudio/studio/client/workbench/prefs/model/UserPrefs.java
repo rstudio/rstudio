@@ -357,6 +357,13 @@ public class UserPrefs extends UserPrefsComputed
       });
    }
 
+   public void setEnableSplashScreen(boolean enabled)
+   {
+      if (Desktop.hasDesktopFrame())
+         Desktop.getFrame().setEnableSplashScreen(enabled);
+      enableSplashScreen().setGlobalValue(enabled);
+   }
+
    public static final int LAYER_DEFAULT  = 0;
    public static final int LAYER_SYSTEM   = 1;
    public static final int LAYER_COMPUTED = 2;

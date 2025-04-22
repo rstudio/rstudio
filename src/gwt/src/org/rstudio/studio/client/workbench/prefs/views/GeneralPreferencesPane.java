@@ -222,6 +222,12 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(autohideMenubar);
       }
 
+      enableSplashScreen_ = new CheckBox(prefs_.enableSplashScreen().getTitle());
+      if (BrowseCap.isElectron())
+      {
+         basic.add(enableSplashScreen_);
+      }
+
       VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
 
       initializeGraphicsBackendWidget();
@@ -528,6 +534,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       initialUiLanguage_ = prefs_.uiLanguage().getValue();
       initialNativeFileDialogs_ = prefs_.nativeFileDialogs().getValue();
       initialDisableRendererAccessibility_ = prefs_.disableRendererAccessibility().getValue();
+      initialEnableSplashScreen_ = prefs.enableSplashScreen().getValue();
+      enableSplashScreen_.setValue(initialEnableSplashScreen_);
    }
 
    @Override
@@ -653,6 +661,13 @@ public class GeneralPreferencesPane extends PreferencesPane
             WebDialogCookie.setUseWebDialogs(useWebDialogsPrefValue);
             restartRequirement.setUiReloadRequired(true);
          }
+
+         boolean enableSplashScreenSetting = enableSplashScreen_.getValue();
+         if (enableSplashScreenSetting != initialEnableSplashScreen_)
+         {
+            initialEnableSplashScreen_ = enableSplashScreenSetting;
+            prefs.setEnableSplashScreen(enableSplashScreenSetting);
+         }
       }
 
       // Pro specific
@@ -756,6 +771,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox disableRendererAccessibility_ = null;
    private CheckBox useGpuExclusions_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;
+   private CheckBox enableSplashScreen_ = null;
    private SelectWidget renderingEngineWidget_ = null;
    private String renderingEngine_ = null;
 
@@ -781,4 +797,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private String initialUiLanguage_;
    private boolean initialNativeFileDialogs_;
    private boolean initialDisableRendererAccessibility_;
+   private boolean initialEnableSplashScreen_;
 }

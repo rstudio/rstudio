@@ -175,6 +175,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getEnableAccessibility(CommandWithArg<Boolean> callback);
    void setEnableAccessibility(boolean enable);
    void setDisableRendererAccessibility(boolean disable);
+   void getEnableSplashScreen(CommandWithArg<Boolean> callback);
+   void setEnableSplashScreen(boolean enable);
 
    void setAutohideMenubar(boolean enable);
 

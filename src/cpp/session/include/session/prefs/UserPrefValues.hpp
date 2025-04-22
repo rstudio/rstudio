@@ -332,6 +332,7 @@ namespace prefs {
 #define kRestoreProjectRVersion "restore_project_r_version"
 #define kClangVerbose "clang_verbose"
 #define kSubmitCrashReports "submit_crash_reports"
+#define kEnableSplashScreen "enable_splash_screen"
 #define kDefaultRVersion "default_r_version"
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
@@ -1641,6 +1642,12 @@ public:
     */
    bool submitCrashReports();
    core::Error setSubmitCrashReports(bool val);
+
+   /**
+    * Whether to show the splash screen when RStudio is starting.
+    */
+   bool enableSplashScreen();
+   core::Error setEnableSplashScreen(bool val);
 
    /**
     * The R version to use by default.
