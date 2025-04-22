@@ -84,7 +84,7 @@ endfunction()
 
 
 # tl-expected
-dependency(EXPECTED
+dependency(TL_EXPECTED
    COMMENT    "Single header implementation of std::expected with functional-style extensions."
    VERSION    "1.1.0"
    REPOSITORY "https://github.com/TartanLlama/expected"
@@ -220,11 +220,11 @@ endfunction()
 
 
 fetch(
-   tl-expected  EXPECTED
    fmt          FMT
    gsl-lite     GSL_LITE
    hunspell     HUNSPELL
    rapidjson    RAPIDJSON
+   tl-expected  TL_EXPECTED
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP
    zlib         ZLIB)
