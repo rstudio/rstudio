@@ -20,3 +20,7 @@
 #### Posit Workbench
 
 -
+
+### Dependencies
+
+- Copilot Language Server 1.304.0 (#15935)
