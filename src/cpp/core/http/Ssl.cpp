@@ -17,6 +17,8 @@
 #include <core/http/Ssl.hpp>
 
 #include <core/Log.hpp>
+#include <core/FileUtils.hpp>
+#include <shared_core/FilePath.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -110,9 +112,7 @@ static const ICertStore& getCertificateStore()
     static WindowsCertificateStore instance;
     return instance;
 }
-#endif
-
-#ifdef __APPLE__
+#elif defined(__APPLE__)
 class Keychain : public ICertStore
 {
 public:
@@ -162,12 +162,121 @@ static const ICertStore& getKeychain()
    static Keychain instance;
    return instance;
 }
+#else
+
+Error loadCertificate(const std::string& certStr, X509** pCert)
+{
+   BIO* bio = BIO_new_mem_buf(certStr.c_str(), certStr.size());
+   if (!bio)
+   {
+      LOG_ERROR_MESSAGE("Failed to load certificate: could not create BIO");
+      return Error(boost::system::errc::io_error, ERROR_LOCATION);
+   }
+
+   *pCert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
+   BIO_free(bio);
+
+   if (!*pCert)
+   {
+      LOG_ERROR_MESSAGE("Failed to load certificate: could not read certificate data");
+      return Error(boost::system::errc::io_error, ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+bool isSelfSigned(X509* pCert)
+{
+   // get the issuer and subject names
+   X509_NAME* pIssuer = X509_get_issuer_name(pCert);
+   X509_NAME* pSubject = X509_get_subject_name(pCert);
+
+   // compare the issuer and subject names
+   return X509_NAME_cmp(pIssuer, pSubject) == 0;
+}
+
+bool isCertTrustedLocally(X509* pCert)
+{
+   // Create a store and load the system CA certs.
+   X509_STORE* store = X509_STORE_new();
+   if (!store)
+   {
+      LOG_ERROR_MESSAGE("Failed to validate self signed certificate: could not create X509 store");
+      return false;
+   }
+
+   if (X509_STORE_set_default_paths(store) != 1)
+   {
+      LOG_ERROR_MESSAGE("Failed to validate self signed certificate: could not load system CA store");
+      X509_STORE_free(store);
+      return false;
+   }
+
+   // Create a store context and validate the certificate.
+   X509_STORE_CTX* ctx = X509_STORE_CTX_new();
+   if (!ctx)
+   {
+      LOG_ERROR_MESSAGE("Failed to validate self signed certificate: could not create X509 store context");
+      X509_STORE_free(store);
+      return false;
+   }
+
+   if (X509_STORE_CTX_init(ctx, store, pCert, nullptr) != 1)
+   {
+      LOG_ERROR_MESSAGE("Failed to validate self signed certificate: could not initialize X509 store context");
+      X509_STORE_CTX_free(ctx);
+      X509_STORE_free(store);
+      return false;
+   }
+
+   int result = X509_verify_cert(ctx);
+   X509_STORE_CTX_free(ctx);
+   X509_STORE_free(store);
+
+   return result == 1;
+}
+
 #endif
+
 } // namespace
 
+void validateSelfSignedCertificate(const FilePath& certPath)
+{
+#if defined(_WIN32) || defined(__APPLE__)
+   LOG_DEBUG_MESSAGE("Unable to validate self signed certificate: platform not supported");
+#else
+   // Read the certificate into an X509 object.
+   std::string contents = file_utils::readFile(certPath);
+   X509* cert = nullptr;
+   Error error = loadCertificate(contents, &cert);
+   if (error)
+   {
+      LOG_ERROR(error);
+      if (cert)
+         X509_free(cert);
+      return;
+   }
+
+   // Check if the certificate is self-signed.
+   if (isSelfSigned(cert))
+   {
+      if (!isCertTrustedLocally(cert))
+      {
+         LOG_WARNING_MESSAGE("Self-signed certificate is not in the system CA store: " + certPath.getAbsolutePath());
+         X509_free(cert);
+         return;
+      }
+
+      LOG_DEBUG_MESSAGE("Successfully validated self signed certificate: " + certPath.getAbsolutePath());
+   }
+
+   X509_free(cert);
+#endif
+}
+
 void initializeSslContext(boost::asio::ssl::context* pContext,
-                                 bool verify,
-                                 const std::string& certificateAuthority)
+                        bool verify,
+                        const std::string& certificateAuthority)
 {
    if (verify)
    {
