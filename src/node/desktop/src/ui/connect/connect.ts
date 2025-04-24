@@ -1,5 +1,4 @@
 /* eslint-disable indent */
-/* eslint-disable max-len */
 /*
  * connect.ts
  *

@@ -99,7 +99,6 @@ export function secondsToMs(seconds: number): number {
 }
 
 export class FunctionInterval {
-  // eslint-disable-next-line @typescript-eslint/ban-types
   func: Function;
   milliseconds: number;
   intervalId: number | null = null;
@@ -109,10 +108,8 @@ export class FunctionInterval {
    * and stopped as needed.
    * @param func Function to execute on an interval.
    *             WARNING: this accepts anything that "looks" like a function which can be unsafe.
-   *             See https://typescript-eslint.io/rules/ban-types/ for more information.
    * @param milliseconds Number of milliseconds to wait before executing the function.
    */
-  // eslint-disable-next-line @typescript-eslint/ban-types
   constructor(func: Function, milliseconds: number) {
     this.func = func;
     this.milliseconds = milliseconds;

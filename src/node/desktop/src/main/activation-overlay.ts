@@ -53,7 +53,6 @@ export class DesktopActivation extends EventEmitter {
   /**
    * show a messagebox (if message is non-empty) then exit the program
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   emitLaunchError(message: string): void {
     this.emit(DesktopActivation.LAUNCH_ERROR, message);
   }

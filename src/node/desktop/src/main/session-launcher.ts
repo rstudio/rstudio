@@ -321,7 +321,6 @@ export class SessionLauncher {
     const gitCommit = info.RSTUDIO_GIT_COMMIT.substr(0, 8);
 
     // Create version string
-    // eslint-disable-next-line max-len
     const ss = `RStudio ${info.RSTUDIO_VERSION} "${info.RSTUDIO_RELEASE_NAME} " (${gitCommit}, ${info.RSTUDIO_BUILD_DATE}) for ${info.RSTUDIO_PACKAGE_OS}`;
     vars.set('version', ss);
 
@@ -724,7 +723,6 @@ export class SessionLauncher {
 
     // check for R version mismatch
     if (abendLogMessage.includes('arguments passed to .Internal')) {
-      // eslint-disable-next-line max-len
       errMsg =
         errMsg +
         '\n\n' +

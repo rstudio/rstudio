@@ -13,8 +13,6 @@
  *
  */
 
-/* eslint-disable max-len */
-
 import { BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import { logger } from '../core/logger';

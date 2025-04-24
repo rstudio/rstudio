@@ -160,7 +160,6 @@ export class DesktopBrowserWindow extends EventEmitter {
       }
 
       const customStyles =
-        // eslint-disable-next-line max-len
         '.gwt-SplitLayoutPanel-HDragger{cursor:ew-resize !important;} .gwt-SplitLayoutPanel-VDragger{cursor:ns-resize !important;}';
 
       this.window.webContents
