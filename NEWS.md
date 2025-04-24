@@ -16,7 +16,7 @@
 
 #### RStudio
 
--
+- Fixed an issue where code indentation stopped working following code chunks containing only Quarto comments (#15879)
 
 #### Posit Workbench
 
