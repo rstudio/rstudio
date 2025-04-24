@@ -142,7 +142,7 @@ export class ArgsManager {
           app
             .whenReady()
             .then(() => {
-              getDesktopBridge().openFile(path.resolve(arg));
+              void getDesktopBridge().openFile(path.resolve(arg));
               const name = webContents.getAllWebContents()[0].mainFrame.name;
               activateWindow(name);
             })

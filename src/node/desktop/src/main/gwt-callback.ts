@@ -1126,7 +1126,7 @@ export class GwtCallback extends EventEmitter {
           if (win.window.webContents.mainFrame === frame) {
             return win;
           }
-        } catch (error: unknown) {
+        } catch (_error: unknown) {
           logger().logDebug('Window WebContents has been destroyed. Skipping this window.');
         }
       }

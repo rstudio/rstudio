@@ -37,12 +37,7 @@ import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
-import {
-  createStandaloneErrorDialog,
-  findRepoRoot,
-  getCurrentlyUniqueFolderName,
-  userLogPath,
-} from './utils';
+import { createStandaloneErrorDialog, findRepoRoot, getCurrentlyUniqueFolderName, userLogPath } from './utils';
 import path from 'path';
 import { createSplashScreen } from './splash-screen';
 
@@ -641,7 +636,7 @@ export class SessionLauncher {
           try {
             rmSync(devSessionPath);
             return;
-          } catch (e: unknown) {
+          } catch (_e: unknown) {
             await sleepPromise(1);
           }
         }

@@ -99,6 +99,7 @@ export function secondsToMs(seconds: number): number {
 }
 
 export class FunctionInterval {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   func: Function;
   milliseconds: number;
   intervalId: number | null = null;
@@ -110,6 +111,7 @@ export class FunctionInterval {
    *             WARNING: this accepts anything that "looks" like a function which can be unsafe.
    * @param milliseconds Number of milliseconds to wait before executing the function.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   constructor(func: Function, milliseconds: number) {
     this.func = func;
     this.milliseconds = milliseconds;

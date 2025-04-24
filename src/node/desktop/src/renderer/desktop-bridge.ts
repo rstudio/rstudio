@@ -757,7 +757,7 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_console_log', output);
     },
 
-    getPathForFile: (file: any) => {
+    getPathForFile: (file: File) => {
       return webUtils.getPathForFile(file);
     },
 

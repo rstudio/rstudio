@@ -87,6 +87,7 @@ export default defineConfig([globalIgnores([
         "@typescript-eslint/no-unused-vars": ["warn", {
             varsIgnorePattern: "^_",
             argsIgnorePattern: "^_",
+            caughtErrorsIgnorePattern: '^_',
         }],
 
         "@typescript-eslint/strict-boolean-expressions": ["error", {
