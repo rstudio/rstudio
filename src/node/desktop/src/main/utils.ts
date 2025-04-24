@@ -619,7 +619,7 @@ function registerWebContentsDebugHandlerImpl(webContents: WebContents, event: st
         } else {
           return JSON.stringify(arg);
         }
-      } catch (e: unknown) {
+      } catch (_e: unknown) {
         return '<unknown>';
       }
     });

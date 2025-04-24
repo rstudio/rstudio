@@ -51,7 +51,7 @@ export function isCentOS(): boolean {
       try {
         const contents = fs.readFileSync(redhatRelease.getAbsolutePath(), 'utf-8');
         return contents.includes('CentOS') || contents.includes('Red Hat Enterprise Linux');
-      } catch (error: unknown) {
+      } catch (_error: unknown) {
         return false;
       }
     }

@@ -31,7 +31,6 @@ function reportIpcError(name: string, error: Error) {
   logString('err', `IpcError: ${name}: ${error.message}`);
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function getDesktopBridge() {
   return {
     writeStdout: (output: string) => {
@@ -758,7 +757,7 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_console_log', output);
     },
 
-    getPathForFile: (file: any) => {
+    getPathForFile: (file: File) => {
       return webUtils.getPathForFile(file);
     },
 

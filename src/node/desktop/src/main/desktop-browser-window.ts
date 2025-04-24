@@ -160,7 +160,6 @@ export class DesktopBrowserWindow extends EventEmitter {
       }
 
       const customStyles =
-        // eslint-disable-next-line max-len
         '.gwt-SplitLayoutPanel-HDragger{cursor:ew-resize !important;} .gwt-SplitLayoutPanel-VDragger{cursor:ns-resize !important;}';
 
       this.window.webContents
@@ -556,7 +555,7 @@ export class DesktopBrowserWindow extends EventEmitter {
   static getPreload(): string {
     try {
       return MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY;
-    } catch (err: unknown) {
+    } catch (_err: unknown) {
       // manually specify preload (necessary when running unit tests)
       return path.join(__dirname, '../renderer/preload.js');
     }

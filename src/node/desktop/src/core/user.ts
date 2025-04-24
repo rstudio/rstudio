@@ -48,7 +48,7 @@ export function userHomePathString(): string {
 export function username(): string {
   try {
     return os.userInfo().username;
-  } catch (err: unknown) {
+  } catch (_err: unknown) {
     return '';
   }
 }
