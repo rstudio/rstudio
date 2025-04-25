@@ -54,7 +54,7 @@ if (!file.exists(boost_dirname)) {
 
    # download boost if we don't have it
    if (!file.exists(boost_archive)) {
-      section("Downloading Boost...")
+      section("Downloading Boost")
       download(boost_url, destfile = boost_archive)
       if (!file.exists(boost_archive))
          fatal("Failed to download '%s'", boost_archive)
@@ -122,11 +122,11 @@ b2_build_args <- function(bitness) {
 }
 
 # build 32bit Boost
-section("Building Boost 32bit...")
+section("Building Boost 32bit")
 exec("b2", b2_build_args("32"))
 
 # build 64bit Boost
-section("Building Boost 64bit...")
+section("Building Boost 64bit")
 exec("b2", b2_build_args("64"))
 
 # rejoice

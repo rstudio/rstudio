@@ -57,27 +57,6 @@ goto :eof
 
 
 ::
-:: Add Visual Studio's tools to the PATH.
-::
-:add-vstools-to-path
-
-setlocal EnableDelayedExpansion
-
-for %%Q in ("BuildTools" "Community") do (
-  for %%P in ("%ProgramFiles(x86)%" "%ProgramFiles%") do (
-    set "_VCDIR=%%~P\Microsoft Visual Studio\2022\%%~Q\VC\Auxiliary\Build"
-    if exist "!_VCDIR!" (
-      endlocal & set "PATH=!_VCDIR!;%PATH%"
-      exit /b 0
-    )
-  )
-)
-
-echo -- ERROR: Could not find Visual Studio build tools.
-exit /b 1
-
-
-::
 :: Find the project root directory.
 ::
 :find-project-root
@@ -387,6 +366,56 @@ VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\require
 popd
 
 exit /b 0
+
+
+::
+:: Run a command with echo enabled.
+::
+:with-echo
+
+setlocal EnableDelayedExpansion
+set "_COMMAND=> %*"
+echo !_COMMAND!
+endlocal
+
+%*
+
+exit /b 0
+
+
+::
+:: Add Visual Studio's tools to the PATH.
+::
+:add-vstools-to-path
+
+for %%Q in ("BuildTools" "Community") do (
+  for %%P in ("%ProgramFiles(x86)%" "%ProgramFiles%") do (
+    call :add-vstools-to-path-impl "%%~P\Microsoft Visual Studio\2022\%%~Q"
+    if defined _VCTOOLSDIR (
+      goto :add-vstools-to-path-done
+    )
+  )
+)
+
+:add-vstools-to-path-impl
+
+if exist "%~f1" (
+  set "_VCTOOLSDIR=%~f1\Common7\Tools"
+  set "_VCBUILDDIR=%~f1\VC\Auxiliary\Build"
+  set "PATH=%_VCTOOLSDIR%;%_VCBUILDDIR%;%PATH%"
+)
+
+exit /b 0
+
+:add-vstools-to-path-done:
+
+where /Q VsDevCmd.bat
+if %ERRORLEVEL% neq 0 (
+  echo -- ERROR: Could not find Visual Studio build tools.
+  exit /b 1
+)
+
+goto :eof
 
 
 ::

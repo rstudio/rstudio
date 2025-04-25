@@ -34,14 +34,8 @@ if not exist %WIN32_BUILD_PATH% mkdir %WIN32_BUILD_PATH%
 cd %WIN32_BUILD_PATH%
 
 REM Build the project
-set VS_TOOLS="%ProgramFiles)%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools"
-if not exist %VS_TOOLS% set VS_TOOLS="%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\Tools"
-if not exist %VS_TOOLS% echo "Could not find VsDevCmd.bat. Please ensure Microsoft Visual Studio 2022 Build Tools are installed." && exit /b 1
-
-pushd %VS_TOOLS%
 call VsDevCmd.bat -clean_env -no_logo || goto :error
 call VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -winsdk=10.0.19041.0 -no_logo || goto :error
-popd
 
 cmake -G "Ninja" ^
       -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
