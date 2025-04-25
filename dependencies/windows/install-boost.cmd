@@ -3,10 +3,10 @@ setlocal
 
 REM Variables defining the build. Update as appropriate.
 set BOOST_VERSION=1.87.0
-set MSVC_VERSION=vc142
+set MSVC_TOOLSET_VERSION=143
 
 REM The file name prefix used for Boost build folders.
-set BOOST_PREFIX=boost-%BOOST_VERSION%-win-ms%MSVC_VERSION%
+set BOOST_PREFIX=boost-%BOOST_VERSION%-win-msvc%MSVC_TOOLSET_VERSION%
 
 REM Make sure our tools are on the PATH.
 set PATH=%CD%\tools;%PATH%

@@ -177,7 +177,7 @@ std::wstring finishExpression(const std::wstring& expression)
       }
       
       // check for operators
-      sawOperator = isOperator(ch);
+      sawOperator = isOperator(static_cast<char>(ch));
       
       // check for identifiers
       //

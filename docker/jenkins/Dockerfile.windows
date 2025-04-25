@@ -1,8 +1,8 @@
 # escape=`
 
 # Use the latest Windows Server Core (LTSC - Long Term Service Channel) image with .NET Framework 4.8.
-# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019
-FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
+# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2022
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2022
 
 ENV OPERATING_SYSTEM=windows_10
 
@@ -39,8 +39,8 @@ RUN `
 
 # install build tools
 RUN choco install -y windows-sdk-10.1 --version 10.1.18362.1
-RUN choco install -y visualstudio2019buildtools --version 16.11.10.0
-RUN choco install -y visualstudio2019-workload-vctools --version 1.0.1
+RUN choco install -y visualstudio2022buildtools --version 117.13.6
+RUN choco install -y visualstudio2022-workload-vctools --version 1.0.0
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
@@ -93,6 +93,6 @@ RUN C:/rstudio-tools/dependencies/windows/install-dependencies.cmd
 ##### the items below this are dependencies relevant to jenkins-swarm. #####
 ##### follow https://issues.jenkins-ci.org/browse/JENKINS-36776 to track docker windows support on jenkins #####
 
-ENV JENKINS_SWARM_VERSION 3.15
+ENV JENKINS_SWARM_VERSION=3.15
 RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
   Invoke-WebRequest $('https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/{0}/swarm-client-{0}.jar' -f $env:JENKINS_SWARM_VERSION) -OutFile 'C:\swarm-client.jar' -UseBasicParsing ;

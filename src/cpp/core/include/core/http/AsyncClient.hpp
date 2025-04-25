@@ -650,17 +650,18 @@ private:
       {
          if (chunk->size() > maxChunkSize)
          {
-            // break the chunk into more reasonable partial chunks with each chunk being
-            // less than or equal to the max chunk size
-            size_t numChunks = static_cast<size_t>(ceil(static_cast<double>(chunk->size()) / maxChunkSize));
-            for (size_t i = 0; i < numChunks; ++i)
+            for (std::size_t offset = 0, n = chunk->size();
+                 offset < n;
+                 offset += maxChunkSize)
             {
-               std::string chunkPiece = chunk->substr(maxChunkSize * i, maxChunkSize);
+               std::string chunkPiece = chunk->substr(offset, maxChunkSize);
                newChunks.push_back(boost::make_shared<std::string>(std::move(chunkPiece)));
             }
          }
          else
+         {
             newChunks.push_back(chunk);
+         }
       }
 
       chunks = newChunks;
@@ -810,7 +811,7 @@ protected:
    bool chunkedEncoding_;
 
 private:
-   static constexpr double maxChunkSize = 1024.0*1024.0; // 1MB
+   static constexpr std::size_t maxChunkSize = 1'048'576; // 1MB
 
    boost::asio::io_context& ioContext_;
    ConnectionRetryContext connectionRetryContext_;

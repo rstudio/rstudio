@@ -1,7 +1,7 @@
 
 BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
-BOOST_TOOLSET <- Sys.getenv("BOOST_TOOLSET", unset = "msvc-14.2")
-MSVC_VERSION  <- Sys.getenv("MSVC_VERSION", unset = "vc142")
+BOOST_TOOLSET <- Sys.getenv("BOOST_TOOLSET", unset = "msvc-14.3")
+MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
 
 argument <- function(index, default) {
    args <- commandArgs(TRUE)
@@ -35,7 +35,7 @@ PATH$prepend("../tools")
 # initialize variables
 boost_name <- sprintf("boost_%s.7z", chartr(".", "_", BOOST_VERSION))
 boost_url <- sprintf("https://s3.amazonaws.com/rstudio-buildtools/Boost/%s", boost_name)
-output_name <- sprintf("boost-%s-win-ms%s-%s-%s.zip", BOOST_VERSION, MSVC_VERSION, variant, link)
+output_name <- sprintf("boost-%s-win-msvc%s-%s-%s.zip", BOOST_VERSION, MSVC_TOOLSET_VERSION, variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
@@ -51,7 +51,7 @@ boost_dirname <- tools::file_path_sans_ext(boost_filename)
 boost_archive <- boost_filename
 
 if (!file.exists(boost_dirname)) {
-   
+
    # download boost if we don't have it
    if (!file.exists(boost_archive)) {
       section("Downloading Boost...")
@@ -59,12 +59,12 @@ if (!file.exists(boost_dirname)) {
       if (!file.exists(boost_archive))
          fatal("Failed to download '%s'", boost_archive)
    }
-   
+
    # extract boost (be patient, this will take a while)
    progress("Extracting archive -- please wait a moment...")
    progress("Feel free to get up and grab a coffee.")
    exec("7z.exe", "x -mmt4", boost_filename)
-   
+
 }
 
 # double-check that we generated the boost folder
@@ -91,17 +91,17 @@ source("../../../tools/use-rstudio-boost-namespace.R")
 # bootstrap the project
 # TODO: system2() seems to hang and never exits, so we use processx
 section("Bootstrapping boost")
-args <- c("/c", "call", "bootstrap.bat", MSVC_VERSION)
+args <- c("/c", "call", "bootstrap.bat", paste0("vc", MSVC_TOOLSET_VERSION))
 result <- processx::run("cmd.exe", args, stdout = "", stderr = "")
 if (result$status != 0L)
    stop("Error bootstrapping Boost. Sorry.")
 
 # construct common arguments for 32bit, 64bit boost builds
 b2_build_args <- function(bitness) {
-   
+
    prefix <- file.path(install_dir, sprintf("boost%s", bitness), fsep = "\\")
    unlink(prefix, recursive = TRUE)
-   
+
    paste(
       "-q",
       "--without-graph_parallel",

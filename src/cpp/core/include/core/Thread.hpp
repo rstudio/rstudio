@@ -72,7 +72,7 @@ class ThreadsafeValue : boost::noncopyable
 public:
    explicit ThreadsafeValue(const T& value = T()) : value_(value) {}
    virtual ~ThreadsafeValue() {}
-   
+
    T get()
    {
       LOCK_MUTEX(mutex_)
@@ -80,11 +80,11 @@ public:
          return value_;
       }
       END_LOCK_MUTEX
-      
+
       // keep compiler happy
       return T();
    }
-   
+
    void set(const T& value)
    {
       LOCK_MUTEX(mutex_)
@@ -93,7 +93,7 @@ public:
       }
       END_LOCK_MUTEX
    }
-   
+
 private:
    boost::mutex mutex_;
    T value_;
@@ -361,9 +361,7 @@ public:
    }
 
 private:
-   // We need to supply the default std::set template argument values because there's a compiler bug pre MSVC 2019 16.6:
-   // https://developercommunity.visualstudio.com/content/problem/910615/c2976-during-function-template-argument-deduction.html
-   std::set<T, std::less<T>, std::allocator<T> > set_;
+   std::set<T> set_;
    mutable boost::mutex mutex_;
 };
 
@@ -395,7 +393,7 @@ bool assertMainThread(
       const std::string& reason,
       const std::string& functionName,
       const core::ErrorLocation& errorLocation);
-      
+
 } // namespace thread
 } // namespace core
 } // namespace rstudio

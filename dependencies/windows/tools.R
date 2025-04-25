@@ -1,62 +1,76 @@
 
-print_progress <- function(fmt, ..., prefix) {
-   tryCatch({
-     cat(sprintf(paste(prefix, fmt, "\n", sep = ""), ...))
-   }, error = function(e) {
-     cat(paste(prefix, fmt, ..., "\n"))
-   })
+`%||%` <- function(x, y) {
+   if (is.null(x)) y else x
 }
 
-section  <- function(fmt, ...) print_progress(fmt, ..., prefix = "--> ")
-progress <- function(fmt, ...) print_progress(fmt, ..., prefix = "-> ")
+sprintf <- function(fmt, ...) {
+   if (nargs() == 1L) fmt else base::sprintf(fmt, ...)
+}
+
+printf <- function(fmt, ...) {
+   msg <- sprintf(fmt, ...)
+   cat(msg, sep = "")
+}
+
+section <- function(fmt, ...) {
+   msg <- sprintf(fmt, ...)
+   printf("== %s\n", msg)
+}
+
+progress <- function(fmt, ...) {
+   msg <- sprintf(fmt, ...)
+   printf("-- %s\n", msg)
+}
 
 fatal <- function(fmt, ...) {
-   if (interactive()) {
-      stop(sprintf(fmt, ...), "\n", call. = FALSE)
-   } else {
-      err <- paste(fmt, ...) 
-      err <- try({
-        sprintf(fmt, ...)
-      }, silent = TRUE)
-      message("FATAL: ", err)
-      quit(save = "no", status = 1, runLast = TRUE)
-   }  
+   
+   msg <- sprintf(fmt, ...)
+   if (interactive())
+      stop(msg, call. = FALSE)
+   
+   printf("!! ERROR: %s\n", msg)
+   quit(save = "no", status = 1, runLast = TRUE)
+   
 }
 
 path_program <- function(name) {
+   
    prog <- Sys.which(name)
    if (!nzchar(prog))
-      fatal("Failed to find '%s' on PATH", name)
+      fatal("failed to find %s on PATH", shQuote(name))
+   
    prog
+   
 }
 
 execBatch <- function(batchfile) {
-  if (!file.exists(batchfile)) {
-    fatal("Batch file does not exist: %s", batchfile)
-  }
-  
-  # Execute the batch file and wait for completion
-  status <- system2("cmd", args = c("/c", batchfile), 
-                    stdout = TRUE, stderr = TRUE)
-  
-  # Check return status
-  if (!is.null(attr(status, "status")) && attr(status, "status") != 0) {
-    # Combine output into single message
-    output <- paste(status, collapse = "\n")
-    fatal("Batch file failed with status %d:\n%s", 
-          attr(status, "status"), output)
-  }
-  
-  invisible(TRUE)
+   
+   if (!file.exists(batchfile))
+      fatal("batch file %s does not exist", shQuote(batchfile))
+   
+   # Execute the batch file and wait for completion
+   output <- system2(
+      command = "cmd",
+      args    = c("/c", shQuote(batchfile)),
+      stdout  = TRUE,
+      stderr  = TRUE
+   )
+   
+   # Check return status
+   status <- attr(output, "status") %||% 0L
+   if (status != 0L) {
+      fmt <- "error executing %s [error code %i]\n%s\n"
+      fatal(fmt, shQuote(batchfile), as.integer(status), output)
+   }
+   
+   invisible(TRUE)
 }
 
-exec <- function(command,
-                 ...,
-                 output = NULL,
-                 dir = getOption("log.dir", default = getwd()))
-{
+exec <- function(command, ..., output = NULL, dir = NULL) {
+   
    # construct path to logfile
    if (is.null(output)) {
+      dir <- dir %||% getOption("log.dir", default = getwd())
       prefix <- paste0(basename(command), "-output-")
       output <- paste(tempfile(prefix, dir), "txt", sep = ".")
    }
@@ -68,25 +82,39 @@ exec <- function(command,
    }))
    
    # print command to console
-   print_progress(
-      paste(command, paste(splat, collapse = " ")),
-      prefix = "> "
-   )
+   cmd <- paste(command, paste(splat, collapse = " "))
+   printf("> %s\n", cmd)
    
    # run command
-   status <- suppressWarnings(
-      system2(command, splat, stdout = output, stderr = output)
+   output <- suppressWarnings(
+      system2(
+         command = command,
+         args    = splat,
+         stdout  = output,
+         stderr  = output
+      )
    )
+   
+   # retrieve status, accommodating fact that form of output depends on
+   # what we passed to 'stdout' and 'stderr'
+   status <- if (is.integer(output)) {
+      output
+   } else {
+      attr(output, "status") %||% 0L
+   }
    
    # report status
    if (status) {
+      
       msg <- paste0("Command exited with status ", as.integer(status), ".")
       if (is.character(output) && file.exists(output)) {
          logmsg <- paste0("Logs written to ", output, ":\n")
          logmsg <- paste0(logmsg, paste(readLines(output), collapse = "\n"), "\n")
          msg <- paste(msg, logmsg, sep = "\n")
       }
+      
       fatal("%s\n", msg)
+      
    }
    
    invisible(TRUE)
@@ -95,18 +123,11 @@ exec <- function(command,
 
 
 download <- function(url, destfile, ...) {
-   progress("Downloading file:\n- '%s' => '%s'", url, destfile)
+   fmt <- "Downloading file:\n- %s => %s"
+   progress(fmt, shQuote(url), shQuote(destfile))
    exec("wget.exe", "--no-check-certificate", "-c", shQuote(url), "-O", shQuote(destfile))
 }
 
-
-printf <- function(fmt, ...) {
-   tryCatch({
-     cat(sprintf(fmt, ...))
-   }, error = function(e) {
-     cat(fmt, ...)
-   })
-}
 
 PATH <- (function() {
    
@@ -138,12 +159,17 @@ PATH <- (function() {
       write(path)
    }
    
-   list(read = read, prepend = prepend, append = append, remove = remove)
+   list(
+      read = read,
+      prepend = prepend,
+      append = append,
+      remove = remove
+   )
    
 })()
 
 enter <- function(dir) {
-   progress("Entering directory '%s'", dir)
+   progress("Entering directory %s", shQuote(dir))
    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
    setwd(dir)
 }
@@ -155,18 +181,39 @@ replace_one_line <- function(filepath, orig_line, new_line) {
       writeLines(replaced, filepath)
 }
 
-win32_setup <- function() {
+interpolate <- function(string) {
+   
+   result <- string
+   
+   # get variable names used within the string
+   starts <- gregexpr("{", string, perl = TRUE)[[1L]]
+   ends <- gregexpr("}", string, perl = TRUE)[[1L]]
+   exprs <- substring(string, starts + 1L, ends - 1L)
+   
+   # replace with their formatted values
+   for (expr in exprs) {
+      value <- eval(parse(text = expr), envir = parent.frame())
+      pattern <- sprintf("{%s}", expr)
+      replace <- paste(as.character(value), collapse = " ")
+      result <- gsub(pattern, replace, result, fixed = TRUE)
+   }
+   
+   result
+   
+}
+
+initialize <- function() {
    
    # Make sure MSVC tools are available
    msvcCandidates <- c(
-      "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build",
-      "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build"
+      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build",
+      "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build"
    )
    
    msvc <- Filter(file.exists, msvcCandidates)
    if (length(msvc) == 0L) {
       message <- paste(
-         "No MSVC 2019 installation detected.",
+         "No MSVC 2022 installation detected.",
          "Install build tools using 'Install-RStudio-Prereqs.ps1'.
       ")
       fatal(message)
@@ -193,28 +240,4 @@ win32_setup <- function() {
    
 }
 
-interpolate <- function(string) {
- 
-   result <- string
-   
-   # get variable names used within the string
-   starts <- gregexpr("{", string, perl = TRUE)[[1L]]
-   ends <- gregexpr("}", string, perl = TRUE)[[1L]]
-   exprs <- substring(string, starts + 1L, ends - 1L)
-   
-   # replace with their formatted values
-   for (expr in exprs) {
-      value <- eval(parse(text = expr), envir = parent.frame())
-      pattern <- sprintf("{%s}", expr)
-      replace <- paste(as.character(value), collapse = " ")
-      result <- gsub(pattern, replace, result, fixed = TRUE)
-   }
-   
-   result
-
-}
-
-if (.Platform$OS.type == "windows") {
-   win32_setup()
-}
-
+initialize()

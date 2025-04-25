@@ -22,7 +22,7 @@ include(cmake/init.cmake)
 include(cmake/release.cmake)
 
 # project name
-project("RStudio [${RSTUDIO_RELEASE_NAME}]")
+project("RStudio [${RSTUDIO_RELEASE_NAME}]" CXX)
 
 # set compiler
 include(cmake/compiler.cmake)

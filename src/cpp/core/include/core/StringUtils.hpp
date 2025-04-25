@@ -20,6 +20,8 @@
 
 #include <cctype>
 #include <cstdio>
+#include <cwctype>
+
 #include <string>
 
 #include <shared_core/Error.hpp>

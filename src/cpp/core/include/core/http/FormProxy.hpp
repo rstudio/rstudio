@@ -38,7 +38,7 @@ public:
    void initialize();
 
 private:
-   constexpr static uint64_t defaultMaxBufferSize = 1024*1024*1.5; // 1.5 MB
+   constexpr static uint64_t defaultMaxBufferSize = 1'572'864; // 1.5 MB
 
    void writeData();
    void onDownstreamConnected();
