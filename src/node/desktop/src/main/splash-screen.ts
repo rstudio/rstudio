@@ -26,6 +26,7 @@ export function createSplashScreen(): BrowserWindow {
     transparent: true,
     center: true,
     resizable: false,
+    roundedCorners: false,
     show: false,
     alwaysOnTop: true,
   });

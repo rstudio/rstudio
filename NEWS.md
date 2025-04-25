@@ -25,3 +25,4 @@
 ### Dependencies
 
 - Copilot Language Server 1.304.0 (#15935)
+- Electron 35.2.1 (#15933)
