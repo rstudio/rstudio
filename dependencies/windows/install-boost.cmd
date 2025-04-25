@@ -18,9 +18,9 @@ R --vanilla -s -f install-boost.R --args release static
 cd ..
 
 REM Build the Boost archive for upload to S3.
-echo --^> Packaging Boost %BOOST_VERSION% ...
+echo -- Packaging Boost %BOOST_VERSION% ...
 7z a -mmt8 -mx9 ^
    %BOOST_PREFIX%.zip ^
    %BOOST_PREFIX%-debug-static ^
    %BOOST_PREFIX%-release-static
-echo --^> Done!
+echo -- Done!

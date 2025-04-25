@@ -8,10 +8,9 @@ BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
 MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
 CMAKE_GENERATOR      <- Sys.getenv("CMAKE_GENERATOR", unset = "Visual Studio 17 2022")
 
-source("../tools.R")
-section("The working directory is: '%s'", getwd())
-progress("Producing SOCI build")
 owd <- getwd()
+source("../tools.R")
+section("Building SOCI %s", SOCI_VERSION)
 
 # initialize log directory (for when things go wrong)
 unlink("logs", recursive = TRUE)

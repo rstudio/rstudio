@@ -44,6 +44,9 @@ exit /b %ERRORLEVEL%
 :: Set the project root directory
 call :find-project-root
 
+:: Put Visual Studio tools on the PATH
+call :add-vstools-to-path
+
 :: Node version used when building the product
 set RSTUDIO_NODE_VERSION=22.13.1
 
@@ -51,6 +54,28 @@ set RSTUDIO_NODE_VERSION=22.13.1
 set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com
 
 goto :eof
+
+
+::
+:: Add Visual Studio's tools to the PATH.
+::
+:add-vstools-to-path
+
+setlocal EnableDelayedExpansion
+
+for %%Q in ("BuildTools" "Community") do (
+  for %%P in ("%ProgramFiles(x86)%" "%ProgramFiles%") do (
+    set "_VCDIR=%%~P\Microsoft Visual Studio\2022\%%~Q\VC\Auxiliary\Build"
+    if exist "!_VCDIR!" (
+      endlocal & set "PATH=!_VCDIR!;%PATH%"
+      exit /b 0
+    )
+  )
+)
+
+echo -- ERROR: Could not find Visual Studio build tools.
+exit /b 1
+
 
 ::
 :: Find the project root directory.

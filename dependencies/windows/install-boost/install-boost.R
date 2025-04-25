@@ -21,9 +21,9 @@ if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-boost")
 
 source("../tools.R")
-section("The working directory is: '%s'", getwd())
-progress("Producing '%s' build with '%s' linking", variant, link)
 owd <- getwd()
+
+section("Building Boost %s [msvc%s-%s-%s]", BOOST_VERSION, MSVC_TOOLSET_VERSION, variant, link)
 
 # initialize log directory (for when things go wrong)
 dir.create("logs", showWarnings = FALSE)
