@@ -402,13 +402,13 @@ for %%Q in ("BuildTools" "Community") do (
 if exist "%~f1" (
   set "_VCTOOLSDIR=%~f1\Common7\Tools"
   set "_VCBUILDDIR=%~f1\VC\Auxiliary\Build"
-  set "PATH=%_VCTOOLSDIR%;%_VCBUILDDIR%;%PATH%"
 )
 
-exit /b 0
+goto :eof
 
 :add-vstools-to-path-done:
 
+set "PATH=%_VCTOOLSDIR%;%_VCBUILDDIR%;%PATH%"
 where /Q VsDevCmd.bat
 if %ERRORLEVEL% neq 0 (
   echo -- ERROR: Could not find Visual Studio build tools.
