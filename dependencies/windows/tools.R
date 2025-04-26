@@ -14,7 +14,7 @@ printf <- function(fmt, ...) {
 
 section <- function(fmt, ...) {
    msg <- sprintf(fmt, ...)
-   printf("== %s\n", msg)
+   printf("\n== %s\n", msg)
 }
 
 progress <- function(fmt, ...) {
@@ -28,7 +28,7 @@ fatal <- function(fmt, ...) {
    if (interactive())
       stop(msg, call. = FALSE)
 
-   printf("!! ERROR: %s\n", msg)
+   printf("!!\n!! ERROR: %s\n!!\n", msg)
    quit(save = "no", status = 1, runLast = TRUE)
 
 }
