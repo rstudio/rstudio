@@ -300,11 +300,13 @@ public:
    
    int count(RToken::TokenType type) const
    {
-      return std::count_if(stack_.begin(), stack_.end(), [&](std::size_t index)
+      auto result = std::count_if(stack_.begin(), stack_.end(), [&](std::size_t index)
       {
          const RToken& token = tokens_.at(index);
          return token.type() == type;
       });
+
+      return static_cast<int>(result);
    }
    
    const RTokens& tokens() const

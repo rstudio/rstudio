@@ -55,36 +55,37 @@ namespace r_packages {
 
 namespace {
 
-char ends(char begins)
+wchar_t ends(wchar_t begins)
 {
    switch (begins) {
-   case '(': return ')';
-   case '[': return ']';
-   case '{': return '}';
+   case L'(': return L')';
+   case L'[': return L']';
+   case L'{': return L'}';
    }
-   return '\0';
+
+   return L'\0';
 }
 
-bool isOperator(char character)
+bool isOperator(wchar_t ch)
 {
-   switch (character)
+   switch (ch)
    {
-   case '~':
-   case '!':
-   case '@':
-   case '$':
-   case '%':
-   case '^':
-   case '&':
-   case '+':
-   case '-':
-   case '*':
-   case '/':
-   case '=':
-   case '|':
-   case '<':
-   case '>':
-   case '?':
+   case L'~':
+   case L'!':
+   case L'@':
+   case L'$':
+   case L'%':
+   case L'^':
+   case L'&':
+   case L'+':
+   case L'-':
+   case L'*':
+   case L'/':
+   case L'=':
+   case L'|':
+   case L'<':
+   case L'>':
+   case L'?':
       return true;
    default:
       return false;
@@ -177,7 +178,7 @@ std::wstring finishExpression(const std::wstring& expression)
       }
       
       // check for operators
-      sawOperator = isOperator(static_cast<char>(ch));
+      sawOperator = isOperator(ch);
       
       // check for identifiers
       //
