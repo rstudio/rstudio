@@ -19,3 +19,7 @@ set(RSTUDIO_PROJECT_ROOT "${RSTUDIO_PROJECT_ROOT}" CACHE INTERNAL "")
 # Set up the CMake module path.
 set(CMAKE_MODULE_PATH "${RSTUDIO_PROJECT_ROOT}/cmake/modules/")
 
+# Set a default CMake build type.
+if(NOT DEFINED CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE "Debug")
+endif()

@@ -46,7 +46,7 @@ class MruList
 {
 public:
    MruList(const FilePath& file, size_t maxSize);
-   MruList(const FilePath& file, size_t maxSize, wchar_t dataSeparator);
+   MruList(const FilePath& file, size_t maxSize, char dataSeparator);
 
    Error initialize();
    void prepend(const std::string& item);
@@ -70,7 +70,7 @@ private:
    FilePath file_;
    size_t maxSize_;
    bool haveExtraData_;
-   wchar_t separator_;
+   char separator_;
 
    std::list<std::string> contents_;
    std::map<std::string, std::string> extraData_;

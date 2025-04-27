@@ -21,7 +21,7 @@ function Invoke-DownloadFile {
     param(
         [Parameter(Mandatory = $true)]
         [string]$url,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$output
     )
@@ -40,11 +40,11 @@ function Install-ChocoPackageIfMissing {
     param(
         [Parameter(Mandatory=$true)]
         [string]$PackageName,
-        
+
         [Parameter(Mandatory=$true)]
         [string]$TestCommand
     )
-    
+
     if (!(Get-Command $TestCommand -ErrorAction SilentlyContinue)) {
         Write-Host "$TestCommand not found, installing $PackageName via chocolatey..."
         choco install -y $PackageName
@@ -100,8 +100,8 @@ Install-ChocoPackageIfMissing -PackageName "git" -TestCommand "git"
 
 # install build tools
 choco install -y windows-sdk-10.1 --version 10.1.18362.1 --force
-choco install -y visualstudio2019buildtools --version 16.11.10.0 --force
-choco install -y visualstudio2019-workload-vctools --version 1.0.1 --force
+choco install -y visualstudio2022buildtools --version 117.13.6 --force
+choco install -y visualstudio2022-workload-vctools --version 1.0.0 --force
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 # Newer choco doesn't have this so don't fail if not found

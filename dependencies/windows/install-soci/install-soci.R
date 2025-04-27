@@ -3,15 +3,14 @@
 if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-soci")
 
-SOCI_VERSION    <- Sys.getenv("SOCI_VERSION", unset = "4.0.3")
-BOOST_VERSION   <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
-MSVC_VERSION    <- Sys.getenv("MSVC_VERSION", unset = "vc142")
-CMAKE_GENERATOR <- Sys.getenv("CMAKE_GENERATOR", unset = "Visual Studio 16 2019")
+SOCI_VERSION         <- Sys.getenv("SOCI_VERSION", unset = "4.0.3")
+BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
+MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
+CMAKE_GENERATOR      <- Sys.getenv("CMAKE_GENERATOR", unset = "Visual Studio 17 2022")
 
-source("../tools.R")
-section("The working directory is: '%s'", getwd())
-progress("Producing SOCI build")
 owd <- getwd()
+source("../tools.R")
+section("Building SOCI %s", SOCI_VERSION)
 
 # initialize log directory (for when things go wrong)
 unlink("logs", recursive = TRUE)
@@ -29,7 +28,9 @@ soci_tar <- paste0(soci_base_name, ".tar")
 soci_archive <- paste0(soci_tar, ".gz")
 soci_url <- paste0("https://rstudio-buildtools.s3.amazonaws.com/soci-", SOCI_VERSION, ".tar.gz")
 soci_dir <- file.path(owd, soci_base_name)
-soci_build_dir <- file.path(soci_dir, "build")
+soci_install_name <- sprintf("soci-msvc%s-%s", MSVC_TOOLSET_VERSION, SOCI_VERSION)
+soci_install_dir <- file.path(owd, soci_install_name)
+soci_build_dir <- file.path(soci_install_dir, "build")
 
 sqlite_dir <- file.path(owd, "sqlite")
 sqlite_header_zip_url <- "https://sqlite.org/2020/sqlite-amalgamation-3310100.zip"
@@ -67,7 +68,7 @@ path <- strsplit(Sys.getenv("PATH"), ";", fixed = TRUE)[[1L]]
 path <- grep("C:\\\\(?:rtools|rbuildtools)", path, value = TRUE, invert = TRUE, ignore.case = TRUE)
 Sys.setenv(PATH = paste(path, collapse = ";"))
 
-   
+
 # download and install sqlite source
 dir.create(sqlite_dir, recursive = TRUE, showWarnings = FALSE)
 downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
@@ -88,35 +89,38 @@ if (!file.exists(soci_base_name)) {
    exec("7z.exe", "-aoa", "x", soci_tar)
 }
 
+# move extracted directory
+file.rename(soci_dir, soci_install_dir)
+setwd(soci_install_dir)
+
 # create build directories
-setwd(soci_dir)
 unlink("build", recursive = TRUE)
 dir.create("build", showWarnings = FALSE, recursive = TRUE)
 setwd("build")
 
 build <- function(arch, config) {
-   
+
    # compute architecture
    winarch <- if (arch == "x86") "Win32" else "x64"
-   
+
    # build cmake arguments
    boost_arch <- if (arch == "x86") "boost32" else "boost64"
-   boost_name <- sprintf("boost-%s-win-ms%s-%s-static", BOOST_VERSION, MSVC_VERSION, tolower(config))
+   boost_name <- sprintf("boost-%s-win-msvc%s-%s-static", BOOST_VERSION, MSVC_TOOLSET_VERSION, tolower(config))
    boost_root <- file.path(output_dir, boost_name, boost_arch)
    boost_include_dir <- list.files(file.path(boost_root, "include"), full.names = TRUE)
    boost_library_dir <- file.path(boost_root, "lib")
-   
+
    boost_version_major <- format(numeric_version(BOOST_VERSION)[1, 1])
    boost_version_minor <- format(numeric_version(BOOST_VERSION)[1, 2])
    boost_version_patch <- format(numeric_version(BOOST_VERSION)[1, 3])
-   
+
    sqlite_library_name <- sprintf("sqlite3-%s-%s.lib", tolower(config), arch)
    sqlite_library_path <- file.path(sqlite_dir, sqlite_library_name)
-   
+
    postgresql_include_dir <- file.path(postgresql_dir, "include")
    postgresql_library_name <- sprintf("lib/%s/%s/libpq.lib", arch, config)
    postgresql_library_path <- file.path(postgresql_dir, "lib/x86/Debug/libpq.lib")
-   
+
    # put together intro big string
    args <- interpolate('
       -G "{CMAKE_GENERATOR}"
@@ -140,9 +144,9 @@ build <- function(arch, config) {
       -DPOSTGRESQL_LIBRARY="{postgresql_library_path}"
       ../..
    ')
-   
+
    args <- gsub("\\s+", " ", args, perl = TRUE)
-   
+
    # move to build directory
    dir.create(arch, showWarnings = FALSE)
    owd <- setwd(arch)
@@ -154,29 +158,29 @@ build <- function(arch, config) {
    command <- paste("cmake", args, "2>&1")
    writeLines(paste(">", command))
    conn <- pipe(command, open = "rb")
-   
+
    while (TRUE) {
       output <- readLines(conn, n = 1L, skipNul = TRUE, warn = FALSE)
       writeLines(output)
       if (length(output) == 0)
          break
    }
-   
+
    try(close(conn))
-   
+
    progress(sprintf("Building SOCI [%s-%s]", arch, config))
    command <- paste("cmake --build . --config", config, "2>&1")
    conn <- pipe(command, open = "rb")
-   
+
    while (TRUE) {
       output <- readLines(conn, n = 1L, skipNul = TRUE, warn = FALSE)
       writeLines(output)
       if (length(output) == 0)
          break
    }
-   
+
    try(close(conn))
-   
+
 }
 
 build("x86", "Debug")
@@ -184,4 +188,3 @@ build("x86", "Release")
 
 build("x64", "Debug")
 build("x64", "Release")
-

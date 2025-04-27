@@ -50,6 +50,9 @@ endif()
 
 if(MSVC)
 
+  # log the compiler being used
+  message(STATUS "Using MSVC ${CMAKE_CXX_COMPILER_VERSION} [toolset msvc${MSVC_TOOLSET_VERSION}]")
+
   # keep some deprecated tools around
   add_definitions(-D_HAS_AUTO_PTR_ETC=1 -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS=1)
 

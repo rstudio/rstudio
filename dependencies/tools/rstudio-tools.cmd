@@ -44,6 +44,9 @@ exit /b %ERRORLEVEL%
 :: Set the project root directory
 call :find-project-root
 
+:: Put Visual Studio tools on the PATH
+call :add-vstools-to-path
+
 :: Node version used when building the product
 set RSTUDIO_NODE_VERSION=22.13.1
 
@@ -51,6 +54,7 @@ set RSTUDIO_NODE_VERSION=22.13.1
 set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com
 
 goto :eof
+
 
 ::
 :: Find the project root directory.
@@ -362,6 +366,56 @@ VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\require
 popd
 
 exit /b 0
+
+
+::
+:: Run a command with echo enabled.
+::
+:with-echo
+
+setlocal EnableDelayedExpansion
+set "_COMMAND=> %*"
+echo !_COMMAND!
+endlocal
+
+%*
+
+exit /b 0
+
+
+::
+:: Add Visual Studio's tools to the PATH.
+::
+:add-vstools-to-path
+
+for %%Q in ("BuildTools" "Community") do (
+  for %%P in ("%ProgramFiles(x86)%" "%ProgramFiles%") do (
+    call :add-vstools-to-path-impl "%%~P\Microsoft Visual Studio\2022\%%~Q"
+    if defined _VCTOOLSDIR (
+      goto :add-vstools-to-path-done
+    )
+  )
+)
+
+:add-vstools-to-path-impl
+
+if exist "%~f1" (
+  set "_VCTOOLSDIR=%~f1\Common7\Tools"
+  set "_VCBUILDDIR=%~f1\VC\Auxiliary\Build"
+)
+
+goto :eof
+
+:add-vstools-to-path-done:
+
+set "PATH=%_VCTOOLSDIR%;%_VCBUILDDIR%;%PATH%"
+where /Q VsDevCmd.bat
+if %ERRORLEVEL% neq 0 (
+  echo -- ERROR: Could not find Visual Studio build tools.
+  exit /b 1
+)
+
+goto :eof
 
 
 ::

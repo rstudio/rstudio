@@ -260,14 +260,14 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
 
       if (process > limit)
       {
-	 int overBy = process - limit;
-	 int abortFreeMemPercent = options().abortFreeMemPercent();
+         auto overBy = process - limit;
+         int abortFreeMemPercent = options().abortFreeMemPercent();
          pStats->overLimit = true;
          // Treat memory limit as only an error unless instructed to abort the session:
-	 //  1. Let sys-admin's override abort
-	 //  2. Give a small grace limit, especially since RSS is fuzzy and memory gets reclaimed
-	 //  as you near the limit in cgroups.
-	 //  3. Don't kill sessions until the system needs memory: less than 100mb or 5% free (where 5 is configurable, useful especially for testing)
+         //  1. Let sys-admin's override abort
+         //  2. Give a small grace limit, especially since RSS is fuzzy and memory gets reclaimed
+         //  as you near the limit in cgroups.
+         //  3. Don't kill sessions until the system needs memory: less than 100mb or 5% free (where 5 is configurable, useful especially for testing)
          pStats->abort = !options().allowOverLimitSessions() && overBy > 50*1024 && (freeMem < 100*1024 || freeMemPercent < abortFreeMemPercent);
          std::string statusMessage = "Session process using: " + std::to_string(process) + "kb over the limit of: " + std::to_string(limit) + "kb.";
          std::string freeMessage = std::to_string(freeMem) + "kb free (" + std::to_string(freeMemPercent) + "%)";
