@@ -26,3 +26,4 @@
 
 - Copilot Language Server 1.310.0 (#15935)
 - Electron 35.2.1 (#15933)
+- Quarto 1.7.29 (#15934)
