@@ -152,13 +152,13 @@ pipeline {
               src\\node\\desktop\\out\\RStudio-win32-x64\\rstudio.exe"""
           }
           steps {
-            bat 'curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"' 
+            bat 'curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"'
             bat 'msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log'
             bat 'type smtools-windows-x64.log'
             bat 'C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user'
             bat '"C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync'
             bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool" sign /tr http://timestamp.digicert.com /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 ' + EXECUTABLES
-            bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool\" verify /v /pa ' + EXECUTABLES
+            bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool" verify /v /pa ' + EXECUTABLES
           }
         }
 
@@ -277,9 +277,9 @@ pipeline {
 
     // Run on linux agent
     stage ("Update Daily Build Redirects") {
-      agent { label "linux" } 
+      agent { label "linux" }
 
-      when { 
+      when {
         anyOf {
           expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
           expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }

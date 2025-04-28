@@ -64,6 +64,40 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
     Write-Host "Error: Requires PowerShell 5.0 or newer"
 }
 
+# install build tools
+
+# Installation instructions borrowed from:
+#
+#   https://learn.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2022
+#
+# If you need to add (or change) the components installed here, use:
+#
+#   https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-community?view=vs-2022
+#
+# to look up the assoicated component name.
+#
+# Note that we use this tool to install Visual Studio's build tools, as well as the
+# required Windows 10 SDK, as chocolatey doesn't seem to provide the versions we need.
+#
+
+# Download the Build Tools bootstrapper.
+Invoke-DownloadFile https://aka.ms/vs/17/release/vs_buildtools.exe vs_buildtools.exe
+
+# Install Build Tools with the Microsoft.VisualStudio.Workload.AzureBuildTools workload.
+# Exclude workloads and components with known issues.
+cmd.exe /C start /w vs_buildtools.exe --wait --norestart --nocache `
+    --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools" `
+    --add Microsoft.VisualStudio.Workload.NativeDesktop `
+    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64	`
+    --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
+    --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
+    --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
+    --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
+    --remove Microsoft.VisualStudio.Component.Windows81SDK
+
+# Clean up.
+Remove-Item vs_buildtools.exe
+
 # install R
 if (-Not (Test-Path -Path "C:\R")) {
     $RSetupPackage = "C:\R-3.6.3-win.exe"
@@ -97,11 +131,6 @@ choco install -y python313
 choco install -y strawberryperl
 choco install -y jq
 Install-ChocoPackageIfMissing -PackageName "git" -TestCommand "git"
-
-# install build tools
-choco install -y windows-sdk-10.1 --version 10.1.18362.1 --force
-choco install -y visualstudio2022buildtools --version 117.13.6 --force
-choco install -y visualstudio2022-workload-vctools --version 1.0.0 --force
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 # Newer choco doesn't have this so don't fail if not found
