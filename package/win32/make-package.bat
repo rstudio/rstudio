@@ -213,7 +213,7 @@ REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
 pushd "%_VCTOOLSDIR%"
 call VsDevCmd.bat -clean_env -no_logo || goto :error
-call VsDevCmd.bat -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.19041.0 -no_logo || goto :error
+call VsDevCmd.bat -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=%WIN32_SDK_VERSION% -no_logo || goto :error
 popd
 
 

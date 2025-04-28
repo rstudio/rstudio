@@ -47,6 +47,9 @@ call :find-project-root
 :: Put Visual Studio tools on the PATH
 call :add-vstools-to-path
 
+:: The version of the Windows SDK to use when building.
+set WIN32_SDK_VERSION=1.0.19041.0
+
 :: Node version used when building the product
 set RSTUDIO_NODE_VERSION=22.13.1
 
