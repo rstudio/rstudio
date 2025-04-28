@@ -1,15 +1,49 @@
 # escape=`
 
 # Use the latest Windows Server Core (LTSC - Long Term Service Channel) image with .NET Framework 4.8.
+# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019
 FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
-
-# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2022
-# FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2022
-
-ENV OPERATING_SYSTEM=windows_10
 
 # If building the docker image locally uncomment this line
 # ENV JENKINS_URL=something
+
+# Restore the default Windows shell for correct batch processing.
+SHELL ["cmd", "/S", "/C"]
+
+#
+# Installation instructions borrowed from:
+#
+#   https://learn.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2022
+#
+# If you need to add (or change) the components installed here, use:
+#
+#   https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-community?view=vs-2022
+#
+# to look up the associated component name.
+#
+# Note that we use this tool to install Visual Studio's build tools, as well as the
+# required Windows 10 SDK, as chocolatey doesn't seem to provide the versions we need.
+#
+RUN `
+    # Download the Build Tools bootstrapper.
+    curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe `
+    `
+    # Install Build Tools with the Microsoft.VisualStudio.Workload.AzureBuildTools workload, excluding workloads and components with known issues.
+    && (start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
+        --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools" `
+        --add Microsoft.VisualStudio.Workload.NativeDesktop `
+        --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64	`
+        --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
+        --remove Microsoft.VisualStudio.Component.Windows81SDK `
+        || IF "%ERRORLEVEL%"=="3010" EXIT 0) `
+    `
+    # Cleanup
+    && del /q vs_buildtools.exe
+
+ENV OPERATING_SYSTEM=windows_10
 
 # set RUN commands to use powershell
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; "]
@@ -38,11 +72,6 @@ RUN `
   choco install -y python313; `
   choco install -y strawberryperl; `
   choco install -y temurin11
-
-# install build tools
-RUN choco install -y windows-sdk-10.1 --version 10.1.18362.1
-RUN choco install -y visualstudio2022buildtools --version 117.13.6
-RUN choco install -y visualstudio2022-workload-vctools --version 1.0.0
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"

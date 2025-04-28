@@ -1,4 +1,9 @@
+
 def utils
+
+// Some constants.
+def WIN32_SDK_VERSION = "10.0.19041.0"
+def WIN32_SDK_BINDIR  = "C:/Program Files (x86)/Windows Kits/10/bin/${WIN32_SDK_VERSION}/x64"
 
 pipeline {
 
@@ -143,6 +148,7 @@ pipeline {
 
         stage('Sign Executables') {
           environment {
+            PATH = "${WIN32_SDK_BINDIR}:${env.PATH}"
             EXECUTABLES = """package\\win32\\build\\src\\cpp\\session\\rsession-utf8.exe ^
               package\\win32\\build\\src\\cpp\\session\\rsession.exe ^
               package\\win32\\build\\src\\cpp\\session\\x86\\rsession.exe ^
@@ -152,13 +158,13 @@ pipeline {
               src\\node\\desktop\\out\\RStudio-win32-x64\\rstudio.exe"""
           }
           steps {
-            bat 'curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"' 
+            bat 'curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"'
             bat 'msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log'
             bat 'type smtools-windows-x64.log'
             bat 'C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user'
             bat '"C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync'
-            bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool" sign /tr http://timestamp.digicert.com /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 ' + EXECUTABLES
-            bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool\" verify /v /pa ' + EXECUTABLES
+            bat 'signtool.exe sign /tr http://timestamp.digicert.com /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 ' + EXECUTABLES
+            bat 'signtool.exe verify /v /pa ' + EXECUTABLES
           }
         }
 
@@ -186,20 +192,29 @@ pipeline {
         }
 
         stage('Sign, Upload, and Publish') {
+
           when { expression { return params.PUBLISH } }
 
-                environment {
-                  LONG_PACKAGE_NAME = "${PACKAGE_NAME}-RelWithDebInfo"
-                }
+          environment {
+            LONG_PACKAGE_NAME = "${PACKAGE_NAME}-RelWithDebInfo"
+            LONG_PACKAGE_PATH = "package/win32/build/${PACKAGE_NAME}-RelWithDebInfo.exe"
+          }
 
           stages {
+
             stage('Sign Installer') {
+
+              environment {
+                PATH = "${WIN32_SDK_BINDIR}:${env.PATH}"
+              }
+
               steps {
                 bat 'C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user'
                 bat '"C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync'
-                bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool" sign /tr http://timestamp.digicert.com /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 package\\win32\\build\\' + LONG_PACKAGE_NAME + '.exe'
-                bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool\" verify /v /pa package\\win32\\build\\${LONG_PACKAGE_NAME}.exe"
+                bat 'signtool.exe sign /tr http://timestamp.digicert.com /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 ' + LONG_PACKAGE_PATH
+                bat 'signtool.exe verify /v /pa ' + LONG_PACKAGE_PATH
               }
+
             }
 
             stage('Upload') {
@@ -277,9 +292,9 @@ pipeline {
 
     // Run on linux agent
     stage ("Update Daily Build Redirects") {
-      agent { label "linux" } 
+      agent { label "linux" }
 
-      when { 
+      when {
         anyOf {
           expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
           expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }

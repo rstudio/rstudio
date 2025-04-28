@@ -36,7 +36,7 @@ cd %WIN32_BUILD_PATH%
 REM Build the project
 pushd "%_VCTOOLSDIR%"
 call VsDevCmd.bat -clean_env -no_logo || goto :error
-call VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -winsdk=10.0.19041.0 -no_logo || goto :error
+call VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -winsdk=%WIN32_SDK_VERSION% -no_logo || goto :error
 popd
 
 cmake -G "Ninja" ^
