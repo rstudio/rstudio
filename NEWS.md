@@ -16,6 +16,7 @@
 
 #### RStudio
 
+- Fixed an issue where the "Save As" dialog would not be visible when trying to save an older git revision of a file (#15955)
 - Fixed an issue where code indentation stopped working following code chunks containing only Quarto comments (#15879)
 
 #### Posit Workbench
