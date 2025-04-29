@@ -31,4 +31,9 @@ REM Build the image.
     --build-arg GITHUB_LOGIN=%DOCKER_GITHUB_LOGIN% ^
     .
 
+if %ERRORLEVEL% NEQ 0 (
+    echo -- Error creating image %REPO%:%IMAGE% [error code %ERRORLEVEL%]
+    exit /b 1
+)
+
 echo -- Created image %REPO%:%IMAGE%
