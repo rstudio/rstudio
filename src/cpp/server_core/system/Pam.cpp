@@ -20,6 +20,7 @@
 
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
+#include <shared_core/system/SyslogDestination.hpp>
 
 namespace rstudio {
 namespace core {
@@ -187,7 +188,7 @@ int PAM::login(const std::string& username,
                          &pamh_);
    if (status_ != PAM_SUCCESS)
    {
-      LOG_ERROR_MESSAGE("pam_start failed: " + lastError());
+      safeLogToSyslog("pam-login", log::LogLevel::ERR, "pam_start failed: " + lastError());
       return status_;
    }
 
@@ -195,14 +196,14 @@ int PAM::login(const std::string& username,
    if (status_ != PAM_SUCCESS)
    {
       if (status_ != PAM_AUTH_ERR)
-         LOG_ERROR_MESSAGE("pam_authenticate failed: " + lastError());
+         safeLogToSyslog("pam-login", log::LogLevel::ERR, "pam_authenticate failed: " + lastError());
       return status_;
    }
 
    status_ = ::pam_acct_mgmt(pamh_, defaultFlags_);
    if (status_ != PAM_SUCCESS)
    {
-      LOG_ERROR_MESSAGE("pam_acct_mgmt failed: " + lastError());
+      safeLogToSyslog("pam-login", log::LogLevel::ERR, "pam_acct_mgmt failed: " + lastError());
       return status_;
    }
 
