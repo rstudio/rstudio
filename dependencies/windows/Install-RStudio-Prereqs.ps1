@@ -83,17 +83,18 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 # Download the Build Tools bootstrapper.
 Invoke-DownloadFile https://aka.ms/vs/17/release/vs_buildtools.exe vs_buildtools.exe
 
-# Install Build Tools with the Microsoft.VisualStudio.Workload.AzureBuildTools workload.
-# Exclude workloads and components with known issues.
-cmd.exe /C start /w vs_buildtools.exe --wait --norestart --nocache `
-    --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools" `
+# Install Build Tools. For whatever reason, this fails when we try to install
+# into C:/Program Files (x86), so just use the "regular" C:/Program Files.
+RUN start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
+    --installPath "C:/Program Files/Microsoft Visual Studio/2022/BuildTools" `
+    --add Microsoft.VisualStudio.Workload.CoreEditor `
     --add Microsoft.VisualStudio.Workload.NativeDesktop `
-    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64	`
-    --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
-    --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
-    --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
-    --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
-    --remove Microsoft.VisualStudio.Component.Windows81SDK
+    --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core `
+    --add Microsoft.VisualStudio.Component.VC.CoreIde `
+    --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
+    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+    --add Microsoft.VisualStudio.Component.Windows10SDK `
+    --add Microsoft.VisualStudio.Component.Windows10SDK.20348
 
 # Clean up.
 Remove-Item vs_buildtools.exe
