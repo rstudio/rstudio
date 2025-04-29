@@ -382,8 +382,7 @@ echo !_COMMAND!
 endlocal
 
 %*
-
-exit /b 0
+exit /b %ERRORLEVEL%
 
 
 ::

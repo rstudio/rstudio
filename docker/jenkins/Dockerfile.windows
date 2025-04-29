@@ -3,6 +3,13 @@
 # https://hub.docker.com/r/microsoft/windows-servercore
 FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 
+# The version of the Windows SDK we want to use.
+ENV _WIN32_SDK_VERSION=20348
+
+# The full version path for the Windows SDK. Some tools want the full version,
+# other sjust want the "inner" component, so we provide both.
+ENV WIN32_SDK_VERSION=10.0.${_WIN32_SDK_VERSION}.0
+
 # Use plain cmd shell for initial setup.
 SHELL ["cmd", "/S", "/C"]
 
@@ -44,11 +51,17 @@ RUN start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
     --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --add Microsoft.VisualStudio.Component.Windows10SDK `
-    --add Microsoft.VisualStudio.Component.Windows10SDK.20348
+    --add Microsoft.VisualStudio.Component.Windows10SDK.%_WIN32_SDK_VERSION%
 
-
-# Clean up.
-RUN del /q vs_buildtools.exe
+# Try testing the build tools. You might see some telemetry errors here;
+# they can apparently be ignored.
+WORKDIR "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/Common7/Tools"
+RUN start /WAIT /B cmd.exe /S /C `
+  echo -- Testing VsDevCmd.bat `
+  && call VsDevCmd.bat -clean_env -no_logo `
+  && call VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -winsdk=%WIN32_SDK_VERSION% -no_logo `
+  && echo -- Testing VsDevCmd.bat -- success
+WORKDIR "C:/BuildTools"
 
 # Use Powershell for the rest of the script.
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; "]
@@ -132,3 +145,4 @@ RUN C:/rstudio-tools/dependencies/windows/install-dependencies.cmd
 ENV JENKINS_SWARM_VERSION=3.15
 RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
   Invoke-WebRequest $('https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/{0}/swarm-client-{0}.jar' -f $env:JENKINS_SWARM_VERSION) -OutFile 'C:\swarm-client.jar' -UseBasicParsing ;
+
