@@ -209,20 +209,12 @@ REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.t
 set PKG_TEMP_DIR=C:\rsbuild
 if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
 
-REM Configure and build the project. (Note that Windows / MSVC builds require
-REM that we specify the build type both at configure time and at build time)
-pushd "%_VCTOOLSDIR%"
-call VsDevCmd.bat -clean_env -no_logo || goto :error
-call VsDevCmd.bat -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=%WIN32_SDK_VERSION% -no_logo || goto :error
-popd
-
-
 cmake -G "Ninja" ^
-      -DRSTUDIO_TARGET=%RSTUDIO_TARGET% ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
+      -DCMAKE_C_COMPILER=cl.exe ^
+      -DCMAKE_CXX_COMPILER=cl.exe ^
+      -DRSTUDIO_TARGET=%RSTUDIO_TARGET% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
-      -DCMAKE_C_COMPILER=cl ^
-      -DCMAKE_CXX_COMPILER=cl ^
       -DGWT_BUILD=%BUILD_GWT% ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error

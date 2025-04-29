@@ -33,19 +33,13 @@ REM perform 32-bit build
 if not exist %WIN32_BUILD_PATH% mkdir %WIN32_BUILD_PATH%
 cd %WIN32_BUILD_PATH%
 
-REM Build the project
-pushd "%_VCTOOLSDIR%"
-call VsDevCmd.bat -clean_env -no_logo || goto :error
-call VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -winsdk=%WIN32_SDK_VERSION% -no_logo || goto :error
-popd
-
 cmake -G "Ninja" ^
-      -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
-      -DRSTUDIO_TARGET=SessionWin32 ^
-      -DRSTUDIO_PACKAGE_BUILD=1 ^
+      -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
       -DCMAKE_C_COMPILER=cl.exe ^
       -DCMAKE_CXX_COMPILER=cl.exe ^
+      -DRSTUDIO_TARGET=SessionWin32 ^
+      -DRSTUDIO_PACKAGE_BUILD=1 ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% --target install -- %MAKEFLAGS% || goto :error
 cd ..

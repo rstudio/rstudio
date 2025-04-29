@@ -62,7 +62,7 @@ REM remove previous image if it exists
 ::
 echo Copying repo into container...
 %RUN% with-echo ^
-    docker cp %HOSTPATH% %CONTAINER_ID%:/src
+    docker cp %HOSTPATH% %CONTAINER_ID%:C:/src
 
 echo Starting container...
 %RUN% with-echo ^
@@ -70,7 +70,8 @@ echo Starting container...
 
 echo Installing dependencies...
 %RUN% with-echo ^
-    docker exec %CONTAINER_ID% cmd.exe /C "cd \src\dependencies\windows && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd"
+    docker exec %CONTAINER_ID% cmd.exe /C ^
+    "cd C:\rstudio-tools\dependencies\windows && \src\dependencies\windows\install-dependencies.cmd"
 
 echo Building RStudio...
 %RUN% with-echo ^
