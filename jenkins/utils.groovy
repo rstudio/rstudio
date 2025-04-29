@@ -330,16 +330,13 @@ def shouldBuild(boolean isDaily, boolean isPro) {
         (env.OS == 'jammy' && env.ARCH == 'x86_64' && isFlavorAProServerProduct()) ||
         (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron'))
     } else {
-      // build an arm64 rhel9 Electron and an x86_64 focal Server
+      // build an arm64 rhel9 Electron and an x86_64 jammy Server
       inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron') ||
-        (env.OS == 'focal' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
+        (env.OS == 'jammy' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
     }
   }
 
-  // The focal builds are being build on bionic, hence the name confusion here
-  def bionicProArm = (env.OS == 'focal' && env.ARCH == 'arm64' && isPro)
-
-  return matchesFilter && inHourlySubset && !bionicProArm
+  return matchesFilter && inHourlySubset
 }
 
 /**
