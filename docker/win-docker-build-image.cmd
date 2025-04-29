@@ -19,6 +19,7 @@ REM rebuild the image if necessary
     --tag %REPO%:%IMAGE% ^
     --file docker\jenkins\Dockerfile.%IMAGE% ^
     --memory 16GB ^
+    --build-arg JENKINS_URL=development-build ^
     --build-arg GITHUB_LOGIN=%DOCKER_GITHUB_LOGIN% ^
     .
 

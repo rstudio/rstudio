@@ -206,18 +206,18 @@ initialize <- function() {
 
    # Make sure MSVC tools are available
    msvcCandidates <- c(
-      "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build",
       "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build",
-      "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build",
-      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
+      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
    )
 
    msvc <- Filter(file.exists, msvcCandidates)
    if (length(msvc) == 0L) {
       message <- paste(
          "No MSVC 2022 installation detected.",
-         "Install build tools using 'Install-RStudio-Prereqs.ps1'.
-      ")
+         "Install build tools using 'Install-RStudio-Prereqs.ps1'."
+      )
       fatal(message)
    }
    PATH$prepend(msvc[[1L]])

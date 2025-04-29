@@ -392,7 +392,7 @@ exit /b 0
 :add-vstools-to-path
 
 for %%Q in ("BuildTools" "Community") do (
-  for %%P in ("%ProgramFiles(x86)%" "%ProgramFiles%") do (
+  for %%P in ("%ProgramFiles%" "%ProgramFiles(x86)%") do (
     call :add-vstools-to-path-impl "%%~P\Microsoft Visual Studio\2022\%%~Q"
     if defined _VCTOOLSDIR (
       goto :add-vstools-to-path-done
