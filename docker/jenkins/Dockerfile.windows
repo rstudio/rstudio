@@ -43,7 +43,9 @@ RUN start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
     --add Microsoft.VisualStudio.Component.VC.CoreIde `
     --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-    --add Microsoft.VisualStudio.Component.Windows10SDK.19041
+    --add Microsoft.VisualStudio.Component.Windows10SDK `
+    --add Microsoft.VisualStudio.Component.Windows10SDK.20348
+
 
 # Clean up.
 RUN del /q vs_buildtools.exe
