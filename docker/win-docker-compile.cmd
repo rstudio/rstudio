@@ -25,9 +25,6 @@ for %%A in (%*) do (
 set IMAGE=windows
 set FLAVOR=electron
 
-REM make sure package directory exists
-mkdir package 2> NUL
-
 REM call the docker build image helper
 cmd /C win-docker-build-image.cmd
 
@@ -92,6 +89,10 @@ docker exec %CONTAINER_ID% cmd.exe /C setx /M RSTUDIO_DOCKER_DEVELOPMENT_BUILD 1
 docker exec %CONTAINER_ID% cmd.exe /C ^
     "cd C:\rstudio\package\win32 && make-package.bat"
 
+docker exec %CONTAINER_ID% cmd.exe /C "mkdir C:\package"
+docker exec %CONTAINER_ID% cmd.exe /C "move C:\rsbuild\*.exe C:\package"
+docker exec %CONTAINER_ID% cmd.exe /C "move C:\rsbuild\*.zip C:\package"
+
 docker stop %CONTAINER_ID%
 
 @echo off
@@ -103,6 +104,6 @@ if "%REPO%" == "rstudio-pro" (
 )
 
 @echo on
-docker cp %CONTAINER_ID%:C:/rsbuild/%PKG_FILENAME%.zip %HOSTPATH%/docker/package/%PKG_FILENAME%.zip
-docker cp %CONTAINER_ID%:C:/rsbuild/%PKG_FILENAME%.exe %HOSTPATH%/docker/package/%PKG_FILENAME%.exe
+mkdir %HOSTPATH%\docker\package 2>NUL
+docker cp %CONTAINER_ID%:C:/package %HOSTPATH%/docker
 @echo off
