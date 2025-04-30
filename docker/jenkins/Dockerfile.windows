@@ -137,6 +137,7 @@ ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror
 ENV DOCKER_IMAGE_BUILD=1
 WORKDIR C:/rstudio-tools/dependencies/windows
 RUN C:/rstudio-tools/dependencies/windows/install-dependencies.cmd
+ENV DOCKER_IMAGE_BUILD=
 
 #### this docker container will currently be used as a jenkins swarm slave, rather than instantiated on a swarm ####
 ##### the items below this are dependencies relevant to jenkins-swarm. #####
