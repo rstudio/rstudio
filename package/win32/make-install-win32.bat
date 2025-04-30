@@ -12,7 +12,7 @@
 :: AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 ::
 @echo off
-setlocal
+setlocal EnableDelayedExpansion
 
 if not defined CMAKE_BUILD_TYPE (
     set CMAKE_BUILD_TYPE=Release
@@ -27,17 +27,27 @@ if not defined WIN32_BUILD_PATH (
     )
 )
 
+REM normalize slashes
+set "WIN32_BUILD_PATH=%WIN32_BUILD_PATH:/=\%"
+
 set INSTALL_PATH=%1
 for %%A in (%*) do (
-    if /I "%%A" == "clean" set CLEANBUILD=1
+    if /I "%%A" == "clean" (
+        set CLEANBUILD=1
+    )
 )
 
 if defined CLEANBUILD (
-    if exist %WIN32_BUILD_PATH% rmdir /s /q %WIN32_BUILD_PATH%
+    if exist %WIN32_BUILD_PATH% (
+        rmdir /s /q %WIN32_BUILD_PATH%
+    )
 )
 
 REM Prepare the build directory.
-if not exist %WIN32_BUILD_PATH% mkdir %WIN32_BUILD_PATH%
+if not exist %WIN32_BUILD_PATH% (
+    mkdir %WIN32_BUILD_PATH%
+)
+
 cd %WIN32_BUILD_PATH%
 
 REM Configure for a 32-bit build.

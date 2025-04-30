@@ -172,6 +172,9 @@ if not defined BUILD_DIR (
     )
 )
 
+REM Normalize slashes.
+set "BUILD_DIR=%BUILD_DIR:/=\%"
+
 REM Enter build directory.
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 pushd "%BUILD_DIR%"
