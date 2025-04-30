@@ -98,17 +98,6 @@ if(APPLE)
    install(FILES ${MAC_FILE_TYPE_ICONS} DESTINATION ${RSTUDIO_INSTALL_BIN}/../..)
 endif()
 
-# Configure into the source directory during builds. This will
-# leave a modified file in the source tree. This is OK in our
-# build environment since we start with a clean repo for each
-# build but will be mildly annoying on a dev machine when using
-# make-package (typically only done while working ON make-package).
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts.in
-                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts)
-
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/src/ui/splash/splash_unversioned.html.in
-                ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/splash/splash.html)
-
 # defines NODEJS, NODEJS_PATH
 include("${CMAKE_CURRENT_LIST_DIR}/../CMakeNodeTools.txt")
 
@@ -118,28 +107,37 @@ if (NOT WIN32)
 endif()
 
 set(ELECTRON_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "")
+set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}" CACHE INTERNAL "")
+
+# copy sources to build directory. note that the build directory cannot
+# be the "true" CMake directory as some files are resolved relative to
+# the desktop project's relative path in the application structure
+file(REMOVE_RECURSE "${ELECTRON_BUILD_DIR}")
+file(MAKE_DIRECTORY "${ELECTRON_BUILD_DIR}")
+file(
+   COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
+   DESTINATION "${ELECTRON_BUILD_DIR}/"
+   REGEX "/.webpack$" EXCLUDE
+   REGEX "/build$" EXCLUDE
+   REGEX "/bin$" EXCLUDE
+   REGEX "/out$" EXCLUDE
+   REGEX "/node_modules$" EXCLUDE)
+
+configure_file(
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts.in
+   ${ELECTRON_BUILD_DIR}/src/main/build-info.ts)
+
+configure_file(
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/splash/splash_unversioned.html.in
+   ${ELECTRON_BUILD_DIR}/src/ui/splash/splash.html)
+
 if (APPLE)
    # configure Info.plist
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
-      ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist)
-
-   # copy sources to build directory. note that the build directory cannot
-   # be the "true" CMake directory as some files are resolved relative to
-   # the desktop project's relative path in the application structure
-   set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}" CACHE INTERNAL "")
-   file(REMOVE_RECURSE "${ELECTRON_BUILD_DIR}")
-   file(MAKE_DIRECTORY "${ELECTRON_BUILD_DIR}")
-   file(
-      COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
-      DESTINATION "${ELECTRON_BUILD_DIR}/"
-      REGEX "/.webpack$" EXCLUDE
-      REGEX "/build$" EXCLUDE
-      REGEX "/bin$" EXCLUDE
-      REGEX "/out$" EXCLUDE
-      REGEX "/node_modules$" EXCLUDE)
-else()
-   set(ELECTRON_BUILD_DIR "${ELECTRON_SOURCE_DIR}" CACHE INTERNAL "")
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
+      ${ELECTRON_BUILD_DIR}/Info.plist)
 endif()
+
 
 # define source dependencies
 file(GLOB_RECURSE DESKTOP_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.ts")

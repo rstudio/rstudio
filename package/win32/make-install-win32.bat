@@ -40,7 +40,10 @@ REM perform 32-bit build
 if not exist %WIN32_BUILD_PATH% mkdir %WIN32_BUILD_PATH%
 cd %WIN32_BUILD_PATH%
 
-cmake -G "Visual Studio 17 2022" -A Win32 ^
+call vcvarsall.bat x86
+%RUN% subprocess "where cl.exe" CC
+%RUN% subprocess "where cl.exe" CXX
+cmake -G Ninja ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DCMAKE_INSTALL_PREFIX=%INSTALL_PATH% ^
       -DRSTUDIO_TARGET=SessionWin32 ^

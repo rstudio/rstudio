@@ -220,9 +220,9 @@ if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Pac
 
 REM Set up for a 64-bit build.
 call vcvarsall.bat amd64
-%RUN% subprocess "where cl.exe" CMAKE_C_COMPILER
-%RUN% subprocess "where cl.exe" CMAKE_CXX_COMPILER
-cmake -G "Visual Studio 17 2022" -A x64 ^
+%RUN% subprocess "where cl.exe" CC
+%RUN% subprocess "where cl.exe" CXX
+cmake -G Ninja ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_TARGET=%RSTUDIO_TARGET% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
