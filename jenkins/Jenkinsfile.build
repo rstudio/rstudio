@@ -1,7 +1,6 @@
 def utils
 
 def labelForOS = [
-  'focal':     'linux',
   'jammy':      'linux',
   'rhel8':      'linux',
   'rhel9':      'linux',
@@ -104,7 +103,7 @@ pipeline {
         axes {
           axis {
             name 'os'
-            values 'focal', 'jammy', 'rhel8', 'rhel9', 'opensuse15', 'windows'
+            values 'jammy', 'rhel8', 'rhel9', 'opensuse15', 'windows'
           }
           axis {
             name 'arch'
