@@ -81,18 +81,18 @@ for %%A in (%*) do (
     if "!KNOWN_ARG!" == "0" goto :showhelp
 )
 
-REM check for debug build
+REM Check for debug build.
 if defined DEBUG_BUILD (
     set CMAKE_BUILD_TYPE=Debug
 )
 
-REM clean if requested
+REM Clean if requested.
 if defined CLEANBUILD (
     call clean-build.bat
     if exist CMakeCache.txt del CMakeCache.txt
 )
 
-REM check for required programs on PATH
+REM Check for required programs on the PATH.
 for %%F in (ant cmake) do (
     where /q %%F
     if ERRORLEVEL 1 (
@@ -102,7 +102,7 @@ for %%F in (ant cmake) do (
     )
 )
 
-REM find node
+REM Find node tools.
 set NODE_DIR=%RSTUDIO_DEPENDENCIES%\common\node\%RSTUDIO_NODE_VERSION%
 set NODE=%NODE_DIR%\node.exe
 if not exist %NODE% (
@@ -112,7 +112,6 @@ if not exist %NODE% (
 )
 echo Using node: %NODE%
 
-REM find npm
 set NPM=%NODE_DIR%\npm
 if not exist %NPM% (
     echo npm not found at %NODE_DIR%; exiting
@@ -121,7 +120,6 @@ if not exist %NPM% (
 )
 echo Using npm: %NPM%
 
-REM find npx
 set NPX=%NODE_DIR%\npx
 if not exist %NPX% (
     echo npx not found at %NODE_DIR%; exiting
@@ -133,6 +131,7 @@ echo Using npx: %NPX%
 REM Put node on the path
 set PATH=%NODE_DIR%;%PATH%
 
+REM Set up resource-hacker utility.
 set REZH=%RSTUDIO_DEPENDENCIES%\windows\resource-hacker\ResourceHacker.exe
 if not exist %REZH% (
     echo ResourceHacker.exe not found; re-run install-dependencies.cmd and try again; exiting
@@ -140,28 +139,31 @@ if not exist %REZH% (
     exit /b 1
 )
 
-REM Build for desktop
+REM Build GWT desktop module.
 set GWT_MAIN_MODULE=RStudioDesktop
 
-REM Remove system Rtools from PATH
+REM Remove system Rtools from PATH (can confuse CMake and other tools)
 call set PATH=%PATH:C:\Rtools\bin=%
 call set PATH=%PATH:C:\Rtools\gcc-4.6.3\bin=%
 
-REM Remove Git from PATH (otherwise cmake complains about 'sh.exe')
+REM Remove Git from PATH (otherwise CMake complains about 'sh.exe')
 call set PATH=%PATH:C:\Program Files (x86)\Git\bin=%
 call set PATH=%PATH:C:\Program Files\Git\bin=%
 
-REM Build RStudio version suffix
+REM Build RStudio version suffix.
 if not defined RSTUDIO_VERSION_MAJOR set RSTUDIO_VERSION_MAJOR=99
 if not defined RSTUDIO_VERSION_MINOR set RSTUDIO_VERSION_MINOR=9
 if not defined RSTUDIO_VERSION_PATCH set RSTUDIO_VERSION_PATCH=9
 if not defined RSTUDIO_VERSION_SUFFIX set RSTUDIO_VERSION_SUFFIX=-dev+999
 set RSTUDIO_VERSION_FULL=%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%%RSTUDIO_VERSION_SUFFIX%
 
-REM set default build type
+REM Set default CMake build type.
 if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=RelWithDebInfo
 
-REM Establish build dir
+REM Work in package directory.
+cd "%PACKAGE_DIR%"
+
+REM Compute build directory.
 if not defined BUILD_DIR (
     if "%CMAKE_BUILD_TYPE%" == "Debug" (
         set BUILD_DIR=build-debug
@@ -170,33 +172,37 @@ if not defined BUILD_DIR (
     )
 )
 
-REM perform 64-bit build
-cd "%PACKAGE_DIR%"
-
+REM Enter build directory.
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
-cd "%BUILD_DIR%"
+pushd "%BUILD_DIR%"
 
 REM Package these files into a shorter path to workaround windows max path of 260
 REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.txt
 set PKG_TEMP_DIR=C:\rsbuild
 if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
 
-REM Set up for a 64-bit build. We set CC and CXX to tell CMake to use the MSVC
+REM Configure the main build.
 call vcvarsall.bat amd64
 cmake -G Ninja ^
-      -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
-      -DCMAKE_C_COMPILER=cl.exe ^
-      -DCMAKE_CXX_COMPILER=cl.exe ^
-      -DRSTUDIO_TARGET=%RSTUDIO_TARGET% ^
-      -DRSTUDIO_PACKAGE_BUILD=1 ^
-      -DLIBR_HOME=C:\R\R-3.6.3 ^
-      -DGWT_BUILD=%BUILD_GWT% ^
-      %RSTUDIO_PROJECT_ROOT% || goto :error
+    -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
+    -DCMAKE_C_COMPILER=cl.exe ^
+    -DCMAKE_CXX_COMPILER=cl.exe ^
+    -DRSTUDIO_TARGET=%RSTUDIO_TARGET% ^
+    -DRSTUDIO_PACKAGE_BUILD=1 ^
+    -DLIBR_HOME=C:\R\R-3.6.3 ^
+    -DGWT_BUILD=%BUILD_GWT% ^
+    %RSTUDIO_PROJECT_ROOT% || (
+        echo.!! ERROR: configure failed
+        exit /b 1
+    )
 
 REM Perform the build.
-cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
+cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || (
+    echo.!! ERROR: build failed
+    exit /b 1
+)
 
-REM add icons for supported file types
+REM Add icons for supported file types.
 if "%RSTUDIO_TARGET%" == "Electron" (
     pushd %ELECTRON_SOURCE_DIR%
     cd out\RStudio-win32-x64
@@ -216,25 +222,29 @@ if "%RSTUDIO_TARGET%" == "Electron" (
     %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RTex.ico -mask ICONGROUP,15,1033
     popd
 )
-cd ..
 
-REM perform 32-bit build and install it into the 64-bit tree
+REM Return to package directory.
+popd
+
+REM Perform 32-bit build and install it into the 64-bit tree.
 if "%MULTIARCH%" == "1" (
-    call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
+    call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || (
+        echo.!! ERROR: 32-bit session components build failed
+        exit /b 1
+    )
 )
 
-REM create packages for dev build (official build invokes this from Jenkinsfile after signing binaries)
+REM Create packages for dev build.
+REM The official build invokes this from Jenkinsfile after signing binaries.
 if not defined JENKINS_URL (
-    call make-dist-packages.bat || goto :error
+    call make-dist-packages.bat || (
+        echo.!! ERROR: package creation failed
+        exit /b 1
+    )
 )
 
-echo -- RStudio was built successfully.
+echo RStudio was built successfully.
 goto :eof
-
-
-:error
-echo Failed to build RStudio [error code %ERRORLEVEL%]
-exit /b %ERRORLEVEL%
 
 
 :showhelp
