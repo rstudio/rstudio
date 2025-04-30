@@ -120,14 +120,35 @@ exec <- function(command, ..., output = NULL, dir = NULL) {
    invisible(TRUE)
 }
 
+run <- function(...) {
 
+   command <- paste(c(...), "2>&1", collapse = " ")
+   writeLines(paste(">", command))
+
+   conn <- pipe(command, open = "rb")
+   if (!isOpen(conn))
+      fatal("execution of %s failed", command)
+
+   while (TRUE) {
+      output <- readLines(conn, n = 1L, skipNul = TRUE, warn = FALSE)
+      writeLines(output)
+      if (length(output) == 0)
+         break
+   }
+
+   result <- close(conn)
+   if (is.integer(result) && result != 0L)
+      fatal("execution of %s failed [status %i]", command, result)
+
+   invisible(result)
+
+}
 
 download <- function(url, destfile, ...) {
    fmt <- "Downloading file:\n- %s => %s"
    progress(fmt, shQuote(url), shQuote(destfile))
    exec("wget.exe", "--no-check-certificate", "-c", shQuote(url), "-O", shQuote(destfile))
 }
-
 
 PATH <- (function() {
 

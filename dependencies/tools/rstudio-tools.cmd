@@ -131,6 +131,22 @@ goto :eof
 
 
 ::
+:: Normalize a path.
+::
+:normalize-path
+
+setlocal EnableDelayedExpansion
+
+set "_PATH=%~1"
+set "_OUTPUT=%~2"
+
+for %%F in ("%_PATH%") do set _RESULT=%%~fF
+
+endlocal & set "%_OUTPUT%=%_RESULT%"
+goto :eof
+
+
+::
 :: Download a file.
 ::
 :: If the URL passed does not include 'http' as a prefix, then the
@@ -377,11 +393,12 @@ exit /b 0
 :with-echo
 
 setlocal EnableDelayedExpansion
-set "_COMMAND=> %*"
-echo !_COMMAND!
+set "PROMPT=> "
+@echo on
+%*
+@echo off
 endlocal
 
-%*
 exit /b %ERRORLEVEL%
 
 

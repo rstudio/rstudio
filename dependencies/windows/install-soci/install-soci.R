@@ -74,7 +74,7 @@ dir.create(sqlite_dir, recursive = TRUE, showWarnings = FALSE)
 downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
 
 # build SQLite static library
-system("cmd.exe /c build-sqlite.cmd")
+run("build-sqlite.cmd")
 
 # download and install postgresql includes/libraries
 # we prebuild these because the postgresql build process is non-trivial
@@ -152,34 +152,11 @@ build <- function(arch, config) {
    owd <- setwd(arch)
    on.exit(setwd(owd), add = TRUE)
 
-   # build it -- we run the process through 'pipe()' because, for whatever
-   # reason, 'system()' seemed to stall after trying to run cmake.
    progress(sprintf("Configuring SOCI [%s-%s]", arch, config))
-   command <- paste("cmake", args, "2>&1")
-   writeLines(paste(">", command))
-   conn <- pipe(command, open = "rb")
-
-   while (TRUE) {
-      output <- readLines(conn, n = 1L, skipNul = TRUE, warn = FALSE)
-      writeLines(output)
-      if (length(output) == 0)
-         break
-   }
-
-   try(close(conn))
+   run("cmake", args)
 
    progress(sprintf("Building SOCI [%s-%s]", arch, config))
-   command <- paste("cmake --build . --config", config, "2>&1")
-   conn <- pipe(command, open = "rb")
-
-   while (TRUE) {
-      output <- readLines(conn, n = 1L, skipNul = TRUE, warn = FALSE)
-      writeLines(output)
-      if (length(output) == 0)
-         break
-   }
-
-   try(close(conn))
+   run("cmake --build . --config", config)
 
 }
 

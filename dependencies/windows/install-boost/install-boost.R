@@ -89,12 +89,8 @@ section("Patching Boost namespaces")
 source("../../../tools/use-rstudio-boost-namespace.R")
 
 # bootstrap the project
-# TODO: system2() seems to hang and never exits, so we use processx
 section("Bootstrapping boost")
-args <- c("/c", "call", "bootstrap.bat", paste0("vc", MSVC_TOOLSET_VERSION))
-result <- processx::run("cmd.exe", args, stdout = "", stderr = "")
-if (result$status != 0L)
-   stop("Error bootstrapping Boost. Sorry.")
+run("bootstrap.bat", paste0("vc", MSVC_TOOLSET_VERSION))
 
 # construct common arguments for 32bit, 64bit boost builds
 b2_build_args <- function(bitness) {
