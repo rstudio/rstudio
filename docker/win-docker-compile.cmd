@@ -45,15 +45,18 @@ echo Ensuring a previously-running container is stopped / deleted...
 %RUN% with-echo docker rm %CONTAINER_ID%
 echo.
 
-
 echo Creating a new container...
 %RUN% with-echo docker create ^
     --name %CONTAINER_ID% ^
-    --volume %HOSTPATH%:C:/rstudio ^
     --memory 6GB ^
     --interactive ^
     %REPO%:%IMAGE% ^
     cmd.exe
+echo.
+
+echo Copying sources to container...
+%RUN% with-echo ^
+    docker cp %HOSTPATH% %CONTAINER_ID%:C:/rstudio
 echo.
 
 echo Starting container...
