@@ -143,9 +143,6 @@ endif()
 file(GLOB_RECURSE DESKTOP_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.ts")
 list(APPEND DESKTOP_SOURCES package.json forge.config.js)
 
-# define custom command for building RStudio with Electron
-# note that OUTPUT tells CMake that this command should be used
-# if that output does not exist and needs to be created
 if (WIN32)
 
    set(RSTUDIO_PRODUCT_VERSION "${CPACK_PACKAGE_VERSION}")

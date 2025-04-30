@@ -64,6 +64,7 @@ docker exec %CONTAINER_ID% cmd.exe /C ^
 
 docker exec %CONTAINER_ID% cmd.exe /C setx /M BUILD_DIR C:/build
 docker exec %CONTAINER_ID% cmd.exe /C setx /M WIN32_BUILD_PATH C:/build32
+docker exec %CONTAINER_ID% cmd.exe /C setx /M RSTUDIO_PROJECT_ROOT C:/rstudio
 
 docker exec %CONTAINER_ID% cmd.exe /C ^
     "cd C:\rstudio\package\win32 && make-package.bat clean"
