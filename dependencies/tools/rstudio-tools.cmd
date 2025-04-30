@@ -377,11 +377,12 @@ exit /b 0
 :with-echo
 
 setlocal EnableDelayedExpansion
-set "_COMMAND=> %*"
-echo !_COMMAND!
+set "PROMPT=> "
+@echo on
+%*
+@echo off
 endlocal
 
-%*
 exit /b %ERRORLEVEL%
 
 

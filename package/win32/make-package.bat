@@ -209,10 +209,12 @@ REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.t
 set PKG_TEMP_DIR=C:\rsbuild
 if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
 
+REM Set up for a 64-bit build.
+call vcvarsall.bat amd64
+%RUN% subprocess "where cl.exe" CMAKE_C_COMPILER
+%RUN% subprocess "where cl.exe" CMAKE_CXX_COMPILER
 cmake -G "Ninja" ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
-      -DCMAKE_C_COMPILER=cl.exe ^
-      -DCMAKE_CXX_COMPILER=cl.exe ^
       -DRSTUDIO_TARGET=%RSTUDIO_TARGET% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       -DGWT_BUILD=%BUILD_GWT% ^

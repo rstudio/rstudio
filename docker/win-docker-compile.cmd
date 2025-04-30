@@ -1,5 +1,5 @@
 @echo off
-setlocal enableextensions enabledelayedexpansion
+setlocal EnableExtensions EnableDelayedExpansion
 
 ::
 :: Script to build RStudio Desktop for Windows using Docker
@@ -36,50 +36,51 @@ for /F "delims=" %%i in ("%CD%") do set REPO=%%~nxi
 
 REM set up build flags
 set "CONTAINER_ID=build-%REPO%-%IMAGE%"
+set "HOSTPATH=%CD:\=/%"
 set "MAKEFLAGS=-j%NUMBER_OF_PROCESSORS%"
-for %%A in ("%cd%") do set HOSTPATH=%%~sA
 
 
-REM remove previous image if it exists
-%RUN% with-echo ^
-    docker rm %CONTAINER_ID%
-
-%RUN% with-echo ^
-    docker create -m 6GB -i --name %CONTAINER_ID% %REPO%:%IMAGE% cmd.exe
+echo Ensuring a previously-running container is stopped / deleted...
+%RUN% with-echo docker stop %CONTAINER_ID%
+%RUN% with-echo docker rm %CONTAINER_ID%
+echo.
 
 
-:: Copy sources into the container; a volume mount doesn't work due to problems with the
-:: MSVC toolchain used by RStudio: https://github.com/docker/for-win/issues/829
-::
-:: This issue is apparently fixed in latest MSVC 2019 so can reevaluate this approach when
-:: we update to newer toolchain and use -v %HOSTPATH%:c:/src instead of copying repo.
-::
-:: A volume mount does work when using "--isolation process" but this mode of operation
-:: requires a close Windows version match between the base image and the host operating
-:: system (largely defeating the whole point of containerization).
-::
-:: https://docs.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility
-::
-echo Copying repo into container...
-%RUN% with-echo ^
-    docker cp %HOSTPATH% %CONTAINER_ID%:C:/src
+echo Creating a new container...
+%RUN% with-echo docker create ^
+    --name %CONTAINER_ID% ^
+    --volume %HOSTPATH%:C:/rstudio ^
+    --memory 6GB ^
+    --interactive ^
+    %REPO%:%IMAGE% ^
+    cmd.exe
+echo.
 
 echo Starting container...
 %RUN% with-echo ^
     docker start %CONTAINER_ID%
+echo.
+
+echo Marking directory as safe for git...
+%RUN% with-echo ^
+    docker exec %CONTAINER_ID% cmd.exe /C ^
+    "git config --global --add safe.directory C:/rstudio/"
+echo.
 
 echo Installing dependencies...
 %RUN% with-echo ^
     docker exec %CONTAINER_ID% cmd.exe /C ^
-    "cd C:\rstudio-tools\dependencies\windows && \src\dependencies\windows\install-dependencies.cmd"
+    "cd C:\rstudio-tools\dependencies\windows && C:\rstudio\dependencies\windows\install-dependencies.cmd"
+echo.
 
 echo Building RStudio...
 %RUN% with-echo ^
-    docker exec %CONTAINER_ID% cmd.exe /C "cd \src\package\win32 && make-package.bat clean"
+    docker exec %CONTAINER_ID% cmd.exe /C "cd C:\rstudio\package\win32 && make-package.bat clean"
+echo.
 
 echo Stopping container...
-%RUN% with-echo
-    docker stop %CONTAINER_ID%
+%RUN% with-echo docker stop %CONTAINER_ID%
+echo.
 
 if "%REPO%" == "rstudio-pro" (
     set PKG_FILENAME=RStudio-pro-99.9.9-RelWithDebInfo
@@ -89,8 +90,8 @@ if "%REPO%" == "rstudio-pro" (
 
 echo Copying build result (%PKG_FILENAME%.zip) to %HOSTPATH%/docker/package
 %RUN% with-echo
-    docker cp %CONTAINER_ID%:/src/package/win32/build/%PKG_FILENAME%.zip %HOSTPATH%/docker/package/%PKG_FILENAME%.zip
+    docker cp %CONTAINER_ID%:/rstudio/package/win32/build/%PKG_FILENAME%.zip %HOSTPATH%/docker/package/%PKG_FILENAME%.zip
 
 echo Copying build result (%PKG_FILENAME%.exe) to %HOSTPATH%/docker/package
 %RUN% with-echo
-    docker cp %CONTAINER_ID%:/src/package/win32/build/%PKG_FILENAME%.exe %HOSTPATH%/docker/package/%PKG_FILENAME%.exe
+    docker cp %CONTAINER_ID%:/rstudio/package/win32/build/%PKG_FILENAME%.exe %HOSTPATH%/docker/package/%PKG_FILENAME%.exe

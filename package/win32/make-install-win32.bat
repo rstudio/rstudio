@@ -33,11 +33,12 @@ REM perform 32-bit build
 if not exist %WIN32_BUILD_PATH% mkdir %WIN32_BUILD_PATH%
 cd %WIN32_BUILD_PATH%
 
+call vcvarsall.bat x86_64
+%RUN% subprocess "where cl.exe" CMAKE_C_COMPILER
+%RUN% subprocess "where cl.exe" CMAKE_CXX_COMPILER
 cmake -G "Ninja" ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
-      -DCMAKE_C_COMPILER=cl.exe ^
-      -DCMAKE_CXX_COMPILER=cl.exe ^
       -DRSTUDIO_TARGET=SessionWin32 ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       ..\..\.. || goto :error
