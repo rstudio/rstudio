@@ -148,11 +148,16 @@ list(APPEND DESKTOP_SOURCES package.json forge.config.js)
 # if that output does not exist and needs to be created
 if (WIN32)
 
+   set(RSTUDIO_PRODUCT_VERSION "${CPACK_PACKAGE_VERSION}")
+   string(REGEX REPLACE "[.]pro[0-9]+$" "" RSTUDIO_PRODUCT_VERSION "${RSTUDIO_PRODUCT_VERSION}")
+
    add_custom_command(
       OUTPUT "${ELECTRON_BINARY_DIR}/out"
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Building desktop (Electron ${UNAME_M})"
       WORKING_DIRECTORY "${ELECTRON_BINARY_DIR}"
+      COMMAND ${NPX} json -I -f package.json -e "this.productName=\\\"RStudio\\\""
+      COMMAND ${NPX} json -I -f package.json -e "this.version=\\\"${RSTUDIO_PRODUCT_VERSION}\\\""
       COMMAND ${NPM} run package
    )
 

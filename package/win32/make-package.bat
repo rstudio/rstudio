@@ -228,9 +228,12 @@ if not defined JENKINS_URL (
     call make-dist-packages.bat || goto :error
 )
 
+echo -- RStudio was built successfully.
+goto :eof
+
 
 :error
-echo Failed to build RStudio! Error: %ERRORLEVEL%
+echo Failed to build RStudio [error code %ERRORLEVEL%]
 exit /b %ERRORLEVEL%
 
 
