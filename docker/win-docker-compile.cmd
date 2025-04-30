@@ -13,6 +13,15 @@ setlocal EnableDelayedExpansion
 :: local filesystem.
 ::
 
+set "_CLEAN="
+set "_BUILD="
+
+for %%A in (%*) do (
+    if /I "%%A" == "clean" (
+        set _CLEAN=1
+    )
+)
+
 set IMAGE=windows
 set FLAVOR=electron
 
@@ -42,17 +51,30 @@ set "MAKEFLAGS=-j%NUMBER_OF_PROCESSORS%"
 set "PROMPT=> "
 @echo on
 
-docker stop %CONTAINER_ID%
-docker rm %CONTAINER_ID%
+if defined _CLEAN (
+    docker stop %CONTAINER_ID%
+    docker rm %CONTAINER_ID%
+)
 
-docker create ^
-    --name %CONTAINER_ID% ^
-    --volume %HOSTPATH%:C:/rstudio:rw ^
-    --cpu-count %CPUS% ^
-    --memory 16GB ^
-    --interactive ^
-    %REPO%:%IMAGE% ^
-    cmd.exe
+REM Create the container if it doesn't already exist.
+docker inspect %CONTAINER_ID% >NUL 2>NUL
+if ERRORLEVEL 1 (
+
+    docker create ^
+        --name %CONTAINER_ID% ^
+        --volume %HOSTPATH%:C:/rstudio:rw ^
+        --cpu-count %CPUS% ^
+        --memory 16GB ^
+        --interactive ^
+        %REPO%:%IMAGE% ^
+        cmd.exe
+
+    if ERRORLEVEL 1 (
+        echo.!! ERROR: docker container creation failed.
+        exit /b 1
+    )
+
+)
 
 docker start %CONTAINER_ID%
 
@@ -65,9 +87,10 @@ docker exec %CONTAINER_ID% cmd.exe /C ^
 docker exec %CONTAINER_ID% cmd.exe /C setx /M BUILD_DIR C:/build
 docker exec %CONTAINER_ID% cmd.exe /C setx /M WIN32_BUILD_PATH C:/build32
 docker exec %CONTAINER_ID% cmd.exe /C setx /M RSTUDIO_PROJECT_ROOT C:/rstudio
+docker exec %CONTAINER_ID% cmd.exe /C setx /M RSTUDIO_DOCKER_DEVELOPMENT_BUILD 1
 
 docker exec %CONTAINER_ID% cmd.exe /C ^
-    "cd C:\rstudio\package\win32 && make-package.bat clean"
+    "cd C:\rstudio\package\win32 && make-package.bat"
 
 docker stop %CONTAINER_ID%
 
@@ -80,6 +103,6 @@ if "%REPO%" == "rstudio-pro" (
 )
 
 @echo on
-docker cp %CONTAINER_ID%:/rstudio/package/win32/build/%PKG_FILENAME%.zip %HOSTPATH%/docker/package/%PKG_FILENAME%.zip
-docker cp %CONTAINER_ID%:/rstudio/package/win32/build/%PKG_FILENAME%.exe %HOSTPATH%/docker/package/%PKG_FILENAME%.exe
+docker cp %CONTAINER_ID%:C:/rsbuild/%PKG_FILENAME%.zip %HOSTPATH%/docker/package/%PKG_FILENAME%.zip
+docker cp %CONTAINER_ID%:C:/rsbuild/%PKG_FILENAME%.exe %HOSTPATH%/docker/package/%PKG_FILENAME%.exe
 @echo off

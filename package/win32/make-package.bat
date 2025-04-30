@@ -240,9 +240,20 @@ if "%MULTIARCH%" == "1" (
     )
 )
 
-REM Create packages for dev build.
+REM Create packages for development builds.
 REM The official build invokes this from Jenkinsfile after signing binaries.
 if not defined JENKINS_URL (
+    set _MAKE_PACKAGE=1
+)
+
+REM Allow an override if RSTUDIO_DOCKER_DEVELOPMENT_BUILD is set.
+REM This is used by the win-docker-compile.bat script.
+if defined RSTUDIO_DOCKER_DEVELOPMENT_BUILD (
+    set _MAKE_PACKAGE=1
+)
+
+REM Generate a package if configured to do so.
+if defined _MAKE_PACKAGE (
     call make-dist-packages.bat || (
         echo.!! ERROR: package creation failed
         exit /b 1
