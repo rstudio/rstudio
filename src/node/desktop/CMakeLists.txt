@@ -183,6 +183,7 @@ if (WIN32)
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Setting Electron fuses"
       WORKING_DIRECTORY "${ELECTRON_BINARY_DIR}"
+      COMMAND ${NPM} install
       COMMAND ${NPM} run install-fuses
    )
 
