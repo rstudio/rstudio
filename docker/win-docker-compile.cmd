@@ -73,6 +73,11 @@ echo Installing dependencies...
     "cd C:\rstudio-tools\dependencies\windows && C:\rstudio\dependencies\windows\install-dependencies.cmd"
 echo.
 
+echo Setting up build directories...
+%RUN% with-echo docker exec %CONTAINER_ID% cmd.exe /C setx /M BUILD_DIR C:/build
+%RUN% with-echo docker exec %CONTAINER_ID% cmd.exe /C setx /M WIN32_BUILD_PATH C:/build32
+echo.
+
 echo Building RStudio...
 %RUN% with-echo ^
     docker exec %CONTAINER_ID% cmd.exe /C "cd C:\rstudio\package\win32 && make-package.bat clean"

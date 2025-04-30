@@ -14,8 +14,7 @@
 @echo off
 
 setlocal
-set PACKAGE_DIR="%CD%"
-set ELECTRON_SOURCE_DIR=%PACKAGE_DIR%\..\..\src\node\desktop
+set "PACKAGE_DIR=%CD%"
 
 if not exist c:\rstudio-tools\dependencies (
     set RSTUDIO_DEPENDENCIES=%PACKAGE_DIR%\..\..\dependencies
@@ -24,6 +23,9 @@ if not exist c:\rstudio-tools\dependencies (
 )
 
 call %RSTUDIO_DEPENDENCIES%\tools\rstudio-tools.cmd
+
+%RUN% normalize-path "%PACKAGE_DIR%\..\..\src\node\desktop" ELECTRON_SOURCE_DIR
+%RUN% normalize-path "%RSTUDIO_DEPENDENCIES%" RSTUDIO_DEPENDENCIES
 
 set BUILD_GWT=1
 set QUICK=
@@ -193,10 +195,17 @@ REM put version and product name into package.json
 echo DEBUG: Calling set-version function
 call :set-version %RSTUDIO_VERSION_FULL% RStudio
 
-REM Establish build dir
-set BUILD_DIR=build
+REM set default build type
 if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=RelWithDebInfo
-if "%CMAKE_BUILD_TYPE%" == "Debug" set BUILD_DIR=build-debug
+
+REM Establish build dir
+if not defined BUILD_DIR (
+    if "%CMAKE_BUILD_TYPE%" == "Debug" (
+        set BUILD_DIR=build-debug
+    ) else (
+        set BUILD_DIR=build
+    )
+)
 
 REM perform 64-bit build
 cd "%PACKAGE_DIR%"
@@ -213,12 +222,13 @@ REM Set up for a 64-bit build.
 call vcvarsall.bat amd64
 %RUN% subprocess "where cl.exe" CMAKE_C_COMPILER
 %RUN% subprocess "where cl.exe" CMAKE_CXX_COMPILER
-cmake -G "Ninja" ^
+cmake -G "Visual Studio 17 2022" -A x64 ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_TARGET=%RSTUDIO_TARGET% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
+      -DLIBR_HOME=C:\R\R-3.6.3 ^
       -DGWT_BUILD=%BUILD_GWT% ^
-      ..\..\.. || goto :error
+      %RSTUDIO_PROJECT_ROOT% || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 
 REM add icons for supported file types
