@@ -13,7 +13,7 @@
 ::
 @echo off
 
-setlocal
+setlocal EnableDelayedExpansion
 set "PACKAGE_DIR=%CD%"
 
 if not exist c:\rstudio-tools\dependencies (
@@ -47,9 +47,7 @@ if "%1" == "-h" goto :showhelp
 if "%1" == "help" goto :showhelp
 if "%1" == "/?" goto :showhelp
 
-echo DEBUG: Parsing arguments
-
-SETLOCAL ENABLEDELAYEDEXPANSION
+setlocal EnableDelayedExpansion
 for %%A in (%*) do (
     set KNOWN_ARG=0
     if /I "%%A" == "clean" (
@@ -160,41 +158,6 @@ if not defined RSTUDIO_VERSION_PATCH set RSTUDIO_VERSION_PATCH=9
 if not defined RSTUDIO_VERSION_SUFFIX set RSTUDIO_VERSION_SUFFIX=-dev+999
 set RSTUDIO_VERSION_FULL=%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%%RSTUDIO_VERSION_SUFFIX%
 
-REM electron-packager fails if we include the ".pro##" suffix, so remove that (if present)
-REM https://github.com/rstudio/rstudio-pro/issues/6242
-
-REM compute string length
-set str=%RSTUDIO_VERSION_FULL%
-set len=0
-:loop
-if not "!str:~%len%,1!"=="" (
-    set /a len+=1
-    goto loop
-)
-set newLen=!len!
-
-REM check for .pro# suffix
-set "last5=!RSTUDIO_VERSION_FULL:~-5!"
-if "!last5:~0,4!"==".pro" (
-    set /a newLen=!len!-5
-) else ( REM check for .pro## suffix
-    set "last6=!RSTUDIO_VERSION_FULL:~-6!"
-    if "!last6:~0,4!"==".pro" (
-        set /a newLen=!len!-6
-    ) else ( REM check for .pro### suffix; very unlikely but just in case)
-        set "last7=!RSTUDIO_VERSION_FULL:~-7!"
-        if "!last7:~0,4!"==".pro" (
-            set /a newLen=!len!-7
-        )
-    )
-)
-
-set "RSTUDIO_VERSION_FULL=!RSTUDIO_VERSION_FULL:~0,%newLen%!"
-
-REM put version and product name into package.json
-echo DEBUG: Calling set-version function
-call :set-version %RSTUDIO_VERSION_FULL% RStudio
-
 REM set default build type
 if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=RelWithDebInfo
 
@@ -263,14 +226,11 @@ if not defined JENKINS_URL (
     call make-dist-packages.bat || goto :error
 )
 
-REM reset modified environment variables (PATH)
-call :restore-package-version
-endlocal
-goto :EOF
 
 :error
 echo Failed to build RStudio! Error: %ERRORLEVEL%
 exit /b %ERRORLEVEL%
+
 
 :showhelp
 echo.
@@ -295,51 +255,3 @@ echo     set RSTUDIO_VERSION_SUFFIX=-daily+321
 echo     make-package clean electron
 echo.
 exit /b 0
-
-REM For a full package build the package.json file gets modified with the
-REM desired build version and product name, and the build-info.ts source file
-REM gets modified with details on the build (date, git-commit, etc). We try to
-REM put these back to their original state at the end of the package build.
-:set-version
-echo DEBUG: In set-version function, RSTUDIO_TARGET=(%RSTUDIO_TARGET%)
-if "%RSTUDIO_TARGET%" == "Electron" (
-    pushd %ELECTRON_SOURCE_DIR%
-
-    call %NPM% ci
-
-    REM Set package.json info
-    call :save-original-file package.json
-    call %NPX% json -I -f package.json -e "this.version=\"%~1\""
-    call %NPX% json -I -f package.json -e "this.productName=\"%~2\""
-
-    REM Keep a backup of build-info.ts so we can restore it
-    call :save-original-file src\main\build-info.ts
-
-    set PACKAGE_VERSION_SET=1
-    popd
-)
-exit /b 0
-
-:restore-package-version
-if defined PACKAGE_VERSION_SET (
-    pushd %ELECTRON_SOURCE_DIR%
-    call :restore-original-file package.json
-    call :restore-original-file src\main\build-info.ts
-    set PACKAGE_VERSION_SET=
-    popd
-)
-exit /b 0
-
-REM create a copy of a file in the same folder with .original extension
-:save-original-file
-copy %~1 %~1.original
-exit /b 0
-
-REM restore a file previously saved with save-original-file
-:restore-original-file
-if exist %~1.modified del %~1.modified
-move %~1 %~1.modified
-move %~1.original %~1
-del %~1.modified
-exit /b 0
-

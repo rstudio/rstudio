@@ -107,16 +107,16 @@ if (NOT WIN32)
 endif()
 
 set(ELECTRON_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "")
-set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}" CACHE INTERNAL "")
+set(ELECTRON_BINARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}" CACHE INTERNAL "")
 
 # copy sources to build directory. note that the build directory cannot
 # be the "true" CMake directory as some files are resolved relative to
 # the desktop project's relative path in the application structure
-file(REMOVE_RECURSE "${ELECTRON_BUILD_DIR}")
-file(MAKE_DIRECTORY "${ELECTRON_BUILD_DIR}")
+file(REMOVE_RECURSE "${ELECTRON_BINARY_DIR}")
+file(MAKE_DIRECTORY "${ELECTRON_BINARY_DIR}")
 file(
    COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
-   DESTINATION "${ELECTRON_BUILD_DIR}/"
+   DESTINATION "${ELECTRON_BINARY_DIR}/"
    REGEX "/.webpack$" EXCLUDE
    REGEX "/build$" EXCLUDE
    REGEX "/bin$" EXCLUDE
@@ -125,17 +125,17 @@ file(
 
 configure_file(
    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts.in
-   ${ELECTRON_BUILD_DIR}/src/main/build-info.ts)
+   ${ELECTRON_BINARY_DIR}/src/main/build-info.ts)
 
 configure_file(
    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/splash/splash_unversioned.html.in
-   ${ELECTRON_BUILD_DIR}/src/ui/splash/splash.html)
+   ${ELECTRON_BINARY_DIR}/src/ui/splash/splash.html)
 
 if (APPLE)
    # configure Info.plist
    configure_file(
       ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
-      ${ELECTRON_BUILD_DIR}/Info.plist)
+      ${ELECTRON_BINARY_DIR}/Info.plist)
 endif()
 
 
@@ -149,20 +149,20 @@ list(APPEND DESKTOP_SOURCES package.json forge.config.js)
 if (WIN32)
 
    add_custom_command(
-      OUTPUT "${ELECTRON_BUILD_DIR}/out"
+      OUTPUT "${ELECTRON_BINARY_DIR}/out"
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Building desktop (Electron ${UNAME_M})"
-      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      WORKING_DIRECTORY "${ELECTRON_BINARY_DIR}"
       COMMAND ${NPM} run package
    )
 
 else()
 
    add_custom_command(
-      OUTPUT "${ELECTRON_BUILD_DIR}/out"
+      OUTPUT "${ELECTRON_BINARY_DIR}/out"
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Building desktop (Electron ${UNAME_M})"
-      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      WORKING_DIRECTORY "${ELECTRON_BINARY_DIR}"
       COMMAND
          ${CMAKE_COMMAND} -E env
          "PATH=${MODIFIED_PATH}"
@@ -177,20 +177,20 @@ endif()
 if (WIN32)
 
    add_custom_command(
-      OUTPUT "${ELECTRON_BUILD_DIR}/out/fuses"
+      OUTPUT "${ELECTRON_BINARY_DIR}/out/fuses"
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Setting Electron fuses"
-      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      WORKING_DIRECTORY "${ELECTRON_BINARY_DIR}"
       COMMAND ${NPM} run install-fuses
    )
 
 else()
 
    add_custom_command(
-      OUTPUT "${ELECTRON_BUILD_DIR}/out/fuses"
+      OUTPUT "${ELECTRON_BINARY_DIR}/out/fuses"
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Setting Electron fuses"
-      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      WORKING_DIRECTORY "${ELECTRON_BINARY_DIR}"
       COMMAND
          ${CMAKE_COMMAND} -E env
          "PATH=${MODIFIED_PATH}"
@@ -204,8 +204,8 @@ endif()
 # requires that aforementioned OUTPUT file
 # (this effectively "links" this target with that command)
 add_custom_target(electron ALL)
-add_custom_target(electron_fuses DEPENDS "${ELECTRON_BUILD_DIR}/out/fuses")
-add_custom_target(electron_build DEPENDS "${ELECTRON_BUILD_DIR}/out")
+add_custom_target(electron_fuses DEPENDS "${ELECTRON_BINARY_DIR}/out/fuses")
+add_custom_target(electron_build DEPENDS "${ELECTRON_BINARY_DIR}/out")
 
 # add target dependencies, so we don't build too many things at once
 add_dependencies(electron electron_fuses)
@@ -220,7 +220,7 @@ endif()
 if(WIN32)
 
    install(
-      DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-win32-x64/"
+      DIRECTORY "${ELECTRON_BINARY_DIR}/out/RStudio-win32-x64/"
       DESTINATION "${RSTUDIO_INSTALL_ELECTRON}")
 
    # install Visual C++ runtime files
@@ -230,8 +230,8 @@ if(WIN32)
    file(GLOB VCRUNTIME_X86_FILES "${CUSTOM_VCRUNTIME_X86_DIR}/*")
    file(GLOB VCRUNTIME_X64_FILES "${CUSTOM_VCRUNTIME_X64_DIR}/*")
 
-   install( FILES ${VCRUNTIME_X86_FILES} DESTINATION "${RSTUDIO_INSTALL_BIN}/x86")
-   install( FILES ${VCRUNTIME_X64_FILES} DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   install(FILES ${VCRUNTIME_X86_FILES} DESTINATION "${RSTUDIO_INSTALL_BIN}/x86")
+   install(FILES ${VCRUNTIME_X64_FILES} DESTINATION "${RSTUDIO_INSTALL_BIN}")
 
 elseif(LINUX)
 
@@ -242,7 +242,7 @@ elseif(LINUX)
    endif()
 
    install(
-      DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-linux-${ELECTRON_ARCH}/"
+      DIRECTORY "${ELECTRON_BINARY_DIR}/out/RStudio-linux-${ELECTRON_ARCH}/"
       DIRECTORY_PERMISSIONS
       OWNER_READ OWNER_WRITE OWNER_EXECUTE
       GROUP_READ GROUP_EXECUTE
