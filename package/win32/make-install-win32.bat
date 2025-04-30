@@ -36,21 +36,25 @@ if defined CLEANBUILD (
     if exist %WIN32_BUILD_PATH% rmdir /s /q %WIN32_BUILD_PATH%
 )
 
-REM perform 32-bit build
+REM Prepare the build directory.
 if not exist %WIN32_BUILD_PATH% mkdir %WIN32_BUILD_PATH%
 cd %WIN32_BUILD_PATH%
 
+REM Configure for a 32-bit build.
 call vcvarsall.bat x86
-%RUN% subprocess "where cl.exe" CC
-%RUN% subprocess "where cl.exe" CXX
 cmake -G Ninja ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DCMAKE_INSTALL_PREFIX=%INSTALL_PATH% ^
+      -DCMAKE_C_COMPILER=cl.exe ^
+      -DCMAKE_CXX_COMPILER=cl.exe ^
       -DRSTUDIO_TARGET=SessionWin32 ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       -DLIBR_HOME=C:\R\R-3.6.3 ^
       %RSTUDIO_PROJECT_ROOT% || goto :error
+
+REM Perform the build.
 cmake --build . --config %CMAKE_BUILD_TYPE% --target install -- %MAKEFLAGS% || goto :error
+
 cd ..
 
 endlocal

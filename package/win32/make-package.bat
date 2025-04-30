@@ -181,17 +181,19 @@ REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.t
 set PKG_TEMP_DIR=C:\rsbuild
 if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
 
-REM Set up for a 64-bit build.
+REM Set up for a 64-bit build. We set CC and CXX to tell CMake to use the MSVC
 call vcvarsall.bat amd64
-%RUN% subprocess "where cl.exe" CC
-%RUN% subprocess "where cl.exe" CXX
 cmake -G Ninja ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
+      -DCMAKE_C_COMPILER=cl.exe ^
+      -DCMAKE_CXX_COMPILER=cl.exe ^
       -DRSTUDIO_TARGET=%RSTUDIO_TARGET% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       -DLIBR_HOME=C:\R\R-3.6.3 ^
       -DGWT_BUILD=%BUILD_GWT% ^
       %RSTUDIO_PROJECT_ROOT% || goto :error
+
+REM Perform the build.
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 
 REM add icons for supported file types
