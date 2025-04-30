@@ -179,6 +179,9 @@ REM Enter build directory.
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 pushd "%BUILD_DIR%"
 
+REM Use full path to build directory.
+set "BUILD_DIR=%CD%"
+
 REM Package these files into a shorter path to workaround windows max path of 260
 REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.txt
 set PKG_TEMP_DIR=C:\rsbuild
@@ -231,7 +234,7 @@ popd
 
 REM Perform 32-bit build and install it into the 64-bit tree.
 if "%MULTIARCH%" == "1" (
-    call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || (
+    call make-install-win32.bat "%BUILD_DIR%\src\cpp\session" %* || (
         echo.!! ERROR: 32-bit session components build failed
         exit /b 1
     )
