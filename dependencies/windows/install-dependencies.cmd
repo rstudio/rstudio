@@ -43,7 +43,7 @@ REM Check for required tools on the PATH.
 for %%X in (R.exe 7z.exe cmake.exe curl.exe) do (
   where /q %%X
   if ERRORLEVEL 1 (
-    echo ERROR: %%X is not available on the PATH; cannot proceed.
+    echo ^^!^^! ERROR: %%X is not available on the PATH; cannot proceed.
     exit /b
   )
 )
@@ -168,13 +168,22 @@ if exist copilot-language-server\copilot-language-server.exe (
 
 %RUN% install PANDOC
 if exist pandoc\pandoc-%PANDOC_VERSION% (
-  move pandoc\pandoc-%PANDOC_VERSION% pandoc\%PANDOC_VERSION%
+  rmdir /s /q pandoc\%PANDOC_VERSION% 2>NUL
+  %RUN% move pandoc\pandoc-%PANDOC_VERSION% pandoc\%PANDOC_VERSION%
+  if ERRORLEVEL 1 (
+    echo ^^!^^! ERROR: Could not move pandoc installation to pandoc\%PANDOC_VERSION%.
+    exit /b
+  )
 )
 
 %RUN% install NODEBUILD
 if exist node\%NODEBUILD_FILE% (
-  rmdir /s /q node\%NODEBUILD_VERSION%
-  move node\%NODEBUILD_FILE% node\%NODEBUILD_VERSION%
+  rmdir /s /q node\%NODEBUILD_VERSION% 2>NUL
+  %RUN% move node\%NODEBUILD_FILE% node\%NODEBUILD_VERSION%
+  if ERRORLEVEL 1 (
+    echo ^^!^^! ERROR: Could not move node installation to node\%NODEBUILD_VERSION%.
+    exit /b
+  )
 )
 
 pushd node\%NODEBUILD_VERSION%

@@ -75,7 +75,7 @@ set OWD=%CD%
 :find-project-root-impl
 
 if "!CWD!" == "%CD%" (
-  echo -- ERROR: Could not find project root directory.
+  echo ^^!^^! ERROR: Could not find project root directory.
   exit /b 1
 )
 
@@ -131,6 +131,41 @@ goto :eof
 
 
 ::
+:: Move a file from one location to another.
+::
+:: This uses robocopy, which will be more robust when a folder
+:: (or files within) are temporarily locked. This can occur when
+:: unpacking large archives, whose contents are then promptly
+:: scanned by e.g. Windows Defender.
+::
+:: Note that robocopy will use error codes from 0 through 7 to
+:: indicate different kinds of success; error codes 8 and above
+:: are used to indicate failure. This routine logs that, but
+:: just returns a plain 0 for success or 1 for failure.
+::
+:move
+
+setlocal EnableDelayedExpansion
+
+set "_SRC=%~1"
+set "_DST=%~2"
+set "_LOG=%TEMP%\robocopy.%RANDOM%.log"
+
+robocopy /MOVE /E /Z /R:5 /W:10 "%_SRC:/=\%" "%_DST:/=\%" >%_LOG% 2>&1
+if %ERRORLEVEL% geq 8 (
+  echo ^^!^^! ERROR: could not move %_SRC% to %_DST%. [exit code %ERRORLEVEL%]
+  type "%_LOG%"
+  del "%_LOG%"
+  endlocal & exit /b 1
+)
+
+echo -- Moved %_SRC% to %_DST%
+
+del "%_LOG%"
+endlocal & exit /b 0
+
+
+::
 :: Normalize a path.
 ::
 :normalize-path
@@ -175,7 +210,7 @@ echo -- Downloading %_URL% =^> !_OUTPUT!
 curl -L -f -C - "%_URL%" -o "!_OUTPUT!"
 
 if %ERRORLEVEL% neq 0 (
-  echo Error downloading %_URL% [exit code %ERRORLEVEL%]
+  echo ^^!^^! ERROR: Download of %_URL% failed. [exit code %ERRORLEVEL%]
   goto :error
 )
 
@@ -211,7 +246,7 @@ if defined _OUTPUT (
 )
 
 if %ERRORLEVEL% neq 0 (
-  echo Error extracting %_ARCHIVE% [exit code %ERRORLEVEL%]
+  echo ^^!^^! ERROR: Could not extract %_ARCHIVE%. [exit code %ERRORLEVEL%]
   goto :error
 )
 
@@ -430,7 +465,7 @@ goto :eof
 set "PATH=%_VCTOOLSDIR%;%_VCBUILDDIR%;%PATH%"
 where /Q VsDevCmd.bat
 if %ERRORLEVEL% neq 0 (
-  echo -- ERROR: Could not find Visual Studio build tools.
+  echo ^^!^^! ERROR: Could not find Visual Studio build tools.
   exit /b 1
 )
 
