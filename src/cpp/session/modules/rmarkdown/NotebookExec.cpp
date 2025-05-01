@@ -377,12 +377,10 @@ bool ChunkExecContext::onCondition(Condition condition,
          return true;
    }
 
-   // add to event queue
+   // add to event queue -- we use 'output' rather than 'error' here
+   // just so that the output doesn't get buffered on the client side
    session::clientEventQueue().add(
-      ClientEvent(client_events::kConsoleWriteError, message));
-
-   // force events to be flushed, so output is displayed
-   session::clientEventQueue().flush();
+      ClientEvent(client_events::kConsoleWriteOutput, message));
 
    return true;
 }
