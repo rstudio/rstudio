@@ -95,8 +95,8 @@ void onBusy(bool busy)
    setPendingOutputType(PendingOutputTypeUnknown);
 }
 
-void onConsoleOutputReceived(module_context::ConsoleOutputType type,
-                             const std::string& output)
+void onConsoleOutput(module_context::ConsoleOutputType type,
+                     const std::string& output)
 {
    if (s_pendingOutputType == PendingOutputTypeUnknown)
    {
@@ -204,7 +204,7 @@ Error initialize()
 #endif
 
    events().onBusy.connect(onBusy);
-   events().onConsoleOutputReceived.connect(onConsoleOutputReceived);
+   events().onConsoleOutput.connect(onConsoleOutput);
    events().onPreferencesSaved.connect(onPreferencesSaved);
 
    RS_REGISTER_CALL_METHOD(rs_errorOutputPending);
