@@ -25,6 +25,7 @@ if not exist c:\rstudio-tools\dependencies (
 call %RSTUDIO_DEPENDENCIES%\tools\rstudio-tools.cmd
 
 %RUN% normalize-path "%PACKAGE_DIR%\..\..\src\node\desktop" ELECTRON_SOURCE_DIR
+%RUN% normalize-path "%ELECTRON_SOURCE_DIR%\..\desktop-build-AMD64" ELECTRON_BINARY_DIR
 %RUN% normalize-path "%RSTUDIO_DEPENDENCIES%" RSTUDIO_DEPENDENCIES
 
 set BUILD_GWT=1
@@ -210,7 +211,7 @@ cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || (
 
 REM Add icons for supported file types.
 if "%RSTUDIO_TARGET%" == "Electron" (
-    pushd %ELECTRON_SOURCE_DIR%
+    pushd %ELECTRON_BINARY_DIR%
     cd out\RStudio-win32-x64
     %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RProject.ico -mask ICONGROUP,2,1033
     %REZH% -open rstudio.exe -save rstudio.exe -action addoverwrite -resource ..\..\resources\icons\RSource.ico -mask ICONGROUP,3,1033
