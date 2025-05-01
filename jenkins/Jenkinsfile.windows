@@ -155,7 +155,7 @@ pipeline {
               package\\win32\\build\\src\\cpp\\session\\consoleio\\consoleio.exe ^
               package\\win32\\build\\src\\cpp\\session\\postback\\rpostback.exe ^
               package\\win32\\build\\src\\cpp\\diagnostics\\diagnostics.exe ^
-              src\\node\\desktop\\out\\RStudio-win32-x64\\rstudio.exe"""
+              src\\node\\desktop-build-AMD64\\out\\RStudio-win32-x64\\rstudio.exe"""
           }
           steps {
             bat 'curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"'
