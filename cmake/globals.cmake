@@ -70,6 +70,12 @@ if (NOT DEFINED RSTUDIO_DEFAULT_LOG_PATH)
    set(RSTUDIO_DEFAULT_LOG_PATH "/var/log/rstudio/rstudio-server")
 endif()
 
+# if we're running within vscode, force color diagnostics
+if(DEFINED ENV{VSCODE_PID})
+   set(CMAKE_COLOR_MAKEFILE TRUE)
+   set(CMAKE_COLOR_DIAGNOSTICS TRUE)
+endif()
+
 # detect architecture
 if(UNIX)
 

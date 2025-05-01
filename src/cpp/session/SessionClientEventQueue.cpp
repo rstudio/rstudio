@@ -420,18 +420,10 @@ void ClientEventQueue::flushBufferedOutput(int event, std::string* pOutput)
 
    if (isConsoleOutputEvent(event))
    {
-      if (event == client_events::kConsoleWriteOutput)
-      {
-         auto type = module_context::ConsoleOutputNormal;
-         module_context::events().onConsoleOutput(type, *pOutput);
-         r::session::consoleActions().add(kConsoleActionOutput, *pOutput);
-      }
-      else
-      {
-         auto type = module_context::ConsoleOutputError;
-         module_context::events().onConsoleOutput(type, *pOutput);
-         r::session::consoleActions().add(kConsoleActionOutputError, *pOutput);
-      }
+      auto actionType = (event == client_events::kConsoleWriteOutput)
+         ? kConsoleActionOutput
+         : kConsoleActionOutputError;
+      r::session::consoleActions().add(actionType, *pOutput);
 
       // send client event
       json::Object payload;
