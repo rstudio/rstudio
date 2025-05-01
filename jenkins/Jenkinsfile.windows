@@ -148,7 +148,7 @@ pipeline {
 
         stage('Sign Executables') {
           environment {
-            PATH = "${WIN32_SDK_BINDIR}:${env.PATH}"
+            PATH = "${WIN32_SDK_BINDIR};${env.PATH}"
             EXECUTABLES = """package\\win32\\build\\src\\cpp\\session\\rsession-utf8.exe ^
               package\\win32\\build\\src\\cpp\\session\\rsession.exe ^
               package\\win32\\build\\src\\cpp\\session\\x86\\rsession.exe ^
@@ -205,7 +205,7 @@ pipeline {
             stage('Sign Installer') {
 
               environment {
-                PATH = "${WIN32_SDK_BINDIR}:${env.PATH}"
+                PATH = "${WIN32_SDK_BINDIR};${env.PATH}"
               }
 
               steps {
