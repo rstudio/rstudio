@@ -1,0 +1,11 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "lldb",
+        "request": "attach",
+        "name": "RStudio: Attach to rsession",
+        "program": "rsession"
+      }
+    ]
+}
