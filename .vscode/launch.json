@@ -13,6 +13,7 @@
       "console": "integratedTerminal",
       "outputCapture": "std",
       "preLaunchTask": "RStudio: Run Desktop",
+      "postDebugTask": "RStudio: Stop Streaming GWT Code Server Logs",
       "presentation": {
         "hidden": true,
       }
@@ -29,13 +30,10 @@
       "console": "integratedTerminal",
       "outputCapture": "std",
       "preLaunchTask": "RStudio: Run Server",
+      "postDebugTask": "RStudio: Stop Streaming GWT Code Server Logs",
       "presentation": {
         "hidden": true,
       }
-    },
-    {
-      "name": "RStudio: Stream GWT Code Server Logs",
-      "preLaunchTask": "RStudio: Stream GWT Code Server Logs"
     },
     {
       "name": "Debug: Attach to Session",
@@ -49,7 +47,6 @@
       "name": "Start RStudio Desktop",
       "configurations": [
         "RStudio: Run Desktop",
-        "RStudio: Stream GWT Code Server Logs",
       ],
       "stopAll": true
     },
@@ -57,7 +54,6 @@
       "name": "Start RStudio Server",
       "configurations": [
         "RStudio: Run Server",
-        "RStudio: Stream GWT Code Server Logs",
       ],
       "stopAll": true
     }

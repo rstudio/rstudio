@@ -25,18 +25,32 @@
     },
     {
       "label": "RStudio: Start GWT Code Server",
-      "type": "process",
-      "command": "bash",
-      "args": ["devmode.sh"],
+      "type": "shell",
+      "command": "bash devmode/gwt-codeserver-start.sh",
       "options": { "cwd": "src/gwt" },
     },
     {
       "label": "RStudio: Stream GWT Code Server Logs",
       "type": "shell",
-      "command": "echo '-- Streaming GWT Code Server Logs' && cat gwt-code-server.log",
+      "command": "bash devmode/gwt-codeserver-stream-start.sh",
       "options": { "cwd": "src/gwt" },
       "isBackground": true,
-      "problemMatcher": []
+      "problemMatcher": [
+        {
+          "pattern": { "regexp": "^$" },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^$",
+            "endsPattern": "^.*$"
+          }
+        }
+      ]
+    },
+    {
+      "label": "RStudio: Stop Streaming GWT Code Server Logs",
+      "type": "shell",
+      "command": "bash devmode/gwt-codeserver-stream-stop.sh",
+      "options": { "cwd": "src/gwt" },
     },
     {
       "label": "RStudio: Stop GWT Code Server",
