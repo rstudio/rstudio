@@ -4,6 +4,32 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
+
+.rs.test("comment chunks can be executed", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Comment Chunks
+      ---
+      
+      ```{comment}
+      This is a comment.
+      ```
+      
+      ```{r}
+      print("This is a regular code chunk.")
+      ```
+   ')
+   
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+      remote$commands.execute(.rs.appCommands$executeAllCode)
+      remote$console.executeExpr({ writeLines("Done.") })
+      output <- remote$console.getOutput()
+      expect_equal(tail(output, n = 1L), "Done.")
+   })
+
+})
+
 .rs.test("the warn option is preserved when running chunks", {
    
    contents <- .rs.heredoc('
