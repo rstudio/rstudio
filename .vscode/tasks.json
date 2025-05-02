@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build RStudio",
+            "label": "RStudio: Build All",
             "type": "shell",
             "command": "cmake --build . --target all",
             "group": {
@@ -10,9 +10,9 @@
                 "isDefault": true
             },
             "options": {
-                "cwd": "build",
+                "cwd": "build"
             },
-            "problemMatcher": "$gcc",
+            "problemMatcher": "$gcc"
         }
     ]
 }

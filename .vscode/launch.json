@@ -2,10 +2,78 @@
     "version": "0.2.0",
     "configurations": [
       {
+        "type": "node-terminal",
+        "request": "launch",
+        "name": "RStudio: npm start",
+        "command": "npm start",
+        "cwd": "${workspaceFolder}/src/node/desktop",
+        "presentation": {
+          "hidden": true,
+        }
+      },
+      {
+        "type": "node-terminal",
+        "request": "launch",
+        "name": "RStudio: ant devmode",
+        "command": "ant devmode",
+        "cwd": "${workspaceFolder}/src/gwt",
+        "presentation": {
+          "hidden": true,
+        }
+      },
+      {
+        "type": "node-terminal",
+        "request": "launch",
+        "name": "RStudio: rserver-dev",
+        "command": "./rserver-dev",
+        "cwd": "${workspaceFolder}/build/src/cpp",
+        "preLaunchTask": "RStudio: Build All",
+        "presentation": {
+          "hidden": true,
+        }
+      },
+      {
         "type": "lldb",
         "request": "attach",
-        "name": "RStudio: Attach to rsession",
-        "program": "rsession"
+        "name": "RStudio: Debug Session",
+        "program": "rsession",
+        "presentation": {
+          "hidden": true,
+        }
+      },
+    ],
+    "compounds": [
+      {
+        "name": "Start RStudio Desktop",
+        "configurations": [
+          "RStudio: ant devmode",
+          "RStudio: npm start",
+        ],
+        "presentation": {
+          "group": "0_rstudio",
+          "order": 1
+        }
+      },
+      {
+        "name": "Start RStudio Server",
+        "configurations": [
+          "RStudio: ant devmode",
+          "RStudio: rserver-dev",
+        ],
+        "presentation": {
+          "group": "0_rstudio",
+          "order": 2
+        },
+      },
+      {
+        "name": "Debug: Attach to Session",
+        "configurations": [
+          "RStudio: Debug Session"
+        ],
+        "presentation": {
+          "group": "0_rstudio",
+          "order": 3
+        }
       }
     ]
 }
