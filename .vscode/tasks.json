@@ -1,18 +1,61 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "RStudio: Build All",
-            "type": "shell",
-            "command": "cmake --build . --target all",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "options": {
-                "cwd": "build"
-            },
-            "problemMatcher": "$gcc"
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "RStudio: Run Desktop",
+      "dependsOn": [
+        "RStudio: Run GWT Code Server",
+        "RStudio: Build All"
+      ]
+    },
+    {
+      "label": "RStudio: Run Server",
+      "dependsOn": [
+        "RStudio: Run GWT Code Server",
+        "RStudio: Build All"
+      ]
+    },
+    {
+      "label": "RStudio: Run GWT Code Server",
+      "dependsOn": [
+        "RStudio: Start GWT Code Server",
+        "RStudio: Stream GWT Code Server Logs",
+      ],
+      "dependsOrder": "sequence",
+    },
+    {
+      "label": "RStudio: Start GWT Code Server",
+      "type": "process",
+      "command": "bash",
+      "args": ["devmode.sh"],
+      "options": { "cwd": "src/gwt" },
+    },
+    {
+      "label": "RStudio: Stream GWT Code Server Logs",
+      "type": "shell",
+      "command": "echo '-- Streaming GWT Code Server Logs' && cat gwt-code-server.log",
+      "options": { "cwd": "src/gwt" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "RStudio: Stop GWT Code Server",
+      "type": "process",
+      "command": "pkill",
+      "args": ["-f", "RStudioSuperDevMode"],
+      "options": { "cwd": "src/gwt" },
+      "isBackground": false,
+      "problemMatcher": [],
+    },
+    {
+      "label": "RStudio: Build All",
+      "type": "process",
+      "command": "cmake",
+      "args": ["--build", ".", "--target", "all"],
+      "options": { "cwd": "build" },
+      "group": { "kind": "build", "isDefault": true },
+      "isBackground": false,
+      "problemMatcher": "$gcc"
+    }
+  ]
 }
