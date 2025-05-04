@@ -210,6 +210,18 @@ function findBuildRootImpl(rootDir: string): string {
   // that get eagerly modified after a build.
   for (const buildDirParent of buildDirParents) {
     if (fs.existsSync(buildDirParent)) {
+
+      // First, check if this is itself a build directory.
+      for (const buildFile of ['.ninja_log', 'CMakeFiles']) {
+        const buildPath = `${buildDirParent}/${buildFile}`;
+        if (fs.existsSync(buildPath)) {
+          console.log(buildDirParent);
+          const stat = fs.statSync(buildPath);
+          buildDirs.push({ path: buildDirParent, stat: stat });
+        }
+      }
+
+      // Otherwise, check if there's a sub-directory that's a build directory.
       const buildDirFiles = fs.readdirSync(buildDirParent);
       for (const buildDirFile of buildDirFiles) {
         if (/^(?:build|cmake-build-|Desktop)/.test(buildDirFile)) {
@@ -223,6 +235,7 @@ function findBuildRootImpl(rootDir: string): string {
           }
         }
       }
+
     }
   }
 
@@ -286,10 +299,12 @@ export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
   // try to find rsession in build root
   const buildRootPath = new FilePath(buildRoot);
   for (const subdir of ['.', 'src/cpp']) {
-    const sessionPath = buildRootPath.completePath(`${subdir}/session/${rsessionExeName()}`);
-    if (sessionPath.existsSync()) {
-      confPath = buildRootPath.completePath(`${subdir}/conf/rdesktop-dev.conf`);
-      return [new FilePath(buildRoot), confPath, sessionPath, new FilePath(getAppPath())];
+    for (const buildType of ['', 'Debug/', 'RelWithDebInfo/']) {
+      const sessionPath = buildRootPath.completePath(`${subdir}/session/${buildType}${rsessionExeName()}`);
+      if (sessionPath.existsSync()) {
+        confPath = buildRootPath.completePath(`${subdir}/conf/rdesktop-dev.conf`);
+        return [new FilePath(buildRoot), confPath, sessionPath, new FilePath(getAppPath())];
+      }
     }
   }
 
