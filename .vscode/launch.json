@@ -13,7 +13,7 @@
       "console": "integratedTerminal",
       "outputCapture": "std",
       "preLaunchTask": "RStudio: Run Desktop",
-      "postDebugTask": "RStudio: Stop Streaming GWT Code Server Logs",
+      "postDebugTask": "RStudio: Stop GWT Code Server Stream",
       "presentation": {
         "hidden": true,
       }
@@ -30,7 +30,7 @@
       "console": "integratedTerminal",
       "outputCapture": "std",
       "preLaunchTask": "RStudio: Run Server",
-      "postDebugTask": "RStudio: Stop Streaming GWT Code Server Logs",
+      "postDebugTask": "RStudio: Stop GWT Code Server Stream",
       "presentation": {
         "hidden": true,
       }

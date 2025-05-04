@@ -19,25 +19,76 @@
       "label": "RStudio: Run GWT Code Server",
       "dependsOn": [
         "RStudio: Start GWT Code Server",
-        "RStudio: Stream GWT Code Server Logs",
+        "RStudio: Wait for GWT Code Server",
+        "RStudio: Start GWT Code Server Stream",
       ],
-      "dependsOrder": "sequence",
+      "dependsOrder": "sequence"
     },
     {
       "label": "RStudio: Start GWT Code Server",
       "type": "shell",
-      "command": "bash devmode/gwt-codeserver-start.sh",
-      "options": { "cwd": "src/gwt" },
+      "command": "npm run daemon-start",
+      "options": {
+        "cwd": "src/gwt/devmode"
+      },
+      "problemMatcher": [],
     },
     {
-      "label": "RStudio: Stream GWT Code Server Logs",
+      "label": "RStudio: Wait for GWT Code Server",
       "type": "shell",
-      "command": "bash devmode/gwt-codeserver-stream-start.sh",
-      "options": { "cwd": "src/gwt" },
+      "command": "npm run daemon-wait",
+      "options": {
+        "cwd": "src/gwt/devmode"
+      },
+      "problemMatcher": [],
+    },
+    {
+      "label": "RStudio: Stop GWT Code Server",
+      "type": "shell",
+      "command": "npm run daemon-stop",
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "src/gwt/devmode"
+      },
+      "problemMatcher": [],
+    },
+    {
+      "label": "RStudio: Kill GWT Code Server",
+      "type": "shell",
+      "command": "npm run daemon-stop",
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "src/gwt/devmode"
+      },
+      "problemMatcher": [],
+    },
+    {
+      "label": "RStudio: Start GWT Code Server Stream",
+      "type": "shell",
+      "command": "npm run daemon-stream-start",
+      "options": {
+        "cwd": "src/gwt/devmode"
+      },
       "isBackground": true,
       "problemMatcher": [
         {
-          "pattern": { "regexp": "^$" },
+          "pattern": {
+            "regexp": "^$"
+          },
           "background": {
             "activeOnStart": true,
             "beginsPattern": "^$",
@@ -47,27 +98,31 @@
       ]
     },
     {
-      "label": "RStudio: Stop Streaming GWT Code Server Logs",
+      "label": "RStudio: Stop GWT Code Server Stream",
       "type": "shell",
-      "command": "bash devmode/gwt-codeserver-stream-stop.sh",
-      "options": { "cwd": "src/gwt" },
-    },
-    {
-      "label": "RStudio: Stop GWT Code Server",
-      "type": "process",
-      "command": "pkill",
-      "args": ["-f", "RStudioSuperDevMode"],
-      "options": { "cwd": "src/gwt" },
-      "isBackground": false,
+      "command": "npm run daemon-stream-stop",
+      "options": {
+        "cwd": "src/gwt/devmode"
+      },
       "problemMatcher": [],
     },
     {
       "label": "RStudio: Build All",
       "type": "process",
       "command": "cmake",
-      "args": ["--build", ".", "--target", "all"],
-      "options": { "cwd": "build" },
-      "group": { "kind": "build", "isDefault": true },
+      "args": [
+        "--build",
+        ".",
+        "--target",
+        "all"
+      ],
+      "options": {
+        "cwd": "build"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
       "isBackground": false,
       "problemMatcher": "$gcc"
     }
