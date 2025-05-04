@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "RStudio: Run Desktop",
+      "name": "Start RStudio Desktop",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
@@ -14,12 +14,9 @@
       "outputCapture": "std",
       "preLaunchTask": "RStudio: Run Desktop",
       "postDebugTask": "RStudio: Stop GWT Code Server Stream",
-      "presentation": {
-        "hidden": true,
-      }
     },
     {
-      "name": "RStudio: Run Server",
+      "name": "Start RStudio Server",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "bash",
@@ -31,31 +28,18 @@
       "outputCapture": "std",
       "preLaunchTask": "RStudio: Run Server",
       "postDebugTask": "RStudio: Stop GWT Code Server Stream",
-      "presentation": {
-        "hidden": true,
-      }
     },
     {
       "name": "Debug: Attach to Session",
       "type": "lldb",
       "request": "attach",
       "program": "rsession",
-    }
-  ],
-  "compounds": [
-    {
-      "name": "Start RStudio Desktop",
-      "configurations": [
-        "RStudio: Run Desktop",
-      ],
-      "stopAll": true
     },
     {
-      "name": "Start RStudio Server",
-      "configurations": [
-        "RStudio: Run Server",
-      ],
-      "stopAll": true
-    }
+      "name": "Debug: Attach to Server",
+      "type": "lldb",
+      "request": "attach",
+      "program": "rserver",
+    },
   ]
 }
