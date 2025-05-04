@@ -1,18 +1,19 @@
 import { Socket } from "net";
 import { createInterface } from "readline";
+import { ENDPOINT } from "./codeserver-common";
 
 let errorCount = 0;
 
 const socket = new Socket();
 
 socket.on('error', (err) => {
-    
+
     errorCount += 1;
     if (errorCount > 100) {
         process.exit(1);
     }
 
-    socket.connect(6789, '127.0.0.1');
+    socket.connect(ENDPOINT);
 });
 
 const reader = createInterface({
@@ -36,5 +37,5 @@ reader.once('line', (line) => {
 
 });
 
-socket.connect(6789, '127.0.0.1');
+socket.connect(ENDPOINT);
 

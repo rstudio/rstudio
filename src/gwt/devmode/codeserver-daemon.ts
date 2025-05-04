@@ -4,6 +4,7 @@ import { createServer, Socket } from 'node:net'
 import path = require('node:path');
 import { chdir, platform } from 'node:process';
 import { createInterface } from 'node:readline';
+import { ENDPOINT } from './codeserver-common';
 
 chdir(path.join(__dirname, '..'));
 
@@ -68,4 +69,4 @@ server.on('connection', (socket) => {
 
 });
 
-server.listen(6789, '127.0.0.1');
+server.listen(ENDPOINT);

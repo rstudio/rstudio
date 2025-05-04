@@ -1,5 +1,6 @@
 import { Socket } from "net";
 import { createInterface } from "readline";
+import { ENDPOINT } from "./codeserver-common";
 
 const socket = new Socket();
 
@@ -13,11 +14,10 @@ const reader = createInterface({
     crlfDelay: Infinity,
 });
 
-reader.once('line', (line) => {
-    const status = JSON.parse(line);
+reader.once('line', (_line) => {
     reader.on('line', (line) => {
         console.log(line);
     });
 });
 
-socket.connect(6789, '127.0.0.1');
+socket.connect(ENDPOINT);
