@@ -8,10 +8,10 @@ import { createInterface } from 'node:readline';
 chdir(path.join(__dirname, '..'));
 
 function broadcast(data: string) {
-    buffer.push(data);
-    for (const socket of sockets) {
-        socket.write(`${data}\n`);
-    }
+  buffer.push(data);
+  for (const socket of sockets) {
+    socket.write(`${data}\n`);
+  }
 }
 
 let buffer: string[] = [];
@@ -22,51 +22,49 @@ const server = createServer();
 
 server.on('listening', () => {
 
-    const ant = platform === 'win32' ? 'ant.exe' : 'ant'
-    const child = spawn(ant, ['devmode'], {
-        detached: true,
-        stdio: ['ignore', 'pipe', 'pipe'],
-        windowsHide: true,
-    });
+  const ant = platform === 'win32' ? 'ant.exe' : 'ant';
+  const child = spawn(ant, ['devmode'], {
+    stdio: 'pipe',
+  });
 
-    child.on('error', (err) => {
-        process.exit(1);
-    });
+  child.on('error', (err) => {
+    process.exit(1);
+  });
 
-    child.on('exit', (code) => {
-        process.exit(1);
-    });
+  child.on('exit', (code) => {
+    process.exit(1);
+  });
 
-    const reader = createInterface({
-        input: child.stdout,
-        crlfDelay: Infinity,
-    });
+  const reader = createInterface({
+    input: child.stdout,
+    crlfDelay: Infinity,
+  });
 
-    reader.on('line', (data) => {
-        console.log(data)
-        ready = ready || data.includes('The code server is ready');
-        broadcast(data);
-    });
+  reader.on('line', (data) => {
+    console.log(data)
+    ready = ready || data.includes('The code server is ready');
+    broadcast(data);
+  });
 
 });
 
 server.on('connection', (socket) => {
 
-    sockets.push(socket);
+  sockets.push(socket);
 
-    socket.on('close', () => {
-        const index = sockets.indexOf(socket);
-        sockets = sockets.splice(index, 1);
-    });
+  socket.on('close', () => {
+    const index = sockets.indexOf(socket);
+    sockets = sockets.splice(index, 1);
+  });
 
-    socket.on('error', (err) => {
-        const index = sockets.indexOf(socket);
-        sockets = sockets.splice(index, 1);
-    });
+  socket.on('error', (err) => {
+    const index = sockets.indexOf(socket);
+    sockets = sockets.splice(index, 1);
+  });
 
-    const status = { ready };
-    socket.write(JSON.stringify(status) + '\n');
-    socket.write(buffer.join('\n') + '\n');
+  const status = { ready };
+  socket.write(JSON.stringify(status) + '\n');
+  socket.write(buffer.join('\n') + '\n');
 
 });
 

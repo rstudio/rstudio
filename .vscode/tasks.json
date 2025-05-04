@@ -113,8 +113,6 @@
       "args": [
         "--build",
         ".",
-        "--target",
-        "all"
       ],
       "options": {
         "cwd": "build"
