@@ -2627,23 +2627,22 @@ bool isPathViewAllowed(const FilePath& filePath)
 
    // Viewing content in R libraries is always allowed
    std::vector<FilePath> libPaths = getLibPaths();
-   for (const auto& dir: libPaths)
+   for (auto&& libPath : libPaths)
    {
-      if (filePath.isWithin(dir))
+      if (filePath.isWithin(libPath))
       {
          return true;
       }
    }
 
    // Check session option for explicitly allowed directories
-   std::string allowDirs = session::options().directoryViewAllowList();
-   std::cerr << "-- " << allowDirs << std::endl;
-   if (!allowDirs.empty())
+   std::string allowDirsPref = session::options().directoryViewAllowList();
+   if (!allowDirsPref.empty())
    {
-      std::vector<std::string> dirs = core::algorithm::split(allowDirs, ":");
-      for (const auto& dir: dirs)
+      auto allowDirs = core::algorithm::split(allowDirsPref, ":");
+      for (auto&& allowDir : allowDirs)
       {
-         if (filePath.isWithin(FilePath(dir)))
+         if (filePath.isWithin(FilePath(allowDir)))
          {
             return true;
          }
