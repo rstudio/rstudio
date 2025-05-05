@@ -9,6 +9,9 @@ war/
 javac.*
 /*.log
 
+# ignore log files
+gwt-code-server.log
+
 # ignore development properties file
 *_dev.properties
 
