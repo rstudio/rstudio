@@ -2279,20 +2279,24 @@ void showFile(const FilePath& filePath, const std::string& window)
 
 std::string createFileUrl(const core::FilePath& filePath)
 {
-    // determine url based on whether this is in ~ or not
-    std::string url;
-    if (isVisibleUserFile(filePath))
-    {
-       std::string relPath = filePath.getRelativePath(
-          module_context::userHomePath());
-       url = "files/" + relPath;
-    }
-    else
-    {
-       url = "file_show?path=" + core::http::util::urlEncode(
-          filePath.getAbsolutePath(), true);
-    }
-    return url;
+   // determine url based on whether this is in ~ or not
+   std::string url;
+   if (isVisibleUserFile(filePath))
+   {
+      auto home = module_context::userHomePath();
+      auto path = filePath.getRelativePath(home);
+      url = "files/" + path;
+   }
+   else if (isPathViewAllowed(filePath))
+   {
+      url = "show" + filePath.getAbsolutePath();
+   }
+   else
+   {
+      auto path = core::http::util::urlEncode(filePath.getAbsolutePath(), true);
+      url = "file_show?path=" + path;
+   }
+   return url;
 }
 
 
@@ -2633,6 +2637,7 @@ bool isPathViewAllowed(const FilePath& filePath)
 
    // Check session option for explicitly allowed directories
    std::string allowDirs = session::options().directoryViewAllowList();
+   std::cerr << "-- " << allowDirs << std::endl;
    if (!allowDirs.empty())
    {
       std::vector<std::string> dirs = core::algorithm::split(allowDirs, ":");
