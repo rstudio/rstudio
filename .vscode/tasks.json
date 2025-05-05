@@ -20,7 +20,7 @@
       "dependsOn": [
         "RStudio: Start GWT Code Server",
         "RStudio: Wait for GWT Code Server",
-        "RStudio: Start GWT Code Server Stream",
+        "RStudio: Start GWT Code Server Stream"
       ],
       "dependsOrder": "sequence"
     },
@@ -31,7 +31,7 @@
       "options": {
         "cwd": "src/gwt/devmode"
       },
-      "problemMatcher": [],
+      "problemMatcher": []
     },
     {
       "label": "RStudio: Wait for GWT Code Server",
@@ -40,7 +40,7 @@
       "options": {
         "cwd": "src/gwt/devmode"
       },
-      "problemMatcher": [],
+      "problemMatcher": []
     },
     {
       "label": "RStudio: Stop GWT Code Server",
@@ -57,7 +57,7 @@
       "options": {
         "cwd": "src/gwt/devmode"
       },
-      "problemMatcher": [],
+      "problemMatcher": []
     },
     {
       "label": "RStudio: Kill GWT Code Server",
@@ -74,7 +74,7 @@
       "options": {
         "cwd": "src/gwt/devmode"
       },
-      "problemMatcher": [],
+      "problemMatcher": []
     },
     {
       "label": "RStudio: Start GWT Code Server Stream",
@@ -104,7 +104,7 @@
       "options": {
         "cwd": "src/gwt/devmode"
       },
-      "problemMatcher": [],
+      "problemMatcher": []
     },
     {
       "label": "RStudio: Build All",
@@ -112,7 +112,7 @@
       "command": "cmake",
       "args": [
         "--build",
-        ".",
+        "."
       ],
       "options": {
         "cwd": "build"
@@ -144,7 +144,8 @@
         "options": {
           "cwd": "dependencies/linux"
         }
-      }
+      },
+      "problemMatcher": []
     }
   ]
 }
