@@ -123,6 +123,28 @@
       },
       "isBackground": false,
       "problemMatcher": "$gcc"
+    },
+    {
+      "label": "RStudio: Install Dependencies",
+      "type": "shell",
+      "windows": {
+        "command": "install-dependencies.cmd",
+        "options": {
+          "cwd": "dependencies/windows"
+        }
+      },
+      "osx": {
+        "command": "install-dependencies-osx",
+        "options": {
+          "cwd": "dependencies/osx"
+        }
+      },
+      "linux": {
+        "command": "install-dependencies-linux",
+        "options": {
+          "cwd": "dependencies/linux"
+        }
+      }
     }
   ]
 }
