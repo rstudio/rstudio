@@ -19,11 +19,9 @@ website:
         url: 'https://docs.posit.co/previous-versions/rstudio/'
       - text: "Guides"
         menu:
-          - text: "Workbench Admin Guide"
+          - text: "Workbench Docs"
             url: 'https://docs.posit.co/ide/server-pro/{{< var version >}}'
-          - text: "Workbench User Guide"
-            url: 'https://docs.posit.co/ide/server-pro/user/{{< var version >}}'
-          - text: Workbench Licenses
+          - text: Workbench/IDE Licenses
             url: 'https://docs.posit.co/ide/licenses/{{< var version >}}'
           - text: "RStudio Open Source User Guide"
             url: 'https://docs.posit.co/ide/user/{{< var version >}}'
@@ -50,7 +48,5 @@ website:
         href: "https://posit.co"
 format:
   html:
-    include-in-header: _ga-header-tag.html
-    include-before-body: _ga-body-tag.html
     code-overflow: scroll
     toc-expand: 1
