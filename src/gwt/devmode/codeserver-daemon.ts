@@ -8,6 +8,16 @@ import { ENDPOINT } from './codeserver-common';
 
 chdir(path.join(__dirname, '..'));
 
+function ant() {
+  if (platform === 'win32') {
+    return 'ant.exe';
+  } else if (platform === 'darwin') {
+    return 'ant';
+  } else {
+    return '/usr/bin/ant';
+  }
+}
+
 function broadcast(data: string) {
   buffer.push(data);
   for (const socket of sockets) {
@@ -23,8 +33,7 @@ const server = createServer();
 
 server.on('listening', () => {
 
-  const ant = platform === 'win32' ? 'ant.exe' : 'ant';
-  const child = spawn(ant, ['devmode'], {
+  const child = spawn(ant(), ['devmode'], {
     stdio: 'pipe',
   });
 
