@@ -217,18 +217,16 @@
          col_type_r <- typeof(val)
          if (is.factor(val))
          {
+            # we previously used the 'maxFactors' variable to try and guess
+            # where a factor variable might have actually been intended to be
+            # used as a character vector. nowdays, with stringsAsFactors = FALSE
+            # being the default, this is no longer necessary and so we just
+            # ignore the 'maxFactors' parameter.
+            #
+            # https://github.com/rstudio/rstudio/issues/14113
             col_type <- "factor"
-            if (length(levels(val)) > maxFactors)
-            {
-               # if the number of factors exceeds the max, search the column as 
-               # though it were a character column
-               col_search_type <- "character"
-            }
-            else 
-            {
-               col_search_type <- "factor"
-               col_vals <- levels(val)
-            }
+            col_search_type <- "factor"
+            col_vals <- levels(val)
          }
          # for histograms, we support only the base R numeric class and its derivatives;
          # is.numeric can return true for values that can only be manipulated using
