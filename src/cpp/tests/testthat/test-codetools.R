@@ -32,6 +32,16 @@ test_that(".rs.detectFreeVars() works as expected", {
    expect_equal(
       
       .rs.detectFreeVarsExpr({
+         base::paste(apple + banana)
+      }),
+      
+      c("apple", "banana")
+      
+   )
+   
+   expect_equal(
+      
+      .rs.detectFreeVarsExpr({
          userDefinedFunction(apple, banana)
       }),
       
