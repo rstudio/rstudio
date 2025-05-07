@@ -654,7 +654,7 @@ public class Packages
 
             final OperationWithInput<Void> operation = (Void input) -> {
 
-               String code = "renv::" + action.toLowerCase() + "(confirm = FALSE)";
+               String code = "renv::" + action.toLowerCase() + "(prompt = FALSE)";
                events_.fireEvent(new SendToConsoleEvent(code, true));
             };
 
