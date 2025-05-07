@@ -326,8 +326,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       if (packagesTable_ != null)
          packagesTable_.onResize();
-
-      int width = packagesTable_.getOffsetWidth();
    }
    
    @Override
