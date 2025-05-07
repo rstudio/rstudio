@@ -121,106 +121,131 @@
           chdir=chdir)
 })
 
-### Detect free variables ###
-
-# Callback when code walker encounters function call.
-# It's mostly looking for variable assignment--if it sees
-# a symbol being assigned, it sets the symbol equal to true
-# in w$assigned. Otherwise, it recurses.
-#
-# Functions are handled specially, they redefine w$assigned
-# to be their sub-environment, with a parent reference to
-# the containing environment.
-.rs.addFunction("detectFreeVars_Call", function(e, w)
+.rs.addFunction("detectFreeVarsExpr", function(node)
 {
-   freeVars <- character(0)
-
-   func <- e[[1]]
-   funcName <- as.character(func)
-   args <- as.list(e[-1])
-   
-   if (typeof(func) == 'language')
-   {
-   	  freeVars <- c(freeVars, codetools:::walkCode(func, w))
-   }
-   else if (funcName %in% c('<-', '<<-', '=', 'for') 
-            && length(args) > 1
-            && typeof(args[[1]]) != 'language')
-   {
-      lvalue <- as.character(args[[1]])
-
-      # Need to walk the right side of an assignment, before
-      # considering the lvalue (e.g.: x <- x + 1)
-      args <- args[-1]
-      if (length(args) > 0)
-      {
-         for (ee in args)
-            freeVars <- c(freeVars, codetools:::walkCode(ee, w))
-      }
-      args <- c()   # Clear out `args` so they aren't walked later
-   
-      if (funcName == '<<-')
-         assign(lvalue, T, envir=w$assignedGlobals)
-      else
-	      assign(lvalue, T, envir=w$assigned)
-   }
-   else if (funcName == '$')
-   {
-      # In foo$bar, ignore bar
-      args <- args[-2]
-   }
-   else if (funcName == 'function')
-   {
-      params <- args[[1]]
-      w$assigned <- new.env(parent=w$assigned)
-      
-      for (param in names(params))
-      {
-         assign(param, T, envir=w$assigned)
-         freeVars <- c(freeVars, codetools:::walkCode(params[[param]], w))
-      }
-      args <- args[-1]
-   }
-   
-   if (length(args) > 0)
-   {
-      # Needs to access the list via index in case of empty strings
-      # see https://github.com/rstudio/rstudio/issues/5285
-      for (i in seq_along(args))
-         freeVars <- c(freeVars, codetools:::walkCode(args[[i]], w))
-   }
-   return(unique(freeVars))
+   .rs.detectFreeVars(substitute(node))
 })
 
-# Lets us know when we've seen a symbol. If the symbol hasn't
-# been assigned yet (i.e. it doesn't exist in w$assigned) then
-# we can assume it's a free variable.
-.rs.addFunction("detectFreeVars_Leaf", function(e, w)
+.rs.addFunction("detectFreeVars", function(node, globals = new.env(parent = baseenv()))
 {
-   if (typeof(e) == 'symbol' && nchar(as.character(e)) > 0 && !exists(as.character(e), envir=w$assigned))
-      return(as.character(e))
-   else
-      return(character(0))
+   vars <- .rs.stack(mode = "character")
+   
+   .rs.recursiveWalkIf(node, function(node)
+   {
+      # check and analyze call objects
+      if (is.call(node))
+      {
+         # skip functions which are likely to perform non-standard evaluation
+         if (is.symbol(node[[1L]]))
+         {
+            lhs <- as.character(node[[1L]])
+            if (lhs %in% .rs.nse.primitives)
+               return(FALSE)
+         }
+         
+         # recurse into for loops with variable binding active
+         isFor <-
+            length(node) == 4L &&
+            identical(node[[1L]], as.symbol("for"))
+         
+         if (isFor)
+         {
+            seqGlobals <- new.env(parent = globals)
+            seqVars <- .rs.detectFreeVars(node[[3L]], seqGlobals)
+            for (seqVar in seqVars)
+               vars$push(seqVar)
+            
+            forGlobals <- new.env(parent = globals)
+            forGlobals[[as.character(node[[2L]])]] <- TRUE
+            
+            forVars <- .rs.detectFreeVars(node[[4L]], forGlobals)
+            for (forVar in forVars)
+               vars$push(forVar)
+            
+            return(FALSE)
+         }
+      
+         # recurse into function definitions; add bindings for
+         # the function parameters
+         isFunction <-
+            identical(node[[1L]], as.symbol("function")) &&
+            length(node) >= 3L
+         
+         if (isFunction)
+         {
+            functionGlobals <- new.env(parent = globals)
+            for (functionParam in names(node[[2L]]))
+               functionGlobals[[functionParam]] <- TRUE
+            
+            functionVars <- .rs.detectFreeVars(node[[3L]], functionGlobals)
+            for (functionVar in functionVars)
+               vars$push(functionVar)
+            
+            return(FALSE)
+         }
+      
+         # don't descend into `::` or `:::` qualified lookups
+         isNamespace <-
+            is.symbol(node[[1L]]) &&
+            as.character(node[[1L]]) %in% c("::", ":::")
+         
+         if (isNamespace)
+         {
+            return(FALSE)
+         }
+         
+         # for `$` and `@`, only look at left hand side
+         isMemberAccess <-
+            is.symbol(node[[1L]]) &&
+            as.character(node[[1L]]) %in% c("$", "@")
+         
+         if (isMemberAccess)
+         {
+            lhs <- node[[2L]]
+            if (is.symbol(lhs))
+               vars$push(as.character(lhs))
+            
+            return(FALSE)
+         }
+         
+         # check for assignments
+         isAssignment <-
+            length(node) == 3L &&
+            is.symbol(node[[1L]]) &&
+            as.character(node[[1L]]) %in% c("=", "<-", "<<-")
+         
+         if (isAssignment)
+         {
+            assignee <- node[[2L]]
+            if (is.symbol(assignee))
+               assign(as.character(assignee), assignee, envir = globals)
+         }
+      }
+      
+      # if we encounter a symbol, it's a free var
+      else if (is.symbol(node))
+      {
+         value <- as.character(node)
+         if (nzchar(value) && !exists(value, envir = globals))
+            vars$push(value)
+         
+         return(FALSE)
+      }
+      
+      # try to recurse other objects by default
+      TRUE
+      
+   })
+   
+   unique(vars$data())
+   
 })
 
 .rs.addJsonRpcHandler("detect_free_vars", function(code)
 {
-   globals <- new.env(parent=emptyenv())
-
-   # Ignore predefined symbols like T and F
-   assign('T', T, envir=globals)
-   assign('F', T, envir=globals)
-
-   w <- codetools:::makeCodeWalker(assigned=globals,
-                                   assignedGlobals=globals,
-                                   call=.rs.detectFreeVars_Call,
-                                   leaf=.rs.detectFreeVars_Leaf)
-   freeVars <- character(0)
-   for (e in parse(text=code))
-     freeVars <- c(freeVars, codetools:::walkCode(e, w))
-   return(unique(freeVars))
+   node <- parse(text = code, keep.source = FALSE)[[1L]]
+   .rs.detectFreeVars(node)
 })
-
 
 .rs.addFunction("createDefaultShellRd", function(`_name`, `_type`)
 {  
