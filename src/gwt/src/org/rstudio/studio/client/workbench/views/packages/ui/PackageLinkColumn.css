@@ -1,6 +1,17 @@
 @external rstudio-themes-dark;
 @external editor_dark, ace_editor_theme;
 
+.icon {
+   display: inline-block;
+   width: 16px;
+   height: 16px;
+   margin-right: 4px;
+   vertical-align: middle;
+   margin-top: 0 !important;
+   margin-left: 4px;
+   user-select: none;
+}
+
 .link {
    overflow: hidden;
    text-overflow: ellipsis;
@@ -20,3 +31,4 @@
 .editor_dark .ace_editor_theme .link {
    color: #b4b4d8;
 }
+

@@ -1,5 +1,5 @@
 /*
- * LinkColumn.java
+ * PackageLinkColumn.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -12,13 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client.cellview;
+package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import java.util.List;
 
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -28,6 +27,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -37,17 +37,17 @@ import com.google.gwt.view.client.ListDataProvider;
 
 
 // package name column which includes a hyperlink to package docs
-public abstract class LinkColumn<T> extends Column<T, String>
+public abstract class PackageLinkColumn extends Column<PackageInfo, String>
 {
-   public LinkColumn(ListDataProvider<T> dataProvider,
-                     OperationWithInput<T> onClicked)
+   public PackageLinkColumn(ListDataProvider<PackageInfo> dataProvider,
+                            OperationWithInput<PackageInfo> onClicked)
    {
       this(dataProvider, onClicked, false);
    }
 
-   public LinkColumn(final ListDataProvider<T> dataProvider,
-                     final OperationWithInput<T> onClicked,
-                     final boolean alwaysUnderline)
+   public PackageLinkColumn(final ListDataProvider<PackageInfo> dataProvider,
+                            final OperationWithInput<PackageInfo> onClicked,
+                            final boolean alwaysUnderline)
    {
       super(new ClickableTextCell()
       {
@@ -60,6 +60,22 @@ public abstract class LinkColumn<T> extends Column<T, String>
          {
             if (value != null)
             {
+               SafeUri uri;
+               if (context.getIndex() == 3)
+               {
+                  uri = RESOURCES.iconError().getSafeUri();
+               }
+               else if (context.getIndex() == 7)
+               {
+                  uri = RESOURCES.iconWarning().getSafeUri();
+               }
+               else
+               {
+                  uri = RESOURCES.iconOk().getSafeUri();
+               }
+
+               sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), uri));
+
                String classNames = alwaysUnderline
                   ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
                   : RESOURCES.styles().link();
@@ -88,17 +104,13 @@ public abstract class LinkColumn<T> extends Column<T, String>
                   return;
                
                int idx = context.getIndex();
-               List<T> data = dataProvider.getList();
+               List<PackageInfo> data = dataProvider.getList();
                if (idx >= 0 && idx < dataProvider.getList().size())
                {
                   onClicked.execute(data.get(idx));
                }
             }
          }
-
-         private final Commands commands_ =
-            RStudioGinjector.INSTANCE.getCommands();
-
       });
    }
 
@@ -116,23 +128,32 @@ public abstract class LinkColumn<T> extends Column<T, String>
 
    interface Styles extends CssResource
    {
+      String icon();
       String link();
       String linkUnderlined();
    }
 
    interface Resources extends ClientBundle
    {
-      @Source("LinkColumn.css")
+      @Source("iconOk.png")
+      ImageResource iconOk();
+
+      @Source("iconWarning.png")
+      ImageResource iconWarning();
+
+      @Source("iconError.png")
+      ImageResource iconError();
+
+      @Source("PackageLinkColumn.css")
       Styles styles();
    }
 
-   public static void ensureStylesInjected()
+   static Resources RESOURCES = GWT.create(Resources.class);
+   static
    {
       RESOURCES.styles().ensureInjected();
    }
 
-   static Resources RESOURCES = GWT.create(Resources.class);
    static NameTemplate NAME_TEMPLATE = GWT.create(NameTemplate.class);
    static IconTemplate ICON_TEMPLATE = GWT.create(IconTemplate.class);
-
 }

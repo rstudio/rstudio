@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUt
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumn;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
 
@@ -655,7 +656,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    }
    
    // package name column which includes a hyperlink to package docs
-   class NameColumn extends LinkColumn<PackageInfo>
+   class NameColumn extends PackageLinkColumn
    {
       public NameColumn()
       {
