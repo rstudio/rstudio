@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
@@ -57,6 +58,8 @@ import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridRes
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
@@ -75,6 +78,7 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasData;
@@ -212,6 +216,21 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       // update packages
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
+      toolbar.addLeftSeparator();
+
+      // manage repositories
+      ToolbarPopupMenu repositoryMenu = new ToolbarPopupMenu();
+      repositoryMenu.addItem(new MenuItem("Use CRAN Repository", false, (ScheduledCommand) null));
+      repositoryMenu.addItem(new MenuItem("Use Research Repository", false, (ScheduledCommand) null));
+      repositoryMenu.addItem(new MenuItem("Use Development Repository", false, (ScheduledCommand) null));
+
+      ToolbarMenuButton repositoryButton = new ToolbarMenuButton(
+         "Repositories",
+         ToolbarButton.NoTitle,
+         commands_.showHtmlPreviewLog().getImageResource(),
+         repositoryMenu
+      );
+      toolbar.addLeftWidget(repositoryButton);
       projectButtonSeparator_ = toolbar.addLeftSeparator();
       
       // packrat (all packrat UI starts out hidden and then appears
@@ -307,6 +326,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
       
       private boolean packratVersion_;
+   }
+
+   private class MetaDataCell extends AbstractCell<PackageInfo>
+   {
+      @Override
+      public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
+      {
+         sb.appendHtmlConstant("<span>Metadata</span>");
+      }
    }
    
    @Override
@@ -415,6 +443,24 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             }
       };
 
+      metadataColumn_ = 
+         new Column<PackageInfo, PackageInfo>(new MetaDataCell())
+         {
+            @Override
+            public void render(Context context, PackageInfo object, SafeHtmlBuilder sb)
+            {
+               sb.appendHtmlConstant("<div style=\"font-style: oblique;\">");
+               sb.appendEscaped("(metadata)");
+               sb.appendHtmlConstant("</div>");
+
+            }
+            @Override
+            public PackageInfo getValue(PackageInfo object)
+            {
+               return object;
+            }
+         };
+
       browseColumn_ = new ImageButtonColumn<PackageInfo>(
             new ImageResource2x(ThemeResources.INSTANCE.browsePackage2x()),
             new OperationWithInput<PackageInfo>() {
@@ -473,14 +519,16 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
       // add common columns
       packagesTable_.addColumn(loadedColumn_, new TextHeader(""));
-      packagesTable_.addColumn(nameColumn_, new TextHeader(constants_.nameText()));
+      packagesTable_.addColumn(nameColumn_, new TextHeader("Package"));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
       packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
+      packagesTable_.addColumn(metadataColumn_, new TextHeader("Metadata"));
 
       // set initial column widths
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
       packagesTable_.setColumnWidth(nameColumn_, 120, Unit.PX);
       packagesTable_.setColumnWidth(versionColumn_, 80, Unit.PX);
+      packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
 
       // add columns when using project-local library
@@ -712,6 +760,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private NameColumn nameColumn_;
    private Column<PackageInfo, PackageInfo> descColumn_;
    private Column<PackageInfo, PackageInfo> versionColumn_;
+   private Column<PackageInfo, PackageInfo> metadataColumn_;
    private ImageButtonColumn<PackageInfo> browseColumn_;
    private ImageButtonColumn<PackageInfo> removeColumn_;
 

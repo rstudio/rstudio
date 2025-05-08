@@ -14,21 +14,33 @@
  */
 package org.rstudio.core.client.cellview;
 
+import java.util.List;
+
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinModule;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.inject.Inject;
 
 
 // package name column which includes a hyperlink to package docs
@@ -44,8 +56,8 @@ public abstract class LinkColumn<T> extends Column<T, String>
                      final OperationWithInput<T> onClicked,
                      final boolean alwaysUnderline)
    {
-      super(new ClickableTextCell(){
-
+      super(new ClickableTextCell()
+      {
          // render anchor using custom styles. detect selection and
          // add selected style to invert text color
          @Override
@@ -55,18 +67,27 @@ public abstract class LinkColumn<T> extends Column<T, String>
          {
             if (value != null)
             {
-              Styles styles = RESOURCES.styles();
-              StringBuilder div = new StringBuilder();
-              div.append("<div class=\"");
-              div.append(styles.link() + " ");
-              div.append(ThemeResources.INSTANCE.themeStyles().handCursor());
-              if (alwaysUnderline)
-                 div.append(" " + styles.linkUnderlined());
-              div.append("\" title=\"" + value.asString() + "\">");
+               SafeUri uri;
+               if (context.getIndex() == 3)
+               {
+                  uri = RESOURCES.iconError().getSafeUri();
+               }
+               else if (context.getIndex() == 7)
+               {
+                  uri = RESOURCES.iconWarning().getSafeUri();
+               }
+               else
+               {
+                  uri = RESOURCES.iconOk().getSafeUri();
+               }
 
-              sb.appendHtmlConstant(div.toString());
-              sb.append(value);
-              sb.appendHtmlConstant("</div>");
+               sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), uri));
+
+               String classNames = alwaysUnderline
+                  ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
+                  : RESOURCES.styles().link();
+
+               sb.append(NAME_TEMPLATE.render(classNames, value.asString()));
             }
           }
 
@@ -77,39 +98,74 @@ public abstract class LinkColumn<T> extends Column<T, String>
                                     String value, NativeEvent event,
                                     ValueUpdater<String> valueUpdater)
          {
-           super.onBrowserEvent(context, parent, value, event, valueUpdater);
-           if ("click".equals(event.getType()))
-           {
-              // verify that the click was on the package link
-              JavaScriptObject evTarget = event.getEventTarget().cast();
-              if (Element.is(evTarget) &&
-                  Element.as(evTarget).getClassName().startsWith(
-                                     RESOURCES.styles().link()))
-              {
-                 int idx = context.getIndex();
-                 if (idx >= 0 && idx < dataProvider.getList().size())
-                    onClicked.execute(dataProvider.getList().get(idx));
-              }
-           }
+            super.onBrowserEvent(context, parent, value, event, valueUpdater);
+            if ("click".equals(event.getType()))
+            {
+               // verify that the click was on the package link
+               JavaScriptObject target = event.getEventTarget().cast();
+               if (!Element.is(target))
+                  return;
+               
+               Element targetEl = Element.as(target);
+               if (!targetEl.hasClassName(RESOURCES.styles().link()))
+                  return;
+               
+               int idx = context.getIndex();
+               List<T> data = dataProvider.getList();
+               if (idx >= 0 && idx < dataProvider.getList().size())
+               {
+                  onClicked.execute(data.get(idx));
+               }
+            }
          }
+
+         private final Commands commands_ =
+            RStudioGinjector.INSTANCE.getCommands();
+
       });
    }
 
-   static interface Styles extends CssResource
+   interface NameTemplate extends SafeHtmlTemplates
    {
+      @Template("<span class=\"{0}\" title=\"{1}\">{1}</span>")
+      SafeHtml render(String className, String title);
+   }
+
+   interface IconTemplate extends SafeHtmlTemplates
+   {
+      @Template("<img class=\"{0}\" src=\"{1}\"></img>")
+      SafeHtml render(String className, SafeUri imgUri);
+   }
+
+   interface Styles extends CssResource
+   {
+      String icon();
       String link();
       String linkUnderlined();
    }
 
    interface Resources extends ClientBundle
    {
+      @Source("iconOk.png")
+      ImageResource iconOk();
+
+      @Source("iconWarning.png")
+      ImageResource iconWarning();
+
+      @Source("iconError.png")
+      ImageResource iconError();
+
       @Source("LinkColumn.css")
       Styles styles();
    }
 
-   static Resources RESOURCES = (Resources)GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();
    }
+
+   static Resources RESOURCES = GWT.create(Resources.class);
+   static NameTemplate NAME_TEMPLATE = GWT.create(NameTemplate.class);
+   static IconTemplate ICON_TEMPLATE = GWT.create(IconTemplate.class);
+
 }
