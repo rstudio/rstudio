@@ -112,8 +112,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 
             if (!didFindVulnerability.get())
             {
-               SafeUri uri = RESOURCES.iconOk().getSafeUri();
-               sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), "", uri));
+               sb.append(NONE_TEMPLATE.render(RESOURCES.styles().icon()));
             }
          }
 
@@ -159,6 +158,12 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
       SafeHtml render(String className, String hoverInfo, SafeUri imgUri);
    }
 
+   interface NoneTemplate extends SafeHtmlTemplates
+   {
+      @Template("<div class=\"{0}\"></div>")
+      SafeHtml render(String className);
+   }
+
    interface Styles extends CssResource
    {
       String icon();
@@ -187,6 +192,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
       RESOURCES.styles().ensureInjected();
    }
 
-   static NameTemplate NAME_TEMPLATE = GWT.create(NameTemplate.class);
-   static IconTemplate ICON_TEMPLATE = GWT.create(IconTemplate.class);
+   static NameTemplate  NAME_TEMPLATE = GWT.create(NameTemplate.class);
+   static IconTemplate  ICON_TEMPLATE = GWT.create(IconTemplate.class);
+   static NoneTemplate  NONE_TEMPLATE = GWT.create(NoneTemplate.class);
 }
