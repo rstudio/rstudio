@@ -16,10 +16,16 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerability;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerabilityList;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerabilityListMap;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 
-import com.google.gwt.cell.client.ClickableTextCell;
+import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -35,61 +41,88 @@ import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.ListDataProvider;
 
+import jsinterop.base.Any;
+import jsinterop.base.Js;
+import jsinterop.base.JsPropertyMap;
+
 
 // package name column which includes a hyperlink to package docs
-public abstract class PackageLinkColumn extends Column<PackageInfo, String>
+public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 {
    public PackageLinkColumn(ListDataProvider<PackageInfo> dataProvider,
+                            RepositoryPackageVulnerabilityListMap vulns,
                             OperationWithInput<PackageInfo> onClicked)
    {
-      this(dataProvider, onClicked, false);
+      this(dataProvider, vulns, onClicked, false);
    }
 
    public PackageLinkColumn(final ListDataProvider<PackageInfo> dataProvider,
+                            final RepositoryPackageVulnerabilityListMap vulns,
                             final OperationWithInput<PackageInfo> onClicked,
                             final boolean alwaysUnderline)
    {
-      super(new ClickableTextCell()
+      super(new AbstractCell<PackageInfo>("click")
       {
          // render anchor using custom styles. detect selection and
          // add selected style to invert text color
          @Override
-         protected void render(Context context,
-                               SafeHtml value,
-                               SafeHtmlBuilder sb)
+         public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
          {
             if (value != null)
             {
-               SafeUri uri;
-               if (context.getIndex() == 3)
-               {
-                  uri = RESOURCES.iconError().getSafeUri();
-               }
-               else if (context.getIndex() == 7)
-               {
-                  uri = RESOURCES.iconWarning().getSafeUri();
-               }
-               else
-               {
-                  uri = RESOURCES.iconOk().getSafeUri();
-               }
-
-               sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), uri));
+               addVulnerabilityInfo(context, value, sb);
 
                String classNames = alwaysUnderline
                   ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
                   : RESOURCES.styles().link();
 
-               sb.append(NAME_TEMPLATE.render(classNames, value.asString()));
+               sb.append(NAME_TEMPLATE.render(classNames, value.getName()));
             }
-          }
+         }
+
+         private void addVulnerabilityInfo(Context context, PackageInfo value, SafeHtmlBuilder sb)
+         {
+            if (vulns == null)
+               return;
+            
+            final Mutable<Boolean> didFindVulnerability = new Mutable<>(false);
+
+            String name = value.getName();
+            String version = value.getVersion();
+
+            vulns.forEach((String key) ->
+            {
+               PackageVulnerabilityListMap pvlMap = Js.uncheckedCast(vulns.get(key));
+               if (pvlMap.has(name))
+               {
+                  PackageVulnerabilityList pvList = Js.uncheckedCast(pvlMap.get(name));
+                  for (PackageVulnerability pvItem : pvList.asList())
+                  {
+                     if (pvItem.versions.has(version))
+                     {
+                        SafeUri uri = RESOURCES.iconWarning().getSafeUri();
+                        String title = pvItem.id + ": " + pvItem.summary + "\n\n" + pvItem.details;
+                        sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), title, uri));
+                        didFindVulnerability.set(true);
+                        return;
+                     }
+                  }
+               }
+            });
+
+            if (!didFindVulnerability.get())
+            {
+               SafeUri uri = RESOURCES.iconOk().getSafeUri();
+               sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), "", uri));
+            }
+         }
 
          // click event which occurs on the actual package link div
          // results in showing help for that package
          @Override
          public void onBrowserEvent(Context context, Element parent,
-                                    String value, NativeEvent event,
-                                    ValueUpdater<String> valueUpdater)
+                                    PackageInfo value, NativeEvent event,
+                                    ValueUpdater<PackageInfo> valueUpdater)
          {
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             if ("click".equals(event.getType()))
@@ -122,8 +155,8 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, String>
 
    interface IconTemplate extends SafeHtmlTemplates
    {
-      @Template("<img class=\"{0}\" src=\"{1}\"></img>")
-      SafeHtml render(String className, SafeUri imgUri);
+      @Template("<img class=\"{0}\" title=\"{1}\" src=\"{2}\"></img>")
+      SafeHtml render(String className, String hoverInfo, SafeUri imgUri);
    }
 
    interface Styles extends CssResource

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.packages.model;
 
 import org.rstudio.studio.client.workbench.projects.ProjectContext;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -34,5 +35,9 @@ public class PackageState extends JavaScriptObject
          "packrat_context": this.packrat_context,
          "renv_context": this.renv_context
       };
+   }-*/;
+
+   public final native RepositoryPackageVulnerabilityListMap getVulnerabilityInfo() /*-{
+      return this.vulns;
    }-*/;
 }

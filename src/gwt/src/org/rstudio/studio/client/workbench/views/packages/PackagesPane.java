@@ -52,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRe
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumn;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
@@ -112,9 +113,12 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    @Override
    public void setPackageState(ProjectContext projectContext, 
-                               List<PackageInfo> packages)
+                               List<PackageInfo> packages,
+                               RepositoryPackageVulnerabilityListMap vulns)
    {
       projectContext_ = projectContext;
+      vulns_ = vulns;
+
       packagesDataProvider_.setList(packages);
       createPackagesTable();
 
@@ -661,6 +665,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       public NameColumn()
       {
          super(packagesDataProvider_,
+               vulns_,
                new OperationWithInput<PackageInfo>() 
                {
                   @Override
@@ -683,9 +688,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
       
       @Override
-      public String getValue(PackageInfo packageInfo)
+      public PackageInfo getValue(PackageInfo packageInfo)
       {
-         return packageInfo.getName();
+         return packageInfo;
       }
    }
    
@@ -779,6 +784,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private LayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
    private ProjectContext projectContext_;
+   private RepositoryPackageVulnerabilityListMap vulns_;
 
    private final Commands commands_;
    private final Session session_;
