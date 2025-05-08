@@ -93,19 +93,19 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
             vulns.forEach((String key) ->
             {
                PackageVulnerabilityListMap pvlMap = Js.uncheckedCast(vulns.get(key));
-               if (pvlMap.has(name))
+               if (pvlMap == null || !pvlMap.has(name))
+                  return;
+               
+               PackageVulnerabilityList pvList = Js.uncheckedCast(pvlMap.get(name));
+               for (PackageVulnerability pvItem : pvList.asList())
                {
-                  PackageVulnerabilityList pvList = Js.uncheckedCast(pvlMap.get(name));
-                  for (PackageVulnerability pvItem : pvList.asList())
+                  if (pvItem.versions.has(version))
                   {
-                     if (pvItem.versions.has(version))
-                     {
-                        SafeUri uri = RESOURCES.iconWarning().getSafeUri();
-                        String title = pvItem.id + ": " + pvItem.summary + "\n\n" + pvItem.details;
-                        sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), title, uri));
-                        didFindVulnerability.set(true);
-                        return;
-                     }
+                     SafeUri uri = RESOURCES.iconWarning().getSafeUri();
+                     String title = pvItem.id + ": " + pvItem.summary + "\n\n" + pvItem.details;
+                     sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), title, uri));
+                     didFindVulnerability.set(true);
+                     return;
                   }
                }
             });

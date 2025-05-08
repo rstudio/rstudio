@@ -527,13 +527,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(nameColumn_, new TextHeader("Package"));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
       packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
-      packagesTable_.addColumn(metadataColumn_, new TextHeader("Metadata"));
+      // packagesTable_.addColumn(metadataColumn_, new TextHeader("Metadata"));
 
       // set initial column widths
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
       packagesTable_.setColumnWidth(nameColumn_, 120, Unit.PX);
       packagesTable_.setColumnWidth(versionColumn_, 80, Unit.PX);
-      packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
+      // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
 
       // add columns when using project-local library

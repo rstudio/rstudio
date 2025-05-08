@@ -37,6 +37,9 @@
    
    # Request vulnerabilities
    ppmUrl <- .rs.ppm.parseRepositoryUrl(repoUrl)
+   if (length(ppmUrl) == 0L)
+      return(list())
+   
    fmt <- "%s/__api__/repos/%s/vulns"
    endpoint <- sprintf(fmt, ppmUrl$root, ppmUrl$repos)
    destfile <- tempfile("ppm-vuln-")
