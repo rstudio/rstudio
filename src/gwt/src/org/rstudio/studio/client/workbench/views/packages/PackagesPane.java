@@ -224,19 +224,19 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftSeparator();
 
       // manage repositories
-      ToolbarPopupMenu repositoryMenu = new ToolbarPopupMenu();
-      repositoryMenu.addItem(new MenuItem("Use CRAN Repository", false, (ScheduledCommand) null));
-      repositoryMenu.addItem(new MenuItem("Use Research Repository", false, (ScheduledCommand) null));
-      repositoryMenu.addItem(new MenuItem("Use Development Repository", false, (ScheduledCommand) null));
-
-      ToolbarMenuButton repositoryButton = new ToolbarMenuButton(
-         "Repositories",
-         ToolbarButton.NoTitle,
-         commands_.showHtmlPreviewLog().getImageResource(),
-         repositoryMenu
-      );
-
       // TODO
+      // ToolbarPopupMenu repositoryMenu = new ToolbarPopupMenu();
+      // repositoryMenu.addItem(new MenuItem("Use CRAN Repository", false, (ScheduledCommand) null));
+      // repositoryMenu.addItem(new MenuItem("Use Research Repository", false, (ScheduledCommand) null));
+      // repositoryMenu.addItem(new MenuItem("Use Development Repository", false, (ScheduledCommand) null));
+
+      // ToolbarMenuButton repositoryButton = new ToolbarMenuButton(
+      //    "Repositories",
+      //    ToolbarButton.NoTitle,
+      //    commands_.showHtmlPreviewLog().getImageResource(),
+      //    repositoryMenu
+      // );
+
       // toolbar.addLeftWidget(repositoryButton);
       // projectButtonSeparator_ = toolbar.addLeftSeparator();
       
