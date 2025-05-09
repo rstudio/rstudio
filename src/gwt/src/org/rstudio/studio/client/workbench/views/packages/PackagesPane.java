@@ -235,8 +235,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          commands_.showHtmlPreviewLog().getImageResource(),
          repositoryMenu
       );
-      toolbar.addLeftWidget(repositoryButton);
-      projectButtonSeparator_ = toolbar.addLeftSeparator();
+
+      // TODO
+      // toolbar.addLeftWidget(repositoryButton);
+      // projectButtonSeparator_ = toolbar.addLeftSeparator();
       
       // packrat (all packrat UI starts out hidden and then appears
       // in response to changes in the packages state)

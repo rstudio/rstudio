@@ -57,11 +57,11 @@
 .rs.addFunction("ppm.parseRepositoryUrl", function(url)
 {
    pattern <- paste0(
-      "^",                                 # start of url
-      "(?<root>.*?)/",                     # leading URL components
+      "^",                                  # start of url
+      "(?<root>.*?)/",                      # leading URL components
       "(?<repos>[^/]+)/",                   # repository name
-      "(?:__linux__/(?<binary>[^/]+)/)?",  # binary url (optional)
-      "(?<snapshot>[^/]+)",                # snapshot
+      "(?:__linux__/(?<binary>[^/]+)/)?",   # binary url (optional)
+      "(?<snapshot>[^/]+)",                 # snapshot
       "$"
    )
    

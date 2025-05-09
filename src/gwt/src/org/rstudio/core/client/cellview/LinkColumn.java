@@ -95,10 +95,6 @@ public abstract class LinkColumn<T> extends Column<T, String>
                }
             }
          }
-
-         private final Commands commands_ =
-            RStudioGinjector.INSTANCE.getCommands();
-
       });
    }
 
