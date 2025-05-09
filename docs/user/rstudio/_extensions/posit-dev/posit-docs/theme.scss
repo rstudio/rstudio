@@ -27,7 +27,7 @@ $font-size-base: 1rem;
 // scss-docs-end font-variables
 
 //font and body color
-$body-color: $posit-gray;
+$body-color: $posit-dark-gray-1;
 
 // scss-docs-start font-sizes
 $h1-font-size: 44px;
@@ -43,7 +43,7 @@ h2 {
 
 // Headings
 // scss-docs-start headings-variables
-$headings-font-weight: 300 !important;
+$headings-font-weight: 400 !important;
 // scss-docs-end headings-variables
 
 //  Customize the navbar
@@ -66,8 +66,9 @@ $list-group-color: $primary !default;
 
 /* Body font */
 body {
-  letter-spacing: -0.2px !important;
-  font-weight: 300 !important;
+  font-weight: 400 !important;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 // Nav and footer
@@ -97,12 +98,9 @@ body {
 }
 
 .nav-link {
-  font-family: $font-family-monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  color: $posit-gray !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: $posit-dark-gray-1 !important;
 }
 
 .navbar-nav .nav-link.active,
@@ -111,14 +109,15 @@ body {
   font-weight: 700 !important;
 }
 
+/* Adds separation between nav bar links and site title */
+.navbar-collapse {
+  margin-left: 50px !important;
+}
+
 /* Footer */
 
 .nav-footer {
-  font-family: $font-family-monospace;
-  text-transform: uppercase;
-  font-size: 14px;
   border-top: solid #0000001a 0.01em;
-  align-items: center !important;
 }
 
 .nav-footer .nav-footer-center {
@@ -146,9 +145,7 @@ body {
 #footer-right-posit-logo {
   width: 18px;
   min-width: 18px;
-  margin-left: -3px !important;
-  margin-right: -3px !important;
-  padding-top: 1px;
+  margin-left: -10px !important;
 }
 
 /* Posit logo - footer
@@ -164,6 +161,11 @@ body {
 
 .bi-lightbulb-fill {
   font-size: 18px !important;
+}
+
+.bi-cookie {
+  font-size: 18px !important;
+
 }
 
 // Footnotes
@@ -188,7 +190,7 @@ body {
 .nav-tabs .nav-item.show .nav-link {
   color: #000000 !important;
   font-weight: 700 !important;
-  text-decoration: underline 1px $posit-orange !important; 
+  text-decoration: underline 1px $posit-orange !important;
 }
 
 .nav-tabs .nav-link:hover,
@@ -269,7 +271,7 @@ body {
 .sidebar nav[role="doc-toc"] > ul li a {
   text-transform: none !important;
   font-family: $font-family-sans-serif;
-  font-weight: 400 !important;
+  font-weight: 500 !important;
   letter-spacing: -0.2px !important;
 }
 
@@ -358,7 +360,7 @@ header h1 .preview-header,
 div span.preview-feature {
   color: $preview-header;
   border: 1px solid $preview-header-border;
-  font-weight: 400;
+  font-weight: 500;
   font-size: 9pt !important;
   padding: 0rem 0.4rem;
 }
@@ -394,4 +396,10 @@ ol.groovyAlpha li > p:before {
   font-size: 14px;
   line-height: 16px;
   vertical-align: middle;
+}
+
+// Mermaid diagrams
+
+#mermaid-1 .nodeLabel {
+  font-weight: 700!important;
 }

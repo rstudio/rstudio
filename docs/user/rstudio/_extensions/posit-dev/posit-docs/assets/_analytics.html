@@ -1,40 +1,30 @@
-<!-- Google Analytics 4 (G-XXXXXXXXXX) -->
-<script>
- /* Use GA when hosted by our public docs site, not when installed. */
- if (location.href.indexOf("docs.posit.co") >= 0) {
-     window.dataLayer = window.dataLayer || []
-     function gtag() { dataLayer.push(arguments) }
-     /* Set up integration and send page view */
-     gtag("js", new Date())
-     gtag("config", "GTM-KHBDBW7")
-
-     /* Register virtual event handlers */
-     document.addEventListener("DOMContentLoaded", function () {
-         if (document.forms.search) {
-             var query = document.forms.search.query
-             query.addEventListener("blur", function () {
-                 if (this.value) {
-                     gtag("event", "search", { search_term: this.value })
-                 }
-             })
-         }
-
-         /* Send page view on location change */
-         if (typeof location$ !== "undefined")
-             location$.subscribe(function (url) {
-                 gtag("config", "GTM-KHBDBW7", {
-                     page_path: url.pathname
-                 })
-             })
-     })
-     /* Create script tag */
-     var script = document.createElement("script")
-     script.async = true
-     script.src = "https://www.googletagmanager.com/gtag/js?id=GTM-KHBDBW7"
-
-     /* Inject script tag */
-     var container = document.getElementsByTagName("head")[0]
-     var firstChild = container.firstChild
-     container.insertBefore(script, firstChild)
- }
+<!-- Google Tag Manager -->
+<script type="text/javascript">
+    const sURL = window.location.href;
+    if (sURL.includes("docs.posit.co") || sURL.includes("netlify.app")) {
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-KHBDBW7');
+    }
 </script>
+<!-- End Google Tag Manager -->
+
+<!-- Display cookie icon in footer in docs.posit.co/netlify.app URLs; hide icon on other URLs -->
+<script type="text/javascript">
+window.onload = function () {
+    // target the <li> instead of the icon to allow screenreaders to properly
+    // calculate the size of the list when the icon is hidden
+    const prefCenter = document.querySelector("li:has(#open_preferences_center)");
+    if (prefCenter) { // Test for prefCenter ID presence
+        const sURL = window.location.href;
+        // Show the icon only if the URL contains "docs.posit.co" or "netlify.app"
+        if (sURL.includes("docs.posit.co") || sURL.includes("netlify.app")) {
+            prefCenter.style.display = "inline";
+            prefCenter.style.visibility = "visible";
+        } else {
+            // Hide the icon for all other URLs
+            prefCenter.style.display = "none";
+            prefCenter.style.visibility = "hidden";
+        }
+    }
+};
+</script>
+<!-- End display/hide cookie icon -->

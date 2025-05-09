@@ -28,11 +28,9 @@ website:
         url: "https://docs.posit.co/ide/news/#rstudio-{{< var version >}}" 
       - text: "Guides"
         menu:
-          - text: "Workbench Admin Guide"
+          - text: "Workbench Docs"
             url: 'https://docs.posit.co/ide/server-pro/{{< var version >}}'
-          - text: "Posit Workbench User Guide"
-            url: 'https://docs.posit.co/ide/server-pro/user/{{< var version >}}'
-          - text: Workbench Licenses
+          - text: Workbench/IDE Licenses
             url: 'https://docs.posit.co/ide/licenses/{{< var version >}}'   
       - icon: "list"
         aria-label: 'Drop-down menu for additional Posit resources'
@@ -130,9 +128,9 @@ website:
       - icon: question-circle-fill
         href: https://support.posit.co/hc/en-us
       - icon: lightbulb-fill
+      - text: '<a href="#" id="open_preferences_center" title="Manage your cookie preferences"><i class="bi bi-cookie"></i></i></a>'
+        aria-label: 'Cookie Prefs'
         href: https://solutions.posit.co
-      - text: "<img src='/images/posit-guide-ltmd.svg' id='footer-right-logo'>"
-        href: https://docs.posit.co
       - text: "<img src='/images/posit-icon-fullcolor.svg' id='footer-right-posit-logo'>"
         href: "https://posit.co"
 
