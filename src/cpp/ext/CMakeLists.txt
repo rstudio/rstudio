@@ -182,7 +182,11 @@ function(fetch)
 
       if(${_PREFIX}_ENABLED)
          if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
-            find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
+            if(CMAKE_VERSION VERSION_GREATER "3.24")
+               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
+            else()
+               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
+            endif()
          else()
             set(${_PREFIX}_FETCHED TRUE)
             FetchContent_Declare("${_NAME}"

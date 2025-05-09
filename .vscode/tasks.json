@@ -22,7 +22,8 @@
         "RStudio: Wait for GWT Code Server",
         "RStudio: Start GWT Code Server Stream"
       ],
-      "dependsOrder": "sequence"
+      "dependsOrder": "sequence",
+      "problemMatcher": []
     },
     {
       "label": "RStudio: Start GWT Code Server",

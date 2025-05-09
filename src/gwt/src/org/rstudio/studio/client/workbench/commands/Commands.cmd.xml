@@ -3144,18 +3144,21 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="packrat"/>
 
    <cmd id="renvHelp"
+        buttonLabel="Help"
         menuLabel="Introduction to renv"
         desc="Learn how to use renv"
         rebindable="false"
         context="renv"/>
 
    <cmd id="renvSnapshot"
+        buttonLabel="Snapshot"
         menuLabel="Snapshot Library..."
         desc="Snapshot the state of your project library"
         rebindable="false"
         context="renv"/>
 
    <cmd id="renvRestore"
+        buttonLabel="Restore"
         menuLabel="Restore Library..."
         desc="Restore your project library from renv.lock"
         rebindable="false"

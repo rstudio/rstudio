@@ -1,5 +1,5 @@
 /*
- * PackagesDataGridStyle.java
+ * SessionPPM.hpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -12,13 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.packages.ui;
 
-import com.google.gwt.user.cellview.client.DataGrid;
+#ifndef SESSION_PPM_HPP
+#define SESSION_PPM_HPP
 
-public interface PackagesDataGridStyle extends DataGrid.Style
-{
-   String packageDescription();
-   String packageOutOfSyncRow();
-   String packageNotApplicableColumn();
+namespace rstudio {
+namespace core {
+class Error;
 }
+}
+ 
+namespace rstudio {
+namespace session {
+namespace modules { 
+namespace ppm {
+   
+core::Error initialize();
+                       
+} // namespace ppm
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif // SESSION_PPM_HPP
+

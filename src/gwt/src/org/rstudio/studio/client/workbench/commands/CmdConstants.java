@@ -2715,18 +2715,24 @@ public interface CmdConstants extends Constants {
     String packratCheckStatusDesc();
     
     // renvHelp
+    @DefaultStringValue("Help") // $NON-NLS-1$
+    String renvHelpButtonLabel();
     @DefaultStringValue("Introduction to renv") // $NON-NLS-1$
     String renvHelpMenuLabel();
     @DefaultStringValue("Learn how to use renv") // $NON-NLS-1$
     String renvHelpDesc();
     
     // renvSnapshot
+    @DefaultStringValue("Snapshot") // $NON-NLS-1$
+    String renvSnapshotButtonLabel();
     @DefaultStringValue("Snapshot Library...") // $NON-NLS-1$
     String renvSnapshotMenuLabel();
     @DefaultStringValue("Snapshot the state of your project library") // $NON-NLS-1$
     String renvSnapshotDesc();
     
     // renvRestore
+    @DefaultStringValue("Restore") // $NON-NLS-1$
+    String renvRestoreButtonLabel();
     @DefaultStringValue("Restore Library...") // $NON-NLS-1$
     String renvRestoreMenuLabel();
     @DefaultStringValue("Restore your project library from renv.lock") // $NON-NLS-1$
