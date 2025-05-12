@@ -30,7 +30,7 @@
 
 - Copilot Language Server 1.311.0 (#15935)
 - Electron 36.2.0 (#15933)
-- Quarto 1.7.29 (#15934)
+- Quarto 1.7.31 (#15934)
 
 ### Deprecated / Removed
 
