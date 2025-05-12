@@ -72,8 +72,6 @@
 {
    calls <- .rs.tracebackCalls()
    n <- length(calls)
-   if (n <= 1L)
-      return(NULL)
    
    # create the traceback for the client
    stack <- lapply(seq_len(n), function(i)
@@ -116,31 +114,40 @@
    stack <- Filter(Negate(is.null), stack)
 
    # look for python entry point and fill in the stack from reticulate if we can
-   amended_stack <- list()
-   lapply(stack, function(x)
+   stack <- .rs.addPythonStackFrames(stack)
+   
+   # only report frames in we have >= 2 of them, or if we're
+   # requesting all stack frames
+   frames <- if (n >= 2 || !userOnly) stack else list()
+   
+   # construct and report error object
+   error <- list(
+      frames = frames,
+      message = .rs.scalar(geterrmessage())
+   )
+   
+   errorReporter(error)
+})
+
+.rs.addFunction("addPythonStackFrames", function(oldStack)
+{
+   newStack <- list()
+   
+   lapply(oldStack, function(stackItem)
    {
-      func <- x$func
-      if (.rs.hasPythonStackTrace(func))
+      if (.rs.hasPythonStackTrace(stackItem$func))
       {
-         python_stack_trace <- .rs.getActivePythonStackTrace()
-         for (item in python_stack_trace)
-            amended_stack[[length(amended_stack) + 1]] <<- item
+         pythonStack <- .rs.getActivePythonStackTrace()
+         for (pythonStackItem in pythonStack)
+            newStack[[length(newStack) + 1]] <<- pythonStackItem
       }
       else
       {
-         amended_stack[[length(amended_stack) + 1]] <<- x
+         newStack[[length(newStack) + 1]] <<- stackItem
       }
    })
    
-   # if we found user code (or weren't looking for it), tell the client
-   if (n >= 2 || !userOnly)
-   {
-      error <- list(
-         frames = amended_stack,
-         message = .rs.scalar(geterrmessage())
-      )
-      errorReporter(error)
-   }
+   newStack
 })
 
 .rs.addFunction("hasPythonStackTrace", function(func) {
