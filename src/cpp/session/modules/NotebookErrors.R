@@ -13,14 +13,14 @@
 #
 #
 
-.rs.addFunction("handleNotebookError", function() {
-  .rs.recordTraceback(FALSE, function(err) {
-    .Call("rs_recordNotebookError", err)
-  })
-},
-attrs = list(hideFromDebugger = TRUE,
-             errorHandlerType = 4L))
+.rs.addErrorHandlerFunction("handleNotebookError", "traceback", function()
+{
+   .rs.recordTraceback(FALSE, function(err) {
+      .Call("rs_recordNotebookError", err)
+   })
+})
 
-.rs.addFunction("registerNotebookErrHandler", function() {
-  options(error = .rs.handleNotebookError)
+.rs.addFunction("registerNotebookErrorHandler", function()
+{
+   options(error = .rs.handleNotebookError)
 })

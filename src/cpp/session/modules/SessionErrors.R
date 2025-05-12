@@ -248,37 +248,25 @@ attrs = list(hideFromDebugger = TRUE))
   .rs.enqueClientEvent("unhandled_error", err)
 })
 
-.rs.addFunction("recordAnyTraceback", function()
+.rs.addErrorHandlerFunction("recordAnyTraceback", "traceback", function()
 {
    .rs.recordTraceback(FALSE, .rs.enqueueError)
-},
-attrs = list(rstudioErrorHandler = TRUE,
-             hideFromDebugger = TRUE,
-             errorHandlerType = "traceback"))
+})
 
-.rs.addFunction("recordUserTraceback", function()
+.rs.addErrorHandlerFunction("recordUserTraceback", "traceback", function()
 {
    .rs.recordTraceback(TRUE, .rs.enqueueError)
-},
-attrs = list(rstudioErrorHandler = TRUE,
-             hideFromDebugger = TRUE,
-             errorHandlerType = "traceback"))
+})
 
-.rs.addFunction("breakOnAnyError", function()
+.rs.addErrorHandlerFunction("breakOnAnyError", "break", function()
 {
    .rs.breakOnError(FALSE)
-},
-attrs = list(rstudioErrorHandler = TRUE,
-             hideFromDebugger = TRUE, 
-             errorHandlerType = "break"))
+})
 
-.rs.addFunction("breakOnUserError", function()
+.rs.addErrorHandlerFunction("breakOnUserError", "break", function()
 {
    .rs.breakOnError(TRUE)
-},
-attrs = list(rstudioErrorHandler = TRUE,
-             hideFromDebugger = TRUE,
-             errorHandlerType = "break"))
+})
 
 .rs.addFunction("setErrorManagementType", function(type, userOnly)
 {
