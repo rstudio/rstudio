@@ -16,7 +16,7 @@
 .rs.addErrorHandlerFunction("handleNotebookError", "notebook", function()
 {
    .rs.recordTraceback(FALSE, function(err) {
-      .Call("rs_recordNotebookError", err)
+      .Call("rs_recordNotebookError", err, PACKAGE = "(embedding)")
    })
 })
 

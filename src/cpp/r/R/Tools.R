@@ -100,7 +100,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # for functions which might act as error handlers
-.rs.addFunction("addErrorHandlerFunction", function(name, type, fn)
+.rs.addFunction("addErrorHandlerFunction", function(name, type, handler)
 {
    attrs <- list(
       rstudioErrorHandler = TRUE,
@@ -108,7 +108,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       errorHandlerType    = type
    )
 
-   .rs.addFunction(name, fn, attrs, envir = .rs.toolsEnv())
+   .rs.addFunction(name, handler, attrs, envir = .rs.toolsEnv())
 })
 
 .rs.addFunction("setVar", function(name, var)
