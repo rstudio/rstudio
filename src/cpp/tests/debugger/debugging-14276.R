@@ -6,6 +6,7 @@
 #
 
 # trace(.rs.simulateSourceRefs, quote(str(var)))
+fn <- NULL
 eval(parse(text = "fn <- function() {
   x <- 1
   1 + 1
