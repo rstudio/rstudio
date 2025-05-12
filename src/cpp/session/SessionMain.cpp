@@ -1062,7 +1062,7 @@ void rConsoleWrite(const std::string& output, int otype)
    auto type = (otype == 1)
          ? module_context::ConsoleOutputNormal
          : module_context::ConsoleOutputError;
-   module_context::events().onConsoleOutputReceived(type, output);
+   module_context::events().onConsoleOutput(type, output);
 
    // add to event queue
    int event;
