@@ -532,7 +532,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       // set initial column widths
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
       packagesTable_.setColumnWidth(nameColumn_, 180, Unit.PX);
-      packagesTable_.setColumnWidth(versionColumn_, 80, Unit.PX);
+      packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
       // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
 
@@ -572,7 +572,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          };
 
          packagesTable_.addColumn(lockfileVersionColumn_, new TextHeader(constants_.lockfileText()));
-         packagesTable_.setColumnWidth(lockfileVersionColumn_, 80, Unit.PX);
+         packagesTable_.setColumnWidth(lockfileVersionColumn_, 100, Unit.PX);
 
          packagesTable_.addColumn(packageSourceColumn_, new TextHeader(constants_.sourceText()));
          packagesTable_.setColumnWidth(packageSourceColumn_, 100, Unit.PX);
