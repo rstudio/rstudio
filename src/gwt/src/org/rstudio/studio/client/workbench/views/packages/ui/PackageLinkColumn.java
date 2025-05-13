@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Mutable;
+import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerability;
@@ -50,13 +51,15 @@ import jsinterop.base.JsPropertyMap;
 public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 {
    public PackageLinkColumn(ListDataProvider<PackageInfo> dataProvider,
+                            PackagesDataGridStyle styles,
                             RepositoryPackageVulnerabilityListMap vulns,
                             OperationWithInput<PackageInfo> onClicked)
    {
-      this(dataProvider, vulns, onClicked, false);
+      this(dataProvider, styles, vulns, onClicked, false);
    }
 
    public PackageLinkColumn(final ListDataProvider<PackageInfo> dataProvider,
+                            final PackagesDataGridStyle style,
                             final RepositoryPackageVulnerabilityListMap vulns,
                             final OperationWithInput<PackageInfo> onClicked,
                             final boolean alwaysUnderline)
@@ -70,13 +73,14 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
          {
             if (value != null)
             {
-               addVulnerabilityInfo(context, value, sb);
-
                String classNames = alwaysUnderline
                   ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
                   : RESOURCES.styles().link();
 
+               sb.appendHtmlConstant("<div class=\"" + style.packageColumn() + "\">");
+               addVulnerabilityInfo(context, value, sb);
                sb.append(NAME_TEMPLATE.render(classNames, value.getName()));
+               sb.appendHtmlConstant("</div>");
             }
          }
 

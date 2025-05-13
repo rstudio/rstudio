@@ -533,7 +533,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
       // set initial column widths
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
-      packagesTable_.setColumnWidth(nameColumn_, 120, Unit.PX);
+      packagesTable_.setColumnWidth(nameColumn_, 180, Unit.PX);
       packagesTable_.setColumnWidth(versionColumn_, 80, Unit.PX);
       // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
@@ -666,27 +666,25 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       public NameColumn()
       {
-         super(packagesDataProvider_,
-               vulns_,
-               new OperationWithInput<PackageInfo>() 
+         super(packagesDataProvider_, dataGridRes_.dataGridStyle(), vulns_, new OperationWithInput<PackageInfo>() 
+         {
+            @Override
+            public void execute(PackageInfo packageInfo)
+            {
+               if (packageInfo.getHelpUrl() == null || 
+                   packageInfo.getHelpUrl().length() == 0)
                {
-                  @Override
-                  public void execute(PackageInfo packageInfo)
-                  {
-                     if (packageInfo.getHelpUrl() == null || 
-                         packageInfo.getHelpUrl().length() == 0)
-                     {
-                        display_.showMessage(GlobalDisplay.MSG_INFO, 
-                              constants_.helpNotAvailableCaption(),
-                              constants_.helpNotAvailableMessage(packageInfo.getName()));
-                     }
-                     else
-                     {
-                        observer_.showHelp(packageInfo);
-                     }
-                  }
-               },
-               false);
+                  display_.showMessage(GlobalDisplay.MSG_INFO, 
+                        constants_.helpNotAvailableCaption(),
+                        constants_.helpNotAvailableMessage(packageInfo.getName()));
+               }
+               else
+               {
+                  observer_.showHelp(packageInfo);
+               }
+            }
+         },
+         false);
       }
       
       @Override
@@ -745,7 +743,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          else
          {
             packageDescription = pkgInfo.getDesc();
-            className = dataGridRes_.dataGridStyle().packageDescription();
+            className = dataGridRes_.dataGridStyle().packageColumn();
          }
 
          sb.append(TEMPLATE.description(className, packageDescription));
