@@ -24,7 +24,7 @@
 
 #### Posit Workbench
 
--
+- Fixed an issue where Positron State wasn't being loaded on login (rstudio-pro#8144)
 
 ### Dependencies
 
