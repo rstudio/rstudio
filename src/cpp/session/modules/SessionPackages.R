@@ -124,90 +124,16 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    })
 })
 
-.rs.addFunction( "packages.initialize", function()
+.rs.addFunction("packages.initialize", function()
 {  
    # list of packages we have hooked attach/detach for
-   .rs.setVar( "hookedPackages", character() )
+   .rs.setVar("hookedPackages", character())
 
    # set flag indicating we should not ignore loadedPackageUpdates checks
    .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
     
    # ensure we are subscribed to package attach/detach events
    .rs.updatePackageEvents()
-   
-   # whenever a package is installed notify the client and make sure
-   # we are subscribed to its attach/detach events
-   .rs.registerReplaceHook("install.packages", "utils", function(original,
-                                                                pkgs,
-                                                                lib,
-                                                                repos = getOption("repos"),
-                                                                ...) 
-   {
-      if (missing(pkgs))
-         return(utils::install.packages())
-      
-      if (!.Call("rs_canInstallPackages", PACKAGE = "(embedding)"))
-      {
-        stop("Package installation is disabled in this version of RStudio",
-             call. = FALSE)
-      }
-      
-      packratMode <- !is.na(Sys.getenv("R_PACKRAT_MODE", unset = NA))
-      
-      repos_missing <- missing(repos)
-      if (!is.null(repos) && !packratMode && .rs.loadedPackageUpdates(pkgs)) {
-
-         # attempt to determine the install command
-         installCmd <- NULL
-         for (i in seq_along(sys.calls()))
-         {
-           if (identical(deparse(sys.call(i)[[1]]), "install.packages"))
-           {
-             installCmd <- gsub("\\s+"," ", 
-                                paste(deparse(sys.call(i)), collapse = " "))
-             break
-           }
-         }
-
-         # call back into rsession to send an event to the client
-         .rs.enqueLoadedPackageUpdates(installCmd)
-
-         # throw error
-         stop("Updating loaded packages")
-      }
-
-      # fixup path as necessary
-      .rs.addRToolsToPath()
-
-      # do housekeeping after we execute the original
-      on.exit({
-         .rs.updatePackageEvents()
-         .Call("rs_packageLibraryMutated", PACKAGE = "(embedding)")
-         .rs.restorePreviousPath()
-      })
-      
-      # call original
-      if (repos_missing)
-         original(pkgs, lib, ...)   
-      else 
-         original(pkgs, lib, repos, ...)
-      
-   })
-   
-   # whenever a package is removed notify the client (leave attach/detach
-   # alone because the dangling event is harmless and removing it would
-   # requrie somewhat involved code
-   .rs.registerReplaceHook("remove.packages", "utils", function(original,
-                                                               pkgs,
-                                                               lib,
-                                                               ...) 
-   {
-      # do housekeeping after we execute the original
-      on.exit(.Call("rs_packageLibraryMutated", PACKAGE = "(embedding)"))
-                         
-      # call original
-      original(pkgs, lib, ...) 
-   })
 })
 
 .rs.addFunction( "addRToolsToPath", function()
