@@ -1014,6 +1014,13 @@ public class Packages
       events_.fireEvent(new SendToConsoleEvent(cmd, true));
    }
 
+   private void executePkgCommandNoEcho(String cmd)
+   {
+      SendToConsoleEvent event = new SendToConsoleEvent(cmd, true);
+      event.setShouldEcho(false);
+      events_.fireEvent(event);
+   }
+
    private void restartForInstallWithConfirmation(final String installCmd)
    {
       String msg = constants_.restartForInstallWithConfirmation();
@@ -1034,13 +1041,13 @@ public class Packages
             },
             () ->
             {
-               server_.ignoreNextLoadedPackageCheck(
-                                            new VoidServerRequestCallback() {
+               server_.ignoreNextLoadedPackageCheck(new VoidServerRequestCallback()
+               {
                   @Override
                   public void onSuccess()
                   {
                      if (haveInstallCmd)
-                        executePkgCommand(installCmd);
+                        executePkgCommandNoEcho(installCmd);
                   }
                });
             },

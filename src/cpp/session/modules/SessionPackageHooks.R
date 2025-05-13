@@ -36,7 +36,9 @@
    }
    
    # Notify if we're about to update an already-loaded package.
-   if (.rs.loadedPackageUpdates(pkgs))
+   # Skip this within renv and packrat projects.
+   
+   if (.rs.installPackagesRequiresRestart(pkgs))
    {
       call <- sys.call()
       call[[1L]] <- quote(install.packages)
@@ -106,3 +108,22 @@ formals(.rs.removePackagesImpl) <- formals(utils::remove.packages)
    binding = "remove.packages",
    value   = .rs.removePackages
 )
+
+.rs.addFunction("installPackagesRequiresRestart", function(pkgs)
+{
+   # if we're in an renv project, no need
+   if ("renv" %in% loadedNamespaces())
+   {
+      project <- renv::project()
+      if (!is.null(project))
+         return(FALSE)
+   }
+   
+   # if we're in a packrat project, no need
+   mode <- Sys.getenv("R_PACKRAT_MODE", unset = NA)
+   if (identical(mode, "1"))
+      return(FALSE)
+   
+   # in other cases, restart if one of the requested packages is loaded
+   .rs.loadedPackageUpdates(pkgs)
+})
