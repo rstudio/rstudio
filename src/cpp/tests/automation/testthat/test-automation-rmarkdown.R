@@ -490,3 +490,25 @@ withr::defer(.rs.automation.deleteRemote())
 
 })
 
+.rs.test("errors in notebook chunks halt execution", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Stop on Error
+      ---
+      
+      ```{r}
+      stop("An error occurred here.")
+      stop("This line of code should not be executed.")
+      ```
+   ')
+   
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+      editor$gotoLine(6L)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      output <- remote$console.getOutput()
+      expect_true("Error: An error occurred here." %in% output)
+      expect_false("This line of code should not be executed." %in% output)
+   })
+   
+})
