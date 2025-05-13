@@ -220,6 +220,7 @@
 #include "modules/SessionTerminal.hpp"
 #include "modules/SessionFonts.hpp"
 #include "modules/SessionSystemResources.hpp"
+#include "modules/SessionPPM.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -675,6 +676,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::preview::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
+      (modules::ppm::initialize)
       (modules::cran_mirrors::initialize)
       (modules::profiler::initialize)
       (modules::viewer::initialize)

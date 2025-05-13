@@ -71,7 +71,7 @@ if (NOT DEFINED RSTUDIO_DEFAULT_LOG_PATH)
 endif()
 
 # if we're running within vscode, force color diagnostics
-if(DEFINED ENV{VSCODE_PID})
+if(NOT DEFINED ENV{JENKINS_URL})
    set(CMAKE_COLOR_MAKEFILE TRUE)
    set(CMAKE_COLOR_DIAGNOSTICS TRUE)
 endif()

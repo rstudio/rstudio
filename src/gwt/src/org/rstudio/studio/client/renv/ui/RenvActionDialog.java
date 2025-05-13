@@ -32,7 +32,7 @@ public class RenvActionDialog extends ModalDialog<Void>
                            final OperationWithInput<Void> operation)
    {
       super(
-            action + constant_.libraryCaption(),
+            action + " " + constant_.libraryCaption(),
             Roles.getDialogRole(),
             operation);
       

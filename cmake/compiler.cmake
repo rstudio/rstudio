@@ -25,8 +25,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 # use C++17
 set(CMAKE_CXX_STANDARD 17)
 
-# use colored output in VSCode
-if(DEFINED ENV{VSCODE_PID})
+# use colored output by default
+if(NOT DEFINED ENV{JENKINS_URL})
   set(CMAKE_COLOR_MAKEFILE TRUE)
   set(CMAKE_COLOR_DIAGNOSTICS TRUE)
 endif()

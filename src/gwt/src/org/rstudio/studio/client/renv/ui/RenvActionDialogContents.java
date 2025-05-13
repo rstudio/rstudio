@@ -134,8 +134,7 @@ public class RenvActionDialogContents extends Composite
    {
       if (entry.getAction() == "install")
       {
-         return constants_.restoreInstallAction(entry.getPackageName(), entry.getLockfileVersion()
-         );
+         return constants_.restoreInstallAction(entry.getPackageName(), entry.getLockfileVersion());
       }
       else if (entry.getAction() == "remove")
       {

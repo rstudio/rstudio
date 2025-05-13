@@ -295,7 +295,7 @@
                                              sliceEnd = 1)
 {
    totalCols <- ncol(x)
-   if (totalCols == 0)
+   if (is.null(totalCols) || totalCols == 0)
       return(NULL)
    
    if (sliceEnd > totalCols || sliceEnd < 1)
