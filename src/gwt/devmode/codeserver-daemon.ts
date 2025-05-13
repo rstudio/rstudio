@@ -5,6 +5,7 @@ import path = require('node:path');
 import { chdir, platform } from 'node:process';
 import { createInterface } from 'node:readline';
 import { ENDPOINT } from './codeserver-common';
+import { rmSync } from 'node:fs';
 
 chdir(path.join(__dirname, '..'));
 
@@ -77,5 +78,9 @@ server.on('connection', (socket) => {
   socket.write(buffer.join('\n') + '\n');
 
 });
+
+if (platform !== 'win32') {
+  rmSync(ENDPOINT, { force: true });
+}
 
 server.listen(ENDPOINT);
