@@ -1062,8 +1062,8 @@ void rConsoleWrite(const std::string& output, int otype)
 
    // notify listeners
    auto type = (otype == 1)
-         ? module_context::ConsoleOutputNormal
-         : module_context::ConsoleOutputError;
+         ? module_context::ConsoleOutputError
+         : module_context::ConsoleOutputNormal;
    module_context::events().onConsoleOutput(type, output);
 
    // add to event queue

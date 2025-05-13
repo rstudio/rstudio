@@ -102,7 +102,7 @@ bool RCntxt::isDebugHidden() const
 bool RCntxt::isErrorHandler() const
 {
    SEXP errFlag = r::sexp::getAttrib(callfun(), "errorHandlerType");
-   return TYPEOF(errFlag) == INTSXP;
+   return errFlag != R_NilValue;
 }
 
 bool RCntxt::hasSourceRefs() const

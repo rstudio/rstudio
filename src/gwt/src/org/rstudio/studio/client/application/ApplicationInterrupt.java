@@ -139,13 +139,16 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
 
    public void interruptR(final InterruptHandler handler,
                           List<String> errorHandlerTypes,
-                          String replacedWithHandlerType) {
+                          String replacedWithHandlerType)
+   {
       final String originalDebugType = errorManager_.getErrorHandlerType();
       
-      if (!errorHandlerTypes.contains(originalDebugType)) {
+      if (!errorHandlerTypes.contains(originalDebugType))
+      {
          interruptR(handler);
       }
-      else {
+      else
+      {
          errorManager_.setDebugSessionHandlerType(
             replacedWithHandlerType,
             new ServerRequestCallback<Void>()

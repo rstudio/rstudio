@@ -616,6 +616,44 @@ void handleFilesRequest(const http::Request& request,
    pResponse->setNoCacheHeaders();
    pResponse->setFile(filePath, request);
 }
+
+void handleShowRequest(const http::Request& request,
+                       http::Response* pResponse)
+{
+   // retrieve request uri
+   std::string uri = request.uri();
+
+   // remove a trailing query string, if any
+   std::size_t pos = uri.find("?");
+   if (pos != std::string::npos)
+      uri.erase(pos);
+   
+   // compute path, removing '/show' prefix
+   FilePath filePath(http::util::urlDecode(uri.substr(strlen("/show"))));
+
+   // confirm the user is allowed to view this file
+   if (!module_context::isPathViewAllowed(filePath))
+   {
+      pResponse->setNotFoundError(request);
+      return;
+   }
+
+   // if the user had requested a directory, check for index.html instead
+   if (filePath.isDirectory())
+   {
+      // if there is an index.html then serve that
+      filePath = filePath.completeChildPath("index.html");
+      if (!filePath.exists())
+      {
+         pResponse->setNotFoundError(request);
+         return;
+      }
+   }
+   
+   pResponse->setNoCacheHeaders();
+   pResponse->setFile(filePath, request);
+}
+
    
 const char * const kUploadFilename = "filename";
 const char * const kUploadedTempFile = "uploadedTempFile";
@@ -1977,6 +2015,7 @@ Error initialize()
       (bind(registerRpcMethod, "complete_upload", completeUpload))
       (bind(registerRpcMethod, "make_project_relative", makeProjectRelative))
       (bind(registerUriHandler, "/files", handleFilesRequest))
+      (bind(registerUriHandler, "/show", handleShowRequest))
       (bind(registerUriHandler, "/export", handleFileExportRequest))
       (bind(registerUploadHandler, "/upload", handleFileUploadRequestAsync))
       (bind(sourceModuleRFile, "SessionFiles.R"))

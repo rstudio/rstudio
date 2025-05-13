@@ -39,8 +39,7 @@ void ErrorCapture::connect()
    sexpErrHandler_.set(r::options::getOption("error"));
 
    // set new handler
-   Error error = r::exec::RFunction(".rs.registerNotebookErrHandler")
-                                  .callUnsafe();
+   Error error = r::exec::RFunction(".rs.registerNotebookErrorHandler").callUnsafe();
    if (error)
       LOG_ERROR(error);
 

@@ -79,5 +79,8 @@ server.on('connection', (socket) => {
 
 });
 
-rmSync(ENDPOINT, { force: true });
+if (platform !== 'win32') {
+  rmSync(ENDPOINT, { force: true });
+}
+
 server.listen(ENDPOINT);
