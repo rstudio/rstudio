@@ -131,7 +131,7 @@ COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
 # panmirror check for changes
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-sandyland-bluebonnet panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-cucumberleaf-sunflower panmirror.version.json
 
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common jammy

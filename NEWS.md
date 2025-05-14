@@ -1,4 +1,4 @@
-## RStudio 2025.08.0 "Sandyland Bluebonnet" Release Notes
+## RStudio 2025.08.0 "Cucumberleaf Sunflower" Release Notes
 
 ### New
 
