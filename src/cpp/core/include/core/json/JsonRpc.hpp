@@ -54,12 +54,14 @@ enum errc_t {
    InvalidSession = 14,   // target session is invalid
    MaxSessionsReached = 15,     // license error - max sessions reached
    MaxUsersReached = 16,  // license error - max users reached
-
    // launcher session parameters not found and should be resent to implicitly resume the session
    LaunchParametersMissing = 17,
+   DirectoryViewListingProhibited = 18, // directory view listing not allowed
 
    // profile errors - those imposed by limits in user profiles
    LimitSessionsReached = 20,
+
+   InvalidLicense = 21,
 
    // Execution errors -- These errors occurred during execution of the method.
    // Application state is therefore known based on the expected behavior
@@ -105,13 +107,7 @@ struct is_error_code_enum<rstudio::core::json::errc::errc_t>
 
 using namespace boost::placeholders;
 
-namespace rstudio {
-namespace core {
-namespace http {
-   class Response;
-}
-}
-}
+#include <core/http/Response.hpp>
 
 namespace rstudio {
 namespace core {
@@ -222,6 +218,8 @@ core::Error readParam(const Array& params, unsigned int index, T* pValue)
 
    if (!isType<T>(params[index]))
       return core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+
+   assert(pValue != nullptr);
 
    *pValue = params[index].getValue<T>();
 
@@ -396,7 +394,8 @@ public:
                  bool includeErrorProperties = false);
 
    void setError(const boost::system::error_code& ec,
-                 const Value& clientInfo = Value());
+                 const Value& clientInfo = Value(),
+                 const std::string& errorMessage = std::string());
 
    void setRedirectError(const core::Error& error,
                          const std::string& redirectUrl);
@@ -464,6 +463,7 @@ private:
 void setJsonRpcResponse(const JsonRpcResponse& jsonRpcResponse,
                         http::Response* pResponse);
 
+void setJsonRpcError(const core::Error& error, core::http::Response* pResponse, bool includeErrorProperties = false);
 
 inline void setVoidJsonRpcResult(http::Response* pResponse)
 {
@@ -479,14 +479,6 @@ void setJsonRpcResult(const T& result, http::Response* pResponse)
    jsonRpcResponse.setResult(result);
    setJsonRpcResponse(jsonRpcResponse, pResponse);
 }   
-
-template <typename T>
-void setJsonRpcError(const T& error, core::http::Response* pResponse, bool includeErrorProperties = false)
-{   
-   JsonRpcResponse jsonRpcResponse;
-   jsonRpcResponse.setError(error, includeErrorProperties);
-   setJsonRpcResponse(jsonRpcResponse, pResponse);
-}
 
 template <typename T>
 void setJsonRpcRedirectError(const T& error,

@@ -53,9 +53,10 @@ http::Cookie createSecureCookie(const std::string& name,
                                 http::Cookie::SameSite sameSite = http::Cookie::SameSite::Undefined);
 
 std::string readSecureCookie(const core::http::Request& request,
-                             const std::string& name);
+                             const std::string& name,
+                             std::string* pDebugInfo = nullptr);
 
-std::string readSecureCookie(const std::string& signedCookieValue);
+std::string readSecureCookie(const std::string& signedCookieValue, std::string* pDebugInfo = nullptr);
 
 // Reads the secure cookie. If reading fails or the cookie is invalid
 // pValue will be set to an empty string and pExpires and pLoginExpiry
@@ -64,7 +65,8 @@ void readSecureCookie(
    const std::string& signedCookieValue,
    std::string* pValue,
    boost::posix_time::ptime* pExpires,
-   boost::optional<boost::posix_time::ptime>* pLoginExpiry);
+   boost::optional<boost::posix_time::ptime>* pLoginExpiry,
+   std::string* pDebugInfo = nullptr);
 
 core::Error hashWithSecureKey(const std::string& value, std::string* pHMAC);
 

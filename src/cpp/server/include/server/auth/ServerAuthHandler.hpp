@@ -212,7 +212,7 @@ void invalidateAuthCookie(const std::string& cookie,
 
 core::Error initialize();
 
-bool isCookieRevoked(const std::string& cookie);
+bool isCookieRevoked(const std::string& cookie, std::string* pDebugInfo);
 
 // User functions
 core::Error addUser(boost::asio::io_context& ioContext, const std::string& username, bool isAdmin = false);

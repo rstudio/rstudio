@@ -731,10 +731,7 @@ Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, uint32_t fdStart
    }
    else
    {
-      // we simply log the error instead of returning it because this is generally benign and can
-      // happen in certain normal scenarios, such as if /proc/x/fd is only readable by root
-      // (if core dumps are turned off)
-      core::log::logErrorAsDebug(error);
+      // this happens in normal scenarios, such as if /proc/x/fd is only readable by root
    }
 
    // write message close (-1) even if we failed to retrieve pids above

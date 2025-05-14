@@ -14,6 +14,7 @@
  */
 
 #include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 
 #include <gsl/gsl-lite.hpp>
@@ -293,6 +294,17 @@ void Request::addCookie(const std::string& name, const std::string& value)
    setHeader("Cookie", boost::algorithm::join(cookies, "; "));
 }
 
+void Request::removeCookie(const std::string& name)
+{
+   cookies_.erase(std::remove_if(cookies_.begin(), cookies_.end(), [&](Field pair){ return pair.first == name; }));
+   std::vector<std::string> cookies;
+   for (const auto& cookie : cookies_)
+   {
+      cookies.push_back(cookie.first + "=" + cookie.second);
+   }
+   setHeader("Cookie", boost::algorithm::join(cookies, "; "));
+}
+
 std::string Request::cookieValueFromHeader(const std::string& headerName) const
 {
    std::string value = headerValue(headerName);
@@ -430,6 +442,15 @@ std::ostream& operator << (std::ostream& stream, const Request& r)
    stream << m;
 
    return stream;
+}
+
+const std::string Request::debugInfoResponse(const Response& response) const
+{
+   std::string res = debugInfoFinal()  + " code: " + std::to_string(response.statusCode());
+   std::string apiError = response.apiError();
+   if (!apiError.empty())
+      res = res + " api error: " + apiError;
+   return res;
 }
 
 } // namespacce http
