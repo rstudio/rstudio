@@ -13,7 +13,7 @@ pushd ..\..\..\src\gwt\lib
 
 if not exist quarto (
   git clone https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
-  REM git clone --branch release/rstudio-sandyland-bluebonnet https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
+  REM git clone --branch release/rstudio-cucumberleaf-sunflower https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
   pushd ..\..\..\src\gwt\lib\quarto
   git rev-parse HEAD
   popd
@@ -23,7 +23,7 @@ if not exist quarto (
   git reset --hard
   git clean -dfx
   git checkout main
-  REM git checkout release/rstudio-sandyland-bluebonnet
+  REM git checkout release/rstudio-cucumberleaf-sunflower
   git pull
   git rev-parse HEAD
   popd
