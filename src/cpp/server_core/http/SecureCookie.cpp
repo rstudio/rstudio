@@ -151,22 +151,23 @@ http::Cookie createSecureCookie(const std::string& name,
 }
 
 std::string readSecureCookie(const core::http::Request& request,
-                             const std::string& name)
+                             const std::string& name,
+                             std::string* pDebugInfo)
 {
    // get the signed cookie value
    std::string signedCookieValue = request.cookieValue(name);
    if (signedCookieValue.empty())
       return std::string();
 
-   return readSecureCookie(signedCookieValue);
+   return readSecureCookie(signedCookieValue, pDebugInfo);
 }
 
-std::string readSecureCookie(const std::string& signedCookieValue)
+std::string readSecureCookie(const std::string& signedCookieValue, std::string* pDebugInfo)
 {
    std::string value;
    boost::posix_time::ptime expires;
    boost::optional<boost::posix_time::ptime> loginExpiry;
-   readSecureCookie(signedCookieValue, &value, &expires, &loginExpiry);
+   readSecureCookie(signedCookieValue, &value, &expires, &loginExpiry, pDebugInfo);
 
    // ok to return the value
    return value;
@@ -176,10 +177,14 @@ void readSecureCookie(
    const std::string& signedCookieValue,
    std::string* pValue,
    boost::posix_time::ptime* pExpires,
-   boost::optional<boost::posix_time::ptime>* pLoginExpiry)
+   boost::optional<boost::posix_time::ptime>* pLoginExpiry,
+   std::string* pDebugInfo)
 {
    *pValue = "";
    *pLoginExpiry = boost::none;
+
+   if (signedCookieValue.empty())
+      return;
 
    // split it into its parts (url decode them as well)
    std::string value, expires, hmac;
@@ -203,8 +208,10 @@ void readSecureCookie(
         expires.empty() ||
         hmac.empty())
    {
-      LOG_WARNING_MESSAGE("Invalid secure cookie (wrong number of fields): " +
-                          signedCookieValue);
+      std::string warning = "Invalid secure cookie (wrong number of fields): " + signedCookieValue;
+      if (pDebugInfo)
+         *pDebugInfo = warning;
+      LOG_WARNING_MESSAGE(warning);
       return;
    }
 
@@ -213,6 +220,8 @@ void readSecureCookie(
    Error error = base64HMAC(value, expires, &computedHmac);
    if (error)
    {
+      if (pDebugInfo)
+         *pDebugInfo = error.getSummary();
       LOG_ERROR(error);
       return;
    }
@@ -220,6 +229,8 @@ void readSecureCookie(
    // compare hmac to the one in the cookie
    if (hmac != computedHmac)
    {
+      if (pDebugInfo)
+         *pDebugInfo = "Hash for secure cookie did not match";
       // will occur in normal course of operations if the user upgrades
       // their browser (and the User-Agent changes). could also occur
       // in the case of an attempted forgery
@@ -236,18 +247,34 @@ void readSecureCookie(
 
       loginExpiry = http::util::parseHttpDate(loginExpiryStr);
       if (loginExpiry.is_not_a_date_time())
+      {
+         if (pDebugInfo)
+            *pDebugInfo = "Max active login timeout invalid date format";
          return;
+      }
       else if (loginExpiry <= second_clock::universal_time())
+      {
+         if (pDebugInfo)
+            *pDebugInfo = "Max active login timeout cookie expired";
          return;
+      }
 
       *pLoginExpiry = loginExpiry;
    }
 
    ptime expiresTime = http::util::parseHttpDate(expires);
    if (expiresTime.is_not_a_date_time())
+   {
+       if (pDebugInfo)
+          *pDebugInfo = "Max login timeout invalid date format";
       return;
+   }
    else if (expiresTime <= second_clock::universal_time())
+   {
+      if (pDebugInfo)
+         *pDebugInfo = "Max login timeout cookie expired";
       return;
+   }
 
    *pExpires = expiresTime;
    *pValue = value;

@@ -138,6 +138,7 @@ public:
    std::string cookieValue(const std::string& name) const;
    std::string cookieValueFromHeader(const std::string& headerName) const;
    void addCookie(const std::string& name, const std::string& value);
+   void removeCookie(const std::string& name);
    
    const Fields& formFields() const;
    std::string formFieldValue(const std::string& name) const;
@@ -191,6 +192,8 @@ public:
       return debugInfo() + " in " + std::to_string(requestTime.total_seconds()) + "." +
                                     std::to_string(requestTime.total_milliseconds() % 1000) + "s";
    }
+
+   const std::string debugInfoResponse(const Response& response) const;
 
 private:
    // Use the internal URI when you need the "behind the proxy" URI

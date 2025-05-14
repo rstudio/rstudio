@@ -159,6 +159,15 @@ bool parseJsonRpcRequestForMethod(const std::string& input,
    return true;
 }
 
+void setJsonRpcError(const core::Error& error, core::http::Response* pResponse, bool includeErrorProperties)
+{
+   JsonRpcResponse jsonRpcResponse;
+   jsonRpcResponse.setError(error, includeErrorProperties);
+   setJsonRpcResponse(jsonRpcResponse, pResponse);
+   pResponse->setApiError(error.getSummary());
+}
+
+
 namespace  {
 
 void copyErrorCodeToJsonError(const boost::system::error_code& code,
@@ -220,11 +229,11 @@ void JsonRpcResponse::setError(const Error& error,
    // remove result
    response_.erase(json::kRpcResult);
    response_.erase(json::kRpcAsyncHandle);
-   
+
    if (error.getName() == json::jsonRpcCategory().name())
    {
       setError(boost::system::error_code(error.getCode(), json::jsonRpcCategory()),
-               json::Value());
+               json::Value(), error.getSummary());
    }
    else
    {
@@ -239,14 +248,8 @@ void JsonRpcResponse::setError(const Error& error,
       std::string errorCategoryName = error.getName();
       executionError["category"] = errorCategoryName;
       
-      std::string errorMessage = error.getMessage();
+      std::string errorMessage = error.getSummary();
       executionError["message"] = errorMessage;
-      
-      if (error.getLocation().hasLocation())
-      {
-         std::string errorLocation = error.getLocation().asString();
-         executionError["location"] = errorLocation;
-      }
       
       jsonError["error"] = executionError;
       if (!clientInfo.isNull())
@@ -285,7 +288,8 @@ void JsonRpcResponse::setError(const Error& error,
 
    
 void JsonRpcResponse::setError(const boost::system::error_code& ec,
-                               const Value& clientInfo)
+                               const Value& clientInfo,
+                               const std::string& errorMessage)
 {
    // remove result
    response_.erase(json::kRpcResult);
@@ -293,7 +297,13 @@ void JsonRpcResponse::setError(const boost::system::error_code& ec,
 
    // error from error code
    Object error;
-   copyErrorCodeToJsonError(ec, &error);
+   if (!errorMessage.empty())
+   {
+      error["code"] = ec.value();
+      error["message"] = errorMessage;
+   }
+   else
+      copyErrorCodeToJsonError(ec, &error);
 
    // client info if provided
    if (!clientInfo.isNull())
@@ -462,6 +472,9 @@ std::string JsonRpcErrorCategory::message( int ev ) const
       case errc::LimitSessionsReached:
          return "The maximum amount of concurrent session allowed for the user profile has been reached";
 
+      case errc::DirectoryViewListingProhibited:
+         return "Viewing of this directory/file is prohibited as per configuration";
+		 
       case errc::RedirectNotImplementedError:
          return "Unsupported redirection requested";
 

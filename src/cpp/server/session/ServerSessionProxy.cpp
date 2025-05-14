@@ -158,7 +158,7 @@ Error launchSessionRecovery(
    if (requiresSession(request))
    {
       LOG_DEBUG_MESSAGE("Failed to connect to session for user: " + context.username +
-                        (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()));
+                        (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()) + ": " + request.debugInfoFinal());
 
       return Error(server::errc::SessionUnavailableError, ERROR_LOCATION);
    }
@@ -170,7 +170,7 @@ Error launchSessionRecovery(
    if (state != core::r_util::ScopeValid)
    {
        LOG_ERROR_MESSAGE("Invalid session scope for user: " + context.username +
-                         (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()));
+                         (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()) + ": " + request.debugInfoFinal());
 
        Error error(server::errc::InvalidSessionScopeError, ERROR_LOCATION);
        error.addProperty("state", static_cast<int>(state));
@@ -182,14 +182,14 @@ Error launchSessionRecovery(
    if (error)
    {
       error.addProperty("description", "Failed to recreate streamsDir for session");
-      error.addProperty("user", context.username);
+      error.addProperty("request-info", request.debugInfoFinal());
       LOG_ERROR(error);
    }
 
    // attempt to launch the session only if this is the first recovery attempt
    if (firstAttempt)
    {
-      LOG_DEBUG_MESSAGE("Launching session for user: " + context.username + (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()));
+      LOG_DEBUG_MESSAGE("Launching session for user: " + context.username + (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()) + " for: " + request.debugInfo());
 
       bool launched;
 
@@ -250,9 +250,8 @@ void handleProxyResponse(
    // request are stamped on the response
    ptrConnection->writeResponse(response, true, getAuthCookies(ptrConnection->response()));
 
-   LOG_DEBUG_MESSAGE("-- sent server proxy response for: " + ptrConnection->request().debugInfoFinal() +
+   LOG_DEBUG_MESSAGE("-- sent server proxy response for: " + ptrConnection->request().debugInfoResponse(response) +
                      (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()) +
-                      ": " + safe_convert::numberToString(ptrConnection->response().statusCode()) +
                       " " + std::to_string(ptrConnection->response().body().length()) + "b");
 }
 
@@ -511,7 +510,7 @@ void logIfNotConnectionTerminated(const Error& error,
    if (!http::isConnectionTerminatedError(error))
    {
       Error logError(error);
-      logError.addProperty("request-uri", request.uri());
+      logError.addProperty("request-info", request.debugInfoFinal());
       LOG_ERROR(logError);
    }
 }
@@ -811,7 +810,7 @@ void proxyRequest(
    // assign request
    pClient->request().assign(*pRequest);
 
-   LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath());
+   LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
 
    // proxy the request
    boost::shared_ptr<http::ChunkProxy> chunkProxy(new http::ChunkProxy(ptrConnection));
