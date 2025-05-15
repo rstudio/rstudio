@@ -113,8 +113,12 @@
    # If the user is opting into bundling warnings, just let the default
    # R warning handler take over. We also need to ignore if warnings are
    # disabled entirely (via a negative value for the option).
+   #
+   # Similarly, this handler will be invoked for warnings even when warn >= 2,
+   # but in this scenario we want treat warnings as errors, and so we should
+   # avoid invoking the handler here.
    warn <- getOption("warn", default = 0L)
-   if (warn <= 0L)
+   if (warn <= 0L || warn >= 2L)
       return(FALSE)
    
    # I can't imagine anyone is actually using this in the wild, but...

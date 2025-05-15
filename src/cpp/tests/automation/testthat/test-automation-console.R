@@ -125,3 +125,25 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(foundWarningSpan)
    
 })
+
+# https://github.com/rstudio/rstudio/issues/16031
+.rs.test("warnings are treated as errors when options(warn = 2)", {
+   
+   remote$console.executeExpr({
+      
+      options(warn = 2)
+      
+      x <- tryCatch(
+         as.numeric("oops"),
+         error = identity
+      )
+      
+      options(warn = 0)
+      inherits(x, "error")
+      
+   })
+   
+   output <- remote$console.getOutput(n = 1L)
+   expect_equal(output, "[1] TRUE")
+   
+})
