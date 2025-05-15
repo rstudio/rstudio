@@ -115,7 +115,7 @@
    # disabled entirely (via a negative value for the option).
    #
    # Similarly, this handler will be invoked for warnings even when warn >= 2,
-   # but in this scenario we want treate warnings as errors, and so we should
+   # but in this scenario we want treat warnings as errors, and so we should
    # avoid invoking the handler here.
    warn <- getOption("warn", default = 0L)
    if (warn <= 0L || warn >= 2L)
