@@ -69,8 +69,9 @@
    
 })
 
-.rs.automation.addRemoteFunction("console.getOutput", function()
+.rs.automation.addRemoteFunction("console.getOutput", function(n = NULL)
 {
    output <- self$js.querySelector("#rstudio_console_output")
-   strsplit(output$innerText, split = "\n", fixed = TRUE)[[1L]]
+   lines <- strsplit(output$innerText, split = "\n", fixed = TRUE)[[1L]]
+   tail(lines, n = .rs.nullCoalesce(n, length(lines)))
 })

@@ -17,3 +17,9 @@ gwt-code-server.log
 
 # ignore local VSCode settings
 .vscode/
+
+# ignore stuff that java dumps on crash
+/snap.*.trc
+/core.*.dmp
+/heapdump.*.phd
+/javacore.*.txt
