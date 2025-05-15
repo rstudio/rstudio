@@ -19,14 +19,12 @@ website:
         url: 'https://docs.posit.co/previous-versions/rstudio/'
       - text: "Guides"
         menu:
-          - text: "Workbench Admin Guide"
-            url: 'https://docs.posit.co/ide/server-pro/{{< var version >}}'
-          - text: "Workbench User Guide"
-            url: 'https://docs.posit.co/ide/server-pro/user/{{< var version >}}'
-          - text: Workbench Licenses
-            url: 'https://docs.posit.co/ide/licenses/{{< var version >}}'
+          - text: "Posit Workbench Documentation"
+            url: 'https://docs.posit.co/ide/server-pro/'
+          - text: Licenses
+            url: 'https://docs.posit.co/ide/licenses/'
           - text: "RStudio Open Source User Guide"
-            url: 'https://docs.posit.co/ide/user/{{< var version >}}'
+            url: 'https://docs.posit.co/ide/user/'
       - icon: "list"
         menu:
           - text: "docs.posit.co"
