@@ -28,7 +28,7 @@
 
 ### Dependencies
 
-- Copilot Language Server 1.311.0 (#15935)
+- Copilot Language Server 1.322.0 (#15935)
 - Electron 36.2.1 (#15933)
 - Quarto 1.7.31 (#15934)
 
