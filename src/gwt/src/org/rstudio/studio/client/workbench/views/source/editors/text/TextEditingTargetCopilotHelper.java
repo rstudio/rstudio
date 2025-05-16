@@ -189,8 +189,7 @@ public class TextEditingTargetCopilotHelper
                            {
                               CopilotCompletion completion = completions.getAt(i);
                               
-                              completion.displayText = completion.insertText.substring(
-                                    completion.range.end.character - completion.range.start.character);
+                              completion.displayText = postProcessCompletion(computeGhostText(completion.insertText));
                               
                               // Copilot includes trailing '```' for some reason in some cases,
                               // remove those if we're inserting in an R document.
@@ -445,6 +444,26 @@ public class TextEditingTargetCopilotHelper
       copilotDisabledInThisDocument_ = false;
    }
    
+   private String computeGhostText(String completionText)
+   {
+      // If the completion includes existing text (i.e. at the beginning of the completion) 
+      // remove that duplicated prefix from the ghost text.
+      String currentLine = display_.getLine(display_.getCursorRow());
+      String currentLineBeforeCursor = StringUtil.substring(currentLine, 0, display_.getCursorColumn());
+
+      // find the common prefix between the current line and the completion text
+      int commonPrefixLength = 0;
+      for (int i = 0; i < Math.min(currentLineBeforeCursor.length(), completionText.length()); i++)
+      {
+         if (currentLineBeforeCursor.charAt(i) != completionText.charAt(i))
+            break;
+         commonPrefixLength++;
+      }
+
+      // remove the common prefix from the completion text and return it as the ghost text
+      return completionText.substring(commonPrefixLength);
+   }
+
    @Inject
    private void initialize(Copilot copilot,
                            EventBus events,
