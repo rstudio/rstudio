@@ -35,15 +35,27 @@ endif()
 # and tasks.json files as appropriate.
 if(RSTUDIO_PROJECT_TYPE STREQUAL OpenSource)
 
-   file(
-      READ "${RSTUDIO_PROJECT_ROOT}/.vscode/launch.json"
-      VSCODE_LAUNCH_JSON)
+   set(RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE TRUE)
 
-   string(FIND "${VSCODE_LAUNCH_JSON}"
-      "// Please edit the configuration file in .vscode/open-source/launch.json."
-      VSCODE_LAUNCH_JSON_OPEN_SOURCE)
+   if(EXISTS "${RSTUDIO_PROJECT_ROOT}/.vscode/launch.json")
 
-   if(NOT VSCODE_LAUNCH_JSON_OPEN_SOURCE EQUAL -1)
+      file(
+         READ "${RSTUDIO_PROJECT_ROOT}/.vscode/launch.json"
+         VSCODE_LAUNCH_JSON)
+
+      string(
+         FIND "${VSCODE_LAUNCH_JSON}"
+         "// Please edit the configuration file in .vscode/open-source/launch.json."
+         RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE_INDEX)
+
+      if(RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE_INDEX EQUAL -1)
+         set(RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE FALSE)
+      endif()
+
+   endif()
+
+   if(RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE)
+
       configure_file(
          "${RSTUDIO_PROJECT_ROOT}/.vscode/open-source/launch.json"
          "${RSTUDIO_PROJECT_ROOT}/.vscode/launch.json"
@@ -53,6 +65,7 @@ if(RSTUDIO_PROJECT_TYPE STREQUAL OpenSource)
          "${RSTUDIO_PROJECT_ROOT}/.vscode/open-source/tasks.json"
          "${RSTUDIO_PROJECT_ROOT}/.vscode/tasks.json"
          @ONLY)
-      endif()
+
+   endif()
 
 endif()
