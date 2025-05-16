@@ -1,3 +1,7 @@
+//
+// Task configurations for the open source edition of RStudio.
+// Please edit the configuration file in .vscode/open-source/launch.json.
+//
 {
   "version": "2.0.0",
   "tasks": [

@@ -23,3 +23,49 @@ set(CMAKE_MODULE_PATH "${RSTUDIO_PROJECT_ROOT}/cmake/modules/")
 if(NOT DEFINED CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Debug")
 endif()
+
+# Figure out if we're open source or not.
+if(EXISTS "${RSTUDIO_PROJECT_ROOT}/upstream")
+   set(RSTUDIO_PROJECT_TYPE Workbench CACHE INTERNAL "")
+else()
+   set(RSTUDIO_PROJECT_TYPE OpenSource CACHE INTERNAL "")
+endif()
+
+# If we're open source, then copy the relevant launch.json
+# and tasks.json files as appropriate.
+if(RSTUDIO_PROJECT_TYPE STREQUAL OpenSource)
+
+   set(RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE TRUE)
+
+   if(EXISTS "${RSTUDIO_PROJECT_ROOT}/.vscode/launch.json")
+
+      file(
+         READ "${RSTUDIO_PROJECT_ROOT}/.vscode/launch.json"
+         VSCODE_LAUNCH_JSON)
+
+      string(
+         FIND "${VSCODE_LAUNCH_JSON}"
+         "// Please edit the configuration file in .vscode/open-source/launch.json."
+         RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE_INDEX)
+
+      if(RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE_INDEX EQUAL -1)
+         set(RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE FALSE)
+      endif()
+
+   endif()
+
+   if(RSTUDIO_USE_OPEN_SOURCE_VSCODE_INFRASTRUCTURE)
+
+      configure_file(
+         "${RSTUDIO_PROJECT_ROOT}/.vscode/open-source/launch.json"
+         "${RSTUDIO_PROJECT_ROOT}/.vscode/launch.json"
+         @ONLY)
+
+      configure_file(
+         "${RSTUDIO_PROJECT_ROOT}/.vscode/open-source/tasks.json"
+         "${RSTUDIO_PROJECT_ROOT}/.vscode/tasks.json"
+         @ONLY)
+
+   endif()
+
+endif()
