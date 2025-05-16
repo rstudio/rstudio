@@ -7,7 +7,7 @@
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
 @eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
 
-.packageDescription {
+.packageColumn {
    display: block;
    white-space: nowrap;
    text-overflow: ellipsis;

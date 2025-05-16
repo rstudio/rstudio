@@ -69,7 +69,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            GlobalDisplay globalDisplay,
                            OperationWithInput<PackageInstallRequest> operation)
 {
-      super(constants_.installPackagesCaption(),Roles.getDialogRole(), operation);
+      super(constants_.installPackagesCaption(), Roles.getDialogRole(), operation);
       
       installContext_ = installContext;
       defaultInstallOptions_ = defaultInstallOptions;

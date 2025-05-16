@@ -398,6 +398,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionPackages.R"))
+      (bind(sourceModuleRFile, "SessionPackageHooks.R"))
       (bind(registerRpcMethod, "available_packages", availablePackages))
       (bind(registerRpcMethod, "get_package_state", getPackageState))
       (bind(r::exec::executeString, ".rs.packages.initialize()"));

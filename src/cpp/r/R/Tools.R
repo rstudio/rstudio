@@ -1754,3 +1754,90 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    lapply(packages, getNamespaceInfo, "path")
 })
 
+.rs.addFunction("readNetrc", function(netrcPath = NULL)
+{
+   # Resolve the path to the .netrc file.
+   netrcPath <- .rs.nullCoalesce(netrcPath,
+   {
+      Sys.getenv("NETRC", unset = "~/.netrc")
+   })
+   
+   info <- file.info(netrcPath, extra_cols = FALSE)
+   if (is.na(info$mode))
+      return(NULL)
+   
+   # Read the contents of the file.
+   contents <- readLines(netrcPath, warn = FALSE)
+   
+   # Remove any 'macdef' entries within the file.
+   macdefLines <- rev(grep("^\\s*macdef\\b", contents, perl = TRUE))
+   if (length(macdefLines))
+   {
+      blankLines <- c(which(contents == ""), length(contents) + 1L)
+      for (macdefLine in macdefLines)
+      {
+         lhs <- macdefLine
+         rhs <- blankLines[blankLines > macdefLine][[1L]]
+         contents <- c(
+            head(contents, n = +(lhs - 1L)),
+            tail(contents, n = -(rhs - 1L))
+         )
+      }
+   }
+   
+   # Read the tokens within the file.
+   tokens <- scan(
+      text         = paste(contents, collapse = "\n"),
+      what         = character(),
+      quote        = "\"",
+      comment.char = "#",
+      quiet        = TRUE
+   )
+   
+   # Add some blank tokens at end, to support lookahead.
+   tokens <- c(tokens, "", "")
+   
+   # Make a simple token walker.
+   i <- 0L; n <- length(tokens)
+   pop <- function() {
+      i <<- i + 1L
+      tokens[[i]]
+   }
+   
+   # netrc can have machine, login, password, and account fields.
+   machine <- ""
+   
+   # Start parsing the .netrc entries within the file.
+   stack <- .rs.stack(mode = "list")
+   
+   token <- pop()
+   while (nzchar(token))
+   {
+      entry <- list()
+      
+      # Get the machine definition. Handle 'default' here as well.
+      entry[["machine"]] <- if (token == "default")
+         ""
+      else if (token == "machine")
+         pop()
+      else
+         stop("unexpected token '", token, "'; expected 'machine' or 'default'")
+      
+      # Handle the optional fields.
+      token <- pop()
+      while (token %in% c("login", "password", "account"))
+      {
+         entry[[token]] <- pop()
+         token <- pop()
+      }
+      
+      # Add it to the result stack.
+      stack$push(entry)
+   }
+   
+   # Return result as named list.
+   result <- stack$data()
+   names(result) <- .rs.mapChr(result, `[[`, "machine")
+   
+   result
+})
