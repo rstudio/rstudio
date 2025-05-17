@@ -159,6 +159,11 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
       return animate_;
    }
 
+   public void setShouldEcho(boolean echo)
+   {
+      echo_ = echo;
+   }
+
    public boolean shouldEcho()
    {
       return echo_;
