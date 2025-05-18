@@ -181,4 +181,12 @@ withr::defer(.rs.automation.deleteRemote())
    output <- remote$console.getOutput(n = 1L)
    expect_equal(output, "This is some more output.")
    
+   remote$console.clear()
+   remote$console.executeExpr({
+      message("M1", appendLF = FALSE); message("\b", appendLF = FALSE); message("2")
+   })
+   
+   output <- remote$console.getOutput(n = 1L)
+   expect_equal(output, "M2")
+   
 })
