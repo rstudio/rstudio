@@ -294,15 +294,17 @@ public class VirtualConsole
       if (cursor_ == 0)
          return;
       
-      while (cursor_ > 0 && output_.charAt(cursor_ - 1) != '\n')
-         cursor_--;
+      cursor_ = output_.lastIndexOf("\n", cursor_) + 1;
    }
 
    private void newline(String clazz)
    {
       clearPartialAnsiCode();
-      while (cursor_ < output_.length() && output_.charAt(cursor_) != '\n')
-         cursor_++;
+
+      cursor_ = output_.indexOf("\n", cursor_);
+      if (cursor_ == -1)
+         cursor_ = output_.length();
+
       // Now we're either at the end of the buffer, or on top of a '\n'
       text("\n", clazz, false/*forceNewRange*/);
    }
@@ -858,23 +860,49 @@ public class VirtualConsole
                         tail += groupStartMatch.getValue().length() - 1;
                         break;
                      }
-                     
+
                      String type = groupStartMatch.getGroup(1);
                      String groupClazz = groupTypeToClazz(type);
                      
                      // re-use the previous group if we're closing and re-opening
                      // a group of the same type
                      Node lastNode = parent_.getLastChild();
+                     Element lastNodeEl = null;
                      if (Element.is(lastNode))
                      {
-                        Element lastEl = Element.as(lastNode);
-                        if (lastEl.hasClassName(groupClazz))
+                        lastNodeEl = Element.as(lastNode);
+                        if (lastNodeEl.hasClassName(groupClazz))
                         {
-                           parent_ = lastEl;
+                           parent_ = lastNodeEl;
                            tail += groupStartMatch.getValue().length() - 1;
                            break;
                         }
                      }
+
+                     // if we're starting a group, but the cursor is not
+                     // located at the end of the output (e.g. a carriage
+                     // return or something similar moved the cursor), then
+                     // adjust output appropriately
+                     if (lastNodeEl != null)
+                     {
+                        int numCharsToRemove = output_.length() - cursor_;
+                        if (numCharsToRemove > 0)
+                        {
+                           String text = lastNodeEl.getInnerText();
+                           if (text.length() <= numCharsToRemove)
+                           {
+                              lastNodeEl.removeFromParent();
+                           }
+                           else
+                           {
+                              lastNodeEl.setInnerText(
+                                 text.substring(0, text.length() - numCharsToRemove));
+                           }
+                        }
+                     }
+
+                     text("", clazz, false);
+                     cursor_ = output_.length();
                      
                      // otherwise, create a new group span and use it
                      SpanElement spanEl = Document.get().createSpanElement();
@@ -1038,13 +1066,14 @@ public class VirtualConsole
    private void trimLeadingNewlines(Element childEl)
    {
       Node firstChildNode = childEl.getFirstChild();
+      if (firstChildNode == null)
+         return;
+      
       while (firstChildNode.getNodeType() != Node.TEXT_NODE)
       {
          firstChildNode = firstChildNode.getFirstChild();
          if (firstChildNode == null)
-         {
             return;
-         }
       }
  
       firstChildNode.setNodeValue(
@@ -1054,13 +1083,14 @@ public class VirtualConsole
    private void trimTrailingNewlines(Element childEl)
    {
       Node lastChildNode = childEl.getLastChild();
+      if (lastChildNode == null)
+         return;
+      
       while (lastChildNode.getNodeType() != Node.TEXT_NODE)
       {
          lastChildNode = lastChildNode.getLastChild();
          if (lastChildNode == null)
-         {
             return;
-         }
       }
  
       lastChildNode.setNodeValue(
