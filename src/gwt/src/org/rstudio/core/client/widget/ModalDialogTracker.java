@@ -18,26 +18,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public class ModalDialogTracker
 {
    public static void onShow(PopupPanel panel)
    {
+      ensureVisible(panel);
       dialogStack_.add(panel);
+
       if (Desktop.hasDesktopFrame()) {
          if (BrowseCap.isElectron())
             Desktop.getFrame().setNumGwtModalsShowing(numModalsShowing());
          DesktopMenuCallback.setMainMenuEnabled(false);
       }
+
       updateInert(true);
    }
 
@@ -132,6 +140,25 @@ public class ModalDialogTracker
          A11y.setInert(ideFrame, inert);
       if (satWrapper != null)
          A11y.setInert(satWrapper, inert);
+   }
+
+   private static void ensureVisible(Panel panel)
+   {
+      try
+      {
+         ensureVisibleImpl(panel);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+   }
+
+   private static void ensureVisibleImpl(Panel panel)
+   {
+      Style styles = DomUtils.getComputedStyles(panel.getElement());
+      Integer zIndex = StringUtil.parseInt(styles.getZIndex(), 1000);
+      panel.getElement().getStyle().setZIndex(zIndex + dialogStack_.size());
    }
 
    private static final List<PopupPanel> dialogStack_ = new ArrayList<>();
