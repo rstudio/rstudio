@@ -352,9 +352,10 @@ pre {
 }
 
 .ace_active_debug_line {
-   margin-left: -1px;
+   margin-left: -2px;
    margin-top: -1px;
-   padding: 1px;
+   padding-right: 2px;
+   padding-bottom: 2px;
 }
 
 .editor_light .ace_active_debug_line {
@@ -362,7 +363,7 @@ pre {
 }
 
 .editor_dark .ace_active_debug_line {
-   background-color: rgb(50, 46, 8);
+   background-color: rgb(54, 50, 8);
 }
 
 .ace_tooltip {
