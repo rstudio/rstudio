@@ -130,10 +130,16 @@ public class AceThemes
          document.getBody().appendChild(currentStyleEl);
       }
       
-      if(theme.isDark())
+      if (theme.isDark())
+      {
+         document.getBody().removeClassName("editor_light");
          document.getBody().addClassName("editor_dark");
+      }
       else
+      {
          document.getBody().removeClassName("editor_dark");
+         document.getBody().addClassName("editor_light");
+      }
       
       // Deferred so that the browser can render the styles.
       new Timer()
