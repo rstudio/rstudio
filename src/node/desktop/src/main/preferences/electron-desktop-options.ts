@@ -47,6 +47,8 @@ const kRendererEngine = 'renderer.engine';
 const kRendererUseGpuExclusionList = 'renderer.useGpuExclusionList';
 const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds';
 
+const kUseDefault32BitR = 'platform.windows.useDefault32BitR';
+const kUseDefault64BitR = 'platform.windows.useDefault64BitR';
 const kRExecutablePath = 'platform.windows.rExecutablePath';
 const kPreferR64 = 'platform.windows.preferR64';
 
@@ -299,6 +301,24 @@ export class DesktopOptionsImpl implements DesktopOptions {
     }
 
     return rBinDir;
+  }
+
+  // Windows-only options
+  public useDefault32BitR() {
+    return this.config.get(kUseDefault32BitR, false);
+  }
+
+  public setUseDefault32BitR(useDefault: boolean) {
+    this.config.set(kUseDefault32BitR, useDefault);
+  }
+
+  // Windows-only option
+  public useDefault64BitR() {
+    return this.config.get(kUseDefault64BitR, false);
+  }
+
+  public setUseDefault64BitR(useDefault: boolean) {
+    this.config.set(kUseDefault64BitR, useDefault);
   }
 
   // Windows-only option

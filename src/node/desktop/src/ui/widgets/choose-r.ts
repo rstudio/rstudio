@@ -118,6 +118,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
       this.addIpcHandler('use-default-32bit', async (event, data: CallbackData) => {
         const installPath = initData.default32bitPath;
+        data.useDefault32BitR = true;
         data.binaryPath = `${installPath}/bin/i386/${kWindowsRExe}`;
         logger().logDebug(`Using default 32-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
@@ -125,6 +126,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
       this.addIpcHandler('use-default-64bit', async (event, data: CallbackData) => {
         const installPath = initData.default64bitPath;
+        data.useDefault64BitR = true;
         data.binaryPath = `${installPath}/bin/x64/${kWindowsRExe}`;
         logger().logDebug(`Using default 64-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
