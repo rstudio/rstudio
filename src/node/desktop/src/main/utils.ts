@@ -215,7 +215,6 @@ function findBuildRootImpl(rootDir: string): string {
       for (const buildFile of ['.ninja_log', 'CMakeFiles']) {
         const buildPath = `${buildDirParent}/${buildFile}`;
         if (fs.existsSync(buildPath)) {
-          console.log(buildDirParent);
           const stat = fs.statSync(buildPath);
           buildDirs.push({ path: buildDirParent, stat: stat });
         }
