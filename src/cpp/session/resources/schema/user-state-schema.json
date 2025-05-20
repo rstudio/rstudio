@@ -58,7 +58,7 @@
                 },
                 "accessibility": {
                     "type": "boolean",
-                    "description": "Screen reader support" 
+                    "description": "Screen reader support"
                 },
                 "disableRendererAccessibility": {
                     "type": "boolean",
@@ -145,6 +145,8 @@
             },
             "default": {
                 "windows": {
+                    "useDefault32BitR": false,
+                    "useDefault64BitR": true,
                     "rBinDir": "",
                     "preferR64": true,
                     "rExecutablePath": ""
@@ -388,13 +390,13 @@
             "type": "string",
             "default": "",
             "title": "Zotero API Key",
-            "description": "Key for making Zotero API calls"  
+            "description": "Key for making Zotero API calls"
         },
         "zotero_data_dir": {
             "type": "string",
             "default": "",
             "title": "Zotero Data Directory",
-            "description": "Directory containing Zotero data files" 
+            "description": "Directory containing Zotero data files"
         },
         "quarto_website_sync_editor": {
             "type": "boolean",
