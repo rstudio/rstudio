@@ -41,6 +41,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -243,9 +244,42 @@ public class CopilotPreferencesPane extends PreferencesPane
             
             if (enabled)
             {
+               server_.copilotVerifyInstalled(new ServerRequestCallback<Boolean>()
+               {
+                  @Override
+                  public void onResponseReceived(Boolean isInstalled)
+                  {
+                     if (isInstalled)
+                     {
+                        // Eagerly change the preference here, so that we can
+                        // respond to changes in the agent status.
+                        prefs_.copilotEnabled().setGlobalValue(true);
+                        prefs_.writeUserPrefs((completed) ->
+                        {
+                           refresh();
+                        });
+                     }
+                     else
+                     {
+                        // Copilot language server not found so revert the checkbox state.
+                        cbCopilotEnabled_.setValue(false);
+                     }
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // Error when verifying copilot language server installation, revert the checkbox state.
+                     Debug.logError(error);
+                     cbCopilotEnabled_.setValue(false);
+                  }
+               });
+            }
+            else
+            {
                // Eagerly change the preference here, so that we can
                // respond to changes in the agent status.
-               prefs_.copilotEnabled().setGlobalValue(true);
+               prefs_.copilotEnabled().setGlobalValue(false);
                prefs_.writeUserPrefs((completed) ->
                {
                   refresh();
@@ -379,7 +413,7 @@ public class CopilotPreferencesPane extends PreferencesPane
             }
             else if (response.result == null)
             {
-               if (response.error != null)
+               if (response.error != null && response.error.getCode() != CopilotConstants.ErrorCodes.AGENT_SHUT_DOWN)
                {
                   lblCopilotStatus_.setText(constants_.copilotStartupError());
                   if (!StringUtil.isNullOrEmpty(response.output))
@@ -387,6 +421,11 @@ public class CopilotPreferencesPane extends PreferencesPane
                      copilotStartupError_ = response.output;
                      showButtons(btnShowError_);
                   }
+               }
+               else if (CopilotResponseTypes.CopilotAgentNotRunningReason.isError(response.reason))
+               {
+                  int reason = (int) response.reason.valueOf();
+                  lblCopilotStatus_.setText(CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
                }
                else if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {

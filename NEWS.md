@@ -23,6 +23,7 @@
 - Fixed an issue where code indentation stopped working following code chunks containing only Quarto comments (#15879)
 - Fixed an issue where RStudio could hang when attempting to execute notebook chunks without a registered handler (#15979)
 - (Windows) "Use default 32bit / 64bit version of R" now always uses the default version of R set in the registry (#12545)
+- Show an error message when the copilot language server is missing (#15923)
 
 #### Posit Workbench
 
