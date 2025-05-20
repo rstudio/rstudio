@@ -491,29 +491,32 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private void insertErrorWidgetElement(List<Element> errorEls,
                                          Element widgetEl)
    {
-      Element firstErrorEl = errorEls.get(0);
-      
       // If console groups are enabled, the error output might have been collected
       // into a single 'groupError' span element. Search the parent element, plus
       // all of that element's siblings.
-      Element parentEl = firstErrorEl.getParentElement();
-      for (Element el = parentEl.getParentElement().getFirstChildElement();
-           el != null;
-           el = el.getNextSiblingElement())
+      for (int i = 0, n = errorEls.size(); i < n; i++)
       {
-         if (el.hasClassName(VirtualConsole.RES.styles().groupError()))
+         Element errorEl = errorEls.get(n - i - 1);
+         Element parentEl = errorEl.getParentElement();
+         for (Element el = parentEl.getParentElement().getFirstChildElement();
+              el != null;
+              el = el.getNextSiblingElement())
          {
-            el.getParentElement().replaceChild(widgetEl, el);
-            return;
+            if (el.hasClassName(VirtualConsole.RES.styles().groupError()))
+            {
+               el.getParentElement().replaceChild(widgetEl, el);
+               return;
+            }
          }
       }
       
       // Otherwise, error output should be a sequence of DOM elements within
-      // some collection. Replace the first one with our error widget, and then
+      // some collection. Replace the last one with our error widget, and then
       // remove all the other error elements.
-      parentEl.replaceChild(widgetEl, firstErrorEl);
-      for (int i = 1; i < errorEls.size(); i++)
-         parentEl.removeChild(errorEls.get(i));
+      Element lastErrorEl = errorEls.get(errorEls.size() - 1);
+      lastErrorEl.getParentElement().replaceChild(widgetEl, lastErrorEl);
+      for (int i = 0, n = errorEls.size() - 1; i < n; i++)
+         errorEls.get(i).removeFromParent();
    }
 
    @Override
