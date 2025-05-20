@@ -223,26 +223,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
       toolbar.addLeftSeparator();
 
-      // manage repositories
-      // TODO
-      // ToolbarPopupMenu repositoryMenu = new ToolbarPopupMenu();
-      // repositoryMenu.addItem(new MenuItem("Use CRAN Repository", false, (ScheduledCommand) null));
-      // repositoryMenu.addItem(new MenuItem("Use Research Repository", false, (ScheduledCommand) null));
-      // repositoryMenu.addItem(new MenuItem("Use Development Repository", false, (ScheduledCommand) null));
-
-      // ToolbarMenuButton repositoryButton = new ToolbarMenuButton(
-      //    "Repositories",
-      //    ToolbarButton.NoTitle,
-      //    commands_.showHtmlPreviewLog().getImageResource(),
-      //    repositoryMenu
-      // );
-
-      // toolbar.addLeftWidget(repositoryButton);
-      // projectButtonSeparator_ = toolbar.addLeftSeparator();
+      projectButtonSeparator_ = toolbar.addLeftSeparator();
       
-      // packrat (all packrat UI starts out hidden and then appears
-      // in response to changes in the packages state)
-
       // create packrat menu + button
       ToolbarPopupMenu packratMenu = new ToolbarPopupMenu();
       packratMenu.addItem(commands_.packratHelp().createMenuItem(false));
