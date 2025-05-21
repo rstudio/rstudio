@@ -67,6 +67,15 @@ public class CopilotResponseTypes
          }
       }
       
+      public static boolean isError(JsNumber reason)
+      {
+         if (reason == null)
+            return false;
+         
+         int intReason = (int) reason.valueOf();
+         return intReason == Unknown || intReason == NotInstalled || intReason == LaunchError;
+      }
+      
       public static int Unknown = 0;
       public static int NotInstalled = 1;
       public static int DisabledByAdministrator = 2;

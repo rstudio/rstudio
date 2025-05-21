@@ -689,6 +689,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void copilotVerifyInstalled(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
+   }
+   
+   @Override
    public void copilotDiagnostics(ServerRequestCallback<CopilotDiagnosticsResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "copilot_diagnostics", requestCallback);

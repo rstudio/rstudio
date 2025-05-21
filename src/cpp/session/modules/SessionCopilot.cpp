@@ -402,6 +402,11 @@ FilePath copilotLanguageServerPath()
    return FilePath();
 }
 
+bool isCopilotAgentInstalled()
+{
+   return copilotLanguageServerPath().exists();
+}
+
 bool isCopilotEnabled()
 {
 #ifdef COPILOT_ENABLED
@@ -412,7 +417,14 @@ bool isCopilotEnabled()
       s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
       return false;
    }
-   
+
+   // Check whether the agent is where it should be
+   if (!isCopilotAgentInstalled())
+   {
+      s_agentNotRunningReason = CopilotAgentNotRunningReason::NotInstalled;
+      return false;
+   }
+
    // Check project option
    switch (s_copilotProjectOptions.copilotEnabled)
    {
@@ -1599,6 +1611,14 @@ SEXP rs_copilotStopAgent()
    return Rf_ScalarLogical(stopped);
 }
 
+Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   json::Object responseJson;
+   pResponse->setResult(isCopilotAgentInstalled());
+   return Success();
+}
+
 Error copilotDiagnostics(const json::JsonRpcRequest& request,
                          const json::JsonRpcFunctionContinuation& continuation)
 {
@@ -1883,6 +1903,7 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
+         (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
          (bind(registerRpcMethod, "copilot_doc_focused", copilotDocFocused))
          (bind(registerRpcMethod, "copilot_did_show_completion", copilotDidShowCompletion))
          (bind(sourceModuleRFile, "SessionCopilot.R"))

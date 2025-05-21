@@ -27,6 +27,8 @@ public interface CopilotServerOperations
 {
    public void copilotDiagnostics(ServerRequestCallback<CopilotDiagnosticsResponse> requestCallback);
    
+   public void copilotVerifyInstalled(ServerRequestCallback<Boolean> requestCallback);
+   
    public void copilotSignIn(ServerRequestCallback<CopilotSignInResponse> requestCallback);
    
    public void copilotSignOut(ServerRequestCallback<CopilotSignOutResponse> requestCallback);
