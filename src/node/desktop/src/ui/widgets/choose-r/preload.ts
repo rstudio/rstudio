@@ -54,7 +54,7 @@ ipcRenderer.on('initialize', (_event, data) => {
   // if we have a default 32-bit R installation, enable it
   const useDefault32BitR = data.useDefault32BitR as boolean;
   const default32BitPath = data.default32bitPath as string;
-  if (use32 && default32BitPath) {
+  if (default32BitPath) {
     use32.removeAttribute('disabled');
     use32.checked = useDefault32BitR;
   }
@@ -62,7 +62,7 @@ ipcRenderer.on('initialize', (_event, data) => {
   // if we have a default 64-bit R installation, enable it
   const useDefault64BitR = data.useDefault64BitR as boolean;
   const default64BitPath = data.default64bitPath as string;
-  if (use64 && default64BitPath) {
+  if (default64BitPath) {
     use64.removeAttribute('disabled');
     use64.checked = useDefault64BitR;
   }
@@ -115,6 +115,7 @@ ipcRenderer.on('initialize', (_event, data) => {
         const useCustomRadioInput = document.getElementById('use-custom') as any;
         useCustomRadioInput.checked = true;
         selectWidget.disabled = false;
+        selectWidget.selectedIndex = selectEl.childElementCount - 1;
         selectWidget.focus();
       }
     }
@@ -133,6 +134,7 @@ ipcRenderer.on('initialize', (_event, data) => {
         const useCustomRadioInput = document.getElementById('use-custom') as any;
         useCustomRadioInput.checked = true;
         selectWidget.disabled = false;
+        selectWidget.selectedIndex = selectEl.childElementCount - 1;
         selectWidget.focus();
       }
     }
