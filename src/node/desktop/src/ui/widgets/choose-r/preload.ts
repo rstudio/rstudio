@@ -52,29 +52,19 @@ ipcRenderer.on('initialize', (_event, data) => {
   const buttonDownload = document.getElementById('button-download') as HTMLButtonElement;
 
   // if we have a default 32-bit R installation, enable it
-  const default32Bit = data.default32bitPath as string;
-  let isDefault32Selected = false;
-  if (default32Bit) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    use32?.removeAttribute('disabled');
-
-    if (isRVersionSelected('' + data.selectedRVersion, default32Bit + `/bin/i386/${kWindowsRExe}`)) {
-      use32.checked = true;
-      isDefault32Selected = true;
-    }
+  const useDefault32BitR = data.useDefault32BitR as boolean;
+  const default32BitPath = data.default32bitPath as string;
+  if (default32BitPath) {
+    use32.removeAttribute('disabled');
+    use32.checked = useDefault32BitR;
   }
 
   // if we have a default 64-bit R installation, enable it
-  const default64Bit = data.default64bitPath as string;
-  let isDefault64Selected = false;
-  if (default64Bit) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    use64?.removeAttribute('disabled');
-
-    if (isRVersionSelected('' + data.selectedRVersion, default64Bit + `/bin/x64/${kWindowsRExe}`)) {
-      use64.checked = true;
-      isDefault64Selected = true;
-    }
+  const useDefault64BitR = data.useDefault64BitR as boolean;
+  const default64BitPath = data.default64bitPath as string;
+  if (default64BitPath) {
+    use64.removeAttribute('disabled');
+    use64.checked = useDefault64BitR;
   }
 
   // cast received data
@@ -112,6 +102,7 @@ ipcRenderer.on('initialize', (_event, data) => {
 
     // check for 64 bit executable
     const r64 = `${rInstall}/bin/x64/${kWindowsRExe}`;
+
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (await ipcRenderer.invoke('fs_existsSync', r64)) {
       const optionEl = window.document.createElement('option');
@@ -119,12 +110,12 @@ ipcRenderer.on('initialize', (_event, data) => {
       optionEl.innerText = `[64-bit] ${rInstall}`;
       selectEl.appendChild(optionEl);
 
-      if (isRVersionSelected(data.selectedRVersion as string, r64) && !isDefault64Selected) {
+      if (!useDefault64BitR && isRVersionSelected(data.selectedRVersion as string, r64)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const useCustomRadioInput = document.getElementById('use-custom') as any;
         useCustomRadioInput.checked = true;
-
         selectWidget.disabled = false;
+        selectWidget.selectedIndex = selectEl.childElementCount - 1;
         selectWidget.focus();
       }
     }
@@ -138,19 +129,18 @@ ipcRenderer.on('initialize', (_event, data) => {
       optionEl.innerText = `[32-bit] ${rInstall}`;
       selectEl.appendChild(optionEl);
 
-      if (isRVersionSelected(data.selectedRVersion as string, r32) && !isDefault32Selected) {
+      if (!useDefault32BitR && isRVersionSelected(data.selectedRVersion as string, r32)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const useCustomRadioInput = document.getElementById('use-custom') as any;
         useCustomRadioInput.checked = true;
-
         selectWidget.disabled = false;
-
+        selectWidget.selectedIndex = selectEl.childElementCount - 1;
         selectWidget.focus();
       }
     }
   });
 
-  useCustomEl.checked = !default32Bit && !default64Bit && rInstalls.length > 0;
+  useCustomEl.checked = !default32BitPath && !default64BitPath && rInstalls.length > 0;
   selectWidget.disabled = !useCustomEl.checked;
   if (rInstalls.length > 0) {
     buttonDownload.remove();
