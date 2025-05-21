@@ -94,14 +94,19 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
   }
 
   async onShowModal(): Promise<CallbackData | null> {
+
+    const options = ElectronDesktopOptions();
+
     const r32 = findDefault32Bit();
     const r64 = findDefault64Bit();
     const initData = {
+      useDefault32BitR: options.useDefault32BitR(),
+      useDefault64BitR: options.useDefault64BitR(),
       default32bitPath: isValidInstallation(r32, 'i386') ? r32 : '',
       default64bitPath: isValidInstallation(r64, 'x64') ? r64 : '',
       rInstalls: this.rInstalls,
-      renderingEngine: ElectronDesktopOptions().renderingEngine(),
-      selectedRVersion: ElectronDesktopOptions().rExecutablePath(),
+      renderingEngine: options.renderingEngine(),
+      selectedRVersion: options.rExecutablePath(),
     };
 
     this.webContents.send('initialize', initData);
