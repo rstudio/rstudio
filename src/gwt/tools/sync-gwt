@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-BRANCH=rstudio/mariposa-orchid
+BRANCH=rstudio/cucumberleaf-sunflower
+
 #
 # RStudio fork of GWT started with BRANCH off of GWT 2.8.2 plus our changes.
 # That is, started life with:
@@ -30,39 +31,40 @@ BRANCH=rstudio/mariposa-orchid
 #   git checkout rstudio/kousa-dogwood
 #   git checkout -b rstudio/mariposa-orchid
 #   git push -u origin rstudio/mariposa-orchid
+#
 
 # check out our copy of gwt and build tools
-if [ ! -d gwt ]; then
-    mkdir gwt
-fi
-cd gwt
-if [ ! -d gwt ]; then
-    git clone git@github.com:rstudio/gwt.git
-    cd gwt
-    git remote add upstream https://github.com/gwtproject/gwt
-    cd ..
-fi
-if [ ! -d tools ]; then
-    git clone git@github.com:gwtproject/tools.git
-fi
+mkdir -p gwtproject
+cd gwtproject
 
-cd gwt
+set +e
 
-if [ "$(git status --porcelain)" != "" ]; then
-    echo "ERROR: Can't merge, working tree is dirty"
-    exit 1
-fi
+git clone git@github.com:rstudio/gwt.git 2> /dev/null
+(cd gwt && git remote add upstream https://github.com/gwtproject/gwt) 2> /dev/null
+(cd gwt && git pull)
+
+git clone git@github.com:gwtproject/tools.git 2> /dev/null
+(cd tools && git pull)
+
+set -e
+
+# move to gwt directory
+cd gwt
+git status
+git diff --quiet
 
 # get latest main from upstream
 git fetch upstream
 git checkout main
 git merge upstream/main
 
-git checkout "${BRANCH}"
+# switch to new branch off of main
+git checkout -B "${BRANCH}"
 git reset --hard "${BRANCH}"
 git status
-cd ../..
 
+echo
 echo Reminder, if you are making changes to GWT sources, use the build-gwt script to rebuild 
 echo the GWT jars into the rstudio source tree, and commit those files AND the gwt-source files
 echo when done.
+echo
