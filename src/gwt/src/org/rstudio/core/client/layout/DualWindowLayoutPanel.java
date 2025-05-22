@@ -40,10 +40,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.SplitterBeforeResizeEvent;
-import com.google.gwt.user.client.ui.SplitterBeforeResizeHandler;
-import com.google.gwt.user.client.ui.SplitterResizedEvent;
-import com.google.gwt.user.client.ui.SplitterResizedHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 
@@ -435,7 +431,7 @@ public class DualWindowLayoutPanel extends SimplePanel
 
       if (eventBus != null)
       {
-         layout_.addSplitterBeforeResizeHandler(new SplitterBeforeResizeHandler()
+         layout_.addSplitterBeforeResizeHandler(new SplitterBeforeResizeEvent.Handler()
          {
             public void onSplitterBeforeResize(SplitterBeforeResizeEvent event)
             {
