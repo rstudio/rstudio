@@ -80,6 +80,7 @@ public class TextEditingTargetCopilotHelper
          this.endCharacter = originalCompletion.range.end.character;
 
          this.originalCompletion = originalCompletion;
+         this.partialAcceptedLength = 0;
       }
 
       public String insertText;
@@ -89,6 +90,7 @@ public class TextEditingTargetCopilotHelper
       public int endLine;
       public int endCharacter;
       public CopilotCompletion originalCompletion;
+      public int partialAcceptedLength;
    }
 
    public TextEditingTargetCopilotHelper(TextEditingTarget target)
@@ -401,8 +403,13 @@ public class TextEditingTargetCopilotHelper
       String insertedWord = StringUtil.substring(text, 0, match.getIndex());
       String leftoverText = StringUtil.substring(text, match.getIndex());
       
-      int acceptedLength = insertedWord.length();
       int n = insertedWord.length();
+      
+      // From the docs: "Note that the acceptedLength includes everything from the start of
+      //                 insertText to the end of the accepted text. It is not the length of 
+      //                 the accepted text itself."
+      activeCompletion_.partialAcceptedLength += n;
+
       activeCompletion_.displayText = leftoverText;
       activeCompletion_.insertText = leftoverText;
       activeCompletion_.startCharacter += n;
@@ -413,7 +420,9 @@ public class TextEditingTargetCopilotHelper
          suppressCursorChangeHandler_ = true;
          display_.insertCode(insertedWord, InsertionBehavior.EditorBehaviorsDisabled);
          display_.setGhostText(activeCompletion_.displayText);
-         server_.copilotDidAcceptPartialCompletion(activeCompletion_.originalCompletion, acceptedLength, new VoidServerRequestCallback());
+         server_.copilotDidAcceptPartialCompletion(activeCompletion_.originalCompletion, 
+                                                   activeCompletion_.partialAcceptedLength,
+                                                   new VoidServerRequestCallback());
          
          // Work around issue with ghost text not appearing after inserting
          // a code suggestion containing a new line
