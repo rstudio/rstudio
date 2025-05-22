@@ -1,4 +1,5 @@
-/* * NewRSConnectAuthPage.java
+/*
+ * NewRSConnectAuthPage.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
