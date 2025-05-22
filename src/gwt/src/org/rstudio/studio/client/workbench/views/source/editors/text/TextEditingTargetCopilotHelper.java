@@ -88,7 +88,7 @@ public class TextEditingTargetCopilotHelper
       public int startCharacter;
       public int endLine;
       public int endCharacter;
-      private CopilotCompletion originalCompletion;
+      public CopilotCompletion originalCompletion;
    }
 
    public TextEditingTargetCopilotHelper(TextEditingTarget target)
