@@ -81,22 +81,21 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 
       private void addVulnerabilityInfo(Context context, PackageInfo value, SafeHtmlBuilder sb)
       {
-         Debug.breakpoint();
          final Mutable<Boolean> didFindVulnerability = new Mutable<>(false);
 
          String name = value.getName();
          String version = value.getVersion();
-         Debug.log("Name == " + name + "; Version == " + version);
 
          vulns_.forEach((String key) ->
          {
-            PackageVulnerabilityListMap pvlMap = (PackageVulnerabilityListMap) vulns_.get(key);
+            PackageVulnerabilityListMap pvlMap = vulns_.get(key);
             if (pvlMap == null || !pvlMap.has(name))
                return;
 
-            PackageVulnerabilityList pvList = (PackageVulnerabilityList) pvlMap.get(name);
-            for (PackageVulnerability pvItem : pvList.asList())
+            PackageVulnerabilityList pvList = pvlMap.get(name);
+            for (int i = 0, n = pvList.getLength(); i < n; i++)
             {
+               PackageVulnerability pvItem = pvList.getAt(i);
                if (pvItem.versions.has(version))
                {
                   SafeUri uri = RESOURCES.iconWarning().getSafeUri();
