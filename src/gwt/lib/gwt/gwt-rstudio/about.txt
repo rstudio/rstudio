@@ -1,5 +1,5 @@
 GWT 2.12.2
-(git revision 0a6b5f81d)
+(git revision 5596fbf64)
 Copyright (c) Google, Inc. 2009.  All rights reserved.
 Visit http://www.gwtproject.org.
 
