@@ -39,11 +39,11 @@ cd gwtproject
 
 set +e
 
-git clone git@github.com:rstudio/gwt.git 2> /dev/null
-(cd gwt && git remote add upstream https://github.com/gwtproject/gwt) 2> /dev/null
+git clone git@github.com:rstudio/gwt.git
+(cd gwt && git remote add upstream https://github.com/gwtproject/gwt)
 (cd gwt && git pull)
 
-git clone git@github.com:gwtproject/tools.git 2> /dev/null
+git clone git@github.com:gwtproject/tools.git
 (cd tools && git pull)
 
 set -e
@@ -58,13 +58,42 @@ git fetch upstream
 git checkout main
 git merge upstream/main
 
-# switch to new branch off of main
-git checkout -B "${BRANCH}"
-git reset --hard "${BRANCH}"
-git status
+cat <<EOF
 
-echo
-echo Reminder, if you are making changes to GWT sources, use the build-gwt script to rebuild 
-echo the GWT jars into the rstudio source tree, and commit those files AND the gwt-source files
-echo when done.
-echo
+The GWT sources have been checked out at 'gwtproject/gwt'.
+
+If you're preparing to update the bundled version of GWT in RStudio,
+you can take the following steps:
+
+1. Find the branch associated with the most recent RStudio release;
+2. Check out that release branch,
+3. Create a new branch off that release,
+4. Merge the appropriate upstream version of GWT into that branch.
+
+As an example, when we updated from Kousa Dogwood to Cucumber Sunflower:
+
+	cd gwtproject/gwt
+	git fetch upstream
+	git checkout rstudio/kousa-dogwood
+	git checkout -B rstudio/cucumberleaf-sunflower
+	git merge 2.12.2
+
+Next, you can try building GWT using:
+
+	ant dist
+
+If the build succeeds, you can push your newly-created branch.
+
+After you've confirmed that GWT has been updated and built successfully,
+you can use the 'build-gwt' script to rebuild the GWT jars into the
+RStudio source tree.
+
+You may also need to update the files at:
+
+	src/gwt/.classpath
+	src/gwt/.project
+
+as IDE tools will use these to resolve the Java libraries used by RStudio.
+
+EOF
+

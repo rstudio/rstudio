@@ -40,10 +40,12 @@
    <property name="bind.address" value="127.0.0.1"/>
 
    <path id="project.class.path">
-     <pathelement location="${build.dir}"/>
+      <pathelement location="${build.dir}"/>
       <fileset dir="${gwt.sdk}" includes="*.jar"/>
       <fileset dir="${lib.dir}/gin/2.1.2" includes="*.jar"/>
-      <fileset dir="${lib.dir}/elemental2/" includes="*.jar"/>
+      <fileset dir="${lib.dir}/elemental2" includes="*.jar"/>
+      <fileset dir="${lib.dir}/jsinterop" includes="*.jar"/>
+      <fileset dir="${lib.dir}/jspecify" includes="*.jar"/>
    </path>
 
    <path id="test.class.path">
