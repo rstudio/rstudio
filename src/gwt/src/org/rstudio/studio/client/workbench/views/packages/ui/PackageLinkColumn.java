@@ -41,14 +41,111 @@ import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.ListDataProvider;
 
-import jsinterop.base.Any;
 import jsinterop.base.Js;
-import jsinterop.base.JsPropertyMap;
 
 
 // package name column which includes a hyperlink to package docs
 public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 {
+   public static class PackageLinkCell extends AbstractCell<PackageInfo>
+   {
+      public PackageLinkCell(final ListDataProvider<PackageInfo> dataProvider,
+                             final RepositoryPackageVulnerabilityListMap vulns,
+                             final OperationWithInput<PackageInfo> onClicked,
+                             final boolean alwaysUnderline)
+      {
+         super("click");
+
+         dataProvider_ = dataProvider;
+         vulns_ = vulns;
+         onClicked_ = onClicked;
+         alwaysUnderline_ = alwaysUnderline;
+      }
+
+      // render anchor using custom styles. detect selection and
+      // add selected style to invert text color
+      @Override
+      public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
+      {
+         if (value == null)
+            return;
+
+         addVulnerabilityInfo(context, value, sb);
+
+         String classNames = alwaysUnderline_
+               ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
+               : RESOURCES.styles().link();
+
+         sb.append(NAME_TEMPLATE.render(classNames, value.getName()));
+      }
+
+      private void addVulnerabilityInfo(Context context, PackageInfo value, SafeHtmlBuilder sb)
+      {
+         final Mutable<Boolean> didFindVulnerability = new Mutable<>(false);
+
+         String name = value.getName();
+         String version = value.getVersion();
+
+         vulns_.forEach((String key) ->
+         {
+            PackageVulnerabilityListMap pvlMap = vulns_.get(key);
+            if (pvlMap == null || !pvlMap.has(name))
+               return;
+
+            PackageVulnerabilityList pvList = pvlMap.get(name);
+            for (int i = 0, n = pvList.getLength(); i < n; i++)
+            {
+               PackageVulnerability pvItem = pvList.getAt(i);
+               if (pvItem.versions.has(version))
+               {
+                  SafeUri uri = RESOURCES.iconWarning().getSafeUri();
+                  String title = pvItem.id + ": " + pvItem.summary + "\n\n" + pvItem.details;
+                  sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), title, uri));
+                  didFindVulnerability.set(true);
+                  return;
+               }
+            }
+         });
+
+         if (!didFindVulnerability.get())
+         {
+            sb.append(NONE_TEMPLATE.render(RESOURCES.styles().icon()));
+         }
+      }
+
+      // click event which occurs on the actual package link div
+      // results in showing help for that package
+      @Override
+      public void onBrowserEvent(Context context, Element parent, PackageInfo value,
+                                 NativeEvent event, ValueUpdater<PackageInfo> valueUpdater)
+      {
+         super.onBrowserEvent(context, parent, value, event, valueUpdater);
+         if ("click".equals(event.getType()))
+         {
+            // verify that the click was on the package link
+            JavaScriptObject target = event.getEventTarget().cast();
+            if (!Element.is(target))
+               return;
+
+            Element targetEl = Element.as(target);
+            if (!targetEl.hasClassName(RESOURCES.styles().link()))
+               return;
+
+            int idx = context.getIndex();
+            List<PackageInfo> data = dataProvider_.getList();
+            if (idx >= 0 && idx < dataProvider_.getList().size())
+            {
+               onClicked_.execute(data.get(idx));
+            }
+         }
+      }
+
+      private final ListDataProvider<PackageInfo> dataProvider_;
+      private final RepositoryPackageVulnerabilityListMap vulns_;
+      private final OperationWithInput<PackageInfo> onClicked_;
+      private final boolean alwaysUnderline_;
+   }
+
    public PackageLinkColumn(ListDataProvider<PackageInfo> dataProvider,
                             RepositoryPackageVulnerabilityListMap vulns,
                             OperationWithInput<PackageInfo> onClicked)
@@ -61,89 +158,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
                             final OperationWithInput<PackageInfo> onClicked,
                             final boolean alwaysUnderline)
    {
-      super(new AbstractCell<PackageInfo>("click")
-      {
-         // render anchor using custom styles. detect selection and
-         // add selected style to invert text color
-         @Override
-         public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
-         {
-            if (value != null)
-            {
-               addVulnerabilityInfo(context, value, sb);
-
-               String classNames = alwaysUnderline
-                  ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
-                  : RESOURCES.styles().link();
-
-               sb.append(NAME_TEMPLATE.render(classNames, value.getName()));
-            }
-         }
-
-         private void addVulnerabilityInfo(Context context, PackageInfo value, SafeHtmlBuilder sb)
-         {
-            if (vulns == null)
-               return;
-            
-            final Mutable<Boolean> didFindVulnerability = new Mutable<>(false);
-
-            String name = value.getName();
-            String version = value.getVersion();
-
-            vulns.forEach((String key) ->
-            {
-               PackageVulnerabilityListMap pvlMap = Js.uncheckedCast(vulns.get(key));
-               if (pvlMap == null || !pvlMap.has(name))
-                  return;
-               
-               PackageVulnerabilityList pvList = Js.uncheckedCast(pvlMap.get(name));
-               for (PackageVulnerability pvItem : pvList.asList())
-               {
-                  if (pvItem.versions.has(version))
-                  {
-                     SafeUri uri = RESOURCES.iconWarning().getSafeUri();
-                     String title = pvItem.id + ": " + pvItem.summary + "\n\n" + pvItem.details;
-                     sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), title, uri));
-                     didFindVulnerability.set(true);
-                     return;
-                  }
-               }
-            });
-
-            if (!didFindVulnerability.get())
-            {
-               sb.append(NONE_TEMPLATE.render(RESOURCES.styles().icon()));
-            }
-         }
-
-         // click event which occurs on the actual package link div
-         // results in showing help for that package
-         @Override
-         public void onBrowserEvent(Context context, Element parent,
-                                    PackageInfo value, NativeEvent event,
-                                    ValueUpdater<PackageInfo> valueUpdater)
-         {
-            super.onBrowserEvent(context, parent, value, event, valueUpdater);
-            if ("click".equals(event.getType()))
-            {
-               // verify that the click was on the package link
-               JavaScriptObject target = event.getEventTarget().cast();
-               if (!Element.is(target))
-                  return;
-               
-               Element targetEl = Element.as(target);
-               if (!targetEl.hasClassName(RESOURCES.styles().link()))
-                  return;
-               
-               int idx = context.getIndex();
-               List<PackageInfo> data = dataProvider.getList();
-               if (idx >= 0 && idx < dataProvider.getList().size())
-               {
-                  onClicked.execute(data.get(idx));
-               }
-            }
-         }
-      });
+      super(new PackageLinkCell(dataProvider, vulns, onClicked, alwaysUnderline));
    }
 
    interface NameTemplate extends SafeHtmlTemplates
@@ -167,7 +182,9 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
    interface Styles extends CssResource
    {
       String icon();
+
       String link();
+
       String linkUnderlined();
    }
 
