@@ -14,9 +14,6 @@
  */
 package org.rstudio.core.client.layout;
 
-import org.rstudio.core.client.events.SplitterBeforeResizeEvent;
-import org.rstudio.core.client.events.SplitterResizedEvent;
-
 import com.google.gwt.aria.client.OrientationValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
@@ -102,13 +99,13 @@ public class BinarySplitLayoutPanel extends LayoutPanel
    }
 
    public HandlerRegistration addSplitterBeforeResizeHandler(
-         SplitterBeforeResizeEvent.Handler handler)
+         SplitterBeforeResizeHandler handler)
    {
       return addHandler(handler, SplitterBeforeResizeEvent.TYPE);
    }
 
    public HandlerRegistration addSplitterResizedHandler(
-         SplitterResizedEvent.Handler handler)
+         SplitterResizedHandler handler)
    {
       return addHandler(handler, SplitterResizedEvent.TYPE);
    }

@@ -23,8 +23,6 @@ import static org.rstudio.core.client.layout.WindowState.NORMAL;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.EnsureHeightEvent;
-import org.rstudio.core.client.events.SplitterBeforeResizeEvent;
-import org.rstudio.core.client.events.SplitterResizedEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
@@ -42,6 +40,10 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.SplitterBeforeResizeEvent;
+import com.google.gwt.user.client.ui.SplitterBeforeResizeHandler;
+import com.google.gwt.user.client.ui.SplitterResizedEvent;
+import com.google.gwt.user.client.ui.SplitterResizedHandler;
 import com.google.gwt.user.client.ui.Widget;
 
 
@@ -433,7 +435,7 @@ public class DualWindowLayoutPanel extends SimplePanel
 
       if (eventBus != null)
       {
-         layout_.addSplitterBeforeResizeHandler(new SplitterBeforeResizeEvent.Handler()
+         layout_.addSplitterBeforeResizeHandler(new SplitterBeforeResizeHandler()
          {
             public void onSplitterBeforeResize(SplitterBeforeResizeEvent event)
             {
@@ -448,7 +450,7 @@ public class DualWindowLayoutPanel extends SimplePanel
                eventBus.fireEvent(new GlassVisibilityEvent(true));
             }
          });
-         layout_.addSplitterResizedHandler(new SplitterResizedEvent.Handler()
+         layout_.addSplitterResizedHandler(new SplitterResizedHandler()
          {
             public void onSplitterResized(SplitterResizedEvent event)
             {
