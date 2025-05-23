@@ -15,6 +15,34 @@
 
 <project name="client" default="build" basedir=".">
 
+   <!-- java version -->
+   <property name="javac.version" value="17"/>
+
+   <!-- helper for compiling Java sources -->
+   <macrodef name="java-compile">
+      <attribute name="srcdir"/>
+      <attribute name="includes"/>
+      <attribute name="nowarn" default="true"/>
+      <attribute name="deprecation" default="true"/>
+      <element name="elements" implicit="yes"/>
+      <sequential>
+         <javac srcdir="@{srcdir}"
+                destdir="${build.dir}"
+                includes="@{includes}"
+                source="${javac.version}"
+                target="${javac.version}"
+                encoding="utf-8"
+                nowarn="@{nowarn}"
+                debug="true"
+                debuglevel="lines,vars,source"
+                deprecation="@{deprecation}"
+                includeantruntime="false">
+            <classpath refid="project.class.path"/>
+            <elements/>
+         </javac>
+      </sequential>
+   </macrodef>
+
    <!-- configure dirs -->
    <property name="src.dir" value="./src"/>        <!-- main Java sources -->
    <property name="test.dir" value="./test"/>      <!-- Java sources for tests -->
@@ -161,27 +189,12 @@
 
    <target name="javac" description="Compile java source">
       <mkdir dir="${build.dir}"/>
-      <!-- Compile com.google stuff separately from org.rstudio stuff since
-         theirs have lots of deprecation warnings we can't do anything about -->
-      <javac srcdir="${src.dir}" includes="com/google/**" encoding="utf-8"
-             destdir="${build.dir}"
-             source="1.8" target="1.8" nowarn="true" deprecation="false"
-             debug="true" debuglevel="lines,vars,source"
-             includeantruntime="false">
-         <classpath refid="project.class.path"/>
+      <java-compile srcdir="${src.dir}" includes="com/google/**" deprecation="false">
          <compilerarg value="-Xlint:-deprecation"/>
-      </javac>
-      <javac srcdir="${src.dir}" includes="org/rstudio/**" encoding="utf-8"
-             destdir="${build.dir}"
-             source="1.8" target="1.8" nowarn="true" deprecation="true"
-             debug="true" debuglevel="lines,vars,source"
-             includeantruntime="false"
-             fork="true">
-         <classpath refid="project.class.path"/>
+      </java-compile>
+      <java-compile srcdir="${src.dir}" includes="org/rstudio/**">
          <compilerarg value="-Xlint"/>
-         <compilerarg value="-J-Xms256m"/>
-         <compilerarg value="-J-Xmx512m"/>
-      </javac>
+      </java-compile>
       <copy todir="${build.dir}">
          <fileset dir="${src.dir}" excludes="**/*.java"/>
       </copy>
@@ -392,14 +405,10 @@
    </target>
 
    <target name="build-unittests" description="Builds JUnit unit tests">
-       <javac srcdir="test" includes="org/rstudio/**/client/**" encoding="utf-8"
-             destdir="${build.dir}"
-             source="1.8" target="1.8" nowarn="true" deprecation="true"
-             debug="true" debuglevel="lines,vars,source"
-             includeantruntime="false">
+      <java-compile srcdir="test" includes="org/rstudio/**/client/**">
          <classpath refid="unittest.class.path"/>
          <classpath refid="project.class.path"/>
-      </javac>
+      </java-compile>
    </target>
 
    <target name="unittest" description="Runs JUnit unit tests" depends="build-unittests">

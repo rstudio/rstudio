@@ -57,7 +57,7 @@ RUN apt-get update && \
     locales \
     lsof \
     ninja-build \
-    openjdk-11-jdk \
+    openjdk-17-jdk \
     p7zip-full \
     patchelf \
     pkg-config \

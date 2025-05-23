@@ -53,7 +53,7 @@ RUN apt-get update && \
     libxslt1-dev \
     lsof \
     ninja-build \
-    openjdk-8-jdk \
+    openjdk-17-jdk \
     p7zip-full \
     pkg-config \
     python \
