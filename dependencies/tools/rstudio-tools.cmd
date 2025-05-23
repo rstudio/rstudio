@@ -289,7 +289,25 @@ endlocal & exit /b 0
 
 setlocal EnableDelayedExpansion
 
-REM TODO
+set _ARCHIVE=%~1
+set _OUTPUT=%~2
+
+if defined _OUTPUT (
+  mkdir %_OUTPUT%
+  pushd %_OUTPUT%
+)
+
+echo -- Extracting %_ARCHIVE%
+tar -xf %_ARCHIVE%
+
+if %ERRORLEVEL% neq 0 (
+  echo ^^!^^! ERROR: Could not extract %_ARCHIVE%. [exit code %ERRORLEVEL%]
+  goto :error
+)
+
+if defined _OUTPUT (
+  popd
+)
 
 endlocal & exit /b 0
 

@@ -70,7 +70,7 @@ set GNUGREP_OUTPUT=gnugrep\%GNUGREP_VERSION%
 
 
 set GWT_URL=gwt/gwt-%GWT_VERSION%.tar.gz
-set GWT_FOLDER=gwt
+set GWT_FOLDER=gwt\gwt-rstudio\gwt-%GWT_VERSION%
 set GWT_OUTPUT=
 
 
@@ -150,6 +150,7 @@ set NODEBUILD_OUTPUT=node
 pushd ..\..\src\gwt\lib
 %RUN% install GWT
 popd
+exit /b 0
 
 :: Install dependencies within 'common' first.
 cd ..\common
