@@ -31,8 +31,8 @@ RUN dnf install -y \
     git \
     gpg1 \
     gtk3 \
-    java-11-openjdk \
-    java-11-openjdk-devel \
+    java-17-openjdk \
+    java-17-openjdk-devel \
     jq \
     libXScrnSaver-devel \
     libXcursor-devel \

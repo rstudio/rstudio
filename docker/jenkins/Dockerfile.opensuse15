@@ -20,7 +20,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     gdb \
     gettext \
     git \
-    java-11-openjdk-devel \
+    java-17-openjdk-devel \
     jq \
     libXcursor-devel \
     libXrandr-devel \
