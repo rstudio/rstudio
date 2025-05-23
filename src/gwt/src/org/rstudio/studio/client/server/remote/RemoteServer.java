@@ -164,6 +164,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.Co
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletionCommand;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -759,6 +760,30 @@ public class RemoteServer implements Server
             .get();
       
       sendRequest(RPC_SCOPE, "copilot_generate_completions", params, requestCallback);
+   }
+   
+   @Override
+   public void copilotDidAcceptCompletion(CopilotCompletionCommand completionCommand,
+                                          ServerRequestCallback<Void> requestCallback) 
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(completionCommand)
+            .get();
+      
+      sendRequest(RPC_SCOPE, "copilot_did_accept_completion", params, requestCallback);
+   }
+
+   @Override
+   public void copilotDidAcceptPartialCompletion(CopilotCompletion completion,
+                                                 int acceptedLength,
+                                                 ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(completion)
+            .add(acceptedLength)
+            .get();
+
+      sendRequest(RPC_SCOPE, "copilot_did_accept_partial_completion", params, requestCallback);
    }
    
    @Override

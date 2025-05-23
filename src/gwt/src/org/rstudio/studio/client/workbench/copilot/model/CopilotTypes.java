@@ -55,10 +55,6 @@ public class CopilotTypes
       public String insertText;
       public CopilotRange range;
       public CopilotCompletionCommand command;
-
-      // The following is not part of the Copilot API, but is used internally
-      // to track ghost text for display.
-      public String displayText;
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

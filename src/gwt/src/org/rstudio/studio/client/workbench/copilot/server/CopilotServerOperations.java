@@ -22,6 +22,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.Co
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletionCommand;
 
 public interface CopilotServerOperations
 {
@@ -48,4 +49,11 @@ public interface CopilotServerOperations
                                           int cursorRow,
                                           int cursorColumn,
                                           ServerRequestCallback<CopilotGenerateCompletionsResponse> requestCallback);
+
+   public void copilotDidAcceptCompletion(CopilotCompletionCommand completionCommand,
+                                          ServerRequestCallback<Void> requestCallback);
+
+   public void copilotDidAcceptPartialCompletion(CopilotCompletion completion,
+                                                 int acceptedLength,
+                                                 ServerRequestCallback<Void> requestCallback);
 }

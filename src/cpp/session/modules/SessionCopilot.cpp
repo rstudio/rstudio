@@ -1856,6 +1856,56 @@ Error copilotDidShowCompletion(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error copilotDidAcceptCompletion(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      // nothing to do if we can't connect to the agent
+      return Success();
+   }
+
+   // Read params
+   json::Object completionCommandJson;
+   Error error = core::json::readParams(request.params, &completionCommandJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   sendNotification("workspace/executeCommand", completionCommandJson);
+   return Success();
+}
+
+Error copilotDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
+                                        json::JsonRpcResponse* pResponse)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      // nothing to do if we can't connect to the agent
+      return Success();
+   }
+
+   // Read params
+   json::Object partialCompletionJson;
+   int acceptedLength;
+   Error error = core::json::readParams(request.params, &partialCompletionJson, &acceptedLength);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   json::Object paramsJson;
+   paramsJson["item"] = partialCompletionJson;
+   paramsJson["acceptedLength"] = acceptedLength;
+   sendNotification("textDocument/didPartiallyAcceptCompletion", paramsJson);
+   return Success();
+}
+
 } // end anonymous namespace
 
 
@@ -1906,6 +1956,8 @@ Error initialize()
          (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
          (bind(registerRpcMethod, "copilot_doc_focused", copilotDocFocused))
          (bind(registerRpcMethod, "copilot_did_show_completion", copilotDidShowCompletion))
+         (bind(registerRpcMethod, "copilot_did_accept_completion", copilotDidAcceptCompletion))
+         (bind(registerRpcMethod, "copilot_did_accept_partial_completion", copilotDidAcceptPartialCompletion))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();
