@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-BRANCH=rstudio/mariposa-orchid
+BRANCH=rstudio/cucumberleaf-sunflower
+
 #
 # RStudio fork of GWT started with BRANCH off of GWT 2.8.2 plus our changes.
 # That is, started life with:
@@ -30,39 +31,69 @@ BRANCH=rstudio/mariposa-orchid
 #   git checkout rstudio/kousa-dogwood
 #   git checkout -b rstudio/mariposa-orchid
 #   git push -u origin rstudio/mariposa-orchid
+#
 
 # check out our copy of gwt and build tools
-if [ ! -d gwt ]; then
-    mkdir gwt
-fi
-cd gwt
-if [ ! -d gwt ]; then
-    git clone git@github.com:rstudio/gwt.git
-    cd gwt
-    git remote add upstream https://github.com/gwtproject/gwt
-    cd ..
-fi
-if [ ! -d tools ]; then
-    git clone git@github.com:gwtproject/tools.git
-fi
+mkdir -p gwtproject
+cd gwtproject
 
-cd gwt
+set +e
 
-if [ "$(git status --porcelain)" != "" ]; then
-    echo "ERROR: Can't merge, working tree is dirty"
-    exit 1
-fi
+git clone git@github.com:rstudio/gwt.git
+(cd gwt && git remote add upstream https://github.com/gwtproject/gwt)
+(cd gwt && git pull)
+
+git clone git@github.com:gwtproject/tools.git
+(cd tools && git pull)
+
+set -e
+
+# move to gwt directory
+cd gwt
+git status
+git diff --quiet
 
 # get latest main from upstream
 git fetch upstream
 git checkout main
 git merge upstream/main
 
-git checkout "${BRANCH}"
-git reset --hard "${BRANCH}"
-git status
-cd ../..
+cat <<EOF
 
-echo Reminder, if you are making changes to GWT sources, use the build-gwt script to rebuild 
-echo the GWT jars into the rstudio source tree, and commit those files AND the gwt-source files
-echo when done.
+The GWT sources have been checked out at 'gwtproject/gwt'.
+
+If you're preparing to update the bundled version of GWT in RStudio,
+you can take the following steps:
+
+1. Find the branch associated with the most recent RStudio release;
+2. Check out that release branch,
+3. Create a new branch off that release,
+4. Merge the appropriate upstream version of GWT into that branch.
+
+As an example, when we updated from Kousa Dogwood to Cucumber Sunflower:
+
+	cd gwtproject/gwt
+	git fetch upstream
+	git checkout rstudio/kousa-dogwood
+	git checkout -B rstudio/cucumberleaf-sunflower
+	git merge 2.12.2
+
+Next, you can try building GWT using:
+
+	ant dist
+
+If the build succeeds, you can push your newly-created branch.
+
+After you've confirmed that GWT has been updated and built successfully,
+you can use the 'build-gwt' script to rebuild the GWT jars into the
+RStudio source tree.
+
+You may also need to update the files at:
+
+	src/gwt/.classpath
+	src/gwt/.project
+
+as IDE tools will use these to resolve the Java libraries used by RStudio.
+
+EOF
+
