@@ -13,6 +13,7 @@ set PATH=%CD%\tools;%PATH%
 
 set BOOST_VERSION=1.87.0
 set GNUGREP_VERSION=3.0
+set GWT_VERSION=2.12.2
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
 set MSVC_TOOLSET_VERSION=143
@@ -52,17 +53,26 @@ set QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download/v%QUAR
 set QUARTO_FOLDER=quarto
 set QUARTO_OUTPUT=quarto
 
+
 set COPILOT_URL=copilot-language-server/%COPILOT_VERSION%/copilot-language-server-win32-x64-%COPILOT_VERSION%.zip
 set COPILOT_FOLDER=copilot-language-server
 set COPILOT_OUTPUT=copilot-language-server
+
 
 set GNUDIFF_URL=gnudiff.zip
 set GNUDIFF_FOLDER=gnudiff
 set GNUDIFF_OUTPUT=gnudiff
 
+
 set GNUGREP_URL=gnugrep-%GNUGREP_VERSION%.zip
 set GNUGREP_FOLDER=gnugrep\%GNUGREP_VERSION%
 set GNUGREP_OUTPUT=gnugrep\%GNUGREP_VERSION%
+
+
+set GWT_URL=gwt/gwt-%GWT_VERSION%.tar.gz
+set GWT_FOLDER=gwt\gwt-rstudio\gwt-%GWT_VERSION%
+set GWT_OUTPUT=
+
 
 set SUMATRA_URL=sumatrapdf/SumatraPDF-%SUMATRA_VERSION%-64.zip
 set SUMATRA_FOLDER=sumatra\%SUMATRA_VERSION%
@@ -136,6 +146,11 @@ set NODEBUILD_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUILD_VERSION%/%NODEBUILD_FILE
 set NODEBUILD_FOLDER=node\%NODEBUILD_VERSION%
 set NODEBUILD_OUTPUT=node
 
+:: Install GWT
+pushd ..\..\src\gwt\lib
+%RUN% install GWT
+popd
+exit /b 0
 
 :: Install dependencies within 'common' first.
 cd ..\common

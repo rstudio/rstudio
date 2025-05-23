@@ -233,6 +233,35 @@ setlocal EnableDelayedExpansion
 set _ARCHIVE=%~1
 set _OUTPUT=%~2
 
+if "%_ARCHIVE:~-4%" == ".zip" (
+  call :extract-zip "%_ARCHIVE%" "%_OUTPUT%"
+  endlocal & exit /b %ERRORLEVEL%
+)
+
+if "%_ARCHIVE:~-3%" == ".7z" (
+  call :extract-zip "%_ARCHIVE%" "%_OUTPUT%"
+  endlocal & exit /b %ERRORLEVEL%
+)
+
+if "%_ARCHIVE:~-7%" == ".tar.gz" (
+  call :extract-tar "%_ARCHIVE%" "%_OUTPUT%"
+  endlocal & exit /b %ERRORLEVEL%
+)
+
+echo -- ERROR: don't know how to extract archive %_ARCHIVE%
+endlocal & exit /b 1
+
+
+::
+:: Extract a .zip archive.
+::
+:extract-zip
+
+setlocal EnableDelayedExpansion
+
+set _ARCHIVE=%~1
+set _OUTPUT=%~2
+
 if "%QUIET%" == "1" (
   set _QUIET=-bb0
 )
@@ -250,9 +279,37 @@ if %ERRORLEVEL% neq 0 (
   goto :error
 )
 
-endlocal
+endlocal & exit /b 0
 
-goto :eof
+
+::
+:: Extract a .tar.gz archive.
+::
+:extract-tar
+
+setlocal EnableDelayedExpansion
+
+set _ARCHIVE=%~1
+set _OUTPUT=%~2
+
+if defined _OUTPUT (
+  mkdir %_OUTPUT%
+  pushd %_OUTPUT%
+)
+
+echo -- Extracting %_ARCHIVE%
+tar -xf %_ARCHIVE%
+
+if %ERRORLEVEL% neq 0 (
+  echo ^^!^^! ERROR: Could not extract %_ARCHIVE%. [exit code %ERRORLEVEL%]
+  goto :error
+)
+
+if defined _OUTPUT (
+  popd
+)
+
+endlocal & exit /b 0
 
 
 ::
