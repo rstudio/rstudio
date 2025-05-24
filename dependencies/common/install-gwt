@@ -23,9 +23,10 @@ GWT_VERSION=2.12.2
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing GWT ${GWT_VERSION}"
 
-cd "$(dirname "${BASH_SOURCE[0]}")/../../src/gwt/lib"
+mkdir -p gwtproject
+cd gwtproject
 download "https://rstudio-buildtools.s3.us-east-1.amazonaws.com/gwt/gwt-${GWT_VERSION}.tar.gz"
 extract "gwt-${GWT_VERSION}.tar.gz"
 rm "gwt-${GWT_VERSION}.tar.gz"
 yay "GWT ${GWT_VERSION} installed to $(pwd)"
-
+cd ..
