@@ -74,8 +74,8 @@ RUN if [ "$ARCH" = "amd64" ]; then \
     gcc-multilib \
     ; fi
 
-# ensure we use the java 8 compiler
-RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-$(dpkg --print-architecture)/jre/bin/java
+# ensure we use the java 17 compiler
+RUN update-alternatives --set java /usr/lib/jvm/java-17-openjdk-$(dpkg --print-architecture)/bin/java
 
 ## build patchelf
 RUN cd /tmp \

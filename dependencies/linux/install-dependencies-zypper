@@ -41,7 +41,8 @@ sudo zypper --non-interactive in boost-devel
 sudo zypper --non-interactive in pango-devel
 
 # gwt prereqs
-sudo zypper --non-interactive in java-1_7_0-openjdk-devel
+sudo zypper --non-interactive in java-17-openjdk
+sudo zypper --non-interactive in java-17-openjdk-devel
 sudo zypper --non-interactive in ant
 
 # install headers needed by Qt (GL, xslt)

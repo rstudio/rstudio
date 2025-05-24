@@ -84,16 +84,15 @@ set-java-home () {
 # processor-native, so can use the fastest tool for the job.
 find-java-home () {
    if is-m1-mac; then
-      if [ -e "/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home" ]; then
-         # native M1 JDK11; see https://www.azul.com/downloads
-         set-java-home "/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home"
-      elif [ -e "/opt/homebrew/opt/openjdk@11" ]; then
+      if [ -e "/opt/homebrew/opt/openjdk@17" ]; then
          # default location for M1 homebrew
-         set-java-home "/opt/homebrew/opt/openjdk@11"
+         set-java-home "/opt/homebrew/opt/openjdk@17"
       fi
    else # Intel Mac
-      if [ -e "/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home" ]; then
-         set-java-home "/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home"
+      if [ -e "/usr/local/opt/openjdk@17" ]; then
+         set-java-home "/usr/local/opt/openjdk@17"
+      elif [ -e "/Library/Java/JavaVirtualMachines/adoptopenjdk-17.jdk/Contents/Home" ]; then
+         set-java-home "/Library/Java/JavaVirtualMachines/adoptopenjdk-17.jdk/Contents/Home"
       fi
    fi
 }
