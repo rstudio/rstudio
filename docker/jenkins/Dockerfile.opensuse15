@@ -87,8 +87,8 @@ RUN bash /tmp/install-dependencies
 COPY dependencies/common/install-crashpad /tmp/
 RUN bash /tmp/install-crashpad opensuse15
 
-# ensure we use the java 11 compiler
-RUN update-alternatives --set java /usr/lib64/jvm/jre-11-openjdk/bin/java
+# ensure we use the java 17 compiler
+RUN update-alternatives --set java /usr/lib64/jvm/jre-17-openjdk/bin/java
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
