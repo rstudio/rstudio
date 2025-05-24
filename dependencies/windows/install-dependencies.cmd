@@ -70,8 +70,8 @@ set GNUGREP_OUTPUT=gnugrep\%GNUGREP_VERSION%
 
 
 set GWT_URL=gwt/gwt-%GWT_VERSION%.tar.gz
-set GWT_FOLDER=gwt\gwt-rstudio\gwt-%GWT_VERSION%
-set GWT_OUTPUT=
+set GWT_FOLDER=gwtproject\%GWT_VERSION%
+set GWT_OUTPUT=gwtproject
 
 
 set SUMATRA_URL=sumatrapdf/SumatraPDF-%SUMATRA_VERSION%-64.zip
@@ -146,15 +146,10 @@ set NODEBUILD_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUILD_VERSION%/%NODEBUILD_FILE
 set NODEBUILD_FOLDER=node\%NODEBUILD_VERSION%
 set NODEBUILD_OUTPUT=node
 
-:: Install GWT
-pushd ..\..\src\gwt\lib
-%RUN% install GWT
-popd
-exit /b 0
-
 :: Install dependencies within 'common' first.
 cd ..\common
 
+%RUN% install GWT
 %RUN% install DICTIONARIES
 %RUN% install MATHJAX
 %RUN% install LIBCLANG

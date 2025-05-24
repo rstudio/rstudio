@@ -79,17 +79,16 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
     iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # install some deps via chocolatey
-RUN `
-  choco install -y -i ant; `
-  choco install -y 7zip; `
-  choco install -y awscli; `
-  choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
-  choco install -y jq; `
-  choco install -y ninja --version "1.12.1"; `
-  choco install -y nsis --version "3.10"; `
-  choco install -y python313; `
-  choco install -y strawberryperl; `
-  choco install -y temurin17
+RUN choco install -y ant
+RUN choco install -y 7zip
+RUN choco install -y awscli
+RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
+RUN choco install -y jq
+RUN choco install -y ninja --version "1.12.1"
+RUN choco install -y nsis --version "3.10"
+RUN choco install -y python313
+RUN choco install -y strawberryperl
+RUN choco install -y temurin17
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
