@@ -27,17 +27,10 @@ endif()
 add_subdirectory(cpp)
 add_subdirectory(node)
 
-# wait for major C++ work to complete before running the GWT build;
-# the Java compiler often runs out of resources when a parallel C++
-# is happening: https://github.com/rstudio/rstudio/issues/7660
+# compile GWT sources before the rest of our C++ work
+# https://github.com/rstudio/rstudio/issues/7660
 if(TARGET gwt_build)
-   if (TARGET rserver)
-      add_dependencies(gwt_build rsession rserver)
-   elseif(TARGET desktop)
-      add_dependencies(gwt_build rsession desktop)
-   else()
-      add_dependencies(gwt_build rsession)
-   endif()
+   add_dependencies(rstudio-shared-core gwt_build)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")

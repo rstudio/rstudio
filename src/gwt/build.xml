@@ -68,11 +68,6 @@
       </sequential>
    </macrodef>
 
-   <!-- Task for compiling JavaScript support sources -->
-   <taskdef name="jscomp"
-            classname="com.google.javascript.jscomp.ant.CompileTask"
-            classpath="${tools.dir}/compiler/compiler.jar"/>
-
    <!-- configure dirs -->
    <property name="src.dir" value="./src"/>        <!-- main Java sources -->
    <property name="test.dir" value="./test"/>      <!-- Java sources for tests -->
@@ -95,6 +90,11 @@
 
    <!-- Configure code server -->
    <property name="bind.address" value="127.0.0.1"/>
+
+   <!-- Task for compiling JavaScript support sources -->
+   <taskdef name="jscomp"
+            classname="com.google.javascript.jscomp.ant.CompileTask"
+            classpath="${tools.dir}/compiler/compiler.jar"/>
 
    <!-- Set up Java classpath -->
    <path id="project.class.path">
