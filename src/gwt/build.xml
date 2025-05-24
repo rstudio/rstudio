@@ -79,9 +79,9 @@
    <property name="gwt.xss" value="-Xss16M"/>      <!-- set java thread stack size -->
 
    <!-- Path to GWT libraries -->
+   <set-if-exists property="lib.dir" value="../../dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="/opt/rstudio-tools/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="C:/rstudio-tools/dependencies/common/gwtproject"/>
-   <set-if-exists property="lib.dir" value="../../dependencies/common/gwtproject"/>
 
    <!-- Configure path to GWT SDK -->
    <property name="gwt.sdk" value="${lib.dir}/gwt/gwt-rstudio"/>
