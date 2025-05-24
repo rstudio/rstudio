@@ -89,7 +89,7 @@ RUN `
   choco install -y nsis --version "3.10"; `
   choco install -y python313; `
   choco install -y strawberryperl; `
-  choco install -y temurin11
+  choco install -y temurin17
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"

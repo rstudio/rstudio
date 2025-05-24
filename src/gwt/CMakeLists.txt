@@ -115,17 +115,6 @@ if(GWT_BUILD)
       gwt_build ALL
       DEPENDS "${GWT_BUILD_TIMESTAMP}")
 
-   # wait for major C++ work to complete before running the GWT build;
-   # the Java compiler often runs out of resources when a parallel C++
-   # is happening: https://github.com/rstudio/rstudio/issues/7660
-   if (TARGET rserver)
-      add_dependencies(gwt_build rsession rserver)
-   elseif(TARGET desktop)
-      add_dependencies(gwt_build rsession desktop)
-   else()
-      add_dependencies(gwt_build rsession)
-   endif()
-
 endif()
 
 if(NOT DEFINED GWT_COPY)

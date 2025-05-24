@@ -61,7 +61,7 @@ if [ -z "$IMAGE" ] || [ -z "$FLAVOR" ]; then
     echo -e "Compiles RStudio inside a Docker container."
     echo -e "Usage: docker-compile.sh image-name flavor-name [version] [variant]\n"
     echo -e "Valid images:\n"
-    find docker/jenkins -name 'Dockerfile.*' | sed -e 's/.*Dockerfile.//'
+    find docker/jenkins -name 'Dockerfile.*' | sed -e 's/.*Dockerfile.//' | sort
     echo -e "\nValid flavors:\n"
     echo -e "electron"
     echo -e "server"
