@@ -40,7 +40,6 @@ endfunction()
 
 if(TARGET gwt_build)
    get_all_targets(RSTUDIO_TARGETS "${CMAKE_CURRENT_SOURCE_DIR}")
-   message(STATUS "${RSTUDIO_TARGETS}")
    foreach(RSTUDIO_TARGET ${RSTUDIO_TARGETS})
       add_dependencies(${RSTUDIO_TARGET} gwt_build)
    endforeach()
