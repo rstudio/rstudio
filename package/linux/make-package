@@ -233,6 +233,10 @@ if [ -n "${JENKINS_URL}" ]; then
    printenv | sort
    echo
 
+   echo "Java version:"
+   java -XshowSettings:properties -version
+   echo
+
    echo "R version:"
    R -s -e 'sessionInfo()' || true
    R -s -e 'renv::diagnostics()' || true
