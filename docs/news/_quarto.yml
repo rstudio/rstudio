@@ -22,7 +22,7 @@ website:
           - text: "Posit Workbench Documentation"
             url: 'https://docs.posit.co/ide/server-pro/'
           - text: Licenses
-            url: 'https://docs.posit.co/ide/licenses/'
+            url: 'https://docs.posit.co/ide/server-pro/licenses/'
           - text: "RStudio Open Source User Guide"
             url: 'https://docs.posit.co/ide/user/'
       - icon: "list"
