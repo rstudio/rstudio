@@ -81,6 +81,9 @@
    <property name="gwt.xmx" value="-Xmx1536M"/>    <!-- set maximum Java heap size -->
    <property name="gwt.xss" value="-Xss16M"/>      <!-- set java thread stack size -->
 
+   <!-- Path where acesupport files should be generated -->
+   <property name="ace.bin" value="${src.dir}/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
+
    <!-- Path to GWT libraries -->
    <set-if-exists property="lib.dir" value="../../dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="/opt/rstudio-tools/dependencies/common/gwtproject"/>
@@ -127,7 +130,6 @@
    </path>
 
    <target name="ext">
-      <property name="ace.bin" value="${src.dir}/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
 
       <jscomp compilationLevel="simple" warning="default"
               debug="false" output="${ace.bin}/acesupport.js">
