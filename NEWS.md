@@ -11,7 +11,7 @@
 
 #### Posit Workbench
 
--
+- Allow for custom certificate bundles for GitHub Copilot (#14083)
 
 ### Fixed
 
