@@ -25,7 +25,8 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute(.rs.appCommands$openSourceDoc)
    
    # wait until the modal dialog is shown
-   remote$dom.waitForElement("div[aria-label=\"Directory Contents\"]")
+   remote$dom.waitForElement(".rstudio_modal_dialog")
+   Sys.sleep(1)
    
    # try typing some keys to select a file
    remote$keyboard.sendKeys("5", "1", "5", "9", "<Enter>")
@@ -35,9 +36,10 @@ withr::defer(.rs.automation.deleteRemote())
    contents <- tabPanelEl$innerText
    expect_equal(.rs.trimWhitespace(contents), "5159.R")
    
-   # restart R to clean the session
-   remote$editor.closeDocument()
-   remote$session.restart()
-   remote$console.clear()
+   # clean up
+   remote$console.executeExpr({
+      files <- sprintf("%04i.R", 0:9999)
+      unlink(files)
+   })
    
 })

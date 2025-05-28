@@ -62,6 +62,7 @@ withr::defer(.rs.automation.deleteRemote())
    
    # Define a function accepting some parameters.
    remote$keyboard.insertText("a <- function(x, y, z) { print(x + y) }", "<Enter>")
+   Sys.sleep(1)
    
    # Request completions for that function.
    completions <- remote$completions.request("a(")
