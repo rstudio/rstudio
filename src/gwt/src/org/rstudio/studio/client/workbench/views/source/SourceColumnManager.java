@@ -74,6 +74,7 @@ import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotStatusChangedEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -137,6 +138,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                                             SourceExtendedTypeDetectedEvent.Handler,
                                             DocumentCloseAllNoSaveEvent.Handler,
                                             DocumentCloseEvent.Handler,
+                                            CopilotStatusChangedEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
@@ -248,6 +250,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
       events_.addHandler(DocumentCloseEvent.TYPE, this);
+      events_.addHandler(CopilotStatusChangedEvent.TYPE, this);
       
       events_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
@@ -1278,6 +1281,42 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (target == null)
          return;
       findByDocument(event.getDocId()).closeTab(target.asWidget(), true, null);
+   }
+
+   @Override
+   public void onCopilotStatusChangedEvent(CopilotStatusChangedEvent event)
+   {
+      int status = event.getStatus();
+
+      // When copilot first starts let it know about documents that were loaded before
+      // it started (i.e. files loaded from a previous session or before enabling Copilot).
+      if (status == CopilotStatusChangedEvent.RUNNING && !copilotNotifiedAboutOpenFiles_)
+      {
+         copilotNotifiedAboutOpenFiles_ = true;
+
+      }
+      else if (status == CopilotStatusChangedEvent.STOPPING ||
+               status == CopilotStatusChangedEvent.STOPPED)
+      {
+         // Prepare for case where Copilot is turned back on during the current session
+         copilotNotifiedAboutOpenFiles_ = false;
+      }
+   }
+
+   // return an array of strings containing file paths of all open files
+   public String[] getOpenFilePaths()
+   {
+      ArrayList<String> paths = new ArrayList<>();
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            String path = target.getPath();
+            if (path != null)
+               paths.add(path);
+         }
+      }
+      return paths.toArray(new String[0]);
    }
 
    public void nextTabWithWrap()
@@ -2972,6 +3011,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private TextEditingTargetRMarkdownHelper rmarkdown_;
    private EditingTargetSource editingTargetSource_;
    private FileTypeRegistry fileTypeRegistry_;
+   private boolean copilotNotifiedAboutOpenFiles_ = false;
 
    private SourceServerOperations server_;
    private DependencyManager dependencyManager_;

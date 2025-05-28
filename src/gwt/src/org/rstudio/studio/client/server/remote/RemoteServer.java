@@ -6906,6 +6906,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "record_command_execution", params, callback);
    }
 
+   @Override
+   public void copilotRegisterOpenFiles(String[] paths,
+                                        ServerRequestCallback<Void> requestCallback) 
+   {
+      // JSONArray params = new JSONArrayBuilder()
+      //       .add(documentId)
+      //       .get();
+      
+      // sendRequest(RPC_SCOPE, "copilot_doc_focused", params, requestCallback);
+   };
+
    private boolean isAuthStatusRequest(RpcRequest request)
    {
       return request.getMethod().equals(AUTH_STATUS);

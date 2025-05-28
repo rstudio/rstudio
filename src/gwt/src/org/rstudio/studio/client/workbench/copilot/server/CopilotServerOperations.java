@@ -56,4 +56,7 @@ public interface CopilotServerOperations
    public void copilotDidAcceptPartialCompletion(CopilotCompletion completion,
                                                  int acceptedLength,
                                                  ServerRequestCallback<Void> requestCallback);
+
+   public void copilotRegisterOpenFiles(String[] paths,
+                                        ServerRequestCallback<Void> requestCallback);
 }

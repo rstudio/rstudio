@@ -1921,6 +1921,13 @@ Error copilotDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error copilotRegisterOpenFiles(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   // TODO
+   return Success();
+}
+
 } // end anonymous namespace
 
 
@@ -1973,6 +1980,7 @@ Error initialize()
          (bind(registerRpcMethod, "copilot_did_show_completion", copilotDidShowCompletion))
          (bind(registerRpcMethod, "copilot_did_accept_completion", copilotDidAcceptCompletion))
          (bind(registerRpcMethod, "copilot_did_accept_partial_completion", copilotDidAcceptPartialCompletion))
+         (bind(registerRpcMethod, "copilot_register_open_files", copilotRegisterOpenFiles))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();
