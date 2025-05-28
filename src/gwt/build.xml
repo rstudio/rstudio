@@ -48,10 +48,13 @@
       <attribute name="property"/>
       <attribute name="value"/>
       <sequential>
-         <condition property="@{property}" value="@{value}">
+         <pathconvert property="@{value}.normalized">
+            <path location="@{value}"/>
+         </pathconvert>
+         <condition property="@{property}" value="${@{value}.normalized}">
             <and>
                <not><isset property="@{property}"/></not>
-               <available file="@{value}"/>
+               <available file="${@{value}.normalized}"/>
             </and>
          </condition>
       </sequential>
