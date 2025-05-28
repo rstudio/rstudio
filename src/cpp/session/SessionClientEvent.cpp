@@ -216,6 +216,7 @@ const int kDeploymentRecordsUpdated = 198;
 const int kRunAutomation = 199;
 const int kConsoleWritePendingError = 200;
 const int kConsoleWritePendingWarning = 201;
+const int kCopilotStatusChanged = 202;
 
 }
 
@@ -604,6 +605,8 @@ std::string ClientEvent::typeName() const
          return "console_write_pending_error";
       case client_events::kConsoleWritePendingWarning:
          return "console_write_pending_warning";
+      case client_events::kCopilotStatusChanged:
+         return "copilot_status_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

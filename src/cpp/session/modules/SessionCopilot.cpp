@@ -234,6 +234,7 @@ enum class CopilotAgentNotRunningReason {
    LaunchError,
 };
 
+// keep in sync with constants in CopilotStatusChangedEvent.java
 enum class CopilotAgentRuntimeStatus {
    Unknown,
    Preparing,
@@ -267,6 +268,20 @@ CopilotAgentNotRunningReason s_agentNotRunningReason = CopilotAgentNotRunningRea
 
 // The current runtime status of the Copilot agent process.
 CopilotAgentRuntimeStatus s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
+
+void setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus status)
+{
+   if (s_agentRuntimeStatus != status)
+   {
+      s_agentRuntimeStatus = status;
+
+      // notify client of copilot status change
+      json::Object dataJson;
+      dataJson["status"] = static_cast<int>(status);
+      ClientEvent event(client_events::kCopilotStatusChanged, dataJson);
+      module_context::enqueClientEvent(event);
+   }
+}
 
 // Whether or not we've handled the Copilot 'initialized' notification.
 // Primarily done to allow proper sequencing of Copilot callbacks.
@@ -733,7 +748,7 @@ void onStarted(ProcessOperations& operations)
    // Record the PID of the agent.
    DLOG("Copilot agent has started [PID = {}]", operations.getPid());
    s_agentPid = operations.getPid();
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Starting;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Starting);
 }
 
 bool onContinue(ProcessOperations& operations)
@@ -868,7 +883,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    }
    
    // Note that the agent is now ready.
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Running;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Running);
 }
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
@@ -886,7 +901,7 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
    case CopilotAgentRuntimeStatus::Stopping:
    {
       s_agentStartupError += stdErr;
-      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopping;
+      setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopping);
       break;
    }
  
@@ -900,13 +915,13 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 void onError(ProcessOperations& operations, const Error& error)
 {
    s_agentPid = -1;
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
 }
 
 void onExit(int status)
 {
    s_agentPid = -1;
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
 }
 
 } // end namespace agent
@@ -916,7 +931,7 @@ void stopAgent()
    if (s_agentPid == -1)
    {
       //DLOG("No agent running; nothing to do.");
-      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
+      setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
       return;
    }
 
@@ -933,7 +948,7 @@ Error startAgent()
       return Success();
    }
 
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Preparing;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Preparing);
 
    Error error;
 
@@ -1005,7 +1020,7 @@ Error startAgent()
    
    if (error)
    {
-      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
+      setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Unknown);
       return error;
    }
    
