@@ -16,9 +16,7 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import java.util.List;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Mutable;
-import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerability;
@@ -42,50 +40,43 @@ import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.ListDataProvider;
 
-import jsinterop.base.Js;
-
 
 // package name column which includes a hyperlink to package docs
 public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 {
-   public PackageLinkColumn(ListDataProvider<PackageInfo> dataProvider,
-                            PackagesDataGridStyle styles,
-                            RepositoryPackageVulnerabilityListMap vulns,
-                            OperationWithInput<PackageInfo> onClicked)
-   {
-      this(dataProvider, styles, vulns, onClicked, false);
-   }
-
-   public PackageLinkColumn(final ListDataProvider<PackageInfo> dataProvider,
-                            final PackagesDataGridStyle style,
-                            final RepositoryPackageVulnerabilityListMap vulns,
-                            final OperationWithInput<PackageInfo> onClicked,
-                            final boolean alwaysUnderline)
+   public static class PackageLinkCell extends AbstractCell<PackageInfo>
    {
       public PackageLinkCell(final ListDataProvider<PackageInfo> dataProvider,
+                             final PackagesDataGridStyle style,
                              final RepositoryPackageVulnerabilityListMap vulns,
                              final OperationWithInput<PackageInfo> onClicked,
                              final boolean alwaysUnderline)
       {
-         // render anchor using custom styles. detect selection and
-         // add selected style to invert text color
-         @Override
-         public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
-         {
-            if (value != null)
-            {
-               String classNames = alwaysUnderline
-                  ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
-                  : RESOURCES.styles().link();
+         super("click");
 
-               sb.appendHtmlConstant("<div class=\"" + style.packageColumn() + "\">");
-               addVulnerabilityInfo(context, value, sb);
-               sb.append(NAME_TEMPLATE.render(classNames, value.getName()));
-               sb.appendHtmlConstant("</div>");
-            }
-         }
+         dataProvider_ = dataProvider;
+         style_ = style;
+         vulns_ = vulns;
+         onClicked_ = onClicked;
+         alwaysUnderline_ = alwaysUnderline;
+      }
 
+      // render anchor using custom styles. detect selection and
+      // add selected style to invert text color
+      @Override
+      public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
+      {
+         if (value == null)
+            return;
+
+         String classNames = alwaysUnderline_
+               ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
+               : RESOURCES.styles().link();
+
+         sb.appendHtmlConstant("<div class=\"" + style_.packageColumn() + "\">");
+         addVulnerabilityInfo(context, value, sb);
          sb.append(NAME_TEMPLATE.render(classNames, value.getName()));
+         sb.appendHtmlConstant("</div>");
       }
 
       private void addVulnerabilityInfo(Context context, PackageInfo value, SafeHtmlBuilder sb)
@@ -150,24 +141,19 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
       }
 
       private final ListDataProvider<PackageInfo> dataProvider_;
+      private final PackagesDataGridStyle style_;
       private final RepositoryPackageVulnerabilityListMap vulns_;
       private final OperationWithInput<PackageInfo> onClicked_;
       private final boolean alwaysUnderline_;
    }
 
-   public PackageLinkColumn(ListDataProvider<PackageInfo> dataProvider,
-                            RepositoryPackageVulnerabilityListMap vulns,
-                            OperationWithInput<PackageInfo> onClicked)
-   {
-      this(dataProvider, vulns, onClicked, false);
-   }
-
    public PackageLinkColumn(final ListDataProvider<PackageInfo> dataProvider,
+                            final PackagesDataGridStyle styles,
                             final RepositoryPackageVulnerabilityListMap vulns,
                             final OperationWithInput<PackageInfo> onClicked,
                             final boolean alwaysUnderline)
    {
-      super(new PackageLinkCell(dataProvider, vulns, onClicked, alwaysUnderline));
+      super(new PackageLinkCell(dataProvider, styles, vulns, onClicked, alwaysUnderline));
    }
 
    interface NameTemplate extends SafeHtmlTemplates
@@ -191,9 +177,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
    interface Styles extends CssResource
    {
       String icon();
-
       String link();
-
       String linkUnderlined();
    }
 
@@ -218,7 +202,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
       RESOURCES.styles().ensureInjected();
    }
 
-   static NameTemplate  NAME_TEMPLATE = GWT.create(NameTemplate.class);
-   static IconTemplate  ICON_TEMPLATE = GWT.create(IconTemplate.class);
-   static NoneTemplate  NONE_TEMPLATE = GWT.create(NoneTemplate.class);
+   static NameTemplate NAME_TEMPLATE = GWT.create(NameTemplate.class);
+   static IconTemplate ICON_TEMPLATE = GWT.create(IconTemplate.class);
+   static NoneTemplate NONE_TEMPLATE = GWT.create(NoneTemplate.class);
 }
