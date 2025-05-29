@@ -245,6 +245,7 @@ if [ -z "${JAVA_HOME}" ]; then
    for JVM in "${JVMS[@]}"; do
       if [ -e "${JVM}" ]; then
          JAVA_HOME="${JVM}"
+         export JAVA_HOME
          break
       fi
    done
