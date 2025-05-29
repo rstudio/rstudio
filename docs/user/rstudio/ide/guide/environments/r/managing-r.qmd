@@ -1,7 +1,9 @@
 ---
-title: "R Startup"
+title: "Managing R"
 date-meta: 2022-12-12
 ---
+
+## R startup
 
 Upon startup, R and RStudio look for a few different files used to control the behavior of the R session, for example by setting options or environment variables. In the context of [Posit Team](https://docs.posit.co/posit-team/), these settings are often used to set Posit Workbench (previously RStudio Server Pro) to search for packages in an Posit Package Manager repository.
 
@@ -18,7 +20,7 @@ Here is a summary table of how to control R options and environment variables on
 | `rsession.conf` | Admin         | Server          | Only RStudio settings, only single repository. |
 | `repos.conf`    | Admin         | Server          | Only for setting repositories.                 |
 
-## `.Renviron`
+### `.Renviron`
 
 `.Renviron` is a user-controllable file that can be used to create environment variables. This is especially useful to avoid including credentials like API keys inside R scripts. This file is written in a key-value format, so environment variables are created in the format:
 
@@ -34,7 +36,7 @@ Like with the `.Rprofile` file, `.Renviron` files can be at either the user or p
 
 The `.Renviron` file is most useful for defining sensitive information such as API keys (such as GitHub, Twitter, or Posit Connect) as well as R specific environment variables like the history size (`R_HISTSIZE=100000`) and default library locations `R_LIBS_USER`.
 
-## `.Rprofile`
+### `.Rprofile`
 
 The .Rprofile file contains R code to be run when R starts up. It is run after the .Renviron file is sourced.
 
@@ -56,7 +58,7 @@ if (interactive()) {
 }
 ```
 
-## `Rprofile.site` and `Renviron.site`
+### `Rprofile.site` and `Renviron.site`
 
 Both `.Rprofile` and `.Renviron` files have equivalents that apply server wide. `Rprofile.site` and`Renviron.site` (no leading dot) files are managed by admins on Posit Workbench or RStudio Server, and are specific to a particular version of R. The most common settings for these files involve access to package repositories. For example, using the [shared-baseline](https://solutions.posit.co/envs-pkgs/environments/shared/) package management strategy is generally done from an `Rprofile.site`.
 
@@ -64,6 +66,127 @@ Users can override settings in these files with their individual `.Rprofile` fil
 
 These files are set for each version of R and should be located in `R_HOME/etc/`. `R_HOME` can be found by running the command `R.home(component = "home")` in a session of that version of R. So, for example, if `R_HOME` is `/opt/R/4.2.0/lib/R`, the `Rprofile.site` for R 4.2.0 would go in `/opt/R/4.2.0/lib/R/etc/Rprofile.site`.
 
-## `rsession.conf` and `repos.conf`
+### `rsession.conf` and `repos.conf`
 
 Posit Workbench and RStudio Server allow server admins to configure particular server-wide R package repositories via the `rsession.conf` and `repos.conf` files. Only one repository can be configured in `rsession.conf`. If multiple repositories are needed, `repos.conf` should be used. Details on configuring Posit Workbench and RStudio Server with these files are in this [guide](https://docs.posit.co/ide/server-pro/rstudio_pro_sessions/package_installation.html).
+
+## Managing R versions
+
+RStudio requires R version 3.6.0 or higher. Since multiple R versions can be installed side-by-side on a system, RStudio needs to select which version of R to run against. 
+
+### Using `rig` to manage R versions
+
+The simplest way to manage your installed R versions is to use the `rig` R Installation Manager. It supports macOS, Windows, and Linux distributions. 
+
+For more information and to download it, visit the [`rig`](https://github.com/r-lib/rig) GitHub repository and review the README. 
+
+Once you have installed `rig` and added various versions, you can use the `rig rstudio` command to start RStudio with a specified R version. For example, to start RStudio with R version 4.3.0, run:
+
+```bash
+rig rstudio 4.3.0
+```
+
+### Managing R versions manually
+
+::: {.panel-tabset group ="OS"}
+
+## Windows
+
+### In the RStudio Options menu
+
+When R is installed on Windows, it writes the version being installed to the Registry as the current version of R. RStudio uses this version by default. 
+
+You can override which version of R is used by navigating to **RStudio Options**  > **General**. 
+
+A **Choose R Installation** dialog displays that allows you to specify that RStudio should always use your machine's default 64-  or 32-bit version of R, or to specify a different version. This dialog box, pictured below, also appears if you hold down the control/`Ctrl` key at RStudio startup. 
+
+![](images/choose-r-version.png){fig-alt="A screenshot of the dialog box to select an R installation on a Windows machine." width="400"}
+
+<!---
+this screenshot needs to be updated, but i'm a mac user
+--->
+
+### Using the command line
+
+You can use the command line to override the R version by setting the `RSTUDIO_WHICH_R` environment variable to the R version you want. To direct RStudio to the R version you want to use, set the variable with an exact file path. 
+
+For example, if your R 4.3.0 installation is stored at `root`, you can direct RStudio to run against that version by setting:
+
+```ini
+RSTUDIO_WHICH_R=C:\R-4.3.0\bin\x64\Rterm.exe
+```
+
+## MacOS X
+
+### R from CRAN
+
+If the only version of R you have installed is the standard R distribution from CRAN, then by default RStudio runs against the current version of `R.Framework`. 
+
+To list all of the versions of `R.Framework` on your system and determine which one is considered current, run: 
+
+```bash
+ls -l /Library/Frameworks/R.framework/Versions/
+```
+
+To change the current version of `R.Framework`, you can:
+
+- Run the installer from CRAN for the R version you want to be current.
+- Update the `R.framework/Versions/Current` directory alias directly using `ln -s`.
+
+### R from source
+
+If R is installed directly from source via a package manager like MacPorts or Homebrew, the R version is installed either to `/usr/local/bin/R` (Homebrew) or `opt/local/bin/R` (MacPorts). To support these variations, RStudio scans for the R executable in the following order:
+
+1. `/usr/bin/R`
+2. `/user/local/bin/R`
+3. `/opt/local/bin/R`
+
+If RStudio is not able to locate the R executable in these locations, it falls back to using the version of R located at `/Library/Frameworks/R.Framework/`. 
+
+<!---
+double check this... / test this.
+--->
+
+
+To override the R version: 
+
+- Set the `RSTUDIO_WHICH_R` environment variable to the R version you want. For example, to force RStudio to use the R version located at `/usr/local/bin`, run:
+
+  ```bash
+  export RSTUDIO_WHICH_R=/usr/local/bin
+  ```
+
+- Then, launch RStudio from the same terminal by running:
+
+  ```bash
+  open -na rstudio
+  ```
+
+## Linux
+
+<!---
+needs to be verified
+--->
+
+RStudio uses the R version determined by the output of running `which R`. The `which R` command performs a search for the R executable using the system PATH. RStudio binds by default to the same version that is run when R is executed from a terminal. 
+
+If system package managers (e.g. r-base on Debian or Ubuntu) install R, the path is `/usr/bin/R`.  If R versions are installed from source, the path is typically (but not always) `/usr/local/bin/R`.
+
+If RStudio is unable to locate the R executable using `which R`, it falls back to scanning explicitly for the R script in the `/usr/local/bi`n and `/usr/bin` directories.
+
+To override the R version: 
+
+- Set the `RSTUDIO_WHICH_R` environment variable to the R version you want. For example, to force RStudio to use the R version located at `/usr/local/bin/R`, run:
+
+  ```bash
+  export RSTUDIO_WHICH_R=/usr/local/bin/R
+  ```
+
+:::{callout.note}
+For RStudio to see the `RSTUDIO_WHICH_R` environment variable when launched from the Applications menu (as opposed to from a terminal), you must s must be defined in the ~/.profile file.
+
+- Then, launch RStudio from the same terminal by running:
+
+  ```bash
+  open -na rstudio
+  ```
