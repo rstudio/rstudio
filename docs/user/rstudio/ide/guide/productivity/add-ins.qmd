@@ -114,6 +114,12 @@ Binding: insertInAddin
 Interactive: false
 ```
 
+:::{.callout-tip}
+If emojis are supported by your OS, you can add them to the `Name` field to make your addins more visually appealing. 
+
+For example: `Name: ✏️ Insert %in%` will display a pencil emoji next to the addin name in the **Addins** toolbar menu.
+:::
+
 To create your own RStudio addins:
 
 1. Create an R package 
