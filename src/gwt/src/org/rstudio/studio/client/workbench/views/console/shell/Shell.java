@@ -875,7 +875,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private void navigateHistory(int offset)
    {
       if (isBrowsePrompt())
+      {
          browseHistoryManager_.navigateHistory(offset);
+      }
       else
       {
          if (input_.isCursorAtEnd())

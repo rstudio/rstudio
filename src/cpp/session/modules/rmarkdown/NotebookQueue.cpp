@@ -125,7 +125,14 @@ public:
             // circumstances we should stop right away
             if (!execContext_->options().getOverlayOption("error", false))
             {
+               // notify client
+               enqueueExecStateChanged(
+                   ChunkExecFinished,
+                   execContext_ ? execContext_->options().chunkOptions() : json::Object());
+
+               // clear execution state
                clear();
+
                return Success();
             }
          }
