@@ -52,7 +52,7 @@ RUN apt-get update && \
     libxslt1-dev \
     lsof \
     ninja-build \
-    openjdk-11-jdk \
+    openjdk-17-jdk \
     p7zip-full \
     pkg-config \
     python \
@@ -76,8 +76,8 @@ RUN if [ "$ARCH" = "amd64" ]; then \
     ; fi
 
 
-# ensure we use the java 11 compiler
-RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-$(dpkg --print-architecture)/bin/java
+# ensure we use the java 17 compiler
+RUN update-alternatives --set java /usr/lib/jvm/java-17-openjdk-$(dpkg --print-architecture)/bin/java
 
 ## build patchelf
 RUN cd /tmp \

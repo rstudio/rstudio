@@ -189,6 +189,7 @@ function(fetch)
             endif()
          else()
             set(${_PREFIX}_FETCHED TRUE)
+
             FetchContent_Declare("${_NAME}"
                GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
                GIT_TAG        "${${_PREFIX}_REVISION}"

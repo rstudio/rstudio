@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:noble
 
 RUN apt-get update
 RUN apt-get install -y git curl python3

@@ -70,10 +70,6 @@ case "${PLATFORM}" in
   else
     ARCH="amd64"
   fi
-  if [ "$OS_DISTRO" == "centos7" ]; then
-    echo "Quarto binaries are not available for CentOS/AL2"
-    exit 0
-  fi
   
   FILES=(
     "quarto-${QUARTO_VERSION}-linux-${ARCH}.tar.gz"

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.copilot.server;
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
@@ -22,10 +24,13 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.Co
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletionCommand;
 
 public interface CopilotServerOperations
 {
    public void copilotDiagnostics(ServerRequestCallback<CopilotDiagnosticsResponse> requestCallback);
+   
+   public void copilotVerifyInstalled(ServerRequestCallback<Boolean> requestCallback);
    
    public void copilotSignIn(ServerRequestCallback<CopilotSignInResponse> requestCallback);
    
@@ -46,4 +51,14 @@ public interface CopilotServerOperations
                                           int cursorRow,
                                           int cursorColumn,
                                           ServerRequestCallback<CopilotGenerateCompletionsResponse> requestCallback);
+
+   public void copilotDidAcceptCompletion(CopilotCompletionCommand completionCommand,
+                                          ServerRequestCallback<Void> requestCallback);
+
+   public void copilotDidAcceptPartialCompletion(CopilotCompletion completion,
+                                                 int acceptedLength,
+                                                 ServerRequestCallback<Void> requestCallback);
+
+   public void copilotRegisterOpenFiles(ArrayList<String> filePaths,
+                                        ServerRequestCallback<Void> requestCallback);
 }

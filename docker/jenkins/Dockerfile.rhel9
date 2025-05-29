@@ -31,8 +31,8 @@ RUN dnf install -y \
     git \
     gpg1 \
     gtk3 \
-    java-11-openjdk \
-    java-11-openjdk-devel \
+    java-17-openjdk \
+    java-17-openjdk-devel \
     jq \
     libXScrnSaver-devel \
     libXcursor-devel \
@@ -71,13 +71,8 @@ RUN dnf install -y \
     xorg-x11-server-Xvfb \
     zlib-devel
 
-# The latest redhat build of java-11-openjdk (11.0.20.0.8-2.el9) is missing a dependency on tzdata-java
-# https://bugzilla.redhat.com/show_bug.cgi?id=2225018 
-# use the workaround until they resolve the issue
-RUN dnf install -y tzdata-java
-
-# ensure we use the java 11 compiler to build GWT
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+# ensure we use the java 17 compiler to build GWT
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools

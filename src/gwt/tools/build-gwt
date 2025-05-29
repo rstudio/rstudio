@@ -2,7 +2,8 @@
 set -e
 
 # Update this when updating to a new base GWT release
-GWT_VER=2.10.1
+GWT_VER=2.12.2
+JAVA_VER=11
 
 # This script is intended to run from the rstudio/gwt/tools folder
 RUN_DIR=$(pwd)
@@ -10,26 +11,44 @@ RUN_DIR=$(pwd)
 GWT_DIR=${RUN_DIR}/../lib/gwt
 INST_DIR=${GWT_DIR}/gwt-rstudio
 
-if [ ! -d gwt ] || [ ! -d gwt/gwt ] || [ ! -d gwt/tools ]; then
+if [ ! -d gwtproject ] || [ ! -d gwtproject/gwt ] || [ ! -d gwtproject/tools ]; then
     echo Error: gwt sources not found, use "sync-gwt" script to clone
     exit 1
 fi
 
-# make sure we have Java 1.8 compiler
+# set up Java compiler
 command -v javac >/dev/null 2>&1 || { echo >&2 "javac required but not found: exiting."; exit 1; }
-if javac -version 2>&1 | grep -q 'javac 1\.8\.'; then
-    echo Building with JDK 1.8.
+
+# help some platforms find java
+if [ -z "${JAVA_HOME}" ]; then
+    if [ "$(uname -sm)" = "Darwin arm64" ]; then
+        JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+    elif [ "$(uname -sm)" = "Linux x86_64" ]; then
+        JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+    fi
+fi
+
+# make sure the right version of javac is on the PATH
+if [ -e "${JAVA_HOME}" ]; then
+    export JAVA_HOME
+    echo "Using JAVA_HOME=${JAVA_HOME}"
+fi
+
+PATH="${JAVA_HOME}/bin:${PATH}"
+
+if javac -version 2>&1 | grep -q "javac ${JAVA_VER}"; then
+    javac -version
 else
-    echo Error: javac version 1.8 required but not found
-    echo Error: consider setting JAVA_HOME to a Java 8 installation
+    echo Error: javac version ${JAVA_VER} required but not found
+    echo Error: consider setting JAVA_HOME to a Java ${JAVA_VER} installation
     exit 1
 fi
 
 # Build GWT disto with custom version
-cd "${RUN_DIR}"/gwt/gwt
+cd "${RUN_DIR}/gwtproject/gwt"
 ant clean dist -Dgwt.version="${GWT_VER}"
 
-GWT_ZIP=${RUN_DIR}/gwt/gwt/build/dist/gwt-${GWT_VER}.zip
+GWT_ZIP=${RUN_DIR}/gwtproject/gwt/build/dist/gwt-${GWT_VER}.zip
 if [ ! -f "${GWT_ZIP}" ]; then
     echo Error: GWT build unsuccessful
     exit 1

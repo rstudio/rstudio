@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
@@ -64,6 +65,34 @@ public class TextEditingTargetCopilotHelper
    {
    }
    
+   class Completion
+   {
+      public Completion(CopilotCompletion originalCompletion, String displayText)
+      {
+         // Copilot includes trailing '```' for some reason in some cases,
+         // remove those if we're inserting in an R document.
+         this.insertText = postProcessCompletion(originalCompletion.insertText);
+         this.displayText = postProcessCompletion(displayText);
+
+         this.startLine = originalCompletion.range.start.line;
+         this.startCharacter = originalCompletion.range.start.character;
+         this.endLine = originalCompletion.range.end.line;
+         this.endCharacter = originalCompletion.range.end.character;
+
+         this.originalCompletion = originalCompletion;
+         this.partialAcceptedLength = 0;
+      }
+
+      public String insertText;
+      public String displayText;
+      public int startLine;
+      public int startCharacter;
+      public int endLine;
+      public int endCharacter;
+      public CopilotCompletion originalCompletion;
+      public int partialAcceptedLength;
+   }
+
    public TextEditingTargetCopilotHelper(TextEditingTarget target)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -185,19 +214,20 @@ public class TextEditingTargetCopilotHelper
                                     ? CopilotEventType.COMPLETION_RECEIVED_NONE
                                     : CopilotEventType.COMPLETION_RECEIVED_SOME));
                            
-                           for (int i = 0, n = completions.getLength(); i < n; i++)
+                           // TODO: If multiple completions are available we should provide a way for 
+                           // the user to view/select them. For now, use the last one.
+                           // https://github.com/rstudio/rstudio/issues/16055
+                           if (completions.getLength() > 0)
                            {
-                              CopilotCompletion completion = completions.getAt(i);
-                              
-                              completion.displayText = completion.insertText.substring(
-                                    completion.range.end.character - completion.range.start.character);
-                              
-                              // Copilot includes trailing '```' for some reason in some cases,
-                              // remove those if we're inserting in an R document.
-                              completion.insertText = postProcessCompletion(completion.insertText);
+                              CopilotCompletion completion = completions.getAt(completions.getLength() - 1);
 
-                              activeCompletion_ = completion;
+                              // The completion data gets modified when doing partial (word-by-word)
+                              // completions, so we need to use a copy and preserve the original
+                              // (which we need to send back to the server as-is in some language-server methods).
+                              activeCompletion_ = new Completion(completion, computeGhostText(completion.insertText));
+
                               display_.setGhostText(activeCompletion_.displayText);
+                              server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                            }
                         }
 
@@ -312,11 +342,13 @@ public class TextEditingTargetCopilotHelper
                         event.preventDefault();
 
                         Range aceRange = Range.create(
-                              activeCompletion_.range.start.line,
-                              activeCompletion_.range.start.character,
-                              activeCompletion_.range.end.line,
-                              activeCompletion_.range.end.character);
+                              activeCompletion_.startLine,
+                              activeCompletion_.startCharacter,
+                              activeCompletion_.endLine,
+                              activeCompletion_.endCharacter);
                         display_.replaceRange(aceRange, activeCompletion_.insertText);
+                        server_.copilotDidAcceptCompletion(activeCompletion_.originalCompletion.command,
+                                                           new VoidServerRequestCallback());
 
                         activeCompletion_ = null;
                      }
@@ -372,16 +404,25 @@ public class TextEditingTargetCopilotHelper
       String leftoverText = StringUtil.substring(text, match.getIndex());
       
       int n = insertedWord.length();
+      
+      // From the docs: "Note that the acceptedLength includes everything from the start of
+      //                 insertText to the end of the accepted text. It is not the length of 
+      //                 the accepted text itself."
+      activeCompletion_.partialAcceptedLength += n;
+
       activeCompletion_.displayText = leftoverText;
       activeCompletion_.insertText = leftoverText;
-      activeCompletion_.range.start.character += n;
-      activeCompletion_.range.end.character += n;
+      activeCompletion_.startCharacter += n;
+      activeCompletion_.endCharacter += n;
       
       Timers.singleShot(() ->
       {
          suppressCursorChangeHandler_ = true;
          display_.insertCode(insertedWord, InsertionBehavior.EditorBehaviorsDisabled);
          display_.setGhostText(activeCompletion_.displayText);
+         server_.copilotDidAcceptPartialCompletion(activeCompletion_.originalCompletion, 
+                                                   activeCompletion_.partialAcceptedLength,
+                                                   new VoidServerRequestCallback());
          
          // Work around issue with ghost text not appearing after inserting
          // a code suggestion containing a new line
@@ -418,8 +459,8 @@ public class TextEditingTargetCopilotHelper
       int n = key.length();
       activeCompletion_.displayText = StringUtil.substring(activeCompletion_.displayText, n);
       activeCompletion_.insertText = StringUtil.substring(activeCompletion_.insertText, n);
-      activeCompletion_.range.start.character += n;
-      activeCompletion_.range.end.character += n;
+      activeCompletion_.startCharacter += n;
+      activeCompletion_.endCharacter += n;
       
       // Ace's ghost text uses a custom token appended to the current line,
       // and lines are eagerly re-tokenized when new text is inserted. To
@@ -445,6 +486,26 @@ public class TextEditingTargetCopilotHelper
       copilotDisabledInThisDocument_ = false;
    }
    
+   private String computeGhostText(String completionText)
+   {
+      // If the completion includes existing text (i.e. at the beginning of the completion) 
+      // remove that duplicated prefix from the ghost text.
+      String currentLine = display_.getLine(display_.getCursorRow());
+      String currentLineBeforeCursor = StringUtil.substring(currentLine, 0, display_.getCursorColumn());
+
+      // find the common prefix between the current line and the completion text
+      int commonPrefixLength = 0;
+      for (int i = 0; i < Math.min(currentLineBeforeCursor.length(), completionText.length()); i++)
+      {
+         if (currentLineBeforeCursor.charAt(i) != completionText.charAt(i))
+            break;
+         commonPrefixLength++;
+      }
+
+      // remove the common prefix from the completion text and return it as the ghost text
+      return completionText.substring(commonPrefixLength);
+   }
+
    @Inject
    private void initialize(Copilot copilot,
                            EventBus events,
@@ -471,7 +532,7 @@ public class TextEditingTargetCopilotHelper
    private boolean suppressCursorChangeHandler_;
    private boolean copilotDisabledInThisDocument_;
    
-   private CopilotCompletion activeCompletion_;
+   private Completion activeCompletion_;
    private boolean automaticCodeSuggestionsEnabled_ = true;
    
    

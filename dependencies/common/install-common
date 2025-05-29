@@ -30,6 +30,7 @@ set -e
 ./install-crashpad
 ./install-panmirror
 ./install-sccache
+./install-gwt
 # ./install-hosts
 
 if [ -e install-overlay ]

@@ -236,12 +236,6 @@ set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
 # node version used for building product components
 set(RSTUDIO_NODE_VERSION "22.13.1" CACHE INTERNAL "Node version for building")
 
-# Check if we're running on Amazon Linux 2
-set(IS_AL2 FALSE)
-if(LINUX AND OS_RELEASE_PRETTY_NAME STREQUAL "Amazon Linux 2")
-   set(IS_AL2 TRUE)
-   message(STATUS "Running on Amazon Linux 2: ${IS_AL2}")
-endif()
 
 # quarto support
 
@@ -251,10 +245,6 @@ endif()
 #   Set QUARTO_ENABLED = FALSE to force the use of an external Quarto installation.
 #
 
-if (IS_AL2)
-   set(QUARTO_ENABLED FALSE CACHE INTERNAL "Internal Quarto enabled")
-   message(STATUS "Quarto disabled on Amazon Linux 2")
-endif()
 
 if(NOT DEFINED QUARTO_ENABLED)
    set(QUARTO_ENABLED TRUE CACHE INTERNAL "")

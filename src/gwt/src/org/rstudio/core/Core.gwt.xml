@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.8.2//EN" "http://www.gwtproject.org/doctype/2.9.0/gwt-module.dtd">
 <module>
-   <inherits name='com.google.gwt.user.User'/>
-   <inherits name='com.google.gwt.json.JSON' />
-   <inherits name='com.google.gwt.http.HTTP' />
+   <inherits name="com.google.gwt.user.User"/>
+   <inherits name="com.google.gwt.json.JSON" />
+   <inherits name="com.google.gwt.http.HTTP" />
 
-   <inherits name='org.rstudio.studio.RStudio' />
+   <inherits name="org.rstudio.studio.RStudio" />
 
-   <!-- Elemental module dependencies                              -->
+   <!-- Elemental module dependencies -->
    <inherits name="elemental2.core.Core" />
    <inherits name="elemental2.dom.Dom" />
    <inherits name="elemental2.promise.Promise" />

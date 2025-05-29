@@ -46,7 +46,7 @@ FORMULAS=(
    krb5
    libpq
    libtool
-   openjdk@11
+   openjdk@17
    openssl
    ninja
    pidof

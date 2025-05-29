@@ -104,7 +104,6 @@
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #585b2c;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;

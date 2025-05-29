@@ -47,6 +47,9 @@ call :find-project-root
 :: Put Visual Studio tools on the PATH
 call :add-vstools-to-path
 
+:: Try to help RStudio find an appropriate version of Java
+call :set-java-home
+
 :: The version of the Windows SDK to use when building.
 set WIN32_SDK_VERSION=1.0.20348.0
 
@@ -107,7 +110,6 @@ set "_OUTPUT=%~2"
 set "_RESULT=%_BASENAME%"
 
 endlocal & set "%_OUTPUT%=%_RESULT%"
-
 goto :eof
 
 
@@ -126,7 +128,6 @@ set "_OUTPUT=%~2"
 for %%F in ("%_PATH%") do set _RESULT=%%~dpF
 
 endlocal & set "%_OUTPUT%=%_RESULT:~0,-1%"
-
 goto :eof
 
 
@@ -215,7 +216,6 @@ if %ERRORLEVEL% neq 0 (
 )
 
 endlocal
-
 goto :eof
 
 
@@ -227,6 +227,35 @@ goto :eof
 :: contents will be unpacked into that directory.
 ::
 :extract
+
+setlocal EnableDelayedExpansion
+
+set _ARCHIVE=%~1
+set _OUTPUT=%~2
+
+if "%_ARCHIVE:~-4%" == ".zip" (
+  call :extract-zip "%_ARCHIVE%" "%_OUTPUT%"
+  endlocal & exit /b %ERRORLEVEL%
+)
+
+if "%_ARCHIVE:~-3%" == ".7z" (
+  call :extract-zip "%_ARCHIVE%" "%_OUTPUT%"
+  endlocal & exit /b %ERRORLEVEL%
+)
+
+if "%_ARCHIVE:~-7%" == ".tar.gz" (
+  call :extract-tar "%_ARCHIVE%" "%_OUTPUT%"
+  endlocal & exit /b %ERRORLEVEL%
+)
+
+echo -- ERROR: don't know how to extract archive %_ARCHIVE%
+endlocal & exit /b 1
+
+
+::
+:: Extract a .zip archive.
+::
+:extract-zip
 
 setlocal EnableDelayedExpansion
 
@@ -250,9 +279,39 @@ if %ERRORLEVEL% neq 0 (
   goto :error
 )
 
-endlocal
+endlocal & exit /b 0
 
-goto :eof
+
+::
+:: Extract a .tar.gz archive.
+::
+:extract-tar
+
+setlocal EnableDelayedExpansion
+
+set _ARCHIVE=%CD%\%~1
+set _OUTPUT=%~2
+
+if defined _OUTPUT (
+  mkdir %_OUTPUT%
+  pushd %_OUTPUT%
+  echo -- Extracting %_ARCHIVE% into %_OUTPUT%
+) else (
+  echo -- Extracting %_ARCHIVE%
+)
+
+tar -xf %_ARCHIVE%
+
+if %ERRORLEVEL% neq 0 (
+  echo ^^!^^! ERROR: Could not extract %_ARCHIVE%. [exit code %ERRORLEVEL%]
+  goto :error
+)
+
+if defined _OUTPUT (
+  popd
+)
+
+endlocal & exit /b 0
 
 
 ::
@@ -304,7 +363,6 @@ call :basename "%_URL%" _FILE
 call :extract "!_FILE!" "!_OUTPUT!"
 
 endlocal
-
 goto :eof
 
 
@@ -345,8 +403,7 @@ set "_STRING=%_STRING:X=x%"
 set "_STRING=%_STRING:Y=y%"
 set "_STRING=%_STRING:Z=z%"
 
-endlocal && set "%_OUTPUT%=%_STRING%"
-
+endlocal & set "%_OUTPUT%=%_STRING%"
 goto :eof
 
 
@@ -368,7 +425,6 @@ for /f "tokens=* delims=" %%A in ('%_COMMAND%') do (
 )
 
 endlocal & set "%_OUTPUT%=%_RESULT%"
-
 goto :eof
 
 
@@ -470,6 +526,29 @@ if %ERRORLEVEL% neq 0 (
 )
 
 goto :eof
+
+
+::
+:: Helper to set JAVA_HOME, so the appropriate version of Java is used.
+::
+:set-java-home
+
+setlocal EnableDelayedExpansion
+
+for %%F in ("C:\Java" "%ProgramFiles%\Eclipse Adoptium") do (
+  if exist %%F (
+    for /f "tokens=* delims=" %%A in ('dir /B %%F ^| findstr /L jdk-17') do (
+      set "JAVA_HOME=%%~F\%%A"
+      goto :set-java-home-done
+    )
+  )
+)
+
+:set-java-home-done
+
+endlocal & set "JAVA_HOME=%JAVA_HOME%"
+echo -- Using JDK: %JAVA_HOME%
+exit /b 0
 
 
 ::

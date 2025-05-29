@@ -213,10 +213,6 @@ applyFixups.pastel_on_dark <- function(content, parsed)
    content
 }
 
-applyFixups.solarized_dark <- function(content, parsed) {
-   content <- .rs.setActiveDebugLineColor(content, "#585b2c")
-}
-
 applyFixups.tomorrow_night_blue <- applyFixups.kr_theme
 applyFixups.tomorrow_night_bright <- applyFixups.kr_theme
 

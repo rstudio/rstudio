@@ -57,7 +57,7 @@ RUN apt-get update && \
     locales \
     lsof \
     ninja-build \
-    openjdk-11-jdk \
+    openjdk-17-jdk \
     p7zip-full \
     patchelf \
     pkg-config \
@@ -102,8 +102,8 @@ ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 
-# ensure we use the java 11 compiler
-RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-$(dpkg --print-architecture)/bin/java
+# ensure we use the java 17 compiler
+RUN update-alternatives --set java /usr/lib/jvm/java-17-openjdk-$(dpkg --print-architecture)/bin/java
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools

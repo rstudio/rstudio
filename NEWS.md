@@ -5,12 +5,13 @@
 #### RStudio
 
 - RStudio now highlights all keywords from the SQL 2023 standard in SQL documents (#15841)
+- Improved legibility of highlighted code when RStudio debugger is active
 - Added a user preference to disable showing the splash screen at startup (#15945)
 - The splash screen now closes when clicked with the mouse (#15614)
 
 #### Posit Workbench
 
--
+- Allow for custom certificate bundles for GitHub Copilot (#14083)
 
 ### Fixed
 
@@ -21,6 +22,9 @@
 - Fixed an issue where the "Save As" dialog would not be visible when trying to save an older git revision of a file (#15955)
 - Fixed an issue where code indentation stopped working following code chunks containing only Quarto comments (#15879)
 - Fixed an issue where RStudio could hang when attempting to execute notebook chunks without a registered handler (#15979)
+- (Windows) "Use default 32bit / 64bit version of R" now always uses the default version of R set in the registry (#12545)
+- Show an error message when the GitHub Copilot language server is missing (#15923)
+- Fixed an issue where GitHub Copilot was unaware of files already loaded in the source editor before Copilot starts (#15895)
 
 #### Posit Workbench
 
@@ -28,8 +32,9 @@
 
 ### Dependencies
 
-- Copilot Language Server 1.311.0 (#15935)
-- Electron 36.2.0 (#15933)
+- Copilot Language Server 1.325.0 (#15935)
+- Electron 36.3.2 (#15933)
+- GWT 2.12.2 (#16062)
 - Quarto 1.7.31 (#15934)
 
 ### Deprecated / Removed

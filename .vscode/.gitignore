@@ -1,0 +1,10 @@
+
+#
+# We ignore launch.json and tasks.json by default, as different
+# developers have differing workflows, and the workflows also
+# differ between the open source product and Workbench.
+#
+
+/launch.json
+/tasks.json
+

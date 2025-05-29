@@ -123,7 +123,7 @@ refreshenv
 # install some deps via chocolatey
 choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
-choco install -y temurin11
+choco install -y temurin17
 choco install -y -i ant
 choco install -y 7zip
 choco install -y ninja
