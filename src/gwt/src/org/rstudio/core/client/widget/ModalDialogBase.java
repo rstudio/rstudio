@@ -77,6 +77,7 @@ public abstract class ModalDialogBase extends DialogBox
       setGlassEnabled(true);
       addStyleDependentName("ModalDialog");
       addStyleName(RES.styles().modalDialog());
+      addStyleName("rstudio_modal_dialog");
 
       // a11y
       role_ = role;

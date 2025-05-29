@@ -538,3 +538,57 @@ withr::defer(.rs.automation.deleteRemote())
    })
    
 })
+
+# https://github.com/rstudio/rstudio/issues/16006
+.rs.test("command line history can be recalled after error", {
+  
+   contents <- .rs.heredoc('
+      ---
+      title: Stop on Error
+      ---
+      
+      ```{r}
+      1 + 1
+      ```
+      
+      ```{r}
+      stop("Ouch!")
+      ```
+      
+      ```{r}
+      2 + 2
+      ```
+   ')
+   
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+      
+      editor$gotoLine(6L)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      Sys.sleep(1)
+      
+      editor$gotoLine(10L)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      Sys.sleep(1)
+      
+      editor$gotoLine(14L)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      Sys.sleep(1)
+      
+      remote$commands.execute("activateConsole")
+      inputEl <- remote$js.querySelector("#rstudio_console_input")
+      
+      remote$keyboard.sendKeys("<Up>")
+      Sys.sleep(1)
+      expect_equal(inputEl$innerText, "2 + 2")
+      
+      remote$keyboard.sendKeys("<Up>")
+      Sys.sleep(1)
+      expect_equal(inputEl$innerText, "stop(\"Ouch!\")")
+      
+      remote$keyboard.sendKeys("<Up>")
+      Sys.sleep(1)
+      expect_equal(inputEl$innerText, "1 + 1")
+      
+      remote$keyboard.sendKeys("<Escape>")
+   })
+})
