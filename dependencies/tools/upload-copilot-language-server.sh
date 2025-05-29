@@ -7,7 +7,7 @@
 # tools (awscli) installed, and configured with a valid AWS account.
 
 # Modify to set the Copilot Language Server version to upload
-COPILOT_VERSION="1.323.0"
+COPILOT_VERSION="1.325.0"
 
 # Check that we're logged in with AWS
 aws sts get-caller-identity || aws sso login
