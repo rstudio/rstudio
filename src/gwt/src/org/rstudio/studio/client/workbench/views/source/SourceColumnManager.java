@@ -1288,23 +1288,24 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       int status = event.getStatus();
 
-      // When copilot first starts let it know about documents that were loaded before
-      // it started (i.e. files loaded from a previous session or before enabling Copilot).
+      // After Copilot first starts let it know about documents that were loaded before
+      // it started (i.e. files loaded from a previous session).
       if (status == CopilotStatusChangedEvent.RUNNING && !copilotNotifiedAboutOpenFiles_)
       {
+         server_.copilotRegisterOpenFiles(getOpenFilePaths(), new VoidServerRequestCallback());
          copilotNotifiedAboutOpenFiles_ = true;
 
       }
       else if (status == CopilotStatusChangedEvent.STOPPING ||
                status == CopilotStatusChangedEvent.STOPPED)
       {
-         // Prepare for case where Copilot is turned back on during the current session
+         // In case Copilot gets turned back on during the current session...
          copilotNotifiedAboutOpenFiles_ = false;
       }
    }
 
    // return an array of strings containing file paths of all open files
-   public String[] getOpenFilePaths()
+   public ArrayList<String> getOpenFilePaths()
    {
       ArrayList<String> paths = new ArrayList<>();
       for (SourceColumn column : columnList_)
@@ -1316,7 +1317,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                paths.add(path);
          }
       }
-      return paths.toArray(new String[0]);
+      return paths;
    }
 
    public void nextTabWithWrap()

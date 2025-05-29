@@ -6907,14 +6907,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void copilotRegisterOpenFiles(String[] paths,
+   public void copilotRegisterOpenFiles(ArrayList<String> filePaths,
                                         ServerRequestCallback<Void> requestCallback) 
    {
-      // JSONArray params = new JSONArrayBuilder()
-      //       .add(documentId)
-      //       .get();
+      JSONArray jsonPaths = JSONUtils.toJSONStringArray(filePaths);
+      JSONArray params = new JSONArray();
+      params.set(0, jsonPaths);
       
-      // sendRequest(RPC_SCOPE, "copilot_doc_focused", params, requestCallback);
+      sendRequest(RPC_SCOPE, "copilot_register_open_files", params, requestCallback);
    };
 
    private boolean isAuthStatusRequest(RpcRequest request)

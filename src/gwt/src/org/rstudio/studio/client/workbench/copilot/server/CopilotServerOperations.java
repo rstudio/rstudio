@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.copilot.server;
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
@@ -57,6 +59,6 @@ public interface CopilotServerOperations
                                                  int acceptedLength,
                                                  ServerRequestCallback<Void> requestCallback);
 
-   public void copilotRegisterOpenFiles(String[] paths,
+   public void copilotRegisterOpenFiles(ArrayList<String> filePaths,
                                         ServerRequestCallback<Void> requestCallback);
 }

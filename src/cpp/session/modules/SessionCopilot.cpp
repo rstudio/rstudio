@@ -1924,7 +1924,31 @@ Error copilotDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
 Error copilotRegisterOpenFiles(const json::JsonRpcRequest& request,
                                json::JsonRpcResponse* pResponse)
 {
-   // TODO
+   json::Array paths;
+   Error error = json::readParam(request.params, 0, &paths);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   for (const json::Value& val : paths)
+   {
+      FilePath filePath(val.getString());
+
+      // avoid duplicates (e.g. project indexing is on, and a file that belongs to the project
+      // is opened in the UI at session launch, it could be indexed both by the project indexing 
+      // and by the "files loaded at start" notification indexing)
+      if (std::find_if(s_indexQueue.begin(), s_indexQueue.end(),
+                       [&filePath](const FileInfo& fileInfo) {
+                          return fileInfo.absolutePath() == filePath.getAbsolutePath();
+                       }) != s_indexQueue.end())
+      {
+         continue;
+      }
+      s_indexQueue.push_back(FileInfo(FilePath(val.getString())));
+   }
+
    return Success();
 }
 
