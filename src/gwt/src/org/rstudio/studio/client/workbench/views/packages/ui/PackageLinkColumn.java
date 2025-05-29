@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Mutable;
+import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerability;
@@ -47,34 +48,42 @@ import jsinterop.base.Js;
 // package name column which includes a hyperlink to package docs
 public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 {
-   public static class PackageLinkCell extends AbstractCell<PackageInfo>
+   public PackageLinkColumn(ListDataProvider<PackageInfo> dataProvider,
+                            PackagesDataGridStyle styles,
+                            RepositoryPackageVulnerabilityListMap vulns,
+                            OperationWithInput<PackageInfo> onClicked)
+   {
+      this(dataProvider, styles, vulns, onClicked, false);
+   }
+
+   public PackageLinkColumn(final ListDataProvider<PackageInfo> dataProvider,
+                            final PackagesDataGridStyle style,
+                            final RepositoryPackageVulnerabilityListMap vulns,
+                            final OperationWithInput<PackageInfo> onClicked,
+                            final boolean alwaysUnderline)
    {
       public PackageLinkCell(final ListDataProvider<PackageInfo> dataProvider,
                              final RepositoryPackageVulnerabilityListMap vulns,
                              final OperationWithInput<PackageInfo> onClicked,
                              final boolean alwaysUnderline)
       {
-         super("click");
+         // render anchor using custom styles. detect selection and
+         // add selected style to invert text color
+         @Override
+         public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
+         {
+            if (value != null)
+            {
+               String classNames = alwaysUnderline
+                  ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
+                  : RESOURCES.styles().link();
 
-         dataProvider_ = dataProvider;
-         vulns_ = vulns;
-         onClicked_ = onClicked;
-         alwaysUnderline_ = alwaysUnderline;
-      }
-
-      // render anchor using custom styles. detect selection and
-      // add selected style to invert text color
-      @Override
-      public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
-      {
-         if (value == null)
-            return;
-
-         addVulnerabilityInfo(context, value, sb);
-
-         String classNames = alwaysUnderline_
-               ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
-               : RESOURCES.styles().link();
+               sb.appendHtmlConstant("<div class=\"" + style.packageColumn() + "\">");
+               addVulnerabilityInfo(context, value, sb);
+               sb.append(NAME_TEMPLATE.render(classNames, value.getName()));
+               sb.appendHtmlConstant("</div>");
+            }
+         }
 
          sb.append(NAME_TEMPLATE.render(classNames, value.getName()));
       }

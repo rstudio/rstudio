@@ -18,12 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
 import org.rstudio.core.client.cellview.LabeledBoolean;
-import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -61,7 +59,6 @@ import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridRes
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
@@ -76,11 +73,11 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasData;
@@ -132,6 +129,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       snapshotRestoreSeparator_.setVisible(false);
       restoreButton_.setVisible(false);
       helpButton_.setVisible(false);
+      helpSeparator_.setVisible(false);
 
       if (packratContext.isModeOn())
       {
@@ -145,6 +143,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          snapshotRestoreSeparator_.setVisible(true);
          restoreButton_.setVisible(true);
          helpButton_.setVisible(true);
+         helpSeparator_.setVisible(true);
       }
    }
    
@@ -217,11 +216,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
      
       // install packages
       toolbar.addLeftWidget(commands_.installPackage().createToolbarButton());
-      toolbar.addLeftSeparator();
       
       // update packages
-      toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
       toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.updatePackages().createToolbarButton());
 
       projectButtonSeparator_ = toolbar.addLeftSeparator();
       
@@ -275,7 +273,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       
       helpButton_ = commands_.renvHelp().createToolbarButton();
       toolbar.addRightWidget(helpButton_);
-      toolbar.addRightSeparator();
+      helpSeparator_ = toolbar.addRightSeparator();
 
       ElementIds.assignElementId(searchWidget_, ElementIds.SW_PACKAGES);
       toolbar.addRightWidget(searchWidget_);
@@ -290,7 +288,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    private class VersionCell extends AbstractCell<PackageInfo>
    {
-      public VersionCell (boolean packratVersion)
+      public VersionCell(boolean packratVersion)
       {
          packratVersion_ = packratVersion;
       }
@@ -515,8 +513,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
       // set initial column widths
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
-      packagesTable_.setColumnWidth(nameColumn_, 120, Unit.PX);
-      packagesTable_.setColumnWidth(versionColumn_, 80, Unit.PX);
+      packagesTable_.setColumnWidth(nameColumn_, 180, Unit.PX);
+      packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
       // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
 
@@ -556,7 +554,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          };
 
          packagesTable_.addColumn(lockfileVersionColumn_, new TextHeader(constants_.lockfileText()));
-         packagesTable_.setColumnWidth(lockfileVersionColumn_, 80, Unit.PX);
+         packagesTable_.setColumnWidth(lockfileVersionColumn_, 100, Unit.PX);
 
          packagesTable_.addColumn(packageSourceColumn_, new TextHeader(constants_.sourceText()));
          packagesTable_.setColumnWidth(packageSourceColumn_, 100, Unit.PX);
@@ -648,27 +646,25 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       public NameColumn()
       {
-         super(packagesDataProvider_,
-               vulns_,
-               new OperationWithInput<PackageInfo>() 
+         super(packagesDataProvider_, dataGridRes_.dataGridStyle(), vulns_, new OperationWithInput<PackageInfo>() 
+         {
+            @Override
+            public void execute(PackageInfo packageInfo)
+            {
+               if (packageInfo.getHelpUrl() == null || 
+                   packageInfo.getHelpUrl().length() == 0)
                {
-                  @Override
-                  public void execute(PackageInfo packageInfo)
-                  {
-                     if (packageInfo.getHelpUrl() == null || 
-                         packageInfo.getHelpUrl().length() == 0)
-                     {
-                        display_.showMessage(GlobalDisplay.MSG_INFO, 
-                              constants_.helpNotAvailableCaption(),
-                              constants_.helpNotAvailableMessage(packageInfo.getName()));
-                     }
-                     else
-                     {
-                        observer_.showHelp(packageInfo);
-                     }
-                  }
-               },
-               false);
+                  display_.showMessage(GlobalDisplay.MSG_INFO, 
+                        constants_.helpNotAvailableCaption(),
+                        constants_.helpNotAvailableMessage(packageInfo.getName()));
+               }
+               else
+               {
+                  observer_.showHelp(packageInfo);
+               }
+            }
+         },
+         false);
       }
       
       @Override
@@ -727,7 +723,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          else
          {
             packageDescription = pkgInfo.getDesc();
-            className = dataGridRes_.dataGridStyle().packageDescription();
+            className = dataGridRes_.dataGridStyle().packageColumn();
          }
 
          sb.append(TEMPLATE.description(className, packageDescription));
@@ -764,6 +760,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private Widget snapshotRestoreSeparator_;
    private ToolbarButton restoreButton_;
    private ToolbarButton helpButton_;
+   private Widget helpSeparator_;
    
    private LayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;

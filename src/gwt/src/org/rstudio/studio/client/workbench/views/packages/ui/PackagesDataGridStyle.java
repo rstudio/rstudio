@@ -18,7 +18,7 @@ import com.google.gwt.user.cellview.client.DataGrid;
 
 public interface PackagesDataGridStyle extends DataGrid.Style
 {
-   String packageDescription();
+   String packageColumn();
    String packageOutOfSyncRow();
    String packageNotApplicableColumn();
 }
