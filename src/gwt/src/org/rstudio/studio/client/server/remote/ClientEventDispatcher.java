@@ -123,6 +123,7 @@ import org.rstudio.studio.client.tests.model.TestsResult;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotStatusChangedEvent;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.events.AdminNotificationEvent;
 import org.rstudio.studio.client.workbench.events.BrowseUrlEvent;
@@ -1181,6 +1182,11 @@ public class ClientEventDispatcher
          else if (type == ClientEvent.RunAutomation)
          {
             eventBus_.dispatchEvent(new RunAutomationEvent());
+         }
+         else if (type == ClientEvent.CopilotStatusChanged)
+         {
+            CopilotStatusChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new CopilotStatusChangedEvent(data.getStatus()));
          }
          else
          {
