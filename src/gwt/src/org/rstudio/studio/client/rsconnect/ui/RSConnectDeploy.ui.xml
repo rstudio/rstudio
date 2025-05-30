@@ -18,7 +18,9 @@
       <g:HTMLPanel>
          <g:VerticalPanel ui:field="filePanel_">
            <g:HTMLPanel>
-             <g:InlineLabel text="Publish files from:" ui:field="fileListLabel_"/>
+             <g:InlineLabel text="Publish files from:" ui:field="fileListLabel_">
+                  <ui:attribute name="text" key="publishFilesFromLabel"/>
+             </g:InlineLabel>
              <g:InlineLabel styleName="{res.style.deployLabel}" 
                             ui:field="deployLabel_">
              </g:InlineLabel>
