@@ -11,7 +11,7 @@ This page provides the release notes associated with each release of RStudio and
 
 ## 2025.05.0 {#rstudio-2025.05.0}
 
-| **"Mariposa Orchid"** | Date: 2025-05-05 | [What's New](https://posit.co/blog/rstudio-2025-05-0-whats-new/)
+| **"Mariposa Orchid"** | Date: 2025-05-05 | [Release Blog Post](https://posit.co/blog/rstudio-2025-05-0-whats-new/)
 |
 
 ### New
@@ -168,7 +168,7 @@ This page provides the release notes associated with each release of RStudio and
 
 ## 2024.12.0 {#rstudio-2024.12.0}
 
-| **"Kousa Dogwood"** | Date: 2024-12-16 | [What's New](https://posit.co/blog/rstudio-2024-12-0-whats-new/)
+| **"Kousa Dogwood"** | Date: 2024-12-16 | [Release Blog Post](https://posit.co/blog/rstudio-2024-12-0-whats-new/)
 |
 
 ### New
@@ -342,7 +342,7 @@ You may also want to update the following configuration entries, as the default 
 
 ## 2024.09.0 {#rstudio-2024.09.0}
 
-**"Cranberry Hibiscus"** | Date: 2024-09-23 | [What's New](https://posit.co/blog/rstudio-2024-09-0-whats-new/)
+**"Cranberry Hibiscus"** | Date: 2024-09-23 | [Release Blog Post](https://posit.co/blog/rstudio-2024-09-0-whats-new/)
 
 ### New
 
@@ -522,7 +522,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 
 ## 2024.04.0 {#rstudio-2024.04.0}
 
-**"Chocolate Cosmos"** | Date: 2024-04-29 | [What's New](https://posit.co/blog/rstudio-2024-04-0-whats-new/)
+**"Chocolate Cosmos"** | Date: 2024-04-29 | [Release Blog Post](https://posit.co/blog/rstudio-2024-04-0-whats-new/)
 
 ### New
 
@@ -706,7 +706,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 
 ## 2023.12.0 {#rstudio-2023.12.0}
 
-**"Ocean Storm"** | Date: 2023-12-15 | [What's New](https://posit.co/blog/rstudio-2023-12-0-whats-new/)
+**"Ocean Storm"** | Date: 2023-12-15 | [Release Blog Post](https://posit.co/blog/rstudio-2023-12-0-whats-new/)
 
 ### New
 #### RStudio
@@ -821,7 +821,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 
 ## 2023.09.0 {#rstudio-2023.09.0}
 
-**"Desert Sunflower"** | Date: 2023-09-25 | [What's New](https://posit.co/blog/rstudio-2023-09-0-whats-new/)
+**"Desert Sunflower"** | Date: 2023-09-25 | [Release Blog Post](https://posit.co/blog/rstudio-2023-09-0-whats-new/)
 
 ### New
 #### RStudio
@@ -1087,7 +1087,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 
 ## 2023.03.0 {#rstudio-2023.03.0}
 
-**"Cherry Blossom"** | Date: 2023-03-16 | [What's New](https://posit.co/blog/rstudio-2023-03-0-whats-new/)
+**"Cherry Blossom"** | Date: 2023-03-16 | [Release Blog Post](https://posit.co/blog/rstudio-2023-03-0-whats-new/)
 
 ### New
 
@@ -1168,7 +1168,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 
 ## 2022.12.0+353 {#rstudio-2022.12.0353}
 
-**"Elsbeth Geranium"** | Date: 2022-12-15 | [What's New](https://posit.co/blog/rstudio-2022-12-0-update-whats-new/)
+**"Elsbeth Geranium"** | Date: 2022-12-15 | [Release Blog Post](https://posit.co/blog/rstudio-2022-12-0-update-whats-new/)
 
 ### New
 
@@ -1316,7 +1316,7 @@ Quarto
 
 ## 2022.07.0+548.pro5 {#rstudio-2022.07.0548.pro5}
 
-**"Spotted Wakerobin"** | Date: 2022-07-07 | [What's New](https://posit.co/blog/rstudio-2022-07-0-what-s-new/)
+**"Spotted Wakerobin"** | Date: 2022-07-07 | [Release Blog Post](https://posit.co/blog/rstudio-2022-07-0-what-s-new/)
 
 ### New
 
@@ -1484,7 +1484,7 @@ R
 
 ## 2022.02.0+443.pro2 {#rstudio-2022.02.0443.pro2}
 
-**"Prairie Trillium"** | Date: 2022-02-23 | [What's New](https://posit.co/blog/rstudio-workbench-2022-02-0/)
+**"Prairie Trillium"** | Date: 2022-02-23 | [Release Blog Post](https://posit.co/blog/rstudio-workbench-2022-02-0/)
 
 ### New
 
@@ -1630,7 +1630,7 @@ Features
 
 ## 2021.09.0+351.pro6 {#rstudio-2021.09.0351.pro6}
 
-**"Ghost Orchid"** | Date: 2021-09-01 | [What's New](https://posit.co/blog/rstudio-2021-09-0-update-whats-new/)
+**"Ghost Orchid"** | Date: 2021-09-01 | [Release Blog Post](https://posit.co/blog/rstudio-2021-09-0-update-whats-new/)
 
 - Changed from semantic versioning to calendar based versioning (Pro #2652)
 
@@ -1728,7 +1728,7 @@ RStudio Workbench
 
 ## 1.4.1717-3 {#rstudio-1.4.1717-3}
 
-**"Juliet Rose"** | Date: 2021-06-01 | [What's New](https://posit.co/blog/rstudio-v1-4-update-whats-new/)
+**"Juliet Rose"** | Date: 2021-06-01 | [Release Blog Post](https://posit.co/blog/rstudio-v1-4-update-whats-new/)
 
 This is a major update to RStudio 1.4 that includes the following enhancements and bugfixes:
 
@@ -2390,7 +2390,7 @@ Acknowledgments
 
 ## 1.2.5042-1 {#rstudio-1.2.5042-1}
 
-**"Double Marigold"** | Date: 2020-04-13 | [What's New](https://posit.co/blog/rstudio-1-2-release/)
+**"Double Marigold"** | Date: 2020-04-13 | [Release Blog Post](https://posit.co/blog/rstudio-1-2-release/)
 
 This is a maintenance release of RStudio containing small bugfixes and functionality enhancements.
 
@@ -2669,7 +2669,7 @@ This is a maintenance release of RStudio which contains fixes for the following 
 
 ## 1.1.383 {#rstudio-1.1.383}
 
-DATE: 2017-10-09 | [What's New](https://posit.co/blog/rstudio-v1-1-release/)
+DATE: 2017-10-09 | [Release Blog Post](https://posit.co/blog/rstudio-v1-1-release/)
 
 Connections
 
