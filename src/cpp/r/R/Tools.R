@@ -1790,7 +1790,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          fmt <- "netrc file %s has 0%s permissions; it will be ignored"
          msg <- sprintf(fmt, shQuote(netrcPath), as.character(info$mode))
          warning(msg, call. = FALSE)
-         warning(".netrc files should accessible to only your own user account")
+         warning(".netrc files should accessible to only your own user account", call. = FALSE)
       }
       
       return(NULL)
