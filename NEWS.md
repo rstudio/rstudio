@@ -29,6 +29,7 @@
 #### Posit Workbench
 
 - Fixed an issue where Positron State wasn't being loaded on login (rstudio-pro#8144)
+- Fixed an issue where Shiny for Python and other applications would reguarly experience websocket failures in VS Code and Positron sessions (rstudio-pro#7368)
 
 ### Dependencies
 
