@@ -121,10 +121,14 @@ endif()
 if(GWT_COPY)
    message(STATUS "Configured to install GWT")
 
+   # set JAVA_HOME variable for configure below
+   set(JAVA_HOME $ENV{JAVA_HOME})
+   
    # create test script and copy to binary directory with executable permissions
    configure_file(
       ${CMAKE_CURRENT_SOURCE_DIR}/gwt-unit-tests.sh.in
-      ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh)
+      ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh
+      @ONLY)
 
    file(COPY ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh
              DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
