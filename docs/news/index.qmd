@@ -9,11 +9,10 @@ format:
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
-## RStudio 2025.05.0
+## 2025.05.0 {#rstudio-2025.05.0}
 
-**"Mariposa Orchid"**
-
->Date: 2025-05-05
+| **"Mariposa Orchid"** | Date: 2025-05-05 | [What's New](https://posit.co/blog/rstudio-2025-05-0-whats-new/)
+|
 
 ### New
 
@@ -112,11 +111,9 @@ This page provides the release notes associated with each release of RStudio and
 - No longer building RStudio Desktop or Desktop Pro for OpenSUSE 15, Ubuntu Focal, or RedHat 8. (rstudio-pro/#7445)
 - No longer bundling node.js with RStudio Desktop, Desktop Pro, or RStudio Server. (rstudio-pro#7450)
 
-## RStudio 2024.12.1
+## 2024.12.1 {#rstudio-2024.12.1}
 
-**"Kousa Dogwood"**
-
->Date: 2025-02-13
+**"Kousa Dogwood"** | Date: 2025-02-13
 
 ### New
 
@@ -169,11 +166,10 @@ This page provides the release notes associated with each release of RStudio and
 ### Deprecated / Removed
 - Added a warning about the deprecation of publishing to Posit Cloud. More information: https://pos.it/pc-publishing (rstudio-pro#7008)
 
-## RStudio 2024.12.0
+## 2024.12.0 {#rstudio-2024.12.0}
 
-**"Kousa Dogwood"**
-
->Date: 2024-12-16
+| **"Kousa Dogwood"** | Date: 2024-12-16 | [What's New](https://posit.co/blog/rstudio-2024-12-0-whats-new/)
+|
 
 ### New
 #### RStudio
@@ -313,11 +309,9 @@ You may also want to update the following configuration entries, as the default 
 - Removed user preference for turning off focus indicator rectangles. (#14352)
 - Removed support for `rsconnect-jupyter`; publish Jupyter Notebooks to Connect using `rsconnect-python`. See the [Publishing Jupyter Notebooks to Connect](https://docs.posit.co/ide/server-pro/integration/jupyter-multiple-python-versions.html#publishing-jupyter-notebooks-to-connect) section of the Posit Workbench Administration Guide for more information. (rstudio-pro#6989)
 
-## RStudio 2024.09.1
+## 2024.09.1 {#rstudio-2024.09.1}
 
-**"Cranberry Hibiscus"**
-
->Date: 2024-11-04
+**"Cranberry Hibiscus"** | Date: 2024-11-04
 
 ### New
 
@@ -346,11 +340,9 @@ You may also want to update the following configuration entries, as the default 
 
 - Removed msys-ssh client from Windows Desktop install and stopped setting RSTUDIO_MSYS_SSH environment variable. (rstudio-pro#6880)
 
-## RStudio 2024.09.0
+## 2024.09.0 {#rstudio-2024.09.0}
 
-**"Cranberry Hibiscus"**
-
->Date: 2024-09-23
+**"Cranberry Hibiscus"** | Date: 2024-09-23 | [What's New](https://posit.co/blog/rstudio-2024-09-0-whats-new/)
 
 ### New
 
@@ -475,20 +467,18 @@ Electron | 30.4.0 | (#14582; Desktop)
 | rserver-saml | 0.8.0 | (rstudio-pro#6529)
 | rserver-openid | 0.7.0 | (rstudio-pro#6635)
 
-## RStudio 2024.04.2
+## 2024.04.2 {#rstudio-2024.04.2}
 
-**"Chocolate Cosmos"**
-
->Date: 2024-06-10
+**"Chocolate Cosmos"** | Date: 2024-06-10
 
 ### New
 
 #### Posit Workbench
 
-- Added a Generic Architectures page to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
-- Added an AWS Single Server reference architecture to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
-- Added an AWS EKS reference architecture to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
-- Added a Background Jobs vs Workbench jobs page to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
+- Added a Generic Architectures page to the Workbench Admin Guide
+- Added an AWS Single Server reference architecture to the Workbench Admin Guide
+- Added an AWS EKS reference architecture to the Workbench Admin Guide
+- Added a Background Jobs vs Workbench jobs page to the Workbench Admin Guide
 
 ### Fixed
 
@@ -501,7 +491,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 #### Posit Workbench
 
 - Fixed an issue introduced in 2024.04.0 with the create-container-user feature for job launcher plugins that reuse a container for more than one session (rstudio/rstudio-pro#6408)
-- Improved some AWS documentation links in the reference architecture section <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
+- Improved some AWS documentation links in the reference architecture section
 
 ### Dependencies
 
@@ -510,12 +500,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Updated Electron to version 28.3.1 (#14732)
 
 
-## RStudio 2024.04.1
+## 2024.04.1 {#rstudio-2024.04.1}
 
-**"Chocolate Cosmos"**
-
->Date: 2024-05-13
-
+**"Chocolate Cosmos"** | Date: 2024-05-13
 
 ### New
 
@@ -533,11 +520,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 
 - Fixed an issue where RStudio could crash when requesting completions within a ggplot2 aes() call, for datasets containing multi-byte variable names. (#14625)
 
-## RStudio 2024.04.0
+## 2024.04.0 {#rstudio-2024.04.0}
 
-**"Chocolate Cosmos"**
-
->Date: 2024-04-29
+**"Chocolate Cosmos"** | Date: 2024-04-29 | [What's New](https://posit.co/blog/rstudio-2024-04-0-whats-new/)
 
 ### New
 
@@ -690,11 +675,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 ### Deprecated / Removed
 - Due to the upcoming [end of support for CentOS 7](https://posit.co/about/platform-support/) in June 2024, CentOS 7 builds are no longer available for public download. If you have any questions, please contact Posit Support.
 
-## RStudio 2023.12.1
+## 2023.12.1 {#rstudio-2023.12.1}
 
-**"Ocean Storm"**
-
->Date: 2024-01-29
+**"Ocean Storm"** | Date: 2024-01-29
 
 ### New
 #### RStudio
@@ -721,11 +704,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Added missing Slurm dependency to Integrating with Slurm documentation (rstudio-pro#5876)
 - Removal of Debian 10 due to end of support (rstudio-pro#5925)
 
-## RStudio 2023.12.0
+## 2023.12.0 {#rstudio-2023.12.0}
 
-**"Ocean Storm"**
-
-> Date: 2023-12-15
+**"Ocean Storm"** | Date: 2023-12-15 | [What's New](https://posit.co/blog/rstudio-2023-12-0-whats-new/)
 
 ### New
 #### RStudio
@@ -812,11 +793,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Improved the accessible label on launcher job details buttons. [accessibility] (rstudio-pro#5270)
 - Reduced the number of DB connections allocated in the pool when servers have many CPUs (rstudio-pro#5210)
 
-## RStudio 2023.09.1
+## 2023.09.1 {#rstudio-2023.09.1}
 
-**"Desert Sunflower"**
-
->Date: 2023-10-17
+**"Desert Sunflower"** | Date: 2023-10-17
 
 ### Deprecated / Removed
 #### Posit Workbench
@@ -840,11 +819,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Exclude unused files from the Workbench VS Code Extension package
 - Fixed issue that caused start up crash in environments with encrypted database passwords. (rstudio-pro#5228)
 
-## RStudio 2023.09.0
+## 2023.09.0 {#rstudio-2023.09.0}
 
-**"Desert Sunflower"**
-
->Date: 2023-09-25
+**"Desert Sunflower"** | Date: 2023-09-25 | [What's New](https://posit.co/blog/rstudio-2023-09-0-whats-new/)
 
 ### New
 #### RStudio
@@ -924,11 +901,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Avoid username lookups when listing processes looking for sessions (rstudio/rstudio-pro#4800)
 - Avoid load balancing node-status checks for Slurm and Kubernetes sessions (rstudio/rstudio-pro#4876)
 
-## RStudio 2023.06.2 
+## 2023.06.2 {#rstudio-2023.06.2}
 
-**"Mountain Hydrangea"**
-
->Date: 2023-08-24
+**"Mountain Hydrangea"** | Date: 2023-08-24
 
 ### Fixed
 
@@ -957,11 +932,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 #### RStudio IDE
 - Remote desktop sessions are no longer supported (rstudio-pro:#4832)
 
-## RStudio 2023.06.1
+## 2023.06.1 {#rstudio-2023.06.1}
 
-**"Mountain Hydrangea"**
-
->Date: 2023-07-07
+**"Mountain Hydrangea"** | Date: 2023-07-07
 
 ### New
 
@@ -977,11 +950,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 
 #### Posit Workbench
 
-## RStudio 2023.06.0
+## 2023.06.0 {#rstudio-2023.06.0}
 
-**"Mountain Hydrangea"**
-
->Date: 2023-06-08
+**"Mountain Hydrangea"** | Date: 2023-06-08
 
 ### New
 
@@ -1069,11 +1040,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 - The Kubernetes plugin now interprets the default number of AMD GPUs correctly (rstudio/launcher#688)
 - Fixed the logic when manipulating ACLs for project sharing to not remove permissions on parent directories (rstudio/rstudio-pro#4258)
 
-## RStudio 2023.03.2
+## 2023.03.2 {#rstudio-2023.03.2}
 
-**"Cherry Blossom"**
-
->Date: 2023-06-12
+**"Cherry Blossom"** | Date: 2023-06-12
 
 ### Fixed
 
@@ -1082,11 +1051,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 #### Posit Workbench
 - Added option to allow launcher sessions to return a non-zero exit code (rstudio/rstudio-pro#4719)
 
-## RStudio 2023.03.1
+## 2023.03.1 {#rstudio-2023.03.1}
 
-**"Cherry Blossom"**
-
->Date: 2023-05-12
+**"Cherry Blossom"** | Date: 2023-05-12
 
 ### New
 
@@ -1118,11 +1085,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Address a crash in the Job Launcher Kubernetes Plugin (rstudio/launcher#660)
 - Fix a bug in Job Launcher Kubernetes Plugin Kubernetes Auth Token reload logic for streaming requests (rstudio/launcher#685)
 
-## RStudio 2023.03.0
+## 2023.03.0 {#rstudio-2023.03.0}
 
-**"Cherry Blossom"**
-
->Date: 2023-03-16
+**"Cherry Blossom"** | Date: 2023-03-16 | [What's New](https://posit.co/blog/rstudio-2023-03-0-whats-new/)
 
 ### New
 
@@ -1201,11 +1166,9 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Security fix: User ID is now set by the server when running Workbench Jobs created by VS Code (rstudio/rstudio-pro#4255)
 - Fixed connection issues with SSL-enabled sessions running on Slurm in a load-balanced cluster or after a Launcher restart (rstudio/rstudio-pro#4098)
 
-## RStudio 2022.12.0+353
+## 2022.12.0+353 {#rstudio-2022.12.0353}
 
-**"Elsbeth Geranium"**
-
->Date: 2022-12-15
+**"Elsbeth Geranium"** | Date: 2022-12-15 | [What's New](https://posit.co/blog/rstudio-2022-12-0-update-whats-new/)
 
 ### New
 
@@ -1317,11 +1280,9 @@ Experimental ARM64 and RedHat 9 support
 - Removed the "rstudio-server install-vs-code" admin command for downloading and configuring code-server; code-server is now installed with Workbench, use the "rstudio-server configure-vs-code" command for configuration (rstudio-pro#3643)
 - It is highly recommended that you disable session culling in Jupyter sessions by done by setting `session-cull-minutes=0` in `jupyter.conf` to prevent potential data loss (rstudio-pro#3054) 
 
-## RStudio 2022.07.2+576.pro12
+## 2022.07.2+576.pro12 {#rstudio-2022.07.2576.pro12}
 
-**"Spotted Wakerobin"**
-
->Date: 2022-09-19
+**"Spotted Wakerobin"** | Date: 2022-09-19
 
 ### New
 
@@ -1344,22 +1305,18 @@ Quarto
 - Fixed `Cannot read property 'python'` error when creating new projects on some systems (#11769)
 
 
-## RStudio 2022.07.1+554.pro3
+## 2022.07.1+554.pro3 {#rstudio-2022.07.1554.pro3}
 
-**"Spotted Wakerobin"**
-
->Date: 2022-07-23
+**"Spotted Wakerobin"** | Date: 2022-07-23
 
 ### New
 
 - Update Quarto to 1.0.36
 
 
-## RStudio 2022.07.0+548.pro5
+## 2022.07.0+548.pro5 {#rstudio-2022.07.0548.pro5}
 
-**"Spotted Wakerobin"**
-
->Date: 2022-07-07
+**"Spotted Wakerobin"** | Date: 2022-07-07 | [What's New](https://posit.co/blog/rstudio-2022-07-0-what-s-new/)
 
 ### New
 
@@ -1453,11 +1410,9 @@ RStudio Workbench
 - No longer support Debian 9 ("stretch") for Desktop, Server, and Workbench (#10981)
 - No longer support SLES 12 for Desktop, Server, and Workbench (#10583)
 
-## RStudio 2022.02.4+500.pro1
+## 2022.02.4+500.pro1 {#rstudio-2022.02.4500.pro1}
 
-**"Prairie Trillium"**
-
->Date: 2022-08-27
+**"Prairie Trillium"** | Date: 2022-08-27
 
 R:
 
@@ -1468,11 +1423,9 @@ R:
 - Fixed for schema version comparison that breaks db in downgrade -> upgrade scenarios (rstudio-pro#3572)
 
 
-## RStudio 2022.02.3+492.pro3
+## 2022.02.3+492.pro3 {#rstudio-2022.02.4500.pro1}
 
-**"Prairie Trillium"**
-
->Date: 2022-05-17
+**"Prairie Trillium"** | Date: 2022-05-17
 
 ### Fixed
 
@@ -1496,11 +1449,9 @@ RStudio Desktop is a developer’s tool that is commonly runs custom code outsid
 See https://chromium.googlesource.com/chromium/src/+/0e94f26e8/docs/linux_sandboxing.md#the-sandbox-1 for more details.
 :::
 
-## RStudio 2022.02.2+485.pro2
+## 2022.02.2+485.pro2 {#rstudio-2022.02.2485.pro2}
 
-**"Prairie Trillium"**
-
->Date: 2022-04-27
+**"Prairie Trillium"** | Date: 2022-04-27
 
 R
 
@@ -1515,11 +1466,9 @@ R
 - Fixed issue with inability to insert Quarto crossrefs (#10918)
 - (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
 
-## RStudio 2022.02.1+461.pro1
+## 2022.02.1+461.pro1 {#rstudio-2022.02.1461.pro1}
 
-**"Prairie Trillium"**
-
->Date: 2022-03-23
+**"Prairie Trillium"** | Date: 2022-03-23
 
 ### Fixed
 
@@ -1533,11 +1482,9 @@ R
 - Fixed error refreshing the IDE when project sharing is enabled and a file is actively being shared (Pro #3321)
 - Fixed restoring session containing invalid `RSTUDIO_PANDOC` value
 
-## RStudio 2022.02.0+443.pro2
+## 2022.02.0+443.pro2 {#rstudio-2022.02.0443.pro2}
 
-**"Prairie Trillium"**
-
->Date: 2022-02-23
+**"Prairie Trillium"** | Date: 2022-02-23 | [What's New](https://posit.co/blog/rstudio-workbench-2022-02-0/)
 
 ### New
 
@@ -1625,22 +1572,18 @@ Misc
 
 - **BREAKING:** Remove `session-collab-server` and `filebase-path` R Session options (pro #3181)
 
-## RStudio 2021.09.4+403.pro3
+## 2021.09.4+403.pro3 {#rstudio-2021.09.4403.pro3}
 
-**Ghost Orchid**
-
->Date: 2022-09-19
+**"Ghost Orchid"** | Date: 2022-09-19
 
 ### Fixed
 
 - Fixed schema version comparison that breaks db in downgrade -> upgrade scenarios (rstudio-pro#3572)
 
 
-## RStudio 2021.09.3+396.pro1
+## 2021.09.3+396.pro1 {#rstudio-2021.09.3396.pro1}
 
-**Ghost Orchid**
-
->Date: 2022-04-20
+**"Ghost Orchid"** | Date: 2022-04-20
 
 RStudio Workbench
 
@@ -1657,11 +1600,9 @@ Features
 (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
 (macOS only) Fixed an issue causing tooltips and menus to render incorrectly in Safari 15.4. (#10821)
 
-## RStudio 2021.09.2+382.pro1
+## 2021.09.2+382.pro1 {#rstudio-2021.09.2382.pro1}
 
-**Ghost Orchid**
-
->Date: "2022-01-04"
+**"Ghost Orchid"** | Date: 2022-01-04
 
 Features
 
@@ -1674,11 +1615,9 @@ Features
 - Fix issue causing backslashes to be added to citations in the visual editor (#10075)
 - Fix issue preventing startup on multi-user macOS environments (#9945, #10267)
 
-## RStudio 2021.09.1+372.pro1
+## 2021.09.1+372.pro1 {#rstudio-2021.09.1372.pro1}
 
-**"Ghost Orchid"**
-
->Date: 2021-11-09
+**"Ghost Orchid"** | Date: 2021-11-09
 
 ### Fixed
 
@@ -1689,11 +1628,9 @@ Features
 - Fixed bug preventing detection of Python environments when conda installed in typical location but not on path (#9975)
 - Make Python detection less likely to override RETICULATE_PYTHON (#9999)
 
-## RStudio 2021.09.0+351.pro6 
+## 2021.09.0+351.pro6 {#rstudio-2021.09.0351.pro6}
 
-**"Ghost Orchid"**
-
->Date: 2021-09-01
+**"Ghost Orchid"** | Date: 2021-09-01 | [What's New](https://posit.co/blog/rstudio-2021-09-0-update-whats-new/)
 
 - Changed from semantic versioning to calendar based versioning (Pro #2652)
 
@@ -1776,26 +1713,22 @@ RStudio Workbench
 - RStudio addins installed within `tools:::R_user_dir(<pkg>, "config")` are now discovered by RStudio. (#9648)
 
 
-## RStudio 1.4.1743-4 
+## 1.4.1743-4 {#rstudio-1.4.1743-4}
 
-**Evergreen Rose**
-
->Date: 2022-04-28
+**"Evergreen Rose"** | Date: 2022-04-28
 
 ### Fixed
 
-* Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
-* Fixed an issue where RStudio Desktop Pro could fail when connecting to remote sessions via https (Pro #2651)
-* Fixed a crash that can occur when opening a VS Code session behind a path-rewriting proxy (Pro #2699)
-* Updated embedded nginx to 1.20.1 (Pro #2676)
-* Blocked access to code-server's `/absproxy/<port>` url (Pro #3275)
-* Fixed a security issue where shiny apps and vscode sessions remained active after signout (rstudio-pro#3287)
+- Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
+- Fixed an issue where RStudio Desktop Pro could fail when connecting to remote sessions via https (Pro #2651)
+- Fixed a crash that can occur when opening a VS Code session behind a path-rewriting proxy (Pro #2699)
+- Updated embedded nginx to 1.20.1 (Pro #2676)
+- Blocked access to code-server's `/absproxy/<port>` url (Pro #3275)
+- Fixed a security issue where shiny apps and vscode sessions remained active after signout (rstudio-pro#3287)
 
-## RStudio 1.4.1717-3
+## 1.4.1717-3 {#rstudio-1.4.1717-3}
 
-**Juliet Rose**
-
->Date: 2021-06-01
+**"Juliet Rose"** | Date: 2021-06-01 | [What's New](https://posit.co/blog/rstudio-v1-4-update-whats-new/)
 
 This is a major update to RStudio 1.4 that includes the following enhancements and bugfixes:
 
@@ -1956,11 +1889,9 @@ Misc
 - Errors that occur when R packages update the Connections pane are now better handled and reported (#9219)
 - Fixed an issue where login page could fail intermittently with slow network connections (Pro #2551)
 
-## RStudio 1.4.1106-5 
+## 1.4.1106-5 {#rstudio-1.4.1106-5}
 
-**Tiger Daylily**
-
->Date: 2021-02-22
+**"Tiger Daylily"** | Date: 2021-02-22
 
 This is a minor update to RStudio 1.4 that contains fixes for a handful of important bugs.
 
@@ -1975,11 +1906,9 @@ Misc
 - Update Pandoc to 2.11.4 (#8848)
 - Update jQuery to 3.5.1 (Pro #2314)
 
-## RStudio 1.4.1103-4 
+## 1.4.1103-4 {#rstudio-1.4.1103-4}
 
-**Wax Begonia**
-
->Date: 2021-01-20
+**"Wax Begonia"** | Date: 2021-01-20
 
 - A new [visual editor](https://rstudio.github.io/visual-markdown-editing/) for R Markdown documents
 - Improved support for Python, including an environment pane for Python and visualization of Python objects
@@ -2147,11 +2076,9 @@ RStudio Server Pro
 - Fixed issue where file permissions were not corrected after uploading a file to a shared project (Pro #2208)
 - Fixed issue where the project sharing would not work behind a HTTPS proxy (Pro #2088)
 
-## RStudio 1.3.1093-1 
+## 1.3.1093-1 {#rstudio-1.3.1093-1}
 
-**Apricot Nasturtium**
-
->Date: 2020-09-18
+**"Apricot Nasturtium"** | Date: 2020-09-18
 
 This is a patch release of RStudio 1.3, consisting primarily of bugfixes and small improvements.
 
@@ -2174,11 +2101,9 @@ This is a patch release of RStudio 1.3, consisting primarily of bugfixes and sma
 - Fix an issue where global replace gave unexpected results outside of a project (#7736)
 - Fix an issue with session detection that could cause a failure to sign in when the authentication does not complete immediately (Pro #1104)
 
-## RStudio 1.3.1073-1
+## 1.3.1073-1 {#rstudio-1.3.1073-1}
 
-**Giant Goldenrod**
-
->Date: 2020-08-11
+**"Giant Goldenrod"** | Date: 2020-08-11
 
 This is a patch release of RStudio 1.3, consisting primarily of bugfixes and small improvements to RStudio 1.3.
 
@@ -2206,11 +2131,9 @@ Misc
 - Fix issue where large R objects in the environment pane could not be expanded (Pro #1799)
 - Fix issue where Session Server settings for a saved server could not be modified (Pro #1824)
 
-## RStudio 1.3.1056-1
+## 1.3.1056-1 {#rstudio-1.3.1056-1}
 
-**Water Lily**
-
->Date: 2020-07-15
+**"Water Lily"** | Date: 2020-07-15
 
 This is a patch release of RStudio 1.3, consisting primarily of bugfixes and small improvements from the initial 1.3 stable release.
 
@@ -2280,11 +2203,9 @@ RStudio Server Pro
 - New option `server-project-sharing-root-dir` allows project sharing outside user home directories (Pro #1340)
 - Update embedded nginx to 1.17.10
 
-## RStudio 1.3.959-1
+## 1.3.959-1 {#rstudio-1.3.959-1}
 
-**Middlemist Red**
-
->Date: 2020-05-22
+**"Middlemist Red"** | Date: 2020-05-22
 
 This is a major new release of RStudio which includes the following enhancements:
 
@@ -2467,11 +2388,9 @@ Acknowledgments
 
 - Thanks to Dr Jonathan Godfrey (Massey University, New Zealand), and to JooYoung Seo (https://www.jooyoungseo.com/) for their valuable insights on improving screen reader support in RStudio 1.3.
 
-## RStudio 1.2.5042-1
+## 1.2.5042-1 {#rstudio-1.2.5042-1}
 
-**Double Marigold**
-
->Date: 2020-04-13
+**"Double Marigold"** | Date: 2020-04-13 | [What's New](https://posit.co/blog/rstudio-1-2-release/)
 
 This is a maintenance release of RStudio containing small bugfixes and functionality enhancements.
 
@@ -2486,11 +2405,9 @@ Server Pro
 - Fix inability to select R version in Global Options and elsewhere (#1470)
 - Fix failure to start R sessions when multiple values are present in `www-frame-origin` (#1529)
 
-## RStudio 1.2.5033-1
+## 1.2.5033-1 {#rstudio-1.2.5033-1}
 
-**Orange Blossom**
-
->Date: 2019-12-17
+**"Orange Blossom"** | Date: 2019-12-17
 
 Misc
 
@@ -2508,11 +2425,9 @@ Server Pro
 - Add documentation for load balancing limitations, module support, and support for multiple versions of R with the Slurm Launcher Plugin (#1296)
 
 
-## RStudio 1.2.5019-6
+## 1.2.5019-6 {#rstudio-1.2.5019-6}
 
-**Elderflower**
-
->Date: 2019-11-01
+**"Elderflower"** | Date: 2019-11-01
 
 Misc
 
@@ -2533,7 +2448,7 @@ Server Pro
 - Adds better Session UI/UX including sorting, label viewing, and creation visibility (#1215)
 - Respect user profile resource limits for local launcher R sessions (#1269)
 
-## RStudio 1.2.5001-3
+## 1.2.5001-3 {#rstudio-1.2.5001-3}
 
 >Date: 2019-09-19
 
@@ -2576,10 +2491,9 @@ Miscellaneous
 - Set secure flag when clearing cookies for consistency (Pro #964)
 
 
-## RStudio 1.2.1335-1
+## 1.2.1335-1 {#rstudio-1.2.1335-1}
 
 >Date: 2019-04-08
-
 
 Python and Notebooks  
 
@@ -2708,7 +2622,7 @@ RStudio Pro Drivers
 
 - Discover, install and uninstall RStudio Pro Drivers from the New Connection wizard.
 
-## RStudio 1.1.463
+## 1.1.463 {#rstudio-1.1.463}
 
 >Date: 2018-10-18
 
@@ -2753,9 +2667,9 @@ This is a maintenance release of RStudio which contains fixes for the following 
 - Server Pro: Update embedded nginx to 1.14.0
 - Server Pro: Can now log in to load-balanced servers when password contains a space (Pro #338)
 
-## RStudio 1.1.383
+## 1.1.383 {#rstudio-1.1.383}
 
->DATE: 2017-10-09
+DATE: 2017-10-09 | [What's New](https://posit.co/blog/rstudio-v1-1-release/)
 
 Connections
 
@@ -2907,7 +2821,7 @@ Miscellaneous
 - Server Pro: Fix issue with dirty indicator/saving after collaborative editing ends
 - Server Pro: Fix issue with using multiple R versions feature when multi-session is off
 
-## RStudio 1.0.153
+## 1.0.153 {#rstudio-1.0.153}
 
 >Date: 2017-07-20
 
@@ -2924,7 +2838,7 @@ Miscellaneous
 - Add .registration=TRUE to useDynLib when Rcpp >= 0.12.11
 - New binary release for users running Ubuntu 16+ and Debian 9+
 
-## RStudio 1.0.143
+## 1.0.143 {#rstudio-1.0.143}
 
 >Date: 2017-04-19
 
@@ -2945,7 +2859,7 @@ Miscellaneous
 
 - Environment pane support for [reticulate](https://cran.r-project.org/web/packages/reticulate/index.html) objects
 
-## RStudio 1.0.136
+## 1.0.136 {#rstudio-1.0.136}
 
 >Date: 2016-12-21
 
@@ -2993,7 +2907,7 @@ Miscellaneous
 - Server Pro: Allow server user to have group name differing from user name
 - Server Pro: Don't require LDAP to support user enumeration when `auth-required-user-group` is set
 
-## RStudio 1.0.44
+## 1.0.44 {#rstudio-1.0.44}
 
 >Date: 2016-11-01
 
@@ -3165,7 +3079,7 @@ Miscellaneous
 - Fix failure to install packages with long install.packages commands after restart
 - Server Pro: Fix issue causing sporadic session launch failures when using PAM sessions 
 
-## RStudio 0.99.903
+## 0.99.903 {#rstudio-0.99.903}
 
 >Date: 2016-07-18
 
@@ -3313,7 +3227,7 @@ Server
 - RPM: Set autreqprov to “no” for both desktop and server
 - Prevent periods from being used in Rmd date field (caused LaTeX errors)
 
-## RStudio 0.99.902
+## 0.99.902 {#rstudio-0.99.902}
 
 >Date: 2016-05-26
 
@@ -3322,7 +3236,6 @@ Data Viewer
 - Support for viewing large data sets (removed 1k row limit)
 - Data can be filtered, searched, and sorted
 - Viewer updates to reflect changes in data
-
 
 R Code Completion
 
@@ -3515,7 +3428,7 @@ Server
 - Persist last size setting in Save Plot as PDF dialog
 - R 3.2: Specify .Platform$pkgType when installing binary package archives
 
-## RStudio 0.98.1103
+## 0.98.1103 {#rstudio-0.98.1103}
 
 >Date: 2015-03-06
 
@@ -3656,7 +3569,7 @@ RStudio Server
 - Fix for Windows crash when ESC key pressed at startup
 - Fix for installing packages when repos option is an unnamed vector
 
-## RStudio 0.98.507
+## 0.98.507 {#rstudio-0.98.507}
 
 >Date: 2015-04-25
 
@@ -3802,7 +3715,7 @@ RStudio Server
 -  Prevent "parameter type mismatch" error when using manipulate
 -  Prevent error messages which could occur when restarting R from an already suspended session
 
-## RStudio 0.97.551
+## 0.97.551 {#rstudio-0.97.551}
 
 >Date: 2013-05-11
 
@@ -4003,7 +3916,7 @@ RStudio Server
 - Prevent freeze when loading large line-wrapped source files on Chrome for Linux
 
 
-## RStudio 0.96.331
+## 0.96.331 {#rstudio-0.96.331}
 
 >Date: 2012-08-27
 
@@ -4174,7 +4087,7 @@ Miscellaneous
 - Fixed editor cursor off by one line problem that occurred after rapid scrolling.
 - Updated to Qt 4.8: required for PDF viewer and to fix OS X Lion trackpad scrolling issue (however as a result 32-bit Mac systems and OS X 10.5 are no longer supported).
 
-## RStudio 0.95.265
+## 0.95.265 {#rstudio-0.95.265}
 
 >Date: 2012-04-05
 
@@ -4291,7 +4204,7 @@ Other New Features
 - Fix re-rendering of R 2.14 lattice plots after server suspend/resume
 - data.css is now correctly served when running behind a reverse proxy
 
-## RStudio 0.94.110
+## 0.94.110 {#rstudio-0.94.110}
 
 >Date: 2011-10-03
 
@@ -4474,7 +4387,7 @@ Server
 - PAM authorization works correctly even if account has password expiration warning
 - Correct display of manipulate panel when Plots pane is on the left
 
-## RStudio 0.93.73
+## 0.93.73 {#rstudio-0.93.73}
 
 >Date: 2011-04-11
 
