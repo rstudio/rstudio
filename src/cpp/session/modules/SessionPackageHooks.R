@@ -13,20 +13,84 @@
 #
 #
 
-.rs.addFunction("installPackages", function(pkgs, lib)
+assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
+
+.rs.addFunction("defineHookImpl", function(package, binding, hook, all)
+{
+   # get reference to original function definition
+   namespace <- getNamespace(package)
+   original <- get(binding, envir = namespace)
+   
+   # update our hook to match definition of original
+   environment(hook) <- environment(original)
+   formals(hook) <- formals(original)
+   
+   # replace binding in search path environment
+   envir <- as.environment(paste("package", package, sep = ":"))
+   .rs.replaceBindingImpl(envir, binding, hook)
+   
+   # also replace the binding in the package namespace if requested
+   if (all)
+   {
+      .rs.registerPackageAttachedHook(package, function(...)
+      {
+         .rs.replaceBindingImpl(namespace, binding, hook)
+      })
+   }
+})
+
+.rs.addFunction("defineGlobalHook", function(package, binding, hook)
+{
+   .rs.defineHookImpl(package, binding, hook, all = TRUE)
+})
+
+.rs.addFunction("defineHook", function(package, binding, hook)
+{
+   .rs.defineHookImpl(package, binding, hook, all = FALSE)
+})
+
+
+.rs.defineGlobalHook("utils", "download.file", function(url, destfile)
+{
+   ""
+   "This is an RStudio hook."
+   "Use `.rs.downloadFile` to bypass this hook if necessary."
+   ""
+   
+   # Note that R also supports downloading multiple files in parallel,
+   # so the 'url' parameter may be a vector of URLs.
+   #
+   # Unfortunately, it doesn't support the use of URL-specific headers,
+   # so we try to handle this appropriately here.
+   result <- vector("integer", length = length(url))
+   authHeaders <- .rs.mapChr(url, .rs.computeAuthorizationHeader)
+   for (authHeader in unique(authHeaders))
+   {
+      # Figure out which URLs are associated with the current header.
+      idx <- which(authHeaders == authHeader)
+      currentUrls <- url[idx]
+      
+      # Build a call to download these files all in one go.
+      call <- match.call(expand.dots = TRUE)
+      call[[1L]] <- quote(.rs.downloadFile)
+      call["url"] <- list(currentUrls)
+      call["headers"] <- list(c(headers, Authorization = authHeader))
+      result[idx] <- eval(call, envir = parent.frame())
+   }
+   
+   # Note that even if multiple files are downloaded, R only reports
+   # a single status code, with 0 implying that all downloads succeeded.
+   if (all(result == 0L)) 0L else 1L
+   
+})
+
+.rs.defineHook("utils", "install.packages", function(pkgs, lib)
 {
    ""
    "This is an RStudio hook."
    "Use `utils::install.packages()` to bypass this hook if necessary."
    ""
    
-   call <- sys.call()
-   call[[1L]] <- quote(.rs.installPackagesImpl)
-   eval(call, envir = parent.frame())
-})
-
-.rs.addFunction("installPackagesImpl", function(pkgs, lib)
-{
    # Check if package installation was disabled in this version of RStudio.
    canInstallPackages <- .Call("rs_canInstallPackages", PACKAGE = "(embedding)")
    if (!canInstallPackages)
@@ -53,7 +117,6 @@
    on.exit(.rs.restorePreviousPath(), add = TRUE)
    
    # Invoke the original function.
-   # TODO: We could consider adding custom headers here.
    call <- sys.call()
    call[[1L]] <- quote(utils::install.packages)
    result <- eval(call, envir = parent.frame())
@@ -66,30 +129,13 @@
    invisible(result)
 })
 
-formals(.rs.installPackages)     <- formals(utils::install.packages)
-formals(.rs.installPackagesImpl) <- formals(utils::install.packages)
-
-.rs.replaceBindingImpl(
-   envir   = as.environment("package:utils"),
-   binding = "install.packages",
-   value   = .rs.installPackages
-)
-
-
-.rs.addFunction("removePackages", function(pkgs, lib)
+.rs.defineHook("utils", "remove.packages", function(pkgs, lib)
 {
    ""
    "This is an RStudio hook."
    "Use `utils::remove.packages()` to bypass this hook if necessary."
    ""
    
-   call <- sys.call()
-   call[[1L]] <- quote(.rs.removePackagesImpl)
-   eval(call, envir = parent.frame())
-})
-
-.rs.addFunction("removePackagesImpl", function(pkgs, lib)
-{
    # Invoke original.
    result <- utils::remove.packages(pkgs, lib)
    
@@ -99,15 +145,6 @@ formals(.rs.installPackagesImpl) <- formals(utils::install.packages)
    # Return original result.
    invisible(result)
 })
-
-formals(.rs.removePackages)     <- formals(utils::remove.packages)
-formals(.rs.removePackagesImpl) <- formals(utils::remove.packages)
-
-.rs.replaceBindingImpl(
-   envir   = as.environment("package:utils"),
-   binding = "remove.packages",
-   value   = .rs.removePackages
-)
 
 .rs.addFunction("installPackagesRequiresRestart", function(pkgs)
 {
