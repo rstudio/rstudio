@@ -139,6 +139,9 @@
    <!-- Specify supported locales -->
    <extend-property name="locale" values="en,fr"/>
 
+   <!-- remove the 'default' locale permutation as it does not support plurals -->
+   <set-property name="locale" value="en,fr"/>
+
    <!-- Set default locale to en -->
    <set-property-fallback name="locale" value="en"/>
 
