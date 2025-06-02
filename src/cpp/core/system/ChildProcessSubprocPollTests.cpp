@@ -37,7 +37,6 @@ const milliseconds kCheckSubprocDelay = milliseconds(25);
 const milliseconds kCheckSubprocDelayExpired = milliseconds(35);
 
 const milliseconds kCheckCwdDelay = milliseconds(35);
-const milliseconds kCheckCwdDelayExpired = milliseconds(45);
 
 void blockingwait(milliseconds ms)
 {
