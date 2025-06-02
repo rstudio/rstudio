@@ -1876,7 +1876,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 {
    # Parse the URL into its component parts.
    pattern <- paste0(
-      "^(?:(?<scheme>[a-z][a-z0-9+\\-.]*)://)?",           # Scheme
+      "^",
+      "(?:(?<scheme>[a-z][a-z0-9+\\-.]*)://)?",            # Scheme
       "(?:(?<user>[^:@/?#]+)(?::(?<pass>[^@/?#]*))?@)?",   # User, Password
       "(?<host>\\[[^\\]]+\\]|[^:/?#]+)",                   # Host (IPv6 in [])
       "(?::(?<port>\\d+))?",                               # Port
