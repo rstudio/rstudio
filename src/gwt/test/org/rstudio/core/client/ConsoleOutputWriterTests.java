@@ -69,13 +69,6 @@ public class ConsoleOutputWriterTests extends GWTTestCase
          return screenReaderEnabled_;
       }
 
-      @Override
-      public boolean limitConsoleVisible()
-      {
-         return limitConsoleVisible_;
-      }
-
-      public boolean limitConsoleVisible_ = false;
       public final int truncateLines_ = 1000;
       public final String ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_ON;
       public final boolean screenReaderEnabled_ = false;

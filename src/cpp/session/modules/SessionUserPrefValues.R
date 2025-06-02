@@ -785,15 +785,6 @@
    clear = function() { .rs.clearUserPref("ansi_console_mode") }
 )
 
-# Limit visible console output
-#
-# Whether to only show a limited window of the total console output
-.rs.uiPrefs$limitVisibleConsole <- list(
-   get = function() { .rs.getUserPref("limit_visible_console") },
-   set = function(value) { .rs.setUserPref("limit_visible_console", value) },
-   clear = function() { .rs.clearUserPref("limit_visible_console") }
-)
-
 # Show toolbar on R Markdown chunks
 #
 # Whether to show a toolbar on code chunks in R Markdown documents.

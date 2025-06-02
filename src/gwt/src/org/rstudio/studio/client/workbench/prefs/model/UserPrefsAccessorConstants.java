@@ -734,14 +734,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String ansiConsoleModeEnum_off();
 
    /**
-    * Whether to only show a limited window of the total console output
-    */
-   @DefaultStringValue("Limit visible console output")
-   String limitVisibleConsoleTitle();
-   @DefaultStringValue("Whether to only show a limited window of the total console output")
-   String limitVisibleConsoleDescription();
-
-   /**
     * Whether to show a toolbar on code chunks in R Markdown documents.
     */
    @DefaultStringValue("Show toolbar on R Markdown chunks")

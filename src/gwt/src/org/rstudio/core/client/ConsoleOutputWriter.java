@@ -18,7 +18,6 @@ import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.core.client.widget.PreWidget;
 
 import com.google.gwt.dom.client.Document;
@@ -26,7 +25,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 
-import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 /**
@@ -60,13 +58,8 @@ public class ConsoleOutputWriter
    {
       lines_ = 0;
 
-      if (VirtualScrollerManager.scrollerForElement(output_.getElement()) != null)
-         VirtualScrollerManager.clear(output_.getElement());
-      else
-      {
-         output_.setText("");
-         virtualConsole_ = null;
-      }
+      output_.setText("");
+      virtualConsole_ = null;
    }
 
    public int getMaxOutputLines()
@@ -109,7 +102,6 @@ public class ConsoleOutputWriter
          Roles.getDocumentRole().set(trailing); // https://github.com/rstudio/rstudio/issues/6884
          outEl.appendChild(trailing);
          virtualConsole_ = vcFactory_.create(trailing);
-         virtualConsole_.setVirtualizedDisableOverride(false);
       }
 
       // set the appendTarget to the VirtualConsole bucket if possible
@@ -133,15 +125,14 @@ public class ConsoleOutputWriter
          virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
       int newLineCount = DomUtils.countLines(appendTarget, true);
 
-      if (!virtualConsole_.isLimitConsoleVisible())
-         lines_ += newLineCount - oldLineCount;
+      lines_ += newLineCount - oldLineCount;
 
       return ignoreLineCount || !trimExcess();
    }
 
    public boolean trimExcess()
    {
-      if (maxLines_ <= 0 || virtualConsole_ != null && virtualConsole_.isLimitConsoleVisible())
+      if (maxLines_ <= 0)
          return false;  // No limit in effect
 
       int linesToTrim = lines_ - maxLines_;

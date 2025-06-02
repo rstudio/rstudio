@@ -308,13 +308,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    @Handler
    void onFocusConsoleOutputEnd()
    {
-      if (prefs_.limitVisibleConsole().getValue())
-      {
-         ariaLive_.announce(AriaLiveService.INACCESSIBLE_FEATURE,
-            constants_.focusConsoleWarningMessage(prefs_.limitVisibleConsole().getTitle()),
-            Timing.IMMEDIATE, Severity.STATUS);
-         return;
-      }
       view_.getConsoleOutputWriter().focusEnd();
    }
 

@@ -26,7 +26,6 @@ import java.util.TreeSet;
 import org.rstudio.core.client.hyperlink.Hyperlink;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.shell.ShellWidget.ErrorClass;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -66,7 +65,6 @@ public class VirtualConsole
       int truncateLongLinesInConsoleHistory();
       String consoleAnsiMode();
       boolean screenReaderEnabled();
-      boolean limitConsoleVisible();
    }
 
    public static class PreferencesImpl extends UserPrefsSubset
@@ -94,12 +92,6 @@ public class VirtualConsole
       public boolean screenReaderEnabled()
       {
          return getUserPrefs().enableScreenReader().getValue();
-      }
-
-      @Override
-      public boolean limitConsoleVisible()
-      {
-         return getUserPrefs().limitVisibleConsole().getValue();
       }
    }
    
@@ -158,7 +150,6 @@ public class VirtualConsole
       prefs_ = prefs;
       parent_ = parent;
       ansiColorMode_ = prefs.consoleAnsiMode();
-      VirtualScrollerManager.init();
    }
    
    @Inject
@@ -243,38 +234,12 @@ public class VirtualConsole
 
    public void clear()
    {
-      if (isVirtualized())
-         clearVirtualScroller();
-      else
-         formfeed();
-   }
-
-   public boolean isLimitConsoleVisible()
-   {
-      return prefs_.limitConsoleVisible();
-   }
-
-   public void setVirtualizedDisableOverride(boolean override)
-   {
-      virtualizedDisableOverride_ = override;
+      formfeed();
    }
 
    public void setPreserveHTML(boolean preserveHTML)
    {
       preserveHTML_ = preserveHTML;
-   }
-
-   public boolean isVirtualized()
-   {
-      return !virtualizedDisableOverride_ && prefs_.limitConsoleVisible() && parent_ != null;
-   }
-
-   public void clearVirtualScroller()
-   {
-      if (isVirtualized())
-      {
-         VirtualScrollerManager.clear(parent_.getParentElement());
-      }
    }
 
    private void backspace()
@@ -629,10 +594,7 @@ public class VirtualConsole
     */
    private void appendChild(Element element)
    {
-      if (isVirtualized())
-         VirtualScrollerManager.append(parent_.getParentElement(), element);
-      else
-         parent_.appendChild(element);
+      parent_.appendChild(element);
    }
 
    /**
@@ -706,10 +668,6 @@ public class VirtualConsole
     */
    public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
-      boolean wasAtBottom = false;
-      if (isVirtualized())
-         wasAtBottom = VirtualScrollerManager.scrolledToBottom(parent_.getParentElement());
-
       // If we're submitting new console output, but the previous submit request
       // asked us to force a new range, respect that.
       forceNewRange = forceNewRange || forceNewRange_;
@@ -854,13 +812,6 @@ public class VirtualConsole
                   Match groupStartMatch = groupStartPattern.match(data.substring(head), 0);
                   if (groupStartMatch != null)
                   {
-                     // skip escapes if we're virtualized
-                     if (isVirtualized())
-                     {
-                        tail += groupStartMatch.getValue().length() - 1;
-                        break;
-                     }
-
                      String type = groupStartMatch.getGroup(1);
                      String groupClazz = groupTypeToClazz(type);
                      
@@ -921,13 +872,6 @@ public class VirtualConsole
                   Match groupEndMatch = groupEndPattern.match(data.substring(head), 0);
                   if (groupEndMatch != null)
                   {
-                     // skip escapes if we're virtualized
-                     if (isVirtualized())
-                     {
-                        tail += groupEndMatch.getValue().length() - 1;
-                        break;
-                     }
-                     
                      if (parent_.hasClassName(RES.styles().group()))
                      {
                         forceNewRange = forceNewRange_ = true;
@@ -1024,19 +968,9 @@ public class VirtualConsole
          }
       }
 
-      Entry<Integer, ClassRange> last = class_.lastEntry();
-      if (last != null)
-      {
-         ClassRange range = last.getValue();
-         if (isVirtualized()) VirtualScrollerManager.prune(parent_.getParentElement(), range.element);
-      }
-
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
          text(StringUtil.substring(data, tail), currentClazz, forceNewRange);
-         
-      if (wasAtBottom && isVirtualized())
-         VirtualScrollerManager.scrollToBottom(parent_.getParentElement());
    }
    
    private Match nextMatch(String data, int offset)
@@ -1113,29 +1047,22 @@ public class VirtualConsole
 
    public void ensureStartingOnNewLine()
    {
-      if (isVirtualized())
-      {
-         VirtualScrollerManager.ensureStartingOnNewLine(parent_.getParentElement());
-      }
-      else
-      {
-         Node child = getParent().getLastChild();
-         if (child == null)
-            return;
-         
-         if (child.getNodeType() != Node.ELEMENT_NODE)
-            return;
-         
-         Element nodeEl = Element.as(child);
-         if (nodeEl.hasClassName(RES.styles().groupMessage()))
-            return;
-         
-         String text = nodeEl.getInnerText();
-         if (text.endsWith("\n"))
-            return;
-         
-         submit("\n");
-      }
+      Node child = getParent().getLastChild();
+      if (child == null)
+         return;
+      
+      if (child.getNodeType() != Node.ELEMENT_NODE)
+         return;
+      
+      Element nodeEl = Element.as(child);
+      if (nodeEl.hasClassName(RES.styles().groupMessage()))
+         return;
+      
+      String text = nodeEl.getInnerText();
+      if (text.endsWith("\n"))
+         return;
+      
+      submit("\n");
    }
 
    private String setCurrentClazz(String clazz)
@@ -1316,9 +1243,6 @@ public class VirtualConsole
    }
    
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
-
-   // only a select few panes should be virtualized. default it to off everywhere.
-   private boolean virtualizedDisableOverride_ = true;
 
    // allows &entity_name; entities like &amp;
    private boolean preserveHTML_ = false;
