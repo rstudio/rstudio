@@ -23,11 +23,8 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Version;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.LayoutGrid.TwoColumnLayoutGridBuilder;
-import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
@@ -77,7 +74,6 @@ public class ConsolePreferencesPane extends PreferencesPane
       
       Label truncationLabel = headerLabel("Truncation");
       add(spacedBefore(truncationLabel));
-      add(checkboxPref(constants_.consoleLimitVariableLabel(), prefs_.limitVisibleConsole()));
       add(nudgeRightPlus(
          numericPref(constants_.consoleLimitOutputLengthLabel(), prefs_.consoleLineLengthLimit())));
       
@@ -118,7 +114,6 @@ public class ConsolePreferencesPane extends PreferencesPane
       consoleColorMode_.setValue(prefs_.ansiConsoleMode().getValue());
       consoleHighlightConditions_.setValue(prefs_.consoleHighlightConditions().getValue());
       initialHighlightConsoleErrors_ = prefs.highlightConsoleErrors().getValue();
-      initialLimitVisibleConsole_ = prefs.limitVisibleConsole().getValue();
    }
 
    @Override
@@ -140,15 +135,6 @@ public class ConsolePreferencesPane extends PreferencesPane
          prefs_.consoleHighlightConditions().setGlobalValue(highlight);
          restartRequirement.setRestartRequired();
       }
-         
-      if (!restartRequirement.getDesktopRestartRequired() && !restartRequirement.getUiReloadRequired())
-      {
-         if (prefs_.limitVisibleConsole().getValue() != initialLimitVisibleConsole_)
-         {
-            initialLimitVisibleConsole_ = prefs_.limitVisibleConsole().getValue();
-            restartRequirement.setRestartRequired();
-         }
-      }
       
       return restartRequirement;
    }
@@ -160,7 +146,6 @@ public class ConsolePreferencesPane extends PreferencesPane
    }
 
    private boolean initialHighlightConsoleErrors_;
-   private boolean initialLimitVisibleConsole_;
    private final SelectWidget consoleColorMode_;
    private final SelectWidget consoleHighlightConditions_;
 

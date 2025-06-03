@@ -1269,18 +1269,6 @@ public class UserPrefsAccessor extends Prefs
    public final static String ANSI_CONSOLE_MODE_OFF = "off";
 
    /**
-    * Whether to only show a limited window of the total console output
-    */
-   public PrefValue<Boolean> limitVisibleConsole()
-   {
-      return bool(
-         "limit_visible_console",
-         _constants.limitVisibleConsoleTitle(), 
-         _constants.limitVisibleConsoleDescription(), 
-         false);
-   }
-
-   /**
     * Whether to show a toolbar on code chunks in R Markdown documents.
     */
    public PrefValue<Boolean> showInlineToolbarForRCodeChunks()
@@ -4006,8 +3994,6 @@ public class UserPrefsAccessor extends Prefs
          consoleMaxLines().setValue(layer, source.getInteger("console_max_lines"));
       if (source.hasKey("ansi_console_mode"))
          ansiConsoleMode().setValue(layer, source.getString("ansi_console_mode"));
-      if (source.hasKey("limit_visible_console"))
-         limitVisibleConsole().setValue(layer, source.getBool("limit_visible_console"));
       if (source.hasKey("show_inline_toolbar_for_r_code_chunks"))
          showInlineToolbarForRCodeChunks().setValue(layer, source.getBool("show_inline_toolbar_for_r_code_chunks"));
       if (source.hasKey("highlight_code_chunks"))
@@ -4461,7 +4447,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(consoleLineLengthLimit());
       prefs.add(consoleMaxLines());
       prefs.add(ansiConsoleMode());
-      prefs.add(limitVisibleConsole());
       prefs.add(showInlineToolbarForRCodeChunks());
       prefs.add(highlightCodeChunks());
       prefs.add(saveFilesBeforeBuild());

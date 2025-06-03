@@ -166,7 +166,6 @@ namespace prefs {
 #define kAnsiConsoleModeOn "on"
 #define kAnsiConsoleModeStrip "strip"
 #define kAnsiConsoleModeOff "off"
-#define kLimitVisibleConsole "limit_visible_console"
 #define kShowInlineToolbarForRCodeChunks "show_inline_toolbar_for_r_code_chunks"
 #define kHighlightCodeChunks "highlight_code_chunks"
 #define kSaveFilesBeforeBuild "save_files_before_build"
@@ -958,12 +957,6 @@ public:
     */
    std::string ansiConsoleMode();
    core::Error setAnsiConsoleMode(std::string val);
-
-   /**
-    * Whether to only show a limited window of the total console output
-    */
-   bool limitVisibleConsole();
-   core::Error setLimitVisibleConsole(bool val);
 
    /**
     * Whether to show a toolbar on code chunks in R Markdown documents.

@@ -100,8 +100,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       prefs_ = prefs;
       ariaLive_ = ariaLive;
 
-      boolean scrollOnClick = prefs_ == null || !prefs_.limitVisibleConsole().getValue();
-      SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler(scrollOnClick);
+      SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler(true);
 
       output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory(), outputLabel);
       output_.getWidget().setStylePrimaryName(styles_.output());
@@ -260,10 +259,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       verticalPanel_.add(inputLine_);
       verticalPanel_.setWidth("100%");
 
-      // dont use the autoscroll timer if we're controlling the content externally
-      // prefs can be null in certain contexts so protect against that
-      boolean useTimer = prefs_ == null || !prefs_.limitVisibleConsole().getValue();
-      scrollPanel_ = new ClickableScrollPanel(useTimer);
+      scrollPanel_ = new ClickableScrollPanel(true);
       scrollPanel_.setWidget(verticalPanel_);
       scrollPanel_.addStyleName("ace_editor");
       scrollPanel_.addStyleName("ace_scroller");

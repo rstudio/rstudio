@@ -287,10 +287,6 @@ public class UserPrefs extends UserPrefsComputed
       // on when screen-reader support is disabled as that is the normal default and most
       // users will never touch it.
       RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().setGlobalValue(enabled);
-
-      // Disable virtual scrolling when screen reader is enabled
-      if (enabled)
-         RStudioGinjector.INSTANCE.getUserPrefs().limitVisibleConsole().setGlobalValue(false);
    }
 
    @Handler
