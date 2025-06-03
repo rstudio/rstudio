@@ -322,8 +322,11 @@ public class VirtualConsole
    @Override
    public String toString()
    {
-      String output = output_.toString();
+      return truncate(output_.toString());
+   }
 
+   private String truncate(String output)
+   {
       int maxLength = prefs_.truncateLongLinesInConsoleHistory();
       if (maxLength == 0)
          return output;
@@ -606,6 +609,8 @@ public class VirtualConsole
     */
    private void text(String text, String clazz, boolean forceNewRange)
    {
+      text = truncate(text);
+
       if (newText_ != null)
          newText_.append(text);
 

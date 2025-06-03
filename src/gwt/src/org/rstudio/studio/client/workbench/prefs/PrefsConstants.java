@@ -1177,6 +1177,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String consoleLimitOutputLengthLabel();
 
     /**
+     * Translated "Number of lines to show in console history:".
+     *
+     * @return translated "Number of lines to show in console history:"
+     */
+    @DefaultMessage("Number of lines to show in console history:")
+    @Key("consoleMaxLinesLabel")
+    String consoleMaxLinesLabel();
+
+    /**
      * Translated "ANSI Escape Codes:".
      *
      * @return translated "ANSI Escape Codes:"
