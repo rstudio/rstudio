@@ -74,7 +74,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
       authHeader <- .rs.computeAuthorizationHeader(url)
       call <- match.call(expand.dots = TRUE)
       call[[1L]] <- quote(.rs.downloadFile)
-      call["headers"] <- list(c(headers, authHeader))
+      call["headers"] <- list(c(headers, Authorization = authHeader))
       status <- eval(call, envir = parent.frame())
       return(invisible(status))
    }
