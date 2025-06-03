@@ -203,6 +203,7 @@ list(APPEND BOOST_LIBS
    regex
    system
    thread
+   url
 )
 
 # UNIX BOOST
