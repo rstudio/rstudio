@@ -584,13 +584,13 @@
         },
         "console_line_length_limit": {
             "type": "integer",
-            "default": 1000,
+            "default": 2000,
             "title": "Maximum characters per line in R console",
             "description": "The maximum number of characters to display in a single line in the R console."
         },
         "console_max_lines": {
             "type": "integer",
-            "default": 1000,
+            "default": 10000,
             "title": "Maximum lines in R console",
             "description": "The maximum number of console actions to store and display in the console scrollback buffer."
         },

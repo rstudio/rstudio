@@ -310,20 +310,27 @@ public class VirtualConsole
    {
       Debug.logToConsole("Dumping " + name);
       if (map == null)
+      {
          Debug.logToConsole("null");
+      }
       else
+      {
          for (Map.Entry<Integer, ClassRange> entry : map.entrySet())
          {
             Debug.logToConsole(name + debugDumpClassEntry(entry));
          }
+      }
       Debug.logToConsole("Done dumping " + name);
    }
 
    @Override
    public String toString()
    {
-      String output = output_.toString();
+      return truncate(output_.toString());
+   }
 
+   private String truncate(String output)
+   {
       int maxLength = prefs_.truncateLongLinesInConsoleHistory();
       if (maxLength == 0)
          return output;
@@ -1166,7 +1173,7 @@ public class VirtualConsole
          }
          else
          {
-            element.setInnerText(text);
+            element.setInnerText(truncate(text));
          }
       }
 
