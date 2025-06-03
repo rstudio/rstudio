@@ -103,7 +103,7 @@ Copilot offers autocomplete-style suggestions as you code as "ghost text". This 
 2.  Copilot's code suggestion, shown in light grey "ghost text".
 3.  The Copilot status bar, which indicates whether RStudio is waiting on a response to be generated, a completion response has been received, or no completions are available.
 
-GitHub Copilot primarily relies on the context in the file you are actively editing. Any comments, code, or other context provided within the active document will be used as a "prompt" that Copilot will then use to provide a suggested completion. To expand the scope of the context used by Copilot beyond just the active document, there is a setting to also index and read from other R, Python, or SQL files in the current project. This setting can be toggled on or off in the Tools \> Global Options \> Copilot \> "Index project files with GitHub Copilot" setting.
+GitHub Copilot primarily relies on the context in the file you are actively editing. Any comments, code, or other context provided within the active document will be used as a "prompt" that Copilot will then use to provide a suggested completion. To expand the scope of the context used by Copilot beyond just the active document, there is a setting to also index and read from other [supported files](#language-support) in the current project. This setting can be toggled on or off in the Tools \> Global Options \> Copilot \> "Index project files with GitHub Copilot" setting.
 
 For general advice on how to use Copilot, please see:
 
@@ -251,9 +251,28 @@ However, the comment may not be needed if a descriptive column name is used inst
 
 ![](images/copilot_se-inline.png){fig-alt="Copilot inline completion"}
 
-### Language support
+### Language support {#language-support}
 
-While R is the primary expected language for RStudio users, Copilot also supports other languages such as SQL, Python, HTML, CSS, JavaScript, and many other languages. Copilot will use the file extension or other context to determine the language of the active document. In multi-language Quarto documents for example, Copilot could use the active language within a code chunk or the body of the document to generate suggestions.
+While R is the primary expected language for RStudio users, Copilot also supports other languages. Copilot will use the file extension or other context to determine the language of the active document. In multi-language Quarto documents for example, Copilot could use the active language within a code chunk or the body of the document to generate suggestions.
+
+Languages supported by Copilot include:
+
+- C
+- C++
+- CSS
+- HTML
+- Java
+- JavaScript
+- LaTeX
+- Markdown
+- Python
+- Quarto
+- R
+- R Markdown
+- SQL
+- TypeScript
+- XML
+- YAML
 
 Comments in other languages can be used to generate suggestions in the active document. For example, a HTML comment (`<!-- COMMENT BODY -->`) might be used in the body of a `.qmd` file:
 
