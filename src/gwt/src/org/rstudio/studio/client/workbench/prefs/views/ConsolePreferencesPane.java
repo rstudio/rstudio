@@ -72,8 +72,6 @@ public class ConsolePreferencesPane extends PreferencesPane
       displayGrid.getElement().getStyle().setMarginLeft(2, Unit.PX);
       add(displayGrid);
       
-      Label truncationLabel = headerLabel("Truncation");
-      add(spacedBefore(truncationLabel));
       TwoColumnLayoutGridBuilder truncationGridBuilder = new TwoColumnLayoutGridBuilder();
       truncationGridBuilder.add(constants_.consoleMaxLinesLabel(), numericPref(prefs_.consoleMaxLines()));
       truncationGridBuilder.add(constants_.consoleLimitOutputLengthLabel(), numericPref(prefs_.consoleLineLengthLimit()));
