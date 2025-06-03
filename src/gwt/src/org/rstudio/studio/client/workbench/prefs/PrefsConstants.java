@@ -1168,11 +1168,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String consoleLimitVariableLabel();
 
     /**
-     * Translated "Limit output line length to:".
+     * Translated "Truncate lines to maximum length (characters)".
      *
-     * @return translated "Limit output line length to:"
+     * @return translated "Truncate lines to maximum length (characters)"
      */
-    @DefaultMessage("Limit output line length to:")
+    @DefaultMessage("Truncate lines to maximum length (characters)")
     @Key("consoleLimitOutputLengthLabel")
     String consoleLimitOutputLengthLabel();
 

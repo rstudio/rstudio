@@ -310,12 +310,16 @@ public class VirtualConsole
    {
       Debug.logToConsole("Dumping " + name);
       if (map == null)
+      {
          Debug.logToConsole("null");
+      }
       else
+      {
          for (Map.Entry<Integer, ClassRange> entry : map.entrySet())
          {
             Debug.logToConsole(name + debugDumpClassEntry(entry));
          }
+      }
       Debug.logToConsole("Done dumping " + name);
    }
 
@@ -609,8 +613,6 @@ public class VirtualConsole
     */
    private void text(String text, String clazz, boolean forceNewRange)
    {
-      text = truncate(text);
-
       if (newText_ != null)
          newText_.append(text);
 
@@ -1171,7 +1173,7 @@ public class VirtualConsole
          }
          else
          {
-            element.setInnerText(text);
+            element.setInnerText(truncate(text));
          }
       }
 
