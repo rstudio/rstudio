@@ -50,7 +50,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
 })
 
 
-.rs.defineGlobalHook("utils", "download.file", function(url, destfile)
+.rs.defineGlobalHook("utils", "download.file", function(url, destfile, method)
 {
    ""
    "This is an RStudio hook."
@@ -62,25 +62,45 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    #
    # Unfortunately, it doesn't support the use of URL-specific headers,
    # so we try to handle this appropriately here.
-   result <- vector("integer", length = length(url))
+   if (missing(method))
+      method <- getOption("download.file.method", default = "auto")
+   
+   # Silence diagnostic warnings.
+   headers <- get("headers", envir = environment(), inherits = FALSE)
+   
+   # Handle the simpler length-one URL case up front.
+   if (length(url) == 1L)
+   {
+      authHeader <- .rs.computeAuthorizationHeader(url)
+      call <- match.call(expand.dots = TRUE)
+      call[[1L]] <- quote(.rs.downloadFile)
+      call["headers"] <- list(c(headers, authHeader))
+      status <- eval(call, envir = parent.frame())
+      return(invisible(status))
+   }
+   
+   # Otherwise, do some more work to map headers to URLs as appropriate.
+   retvals <- vector("integer", length = length(url))
    authHeaders <- .rs.mapChr(url, .rs.computeAuthorizationHeader)
    for (authHeader in unique(authHeaders))
    {
       # Figure out which URLs are associated with the current header.
       idx <- which(authHeaders == authHeader)
-      currentUrls <- url[idx]
       
       # Build a call to download these files all in one go.
       call <- match.call(expand.dots = TRUE)
       call[[1L]] <- quote(.rs.downloadFile)
-      call["url"] <- list(currentUrls)
+      call["url"] <- list(url[idx])
+      call["destfile"] <- list(destfile[idx])
       call["headers"] <- list(c(headers, Authorization = authHeader))
-      result[idx] <- eval(call, envir = parent.frame())
+      retvals[idx] <- eval(call, envir = parent.frame())
    }
    
    # Note that even if multiple files are downloaded, R only reports
    # a single status code, with 0 implying that all downloads succeeded.
-   if (all(result == 0L)) 0L else 1L
+   status <- if (all(retvals == 0L)) 0L else 1L
+   attr(status, "retvals") <- retvals
+   invisible(status)
    
 })
 
