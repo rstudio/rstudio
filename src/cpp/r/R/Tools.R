@@ -1278,7 +1278,20 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       value    = hook,
       action   = "append"
    )
-      
+
+})
+
+.rs.addFunction("registerPackageAttachedHook", function(package, hook)
+{
+   searchPathName <- paste("package", package, sep = ":")
+   if (searchPathName %in% search())
+      return(hook())
+   
+   setHook(
+      hookName = packageEvent(package, "attach"),
+      value    = hook,
+      action   = "append"
+   )
 })
 
 .rs.addFunction("prependToPath", function(entry)
@@ -1766,6 +1779,23 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    if (is.na(info$mode))
       return(NULL)
    
+   # Require that the netrc file be accessible only to the current user.
+   if ((info$mode & "077") != 0L)
+   {
+      warned <- getOption("rstudio.netrc.warnedAboutPermissions", default = FALSE)
+      options(rstudio.netrc.warnedAboutPermissions = TRUE)
+      
+      if (!warned)
+      {
+         fmt <- "netrc file %s has 0%s permissions; it will be ignored"
+         msg <- sprintf(fmt, shQuote(netrcPath), as.character(info$mode))
+         warning(msg, call. = FALSE)
+         warning(".netrc files should accessible to only your own user account", call. = FALSE)
+      }
+      
+      return(NULL)
+   }
+   
    # Read the contents of the file.
    contents <- readLines(netrcPath, warn = FALSE)
    
@@ -1840,4 +1870,41 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    names(result) <- .rs.mapChr(result, `[[`, "machine")
    
    result
+})
+
+.rs.addFunction("computeAuthorizationHeader", function(url)
+{
+   # Parse the URL into its component parts.
+   pattern <- paste0(
+      "^",
+      "(?:(?<scheme>[a-z][a-z0-9+\\-.]*)://)?",            # Scheme
+      "(?:(?<user>[^:@/?#]+)(?::(?<pass>[^@/?#]*))?@)?",   # User, Password
+      "(?<host>\\[[^\\]]+\\]|[^:/?#]+)",                   # Host (IPv6 in [])
+      "(?::(?<port>\\d+))?",                               # Port
+      "(?<path>/[^?#]*)?",                                 # Path
+      "(?:\\?(?<query>[^#]*))?",                           # Query
+      "(?:#(?<fragment>.*))?",                             # Fragment
+      "$"
+   )
+   
+   match <- regexec(pattern, url, perl = TRUE)
+   parts <- as.list(regmatches(url, match)[[1L]])
+   
+   # Read user's .netrc file (if any)
+   netrcEntries <- .rs.readNetrc()
+   if (is.null(netrcEntries))
+      return("")
+   
+   # Look for valid credentials for the provided URLs.
+   for (netrcEntry in netrcEntries)
+   {
+      if (.rs.startsWith(parts$host, netrcEntry$machine))
+      {
+         userPass <- paste(netrcEntry$login, netrcEntry$password, sep = ":")
+         result <- paste("Basic", .rs.base64encode(userPass))
+         return(result)
+      }
+   }
+   
+   ""
 })

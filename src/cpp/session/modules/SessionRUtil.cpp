@@ -13,11 +13,18 @@
  *
  */
 
-#include <yaml-cpp/yaml.h>
-
 #include <session/SessionRUtil.hpp>
 
+#include <string>
+#include <yaml-cpp/yaml.h>
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/regex.hpp>
+#include <boost/url.hpp>
+
 #include <shared_core/Error.hpp>
+
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -33,10 +40,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSuspend.hpp>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
-#include <boost/regex.hpp>
-
+#include "core/http/URL.hpp"
 #include "shiny/SessionShiny.hpp"
 
 namespace rstudio {
