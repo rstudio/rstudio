@@ -408,14 +408,14 @@ public class StringUtil
       return data;
    }
 
-   public static String trimLeft(String str)
+   public static String trimLeft(String string)
    {
-      return str.replaceFirst("^\\s+", "");
+      return RE_LEADING_WHITESPACE.replaceAll(string, "");
    }
 
-   public static String trimRight(String str)
+   public static String trimRight(String string)
    {
-      return str.replaceFirst("\\s+$", "");
+      return RE_TRAILING_WHITESPACE.replaceAll(string, "");
    }
 
    /**
@@ -1563,6 +1563,9 @@ public class StringUtil
       var val2 = str2 ? str2 : "";
       return val1.localeCompare(val2, [], { "numeric": true });
    }-*/;
+
+   private static final Pattern RE_LEADING_WHITESPACE  = Pattern.create("^\\s+", "");
+   private static final Pattern RE_TRAILING_WHITESPACE = Pattern.create("\\s+$", "");
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");

@@ -39,7 +39,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
@@ -331,22 +330,65 @@ public class VirtualConsole
 
    private String truncate(String output)
    {
-      int maxLength = prefs_.truncateLongLinesInConsoleHistory();
-      if (maxLength == 0)
+      int size = prefs_.truncateLongLinesInConsoleHistory();
+      if (size == 0)
          return output;
 
-      JsArrayString splat = StringUtil.split(output, "\n");
-      for (int i = 0; i < splat.length(); i++)
+      return truncate(output, size);
+   }
+
+   private String truncate(String output, int size)
+   {
+      // Check for the first newline. If we don't find anything,
+      // we can just substring the string itself.
+      int n = output.length();
+      int rhs = output.indexOf("\n");
+      if (rhs == -1)
       {
-         String string = splat.get(i);
-         String trimmed = StringUtil.trimRight(string);
-         if (trimmed.length() > maxLength)
-            splat.set(i, StringUtil.substring(trimmed, 0, maxLength) + "... <truncated>");
-         else if (string.length() > maxLength)
-            splat.set(i, StringUtil.substring(string, 0, maxLength));
+         return (n > size)
+            ? output.substring(0, size) + " ... <truncated>"
+            : output;
       }
 
-      return splat.join("\n");
+      // As a special case, check if the newline was found at the
+      // end of the output string. This is relatively common for
+      // line-delimited output where a single line with a trailing
+      // newline is submitted.
+      if (rhs == n - 1)
+      {
+         return (n > size)
+            ? output.substring(0, size) + " ... <truncated>\n"
+            : output;
+      }
+
+      // Iterate over all of the newlines within the output text.
+      // For each string, pull out the relevant substring, and then
+      // truncate it if appropriate. Build the result as an array
+      // of strings which we'll later join into a final string.
+      JsVectorString result = JsVectorString.createVector();
+
+      int lhs = 0;
+      while (rhs != -1)
+      {
+         // Grab the (possibly truncated) substring within.
+         String value = (rhs - lhs > size)
+            ? output.substring(lhs, lhs + size) + " ... <truncated>"
+            : output.substring(lhs, rhs);
+         result.push(value);
+
+         // Look for the next newline.
+         lhs = rhs + 1;
+         rhs = output.indexOf("\n", lhs);
+      }
+
+      // Add the final bit of text following the last newline found in the line.
+      String value = (n - lhs > size)
+         ? output.substring(lhs, lhs + size) + " ... <truncated>"
+         : output.substring(lhs);
+      result.push(value);
+
+      // Finally, join it all back together.
+      return result.join("\n");
    }
 
    public int getLength()
