@@ -1559,6 +1559,16 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
 })
 
+.rs.addFunction("emptyCoalesce", function(...)
+{
+   for (i in seq_len(...length()))
+   {
+      value <- ...elt(i)
+      if (length(value))
+         return(value)
+   }
+})
+
 .rs.addFunction("restoreSearchPath", function(searchPathsFile,
                                               packagePathsFile,
                                               environmentDataDir)
@@ -1907,4 +1917,40 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
    
    ""
+})
+
+.rs.addFunction("recordPackageRepository", function(pkgPath, db)
+{
+   # Infer package name from installed path.
+   pkgName <- basename(pkgPath)
+   
+   # For now, only update the repository field for PPM packages.
+   pkgDesc <- packageDescription(pkgName, lib.loc = dirname(pkgPath))
+   if (pkgDesc$Repository != "RSPM")
+      return()
+   
+   # Try to figure out post-hoc from where the package was retrieved.
+   pkgEntry <- subset(db, Package == pkgName)
+   if (nrow(pkgEntry) == 0L)
+      return()
+   
+   # Normalize the repository path, removing source / binary suffixes.
+   pkgSource <- gsub("/(src|bin)/.*", "", pkgEntry$Repository, perl = TRUE)
+   
+   # Update the DESCRIPTION file.
+   descPath <- file.path(pkgPath, "DESCRIPTION")
+   descContents <- readLines(descPath, warn = FALSE)
+   reposIndex <- grep("^Repository:", descContents, perl = TRUE)
+   updateIndex <- .rs.emptyCoalesce(reposIndex, length(descContents) + 1L)
+   descContents[[updateIndex]] <- paste("Repository:", pkgSource)
+   writeLines(descContents, con = descPath, useBytes = TRUE)
+   
+   # Update `Meta/package.rds`.
+   metaPackagePath <- file.path(pkgPath, "Meta/package.rds")
+   if (file.exists(metaPackagePath))
+   {
+      metaPackageInfo <- readRDS(metaPackagePath)
+      metaPackageInfo$DESCRIPTION[["Repository"]] <- pkgSource
+      saveRDS(metaPackageInfo, file = metaPackagePath)
+   }
 })

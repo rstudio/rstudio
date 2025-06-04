@@ -121,7 +121,6 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
    # Notify if we're about to update an already-loaded package.
    # Skip this within renv and packrat projects.
-   
    if (.rs.installPackagesRequiresRestart(pkgs))
    {
       call <- sys.call()
@@ -136,10 +135,42 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    .rs.addRToolsToPath()
    on.exit(.rs.restorePreviousPath(), add = TRUE)
    
+   # Resolve library path.
+   if (missing(lib) || is.null(lib))
+      lib <- .libPaths()[1L]
+   
+   # Get paths to DESCRIPTION files, so we can see what packages
+   # were updated before and after installation.
+   pkgPaths <- list.files(lib, full.names = TRUE)
+   descPaths <- file.path(pkgPaths, "DESCRIPTION")
+   before <- file.info(pkgPaths, extra_cols = FALSE)
+   before$path <- row.names(before)
+   
    # Invoke the original function.
    call <- sys.call()
    call[[1L]] <- quote(utils::install.packages)
    result <- eval(call, envir = parent.frame())
+   
+   # Check and see what packages were updated.
+   pkgPaths <- list.files(lib, full.names = TRUE)
+   descPaths <- file.path(pkgPaths, "DESCRIPTION")
+   after <- file.info(pkgPaths, extra_cols = FALSE)
+   after$path <- row.names(after)
+   
+   # Merge them together.
+   result <- merge(before, after, by = "path")
+   diffs <-
+      result$ctime.x != result$ctime.y |
+      result$mtime.x != result$mtime.y
+   
+   # For any packages which appear to have been updated,
+   # tag their DESCRIPTION file with their installation source.
+   rows <- result[which(diffs), ]
+   if (nrow(rows))
+   {
+      db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
+      lapply(rows$path, .rs.recordPackageRepository, db = db)
+   }
    
    # Notify the front-end that we've made some updates.
    .rs.updatePackageEvents()
