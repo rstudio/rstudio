@@ -167,7 +167,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    # tag their DESCRIPTION file with their installation source.
    db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
    rows <- result[which(diffs), ]
-   lapply(rows$path, .rs.recordPackageRepository, db = db)
+   lapply(rows$path, .rs.recordPackageSource, db = db)
    
    # Notify the front-end that we've made some updates.
    .rs.updatePackageEvents()
