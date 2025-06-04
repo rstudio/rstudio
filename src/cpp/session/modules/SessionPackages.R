@@ -287,100 +287,104 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    identical(tail(strsplit(value, "")[[1]], n = 1), ending)
 })
 
-.rs.addFunction("listInstalledPackages", function()
+# helper function for extracting information from a package's
+# DESCRIPTION file
+.rs.addFunction("readPackageInfo", function(pkgPath)
 {
    # get the CRAN repository URL, and remove a trailing slash if required
    repos <- getOption("repos")
    cran <- if ("CRAN" %in% names(repos))
       repos[["CRAN"]]
+   else if ("RSPM" %in% names(repos))
+      repos[["RSPM"]]
    else
       .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
    
    # trim trailing slashes if necessary
-   cran <- gsub("/*", "", cran)
+   cran <- gsub("/*$", "", cran, perl = TRUE)
    
-   # helper function for extracting information from a package's
-   # DESCRIPTION file
-   readPackageInfo <- function(pkgPath) {
+   # attempt to read package metadata
+   desc <- .rs.tryCatch({
+      metapath <- file.path(pkgPath, "Meta", "package.rds")
+      metadata <- readRDS(metapath)
+      as.list(metadata$DESCRIPTION)
+   })
+   
+   # if that failed, try reading the DESCRIPTION
+   if (inherits(desc, "error"))
+      desc <- read.dcf(file.path(pkgPath, "DESCRIPTION"), all = TRUE)
+   
+   # attempt to infer an appropriate URL for this package
+   if (identical(as.character(desc$Priority), "base")) {
+      source <- "Base"
+      url <- ""
+   } else if (!is.null(desc$URL)) {
+      source <- "Custom"
+      url <- sub("[ ,].*", "", trimws(desc$URL))
+   } else if ("biocViews" %in% names(desc)) {
+      source <- "Bioconductor"
+      url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
+   } else if (identical(desc$Repository, "CRAN")) {
+      source <- "CRAN"
+      url <- sprintf("%s/package=%s", cran, desc$Package)
+   } else if (!is.null(desc$GithubRepo)) {
+      source <- "GitHub"
+      url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
+   } else {
+      source <- "Unknown"
+      url <- sprintf("%s/package=%s", cran, desc$Package)
+   }
+   
+   # attempt to infer a repository source for this package
+   repository <- desc[["Repository"]]
+   if (identical(repository, "RSPM"))
+   {
+      repository <- "PPM"
       
-      # attempt to read package metadata
-      desc <- .rs.tryCatch({
-         metapath <- file.path(pkgPath, "Meta", "package.rds")
-         metadata <- readRDS(metapath)
-         as.list(metadata$DESCRIPTION)
-      })
-      
-      # if that failed, try reading the DESCRIPTION
-      if (inherits(desc, "error"))
-         desc <- read.dcf(file.path(pkgPath, "DESCRIPTION"), all = TRUE)
-      
-      # attempt to infer an appropriate URL for this package
-      if (identical(as.character(desc$Priority), "base")) {
-         source <- "Base"
-         url <- ""
-      } else if (!is.null(desc$URL)) {
-         source <- "Custom"
-         url <- sub("[ ,].*", "", trimws(desc$URL))
-      } else if ("biocViews" %in% names(desc)) {
-         source <- "Bioconductor"
-         url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
-      } else if (identical(desc$Repository, "CRAN")) {
-         source <- "CRAN"
-         url <- sprintf("%s/package=%s", cran, desc$Package)
-      } else if (!is.null(desc$GithubRepo)) {
-         source <- "GitHub"
-         url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
-      } else {
-         source <- "Unknown"
-         url <- sprintf("%s/package=%s", cran, desc$Package)
-      }
-      
-      # attempt to infer a repository source for this package
-      repository <- desc[["Repository"]]
-      if (identical(repository, "RSPM"))
+      repos <- desc[["RemoteRepos"]]
+      if (!is.null(repos))
       {
-         repository <- "PPM"
-         
-         repos <- desc[["RemoteRepos"]]
-         if (!is.null(repos))
-         {
-            snapshot <- basename(repos)
-            name <- basename(dirname(repos))
-            repository <- sprintf("PPM [%s/%s]", name, snapshot)
-         }
+         snapshot <- basename(repos)
+         name <- basename(dirname(repos))
+         repository <- sprintf("PPM [%s/%s]", name, snapshot)
       }
-      
-      list(
-         Package     = .rs.nullCoalesce(desc$Package, "[Unknown]"),
-         LibPath     = dirname(pkgPath),
-         Version     = .rs.nullCoalesce(desc$Version, "[Unknown]"),
-         Title       = .rs.nullCoalesce(desc$Title, "[No description available]"),
-         Source      = source,
-         BrowseUrl   = utils::URLencode(url),
-         Repository  = .rs.nullCoalesce(repository, "")
-      )
-      
    }
    
-   # to be called if our attempt to read the package DESCRIPTION file failed
-   # for some reason
-   emptyPackageInfo <- function(pkgPath) {
-      
-      package <- basename(pkgPath)
-      libPath <- dirname(pkgPath)
-      
-      list(
-         Package    = package,
-         LibPath    = libPath,
-         Version    = "[Unknown]",
-         Title      = "[Failed to read package metadata]",
-         Source     = "Unknown",
-         BrowseUrl  = "",
-         Repository = ""
-      )
-      
-   }
+   if (is.character(source))
+      source <- sub("Bioconductor", "BioC", source, fixed = TRUE)
    
+   if (is.character(repository))
+      repository <- sub("Bioconductor", "BioC", repository, fixed = TRUE)
+   
+   list(
+      Package     = .rs.nullCoalesce(desc$Package, "[Unknown]"),
+      LibPath     = dirname(pkgPath),
+      Version     = .rs.nullCoalesce(desc$Version, "[Unknown]"),
+      Title       = .rs.nullCoalesce(desc$Title, "[No description available]"),
+      Source      = .rs.nullCoalesce(source, "[Unknown]"),
+      Repository  = .rs.nullCoalesce(repository, ""),
+      BrowseUrl   = utils::URLencode(url)
+   )
+})
+
+.rs.addFunction("emptyPackageInfo", function(pkgPath)
+{
+   package <- basename(pkgPath)
+   libPath <- dirname(pkgPath)
+   
+   list(
+      Package    = package,
+      LibPath    = libPath,
+      Version    = "[Unknown]",
+      Title      = "[Failed to read package metadata]",
+      Source     = "Unknown",
+      Repository = "",
+      BrowseUrl  = ""
+   )
+})
+
+.rs.addFunction("listInstalledPackages", function()
+{
    # now, find packages. we'll only include packages that have
    # a Meta folder. note that the pseudo-package 'translations'
    # lives in the R system library, and has a DESCRIPTION file,
@@ -394,8 +398,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    parts <- lapply(packagePaths, function(pkgPath) {
       
       tryCatch(
-         readPackageInfo(pkgPath),
-         error = function(e) emptyPackageInfo(pkgPath)
+         .rs.readPackageInfo(pkgPath),
+         error = function(e) .rs.emptyPackageInfo(pkgPath)
       )
       
    })
