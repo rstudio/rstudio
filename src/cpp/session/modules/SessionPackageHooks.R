@@ -165,12 +165,9 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
    # For any packages which appear to have been updated,
    # tag their DESCRIPTION file with their installation source.
+   db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
    rows <- result[which(diffs), ]
-   if (nrow(rows))
-   {
-      db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
-      lapply(rows$path, .rs.recordPackageRepository, db = db)
-   }
+   lapply(rows$path, .rs.recordPackageRepository, db = db)
    
    # Notify the front-end that we've made some updates.
    .rs.updatePackageEvents()
