@@ -335,13 +335,29 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          url <- sprintf("%s/package=%s", cran, desc$Package)
       }
       
+      # attempt to infer a repository source for this package
+      repository <- desc[["Repository"]]
+      if (identical(repository, "RSPM"))
+      {
+         repository <- "PPM"
+         
+         repos <- desc[["RemoteRepos"]]
+         if (!is.null(repos))
+         {
+            snapshot <- basename(repos)
+            name <- basename(dirname(repos))
+            repository <- sprintf("PPM [%s/%s]", name, snapshot)
+         }
+      }
+      
       list(
          Package     = .rs.nullCoalesce(desc$Package, "[Unknown]"),
          LibPath     = dirname(pkgPath),
          Version     = .rs.nullCoalesce(desc$Version, "[Unknown]"),
          Title       = .rs.nullCoalesce(desc$Title, "[No description available]"),
          Source      = source,
-         BrowseUrl   = utils::URLencode(url)
+         BrowseUrl   = utils::URLencode(url),
+         Repository  = .rs.nullCoalesce(repository, "")
       )
       
    }
@@ -354,12 +370,13 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       libPath <- dirname(pkgPath)
       
       list(
-         Package   = package,
-         LibPath   = libPath,
-         Version   = "[Unknown]",
-         Title     = "[Failed to read package metadata]",
-         Source    = "Unknown",
-         BrowseUrl = ""
+         Package    = package,
+         LibPath    = libPath,
+         Version    = "[Unknown]",
+         Title      = "[Failed to read package metadata]",
+         Source     = "Unknown",
+         BrowseUrl  = "",
+         Repository = ""
       )
       
    }
@@ -407,6 +424,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       loaded           = loaded,
       source           = info$Source,
       browse_url       = info$BrowseUrl,
+      repository       = info$Repository,
       check.rows       = TRUE,
       stringsAsFactors = FALSE
    )

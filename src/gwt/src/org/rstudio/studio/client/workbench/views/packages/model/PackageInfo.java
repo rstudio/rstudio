@@ -60,6 +60,10 @@ public class PackageInfo extends JavaScriptObject
    public final native String getBrowseUrl() /*-{
       return this.browse_url;
    }-*/;
+
+   public final native String getRepository() /*-{
+      return this.repository;
+   }-*/;
    
    public final native String getPackageSource() /*-{
       return this.source;
