@@ -29,10 +29,10 @@
 .rs.addFunction("createAliasedPath", function(path)
 {
    homeDir <- path.expand("~/")
-   homePathIdx <- substr(path, 1, nchar(homeDir)) == homeDir
+   homePathIdx <- substr(path, 1L, nchar(homeDir)) == homeDir
    homePaths <- path[homePathIdx]
-   path[homePathIdx] <-
-          paste("~", substr(homePaths, nchar(homeDir), nchar(homePaths)), sep="")
+   homeSuffix <- substr(homePaths, nchar(homeDir), nchar(homePaths))
+   path[homePathIdx] <- paste0("~", homeSuffix)
    path
 })
 
@@ -287,10 +287,42 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    identical(tail(strsplit(value, "")[[1]], n = 1), ending)
 })
 
+.rs.addFunction("findPackage", function(pkgPath)
+{
+   if (grepl("/", pkgPath, fixed = TRUE))
+      pkgPath
+   else
+      find.package(pkgPath, quiet = TRUE)
+})
+
+.rs.addFunction("normalizeRemoteType", function(type)
+{
+   aliases <- list(
+      bioc         = "Bioconductor",
+      bioconductor = "Bioconductor",
+      bitbucket    = "Bitbucket",
+      cran         = "CRAN",
+      git2r        = "Git",
+      github       = "GitHub",
+      gitlab       = "GitLab",
+      local        = "Local",
+      repository   = "Repository",
+      standard     = "Repository",
+      url          = "URL",
+      xgit         = "Git"
+   )
+   
+   .rs.nullCoalesce(aliases[[type]], type)
+   
+})
+
 # helper function for extracting information from a package's
 # DESCRIPTION file
 .rs.addFunction("readPackageInfo", function(pkgPath)
 {
+   # Resolve path to package.
+   pkgPath <- .rs.findPackage(pkgPath)
+   
    # get the CRAN repository URL, and remove a trailing slash if required
    repos <- getOption("repos")
    cran <- if ("CRAN" %in% names(repos))
@@ -318,9 +350,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (identical(as.character(desc$Priority), "base")) {
       source <- "Base"
       url <- ""
-   } else if (!is.null(desc$URL)) {
-      source <- "Custom"
-      url <- sub("[ ,].*", "", trimws(desc$URL))
    } else if ("biocViews" %in% names(desc)) {
       source <- "Bioconductor"
       url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
@@ -330,6 +359,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    } else if (!is.null(desc$GithubRepo)) {
       source <- "GitHub"
       url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
+   } else if (!is.null(desc$RemoteType)) {
+      source <- .rs.normalizeRemoteType(desc$RemoteType)
+      url <- sub("[ ,].*", "", trimws(desc$URL))
+   } else if (!is.null(desc$URL)) {
+      source <- "Custom"
+      url <- sub("[ ,].*", "", trimws(desc$URL))
    } else {
       source <- "Unknown"
       url <- sprintf("%s/package=%s", cran, desc$Package)
