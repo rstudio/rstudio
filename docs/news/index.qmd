@@ -9,6 +9,34 @@ format:
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
+## RStudio 2025.05.1
+
+**"Mariposa Orchid"**
+
+>Date: 2025-06-05
+
+### Fixed
+
+#### RStudio
+
+- Fixed an issue where GitHub Copilot suggestions could be missing some text (#16023)
+- Fixed an issue where warnings were not treated as errors when options(warn = 2) was set (#16031)
+- Fixed an issue where RStudio could hang when attempting to execute notebook chunks without a registered handler (#15979)
+- Fixed an issue where RStudio continued executing code within R Markdown chunks after an error occurred (#16000, #16002)
+- Fixed an issue where no more console output was produced after a '\r' character input in some cases (#16038)
+- Fixed an issue where console history could not be retrieved if an error occurred while executing a notebook chunk (#16006)
+
+#### Posit Workbench
+
+- Fixed an issue where resource profiles would be incorrectly added to Workbench Jobs (rstudio-pro#8127)
+- Fixed an issue where audited jobs would fail if the user's Workbench username differs from their posix username (rstudio-pro#8129)
+- Fixed an issue where the session init container was being added to containerized sessions and jobs on clusters that did not support them (rstudio-pro#8009)
+- Fixed an issue where Shiny for Python and other applications would reguarly experience websocket failures in VS Code and Positron sessions (rstudio-pro#7368)
+
+### Dependencies
+
+- Updated Positron Pro sessions to 2025.06 with Code OSS 1.100 (rstudio-pro#8239)
+
 ## RStudio 2025.05.0
 
 **"Mariposa Orchid"**
@@ -418,7 +446,7 @@ You may also want to update the following configuration entries, as the default 
 - Hide Refresh button while Replace All operation is running in the Find in Files pane. (#13873)
 - Stop the File Pane's "Copy To" operation from deleting the file when source and destination are the same. (#14525)
 - Fix keyboard shortcuts acting on the wrong source file when using Visual Editor in source columns or separate windows. (#12581, #11684)
-- Fix startup error due to invalid zoom setting triggering a config schema violation. (#14690) 
+- Fix startup error due to invalid zoom setting triggering a config schema violation. (#14690)
 - Removed extra spaces after package names in warning message about required packages. (#14608)
 - Moved the "Sign commit" check box to Git/Svn global options panel. (##14559)
 - RStudio's editor highlighting no longer accepts embedded spaces in '#|' comment prefixes. (#14592)
@@ -458,7 +486,7 @@ You may also want to update the following configuration entries, as the default 
 
 If upgrading from Workbench <u>2024.04.x</u> with automatic user provisioning enabled, fix a performance and reliability issue:
 
-- In the `workbench-nss.conf` file, update the `server-address` setting to: <br>`unix:/var/run/rstudio-server/rstudio-rserver/user-service.socket` 
+- In the `workbench-nss.conf` file, update the `server-address` setting to: <br>`unix:/var/run/rstudio-server/rstudio-rserver/user-service.socket`
 
 See the [User Provisioning Configuration](https://docs.posit.co/ide/server-pro/user_provisioning/configuration.html) section in the Posit Workbench Administrator Guide for more information. (rstudio-pro#6591)
 
@@ -469,7 +497,7 @@ Updated the following dependencies to the listed version:
 | Name | Version | Reference |
 |------|:--------|:----------|
 MathJax | 2.7.9 | (#11535)
-node.js | 20.15.1 | (#14826) 
+node.js | 20.15.1 | (#14826)
 Electron | 30.4.0 | (#14582; Desktop)
 | Quarto| 1.5.57 | (#14884, #15102)
 | rserver-saml | 0.8.0 | (rstudio-pro#6529)
@@ -497,7 +525,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Fixed an issue where editor tools (e.g., Reindent Lines) did not work in Quarto documents with `:::` blocks. (#14652; #14640)
 - Fixed an issue where insertion of braces in Sweave documents did not function as intended. (#14667; #14646)
 - Fixed ability to build using system YAML (#14629)
-  
+
 #### Posit Workbench
 
 - Fixed an issue introduced in 2024.04.0 with the create-container-user feature for job launcher plugins that reuse a container for more than one session (rstudio/rstudio-pro#6408)
@@ -710,7 +738,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Fixed regression that prevented opening help topics in separate window (#14097)
 - Increased open files limit (#14148)
 - Fixed an issue with saving pane layouts for Desktop Pro and Workbench (rstudio-pro#5612)
- 
+
 #### Posit Workbench
 - Fixed join session when ready control not responding to mouse clicks in all areas (rstudio/rstudio-pro#5609)
 - Fixed intermittent rserver crash when joining a session started with the job launcher that is not immediately available (rstudio-pro#5579)
@@ -900,7 +928,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Fixed an issue where parameter name completions were not provided within `dplyr` joins. (#13415)
 - Fixed issue where R sessions containing large 'igraph' objects could become slow (#13489)
 
-#### Posit Workbench 
+#### Posit Workbench
 - Fixed intermittent rsession crash when the linux nscd service was enabled (rstudio/rstudio-pro#4648)
 - Fixed bug when resuming session not restoring current working directory for Terminal pane (rstudio/rstudio-pro#4027)
 - Fixed bug preventing `HOME` from being modified in system init scripts (rstudio/rstudio-pro#4584)
@@ -924,7 +952,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Avoid username lookups when listing processes looking for sessions (rstudio/rstudio-pro#4800)
 - Avoid load balancing node-status checks for Slurm and Kubernetes sessions (rstudio/rstudio-pro#4876)
 
-## RStudio 2023.06.2 
+## RStudio 2023.06.2
 
 **"Mountain Hydrangea"**
 
@@ -1139,7 +1167,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Support searching for roxygen specific information in fuzzy finder (Go to File/Function) (#12190)
 - "Rainbow" fenced divs, controlled by Options > R Markdown > [v] Use rainbow fenced divs (#12115)
 - Disable argument tooltips in the script editor for unknown functions (#12160)
-- Add RTools 4.3 support (#12528) 
+- Add RTools 4.3 support (#12528)
 - Add support for R 4.3 (#12751)
 
 #### Posit Workbench
@@ -1184,7 +1212,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 
 #### Posit Workbench
 - Fixed intermittent hanging logins in Workbench using ActiveDirectory (rstudio/rstudio-pro#4285)
-- Fixed incorrect icons displayed in the sessions drop-down menu in RStudio Pro (rstudio/rstudio-pro#4257) 
+- Fixed incorrect icons displayed in the sessions drop-down menu in RStudio Pro (rstudio/rstudio-pro#4257)
 - Editor Selection widget in New Session dialog is now usable via keyboard [Accessibility] (rstudio/rstudio-pro#4205)
 - Editor Selection widget in New Session dialog supports screen reader usage [Accessibility] (rstudio/rstudio-pro#4206)
 - Editor icons in New Session dialog are marked as cosmetic for screen readers [Accessibility] (rstudio/rstudio-pro#4207)
@@ -1230,7 +1258,7 @@ R
 - Memory usage in the environment pane now works correctly on Linux when using cgroups v2. (#11894)
 - Fixed an issue where code execution could pause in RStudio Server after closing the browser tab even with active computations. (Pro #3943)
 - Chunk output calls `format()` method on vctrs-based classes stored in a dataframe. (#6878)
-  
+
 Python
 
 - RStudio attempts to infer the appropriate version of Python when "Automatically activate project-local Python environments" is checked and the user has not requested a specific version of Python. This Python will be stored in the environment variable "RETICULATE_PYTHON_FALLBACK", available from the R console, the Python REPL, and the RStudio Terminal (#9990)
@@ -1315,7 +1343,7 @@ Experimental ARM64 and RedHat 9 support
 - Removed the Tools / Shell command (#11253)
 - Deprecated the vscode.conf "min-ext-version" option for specifying the minimum version of the Posit Workbench VS Code extension as the extension is now bundled with Workbench and Session packages rather than being downloaded (rstudio-pro#3643)
 - Removed the "rstudio-server install-vs-code" admin command for downloading and configuring code-server; code-server is now installed with Workbench, use the "rstudio-server configure-vs-code" command for configuration (rstudio-pro#3643)
-- It is highly recommended that you disable session culling in Jupyter sessions by done by setting `session-cull-minutes=0` in `jupyter.conf` to prevent potential data loss (rstudio-pro#3054) 
+- It is highly recommended that you disable session culling in Jupyter sessions by done by setting `session-cull-minutes=0` in `jupyter.conf` to prevent potential data loss (rstudio-pro#3054)
 
 ## RStudio 2022.07.2+576.pro12
 
@@ -1418,7 +1446,7 @@ R
 - The R version and logo displayed in the top left of the console will update to the current R version whenever the R session is restarted (#10458)
 - Fixed issue where `core::system::userBelongsToGroup` errors under specific sssd configurations (`ignore_group_members = true`) (#10829)
 - Fixed a security issue where shiny apps and vscode sessions remained active after signout (rstudio-pro#3287)
-- Fixed an intermittent hang when invoking `rstudio-server verify-installation` which caused stale `rserver` processes to exist (rstudio-pro#3041) 
+- Fixed an intermittent hang when invoking `rstudio-server verify-installation` which caused stale `rserver` processes to exist (rstudio-pro#3041)
 - (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
 - Fixed unintended change of date/time formatting in the VCS commit history (#10810)
 - Fixed an issue where code of the form '1:2:3' was diagnosed incorrectly. (#10979)
@@ -1689,7 +1717,7 @@ Features
 - Fixed bug preventing detection of Python environments when conda installed in typical location but not on path (#9975)
 - Make Python detection less likely to override RETICULATE_PYTHON (#9999)
 
-## RStudio 2021.09.0+351.pro6 
+## RStudio 2021.09.0+351.pro6
 
 **"Ghost Orchid"**
 
@@ -1756,7 +1784,7 @@ RStudio Workbench
 - **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 - **BREAKING:** The `session-env-var-save-blacklist` option has been renamed to `session-ephemeral-env-vars`.
 - **BREAKING:**  The `directory-view-whitelist` option has been renamed to `directory-view-allow-list`.
-- Update bundled Pandoc to version 2.14.1 
+- Update bundled Pandoc to version 2.14.1
 - Depend on new versions of `rmarkdown` (2.10) and `shiny` (1.6)
 - Fixed an issue where scroll position in PDFs was not preserved on re-render (#9603)
 - Support highlight of 'css' and 'asis' chunks in R Markdown documents (#4821)
@@ -1767,7 +1795,7 @@ RStudio Workbench
 - Local background jobs can now be replayed (#5548)
 - Improved display of R stack traces in R functions invoked internally by RStudio (#9307)
 - High DPI ("Retina") plots are now supported on RStudio Server (#3896)
-- The "auto-detect indentation" preference is now off by default (#9211) 
+- The "auto-detect indentation" preference is now off by default (#9211)
 - Make the *Use renv with this project- option sticky, and allow setting by admins (Pro #2671)
 - RStudio no longer treats R objects containing null external pointers specially when building Environment pane (#5546)
 - Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)
@@ -1776,7 +1804,7 @@ RStudio Workbench
 - RStudio addins installed within `tools:::R_user_dir(<pkg>, "config")` are now discovered by RStudio. (#9648)
 
 
-## RStudio 1.4.1743-4 
+## RStudio 1.4.1743-4
 
 **Evergreen Rose**
 
@@ -1844,7 +1872,7 @@ VS Code
 - Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, `SERVER_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346, Pro #2373)
 - Updated `rstudio-server install-vs-code` to install `code-server` 3.9.3 (Pro #2576)
 - **BREAKING** `code-server` 3.3.0 moves the executable to a `bin` directory. After upgrading `code-server`, the `exe` setting in `vscode.conf` may need to be updated to include `bin` in the path. This happens if the upgrade is not done by `install-vs-code-ext` or if `vscode.conf` is being programatically managed. If not updated, VS Code sessions will launch with "wrong version number" message. [Related `code-server` change](https://github.com/cdr/code-server/releases/tag/v3.3.0)
-- Change the default behavior of `install-vs-code` to not configure a global extensions directory and allow users to manage their own extensions. If `install-vs-code` was run with a previous release and you'd like to change your configuration, the configuration can be manually removed from `vscode.conf` or the script can be rerun to regenerate `vscode.conf` (Pro #2516) 
+- Change the default behavior of `install-vs-code` to not configure a global extensions directory and allow users to manage their own extensions. If `install-vs-code` was run with a previous release and you'd like to change your configuration, the configuration can be manually removed from `vscode.conf` or the script can be rerun to regenerate `vscode.conf` (Pro #2516)
 - Added `rstudio-server install-vs-code-ext` script to install the RStudio Workbench VS Code extension in a global directory and upgrade `code-server` to 3.9.3 (Pro #2456)
 - When a global extensions directory isn't configured, install the RStudio Workbench extension on the first VS Code session launch per user (Pro #2376)
 - Disable the extensions marketplace in VS Code sessions when a global directory is configured that the user does not have write access to (Pro #2507)
@@ -1853,7 +1881,7 @@ VS Code
 RStudio Server Open Source
 
 - **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
-- **BREAKING:** RStudio Server no longer supports Internet Explorer 11. 
+- **BREAKING:** RStudio Server no longer supports Internet Explorer 11.
 - Added `session-suspend-on-incomplete-statement` option to enable more aggressive session suspension behavior (Pro #1934)
 - New `env-vars` configuration file simplifies setting environment variables for the main RStudio server process. (Pro #2433)
 - Refreshed style on sign-in page; sign-in page now has a dark mode that syncs with the operating system's (#9092, #9093)
@@ -1956,7 +1984,7 @@ Misc
 - Errors that occur when R packages update the Connections pane are now better handled and reported (#9219)
 - Fixed an issue where login page could fail intermittently with slow network connections (Pro #2551)
 
-## RStudio 1.4.1106-5 
+## RStudio 1.4.1106-5
 
 **Tiger Daylily**
 
@@ -1975,7 +2003,7 @@ Misc
 - Update Pandoc to 2.11.4 (#8848)
 - Update jQuery to 3.5.1 (Pro #2314)
 
-## RStudio 1.4.1103-4 
+## RStudio 1.4.1103-4
 
 **Wax Begonia**
 
@@ -2147,7 +2175,7 @@ RStudio Server Pro
 - Fixed issue where file permissions were not corrected after uploading a file to a shared project (Pro #2208)
 - Fixed issue where the project sharing would not work behind a HTTPS proxy (Pro #2088)
 
-## RStudio 1.3.1093-1 
+## RStudio 1.3.1093-1
 
 **Apricot Nasturtium**
 
@@ -2516,7 +2544,7 @@ Server Pro
 
 Misc
 
-- Fully reset Connections pane objects when refreshing (#2136)	
+- Fully reset Connections pane objects when refreshing (#2136)
 - Fix incorrect `memory.limit()` result with R >= 3.6.0 (#4986)
 - Unset `DYLD_INSERT_LIBRARIES` after launch on macOS to prevent spurious library load errors (#5313)
 - Include R/RStudio version in HTTP user agent header when installing required packages (#5369)
@@ -2529,7 +2557,7 @@ Server Pro
 
 - Include Job Launcher logs in diagnostics report (#1262)
 - Add ability to specify multiple R versions with same path but differing labels (#1034)
-- Include child processes and timing information in session diagnostic traces (#1192) 
+- Include child processes and timing information in session diagnostic traces (#1192)
 - Adds better Session UI/UX including sorting, label viewing, and creation visibility (#1215)
 - Respect user profile resource limits for local launcher R sessions (#1269)
 
@@ -2581,11 +2609,11 @@ Miscellaneous
 >Date: 2019-04-08
 
 
-Python and Notebooks  
+Python and Notebooks
 
 - Use a shared Python session to execute Python chunks via reticulate
 - Simple bindings to access R objects from Python chunks and vice versa
-- Show matplotlib plots emitted by Python chunks  
+- Show matplotlib plots emitted by Python chunks
 
 Keyring
 
@@ -2601,7 +2629,7 @@ Jobs
 
 - Run any R script as a background job in a clean R session
 - Monitor progress and see script output in real time
-- Optionally give jobs your global environment when started, and export values back when complete  
+- Optionally give jobs your global environment when started, and export values back when complete
 
 SQL
 
@@ -3061,7 +3089,7 @@ Source Editor
 - The various ‘yank’ commands are now rebindable (Ctrl + Y, Ctrl + K, Ctrl + U)
 - Insert assignment operator (Alt+-, ‘<-’) is now rebindable
 - Insert pipe operator (Cmd+Shift+M, ‘%>%’) is now rebindable
-- Enable implementors of .DollarNames to provide custom types  
+- Enable implementors of .DollarNames to provide custom types
 
 R Markdown
 
@@ -3163,7 +3191,7 @@ Miscellaneous
 - Prompt to save untitled (never saved) documents when closing source windows
 - Don’t depend on number of call frames when detecting install.packages call
 - Fix failure to install packages with long install.packages commands after restart
-- Server Pro: Fix issue causing sporadic session launch failures when using PAM sessions 
+- Server Pro: Fix issue causing sporadic session launch failures when using PAM sessions
 
 ## RStudio 0.99.903
 
@@ -3222,7 +3250,7 @@ Miscellaneous
 
 - RStudio Addins:
   - Register R functions as addins that can interact with the IDE using the rstudioapi package.
-  - Accessible from the Addins menu and can be bound to custom keyboard shortcuts  
+  - Accessible from the Addins menu and can be bound to custom keyboard shortcuts
 - New Session command (create new R session with same project or working directory)
 - Open project in a new window from the projects recently used menu
 - New Shiny App command for quick creation of Shiny applications
@@ -3851,7 +3879,7 @@ Source Editor
   - Backwards find
   - Options for whole word and wrap
 
-- Automatic indentation improvements:  
+- Automatic indentation improvements:
   - Full support for auto-indent in Sweave/knitr code chunks
   - More intelligent handling of closing braces
   - Recognize operators (e.g. '+' for ggplot) as expression continuations
