@@ -417,8 +417,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       if (object.getPackageSource() == null)
          return false;
       
-      PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
-      return source != PackageInfo.Source.Base;
+      String source = object.getPackageSource();
+      return source != "Base";
    }
    
    private void initPackagesTable()
@@ -487,19 +487,30 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                @Override
                public String get(PackageInfo object)
                {
-                  if (object.getPackageSource() == null)
-                     return constants_.browsePackageCRANLabel();
-                  
-                  PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
-                  switch (source)
+                  String source = object.getPackageSource();
+                  String url = object.getBrowseUrl();
+
+                  if (source != null)
                   {
-                  case Base         : return "";
-                  case Bioconductor : return constants_.browsePackageBioconductorLabel();
-                  case CRAN         : return constants_.browsePackageCRANLabel();
-                  case Custom       : return constants_.brosePackageLabel(object.getBrowseUrl());
-                  case GitHub       : return constants_.browsePackageGitHubLabel();
-                  case Unknown      : return constants_.browsePackageCRANLabel();
-                  default           : return constants_.browsePackageCRANLabel();
+                     if (url != null)
+                     {
+                        return constants_.browsePackageOn(source, url);
+                     }
+                     else
+                     {
+                        return "";
+                     }
+                  }
+                  else
+                  {
+                     if (url != null)
+                     {
+                        return constants_.browsePackageLabel(url);
+                     }
+                     else
+                     {
+                        return constants_.browsePackageCRANLabel();
+                     }
                   }
                }
             })

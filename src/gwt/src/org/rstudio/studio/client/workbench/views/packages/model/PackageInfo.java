@@ -19,15 +19,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class PackageInfo extends JavaScriptObject 
 {
-   public static enum Source
-   {
-      Unknown, Base, Custom, CRAN, Bioconductor, GitHub
-   }
-   
    protected PackageInfo()
    {
    }
-   
    
    public final native String getName() /*-{
       return this.name;

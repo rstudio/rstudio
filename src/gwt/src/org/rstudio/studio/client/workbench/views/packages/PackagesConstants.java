@@ -275,7 +275,16 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      */
     @DefaultMessage("Browse package [{0}]")
     @Key("brosePackageLabel")
-    String brosePackageLabel(String browseUrl);
+    String browsePackageLabel(String browseUrl);
+
+    /**
+     * Translated "Browse package on {0} [{1}]"
+     * 
+     * @return translated "Browse package on {0} [{1}]"
+     */
+    @DefaultMessage("Browse package on {0} [{1}]")
+    @Key("browsePackageOn")
+    String browsePackageOn(String remoteType, String browseUrl);
 
     /**
      * Translated "Browse package on GitHub".

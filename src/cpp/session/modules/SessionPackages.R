@@ -295,8 +295,19 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       find.package(pkgPath, quiet = TRUE)
 })
 
-.rs.addFunction("normalizeRemoteType", function(type)
+.rs.addFunction("inferPackageSource", function(desc)
 {
+   rtype <- .rs.nullCoalesce(desc[["RemoteType"]], "standard")
+   if (identical(rtype, "standard"))
+   {
+      result <- .rs.nullCoalesce(
+         desc[["RemoteReposName"]],
+         desc[["Repository"]]
+      )
+      
+      return(result)
+   }
+   
    aliases <- list(
       bioc         = "Bioconductor",
       bioconductor = "Bioconductor",
@@ -312,7 +323,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       xgit         = "Git"
    )
    
-   .rs.nullCoalesce(aliases[[type]], type)
+   .rs.nullCoalesce(aliases[[rtype]], rtype)
    
 })
 
@@ -350,21 +361,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (identical(as.character(desc$Priority), "base")) {
       source <- "Base"
       url <- ""
-   } else if ("biocViews" %in% names(desc)) {
-      source <- "Bioconductor"
-      url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
-   } else if (identical(desc$Repository, "CRAN")) {
-      source <- "CRAN"
-      url <- sprintf("%s/package=%s", cran, desc$Package)
    } else if (!is.null(desc$GithubRepo)) {
       source <- "GitHub"
       url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
    } else if (!is.null(desc$RemoteType)) {
-      source <- .rs.normalizeRemoteType(desc$RemoteType)
-      url <- sub("[ ,].*", "", trimws(desc$URL))
-   } else if (!is.null(desc$URL)) {
-      source <- "Custom"
-      url <- sub("[ ,].*", "", trimws(desc$URL))
+      source <- .rs.inferPackageSource(desc)
+      url <- sub("[ ,].*", "", trimws(.rs.nullCoalesce(desc$URL, "")))
+   } else if ("biocViews" %in% names(desc)) {
+      source <- "Bioconductor"
+      url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
+   } else if (!is.null(desc$Repository)) {
+      source <- desc$Repository
+      url <- sprintf("%s/package=%s", cran, desc$Package)
    } else {
       source <- "Unknown"
       url <- sprintf("%s/package=%s", cran, desc$Package)
@@ -389,7 +397,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       source <- sub("Bioconductor", "BioC", source, fixed = TRUE)
    
    if (is.character(repository))
+   {
       repository <- sub("Bioconductor", "BioC", repository, fixed = TRUE)
+      
+      pattern <- "^https?://(.*)\\.r-universe\\.dev/?$"
+      m <- regexec(pattern, repository)
+      matches <- regmatches(repository, m)[[1L]]
+      if (length(matches))
+         repository <- sprintf("R-universe [%s]", matches[[2L]])
+   }
    
    list(
       Package     = .rs.nullCoalesce(desc$Package, "[Unknown]"),
