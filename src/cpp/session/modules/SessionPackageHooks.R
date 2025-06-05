@@ -158,8 +158,12 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    after$path <- row.names(after)
    
    # Merge them together.
-   result <- merge(before, after, by = "path")
+   result <- merge(before, after, by = "path", all = TRUE)
+   
+   # Check for changes. (Be careful to handle NA values.)
    diffs <-
+      is.na(result$ctime.x) & !is.na(result$ctime.y) |
+      is.na(result$mtime.x) & !is.na(result$mtime.y) |
       result$ctime.x != result$ctime.y |
       result$mtime.x != result$mtime.y
    
