@@ -552,7 +552,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
       packagesTable_.setColumnWidth(nameColumn_, 180, Unit.PX);
       packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
-      packagesTable_.setColumnWidth(sourceColumn_, 120, Unit.PX);
+      packagesTable_.setColumnWidth(sourceColumn_, 180, Unit.PX);
       // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
 

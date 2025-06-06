@@ -104,7 +104,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
 })
 
-.rs.defineHook("utils", "install.packages", function(pkgs, lib)
+.rs.defineHook("utils", "install.packages", function(pkgs, lib, repos)
 {
    ""
    "This is an RStudio hook."
@@ -156,7 +156,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
    # For any packages which appear to have been updated,
    # tag their DESCRIPTION file with their installation source.
-   db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
+   db <- as.data.frame(available.packages(repos = repos), stringsAsFactors = FALSE)
    lapply(rows$path, .rs.recordPackageSource, db = db)
    
    # Notify the front-end that we've made some updates.
