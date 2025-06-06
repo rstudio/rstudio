@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
@@ -320,16 +319,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Override
       public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
       {
-         String source = "(unknown)";
-
          String pkgSource = value.getPackageSource();
-         if (!StringUtil.isNullOrEmpty(pkgSource))
-            source = pkgSource;
-
-         String pkgRepository = value.getRepository();
-         if (!StringUtil.isNullOrEmpty(pkgRepository))
-            source = pkgRepository;
-
+         String source = (pkgSource != null) ? pkgSource : "[Unknown]";
          sb.append(renderText(source));
       }
    }
@@ -550,7 +541,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
       // set initial column widths
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
-      packagesTable_.setColumnWidth(nameColumn_, 180, Unit.PX);
+      packagesTable_.setColumnWidth(nameColumn_, 120, Unit.PX);
       packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
       packagesTable_.setColumnWidth(sourceColumn_, 180, Unit.PX);
       // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
@@ -750,7 +741,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    interface Templates extends SafeHtmlTemplates
    {
-      @Template("<div class=\"{0}\">{1}</div>")
+      @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
       SafeHtml text(String className, String text);
 
       @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")

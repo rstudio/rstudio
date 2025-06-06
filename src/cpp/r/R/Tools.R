@@ -1924,10 +1924,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # Infer package name from installed path.
    pkgName <- basename(pkgPath)
    
-   # For now, only update the repository field for PPM packages.
+   # Read the package's DESCRIPTION file.
    pkgDesc <- packageDescription(pkgName, lib.loc = dirname(pkgPath))
-   if (pkgDesc$Repository != "RSPM")
-      return()
    
    # If the package already has some remote fields recorded, then skip.
    # Currently, this is relevant for packages installed from r-universe.

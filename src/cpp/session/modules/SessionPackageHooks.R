@@ -139,25 +139,39 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    if (missing(lib) || is.null(lib))
       lib <- .libPaths()[1L]
    
-   # Get paths to DESCRIPTION files, so we can see what packages
-   # were updated before and after installation.
-   before <- .rs.installedPackageFileInfo(lib)
+   # Check if we're installing a package from the filesystem,
+   # versus installing a package from CRAN.
+   isLocal <- is.null(repos) || any(grepl("/", pkgs, fixed = TRUE))
    
-   # Invoke the original function.
-   call <- sys.call()
-   call[[1L]] <- quote(utils::install.packages)
-   result <- eval(call, envir = parent.frame())
-   
-   # Check and see what packages were updated.
-   after <- .rs.installedPackageFileInfo(lib)
-   
-   # Figure out which packages were changed.
-   rows <- .rs.installedPackageFileInfoDiff(before, after)
-   
-   # For any packages which appear to have been updated,
-   # tag their DESCRIPTION file with their installation source.
-   db <- as.data.frame(available.packages(repos = repos), stringsAsFactors = FALSE)
-   lapply(rows$path, .rs.recordPackageSource, db = db)
+   if (isLocal)
+   {
+      # Invoke the original function.
+      call <- sys.call()
+      call[[1L]] <- quote(utils::install.packages)
+      result <- eval(call, envir = parent.frame())
+   }
+   else
+   {
+      # Get paths to DESCRIPTION files, so we can see what packages
+      # were updated before and after installation.
+      before <- .rs.installedPackageFileInfo(lib)
+      
+      # Invoke the original function.
+      call <- sys.call()
+      call[[1L]] <- quote(utils::install.packages)
+      result <- eval(call, envir = parent.frame())
+      
+      # Check and see what packages were updated.
+      after <- .rs.installedPackageFileInfo(lib)
+      
+      # Figure out which packages were changed.
+      rows <- .rs.installedPackageFileInfoDiff(before, after)
+      
+      # For any packages which appear to have been updated,
+      # tag their DESCRIPTION file with their installation source.
+      db <- as.data.frame(available.packages(repos = repos), stringsAsFactors = FALSE)
+      lapply(rows$path, .rs.recordPackageSource, db = db)
+   }
    
    # Notify the front-end that we've made some updates.
    .rs.updatePackageEvents()

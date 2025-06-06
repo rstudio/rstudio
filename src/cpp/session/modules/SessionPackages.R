@@ -323,7 +323,17 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       xgit         = "Git"
    )
    
-   .rs.nullCoalesce(aliases[[rtype]], rtype)
+   type <- .rs.nullCoalesce(aliases[[rtype]], rtype)
+   
+   user <- desc[["RemoteUsername"]]
+   repo <- desc[["RemoteRepo"]]
+   if (!is.null(user) && !is.null(repo))
+   {
+      result <- sprintf("%s [%s/%s]", type, user, repo)
+      return(result)
+   }
+   
+   type
    
 })
 
@@ -361,9 +371,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (identical(as.character(desc$Priority), "base")) {
       source <- "Base"
       url <- ""
-   } else if (!is.null(desc$GithubRepo)) {
-      source <- "GitHub"
-      url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
    } else if (!is.null(desc$RemoteType)) {
       source <- .rs.inferPackageSource(desc)
       url <- sub("[ ,].*", "", trimws(.rs.nullCoalesce(desc$URL, "")))
