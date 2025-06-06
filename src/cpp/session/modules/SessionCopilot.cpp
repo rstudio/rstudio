@@ -1161,40 +1161,6 @@ std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocume
    return contents;
 }
 
-void docOpened(const std::string& uri,
-               const std::string& languageId,
-               int version,
-               const std::string& contents)
-{
-   if (!ensureAgentRunning())
-      return;
-
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-   textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = version;
-   textDocumentJson["text"] = contents;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didOpen", paramsJson);
-}
-
-void docClosed(const std::string& uri)
-{
-   if (!ensureAgentRunning())
-      return;
-
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didClose", paramsJson);
-}
-
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
@@ -1203,10 +1169,16 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    if (!isIndexableDocument(pDoc))
       return;
    
-   docOpened(uriFromDocument(pDoc),
-             languageIdFromDocument(pDoc),
-             kCopilotDefaultDocumentVersion,
-             contentsFromDocument(pDoc));
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
+   textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
+   textDocumentJson["text"] = contentsFromDocument(pDoc);
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didOpen", paramsJson);
 }
 
 namespace file_monitor {
@@ -1236,10 +1208,16 @@ void indexFile(const core::FileInfo& info)
    
    DLOG("Indexing document: {}", info.absolutePath());
    
-   docOpened(uriFromDocumentPath(documentPath.getAbsolutePath()),
-             languageId,
-             kCopilotDefaultDocumentVersion,
-             contents);
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
+   textDocumentJson["text"] = contents;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didOpen", paramsJson);
 }
 
 } // end anonymous namespace
@@ -1273,15 +1251,30 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       return;
    
    // Synchronize document contents with Copilot
-   docOpened(uriFromDocument(pDoc),
-             languageIdFromDocument(pDoc),
-             kCopilotDefaultDocumentVersion,
-             contentsFromDocument(pDoc));
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
+   textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
+   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
+   textDocumentJson["text"] = contentsFromDocument(pDoc);
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didOpen", paramsJson);
 }
 
 void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   docClosed(uriFromDocument(pDoc));
+   if (!ensureAgentRunning())
+      return;
+
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didClose", paramsJson);
 }
 
 void onBackgroundProcessing(bool isIdle)
