@@ -141,10 +141,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
    # Get paths to DESCRIPTION files, so we can see what packages
    # were updated before and after installation.
-   pkgPaths <- list.files(lib, full.names = TRUE)
-   descPaths <- file.path(pkgPaths, "DESCRIPTION")
-   before <- file.info(pkgPaths, extra_cols = FALSE)
-   before$path <- row.names(before)
+   before <- .rs.installedPackageFileInfo(lib)
    
    # Invoke the original function.
    call <- sys.call()
@@ -152,10 +149,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    result <- eval(call, envir = parent.frame())
    
    # Check and see what packages were updated.
-   pkgPaths <- list.files(lib, full.names = TRUE)
-   descPaths <- file.path(pkgPaths, "DESCRIPTION")
-   after <- file.info(pkgPaths, extra_cols = FALSE)
-   after$path <- row.names(after)
+   after <- .rs.installedPackageFileInfo(lib)
    
    # Merge them together.
    result <- merge(before, after, by = "path", all = TRUE)

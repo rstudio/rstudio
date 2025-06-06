@@ -197,3 +197,36 @@
    # Return the expanded and sorted result
    result
 })
+
+.rs.addFunction("installedPackageFileInfo", function(lib = .libPaths())
+{
+   pkgPaths <- list.files(lib, full.names = TRUE)
+   descPaths <- file.path(pkgPaths, "DESCRIPTION")
+   pkgInfo <- file.info(pkgPaths, extra_cols = FALSE)
+   pkgInfo$path <- row.names(pkgInfo)
+   pkgInfo
+})
+
+.rs.addFunction("onInstallScriptJobStarted", function()
+{
+   .rs.setVar("jobPackageInfo", .rs.installedPackageFileInfo())
+})
+
+.rs.addFunction("onInstallScriptJobFinished", function(pkgInfo)
+{
+   before <- .rs.getVar("jobPackageInfo")
+   after <- .rs.installedPackageFileInfo()
+   .rs.clearVar("jobPackageInfo")
+   
+   result <- merge(before, after, by = "path", all = TRUE)
+   
+   diffs <-
+      is.na(result$ctime.x) & !is.na(result$ctime.y) |
+      is.na(result$mtime.x) & !is.na(result$mtime.y) |
+      result$ctime.x != result$ctime.y |
+      result$mtime.x != result$mtime.y
+   
+   db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
+   rows <- result[which(diffs), ]
+   lapply(rows$path, .rs.recordPackageSource, db = db)
+})
