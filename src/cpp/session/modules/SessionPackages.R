@@ -375,22 +375,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       desc <- read.dcf(file.path(pkgPath, "DESCRIPTION"), all = TRUE)
    
    # attempt to infer an appropriate URL for this package
-   if (identical(as.character(desc$Priority), "base")) {
-      source <- "Base"
-      url <- ""
-   } else if (!is.null(desc$RemoteType)) {
-      source <- .rs.inferPackageSource(desc)
-      url <- sub("[ ,].*", "", trimws(.rs.nullCoalesce(desc$URL, "")))
-   } else if ("biocViews" %in% names(desc)) {
-      source <- "Bioconductor"
-      url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
-   } else if (!is.null(desc$Repository)) {
-      source <- desc$Repository
-      url <- sprintf("%s/package=%s", cran, desc$Package)
-   } else {
-      source <- "Unknown"
-      url <- sprintf("%s/package=%s", cran, desc$Package)
-   }
+   source <- .rs.inferPackageSource(desc)
+   url <- .rs.inferPackageUrl(desc)
    
    # attempt to infer a repository source for this package
    repository <- desc[["Repository"]]
