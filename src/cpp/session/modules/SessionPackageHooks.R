@@ -151,20 +151,12 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    # Check and see what packages were updated.
    after <- .rs.installedPackageFileInfo(lib)
    
-   # Merge them together.
-   result <- merge(before, after, by = "path", all = TRUE)
-   
-   # Check for changes. (Be careful to handle NA values.)
-   diffs <-
-      is.na(result$ctime.x) & !is.na(result$ctime.y) |
-      is.na(result$mtime.x) & !is.na(result$mtime.y) |
-      result$ctime.x != result$ctime.y |
-      result$mtime.x != result$mtime.y
+   # Figure out which packages were changed.
+   rows <- .rs.installedPackageFileInfoDiff(before, after)
    
    # For any packages which appear to have been updated,
    # tag their DESCRIPTION file with their installation source.
    db <- as.data.frame(available.packages(), stringsAsFactors = FALSE)
-   rows <- result[which(diffs), ]
    lapply(rows$path, .rs.recordPackageSource, db = db)
    
    # Notify the front-end that we've made some updates.
