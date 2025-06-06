@@ -124,7 +124,9 @@ public:
       connectionRetryContext_.profile = connectionRetryProfile;
    }
 
-   // execute the async client
+   // Execute the async client
+   // The responseHandler will be expected to handle any status that indicates http error, such as 400 or 500 series of codes
+   // The errorHandler is called on a low level level error like failure to read or write
    virtual void execute(const ResponseHandler& responseHandler,
                         const ErrorHandler& errorHandler,
                         const ChunkHandler& chunkHandler = ChunkHandler())
