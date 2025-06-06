@@ -170,6 +170,16 @@ public class VirtualConsole
             ansiColorMode_ = event.getValue();
          }
       });
+
+      maxLineLength_ = userPrefs_.consoleLineLengthLimit().getValue();
+      userPrefs_.consoleLineLengthLimit().addValueChangeHandler(new ValueChangeHandler<Integer>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Integer> event)
+         {
+            maxLineLength_ = event.getValue();
+         }
+      });
       
       events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
       {
@@ -330,36 +340,20 @@ public class VirtualConsole
 
    private String truncate(String output)
    {
-      int size = prefs_.truncateLongLinesInConsoleHistory();
-      if (size == 0)
+      // If truncation isn't enabled, do nothing.
+      if (maxLineLength_ == 0)
          return output;
 
-      return truncate(output, size);
-   }
+      // If the size of the output we've received is already below the limit, return early.
+      int n = output.length();
+      if (n <= maxLineLength_)
+         return output;
 
-   private String truncate(String output, int size)
-   {
       // Check for the first newline. If we don't find anything,
       // we can just substring the string itself.
-      int n = output.length();
       int rhs = output.indexOf("\n");
       if (rhs == -1)
-      {
-         return (n > size)
-            ? output.substring(0, size) + " ... <truncated>"
-            : output;
-      }
-
-      // As a special case, check if the newline was found at the
-      // end of the output string. This is relatively common for
-      // line-delimited output where a single line with a trailing
-      // newline is submitted.
-      if (rhs == n - 1)
-      {
-         return (n > size)
-            ? output.substring(0, size) + " ... <truncated>\n"
-            : output;
-      }
+         return output.substring(0, maxLineLength_) + " ... <truncated>";
 
       // Iterate over all of the newlines within the output text.
       // For each string, pull out the relevant substring, and then
@@ -371,8 +365,8 @@ public class VirtualConsole
       while (rhs != -1)
       {
          // Grab the (possibly truncated) substring within.
-         String value = (rhs - lhs > size)
-            ? output.substring(lhs, lhs + size) + " ... <truncated>"
+         String value = (rhs - lhs > maxLineLength_)
+            ? output.substring(lhs, lhs + maxLineLength_) + " ... <truncated>"
             : output.substring(lhs, rhs);
          result.push(value);
 
@@ -382,8 +376,8 @@ public class VirtualConsole
       }
 
       // Add the final bit of text following the last newline found in the line.
-      String value = (n - lhs > size)
-         ? output.substring(lhs, lhs + size) + " ... <truncated>"
+      String value = (n - lhs > maxLineLength_)
+         ? output.substring(lhs, lhs + maxLineLength_) + " ... <truncated>"
          : output.substring(lhs);
       result.push(value);
 
@@ -1215,7 +1209,7 @@ public class VirtualConsole
          }
          else
          {
-            element.setInnerText(truncate(text));
+            element.setInnerText(text);
          }
       }
 
@@ -1356,6 +1350,8 @@ public class VirtualConsole
    private static final String GROUP_TYPE_ERROR   = "1";
    private static final String GROUP_TYPE_WARNING = "2";
    private static final String GROUP_TYPE_MESSAGE = "3";
+
+   private int maxLineLength_;
    
 
    // Injected ----
