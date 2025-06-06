@@ -143,13 +143,13 @@
         }
       },
       "osx": {
-        "command": "install-dependencies-osx",
+        "command": "./install-dependencies-osx",
         "options": {
           "cwd": "dependencies/osx"
         }
       },
       "linux": {
-        "command": "install-dependencies-linux",
+        "command": "./install-dependencies-linux",
         "options": {
           "cwd": "dependencies/linux"
         }

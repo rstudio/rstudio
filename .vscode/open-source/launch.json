@@ -23,9 +23,8 @@
       "name": "Start RStudio Server",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "bash",
       "runtimeArgs": [
-        "bash",
         "rserver-dev"
       ],
       "cwd": "${workspaceFolder}/build/src/cpp",
