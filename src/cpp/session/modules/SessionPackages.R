@@ -76,14 +76,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 .rs.addFunction( "updatePackageEvents", function()
 {
    reportPackageStatus <- function(status)
+   {
       function(pkgname, ...)
       {
-         packageStatus = list(name=pkgname,
-                              path=.rs.createAliasedPath(
-                                     .rs.pathPackage(pkgname, quiet=TRUE)),
-                              loaded=status)
+         packagePath <- .rs.pathPackage(pkgname, quiet = TRUE)
+         packageStatus = list(
+            name = pkgname,
+            path = .rs.createAliasedPath(packagePath),
+            loaded = status
+         )
          .rs.enqueClientEvent("package_status_changed", packageStatus)
       }
+   }
    
    notifyPackageLoaded <- function(pkgname, ...)
    {
@@ -108,16 +112,16 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       if ( !(packageName %in% .rs.hookedPackages) )
       {
          attachEventName = packageEvent(packageName, "attach")
-         setHook(attachEventName, reportPackageStatus(TRUE), action="append")
+         setHook(attachEventName, reportPackageStatus(TRUE), action = "append")
          
          loadEventName = packageEvent(packageName, "onLoad")
-         setHook(loadEventName, notifyPackageLoaded, action="append")
+         setHook(loadEventName, notifyPackageLoaded, action = "append")
 
          unloadEventName = packageEvent(packageName, "onUnload")
-         setHook(unloadEventName, notifyPackageUnloaded, action="append")
+         setHook(unloadEventName, notifyPackageUnloaded, action = "append")
              
          detachEventName = packageEvent(packageName, "detach")
-         setHook(detachEventName, reportPackageStatus(FALSE), action="append")
+         setHook(detachEventName, reportPackageStatus(FALSE), action = "append")
           
          .rs.setVar("hookedPackages", append(.rs.hookedPackages, packageName))
       }
@@ -153,8 +157,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (!identical(.Platform$OS.type, "windows"))
       libPaths <- .rs.normalizePath(libPaths)
 
-   uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
-   return (uniqueLibPaths)
+   subset(libPaths, !duplicated(libPaths))
 })
 
 .rs.addFunction( "writeableLibraryPaths", function()
@@ -164,13 +167,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    for (libPath in uniqueLibraryPaths)
       if (.rs.isLibraryWriteable(libPath))
          writeableLibraryPaths <- append(writeableLibraryPaths, libPath)
-   return (writeableLibraryPaths)
+   writeableLibraryPaths
 })
 
 .rs.addFunction("defaultUserLibraryPath", function()
 {
-   unlist(strsplit(Sys.getenv("R_LIBS_USER"),
-                              .Platform$path.sep))[1L]
+   unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L]
 })
 
 .rs.addFunction("defaultLibraryPath", function()
@@ -297,17 +299,21 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("inferPackageSource", function(desc)
 {
+   # Handle 'standard' remotes.
    rtype <- .rs.nullCoalesce(desc[["RemoteType"]], "standard")
    if (identical(rtype, "standard"))
    {
       result <- .rs.nullCoalesce(
          desc[["RemoteReposName"]],
+         desc[["RemoteRepos"]],
          desc[["Repository"]]
       )
       
       return(result)
    }
    
+   # Handle other remotes. Start by mapping the RemoteType field
+   # into a "pretty" version of the type.
    aliases <- list(
       bioc         = "Bioconductor",
       bioconductor = "Bioconductor",
@@ -325,6 +331,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    type <- .rs.nullCoalesce(aliases[[rtype]], rtype)
    
+   # Check for packages installed from e.g. hosted Git repositories.
    user <- desc[["RemoteUsername"]]
    repo <- desc[["RemoteRepo"]]
    if (!is.null(user) && !is.null(repo))
@@ -389,29 +396,24 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    repository <- desc[["Repository"]]
    if (identical(repository, "RSPM"))
    {
-      repository <- "PPM"
-      
       repos <- desc[["RemoteRepos"]]
       if (!is.null(repos))
       {
          snapshot <- basename(repos)
          name <- basename(dirname(repos))
-         repository <- sprintf("PPM [%s/%s]", name, snapshot)
+         source <- sprintf("PPM [%s/%s]", name, snapshot)
       }
    }
    
    if (is.character(source))
-      source <- sub("Bioconductor", "BioC", source, fixed = TRUE)
-   
-   if (is.character(repository))
    {
-      repository <- sub("Bioconductor", "BioC", repository, fixed = TRUE)
+      source <- sub("Bioconductor", "BioC", source, fixed = TRUE)
       
       pattern <- "^https?://(.*)\\.r-universe\\.dev/?$"
-      m <- regexec(pattern, repository)
-      matches <- regmatches(repository, m)[[1L]]
+      m <- regexec(pattern, source)
+      matches <- regmatches(source, m)[[1L]]
       if (length(matches))
-         repository <- sprintf("R-universe [%s]", matches[[2L]])
+         source <- sprintf("R-universe [%s]", matches[[2L]])
    }
    
    list(
@@ -420,7 +422,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       Version     = .rs.nullCoalesce(desc$Version, "[Unknown]"),
       Title       = .rs.nullCoalesce(desc$Title, "[No description available]"),
       Source      = .rs.nullCoalesce(source, "[Unknown]"),
-      Repository  = .rs.nullCoalesce(repository, ""),
       BrowseUrl   = utils::URLencode(url)
    )
 })
@@ -435,8 +436,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       LibPath    = libPath,
       Version    = "[Unknown]",
       Title      = "[Failed to read package metadata]",
-      Source     = "Unknown",
-      Repository = "",
+      Source     = "[Unknown]",
       BrowseUrl  = ""
    )
 })
@@ -486,7 +486,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       loaded           = loaded,
       source           = info$Source,
       browse_url       = info$BrowseUrl,
-      repository       = info$Repository,
       check.rows       = TRUE,
       stringsAsFactors = FALSE
    )
