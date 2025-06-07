@@ -819,10 +819,9 @@ public class Packages
       {
          PackageInfo packageInfo = allPackages_.get(i);
          if (packageInfo.getName() == status.getName() &&
-             packageInfo.getLibrary() == status.getLib())
+             packageInfo.getLibrary() == status.getLibrary())
          {
-            allPackages_.set(i, status.isLoaded() ? packageInfo.asLoaded() :
-                                                    packageInfo.asUnloaded());
+            packageInfo.setAttached(status.isAttached());
          }
       }
    }

@@ -177,24 +177,26 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    public void setPackageStatus(PackageStatus status)
    {
-      int row = packageRow(status.getName(), status.getLib());
+      int row = packageRow(status.getName(), status.getLibrary());
       
       if (row != -1)
       {
          List<PackageInfo> packages = packagesDataProvider_.getList();
-        
-         packages.set(row, status.isLoaded() ? packages.get(row).asLoaded() :
-                                               packages.get(row).asUnloaded());
+         packages.get(row).setAttached(status.isAttached());
       }
       
       // go through any duplicates to reconcile their status
+      // (in case the same package is installed into multiple libraries)
       List<PackageInfo> packages = packagesDataProvider_.getList();
-      for (int i=0; i<packages.size(); i++)
+      for (int i = 0; i < packages.size(); i++)
       {
-         if (packages.get(i).getName() == status.getName() &&
-             i != row)
+         if (i == row)
          {
-            packages.set(i, packages.get(i).asUnloaded());
+            continue;
+         }
+         else if (packages.get(i).getName() == status.getName())
+         {
+            packages.get(i).setAttached(false);
          }
       }
    }
