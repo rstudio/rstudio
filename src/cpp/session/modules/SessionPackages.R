@@ -29,10 +29,10 @@
 .rs.addFunction("createAliasedPath", function(path)
 {
    homeDir <- path.expand("~/")
-   homePathIdx <- substr(path, 1, nchar(homeDir)) == homeDir
+   homePathIdx <- substr(path, 1L, nchar(homeDir)) == homeDir
    homePaths <- path[homePathIdx]
-   path[homePathIdx] <-
-          paste("~", substr(homePaths, nchar(homeDir), nchar(homePaths)), sep="")
+   homeSuffix <- substr(homePaths, nchar(homeDir), nchar(homePaths))
+   path[homePathIdx] <- paste0("~", homeSuffix)
    path
 })
 
@@ -76,14 +76,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 .rs.addFunction( "updatePackageEvents", function()
 {
    reportPackageStatus <- function(status)
+   {
       function(pkgname, ...)
       {
-         packageStatus = list(name=pkgname,
-                              path=.rs.createAliasedPath(
-                                     .rs.pathPackage(pkgname, quiet=TRUE)),
-                              loaded=status)
+         packagePath <- .rs.pathPackage(pkgname, quiet = TRUE)
+         packageStatus = list(
+            name = pkgname,
+            path = .rs.createAliasedPath(packagePath),
+            loaded = status
+         )
          .rs.enqueClientEvent("package_status_changed", packageStatus)
       }
+   }
    
    notifyPackageLoaded <- function(pkgname, ...)
    {
@@ -108,16 +112,16 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       if ( !(packageName %in% .rs.hookedPackages) )
       {
          attachEventName = packageEvent(packageName, "attach")
-         setHook(attachEventName, reportPackageStatus(TRUE), action="append")
+         setHook(attachEventName, reportPackageStatus(TRUE), action = "append")
          
          loadEventName = packageEvent(packageName, "onLoad")
-         setHook(loadEventName, notifyPackageLoaded, action="append")
+         setHook(loadEventName, notifyPackageLoaded, action = "append")
 
          unloadEventName = packageEvent(packageName, "onUnload")
-         setHook(unloadEventName, notifyPackageUnloaded, action="append")
+         setHook(unloadEventName, notifyPackageUnloaded, action = "append")
              
          detachEventName = packageEvent(packageName, "detach")
-         setHook(detachEventName, reportPackageStatus(FALSE), action="append")
+         setHook(detachEventName, reportPackageStatus(FALSE), action = "append")
           
          .rs.setVar("hookedPackages", append(.rs.hookedPackages, packageName))
       }
@@ -153,8 +157,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (!identical(.Platform$OS.type, "windows"))
       libPaths <- .rs.normalizePath(libPaths)
 
-   uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
-   return (uniqueLibPaths)
+   subset(libPaths, !duplicated(libPaths))
 })
 
 .rs.addFunction( "writeableLibraryPaths", function()
@@ -164,13 +167,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    for (libPath in uniqueLibraryPaths)
       if (.rs.isLibraryWriteable(libPath))
          writeableLibraryPaths <- append(writeableLibraryPaths, libPath)
-   return (writeableLibraryPaths)
+   writeableLibraryPaths
 })
 
 .rs.addFunction("defaultUserLibraryPath", function()
 {
-   unlist(strsplit(Sys.getenv("R_LIBS_USER"),
-                              .Platform$path.sep))[1L]
+   unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L]
 })
 
 .rs.addFunction("defaultLibraryPath", function()
@@ -287,132 +289,218 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    identical(tail(strsplit(value, "")[[1]], n = 1), ending)
 })
 
-.rs.addFunction("listInstalledPackages", function()
+.rs.addFunction("findPackage", function(pkgPath)
 {
-   # get the CRAN repository URL, and remove a trailing slash if required
-   repos <- getOption("repos")
-   cran <- if ("CRAN" %in% names(repos))
-      repos[["CRAN"]]
+   if (grepl("/", pkgPath, fixed = TRUE))
+      pkgPath
    else
-      .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
+      find.package(pkgPath, quiet = TRUE)
+})
+
+.rs.addFunction("inferPackageSource", function(pkgDesc)
+{
+   # Check for 'base' packages.
+   if (identical(pkgDesc[["Priority"]], "base"))
+      return("Base")
    
-   # trim trailing slashes if necessary
-   cran <- gsub("/*", "", cran)
-   
-   # helper function for extracting information from a package's
-   # DESCRIPTION file
-   readPackageInfo <- function(pkgPath) {
+   # Handle 'standard' remotes.
+   rtype <- .rs.nullCoalesce(pkgDesc[["RemoteType"]], "standard")
+   if (identical(rtype, "standard"))
+   {
+      source <- .rs.nullCoalesce(
+         pkgDesc[["RemoteReposName"]],
+         pkgDesc[["RemoteRepos"]],
+         pkgDesc[["Repository"]]
+      )
       
-      # attempt to read package metadata
-      desc <- .rs.tryCatch({
-         metapath <- file.path(pkgPath, "Meta", "package.rds")
-         metadata <- readRDS(metapath)
-         as.list(metadata$DESCRIPTION)
-      })
+      # Shorten the name for Bioconductor remotes.
+      source <- sub("Bioconductor", "BioC", source, fixed = TRUE)
       
-      # if that failed, try reading the DESCRIPTION
-      if (inherits(desc, "error"))
-         desc <- read.dcf(file.path(pkgPath, "DESCRIPTION"), all = TRUE)
+      # Check for R-universe remotes, and format them specially.
+      pattern <- "^https?://(.*)\\.r-universe\\.dev/?$"
+      m <- regexec(pattern, source)
+      matches <- regmatches(source, m)[[1L]]
+      if (length(matches))
+         source <- sprintf("R-universe [%s]", matches[[2L]])
       
-      # attempt to infer an appropriate URL for this package
-      if (identical(as.character(desc$Priority), "base")) {
-         source <- "Base"
-         url <- ""
-      } else if (!is.null(desc$URL)) {
-         source <- "Custom"
-         url <- sub("[ ,].*", "", trimws(desc$URL))
-      } else if ("biocViews" %in% names(desc)) {
-         source <- "Bioconductor"
-         url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
-      } else if (identical(desc$Repository, "CRAN")) {
-         source <- "CRAN"
-         url <- sprintf("%s/package=%s", cran, desc$Package)
-      } else if (!is.null(desc$GithubRepo)) {
-         source <- "GitHub"
-         url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
-      } else {
-         source <- "Unknown"
-         url <- sprintf("%s/package=%s", cran, desc$Package)
+      # Check for PPM remorts, and format them specially.
+      if (identical(pkgDesc[["Repository"]], "RSPM"))
+      {
+         repos <- pkgDesc[["RemoteRepos"]]
+         if (!is.null(repos))
+         {
+            ppm <- if (grepl("https://p3m.dev/", repos, fixed = TRUE))
+               "p3m.dev"
+            else if (grepl("https://packagemanager.posit.co/", repos, fixed = TRUE))
+               "P3M"
+            else
+               "PPM"
+            
+            snapshot <- basename(repos)
+            name <- basename(dirname(repos))
+            source <- sprintf("%s [%s/%s]", ppm, name, snapshot)
+         }
       }
       
-      list(
-         Package     = .rs.nullCoalesce(desc$Package, "[Unknown]"),
-         LibPath     = dirname(pkgPath),
-         Version     = .rs.nullCoalesce(desc$Version, "[Unknown]"),
-         Title       = .rs.nullCoalesce(desc$Title, "[No description available]"),
-         Source      = source,
-         BrowseUrl   = utils::URLencode(url)
-      )
-      
+      return(source)
    }
    
-   # to be called if our attempt to read the package DESCRIPTION file failed
-   # for some reason
-   emptyPackageInfo <- function(pkgPath) {
-      
-      package <- basename(pkgPath)
-      libPath <- dirname(pkgPath)
-      
-      list(
-         Package   = package,
-         LibPath   = libPath,
-         Version   = "[Unknown]",
-         Title     = "[Failed to read package metadata]",
-         Source    = "Unknown",
-         BrowseUrl = ""
-      )
-      
+   # Handle other remotes. Start by mapping the RemoteType field
+   # into a "pretty" version of the type.
+   aliases <- list(
+      bioc         = "Bioconductor",
+      bioconductor = "Bioconductor",
+      bitbucket    = "Bitbucket",
+      cran         = "CRAN",
+      git2r        = "Git",
+      github       = "GitHub",
+      gitlab       = "GitLab",
+      local        = "Local",
+      repository   = "Repository",
+      standard     = "Repository",
+      url          = "URL",
+      xgit         = "Git"
+   )
+   
+   type <- .rs.nullCoalesce(aliases[[rtype]], rtype)
+   
+   # Check for packages installed from e.g. hosted Git repositories.
+   user <- pkgDesc[["RemoteUsername"]]
+   repo <- pkgDesc[["RemoteRepo"]]
+   if (!is.null(user) && !is.null(repo))
+   {
+      source <- sprintf("%s [%s/%s]", type, user, repo)
+      return(source)
    }
    
-   # now, find packages. we'll only include packages that have
-   # a Meta folder. note that the pseudo-package 'translations'
-   # lives in the R system library, and has a DESCRIPTION file,
-   # but cannot be loaded as a regular R package.
-   packagePaths <- list.files(.rs.uniqueLibraryPaths(), full.names = TRUE)
-   hasMeta <- file.exists(file.path(packagePaths, "Meta"))
-   packagePaths <- packagePaths[hasMeta]
+   # If we couldn't infer any more details, just use the type.
+   type
    
-   # now, iterate over these to generate the requisite package
-   # information and combine into a data.frame
-   parts <- lapply(packagePaths, function(pkgPath) {
-      
-      tryCatch(
-         readPackageInfo(pkgPath),
-         error = function(e) emptyPackageInfo(pkgPath)
+})
+
+.rs.addFunction("inferPackageBrowseUrl", function(pkgDesc)
+{
+   repos <- as.list(getOption("repos"))
+   
+   # For packages that were installed from CRAN or RSPM, browse
+   # to the package page associated with the repository.
+   repository <- pkgDesc[["Repository"]]
+   if (identical(repository, "RSPM") || identical(repository, "CRAN"))
+   {
+      repoUrl <- .rs.nullCoalesce(
+         pkgDesc[["RemoteRepos"]],
+         repos[[repository]],
+         repos[[1L]]
       )
+      
+      if (length(repoUrl))
+      {
+         url <- sprintf("%s/package=%s", repoUrl[[1L]], pkgDesc[["Package"]])
+         return(url)
+      }
+   }
+   
+   # Try to build a link for packages installed from other remotes.
+   host <- pkgDesc[["RemoteHost"]]
+   user <- pkgDesc[["RemoteUsername"]]
+   repo <- pkgDesc[["RemoteRepo"]]
+   
+   if (!is.null(host) && !is.null(user) && !is.null(repo))
+   {
+      host <- sub("api.github.com", "github.com", host, fixed = TRUE)
+      url <- sprintf("https://%s/%s/%s", host, user, repo)
+      return(url)
+   }
+   
+   # If 'Repository' appears to be a URL, use it directly.
+   if (is.character(repository) && grepl("^https://", repository))
+   {
+      return(repository)
+   }
+   
+   # If this appears to be a Bioconductor package, link there.
+   if (!is.null(pkgDesc[["biocViews"]]))
+   {
+      mirror <- getOption("BioC_mirror", default = "https://bioconductor.org")
+      fmt <- "%s/packages/release/bioc/html/%s.html"
+      url <- sprintf(fmt, mirror, pkgDesc[["Package"]])
+      return(url)
+   }
+   
+   # Give up.
+   ""
+})
+
+.rs.addFunction("listInstalledPackages", function()
+{
+   # Look for packages in the library paths.
+   pkgPaths <- list.files(.rs.uniqueLibraryPaths(), full.names = TRUE)
+   
+   # Include only packages which have a 'Meta' sub-directory.
+   hasMeta <- file.exists(file.path(pkgPaths, "Meta"))
+   pkgPaths <- pkgPaths[hasMeta]
+   
+   # Iterate over these packages, and read their DESCRIPTION files.
+   pkgDescs <- lapply(pkgPaths, function(pkgPath) {
+      
+      pkgDesc <- tryCatch(
+         .rs.readPackageDescription(pkgPath),
+         condition = function(e) list(Package = basename(pkgPath))
+      )
+      
+      # Pull out package name for later use.
+      pkgName <- pkgDesc[["Package"]]
+      
+      # Also record metadata about the library where it was found.
+      libraryPath <- dirname(pkgPath)
+      pkgDesc[["Library"]] <- .rs.createAliasedPath(libraryPath)
+      pkgDesc[["LibraryAbsolute"]] <- libraryPath
+      pkgDesc[["LibraryIndex"]] <- match(libraryPath, .libPaths(), nomatch = 0L)
+      
+      # Also note which packages appear to be loaded or attached.
+      isLoaded <- FALSE
+      if (pkgName %in% loadedNamespaces())
+      {
+         isLoaded <-
+            identical(pkgDesc[["Priority"]], "base") ||
+            identical(getNamespaceInfo(pkgName, "path"), pkgPath)
+      }
+      
+      isAttached <-
+         isLoaded &&
+         paste("package", pkgName, sep = ":") %in% search()
+      
+      pkgDesc[["Loaded"]] <- isLoaded
+      pkgDesc[["Attached"]] <- isAttached
+      
+      pkgDesc[["Source"]] <- tryCatch(
+         .rs.inferPackageSource(pkgDesc),
+         error = function(cnd) "[Unknown]"
+      )
+      
+      pkgDesc[["BrowseUrl"]] <- tryCatch(
+         .rs.inferPackageBrowseUrl(pkgDesc),
+         error = function(cnd) ""
+      )
+      
+      url <- pkgDesc[["URL"]]
+      if (!is.null(url))
+      {
+         urls <- strsplit(url, "[,\\s\\n]+", perl = TRUE)[[1L]]
+         pkgDesc[["PackageUrl"]] <- urls[[1L]]
+      }
+      
+      # Return the resulting object.
+      .rs.scalarListFromList(pkgDesc)
       
    })
    
-   # combine into a data.frame
-   info <- .rs.rbindList(parts)
+   # Sort based on the package name.
+   pkgOrder <- order(.rs.mapChr(pkgDescs, `[[`, "Package"))
+   pkgDescs <- pkgDescs[pkgOrder]
    
-   # find which packages are currently attached (be careful to handle
-   # cases where package is installed into multiple libraries)
-   #
-   # we suppress warnings here as 'find.packages(.packages())' can warn
-   # if a package that is attached is no longer actually installed
-   loaded <- suppressWarnings(
-      normalizePath(file.path(info$LibPath, info$Package), winslash = "/", mustWork = FALSE) %in%
-      normalizePath(find.package(.packages(), quiet = TRUE), winslash = "/", mustWork = FALSE)
-   )
-   
-   # extract fields relevant to us
-   packages <- data.frame(
-      name             = info$Package,
-      library          = .rs.createAliasedPath(info$LibPath),
-      library_absolute = info$LibPath,
-      library_index    = match(info$LibPath, .libPaths(), nomatch = 0L),
-      version          = info$Version,
-      desc             = info$Title,
-      loaded           = loaded,
-      source           = info$Source,
-      browse_url       = info$BrowseUrl,
-      check.rows       = TRUE,
-      stringsAsFactors = FALSE
-   )
-   
-   # sort and return
-   packages[order(packages$name), ]
+   # And we're done.
+   pkgDescs
 })
 
 .rs.addJsonRpcHandler("get_package_install_context", function()

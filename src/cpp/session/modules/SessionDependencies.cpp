@@ -506,8 +506,7 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
          EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
 
          // Build install command for bundled archive
-         script += "utils::install.packages('" + pkg.archivePath + 
-            "', repos = NULL, type = 'source')";
+         script += "utils::install.packages('" + pkg.archivePath + "', repos = NULL, type = 'source')";
       }
 
       script += "\n\n";
@@ -621,9 +620,19 @@ Error installDependencies(const json::JsonRpcRequest& request,
       installJob.setProcOptions(async_r::R_PROCESS_VANILLA_USER);
    }
 
+   // Call R script job callback
+   error = r::exec::RFunction(".rs.onInstallScriptJobStarted").call();
+   if (error)
+      LOG_ERROR(error);
+
    std::string jobId;
    error = jobs::startScriptJob(installJob, [&]()
    {
+      // Call R script job callback
+      error = r::exec::RFunction(".rs.onInstallScriptJobFinished").call();
+      if (error)
+         LOG_ERROR(error);
+
       // When job is finished, update the packages state
       packages::enquePackageStateChanged();
    }, &jobId);

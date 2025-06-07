@@ -1559,6 +1559,16 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
 })
 
+.rs.addFunction("emptyCoalesce", function(...)
+{
+   for (i in seq_len(...length()))
+   {
+      value <- ...elt(i)
+      if (length(value))
+         return(value)
+   }
+})
+
 .rs.addFunction("restoreSearchPath", function(searchPathsFile,
                                               packagePathsFile,
                                               environmentDataDir)
@@ -1907,4 +1917,64 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
    
    ""
+})
+
+.rs.addFunction("recordPackageSource", function(pkgPath, db)
+{
+   # Infer package name from installed path.
+   pkgName <- basename(pkgPath)
+   
+   # Read the package's DESCRIPTION file.
+   pkgDesc <- packageDescription(pkgName, lib.loc = dirname(pkgPath))
+   
+   # If the package already has some remote fields recorded, then skip.
+   # Currently, this is relevant for packages installed from r-universe.
+   remotes <- grep("^Remote", names(pkgDesc), value = TRUE)
+   if (length(remotes))
+      return()
+   
+   # Try to figure out post-hoc from where the package was retrieved.
+   pkgEntry <- subset(db, Package == pkgName)
+   if (nrow(pkgEntry) == 0L)
+      return()
+   
+   # Grab the package version.
+   pkgVersion <- pkgDesc[["Version"]]
+   
+   # Normalize the repository path, removing source / binary suffixes.
+   pkgSource <- gsub("/(src|bin)/.*", "", pkgEntry$Repository, perl = TRUE)
+   
+   # Also remove a potential binary component.
+   pkgSource <- sub("/__[^_]+__/[^/]+/", "", pkgSource)
+   
+   remoteFields <- c(
+      RemoteType   = "standard",
+      RemotePkgRef = pkgName,
+      RemoteRef    = pkgName,
+      RemoteRepos  = pkgSource,
+      RemoteSha    = pkgVersion
+   )
+   
+   remoteText <- sprintf(
+      "%s: %s",
+      names(remoteFields),
+      unlist(remoteFields)
+   )
+   
+   # Update the DESCRIPTION file. We read and write the DESCRIPTION file
+   # just to avoid issues with potential trailing lines.
+   descPath <- file.path(pkgPath, "DESCRIPTION")
+   descContents <- readLines(descPath, warn = FALSE)
+   descContents <- descContents[nzchar(descContents)]
+   descContents <- c(descContents, remoteText)
+   writeLines(descContents, con = descPath, useBytes = TRUE)
+   
+   # Update `Meta/package.rds`.
+   metaPackagePath <- file.path(pkgPath, "Meta/package.rds")
+   if (file.exists(metaPackagePath))
+   {
+      metaPackageInfo <- readRDS(metaPackagePath)
+      metaPackageInfo[["DESCRIPTION"]][names(remoteFields)] <- remoteFields
+      saveRDS(metaPackageInfo, file = metaPackagePath)
+   }
 })

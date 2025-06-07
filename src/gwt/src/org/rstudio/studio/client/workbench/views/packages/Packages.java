@@ -78,10 +78,10 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOp
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils.PackageLibraryType;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackratActions;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
@@ -356,7 +356,7 @@ public class Packages
 
                if (!usingDefaultLibrary)
                {
-                  command.append(", lib=\"");
+                  command.append(", lib = \"");
                   command.append(request.getOptions().getLibraryPath());
                   command.append("\"");
                }
@@ -481,13 +481,6 @@ public class Packages
          }
          if (libPathUpdates.size() > 1)
             command.append(")");
-
-         if (libPath != installContext.getDefaultLibraryPath())
-         {
-            command.append(", lib=\"");
-            command.append(libPath);
-            command.append("\"");
-         }
 
          command.append(")");
 
@@ -727,7 +720,7 @@ public class Packages
                      command.append("\"");
                      if (!usingDefaultLibrary)
                      {
-                        command.append(", lib=\"");
+                        command.append(", lib = \"");
                         command.append(packageInfo.getLibrary());
                         command.append("\"");
                      }

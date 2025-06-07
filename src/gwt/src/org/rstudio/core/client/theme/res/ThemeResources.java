@@ -176,6 +176,9 @@ public interface ThemeResources extends ClientBundle
    @Source("help_2x.png")
    ImageResource help2x();
 
+   @Source("helpSmall_2x.png")
+   ImageResource helpSmall2x();
+
    @Source("infoSmall_2x.png")
    ImageResource infoSmall2x();
 
