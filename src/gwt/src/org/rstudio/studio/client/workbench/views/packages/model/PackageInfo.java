@@ -24,48 +24,51 @@ public class PackageInfo extends JavaScriptObject
    }
    
    public final native String getName() /*-{
-      return this.name;
+      return this["Package"];
    }-*/;
    
    public final native String getLibrary() /*-{
-      return this.library == null ? "" : this.library;
+      return this["Library"] || "";
    }-*/;
    
    public final native String getLibraryAbsolute() /*-{
-      return this.library_absolute || "";
+      return this["LibraryAbsolute"] || "";
    }-*/;
    
    public final native int getLibraryIndex() /*-{
-      return this.library_index || 0;
+      return this["LibraryIndex"] || 0;
    }-*/;
 
    public final native String getVersion() /*-{
-      return this.version == null ? "" : this.version;
+      return this["Version"] || "";
    }-*/;
    
    public final native String getDesc() /*-{
-      return this.desc == null ? "" : this.desc;
+      return this["Title"] || "";
    }-*/;
    
    public final native String getHelpUrl() /*-{
-      return "help/library/" + this.name + "/html/00Index.html";
+      return "help/library/" + this["Package"] + "/html/00Index.html";
+   }-*/;
+
+   public final native String getPackageUrl() /*-{
+      return this["PackageUrl"]
    }-*/;
 
    public final native String getBrowseUrl() /*-{
-      return this.browse_url;
+      return this["BrowseUrl"];
    }-*/;
 
    public final native String getPackageSource() /*-{
-      return this.source;
+      return this["Source"] || "";
    }-*/;
    
-   public final native boolean isLoaded() /*-{
-      return this.loaded;
+   public final native boolean isAttached() /*-{
+      return this["Attached"] || false;
    }-*/;
    
    public final native boolean isFirstInLibrary() /*-{
-      return (typeof this.first_in_library === "undefined") ? 
-         false : this.first_in_library;
+      return this.first_in_library || false;
    }-*/;
    
    public final native boolean setFirstInLibrary(boolean isFirst) /*-{

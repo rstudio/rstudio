@@ -464,6 +464,31 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
       };
 
+      helpColumn_ = new ImageButtonColumn<PackageInfo>(
+            new ImageResource2x(ThemeResources.INSTANCE.helpSmall2x()),
+            new OperationWithInput<PackageInfo>() {
+               @Override
+               public void execute(PackageInfo packageInfo)
+               {
+                  RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(packageInfo.getPackageUrl());
+               }
+            },
+            new TitleProvider<PackageInfo>()
+            {
+               @Override
+               public String get(PackageInfo object)
+               {
+                  return object.getPackageUrl();
+               }
+            })
+      {
+         @Override
+         public boolean showButton(PackageInfo object)
+         {
+            return object.getPackageUrl() != null;
+         }
+      };
+
       browseColumn_ = new ImageButtonColumn<PackageInfo>(
             new ImageResource2x(ThemeResources.INSTANCE.browsePackage2x()),
             new OperationWithInput<PackageInfo>() {
@@ -564,6 +589,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.setColumnWidth(lockfileVersionColumn_, 100, Unit.PX);
       }
      
+      // help column is common
+      packagesTable_.addColumn(helpColumn_, new TextHeader(""));
+      packagesTable_.setColumnWidth(helpColumn_, 20, Unit.PX);
+
       // browse column is common
       packagesTable_.addColumn(browseColumn_, new TextHeader(""));
       packagesTable_.setColumnWidth(browseColumn_, 20, Unit.PX);
@@ -640,7 +669,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Override
       public LabeledBoolean getValue(PackageInfo packageInfo)
       {
-         return new LabeledBoolean(packageInfo.getName(), packageInfo.isLoaded());
+         return new LabeledBoolean(packageInfo.getName(), packageInfo.isAttached());
       }
       
    }
@@ -759,6 +788,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private Column<PackageInfo, PackageInfo> versionColumn_;
    private Column<PackageInfo, PackageInfo> sourceColumn_;
    private Column<PackageInfo, PackageInfo> metadataColumn_;
+   private ImageButtonColumn<PackageInfo> helpColumn_;
    private ImageButtonColumn<PackageInfo> browseColumn_;
    private ImageButtonColumn<PackageInfo> removeColumn_;
 
