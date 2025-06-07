@@ -66,6 +66,10 @@ public class PackageInfo extends JavaScriptObject
    public final native boolean isAttached() /*-{
       return this["Attached"] || false;
    }-*/;
+
+   public final native boolean setAttached(boolean attached) /*-{
+      this["Attached"] = attached;
+   }-*/;
    
    public final native boolean isFirstInLibrary() /*-{
       return this.first_in_library || false;
@@ -114,23 +118,4 @@ public class PackageInfo extends JavaScriptObject
       String sourceLibrary = getPackratStringField("source.library");
       return sourceLibrary.length() == 0 ? getLibrary() : sourceLibrary;
    }
-   
-   public final PackageInfo asLoaded()
-   {
-      return asLoadedState(true);
-   }
-   
-   public final PackageInfo asUnloaded()
-   {
-      return asLoadedState(false);
-   }
-   
-   private final native PackageInfo asLoadedState(boolean loaded) /*-{
-      var packageInfo = new Object();
-      for (var key in this)
-         packageInfo[key] = this[key];
-      packageInfo.loaded = loaded;
-      return packageInfo;
-   }-*/;
-   
 }

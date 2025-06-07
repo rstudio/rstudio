@@ -27,42 +27,25 @@ public class PackageStatus extends JavaScriptObject
    }
    
    public static final native PackageStatus create(String name,
-                                                   String lib,
-                                                   boolean loaded) /*-{
-      var status = new Object();
-      status.name = name;
-      status.lib = lib;
-      status.loaded = loaded;
-      return status;
+                                                   String library,
+                                                   boolean attached)
+   /*-{
+      return {
+         name: name,
+         library: library,
+         attached: attached
+      };
    }-*/;
    
    public final native String getName() /*-{
-      return this.name[0];
+      return this.name;
    }-*/;
 
-   public final String getLib() 
-   {
-      String lib = getLibNative();
-      if (lib != null)
-      {
-         return lib;
-      }
-      else
-      {
-         FileSystemItem path = FileSystemItem.createDir(getPathNative());
-         return path.getParentPathString();
-      }
-   }   
-   
-   public final native boolean isLoaded() /*-{
-      return this.loaded[0];
+   public final native String getLibrary() /*-{
+      return this.library;
    }-*/;
-   
-   private final native String getPathNative() /*-{
-      return this.path[0];
-   }-*/;
-   
-   private final native String getLibNative() /*-{
-      return this.lib;
+
+   public final native boolean isAttached() /*-{
+      return this.attached || false;
    }-*/;
 }

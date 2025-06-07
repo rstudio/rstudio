@@ -73,17 +73,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
 })
 
-.rs.addFunction( "updatePackageEvents", function()
+.rs.addFunction("updatePackageEvents", function()
 {
-   reportPackageStatus <- function(status)
+   reportPackageStatus <- function(attached)
    {
       function(pkgname, ...)
       {
          packagePath <- .rs.pathPackage(pkgname, quiet = TRUE)
          packageStatus = list(
-            name = pkgname,
-            path = .rs.createAliasedPath(packagePath),
-            loaded = status
+            name     = I(pkgname),
+            library  = I(dirname(packagePath)),
+            path     = I(.rs.createAliasedPath(packagePath)),
+            attached = I(attached)
          )
          .rs.enqueClientEvent("package_status_changed", packageStatus)
       }
