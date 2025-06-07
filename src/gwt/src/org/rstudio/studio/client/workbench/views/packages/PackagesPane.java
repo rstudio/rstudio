@@ -86,6 +86,20 @@ import com.google.inject.Inject;
 
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
+   private class WidgetTextHeader extends TextHeader
+   {
+      public WidgetTextHeader()
+      {
+         super("");
+      }
+
+      @Override
+      public String getHeaderStyleNames()
+      {
+         return dataGridRes_.dataGridStyle().widgetColumnHeader();
+      }
+   }
+
    @Inject
    public PackagesPane(Commands commands, 
                        Session session,
@@ -590,11 +604,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
      
       // help column is common
-      packagesTable_.addColumn(helpColumn_, new TextHeader(""));
+      packagesTable_.addColumn(helpColumn_, new WidgetTextHeader());
       packagesTable_.setColumnWidth(helpColumn_, 20, Unit.PX);
 
       // browse column is common
-      packagesTable_.addColumn(browseColumn_, new TextHeader(""));
+      packagesTable_.addColumn(browseColumn_, new WidgetTextHeader());
       packagesTable_.setColumnWidth(browseColumn_, 20, Unit.PX);
 
       // remove column is common (note that we allocate extra column

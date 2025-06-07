@@ -14,6 +14,10 @@
    overflow: hidden;
 }
 
+.widgetColumnHeader {
+   border-right: none;
+}
+
 .dataGridFirstColumn
 {
    text-align: center;
