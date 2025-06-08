@@ -19,10 +19,8 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
-import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -59,10 +57,14 @@ import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridRes
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -79,6 +81,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
@@ -182,7 +185,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       if (row != -1)
       {
          List<PackageInfo> packages = packagesDataProvider_.getList();
-         packages.get(row).setAttached(status.isAttached());
+         PackageInfo packageInfo = packages.get(row);
+         packageInfo.setAttached(status.isAttached());
+         packages.set(row, packageInfo);
       }
       
       // go through any duplicates to reconcile their status
@@ -196,7 +201,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
          else if (packages.get(i).getName() == status.getName())
          {
-            packages.get(i).setAttached(false);
+            PackageInfo packageInfo = packages.get(i);
+            packageInfo.setAttached(false);
+            packages.set(i, packageInfo);
          }
       }
    }
@@ -359,7 +366,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       return packagesTableContainer_;
    }
    
-   
    @Override
    public void onResize()
    {
@@ -387,7 +393,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       {
          packagesTableContainer_.clear();
          packagesTable_ = new RStudioDataGrid<>(
-            packagesDataProvider_.getList().size(), dataGridRes_);
+            packagesDataProvider_.getList().size(),
+            dataGridRes_);
       }
       catch (Exception e)
       {
@@ -432,7 +439,34 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<>());
-        
+      packagesTable_.addCellPreviewHandler(new CellPreviewEvent.Handler<PackageInfo>()
+      {
+         @Override
+         public void onCellPreview(CellPreviewEvent<PackageInfo> preview)
+         {
+            NativeEvent event = preview.getNativeEvent();
+            if (event.getType() != BrowserEvents.CLICK)
+               return;
+
+            EventTarget target = event.getEventTarget();
+            if (!Element.is(target))
+               return;
+
+            Element targetEl = Element.as(target);
+            if (!targetEl.hasTagName(InputElement.TAG))
+               return;
+
+            event.stopPropagation();
+            event.preventDefault();
+
+            boolean isChecked = targetEl.hasAttribute("checked");
+            if (isChecked)
+               observer_.unloadPackage(preview.getValue());
+            else
+               observer_.loadPackage(preview.getValue());
+         }
+      });
+
       loadedColumn_ = new LoadedColumn();
       nameColumn_ = new NameColumn();
     
@@ -651,43 +685,37 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private void updateColumnWidths()
    {
-      // TODO
+   }
+
+   class LoadedCell extends AbstractCell<PackageInfo>
+   {
+      public LoadedCell()
+      {
+      }
+
+      @Override
+      public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
+      {
+         SafeHtml checkbox = value.isAttached()
+            ? TEMPLATES.checkboxChecked(value.getName())
+            : TEMPLATES.checkboxUnchecked(value.getName());
+
+         sb.append(checkbox);
+      }
    }
    
-   class LoadedColumn extends Column<PackageInfo, LabeledBoolean>
+   class LoadedColumn extends Column<PackageInfo, PackageInfo>
    {
       public LoadedColumn()
       {
-         super(new AriaLabeledCheckboxCell(false, false));
-         
-         setFieldUpdater(new FieldUpdater<PackageInfo, LabeledBoolean>() {
-            @Override
-            public void update(int index, PackageInfo packageInfo, LabeledBoolean value)
-            {
-               if (packageInfo.getLibrary() == null ||
-                   packageInfo.getLibrary().length() == 0)
-               {
-                  display_.showMessage(GlobalDisplay.MSG_INFO, 
-                        constants_.packageNotLoadedCaption(),
-                        constants_.packageNotLoadedMessage(packageInfo.getName()));
-               }
-               else
-               {
-                  if (value.getBool())
-                     observer_.loadPackage(packageInfo);
-                  else
-                     observer_.unloadPackage(packageInfo);
-               }
-            }    
-         });
+         super(new LoadedCell());
       }
-      
+
       @Override
-      public LabeledBoolean getValue(PackageInfo packageInfo)
+      public PackageInfo getValue(PackageInfo packageInfo)
       {
-         return new LabeledBoolean(packageInfo.getName(), packageInfo.isAttached());
+         return packageInfo;
       }
-      
    }
    
    // package name column which includes a hyperlink to package docs
@@ -773,7 +801,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             className = dataGridRes_.dataGridStyle().packageColumn();
          }
 
-         sb.append(TEMPLATE.description(className, packageDescription));
+         sb.append(TEMPLATES.description(className, packageDescription));
       }
 
    }
@@ -781,7 +809,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final SafeHtml renderText(String text)
    {
       String className = dataGridRes_.dataGridStyle().packageColumn();
-      return TEMPLATE.text(className, text);
+      return TEMPLATES.text(className, text);
    }
 
    interface Templates extends SafeHtmlTemplates
@@ -791,6 +819,12 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
       @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
       SafeHtml description(String className, String packageDescription);
+
+      @Template("<input type=\"checkbox\" tabindex=\"-1\" aria-label=\"{0}\" checked />")
+      SafeHtml checkboxChecked(String label);
+
+      @Template("<input type=\"checkbox\" tabindex=\"-1\" aria-label=\"{0}\" />")
+      SafeHtml checkboxUnchecked(String label);
    }
 
    private DataGrid<PackageInfo> packagesTable_;
@@ -831,6 +865,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 
-   private static final Templates TEMPLATE = GWT.create(Templates.class);
+   private static final Templates TEMPLATES = GWT.create(Templates.class);
 
 }
