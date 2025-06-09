@@ -208,9 +208,13 @@ long getProcessSizeOfChildren(PidType parentPid, UidType userId)
             statusFile.close();
          }
       }
+      ::closedir(pDir);
+      pDir = nullptr;
    }
    catch (...)
    {
+      if (pDir != nullptr)
+         ::closedir(pDir);
       return 0;
    }
    int numChildren = 0;
