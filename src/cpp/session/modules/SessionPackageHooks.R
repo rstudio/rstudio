@@ -39,18 +39,23 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    }
 })
 
-.rs.addFunction("defineGlobalHook", function(package, binding, hook)
+.rs.addFunction("defineGlobalHook", function(package, binding, hook, when = TRUE)
 {
-   .rs.defineHookImpl(package, binding, hook, all = TRUE)
+   if (when)
+      .rs.defineHookImpl(package, binding, hook, all = TRUE)
 })
 
-.rs.addFunction("defineHook", function(package, binding, hook)
+.rs.addFunction("defineHook", function(package, binding, hook, when = TRUE)
 {
-   .rs.defineHookImpl(package, binding, hook, all = FALSE)
+   if (when)
+      .rs.defineHookImpl(package, binding, hook, all = FALSE)
 })
 
-
-.rs.defineGlobalHook("utils", "download.file", function(url, destfile, method)
+.rs.defineGlobalHook(
+   package = "utils",
+   binding = "download.file",
+   when    = "headers" %in% names(formals(utils::download.file)),
+   function(url, destfile, method)
 {
    ""
    "This is an RStudio hook."
@@ -104,7 +109,10 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
 })
 
-.rs.defineHook("utils", "install.packages", function(pkgs, lib, repos)
+.rs.defineHook(
+   package = "utils",
+   binding = "install.packages",
+   function(pkgs, lib, repos)
 {
    ""
    "This is an RStudio hook."
@@ -181,7 +189,10 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    invisible(result)
 })
 
-.rs.defineHook("utils", "remove.packages", function(pkgs, lib)
+.rs.defineHook(
+   package = "utils",
+   binding = "remove.packages",
+   function(pkgs, lib)
 {
    ""
    "This is an RStudio hook."
@@ -196,23 +207,4 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
    # Return original result.
    invisible(result)
-})
-
-.rs.addFunction("installPackagesRequiresRestart", function(pkgs)
-{
-   # if we're in an renv project, no need
-   if ("renv" %in% loadedNamespaces())
-   {
-      project <- renv::project()
-      if (!is.null(project))
-         return(FALSE)
-   }
-   
-   # if we're in a packrat project, no need
-   mode <- Sys.getenv("R_PACKRAT_MODE", unset = NA)
-   if (identical(mode, "1"))
-      return(FALSE)
-   
-   # in other cases, restart if one of the requested packages is loaded
-   .rs.loadedPackageUpdates(pkgs)
 })
