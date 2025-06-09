@@ -27,6 +27,8 @@
 - Show an error message when the GitHub Copilot language server is missing (#15923)
 - Fixed an issue where GitHub Copilot was unaware of files already loaded in the source editor before Copilot starts (#15895)
 - Fixed an issue where GitHub Copilot's status was incorrectly reported as an error in the Preferences dialog (#16119)
+- Fixed an issue where GitHub Copilot would not index project files when Copilot was started while the project is open (#16128)
+- Fixed an issue where RStudio would send multiple didOpen messages to GitHub Copilot for the same file (#16129)
 
 #### Posit Workbench
 
