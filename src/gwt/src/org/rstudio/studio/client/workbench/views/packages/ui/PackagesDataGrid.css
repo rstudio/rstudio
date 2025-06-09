@@ -18,6 +18,38 @@
    border-right: none;
 }
 
+.rstudio-themes-default .dataGridCell img {
+   filter: brightness(0.90);
+}
+
+.rstudio-themes-dark .dataGridOddRow:hover,
+.rstudio-themes-dark .dataGridEvenRow:hover
+{
+   background-color: rgba(255, 255, 255, 0.15);
+}
+
+.rstudio-themes-default .dataGridOddRow:hover,
+.rstudio-themes-default .dataGridEvenRow:hover
+{
+   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.rstudio-themes-default .dataGridOddRow:hover img,
+.rstudio-themes-default .dataGridEvenRow:hover img
+{
+   filter: brightness(0.80);
+}
+
+.rstudio-themes-default img:hover {
+   filter: brightness(0.50) !important;
+}
+
+.rstudio-themes-dark .dataGridOddRow img:hover,
+.rstudio-themes-dark .dataGridEvenRow img:hover
+{
+   filter: brightness(1.20);
+}
+
 .dataGridFirstColumn
 {
    text-align: center;
