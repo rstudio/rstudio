@@ -1928,7 +1928,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    pkgDesc <- packageDescription(pkgName, lib.loc = dirname(pkgPath))
    
    # If the package already has some remote fields recorded, then skip.
-   # Currently, this is relevant for packages installed from r-universe.
+   # Currently, this is relevant for packages installed from R-universe.
    remotes <- grep("^Remote", names(pkgDesc), value = TRUE)
    if (length(remotes))
       return()

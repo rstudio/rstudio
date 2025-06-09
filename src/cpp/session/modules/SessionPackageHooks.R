@@ -154,7 +154,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    {
       # Get paths to DESCRIPTION files, so we can see what packages
       # were updated before and after installation.
-      before <- .rs.installedPackageFileInfo(lib)
+      before <- .rs.installedPackagesFileInfo(lib)
       
       # Invoke the original function.
       call <- sys.call()
@@ -162,10 +162,10 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
       result <- eval(call, envir = parent.frame())
       
       # Check and see what packages were updated.
-      after <- .rs.installedPackageFileInfo(lib)
+      after <- .rs.installedPackagesFileInfo(lib)
       
       # Figure out which packages were changed.
-      rows <- .rs.installedPackageFileInfoDiff(before, after)
+      rows <- .rs.installedPackagesFileInfoDiff(before, after)
       
       # For any packages which appear to have been updated,
       # tag their DESCRIPTION file with their installation source.

@@ -198,7 +198,7 @@
    result
 })
 
-.rs.addFunction("installedPackageFileInfo", function(lib = .libPaths())
+.rs.addFunction("installedPackagesFileInfo", function(lib = .libPaths())
 {
    pkgPaths <- list.files(lib, full.names = TRUE)
    descPaths <- file.path(pkgPaths, "DESCRIPTION")
@@ -207,7 +207,7 @@
    pkgInfo
 })
 
-.rs.addFunction("installedPackageFileInfoDiff", function(before, after)
+.rs.addFunction("installedPackagesFileInfoDiff", function(before, after)
 {
    result <- merge(before, after, by = "path", all = TRUE)
    
@@ -222,17 +222,17 @@
 
 .rs.addFunction("onInstallScriptJobStarted", function()
 {
-   .rs.setVar("jobPackageInfo", .rs.installedPackageFileInfo())
+   .rs.setVar("jobPackageInfo", .rs.installedPackagesFileInfo())
 })
 
 .rs.addFunction("onInstallScriptJobFinished", function(pkgInfo)
 {
    before <- .rs.getVar("jobPackageInfo")
-   after <- .rs.installedPackageFileInfo()
+   after <- .rs.installedPackagesFileInfo()
    .rs.clearVar("jobPackageInfo")
    
    # Figure out which packages were changed.
-   rows <- .rs.installedPackageFileInfoDiff(before, after)
+   rows <- .rs.installedPackagesFileInfoDiff(before, after)
    
    # For any packages which appear to have been updated,
    # tag their DESCRIPTION file with their installation source.
