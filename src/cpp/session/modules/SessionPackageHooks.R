@@ -157,6 +157,11 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
       call <- sys.call()
       call[[1L]] <- quote(utils::install.packages)
       result <- eval(call, envir = parent.frame())
+      
+      # Record the package source.
+      shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
+      if (shouldRecord)
+         .rs.recordPackageSource(pkgs, local = TRUE)
    }
    else
    {
@@ -177,8 +182,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
       
       # For any packages which appear to have been updated,
       # tag their DESCRIPTION file with their installation source.
-      db <- as.data.frame(available.packages(repos = repos), stringsAsFactors = FALSE)
-      lapply(rows$path, .rs.recordPackageSource, db = db)
+      .rs.recordPackageSource(rows$path, local = FALSE)
    }
    
    # Notify the front-end that we've made some updates.

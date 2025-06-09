@@ -1919,7 +1919,21 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    ""
 })
 
-.rs.addFunction("recordPackageSource", function(pkgPath, db)
+.rs.addFunction("recordPackageSource", function(pkgPaths, local = FALSE)
+{
+   # Request available packages.
+   avPkgs <- .rs.availablePackages()
+   db <- if (!local) as.data.frame(
+      .rs.nullCoalesce(avPkgs$value, available.packages()),
+      stringsAsFactors = FALSE
+   )
+   
+   # Record sources for each package.
+   for (pkgPath in pkgPaths)
+      .rs.recordPackageSourceImpl(pkgPath, db, local)
+})
+
+.rs.addFunction("recordPackageSourceImpl", function(pkgPath, db, local)
 {
    # Infer package name from installed path.
    pkgName <- basename(pkgPath)
@@ -1933,28 +1947,41 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    if (length(remotes))
       return()
    
-   # Try to figure out post-hoc from where the package was retrieved.
-   pkgEntry <- subset(db, Package == pkgName)
-   if (nrow(pkgEntry) == 0L)
-      return()
-   
-   # Grab the package version.
-   pkgVersion <- pkgDesc[["Version"]]
-   
-   # Normalize the repository path, removing source / binary suffixes.
-   pkgSource <- gsub("/(src|bin)/.*", "", pkgEntry$Repository, perl = TRUE)
-   
-   # Also remove a potential binary component.
-   pkgSource <- sub("/__[^_]+__/[^/]+/", "", pkgSource)
-   
-   remoteFields <- c(
-      RemoteType   = "standard",
-      RemotePkgRef = pkgName,
-      RemoteRef    = pkgName,
-      RemoteRepos  = pkgSource,
-      RemoteSha    = pkgVersion
-   )
-   
+   remoteFields <- if (local)
+   {
+      pkgPath <- path.expand(pkgPath)
+      
+      c(
+         RemoteType   = "local",
+         RemotePkgRef = sprintf("local::%s", pkgPath),
+         RemoteUrl    = pkgPath
+      )
+   }
+   else
+   {
+      # Try to figure out post-hoc from where the package was retrieved.
+      pkgEntry <- subset(db, Package == pkgName)
+      if (nrow(pkgEntry) == 0L)
+         return()
+      
+      # Grab the package version.
+      pkgVersion <- pkgDesc[["Version"]]
+      
+      # Normalize the repository path, removing source / binary suffixes.
+      pkgSource <- gsub("/(src|bin)/.*", "", pkgEntry$Repository, perl = TRUE)
+      
+      # Also remove a potential binary component.
+      pkgSource <- sub("/__[^_]+__/[^/]+/", "", pkgSource)
+      
+      c(
+         RemoteType   = "standard",
+         RemotePkgRef = pkgName,
+         RemoteRef    = pkgName,
+         RemoteRepos  = pkgSource,
+         RemoteSha    = pkgVersion
+      )
+   }
+      
    remoteText <- sprintf(
       "%s: %s",
       names(remoteFields),

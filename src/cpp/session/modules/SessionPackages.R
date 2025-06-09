@@ -1159,8 +1159,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (identical(pkgDesc[["Priority"]], "base"))
       return("Base")
    
-   # Handle 'standard' remotes.
+   # Compute the package remote type, assuming "stanadrd" if none specified.
    rtype <- .rs.nullCoalesce(pkgDesc[["RemoteType"]], "standard")
+   
+   # Handle 'local' remotes.
+   if (identical(rtype, "local"))
+   {
+      path <- pkgDesc[["RemoteUrl"]]
+      if (is.null(path))
+      {
+         path <- pkgDesc[["RemoteUrl"]]
+         if (!is.null(path))
+         {
+            path <- sub("^local::", "", path, perl = TRUE)
+         }
+      }
+      
+      return(sprintf("Local [%s]", .rs.nullCoalesce(path, "?")))
+   }
+   
+   # Handle 'standard' remotes.
+   
    if (identical(rtype, "standard"))
    {
       source <- .rs.nullCoalesce(

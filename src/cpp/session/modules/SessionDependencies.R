@@ -236,11 +236,5 @@
    
    # For any packages which appear to have been updated,
    # tag their DESCRIPTION file with their installation source.
-   avPkgs <- .rs.availablePackages()
-   db <- as.data.frame(
-      .rs.nullCoalesce(avPkgs$value, available.packages()),
-      stringsAsFactors = FALSE
-   )
-   
-   lapply(rows$path, .rs.recordPackageSource, db = db)
+   .rs.recordPackageSource(rows$path, local = FALSE)
 })
