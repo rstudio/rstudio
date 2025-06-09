@@ -86,14 +86,16 @@
       defaultLibraryPath <- .rs.normalizePath(defaultLibraryPath)
    
    # return context
-   list(cranMirrorConfigured = cranMirrorConfigured,
-        selectedRepositoryNames = selectedRepositoryNames,
-        packageArchiveExtension = packageArchiveExtension,
-        defaultLibraryPath = defaultLibraryPath,
-        defaultLibraryWriteable = .rs.defaultLibPathIsWriteable(),
-        writeableLibraryPaths = .rs.writeableLibraryPaths(),
-        defaultUserLibraryPath = .rs.defaultUserLibraryPath(),
-        devModeOn = .rs.devModeOn())
+   list(
+      cranMirrorConfigured = cranMirrorConfigured,
+      selectedRepositoryNames = selectedRepositoryNames,
+      packageArchiveExtension = packageArchiveExtension,
+      defaultLibraryPath = defaultLibraryPath,
+      defaultLibraryWriteable = .rs.defaultLibPathIsWriteable(),
+      writeableLibraryPaths = .rs.writeableLibraryPaths(),
+      defaultUserLibraryPath = .rs.defaultUserLibraryPath(),
+      devModeOn = .rs.devModeOn()
+   )
 })
 
 .rs.addJsonRpcHandler("get_cran_mirrors", function()
@@ -164,29 +166,58 @@
 
 .rs.addJsonRpcHandler("check_for_package_updates", function()
 {
-   # by default, check for updates in all writable library paths
-   libPaths <- .rs.writeableLibraryPaths()
+   # Exit early if we don't have any repositories set.
+   repos <- getOption("repos")
+   if (length(repos) == 0L)
+      return(list())
    
-   # if this is an renv project, check only the project library path
-   if ("renv" %in% loadedNamespaces())
+   # Get all of the currently-installed packages. We list packages for each
+   # library separately, so we can merge them appropriately after.
+   installedPkgsList <- lapply(.libPaths(), function(libPath)
    {
-      activeProjectPath <- .rs.renv.activeProjectPath()
-      if (!is.null(activeProjectPath))
-         libPaths <- .libPaths()[[1L]]
-   }
+      as.data.frame(
+         utils::installed.packages(
+            lib.loc = libPath,
+            priority = c("recommended", NA_character_)
+         ),
+         stringsAsFactors = FALSE
+      )
+   })
    
-   # get updates writable libraries and convert to a data frame
-   updates <- as.data.frame(
-      utils::old.packages(lib.loc = libPaths),
+   installedPkgs <- .rs.rbindList(installedPkgsList)
+   
+   # Remove duplicates.
+   installedPkgs <- installedPkgs[!duplicated(installedPkgs$Package), ]
+   
+   # Compare installed packages with what's available from package repositories.
+   availablePkgs <- as.data.frame(
+      utils::available.packages(),
       stringsAsFactors = FALSE
    )
-   row.names(updates) <- NULL
    
+   # Keep only the package name and version component.
+   availablePkgs <- data.frame(
+      Package  = availablePkgs[["Package"]],
+      ReposVer = availablePkgs[["Version"]],
+      stringsAsFactors = FALSE
+   )
+   
+   # Merge in the repository version components.
+   allPkgs <- merge(
+      x  = installedPkgs,
+      y  = availablePkgs,
+      by = "Package"
+   )
+   
+   # Figure out which packages are out-of-date.
+   oldPkgs <- subset(allPkgs, numeric_version(Version) < numeric_version(ReposVer))
+   
+   # Add in version fields as appropriate.
    data.frame(
-      packageName = updates$Package,
-      libPath     = updates$LibPath,
-      installed   = updates$Installed,
-      available   = updates$ReposVer,
+      packageName = oldPkgs[["Package"]],
+      libPath     = oldPkgs[["LibPath"]],
+      installed   = oldPkgs[["Version"]],
+      available   = oldPkgs[["ReposVer"]],
       stringsAsFactors = FALSE
    )
    
