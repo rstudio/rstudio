@@ -175,13 +175,21 @@
    # library separately, so we can merge them appropriately after.
    installedPkgsList <- lapply(.libPaths(), function(libPath)
    {
-      as.data.frame(
-         utils::installed.packages(
-            lib.loc = libPath,
-            priority = c("recommended", NA_character_)
-         ),
-         stringsAsFactors = FALSE
-      )
+      pkgPaths <- list.files(libPath, full.names = TRUE)
+      
+      pkgDescs <- lapply(pkgPaths, function(pkgPath)
+      {
+         pkgDesc <- tryCatch(
+            .rs.readPackageDescription(pkgPath),
+            condition = function(cnd) NULL
+         )
+         
+         pkgDesc[c("Package", "Version")]
+      })
+      
+      pkgResult <- .rs.rbindList(Filter(length, pkgDescs))
+      pkgResult[["LibPath"]] <- libPath
+      pkgResult
    })
    
    installedPkgs <- .rs.rbindList(installedPkgsList)
