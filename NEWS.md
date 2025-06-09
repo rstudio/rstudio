@@ -26,6 +26,8 @@
 - (Windows) "Use default 32bit / 64bit version of R" now always uses the default version of R set in the registry (#12545)
 - Show an error message when the GitHub Copilot language server is missing (#15923)
 - Fixed an issue where GitHub Copilot was unaware of files already loaded in the source editor before Copilot starts (#15895)
+- Fixed an issue where RStudio's Update Packages dialog could report packages were out-of-date for packages installed into multiple library paths
+- Fixed an issue where attempting to attach or detach a package using the Packages pane could cause UI to become out-of-sync with actual package state
 
 #### Posit Workbench
 
