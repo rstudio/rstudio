@@ -1949,12 +1949,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
    remoteFields <- if (local)
    {
-      pkgPath <- path.expand(pkgPath)
-      
       c(
          RemoteType   = "local",
          RemotePkgRef = sprintf("local::%s", pkgPath),
-         RemoteUrl    = pkgPath
+         RemoteUrl    = normalizePath(pkgPath, winslash = "/", mustWork = TRUE)
       )
    }
    else
