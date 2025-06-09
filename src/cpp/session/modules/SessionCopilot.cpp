@@ -15,6 +15,8 @@
 
 #include "SessionCopilot.hpp"
 
+#include <unordered_set>
+
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -296,6 +298,17 @@ std::map<std::string, CopilotContinuation> s_pendingContinuations;
 
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
+
+// The language server protocol states:
+//
+// ...open notification must not be sent more than once without a corresponding close notification 
+// send before. This means open and close notification must be balanced and the max open count
+// for a particular textDocument is one.
+//
+// Track documents Copilot knows about via textDocument/didOpen. Remove them when
+// textDocument/didClose is sent (or the agent is stopped).
+//
+std::unordered_set<std::string> s_knownDocuments;
 
 // Whether we're about to shut down.
 bool s_isSessionShuttingDown = false;
@@ -928,6 +941,7 @@ void onExit(int status)
 
 void stopAgent()
 {
+   s_knownDocuments.clear();
    if (s_agentPid == -1)
    {
       //DLOG("No agent running; nothing to do.");
@@ -1164,10 +1178,55 @@ std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocume
 void docOpened(const std::string& uri,
                const std::string& languageId,
                int version,
+               const std::string& contents);
+
+// Send a textDocument/didChange notification with entire document contents (vs. deltas).
+void didChangeNonIncremental(const std::string& uri,
+                             const std::string& languageId,
+                             int version,
+                             const std::string& contents)
+{
+   if (!ensureAgentRunning())
+      return;
+
+   if (s_knownDocuments.count(uri) == 0)
+   {
+      // unknown document, open it instead
+      docOpened(uri, languageId, version, contents);
+   }
+
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uri;
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = version;
+
+   json::Object contentChangeJson;
+   contentChangeJson["text"] = contents;
+
+   json::Array contentChangesJsonArray;
+   contentChangesJsonArray.push_back(contentChangeJson);
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+   paramsJson["contentChanges"] = contentChangesJsonArray;
+
+   sendNotification("textDocument/didChange", paramsJson);
+}
+
+void docOpened(const std::string& uri,
+               const std::string& languageId,
+               int version,
                const std::string& contents)
 {
    if (!ensureAgentRunning())
       return;
+
+   if (s_knownDocuments.count(uri) > 0)
+   {
+      // already told Copilot about this document, so just update it
+      didChangeNonIncremental(uri, languageId, version, contents);
+      return;
+   }
 
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
@@ -1178,6 +1237,7 @@ void docOpened(const std::string& uri,
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
 
+   s_knownDocuments.insert(uri);
    sendNotification("textDocument/didOpen", paramsJson);
 }
 
@@ -1186,12 +1246,19 @@ void docClosed(const std::string& uri)
    if (!ensureAgentRunning())
       return;
 
+   if (s_knownDocuments.count(uri) == 0)
+   {
+      WLOG("Tried to close unknown document '{}'.", uri);
+      return;
+   }
+
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
 
+   s_knownDocuments.erase(uri);
    sendNotification("textDocument/didClose", paramsJson);
 }
 

@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotStatusChangedEvent;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -62,6 +63,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -86,6 +88,13 @@ public class CopilotPreferencesPane extends PreferencesPane
          requirement.setSessionRestartRequired(true);
       if (initialCopilotWorkspaceEnabled_ != prefs.copilotProjectWorkspace().getGlobalValue())
          requirement.setSessionRestartRequired(true); 
+      
+      // If project indexing is enabled and Copilot was started while the dialog was open, suggest
+      // a session restart to ensure that Copilot indexes the project files.
+      boolean projectOpened = session_.getSessionInfo().getActiveProjectFile() != null;
+      if (projectOpened && copilotStarted_ && prefs.copilotIndexingEnabled().getGlobalValue())
+         requirement.setSessionRestartRequired(true); 
+
       return requirement;
    }
    
@@ -191,6 +200,21 @@ public class CopilotPreferencesPane extends PreferencesPane
       
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
+
+      copilotStatusHandler_ = events_.addHandler(CopilotStatusChangedEvent.TYPE, (event) -> {
+         copilotStarted_ = event.getStatus() == CopilotStatusChangedEvent.RUNNING;
+      });
+   }
+   
+   @Override
+   public void onUnload()
+   {
+      if (copilotStatusHandler_ != null)
+      {
+         copilotStatusHandler_.removeHandler();
+         copilotStatusHandler_ = null;
+      }
+      super.onUnload();
    }
    
    private void initDisplay()
@@ -576,6 +600,8 @@ public class CopilotPreferencesPane extends PreferencesPane
    private String copilotStartupError_;
    private boolean initialCopilotIndexingEnabled_;
    private boolean initialCopilotWorkspaceEnabled_;
+   private HandlerRegistration copilotStatusHandler_;
+   private boolean copilotStarted_ = false; // did Copilot get started while the dialog was open?
    private RProjectOptions projectOptions_;
  
    // UI
