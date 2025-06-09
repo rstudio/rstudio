@@ -181,7 +181,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
   .libPaths()[1]
 })
 
-.rs.addJsonRpcHandler("is_package_attached", function(packageName, libPath)
+.rs.addJsonRpcHandler("is_package_attached", function(packageName, libraryPath)
 {
    # quick check first if the package is loaded
    if (!isNamespaceLoaded(packageName))
@@ -192,11 +192,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (length(packagePath) == 0L)
       return(.rs.scalar(FALSE))
    
-   # library path from client is aliased, so compare aliased paths
-   packagePath <- .rs.createAliasedPath(packagePath)
+   # get associated library path
+   packageLibraryPath <- dirname(packagePath)
    
    # compare with the library given by the client
-   samePath <- identical(dirname(packagePath), libPath)
+   samePath <- identical(
+      normalizePath(libraryPath, winslash = "/", mustWork = FALSE),
+      normalizePath(packageLibraryPath, winslash = "/", mustWork = FALSE)
+   )
+   
    .rs.scalar(samePath)
 })
 
