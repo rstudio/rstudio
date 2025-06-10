@@ -9,11 +9,9 @@ format:
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
-## RStudio 2025.05.1
+## RStudio 2025.05.1 {#rstudio-2025.05.1}
 
-**"Mariposa Orchid"**
-
->Date: 2025-06-05
+| **"Mariposa Orchid"** | Date: 2025-06-05
 
 ### Fixed
 
@@ -40,7 +38,6 @@ This page provides the release notes associated with each release of RStudio and
 ## 2025.05.0 {#rstudio-2025.05.0}
 
 | **"Mariposa Orchid"** | Date: 2025-05-05 | [Release Blog Post](https://posit.co/blog/rstudio-2025-05-0-whats-new/)
-|
 
 ### New
 
