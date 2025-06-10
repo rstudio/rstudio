@@ -1,0 +1,8 @@
+//
+// Project settings for the open source edition of RStudio.
+// Please edit the configuration file in .vscode/open-source/settings.json.
+//
+{
+  "cmake.generator": "Ninja",
+  "java.format.settings.url": "src/gwt/tools/editor-settings/eclipse-code-style.xml"
+}
