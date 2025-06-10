@@ -1,0 +1,12 @@
+//
+// Project settings for the open source edition of RStudio.
+// Please edit the configuration file in .vscode/open-source/settings.json.
+//
+{
+  "cmake.generator": "Ninja",
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m -Xlog:disable",
+  "java.format.settings.url": "src/gwt/tools/editor-settings/eclipse-code-style.xml",
+  "java.saveActions.organizeImports": true,
+  "java.sources.organizeImports.starThreshold": 1000,
+  "java.sources.organizeImports.staticStarThreshold": 1000
+}
