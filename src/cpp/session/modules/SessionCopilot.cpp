@@ -939,6 +939,12 @@ void onExit(int status)
 
 } // end namespace agent
 
+// foward declaration
+void didChangeNonIncremental(const std::string& uri,
+                             const std::string& languageId,
+                             int version,
+                             const std::string& contents);
+
 void stopAgent()
 {
    s_knownDocuments.clear();
@@ -1178,44 +1184,6 @@ std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocume
 void docOpened(const std::string& uri,
                const std::string& languageId,
                int version,
-               const std::string& contents);
-
-// Send a textDocument/didChange notification with entire document contents (vs. deltas).
-void didChangeNonIncremental(const std::string& uri,
-                             const std::string& languageId,
-                             int version,
-                             const std::string& contents)
-{
-   if (!ensureAgentRunning())
-      return;
-
-   if (s_knownDocuments.count(uri) == 0)
-   {
-      // unknown document, open it instead
-      docOpened(uri, languageId, version, contents);
-   }
-
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-   textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = version;
-
-   json::Object contentChangeJson;
-   contentChangeJson["text"] = contents;
-
-   json::Array contentChangesJsonArray;
-   contentChangesJsonArray.push_back(contentChangeJson);
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-   paramsJson["contentChanges"] = contentChangesJsonArray;
-
-   sendNotification("textDocument/didChange", paramsJson);
-}
-
-void docOpened(const std::string& uri,
-               const std::string& languageId,
-               int version,
                const std::string& contents)
 {
    if (!ensureAgentRunning())
@@ -1274,6 +1242,39 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
              languageIdFromDocument(pDoc),
              kCopilotDefaultDocumentVersion,
              contentsFromDocument(pDoc));
+}
+
+// Send a textDocument/didChange notification with entire document contents (vs. deltas).
+void didChangeNonIncremental(const std::string& uri,
+                             const std::string& languageId,
+                             int version,
+                             const std::string& contents)
+{
+   if (!ensureAgentRunning())
+      return;
+
+   if (s_knownDocuments.count(uri) == 0)
+   {
+      // unknown document, open it instead
+      docOpened(uri, languageId, version, contents);
+   }
+
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uri;
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = version;
+
+   json::Object contentChangeJson;
+   contentChangeJson["text"] = contents;
+
+   json::Array contentChangesJsonArray;
+   contentChangesJsonArray.push_back(contentChangeJson);
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+   paramsJson["contentChanges"] = contentChangesJsonArray;
+
+   sendNotification("textDocument/didChange", paramsJson);
 }
 
 namespace file_monitor {
