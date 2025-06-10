@@ -1244,9 +1244,6 @@ void didChangeNonIncremental(const std::string& uri,
                              int version,
                              const std::string& contents)
 {
-   if (!ensureAgentRunning())
-      return;
-
    if (s_knownDocuments.count(uri) == 0)
    {
       // unknown document, open it instead
