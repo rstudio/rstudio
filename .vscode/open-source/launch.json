@@ -1,0 +1,49 @@
+//
+// Launch configurations for the open source edition of RStudio.
+// Please edit the configuration file in .vscode/open-source/launch.json.
+//
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start RStudio Desktop",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "start"
+      ],
+      "cwd": "${workspaceFolder}/src/node/desktop",
+      "console": "integratedTerminal",
+      "outputCapture": "std",
+      "preLaunchTask": "RStudio: Run Desktop",
+      "postDebugTask": "RStudio: Stop GWT Code Server Stream",
+    },
+    {
+      "name": "Start RStudio Server",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "rserver-dev"
+      ],
+      "cwd": "${workspaceFolder}/build/src/cpp",
+      "console": "integratedTerminal",
+      "outputCapture": "std",
+      "preLaunchTask": "RStudio: Run Server",
+      "postDebugTask": "RStudio: Stop GWT Code Server Stream",
+    },
+    {
+      "name": "Debug: Attach to Session",
+      "type": "lldb",
+      "request": "attach",
+      "program": "rsession",
+    },
+    {
+      "name": "Debug: Attach to Server",
+      "type": "lldb",
+      "request": "attach",
+      "program": "rserver",
+    },
+  ]
+}

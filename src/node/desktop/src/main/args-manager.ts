@@ -82,10 +82,8 @@ export class ArgsManager {
       console.log('  --run-diagnostics  Run diagnostics and save in a file');
       console.log('  --log-level        Sets the verbosity of the logging');
       console.log('                     --log-level=ERR|WARN|INFO|DEBUG');
-      /* eslint-disable max-len */
       // prettier-ignore
       console.log('  --log-dir          The log directory to store log files in. The resulting log file name is based on the executable name.');
-      /* eslint-enable max-len */
       console.log('  --session-delay    Pause the rsession so the "Loading R" screen displays longer');
       console.log('  --session-exit     Terminate the rsession immediately forcing error page to display');
       console.log('  --startup-delay    Pause before showing the application so the splash screen displays longer');
@@ -144,7 +142,7 @@ export class ArgsManager {
           app
             .whenReady()
             .then(() => {
-              getDesktopBridge().openFile(path.resolve(arg));
+              void getDesktopBridge().openFile(path.resolve(arg));
               const name = webContents.getAllWebContents()[0].mainFrame.name;
               activateWindow(name);
             })

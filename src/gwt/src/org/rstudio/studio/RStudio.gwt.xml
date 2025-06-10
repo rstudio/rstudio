@@ -1,22 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.8.2//EN" "http://www.gwtproject.org/doctype/2.9.0/gwt-module.dtd">
-<module rename-to='rstudio'>
+<module rename-to="rstudio">
 
-   <!-- GWT module dependencies                                    -->
-   <inherits name='com.google.gwt.user.User'/>
-   <inherits name='com.google.gwt.widgetideas.SliderBar'/>
-   <inherits name='com.sksamuel.gwt.GwtWebsockets'/>
+   <!-- GWT module dependencies -->
+   <inherits name="com.google.gwt.user.User"/>
+   <inherits name="com.google.gwt.widgetideas.SliderBar"/>
+   <inherits name="com.sksamuel.gwt.GwtWebsockets"/>
 
-   <!-- Gin module dependencies                                    -->
+   <!-- Gin module dependencies -->
    <inherits name="com.google.gwt.inject.Inject"/>
 
-   <!-- Elemental module dependencies                              -->
+   <!-- Elemental module dependencies -->
    <inherits name="elemental2.core.Core" />
    <inherits name="elemental2.dom.Dom" />
    <inherits name="elemental2.promise.Promise" />
-
-   <!-- Use default GWT style sheet                                -->
-   <!--<inherits name='com.google.gwt.user.theme.standard.Standard'/>-->
 
    <!-- Detect RStudio Desktop builds -->
    <define-property name="rstudio.desktop" values="true,false"/>
@@ -141,6 +138,9 @@
 
    <!-- Specify supported locales -->
    <extend-property name="locale" values="en,fr"/>
+
+   <!-- remove the 'default' locale permutation as it does not support plurals -->
+   <set-property name="locale" value="en,fr"/>
 
    <!-- Set default locale to en -->
    <set-property-fallback name="locale" value="en"/>

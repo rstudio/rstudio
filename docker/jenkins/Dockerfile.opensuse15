@@ -20,7 +20,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     gdb \
     gettext \
     git \
-    java-11-openjdk-devel \
+    java-17-openjdk-devel \
     jq \
     libXcursor-devel \
     libXrandr-devel \
@@ -87,16 +87,16 @@ RUN bash /tmp/install-dependencies
 COPY dependencies/common/install-crashpad /tmp/
 RUN bash /tmp/install-crashpad opensuse15
 
-# ensure we use the java 11 compiler
-RUN update-alternatives --set java /usr/lib64/jvm/jre-11-openjdk/bin/java
+# ensure we use the java 17 compiler
+RUN update-alternatives --set java /usr/lib64/jvm/jre-17-openjdk/bin/java
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
 # panmirror check for changes
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-mariposa-orchid panmirror.version.json
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-cucumberleaf-sunflower panmirror.version.json
 
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse15

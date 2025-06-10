@@ -639,7 +639,12 @@ Error runUserDefinedEngine(const std::string& docId,
                targetPath);
       return error;
    }
-   
+
+   // null / empty output; just ignore it
+   if (isNull(outputSEXP))
+   {
+   }
+
    // generic engine output (as a single string of console output)
    if (isString(outputSEXP))
    {
@@ -657,6 +662,8 @@ Error runUserDefinedEngine(const std::string& docId,
          emitText(text, kChunkConsoleOutput);
       }
    }
+
+   // html widget output
    else if (inherits(outputSEXP, "htmlwidget"))
    {
       // render htmlwidget to file
@@ -666,6 +673,7 @@ Error runUserDefinedEngine(const std::string& docId,
          .addParam(outputSEXP)
          .call(&pathSEXP, &protect);
    }
+
    // evaluate-style (list) output
    else if (isList(outputSEXP))
    {

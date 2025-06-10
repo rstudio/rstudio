@@ -234,6 +234,7 @@ enum class CopilotAgentNotRunningReason {
    LaunchError,
 };
 
+// keep in sync with constants in CopilotStatusChangedEvent.java
 enum class CopilotAgentRuntimeStatus {
    Unknown,
    Preparing,
@@ -267,6 +268,20 @@ CopilotAgentNotRunningReason s_agentNotRunningReason = CopilotAgentNotRunningRea
 
 // The current runtime status of the Copilot agent process.
 CopilotAgentRuntimeStatus s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
+
+void setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus status)
+{
+   if (s_agentRuntimeStatus != status)
+   {
+      s_agentRuntimeStatus = status;
+
+      // notify client of copilot status change
+      json::Object dataJson;
+      dataJson["status"] = static_cast<int>(status);
+      ClientEvent event(client_events::kCopilotStatusChanged, dataJson);
+      module_context::enqueClientEvent(event);
+   }
+}
 
 // Whether or not we've handled the Copilot 'initialized' notification.
 // Primarily done to allow proper sequencing of Copilot callbacks.
@@ -402,6 +417,11 @@ FilePath copilotLanguageServerPath()
    return FilePath();
 }
 
+bool isCopilotAgentInstalled()
+{
+   return copilotLanguageServerPath().exists();
+}
+
 bool isCopilotEnabled()
 {
 #ifdef COPILOT_ENABLED
@@ -412,7 +432,14 @@ bool isCopilotEnabled()
       s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
       return false;
    }
-   
+
+   // Check whether the agent is where it should be
+   if (!isCopilotAgentInstalled())
+   {
+      s_agentNotRunningReason = CopilotAgentNotRunningReason::NotInstalled;
+      return false;
+   }
+
    // Check project option
    switch (s_copilotProjectOptions.copilotEnabled)
    {
@@ -721,7 +748,7 @@ void onStarted(ProcessOperations& operations)
    // Record the PID of the agent.
    DLOG("Copilot agent has started [PID = {}]", operations.getPid());
    s_agentPid = operations.getPid();
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Starting;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Starting);
 }
 
 bool onContinue(ProcessOperations& operations)
@@ -856,7 +883,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    }
    
    // Note that the agent is now ready.
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Running;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Running);
 }
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
@@ -874,7 +901,7 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
    case CopilotAgentRuntimeStatus::Stopping:
    {
       s_agentStartupError += stdErr;
-      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopping;
+      setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopping);
       break;
    }
  
@@ -888,13 +915,13 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 void onError(ProcessOperations& operations, const Error& error)
 {
    s_agentPid = -1;
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
 }
 
 void onExit(int status)
 {
    s_agentPid = -1;
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
 }
 
 } // end namespace agent
@@ -904,7 +931,7 @@ void stopAgent()
    if (s_agentPid == -1)
    {
       //DLOG("No agent running; nothing to do.");
-      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
+      setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
       return;
    }
 
@@ -921,7 +948,7 @@ Error startAgent()
       return Success();
    }
 
-   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Preparing;
+   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Preparing);
 
    Error error;
 
@@ -993,7 +1020,7 @@ Error startAgent()
    
    if (error)
    {
-      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
+      setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Unknown);
       return error;
    }
    
@@ -1599,6 +1626,14 @@ SEXP rs_copilotStopAgent()
    return Rf_ScalarLogical(stopped);
 }
 
+Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   json::Object responseJson;
+   pResponse->setResult(isCopilotAgentInstalled());
+   return Success();
+}
+
 Error copilotDiagnostics(const json::JsonRpcRequest& request,
                          const json::JsonRpcFunctionContinuation& continuation)
 {
@@ -1836,6 +1871,73 @@ Error copilotDidShowCompletion(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error copilotDidAcceptCompletion(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      // nothing to do if we can't connect to the agent
+      return Success();
+   }
+
+   // Read params
+   json::Object completionCommandJson;
+   Error error = core::json::readParams(request.params, &completionCommandJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   sendNotification("workspace/executeCommand", completionCommandJson);
+   return Success();
+}
+
+Error copilotDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
+                                        json::JsonRpcResponse* pResponse)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      // nothing to do if we can't connect to the agent
+      return Success();
+   }
+
+   // Read params
+   json::Object partialCompletionJson;
+   int acceptedLength;
+   Error error = core::json::readParams(request.params, &partialCompletionJson, &acceptedLength);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   json::Object paramsJson;
+   paramsJson["item"] = partialCompletionJson;
+   paramsJson["acceptedLength"] = acceptedLength;
+   sendNotification("textDocument/didPartiallyAcceptCompletion", paramsJson);
+   return Success();
+}
+
+Error copilotRegisterOpenFiles(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   json::Array paths;
+   Error error = json::readParam(request.params, 0, &paths);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   for (const json::Value& val : paths)
+      s_indexQueue.push_back(FileInfo(FilePath(val.getString())));
+
+   return Success();
+}
+
 } // end anonymous namespace
 
 
@@ -1883,8 +1985,12 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
+         (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
          (bind(registerRpcMethod, "copilot_doc_focused", copilotDocFocused))
          (bind(registerRpcMethod, "copilot_did_show_completion", copilotDidShowCompletion))
+         (bind(registerRpcMethod, "copilot_did_accept_completion", copilotDidAcceptCompletion))
+         (bind(registerRpcMethod, "copilot_did_accept_partial_completion", copilotDidAcceptPartialCompletion))
+         (bind(registerRpcMethod, "copilot_register_open_files", copilotRegisterOpenFiles))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();

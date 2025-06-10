@@ -638,8 +638,7 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output)
    // truncate it to the amount that the client can show. Too much
    // output can overwhelm the client, making it unresponsive.
    std::string trimmedOutput = output;
-   if (!prefs::userPrefs().limitVisibleConsole())
-      string_utils::trimLeadingLines(procInfo_->getMaxOutputLines(), &trimmedOutput);
+   string_utils::trimLeadingLines(procInfo_->getMaxOutputLines(), &trimmedOutput);
 
    if (procInfo_->getChannelMode() == Websocket)
    {

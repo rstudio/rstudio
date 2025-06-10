@@ -222,6 +222,12 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(autohideMenubar);
       }
 
+      CheckBox enableSplashScreen = checkboxPref(prefs_.enableSplashScreen());
+      if (BrowseCap.isElectron())
+      {
+         basic.add(enableSplashScreen);
+      }
+
       VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
 
       initializeGraphicsBackendWidget();

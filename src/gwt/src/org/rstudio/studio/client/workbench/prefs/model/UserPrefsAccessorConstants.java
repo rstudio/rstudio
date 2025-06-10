@@ -734,14 +734,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String ansiConsoleModeEnum_off();
 
    /**
-    * Whether to only show a limited window of the total console output
-    */
-   @DefaultStringValue("Limit visible console output")
-   String limitVisibleConsoleTitle();
-   @DefaultStringValue("Whether to only show a limited window of the total console output")
-   String limitVisibleConsoleDescription();
-
-   /**
     * Whether to show a toolbar on code chunks in R Markdown documents.
     */
    @DefaultStringValue("Show toolbar on R Markdown chunks")
@@ -1654,6 +1646,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String submitCrashReportsTitle();
    @DefaultStringValue("Whether to automatically submit crash reports to Posit.")
    String submitCrashReportsDescription();
+
+   /**
+    * Whether to show the splash screen when RStudio is starting.
+    */
+   @DefaultStringValue("Show splash screen when RStudio is starting")
+   String enableSplashScreenTitle();
+   @DefaultStringValue("Whether to show the splash screen when RStudio is starting.")
+   String enableSplashScreenDescription();
 
    /**
     * The R version to use by default.

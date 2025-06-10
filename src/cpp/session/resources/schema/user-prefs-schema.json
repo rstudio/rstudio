@@ -584,13 +584,13 @@
         },
         "console_line_length_limit": {
             "type": "integer",
-            "default": 1000,
+            "default": 2000,
             "title": "Maximum characters per line in R console",
             "description": "The maximum number of characters to display in a single line in the R console."
         },
         "console_max_lines": {
             "type": "integer",
-            "default": 1000,
+            "default": 10000,
             "title": "Maximum lines in R console",
             "description": "The maximum number of console actions to store and display in the console scrollback buffer."
         },
@@ -601,12 +601,6 @@
             "default": "on",
             "title": "ANSI escape codes in R console",
             "description": "How to treat ANSI escape codes in the console."
-        },
-        "limit_visible_console": {
-            "type": "boolean",
-            "default": false,
-            "title": "Limit visible console output",
-            "description": "Whether to only show a limited window of the total console output"
         },
         "show_inline_toolbar_for_r_code_chunks": {
             "type": "boolean",
@@ -1323,6 +1317,12 @@
             "default": true,
             "title": "Submit crash reports to Posit",
             "description": "Whether to automatically submit crash reports to Posit."
+        },
+        "enable_splash_screen": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show splash screen when RStudio is starting",
+            "description": "Whether to show the splash screen when RStudio is starting."
         },
         "default_r_version": {
             "type": "object",

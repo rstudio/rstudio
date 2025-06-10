@@ -206,11 +206,11 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
     String copilotUnknownError();
 
     /**
-     * Translated "The GitHub Copilot agent is not installed."
+     * Translated "The GitHub Copilot Language Server could not be located."
      *
-     * @return translated "The GitHub Copilot agent is not installed."
+     * @return translated "The GitHub Copilot Language Server could not be located."
      */
-    @DefaultMessage("The GitHub Copilot agent is not installed.")
+    @DefaultMessage("The GitHub Copilot Language Server could not be located.")
     @Key("copilotNotInstalledError")
     String copilotNotInstalledError();
 

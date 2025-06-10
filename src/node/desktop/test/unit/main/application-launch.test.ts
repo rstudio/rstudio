@@ -61,7 +61,7 @@ describe('ApplicationLaunch', () => {
       assert.isTrue(isRprojExtensionValid, 'File extension is not .rproj');
 
       fs.unlinkSync('./' + filename);
-    } catch (err: unknown) {
+    } catch (_err: unknown) {
       assert.isTrue(false, 'Error happened when trying to assert rproj extension');
     }
   });

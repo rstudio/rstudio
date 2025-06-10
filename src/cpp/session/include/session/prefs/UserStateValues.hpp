@@ -36,6 +36,7 @@ namespace prefs {
 #define kViewWindowBounds "windowBounds"
 #define kViewAccessibility "accessibility"
 #define kViewDisableRendererAccessibility "disableRendererAccessibility"
+#define kViewEnableSplashScreen "enableSplashScreen"
 #define kRemoteSession "remote_session"
 #define kRemoteSessionLastRemoteSessionUrl "lastRemoteSessionUrl"
 #define kRemoteSessionAuthCookies "authCookies"

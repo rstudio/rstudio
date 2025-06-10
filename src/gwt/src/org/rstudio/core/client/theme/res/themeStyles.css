@@ -6,6 +6,7 @@
 @external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line;
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
+@external ace_active_debug_line;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
 @external cueText;
@@ -29,7 +30,7 @@
 @external gwt-TabLayoutPanel-Workbench;
 @external gwt-TabLayoutPanelTabs;
 @external gwt-DecoratedPopupPanel;
-@external editor_dark;
+@external editor_light, editor_dark;
 @external gwt-TextBox-readonly;
 @external gwt-TextBox;
 @external gwt-ListBox;
@@ -348,6 +349,21 @@ pre {
 
 .ace_editor, .ace_text-layer {
    font-family: fixedWidthFont !important;
+}
+
+.ace_active_debug_line {
+   margin-left: -2px;
+   margin-top: -1px;
+   padding-right: 2px;
+   padding-bottom: 2px;
+}
+
+.editor_light .ace_active_debug_line {
+   background-color: rgb(255, 240, 180);
+}
+
+.editor_dark .ace_active_debug_line {
+   background-color: rgb(54, 50, 8);
 }
 
 .ace_tooltip {

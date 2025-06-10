@@ -2,7 +2,6 @@ def utils
 
 def ext_map = 
 [
-  'focal':      'deb',
   'jammy':      'deb',
   'rhel8':      'rpm',
   'rhel9':      'rpm',
@@ -11,7 +10,6 @@ def ext_map =
 
 def package_os =
 [
-  'focal':      'Ubuntu Focal',
   'jammy':      'Ubuntu Jammy',
   'rhel8':      'RHEL 8',
   'rhel9':      'RHEL 9',
@@ -111,7 +109,7 @@ pipeline {
         axes {
           axis {
             name 'OS'
-            values 'focal', 'jammy', 'rhel8', 'rhel9', 'opensuse15'
+            values 'jammy', 'rhel8', 'rhel9', 'opensuse15'
           }
           axis {
             name 'ARCH'
@@ -138,7 +136,7 @@ pipeline {
           exclude {
             axis {
               name 'OS'
-              values 'rhel8', 'opensuse15', 'focal'
+              values 'rhel8', 'opensuse15'
             }
             axis {
               name 'FLAVOR'
@@ -249,11 +247,6 @@ pipeline {
                         }
                       }
                       stage("rsession Tests") {
-                        when {
-                          allOf {
-                            expression { return !(OS == "focal" &&  FLAVOR == "Electron" && IS_PRO == false) } // See https://github.com/rstudio/rstudio-pro/issues/4681  
-                          }
-                        }
                         steps {
                           dir ( 'package/linux/' ) {
                             sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope rsession"
@@ -261,11 +254,6 @@ pipeline {
                         }
                       }
                       stage("rserver Tests") {
-                        when {
-                          allOf {
-                            expression { return !(OS == "focal" &&  FLAVOR == "Electron" && IS_PRO == false) } // See https://github.com/rstudio/rstudio-pro/issues/4681  
-                          }
-                        }
                         steps {
                           dir ( 'package/linux/' ) {
                             sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope rserver"
@@ -273,11 +261,6 @@ pipeline {
                         }
                       }
                       stage("r Tests") {
-                        when {
-                          allOf {
-                            expression { return OS != "focal"} // See https://github.com/rstudio/rstudio-pro/issues/4681  
-                          }
-                        }
                         steps {
                           dir ( 'package/linux/' ) {
                             sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope r"

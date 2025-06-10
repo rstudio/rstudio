@@ -486,6 +486,8 @@ export class Application implements AppState {
 
   setDockMenu() {
     if (process.platform === 'darwin') {
+      // Type assertion to reassure TypeScript that dock exists on macOS
+      const dock = app.dock as Electron.Dock;
       const menuDock = Menu.buildFromTemplate([
         {
           label: i18next.t('applicationTs.newRstudioWindow'),
@@ -495,7 +497,7 @@ export class Application implements AppState {
         },
       ]);
 
-      app.dock.setMenu(menuDock);
+      dock.setMenu(menuDock);
     }
   }
 }

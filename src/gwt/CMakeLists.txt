@@ -16,8 +16,6 @@
 cmake_minimum_required(VERSION 3.6.3)
 project (RSTUDIO_GWT)
 
-set(GWT_LIB_DIR "lib")
-
 # define output dirs
 if("${GWT_BIN_DIR}" STREQUAL "")
    set(GWT_BIN_DIR "bin")
@@ -103,7 +101,6 @@ if(GWT_BUILD)
          -Dbuild.dir="${GWT_BIN_DIR}"
          -Dwww.dir="${GWT_WWW_DIR}"
          -Dextras.dir="${GWT_EXTRAS_DIR}"
-         -Dlib.dir="${GWT_LIB_DIR}"
          -Dgwt.xmx="${GWT_XMX}"
          -Dgwt.xss="${GWT_XSS}"
          -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}"
@@ -115,17 +112,6 @@ if(GWT_BUILD)
       gwt_build ALL
       DEPENDS "${GWT_BUILD_TIMESTAMP}")
 
-   # wait for major C++ work to complete before running the GWT build;
-   # the Java compiler often runs out of resources when a parallel C++
-   # is happening: https://github.com/rstudio/rstudio/issues/7660
-   if (TARGET rserver)
-      add_dependencies(gwt_build rsession rserver)
-   elseif(TARGET desktop)
-      add_dependencies(gwt_build rsession desktop)
-   else()
-      add_dependencies(gwt_build rsession)
-   endif()
-
 endif()
 
 if(NOT DEFINED GWT_COPY)
@@ -135,10 +121,14 @@ endif()
 if(GWT_COPY)
    message(STATUS "Configured to install GWT")
 
+   # set JAVA_HOME variable for configure below
+   set(JAVA_HOME $ENV{JAVA_HOME})
+   
    # create test script and copy to binary directory with executable permissions
    configure_file(
       ${CMAKE_CURRENT_SOURCE_DIR}/gwt-unit-tests.sh.in
-      ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh)
+      ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh
+      @ONLY)
 
    file(COPY ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh
              DESTINATION ${CMAKE_CURRENT_BINARY_DIR}

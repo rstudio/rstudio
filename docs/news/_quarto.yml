@@ -22,7 +22,7 @@ website:
           - text: "Posit Workbench Documentation"
             url: 'https://docs.posit.co/ide/server-pro/'
           - text: Licenses
-            url: 'https://docs.posit.co/ide/licenses/'
+            url: 'https://docs.posit.co/ide/server-pro/licenses/'
           - text: "RStudio Open Source User Guide"
             url: 'https://docs.posit.co/ide/user/'
       - icon: "list"
@@ -41,14 +41,13 @@ website:
       - icon: question-circle-fill
         href: https://support.posit.co/hc/en-us
       - icon: lightbulb-fill
+      - text: '<a href="#" id="open_preferences_center" title="Manage your cookie preferences"><i class="bi bi-cookie"></i></i></a>'
+        aria-label: 'Cookie Prefs'
         href: https://solutions.posit.co
-      - text: "<img src='/images/posit-guide-ltmd.svg' id='footer-right-logo'>"
-        href: https://docs.posit.co
-      - text: "<img src='/images/posit-logo-black-TM.svg' id='footer-right-posit-logo'>"
+      - text: "<img src='/images/posit-icon-fullcolor.svg' id='footer-right-posit-logo'>"
         href: "https://posit.co"
+        
 format:
   html:
-    include-in-header: _ga-header-tag.html
-    include-before-body: _ga-body-tag.html
     code-overflow: scroll
     toc-expand: 1

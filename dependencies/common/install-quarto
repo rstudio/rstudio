@@ -22,7 +22,7 @@ section "Installing Quarto"
 
 # variables that control download + installation process
 # specify a version to pin for releases
-QUARTO_VERSION=1.6.42
+QUARTO_VERSION=1.7.31
 
 # update to latest Quarto release
 # QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
@@ -69,10 +69,6 @@ case "${PLATFORM}" in
     ARCH="arm64"
   else
     ARCH="amd64"
-  fi
-  if [ "$OS_DISTRO" == "centos7" ]; then
-    echo "Quarto binaries are not available for CentOS/AL2"
-    exit 0
   fi
   
   FILES=(

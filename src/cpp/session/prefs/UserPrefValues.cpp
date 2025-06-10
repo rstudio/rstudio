@@ -1103,19 +1103,6 @@ core::Error UserPrefValues::setAnsiConsoleMode(std::string val)
 }
 
 /**
- * Whether to only show a limited window of the total console output
- */
-bool UserPrefValues::limitVisibleConsole()
-{
-   return readPref<bool>("limit_visible_console");
-}
-
-core::Error UserPrefValues::setLimitVisibleConsole(bool val)
-{
-   return writePref("limit_visible_console", val);
-}
-
-/**
  * Whether to show a toolbar on code chunks in R Markdown documents.
  */
 bool UserPrefValues::showInlineToolbarForRCodeChunks()
@@ -2585,6 +2572,19 @@ core::Error UserPrefValues::setSubmitCrashReports(bool val)
 }
 
 /**
+ * Whether to show the splash screen when RStudio is starting.
+ */
+bool UserPrefValues::enableSplashScreen()
+{
+   return readPref<bool>("enable_splash_screen");
+}
+
+core::Error UserPrefValues::setEnableSplashScreen(bool val)
+{
+   return writePref("enable_splash_screen", val);
+}
+
+/**
  * The R version to use by default.
  */
 core::json::Object UserPrefValues::defaultRVersion()
@@ -3567,7 +3567,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,
-      kLimitVisibleConsole,
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
       kSaveFilesBeforeBuild,
@@ -3681,6 +3680,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRestoreProjectRVersion,
       kClangVerbose,
       kSubmitCrashReports,
+      kEnableSplashScreen,
       kDefaultRVersion,
       kDataViewerMaxColumns,
       kDataViewerMaxCellSize,

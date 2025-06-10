@@ -21,6 +21,7 @@ import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -47,12 +48,18 @@ public class LayoutGrid extends Grid
          LayoutGrid grid = new LayoutGrid(widgets_.size(), 2);
          for (int i = 0, n = widgets_.size(); i < n; i++)
          {
-            FormLabel label = new FormLabel(
-                  StringUtil.ensureColonSuffix(widgets_.get(i).first),
-                  widgets_.get(i).second);
+            String label = widgets_.get(i).first;
+            Widget widget = widgets_.get(i).second;
+            FormLabel formLabel = new FormLabel(StringUtil.ensureColonSuffix(label), widget);
             
-            grid.setWidget(i, 0, label);
-            grid.setWidget(i, 1, widgets_.get(i).second);
+            if (widget instanceof NumericValueWidget)
+            {
+               ((NumericValueWidget) widget).setLabel("");
+               formLabel.getElement().getStyle().setMarginBottom(4, Unit.PX);
+            }
+
+            grid.setWidget(i, 0, formLabel);
+            grid.setWidget(i, 1, widget);
          }
          return grid;
       }

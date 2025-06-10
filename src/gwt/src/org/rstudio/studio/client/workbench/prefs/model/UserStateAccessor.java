@@ -123,6 +123,10 @@ public class UserStateAccessor extends Prefs
          return this && this.disableRendererAccessibility || false;
       }-*/;
 
+      public final native boolean getEnableSplashScreen() /*-{
+         return this && this.enableSplashScreen || true;
+      }-*/;
+
    }
 
    /**
@@ -202,7 +206,7 @@ public class UserStateAccessor extends Prefs
       protected Platform() {} 
 
       public final native JavaScriptObject getWindows() /*-{
-         return this && this.windows || {"rBinDir":"","preferR64":true,"rExecutablePath":""};
+         return this && this.windows || {"useDefault32BitR":false,"useDefault64BitR":true,"rBinDir":"","preferR64":true,"rExecutablePath":""};
       }-*/;
 
       public final native JavaScriptObject getMacos() /*-{

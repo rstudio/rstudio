@@ -928,6 +928,10 @@ Error rVersion(const FilePath& rHomePath,
    if (error)
    {
       error.addProperty("r-script", rScriptPath);
+      error.addProperty("command", fullCommand);
+      if (!module.empty())
+         error.addProperty("module", module);
+      error.addProperty("modules-bin-path", moduleBinaryPath.getAbsolutePath());
       return error;
    }
    else
@@ -938,6 +942,7 @@ Error rVersion(const FilePath& rHomePath,
       if (regex_utils::search(versionInfo, match, re))
       {
          *pVersion = match[1];
+         LOG_DEBUG_MESSAGE("Found R version: " + *pVersion + " with: " + fullCommand);
          return Success();
       }
       else
@@ -951,6 +956,10 @@ Error rVersion(const FilePath& rHomePath,
 
          // log any errors emitted by R
          error.addProperty("r-error", result.stdErr);
+         error.addProperty("command", fullCommand);
+         if (!module.empty())
+            error.addProperty("module", module);
+         error.addProperty("modules-bin-path", moduleBinaryPath.getAbsolutePath());
          return error;
       }
    }

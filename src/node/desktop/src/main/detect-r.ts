@@ -61,6 +61,9 @@ function executeCommand(command: string): Expected<string> {
 }
 
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
+
+  const options = ElectronDesktopOptions();
+
   if (platform === 'win32') {
     const showUi = getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 || desktop.isCtrlKeyDown();
 
@@ -72,8 +75,36 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
         return ok(rstudioWhichR);
       }
 
-      // if the user selected a version of R previously, then use it
-      const rBinDir = ElectronDesktopOptions().rBinDir();
+      // check if user has requested default 32-bit version of R
+      const useDefault32Bit = options.useDefault32BitR();
+      if (useDefault32Bit) {
+        logger().logDebug('User has requested the default 32-bit R installation.');
+        const installPath = findDefault32Bit();
+        if (installPath) {
+          const rPath = `${installPath}/bin/i386/${kWindowsRExe}`;
+          if (existsSync(rPath)) {
+            logger().logDebug(`Using default 32-bit R installation at path: ${rPath}`);
+            return ok(rPath);
+          }
+        }
+      }
+
+      // check if user has requested default 64-bit version of R
+      const useDefault64Bit = options.useDefault64BitR();
+      if (useDefault64Bit) {
+        logger().logDebug('User has requested the default 64-bit R installation.');
+        const installPath = findDefault64Bit();
+        if (installPath) {
+          const rPath = `${installPath}/bin/x64/${kWindowsRExe}`;
+          if (existsSync(rPath)) {
+            logger().logDebug(`Using default 64-bit R installation at path: ${rPath}`);
+            return ok(rPath);
+          }
+        }
+      }
+
+      // otherwise, look for a stored R executable path location
+      const rBinDir = options.rBinDir();
       if (rBinDir) {
         const rPath = fixWindowsRExecutablePath(`${rBinDir}/${kWindowsRExe}`);
         logger().logDebug(`Trying version of R stored in RStudio Desktop options: ${rPath}`);
@@ -106,17 +137,18 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
       return ok(null);
     }
 
-    // save the stored version of R
+    // reset some options
     const path = data.binaryPath as string;
-
-    ElectronDesktopOptions().setRExecutablePath(path);
+    options.setUseDefault32BitR(data.useDefault32BitR || false);
+    options.setUseDefault64BitR(data.useDefault64BitR || false);
+    options.setRExecutablePath(path);
 
     // if the user has changed the default rendering engine,
     // then we'll need to ask them to restart RStudio now
-    const enginePref = ElectronDesktopOptions().renderingEngine() || 'auto';
+    const enginePref = options.renderingEngine() || 'auto';
     const engineValue = data.renderingEngine || 'auto';
     if (enginePref !== engineValue) {
-      ElectronDesktopOptions().setRenderingEngine(engineValue);
+      options.setRenderingEngine(engineValue);
       appState().modalTracker.trackElectronModalSync(() =>
         dialog.showMessageBoxSync({
           title: t('chooseRDialog.renderingEngineChangedTitle'),

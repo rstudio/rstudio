@@ -25,6 +25,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 # use C++17
 set(CMAKE_CXX_STANDARD 17)
 
+# use colored output by default
+if(NOT DEFINED ENV{JENKINS_URL})
+  set(CMAKE_COLOR_MAKEFILE TRUE)
+  set(CMAKE_COLOR_DIAGNOSTICS TRUE)
+endif()
+
 # use clang on osx
 if(APPLE)
 
@@ -49,6 +55,9 @@ if(APPLE)
 endif()
 
 if(MSVC)
+
+  # log the compiler being used
+  message(STATUS "Using MSVC ${CMAKE_CXX_COMPILER_VERSION} [toolset msvc${MSVC_TOOLSET_VERSION}]")
 
   # keep some deprecated tools around
   add_definitions(-D_HAS_AUTO_PTR_ETC=1 -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS=1)

@@ -78,6 +78,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOp
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils.PackageLibraryType;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
@@ -104,7 +105,8 @@ public class Packages
    public interface Display extends WorkbenchView
    {
       void setPackageState(ProjectContext projectContext,
-                           List<PackageInfo> packagesDS);
+                           List<PackageInfo> packages,
+                           RepositoryPackageVulnerabilityListMap vulns);
 
       void installPackage(PackageInstallContext installContext,
                           PackageInstallOptions defaultInstallOptions,
@@ -654,7 +656,7 @@ public class Packages
 
             final OperationWithInput<Void> operation = (Void input) -> {
 
-               String code = "renv::" + action.toLowerCase() + "(confirm = FALSE)";
+               String code = "renv::" + action.toLowerCase() + "(prompt = FALSE)";
                events_.fireEvent(new SendToConsoleEvent(code, true));
             };
 
@@ -877,7 +879,7 @@ public class Packages
          packages = allPackages_;
       }
 
-      view_.setPackageState(projectContext_, packages);
+      view_.setPackageState(projectContext_, packages, vulns_);
    }
 
    private void checkPackageStatusOnNextConsolePrompt(
@@ -1012,6 +1014,13 @@ public class Packages
       events_.fireEvent(new SendToConsoleEvent(cmd, true));
    }
 
+   private void executePkgCommandNoEcho(String cmd)
+   {
+      SendToConsoleEvent event = new SendToConsoleEvent(cmd, true);
+      event.setShouldEcho(false);
+      events_.fireEvent(event);
+   }
+
    private void restartForInstallWithConfirmation(final String installCmd)
    {
       String msg = constants_.restartForInstallWithConfirmation();
@@ -1032,13 +1041,13 @@ public class Packages
             },
             () ->
             {
-               server_.ignoreNextLoadedPackageCheck(
-                                            new VoidServerRequestCallback() {
+               server_.ignoreNextLoadedPackageCheck(new VoidServerRequestCallback()
+               {
                   @Override
                   public void onSuccess()
                   {
                      if (haveInstallCmd)
-                        executePkgCommand(installCmd);
+                        executePkgCommandNoEcho(installCmd);
                   }
                });
             },
@@ -1207,9 +1216,12 @@ public class Packages
    {
       // sort the packages
       allPackages_ = new ArrayList<>();
+      vulns_ = newState.getVulnerabilityInfo();
+
       JsArray<PackageInfo> serverPackages = newState.getPackageList();
       for (int i = 0; i < serverPackages.length(); i++)
          allPackages_.add(serverPackages.get(i));
+
       Collections.sort(allPackages_, new Comparator<PackageInfo>() {
          public int compare(PackageInfo o1, PackageInfo o2)
          {
@@ -1225,7 +1237,7 @@ public class Packages
          }
       });
 
-      // Mark  which packages are first in their respective libraries (used
+      // Mark which packages are first in their respective libraries (used
       // later to render headers)
       PackageLibraryType libraryType = PackageLibraryType.None;
       for (PackageInfo pkgInfo: allPackages_)
@@ -1260,6 +1272,7 @@ public class Packages
    private final PackratServerOperations packratServer_;
    private final RenvServerOperations renvServer_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<>();
+   private RepositoryPackageVulnerabilityListMap vulns_;
    private ProjectContext projectContext_;
    private String packageFilter_ = new String();
    private HandlerRegistration consolePromptHandlerReg_ = null;

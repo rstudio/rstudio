@@ -36,23 +36,30 @@ if not exist %BUILD_DIR% (
     goto :error
 )
 
-cd %BUILD_DIR%
+pushd %BUILD_DIR%
+set "BUILD_DIR=%CD%"
+
 if not defined QUICK (
     echo Creating NSIS setup package...
     cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
     REM emit NSIS error output if present
     if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
-    move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
+    if not defined RSTUDIO_DOCKER_DEVELOPMENT_BUILD (
+        move "%PKG_TEMP_DIR%\*.exe" "%BUILD_DIR%"
+    )
 )
 
 if not defined NOZIP (
     if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" (
         echo Creating ZIP package...
         cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
-        move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
+        if not defined RSTUDIO_DOCKER_DEVELOPMENT_BUILD (
+            move "%PKG_TEMP_DIR%\*.zip" "%BUILD_DIR%"
+        )
     )
 )
-cd ..
+
+popd
 
 endlocal
 goto :EOF

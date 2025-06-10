@@ -298,12 +298,16 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
       for (var state in self.$rules) {
 
          // add rules for highlighting YAML comments
-         // TODO: Associate embedded rules with their comment tokens
          if (state === "start" || state.indexOf("-start") !== -1) {
             self.$rules[state].unshift({
                token: "comment.doc.tag",
                regex: "^\\s*#[|]",
-               push: prefix + "start"
+               next: prefix + "start",
+               onMatch: function(value, state, stack, line, context) {
+                  context.quarto = context.quarto || {};
+                  context.quarto.state = state;
+                  return this.token;
+               }
             });
          }
 
@@ -321,15 +325,24 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
             self.$rules[state].unshift({
                token: "whitespace",
                regex: "^\\s*(?!#)",
-               next: "pop"
+               onMatch: function(value, state, stack, line, context) {
+                  this.next = context.quarto.state;
+                  delete context.quarto.state;
+                  return this.token;
+               }
             });
 
          }
 
+         // make sure YAML rules exit when there's no leading #|
          self.$rules[prefix + "start"].unshift({
             token: "text",
             regex: "^\\s*(?!#)",
-            next: "pop"
+            onMatch: function(value, state, stack, line, context) {
+               this.next = context.quarto.state;
+               delete context.quarto.state;
+               return this.token;
+            }
          });
 
          // allow for multi-line strings in YAML comments

@@ -44,6 +44,15 @@ exit /b %ERRORLEVEL%
 :: Set the project root directory
 call :find-project-root
 
+:: Put Visual Studio tools on the PATH
+call :add-vstools-to-path
+
+:: Try to help RStudio find an appropriate version of Java
+call :set-java-home
+
+:: The version of the Windows SDK to use when building.
+set WIN32_SDK_VERSION=1.0.20348.0
+
 :: Node version used when building the product
 set RSTUDIO_NODE_VERSION=22.13.1
 
@@ -51,6 +60,7 @@ set RSTUDIO_NODE_VERSION=22.13.1
 set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com
 
 goto :eof
+
 
 ::
 :: Find the project root directory.
@@ -68,7 +78,7 @@ set OWD=%CD%
 :find-project-root-impl
 
 if "!CWD!" == "%CD%" (
-  echo -- ERROR: Could not find project root directory.
+  echo ^^!^^! ERROR: Could not find project root directory.
   exit /b 1
 )
 
@@ -100,7 +110,6 @@ set "_OUTPUT=%~2"
 set "_RESULT=%_BASENAME%"
 
 endlocal & set "%_OUTPUT%=%_RESULT%"
-
 goto :eof
 
 
@@ -119,7 +128,57 @@ set "_OUTPUT=%~2"
 for %%F in ("%_PATH%") do set _RESULT=%%~dpF
 
 endlocal & set "%_OUTPUT%=%_RESULT:~0,-1%"
+goto :eof
 
+
+::
+:: Move a file from one location to another.
+::
+:: This uses robocopy, which will be more robust when a folder
+:: (or files within) are temporarily locked. This can occur when
+:: unpacking large archives, whose contents are then promptly
+:: scanned by e.g. Windows Defender.
+::
+:: Note that robocopy will use error codes from 0 through 7 to
+:: indicate different kinds of success; error codes 8 and above
+:: are used to indicate failure. This routine logs that, but
+:: just returns a plain 0 for success or 1 for failure.
+::
+:move
+
+setlocal EnableDelayedExpansion
+
+set "_SRC=%~1"
+set "_DST=%~2"
+set "_LOG=%TEMP%\robocopy.%RANDOM%.log"
+
+robocopy /MOVE /E /Z /R:5 /W:10 "%_SRC:/=\%" "%_DST:/=\%" >%_LOG% 2>&1
+if %ERRORLEVEL% geq 8 (
+  echo ^^!^^! ERROR: could not move %_SRC% to %_DST%. [exit code %ERRORLEVEL%]
+  type "%_LOG%"
+  del "%_LOG%"
+  endlocal & exit /b 1
+)
+
+echo -- Moved %_SRC% to %_DST%
+
+del "%_LOG%"
+endlocal & exit /b 0
+
+
+::
+:: Normalize a path.
+::
+:normalize-path
+
+setlocal EnableDelayedExpansion
+
+set "_PATH=%~1"
+set "_OUTPUT=%~2"
+
+for %%F in ("%_PATH%") do set _RESULT=%%~fF
+
+endlocal & set "%_OUTPUT%=%_RESULT%"
 goto :eof
 
 
@@ -152,12 +211,11 @@ echo -- Downloading %_URL% =^> !_OUTPUT!
 curl -L -f -C - "%_URL%" -o "!_OUTPUT!"
 
 if %ERRORLEVEL% neq 0 (
-  echo Error downloading %_URL% [exit code %ERRORLEVEL%]
+  echo ^^!^^! ERROR: Download of %_URL% failed. [exit code %ERRORLEVEL%]
   goto :error
 )
 
 endlocal
-
 goto :eof
 
 
@@ -169,6 +227,35 @@ goto :eof
 :: contents will be unpacked into that directory.
 ::
 :extract
+
+setlocal EnableDelayedExpansion
+
+set _ARCHIVE=%~1
+set _OUTPUT=%~2
+
+if "%_ARCHIVE:~-4%" == ".zip" (
+  call :extract-zip "%_ARCHIVE%" "%_OUTPUT%"
+  endlocal & exit /b %ERRORLEVEL%
+)
+
+if "%_ARCHIVE:~-3%" == ".7z" (
+  call :extract-zip "%_ARCHIVE%" "%_OUTPUT%"
+  endlocal & exit /b %ERRORLEVEL%
+)
+
+if "%_ARCHIVE:~-7%" == ".tar.gz" (
+  call :extract-tar "%_ARCHIVE%" "%_OUTPUT%"
+  endlocal & exit /b %ERRORLEVEL%
+)
+
+echo -- ERROR: don't know how to extract archive %_ARCHIVE%
+endlocal & exit /b 1
+
+
+::
+:: Extract a .zip archive.
+::
+:extract-zip
 
 setlocal EnableDelayedExpansion
 
@@ -188,13 +275,43 @@ if defined _OUTPUT (
 )
 
 if %ERRORLEVEL% neq 0 (
-  echo Error extracting %_ARCHIVE% [exit code %ERRORLEVEL%]
+  echo ^^!^^! ERROR: Could not extract %_ARCHIVE%. [exit code %ERRORLEVEL%]
   goto :error
 )
 
-endlocal
+endlocal & exit /b 0
 
-goto :eof
+
+::
+:: Extract a .tar.gz archive.
+::
+:extract-tar
+
+setlocal EnableDelayedExpansion
+
+set _ARCHIVE=%CD%\%~1
+set _OUTPUT=%~2
+
+if defined _OUTPUT (
+  mkdir %_OUTPUT%
+  pushd %_OUTPUT%
+  echo -- Extracting %_ARCHIVE% into %_OUTPUT%
+) else (
+  echo -- Extracting %_ARCHIVE%
+)
+
+tar -xf %_ARCHIVE%
+
+if %ERRORLEVEL% neq 0 (
+  echo ^^!^^! ERROR: Could not extract %_ARCHIVE%. [exit code %ERRORLEVEL%]
+  goto :error
+)
+
+if defined _OUTPUT (
+  popd
+)
+
+endlocal & exit /b 0
 
 
 ::
@@ -246,7 +363,6 @@ call :basename "%_URL%" _FILE
 call :extract "!_FILE!" "!_OUTPUT!"
 
 endlocal
-
 goto :eof
 
 
@@ -287,8 +403,7 @@ set "_STRING=%_STRING:X=x%"
 set "_STRING=%_STRING:Y=y%"
 set "_STRING=%_STRING:Z=z%"
 
-endlocal && set "%_OUTPUT%=%_STRING%"
-
+endlocal & set "%_OUTPUT%=%_STRING%"
 goto :eof
 
 
@@ -310,7 +425,6 @@ for /f "tokens=* delims=" %%A in ('%_COMMAND%') do (
 )
 
 endlocal & set "%_OUTPUT%=%_RESULT%"
-
 goto :eof
 
 
@@ -361,6 +475,79 @@ py -3 -m venv VENV
 VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\requirements.txt
 popd
 
+exit /b 0
+
+
+::
+:: Run a command with echo enabled.
+::
+:with-echo
+
+setlocal EnableDelayedExpansion
+set "PROMPT=> "
+@echo on
+%*
+@echo off
+endlocal
+
+exit /b %ERRORLEVEL%
+
+
+::
+:: Add Visual Studio's tools to the PATH.
+::
+:add-vstools-to-path
+
+for %%Q in ("BuildTools" "Community") do (
+  for %%P in ("%ProgramFiles%" "%ProgramFiles(x86)%") do (
+    call :add-vstools-to-path-impl "%%~P\Microsoft Visual Studio\2022\%%~Q"
+    if defined _VCTOOLSDIR (
+      goto :add-vstools-to-path-done
+    )
+  )
+)
+
+:add-vstools-to-path-impl
+
+if exist "%~f1" (
+  set "_VCTOOLSDIR=%~f1\Common7\Tools"
+  set "_VCBUILDDIR=%~f1\VC\Auxiliary\Build"
+)
+
+goto :eof
+
+:add-vstools-to-path-done:
+
+set "PATH=%_VCTOOLSDIR%;%_VCBUILDDIR%;%PATH%"
+where /Q VsDevCmd.bat
+if %ERRORLEVEL% neq 0 (
+  echo ^^!^^! ERROR: Could not find Visual Studio build tools.
+  exit /b 1
+)
+
+goto :eof
+
+
+::
+:: Helper to set JAVA_HOME, so the appropriate version of Java is used.
+::
+:set-java-home
+
+setlocal EnableDelayedExpansion
+
+for %%F in ("C:\Java" "%ProgramFiles%\Eclipse Adoptium") do (
+  if exist %%F (
+    for /f "tokens=* delims=" %%A in ('dir /B %%F ^| findstr /L jdk-17') do (
+      set "JAVA_HOME=%%~F\%%A"
+      goto :set-java-home-done
+    )
+  )
+)
+
+:set-java-home-done
+
+endlocal & set "JAVA_HOME=%JAVA_HOME%"
+echo -- Using JDK: %JAVA_HOME%
 exit /b 0
 
 

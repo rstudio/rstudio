@@ -7,7 +7,7 @@
 boolean hasChangesIn(String module, boolean invertMatch = false, boolean useRegex = false) {
   sh "echo 'Comparing changes in ${module} with ${env.CHANGE_TARGET}..${env.BRANCH_NAME}'"
   grepArgs = invertMatch ? 'v' : ''
-  grepArgs = useRegex ? 'P' : grepArgs
+  grepArgs = useRegex ? "P${grepArgs}" : grepArgs
   grepArgs = grepArgs.isEmpty() ? '' : "-${grepArgs}"
   mergeBase = sh(
     returnStdout: true, script: "git merge-base origin/${env.BRANCH_NAME} origin/${env.CHANGE_TARGET}").trim()
@@ -111,8 +111,8 @@ def sentryUploadSourceMaps() {
   }
 }
 
-/** 
-  * Upload debug symbols to sentry. Symbol type should be dsym or elf. 
+/**
+  * Upload debug symbols to sentry. Symbol type should be dsym or elf.
   * Does not work on windows.
   */
 def sentryUpload(String symbolType) {
@@ -128,11 +128,11 @@ def sentryUpload(String symbolType) {
   }
 }
 
-/** 
+/**
   * Publish a build to the dailies site.
   * Does not work on windows.
   */
-def publishToDailiesSite(String packageFile, String destinationPath, String urlPath = '') {
+def publishToDailiesSite(String packageFile, String destinationPath, String urlPath = '', String arch = '') {
   def channel = ''
   if (!params.DAILY) {
     channel = ' --channel Hourly'
@@ -140,6 +140,10 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
   if (urlPath == '')
   {
     urlPath = destinationPath
+  }
+  archArg = ''
+  if (arch != '') {
+    archArg = ' --arch ' + arch
   }
 
   sh '${WORKSPACE}/docker/jenkins/publish-build.sh --pat ${GITHUB_LOGIN_PSW} ' +
@@ -153,17 +157,23 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
     '/' +
     packageFile +
     ' --file ' +
-    packageFile 
+    packageFile +
+    archArg
 }
 
 /**
  * Sometimes a specific OS/ARCH/FLAVOR needs to do an additional publish.
  * Handle that here.
  */
-def optionalPublishToDailies(String packageFile, String destinationPath, String urlPath = '') {
+def optionalPublishToDailies(String packageFile, String destinationPath, String urlPath = '', String product = '') {
   // Noble and Jammy use the same binaries. Re-publish jammy builds under the noble path on the dailies site.
   if (env.OS == "jammy") {
-    def noble_dalies_path = "${env.PRODUCT}/noble-${getArchForOs(env.OS, env.ARCH)}"
+    if (product == '') {
+      // If the product name is not passed as a parameter, we expect it
+      // to be set in the environment.
+      product = "${env.PRODUCT}"
+    }
+    def noble_dalies_path = "${product}/noble-${getArchForOs(env.OS, env.ARCH)}"
     if (destinationPath.contains("-xcopy")) {
       noble_dalies_path = "${noble_dalies_path}-xcopy"
     }
@@ -178,17 +188,25 @@ def urlExists(String url) {
   return sh( returnStatus: true, script: 'curl --head --silent --fail ' + url + ' 2> /dev/null') == 0
 }
 
-/** 
-  * Convert an architecture to the operating specific version of that arch.
-  * amd64  -> x86_64 on non-Debian
-  * x86_64 -> amd64  on Debian
-  */
+/**
+ * Convert an architecture to the operating specific version of that arch.
+ * amd64  -> x86_64 on non-Debian
+ * x86_64 -> amd64  on Debian
+ * noarch -> all    on Debian
+ */
 def getArchForOs(String os, String arch) {
-  if ((arch == "amd64") && (os != "focal") && (os != "jammy")) {
+  def debianLikeOS = ["focal", "jammy", "noble"]
+  def isDebianLike = debianLikeOS.contains(os)
+
+  if ((arch == "noarch") && isDebianLike) {
+    return "all"
+  }
+
+  if ((arch == "amd64") && !isDebianLike) {
     return "x86_64"
   }
 
-  if ((arch == "x86_64") && ((os == "focal") || (os == "jammy"))) {
+  if ((arch == "x86_64") && isDebianLike) {
     return "amd64"
   }
 
@@ -223,7 +241,7 @@ def getLinuxAgentLabel(String arch) {
   return 'linux-4x && x86_64'
 }
 
-/** 
+/**
   * Get the name of the product based on the type of build
   */
 def getProductName() {
@@ -255,6 +273,14 @@ def getDockerTag() {
 }
 
 /**
+  * Resolve the wildcards to find a file on the filesystem
+  */
+def resolveFilename(String dir, String match) {
+  def file = sh(script: "basename `ls ${dir}/${match}`", returnStdout: true).trim()
+  return file
+}
+
+/**
   * Rename the file on the filesystem
   */
 def renameFile(String dir, String match) {
@@ -283,8 +309,14 @@ def getAgentLabel(String arch) {
   return 'linux-4x && x86_64'
 }
 
+def isFlavorAProServerProduct() {
+  serverProducts = ["Server", "selinux", "session", "monitor"]
+  return serverProducts.contains(env.FLAVOR.toString())
+}
+
 // Use a function to keep the pipeline length down.
 def shouldBuild(boolean isDaily, boolean isPro) {
+  echo "Checking if we should build ${env.FLAVOR} on ${env.OS}-${env.ARCH}"
   def matchesFilter = ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
     (params.ARCH_FILTER == env.ARCH ||  params.ARCH_FILTER == 'all') &&
     (params.FLAVOR_FILTER == env.FLAVOR ||  params.FLAVOR_FILTER == 'all'))
@@ -293,20 +325,18 @@ def shouldBuild(boolean isDaily, boolean isPro) {
   def inHourlySubset = true
   if (!isDaily) {
     if (isPro) {
-      // build an x86_64 rhel8 WB, x86_64 rhel9 QT RDP, and an arm64 jammy Electron RDP 
-      inHourlySubset = ((env.OS == 'rhel8' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server') ||
+      // build a set of x86_64 rhel9 + ubuntu22/24 server products and an arm64 jammy Electron RDP
+      inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'x86_64' && isFlavorAProServerProduct()) ||
+        (env.OS == 'jammy' && env.ARCH == 'x86_64' && isFlavorAProServerProduct()) ||
         (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron'))
     } else {
-      // build an arm64 rhel9 Electron and an x86_64 focal Server
+      // build an arm64 rhel9 Electron and an x86_64 jammy Server
       inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron') ||
-        (env.OS == 'focal' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
+        (env.OS == 'jammy' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
     }
   }
 
-  // The focal builds are being build on bionic, hence the name confusion here
-  def bionicProArm = (env.OS == 'focal' && env.ARCH == 'arm64' && isPro)
-
-  return matchesFilter && inHourlySubset && !bionicProArm
+  return matchesFilter && inHourlySubset
 }
 
 /**
@@ -318,12 +348,12 @@ def rebuildCheck() {
   if (params.FORCE_BUILD_BINARIES) {
     echo "Building ${env.ARCH} ${env.PRODUCT} on ${env.OS} because FORCE_BUILD_BINARIES is set"
     return true
-  } 
+  }
   else {
     def buildType = ""
     if (RSTUDIO_VERSION_FILENAME.contains("hourly")) {
       buildType = "rstudio-hourly"
-    } 
+    }
     else {
       buildType = "rstudio"
     }
@@ -331,7 +361,7 @@ def rebuildCheck() {
     def osArchName = ""
     if (OS == "macos" || OS == "windows") {
       osArchName = OS
-    } 
+    }
     else {
       osArchName = "${env.OS}-${getArchForOs(env.OS, env.ARCH)}"
     }
@@ -392,14 +422,14 @@ checks = [:]
 
 /**
   * Posts a review check to the GitHub /check-runs API with the specified args.
-  * 
+  *
   * If the check does not exist, it will be created with default values.
   * If the check has already been posted in the current pipeline build, existing values will be used.
   *
   * Map args:
   *    title:   The title of the check (required)
-  *    status:  The status of the check, one of 'queued', 'in_progress', 
-  *             'action_required', 'cancelled', 'failure', 'neutral', 'success', 
+  *    status:  The status of the check, one of 'queued', 'in_progress',
+  *             'action_required', 'cancelled', 'failure', 'neutral', 'success',
   *             'skipped', 'timed_out' (optional, default: 'queued')
   *    summary: The summary of the check (optional, default: '')
   *    details: The details of the check (optional, default: '')
@@ -414,7 +444,7 @@ synchronized boolean postReviewCheck(Map args) {
   } else {
     return false
   }
-  
+
   def check = checks.get(title)
   if (!check) {
     def name = title.toLowerCase().replaceAll(' ', '-')
@@ -438,18 +468,25 @@ synchronized boolean postReviewCheck(Map args) {
     check.details = args.details
   }
 
-  text = check.details.trim()
+  def text = check.details.trim()
     .replaceAll('^"', '')
     .replaceAll('"$', '')
     .replaceAll("'", "\\'")
     .replaceAll("\"", "\\\"")
     .replaceAll(/\R/, "\\\n")
     .replaceAll(/\\n/, "\\\n")
-  
+    
+  // If text has more than 65000 characters, truncate it to 65000
+  // GitHub API has a limit of 65536 characters for the text field
+  if (text.length() > 65000) {
+    text = text.substring(0, 65000)
+    text += "\n\n[truncated]. See the full output in the Jenkins build log."
+  }
+
   if (text) {
     text = "```bash\n${text}\n```"
   }
-  output = [
+  def output = [
     "title": check.title,
     "summary": check.summary,
     "text": "${text}",
@@ -479,7 +516,6 @@ synchronized boolean postReviewCheck(Map args) {
   def payload = writeJSON(json: payloadDict, returnText: true)
 
   // archive the file
-  sh "echo Sending check for ${check.title} with payload ${payload}"
   def response = checkRunsRequestWithRetry('POST', payload)
 
   if (response.status == 201) {
@@ -510,7 +546,7 @@ def finishReviewChecks(String buildResult) {
         continue
       }
 
-      checkResponse = readJSON(text: response.content)
+      def checkResponse = readJSON(text: response.content)
       check.status = checkResponse.status
 
       if (check.status == 'in_progress') {
@@ -533,7 +569,10 @@ def runCmd(String cmd) {
 
   def file = "${UUID.randomUUID()}"
   def status = sh(
-    script: "#!/usr/bin/env bash\n${cmd} 2>&1 | tee ${file}",
+    script: """#!/usr/bin/env bash
+set -o pipefail
+${cmd} 2>&1 | tee ${file}
+""",
     returnStatus: true
   )
   def output = fileExists(file) ? readFile(file: file) : '<no output available>'
@@ -557,8 +596,8 @@ def runCheckCmd(String cmd, String checkName, String stageUrl, boolean hideDetai
   success = exitCode == 0
 
   status = success ? "success" : "failure"
-  text = hideDetails ? '<details hidden>' : out
-  
+  def text = hideDetails ? '<details hidden>' : out
+
   postReviewCheck([
     title: checkName,
     status: status,
@@ -578,7 +617,7 @@ def getStageUrl(String stageDisplayName) {
     nodeRequestUrl = "${buildUrl}api/json?tree="+ URLEncoder.encode("actions[parameters[name,value],nodes[displayName,id]]", "UTF-8")
 
     jsonText = sh(
-      returnStdout: true, 
+      returnStdout: true,
       script: 'curl -u $JENKINS_CREDENTIALS -H "Content-Type: application/json" -H "Accept: application/json"' + " ${nodeRequestUrl}"
     )
     json = readJSON(text: jsonText)
@@ -599,13 +638,74 @@ def getStageUrl(String stageDisplayName) {
     return "${buildUrl}pipeline-console/?selected-node=${nodeId}"
 }
 
-// ninja is named ninja-build on AL2, so account for that
 def ninjaCmd() {
-  if (env.OS == "al2") {
-    return "ninja-build"
-  }
-
   return "ninja"
 }
+
+/**
+ * Get a specific document property for a given document "flavor" from the build matrix
+ * @param flavor The document flavor identifier
+ * @param property The property name to retrieve ('buildDir', 'uploadSrc', 'uploadDst', 'revision')
+ * @return The property value for the specified flavor or null if not found
+ *
+ * If the value of the doc matrix FLAVOR axis changes, these values *MUST* be updated to match
+ */
+def getDocProperty(String flavor, String property) {
+  switch (flavor) {
+    case 'admin-rstudio':
+      switch (property) {
+        case 'buildDir': return 'docs/desktop/'
+        case 'uploadSrc': return 'docs/desktop/_site/'
+        case 'uploadDst': return 'ide/desktop-pro'
+        default: return null
+      }
+      break
+
+    case 'admin-workbench':
+      switch (property) {
+        case 'buildDir': return 'docs/server/'
+        case 'uploadSrc': return 'docs/server/_site/'
+        case 'uploadDst': return 'ide/server-pro'
+        default: return null
+      }
+      break
+
+    case 'user-rstudio':
+      switch (property) {
+        case 'buildDir': return 'docs/user/rstudio/'
+        case 'uploadSrc': return 'docs/user/rstudio/_site/'
+        case 'uploadDst': return 'ide/user'
+        default: return null
+      }
+      break
+
+    case 'licenses':
+      switch (property) {
+        case 'buildDir': return 'docs/licenses/'
+        case 'uploadSrc': return 'docs/licenses/_site/'
+        case 'uploadDst': return 'ide/licenses'
+        default: return null
+      }
+      break
+
+    default:
+      return null
+  }
+}
+
+/**
+ * Checks if this is a docs draft PR and returns its name
+ * @param branchName the name of the branch being built
+ * @return An empty string for a prod build, or the name of the draft build
+ */
+def getDocsDraftName(String branchName) {
+  def DRAFT_PREFIX = 'docs-draft-'
+
+  if (branchName.startsWith(DRAFT_PREFIX)) {
+    return draftName = branchName.substring(DRAFT_PREFIX.length())
+  }
+  return ""
+}
+
 
 return this

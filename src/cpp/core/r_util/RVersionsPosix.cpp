@@ -63,6 +63,8 @@ std::vector<FilePath> removeNonExistent(const std::vector<FilePath>& paths)
    {
       if (path.exists())
          filteredPaths.push_back(path);
+      else
+	 LOG_DEBUG_MESSAGE("Skipping non-existent R home path: " + path.getAbsolutePath());
    }
    return filteredPaths;
 }
@@ -79,7 +81,10 @@ void scanForRHomePaths(const core::FilePath& rootDir,
       for (const FilePath& rDir : rDirs)
       {
          if (rDir.completeChildPath("bin/R").exists())
+	 {
+            LOG_DEBUG_MESSAGE("Discovered other R version in standard path: " + rDir.getAbsolutePath() + " with r-versions-scan=1");
             pHomePaths->push_back(rDir);
+	 }
       }
    }
 }
@@ -105,6 +110,15 @@ std::ostream& operator<<(std::ostream& os, const RVersion& version)
    return os;
 }
 
+void addExistingPaths(std::vector<FilePath> paths, std::vector<FilePath>* pRHomePaths)
+{
+   for (FilePath path : paths)
+   {
+      if (path.exists())
+	 (*pRHomePaths).push_back(path);
+   }
+}
+
 std::vector<RVersion> enumerateRVersions(
                               std::vector<FilePath> rHomePaths,
                               std::vector<r_util::RVersion> rEntries,
@@ -119,12 +133,15 @@ std::vector<RVersion> enumerateRVersions(
    if (scanForOtherVersions)
    {
       // start with all of the typical script locations
-      rHomePaths.push_back(FilePath("/usr/lib/R"));
-      rHomePaths.push_back(FilePath("/usr/lib64/R"));
-      rHomePaths.push_back(FilePath("/usr/local/lib/R"));
-      rHomePaths.push_back(FilePath("/usr/local/lib64/R"));
-      rHomePaths.push_back(FilePath("/opt/local/lib/R"));
-      rHomePaths.push_back(FilePath("/opt/local/lib64/R"));
+      std::vector<FilePath> canonPaths = {
+         FilePath("/usr/lib/R"),
+         FilePath("/usr/lib64/R"),
+         FilePath("/usr/local/lib/R"),
+         FilePath("/usr/local/lib64/R"),
+         FilePath("/opt/local/lib/R"),
+         FilePath("/opt/local/lib64/R")
+      };
+      addExistingPaths(canonPaths, &rHomePaths);
 
       // scan /opt/R and /opt/local/R
       scanForRHomePaths(FilePath("/opt/R"), &rHomePaths);
@@ -168,6 +185,7 @@ std::vector<RVersion> enumerateRVersions(
       std::string prelaunchScript = rEntry.prelaunchScript();
       if (prelaunchScript.find('~') == 0)
       {
+	 LOG_DEBUG_MESSAGE("Ignoring user specific R prelaunch script in workbench: " + prelaunchScript);
          prelaunchScript = "";
       }
 

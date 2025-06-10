@@ -1,15 +1,69 @@
 # escape=`
 
-# Use the latest Windows Server Core (LTSC - Long Term Service Channel) image with .NET Framework 4.8.
-# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019
+# https://hub.docker.com/r/microsoft/windows-servercore
 FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 
+# The version of the Windows SDK we want to use.
+ENV _WIN32_SDK_VERSION=20348
+
+# The full version path for the Windows SDK. Some tools want the full version,
+# other sjust want the "inner" component, so we provide both.
+ENV WIN32_SDK_VERSION=10.0.${_WIN32_SDK_VERSION}.0
+
+# Use plain cmd shell for initial setup.
+SHELL ["cmd", "/S", "/C"]
+
+# Set JENKINS_URL if it's not currently set.
+RUN if not defined JENKINS_URL ( setx /M JENKINS_URL jenkins-docker-build )
+
+# Tell test scripts what operating system we are.
 ENV OPERATING_SYSTEM=windows_10
 
-# If building the docker image locally uncomment this line
-# ENV JENKINS_URL=something
+# Work within build tools directory.
+WORKDIR "C:/BuildTools"
 
-# set RUN commands to use powershell
+#
+# Installation instructions borrowed from:
+#
+#   https://learn.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2022
+#
+# If you need to add (or change) the components installed here, use:
+#
+#   https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-community?view=vs-2022
+#
+# to look up the associated component name.
+#
+# Note that we use this tool to install Visual Studio's build tools, as well as the
+# required Windows 10 SDK, as chocolatey doesn't seem to provide the versions we need.
+#
+
+# Download the Build Tools bootstrapper.
+RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe
+
+# Install Build Tools. For whatever reason, this fails when we try to install
+# into C:/Program Files (x86), so just use the "regular" C:/Program Files.
+RUN start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
+    --installPath "C:/Program Files/Microsoft Visual Studio/2022/BuildTools" `
+    --add Microsoft.VisualStudio.Workload.CoreEditor `
+    --add Microsoft.VisualStudio.Workload.NativeDesktop `
+    --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core `
+    --add Microsoft.VisualStudio.Component.VC.CoreIde `
+    --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
+    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+    --add Microsoft.VisualStudio.Component.Windows10SDK `
+    --add Microsoft.VisualStudio.Component.Windows10SDK.%_WIN32_SDK_VERSION%
+
+# Try testing the build tools. You might see some telemetry errors here;
+# they can apparently be ignored.
+WORKDIR "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/Common7/Tools"
+RUN start /WAIT /B cmd.exe /S /C `
+  echo -- Testing VsDevCmd.bat `
+  && call VsDevCmd.bat -clean_env -no_logo `
+  && call VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -winsdk=%WIN32_SDK_VERSION% -no_logo `
+  && echo -- Testing VsDevCmd.bat -- success
+WORKDIR "C:/BuildTools"
+
+# Use Powershell for the rest of the script.
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; "]
 
 # Note: keep installed dependencies in-sync with Install-RStudio-Prereqs.ps1 for consistency
@@ -25,22 +79,16 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
     iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # install some deps via chocolatey
-RUN `
-  choco install -y -i ant; `
-  choco install -y 7zip; `
-  choco install -y awscli; `
-  choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
-  choco install -y jq; `
-  choco install -y ninja --version "1.12.1"; `
-  choco install -y nsis --version "3.10"; `
-  choco install -y python313; `
-  choco install -y strawberryperl; `
-  choco install -y temurin11
-
-# install build tools
-RUN choco install -y windows-sdk-10.1 --version 10.1.18362.1
-RUN choco install -y visualstudio2019buildtools --version 16.11.10.0
-RUN choco install -y visualstudio2019-workload-vctools --version 1.0.1
+RUN choco install -y ant
+RUN choco install -y 7zip
+RUN choco install -y awscli
+RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
+RUN choco install -y jq
+RUN choco install -y ninja --version "1.12.1"
+RUN choco install -y nsis --version "3.10"
+RUN choco install -y python313
+RUN choco install -y strawberryperl
+RUN choco install -y temurin17
 
 # we use "R" for its real purpose, remove the Invoke-History powershell alias
 RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
@@ -82,17 +130,19 @@ COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
 COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
 # panmirror check for changes
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-mariposa-orchid panmirror.version.json
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-cucumberleaf-sunflower panmirror.version.json
 
 ENV DOCKER_IMAGE_BUILD=1
 WORKDIR C:/rstudio-tools/dependencies/windows
 RUN C:/rstudio-tools/dependencies/windows/install-dependencies.cmd
+ENV DOCKER_IMAGE_BUILD=
 
 #### this docker container will currently be used as a jenkins swarm slave, rather than instantiated on a swarm ####
 ##### the items below this are dependencies relevant to jenkins-swarm. #####
 ##### follow https://issues.jenkins-ci.org/browse/JENKINS-36776 to track docker windows support on jenkins #####
 
-ENV JENKINS_SWARM_VERSION 3.15
+ENV JENKINS_SWARM_VERSION=3.15
 RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
   Invoke-WebRequest $('https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/{0}/swarm-client-{0}.jar' -f $env:JENKINS_SWARM_VERSION) -OutFile 'C:\swarm-client.jar' -UseBasicParsing ;
+

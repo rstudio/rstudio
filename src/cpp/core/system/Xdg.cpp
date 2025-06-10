@@ -281,6 +281,18 @@ FilePath resolveXdgPath(
    return resolveXdgDirImpl(resolvedXdgPath, user, homeDir, suffix);
 }
 
+std::string logEnvInfo()
+{
+   std::string env = getenv("RSTUDIO_CONFIG_DIR");
+   if (!env.empty())
+      return "with env: RSTUDIO_CONFIG_DIR=" + env;
+
+   env = getenv("XDG_CONFIG_DIRS");
+   if (!env.empty())
+      return "with env: XDG_CONFIG_DIRS=" + env;
+   return "using default config dir";
+}
+
 } // anonymous namespace
 
 FilePath userConfigDir(
@@ -437,7 +449,7 @@ FilePath findSystemConfigFile(const std::string& context, const std::string& fil
    {
       // We found the file, so just say where we found it
       rstudio::core::log::logInfoMessage("Reading " + context + " from '" +
-            configFile.getAbsolutePath() + "'");
+            configFile.getAbsolutePath() + "' " + logEnvInfo());
    }
    else
    {
@@ -465,6 +477,43 @@ FilePath findSystemConfigFile(const std::string& context, const std::string& fil
       }
    }
    return configFile;
+}
+
+FilePath findSystemConfigDirectory(const std::string& context, const std::string& dirName)
+{
+   FilePath configDir = systemConfigDir().completePath(dirName);
+   if (configDir.exists())
+   {
+      // We found the directory, so just say where we found it
+      rstudio::core::log::logInfoMessage("Reading " + context + " from '" +
+            configDir.getAbsolutePath() + "' " + logEnvInfo());
+   }
+   else
+   {
+      if (getenv("RSTUDIO_CONFIG_DIR").empty())
+      {
+         if (getenv("XDG_CONFIG_DIRS").empty())
+         {
+            // No env vars so just say we didn't find the directory at its default location
+            rstudio::core::log::logInfoMessage("No " + context + " found at " +
+                  configDir.getAbsolutePath());
+         }
+         else
+         {
+            // XDG_CONFIG_DIRS was set, so emit the search path we used
+            rstudio::core::log::logInfoMessage("No " + context + " '" + dirName + "' "
+                  "found in XDG_CONFIG_DIRS, expected in an 'rstudio' folder in one of "
+                  "'" + getenv("XDG_CONFIG_DIRS") + "'");
+         }
+      }
+      else
+      {
+         // RSTUDIO_CONFIG_DIR was set, so emit where we expected the directory to be
+         rstudio::core::log::logInfoMessage("No " + context + " found in RSTUDIO_CONFIG_DIR, "
+               "expected at '" + configDir.getAbsolutePath() + "'");
+      }
+   }
+   return configDir;
 }
 
 void forwardXdgEnvVars(Options *pEnvironment)

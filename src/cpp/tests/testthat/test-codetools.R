@@ -17,6 +17,65 @@ library(testthat)
 
 context("codetools")
 
+test_that(".rs.detectFreeVars() works as expected", {
+   
+   expect_equal(
+      
+      .rs.detectFreeVarsExpr({
+         paste(apple + banana)
+      }),
+      
+      c("apple", "banana")
+      
+   )
+   
+   expect_equal(
+      
+      .rs.detectFreeVarsExpr({
+         base::paste(apple + banana)
+      }),
+      
+      c("apple", "banana")
+      
+   )
+   
+   expect_equal(
+      
+      .rs.detectFreeVarsExpr({
+         userDefinedFunction(apple, banana)
+      }),
+      
+      c("userDefinedFunction", "apple", "banana")
+      
+   )
+   
+   expect_equal(
+      
+      .rs.detectFreeVarsExpr({
+         for (i in 1:10) {
+            print(i + j)
+         }
+      }),
+      
+      c("j")
+      
+   )
+   
+   expect_equal(
+      
+      .rs.detectFreeVarsExpr({
+         udf <- function(apple, banana) {
+            apple + banana + cherry + danish
+         }
+      }),
+      
+      c("cherry", "danish")
+      
+   )
+   
+   
+})
+
 test_that(".rs.CRANDownloadOptionsString() generates a valid R expression", {
    
    # restore options when done

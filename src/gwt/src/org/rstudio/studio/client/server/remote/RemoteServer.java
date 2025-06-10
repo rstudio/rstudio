@@ -164,6 +164,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.Co
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletionCommand;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -689,6 +690,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void copilotVerifyInstalled(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
+   }
+   
+   @Override
    public void copilotDiagnostics(ServerRequestCallback<CopilotDiagnosticsResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "copilot_diagnostics", requestCallback);
@@ -753,6 +760,30 @@ public class RemoteServer implements Server
             .get();
       
       sendRequest(RPC_SCOPE, "copilot_generate_completions", params, requestCallback);
+   }
+   
+   @Override
+   public void copilotDidAcceptCompletion(CopilotCompletionCommand completionCommand,
+                                          ServerRequestCallback<Void> requestCallback) 
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(completionCommand)
+            .get();
+      
+      sendRequest(RPC_SCOPE, "copilot_did_accept_completion", params, requestCallback);
+   }
+
+   @Override
+   public void copilotDidAcceptPartialCompletion(CopilotCompletion completion,
+                                                 int acceptedLength,
+                                                 ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(completion)
+            .add(acceptedLength)
+            .get();
+
+      sendRequest(RPC_SCOPE, "copilot_did_accept_partial_completion", params, requestCallback);
    }
    
    @Override
@@ -6874,6 +6905,17 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(StringUtil.notNull(commandId)));
       sendRequest(RPC_SCOPE, "record_command_execution", params, callback);
    }
+
+   @Override
+   public void copilotRegisterOpenFiles(ArrayList<String> filePaths,
+                                        ServerRequestCallback<Void> requestCallback) 
+   {
+      JSONArray jsonPaths = JSONUtils.toJSONStringArray(filePaths);
+      JSONArray params = new JSONArray();
+      params.set(0, jsonPaths);
+      
+      sendRequest(RPC_SCOPE, "copilot_register_open_files", params, requestCallback);
+   };
 
    private boolean isAuthStatusRequest(RpcRequest request)
    {

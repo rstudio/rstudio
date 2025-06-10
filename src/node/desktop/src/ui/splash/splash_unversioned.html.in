@@ -9,7 +9,7 @@
       }
     </style>
 </head>
-<body style="-webkit-app-region:drag">
+<body style="-webkit-app-region:no-drag">
   <?xml version="1.0" encoding="utf-8"?>
   <svg xmlns="http://www.w3.org/1999/svg" xmlns:xlink="http://www.w3.org/2000/xlink" viewBox="0 0 766 434">
     <defs>
@@ -120,6 +120,9 @@
   </svg>
   <script>
     document.addEventListener('keydown', function(event) {
+        window.close();
+    });
+    document.addEventListener('mousedown', function(event) {
         window.close();
     });
   </script>

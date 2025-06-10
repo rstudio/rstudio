@@ -16,7 +16,6 @@
 #include "SessionClientEventQueue.hpp"
 
 #include <string>
-#include <utility>
 
 #include <boost/regex/v5/regex.hpp>
 
@@ -112,7 +111,7 @@ void annotateError(std::string* pOutput, bool allowGroupAll)
       // compute offsets from the match
 
       // Check for a match in one of our capturing groups.
-      for (std::size_t i = 1; i < match.size(); i++)
+      for (int i = 1; i < (int) match.size(); i++)
       {
          if (match[i].matched)
          {
@@ -143,7 +142,7 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
 
    boost::smatch match;
    
-   auto offset = 0;
+   std::string::difference_type offset = 0;
    auto lhs = pOutput->cbegin();
    auto rhs = pOutput->cend();
 
@@ -156,7 +155,7 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
    if (regex_utils::search(lhs + offset, rhs, match, reWarningPrefix()))
    {
       // Check for a match in one of our capturing groups.
-      for (std::size_t i = 1; i < match.size(); i++)
+      for (int i = 1; i < (int) match.size(); i++)
       {
          if (match[i].matched)
          {

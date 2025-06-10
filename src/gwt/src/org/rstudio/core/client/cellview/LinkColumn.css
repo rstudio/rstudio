@@ -8,10 +8,12 @@
 }
 
 .linkUnderlined {
+   cursor: pointer;
    text-decoration: underline;
 }
 
 .link:hover {
+   cursor: pointer;
    text-decoration: underline;
 }
 

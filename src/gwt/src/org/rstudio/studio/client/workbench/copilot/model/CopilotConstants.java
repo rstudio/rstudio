@@ -24,6 +24,8 @@ public class CopilotConstants
    
    public static class ErrorCodes
    {
+      public static final int AGENT_NOT_INITIALIZED = -32002;
+      public static final int AGENT_SHUT_DOWN = -32600;
       public static final int DOCUMENT_NOT_FOUND = -32602;
       public static final int UNABLE_TO_GET_LOCAL_ISSUER_CERTIFICATE = -32603;
       public static final int NOT_SIGNED_IN = 1000;

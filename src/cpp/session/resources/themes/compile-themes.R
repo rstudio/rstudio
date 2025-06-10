@@ -573,10 +573,6 @@
    .rs.updateSetting(content, color, "ace_print-margin", "background")
 })
 
-.rs.addFunction("setActiveDebugLineColor", function(content, color) {
-   .rs.updateSetting(content, color, "ace_active_debug_line", "background-color")
-})
-
 .rs.addFunction("setSelectionStartBorderRadius", function(content) {
    .rs.updateSetting(content, "2px", "ace_selection.ace_start", "border-radius")
 })

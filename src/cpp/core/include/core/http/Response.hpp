@@ -59,6 +59,7 @@ enum Code {
    SwitchingProtocols = 101,
    Ok = 200,
    Created = 201,
+   NoContent = 204,
    PartialContent = 206,
    MovedPermanently = 301,
    MovedTemporarily = 302,
@@ -136,6 +137,7 @@ public:
       statusCodeStr_ = response.statusCodeStr_;
       statusMessage_ = response.statusMessage_;
       streamResponse_ = response.streamResponse_;
+      apiError_ = response.apiError_;
    }
 
 public:   
@@ -465,6 +467,10 @@ public:
       return streamResponse_;
    }
 
+   void setApiError(const std::string& apiError) { apiError_ = apiError; }
+   std::string apiError() const { return apiError_; }
+
+
 private:
    virtual void appendFirstLineBuffers(
          std::vector<boost::asio::const_buffer>& buffers) const;
@@ -492,6 +498,8 @@ private:
    NotFoundHandler notFoundHandler_;
 
    boost::shared_ptr<StreamResponse> streamResponse_;
+
+   std::string apiError_;
 };
 
 std::ostream& operator << (std::ostream& stream, const Response& r);

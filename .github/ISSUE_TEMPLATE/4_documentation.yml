@@ -1,0 +1,55 @@
+name: Documentation request, project tracking, or error reporting
+description: File an issue to suggest documentation additions, changes, deletions, and errors (such as links or inaccurate content)
+title: '[DOC] '
+labels: ["documentation"]
+projects: [rstudio/90]
+body:
+  - type: textarea
+    id: request-details
+    attributes:
+      label: Documentation request/issue to report
+      description: Give as much information about the request/fix/removal.
+    validations:
+      required: true
+  - type: textarea
+    id: request-doc-version
+    attributes:
+      label: Documentation version
+      description: If this request is for an existing/released version of the docs, report the version in this format <br>to <version name> <YYYY.MM.patch>
+    validations:
+      required: false
+  - type: textarea
+    id: request-location
+    attributes:
+      label: Location of issue / suggested location for content
+    validations:
+      required: true
+  - type: textarea
+    id: request-due-date
+    attributes:
+      label: Due date
+      description: If no due date, type "NA". If this documentation change is tied to a release or completion of a task/project is dependent on this change, please list the due date/goal here.
+    validations:
+      required: true
+  - type: textarea
+    id: request-completion-criteria
+    attributes:
+      label: Completion criteria
+      description: Requirements or conditions must be met for this request to be considered fully complete and ready for delivery.
+    validations:
+      required: true
+  - type: textarea
+    id: add-to-issue
+    attributes:
+      label: Add the following to the issue
+      description: Add the following items (if applicable)to the issue before you submit<br>
+        - Milestone
+        - Applicable labels
+  - type: dropdown
+    id: follow-on
+    attributes:
+      label: Follow-on task
+      description: Submit release notes
+      options:
+      - label: Update Release Notes
+    

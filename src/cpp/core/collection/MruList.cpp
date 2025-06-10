@@ -15,29 +15,30 @@
 
 #include <core/collection/MruList.hpp>
 
+#include <utility>
+
+#include <shared_core/Error.hpp>
+
 #include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 
-
-#include <shared_core/Error.hpp>
-#include <utility>
 
 namespace rstudio {
 namespace core {
 namespace collection {
 
-MruList::MruList(const FilePath& file, size_t maxSize, wchar_t dataSeparator) :
-   file_(file),
-   maxSize_(maxSize),
-   haveExtraData_(true),
-   separator_(dataSeparator)
+MruList::MruList(const FilePath& file, size_t maxSize, char dataSeparator)
+   : file_(file),
+     maxSize_(maxSize),
+     haveExtraData_(true),
+     separator_(dataSeparator)
 {
 }
 
-MruList::MruList(const FilePath& file, size_t maxSize) :
-   file_(file),
-   maxSize_(maxSize),
-   haveExtraData_(false)
+MruList::MruList(const FilePath& file, size_t maxSize)
+   : file_(file),
+     maxSize_(maxSize),
+     haveExtraData_(false)
 {
 }
 

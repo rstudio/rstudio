@@ -55,18 +55,20 @@ detect_secrets_installed() {
 }
 
 # Linting and formatting on RStudio Desktop IDE files
-if test -f ./src/node/desktop/.lintstagedrc
+if git diff --staged --name-only | grep -qE '^src/node/desktop/.*'
 then
-    hook_setup
-    if git diff --staged --name-only | grep -qE '^src/node/desktop/.*'
-    then
+    if ! test -f ./src/node/desktop/.lintstagedrc; then
+        echo -e >&2 "${color_highlight}Note: src/node/desktop linting pre-commit hook is not being run because ${color_none}.lintstagedrc${color_highlight} was not found.${color_none}"
+    elif ! test -x ./src/node/desktop/node_modules/.bin/prettier || ! test -x ./src/node/desktop/node_modules/.bin/eslint; then
+        echo -e >&2 "${color_highlight}Note: src/node/desktop linting pre-commit hook is not being run because the npm packages are not installed.${color_none}"
+        echo -e >&2 "\tInstall the npm dependencies by moving to ${color_highlight}src/node/desktop${color_none} and running ${color_highlight}npm install${color_none}."
+    else
+        hook_setup
         cd ./src/node/desktop && npx lint-staged
         if [ $? -ne 0 ]; then
             fail_precommit=true
         fi
     fi
-else
-    echo -e >&2 "${color_highlight}Note: src/node/desktop linting pre-commit hook is not being run because ${color_none}.lintstagedrc${color_highlight} was not found.${color_none}"
 fi
 
 # Secret scanning on staged files

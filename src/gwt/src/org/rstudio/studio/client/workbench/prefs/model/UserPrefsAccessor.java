@@ -1269,18 +1269,6 @@ public class UserPrefsAccessor extends Prefs
    public final static String ANSI_CONSOLE_MODE_OFF = "off";
 
    /**
-    * Whether to only show a limited window of the total console output
-    */
-   public PrefValue<Boolean> limitVisibleConsole()
-   {
-      return bool(
-         "limit_visible_console",
-         _constants.limitVisibleConsoleTitle(), 
-         _constants.limitVisibleConsoleDescription(), 
-         false);
-   }
-
-   /**
     * Whether to show a toolbar on code chunks in R Markdown documents.
     */
    public PrefValue<Boolean> showInlineToolbarForRCodeChunks()
@@ -2801,6 +2789,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to show the splash screen when RStudio is starting.
+    */
+   public PrefValue<Boolean> enableSplashScreen()
+   {
+      return bool(
+         "enable_splash_screen",
+         _constants.enableSplashScreenTitle(), 
+         _constants.enableSplashScreenDescription(), 
+         true);
+   }
+
+   /**
     * The R version to use by default.
     */
    public PrefValue<DefaultRVersion> defaultRVersion()
@@ -3994,8 +3994,6 @@ public class UserPrefsAccessor extends Prefs
          consoleMaxLines().setValue(layer, source.getInteger("console_max_lines"));
       if (source.hasKey("ansi_console_mode"))
          ansiConsoleMode().setValue(layer, source.getString("ansi_console_mode"));
-      if (source.hasKey("limit_visible_console"))
-         limitVisibleConsole().setValue(layer, source.getBool("limit_visible_console"));
       if (source.hasKey("show_inline_toolbar_for_r_code_chunks"))
          showInlineToolbarForRCodeChunks().setValue(layer, source.getBool("show_inline_toolbar_for_r_code_chunks"));
       if (source.hasKey("highlight_code_chunks"))
@@ -4222,6 +4220,8 @@ public class UserPrefsAccessor extends Prefs
          clangVerbose().setValue(layer, source.getInteger("clang_verbose"));
       if (source.hasKey("submit_crash_reports"))
          submitCrashReports().setValue(layer, source.getBool("submit_crash_reports"));
+      if (source.hasKey("enable_splash_screen"))
+         enableSplashScreen().setValue(layer, source.getBool("enable_splash_screen"));
       if (source.hasKey("default_r_version"))
          defaultRVersion().setValue(layer, source.getObject("default_r_version"));
       if (source.hasKey("data_viewer_max_columns"))
@@ -4447,7 +4447,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(consoleLineLengthLimit());
       prefs.add(consoleMaxLines());
       prefs.add(ansiConsoleMode());
-      prefs.add(limitVisibleConsole());
       prefs.add(showInlineToolbarForRCodeChunks());
       prefs.add(highlightCodeChunks());
       prefs.add(saveFilesBeforeBuild());
@@ -4561,6 +4560,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(restoreProjectRVersion());
       prefs.add(clangVerbose());
       prefs.add(submitCrashReports());
+      prefs.add(enableSplashScreen());
       prefs.add(defaultRVersion());
       prefs.add(dataViewerMaxColumns());
       prefs.add(dataViewerMaxCellSize());

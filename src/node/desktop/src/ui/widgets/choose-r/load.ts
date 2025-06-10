@@ -13,7 +13,6 @@
  *
  */
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 import { Callbacks, CallbackData } from './preload';
 import { changeLanguage, initI18n, localize } from '../../../main/i18n-manager';

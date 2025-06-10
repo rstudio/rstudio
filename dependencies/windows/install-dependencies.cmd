@@ -13,14 +13,15 @@ set PATH=%CD%\tools;%PATH%
 
 set BOOST_VERSION=1.87.0
 set GNUGREP_VERSION=3.0
+set GWT_VERSION=2.12.2
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
-set MSVC_VERSION=vc142
+set MSVC_TOOLSET_VERSION=143
 set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
-set QUARTO_VERSION=1.6.42
-set COPILOT_VERSION=1.300.0
+set QUARTO_VERSION=1.7.31
+set COPILOT_VERSION=1.329.0
 set SUMATRA_VERSION=3.1.2
 set WINPTY_VERSION=0.4.3-msys2-2.7.0
 set WINUTILS_VERSION=1.0
@@ -43,7 +44,7 @@ REM Check for required tools on the PATH.
 for %%X in (R.exe 7z.exe cmake.exe curl.exe) do (
   where /q %%X
   if ERRORLEVEL 1 (
-    echo ERROR: %%X is not available on the PATH; cannot proceed.
+    echo ^^!^^! ERROR: %%X is not available on the PATH; cannot proceed.
     exit /b
   )
 )
@@ -52,17 +53,26 @@ set QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download/v%QUAR
 set QUARTO_FOLDER=quarto
 set QUARTO_OUTPUT=quarto
 
+
 set COPILOT_URL=copilot-language-server/%COPILOT_VERSION%/copilot-language-server-win32-x64-%COPILOT_VERSION%.zip
 set COPILOT_FOLDER=copilot-language-server
 set COPILOT_OUTPUT=copilot-language-server
+
 
 set GNUDIFF_URL=gnudiff.zip
 set GNUDIFF_FOLDER=gnudiff
 set GNUDIFF_OUTPUT=gnudiff
 
+
 set GNUGREP_URL=gnugrep-%GNUGREP_VERSION%.zip
 set GNUGREP_FOLDER=gnugrep\%GNUGREP_VERSION%
 set GNUGREP_OUTPUT=gnugrep\%GNUGREP_VERSION%
+
+
+set GWT_URL=gwt/gwt-%GWT_VERSION%.tar.gz
+set GWT_FOLDER=gwtproject\%GWT_VERSION%
+set GWT_OUTPUT=gwtproject
+
 
 set SUMATRA_URL=sumatrapdf/SumatraPDF-%SUMATRA_VERSION%-64.zip
 set SUMATRA_FOLDER=sumatra\%SUMATRA_VERSION%
@@ -84,8 +94,8 @@ set OPENSSL_FOLDER=openssl-%OPENSSL_VERSION%
 set OPENSSL_OUTPUT=
 
 
-set BOOST_URL=Boost/boost-%BOOST_VERSION%-win-ms%MSVC_VERSION%.zip
-set BOOST_FOLDER=boost-%BOOST_VERSION%-win-ms%MSVC_VERSION%
+set BOOST_URL=Boost/boost-%BOOST_VERSION%-win-msvc%MSVC_TOOLSET_VERSION%.zip
+set BOOST_FOLDER=boost-%BOOST_VERSION%-win-msvc%MSVC_TOOLSET_VERSION%
 set BOOST_OUTPUT=
 
 
@@ -136,10 +146,10 @@ set NODEBUILD_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUILD_VERSION%/%NODEBUILD_FILE
 set NODEBUILD_FOLDER=node\%NODEBUILD_VERSION%
 set NODEBUILD_OUTPUT=node
 
-
 :: Install dependencies within 'common' first.
 cd ..\common
 
+%RUN% install GWT
 %RUN% install DICTIONARIES
 %RUN% install MATHJAX
 %RUN% install LIBCLANG
@@ -168,13 +178,22 @@ if exist copilot-language-server\copilot-language-server.exe (
 
 %RUN% install PANDOC
 if exist pandoc\pandoc-%PANDOC_VERSION% (
-  move pandoc\pandoc-%PANDOC_VERSION% pandoc\%PANDOC_VERSION%
+  rmdir /s /q pandoc\%PANDOC_VERSION% 2>NUL
+  %RUN% move pandoc\pandoc-%PANDOC_VERSION% pandoc\%PANDOC_VERSION%
+  if ERRORLEVEL 1 (
+    echo ^^!^^! ERROR: Could not move pandoc installation to pandoc\%PANDOC_VERSION%.
+    exit /b
+  )
 )
 
 %RUN% install NODEBUILD
 if exist node\%NODEBUILD_FILE% (
-  rmdir /s /q node\%NODEBUILD_VERSION%
-  move node\%NODEBUILD_FILE% node\%NODEBUILD_VERSION%
+  rmdir /s /q node\%NODEBUILD_VERSION% 2>NUL
+  %RUN% move node\%NODEBUILD_FILE% node\%NODEBUILD_VERSION%
+  if ERRORLEVEL 1 (
+    echo ^^!^^! ERROR: Could not move node installation to node\%NODEBUILD_VERSION%.
+    exit /b
+  )
 )
 
 pushd node\%NODEBUILD_VERSION%

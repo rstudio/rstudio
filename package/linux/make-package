@@ -125,6 +125,12 @@ then
    exit 1
 fi
 
+# figure out machine architecture
+case "${PACKAGE_TARGET}" in
+DEB) _ARCH=$(dpkg --print-architecture) ;;
+RPM) _ARCH=$(rpm --eval '%_arch')
+esac
+
 # set up GWT module
 if [ "$RSTUDIO_TARGET" = "Desktop" ] || [ "$RSTUDIO_TARGET" == "Electron" ]; then
    GWT_MAIN_MODULE=RStudioDesktop
@@ -226,11 +232,36 @@ else
    GWT_BUILD="no"
 fi
 
+# set JAVA_HOME -- this may be required for some tools which use Java;
+# e.g. we use 'ant' to build RStudio's front-end, but 'ant' might use
+# an alternate JDK version by default.
+if [ -z "${JAVA_HOME}" ]; then
+
+   JVMS=(
+      "/usr/lib/jvm/java-17-openjdk-${_ARCH}"
+      "/usr/lib/jvm/java-17-openjdk"
+   )
+
+   for JVM in "${JVMS[@]}"; do
+      if [ -e "${JVM}" ]; then
+         JAVA_HOME="${JVM}"
+         export JAVA_HOME
+         break
+      fi
+   done
+
+fi
+
 # show build environment when building in CI
 if [ -n "${JENKINS_URL}" ]; then
 
    echo "Build environment:"
    printenv | sort
+   echo
+
+   echo "Java version:"
+   java -XshowSettings:properties -version || true
+   echo "JAVA_HOME: ${JAVA_HOME:-(unset)}"
    echo
 
    echo "R version:"

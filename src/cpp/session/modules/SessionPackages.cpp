@@ -228,17 +228,33 @@ Error getPackageStateJson(json::Object* pJson)
               .call(&packageList, &protect);
    }
 
-   if (!error)
+   if (error)
    {
-      // return the generated package list and the Packrat context
-      r::json::jsonValueFromObject(packageList, &packageListJson);
-
-      (*pJson)["package_list"] = packageListJson;
-      (*pJson)["packrat_context"] = packrat::contextAsJson(packratContext);
-      (*pJson)["renv_context"] = renvContext;
+      LOG_ERROR(error);
+      return error;
    }
 
-   return error;
+   // return the generated package list and the Packrat context
+   r::json::jsonValueFromObject(packageList, &packageListJson);
+
+   (*pJson)["package_list"] = packageListJson;
+   (*pJson)["packrat_context"] = packrat::contextAsJson(packratContext);
+   (*pJson)["renv_context"] = renvContext;
+
+   // collect vulnerability information as well
+   SEXP vulnsSEXP = R_NilValue;
+   error = r::exec::RFunction(".rs.ppm.getVulnerabilityInformation")
+      .call(&vulnsSEXP, &protect);
+   if (error)
+      LOG_ERROR(error);
+
+   json::Value vulnsJson;
+   error = r::json::jsonValueFromObject(vulnsSEXP, &vulnsJson);
+   if (error)
+      LOG_ERROR(error);
+
+   (*pJson)["vulns"] = vulnsJson;
+   return Success();
 }
 
 SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
@@ -382,6 +398,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionPackages.R"))
+      (bind(sourceModuleRFile, "SessionPackageHooks.R"))
       (bind(registerRpcMethod, "available_packages", availablePackages))
       (bind(registerRpcMethod, "get_package_state", getPackageState))
       (bind(r::exec::executeString, ".rs.packages.initialize()"));

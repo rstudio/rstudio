@@ -17,9 +17,9 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JSON;
+import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FormLabel;
@@ -39,6 +39,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -297,9 +298,21 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
             }
             else if (response.result == null)
             {
-               if (response.error != null)
+               if (response.error != null && response.error.getCode() == CopilotConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
+               {
+                  // Copilot still starting up, so wait a second and refresh again
+                  SingleShotTimer.fire(1000, () -> {
+                     refresh();
+                  });
+               }
+               else if (response.error != null && response.error.getCode() != CopilotConstants.ErrorCodes.AGENT_SHUT_DOWN)
                {
                   lblCopilotStatus_.setText(constants_.copilotStartupError());
+               }
+               else if (CopilotResponseTypes.CopilotAgentNotRunningReason.isError(response.reason))
+               {
+                  int reason = (int) response.reason.valueOf();
+                  lblCopilotStatus_.setText(CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
                }
                else if (prefs_.copilotEnabled().getValue())
                {

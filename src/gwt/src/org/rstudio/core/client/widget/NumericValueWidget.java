@@ -68,7 +68,7 @@ public class NumericValueWidget extends Composite
       FlowPanel flowPanel = new FlowPanel();
 
       textBox_ = new NumericTextBox();
-      textBox_.setWidth("48px");
+      textBox_.setWidth("60px");
       setLimits(minValue, maxValue);
       textBox_.getElement().getStyle().setMarginLeft(0.6, Unit.EM);
       flowPanel.add(textBoxLabel_ = new SpanLabel(label_, tooltip_, textBox_, true));

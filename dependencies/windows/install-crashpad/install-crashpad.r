@@ -2,10 +2,9 @@
 if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-crashpad")
 
-source("../tools.R")
-section("The working directory is: '%s'", getwd())
-progress("Producing crashpad build")
 owd <- getwd()
+source("../tools.R")
+section("Building crashpad")
 
 # initialize log directory (for when things go wrong)
 unlink("logs", recursive = TRUE)
@@ -32,7 +31,7 @@ downloadAndUnzip <- function(outputFile, extractDir, outputDir, url) {
 	  if (!file.exists(outputFile))
 	     fatal("Failed to download '%s'", outputFile)
    }
-   
+
    if (!file.exists(outputDir)) {
       # extract zip file
       progress("Extracting zip file '%s'", outputFile)

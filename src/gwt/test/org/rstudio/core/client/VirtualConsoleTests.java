@@ -56,13 +56,6 @@ public class VirtualConsoleTests extends GWTTestCase
          return screenReaderEnabled_;
       }
 
-      @Override
-      public boolean limitConsoleVisible()
-      {
-         return limitConsoleVisible_;
-      }
-
-      public boolean limitConsoleVisible_ = false;
       public int truncateLines_ = 1000;
       public String ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_ON;
       public boolean screenReaderEnabled_ = false;

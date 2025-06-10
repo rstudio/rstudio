@@ -7,14 +7,14 @@
   "license": "AGPLv3",
   "dependencies": {
     "csv-writer": "^1.6.0",
-    "glob": "^11.0.0"
+    "glob": "^11.0.1"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
-    "@types/node": "^22.0.0",
-    "eslint": "^9.8.0",
-    "tsx": "^4.16.2",
-    "typescript": "^5.5.4"
+    "@types/node": "^22.14.1",
+    "eslint": "^9.25.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
   } ,
   "scripts": {
     "start": "tsx locdiff.ts"

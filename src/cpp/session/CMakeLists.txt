@@ -218,6 +218,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionPlumberViewer.cpp
+   modules/SessionPPM.cpp
    modules/SessionProfiler.cpp
    modules/SessionProjectTemplate.cpp
    modules/SessionPythonEnvironments.cpp

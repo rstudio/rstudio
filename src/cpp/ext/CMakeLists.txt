@@ -83,8 +83,8 @@ function(dependency)
 endfunction()
 
 
-# expected
-dependency(EXPECTED
+# tl-expected
+dependency(TL_EXPECTED
    COMMENT    "Single header implementation of std::expected with functional-style extensions."
    VERSION    "1.1.0"
    REPOSITORY "https://github.com/TartanLlama/expected"
@@ -182,9 +182,14 @@ function(fetch)
 
       if(${_PREFIX}_ENABLED)
          if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
-            find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
+            if(CMAKE_VERSION VERSION_GREATER "3.24")
+               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
+            else()
+               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
+            endif()
          else()
             set(${_PREFIX}_FETCHED TRUE)
+
             FetchContent_Declare("${_NAME}"
                GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
                GIT_TAG        "${${_PREFIX}_REVISION}"
@@ -220,11 +225,11 @@ endfunction()
 
 
 fetch(
-   expected     EXPECTED
    fmt          FMT
    gsl-lite     GSL_LITE
    hunspell     HUNSPELL
    rapidjson    RAPIDJSON
+   tl-expected  TL_EXPECTED
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP
    zlib         ZLIB)

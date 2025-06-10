@@ -90,10 +90,13 @@ public class UserPrefs extends UserPrefsComputed
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
       
-      // Let desktop-side know when this changes
+      // Let desktop-side know when Electron-specific preferences change as these are mirrored
+      // in the electron-store so they can be used during startup (before the session is started).
       if (BrowseCap.isElectron())
       {
          autohideMenubar().addValueChangeHandler(enabled -> Desktop.getFrame().setAutohideMenubar(enabled.getValue()));
+         enableSplashScreen().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableSplashScreen(enabled.getValue()));
+         enableScreenReader().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableAccessibility(enabled.getValue()));
       }
    }
 
@@ -277,8 +280,6 @@ public class UserPrefs extends UserPrefsComputed
 
    public void setScreenReaderEnabled(boolean enabled)
    {
-      if (Desktop.hasDesktopFrame())
-         Desktop.getFrame().setEnableAccessibility(enabled);
       enableScreenReader().setGlobalValue(enabled);
 
       // When screen-reader is enabled, reduce UI animations as they serve no purpose
@@ -286,10 +287,6 @@ public class UserPrefs extends UserPrefsComputed
       // on when screen-reader support is disabled as that is the normal default and most
       // users will never touch it.
       RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().setGlobalValue(enabled);
-
-      // Disable virtual scrolling when screen reader is enabled
-      if (enabled)
-         RStudioGinjector.INSTANCE.getUserPrefs().limitVisibleConsole().setGlobalValue(false);
    }
 
    @Handler
