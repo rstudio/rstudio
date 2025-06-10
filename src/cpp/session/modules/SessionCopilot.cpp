@@ -1186,9 +1186,6 @@ void docOpened(const std::string& uri,
                int version,
                const std::string& contents)
 {
-   if (!ensureAgentRunning())
-      return;
-
    if (s_knownDocuments.count(uri) > 0)
    {
       // already told Copilot about this document, so just update it
@@ -1211,9 +1208,6 @@ void docOpened(const std::string& uri,
 
 void docClosed(const std::string& uri)
 {
-   if (!ensureAgentRunning())
-      return;
-
    if (s_knownDocuments.count(uri) == 0)
    {
       WLOG("Tried to close unknown document '{}'.", uri);
@@ -1349,6 +1343,9 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   if (!ensureAgentRunning())
+      return;
+
    docClosed(uriFromDocument(pDoc));
 }
 
