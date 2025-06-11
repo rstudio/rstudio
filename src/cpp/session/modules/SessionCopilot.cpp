@@ -1621,6 +1621,11 @@ void onShutdown(bool)
    s_agentPid = -1;
 }
 
+void onSourceFileDiff(module_context::DocumentDiff diff)
+{
+   DLOG(diff.toString());
+}
+
 // Primarily intended for debugging / exploration.
 SEXP rs_copilotSendRequest(SEXP methodSEXP, SEXP paramsSEXP)
 {
@@ -2036,6 +2041,7 @@ Error initialize()
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
+   events().onSourceFileDiff.connect(onSourceFileDiff);
 
    // TODO: Do we need this _and_ the preferences saved callback?
    // This one seems required so that we see preference changes while

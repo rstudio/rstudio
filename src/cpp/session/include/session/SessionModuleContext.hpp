@@ -323,6 +323,33 @@ enum ChangeSource
    ChangeSourceURI
 };
    
+struct DocumentDiff
+{
+   // This is a chunk of text inserted into the specified document.
+   // It replaces the subrange [offset, offset+length).
+   explicit DocumentDiff(std::string docId,
+                         std::string replacement,
+                         int offset,
+                         int length)
+      : docId(std::move(docId)),
+        replacement(std::move(replacement)),
+        offset(offset),
+        length(length)
+   {
+   }
+
+   std::string toString() const
+   {
+      return "DocumentDiff(docId=" + docId +
+             ", replacement=[" + replacement + "]"
+             ", offset=" + std::to_string(offset) +
+             ", length=" + std::to_string(length) + ")";
+   }
+
+   std::string docId;
+   std::string replacement;
+   int offset, length;
+};
 
 // custom slot combiner that takes the first non empty value
 template<typename T>
@@ -362,6 +389,7 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void()>                                       onUserInterrupt;
    RSTUDIO_BOOST_SIGNAL<void(ChangeSource)>                           onDetectChanges;
    RSTUDIO_BOOST_SIGNAL<void(core::FilePath)>                         onSourceEditorFileSaved;
+   RSTUDIO_BOOST_SIGNAL<void(DocumentDiff)>                           onSourceFileDiff;
    RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onBackgroundProcessing;
    RSTUDIO_BOOST_SIGNAL<void(const std::vector<std::string>&)>        onLibPathsChanged;
    RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onPackageLoaded;
