@@ -113,7 +113,7 @@
     },
     {
       "label": "RStudio: Build All",
-      "type": "process",
+      "type": "shell",
       "command": "cmake",
       "args": [
         "--build",
@@ -143,13 +143,13 @@
         }
       },
       "osx": {
-        "command": "install-dependencies-osx",
+        "command": "./install-dependencies-osx",
         "options": {
           "cwd": "dependencies/osx"
         }
       },
       "linux": {
-        "command": "install-dependencies-linux",
+        "command": "./install-dependencies-linux",
         "options": {
           "cwd": "dependencies/linux"
         }
@@ -174,5 +174,18 @@
       },
       "problemMatcher": []
     }
-  ]
+  ],
+  "windows": {
+    "options": {
+      "shell": {
+        "executable": "cmd.exe",
+        "args": [
+          "/C",
+          "\"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvarsall.bat\"",
+          "x64",
+          "&&"
+        ]
+      }
+    }
+  }
 }

@@ -66,6 +66,11 @@ if(RSTUDIO_PROJECT_TYPE STREQUAL OpenSource)
          "${RSTUDIO_PROJECT_ROOT}/.vscode/tasks.json"
          @ONLY)
 
+      configure_file(
+         "${RSTUDIO_PROJECT_ROOT}/.vscode/open-source/settings.json"
+         "${RSTUDIO_PROJECT_ROOT}/.vscode/settings.json"
+         @ONLY)
+
    endif()
 
 endif()

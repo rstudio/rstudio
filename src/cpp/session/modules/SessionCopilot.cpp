@@ -15,6 +15,8 @@
 
 #include "SessionCopilot.hpp"
 
+#include <unordered_set>
+
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -296,6 +298,17 @@ std::map<std::string, CopilotContinuation> s_pendingContinuations;
 
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
+
+// The language server protocol states:
+//
+// ...open notification must not be sent more than once without a corresponding close notification 
+// send before. This means open and close notification must be balanced and the max open count
+// for a particular textDocument is one.
+//
+// Track documents Copilot knows about via textDocument/didOpen. Remove them when
+// textDocument/didClose is sent (or the agent is stopped).
+//
+std::unordered_set<std::string> s_knownDocuments;
 
 // Whether we're about to shut down.
 bool s_isSessionShuttingDown = false;
@@ -926,8 +939,15 @@ void onExit(int status)
 
 } // end namespace agent
 
+// foward declaration
+void didChangeNonIncremental(const std::string& uri,
+                             const std::string& languageId,
+                             int version,
+                             const std::string& contents);
+
 void stopAgent()
 {
+   s_knownDocuments.clear();
    if (s_agentPid == -1)
    {
       //DLOG("No agent running; nothing to do.");
@@ -1161,6 +1181,49 @@ std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocume
    return contents;
 }
 
+void docOpened(const std::string& uri,
+               const std::string& languageId,
+               int version,
+               const std::string& contents)
+{
+   if (s_knownDocuments.count(uri) > 0)
+   {
+      // already told Copilot about this document, so just update it
+      didChangeNonIncremental(uri, languageId, version, contents);
+      return;
+   }
+
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uri;
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = version;
+   textDocumentJson["text"] = contents;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   s_knownDocuments.insert(uri);
+   sendNotification("textDocument/didOpen", paramsJson);
+}
+
+void docClosed(const std::string& uri)
+{
+   if (s_knownDocuments.count(uri) == 0)
+   {
+      WLOG("Tried to close unknown document '{}'.", uri);
+      return;
+   }
+
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uri;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   s_knownDocuments.erase(uri);
+   sendNotification("textDocument/didClose", paramsJson);
+}
+
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
@@ -1169,16 +1232,40 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    if (!isIndexableDocument(pDoc))
       return;
    
+   docOpened(uriFromDocument(pDoc),
+             languageIdFromDocument(pDoc),
+             kCopilotDefaultDocumentVersion,
+             contentsFromDocument(pDoc));
+}
+
+// Send a textDocument/didChange notification with entire document contents (vs. deltas).
+void didChangeNonIncremental(const std::string& uri,
+                             const std::string& languageId,
+                             int version,
+                             const std::string& contents)
+{
+   if (s_knownDocuments.count(uri) == 0)
+   {
+      // unknown document, open it instead
+      docOpened(uri, languageId, version, contents);
+   }
+
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocument(pDoc);
-   textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
-   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
-   textDocumentJson["text"] = contentsFromDocument(pDoc);
+   textDocumentJson["uri"] = uri;
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = version;
+
+   json::Object contentChangeJson;
+   contentChangeJson["text"] = contents;
+
+   json::Array contentChangesJsonArray;
+   contentChangesJsonArray.push_back(contentChangeJson);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
+   paramsJson["contentChanges"] = contentChangesJsonArray;
 
-   sendNotification("textDocument/didOpen", paramsJson);
+   sendNotification("textDocument/didChange", paramsJson);
 }
 
 namespace file_monitor {
@@ -1208,16 +1295,10 @@ void indexFile(const core::FileInfo& info)
    
    DLOG("Indexing document: {}", info.absolutePath());
    
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
-   textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
-   textDocumentJson["text"] = contents;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didOpen", paramsJson);
+   docOpened(uriFromDocumentPath(documentPath.getAbsolutePath()),
+             languageId,
+             kCopilotDefaultDocumentVersion,
+             contents);
 }
 
 } // end anonymous namespace
@@ -1251,16 +1332,10 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       return;
    
    // Synchronize document contents with Copilot
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocument(pDoc);
-   textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
-   textDocumentJson["version"] = kCopilotDefaultDocumentVersion;
-   textDocumentJson["text"] = contentsFromDocument(pDoc);
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didOpen", paramsJson);
+   docOpened(uriFromDocument(pDoc),
+             languageIdFromDocument(pDoc),
+             kCopilotDefaultDocumentVersion,
+             contentsFromDocument(pDoc));
 }
 
 void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -1268,13 +1343,7 @@ void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
    if (!ensureAgentRunning())
       return;
 
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocument(pDoc);
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didClose", paramsJson);
+   docClosed(uriFromDocument(pDoc));
 }
 
 void onBackgroundProcessing(bool isIdle)

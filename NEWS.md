@@ -28,6 +28,10 @@
 - Fixed an issue where GitHub Copilot was unaware of files already loaded in the source editor before Copilot starts (#15895)
 - Fixed an issue where RStudio's Update Packages dialog could report packages were out-of-date for packages installed into multiple library paths (#16133)
 - Fixed an issue where attempting to attach or detach a package using the Packages pane could cause UI to become out-of-sync with actual package state
+- Fixed an issue where GitHub Copilot's status was incorrectly reported as an error in the Preferences dialog (#16119)
+- Fixed an issue where GitHub Copilot would not index project files when Copilot was started while the project is open (#16128)
+- Fixed an issue where RStudio would send multiple didOpen messages to GitHub Copilot for the same file (#16129)
+
 
 #### Posit Workbench
 
@@ -36,8 +40,8 @@
 
 ### Dependencies
 
-- Copilot Language Server 1.328.0 (#15935)
-- Electron 36.3.2 (#15933)
+- Copilot Language Server 1.332.0 (#15935)
+- Electron 36.4.0 (#15933)
 - GWT 2.12.2 (#16062)
 - Quarto 1.7.31 (#15934)
 
