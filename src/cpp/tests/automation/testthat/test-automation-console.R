@@ -190,3 +190,23 @@ withr::defer(.rs.automation.deleteRemote())
    expect_equal(output, "M2")
    
 })
+
+.rs.test("text is truncated appropriately in console", {
+   
+   remote$console.executeExpr({
+      .rs.uiPrefs$consoleLineLengthLimit$set(10L)
+   })
+   
+   remote$console.executeExpr({
+      long <- paste(rep.int("a", 1E4), collapse = "")
+      cat(long, sep = "\n")
+   })
+   
+   output <- remote$console.getOutput(n = 1L)
+   expect_equal(output, "aaaaaaaaaa ... <truncated>")
+   
+   remote$console.executeExpr({
+      .rs.uiPrefs$consoleLineLengthLimit$set(2000L)
+   })
+   
+})
