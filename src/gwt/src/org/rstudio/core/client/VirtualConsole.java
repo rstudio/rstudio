@@ -335,54 +335,7 @@ public class VirtualConsole
    @Override
    public String toString()
    {
-      return truncate(output_.toString());
-   }
-
-   private String truncate(String output)
-   {
-      // If truncation isn't enabled, do nothing.
-      if (maxLineLength_ == 0)
-         return output;
-
-      // If the size of the output we've received is already below the limit, return early.
-      int n = output.length();
-      if (n <= maxLineLength_)
-         return output;
-
-      // Check for the first newline. If we don't find anything,
-      // we can just substring the string itself.
-      int rhs = output.indexOf("\n");
-      if (rhs == -1)
-         return output.substring(0, maxLineLength_) + " ... <truncated>";
-
-      // Iterate over all of the newlines within the output text.
-      // For each string, pull out the relevant substring, and then
-      // truncate it if appropriate. Build the result as an array
-      // of strings which we'll later join into a final string.
-      JsVectorString result = JsVectorString.createVector();
-
-      int lhs = 0;
-      while (rhs != -1)
-      {
-         // Grab the (possibly truncated) substring within.
-         String value = (rhs - lhs > maxLineLength_)
-            ? output.substring(lhs, lhs + maxLineLength_) + " ... <truncated>"
-            : output.substring(lhs, rhs);
-         result.push(value);
-
-         // Look for the next newline.
-         lhs = rhs + 1;
-         rhs = output.indexOf("\n", lhs);
-      }
-
-      // Add the final bit of text following the last newline found in the line.
-      String value = (n - lhs > maxLineLength_)
-         ? output.substring(lhs, lhs + maxLineLength_) + " ... <truncated>"
-         : output.substring(lhs);
-      result.push(value);
-
-      // Finally, join it all back together.
-      return result.join("\n");
+      return StringUtil.truncateLines(output_.toString(), maxLineLength_);
    }
 
    public int getLength()
@@ -649,6 +602,8 @@ public class VirtualConsole
     */
    private void text(String text, String clazz, boolean forceNewRange)
    {
+      text = StringUtil.truncateLines(text, maxLineLength_);
+
       if (newText_ != null)
          newText_.append(text);
 
