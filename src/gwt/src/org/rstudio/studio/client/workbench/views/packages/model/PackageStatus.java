@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.model;
 
-import org.rstudio.core.client.files.FileSystemItem;
-
 import com.google.gwt.core.client.JavaScriptObject;
 
 

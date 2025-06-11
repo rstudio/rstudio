@@ -52,7 +52,7 @@ public class PackageInfo extends JavaScriptObject
    }-*/;
 
    public final native String getPackageUrl() /*-{
-      return this["PackageUrl"]
+      return this["PackageUrl"];
    }-*/;
 
    public final native String getBrowseUrl() /*-{
@@ -67,7 +67,7 @@ public class PackageInfo extends JavaScriptObject
       return this["Attached"] || false;
    }-*/;
 
-   public final native boolean setAttached(boolean attached) /*-{
+   public final native void setAttached(boolean attached) /*-{
       this["Attached"] = attached;
    }-*/;
    
