@@ -502,7 +502,7 @@ Error jsonValueFromObject(SEXP objectSEXP, core::json::Value* pValue)
    //         - support for LISTSXP? (old style lists)
    //         - isVectorAtomic should replace default: label
  
-   switch(TYPEOF(objectSEXP))
+   switch (TYPEOF(objectSEXP))
    {
       case NILSXP:
       {

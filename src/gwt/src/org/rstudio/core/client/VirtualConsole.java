@@ -39,7 +39,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
@@ -169,6 +168,16 @@ public class VirtualConsole
          public void onValueChange(ValueChangeEvent<String> event)
          {
             ansiColorMode_ = event.getValue();
+         }
+      });
+
+      maxLineLength_ = userPrefs_.consoleLineLengthLimit().getValue();
+      userPrefs_.consoleLineLengthLimit().addValueChangeHandler(new ValueChangeHandler<Integer>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Integer> event)
+         {
+            maxLineLength_ = event.getValue();
          }
       });
       
@@ -331,22 +340,49 @@ public class VirtualConsole
 
    private String truncate(String output)
    {
-      int maxLength = prefs_.truncateLongLinesInConsoleHistory();
-      if (maxLength == 0)
+      // If truncation isn't enabled, do nothing.
+      if (maxLineLength_ == 0)
          return output;
 
-      JsArrayString splat = StringUtil.split(output, "\n");
-      for (int i = 0; i < splat.length(); i++)
+      // If the size of the output we've received is already below the limit, return early.
+      int n = output.length();
+      if (n <= maxLineLength_)
+         return output;
+
+      // Check for the first newline. If we don't find anything,
+      // we can just substring the string itself.
+      int rhs = output.indexOf("\n");
+      if (rhs == -1)
+         return output.substring(0, maxLineLength_) + " ... <truncated>";
+
+      // Iterate over all of the newlines within the output text.
+      // For each string, pull out the relevant substring, and then
+      // truncate it if appropriate. Build the result as an array
+      // of strings which we'll later join into a final string.
+      JsVectorString result = JsVectorString.createVector();
+
+      int lhs = 0;
+      while (rhs != -1)
       {
-         String string = splat.get(i);
-         String trimmed = StringUtil.trimRight(string);
-         if (trimmed.length() > maxLength)
-            splat.set(i, StringUtil.substring(trimmed, 0, maxLength) + "... <truncated>");
-         else if (string.length() > maxLength)
-            splat.set(i, StringUtil.substring(string, 0, maxLength));
+         // Grab the (possibly truncated) substring within.
+         String value = (rhs - lhs > maxLineLength_)
+            ? output.substring(lhs, lhs + maxLineLength_) + " ... <truncated>"
+            : output.substring(lhs, rhs);
+         result.push(value);
+
+         // Look for the next newline.
+         lhs = rhs + 1;
+         rhs = output.indexOf("\n", lhs);
       }
 
-      return splat.join("\n");
+      // Add the final bit of text following the last newline found in the line.
+      String value = (n - lhs > maxLineLength_)
+         ? output.substring(lhs, lhs + maxLineLength_) + " ... <truncated>"
+         : output.substring(lhs);
+      result.push(value);
+
+      // Finally, join it all back together.
+      return result.join("\n");
    }
 
    public int getLength()
@@ -1173,7 +1209,7 @@ public class VirtualConsole
          }
          else
          {
-            element.setInnerText(truncate(text));
+            element.setInnerText(text);
          }
       }
 
@@ -1314,6 +1350,8 @@ public class VirtualConsole
    private static final String GROUP_TYPE_ERROR   = "1";
    private static final String GROUP_TYPE_WARNING = "2";
    private static final String GROUP_TYPE_MESSAGE = "3";
+
+   private int maxLineLength_;
    
 
    // Injected ----

@@ -23,162 +23,16 @@
 # map the repository string to the directory containing produced output
 .rs.setVar("availablePackagesPendingEnv", new.env(parent = emptyenv()))
 
-# a vectorized function that takes any number of paths and aliases the home
-# directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
-# paths outside the home directory untouched
-.rs.addFunction("createAliasedPath", function(path)
+.rs.addJsonRpcHandler("is_package_installed", function(package, version)
 {
-   homeDir <- path.expand("~/")
-   homePathIdx <- substr(path, 1, nchar(homeDir)) == homeDir
-   homePaths <- path[homePathIdx]
-   path[homePathIdx] <-
-          paste("~", substr(homePaths, nchar(homeDir), nchar(homePaths)), sep="")
-   path
+   installed <- if (is.null(version))
+      .rs.isPackageInstalled(package)
+   else
+      .rs.isPackageVersionInstalled(package, version)
+   .rs.scalar(installed)
 })
 
-# Some R commands called during packaging-related operations (such as untar)
-# delegate to the system tar binary specified in TAR. On OS X, R may set TAR to
-# /usr/bin/gnutar, which exists prior to Mavericks (10.9) but not in later
-# rleases of the OS. In the special case wherein the TAR environment variable
-# on OS X is set to a non-existent gnutar and there exists a tar at
-# /usr/bin/tar, tell R to use that binary instead.
-if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
-    identical(Sys.getenv("TAR"), "/usr/bin/gnutar") && 
-    !file.exists("/usr/bin/gnutar") &&
-    file.exists("/usr/bin/tar"))
-{
-   Sys.setenv(TAR = "/usr/bin/tar")
-}
-
-.rs.addFunction("beforePackageUnloaded", function(package)
-{
-   # force any promises associated with package's registered S3 methods --
-   # this is necessary as otherwise the lazy-load database may become corrupt
-   # if a new version of this package is later installed as the old promises
-   # will now have invalid pointers to the old lazy-load database.
-   #
-   # note that we iterate over all loaded packages here because loading a
-   # package might entail registering S3 methods in the namespace of the
-   # package owning the generic, which typically is a separate package
-   #
-   # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=16644
-   # https://github.com/rstudio/rstudio/issues/8265
-   for (namespaceName in loadedNamespaces())
-   {
-      .rs.tryCatch({
-         ns <- asNamespace(namespaceName)
-         table <- ns[[".__S3MethodsTable__."]]
-         as.list(table)
-      })
-   }
-})
-
-.rs.addFunction( "updatePackageEvents", function()
-{
-   reportPackageStatus <- function(status)
-      function(pkgname, ...)
-      {
-         packageStatus = list(name=pkgname,
-                              path=.rs.createAliasedPath(
-                                     .rs.pathPackage(pkgname, quiet=TRUE)),
-                              loaded=status)
-         .rs.enqueClientEvent("package_status_changed", packageStatus)
-      }
-   
-   notifyPackageLoaded <- function(pkgname, ...)
-   {
-      .Call("rs_packageLoaded", pkgname, PACKAGE = "(embedding)")
-
-      # when a package is loaded, it can register S3 methods which replace overrides we've
-      # attached manually; take this opportunity to reattach them.
-      .rs.reattachS3Overrides()
-   }
-
-   notifyPackageUnloaded <- function(pkgname, ...)
-   {
-      .rs.beforePackageUnloaded(pkgname)
-      .Call("rs_packageUnloaded", pkgname, PACKAGE = "(embedding)")
-   }
-   
-   pkgNames <-
-      base::list.dirs(.libPaths(), full.names = FALSE, recursive = FALSE)
-   
-   sapply(pkgNames, function(packageName)
-   {
-      if ( !(packageName %in% .rs.hookedPackages) )
-      {
-         attachEventName = packageEvent(packageName, "attach")
-         setHook(attachEventName, reportPackageStatus(TRUE), action="append")
-         
-         loadEventName = packageEvent(packageName, "onLoad")
-         setHook(loadEventName, notifyPackageLoaded, action="append")
-
-         unloadEventName = packageEvent(packageName, "onUnload")
-         setHook(unloadEventName, notifyPackageUnloaded, action="append")
-             
-         detachEventName = packageEvent(packageName, "detach")
-         setHook(detachEventName, reportPackageStatus(FALSE), action="append")
-          
-         .rs.setVar("hookedPackages", append(.rs.hookedPackages, packageName))
-      }
-   })
-})
-
-.rs.addFunction("packages.initialize", function()
-{  
-   # list of packages we have hooked attach/detach for
-   .rs.setVar("hookedPackages", character())
-
-   # set flag indicating we should not ignore loadedPackageUpdates checks
-   .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
-    
-   # ensure we are subscribed to package attach/detach events
-   .rs.updatePackageEvents()
-})
-
-.rs.addFunction( "addRToolsToPath", function()
-{
-    .Call("rs_addRToolsToPath", PACKAGE = "(embedding)")
-})
-
-.rs.addFunction( "restorePreviousPath", function()
-{
-    .Call("rs_restorePreviousPath", PACKAGE = "(embedding)")
-})
-
-.rs.addFunction( "uniqueLibraryPaths", function()
-{
-   # get library paths (normalize on unix to get rid of duplicate symlinks)
-   libPaths <- .libPaths()
-   if (!identical(.Platform$OS.type, "windows"))
-      libPaths <- .rs.normalizePath(libPaths)
-
-   uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
-   return (uniqueLibPaths)
-})
-
-.rs.addFunction( "writeableLibraryPaths", function()
-{
-   uniqueLibraryPaths <- .rs.uniqueLibraryPaths()
-   writeableLibraryPaths <- character()
-   for (libPath in uniqueLibraryPaths)
-      if (.rs.isLibraryWriteable(libPath))
-         writeableLibraryPaths <- append(writeableLibraryPaths, libPath)
-   return (writeableLibraryPaths)
-})
-
-.rs.addFunction("defaultUserLibraryPath", function()
-{
-   unlist(strsplit(Sys.getenv("R_LIBS_USER"),
-                              .Platform$path.sep))[1L]
-})
-
-.rs.addFunction("defaultLibraryPath", function()
-{
-  .libPaths()[1]
-})
-
-.rs.addJsonRpcHandler("is_package_attached", function(packageName, libPath)
+.rs.addJsonRpcHandler("is_package_attached", function(packageName, libraryPath)
 {
    # quick check first if the package is loaded
    if (!isNamespaceLoaded(packageName))
@@ -189,230 +43,21 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (length(packagePath) == 0L)
       return(.rs.scalar(FALSE))
    
-   # library path from client is aliased, so compare aliased paths
-   packagePath <- .rs.createAliasedPath(packagePath)
+   # get associated library path
+   packageLibraryPath <- dirname(packagePath)
    
    # compare with the library given by the client
-   samePath <- identical(dirname(packagePath), libPath)
+   samePath <- identical(
+      normalizePath(libraryPath, winslash = "/", mustWork = FALSE),
+      normalizePath(packageLibraryPath, winslash = "/", mustWork = FALSE)
+   )
+   
    .rs.scalar(samePath)
-})
-
-.rs.addFunction("isPackageHyperlinkSafe", function(packageName)
-{
-   allowed <- setdiff(
-      c(.packages(), "testthat", "rlang", "devtools", "usethis", "pkgload", "pkgdown"), 
-      c("base", "stats", "utils")
-   )
-   .rs.scalar(
-      packageName %in% allowed
-   )
 })
 
 .rs.addJsonRpcHandler("is_package_hyperlink_safe", function(packageName)
 {
    .rs.isPackageHyperlinkSafe(packageName)
-})
-
-.rs.addFunction("forceUnloadPackage", function(package)
-{
-   tryCatch(
-      withCallingHandlers(
-         .rs.forceUnloadPackageImpl(package),
-         warning = function(w) invokeRestart("muffleWarning")
-      ),
-      error = warning
-   )
-})
-
-.rs.addFunction("forceUnloadPackageImpl", function(package)
-{
-   .rs.beforePackageUnloaded(package)
-   
-   # Figure out where the package was loaded from before unloading it.
-   pkgPath <- if (package %in% loadedNamespaces())
-   {
-      getNamespaceInfo(package, "path")
-   }
-   
-   # Now, try to unload the package. If it's attached, detach it;
-   # if the namespace is loaded, unload it.
-   searchPathName <- paste("package", package, sep = ":")
-   if (searchPathName %in% search())
-   {
-      detach(
-         name = searchPathName,
-         unload = TRUE,
-         character.only = TRUE,
-         force = TRUE
-      )
-   }
-   else if (package %in% loadedNamespaces())
-   {
-      unloadNamespace(package)
-   }
-   
-   # Now, unload a loaded DLL (if any) associated with the package.
-   dllInfo <- getLoadedDLLs()[[package]]
-   if (!is.null(dllInfo) && !is.null(pkgPath))
-   {
-      suppressWarnings(
-         library.dynam.unload(package, pkgPath)
-      )
-   }
-})
-
-.rs.addFunction("packageVersion", function(name, libPath, pkgs)
-{
-   pkgs <- subset(pkgs, Package == name & LibPath == libPath)
-   if (nrow(pkgs) == 1)
-      pkgs$Version
-   else
-      ""
-})
-
-.rs.addFunction( "initDefaultUserLibrary", function()
-{
-  userdir <- .rs.defaultUserLibraryPath()
-  dir.create(userdir, showWarnings = FALSE, recursive = TRUE)
-  .libPaths(c(userdir, .libPaths()))
-})
-
-.rs.addFunction("ensureWriteableUserLibrary", function()
-{
-   if (!.rs.defaultLibPathIsWriteable())
-      .rs.initDefaultUserLibrary()
-})
-
-.rs.addFunction("lastCharacterIs", function(value, ending) {
-   identical(tail(strsplit(value, "")[[1]], n = 1), ending)
-})
-
-.rs.addFunction("listInstalledPackages", function()
-{
-   # get the CRAN repository URL, and remove a trailing slash if required
-   repos <- getOption("repos")
-   cran <- if ("CRAN" %in% names(repos))
-      repos[["CRAN"]]
-   else
-      .Call("rs_rstudioCRANReposUrl", PACKAGE = "(embedding)")
-   
-   # trim trailing slashes if necessary
-   cran <- gsub("/*", "", cran)
-   
-   # helper function for extracting information from a package's
-   # DESCRIPTION file
-   readPackageInfo <- function(pkgPath) {
-      
-      # attempt to read package metadata
-      desc <- .rs.tryCatch({
-         metapath <- file.path(pkgPath, "Meta", "package.rds")
-         metadata <- readRDS(metapath)
-         as.list(metadata$DESCRIPTION)
-      })
-      
-      # if that failed, try reading the DESCRIPTION
-      if (inherits(desc, "error"))
-         desc <- read.dcf(file.path(pkgPath, "DESCRIPTION"), all = TRUE)
-      
-      # attempt to infer an appropriate URL for this package
-      if (identical(as.character(desc$Priority), "base")) {
-         source <- "Base"
-         url <- ""
-      } else if (!is.null(desc$URL)) {
-         source <- "Custom"
-         url <- sub("[ ,].*", "", trimws(desc$URL))
-      } else if ("biocViews" %in% names(desc)) {
-         source <- "Bioconductor"
-         url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
-      } else if (identical(desc$Repository, "CRAN")) {
-         source <- "CRAN"
-         url <- sprintf("%s/package=%s", cran, desc$Package)
-      } else if (!is.null(desc$GithubRepo)) {
-         source <- "GitHub"
-         url <- sprintf("https://github.com/%s/%s", desc$GithubUsername, desc$GithubRepo)
-      } else {
-         source <- "Unknown"
-         url <- sprintf("%s/package=%s", cran, desc$Package)
-      }
-      
-      list(
-         Package     = .rs.nullCoalesce(desc$Package, "[Unknown]"),
-         LibPath     = dirname(pkgPath),
-         Version     = .rs.nullCoalesce(desc$Version, "[Unknown]"),
-         Title       = .rs.nullCoalesce(desc$Title, "[No description available]"),
-         Source      = source,
-         BrowseUrl   = utils::URLencode(url)
-      )
-      
-   }
-   
-   # to be called if our attempt to read the package DESCRIPTION file failed
-   # for some reason
-   emptyPackageInfo <- function(pkgPath) {
-      
-      package <- basename(pkgPath)
-      libPath <- dirname(pkgPath)
-      
-      list(
-         Package   = package,
-         LibPath   = libPath,
-         Version   = "[Unknown]",
-         Title     = "[Failed to read package metadata]",
-         Source    = "Unknown",
-         BrowseUrl = ""
-      )
-      
-   }
-   
-   # now, find packages. we'll only include packages that have
-   # a Meta folder. note that the pseudo-package 'translations'
-   # lives in the R system library, and has a DESCRIPTION file,
-   # but cannot be loaded as a regular R package.
-   packagePaths <- list.files(.rs.uniqueLibraryPaths(), full.names = TRUE)
-   hasMeta <- file.exists(file.path(packagePaths, "Meta"))
-   packagePaths <- packagePaths[hasMeta]
-   
-   # now, iterate over these to generate the requisite package
-   # information and combine into a data.frame
-   parts <- lapply(packagePaths, function(pkgPath) {
-      
-      tryCatch(
-         readPackageInfo(pkgPath),
-         error = function(e) emptyPackageInfo(pkgPath)
-      )
-      
-   })
-   
-   # combine into a data.frame
-   info <- .rs.rbindList(parts)
-   
-   # find which packages are currently attached (be careful to handle
-   # cases where package is installed into multiple libraries)
-   #
-   # we suppress warnings here as 'find.packages(.packages())' can warn
-   # if a package that is attached is no longer actually installed
-   loaded <- suppressWarnings(
-      normalizePath(file.path(info$LibPath, info$Package), winslash = "/", mustWork = FALSE) %in%
-      normalizePath(find.package(.packages(), quiet = TRUE), winslash = "/", mustWork = FALSE)
-   )
-   
-   # extract fields relevant to us
-   packages <- data.frame(
-      name             = info$Package,
-      library          = .rs.createAliasedPath(info$LibPath),
-      library_absolute = info$LibPath,
-      library_index    = match(info$LibPath, .libPaths(), nomatch = 0L),
-      version          = info$Version,
-      desc             = info$Title,
-      loaded           = loaded,
-      source           = info$Source,
-      browse_url       = info$BrowseUrl,
-      check.rows       = TRUE,
-      stringsAsFactors = FALSE
-   )
-   
-   # sort and return
-   packages[order(packages$name), ]
 })
 
 .rs.addJsonRpcHandler("get_package_install_context", function()
@@ -425,8 +70,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # TODO: What if no repositories are set?
    selectedRepositoryNames <- names(repos)
    if (is.null(selectedRepositoryNames))
-     selectedRepositoryNames <- "CRAN"
-
+      selectedRepositoryNames <- "CRAN"
+   
    # package archive extension
    packageArchiveExtension <- switch(
       Sys.info()[["sysname"]],
@@ -441,17 +86,19 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       defaultLibraryPath <- .rs.normalizePath(defaultLibraryPath)
    
    # return context
-   list(cranMirrorConfigured = cranMirrorConfigured,
-        selectedRepositoryNames = selectedRepositoryNames,
-        packageArchiveExtension = packageArchiveExtension,
-        defaultLibraryPath = defaultLibraryPath,
-        defaultLibraryWriteable = .rs.defaultLibPathIsWriteable(),
-        writeableLibraryPaths = .rs.writeableLibraryPaths(),
-        defaultUserLibraryPath = .rs.defaultUserLibraryPath(),
-        devModeOn = .rs.devModeOn())
+   list(
+      cranMirrorConfigured = cranMirrorConfigured,
+      selectedRepositoryNames = selectedRepositoryNames,
+      packageArchiveExtension = packageArchiveExtension,
+      defaultLibraryPath = defaultLibraryPath,
+      defaultLibraryWriteable = .rs.defaultLibPathIsWriteable(),
+      writeableLibraryPaths = .rs.writeableLibraryPaths(),
+      defaultUserLibraryPath = .rs.defaultUserLibraryPath(),
+      devModeOn = .rs.devModeOn()
+   )
 })
 
-.rs.addJsonRpcHandler( "get_cran_mirrors", function()
+.rs.addJsonRpcHandler("get_cran_mirrors", function()
 {
    # get CRAN mirrors (securely if we are configured to do so)
    haveSecureMethod <- .rs.haveSecureDownloadFileMethod()
@@ -477,10 +124,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                         country = cranMirrors$CountryCode,
                         ok = cranMirrors$OK,
                         stringsAsFactors = FALSE)
-
+   
    # filter by OK status
    cranDF <- cranDF[as.logical(cranDF$ok), ]
-
+   
    # filter by mirror type supported by the current download.file.method
    # (also verify that https urls are provided inline -- if we didn't do
    # this and CRAN changed the format we could end up with no mirrors)
@@ -490,7 +137,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       cranDF <- cranDF[secureMirror,]
    else
       cranDF <- cranDF[!secureMirror,]
-
+   
    # prepend RStudio mirror and return
    rstudioDF <- data.frame(name = "Global (CDN)",
                            host = "RStudio",
@@ -514,34 +161,71 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addJsonRpcHandler( "init_default_user_library", function()
 {
-  .rs.initDefaultUserLibrary()
+   .rs.initDefaultUserLibrary()
 })
 
 .rs.addJsonRpcHandler("check_for_package_updates", function()
 {
-   # by default, check for updates in all writable library paths
-   libPaths <- .rs.writeableLibraryPaths()
+   # Exit early if we don't have any repositories set.
+   repos <- getOption("repos")
+   if (length(repos) == 0L)
+      return(list())
    
-   # if this is an renv project, check only the project library path
-   if ("renv" %in% loadedNamespaces())
+   # Get all of the currently-installed packages. We list packages for each
+   # library separately, so we can merge them appropriately after.
+   installedPkgsList <- lapply(.libPaths(), function(libPath)
    {
-      activeProjectPath <- .rs.renv.activeProjectPath()
-      if (!is.null(activeProjectPath))
-         libPaths <- .libPaths()[[1L]]
-   }
+      pkgPaths <- list.files(libPath, full.names = TRUE)
+      
+      pkgDescs <- lapply(pkgPaths, function(pkgPath)
+      {
+         pkgDesc <- tryCatch(
+            .rs.readPackageDescription(pkgPath),
+            condition = function(cnd) NULL
+         )
+         
+         pkgDesc[c("Package", "Version")]
+      })
+      
+      pkgResult <- .rs.rbindList(Filter(length, pkgDescs))
+      pkgResult[["LibPath"]] <- libPath
+      pkgResult
+   })
    
-   # get updates writable libraries and convert to a data frame
-   updates <- as.data.frame(
-      utils::old.packages(lib.loc = libPaths),
+   installedPkgs <- .rs.rbindList(installedPkgsList)
+   
+   # Remove duplicates.
+   installedPkgs <- installedPkgs[!duplicated(installedPkgs$Package), ]
+   
+   # Compare installed packages with what's available from package repositories.
+   availablePkgs <- as.data.frame(
+      utils::available.packages(),
       stringsAsFactors = FALSE
    )
-   row.names(updates) <- NULL
    
+   # Keep only the package name and version component.
+   availablePkgs <- data.frame(
+      Package  = availablePkgs[["Package"]],
+      ReposVer = availablePkgs[["Version"]],
+      stringsAsFactors = FALSE
+   )
+   
+   # Merge in the repository version components.
+   allPkgs <- merge(
+      x  = installedPkgs,
+      y  = availablePkgs,
+      by = "Package"
+   )
+   
+   # Figure out which packages are out-of-date.
+   oldPkgs <- subset(allPkgs, numeric_version(Version) < numeric_version(ReposVer))
+   
+   # Add in version fields as appropriate.
    data.frame(
-      packageName = updates$Package,
-      libPath     = updates$LibPath,
-      installed   = updates$Installed,
-      available   = updates$ReposVer,
+      packageName = oldPkgs[["Package"]],
+      libPath     = oldPkgs[["LibPath"]],
+      installed   = oldPkgs[["Version"]],
+      available   = oldPkgs[["ReposVer"]],
       stringsAsFactors = FALSE
    )
    
@@ -733,95 +417,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.scalar(candidates[[1]])
 })
 
-.rs.addFunction("readPackageImports", function(pkg)
-{
-   pkgPath <- find.package(pkg, quiet = TRUE)
-   if (length(pkgPath) == 0L)
-      return(character())
-   
-   metaPath <- file.path(pkgPath, "Meta/package.rds")
-   if (!file.exists(metaPath))
-      return(character())
-   
-   metaInfo <- readRDS(metaPath)
-   importInfo <- metaInfo$Imports
-   sort(unique(names(importInfo)))
-})
-
-.rs.addFunction("recursivePackageDependenciesImpl", function(pkg, envir)
-{
-   if (exists(pkg, envir = envir))
-      return()
-   
-   deps <- setdiff(.rs.readPackageImports(pkg), "base")
-   assign(pkg, deps, envir = envir)
-   
-   for (dep in deps)
-      .rs.recursivePackageDependenciesImpl(dep, envir)
-})
-
-.rs.addFunction("recursivePackageDependencies", function(pkgs)
-{
-   envir <- new.env(parent = emptyenv())
-   for (pkg in pkgs)
-      .rs.recursivePackageDependenciesImpl(pkg, envir)
-   as.list(envir, all.names = TRUE)
-})
-
-.rs.addFunction("packagesLoaded", function(pkgs)
-{
-   # exclude base packages
-   basePkgs <- rownames(installed.packages(lib.loc = .Library, priority = "base"))
-   pkgs <- setdiff(pkgs, basePkgs)
-   
-   # first check loaded namespaces
-   if (any(pkgs %in% loadedNamespaces()))
-      return(TRUE)
-
-   # now check if there are libraries still loaded in spite of the
-   # namespace being unloaded 
-   libs <- .dynLibs()
-   libnames <- vapply(libs, "[[", character(1), "name")
-   return(any(pkgs %in% libnames))
-})
-
-.rs.addFunction("loadedPackageUpdates", function(pkgs)
-{
-   # are we ignoring?
-   ignore <- .rs.ignoreNextLoadedPackageCheck
-   .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
-   if (ignore)
-      return(FALSE)
-   
-   # first, check if the packages themselves are loaded
-   if (.rs.packagesLoaded(pkgs))
-      return(TRUE)
-   
-   # next, check if any of these package's dependencies are loaded
-   recdeps <- .rs.recursivePackageDependencies(pkgs)
-   if (.rs.packagesLoaded(recdeps))
-      return(TRUE)
-   
-   FALSE
-})
-
-.rs.addFunction("loadedPackagesAndDependencies", function(pkgs)
-{
-   recdeps <- .rs.recursivePackageDependencies(pkgs)
-   sort(unique(unlist(recdeps)))
-})
-
-.rs.addFunction("forceUnloadForPackageInstall", function(pkgs)
-{
-   sapply(pkgs, .rs.forceUnloadPackage)
-   pkgs
-})
-
-.rs.addFunction("enqueLoadedPackageUpdates", function(installCmd)
-{
-   .Call("rs_enqueLoadedPackageUpdates", installCmd, PACKAGE = "(embedding)")
-})
-
 .rs.addJsonRpcHandler("loaded_package_updates_required", function(pkgs)
 {
    .rs.scalar(.rs.loadedPackageUpdates(as.character(pkgs)))
@@ -832,16 +427,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    return(NULL)
 })
 
-.rs.addFunction("getCachedAvailablePackages", function(contribUrl)
-{
-   .Call("rs_getCachedAvailablePackages", contribUrl, PACKAGE = "(embedding)")
-})
-
-.rs.addFunction("downloadAvailablePackages", function(contribUrl)
-{
-   .Call("rs_downloadAvailablePackages", contribUrl, PACKAGE = "(embedding)")
-})
-
 .rs.addJsonRpcHandler("package_skeleton", function(packageName,
                                                    packageDirectory,
                                                    sourceFiles,
@@ -849,7 +434,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 {
    # mark encoding
    Encoding(packageDirectory) <- "UTF-8"
-
+   
    # sourceFiles is passed in as a list -- convert back to
    # character vector
    sourceFiles <- as.character(sourceFiles)
@@ -1163,7 +748,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
             }
 
          ')
-
+         
          helloWorldDoc <- .rs.trimCommonIndent('
             \\name{rcpp_hello}
             \\alias{rcpp_hello}
@@ -1183,7 +768,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          cat(helloWorldCpp,
              file = file.path(packageDirectory, "src", "rcpp_hello.cpp"),
              sep = "\n")
-
+         
          cat(helloWorldDoc,
              file = file.path(packageDirectory, "man", "rcpp_hello.Rd"),
              sep = "\n")
@@ -1281,7 +866,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    {
       .Call("rs_addFirstRunDoc", scratchPath, "R/hello.R", PACKAGE = "(embedding)")
    }
-
+   
    ## NOTE: This must come last to ensure the other package
    ## infrastructure bits have been generated; otherwise
    ## compileAttributes can fail
@@ -1299,6 +884,638 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    .rs.success()
    
+})
+
+.rs.addJsonRpcHandler("validate_cran_repo", function(url) {
+   
+   url <- .rs.completeUrl(.rs.appendSlashIfNeeded(url), "src/contrib/PACKAGES.gz")
+   packagesFile <- tempfile(fileext = ".gz")
+   
+   # ensure warnings are not suppressed in this scope
+   op <- options(warn = 1L)
+   on.exit(options(op), add = TRUE)
+   
+   # execute download.file(), but capture warnings and errors
+   warnings <- list()
+   error <- NULL
+   
+   withCallingHandlers(
+      
+      tryCatch(
+         download.file(url, packagesFile, quiet = TRUE),
+         error = function(cnd) error <<- cnd
+      ),
+      
+      warning = function(cnd) {
+         warnings[[length(warnings) + 1L]] <<- cnd
+         restart <- findRestart("muffleWarning")
+         if (isRestart(restart))
+            invokeRestart(restart)
+      }
+      
+   )
+   
+   
+   # build a message for display to client if an error occurred
+   message <- ""
+   if (length(error))
+      message <- paste("Error:", conditionMessage(error))
+   
+   if (length(warnings)) {
+      msgs <- vapply(warnings, conditionMessage, FUN.VALUE = character(1))
+      message <- paste(message, paste("Warning:", msgs, collapse = "\n"), sep = "\n")
+   }
+   
+   result <- list(
+      valid = file.exists(packagesFile) && is.null(error),
+      error = message
+   )
+   
+   .rs.scalarListFromList(result)
+   
+})
+
+.rs.addJsonRpcHandler("get_secondary_repos", function(cran, custom)
+{
+   .rs.getSecondaryRepos(cran, custom)
+})
+
+
+# a vectorized function that takes any number of paths and aliases the home
+# directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
+# paths outside the home directory untouched
+.rs.addFunction("createAliasedPath", function(path)
+{
+   homeDir <- path.expand("~/")
+   homePathIdx <- substr(path, 1L, nchar(homeDir)) == homeDir
+   homePaths <- path[homePathIdx]
+   homeSuffix <- substr(homePaths, nchar(homeDir), nchar(homePaths))
+   path[homePathIdx] <- paste0("~", homeSuffix)
+   path
+})
+
+# Some R commands called during packaging-related operations (such as untar)
+# delegate to the system tar binary specified in TAR. On OS X, R may set TAR to
+# /usr/bin/gnutar, which exists prior to Mavericks (10.9) but not in later
+# rleases of the OS. In the special case wherein the TAR environment variable
+# on OS X is set to a non-existent gnutar and there exists a tar at
+# /usr/bin/tar, tell R to use that binary instead.
+if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
+    identical(Sys.getenv("TAR"), "/usr/bin/gnutar") && 
+    !file.exists("/usr/bin/gnutar") &&
+    file.exists("/usr/bin/tar"))
+{
+   Sys.setenv(TAR = "/usr/bin/tar")
+}
+
+.rs.addFunction("beforePackageUnloaded", function(package)
+{
+   # force any promises associated with package's registered S3 methods --
+   # this is necessary as otherwise the lazy-load database may become corrupt
+   # if a new version of this package is later installed as the old promises
+   # will now have invalid pointers to the old lazy-load database.
+   #
+   # note that we iterate over all loaded packages here because loading a
+   # package might entail registering S3 methods in the namespace of the
+   # package owning the generic, which typically is a separate package
+   #
+   # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=16644
+   # https://github.com/rstudio/rstudio/issues/8265
+   for (namespaceName in loadedNamespaces())
+   {
+      .rs.tryCatch({
+         ns <- asNamespace(namespaceName)
+         table <- ns[[".__S3MethodsTable__."]]
+         as.list(table)
+      })
+   }
+})
+
+.rs.addFunction("updatePackageEvents", function()
+{
+   reportPackageStatus <- function(attached)
+   {
+      function(pkgname, ...)
+      {
+         packagePath <- .rs.pathPackage(pkgname, quiet = TRUE)
+         packageStatus = list(
+            name     = I(pkgname),
+            library  = I(dirname(packagePath)),
+            path     = I(.rs.createAliasedPath(packagePath)),
+            attached = I(attached)
+         )
+         .rs.enqueClientEvent("package_status_changed", packageStatus)
+      }
+   }
+   
+   notifyPackageLoaded <- function(pkgname, ...)
+   {
+      .Call("rs_packageLoaded", pkgname, PACKAGE = "(embedding)")
+
+      # when a package is loaded, it can register S3 methods which replace overrides we've
+      # attached manually; take this opportunity to reattach them.
+      .rs.reattachS3Overrides()
+   }
+
+   notifyPackageUnloaded <- function(pkgname, ...)
+   {
+      .rs.beforePackageUnloaded(pkgname)
+      .Call("rs_packageUnloaded", pkgname, PACKAGE = "(embedding)")
+   }
+   
+   pkgNames <-
+      base::list.dirs(.libPaths(), full.names = FALSE, recursive = FALSE)
+   
+   sapply(pkgNames, function(packageName)
+   {
+      if ( !(packageName %in% .rs.hookedPackages) )
+      {
+         attachEventName = packageEvent(packageName, "attach")
+         setHook(attachEventName, reportPackageStatus(TRUE), action = "append")
+         
+         loadEventName = packageEvent(packageName, "onLoad")
+         setHook(loadEventName, notifyPackageLoaded, action = "append")
+
+         unloadEventName = packageEvent(packageName, "onUnload")
+         setHook(unloadEventName, notifyPackageUnloaded, action = "append")
+             
+         detachEventName = packageEvent(packageName, "detach")
+         setHook(detachEventName, reportPackageStatus(FALSE), action = "append")
+          
+         .rs.setVar("hookedPackages", append(.rs.hookedPackages, packageName))
+      }
+   })
+})
+
+.rs.addFunction("packages.initialize", function()
+{  
+   # list of packages we have hooked attach/detach for
+   .rs.setVar("hookedPackages", character())
+
+   # set flag indicating we should not ignore loadedPackageUpdates checks
+   .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
+    
+   # ensure we are subscribed to package attach/detach events
+   .rs.updatePackageEvents()
+})
+
+.rs.addFunction( "addRToolsToPath", function()
+{
+    .Call("rs_addRToolsToPath", PACKAGE = "(embedding)")
+})
+
+.rs.addFunction( "restorePreviousPath", function()
+{
+    .Call("rs_restorePreviousPath", PACKAGE = "(embedding)")
+})
+
+.rs.addFunction( "uniqueLibraryPaths", function()
+{
+   # get library paths (normalize on unix to get rid of duplicate symlinks)
+   libPaths <- .libPaths()
+   if (!identical(.Platform$OS.type, "windows"))
+      libPaths <- .rs.normalizePath(libPaths)
+
+   subset(libPaths, !duplicated(libPaths))
+})
+
+.rs.addFunction( "writeableLibraryPaths", function()
+{
+   uniqueLibraryPaths <- .rs.uniqueLibraryPaths()
+   writeableLibraryPaths <- character()
+   for (libPath in uniqueLibraryPaths)
+      if (.rs.isLibraryWriteable(libPath))
+         writeableLibraryPaths <- append(writeableLibraryPaths, libPath)
+   writeableLibraryPaths
+})
+
+.rs.addFunction("defaultUserLibraryPath", function()
+{
+   unlist(strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep))[1L]
+})
+
+.rs.addFunction("defaultLibraryPath", function()
+{
+  .libPaths()[1]
+})
+
+.rs.addFunction("isPackageHyperlinkSafe", function(packageName)
+{
+   allowed <- setdiff(
+      c(.packages(), "testthat", "rlang", "devtools", "usethis", "pkgload", "pkgdown"), 
+      c("base", "stats", "utils")
+   )
+   .rs.scalar(
+      packageName %in% allowed
+   )
+})
+
+.rs.addFunction("forceUnloadPackage", function(package)
+{
+   tryCatch(
+      withCallingHandlers(
+         .rs.forceUnloadPackageImpl(package),
+         warning = function(w) invokeRestart("muffleWarning")
+      ),
+      error = warning
+   )
+})
+
+.rs.addFunction("forceUnloadPackageImpl", function(package)
+{
+   .rs.beforePackageUnloaded(package)
+   
+   # Figure out where the package was loaded from before unloading it.
+   pkgPath <- if (package %in% loadedNamespaces())
+   {
+      getNamespaceInfo(package, "path")
+   }
+   
+   # Now, try to unload the package. If it's attached, detach it;
+   # if the namespace is loaded, unload it.
+   searchPathName <- paste("package", package, sep = ":")
+   if (searchPathName %in% search())
+   {
+      detach(
+         name = searchPathName,
+         unload = TRUE,
+         character.only = TRUE,
+         force = TRUE
+      )
+   }
+   else if (package %in% loadedNamespaces())
+   {
+      unloadNamespace(package)
+   }
+   
+   # Now, unload a loaded DLL (if any) associated with the package.
+   dllInfo <- getLoadedDLLs()[[package]]
+   if (!is.null(dllInfo) && !is.null(pkgPath))
+   {
+      suppressWarnings(
+         library.dynam.unload(package, pkgPath)
+      )
+   }
+})
+
+.rs.addFunction("packageVersion", function(name, libPath, pkgs)
+{
+   pkgs <- subset(pkgs, Package == name & LibPath == libPath)
+   if (nrow(pkgs) == 1)
+      pkgs$Version
+   else
+      ""
+})
+
+.rs.addFunction( "initDefaultUserLibrary", function()
+{
+  userdir <- .rs.defaultUserLibraryPath()
+  dir.create(userdir, showWarnings = FALSE, recursive = TRUE)
+  .libPaths(c(userdir, .libPaths()))
+})
+
+.rs.addFunction("ensureWriteableUserLibrary", function()
+{
+   if (!.rs.defaultLibPathIsWriteable())
+      .rs.initDefaultUserLibrary()
+})
+
+.rs.addFunction("lastCharacterIs", function(value, ending) {
+   identical(tail(strsplit(value, "")[[1]], n = 1), ending)
+})
+
+.rs.addFunction("findPackage", function(pkgPath)
+{
+   if (grepl("/", pkgPath, fixed = TRUE))
+      pkgPath
+   else
+      find.package(pkgPath, quiet = TRUE)
+})
+
+.rs.addFunction("inferPackageSource", function(pkgDesc)
+{
+   # Check for 'base' packages.
+   if (identical(pkgDesc[["Priority"]], "base"))
+      return("Base")
+   
+   # Compute the package remote type, assuming "stanadrd" if none specified.
+   rtype <- .rs.nullCoalesce(pkgDesc[["RemoteType"]], "standard")
+   
+   # Handle 'local' remotes.
+   if (identical(rtype, "local"))
+   {
+      path <- pkgDesc[["RemoteUrl"]]
+      if (is.null(path))
+      {
+         path <- pkgDesc[["RemoteUrl"]]
+         if (!is.null(path))
+         {
+            path <- sub("^local::", "", path, perl = TRUE)
+         }
+      }
+      
+      return(sprintf("Local [%s]", .rs.nullCoalesce(path, "?")))
+   }
+   
+   # Handle 'standard' remotes.
+   
+   if (identical(rtype, "standard"))
+   {
+      source <- .rs.nullCoalesce(
+         pkgDesc[["RemoteReposName"]],
+         pkgDesc[["RemoteRepos"]],
+         pkgDesc[["Repository"]]
+      )
+      
+      # Shorten the name for Bioconductor remotes.
+      source <- sub("Bioconductor", "BioC", source, fixed = TRUE)
+      
+      # Check for R-universe remotes, and format them specially.
+      pattern <- "^https?://(.*)\\.r-universe\\.dev/?$"
+      m <- regexec(pattern, source)
+      matches <- regmatches(source, m)[[1L]]
+      if (length(matches))
+         source <- sprintf("R-universe [%s]", matches[[2L]])
+      
+      # Check for PPM remorts, and format them specially.
+      if (identical(pkgDesc[["Repository"]], "RSPM"))
+      {
+         repos <- pkgDesc[["RemoteRepos"]]
+         if (!is.null(repos))
+         {
+            ppm <- if (grepl("https://p3m.dev/", repos, fixed = TRUE))
+               "p3m.dev"
+            else if (grepl("https://packagemanager.posit.co/", repos, fixed = TRUE))
+               "P3M"
+            else
+               "PPM"
+            
+            snapshot <- basename(repos)
+            name <- basename(dirname(repos))
+            source <- sprintf("%s [%s/%s]", ppm, name, snapshot)
+         }
+      }
+      
+      return(source)
+   }
+   
+   # Handle other remotes. Start by mapping the RemoteType field
+   # into a "pretty" version of the type.
+   aliases <- list(
+      bioc         = "Bioconductor",
+      bioconductor = "Bioconductor",
+      bitbucket    = "Bitbucket",
+      cran         = "CRAN",
+      git2r        = "Git",
+      github       = "GitHub",
+      gitlab       = "GitLab",
+      local        = "Local",
+      repository   = "Repository",
+      standard     = "Repository",
+      url          = "URL",
+      xgit         = "Git"
+   )
+   
+   type <- .rs.nullCoalesce(aliases[[rtype]], rtype)
+   
+   # Check for packages installed from e.g. hosted Git repositories.
+   user <- pkgDesc[["RemoteUsername"]]
+   repo <- pkgDesc[["RemoteRepo"]]
+   if (!is.null(user) && !is.null(repo))
+   {
+      source <- sprintf("%s [%s/%s]", type, user, repo)
+      return(source)
+   }
+   
+   # If we couldn't infer any more details, just use the type.
+   type
+   
+})
+
+.rs.addFunction("inferPackageBrowseUrl", function(pkgDesc)
+{
+   repos <- as.list(getOption("repos"))
+   
+   # For packages that were installed from CRAN or RSPM, browse
+   # to the package page associated with the repository.
+   repository <- pkgDesc[["Repository"]]
+   if (identical(repository, "RSPM") || identical(repository, "CRAN"))
+   {
+      repoUrl <- .rs.nullCoalesce(
+         pkgDesc[["RemoteRepos"]],
+         repos[[repository]],
+         repos[[1L]]
+      )
+      
+      if (length(repoUrl))
+      {
+         url <- sprintf("%s/package=%s", repoUrl[[1L]], pkgDesc[["Package"]])
+         return(url)
+      }
+   }
+   
+   # Try to build a link for packages installed from other remotes.
+   host <- pkgDesc[["RemoteHost"]]
+   user <- pkgDesc[["RemoteUsername"]]
+   repo <- pkgDesc[["RemoteRepo"]]
+   
+   if (!is.null(host) && !is.null(user) && !is.null(repo))
+   {
+      host <- sub("api.github.com", "github.com", host, fixed = TRUE)
+      url <- sprintf("https://%s/%s/%s", host, user, repo)
+      return(url)
+   }
+   
+   # If 'Repository' appears to be a URL, use it directly.
+   if (is.character(repository) && grepl("^https://", repository))
+   {
+      return(repository)
+   }
+   
+   # If this appears to be a Bioconductor package, link there.
+   if (!is.null(pkgDesc[["biocViews"]]))
+   {
+      mirror <- getOption("BioC_mirror", default = "https://bioconductor.org")
+      fmt <- "%s/packages/release/bioc/html/%s.html"
+      url <- sprintf(fmt, mirror, pkgDesc[["Package"]])
+      return(url)
+   }
+   
+   # Give up.
+   ""
+})
+
+.rs.addFunction("listInstalledPackages", function()
+{
+   # Look for packages in the library paths.
+   pkgPaths <- list.files(.rs.uniqueLibraryPaths(), full.names = TRUE)
+   
+   # Include only packages which have a 'Meta' sub-directory.
+   hasMeta <- file.exists(file.path(pkgPaths, "Meta"))
+   pkgPaths <- pkgPaths[hasMeta]
+   
+   # Iterate over these packages, and read their DESCRIPTION files.
+   pkgDescs <- lapply(pkgPaths, function(pkgPath) {
+      
+      pkgDesc <- tryCatch(
+         .rs.readPackageDescription(pkgPath),
+         condition = function(e) list(Package = basename(pkgPath))
+      )
+      
+      # Pull out package name for later use.
+      pkgName <- pkgDesc[["Package"]]
+      
+      # Also record metadata about the library where it was found.
+      libraryPath <- dirname(pkgPath)
+      pkgDesc[["Library"]] <- .rs.createAliasedPath(libraryPath)
+      pkgDesc[["LibraryAbsolute"]] <- libraryPath
+      pkgDesc[["LibraryIndex"]] <- match(libraryPath, .libPaths(), nomatch = 0L)
+      
+      # Also note which packages appear to be loaded or attached.
+      isLoaded <- FALSE
+      if (pkgName %in% loadedNamespaces())
+      {
+         isLoaded <-
+            identical(pkgDesc[["Priority"]], "base") ||
+            identical(getNamespaceInfo(pkgName, "path"), pkgPath)
+      }
+      
+      isAttached <-
+         isLoaded &&
+         paste("package", pkgName, sep = ":") %in% search()
+      
+      pkgDesc[["Loaded"]] <- isLoaded
+      pkgDesc[["Attached"]] <- isAttached
+      
+      pkgDesc[["Source"]] <- tryCatch(
+         .rs.inferPackageSource(pkgDesc),
+         error = function(cnd) "[Unknown]"
+      )
+      
+      pkgDesc[["BrowseUrl"]] <- tryCatch(
+         .rs.inferPackageBrowseUrl(pkgDesc),
+         error = function(cnd) ""
+      )
+      
+      url <- pkgDesc[["URL"]]
+      if (!is.null(url))
+      {
+         urls <- strsplit(url, "[,\\s\\n]+", perl = TRUE)[[1L]]
+         pkgDesc[["PackageUrl"]] <- urls[[1L]]
+      }
+      
+      # Return the resulting object.
+      .rs.scalarListFromList(pkgDesc)
+      
+   })
+   
+   # Sort based on the package name.
+   pkgOrder <- order(.rs.mapChr(pkgDescs, `[[`, "Package"))
+   pkgDescs <- pkgDescs[pkgOrder]
+   
+   # And we're done.
+   pkgDescs
+})
+
+
+
+.rs.addFunction("readPackageImports", function(pkg)
+{
+   pkgPath <- find.package(pkg, quiet = TRUE)
+   if (length(pkgPath) == 0L)
+      return(character())
+   
+   metaPath <- file.path(pkgPath, "Meta/package.rds")
+   if (!file.exists(metaPath))
+      return(character())
+   
+   metaInfo <- readRDS(metaPath)
+   importInfo <- metaInfo$Imports
+   sort(unique(names(importInfo)))
+})
+
+.rs.addFunction("recursivePackageDependenciesImpl", function(pkg, envir)
+{
+   if (exists(pkg, envir = envir))
+      return()
+   
+   deps <- setdiff(.rs.readPackageImports(pkg), "base")
+   assign(pkg, deps, envir = envir)
+   
+   for (dep in deps)
+      .rs.recursivePackageDependenciesImpl(dep, envir)
+})
+
+.rs.addFunction("recursivePackageDependencies", function(pkgs)
+{
+   envir <- new.env(parent = emptyenv())
+   for (pkg in pkgs)
+      .rs.recursivePackageDependenciesImpl(pkg, envir)
+   as.list(envir, all.names = TRUE)
+})
+
+.rs.addFunction("packagesLoaded", function(pkgs)
+{
+   # exclude base packages
+   basePkgs <- rownames(installed.packages(lib.loc = .Library, priority = "base"))
+   pkgs <- setdiff(pkgs, basePkgs)
+   
+   # first check loaded namespaces
+   if (any(pkgs %in% loadedNamespaces()))
+      return(TRUE)
+
+   # now check if there are libraries still loaded in spite of the
+   # namespace being unloaded 
+   libs <- .dynLibs()
+   libnames <- vapply(libs, "[[", character(1), "name")
+   return(any(pkgs %in% libnames))
+})
+
+.rs.addFunction("loadedPackageUpdates", function(pkgs)
+{
+   # are we ignoring?
+   ignore <- .rs.ignoreNextLoadedPackageCheck
+   .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
+   if (ignore)
+      return(FALSE)
+   
+   # first, check if the packages themselves are loaded
+   if (.rs.packagesLoaded(pkgs))
+      return(TRUE)
+   
+   # next, check if any of these package's dependencies are loaded
+   recdeps <- .rs.recursivePackageDependencies(pkgs)
+   if (.rs.packagesLoaded(recdeps))
+      return(TRUE)
+   
+   FALSE
+})
+
+.rs.addFunction("loadedPackagesAndDependencies", function(pkgs)
+{
+   recdeps <- .rs.recursivePackageDependencies(pkgs)
+   sort(unique(unlist(recdeps)))
+})
+
+.rs.addFunction("forceUnloadForPackageInstall", function(pkgs)
+{
+   sapply(pkgs, .rs.forceUnloadPackage)
+   pkgs
+})
+
+.rs.addFunction("enqueLoadedPackageUpdates", function(installCmd)
+{
+   .Call("rs_enqueLoadedPackageUpdates", installCmd, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("getCachedAvailablePackages", function(contribUrl)
+{
+   .Call("rs_getCachedAvailablePackages", contribUrl, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("downloadAvailablePackages", function(contribUrl)
+{
+   .Call("rs_downloadAvailablePackages", contribUrl, PACKAGE = "(embedding)")
 })
 
 # Formats a person object in a way suitable for the Authors@R
@@ -1840,69 +2057,26 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    result
 })
 
-.rs.addJsonRpcHandler("get_secondary_repos", function(cran, custom) {
-   .rs.getSecondaryRepos(cran, custom)
-})
-
 .rs.addFunction("appendSlashIfNeeded", function(url) {
    slash <- if (.rs.lastCharacterIs(url, "/")) "" else "/"
    paste(url, slash, sep = "")
 })
 
-.rs.addJsonRpcHandler("validate_cran_repo", function(url) {
-   
-   url <- .rs.completeUrl(.rs.appendSlashIfNeeded(url), "src/contrib/PACKAGES.gz")
-   packagesFile <- tempfile(fileext = ".gz")
-   
-   # ensure warnings are not suppressed in this scope
-   op <- options(warn = 1L)
-   on.exit(options(op), add = TRUE)
-   
-   # execute download.file(), but capture warnings and errors
-   warnings <- list()
-   error <- NULL
-   
-   withCallingHandlers(
-      
-      tryCatch(
-         download.file(url, packagesFile, quiet = TRUE),
-         error = function(cnd) error <<- cnd
-      ),
-      
-      warning = function(cnd) {
-         warnings[[length(warnings) + 1L]] <<- cnd
-         restart <- findRestart("muffleWarning")
-         if (isRestart(restart))
-            invokeRestart(restart)
-      }
-      
-   )
-      
-   
-   # build a message for display to client if an error occurred
-   message <- ""
-   if (length(error))
-      message <- paste("Error:", conditionMessage(error))
-   
-   if (length(warnings)) {
-      msgs <- vapply(warnings, conditionMessage, FUN.VALUE = character(1))
-      message <- paste(message, paste("Warning:", msgs, collapse = "\n"), sep = "\n")
+.rs.addFunction("installPackagesRequiresRestart", function(pkgs)
+{
+   # if we're in an renv project, no need
+   if ("renv" %in% loadedNamespaces())
+   {
+      project <- renv::project()
+      if (!is.null(project))
+         return(FALSE)
    }
    
-   result <- list(
-      valid = file.exists(packagesFile) && is.null(error),
-      error = message
-   )
+   # if we're in a packrat project, no need
+   mode <- Sys.getenv("R_PACKRAT_MODE", unset = NA)
+   if (identical(mode, "1"))
+      return(FALSE)
    
-   .rs.scalarListFromList(result)
-   
-})
-
-.rs.addJsonRpcHandler("is_package_installed", function(package, version)
-{
-   installed <- if (is.null(version))
-      .rs.isPackageInstalled(package)
-   else
-      .rs.isPackageVersionInstalled(package, version)
-   .rs.scalar(installed)
+   # in other cases, restart if one of the requested packages is loaded
+   .rs.loadedPackageUpdates(pkgs)
 })

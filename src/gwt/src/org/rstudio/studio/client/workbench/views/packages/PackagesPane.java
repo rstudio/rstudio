@@ -16,12 +16,11 @@ package org.rstudio.studio.client.workbench.views.packages;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
-import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -49,19 +48,23 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOp
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
-import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
+import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumn;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -73,13 +76,12 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
-import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
@@ -87,6 +89,20 @@ import com.google.inject.Inject;
 
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
+   private class WidgetTextHeader extends TextHeader
+   {
+      public WidgetTextHeader()
+      {
+         super("");
+      }
+
+      @Override
+      public String getHeaderStyleNames()
+      {
+         return dataGridRes_.dataGridStyle().widgetColumnHeader();
+      }
+   }
+
    @Inject
    public PackagesPane(Commands commands, 
                        Session session,
@@ -164,24 +180,30 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    public void setPackageStatus(PackageStatus status)
    {
-      int row = packageRow(status.getName(), status.getLib());
+      int row = packageRow(status.getName(), status.getLibrary());
       
       if (row != -1)
       {
          List<PackageInfo> packages = packagesDataProvider_.getList();
-        
-         packages.set(row, status.isLoaded() ? packages.get(row).asLoaded() :
-                                               packages.get(row).asUnloaded());
+         PackageInfo packageInfo = packages.get(row);
+         packageInfo.setAttached(status.isAttached());
+         packages.set(row, packageInfo);
       }
       
       // go through any duplicates to reconcile their status
+      // (in case the same package is installed into multiple libraries)
       List<PackageInfo> packages = packagesDataProvider_.getList();
-      for (int i=0; i<packages.size(); i++)
+      for (int i = 0; i < packages.size(); i++)
       {
-         if (packages.get(i).getName() == status.getName() &&
-             i != row)
+         if (i == row)
          {
-            packages.set(i, packages.get(i).asUnloaded());
+            continue;
+         }
+         else if (packages.get(i).getName() == status.getName())
+         {
+            PackageInfo packageInfo = packages.get(i);
+            packageInfo.setAttached(false);
+            packages.set(i, packageInfo);
          }
       }
    }
@@ -315,6 +337,17 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       private boolean packratVersion_;
    }
 
+   private class SourceCell extends AbstractCell<PackageInfo>
+   {
+      @Override
+      public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
+      {
+         String pkgSource = value.getPackageSource();
+         String source = (pkgSource != null) ? pkgSource : "[Unknown]";
+         sb.append(renderText(source));
+      }
+   }
+
    private class MetaDataCell extends AbstractCell<PackageInfo>
    {
       @Override
@@ -332,7 +365,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTableContainer_.addStyleName("ace_editor_theme");
       return packagesTableContainer_;
    }
-   
    
    @Override
    public void onResize()
@@ -361,7 +393,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       {
          packagesTableContainer_.clear();
          packagesTable_ = new RStudioDataGrid<>(
-            packagesDataProvider_.getList().size(), dataGridRes_);
+            packagesDataProvider_.getList().size(),
+            dataGridRes_);
       }
       catch (Exception e)
       {
@@ -398,55 +431,113 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       if (object.getPackageSource() == null)
          return false;
       
-      PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
-      return source != PackageInfo.Source.Base;
+      String source = object.getPackageSource();
+      return source != "Base";
    }
    
    private void initPackagesTable()
    {
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       packagesTable_.setSelectionModel(new NoSelectionModel<>());
-        
+      packagesTable_.addCellPreviewHandler(new CellPreviewEvent.Handler<PackageInfo>()
+      {
+         @Override
+         public void onCellPreview(CellPreviewEvent<PackageInfo> preview)
+         {
+            NativeEvent event = preview.getNativeEvent();
+            if (event.getType() != BrowserEvents.CLICK)
+               return;
+
+            EventTarget target = event.getEventTarget();
+            if (!Element.is(target))
+               return;
+
+            Element targetEl = Element.as(target);
+            if (!targetEl.hasTagName(InputElement.TAG))
+               return;
+
+            event.stopPropagation();
+            event.preventDefault();
+
+            boolean isChecked = targetEl.hasAttribute("checked");
+            if (isChecked)
+               observer_.unloadPackage(preview.getValue());
+            else
+               observer_.loadPackage(preview.getValue());
+         }
+      });
+
       loadedColumn_ = new LoadedColumn();
       nameColumn_ = new NameColumn();
     
-      descColumn_ = 
-         new Column<PackageInfo, PackageInfo>(new DescriptionCell()) {
-
-            @Override
-            public PackageInfo getValue(PackageInfo object)
-            {
-               return object;
-            } 
+      descColumn_ = new Column<PackageInfo, PackageInfo>(new DescriptionCell())
+      {
+         @Override
+         public PackageInfo getValue(PackageInfo object)
+         {
+            return object;
+         } 
       };  
       
-      versionColumn_ = 
-         new Column<PackageInfo, PackageInfo>(new VersionCell(false)) {
-
-            @Override
-            public PackageInfo getValue(PackageInfo object)
-            {
-               return object;
-            }
+      versionColumn_ = new Column<PackageInfo, PackageInfo>(new VersionCell(false))
+      {
+         @Override
+         public PackageInfo getValue(PackageInfo object)
+         {
+            return object;
+         }
       };
 
-      metadataColumn_ = 
-         new Column<PackageInfo, PackageInfo>(new MetaDataCell())
+      sourceColumn_ = new Column<PackageInfo, PackageInfo>(new SourceCell())
+      {
+         @Override
+         public PackageInfo getValue(PackageInfo object)
          {
-            @Override
-            public void render(Context context, PackageInfo object, SafeHtmlBuilder sb)
-            {
-               sb.appendHtmlConstant("<div style=\"font-style: oblique;\">");
-               sb.appendEscaped("(metadata)");
-               sb.appendHtmlConstant("</div>");
+            return object;
+         }
+      };
 
-            }
-            @Override
-            public PackageInfo getValue(PackageInfo object)
+      metadataColumn_ = new Column<PackageInfo, PackageInfo>(new MetaDataCell())
+      {
+         @Override
+         public void render(Context context, PackageInfo object, SafeHtmlBuilder sb)
+         {
+            sb.appendHtmlConstant("<div style=\"font-style: oblique;\">");
+            sb.appendEscaped("(metadata)");
+            sb.appendHtmlConstant("</div>");
+
+         }
+         @Override
+         public PackageInfo getValue(PackageInfo object)
+         {
+            return object;
+         }
+      };
+
+      helpColumn_ = new ImageButtonColumn<PackageInfo>(
+            new ImageResource2x(ThemeResources.INSTANCE.helpSmall2x()),
+            new OperationWithInput<PackageInfo>() {
+               @Override
+               public void execute(PackageInfo packageInfo)
+               {
+                  RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(packageInfo.getPackageUrl());
+               }
+            },
+            new TitleProvider<PackageInfo>()
             {
-               return object;
-            }
-         };
+               @Override
+               public String get(PackageInfo object)
+               {
+                  return object.getPackageUrl();
+               }
+            })
+      {
+         @Override
+         public boolean showButton(PackageInfo object)
+         {
+            return object.getPackageUrl() != null;
+         }
+      };
 
       browseColumn_ = new ImageButtonColumn<PackageInfo>(
             new ImageResource2x(ThemeResources.INSTANCE.browsePackage2x()),
@@ -462,19 +553,30 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                @Override
                public String get(PackageInfo object)
                {
-                  if (object.getPackageSource() == null)
-                     return constants_.browsePackageCRANLabel();
-                  
-                  PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
-                  switch (source)
+                  String source = object.getPackageSource();
+                  String url = object.getBrowseUrl();
+
+                  if (source != null)
                   {
-                  case Base         : return "";
-                  case Bioconductor : return constants_.browsePackageBioconductorLabel();
-                  case CRAN         : return constants_.browsePackageCRANLabel();
-                  case Custom       : return constants_.brosePackageLabel(object.getBrowseUrl());
-                  case GitHub       : return constants_.browsePackageGitHubLabel();
-                  case Unknown      : return constants_.browsePackageCRANLabel();
-                  default           : return constants_.browsePackageCRANLabel();
+                     if (url != null)
+                     {
+                        return constants_.browsePackageOn(source, url);
+                     }
+                     else
+                     {
+                        return "";
+                     }
+                  }
+                  else
+                  {
+                     if (url != null)
+                     {
+                        return constants_.browsePackageLabel(url);
+                     }
+                     else
+                     {
+                        return constants_.browsePackageCRANLabel();
+                     }
                   }
                }
             })
@@ -509,12 +611,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(nameColumn_, new TextHeader("Package"));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
       packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
+      packagesTable_.addColumn(sourceColumn_, new TextHeader(constants_.sourceText()));
       // packagesTable_.addColumn(metadataColumn_, new TextHeader("Metadata"));
 
       // set initial column widths
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
-      packagesTable_.setColumnWidth(nameColumn_, 180, Unit.PX);
+      packagesTable_.setColumnWidth(nameColumn_, 130, Unit.PX);
       packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
+      packagesTable_.setColumnWidth(sourceColumn_, 180, Unit.PX);
       // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
 
@@ -531,37 +635,16 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                }
          };
       
-         packageSourceColumn_ = 
-               new TextColumn<PackageInfo>() {
-                  @Override
-                  public String getValue(PackageInfo pkgInfo)
-                  {
-                     if (pkgInfo.isInProjectLibrary())
-                     {
-                        String source = pkgInfo.getPackratSource();
-                        if (source == "github")
-                           return "GitHub";
-                        else if (source == "Bioconductor")
-                           return "BioC";
-                        else if (source == "source")
-                           return constants_.sourceText();
-                        else
-                           return source;
-                     }
-                     else
-                        return "";
-                  }
-         };
-
          packagesTable_.addColumn(lockfileVersionColumn_, new TextHeader(constants_.lockfileText()));
          packagesTable_.setColumnWidth(lockfileVersionColumn_, 100, Unit.PX);
-
-         packagesTable_.addColumn(packageSourceColumn_, new TextHeader(constants_.sourceText()));
-         packagesTable_.setColumnWidth(packageSourceColumn_, 100, Unit.PX);
       }
      
+      // help column is common
+      packagesTable_.addColumn(helpColumn_, new WidgetTextHeader());
+      packagesTable_.setColumnWidth(helpColumn_, 20, Unit.PX);
+
       // browse column is common
-      packagesTable_.addColumn(browseColumn_, new TextHeader(""));
+      packagesTable_.addColumn(browseColumn_, new WidgetTextHeader());
       packagesTable_.setColumnWidth(browseColumn_, 20, Unit.PX);
 
       // remove column is common (note that we allocate extra column
@@ -602,43 +685,37 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private void updateColumnWidths()
    {
-      // TODO
+   }
+
+   class LoadedCell extends AbstractCell<PackageInfo>
+   {
+      public LoadedCell()
+      {
+      }
+
+      @Override
+      public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
+      {
+         SafeHtml checkbox = value.isAttached()
+            ? TEMPLATES.checkboxChecked(value.getName())
+            : TEMPLATES.checkboxUnchecked(value.getName());
+
+         sb.append(checkbox);
+      }
    }
    
-   class LoadedColumn extends Column<PackageInfo, LabeledBoolean>
+   class LoadedColumn extends Column<PackageInfo, PackageInfo>
    {
       public LoadedColumn()
       {
-         super(new AriaLabeledCheckboxCell(false, false));
-         
-         setFieldUpdater(new FieldUpdater<PackageInfo, LabeledBoolean>() {
-            @Override
-            public void update(int index, PackageInfo packageInfo, LabeledBoolean value)
-            {
-               if (packageInfo.getLibrary() == null ||
-                   packageInfo.getLibrary().length() == 0)
-               {
-                  display_.showMessage(GlobalDisplay.MSG_INFO, 
-                        constants_.packageNotLoadedCaption(),
-                        constants_.packageNotLoadedMessage(packageInfo.getName()));
-               }
-               else
-               {
-                  if (value.getBool())
-                     observer_.loadPackage(packageInfo);
-                  else
-                     observer_.unloadPackage(packageInfo);
-               }
-            }    
-         });
+         super(new LoadedCell());
       }
-      
+
       @Override
-      public LabeledBoolean getValue(PackageInfo packageInfo)
+      public PackageInfo getValue(PackageInfo packageInfo)
       {
-         return new LabeledBoolean(packageInfo.getName(), packageInfo.isLoaded());
+         return packageInfo;
       }
-      
    }
    
    // package name column which includes a hyperlink to package docs
@@ -708,9 +785,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private class DescriptionCell extends AbstractCell<PackageInfo>
    {
       @Override
-      public void render(Context context,
-                         PackageInfo pkgInfo,
-                         SafeHtmlBuilder sb)
+      public void render(Context context, PackageInfo pkgInfo, SafeHtmlBuilder sb)
       {
          String className;
          String packageDescription;
@@ -726,15 +801,30 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             className = dataGridRes_.dataGridStyle().packageColumn();
          }
 
-         sb.append(TEMPLATE.description(className, packageDescription));
+         sb.append(TEMPLATES.description(className, packageDescription));
       }
 
    }
 
-   interface DescriptionTemplate extends SafeHtmlTemplates
+   private final SafeHtml renderText(String text)
+   {
+      String className = dataGridRes_.dataGridStyle().packageColumn();
+      return TEMPLATES.text(className, text);
+   }
+
+   interface Templates extends SafeHtmlTemplates
    {
       @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
+      SafeHtml text(String className, String text);
+
+      @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
       SafeHtml description(String className, String packageDescription);
+
+      @Template("<input type=\"checkbox\" tabindex=\"-1\" aria-label=\"{0}\" checked />")
+      SafeHtml checkboxChecked(String label);
+
+      @Template("<input type=\"checkbox\" tabindex=\"-1\" aria-label=\"{0}\" />")
+      SafeHtml checkboxUnchecked(String label);
    }
 
    private DataGrid<PackageInfo> packagesTable_;
@@ -746,12 +836,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private NameColumn nameColumn_;
    private Column<PackageInfo, PackageInfo> descColumn_;
    private Column<PackageInfo, PackageInfo> versionColumn_;
+   private Column<PackageInfo, PackageInfo> sourceColumn_;
    private Column<PackageInfo, PackageInfo> metadataColumn_;
+   private ImageButtonColumn<PackageInfo> helpColumn_;
    private ImageButtonColumn<PackageInfo> browseColumn_;
    private ImageButtonColumn<PackageInfo> removeColumn_;
 
    private Column<PackageInfo, PackageInfo> lockfileVersionColumn_;
-   private TextColumn<PackageInfo> packageSourceColumn_;
    
    private ToolbarMenuButton packratMenuButton_;
    private Widget projectButtonSeparator_;
@@ -774,6 +865,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 
-   private static final DescriptionTemplate TEMPLATE = GWT.create(DescriptionTemplate.class);
+   private static final Templates TEMPLATES = GWT.create(Templates.class);
 
 }

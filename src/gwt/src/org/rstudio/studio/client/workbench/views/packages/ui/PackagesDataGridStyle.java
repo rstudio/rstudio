@@ -21,4 +21,5 @@ public interface PackagesDataGridStyle extends DataGrid.Style
    String packageColumn();
    String packageOutOfSyncRow();
    String packageNotApplicableColumn();
+   String widgetColumnHeader();
 }

@@ -39,18 +39,23 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    }
 })
 
-.rs.addFunction("defineGlobalHook", function(package, binding, hook)
+.rs.addFunction("defineGlobalHook", function(package, binding, hook, when = TRUE)
 {
-   .rs.defineHookImpl(package, binding, hook, all = TRUE)
+   if (when)
+      .rs.defineHookImpl(package, binding, hook, all = TRUE)
 })
 
-.rs.addFunction("defineHook", function(package, binding, hook)
+.rs.addFunction("defineHook", function(package, binding, hook, when = TRUE)
 {
-   .rs.defineHookImpl(package, binding, hook, all = FALSE)
+   if (when)
+      .rs.defineHookImpl(package, binding, hook, all = FALSE)
 })
 
-
-.rs.defineGlobalHook("utils", "download.file", function(url, destfile, method)
+.rs.defineGlobalHook(
+   package = "utils",
+   binding = "download.file",
+   when    = "headers" %in% names(formals(utils::download.file)),
+   function(url, destfile, method)
 {
    ""
    "This is an RStudio hook."
@@ -104,7 +109,10 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
 })
 
-.rs.defineHook("utils", "install.packages", function(pkgs, lib)
+.rs.defineHook(
+   package = "utils",
+   binding = "install.packages",
+   function(pkgs, lib, repos)
 {
    ""
    "This is an RStudio hook."
@@ -121,7 +129,6 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
    # Notify if we're about to update an already-loaded package.
    # Skip this within renv and packrat projects.
-   
    if (.rs.installPackagesRequiresRestart(pkgs))
    {
       call <- sys.call()
@@ -136,10 +143,47 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    .rs.addRToolsToPath()
    on.exit(.rs.restorePreviousPath(), add = TRUE)
    
-   # Invoke the original function.
-   call <- sys.call()
-   call[[1L]] <- quote(utils::install.packages)
-   result <- eval(call, envir = parent.frame())
+   # Resolve library path.
+   if (missing(lib) || is.null(lib))
+      lib <- .libPaths()[1L]
+   
+   # Check if we're installing a package from the filesystem,
+   # versus installing a package from CRAN.
+   isLocal <- is.null(repos) || any(grepl("/", pkgs, fixed = TRUE))
+   
+   if (isLocal)
+   {
+      # Invoke the original function.
+      call <- sys.call()
+      call[[1L]] <- quote(utils::install.packages)
+      result <- eval(call, envir = parent.frame())
+      
+      # Record the package source.
+      shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
+      if (shouldRecord)
+         .rs.recordPackageSource(pkgs, local = TRUE)
+   }
+   else
+   {
+      # Get paths to DESCRIPTION files, so we can see what packages
+      # were updated before and after installation.
+      before <- .rs.installedPackagesFileInfo(lib)
+      
+      # Invoke the original function.
+      call <- sys.call()
+      call[[1L]] <- quote(utils::install.packages)
+      result <- eval(call, envir = parent.frame())
+      
+      # Check and see what packages were updated.
+      after <- .rs.installedPackagesFileInfo(lib)
+      
+      # Figure out which packages were changed.
+      rows <- .rs.installedPackagesFileInfoDiff(before, after)
+      
+      # For any packages which appear to have been updated,
+      # tag their DESCRIPTION file with their installation source.
+      .rs.recordPackageSource(rows$path, local = FALSE)
+   }
    
    # Notify the front-end that we've made some updates.
    .rs.updatePackageEvents()
@@ -149,7 +193,10 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    invisible(result)
 })
 
-.rs.defineHook("utils", "remove.packages", function(pkgs, lib)
+.rs.defineHook(
+   package = "utils",
+   binding = "remove.packages",
+   function(pkgs, lib)
 {
    ""
    "This is an RStudio hook."
@@ -164,23 +211,4 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
    
    # Return original result.
    invisible(result)
-})
-
-.rs.addFunction("installPackagesRequiresRestart", function(pkgs)
-{
-   # if we're in an renv project, no need
-   if ("renv" %in% loadedNamespaces())
-   {
-      project <- renv::project()
-      if (!is.null(project))
-         return(FALSE)
-   }
-   
-   # if we're in a packrat project, no need
-   mode <- Sys.getenv("R_PACKRAT_MODE", unset = NA)
-   if (identical(mode, "1"))
-      return(FALSE)
-   
-   # in other cases, restart if one of the requested packages is loaded
-   .rs.loadedPackageUpdates(pkgs)
 })
