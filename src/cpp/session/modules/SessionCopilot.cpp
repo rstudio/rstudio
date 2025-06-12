@@ -310,7 +310,37 @@ std::queue<std::string> s_pendingResponses;
 // Track documents Copilot knows about via textDocument/didOpen. Remove them when
 // textDocument/didClose is sent (or the agent is stopped).
 //
-std::unordered_set<std::string> s_knownDocuments;
+// Also tracks an incrementing version number for each document.
+//
+std::unordered_map<std::string, int> s_knownDocuments;
+
+// Set/update the version for a given URI. IMPORTANT: will increment the version number each time
+// it is called.
+int setVersionForDocument(const std::string& uri)
+{
+   // If the document is already known, increment its version.
+   auto it = s_knownDocuments.find(uri);
+   if (it != s_knownDocuments.end())
+   {
+      it->second++;
+      return it->second;
+   }
+   
+   // Otherwise, add it with initial version
+   s_knownDocuments[uri] = kCopilotDefaultDocumentVersion;
+   return s_knownDocuments[uri];
+}
+
+int currentVersionForDocument(const std::string& uri)
+{
+   // If the document is known, return its version.
+   auto it = s_knownDocuments.find(uri);
+   if (it != s_knownDocuments.end())
+      return it->second;
+
+   // Otherwise, return the default version.
+   return kCopilotDefaultDocumentVersion;
+}
 
 // Whether we're about to shut down.
 bool s_isSessionShuttingDown = false;
@@ -944,7 +974,6 @@ void onExit(int status)
 // foward declaration
 void didChangeNonIncremental(const std::string& uri,
                              const std::string& languageId,
-                             int version,
                              const std::string& contents);
 
 void stopAgent()
@@ -1185,26 +1214,24 @@ std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocume
 
 void docOpened(const std::string& uri,
                const std::string& languageId,
-               int version,
                const std::string& contents)
 {
    if (s_knownDocuments.count(uri) > 0)
    {
       // already told Copilot about this document, so just update it
-      didChangeNonIncremental(uri, languageId, version, contents);
+      didChangeNonIncremental(uri, languageId, contents);
       return;
    }
 
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = version;
+   textDocumentJson["version"] = setVersionForDocument(uri);
    textDocumentJson["text"] = contents;
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
 
-   s_knownDocuments.insert(uri);
    sendNotification("textDocument/didOpen", paramsJson);
 }
 
@@ -1236,26 +1263,24 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    
    docOpened(uriFromDocument(pDoc),
              languageIdFromDocument(pDoc),
-             kCopilotDefaultDocumentVersion,
              contentsFromDocument(pDoc));
 }
 
 // Send a textDocument/didChange notification with entire document contents (vs. deltas).
 void didChangeNonIncremental(const std::string& uri,
                              const std::string& languageId,
-                             int version,
                              const std::string& contents)
 {
    if (s_knownDocuments.count(uri) == 0)
    {
       // unknown document, open it instead
-      docOpened(uri, languageId, version, contents);
+      docOpened(uri, languageId, contents);
    }
 
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = version;
+   textDocumentJson["version"] = setVersionForDocument(uri);
 
    json::Object contentChangeJson;
    contentChangeJson["text"] = contents;
@@ -1273,7 +1298,6 @@ void didChangeNonIncremental(const std::string& uri,
 // Send a textDocument/didChange notification with diff
 void didChangeIncremental(const std::string& uri,
                           const std::string& languageId,
-                          int version,
                           collection::Range range,
                           const std::string& text)
 {
@@ -1286,7 +1310,7 @@ void didChangeIncremental(const std::string& uri,
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = version;
+   textDocumentJson["version"] = setVersionForDocument(uri);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
@@ -1343,7 +1367,6 @@ void indexFile(const core::FileInfo& info)
    
    docOpened(uriFromDocumentPath(documentPath.getAbsolutePath()),
              languageId,
-             kCopilotDefaultDocumentVersion,
              contents);
 }
 
@@ -1673,7 +1696,6 @@ void onSourceFileDiff(module_context::DocumentDiff diff)
    // Notify Copilot of the change
    didChangeIncremental(uriFromDocument(pDoc),
                         languageIdFromDocument(pDoc),
-                        kCopilotDefaultDocumentVersion, // TODO increment this!
                         range,
                         diff.replacement);
 }
@@ -1840,8 +1862,9 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    positionJson["character"] = cursorColumn;
 
    json::Object docJson;
-   docJson["uri"] = uriFromDocument(pDoc);
-   docJson["version"] = kCopilotDefaultDocumentVersion;
+   auto uri = uriFromDocument(pDoc);
+   docJson["uri"] = uri;
+   docJson["version"] = currentVersionForDocument(uri);
 
    json::Object contextJson;
    contextJson["triggerKind"] = autoInvoked ? 
