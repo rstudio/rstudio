@@ -24,10 +24,12 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <core/collection/Position.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/Header.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -1268,6 +1270,50 @@ void didChangeNonIncremental(const std::string& uri,
    sendNotification("textDocument/didChange", paramsJson);
 }
 
+// Send a textDocument/didChange notification with diff
+void didChangeIncremental(const std::string& uri,
+                          const std::string& languageId,
+                          int version,
+                          collection::Range range,
+                          const std::string& text)
+{
+   if (s_knownDocuments.count(uri) == 0)
+   {
+      DLOG("Ignoring diff for unknown document '{}'.", uri);
+      return;
+   }
+
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uri;
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = version;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   json::Object startJson;
+   startJson["line"] = static_cast<uint64_t>(range.begin().row);
+   startJson["character"] = static_cast<uint64_t>(range.begin().column);
+
+   json::Object endJson;
+   endJson["line"] = static_cast<uint64_t>(range.end().row);
+   endJson["character"] = static_cast<uint64_t>(range.end().column);
+
+   json::Object rangeJson;
+   rangeJson["start"] = startJson;
+   rangeJson["end"] = endJson;
+
+   json::Object contentChangeJson;
+   contentChangeJson["range"] = rangeJson;
+   contentChangeJson["text"] = text;
+
+   json::Array contentChangesJsonArray;
+   contentChangesJsonArray.push_back(contentChangeJson);
+   paramsJson["contentChanges"] = contentChangesJsonArray;
+
+   sendNotification("textDocument/didChange", paramsJson);
+}
+
 namespace file_monitor {
 
 namespace {
@@ -1322,21 +1368,6 @@ void onMonitoringDisabled()
 }
 
 } // end namespace file_monitor
-
-void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (!ensureAgentRunning())
-      return;
-
-   if (!isIndexableDocument(pDoc))
-      return;
-   
-   // Synchronize document contents with Copilot
-   docOpened(uriFromDocument(pDoc),
-             languageIdFromDocument(pDoc),
-             kCopilotDefaultDocumentVersion,
-             contentsFromDocument(pDoc));
-}
 
 void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
@@ -1603,7 +1634,6 @@ void onUserPrefsChanged(const std::string& layer,
 void onDeferredInit(bool newSession)
 {
    source_database::events().onDocAdded.connect(onDocAdded);
-   source_database::events().onDocUpdated.connect(onDocUpdated);
    source_database::events().onDocPendingRemove.connect(onDocRemoved);
 }
 
@@ -1623,7 +1653,29 @@ void onShutdown(bool)
 
 void onSourceFileDiff(module_context::DocumentDiff diff)
 {
-   DLOG(diff.toString());
+   if (!ensureAgentRunning())
+      return;
+
+   // Resolve source document from id
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   Error error = source_database::get(diff.docId, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // Convert from absolute location in the file to a line/column range.
+   collection::Range range(
+         core::string_utils::offsetToPosition(pDoc->contents(), diff.offset), 
+         core::string_utils::offsetToPosition(pDoc->contents(), diff.offset + diff.length));
+
+   // Notify Copilot of the change
+   didChangeIncremental(uriFromDocument(pDoc),
+                        languageIdFromDocument(pDoc),
+                        kCopilotDefaultDocumentVersion, // TODO increment this!
+                        range,
+                        diff.replacement);
 }
 
 // Primarily intended for debugging / exploration.
