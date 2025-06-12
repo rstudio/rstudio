@@ -1345,6 +1345,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    ""
 })
 
+.rs.addFunction("inferPackageDocumentationUrl", function(pkgDesc)
+{
+   url <- .rs.nullCoalesce(pkgDesc[["URL"]], "")
+   sub("[[:space:],].*", "", url)
+})
+
 .rs.addFunction("listInstalledPackages", function()
 {
    # Look for packages in the library paths.
@@ -1355,7 +1361,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    pkgPaths <- pkgPaths[hasMeta]
    
    # Iterate over these packages, and read their DESCRIPTION files.
-   pkgDescs <- lapply(pkgPaths, function(pkgPath) {
+   pkgInfos <- lapply(pkgPaths, function(pkgPath) {
       
       pkgDesc <- tryCatch(
          .rs.readPackageDescription(pkgPath),
@@ -1365,11 +1371,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       # Pull out package name for later use.
       pkgName <- pkgDesc[["Package"]]
       
+      # Keep only fields of interest.
+      pkgInfo <- pkgDesc[c("Package", "Title", "Version")]
+      
       # Also record metadata about the library where it was found.
       libraryPath <- dirname(pkgPath)
-      pkgDesc[["Library"]] <- .rs.createAliasedPath(libraryPath)
-      pkgDesc[["LibraryAbsolute"]] <- libraryPath
-      pkgDesc[["LibraryIndex"]] <- match(libraryPath, .libPaths(), nomatch = 0L)
+      pkgInfo[["Library"]] <- .rs.createAliasedPath(libraryPath)
+      pkgInfo[["LibraryAbsolute"]] <- libraryPath
+      pkgInfo[["LibraryIndex"]] <- match(libraryPath, .libPaths(), nomatch = 0L)
       
       # Also note which packages appear to be loaded or attached.
       isLoaded <- FALSE
@@ -1384,40 +1393,36 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          isLoaded &&
          paste("package", pkgName, sep = ":") %in% search()
       
-      pkgDesc[["Loaded"]] <- isLoaded
-      pkgDesc[["Attached"]] <- isAttached
+      pkgInfo[["Loaded"]] <- isLoaded
+      pkgInfo[["Attached"]] <- isAttached
       
-      pkgDesc[["Source"]] <- tryCatch(
+      pkgInfo[["Source"]] <- tryCatch(
          .rs.inferPackageSource(pkgDesc),
          error = function(cnd) "[Unknown]"
       )
       
-      pkgDesc[["BrowseUrl"]] <- tryCatch(
+      pkgInfo[["BrowseUrl"]] <- tryCatch(
          .rs.inferPackageBrowseUrl(pkgDesc),
          error = function(cnd) ""
       )
       
-      url <- pkgDesc[["URL"]]
-      if (!is.null(url))
-      {
-         urls <- strsplit(url, "[,\\s\\n]+", perl = TRUE)[[1L]]
-         pkgDesc[["PackageUrl"]] <- urls[[1L]]
-      }
+      pkgInfo[["PackageUrl"]] <- tryCatch(
+         .rs.inferPackageDocumentationUrl(pkgDesc),
+         error = function(cnd) ""
+      )
       
       # Return the resulting object.
-      .rs.scalarListFromList(pkgDesc)
+      .rs.scalarListFromList(pkgInfo)
       
    })
    
    # Sort based on the package name.
-   pkgOrder <- order(.rs.mapChr(pkgDescs, `[[`, "Package"))
-   pkgDescs <- pkgDescs[pkgOrder]
+   pkgOrder <- order(.rs.mapChr(pkgInfos, `[[`, "Package"))
+   pkgInfos <- pkgInfos[pkgOrder]
    
    # And we're done.
-   pkgDescs
+   pkgInfos
 })
-
-
 
 .rs.addFunction("readPackageImports", function(pkg)
 {

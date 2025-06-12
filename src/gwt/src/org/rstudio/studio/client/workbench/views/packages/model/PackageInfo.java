@@ -27,6 +27,18 @@ public class PackageInfo extends JavaScriptObject
       return this["Package"];
    }-*/;
    
+   public final native String getDesc() /*-{
+      return this["Title"] || "";
+   }-*/;
+   
+   public final native String getVersion() /*-{
+      return this["Version"] || "";
+   }-*/;
+
+   public final native String getPackageSource() /*-{
+      return this["Source"] || "";
+   }-*/;
+   
    public final native String getLibrary() /*-{
       return this["Library"] || "";
    }-*/;
@@ -39,30 +51,18 @@ public class PackageInfo extends JavaScriptObject
       return this["LibraryIndex"] || 0;
    }-*/;
 
-   public final native String getVersion() /*-{
-      return this["Version"] || "";
-   }-*/;
-   
-   public final native String getDesc() /*-{
-      return this["Title"] || "";
-   }-*/;
-   
    public final native String getHelpUrl() /*-{
       return "help/library/" + this["Package"] + "/html/00Index.html";
    }-*/;
 
    public final native String getPackageUrl() /*-{
-      return this["PackageUrl"];
+      return this["PackageUrl"] || "";
    }-*/;
 
    public final native String getBrowseUrl() /*-{
-      return this["BrowseUrl"];
+      return this["BrowseUrl"] || "";
    }-*/;
 
-   public final native String getPackageSource() /*-{
-      return this["Source"] || "";
-   }-*/;
-   
    public final native boolean isAttached() /*-{
       return this["Attached"] || false;
    }-*/;
