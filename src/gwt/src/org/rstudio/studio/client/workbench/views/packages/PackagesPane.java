@@ -87,6 +87,8 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.inject.Inject;
 
+import jsinterop.base.Js;
+
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
    private class WidgetTextHeader extends TextHeader
@@ -537,7 +539,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          @Override
          public boolean showButton(PackageInfo object)
          {
-            return object.getPackageUrl() != null;
+            return Js.isTruthy(object.getPackageUrl());
          }
       };
 
@@ -558,9 +560,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   String source = object.getPackageSource();
                   String url = object.getBrowseUrl();
 
-                  if (source != null)
+                  if (Js.isTruthy(source))
                   {
-                     if (url != null)
+                     if (Js.isTruthy(url))
                      {
                         return constants_.browsePackageOn(source, url);
                      }
@@ -571,7 +573,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   }
                   else
                   {
-                     if (url != null)
+                     if (Js.isTruthy(url))
                      {
                         return constants_.browsePackageLabel(url);
                      }
