@@ -35,14 +35,19 @@
 #define kWorkspacesId              "3c286bd3"
 #define kVSCodeId                  "3c9ab5a7"
 #define kPositronId                "6ae9dc1b"
+// Project ID f468a750 is reserved for R Scripts launched as jobs.
 #define kProjectScript             "f468a750"
 
 #define kWorkbenchRStudio          "RStudio"
 #define kWorkbenchJupyterLab       "JupyterLab"
 #define kWorkbenchJupyterNotebook  "Jupyter Notebook"
 #define kWorkbenchVSCode           "VS Code"
+#define kWorkbenchPositron         "Positron"
+#define kJupyterExecutableName     "jupyter"
+#define kVSCodeExecutableName      "code-server"
+#define kPositronExecutableName    "positron"
 #define kJupyterPathEnvVar         "WORKBENCH_JUPYTER_PATH"
-#define kVSCodePathDefault         "/usr/lib/rstudio-server/bin/code-server/bin/code-server"
+#define kVSCodePathDefault         "/usr/lib/rstudio-server/bin/pwb-code-server/bin/code-server"
 #define kVSCodePathEnvVar          "WORKBENCH_VSCODE_PATH"
 #define kPositronPathDefault       "/usr/lib/rstudio-server/bin/positron-server/bin/positron-server"
 #define kPositronPathEnvVar        "WORKBENCH_POSITRON_PATH"
@@ -168,6 +173,8 @@ public:
 
    static SessionScope vscodeSession(const std::string& id);
 
+   static SessionScope positronSession(const std::string& id);
+
    static SessionScope fromSessionId(const std::string &id, const std::string& editor);
 
    SessionScope()
@@ -182,6 +189,8 @@ public:
    bool isJupyterLab() const;
    bool isJupyterNotebook() const;
    bool isVSCode() const;
+   bool isPositron() const;
+
 
    std::string workbench() const;
 
@@ -237,7 +246,8 @@ void parseSessionUrl(const std::string& url,
                      SessionScope* pScope,
                      std::string* pUrlPrefix,
                      std::string* pUrlWithoutPrefix,
-                     std::string* pBaseUrl = nullptr);
+                     std::string* pBaseUrl = nullptr,
+                     std::string* pQueryParams = nullptr);
 
 
 struct SessionContext
