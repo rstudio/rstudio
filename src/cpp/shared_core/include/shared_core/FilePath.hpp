@@ -478,6 +478,14 @@ public:
     * @return Success if the file mode could be retrieved; Error otherwise.
     */
    Error getFileOwner(uid_t& out_ownerUid) const;
+
+   /**
+    * @brief Get the creation time or last time the file's permissions were changed.
+    *
+    * @return File's inode change time (ctime).
+    */
+   std::time_t getFileChangeTime() const;
+
 #endif
 
    /**

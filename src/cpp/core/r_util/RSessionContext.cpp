@@ -120,6 +120,13 @@ SessionScope SessionScope::vscodeSession(const std::string& id)
    return SessionScope(ProjectId(kVSCodeId), id);
 }
 
+SessionScope SessionScope::positronSession(const std::string& id)
+{
+   // note: project ID is currently unused as it is meaningless
+   // in the context of external workbenches
+   return SessionScope(ProjectId(kPositronId), id);
+}
+
 SessionScope SessionScope::fromSessionId(const std::string& id, const std::string& editor)
 {
    if (editor == kWorkbenchJupyterLab)
@@ -128,6 +135,8 @@ SessionScope SessionScope::fromSessionId(const std::string& id, const std::strin
       return jupyterNotebookSession(id);
    else if (editor == kWorkbenchVSCode)
       return vscodeSession(id);
+   else if (editor == kWorkbenchPositron)
+      return positronSession(id);
    else
       return projectNone(id);
 }
@@ -162,12 +171,19 @@ bool SessionScope::isVSCode() const
    return project_.id() == kVSCodeId;
 }
 
+bool SessionScope::isPositron() const
+{
+   return project_.id() == kPositronId;
+}
+
 std::string SessionScope::workbench() const
 {
    if (isJupyter())
       return isJupyterLab() ? kWorkbenchJupyterLab : kWorkbenchJupyterNotebook;
    else if (isVSCode())
       return kWorkbenchVSCode;
+   else if (isPositron())
+      return kWorkbenchPositron;
    else
       return kWorkbenchRStudio;
 }
@@ -335,9 +351,11 @@ void parseSessionUrl(const std::string& url,
                      SessionScope* pScope,
                      std::string* pUrlPrefix,
                      std::string* pUrlWithoutPrefix,
-                     std::string* pBaseUrl)
+                     std::string* pBaseUrl,
+                     std::string* pQueryParams)
 {
-   static boost::regex re("/s/([A-Fa-f0-9]{5})([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})(/|$)");
+   // TODO: [new-homepage] change back to "/s/..." before releasing!!!
+   static boost::regex re("/[sn]/([A-Fa-f0-9]{5})([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})(/|$)(\\?.*)?");
 
    boost::smatch match;
    if (regex_utils::search(url, match, re))
@@ -350,12 +368,15 @@ void parseSessionUrl(const std::string& url,
          *pScope = r_util::SessionScope::fromProjectId(
                   ProjectId(project, user), id);
       }
+      std::string sessionUrl = "/s/" + match[1] + match[2] + match[3] + match[4];
       if (pUrlPrefix)
       {
-         *pUrlPrefix = match[0];
+         // Strip of any query params to get the session URL part
+         *pUrlPrefix = sessionUrl;
       }
       if (pUrlWithoutPrefix)
       {
+         // take away any /rstudio prefix the proxy might add
          *pUrlWithoutPrefix = boost::algorithm::replace_first_copy(
                                    url, std::string(match[0]), "/");
       }
@@ -364,6 +385,8 @@ void parseSessionUrl(const std::string& url,
          http::URL urlObj(url.substr(0, url.find(match[0])));
          *pBaseUrl = urlObj.path();
       }
+      if (pQueryParams)
+        *pQueryParams = match[5];
    }
    else
    {
@@ -479,10 +502,10 @@ std::string generateScopeId()
    reserved.push_back(kWorkspacesId);
    reserved.push_back(kJupyterLabId);
    reserved.push_back(kJupyterNotebookId);
+   reserved.push_back(kVSCodeId);
+   reserved.push_back(kPositronId);
 
    // a few more for future expansion
-   reserved.push_back("f468a750");
-   reserved.push_back("6ae9dc1b");
    reserved.push_back("1d717df9");
    reserved.push_back("6d3c4c0e");
    reserved.push_back("a142989c");
