@@ -20,6 +20,14 @@ public class ConsoleAction extends JavaScriptObject
 {
    protected ConsoleAction() {}
 
+   public static final native ConsoleAction create(int type, String data)
+   /*-{
+      return {
+         type: type,
+         data: data
+      };
+   }-*/;
+
    public static final int PROMPT = 0;
    public static final int INPUT = 1;
    public static final int OUTPUT = 2;
