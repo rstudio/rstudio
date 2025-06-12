@@ -355,20 +355,22 @@ void parseSessionUrl(const std::string& url,
                      std::string* pQueryParams)
 {
    // TODO: [new-homepage] change back to "/s/..." before releasing!!!
-   static boost::regex re("/[sn]/([A-Fa-f0-9]{5})([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})(/|$)(\\?.*)?");
+   static boost::regex re("/([sn])/([A-Fa-f0-9]{5})([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})(/|$)(\\?.*)?");
 
    boost::smatch match;
    if (regex_utils::search(url, match, re))
    {
       if (pScope)
       {
-         std::string user = http::util::urlDecode(match[1]);
-         std::string project = http::util::urlDecode(match[2]);
-         std::string id = match[3];
+         // TODO: [new-homepage] decrement match indexes 
+         std::string user = http::util::urlDecode(match[2]);
+         std::string project = http::util::urlDecode(match[3]);
+         std::string id = match[4];
          *pScope = r_util::SessionScope::fromProjectId(
                   ProjectId(project, user), id);
       }
-      std::string sessionUrl = "/s/" + match[1] + match[2] + match[3] + match[4];
+      // TODO: [new-homepage] remove match[1] and decrement indexes
+      std::string sessionUrl = "/" + match[1] + "/" + match[2] + match[3] + match[4] + match[5];
       if (pUrlPrefix)
       {
          // Strip of any query params to get the session URL part
@@ -386,7 +388,7 @@ void parseSessionUrl(const std::string& url,
          *pBaseUrl = urlObj.path();
       }
       if (pQueryParams)
-        *pQueryParams = match[5];
+        *pQueryParams = match[6];
    }
    else
    {
