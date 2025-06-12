@@ -264,13 +264,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packratMenuButton_.setVisible(false);
       
       // create renv menu + button
-      snapshotButton_ = commands_.renvSnapshot().createToolbarButton();
+      snapshotButton_ = commands_.renvSnapshot().createToolbarButton(false);
       toolbar.addLeftWidget(snapshotButton_);
       snapshotButton_.setVisible(false);
 
       snapshotRestoreSeparator_ = toolbar.addLeftSeparator();
 
-      restoreButton_ = commands_.renvRestore().createToolbarButton();
+      restoreButton_ = commands_.renvRestore().createToolbarButton(false);
       toolbar.addLeftWidget(restoreButton_);
       restoreButton_.setVisible(false);
 
@@ -293,9 +293,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
       });
       
-      helpButton_ = commands_.renvHelp().createToolbarButton();
+      helpButton_ = commands_.renvHelp().createToolbarButton(false);
       toolbar.addRightWidget(helpButton_);
+      helpButton_.setVisible(false);
       helpSeparator_ = toolbar.addRightSeparator();
+      helpSeparator_.setVisible(false);
 
       ElementIds.assignElementId(searchWidget_, ElementIds.SW_PACKAGES);
       toolbar.addRightWidget(searchWidget_);
