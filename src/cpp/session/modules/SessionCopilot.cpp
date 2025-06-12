@@ -971,10 +971,6 @@ void onExit(int status)
 
 } // end namespace agent
 
-// foward declaration
-void didChangeNonIncremental(const std::string& uri,
-                             const std::string& languageId,
-                             const std::string& contents);
 
 void stopAgent()
 {
@@ -1218,8 +1214,7 @@ void docOpened(const std::string& uri,
 {
    if (s_knownDocuments.count(uri) > 0)
    {
-      // already told Copilot about this document, so just update it
-      didChangeNonIncremental(uri, languageId, contents);
+      // already told Copilot about this document, so skip this
       return;
    }
 
@@ -1264,35 +1259,6 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    docOpened(uriFromDocument(pDoc),
              languageIdFromDocument(pDoc),
              contentsFromDocument(pDoc));
-}
-
-// Send a textDocument/didChange notification with entire document contents (vs. deltas).
-void didChangeNonIncremental(const std::string& uri,
-                             const std::string& languageId,
-                             const std::string& contents)
-{
-   if (s_knownDocuments.count(uri) == 0)
-   {
-      // unknown document, open it instead
-      docOpened(uri, languageId, contents);
-   }
-
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-   textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = setVersionForDocument(uri);
-
-   json::Object contentChangeJson;
-   contentChangeJson["text"] = contents;
-
-   json::Array contentChangesJsonArray;
-   contentChangesJsonArray.push_back(contentChangeJson);
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-   paramsJson["contentChanges"] = contentChangesJsonArray;
-
-   sendNotification("textDocument/didChange", paramsJson);
 }
 
 // Send a textDocument/didChange notification with diff
@@ -1391,6 +1357,22 @@ void onMonitoringDisabled()
 }
 
 } // end namespace file_monitor
+
+void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (!ensureAgentRunning())
+      return;
+
+   if (!isIndexableDocument(pDoc))
+      return;
+
+   // We generally handle changes to the document via onSourceFileDiff(), but in the case 
+   // where a new document is created but not yet saved, we get this onDocUpdated() call
+   // and use it to tell Copilot about the new document.
+   docOpened(uriFromDocument(pDoc),
+             languageIdFromDocument(pDoc),
+             contentsFromDocument(pDoc));
+}
 
 void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
@@ -1657,6 +1639,7 @@ void onUserPrefsChanged(const std::string& layer,
 void onDeferredInit(bool newSession)
 {
    source_database::events().onDocAdded.connect(onDocAdded);
+   source_database::events().onDocUpdated.connect(onDocUpdated);
    source_database::events().onDocPendingRemove.connect(onDocRemoved);
 }
 
