@@ -21,7 +21,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Copilot Language Server"
 
 # version to download
-COPILOT_VERSION="1.333.0"
+COPILOT_VERSION="1.335.0"
 
 # determine platform and architecture
 PLATFORM="$(uname)-$(getconf LONG_BIT)"
