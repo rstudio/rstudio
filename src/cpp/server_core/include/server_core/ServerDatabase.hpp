@@ -16,6 +16,8 @@
 #ifndef SERVER_CORE_SERVER_DATABASE_HPP
 #define SERVER_CORE_SERVER_DATABASE_HPP
 
+#include <server_core/ServerDatabaseOverlay.hpp>
+
 #include <boost/optional.hpp>
 
 #include <core/Database.hpp>

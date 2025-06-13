@@ -45,8 +45,6 @@ namespace {
 // settings constants
 constexpr const char* kConfigFile = "database.conf";
 constexpr const char* kDatabaseProvider = "provider";
-constexpr const char* kDatabaseProviderSqlite = "sqlite";
-constexpr const char* kDatabaseProviderPostgresql = "postgresql";
 constexpr const char* kSqliteDatabaseDirectory = "directory";
 constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/lib/rstudio-server";
 constexpr const char* kDatabaseHost = "host";
@@ -158,6 +156,25 @@ void validateMinimumPostgreSqlVersion()
    else {
       LOG_WARNING_MESSAGE("Failed to parse PostgreSQL version: " + versionStr);
    }
+}
+
+Error migrationsDir(FilePath* pMigrationsDir)
+{
+   FilePath exePath;
+   Error error = core::system::executablePath(nullptr, &exePath);
+   if (error)
+      return error;
+
+   // get the path for the migration files - this may be overridden via env var
+   // for supporting development setups
+   FilePath migrationsDir;
+   std::string migrationsPathEnv = core::system::getenv(kDatabaseMigrationsPathEnvVar);
+   if (!migrationsPathEnv.empty())
+      *pMigrationsDir = FilePath(migrationsPathEnv);
+   else
+      *pMigrationsDir = exePath.getParent().getParent().completeChildPath("db");
+
+   return Success();
 }
 
 Error readOptions(const std::string& databaseConfigFile,
@@ -346,25 +363,6 @@ Error readOptions(const std::string& databaseConfigFile,
          }
       }
    }
-
-   return Success();
-}
-
-Error migrationsDir(FilePath* pMigrationsDir)
-{
-   FilePath exePath;
-   Error error = core::system::executablePath(nullptr, &exePath);
-   if (error)
-      return error;
-
-   // get the path for the migration files - this may be overridden via env var
-   // for supporting development setups
-   FilePath migrationsDir;
-   std::string migrationsPathEnv = core::system::getenv(kDatabaseMigrationsPathEnvVar);
-   if (!migrationsPathEnv.empty())
-      *pMigrationsDir = FilePath(migrationsPathEnv);
-   else
-      *pMigrationsDir = exePath.getParent().getParent().completeChildPath("db");
 
    return Success();
 }
