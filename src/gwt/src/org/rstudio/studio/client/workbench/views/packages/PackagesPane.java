@@ -87,6 +87,8 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import com.google.inject.Inject;
 
+import jsinterop.base.Js;
+
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
    private class WidgetTextHeader extends TextHeader
@@ -264,13 +266,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packratMenuButton_.setVisible(false);
       
       // create renv menu + button
-      snapshotButton_ = commands_.renvSnapshot().createToolbarButton();
+      snapshotButton_ = commands_.renvSnapshot().createToolbarButton(false);
       toolbar.addLeftWidget(snapshotButton_);
       snapshotButton_.setVisible(false);
 
       snapshotRestoreSeparator_ = toolbar.addLeftSeparator();
 
-      restoreButton_ = commands_.renvRestore().createToolbarButton();
+      restoreButton_ = commands_.renvRestore().createToolbarButton(false);
       toolbar.addLeftWidget(restoreButton_);
       restoreButton_.setVisible(false);
 
@@ -293,9 +295,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
       });
       
-      helpButton_ = commands_.renvHelp().createToolbarButton();
+      helpButton_ = commands_.renvHelp().createToolbarButton(false);
       toolbar.addRightWidget(helpButton_);
+      helpButton_.setVisible(false);
       helpSeparator_ = toolbar.addRightSeparator();
+      helpSeparator_.setVisible(false);
 
       ElementIds.assignElementId(searchWidget_, ElementIds.SW_PACKAGES);
       toolbar.addRightWidget(searchWidget_);
@@ -479,7 +483,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          } 
       };  
       
-      versionColumn_ = new Column<PackageInfo, PackageInfo>(new VersionCell(false))
+      sourceColumn_ = new Column<PackageInfo, PackageInfo>(new SourceCell())
       {
          @Override
          public PackageInfo getValue(PackageInfo object)
@@ -488,7 +492,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
       };
 
-      sourceColumn_ = new Column<PackageInfo, PackageInfo>(new SourceCell())
+      versionColumn_ = new Column<PackageInfo, PackageInfo>(new VersionCell(false))
       {
          @Override
          public PackageInfo getValue(PackageInfo object)
@@ -535,7 +539,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          @Override
          public boolean showButton(PackageInfo object)
          {
-            return object.getPackageUrl() != null;
+            return Js.isTruthy(object.getPackageUrl());
          }
       };
 
@@ -556,9 +560,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   String source = object.getPackageSource();
                   String url = object.getBrowseUrl();
 
-                  if (source != null)
+                  if (Js.isTruthy(source))
                   {
-                     if (url != null)
+                     if (Js.isTruthy(url))
                      {
                         return constants_.browsePackageOn(source, url);
                      }
@@ -569,7 +573,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   }
                   else
                   {
-                     if (url != null)
+                     if (Js.isTruthy(url))
                      {
                         return constants_.browsePackageLabel(url);
                      }
@@ -610,17 +614,17 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(loadedColumn_, new TextHeader(""));
       packagesTable_.addColumn(nameColumn_, new TextHeader("Package"));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
-      packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
       packagesTable_.addColumn(sourceColumn_, new TextHeader(constants_.sourceText()));
+      packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
       // packagesTable_.addColumn(metadataColumn_, new TextHeader("Metadata"));
 
       // set initial column widths
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
       packagesTable_.setColumnWidth(nameColumn_, 130, Unit.PX);
-      packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
-      packagesTable_.setColumnWidth(sourceColumn_, 180, Unit.PX);
-      // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
+      packagesTable_.setColumnWidth(sourceColumn_, 180, Unit.PX);
+      packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
+      // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
 
       // add columns when using project-local library
       if (projectContext_.isActive())

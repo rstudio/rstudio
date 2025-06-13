@@ -1081,6 +1081,14 @@ Error FilePath::getFileOwner(uid_t& out_fileOwner) const
    return Success();
 }
 
+std::time_t FilePath::getFileChangeTime() const
+{
+   struct stat st;
+   if (::stat(getAbsolutePath().c_str(), &st) == -1)
+      return 0;
+   return st.st_ctime;
+}
+
 #endif
 
 std::string FilePath::getFilename() const
