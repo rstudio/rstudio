@@ -807,7 +807,8 @@ Error ChildProcess::run()
          // the child from clobbering the parent's FDs
          // and actually prevents potential missed child exits caused by
          // clobbering of FDs affecting epoll calls
-         signal_safe::closeFileDescriptorsFromParent(fdCloseFd[READ], STDERR_FILENO+1, hard);
+         // Use the soft limit as the upper bound since that's the effective limit.
+         signal_safe::closeFileDescriptorsFromParent(fdCloseFd[READ], STDERR_FILENO+1, soft);
          ::close(fdCloseFd[READ]);
       }
 

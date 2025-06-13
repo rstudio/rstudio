@@ -152,6 +152,13 @@ int signalForType(SignalType type)
    }
 }
 
+// Reasonable (for us) upper limit for open files.
+// Circa 2025 the limit in Linux/Docker defaults to something like 1 billion.
+// This high of a limit is not practical for us, and it slows down the slow close fallback method
+// so we set a more reasonable limit here.
+// This value is the default hard limit on Ubuntu 22.04 circa 2025.
+static constexpr rlim_t kOpenFilesLimit = 1048576;
+
 } // anonymous namespace
 
 Error realPath(const FilePath& filePath, FilePath* pRealPath)
@@ -797,6 +804,13 @@ void closeNonStdFileDescriptors(rlim_t fdLimit)
 
 void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit)
 {
+   // Newer (circa 2025) versions of Linux/Docker pass in an absurdly (for us) high 
+   // value for RLIMIT_NOFILE, which can be as high as 1 billion. This can cause issues
+   // with the closeFileDescriptorsFromSafe function, which will try to close all file
+   // descriptors from fdStart to fdLimit, which can take a very long time and cause
+   // the process to hang. To prevent this, we clamp the fdLimit to a reasonable value.
+   auto clampedFdLimit = std::min(fdLimit, kOpenFilesLimit);
+
    // read fds that we own from parent process pipe until we've read them all
    // the parent must give us this list because we cannot fetch it ourselves
    // in a signal-safe way, but we can read from the pipe safely
@@ -831,7 +845,7 @@ void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit
       uint32_t fd = static_cast<uint32_t>(buff);
 
       // close the reported fd if it is in range
-      if (fd >= fdStart && fd < fdLimit && buff != pipeFd)
+      if (fd >= fdStart && fd < clampedFdLimit && buff != pipeFd)
          safeClose(fd);
    }
 
@@ -841,7 +855,7 @@ void closeFileDescriptorsFromParent(int pipeFd, uint32_t fdStart, rlim_t fdLimit
    if (error || !fdsRead)
    {
       closeFileDescriptorsFromSafe(fdStart, pipeFd);
-      closeFileDescriptorsFromSafe(pipeFd + 1, fdLimit);
+      closeFileDescriptorsFromSafe(pipeFd + 1, clampedFdLimit);
    }
 }
 
