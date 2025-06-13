@@ -1185,15 +1185,6 @@
    clear = function() { .rs.clearUserPref("show_publish_diagnostics") }
 )
 
-# 
-#
-# Whether to show UI for publishing content to Posit Cloud.
-.rs.uiPrefs$enableCloudPublishUi <- list(
-   get = function() { .rs.getUserPref("enable_cloud_publish_ui") },
-   set = function(value) { .rs.setUserPref("enable_cloud_publish_ui", value) },
-   clear = function() { .rs.clearUserPref("enable_cloud_publish_ui") }
-)
-
 # Check SSL certificates when publishing
 #
 # Whether to check remote server SSL certificates when publishing content.

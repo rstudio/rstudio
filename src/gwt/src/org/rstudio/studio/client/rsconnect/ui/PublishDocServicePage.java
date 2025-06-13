@@ -15,7 +15,6 @@
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
@@ -24,6 +23,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.ServerType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 
 public class PublishDocServicePage 
@@ -72,40 +72,10 @@ public class PublishDocServicePage
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
             new PublishRPubsPage("RPubs", constants_.rPubsSubtitle());
 
-      String cloudTitle = constants_.cloudTitle();
-      String cloudSubtitle = constants_.cloudSubtitle();
-
-      WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage = null;
-
-      if (input.isMultiRmd() && !input.isWebsiteRmd())
-      {
-         cloudPage = new PublishMultiplePage(cloudTitle, cloudSubtitle,
-            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
-            ServerType.POSITCLOUD);
-      } else
-      {
-         if (input.isStaticDocInput())
-         {
-            // static input implies static output
-            cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
-               new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
-               false, true, ServerType.POSITCLOUD);
-         }
-         else
-         {
-            cloudPage = new PublishReportSourcePage(cloudTitle, cloudSubtitle,
-               constants_.publishToPositCloud(),
-               new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
-               false, false, ServerType.POSITCLOUD);
-         }
-      }
-
       if (input.isExternalUIEnabled() && !input.isWebsiteRmd())
          pages.add(rpubsPage);
       if (input.isConnectUIEnabled())
          pages.add(connectPage);
-      if (input.isCloudUIEnabled() && cloudPage != null)
-         pages.add(cloudPage);
       
       return pages;
    }
