@@ -897,6 +897,33 @@ std::string consumeStdin(StdinLines kind, unsigned maxChars)
    return input;
 }
 
+collection::Position offsetToPosition(const std::string& str, std::size_t offset)
+{
+   int line = 0;
+   int column = 0;
+   
+   for (size_t i = 0; i < offset && i < str.length(); i++)
+   {
+      if (str[i] == '\n')
+      {
+         line++;
+         column = 0;
+      }
+      else if (str[i] == '\r' && i + 1 < str.length() && str[i + 1] != '\n')
+      {
+         // Handle standalone \r (old Mac style)
+         line++;
+         column = 0;
+      }
+      else
+      {
+         column++;
+      }
+   }
+
+   return collection::Position(line, column);
+}
+
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

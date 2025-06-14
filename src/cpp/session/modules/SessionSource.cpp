@@ -639,6 +639,12 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       if (error)
          return error;
 
+      if (hasChanges)
+      {
+         module_context::events().onSourceFileDiff(
+            module_context::DocumentDiff(id, replacement, offset, length));
+      }
+
       // write to the source database (don't worry about writing document
       // contents if those have not changed)
       error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges, retryWrite);
