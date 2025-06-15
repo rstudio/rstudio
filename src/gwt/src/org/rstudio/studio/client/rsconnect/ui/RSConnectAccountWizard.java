@@ -20,6 +20,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
+import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RsconnectConstants;
@@ -38,14 +39,15 @@ public class RSConnectAccountWizard
          RSConnectServerOperations server,
          GlobalDisplay display,
          boolean forFirstAccount,
+         boolean showCloudPage,
          boolean isConnectEnabled,
          ProgressOperationWithInput<NewRSConnectAccountResult> operation)
    {
       super(constants_.connectAccount(), constants_.connectAccount(), Roles.getDialogRole(),
             new NewRSConnectAccountInput(server, display), 
             forFirstAccount ? 
-               createIntroPage(isConnectEnabled) :
-               createSelectorPage(isConnectEnabled),
+               createIntroPage(showCloudPage, isConnectEnabled) :
+               createSelectorPage(showCloudPage, isConnectEnabled),
             operation);
       initAuthPage(getFirstPage());
    }
@@ -82,19 +84,31 @@ public class RSConnectAccountWizard
    
    protected static WizardPage<NewRSConnectAccountInput,
                                NewRSConnectAccountResult> createIntroPage(
+                                     boolean showCloudPage,
                                      boolean isConnectEnabled)
    {
       return new NewRSConnectAccountPage(constants_.connectPublishingAccount(),
             constants_.pickAnAccount(), constants_.connectPublishingAccount(),
             new ImageResource2x(RSConnectResources.INSTANCE.publishIcon2x()),
             new ImageResource2x(RSConnectResources.INSTANCE.publishIconLarge2x()),
-            createSelectorPage(isConnectEnabled));
+            createSelectorPage(showCloudPage, isConnectEnabled));
    }
    
    protected static WizardPage<NewRSConnectAccountInput,
                                NewRSConnectAccountResult> createSelectorPage(
+                                     boolean showCloudPage,
                                      boolean isConnectEnabled)
    {
+      if (showCloudPage)
+      {
+         return new WizardNavigationPage<>(
+                  constants_.chooseAccountType(),
+                  constants_.chooseAccountType(),
+                  constants_.connectAccount(),
+                  null, 
+                  null, 
+                  createPages(isConnectEnabled));
+      }
       return new NewRSConnectLocalPage();
    }
    

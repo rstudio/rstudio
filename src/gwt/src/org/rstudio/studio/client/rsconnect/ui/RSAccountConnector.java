@@ -38,6 +38,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
@@ -222,6 +223,8 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
             server_,
             display_,
             forFirstAccount,
+            withCloudOption &&
+               SessionUtils.showExternalPublishUi(session_, pUserState_.get()),
             pUserState_.get().enableRsconnectPublishUi().getGlobalValue(),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
