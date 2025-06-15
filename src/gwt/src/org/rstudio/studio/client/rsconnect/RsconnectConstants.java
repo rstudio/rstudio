@@ -710,24 +710,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String rPubsSubtitle();
 
     /**
-     * Translated "Posit Cloud (deprecated)".
-     *
-     * @return translated "Posit Cloud (deprecated)"
-     */
-    @DefaultMessage("Posit Cloud (deprecated)")
-    @Key("cloudTitle")
-    String cloudTitle();
-
-   /**
-     * Translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.".
-     *
-     * @return translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information."
-     */
-    @DefaultMessage("Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.")
-    @Key("cloudSubtitle")
-    String cloudSubtitle();
-
-    /**
      * Translated "Publish To".
      *
      * @return translated "Publish To"

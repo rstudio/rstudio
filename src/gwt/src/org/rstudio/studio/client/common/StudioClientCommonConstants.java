@@ -1120,15 +1120,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String chkEnableRSConnectLabel();
 
     /**
-     * Translated "Enable publishing to Posit Cloud".
-     *
-     * @return translated "Enable publishing to Posit Cloud"
-     */
-    @DefaultMessage("Enable publishing to Posit Cloud")
-    @Key("chkEnableCloudLabel")
-    String chkEnableCloudLabel();
-
-    /**
      * Translated "Information about Posit Connect".
      *
      * @return translated "Information about Posit Connect"
