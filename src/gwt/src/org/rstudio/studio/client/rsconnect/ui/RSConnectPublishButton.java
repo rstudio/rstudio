@@ -748,7 +748,7 @@ public class RSConnectPublishButton extends Composite
    {
       if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
       {
-         // always show the menu when RSConnect or Posit Cloud is enabled
+         // always show the menu when RSConnect is enabled
          return true;
       }
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&

@@ -326,7 +326,7 @@ public class RSConnectDeploy extends Composite
       }
       else
       {
-         // if not deploying a Shiny app and RSConnect UI/ Posit Cloud UI are not enabled, then
+         // if not deploying a Shiny app and RSConnect UI is not enabled, then
          // there's no account we can add suitable for this content
          addAccountAnchor_.setVisible(false);
       }
