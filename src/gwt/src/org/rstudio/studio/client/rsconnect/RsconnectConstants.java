@@ -710,24 +710,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String rPubsSubtitle();
 
     /**
-     * Translated "Posit Cloud (deprecated)".
-     *
-     * @return translated "Posit Cloud (deprecated)"
-     */
-    @DefaultMessage("Posit Cloud (deprecated)")
-    @Key("cloudTitle")
-    String cloudTitle();
-
-   /**
-     * Translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.".
-     *
-     * @return translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information."
-     */
-    @DefaultMessage("Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.")
-    @Key("cloudSubtitle")
-    String cloudSubtitle();
-
-    /**
      * Translated "Publish To".
      *
      * @return translated "Publish To"
@@ -888,15 +870,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Publish to Posit Connect")
     @Key("publishToRstudioConnect")
     String publishToRstudioConnect();
-
-    /**
-     * Translated "Publish to Posit Cloud".
-     *
-     * @return translated "Publish to Posit Cloud"
-     */
-    @DefaultMessage("Publish to Posit Cloud")
-    @Key("publishToPositCloud")
-    String publishToPositCloud();
 
     /**
      * Translated "Publish to RPubs".
@@ -1483,24 +1456,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @Key("publishWizardLabel")
     String publishWizardLabel();
 
-    /**
-     * Translated "Connect Posit Cloud account".
-     *
-     * @return translated "Connect Posit Cloud account"
-     */
-    @DefaultMessage("Connect Posit Cloud account")
-    @Key("newPositCloudPageCaption")
-    String newPositCloudPageCaption();
-
-    /**
-     * Translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.".
-     *
-     * @return translated "Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information."
-     */
-    @DefaultMessage("Publishing to Posit Cloud is deprecated as of October 2024. Visit https://pos.it/pc-publishing for more information.")
-    @Key("newPositCloudPageSubTitle")
-    String newPositCloudPageSubTitle();
-    
     @DefaultMessage("{0,number} environment variables will be published with this {1}.")
     @AlternateMessage({"one", "1 environment variable will be published with this {1}."})
     String envVarsPublishMessage(@PluralCount int itemCount, String contentType);

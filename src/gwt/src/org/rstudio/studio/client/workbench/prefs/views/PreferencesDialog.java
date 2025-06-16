@@ -105,8 +105,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
          hidePane(PublishingPreferencesPane.class);
 
       else if (!session.getSessionInfo().getAllowExternalPublish() &&
-               !userState.enableRsconnectPublishUi().getValue() &&
-               !userPrefs.enableCloudPublishUi().getValue())
+               !userState.enableRsconnectPublishUi().getValue())
       {
          hidePane(PublishingPreferencesPane.class);
       }

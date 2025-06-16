@@ -16,7 +16,6 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
@@ -25,6 +24,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.ServerType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 
 public class PublishMultiplePage 
@@ -72,11 +72,6 @@ public class PublishMultiplePage
          if (serverType == ServerType.RSCONNECT)
          {
             pageCaption = constants_.publishToRstudioConnect();
-         }
-         else if (serverType == ServerType.POSITCLOUD)
-         {
-            pageCaption = constants_.publishToPositCloud();
-            allowScheduling = false;
          }
          pages.add(
             new PublishReportSourcePage(singleTitle, singleSubtitle, pageCaption,

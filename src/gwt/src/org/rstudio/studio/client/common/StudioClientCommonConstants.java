@@ -1120,15 +1120,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String chkEnableRSConnectLabel();
 
     /**
-     * Translated "Enable publishing to Posit Cloud".
-     *
-     * @return translated "Enable publishing to Posit Cloud"
-     */
-    @DefaultMessage("Enable publishing to Posit Cloud")
-    @Key("chkEnableCloudLabel")
-    String chkEnableCloudLabel();
-
-    /**
      * Translated "Information about Posit Connect".
      *
      * @return translated "Information about Posit Connect"
@@ -1389,24 +1380,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     @DefaultMessage("and interactive documents to the Internet.")
     @Key("newRSConnectCloudPageSub")
     String newRSConnectCloudPageSub();
-
-    /**
-     * Translated "Connect Posit Cloud account".
-     *
-     * @return translated "Connect Posit Cloud account"
-     */
-    @DefaultMessage("Connect Posit Cloud account")
-    @Key("newPositCloudPageCaption")
-    String newPositCloudPageCaption();
-
-    /**
-     * Translated "Our online service that lets you do, share, teach and learn data science in your web browser.".
-     *
-     * @return translated "Our online service that lets you do, share, teach and learn data science in your web browser."
-     */
-    @DefaultMessage("Our online service that lets you do, share, teach and learn data science in your web browser.")
-    @Key("newPositCloudPageSubTitle")
-    String newPositCloudPageSubTitle();
 
     /**
      * Translated "Connect ShinyApps.io Account".
