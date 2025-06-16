@@ -55,8 +55,6 @@ public class RSConnectAccountEntry extends Composite
       
       DecorativeImage icon = new DecorativeImage(account.isShinyAppsAccount() ?
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIconSmall2x()) :
-         account.isCloudAccount() ?
-            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIconSmall2x()) :
             new ImageResource2x(RSConnectResources.INSTANCE.localAccountIconSmall2x()));
       icon.getElement().getStyle().setMarginRight(2, Unit.PX);
       panel_.add(icon);

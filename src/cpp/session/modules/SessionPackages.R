@@ -187,7 +187,11 @@
          pkgDesc[c("Package", "Version")]
       })
       
-      pkgResult <- .rs.rbindList(Filter(length, pkgDescs))
+      pkgDescs <- Filter(length, pkgDescs)
+      if (length(pkgDescs) == 0L)
+         return(NULL)
+      
+      pkgResult <- .rs.rbindList(pkgDescs)
       pkgResult[["LibPath"]] <- libPath
       pkgResult
    })

@@ -158,7 +158,7 @@ public class RSConnectDeploy extends Composite
    public enum ServerType {
       RSCONNECT,
       RSPUBS,
-      POSITCLOUD,
+      POSITCLOUD_DEPRECATED,
       SHINYAPPS
    }
    
@@ -305,18 +305,15 @@ public class RSConnectDeploy extends Composite
 
       final boolean rsConnectEnabled = 
          userState_.enableRsconnectPublishUi().getGlobalValue();
-      final boolean positCloudEnabled =
-         userPrefs_.enableCloudPublishUi().getGlobalValue();
       
       // Invoke the "add account" wizard if either Shiny app or Connect enabled
-      if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled || positCloudEnabled)
+      if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
       {
          addAccountAnchor_.setClickHandler(() ->
          {
             boolean withCloudOption =
                   contentType == RSConnect.CONTENT_TYPE_APP ||
-                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE ||
-                  positCloudEnabled;
+                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE;
             
             connector_.showAccountWizard(false, withCloudOption, (successful) ->
             {
@@ -329,7 +326,7 @@ public class RSConnectDeploy extends Composite
       }
       else
       {
-         // if not deploying a Shiny app and RSConnect UI/ Posit Cloud UI are not enabled, then
+         // if not deploying a Shiny app and RSConnect UI is not enabled, then
          // there's no account we can add suitable for this content
          addAccountAnchor_.setVisible(false);
       }
@@ -451,7 +448,7 @@ public class RSConnectDeploy extends Composite
       userState_ = state;
       // posit.cloud should be enabled for static and non-static content
       accountList_ = new RSConnectAccountList(server_, display_, false, 
-            !asStatic_, true, true, constants_.publishFromAccount());
+            !asStatic_, true, constants_.publishFromAccount());
       appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
@@ -596,21 +593,9 @@ public class RSConnectDeploy extends Composite
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
 
-      // In order to display Posit.cloud accounts, it needs to be enabled in Prefs AND
-      // the server type needs to be Posit.cloud, or null (which means the user hasn't specified)
-      boolean positCloudEnabled =
-         userPrefs_.enableCloudPublishUi().getGlobalValue() &&
-            (serverType == ServerType.POSITCLOUD || serverType == null);
-
       boolean rsConnectEnabled =
          userState_.enableRsconnectPublishUi().getGlobalValue() &&
             (serverType == ServerType.RSCONNECT || serverType == null);
-
-      if (positCloudEnabled != accountList_.getShowPositCloudAccounts())
-      {
-         accountList_.setShowPositCloudAccounts(positCloudEnabled);
-         accountList_.refreshAccountList();
-      }
 
       if (rsConnectEnabled != accountList_.getShowConnectAccounts())
       {
@@ -973,7 +958,7 @@ public class RSConnectDeploy extends Composite
       if (numAccounts == 0 && !isRetry)
       {
          connector_.showAccountWizard(accounts.length() == 0, 
-               source_.isShiny() || userPrefs_.enableCloudPublishUi().getGlobalValue(),
+               source_.isShiny(),
                new OperationWithInput<Boolean>() 
          {
             @Override

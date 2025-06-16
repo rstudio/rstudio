@@ -1206,6 +1206,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("rbindList", function(data)
 {
+   data <- Filter(length, data)
    result <- do.call(mapply, c(c, data, USE.NAMES = FALSE, SIMPLIFY = FALSE))
    names(result) <- names(data[[1]])
    as.data.frame(result, stringsAsFactors = FALSE)
