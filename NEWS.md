@@ -48,5 +48,5 @@
 ### Deprecated / Removed
 
 - RStudio Server and Posit Workbench are no longer supported on Ubuntu Focal (#15940)
-- Publishing to Posit Cloud has been removed (#8257)
+- Publishing to Posit Cloud has been removed (rstudio-pro#8257)
 - The "Limit visible console output" feature has been removed (#16104)
