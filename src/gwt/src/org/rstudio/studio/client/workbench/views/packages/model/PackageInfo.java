@@ -24,51 +24,51 @@ public class PackageInfo extends JavaScriptObject
    }
    
    public final native String getName() /*-{
-      return this["Package"];
+      return this["name"];
    }-*/;
    
    public final native String getDesc() /*-{
-      return this["Title"] || "";
+      return this["desc"] || "";
    }-*/;
    
    public final native String getVersion() /*-{
-      return this["Version"] || "";
+      return this["version"] || "";
    }-*/;
 
    public final native String getPackageSource() /*-{
-      return this["Source"] || "";
+      return this["source"] || "";
    }-*/;
    
    public final native String getLibrary() /*-{
-      return this["Library"] || "";
+      return this["library"] || "";
    }-*/;
    
    public final native String getLibraryAbsolute() /*-{
-      return this["LibraryAbsolute"] || "";
+      return this["library_absolute"] || "";
    }-*/;
    
    public final native int getLibraryIndex() /*-{
-      return this["LibraryIndex"] || 0;
+      return this["library_index"] || 0;
    }-*/;
 
    public final native String getHelpUrl() /*-{
-      return "help/library/" + this["Package"] + "/html/00Index.html";
+      return "help/library/" + this["name"] + "/html/00Index.html";
    }-*/;
 
    public final native String getPackageUrl() /*-{
-      return this["PackageUrl"] || "";
+      return this["package_url"] || "";
    }-*/;
 
    public final native String getBrowseUrl() /*-{
-      return this["BrowseUrl"] || "";
+      return this["browse_url"] || "";
    }-*/;
 
    public final native boolean isAttached() /*-{
-      return this["Attached"] || false;
+      return this["attached"] || false;
    }-*/;
 
    public final native void setAttached(boolean attached) /*-{
-      this["Attached"] = attached;
+      this["attached"] = attached;
    }-*/;
    
    public final native boolean isFirstInLibrary() /*-{
@@ -80,17 +80,11 @@ public class PackageInfo extends JavaScriptObject
    }-*/;
    
    public final native String getPackratStringField(String name) /*-{
-      if (typeof this[name] === "undefined" || this[name] === null)
-         return "";
-      else
-         return this[name];
+      return this[name] || "";
    }-*/;
    
    public final native boolean getPackratBoolField(String name) /*-{
-      if (typeof this[name] === "undefined" || this[name] === null)
-         return false;
-      else
-         return this[name];
+      return this[name] || false;
    }-*/;
    
    public final String getPackratVersion() 

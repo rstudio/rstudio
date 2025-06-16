@@ -32,6 +32,7 @@
 - Fixed an issue where GitHub Copilot would not index project files when Copilot was started while the project is open (#16128)
 - Fixed an issue where the entire document was sent to GitHub Copilot after each edit instead of just the changes (#15901)
 - Fixed an issue where RStudio would send multiple didOpen messages to GitHub Copilot for the same file (#16129)
+- Fixed an issue where large character vectors were shown with an NaN size in the environment pane (#15919)
 
 
 #### Posit Workbench

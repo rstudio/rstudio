@@ -209,8 +209,17 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   {
                      int size = object.rObject.getSize();
                      if (size < 0)
+                     {
                         return "<NA>";
-                     return StringUtil.formatFileSize(size);
+                     }
+                     else if (object.rObject.isSizeEstimated())
+                     {
+                        return "> " + StringUtil.formatFileSize(size, 1000);
+                     }
+                     else
+                     {
+                        return StringUtil.formatFileSize(size);
+                     }
                   }
               });
       columns_.add(new ObjectGridColumn(

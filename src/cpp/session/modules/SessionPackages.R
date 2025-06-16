@@ -1378,11 +1378,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       # Keep only fields of interest.
       pkgInfo <- pkgDesc[c("Package", "Title", "Version")]
       
+      # Re-map names. Note that these names are also used and expected by
+      # panmirror / Quarto.
+      names(pkgInfo) <- c("name", "desc", "version")
+      
       # Also record metadata about the library where it was found.
       libraryPath <- dirname(pkgPath)
-      pkgInfo[["Library"]] <- .rs.createAliasedPath(libraryPath)
-      pkgInfo[["LibraryAbsolute"]] <- libraryPath
-      pkgInfo[["LibraryIndex"]] <- match(libraryPath, .libPaths(), nomatch = 0L)
+      pkgInfo[["library"]] <- .rs.createAliasedPath(libraryPath)
+      pkgInfo[["library_absolute"]] <- libraryPath
+      pkgInfo[["library_index"]] <- match(libraryPath, .libPaths(), nomatch = 0L)
       
       # Also note which packages appear to be loaded or attached.
       isLoaded <- FALSE
@@ -1397,20 +1401,20 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          isLoaded &&
          paste("package", pkgName, sep = ":") %in% search()
       
-      pkgInfo[["Loaded"]] <- isLoaded
-      pkgInfo[["Attached"]] <- isAttached
+      pkgInfo[["loaded"]] <- isLoaded
+      pkgInfo[["attached"]] <- isAttached
       
-      pkgInfo[["Source"]] <- tryCatch(
+      pkgInfo[["source"]] <- tryCatch(
          .rs.inferPackageSource(pkgDesc),
          error = function(cnd) "[Unknown]"
       )
       
-      pkgInfo[["BrowseUrl"]] <- tryCatch(
+      pkgInfo[["browse_url"]] <- tryCatch(
          .rs.inferPackageBrowseUrl(pkgDesc),
          error = function(cnd) ""
       )
       
-      pkgInfo[["PackageUrl"]] <- tryCatch(
+      pkgInfo[["package_url"]] <- tryCatch(
          .rs.inferPackageDocumentationUrl(pkgDesc),
          error = function(cnd) ""
       )
@@ -1421,7 +1425,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    })
    
    # Sort based on the package name.
-   pkgOrder <- order(.rs.mapChr(pkgInfos, `[[`, "Package"))
+   pkgOrder <- order(.rs.mapChr(pkgInfos, `[[`, "name"))
    pkgInfos <- pkgInfos[pkgOrder]
    
    # And we're done.
