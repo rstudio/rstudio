@@ -316,7 +316,7 @@ std::unordered_map<std::string, int> s_knownDocuments;
 
 // Set/update the version for a given URI. IMPORTANT: will increment the version number each time
 // it is called.
-int setVersionForDocument(const std::string& uri)
+int updateVersionForDocument(const std::string& uri)
 {
    // If the document is already known, increment its version.
    auto it = s_knownDocuments.find(uri);
@@ -1221,7 +1221,7 @@ void docOpened(const std::string& uri,
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = setVersionForDocument(uri);
+   textDocumentJson["version"] = updateVersionForDocument(uri);
    textDocumentJson["text"] = contents;
 
    json::Object paramsJson;
@@ -1276,7 +1276,7 @@ void didChangeIncremental(const std::string& uri,
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = setVersionForDocument(uri);
+   textDocumentJson["version"] = updateVersionForDocument(uri);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
