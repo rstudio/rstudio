@@ -769,10 +769,10 @@
          desc <- .rs.valueDescription(obj)
 
          # expandable object--supply contents
-         if (is.list(obj) ||  is.data.frame(obj) || isS4(obj) ||
+         if (is.list(obj) || is.data.frame(obj) || isS4(obj) ||
              inherits(obj, c("data.table", "ore.frame", "cast_df", "xts", "DataFrame")))
          {
-            if (.rs.isAltrep(obj))
+            if (.rs.hasAltrep(obj))
             {
                # don't prefetch content for altreps
                val <- "NO_VALUE"
