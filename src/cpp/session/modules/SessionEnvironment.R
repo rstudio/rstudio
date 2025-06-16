@@ -718,6 +718,7 @@
    class <- .rs.getSingleClass(obj)
    contents <- list()
    contents_deferred <- FALSE
+   is_size_estimated <- FALSE
 
    # for language objects, don't evaluate, just show the expression
    if (is.symbol(obj))
@@ -753,12 +754,12 @@
          else
          {
             is_size_estimated <- identical(attr(size, "estimate"), TRUE)
-            size <- format(size, units = "auto", standard = "SI")
+            size_formatted <- format(size, units = "auto", standard = "SI")
             if (is_size_estimated)
-               size <- paste(">", size)
+               size_formatted <- paste(">", size_formatted)
             
             fmt <- "Large %s (%s %s)"
-            val <- sprintf(fmt, class, len_desc, size)
+            val <- sprintf(fmt, class, len_desc, size_formatted)
          }
          contents_deferred <- TRUE
       }
@@ -794,6 +795,7 @@
       value             = .rs.scalar(val),
       description       = .rs.scalar(desc),
       size              = .rs.scalar(size),
+      is_size_estimated = .rs.scalar(is_size_estimated),
       length            = .rs.scalar(len),
       contents          = contents,
       contents_deferred = .rs.scalar(contents_deferred)
