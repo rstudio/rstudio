@@ -19,8 +19,12 @@ namespace rstudio {
 namespace server_core {
 namespace database {
 
-constexpr const char* kDatabaseProviderSqlite = "sqlite";
-constexpr const char* kDatabaseProviderPostgresql = "postgresql";
+core::Error execute(const std::string& databaseConfigFile,
+                    const boost::optional<core::system::User>& databaseFileUser,
+                    std::string command)
+{
+   return Success();
+}
 
 } // namespace database
 } // namespace server_core

@@ -468,13 +468,6 @@ Error initialize(const std::string& databaseConfigFile,
    return Success();
 }
 
-Error execute(const std::string& databaseConfigFile,
-              const boost::optional<system::User>& databaseFileUser,
-              std::string command)
-{
-   return Success();
-}
-
 boost::shared_ptr<IConnection> getConnection()
 {
    return s_connectionPool->getConnection();

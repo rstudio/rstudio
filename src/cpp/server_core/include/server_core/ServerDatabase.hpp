@@ -49,11 +49,6 @@ core::Error initialize(const std::string& databaseConfigFile = std::string(),
                        bool updateSchema = false,
                        const boost::optional<core::system::User>& databaseFileUser = boost::none);
 
-// Execute the database command using the underlying configuration
-core::Error execute(const std::string& databaseConfigFile,
-                    const boost::optional<core::system::User>& databaseFileUser,
-                    std::string command);
-
 boost::shared_ptr<core::database::IConnection> getConnection();
 bool getConnection(const boost::posix_time::time_duration& waitTime,
                    boost::shared_ptr<core::database::IConnection>* pConnection);
