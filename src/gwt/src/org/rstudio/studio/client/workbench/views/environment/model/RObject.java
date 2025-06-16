@@ -59,6 +59,10 @@ public class RObject extends JavaScriptObject
    public final native int getSize() /*-{
       return this.size;
    }-*/;
+
+   public final native boolean isSizeEstimated() /*-{
+      return this.is_size_estimated || false;
+   }-*/;
    
    public final native boolean getContentsDeferred() /*-{
       return this.contents_deferred;
