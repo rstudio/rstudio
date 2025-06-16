@@ -1816,7 +1816,7 @@ double v_size(double n, int element_size)
 
    double vec_size = std::max(sizeof(SEXP), sizeof(double));
    double elements_per_byte = vec_size / element_size;
-   double n_bytes = ceil(n / elements_per_byte);
+   double n_bytes = std::ceil(n / elements_per_byte);
    // Rcout << n << " elements, each of " << elements_per_byte << " = " <<
    //  n_bytes << "\n";
 
@@ -1909,6 +1909,8 @@ double obj_size_tree(SEXP x,
 
    // Simple vectors
    case LGLSXP:
+      size += v_size(XLENGTH(x), sizeof(int));
+      break;
    case INTSXP:
       size += v_size(XLENGTH(x), sizeof(int));
       break;
@@ -2045,19 +2047,21 @@ int computeSize(SEXP objectSEXP)
 
 int computeNodeSize()
 {
-   SEXP listSEXP = Rf_allocList(0);
-   PROTECT(listSEXP);
-   int size = computeSize(listSEXP);
-   UNPROTECT(1);
+   int size = 0;
+   Error error = r::exec::RFunction(".rs.computeNodeSize").call(&size);
+   if (error)
+      LOG_ERROR(error);
+
    return size;
 }
 
 int computeVectorSize()
 {
-   SEXP vecSEXP = Rf_allocVector(INTSXP, 0);
-   PROTECT(vecSEXP);
-   int size = computeSize(vecSEXP);
-   UNPROTECT(1);
+   int size = 0;
+   Error error = r::exec::RFunction(".rs.computeVectorSize").call(&size);
+   if (error)
+      LOG_ERROR(error);
+
    return size;
 }
 

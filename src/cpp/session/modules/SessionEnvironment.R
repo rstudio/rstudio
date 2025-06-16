@@ -1026,6 +1026,16 @@
    result
 })
 
+.rs.addFunction("computeNodeSize", function()
+{
+   as.integer(utils::object.size(quote(expr = )))
+})
+
+.rs.addFunction("computeVectorSize", function()
+{
+   as.integer(utils::object.size(logical()))
+})
+
 .rs.addFunction("estimatedObjectSize", function(x)
 {
    # avoid invoking object.size() on large character vectors,

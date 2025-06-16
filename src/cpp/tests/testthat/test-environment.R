@@ -305,3 +305,12 @@ test_that(".rs.isSerializable() works as expected", {
       .rs.isSerializable(environment())
    
 })
+
+test_that("object size computations are correct", {
+   
+   expect_equal(object.size(123), .rs.objectSize(123))
+   expect_equal(object.size(letters), .rs.objectSize(letters))
+   expect_equal(object.size(mtcars), .rs.objectSize(mtcars))
+   expect_equal(object.size(list()), .rs.objectSize(list()))
+   expect_equal(object.size(data.frame()), .rs.objectSize(data.frame()))
+})
