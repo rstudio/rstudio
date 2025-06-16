@@ -307,10 +307,49 @@ test_that(".rs.isSerializable() works as expected", {
 })
 
 test_that("object size computations are correct", {
+
+   expect_size <- function(object) {
+      testthat::expect_equal(object.size(object), .rs.objectSize(object))
+   }
    
-   expect_equal(object.size(123), .rs.objectSize(123))
-   expect_equal(object.size(letters), .rs.objectSize(letters))
-   expect_equal(object.size(mtcars), .rs.objectSize(mtcars))
-   expect_equal(object.size(list()), .rs.objectSize(list()))
-   expect_equal(object.size(data.frame()), .rs.objectSize(data.frame()))
+   expect_size(NULL)
+   expect_size(TRUE)
+   expect_size(NA)
+   expect_size(123L)
+   expect_size(123)
+   expect_size(letters)
+   
+   expect_size(list())
+   expect_size(letters)
+   expect_size(mtcars)
+   
+   expect_size(quote(expr = ))
+   expect_size(as.symbol("hello"))
+   
+   expect_size(pairlist(1, 2, 3))
+   
+   expect_size(baseenv())
+   expect_size(globalenv())
+   
+   foo <- function(a = 1) {}
+   expect_size(formals(foo))
+   expect_size(body(foo))
+   expect_size(foo)
+   
+   if (requireNamespace("compiler", quietly = TRUE))
+   {
+      foo <- compiler::cmpfun(foo)
+      expect_size(formals(foo))
+      expect_size(body(foo))
+      expect_size(foo)
+      
+      bytecode <- .Call("rs_functionBody", foo)
+      expect_size(bytecode)
+   }
+   
+   expect_size(globalenv())
+   expect_size(emptyenv())
+   expect_size(baseenv())
+   expect_size(new.env())
+   
 })

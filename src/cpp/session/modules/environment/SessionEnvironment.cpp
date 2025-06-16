@@ -1872,18 +1872,12 @@ double obj_size_tree(SEXP x,
       return 0;
    }
 
-   // Don't count objects that we've seen before
-   if (!seen.insert(x).second)
-      return 0;
-
    // Rcout << "\n" << std::string(depth * 2, ' ');
    // Rprintf("type: %s", Rf_type2char(TYPEOF(x)));
 
    // Use sizeof(SEXPREC) and sizeof(VECTOR_SEXPREC) computed in R.
    // CHARSXP are treated as vectors for this purpose
-   double size = (Rf_isVector(x) || TYPEOF(x) == CHARSXP)
-      ? sizeof_vector
-      : sizeof_node;
+   double size = 0;
 
    // Handle ALTREP objects
    if (ALTREP(x))
@@ -1897,9 +1891,7 @@ double obj_size_tree(SEXP x,
       return size;
    }
 
-   // CHARSXPs have fake attributes
-   if (TYPEOF(x) != CHARSXP)
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+   // Rprintf("type: %-10s size: %6.0f\n", Rf_type2char(TYPEOF(x)), size);
 
    switch (TYPEOF(x))
    {
@@ -1909,23 +1901,36 @@ double obj_size_tree(SEXP x,
 
    // Simple vectors
    case LGLSXP:
+      size += sizeof_vector;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += v_size(XLENGTH(x), sizeof(int));
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       break;
    case INTSXP:
+      size += sizeof_vector;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += v_size(XLENGTH(x), sizeof(int));
       break;
    case REALSXP:
+      size += sizeof_vector;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += v_size(XLENGTH(x), sizeof(double));
       break;
    case CPLXSXP:
+      size += sizeof_vector;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += v_size(XLENGTH(x), sizeof(Rcomplex));
       break;
    case RAWSXP:
+      size += sizeof_vector;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += v_size(XLENGTH(x), 1);
       break;
 
    // Strings
    case STRSXP:
+      size += sizeof_vector;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += v_size(XLENGTH(x), sizeof(SEXP));
       for (R_xlen_t i = 0; i < XLENGTH(x); i++)
       {
@@ -1934,6 +1939,7 @@ double obj_size_tree(SEXP x,
       break;
 
    case CHARSXP:
+      size += sizeof_vector;
       size += v_size(LENGTH(x) + 1, 1);
       break;
 
@@ -1941,6 +1947,8 @@ double obj_size_tree(SEXP x,
    case VECSXP:
    case EXPRSXP:
    case WEAKREFSXP:
+      size += sizeof_vector;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += v_size(XLENGTH(x), sizeof(SEXP));
       for (R_xlen_t i = 0; i < XLENGTH(x); ++i)
       {
@@ -1954,33 +1962,22 @@ double obj_size_tree(SEXP x,
    // All have enough space for three SEXP pointers
 
    // Linked lists
-   case DOTSXP:
    case LISTSXP:
    case LANGSXP:
-   {
-      // Needed for DOTSXP
-      if (x == R_MissingArg)
+   case DOTSXP:
+      for (; x != R_NilValue; x = CDR(x))
       {
-         break;
+         size += sizeof_node;
+         size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+         size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+         size += obj_size_tree(CAR(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       }
-
-      SEXP cons = x;
-      for (; is_linked_list(cons); cons = CDR(cons))
-      {
-         if (cons != x)
-         {
-            size += sizeof_node;
-         }
-         size += obj_size_tree(TAG(cons), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
-         size += obj_size_tree(CAR(cons), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
-      }
-
-      // Handle non-nil CDRs
-      size += obj_size_tree(cons, base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       break;
-   }
 
    case BCODESXP:
+      size += sizeof_node;
+      size += sizeof_node;  // ?
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += obj_size_tree(CAR(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += obj_size_tree(CDR(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
@@ -1988,45 +1985,52 @@ double obj_size_tree(SEXP x,
 
    // Environments
    case ENVSXP:
-      if (x == R_BaseEnv || x == R_GlobalEnv || x == R_EmptyEnv || x == base_env || is_namespace(x))
-         return 0;
-
-      size += obj_size_tree(FRAME(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
-      size += obj_size_tree(ENCLOS(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
-      size += obj_size_tree(HASHTAB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+      size += sizeof_node;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+      // size += obj_size_tree(FRAME(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+      // size += obj_size_tree(ENCLOS(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+      // size += obj_size_tree(HASHTAB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       break;
 
    // Functions
    case CLOSXP:
+      size += sizeof_node;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += obj_size_tree(FORMALS(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += obj_size_tree(BODY(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
-      size += obj_size_tree(CLOENV(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+      // size += obj_size_tree(CLOENV(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       break;
 
    case PROMSXP:
-      size += obj_size_tree(PRVALUE(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
-      size += obj_size_tree(PRCODE(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
-      size += obj_size_tree(PRENV(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+      size += sizeof_node;
+      // size += obj_size_tree(PRVALUE(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+      // size += obj_size_tree(PRCODE(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
+      // size += obj_size_tree(PRENV(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       break;
 
    case EXTPTRSXP:
+      size += sizeof_node;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += sizeof(void*); // the actual pointer
       size += obj_size_tree(EXTPTR_PROT(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += obj_size_tree(EXTPTR_TAG(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       break;
 
    case S4SXP:
+      size += sizeof_node;
+      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
       break;
 
    case SYMSXP:
+      size += sizeof_node;
       break;
 
    default:
-      return 0;
+      size += sizeof_node;
+      break;
    }
 
-   // Rprintf("type: %-10s size: %6.0f\n", Rf_type2char(TYPEOF(x)), size);
    return size;
 }
 
@@ -2078,6 +2082,11 @@ SEXP rs_objectSize(SEXP objectSEXP,
    return r::sexp::create(size, &protect);
 }
 
+SEXP rs_functionBody(SEXP functionSEXP)
+{
+   return BODY(functionSEXP);
+}
+
 Error initialize()
 {
    // store on the heap so that the destructor is never called (so we
@@ -2117,6 +2126,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_newTestExternalPointer);
    RS_REGISTER_CALL_METHOD(rs_isSerializable);
    RS_REGISTER_CALL_METHOD(rs_objectSize);
+   RS_REGISTER_CALL_METHOD(rs_functionBody);
 
    // subscribe to events
    using boost::bind;
