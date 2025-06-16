@@ -670,7 +670,7 @@
    .Call("rs_hasExternalPointer", object, nullPtr, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
+.rs.addFunction("describeObject", function(env, objName, isAltrep)
 {
    obj <- get(objName, env)
 
@@ -711,7 +711,7 @@
 
       # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
       # an attempt is made to compute their metrics exactly; avoid computing the size for these
-      size <- if (computeSize) .rs.estimatedObjectSize(obj) else 0
+      size <- .rs.estimatedObjectSize(obj)
       len <- length(obj)
    }
 
@@ -772,16 +772,16 @@
          if (is.list(obj) ||  is.data.frame(obj) || isS4(obj) ||
              inherits(obj, c("data.table", "ore.frame", "cast_df", "xts", "DataFrame")))
          {
-            if (computeSize)
-            {
-               # normal object
-               contents <- .rs.valueContents(obj)
-            }
-            else
+            if (isAltrep)
             {
                # don't prefetch content for altreps
                val <- "NO_VALUE"
                contents_deferred <- TRUE
+            }
+            else
+            {
+               # normal object
+               contents <- .rs.valueContents(obj)
             }
          }
       }
@@ -1018,12 +1018,12 @@
    TRUE
 })
 
-.rs.addFunction("objectSize", function(x)
+.rs.addFunction("objectSize", function(object)
 {
-   if ("lobstr" %in% loadedNamespaces())
-      lobstr::obj_size(x)
-   else
-      utils::object.size(x)
+   envir <- parent.frame()
+   result <- .Call("rs_objectSize", object, envir, PACKAGE = "(embedding)")
+   class(result) <- "object_size"
+   result
 })
 
 .rs.addFunction("estimatedObjectSize", function(x)
@@ -1041,4 +1041,3 @@
    
    .rs.objectSize(x)
 })
-
