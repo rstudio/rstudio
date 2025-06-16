@@ -1986,8 +1986,7 @@ double obj_size_tree(SEXP x,
 
    // Environments
    case ENVSXP:
-      if (x == R_BaseEnv || x == R_GlobalEnv || x == R_EmptyEnv ||
-          x == base_env || is_namespace(x))
+      if (x == R_BaseEnv || x == R_GlobalEnv || x == R_EmptyEnv || x == base_env || is_namespace(x))
          return 0;
 
       size += obj_size_tree(FRAME(x), base_env, sizeof_node, sizeof_vector, seen, depth + 1);
