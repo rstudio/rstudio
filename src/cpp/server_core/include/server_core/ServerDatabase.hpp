@@ -18,13 +18,6 @@
 
 #include <server_core/ServerDatabaseOverlay.hpp>
 
-#include <boost/optional.hpp>
-
-#include <core/Database.hpp>
-
-#include <shared_core/Error.hpp>
-#include <shared_core/system/User.hpp>
-
 namespace rstudio {
 namespace server_core {
 namespace database {

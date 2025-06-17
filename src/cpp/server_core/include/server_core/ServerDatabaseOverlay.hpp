@@ -16,7 +16,12 @@
 #ifndef SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
 #define SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
 
+#include <boost/optional.hpp>
+
+#include <core/Database.hpp>
+
 #include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
 
 namespace rstudio {
 namespace server_core {
