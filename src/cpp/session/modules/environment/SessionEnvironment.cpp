@@ -1838,7 +1838,7 @@ double v_size(double n, int element_size)
    else if (n_bytes > 0)
       size = 8;
 
-   // Size is pointer to struct  + struct size
+   // Size is pointer to struct + struct size
    return size;
 }
 
