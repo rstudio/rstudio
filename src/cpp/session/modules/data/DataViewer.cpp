@@ -15,16 +15,18 @@
 
 #include "DataViewer.hpp"
 
+#include <gsl/gsl-lite.hpp>
+
 #include <string>
 #include <vector>
 #include <sstream>
-#include <gsl/gsl-lite.hpp>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/Noncopyable.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/Log.hpp>
@@ -225,12 +227,12 @@ int safeDim(SEXP data, DimType dimType)
 }
 
 // CachedFrame represents an object that's currently active in a data viewer window.
-struct CachedFrame
+struct CachedFrame : noncopyable
 {
-   CachedFrame(const std::string& env, const std::string& obj, SEXP sexp):
-      envName(env),
-      objName(obj),
-      observedSEXP(sexp)
+   CachedFrame(const std::string& env, const std::string& obj, SEXP sexp)
+      : envName(env),
+        objName(obj),
+        observedSEXP(sexp)
    {
       if (sexp == nullptr)
          return;
@@ -254,10 +256,6 @@ struct CachedFrame
       ncol = safeDim(sexp, DIM_COLS);
    };
    
-   // Class is movable but not copyable
-   CachedFrame(CachedFrame&&) = default;
-   CachedFrame(const CachedFrame&) = delete;
-
    // The location of the frame (if we know it)
    std::string envName;
    std::string objName;
@@ -1137,7 +1135,7 @@ void onDetectChanges(module_context::ChangeSource source)
          module_context::enqueClientEvent(event);
 
          // replace old frame with new
-         s_cachedFrames.emplace(i->first, std::move(newFrame));
+         i->second = std::move(newFrame);
       }
    }
 }

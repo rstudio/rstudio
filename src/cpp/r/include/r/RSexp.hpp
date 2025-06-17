@@ -32,6 +32,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/Noncopyable.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <core/Log.hpp>
@@ -334,25 +335,80 @@ core::Error setNamedListElement(SEXP listSEXP,
 }
 
 
-class PreservedSEXP : boost::noncopyable
+class PreservedSEXP : noncopyable
 {
 public:
-   explicit PreservedSEXP(SEXP sexp = R_NilValue);
-   PreservedSEXP(PreservedSEXP&& other);
-   ~PreservedSEXP();
+
+   explicit PreservedSEXP(SEXP sexp = R_NilValue)
+      : sexp_(sexp)
+   {
+      preserve();
+   }
+
+   PreservedSEXP(PreservedSEXP&& other)
+   {
+      sexp_ = other.sexp_;
+      other.sexp_ = R_NilValue;
+   }
+
+   PreservedSEXP& operator=(PreservedSEXP&& other)
+   {
+      sexp_ = other.sexp_;
+      other.sexp_ = R_NilValue;
+      return *this;
+   }
+
+   ~PreservedSEXP()
+   {
+      release();
+   }
    
-   void set(SEXP sexp);
-   SEXP get() const { return sexp_; }
-   bool isNil() const { return sexp_ == R_NilValue; }
+   void set(SEXP sexp)
+   {
+      release();
+      sexp_ = sexp;
+      preserve();
+   }
+
+   SEXP get() const
+   {
+      return sexp_;
+   }
+
+   bool isNil() const
+   {
+      return sexp_ == R_NilValue;
+   }
    
    explicit operator bool() const
    {
       return !isNil();
    }
 
-   void releaseNow();
+   void releaseNow()
+   {
+      release();
+   }
 
 private:
+
+   void preserve()
+   {
+      if (sexp_ != R_NilValue)
+      {
+         ::R_PreserveObject(sexp_);
+      }
+   }
+
+   void release()
+   {
+      if (sexp_ != R_NilValue)
+      {
+         ::R_ReleaseObject(sexp_);
+         sexp_ = R_NilValue;
+      }
+   }
+
    SEXP sexp_;
 };
 
