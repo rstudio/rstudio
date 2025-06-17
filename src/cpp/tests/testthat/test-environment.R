@@ -308,48 +308,71 @@ test_that(".rs.isSerializable() works as expected", {
 
 test_that("object size computations are correct", {
 
-   expect_size <- function(object) {
+   expect_equal_size <- function(object) {
       testthat::expect_equal(object.size(object), .rs.objectSize(object))
    }
    
-   expect_size(NULL)
-   expect_size(TRUE)
-   expect_size(NA)
-   expect_size(123L)
-   expect_size(123)
-   expect_size(letters)
+   expect_equal_size(NULL)
+   expect_equal_size(as.symbol("symbol"))
+   expect_equal_size(pairlist(42))
+   expect_equal_size(function() {})
+   expect_equal_size(globalenv())
+   expect_equal_size(quote(2 + 2))
+   expect_equal_size(c)
+   expect_equal_size(logical(42))
+   expect_equal_size(integer(42))
+   expect_equal_size(double(42))
+   expect_equal_size(complex(42))
+   expect_equal_size(raw(42))
+   expect_equal_size(letters)
+   expect_equal_size(vector("list", 42))
+   expect_equal_size(list(1, 2, 3))
+   expect_equal_size(parse(text = "{ 1 + 2 }"))
+   expect_equal_size(parse(text = "{ 1 + 2 }")[[1]])
    
-   expect_size(list())
-   expect_size(letters)
-   expect_size(mtcars)
    
-   expect_size(quote(expr = ))
-   expect_size(as.symbol("hello"))
+   expect_equal_size(NULL)
+   expect_equal_size(TRUE)
+   expect_equal_size(NA)
+   expect_equal_size(123L)
+   expect_equal_size(123)
+   expect_equal_size(letters)
    
-   expect_size(pairlist(1, 2, 3))
+   expect_equal_size(list())
+   expect_equal_size(letters)
+   expect_equal_size(mtcars)
    
-   expect_size(baseenv())
-   expect_size(globalenv())
+   expect_equal_size(quote(expr = ))
+   expect_equal_size(as.symbol("hello"))
+   
+   expect_equal_size(pairlist(1, 2, 3))
+   
+   expect_equal_size(baseenv())
+   expect_equal_size(globalenv())
    
    foo <- function(a = 1) {}
-   expect_size(formals(foo))
-   expect_size(body(foo))
-   expect_size(foo)
+   expect_equal_size(formals(foo))
+   expect_equal_size(body(foo))
+   expect_equal_size(foo)
    
    if (requireNamespace("compiler", quietly = TRUE))
    {
       foo <- compiler::cmpfun(foo)
-      expect_size(formals(foo))
-      expect_size(body(foo))
-      expect_size(foo)
+      expect_equal_size(formals(foo))
+      expect_equal_size(body(foo))
+      expect_equal_size(foo)
       
       bytecode <- .Call("rs_functionBody", foo)
-      expect_size(bytecode)
+      expect_equal_size(bytecode)
    }
    
-   expect_size(globalenv())
-   expect_size(emptyenv())
-   expect_size(baseenv())
-   expect_size(new.env())
+   expect_equal_size(globalenv())
+   expect_equal_size(emptyenv())
+   expect_equal_size(baseenv())
+   expect_equal_size(new.env())
+   
+   setClass("Person", representation(name = "character", age = "numeric"))
+   kevin <- new("Person", name = "Kevin", age = NA_real_)
+   expect_equal_size(kevin)
    
 })

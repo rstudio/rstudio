@@ -1794,6 +1794,10 @@ bool isSuspendable()
    return s_isGlobalEnvironmentSerializable;
 }
 
+// Code within this namespace is borrowed from the lobstr package.
+// See https://github.com/r-lib/lobstr for more details.
+// Some patches are included to make this implementation conform
+// with the base R implementation where appropriate.
 namespace lobstr {
 
 bool is_linked_list(SEXP x)
@@ -1861,16 +1865,6 @@ double obj_size_tree(SEXP x,
                      int sizeof_vector,
                      int depth)
 {
-   // NILSXP is a singleton, so occupies no space. Similarly SPECIAL and
-   // BUILTIN are fixed and unchanging
-   switch (TYPEOF(x))
-   {
-   case NILSXP:
-   case SPECIALSXP:
-   case BUILTINSXP:
-      return 0;
-   }
-
    // Rcout << "\n" << std::string(depth * 2, ' ');
    // Rprintf("type: %s", Rf_type2char(TYPEOF(x)));
 
@@ -1905,21 +1899,25 @@ double obj_size_tree(SEXP x,
       size += v_size(XLENGTH(x), sizeof(int));
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
+
    case INTSXP:
       size += sizeof_vector;
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(int));
       break;
+
    case REALSXP:
       size += sizeof_vector;
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(double));
       break;
+
    case CPLXSXP:
       size += sizeof_vector;
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(Rcomplex));
       break;
+
    case RAWSXP:
       size += sizeof_vector;
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
@@ -1960,6 +1958,16 @@ double obj_size_tree(SEXP x,
    // https://github.com/wch/r-source/blob/master/src/include/Rinternals.h#L237-L249
    // All have enough space for three SEXP pointers
 
+   // R treates 'NULL' as an object with 0 size
+   case NILSXP:
+      return 0;
+   
+   // Special objects
+   case SPECIALSXP:
+   case BUILTINSXP:
+      size += sizeof_node;
+      break;
+
    // Linked lists
    case LISTSXP:
    case LANGSXP:
@@ -1969,7 +1977,9 @@ double obj_size_tree(SEXP x,
          size += sizeof_node;
          size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
          size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-         size += obj_size_tree(CAR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+
+         if (!r::internal::isImmediateBinding(x))
+            size += obj_size_tree(CAR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       }
       break;
 
