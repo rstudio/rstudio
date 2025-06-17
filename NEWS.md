@@ -30,6 +30,7 @@
 - Fixed an issue where attempting to attach or detach a package using the Packages pane could cause UI to become out-of-sync with actual package state
 - Fixed an issue where GitHub Copilot's status was incorrectly reported as an error in the Preferences dialog (#16119)
 - Fixed an issue where GitHub Copilot would not index project files when Copilot was started while the project is open (#16128)
+- Fixed an issue where the entire document was sent to GitHub Copilot after each edit instead of just the changes (#15901)
 - Fixed an issue where RStudio would send multiple didOpen messages to GitHub Copilot for the same file (#16129)
 - Fixed an issue where large character vectors were shown with an NaN size in the environment pane (#15919)
 
@@ -41,7 +42,7 @@
 
 ### Dependencies
 
-- Copilot Language Server 1.332.0 (#15935)
+- Copilot Language Server 1.335.0 (#15935)
 - Electron 36.4.0 (#15933)
 - GWT 2.12.2 (#16062)
 - Quarto 1.7.31 (#15934)

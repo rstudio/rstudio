@@ -28,6 +28,8 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/system/Win32StringUtils.hpp>
 
+#include <core/collection/Position.hpp>
+
 namespace rstudio {
 namespace core {
 namespace string_utils {
@@ -124,6 +126,10 @@ bool detectLineEndings(const FilePath& filePath, LineEnding* pType);
 std::string filterControlChars(const std::string& str);
 
 bool parseVersion(const std::string& str, uint64_t* pVersion);
+
+// Given a string and an offset into the string, return the corresponding line/column
+// position, taking varying line ending possibilities into account.
+collection::Position offsetToPosition(const std::string& str, std::size_t offset);
 
 template<typename T>
 T hashStable(const std::string& str)

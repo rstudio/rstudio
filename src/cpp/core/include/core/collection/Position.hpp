@@ -122,6 +122,13 @@ public:
       return contains(range.begin()) || contains(range.end());
    }
    
+   std::string toString() const
+   {
+      std::stringstream ss;
+      ss << begin_.toString() << " - " << end_.toString();
+      return ss.str();
+   }
+   
 private:
    
    Position begin_;
