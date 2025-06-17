@@ -375,4 +375,9 @@ test_that("object size computations are correct", {
    kevin <- new("Person", name = "Kevin", age = NA_real_)
    expect_equal_size(kevin)
    
+   expect_equal_size(c("a", "a", "a"))
+   expect_equal_size(c("a", "b", "c"))
+   expect_equal_size(list("a", "a", "a"))
+   expect_equal_size(list("a", "b", "c"))
+   
 })

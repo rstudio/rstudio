@@ -1926,14 +1926,24 @@ double obj_size_tree(SEXP x,
 
    // Strings
    case STRSXP:
+   {
+      // R ignores duplicates within the same string.
+      std::set<SEXP> visited;
+
       size += sizeof_vector;
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(SEXP));
       for (R_xlen_t i = 0; i < XLENGTH(x); i++)
       {
-         size += obj_size_tree(STRING_ELT(x, i), base_env, sizeof_node, sizeof_vector, depth + 1);
+         SEXP eltSEXP = STRING_ELT(x, i);
+         if (eltSEXP != NA_STRING && visited.count(eltSEXP) == 0)
+         {
+            size += obj_size_tree(eltSEXP, base_env, sizeof_node, sizeof_vector, depth + 1);
+            visited.insert(eltSEXP);
+         }
       }
       break;
+   }
 
    case CHARSXP:
       size += sizeof_vector;
@@ -2036,7 +2046,6 @@ double obj_size_tree(SEXP x,
       break;
 
    default:
-      size += sizeof_node;
       break;
    }
 
