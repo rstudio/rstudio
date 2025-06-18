@@ -1,7 +1,7 @@
 /*
- * ServerDatabase.hpp
+ * DatabaseUtils.hpp
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2025 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -13,42 +13,38 @@
  *
  */
 
-#ifndef SERVER_CORE_SERVER_DATABASE_HPP
-#define SERVER_CORE_SERVER_DATABASE_HPP
+#ifndef SERVER_CORE_DATABASE_UTILS_HPP
+#define SERVER_CORE_DATABASE_UTILS_HPP
 
-#include <server_core/ServerDatabaseOverlay.hpp>
+#include <boost/optional.hpp>
+
+#include <core/Database.hpp>
+
+#include <server_core/DatabaseConstants.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace server_core {
 namespace database {
+namespace utils {
 
-// get the configured driver
+core::Error readOptions(const core::FilePath& databaseConfigFile,
+                        const boost::optional<core::system::User>& databaseFileUser,
+                        core::database::ConnectionOptions* pOptions,
+                        const std::string forceDatabaseProvider);
+                        
+void determineConnectionPoolSize(core::database::ConnectionOptions& options, size_t& poolSize, std::string& source);
+void validateMinimumPostgreSqlVersion(boost::shared_ptr<core::database::IConnection> pConnection);
 core::database::Driver getConfiguredDriver(core::database::ConnectionOptions options);
+core::database::Driver getConfiguredDriver(const core::FilePath& databaseConfigFile);
 
-// get the configured driver
-// this method can be called before initialization to peak to see
-// which type of database would be used after initialization
-core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile = std::string());
-
-// Get the configured options
-// this method can be called after initialization to 
-// see the configured database connection options
-// returns boost::none if accessed before initialization
-boost::optional<core::database::ConnectionOptions> getConnectionOptions();
-
-// initialize server database, optionally performing migration
-// to the latest database schema version
-core::Error initialize(const std::string& databaseConfigFile = std::string(),
-                       bool updateSchema = false,
-                       const boost::optional<core::system::User>& databaseFileUser = boost::none);
-
-boost::shared_ptr<core::database::IConnection> getConnection();
-bool getConnection(const boost::posix_time::time_duration& waitTime,
-                   boost::shared_ptr<core::database::IConnection>* pConnection);
-
+} // namespace utils
 } // namespace database
 } // namespace server_core
 } // namespace rstudio
 
 
-#endif // SERVER_CORE_SERVER_DATABASE_HPP
+#endif // SERVER_CORE_DATABASE_UTILS_HPP
