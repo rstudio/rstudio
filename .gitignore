@@ -1,3 +1,4 @@
+/.cache
 /build/
 build_*/
 build-*/

@@ -19,15 +19,14 @@
 
 #include <string>
 #include <vector>
-#include <sstream>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
-#include <shared_core/Noncopyable.hpp>
 #include <shared_core/SafeConvert.hpp>
+#include <shared_core/Utility.hpp>
 
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
@@ -227,7 +226,7 @@ int safeDim(SEXP data, DimType dimType)
 }
 
 // CachedFrame represents an object that's currently active in a data viewer window.
-struct CachedFrame : noncopyable
+struct CachedFrame : MoveOnly
 {
    CachedFrame(const std::string& env, const std::string& obj, SEXP sexp)
       : envName(env),

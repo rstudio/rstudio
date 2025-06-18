@@ -1,7 +1,7 @@
 /*
- * Noncopyable.hpp
+ * Utility.hpp
  * 
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2025 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant to the terms of a commercial license agreement
  * with Posit, then this program is licensed to you under the following terms:
@@ -21,19 +21,19 @@
  *
  */
 
-#ifndef RSTUDIO_NONCOPYABLE_HPP
-#define RSTUDIO_NONCOPYABLE_HPP
+#ifndef RSTUDIO_UTILITY_HPP
+#define RSTUDIO_UTILITY_HPP
 
 namespace rstudio {
 
 // Like boost::noncopyable, but allows a type to remain movable.
-struct noncopyable
+struct MoveOnly
 {
-    noncopyable() = default;
-    noncopyable(noncopyable&&) = default;
-    noncopyable& operator=(noncopyable&&) = default;
+    MoveOnly() = default;
+    MoveOnly(MoveOnly&&) = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
 };
  
 } // end namespace rstudio
 
-#endif /* RSTUDIO_NONCOPYABLE_HPP */
+#endif /* RSTUDIO_UTILITY_HPP */

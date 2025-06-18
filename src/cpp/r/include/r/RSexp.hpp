@@ -32,7 +32,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <shared_core/Error.hpp>
-#include <shared_core/Noncopyable.hpp>
+#include <shared_core/Utility.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <core/Log.hpp>
@@ -335,7 +335,7 @@ core::Error setNamedListElement(SEXP listSEXP,
 }
 
 
-class PreservedSEXP : noncopyable
+class PreservedSEXP : MoveOnly
 {
 public:
 
