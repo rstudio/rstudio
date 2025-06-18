@@ -65,13 +65,13 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 struct RProjectBuildDefaults
 {
    RProjectBuildDefaults()
-      : packageRoxygenize("rd,collate,namespace"),
+      : roxygenize("rd,collate,namespace"),
         useDevtools(true),
         cleanBeforeInstall(true)
    {
    }
 
-   std::string packageRoxygenize;
+   std::string roxygenize;
    bool useDevtools;
    bool cleanBeforeInstall;
 };

@@ -287,7 +287,7 @@ void setBuildPackageDefaults(const std::string& packagePath,
 {
    pConfig->buildType = kBuildTypePackage;
    pConfig->packageUseDevtools = buildDefaults.useDevtools;
-   pConfig->packageRoxygenize = buildDefaults.packageRoxygenize;
+   pConfig->packageRoxygenize = buildDefaults.roxygenize;
    pConfig->packageCleanBeforeInstall = buildDefaults.cleanBeforeInstall;
    pConfig->packagePath = packagePath;
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
