@@ -1,5 +1,5 @@
-/*
- * ServerDatabaseOverlay.cpp
+/* 
+ * DatabaseConstants.hpp
  *
  * Copyright (C) 2025 by Posit Software, PBC
  *
@@ -13,16 +13,18 @@
  *
  */
 
-#include <server_core/ServerDatabaseOverlay.hpp>
+#ifndef SERVER_CORE_DATABASE_CONSTANTS_HPP
+#define SERVER_CORE_DATABASE_CONSTANTS_HPP
 
 namespace rstudio {
 namespace server_core {
 namespace database {
-namespace utils {
-namespace overlay {
 
-} // namespace overlay
-} // namespace utils
+constexpr const char* kDatabaseProviderSqlite = "sqlite";
+constexpr const char* kDatabaseProviderPostgresql = "postgresql";
+
 } // namespace database
 } // namespace server_core
 } // namespace rstudio
+
+#endif // SERVER_CORE_DATABASE_CONSTANTS_HPP
