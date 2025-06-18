@@ -75,7 +75,7 @@ struct RProjectBuildOptions
       websiteOutputFormat(),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
-      autoRoxygenizeForBuildAndReload(false)
+      autoRoxygenizeForBuildAndReload(true)
    {
    }
 
