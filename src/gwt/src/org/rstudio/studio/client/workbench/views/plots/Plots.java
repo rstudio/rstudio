@@ -14,17 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.plots;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.HasResizeHandlers;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.user.client.ui.HasWidgets;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
@@ -34,9 +23,9 @@ import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
@@ -63,6 +52,17 @@ import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOption
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.HasResizeHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.ui.HasWidgets;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
                                                     LocatorEvent.Handler,
@@ -434,6 +434,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
             public void execute(WindowEx input)
             {
                zoomWindow_ = input;
+               zoomWindow_.focus();
             }
          }
       );
