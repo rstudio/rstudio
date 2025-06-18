@@ -287,6 +287,7 @@ void setBuildPackageDefaults(const std::string& packagePath,
 {
    pConfig->buildType = kBuildTypePackage;
    pConfig->packageUseDevtools = buildDefaults.useDevtools;
+   pConfig->packageRoxygenize = buildDefaults.packageRoxygenize;
    pConfig->packageCleanBeforeInstall = buildDefaults.cleanBeforeInstall;
    pConfig->packagePath = packagePath;
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
@@ -299,7 +300,7 @@ std::string detectBuildType(const FilePath& projectFilePath,
    FilePath projectDir = projectFilePath.getParent();
    if (r_util::isPackageDirectory(projectDir))
    {
-      setBuildPackageDefaults("", buildDefaults ,pConfig);
+      setBuildPackageDefaults("", buildDefaults, pConfig);
    }
    else if (projectDir.completeChildPath("pkg/DESCRIPTION").exists())
    {

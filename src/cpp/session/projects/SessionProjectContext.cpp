@@ -1087,15 +1087,9 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
    pOptions->previewWebsite = optionsFile.getBool("preview_website", true);
    pOptions->livePreviewWebsite = optionsFile.getBool("live_preview_website", false);
    pOptions->websiteOutputFormat = optionsFile.get("website_output_format", "all");
-   pOptions->autoRoxygenizeForCheck = optionsFile.getBool(
-                                       "auto_roxygenize_for_check",
-                                       true);
-   pOptions->autoRoxygenizeForBuildPackage = optionsFile.getBool(
-                                       "auto_roxygenize_for_build_package",
-                                       true);
-   pOptions->autoRoxygenizeForBuildAndReload = optionsFile.getBool(
-                                       "auto_roxygenize_for_build_and_reload",
-                                       false);
+   pOptions->autoRoxygenizeForCheck = optionsFile.getBool("auto_roxygenize_for_check", true);
+   pOptions->autoRoxygenizeForBuildPackage = optionsFile.getBool("auto_roxygenize_for_build_package", true);
+   pOptions->autoRoxygenizeForBuildAndReload = optionsFile.getBool("auto_roxygenize_for_build_and_reload", true);
 
    // opportunistically sync in-memory representation to what we read from disk
    buildOptions_ = *pOptions;
@@ -1115,12 +1109,9 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
    optionsFile.set("preview_website", options.previewWebsite);
    optionsFile.set("live_preview_website", options.livePreviewWebsite);
    optionsFile.set("website_output_format", options.websiteOutputFormat);
-   optionsFile.set("auto_roxygenize_for_check",
-                   options.autoRoxygenizeForCheck);
-   optionsFile.set("auto_roxygenize_for_build_package",
-                   options.autoRoxygenizeForBuildPackage);
-   optionsFile.set("auto_roxygenize_for_build_and_reload",
-                   options.autoRoxygenizeForBuildAndReload);
+   optionsFile.set("auto_roxygenize_for_check", options.autoRoxygenizeForCheck);
+   optionsFile.set("auto_roxygenize_for_build_package", options.autoRoxygenizeForBuildPackage);
+   optionsFile.set("auto_roxygenize_for_build_and_reload", options.autoRoxygenizeForBuildAndReload);
    optionsFile.endUpdate();
 
    // opportunistically sync in-memory representation to what we wrote to disk

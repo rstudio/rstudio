@@ -483,18 +483,19 @@ json::Object projectBuildOptionsJson()
    Error error = s_projectContext.readBuildOptions(&buildOptions);
    if (error)
       LOG_ERROR(error);
+
    json::Object buildOptionsJson;
    buildOptionsJson["makefile_args"] = buildOptions.makefileArgs;
    buildOptionsJson["preview_website"] = buildOptions.previewWebsite;
    buildOptionsJson["live_preview_website"] = buildOptions.livePreviewWebsite;
    buildOptionsJson["website_output_format"] = buildOptions.websiteOutputFormat;
+
    json::Object autoRoxJson;
    autoRoxJson["run_on_check"] = buildOptions.autoRoxygenizeForCheck;
-   autoRoxJson["run_on_package_builds"] =
-                              buildOptions.autoRoxygenizeForBuildPackage;
-   autoRoxJson["run_on_build_and_reload"] =
-                              buildOptions.autoRoxygenizeForBuildAndReload;
+   autoRoxJson["run_on_package_builds"] = buildOptions.autoRoxygenizeForBuildPackage;
+   autoRoxJson["run_on_build_and_reload"] = buildOptions.autoRoxygenizeForBuildAndReload;
    buildOptionsJson["auto_roxygenize_options"] = autoRoxJson;
+
    return buildOptionsJson;
 }
 

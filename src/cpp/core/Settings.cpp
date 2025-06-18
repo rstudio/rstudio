@@ -15,9 +15,10 @@
 
 #include <core/Settings.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
+
+#include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 
 namespace rstudio {
@@ -155,7 +156,5 @@ void Settings::writeSettings()
 }
 
 
-}
-}
-
-
+} // end namespace core
+} // end namespace rstudio
