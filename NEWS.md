@@ -18,6 +18,7 @@
 
 #### RStudio
 
+- Fixed an issue where RStudio would display a "Cannot reinitialise DataTable" error when viewing data sets. (#15482)
 - Fixed an issue where pkgdown websites built outside of the user directory could not be viewed from RStudio Server (#15133)
 - RStudio no longer displays factors with more than 64 levels as though they were character vectors (#14113)
 - Fixed an issue where the "Save As" dialog would not be visible when trying to save an older git revision of a file (#15955)
