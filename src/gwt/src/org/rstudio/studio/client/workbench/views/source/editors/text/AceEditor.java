@@ -33,7 +33,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
@@ -69,7 +68,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonComp
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.StanCompletionManager;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.output.lint.DiagnosticsBackgroundPopup;
@@ -174,9 +172,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class AceEditor implements DocDisplay,
-                                  InputEditorDisplay,
-                                  NavigableSourceEditor
+public class AceEditor implements DocDisplay
 {
    public enum NewLineMode
    {

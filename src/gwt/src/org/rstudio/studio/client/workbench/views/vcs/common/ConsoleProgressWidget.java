@@ -18,12 +18,11 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.AriaLiveService;
-import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
-public class ConsoleProgressWidget extends ShellWidget implements ShellDisplay
+public class ConsoleProgressWidget extends ShellWidget
 {
    public ConsoleProgressWidget()
    {

@@ -54,7 +54,6 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.aria.client.Id;
@@ -438,13 +437,11 @@ public class RSConnectDeploy extends Composite
    public void initialize(RSConnectServerOperations server, 
                           RSAccountConnector connector,    
                           GlobalDisplay display,
-                          UserPrefs prefs,
                           UserState state)
    {
       server_ = server;
       connector_ = connector;
       display_ = display;
-      userPrefs_ = prefs;
       userState_ = state;
       // posit.cloud should be enabled for static and non-static content
       accountList_ = new RSConnectAccountList(server_, display_, false, 
@@ -1538,7 +1535,6 @@ public class RSConnectDeploy extends Composite
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSAccountConnector connector_;
-   private UserPrefs userPrefs_;
    private UserState userState_;
    
    private RSConnectPublishSource source_;

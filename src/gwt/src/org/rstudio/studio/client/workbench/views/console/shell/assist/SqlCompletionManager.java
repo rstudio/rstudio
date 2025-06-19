@@ -30,7 +30,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChu
 import com.google.gwt.core.client.JsArray;
 
 public class SqlCompletionManager extends CompletionManagerBase
-                                  implements CompletionManager
 {
    // Use a funstructor to create an instance in order to ensure toggleHandlers()
    // is invoked after the object is fully instantiated
