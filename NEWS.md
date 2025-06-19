@@ -37,7 +37,7 @@
 - Fixed an issue where RStudio would send multiple didOpen messages to GitHub Copilot for the same file (#16129)
 - Fixed issue where new R package projects did not inherit "Generate documentation with Roxygen" preference
 - Fixed an issue where large character vectors were shown with an NaN size in the environment pane (#15919)
-
+- Fixed an issue where hitting the Escape key to close the "Update Available" dialog would exit RStudio (#15444)
 
 #### Posit Workbench
 

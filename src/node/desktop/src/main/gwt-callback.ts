@@ -617,12 +617,16 @@ export class GwtCallback extends EventEmitter {
             type: this.convertMessageBoxType(type),
             message: caption,
             detail: message,
+            cancelId: _cancelButton,
+            defaultId: _defaultButton,
             buttons: this.convertButtons(buttons),
           };
         } else {
           openDialogOptions = {
             type: this.convertMessageBoxType(type),
             title: caption,
+            cancelId: _cancelButton,
+            defaultId: _defaultButton,
             message: message,
             buttons: this.convertButtons(buttons),
           };

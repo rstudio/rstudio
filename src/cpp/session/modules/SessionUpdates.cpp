@@ -88,7 +88,15 @@ void beginUpdateCheck(bool manual,
    cmd.append("source('");
    cmd.append(string_utils::jsLiteralEscape(scriptPath));
    cmd.append("'); downloadUpdateInfo('");
-   cmd.append(http::util::urlEncode(RSTUDIO_VERSION));
+   
+   // Testing/debugging feature: set the RStudio version you want to impersonate for the 
+   // update check via the environment variable RSTUDIO_UPDATE_VERSION, e.g.
+   // RSTUDIO_UPDATE_VERSION=2022.07.2+576 (~/.Renviron is a good place to set this)
+   std::string versionOverride = core::system::getenv("RSTUDIO_UPDATE_VERSION");
+   if (!versionOverride.empty())
+      cmd.append(http::util::urlEncode(versionOverride));
+   else
+      cmd.append(http::util::urlEncode(RSTUDIO_VERSION));
    cmd.append("', '");
 #if defined(_WIN32)
    cmd.append("windows");
