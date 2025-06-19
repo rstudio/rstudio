@@ -30,7 +30,6 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
@@ -46,8 +45,7 @@ import java.util.ArrayList;
 
 
 public class FindOutputPane extends WorkbenchPane
-      implements FindOutputPresenter.Display,
-                 HasSelectionCommitHandlers<CodeNavigationTarget>
+      implements FindOutputPresenter.Display
 {
    @Inject
    public FindOutputPane(Commands commands,

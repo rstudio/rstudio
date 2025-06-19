@@ -49,7 +49,7 @@ import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
 
-public class GitPresenter extends BaseVcsPresenter implements IsWidget
+public class GitPresenter extends BaseVcsPresenter
 {
    public interface Binder extends CommandBinder<Commands, GitPresenter> {}
 

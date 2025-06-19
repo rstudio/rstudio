@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FocusWidget;
@@ -31,7 +30,7 @@ import org.rstudio.core.client.a11y.A11y;
 /**
  * An image that behaves like a button.
  */
-public class ImageButton extends FocusWidget implements HasClickHandlers
+public class ImageButton extends FocusWidget
 {
    public ImageButton()
    {

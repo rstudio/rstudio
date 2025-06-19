@@ -46,8 +46,6 @@ import org.rstudio.studio.client.workbench.views.source.Source.Display;
 import java.util.ArrayList;
 
 public class SourcePane extends LazyPanel implements Display,
-                                                     HasEnsureVisibleHandlers,
-                                                     HasEnsureHeightHandlers,
                                                      ProvidesResize,
                                                      RequiresResize,
                                                      BeforeShowCallback,

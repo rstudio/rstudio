@@ -17,7 +17,6 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.HasOneWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import org.rstudio.core.client.a11y.A11y;
@@ -25,7 +24,7 @@ import org.rstudio.core.client.a11y.A11y;
 /**
  * Base class for panels containing one widget, wrapped in a Fieldset element.
  */
-public class FieldSetPanel extends SimplePanel implements HasOneWidget
+public class FieldSetPanel extends SimplePanel
 {
    public FieldSetPanel(String legend, boolean visuallyHideLegend)
    {

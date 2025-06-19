@@ -34,7 +34,6 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -50,8 +49,7 @@ import org.rstudio.studio.client.workbench.views.history.view.HistoryEntryItemCo
 import java.util.ArrayList;
 
 public class HistoryPane extends WorkbenchPane
-      implements org.rstudio.studio.client.workbench.views.history.History.Display,
-                 HasSelectionCommitHandlers<Void>
+      implements org.rstudio.studio.client.workbench.views.history.History.Display
 {
    interface Resources extends ClientBundle
    {

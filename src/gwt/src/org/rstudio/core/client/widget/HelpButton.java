@@ -16,7 +16,6 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FocusWidget;
@@ -37,7 +36,6 @@ import com.google.gwt.user.client.ui.Image;
 import elemental2.dom.URL;
 
 public class HelpButton extends FocusWidget
-                        implements HasClickHandlers
 {
    private final static int kDefaultTopMargin = 3;
    

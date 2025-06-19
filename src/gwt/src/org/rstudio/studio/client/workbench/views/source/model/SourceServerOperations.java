@@ -24,13 +24,10 @@ import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
-import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
-import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
@@ -51,17 +48,13 @@ import com.google.gwt.core.client.JsArrayString;
  */
 public interface SourceServerOperations extends FilesServerOperations, 
                                                 CodeToolsServerOperations,
-                                                CodeSearchServerOperations,
-                                                CppServerOperations,
                                                 TexServerOperations,
                                                 HTMLPreviewServerOperations,
-                                                BuildServerOperations,
                                                 PresentationServerOperations,
                                                 LintServerOperations,
                                                 RSConnectServerOperations,
                                                 ObjectExplorerServerOperations,
                                                 TestServerOperations,
-                                                QuartoServerOperations,
                                                 CryptoServerOperations,
                                                 CopilotServerOperations
 {
