@@ -28,17 +28,18 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
-import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
@@ -69,11 +70,11 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -215,6 +216,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
       public void addIgnoredUpdate(String update) {
          ignoredUpdates_.addIgnoredUpdate(update);
+         ignoredUpdatesDirty_ = true;
+      }
+
+      public void removeIgnoredUpdates() {
+         ignoredUpdates_.removeIgnoredUpdates();
          ignoredUpdatesDirty_ = true;
       }
 
@@ -492,6 +498,28 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                {
                   // Don't do anything here; the prompt will re-appear the next
                   // time we do an update check
+               }
+            });
+         }
+
+         // If update has been ignored, give an option to stop ignoring it
+         if (isManualAndIgnored)
+         {
+            buttonLabels.add(constants_.stopIgnoringUpdatesButtonLabel());
+            elementIds.add(ElementIds.DIALOG_RETRY_BUTTON);
+            buttonOperations.add(new Operation() {
+               @Override
+               public void execute()
+               {
+                  ignoredUpdatesState_.removeIgnoredUpdates();
+                  // Trigger an update to the persistent updates state file
+                  eventBus_.fireEvent(new PushClientStateEvent(true));
+
+                  // Let user know what happened
+                  globalDisplay_.showMessage(
+                     MessageDialog.INFO,
+                     constants_.autoUpdateReenabledCaption(),
+                     constants_.autoUpdateReenabledMessage());
                }
             });
          }
