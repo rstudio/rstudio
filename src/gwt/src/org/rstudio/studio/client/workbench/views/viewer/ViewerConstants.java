@@ -18,8 +18,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Viewer".
-     *
-     * @return translated "Viewer"
      */
     @DefaultMessage("Viewer")
     @Key("viewerTitle")
@@ -27,8 +25,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Viewer Tab".
-     *
-     * @return translated "Viewer Tab"
      */
     @DefaultMessage("Viewer Tab")
     @Key("viewerTabLabel")
@@ -36,8 +32,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Export".
-     *
-     * @return translated "Export"
      */
     @DefaultMessage("Export")
     @Key("exportText")
@@ -45,8 +39,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Could Not Publish".
-     *
-     * @return translated "Could Not Publish"
      */
     @DefaultMessage("Could Not Publish")
     @Key("couldNotPublishCaption")
@@ -54,8 +46,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Viewer Content".
-     *
-     * @return translated "Viewer Content"
      */
     @DefaultMessage("Viewer Content")
     @Key("viewerContentTitle")
@@ -63,8 +53,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Viewer Pane".
-     *
-     * @return translated "Viewer Pane"
      */
     @DefaultMessage("Viewer Pane")
     @Key("viewerPaneTitle")
@@ -72,8 +60,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Sync Editor".
-     *
-     * @return translated "Sync Editor"
      */
     @DefaultMessage("Sync Editor")
     @Key("syncEditorLabel")
@@ -81,8 +67,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Error".
-     *
-     * @return translated "Error"
      */
     @DefaultMessage("Error")
     @Key("errorCaption")
@@ -90,8 +74,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Preparing to export plot...".
-     *
-     * @return translated "Preparing to export plot..."
      */
     @DefaultMessage("Preparing to export plot...")
     @Key("preparingToExportPlotMessage")
@@ -99,8 +81,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Saving standalone web pages".
-     *
-     * @return translated "Saving standalone web pages"
      */
     @DefaultMessage("Saving standalone web pages")
     @Key("savingStandaloneWebPagesMessage")
@@ -108,8 +88,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Save As Web Page".
-     *
-     * @return translated "Save As Web Page"
      */
     @DefaultMessage("Save As Web Page")
     @Key("saveAsWebPageCaption")
@@ -117,8 +95,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Saving as web page...".
-     *
-     * @return translated "Saving as web page..."
      */
     @DefaultMessage("Saving as web page...")
     @Key("savingAsWebPageMessage")
@@ -126,8 +102,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Clear Viewer".
-     *
-     * @return translated "Clear Viewer"
      */
     @DefaultMessage("Clear Viewer")
     @Key("clearViewerCaption")
@@ -135,8 +109,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Are you sure you want to clear all of the items in the history?".
-     *
-     * @return translated "Are you sure you want to clear all of the items in the history?"
      */
     @DefaultMessage("Are you sure you want to clear all of the items in the history?")
     @Key("clearViewerMessage")
@@ -144,8 +116,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Clearing viewer...".
-     *
-     * @return translated "Clearing viewer..."
      */
     @DefaultMessage("Clearing viewer...")
     @Key("clearingViewerMessage")
@@ -153,8 +123,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Viewer Pane Preview".
-     *
-     * @return translated "Viewer Pane Preview"
      */
     @DefaultMessage("Viewer Pane Preview")
     @Key("viewerPanePreviewTitle")
