@@ -107,8 +107,8 @@ rig rstudio 4.3.0
 
 ### Managing R versions manually on Windows
 
-You can override which R version RStudio uses on a Windows machine by navigating to **RStudio Options**  > **General**. 
+You can override which R version RStudio uses on a Windows machine by navigating to **Tools** > **Global Options** > **General** > **Basic** > **R Sessions**. Select **Change** next to the **R Version** field.
 
-A **Choose R Installation** dialog displays that allows you to select the version of R to use. This dialog box, pictured below, also appears if you hold down the control/`Ctrl` key at RStudio startup. 
+A **Choose R Installation** dialog displays that allows you to select the version of R to use. This dialog box, pictured below, also appears if you hold down the `Ctrl` key at RStudio startup. 
 
 ![](images/choose-r-version.png){fig-alt="A screenshot of the dialog box to select an R installation on a Windows operating system." width="450"}
