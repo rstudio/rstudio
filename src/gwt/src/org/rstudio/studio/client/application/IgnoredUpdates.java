@@ -54,4 +54,9 @@ public class IgnoredUpdates extends JavaScriptObject
       newUpdateList.push(update);
       setIgnoredUpdates(newUpdateList);
    }
+
+   public final void removeIgnoredUpdates() 
+   {
+      setIgnoredUpdates(create().getIgnoredUpdates());
+   }
 }
