@@ -21,8 +21,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Command Not Available".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Command Not Available")
     @Key("commandNotAvailableCaption")
@@ -30,8 +28,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "The command ''{0}'' is not currently available.".
-     *
-     * @return the translated value
      */
     @DefaultMessage("The command ''{0}'' is not currently available.")
     @Key("commandNotAvailableMessage")
@@ -39,8 +35,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Command Disabled".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Command Disabled")
     @Key("commandDisabledCaption")
@@ -48,8 +42,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "The command ''{0}'' cannot be used right now. It may be unavailable in this project, file, or view.".
-     *
-     * @return the translated value
      */
     @DefaultMessage("The command ''{0}'' cannot be used right now. It may be unavailable in this project, file, or view.")
     @Key("commandDisabledMessage")
@@ -57,17 +49,13 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Command Execution Failed".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Command Execution Failed")
     @Key("commandExecutionFailedCaption")
     String commandExecutionFailedCaption();
 
     /**
-     * Translate "The command ''{0}'' could not be executed.\n\n".
-     *
-     * @return the translated value
+     * Translate "The command ''{0}'' could not be executed.\n\n {1}".
      */
     @DefaultMessage("The command ''{0}'' could not be executed.\\n\\n {1}")
     @Key("commandExecutionFailedMessage")
@@ -75,8 +63,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Command Palette Cleared".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Command Palette Cleared")
     @Key("cmdPaletteClearedCaption")
@@ -84,8 +70,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "The Command Palette's list of recently used items has been cleared.".
-     *
-     * @return the translated value
      */
     @DefaultMessage("The Command Palette''s list of recently used items has been cleared.")
     @Key("cmdPaletteClearedMessage")
@@ -93,8 +77,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Search commands and settings".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Search commands and settings")
     @Key("searchCmdsAriaLabelProperty")
@@ -102,8 +84,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Matching commands and settings".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Matching commands and settings")
     @Key("matchCmdsAriaLabelProperty")
@@ -111,8 +91,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Search for commands and settings".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Search for commands and settings")
     @Key("searchForCmdsAriaLabelProperty")
@@ -120,8 +98,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "commands found, press up and down to navigate".
-     *
-     * @return the translated value
      */
     @DefaultMessage("commands found, press up and down to navigate")
     @Key("cmdsFoundReportStatusMsg")
@@ -129,8 +105,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "On".
-     *
-     * @return the translated value
      */
     @DefaultMessage("On")
     @Key("checkboxLabelOn")
@@ -138,8 +112,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Off".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Off")
     @Key("checkboxLabelOff")
@@ -147,8 +119,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Setting".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Setting")
     @Key("settingText")
@@ -156,8 +126,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Ctrl".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Ctrl")
     @Key("commandCtrl")
@@ -165,8 +133,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Alt".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Alt")
     @Key("commandAlt")
@@ -174,8 +140,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Shift".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Shift")
     @Key("commandShift")
@@ -183,8 +147,6 @@ public interface PaletteConstants extends Messages {
 
     /**
      * Translate "Cmd".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Cmd")
     @Key("commandCmd")

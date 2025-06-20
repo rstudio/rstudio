@@ -18,8 +18,6 @@ public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages 
     
     /**
      * Translated "Documentation not found.".
-     *
-     * @return translated "Documentation not found."
      */
     @DefaultMessage("Documentation not found.")
     @Key("noDocumentation")
@@ -27,17 +25,13 @@ public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages 
 
     /**
      * Translated "Package not found.".
-     *
-     * @return translated "Package not found."
      */
-    @DefaultMessage("Package not found")
+    @DefaultMessage("Package not found.")
     @Key("noPackage")
     String noPackage();
 
     /**
      * Translated "Vignette not found.".
-     *
-     * @return translated "Vignette not found."
      */
     @DefaultMessage("Vignette not found.")
     @Key("noVignette")
@@ -45,8 +39,6 @@ public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages 
 
     /**
      * Translated "click to run".
-     *
-     * @return translated "click to run"
      */
     @DefaultMessage("click to run")
     @Key("clickToRun")
@@ -54,8 +46,6 @@ public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages 
 
     /**
      * Translated "No such file".
-     *
-     * @return translated "No such file"
      */
     @DefaultMessage("No such file")
     @Key("noSuchFile")
@@ -63,8 +53,6 @@ public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages 
 
     /**
      * Translated "''{0}'' does not exist.".
-     *
-     * @return translated "''{0}'' does not exist."
      */
     @DefaultMessage("''{0}'' does not exist.")
     @Key("doesNotExist")
