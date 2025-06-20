@@ -11,6 +11,7 @@
 - The splash screen now closes when clicked with the mouse (#15614)
 - The default console buffer size has been increased to 10000 lines (#16111)
 - The Zoom button in the plots pane on RStudio Desktop now brings an existing zoomed plot window to the foreground (#11661)
+- When manually checking for updates (after previously ignoring an update) an option is provided to stop ignoring updates (#16009)
 
 #### Posit Workbench
 
